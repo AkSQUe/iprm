@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Реєстрація: {{ event.title }} | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="reg-layout">
+
+  <div class="reg-confirmation">
+    {% if reg.status == 'confirmed' %}
+      <h1 class="reg-confirmation__title">Реєстрацію підтверджено</h1>
+      <p class="reg-confirmation__subtitle">Ви зареєстровані на курс. Очікуйте деталі на email.</p>
+    {% elif reg.status == 'pending' %}
+      <h1 class="reg-confirmation__title">Реєстрацію створено</h1>
+      <p class="reg-confirmation__subtitle">Для підтвердження необхідно здійснити оплату.</p>
+    {% elif reg.status == 'cancelled' %}
+      <h1 class="reg-confirmation__title">Реєстрацію скасовано</h1>
+      <p class="reg-confirmation__subtitle">Ваша реєстрація була скасована.</p>
+    {% elif reg.status == 'completed' %}
+      <h1 class="reg-confirmation__title">Захід завершено</h1>
+      {% if reg.attended and reg.cpd_points_awarded %}
+        <p class="reg-confirmation__subtitle">Вам нараховано {{ reg.cpd_points_awarded }} балів БПР.</p>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <!-- Status details -->
+  <div class="reg-status-card">
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">Курс</span>
+      <span class="reg-status-card__value">{{ event.title }}</span>
+    </div>
+    {% if event.start_date %}
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">Дата</span>
+      <span class="reg-status-card__value">{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</span>
+    </div>
+    {% endif %}
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">Статус реєстрації</span>
+      <span class="reg-status-card__value">
+        <span class="badge badge--{{ reg.status }}">{{ reg.status_label }}</span>
+      </span>
+    </div>
+    {% if reg.payment_amount and reg.payment_amount > 0 %}
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">Оплата</span>
+      <span class="reg-status-card__value">
+        {{ reg.payment_amount | int }} &#8372; &mdash;
+        <span class="badge badge--{{ 'active' if reg.payment_status == 'paid' else 'draft' }}">{{ reg.payment_status_label }}</span>
+      </span>
+    </div>
+    {% endif %}
+    {% if event.cpd_points %}
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">Балів БПР</span>
+      <span class="reg-status-card__value">
+        {% if reg.cpd_points_awarded %}
+          {{ reg.cpd_points_awarded }} (нараховано)
+        {% else %}
+          {{ event.cpd_points }} (після завершення)
+        {% endif %}
+      </span>
+    </div>
+    {% endif %}
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">Дата реєстрації</span>
+      <span class="reg-status-card__value">{{ reg.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+    </div>
+  </div>
+
+  <!-- LiqPay placeholder (future payment) -->
+  {% if reg.status == 'pending' and reg.payment_status == 'unpaid' and reg.payment_amount and reg.payment_amount > 0 %}
+  <div class="reg-liqpay-placeholder">
+    Оплата через LiqPay буде доступна найближчим часом
+  </div>
+  {% endif %}
+
+  <div class="reg-actions reg-actions--center">
+    <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-btn iprm-btn--primary">
+      <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Повернутися до курсу
+    </a>
+  </div>
+
+</div>
+{% endblock %}
