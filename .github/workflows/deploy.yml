@@ -29,5 +29,8 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            cd /var/www/iprm
+            source venv/bin/activate
+            pip install -r requirements.txt --quiet
             chown -R www-data:www-data /var/www/iprm
             systemctl restart iprm
