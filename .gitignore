@@ -16,6 +16,7 @@ env/
 instance/
 *.db
 *.sqlite3
+migrations/versions/*.pyc
 
 # Environment
 .env
@@ -30,3 +31,6 @@ instance/
 # OS
 .DS_Store
 Thumbs.db
+
+# Node (Tailwind build)
+node_modules/
