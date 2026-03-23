@@ -1,0 +1,58 @@
+from app.extensions import db
+from app.models.mixins import TimestampMixin
+
+
+class EventRegistration(TimestampMixin, db.Model):
+    __tablename__ = 'event_registrations'
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), nullable=False, index=True)
+    event_id = db.Column(db.BigInteger, db.ForeignKey('events.id'), nullable=False, index=True)
+
+    phone = db.Column(db.String(20), nullable=False)
+    specialty = db.Column(db.String(200), nullable=False)
+    workplace = db.Column(db.String(300), nullable=False)
+    experience_years = db.Column(db.Integer)
+    license_number = db.Column(db.String(50))
+
+    status = db.Column(db.String(20), default='pending', nullable=False, index=True)
+    payment_status = db.Column(db.String(20), default='unpaid', nullable=False, index=True)
+    payment_amount = db.Column(db.Numeric(10, 2))
+    payment_id = db.Column(db.String(255))
+    paid_at = db.Column(db.DateTime(timezone=True))
+
+    attended = db.Column(db.Boolean, default=False)
+    cpd_points_awarded = db.Column(db.Integer)
+    admin_notes = db.Column(db.Text)
+
+    user = db.relationship('User', backref=db.backref('registrations', lazy='dynamic'))
+    event = db.relationship('Event', backref=db.backref('registrations', lazy='dynamic'))
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'event_id', name='uq_user_event_registration'),
+    )
+
+    STATUSES = [
+        ('pending', 'Очікує'),
+        ('confirmed', 'Підтверджено'),
+        ('cancelled', 'Скасовано'),
+        ('completed', 'Завершено'),
+    ]
+
+    PAYMENT_STATUSES = [
+        ('unpaid', 'Не оплачено'),
+        ('pending', 'Очікує оплати'),
+        ('paid', 'Оплачено'),
+        ('refunded', 'Повернено'),
+    ]
+
+    @property
+    def status_label(self):
+        return dict(self.STATUSES).get(self.status, self.status)
+
+    @property
+    def payment_status_label(self):
+        return dict(self.PAYMENT_STATUSES).get(self.payment_status, self.payment_status)
+
+    def __repr__(self):
+        return f'<EventRegistration user={self.user_id} event={self.event_id}>'
