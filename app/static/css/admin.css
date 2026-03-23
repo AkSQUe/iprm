@@ -180,7 +180,7 @@
 
 .admin-form__section {
   background: var(--iprm-card-bg);
-  border-radius: 4%;
+  border-radius: var(--iprm-radius);
   padding: 28px;
 }
 
