@@ -1,4 +1,4 @@
-from flask import render_template, abort
+from flask import render_template, abort, redirect, url_for
 
 from app.courses import courses_bp
 from app.models.event import Event
@@ -21,39 +21,24 @@ def course_by_slug(slug):
     return render_template('courses/event.html', event=event, active_nav='courses')
 
 
-# Legacy hardcoded routes - fallback to static templates if no DB record
-LEGACY_SLUGS = {
-    'course_detail': 'plazmoterapiya-v-ginekologii',
-    'course_stomatology': 'plazmoterapiya-v-stomatologii',
-    'course_orthopedics': 'plazmoterapiya-v-ortopedii',
+# Legacy URL redirects -> slug-based routes
+LEGACY_REDIRECTS = {
+    'detail': 'plazmoterapiya-v-ginekologii',
+    'stomatology': 'plazmoterapiya-v-stomatologii',
+    'orthopedics': 'plazmoterapiya-v-ortopedii',
 }
-
-LEGACY_TEMPLATES = {
-    'course_detail': 'courses/detail.html',
-    'course_stomatology': 'courses/stomatology.html',
-    'course_orthopedics': 'courses/orthopedics.html',
-}
-
-
-def _legacy_or_db(route_name):
-    slug = LEGACY_SLUGS.get(route_name)
-    if slug:
-        event = Event.query.filter_by(slug=slug, is_active=True).first()
-        if event:
-            return render_template('courses/event.html', event=event, active_nav='courses')
-    return render_template(LEGACY_TEMPLATES[route_name], active_nav='courses')
 
 
 @courses_bp.route('/detail')
 def course_detail():
-    return _legacy_or_db('course_detail')
+    return redirect(url_for('courses.course_by_slug', slug=LEGACY_REDIRECTS['detail']), code=301)
 
 
 @courses_bp.route('/stomatology')
 def course_stomatology():
-    return _legacy_or_db('course_stomatology')
+    return redirect(url_for('courses.course_by_slug', slug=LEGACY_REDIRECTS['stomatology']), code=301)
 
 
 @courses_bp.route('/orthopedics')
 def course_orthopedics():
-    return _legacy_or_db('course_orthopedics')
+    return redirect(url_for('courses.course_by_slug', slug=LEGACY_REDIRECTS['orthopedics']), code=301)

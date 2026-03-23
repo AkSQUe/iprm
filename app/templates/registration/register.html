@@ -91,7 +91,7 @@
     </div>
 
     <div class="reg-actions">
-      <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="btn-admin btn-admin--secondary">Назад</a>
+      <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="reg-btn-secondary">Назад</a>
       <button type="submit" class="iprm-btn iprm-btn--primary">
         <span class="iprm-btn__arrow">&#x2197;</span>
         {% if event.price and event.price > 0 %}
