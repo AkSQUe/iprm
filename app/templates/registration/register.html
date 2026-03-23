@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Реєстрація на курс | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="reg-layout">
+
+  <h1 class="reg-confirmation__title">Реєстрація на курс</h1>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert--{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- Event summary -->
+  <div class="reg-event-card">
+    <h2 class="reg-event-card__title">{{ event.title }}</h2>
+    <div class="reg-event-card__meta">
+      {% if event.start_date %}
+        <div>Дата: <strong>{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</strong></div>
+      {% endif %}
+      {% if event.format_label %}
+        <div>Формат: <strong>{{ event.format_label }}</strong></div>
+      {% endif %}
+      {% if event.price and event.price > 0 %}
+        <div>Вартість: <strong>{{ event.price | int }} &#8372;</strong></div>
+      {% else %}
+        <div>Вартість: <strong>Безкоштовно</strong></div>
+      {% endif %}
+      {% if event.cpd_points %}
+        <div>БПР: <strong>{{ event.cpd_points }} балів</strong></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- User info (read-only) -->
+  <div class="reg-user-info">
+    <div class="reg-user-info__item">
+      <span>Ім'я</span>
+      {{ current_user.first_name }} {{ current_user.last_name }}
+    </div>
+    <div class="reg-user-info__item">
+      <span>Email</span>
+      {{ current_user.email }}
+    </div>
+  </div>
+
+  <!-- Registration form -->
+  <form method="POST" action="{{ url_for('registration.register', event_id=event.id) }}">
+    {{ form.hidden_tag() }}
+
+    <div class="reg-form-section">
+      <h3 class="reg-form-section__title">Професійна інформація</h3>
+      <div class="reg-form-grid">
+
+        <div class="form-group">
+          <label for="phone">Телефон <span class="required">*</span></label>
+          {{ form.phone(class="form-input" + (" is-invalid" if form.phone.errors else ""), id="phone") }}
+          {% for error in form.phone.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="specialty">Спеціальність <span class="required">*</span></label>
+          {{ form.specialty(class="form-input" + (" is-invalid" if form.specialty.errors else ""), id="specialty") }}
+          {% for error in form.specialty.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group reg-form-full">
+          <label for="workplace">Місце роботи <span class="required">*</span></label>
+          {{ form.workplace(class="form-input" + (" is-invalid" if form.workplace.errors else ""), id="workplace") }}
+          {% for error in form.workplace.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="experience_years">Стаж роботи (років)</label>
+          {{ form.experience_years(class="form-input", id="experience_years") }}
+        </div>
+
+        <div class="form-group">
+          <label for="license_number">Номер ліцензії</label>
+          {{ form.license_number(class="form-input", id="license_number") }}
+        </div>
+
+      </div>
+    </div>
+
+    <div class="reg-actions">
+      <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="btn-admin btn-admin--secondary">Назад</a>
+      <button type="submit" class="iprm-btn iprm-btn--primary">
+        <span class="iprm-btn__arrow">&#x2197;</span>
+        {% if event.price and event.price > 0 %}
+          Зареєструватися ({{ event.price | int }} &#8372;)
+        {% else %}
+          Зареєструватися
+        {% endif %}
+      </button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}
