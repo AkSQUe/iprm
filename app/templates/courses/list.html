@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}IPRM - Курси інституту{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-home.css') }}">
+{% endblock %}
+
+{% block content %}
+  <!-- ===== HERO SLIDER ===== -->
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero">
+      <div class="iprm-hero__bg"></div>
+      <div class="iprm-hero__content">
+        <h1 class="iprm-hero__title">Проведення курсів післядипломної освіти з нарахуванням балів БПР</h1>
+        <p class="iprm-hero__subtitle">Сертифіковані програми підвищення кваліфікації для лікарів з офіційним нарахуванням балів безперервного професійного розвитку</p>
+        <a href="#" class="iprm-btn iprm-btn--outline">
+          <span class="iprm-btn__arrow">&#x2197;</span> На сторінку курсів
+        </a>
+      </div>
+      <div class="iprm-hero__nav">
+        <button class="iprm-hero__arrow iprm-hero__arrow--prev">&#8249;</button>
+        <div class="iprm-hero__dots">
+          <span class="iprm-hero__dot iprm-hero__dot--active"></span>
+          <span class="iprm-hero__dot"></span>
+          <span class="iprm-hero__dot"></span>
+          <span class="iprm-hero__dot"></span>
+        </div>
+        <button class="iprm-hero__arrow iprm-hero__arrow--next">&#8250;</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== POSTGRADUATE COURSES ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Курси післядипломної освіти</h2>
+
+      <div class="iprm-course-cards">
+        <a href="{{ url_for('courses.course_detail') }}" class="iprm-course-card">
+          <div class="iprm-course-card__image">[photo placeholder]</div>
+          <p class="iprm-course-card__title">Плазмотерапія в гінекології</p>
+          <div class="iprm-course-card__tags">
+            <span class="iprm-tag">Очні курси з практичними заняттями</span>
+            <span class="iprm-tag">Онлайн курси з відеодемонстраціями</span>
+            <span class="iprm-tag">Курси на платформі SYNTEGRUM</span>
+          </div>
+        </a>
+        <a href="{{ url_for('courses.course_stomatology') }}" class="iprm-course-card">
+          <div class="iprm-course-card__image">[photo placeholder]</div>
+          <p class="iprm-course-card__title">Плазмотерапія в косметологічному лікуванні шкіри</p>
+          <div class="iprm-course-card__tags">
+            <span class="iprm-tag">Очні курси з практичними заняттями</span>
+            <span class="iprm-tag">Онлайн курси з відеодемонстраціями</span>
+            <span class="iprm-tag">Курси на платформі SYNTEGRUM</span>
+          </div>
+        </a>
+        <a href="{{ url_for('courses.course_orthopedics') }}" class="iprm-course-card">
+          <div class="iprm-course-card__image">[photo placeholder]</div>
+          <p class="iprm-course-card__title">Плазмотерапія в age-менеджменті</p>
+          <div class="iprm-course-card__tags">
+            <span class="iprm-tag">Очні курси з практичними заняттями</span>
+            <span class="iprm-tag">Онлайн курси з відеодемонстраціями</span>
+            <span class="iprm-tag">Курси на платформі SYNTEGRUM</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CLINIC SECTION ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Клініка клітинних та регенеративних технологій</h2>
+      <p class="iprm-section__subtitle">Перелік відділень клінік</p>
+
+      <div class="iprm-photo-cards">
+        <div class="iprm-photo-card">
+          <div class="iprm-photo-card__image">[photo placeholder]</div>
+          <div class="iprm-photo-card__body">
+            <p class="iprm-photo-card__title">Відділення PRP-, плазмотерапії та терапії екзосомами</p>
+            <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm">
+              <span class="iprm-btn__arrow">&#x2197;</span> На сторінку клініки
+            </a>
+          </div>
+        </div>
+        <div class="iprm-photo-card">
+          <div class="iprm-photo-card__image">[photo placeholder]</div>
+          <div class="iprm-photo-card__body">
+            <p class="iprm-photo-card__title">Відділення терапії мезенхімальними стовбуровими клітинами</p>
+            <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm">
+              <span class="iprm-btn__arrow">&#x2197;</span> На сторінку клініки
+            </a>
+          </div>
+        </div>
+        <div class="iprm-photo-card">
+          <div class="iprm-photo-card__image">[photo placeholder]</div>
+          <div class="iprm-photo-card__body">
+            <p class="iprm-photo-card__title">Відділення персоніфікованої інфузійної терапії</p>
+            <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm">
+              <span class="iprm-btn__arrow">&#x2197;</span> На сторінку клініки
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== LAB 1: BIOLOGICAL AGE ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Лабораторія біологічного віку та прогнозування захворювань</h2>
+
+      <div class="iprm-cards">
+        <div class="iprm-card iprm-card--left">
+          <div class="iprm-card__icon">[icon]</div>
+          <p class="iprm-card__text">Епігенетика, фізіологія, біохімія та імунологія процесів старіння та вік-залежних захворювань</p>
+        </div>
+        <div class="iprm-card iprm-card--left">
+          <div class="iprm-card__icon">[icon]</div>
+          <p class="iprm-card__text">Визначення індивідуальних параметрів для вибору персоналізованої терапії</p>
+        </div>
+        <div class="iprm-card iprm-card--left">
+          <div class="iprm-card__icon">[icon]</div>
+          <p class="iprm-card__text">Біоінформатика. Інтегральний аналіз даних досліджень з використанням ШІ</p>
+        </div>
+      </div>
+
+      <div class="iprm-section__cta">
+        <a href="#" class="iprm-btn iprm-btn--primary">
+          <span class="iprm-btn__arrow">&#x2197;</span> На сторінку лабораторії
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== LAB 2: ANTI-AGE ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Лабораторія інноваційних досліджень у сфері anti-age та регенерації</h2>
+
+      <div class="iprm-cards">
+        <div class="iprm-card iprm-card--left">
+          <div class="iprm-card__icon">[icon]</div>
+          <p class="iprm-card__text">Пошук, апробація, валідація нових біомаркерів старіння та геропротекторів</p>
+        </div>
+        <div class="iprm-card iprm-card--left">
+          <div class="iprm-card__icon">[icon]</div>
+          <p class="iprm-card__text">Дослідження процесів старіння на клітинному рівні</p>
+        </div>
+        <div class="iprm-card iprm-card--left">
+          <div class="iprm-card__icon">[icon]</div>
+          <p class="iprm-card__text">Дослідження ефективності нових anti-age протоколів</p>
+        </div>
+      </div>
+
+      <div class="iprm-section__cta">
+        <a href="#" class="iprm-btn iprm-btn--primary">
+          <span class="iprm-btn__arrow">&#x2197;</span> На сторінку лабораторії
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== COURSES INSTITUTE ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Курси інституту плазмотерапії та регенеративної медицини</h2>
+
+      <div class="iprm-courses">
+        <div class="iprm-courses__item iprm-courses__item--tall iprm-courses__item--col">
+          <div class="iprm-courses__icon">[icon]</div>
+          <p class="iprm-courses__text">Навчальні курси інституту плазмотерапії проводяться висококваліфікованими спеціалістами з багатим досвідом</p>
+        </div>
+        <div class="iprm-courses__item">
+          <div class="iprm-courses__icon">[icon]</div>
+          <p class="iprm-courses__text"><strong>Курси проводяться очно та онлайн, в комфортних умовах та повністю забезпечені всім необхідним</strong></p>
+        </div>
+        <div class="iprm-courses__item iprm-courses__item--icon-abs">
+          <p class="iprm-courses__text">Слухачі курсів отримують максимум сучасної інформації по вибраних темах</p>
+          <div class="iprm-courses__icon">[icon]</div>
+        </div>
+        <div class="iprm-courses__item iprm-courses__item--full">
+          <div class="iprm-courses__icon iprm-courses__icon--sm">[icon]</div>
+          <p class="iprm-courses__text">Після проходження вибраного курсу слухачі отримують сертифікати з балами БПР</p>
+        </div>
+      </div>
+
+      <div class="iprm-section__cta">
+        <a href="{{ url_for('courses.course_list') }}" class="iprm-btn iprm-btn--primary">
+          <span class="iprm-btn__arrow">&#x2197;</span> Обрати курси
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HISTORY SECTION ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Історія створення</h2>
+
+      <div class="iprm-history__text">
+        <p>Інститут плазмотерапії засновано у 2015 році групою лікарів-дослідників, які понад 10 років вивчали природні механізми відновлення організму. Їх обіцяна мета — зробити передові біотехнології доступними для кожного, хто прагне не просто лікування, а реального відновлення.</p>
+        <p>Починалось все з невеличкої лабораторії в Києві, де проводились перші клінічні дослідження плазмотерапії у відновленні після травм та у дерматології. Успішні результати надихнули команду розширити діяльність — додати напрям біорегуляційної медицини, а згодом і власну навчальну програму для лікарів.</p>
+        <p>Сьогодні Інститут об'єднує фахівців з епігенетики, фізіології, біохімії, імунології та біоінформатики. Тут проводяться:</p>
+        <ul class="iprm-history__list">
+          <li>дослідження процесів старіння на клітинному рівні</li>
+          <li>визначення індивідуальних параметрів для персоналізованої терапії</li>
+          <li>пошук і валідація нових біомаркерів старіння</li>
+          <li>тестування ефективності anti-age протоколів</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+{% endblock %}
