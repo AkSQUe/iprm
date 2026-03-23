@@ -1,0 +1,209 @@
+/* Registration page styles */
+
+.reg-layout {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.reg-event-card {
+  background: var(--iprm-card-bg);
+  border-radius: var(--iprm-radius);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.reg-event-card__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--iprm-dark);
+  margin-bottom: 8px;
+}
+
+.reg-event-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 14px;
+  color: var(--iprm-text-light);
+}
+
+.reg-event-card__meta strong {
+  color: var(--iprm-text);
+}
+
+/* User info read-only */
+.reg-user-info {
+  background: var(--iprm-card-bg);
+  border-radius: var(--iprm-radius);
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.reg-user-info__item {
+  font-size: 14px;
+}
+
+.reg-user-info__item span {
+  display: block;
+  font-size: 12px;
+  color: var(--iprm-text-light);
+  margin-bottom: 2px;
+}
+
+/* Form section */
+.reg-form-section {
+  background: var(--iprm-card-bg);
+  border-radius: var(--iprm-radius);
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.reg-form-section__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--iprm-dark);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--iprm-border);
+}
+
+.reg-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.reg-form-full {
+  grid-column: 1 / -1;
+}
+
+.reg-form-section .form-group {
+  margin-bottom: 0;
+}
+
+.reg-form-section .form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--iprm-dark);
+  margin-bottom: 6px;
+}
+
+.reg-form-section .form-group label .required {
+  color: var(--iprm-accent);
+}
+
+.reg-form-section .form-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: var(--iprm-font);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  background: var(--iprm-white);
+  color: var(--iprm-text);
+  transition: border-color var(--iprm-transition), box-shadow var(--iprm-transition);
+}
+
+.reg-form-section .form-input:focus {
+  outline: none;
+  border-color: var(--iprm-dark);
+  box-shadow: 0 0 0 3px rgba(26, 26, 46, 0.08);
+}
+
+.reg-form-section .form-input.is-invalid {
+  border-color: #ef4444;
+}
+
+.reg-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Confirmation page */
+.reg-confirmation {
+  text-align: center;
+  padding: 32px 0;
+}
+
+.reg-confirmation__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--iprm-dark);
+  margin-bottom: 8px;
+}
+
+.reg-confirmation__subtitle {
+  font-size: 15px;
+  color: var(--iprm-text-light);
+  margin-bottom: 24px;
+}
+
+.reg-status-card {
+  background: var(--iprm-card-bg);
+  border-radius: var(--iprm-radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.reg-status-card__row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 14px;
+  border-bottom: 1px solid var(--iprm-border);
+}
+
+.reg-status-card__row:last-child {
+  border-bottom: none;
+}
+
+.reg-status-card__label {
+  color: var(--iprm-text-light);
+}
+
+.reg-status-card__value {
+  font-weight: 600;
+  color: var(--iprm-text);
+}
+
+.reg-liqpay-placeholder {
+  background: var(--iprm-card-bg);
+  border: 2px dashed var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  padding: 32px;
+  margin-bottom: 24px;
+  text-align: center;
+  color: var(--iprm-text-light);
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .reg-layout {
+    padding: 20px 16px;
+  }
+
+  .reg-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reg-event-card__meta {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .reg-user-info {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .reg-actions {
+    flex-direction: column;
+  }
+}
