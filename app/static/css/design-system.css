@@ -66,27 +66,12 @@
   line-height: 1.4;
 }
 
-.ds-swatch__info span {
+.ds-swatch__value {
   display: block;
   font-size: 11px;
   color: var(--iprm-text-light);
 }
 
-.ds-grid-demo {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.ds-grid-demo > div {
-  background: var(--iprm-card-bg);
-  border-radius: 8px;
-  padding: 16px;
-  text-align: center;
-  font-size: 13px;
-  color: var(--iprm-text-light);
-}
 
 .ds-nav {
   position: sticky;
@@ -170,10 +155,6 @@
     gap: 16px;
   }
 
-  .ds-grid-demo {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .ds-title {
     font-size: 18px;
   }
@@ -182,10 +163,6 @@
 @media (max-width: 480px) {
   .ds-section {
     padding: 20px 12px;
-  }
-
-  .ds-grid-demo {
-    grid-template-columns: 1fr;
   }
 
   .ds-nav {
