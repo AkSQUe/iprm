@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}IPRM - {{ event.title }}{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}">
+{% endblock %}
+
+{% block content %}
+  <!-- ===== HERO ===== -->
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero iprm-hero--tall">
+      <div class="iprm-hero__bg"></div>
+      <div class="iprm-hero__content">
+        {% if event.price %}
+          <span class="iprm-hero__price">{{ event.price | int }} &#8372; за курс</span>
+        {% endif %}
+        <h1 class="iprm-hero__title">{{ event.title }}</h1>
+        {% if event.subtitle %}
+          <p class="iprm-hero__subtitle">{{ event.subtitle }}</p>
+        {% endif %}
+        <a href="#" class="iprm-btn iprm-btn--primary">
+          <span class="iprm-btn__arrow">&#x2197;</span> Реєстрація на курс
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== TARGET AUDIENCE ===== -->
+  {% if event.target_audience %}
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Для кого</h2>
+      <div class="iprm-target-grid">
+        {% for item in event.target_audience %}
+        <div class="iprm-target-card{% if loop.last and loop.length is odd %} iprm-target-card--full{% endif %}">
+          <p>{{ item }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== TRAINER ===== -->
+  {% if event.trainer %}
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Тренер курсу</h2>
+      <div class="iprm-trainer">
+        <div class="iprm-trainer__photo">
+          {% if event.trainer.photo %}
+            <img src="{{ event.trainer.photo }}" alt="{{ event.trainer.full_name }}">
+          {% else %}
+            [photo placeholder]
+          {% endif %}
+        </div>
+        <div class="iprm-trainer__info">
+          <h3 class="iprm-trainer__name">{{ event.trainer.full_name }}</h3>
+          {% if event.trainer.role %}
+            <p class="iprm-trainer__role">{{ event.trainer.role }}</p>
+          {% endif %}
+          {% if event.trainer.bio %}
+            <p class="iprm-trainer__desc">{{ event.trainer.bio }}</p>
+          {% endif %}
+          <a href="#" class="iprm-btn iprm-btn--primary">
+            <span class="iprm-btn__arrow">&#x2197;</span> Реєстрація на курс
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== PROGRAM ===== -->
+  {% if event.program_blocks %}
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Програма курсу</h2>
+      <div class="iprm-program">
+        {% for block in event.program_blocks %}
+        <div class="iprm-program__block">
+          <h3 class="iprm-program__heading">{{ block.heading }}</h3>
+          <ul class="iprm-program__list">
+            {% for item in block.items %}
+              <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="iprm-section__cta">
+        <a href="#" class="iprm-btn iprm-btn--primary">
+          <span class="iprm-btn__arrow">&#x2197;</span> Реєстрація на курс
+        </a>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== DESCRIPTION ===== -->
+  {% if event.description %}
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <div class="iprm-history__text">
+        {{ event.description | safe }}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+{% endblock %}
