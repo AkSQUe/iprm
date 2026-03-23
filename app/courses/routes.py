@@ -4,7 +4,7 @@ from app.courses import courses_bp
 from app.models.event import Event
 
 
-@courses_bp.route('/courses')
+@courses_bp.route('/')
 def course_list():
     events = Event.query.filter(
         Event.is_active.is_(True),
@@ -13,7 +13,7 @@ def course_list():
     return render_template('courses/list.html', active_nav='courses', events=events)
 
 
-@courses_bp.route('/courses/<slug>')
+@courses_bp.route('/<slug>')
 def course_by_slug(slug):
     event = Event.query.filter_by(slug=slug, is_active=True).first()
     if not event:
@@ -44,16 +44,16 @@ def _legacy_or_db(route_name):
     return render_template(LEGACY_TEMPLATES[route_name], active_nav='courses')
 
 
-@courses_bp.route('/course-detail')
+@courses_bp.route('/detail')
 def course_detail():
     return _legacy_or_db('course_detail')
 
 
-@courses_bp.route('/course-stomatology')
+@courses_bp.route('/stomatology')
 def course_stomatology():
     return _legacy_or_db('course_stomatology')
 
 
-@courses_bp.route('/course-orthopedics')
+@courses_bp.route('/orthopedics')
 def course_orthopedics():
     return _legacy_or_db('course_orthopedics')
