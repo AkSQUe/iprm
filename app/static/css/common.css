@@ -66,9 +66,43 @@ a {
   position: relative;
 }
 
-.iprm-header__ds-link {
+.iprm-header__actions {
   position: absolute;
   right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iprm-header__auth-link {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--iprm-white);
+  padding: 5px 16px;
+  background: var(--iprm-accent);
+  border: 1px solid var(--iprm-accent);
+  border-radius: 6px;
+  transition: all var(--iprm-transition);
+  cursor: pointer;
+  font-family: var(--iprm-font);
+}
+
+.iprm-header__auth-link:hover {
+  background: #0284c7;
+  border-color: #0284c7;
+}
+
+.iprm-header__user {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--iprm-text-light);
+}
+
+.iprm-header__logout-form {
+  display: inline;
+}
+
+.iprm-header__ds-link {
   font-size: 11px;
   font-weight: 500;
   color: var(--iprm-accent);

@@ -3,7 +3,18 @@
     <a href="{{ url_for('main.index') }}" class="iprm-logo">
       <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="IPRM" class="iprm-logo__icon">
     </a>
-    <a href="{{ url_for('main.design_system') }}" class="iprm-header__ds-link">DS</a>
+    <div class="iprm-header__actions">
+      {% if current_user.is_authenticated %}
+        <span class="iprm-header__user">{{ current_user.first_name }}</span>
+        <form method="POST" action="{{ url_for('auth.logout') }}" class="iprm-header__logout-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="iprm-header__auth-link">Вийти</button>
+        </form>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}" class="iprm-header__auth-link">Увійти</a>
+      {% endif %}
+      <a href="{{ url_for('main.design_system') }}" class="iprm-header__ds-link">DS</a>
+    </div>
   </div>
   <nav>
     <ul class="iprm-nav">
