@@ -1,11 +1,20 @@
-{% extends "base.html" %}
-{% block title %}401 | IPRM{% endblock %}
+{% extends 'base.html' %}
+
+{% block title %}IPRM - 401{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-404.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class="auth-page">
-  <div class="auth-card auth-success">
-    <h1 class="auth-card__title">401</h1>
-    <p class="auth-success__message">Необхідна авторизація</p>
-    <a href="{{ url_for('auth.login') }}" class="btn-auth">Увійти</a>
-  </div>
-</div>
+  <main class="iprm-404">
+    <div class="iprm-404__text">
+      <h1 class="iprm-404__title">Необхідна авторизація</h1>
+      <p class="iprm-404__subtitle">Увійдіть до свого облікового запису для доступу до цієї сторінки</p>
+      <a href="{{ url_for('auth.login') }}" class="iprm-btn iprm-btn--primary" style="margin-top: 24px;">
+        <span class="iprm-btn__arrow">&#x2197;</span> Увійти
+      </a>
+    </div>
+    <div class="iprm-404__image">[401 illustration placeholder]</div>
+  </main>
 {% endblock %}
