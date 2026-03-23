@@ -1,12 +1,8 @@
-from datetime import datetime, timezone
 from app.extensions import db
+from app.models.mixins import TimestampMixin
 
 
-def _utcnow():
-    return datetime.now(timezone.utc)
-
-
-class Event(db.Model):
+class Event(TimestampMixin, db.Model):
     __tablename__ = 'events'
 
     id = db.Column(db.BigInteger, primary_key=True)
@@ -16,7 +12,7 @@ class Event(db.Model):
     description = db.Column(db.Text)
     short_description = db.Column(db.String(500))
     event_type = db.Column(db.String(30))
-    format = db.Column(db.String(20))
+    event_format = db.Column(db.String(20))
     status = db.Column(db.String(20), default='draft', index=True)
     start_date = db.Column(db.DateTime(timezone=True))
     end_date = db.Column(db.DateTime(timezone=True))
@@ -33,8 +29,6 @@ class Event(db.Model):
     agenda = db.Column(db.Text)
     is_featured = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True, index=True)
-    created_at = db.Column(db.DateTime(timezone=True), default=_utcnow)
-    updated_at = db.Column(db.DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     created_by = db.Column(db.BigInteger, db.ForeignKey('users.id'), nullable=True)
     trainer_id = db.Column(db.BigInteger, db.ForeignKey('trainers.id'), nullable=True)
 
@@ -79,7 +73,7 @@ class Event(db.Model):
 
     @property
     def format_label(self):
-        return dict(self.FORMATS).get(self.format, self.format)
+        return dict(self.FORMATS).get(self.event_format, self.event_format)
 
     def __repr__(self):
         return f'<Event {self.title}>'

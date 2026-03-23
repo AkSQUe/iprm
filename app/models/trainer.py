@@ -1,12 +1,8 @@
-from datetime import datetime, timezone
 from app.extensions import db
+from app.models.mixins import TimestampMixin
 
 
-def _utcnow():
-    return datetime.now(timezone.utc)
-
-
-class Trainer(db.Model):
+class Trainer(TimestampMixin, db.Model):
     __tablename__ = 'trainers'
 
     id = db.Column(db.BigInteger, primary_key=True)
@@ -17,8 +13,6 @@ class Trainer(db.Model):
     photo = db.Column(db.String(500))
     experience_years = db.Column(db.Integer)
     is_active = db.Column(db.Boolean, default=True, index=True)
-    created_at = db.Column(db.DateTime(timezone=True), default=_utcnow)
-    updated_at = db.Column(db.DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     events = db.relationship('Event', back_populates='trainer', lazy='dynamic')
 

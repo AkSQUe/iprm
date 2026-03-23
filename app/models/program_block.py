@@ -1,7 +1,8 @@
 from app.extensions import db
+from app.models.mixins import TimestampMixin
 
 
-class ProgramBlock(db.Model):
+class ProgramBlock(TimestampMixin, db.Model):
     __tablename__ = 'program_blocks'
 
     id = db.Column(db.BigInteger, primary_key=True)

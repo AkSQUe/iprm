@@ -1,14 +1,10 @@
-from datetime import datetime, timezone
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db
+from app.models.mixins import TimestampMixin
 
 
-def _utcnow():
-    return datetime.now(timezone.utc)
-
-
-class User(UserMixin, db.Model):
+class User(TimestampMixin, UserMixin, db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.BigInteger, primary_key=True)
@@ -17,8 +13,7 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime(timezone=True), default=_utcnow)
-    updated_at = db.Column(db.DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    is_admin = db.Column(db.Boolean, default=False)
     last_login_at = db.Column(db.DateTime(timezone=True))
 
     def __init__(self, email, password=None, **kwargs):
