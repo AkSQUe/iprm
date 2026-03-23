@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='svg/IPRM-logo-simple.svg') }}">
+  <title>{% block title %}IPRM{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+  {% block extra_css %}{% endblock %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  {% block header %}
+  {% include 'partials/header.html' %}
+  {% endblock %}
+
+  {% block content %}{% endblock %}
+
+  {% block footer %}
+  {% include 'partials/footer.html' %}
+  {% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+<header class="iprm-header">
+  <div class="iprm-header__top">
+    <a href="{{ url_for('main.index') }}" class="iprm-logo">
+      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="IPRM" class="iprm-logo__icon">
+    </a>
+    <a href="{{ url_for('main.design_system') }}" class="iprm-header__ds-link">DS</a>
+  </div>
+  <nav>
+    <ul class="iprm-nav">
+      <li><a href="{{ url_for('main.index') }}"{% if active_nav == 'labs' %} class="iprm-nav--active"{% endif %}>Лабораторії</a></li>
+      <li><a href="{{ url_for('courses.course_list') }}"{% if active_nav == 'clinics' %} class="iprm-nav--active"{% endif %}>Клініки</a></li>
+      <li><a href="{{ url_for('courses.course_list') }}"{% if active_nav == 'courses' %} class="iprm-nav--active"{% endif %}>Курси інституту</a></li>
+      <li><a href="#"{% if active_nav == 'trainers' %} class="iprm-nav--active"{% endif %}>Тренери</a></li>
+    </ul>
+  </nav>
+</header>
