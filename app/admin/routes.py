@@ -50,7 +50,7 @@ def event_create():
             short_description=form.short_description.data,
             description=form.description.data,
             event_type=form.event_type.data,
-            format=form.format.data,
+            event_format=form.event_format.data,
             status=form.status.data,
             start_date=form.start_date.data,
             end_date=form.end_date.data,
@@ -68,9 +68,14 @@ def event_create():
             created_by=current_user.id,
         )
         db.session.add(event)
-        db.session.commit()
-        flash('Захід створено', 'success')
-        return redirect(url_for('admin.dashboard'))
+
+        try:
+            db.session.commit()
+            flash('Захід створено', 'success')
+            return redirect(url_for('admin.dashboard'))
+        except Exception:
+            db.session.rollback()
+            flash('Помилка при збереженні', 'error')
 
     return render_template('admin/event_edit.html', form=form, event=None)
 
@@ -93,12 +98,35 @@ def event_edit(event_id):
             flash('Захід з таким slug вже існує', 'error')
             return render_template('admin/event_edit.html', form=form, event=event)
 
-        form.populate_obj(event)
-        if not event.trainer_id:
-            event.trainer_id = None
-        db.session.commit()
-        flash('Захід оновлено', 'success')
-        return redirect(url_for('admin.dashboard'))
+        event.title = form.title.data.strip()
+        event.subtitle = form.subtitle.data
+        event.slug = slug
+        event.short_description = form.short_description.data
+        event.description = form.description.data
+        event.event_type = form.event_type.data
+        event.event_format = form.event_format.data
+        event.status = form.status.data
+        event.start_date = form.start_date.data
+        event.end_date = form.end_date.data
+        event.max_participants = form.max_participants.data
+        event.price = form.price.data or 0
+        event.location = form.location.data
+        event.online_link = form.online_link.data
+        event.hero_image = form.hero_image.data
+        event.card_image = form.card_image.data
+        event.cpd_points = form.cpd_points.data
+        event.trainer_id = form.trainer_id.data or None
+        event.speaker_info = form.speaker_info.data
+        event.agenda = form.agenda.data
+        event.is_featured = form.is_featured.data
+
+        try:
+            db.session.commit()
+            flash('Захід оновлено', 'success')
+            return redirect(url_for('admin.dashboard'))
+        except Exception:
+            db.session.rollback()
+            flash('Помилка при збереженні', 'error')
 
     return render_template('admin/event_edit.html', form=form, event=event)
 
@@ -109,6 +137,10 @@ def event_delete(event_id):
     event = db.session.get(Event, event_id)
     if event:
         db.session.delete(event)
-        db.session.commit()
-        flash('Захід видалено', 'success')
+        try:
+            db.session.commit()
+            flash('Захід видалено', 'success')
+        except Exception:
+            db.session.rollback()
+            flash('Помилка при видаленні', 'error')
     return redirect(url_for('admin.dashboard'))

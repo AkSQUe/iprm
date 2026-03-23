@@ -4,6 +4,7 @@ from wtforms import (
     DecimalField, BooleanField, DateTimeLocalField
 )
 from wtforms.validators import DataRequired, Length, Optional, NumberRange
+from app.models.event import Event
 
 
 class EventForm(FlaskForm):
@@ -29,33 +30,17 @@ class EventForm(FlaskForm):
     )
     event_type = SelectField(
         'Тип заходу',
-        choices=[
-            ('seminar', 'Семінар'),
-            ('webinar', 'Вебінар'),
-            ('course', 'Курс'),
-            ('masterclass', 'Майстер-клас'),
-            ('conference', 'Конференція'),
-        ],
+        choices=Event.EVENT_TYPES,
         validators=[DataRequired()],
     )
-    format = SelectField(
+    event_format = SelectField(
         'Формат',
-        choices=[
-            ('online', 'Онлайн'),
-            ('offline', 'Офлайн'),
-            ('hybrid', 'Гібрид'),
-        ],
+        choices=Event.FORMATS,
         validators=[DataRequired()],
     )
     status = SelectField(
         'Статус',
-        choices=[
-            ('draft', 'Чернетка'),
-            ('published', 'Опубліковано'),
-            ('active', 'Активний'),
-            ('completed', 'Завершено'),
-            ('cancelled', 'Скасовано'),
-        ],
+        choices=Event.STATUSES,
         validators=[DataRequired()],
     )
     start_date = DateTimeLocalField(

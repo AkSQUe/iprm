@@ -85,4 +85,4 @@ class RegistrationForm(FlaskForm):
 
     def validate_email(self, field):
         if User.query.filter_by(email=field.data.lower().strip()).first():
-            raise ValidationError('Цей email вже зареєстрований')
+            raise ValidationError('Неможливо використати цей email')

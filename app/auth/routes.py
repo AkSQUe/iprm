@@ -4,7 +4,7 @@ from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app.auth import auth_bp
 from app.auth.forms import LoginForm, RegistrationForm
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models.user import User
 
 
@@ -16,9 +16,11 @@ def _is_safe_redirect_url(target):
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute", methods=['POST'])
+@limiter.limit("20 per hour", methods=['POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('auth.success'))
+        return redirect(url_for('auth.account'))
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -27,12 +29,16 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember.data)
             user.last_login_at = datetime.now(timezone.utc)
-            db.session.commit()
+
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
 
             next_page = request.args.get('next')
             if _is_safe_redirect_url(next_page):
                 return redirect(next_page)
-            return redirect(url_for('auth.success'))
+            return redirect(url_for('auth.account'))
 
         flash('Невірний email або пароль', 'error')
 
@@ -40,9 +46,10 @@ def login():
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
+@limiter.limit("3 per hour", methods=['POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('auth.success'))
+        return redirect(url_for('auth.account'))
 
     form = RegistrationForm()
     if form.validate_on_submit():
@@ -53,10 +60,14 @@ def register():
             last_name=form.last_name.data.strip(),
         )
         db.session.add(user)
-        db.session.commit()
 
-        login_user(user)
-        return redirect(url_for('auth.success'))
+        try:
+            db.session.commit()
+            login_user(user)
+            return redirect(url_for('auth.account'))
+        except Exception:
+            db.session.rollback()
+            flash('Помилка при реєстрації', 'error')
 
     return render_template('auth/register.html', form=form)
 
@@ -66,12 +77,6 @@ def register():
 def logout():
     logout_user()
     return redirect(url_for('main.index'))
-
-
-@auth_bp.route('/success')
-@login_required
-def success():
-    return redirect(url_for('auth.account'))
 
 
 @auth_bp.route('/account')
