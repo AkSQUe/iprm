@@ -332,6 +332,13 @@
   padding-top: 8px;
 }
 
+/* ========== ТАБЛИЦЯ: обгортка для горизонтальної прокрутки ========== */
+
+.admin-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
@@ -352,8 +359,22 @@
     gap: 16px;
   }
 
+  .admin-hero__title {
+    font-size: 20px;
+  }
+
   .admin-table {
     font-size: 13px;
+    min-width: 600px;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 10px 12px;
+  }
+
+  .admin-empty {
+    padding: 40px 16px;
   }
 
   .admin-form__actions {
@@ -362,5 +383,24 @@
 
   .admin-form__actions .btn-admin {
     justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-layout {
+    padding: 16px 12px;
+  }
+
+  .admin-hero__title {
+    font-size: 18px;
+  }
+
+  .admin-form__section {
+    padding: 16px;
+  }
+
+  .btn-admin {
+    padding: 6px 16px;
+    font-size: 13px;
   }
 }

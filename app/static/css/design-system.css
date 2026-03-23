@@ -157,3 +157,44 @@
   font-weight: 600;
   margin-bottom: 12px;
 }
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .ds-section {
+    padding: 24px 16px;
+  }
+
+  .ds-nav {
+    padding: 10px 16px;
+    gap: 16px;
+  }
+
+  .ds-grid-demo {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ds-title {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ds-section {
+    padding: 20px 12px;
+  }
+
+  .ds-grid-demo {
+    grid-template-columns: 1fr;
+  }
+
+  .ds-nav {
+    gap: 12px;
+    padding: 8px 12px;
+  }
+
+  .ds-pages a {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}

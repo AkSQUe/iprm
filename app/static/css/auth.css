@@ -222,7 +222,7 @@
 .account-section {
   max-width: var(--iprm-max-content);
   margin: 0 auto;
-  padding: 2rem 2rem;
+  padding: 2rem;
 }
 
 .account-grid {
@@ -258,4 +258,35 @@
 .account-actions {
   text-align: center;
   padding-top: 1rem;
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .auth-card {
+    padding: 1.75rem;
+  }
+
+  .account-section {
+    padding: 1.5rem 1rem;
+  }
+
+  .account-card {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 1.5rem;
+    border-radius: var(--iprm-radius-sm);
+  }
+
+  .auth-card__title {
+    font-size: 1.25rem;
+  }
+
+  .account-section {
+    padding: 1rem 0.75rem;
+  }
 }

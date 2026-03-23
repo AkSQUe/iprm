@@ -60,3 +60,18 @@
     gap: 24px;
   }
 }
+
+@media (max-width: 480px) {
+  .iprm-course-card {
+    padding: 12px;
+  }
+
+  .iprm-course-card__title {
+    font-size: 13px;
+  }
+
+  .iprm-tag {
+    padding: 3px 10px;
+    font-size: 11px;
+  }
+}

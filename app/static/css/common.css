@@ -760,10 +760,33 @@ a {
     gap: 12px;
   }
 
+  /* Хедер: скидаємо абсолютне позиціювання для мобільних */
+  .iprm-header__top {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .iprm-header__actions {
+    position: static;
+    justify-content: center;
+  }
+
+  .iprm-logo__icon {
+    width: 180px;
+  }
+
   .iprm-nav {
-    gap: 20px;
+    gap: 16px;
     flex-wrap: wrap;
     justify-content: center;
+  }
+
+  .iprm-nav a {
+    font-size: 14px;
+  }
+
+  .iprm-hero-wrap {
+    padding: 16px;
   }
 
   .iprm-hero {
@@ -777,6 +800,19 @@ a {
 
   .iprm-hero__content {
     padding: 48px 20px 60px;
+  }
+
+  /* Збільшуємо touch-зону для точок навігації героя */
+  .iprm-hero__dot {
+    width: 12px;
+    height: 12px;
+    padding: 8px;
+    box-sizing: content-box;
+  }
+
+  .iprm-hero__arrow {
+    font-size: 28px;
+    padding: 8px;
   }
 
   .iprm-section {
@@ -815,14 +851,64 @@ a {
     gap: 16px;
     text-align: center;
   }
+
+  .iprm-footer__right {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .iprm-footer .iprm-logo__icon {
+    width: 160px;
+  }
 }
 
 @media (max-width: 480px) {
+  .iprm-logo__icon {
+    width: 140px;
+  }
+
+  .iprm-nav {
+    gap: 12px;
+  }
+
+  .iprm-nav a {
+    font-size: 13px;
+  }
+
   .iprm-hero__title {
     font-size: 20px;
   }
 
   .iprm-hero__subtitle {
     font-size: 14px;
+  }
+
+  .iprm-hero__content {
+    padding: 32px 16px 56px;
+  }
+
+  .iprm-section__title {
+    font-size: 18px;
+  }
+
+  .iprm-card {
+    padding: 16px;
+  }
+
+  .iprm-card__icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .iprm-target-card {
+    padding: 16px;
+  }
+
+  .iprm-program__block {
+    padding: 16px;
+  }
+
+  .iprm-footer {
+    padding: 20px 16px;
   }
 }
