@@ -20,10 +20,13 @@
     <p class="auth-success__message">Ви увійшли до облікового запису</p>
     <p class="auth-success__user">{{ current_user.first_name }} {{ current_user.last_name }} ({{ current_user.email }})</p>
 
-    <a href="{{ url_for('main.index') }}" class="btn-auth" style="display: inline-block; text-align: center;">На головну</a>
+    <a href="{{ url_for('main.index') }}" class="btn-auth btn-auth--block">На головну</a>
 
     <div class="auth-card__footer">
-      <a href="{{ url_for('auth.logout') }}">Вийти з облікового запису</a>
+      <form method="POST" action="{{ url_for('auth.logout') }}" class="form-logout">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-link">Вийти з облікового запису</button>
+      </form>
     </div>
   </div>
 </div>
