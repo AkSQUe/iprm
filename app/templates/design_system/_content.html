@@ -1,0 +1,228 @@
+  <!-- ===== PAGES ===== -->
+  <div class="ds-section" id="pages">
+    <p class="ds-label">Навігація</p>
+    <h2 class="ds-title">Сторінки</h2>
+    <div class="ds-pages">
+      <a href="{{ url_for('main.index') }}">Головна</a>
+      <a href="{{ url_for('courses.course_list') }}">Курси</a>
+      <a href="{{ url_for('courses.course_detail') }}">Курс: Гінекологія</a>
+      <a href="{{ url_for('courses.course_stomatology') }}">Курс: Стоматологія</a>
+      <a href="{{ url_for('courses.course_orthopedics') }}">Курс: Ортопедія</a>
+    </div>
+  </div>
+
+  <!-- ===== COLORS ===== -->
+  <div class="ds-section" id="colors">
+    <p class="ds-label">Foundations</p>
+    <h2 class="ds-title">Кольори</h2>
+    <div class="ds-row">
+      <div class="ds-swatch">
+        <div class="ds-swatch__color" style="background: #1a1a2e;"></div>
+        <div class="ds-swatch__info">Dark<span>#1a1a2e</span></div>
+      </div>
+      <div class="ds-swatch">
+        <div class="ds-swatch__color" style="background: #333;"></div>
+        <div class="ds-swatch__info">Text<span>#333333</span></div>
+      </div>
+      <div class="ds-swatch">
+        <div class="ds-swatch__color" style="background: #666;"></div>
+        <div class="ds-swatch__info">Text Light<span>#666666</span></div>
+      </div>
+      <div class="ds-swatch">
+        <div class="ds-swatch__color" style="background: #F6F7F7;"></div>
+        <div class="ds-swatch__info">Card BG<span>#F6F7F7</span></div>
+      </div>
+      <div class="ds-swatch">
+        <div class="ds-swatch__color" style="background: #e5e7eb;"></div>
+        <div class="ds-swatch__info">Border<span>#e5e7eb</span></div>
+      </div>
+      <div class="ds-swatch">
+        <div class="ds-swatch__color" style="background: #0ea5e9;"></div>
+        <div class="ds-swatch__info">Accent<span>#0ea5e9</span></div>
+      </div>
+      <div class="ds-swatch">
+        <div class="ds-swatch__color" style="background: #e0f2fe;"></div>
+        <div class="ds-swatch__info">Accent Light<span>#e0f2fe</span></div>
+      </div>
+      <div class="ds-swatch">
+        <div class="ds-swatch__color" style="background: #000;"></div>
+        <div class="ds-swatch__info">Button<span>#000000</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TYPOGRAPHY ===== -->
+  <div class="ds-section" id="typography">
+    <p class="ds-label">Foundations</p>
+    <h2 class="ds-title">Типографіка</h2>
+    <div class="ds-col">
+      <div class="ds-typo-item" style="font-size: 32px; font-weight: 700; color: var(--iprm-dark);">Hero Title -- 32px / 700</div>
+      <div class="ds-typo-item" style="font-size: 24px; font-weight: 700; color: var(--iprm-dark);">Section Title -- 24px / 700</div>
+      <div class="ds-typo-item" style="font-size: 18px; font-weight: 700; color: var(--iprm-dark);">Card Heading -- 18px / 700</div>
+      <div class="ds-typo-item" style="font-size: 16px; font-weight: 700; color: var(--iprm-dark);">Program Heading -- 16px / 700</div>
+      <div class="ds-typo-item" style="font-size: 15px; color: var(--iprm-text);">Body Text -- 15px / 400</div>
+      <div class="ds-typo-item" style="font-size: 14px; color: var(--iprm-text);">Card Text -- 14px / 400</div>
+      <div class="ds-typo-item" style="font-size: 14px; font-weight: 600;">Button Text -- 14px / 600</div>
+      <div class="ds-typo-item" style="font-size: 13px; color: var(--iprm-text-light);">Subtitle -- 13px / 400</div>
+      <div class="ds-typo-item" style="font-size: 12px; color: var(--iprm-text-light);">Tag / Small -- 12px / 500</div>
+    </div>
+    <p class="ds-hint">Font: Inter. Fallback: system-ui, -apple-system, sans-serif</p>
+  </div>
+
+  <!-- ===== BUTTONS ===== -->
+  <div class="ds-section" id="buttons">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Кнопки</h2>
+    <div class="ds-row">
+      <a href="#" class="iprm-btn iprm-btn--primary"><span class="iprm-btn__arrow">&#x2197;</span> Primary Button</a>
+      <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm"><span class="iprm-btn__arrow">&#x2197;</span> Small Button</a>
+    </div>
+    <p class="ds-hint">padding: 4px 18px / border-radius: 10px / bg: #000 / color: #fff / no shadow</p>
+    <div class="ds-row ds-dark-demo">
+      <a href="#" class="iprm-btn iprm-btn--outline"><span class="iprm-btn__arrow">&#x2197;</span> Outline (on dark)</a>
+    </div>
+    <p class="ds-hint">Same as primary but used on hero dark backgrounds</p>
+    <h3 class="ds-section-heading">Tags</h3>
+    <div class="ds-row">
+      <span class="iprm-tag">Tag Label</span>
+      <span class="iprm-tag">Another Tag</span>
+    </div>
+    <p class="ds-hint">padding: 4px 12px / border: 1px solid #e5e7eb / border-radius: 10px</p>
+    <h3 class="ds-section-heading">Price Badge</h3>
+    <div class="ds-row ds-dark-demo">
+      <span class="iprm-hero__price">7500 &#8372; за курс</span>
+    </div>
+    <p class="ds-hint">bg: #fff / border-radius: 10px / font-weight: 600</p>
+  </div>
+
+  <!-- ===== CARDS ===== -->
+  <div class="ds-section" id="cards">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Картки (icon cards)</h2>
+    <div class="iprm-cards" style="margin-bottom: 24px;">
+      <div class="iprm-card iprm-card--left"><div class="iprm-card__icon">[icon]</div><p class="iprm-card__text">Текст картки з іконкою по лівому краю</p></div>
+      <div class="iprm-card"><div class="iprm-card__icon">[icon]</div><p class="iprm-card__text">Текст картки з іконкою по центру</p></div>
+      <div class="iprm-card iprm-card--left"><div class="iprm-card__icon">[icon]</div><p class="iprm-card__text">Ще одна картка</p></div>
+    </div>
+    <p class="ds-hint">bg: #F6F7F7 / border-radius: 4% / padding: 24px / icon: 80x80</p>
+  </div>
+
+  <!-- ===== HERO ===== -->
+  <div class="ds-section" id="hero">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Hero Block</h2>
+    <div class="iprm-hero-wrap" style="margin-bottom: 24px;">
+      <section class="iprm-hero" style="height: 300px;">
+        <div class="iprm-hero__bg"></div>
+        <div class="iprm-hero__content">
+          <span class="iprm-hero__price">7500 &#8372; за курс</span>
+          <h1 class="iprm-hero__title">Заголовок Hero блоку</h1>
+          <p class="iprm-hero__subtitle">Опис під заголовком hero блоку з додатковою інформацією</p>
+          <a href="#" class="iprm-btn iprm-btn--outline"><span class="iprm-btn__arrow">&#x2197;</span> Call to Action</a>
+        </div>
+        <div class="iprm-hero__nav">
+          <button class="iprm-hero__arrow iprm-hero__arrow--prev">&#8249;</button>
+          <div class="iprm-hero__dots">
+            <span class="iprm-hero__dot iprm-hero__dot--active"></span>
+            <span class="iprm-hero__dot"></span>
+            <span class="iprm-hero__dot"></span>
+          </div>
+          <button class="iprm-hero__arrow iprm-hero__arrow--next">&#8250;</button>
+        </div>
+      </section>
+    </div>
+    <p class="ds-hint">Grey wrap (#F6F7F7) full-width / dark container max-width: 1200px / border-radius: 12px / dots: outline, active: filled</p>
+  </div>
+
+  <!-- ===== PHOTO CARDS ===== -->
+  <div class="ds-section" id="photo-cards">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Фото-картки (клініка)</h2>
+    <div class="iprm-photo-cards" style="margin-bottom: 24px;">
+      <div class="iprm-photo-card">
+        <div class="iprm-photo-card__image">[photo]</div>
+        <div class="iprm-photo-card__body">
+          <p class="iprm-photo-card__title">Назва відділення або напрямку</p>
+          <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm"><span class="iprm-btn__arrow">&#x2197;</span> На сторінку</a>
+        </div>
+      </div>
+      <div class="iprm-photo-card">
+        <div class="iprm-photo-card__image">[photo]</div>
+        <div class="iprm-photo-card__body">
+          <p class="iprm-photo-card__title">Друга картка</p>
+          <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm"><span class="iprm-btn__arrow">&#x2197;</span> На сторінку</a>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">bg: #F6F7F7 / image aspect-ratio: 1:1 / padding: 16px</p>
+  </div>
+
+  <!-- ===== COURSE CARDS ===== -->
+  <div class="ds-section" id="course-cards">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Картки курсів</h2>
+    <div class="iprm-course-cards" style="margin-bottom: 24px;">
+      <div class="iprm-course-card">
+        <div class="iprm-course-card__image">[photo]</div>
+        <p class="iprm-course-card__title">Назва курсу</p>
+        <div class="iprm-course-card__tags"><span class="iprm-tag">Очні курси</span><span class="iprm-tag">Онлайн курси</span><span class="iprm-tag">Платформа SYNTEGRUM</span></div>
+      </div>
+      <div class="iprm-course-card">
+        <div class="iprm-course-card__image">[photo]</div>
+        <p class="iprm-course-card__title">Другий курс</p>
+        <div class="iprm-course-card__tags"><span class="iprm-tag">Очні курси</span><span class="iprm-tag">Онлайн курси</span></div>
+      </div>
+    </div>
+    <p class="ds-hint">image aspect-ratio: 4:3 / tags with border / clickable as &lt;a&gt;</p>
+  </div>
+
+  <!-- ===== TARGET GRID ===== -->
+  <div class="ds-section" id="target">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Target Grid (Для кого / Що ви отримаєте)</h2>
+    <div class="iprm-target-grid" style="margin-bottom: 24px;">
+      <div class="iprm-target-card"><p>Картка 2-колонкового grid з текстом</p></div>
+      <div class="iprm-target-card"><p>Друга картка поруч</p></div>
+      <div class="iprm-target-card iprm-target-card--full"><p>Картка на всю ширину (--full)</p></div>
+    </div>
+    <p class="ds-hint">grid 2 columns / gap: 12px / --full spans both columns</p>
+  </div>
+
+  <!-- ===== TRAINER ===== -->
+  <div class="ds-section" id="trainer">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Тренер курсу</h2>
+    <div class="iprm-trainer" style="margin-bottom: 24px;">
+      <div class="iprm-trainer__photo">[photo]</div>
+      <div class="iprm-trainer__info">
+        <h3 class="iprm-trainer__name">Прізвище Ім'я По батькові</h3>
+        <p class="iprm-trainer__role">Спеціалізація, досвід</p>
+        <p class="iprm-trainer__desc">Розгорнутий опис (опціональний). Може бути відсутнім на деяких сторінках.</p>
+        <a href="#" class="iprm-btn iprm-btn--primary"><span class="iprm-btn__arrow">&#x2197;</span> Реєстрація на курс</a>
+      </div>
+    </div>
+    <p class="ds-hint">photo: 180x220 / flex row / desc is optional</p>
+  </div>
+
+  <!-- ===== PROGRAM ===== -->
+  <div class="ds-section" id="program">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Програма курсу</h2>
+    <div class="iprm-program" style="margin-bottom: 24px;">
+      <div class="iprm-program__block">
+        <h3 class="iprm-program__heading">Назва блоку</h3>
+        <ul class="iprm-program__list">
+          <li>Пункт програми перший</li>
+          <li>Пункт програми другий</li>
+          <li>Пункт програми третій</li>
+        </ul>
+      </div>
+    </div>
+    <p class="ds-hint">Stacked blocks / middot bullets / gap: 12px between blocks</p>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <div class="ds-section" id="footer">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Футер</h2>
+  </div>
