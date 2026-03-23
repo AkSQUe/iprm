@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}IPRM - {{ trainer.full_name }}{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}">
+{% endblock %}
+
+{% block content %}
+  <!-- ===== HERO ===== -->
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero">
+      <div class="iprm-hero__bg"></div>
+      <div class="iprm-hero__content">
+        <h1 class="iprm-hero__title">{{ trainer.full_name }}</h1>
+        {% if trainer.role %}
+          <p class="iprm-hero__subtitle">{{ trainer.role }}</p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== TRAINER PROFILE ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <div class="iprm-trainer">
+        <div class="iprm-trainer__photo">
+          {% if trainer.photo %}
+            <img src="{{ trainer.photo }}" alt="{{ trainer.full_name }}">
+          {% else %}
+            [photo placeholder]
+          {% endif %}
+        </div>
+        <div class="iprm-trainer__info">
+          <h2 class="iprm-trainer__name">{{ trainer.full_name }}</h2>
+          {% if trainer.role %}
+            <p class="iprm-trainer__role">{{ trainer.role }}</p>
+          {% endif %}
+          {% if trainer.experience_years %}
+            <p class="iprm-trainer__role">Досвід: {{ trainer.experience_years }} років</p>
+          {% endif %}
+          {% if trainer.bio %}
+            <p class="iprm-trainer__desc">{{ trainer.bio }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TRAINER COURSES ===== -->
+  {% if events %}
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Курси тренера</h2>
+
+      <div class="iprm-course-cards">
+        {% for event in events %}
+        <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-course-card">
+          <div class="iprm-course-card__image">
+            {% if event.card_image %}
+              <img src="{{ event.card_image }}" alt="{{ event.title }}">
+            {% else %}
+              [photo placeholder]
+            {% endif %}
+          </div>
+          <p class="iprm-course-card__title">{{ event.title }}</p>
+          {% if event.tags %}
+          <div class="iprm-course-card__tags">
+            {% for tag in event.tags %}
+              <span class="iprm-tag">{{ tag }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== BACK ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <div class="iprm-section__cta">
+        <a href="{{ url_for('trainers.trainer_list') }}" class="iprm-btn iprm-btn--primary">
+          <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Всі тренери
+        </a>
+      </div>
+    </div>
+  </section>
+{% endblock %}

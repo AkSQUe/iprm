@@ -52,6 +52,9 @@ def create_app(config_name=None):
     from app.registration import registration_bp
     app.register_blueprint(registration_bp)
 
+    from app.trainers import trainers_bp
+    app.register_blueprint(trainers_bp)
+
     from app.cli import seed_courses
     app.cli.add_command(seed_courses)
 

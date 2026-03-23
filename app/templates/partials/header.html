@@ -29,7 +29,7 @@
       <li><a href="{{ url_for('main.index') }}"{% if active_nav == 'labs' %} class="iprm-nav--active"{% endif %}>Лабораторії</a></li>
       <li><a href="{{ url_for('courses.course_list') }}"{% if active_nav == 'clinics' %} class="iprm-nav--active"{% endif %}>Клініки</a></li>
       <li><a href="{{ url_for('courses.course_list') }}"{% if active_nav == 'courses' %} class="iprm-nav--active"{% endif %}>Курси інституту</a></li>
-      <li><a href="#"{% if active_nav == 'trainers' %} class="iprm-nav--active"{% endif %}>Тренери</a></li>
+      <li><a href="{{ url_for('trainers.trainer_list') }}"{% if active_nav == 'trainers' %} class="iprm-nav--active"{% endif %}>Тренери</a></li>
     </ul>
   </nav>
 </header>

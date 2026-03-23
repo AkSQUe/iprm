@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}IPRM - Тренери{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}">
+{% endblock %}
+
+{% block content %}
+  <!-- ===== HERO ===== -->
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero">
+      <div class="iprm-hero__bg"></div>
+      <div class="iprm-hero__content">
+        <h1 class="iprm-hero__title">Тренери інституту</h1>
+        <p class="iprm-hero__subtitle">Висококваліфіковані спеціалісти з багаторічним досвідом у плазмотерапії та регенеративній медицині</p>
+      </div>
+      <div class="iprm-hero__nav">
+        <button class="iprm-hero__arrow iprm-hero__arrow--prev">&#8249;</button>
+        <div class="iprm-hero__dots">
+          <span class="iprm-hero__dot iprm-hero__dot--active"></span>
+          <span class="iprm-hero__dot"></span>
+          <span class="iprm-hero__dot"></span>
+          <span class="iprm-hero__dot"></span>
+        </div>
+        <button class="iprm-hero__arrow iprm-hero__arrow--next">&#8250;</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== TRAINERS LIST ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Наші тренери</h2>
+      <p class="iprm-section__subtitle">Фахівці, які проводять курси післядипломної освіти</p>
+
+      <div class="iprm-trainer-cards">
+        {% if trainers %}
+          {% for trainer in trainers %}
+        <a href="{{ url_for('trainers.trainer_detail', slug=trainer.slug) }}" class="iprm-trainer-card">
+          <div class="iprm-trainer-card__photo">
+            {% if trainer.photo %}
+              <img src="{{ trainer.photo }}" alt="{{ trainer.full_name }}">
+            {% else %}
+              [photo placeholder]
+            {% endif %}
+          </div>
+          <div class="iprm-trainer-card__body">
+            <h3 class="iprm-trainer-card__name">{{ trainer.full_name }}</h3>
+            {% if trainer.role %}
+              <p class="iprm-trainer-card__role">{{ trainer.role }}</p>
+            {% endif %}
+            {% if trainer.experience_years %}
+              <span class="iprm-trainer-card__exp">{{ trainer.experience_years }} р. досвіду</span>
+            {% endif %}
+          </div>
+        </a>
+          {% endfor %}
+        {% else %}
+        <div class="iprm-trainer-cards__empty">
+          <p>Iнформація про тренерів скоро з'явиться</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== WHY US ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Чому навчатися у нас</h2>
+
+      <div class="iprm-cards">
+        <div class="iprm-card iprm-card--left">
+          <div class="iprm-card__icon">[icon]</div>
+          <p class="iprm-card__text">Практикуючі лікарі з клінічним досвідом у плазмотерапії та регенеративній медицині</p>
+        </div>
+        <div class="iprm-card iprm-card--left">
+          <div class="iprm-card__icon">[icon]</div>
+          <p class="iprm-card__text">Авторські методики та протоколи, підтверджені результатами клінічних досліджень</p>
+        </div>
+        <div class="iprm-card iprm-card--left">
+          <div class="iprm-card__icon">[icon]</div>
+          <p class="iprm-card__text">Індивідуальний підхід та супровід кожного слухача курсу від початку до отримання сертифікату</p>
+        </div>
+      </div>
+
+      <div class="iprm-section__cta">
+        <a href="{{ url_for('courses.course_list') }}" class="iprm-btn iprm-btn--primary">
+          <span class="iprm-btn__arrow">&#x2197;</span> Обрати курси
+        </a>
+      </div>
+    </div>
+  </section>
+{% endblock %}
