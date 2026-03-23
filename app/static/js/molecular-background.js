@@ -9,7 +9,22 @@
 (function () {
     'use strict';
 
-    var GRAY_RGB = [180, 180, 180];
+    var activeRGB = [180, 180, 180];
+
+    function readMolecularColor() {
+        var raw = getComputedStyle(document.documentElement)
+            .getPropertyValue('--iprm-molecular-rgb').trim();
+        if (raw) {
+            var parts = raw.split(',');
+            if (parts.length === 3) {
+                activeRGB = [
+                    parseInt(parts[0], 10) || 180,
+                    parseInt(parts[1], 10) || 180,
+                    parseInt(parts[2], 10) || 180
+                ];
+            }
+        }
+    }
 
     var animId = null;
     var nodes = [];
@@ -49,7 +64,7 @@
             vx: (Math.random() - 0.5) * effectiveSpeed,
             vy: (Math.random() - 0.5) * effectiveSpeed,
             radius: config.nodeSize * (0.6 + Math.random() * 0.8),
-            color: GRAY_RGB,
+            color: activeRGB,
             pulseOffset: Math.random() * Math.PI * 2
         };
     }
@@ -109,7 +124,7 @@
         ctx.clearRect(0, 0, width, height);
 
         var linkDistSq = config.linkDistance * config.linkDistance;
-        var c = GRAY_RGB;
+        var c = activeRGB;
 
         for (var i = 0; i < nodes.length; i++) {
             for (var j = i + 1; j < nodes.length; j++) {
@@ -169,9 +184,18 @@
         ctx = canvas.getContext('2d');
         dpr = window.devicePixelRatio || 1;
 
+        readMolecularColor();
         resize();
         initNodes();
         loop(0);
+
+        var themeObserver = new MutationObserver(function () {
+            readMolecularColor();
+            for (var i = 0; i < nodes.length; i++) {
+                nodes[i].color = activeRGB;
+            }
+        });
+        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
         document.addEventListener('mousemove', function (e) {
             mouse.x = e.clientX;

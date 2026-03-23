@@ -30,6 +30,7 @@
   --iprm-hero-glow: rgba(14, 165, 233, 0.15);
   --iprm-hero-glow-dim: rgba(14, 165, 233, 0.08);
   --iprm-placeholder-grad: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 50%, #cffafe 100%);
+  --iprm-molecular-rgb: 180, 180, 180;
 }
 
 [data-theme="branded"] {
@@ -48,6 +49,7 @@
   --iprm-hero-glow: rgba(112, 85, 164, 0.2);
   --iprm-hero-glow-dim: rgba(232, 121, 58, 0.1);
   --iprm-placeholder-grad: linear-gradient(135deg, #ede9f6 0%, #e8e0f4 50%, #fef0e6 100%);
+  --iprm-molecular-rgb: 140, 110, 180;
 }
 
 *,
