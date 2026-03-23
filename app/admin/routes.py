@@ -7,6 +7,7 @@ from app.extensions import db
 from app.models.event import Event
 from app.models.trainer import Trainer
 from app.models.program_block import ProgramBlock
+from app.models.registration import EventRegistration
 from app.utils import slugify
 
 
