@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}{% if event %}Редагування: {{ event.title }}{% else %}Новий захід{% endif %} | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <div class="admin-hero">
+    <div>
+      <h1 class="admin-hero__title">{% if event %}Редагування заходу{% else %}Новий захід{% endif %}</h1>
+      <p class="admin-hero__subtitle">{% if event %}{{ event.title }}{% else %}Створення нового заходу{% endif %}</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn-admin btn-admin--secondary">Назад до списку</a>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="admin-alert admin-alert--{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST" class="admin-form">
+    {{ form.hidden_tag() }}
+
+    <div class="admin-form__section">
+      <h3 class="admin-form__section-title">Основна інформація</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group admin-form__full">
+          <label for="title">Назва заходу <span class="required">*</span></label>
+          {{ form.title(class="form-input" + (" is-invalid" if form.title.errors else ""), id="title", placeholder="Майстер-клас: PRP-терапія") }}
+          {% for error in form.title.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="subtitle">Підзаголовок</label>
+          {{ form.subtitle(class="form-input", id="subtitle", placeholder="Додатковий опис для hero-секції") }}
+        </div>
+
+        <div class="form-group">
+          <label for="slug">Slug (URL) <span class="required">*</span></label>
+          {{ form.slug(class="form-input" + (" is-invalid" if form.slug.errors else ""), id="slug", placeholder="prp-terapiya") }}
+          <div class="form-hint">Автоматично генерується з назви</div>
+          {% for error in form.slug.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="event_type">Тип заходу <span class="required">*</span></label>
+          {{ form.event_type(class="form-input", id="event_type") }}
+        </div>
+
+        <div class="form-group">
+          <label for="format">Формат <span class="required">*</span></label>
+          {{ form.format(class="form-input", id="format") }}
+        </div>
+
+        <div class="form-group">
+          <label for="status">Статус <span class="required">*</span></label>
+          {{ form.status(class="form-input", id="status") }}
+        </div>
+
+        <div class="form-group">
+          <label for="start_date">Дата початку <span class="required">*</span></label>
+          {{ form.start_date(class="form-input" + (" is-invalid" if form.start_date.errors else ""), id="start_date") }}
+          {% for error in form.start_date.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="end_date">Дата закінчення</label>
+          {{ form.end_date(class="form-input", id="end_date") }}
+        </div>
+
+        <div class="form-group">
+          <label for="max_participants">Макс. учасників</label>
+          {{ form.max_participants(class="form-input", id="max_participants", placeholder="Без обмежень") }}
+        </div>
+
+        <div class="form-group">
+          <label for="price">Ціна (UAH)</label>
+          {{ form.price(class="form-input", id="price", step="0.01") }}
+          <div class="form-hint">0 для безкоштовного заходу</div>
+        </div>
+
+        <div class="form-group">
+          <label for="location">Локація</label>
+          {{ form.location(class="form-input", id="location", placeholder="Київ, вул. ...") }}
+        </div>
+
+        <div class="form-group">
+          <label for="online_link">Посилання на онлайн</label>
+          {{ form.online_link(class="form-input", id="online_link", placeholder="https://zoom.us/j/...") }}
+        </div>
+
+        <div class="form-group">
+          <label for="cpd_points">CPD балів</label>
+          {{ form.cpd_points(class="form-input", id="cpd_points", placeholder="0") }}
+        </div>
+
+        <div class="form-group">
+          <label for="trainer_id">Тренер</label>
+          {{ form.trainer_id(class="form-input", id="trainer_id") }}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            {{ form.is_featured(id="is_featured") }}
+            <label for="is_featured">Рекомендований захід</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-form__section">
+      <h3 class="admin-form__section-title">Зображення</h3>
+      <div class="admin-form__grid">
+        <div class="form-group">
+          <label for="hero_image">Hero зображення (URL)</label>
+          {{ form.hero_image(class="form-input", id="hero_image", placeholder="https://...") }}
+        </div>
+        <div class="form-group">
+          <label for="card_image">Зображення картки (URL)</label>
+          {{ form.card_image(class="form-input", id="card_image", placeholder="https://...") }}
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-form__section">
+      <h3 class="admin-form__section-title">Контент</h3>
+      <div class="admin-form__grid">
+        <div class="form-group admin-form__full">
+          <label for="short_description">Короткий опис</label>
+          {{ form.short_description(class="form-input", id="short_description", rows="3", placeholder="Для карток (макс 500 символів)") }}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="description">Повний опис</label>
+          {{ form.description(class="form-input", id="description", rows="6", placeholder="Детальний опис заходу") }}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="speaker_info">Інформація про спікера</label>
+          {{ form.speaker_info(class="form-input", id="speaker_info", rows="4", placeholder="ПІБ, посада, досвід") }}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="agenda">Програма заходу</label>
+          {{ form.agenda(class="form-input", id="agenda", rows="6", placeholder="10:00-11:00 - Реєстрація\n11:00-12:00 - Доповідь") }}
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-form__actions">
+      <a href="{{ url_for('admin.dashboard') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      <button type="submit" class="btn-admin btn-admin--primary">
+        {% if event %}Зберегти зміни{% else %}Створити захід{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function() {
+  var titleInput = document.getElementById('title');
+  var slugInput = document.getElementById('slug');
+  if (!titleInput || !slugInput) return;
+
+  var slugManuallyEdited = slugInput.value.length > 0;
+
+  slugInput.addEventListener('input', function() {
+    slugManuallyEdited = true;
+  });
+
+  titleInput.addEventListener('input', function() {
+    if (slugManuallyEdited) return;
+    var text = titleInput.value.toLowerCase().trim();
+    text = text.replace(/[^\w\s-]/g, '');
+    text = text.replace(/[\s_]+/g, '-');
+    text = text.replace(/-+/g, '-');
+    slugInput.value = text.substring(0, 200);
+  });
+})();
+</script>
+{% endblock %}

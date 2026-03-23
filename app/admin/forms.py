@@ -11,6 +11,10 @@ class EventForm(FlaskForm):
         'Назва заходу',
         validators=[DataRequired(message='Назва обов\'язкова'), Length(max=255)],
     )
+    subtitle = StringField(
+        'Підзаголовок',
+        validators=[Optional(), Length(max=500)],
+    )
     slug = StringField(
         'Slug (URL)',
         validators=[DataRequired(message='Slug обов\'язковий'), Length(max=200)],
@@ -80,6 +84,23 @@ class EventForm(FlaskForm):
     online_link = StringField(
         'Посилання на онлайн',
         validators=[Optional(), Length(max=500)],
+    )
+    hero_image = StringField(
+        'Hero зображення (URL)',
+        validators=[Optional(), Length(max=500)],
+    )
+    card_image = StringField(
+        'Зображення картки (URL)',
+        validators=[Optional(), Length(max=500)],
+    )
+    cpd_points = IntegerField(
+        'CPD балів',
+        validators=[Optional(), NumberRange(min=0)],
+    )
+    trainer_id = SelectField(
+        'Тренер',
+        coerce=int,
+        validators=[Optional()],
     )
     speaker_info = TextAreaField(
         'Інформація про спікера',
