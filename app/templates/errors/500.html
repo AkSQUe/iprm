@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}IPRM - 500{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-404.css') }}">
+{% endblock %}
+
+{% block content %}
+  <main class="iprm-404">
+    <div class="iprm-404__text">
+      <h1 class="iprm-404__title">Внутрішня помилка сервера</h1>
+      <p class="iprm-404__subtitle">Ми вже працюємо над вирішенням проблеми</p>
+    </div>
+    <div class="iprm-404__image">[500 illustration placeholder]</div>
+  </main>
+{% endblock %}
