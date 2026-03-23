@@ -11,6 +11,9 @@ class Config:
     STATIC_URL_PATH = '/static'
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_DURATION = 1209600  # 14 days in seconds
 
 
 class DevelopmentConfig(Config):
@@ -20,11 +23,19 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    SESSION_COOKIE_SECURE = os.environ.get('HTTPS_ENABLED', '').lower() == 'true'
+    SESSION_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SECURE = True
+
+    @staticmethod
+    def init_app(app):
+        if app.config['SECRET_KEY'] == 'dev-secret-key-change-in-production':
+            raise RuntimeError('SECRET_KEY environment variable must be set for production')
 
 
 class TestingConfig(Config):
     TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    WTF_CSRF_ENABLED = False
 
 
 config = {

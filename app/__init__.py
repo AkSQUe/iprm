@@ -1,8 +1,7 @@
 import os
-
-from flask import Flask
+from flask import Flask, render_template
 from config import config
-from app.extensions import db, login_manager, csrf
+from app.extensions import db, login_manager, csrf, migrate, limiter
 
 
 def create_app(config_name=None):
@@ -12,8 +11,13 @@ def create_app(config_name=None):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
 
+    if hasattr(config[config_name], 'init_app'):
+        config[config_name].init_app(app)
+
     db.init_app(app)
+    migrate.init_app(app, db)
     csrf.init_app(app)
+    limiter.init_app(app)
 
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Будь ласка, увійдіть для доступу до цієї сторінки.'
@@ -27,6 +31,8 @@ def create_app(config_name=None):
         if user and user.is_active:
             return user
         return None
+
+    from app import models  # noqa: F401 - ensure all models are loaded for Alembic
 
     from app.main import main_bp
     app.register_blueprint(main_bp)
@@ -43,7 +49,19 @@ def create_app(config_name=None):
     from app.admin import admin_bp
     app.register_blueprint(admin_bp)
 
-    with app.app_context():
-        db.create_all()
+    @app.errorhandler(401)
+    def unauthorized(e):
+        return render_template('errors/401.html'), 401
+
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('errors/403.html'), 403
+
+    @app.after_request
+    def set_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        return response
 
     return app
