@@ -30,7 +30,6 @@
   --iprm-hero-glow: rgba(14, 165, 233, 0.15);
   --iprm-hero-glow-dim: rgba(14, 165, 233, 0.08);
   --iprm-placeholder-grad: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 50%, #cffafe 100%);
-  --iprm-molecular-rgb: 180, 180, 180;
 }
 
 [data-theme="branded"] {
@@ -606,6 +605,11 @@ a {
   line-height: 1.5;
   color: var(--iprm-text-light);
   margin-bottom: 12px;
+}
+
+.iprm-trainer__info {
+  flex: 1;
+  min-width: 0;
 }
 
 .iprm-trainer__desc {

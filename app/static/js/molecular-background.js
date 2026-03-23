@@ -2,26 +2,49 @@
  * Molecular Network Background for IPRM
  *
  * Canvas 2D animated dots connected by lines when within proximity.
- * All nodes are grey. Cursor interaction (attract mode).
- * Adapted from mm-medic project.
+ * Two color modes: grey (default) and colored (purple + orange).
+ * Cursor interaction (attract mode).
  */
 
 (function () {
     'use strict';
 
-    var activeRGB = [180, 180, 180];
+    var STORAGE_KEY = 'iprm-molecules';
+    var GREY = [180, 180, 180];
+    var PURPLE = [112, 85, 164];
+    var ORANGE = [232, 121, 58];
+    var colorMode = 'grey';
 
-    function readMolecularColor() {
-        var raw = getComputedStyle(document.documentElement)
-            .getPropertyValue('--iprm-molecular-rgb').trim();
-        if (raw) {
-            var parts = raw.split(',');
-            if (parts.length === 3) {
-                activeRGB = [
-                    parseInt(parts[0], 10) || 180,
-                    parseInt(parts[1], 10) || 180,
-                    parseInt(parts[2], 10) || 180
-                ];
+    function getColorMode() {
+        var saved = localStorage.getItem(STORAGE_KEY);
+        return saved === 'colored' ? 'colored' : 'grey';
+    }
+
+    function pickNodeColor() {
+        if (colorMode === 'colored') {
+            return Math.random() < 0.65 ? PURPLE : ORANGE;
+        }
+        return GREY;
+    }
+
+    function applyColorMode(mode) {
+        colorMode = mode;
+        localStorage.setItem(STORAGE_KEY, mode);
+        for (var i = 0; i < nodes.length; i++) {
+            nodes[i].color = pickNodeColor();
+        }
+        updateToggleLabels();
+    }
+
+    function updateToggleLabels() {
+        var buttons = document.querySelectorAll('.molecules-toggle');
+        var label = colorMode === 'grey' ? 'Grey' : 'Color';
+        for (var i = 0; i < buttons.length; i++) {
+            var span = buttons[i].querySelector('.molecules-toggle__label');
+            if (span) span.textContent = label;
+            var dot = buttons[i].querySelector('.molecules-toggle__dot');
+            if (dot) {
+                dot.style.background = colorMode === 'grey' ? '#b4b4b4' : '#7055a4';
             }
         }
     }
@@ -64,7 +87,7 @@
             vx: (Math.random() - 0.5) * effectiveSpeed,
             vy: (Math.random() - 0.5) * effectiveSpeed,
             radius: config.nodeSize * (0.6 + Math.random() * 0.8),
-            color: activeRGB,
+            color: pickNodeColor(),
             pulseOffset: Math.random() * Math.PI * 2
         };
     }
@@ -124,7 +147,6 @@
         ctx.clearRect(0, 0, width, height);
 
         var linkDistSq = config.linkDistance * config.linkDistance;
-        var c = activeRGB;
 
         for (var i = 0; i < nodes.length; i++) {
             for (var j = i + 1; j < nodes.length; j++) {
@@ -137,25 +159,25 @@
                 if (distSq < linkDistSq) {
                     var dist = Math.sqrt(distSq);
                     var alpha = (1 - dist / config.linkDistance) * config.opacity * 0.8;
+                    var lc = a.color;
                     ctx.beginPath();
                     ctx.moveTo(a.x, a.y);
                     ctx.lineTo(b.x, b.y);
-                    ctx.strokeStyle = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + alpha + ')';
+                    ctx.strokeStyle = 'rgba(' + lc[0] + ',' + lc[1] + ',' + lc[2] + ',' + alpha + ')';
                     ctx.lineWidth = config.linkWidth;
                     ctx.stroke();
                 }
             }
         }
 
-        var nodeFill = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + config.opacity + ')';
-
         for (var k = 0; k < nodes.length; k++) {
             var n = nodes[k];
             var r = n.radius * config.nodeSize / 2.5;
+            var nc = n.color;
 
             ctx.beginPath();
             ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-            ctx.fillStyle = nodeFill;
+            ctx.fillStyle = 'rgba(' + nc[0] + ',' + nc[1] + ',' + nc[2] + ',' + config.opacity + ')';
             ctx.fill();
         }
     }
@@ -173,6 +195,8 @@
         var container = document.getElementById('molecular-background');
         if (!container) return;
 
+        colorMode = getColorMode();
+
         var reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
         var prefersReducedMotion = reducedMotionQuery.matches;
         var targetFps = prefersReducedMotion ? 10 : 60;
@@ -184,18 +208,17 @@
         ctx = canvas.getContext('2d');
         dpr = window.devicePixelRatio || 1;
 
-        readMolecularColor();
         resize();
         initNodes();
         loop(0);
 
-        var themeObserver = new MutationObserver(function () {
-            readMolecularColor();
-            for (var i = 0; i < nodes.length; i++) {
-                nodes[i].color = activeRGB;
-            }
-        });
-        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+        var buttons = document.querySelectorAll('.molecules-toggle');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].addEventListener('click', function () {
+                applyColorMode(colorMode === 'grey' ? 'colored' : 'grey');
+            });
+        }
+        updateToggleLabels();
 
         document.addEventListener('mousemove', function (e) {
             mouse.x = e.clientX;
