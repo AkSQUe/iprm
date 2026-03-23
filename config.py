@@ -15,6 +15,10 @@ class Config:
     REMEMBER_COOKIE_SAMESITE = 'Lax'
     REMEMBER_COOKIE_DURATION = 1209600  # 14 days in seconds
 
+    LIQPAY_PUBLIC_KEY = os.environ.get('LIQPAY_PUBLIC_KEY', '')
+    LIQPAY_PRIVATE_KEY = os.environ.get('LIQPAY_PRIVATE_KEY', '')
+    LIQPAY_SANDBOX = os.environ.get('LIQPAY_SANDBOX', 'true').lower() == 'true'
+
 
 class DevelopmentConfig(Config):
     DEBUG = True
