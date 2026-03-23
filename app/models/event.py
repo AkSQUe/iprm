@@ -12,6 +12,7 @@ class Event(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     slug = db.Column(db.String(200), unique=True, nullable=False)
+    subtitle = db.Column(db.String(500))
     description = db.Column(db.Text)
     short_description = db.Column(db.String(500))
     event_type = db.Column(db.String(30))
@@ -23,6 +24,11 @@ class Event(db.Model):
     price = db.Column(db.Numeric(10, 2), default=0)
     location = db.Column(db.String(255))
     online_link = db.Column(db.String(500))
+    hero_image = db.Column(db.String(500))
+    card_image = db.Column(db.String(500))
+    cpd_points = db.Column(db.Integer)
+    target_audience = db.Column(db.JSON, default=list)
+    tags = db.Column(db.JSON, default=list)
     speaker_info = db.Column(db.Text)
     agenda = db.Column(db.Text)
     is_featured = db.Column(db.Boolean, default=False)
@@ -30,8 +36,16 @@ class Event(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), default=_utcnow)
     updated_at = db.Column(db.DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     created_by = db.Column(db.BigInteger, db.ForeignKey('users.id'), nullable=True)
+    trainer_id = db.Column(db.BigInteger, db.ForeignKey('trainers.id'), nullable=True)
 
     creator = db.relationship('User', foreign_keys=[created_by])
+    trainer = db.relationship('Trainer', back_populates='events')
+    program_blocks = db.relationship(
+        'ProgramBlock',
+        back_populates='event',
+        order_by='ProgramBlock.sort_order',
+        cascade='all, delete-orphan',
+    )
 
     EVENT_TYPES = [
         ('seminar', 'Семінар'),
