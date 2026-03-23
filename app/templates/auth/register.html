@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Реєстрація | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-card__logo">
+      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="IPRM">
+    </div>
+    <h1 class="auth-card__title">Реєстрація</h1>
+    <p class="auth-card__subtitle">Створіть обліковий запис</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert--{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('auth.register') }}">
+      {{ form.hidden_tag() }}
+
+      <div class="form-group">
+        <label for="first_name">Ім'я <span class="required">*</span></label>
+        {{ form.first_name(class="form-input" + (" is-invalid" if form.first_name.errors else ""), id="first_name") }}
+        {% for error in form.first_name.errors %}
+          <div class="form-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        <label for="last_name">Прізвище <span class="required">*</span></label>
+        {{ form.last_name(class="form-input" + (" is-invalid" if form.last_name.errors else ""), id="last_name") }}
+        {% for error in form.last_name.errors %}
+          <div class="form-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email <span class="required">*</span></label>
+        {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email") }}
+        {% for error in form.email.errors %}
+          <div class="form-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        <label for="password">Пароль <span class="required">*</span></label>
+        {{ form.password(class="form-input" + (" is-invalid" if form.password.errors else ""), id="password") }}
+        {% for error in form.password.errors %}
+          <div class="form-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        <label for="password_confirm">Підтвердження паролю <span class="required">*</span></label>
+        {{ form.password_confirm(class="form-input" + (" is-invalid" if form.password_confirm.errors else ""), id="password_confirm") }}
+        {% for error in form.password_confirm.errors %}
+          <div class="form-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <button type="submit" class="btn-auth">Зареєструватися</button>
+    </form>
+
+    <div class="auth-card__footer">
+      <span>Вже маєте акаунт? </span>
+      <a href="{{ url_for('auth.login') }}">Увійти</a>
+    </div>
+
+    <a href="{{ url_for('main.index') }}" class="auth-card__back">Повернутися на головну</a>
+  </div>
+</div>
+{% endblock %}
