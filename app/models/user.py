@@ -1,7 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db
+
+
+def _utcnow():
+    return datetime.now(timezone.utc)
 
 
 class User(UserMixin, db.Model):
@@ -13,9 +17,9 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    last_login_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime(timezone=True), default=_utcnow)
+    updated_at = db.Column(db.DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    last_login_at = db.Column(db.DateTime(timezone=True))
 
     def __init__(self, email, password=None, **kwargs):
         super().__init__(**kwargs)
