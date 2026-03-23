@@ -16,11 +16,7 @@
     <a href="{{ url_for('admin.event_create') }}" class="btn-admin btn-admin--primary">+ Додати захід</a>
   </div>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-      <div class="admin-alert admin-alert--{{ category }}">{{ message }}</div>
-    {% endfor %}
-  {% endwith %}
+  {% include 'partials/flash_messages.html' %}
 
   {% if events %}
   <table class="admin-table">

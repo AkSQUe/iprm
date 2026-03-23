@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}403 | IPRM{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card auth-success">
+    <h1 class="auth-card__title">403</h1>
+    <p class="auth-success__message">Доступ заборонено</p>
+    <a href="{{ url_for('main.index') }}" class="btn-auth">На головну</a>
+  </div>
+</div>
+{% endblock %}

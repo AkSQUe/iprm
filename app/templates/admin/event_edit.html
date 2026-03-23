@@ -14,15 +14,11 @@
       <p class="admin-hero__subtitle">{% if event %}{{ event.title }}{% else %}Створення нового заходу{% endif %}</p>
     </div>
     <a href="{{ url_for('admin.dashboard') }}" class="btn-admin btn-admin--secondary">
-      <span class="iprm-btn__arrow" style="transform: rotate(225deg);">&#x2197;</span> Назад до списку
+      <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Назад до списку
     </a>
   </div>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-      <div class="admin-alert admin-alert--{{ category }}">{{ message }}</div>
-    {% endfor %}
-  {% endwith %}
+  {% include 'partials/flash_messages.html' %}
 
   <form method="POST" class="admin-form">
     {{ form.hidden_tag() }}
@@ -56,8 +52,8 @@
         </div>
 
         <div class="form-group">
-          <label for="format">Формат <span class="required">*</span></label>
-          {{ form.format(class="form-input", id="format") }}
+          <label for="event_format">Формат <span class="required">*</span></label>
+          {{ form.event_format(class="form-input", id="event_format") }}
         </div>
 
         <div class="form-group">
@@ -185,26 +181,5 @@
   </form>
 </div>
 
-<script>
-(function() {
-  var titleInput = document.getElementById('title');
-  var slugInput = document.getElementById('slug');
-  if (!titleInput || !slugInput) return;
-
-  var slugManuallyEdited = slugInput.value.length > 0;
-
-  slugInput.addEventListener('input', function() {
-    slugManuallyEdited = true;
-  });
-
-  titleInput.addEventListener('input', function() {
-    if (slugManuallyEdited) return;
-    var text = titleInput.value.toLowerCase().trim();
-    text = text.replace(/[^\w\s-]/g, '');
-    text = text.replace(/[\s_]+/g, '-');
-    text = text.replace(/-+/g, '-');
-    slugInput.value = text.substring(0, 200);
-  });
-})();
-</script>
+<script src="{{ url_for('static', filename='js/admin-event-edit.js') }}"></script>
 {% endblock %}
