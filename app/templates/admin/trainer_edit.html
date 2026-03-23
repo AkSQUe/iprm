@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}{% if trainer %}Редагування: {{ trainer.full_name }}{% else %}Новий тренер{% endif %} | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <div class="admin-hero">
+    <div>
+      <h1 class="admin-hero__title">{% if trainer %}Редагування тренера{% else %}Новий тренер{% endif %}</h1>
+      <p class="admin-hero__subtitle">{% if trainer %}{{ trainer.full_name }}{% else %}Додавання нового тренера{% endif %}</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn-admin btn-admin--secondary">
+      <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Назад до списку
+    </a>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <form method="POST" class="admin-form">
+    {{ form.hidden_tag() }}
+
+    <!-- Basic info -->
+    <div class="admin-form__section">
+      <h3 class="admin-form__section-title">Основна інформація</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group admin-form__full">
+          <label for="full_name">ПІБ <span class="required">*</span></label>
+          {{ form.full_name(class="form-input" + (" is-invalid" if form.full_name.errors else ""), id="full_name", placeholder="Степаненко Альона Ігорівна") }}
+          {% for error in form.full_name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="slug">Slug (URL) <span class="required">*</span></label>
+          {{ form.slug(class="form-input" + (" is-invalid" if form.slug.errors else ""), id="slug", placeholder="stepanenko-alona") }}
+          <div class="form-hint">Автоматично генерується з ПІБ</div>
+          {% for error in form.slug.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="experience_years">Стаж (років)</label>
+          {{ form.experience_years(class="form-input", id="experience_years", placeholder="10") }}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="role">Посада / спеціалізація</label>
+          {{ form.role(class="form-input", id="role", placeholder="Лікар гінеколог-ендокринолог, хірург") }}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Bio & photo -->
+    <div class="admin-form__section">
+      <h3 class="admin-form__section-title">Профіль</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group admin-form__full">
+          <label for="bio">Біографія</label>
+          {{ form.bio(class="form-input", id="bio", rows="5", placeholder="Досвід, досягнення, спеціалізація") }}
+        </div>
+
+        <div class="form-group">
+          <label for="photo">Фото (URL)</label>
+          {{ form.photo(class="form-input", id="photo", placeholder="https://...") }}
+        </div>
+
+        <div class="form-group">
+          <div class="form-checkbox">
+            {{ form.is_active(id="is_active") }}
+            <label for="is_active">Активний тренер</label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="admin-form__actions">
+      <a href="{{ url_for('admin.dashboard') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      <button type="submit" class="btn-admin btn-admin--primary">
+        <span class="iprm-btn__arrow">&#x2197;</span>
+        {% if trainer %}Зберегти зміни{% else %}Додати тренера{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var nameField = document.getElementById('full_name');
+  var slugField = document.getElementById('slug');
+  if (!nameField || !slugField) return;
+
+  var slugEdited = slugField.value.trim() !== '';
+
+  slugField.addEventListener('input', function() {
+    slugEdited = true;
+  });
+
+  nameField.addEventListener('input', function() {
+    if (slugEdited) return;
+    var text = nameField.value.toLowerCase().trim();
+    text = text.replace(/[^\w\s-]/g, '');
+    text = text.replace(/[\s_]+/g, '-');
+    text = text.replace(/-+/g, '-');
+    slugField.value = text.substring(0, 200);
+  });
+});
+</script>
+{% endblock %}

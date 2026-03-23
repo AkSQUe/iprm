@@ -7,6 +7,34 @@ from wtforms.validators import DataRequired, Length, Optional, NumberRange
 from app.models.event import Event
 
 
+class TrainerForm(FlaskForm):
+    full_name = StringField(
+        'ПІБ',
+        validators=[DataRequired(message='ПІБ обов\'язкове'), Length(max=200)],
+    )
+    slug = StringField(
+        'Slug (URL)',
+        validators=[DataRequired(message='Slug обов\'язковий'), Length(max=200)],
+    )
+    role = StringField(
+        'Посада / спеціалізація',
+        validators=[Optional(), Length(max=300)],
+    )
+    bio = TextAreaField(
+        'Біографія',
+        validators=[Optional()],
+    )
+    photo = StringField(
+        'Фото (URL)',
+        validators=[Optional(), Length(max=500)],
+    )
+    experience_years = IntegerField(
+        'Стаж (років)',
+        validators=[Optional(), NumberRange(min=0)],
+    )
+    is_active = BooleanField('Активний', default=True)
+
+
 class EventForm(FlaskForm):
     title = StringField(
         'Назва заходу',

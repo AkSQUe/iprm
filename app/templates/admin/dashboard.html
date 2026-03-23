@@ -8,6 +8,10 @@
 
 {% block content %}
 <div class="admin-layout">
+
+  {% include 'partials/flash_messages.html' %}
+
+  <!-- ===== EVENTS ===== -->
   <div class="admin-hero">
     <div>
       <h1 class="admin-hero__title">Заходи</h1>
@@ -15,8 +19,6 @@
     </div>
     <a href="{{ url_for('admin.event_create') }}" class="btn-admin btn-admin--primary">+ Додати захід</a>
   </div>
-
-  {% include 'partials/flash_messages.html' %}
 
   {% if events %}
   <table class="admin-table">
@@ -57,5 +59,59 @@
     <p>Створіть перший захід натиснувши кнопку вище</p>
   </div>
   {% endif %}
+
+  <!-- ===== TRAINERS ===== -->
+  <div class="admin-hero admin-hero--section">
+    <div>
+      <h1 class="admin-hero__title">Тренери</h1>
+      <p class="admin-hero__subtitle">Управління тренерами інституту</p>
+    </div>
+    <a href="{{ url_for('admin.trainer_create') }}" class="btn-admin btn-admin--primary">+ Додати тренера</a>
+  </div>
+
+  {% if trainers %}
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>ПІБ</th>
+        <th>Посада</th>
+        <th>Стаж</th>
+        <th>Статус</th>
+        <th>Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for trainer in trainers %}
+      <tr>
+        <td><strong>{{ trainer.full_name }}</strong></td>
+        <td>{{ trainer.role or '---' }}</td>
+        <td>{{ (trainer.experience_years | string) + ' р.' if trainer.experience_years else '---' }}</td>
+        <td>
+          {% if trainer.is_active %}
+            <span class="badge badge--active">Активний</span>
+          {% else %}
+            <span class="badge badge--draft">Неактивний</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="admin-table__actions">
+            <a href="{{ url_for('admin.trainer_edit', trainer_id=trainer.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Редагувати</a>
+            <form method="POST" action="{{ url_for('admin.trainer_delete', trainer_id=trainer.id) }}" onsubmit="return confirm('Видалити тренера?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="admin-empty">
+    <h3 class="admin-empty__title">Тренерів ще немає</h3>
+    <p>Додайте першого тренера натиснувши кнопку вище</p>
+  </div>
+  {% endif %}
+
 </div>
 {% endblock %}
