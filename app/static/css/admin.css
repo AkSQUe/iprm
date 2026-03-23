@@ -332,6 +332,26 @@
   padding-top: 8px;
 }
 
+/* ========== PROGRAM BLOCKS ========== */
+
+.admin-program-block {
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.admin-program-block__header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-program-block__header .form-input {
+  flex: 1;
+}
+
 /* ========== ТАБЛИЦЯ: обгортка для горизонтальної прокрутки ========== */
 
 .admin-table-wrap {

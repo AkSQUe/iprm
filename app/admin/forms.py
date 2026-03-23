@@ -115,6 +115,16 @@ class EventForm(FlaskForm):
         coerce=int,
         validators=[Optional()],
     )
+    target_audience_text = TextAreaField(
+        'Цільова аудиторія',
+        validators=[Optional()],
+        description='Один пункт на рядок',
+    )
+    tags_text = TextAreaField(
+        'Теги курсу',
+        validators=[Optional()],
+        description='Один тег на рядок',
+    )
     speaker_info = TextAreaField(
         'Інформація про спікера',
         validators=[Optional()],

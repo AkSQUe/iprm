@@ -159,15 +159,56 @@
         </div>
 
         <div class="form-group admin-form__full">
+          <label for="target_audience_text">Цільова аудиторія (Для кого / Що ви отримаєте)</label>
+          {{ form.target_audience_text(class="form-input", id="target_audience_text", rows="5", placeholder="Один пункт на рядок\nДля гінекологів, які прагнуть...\nДля спеціалістів естетичної медицини...") }}
+          <div class="form-hint">Кожен рядок стане окремою карткою на сторінці курсу</div>
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="tags_text">Теги курсу</label>
+          {{ form.tags_text(class="form-input", id="tags_text", rows="3", placeholder="Очні курси з практичними заняттями\nОнлайн курси з відеодемонстраціями\nКурси на платформі SYNTEGRUM") }}
+          <div class="form-hint">Кожен рядок стане тегом на картці курсу у списку</div>
+        </div>
+
+        <div class="form-group admin-form__full">
           <label for="speaker_info">Інформація про спікера</label>
           {{ form.speaker_info(class="form-input", id="speaker_info", rows="4", placeholder="ПІБ, посада, досвід") }}
         </div>
 
         <div class="form-group admin-form__full">
-          <label for="agenda">Програма заходу</label>
-          {{ form.agenda(class="form-input", id="agenda", rows="6", placeholder="10:00-11:00 - Реєстрація\n11:00-12:00 - Доповідь") }}
+          <label for="agenda">Програма заходу (текст)</label>
+          {{ form.agenda(class="form-input", id="agenda", rows="4", placeholder="10:00-11:00 - Реєстрація") }}
         </div>
       </div>
+    </div>
+
+    <!-- Program blocks -->
+    <div class="admin-form__section">
+      <h3 class="admin-form__section-title">Блоки програми курсу</h3>
+      <div id="program-blocks">
+        {% if event and event.program_blocks %}
+          {% for block in event.program_blocks %}
+        <div class="admin-program-block" data-index="{{ loop.index0 }}">
+          <input type="hidden" name="block_{{ loop.index0 }}_id" value="{{ block.id }}">
+          <div class="admin-form__grid">
+            <div class="form-group admin-form__full">
+              <label>Заголовок блоку <span class="required">*</span></label>
+              <div class="admin-program-block__header">
+                <input type="text" name="block_{{ loop.index0 }}_heading" value="{{ block.heading }}" class="form-input" placeholder="Теоретична частина">
+                <button type="button" class="btn-admin btn-admin--danger btn-admin--sm admin-program-block__remove">X</button>
+              </div>
+            </div>
+            <div class="form-group admin-form__full">
+              <label>Пункти програми</label>
+              <textarea name="block_{{ loop.index0 }}_items" class="form-input" rows="5" placeholder="Один пункт на рядок">{{ block.items | join('\n') }}</textarea>
+              <div class="form-hint">Кожен рядок стане окремим пунктом списку</div>
+            </div>
+          </div>
+        </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+      <button type="button" id="add-program-block" class="btn-admin btn-admin--secondary">+ Додати блок програми</button>
     </div>
 
     <!-- Actions -->

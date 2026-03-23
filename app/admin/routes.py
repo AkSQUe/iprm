@@ -1,5 +1,4 @@
-import re
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
@@ -7,14 +6,8 @@ from app.admin.forms import EventForm, TrainerForm
 from app.extensions import db
 from app.models.event import Event
 from app.models.trainer import Trainer
-
-
-def _slugify(text):
-    text = text.lower().strip()
-    text = re.sub(r'[^\w\s-]', '', text)
-    text = re.sub(r'[\s_]+', '-', text)
-    text = re.sub(r'-+', '-', text)
-    return text[:200]
+from app.models.program_block import ProgramBlock
+from app.utils import slugify
 
 
 def _populate_trainer_choices(form):
@@ -22,6 +15,55 @@ def _populate_trainer_choices(form):
     form.trainer_id.choices = [(0, '--- Без тренера ---')] + [
         (t.id, t.full_name) for t in trainers
     ]
+
+
+def _lines_to_list(text):
+    if not text:
+        return []
+    return [line.strip() for line in text.strip().splitlines() if line.strip()]
+
+
+def _list_to_lines(items):
+    if not items:
+        return ''
+    return '\n'.join(items)
+
+
+def _save_program_blocks(event):
+    existing_ids = {b.id for b in event.program_blocks}
+    seen_ids = set()
+
+    idx = 0
+    while True:
+        heading = request.form.get(f'block_{idx}_heading', '').strip()
+        if not heading and f'block_{idx}_heading' not in request.form:
+            break
+        if heading:
+            block_id_str = request.form.get(f'block_{idx}_id', '')
+            items_text = request.form.get(f'block_{idx}_items', '')
+            items = _lines_to_list(items_text)
+            block_id = int(block_id_str) if block_id_str else None
+
+            if block_id and block_id in existing_ids:
+                block = db.session.get(ProgramBlock, block_id)
+                block.heading = heading
+                block.items = items
+                block.sort_order = idx
+                seen_ids.add(block_id)
+            else:
+                block = ProgramBlock(
+                    event=event,
+                    heading=heading,
+                    items=items,
+                    sort_order=idx,
+                )
+                db.session.add(block)
+        idx += 1
+
+    for old_id in existing_ids - seen_ids:
+        old_block = db.session.get(ProgramBlock, old_id)
+        if old_block:
+            db.session.delete(old_block)
 
 
 @admin_bp.route('/')
@@ -39,7 +81,7 @@ def event_create():
     _populate_trainer_choices(form)
 
     if form.validate_on_submit():
-        slug = form.slug.data.strip() or _slugify(form.title.data)
+        slug = form.slug.data.strip() or slugify(form.title.data)
         if Event.query.filter_by(slug=slug).first():
             flash('Захід з таким slug вже існує', 'error')
             return render_template('admin/event_edit.html', form=form, event=None)
@@ -63,12 +105,16 @@ def event_create():
             card_image=form.card_image.data,
             cpd_points=form.cpd_points.data,
             trainer_id=form.trainer_id.data or None,
+            target_audience=_lines_to_list(form.target_audience_text.data),
+            tags=_lines_to_list(form.tags_text.data),
             speaker_info=form.speaker_info.data,
             agenda=form.agenda.data,
             is_featured=form.is_featured.data,
             created_by=current_user.id,
         )
         db.session.add(event)
+        db.session.flush()
+        _save_program_blocks(event)
 
         try:
             db.session.commit()
@@ -91,6 +137,10 @@ def event_edit(event_id):
 
     form = EventForm(obj=event)
     _populate_trainer_choices(form)
+
+    if request.method == 'GET':
+        form.target_audience_text.data = _list_to_lines(event.target_audience)
+        form.tags_text.data = _list_to_lines(event.tags)
 
     if form.validate_on_submit():
         slug = form.slug.data.strip()
@@ -117,9 +167,12 @@ def event_edit(event_id):
         event.card_image = form.card_image.data
         event.cpd_points = form.cpd_points.data
         event.trainer_id = form.trainer_id.data or None
+        event.target_audience = _lines_to_list(form.target_audience_text.data)
+        event.tags = _lines_to_list(form.tags_text.data)
         event.speaker_info = form.speaker_info.data
         event.agenda = form.agenda.data
         event.is_featured = form.is_featured.data
+        _save_program_blocks(event)
 
         try:
             db.session.commit()
@@ -156,7 +209,7 @@ def trainer_create():
     form = TrainerForm()
 
     if form.validate_on_submit():
-        slug = form.slug.data.strip() or _slugify(form.full_name.data)
+        slug = form.slug.data.strip() or slugify(form.full_name.data)
         if Trainer.query.filter_by(slug=slug).first():
             flash('Тренер з таким slug вже існує', 'error')
             return render_template('admin/trainer_edit.html', form=form, trainer=None)
