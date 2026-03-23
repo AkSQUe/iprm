@@ -8,13 +8,46 @@
   --iprm-bg: #f8f9fa;
   --iprm-white: #fff;
   --iprm-border: #e5e7eb;
-  --iprm-accent: #0ea5e9;
-  --iprm-accent-light: #e0f2fe;
   --iprm-radius: 12px;
   --iprm-radius-sm: 8px;
   --iprm-transition: 0.25s ease;
   --iprm-max-content: 1200px;
   --iprm-card-bg: #F6F7F7;
+
+  /* Theme-switchable colors (legacy = default) */
+  --iprm-accent: #0ea5e9;
+  --iprm-accent-hover: #0284c7;
+  --iprm-accent-light: #e0f2fe;
+  --iprm-accent-secondary: #0ea5e9;
+  --iprm-accent-secondary-hover: #0284c7;
+  --iprm-accent-secondary-light: #e0f2fe;
+  --iprm-btn-bg: #000;
+  --iprm-btn-bg-hover: #222;
+  --iprm-nav-active: #7055a4;
+  --iprm-hero-grad-1: #1a1a2e;
+  --iprm-hero-grad-2: #16213e;
+  --iprm-hero-grad-3: #0f3460;
+  --iprm-hero-glow: rgba(14, 165, 233, 0.15);
+  --iprm-hero-glow-dim: rgba(14, 165, 233, 0.08);
+  --iprm-placeholder-grad: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 50%, #cffafe 100%);
+}
+
+[data-theme="branded"] {
+  --iprm-accent: #7055a4;
+  --iprm-accent-hover: #5d4691;
+  --iprm-accent-light: #ede9f6;
+  --iprm-accent-secondary: #e8793a;
+  --iprm-accent-secondary-hover: #d4682e;
+  --iprm-accent-secondary-light: #fef0e6;
+  --iprm-btn-bg: #7055a4;
+  --iprm-btn-bg-hover: #5d4691;
+  --iprm-nav-active: #7055a4;
+  --iprm-hero-grad-1: #2d1b4e;
+  --iprm-hero-grad-2: #3b2368;
+  --iprm-hero-grad-3: #4a2d80;
+  --iprm-hero-glow: rgba(112, 85, 164, 0.2);
+  --iprm-hero-glow-dim: rgba(232, 121, 58, 0.1);
+  --iprm-placeholder-grad: linear-gradient(135deg, #ede9f6 0%, #e8e0f4 50%, #fef0e6 100%);
 }
 
 *,
@@ -41,6 +74,37 @@ img {
 a {
   text-decoration: none;
   color: inherit;
+}
+
+/* ========== THEME TOGGLE ========== */
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--iprm-font);
+  color: var(--iprm-text-light);
+  background: var(--iprm-card-bg);
+  border: 1px solid var(--iprm-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--iprm-transition);
+}
+
+.theme-toggle:hover {
+  border-color: var(--iprm-accent);
+  color: var(--iprm-accent);
+}
+
+.theme-toggle__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--iprm-accent);
+  transition: background var(--iprm-transition);
 }
 
 /* ========== HEADER ========== */
@@ -88,8 +152,8 @@ a {
 }
 
 .iprm-header__auth-link:hover {
-  background: #0284c7;
-  border-color: #0284c7;
+  background: var(--iprm-accent-hover);
+  border-color: var(--iprm-accent-hover);
 }
 
 .iprm-header__user {
@@ -144,11 +208,11 @@ a {
 }
 
 .iprm-nav a:hover {
-  color: #7055a4;
+  color: var(--iprm-nav-active);
 }
 
 .iprm-nav--active {
-  color: #7055a4;
+  color: var(--iprm-nav-active);
 }
 
 /* ========== HERO ========== */
@@ -175,7 +239,7 @@ a {
 .iprm-hero__bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background: linear-gradient(135deg, var(--iprm-hero-grad-1) 0%, var(--iprm-hero-grad-2) 50%, var(--iprm-hero-grad-3) 100%);
   opacity: 0.9;
 }
 
@@ -184,8 +248,8 @@ a {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 70% 40%, rgba(14, 165, 233, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 30% 60%, rgba(14, 165, 233, 0.08) 0%, transparent 40%);
+    radial-gradient(circle at 70% 40%, var(--iprm-hero-glow) 0%, transparent 50%),
+    radial-gradient(circle at 30% 60%, var(--iprm-hero-glow-dim) 0%, transparent 40%);
 }
 
 .iprm-hero__content {
@@ -294,24 +358,24 @@ a {
 }
 
 .iprm-btn--primary {
-  background: #000;
+  background: var(--iprm-btn-bg);
   color: var(--iprm-white);
   box-shadow: none;
 }
 
 .iprm-btn--primary:hover {
-  background: #222;
+  background: var(--iprm-btn-bg-hover);
 }
 
 .iprm-btn--outline {
-  background: #000;
+  background: var(--iprm-btn-bg);
   color: var(--iprm-white);
   border: none;
   box-shadow: none;
 }
 
 .iprm-btn--outline:hover {
-  background: #222;
+  background: var(--iprm-btn-bg-hover);
 }
 
 .iprm-btn--sm {
@@ -424,7 +488,7 @@ a {
 .iprm-photo-card__image {
   width: 100%;
   aspect-ratio: 1 / 1;
-  background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 50%, #cffafe 100%);
+  background: var(--iprm-placeholder-grad);
   border: 2px dashed var(--iprm-border);
   border-radius: var(--iprm-radius-sm);
   display: flex;
@@ -520,7 +584,7 @@ a {
   flex-shrink: 0;
   width: 180px;
   height: 220px;
-  background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 50%, #cffafe 100%);
+  background: var(--iprm-placeholder-grad);
   border: 2px dashed var(--iprm-border);
   border-radius: var(--iprm-radius-sm);
   display: flex;

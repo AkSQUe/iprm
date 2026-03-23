@@ -14,6 +14,10 @@
         <a href="{{ url_for('auth.login') }}" class="iprm-header__auth-link">Увійти</a>
       {% endif %}
       <a href="{{ url_for('main.design_system') }}" class="iprm-header__ds-link">DS</a>
+      <button type="button" class="theme-toggle">
+        <span class="theme-toggle__dot"></span>
+        <span class="theme-toggle__label">Legacy</span>
+      </button>
     </div>
   </div>
   <nav>

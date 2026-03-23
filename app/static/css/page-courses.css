@@ -18,7 +18,7 @@
 .iprm-course-card__image {
   width: 100%;
   aspect-ratio: 4 / 3;
-  background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 50%, #cffafe 100%);
+  background: var(--iprm-placeholder-grad);
   border: 2px dashed var(--iprm-border);
   border-radius: var(--iprm-radius-sm);
   display: flex;

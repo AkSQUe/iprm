@@ -55,12 +55,12 @@
 }
 
 .btn-admin--primary {
-  background: #000;
+  background: var(--iprm-btn-bg);
   color: var(--iprm-white);
 }
 
 .btn-admin--primary:hover {
-  background: #222;
+  background: var(--iprm-btn-bg-hover);
 }
 
 .btn-admin--secondary {
@@ -240,8 +240,8 @@
 
 .admin-form .form-input:focus {
   outline: none;
-  border-color: var(--iprm-dark);
-  box-shadow: 0 0 0 3px rgba(26, 26, 46, 0.08);
+  border-color: var(--iprm-accent);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light);
 }
 
 .admin-form .form-input.is-invalid {
@@ -281,6 +281,16 @@
 }
 
 /* Checkbox */
+.admin-form .form-group--align-end {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.admin-form .form-checkbox--stretch {
+  flex: 1;
+}
+
 .admin-form .form-checkbox {
   display: flex;
   align-items: center;
@@ -301,7 +311,7 @@
 .admin-form .form-checkbox input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: var(--iprm-dark);
+  accent-color: var(--iprm-accent);
   cursor: pointer;
 }
 

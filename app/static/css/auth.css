@@ -126,7 +126,7 @@
 }
 
 .btn-auth:hover {
-  background: #0284c7;
+  background: var(--iprm-accent-hover);
 }
 
 .btn-auth:active {
