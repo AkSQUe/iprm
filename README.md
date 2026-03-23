@@ -27,7 +27,10 @@ site-iprm/
 │   ├── errors/                  # Blueprint: обробка помилок
 │   │   └── handlers.py          # 404, 500
 │   ├── models/
-│   │   └── user.py              # Модель User (SQLAlchemy)
+│   │   ├── user.py              # Модель User
+│   │   ├── event.py             # Модель Event (курси/заходи)
+│   │   ├── trainer.py           # Модель Trainer (тренери)
+│   │   └── program_block.py     # Модель ProgramBlock (блоки програми)
 │   ├── static/
 │   │   ├── css/                 # Стилі (common, auth, page-*, ...)
 │   │   ├── js/                  # molecular-background.js
@@ -96,6 +99,70 @@ site-iprm/
 | `updated_at` | DateTime (UTC) | Дата оновлення |
 | `last_login_at` | DateTime (UTC) | Останній вхід |
 
+### Event
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ |
+| `title` | String(255) | Назва курсу/заходу |
+| `slug` | String(200) | URL-slug, унікальний |
+| `subtitle` | String(500) | Підзаголовок hero-секції |
+| `description` | Text | Повний опис |
+| `short_description` | String(500) | Короткий опис для карток |
+| `event_type` | String(30) | Тип: seminar, webinar, course, masterclass, conference |
+| `format` | String(20) | Формат: online, offline, hybrid |
+| `status` | String(20) | Статус: draft, published, active, completed, cancelled |
+| `start_date` | DateTime (UTC) | Дата початку |
+| `end_date` | DateTime (UTC) | Дата завершення |
+| `max_participants` | Integer | Максимум учасників |
+| `price` | Numeric(10,2) | Ціна (грн) |
+| `location` | String(255) | Місце проведення |
+| `online_link` | String(500) | Посилання на онлайн-трансляцію |
+| `hero_image` | String(500) | Фонове зображення hero-секції |
+| `card_image` | String(500) | Зображення для картки у списку |
+| `cpd_points` | Integer | Бали БПР |
+| `target_audience` | JSON | Масив текстових блоків "Для кого" |
+| `tags` | JSON | Масив тегів курсу |
+| `speaker_info` | Text | Додаткова інформація про спікера |
+| `agenda` | Text | Програма (текст) |
+| `is_featured` | Boolean | Виділений захід |
+| `is_active` | Boolean | Активний |
+| `created_by` | FK -> users.id | Автор запису |
+| `trainer_id` | FK -> trainers.id | Тренер курсу |
+
+### Trainer
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ |
+| `full_name` | String(200) | ПІБ тренера |
+| `slug` | String(200) | URL-slug, унікальний |
+| `role` | String(300) | Посада / спеціалізація |
+| `bio` | Text | Розгорнутий опис |
+| `photo` | String(500) | Шлях до фото |
+| `experience_years` | Integer | Стаж (років) |
+| `is_active` | Boolean | Активний |
+| `created_at` | DateTime (UTC) | Дата створення |
+| `updated_at` | DateTime (UTC) | Дата оновлення |
+
+### ProgramBlock
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ |
+| `event_id` | FK -> events.id | Захід |
+| `heading` | String(200) | Заголовок блоку ("Теоретична частина", ...) |
+| `items` | JSON | Масив пунктів програми |
+| `sort_order` | Integer | Порядок відображення |
+
+### Зв'язки
+
+```
+User 1--* Event          (created_by)
+Trainer 1--* Event       (trainer_id)
+Event 1--* ProgramBlock  (event_id, cascade delete)
+```
+
 ## Встановлення та запуск
 
 ### Вимоги
@@ -135,6 +202,39 @@ python run.py
 | `DATABASE_URL` | URI бази даних | `sqlite:///iprm.db` |
 | `FLASK_CONFIG` | Профіль конфігурації | `default` (development) |
 
+## Сервер (VPS)
+
+| Параметр | Значення |
+|----------|----------|
+| Хост | `173.242.58.186` |
+| Користувач | `root` |
+| SSH-ключ | `keys/iprm-key` |
+| Шлях до проекту | `/var/www/iprm/` |
+| Systemd-сервіс | `iprm` |
+| WSGI-сервер | gunicorn |
+
+### Підключення до сервера
+
+```bash
+ssh -i keys/iprm-key root@173.242.58.186
+```
+
+### Корисні команди на сервері
+
+```bash
+# Статус сервісу
+systemctl status iprm
+
+# Перезапуск
+systemctl restart iprm
+
+# Логи
+journalctl -u iprm -f
+
+# Шлях до проекту
+cd /var/www/iprm
+```
+
 ## CI/CD
 
 Деплой автоматизований через GitHub Actions (`.github/workflows/deploy.yml`):
@@ -145,9 +245,11 @@ python run.py
 
 ### Необхідні секрети GitHub
 
-- `VPS_HOST` - адреса сервера
-- `VPS_USER` - користувач SSH
-- `VPS_SSH_KEY` - приватний SSH-ключ
+| Секрет | Опис |
+|--------|------|
+| `VPS_HOST` | `173.242.58.186` |
+| `VPS_USER` | `root` |
+| `VPS_SSH_KEY` | Вміст `keys/iprm-key` |
 
 ## Залежності
 
