@@ -49,6 +49,12 @@ def create_app(config_name=None):
     from app.admin import admin_bp
     app.register_blueprint(admin_bp)
 
+    from app.registration import registration_bp
+    app.register_blueprint(registration_bp)
+
+    from app.cli import seed_courses
+    app.cli.add_command(seed_courses)
+
     @app.after_request
     def set_security_headers(response):
         response.headers['X-Content-Type-Options'] = 'nosniff'
