@@ -25,7 +25,7 @@
         linkWidth: 2,
         speed: 0.2,
         nodeSize: 4,
-        opacity: 0.3,
+        opacity: 0.15,
         nodeBlur: 0,
         cursorMode: 'attract',
         cursorRadius: 200,
@@ -132,7 +132,7 @@
             }
         }
 
-        var solidFill = 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
+        var nodeFill = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + config.opacity + ')';
 
         for (var k = 0; k < nodes.length; k++) {
             var n = nodes[k];
@@ -140,7 +140,7 @@
 
             ctx.beginPath();
             ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-            ctx.fillStyle = solidFill;
+            ctx.fillStyle = nodeFill;
             ctx.fill();
         }
     }
