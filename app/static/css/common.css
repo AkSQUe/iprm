@@ -127,17 +127,15 @@ a {
 .iprm-header__top {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   width: 100%;
-  position: relative;
 }
 
 .iprm-header__actions {
-  position: absolute;
-  right: 0;
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .iprm-header__auth-link {
@@ -760,14 +758,13 @@ a {
     gap: 12px;
   }
 
-  /* Хедер: скидаємо абсолютне позиціювання для мобільних */
+  /* Хедер: вертикальне розташування для мобільних */
   .iprm-header__top {
     flex-direction: column;
     gap: 8px;
   }
 
   .iprm-header__actions {
-    position: static;
     justify-content: center;
   }
 

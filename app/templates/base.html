@@ -5,12 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='svg/IPRM-logo-simple.svg') }}">
   <title>{% block title %}IPRM{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/molecular-background.css') }}">
   {% block extra_css %}{% endblock %}
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>
     (function(){var t=localStorage.getItem('iprm-theme');if(t==='branded')document.documentElement.setAttribute('data-theme','branded');})();
   </script>
