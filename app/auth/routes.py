@@ -71,4 +71,10 @@ def logout():
 @auth_bp.route('/success')
 @login_required
 def success():
-    return render_template('auth/success.html')
+    return redirect(url_for('auth.account'))
+
+
+@auth_bp.route('/account')
+@login_required
+def account():
+    return render_template('auth/account.html')

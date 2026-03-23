@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Обліковий запис | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="iprm-hero-wrap">
+  <div class="iprm-hero">
+    <div class="iprm-hero__bg"></div>
+    <div class="iprm-hero__content">
+      <h1 class="iprm-hero__title">{{ current_user.first_name }} {{ current_user.last_name }}</h1>
+      <p class="iprm-hero__subtitle">{{ current_user.email }}</p>
+    </div>
+  </div>
+</section>
+
+<section class="account-section">
+  <div class="account-grid">
+    <div class="account-card">
+      <h3 class="account-card__title">Мої курси</h3>
+      <p class="account-card__text">Тут будуть ваші курси</p>
+    </div>
+    <div class="account-card">
+      <h3 class="account-card__title">Налаштування</h3>
+      <p class="account-card__text">Редагування профілю</p>
+    </div>
+    <div class="account-card">
+      <h3 class="account-card__title">Сертифікати</h3>
+      <p class="account-card__text">Ваші сертифікати</p>
+    </div>
+  </div>
+
+  <div class="account-actions">
+    <form method="POST" action="{{ url_for('auth.logout') }}" class="form-logout">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn-auth btn-auth--outline">Вийти з облікового запису</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

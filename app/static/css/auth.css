@@ -243,3 +243,45 @@
 .form-logout .btn-link:hover {
   text-decoration: underline;
 }
+
+/* Account page */
+.account-section {
+  max-width: var(--iprm-max-content);
+  margin: 0 auto;
+  padding: 2rem 2rem;
+}
+
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.account-card {
+  background: var(--iprm-card-bg);
+  border-radius: var(--iprm-radius);
+  padding: 2rem;
+  transition: box-shadow var(--iprm-transition);
+}
+
+.account-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.account-card__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--iprm-dark);
+  margin-bottom: 0.5rem;
+}
+
+.account-card__text {
+  font-size: 0.9rem;
+  color: var(--iprm-text-light);
+}
+
+.account-actions {
+  text-align: center;
+  padding-top: 1rem;
+}
