@@ -1,0 +1,60 @@
+/* IPRM - 404 Page Styles */
+
+.iprm-404 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  min-height: calc(100vh - 220px);
+  max-width: var(--iprm-max-content);
+  margin: 0 auto;
+  padding: 64px 32px;
+}
+
+.iprm-404__text {
+  flex: 1;
+}
+
+.iprm-404__title {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--iprm-dark);
+  margin-bottom: 16px;
+}
+
+.iprm-404__subtitle {
+  font-size: 16px;
+  font-style: italic;
+  color: var(--iprm-text-light);
+}
+
+.iprm-404__image {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 320px;
+  border: 2px dashed var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  background: var(--iprm-card-bg);
+  color: var(--iprm-text-light);
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .iprm-404 {
+    flex-direction: column-reverse;
+    text-align: center;
+    padding: 40px 16px;
+  }
+
+  .iprm-404__title {
+    font-size: 24px;
+  }
+
+  .iprm-404__image {
+    width: 100%;
+    height: 240px;
+  }
+}

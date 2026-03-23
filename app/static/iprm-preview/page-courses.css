@@ -1,0 +1,62 @@
+/* IPRM - Courses Listing Page Styles */
+
+/* ========== COURSE CARDS (postgraduate) ========== */
+
+.iprm-course-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.iprm-course-card {
+  background: var(--iprm-card-bg);
+  border: 1px solid var(--iprm-card-bg);
+  border-radius: 4%;
+  padding: 16px;
+}
+
+.iprm-course-card__image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 50%, #cffafe 100%);
+  border: 2px dashed var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--iprm-text-light);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.iprm-course-card__title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--iprm-text);
+  margin-bottom: 12px;
+}
+
+.iprm-course-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.iprm-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--iprm-text);
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+  .iprm-course-cards {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
