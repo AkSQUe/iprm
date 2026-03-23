@@ -110,32 +110,6 @@
   margin-top: 0.25rem;
 }
 
-/* Alert messages */
-.alert {
-  padding: 0.75rem 1rem;
-  border-radius: var(--iprm-radius-sm);
-  font-size: 0.875rem;
-  margin-bottom: 1.25rem;
-}
-
-.alert--error {
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
-}
-
-.alert--success {
-  background: #f0fdf4;
-  color: #16a34a;
-  border: 1px solid #bbf7d0;
-}
-
-.alert--info {
-  background: var(--iprm-accent-light);
-  color: #0369a1;
-  border: 1px solid #bae6fd;
-}
-
 /* Submit button */
 .btn-auth {
   width: 100%;

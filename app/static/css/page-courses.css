@@ -11,7 +11,7 @@
 .iprm-course-card {
   background: var(--iprm-card-bg);
   border: 1px solid var(--iprm-card-bg);
-  border-radius: 4%;
+  border-radius: var(--iprm-radius);
   padding: 16px;
 }
 
