@@ -19,9 +19,13 @@
         {% if event.subtitle %}
           <p class="iprm-hero__subtitle">{{ event.subtitle }}</p>
         {% endif %}
-        <a href="#" class="iprm-btn iprm-btn--primary">
-          <span class="iprm-btn__arrow">&#x2197;</span> Реєстрація на курс
-        </a>
+        {% if event.is_registration_open %}
+          <a href="{{ url_for('registration.register', event_id=event.id) }}" class="iprm-btn iprm-btn--primary">
+            <span class="iprm-btn__arrow">&#x2197;</span> Реєстрація на курс
+          </a>
+        {% else %}
+          <span class="iprm-btn iprm-btn--primary" style="opacity: 0.5; cursor: default;">Реєстрацію закрито</span>
+        {% endif %}
       </div>
     </section>
   </div>
@@ -63,9 +67,11 @@
           {% if event.trainer.bio %}
             <p class="iprm-trainer__desc">{{ event.trainer.bio }}</p>
           {% endif %}
-          <a href="#" class="iprm-btn iprm-btn--primary">
-            <span class="iprm-btn__arrow">&#x2197;</span> Реєстрація на курс
-          </a>
+          {% if event.is_registration_open %}
+            <a href="{{ url_for('registration.register', event_id=event.id) }}" class="iprm-btn iprm-btn--primary">
+              <span class="iprm-btn__arrow">&#x2197;</span> Реєстрація на курс
+            </a>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -89,11 +95,13 @@
         </div>
         {% endfor %}
       </div>
+      {% if event.is_registration_open %}
       <div class="iprm-section__cta">
-        <a href="#" class="iprm-btn iprm-btn--primary">
+        <a href="{{ url_for('registration.register', event_id=event.id) }}" class="iprm-btn iprm-btn--primary">
           <span class="iprm-btn__arrow">&#x2197;</span> Реєстрація на курс
         </a>
       </div>
+      {% endif %}
     </div>
   </section>
   {% endif %}

@@ -145,6 +145,10 @@
   background: var(--iprm-card-bg);
 }
 
+.reg-actions--center {
+  justify-content: center;
+}
+
 /* Confirmation page */
 .reg-confirmation {
   text-align: center;
