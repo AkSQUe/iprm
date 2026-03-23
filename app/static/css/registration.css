@@ -125,6 +125,26 @@
   justify-content: flex-end;
 }
 
+.reg-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--iprm-font);
+  color: var(--iprm-text);
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all var(--iprm-transition);
+  text-decoration: none;
+}
+
+.reg-btn-secondary:hover {
+  background: var(--iprm-card-bg);
+}
+
 /* Confirmation page */
 .reg-confirmation {
   text-align: center;
