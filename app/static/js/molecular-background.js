@@ -22,11 +22,11 @@
         nodeCount: 60,
         nodeCountMobile: 25,
         linkDistance: 160,
-        linkWidth: 0.8,
-        speed: 0.4,
+        linkWidth: 2,
+        speed: 0.2,
         nodeSize: 4,
         opacity: 0.3,
-        nodeBlur: 6,
+        nodeBlur: 0,
         cursorMode: 'attract',
         cursorRadius: 200,
         cursorForce: 0.02
@@ -105,7 +105,7 @@
         }
     }
 
-    function draw(time) {
+    function draw() {
         ctx.clearRect(0, 0, width, height);
 
         var linkDistSq = config.linkDistance * config.linkDistance;
@@ -132,36 +132,17 @@
             }
         }
 
-        if (config.nodeBlur > 0) {
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-        }
+        var solidFill = 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
 
         for (var k = 0; k < nodes.length; k++) {
             var n = nodes[k];
-            var nodePulse = Math.sin(time * 0.002 + n.pulseOffset) * 0.3;
-            var nodeAlpha = config.opacity * (0.8 + nodePulse);
             var r = n.radius * config.nodeSize / 2.5;
-
-            if (config.nodeBlur > 0) {
-                ctx.shadowBlur = config.nodeBlur;
-                ctx.shadowColor = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + nodeAlpha + ')';
-            }
 
             ctx.beginPath();
             ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + nodeAlpha + ')';
+            ctx.fillStyle = solidFill;
             ctx.fill();
-
-            if (config.nodeBlur > 4) {
-                ctx.beginPath();
-                ctx.arc(n.x, n.y, r * 0.6, 0, Math.PI * 2);
-                ctx.fill();
-            }
         }
-
-        ctx.shadowBlur = 0;
-        ctx.shadowColor = 'transparent';
     }
 
     function loop(timestamp) {
@@ -170,7 +151,7 @@
         if (elapsed < frameInterval) return;
         lastTime = timestamp - (elapsed % frameInterval);
         updateNodes();
-        draw(timestamp);
+        draw();
     }
 
     function init() {
