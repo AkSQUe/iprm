@@ -16,3 +16,6 @@
 | GET/POST | `/admin/events/new` | Створення заходу |
 | GET/POST | `/admin/events/<id>/edit` | Редагування заходу |
 | POST | `/admin/events/<id>/delete` | Видалення заходу |
+| GET/POST | `/admin/trainers/new` | Додавання тренера |
+| GET/POST | `/admin/trainers/<id>/edit` | Редагування тренера |
+| POST | `/admin/trainers/<id>/delete` | Видалення тренера |

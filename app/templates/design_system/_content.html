@@ -17,38 +17,56 @@
     <h2 class="ds-title">Кольори</h2>
     <div class="ds-row">
       <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: #1a1a2e;"></div>
-        <div class="ds-swatch__info">Dark<span>#1a1a2e</span></div>
+        <div class="ds-swatch__color" style="background: var(--iprm-dark);"></div>
+        <div class="ds-swatch__info">Dark<span class="ds-swatch__value" data-var="--iprm-dark"></span></div>
       </div>
       <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: #333;"></div>
-        <div class="ds-swatch__info">Text<span>#333333</span></div>
+        <div class="ds-swatch__color" style="background: var(--iprm-text);"></div>
+        <div class="ds-swatch__info">Text<span class="ds-swatch__value" data-var="--iprm-text"></span></div>
       </div>
       <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: #666;"></div>
-        <div class="ds-swatch__info">Text Light<span>#666666</span></div>
+        <div class="ds-swatch__color" style="background: var(--iprm-text-light);"></div>
+        <div class="ds-swatch__info">Text Light<span class="ds-swatch__value" data-var="--iprm-text-light"></span></div>
       </div>
       <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: #F6F7F7;"></div>
-        <div class="ds-swatch__info">Card BG<span>#F6F7F7</span></div>
+        <div class="ds-swatch__color" style="background: var(--iprm-card-bg);"></div>
+        <div class="ds-swatch__info">Card BG<span class="ds-swatch__value" data-var="--iprm-card-bg"></span></div>
       </div>
       <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: #e5e7eb;"></div>
-        <div class="ds-swatch__info">Border<span>#e5e7eb</span></div>
+        <div class="ds-swatch__color" style="background: var(--iprm-border);"></div>
+        <div class="ds-swatch__info">Border<span class="ds-swatch__value" data-var="--iprm-border"></span></div>
       </div>
       <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: #0ea5e9;"></div>
-        <div class="ds-swatch__info">Accent<span>#0ea5e9</span></div>
+        <div class="ds-swatch__color" style="background: var(--iprm-accent);"></div>
+        <div class="ds-swatch__info">Accent<span class="ds-swatch__value" data-var="--iprm-accent"></span></div>
       </div>
       <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: #e0f2fe;"></div>
-        <div class="ds-swatch__info">Accent Light<span>#e0f2fe</span></div>
+        <div class="ds-swatch__color" style="background: var(--iprm-accent-light);"></div>
+        <div class="ds-swatch__info">Accent Light<span class="ds-swatch__value" data-var="--iprm-accent-light"></span></div>
       </div>
       <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: #000;"></div>
-        <div class="ds-swatch__info">Button<span>#000000</span></div>
+        <div class="ds-swatch__color" style="background: var(--iprm-accent-secondary);"></div>
+        <div class="ds-swatch__info">Accent Secondary<span class="ds-swatch__value" data-var="--iprm-accent-secondary"></span></div>
+      </div>
+      <div class="ds-swatch">
+        <div class="ds-swatch__color" style="background: var(--iprm-btn-bg);"></div>
+        <div class="ds-swatch__info">Button<span class="ds-swatch__value" data-var="--iprm-btn-bg"></span></div>
       </div>
     </div>
+    <script>
+      (function() {
+        function updateSwatches() {
+          var root = getComputedStyle(document.documentElement);
+          var spans = document.querySelectorAll('.ds-swatch__value[data-var]');
+          for (var i = 0; i < spans.length; i++) {
+            spans[i].textContent = root.getPropertyValue(spans[i].getAttribute('data-var')).trim();
+          }
+        }
+        updateSwatches();
+        var observer = new MutationObserver(updateSwatches);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+      })();
+    </script>
   </div>
 
   <!-- ===== TYPOGRAPHY ===== -->
@@ -77,7 +95,7 @@
       <a href="#" class="iprm-btn iprm-btn--primary"><span class="iprm-btn__arrow">&#x2197;</span> Primary Button</a>
       <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm"><span class="iprm-btn__arrow">&#x2197;</span> Small Button</a>
     </div>
-    <p class="ds-hint">padding: 4px 18px / border-radius: 10px / bg: #000 / color: #fff / no shadow</p>
+    <p class="ds-hint">padding: 4px 18px / border-radius: 10px / bg: var(--iprm-btn-bg) / color: #fff / no shadow</p>
     <div class="ds-row ds-dark-demo">
       <a href="#" class="iprm-btn iprm-btn--outline"><span class="iprm-btn__arrow">&#x2197;</span> Outline (on dark)</a>
     </div>
@@ -87,7 +105,7 @@
       <span class="iprm-tag">Tag Label</span>
       <span class="iprm-tag">Another Tag</span>
     </div>
-    <p class="ds-hint">padding: 4px 12px / border: 1px solid #e5e7eb / border-radius: 10px</p>
+    <p class="ds-hint">padding: 4px 12px / border: 1px solid var(--iprm-border) / border-radius: 10px</p>
     <h3 class="ds-section-heading">Price Badge</h3>
     <div class="ds-row ds-dark-demo">
       <span class="iprm-hero__price">7500 &#8372; за курс</span>
@@ -104,7 +122,7 @@
       <div class="iprm-card"><div class="iprm-card__icon">[icon]</div><p class="iprm-card__text">Текст картки з іконкою по центру</p></div>
       <div class="iprm-card iprm-card--left"><div class="iprm-card__icon">[icon]</div><p class="iprm-card__text">Ще одна картка</p></div>
     </div>
-    <p class="ds-hint">bg: #F6F7F7 / border-radius: 4% / padding: 24px / icon: 80x80</p>
+    <p class="ds-hint">bg: var(--iprm-card-bg) / border-radius: 4% / padding: 24px / icon: 80x80</p>
   </div>
 
   <!-- ===== HERO ===== -->
@@ -131,7 +149,7 @@
         </div>
       </section>
     </div>
-    <p class="ds-hint">Grey wrap (#F6F7F7) full-width / dark container max-width: 1200px / border-radius: 12px / dots: outline, active: filled</p>
+    <p class="ds-hint">Grey wrap (var(--iprm-card-bg)) full-width / dark container max-width: 1200px / border-radius: 12px / dots: outline, active: filled</p>
   </div>
 
   <!-- ===== PHOTO CARDS ===== -->
@@ -154,7 +172,7 @@
         </div>
       </div>
     </div>
-    <p class="ds-hint">bg: #F6F7F7 / image aspect-ratio: 1:1 / padding: 16px</p>
+    <p class="ds-hint">bg: var(--iprm-card-bg) / image aspect-ratio: 1:1 / padding: 16px</p>
   </div>
 
   <!-- ===== COURSE CARDS ===== -->
