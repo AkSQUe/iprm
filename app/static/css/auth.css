@@ -219,3 +219,27 @@
 .btn-auth--outline:hover {
   background: var(--iprm-accent-light);
 }
+
+.btn-auth--block {
+  display: inline-block;
+  text-align: center;
+}
+
+.form-logout {
+  display: inline;
+}
+
+.form-logout .btn-link {
+  background: none;
+  border: none;
+  color: var(--iprm-accent);
+  font-weight: 500;
+  font-size: 0.9rem;
+  font-family: var(--iprm-font);
+  cursor: pointer;
+  padding: 0;
+}
+
+.form-logout .btn-link:hover {
+  text-decoration: underline;
+}
