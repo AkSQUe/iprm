@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template
+from flask import Flask
 from config import config
 from app.extensions import db, login_manager, csrf, migrate, limiter
 
@@ -48,14 +48,6 @@ def create_app(config_name=None):
 
     from app.admin import admin_bp
     app.register_blueprint(admin_bp)
-
-    @app.errorhandler(401)
-    def unauthorized(e):
-        return render_template('errors/401.html'), 401
-
-    @app.errorhandler(403)
-    def forbidden(e):
-        return render_template('errors/403.html'), 403
 
     @app.after_request
     def set_security_headers(response):

@@ -29,6 +29,10 @@
   color: var(--iprm-text-light);
 }
 
+.iprm-404__action {
+  margin-top: 24px;
+}
+
 .iprm-404__image {
   flex: 1;
   display: flex;

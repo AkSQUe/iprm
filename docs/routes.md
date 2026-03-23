@@ -8,10 +8,11 @@
 | GET/POST | `/auth/register` | Реєстрація |
 | POST | `/auth/logout` | Вихід |
 | GET | `/auth/account` | Обліковий запис |
-| GET | `/courses` | Список курсів |
-| GET | `/course-detail` | Курс гінекології |
-| GET | `/course-stomatology` | Курс косметології |
-| GET | `/course-orthopedics` | Курс вікового менеджменту |
+| GET | `/courses` | Список курсів (динамічний з БД) |
+| GET | `/courses/<slug>` | Сторінка заходу за slug (динамічна з БД) |
+| GET | `/course-detail` | Legacy: гінекологія (fallback на БД або статику) |
+| GET | `/course-stomatology` | Legacy: стоматологія (fallback на БД або статику) |
+| GET | `/course-orthopedics` | Legacy: ортопедія (fallback на БД або статику) |
 | GET | `/admin/` | Адмін-панель (dashboard) |
 | GET/POST | `/admin/events/new` | Створення заходу |
 | GET/POST | `/admin/events/<id>/edit` | Редагування заходу |
