@@ -1,0 +1,159 @@
+/* IPRM - Design System Page Styles */
+
+.ds-section {
+  padding: 32px;
+  max-width: var(--iprm-max-content);
+  margin: 0 auto;
+}
+
+.ds-section + .ds-section {
+  border-top: 1px solid var(--iprm-border);
+}
+
+.ds-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--iprm-accent);
+  margin-bottom: 8px;
+}
+
+.ds-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--iprm-dark);
+  margin-bottom: 24px;
+}
+
+.ds-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.ds-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.ds-hint {
+  font-size: 12px;
+  color: var(--iprm-text-light);
+  margin-top: -16px;
+  margin-bottom: 24px;
+}
+
+.ds-swatch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ds-swatch__color {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--iprm-border);
+}
+
+.ds-swatch__info {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.ds-swatch__info span {
+  display: block;
+  font-size: 11px;
+  color: var(--iprm-text-light);
+}
+
+.ds-grid-demo {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.ds-grid-demo > div {
+  background: var(--iprm-card-bg);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--iprm-text-light);
+}
+
+.ds-nav {
+  position: sticky;
+  top: 0;
+  background: var(--iprm-white);
+  border-bottom: 1px solid var(--iprm-border);
+  padding: 12px 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  z-index: 100;
+  overflow-x: auto;
+}
+
+.ds-nav__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--iprm-dark);
+  white-space: nowrap;
+}
+
+.ds-nav a {
+  font-size: 13px;
+  color: var(--iprm-text-light);
+  white-space: nowrap;
+}
+
+.ds-nav a:hover {
+  color: var(--iprm-accent);
+}
+
+.ds-pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ds-pages a {
+  display: block;
+  padding: 12px 20px;
+  background: var(--iprm-card-bg);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--iprm-text);
+  transition: background var(--iprm-transition);
+}
+
+.ds-pages a:hover {
+  background: var(--iprm-accent-light);
+}
+
+/* Typography demo items */
+.ds-typo-item {
+  margin-bottom: 4px;
+}
+
+/* Dark background demo wrapper */
+.ds-dark-demo {
+  background: var(--iprm-dark);
+  padding: 16px;
+  border-radius: 12px;
+}
+
+/* Section heading in DS */
+.ds-section-heading {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}

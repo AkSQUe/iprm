@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}IPRM - Design System{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-home.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
+{% endblock %}
+
+{% block header %}
+  <nav class="ds-nav">
+    <span class="ds-nav__title">IPRM Design System</span>
+    <a href="#colors">Кольори</a>
+    <a href="#typography">Типографіка</a>
+    <a href="#buttons">Кнопки</a>
+    <a href="#cards">Картки</a>
+    <a href="#hero">Hero</a>
+    <a href="#photo-cards">Фото-картки</a>
+    <a href="#course-cards">Картки курсів</a>
+    <a href="#target">Target grid</a>
+    <a href="#trainer">Тренер</a>
+    <a href="#program">Програма</a>
+    <a href="#footer">Футер</a>
+    <a href="#pages">Сторінки</a>
+  </nav>
+{% endblock %}
+
+{% block content %}
+  {% include 'design_system/_content.html' %}
+{% endblock %}
