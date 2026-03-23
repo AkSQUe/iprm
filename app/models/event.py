@@ -75,5 +75,24 @@ class Event(TimestampMixin, db.Model):
     def format_label(self):
         return dict(self.FORMATS).get(self.event_format, self.event_format)
 
+    @property
+    def registration_count(self):
+        from app.models.registration import EventRegistration
+        return self.registrations.filter(
+            EventRegistration.status.notin_(['cancelled'])
+        ).count()
+
+    @property
+    def has_capacity(self):
+        if self.max_participants is None:
+            return True
+        return self.registration_count < self.max_participants
+
+    @property
+    def is_registration_open(self):
+        return (self.is_active
+                and self.status in ('published', 'active')
+                and self.has_capacity)
+
     def __repr__(self):
         return f'<Event {self.title}>'
