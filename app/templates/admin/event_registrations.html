@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Реєстрації: {{ event.title }} | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <div class="admin-hero">
+    <div>
+      <h1 class="admin-hero__title">Реєстрації</h1>
+      <p class="admin-hero__subtitle">{{ event.title }}</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn-admin btn-admin--secondary">
+      <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Назад
+    </a>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <div class="admin-event-card__meta" style="margin-bottom: 24px; display: flex; gap: 16px; font-size: 14px; color: var(--iprm-text-light);">
+    <span>Всього: <strong>{{ registrations | length }}</strong></span>
+    <span>Підтверджено: <strong>{{ registrations | selectattr('status', 'equalto', 'confirmed') | list | length }}</strong></span>
+    <span>Очікує: <strong>{{ registrations | selectattr('status', 'equalto', 'pending') | list | length }}</strong></span>
+  </div>
+
+  {% if registrations %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Учасник</th>
+        <th>Телефон</th>
+        <th>Спеціальність</th>
+        <th>Статус</th>
+        <th>Оплата</th>
+        <th>Дата</th>
+        <th>Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for reg in registrations %}
+      <tr>
+        <td>
+          <strong>{{ reg.user.first_name }} {{ reg.user.last_name }}</strong><br>
+          <small>{{ reg.user.email }}</small>
+        </td>
+        <td>{{ reg.phone }}</td>
+        <td>{{ reg.specialty }}</td>
+        <td><span class="badge badge--{{ reg.status }}">{{ reg.status_label }}</span></td>
+        <td><span class="badge badge--{{ 'active' if reg.payment_status == 'paid' else 'draft' }}">{{ reg.payment_status_label }}</span></td>
+        <td>{{ reg.created_at.strftime('%d.%m.%Y') }}</td>
+        <td>
+          <div class="admin-table__actions">
+            {% if reg.status == 'pending' %}
+            <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="status" value="confirmed">
+              <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Підтвердити</button>
+            </form>
+            {% endif %}
+            {% if reg.status in ('confirmed', 'pending') and not reg.attended %}
+            <form method="POST" action="{{ url_for('admin.registration_attendance', reg_id=reg.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="cpd_points" value="{{ event.cpd_points or 0 }}">
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">БПР</button>
+            </form>
+            {% endif %}
+            {% if reg.status != 'cancelled' %}
+            <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}" onsubmit="return confirm('Скасувати реєстрацію?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="status" value="cancelled">
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">X</button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="admin-empty">
+    <h3 class="admin-empty__title">Реєстрацій ще немає</h3>
+    <p>Учасники зможуть реєструватися на опубліковані заходи</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
