@@ -1,0 +1,221 @@
+/* Auth pages styles */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: var(--iprm-bg);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--iprm-white);
+  border-radius: var(--iprm-radius);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  padding: 2.5rem;
+}
+
+.auth-card__logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.auth-card__logo img {
+  height: 48px;
+  width: auto;
+}
+
+.auth-card__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: var(--iprm-dark);
+}
+
+.auth-card__subtitle {
+  text-align: center;
+  color: var(--iprm-text-light);
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+
+/* Form fields */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--iprm-text);
+  margin-bottom: 0.375rem;
+}
+
+.form-group label .required {
+  color: #ef4444;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  font-family: var(--iprm-font);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  background: var(--iprm-white);
+  color: var(--iprm-text);
+  transition: border-color var(--iprm-transition), box-shadow var(--iprm-transition);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--iprm-accent);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light);
+}
+
+.form-input.is-invalid {
+  border-color: #ef4444;
+}
+
+/* Checkbox */
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.form-checkbox input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--iprm-accent);
+}
+
+.form-checkbox label {
+  font-size: 0.875rem;
+  color: var(--iprm-text-light);
+  cursor: pointer;
+}
+
+/* Errors */
+.form-error {
+  font-size: 0.8rem;
+  color: #ef4444;
+  margin-top: 0.25rem;
+}
+
+/* Alert messages */
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: var(--iprm-radius-sm);
+  font-size: 0.875rem;
+  margin-bottom: 1.25rem;
+}
+
+.alert--error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.alert--success {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.alert--info {
+  background: var(--iprm-accent-light);
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+/* Submit button */
+.btn-auth {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: var(--iprm-font);
+  color: var(--iprm-white);
+  background: var(--iprm-accent);
+  border: none;
+  border-radius: var(--iprm-radius-sm);
+  cursor: pointer;
+  transition: background var(--iprm-transition), transform var(--iprm-transition);
+}
+
+.btn-auth:hover {
+  background: #0284c7;
+}
+
+.btn-auth:active {
+  transform: scale(0.98);
+}
+
+/* Footer links */
+.auth-card__footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--iprm-border);
+}
+
+.auth-card__footer a {
+  color: var(--iprm-accent);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.auth-card__footer a:hover {
+  text-decoration: underline;
+}
+
+.auth-card__back {
+  display: block;
+  text-align: center;
+  margin-top: 1rem;
+  color: var(--iprm-text-light);
+  font-size: 0.875rem;
+}
+
+.auth-card__back:hover {
+  color: var(--iprm-accent);
+}
+
+/* Success page */
+.auth-success {
+  text-align: center;
+}
+
+.auth-success__icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.auth-success__message {
+  font-size: 1.125rem;
+  color: var(--iprm-text);
+  margin-bottom: 0.5rem;
+}
+
+.auth-success__user {
+  color: var(--iprm-text-light);
+  margin-bottom: 2rem;
+}
+
+.btn-auth--outline {
+  background: transparent;
+  color: var(--iprm-accent);
+  border: 2px solid var(--iprm-accent);
+}
+
+.btn-auth--outline:hover {
+  background: var(--iprm-accent-light);
+}

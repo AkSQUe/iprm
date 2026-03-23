@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Вхід | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-card__logo">
+      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="IPRM">
+    </div>
+    <h1 class="auth-card__title">Вхід</h1>
+    <p class="auth-card__subtitle">Увійдіть до вашого облікового запису</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert--{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('auth.login') }}">
+      {{ form.hidden_tag() }}
+
+      <div class="form-group">
+        <label for="email">Email <span class="required">*</span></label>
+        {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email") }}
+        {% for error in form.email.errors %}
+          <div class="form-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        <label for="password">Пароль <span class="required">*</span></label>
+        {{ form.password(class="form-input" + (" is-invalid" if form.password.errors else ""), id="password") }}
+        {% for error in form.password.errors %}
+          <div class="form-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-checkbox">
+        {{ form.remember(id="remember") }}
+        <label for="remember">Запам'ятати мене</label>
+      </div>
+
+      <button type="submit" class="btn-auth">Увійти</button>
+    </form>
+
+    <div class="auth-card__footer">
+      <span>Ще не маєте акаунта? </span>
+      <a href="{{ url_for('auth.register') }}">Зареєструватися</a>
+    </div>
+
+    <a href="{{ url_for('main.index') }}" class="auth-card__back">Повернутися на головну</a>
+  </div>
+</div>
+{% endblock %}
