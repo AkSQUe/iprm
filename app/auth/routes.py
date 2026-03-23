@@ -1,10 +1,18 @@
-from datetime import datetime
+from datetime import datetime, timezone
+from urllib.parse import urlparse
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app.auth import auth_bp
 from app.auth.forms import LoginForm, RegistrationForm
 from app.extensions import db
 from app.models.user import User
+
+
+def _is_safe_redirect_url(target):
+    if not target:
+        return False
+    parsed = urlparse(target)
+    return not parsed.netloc and not parsed.scheme
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -18,11 +26,11 @@ def login():
 
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember.data)
-            user.last_login_at = datetime.utcnow()
+            user.last_login_at = datetime.now(timezone.utc)
             db.session.commit()
 
             next_page = request.args.get('next')
-            if next_page:
+            if _is_safe_redirect_url(next_page):
                 return redirect(next_page)
             return redirect(url_for('auth.success'))
 
@@ -53,7 +61,7 @@ def register():
     return render_template('auth/register.html', form=form)
 
 
-@auth_bp.route('/logout')
+@auth_bp.route('/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
