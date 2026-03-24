@@ -16,9 +16,6 @@
       <a href="{{ url_for('admin.registrations_all') }}" class="admin-sidebar__link{% if ep in ('admin.registrations_all', 'admin.event_registrations', 'admin.registration_status', 'admin.registration_attendance') %} admin-sidebar__link--active{% endif %}">
         Реєстрації
       </a>
-      <a href="{{ url_for('admin.payments') }}" class="admin-sidebar__link{% if ep == 'admin.payments' %} admin-sidebar__link--active{% endif %}">
-        Платежі
-      </a>
       <a href="{{ url_for('admin.liqpay') }}" class="admin-sidebar__link{% if ep == 'admin.liqpay' %} admin-sidebar__link--active{% endif %}">
         LiqPay
       </a>

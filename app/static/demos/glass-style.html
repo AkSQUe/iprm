@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IPRM - Інститут Плазмотерапії та Регенеративної Медицини. Демо у стилі Glassmorphism.">
+    <title>IPRM - Glassmorphism Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --purple: #7055a4;
+            --purple-dark: #5d4691;
+            --purple-light: #ede9f6;
+            --orange: #e8913a;
+            --orange-light: #fef0e6;
+            --text: #1d1d1f;
+            --text-secondary: #555;
+            --text-muted: #888;
+            --glass: rgba(255, 255, 255, 0.55);
+            --glass-strong: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px rgba(80, 50, 120, 0.08);
+            --blur: 16px;
+            --blur-strong: 20px;
+        }
+
+        html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            background: #f0ecf5;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* ========== BACKGROUND LAYER ========== */
+        .bg-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            background: linear-gradient(160deg, #ece5f5 0%, #f5f0fa 30%, #fef6ee 60%, #f0ecf5 100%);
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.6;
+            animation: blobFloat 20s ease-in-out infinite;
+        }
+
+        .bg-blob--1 {
+            width: 500px; height: 500px;
+            background: rgba(112, 85, 164, 0.2);
+            top: -10%; left: -5%;
+            animation-duration: 22s;
+        }
+
+        .bg-blob--2 {
+            width: 400px; height: 400px;
+            background: rgba(232, 145, 58, 0.15);
+            top: 20%; right: -8%;
+            animation-duration: 26s;
+            animation-delay: -5s;
+        }
+
+        .bg-blob--3 {
+            width: 450px; height: 450px;
+            background: rgba(180, 130, 220, 0.15);
+            bottom: 10%; left: 30%;
+            animation-duration: 24s;
+            animation-delay: -10s;
+        }
+
+        .bg-blob--4 {
+            width: 350px; height: 350px;
+            background: rgba(232, 145, 58, 0.12);
+            bottom: -5%; right: 20%;
+            animation-duration: 28s;
+            animation-delay: -3s;
+        }
+
+        @keyframes blobFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -20px) scale(1.05); }
+            50% { transform: translate(-15px, 25px) scale(0.95); }
+            75% { transform: translate(20px, 10px) scale(1.02); }
+        }
+
+        /* molecular bg sits between blobs and content */
+        #molecular-background {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        #molecular-background canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* all content above background */
+        .page-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ========== GLASS HELPERS ========== */
+        .glass {
+            background: var(--glass);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .glass-strong {
+            background: var(--glass-strong);
+            backdrop-filter: blur(var(--blur-strong));
+            -webkit-backdrop-filter: blur(var(--blur-strong));
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* ========== NAV ========== */
+        .nav {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            width: calc(100% - 32px);
+            max-width: 1100px;
+            border-radius: 18px;
+            transition: box-shadow 0.3s;
+        }
+
+        .nav.scrolled {
+            box-shadow: 0 8px 40px rgba(80, 50, 120, 0.12);
+        }
+
+        .nav__inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            height: 54px;
+        }
+
+        .nav__logo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--purple);
+            text-decoration: none;
+        }
+
+        .nav__links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav__links a {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav__links a:hover { color: var(--purple); }
+
+        .nav__cta {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: #fff;
+            background: var(--purple);
+            padding: 8px 22px;
+            border-radius: 999px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .nav__cta:hover { background: var(--purple-dark); }
+
+        /* ========== HERO ========== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 24px 60px;
+        }
+
+        .hero__card {
+            border-radius: 32px;
+            padding: 64px 56px;
+            max-width: 860px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .hero__badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--purple);
+            background: rgba(112, 85, 164, 0.1);
+            border: 1px solid rgba(112, 85, 164, 0.15);
+            padding: 5px 14px;
+            border-radius: 999px;
+            margin-bottom: 28px;
+            opacity: 0; transform: translateY(16px);
+            animation: fadeUp 0.7s ease 0.1s forwards;
+        }
+
+        .hero__badge::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--purple);
+        }
+
+        .hero__title {
+            font-size: clamp(2.25rem, 6vw, 3.75rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            opacity: 0; transform: translateY(20px);
+            animation: fadeUp 0.7s ease 0.2s forwards;
+        }
+
+        .hero__title .accent {
+            background: linear-gradient(135deg, var(--purple), #b06ccf, var(--orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero__sub {
+            font-size: 1.0625rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            max-width: 560px;
+            margin: 20px auto 0;
+            opacity: 0; transform: translateY(20px);
+            animation: fadeUp 0.7s ease 0.35s forwards;
+        }
+
+        .hero__actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 36px;
+            opacity: 0; transform: translateY(20px);
+            animation: fadeUp 0.7s ease 0.5s forwards;
+        }
+
+        .btn {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            padding: 13px 30px;
+            border-radius: 999px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .btn--solid {
+            color: #fff;
+            background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+            box-shadow: 0 4px 16px rgba(112, 85, 164, 0.3);
+        }
+
+        .btn--solid:hover {
+            box-shadow: 0 6px 24px rgba(112, 85, 164, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn--glass {
+            color: var(--purple);
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border: 1px solid rgba(112, 85, 164, 0.15);
+        }
+
+        .btn--glass:hover {
+            background: rgba(255, 255, 255, 0.7);
+            border-color: rgba(112, 85, 164, 0.3);
+        }
+
+        /* ========== SECTIONS ========== */
+        .section {
+            padding: 100px 24px;
+        }
+
+        .section__header {
+            text-align: center;
+            max-width: 640px;
+            margin: 0 auto 56px;
+        }
+
+        .section__header h2 {
+            font-size: clamp(1.75rem, 4vw, 2.75rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.12;
+        }
+
+        .section__header p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-top: 12px;
+            line-height: 1.5;
+        }
+
+        /* ========== COURSES: HORIZONTAL SCROLL CARDS ========== */
+        .hscroll-wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: none;
+        }
+
+        .hscroll-wrap::-webkit-scrollbar { display: none; }
+
+        .hscroll {
+            display: flex;
+            gap: 20px;
+            padding: 4px 4px 4px 0;
+            min-width: min-content;
+        }
+
+        .course-card {
+            flex: 0 0 300px;
+            border-radius: 24px;
+            padding: 36px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .course-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(80, 50, 120, 0.12);
+        }
+
+        .course-card__icon {
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(112, 85, 164, 0.12), rgba(232, 145, 58, 0.08));
+            color: var(--purple);
+        }
+
+        .course-card h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .course-card p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ========== STATS: INLINE GLASS PILLS ========== */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .stat-pill {
+            border-radius: 20px;
+            padding: 28px 36px;
+            text-align: center;
+            flex: 1 1 180px;
+            min-width: 180px;
+            transition: transform 0.3s;
+        }
+
+        .stat-pill:hover { transform: translateY(-2px); }
+
+        .stat-pill__num {
+            font-size: clamp(2rem, 4vw, 2.75rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, var(--purple), var(--orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-pill__label {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* ========== LABS: MOSAIC ========== */
+        .mosaic {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+        }
+
+        .mosaic__card {
+            border-radius: 24px;
+            padding: 32px 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            min-height: 220px;
+            position: relative;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .mosaic__card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 48px rgba(80, 50, 120, 0.1);
+        }
+
+        .mosaic__card--wide { grid-column: span 8; min-height: 280px; }
+        .mosaic__card--narrow { grid-column: span 4; }
+        .mosaic__card--third { grid-column: span 4; }
+
+        .mosaic__card--hero {
+            grid-column: span 12;
+            min-height: 260px;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg,
+                rgba(112, 85, 164, 0.15) 0%,
+                rgba(255, 255, 255, 0.4) 40%,
+                rgba(232, 145, 58, 0.08) 100%
+            ) !important;
+            border: 1px solid rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .mosaic__icon {
+            width: 52px; height: 52px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            background: rgba(112, 85, 164, 0.08);
+            border: 1px solid rgba(112, 85, 164, 0.1);
+            color: var(--purple);
+        }
+
+        .mosaic__card--hero .mosaic__icon {
+            margin: 0 auto 20px;
+            width: 64px; height: 64px;
+            border-radius: 20px;
+        }
+
+        .mosaic__card h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            margin-bottom: 4px;
+        }
+
+        .mosaic__card--hero h3 {
+            font-size: clamp(1.25rem, 3vw, 1.75rem);
+            font-weight: 800;
+            max-width: 600px;
+        }
+
+        .mosaic__card p {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            line-height: 1.55;
+        }
+
+        /* ========== CLINIC: VERTICAL STACK ========== */
+        .clinic-stack {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .clinic-row {
+            border-radius: 20px;
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .clinic-row:hover {
+            transform: translateX(4px);
+            box-shadow: 0 12px 36px rgba(80, 50, 120, 0.1);
+        }
+
+        .clinic-row__icon {
+            flex-shrink: 0;
+            width: 52px; height: 52px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--purple-light), var(--orange-light));
+            color: var(--purple);
+        }
+
+        .clinic-row__text {
+            flex: 1;
+        }
+
+        .clinic-row__text h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .clinic-row__text p {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        .clinic-row__arrow {
+            font-size: 1.25rem;
+            color: var(--purple);
+            opacity: 0;
+            transform: translateX(-4px);
+            transition: all 0.2s;
+        }
+
+        .clinic-row:hover .clinic-row__arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* ========== HISTORY: SPLIT ========== */
+        .history {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .history__visual {
+            border-radius: 28px;
+            min-height: 380px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg,
+                rgba(112, 85, 164, 0.12),
+                rgba(255, 255, 255, 0.3),
+                rgba(232, 145, 58, 0.08)
+            ) !important;
+            border: 1px solid rgba(255, 255, 255, 0.5) !important;
+        }
+
+        .history__visual svg { opacity: 0.15; }
+
+        .history__content {
+            border-radius: 28px;
+            padding: 40px 36px;
+        }
+
+        .history__content h2 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 20px;
+        }
+
+        .history__content p {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 14px;
+        }
+
+        .history__content ul {
+            list-style: none;
+            margin-top: 16px;
+        }
+
+        .history__content li {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            padding: 4px 0 4px 20px;
+            position: relative;
+        }
+
+        .history__content li::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 12px;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--purple), var(--orange));
+        }
+
+        /* ========== CTA ========== */
+        .cta {
+            max-width: 700px;
+            margin: 0 auto;
+            border-radius: 32px;
+            padding: 56px 40px;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+        }
+
+        .cta h2 .accent {
+            background: linear-gradient(135deg, var(--purple), var(--orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .cta p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-top: 12px;
+            line-height: 1.5;
+        }
+
+        .cta__actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 32px;
+        }
+
+        /* ========== FOOTER ========== */
+        .footer {
+            padding: 40px 24px;
+            text-align: center;
+        }
+
+        .footer p {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        .footer__links {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            list-style: none;
+            margin-top: 8px;
+        }
+
+        .footer__links a {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer__links a:hover { color: var(--purple); }
+
+        /* ========== FOCUS STATES ========== */
+        *:focus-visible {
+            outline: 2px solid var(--purple);
+            outline-offset: 2px;
+        }
+
+        .btn:focus-visible,
+        .nav__cta:focus-visible {
+            outline-offset: 3px;
+        }
+
+        ::selection {
+            background: rgba(112, 85, 164, 0.2);
+            color: var(--text);
+        }
+
+        /* ========== ANIMATIONS ========== */
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ========== MOBILE MENU ========== */
+        .nav__burger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .nav__burger span {
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: var(--text);
+            border-radius: 1px;
+            transition: all 0.3s;
+        }
+
+        .nav__burger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .nav__burger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .nav__burger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 1024px) {
+            .mosaic__card--wide,
+            .mosaic__card--narrow { grid-column: span 6; }
+            .mosaic__card--hero { grid-column: span 12; }
+            .mosaic__card--third { grid-column: span 6; }
+
+            .history {
+                grid-template-columns: 1fr;
+            }
+
+            .history__visual { min-height: 240px; }
+        }
+
+        @media (max-width: 768px) {
+            .nav { top: 8px; width: calc(100% - 24px); }
+            .nav__links { display: none; }
+            .nav__burger { display: flex; }
+            .nav__links.open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 58px;
+                left: 0;
+                right: 0;
+                background: var(--glass-strong);
+                backdrop-filter: blur(var(--blur-strong));
+                -webkit-backdrop-filter: blur(var(--blur-strong));
+                border: 1px solid var(--glass-border);
+                border-radius: 0 0 18px 18px;
+                padding: 16px 24px;
+                gap: 14px;
+            }
+
+            .section { padding: 72px 16px; }
+            .section__header { margin-bottom: 40px; }
+
+            .hero { padding: 80px 16px 48px; }
+            .hero__card { padding: 40px 24px; border-radius: 24px; }
+            .hero__actions { flex-direction: column; align-items: center; }
+
+            .course-card { flex: 0 0 260px; padding: 28px 24px; }
+
+            .stats { flex-direction: column; align-items: center; }
+            .stat-pill { min-width: 240px; padding: 24px 28px; }
+
+            .mosaic { grid-template-columns: 1fr; }
+            .mosaic__card--wide,
+            .mosaic__card--narrow,
+            .mosaic__card--hero,
+            .mosaic__card--third { grid-column: span 1; }
+            .mosaic__card { min-height: 220px; }
+            .mosaic__card--hero { min-height: 240px; }
+
+            .clinic-stack { gap: 10px; }
+            .clinic-row { padding: 20px 24px; }
+
+            .history { grid-template-columns: 1fr; }
+            .history__visual { min-height: 200px; }
+
+            .cta { padding: 40px 24px; border-radius: 24px; }
+            .cta__actions { flex-direction: column; align-items: center; }
+
+            .footer { padding: 32px 16px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .bg-blob { animation: none; }
+            .reveal { transition: none; opacity: 1; transform: none; }
+            .hero__badge, .hero__title, .hero__sub, .hero__actions {
+                animation: none; opacity: 1; transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BACKGROUND -->
+    <div class="bg-layer">
+        <div class="bg-blob bg-blob--1"></div>
+        <div class="bg-blob bg-blob--2"></div>
+        <div class="bg-blob bg-blob--3"></div>
+        <div class="bg-blob bg-blob--4"></div>
+    </div>
+    <div id="molecular-background"></div>
+
+    <!-- PAGE CONTENT -->
+    <div class="page-content">
+
+        <!-- NAV -->
+        <nav class="nav glass" id="navbar">
+            <div class="nav__inner">
+                <a href="#" class="nav__logo">IPRM</a>
+                <ul class="nav__links">
+                    <li><a href="#courses">Курси</a></li>
+                    <li><a href="#labs">Лабораторії</a></li>
+                    <li><a href="#clinic">Клініка</a></li>
+                    <li><a href="#history">Про нас</a></li>
+                </ul>
+                <button class="nav__burger" aria-label="Menu" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <a href="#courses" class="nav__cta">Обрати курс</a>
+            </div>
+        </nav>
+
+        <!-- HERO -->
+        <section class="hero">
+            <div class="hero__card glass-strong">
+                <div class="hero__badge">Сертифіковані курси з балами БПР</div>
+                <h1 class="hero__title">Інститут Плазмотерапії та <span class="accent">Регенеративної Медицини</span></h1>
+                <p class="hero__sub">Курси післядипломної освіти для лікарів, дослідження біологічного віку та персоналізована регенеративна терапія</p>
+                <div class="hero__actions">
+                    <a href="#courses" class="btn btn--solid">Обрати курс</a>
+                    <a href="#labs" class="btn btn--glass">Про лабораторії</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- COURSES -->
+        <section id="courses" class="section">
+            <div class="section__header reveal">
+                <h2>Курси інституту плазмотерапії та регенеративної медицини</h2>
+                <p>Професійне навчання з офіційним нарахуванням балів БПР</p>
+            </div>
+            <div class="hscroll-wrap reveal">
+                <div class="hscroll">
+                    <div class="course-card glass">
+                        <div class="course-card__icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/></svg>
+                        </div>
+                        <h3>Висококваліфіковані спеціалісти</h3>
+                        <p>Навчальні курси проводяться висококваліфікованими спеціалістами з багатим досвідом у сфері регенеративної медицини.</p>
+                    </div>
+                    <div class="course-card glass">
+                        <div class="course-card__icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                        </div>
+                        <h3>Очно та онлайн</h3>
+                        <p>Курси проводяться очно та онлайн, в комфортних умовах та повністю забезпечені всім необхідним.</p>
+                    </div>
+                    <div class="course-card glass">
+                        <div class="course-card__icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        </div>
+                        <h3>Сучасна інформація</h3>
+                        <p>Слухачі курсів отримують максимум сучасної інформації по вибраних темах регенеративної медицини.</p>
+                    </div>
+                    <div class="course-card glass">
+                        <div class="course-card__icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                        </div>
+                        <h3>Сертифікати з балами БПР</h3>
+                        <p>Після проходження курсу слухачі отримують сертифікати з балами БПР, що підтверджують підвищення кваліфікації.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STATS -->
+        <section class="section">
+            <div class="section__header reveal">
+                <h2>Інститут у цифрах</h2>
+            </div>
+            <div class="stats reveal">
+                <div class="stat-pill glass">
+                    <div class="stat-pill__num" data-target="2015" data-suffix="">2015</div>
+                    <div class="stat-pill__label">Рік заснування</div>
+                </div>
+                <div class="stat-pill glass">
+                    <div class="stat-pill__num" data-target="10" data-suffix="+">10+</div>
+                    <div class="stat-pill__label">Років досліджень</div>
+                </div>
+                <div class="stat-pill glass">
+                    <div class="stat-pill__num" data-target="3" data-suffix="">3</div>
+                    <div class="stat-pill__label">Лабораторії та клініка</div>
+                </div>
+                <div class="stat-pill glass">
+                    <div class="stat-pill__num" data-target="50" data-suffix="+">50+</div>
+                    <div class="stat-pill__label">Курсів проведено</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LABS -->
+        <section id="labs" class="section">
+            <div class="section__header reveal">
+                <h2>Наші лабораторії</h2>
+                <p>Наукові дослідження та інновації у сфері регенеративної медицини</p>
+            </div>
+            <div class="mosaic">
+                <div class="mosaic__card glass mosaic__card--hero reveal">
+                    <div class="mosaic__icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><circle cx="10" cy="13" r="1"/><circle cx="14" cy="16" r="1"/><circle cx="10" cy="19" r="1"/></svg>
+                    </div>
+                    <h3>Лабораторія біологічного віку та прогнозування захворювань</h3>
+                    <p>Епігенетика, фізіологія, біохімія та імунологія процесів старіння</p>
+                </div>
+                <div class="mosaic__card glass mosaic__card--wide reveal">
+                    <div class="mosaic__icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                    <h3>Персоналізована терапія</h3>
+                    <p>Визначення індивідуальних параметрів для вибору персоналізованої терапії</p>
+                </div>
+                <div class="mosaic__card glass mosaic__card--narrow reveal">
+                    <div class="mosaic__icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                    </div>
+                    <h3>Біоінформатика та ШІ</h3>
+                    <p>Інтегральний аналіз даних з використанням штучного інтелекту</p>
+                </div>
+                <div class="mosaic__card glass mosaic__card--third reveal">
+                    <div class="mosaic__icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg>
+                    </div>
+                    <h3>Біомаркери старіння</h3>
+                    <p>Пошук, апробація, валідація нових біомаркерів старіння та геропротекторів</p>
+                </div>
+                <div class="mosaic__card glass mosaic__card--third reveal">
+                    <div class="mosaic__icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                    </div>
+                    <h3>Anti-age протоколи</h3>
+                    <p>Дослідження ефективності нових anti-age протоколів</p>
+                </div>
+                <div class="mosaic__card glass mosaic__card--third reveal">
+                    <div class="mosaic__icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                    </div>
+                    <h3>Клітинне старіння</h3>
+                    <p>Дослідження процесів старіння на клітинному рівні</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CLINIC -->
+        <section id="clinic" class="section">
+            <div class="section__header reveal">
+                <h2>Клініка клітинних та регенеративних технологій</h2>
+                <p>Перелік відділень клінік</p>
+            </div>
+            <div class="clinic-stack">
+                <a href="#" class="clinic-row glass reveal">
+                    <div class="clinic-row__icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg>
+                    </div>
+                    <div class="clinic-row__text">
+                        <h3>Відділення PRP-, плазмотерапії та терапії екзосомами</h3>
+                        <p>Передові методи регенеративної терапії</p>
+                    </div>
+                    <span class="clinic-row__arrow">></span>
+                </a>
+                <a href="#" class="clinic-row glass reveal">
+                    <div class="clinic-row__icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2"/></svg>
+                    </div>
+                    <div class="clinic-row__text">
+                        <h3>Відділення терапії мезенхімальними стовбуровими клітинами</h3>
+                        <p>Клітинна терапія та відновлення</p>
+                    </div>
+                    <span class="clinic-row__arrow">></span>
+                </a>
+                <a href="#" class="clinic-row glass reveal">
+                    <div class="clinic-row__icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <div class="clinic-row__text">
+                        <h3>Відділення персоніфікованої інфузійної терапії</h3>
+                        <p>Індивідуальний підхід до кожного пацієнта</p>
+                    </div>
+                    <span class="clinic-row__arrow">></span>
+                </a>
+            </div>
+        </section>
+
+        <!-- HISTORY -->
+        <section id="history" class="section">
+            <div class="history">
+                <div class="history__visual glass reveal">
+                    <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="0.5"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><circle cx="10" cy="13" r="1"/><circle cx="14" cy="16" r="1"/><circle cx="10" cy="19" r="1"/></svg>
+                </div>
+                <div class="history__content glass-strong reveal">
+                    <h2>Історія створення</h2>
+                    <p>Інститут плазмотерапії засновано у 2015 році групою лікарів-дослідників, які понад 10 років вивчали природні механізми відновлення організму. Їх мета — зробити передові біотехнології доступними для кожного.</p>
+                    <p>Починалось все з невеличкої лабораторії в Києві, де проводились перші клінічні дослідження плазмотерапії у відновленні після травм та у дерматології.</p>
+                    <p>Сьогодні Інститут об'єднує фахівців з епігенетики, фізіології, біохімії, імунології та біоінформатики. Тут проводяться:</p>
+                    <ul>
+                        <li>Дослідження процесів старіння на клітинному рівні</li>
+                        <li>Визначення індивідуальних параметрів для персоналізованої терапії</li>
+                        <li>Пошук і валідація нових біомаркерів старіння</li>
+                        <li>Тестування ефективності anti-age протоколів</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="section">
+            <div class="cta glass-strong reveal">
+                <h2>Почни навчання <span class="accent">сьогодні</span></h2>
+                <p>Обери курс післядипломної освіти та отримай сертифікат з балами БПР від Інституту плазмотерапії та регенеративної медицини.</p>
+                <div class="cta__actions">
+                    <a href="#courses" class="btn btn--solid">Обрати курс</a>
+                    <a href="#history" class="btn btn--glass">Дізнатись більше</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <p>2026 IPRM. Інститут Плазмотерапії та Регенеративної Медицини.</p>
+            <ul class="footer__links">
+                <li><a href="#">Конфіденційність</a></li>
+                <li><a href="#">Умови</a></li>
+                <li><a href="#">Контакти</a></li>
+            </ul>
+        </footer>
+
+    </div>
+
+    <!-- MOLECULAR BACKGROUND (inlined, colored mode) -->
+    <script>
+    (function () {
+        'use strict';
+
+        var PURPLE = [112, 85, 164];
+        var ORANGE = [232, 121, 58];
+
+        function pickColor() {
+            return Math.random() < 0.65 ? PURPLE : ORANGE;
+        }
+
+        var animId = null, nodes = [], mouse = { x: -1000, y: -1000 }, lastTime = 0;
+        var canvas, ctx, w, h, dpr;
+
+        var cfg = {
+            count: 70, countMobile: 25,
+            linkDist: 150, linkWidth: 1.5,
+            speed: 0.18, nodeSize: 3.5, opacity: 0.12,
+            cursorR: 180, cursorF: 0.02
+        };
+
+        var spd = cfg.speed, interval = 1000 / 60;
+
+        function resize() {
+            w = window.innerWidth;
+            h = window.innerHeight;
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function makeNode() {
+            return {
+                x: Math.random() * w, y: Math.random() * h,
+                vx: (Math.random() - 0.5) * spd, vy: (Math.random() - 0.5) * spd,
+                r: cfg.nodeSize * (0.6 + Math.random() * 0.8), c: pickColor()
+            };
+        }
+
+        function initNodes() {
+            var n = w < 768 ? cfg.countMobile : cfg.count;
+            nodes = [];
+            for (var i = 0; i < n; i++) nodes.push(makeNode());
+        }
+
+        function update() {
+            for (var i = 0; i < nodes.length; i++) {
+                var n = nodes[i];
+                var dx = mouse.x - n.x, dy = mouse.y - n.y;
+                var d = Math.sqrt(dx * dx + dy * dy);
+                if (d < cfg.cursorR && d > 1) {
+                    var f = cfg.cursorF * (1 - d / cfg.cursorR);
+                    n.vx += (dx / d) * f; n.vy += (dy / d) * f;
+                }
+                n.vx *= 0.998; n.vy *= 0.998;
+                var v = Math.sqrt(n.vx * n.vx + n.vy * n.vy);
+                var mx = spd * 1.5;
+                if (v > mx) { n.vx = (n.vx / v) * mx; n.vy = (n.vy / v) * mx; }
+                if (v < spd * 0.2 && v > 0.001) { n.vx = (n.vx / v) * spd * 0.2; n.vy = (n.vy / v) * spd * 0.2; }
+                n.x += n.vx; n.y += n.vy;
+                if (n.x < 10) { n.x = 10; n.vx = Math.abs(n.vx); }
+                if (n.x > w - 10) { n.x = w - 10; n.vx = -Math.abs(n.vx); }
+                if (n.y < 10) { n.y = 10; n.vy = Math.abs(n.vy); }
+                if (n.y > h - 10) { n.y = h - 10; n.vy = -Math.abs(n.vy); }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, w, h);
+            var ld2 = cfg.linkDist * cfg.linkDist;
+            for (var i = 0; i < nodes.length; i++) {
+                for (var j = i + 1; j < nodes.length; j++) {
+                    var a = nodes[i], b = nodes[j];
+                    var dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy;
+                    if (d2 < ld2) {
+                        var alpha = (1 - Math.sqrt(d2) / cfg.linkDist) * cfg.opacity;
+                        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+                        ctx.strokeStyle = 'rgba(' + a.c[0] + ',' + a.c[1] + ',' + a.c[2] + ',' + alpha + ')';
+                        ctx.lineWidth = cfg.linkWidth; ctx.stroke();
+                    }
+                }
+            }
+            for (var k = 0; k < nodes.length; k++) {
+                var n = nodes[k];
+                ctx.beginPath(); ctx.arc(n.x, n.y, n.r * cfg.nodeSize / 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(' + n.c[0] + ',' + n.c[1] + ',' + n.c[2] + ',' + cfg.opacity + ')';
+                ctx.fill();
+            }
+        }
+
+        function loop(ts) {
+            animId = requestAnimationFrame(loop);
+            if (ts - lastTime < interval) return;
+            lastTime = ts - ((ts - lastTime) % interval);
+            update(); draw();
+        }
+
+        function init() {
+            var el = document.getElementById('molecular-background');
+            if (!el) return;
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                spd = 0.08; interval = 100;
+            }
+            canvas = document.createElement('canvas');
+            el.appendChild(canvas);
+            ctx = canvas.getContext('2d');
+            dpr = window.devicePixelRatio || 1;
+            resize(); initNodes(); loop(0);
+
+            document.addEventListener('mousemove', function (e) { mouse.x = e.clientX; mouse.y = e.clientY; }, { passive: true });
+            document.addEventListener('mouseleave', function () { mouse.x = mouse.y = -1000; });
+            window.addEventListener('resize', resize);
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden && animId) { cancelAnimationFrame(animId); animId = null; }
+                else if (!document.hidden && !animId) { lastTime = 0; animId = requestAnimationFrame(loop); }
+            });
+        }
+
+        document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
+    })();
+    </script>
+
+    <!-- UI JS -->
+    <script>
+    (function () {
+        var navbar = document.getElementById('navbar');
+        if (navbar) {
+            window.addEventListener('scroll', function () {
+                navbar.classList.toggle('scrolled', window.scrollY > 10);
+            });
+        }
+
+        var els = document.querySelectorAll('.reveal');
+        var obs = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        els.forEach(function (el) { obs.observe(el); });
+
+        document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+                var t = document.querySelector(this.getAttribute('href'));
+                if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        function animNum(el, target, suffix) {
+            var dur = 1800, start = performance.now();
+            function tick(now) {
+                var p = Math.min((now - start) / dur, 1);
+                var eased = 1 - Math.pow(1 - p, 3);
+                el.textContent = Math.floor(target * eased) + suffix;
+                if (p < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        }
+
+        var sObs = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                if (e.isIntersecting) {
+                    e.target.querySelectorAll('.stat-pill__num').forEach(function (el) {
+                        var t = parseInt(el.getAttribute('data-target'));
+                        var s = el.getAttribute('data-suffix') || '';
+                        if (t) animNum(el, t, s);
+                    });
+                    sObs.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.3 });
+
+        var sr = document.querySelector('.stats');
+        if (sr) sObs.observe(sr);
+
+        var burger = document.querySelector('.nav__burger');
+        var navLinks = document.querySelector('.nav__links');
+        if (burger && navLinks) {
+            burger.addEventListener('click', function() {
+                var isOpen = navLinks.classList.toggle('open');
+                burger.classList.toggle('active');
+                burger.setAttribute('aria-expanded', isOpen);
+            });
+            navLinks.querySelectorAll('a').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    navLinks.classList.remove('open');
+                    burger.classList.remove('active');
+                    burger.setAttribute('aria-expanded', 'false');
+                });
+            });
+        }
+    })();
+    </script>
+
+</body>
+</html>
