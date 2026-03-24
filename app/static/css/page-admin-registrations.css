@@ -1,11 +1,2 @@
 /* Стилі для сторінки реєстрацій заходу */
-
-/* ========== STATS BAR ========== */
-
-.admin-stats-bar {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-  font-size: 14px;
-  color: var(--iprm-text-light);
-}
+/* Компонент .admin-stats-bar перенесено до admin.css */

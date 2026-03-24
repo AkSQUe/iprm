@@ -390,6 +390,67 @@
   color: var(--iprm-text-light);
 }
 
+/* ========== TODO LIST (маркетинг, інтеграції) ========== */
+
+.admin-todo {
+  list-style: none;
+  padding: 0;
+}
+
+.admin-todo li {
+  position: relative;
+  padding: 8px 0 8px 24px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--iprm-text);
+  border-bottom: 1px solid var(--iprm-border);
+}
+
+.admin-todo li:last-child {
+  border-bottom: none;
+}
+
+.admin-todo li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--iprm-border);
+  border-radius: 3px;
+}
+
+/* ========== STATS BAR (реєстрації) ========== */
+
+.admin-stats-bar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  color: var(--iprm-text-light);
+}
+
+/* ========== PROGRAM BLOCKS (редагування заходу) ========== */
+
+.admin-program-block {
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.admin-program-block__header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-program-block__header .form-input {
+  flex: 1;
+}
+
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
