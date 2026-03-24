@@ -1,3 +1,4 @@
+import logging
 from flask import render_template, redirect, url_for, flash
 from flask_login import current_user
 from sqlalchemy.orm import joinedload
@@ -5,6 +6,8 @@ from app.admin import admin_bp
 from app.admin.decorators import admin_required
 from app.extensions import db
 from app.models.registration import EventRegistration
+
+audit_logger = logging.getLogger('audit')
 
 
 @admin_bp.route('/')
