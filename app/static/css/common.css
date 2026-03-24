@@ -161,6 +161,23 @@ a {
   flex-shrink: 0;
 }
 
+.iprm-header__admin-link {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--iprm-white);
+  padding: 3px 10px;
+  background: var(--iprm-dark);
+  border: 1px solid var(--iprm-dark);
+  border-radius: 6px;
+  transition: all var(--iprm-transition);
+}
+
+.iprm-header__admin-link:hover {
+  background: var(--iprm-text);
+  border-color: var(--iprm-text);
+  color: var(--iprm-white);
+}
+
 .iprm-header__auth-link {
   font-size: 13px;
   font-weight: 500;

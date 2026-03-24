@@ -5,6 +5,9 @@
     </a>
     <div class="iprm-header__actions">
       {% if current_user.is_authenticated %}
+        {% if current_user.is_admin %}
+          <a href="{{ url_for('admin.dashboard') }}" class="iprm-header__admin-link">Admin</a>
+        {% endif %}
         <span class="iprm-header__user">{{ current_user.first_name }}</span>
         <form method="POST" action="{{ url_for('auth.logout') }}" class="iprm-header__logout-form">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
