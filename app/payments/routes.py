@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from sqlalchemy.orm import joinedload
 
 from app.payments import payments_bp
-from app.extensions import db, limiter
+from app.extensions import db, limiter, csrf
 from app.models.registration import EventRegistration
 from app.services.liqpay import get_liqpay_service
 
@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 @payments_bp.route('/liqpay/callback', methods=['POST'])
+@csrf.exempt
 @limiter.limit('100 per hour;10 per minute')
 def liqpay_callback():
     data = request.form.get('data', '')

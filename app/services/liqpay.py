@@ -83,7 +83,12 @@ class LiqPayService:
             logger.warning('LiqPay callback: unknown order_id format: %s', order_id)
             return False, 'unknown order_id'
 
-        reg_id = int(order_id.split('-', 1)[1])
+        try:
+            reg_id = int(order_id.split('-', 1)[1])
+        except (ValueError, IndexError):
+            logger.warning('LiqPay callback: malformed order_id: %s', order_id)
+            return False, 'invalid order_id'
+
         reg = db.session.get(EventRegistration, reg_id)
         if not reg:
             logger.warning('LiqPay callback: registration %d not found', reg_id)
@@ -96,6 +101,34 @@ class LiqPayService:
         if not new_status:
             logger.warning('LiqPay callback: unknown status %s', liqpay_status)
             return False, f'unknown status: {liqpay_status}'
+
+        # Validate payment amount matches expected
+        callback_amount = payload.get('amount')
+        if new_status == 'paid' and reg.payment_amount:
+            try:
+                if abs(float(callback_amount) - float(reg.payment_amount)) > 0.01:
+                    logger.warning(
+                        'LiqPay callback: amount mismatch REG-%d: expected %s, got %s',
+                        reg_id, reg.payment_amount, callback_amount,
+                    )
+                    return False, 'amount mismatch'
+            except (TypeError, ValueError):
+                logger.warning('LiqPay callback: invalid amount for REG-%d', reg_id)
+                return False, 'invalid amount'
+
+        # State transition guard: prevent regression
+        allowed = {
+            'unpaid': {'pending', 'paid', 'refunded'},
+            'pending': {'paid', 'refunded'},
+            'paid': {'refunded'},
+            'refunded': set(),
+        }
+        if new_status not in allowed.get(reg.payment_status, set()):
+            logger.warning(
+                'LiqPay callback: invalid transition %s -> %s for REG-%d',
+                reg.payment_status, new_status, reg_id,
+            )
+            return True, 'no-op transition'
 
         reg.payment_status = new_status
         reg.payment_id = payment_id
