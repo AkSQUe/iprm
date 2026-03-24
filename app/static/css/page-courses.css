@@ -54,6 +54,12 @@
   border-radius: 10px;
 }
 
+.iprm-tag--accent {
+  color: var(--iprm-accent);
+  background: var(--iprm-accent-light);
+  border-color: var(--iprm-accent-light);
+}
+
 @media (max-width: 768px) {
   .iprm-course-cards {
     grid-template-columns: 1fr;

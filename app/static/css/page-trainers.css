@@ -61,14 +61,7 @@
 }
 
 .iprm-trainer-card__exp {
-  display: inline-block;
   margin-top: 8px;
-  padding: 3px 12px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--iprm-accent);
-  background: var(--iprm-accent-light);
-  border-radius: 10px;
   align-self: flex-start;
 }
 
