@@ -29,8 +29,8 @@
 
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Аудиторія</p>
-      <a href="{{ url_for('admin.clients') }}" class="admin-sidebar__link{% if ep == 'admin.clients' %} admin-sidebar__link--active{% endif %}">
-        Клієнти
+      <a href="{{ url_for('admin.users') }}" class="admin-sidebar__link{% if ep == 'admin.users' %} admin-sidebar__link--active{% endif %}">
+        Користувачі
       </a>
       <a href="{{ url_for('admin.reviews') }}" class="admin-sidebar__link{% if ep == 'admin.reviews' %} admin-sidebar__link--active{% endif %}">
         Відгуки

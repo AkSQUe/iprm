@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Користувачі | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+    <div class="admin-hero">
+      <div>
+        <h1 class="admin-hero__title">Користувачі</h1>
+        <p class="admin-hero__subtitle">Всього: {{ users | length }}</p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    {% if users %}
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Ім'я</th>
+          <th>Email</th>
+          <th>Реєстрацій</th>
+          <th>Останній вхід</th>
+          <th>Дата реєстрації</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>{{ user.id }}</td>
+          <td>
+            <strong>{{ user.first_name or '' }} {{ user.last_name or '' }}</strong>
+            {% if user.is_admin %}
+              <span class="badge badge--active">admin</span>
+            {% endif %}
+          </td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.registrations.count() }}</td>
+          <td>
+            {% if user.last_login_at %}
+              {{ user.last_login_at.strftime('%d.%m.%Y %H:%M') }}
+            {% else %}
+              <span class="admin-text-muted">--</span>
+            {% endif %}
+          </td>
+          <td>{{ user.created_at.strftime('%d.%m.%Y') }}</td>
+          <td>
+            {% if user.is_active %}
+              <span class="badge badge--active">Активний</span>
+            {% else %}
+              <span class="badge badge--cancelled">Неактивний</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div class="admin-empty">
+      <h3 class="admin-empty__title">Користувачів ще немає</h3>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
