@@ -47,16 +47,21 @@
   </nav>
 </header>
 <script>
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
   var dd = document.querySelector('.iprm-nav__dropdown');
   if (!dd) return;
   var btn = dd.querySelector('.iprm-nav__dropdown-toggle');
+  if (!btn) return;
   btn.addEventListener('click', function(e) {
+    e.preventDefault();
     e.stopPropagation();
     dd.classList.toggle('open');
+  });
+  dd.addEventListener('click', function(e) {
+    e.stopPropagation();
   });
   document.addEventListener('click', function() {
     dd.classList.remove('open');
   });
-})();
+});
 </script>
