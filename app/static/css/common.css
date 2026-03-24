@@ -306,10 +306,17 @@ a {
   padding: 6px 0;
   min-width: 180px;
   z-index: 9999;
+  pointer-events: auto;
+  isolation: isolate;
 }
 
 .iprm-nav__dropdown.open .iprm-nav__dropdown-menu {
   display: block;
+}
+
+.iprm-nav__dropdown-menu li {
+  position: relative;
+  z-index: 1;
 }
 
 .iprm-nav__dropdown-menu li a {
@@ -318,7 +325,12 @@ a {
   font-size: 13px;
   font-weight: 500;
   color: var(--iprm-text);
+  text-decoration: none;
   white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
   transition: background var(--iprm-transition), color var(--iprm-transition);
 }
 
