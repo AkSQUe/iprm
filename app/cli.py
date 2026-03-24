@@ -208,5 +208,9 @@ def seed_courses():
 
         click.echo(f'  + Захід: {event.title} ({len(program_data)} блоків програми)')
 
-    db.session.commit()
-    click.echo('Seed завершено.')
+    try:
+        db.session.commit()
+        click.echo('Seed завершено.')
+    except Exception as e:
+        db.session.rollback()
+        click.echo(f'Помилка при збереженні: {e}', err=True)
