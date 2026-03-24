@@ -18,6 +18,17 @@
   "url": "{{ url_for('trainers.trainer_detail', slug=trainer.slug, _external=True) }}"
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "IPRM", "item": "{{ url_for('main.index', _external=True) }}"},
+    {"@type": "ListItem", "position": 2, "name": "Тренери", "item": "{{ url_for('trainers.trainer_list', _external=True) }}"},
+    {"@type": "ListItem", "position": 3, "name": "{{ trainer.full_name }}"}
+  ]
+}
+</script>
 {% endblock %}
 
 {% block extra_css %}
