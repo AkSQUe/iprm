@@ -398,12 +398,7 @@ def registrations_all():
 @admin_bp.route('/payments')
 @admin_required
 def payments():
-    return render_template(
-        'admin/stub.html',
-        admin_section='payments',
-        page_title='Платежі',
-        page_subtitle='Управління платежами та транзакціями',
-    )
+    return redirect(url_for('admin.liqpay'))
 
 
 @admin_bp.route('/liqpay')

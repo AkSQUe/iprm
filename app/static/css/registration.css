@@ -132,6 +132,42 @@
   font-size: 14px;
 }
 
+.reg-liqpay-payment {
+  background: var(--iprm-card-bg);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  padding: 28px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.reg-liqpay-payment__label {
+  font-size: 15px;
+  color: var(--iprm-text);
+  margin-bottom: 16px;
+}
+
+.reg-liqpay-payment__btn {
+  font-size: 16px;
+  padding: 10px 32px;
+}
+
+.reg-liqpay-payment__note {
+  font-size: 12px;
+  color: var(--iprm-text-light);
+  margin-top: 12px;
+}
+
+.reg-liqpay-payment--processing {
+  border-color: var(--iprm-accent);
+  border-style: dashed;
+}
+
+.reg-liqpay-payment--processing p {
+  color: var(--iprm-text-light);
+  font-size: 14px;
+}
+
 @media (max-width: 768px) {
   .reg-layout {
     padding: 20px 16px;
