@@ -40,6 +40,10 @@ class EventRegistration(TimestampMixin, db.Model):
             "payment_status IN ('unpaid', 'pending', 'paid', 'refunded')",
             name='ck_registrations_payment_status',
         ),
+        db.CheckConstraint(
+            'experience_years >= 0',
+            name='ck_registrations_experience_non_negative',
+        ),
     )
 
     STATUSES = [

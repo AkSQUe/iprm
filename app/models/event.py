@@ -46,6 +46,7 @@ class Event(TimestampMixin, db.Model):
             "status IN ('draft', 'published', 'active', 'completed', 'cancelled')",
             name='ck_events_status',
         ),
+        db.CheckConstraint('price >= 0', name='ck_events_price_non_negative'),
     )
 
     creator = db.relationship('User', foreign_keys=[created_by])

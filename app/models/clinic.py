@@ -11,7 +11,7 @@ class Clinic(TimestampMixin, db.Model):
     short_description = db.Column(db.String(500))
     description = db.Column(db.Text)
     photo = db.Column(db.String(500))
-    sort_order = db.Column(db.Integer, default=0)
+    sort_order = db.Column(db.Integer, default=0, index=True)
     is_active = db.Column(db.Boolean, default=True, index=True)
 
     def __repr__(self):
