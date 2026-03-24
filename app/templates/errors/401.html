@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}IPRM - 401{% endblock %}
+{% block title %}Потрібна авторизація | IPRM{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/page-404.css') }}">

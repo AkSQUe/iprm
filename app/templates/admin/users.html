@@ -31,6 +31,7 @@
           <th>Останній вхід</th>
           <th>Дата реєстрації</th>
           <th>Статус</th>
+          <th>Дії</th>
         </tr>
       </thead>
       <tbody>
@@ -58,6 +59,20 @@
               <span class="badge badge--active">Активний</span>
             {% else %}
               <span class="badge badge--cancelled">Неактивний</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if user.id != current_user.id %}
+            <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" onsubmit="return confirm('{{ 'Зняти адмін-повноваження?' if user.is_admin else 'Надати адмін-повноваження?' }}')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              {% if user.is_admin %}
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Зняти адмін</button>
+              {% else %}
+                <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Зробити адміном</button>
+              {% endif %}
+            </form>
+            {% else %}
+              <span class="admin-text-muted">--</span>
             {% endif %}
           </td>
         </tr>
