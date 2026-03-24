@@ -318,6 +318,50 @@
     <p class="ds-hint">.iprm-btn--secondary: bg white / border: 1px solid var(--iprm-border) / color: var(--iprm-text)</p>
   </div>
 
+  <!-- ===== ADMIN TODO LIST ===== -->
+  <div class="ds-section" id="admin-todo">
+    <p class="ds-label">Admin Components</p>
+    <h2 class="ds-title">Todo List (адмін)</h2>
+    <div class="form-section" style="margin-bottom: 24px;">
+      <ul class="admin-todo">
+        <li>Перший пункт завдання</li>
+        <li>Другий пункт завдання</li>
+        <li>Третій пункт завдання</li>
+      </ul>
+    </div>
+    <p class="ds-hint">.admin-todo: list-style none / checkbox-like ::before / border-bottom separator</p>
+  </div>
+
+  <!-- ===== ADMIN STATS BAR ===== -->
+  <div class="ds-section" id="admin-stats-bar">
+    <p class="ds-label">Admin Components</p>
+    <h2 class="ds-title">Stats Bar (адмін)</h2>
+    <div class="admin-stats-bar" style="margin-bottom: 24px;">
+      <span>Всього: <strong>42</strong></span>
+      <span>Підтверджено: <strong>35</strong></span>
+      <span>Очікує: <strong>7</strong></span>
+    </div>
+    <p class="ds-hint">.admin-stats-bar: flex / gap: 16px / font-size: 14px / color: var(--iprm-text-light)</p>
+  </div>
+
+  <!-- ===== ADMIN PROGRAM BLOCK ===== -->
+  <div class="ds-section" id="admin-program-block">
+    <p class="ds-label">Admin Components</p>
+    <h2 class="ds-title">Program Block (адмін)</h2>
+    <div class="admin-program-block" style="margin-bottom: 24px;">
+      <div class="admin-form__grid">
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>Заголовок блоку</label>
+          <div class="admin-program-block__header">
+            <input type="text" class="form-input" value="Теоретична частина" readonly>
+            <button type="button" class="btn-admin btn-admin--danger btn-admin--sm">X</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">.admin-program-block: bg white / border / padding: 20px / header flex with remove button</p>
+  </div>
+
   <!-- ===== FOOTER ===== -->
   <div class="ds-section" id="footer">
     <p class="ds-label">Components</p>
