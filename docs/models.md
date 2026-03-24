@@ -71,10 +71,53 @@
 | `items` | JSON | Масив пунктів програми |
 | `sort_order` | Integer | Порядок відображення |
 
+## EventRegistration
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ |
+| `user_id` | FK -> users.id | Користувач |
+| `event_id` | FK -> events.id | Захід |
+| `phone` | String(20) | Телефон |
+| `specialty` | String(200) | Спеціальність |
+| `workplace` | String(300) | Місце роботи |
+| `experience_years` | Integer | Стаж (років) |
+| `license_number` | String(50) | Номер ліцензії |
+| `status` | String(20) | pending, confirmed, cancelled, completed |
+| `payment_status` | String(20) | unpaid, pending, paid, refunded |
+| `payment_amount` | Numeric(10,2) | Сума оплати |
+| `payment_id` | String(255) | ID транзакції LiqPay |
+| `paid_at` | DateTime (UTC) | Дата оплати |
+| `attended` | Boolean | Відвідав |
+| `cpd_points_awarded` | Integer | Нараховані бали БПР |
+| `admin_notes` | Text | Нотатки адміна |
+
+Unique: (user_id, event_id)
+
 ## Зв'язки
 
 ```
-User 1--* Event          (created_by)
-Trainer 1--* Event       (trainer_id)
-Event 1--* ProgramBlock  (event_id, cascade delete)
+User 1--* Event              (created_by)
+User 1--* EventRegistration  (user_id)
+Trainer 1--* Event           (trainer_id)
+Event 1--* ProgramBlock      (event_id, cascade delete)
+Event 1--* EventRegistration (event_id, cascade delete)
+```
+
+## Потік оплати (LiqPay)
+
+```
+Реєстрація -> status=pending, payment_status=unpaid
+    |
+    v
+Кнопка "Оплатити" -> форма POST на LiqPay checkout
+    |
+    v
+LiqPay webhook -> POST /payments/liqpay/callback
+    |  (валідація підпису, оновлення БД)
+    v
+payment_status=paid, status=confirmed, paid_at=now
+    |
+    v
+Redirect -> /payments/success (server-side верифікація check_status)
 ```
