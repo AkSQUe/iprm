@@ -239,6 +239,85 @@
     <p class="ds-hint">Stacked blocks / middot bullets / gap: 12px between blocks</p>
   </div>
 
+  <!-- ===== EMPTY STATE ===== -->
+  <div class="ds-section" id="empty-state">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Порожній стан</h2>
+    <div class="iprm-empty-state" style="background: var(--iprm-card-bg); border-radius: var(--iprm-radius); margin-bottom: 24px;">
+      <p>Iнформація скоро з'явиться</p>
+    </div>
+    <p class="ds-hint">text-align: center / padding: 48px 24px / color: var(--iprm-text-light) / font-size: 15px</p>
+  </div>
+
+  <!-- ===== BADGES ===== -->
+  <div class="ds-section" id="badges">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Бейджі статусу</h2>
+    <div class="ds-row" style="margin-bottom: 24px;">
+      <span class="badge badge--draft">Чернетка</span>
+      <span class="badge badge--published">Опубліковано</span>
+      <span class="badge badge--active">Активний</span>
+      <span class="badge badge--completed">Завершено</span>
+      <span class="badge badge--cancelled">Скасовано</span>
+    </div>
+    <p class="ds-hint">padding: 3px 10px / font-size: 12px / border-radius: 10px / CSS-змінні --iprm-badge-*</p>
+    <h3 class="ds-section-heading">Tag-модифікатори</h3>
+    <div class="ds-row">
+      <span class="iprm-tag">Звичайний тег</span>
+      <span class="iprm-tag iprm-tag--accent">Accent тег</span>
+    </div>
+    <p class="ds-hint">.iprm-tag--accent: bg: var(--iprm-accent-light) / color: var(--iprm-accent)</p>
+  </div>
+
+  <!-- ===== ALERTS ===== -->
+  <div class="ds-section" id="alerts">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Алерти / повідомлення</h2>
+    <div class="ds-col" style="max-width: 600px; margin-bottom: 24px;">
+      <div class="alert alert--error">Помилка: щось пішло не так</div>
+      <div class="alert alert--success">Операцію виконано успішно</div>
+      <div class="alert alert--info">Зверніть увагу на цю інформацію</div>
+    </div>
+    <p class="ds-hint">padding: 12px 16px / border-radius: var(--iprm-radius-sm) / CSS-змінні --iprm-error-*, --iprm-success-*, --iprm-info-*</p>
+  </div>
+
+  <!-- ===== FORM SECTION ===== -->
+  <div class="ds-section" id="form-section">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Секція форми</h2>
+    <div class="form-section" style="margin-bottom: 24px;">
+      <h3 class="form-section__title">Заголовок секції</h3>
+      <div class="form-section__grid">
+        <div class="form-group">
+          <label>Поле 1 <span class="required">*</span></label>
+          <input type="text" class="form-input" placeholder="Введіть значення">
+        </div>
+        <div class="form-group">
+          <label>Поле 2</label>
+          <input type="text" class="form-input" placeholder="Введіть значення">
+        </div>
+        <div class="form-group form-section__full">
+          <label>Поле на всю ширину</label>
+          <input type="text" class="form-input" placeholder="Широке поле">
+          <div class="form-hint">Підказка для поля</div>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">bg: var(--iprm-card-bg) / padding: 28px / grid: 2col / input: 10px 14px / focus: accent ring</p>
+  </div>
+
+  <!-- ===== SECONDARY BUTTON ===== -->
+  <div class="ds-section" id="secondary-btn">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Кнопка Secondary</h2>
+    <div class="ds-row" style="margin-bottom: 24px;">
+      <a href="#" class="iprm-btn iprm-btn--primary"><span class="iprm-btn__arrow">&#x2197;</span> Primary</a>
+      <a href="#" class="iprm-btn iprm-btn--secondary">Secondary</a>
+      <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--disabled"><span class="iprm-btn__arrow">&#x2197;</span> Disabled</a>
+    </div>
+    <p class="ds-hint">.iprm-btn--secondary: bg white / border: 1px solid var(--iprm-border) / color: var(--iprm-text)</p>
+  </div>
+
   <!-- ===== FOOTER ===== -->
   <div class="ds-section" id="footer">
     <p class="ds-label">Components</p>
