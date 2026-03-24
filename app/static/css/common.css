@@ -761,6 +761,17 @@ a {
   filter: brightness(0) saturate(100%) invert(30%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(90%);
 }
 
+.iprm-footer__link {
+  font-size: 13px;
+  color: var(--iprm-text-light);
+  text-decoration: none;
+  transition: color var(--iprm-transition);
+}
+
+.iprm-footer__link:hover {
+  color: var(--iprm-accent);
+}
+
 .iprm-footer__phone {
   font-size: 14px;
   font-weight: 500;
