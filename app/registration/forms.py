@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, IntegerField
+from wtforms import StringField, IntegerField, BooleanField
 from wtforms.validators import DataRequired, Length, Optional, NumberRange
 
 
@@ -29,3 +29,7 @@ class EventRegistrationForm(FlaskForm):
         validators=[Optional(), Length(max=50)],
         render_kw={'placeholder': 'Номер ліцензії лікаря'},
     )
+    consent_data = BooleanField(
+        validators=[DataRequired(message='Необхідно надати згоду на обробку персональних даних')],
+    )
+    consent_marketing = BooleanField()

@@ -90,6 +90,25 @@
       </div>
     </div>
 
+    <div class="form-consent">
+      <div class="form-checkbox">
+        {{ form.consent_data(id="consent_data") }}
+        <label for="consent_data">
+          Я надаю згоду на обробку моїх персональних даних (прізвище, ім'я, електронна пошта, номер телефону, спеціальність, місце роботи) з метою оформлення та виконання реєстрації на захід, а також обробки платежу через платіжну систему LiqPay. Ознайомлений(а) з <a href="{{ url_for('main.privacy') }}" target="_blank">Політикою конфіденційності</a>. <span class="required">*</span>
+        </label>
+      </div>
+      {% for error in form.consent_data.errors %}
+        <div class="form-error">{{ error }}</div>
+      {% endfor %}
+
+      <div class="form-checkbox">
+        {{ form.consent_marketing(id="consent_marketing") }}
+        <label for="consent_marketing">
+          Я надаю згоду на отримання інформації про акції, спеціальні пропозиції та новини від ПО "ІПРМ" на вказану електронну адресу та/або номер телефону. Цю згоду можна відкликати в будь-який момент.
+        </label>
+      </div>
+    </div>
+
     <div class="reg-actions">
       <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-btn iprm-btn--secondary">Назад</a>
       <button type="submit" class="iprm-btn iprm-btn--primary">

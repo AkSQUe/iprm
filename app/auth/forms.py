@@ -83,6 +83,10 @@ class RegistrationForm(FlaskForm):
         }
     )
 
+    consent_data = BooleanField(
+        validators=[DataRequired(message='Необхідно надати згоду на обробку персональних даних')],
+    )
+
     def validate_email(self, field):
         if User.query.filter_by(email=field.data.lower().strip()).first():
             raise ValidationError('Неможливо використати цей email')
