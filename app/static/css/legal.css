@@ -7,8 +7,6 @@
 }
 
 .legal-page__inner {
-  max-width: 800px;
-  margin: 0 auto;
   background: var(--iprm-white);
   border-radius: var(--iprm-radius);
   padding: 48px 40px;
@@ -36,7 +34,8 @@
   color: var(--iprm-text);
   margin-bottom: 32px;
   padding: 20px 24px;
-  background: var(--iprm-card-bg);
+  background: var(--iprm-accent-light);
+  border-left: 3px solid var(--iprm-accent);
   border-radius: var(--iprm-radius-sm);
 }
 
@@ -51,8 +50,9 @@
   font-weight: 700;
   color: var(--iprm-dark);
   margin-bottom: 16px;
-  padding-bottom: 8px;
+  padding: 0 0 8px 14px;
   border-bottom: 1px solid var(--iprm-border);
+  border-left: 3px solid var(--iprm-accent);
 }
 
 .legal-section h3 {
@@ -67,6 +67,11 @@
   line-height: 1.7;
   color: var(--iprm-text);
   margin-bottom: 10px;
+}
+
+.legal-section p strong {
+  color: var(--iprm-accent);
+  font-weight: 600;
 }
 
 .legal-section ul,
