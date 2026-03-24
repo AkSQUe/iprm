@@ -76,48 +76,57 @@
 | Поле | Тип | Опис |
 |------|-----|------|
 | `id` | BigInteger | Первинний ключ |
-| `user_id` | FK -> users.id | Користувач |
-| `event_id` | FK -> events.id | Захід |
+| `user_id` | FK -> users.id (CASCADE) | Користувач |
+| `event_id` | FK -> events.id (CASCADE) | Захід |
 | `phone` | String(20) | Телефон |
 | `specialty` | String(200) | Спеціальність |
 | `workplace` | String(300) | Місце роботи |
 | `experience_years` | Integer | Стаж (років) |
 | `license_number` | String(50) | Номер ліцензії |
-| `status` | String(20) | pending, confirmed, cancelled, completed |
-| `payment_status` | String(20) | unpaid, pending, paid, refunded |
+| `status` | String(20) | Статус: pending, confirmed, cancelled, completed |
+| `payment_status` | String(20) | Статус оплати: unpaid, pending, paid, refunded |
 | `payment_amount` | Numeric(10,2) | Сума оплати |
-| `payment_id` | String(255) | ID транзакції LiqPay |
+| `payment_id` | String(255) | ID платежу (LiqPay) |
 | `paid_at` | DateTime (UTC) | Дата оплати |
-| `attended` | Boolean | Відвідав |
+| `attended` | Boolean | Чи відвідав захід |
 | `cpd_points_awarded` | Integer | Нараховані бали БПР |
-| `admin_notes` | Text | Нотатки адміна |
+| `admin_notes` | Text | Нотатки адміністратора |
+| `created_at` | DateTime (UTC) | TimestampMixin |
+| `updated_at` | DateTime (UTC) | TimestampMixin |
 
-Unique: (user_id, event_id)
+## Clinic
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ |
+| `name` | String(300) | Назва клініки |
+| `slug` | String(200) | URL-slug, унікальний |
+| `short_description` | String(500) | Короткий опис |
+| `description` | Text | Повний опис |
+| `photo` | String(500) | Фото клініки |
+| `sort_order` | Integer | Порядок сортування |
+| `is_active` | Boolean | Активна |
+| `created_at` | DateTime (UTC) | TimestampMixin |
+| `updated_at` | DateTime (UTC) | TimestampMixin |
 
 ## Зв'язки
 
 ```
 User 1--* Event              (created_by)
-User 1--* EventRegistration  (user_id)
+User 1--* EventRegistration  (user_id, CASCADE)
 Trainer 1--* Event           (trainer_id)
-Event 1--* ProgramBlock      (event_id, cascade delete)
-Event 1--* EventRegistration (event_id, cascade delete)
+Event 1--* ProgramBlock      (event_id, CASCADE delete-orphan)
+Event 1--* EventRegistration (event_id, CASCADE)
 ```
 
-## Потік оплати (LiqPay)
+## Constraints
 
-```
-Реєстрація -> status=pending, payment_status=unpaid
-    |
-    v
-Кнопка "Оплатити" -> форма POST на LiqPay checkout
-    |
-    v
-LiqPay webhook -> POST /payments/liqpay/callback
-    |  (валідація підпису, оновлення БД)
-    v
-payment_status=paid, status=confirmed, paid_at=now
-    |
-    v
-Redirect -> /payments/success (server-side верифікація check_status)
-```
+- `uq_user_event_registration` - один користувач = одна реєстрація на захід
+- `ck_events_event_type` - валідація типу заходу
+- `ck_events_event_format` - валідація формату
+- `ck_events_status` - валідація статусу
+- `ck_events_price_non_negative` - ціна >= 0
+- `ck_registrations_status` - валідація статусу реєстрації
+- `ck_registrations_payment_status` - валідація статусу оплати
+- `ck_registrations_experience_non_negative` - стаж >= 0
+- `ck_trainers_experience_non_negative` - стаж >= 0

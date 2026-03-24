@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Оплату підтверджено | IPRM{% endblock %}
+{% block title %}Оплата успішна | IPRM{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}">
@@ -11,7 +11,7 @@
 
   <div class="reg-confirmation">
     <h1 class="reg-confirmation__title">Оплату підтверджено</h1>
-    <p class="reg-confirmation__subtitle">Дякуємо! Вашу реєстрацію на курс підтверджено.</p>
+    <p class="reg-confirmation__subtitle">Дякуємо! Ваша оплата успішно оброблена.</p>
   </div>
 
   <div class="reg-status-card">
@@ -26,16 +26,13 @@
     </div>
     {% endif %}
     <div class="reg-status-card__row">
-      <span class="reg-status-card__label">Оплата</span>
-      <span class="reg-status-card__value">
-        {{ reg.payment_amount | int }} &#8372; &mdash;
-        <span class="badge badge--active">Оплачено</span>
-      </span>
+      <span class="reg-status-card__label">Сума</span>
+      <span class="reg-status-card__value">{{ reg.payment_amount | int }} &#8372;</span>
     </div>
     <div class="reg-status-card__row">
       <span class="reg-status-card__label">Статус</span>
       <span class="reg-status-card__value">
-        <span class="badge badge--active">Підтверджено</span>
+        <span class="badge badge--active">{{ reg.payment_status_label }}</span>
       </span>
     </div>
   </div>

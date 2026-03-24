@@ -11,19 +11,33 @@
 
   <div class="reg-confirmation">
     <h1 class="reg-confirmation__title">Оплату не завершено</h1>
-    <p class="reg-confirmation__subtitle">На жаль, оплата не пройшла. Ви можете спробувати ще раз.</p>
+    <p class="reg-confirmation__subtitle">На жаль, оплата не була успішною. Спробуйте ще раз або зверніться до підтримки.</p>
+  </div>
+
+  {% if reg %}
+  <div class="reg-status-card">
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">Курс</span>
+      <span class="reg-status-card__value">{{ reg.event.title }}</span>
+    </div>
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">Сума</span>
+      <span class="reg-status-card__value">{{ reg.payment_amount | int }} &#8372;</span>
+    </div>
   </div>
 
   <div class="reg-actions reg-actions--center">
-    {% if reg %}
     <a href="{{ url_for('registration.confirmation', registration_id=reg.id) }}" class="iprm-btn iprm-btn--primary">
-      Спробувати ще раз
-    </a>
-    {% endif %}
-    <a href="{{ url_for('main.index') }}" class="iprm-btn iprm-btn--secondary">
-      На головну
+      Повернутися до реєстрації
     </a>
   </div>
+  {% else %}
+  <div class="reg-actions reg-actions--center">
+    <a href="{{ url_for('courses.course_list') }}" class="iprm-btn iprm-btn--primary">
+      Повернутися до курсів
+    </a>
+  </div>
+  {% endif %}
 
 </div>
 {% endblock %}
