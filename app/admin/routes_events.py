@@ -184,9 +184,11 @@ def event_edit(event_id):
 def event_delete(event_id):
     event = db.session.get(Event, event_id)
     if event:
+        title = event.title
         db.session.delete(event)
         try:
             db.session.commit()
+            audit_logger.info('Admin %s deleted event %s (%s)', current_user.email, event_id, title)
             flash('Захід видалено', 'success')
         except Exception:
             db.session.rollback()
