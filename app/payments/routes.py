@@ -40,9 +40,9 @@ def success():
         return redirect(url_for('main.index'))
 
     reg_id = int(order_id.split('-', 1)[1])
-    reg = EventRegistration.query.options(
+    reg = db.session.query(EventRegistration).options(
         joinedload(EventRegistration.event),
-    ).get(reg_id)
+    ).filter_by(id=reg_id).first()
 
     if not reg or reg.user_id != current_user.id:
         abort(404)
@@ -81,9 +81,9 @@ def failure():
 
     if order_id.startswith('REG-'):
         reg_id = int(order_id.split('-', 1)[1])
-        reg = EventRegistration.query.options(
+        reg = db.session.query(EventRegistration).options(
             joinedload(EventRegistration.event),
-        ).get(reg_id)
+        ).filter_by(id=reg_id).first()
         if reg and reg.user_id != current_user.id:
             reg = None
 

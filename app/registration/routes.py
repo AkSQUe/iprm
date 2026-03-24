@@ -67,9 +67,9 @@ def register(event_id):
 @registration_bp.route('/<int:registration_id>')
 @login_required
 def confirmation(registration_id):
-    reg = EventRegistration.query.options(
+    reg = db.session.query(EventRegistration).options(
         joinedload(EventRegistration.event),
-    ).get(registration_id)
+    ).filter_by(id=registration_id).first()
     if not reg or reg.user_id != current_user.id:
         abort(404)
 
