@@ -30,7 +30,7 @@
   <nav>
     <ul class="iprm-nav">
       <li><a href="{{ url_for('main.index') }}"{% if active_nav == 'labs' %} class="iprm-nav--active"{% endif %}>Лабораторії</a></li>
-      <li><a href="{{ url_for('courses.course_list') }}"{% if active_nav == 'clinics' %} class="iprm-nav--active"{% endif %}>Клініки</a></li>
+      <li><a href="{{ url_for('clinics.clinic_list') }}"{% if active_nav == 'clinics' %} class="iprm-nav--active"{% endif %}>Клініки</a></li>
       <li><a href="{{ url_for('courses.course_list') }}"{% if active_nav == 'courses' %} class="iprm-nav--active"{% endif %}>Курси інституту</a></li>
       <li><a href="{{ url_for('trainers.trainer_list') }}"{% if active_nav == 'trainers' %} class="iprm-nav--active"{% endif %}>Тренери</a></li>
     </ul>
