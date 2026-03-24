@@ -2,6 +2,40 @@
 
 {% block title %}{{ event.title }} | IPRM{% endblock %}
 {% block meta_description %}{{ event.subtitle or event.short_description or event.title }}{% endblock %}
+{% block og_type %}website{% endblock %}
+
+{% block jsonld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Course",
+  "name": "{{ event.title }}",
+  "description": "{{ event.subtitle or event.short_description or '' }}",
+  "provider": {
+    "@type": "EducationalOrganization",
+    "name": "IPRM",
+    "url": "{{ url_for('main.index', _external=True) }}"
+  },
+  {% if event.price and event.price > 0 %}
+  "offers": {
+    "@type": "Offer",
+    "price": "{{ event.price }}",
+    "priceCurrency": "UAH",
+    "availability": "https://schema.org/InStock"
+  },
+  {% endif %}
+  {% if event.trainer %}
+  "instructor": {
+    "@type": "Person",
+    "name": "{{ event.trainer.full_name }}",
+    "jobTitle": "{{ event.trainer.role or '' }}"
+  },
+  {% endif %}
+  "inLanguage": "uk",
+  "url": "{{ url_for('courses.course_by_slug', slug=event.slug, _external=True) }}"
+}
+</script>
+{% endblock %}
 
 {% block extra_css %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}">

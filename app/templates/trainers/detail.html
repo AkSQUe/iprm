@@ -3,6 +3,23 @@
 {% block title %}{{ trainer.full_name }} | IPRM{% endblock %}
 {% block meta_description %}{{ trainer.role or trainer.full_name }}. Тренер Інституту Плазмотерапії та Регенеративної Медицини.{% endblock %}
 
+{% block jsonld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "{{ trainer.full_name }}",
+  "jobTitle": "{{ trainer.role or '' }}",
+  {% if trainer.bio %}"description": "{{ trainer.bio[:200] }}",{% endif %}
+  "worksFor": {
+    "@type": "EducationalOrganization",
+    "name": "IPRM"
+  },
+  "url": "{{ url_for('trainers.trainer_detail', slug=trainer.slug, _external=True) }}"
+}
+</script>
+{% endblock %}
+
 {% block extra_css %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}">

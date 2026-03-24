@@ -11,7 +11,26 @@
   <meta property="og:type" content="{% block og_type %}website{% endblock %}">
   <meta property="og:locale" content="uk_UA">
   <meta property="og:site_name" content="IPRM">
+  <link rel="canonical" href="{% block canonical %}{{ request.url }}{% endblock %}">
   {% block extra_meta %}{% endblock %}
+  {% block jsonld %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "IPRM",
+    "alternateName": "Інститут Плазмотерапії та Регенеративної Медицини",
+    "url": "{{ url_for('main.index', _external=True) }}",
+    "logo": "{{ url_for('static', filename='svg/IPRM-logo-complex.svg', _external=True) }}",
+    "telephone": "+380660976693",
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "UA",
+      "addressLocality": "Київ"
+    }
+  }
+  </script>
+  {% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/molecular-background.css') }}">
