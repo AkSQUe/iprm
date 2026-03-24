@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IPRM - Інститут Плазмотерапії та Регенеративної Медицини. Демо у стилі Apple.">
+    <title>IPRM - Apple Style Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --black: #1d1d1f;
+            --dark: #1a1a2e;
+            --gray-dark: #424245;
+            --gray: #86868b;
+            --gray-light: #d2d2d7;
+            --white: #fbfbfd;
+            --accent: #7055a4;
+            --accent-hover: #5d4691;
+            --accent-light: #ede9f6;
+            --orange: #e8913a;
+            --orange-light: #fef0e6;
+            --section-bg: #f5f5f7;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 72px;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--black);
+            background: #fff;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+
+        /* ========== NAV ========== */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(251, 251, 253, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            transition: background 0.3s;
+        }
+
+        nav.scrolled {
+            background: rgba(251, 251, 253, 0.92);
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--black);
+            text-decoration: none;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-logo span {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-size: 0.8125rem;
+            font-weight: 400;
+            color: var(--gray-dark);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        .nav-cta {
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: #fff;
+            background: var(--accent);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 980px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .nav-cta:hover {
+            background: var(--accent-hover);
+        }
+
+        /* ========== HERO ========== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 24px 80px;
+            background: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(112, 85, 164, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -100px;
+            left: -100px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(232, 145, 58, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--accent);
+            background: var(--accent-light);
+            padding: 6px 16px;
+            border-radius: 980px;
+            margin-bottom: 24px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.8s ease forwards;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 7vw, 4.5rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.08;
+            max-width: 900px;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 0.8s ease 0.15s forwards;
+        }
+
+        .hero h1 .gradient-text {
+            background: linear-gradient(135deg, var(--accent) 0%, #9b59b6 40%, var(--orange) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: clamp(1.0625rem, 2.5vw, 1.3125rem);
+            font-weight: 400;
+            color: var(--gray);
+            max-width: 640px;
+            line-height: 1.55;
+            margin-top: 20px;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 0.8s ease 0.3s forwards;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 40px;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 0.8s ease 0.45s forwards;
+        }
+
+        .btn-primary {
+            font-size: 1.0625rem;
+            font-weight: 500;
+            color: #fff;
+            background: var(--accent);
+            border: none;
+            padding: 14px 32px;
+            border-radius: 980px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: scale(1.02);
+        }
+
+        .btn-secondary {
+            font-size: 1.0625rem;
+            font-weight: 500;
+            color: var(--accent);
+            background: transparent;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 980px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .btn-secondary:hover {
+            color: var(--accent-hover);
+        }
+
+        .btn-secondary::after {
+            content: ' >';
+        }
+
+        /* ========== SECTION COMMON ========== */
+        .section {
+            padding: 120px 24px;
+        }
+
+        .section-dark {
+            background: var(--dark);
+            color: #fff;
+        }
+
+        .section-gray {
+            background: var(--section-bg);
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 780px;
+            margin: 0 auto 72px;
+        }
+
+        .section-header h2 {
+            font-size: clamp(2rem, 5vw, 3.25rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+        }
+
+        .section-header p {
+            font-size: 1.125rem;
+            color: var(--gray);
+            margin-top: 16px;
+            line-height: 1.5;
+        }
+
+        .section-dark .section-header p {
+            color: var(--gray-light);
+        }
+
+        /* ========== COURSES FEATURES GRID ========== */
+        .features-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 48px 36px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section-gray .feature-card {
+            background: #fff;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(112, 85, 164, 0.1);
+        }
+
+        .feature-card.featured {
+            grid-column: span 2;
+            background: linear-gradient(135deg, #2d1b4e 0%, #3b2368 50%, #4a2d80 100%);
+            color: #fff;
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 24px;
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+
+        .featured .feature-icon {
+            background: rgba(255, 255, 255, 0.12);
+            color: #c4b5fd;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            font-size: 0.9375rem;
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        .featured p {
+            color: var(--gray-light);
+        }
+
+        /* ========== STATS SECTION ========== */
+        .stats-row {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 48px;
+            text-align: center;
+        }
+
+        .stat-item h3 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #c4b5fd, var(--orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-item p {
+            font-size: 0.9375rem;
+            color: var(--gray-light);
+            margin-top: 8px;
+            font-weight: 400;
+        }
+
+        /* ========== BENTO GRID — LABS ========== */
+        .bento-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .bento-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 40px 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            min-height: 320px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .bento-card:hover {
+            transform: scale(1.01);
+        }
+
+        .bento-card.b-hero {
+            grid-column: span 3;
+            min-height: 400px;
+            background: linear-gradient(135deg, #2d1b4e 0%, #3b2368 40%, #4a2d80 100%);
+            color: #fff;
+            justify-content: center;
+            text-align: center;
+            align-items: center;
+        }
+
+        .bento-card.b-hero h3 {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            max-width: 700px;
+        }
+
+        .bento-card.b-hero p {
+            color: rgba(255, 255, 255, 0.6);
+            max-width: 500px;
+            margin-top: 12px;
+        }
+
+        .bento-card .bento-visual {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            right: 24px;
+            bottom: 140px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--accent-light) 0%, var(--orange-light) 100%);
+        }
+
+        .bento-card.b-hero .bento-visual {
+            position: relative;
+            top: auto;
+            left: auto;
+            right: auto;
+            bottom: auto;
+            width: 100px;
+            height: 100px;
+            border-radius: 28px;
+            margin-bottom: 28px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .bento-visual-content {
+            opacity: 0.5;
+            color: var(--accent);
+        }
+
+        .bento-card.b-hero .bento-visual-content {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .bento-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+        }
+
+        .bento-card p {
+            font-size: 0.875rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* ========== CLINIC SECTION ========== */
+        .clinic-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .clinic-card {
+            border-radius: 24px;
+            overflow: hidden;
+            background: #fff;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .clinic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(112, 85, 164, 0.12);
+        }
+
+        .clinic-card__image {
+            height: 220px;
+            background: linear-gradient(135deg, var(--accent-light) 0%, var(--orange-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .clinic-card__image svg {
+            opacity: 0.3;
+        }
+
+        .clinic-card__body {
+            padding: 28px 24px;
+        }
+
+        .clinic-card__body h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            line-height: 1.3;
+            margin-bottom: 16px;
+        }
+
+        .clinic-card__body .btn-link {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--accent);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .clinic-card__body .btn-link:hover {
+            color: var(--accent-hover);
+        }
+
+        .clinic-card__body .btn-link::after {
+            content: ' >';
+        }
+
+        /* ========== HISTORY / ABOUT ========== */
+        .about-section {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .about-section h2 {
+            font-size: clamp(2rem, 5vw, 3.25rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .about-section p {
+            font-size: 1.0625rem;
+            color: var(--gray-dark);
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .about-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 24px 0;
+        }
+
+        .about-section ul li {
+            font-size: 1.0625rem;
+            color: var(--gray-dark);
+            line-height: 1.7;
+            padding: 8px 0 8px 28px;
+            position: relative;
+        }
+
+        .about-section ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 16px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--orange));
+        }
+
+        /* ========== CTA ========== */
+        .cta-section {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .cta-section h2 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+        }
+
+        .cta-section h2 .gradient-text {
+            background: linear-gradient(135deg, var(--accent), var(--orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .cta-section p {
+            font-size: 1.125rem;
+            color: var(--gray);
+            margin-top: 16px;
+            line-height: 1.5;
+        }
+
+        .cta-section .hero-actions {
+            justify-content: center;
+            margin-top: 40px;
+            opacity: 1;
+            transform: none;
+            animation: none;
+        }
+
+        /* ========== FOOTER ========== */
+        footer {
+            padding: 48px 24px;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-inner p {
+            font-size: 0.8125rem;
+            color: var(--gray);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }
+
+        .footer-links a {
+            font-size: 0.8125rem;
+            color: var(--gray);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        /* ========== FOCUS STATES ========== */
+        *:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .btn-primary:focus-visible,
+        .btn-secondary:focus-visible,
+        .nav-cta:focus-visible {
+            outline-offset: 3px;
+        }
+
+        ::selection {
+            background: var(--accent-light);
+            color: var(--black);
+        }
+
+        /* ========== ANIMATIONS ========== */
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ========== MOBILE MENU ========== */
+        .nav-burger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .nav-burger span {
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: var(--black);
+            border-radius: 1px;
+            transition: all 0.3s;
+        }
+
+        .nav-burger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .nav-burger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .nav-burger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 1024px) {
+            .features-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .feature-card.featured {
+                grid-column: span 2;
+            }
+
+            .bento-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .bento-card.b-hero {
+                grid-column: span 2;
+            }
+
+            .clinic-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .clinic-grid .clinic-card:last-child {
+                grid-column: span 2;
+                max-width: 50%;
+                justify-self: center;
+            }
+
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 36px;
+            }
+
+            .section {
+                padding: 80px 24px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-burger {
+                display: flex;
+            }
+
+            .nav-links.open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 52px;
+                left: 0;
+                right: 0;
+                background: rgba(251, 251, 253, 0.95);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                padding: 16px 24px;
+                gap: 16px;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: clamp(2rem, 8vw, 3rem);
+            }
+
+            .section {
+                padding: 64px 16px;
+            }
+
+            .section-header {
+                margin-bottom: 48px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-card.featured {
+                grid-column: span 1;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr 1fr;
+                gap: 24px;
+            }
+
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .bento-card.b-hero {
+                grid-column: span 1;
+                min-height: 260px;
+            }
+
+            .bento-card {
+                min-height: 240px;
+            }
+
+            .clinic-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .clinic-grid .clinic-card:last-child {
+                grid-column: span 1;
+                max-width: 100%;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .about-section ul li {
+                padding-left: 20px;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav id="navbar">
+        <div class="nav-inner">
+            <a href="#" class="nav-logo"><span>IPRM</span></a>
+            <ul class="nav-links">
+                <li><a href="#courses">Курси</a></li>
+                <li><a href="#labs">Лабораторії</a></li>
+                <li><a href="#clinic">Клініка</a></li>
+                <li><a href="#about">Про нас</a></li>
+            </ul>
+            <button class="nav-burger" aria-label="Menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+            <a href="#courses" class="nav-cta">Обрати курс</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-badge">Бали БПР — Сертифіковані курси</div>
+        <h1>Плазмотерапія.<br><span class="gradient-text">Регенерація.</span></h1>
+        <p>Курси післядипломної освіти для лікарів, дослідження біологічного віку та персоналізована регенеративна терапія</p>
+        <div class="hero-actions">
+            <a href="#courses" class="btn-primary">Обрати курс</a>
+            <a href="#labs" class="btn-secondary">Про лабораторії</a>
+        </div>
+    </section>
+
+    <!-- COURSES FEATURES -->
+    <section id="courses" class="section section-gray">
+        <div class="section-header reveal">
+            <h2>Курси інституту плазмотерапії та регенеративної медицини</h2>
+            <p>Професійне навчання з офіційним нарахуванням балів БПР</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card featured reveal">
+                <div class="feature-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/></svg>
+                </div>
+                <h3>Висококваліфіковані спеціалісти</h3>
+                <p>Навчальні курси інституту плазмотерапії проводяться висококваліфікованими спеціалістами з багатим досвідом у сфері регенеративної медицини, плазмотерапії та біорегуляційної медицини.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                </div>
+                <h3>Очно та онлайн</h3>
+                <p>Курси проводяться очно та онлайн, в комфортних умовах та повністю забезпечені всім необхідним.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <h3>Сучасна інформація</h3>
+                <p>Слухачі курсів отримують максимум сучасної інформації по вибраних темах регенеративної медицини.</p>
+            </div>
+            <div class="feature-card featured reveal">
+                <div class="feature-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                </div>
+                <h3>Сертифікати з балами БПР</h3>
+                <p>Після проходження вибраного курсу слухачі отримують сертифікати з балами БПР (безперервний професійний розвиток), що підтверджують підвищення кваліфікації.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="section section-dark">
+        <div class="section-header reveal">
+            <h2>Інститут у цифрах</h2>
+        </div>
+        <div class="stats-row reveal">
+            <div class="stat-item">
+                <h3 data-target="2015" data-suffix="">2015</h3>
+                <p>Рік заснування</p>
+            </div>
+            <div class="stat-item">
+                <h3 data-target="10" data-suffix="+">10+</h3>
+                <p>Років досліджень</p>
+            </div>
+            <div class="stat-item">
+                <h3 data-target="3" data-suffix="">3</h3>
+                <p>Лабораторії та клініка</p>
+            </div>
+            <div class="stat-item">
+                <h3 data-target="50" data-suffix="+">50+</h3>
+                <p>Курсів проведено</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- LABS BENTO -->
+    <section id="labs" class="section section-gray">
+        <div class="section-header reveal">
+            <h2>Наші лабораторії</h2>
+            <p>Наукові дослідження та інновації у сфері регенеративної медицини</p>
+        </div>
+        <div class="bento-grid">
+            <!-- Lab 1 hero -->
+            <div class="bento-card b-hero reveal">
+                <div class="bento-visual">
+                    <div class="bento-visual-content">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M10 12.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/><path d="M14 15.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/><path d="M10 18.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/></svg>
+                    </div>
+                </div>
+                <h3>Лабораторія біологічного віку та прогнозування захворювань</h3>
+                <p>Епігенетика, фізіологія, біохімія та імунологія процесів старіння</p>
+            </div>
+            <!-- Lab 1 cards -->
+            <div class="bento-card reveal">
+                <div class="bento-visual">
+                    <div class="bento-visual-content">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                </div>
+                <h3>Персоналізована терапія</h3>
+                <p>Визначення індивідуальних параметрів для вибору персоналізованої терапії</p>
+            </div>
+            <div class="bento-card reveal">
+                <div class="bento-visual">
+                    <div class="bento-visual-content">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M9 2v2"/><path d="M9 20v2"/><path d="M2 9h2"/><path d="M2 15h2"/><path d="M20 9h2"/><path d="M20 15h2"/></svg>
+                    </div>
+                </div>
+                <h3>Біоінформатика та ШІ</h3>
+                <p>Інтегральний аналіз даних досліджень з використанням штучного інтелекту</p>
+            </div>
+            <!-- Lab 2 cards -->
+            <div class="bento-card reveal">
+                <div class="bento-visual">
+                    <div class="bento-visual-content">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg>
+                    </div>
+                </div>
+                <h3>Біомаркери старіння</h3>
+                <p>Пошук, апробація, валідація нових біомаркерів старіння та геропротекторів</p>
+            </div>
+            <div class="bento-card reveal">
+                <div class="bento-visual">
+                    <div class="bento-visual-content">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                    </div>
+                </div>
+                <h3>Anti-age протоколи</h3>
+                <p>Дослідження ефективності нових anti-age протоколів та процесів старіння на клітинному рівні</p>
+            </div>
+            <div class="bento-card reveal">
+                <div class="bento-visual">
+                    <div class="bento-visual-content">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                    </div>
+                </div>
+                <h3>Клітинне старіння</h3>
+                <p>Дослідження процесів старіння на клітинному рівні з використанням сучасних методів</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CLINIC -->
+    <section id="clinic" class="section">
+        <div class="section-header reveal">
+            <h2>Клініка клітинних та регенеративних технологій</h2>
+            <p>Перелік відділень клінік</p>
+        </div>
+        <div class="clinic-grid">
+            <div class="clinic-card reveal">
+                <div class="clinic-card__image">
+                    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#7055a4" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg>
+                </div>
+                <div class="clinic-card__body">
+                    <h3>Відділення PRP-, плазмотерапії та терапії екзосомами</h3>
+                    <a href="#" class="btn-link">На сторінку клініки</a>
+                </div>
+            </div>
+            <div class="clinic-card reveal">
+                <div class="clinic-card__image">
+                    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#7055a4" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                </div>
+                <div class="clinic-card__body">
+                    <h3>Відділення терапії мезенхімальними стовбуровими клітинами</h3>
+                    <a href="#" class="btn-link">На сторінку клініки</a>
+                </div>
+            </div>
+            <div class="clinic-card reveal">
+                <div class="clinic-card__image">
+                    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#7055a4" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div class="clinic-card__body">
+                    <h3>Відділення персоніфікованої інфузійної терапії</h3>
+                    <a href="#" class="btn-link">На сторінку клініки</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HISTORY -->
+    <section id="about" class="section section-gray">
+        <div class="about-section reveal">
+            <h2>Історія створення</h2>
+            <p>Інститут плазмотерапії засновано у 2015 році групою лікарів-дослідників, які понад 10 років вивчали природні механізми відновлення організму. Їх мета — зробити передові біотехнології доступними для кожного, хто прагне не просто лікування, а реального відновлення.</p>
+            <p>Починалось все з невеличкої лабораторії в Києві, де проводились перші клінічні дослідження плазмотерапії у відновленні після травм та у дерматології. Успішні результати надихнули команду розширити діяльність.</p>
+            <p>Сьогодні Інститут об'єднує фахівців з епігенетики, фізіології, біохімії, імунології та біоінформатики. Тут проводяться:</p>
+            <ul>
+                <li>Дослідження процесів старіння на клітинному рівні</li>
+                <li>Визначення індивідуальних параметрів для персоналізованої терапії</li>
+                <li>Пошук і валідація нових біомаркерів старіння</li>
+                <li>Тестування ефективності anti-age протоколів</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section">
+        <div class="cta-section reveal">
+            <h2>Почни навчання<br><span class="gradient-text">сьогодні.</span></h2>
+            <p>Обери курс післядипломної освіти та отримай сертифікат з балами БПР від Інституту плазмотерапії та регенеративної медицини.</p>
+            <div class="hero-actions">
+                <a href="#courses" class="btn-primary">Обрати курс</a>
+                <a href="#about" class="btn-secondary">Дізнатись більше</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-inner">
+            <p>2026 IPRM. Інститут Плазмотерапії та Регенеративної Медицини.</p>
+            <ul class="footer-links">
+                <li><a href="#">Конфіденційність</a></li>
+                <li><a href="#">Умови</a></li>
+                <li><a href="#">Контакти</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- JS -->
+    <script>
+        // Navbar scroll effect
+        var navbar = document.getElementById('navbar');
+        if (navbar) {
+            window.addEventListener('scroll', function() {
+                navbar.classList.toggle('scrolled', window.scrollY > 10);
+            });
+        }
+
+        // Scroll reveal
+        var revealElements = document.querySelectorAll('.reveal');
+        var revealObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.15,
+            rootMargin: '0px 0px -60px 0px'
+        });
+
+        revealElements.forEach(function(el) {
+            revealObserver.observe(el);
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                var target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Counter animation for stats
+        function animateCounter(el, target, suffix) {
+            var duration = 2000;
+            var start = performance.now();
+
+            function update(now) {
+                var elapsed = now - start;
+                var progress = Math.min(elapsed / duration, 1);
+                var eased = 1 - Math.pow(1 - progress, 3);
+                var current = Math.floor(target * eased);
+
+                el.textContent = current + suffix;
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        var statsObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    var statItems = entry.target.querySelectorAll('.stat-item h3');
+                    statItems.forEach(function(item) {
+                        var target = parseInt(item.getAttribute('data-target'));
+                        var suffix = item.getAttribute('data-suffix') || '';
+                        if (target) {
+                            animateCounter(item, target, suffix);
+                        }
+                    });
+                    statsObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.3 });
+
+        var statsRow = document.querySelector('.stats-row');
+        if (statsRow) statsObserver.observe(statsRow);
+
+        // Mobile menu
+        var burger = document.querySelector('.nav-burger');
+        var navLinks = document.querySelector('.nav-links');
+        if (burger && navLinks) {
+            burger.addEventListener('click', function() {
+                var isOpen = navLinks.classList.toggle('open');
+                burger.classList.toggle('active');
+                burger.setAttribute('aria-expanded', isOpen);
+            });
+            navLinks.querySelectorAll('a').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    navLinks.classList.remove('open');
+                    burger.classList.remove('active');
+                    burger.setAttribute('aria-expanded', 'false');
+                });
+            });
+        }
+    </script>
+
+</body>
+</html>
