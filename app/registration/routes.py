@@ -73,8 +73,32 @@ def confirmation(registration_id):
     if not reg or reg.user_id != current_user.id:
         abort(404)
 
+    liqpay_data = None
+    liqpay_signature = None
+    liqpay_checkout_url = None
+
+    needs_payment = (
+        reg.status == 'pending'
+        and reg.payment_status == 'unpaid'
+        and reg.payment_amount
+        and reg.payment_amount > 0
+    )
+    if needs_payment:
+        from app.services.liqpay import get_liqpay_service
+        service = get_liqpay_service()
+        if service.is_configured:
+            order_id = f'REG-{reg.id}'
+            result_url = url_for('payments.success', order_id=order_id, _external=True)
+            server_url = url_for('payments.liqpay_callback', _external=True)
+            liqpay_data, liqpay_signature, liqpay_checkout_url = (
+                service.create_payment_form(reg, result_url, server_url)
+            )
+
     return render_template(
         'registration/confirmation.html',
         reg=reg,
         event=reg.event,
+        liqpay_data=liqpay_data,
+        liqpay_signature=liqpay_signature,
+        liqpay_checkout_url=liqpay_checkout_url,
     )

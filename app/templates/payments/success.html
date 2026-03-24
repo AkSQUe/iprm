@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Оплату підтверджено | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="reg-layout">
+
+  <div class="reg-confirmation">
+    <h1 class="reg-confirmation__title">Оплату підтверджено</h1>
+    <p class="reg-confirmation__subtitle">Дякуємо! Вашу реєстрацію на курс підтверджено.</p>
+  </div>
+
+  <div class="reg-status-card">
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">Курс</span>
+      <span class="reg-status-card__value">{{ event.title }}</span>
+    </div>
+    {% if event.start_date %}
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">Дата</span>
+      <span class="reg-status-card__value">{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</span>
+    </div>
+    {% endif %}
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">Оплата</span>
+      <span class="reg-status-card__value">
+        {{ reg.payment_amount | int }} &#8372; &mdash;
+        <span class="badge badge--active">Оплачено</span>
+      </span>
+    </div>
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">Статус</span>
+      <span class="reg-status-card__value">
+        <span class="badge badge--active">Підтверджено</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="reg-actions reg-actions--center">
+    <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-btn iprm-btn--primary">
+      <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Повернутися до курсу
+    </a>
+  </div>
+
+</div>
+{% endblock %}

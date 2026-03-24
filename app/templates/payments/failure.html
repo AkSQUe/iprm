@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Помилка оплати | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="reg-layout">
+
+  <div class="reg-confirmation">
+    <h1 class="reg-confirmation__title">Оплату не завершено</h1>
+    <p class="reg-confirmation__subtitle">На жаль, оплата не пройшла. Ви можете спробувати ще раз.</p>
+  </div>
+
+  <div class="reg-actions reg-actions--center">
+    {% if reg %}
+    <a href="{{ url_for('registration.confirmation', registration_id=reg.id) }}" class="iprm-btn iprm-btn--primary">
+      Спробувати ще раз
+    </a>
+    {% endif %}
+    <a href="{{ url_for('main.index') }}" class="iprm-btn iprm-btn--secondary">
+      На головну
+    </a>
+  </div>
+
+</div>
+{% endblock %}

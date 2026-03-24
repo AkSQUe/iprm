@@ -72,10 +72,28 @@
     </div>
   </div>
 
-  <!-- LiqPay placeholder (future payment) -->
+  <!-- LiqPay payment -->
   {% if reg.status == 'pending' and reg.payment_status == 'unpaid' and reg.payment_amount and reg.payment_amount > 0 %}
-  <div class="reg-liqpay-placeholder">
-    Оплата через LiqPay буде доступна найближчим часом
+    {% if liqpay_data and liqpay_signature %}
+    <div class="reg-liqpay-payment">
+      <p class="reg-liqpay-payment__label">Для підтвердження реєстрації необхідно здійснити оплату</p>
+      <form method="POST" action="{{ liqpay_checkout_url }}" accept-charset="utf-8">
+        <input type="hidden" name="data" value="{{ liqpay_data }}">
+        <input type="hidden" name="signature" value="{{ liqpay_signature }}">
+        <button type="submit" class="iprm-btn iprm-btn--primary reg-liqpay-payment__btn">
+          Оплатити {{ reg.payment_amount | int }} &#8372;
+        </button>
+      </form>
+      <p class="reg-liqpay-payment__note">Безпечна оплата через LiqPay (Visa, Mastercard, Google Pay, Apple Pay)</p>
+    </div>
+    {% else %}
+    <div class="reg-liqpay-placeholder">
+      Оплата через LiqPay буде доступна найближчим часом
+    </div>
+    {% endif %}
+  {% elif reg.payment_status == 'pending' %}
+  <div class="reg-liqpay-payment reg-liqpay-payment--processing">
+    <p>Оплата обробляється. Оновіть сторінку через декілька хвилин.</p>
   </div>
   {% endif %}
 

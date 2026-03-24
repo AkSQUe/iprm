@@ -58,6 +58,10 @@ def create_app(config_name=None):
     from app.clinics import clinics_bp
     app.register_blueprint(clinics_bp)
 
+    from app.payments import payments_bp
+    csrf.exempt(payments_bp)
+    app.register_blueprint(payments_bp)
+
     from app.cli import seed_courses
     app.cli.add_command(seed_courses)
 

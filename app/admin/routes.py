@@ -77,9 +77,16 @@ def dashboard():
 @admin_bp.route('/events')
 @admin_required
 def events_list():
-    events = Event.query.options(
+    reg_count = Event.with_registration_count()
+    rows = db.session.query(Event, reg_count).options(
         joinedload(Event.trainer),
     ).order_by(Event.created_at.desc()).all()
+
+    events = []
+    for event, count in rows:
+        event._cached_reg_count = count
+        events.append(event)
+
     return render_template('admin/events.html', events=events)
 
 
@@ -402,12 +409,57 @@ def payments():
 @admin_bp.route('/liqpay')
 @admin_required
 def liqpay():
+    from sqlalchemy import func as sa_func
+    from app.services.liqpay import get_liqpay_service
+
+    service = get_liqpay_service()
+    cfg = {
+        'public_key': _mask_key(service.public_key),
+        'private_key': _mask_key(service.private_key),
+        'sandbox': service.sandbox,
+        'is_configured': service.is_configured,
+        'webhook_url': url_for('payments.liqpay_callback', _external=True),
+    }
+
+    stats = db.session.query(
+        sa_func.count(EventRegistration.id).label('total'),
+        sa_func.count(EventRegistration.id).filter(
+            EventRegistration.payment_status == 'paid'
+        ).label('paid'),
+        sa_func.count(EventRegistration.id).filter(
+            EventRegistration.payment_status == 'pending'
+        ).label('pending'),
+        sa_func.count(EventRegistration.id).filter(
+            EventRegistration.payment_status == 'refunded'
+        ).label('refunded'),
+        sa_func.coalesce(sa_func.sum(
+            EventRegistration.payment_amount
+        ).filter(EventRegistration.payment_status == 'paid'), 0).label('total_amount'),
+    ).filter(
+        EventRegistration.payment_amount > 0,
+    ).one()
+
+    recent = EventRegistration.query.options(
+        joinedload(EventRegistration.event),
+        joinedload(EventRegistration.user),
+    ).filter(
+        EventRegistration.payment_amount > 0,
+    ).order_by(EventRegistration.created_at.desc()).limit(20).all()
+
     return render_template(
-        'admin/stub.html',
-        admin_section='liqpay',
-        page_title='LiqPay',
-        page_subtitle='Інтеграція з платіжною системою LiqPay',
+        'admin/liqpay.html',
+        cfg=cfg,
+        stats=stats,
+        recent=recent,
     )
+
+
+def _mask_key(key):
+    if not key:
+        return ''
+    if len(key) <= 4:
+        return '****'
+    return '****' + key[-4:]
 
 
 @admin_bp.route('/certificates')

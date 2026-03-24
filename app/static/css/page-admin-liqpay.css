@@ -1,0 +1,104 @@
+/* Admin LiqPay Dashboard */
+
+.liqpay-status-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Statistics grid */
+.liqpay-stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.liqpay-stat-card {
+  background: var(--iprm-card-bg);
+  border-radius: var(--iprm-radius-sm);
+  padding: 16px;
+  text-align: center;
+  border: 1px solid var(--iprm-border);
+}
+
+.liqpay-stat-card__value {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--iprm-dark);
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.liqpay-stat-card__label {
+  font-size: 12px;
+  color: var(--iprm-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.liqpay-stat-card--success .liqpay-stat-card__value { color: var(--iprm-badge-active-text); }
+.liqpay-stat-card--warning .liqpay-stat-card__value { color: var(--iprm-badge-published-text); }
+.liqpay-stat-card--danger .liqpay-stat-card__value { color: var(--iprm-error-text); }
+.liqpay-stat-card--accent .liqpay-stat-card__value { color: var(--iprm-accent); }
+
+/* Configuration display */
+.liqpay-config {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.liqpay-config__row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.liqpay-config__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--iprm-dark);
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.liqpay-config__value {
+  font-size: 14px;
+  color: var(--iprm-text);
+}
+
+.liqpay-config__value--mono {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  background: var(--iprm-white);
+  padding: 4px 10px;
+  border: 1px solid var(--iprm-border);
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .liqpay-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .liqpay-config__row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .liqpay-config__label {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .liqpay-stats {
+    grid-template-columns: 1fr;
+  }
+}
