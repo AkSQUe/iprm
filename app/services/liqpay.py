@@ -25,12 +25,6 @@ STATUS_MAP = {
     'reversed': 'refunded',
 }
 
-SENSITIVE_FIELDS = frozenset({
-    'sender_card_mask2', 'sender_card_bank', 'sender_card_type',
-    'sender_card_country', 'ip', 'sender_phone',
-})
-
-
 class LiqPayService:
 
     def __init__(self, public_key, private_key, sandbox=True):
