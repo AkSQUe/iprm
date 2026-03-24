@@ -1,0 +1,32 @@
+/* Стилі для сторінки маркетингу */
+
+/* ========== TODO LIST ========== */
+
+.admin-todo {
+  list-style: none;
+  padding: 0;
+}
+
+.admin-todo li {
+  position: relative;
+  padding: 8px 0 8px 24px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--iprm-text);
+  border-bottom: 1px solid var(--iprm-border);
+}
+
+.admin-todo li:last-child {
+  border-bottom: none;
+}
+
+.admin-todo li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--iprm-border);
+  border-radius: 3px;
+}
