@@ -60,6 +60,10 @@ def registration_attendance(reg_id):
     reg.attended = True
     reg.status = 'completed'
     cpd = request.form.get('cpd_points', type=int)
+    max_cpd = (reg.event.cpd_points or 0) * 2
+    if cpd is not None and (cpd < 0 or cpd > max(max_cpd, 100)):
+        flash('Некоректна кількість балів БПР', 'error')
+        return redirect(url_for('admin.event_registrations', event_id=reg.event_id))
     reg.cpd_points_awarded = cpd if cpd is not None else reg.event.cpd_points
 
     try:

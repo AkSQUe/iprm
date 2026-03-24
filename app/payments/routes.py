@@ -35,11 +35,14 @@ def liqpay_callback():
 def success():
     order_id = request.args.get('order_id', '')
 
-    if not order_id.startswith('REG-'):
+    try:
+        if not order_id.startswith('REG-'):
+            raise ValueError('Invalid order format')
+        reg_id = int(order_id.split('-', 1)[1])
+    except (ValueError, IndexError):
         flash('Невідоме замовлення', 'error')
         return redirect(url_for('main.index'))
 
-    reg_id = int(order_id.split('-', 1)[1])
     reg = db.session.query(EventRegistration).options(
         joinedload(EventRegistration.event),
     ).filter_by(id=reg_id).first()
@@ -80,7 +83,10 @@ def failure():
     reg = None
 
     if order_id.startswith('REG-'):
-        reg_id = int(order_id.split('-', 1)[1])
+        try:
+            reg_id = int(order_id.split('-', 1)[1])
+        except (ValueError, IndexError):
+            return render_template('payments/failure.html', reg=None)
         reg = db.session.query(EventRegistration).options(
             joinedload(EventRegistration.event),
         ).filter_by(id=reg_id).first()
