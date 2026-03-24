@@ -1,3 +1,4 @@
+from sqlalchemy import func, select
 from app.extensions import db
 from app.models.mixins import TimestampMixin, BigIntPK
 
@@ -49,7 +50,7 @@ class Event(TimestampMixin, db.Model):
         db.CheckConstraint('price >= 0', name='ck_events_price_non_negative'),
     )
 
-    creator = db.relationship('User', foreign_keys=[created_by])
+    creator = db.relationship('User', foreign_keys=[created_by], back_populates='created_events')
     trainer = db.relationship('Trainer', back_populates='events')
     registrations = db.relationship(
         'EventRegistration',
@@ -99,10 +100,29 @@ class Event(TimestampMixin, db.Model):
 
     @property
     def registration_count(self):
+        """Кількість активних реєстрацій. Використовує кеш якщо завантажено через with_registration_count()."""
+        cached = getattr(self, '_cached_reg_count', None)
+        if cached is not None:
+            return cached
         from app.models.registration import EventRegistration
         return self.registrations.filter(
             EventRegistration.status.notin_(['cancelled'])
         ).count()
+
+    @classmethod
+    def with_registration_count(cls):
+        """Subquery для ефективного підрахунку реєстрацій у списках."""
+        from app.models.registration import EventRegistration
+        return (
+            select(func.count(EventRegistration.id))
+            .where(
+                EventRegistration.event_id == cls.id,
+                EventRegistration.status.notin_(['cancelled']),
+            )
+            .correlate(cls)
+            .scalar_subquery()
+            .label('_registration_count')
+        )
 
     @property
     def has_capacity(self):

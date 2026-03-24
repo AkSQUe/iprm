@@ -1,5 +1,4 @@
 from flask import render_template, abort
-from sqlalchemy.orm import joinedload
 
 from app.trainers import trainers_bp
 from app.models.event import Event
