@@ -136,12 +136,12 @@
 
 .btn-admin--danger {
   background: var(--iprm-white);
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  color: var(--iprm-error-text);
+  border: 1px solid var(--iprm-error-light);
 }
 
 .btn-admin--danger:hover {
-  background: #fef2f2;
+  background: var(--iprm-error-bg);
 }
 
 .btn-admin--sm {
@@ -230,8 +230,8 @@
 }
 
 .badge--cancelled {
-  background: #fef2f2;
-  color: #dc2626;
+  background: var(--iprm-error-bg);
+  color: var(--iprm-error-text);
 }
 
 /* ========== EMPTY STATE ========== */
@@ -318,12 +318,12 @@
 }
 
 .admin-form .form-input.is-invalid {
-  border-color: #ef4444;
+  border-color: var(--iprm-error);
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
 }
 
 .admin-form .form-input::placeholder {
-  color: #bbb;
+  color: var(--iprm-placeholder-text);
 }
 
 .admin-form select.form-input {
@@ -349,7 +349,7 @@
 
 .admin-form .form-error {
   font-size: 12px;
-  color: #ef4444;
+  color: var(--iprm-error);
   margin-top: 4px;
 }
 
@@ -396,16 +396,6 @@
   cursor: pointer;
 }
 
-/* ========== STATS BAR ========== */
-
-.admin-stats-bar {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-  font-size: 14px;
-  color: var(--iprm-text-light);
-}
-
 /* ========== FORM ACTIONS ========== */
 
 .admin-form__actions {
@@ -415,37 +405,6 @@
   padding-top: 8px;
 }
 
-
-/* ========== TODO LIST ========== */
-
-.admin-todo {
-  list-style: none;
-  padding: 0;
-}
-
-.admin-todo li {
-  position: relative;
-  padding: 8px 0 8px 24px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--iprm-text);
-  border-bottom: 1px solid var(--iprm-border);
-}
-
-.admin-todo li:last-child {
-  border-bottom: none;
-}
-
-.admin-todo li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 14px;
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--iprm-border);
-  border-radius: 3px;
-}
 
 /* ========== ТАБЛИЦЯ: обгортка для горизонтальної прокрутки ========== */
 

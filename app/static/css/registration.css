@@ -116,7 +116,7 @@
 }
 
 .reg-form-section .form-input.is-invalid {
-  border-color: #ef4444;
+  border-color: var(--iprm-error);
 }
 
 .reg-actions {

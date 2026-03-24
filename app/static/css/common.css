@@ -28,6 +28,17 @@
   --iprm-hero-glow-dim: rgba(14, 165, 233, 0.08);
   --iprm-placeholder-grad: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 50%, #cffafe 100%);
   --iprm-molecular-rgb: 180, 180, 180;
+
+  /* Status / feedback colors */
+  --iprm-error: #ef4444;
+  --iprm-error-light: #fecaca;
+  --iprm-error-bg: #fef2f2;
+  --iprm-error-text: #dc2626;
+  --iprm-success: #16a34a;
+  --iprm-success-bg: #f0fdf4;
+  --iprm-info: #0369a1;
+  --iprm-info-bg: #e0f2fe;
+  --iprm-placeholder-text: #bbb;
 }
 
 [data-theme="branded"] {
@@ -412,6 +423,12 @@ a {
   font-size: 13px;
 }
 
+.iprm-btn--disabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
 .iprm-btn__arrow {
   font-size: 16px;
 }
@@ -760,20 +777,20 @@ a {
 }
 
 .alert--error {
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background: var(--iprm-error-bg);
+  color: var(--iprm-error-text);
+  border: 1px solid var(--iprm-error-light);
 }
 
 .alert--success {
-  background: #f0fdf4;
-  color: #16a34a;
+  background: var(--iprm-success-bg);
+  color: var(--iprm-success);
   border: 1px solid #bbf7d0;
 }
 
 .alert--info {
-  background: #e0f2fe;
-  color: #0369a1;
+  background: var(--iprm-info-bg);
+  color: var(--iprm-info);
   border: 1px solid #bae6fd;
 }
 

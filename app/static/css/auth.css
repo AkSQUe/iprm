@@ -58,7 +58,7 @@
 }
 
 .form-group label .required {
-  color: #ef4444;
+  color: var(--iprm-error);
 }
 
 .form-input {
@@ -80,7 +80,7 @@
 }
 
 .form-input.is-invalid {
-  border-color: #ef4444;
+  border-color: var(--iprm-error);
 }
 
 /* Checkbox */
@@ -106,7 +106,7 @@
 /* Errors */
 .form-error {
   font-size: 0.8rem;
-  color: #ef4444;
+  color: var(--iprm-error);
   margin-top: 0.25rem;
 }
 
