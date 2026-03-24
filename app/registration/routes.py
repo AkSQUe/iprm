@@ -1,5 +1,6 @@
 from flask import render_template, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
+from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 from app.registration import registration_bp
 from app.registration.forms import EventRegistrationForm
@@ -19,6 +20,7 @@ def register(event_id):
     existing = EventRegistration.query.filter_by(
         user_id=current_user.id, event_id=event.id
     ).first()
+
     if existing and existing.status != 'cancelled':
         flash('Ви вже зареєстровані на цей захід', 'info')
         return redirect(url_for('registration.confirmation', registration_id=existing.id))
@@ -32,19 +34,50 @@ def register(event_id):
     if form.validate_on_submit():
         is_free = not event.price or event.price == 0
 
-        reg = EventRegistration(
-            user_id=current_user.id,
-            event_id=event.id,
-            phone=form.phone.data.strip(),
-            specialty=form.specialty.data.strip(),
-            workplace=form.workplace.data.strip(),
-            experience_years=form.experience_years.data,
-            license_number=form.license_number.data,
-            payment_amount=event.price or 0,
-            status='confirmed' if is_free else 'pending',
-            payment_status='paid' if is_free else 'unpaid',
-        )
-        db.session.add(reg)
+        # Row lock on event to prevent overbooking
+        locked_event = db.session.query(Event).with_for_update().filter_by(
+            id=event_id
+        ).first()
+        if locked_event.max_participants:
+            active_count = db.session.query(func.count(EventRegistration.id)).filter(
+                EventRegistration.event_id == event.id,
+                EventRegistration.status.notin_(['cancelled']),
+            ).scalar()
+            if active_count >= locked_event.max_participants:
+                db.session.rollback()
+                flash('На жаль, місць більше немає', 'error')
+                return redirect(url_for('courses.course_by_slug', slug=event.slug))
+
+        new_status = 'confirmed' if is_free else 'pending'
+        new_payment = 'paid' if is_free else 'unpaid'
+
+        if existing and existing.status == 'cancelled':
+            # Reuse cancelled row to avoid UniqueConstraint violation
+            existing.phone = form.phone.data.strip()
+            existing.specialty = form.specialty.data.strip()
+            existing.workplace = form.workplace.data.strip()
+            existing.experience_years = form.experience_years.data
+            existing.license_number = form.license_number.data
+            existing.payment_amount = event.price or 0
+            existing.status = new_status
+            existing.payment_status = new_payment
+            existing.payment_id = None
+            existing.paid_at = None
+            reg = existing
+        else:
+            reg = EventRegistration(
+                user_id=current_user.id,
+                event_id=event.id,
+                phone=form.phone.data.strip(),
+                specialty=form.specialty.data.strip(),
+                workplace=form.workplace.data.strip(),
+                experience_years=form.experience_years.data,
+                license_number=form.license_number.data,
+                payment_amount=event.price or 0,
+                status=new_status,
+                payment_status=new_payment,
+            )
+            db.session.add(reg)
 
         try:
             db.session.commit()
@@ -91,7 +124,13 @@ def confirmation(registration_id):
             result_url = url_for('payments.success', order_id=order_id, _external=True)
             server_url = url_for('payments.liqpay_callback', _external=True)
             liqpay_data, liqpay_signature, liqpay_checkout_url = (
-                service.create_payment_form(reg, result_url, server_url)
+                service.create_payment_form(
+                    order_id=order_id,
+                    amount=float(reg.payment_amount),
+                    description=reg.event.title,
+                    result_url=result_url,
+                    server_url=server_url,
+                )
             )
 
     return render_template(

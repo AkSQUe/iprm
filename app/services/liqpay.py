@@ -1,29 +1,22 @@
+"""
+LiqPay protocol layer (pure, no DB dependency).
+
+Handles: encoding, signatures, payment form generation, API calls.
+Business logic (status transitions, DB updates) lives in payment_ops.py.
+"""
 import base64
 import hashlib
 import hmac
 import json
 import logging
-from datetime import datetime, timezone
 from urllib.parse import urlencode
 from urllib.request import urlopen, Request
-
-from app.extensions import db
-from app.models.registration import EventRegistration
 
 logger = logging.getLogger(__name__)
 
 CHECKOUT_URL = 'https://www.liqpay.ua/api/3/checkout'
 API_URL = 'https://www.liqpay.ua/api/request'
 
-STATUS_MAP = {
-    'success': 'paid',
-    'sandbox': 'paid',
-    'failure': 'unpaid',
-    'error': 'unpaid',
-    'processing': 'pending',
-    'wait_accept': 'pending',
-    'reversed': 'refunded',
-}
 
 class LiqPayService:
 
@@ -49,15 +42,15 @@ class LiqPayService:
         raw = base64.b64decode(data_base64)
         return json.loads(raw)
 
-    def create_payment_form(self, registration, result_url, server_url):
+    def create_payment_form(self, order_id, amount, description, result_url, server_url):
         params = {
             'version': 3,
             'public_key': self.public_key,
             'action': 'pay',
-            'amount': str(float(registration.payment_amount)),
+            'amount': str(float(amount)),
             'currency': 'UAH',
-            'description': registration.event.title,
-            'order_id': f'REG-{registration.id}',
+            'description': description,
+            'order_id': order_id,
             'result_url': result_url,
             'server_url': server_url,
             'language': 'uk',
@@ -69,103 +62,35 @@ class LiqPayService:
         signature = self._generate_signature(data)
         return data, signature, CHECKOUT_URL
 
-    def process_callback(self, data_base64, signature):
-        if not self.validate_callback_signature(data_base64, signature):
-            logger.warning('LiqPay callback: invalid signature')
-            return False, 'invalid signature'
-
-        payload = self.decode_callback(data_base64)
-        order_id = payload.get('order_id', '')
-        liqpay_status = payload.get('status', '')
-        payment_id = str(payload.get('payment_id', ''))
-
-        if not order_id.startswith('REG-'):
-            logger.warning('LiqPay callback: unknown order_id format: %s', order_id)
-            return False, 'unknown order_id'
-
+    def api_request(self, params, timeout=10):
+        data = self._encode_params(params)
+        signature = self._generate_signature(data)
+        body = urlencode({'data': data, 'signature': signature}).encode('utf-8')
+        req = Request(API_URL, data=body, method='POST')
+        req.add_header('Content-Type', 'application/x-www-form-urlencoded')
         try:
-            reg_id = int(order_id.split('-', 1)[1])
-        except (ValueError, IndexError):
-            logger.warning('LiqPay callback: malformed order_id: %s', order_id)
-            return False, 'invalid order_id'
-
-        reg = db.session.get(EventRegistration, reg_id)
-        if not reg:
-            logger.warning('LiqPay callback: registration %d not found', reg_id)
-            return False, 'registration not found'
-
-        if reg.payment_status == 'paid' and reg.payment_id == payment_id:
-            return True, 'already processed'
-
-        new_status = STATUS_MAP.get(liqpay_status)
-        if not new_status:
-            logger.warning('LiqPay callback: unknown status %s', liqpay_status)
-            return False, f'unknown status: {liqpay_status}'
-
-        # Validate payment amount matches expected
-        callback_amount = payload.get('amount')
-        if new_status == 'paid' and reg.payment_amount:
-            try:
-                if abs(float(callback_amount) - float(reg.payment_amount)) > 0.01:
-                    logger.warning(
-                        'LiqPay callback: amount mismatch REG-%d: expected %s, got %s',
-                        reg_id, reg.payment_amount, callback_amount,
-                    )
-                    return False, 'amount mismatch'
-            except (TypeError, ValueError):
-                logger.warning('LiqPay callback: invalid amount for REG-%d', reg_id)
-                return False, 'invalid amount'
-
-        # State transition guard: prevent regression
-        allowed = {
-            'unpaid': {'pending', 'paid', 'refunded'},
-            'pending': {'paid', 'refunded'},
-            'paid': {'refunded'},
-            'refunded': set(),
-        }
-        if new_status not in allowed.get(reg.payment_status, set()):
-            logger.warning(
-                'LiqPay callback: invalid transition %s -> %s for REG-%d',
-                reg.payment_status, new_status, reg_id,
-            )
-            return True, 'no-op transition'
-
-        reg.payment_status = new_status
-        reg.payment_id = payment_id
-
-        if new_status == 'paid':
-            reg.paid_at = datetime.now(timezone.utc)
-            reg.status = 'confirmed'
-
-        try:
-            db.session.commit()
-            logger.info('LiqPay callback: REG-%d -> %s', reg_id, new_status)
-            return True, 'ok'
+            with urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read())
         except Exception:
-            db.session.rollback()
-            logger.exception('LiqPay callback: db error for REG-%d', reg_id)
-            return False, 'db error'
+            logger.exception('LiqPay API request failed: action=%s', params.get('action'))
+            return None
 
     def check_status(self, order_id):
-        params = {
+        return self.api_request({
             'version': 3,
             'public_key': self.public_key,
             'action': 'status',
             'order_id': order_id,
-        }
-        data = self._encode_params(params)
-        signature = self._generate_signature(data)
+        })
 
-        body = urlencode({'data': data, 'signature': signature}).encode('utf-8')
-        req = Request(API_URL, data=body, method='POST')
-        req.add_header('Content-Type', 'application/x-www-form-urlencoded')
-
-        try:
-            with urlopen(req, timeout=10) as resp:
-                return json.loads(resp.read())
-        except Exception:
-            logger.exception('LiqPay check_status failed for %s', order_id)
-            return None
+    def create_refund_request(self, order_id, amount):
+        return self.api_request({
+            'version': 3,
+            'public_key': self.public_key,
+            'action': 'refund',
+            'order_id': order_id,
+            'amount': str(float(amount)),
+        })
 
     @property
     def is_configured(self):

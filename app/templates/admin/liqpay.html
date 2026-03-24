@@ -132,6 +132,7 @@
             <th>Сума</th>
             <th>Статус</th>
             <th>Дата</th>
+            <th>Дії</th>
           </tr>
         </thead>
         <tbody>
@@ -147,6 +148,18 @@
               </span>
             </td>
             <td>{{ reg.paid_at.strftime('%d.%m.%Y %H:%M') if reg.paid_at else reg.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td>
+              {% if reg.payment_status == 'paid' %}
+              <form method="POST" action="{{ url_for('admin.liqpay_refund', reg_id=reg.id) }}" onsubmit="return confirm('Повернути {{ reg.payment_amount | int }} грн?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Повернення</button>
+              </form>
+              {% elif reg.payment_status == 'refunded' %}
+              <span class="admin-text-muted">Повернено</span>
+              {% else %}
+              <span class="admin-text-muted">--</span>
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>

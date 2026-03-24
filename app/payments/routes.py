@@ -7,8 +7,15 @@ from app.payments import payments_bp
 from app.extensions import db, limiter, csrf
 from app.models.registration import EventRegistration
 from app.services.liqpay import get_liqpay_service
+from app.services.payment_ops import PaymentOps, PERMANENT_ERRORS
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_order_id(order_id):
+    if not order_id.startswith('REG-'):
+        raise ValueError('Invalid order format')
+    return int(order_id.split('-', 1)[1])
 
 
 @payments_bp.route('/liqpay/callback', methods=['POST'])
@@ -22,11 +29,13 @@ def liqpay_callback():
         logger.warning('LiqPay callback: missing data or signature')
         return 'Bad Request', 400
 
-    service = get_liqpay_service()
-    ok, message = service.process_callback(data, signature)
+    ops = PaymentOps(get_liqpay_service())
+    ok, message = ops.process_callback(data, signature)
 
     if not ok:
         logger.warning('LiqPay callback failed: %s', message)
+        status_code = 400 if message in PERMANENT_ERRORS else 500
+        return message, status_code
 
     return 'OK', 200
 
@@ -37,9 +46,7 @@ def success():
     order_id = request.args.get('order_id', '')
 
     try:
-        if not order_id.startswith('REG-'):
-            raise ValueError('Invalid order format')
-        reg_id = int(order_id.split('-', 1)[1])
+        reg_id = _parse_order_id(order_id)
     except (ValueError, IndexError):
         flash('Невідоме замовлення', 'error')
         return redirect(url_for('main.index'))
@@ -52,23 +59,9 @@ def success():
         abort(404)
 
     if reg.payment_status != 'paid':
-        service = get_liqpay_service()
-        status_data = service.check_status(order_id)
-
-        if status_data:
-            lp_status = status_data.get('status', '')
-            payment_id = str(status_data.get('payment_id', ''))
-
-            if lp_status in ('success', 'sandbox'):
-                from datetime import datetime, timezone
-                reg.payment_status = 'paid'
-                reg.payment_id = payment_id
-                reg.paid_at = datetime.now(timezone.utc)
-                reg.status = 'confirmed'
-                try:
-                    db.session.commit()
-                except Exception:
-                    db.session.rollback()
+        ops = PaymentOps(get_liqpay_service())
+        ops.check_and_update(reg)
+        db.session.refresh(reg)
 
     if reg.payment_status == 'paid':
         return render_template('payments/success.html', reg=reg, event=reg.event)
@@ -83,15 +76,14 @@ def failure():
     order_id = request.args.get('order_id', '')
     reg = None
 
-    if order_id.startswith('REG-'):
-        try:
-            reg_id = int(order_id.split('-', 1)[1])
-        except (ValueError, IndexError):
-            return render_template('payments/failure.html', reg=None)
+    try:
+        reg_id = _parse_order_id(order_id)
         reg = db.session.query(EventRegistration).options(
             joinedload(EventRegistration.event),
         ).filter_by(id=reg_id).first()
         if reg and reg.user_id != current_user.id:
             reg = None
+    except (ValueError, IndexError):
+        pass
 
     return render_template('payments/failure.html', reg=reg)
