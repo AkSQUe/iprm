@@ -2,7 +2,7 @@
 
 {% block title %}{{ event.title }} | IPRM{% endblock %}
 {% block meta_description %}{{ event.subtitle or event.short_description or event.title }}{% endblock %}
-{% block og_type %}website{% endblock %}
+{% if event.card_image %}{% block og_image %}{{ event.card_image }}{% endblock %}{% endif %}
 
 {% block jsonld %}
 <script type="application/ld+json">

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}{{ clinic.name }} | IPRM{% endblock %}
+{% block meta_description %}{{ clinic.short_description or clinic.name }}. Клініка Інституту Плазмотерапії та Регенеративної Медицини.{% endblock %}
 
 {% block extra_css %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/page-clinics.css') }}">
