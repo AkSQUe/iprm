@@ -1,11 +1,11 @@
 from app.extensions import db
-from app.models.mixins import TimestampMixin
+from app.models.mixins import TimestampMixin, BigIntPK
 
 
 class Trainer(TimestampMixin, db.Model):
     __tablename__ = 'trainers'
 
-    id = db.Column(db.BigInteger, primary_key=True)
+    id = db.Column(BigIntPK, primary_key=True)
     full_name = db.Column(db.String(200), nullable=False)
     slug = db.Column(db.String(200), unique=True, nullable=False)
     role = db.Column(db.String(300))

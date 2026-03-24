@@ -1,11 +1,11 @@
 from app.extensions import db
-from app.models.mixins import TimestampMixin
+from app.models.mixins import TimestampMixin, BigIntPK
 
 
 class Event(TimestampMixin, db.Model):
     __tablename__ = 'events'
 
-    id = db.Column(db.BigInteger, primary_key=True)
+    id = db.Column(BigIntPK, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     slug = db.Column(db.String(200), unique=True, nullable=False)
     subtitle = db.Column(db.String(500))
@@ -14,7 +14,7 @@ class Event(TimestampMixin, db.Model):
     event_type = db.Column(db.String(30))
     event_format = db.Column(db.String(20))
     status = db.Column(db.String(20), default='draft', index=True)
-    start_date = db.Column(db.DateTime(timezone=True))
+    start_date = db.Column(db.DateTime(timezone=True), index=True)
     end_date = db.Column(db.DateTime(timezone=True))
     max_participants = db.Column(db.Integer)
     price = db.Column(db.Numeric(10, 2), default=0)
@@ -29,8 +29,24 @@ class Event(TimestampMixin, db.Model):
     agenda = db.Column(db.Text)
     is_featured = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True, index=True)
-    created_by = db.Column(db.BigInteger, db.ForeignKey('users.id'), nullable=True)
-    trainer_id = db.Column(db.BigInteger, db.ForeignKey('trainers.id'), nullable=True)
+    created_by = db.Column(db.BigInteger, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True, index=True)
+    trainer_id = db.Column(db.BigInteger, db.ForeignKey('trainers.id', ondelete='SET NULL'), nullable=True, index=True)
+
+    __table_args__ = (
+        db.Index('ix_events_active_status', 'is_active', 'status'),
+        db.CheckConstraint(
+            "event_type IN ('seminar', 'webinar', 'course', 'masterclass', 'conference')",
+            name='ck_events_event_type',
+        ),
+        db.CheckConstraint(
+            "event_format IN ('online', 'offline', 'hybrid')",
+            name='ck_events_event_format',
+        ),
+        db.CheckConstraint(
+            "status IN ('draft', 'published', 'active', 'completed', 'cancelled')",
+            name='ck_events_status',
+        ),
+    )
 
     creator = db.relationship('User', foreign_keys=[created_by])
     trainer = db.relationship('Trainer', back_populates='events')

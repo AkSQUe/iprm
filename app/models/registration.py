@@ -1,13 +1,13 @@
 from app.extensions import db
-from app.models.mixins import TimestampMixin
+from app.models.mixins import TimestampMixin, BigIntPK
 
 
 class EventRegistration(TimestampMixin, db.Model):
     __tablename__ = 'event_registrations'
 
-    id = db.Column(db.BigInteger, primary_key=True)
-    user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), nullable=False, index=True)
-    event_id = db.Column(db.BigInteger, db.ForeignKey('events.id'), nullable=False, index=True)
+    id = db.Column(BigIntPK, primary_key=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    event_id = db.Column(db.BigInteger, db.ForeignKey('events.id', ondelete='CASCADE'), nullable=False, index=True)
 
     phone = db.Column(db.String(20), nullable=False)
     specialty = db.Column(db.String(200), nullable=False)
@@ -30,6 +30,16 @@ class EventRegistration(TimestampMixin, db.Model):
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'event_id', name='uq_user_event_registration'),
+        db.Index('ix_registrations_event_status', 'event_id', 'status'),
+        db.Index('ix_registrations_created_at', 'created_at'),
+        db.CheckConstraint(
+            "status IN ('pending', 'confirmed', 'cancelled', 'completed')",
+            name='ck_registrations_status',
+        ),
+        db.CheckConstraint(
+            "payment_status IN ('unpaid', 'pending', 'paid', 'refunded')",
+            name='ck_registrations_payment_status',
+        ),
     )
 
     STATUSES = [

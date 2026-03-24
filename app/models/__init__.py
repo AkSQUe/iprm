@@ -1,4 +1,4 @@
-from app.models.mixins import TimestampMixin, utcnow
+from app.models.mixins import TimestampMixin, BigIntPK, utcnow
 from app.models.user import User
 from app.models.event import Event
 from app.models.trainer import Trainer
@@ -7,6 +7,6 @@ from app.models.registration import EventRegistration
 from app.models.clinic import Clinic
 
 __all__ = [
-    'TimestampMixin', 'utcnow', 'User', 'Event', 'Trainer',
+    'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'Event', 'Trainer',
     'ProgramBlock', 'EventRegistration', 'Clinic',
 ]
