@@ -1,0 +1,28 @@
+<div id="cookie-banner" class="cookie-banner" hidden>
+  <div class="cookie-banner__inner">
+    <p class="cookie-banner__text">
+      Ми використовуємо файли Cookie для забезпечення роботи сайту та покращення вашого досвіду.
+      <a href="{{ url_for('main.cookies') }}">Детальніше</a>
+    </p>
+    <div class="cookie-banner__actions">
+      <button type="button" class="cookie-banner__btn cookie-banner__btn--accept" id="cookie-accept">Прийняти</button>
+      <button type="button" class="cookie-banner__btn cookie-banner__btn--reject" id="cookie-reject">Лише необхідні</button>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  'use strict';
+  if (localStorage.getItem('iprm-cookie-consent')) return;
+  var banner = document.getElementById('cookie-banner');
+  banner.hidden = false;
+  document.getElementById('cookie-accept').addEventListener('click', function() {
+    localStorage.setItem('iprm-cookie-consent', 'all');
+    banner.hidden = true;
+  });
+  document.getElementById('cookie-reject').addEventListener('click', function() {
+    localStorage.setItem('iprm-cookie-consent', 'essential');
+    banner.hidden = true;
+  });
+})();
+</script>

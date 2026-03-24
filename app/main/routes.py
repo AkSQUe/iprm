@@ -36,6 +36,11 @@ def disclaimer():
     return render_template('main/disclaimer.html')
 
 
+@main_bp.route('/cookies')
+def cookies():
+    return render_template('main/cookies.html')
+
+
 @main_bp.route('/design-system')
 def design_system():
     return render_template('design_system/index.html')
