@@ -1,5 +1,6 @@
 from flask import render_template, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
+from sqlalchemy.orm import joinedload
 from app.registration import registration_bp
 from app.registration.forms import EventRegistrationForm
 from app.extensions import db, limiter
@@ -66,7 +67,9 @@ def register(event_id):
 @registration_bp.route('/<int:registration_id>')
 @login_required
 def confirmation(registration_id):
-    reg = db.session.get(EventRegistration, registration_id)
+    reg = EventRegistration.query.options(
+        joinedload(EventRegistration.event),
+    ).get(registration_id)
     if not reg or reg.user_id != current_user.id:
         abort(404)
 

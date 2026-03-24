@@ -377,9 +377,6 @@ def registration_attendance(reg_id):
 @admin_bp.route('/registrations')
 @admin_required
 def registrations_all():
-    registrations = EventRegistration.query.order_by(
-        EventRegistration.created_at.desc()
-    ).all()
     return render_template(
         'admin/stub.html',
         admin_section='registrations',
