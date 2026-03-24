@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
 {% block title %}{% if event %}Редагування: {{ event.title }}{% else %}Новий захід{% endif %} | IPRM{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-event-edit.css') }}">
 {% endblock %}
 
 {% block content %}

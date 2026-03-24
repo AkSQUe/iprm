@@ -431,6 +431,44 @@
   color: var(--iprm-text-light);
 }
 
+/* ========== STAT CARDS (статистика, дашборд) ========== */
+
+.admin-stat-cards {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.admin-stat-card {
+  background: var(--iprm-card-bg);
+  border-radius: var(--iprm-radius-sm);
+  padding: 16px;
+  text-align: center;
+  border: 1px solid var(--iprm-border);
+}
+
+.admin-stat-card__value {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--iprm-dark);
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.admin-stat-card__label {
+  font-size: 12px;
+  color: var(--iprm-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-stat-card--success .admin-stat-card__value { color: var(--iprm-badge-active-text); }
+.admin-stat-card--warning .admin-stat-card__value { color: var(--iprm-badge-published-text); }
+.admin-stat-card--danger .admin-stat-card__value { color: var(--iprm-error-text); }
+.admin-stat-card--accent .admin-stat-card__value { color: var(--iprm-accent); }
+
 /* ========== PROGRAM BLOCKS (редагування заходу) ========== */
 
 .admin-program-block {
@@ -454,6 +492,10 @@
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
+  .admin-stat-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .admin-with-sidebar {
     flex-direction: column;
   }
@@ -542,6 +584,10 @@
 }
 
 @media (max-width: 480px) {
+  .admin-stat-cards {
+    grid-template-columns: 1fr;
+  }
+
   .admin-layout {
     padding: 16px 12px;
   }

@@ -33,26 +33,26 @@
     </div>
 
     <!-- Statistics -->
-    <div class="liqpay-stats">
-      <div class="liqpay-stat-card">
-        <span class="liqpay-stat-card__value">{{ stats.total }}</span>
-        <span class="liqpay-stat-card__label">Всього</span>
+    <div class="admin-stat-cards">
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ stats.total }}</span>
+        <span class="admin-stat-card__label">Всього</span>
       </div>
-      <div class="liqpay-stat-card liqpay-stat-card--success">
-        <span class="liqpay-stat-card__value">{{ stats.paid }}</span>
-        <span class="liqpay-stat-card__label">Оплачено</span>
+      <div class="admin-stat-card admin-stat-card--success">
+        <span class="admin-stat-card__value">{{ stats.paid }}</span>
+        <span class="admin-stat-card__label">Оплачено</span>
       </div>
-      <div class="liqpay-stat-card liqpay-stat-card--warning">
-        <span class="liqpay-stat-card__value">{{ stats.pending }}</span>
-        <span class="liqpay-stat-card__label">Очікує</span>
+      <div class="admin-stat-card admin-stat-card--warning">
+        <span class="admin-stat-card__value">{{ stats.pending }}</span>
+        <span class="admin-stat-card__label">Очікує</span>
       </div>
-      <div class="liqpay-stat-card liqpay-stat-card--danger">
-        <span class="liqpay-stat-card__value">{{ stats.refunded }}</span>
-        <span class="liqpay-stat-card__label">Повернено</span>
+      <div class="admin-stat-card admin-stat-card--danger">
+        <span class="admin-stat-card__value">{{ stats.refunded }}</span>
+        <span class="admin-stat-card__label">Повернено</span>
       </div>
-      <div class="liqpay-stat-card liqpay-stat-card--accent">
-        <span class="liqpay-stat-card__value">{{ stats.total_amount | int }} &#8372;</span>
-        <span class="liqpay-stat-card__label">Загальна сума</span>
+      <div class="admin-stat-card admin-stat-card--accent">
+        <span class="admin-stat-card__value">{{ stats.total_amount | int }} &#8372;</span>
+        <span class="admin-stat-card__label">Загальна сума</span>
       </div>
     </div>
 
