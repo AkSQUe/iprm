@@ -42,7 +42,7 @@
         for (var i = 0; i < buttons.length; i++) {
             var span = buttons[i].querySelector('.molecules-toggle__label');
             if (span) span.textContent = label;
-            var dot = buttons[i].querySelector('.molecules-toggle__dot');
+            var dot = buttons[i].querySelector('.iprm-toggle__dot');
             if (dot) {
                 dot.style.background = colorMode === 'grey' ? '#b4b4b4' : '#7055a4';
             }
