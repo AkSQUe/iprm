@@ -38,8 +38,7 @@
       <h2 class="iprm-section__title">Курси післядипломної освіти</h2>
 
       <div class="iprm-course-cards">
-        {% if events %}
-          {% for event in events %}
+        {% for event in events %}
         <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-course-card">
           <div class="iprm-course-card__image">
             {% if event.card_image %}
@@ -57,33 +56,11 @@
           </div>
           {% endif %}
         </a>
-          {% endfor %}
         {% else %}
-        <a href="{{ url_for('courses.course_detail') }}" class="iprm-course-card">
-          <div class="iprm-course-card__image">[photo placeholder]</div>
-          <p class="iprm-course-card__title">Плазмотерапія в гінекології</p>
-          <div class="iprm-course-card__tags">
-            <span class="iprm-tag">Очні курси з практичними заняттями</span>
-            <span class="iprm-tag">Онлайн курси з відеодемонстраціями</span>
-          </div>
-        </a>
-        <a href="{{ url_for('courses.course_stomatology') }}" class="iprm-course-card">
-          <div class="iprm-course-card__image">[photo placeholder]</div>
-          <p class="iprm-course-card__title">Плазмотерапія в стоматології</p>
-          <div class="iprm-course-card__tags">
-            <span class="iprm-tag">Очні курси з практичними заняттями</span>
-            <span class="iprm-tag">Онлайн курси з відеодемонстраціями</span>
-          </div>
-        </a>
-        <a href="{{ url_for('courses.course_orthopedics') }}" class="iprm-course-card">
-          <div class="iprm-course-card__image">[photo placeholder]</div>
-          <p class="iprm-course-card__title">Плазмотерапія в age-менеджменті</p>
-          <div class="iprm-course-card__tags">
-            <span class="iprm-tag">Очні курси з практичними заняттями</span>
-            <span class="iprm-tag">Онлайн курси з відеодемонстраціями</span>
-          </div>
-        </a>
-        {% endif %}
+        <div class="admin-empty">
+          <p>Наразі немає доступних курсів</p>
+        </div>
+        {% endfor %}
       </div>
     </div>
   </section>

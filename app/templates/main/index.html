@@ -4,6 +4,7 @@
 
 {% block extra_css %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/page-home.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -63,6 +64,36 @@
       </div>
     </div>
   </section>
+
+  {% if events %}
+  <!-- ===== COURSE CARDS ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Курси післядипломної освіти</h2>
+      <div class="iprm-course-cards">
+        {% for event in events %}
+        <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-course-card">
+          <div class="iprm-course-card__image">
+            {% if event.card_image %}
+              <img src="{{ event.card_image }}" alt="{{ event.title }}">
+            {% else %}
+              [photo placeholder]
+            {% endif %}
+          </div>
+          <p class="iprm-course-card__title">{{ event.title }}</p>
+          {% if event.tags %}
+          <div class="iprm-course-card__tags">
+            {% for tag in event.tags %}
+              <span class="iprm-tag">{{ tag }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
 
   <!-- ===== LAB 1: BIOLOGICAL AGE ===== -->
   <section class="iprm-section">
