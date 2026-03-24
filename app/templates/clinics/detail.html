@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}IPRM - {{ clinic.name }}{% endblock %}
+{% block title %}{{ clinic.name }} | IPRM{% endblock %}
 
 {% block extra_css %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/page-clinics.css') }}">

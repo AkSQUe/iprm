@@ -4,7 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='svg/IPRM-logo-simple.svg') }}">
-  <title>{% block title %}IPRM{% endblock %}</title>
+  <title>{% block title %}IPRM | Інститут Плазмотерапії та Регенеративної Медицини{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Інститут Плазмотерапії та Регенеративної Медицини. Курси післядипломної освіти для лікарів з нарахуванням балів БПР.{% endblock %}">
+  <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ self.meta_description() }}{% endblock %}">
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+  <meta property="og:locale" content="uk_UA">
+  <meta property="og:site_name" content="IPRM">
+  {% block extra_meta %}{% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/molecular-background.css') }}">

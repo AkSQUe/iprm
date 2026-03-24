@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}IPRM - {{ trainer.full_name }}{% endblock %}
+{% block title %}{{ trainer.full_name }} | IPRM{% endblock %}
+{% block meta_description %}{{ trainer.role or trainer.full_name }}. Тренер Інституту Плазмотерапії та Регенеративної Медицини.{% endblock %}
 
 {% block extra_css %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}">
