@@ -4,10 +4,13 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-event-edit.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="admin-layout">
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
   <div class="admin-hero">
     <div>
       <h1 class="admin-hero__title">{% if event %}Редагування заходу{% else %}Новий захід{% endif %}</h1>
@@ -220,6 +223,7 @@
       </button>
     </div>
   </form>
+  </div>
 </div>
 
 <script src="{{ url_for('static', filename='js/admin-event-edit.js') }}"></script>

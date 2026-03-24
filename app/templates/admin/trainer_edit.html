@@ -7,7 +7,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="admin-layout">
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
   <div class="admin-hero">
     <div>
       <h1 class="admin-hero__title">{% if trainer %}Редагування тренера{% else %}Новий тренер{% endif %}</h1>
@@ -88,6 +90,7 @@
       </button>
     </div>
   </form>
+  </div>
 </div>
 
 <script>

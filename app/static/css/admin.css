@@ -1,10 +1,71 @@
 /* Admin panel styles - IPRM Design System */
 
-/* ========== LAYOUT ========== */
+/* ========== SIDEBAR LAYOUT ========== */
+
+.admin-with-sidebar {
+  display: flex;
+  min-height: calc(100vh - 120px);
+}
+
+.admin-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--iprm-card-bg);
+  border-right: 1px solid var(--iprm-border);
+  padding: 24px 0;
+}
+
+.admin-sidebar__nav {
+  position: sticky;
+  top: 80px;
+}
+
+.admin-sidebar__group {
+  margin-bottom: 20px;
+  padding: 0 16px;
+}
+
+.admin-sidebar__group-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--iprm-text-light);
+  padding: 0 12px;
+  margin-bottom: 6px;
+}
+
+.admin-sidebar__link {
+  display: block;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--iprm-text);
+  border-radius: 6px;
+  transition: all var(--iprm-transition);
+}
+
+.admin-sidebar__link:hover {
+  background: var(--iprm-border);
+  color: var(--iprm-dark);
+}
+
+.admin-sidebar__link--active {
+  background: var(--iprm-accent);
+  color: var(--iprm-white);
+}
+
+.admin-sidebar__link--active:hover {
+  background: var(--iprm-accent-hover);
+  color: var(--iprm-white);
+}
+
+/* ========== CONTENT LAYOUT ========== */
 
 .admin-layout {
+  flex: 1;
+  min-width: 0;
   max-width: var(--iprm-max-content);
-  margin: 0 auto;
   padding: 32px;
 }
 
@@ -105,9 +166,14 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--iprm-text-light);
-  text-align: left;
+  text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.admin-table th:first-child,
+.admin-table th:nth-child(2) {
+  text-align: left;
 }
 
 .admin-table td {
@@ -115,6 +181,12 @@
   font-size: 14px;
   border-top: 1px solid var(--iprm-border);
   color: var(--iprm-text);
+  text-align: center;
+}
+
+.admin-table td:first-child,
+.admin-table td:nth-child(2) {
+  text-align: left;
 }
 
 .admin-table tr:hover td {
@@ -124,6 +196,7 @@
 .admin-table__actions {
   display: flex;
   gap: 8px;
+  justify-content: center;
 }
 
 /* ========== BADGES ========== */
@@ -323,6 +396,16 @@
   cursor: pointer;
 }
 
+/* ========== STATS BAR ========== */
+
+.admin-stats-bar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  color: var(--iprm-text-light);
+}
+
 /* ========== FORM ACTIONS ========== */
 
 .admin-form__actions {
@@ -332,24 +415,36 @@
   padding-top: 8px;
 }
 
-/* ========== PROGRAM BLOCKS ========== */
 
-.admin-program-block {
-  background: var(--iprm-white);
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm);
-  padding: 20px;
-  margin-bottom: 16px;
+/* ========== TODO LIST ========== */
+
+.admin-todo {
+  list-style: none;
+  padding: 0;
 }
 
-.admin-program-block__header {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+.admin-todo li {
+  position: relative;
+  padding: 8px 0 8px 24px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--iprm-text);
+  border-bottom: 1px solid var(--iprm-border);
 }
 
-.admin-program-block__header .form-input {
-  flex: 1;
+.admin-todo li:last-child {
+  border-bottom: none;
+}
+
+.admin-todo li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--iprm-border);
+  border-radius: 3px;
 }
 
 /* ========== ТАБЛИЦЯ: обгортка для горизонтальної прокрутки ========== */
@@ -362,6 +457,45 @@
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
+  .admin-with-sidebar {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--iprm-border);
+    padding: 12px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-sidebar__nav {
+    position: static;
+    display: flex;
+    gap: 4px;
+    padding: 0 12px;
+  }
+
+  .admin-sidebar__group {
+    margin-bottom: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .admin-sidebar__group-title {
+    display: none;
+  }
+
+  .admin-sidebar__link {
+    white-space: nowrap;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
   .admin-layout {
     padding: 20px 16px;
   }

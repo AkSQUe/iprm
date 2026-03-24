@@ -7,7 +7,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="admin-layout">
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
 
   {% include 'partials/flash_messages.html' %}
 
@@ -124,5 +126,6 @@
   </div>
   {% endif %}
 
+  </div>
 </div>
 {% endblock %}

@@ -7,7 +7,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="admin-layout">
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
   <div class="admin-hero">
     <div>
       <h1 class="admin-hero__title">Реєстрації</h1>
@@ -20,7 +22,7 @@
 
   {% include 'partials/flash_messages.html' %}
 
-  <div class="admin-event-card__meta" style="margin-bottom: 24px; display: flex; gap: 16px; font-size: 14px; color: var(--iprm-text-light);">
+  <div class="admin-stats-bar">
     <span>Всього: <strong>{{ registrations | length }}</strong></span>
     <span>Підтверджено: <strong>{{ registrations | selectattr('status', 'equalto', 'confirmed') | list | length }}</strong></span>
     <span>Очікує: <strong>{{ registrations | selectattr('status', 'equalto', 'pending') | list | length }}</strong></span>
@@ -88,5 +90,6 @@
     <p>Учасники зможуть реєструватися на опубліковані заходи</p>
   </div>
   {% endif %}
+  </div>
 </div>
 {% endblock %}

@@ -1,0 +1,53 @@
+{% set ep = request.endpoint or '' %}
+<aside class="admin-sidebar">
+  <nav class="admin-sidebar__nav">
+    <div class="admin-sidebar__group">
+      <p class="admin-sidebar__group-title">Контент</p>
+      <a href="{{ url_for('admin.dashboard') }}" class="admin-sidebar__link{% if ep in ('admin.dashboard', 'admin.event_create', 'admin.event_edit', 'admin.event_delete') %} admin-sidebar__link--active{% endif %}">
+        Заходи
+      </a>
+      <a href="{{ url_for('admin.dashboard') }}#trainers" class="admin-sidebar__link{% if ep in ('admin.trainer_create', 'admin.trainer_edit', 'admin.trainer_delete') %} admin-sidebar__link--active{% endif %}">
+        Тренери
+      </a>
+    </div>
+
+    <div class="admin-sidebar__group">
+      <p class="admin-sidebar__group-title">Продажі</p>
+      <a href="{{ url_for('admin.registrations_all') }}" class="admin-sidebar__link{% if ep in ('admin.registrations_all', 'admin.event_registrations', 'admin.registration_status', 'admin.registration_attendance') %} admin-sidebar__link--active{% endif %}">
+        Реєстрації
+      </a>
+      <a href="{{ url_for('admin.payments') }}" class="admin-sidebar__link{% if ep == 'admin.payments' %} admin-sidebar__link--active{% endif %}">
+        Платежі
+      </a>
+      <a href="{{ url_for('admin.liqpay') }}" class="admin-sidebar__link{% if ep == 'admin.liqpay' %} admin-sidebar__link--active{% endif %}">
+        LiqPay
+      </a>
+      <a href="{{ url_for('admin.certificates') }}" class="admin-sidebar__link{% if ep == 'admin.certificates' %} admin-sidebar__link--active{% endif %}">
+        Сертифікати
+      </a>
+    </div>
+
+    <div class="admin-sidebar__group">
+      <p class="admin-sidebar__group-title">Аудиторія</p>
+      <a href="{{ url_for('admin.clients') }}" class="admin-sidebar__link{% if ep == 'admin.clients' %} admin-sidebar__link--active{% endif %}">
+        Клієнти
+      </a>
+      <a href="{{ url_for('admin.reviews') }}" class="admin-sidebar__link{% if ep == 'admin.reviews' %} admin-sidebar__link--active{% endif %}">
+        Відгуки
+      </a>
+    </div>
+
+    <div class="admin-sidebar__group">
+      <p class="admin-sidebar__group-title">Система</p>
+      <a href="{{ url_for('admin.marketing') }}" class="admin-sidebar__link{% if ep == 'admin.marketing' %} admin-sidebar__link--active{% endif %}">
+        Маркетинг
+      </a>
+      <a href="{{ url_for('admin.integrations') }}" class="admin-sidebar__link{% if ep == 'admin.integrations' %} admin-sidebar__link--active{% endif %}">
+        Інтеграції
+      </a>
+      <a href="{{ url_for('admin.settings') }}" class="admin-sidebar__link{% if ep == 'admin.settings' %} admin-sidebar__link--active{% endif %}">
+        Налаштування
+      </a>
+    </div>
+  </nav>
+</aside>
