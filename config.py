@@ -29,11 +29,20 @@ class ProductionConfig(Config):
     DEBUG = False
     SESSION_COOKIE_SECURE = True
     REMEMBER_COOKIE_SECURE = True
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': 10,
+        'pool_recycle': 3600,
+        'pool_pre_ping': True,
+        'max_overflow': 20,
+    }
 
     @staticmethod
     def init_app(app):
-        if app.config['SECRET_KEY'] == 'dev-secret-key-change-in-production':
+        secret = app.config.get('SECRET_KEY', '')
+        if not secret or secret == 'dev-secret-key-change-in-production':
             raise RuntimeError('SECRET_KEY environment variable must be set for production')
+        if len(secret) < 32:
+            raise RuntimeError('SECRET_KEY must be at least 32 characters')
 
 
 class TestingConfig(Config):
