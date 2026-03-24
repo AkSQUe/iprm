@@ -1,10 +1,10 @@
 from sqlalchemy.orm import joinedload, selectinload
 
+from app.extensions import db
 from app.models.event import Event
 from app.models.trainer import Trainer
 from app.models.registration import EventRegistration
 from app.models.program_block import ProgramBlock
-from app.models.user import User
 
 
 class TestJoinedLoadQueries:
@@ -86,3 +86,41 @@ class TestFilterQueries:
         slugs = [t.slug for t in trainers]
         assert 't-flt-active' in slugs
         assert 't-flt-inactive' not in slugs
+
+
+class TestSubqueryCount:
+    """Перевірка with_registration_count() -- subquery замість N+1."""
+
+    def test_with_registration_count_zero(self, db_session):
+        """Event без реєстрацій повертає count=0."""
+        event = Event(title='E', slug='e-cnt-zero', is_active=True, status='published')
+        db_session.add(event)
+        db_session.flush()
+
+        reg_count = Event.with_registration_count()
+        rows = db.session.query(Event, reg_count).filter(Event.id == event.id).all()
+
+        assert len(rows) == 1
+        assert rows[0][1] == 0
+
+    def test_with_registration_count_excludes_cancelled(self, db_session, sample_user, sample_event):
+        """Subquery count не рахує скасовані реєстрації."""
+        reg1 = EventRegistration(
+            user_id=sample_user.id, event_id=sample_event.id,
+            phone='+380', specialty='S', workplace='W',
+            status='confirmed',
+        )
+        db_session.add(reg1)
+        db_session.flush()
+
+        reg_count = Event.with_registration_count()
+        rows = db.session.query(Event, reg_count).filter(Event.id == sample_event.id).all()
+
+        assert rows[0][1] == 1
+
+    def test_cached_reg_count_used_by_property(self, db_session):
+        """registration_count property використовує _cached_reg_count якщо встановлено."""
+        event = Event(title='E', slug='e-cached-cnt')
+        event._cached_reg_count = 42
+
+        assert event.registration_count == 42

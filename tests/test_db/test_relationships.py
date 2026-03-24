@@ -1,4 +1,3 @@
-from app.extensions import db
 from app.models.user import User
 from app.models.event import Event
 from app.models.trainer import Trainer
@@ -18,13 +17,15 @@ class TestEventRelationships:
         assert event.trainer.full_name == sample_trainer.full_name
         assert sample_trainer.events.count() == 1
 
-    def test_event_creator_relationship(self, db_session, sample_user):
-        """Зв'язок Event -> User (creator)."""
+    def test_event_creator_back_populates(self, db_session, sample_user):
+        """Двосторонній зв'язок Event.creator <-> User.created_events."""
         event = Event(title='E', slug='e-creator', created_by=sample_user.id)
         db_session.add(event)
         db_session.flush()
 
         assert event.creator.email == sample_user.email
+        assert len(sample_user.created_events) == 1
+        assert sample_user.created_events[0].slug == 'e-creator'
 
     def test_event_cascade_deletes_program_blocks(self, db_session):
         """CASCADE: видалення event видаляє пов'язані program_blocks."""
