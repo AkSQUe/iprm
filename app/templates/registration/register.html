@@ -55,9 +55,9 @@
   <form method="POST" action="{{ url_for('registration.register', event_id=event.id) }}">
     {{ form.hidden_tag() }}
 
-    <div class="reg-form-section">
-      <h3 class="reg-form-section__title">Професійна інформація</h3>
-      <div class="reg-form-grid">
+    <div class="form-section reg-form-section">
+      <h3 class="form-section__title reg-form-section__title">Професійна інформація</h3>
+      <div class="form-section__grid">
 
         <div class="form-group">
           <label for="phone">Телефон <span class="required">*</span></label>
@@ -71,7 +71,7 @@
           {% for error in form.specialty.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
         </div>
 
-        <div class="form-group reg-form-full">
+        <div class="form-group form-section__full">
           <label for="workplace">Місце роботи <span class="required">*</span></label>
           {{ form.workplace(class="form-input" + (" is-invalid" if form.workplace.errors else ""), id="workplace") }}
           {% for error in form.workplace.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
@@ -91,7 +91,7 @@
     </div>
 
     <div class="reg-actions">
-      <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="reg-btn-secondary">Назад</a>
+      <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-btn iprm-btn--secondary">Назад</a>
       <button type="submit" class="iprm-btn iprm-btn--primary">
         <span class="iprm-btn__arrow">&#x2197;</span>
         {% if event.price and event.price > 0 %}

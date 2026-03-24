@@ -54,95 +54,19 @@
   margin-bottom: 2px;
 }
 
-/* Form section */
+/* Form section -- extends .form-section from common.css */
 .reg-form-section {
-  background: var(--iprm-card-bg);
-  border-radius: var(--iprm-radius);
-  padding: 28px;
   margin-bottom: 24px;
 }
 
 .reg-form-section__title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--iprm-dark);
   margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--iprm-border);
-}
-
-.reg-form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.reg-form-full {
-  grid-column: 1 / -1;
-}
-
-.reg-form-section .form-group {
-  margin-bottom: 0;
-}
-
-.reg-form-section .form-group label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--iprm-dark);
-  margin-bottom: 6px;
-}
-
-.reg-form-section .form-group label .required {
-  color: var(--iprm-accent);
-}
-
-.reg-form-section .form-input {
-  width: 100%;
-  padding: 10px 14px;
-  font-size: 14px;
-  font-family: var(--iprm-font);
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm);
-  background: var(--iprm-white);
-  color: var(--iprm-text);
-  transition: border-color var(--iprm-transition), box-shadow var(--iprm-transition);
-}
-
-.reg-form-section .form-input:focus {
-  outline: none;
-  border-color: var(--iprm-dark);
-  box-shadow: 0 0 0 3px rgba(26, 26, 46, 0.08);
-}
-
-.reg-form-section .form-input.is-invalid {
-  border-color: var(--iprm-error);
 }
 
 .reg-actions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-}
-
-.reg-btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--iprm-font);
-  color: var(--iprm-text);
-  background: var(--iprm-white);
-  border: 1px solid var(--iprm-border);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all var(--iprm-transition);
-  text-decoration: none;
-}
-
-.reg-btn-secondary:hover {
-  background: var(--iprm-card-bg);
 }
 
 .reg-actions--center {
@@ -211,10 +135,6 @@
 @media (max-width: 768px) {
   .reg-layout {
     padding: 20px 16px;
-  }
-
-  .reg-form-grid {
-    grid-template-columns: 1fr;
   }
 
   .reg-event-card__meta {

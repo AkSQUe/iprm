@@ -210,23 +210,23 @@
 }
 
 .badge--draft {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: var(--iprm-badge-draft-bg);
+  color: var(--iprm-badge-draft-text);
 }
 
 .badge--published {
-  background: #dbeafe;
-  color: #2563eb;
+  background: var(--iprm-badge-published-bg);
+  color: var(--iprm-badge-published-text);
 }
 
 .badge--active {
-  background: #d1fae5;
-  color: #059669;
+  background: var(--iprm-badge-active-bg);
+  color: var(--iprm-badge-active-text);
 }
 
 .badge--completed {
-  background: #e0e7ff;
-  color: #4338ca;
+  background: var(--iprm-badge-completed-bg);
+  color: var(--iprm-badge-completed-text);
 }
 
 .badge--cancelled {
@@ -257,19 +257,10 @@
   gap: 24px;
 }
 
-.admin-form__section {
-  background: var(--iprm-card-bg);
-  border-radius: var(--iprm-radius);
-  padding: 28px;
-}
+/* .admin-form__section extends .form-section from common.css */
 
 .admin-form__section-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--iprm-dark);
   margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--iprm-border);
 }
 
 .admin-form__grid {
@@ -282,50 +273,7 @@
   grid-column: 1 / -1;
 }
 
-/* Form group overrides for admin */
-.admin-form .form-group {
-  margin-bottom: 0;
-}
-
-.admin-form .form-group label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--iprm-dark);
-  margin-bottom: 6px;
-}
-
-.admin-form .form-group label .required {
-  color: var(--iprm-accent);
-}
-
-.admin-form .form-input {
-  width: 100%;
-  padding: 10px 14px;
-  font-size: 14px;
-  font-family: var(--iprm-font);
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm);
-  background: var(--iprm-white);
-  color: var(--iprm-text);
-  transition: border-color var(--iprm-transition), box-shadow var(--iprm-transition);
-}
-
-.admin-form .form-input:focus {
-  outline: none;
-  border-color: var(--iprm-accent);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
-}
-
-.admin-form .form-input.is-invalid {
-  border-color: var(--iprm-error);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
-}
-
-.admin-form .form-input::placeholder {
-  color: var(--iprm-placeholder-text);
-}
-
+/* Admin-specific form overrides */
 .admin-form select.form-input {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
@@ -339,18 +287,6 @@
   resize: vertical;
   min-height: 100px;
   line-height: 1.6;
-}
-
-.admin-form .form-hint {
-  font-size: 12px;
-  color: var(--iprm-text-light);
-  margin-top: 4px;
-}
-
-.admin-form .form-error {
-  font-size: 12px;
-  color: var(--iprm-error);
-  margin-top: 4px;
 }
 
 /* Checkbox */

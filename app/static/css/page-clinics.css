@@ -79,14 +79,10 @@
   color: var(--iprm-accent-hover);
 }
 
-/* ========== EMPTY STATE ========== */
+/* ========== EMPTY STATE (extends .iprm-empty-state from common.css) ========== */
 
 .iprm-clinic-cards__empty {
   grid-column: 1 / -1;
-  text-align: center;
-  padding: 48px 24px;
-  color: var(--iprm-text-light);
-  font-size: 15px;
 }
 
 /* ========== CLINIC DETAIL ========== */
