@@ -148,6 +148,7 @@ a {
   position: sticky;
   top: 0;
   z-index: 100;
+  overflow: visible;
 }
 
 .iprm-header__top {
@@ -294,7 +295,7 @@ a {
 .iprm-nav__dropdown-menu {
   display: none;
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 12px);
   left: 50%;
   transform: translateX(-50%);
   background: var(--iprm-white);
@@ -304,7 +305,7 @@ a {
   list-style: none;
   padding: 6px 0;
   min-width: 180px;
-  z-index: 200;
+  z-index: 9999;
 }
 
 .iprm-nav__dropdown.open .iprm-nav__dropdown-menu {
