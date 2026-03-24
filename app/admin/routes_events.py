@@ -131,6 +131,7 @@ def event_create():
 
         try:
             db.session.commit()
+            audit_logger.info('Admin %s created event %s (%s)', current_user.email, event.id, event.title)
             flash('Захід створено', 'success')
             return redirect(url_for('admin.dashboard'))
         except Exception:
@@ -168,6 +169,7 @@ def event_edit(event_id):
 
         try:
             db.session.commit()
+            audit_logger.info('Admin %s updated event %s (%s)', current_user.email, event.id, event.title)
             flash('Захід оновлено', 'success')
             return redirect(url_for('admin.dashboard'))
         except Exception:
