@@ -100,7 +100,7 @@
       <div class="iprm-trainer">
         <div class="iprm-trainer__photo">
           {% if event.trainer.photo %}
-            <img src="{{ event.trainer.photo }}" alt="{{ event.trainer.full_name }}">
+            <img src="{{ event.trainer.photo }}" alt="{{ event.trainer.full_name }}" loading="lazy">
           {% else %}
             [photo placeholder]
           {% endif %}

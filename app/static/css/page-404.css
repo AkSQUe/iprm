@@ -29,6 +29,13 @@
   color: var(--iprm-text-light);
 }
 
+.iprm-404__nav {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
 .iprm-404__action {
   margin-top: 24px;
 }

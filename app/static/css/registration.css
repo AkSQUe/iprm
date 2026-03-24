@@ -186,4 +186,47 @@
   .reg-actions {
     flex-direction: column;
   }
+
+  .reg-status-card__row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .reg-liqpay-placeholder {
+    padding: 24px 16px;
+  }
+
+  .reg-liqpay-payment {
+    padding: 20px 16px;
+  }
+}
+
+/* Мобільні: зменшення шрифтів та padding */
+@media (max-width: 480px) {
+  .reg-confirmation {
+    padding: 20px 0;
+  }
+
+  .reg-confirmation__title {
+    font-size: 20px;
+  }
+
+  .reg-event-card {
+    padding: 16px;
+  }
+
+  .reg-event-card__title {
+    font-size: 18px;
+  }
+
+  .reg-status-card {
+    padding: 16px;
+  }
+
+  .reg-liqpay-payment__btn {
+    padding: 10px 24px;
+    font-size: 15px;
+    width: 100%;
+    justify-content: center;
+  }
 }

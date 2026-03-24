@@ -55,4 +55,15 @@
   .liqpay-config__label {
     min-width: 0;
   }
+
+  .liqpay-status-badges {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .liqpay-config__value--mono {
+    font-size: 12px;
+    padding: 3px 8px;
+  }
 }
