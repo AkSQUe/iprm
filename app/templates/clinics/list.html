@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}IPRM - Клініки{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-clinics.css') }}">
+{% endblock %}
+
+{% block content %}
+  <!-- ===== HERO ===== -->
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero">
+      <div class="iprm-hero__bg"></div>
+      <div class="iprm-hero__content">
+        <h1 class="iprm-hero__title">Клініка клітинних та регенеративних технологій</h1>
+        <p class="iprm-hero__subtitle">Сучасні методи відновлювальної медицини на основі PRP-терапії, екзосом та мезенхімальних стовбурових клітин</p>
+      </div>
+      <div class="iprm-hero__nav">
+        <button class="iprm-hero__arrow iprm-hero__arrow--prev">&#8249;</button>
+        <div class="iprm-hero__dots">
+          <span class="iprm-hero__dot iprm-hero__dot--active"></span>
+          <span class="iprm-hero__dot"></span>
+          <span class="iprm-hero__dot"></span>
+          <span class="iprm-hero__dot"></span>
+        </div>
+        <button class="iprm-hero__arrow iprm-hero__arrow--next">&#8250;</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== CLINICS LIST ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Відділення клініки</h2>
+      <p class="iprm-section__subtitle">Перелік напрямків клітинної та регенеративної терапії</p>
+
+      <div class="iprm-clinic-cards">
+        {% if clinics %}
+          {% for clinic in clinics %}
+        <a href="{{ url_for('clinics.clinic_detail', slug=clinic.slug) }}" class="iprm-clinic-card">
+          <div class="iprm-clinic-card__photo">
+            {% if clinic.photo %}
+              <img src="{{ clinic.photo }}" alt="{{ clinic.name }}">
+            {% else %}
+              [photo placeholder]
+            {% endif %}
+          </div>
+          <div class="iprm-clinic-card__body">
+            <h3 class="iprm-clinic-card__name">{{ clinic.name }}</h3>
+            {% if clinic.short_description %}
+              <p class="iprm-clinic-card__desc">{{ clinic.short_description }}</p>
+            {% endif %}
+            <span class="iprm-clinic-card__link">
+              <span class="iprm-btn__arrow">&#x2197;</span> Детальніше
+            </span>
+          </div>
+        </a>
+          {% endfor %}
+        {% else %}
+        <div class="iprm-clinic-cards__empty">
+          <p>Iнформація про відділення скоро з'явиться</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ADVANTAGES ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <h2 class="iprm-section__title">Переваги клініки</h2>
+
+      <div class="iprm-cards">
+        <div class="iprm-card iprm-card--left">
+          <div class="iprm-card__icon">[icon]</div>
+          <p class="iprm-card__text">Персоналізований підхід до кожного пацієнта з урахуванням індивідуальних біомаркерів</p>
+        </div>
+        <div class="iprm-card iprm-card--left">
+          <div class="iprm-card__icon">[icon]</div>
+          <p class="iprm-card__text">Сертифіковані протоколи лікування, підтверджені клінічними дослідженнями</p>
+        </div>
+        <div class="iprm-card iprm-card--left">
+          <div class="iprm-card__icon">[icon]</div>
+          <p class="iprm-card__text">Команда фахівців з багаторічним досвідом у регенеративній та клітинній медицині</p>
+        </div>
+      </div>
+
+      <div class="iprm-section__cta">
+        <a href="{{ url_for('courses.course_list') }}" class="iprm-btn iprm-btn--primary">
+          <span class="iprm-btn__arrow">&#x2197;</span> Курси інституту
+        </a>
+      </div>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}IPRM - {{ clinic.name }}{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-clinics.css') }}">
+{% endblock %}
+
+{% block content %}
+  <!-- ===== HERO ===== -->
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero">
+      <div class="iprm-hero__bg"></div>
+      <div class="iprm-hero__content">
+        <h1 class="iprm-hero__title">{{ clinic.name }}</h1>
+        {% if clinic.short_description %}
+          <p class="iprm-hero__subtitle">{{ clinic.short_description }}</p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== CLINIC INFO ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <div class="iprm-clinic-detail">
+        <div class="iprm-clinic-detail__photo">
+          {% if clinic.photo %}
+            <img src="{{ clinic.photo }}" alt="{{ clinic.name }}">
+          {% else %}
+            [photo placeholder]
+          {% endif %}
+        </div>
+        <div class="iprm-clinic-detail__content">
+          <h2 class="iprm-clinic-detail__title">{{ clinic.name }}</h2>
+          {% if clinic.description %}
+            <div class="iprm-clinic-detail__text">
+              {{ clinic.description | safe }}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== BACK ===== -->
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <div class="iprm-section__cta">
+        <a href="{{ url_for('clinics.clinic_list') }}" class="iprm-btn iprm-btn--primary">
+          <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Всі відділення
+        </a>
+      </div>
+    </div>
+  </section>
+{% endblock %}
