@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Контакти | IPRM{% endblock %}
+{% block meta_description %}Зв'яжіться з Інститутом Плазмотерапії та Регенеративної Медицини. Телефон, адреса, форма зворотного зв'язку.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-contact.css') }}">
+{% endblock %}
+
+{% block jsonld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ContactPage",
+  "name": "Контакти IPRM",
+  "url": "{{ url_for('main.contact', _external=True) }}",
+  "mainEntity": {
+    "@type": "EducationalOrganization",
+    "name": "IPRM",
+    "alternateName": "Інститут Плазмотерапії та Регенеративної Медицини",
+    "telephone": "+380660976693",
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "UA",
+      "addressLocality": "Київ"
+    },
+    "sameAs": [
+      "https://facebook.com/",
+      "https://instagram.com/"
+    ]
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="contact-page">
+  <div class="contact-page__inner">
+    <h1 class="contact-page__title">Контакти</h1>
+    <p class="contact-page__subtitle">Зв'яжіться з нами будь-яким зручним способом</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert--{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="contact-page__grid">
+
+      <div class="contact-page__info">
+        <div class="contact-page__info-item">
+          <div class="contact-page__info-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.24 1.01l-2.2 2.2z"/></svg>
+          </div>
+          <div>
+            <div class="contact-page__info-label">Телефон</div>
+            <div class="contact-page__info-value">
+              <a href="tel:+380660976693">+38066 097 66 93</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-page__info-item">
+          <div class="contact-page__info-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+          </div>
+          <div>
+            <div class="contact-page__info-label">Адреса</div>
+            <div class="contact-page__info-value">Київ, Україна</div>
+          </div>
+        </div>
+
+        <div class="contact-page__info-item">
+          <div class="contact-page__info-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1a2 2 0 0 0 2 2v1.93zm6.9-2.54A1.99 1.99 0 0 0 16 16h-1v-3a1 1 0 0 0-1-1H8v-2h2a1 1 0 0 0 1-1V7h2a2 2 0 0 0 2-2v-.41a7.984 7.984 0 0 1 2.9 12.8z"/></svg>
+          </div>
+          <div>
+            <div class="contact-page__info-label">Соціальні мережі</div>
+            <div class="contact-page__socials">
+              <a href="https://facebook.com/" class="contact-page__social-link" aria-label="IPRM у Facebook" target="_blank" rel="noopener noreferrer">
+                <img src="{{ url_for('static', filename='svg/social/facebook.svg') }}" alt="Facebook">
+              </a>
+              <a href="https://instagram.com/" class="contact-page__social-link" aria-label="IPRM в Instagram" target="_blank" rel="noopener noreferrer">
+                <img src="{{ url_for('static', filename='svg/social/instagram.svg') }}" alt="Instagram">
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-page__form-wrap">
+        <form method="POST" action="{{ url_for('main.contact') }}">
+          {{ form.hidden_tag() }}
+
+          <div class="form-group">
+            <label for="name">Ім'я <span class="required">*</span></label>
+            {{ form.name(class="form-input" + (" is-invalid" if form.name.errors else ""), id="name") }}
+            {% for error in form.name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email <span class="required">*</span></label>
+            {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email") }}
+            {% for error in form.email.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Телефон</label>
+            {{ form.phone(class="form-input", id="phone") }}
+            {% for error in form.phone.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="form-group">
+            <label for="subject">Тема</label>
+            {{ form.subject(class="form-input", id="subject") }}
+            {% for error in form.subject.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="form-group">
+            <label for="message">Повідомлення <span class="required">*</span></label>
+            {{ form.message(class="form-input" + (" is-invalid" if form.message.errors else ""), id="message") }}
+            {% for error in form.message.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="form-consent">
+            <div class="form-checkbox">
+              {{ form.consent_data(id="consent_data") }}
+              <label for="consent_data">
+                Я надаю згоду на обробку моїх персональних даних з метою обробки мого звернення. Ознайомлений(а) з <a href="{{ url_for('main.privacy') }}" target="_blank" rel="noopener noreferrer">Політикою конфіденційності</a>. <span class="required">*</span>
+              </label>
+            </div>
+            {% for error in form.consent_data.errors %}
+              <div class="form-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="contact-page__submit">
+            <button type="submit" class="iprm-btn iprm-btn--primary">
+              <span class="iprm-btn__arrow">&#x2197;</span>
+              Надіслати повідомлення
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

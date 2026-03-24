@@ -1,7 +1,9 @@
-from flask import render_template, make_response, url_for
+from flask import flash, make_response, redirect, render_template, url_for
 from sqlalchemy.orm import joinedload
 
+from app.extensions import limiter
 from app.main import main_bp
+from app.main.forms import ContactForm
 from app.models.event import Event
 from app.models.trainer import Trainer
 
@@ -42,6 +44,19 @@ def cookies():
     return render_template('main/cookies.html')
 
 
+@main_bp.route('/contact', methods=['GET', 'POST'])
+@limiter.limit("5 per hour", methods=['POST'])
+def contact():
+    form = ContactForm()
+    if form.validate_on_submit():
+        flash(
+            'Дякуємо за ваше повідомлення! Ми зв\'яжемося з вами найближчим часом.',
+            'success',
+        )
+        return redirect(url_for('main.contact'))
+    return render_template('main/contact.html', form=form, active_nav='contact')
+
+
 @main_bp.route('/design-system')
 def design_system():
     return render_template('design_system/index.html')
@@ -79,6 +94,7 @@ def sitemap():
         ('courses.course_list', '0.9', 'weekly'),
         ('trainers.trainer_list', '0.8', 'weekly'),
         ('clinics.clinic_list', '0.8', 'monthly'),
+        ('main.contact', '0.7', 'monthly'),
         ('main.offer', '0.3', 'yearly'),
         ('main.privacy', '0.3', 'yearly'),
         ('main.refund', '0.3', 'yearly'),
