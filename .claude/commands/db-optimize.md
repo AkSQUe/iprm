@@ -140,52 +140,70 @@ grep -r "old_field_name" app/templates/ --include="*.html"
 
 ### 3.4 Тести
 
-Для КОЖНОЇ зміни:
+**ОБОВ'ЯЗКОВО:** Всі тести, що створюються цим skill, складаються в окрему папку `tests/test_db/` з чіткою структурою по категоріях. НЕ змішуй з іншими тестами в `tests/test_models/` або `tests/test_routes/` -- вони можуть містити тести написані вручну або іншими skill.
 
-**Модельні тести:**
-```python
-def test_model_creation():
-    """Перевірка створення екземпляра моделі."""
-
-def test_model_constraints():
-    """Перевірка що constraints працюють (unique, not null, check)."""
-
-def test_model_relationships():
-    """Перевірка що relationships працюють коректно."""
-
-def test_model_cascade_delete():
-    """Перевірка каскадного видалення."""
-```
-
-**Тести запитів (якщо змінено routes):**
-```python
-def test_query_with_joinedload():
-    """Перевірка що joinedload не ламає запит."""
-
-def test_query_filters():
-    """Перевірка фільтрів з новими індексами."""
-```
-
-**Тести міграцій:**
-```python
-def test_migration_upgrade():
-    """Перевірка що міграція застосовується без помилок."""
-```
-
-Структура тестів:
+**Структура тестів db-optimize:**
 ```
 tests/
-  conftest.py          -- fixtures (app, db, client, users, events)
-  test_models/
-    test_user.py
-    test_event.py
-    test_trainer.py
-    ...
-  test_routes/
-    test_admin.py
-    test_courses.py
-    ...
+  conftest.py              -- спільні fixtures (app, db, client)
+  test_db/                 -- ВСІ тести db-optimize ТІЛЬКИ тут
+    __init__.py
+    conftest.py            -- fixtures специфічні для db-тестів (seed data, helpers)
+    test_constraints.py    -- CHECK constraints, UNIQUE, NOT NULL, FK ondelete
+    test_relationships.py  -- back_populates, cascade, lazy loading
+    test_queries.py        -- joinedload, selectinload, N+1 фікси, фільтри
+    test_indexes.py        -- перевірка що індексовані поля працюють в order_by/filter
 ```
+
+**Кожен файл відповідає за свою категорію:**
+
+`test_constraints.py` -- перевірка що DB-level constraints працюють:
+```python
+def test_event_price_non_negative(db_session):
+    """CHECK constraint: price >= 0."""
+
+def test_registration_unique_per_event(db_session):
+    """UNIQUE constraint: один користувач -- одна реєстрація."""
+
+def test_event_status_check_constraint(db_session):
+    """CHECK constraint: status тільки з дозволеного списку."""
+```
+
+`test_relationships.py` -- перевірка зв'язків між моделями:
+```python
+def test_event_trainer_back_populates(db_session):
+    """Двосторонній зв'язок Event <-> Trainer."""
+
+def test_event_cascade_deletes_program_blocks(db_session):
+    """CASCADE: видалення event видаляє program_blocks."""
+
+def test_registration_back_populates_user_and_event(db_session):
+    """Двосторонній зв'язок EventRegistration <-> User/Event."""
+```
+
+`test_queries.py` -- перевірка оптимізованих запитів:
+```python
+def test_events_list_with_joinedload_trainer(db_session):
+    """joinedload(Event.trainer) не ламає запит."""
+
+def test_registrations_with_joinedload_user(db_session):
+    """joinedload(EventRegistration.user) не ламає запит."""
+```
+
+`test_indexes.py` -- перевірка що індексовані колонки працюють коректно:
+```python
+def test_events_order_by_start_date(db_session):
+    """Сортування по індексованому start_date."""
+
+def test_trainers_order_by_full_name(db_session):
+    """Сортування по індексованому full_name."""
+```
+
+**Правила:**
+- Кожен тестовий файл має `__init__.py` в своїй папці
+- Спільні fixtures (створення user, event, trainer) виносяться в `tests/test_db/conftest.py`
+- Назви тестів описують ЩО перевіряється, а не ЯК
+- Docstring кожного тесту пояснює бізнес-правило або constraint
 
 ### 3.5 Позначити крок завершеним
 
