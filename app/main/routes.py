@@ -72,10 +72,13 @@ def sitemap():
 
     pages = []
 
+    from app.models.clinic import Clinic
+
     static_urls = [
         ('main.index', '1.0', 'weekly'),
         ('courses.course_list', '0.9', 'weekly'),
         ('trainers.trainer_list', '0.8', 'weekly'),
+        ('clinics.clinic_list', '0.8', 'monthly'),
         ('main.offer', '0.3', 'yearly'),
         ('main.privacy', '0.3', 'yearly'),
         ('main.refund', '0.3', 'yearly'),
@@ -104,6 +107,14 @@ def sitemap():
     for trainer in trainers:
         pages.append({
             'loc': url_for('trainers.trainer_detail', slug=trainer.slug, _external=True),
+            'priority': '0.6',
+            'changefreq': 'monthly',
+        })
+
+    clinics = Clinic.query.filter_by(is_active=True).all()
+    for clinic in clinics:
+        pages.append({
+            'loc': url_for('clinics.clinic_detail', slug=clinic.slug, _external=True),
             'priority': '0.6',
             'changefreq': 'monthly',
         })

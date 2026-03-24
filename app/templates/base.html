@@ -14,7 +14,12 @@
   <meta property="og:image:height" content="630">
   <meta property="og:locale" content="uk_UA">
   <meta property="og:site_name" content="IPRM">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:alt" content="IPRM - Інститут Плазмотерапії та Регенеративної Медицини">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ self.title() }}">
+  <meta name="twitter:description" content="{{ self.meta_description() }}">
+  <meta name="twitter:image" content="{{ self.og_image() }}">
   <link rel="canonical" href="{% block canonical %}{{ request.url }}{% endblock %}">
   <link rel="preload" href="{{ url_for('static', filename='fonts/inter-400.woff2') }}" as="font" type="font/woff2" crossorigin>
   {% block extra_meta %}{% endblock %}
@@ -62,6 +67,6 @@
   {% include 'partials/cookie_banner.html' %}
 
   <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/molecular-background.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='js/molecular-background.js') }}"></script>
 </body>
 </html>
