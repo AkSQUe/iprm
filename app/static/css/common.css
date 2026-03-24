@@ -95,9 +95,9 @@ a {
   color: inherit;
 }
 
-/* ========== THEME TOGGLE ========== */
+/* ========== TOGGLE (базовий компонент для theme/molecules) ========== */
 
-.theme-toggle {
+.iprm-toggle {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -113,46 +113,26 @@ a {
   transition: all var(--iprm-transition);
 }
 
-.theme-toggle:hover {
+.iprm-toggle:hover {
   border-color: var(--iprm-accent);
   color: var(--iprm-accent);
 }
 
-.theme-toggle__dot {
+.iprm-toggle__dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  transition: background var(--iprm-transition);
+}
+
+/* Варіант: тема (accent dot) */
+.theme-toggle .iprm-toggle__dot {
   background: var(--iprm-accent);
-  transition: background var(--iprm-transition);
 }
 
-.molecules-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 10px;
-  font-size: 11px;
-  font-weight: 500;
-  font-family: var(--iprm-font);
-  color: var(--iprm-text-light);
-  background: var(--iprm-card-bg);
-  border: 1px solid var(--iprm-border);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all var(--iprm-transition);
-}
-
-.molecules-toggle:hover {
-  border-color: var(--iprm-accent);
-  color: var(--iprm-accent);
-}
-
-.molecules-toggle__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #b4b4b4;
-  transition: background var(--iprm-transition);
+/* Варіант: молекули (neutral dot) */
+.molecules-toggle .iprm-toggle__dot {
+  background: rgb(var(--iprm-molecular-rgb));
 }
 
 /* ========== HEADER ========== */
