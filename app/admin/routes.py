@@ -352,3 +352,106 @@ def registration_attendance(reg_id):
         flash('Помилка при оновленні', 'error')
 
     return redirect(url_for('admin.event_registrations', event_id=reg.event_id))
+
+
+# ========== REGISTRATIONS (ALL) ==========
+
+
+@admin_bp.route('/registrations')
+@admin_required
+def registrations_all():
+    registrations = EventRegistration.query.order_by(
+        EventRegistration.created_at.desc()
+    ).all()
+    return render_template(
+        'admin/stub.html',
+        admin_section='registrations',
+        page_title='Реєстрації',
+        page_subtitle='Всі реєстрації на заходи',
+    )
+
+
+# ========== STUB SECTIONS ==========
+
+
+@admin_bp.route('/payments')
+@admin_required
+def payments():
+    return render_template(
+        'admin/stub.html',
+        admin_section='payments',
+        page_title='Платежі',
+        page_subtitle='Управління платежами та транзакціями',
+    )
+
+
+@admin_bp.route('/liqpay')
+@admin_required
+def liqpay():
+    return render_template(
+        'admin/stub.html',
+        admin_section='liqpay',
+        page_title='LiqPay',
+        page_subtitle='Інтеграція з платіжною системою LiqPay',
+    )
+
+
+@admin_bp.route('/certificates')
+@admin_required
+def certificates():
+    return render_template(
+        'admin/stub.html',
+        admin_section='certificates',
+        page_title='Сертифікати',
+        page_subtitle='Управління сертифікатами слухачів',
+    )
+
+
+@admin_bp.route('/clients')
+@admin_required
+def clients():
+    return render_template(
+        'admin/stub.html',
+        admin_section='clients',
+        page_title='Клієнти',
+        page_subtitle='База клієнтів та учасників',
+    )
+
+
+@admin_bp.route('/reviews')
+@admin_required
+def reviews():
+    return render_template(
+        'admin/stub.html',
+        admin_section='reviews',
+        page_title='Відгуки',
+        page_subtitle='Відгуки учасників на заходи',
+    )
+
+
+@admin_bp.route('/marketing')
+@admin_required
+def marketing():
+    return render_template('admin/marketing.html')
+
+
+@admin_bp.route('/integrations')
+@admin_required
+def integrations():
+    return render_template(
+        'admin/stub.html',
+        admin_section='integrations',
+        page_title='Інтеграції',
+        page_subtitle='Зовнішні сервіси та API',
+    )
+
+
+@admin_bp.route('/settings')
+@admin_required
+def settings():
+    return render_template(
+        'admin/stub.html',
+        admin_section='settings',
+        page_title='Налаштування',
+        page_subtitle='Загальні налаштування системи',
+    )

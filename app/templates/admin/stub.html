@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+    {% include 'partials/flash_messages.html' %}
+    <div class="admin-hero">
+      <div>
+        <h1 class="admin-hero__title">{{ page_title }}</h1>
+        <p class="admin-hero__subtitle">{{ page_subtitle }}</p>
+      </div>
+    </div>
+    <div class="admin-empty">
+      <h3 class="admin-empty__title">В розробці</h3>
+      <p>Цей розділ буде доступний найближчим часом</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

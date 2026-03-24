@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Маркетинг | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+    {% include 'partials/flash_messages.html' %}
+    <div class="admin-hero">
+      <div>
+        <h1 class="admin-hero__title">Маркетинг</h1>
+        <p class="admin-hero__subtitle">Розсилки, нагадування та аналітика</p>
+      </div>
+    </div>
+
+    <div class="admin-form__section">
+      <h3 class="admin-form__section-title">TODO: Email-розсилки</h3>
+      <ul class="admin-todo">
+        <li>Масові розсилки (newsletters) з HTML-шаблонами та сегментацією аудиторії</li>
+        <li>Промо-листи з промокодами та терміном дії</li>
+        <li>Автоматичні нагадування про заходи (за 48, 24, 2 години до початку)</li>
+        <li>Follow-up листи після завершення курсу (запит відгуку, пропозиція наступного курсу)</li>
+        <li>Celery + Redis для асинхронної обробки черги листів з пріоритетами</li>
+        <li>Відстеження відкриттів, кліків, відписок</li>
+        <li>GDPR-сумісні налаштування підписки з одноклікною відпискою</li>
+        <li>Шаблони листів: запрошення на курс, підтвердження реєстрації, нагадування, сертифікат</li>
+      </ul>
+    </div>
+
+    <div class="admin-form__section">
+      <h3 class="admin-form__section-title">TODO: SMS-повідомлення</h3>
+      <ul class="admin-todo">
+        <li>Інтеграція з SMS-провайдером (Twilio / TurboSMS / SMS Club)</li>
+        <li>SMS-нагадування про заходи за 24 години та 2 години до початку</li>
+        <li>SMS-підтвердження реєстрації та оплати</li>
+        <li>Масові SMS-розсилки з обмеженням частоти</li>
+      </ul>
+    </div>
+
+    <div class="admin-form__section">
+      <h3 class="admin-form__section-title">TODO: Аналітика</h3>
+      <ul class="admin-todo">
+        <li>Дашборд: open rate, click rate, bounce rate, delivery rate по кампаніях</li>
+        <li>Історія розсилок з фільтрацією за статусом та датою</li>
+        <li>Статистика відписок та причини</li>
+        <li>A/B тестування тем та контенту листів</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
