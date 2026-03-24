@@ -1,4 +1,5 @@
 from flask import render_template, abort, redirect, url_for
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.courses import courses_bp
 from app.models.event import Event
@@ -6,7 +7,9 @@ from app.models.event import Event
 
 @courses_bp.route('/')
 def course_list():
-    events = Event.query.filter(
+    events = Event.query.options(
+        joinedload(Event.trainer),
+    ).filter(
         Event.is_active.is_(True),
         Event.status.in_(['published', 'active']),
     ).order_by(Event.start_date).all()
@@ -15,7 +18,10 @@ def course_list():
 
 @courses_bp.route('/<slug>')
 def course_by_slug(slug):
-    event = Event.query.filter_by(slug=slug, is_active=True).first()
+    event = Event.query.options(
+        joinedload(Event.trainer),
+        selectinload(Event.program_blocks),
+    ).filter_by(slug=slug, is_active=True).first()
     if not event:
         abort(404)
     return render_template('courses/event.html', event=event, active_nav='courses')

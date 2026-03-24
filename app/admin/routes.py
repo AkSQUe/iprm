@@ -1,5 +1,6 @@
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
+from sqlalchemy.orm import joinedload
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
 from app.admin.forms import EventForm, TrainerForm
@@ -76,7 +77,9 @@ def dashboard():
 @admin_bp.route('/events')
 @admin_required
 def events_list():
-    events = Event.query.order_by(Event.created_at.desc()).all()
+    events = Event.query.options(
+        joinedload(Event.trainer),
+    ).order_by(Event.created_at.desc()).all()
     return render_template('admin/events.html', events=events)
 
 
@@ -311,7 +314,9 @@ def event_registrations(event_id):
         flash('Захід не знайдено', 'error')
         return redirect(url_for('admin.dashboard'))
 
-    registrations = EventRegistration.query.filter_by(event_id=event.id).order_by(
+    registrations = EventRegistration.query.options(
+        joinedload(EventRegistration.user),
+    ).filter_by(event_id=event.id).order_by(
         EventRegistration.created_at.desc()
     ).all()
 
