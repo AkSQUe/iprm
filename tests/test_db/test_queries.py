@@ -2,6 +2,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from app.extensions import db
 from app.models.event import Event
+from app.models.user import User
 from app.models.trainer import Trainer
 from app.models.registration import EventRegistration
 from app.models.program_block import ProgramBlock
@@ -124,3 +125,35 @@ class TestSubqueryCount:
         event._cached_reg_count = 42
 
         assert event.registration_count == 42
+
+
+class TestUserRegistrationCount:
+    """Перевірка User.with_registration_count() -- subquery замість N+1."""
+
+    def test_user_with_registration_count_zero(self, db_session, sample_user):
+        """User без реєстрацій повертає count=0."""
+        reg_count = User.with_registration_count()
+        rows = db.session.query(User, reg_count).filter(User.id == sample_user.id).all()
+
+        assert len(rows) == 1
+        assert rows[0][1] == 0
+
+    def test_user_with_registration_count(self, db_session, sample_user, sample_event):
+        """User з реєстраціями повертає правильний count."""
+        reg = EventRegistration(
+            user_id=sample_user.id, event_id=sample_event.id,
+            phone='+380', specialty='S', workplace='W',
+            status='confirmed',
+        )
+        db_session.add(reg)
+        db_session.flush()
+
+        reg_count = User.with_registration_count()
+        rows = db.session.query(User, reg_count).filter(User.id == sample_user.id).all()
+
+        assert rows[0][1] == 1
+
+    def test_user_cached_reg_count_used_by_property(self, db_session, sample_user):
+        """registration_count property використовує _cached_reg_count якщо встановлено."""
+        sample_user._cached_reg_count = 7
+        assert sample_user.registration_count == 7
