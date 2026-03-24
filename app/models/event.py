@@ -51,6 +51,11 @@ class Event(TimestampMixin, db.Model):
 
     creator = db.relationship('User', foreign_keys=[created_by])
     trainer = db.relationship('Trainer', back_populates='events')
+    registrations = db.relationship(
+        'EventRegistration',
+        back_populates='event',
+        lazy='dynamic',
+    )
     program_blocks = db.relationship(
         'ProgramBlock',
         back_populates='event',

@@ -16,6 +16,8 @@ class User(TimestampMixin, UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     last_login_at = db.Column(db.DateTime(timezone=True))
 
+    registrations = db.relationship('EventRegistration', back_populates='user', lazy='dynamic')
+
     def __init__(self, email, password=None, **kwargs):
         super().__init__(**kwargs)
         self.email = email.lower().strip()

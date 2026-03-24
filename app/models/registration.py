@@ -25,8 +25,8 @@ class EventRegistration(TimestampMixin, db.Model):
     cpd_points_awarded = db.Column(db.Integer)
     admin_notes = db.Column(db.Text)
 
-    user = db.relationship('User', backref=db.backref('registrations', lazy='dynamic'))
-    event = db.relationship('Event', backref=db.backref('registrations', lazy='dynamic'))
+    user = db.relationship('User', back_populates='registrations')
+    event = db.relationship('Event', back_populates='registrations')
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'event_id', name='uq_user_event_registration'),
