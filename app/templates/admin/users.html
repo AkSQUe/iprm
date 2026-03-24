@@ -45,7 +45,7 @@
             {% endif %}
           </td>
           <td>{{ user.email }}</td>
-          <td>{{ user.registrations.count() }}</td>
+          <td>{{ user.registration_count }}</td>
           <td>
             {% if user.last_login_at %}
               {{ user.last_login_at.strftime('%d.%m.%Y %H:%M') }}

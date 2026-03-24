@@ -90,7 +90,14 @@ def certificates():
 @admin_required
 def users():
     from app.models.user import User
-    all_users = User.query.order_by(User.created_at.desc()).all()
+    reg_count = User.with_registration_count()
+    rows = db.session.query(User, reg_count).order_by(User.created_at.desc()).all()
+
+    all_users = []
+    for user, count in rows:
+        user._cached_reg_count = count
+        all_users.append(user)
+
     return render_template('admin/users.html', users=all_users)
 
 

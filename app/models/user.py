@@ -1,3 +1,4 @@
+from sqlalchemy import func, select
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db
@@ -30,6 +31,24 @@ class User(TimestampMixin, UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    @property
+    def registration_count(self):
+        cached = getattr(self, '_cached_reg_count', None)
+        if cached is not None:
+            return cached
+        return self.registrations.count()
+
+    @classmethod
+    def with_registration_count(cls):
+        from app.models.registration import EventRegistration
+        return (
+            select(func.count(EventRegistration.id))
+            .where(EventRegistration.user_id == cls.id)
+            .correlate(cls)
+            .scalar_subquery()
+            .label('_registration_count')
+        )
 
     def __repr__(self):
         return f'<User {self.email}>'
