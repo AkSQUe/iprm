@@ -1,7 +1,20 @@
+import logging
 import os
 from flask import Flask
 from config import config
 from app.extensions import db, login_manager, csrf, migrate, limiter
+
+
+def _configure_logging(app):
+    log_level = logging.DEBUG if app.debug else logging.INFO
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter(
+        '[%(asctime)s] %(levelname)s in %(name)s: %(message)s'
+    ))
+    app.logger.handlers.clear()
+    app.logger.addHandler(handler)
+    app.logger.setLevel(log_level)
+    logging.getLogger('app').setLevel(log_level)
 
 
 def create_app(config_name=None):
@@ -10,6 +23,7 @@ def create_app(config_name=None):
 
     app = Flask(__name__)
     app.config.from_object(config[config_name])
+    _configure_logging(app)
 
     if hasattr(config[config_name], 'init_app'):
         config[config_name].init_app(app)
