@@ -1,3 +1,4 @@
+import logging
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
 from sqlalchemy.orm import joinedload
@@ -8,6 +9,8 @@ from app.extensions import db
 from app.models.event import Event
 from app.models.program_block import ProgramBlock
 from app.utils import slugify
+
+audit_logger = logging.getLogger('audit')
 
 
 def _populate_trainer_choices(form):

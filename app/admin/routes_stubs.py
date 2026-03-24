@@ -119,6 +119,8 @@ def toggle_admin(user_id):
     try:
         db.session.commit()
         status = 'надано' if user.is_admin else 'знято'
+        audit_logger.info('Admin %s toggled admin for user %s (%s): %s',
+                          current_user.email, user.id, user.email, status)
         flash(f'Адмін-повноваження {status}: {user.email}', 'success')
     except Exception:
         db.session.rollback()
