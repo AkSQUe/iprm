@@ -24,10 +24,6 @@ def course_by_slug(slug):
     ).filter_by(slug=slug, is_active=True).first()
     if not event:
         abort(404)
-    from app.models.registration import EventRegistration
-    event._cached_reg_count = event.registrations.filter(
-        EventRegistration.status.notin_(['cancelled'])
-    ).count()
     return render_template('courses/event.html', event=event, active_nav='courses')
 
 

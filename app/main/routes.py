@@ -83,6 +83,7 @@ def sitemap():
         ('main.privacy', '0.3', 'yearly'),
         ('main.refund', '0.3', 'yearly'),
         ('main.disclaimer', '0.3', 'yearly'),
+        ('main.cookies', '0.3', 'yearly'),
     ]
     for endpoint, priority, freq in static_urls:
         pages.append({

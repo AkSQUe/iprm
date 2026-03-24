@@ -12,6 +12,12 @@
     <div class="iprm-404__text">
       <h1 class="iprm-404__title">Внутрішня помилка сервера</h1>
       <p class="iprm-404__subtitle">Ми вже працюємо над вирішенням проблеми</p>
+      <nav class="iprm-404__nav">
+        <a href="{{ url_for('main.index') }}" class="iprm-btn iprm-btn--primary">
+          <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> На головну
+        </a>
+        <a href="{{ url_for('courses.course_list') }}" class="iprm-btn iprm-btn--secondary">Курси</a>
+      </nav>
     </div>
     <div class="iprm-404__image">[500 illustration placeholder]</div>
   </main>
