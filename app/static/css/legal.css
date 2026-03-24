@@ -3,7 +3,7 @@
 .legal-page {
   max-width: var(--iprm-max-content);
   margin: 0 auto;
-  padding: 48px 24px 80px;
+  padding: 24px 24px 80px;
 }
 
 .legal-page__inner {
@@ -114,6 +114,43 @@
   color: var(--iprm-text);
   margin-left: 0;
   margin-bottom: 4px;
+}
+
+/* ========== REFUND TABLE ========== */
+
+.legal-refund-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin: 16px 0 24px;
+}
+
+.legal-refund-table th {
+  text-align: left;
+  padding: 10px 14px;
+  background: var(--iprm-dark);
+  color: var(--iprm-white);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.legal-refund-table th:first-child {
+  border-radius: var(--iprm-radius-sm) 0 0 0;
+}
+
+.legal-refund-table th:last-child {
+  border-radius: 0 var(--iprm-radius-sm) 0 0;
+}
+
+.legal-refund-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--iprm-border);
+  color: var(--iprm-text);
+}
+
+.legal-refund-table__highlight {
+  font-weight: 600;
+  color: var(--iprm-accent);
 }
 
 /* ========== DETAILS TABLE ========== */

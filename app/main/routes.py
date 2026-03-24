@@ -21,6 +21,21 @@ def offer():
     return render_template('main/offer.html')
 
 
+@main_bp.route('/privacy')
+def privacy():
+    return render_template('main/privacy.html')
+
+
+@main_bp.route('/refund')
+def refund():
+    return render_template('main/refund.html')
+
+
+@main_bp.route('/disclaimer')
+def disclaimer():
+    return render_template('main/disclaimer.html')
+
+
 @main_bp.route('/design-system')
 def design_system():
     return render_template('design_system/index.html')
