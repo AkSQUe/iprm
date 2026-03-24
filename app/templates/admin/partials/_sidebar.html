@@ -3,10 +3,10 @@
   <nav class="admin-sidebar__nav">
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Контент</p>
-      <a href="{{ url_for('admin.dashboard') }}" class="admin-sidebar__link{% if ep in ('admin.dashboard', 'admin.event_create', 'admin.event_edit', 'admin.event_delete') %} admin-sidebar__link--active{% endif %}">
+      <a href="{{ url_for('admin.events_list') }}" class="admin-sidebar__link{% if ep in ('admin.events_list', 'admin.event_create', 'admin.event_edit', 'admin.event_delete') %} admin-sidebar__link--active{% endif %}">
         Заходи
       </a>
-      <a href="{{ url_for('admin.dashboard') }}#trainers" class="admin-sidebar__link{% if ep in ('admin.trainer_create', 'admin.trainer_edit', 'admin.trainer_delete') %} admin-sidebar__link--active{% endif %}">
+      <a href="{{ url_for('admin.trainers_list') }}" class="admin-sidebar__link{% if ep in ('admin.trainers_list', 'admin.trainer_create', 'admin.trainer_edit', 'admin.trainer_delete') %} admin-sidebar__link--active{% endif %}">
         Тренери
       </a>
     </div>

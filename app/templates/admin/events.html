@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Заходи | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  {% include 'partials/flash_messages.html' %}
+
+  <div class="admin-hero">
+    <div>
+      <h1 class="admin-hero__title">Заходи</h1>
+      <p class="admin-hero__subtitle">Управління заходами інституту</p>
+    </div>
+    <a href="{{ url_for('admin.event_create') }}" class="btn-admin btn-admin--primary">+ Додати захід</a>
+  </div>
+
+  {% if events %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Назва</th>
+        <th>Тип</th>
+        <th>Формат</th>
+        <th>Дата</th>
+        <th>Статус</th>
+        <th>Реєстрації</th>
+        <th>Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for event in events %}
+      <tr>
+        <td><strong>{{ event.title }}</strong></td>
+        <td>{{ event.event_type_label }}</td>
+        <td>{{ event.format_label }}</td>
+        <td>{{ event.start_date.strftime('%d.%m.%Y %H:%M') if event.start_date else '---' }}</td>
+        <td><span class="badge badge--{{ event.status }}">{{ event.status_label }}</span></td>
+        <td>
+          <a href="{{ url_for('admin.event_registrations', event_id=event.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">
+            {{ event.registration_count }}
+          </a>
+        </td>
+        <td>
+          <div class="admin-table__actions">
+            <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm" target="_blank">Перегляд</a>
+            <a href="{{ url_for('admin.event_edit', event_id=event.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Редагувати</a>
+            <form method="POST" action="{{ url_for('admin.event_delete', event_id=event.id) }}" onsubmit="return confirm('Видалити захід?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="admin-empty">
+    <h3 class="admin-empty__title">Заходів ще немає</h3>
+    <p>Створіть перший захід натиснувши кнопку вище</p>
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}

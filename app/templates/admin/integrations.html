@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Інтеграції | IPRM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+    {% include 'partials/flash_messages.html' %}
+    <div class="admin-hero">
+      <div>
+        <h1 class="admin-hero__title">Інтеграції</h1>
+        <p class="admin-hero__subtitle">Зовнішні сервіси та API</p>
+      </div>
+    </div>
+
+    <div class="admin-integrations">
+
+      <!-- LiqPay -->
+      <div class="admin-form__section">
+        <h3 class="admin-form__section-title">LiqPay</h3>
+        <p class="admin-integration__desc">Платіжна система для прийому оплати за курси. Підтримка card, Google Pay, Apple Pay.</p>
+        <ul class="admin-todo">
+          <li>Public / Private ключі (sandbox + production)</li>
+          <li>Webhook для callback-підтверджень оплати</li>
+          <li>Автоматична зміна статусу реєстрації після оплати</li>
+          <li>Рефанди та часткове повернення</li>
+        </ul>
+      </div>
+
+      <!-- Google -->
+      <div class="admin-form__section">
+        <h3 class="admin-form__section-title">Google</h3>
+        <p class="admin-integration__desc">Авторизація через Google та One Tap, аналітика, реклама.</p>
+        <div class="admin-integrations__grid">
+          <div class="admin-integration-card">
+            <h4 class="admin-integration-card__title">OAuth 2.0</h4>
+            <p>Вхід через Google-акаунт. Client ID + Client Secret, redirect URI.</p>
+          </div>
+          <div class="admin-integration-card">
+            <h4 class="admin-integration-card__title">One Tap</h4>
+            <p>Швидка авторизація без перенаправлення. Popup на сторінці входу.</p>
+          </div>
+          <div class="admin-integration-card">
+            <h4 class="admin-integration-card__title">Google Analytics (GA4)</h4>
+            <p>Measurement ID, відстеження конверсій реєстрації та оплати курсів.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- reCAPTCHA -->
+      <div class="admin-form__section">
+        <h3 class="admin-form__section-title">reCAPTCHA</h3>
+        <p class="admin-integration__desc">Захист форм реєстрації та входу від ботів.</p>
+        <ul class="admin-todo">
+          <li>reCAPTCHA v3 (invisible) для форм реєстрації та входу</li>
+          <li>Site Key + Secret Key</li>
+          <li>Поріг score для блокування (default 0.5)</li>
+        </ul>
+      </div>
+
+      <!-- Apple -->
+      <div class="admin-form__section">
+        <h3 class="admin-form__section-title">Apple</h3>
+        <p class="admin-integration__desc">Авторизація через Apple ID (Sign in with Apple).</p>
+        <ul class="admin-todo">
+          <li>Service ID, Team ID, Key ID, Private Key (.p8)</li>
+          <li>Redirect URI та обробка callback</li>
+          <li>Підтримка приховання email (relay)</li>
+        </ul>
+      </div>
+
+      <!-- Microsoft Clarity -->
+      <div class="admin-form__section">
+        <h3 class="admin-form__section-title">Microsoft Clarity</h3>
+        <p class="admin-integration__desc">Аналітика поведінки користувачів: теплові карти, записи сесій.</p>
+        <ul class="admin-todo">
+          <li>Project ID для вбудовування tracking-скрипту</li>
+          <li>Фільтрація адмін-сесій</li>
+        </ul>
+      </div>
+
+      <!-- Facebook -->
+      <div class="admin-form__section">
+        <h3 class="admin-form__section-title">Facebook</h3>
+        <p class="admin-integration__desc">OAuth-авторизація, Facebook Pixel для відстеження конверсій, Open Graph.</p>
+        <ul class="admin-todo">
+          <li>Facebook Login (OAuth): App ID + App Secret</li>
+          <li>Facebook Pixel: відстеження реєстрацій та оплат</li>
+          <li>Open Graph мета-теги для шерінгу курсів</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

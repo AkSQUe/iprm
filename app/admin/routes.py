@@ -70,9 +70,21 @@ def _save_program_blocks(event):
 @admin_bp.route('/')
 @admin_required
 def dashboard():
+    return redirect(url_for('admin.events_list'))
+
+
+@admin_bp.route('/events')
+@admin_required
+def events_list():
     events = Event.query.order_by(Event.created_at.desc()).all()
+    return render_template('admin/events.html', events=events)
+
+
+@admin_bp.route('/trainers')
+@admin_required
+def trainers_list():
     trainers = Trainer.query.order_by(Trainer.full_name).all()
-    return render_template('admin/dashboard.html', events=events, trainers=trainers)
+    return render_template('admin/trainers.html', trainers=trainers)
 
 
 @admin_bp.route('/events/new', methods=['GET', 'POST'])
@@ -438,12 +450,7 @@ def marketing():
 @admin_bp.route('/integrations')
 @admin_required
 def integrations():
-    return render_template(
-        'admin/stub.html',
-        admin_section='integrations',
-        page_title='Інтеграції',
-        page_subtitle='Зовнішні сервіси та API',
-    )
+    return render_template('admin/integrations.html')
 
 
 @admin_bp.route('/settings')
