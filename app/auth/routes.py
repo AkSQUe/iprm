@@ -6,6 +6,8 @@ from app.auth import auth_bp
 from app.auth.forms import LoginForm, RegistrationForm
 from app.extensions import db, limiter
 from app.models.user import User
+from app.models.event import Event
+from app.models.registration import EventRegistration
 
 
 def _is_safe_redirect_url(target):
@@ -85,4 +87,12 @@ def logout():
 @auth_bp.route('/account')
 @login_required
 def account():
-    return render_template('auth/account.html')
+    registrations = (
+        EventRegistration.query
+        .filter_by(user_id=current_user.id)
+        .filter(EventRegistration.status != 'cancelled')
+        .join(Event)
+        .order_by(Event.start_date.desc())
+        .all()
+    )
+    return render_template('auth/account.html', registrations=registrations)
