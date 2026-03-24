@@ -56,13 +56,13 @@
       <div class="iprm-trainer">
         <div class="iprm-trainer__photo">
           {% if trainer.photo %}
-            <img src="{{ trainer.photo }}" alt="{{ trainer.full_name }}">
+            <img src="{{ trainer.photo }}" alt="{{ trainer.full_name }}" loading="lazy">
           {% else %}
             [photo placeholder]
           {% endif %}
         </div>
         <div class="iprm-trainer__info">
-          <h2 class="iprm-trainer__name">{{ trainer.full_name }}</h2>
+          <p class="iprm-trainer__name">{{ trainer.full_name }}</p>
           {% if trainer.role %}
             <p class="iprm-trainer__role">{{ trainer.role }}</p>
           {% endif %}
@@ -88,7 +88,7 @@
         <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-course-card">
           <div class="iprm-course-card__image">
             {% if event.card_image %}
-              <img src="{{ event.card_image }}" alt="{{ event.title }}">
+              <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy">
             {% else %}
               [photo placeholder]
             {% endif %}

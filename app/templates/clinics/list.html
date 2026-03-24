@@ -3,6 +3,20 @@
 {% block title %}Клініка регенеративних технологій | IPRM{% endblock %}
 {% block meta_description %}Клініка клітинних та регенеративних технологій. PRP-терапія, терапія екзосомами, мезенхімальні стовбурові клітини.{% endblock %}
 
+{% block jsonld %}
+{{ super() }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "IPRM", "item": "{{ url_for('main.index', _external=True) }}"},
+    {"@type": "ListItem", "position": 2, "name": "Клініки"}
+  ]
+}
+</script>
+{% endblock %}
+
 {% block extra_css %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/page-clinics.css') }}">
 {% endblock %}
@@ -41,7 +55,7 @@
         <a href="{{ url_for('clinics.clinic_detail', slug=clinic.slug) }}" class="iprm-clinic-card">
           <div class="iprm-clinic-card__photo">
             {% if clinic.photo %}
-              <img src="{{ clinic.photo }}" alt="{{ clinic.name }}">
+              <img src="{{ clinic.photo }}" alt="{{ clinic.name }}" loading="lazy">
             {% else %}
               [photo placeholder]
             {% endif %}

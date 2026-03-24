@@ -17,8 +17,8 @@
       <div class="iprm-hero__content">
         <h1 class="iprm-hero__title">Інститут Плазмотерапії та Регенеративної Медицини</h1>
         <p class="iprm-hero__subtitle">Курси післядипломної освіти для лікарів, дослідження біологічного віку та персоналізована регенеративна терапія</p>
-        <a href="#" class="iprm-btn iprm-btn--primary">
-          <span class="iprm-btn__arrow">&#x2197;</span> На сторінку лабораторії
+        <a href="{{ url_for('courses.course_list') }}" class="iprm-btn iprm-btn--primary">
+          <span class="iprm-btn__arrow">&#x2197;</span> Обрати курси
         </a>
       </div>
       <div class="iprm-hero__nav">
@@ -76,7 +76,7 @@
         <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-course-card">
           <div class="iprm-course-card__image">
             {% if event.card_image %}
-              <img src="{{ event.card_image }}" alt="{{ event.title }}">
+              <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy">
             {% else %}
               [photo placeholder]
             {% endif %}
@@ -117,8 +117,8 @@
       </div>
 
       <div class="iprm-section__cta">
-        <a href="#" class="iprm-btn iprm-btn--primary">
-          <span class="iprm-btn__arrow">&#x2197;</span> На сторінку лабораторії
+        <a href="{{ url_for('courses.course_list') }}" class="iprm-btn iprm-btn--primary">
+          <span class="iprm-btn__arrow">&#x2197;</span> Дізнатися більше
         </a>
       </div>
     </div>
@@ -145,8 +145,8 @@
       </div>
 
       <div class="iprm-section__cta">
-        <a href="#" class="iprm-btn iprm-btn--primary">
-          <span class="iprm-btn__arrow">&#x2197;</span> На сторінку лабораторії
+        <a href="{{ url_for('courses.course_list') }}" class="iprm-btn iprm-btn--primary">
+          <span class="iprm-btn__arrow">&#x2197;</span> Дізнатися більше
         </a>
       </div>
     </div>
@@ -163,7 +163,7 @@
           <div class="iprm-photo-card__image">[photo placeholder]</div>
           <div class="iprm-photo-card__body">
             <p class="iprm-photo-card__title">Відділення PRP-, плазмотерапії та терапії екзосомами</p>
-            <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm">
+            <a href="{{ url_for('clinics.clinic_list') }}" class="iprm-btn iprm-btn--primary iprm-btn--sm">
               <span class="iprm-btn__arrow">&#x2197;</span> На сторінку клініки
             </a>
           </div>
@@ -172,7 +172,7 @@
           <div class="iprm-photo-card__image">[photo placeholder]</div>
           <div class="iprm-photo-card__body">
             <p class="iprm-photo-card__title">Відділення терапії мезенхімальними стовбуровими клітинами</p>
-            <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm">
+            <a href="{{ url_for('clinics.clinic_list') }}" class="iprm-btn iprm-btn--primary iprm-btn--sm">
               <span class="iprm-btn__arrow">&#x2197;</span> На сторінку клініки
             </a>
           </div>
@@ -181,7 +181,7 @@
           <div class="iprm-photo-card__image">[photo placeholder]</div>
           <div class="iprm-photo-card__body">
             <p class="iprm-photo-card__title">Відділення персоніфікованої інфузійної терапії</p>
-            <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm">
+            <a href="{{ url_for('clinics.clinic_list') }}" class="iprm-btn iprm-btn--primary iprm-btn--sm">
               <span class="iprm-btn__arrow">&#x2197;</span> На сторінку клініки
             </a>
           </div>

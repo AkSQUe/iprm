@@ -3,6 +3,20 @@
 {% block title %}{{ clinic.name }} | IPRM{% endblock %}
 {% block meta_description %}{{ clinic.short_description or clinic.name }}. Клініка Інституту Плазмотерапії та Регенеративної Медицини.{% endblock %}
 
+{% block jsonld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "IPRM", "item": "{{ url_for('main.index', _external=True) }}"},
+    {"@type": "ListItem", "position": 2, "name": "Клініки", "item": "{{ url_for('clinics.clinic_list', _external=True) }}"},
+    {"@type": "ListItem", "position": 3, "name": "{{ clinic.name }}"}
+  ]
+}
+</script>
+{% endblock %}
+
 {% block extra_css %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/page-clinics.css') }}">
 {% endblock %}
@@ -27,7 +41,7 @@
       <div class="iprm-clinic-detail">
         <div class="iprm-clinic-detail__photo">
           {% if clinic.photo %}
-            <img src="{{ clinic.photo }}" alt="{{ clinic.name }}">
+            <img src="{{ clinic.photo }}" alt="{{ clinic.name }}" loading="lazy">
           {% else %}
             [photo placeholder]
           {% endif %}

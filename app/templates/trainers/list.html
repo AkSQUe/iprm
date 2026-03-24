@@ -3,6 +3,20 @@
 {% block title %}Тренери інституту | IPRM{% endblock %}
 {% block meta_description %}Висококваліфіковані тренери Інституту Плазмотерапії та Регенеративної Медицини. Досвідчені практикуючі лікарі.{% endblock %}
 
+{% block jsonld %}
+{{ super() }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "IPRM", "item": "{{ url_for('main.index', _external=True) }}"},
+    {"@type": "ListItem", "position": 2, "name": "Тренери"}
+  ]
+}
+</script>
+{% endblock %}
+
 {% block extra_css %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}">
 {% endblock %}
@@ -41,7 +55,7 @@
         <a href="{{ url_for('trainers.trainer_detail', slug=trainer.slug) }}" class="iprm-trainer-card">
           <div class="iprm-trainer-card__photo">
             {% if trainer.photo %}
-              <img src="{{ trainer.photo }}" alt="{{ trainer.full_name }}">
+              <img src="{{ trainer.photo }}" alt="{{ trainer.full_name }}" loading="lazy">
             {% else %}
               [photo placeholder]
             {% endif %}
