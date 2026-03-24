@@ -22,7 +22,7 @@ def payments():
     return redirect(url_for('admin.liqpay'))
 
 
-@admin_bp.route('/liqpay')
+@admin_bp.route('/liqpay', methods=['GET', 'POST'])
 @admin_required
 def liqpay():
     from sqlalchemy import func as sa_func
@@ -68,6 +68,84 @@ def liqpay():
         stats=stats,
         recent=recent,
     )
+
+
+@admin_bp.route('/liqpay/save-keys', methods=['POST'])
+@admin_required
+def liqpay_save_keys():
+    import os
+    from flask import request as req
+
+    public_key = req.form.get('public_key', '').strip()
+    private_key = req.form.get('private_key', '').strip()
+    sandbox = req.form.get('sandbox') == 'on'
+
+    if not public_key or not private_key:
+        flash('Обидва ключі обов\'язкові', 'error')
+        return redirect(url_for('admin.liqpay'))
+
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
+    _update_env_key(env_path, 'LIQPAY_PUBLIC_KEY', public_key)
+    _update_env_key(env_path, 'LIQPAY_PRIVATE_KEY', private_key)
+    _update_env_key(env_path, 'LIQPAY_SANDBOX', 'true' if sandbox else 'false')
+
+    from flask import current_app
+    current_app.config['LIQPAY_PUBLIC_KEY'] = public_key
+    current_app.config['LIQPAY_PRIVATE_KEY'] = private_key
+    current_app.config['LIQPAY_SANDBOX'] = sandbox
+
+    audit_logger.info('Admin %s updated LiqPay keys (sandbox=%s)', current_user.email, sandbox)
+    flash('Ключі LiqPay збережено', 'success')
+    return redirect(url_for('admin.liqpay'))
+
+
+@admin_bp.route('/liqpay/test', methods=['POST'])
+@admin_required
+def liqpay_test():
+    from app.services.liqpay import get_liqpay_service
+
+    service = get_liqpay_service()
+    if not service.is_configured:
+        flash('Спочатку збережіть ключі LiqPay', 'error')
+        return redirect(url_for('admin.liqpay'))
+
+    result = service.check_status('TEST-0')
+    if result is not None:
+        lp_err = result.get('err_code', '')
+        lp_status = result.get('status', '')
+        if lp_err == 'payment_not_found' or lp_status:
+            flash('З\'єднання з LiqPay API успішне', 'success')
+        else:
+            err_desc = result.get('err_description', str(result))
+            flash(f'LiqPay API відповів помилкою: {err_desc}', 'error')
+    else:
+        flash('Не вдалося з\'єднатися з LiqPay API. Перевірте ключі.', 'error')
+
+    audit_logger.info('Admin %s tested LiqPay connection', current_user.email)
+    return redirect(url_for('admin.liqpay'))
+
+
+def _update_env_key(env_path, key, value):
+    import os
+    lines = []
+    found = False
+    if os.path.exists(env_path):
+        with open(env_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+
+    new_lines = []
+    for line in lines:
+        if line.strip().startswith(f'{key}='):
+            new_lines.append(f'{key}={value}\n')
+            found = True
+        else:
+            new_lines.append(line)
+
+    if not found:
+        new_lines.append(f'{key}={value}\n')
+
+    with open(env_path, 'w', encoding='utf-8') as f:
+        f.writelines(new_lines)
 
 
 def _mask_key(key):
