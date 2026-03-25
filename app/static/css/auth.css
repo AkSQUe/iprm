@@ -316,14 +316,14 @@
   color: var(--iprm-text-light);
 }
 
-.account-course__status--pending { background: #fef3c7; color: #92400e; }
-.account-course__status--confirmed { background: #d1fae5; color: #065f46; }
-.account-course__status--completed { background: #ede9f6; color: #5d4691; }
+.account-course__status--pending { background: var(--iprm-warning-bg); color: var(--iprm-warning-text); }
+.account-course__status--confirmed { background: var(--iprm-badge-active-bg); color: var(--iprm-badge-active-text); }
+.account-course__status--completed { background: var(--iprm-badge-completed-bg); color: var(--iprm-badge-completed-text); }
 
-.account-course__payment--unpaid { background: #fee2e2; color: #991b1b; }
-.account-course__payment--pending { background: #fef3c7; color: #92400e; }
-.account-course__payment--paid { background: #d1fae5; color: #065f46; }
-.account-course__payment--refunded { background: #e5e7eb; color: #4b5563; }
+.account-course__payment--unpaid { background: var(--iprm-error-bg); color: var(--iprm-error-text); }
+.account-course__payment--pending { background: var(--iprm-warning-bg); color: var(--iprm-warning-text); }
+.account-course__payment--paid { background: var(--iprm-badge-active-bg); color: var(--iprm-badge-active-text); }
+.account-course__payment--refunded { background: var(--iprm-neutral-bg); color: var(--iprm-neutral-text); }
 
 .account-course__title {
   font-size: 1rem;

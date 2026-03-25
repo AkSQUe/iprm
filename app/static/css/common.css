@@ -41,6 +41,10 @@
   --iprm-info-bg: #e0f2fe;
   --iprm-info-light: #bae6fd;
   --iprm-placeholder-text: #bbb;
+  --iprm-warning-bg: #fef3c7;
+  --iprm-warning-text: #92400e;
+  --iprm-neutral-bg: #e5e7eb;
+  --iprm-neutral-text: #4b5563;
 
   /* Badge colors */
   --iprm-badge-draft-bg: #f3f4f6;
@@ -148,7 +152,7 @@ a {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 100;
+  z-index: 1000;
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
@@ -569,6 +573,52 @@ a {
   transform: rotate(225deg);
 }
 
+/* ========== APPLE BUTTONS (capsule-style, глобальний компонент) ========== */
+
+.apple-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 980px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  font-family: var(--iprm-font);
+}
+
+.apple-btn--primary {
+  background: #7055a4;
+  color: #fff;
+}
+
+.apple-btn--primary:hover {
+  background: #5d4691;
+  transform: scale(1.02);
+}
+
+.apple-btn--secondary {
+  background: transparent;
+  color: #7055a4;
+}
+
+.apple-btn--secondary::after {
+  content: ' >';
+}
+
+.apple-btn--secondary:hover {
+  color: #5d4691;
+}
+
+.apple-btn--disabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
 /* ========== SECTIONS ========== */
 
 .iprm-section {
@@ -970,6 +1020,10 @@ a {
   padding: 48px 24px;
   color: var(--iprm-text-light);
   font-size: 15px;
+}
+
+.iprm-empty-state--full {
+  grid-column: 1 / -1;
 }
 
 /* ========== COURSES GRID (masonry 2-col) ========== */

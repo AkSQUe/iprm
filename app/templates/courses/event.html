@@ -65,7 +65,7 @@
         {% if event.is_registration_open %}
           <a href="{{ url_for('registration.register', event_id=event.id) }}" class="apple-btn apple-btn--primary">Реєстрація на курс</a>
         {% else %}
-          <span class="apple-btn apple-btn--primary" style="opacity:0.5;cursor:default;">Реєстрацію закрито</span>
+          <span class="apple-btn apple-btn--primary apple-btn--disabled">Реєстрацію закрито</span>
         {% endif %}
       </div>
     </section>
@@ -124,6 +124,7 @@
       <div class="iprm-program">
         {% for block in event.program_blocks %}
         <div class="iprm-program__block apple-reveal">
+          <div class="iprm-program__tag">Частина {{ loop.index }}</div>
           <h3 class="iprm-program__heading">{{ block.heading }}</h3>
           <ul class="iprm-program__list">
             {% for item in block.items %}

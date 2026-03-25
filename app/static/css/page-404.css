@@ -46,38 +46,7 @@
   justify-content: center;
 }
 
-.iprm-error-page__actions .apple-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.0625rem;
-  font-weight: 500;
-  border: none;
-  padding: 14px 32px;
-  border-radius: 980px;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.2s;
-}
-
-.iprm-error-page__actions .apple-btn--primary {
-  background: #7055a4;
-  color: #fff;
-}
-
-.iprm-error-page__actions .apple-btn--primary:hover {
-  background: #5d4691;
-  transform: scale(1.02);
-}
-
-.iprm-error-page__actions .apple-btn--secondary {
-  background: transparent;
-  color: #7055a4;
-}
-
-.iprm-error-page__actions .apple-btn--secondary:hover {
-  color: #5d4691;
-}
+/* .apple-btn -- визначено глобально в common.css */
 
 @media (max-width: 768px) {
   .iprm-error-page {
