@@ -1,35 +1,134 @@
-/* IPRM - Design System Page Styles */
+/* IPRM - Design System Page Styles (Apple-style redesign) */
+
+/* ========== NAV ========== */
+
+.ds-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(251, 251, 253, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  height: 52px;
+}
+
+.ds-nav__title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #7055a4;
+  white-space: nowrap;
+  margin-right: 32px;
+  letter-spacing: -0.02em;
+}
+
+.ds-nav a {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: #424245;
+  white-space: nowrap;
+  padding: 16px 12px;
+  transition: color 0.2s;
+  position: relative;
+}
+
+.ds-nav a:hover {
+  color: #7055a4;
+}
+
+.ds-nav a.active {
+  color: #7055a4;
+}
+
+.ds-nav a.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: #7055a4;
+  border-radius: 1px;
+}
+
+/* ========== SECTIONS ========== */
 
 .ds-section {
-  padding: 32px;
-  max-width: var(--iprm-max-content);
+  padding: 80px 32px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
 .ds-section + .ds-section {
-  border-top: 1px solid var(--iprm-border);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
+.ds-section-alt {
+  background: #f5f5f7;
+}
+
+.ds-section-alt .ds-section {
+  border-top: none;
+}
+
+.ds-section-dark {
+  background: #1a1a2e;
+}
+
+.ds-section-dark .ds-section {
+  border-top: none;
+}
+
+/* ========== LABEL / TITLE / HINT ========== */
+
 .ds-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--iprm-accent);
+  color: #7055a4;
   margin-bottom: 8px;
 }
 
 .ds-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--iprm-dark);
-  margin-bottom: 24px;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  color: #1d1d1f;
+  letter-spacing: -0.03em;
+  margin-bottom: 32px;
 }
+
+.ds-section-dark .ds-title {
+  color: #fff;
+}
+
+.ds-hint {
+  font-size: 0.8125rem;
+  color: #86868b;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #f5f5f7;
+  border-radius: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  line-height: 1.6;
+}
+
+.ds-section-dark .ds-hint {
+  background: rgba(255, 255, 255, 0.06);
+  color: #d2d2d7;
+}
+
+/* ========== LAYOUT HELPERS ========== */
 
 .ds-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
   align-items: center;
   margin-bottom: 24px;
 }
@@ -41,137 +140,205 @@
   margin-bottom: 24px;
 }
 
-.ds-hint {
-  font-size: 12px;
-  color: var(--iprm-text-light);
-  margin-top: -16px;
+.ds-spacer {
+  margin-bottom: 48px;
+}
+
+/* ========== COLOR SWATCHES ========== */
+
+.ds-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
   margin-bottom: 24px;
 }
 
 .ds-swatch {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px 16px;
+  transition: transform 0.2s;
+}
+
+.ds-swatch:hover {
+  transform: translateY(-2px);
 }
 
 .ds-swatch__color {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  border: 1px solid var(--iprm-border);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
 }
 
 .ds-swatch__info {
-  font-size: 13px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1d1d1f;
   line-height: 1.4;
 }
 
 .ds-swatch__value {
   display: block;
-  font-size: 11px;
-  color: var(--iprm-text-light);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #86868b;
+  font-family: 'SF Mono', 'Fira Code', monospace;
 }
 
+/* ========== TYPOGRAPHY DEMO ========== */
 
-.ds-nav {
-  position: sticky;
-  top: 0;
-  background: var(--iprm-white);
-  border-bottom: 1px solid var(--iprm-border);
-  padding: 12px 32px;
+.ds-typo-item {
+  margin-bottom: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.ds-typo-item:last-child {
+  border-bottom: none;
+}
+
+.ds-typo-meta {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: #86868b;
+  margin-top: 2px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+/* ========== DARK DEMO ========== */
+
+.ds-dark-demo {
+  background: #1a1a2e;
+  padding: 24px;
+  border-radius: 20px;
+}
+
+/* ========== GRADIENT DEMO ========== */
+
+.ds-gradient-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ds-gradient-sample {
+  height: 56px;
+  border-radius: 16px;
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 24px;
-  z-index: 100;
-  overflow-x: auto;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #fff;
 }
 
-.ds-nav__title {
-  font-size: 14px;
+/* ========== COMPONENT DEMOS ========== */
+
+.ds-demo {
+  padding: 32px;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  margin-bottom: 16px;
+}
+
+.ds-section-alt .ds-demo {
+  background: #fff;
+}
+
+.ds-demo--flush {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ========== SECTION HEADING ========== */
+
+.ds-section-heading {
+  font-size: 1rem;
   font-weight: 700;
-  color: var(--iprm-dark);
-  white-space: nowrap;
+  letter-spacing: -0.01em;
+  color: #1d1d1f;
+  margin-top: 40px;
+  margin-bottom: 16px;
 }
 
-.ds-nav a {
-  font-size: 13px;
-  color: var(--iprm-text-light);
-  white-space: nowrap;
-}
-
-.ds-nav a:hover {
-  color: var(--iprm-accent);
-}
+/* ========== PAGES GRID ========== */
 
 .ds-pages {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
 }
 
 .ds-pages a {
-  display: block;
-  padding: 12px 20px;
-  background: var(--iprm-card-bg);
-  border-radius: 10px;
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  background: #fff;
+  border-radius: 16px;
+  font-size: 0.9375rem;
   font-weight: 500;
-  color: var(--iprm-text);
-  transition: background var(--iprm-transition);
+  color: #1d1d1f;
+  transition: all 0.2s;
 }
 
 .ds-pages a:hover {
-  background: var(--iprm-accent-light);
+  background: #ede9f6;
+  color: #7055a4;
+  transform: translateY(-2px);
 }
 
-/* Typography demo items */
-.ds-typo-item {
-  margin-bottom: 4px;
-}
-
-/* Dark background demo wrapper */
-.ds-dark-demo {
-  background: var(--iprm-dark);
-  padding: 16px;
-  border-radius: 12px;
-}
-
-/* Section heading in DS */
-.ds-section-heading {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 12px;
+.ds-pages a::after {
+  content: '>';
+  margin-left: auto;
+  color: #86868b;
+  font-size: 0.75rem;
 }
 
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
   .ds-section {
-    padding: 24px 16px;
+    padding: 48px 16px;
   }
 
   .ds-nav {
-    padding: 10px 16px;
-    gap: 16px;
+    padding: 0 16px;
+    gap: 0;
+    height: 44px;
+  }
+
+  .ds-nav__title {
+    font-size: 0.9375rem;
+    margin-right: 16px;
+  }
+
+  .ds-nav a {
+    padding: 12px 8px;
+    font-size: 0.75rem;
   }
 
   .ds-title {
-    font-size: 18px;
-  }
-}
-
-@media (max-width: 480px) {
-  .ds-section {
-    padding: 20px 12px;
+    font-size: 1.5rem;
   }
 
-  .ds-nav {
-    gap: 12px;
-    padding: 8px 12px;
+  .ds-swatches {
+    grid-template-columns: 1fr;
   }
 
-  .ds-pages a {
-    padding: 10px 16px;
-    font-size: 13px;
+  .ds-gradient-row {
+    flex-direction: column;
+  }
+
+  .ds-demo {
+    padding: 20px;
   }
 }
