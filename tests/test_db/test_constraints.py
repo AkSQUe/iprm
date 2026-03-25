@@ -148,6 +148,49 @@ class TestCheckConstraints:
         db_session.flush()
         assert event.max_participants == 30
 
+    def test_event_cpd_points_negative_rejected(self, db_session):
+        """CHECK constraint: cpd_points не може бути від'ємним."""
+        event = Event(title='E', slug='e-ck-cpd-neg', cpd_points=-1)
+        db_session.add(event)
+        with pytest.raises(Exception):
+            db_session.flush()
+
+    def test_event_cpd_points_zero_allowed(self, db_session):
+        """cpd_points = 0 допустимий."""
+        event = Event(title='E', slug='e-ck-cpd-zero', cpd_points=0)
+        db_session.add(event)
+        db_session.flush()
+        assert event.cpd_points == 0
+
+    def test_event_cpd_points_null_allowed(self, db_session):
+        """cpd_points NULL допустимий."""
+        event = Event(title='E', slug='e-ck-cpd-null', cpd_points=None)
+        db_session.add(event)
+        db_session.flush()
+        assert event.cpd_points is None
+
+    def test_registration_cpd_awarded_negative_rejected(self, db_session, sample_user, sample_event):
+        """CHECK constraint: cpd_points_awarded не може бути від'ємним."""
+        reg = EventRegistration(
+            user_id=sample_user.id, event_id=sample_event.id,
+            phone='+380', specialty='S', workplace='W',
+            cpd_points_awarded=-5,
+        )
+        db_session.add(reg)
+        with pytest.raises(Exception):
+            db_session.flush()
+
+    def test_registration_payment_amount_negative_rejected(self, db_session, sample_user, sample_event):
+        """CHECK constraint: payment_amount не може бути від'ємним."""
+        reg = EventRegistration(
+            user_id=sample_user.id, event_id=sample_event.id,
+            phone='+380', specialty='S', workplace='W',
+            payment_amount=-100,
+        )
+        db_session.add(reg)
+        with pytest.raises(Exception):
+            db_session.flush()
+
 
 class TestTimestamps:
     """Перевірка автоматичних timestamps."""

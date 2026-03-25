@@ -44,6 +44,14 @@ class EventRegistration(TimestampMixin, db.Model):
             'experience_years >= 0',
             name='ck_registrations_experience_non_negative',
         ),
+        db.CheckConstraint(
+            'cpd_points_awarded >= 0 OR cpd_points_awarded IS NULL',
+            name='ck_registrations_cpd_non_negative',
+        ),
+        db.CheckConstraint(
+            'payment_amount >= 0 OR payment_amount IS NULL',
+            name='ck_registrations_payment_amount_non_negative',
+        ),
     )
 
     STATUSES = [
