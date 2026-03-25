@@ -22,10 +22,11 @@
 {% endblock %}
 
 {% block content %}
+<div class="apple-page">
+
   <!-- ===== HERO ===== -->
   <div class="iprm-hero-wrap">
     <section class="iprm-hero">
-      <div class="iprm-hero__bg"></div>
       <div class="iprm-hero__content">
         <h1 class="iprm-hero__title">{{ clinic.name }}</h1>
         {% if clinic.short_description %}
@@ -36,14 +37,12 @@
   </div>
 
   <!-- ===== CLINIC INFO ===== -->
-  <section class="iprm-section">
+  <section class="iprm-section apple-section-gray">
     <div class="iprm-section__inner">
       <div class="iprm-clinic-detail">
         <div class="iprm-clinic-detail__photo">
           {% if clinic.photo %}
             <img src="{{ clinic.photo }}" alt="{{ clinic.name }}" loading="lazy">
-          {% else %}
-            [photo placeholder]
           {% endif %}
         </div>
         <div class="iprm-clinic-detail__content">
@@ -59,13 +58,11 @@
   </section>
 
   <!-- ===== BACK ===== -->
-  <section class="iprm-section">
-    <div class="iprm-section__inner">
-      <div class="iprm-section__cta">
-        <a href="{{ url_for('clinics.clinic_list') }}" class="iprm-btn iprm-btn--primary">
-          <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Всі відділення
-        </a>
-      </div>
+  <section class="iprm-section" style="padding: 48px 24px;">
+    <div class="apple-section-cta">
+      <a href="{{ url_for('clinics.clinic_list') }}" class="apple-btn apple-btn--secondary">Всі відділення</a>
     </div>
   </section>
+
+</div>
 {% endblock %}

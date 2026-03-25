@@ -31,15 +31,12 @@
 </script>
 {% endblock %}
 
-{% block extra_css %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}?v={{ assets_version }}">
-{% endblock %}
-
 {% block content %}
+<div class="apple-page">
+
   <!-- ===== HERO ===== -->
   <div class="iprm-hero-wrap">
     <section class="iprm-hero">
-      <div class="iprm-hero__bg"></div>
       <div class="iprm-hero__content">
         <h1 class="iprm-hero__title">{{ trainer.full_name }}</h1>
         {% if trainer.role %}
@@ -50,18 +47,16 @@
   </div>
 
   <!-- ===== TRAINER PROFILE ===== -->
-  <section class="iprm-section">
+  <section class="iprm-section apple-section-gray">
     <div class="iprm-section__inner">
-      <div class="iprm-trainer">
+      <div class="iprm-trainer apple-reveal">
         <div class="iprm-trainer__photo">
           {% if trainer.photo %}
             <img src="{{ trainer.photo }}" alt="{{ trainer.full_name }}" loading="lazy">
-          {% else %}
-            [photo placeholder]
           {% endif %}
         </div>
         <div class="iprm-trainer__info">
-          <p class="iprm-trainer__name">{{ trainer.full_name }}</p>
+          <h3 class="iprm-trainer__name">{{ trainer.full_name }}</h3>
           {% if trainer.role %}
             <p class="iprm-trainer__role">{{ trainer.role }}</p>
           {% endif %}
@@ -81,25 +76,26 @@
   <section class="iprm-section">
     <div class="iprm-section__inner">
       <h2 class="iprm-section__title">Курси тренера</h2>
+      <p class="iprm-section__subtitle">Доступні програми навчання</p>
 
       <div class="iprm-course-cards">
         {% for event in events %}
-        <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-course-card">
+        <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-course-card apple-reveal">
           <div class="iprm-course-card__image">
             {% if event.card_image %}
               <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy">
-            {% else %}
-              [photo placeholder]
             {% endif %}
           </div>
-          <p class="iprm-course-card__title">{{ event.title }}</p>
-          {% if event.tags %}
-          <div class="iprm-course-card__tags">
-            {% for tag in event.tags %}
-              <span class="iprm-tag">{{ tag }}</span>
-            {% endfor %}
+          <div class="apple-card-body">
+            <p class="iprm-course-card__title">{{ event.title }}</p>
+            {% if event.tags %}
+            <div class="iprm-course-card__tags">
+              {% for tag in event.tags %}
+                <span class="iprm-tag">{{ tag }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
           </div>
-          {% endif %}
         </a>
         {% endfor %}
       </div>
@@ -108,13 +104,26 @@
   {% endif %}
 
   <!-- ===== BACK ===== -->
-  <section class="iprm-section">
-    <div class="iprm-section__inner">
-      <div class="iprm-section__cta">
-        <a href="{{ url_for('trainers.trainer_list') }}" class="iprm-btn iprm-btn--primary">
-          <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Всі тренери
-        </a>
-      </div>
+  <section class="iprm-section apple-section-gray" style="padding: 48px 24px;">
+    <div class="apple-section-cta">
+      <a href="{{ url_for('trainers.trainer_list') }}" class="apple-btn apple-btn--secondary">Всі тренери</a>
     </div>
   </section>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  var els = document.querySelectorAll('.apple-reveal');
+  if (!els.length) return;
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(function (el) { obs.observe(el); });
+})();
+</script>
 {% endblock %}

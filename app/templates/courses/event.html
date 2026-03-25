@@ -48,13 +48,12 @@
 </script>
 {% endblock %}
 
-{% block extra_css %}{% endblock %}
-
 {% block content %}
+<div class="apple-page">
+
   <!-- ===== HERO ===== -->
   <div class="iprm-hero-wrap">
-    <section class="iprm-hero iprm-hero--tall">
-      <div class="iprm-hero__bg"></div>
+    <section class="iprm-hero">
       <div class="iprm-hero__content">
         {% if event.price %}
           <span class="iprm-hero__price">{{ event.price | int }} &#8372; за курс</span>
@@ -64,11 +63,9 @@
           <p class="iprm-hero__subtitle">{{ event.subtitle }}</p>
         {% endif %}
         {% if event.is_registration_open %}
-          <a href="{{ url_for('registration.register', event_id=event.id) }}" class="iprm-btn iprm-btn--primary">
-            <span class="iprm-btn__arrow">&#x2197;</span> Реєстрація на курс
-          </a>
+          <a href="{{ url_for('registration.register', event_id=event.id) }}" class="apple-btn apple-btn--primary">Реєстрація на курс</a>
         {% else %}
-          <span class="iprm-btn iprm-btn--primary iprm-btn--disabled">Реєстрацію закрито</span>
+          <span class="apple-btn apple-btn--primary" style="opacity:0.5;cursor:default;">Реєстрацію закрито</span>
         {% endif %}
       </div>
     </section>
@@ -76,12 +73,13 @@
 
   <!-- ===== TARGET AUDIENCE ===== -->
   {% if event.target_audience %}
-  <section class="iprm-section">
+  <section class="iprm-section apple-section-gray">
     <div class="iprm-section__inner">
       <h2 class="iprm-section__title">Для кого</h2>
+      <p class="iprm-section__subtitle">Спеціалісти, яким курс принесе найбільше користі</p>
       <div class="iprm-target-grid">
         {% for item in event.target_audience %}
-        <div class="iprm-target-card{% if loop.last and loop.length is odd %} iprm-target-card--full{% endif %}">
+        <div class="iprm-target-card apple-reveal{% if loop.last and loop.length is odd %} iprm-target-card--full{% endif %}">
           <p>{{ item }}</p>
         </div>
         {% endfor %}
@@ -95,12 +93,10 @@
   <section class="iprm-section">
     <div class="iprm-section__inner">
       <h2 class="iprm-section__title">Тренер курсу</h2>
-      <div class="iprm-trainer">
+      <div class="iprm-trainer apple-reveal">
         <div class="iprm-trainer__photo">
           {% if event.trainer.photo %}
             <img src="{{ event.trainer.photo }}" alt="{{ event.trainer.full_name }}" loading="lazy">
-          {% else %}
-            [photo placeholder]
           {% endif %}
         </div>
         <div class="iprm-trainer__info">
@@ -112,9 +108,7 @@
             <p class="iprm-trainer__desc">{{ event.trainer.bio }}</p>
           {% endif %}
           {% if event.is_registration_open %}
-            <a href="{{ url_for('registration.register', event_id=event.id) }}" class="iprm-btn iprm-btn--primary">
-              <span class="iprm-btn__arrow">&#x2197;</span> Реєстрація на курс
-            </a>
+            <a href="{{ url_for('registration.register', event_id=event.id) }}" class="apple-btn apple-btn--primary">Реєстрація на курс</a>
           {% endif %}
         </div>
       </div>
@@ -124,12 +118,12 @@
 
   <!-- ===== PROGRAM ===== -->
   {% if event.program_blocks %}
-  <section class="iprm-section">
+  <section class="iprm-section apple-section-gray">
     <div class="iprm-section__inner">
       <h2 class="iprm-section__title">Програма курсу</h2>
       <div class="iprm-program">
         {% for block in event.program_blocks %}
-        <div class="iprm-program__block">
+        <div class="iprm-program__block apple-reveal">
           <h3 class="iprm-program__heading">{{ block.heading }}</h3>
           <ul class="iprm-program__list">
             {% for item in block.items %}
@@ -140,10 +134,8 @@
         {% endfor %}
       </div>
       {% if event.is_registration_open %}
-      <div class="iprm-section__cta">
-        <a href="{{ url_for('registration.register', event_id=event.id) }}" class="iprm-btn iprm-btn--primary">
-          <span class="iprm-btn__arrow">&#x2197;</span> Реєстрація на курс
-        </a>
+      <div class="apple-section-cta">
+        <a href="{{ url_for('registration.register', event_id=event.id) }}" class="apple-btn apple-btn--primary">Реєстрація на курс</a>
       </div>
       {% endif %}
     </div>
@@ -154,10 +146,27 @@
   {% if event.description %}
   <section class="iprm-section">
     <div class="iprm-section__inner">
-      <div class="iprm-history__text">
+      <div class="iprm-history__text apple-reveal">
         {{ event.description | safe }}
       </div>
     </div>
   </section>
   {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  var els = document.querySelectorAll('.apple-reveal');
+  if (!els.length) return;
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(function (el) { obs.observe(el); });
+})();
+</script>
 {% endblock %}

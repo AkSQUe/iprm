@@ -22,29 +22,20 @@
 {% endblock %}
 
 {% block content %}
+<div class="apple-page">
+
   <!-- ===== HERO ===== -->
   <div class="iprm-hero-wrap">
     <section class="iprm-hero">
-      <div class="iprm-hero__bg"></div>
       <div class="iprm-hero__content">
         <h1 class="iprm-hero__title">Клініка клітинних та регенеративних технологій</h1>
         <p class="iprm-hero__subtitle">Сучасні методи відновлювальної медицини на основі PRP-терапії, екзосом та мезенхімальних стовбурових клітин</p>
-      </div>
-      <div class="iprm-hero__nav">
-        <button class="iprm-hero__arrow iprm-hero__arrow--prev">&#8249;</button>
-        <div class="iprm-hero__dots">
-          <span class="iprm-hero__dot iprm-hero__dot--active"></span>
-          <span class="iprm-hero__dot"></span>
-          <span class="iprm-hero__dot"></span>
-          <span class="iprm-hero__dot"></span>
-        </div>
-        <button class="iprm-hero__arrow iprm-hero__arrow--next">&#8250;</button>
       </div>
     </section>
   </div>
 
   <!-- ===== CLINICS LIST ===== -->
-  <section class="iprm-section">
+  <section class="iprm-section apple-section-gray">
     <div class="iprm-section__inner">
       <h2 class="iprm-section__title">Відділення клініки</h2>
       <p class="iprm-section__subtitle">Перелік напрямків клітинної та регенеративної терапії</p>
@@ -52,12 +43,10 @@
       <div class="iprm-clinic-cards">
         {% if clinics %}
           {% for clinic in clinics %}
-        <a href="{{ url_for('clinics.clinic_detail', slug=clinic.slug) }}" class="iprm-clinic-card">
+        <a href="{{ url_for('clinics.clinic_detail', slug=clinic.slug) }}" class="iprm-clinic-card apple-reveal">
           <div class="iprm-clinic-card__photo">
             {% if clinic.photo %}
               <img src="{{ clinic.photo }}" alt="{{ clinic.name }}" loading="lazy">
-            {% else %}
-              [photo placeholder]
             {% endif %}
           </div>
           <div class="iprm-clinic-card__body">
@@ -65,15 +54,12 @@
             {% if clinic.short_description %}
               <p class="iprm-clinic-card__desc">{{ clinic.short_description }}</p>
             {% endif %}
-            <span class="iprm-clinic-card__link">
-              <span class="iprm-btn__arrow">&#x2197;</span> Детальніше
-            </span>
           </div>
         </a>
           {% endfor %}
         {% else %}
-        <div class="iprm-empty-state iprm-clinic-cards__empty">
-          <p>Iнформація про відділення скоро з'явиться</p>
+        <div class="iprm-empty-state" style="grid-column: 1 / -1;">
+          <p>Інформація про відділення скоро з'явиться</p>
         </div>
         {% endif %}
       </div>
@@ -84,27 +70,49 @@
   <section class="iprm-section">
     <div class="iprm-section__inner">
       <h2 class="iprm-section__title">Переваги клініки</h2>
-
-      <div class="iprm-cards">
-        <div class="iprm-card iprm-card--left">
-          <div class="iprm-card__icon">[icon]</div>
-          <p class="iprm-card__text">Персоналізований підхід до кожного пацієнта з урахуванням індивідуальних біомаркерів</p>
+      <div class="apple-features-grid">
+        <div class="apple-feature-card apple-reveal">
+          <div class="apple-feature-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg>
+          </div>
+          <h3>Персоналізований підхід</h3>
+          <p>Індивідуальний підхід до кожного пацієнта з урахуванням індивідуальних біомаркерів.</p>
         </div>
-        <div class="iprm-card iprm-card--left">
-          <div class="iprm-card__icon">[icon]</div>
-          <p class="iprm-card__text">Сертифіковані протоколи лікування, підтверджені клінічними дослідженнями</p>
+        <div class="apple-feature-card apple-reveal">
+          <div class="apple-feature-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <h3>Сертифіковані протоколи</h3>
+          <p>Протоколи лікування, підтверджені клінічними дослідженнями.</p>
         </div>
-        <div class="iprm-card iprm-card--left">
-          <div class="iprm-card__icon">[icon]</div>
-          <p class="iprm-card__text">Команда фахівців з багаторічним досвідом у регенеративній та клітинній медицині</p>
+        <div class="apple-feature-card apple-reveal">
+          <div class="apple-feature-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/></svg>
+          </div>
+          <h3>Досвідчена команда</h3>
+          <p>Фахівці з багаторічним досвідом у регенеративній та клітинній медицині.</p>
         </div>
       </div>
-
-      <div class="iprm-section__cta">
-        <a href="{{ url_for('courses.course_list') }}" class="iprm-btn iprm-btn--primary">
-          <span class="iprm-btn__arrow">&#x2197;</span> Курси інституту
-        </a>
+      <div class="apple-section-cta">
+        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Курси інституту</a>
       </div>
     </div>
   </section>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  var els = document.querySelectorAll('.apple-reveal');
+  if (!els.length) return;
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(function (el) { obs.observe(el); });
+})();
+</script>
 {% endblock %}
