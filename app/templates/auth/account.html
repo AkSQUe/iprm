@@ -37,8 +37,8 @@
           </div>
           <div class="account-course__body">
             <div class="account-course__meta">
-              <span class="account-course__status account-course__status--{{ reg.status }}">{{ reg.status_label }}</span>
-              <span class="account-course__payment account-course__payment--{{ reg.payment_status }}">{{ reg.payment_status_label }}</span>
+              <span class="badge badge--{{ reg.status }}">{{ reg.status_label }}</span>
+              <span class="badge badge--{{ 'active' if reg.payment_status == 'paid' else ('danger' if reg.payment_status == 'unpaid' else ('warning' if reg.payment_status == 'pending' else 'draft')) }}">{{ reg.payment_status_label }}</span>
             </div>
             <h3 class="account-course__title">{{ reg.event.title }}</h3>
             <div class="account-course__details">

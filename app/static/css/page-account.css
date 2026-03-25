@@ -85,27 +85,6 @@
   flex-wrap: wrap;
 }
 
-.account-course__status,
-.account-course__payment {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 3px 10px;
-  border-radius: 980px;
-  background: var(--apple-gray-light);
-  color: var(--apple-gray-dark);
-}
-
-.account-course__status--pending { background: var(--iprm-warning-bg); color: var(--iprm-warning-text); }
-.account-course__status--confirmed { background: var(--iprm-badge-active-bg); color: var(--iprm-badge-active-text); }
-.account-course__status--completed { background: var(--iprm-badge-completed-bg); color: var(--iprm-badge-completed-text); }
-
-.account-course__payment--unpaid { background: var(--iprm-error-bg); color: var(--iprm-error-text); }
-.account-course__payment--pending { background: var(--iprm-warning-bg); color: var(--iprm-warning-text); }
-.account-course__payment--paid { background: var(--iprm-badge-active-bg); color: var(--iprm-badge-active-text); }
-.account-course__payment--refunded { background: var(--iprm-badge-draft-bg); color: var(--iprm-badge-draft-text); }
-
 .account-course__title {
   font-size: 1.0625rem;
   font-weight: 700;

@@ -635,6 +635,63 @@ a {
   pointer-events: none;
 }
 
+/* ========== BADGES ========== */
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 980px;
+}
+
+.badge--draft {
+  background: var(--iprm-badge-draft-bg);
+  color: var(--iprm-badge-draft-text);
+}
+
+.badge--published {
+  background: var(--iprm-badge-published-bg);
+  color: var(--iprm-badge-published-text);
+}
+
+.badge--active {
+  background: var(--iprm-badge-active-bg);
+  color: var(--iprm-badge-active-text);
+}
+
+.badge--completed {
+  background: var(--iprm-badge-completed-bg);
+  color: var(--iprm-badge-completed-text);
+}
+
+.badge--cancelled {
+  background: var(--iprm-error-bg);
+  color: var(--iprm-error-text);
+}
+
+.badge--pending {
+  background: var(--iprm-badge-draft-bg);
+  color: var(--iprm-badge-draft-text);
+}
+
+/* Семантичні aliases */
+.badge--success {
+  background: var(--iprm-badge-active-bg);
+  color: var(--iprm-badge-active-text);
+}
+
+.badge--danger {
+  background: var(--iprm-error-bg);
+  color: var(--iprm-error-text);
+}
+
+.badge--warning {
+  background: var(--iprm-warning-bg);
+  color: var(--iprm-warning-text);
+}
+
 /* ========== SECTIONS ========== */
 
 .iprm-section {

@@ -163,16 +163,6 @@
   gap: 6px;
 }
 
-/* ========== BADGES ========== */
-
-.badge {
-  border-radius: 980px;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  padding: 3px 12px;
-}
-
 /* ========== EMPTY STATE ========== */
 
 .admin-empty {
@@ -243,6 +233,35 @@
   transition:
     border-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.admin-integration-card .form-group {
+  margin-bottom: 16px;
+}
+
+.admin-integration-card .form-group label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--apple-gray-dark);
+  margin-bottom: 6px;
+}
+
+.admin-integration-card .form-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  background: var(--iprm-white);
+  color: var(--apple-black);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-integration-card .form-input:focus {
+  outline: none;
+  border-color: var(--iprm-nav-active);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light);
 }
 
 .admin-integration-card .admin-table {
