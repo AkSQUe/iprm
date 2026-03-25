@@ -239,10 +239,7 @@
   color: var(--iprm-badge-draft-text);
 }
 
-.badge--confirmed {
-  background: var(--iprm-badge-active-bg);
-  color: var(--iprm-badge-active-text);
-}
+/* .badge--confirmed -- видалено (дублікат .badge--active) */
 
 /* ========== FILTER FORM ========== */
 
