@@ -424,7 +424,7 @@
 
 .apple-page .iprm-target-card {
   background: var(--iprm-white);
-  border-radius: 20px;
+  border-radius: var(--iprm-radius);
   padding: 36px 32px;
   border: none;
   transition:

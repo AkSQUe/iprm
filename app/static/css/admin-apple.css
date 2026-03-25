@@ -5,7 +5,7 @@
 
 .admin-sidebar {
   background: var(--apple-section-bg);
-  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  border-right: 1px solid var(--iprm-border);
 }
 
 .admin-sidebar__group-title {
@@ -21,7 +21,7 @@
   font-weight: 400;
   color: var(--apple-gray-dark);
   border-radius: 10px;
-  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: all 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
 }
 
 .admin-sidebar__link:hover {
@@ -72,9 +72,9 @@
   font-weight: 500;
   font-size: 0.875rem;
   transition:
-    transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    box-shadow 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    background-color 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
+    box-shadow 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
+    background-color 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
 }
 
 .btn-admin--primary {
@@ -129,8 +129,8 @@
 
 .admin-table {
   background: var(--iprm-white);
-  border-radius: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: var(--iprm-radius);
+  border: 1px solid var(--iprm-border);
   overflow: hidden;
 }
 
@@ -189,8 +189,8 @@
 .admin-stat-card {
   background: var(--iprm-white);
   border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  border: 1px solid var(--iprm-border);
+  transition: box-shadow 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
 }
 
 .admin-stat-card:hover {
@@ -229,10 +229,10 @@
 
 .admin-integration-card {
   border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--iprm-border);
   transition:
-    border-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border-color 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
+    box-shadow 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
 }
 
 .admin-integration-card .form-group {
@@ -300,7 +300,7 @@
 
 .admin-dropzone {
   border: 2px dashed rgba(0, 0, 0, 0.1);
-  border-radius: 20px;
+  border-radius: var(--iprm-radius);
   background: var(--apple-section-bg);
 }
 
@@ -313,14 +313,14 @@
 /* ========== PROGRAM BLOCK ========== */
 
 .admin-program-block {
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--iprm-border);
   border-radius: 16px;
 }
 
 /* ========== TODO LIST ========== */
 
 .admin-todo li {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--iprm-border);
   color: var(--apple-gray-dark);
 }
 
@@ -345,7 +345,7 @@
 
 @media (max-width: 768px) {
   .admin-sidebar {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid var(--iprm-border);
     border-right: none;
   }
 

@@ -247,7 +247,7 @@
   text-align: center;
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: 1px solid var(--iprm-border);
 }
 
 .auth-card__footer a {
@@ -295,7 +295,7 @@
 
   .auth-card {
     padding: 28px 20px;
-    border-radius: 20px;
+    border-radius: var(--iprm-radius);
   }
 
   .auth-card__title {

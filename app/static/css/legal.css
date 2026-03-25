@@ -9,7 +9,7 @@
   padding: 24px;
   background: var(--apple-section-bg);
   border-left: 3px solid var(--iprm-nav-active);
-  border-radius: 16px;
+  border-radius: var(--iprm-radius-sm);
 }
 
 /* ========== SECTIONS ========== */
@@ -25,7 +25,7 @@
   color: var(--apple-black);
   margin-bottom: 16px;
   padding: 0 0 12px 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--iprm-border);
   border-left: 3px solid var(--iprm-nav-active);
 }
 
@@ -99,7 +99,7 @@
   border-collapse: collapse;
   font-size: 0.9375rem;
   margin: 16px 0 24px;
-  border-radius: 16px;
+  border-radius: var(--iprm-radius-sm);
   overflow: hidden;
 }
 
@@ -114,16 +114,16 @@
 }
 
 .legal-refund-table th:first-child {
-  border-radius: 12px 0 0 0;
+  border-radius: var(--iprm-radius-sm) 0 0 0;
 }
 
 .legal-refund-table th:last-child {
-  border-radius: 0 12px 0 0;
+  border-radius: 0 var(--iprm-radius-sm) 0 0;
 }
 
 .legal-refund-table td {
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--iprm-border);
   color: var(--apple-gray-dark);
 }
 
@@ -142,7 +142,7 @@
 
 .legal-details td {
   padding: 10px 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--iprm-border);
   color: var(--apple-gray-dark);
   vertical-align: top;
 }
@@ -171,7 +171,7 @@
   color: var(--apple-gray);
   margin-top: 40px;
   padding-top: 24px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: 1px solid var(--iprm-border);
   text-align: center;
 }
 
@@ -212,11 +212,11 @@
   .legal-details tr {
     display: block;
     padding: 8px 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid var(--iprm-border);
   }
 
   .legal-page__preamble {
     padding: 16px;
-    border-radius: 12px;
+    border-radius: var(--iprm-radius-sm);
   }
 }

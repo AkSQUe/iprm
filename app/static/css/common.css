@@ -179,7 +179,7 @@ a {
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--iprm-border);
   transition: background 0.36s cubic-bezier(0.32, 0.08, 0.24, 1);
   overflow: visible;
 }
@@ -397,7 +397,7 @@ a {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--iprm-border);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   list-style: none;
@@ -771,7 +771,7 @@ a {
 /* ========== FOOTER (Apple-style) ========== */
 
 .iprm-footer {
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: 1px solid var(--iprm-border);
   padding: 48px 24px;
 }
 
@@ -919,7 +919,7 @@ a {
   color: #86868b;
   margin-bottom: 32px;
   padding-bottom: 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--iprm-border);
 }
 
 /* ========== EMPTY STATE (публічний) ========== */
@@ -1099,7 +1099,7 @@ a {
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   color: var(--iprm-white);
   padding: 16px 24px;
-  border-radius: 20px;
+  border-radius: var(--iprm-radius);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
@@ -1223,7 +1223,7 @@ a {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid var(--iprm-border);
     padding: 16px 24px;
     z-index: 99;
   }
@@ -1332,7 +1332,7 @@ a {
 @media (max-width: 480px) {
   .iprm-content-page__inner {
     padding: 24px 16px;
-    border-radius: 20px;
+    border-radius: var(--iprm-radius);
   }
 
   .iprm-content-page__title {
