@@ -5,7 +5,7 @@ import time
 
 from flask import Flask
 from config import config
-from app.extensions import db, login_manager, csrf, migrate, limiter
+from app.extensions import db, login_manager, csrf, migrate, limiter, mail
 
 
 _cached_assets_version = None
@@ -59,6 +59,7 @@ def create_app(config_name=None):
     migrate.init_app(app, db)
     csrf.init_app(app)
     limiter.init_app(app)
+    mail.init_app(app)
 
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Будь ласка, увійдіть для доступу до цієї сторінки.'
@@ -128,5 +129,8 @@ def create_app(config_name=None):
         if 'text/html' in (response.content_type or ''):
             response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         return response
+
+    from app.services.scheduler_service import init_scheduler
+    init_scheduler(app)
 
     return app
