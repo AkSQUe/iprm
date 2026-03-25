@@ -34,7 +34,10 @@ site-iprm/
 │   ├── payments/                # Blueprint: платежі LiqPay
 │   │   └── routes.py            # /payments/liqpay/callback, success, failure
 │   ├── services/                # Шар бізнес-логіки
-│   │   └── liqpay.py            # LiqPayService (створення платежів, callbacks)
+│   │   ├── liqpay.py            # LiqPayService (створення платежів, callbacks)
+│   │   ├── payment_ops.py       # Операції зі статусами оплат (row-level locking)
+│   │   ├── email_service.py     # EmailService (SMTP-відправка, threading, аудит-лог)
+│   │   └── scheduler_service.py # APScheduler (нагадування про заходи, persistent jobs)
 │   ├── errors/                  # Blueprint: обробка помилок
 │   │   └── handlers.py          # 401, 403, 404, 500
 │   ├── models/
@@ -44,11 +47,13 @@ site-iprm/
 │   │   ├── trainer.py           # Модель Trainer (тренери)
 │   │   ├── program_block.py     # Модель ProgramBlock (блоки програми)
 │   │   ├── registration.py      # Модель EventRegistration
-│   │   └── clinic.py            # Модель Clinic (клініки)
+│   │   ├── clinic.py            # Модель Clinic (клініки)
+│   │   ├── email_log.py         # Модель EmailLog (журнал листів)
+│   │   └── email_settings.py    # Модель EmailSettings (SMTP-налаштування, singleton)
 │   ├── static/
 │   │   ├── css/                 # Стилі (common, auth, admin, page-*, ...)
 │   │   ├── js/                  # theme-toggle, molecular-background, admin-event-edit
-│   │   ├── fonts/               # Inter WOFF2 (400-700)
+│   │   ├── fonts/               # Inter WOFF2 (400-700, 800)
 │   │   └── svg/                 # Логотипи та іконки
 │   └── templates/
 │       ├── base.html            # Базовий шаблон

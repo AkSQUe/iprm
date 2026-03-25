@@ -109,6 +109,50 @@
 | `created_at` | DateTime (UTC) | TimestampMixin |
 | `updated_at` | DateTime (UTC) | TimestampMixin |
 
+## EmailLog
+
+Журнал відправлених email-повідомлень. Зберігає аудит-трейл кожного листа із статусом доставки.
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ |
+| `to_email` | String(255) | Адреса одержувача, індексоване |
+| `subject` | String(500) | Тема листа |
+| `template_name` | String(100) | Назва шаблону листа |
+| `status` | String(20) | Статус: pending, sent, failed (індексоване) |
+| `error_message` | Text | Повідомлення про помилку (якщо failed) |
+| `sent_at` | DateTime (UTC) | Час фактичного відправлення |
+| `trigger` | String(50) | Тригер: registration, payment, reminder, status_change, test (індексоване) |
+| `registration_id` | FK -> event_registrations.id (SET NULL) | Пов'язана реєстрація |
+| `created_at` | DateTime (UTC) | Дата створення (TimestampMixin, індексоване) |
+| `updated_at` | DateTime (UTC) | Дата оновлення (TimestampMixin) |
+
+## EmailSettings
+
+Singleton-модель для зберігання SMTP-налаштувань у БД. Керується через адмін-панель. Пароль шифрується Fernet (ключ виводиться з SECRET_KEY).
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | Integer | Первинний ключ (завжди 1 -- singleton) |
+| `smtp_server` | String(255) | SMTP-сервер |
+| `smtp_port` | Integer | Порт SMTP (>0) |
+| `smtp_use_ssl` | Boolean | Використовувати SSL |
+| `smtp_use_tls` | Boolean | Використовувати TLS |
+| `smtp_username` | String(255) | Логін SMTP |
+| `smtp_password` | String(500) | Пароль SMTP (зашифрований Fernet) |
+| `default_sender` | String(255) | Email відправника за замовчуванням |
+| `sender_name` | String(255) | Ім'я відправника |
+| `is_enabled` | Boolean | Увімкнено відправку листів |
+| `reminder_days` | String(50) | Дні нагадувань через кому (напр. "7,3,1") |
+| `created_at` | DateTime (UTC) | TimestampMixin |
+| `updated_at` | DateTime (UTC) | TimestampMixin |
+
+**Методи:**
+- `get()` -- класовий метод, повертає або створює єдиний рядок (id=1)
+- `smtp_password` -- property з шифруванням/розшифруванням через Fernet
+- `apply_to_app(app)` -- застосовує налаштування до конфігурації Flask-Mail
+- `reminder_days_list` -- property, парсить рядок у список чисел
+
 ## Зв'язки
 
 ```
@@ -117,6 +161,7 @@ User 1--* EventRegistration  (user_id, CASCADE)
 Trainer 1--* Event           (trainer_id)
 Event 1--* ProgramBlock      (event_id, CASCADE delete-orphan)
 Event 1--* EventRegistration (event_id, CASCADE)
+EventRegistration 1--* EmailLog (registration_id, SET NULL)
 ```
 
 ## Constraints
@@ -130,3 +175,6 @@ Event 1--* EventRegistration (event_id, CASCADE)
 - `ck_registrations_payment_status` - валідація статусу оплати
 - `ck_registrations_experience_non_negative` - стаж >= 0
 - `ck_trainers_experience_non_negative` - стаж >= 0
+- `ck_email_logs_status` - валідація статусу листа (pending, sent, failed)
+- `ck_email_logs_trigger` - валідація тригера (registration, payment, reminder, status_change, test)
+- `ck_email_settings_port` - порт > 0

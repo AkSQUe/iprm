@@ -215,6 +215,7 @@ a {
   display: flex;
   flex: 1;
   justify-content: center;
+  align-items: center;
 }
 
 .iprm-header__actions {
@@ -257,6 +258,7 @@ a {
   border: none;
   cursor: pointer;
   font-family: var(--iprm-font);
+  line-height: 1;
   transition: color 0.2s;
   padding: 0;
 }
@@ -278,7 +280,8 @@ a {
 }
 
 .iprm-header__logout-form {
-  display: inline;
+  display: flex;
+  align-items: center;
 }
 
 /* Burger (mobile) */
@@ -316,6 +319,7 @@ a {
 /* Nav */
 .iprm-nav {
   display: flex;
+  align-items: center;
   gap: 32px;
   list-style: none;
 }
@@ -324,6 +328,7 @@ a {
   font-size: 0.8125rem;
   font-weight: 400;
   color: var(--apple-gray-dark);
+  line-height: 1;
   transition: color 0.2s;
 }
 
@@ -349,6 +354,7 @@ a {
   cursor: pointer;
   padding: 0;
   font-family: var(--iprm-font);
+  line-height: 1;
   transition: color 0.2s;
   display: flex;
   align-items: center;

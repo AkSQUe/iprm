@@ -13,7 +13,9 @@
 {% block content %}
 <div class="apple-page auth-page">
   <div class="auth-card">
-    <a href="{{ url_for('main.index') }}" class="auth-card__logo-text">IPRM</a>
+    <a href="{{ url_for('main.index') }}" class="auth-card__logo">
+      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="IPRM" class="auth-card__logo-img">
+    </a>
     <h1 class="auth-card__title">Вхід</h1>
     <p class="auth-card__subtitle">Увійдіть до вашого облікового запису</p>
 
