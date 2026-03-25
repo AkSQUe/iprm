@@ -1,31 +1,74 @@
 {% extends "emails/base.html" %}
 {% block title %}Реєстрацію підтверджено{% endblock %}
 {% block content %}
-<h1 style="font-size:24px; font-weight:800; letter-spacing:-0.03em; color:#1d1d1f; margin:0 0 16px;">
-  Реєстрацію підтверджено
-</h1>
-<p style="color:#424245; font-size:16px; line-height:1.6; margin:0 0 24px;">
-  {{ user.first_name or 'Шановний учаснику' }}, ви успішно зареєструвались на курс:
-</p>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7; border-radius:12px; margin-bottom:24px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
   <tr>
-    <td style="padding:20px 24px;">
-      <p style="margin:0 0 8px; font-weight:700; font-size:18px; color:#1d1d1f; letter-spacing:-0.02em;">{{ event.title }}</p>
-      {% if event.start_date %}
-      <p style="margin:0 0 4px; color:#86868b; font-size:14px;">{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</p>
-      {% endif %}
-      {% if event.location %}
-      <p style="margin:0; color:#86868b; font-size:14px;">{{ event.location }}</p>
-      {% endif %}
+    <td align="center" style="padding:0 0 32px;">
+      <div style="width:64px; height:64px; border-radius:16px; background:linear-gradient(135deg, #34c759, #30d158); display:inline-block; line-height:64px; text-align:center;">
+        <span style="font-size:28px; color:#ffffff;">&#10003;</span>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="padding:0 0 12px;">
+      <h1 style="margin:0; font-size:28px; font-weight:800; letter-spacing:-0.03em; color:#1d1d1f; line-height:1.15;">
+        Реєстрацію підтверджено
+      </h1>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="padding:0 0 32px;">
+      <p style="margin:0; color:#86868b; font-size:17px; line-height:1.5;">
+        {{ user.first_name or 'Шановний учаснику' }}, ви успішно зареєстровані на курс.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 0 32px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7; border-radius:16px;">
+        <tr>
+          <td style="padding:24px;">
+            <p style="margin:0 0 4px; font-size:13px; color:#86868b; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;">Курс</p>
+            <p style="margin:0 0 16px; font-size:20px; font-weight:700; color:#1d1d1f; letter-spacing:-0.02em;">{{ event.title }}</p>
+            {% if event.start_date %}
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 8px;">
+              <tr>
+                <td style="padding-right:10px; font-size:14px; color:#86868b; vertical-align:top;">Дата</td>
+                <td style="font-size:14px; color:#1d1d1f; font-weight:500;">{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</td>
+              </tr>
+            </table>
+            {% endif %}
+            {% if event.location %}
+            <table role="presentation" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding-right:10px; font-size:14px; color:#86868b; vertical-align:top;">Місце</td>
+                <td style="font-size:14px; color:#1d1d1f; font-weight:500;">{{ event.location }}</td>
+              </tr>
+            </table>
+            {% endif %}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {% if event.price and event.price > 0 and registration.payment_status == 'unpaid' %}
+  <tr>
+    <td style="padding:0 0 32px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fef0e6; border-radius:16px;">
+        <tr>
+          <td style="padding:20px 24px;">
+            <p style="margin:0; font-size:13px; color:#86868b; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;">До оплати</p>
+            <p style="margin:6px 0 0; font-size:24px; font-weight:800; color:#e8913a; letter-spacing:-0.02em;">{{ event.price | int }} UAH</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {% endif %}
+  <tr>
+    <td align="center">
+      <a href="https://iprm.space" style="display:inline-block; padding:14px 32px; background:#7055a4; color:#ffffff; text-decoration:none; border-radius:980px; font-size:15px; font-weight:600; letter-spacing:-0.01em;">Перейти на сайт</a>
     </td>
   </tr>
 </table>
-{% if event.price and event.price > 0 and registration.payment_status == 'unpaid' %}
-<p style="color:#424245; font-size:16px; line-height:1.6; margin:0 0 24px;">
-  Сума до оплати: <strong style="color:#1d1d1f;">{{ event.price | int }} UAH</strong>
-</p>
-{% endif %}
-<p style="color:#86868b; font-size:14px; margin:0;">
-  Якщо у вас виникнуть запитання, зверніться до нас через сторінку контактів.
-</p>
 {% endblock %}

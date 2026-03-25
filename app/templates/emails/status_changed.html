@@ -1,25 +1,41 @@
 {% extends "emails/base.html" %}
 {% block title %}Статус реєстрації змінено{% endblock %}
 {% block content %}
-<h1 style="font-size:24px; font-weight:800; letter-spacing:-0.03em; color:#1d1d1f; margin:0 0 16px;">
-  Статус реєстрації змінено
-</h1>
-<p style="color:#424245; font-size:16px; line-height:1.6; margin:0 0 24px;">
-  {{ user.first_name or 'Шановний учаснику' }}, статус вашої реєстрації на курс було оновлено:
-</p>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7; border-radius:12px; margin-bottom:24px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
   <tr>
-    <td style="padding:20px 24px;">
-      <p style="margin:0 0 12px; font-weight:700; font-size:18px; color:#1d1d1f; letter-spacing:-0.02em;">{{ event.title }}</p>
-      <table role="presentation" cellpadding="0" cellspacing="0">
+    <td align="center" style="padding:0 0 32px;">
+      <div style="width:64px; height:64px; border-radius:16px; background:linear-gradient(135deg, #7055a4, #5d4691); display:inline-block; line-height:64px; text-align:center;">
+        <span style="font-size:28px; color:#ffffff;">&#8635;</span>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="padding:0 0 12px;">
+      <h1 style="margin:0; font-size:28px; font-weight:800; letter-spacing:-0.03em; color:#1d1d1f; line-height:1.15;">
+        Статус реєстрації змінено
+      </h1>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="padding:0 0 32px;">
+      <p style="margin:0; color:#86868b; font-size:17px; line-height:1.5;">
+        {{ user.first_name or 'Шановний учаснику' }}, статус вашої реєстрації оновлено.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 0 32px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7; border-radius:16px;">
         <tr>
-          <td style="padding-right:12px; font-size:14px; color:#86868b;">Новий статус:</td>
-          <td>
-            <span style="display:inline-block; padding:4px 12px; border-radius:980px; font-size:13px; font-weight:600;
+          <td style="padding:24px;">
+            <p style="margin:0 0 4px; font-size:13px; color:#86868b; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;">Курс</p>
+            <p style="margin:0 0 20px; font-size:20px; font-weight:700; color:#1d1d1f; letter-spacing:-0.02em;">{{ event.title }}</p>
+            <p style="margin:0 0 8px; font-size:13px; color:#86868b; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;">Новий статус</p>
+            <span style="display:inline-block; padding:6px 16px; border-radius:980px; font-size:14px; font-weight:600;
               {% if new_status == 'confirmed' %}background:#dcfce7; color:#16a34a;
               {% elif new_status == 'cancelled' %}background:#fef2f2; color:#ef4444;
               {% elif new_status == 'completed' %}background:#ede9f6; color:#7055a4;
-              {% else %}background:#f5f5f7; color:#86868b;{% endif %}">
+              {% else %}background:#f5f5f7; color:#86868b; border:1px solid #e5e5e7;{% endif %}">
               {{ new_status_label }}
             </span>
           </td>
@@ -27,8 +43,10 @@
       </table>
     </td>
   </tr>
+  <tr>
+    <td align="center">
+      <a href="https://iprm.space" style="display:inline-block; padding:14px 32px; background:#7055a4; color:#ffffff; text-decoration:none; border-radius:980px; font-size:15px; font-weight:600; letter-spacing:-0.01em;">Перейти на сайт</a>
+    </td>
+  </tr>
 </table>
-<p style="color:#86868b; font-size:14px; margin:0;">
-  Якщо у вас виникнуть запитання, зверніться до нас через сторінку контактів.
-</p>
 {% endblock %}
