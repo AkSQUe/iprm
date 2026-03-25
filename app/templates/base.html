@@ -68,5 +68,6 @@
 
   <script src="{{ url_for('static', filename='js/theme-toggle.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/molecular-background.js') }}?v={{ assets_version }}"></script>
+  {% block extra_scripts %}{% endblock %}
 </body>
 </html>
