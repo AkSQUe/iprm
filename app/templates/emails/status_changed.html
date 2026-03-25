@@ -1,0 +1,34 @@
+{% extends "emails/base.html" %}
+{% block title %}Статус реєстрації змінено{% endblock %}
+{% block content %}
+<h1 style="font-size:24px; font-weight:800; letter-spacing:-0.03em; color:#1d1d1f; margin:0 0 16px;">
+  Статус реєстрації змінено
+</h1>
+<p style="color:#424245; font-size:16px; line-height:1.6; margin:0 0 24px;">
+  {{ user.first_name or 'Шановний учаснику' }}, статус вашої реєстрації на курс було оновлено:
+</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7; border-radius:12px; margin-bottom:24px;">
+  <tr>
+    <td style="padding:20px 24px;">
+      <p style="margin:0 0 12px; font-weight:700; font-size:18px; color:#1d1d1f; letter-spacing:-0.02em;">{{ event.title }}</p>
+      <table role="presentation" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding-right:12px; font-size:14px; color:#86868b;">Новий статус:</td>
+          <td>
+            <span style="display:inline-block; padding:4px 12px; border-radius:980px; font-size:13px; font-weight:600;
+              {% if new_status == 'confirmed' %}background:#dcfce7; color:#16a34a;
+              {% elif new_status == 'cancelled' %}background:#fef2f2; color:#ef4444;
+              {% elif new_status == 'completed' %}background:#ede9f6; color:#7055a4;
+              {% else %}background:#f5f5f7; color:#86868b;{% endif %}">
+              {{ new_status_label }}
+            </span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<p style="color:#86868b; font-size:14px; margin:0;">
+  Якщо у вас виникнуть запитання, зверніться до нас через сторінку контактів.
+</p>
+{% endblock %}

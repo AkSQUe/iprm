@@ -119,6 +119,14 @@ class PaymentOps:
         try:
             db.session.commit()
             logger.info('Payment REG-%d -> %s', reg.id, new_status)
+
+            if new_status == 'paid':
+                try:
+                    from app.services.email_service import EmailService
+                    EmailService.send_payment_confirmation(reg)
+                except Exception:
+                    logger.exception('Failed to queue payment email for REG-%d', reg.id)
+
             return True, 'ok'
         except Exception:
             db.session.rollback()

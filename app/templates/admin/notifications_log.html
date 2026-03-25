@@ -1,0 +1,116 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Лог сповіщень | IPRM{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <h1 class="admin-hero__title">Лог сповіщень</h1>
+      <p class="admin-hero__subtitle">Історія всіх email-відправок</p>
+    </div>
+    <a href="{{ url_for('admin.notifications') }}" class="btn-admin btn-admin--secondary">
+      <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Назад
+    </a>
+  </div>
+
+  <!-- Filters -->
+  <form method="GET" class="admin-form__grid" style="margin-bottom: 24px;">
+    <div class="form-group">
+      <label>Статус</label>
+      <select name="status" class="form-input" onchange="this.form.submit()">
+        <option value="">Всі статуси</option>
+        <option value="sent"{% if filters.status == 'sent' %} selected{% endif %}>Відправлено</option>
+        <option value="failed"{% if filters.status == 'failed' %} selected{% endif %}>Помилка</option>
+        <option value="pending"{% if filters.status == 'pending' %} selected{% endif %}>Очікує</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Тригер</label>
+      <select name="trigger" class="form-input" onchange="this.form.submit()">
+        <option value="">Всі тригери</option>
+        <option value="registration"{% if filters.trigger == 'registration' %} selected{% endif %}>Реєстрація</option>
+        <option value="payment"{% if filters.trigger == 'payment' %} selected{% endif %}>Оплата</option>
+        <option value="reminder"{% if filters.trigger == 'reminder' %} selected{% endif %}>Нагадування</option>
+        <option value="status_change"{% if filters.trigger == 'status_change' %} selected{% endif %}>Зміна статусу</option>
+        <option value="test"{% if filters.trigger == 'test' %} selected{% endif %}>Тест</option>
+      </select>
+    </div>
+  </form>
+
+  <!-- Log table -->
+  {% if logs %}
+  <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Кому</th>
+          <th>Тема</th>
+          <th>Шаблон</th>
+          <th>Тригер</th>
+          <th>Статус</th>
+          <th>Помилка</th>
+          <th>Створено</th>
+          <th>Відправлено</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.id }}</td>
+          <td>{{ log.to_email }}</td>
+          <td>{{ log.subject[:40] }}{% if log.subject|length > 40 %}...{% endif %}</td>
+          <td><code>{{ log.template_name }}</code></td>
+          <td><span class="badge">{{ log.trigger_label }}</span></td>
+          <td>
+            {% if log.status == 'sent' %}
+            <span class="badge badge--success">{{ log.status_label }}</span>
+            {% elif log.status == 'failed' %}
+            <span class="badge badge--danger">{{ log.status_label }}</span>
+            {% else %}
+            <span class="badge badge--warning">{{ log.status_label }}</span>
+            {% endif %}
+          </td>
+          <td>{{ (log.error_message or '')[:30] }}{% if log.error_message and log.error_message|length > 30 %}...{% endif %}</td>
+          <td>{{ log.created_at.strftime('%d.%m.%Y %H:%M') if log.created_at else '' }}</td>
+          <td>{{ log.sent_at.strftime('%d.%m.%Y %H:%M') if log.sent_at else '' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if pagination.pages > 1 %}
+  <div style="display:flex; gap:8px; justify-content:center; margin-top:24px;">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.notifications_log', page=pagination.prev_num, status=filters.status, trigger=filters.trigger) }}" class="btn-admin btn-admin--secondary btn-admin--sm">&larr;</a>
+    {% endif %}
+    <span style="padding:8px 16px; font-size:14px; color:var(--iprm-text-light);">
+      {{ pagination.page }} / {{ pagination.pages }}
+    </span>
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.notifications_log', page=pagination.next_num, status=filters.status, trigger=filters.trigger) }}" class="btn-admin btn-admin--secondary btn-admin--sm">&rarr;</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="admin-empty">
+    <p>Немає записів{% if filters.status or filters.trigger %} за обраними фільтрами{% endif %}</p>
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}

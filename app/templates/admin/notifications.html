@@ -1,0 +1,150 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Сповіщення | IPRM{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <h1 class="admin-hero__title">Сповіщення</h1>
+      <p class="admin-hero__subtitle">Email-розсилки та нагадування</p>
+    </div>
+    <a href="{{ url_for('admin.notifications_log') }}" class="btn-admin btn-admin--secondary">Повний лог</a>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <!-- Stats -->
+  <div class="admin-stat-cards" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="admin-stat-card">
+      <div class="admin-stat-card__value">{{ stats.total }}</div>
+      <div class="admin-stat-card__label">Всього</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-card__value" style="color: #16a34a;">{{ stats.sent }}</div>
+      <div class="admin-stat-card__label">Відправлено</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-card__value" style="color: #ef4444;">{{ stats.failed }}</div>
+      <div class="admin-stat-card__label">Помилки</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-card__value" style="color: #f59e0b;">{{ stats.pending }}</div>
+      <div class="admin-stat-card__label">Очікує</div>
+    </div>
+  </div>
+
+  <!-- Config & Test -->
+  <div class="admin-form__grid" style="margin-bottom: 24px;">
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Налаштування</h3>
+      <table class="admin-table">
+        <tr>
+          <td>SMTP</td>
+          <td>
+            {% if mail_configured %}
+            <span class="badge badge--success">Налаштовано</span>
+            {% else %}
+            <span class="badge badge--warning">Не налаштовано</span>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Планувальник</td>
+          <td>
+            {% if scheduler_running %}
+            <span class="badge badge--success">Працює</span>
+            {% else %}
+            <span class="badge badge--danger">Зупинено</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% for job in jobs %}
+        <tr>
+          <td>{{ job.name }}</td>
+          <td>{{ job.next_run_time.strftime('%d.%m.%Y %H:%M') if job.next_run_time else 'Призупинено' }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+
+      {% if scheduler_running %}
+      <form method="POST" action="{{ url_for('admin.scheduler_pause') }}" style="margin-top: 12px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Призупинити планувальник</button>
+      </form>
+      {% else %}
+      <form method="POST" action="{{ url_for('admin.scheduler_resume') }}" style="margin-top: 12px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Відновити планувальник</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Тестовий лист</h3>
+      <form method="POST" action="{{ url_for('admin.notifications_test') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+          <label for="test-email">Email адреса</label>
+          <input type="email" name="to" id="test-email" class="form-input" value="{{ current_user.email }}" placeholder="email@example.com">
+        </div>
+        <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Надіслати тестовий лист</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Recent sends -->
+  <div class="form-section admin-form__section">
+    <h3 class="admin-form__section-title">Останні відправки</h3>
+    {% if recent %}
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Кому</th>
+            <th>Тема</th>
+            <th>Тригер</th>
+            <th>Статус</th>
+            <th>Дата</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in recent %}
+          <tr>
+            <td>{{ log.to_email }}</td>
+            <td>{{ log.subject[:50] }}{% if log.subject|length > 50 %}...{% endif %}</td>
+            <td><span class="badge">{{ log.trigger_label }}</span></td>
+            <td>
+              {% if log.status == 'sent' %}
+              <span class="badge badge--success">{{ log.status_label }}</span>
+              {% elif log.status == 'failed' %}
+              <span class="badge badge--danger" title="{{ log.error_message or '' }}">{{ log.status_label }}</span>
+              {% else %}
+              <span class="badge badge--warning">{{ log.status_label }}</span>
+              {% endif %}
+            </td>
+            <td>{{ log.created_at.strftime('%d.%m %H:%M') if log.created_at else '' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="admin-empty">
+      <p>Ще немає відправлених листів</p>
+    </div>
+    {% endif %}
+  </div>
+
+  </div>
+</div>
+{% endblock %}
