@@ -10,10 +10,23 @@
     'use strict';
 
     var STORAGE_KEY = 'iprm-molecules';
-    var GREY = [180, 180, 180];
-    var PURPLE = [112, 85, 164];
-    var ORANGE = [232, 121, 58];
+    var GREY, PURPLE, ORANGE;
     var colorMode = 'grey';
+
+    function parseCssRgb(varName) {
+        var val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+        var parts = val.split(',');
+        if (parts.length === 3) {
+            return [parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2], 10)];
+        }
+        return null;
+    }
+
+    function loadColorsFromCss() {
+        GREY = parseCssRgb('--iprm-molecular-rgb') || [180, 180, 180];
+        PURPLE = parseCssRgb('--apple-accent-rgb') || [112, 85, 164];
+        ORANGE = parseCssRgb('--apple-orange-rgb') || [232, 145, 58];
+    }
 
     function getColorMode() {
         var saved = localStorage.getItem(STORAGE_KEY);
@@ -44,7 +57,9 @@
             if (span) span.textContent = label;
             var dot = buttons[i].querySelector('.iprm-toggle__dot');
             if (dot) {
-                dot.style.background = colorMode === 'grey' ? '#b4b4b4' : '#7055a4';
+                dot.style.background = colorMode === 'grey'
+                    ? 'rgb(' + GREY.join(',') + ')'
+                    : 'rgb(' + PURPLE.join(',') + ')';
             }
         }
     }
@@ -195,7 +210,23 @@
         var container = document.getElementById('molecular-background');
         if (!container) return;
 
+        loadColorsFromCss();
         colorMode = getColorMode();
+
+        /* Оновлення кольорів при зміні теми */
+        var observer = new MutationObserver(function (mutations) {
+            for (var i = 0; i < mutations.length; i++) {
+                if (mutations[i].attributeName === 'data-theme') {
+                    loadColorsFromCss();
+                    for (var j = 0; j < nodes.length; j++) {
+                        nodes[j].color = pickNodeColor();
+                    }
+                    updateToggleLabels();
+                    break;
+                }
+            }
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
         var reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
         var prefersReducedMotion = reducedMotionQuery.matches;
