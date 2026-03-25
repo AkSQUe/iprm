@@ -46,6 +46,24 @@
     </div>
   </div>
 
+  <!-- Queue Health -->
+  {% if queue_health and (queue_health.circuit_open or queue_health.retryable > 0) %}
+  <div class="form-section admin-form__section" style="{% if queue_health.circuit_open %}border-left:4px solid var(--admin-danger, #ef4444);{% else %}border-left:4px solid var(--admin-warning, #f59e0b);{% endif %} padding-left:20px;">
+    {% if queue_health.circuit_open %}
+    <h3 class="admin-form__section-title" style="color:var(--admin-danger, #ef4444);">Circuit Breaker: OPEN</h3>
+    <p style="color:#86868b; font-size:14px; margin:0 0 8px;">
+      Виявлено {{ queue_health.recent_failures }} помилок за останні 10 хв. Нові відправки призупинено до стабілізації SMTP.
+      Перевірте налаштування та спробуйте тестовий лист.
+    </p>
+    {% else %}
+    <h3 class="admin-form__section-title">Черга відправки</h3>
+    <p style="color:#86868b; font-size:14px; margin:0 0 8px;">
+      {{ queue_health.retryable }} лист(ів) очікують повторної відправки. Retry відбувається автоматично кожні 5 хв (макс. 3 спроби).
+    </p>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <!-- SMTP Settings -->
   <form method="POST" action="{{ url_for('admin.notifications_settings') }}" class="form-section admin-form__section admin-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -177,7 +195,7 @@
               {% if log.status == 'sent' %}
               <span class="badge badge--success">{{ log.status_label }}</span>
               {% elif log.status == 'failed' %}
-              <span class="badge badge--danger" title="{{ log.error_message or '' }}">{{ log.status_label }}</span>
+              <span class="badge badge--danger" title="{{ log.error_message or '' }}">{{ log.status_label }}{% if log.retry_count > 0 %} ({{ log.retry_count }}x){% endif %}</span>
               {% else %}
               <span class="badge badge--warning">{{ log.status_label }}</span>
               {% endif %}

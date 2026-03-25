@@ -1,25 +1,36 @@
 """
-Email sending service with threaded delivery and audit logging.
+Email sending service with threaded delivery, retry logic, and audit logging.
 
-Reads SMTP settings from EmailSettings model (DB) before each send.
-Uses Flask-Mail for SMTP, threading.Thread for non-blocking sends,
-and EmailLog model for audit trail.
+Protection system:
+- Stale pending cleanup: emails stuck >5 min in "pending" are marked failed.
+- Retry with backoff: transient SMTP failures retried up to 3 times.
+- Permanent failure detection: auth errors, bad addresses are never retried.
+- Deduplication: same trigger+registration within 60s window is skipped.
+- Circuit breaker: if >5 failures in last 10 min, new sends are paused.
+- Test emails are always synchronous and never retried.
 """
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from threading import Thread
 
 from flask import current_app, render_template
 from flask_mail import Message
 
 from app.extensions import db, mail
-from app.models.email_log import EmailLog
+from app.models.email_log import EmailLog, MAX_RETRIES, STALE_PENDING_MINUTES
 
 logger = logging.getLogger(__name__)
 
 _HTML_TAG_RE = re.compile(r'<[^>]+>')
 _WHITESPACE_RE = re.compile(r'\n\s*\n')
+
+# Dedup window: skip if identical email was created within this many seconds.
+DEDUP_WINDOW_SECONDS = 60
+
+# Circuit breaker: pause if more than this many failures in the window.
+CIRCUIT_BREAKER_THRESHOLD = 5
+CIRCUIT_BREAKER_WINDOW_MINUTES = 10
 
 
 def _html_to_plaintext(html):
@@ -42,12 +53,39 @@ class EmailService:
             return settings
 
     @staticmethod
+    def _check_circuit_breaker():
+        """Return True if too many recent failures (circuit open)."""
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=CIRCUIT_BREAKER_WINDOW_MINUTES)
+        recent_failures = EmailLog.query.filter(
+            EmailLog.status == 'failed',
+            EmailLog.created_at >= cutoff,
+            EmailLog.trigger != 'test',
+        ).count()
+        return recent_failures >= CIRCUIT_BREAKER_THRESHOLD
+
+    @staticmethod
+    def _check_duplicate(to, trigger, registration_id):
+        """Return True if a duplicate email was sent/queued recently."""
+        if not trigger or trigger == 'test':
+            return False
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=DEDUP_WINDOW_SECONDS)
+        query = EmailLog.query.filter(
+            EmailLog.to_email == to,
+            EmailLog.trigger == trigger,
+            EmailLog.created_at >= cutoff,
+            EmailLog.status.in_(['pending', 'sent']),
+        )
+        if registration_id:
+            query = query.filter(EmailLog.registration_id == registration_id)
+        return query.first() is not None
+
+    @staticmethod
     def send_email(to, subject, template_name, context=None,
                    trigger=None, registration_id=None):
         """
         Render email template and send via SMTP in background thread.
-        Reads SMTP config from DB before each send.
 
+        Guards: disabled check, deduplication, circuit breaker.
         Returns EmailLog instance (status may still be 'pending' if async).
         """
         app = current_app._get_current_object()
@@ -63,6 +101,28 @@ class EmailService:
                 template_name=template_name,
                 status='failed',
                 error_message='Email sending is disabled in settings',
+                trigger=trigger,
+                registration_id=registration_id,
+            )
+            db.session.add(log_entry)
+            db.session.commit()
+            return log_entry
+
+        # Dedup guard
+        if EmailService._check_duplicate(to, trigger, registration_id):
+            logger.info('Dedup: skipping %s -> %s (trigger=%s reg=%s)',
+                        template_name, to, trigger, registration_id)
+            return None
+
+        # Circuit breaker
+        if EmailService._check_circuit_breaker():
+            logger.warning('Circuit breaker OPEN: skipping %s -> %s', template_name, to)
+            log_entry = EmailLog(
+                to_email=to,
+                subject=subject,
+                template_name=template_name,
+                status='failed',
+                error_message='Circuit breaker: too many recent failures, sending paused',
                 trigger=trigger,
                 registration_id=registration_id,
             )
@@ -130,6 +190,8 @@ class EmailService:
                 logger.exception('Failed to send email to %s', msg.recipients[0])
             finally:
                 db.session.commit()
+
+    # ---- Convenience senders ----
 
     @staticmethod
     def send_registration_confirmation(registration):
@@ -250,3 +312,106 @@ class EmailService:
             logger.exception('Failed to send test email to %s', to)
             raise
         return log_entry
+
+    # ---- Queue maintenance ----
+
+    @staticmethod
+    def cleanup_stale_pending(app):
+        """Mark emails stuck in 'pending' longer than STALE_PENDING_MINUTES as failed."""
+        with app.app_context():
+            cutoff = datetime.now(timezone.utc) - timedelta(minutes=STALE_PENDING_MINUTES)
+            stale = EmailLog.query.filter(
+                EmailLog.status == 'pending',
+                EmailLog.created_at < cutoff,
+            ).all()
+
+            for entry in stale:
+                entry.status = 'failed'
+                entry.error_message = (
+                    f'Timeout: stuck in pending for >{STALE_PENDING_MINUTES} min '
+                    f'(previous error: {entry.error_message or "none"})'
+                )
+                logger.warning('Stale pending email marked failed: id=%s to=%s',
+                               entry.id, entry.to_email)
+
+            if stale:
+                db.session.commit()
+                logger.info('Cleaned up %d stale pending emails', len(stale))
+
+            return len(stale)
+
+    @staticmethod
+    def retry_failed_emails(app):
+        """Retry failed emails that are eligible (transient errors, under max retries)."""
+        with app.app_context():
+            from app.models.email_settings import EmailSettings
+            settings = EmailSettings.get()
+            if not settings.is_enabled:
+                return 0
+
+            # Check circuit breaker before retrying
+            cutoff_cb = datetime.now(timezone.utc) - timedelta(minutes=CIRCUIT_BREAKER_WINDOW_MINUTES)
+            recent_failures = EmailLog.query.filter(
+                EmailLog.status == 'failed',
+                EmailLog.created_at >= cutoff_cb,
+                EmailLog.trigger != 'test',
+            ).count()
+            if recent_failures >= CIRCUIT_BREAKER_THRESHOLD:
+                logger.warning('Circuit breaker open: skipping retry cycle')
+                return 0
+
+            settings.apply_to_app(app)
+
+            # Only retry emails failed in the last hour (not ancient ones)
+            cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
+            failed = EmailLog.query.filter(
+                EmailLog.status == 'failed',
+                EmailLog.retry_count < MAX_RETRIES,
+                EmailLog.trigger != 'test',
+                EmailLog.created_at >= cutoff,
+            ).order_by(EmailLog.created_at.asc()).limit(10).all()
+
+            retried = 0
+            for entry in failed:
+                if not entry.is_retryable:
+                    continue
+
+                entry.retry_count += 1
+                entry.status = 'pending'
+                entry.error_message = (
+                    f'Retry {entry.retry_count}/{MAX_RETRIES}: {entry.error_message or ""}'
+                )
+                db.session.commit()
+
+                try:
+                    sender = app.config.get('MAIL_DEFAULT_SENDER')
+                    html_body = render_template(
+                        f'emails/{entry.template_name}.html',
+                        to_email=entry.to_email,
+                    )
+                    plain_body = _html_to_plaintext(html_body)
+                    msg = Message(
+                        subject=entry.subject,
+                        recipients=[entry.to_email],
+                        html=html_body,
+                        body=plain_body,
+                        sender=sender,
+                    )
+                    mail.send(msg)
+                    entry.status = 'sent'
+                    entry.sent_at = datetime.now(timezone.utc)
+                    logger.info('Retry OK: id=%s to=%s (attempt %d)',
+                                entry.id, entry.to_email, entry.retry_count)
+                    retried += 1
+                except Exception as exc:
+                    entry.status = 'failed'
+                    entry.error_message = f'Retry {entry.retry_count} failed: {str(exc)[:400]}'
+                    logger.warning('Retry FAILED: id=%s to=%s (attempt %d): %s',
+                                   entry.id, entry.to_email, entry.retry_count, exc)
+                finally:
+                    db.session.commit()
+
+            if retried:
+                logger.info('Retried %d/%d failed emails', retried, len(failed))
+
+            return retried

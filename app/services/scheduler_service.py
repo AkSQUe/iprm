@@ -49,6 +49,14 @@ def init_scheduler(app):
         name='Нагадування перед курсами',
     )
 
+    scheduler.add_job(
+        email_queue_maintenance,
+        trigger=CronTrigger(minute='*/5'),
+        id='email_queue_maintenance',
+        replace_existing=True,
+        name='Обслуговування черги email',
+    )
+
     scheduler.start()
     _initialized = True
     logger.info('APScheduler started with SQLAlchemy jobstore')
@@ -116,3 +124,19 @@ def send_course_reminders():
                         logger.exception('Reminder failed: reg=%d', reg.id)
 
         logger.info('Course reminder job completed')
+
+
+def email_queue_maintenance():
+    """Periodic job: clean stale pending emails and retry transient failures."""
+    app = scheduler._app
+    with app.app_context():
+        from app.services.email_service import EmailService
+
+        stale_count = EmailService.cleanup_stale_pending(app)
+        retry_count = EmailService.retry_failed_emails(app)
+
+        if stale_count or retry_count:
+            logger.info(
+                'Email maintenance: %d stale cleaned, %d retried',
+                stale_count, retry_count,
+            )

@@ -1,6 +1,23 @@
 from app.extensions import db
 from app.models.mixins import TimestampMixin, BigIntPK
 
+# Emails older than this (minutes) in "pending" are considered stuck.
+STALE_PENDING_MINUTES = 5
+
+# Maximum retry attempts for transient SMTP failures.
+MAX_RETRIES = 3
+
+# Errors that should NOT be retried (permanent failures).
+PERMANENT_ERROR_MARKERS = (
+    'disabled in settings',
+    'Template render error',
+    'Authentication',
+    '535 ',
+    '550 ',
+    '553 ',
+    '554 ',
+)
+
 
 class EmailLog(TimestampMixin, db.Model):
     __tablename__ = 'email_logs'
@@ -13,6 +30,7 @@ class EmailLog(TimestampMixin, db.Model):
     error_message = db.Column(db.Text)
     sent_at = db.Column(db.DateTime(timezone=True))
     trigger = db.Column(db.String(50), index=True)
+    retry_count = db.Column(db.Integer, default=0, nullable=False)
     registration_id = db.Column(
         db.BigInteger,
         db.ForeignKey('event_registrations.id', ondelete='SET NULL'),
@@ -58,5 +76,17 @@ class EmailLog(TimestampMixin, db.Model):
     def trigger_label(self):
         return dict(self.TRIGGERS).get(self.trigger, self.trigger or '')
 
+    @property
+    def is_retryable(self):
+        """True if this failed email can be retried."""
+        if self.status != 'failed':
+            return False
+        if self.retry_count >= MAX_RETRIES:
+            return False
+        if self.trigger == 'test':
+            return False
+        err = self.error_message or ''
+        return not any(marker in err for marker in PERMANENT_ERROR_MARKERS)
+
     def __repr__(self):
-        return f'<EmailLog {self.id} to={self.to_email} status={self.status}>'
+        return f'<EmailLog {self.id} to={self.to_email} status={self.status} retry={self.retry_count}>'

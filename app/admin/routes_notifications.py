@@ -30,9 +30,32 @@ def notifications():
         EmailLog.created_at.desc()
     ).limit(20).all()
 
+    from datetime import datetime, timedelta, timezone
     from app.services.scheduler_service import scheduler
+    from app.models.email_log import MAX_RETRIES
     scheduler_running = scheduler.running
     jobs = scheduler.get_jobs() if scheduler_running else []
+
+    # Queue health stats
+    cutoff_10m = datetime.now(timezone.utc) - timedelta(minutes=10)
+    recent_failures = EmailLog.query.filter(
+        EmailLog.status == 'failed',
+        EmailLog.created_at >= cutoff_10m,
+        EmailLog.trigger != 'test',
+    ).count()
+    retryable = EmailLog.query.filter(
+        EmailLog.status == 'failed',
+        EmailLog.retry_count < MAX_RETRIES,
+        EmailLog.trigger != 'test',
+        EmailLog.created_at >= datetime.now(timezone.utc) - timedelta(hours=1),
+    ).count()
+    circuit_open = recent_failures >= 5
+
+    queue_health = {
+        'recent_failures': recent_failures,
+        'retryable': retryable,
+        'circuit_open': circuit_open,
+    }
 
     return render_template(
         'admin/notifications.html',
@@ -41,6 +64,7 @@ def notifications():
         recent=recent,
         scheduler_running=scheduler_running,
         jobs=jobs,
+        queue_health=queue_health,
     )
 
 
