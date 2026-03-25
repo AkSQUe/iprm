@@ -513,52 +513,7 @@ a {
   margin-bottom: 16px;
 }
 
-.iprm-hero__nav {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  position: absolute;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-}
-
-.iprm-hero__arrow {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 24px;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-  transition: color var(--iprm-transition);
-}
-
-.iprm-hero__arrow:hover {
-  color: var(--iprm-white);
-}
-
-.iprm-hero__dots {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.iprm-hero__dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: transparent;
-  border: 1.5px solid rgba(255, 255, 255, 0.6);
-  cursor: pointer;
-  transition: all var(--iprm-transition);
-}
-
-.iprm-hero__dot--active {
-  background: var(--iprm-white);
-  border-color: var(--iprm-white);
-}
+/* Hero nav/dots/arrows -- видалено (legacy-слайдер замінено на Apple-style) */
 
 /* ========== BUTTONS ========== */
 
