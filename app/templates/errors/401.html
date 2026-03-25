@@ -8,14 +8,13 @@
 {% endblock %}
 
 {% block content %}
-  <main class="iprm-404">
-    <div class="iprm-404__text">
-      <h1 class="iprm-404__title">Необхідна авторизація</h1>
-      <p class="iprm-404__subtitle">Увійдіть до свого облікового запису для доступу до цієї сторінки</p>
-      <a href="{{ url_for('auth.login') }}" class="iprm-btn iprm-btn--primary iprm-404__action">
-        <span class="iprm-btn__arrow">&#x2197;</span> Увійти
-      </a>
-    </div>
-    <div class="iprm-404__image">[401 illustration placeholder]</div>
+  <main class="iprm-error-page">
+    <div class="iprm-error-page__code">401</div>
+    <h1 class="iprm-error-page__title">Необхідна авторизація</h1>
+    <p class="iprm-error-page__subtitle">Увійдіть до свого облікового запису для доступу до цієї сторінки</p>
+    <nav class="iprm-error-page__actions">
+      <a href="{{ url_for('auth.login') }}" class="apple-btn apple-btn--primary">Увійти</a>
+      <a href="{{ url_for('main.index') }}" class="apple-btn apple-btn--secondary">На головну</a>
+    </nav>
   </main>
 {% endblock %}

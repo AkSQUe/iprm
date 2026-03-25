@@ -8,14 +8,12 @@
 {% endblock %}
 
 {% block content %}
-  <main class="iprm-404">
-    <div class="iprm-404__text">
-      <h1 class="iprm-404__title">Доступ заборонено</h1>
-      <p class="iprm-404__subtitle">У вас немає прав для перегляду цієї сторінки</p>
-      <a href="{{ url_for('main.index') }}" class="iprm-btn iprm-btn--primary iprm-404__action">
-        <span class="iprm-btn__arrow">&#x2197;</span> На головну
-      </a>
-    </div>
-    <div class="iprm-404__image">[403 illustration placeholder]</div>
+  <main class="iprm-error-page">
+    <div class="iprm-error-page__code">403</div>
+    <h1 class="iprm-error-page__title">Доступ заборонено</h1>
+    <p class="iprm-error-page__subtitle">У вас немає прав для перегляду цієї сторінки</p>
+    <nav class="iprm-error-page__actions">
+      <a href="{{ url_for('main.index') }}" class="apple-btn apple-btn--primary">На головну</a>
+    </nav>
   </main>
 {% endblock %}
