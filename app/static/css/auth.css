@@ -402,6 +402,8 @@
   gap: 4px;
 }
 
+/* Елементи деталей курсу (дата, формат) -- базові стилі через .account-course__details span */
+
 .account-course__cpd {
   font-weight: 600;
   color: var(--iprm-nav-active);

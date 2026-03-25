@@ -131,6 +131,11 @@
   object-fit: cover;
 }
 
+.iprm-clinic-detail__content {
+  flex: 1;
+  min-width: 0;
+}
+
 .iprm-clinic-detail__title {
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;

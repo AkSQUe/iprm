@@ -59,6 +59,13 @@
   color: var(--apple-black);
 }
 
+.contact-page__info-messengers {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--apple-gray);
+  margin-top: 2px;
+}
+
 .contact-page__info-value a {
   color: var(--iprm-nav-active);
   text-decoration: none;

@@ -155,6 +155,10 @@
   margin-bottom: 16px;
 }
 
+.reg-liqpay-payment__btn {
+  width: 100%;
+}
+
 .reg-liqpay-payment__note {
   font-size: 0.8125rem;
   color: var(--apple-gray);

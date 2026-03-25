@@ -260,6 +260,13 @@
   font-size: 13px;
 }
 
+/* ========== MUTED TEXT ========== */
+
+.admin-text-muted {
+  color: var(--iprm-text-light);
+  font-size: 13px;
+}
+
 /* ========== EMPTY STATE ========== */
 
 .admin-empty {
