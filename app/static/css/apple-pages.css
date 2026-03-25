@@ -29,6 +29,11 @@
   overflow: hidden;
 }
 
+/* Compact hero for account/profile pages */
+.apple-page .iprm-hero--compact {
+  min-height: 40vh;
+}
+
 .apple-page .iprm-hero__bg {
   display: none;
 }
@@ -143,8 +148,8 @@
   transition:
     transform 0.15s var(--ease-interact),
     box-shadow 0.15s var(--ease-interact),
-    background-color 0.15s ease,
-    color 0.15s ease;
+    background-color 0.15s var(--ease-interact),
+    color 0.15s var(--ease-interact);
 }
 
 .apple-page .apple-btn--primary {

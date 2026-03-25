@@ -15,7 +15,7 @@
   font-weight: 800;
   letter-spacing: -0.06em;
   line-height: 1;
-  background: linear-gradient(135deg, #7055a4 0%, #9b59b6 40%, #e8913a 100%);
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 40%, var(--apple-orange) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -26,13 +26,13 @@
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: #1d1d1f;
+  color: var(--apple-black);
   margin-bottom: 12px;
   max-width: 600px;
 }
 
 .iprm-error-page .apple-gradient-text {
-  background: linear-gradient(135deg, #7055a4 0%, #9b59b6 40%, #e8913a 100%);
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 40%, var(--apple-orange) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -40,7 +40,7 @@
 
 .iprm-error-page__subtitle {
   font-size: 17px;
-  color: #86868b;
+  color: var(--apple-gray);
   line-height: 1.5;
   max-width: 500px;
   margin-bottom: 40px;

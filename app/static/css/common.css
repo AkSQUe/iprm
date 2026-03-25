@@ -104,20 +104,21 @@ html {
 
 /* Webkit scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f5f5f7;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #7055a4 0%, #9b59b6 50%, #e8913a 100%);
-  border-radius: 8px;
+  background: linear-gradient(180deg, #7055a4 0%, #9b59b6 35%, #c77b4a 70%, #e8913a 100%);
+  border-radius: 10px;
+  border: 2px solid #f5f5f7;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #5d4691 0%, #8a4aa5 50%, #d67e2e 100%);
+  background: linear-gradient(180deg, #5d4691 0%, #8a4aa5 35%, #b56a3a 70%, #d67e2e 100%);
 }
 
 body {
