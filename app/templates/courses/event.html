@@ -57,7 +57,7 @@
 
   <!-- ===== HERO ===== -->
   <div class="iprm-hero-wrap">
-    <section class="iprm-hero">
+    <section class="iprm-hero" aria-label="Hero">
       <div class="iprm-hero__content">
         {% if event.price %}
           <span class="iprm-hero__price">{{ event.price | int }} &#8372; за курс</span>
@@ -77,9 +77,9 @@
 
   <!-- ===== TARGET AUDIENCE ===== -->
   {% if event.target_audience %}
-  <section class="iprm-section apple-section-gray">
+  <section class="iprm-section apple-section-gray" aria-labelledby="target-audience-title">
     <div class="iprm-section__inner">
-      <h2 class="iprm-section__title">Для <span class="apple-gradient-text">кого</span></h2>
+      <h2 id="target-audience-title" class="iprm-section__title">Для <span class="apple-gradient-text">кого</span></h2>
       <p class="iprm-section__subtitle">Спеціалісти, яким курс принесе найбільше користі</p>
       <div class="iprm-target-grid">
         {% for item in event.target_audience %}
@@ -94,9 +94,9 @@
 
   <!-- ===== TRAINER ===== -->
   {% if event.trainer %}
-  <section class="iprm-section">
+  <section class="iprm-section" aria-labelledby="course-trainer-title">
     <div class="iprm-section__inner">
-      <h2 class="iprm-section__title">Тренер <span class="apple-gradient-text">курсу</span></h2>
+      <h2 id="course-trainer-title" class="iprm-section__title">Тренер <span class="apple-gradient-text">курсу</span></h2>
       <div class="iprm-trainer apple-reveal">
         <div class="iprm-trainer__photo">
           {% if event.trainer.photo %}
@@ -122,9 +122,9 @@
 
   <!-- ===== PROGRAM ===== -->
   {% if event.program_blocks %}
-  <section class="iprm-section apple-section-gray">
+  <section class="iprm-section apple-section-gray" aria-labelledby="course-program-title">
     <div class="iprm-section__inner">
-      <h2 class="iprm-section__title">Програма <span class="apple-gradient-text">курсу</span></h2>
+      <h2 id="course-program-title" class="iprm-section__title">Програма <span class="apple-gradient-text">курсу</span></h2>
       <div class="iprm-program">
         {% for block in event.program_blocks %}
         <div class="iprm-program__block apple-reveal">

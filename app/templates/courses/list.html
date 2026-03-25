@@ -22,7 +22,7 @@
 
   <!-- ===== HERO ===== -->
   <div class="iprm-hero-wrap">
-    <section class="iprm-hero">
+    <section class="iprm-hero" aria-label="Hero">
       <div class="iprm-hero__content">
         <h1 class="iprm-hero__title">Курси післядипломної<br><span class="apple-gradient-text">освіти.</span></h1>
         <p class="iprm-hero__subtitle">Сертифіковані програми підвищення кваліфікації для лікарів з офіційним нарахуванням балів БПР</p>
@@ -32,30 +32,32 @@
   </div>
 
   <!-- ===== COURSE CARDS ===== -->
-  <section id="courses" class="iprm-section apple-section-gray">
+  <section id="courses" class="iprm-section apple-section-gray" aria-labelledby="courses-title">
     <div class="iprm-section__inner">
-      <h2 class="iprm-section__title">Доступні <span class="apple-gradient-text">курси</span></h2>
+      <h2 id="courses-title" class="iprm-section__title">Доступні <span class="apple-gradient-text">курси</span></h2>
       <p class="iprm-section__subtitle">Оберіть курс та підвищіть свою кваліфікацію</p>
 
       <div class="iprm-course-cards">
         {% for event in events %}
-        <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-course-card apple-reveal">
-          <div class="iprm-course-card__image">
-            {% if event.card_image %}
-              <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy">
-            {% endif %}
-          </div>
-          <div class="apple-card-body">
-            <p class="iprm-course-card__title">{{ event.title }}</p>
-            {% if event.tags %}
-            <div class="iprm-course-card__tags">
-              {% for tag in event.tags %}
-                <span class="iprm-tag">{{ tag }}</span>
-              {% endfor %}
+        <article class="iprm-course-card apple-reveal">
+          <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}">
+            <div class="iprm-course-card__image">
+              {% if event.card_image %}
+                <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy">
+              {% endif %}
             </div>
-            {% endif %}
-          </div>
-        </a>
+            <div class="apple-card-body">
+              <p class="iprm-course-card__title">{{ event.title }}</p>
+              {% if event.tags %}
+              <div class="iprm-course-card__tags">
+                {% for tag in event.tags %}
+                  <span class="iprm-tag">{{ tag }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </a>
+        </article>
         {% else %}
         <div class="iprm-empty-state iprm-empty-state--full">
           <p>Наразі немає доступних курсів</p>
@@ -66,29 +68,29 @@
   </section>
 
   <!-- ===== WHY US ===== -->
-  <section class="iprm-section">
+  <section class="iprm-section" aria-labelledby="why-us-title">
     <div class="iprm-section__inner">
-      <h2 class="iprm-section__title">Чому обирають <span class="apple-gradient-text">наші курси</span></h2>
+      <h2 id="why-us-title" class="iprm-section__title">Чому обирають <span class="apple-gradient-text">наші курси</span></h2>
       <p class="iprm-section__subtitle">Професійне навчання з офіційним нарахуванням балів БПР</p>
 
       <div class="apple-features-grid">
         <div class="apple-feature-card apple-reveal">
           <div class="apple-feature-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/></svg>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/></svg>
           </div>
           <h3>Висококваліфіковані спеціалісти</h3>
           <p>Навчальні курси проводяться спеціалістами з багатим досвідом у регенеративній медицині.</p>
         </div>
         <div class="apple-feature-card apple-reveal">
           <div class="apple-feature-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           </div>
           <h3>Очно та онлайн</h3>
           <p>Курси проводяться очно та онлайн, в комфортних умовах та повністю забезпечені всім необхідним.</p>
         </div>
         <div class="apple-feature-card apple-reveal">
           <div class="apple-feature-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
           </div>
           <h3>Сертифікати з балами БПР</h3>
           <p>Після проходження курсу слухачі отримують сертифікати з балами безперервного професійного розвитку.</p>

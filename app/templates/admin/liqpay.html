@@ -14,6 +14,12 @@
   <div class="admin-layout">
     {% include 'partials/flash_messages.html' %}
 
+    <nav class="admin-breadcrumb">
+      <a href="{{ url_for('admin.integrations') }}" class="admin-breadcrumb__link">Інтеграції</a>
+      <span class="admin-breadcrumb__sep">/</span>
+      <span class="admin-breadcrumb__current">LiqPay</span>
+    </nav>
+
     <div class="admin-hero">
       <div>
         <h1 class="admin-hero__title">LiqPay</h1>

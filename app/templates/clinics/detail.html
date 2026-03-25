@@ -26,7 +26,7 @@
 
   <!-- ===== HERO ===== -->
   <div class="iprm-hero-wrap">
-    <section class="iprm-hero">
+    <section class="iprm-hero" aria-label="Hero">
       <div class="iprm-hero__content">
         <h1 class="iprm-hero__title">{% set words = clinic.name.rsplit(' ', 1) %}{% if words | length > 1 %}{{ words[0] }} <span class="apple-gradient-text">{{ words[1] }}</span>{% else %}<span class="apple-gradient-text">{{ clinic.name }}</span>{% endif %}</h1>
         {% if clinic.short_description %}
@@ -37,7 +37,7 @@
   </div>
 
   <!-- ===== CLINIC INFO ===== -->
-  <section class="iprm-section apple-section-gray">
+  <section class="iprm-section apple-section-gray" aria-labelledby="clinic-info-title">
     <div class="iprm-section__inner">
       <div class="iprm-clinic-detail">
         <div class="iprm-clinic-detail__photo">
@@ -46,7 +46,7 @@
           {% endif %}
         </div>
         <div class="iprm-clinic-detail__content">
-          <h2 class="iprm-clinic-detail__title">{{ clinic.name }}</h2>
+          <h2 id="clinic-info-title" class="iprm-clinic-detail__title">{{ clinic.name }}</h2>
           {% if clinic.description %}
             <div class="iprm-clinic-detail__text">
               {{ clinic.description | safe }}

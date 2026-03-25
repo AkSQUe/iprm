@@ -16,9 +16,6 @@
       <a href="{{ url_for('admin.registrations_all') }}" class="admin-sidebar__link{% if ep in ('admin.registrations_all', 'admin.event_registrations', 'admin.registration_status', 'admin.registration_attendance') %} admin-sidebar__link--active{% endif %}">
         Реєстрації
       </a>
-      <a href="{{ url_for('admin.liqpay') }}" class="admin-sidebar__link{% if ep == 'admin.liqpay' %} admin-sidebar__link--active{% endif %}">
-        LiqPay
-      </a>
       <a href="{{ url_for('admin.certificates') }}" class="admin-sidebar__link{% if ep == 'admin.certificates' %} admin-sidebar__link--active{% endif %}">
         Сертифікати
       </a>
@@ -39,7 +36,7 @@
       <a href="{{ url_for('admin.marketing') }}" class="admin-sidebar__link{% if ep == 'admin.marketing' %} admin-sidebar__link--active{% endif %}">
         Маркетинг
       </a>
-      <a href="{{ url_for('admin.integrations') }}" class="admin-sidebar__link{% if ep == 'admin.integrations' %} admin-sidebar__link--active{% endif %}">
+      <a href="{{ url_for('admin.integrations') }}" class="admin-sidebar__link{% if ep in ('admin.integrations', 'admin.liqpay', 'admin.liqpay_save_keys', 'admin.liqpay_test', 'admin.liqpay_refund') %} admin-sidebar__link--active{% endif %}">
         Інтеграції
       </a>
       <a href="{{ url_for('admin.settings') }}" class="admin-sidebar__link{% if ep == 'admin.settings' %} admin-sidebar__link--active{% endif %}">

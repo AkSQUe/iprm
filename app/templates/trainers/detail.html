@@ -3,6 +3,10 @@
 {% block title %}{{ trainer.full_name }} | IPRM{% endblock %}
 {% block meta_description %}{{ trainer.role or trainer.full_name }}. Тренер Інституту Плазмотерапії та Регенеративної Медицини.{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}?v={{ assets_version }}">
+{% endblock %}
+
 {% block jsonld %}
 <script type="application/ld+json">
 {
@@ -36,7 +40,7 @@
 
   <!-- ===== HERO ===== -->
   <div class="iprm-hero-wrap">
-    <section class="iprm-hero">
+    <section class="iprm-hero" aria-label="Hero">
       <div class="iprm-hero__content">
         <h1 class="iprm-hero__title">{% set words = trainer.full_name.rsplit(' ', 1) %}{% if words | length > 1 %}{{ words[0] }} <span class="apple-gradient-text">{{ words[1] }}</span>{% else %}<span class="apple-gradient-text">{{ trainer.full_name }}</span>{% endif %}</h1>
         {% if trainer.role %}
@@ -73,30 +77,32 @@
 
   <!-- ===== TRAINER COURSES ===== -->
   {% if events %}
-  <section class="iprm-section">
+  <section class="iprm-section" aria-labelledby="trainer-courses-title">
     <div class="iprm-section__inner">
-      <h2 class="iprm-section__title">Курси <span class="apple-gradient-text">тренера</span></h2>
+      <h2 id="trainer-courses-title" class="iprm-section__title">Курси <span class="apple-gradient-text">тренера</span></h2>
       <p class="iprm-section__subtitle">Доступні програми навчання</p>
 
       <div class="iprm-course-cards">
         {% for event in events %}
-        <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-course-card apple-reveal">
-          <div class="iprm-course-card__image">
-            {% if event.card_image %}
-              <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy">
-            {% endif %}
-          </div>
-          <div class="apple-card-body">
-            <p class="iprm-course-card__title">{{ event.title }}</p>
-            {% if event.tags %}
-            <div class="iprm-course-card__tags">
-              {% for tag in event.tags %}
-                <span class="iprm-tag">{{ tag }}</span>
-              {% endfor %}
+        <article class="iprm-course-card apple-reveal">
+          <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}">
+            <div class="iprm-course-card__image">
+              {% if event.card_image %}
+                <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy">
+              {% endif %}
             </div>
-            {% endif %}
-          </div>
-        </a>
+            <div class="apple-card-body">
+              <p class="iprm-course-card__title">{{ event.title }}</p>
+              {% if event.tags %}
+              <div class="iprm-course-card__tags">
+                {% for tag in event.tags %}
+                  <span class="iprm-tag">{{ tag }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </a>
+        </article>
         {% endfor %}
       </div>
     </div>

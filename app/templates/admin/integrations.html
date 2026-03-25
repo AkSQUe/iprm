@@ -19,81 +19,82 @@
       </div>
     </div>
 
+    <!-- Активні інтеграції -->
     <div class="admin-integrations">
 
-      <!-- LiqPay -->
-      <div class="form-section admin-form__section">
-        <h3 class="admin-form__section-title">LiqPay</h3>
-        <p class="admin-integration__desc">Платіжна система для прийому оплати за курси. Підтримка card, Google Pay, Apple Pay.</p>
-        <ul class="admin-todo">
-          <li>Public / Private ключі (sandbox + production)</li>
-          <li>Webhook для callback-підтверджень оплати</li>
-          <li>Автоматична зміна статусу реєстрації після оплати</li>
-          <li>Рефанди та часткове повернення</li>
-        </ul>
-      </div>
+      <div class="admin-integrations__grid">
 
-      <!-- Google -->
-      <div class="form-section admin-form__section">
-        <h3 class="admin-form__section-title">Google</h3>
-        <p class="admin-integration__desc">Авторизація через Google та One Tap, аналітика, реклама.</p>
-        <div class="admin-integrations__grid">
-          <div class="admin-integration-card">
-            <h4 class="admin-integration-card__title">OAuth 2.0</h4>
-            <p>Вхід через Google-акаунт. Client ID + Client Secret, redirect URI.</p>
+        <!-- LiqPay -->
+        <a href="{{ url_for('admin.liqpay') }}" class="admin-integration-card admin-integration-card--link">
+          <div class="admin-integration-card__header">
+            <h4 class="admin-integration-card__title">LiqPay</h4>
+            {% if liqpay_status.is_configured %}
+              {% if liqpay_status.sandbox %}
+                <span class="badge badge--published">Sandbox</span>
+              {% else %}
+                <span class="badge badge--active">Production</span>
+              {% endif %}
+            {% else %}
+              <span class="badge badge--draft">Не налаштовано</span>
+            {% endif %}
           </div>
-          <div class="admin-integration-card">
-            <h4 class="admin-integration-card__title">One Tap</h4>
-            <p>Швидка авторизація без перенаправлення. Popup на сторінці входу.</p>
+          <p>Платіжна система: оплата картою, Google Pay, Apple Pay. Webhook, рефанди.</p>
+        </a>
+
+        <!-- Google OAuth -->
+        <div class="admin-integration-card admin-integration-card--planned">
+          <div class="admin-integration-card__header">
+            <h4 class="admin-integration-card__title">Google OAuth</h4>
+            <span class="badge badge--pending">Планується</span>
           </div>
-          <div class="admin-integration-card">
-            <h4 class="admin-integration-card__title">Google Analytics (GA4)</h4>
-            <p>Measurement ID, відстеження конверсій реєстрації та оплати курсів.</p>
-          </div>
+          <p>Вхід через Google-акаунт. Client ID, redirect URI, One Tap.</p>
         </div>
-      </div>
 
-      <!-- reCAPTCHA -->
-      <div class="form-section admin-form__section">
-        <h3 class="admin-form__section-title">reCAPTCHA</h3>
-        <p class="admin-integration__desc">Захист форм реєстрації та входу від ботів.</p>
-        <ul class="admin-todo">
-          <li>reCAPTCHA v3 (invisible) для форм реєстрації та входу</li>
-          <li>Site Key + Secret Key</li>
-          <li>Поріг score для блокування (default 0.5)</li>
-        </ul>
-      </div>
+        <!-- Google Analytics -->
+        <div class="admin-integration-card admin-integration-card--planned">
+          <div class="admin-integration-card__header">
+            <h4 class="admin-integration-card__title">Google Analytics</h4>
+            <span class="badge badge--pending">Планується</span>
+          </div>
+          <p>GA4 Measurement ID, відстеження конверсій реєстрації та оплати.</p>
+        </div>
 
-      <!-- Apple -->
-      <div class="form-section admin-form__section">
-        <h3 class="admin-form__section-title">Apple</h3>
-        <p class="admin-integration__desc">Авторизація через Apple ID (Sign in with Apple).</p>
-        <ul class="admin-todo">
-          <li>Service ID, Team ID, Key ID, Private Key (.p8)</li>
-          <li>Redirect URI та обробка callback</li>
-          <li>Підтримка приховання email (relay)</li>
-        </ul>
-      </div>
+        <!-- reCAPTCHA -->
+        <div class="admin-integration-card admin-integration-card--planned">
+          <div class="admin-integration-card__header">
+            <h4 class="admin-integration-card__title">reCAPTCHA v3</h4>
+            <span class="badge badge--pending">Планується</span>
+          </div>
+          <p>Захист форм від ботів. Site Key, Secret Key, поріг score.</p>
+        </div>
 
-      <!-- Microsoft Clarity -->
-      <div class="form-section admin-form__section">
-        <h3 class="admin-form__section-title">Microsoft Clarity</h3>
-        <p class="admin-integration__desc">Аналітика поведінки користувачів: теплові карти, записи сесій.</p>
-        <ul class="admin-todo">
-          <li>Project ID для вбудовування tracking-скрипту</li>
-          <li>Фільтрація адмін-сесій</li>
-        </ul>
-      </div>
+        <!-- Apple Sign In -->
+        <div class="admin-integration-card admin-integration-card--planned">
+          <div class="admin-integration-card__header">
+            <h4 class="admin-integration-card__title">Apple Sign In</h4>
+            <span class="badge badge--pending">Планується</span>
+          </div>
+          <p>Авторизація через Apple ID. Service ID, Team ID, relay email.</p>
+        </div>
 
-      <!-- Facebook -->
-      <div class="form-section admin-form__section">
-        <h3 class="admin-form__section-title">Facebook</h3>
-        <p class="admin-integration__desc">OAuth-авторизація, Facebook Pixel для відстеження конверсій, Open Graph.</p>
-        <ul class="admin-todo">
-          <li>Facebook Login (OAuth): App ID + App Secret</li>
-          <li>Facebook Pixel: відстеження реєстрацій та оплат</li>
-          <li>Open Graph мета-теги для шерінгу курсів</li>
-        </ul>
+        <!-- Microsoft Clarity -->
+        <div class="admin-integration-card admin-integration-card--planned">
+          <div class="admin-integration-card__header">
+            <h4 class="admin-integration-card__title">Microsoft Clarity</h4>
+            <span class="badge badge--pending">Планується</span>
+          </div>
+          <p>Теплові карти, записи сесій, аналітика поведінки.</p>
+        </div>
+
+        <!-- Facebook -->
+        <div class="admin-integration-card admin-integration-card--planned">
+          <div class="admin-integration-card__header">
+            <h4 class="admin-integration-card__title">Facebook</h4>
+            <span class="badge badge--pending">Планується</span>
+          </div>
+          <p>OAuth-авторизація, Pixel для конверсій, Open Graph.</p>
+        </div>
+
       </div>
 
     </div>
