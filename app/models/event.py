@@ -48,6 +48,10 @@ class Event(TimestampMixin, db.Model):
             name='ck_events_status',
         ),
         db.CheckConstraint('price >= 0', name='ck_events_price_non_negative'),
+        db.CheckConstraint(
+            'max_participants >= 1 OR max_participants IS NULL',
+            name='ck_events_max_participants_positive',
+        ),
     )
 
     creator = db.relationship('User', foreign_keys=[created_by], back_populates='created_events')

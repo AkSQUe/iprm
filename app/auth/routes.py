@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from urllib.parse import urlparse
 from flask import render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
+from sqlalchemy.orm import contains_eager
 from app.auth import auth_bp
 from app.auth.forms import LoginForm, RegistrationForm
 from app.extensions import db, limiter
@@ -92,6 +93,7 @@ def account():
         .filter_by(user_id=current_user.id)
         .filter(EventRegistration.status != 'cancelled')
         .join(Event)
+        .options(contains_eager(EventRegistration.event))
         .order_by(Event.start_date.desc())
         .all()
     )
