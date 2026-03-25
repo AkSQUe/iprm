@@ -1,13 +1,7 @@
 /* page-index.css -- Apple-style landing page (concept v2) */
 /* Shared Apple styles (buttons, cards, reveal) defined in apple-pages.css */
 
-/* ========== APPLE EASING CURVES ========== */
-
-:root {
-  --ease-reveal: cubic-bezier(0.28, 0.11, 0.32, 1);
-  --ease-interact: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  --ease-spring: cubic-bezier(0.32, 0.08, 0.24, 1);
-}
+/* Easing-змінні визначено в apple-pages.css (--ease-reveal, --ease-interact, --ease-spring) */
 
 /* ========== HERO -- fullscreen (landing: 100vh) ========== */
 
