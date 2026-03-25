@@ -833,34 +833,35 @@ a {
   border: 1px solid var(--iprm-info-light);
 }
 
-/* ========== CONTENT PAGE (спільний layout для legal, contact) ========== */
+/* ========== CONTENT PAGE (Apple-style v2: legal, contact) ========== */
 
 .iprm-content-page {
-  max-width: var(--iprm-max-content);
+  max-width: 980px;
   margin: 0 auto;
-  padding: 24px 24px 80px;
+  padding: 48px 24px 80px;
 }
 
 .iprm-content-page__inner {
-  background: var(--iprm-white);
-  border-radius: var(--iprm-radius);
-  padding: 48px 40px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  background: #fff;
+  border-radius: 28px;
+  padding: 64px 56px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .iprm-content-page__title {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--iprm-dark);
-  margin-bottom: 8px;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #1d1d1f;
+  margin-bottom: 12px;
 }
 
 .iprm-content-page__subtitle {
-  font-size: 14px;
-  color: var(--iprm-text-light);
+  font-size: 0.9375rem;
+  color: #86868b;
   margin-bottom: 32px;
   padding-bottom: 24px;
-  border-bottom: 1px solid var(--iprm-border);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 /* ========== EMPTY STATE (публічний) ========== */
@@ -1233,11 +1234,11 @@ a {
   }
 
   .iprm-content-page__inner {
-    padding: 28px 20px;
+    padding: 36px 24px;
   }
 
   .iprm-content-page__title {
-    font-size: 22px;
+    font-size: 1.5rem;
   }
 
   .iprm-footer {
@@ -1280,11 +1281,12 @@ a {
 
 @media (max-width: 480px) {
   .iprm-content-page__inner {
-    padding: 20px 16px;
+    padding: 24px 16px;
+    border-radius: 20px;
   }
 
   .iprm-content-page__title {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
 
   .iprm-hero__title {

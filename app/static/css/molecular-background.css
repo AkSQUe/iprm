@@ -24,6 +24,13 @@ body > *:not(#molecular-background):not(script):not(.iprm-header) {
   z-index: 1;
 }
 
+/* Hide molecular background on Apple-style pages */
+body:has(.apple-page) #molecular-background,
+body:has(.iprm-error-page) #molecular-background,
+body:has(.auth-page) #molecular-background {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   #molecular-background canvas {
     animation-play-state: paused;

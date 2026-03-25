@@ -1,71 +1,74 @@
-/* ========== LEGAL PAGES (offer, privacy policy) ========== */
-/* Layout (.legal-page) використовує .iprm-content-page з common.css */
+/* ========== LEGAL PAGES (Apple-style v2) ========== */
+/* Layout wrapper: .iprm-content-page defined in common.css */
 
 .legal-page__preamble {
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--iprm-text);
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--apple-gray-dark);
   margin-bottom: 32px;
-  padding: 20px 24px;
-  background: var(--iprm-accent-light);
-  border-left: 3px solid var(--iprm-accent);
-  border-radius: var(--iprm-radius-sm);
+  padding: 24px;
+  background: var(--apple-section-bg);
+  border-left: 3px solid var(--iprm-nav-active);
+  border-radius: 16px;
 }
 
 /* ========== SECTIONS ========== */
 
 .legal-section {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
 .legal-section h2 {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--iprm-dark);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--apple-black);
   margin-bottom: 16px;
-  padding: 0 0 8px 14px;
-  border-bottom: 1px solid var(--iprm-border);
-  border-left: 3px solid var(--iprm-accent);
+  padding: 0 0 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-left: 3px solid var(--iprm-nav-active);
 }
 
 .legal-section h3 {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--iprm-dark);
-  margin: 20px 0 12px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--apple-black);
+  margin: 24px 0 12px;
 }
 
 .legal-section p {
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--iprm-text);
-  margin-bottom: 10px;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--apple-gray-dark);
+  margin-bottom: 12px;
 }
 
 .legal-section p strong {
-  color: var(--iprm-accent);
+  color: var(--iprm-nav-active);
   font-weight: 600;
 }
 
 .legal-section ul,
 .legal-section ol {
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--iprm-text);
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--apple-gray-dark);
   margin: 8px 0 16px 24px;
 }
 
 .legal-section li {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .legal-section a {
-  color: var(--iprm-accent);
+  color: var(--iprm-nav-active);
   text-decoration: none;
+  transition: color 0.2s;
 }
 
 .legal-section a:hover {
-  text-decoration: underline;
+  color: var(--iprm-accent-hover);
 }
 
 /* ========== DEFINITIONS ========== */
@@ -75,16 +78,16 @@
 }
 
 .legal-definitions dt {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--iprm-dark);
-  margin-top: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--apple-black);
+  margin-top: 16px;
 }
 
 .legal-definitions dd {
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--iprm-text);
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--apple-gray-dark);
   margin-left: 0;
   margin-bottom: 4px;
 }
@@ -94,36 +97,39 @@
 .legal-refund-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 0.9375rem;
   margin: 16px 0 24px;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .legal-refund-table th {
   text-align: left;
-  padding: 10px 14px;
-  background: var(--iprm-dark);
-  color: var(--iprm-white);
+  padding: 14px 16px;
+  background: var(--apple-black);
+  color: var(--apple-section-bg);
   font-weight: 600;
-  font-size: 13px;
+  font-size: 0.8125rem;
+  letter-spacing: 0.01em;
 }
 
 .legal-refund-table th:first-child {
-  border-radius: var(--iprm-radius-sm) 0 0 0;
+  border-radius: 12px 0 0 0;
 }
 
 .legal-refund-table th:last-child {
-  border-radius: 0 var(--iprm-radius-sm) 0 0;
+  border-radius: 0 12px 0 0;
 }
 
 .legal-refund-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--iprm-border);
-  color: var(--iprm-text);
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  color: var(--apple-gray-dark);
 }
 
 .legal-refund-table__highlight {
   font-weight: 600;
-  color: var(--iprm-accent);
+  color: var(--iprm-nav-active);
 }
 
 /* ========== DETAILS TABLE ========== */
@@ -131,61 +137,68 @@
 .legal-details {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 0.9375rem;
 }
 
 .legal-details td {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--iprm-border);
-  color: var(--iprm-text);
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  color: var(--apple-gray-dark);
   vertical-align: top;
 }
 
 .legal-details td:first-child {
   font-weight: 600;
-  color: var(--iprm-dark);
+  color: var(--apple-black);
   white-space: nowrap;
   width: 220px;
 }
 
 .legal-details a {
-  color: var(--iprm-accent);
+  color: var(--iprm-nav-active);
   text-decoration: none;
+}
+
+.legal-details a:hover {
+  color: var(--iprm-accent-hover);
 }
 
 /* ========== CLOSING ========== */
 
 .legal-page__closing {
-  font-size: 14px;
+  font-size: 0.9375rem;
   font-style: italic;
-  color: var(--iprm-text-light);
-  margin-top: 32px;
+  color: var(--apple-gray);
+  margin-top: 40px;
   padding-top: 24px;
-  border-top: 1px solid var(--iprm-border);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
   text-align: center;
 }
 
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
-  /* Responsive для layout (.iprm-content-page) -- в common.css */
-
   .legal-details td:first-child {
     white-space: normal;
     width: auto;
   }
 
-  /* Горизонтальна прокрутка для таблиці повернень */
   .legal-refund-table {
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
+
+  .legal-section p,
+  .legal-section ul,
+  .legal-section ol,
+  .legal-definitions dt,
+  .legal-definitions dd {
+    font-size: 16px;
+  }
 }
 
 @media (max-width: 480px) {
-  /* Responsive для layout (.iprm-content-page) -- в common.css */
-
   .legal-details td {
     display: block;
     padding: 4px 0;
@@ -199,6 +212,11 @@
   .legal-details tr {
     display: block;
     padding: 8px 0;
-    border-bottom: 1px solid var(--iprm-border);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .legal-page__preamble {
+    padding: 16px;
+    border-radius: 12px;
   }
 }
