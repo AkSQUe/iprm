@@ -18,7 +18,7 @@
       <h1 class="admin-hero__title">Сповіщення</h1>
       <p class="admin-hero__subtitle">Email-розсилки та нагадування</p>
     </div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <div class="admin-form__actions" style="padding-top:0;">
       <a href="{{ url_for('admin.notifications_templates') }}" class="btn-admin btn-admin--secondary">Шаблони</a>
       <a href="{{ url_for('admin.notifications_log') }}" class="btn-admin btn-admin--secondary">Повний лог</a>
     </div>
@@ -48,16 +48,16 @@
 
   <!-- Queue Health -->
   {% if queue_health and (queue_health.circuit_open or queue_health.retryable > 0) %}
-  <div class="form-section admin-form__section" style="{% if queue_health.circuit_open %}border-left:4px solid var(--admin-danger, #ef4444);{% else %}border-left:4px solid var(--admin-warning, #f59e0b);{% endif %} padding-left:20px;">
+  <div class="form-section admin-form__section" style="{% if queue_health.circuit_open %}border-left:4px solid var(--iprm-error);{% else %}border-left:4px solid var(--iprm-warning-text);{% endif %} padding-left:20px;">
     {% if queue_health.circuit_open %}
-    <h3 class="admin-form__section-title" style="color:var(--admin-danger, #ef4444);">Circuit Breaker: OPEN</h3>
-    <p style="color:#86868b; font-size:14px; margin:0 0 8px;">
+    <h3 class="admin-form__section-title" style="color:var(--iprm-error-text);">Circuit Breaker: OPEN</h3>
+    <p class="admin-text-muted">
       Виявлено {{ queue_health.recent_failures }} помилок за останні 10 хв. Нові відправки призупинено до стабілізації SMTP.
       Перевірте налаштування та спробуйте тестовий лист.
     </p>
     {% else %}
     <h3 class="admin-form__section-title">Черга відправки</h3>
-    <p style="color:#86868b; font-size:14px; margin:0 0 8px;">
+    <p class="admin-text-muted">
       {{ queue_health.retryable }} лист(ів) очікують повторної відправки. Retry відбувається автоматично кожні 5 хв (макс. 3 спроби).
     </p>
     {% endif %}
@@ -190,7 +190,7 @@
           <tr>
             <td>{{ log.to_email }}</td>
             <td>{{ log.subject[:50] }}{% if log.subject|length > 50 %}...{% endif %}</td>
-            <td><span class="badge">{{ log.trigger_label }}</span></td>
+            <td><span class="badge badge--draft">{{ log.trigger_label }}</span></td>
             <td>
               {% if log.status == 'sent' %}
               <span class="badge badge--success">{{ log.status_label }}</span>

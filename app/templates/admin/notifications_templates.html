@@ -99,7 +99,7 @@
       <span class="template-preview__meta"><strong>Тригер:</strong> {{ tpl.trigger }}</span>
       <span class="template-preview__meta"><strong>Тема:</strong> {{ tpl.subject }}</span>
     </div>
-    <iframe class="template-preview__frame" srcdoc="{{ tpl.html | e }}" sandbox="allow-same-origin"></iframe>
+    <iframe class="template-preview__frame" srcdoc="{{ tpl.html | e }}"></iframe>
   </div>
   {% endfor %}
 
