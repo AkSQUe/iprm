@@ -12,7 +12,7 @@
 
   <!-- ===== HERO ===== -->
   <div class="iprm-hero-wrap">
-    <section class="iprm-hero">
+    <section class="iprm-hero" aria-label="Hero">
       <div class="iprm-hero__content">
         <div class="iprm-hero__badge">Бали БПР — Сертифіковані курси</div>
         <h1 class="iprm-hero__title">Плазмотерапія.<br><span class="apple-gradient-text">Регенерація.</span></h1>
@@ -26,36 +26,36 @@
   </div>
 
   <!-- ===== COURSES FEATURES ===== -->
-  <section class="iprm-section apple-section-gray">
+  <section class="iprm-section apple-section-gray" aria-labelledby="features-title">
     <div class="apple-section-header apple-reveal">
-      <h2>Курси інституту плазмотерапії та регенеративної медицини</h2>
+      <h2 id="features-title">Курси інституту плазмотерапії та регенеративної медицини</h2>
       <p>Професійне навчання з офіційним нарахуванням балів БПР</p>
     </div>
     <div class="apple-features-grid">
       <div class="apple-feature-card apple-feature-card--featured apple-reveal">
         <div class="apple-feature-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/></svg>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/></svg>
         </div>
         <h3>Висококваліфіковані спеціалісти</h3>
         <p>Навчальні курси інституту плазмотерапії проводяться висококваліфікованими спеціалістами з багатим досвідом у сфері регенеративної медицини, плазмотерапії та біорегуляційної медицини.</p>
       </div>
       <div class="apple-feature-card apple-reveal">
         <div class="apple-feature-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
         </div>
         <h3>Очно та онлайн</h3>
         <p>Курси проводяться очно та онлайн, в комфортних умовах та повністю забезпечені всім необхідним.</p>
       </div>
       <div class="apple-feature-card apple-reveal">
         <div class="apple-feature-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         </div>
         <h3>Сучасна інформація</h3>
         <p>Слухачі курсів отримують максимум сучасної інформації по вибраних темах регенеративної медицини.</p>
       </div>
       <div class="apple-feature-card apple-feature-card--featured apple-reveal">
         <div class="apple-feature-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
         </div>
         <h3>Сертифікати з балами БПР</h3>
         <p>Після проходження вибраного курсу слухачі отримують сертифікати з балами БПР (безперервний професійний розвиток), що підтверджують підвищення кваліфікації.</p>
@@ -64,9 +64,9 @@
   </section>
 
   <!-- ===== STATS ===== -->
-  <section class="iprm-section apple-section-dark">
+  <section class="iprm-section apple-section-dark" aria-labelledby="stats-title">
     <div class="apple-section-header apple-reveal">
-      <h2>Інститут у цифрах</h2>
+      <h2 id="stats-title">Інститут у цифрах</h2>
     </div>
     <div class="apple-stats-row apple-reveal" id="stats-row">
       <div class="apple-stat">
@@ -90,46 +90,48 @@
 
   {% if events %}
   <!-- ===== COURSE CARDS ===== -->
-  <section class="iprm-section">
+  <section class="iprm-section" aria-labelledby="courses-title">
     <div class="apple-section-header apple-reveal">
-      <h2>Курси післядипломної освіти</h2>
+      <h2 id="courses-title">Курси післядипломної освіти</h2>
       <p>Оберіть курс та підвищіть свою кваліфікацію</p>
     </div>
     <div class="iprm-course-cards">
       {% for event in events %}
-      <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-course-card apple-reveal">
-        <div class="iprm-course-card__image">
-          {% if event.card_image %}
-            <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy">
-          {% endif %}
-        </div>
-        <div class="apple-course-body">
-          <p class="iprm-course-card__title">{{ event.title }}</p>
-          {% if event.tags %}
-          <div class="iprm-course-card__tags">
-            {% for tag in event.tags %}
-              <span class="iprm-tag">{{ tag }}</span>
-            {% endfor %}
+      <article class="iprm-course-card apple-reveal">
+        <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}">
+          <div class="iprm-course-card__image">
+            {% if event.card_image %}
+              <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy" width="400" height="200">
+            {% endif %}
           </div>
-          {% endif %}
-        </div>
-      </a>
+          <div class="apple-course-body">
+            <h3 class="iprm-course-card__title">{{ event.title }}</h3>
+            {% if event.tags %}
+            <div class="iprm-course-card__tags">
+              {% for tag in event.tags %}
+                <span class="iprm-tag">{{ tag }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+        </a>
+      </article>
       {% endfor %}
     </div>
   </section>
   {% endif %}
 
   <!-- ===== LABS BENTO ===== -->
-  <section id="labs" class="iprm-section apple-section-gray">
+  <section id="labs" class="iprm-section apple-section-gray" aria-labelledby="labs-title">
     <div class="apple-section-header apple-reveal">
-      <h2>Наші лабораторії</h2>
+      <h2 id="labs-title">Наші лабораторії</h2>
       <p>Наукові дослідження та інновації у сфері регенеративної медицини</p>
     </div>
     <div class="apple-bento-grid">
       <!-- Lab 1: hero -->
       <div class="apple-bento-card apple-bento-card--hero apple-reveal">
         <div class="apple-bento-visual">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><circle cx="10" cy="13" r="0.5"/><circle cx="14" cy="16" r="0.5"/><circle cx="10" cy="19" r="0.5"/></svg>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><circle cx="10" cy="13" r="0.5"/><circle cx="14" cy="16" r="0.5"/><circle cx="10" cy="19" r="0.5"/></svg>
         </div>
         <h3>Лабораторія біологічного віку та прогнозування захворювань</h3>
         <p>Епігенетика, фізіологія, біохімія та імунологія процесів старіння</p>
@@ -137,14 +139,14 @@
       <!-- Lab 1: cards -->
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
         </div>
         <h3>Персоналізована терапія</h3>
         <p>Визначення індивідуальних параметрів для вибору персоналізованої терапії</p>
       </div>
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M15 2v2M15 20v2M9 2v2M9 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M15 2v2M15 20v2M9 2v2M9 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg>
         </div>
         <h3>Біоінформатика та ШІ</h3>
         <p>Інтегральний аналіз даних досліджень з використанням штучного інтелекту</p>
@@ -152,21 +154,21 @@
       <!-- Lab 2: cards -->
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg>
         </div>
         <h3>Біомаркери старіння</h3>
         <p>Пошук, апробація, валідація нових біомаркерів старіння та геропротекторів</p>
       </div>
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-15.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m12.73-12.73 1.41-1.41"/></svg>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-15.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m12.73-12.73 1.41-1.41"/></svg>
         </div>
         <h3>Anti-age протоколи</h3>
         <p>Дослідження ефективності нових anti-age протоколів та процесів старіння на клітинному рівні</p>
       </div>
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
         </div>
         <h3>Клітинне старіння</h3>
         <p>Дослідження процесів старіння на клітинному рівні з використанням сучасних методів</p>
@@ -175,15 +177,15 @@
   </section>
 
   <!-- ===== CLINIC ===== -->
-  <section class="iprm-section">
+  <section class="iprm-section" aria-labelledby="clinic-title">
     <div class="apple-section-header apple-reveal">
-      <h2>Клініка клітинних та регенеративних технологій</h2>
+      <h2 id="clinic-title">Клініка клітинних та регенеративних технологій</h2>
       <p>Перелік відділень клініки</p>
     </div>
     <div class="apple-clinic-grid">
       <div class="apple-clinic-card apple-reveal">
         <div class="apple-clinic-card__image">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#7055a4" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg>
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#7055a4" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg>
         </div>
         <div class="apple-clinic-card__body">
           <h3>Відділення PRP-, плазмотерапії та терапії екзосомами</h3>
@@ -192,7 +194,7 @@
       </div>
       <div class="apple-clinic-card apple-reveal">
         <div class="apple-clinic-card__image">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#7055a4" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-15.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m12.73-12.73 1.41-1.41"/></svg>
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#7055a4" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-15.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m12.73-12.73 1.41-1.41"/></svg>
         </div>
         <div class="apple-clinic-card__body">
           <h3>Відділення терапії мезенхімальними стовбуровими клітинами</h3>
@@ -201,7 +203,7 @@
       </div>
       <div class="apple-clinic-card apple-reveal">
         <div class="apple-clinic-card__image">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#7055a4" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#7055a4" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
         </div>
         <div class="apple-clinic-card__body">
           <h3>Відділення персоніфікованої інфузійної терапії</h3>
@@ -212,9 +214,9 @@
   </section>
 
   <!-- ===== HISTORY ===== -->
-  <section class="iprm-section apple-section-gray">
+  <section class="iprm-section apple-section-gray" aria-labelledby="history-title">
     <div class="apple-about apple-reveal">
-      <h2>Історія створення</h2>
+      <h2 id="history-title">Історія створення</h2>
       <p>Інститут плазмотерапії засновано у 2015 році групою лікарів-дослідників, які понад 10 років вивчали природні механізми відновлення організму. Їхня мета — зробити передові біотехнології доступними для кожного, хто прагне не просто лікування, а реального відновлення.</p>
       <p>Починалось все з невеличкої лабораторії в Києві, де проводились перші клінічні дослідження плазмотерапії у відновленні після травм та у дерматології. Успішні результати надихнули команду розширити діяльність — додати напрям біорегуляційної медицини, а згодом і власну навчальну програму для лікарів.</p>
       <p>Сьогодні Інститут об'єднує фахівців з епігенетики, фізіології, біохімії, імунології та біоінформатики. Тут проводяться:</p>
@@ -228,7 +230,7 @@
   </section>
 
   <!-- ===== CTA ===== -->
-  <section class="iprm-section">
+  <section class="iprm-section" aria-label="Call to action">
     <div class="apple-cta apple-reveal">
       <h2>Почни навчання<br><span class="apple-gradient-text">сьогодні.</span></h2>
       <p>Обери курс післядипломної освіти та отримай сертифікат з балами БПР від Інституту плазмотерапії та регенеративної медицини.</p>

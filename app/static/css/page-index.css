@@ -1,7 +1,15 @@
-/* page-index.css -- Стилі головної сторінки (доповнення до apple-pages.css) */
-/* Спільні Apple-стилі (кнопки, картки, reveal) визначені глобально */
+/* page-index.css -- Apple-style landing page (concept v2) */
+/* Shared Apple styles (buttons, cards, reveal) defined in apple-pages.css */
 
-/* ========== HERO -- fullscreen (головна: 100vh замість 50vh) ========== */
+/* ========== APPLE EASING CURVES ========== */
+
+:root {
+  --ease-reveal: cubic-bezier(0.28, 0.11, 0.32, 1);
+  --ease-interact: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-spring: cubic-bezier(0.32, 0.08, 0.24, 1);
+}
+
+/* ========== HERO -- fullscreen (landing: 100vh) ========== */
 
 .page-index .iprm-hero {
   min-height: 100vh;
@@ -35,21 +43,21 @@
   font-size: clamp(2.5rem, 7vw, 4.5rem);
   font-weight: 800;
   letter-spacing: -0.04em;
-  line-height: 1.08;
+  line-height: 1.05;
   max-width: 900px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   opacity: 0;
   transform: translateY(30px);
-  animation: appleHeroFadeUp 0.8s ease 0.15s forwards;
+  animation: appleHeroFadeUp 0.8s var(--ease-reveal) 0.15s forwards;
 }
 
 .page-index .iprm-hero__subtitle {
-  font-size: clamp(1.0625rem, 2.5vw, 1.3125rem);
+  font-size: 17px;
   max-width: 640px;
   margin-bottom: 40px;
   opacity: 0;
   transform: translateY(30px);
-  animation: appleHeroFadeUp 0.8s ease 0.3s forwards;
+  animation: appleHeroFadeUp 0.8s var(--ease-reveal) 0.3s forwards;
 }
 
 /* Hero badge */
@@ -59,12 +67,12 @@
   font-weight: 500;
   color: #7055a4;
   background: #ede9f6;
-  padding: 6px 16px;
+  padding: 8px 20px;
   border-radius: 980px;
   margin-bottom: 24px;
   opacity: 0;
   transform: translateY(20px);
-  animation: appleHeroFadeUp 0.8s ease forwards;
+  animation: appleHeroFadeUp 0.8s var(--ease-reveal) forwards;
 }
 
 /* Hero actions */
@@ -73,7 +81,7 @@
   gap: 16px;
   opacity: 0;
   transform: translateY(30px);
-  animation: appleHeroFadeUp 0.8s ease 0.45s forwards;
+  animation: appleHeroFadeUp 0.8s var(--ease-reveal) 0.45s forwards;
 }
 
 /* Gradient text */
@@ -91,15 +99,27 @@
   }
 }
 
-/* ========== SECTIONS -- збільшений padding для головної ========== */
+/* ========== SECTIONS ========== */
 
 .page-index .iprm-section {
   padding: 120px 24px;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
 }
 
 .page-index .apple-section-dark {
-  background: #1a1a2e;
+  background: linear-gradient(180deg, #1d1d1f 0%, #2d2d2f 40%, #1a1a2e 100%);
   color: #fff;
+  position: relative;
+}
+
+/* Subtle radial glow on dark section */
+.page-index .apple-section-dark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(112, 85, 164, 0.12) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 /* Section header -- centered */
@@ -113,7 +133,7 @@
   font-size: clamp(2rem, 5vw, 3.25rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  line-height: 1.1;
+  line-height: 1.07;
   color: #1d1d1f;
 }
 
@@ -122,7 +142,7 @@
 }
 
 .page-index .apple-section-header p {
-  font-size: 1.125rem;
+  font-size: 17px;
   color: #86868b;
   margin-top: 16px;
   line-height: 1.5;
@@ -132,7 +152,7 @@
   color: #d2d2d7;
 }
 
-/* ========== FEATURES GRID -- 2-col з featured (унікально для головної) ========== */
+/* ========== FEATURES GRID -- 2-col with featured ========== */
 
 .page-index .apple-features-grid {
   grid-template-columns: repeat(2, 1fr);
@@ -140,6 +160,19 @@
 
 .page-index .apple-feature-card {
   padding: 48px 36px;
+  transition:
+    transform 0.3s var(--ease-interact),
+    box-shadow 0.3s var(--ease-interact);
+}
+
+.page-index .apple-feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(112, 85, 164, 0.1);
+}
+
+.page-index .apple-feature-card:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(112, 85, 164, 0.08);
 }
 
 .page-index .apple-feature-card--featured {
@@ -159,13 +192,14 @@
 
 .page-index .apple-feature-card h3 {
   font-size: 1.5rem;
+  letter-spacing: -0.025em;
 }
 
 .page-index .apple-feature-card--featured p {
   color: #d2d2d7;
 }
 
-/* ========== STATS ROW (унікально для головної) ========== */
+/* ========== STATS ROW ========== */
 
 .page-index .apple-stats-row {
   max-width: 1000px;
@@ -174,6 +208,7 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 48px;
   text-align: center;
+  position: relative;
 }
 
 .page-index .apple-stat h3 {
@@ -188,17 +223,35 @@
 
 .page-index .apple-stat p {
   font-size: 0.9375rem;
+  font-weight: 300;
   color: #d2d2d7;
   margin-top: 8px;
+  letter-spacing: 0.01em;
 }
 
-/* ========== COURSE CARDS -- apple-course-body (унікально для головної) ========== */
+/* ========== COURSE CARDS ========== */
+
+.page-index .iprm-course-card {
+  transition:
+    transform 0.3s var(--ease-interact),
+    box-shadow 0.3s var(--ease-interact);
+}
+
+.page-index .iprm-course-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(112, 85, 164, 0.12);
+}
+
+.page-index .iprm-course-card:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(112, 85, 164, 0.08);
+}
 
 .page-index .apple-course-body {
   padding: 24px;
 }
 
-/* ========== BENTO GRID (унікально для головної) ========== */
+/* ========== BENTO GRID ========== */
 
 .page-index .apple-bento-grid {
   max-width: 1200px;
@@ -218,7 +271,7 @@
   min-height: 320px;
   position: relative;
   overflow: hidden;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s var(--ease-interact);
 }
 
 .page-index .apple-bento-card:hover {
@@ -296,19 +349,24 @@
   line-height: 1.5;
 }
 
-/* ========== CLINIC GRID -- розташування останньої картки (головна) ========== */
+/* ========== ABOUT TEXT ========== */
 
 .page-index .apple-about h2 {
   font-size: clamp(2rem, 5vw, 3.25rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  line-height: 1.1;
+  line-height: 1.07;
   text-align: center;
   margin-bottom: 48px;
   color: #1d1d1f;
 }
 
-/* ========== CTA SECTION (унікально для головної) ========== */
+.page-index .apple-about p {
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+/* ========== CTA SECTION ========== */
 
 .page-index .apple-cta {
   text-align: center;
@@ -320,12 +378,12 @@
   font-size: clamp(2.5rem, 6vw, 4rem);
   font-weight: 800;
   letter-spacing: -0.04em;
-  line-height: 1.1;
+  line-height: 1.05;
   color: #1d1d1f;
 }
 
 .page-index .apple-cta p {
-  font-size: 1.125rem;
+  font-size: 17px;
   color: #86868b;
   margin-top: 16px;
   line-height: 1.5;
@@ -338,23 +396,77 @@
   margin-top: 40px;
 }
 
-/* ========== SCROLL REVEAL -- головна використовує більшу амплітуду ========== */
+/* ========== SCROLL REVEAL ========== */
 
 .page-index .apple-reveal {
   transform: translateY(40px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
+  transition: opacity 0.8s var(--ease-reveal), transform 0.8s var(--ease-reveal);
+}
+
+/* ========== BUTTON STATES (Apple 3-state pattern) ========== */
+
+.page-index .apple-btn--primary {
+  transition:
+    transform 0.15s var(--ease-interact),
+    box-shadow 0.15s var(--ease-interact),
+    background-color 0.15s ease;
+}
+
+.page-index .apple-btn--primary:hover {
+  transform: scale(1.02) translateY(-1px);
+  box-shadow: 0 8px 24px rgba(112, 85, 164, 0.25);
+}
+
+.page-index .apple-btn--primary:active {
+  transform: scale(0.98) translateY(0);
+  box-shadow: 0 2px 8px rgba(112, 85, 164, 0.15);
 }
 
 /* ========== FOCUS & SELECTION ========== */
 
 .page-index *:focus-visible {
   outline: 2px solid #7055a4;
-  outline-offset: 2px;
+  outline-offset: 3px;
+}
+
+.page-index .apple-btn:focus-visible {
+  outline-offset: 4px;
 }
 
 .page-index ::selection {
   background: #ede9f6;
   color: #1d1d1f;
+}
+
+/* ========== ACCESSIBILITY ========== */
+
+@media (prefers-reduced-transparency: reduce) {
+  .page-index .apple-section-dark::before {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-index .apple-reveal {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .page-index .iprm-hero__badge,
+  .page-index .iprm-hero__title,
+  .page-index .iprm-hero__subtitle,
+  .page-index .iprm-hero__actions {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .page-index .apple-feature-card,
+  .page-index .apple-bento-card,
+  .page-index .iprm-course-card {
+    transition: none;
+  }
 }
 
 /* ========== RESPONSIVE ========== */
@@ -398,7 +510,7 @@
   }
 
   .page-index .iprm-hero__content {
-    padding: 100px 16px 60px;
+    padding: 96px 16px 64px;
   }
 
   .page-index .iprm-hero__title {
@@ -456,22 +568,5 @@
   .page-index .apple-cta__actions {
     flex-direction: column;
     align-items: center;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .page-index .apple-reveal {
-    transition: none;
-    opacity: 1;
-    transform: none;
-  }
-
-  .page-index .iprm-hero__badge,
-  .page-index .iprm-hero__title,
-  .page-index .iprm-hero__subtitle,
-  .page-index .iprm-hero__actions {
-    animation: none;
-    opacity: 1;
-    transform: none;
   }
 }
