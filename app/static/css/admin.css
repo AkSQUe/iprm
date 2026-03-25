@@ -234,6 +234,32 @@
   color: var(--iprm-error-text);
 }
 
+.badge--pending {
+  background: var(--iprm-badge-draft-bg);
+  color: var(--iprm-badge-draft-text);
+}
+
+.badge--confirmed {
+  background: var(--iprm-badge-active-bg);
+  color: var(--iprm-badge-active-text);
+}
+
+/* ========== FILTER FORM ========== */
+
+.admin-filter-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-filter-form .form-input {
+  width: auto;
+  min-width: 160px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
 /* ========== EMPTY STATE ========== */
 
 .admin-empty {

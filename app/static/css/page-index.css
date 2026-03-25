@@ -153,6 +153,10 @@
   color: #c4b5fd;
 }
 
+.page-index .apple-feature-card--featured h3 {
+  color: #fff;
+}
+
 .page-index .apple-feature-card h3 {
   font-size: 1.5rem;
 }

@@ -105,46 +105,6 @@ a {
   color: inherit;
 }
 
-/* ========== TOGGLE (базовий компонент для theme/molecules) ========== */
-
-.iprm-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 10px;
-  font-size: 11px;
-  font-weight: 500;
-  font-family: var(--iprm-font);
-  color: var(--iprm-text-light);
-  background: var(--iprm-card-bg);
-  border: 1px solid var(--iprm-border);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all var(--iprm-transition);
-}
-
-.iprm-toggle:hover {
-  border-color: var(--iprm-accent);
-  color: var(--iprm-accent);
-}
-
-.iprm-toggle__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  transition: background var(--iprm-transition);
-}
-
-/* Варіант: тема (accent dot) */
-.theme-toggle .iprm-toggle__dot {
-  background: var(--iprm-accent);
-}
-
-/* Варіант: молекули (neutral dot) */
-.molecules-toggle .iprm-toggle__dot {
-  background: rgb(var(--iprm-molecular-rgb));
-}
-
 /* ========== HEADER (Apple-style) ========== */
 
 .iprm-header {
@@ -409,10 +369,6 @@ a {
   overflow: hidden;
 }
 
-.iprm-hero--tall {
-  height: 480px;
-}
-
 .iprm-hero__bg {
   position: absolute;
   inset: 0;
@@ -650,153 +606,6 @@ a {
   margin-top: 18px;
 }
 
-/* ========== CARDS GRID (3 columns) ========== */
-
-.iprm-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-}
-
-.iprm-card {
-  text-align: center;
-  background: var(--iprm-card-bg);
-  border: 1px solid var(--iprm-card-bg);
-  border-radius: var(--iprm-radius);
-  padding: 24px;
-}
-
-.iprm-card--left {
-  text-align: left;
-}
-
-.iprm-card--left .iprm-card__icon {
-  margin-left: 0;
-  margin-right: auto;
-}
-
-.iprm-card__icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 16px;
-  border-radius: var(--iprm-radius-sm);
-  background: var(--iprm-accent-light);
-  border: 2px dashed var(--iprm-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--iprm-accent);
-  font-size: 12px;
-}
-
-.iprm-card__text {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--iprm-text);
-}
-
-/* ========== PHOTO CARDS (clinic) ========== */
-
-.iprm-photo-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-}
-
-.iprm-photo-card {
-  background: var(--iprm-card-bg);
-  border: 1px solid var(--iprm-card-bg);
-  border-radius: var(--iprm-radius);
-  overflow: hidden;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-}
-
-.iprm-photo-card__image {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  background: var(--iprm-placeholder-grad);
-  border: 2px dashed var(--iprm-border);
-  border-radius: var(--iprm-radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--iprm-text-light);
-  font-size: 13px;
-}
-
-.iprm-photo-card__body {
-  padding: 16px 0 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.iprm-photo-card__body .iprm-btn {
-  margin-top: auto;
-}
-
-.iprm-photo-card__title {
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--iprm-text);
-  margin-bottom: 12px;
-}
-
-/* ========== HISTORY ========== */
-
-.iprm-history__text {
-  font-size: 15px;
-  line-height: 1.75;
-  color: var(--iprm-text);
-  max-width: 900px;
-}
-
-.iprm-history__text p {
-  margin-bottom: 16px;
-}
-
-.iprm-history__list {
-  list-style: disc;
-  padding-left: 24px;
-  margin-top: 16px;
-}
-
-.iprm-history__list li {
-  margin-bottom: 6px;
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--iprm-text);
-}
-
-/* ========== TARGET GRID ========== */
-
-.iprm-target-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.iprm-target-card {
-  background: var(--iprm-card-bg);
-  border: 1px solid var(--iprm-card-bg);
-  border-radius: var(--iprm-radius);
-  padding: 20px 24px;
-}
-
-.iprm-target-card--full {
-  grid-column: 1 / -1;
-}
-
-.iprm-target-card p {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--iprm-text);
-}
-
 /* ========== TRAINER ========== */
 
 .iprm-trainer {
@@ -846,50 +655,6 @@ a {
   line-height: 1.6;
   color: var(--iprm-text);
   margin-bottom: 16px;
-}
-
-/* ========== PROGRAM ========== */
-
-.iprm-program {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.iprm-program__block {
-  background: var(--iprm-card-bg);
-  border: 1px solid var(--iprm-card-bg);
-  border-radius: var(--iprm-radius);
-  padding: 24px;
-}
-
-.iprm-program__heading {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--iprm-dark);
-  margin-bottom: 12px;
-}
-
-.iprm-program__list {
-  list-style: none;
-  padding: 0;
-}
-
-.iprm-program__list li {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--iprm-text);
-  padding: 4px 0;
-  padding-left: 16px;
-  position: relative;
-}
-
-.iprm-program__list li::before {
-  content: '\00B7';
-  position: absolute;
-  left: 0;
-  font-weight: 700;
-  font-size: 18px;
 }
 
 /* ========== FOOTER (Apple-style) ========== */
@@ -1054,84 +819,6 @@ a {
 
 .iprm-empty-state--full {
   grid-column: 1 / -1;
-}
-
-/* ========== COURSES GRID (masonry 2-col) ========== */
-
-.iprm-courses {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 2fr 1fr auto;
-  gap: 12px;
-}
-
-.iprm-courses__item {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  background: var(--iprm-card-bg);
-  border: 1px solid var(--iprm-card-bg);
-  border-radius: var(--iprm-radius);
-  padding: 12px 16px;
-}
-
-.iprm-courses__item--col {
-  flex-direction: column;
-}
-
-.iprm-courses__item--col .iprm-courses__icon {
-  width: 144px;
-  height: 144px;
-}
-
-.iprm-courses__item--tall {
-  grid-row: 1 / 3;
-}
-
-.iprm-courses__item--icon-abs {
-  position: relative;
-}
-
-.iprm-courses__item--icon-abs .iprm-courses__icon {
-  position: absolute;
-  bottom: 12px;
-  right: 16px;
-}
-
-.iprm-courses__item--full {
-  grid-column: 1 / -1;
-}
-
-.iprm-courses__icon--sm {
-  width: 32px;
-  height: 32px;
-}
-
-.iprm-courses__icon {
-  flex-shrink: 0;
-  width: 96px;
-  height: 96px;
-  border-radius: var(--iprm-radius-sm);
-  background: var(--iprm-accent-light);
-  border: 2px dashed var(--iprm-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--iprm-accent);
-  font-size: 12px;
-}
-
-.iprm-courses__text {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--iprm-text);
-}
-
-.iprm-courses__text strong {
-  display: block;
-  font-size: 15px;
-  margin-bottom: 4px;
-  color: var(--iprm-dark);
 }
 
 /* ========== COURSE CARDS ========== */
@@ -1375,15 +1062,6 @@ a {
     gap: 12px;
   }
 
-  .iprm-courses {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-  }
-
-  .iprm-courses__item--tall {
-    grid-row: auto;
-  }
-
   .iprm-course-cards {
     grid-template-columns: 1fr;
     gap: 24px;
@@ -1435,10 +1113,6 @@ a {
     min-height: 320px;
   }
 
-  .iprm-hero--tall {
-    height: auto;
-  }
-
   .iprm-hero__content {
     padding: 48px 20px 60px;
   }
@@ -1462,20 +1136,6 @@ a {
 
   .iprm-section__title {
     font-size: 20px;
-  }
-
-  .iprm-cards {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-
-  .iprm-photo-cards {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-
-  .iprm-target-grid {
-    grid-template-columns: 1fr;
   }
 
   .form-section__grid {
@@ -1563,20 +1223,6 @@ a {
     font-size: 18px;
   }
 
-  .iprm-card {
-    padding: 16px;
-  }
-
-  .iprm-card__icon {
-    width: 60px;
-    height: 60px;
-  }
-
-  .iprm-courses__icon {
-    width: 60px;
-    height: 60px;
-  }
-
   .iprm-course-card {
     padding: 12px;
   }
@@ -1588,14 +1234,6 @@ a {
   .iprm-tag {
     padding: 3px 10px;
     font-size: 11px;
-  }
-
-  .iprm-target-card {
-    padding: 16px;
-  }
-
-  .iprm-program__block {
-    padding: 16px;
   }
 
   .form-section {

@@ -199,27 +199,6 @@
   color: var(--iprm-accent);
 }
 
-/* Success page */
-.auth-success {
-  text-align: center;
-}
-
-.auth-success__icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.auth-success__message {
-  font-size: 1.125rem;
-  color: var(--iprm-text);
-  margin-bottom: 0.5rem;
-}
-
-.auth-success__user {
-  color: var(--iprm-text-light);
-  margin-bottom: 2rem;
-}
-
 .btn-auth--outline {
   background: transparent;
   color: var(--iprm-accent);

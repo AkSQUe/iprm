@@ -140,10 +140,6 @@
   margin-bottom: 24px;
 }
 
-.ds-spacer {
-  margin-bottom: 48px;
-}
-
 /* ========== COLOR SWATCHES ========== */
 
 .ds-swatches {
@@ -209,14 +205,6 @@
   color: #86868b;
   margin-top: 2px;
   font-family: 'SF Mono', 'Fira Code', monospace;
-}
-
-/* ========== DARK DEMO ========== */
-
-.ds-dark-demo {
-  background: #1a1a2e;
-  padding: 24px;
-  border-radius: 20px;
 }
 
 /* ========== GRADIENT DEMO ========== */

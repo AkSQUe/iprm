@@ -147,10 +147,7 @@
   margin-bottom: 16px;
 }
 
-.reg-liqpay-payment__btn {
-  font-size: 16px;
-  padding: 10px 32px;
-}
+/* .reg-liqpay-payment__btn -- стилі від .apple-btn */
 
 .reg-liqpay-payment__note {
   font-size: 12px;
@@ -224,8 +221,6 @@
   }
 
   .reg-liqpay-payment__btn {
-    padding: 10px 24px;
-    font-size: 15px;
     width: 100%;
     justify-content: center;
   }
