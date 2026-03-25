@@ -81,6 +81,7 @@ def trainer_edit(trainer_id):
 
         try:
             db.session.commit()
+            audit_logger.info('Admin %s updated trainer %s (%s)', current_user.email, trainer_id, trainer.full_name)
             flash('Тренера оновлено', 'success')
             return redirect(url_for('admin.dashboard'))
         except Exception:
@@ -96,9 +97,11 @@ def trainer_edit(trainer_id):
 def trainer_delete(trainer_id):
     trainer = db.session.get(Trainer, trainer_id)
     if trainer:
+        name = trainer.full_name
         db.session.delete(trainer)
         try:
             db.session.commit()
+            audit_logger.info('Admin %s deleted trainer %s (%s)', current_user.email, trainer_id, name)
             flash('Тренера видалено', 'success')
         except Exception:
             logger.exception('Failed to delete trainer %d', trainer_id)
