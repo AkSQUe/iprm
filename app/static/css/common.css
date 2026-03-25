@@ -137,12 +137,20 @@ a {
 }
 
 .iprm-header__logo {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #7055a4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1d1d1f;
   text-decoration: none;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   flex-shrink: 0;
+}
+
+.iprm-header__logo-icon {
+  height: 28px;
+  width: auto;
 }
 
 .iprm-header__nav {
