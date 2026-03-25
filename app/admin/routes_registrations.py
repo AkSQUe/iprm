@@ -51,10 +51,22 @@ def registration_status(reg_id):
 
     new_status = request.form.get('status')
     if new_status in dict(EventRegistration.STATUSES):
+        old_status = reg.status
         reg.status = new_status
         try:
             db.session.commit()
+            audit_logger.info(
+                'Admin %s changed reg %d status: %s -> %s',
+                current_user.email, reg_id, old_status, new_status,
+            )
             flash(f'Статус змінено на "{reg.status_label}"', 'success')
+
+            try:
+                from app.services.email_service import EmailService
+                EmailService.send_status_change(reg, old_status, new_status)
+            except Exception:
+                logger.exception('Failed to queue status change email for reg %d', reg_id)
+
         except Exception:
             logger.exception('Failed to update registration %d status', reg_id)
             db.session.rollback()
