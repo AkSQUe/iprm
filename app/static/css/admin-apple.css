@@ -245,6 +245,14 @@
     box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
+.admin-integration-card .admin-table {
+  margin-top: 12px;
+}
+
+.admin-integration-card .admin-form--compact {
+  margin-top: 16px;
+}
+
 .admin-integration-card--link:hover {
   border-color: var(--iprm-nav-active);
   box-shadow: 0 4px 16px rgba(var(--apple-accent-rgb), 0.08);

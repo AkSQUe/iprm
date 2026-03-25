@@ -18,25 +18,19 @@
       <h1 class="admin-hero__title">Лог сповіщень</h1>
       <p class="admin-hero__subtitle">Історія всіх email-відправок</p>
     </div>
-    <a href="{{ url_for('admin.notifications') }}" class="btn-admin btn-admin--secondary">
-      <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Назад
-    </a>
+    <a href="{{ url_for('admin.notifications') }}" class="btn-admin btn-admin--secondary">Назад</a>
   </div>
 
   <!-- Filters -->
-  <form method="GET" class="admin-form__grid admin-form__grid--spaced">
-    <div class="form-group">
-      <label>Статус</label>
-      <select name="status" class="form-input" onchange="this.form.submit()">
+  <div class="admin-stats-bar">
+    <form method="GET" action="{{ url_for('admin.notifications_log') }}" class="admin-filter-form">
+      <select name="status" class="form-input form-input--sm">
         <option value="">Всі статуси</option>
         <option value="sent"{% if filters.status == 'sent' %} selected{% endif %}>Відправлено</option>
         <option value="failed"{% if filters.status == 'failed' %} selected{% endif %}>Помилка</option>
         <option value="pending"{% if filters.status == 'pending' %} selected{% endif %}>Очікує</option>
       </select>
-    </div>
-    <div class="form-group">
-      <label>Тригер</label>
-      <select name="trigger" class="form-input" onchange="this.form.submit()">
+      <select name="trigger" class="form-input form-input--sm">
         <option value="">Всі тригери</option>
         <option value="registration"{% if filters.trigger == 'registration' %} selected{% endif %}>Реєстрація</option>
         <option value="payment"{% if filters.trigger == 'payment' %} selected{% endif %}>Оплата</option>
@@ -44,8 +38,12 @@
         <option value="status_change"{% if filters.trigger == 'status_change' %} selected{% endif %}>Зміна статусу</option>
         <option value="test"{% if filters.trigger == 'test' %} selected{% endif %}>Тест</option>
       </select>
-    </div>
-  </form>
+      <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Фільтрувати</button>
+      {% if filters.status or filters.trigger %}
+        <a href="{{ url_for('admin.notifications_log') }}" class="btn-admin btn-admin--sm">Скинути</a>
+      {% endif %}
+    </form>
+  </div>
 
   <!-- Log table -->
   {% if logs %}
@@ -53,37 +51,31 @@
     <table class="admin-table">
       <thead>
         <tr>
-          <th>#</th>
           <th>Кому</th>
           <th>Тема</th>
           <th>Шаблон</th>
           <th>Тригер</th>
           <th>Статус</th>
-          <th>Помилка</th>
-          <th>Створено</th>
-          <th>Відправлено</th>
+          <th>Дата</th>
         </tr>
       </thead>
       <tbody>
         {% for log in logs %}
         <tr>
-          <td>{{ log.id }}</td>
           <td>{{ log.to_email }}</td>
-          <td>{{ log.subject[:40] }}{% if log.subject|length > 40 %}...{% endif %}</td>
+          <td>{{ log.subject[:50] }}{% if log.subject|length > 50 %}...{% endif %}</td>
           <td><code>{{ log.template_name }}</code></td>
           <td><span class="badge">{{ log.trigger_label }}</span></td>
           <td>
             {% if log.status == 'sent' %}
             <span class="badge badge--success">{{ log.status_label }}</span>
             {% elif log.status == 'failed' %}
-            <span class="badge badge--danger">{{ log.status_label }}</span>
+            <span class="badge badge--danger" title="{{ log.error_message or '' }}">{{ log.status_label }}</span>
             {% else %}
             <span class="badge badge--warning">{{ log.status_label }}</span>
             {% endif %}
           </td>
-          <td>{{ (log.error_message or '')[:30] }}{% if log.error_message and log.error_message|length > 30 %}...{% endif %}</td>
-          <td>{{ log.created_at.strftime('%d.%m.%Y %H:%M') if log.created_at else '' }}</td>
-          <td>{{ log.sent_at.strftime('%d.%m.%Y %H:%M') if log.sent_at else '' }}</td>
+          <td>{{ (log.sent_at or log.created_at).strftime('%d.%m.%Y %H:%M') if (log.sent_at or log.created_at) else '' }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -107,7 +99,8 @@
 
   {% else %}
   <div class="admin-empty">
-    <p>Немає записів{% if filters.status or filters.trigger %} за обраними фільтрами{% endif %}</p>
+    <h3 class="admin-empty__title">Записів не знайдено</h3>
+    <p>Немає записів{% if filters.status or filters.trigger %} за обраними фільтрами. <a href="{{ url_for('admin.notifications_log') }}">Скинути фільтри</a>{% endif %}</p>
   </div>
   {% endif %}
 
