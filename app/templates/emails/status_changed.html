@@ -1,60 +1,48 @@
 {% extends "emails/base.html" %}
-{% from "emails/_macros.html" import icon, cta_button %}
+{% from "emails/_macros.html" import button_primary, badge, spacer %}
+
 {% block title %}Статус реєстрації змінено{% endblock %}
-{% block preheader %}
-<div style="display:none;font-size:1px;color:#f5f5f7;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
-  Статус реєстрації на {{ event.title }}: {{ new_status_label }}
-</div>
-{% endblock %}
+
+{% block preview_text %}Статус реєстрації на {{ event.title }}: {{ new_status_label }}{% endblock %}
+
 {% block content %}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-  <tr>
-    <td align="center" style="padding:0 0 24px;">
-      {{ icon("&#8635;", "#7055a4") }}
-    </td>
-  </tr>
-  <tr>
-    <td align="center" style="padding:0 0 12px;">
-      <h1 class="email-h1" style="margin:0; font-size:28px; font-weight:800; letter-spacing:-0.03em; color:#1d1d1f; line-height:1.15;">
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
         Статус реєстрації змінено
-      </h1>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" style="padding:0 0 32px;">
-      <p class="email-subtitle" style="margin:0; color:#86868b; font-size:17px; line-height:1.5;">
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
         {{ user.first_name or 'Шановний учаснику' }}, статус вашої реєстрації оновлено.
-      </p>
-    </td>
-  </tr>
-  <tr>
-    <td style="padding:0 0 32px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f5f5f7" style="border-radius:16px;">
+    </p>
+
+    <!-- Course details -->
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
+        Деталі
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td style="padding:24px;">
-            <p style="margin:0 0 4px; font-size:13px; color:#86868b; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;">Курс</p>
-            <p style="margin:0 0 20px; font-size:20px; font-weight:700; color:#1d1d1f; letter-spacing:-0.02em;">{{ event.title }}</p>
-            <p style="margin:0 0 8px; font-size:13px; color:#86868b; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;">Новий статус</p>
-            <table role="presentation" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="padding:6px 16px; border-radius:980px; font-size:14px; font-weight:600;
-                  {% if new_status == 'confirmed' %}background-color:#dcfce7; color:#15803d;
-                  {% elif new_status == 'cancelled' %}background-color:#fef2f2; color:#dc2626;
-                  {% elif new_status == 'completed' %}background-color:#ede9f6; color:#5d4691;
-                  {% else %}background-color:#f5f5f7; color:#86868b;{% endif %}">
-                  {{ new_status_label }}
-                </td>
-              </tr>
-            </table>
-          </td>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">{{ event.title }}</p>
+
+                <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">Новий статус</p>
+                {% if new_status == 'confirmed' %}
+                {{ badge(new_status_label, 'success') }}
+                {% elif new_status == 'cancelled' %}
+                {{ badge(new_status_label, 'error') }}
+                {% elif new_status == 'completed' %}
+                {{ badge(new_status_label, 'primary') }}
+                {% else %}
+                {{ badge(new_status_label, 'warning') }}
+                {% endif %}
+            </td>
         </tr>
-      </table>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      {{ cta_button("https://iprm.space", "Перейти на сайт") }}
-    </td>
-  </tr>
-</table>
+    </table>
+
+    {{ button_primary("Перейти на сайт", "https://iprm.space") }}
+
+    {{ spacer(16) }}
+
+    <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
+        Якщо у вас виникнуть запитання, зверніться до нас через сторінку контактів.
+    </p>
 {% endblock %}
