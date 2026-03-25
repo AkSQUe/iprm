@@ -274,197 +274,6 @@
   color: var(--iprm-nav-active);
 }
 
-.btn-auth--outline {
-  background: transparent;
-  color: var(--iprm-nav-active);
-  border: 2px solid var(--iprm-nav-active);
-}
-
-.btn-auth--outline:hover {
-  background: var(--iprm-accent-light);
-  box-shadow: none;
-  transform: none;
-}
-
-.btn-auth--outline:active {
-  transform: scale(0.98);
-}
-
-.form-logout {
-  display: inline;
-}
-
-/* Account page -- sections now use .iprm-section from apple-pages.css */
-/* account-section__title replaced by iprm-section__title */
-
-/* Account courses */
-.account-courses {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 48px;
-}
-
-.account-course {
-  display: flex;
-  gap: 16px;
-  background: var(--iprm-white);
-  border-radius: 20px;
-  overflow: hidden;
-  text-decoration: none;
-  color: inherit;
-  transition:
-    box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.account-course:hover {
-  box-shadow: 0 8px 32px rgba(var(--apple-accent-rgb), 0.1);
-  transform: translateY(-2px);
-}
-
-.account-course:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 12px rgba(var(--apple-accent-rgb), 0.08);
-}
-
-.account-course__image {
-  flex-shrink: 0;
-  width: 180px;
-  min-height: 120px;
-  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--apple-orange-light) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.account-course__image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.account-course__body {
-  flex: 1;
-  padding: 16px 16px 16px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
-
-.account-course__meta {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.account-course__status,
-.account-course__payment {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 3px 10px;
-  border-radius: 980px;
-  background: var(--apple-gray-light);
-  color: var(--apple-gray-dark);
-}
-
-.account-course__status--pending { background: var(--iprm-warning-bg); color: var(--iprm-warning-text); }
-.account-course__status--confirmed { background: var(--iprm-badge-active-bg); color: var(--iprm-badge-active-text); }
-.account-course__status--completed { background: var(--iprm-badge-completed-bg); color: var(--iprm-badge-completed-text); }
-
-.account-course__payment--unpaid { background: var(--iprm-error-bg); color: var(--iprm-error-text); }
-.account-course__payment--pending { background: var(--iprm-warning-bg); color: var(--iprm-warning-text); }
-.account-course__payment--paid { background: var(--iprm-badge-active-bg); color: var(--iprm-badge-active-text); }
-.account-course__payment--refunded { background: var(--iprm-badge-draft-bg); color: var(--iprm-badge-draft-text); }
-
-.account-course__title {
-  font-size: 1.0625rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--apple-black);
-  line-height: 1.35;
-}
-
-.account-course__details {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  font-size: 0.8125rem;
-  color: var(--apple-gray);
-}
-
-.account-course__details span {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* Елементи деталей курсу (дата, формат) -- базові стилі через .account-course__details span */
-
-.account-course__cpd {
-  font-weight: 600;
-  color: var(--iprm-nav-active);
-}
-
-.account-course__awarded {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--iprm-nav-active);
-}
-
-.account-empty {
-  text-align: center;
-  padding: 64px 24px;
-  background: var(--apple-section-bg);
-  border-radius: 24px;
-  margin-bottom: 48px;
-}
-
-.account-empty__text {
-  font-size: 17px;
-  color: var(--apple-gray);
-  margin-bottom: 24px;
-}
-
-.account-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
-}
-
-.account-card {
-  background: var(--iprm-white);
-  border-radius: 20px;
-  padding: 32px;
-  transition: box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.account-card:hover {
-  box-shadow: 0 8px 32px rgba(var(--apple-accent-rgb), 0.08);
-}
-
-.account-card__title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--apple-black);
-  margin-bottom: 8px;
-}
-
-.account-card__text {
-  font-size: 0.9375rem;
-  color: var(--apple-gray);
-}
-
-.account-actions {
-  text-align: center;
-  padding-top: 16px;
-}
-
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
@@ -476,19 +285,6 @@
   .auth-card__row {
     grid-template-columns: 1fr;
     gap: 0;
-  }
-
-  .account-course {
-    flex-direction: column;
-  }
-
-  .account-course__image {
-    width: 100%;
-    height: 160px;
-  }
-
-  .account-course__body {
-    padding: 16px;
   }
 }
 
@@ -505,10 +301,6 @@
   .auth-card__title {
     font-size: 1.25rem;
   }
-
-  .account-card {
-    padding: 24px;
-  }
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -519,9 +311,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn-auth,
-  .account-course,
-  .account-card {
+  .btn-auth {
     transition: none;
   }
 }
