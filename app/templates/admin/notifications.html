@@ -18,7 +18,10 @@
       <h1 class="admin-hero__title">Сповіщення</h1>
       <p class="admin-hero__subtitle">Email-розсилки та нагадування</p>
     </div>
-    <a href="{{ url_for('admin.notifications_log') }}" class="btn-admin btn-admin--secondary">Повний лог</a>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <a href="{{ url_for('admin.notifications_templates') }}" class="btn-admin btn-admin--secondary">Шаблони</a>
+      <a href="{{ url_for('admin.notifications_log') }}" class="btn-admin btn-admin--secondary">Повний лог</a>
+    </div>
   </div>
 
   {% include 'partials/flash_messages.html' %}

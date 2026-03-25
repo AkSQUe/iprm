@@ -132,6 +132,91 @@ def notifications_test():
     return redirect(url_for('admin.notifications'))
 
 
+@admin_bp.route('/notifications/templates')
+@admin_required
+def notifications_templates():
+    """Preview all email templates with mock data."""
+    from datetime import datetime, timezone
+
+    class MockUser:
+        first_name = 'Олена'
+        last_name = 'Шевченко'
+        email = 'olena@example.com'
+
+    class MockEvent:
+        title = 'PRP-терапія: сучасні протоколи'
+        start_date = datetime(2026, 4, 15, 10, 0, tzinfo=timezone.utc)
+        location = 'Київ, вул. Хрещатик 1, клініка IPRM'
+        price = 12500
+        online_link = 'https://zoom.us/j/example'
+
+    class MockRegistration:
+        id = 1
+        payment_status = 'unpaid'
+        payment_amount = 12500
+        STATUSES = [
+            ('pending', 'Очікує'),
+            ('confirmed', 'Підтверджено'),
+            ('cancelled', 'Скасовано'),
+            ('completed', 'Завершено'),
+        ]
+
+    user = MockUser()
+    event = MockEvent()
+    reg = MockRegistration()
+
+    templates = [
+        {
+            'key': 'test',
+            'label': 'Тестовий лист',
+            'template_name': 'test.html',
+            'trigger': 'test',
+            'subject': 'IPRM: Тестовий лист',
+            'html': render_template('emails/test.html', to_email='admin@iprm.space'),
+        },
+        {
+            'key': 'registration',
+            'label': 'Реєстрація',
+            'template_name': 'registration_confirmed.html',
+            'trigger': 'registration',
+            'subject': f'Реєстрацію підтверджено: {event.title}',
+            'html': render_template('emails/registration_confirmed.html',
+                                    user=user, event=event, registration=reg),
+        },
+        {
+            'key': 'payment',
+            'label': 'Оплата',
+            'template_name': 'payment_confirmed.html',
+            'trigger': 'payment',
+            'subject': f'Оплату підтверджено: {event.title}',
+            'html': render_template('emails/payment_confirmed.html',
+                                    user=user, event=event, registration=reg),
+        },
+        {
+            'key': 'reminder',
+            'label': 'Нагадування',
+            'template_name': 'course_reminder.html',
+            'trigger': 'reminder',
+            'subject': f'Нагадування: {event.title} через 1 дн.',
+            'html': render_template('emails/course_reminder.html',
+                                    user=user, event=event, registration=reg, days_until=1),
+        },
+        {
+            'key': 'status',
+            'label': 'Зміна статусу',
+            'template_name': 'status_changed.html',
+            'trigger': 'status_change',
+            'subject': f'Статус реєстрації змінено: {event.title}',
+            'html': render_template('emails/status_changed.html',
+                                    user=user, event=event, registration=reg,
+                                    old_status='pending', new_status='confirmed',
+                                    new_status_label='Підтверджено'),
+        },
+    ]
+
+    return render_template('admin/notifications_templates.html', templates=templates)
+
+
 @admin_bp.route('/notifications/scheduler/pause', methods=['POST'])
 @admin_required
 def scheduler_pause():

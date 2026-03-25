@@ -1,0 +1,130 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Шаблони листів | IPRM{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<style>
+  .template-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 0 0 32px;
+    flex-wrap: wrap;
+  }
+  .template-tab {
+    display: inline-block;
+    padding: 8px 20px;
+    border-radius: 980px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #424245;
+    background: #f5f5f7;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .template-tab:hover {
+    background: #ede9f6;
+    color: #7055a4;
+  }
+  .template-tab--active {
+    background: #7055a4;
+    color: #ffffff;
+  }
+  .template-tab--active:hover {
+    background: #5d4691;
+    color: #ffffff;
+  }
+  .template-preview {
+    display: none;
+  }
+  .template-preview--active {
+    display: block;
+  }
+  .template-preview__frame {
+    width: 100%;
+    border: none;
+    border-radius: 16px;
+    background: #f5f5f7;
+    min-height: 700px;
+  }
+  .template-preview__info {
+    display: flex;
+    gap: 24px;
+    margin: 0 0 24px;
+    flex-wrap: wrap;
+  }
+  .template-preview__meta {
+    font-size: 13px;
+    color: #86868b;
+  }
+  .template-preview__meta strong {
+    color: #1d1d1f;
+    font-weight: 600;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <h1 class="admin-hero__title">Шаблони листів</h1>
+      <p class="admin-hero__subtitle">Попередній перегляд email-шаблонів</p>
+    </div>
+    <a href="{{ url_for('admin.notifications') }}" class="btn-admin btn-admin--secondary">Назад до сповіщень</a>
+  </div>
+
+  <div class="template-tabs" role="tablist">
+    {% for tpl in templates %}
+    <button class="template-tab{% if loop.first %} template-tab--active{% endif %}"
+            role="tab"
+            aria-selected="{{ 'true' if loop.first else 'false' }}"
+            data-target="tpl-{{ tpl.key }}">
+      {{ tpl.label }}
+    </button>
+    {% endfor %}
+  </div>
+
+  {% for tpl in templates %}
+  <div id="tpl-{{ tpl.key }}" class="template-preview{% if loop.first %} template-preview--active{% endif %}" role="tabpanel">
+    <div class="template-preview__info">
+      <span class="template-preview__meta"><strong>Шаблон:</strong> {{ tpl.template_name }}</span>
+      <span class="template-preview__meta"><strong>Тригер:</strong> {{ tpl.trigger }}</span>
+      <span class="template-preview__meta"><strong>Тема:</strong> {{ tpl.subject }}</span>
+    </div>
+    <iframe class="template-preview__frame" srcdoc="{{ tpl.html | e }}" sandbox="allow-same-origin"></iframe>
+  </div>
+  {% endfor %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  var tabs = document.querySelectorAll('.template-tab');
+  var panels = document.querySelectorAll('.template-preview');
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      tabs.forEach(function(t) {
+        t.classList.remove('template-tab--active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      panels.forEach(function(p) { p.classList.remove('template-preview--active'); });
+      tab.classList.add('template-tab--active');
+      tab.setAttribute('aria-selected', 'true');
+      var panel = document.getElementById(tab.getAttribute('data-target'));
+      if (panel) panel.classList.add('template-preview--active');
+    });
+  });
+})();
+</script>
+{% endblock %}
