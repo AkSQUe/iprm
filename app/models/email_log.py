@@ -28,6 +28,7 @@ class EmailLog(TimestampMixin, db.Model):
     template_name = db.Column(db.String(100), nullable=False)
     status = db.Column(db.String(20), default='pending', nullable=False, index=True)
     error_message = db.Column(db.Text)
+    html_body = db.Column(db.Text)
     sent_at = db.Column(db.DateTime(timezone=True))
     trigger = db.Column(db.String(50), index=True)
     retry_count = db.Column(db.Integer, default=0, nullable=False)

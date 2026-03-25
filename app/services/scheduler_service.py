@@ -1,8 +1,9 @@
 """
 APScheduler with SQLAlchemy jobstore for persistent scheduled jobs.
 
-Runs a daily job scanning for upcoming events and sending reminders
-to confirmed registrations.
+Jobs:
+- daily_course_reminders: daily at 09:00, sends reminders for upcoming events.
+- email_queue_maintenance: every 5 min, cleans stale pending + retries failed.
 """
 import logging
 import os
@@ -24,7 +25,6 @@ def init_scheduler(app):
     if _initialized:
         return
 
-    # Skip scheduler in reloader child process
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true' and app.debug:
         return
 
@@ -70,10 +70,13 @@ def send_course_reminders():
         from app.models.event import Event
         from app.models.registration import EventRegistration
         from app.models.email_log import EmailLog
+        from app.models.email_settings import EmailSettings
         from app.services.email_service import EmailService
         from app.extensions import db
 
-        reminder_days = app.config.get('SCHEDULER_REMINDER_DAYS', [7, 3, 1])
+        settings = EmailSettings.get()
+        reminder_days = settings.reminder_days_list
+
         now = datetime.now(timezone.utc)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -82,7 +85,6 @@ def send_course_reminders():
             window_start = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
             window_end = target_date.replace(hour=23, minute=59, second=59, microsecond=999999)
 
-            # Один запит: реєстрації з event та user (замість N+1)
             registrations = (
                 EventRegistration.query
                 .join(Event)
@@ -101,7 +103,6 @@ def send_course_reminders():
             if not registrations:
                 continue
 
-            # Batch: одним запитом отримуємо всі вже відправлені reminders
             reg_ids = [r.id for r in registrations]
             already_sent_ids = set(
                 row[0] for row in
@@ -127,13 +128,27 @@ def send_course_reminders():
 
 
 def email_queue_maintenance():
-    """Periodic job: clean stale pending emails and retry transient failures."""
+    """Periodic job: clean stale pending emails and retry transient failures.
+
+    Each operation is wrapped in its own try/except so one failure
+    does not block the other.
+    """
     app = scheduler._app
     with app.app_context():
         from app.services.email_service import EmailService
 
-        stale_count = EmailService.cleanup_stale_pending(app)
-        retry_count = EmailService.retry_failed_emails(app)
+        stale_count = 0
+        retry_count = 0
+
+        try:
+            stale_count = EmailService.cleanup_stale_pending()
+        except Exception:
+            logger.exception('cleanup_stale_pending failed')
+
+        try:
+            retry_count = EmailService.retry_failed_emails()
+        except Exception:
+            logger.exception('retry_failed_emails failed')
 
         if stale_count or retry_count:
             logger.info(

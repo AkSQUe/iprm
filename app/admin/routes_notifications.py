@@ -6,8 +6,9 @@ from sqlalchemy import func as sa_func
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
 from app.extensions import db
-from app.models.email_log import EmailLog
+from app.models.email_log import EmailLog, MAX_RETRIES
 from app.models.email_settings import EmailSettings
+from app.services.email_service import CIRCUIT_BREAKER_THRESHOLD
 
 audit_logger = logging.getLogger('audit')
 
@@ -32,7 +33,6 @@ def notifications():
 
     from datetime import datetime, timedelta, timezone
     from app.services.scheduler_service import scheduler
-    from app.models.email_log import MAX_RETRIES
     scheduler_running = scheduler.running
     jobs = scheduler.get_jobs() if scheduler_running else []
 
@@ -49,7 +49,7 @@ def notifications():
         EmailLog.trigger != 'test',
         EmailLog.created_at >= datetime.now(timezone.utc) - timedelta(hours=1),
     ).count()
-    circuit_open = recent_failures >= 5
+    circuit_open = recent_failures >= CIRCUIT_BREAKER_THRESHOLD
 
     queue_health = {
         'recent_failures': recent_failures,
@@ -75,7 +75,10 @@ def notifications_settings():
     settings = EmailSettings.get()
 
     settings.smtp_server = request.form.get('smtp_server', '').strip()
-    settings.smtp_port = int(request.form.get('smtp_port', 465) or 465)
+    try:
+        settings.smtp_port = int(request.form.get('smtp_port') or 465)
+    except (ValueError, TypeError):
+        settings.smtp_port = 465
     settings.smtp_use_ssl = request.form.get('smtp_use_ssl') == 'on'
     settings.smtp_use_tls = request.form.get('smtp_use_tls') == 'on'
     settings.smtp_username = request.form.get('smtp_username', '').strip()
