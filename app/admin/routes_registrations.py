@@ -94,6 +94,10 @@ def registration_attendance(reg_id):
 
     try:
         db.session.commit()
+        audit_logger.info(
+            'Admin %s confirmed attendance reg %d, CPD=%s',
+            current_user.email, reg_id, reg.cpd_points_awarded,
+        )
         flash(f'Присутність підтверджено, нараховано {reg.cpd_points_awarded} балів БПР', 'success')
     except Exception:
         logger.exception('Failed to update attendance for registration %d', reg_id)
