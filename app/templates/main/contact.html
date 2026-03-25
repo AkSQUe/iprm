@@ -98,19 +98,19 @@
 
           <div class="form-group">
             <label for="name">Ім'я <span class="required">*</span></label>
-            {{ form.name(class="form-input" + (" is-invalid" if form.name.errors else ""), id="name") }}
+            {{ form.name(class="form-input" + (" is-invalid" if form.name.errors else ""), id="name", autocomplete="name") }}
             {% for error in form.name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
           </div>
 
           <div class="form-group">
             <label for="email">Email <span class="required">*</span></label>
-            {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email") }}
+            {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email", autocomplete="email") }}
             {% for error in form.email.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
           </div>
 
           <div class="form-group">
             <label for="phone">Телефон</label>
-            {{ form.phone(class="form-input", id="phone") }}
+            {{ form.phone(class="form-input", id="phone", autocomplete="tel") }}
             {% for error in form.phone.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
           </div>
 

@@ -62,13 +62,13 @@
 
         <div class="form-group">
           <label for="phone">Телефон <span class="required">*</span></label>
-          {{ form.phone(class="form-input" + (" is-invalid" if form.phone.errors else ""), id="phone") }}
+          {{ form.phone(class="form-input" + (" is-invalid" if form.phone.errors else ""), id="phone", autocomplete="tel") }}
           {% for error in form.phone.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
         </div>
 
         <div class="form-group">
           <label for="specialty">Спеціальність <span class="required">*</span></label>
-          {{ form.specialty(class="form-input" + (" is-invalid" if form.specialty.errors else ""), id="specialty") }}
+          {{ form.specialty(class="form-input" + (" is-invalid" if form.specialty.errors else ""), id="specialty", autocomplete="organization-title") }}
           {% for error in form.specialty.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
         </div>
 
