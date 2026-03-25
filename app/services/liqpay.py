@@ -9,6 +9,8 @@ import hashlib
 import hmac
 import json
 import logging
+import time
+from urllib.error import URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen, Request
 
@@ -62,18 +64,35 @@ class LiqPayService:
         signature = self._generate_signature(data)
         return data, signature, CHECKOUT_URL
 
-    def api_request(self, params, timeout=10):
+    def api_request(self, params, timeout=10, max_retries=2):
+        action = params.get('action', 'unknown')
         data = self._encode_params(params)
         signature = self._generate_signature(data)
         body = urlencode({'data': data, 'signature': signature}).encode('utf-8')
-        req = Request(API_URL, data=body, method='POST')
-        req.add_header('Content-Type', 'application/x-www-form-urlencoded')
-        try:
-            with urlopen(req, timeout=timeout) as resp:
-                return json.loads(resp.read())
-        except Exception:
-            logger.exception('LiqPay API request failed: action=%s', params.get('action'))
-            return None
+
+        for attempt in range(max_retries + 1):
+            req = Request(API_URL, data=body, method='POST')
+            req.add_header('Content-Type', 'application/x-www-form-urlencoded')
+            try:
+                with urlopen(req, timeout=timeout) as resp:
+                    return json.loads(resp.read())
+            except URLError as e:
+                logger.warning(
+                    'LiqPay API connection error (attempt %d/%d): action=%s, error=%s',
+                    attempt + 1, max_retries + 1, action, e,
+                )
+            except json.JSONDecodeError as e:
+                logger.error('LiqPay API invalid JSON: action=%s, error=%s', action, e)
+                return None
+            except Exception:
+                logger.exception('LiqPay API unexpected error: action=%s', action)
+                return None
+
+            if attempt < max_retries:
+                time.sleep(0.5 * (attempt + 1))
+
+        logger.error('LiqPay API failed after %d attempts: action=%s', max_retries + 1, action)
+        return None
 
     def check_status(self, order_id):
         return self.api_request({

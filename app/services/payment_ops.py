@@ -36,6 +36,16 @@ PERMANENT_ERRORS = frozenset({
 })
 
 
+def _fail(msg):
+    db.session.rollback()
+    return False, msg
+
+
+def _noop(msg):
+    db.session.rollback()
+    return True, msg
+
+
 class PaymentOps:
 
     def __init__(self, liqpay_service):
@@ -71,12 +81,10 @@ class PaymentOps:
         new_status = STATUS_MAP.get(liqpay_status)
         if not new_status:
             logger.warning('LiqPay callback: unknown status %s', liqpay_status)
-            db.session.rollback()
-            return False, f'unknown status: {liqpay_status}'
+            return _fail(f'unknown status: {liqpay_status}')
 
         if reg.payment_status == new_status and reg.payment_id == payment_id:
-            db.session.rollback()
-            return True, 'already processed'
+            return _noop('already processed')
 
         callback_amount = payload.get('amount')
         return self.update_payment_status(
@@ -91,20 +99,17 @@ class PaymentOps:
                         'Payment amount mismatch REG-%d: expected %s, got %s',
                         reg.id, reg.payment_amount, amount,
                     )
-                    db.session.rollback()
-                    return False, 'amount mismatch'
+                    return _fail('amount mismatch')
             except (TypeError, ValueError):
                 logger.warning('Payment invalid amount for REG-%d', reg.id)
-                db.session.rollback()
-                return False, 'invalid amount'
+                return _fail('invalid amount')
 
         if new_status not in ALLOWED_TRANSITIONS.get(reg.payment_status, set()):
             logger.warning(
                 'Payment invalid transition %s -> %s for REG-%d',
                 reg.payment_status, new_status, reg.id,
             )
-            db.session.rollback()
-            return True, 'no-op transition'
+            return _noop('no-op transition')
 
         reg.payment_status = new_status
         if payment_id:
@@ -129,9 +134,8 @@ class PaymentOps:
 
             return True, 'ok'
         except Exception:
-            db.session.rollback()
             logger.exception('Payment DB error for REG-%d', reg.id)
-            return False, 'db error'
+            return _fail('db error')
 
     def check_and_update(self, reg):
         order_id = f'REG-{reg.id}'
@@ -158,29 +162,29 @@ class PaymentOps:
         )
 
     def initiate_refund(self, reg, admin_user):
-        if reg.payment_status != 'paid':
-            return False, 'Повернення можливе тільки для оплачених реєстрацій'
+        locked_reg = db.session.query(EventRegistration).with_for_update().filter_by(
+            id=reg.id
+        ).first()
+        if not locked_reg or locked_reg.payment_status != 'paid':
+            return _fail('Повернення можливе тільки для оплачених реєстрацій')
 
-        order_id = f'REG-{reg.id}'
-        result = self.liqpay.create_refund_request(order_id, float(reg.payment_amount))
+        order_id = f'REG-{locked_reg.id}'
+        result = self.liqpay.create_refund_request(order_id, float(locked_reg.payment_amount))
 
         if result is None:
-            return False, 'Не вдалося зв\'єднатися з LiqPay API'
+            return _fail('Не вдалося зв\'єднатися з LiqPay API')
 
         lp_status = result.get('status', '')
         if lp_status in ('reversed', 'sandbox'):
-            locked_reg = db.session.query(EventRegistration).with_for_update().filter_by(
-                id=reg.id
-            ).first()
             ok, msg = self.update_payment_status(locked_reg, 'refunded')
             if ok:
                 audit_logger.info(
                     'Admin %s refunded REG-%d (%s UAH)',
-                    admin_user.email, reg.id, reg.payment_amount,
+                    admin_user.email, locked_reg.id, locked_reg.payment_amount,
                 )
-                return True, f'Повернення коштів ініційовано: {reg.payment_amount} UAH'
+                return True, f'Повернення коштів ініційовано: {locked_reg.payment_amount} UAH'
             return False, f'Помилка оновлення статусу: {msg}'
 
         err = result.get('err_description', result.get('status', 'unknown'))
-        logger.warning('LiqPay refund failed REG-%d: %s', reg.id, err)
-        return False, f'LiqPay відхилив повернення: {err}'
+        logger.warning('LiqPay refund failed REG-%d: %s', locked_reg.id, err)
+        return _fail(f'LiqPay відхилив повернення: {err}')

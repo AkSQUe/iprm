@@ -1,7 +1,6 @@
 import logging
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
-from sqlalchemy import func as sa_func
 from sqlalchemy.orm import joinedload
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
@@ -40,23 +39,7 @@ def liqpay():
         'webhook_url': url_for('payments.liqpay_callback', _external=True),
     }
 
-    stats = db.session.query(
-        sa_func.count(EventRegistration.id).label('total'),
-        sa_func.count(EventRegistration.id).filter(
-            EventRegistration.payment_status == 'paid'
-        ).label('paid'),
-        sa_func.count(EventRegistration.id).filter(
-            EventRegistration.payment_status == 'pending'
-        ).label('pending'),
-        sa_func.count(EventRegistration.id).filter(
-            EventRegistration.payment_status == 'refunded'
-        ).label('refunded'),
-        sa_func.coalesce(sa_func.sum(
-            EventRegistration.payment_amount
-        ).filter(EventRegistration.payment_status == 'paid'), 0).label('total_amount'),
-    ).filter(
-        EventRegistration.payment_amount > 0,
-    ).one()
+    stats = EventRegistration.payment_stats()
 
     recent = EventRegistration.query.options(
         joinedload(EventRegistration.event),
@@ -87,7 +70,7 @@ def liqpay_save_keys():
         flash('Обидва ключі обов\'язкові', 'error')
         return redirect(url_for('admin.liqpay'))
 
-    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
+    env_path = os.path.join(current_app.root_path, '..', '.env')
     update_env_key(env_path, 'LIQPAY_PUBLIC_KEY', public_key)
     update_env_key(env_path, 'LIQPAY_PRIVATE_KEY', private_key)
     update_env_key(env_path, 'LIQPAY_SANDBOX', 'true' if sandbox else 'false')

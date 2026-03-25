@@ -81,7 +81,9 @@ def _smtp_send(msg, smtp_cfg):
             host.ehlo()
         if smtp_cfg['username'] and smtp_cfg['password']:
             host.login(smtp_cfg['username'], smtp_cfg['password'])
-        host.send_message(msg.as_message())
+        sender = smtp_cfg['username']
+        recipients = msg.send_to
+        host.sendmail(sender, recipients, msg.as_string())
 
 
 class EmailService:

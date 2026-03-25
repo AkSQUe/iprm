@@ -1,3 +1,5 @@
+from sqlalchemy import func as sa_func
+
 from app.extensions import db
 from app.models.mixins import TimestampMixin, BigIntPK
 
@@ -76,6 +78,26 @@ class EventRegistration(TimestampMixin, db.Model):
     @property
     def payment_status_label(self):
         return dict(self.PAYMENT_STATUSES).get(self.payment_status, self.payment_status)
+
+    @classmethod
+    def payment_stats(cls):
+        return db.session.query(
+            sa_func.count(cls.id).label('total'),
+            sa_func.count(cls.id).filter(
+                cls.payment_status == 'paid'
+            ).label('paid'),
+            sa_func.count(cls.id).filter(
+                cls.payment_status == 'pending'
+            ).label('pending'),
+            sa_func.count(cls.id).filter(
+                cls.payment_status == 'refunded'
+            ).label('refunded'),
+            sa_func.coalesce(sa_func.sum(
+                cls.payment_amount
+            ).filter(cls.payment_status == 'paid'), 0).label('total_amount'),
+        ).filter(
+            cls.payment_amount > 0,
+        ).one()
 
     def __repr__(self):
         return f'<EventRegistration user={self.user_id} event={self.event_id}>'
