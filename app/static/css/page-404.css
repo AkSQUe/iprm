@@ -31,6 +31,13 @@
   max-width: 600px;
 }
 
+.iprm-error-page .apple-gradient-text {
+  background: linear-gradient(135deg, #7055a4 0%, #9b59b6 40%, #e8913a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 .iprm-error-page__subtitle {
   font-size: 1.0625rem;
   color: #86868b;
