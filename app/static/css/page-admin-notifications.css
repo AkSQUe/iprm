@@ -1,0 +1,23 @@
+/* Адмін: сповіщення -- IPRM */
+
+/* Скидання padding для кнопок у hero */
+.admin-hero .admin-form__actions--flush {
+  padding-top: 0;
+}
+
+/* Індикатор стану черги */
+.admin-queue-alert {
+  padding-left: 20px;
+}
+
+.admin-queue-alert--error {
+  border-left: 4px solid var(--iprm-error);
+}
+
+.admin-queue-alert--warning {
+  border-left: 4px solid var(--iprm-warning-text);
+}
+
+.admin-queue-alert__title--error {
+  color: var(--iprm-error-text);
+}
