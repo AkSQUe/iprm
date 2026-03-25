@@ -21,6 +21,19 @@
     </section>
   </div>
 
+  <!-- ===== EMAIL CONFIRMATION BANNER ===== -->
+  {% if not current_user.email_confirmed %}
+  <div class="account-confirm-banner">
+    <div class="account-confirm-banner__inner">
+      <p class="account-confirm-banner__text">Підтвердіть ваш email для повного доступу до функцій сайту</p>
+      <form method="POST" action="{{ url_for('auth.resend_confirmation') }}" class="account-confirm-banner__form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="account-confirm-banner__btn">Надіслати лист повторно</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- ===== MY COURSES ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="my-courses-title">
     <div class="iprm-section__inner">
