@@ -1,27 +1,27 @@
-/* Auth pages styles */
+/* Auth pages styles (Apple-style v2) */
 
 .auth-page {
-  min-height: 100vh;
+  min-height: calc(100vh - 52px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
-  background: var(--iprm-bg);
+  padding: 48px 24px;
+  background: #f5f5f7;
 }
 
 .auth-card {
   width: 100%;
   max-width: 440px;
-  background: var(--iprm-white);
-  border-radius: var(--iprm-radius);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  padding: 2.5rem;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  padding: 48px 40px;
 }
 
 .auth-card__logo {
   display: flex;
   justify-content: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 32px;
 }
 
 .auth-card__logo img {
@@ -31,89 +31,97 @@
 
 .auth-card__title {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.025em;
   text-align: center;
-  margin-bottom: 0.5rem;
-  color: var(--iprm-dark);
+  margin-bottom: 8px;
+  color: #1d1d1f;
 }
 
 .auth-card__subtitle {
   text-align: center;
-  color: var(--iprm-text-light);
-  margin-bottom: 2rem;
-  font-size: 0.95rem;
+  color: #86868b;
+  margin-bottom: 32px;
+  font-size: 0.9375rem;
 }
 
 /* Form fields */
 .form-group {
-  margin-bottom: 1.25rem;
+  margin-bottom: 20px;
 }
 
 .form-group label {
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--iprm-text);
-  margin-bottom: 0.375rem;
+  color: #1d1d1f;
+  margin-bottom: 6px;
 }
 
 .form-group label .required {
-  color: var(--iprm-error);
+  color: #ff3b30;
 }
 
 .form-input {
   width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 0.95rem;
+  padding: 12px 16px;
+  font-size: 17px;
   font-family: var(--iprm-font);
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm);
-  background: var(--iprm-white);
-  color: var(--iprm-text);
-  transition: border-color var(--iprm-transition), box-shadow var(--iprm-transition);
+  border: 1px solid #d2d2d7;
+  border-radius: 12px;
+  background: #fff;
+  color: #1d1d1f;
+  transition:
+    border-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .form-input:focus {
   outline: none;
-  border-color: var(--iprm-accent);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
+  border-color: #7055a4;
+  box-shadow: 0 0 0 3px #ede9f6;
 }
 
 .form-input.is-invalid {
-  border-color: var(--iprm-error);
+  border-color: #ff3b30;
+  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.08);
+}
+
+.form-input::placeholder {
+  color: #86868b;
 }
 
 /* Checkbox */
 .form-checkbox {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
+  gap: 8px;
+  margin-bottom: 20px;
 }
 
 .form-checkbox input[type="checkbox"] {
   width: 1rem;
   height: 1rem;
-  accent-color: var(--iprm-accent);
+  accent-color: #7055a4;
 }
 
 .form-checkbox label {
   font-size: 0.875rem;
-  color: var(--iprm-text-light);
+  color: #86868b;
   cursor: pointer;
 }
 
 /* Consent block */
 .form-consent {
-  margin: 1.25rem 0;
+  margin: 20px 0;
   padding: 16px;
-  background: var(--iprm-card-bg);
-  border-radius: var(--iprm-radius-sm);
+  background: #f5f5f7;
+  border-radius: 12px;
 }
 
 .form-consent .form-checkbox {
   align-items: flex-start;
-  margin-bottom: 0.75rem;
+  margin-bottom: 12px;
 }
 
 .form-consent .form-checkbox:last-child {
@@ -131,7 +139,7 @@
 }
 
 .form-consent .form-checkbox label a {
-  color: var(--iprm-accent);
+  color: #7055a4;
   text-decoration: none;
 }
 
@@ -142,121 +150,147 @@
 /* Errors */
 .form-error {
   font-size: 0.8rem;
-  color: var(--iprm-error);
-  margin-top: 0.25rem;
+  color: #ff3b30;
+  margin-top: 4px;
 }
 
 /* Submit button */
 .btn-auth {
   width: 100%;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 600;
+  padding: 14px 24px;
+  font-size: 1.0625rem;
+  font-weight: 500;
   font-family: var(--iprm-font);
-  color: var(--iprm-white);
-  background: var(--iprm-accent);
+  color: #fff;
+  background: #7055a4;
   border: none;
-  border-radius: var(--iprm-radius-sm);
+  border-radius: 980px;
   cursor: pointer;
-  transition: background var(--iprm-transition), transform var(--iprm-transition);
+  transition:
+    transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    background-color 0.15s ease;
 }
 
 .btn-auth:hover {
-  background: var(--iprm-accent-hover);
+  background: #5d4691;
+  transform: scale(1.02) translateY(-1px);
+  box-shadow: 0 8px 24px rgba(112, 85, 164, 0.25);
 }
 
 .btn-auth:active {
-  transform: scale(0.98);
+  transform: scale(0.98) translateY(0);
+  box-shadow: 0 2px 8px rgba(112, 85, 164, 0.15);
+}
+
+.btn-auth:focus-visible {
+  outline: 2px solid #7055a4;
+  outline-offset: 4px;
 }
 
 /* Footer links */
 .auth-card__footer {
   text-align: center;
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--iprm-border);
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .auth-card__footer a {
-  color: var(--iprm-accent);
+  color: #7055a4;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.9375rem;
+  transition: color 0.2s;
 }
 
 .auth-card__footer a:hover {
-  text-decoration: underline;
+  color: #5d4691;
 }
 
 .auth-card__back {
   display: block;
   text-align: center;
-  margin-top: 1rem;
-  color: var(--iprm-text-light);
+  margin-top: 16px;
+  color: #86868b;
   font-size: 0.875rem;
+  transition: color 0.2s;
 }
 
 .auth-card__back:hover {
-  color: var(--iprm-accent);
+  color: #7055a4;
 }
 
 .btn-auth--outline {
   background: transparent;
-  color: var(--iprm-accent);
-  border: 2px solid var(--iprm-accent);
+  color: #7055a4;
+  border: 2px solid #7055a4;
 }
 
 .btn-auth--outline:hover {
-  background: var(--iprm-accent-light);
+  background: #ede9f6;
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-auth--outline:active {
+  transform: scale(0.98);
 }
 
 .form-logout {
   display: inline;
 }
 
-
 /* Account page */
 .account-section {
-  max-width: var(--iprm-max-content);
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 48px 24px;
 }
 
 .account-section__title {
-  font-size: 1.375rem;
-  font-weight: 700;
-  color: var(--iprm-dark);
-  margin-bottom: 1.25rem;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #1d1d1f;
+  margin-bottom: 24px;
 }
 
 /* Account courses */
 .account-courses {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 2.5rem;
+  gap: 16px;
+  margin-bottom: 48px;
 }
 
 .account-course {
   display: flex;
   gap: 16px;
-  background: var(--iprm-card-bg);
-  border-radius: var(--iprm-radius);
+  background: #fff;
+  border-radius: 20px;
   overflow: hidden;
   text-decoration: none;
   color: inherit;
-  transition: box-shadow var(--iprm-transition), transform var(--iprm-transition);
+  transition:
+    box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .account-course:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(112, 85, 164, 0.1);
+  transform: translateY(-2px);
+}
+
+.account-course:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 12px rgba(112, 85, 164, 0.08);
 }
 
 .account-course__image {
   flex-shrink: 0;
-  width: 160px;
+  width: 180px;
   min-height: 120px;
-  background: linear-gradient(135deg, var(--iprm-accent-light, #ede9f6) 0%, #fef0e6 100%);
+  background: linear-gradient(135deg, #ede9f6 0%, #fef0e6 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -273,7 +307,7 @@
   padding: 16px 16px 16px 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -289,25 +323,26 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: var(--iprm-border);
-  color: var(--iprm-text-light);
+  padding: 3px 10px;
+  border-radius: 980px;
+  background: #d2d2d7;
+  color: #424245;
 }
 
-.account-course__status--pending { background: var(--iprm-warning-bg); color: var(--iprm-warning-text); }
-.account-course__status--confirmed { background: var(--iprm-badge-active-bg); color: var(--iprm-badge-active-text); }
-.account-course__status--completed { background: var(--iprm-badge-completed-bg); color: var(--iprm-badge-completed-text); }
+.account-course__status--pending { background: #fff3cd; color: #856404; }
+.account-course__status--confirmed { background: #d1fae5; color: #059669; }
+.account-course__status--completed { background: #e0e7ff; color: #4338ca; }
 
-.account-course__payment--unpaid { background: var(--iprm-error-bg); color: var(--iprm-error-text); }
-.account-course__payment--pending { background: var(--iprm-warning-bg); color: var(--iprm-warning-text); }
-.account-course__payment--paid { background: var(--iprm-badge-active-bg); color: var(--iprm-badge-active-text); }
-.account-course__payment--refunded { background: var(--iprm-neutral-bg); color: var(--iprm-neutral-text); }
+.account-course__payment--unpaid { background: #fef2f2; color: #dc2626; }
+.account-course__payment--pending { background: #fff3cd; color: #856404; }
+.account-course__payment--paid { background: #d1fae5; color: #059669; }
+.account-course__payment--refunded { background: #f3f4f6; color: #6b7280; }
 
 .account-course__title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--iprm-dark);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #1d1d1f;
   line-height: 1.35;
 }
 
@@ -316,7 +351,7 @@
   gap: 12px;
   flex-wrap: wrap;
   font-size: 0.8125rem;
-  color: var(--iprm-text-light);
+  color: #86868b;
 }
 
 .account-course__details span {
@@ -327,73 +362,74 @@
 
 .account-course__cpd {
   font-weight: 600;
-  color: var(--iprm-accent);
+  color: #7055a4;
 }
 
 .account-course__awarded {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--iprm-accent);
+  color: #7055a4;
 }
 
 .account-empty {
   text-align: center;
-  padding: 3rem 1rem;
-  background: var(--iprm-card-bg);
-  border-radius: var(--iprm-radius);
-  margin-bottom: 2.5rem;
+  padding: 64px 24px;
+  background: #f5f5f7;
+  border-radius: 24px;
+  margin-bottom: 48px;
 }
 
 .account-empty__text {
-  font-size: 0.9375rem;
-  color: var(--iprm-text-light);
-  margin-bottom: 1rem;
+  font-size: 17px;
+  color: #86868b;
+  margin-bottom: 24px;
 }
 
 .account-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  gap: 20px;
+  margin-bottom: 32px;
 }
 
 .account-card {
-  background: var(--iprm-card-bg);
-  border-radius: var(--iprm-radius);
-  padding: 2rem;
-  transition: box-shadow var(--iprm-transition);
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px;
+  transition: box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .account-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(112, 85, 164, 0.08);
 }
 
 .account-card__title {
   font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--iprm-dark);
-  margin-bottom: 0.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #1d1d1f;
+  margin-bottom: 8px;
 }
 
 .account-card__text {
-  font-size: 0.9rem;
-  color: var(--iprm-text-light);
+  font-size: 0.9375rem;
+  color: #86868b;
 }
 
 .account-actions {
   text-align: center;
-  padding-top: 1rem;
+  padding-top: 16px;
 }
 
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
   .auth-card {
-    padding: 1.75rem;
+    padding: 36px 28px;
   }
 
   .account-section {
-    padding: 1.5rem 1rem;
+    padding: 32px 16px;
   }
 
   .account-course {
@@ -402,22 +438,18 @@
 
   .account-course__image {
     width: 100%;
-    height: 140px;
+    height: 160px;
   }
 
   .account-course__body {
-    padding: 12px 16px 16px;
-  }
-
-  .account-card {
-    padding: 1.5rem;
+    padding: 16px;
   }
 }
 
 @media (max-width: 480px) {
   .auth-card {
-    padding: 1.5rem;
-    border-radius: var(--iprm-radius-sm);
+    padding: 28px 20px;
+    border-radius: 20px;
   }
 
   .auth-card__title {
@@ -425,6 +457,18 @@
   }
 
   .account-section {
-    padding: 1rem 0.75rem;
+    padding: 24px 12px;
+  }
+
+  .account-card {
+    padding: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-auth,
+  .account-course,
+  .account-card {
+    transition: none;
   }
 }
