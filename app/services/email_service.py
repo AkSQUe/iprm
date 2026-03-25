@@ -247,6 +247,16 @@ class EmailService:
         )
 
     @staticmethod
+    def send_email_confirmation(user, confirm_url):
+        return EmailService.send_email(
+            to=user.email,
+            subject='Підтвердіть ваш email | IPRM',
+            template_name='email_confirm',
+            context={'user': user, 'confirm_url': confirm_url},
+            trigger='email_confirm',
+        )
+
+    @staticmethod
     def send_payment_confirmation(registration):
         event = registration.event
         user = registration.user

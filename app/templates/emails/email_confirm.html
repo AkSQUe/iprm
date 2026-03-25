@@ -1,0 +1,31 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, spacer %}
+
+{% block title %}Підтвердіть ваш email{% endblock %}
+
+{% block preview_text %}Підтвердіть email для доступу до всіх функцій IPRM{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
+        Підтвердіть ваш email
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+        {{ user.first_name or 'Вітаємо' }}, дякуємо за реєстрацію в IPRM. Натисніть кнопку нижче, щоб підтвердити вашу email-адресу.
+    </p>
+
+    {{ button_primary("Підтвердити email", confirm_url) }}
+
+    {{ spacer(16) }}
+
+    <p style="margin: 0 0 8px 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
+        Посилання дійсне протягом 24 годин. Якщо ви не реєструвалися на IPRM, просто проігноруйте цей лист.
+    </p>
+
+    <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
+        Якщо кнопка не працює, скопіюйте це посилання у браузер:
+    </p>
+    <p style="margin: 4px 0 0 0; font-size: 12px; color: #7055a4; word-break: break-all; line-height: 1.5;">
+        {{ confirm_url }}
+    </p>
+{% endblock %}

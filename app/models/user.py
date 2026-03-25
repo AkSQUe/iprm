@@ -13,6 +13,7 @@ class User(TimestampMixin, UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
+    email_confirmed = db.Column(db.Boolean, default=False, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     is_admin = db.Column(db.Boolean, default=False)
     last_login_at = db.Column(db.DateTime(timezone=True))

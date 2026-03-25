@@ -10,6 +10,8 @@ from app.extensions import db, limiter
 from app.models.user import User
 from app.models.event import Event
 from app.models.registration import EventRegistration
+from app.services.token_service import generate_confirmation_token, confirm_token
+from app.services.email_service import EmailService
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +76,20 @@ def register():
             db.session.commit()
             session.clear()
             login_user(user)
+
+            email_sent = False
+            try:
+                token = generate_confirmation_token(user.id)
+                confirm_url = url_for('auth.confirm_email', token=token, _external=True)
+                EmailService.send_email_confirmation(user, confirm_url)
+                email_sent = True
+            except Exception:
+                logger.exception('Failed to send confirmation email to %s', user.email)
+
+            if email_sent:
+                flash('Реєстрацію завершено. Перевірте email для підтвердження.', 'info')
+            else:
+                flash('Реєстрацію завершено. Натисніть "Надіслати лист повторно" у кабінеті для підтвердження email.', 'warning')
             return redirect(url_for('auth.account'))
         except Exception:
             logger.exception('Failed to register user %s', form.email.data)
@@ -103,3 +119,54 @@ def account():
         .all()
     )
     return render_template('auth/account.html', registrations=registrations)
+
+
+@auth_bp.route('/confirm/<token>')
+@limiter.limit('10 per minute')
+def confirm_email(token):
+    user_id = confirm_token(token)
+    if user_id is None:
+        flash('Посилання недійсне або прострочене. Запросіть нове.', 'error')
+        return redirect(url_for('auth.login'))
+
+    user = db.session.get(User, user_id)
+    if not user:
+        flash('Користувача не знайдено', 'error')
+        return redirect(url_for('auth.login'))
+
+    if user.email_confirmed:
+        flash('Email вже підтверджено', 'info')
+    else:
+        user.email_confirmed = True
+        try:
+            db.session.commit()
+            flash('Email успішно підтверджено!', 'success')
+            logger.info('Email confirmed for user %d', user.id)
+        except Exception:
+            db.session.rollback()
+            logger.exception('Failed to confirm email for user %d', user.id)
+            flash('Помилка при підтвердженні', 'error')
+
+    if current_user.is_authenticated:
+        return redirect(url_for('auth.account'))
+    return redirect(url_for('auth.login'))
+
+
+@auth_bp.route('/resend-confirmation', methods=['POST'])
+@login_required
+@limiter.limit('3 per hour')
+def resend_confirmation():
+    if current_user.email_confirmed:
+        flash('Email вже підтверджено', 'info')
+        return redirect(url_for('auth.account'))
+
+    try:
+        token = generate_confirmation_token(current_user.id)
+        confirm_url = url_for('auth.confirm_email', token=token, _external=True)
+        EmailService.send_email_confirmation(current_user, confirm_url)
+        flash('Лист з підтвердженням надіслано повторно', 'success')
+    except Exception:
+        logger.exception('Failed to resend confirmation to %s', current_user.email)
+        flash('Не вдалося надіслати лист', 'error')
+
+    return redirect(url_for('auth.account'))

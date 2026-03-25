@@ -16,6 +16,10 @@ logger = logging.getLogger(__name__)
 @login_required
 @limiter.limit("10 per hour", methods=['POST'])
 def register(event_id):
+    if not current_user.email_confirmed:
+        flash('Для реєстрації на курс необхідно підтвердити email', 'warning')
+        return redirect(url_for('auth.account'))
+
     event = db.session.get(Event, event_id)
     if not event or not event.is_active:
         abort(404)
