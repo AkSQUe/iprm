@@ -12,17 +12,6 @@
         <li><a href="{{ url_for('courses.course_list') }}"{% if active_nav == 'courses' %} class="iprm-nav--active"{% endif %}>Курси</a></li>
         <li><a href="{{ url_for('trainers.trainer_list') }}"{% if active_nav == 'trainers' %} class="iprm-nav--active"{% endif %}>Тренери</a></li>
         <li><a href="{{ url_for('main.contact') }}"{% if active_nav == 'contact' %} class="iprm-nav--active"{% endif %}>Контакти</a></li>
-        <li class="iprm-nav__dropdown">
-          <button type="button" class="iprm-nav__dropdown-toggle{% if active_nav == 'demos' %} iprm-nav--active{% endif %}">
-            Демо <span class="iprm-nav__dropdown-arrow">&#9662;</span>
-          </button>
-          <ul class="iprm-nav__dropdown-menu">
-            <li><a href="{{ url_for('static', filename='demos/apple-style.html') }}" target="_blank" rel="noopener noreferrer">Apple Style</a></li>
-            <li><a href="{{ url_for('static', filename='demos/apple-course.html') }}" target="_blank" rel="noopener noreferrer">Apple Course</a></li>
-            <li><a href="{{ url_for('static', filename='demos/glass-style.html') }}" target="_blank" rel="noopener noreferrer">Glassmorphism</a></li>
-            <li><a href="{{ url_for('static', filename='demos/minimal-style.html') }}" target="_blank" rel="noopener noreferrer">Minimalism</a></li>
-          </ul>
-        </li>
       </ul>
     </nav>
 
