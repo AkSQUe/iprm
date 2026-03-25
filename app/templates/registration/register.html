@@ -74,7 +74,7 @@
 
         <div class="form-group form-section__full">
           <label for="workplace">Місце роботи <span class="required">*</span></label>
-          {{ form.workplace(class="form-input" + (" is-invalid" if form.workplace.errors else ""), id="workplace") }}
+          {{ form.workplace(class="form-input" + (" is-invalid" if form.workplace.errors else ""), id="workplace", autocomplete="organization") }}
           {% for error in form.workplace.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
         </div>
 
