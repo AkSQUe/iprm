@@ -68,6 +68,13 @@
   text-decoration: underline;
 }
 
+.contact-page__info-messengers {
+  display: block;
+  font-size: 12px;
+  color: var(--iprm-text-light);
+  margin-top: 2px;
+}
+
 /* ========== SOCIAL LINKS ========== */
 
 .contact-page__socials {
