@@ -99,7 +99,7 @@ html {
   scroll-behavior: smooth;
   scroll-padding-top: 60px;
   scrollbar-width: thin;
-  scrollbar-color: #7055a4 transparent;
+  scrollbar-color: var(--iprm-nav-active) transparent;
 }
 
 /* Webkit scrollbar */
@@ -108,23 +108,23 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f5f5f7;
+  background: var(--apple-section-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #7055a4 0%, #9b59b6 35%, #c77b4a 70%, #e8913a 100%);
+  background: linear-gradient(180deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 35%, #c77b4a 70%, var(--apple-orange) 100%);
   border-radius: 10px;
-  border: 2px solid #f5f5f7;
+  border: 2px solid var(--apple-section-bg);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #5d4691 0%, #8a4aa5 35%, #b56a3a 70%, #d67e2e 100%);
+  background: linear-gradient(180deg, var(--iprm-accent-hover) 0%, #8a4aa5 35%, #b56a3a 70%, #d67e2e 100%);
 }
 
 body {
   font-family: var(--iprm-font);
-  color: #1d1d1f;
-  background: #fff;
+  color: var(--apple-black);
+  background: var(--iprm-white);
   font-size: 17px;
   line-height: 1.47;
   -webkit-font-smoothing: antialiased;
@@ -187,7 +187,7 @@ a {
   gap: 8px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #1d1d1f;
+  color: var(--apple-black);
   text-decoration: none;
   letter-spacing: -0.01em;
   flex-shrink: 0;
@@ -216,30 +216,30 @@ a {
   font-weight: 600;
   color: var(--iprm-white);
   padding: 3px 10px;
-  background: #1d1d1f;
+  background: var(--apple-black);
   border-radius: 6px;
   transition: all 0.2s;
 }
 
 .iprm-header__admin-link:hover {
-  background: #424245;
+  background: var(--apple-gray-dark);
 }
 
 .iprm-header__user-link {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #424245;
+  color: var(--apple-gray-dark);
   transition: color 0.2s;
 }
 
 .iprm-header__user-link:hover {
-  color: #7055a4;
+  color: var(--iprm-nav-active);
 }
 
 .iprm-header__auth-link {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #424245;
+  color: var(--apple-gray-dark);
   background: none;
   border: none;
   cursor: pointer;
@@ -249,19 +249,19 @@ a {
 }
 
 .iprm-header__auth-link:hover {
-  color: #7055a4;
+  color: var(--iprm-nav-active);
 }
 
 .iprm-header__auth-link--cta {
-  color: #fff;
-  background: #7055a4;
+  color: var(--iprm-white);
+  background: var(--iprm-nav-active);
   padding: 8px 20px;
   border-radius: 980px;
 }
 
 .iprm-header__auth-link--cta:hover {
-  background: #5d4691;
-  color: #fff;
+  background: var(--iprm-accent-hover);
+  color: var(--iprm-white);
 }
 
 .iprm-header__logout-form {
@@ -283,7 +283,7 @@ a {
   display: block;
   width: 20px;
   height: 2px;
-  background: #1d1d1f;
+  background: var(--apple-black);
   border-radius: 1px;
   transition: all 0.3s;
 }
@@ -310,16 +310,16 @@ a {
 .iprm-nav a {
   font-size: 0.8125rem;
   font-weight: 400;
-  color: #424245;
+  color: var(--apple-gray-dark);
   transition: color 0.2s;
 }
 
 .iprm-nav a:hover {
-  color: #7055a4;
+  color: var(--iprm-nav-active);
 }
 
 .iprm-nav a.iprm-nav--active {
-  color: #7055a4;
+  color: var(--iprm-nav-active);
 }
 
 /* Nav Dropdown */
@@ -330,7 +330,7 @@ a {
 .iprm-nav__dropdown-toggle {
   font-size: 0.8125rem;
   font-weight: 400;
-  color: #424245;
+  color: var(--apple-gray-dark);
   background: none;
   border: none;
   cursor: pointer;
@@ -344,7 +344,7 @@ a {
 
 .iprm-nav__dropdown-toggle:hover,
 .iprm-nav__dropdown-toggle.iprm-nav--active {
-  color: #7055a4;
+  color: var(--iprm-nav-active);
 }
 
 .iprm-nav__dropdown-arrow {
@@ -390,7 +390,7 @@ a {
   padding: 8px 16px;
   font-size: 0.8125rem;
   font-weight: 400;
-  color: #424245;
+  color: var(--apple-gray-dark);
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
@@ -401,8 +401,8 @@ a {
 }
 
 .iprm-nav__dropdown-menu li a:hover {
-  background: #ede9f6;
-  color: #7055a4;
+  background: var(--iprm-accent-light);
+  color: var(--iprm-nav-active);
 }
 
 /* ========== HERO ========== */
@@ -600,18 +600,18 @@ a {
 }
 
 .apple-btn--primary {
-  background: #7055a4;
-  color: #fff;
+  background: var(--iprm-nav-active);
+  color: var(--iprm-white);
 }
 
 .apple-btn--primary:hover {
-  background: #5d4691;
+  background: var(--iprm-accent-hover);
   transform: scale(1.02);
 }
 
 .apple-btn--secondary {
   background: transparent;
-  color: #7055a4;
+  color: var(--iprm-nav-active);
 }
 
 .apple-btn--secondary::after {
@@ -619,7 +619,7 @@ a {
 }
 
 .apple-btn--secondary:hover {
-  color: #5d4691;
+  color: var(--iprm-accent-hover);
 }
 
 .apple-btn--disabled {
@@ -744,7 +744,7 @@ a {
 
 .iprm-footer__copy {
   font-size: 0.8125rem;
-  color: #86868b;
+  color: var(--apple-gray);
 }
 
 .iprm-footer__center {
@@ -786,24 +786,24 @@ a {
 
 .iprm-footer__link {
   font-size: 0.8125rem;
-  color: #86868b;
+  color: var(--apple-gray);
   text-decoration: none;
   transition: color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .iprm-footer__link:hover {
-  color: #7055a4;
+  color: var(--iprm-nav-active);
 }
 
 .iprm-footer__phone {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #424245;
+  color: var(--apple-gray-dark);
   transition: color 0.2s;
 }
 
 .iprm-footer__phone:hover {
-  color: #7055a4;
+  color: var(--iprm-nav-active);
 }
 
 /* ========== ALERTS ========== */
@@ -1033,7 +1033,7 @@ a {
   background: rgba(29, 29, 31, 0.88);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  color: #fff;
+  color: var(--iprm-white);
   padding: 16px 24px;
   border-radius: 20px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
@@ -1054,12 +1054,12 @@ a {
 }
 
 .cookie-banner__text a {
-  color: #c4b5fd;
+  color: var(--apple-purple-light);
   text-decoration: underline;
 }
 
 .cookie-banner__text a:hover {
-  color: #fff;
+  color: var(--iprm-white);
 }
 
 .cookie-banner__actions {
@@ -1088,12 +1088,12 @@ a {
 }
 
 .cookie-banner__btn--accept {
-  background: #7055a4;
-  color: #fff;
+  background: var(--iprm-nav-active);
+  color: var(--iprm-white);
 }
 
 .cookie-banner__btn--accept:hover {
-  background: #5d4691;
+  background: var(--iprm-accent-hover);
 }
 
 .cookie-banner__btn--reject {
@@ -1104,7 +1104,7 @@ a {
 
 .cookie-banner__btn--reject:hover {
   background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  color: var(--iprm-white);
 }
 
 @media (prefers-reduced-transparency: reduce) {
