@@ -149,7 +149,7 @@
 
 .apple-page .apple-btn--primary {
   background: var(--iprm-nav-active);
-  color: #fff;
+  color: var(--iprm-white);
 }
 
 .apple-page .apple-btn--primary:hover {
@@ -210,7 +210,7 @@
   aspect-ratio: auto;
   border: none;
   border-radius: 0;
-  background: linear-gradient(135deg, #ede9f6 0%, #fef0e6 100%);
+  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--apple-orange-light) 100%);
   margin-bottom: 0;
 }
 
@@ -313,7 +313,7 @@
   border-radius: 24px;
   overflow: hidden;
   aspect-ratio: 3 / 4;
-  background: linear-gradient(135deg, #ede9f6, #fef0e6);
+  background: linear-gradient(135deg, var(--iprm-accent-light), var(--apple-orange-light));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -380,7 +380,7 @@
 
 .apple-page .iprm-trainer-card__photo {
   height: 280px;
-  background: linear-gradient(135deg, #ede9f6 0%, #fef0e6 100%);
+  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--apple-orange-light) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -539,7 +539,7 @@
 
 .apple-page .apple-clinic-card__image {
   height: 220px;
-  background: linear-gradient(135deg, #ede9f6 0%, #fef0e6 100%);
+  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--apple-orange-light) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
