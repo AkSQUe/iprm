@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-notifications.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
@@ -18,7 +19,7 @@
       <h1 class="admin-hero__title">Сповіщення</h1>
       <p class="admin-hero__subtitle">Email-розсилки та нагадування</p>
     </div>
-    <div class="admin-form__actions" style="padding-top:0;">
+    <div class="admin-form__actions admin-form__actions--flush">
       <a href="{{ url_for('admin.notifications_templates') }}" class="btn-admin btn-admin--secondary">Шаблони</a>
       <a href="{{ url_for('admin.notifications_log') }}" class="btn-admin btn-admin--secondary">Повний лог</a>
     </div>
@@ -48,7 +49,7 @@
 
   <!-- Queue Health -->
   {% if queue_health and (queue_health.circuit_open or queue_health.retryable > 0) %}
-  <div class="form-section admin-form__section" style="{% if queue_health.circuit_open %}border-left:4px solid var(--iprm-error);{% else %}border-left:4px solid var(--iprm-warning-text);{% endif %} padding-left:20px;">
+  <div class="form-section admin-form__section admin-queue-alert{% if queue_health.circuit_open %} admin-queue-alert--error{% else %} admin-queue-alert--warning{% endif %}">
     {% if queue_health.circuit_open %}
     <h3 class="admin-form__section-title" style="color:var(--iprm-error-text);">Circuit Breaker: OPEN</h3>
     <p class="admin-text-muted">
