@@ -260,7 +260,7 @@
 .apple-page .apple-feature-card {
   background: var(--iprm-white);
   border-radius: 24px;
-  padding: 40px 32px;
+  padding: 48px 36px;
   transition:
     transform 0.3s var(--ease-interact),
     box-shadow 0.3s var(--ease-interact);

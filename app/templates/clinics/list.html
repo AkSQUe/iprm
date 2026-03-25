@@ -46,7 +46,7 @@
         <a href="{{ url_for('clinics.clinic_detail', slug=clinic.slug) }}" class="iprm-clinic-card apple-reveal">
           <div class="iprm-clinic-card__photo">
             {% if clinic.photo %}
-              <img src="{{ clinic.photo }}" alt="{{ clinic.name }}" loading="lazy">
+              <img src="{{ clinic.photo }}" alt="{{ clinic.name }}" loading="lazy" width="400" height="240">
             {% endif %}
           </div>
           <div class="iprm-clinic-card__body">

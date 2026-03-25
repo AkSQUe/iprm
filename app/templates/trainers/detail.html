@@ -56,7 +56,7 @@
       <div class="iprm-trainer apple-reveal">
         <div class="iprm-trainer__photo">
           {% if trainer.photo %}
-            <img src="{{ trainer.photo }}" alt="{{ trainer.full_name }}" loading="lazy">
+            <img src="{{ trainer.photo }}" alt="{{ trainer.full_name }}" loading="lazy" width="320" height="427">
           {% endif %}
         </div>
         <div class="iprm-trainer__info">
@@ -88,7 +88,7 @@
           <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}">
             <div class="iprm-course-card__image">
               {% if event.card_image %}
-                <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy">
+                <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy" width="400" height="200">
               {% endif %}
             </div>
             <div class="apple-card-body">

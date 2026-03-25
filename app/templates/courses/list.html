@@ -43,7 +43,7 @@
           <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}">
             <div class="iprm-course-card__image">
               {% if event.card_image %}
-                <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy">
+                <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy" width="400" height="200">
               {% endif %}
             </div>
             <div class="apple-card-body">

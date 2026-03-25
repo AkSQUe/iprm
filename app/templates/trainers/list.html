@@ -46,7 +46,7 @@
         <a href="{{ url_for('trainers.trainer_detail', slug=trainer.slug) }}" class="iprm-trainer-card apple-reveal">
           <div class="iprm-trainer-card__photo">
             {% if trainer.photo %}
-              <img src="{{ trainer.photo }}" alt="{{ trainer.full_name }}" loading="lazy">
+              <img src="{{ trainer.photo }}" alt="{{ trainer.full_name }}" loading="lazy" width="400" height="280">
             {% endif %}
           </div>
           <div class="iprm-trainer-card__body">
