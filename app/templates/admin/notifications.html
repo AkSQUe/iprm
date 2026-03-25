@@ -51,7 +51,7 @@
   {% if queue_health and (queue_health.circuit_open or queue_health.retryable > 0) %}
   <div class="form-section admin-form__section admin-queue-alert{% if queue_health.circuit_open %} admin-queue-alert--error{% else %} admin-queue-alert--warning{% endif %}">
     {% if queue_health.circuit_open %}
-    <h3 class="admin-form__section-title" style="color:var(--iprm-error-text);">Circuit Breaker: OPEN</h3>
+    <h3 class="admin-form__section-title admin-queue-alert__title--error">Circuit Breaker: OPEN</h3>
     <p class="admin-text-muted">
       Виявлено {{ queue_health.recent_failures }} помилок за останні 10 хв. Нові відправки призупинено до стабілізації SMTP.
       Перевірте налаштування та спробуйте тестовий лист.
