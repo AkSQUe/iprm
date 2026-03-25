@@ -1,32 +1,5 @@
 /* ========== CONTACT PAGE ========== */
-
-.contact-page {
-  max-width: var(--iprm-max-content);
-  margin: 0 auto;
-  padding: 24px 24px 80px;
-}
-
-.contact-page__inner {
-  background: var(--iprm-white);
-  border-radius: var(--iprm-radius);
-  padding: 48px 40px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.contact-page__title {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--iprm-dark);
-  margin-bottom: 8px;
-}
-
-.contact-page__subtitle {
-  font-size: 14px;
-  color: var(--iprm-text-light);
-  margin-bottom: 32px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--iprm-border);
-}
+/* Layout використовує .iprm-content-page з common.css */
 
 /* ========== GRID LAYOUT ========== */
 
