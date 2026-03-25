@@ -126,7 +126,7 @@ def create_app(config_name=None):
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "
             "img-src 'self' data:; "
-            "frame-src https://www.liqpay.ua https://checkout.liqpay.ua; "
+            "frame-src 'self' blob: https://www.liqpay.ua https://checkout.liqpay.ua; "
             "connect-src 'self'"
         )
         response.headers['Content-Security-Policy'] = csp

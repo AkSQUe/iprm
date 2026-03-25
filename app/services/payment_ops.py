@@ -68,15 +68,15 @@ class PaymentOps:
             logger.warning('LiqPay callback: registration %d not found', reg_id)
             return False, 'registration not found'
 
-        if reg.payment_status == 'paid' and reg.payment_id == payment_id:
-            db.session.rollback()
-            return True, 'already processed'
-
         new_status = STATUS_MAP.get(liqpay_status)
         if not new_status:
             logger.warning('LiqPay callback: unknown status %s', liqpay_status)
             db.session.rollback()
             return False, f'unknown status: {liqpay_status}'
+
+        if reg.payment_status == new_status and reg.payment_id == payment_id:
+            db.session.rollback()
+            return True, 'already processed'
 
         callback_amount = payload.get('amount')
         return self.update_payment_status(

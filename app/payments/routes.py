@@ -42,6 +42,7 @@ def liqpay_callback():
 
 @payments_bp.route('/success')
 @login_required
+@limiter.limit('5 per minute')
 def success():
     order_id = request.args.get('order_id', '')
 
@@ -64,7 +65,7 @@ def success():
             ops.check_and_update(reg)
             db.session.refresh(reg)
         except Exception:
-            pass
+            logger.exception('Failed to poll LiqPay for REG-%d on success page', reg_id)
 
     if reg.payment_status == 'paid':
         return render_template('payments/success.html', reg=reg, event=reg.event)
