@@ -10,7 +10,8 @@ from app.services.payment_ops import PaymentOps, STATUS_MAP, ALLOWED_TRANSITIONS
 
 @pytest.fixture
 def user(app):
-    u = User(email='test@example.com', first_name='Test', last_name='User')
+    from uuid import uuid4
+    u = User(email=f'pay-{uuid4().hex[:6]}@test.com', first_name='Test', last_name='User')
     u.set_password('password123')
     db.session.add(u)
     db.session.flush()
@@ -20,7 +21,8 @@ def user(app):
 @pytest.fixture
 def event(app, user):
     e = Event(
-        title='Test Event', slug='test-event',
+        from uuid import uuid4 as _u
+        title='Test Event', slug=f'test-event-{_u().hex[:6]}',
         event_type='course', event_format='offline', status='active',
         price=1000, is_active=True, created_by=user.id,
     )
