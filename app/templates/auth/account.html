@@ -29,7 +29,7 @@
       {% if registrations %}
       <div class="account-courses">
         {% for reg in registrations %}
-        <a href="{{ url_for('courses.course_by_slug', slug=reg.event.slug) }}" class="account-course apple-reveal">
+        <div class="account-course apple-reveal">
           <div class="account-course__image">
             {% if reg.event.card_image %}
               <img src="{{ reg.event.card_image }}" alt="{{ reg.event.title }}" loading="lazy" width="180" height="120">
@@ -40,7 +40,9 @@
               <span class="badge badge--{{ reg.status }}">{{ reg.status_label }}</span>
               <span class="badge badge--{{ 'active' if reg.payment_status == 'paid' else ('danger' if reg.payment_status == 'unpaid' else ('warning' if reg.payment_status == 'pending' else 'draft')) }}">{{ reg.payment_status_label }}</span>
             </div>
-            <h3 class="account-course__title">{{ reg.event.title }}</h3>
+            <h3 class="account-course__title">
+              <a href="{{ url_for('courses.course_by_slug', slug=reg.event.slug) }}" class="account-course__link">{{ reg.event.title }}</a>
+            </h3>
             <div class="account-course__details">
               {% if reg.event.start_date %}
                 <span class="account-course__date">{{ reg.event.start_date.strftime('%d.%m.%Y') }}</span>
@@ -55,8 +57,15 @@
             {% if reg.attended and reg.cpd_points_awarded %}
               <div class="account-course__awarded">Нараховано {{ reg.cpd_points_awarded }} балiв БПР</div>
             {% endif %}
+            {% if reg.status == 'pending' and reg.payment_status == 'unpaid' and reg.payment_amount and reg.payment_amount > 0 %}
+            <div class="account-course__payment">
+              <a href="{{ url_for('registration.confirmation', registration_id=reg.id) }}" class="account-course__pay-btn">
+                Оплатити {{ reg.payment_amount | int }} &#8372;
+              </a>
+            </div>
+            {% endif %}
           </div>
-        </a>
+        </div>
         {% endfor %}
       </div>
       {% else %}
