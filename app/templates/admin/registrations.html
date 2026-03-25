@@ -1,0 +1,169 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Реєстрації | IPRM{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <h1 class="admin-hero__title">Реєстрації</h1>
+        <p class="admin-hero__subtitle">Всі реєстрації на заходи</p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <!-- Statistics -->
+    <div class="admin-stat-cards">
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ stats.total }}</span>
+        <span class="admin-stat-card__label">Всього</span>
+      </div>
+      <div class="admin-stat-card admin-stat-card--success">
+        <span class="admin-stat-card__value">{{ stats.confirmed }}</span>
+        <span class="admin-stat-card__label">Підтверджено</span>
+      </div>
+      <div class="admin-stat-card admin-stat-card--warning">
+        <span class="admin-stat-card__value">{{ stats.pending }}</span>
+        <span class="admin-stat-card__label">Очікує</span>
+      </div>
+      <div class="admin-stat-card admin-stat-card--danger">
+        <span class="admin-stat-card__value">{{ stats.cancelled }}</span>
+        <span class="admin-stat-card__label">Скасовано</span>
+      </div>
+      <div class="admin-stat-card admin-stat-card--accent">
+        <span class="admin-stat-card__value">{{ stats.total_paid | int }} &#8372;</span>
+        <span class="admin-stat-card__label">Оплачено</span>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="admin-stats-bar">
+      <form method="GET" action="{{ url_for('admin.registrations_all') }}" class="admin-filter-form">
+        <select name="status" class="form-input form-input--sm">
+          <option value="">Всі статуси</option>
+          <option value="pending"{% if filters.status == 'pending' %} selected{% endif %}>Очікує</option>
+          <option value="confirmed"{% if filters.status == 'confirmed' %} selected{% endif %}>Підтверджено</option>
+          <option value="cancelled"{% if filters.status == 'cancelled' %} selected{% endif %}>Скасовано</option>
+          <option value="completed"{% if filters.status == 'completed' %} selected{% endif %}>Завершено</option>
+        </select>
+        <select name="payment" class="form-input form-input--sm">
+          <option value="">Всі оплати</option>
+          <option value="unpaid"{% if filters.payment == 'unpaid' %} selected{% endif %}>Не оплачено</option>
+          <option value="pending"{% if filters.payment == 'pending' %} selected{% endif %}>Очікує оплати</option>
+          <option value="paid"{% if filters.payment == 'paid' %} selected{% endif %}>Оплачено</option>
+          <option value="refunded"{% if filters.payment == 'refunded' %} selected{% endif %}>Повернено</option>
+        </select>
+        <select name="event_id" class="form-input form-input--sm">
+          <option value="">Всі заходи</option>
+          {% for event in events %}
+            <option value="{{ event.id }}"{% if filters.event_id == event.id %} selected{% endif %}>{{ event.title }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Фільтрувати</button>
+        {% if filters.status or filters.payment or filters.event_id %}
+          <a href="{{ url_for('admin.registrations_all') }}" class="btn-admin btn-admin--sm">Скинути</a>
+        {% endif %}
+      </form>
+    </div>
+
+    <!-- Table -->
+    {% if registrations %}
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Захід</th>
+          <th>Учасник</th>
+          <th>Телефон</th>
+          <th>Статус</th>
+          <th>Оплата</th>
+          <th>Сума</th>
+          <th>Дата</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for reg in registrations %}
+        <tr>
+          <td>
+            {% if reg.event %}
+              <a href="{{ url_for('admin.event_registrations', event_id=reg.event_id) }}">{{ reg.event.title }}</a>
+            {% else %}
+              <span class="admin-text-muted">---</span>
+            {% endif %}
+          </td>
+          <td>
+            <strong>{{ reg.user.first_name }} {{ reg.user.last_name }}</strong><br>
+            <small>{{ reg.user.email }}</small>
+          </td>
+          <td>{{ reg.phone }}</td>
+          <td><span class="badge badge--{{ reg.status }}">{{ reg.status_label }}</span></td>
+          <td>
+            <span class="badge badge--{{ 'active' if reg.payment_status == 'paid' else ('published' if reg.payment_status == 'pending' else ('cancelled' if reg.payment_status == 'refunded' else 'draft')) }}">
+              {{ reg.payment_status_label }}
+            </span>
+          </td>
+          <td>
+            {% if reg.payment_amount %}
+              {{ reg.payment_amount | int }} &#8372;
+            {% else %}
+              <span class="admin-text-muted">--</span>
+            {% endif %}
+          </td>
+          <td>{{ reg.created_at.strftime('%d.%m.%Y') }}</td>
+          <td>
+            <div class="admin-table__actions">
+              {% if reg.status == 'pending' %}
+              <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="status" value="confirmed">
+                <input type="hidden" name="next" value="registrations_all">
+                <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Підтвердити</button>
+              </form>
+              {% endif %}
+              {% if reg.status in ('confirmed', 'pending') and not reg.attended %}
+              <form method="POST" action="{{ url_for('admin.registration_attendance', reg_id=reg.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="cpd_points" value="{{ reg.event.cpd_points or 0 }}">
+                <input type="hidden" name="next" value="registrations_all">
+                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">БПР</button>
+              </form>
+              {% endif %}
+              {% if reg.status != 'cancelled' %}
+              <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}" onsubmit="return confirm('Скасувати реєстрацію?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="status" value="cancelled">
+                <input type="hidden" name="next" value="registrations_all">
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">X</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div class="admin-empty">
+      <h3 class="admin-empty__title">Реєстрацій не знайдено</h3>
+      {% if filters.status or filters.payment or filters.event_id %}
+        <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.registrations_all') }}">скинути їх</a></p>
+      {% else %}
+        <p>Учасники зможуть реєструватися на опубліковані заходи</p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
