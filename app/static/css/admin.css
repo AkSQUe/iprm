@@ -529,8 +529,8 @@
 
 .admin-dropzone:hover,
 .admin-dropzone--dragover {
-  border-color: #7055a4;
-  background: #ede9f6;
+  border-color: var(--iprm-nav-active);
+  background: var(--iprm-accent-light);
 }
 
 .admin-dropzone--uploading {
@@ -553,7 +553,7 @@
 }
 
 .admin-dropzone__prompt svg {
-  color: #7055a4;
+  color: var(--iprm-nav-active);
   opacity: 0.5;
 }
 
@@ -568,7 +568,7 @@
 }
 
 .admin-dropzone__link {
-  color: #7055a4;
+  color: var(--iprm-nav-active);
   font-weight: 500;
   text-decoration: underline;
 }
@@ -595,7 +595,7 @@
   border-radius: 50%;
   border: none;
   background: rgba(0, 0, 0, 0.6);
-  color: #fff;
+  color: var(--iprm-white);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;

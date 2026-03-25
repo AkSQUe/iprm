@@ -1,0 +1,342 @@
+/* admin-apple.css -- Apple-style v2 overlay for admin panel */
+/* Loaded AFTER admin.css, overrides legacy styles */
+
+/* ========== SIDEBAR ========== */
+
+.admin-sidebar {
+  background: #f5f5f7;
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.admin-sidebar__group-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #86868b;
+}
+
+.admin-sidebar__link {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: #424245;
+  border-radius: 10px;
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.admin-sidebar__link:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #1d1d1f;
+}
+
+.admin-sidebar__link--active {
+  background: #7055a4;
+  color: #fff;
+}
+
+.admin-sidebar__link--active:hover {
+  background: #5d4691;
+  color: #fff;
+}
+
+/* ========== LAYOUT ========== */
+
+.admin-layout {
+  padding: 40px;
+  background: #fff;
+}
+
+/* ========== HERO ========== */
+
+.admin-hero {
+  margin-bottom: 40px;
+}
+
+.admin-hero__title {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #1d1d1f;
+}
+
+.admin-hero__subtitle {
+  font-size: 0.9375rem;
+  color: #86868b;
+  margin-top: 4px;
+}
+
+/* ========== BUTTONS ========== */
+
+.btn-admin {
+  border-radius: 980px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition:
+    transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    background-color 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.btn-admin--primary {
+  background: #7055a4;
+  color: #fff;
+}
+
+.btn-admin--primary:hover {
+  background: #5d4691;
+  transform: scale(1.02) translateY(-1px);
+  box-shadow: 0 4px 16px rgba(112, 85, 164, 0.2);
+}
+
+.btn-admin--primary:active {
+  transform: scale(0.98) translateY(0);
+  box-shadow: 0 1px 4px rgba(112, 85, 164, 0.1);
+}
+
+.btn-admin--secondary {
+  background: #fff;
+  color: #424245;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.btn-admin--secondary:hover {
+  background: #f5f5f7;
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.btn-admin--danger {
+  background: #fff;
+  color: #ff3b30;
+  border: 1px solid rgba(255, 59, 48, 0.2);
+}
+
+.btn-admin--danger:hover {
+  background: #fef2f2;
+  border-color: rgba(255, 59, 48, 0.4);
+}
+
+.btn-admin--sm {
+  padding: 4px 14px;
+  font-size: 0.8125rem;
+}
+
+.btn-admin:focus-visible {
+  outline: 2px solid #7055a4;
+  outline-offset: 3px;
+}
+
+/* ========== TABLE ========== */
+
+.admin-table {
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.admin-table th {
+  background: #f5f5f7;
+  padding: 14px 16px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #86868b;
+  letter-spacing: 0.06em;
+}
+
+.admin-table td {
+  padding: 14px 16px;
+  font-size: 0.875rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  color: #424245;
+}
+
+.admin-table td strong {
+  color: #1d1d1f;
+  font-weight: 600;
+}
+
+.admin-table tr:hover td {
+  background: rgba(112, 85, 164, 0.02);
+}
+
+.admin-table__actions {
+  gap: 6px;
+}
+
+/* ========== BADGES ========== */
+
+.badge {
+  border-radius: 980px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 3px 12px;
+}
+
+/* ========== EMPTY STATE ========== */
+
+.admin-empty {
+  background: #f5f5f7;
+  border-radius: 24px;
+  padding: 80px 32px;
+}
+
+.admin-empty__title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #1d1d1f;
+  margin-bottom: 8px;
+}
+
+.admin-empty p {
+  color: #86868b;
+  font-size: 0.9375rem;
+}
+
+/* ========== STAT CARDS ========== */
+
+.admin-stat-card {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.admin-stat-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.admin-stat-card__value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #1d1d1f;
+}
+
+.admin-stat-card__label {
+  font-size: 0.6875rem;
+  color: #86868b;
+  letter-spacing: 0.06em;
+}
+
+/* ========== BREADCRUMB ========== */
+
+.admin-breadcrumb__link {
+  color: #7055a4;
+}
+
+.admin-breadcrumb__link:hover {
+  color: #5d4691;
+}
+
+.admin-breadcrumb__sep,
+.admin-breadcrumb__current {
+  color: #86868b;
+}
+
+/* ========== INTEGRATION CARDS ========== */
+
+.admin-integration-card {
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  transition:
+    border-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.admin-integration-card--link:hover {
+  border-color: #7055a4;
+  box-shadow: 0 4px 16px rgba(112, 85, 164, 0.08);
+}
+
+.admin-integration-card__title {
+  color: #1d1d1f;
+}
+
+.admin-integration-card p {
+  color: #86868b;
+}
+
+/* ========== FORM OVERRIDES ========== */
+
+.admin-form .form-checkbox {
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.admin-form .form-checkbox:hover {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+/* ========== DROPZONE ========== */
+
+.admin-dropzone {
+  border: 2px dashed rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  background: #f5f5f7;
+}
+
+.admin-dropzone:hover,
+.admin-dropzone--dragover {
+  border-color: #7055a4;
+  background: #ede9f6;
+}
+
+/* ========== PROGRAM BLOCK ========== */
+
+.admin-program-block {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+}
+
+/* ========== TODO LIST ========== */
+
+.admin-todo li {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  color: #424245;
+}
+
+.admin-todo li::before {
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+}
+
+/* ========== FILTER FORM ========== */
+
+.admin-filter-form .form-input {
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.admin-filter-form .form-input:focus {
+  border-color: #7055a4;
+  box-shadow: 0 0 0 3px #ede9f6;
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .admin-sidebar {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    border-right: none;
+  }
+
+  .admin-layout {
+    padding: 24px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-layout {
+    padding: 16px 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-admin,
+  .admin-stat-card,
+  .admin-integration-card {
+    transition: none;
+  }
+}
