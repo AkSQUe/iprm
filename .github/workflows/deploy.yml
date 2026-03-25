@@ -37,4 +37,4 @@ jobs:
             chown -R www-data:www-data /var/www/iprm
             systemctl restart iprm
             sleep 3
-            curl -sf http://127.0.0.1:8000/ > /dev/null || (systemctl status iprm --no-pager; exit 1)
+            curl -sf --unix-socket /var/www/iprm/iprm.sock http://localhost/ > /dev/null || (systemctl status iprm --no-pager; exit 1)

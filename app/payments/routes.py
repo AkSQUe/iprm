@@ -59,9 +59,12 @@ def success():
         abort(404)
 
     if reg.payment_status != 'paid':
-        ops = PaymentOps(get_liqpay_service())
-        ops.check_and_update(reg)
-        db.session.refresh(reg)
+        try:
+            ops = PaymentOps(get_liqpay_service())
+            ops.check_and_update(reg)
+            db.session.refresh(reg)
+        except Exception:
+            pass
 
     if reg.payment_status == 'paid':
         return render_template('payments/success.html', reg=reg, event=reg.event)
