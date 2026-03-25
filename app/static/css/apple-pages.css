@@ -11,7 +11,7 @@
 /* ========== INTERNAL HERO (92vh, white, centered) ========== */
 
 .apple-page .iprm-hero-wrap {
-  background: #fff;
+  background: var(--iprm-white);
   padding: 0;
 }
 
@@ -20,7 +20,7 @@
   min-height: 92vh;
   max-width: none;
   border-radius: 0;
-  background: #fff;
+  background: var(--iprm-white);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -185,7 +185,7 @@
 /* ========== CARD OVERRIDES ========== */
 
 .apple-page .iprm-course-card {
-  background: #fff;
+  background: var(--iprm-white);
   border: none;
   border-radius: 24px;
   padding: 0;
@@ -252,7 +252,7 @@
 }
 
 .apple-page .apple-feature-card {
-  background: #fff;
+  background: var(--iprm-white);
   border-radius: 24px;
   padding: 40px 32px;
   transition:
@@ -359,7 +359,7 @@
 }
 
 .apple-page .iprm-trainer-card {
-  background: #fff;
+  background: var(--iprm-white);
   border-radius: 24px;
   overflow: hidden;
   transition:
@@ -421,7 +421,7 @@
 }
 
 .apple-page .iprm-target-card {
-  background: #fff;
+  background: var(--iprm-white);
   border-radius: 20px;
   padding: 36px 32px;
   border: none;
@@ -452,7 +452,7 @@
 }
 
 .apple-page .iprm-program__block {
-  background: #fff;
+  background: var(--iprm-white);
   border-radius: 24px;
   padding: 40px 36px;
   border: none;
@@ -521,7 +521,7 @@
 .apple-page .apple-clinic-card {
   border-radius: 24px;
   overflow: hidden;
-  background: #fff;
+  background: var(--iprm-white);
   transition:
     transform 0.3s var(--ease-interact),
     box-shadow 0.3s var(--ease-interact);
