@@ -233,7 +233,21 @@
   color: var(--iprm-badge-draft-text);
 }
 
-/* .badge--confirmed -- видалено (дублікат .badge--active) */
+/* Семантичні aliases для сповіщень */
+.badge--success {
+  background: var(--iprm-badge-active-bg);
+  color: var(--iprm-badge-active-text);
+}
+
+.badge--danger {
+  background: var(--iprm-error-bg);
+  color: var(--iprm-error-text);
+}
+
+.badge--warning {
+  background: var(--iprm-warning-bg);
+  color: var(--iprm-warning-text);
+}
 
 /* ========== FILTER FORM ========== */
 
@@ -293,6 +307,10 @@
   gap: 20px;
 }
 
+.admin-form__grid--spaced {
+  margin-bottom: 24px;
+}
+
 .admin-form__full {
   grid-column: 1 / -1;
 }
@@ -314,10 +332,17 @@
 }
 
 /* Checkbox */
-.admin-form .form-group--align-end {
+.admin-form .form-group--align-end,
+.form-group--align-end {
   display: flex;
   flex-direction: column;
+  gap: 12px;
   justify-content: flex-end;
+}
+
+/* Компактна форма (малий відступ зверху) */
+.admin-form--compact {
+  margin-top: 12px;
 }
 
 .admin-form .form-checkbox--stretch {
@@ -607,6 +632,10 @@
   grid-template-columns: repeat(5, 1fr);
   gap: 12px;
   margin-bottom: 24px;
+}
+
+.admin-stat-cards--4 {
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .admin-stat-card {

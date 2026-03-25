@@ -12,6 +12,9 @@ python-dotenv==1.0.1
 gunicorn==22.0.0
 Flask-Limiter==3.5.1
 Flask-Migrate==4.1.0
+Flask-Mail==0.10.0
+APScheduler==3.10.4
+cryptography==44.0.3
 
 # Transitive dependencies
 alembic==1.18.4

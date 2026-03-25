@@ -24,7 +24,7 @@
   </div>
 
   <!-- Filters -->
-  <form method="GET" class="admin-form__grid" style="margin-bottom: 24px;">
+  <form method="GET" class="admin-form__grid admin-form__grid--spaced">
     <div class="form-group">
       <label>Статус</label>
       <select name="status" class="form-input" onchange="this.form.submit()">
@@ -92,17 +92,17 @@
 
   <!-- Pagination -->
   {% if pagination.pages > 1 %}
-  <div style="display:flex; gap:8px; justify-content:center; margin-top:24px;">
+  <nav class="admin-pagination">
     {% if pagination.has_prev %}
     <a href="{{ url_for('admin.notifications_log', page=pagination.prev_num, status=filters.status, trigger=filters.trigger) }}" class="btn-admin btn-admin--secondary btn-admin--sm">&larr;</a>
     {% endif %}
-    <span style="padding:8px 16px; font-size:14px; color:var(--iprm-text-light);">
+    <span class="admin-pagination__info">
       {{ pagination.page }} / {{ pagination.pages }}
     </span>
     {% if pagination.has_next %}
     <a href="{{ url_for('admin.notifications_log', page=pagination.next_num, status=filters.status, trigger=filters.trigger) }}" class="btn-admin btn-admin--secondary btn-admin--sm">&rarr;</a>
     {% endif %}
-  </div>
+  </nav>
   {% endif %}
 
   {% else %}

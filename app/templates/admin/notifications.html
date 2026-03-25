@@ -24,21 +24,21 @@
   {% include 'partials/flash_messages.html' %}
 
   <!-- Stats -->
-  <div class="admin-stat-cards" style="grid-template-columns: repeat(4, 1fr);">
+  <div class="admin-stat-cards admin-stat-cards--4">
     <div class="admin-stat-card">
       <div class="admin-stat-card__value">{{ stats.total }}</div>
       <div class="admin-stat-card__label">Всього</div>
     </div>
-    <div class="admin-stat-card">
-      <div class="admin-stat-card__value" style="color: #16a34a;">{{ stats.sent }}</div>
+    <div class="admin-stat-card admin-stat-card--success">
+      <div class="admin-stat-card__value">{{ stats.sent }}</div>
       <div class="admin-stat-card__label">Відправлено</div>
     </div>
-    <div class="admin-stat-card">
-      <div class="admin-stat-card__value" style="color: #ef4444;">{{ stats.failed }}</div>
+    <div class="admin-stat-card admin-stat-card--danger">
+      <div class="admin-stat-card__value">{{ stats.failed }}</div>
       <div class="admin-stat-card__label">Помилки</div>
     </div>
-    <div class="admin-stat-card">
-      <div class="admin-stat-card__value" style="color: #f59e0b;">{{ stats.pending }}</div>
+    <div class="admin-stat-card admin-stat-card--warning">
+      <div class="admin-stat-card__value">{{ stats.pending }}</div>
       <div class="admin-stat-card__label">Очікує</div>
     </div>
   </div>
@@ -80,7 +80,7 @@
         <input type="text" name="reminder_days" id="reminder_days" class="form-input" value="{{ settings.reminder_days }}" placeholder="7,3,1">
         <div class="form-hint">Через кому: 7,3,1</div>
       </div>
-      <div class="form-group" style="display:flex; flex-direction:column; gap:12px; justify-content:flex-end;">
+      <div class="form-group form-group--align-end">
         <div class="form-checkbox">
           <input type="checkbox" name="smtp_use_ssl" id="smtp_use_ssl"{% if settings.smtp_use_ssl %} checked{% endif %}>
           <label for="smtp_use_ssl">SSL (порт 465)</label>
@@ -101,7 +101,7 @@
   </form>
 
   <!-- Test & Scheduler -->
-  <div class="admin-form__grid" style="margin-bottom: 24px;">
+  <div class="admin-form__grid admin-form__grid--spaced">
     <div class="form-section admin-form__section">
       <h3 class="admin-form__section-title">Тестовий лист</h3>
       <form method="POST" action="{{ url_for('admin.notifications_test') }}">
@@ -135,12 +135,12 @@
         {% endfor %}
       </table>
       {% if scheduler_running %}
-      <form method="POST" action="{{ url_for('admin.scheduler_pause') }}" style="margin-top: 12px;">
+      <form method="POST" action="{{ url_for('admin.scheduler_pause') }}" class="admin-form--compact">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Призупинити</button>
       </form>
       {% else %}
-      <form method="POST" action="{{ url_for('admin.scheduler_resume') }}" style="margin-top: 12px;">
+      <form method="POST" action="{{ url_for('admin.scheduler_resume') }}" class="admin-form--compact">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Відновити</button>
       </form>
