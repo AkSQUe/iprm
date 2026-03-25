@@ -1,12 +1,14 @@
 import logging
 from flask import render_template, redirect, url_for, flash, request
+from flask_login import current_user
 from sqlalchemy import case, func
 from sqlalchemy.orm import joinedload
 
 from app.admin import admin_bp
+from app.admin.decorators import admin_required
 
 logger = logging.getLogger(__name__)
-from app.admin.decorators import admin_required
+audit_logger = logging.getLogger('audit')
 from app.extensions import db
 from app.models.event import Event
 from app.models.registration import EventRegistration
