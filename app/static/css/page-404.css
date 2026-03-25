@@ -31,12 +31,7 @@
   max-width: 600px;
 }
 
-.iprm-error-page .apple-gradient-text {
-  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 40%, var(--apple-orange) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+/* .apple-gradient-text визначено глобально в apple-pages.css */
 
 .iprm-error-page__subtitle {
   font-size: 17px;

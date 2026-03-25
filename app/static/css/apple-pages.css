@@ -69,7 +69,8 @@
   margin-bottom: 16px;
 }
 
-.apple-page .apple-gradient-text {
+/* Глобальний градієнтний текст -- використовується на apple-page, error-page, index */
+.apple-gradient-text {
   background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 40%, var(--apple-orange) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
