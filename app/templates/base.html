@@ -23,6 +23,7 @@
   <meta name="twitter:image" content="{{ self.og_image() }}">
   <link rel="canonical" href="{% block canonical %}{{ request.base_url }}{% endblock %}">
   <link rel="preload" href="{{ url_for('static', filename='fonts/inter-400.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ url_for('static', filename='fonts/inter-600.woff2') }}" as="font" type="font/woff2" crossorigin>
   {% block extra_meta %}{% endblock %}
   {% block jsonld %}
   <script type="application/ld+json">
@@ -44,7 +45,9 @@
   {% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}?v={{ assets_version }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}?v={{ assets_version }}">
+  {% block molecular_css %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/molecular-background.css') }}?v={{ assets_version }}">
+  {% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/apple-pages.css') }}?v={{ assets_version }}">
   {% block extra_css %}{% endblock %}
   <script>
@@ -54,7 +57,9 @@
 </head>
 <body>
 
+  {% block molecular_bg %}
   <div id="molecular-background" aria-hidden="true"></div>
+  {% endblock %}
 
   {% block header %}
   {% include 'partials/header.html' %}
@@ -69,7 +74,9 @@
   {% include 'partials/cookie_banner.html' %}
 
   <script src="{{ url_for('static', filename='js/theme-toggle.js') }}?v={{ assets_version }}"></script>
+  {% block molecular_js %}
   <script defer src="{{ url_for('static', filename='js/molecular-background.js') }}?v={{ assets_version }}"></script>
+  {% endblock %}
   {% block extra_scripts %}{% endblock %}
 </body>
 </html>

@@ -81,7 +81,7 @@
       <form method="POST" action="{{ liqpay_checkout_url }}" accept-charset="utf-8">
         <input type="hidden" name="data" value="{{ liqpay_data }}">
         <input type="hidden" name="signature" value="{{ liqpay_signature }}">
-        <button type="submit" class="iprm-btn iprm-btn--primary reg-liqpay-payment__btn">
+        <button type="submit" class="apple-btn apple-btn--primary reg-liqpay-payment__btn">
           Оплатити {{ reg.payment_amount | int }} &#8372;
         </button>
       </form>
@@ -99,9 +99,7 @@
   {% endif %}
 
   <div class="reg-actions reg-actions--center">
-    <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-btn iprm-btn--primary">
-      <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Повернутися до курсу
-    </a>
+    <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="apple-btn apple-btn--secondary">Повернутися до курсу</a>
   </div>
 
 </div>

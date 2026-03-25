@@ -28,15 +28,11 @@
   </div>
 
   <div class="reg-actions reg-actions--center">
-    <a href="{{ url_for('registration.confirmation', registration_id=reg.id) }}" class="iprm-btn iprm-btn--primary">
-      Повернутися до реєстрації
-    </a>
+    <a href="{{ url_for('registration.confirmation', registration_id=reg.id) }}" class="apple-btn apple-btn--primary">Повернутися до реєстрації</a>
   </div>
   {% else %}
   <div class="reg-actions reg-actions--center">
-    <a href="{{ url_for('courses.course_list') }}" class="iprm-btn iprm-btn--primary">
-      Повернутися до курсів
-    </a>
+    <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Повернутися до курсів</a>
   </div>
   {% endif %}
 

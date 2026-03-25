@@ -4,6 +4,10 @@
 {% block meta_description %}{{ event.subtitle or event.short_description or event.title }}{% endblock %}
 {% if event.card_image %}{% block og_image %}{{ event.card_image }}{% endblock %}{% endif %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}">
+{% endblock %}
+
 {% block jsonld %}
 <script type="application/ld+json">
 {
@@ -158,16 +162,5 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-(function () {
-  var els = document.querySelectorAll('.apple-reveal');
-  if (!els.length) return;
-  var obs = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
-    });
-  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-  els.forEach(function (el) { obs.observe(el); });
-})();
-</script>
+<script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
 {% endblock %}

@@ -111,9 +111,8 @@
     </div>
 
     <div class="reg-actions">
-      <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-btn iprm-btn--secondary">Назад</a>
-      <button type="submit" class="iprm-btn iprm-btn--primary">
-        <span class="iprm-btn__arrow">&#x2197;</span>
+      <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="apple-btn apple-btn--secondary">Назад</a>
+      <button type="submit" class="apple-btn apple-btn--primary">
         {% if event.price and event.price > 0 %}
           Зареєструватися ({{ event.price | int }} &#8372;)
         {% else %}

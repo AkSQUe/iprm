@@ -563,18 +563,39 @@
     <p class="ds-hint">bg: var(--iprm-card-bg) / padding: 28px / grid: 2col / input: 10px 14px / focus: accent ring</p>
   </div>
 
-  <!-- ===== EMPTY STATE ===== -->
+  <!-- ===== CONTENT PAGE ===== -->
   <div class="ds-section-alt">
-    <div class="ds-section" id="empty-state">
+    <div class="ds-section" id="content-page">
       <p class="ds-label">Components</p>
-      <h2 class="ds-title">Порожній стан</h2>
+      <h2 class="ds-title">Content Page Layout</h2>
       <div class="ds-demo">
+        <div style="max-width:600px;">
+          <div class="iprm-content-page__inner">
+            <h1 class="iprm-content-page__title">Заголовок сторінки</h1>
+            <p class="iprm-content-page__subtitle">Підзаголовок з додатковою інформацією</p>
+            <p style="font-size:14px;color:var(--iprm-text);line-height:1.7;">Вміст сторінки тут...</p>
+          </div>
+        </div>
+      </div>
+      <p class="ds-hint">.iprm-content-page: max-width, padding / .iprm-content-page__inner: bg white, radius, shadow / Використовується для: legal, contact, cookies</p>
+    </div>
+  </div>
+
+  <!-- ===== EMPTY STATE ===== -->
+  <div class="ds-section" id="empty-state">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Порожній стан</h2>
+    <div class="ds-demo">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
         <div class="iprm-empty-state" style="background: var(--iprm-card-bg); border-radius: var(--iprm-radius);">
           <p>Інформація скоро з'явиться</p>
         </div>
+        <div class="iprm-empty-state iprm-empty-state--full" style="background: var(--iprm-card-bg); border-radius: var(--iprm-radius); grid-column: 1 / -1;">
+          <p>Порожній стан на всю ширину (--full)</p>
+        </div>
       </div>
-      <p class="ds-hint">text-align: center / padding: 48px 24px / color: var(--iprm-text-light)</p>
     </div>
+    <p class="ds-hint">.iprm-empty-state: text-align center, padding 48px 24px / .iprm-empty-state--full: grid-column 1 / -1</p>
   </div>
 
   <!-- ===== ANIMATIONS ===== -->
