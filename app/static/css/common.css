@@ -641,11 +641,7 @@ a {
   margin-bottom: 20px;
 }
 
-.iprm-section__cta {
-  display: flex;
-  justify-content: center;
-  margin-top: 18px;
-}
+/* .iprm-section__cta -- видалено (замінено на .apple-section-cta в apple-pages.css) */
 
 /* ========== TRAINER ========== */
 
