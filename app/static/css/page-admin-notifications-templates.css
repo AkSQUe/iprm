@@ -1,0 +1,101 @@
+/* Адмін: шаблони листів -- IPRM */
+
+/* Табки шаблонів */
+.template-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 0 32px;
+  flex-wrap: wrap;
+}
+
+.template-tab {
+  display: inline-block;
+  padding: 8px 20px;
+  border-radius: 980px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--apple-gray-dark);
+  background: var(--apple-section-bg);
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.template-tab:hover {
+  background: var(--iprm-accent-light);
+  color: var(--iprm-nav-active);
+}
+
+.template-tab--active {
+  background: var(--iprm-nav-active);
+  color: var(--iprm-white);
+}
+
+.template-tab--active:hover {
+  background: var(--iprm-accent-hover);
+  color: var(--iprm-white);
+}
+
+/* Превью шаблону */
+.template-preview {
+  display: none;
+}
+
+.template-preview--active {
+  display: block;
+}
+
+.template-preview__frame {
+  width: 100%;
+  border: none;
+  border-radius: 16px;
+  background: var(--apple-section-bg);
+  min-height: 700px;
+}
+
+.template-preview__info {
+  display: flex;
+  gap: 24px;
+  margin: 0 0 24px;
+  flex-wrap: wrap;
+}
+
+.template-preview__meta {
+  font-size: 13px;
+  color: var(--apple-gray);
+}
+
+.template-preview__meta strong {
+  color: var(--apple-black);
+  font-weight: 600;
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .template-tabs {
+    gap: 6px;
+    padding: 0 0 24px;
+  }
+
+  .template-tab {
+    padding: 6px 16px;
+    font-size: 13px;
+  }
+
+  .template-preview__frame {
+    min-height: 500px;
+  }
+
+  .template-preview__info {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .template-preview__frame {
+    min-height: 400px;
+    border-radius: 12px;
+  }
+}
