@@ -1,4 +1,4 @@
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload, selectinload, contains_eager
 
 from app.extensions import db
 from app.models.event import Event
@@ -53,6 +53,28 @@ class TestJoinedLoadQueries:
 
         assert len(regs) == 1
         assert regs[0].user.email == sample_user.email
+
+
+    def test_registrations_with_contains_eager_event(self, db_session, sample_user, sample_event):
+        """contains_eager(EventRegistration.event) завантажує event через існуючий JOIN."""
+        reg = EventRegistration(
+            user_id=sample_user.id, event_id=sample_event.id,
+            phone='+380', specialty='S', workplace='W',
+        )
+        db_session.add(reg)
+        db_session.flush()
+
+        regs = (
+            EventRegistration.query
+            .filter_by(user_id=sample_user.id)
+            .join(Event)
+            .options(contains_eager(EventRegistration.event))
+            .order_by(Event.start_date.desc())
+            .all()
+        )
+
+        assert len(regs) == 1
+        assert regs[0].event.title == sample_event.title
 
 
 class TestFilterQueries:

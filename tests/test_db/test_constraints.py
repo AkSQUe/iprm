@@ -117,6 +117,38 @@ class TestDefaultValues:
         assert clinic.is_active is True
 
 
+class TestCheckConstraints:
+    """Перевірка CHECK constraints на рівні БД (SQLite не підтримує всі CHECK)."""
+
+    def test_event_max_participants_zero_rejected(self, db_session):
+        """CHECK constraint: max_participants не може бути 0."""
+        event = Event(title='E', slug='e-ck-mp-zero', max_participants=0)
+        db_session.add(event)
+        with pytest.raises(Exception):
+            db_session.flush()
+
+    def test_event_max_participants_negative_rejected(self, db_session):
+        """CHECK constraint: max_participants не може бути від'ємним."""
+        event = Event(title='E', slug='e-ck-mp-neg', max_participants=-1)
+        db_session.add(event)
+        with pytest.raises(Exception):
+            db_session.flush()
+
+    def test_event_max_participants_null_allowed(self, db_session):
+        """max_participants NULL допустимий (необмежена кількість)."""
+        event = Event(title='E', slug='e-ck-mp-null', max_participants=None)
+        db_session.add(event)
+        db_session.flush()
+        assert event.max_participants is None
+
+    def test_event_max_participants_positive_allowed(self, db_session):
+        """max_participants >= 1 допустимий."""
+        event = Event(title='E', slug='e-ck-mp-pos', max_participants=30)
+        db_session.add(event)
+        db_session.flush()
+        assert event.max_participants == 30
+
+
 class TestTimestamps:
     """Перевірка автоматичних timestamps."""
 

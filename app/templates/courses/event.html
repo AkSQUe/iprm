@@ -58,7 +58,7 @@
         {% if event.price %}
           <span class="iprm-hero__price">{{ event.price | int }} &#8372; за курс</span>
         {% endif %}
-        <h1 class="iprm-hero__title">{{ event.title }}</h1>
+        <h1 class="iprm-hero__title">{% set words = event.title.rsplit(' ', 1) %}{% if words | length > 1 %}{{ words[0] }} <span class="apple-gradient-text">{{ words[1] }}</span>{% else %}<span class="apple-gradient-text">{{ event.title }}</span>{% endif %}</h1>
         {% if event.subtitle %}
           <p class="iprm-hero__subtitle">{{ event.subtitle }}</p>
         {% endif %}

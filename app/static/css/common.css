@@ -1495,6 +1495,18 @@ a {
     height: 200px;
   }
 
+  .iprm-content-page {
+    padding: 24px 16px 48px;
+  }
+
+  .iprm-content-page__inner {
+    padding: 28px 20px;
+  }
+
+  .iprm-content-page__title {
+    font-size: 22px;
+  }
+
   .iprm-footer {
     padding: 32px 16px;
   }

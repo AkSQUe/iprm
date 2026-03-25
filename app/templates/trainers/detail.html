@@ -38,7 +38,7 @@
   <div class="iprm-hero-wrap">
     <section class="iprm-hero">
       <div class="iprm-hero__content">
-        <h1 class="iprm-hero__title">{{ trainer.full_name }}</h1>
+        <h1 class="iprm-hero__title">{% set words = trainer.full_name.rsplit(' ', 1) %}{% if words | length > 1 %}{{ words[0] }} <span class="apple-gradient-text">{{ words[1] }}</span>{% else %}<span class="apple-gradient-text">{{ trainer.full_name }}</span>{% endif %}</h1>
         {% if trainer.role %}
           <p class="iprm-hero__subtitle">{{ trainer.role }}</p>
         {% endif %}
