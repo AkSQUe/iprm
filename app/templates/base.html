@@ -41,9 +41,9 @@
   }
   </script>
   {% endblock %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/molecular-background.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}?v={{ assets_version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}?v={{ assets_version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/molecular-background.css') }}?v={{ assets_version }}">
   {% block extra_css %}{% endblock %}
   <script>
     (function(){var t=localStorage.getItem('iprm-theme');if(t==='branded')document.documentElement.setAttribute('data-theme','branded');})();
@@ -66,7 +66,7 @@
 
   {% include 'partials/cookie_banner.html' %}
 
-  <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
-  <script defer src="{{ url_for('static', filename='js/molecular-background.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/theme-toggle.js') }}?v={{ assets_version }}"></script>
+  <script defer src="{{ url_for('static', filename='js/molecular-background.js') }}?v={{ assets_version }}"></script>
 </body>
 </html>

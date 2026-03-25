@@ -4,7 +4,7 @@
 {% block meta_description %}Публічна оферта Інституту Плазмотерапії та Регенеративної Медицини. Умови надання освітніх послуг та участі в курсах.{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}

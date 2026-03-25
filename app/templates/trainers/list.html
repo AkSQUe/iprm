@@ -18,7 +18,7 @@
 {% endblock %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}

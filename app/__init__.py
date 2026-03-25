@@ -1,8 +1,35 @@
+import hashlib
 import logging
 import os
+import time
+
 from flask import Flask
 from config import config
 from app.extensions import db, login_manager, csrf, migrate, limiter
+
+
+_cached_assets_version = None
+
+
+def get_assets_version(static_folder):
+    global _cached_assets_version
+    if _cached_assets_version:
+        return _cached_assets_version
+
+    css_dir = os.path.join(static_folder, 'css')
+    js_dir = os.path.join(static_folder, 'js')
+    mtimes = []
+
+    for folder in (css_dir, js_dir):
+        if os.path.isdir(folder):
+            for f in sorted(os.listdir(folder)):
+                if f.endswith(('.css', '.js')):
+                    mtimes.append(f'{f}:{os.path.getmtime(os.path.join(folder, f))}')
+
+    _cached_assets_version = (
+        hashlib.md5('|'.join(mtimes).encode()).hexdigest()[:8] if mtimes else '1.0'
+    )
+    return _cached_assets_version
 
 
 def _configure_logging(app):
@@ -78,6 +105,14 @@ def create_app(config_name=None):
     from app.cli import seed_courses
     app.cli.add_command(seed_courses)
 
+    @app.context_processor
+    def inject_assets_version():
+        if app.debug:
+            version = str(int(time.time()))
+        else:
+            version = get_assets_version(app.static_folder)
+        return {'assets_version': version}
+
     @app.after_request
     def set_security_headers(response):
         response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -86,6 +121,12 @@ def create_app(config_name=None):
         response.headers['X-XSS-Protection'] = '1; mode=block'
         if not app.debug:
             response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        return response
+
+    @app.after_request
+    def no_cache_html(response):
+        if 'text/html' in (response.content_type or ''):
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         return response
 
     return app

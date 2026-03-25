@@ -4,7 +4,7 @@
 {% block meta_description %}Медичний дисклеймер IPRM. Інформація на сайті не замінює консультацію лікаря. Обмеження відповідальності.{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}

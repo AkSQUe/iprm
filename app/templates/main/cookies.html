@@ -4,7 +4,7 @@
 {% block meta_description %}Політика використання Cookie на сайті IPRM. Які файли cookie ми використовуємо та як ви можете ними керувати.{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}

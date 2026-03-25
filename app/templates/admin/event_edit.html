@@ -4,7 +4,7 @@
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
@@ -226,5 +226,5 @@
   </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/admin-event-edit.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin-event-edit.js') }}?v={{ assets_version }}"></script>
 {% endblock %}

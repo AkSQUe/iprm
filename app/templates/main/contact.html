@@ -4,8 +4,8 @@
 {% block meta_description %}Зв'яжіться з Інститутом Плазмотерапії та Регенеративної Медицини. Телефон, адреса, форма зворотного зв'язку.{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-contact.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-contact.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block jsonld %}
