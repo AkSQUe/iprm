@@ -168,17 +168,7 @@
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
-  .legal-page {
-    padding: 24px 16px 48px;
-  }
-
-  .legal-page__inner {
-    padding: 28px 20px;
-  }
-
-  .legal-page__title {
-    font-size: 22px;
-  }
+  /* Responsive для layout (.iprm-content-page) -- в common.css */
 
   .legal-details td:first-child {
     white-space: normal;
@@ -187,13 +177,7 @@
 }
 
 @media (max-width: 480px) {
-  .legal-page__inner {
-    padding: 20px 16px;
-  }
-
-  .legal-page__title {
-    font-size: 20px;
-  }
+  /* Responsive для layout (.iprm-content-page) -- в common.css */
 
   .legal-details td {
     display: block;
