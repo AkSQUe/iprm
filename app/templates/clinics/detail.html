@@ -28,7 +28,7 @@
   <div class="iprm-hero-wrap">
     <section class="iprm-hero">
       <div class="iprm-hero__content">
-        <h1 class="iprm-hero__title">{{ clinic.name }}</h1>
+        <h1 class="iprm-hero__title">{% set words = clinic.name.rsplit(' ', 1) %}{% if words | length > 1 %}{{ words[0] }} <span class="apple-gradient-text">{{ words[1] }}</span>{% else %}<span class="apple-gradient-text">{{ clinic.name }}</span>{% endif %}</h1>
         {% if clinic.short_description %}
           <p class="iprm-hero__subtitle">{{ clinic.short_description }}</p>
         {% endif %}

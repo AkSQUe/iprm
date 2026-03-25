@@ -1539,6 +1539,14 @@ a {
 }
 
 @media (max-width: 480px) {
+  .iprm-content-page__inner {
+    padding: 20px 16px;
+  }
+
+  .iprm-content-page__title {
+    font-size: 20px;
+  }
+
   .iprm-hero__title {
     font-size: 20px;
   }
