@@ -511,6 +511,104 @@
   color: var(--iprm-text-light);
 }
 
+/* ========== IMAGE DROPZONE ========== */
+
+.admin-dropzone {
+  position: relative;
+  border: 2px dashed var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  background: var(--iprm-card-bg);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  overflow: hidden;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-dropzone:hover,
+.admin-dropzone--dragover {
+  border-color: #7055a4;
+  background: #ede9f6;
+}
+
+.admin-dropzone--uploading {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.admin-dropzone__input {
+  display: none;
+}
+
+.admin-dropzone__prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--iprm-text-light);
+}
+
+.admin-dropzone__prompt svg {
+  color: #7055a4;
+  opacity: 0.5;
+}
+
+.admin-dropzone__prompt p {
+  font-size: 14px;
+  margin: 0;
+}
+
+.admin-dropzone__prompt small {
+  font-size: 12px;
+  color: var(--iprm-text-light);
+}
+
+.admin-dropzone__link {
+  color: #7055a4;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.admin-dropzone__preview {
+  display: none;
+  position: relative;
+  width: 100%;
+}
+
+.admin-dropzone__preview img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: calc(var(--iprm-radius) - 2px);
+}
+
+.admin-dropzone__remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.admin-dropzone__remove:hover {
+  background: rgba(239, 68, 68, 0.9);
+}
+
 /* ========== STAT CARDS (статистика, дашборд) ========== */
 
 .admin-stat-cards {

@@ -137,12 +137,40 @@
       <h3 class="admin-form__section-title">Зображення</h3>
       <div class="admin-form__grid">
         <div class="form-group">
-          <label for="hero_image">Hero зображення (URL)</label>
-          {{ form.hero_image(class="form-input", id="hero_image", placeholder="https://...") }}
+          <label>Hero зображення</label>
+          <div class="admin-dropzone" id="dropzone-hero" data-target="hero_image">
+            <div class="admin-dropzone__preview" id="preview-hero"{% if form.hero_image.data %} style="display:block"{% endif %}>
+              {% if form.hero_image.data %}
+              <img src="{{ form.hero_image.data }}" alt="Hero preview">
+              {% endif %}
+              <button type="button" class="admin-dropzone__remove" aria-label="Видалити">X</button>
+            </div>
+            <div class="admin-dropzone__prompt"{% if form.hero_image.data %} style="display:none"{% endif %}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p>Перетягніть зображення або <span class="admin-dropzone__link">оберіть файл</span></p>
+              <small>PNG, JPG, WebP. Макс. 5 MB</small>
+            </div>
+            <input type="file" class="admin-dropzone__input" accept="image/png,image/jpeg,image/webp">
+          </div>
+          {{ form.hero_image(type="hidden", id="hero_image") }}
         </div>
         <div class="form-group">
-          <label for="card_image">Зображення картки (URL)</label>
-          {{ form.card_image(class="form-input", id="card_image", placeholder="https://...") }}
+          <label>Зображення картки</label>
+          <div class="admin-dropzone" id="dropzone-card" data-target="card_image">
+            <div class="admin-dropzone__preview" id="preview-card"{% if form.card_image.data %} style="display:block"{% endif %}>
+              {% if form.card_image.data %}
+              <img src="{{ form.card_image.data }}" alt="Card preview">
+              {% endif %}
+              <button type="button" class="admin-dropzone__remove" aria-label="Видалити">X</button>
+            </div>
+            <div class="admin-dropzone__prompt"{% if form.card_image.data %} style="display:none"{% endif %}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p>Перетягніть зображення або <span class="admin-dropzone__link">оберіть файл</span></p>
+              <small>PNG, JPG, WebP. Макс. 5 MB</small>
+            </div>
+            <input type="file" class="admin-dropzone__input" accept="image/png,image/jpeg,image/webp">
+          </div>
+          {{ form.card_image(type="hidden", id="card_image") }}
         </div>
       </div>
     </div>
