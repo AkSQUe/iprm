@@ -25,20 +25,22 @@
       "addressCountry": "UA",
       "addressLocality": "Київ"
     },
-    "sameAs": [
-      "https://facebook.com/",
-      "https://instagram.com/"
-    ]
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+380660976693",
+      "contactType": "customer service",
+      "availableLanguage": "Ukrainian"
+    }
   }
 }
 </script>
 {% endblock %}
 
 {% block content %}
-<div class="apple-page contact-page">
-  <div class="contact-page__inner">
-    <h1 class="contact-page__title">Контакти</h1>
-    <p class="contact-page__subtitle">Зв'яжіться з нами будь-яким зручним способом</p>
+<div class="apple-page contact-page iprm-content-page">
+  <div class="iprm-content-page__inner">
+    <h1 class="iprm-content-page__title">Контакти</h1>
+    <p class="iprm-content-page__subtitle">Зв'яжіться з нами будь-яким зручним способом</p>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% for category, message in messages %}

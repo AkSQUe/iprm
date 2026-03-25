@@ -12,6 +12,7 @@
   <meta property="og:image" content="{% block og_image %}{{ url_for('static', filename='img/og-default.png', _external=True) }}{% endblock %}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:url" content="{% block og_url %}{{ request.url }}{% endblock %}">
   <meta property="og:locale" content="uk_UA">
   <meta property="og:site_name" content="IPRM">
   <meta property="og:image:type" content="image/png">

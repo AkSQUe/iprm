@@ -129,17 +129,7 @@
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
-  .contact-page {
-    padding: 24px 16px 48px;
-  }
-
-  .contact-page__inner {
-    padding: 28px 20px;
-  }
-
-  .contact-page__title {
-    font-size: 22px;
-  }
+  /* Responsive для layout (.iprm-content-page) -- в common.css */
 
   .contact-page__grid {
     grid-template-columns: 1fr;
@@ -148,13 +138,7 @@
 }
 
 @media (max-width: 480px) {
-  .contact-page__inner {
-    padding: 20px 16px;
-  }
-
-  .contact-page__title {
-    font-size: 20px;
-  }
+  /* Responsive для layout (.iprm-content-page) -- в common.css */
 
   .contact-page__submit {
     justify-content: stretch;
