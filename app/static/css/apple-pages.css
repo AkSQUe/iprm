@@ -1,0 +1,656 @@
+/* apple-pages.css -- Apple-style shared styles for all public pages (except index) */
+
+/* ========== INTERNAL HERO (compact, white, centered) ========== */
+
+.apple-page .iprm-hero-wrap {
+  background: #fff;
+  padding: 0;
+}
+
+.apple-page .iprm-hero {
+  height: auto;
+  min-height: 50vh;
+  max-width: none;
+  border-radius: 0;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.apple-page .iprm-hero__bg {
+  display: none;
+}
+
+.apple-page .iprm-hero::before {
+  content: '';
+  position: absolute;
+  top: -150px;
+  right: -150px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(112, 85, 164, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.apple-page .iprm-hero__content {
+  padding: 80px 24px 60px;
+  color: #1d1d1f;
+  max-width: 800px;
+  text-align: center;
+}
+
+.apple-page .iprm-hero__nav {
+  display: none;
+}
+
+.apple-page .iprm-hero__title {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: #1d1d1f;
+  margin-bottom: 16px;
+}
+
+.apple-page .iprm-hero__subtitle {
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  color: #86868b;
+  line-height: 1.55;
+  opacity: 1;
+  max-width: 600px;
+  margin: 0 auto 32px;
+}
+
+.apple-page .iprm-hero__price {
+  display: inline-block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #7055a4;
+  background: #ede9f6;
+  padding: 8px 24px;
+  border-radius: 980px;
+  margin-bottom: 20px;
+  border: none;
+}
+
+/* ========== SECTION OVERRIDES ========== */
+
+.apple-page .iprm-section {
+  padding: 100px 24px;
+}
+
+.apple-page .apple-section-gray {
+  background: #f5f5f7;
+}
+
+/* Section header centered */
+.apple-page .iprm-section__title {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #1d1d1f;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.apple-page .iprm-section__subtitle {
+  font-size: 1.0625rem;
+  color: #86868b;
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+/* ========== CARD OVERRIDES ========== */
+
+.apple-page .iprm-course-card {
+  background: #fff;
+  border: none;
+  border-radius: 24px;
+  padding: 0;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.apple-page .iprm-course-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(112, 85, 164, 0.12);
+}
+
+.apple-page .iprm-course-card__image {
+  height: 200px;
+  aspect-ratio: auto;
+  border: none;
+  border-radius: 0;
+  background: linear-gradient(135deg, #ede9f6 0%, #fef0e6 100%);
+  margin-bottom: 0;
+}
+
+.apple-page .iprm-course-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.apple-page .apple-card-body {
+  padding: 24px;
+}
+
+.apple-page .iprm-course-card__title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: #1d1d1f;
+  margin-bottom: 16px;
+}
+
+.apple-page .iprm-course-cards {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* ========== FEATURE CARDS (reusable) ========== */
+
+.apple-page .apple-features-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.apple-page .apple-feature-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 40px 32px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.apple-page .apple-feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(112, 85, 164, 0.1);
+}
+
+.apple-page .apple-feature-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  background: #ede9f6;
+  color: #7055a4;
+}
+
+.apple-page .apple-feature-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+  color: #1d1d1f;
+}
+
+.apple-page .apple-feature-card p {
+  font-size: 0.9375rem;
+  color: #86868b;
+  line-height: 1.6;
+}
+
+/* ========== TRAINER PROFILE (split) ========== */
+
+.apple-page .iprm-trainer {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.apple-page .iprm-trainer__photo {
+  width: auto;
+  height: auto;
+  border-radius: 24px;
+  overflow: hidden;
+  aspect-ratio: 3 / 4;
+  background: linear-gradient(135deg, #ede9f6, #fef0e6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.apple-page .iprm-trainer__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.apple-page .iprm-trainer__name {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #1d1d1f;
+  margin-bottom: 6px;
+}
+
+.apple-page .iprm-trainer__role {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #7055a4;
+  margin-bottom: 20px;
+}
+
+.apple-page .iprm-trainer__desc {
+  font-size: 1rem;
+  color: #424245;
+  line-height: 1.65;
+  margin-bottom: 28px;
+}
+
+/* ========== TRAINER CARDS (grid) ========== */
+
+.apple-page .iprm-trainer-cards {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.apple-page .iprm-trainer-card {
+  background: #fff;
+  border-radius: 24px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-decoration: none;
+}
+
+.apple-page .iprm-trainer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(112, 85, 164, 0.12);
+}
+
+.apple-page .iprm-trainer-card__photo {
+  height: 280px;
+  background: linear-gradient(135deg, #ede9f6 0%, #fef0e6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apple-page .iprm-trainer-card__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.apple-page .iprm-trainer-card__body {
+  padding: 24px;
+}
+
+.apple-page .iprm-trainer-card__name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #1d1d1f;
+  margin-bottom: 6px;
+}
+
+.apple-page .iprm-trainer-card__role {
+  font-size: 0.875rem;
+  color: #86868b;
+  margin-bottom: 12px;
+}
+
+/* ========== TARGET GRID (audience) ========== */
+
+.apple-page .iprm-target-grid {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.apple-page .iprm-target-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 36px 32px;
+  border: none;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.apple-page .iprm-target-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(112, 85, 164, 0.08);
+}
+
+.apple-page .iprm-target-card p {
+  font-size: 1rem;
+  color: #424245;
+  line-height: 1.55;
+}
+
+/* ========== PROGRAM BLOCKS ========== */
+
+.apple-page .iprm-program {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.apple-page .iprm-program__block {
+  background: #fff;
+  border-radius: 24px;
+  padding: 40px 36px;
+  border: none;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.apple-page .iprm-program__block:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(112, 85, 164, 0.08);
+}
+
+.apple-page .iprm-program__heading {
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 20px;
+  color: #1d1d1f;
+}
+
+.apple-page .iprm-program__list {
+  list-style: none;
+  padding: 0;
+}
+
+.apple-page .iprm-program__list li {
+  font-size: 0.9375rem;
+  color: #424245;
+  line-height: 1.6;
+  padding: 10px 0 10px 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.apple-page .iprm-program__list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 18px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7055a4, #e8913a);
+}
+
+/* ========== CLINIC CARDS ========== */
+
+.apple-page .apple-clinic-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.apple-page .apple-clinic-card {
+  border-radius: 24px;
+  overflow: hidden;
+  background: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.apple-page .apple-clinic-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(112, 85, 164, 0.12);
+}
+
+.apple-page .apple-clinic-card__image {
+  height: 220px;
+  background: linear-gradient(135deg, #ede9f6 0%, #fef0e6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apple-page .apple-clinic-card__image svg {
+  opacity: 0.3;
+}
+
+.apple-page .apple-clinic-card__body {
+  padding: 28px 24px;
+}
+
+.apple-page .apple-clinic-card__body h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  margin-bottom: 16px;
+  color: #1d1d1f;
+}
+
+.apple-page .apple-clinic-link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #7055a4;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.apple-page .apple-clinic-link::after {
+  content: ' >';
+}
+
+.apple-page .apple-clinic-link:hover {
+  color: #5d4691;
+}
+
+/* ========== ABOUT TEXT ========== */
+
+.apple-page .apple-about {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.apple-page .apple-about p {
+  font-size: 1.0625rem;
+  color: #424245;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+
+.apple-page .apple-about ul {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0;
+}
+
+.apple-page .apple-about ul li {
+  font-size: 1.0625rem;
+  color: #424245;
+  line-height: 1.7;
+  padding: 8px 0 8px 28px;
+  position: relative;
+}
+
+.apple-page .apple-about ul li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 16px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7055a4, #e8913a);
+}
+
+/* ========== APPLE BUTTONS (reusable) ========== */
+
+.apple-page .apple-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 980px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  font-family: var(--iprm-font);
+}
+
+.apple-page .apple-btn--primary {
+  background: #7055a4;
+  color: #fff;
+}
+
+.apple-page .apple-btn--primary:hover {
+  background: #5d4691;
+  transform: scale(1.02);
+}
+
+.apple-page .apple-btn--secondary {
+  background: transparent;
+  color: #7055a4;
+}
+
+.apple-page .apple-btn--secondary::after {
+  content: ' >';
+}
+
+.apple-page .apple-btn--secondary:hover {
+  color: #5d4691;
+}
+
+/* CTA centered */
+.apple-page .apple-section-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 48px;
+}
+
+/* ========== SCROLL REVEAL ========== */
+
+.apple-page .apple-reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.apple-page .apple-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ========== EMPTY STATE ========== */
+
+.apple-page .iprm-empty-state {
+  text-align: center;
+  padding: 80px 24px;
+  font-size: 1.0625rem;
+  color: #86868b;
+  background: #f5f5f7;
+  border-radius: 24px;
+}
+
+/* ========== DESCRIPTION TEXT ========== */
+
+.apple-page .iprm-history__text {
+  max-width: 800px;
+  margin: 0 auto;
+  font-size: 1.0625rem;
+  color: #424245;
+  line-height: 1.7;
+}
+
+.apple-page .iprm-history__text p {
+  margin-bottom: 20px;
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 1024px) {
+  .apple-page .iprm-trainer {
+    grid-template-columns: 240px 1fr;
+    gap: 36px;
+  }
+
+  .apple-page .apple-features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .apple-page .apple-clinic-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .apple-page .iprm-trainer-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .apple-page .iprm-hero__content {
+    padding: 60px 16px 40px;
+  }
+
+  .apple-page .iprm-section {
+    padding: 64px 16px;
+  }
+
+  .apple-page .iprm-course-cards,
+  .apple-page .apple-features-grid,
+  .apple-page .apple-clinic-grid,
+  .apple-page .iprm-trainer-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .apple-page .iprm-target-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .apple-page .iprm-program {
+    grid-template-columns: 1fr;
+  }
+
+  .apple-page .iprm-trainer {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+    text-align: center;
+    margin: 0 auto;
+  }
+
+  .apple-page .iprm-trainer__photo {
+    aspect-ratio: 1;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+
+  .apple-page .apple-section-cta {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apple-page .apple-reveal {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -1,71 +1,91 @@
-/* IPRM - 404 Page Styles */
+/* IPRM - Error Page Styles (Apple-style) */
 
-.iprm-404 {
+.iprm-error-page {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 40px;
-  min-height: calc(100vh - 220px);
-  max-width: var(--iprm-max-content);
-  margin: 0 auto;
-  padding: 64px 32px;
+  justify-content: center;
+  min-height: calc(100vh - 52px);
+  text-align: center;
+  padding: 80px 24px;
 }
 
-.iprm-404__text {
-  flex: 1;
-}
-
-.iprm-404__title {
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--iprm-dark);
+.iprm-error-page__code {
+  font-size: clamp(5rem, 15vw, 10rem);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  background: linear-gradient(135deg, #7055a4 0%, #9b59b6 40%, #e8913a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin-bottom: 16px;
 }
 
-.iprm-404__subtitle {
-  font-size: 16px;
-  font-style: italic;
-  color: var(--iprm-text-light);
+.iprm-error-page__title {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #1d1d1f;
+  margin-bottom: 12px;
+  max-width: 600px;
 }
 
-.iprm-404__nav {
+.iprm-error-page__subtitle {
+  font-size: 1.0625rem;
+  color: #86868b;
+  line-height: 1.5;
+  max-width: 500px;
+  margin-bottom: 40px;
+}
+
+.iprm-error-page__actions {
   display: flex;
-  gap: 12px;
-  margin-top: 24px;
+  gap: 16px;
   flex-wrap: wrap;
-}
-
-.iprm-404__action {
-  margin-top: 24px;
-}
-
-.iprm-404__image {
-  flex: 1;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  height: 320px;
-  border: 2px dashed var(--iprm-border);
-  border-radius: var(--iprm-radius);
-  background: var(--iprm-card-bg);
-  color: var(--iprm-text-light);
-  font-size: 14px;
+}
+
+.iprm-error-page__actions .apple-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 980px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.iprm-error-page__actions .apple-btn--primary {
+  background: #7055a4;
+  color: #fff;
+}
+
+.iprm-error-page__actions .apple-btn--primary:hover {
+  background: #5d4691;
+  transform: scale(1.02);
+}
+
+.iprm-error-page__actions .apple-btn--secondary {
+  background: transparent;
+  color: #7055a4;
+}
+
+.iprm-error-page__actions .apple-btn--secondary:hover {
+  color: #5d4691;
 }
 
 @media (max-width: 768px) {
-  .iprm-404 {
-    flex-direction: column-reverse;
-    text-align: center;
-    padding: 40px 16px;
+  .iprm-error-page {
+    padding: 60px 16px;
   }
 
-  .iprm-404__title {
-    font-size: 24px;
-  }
-
-  .iprm-404__image {
-    width: 100%;
-    height: 240px;
+  .iprm-error-page__actions {
+    flex-direction: column;
+    align-items: center;
   }
 }

@@ -1,69 +1,89 @@
 <header class="iprm-header">
-  <div class="iprm-header__top">
-    <a href="{{ url_for('main.index') }}" class="iprm-logo">
-      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="IPRM" class="iprm-logo__icon">
-    </a>
+  <div class="iprm-header__inner">
+    <a href="{{ url_for('main.index') }}" class="iprm-header__logo">IPRM</a>
+
+    <nav class="iprm-header__nav" id="main-nav">
+      <ul class="iprm-nav">
+        <li><a href="{{ url_for('main.index') }}"{% if active_nav == 'labs' %} class="iprm-nav--active"{% endif %}>Лабораторії</a></li>
+        <li><a href="{{ url_for('clinics.clinic_list') }}"{% if active_nav == 'clinics' %} class="iprm-nav--active"{% endif %}>Клініки</a></li>
+        <li><a href="{{ url_for('courses.course_list') }}"{% if active_nav == 'courses' %} class="iprm-nav--active"{% endif %}>Курси</a></li>
+        <li><a href="{{ url_for('trainers.trainer_list') }}"{% if active_nav == 'trainers' %} class="iprm-nav--active"{% endif %}>Тренери</a></li>
+        <li><a href="{{ url_for('main.contact') }}"{% if active_nav == 'contact' %} class="iprm-nav--active"{% endif %}>Контакти</a></li>
+        <li class="iprm-nav__dropdown">
+          <button type="button" class="iprm-nav__dropdown-toggle{% if active_nav == 'demos' %} iprm-nav--active{% endif %}">
+            Демо <span class="iprm-nav__dropdown-arrow">&#9662;</span>
+          </button>
+          <ul class="iprm-nav__dropdown-menu">
+            <li><a href="{{ url_for('static', filename='demos/apple-style.html') }}" target="_blank">Apple Style</a></li>
+            <li><a href="{{ url_for('static', filename='demos/apple-course.html') }}" target="_blank">Apple Course</a></li>
+            <li><a href="{{ url_for('static', filename='demos/glass-style.html') }}" target="_blank">Glassmorphism</a></li>
+            <li><a href="{{ url_for('static', filename='demos/minimal-style.html') }}" target="_blank">Minimalism</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+
     <div class="iprm-header__actions">
       {% if current_user.is_authenticated %}
         {% if current_user.is_admin %}
           <a href="{{ url_for('admin.dashboard') }}" class="iprm-header__admin-link">Admin</a>
         {% endif %}
-        <span class="iprm-header__user">{{ current_user.first_name }}</span>
+        <a href="{{ url_for('auth.account') }}" class="iprm-header__user-link">{{ current_user.first_name }}</a>
         <form method="POST" action="{{ url_for('auth.logout') }}" class="iprm-header__logout-form">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="iprm-header__auth-link">Вийти</button>
         </form>
       {% else %}
-        <a href="{{ url_for('auth.login') }}" class="iprm-header__auth-link">Увійти</a>
+        <a href="{{ url_for('auth.login') }}" class="iprm-header__auth-link iprm-header__auth-link--cta">Увійти</a>
       {% endif %}
-      <a href="{{ url_for('main.design_system') }}" class="iprm-header__ds-link">DS</a>
-      <button type="button" class="iprm-toggle theme-toggle">
-        <span class="iprm-toggle__dot"></span>
-        <span class="theme-toggle__label">Legacy</span>
-      </button>
-      <button type="button" class="iprm-toggle molecules-toggle">
-        <span class="iprm-toggle__dot"></span>
-        <span class="molecules-toggle__label">Grey</span>
-      </button>
     </div>
+
+    <button class="iprm-header__burger" id="burger-btn" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
   </div>
-  <nav>
-    <ul class="iprm-nav">
-      <li><a href="{{ url_for('main.index') }}"{% if active_nav == 'labs' %} class="iprm-nav--active"{% endif %}>Лабораторії</a></li>
-      <li><a href="{{ url_for('clinics.clinic_list') }}"{% if active_nav == 'clinics' %} class="iprm-nav--active"{% endif %}>Клініки</a></li>
-      <li><a href="{{ url_for('courses.course_list') }}"{% if active_nav == 'courses' %} class="iprm-nav--active"{% endif %}>Курси інституту</a></li>
-      <li><a href="{{ url_for('trainers.trainer_list') }}"{% if active_nav == 'trainers' %} class="iprm-nav--active"{% endif %}>Тренери</a></li>
-      <li><a href="{{ url_for('main.contact') }}"{% if active_nav == 'contact' %} class="iprm-nav--active"{% endif %}>Контакти</a></li>
-      <li class="iprm-nav__dropdown">
-        <button type="button" class="iprm-nav__dropdown-toggle{% if active_nav == 'demos' %} iprm-nav--active{% endif %}">
-          Демо дизайни <span class="iprm-nav__dropdown-arrow">&#9662;</span>
-        </button>
-        <ul class="iprm-nav__dropdown-menu">
-          <li><a href="{{ url_for('static', filename='demos/apple-style.html') }}" target="_blank">Apple Style</a></li>
-          <li><a href="{{ url_for('static', filename='demos/apple-course.html') }}" target="_blank">Apple Course</a></li>
-          <li><a href="{{ url_for('static', filename='demos/glass-style.html') }}" target="_blank">Glassmorphism</a></li>
-          <li><a href="{{ url_for('static', filename='demos/minimal-style.html') }}" target="_blank">Minimalism</a></li>
-        </ul>
-      </li>
-    </ul>
-  </nav>
 </header>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
+  // Dropdown
   var dd = document.querySelector('.iprm-nav__dropdown');
-  if (!dd) return;
-  var btn = dd.querySelector('.iprm-nav__dropdown-toggle');
-  if (!btn) return;
-  btn.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    dd.classList.toggle('open');
-  });
-  dd.addEventListener('click', function(e) {
-    e.stopPropagation();
-  });
-  document.addEventListener('click', function() {
-    dd.classList.remove('open');
-  });
-});
+  if (dd) {
+    var btn = dd.querySelector('.iprm-nav__dropdown-toggle');
+    if (btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dd.classList.toggle('open');
+      });
+    }
+    dd.addEventListener('click', function(e) { e.stopPropagation(); });
+    document.addEventListener('click', function() { dd.classList.remove('open'); });
+  }
+
+  // Burger menu
+  var burger = document.getElementById('burger-btn');
+  var nav = document.getElementById('main-nav');
+  if (burger && nav) {
+    burger.addEventListener('click', function() {
+      var isOpen = nav.classList.toggle('open');
+      burger.classList.toggle('active', isOpen);
+      burger.setAttribute('aria-expanded', isOpen);
+    });
+    nav.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        nav.classList.remove('open');
+        burger.classList.remove('active');
+        burger.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+
+  // Scroll effect
+  var header = document.querySelector('.iprm-header');
+  if (header) {
+    window.addEventListener('scroll', function() {
+      header.classList.toggle('scrolled', window.scrollY > 10);
+    });
+  }
+})();
 </script>

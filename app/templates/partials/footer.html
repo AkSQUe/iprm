@@ -1,21 +1,25 @@
 <footer class="iprm-footer">
   <div class="iprm-footer__inner">
     <div class="iprm-footer__left">
-      <span class="iprm-footer__copy">&copy; 2026</span>
-      <a href="{{ url_for('main.offer') }}" class="iprm-footer__link">Публічна оферта</a>
+      <a href="{{ url_for('main.index') }}" class="iprm-footer__brand">IPRM</a>
+      <span class="iprm-footer__copy">2026 Інститут Плазмотерапії та Регенеративної Медицини.</span>
+    </div>
+    <div class="iprm-footer__center">
+      <a href="{{ url_for('main.offer') }}" class="iprm-footer__link">Оферта</a>
       <a href="{{ url_for('main.privacy') }}" class="iprm-footer__link">Конфіденційність</a>
-      <a href="{{ url_for('main.refund') }}" class="iprm-footer__link">Повернення коштів</a>
+      <a href="{{ url_for('main.refund') }}" class="iprm-footer__link">Повернення</a>
       <a href="{{ url_for('main.disclaimer') }}" class="iprm-footer__link">Дисклеймер</a>
       <a href="{{ url_for('main.cookies') }}" class="iprm-footer__link">Cookie</a>
       <a href="{{ url_for('main.contact') }}" class="iprm-footer__link">Контакти</a>
     </div>
-    <a href="{{ url_for('main.index') }}" class="iprm-footer__logo">
-      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="IPRM" class="iprm-logo__icon">
-    </a>
     <div class="iprm-footer__right">
       <div class="iprm-footer__socials">
-        <a href="https://facebook.com/" class="iprm-footer__social-icon" aria-label="IPRM у Facebook" target="_blank" rel="noopener noreferrer"><img src="{{ url_for('static', filename='svg/social/facebook.svg') }}" alt="Facebook"></a>
-        <a href="https://instagram.com/" class="iprm-footer__social-icon" aria-label="IPRM в Instagram" target="_blank" rel="noopener noreferrer"><img src="{{ url_for('static', filename='svg/social/instagram.svg') }}" alt="Instagram"></a>
+        <a href="https://facebook.com/" class="iprm-footer__social-icon" aria-label="IPRM у Facebook" target="_blank" rel="noopener noreferrer">
+          <img src="{{ url_for('static', filename='svg/social/facebook.svg') }}" alt="Facebook">
+        </a>
+        <a href="https://instagram.com/" class="iprm-footer__social-icon" aria-label="IPRM в Instagram" target="_blank" rel="noopener noreferrer">
+          <img src="{{ url_for('static', filename='svg/social/instagram.svg') }}" alt="Instagram">
+        </a>
       </div>
       <a href="tel:+380660976693" class="iprm-footer__phone">+38066 097 66 93</a>
     </div>
