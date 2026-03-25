@@ -6,6 +6,7 @@ Uses Flask-Mail for SMTP, threading.Thread for non-blocking sends,
 and EmailLog model for audit trail.
 """
 import logging
+import re
 from datetime import datetime, timezone
 from threading import Thread
 
@@ -16,6 +17,17 @@ from app.extensions import db, mail
 from app.models.email_log import EmailLog
 
 logger = logging.getLogger(__name__)
+
+_HTML_TAG_RE = re.compile(r'<[^>]+>')
+_WHITESPACE_RE = re.compile(r'\n\s*\n')
+
+
+def _html_to_plaintext(html):
+    """Minimal HTML-to-text conversion for email plain text fallback."""
+    text = html.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
+    text = _HTML_TAG_RE.sub('', text)
+    text = _WHITESPACE_RE.sub('\n\n', text)
+    return text.strip()
 
 
 class EmailService:
@@ -41,7 +53,6 @@ class EmailService:
         app = current_app._get_current_object()
         ctx = context or {}
 
-        # Завантажуємо налаштування з БД
         settings = EmailService._load_settings(app)
 
         if not settings.is_enabled:
@@ -70,13 +81,22 @@ class EmailService:
         db.session.add(log_entry)
         db.session.commit()
 
-        html_body = render_template(f'emails/{template_name}.html', **ctx)
+        try:
+            html_body = render_template(f'emails/{template_name}.html', **ctx)
+        except Exception as exc:
+            log_entry.status = 'failed'
+            log_entry.error_message = f'Template render error: {str(exc)[:400]}'
+            db.session.commit()
+            logger.exception('Failed to render email template %s', template_name)
+            return log_entry
 
         sender = app.config.get('MAIL_DEFAULT_SENDER')
+        plain_body = _html_to_plaintext(html_body)
         msg = Message(
             subject=subject,
             recipients=[to],
             html=html_body,
+            body=plain_body,
             sender=sender,
         )
 
@@ -93,10 +113,12 @@ class EmailService:
     def _send_in_thread(app, msg, log_id):
         """Execute SMTP send inside app context, update EmailLog."""
         with app.app_context():
-            # Перезавантажуємо налаштування для thread
             EmailService._load_settings(app)
 
             log_entry = db.session.get(EmailLog, log_id)
+            if not log_entry:
+                logger.error('EmailLog %s not found in thread', log_id)
+                return
             try:
                 mail.send(msg)
                 log_entry.status = 'sent'
@@ -188,12 +210,20 @@ class EmailService:
             db.session.commit()
             raise RuntimeError('Email sending is disabled in settings')
 
+        if not settings.smtp_server or not settings.smtp_username:
+            raise RuntimeError('SMTP сервер або логін не налаштовані')
+
+        if not settings.has_password:
+            raise RuntimeError('SMTP пароль не налаштований')
+
         html_body = render_template('emails/test.html', to_email=to)
+        plain_body = _html_to_plaintext(html_body)
         sender = app.config.get('MAIL_DEFAULT_SENDER')
         msg = Message(
             subject='IPRM: Тестовий лист',
             recipients=[to],
             html=html_body,
+            body=plain_body,
             sender=sender,
         )
 

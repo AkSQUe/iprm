@@ -62,7 +62,23 @@ def notifications_settings():
 
     settings.default_sender = request.form.get('default_sender', '').strip()
     settings.sender_name = request.form.get('sender_name', 'IPRM').strip()
-    settings.is_enabled = request.form.get('is_enabled') == 'on'
+    want_enabled = request.form.get('is_enabled') == 'on'
+
+    if want_enabled:
+        missing = []
+        if not settings.smtp_server:
+            missing.append('SMTP сервер')
+        if not settings.smtp_username:
+            missing.append('Логін')
+        if not settings.has_password and not new_password:
+            missing.append('Пароль')
+        if not settings.default_sender:
+            missing.append('Email відправника')
+        if missing:
+            flash(f'Неможливо увімкнути: заповніть {", ".join(missing)}', 'error')
+            want_enabled = False
+
+    settings.is_enabled = want_enabled
     settings.reminder_days = request.form.get('reminder_days', '7,3,1').strip()
 
     try:
@@ -165,10 +181,18 @@ def notifications_templates():
     event = MockEvent()
     reg = MockRegistration()
 
+    class MockRegPaid:
+        id = 2
+        payment_status = 'paid'
+        payment_amount = 12500
+        STATUSES = MockRegistration.STATUSES
+
+    reg_paid = MockRegPaid()
+
     templates = [
         {
             'key': 'test',
-            'label': 'Тестовий лист',
+            'label': 'Тестовий',
             'template_name': 'test.html',
             'trigger': 'test',
             'subject': 'IPRM: Тестовий лист',
@@ -190,11 +214,20 @@ def notifications_templates():
             'trigger': 'payment',
             'subject': f'Оплату підтверджено: {event.title}',
             'html': render_template('emails/payment_confirmed.html',
-                                    user=user, event=event, registration=reg),
+                                    user=user, event=event, registration=reg_paid),
         },
         {
-            'key': 'reminder',
-            'label': 'Нагадування',
+            'key': 'reminder-7',
+            'label': 'Нагадування (7 дн.)',
+            'template_name': 'course_reminder.html',
+            'trigger': 'reminder',
+            'subject': f'Нагадування: {event.title} через 7 дн.',
+            'html': render_template('emails/course_reminder.html',
+                                    user=user, event=event, registration=reg, days_until=7),
+        },
+        {
+            'key': 'reminder-1',
+            'label': 'Нагадування (завтра)',
             'template_name': 'course_reminder.html',
             'trigger': 'reminder',
             'subject': f'Нагадування: {event.title} через 1 дн.',
@@ -202,8 +235,8 @@ def notifications_templates():
                                     user=user, event=event, registration=reg, days_until=1),
         },
         {
-            'key': 'status',
-            'label': 'Зміна статусу',
+            'key': 'status-confirmed',
+            'label': 'Статус: підтверджено',
             'template_name': 'status_changed.html',
             'trigger': 'status_change',
             'subject': f'Статус реєстрації змінено: {event.title}',
@@ -211,6 +244,28 @@ def notifications_templates():
                                     user=user, event=event, registration=reg,
                                     old_status='pending', new_status='confirmed',
                                     new_status_label='Підтверджено'),
+        },
+        {
+            'key': 'status-cancelled',
+            'label': 'Статус: скасовано',
+            'template_name': 'status_changed.html',
+            'trigger': 'status_change',
+            'subject': f'Статус реєстрації змінено: {event.title}',
+            'html': render_template('emails/status_changed.html',
+                                    user=user, event=event, registration=reg,
+                                    old_status='confirmed', new_status='cancelled',
+                                    new_status_label='Скасовано'),
+        },
+        {
+            'key': 'status-completed',
+            'label': 'Статус: завершено',
+            'template_name': 'status_changed.html',
+            'trigger': 'status_change',
+            'subject': f'Статус реєстрації змінено: {event.title}',
+            'html': render_template('emails/status_changed.html',
+                                    user=user, event=event, registration=reg,
+                                    old_status='confirmed', new_status='completed',
+                                    new_status_label='Завершено'),
         },
     ]
 
