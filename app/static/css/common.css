@@ -59,6 +59,9 @@
   --apple-grad-dark-1: #2d1b4e;
   --apple-grad-dark-2: #3b2368;
   --apple-grad-dark-3: #4a2d80;
+  --apple-accent-rgb: 112, 85, 164;
+  --apple-orange-rgb: 232, 145, 58;
+  --apple-black-rgb: 29, 29, 31;
 
   /* Badge colors */
   --iprm-badge-draft-bg: #f3f4f6;
@@ -404,6 +407,26 @@ a {
   background: var(--iprm-accent-light);
   color: var(--iprm-nav-active);
 }
+
+/* Staggered fade-in (Apple menu pattern) */
+.iprm-nav__dropdown-menu li {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.iprm-nav__dropdown.open .iprm-nav__dropdown-menu li {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.iprm-nav__dropdown-menu li:nth-child(1) { transition-delay: 0.02s; }
+.iprm-nav__dropdown-menu li:nth-child(2) { transition-delay: 0.05s; }
+.iprm-nav__dropdown-menu li:nth-child(3) { transition-delay: 0.08s; }
+.iprm-nav__dropdown-menu li:nth-child(4) { transition-delay: 0.11s; }
+.iprm-nav__dropdown-menu li:nth-child(5) { transition-delay: 0.14s; }
 
 /* ========== HERO ========== */
 
@@ -1031,7 +1054,7 @@ a {
   z-index: 1000;
   width: calc(100% - 32px);
   max-width: 800px;
-  background: rgba(29, 29, 31, 0.88);
+  background: rgba(var(--apple-black-rgb), 0.88);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   color: var(--iprm-white);
@@ -1110,7 +1133,7 @@ a {
 
 @media (prefers-reduced-transparency: reduce) {
   .cookie-banner {
-    background: rgba(29, 29, 31, 0.98);
+    background: rgba(var(--apple-black-rgb), 0.98);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }

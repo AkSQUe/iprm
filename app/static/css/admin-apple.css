@@ -4,7 +4,7 @@
 /* ========== SIDEBAR ========== */
 
 .admin-sidebar {
-  background: #f5f5f7;
+  background: var(--apple-section-bg);
   border-right: 1px solid rgba(0, 0, 0, 0.06);
 }
 
@@ -13,37 +13,37 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #86868b;
+  color: var(--apple-gray);
 }
 
 .admin-sidebar__link {
   font-size: 0.8125rem;
   font-weight: 400;
-  color: #424245;
+  color: var(--apple-gray-dark);
   border-radius: 10px;
   transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .admin-sidebar__link:hover {
   background: rgba(0, 0, 0, 0.04);
-  color: #1d1d1f;
+  color: var(--apple-black);
 }
 
 .admin-sidebar__link--active {
-  background: #7055a4;
-  color: #fff;
+  background: var(--iprm-nav-active);
+  color: var(--iprm-white);
 }
 
 .admin-sidebar__link--active:hover {
-  background: #5d4691;
-  color: #fff;
+  background: var(--iprm-accent-hover);
+  color: var(--iprm-white);
 }
 
 /* ========== LAYOUT ========== */
 
 .admin-layout {
   padding: 40px;
-  background: #fff;
+  background: var(--iprm-white);
 }
 
 /* ========== HERO ========== */
@@ -56,12 +56,12 @@
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: #1d1d1f;
+  color: var(--apple-black);
 }
 
 .admin-hero__subtitle {
   font-size: 0.9375rem;
-  color: #86868b;
+  color: var(--apple-gray);
   margin-top: 4px;
 }
 
@@ -78,40 +78,40 @@
 }
 
 .btn-admin--primary {
-  background: #7055a4;
-  color: #fff;
+  background: var(--iprm-nav-active);
+  color: var(--iprm-white);
 }
 
 .btn-admin--primary:hover {
-  background: #5d4691;
+  background: var(--iprm-accent-hover);
   transform: scale(1.02) translateY(-1px);
-  box-shadow: 0 4px 16px rgba(112, 85, 164, 0.2);
+  box-shadow: 0 4px 16px rgba(var(--apple-accent-rgb), 0.2);
 }
 
 .btn-admin--primary:active {
   transform: scale(0.98) translateY(0);
-  box-shadow: 0 1px 4px rgba(112, 85, 164, 0.1);
+  box-shadow: 0 1px 4px rgba(var(--apple-accent-rgb), 0.1);
 }
 
 .btn-admin--secondary {
-  background: #fff;
-  color: #424245;
+  background: var(--iprm-white);
+  color: var(--apple-gray-dark);
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .btn-admin--secondary:hover {
-  background: #f5f5f7;
+  background: var(--apple-section-bg);
   border-color: rgba(0, 0, 0, 0.15);
 }
 
 .btn-admin--danger {
-  background: #fff;
-  color: #ff3b30;
+  background: var(--iprm-white);
+  color: var(--iprm-error);
   border: 1px solid rgba(255, 59, 48, 0.2);
 }
 
 .btn-admin--danger:hover {
-  background: #fef2f2;
+  background: var(--iprm-error-bg);
   border-color: rgba(255, 59, 48, 0.4);
 }
 
@@ -121,25 +121,25 @@
 }
 
 .btn-admin:focus-visible {
-  outline: 2px solid #7055a4;
+  outline: 2px solid var(--iprm-nav-active);
   outline-offset: 3px;
 }
 
 /* ========== TABLE ========== */
 
 .admin-table {
-  background: #fff;
+  background: var(--iprm-white);
   border-radius: 20px;
   border: 1px solid rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
 
 .admin-table th {
-  background: #f5f5f7;
+  background: var(--apple-section-bg);
   padding: 14px 16px;
   font-size: 0.6875rem;
   font-weight: 600;
-  color: #86868b;
+  color: var(--apple-gray);
   letter-spacing: 0.06em;
 }
 
@@ -147,16 +147,16 @@
   padding: 14px 16px;
   font-size: 0.875rem;
   border-top: 1px solid rgba(0, 0, 0, 0.04);
-  color: #424245;
+  color: var(--apple-gray-dark);
 }
 
 .admin-table td strong {
-  color: #1d1d1f;
+  color: var(--apple-black);
   font-weight: 600;
 }
 
 .admin-table tr:hover td {
-  background: rgba(112, 85, 164, 0.02);
+  background: rgba(var(--apple-accent-rgb), 0.02);
 }
 
 .admin-table__actions {
@@ -176,7 +176,7 @@
 /* ========== EMPTY STATE ========== */
 
 .admin-empty {
-  background: #f5f5f7;
+  background: var(--apple-section-bg);
   border-radius: 24px;
   padding: 80px 32px;
 }
@@ -185,19 +185,19 @@
   font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #1d1d1f;
+  color: var(--apple-black);
   margin-bottom: 8px;
 }
 
 .admin-empty p {
-  color: #86868b;
+  color: var(--apple-gray);
   font-size: 0.9375rem;
 }
 
 /* ========== STAT CARDS ========== */
 
 .admin-stat-card {
-  background: #fff;
+  background: var(--iprm-white);
   border-radius: 16px;
   border: 1px solid rgba(0, 0, 0, 0.06);
   transition: box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -211,28 +211,28 @@
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #1d1d1f;
+  color: var(--apple-black);
 }
 
 .admin-stat-card__label {
   font-size: 0.6875rem;
-  color: #86868b;
+  color: var(--apple-gray);
   letter-spacing: 0.06em;
 }
 
 /* ========== BREADCRUMB ========== */
 
 .admin-breadcrumb__link {
-  color: #7055a4;
+  color: var(--iprm-nav-active);
 }
 
 .admin-breadcrumb__link:hover {
-  color: #5d4691;
+  color: var(--iprm-accent-hover);
 }
 
 .admin-breadcrumb__sep,
 .admin-breadcrumb__current {
-  color: #86868b;
+  color: var(--apple-gray);
 }
 
 /* ========== INTEGRATION CARDS ========== */
@@ -246,16 +246,16 @@
 }
 
 .admin-integration-card--link:hover {
-  border-color: #7055a4;
-  box-shadow: 0 4px 16px rgba(112, 85, 164, 0.08);
+  border-color: var(--iprm-nav-active);
+  box-shadow: 0 4px 16px rgba(var(--apple-accent-rgb), 0.08);
 }
 
 .admin-integration-card__title {
-  color: #1d1d1f;
+  color: var(--apple-black);
 }
 
 .admin-integration-card p {
-  color: #86868b;
+  color: var(--apple-gray);
 }
 
 /* ========== FORM OVERRIDES ========== */
@@ -274,13 +274,13 @@
 .admin-dropzone {
   border: 2px dashed rgba(0, 0, 0, 0.1);
   border-radius: 20px;
-  background: #f5f5f7;
+  background: var(--apple-section-bg);
 }
 
 .admin-dropzone:hover,
 .admin-dropzone--dragover {
-  border-color: #7055a4;
-  background: #ede9f6;
+  border-color: var(--iprm-nav-active);
+  background: var(--iprm-accent-light);
 }
 
 /* ========== PROGRAM BLOCK ========== */
@@ -294,7 +294,7 @@
 
 .admin-todo li {
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  color: #424245;
+  color: var(--apple-gray-dark);
 }
 
 .admin-todo li::before {
@@ -310,8 +310,8 @@
 }
 
 .admin-filter-form .form-input:focus {
-  border-color: #7055a4;
-  box-shadow: 0 0 0 3px #ede9f6;
+  border-color: var(--iprm-nav-active);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light);
 }
 
 /* ========== RESPONSIVE ========== */

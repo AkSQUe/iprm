@@ -14,7 +14,7 @@
   right: -200px;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(112, 85, 164, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--apple-accent-rgb), 0.06) 0%, transparent 70%);
 }
 
 .page-index .iprm-hero::after {
@@ -24,7 +24,7 @@
   left: -100px;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(232, 145, 58, 0.05) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--apple-orange-rgb), 0.05) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -106,7 +106,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(112, 85, 164, 0.12) 0%, transparent 70%);
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(var(--apple-accent-rgb), 0.12) 0%, transparent 70%);
   pointer-events: none;
 }
 
