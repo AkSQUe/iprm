@@ -25,7 +25,7 @@ def _mask_key(key):
 @admin_bp.route('/payments')
 @admin_required
 def payments():
-    return redirect(url_for('admin.liqpay'))
+    return redirect(url_for('admin.integrations'))
 
 
 @admin_bp.route('/liqpay')

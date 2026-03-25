@@ -1,8 +1,11 @@
+import logging
 from flask import render_template, redirect, url_for, flash, request
 from sqlalchemy import case, func
 from sqlalchemy.orm import joinedload
 
 from app.admin import admin_bp
+
+logger = logging.getLogger(__name__)
 from app.admin.decorators import admin_required
 from app.extensions import db
 from app.models.event import Event
@@ -51,6 +54,7 @@ def registration_status(reg_id):
             db.session.commit()
             flash(f'Статус змінено на "{reg.status_label}"', 'success')
         except Exception:
+            logger.exception('Failed to update registration %d status', reg_id)
             db.session.rollback()
             flash('Помилка при оновленні', 'error')
 
@@ -78,6 +82,7 @@ def registration_attendance(reg_id):
         db.session.commit()
         flash(f'Присутність підтверджено, нараховано {reg.cpd_points_awarded} балів БПР', 'success')
     except Exception:
+        logger.exception('Failed to update attendance for registration %d', reg_id)
         db.session.rollback()
         flash('Помилка при оновленні', 'error')
 

@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 from flask import render_template, redirect, url_for, flash, request, session
@@ -9,6 +10,8 @@ from app.extensions import db, limiter
 from app.models.user import User
 from app.models.event import Event
 from app.models.registration import EventRegistration
+
+logger = logging.getLogger(__name__)
 
 
 def _is_safe_redirect_url(target):
@@ -38,6 +41,7 @@ def login():
             try:
                 db.session.commit()
             except Exception:
+                logger.exception('Failed to update last_login_at for user %s', user.id)
                 db.session.rollback()
 
             next_page = request.args.get('next')
@@ -72,6 +76,7 @@ def register():
             login_user(user)
             return redirect(url_for('auth.account'))
         except Exception:
+            logger.exception('Failed to register user %s', form.email.data)
             db.session.rollback()
             flash('Помилка при реєстрації', 'error')
 

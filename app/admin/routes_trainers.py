@@ -1,3 +1,4 @@
+import logging
 from flask import render_template, redirect, url_for, flash
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
@@ -5,6 +6,8 @@ from app.admin.forms import TrainerForm
 from app.extensions import db
 from app.models.trainer import Trainer
 from app.utils import slugify
+
+logger = logging.getLogger(__name__)
 
 
 @admin_bp.route('/trainers')
@@ -41,6 +44,7 @@ def trainer_create():
             flash('Тренера додано', 'success')
             return redirect(url_for('admin.dashboard'))
         except Exception:
+            logger.exception('Failed to create trainer')
             db.session.rollback()
             flash('Помилка при збереженні', 'error')
 
@@ -77,6 +81,7 @@ def trainer_edit(trainer_id):
             flash('Тренера оновлено', 'success')
             return redirect(url_for('admin.dashboard'))
         except Exception:
+            logger.exception('Failed to update trainer %d', trainer_id)
             db.session.rollback()
             flash('Помилка при збереженні', 'error')
 
@@ -93,6 +98,7 @@ def trainer_delete(trainer_id):
             db.session.commit()
             flash('Тренера видалено', 'success')
         except Exception:
+            logger.exception('Failed to delete trainer %d', trainer_id)
             db.session.rollback()
             flash('Помилка при видаленні', 'error')
     return redirect(url_for('admin.dashboard'))

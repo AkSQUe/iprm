@@ -59,6 +59,7 @@ def toggle_admin(user_id):
                           current_user.email, user.id, user.email, status)
         flash(f'Адмін-повноваження {status}: {user.email}', 'success')
     except Exception:
+        audit_logger.exception('Failed to toggle admin for user %d', user_id)
         db.session.rollback()
         flash('Помилка при оновленні', 'error')
     return redirect(url_for('admin.users'))
@@ -84,7 +85,13 @@ def marketing():
 @admin_bp.route('/integrations')
 @admin_required
 def integrations():
-    return render_template('admin/integrations.html')
+    from app.services.liqpay import get_liqpay_service
+    liqpay_service = get_liqpay_service()
+    liqpay_status = {
+        'is_configured': liqpay_service.is_configured,
+        'sandbox': liqpay_service.sandbox,
+    }
+    return render_template('admin/integrations.html', liqpay_status=liqpay_status)
 
 
 @admin_bp.route('/settings')

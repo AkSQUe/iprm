@@ -1,3 +1,4 @@
+import logging
 from flask import render_template, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
 from sqlalchemy import func
@@ -7,6 +8,8 @@ from app.registration.forms import EventRegistrationForm
 from app.extensions import db, limiter
 from app.models.event import Event
 from app.models.registration import EventRegistration
+
+logger = logging.getLogger(__name__)
 
 
 @registration_bp.route('/<int:event_id>/register', methods=['GET', 'POST'])
@@ -87,6 +90,7 @@ def register(event_id):
                 flash('Реєстрацію створено. Очікує оплати.', 'info')
             return redirect(url_for('registration.confirmation', registration_id=reg.id))
         except Exception:
+            logger.exception('Failed to register user %d for event %d', current_user.id, event_id)
             db.session.rollback()
             flash('Помилка при реєстрації. Спробуйте ще раз.', 'error')
 
