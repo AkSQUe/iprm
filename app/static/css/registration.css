@@ -1,41 +1,43 @@
-/* Registration page styles */
+/* Registration page styles (Apple-style v2) */
 
 .reg-layout {
   max-width: 720px;
   margin: 0 auto;
-  padding: 32px;
+  padding: 48px 24px;
 }
 
 .reg-event-card {
-  background: var(--iprm-card-bg);
-  border-radius: var(--iprm-radius);
-  padding: 24px;
+  background: #fff;
+  border-radius: 24px;
+  padding: 32px;
   margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .reg-event-card__title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--iprm-dark);
-  margin-bottom: 8px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #1d1d1f;
+  margin-bottom: 12px;
 }
 
 .reg-event-card__meta {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  font-size: 14px;
-  color: var(--iprm-text-light);
+  font-size: 0.875rem;
+  color: #86868b;
 }
 
 .reg-event-card__meta strong {
-  color: var(--iprm-text);
+  color: #1d1d1f;
 }
 
 /* User info read-only */
 .reg-user-info {
-  background: var(--iprm-card-bg);
-  border-radius: var(--iprm-radius);
+  background: #f5f5f7;
+  border-radius: 16px;
   padding: 20px 24px;
   margin-bottom: 24px;
   display: flex;
@@ -44,17 +46,21 @@
 }
 
 .reg-user-info__item {
-  font-size: 14px;
+  font-size: 0.9375rem;
+  color: #1d1d1f;
 }
 
 .reg-user-info__item span {
   display: block;
-  font-size: 12px;
-  color: var(--iprm-text-light);
-  margin-bottom: 2px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #86868b;
+  margin-bottom: 4px;
 }
 
-/* Form section -- extends .form-section from common.css */
+/* Form section */
 .reg-form-section {
   margin-bottom: 24px;
 }
@@ -65,7 +71,7 @@
 
 .reg-actions {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   justify-content: flex-end;
 }
 
@@ -76,36 +82,38 @@
 /* Confirmation page */
 .reg-confirmation {
   text-align: center;
-  padding: 32px 0;
+  padding: 48px 0;
 }
 
 .reg-confirmation__title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--iprm-dark);
-  margin-bottom: 8px;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #1d1d1f;
+  margin-bottom: 12px;
 }
 
 .reg-confirmation__subtitle {
-  font-size: 15px;
-  color: var(--iprm-text-light);
-  margin-bottom: 24px;
+  font-size: 17px;
+  color: #86868b;
+  margin-bottom: 32px;
 }
 
 .reg-status-card {
-  background: var(--iprm-card-bg);
-  border-radius: var(--iprm-radius);
-  padding: 24px;
+  background: #fff;
+  border-radius: 24px;
+  padding: 32px;
   margin-bottom: 24px;
   text-align: left;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .reg-status-card__row {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
-  font-size: 14px;
-  border-bottom: 1px solid var(--iprm-border);
+  padding: 12px 0;
+  font-size: 0.9375rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .reg-status-card__row:last-child {
@@ -113,61 +121,61 @@
 }
 
 .reg-status-card__label {
-  color: var(--iprm-text-light);
+  color: #86868b;
 }
 
 .reg-status-card__value {
   font-weight: 600;
-  color: var(--iprm-text);
+  color: #1d1d1f;
 }
 
 .reg-liqpay-placeholder {
-  background: var(--iprm-card-bg);
-  border: 2px dashed var(--iprm-border);
-  border-radius: var(--iprm-radius);
-  padding: 32px;
+  background: #f5f5f7;
+  border: none;
+  border-radius: 24px;
+  padding: 48px 32px;
   margin-bottom: 24px;
   text-align: center;
-  color: var(--iprm-text-light);
-  font-size: 14px;
+  color: #86868b;
+  font-size: 0.9375rem;
 }
 
 .reg-liqpay-payment {
-  background: var(--iprm-card-bg);
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius);
-  padding: 28px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 24px;
+  padding: 32px;
   margin-bottom: 24px;
   text-align: center;
 }
 
 .reg-liqpay-payment__label {
-  font-size: 15px;
-  color: var(--iprm-text);
+  font-size: 17px;
+  color: #1d1d1f;
   margin-bottom: 16px;
 }
 
-/* .reg-liqpay-payment__btn -- стилі від .apple-btn */
-
 .reg-liqpay-payment__note {
-  font-size: 12px;
-  color: var(--iprm-text-light);
+  font-size: 0.8125rem;
+  color: #86868b;
   margin-top: 12px;
 }
 
 .reg-liqpay-payment--processing {
-  border-color: var(--iprm-accent);
+  border-color: #7055a4;
   border-style: dashed;
 }
 
 .reg-liqpay-payment--processing p {
-  color: var(--iprm-text-light);
-  font-size: 14px;
+  color: #86868b;
+  font-size: 0.9375rem;
 }
+
+/* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
   .reg-layout {
-    padding: 20px 16px;
+    padding: 32px 16px;
   }
 
   .reg-event-card__meta {
@@ -188,40 +196,36 @@
     flex-direction: column;
     gap: 4px;
   }
-
-  .reg-liqpay-placeholder {
-    padding: 24px 16px;
-  }
-
-  .reg-liqpay-payment {
-    padding: 20px 16px;
-  }
 }
 
-/* Мобільні: зменшення шрифтів та padding */
 @media (max-width: 480px) {
+  .reg-layout {
+    padding: 24px 12px;
+  }
+
   .reg-confirmation {
-    padding: 20px 0;
+    padding: 24px 0;
   }
 
   .reg-confirmation__title {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
 
   .reg-event-card {
-    padding: 16px;
-  }
-
-  .reg-event-card__title {
-    font-size: 18px;
+    padding: 20px;
+    border-radius: 20px;
   }
 
   .reg-status-card {
-    padding: 16px;
+    padding: 20px;
+    border-radius: 20px;
   }
 
-  .reg-liqpay-payment__btn {
-    width: 100%;
-    justify-content: center;
+  .reg-liqpay-placeholder {
+    padding: 32px 16px;
+  }
+
+  .reg-liqpay-payment {
+    padding: 24px 16px;
   }
 }
