@@ -1,12 +1,16 @@
 {% extends "emails/base.html" %}
+{% from "emails/_macros.html" import icon, cta_button %}
 {% block title %}Статус реєстрації змінено{% endblock %}
+{% block preheader %}
+<div style="display:none;font-size:1px;color:#f5f5f7;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+  Статус реєстрації на {{ event.title }}: {{ new_status_label }}
+</div>
+{% endblock %}
 {% block content %}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
   <tr>
-    <td align="center" style="padding:0 0 32px;">
-      <div style="width:64px; height:64px; border-radius:16px; background:linear-gradient(135deg, #7055a4, #5d4691); display:inline-block; line-height:64px; text-align:center;">
-        <span style="font-size:28px; color:#ffffff;">&#8635;</span>
-      </div>
+    <td align="center" style="padding:0 0 24px;">
+      {{ icon("&#8635;", "#7055a4") }}
     </td>
   </tr>
   <tr>
@@ -25,19 +29,23 @@
   </tr>
   <tr>
     <td style="padding:0 0 32px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7; border-radius:16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f5f5f7" style="border-radius:16px;">
         <tr>
           <td style="padding:24px;">
             <p style="margin:0 0 4px; font-size:13px; color:#86868b; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;">Курс</p>
             <p style="margin:0 0 20px; font-size:20px; font-weight:700; color:#1d1d1f; letter-spacing:-0.02em;">{{ event.title }}</p>
             <p style="margin:0 0 8px; font-size:13px; color:#86868b; text-transform:uppercase; letter-spacing:0.06em; font-weight:600;">Новий статус</p>
-            <span style="display:inline-block; padding:6px 16px; border-radius:980px; font-size:14px; font-weight:600;
-              {% if new_status == 'confirmed' %}background:#dcfce7; color:#16a34a;
-              {% elif new_status == 'cancelled' %}background:#fef2f2; color:#ef4444;
-              {% elif new_status == 'completed' %}background:#ede9f6; color:#7055a4;
-              {% else %}background:#f5f5f7; color:#86868b; border:1px solid #e5e5e7;{% endif %}">
-              {{ new_status_label }}
-            </span>
+            <table role="presentation" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding:6px 16px; border-radius:980px; font-size:14px; font-weight:600;
+                  {% if new_status == 'confirmed' %}background-color:#dcfce7; color:#15803d;
+                  {% elif new_status == 'cancelled' %}background-color:#fef2f2; color:#dc2626;
+                  {% elif new_status == 'completed' %}background-color:#ede9f6; color:#5d4691;
+                  {% else %}background-color:#f5f5f7; color:#86868b;{% endif %}">
+                  {{ new_status_label }}
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
       </table>
@@ -45,7 +53,7 @@
   </tr>
   <tr>
     <td align="center">
-      <a href="https://iprm.space" style="display:inline-block; padding:14px 32px; background:#7055a4; color:#ffffff; text-decoration:none; border-radius:980px; font-size:15px; font-weight:600; letter-spacing:-0.01em;">Перейти на сайт</a>
+      {{ cta_button("https://iprm.space", "Перейти на сайт") }}
     </td>
   </tr>
 </table>

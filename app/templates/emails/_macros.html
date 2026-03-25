@@ -1,0 +1,57 @@
+{#- Jinja2 macros для email-шаблонів IPRM -#}
+
+{%- macro icon(symbol, bgcolor="#7055a4") -%}
+<table role="presentation" cellpadding="0" cellspacing="0">
+  <tr>
+    <td width="64" height="64" align="center" valign="middle" bgcolor="{{ bgcolor }}" style="border-radius:16px; color:#ffffff; font-size:28px; line-height:64px;">
+      {{ symbol }}
+    </td>
+  </tr>
+</table>
+{%- endmacro -%}
+
+{%- macro info_row(label, value) -%}
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 8px;">
+  <tr>
+    <td style="padding-right:10px; font-size:14px; color:#86868b; vertical-align:top;">{{ label }}</td>
+    <td style="font-size:14px; color:#1d1d1f; font-weight:500;">{{ value }}</td>
+  </tr>
+</table>
+{%- endmacro -%}
+
+{%- macro cta_button(href, text, bgcolor="#7055a4") -%}
+<!--[if mso]>
+<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="{{ href }}" style="height:48px;v-text-anchor:middle;width:200px;" arcsize="50%" fillcolor="{{ bgcolor }}">
+<center style="color:#ffffff;font-size:15px;font-weight:600;">{{ text }}</center>
+</v:roundrect>
+<![endif]-->
+<!--[if !mso]><!-->
+<a href="{{ href }}" style="display:inline-block; padding:14px 32px; background-color:{{ bgcolor }}; color:#ffffff; text-decoration:none; border-radius:980px; font-size:15px; font-weight:600;">{{ text }}</a>
+<!--<![endif]-->
+{%- endmacro -%}
+
+{%- macro cta_button_sm(href, text, bgcolor="#7055a4") -%}
+<!--[if mso]>
+<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="{{ href }}" style="height:40px;v-text-anchor:middle;width:200px;" arcsize="50%" fillcolor="{{ bgcolor }}">
+<center style="color:#ffffff;font-size:14px;font-weight:600;">{{ text }}</center>
+</v:roundrect>
+<![endif]-->
+<!--[if !mso]><!-->
+<a href="{{ href }}" style="display:inline-block; padding:10px 24px; background-color:{{ bgcolor }}; color:#ffffff; text-decoration:none; border-radius:980px; font-size:14px; font-weight:600;">{{ text }}</a>
+<!--<![endif]-->
+{%- endmacro -%}
+
+{%- macro days_label(n) -%}
+{#- Українське відмінювання: 1 день, 2-4 дні, 5-20 днів, 21 день... -#}
+{%- set mod10 = n % 10 -%}
+{%- set mod100 = n % 100 -%}
+{%- if mod100 >= 11 and mod100 <= 19 -%}
+{{ n }} днів
+{%- elif mod10 == 1 -%}
+{{ n }} день
+{%- elif mod10 >= 2 and mod10 <= 4 -%}
+{{ n }} дні
+{%- else -%}
+{{ n }} днів
+{%- endif -%}
+{%- endmacro -%}
