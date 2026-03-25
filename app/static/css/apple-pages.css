@@ -56,10 +56,6 @@
   text-align: center;
 }
 
-.apple-page .iprm-hero__nav {
-  display: none;
-}
-
 .apple-page .iprm-hero__title {
   font-size: clamp(2rem, 5vw, 3.25rem);
   font-weight: 800;
@@ -668,6 +664,56 @@
   margin-bottom: 20px;
 }
 
+/* ========== ERROR PAGE (shared: 401, 403, 404, 500) ========== */
+
+.iprm-error-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 52px);
+  text-align: center;
+  padding: 80px 24px;
+}
+
+.iprm-error-page__code {
+  font-size: clamp(5rem, 15vw, 10rem);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 40%, var(--apple-orange) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 16px;
+}
+
+.iprm-error-page__title {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--apple-black);
+  margin-bottom: 12px;
+  max-width: 600px;
+}
+
+/* .apple-gradient-text визначено глобально вище */
+
+.iprm-error-page__subtitle {
+  font-size: 17px;
+  color: var(--apple-gray);
+  line-height: 1.5;
+  max-width: 500px;
+  margin-bottom: 40px;
+}
+
+.iprm-error-page__actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 /* ========== FOCUS & SELECTION (global) ========== */
 
 .apple-page *:focus-visible {
@@ -782,6 +828,15 @@
   }
 
   .apple-page .iprm-hero__actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .iprm-error-page {
+    padding: 60px 16px;
+  }
+
+  .iprm-error-page__actions {
     flex-direction: column;
     align-items: center;
   }

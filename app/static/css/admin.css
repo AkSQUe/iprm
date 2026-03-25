@@ -91,12 +91,6 @@
   margin-top: 4px;
 }
 
-.admin-hero--section {
-  margin-top: 48px;
-  padding-top: 32px;
-  border-top: 1px solid var(--iprm-border);
-}
-
 /* ========== BUTTONS ========== */
 
 .btn-admin {
@@ -385,13 +379,6 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-}
-
-.admin-integration__desc {
-  font-size: 14px;
-  color: var(--iprm-text-light);
-  margin-bottom: 16px;
-  line-height: 1.6;
 }
 
 .admin-integrations__grid {
