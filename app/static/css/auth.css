@@ -169,7 +169,7 @@
   transition:
     transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     box-shadow 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    background-color 0.15s ease;
+    background-color 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .btn-auth:hover {
@@ -240,20 +240,8 @@
   display: inline;
 }
 
-/* Account page */
-.account-section {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 48px 24px;
-}
-
-.account-section__title {
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  color: #1d1d1f;
-  margin-bottom: 24px;
-}
+/* Account page -- sections now use .iprm-section from apple-pages.css */
+/* account-section__title replaced by iprm-section__title */
 
 /* Account courses */
 .account-courses {
