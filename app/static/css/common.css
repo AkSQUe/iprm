@@ -10,7 +10,7 @@
   --iprm-border: #e5e7eb;
   --iprm-radius: 12px;
   --iprm-radius-sm: 8px;
-  --iprm-transition: 0.25s ease;
+  --iprm-transition: 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --iprm-max-content: 1200px;
   --iprm-card-bg: #F6F7F7;
 
@@ -45,6 +45,20 @@
   --iprm-warning-text: #92400e;
   --iprm-neutral-bg: #e5e7eb;
   --iprm-neutral-text: #4b5563;
+
+  /* Apple-style neutral palette */
+  --apple-black: #1d1d1f;
+  --apple-gray-dark: #424245;
+  --apple-gray: #86868b;
+  --apple-gray-light: #d2d2d7;
+  --apple-section-bg: #f5f5f7;
+  --apple-purple-light: #c4b5fd;
+  --apple-orange: #e8913a;
+  --apple-purple-mid: #9b59b6;
+  --apple-orange-light: #fef0e6;
+  --apple-grad-dark-1: #2d1b4e;
+  --apple-grad-dark-2: #3b2368;
+  --apple-grad-dark-3: #4a2d80;
 
   /* Badge colors */
   --iprm-badge-draft-bg: #f3f4f6;
@@ -84,14 +98,36 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 60px;
+  scrollbar-width: thin;
+  scrollbar-color: #7055a4 transparent;
+}
+
+/* Webkit scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7055a4 0%, #9b59b6 50%, #e8913a 100%);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #5d4691 0%, #8a4aa5 50%, #d67e2e 100%);
 }
 
 body {
   font-family: var(--iprm-font);
-  color: var(--iprm-text);
-  background: var(--iprm-white);
-  line-height: 1.6;
+  color: #1d1d1f;
+  background: #fff;
+  font-size: 17px;
+  line-height: 1.47;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   padding-top: 52px;
 }
 
@@ -117,12 +153,20 @@ a {
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  transition: background 0.3s;
+  transition: background 0.36s cubic-bezier(0.32, 0.08, 0.24, 1);
   overflow: visible;
 }
 
 .iprm-header.scrolled {
   background: rgba(255, 255, 255, 0.95);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .iprm-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .iprm-header__inner {
@@ -688,11 +732,13 @@ a {
 }
 
 .iprm-footer__brand {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #7055a4;
+  display: inline-block;
   text-decoration: none;
-  letter-spacing: -0.02em;
+}
+
+.iprm-footer__logo {
+  height: 28px;
+  width: auto;
 }
 
 .iprm-footer__copy {
@@ -741,7 +787,7 @@ a {
   font-size: 0.8125rem;
   color: #86868b;
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .iprm-footer__link:hover {
@@ -1033,7 +1079,11 @@ a {
 }
 
 .cookie-banner__btn:hover {
-  transform: scale(1.02);
+  transform: scale(1.02) translateY(-1px);
+}
+
+.cookie-banner__btn:active {
+  transform: scale(0.98) translateY(0);
 }
 
 .cookie-banner__btn--accept {
@@ -1046,8 +1096,9 @@ a {
 }
 
 .cookie-banner__btn--reject {
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.8);
+  background: transparent;
+  color: var(--iprm-white);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .cookie-banner__btn--reject:hover {
@@ -1055,13 +1106,22 @@ a {
   color: #fff;
 }
 
-.cookie-banner__btn--reject {
-  background: transparent;
-  color: var(--iprm-white);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+@media (prefers-reduced-transparency: reduce) {
+  .cookie-banner {
+    background: rgba(29, 29, 31, 0.98);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 /* ========== RESPONSIVE ========== */
+
+/* Планшет: сітка курсів 2 колонки */
+@media (max-width: 1024px) {
+  .iprm-course-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 
 @media (max-width: 768px) {
   .cookie-banner__inner {
@@ -1203,6 +1263,13 @@ a {
   .iprm-footer__right {
     flex-direction: column;
     gap: 12px;
+  }
+
+  /* Збільшуємо touch-зону соціальних іконок */
+  .iprm-footer__social-icon {
+    width: 44px;
+    height: 44px;
+    padding: 8px;
   }
 
   .iprm-empty-state {

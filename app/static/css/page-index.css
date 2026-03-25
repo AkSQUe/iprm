@@ -570,3 +570,44 @@
     align-items: center;
   }
 }
+
+/* Мобільні: зменшення padding, stats, bento */
+@media (max-width: 480px) {
+  .page-index .iprm-hero__content {
+    padding: 72px 12px 48px;
+  }
+
+  .page-index .iprm-section {
+    padding: 48px 16px;
+  }
+
+  .page-index .apple-section-header {
+    margin-bottom: 36px;
+  }
+
+  .page-index .apple-feature-card {
+    padding: 28px 20px;
+  }
+
+  .page-index .apple-feature-card h3 {
+    font-size: 1.25rem;
+  }
+
+  .page-index .apple-stats-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .page-index .apple-bento-card {
+    min-height: 200px;
+    padding: 28px 20px;
+  }
+
+  .page-index .apple-bento-card--hero {
+    min-height: 220px;
+  }
+
+  .page-index .apple-bento-visual {
+    bottom: 110px;
+  }
+}

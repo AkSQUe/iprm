@@ -330,3 +330,34 @@
     padding: 20px;
   }
 }
+
+/* Мобільні: зменшення padding та елементів */
+@media (max-width: 480px) {
+  .ds-section {
+    padding: 32px 12px;
+  }
+
+  .ds-nav {
+    padding: 0 12px;
+    height: 40px;
+  }
+
+  .ds-nav__title {
+    font-size: 0.875rem;
+    margin-right: 12px;
+  }
+
+  .ds-nav a {
+    padding: 10px 6px;
+    font-size: 0.6875rem;
+  }
+
+  .ds-demo {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .ds-swatch {
+    padding: 10px 12px;
+  }
+}

@@ -400,19 +400,73 @@
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-sm);
-  padding: 16px;
+  padding: 20px;
+  transition: border-color var(--iprm-transition), box-shadow var(--iprm-transition);
+}
+
+.admin-integration-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .admin-integration-card__title {
   font-size: 14px;
   font-weight: 600;
   color: var(--iprm-dark);
-  margin-bottom: 6px;
 }
 
 .admin-integration-card p {
   font-size: 13px;
   line-height: 1.5;
+  color: var(--iprm-text-light);
+}
+
+/* Картка-посилання (активна інтеграція) */
+.admin-integration-card--link {
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+}
+
+.admin-integration-card--link:hover {
+  border-color: var(--iprm-accent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* Картка запланованої інтеграції */
+.admin-integration-card--planned {
+  opacity: 0.7;
+}
+
+/* ========== BREADCRUMB ========== */
+
+.admin-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.admin-breadcrumb__link {
+  color: var(--iprm-accent);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--iprm-transition);
+}
+
+.admin-breadcrumb__link:hover {
+  color: var(--iprm-accent-hover);
+}
+
+.admin-breadcrumb__sep {
+  color: var(--iprm-text-light);
+}
+
+.admin-breadcrumb__current {
   color: var(--iprm-text-light);
 }
 
@@ -517,6 +571,13 @@
 
 /* ========== RESPONSIVE ========== */
 
+/* Планшет: інтеграції 2 колонки */
+@media (max-width: 1024px) {
+  .admin-integrations__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .admin-stat-cards {
     grid-template-columns: repeat(2, 1fr);
@@ -606,6 +667,10 @@
 
   .admin-integrations__grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-breadcrumb {
+    margin-bottom: 12px;
   }
 }
 
