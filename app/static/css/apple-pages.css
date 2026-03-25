@@ -65,7 +65,7 @@
 }
 
 .apple-page .apple-gradient-text {
-  background: linear-gradient(135deg, #7055a4 0%, #9b59b6 40%, #e8913a 100%);
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 40%, var(--apple-orange) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -505,7 +505,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7055a4, #e8913a);
+  background: linear-gradient(135deg, var(--iprm-nav-active), var(--apple-orange));
 }
 
 /* ========== CLINIC CARDS ========== */
@@ -614,7 +614,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7055a4, #e8913a);
+  background: linear-gradient(135deg, var(--iprm-nav-active), var(--apple-orange));
 }
 
 /* CTA centered */
