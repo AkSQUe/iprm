@@ -36,7 +36,7 @@
       <a href="{{ url_for('admin.marketing') }}" class="admin-sidebar__link{% if ep == 'admin.marketing' %} admin-sidebar__link--active{% endif %}">
         Маркетинг
       </a>
-      <a href="{{ url_for('admin.notifications') }}" class="admin-sidebar__link{% if ep in ('admin.notifications', 'admin.notifications_log', 'admin.notifications_test') %} admin-sidebar__link--active{% endif %}">
+      <a href="{{ url_for('admin.notifications') }}" class="admin-sidebar__link{% if ep in ('admin.notifications', 'admin.notifications_log', 'admin.notifications_test', 'admin.notifications_settings') %} admin-sidebar__link--active{% endif %}">
         Сповіщення
       </a>
       <a href="{{ url_for('admin.integrations') }}" class="admin-sidebar__link{% if ep in ('admin.integrations', 'admin.liqpay', 'admin.liqpay_save_keys', 'admin.liqpay_test', 'admin.liqpay_refund') %} admin-sidebar__link--active{% endif %}">

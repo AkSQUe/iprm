@@ -43,23 +43,82 @@
     </div>
   </div>
 
-  <!-- Config & Test -->
+  <!-- SMTP Settings -->
+  <form method="POST" action="{{ url_for('admin.notifications_settings') }}" class="form-section admin-form__section">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h3 class="admin-form__section-title">Налаштування SMTP</h3>
+    <div class="admin-form__grid">
+      <div class="form-group">
+        <label for="smtp_server">SMTP сервер</label>
+        <input type="text" name="smtp_server" id="smtp_server" class="form-input" value="{{ settings.smtp_server }}" placeholder="mail.adm.tools">
+      </div>
+      <div class="form-group">
+        <label for="smtp_port">Порт</label>
+        <input type="number" name="smtp_port" id="smtp_port" class="form-input" value="{{ settings.smtp_port }}" placeholder="465">
+      </div>
+      <div class="form-group">
+        <label for="smtp_username">Логін (email)</label>
+        <input type="text" name="smtp_username" id="smtp_username" class="form-input" value="{{ settings.smtp_username }}" placeholder="noreply@iprm.space">
+      </div>
+      <div class="form-group">
+        <label for="smtp_password">Пароль</label>
+        <input type="password" name="smtp_password" id="smtp_password" class="form-input" placeholder="{% if settings.smtp_password %}(збережено){% else %}Введіть пароль{% endif %}">
+        {% if settings.smtp_password %}
+        <div class="form-hint">Залиште порожнім щоб не змінювати</div>
+        {% endif %}
+      </div>
+      <div class="form-group">
+        <label for="default_sender">Email відправника</label>
+        <input type="email" name="default_sender" id="default_sender" class="form-input" value="{{ settings.default_sender }}" placeholder="noreply@iprm.space">
+      </div>
+      <div class="form-group">
+        <label for="sender_name">Ім'я відправника</label>
+        <input type="text" name="sender_name" id="sender_name" class="form-input" value="{{ settings.sender_name }}" placeholder="IPRM">
+      </div>
+      <div class="form-group">
+        <label for="reminder_days">Нагадування за N днів</label>
+        <input type="text" name="reminder_days" id="reminder_days" class="form-input" value="{{ settings.reminder_days }}" placeholder="7,3,1">
+        <div class="form-hint">Через кому: 7,3,1</div>
+      </div>
+      <div class="form-group" style="display:flex; flex-direction:column; gap:12px; justify-content:flex-end;">
+        <div class="form-checkbox">
+          <input type="checkbox" name="smtp_use_ssl" id="smtp_use_ssl"{% if settings.smtp_use_ssl %} checked{% endif %}>
+          <label for="smtp_use_ssl">SSL (порт 465)</label>
+        </div>
+        <div class="form-checkbox">
+          <input type="checkbox" name="smtp_use_tls" id="smtp_use_tls"{% if settings.smtp_use_tls %} checked{% endif %}>
+          <label for="smtp_use_tls">STARTTLS (порт 587)</label>
+        </div>
+        <div class="form-checkbox">
+          <input type="checkbox" name="is_enabled" id="is_enabled"{% if settings.is_enabled %} checked{% endif %}>
+          <label for="is_enabled">Відправка увімкнена</label>
+        </div>
+      </div>
+    </div>
+    <div class="admin-form__actions">
+      <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Зберегти налаштування</button>
+    </div>
+  </form>
+
+  <!-- Test & Scheduler -->
   <div class="admin-form__grid" style="margin-bottom: 24px;">
     <div class="form-section admin-form__section">
-      <h3 class="admin-form__section-title">Налаштування</h3>
+      <h3 class="admin-form__section-title">Тестовий лист</h3>
+      <form method="POST" action="{{ url_for('admin.notifications_test') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+          <label for="test-email">Email адреса</label>
+          <input type="email" name="to" id="test-email" class="form-input" value="{{ current_user.email }}" placeholder="email@example.com">
+        </div>
+        <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm"{% if not settings.is_enabled %} disabled title="Увімкніть відправку в налаштуваннях"{% endif %}>Надіслати тестовий лист</button>
+      </form>
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Планувальник</h3>
       <table class="admin-table">
         <tr>
-          <td>SMTP</td>
-          <td>
-            {% if mail_configured %}
-            <span class="badge badge--success">Налаштовано</span>
-            {% else %}
-            <span class="badge badge--warning">Не налаштовано</span>
-            {% endif %}
-          </td>
-        </tr>
-        <tr>
-          <td>Планувальник</td>
+          <td>Статус</td>
           <td>
             {% if scheduler_running %}
             <span class="badge badge--success">Працює</span>
@@ -75,30 +134,17 @@
         </tr>
         {% endfor %}
       </table>
-
       {% if scheduler_running %}
       <form method="POST" action="{{ url_for('admin.scheduler_pause') }}" style="margin-top: 12px;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Призупинити планувальник</button>
+        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Призупинити</button>
       </form>
       {% else %}
       <form method="POST" action="{{ url_for('admin.scheduler_resume') }}" style="margin-top: 12px;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Відновити планувальник</button>
+        <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Відновити</button>
       </form>
       {% endif %}
-    </div>
-
-    <div class="form-section admin-form__section">
-      <h3 class="admin-form__section-title">Тестовий лист</h3>
-      <form method="POST" action="{{ url_for('admin.notifications_test') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="form-group">
-          <label for="test-email">Email адреса</label>
-          <input type="email" name="to" id="test-email" class="form-input" value="{{ current_user.email }}" placeholder="email@example.com">
-        </div>
-        <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Надіслати тестовий лист</button>
-      </form>
     </div>
   </div>
 

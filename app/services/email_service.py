@@ -1,6 +1,7 @@
 """
 Email sending service with threaded delivery and audit logging.
 
+Reads SMTP settings from EmailSettings model (DB) before each send.
 Uses Flask-Mail for SMTP, threading.Thread for non-blocking sends,
 and EmailLog model for audit trail.
 """
@@ -20,15 +21,43 @@ logger = logging.getLogger(__name__)
 class EmailService:
 
     @staticmethod
+    def _load_settings(app):
+        """Load SMTP settings from DB and apply to Flask-Mail config."""
+        from app.models.email_settings import EmailSettings
+        with app.app_context():
+            settings = EmailSettings.get()
+            settings.apply_to_app(app)
+            return settings
+
+    @staticmethod
     def send_email(to, subject, template_name, context=None,
                    trigger=None, registration_id=None):
         """
         Render email template and send via SMTP in background thread.
+        Reads SMTP config from DB before each send.
 
         Returns EmailLog instance (status may still be 'pending' if async).
         """
         app = current_app._get_current_object()
         ctx = context or {}
+
+        # Завантажуємо налаштування з БД
+        settings = EmailService._load_settings(app)
+
+        if not settings.is_enabled:
+            logger.info('Email disabled, skipping: %s -> %s', template_name, to)
+            log_entry = EmailLog(
+                to_email=to,
+                subject=subject,
+                template_name=template_name,
+                status='failed',
+                error_message='Email sending is disabled in settings',
+                trigger=trigger,
+                registration_id=registration_id,
+            )
+            db.session.add(log_entry)
+            db.session.commit()
+            return log_entry
 
         log_entry = EmailLog(
             to_email=to,
@@ -43,11 +72,12 @@ class EmailService:
 
         html_body = render_template(f'emails/{template_name}.html', **ctx)
 
+        sender = app.config.get('MAIL_DEFAULT_SENDER')
         msg = Message(
             subject=subject,
             recipients=[to],
             html=html_body,
-            sender=app.config.get('MAIL_DEFAULT_SENDER'),
+            sender=sender,
         )
 
         thread = Thread(
@@ -63,6 +93,9 @@ class EmailService:
     def _send_in_thread(app, msg, log_id):
         """Execute SMTP send inside app context, update EmailLog."""
         with app.app_context():
+            # Перезавантажуємо налаштування для thread
+            EmailService._load_settings(app)
+
             log_entry = db.session.get(EmailLog, log_id)
             try:
                 mail.send(msg)
