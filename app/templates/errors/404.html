@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block content %}
-  <main class="iprm-error-page">
+  <div class="iprm-error-page">
     <div class="iprm-error-page__code">404</div>
     <h1 class="iprm-error-page__title">Сторінка перебуває на стадії <span class="apple-gradient-text">репаративної регенерації</span></h1>
     <p class="iprm-error-page__subtitle">Буде здоровою й красивою найближчим часом</p>
@@ -16,5 +16,5 @@
       <a href="{{ url_for('main.index') }}" class="apple-btn apple-btn--primary">На головну</a>
       <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary">Курси</a>
     </nav>
-  </main>
+  </div>
 {% endblock %}
