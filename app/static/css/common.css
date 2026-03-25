@@ -1081,6 +1081,10 @@ a {
     gap: 16px;
   }
 
+  .iprm-header__logo span {
+    display: none;
+  }
+
   .iprm-header__burger {
     display: flex;
   }
