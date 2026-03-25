@@ -1,5 +1,6 @@
 import logging
 from flask import render_template, redirect, url_for, flash
+from flask_login import current_user
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
 from app.admin.forms import TrainerForm
@@ -8,6 +9,7 @@ from app.models.trainer import Trainer
 from app.utils import slugify
 
 logger = logging.getLogger(__name__)
+audit_logger = logging.getLogger('audit')
 
 
 @admin_bp.route('/trainers')
@@ -41,6 +43,7 @@ def trainer_create():
 
         try:
             db.session.commit()
+            audit_logger.info('Admin %s created trainer %s (%s)', current_user.email, trainer.id, trainer.full_name)
             flash('Тренера додано', 'success')
             return redirect(url_for('admin.dashboard'))
         except Exception:
