@@ -1,72 +1,108 @@
   <!-- ===== PAGES ===== -->
   <div class="ds-section" id="pages">
-    <p class="ds-label">Навігація</p>
+    <p class="ds-label">Navigation</p>
     <h2 class="ds-title">Сторінки</h2>
     <div class="ds-pages">
       <a href="{{ url_for('main.index') }}">Головна</a>
       <a href="{{ url_for('courses.course_list') }}">Курси</a>
-      <a href="{{ url_for('courses.course_detail') }}">Курс: Гінекологія</a>
-      <a href="{{ url_for('courses.course_stomatology') }}">Курс: Стоматологія</a>
-      <a href="{{ url_for('courses.course_orthopedics') }}">Курс: Ортопедія</a>
+      <a href="{{ url_for('trainers.trainer_list') }}">Тренери</a>
+      <a href="{{ url_for('clinics.clinic_list') }}">Клініки</a>
+      <a href="{{ url_for('main.contact') }}">Контакти</a>
     </div>
   </div>
 
   <!-- ===== COLORS ===== -->
-  <div class="ds-section" id="colors">
-    <p class="ds-label">Foundations</p>
-    <h2 class="ds-title">Кольори</h2>
-    <div class="ds-row">
-      <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: var(--iprm-dark);"></div>
-        <div class="ds-swatch__info">Dark<span class="ds-swatch__value" data-var="--iprm-dark"></span></div>
+  <div class="ds-section-alt">
+    <div class="ds-section" id="colors">
+      <p class="ds-label">Foundations</p>
+      <h2 class="ds-title">Кольорова палітра</h2>
+
+      <h3 class="ds-section-heading">Нейтральні</h3>
+      <div class="ds-swatches">
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #1d1d1f;"></div>
+          <div class="ds-swatch__info">Black<span class="ds-swatch__value">#1d1d1f</span></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #1a1a2e;"></div>
+          <div class="ds-swatch__info">Dark<span class="ds-swatch__value">#1a1a2e</span></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #424245;"></div>
+          <div class="ds-swatch__info">Gray Dark<span class="ds-swatch__value">#424245</span></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #86868b;"></div>
+          <div class="ds-swatch__info">Gray<span class="ds-swatch__value">#86868b</span></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #d2d2d7;"></div>
+          <div class="ds-swatch__info">Gray Light<span class="ds-swatch__value">#d2d2d7</span></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #f5f5f7;"></div>
+          <div class="ds-swatch__info">Section BG<span class="ds-swatch__value">#f5f5f7</span></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #fbfbfd;"></div>
+          <div class="ds-swatch__info">White<span class="ds-swatch__value">#fbfbfd</span></div>
+        </div>
       </div>
-      <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: var(--iprm-text);"></div>
-        <div class="ds-swatch__info">Text<span class="ds-swatch__value" data-var="--iprm-text"></span></div>
+
+      <h3 class="ds-section-heading">Акцентні</h3>
+      <div class="ds-swatches">
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #7055a4;"></div>
+          <div class="ds-swatch__info">Accent<span class="ds-swatch__value">#7055a4</span></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #5d4691;"></div>
+          <div class="ds-swatch__info">Accent Hover<span class="ds-swatch__value">#5d4691</span></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #ede9f6;"></div>
+          <div class="ds-swatch__info">Accent Light<span class="ds-swatch__value">#ede9f6</span></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #e8913a;"></div>
+          <div class="ds-swatch__info">Orange<span class="ds-swatch__value">#e8913a</span></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #fef0e6;"></div>
+          <div class="ds-swatch__info">Orange Light<span class="ds-swatch__value">#fef0e6</span></div>
+        </div>
       </div>
-      <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: var(--iprm-text-light);"></div>
-        <div class="ds-swatch__info">Text Light<span class="ds-swatch__value" data-var="--iprm-text-light"></span></div>
+
+      <h3 class="ds-section-heading">Статус</h3>
+      <div class="ds-swatches">
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #ef4444;"></div>
+          <div class="ds-swatch__info">Error<span class="ds-swatch__value">#ef4444</span></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #16a34a;"></div>
+          <div class="ds-swatch__info">Success<span class="ds-swatch__value">#16a34a</span></div>
+        </div>
+        <div class="ds-swatch">
+          <div class="ds-swatch__color" style="background: #0369a1;"></div>
+          <div class="ds-swatch__info">Info<span class="ds-swatch__value">#0369a1</span></div>
+        </div>
       </div>
-      <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: var(--iprm-card-bg);"></div>
-        <div class="ds-swatch__info">Card BG<span class="ds-swatch__value" data-var="--iprm-card-bg"></span></div>
+
+      <h3 class="ds-section-heading">Градієнти</h3>
+      <div class="ds-gradient-row">
+        <div class="ds-gradient-sample" style="background: linear-gradient(135deg, #7055a4 0%, #9b59b6 40%, #e8913a 100%);">
+          Gradient Text
+        </div>
+        <div class="ds-gradient-sample" style="background: linear-gradient(135deg, #7055a4, #e8913a);">
+          Accent-Orange
+        </div>
+        <div class="ds-gradient-sample" style="background: linear-gradient(135deg, #2d1b4e 0%, #3b2368 50%, #4a2d80 100%);">
+          Dark Featured
+        </div>
       </div>
-      <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: var(--iprm-border);"></div>
-        <div class="ds-swatch__info">Border<span class="ds-swatch__value" data-var="--iprm-border"></span></div>
-      </div>
-      <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: var(--iprm-accent);"></div>
-        <div class="ds-swatch__info">Accent<span class="ds-swatch__value" data-var="--iprm-accent"></span></div>
-      </div>
-      <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: var(--iprm-accent-light);"></div>
-        <div class="ds-swatch__info">Accent Light<span class="ds-swatch__value" data-var="--iprm-accent-light"></span></div>
-      </div>
-      <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: var(--iprm-accent-secondary);"></div>
-        <div class="ds-swatch__info">Accent Secondary<span class="ds-swatch__value" data-var="--iprm-accent-secondary"></span></div>
-      </div>
-      <div class="ds-swatch">
-        <div class="ds-swatch__color" style="background: var(--iprm-btn-bg);"></div>
-        <div class="ds-swatch__info">Button<span class="ds-swatch__value" data-var="--iprm-btn-bg"></span></div>
-      </div>
+      <p class="ds-hint">Градієнти використовуються для: gradient-text (1-2 слова), маркерів списків, чисел статистики. Не для фонів кнопок.</p>
     </div>
-    <script>
-      (function() {
-        function updateSwatches() {
-          var root = getComputedStyle(document.documentElement);
-          var spans = document.querySelectorAll('.ds-swatch__value[data-var]');
-          for (var i = 0; i < spans.length; i++) {
-            spans[i].textContent = root.getPropertyValue(spans[i].getAttribute('data-var')).trim();
-          }
-        }
-        updateSwatches();
-        var observer = new MutationObserver(updateSwatches);
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-      })();
-    </script>
   </div>
 
   <!-- ===== TYPOGRAPHY ===== -->
@@ -74,325 +110,611 @@
     <p class="ds-label">Foundations</p>
     <h2 class="ds-title">Типографіка</h2>
     <div class="ds-col">
-      <div class="ds-typo-item" style="font-size: 32px; font-weight: 700; color: var(--iprm-dark);">Hero Title -- 32px / 700</div>
-      <div class="ds-typo-item" style="font-size: 24px; font-weight: 700; color: var(--iprm-dark);">Section Title -- 24px / 700</div>
-      <div class="ds-typo-item" style="font-size: 18px; font-weight: 700; color: var(--iprm-dark);">Card Heading -- 18px / 700</div>
-      <div class="ds-typo-item" style="font-size: 16px; font-weight: 700; color: var(--iprm-dark);">Program Heading -- 16px / 700</div>
-      <div class="ds-typo-item" style="font-size: 15px; color: var(--iprm-text);">Body Text -- 15px / 400</div>
-      <div class="ds-typo-item" style="font-size: 14px; color: var(--iprm-text);">Card Text -- 14px / 400</div>
-      <div class="ds-typo-item" style="font-size: 14px; font-weight: 600;">Button Text -- 14px / 600</div>
-      <div class="ds-typo-item" style="font-size: 13px; color: var(--iprm-text-light);">Subtitle -- 13px / 400</div>
-      <div class="ds-typo-item" style="font-size: 12px; color: var(--iprm-text-light);">Tag / Small -- 12px / 500</div>
+      <div class="ds-typo-item" style="font-size: clamp(2.5rem, 7vw, 4.5rem); font-weight: 800; letter-spacing: -0.04em; line-height: 1.08; color: #1d1d1f;">
+        Hero Title
+        <span class="ds-typo-meta">clamp(2.5rem, 7vw, 4.5rem) / 800 / -0.04em</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: #1d1d1f;">
+        Section Title
+        <span class="ds-typo-meta">clamp(2rem, 5vw, 3.25rem) / 800 / -0.03em</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: #1d1d1f;">
+        Card Heading
+        <span class="ds-typo-meta">1.5rem / 700 / -0.02em</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; color: #1d1d1f;">
+        Bento Heading
+        <span class="ds-typo-meta">1.25rem / 700 / -0.02em</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: 1.125rem; font-weight: 400; color: #86868b; line-height: 1.5;">
+        Section description text
+        <span class="ds-typo-meta">1.125rem / 400 / gray</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: 1.0625rem; font-weight: 400; color: #424245; line-height: 1.7;">
+        Body text for longer content
+        <span class="ds-typo-meta">1.0625rem / 400 / gray-dark</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: 0.9375rem; font-weight: 400; color: #86868b; line-height: 1.6;">
+        Card description text
+        <span class="ds-typo-meta">0.9375rem / 400 / gray</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: 0.8125rem; font-weight: 400; color: #424245;">
+        Nav link, footer text
+        <span class="ds-typo-meta">0.8125rem / 400</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #7055a4;">
+        LABEL / TAG
+        <span class="ds-typo-meta">0.6875rem / 600 / uppercase / 0.08em</span>
+      </div>
     </div>
-    <p class="ds-hint">Font: Inter. Fallback: system-ui, -apple-system, sans-serif</p>
+    <p class="ds-hint">Font: Inter (wght 300-900). Fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif. Всі заголовки з негативним letter-spacing (tight).</p>
   </div>
 
   <!-- ===== BUTTONS ===== -->
-  <div class="ds-section" id="buttons">
-    <p class="ds-label">Components</p>
-    <h2 class="ds-title">Кнопки</h2>
-    <div class="ds-row">
-      <a href="#" class="iprm-btn iprm-btn--primary"><span class="iprm-btn__arrow">&#x2197;</span> Primary Button</a>
-      <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm"><span class="iprm-btn__arrow">&#x2197;</span> Small Button</a>
+  <div class="ds-section-alt">
+    <div class="ds-section" id="buttons">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Кнопки</h2>
+
+      <h3 class="ds-section-heading">Apple-style (capsule)</h3>
+      <div class="ds-demo">
+        <div class="ds-row">
+          <a href="#" class="apple-btn apple-btn--primary" style="display:inline-flex;align-items:center;gap:8px;font-size:1.0625rem;font-weight:500;border:none;padding:14px 32px;border-radius:980px;cursor:pointer;text-decoration:none;transition:all 0.2s;background:#7055a4;color:#fff;">Primary</a>
+          <a href="#" style="display:inline-flex;align-items:center;gap:8px;font-size:1.0625rem;font-weight:500;border:none;padding:14px 32px;border-radius:980px;cursor:pointer;text-decoration:none;transition:all 0.2s;background:transparent;color:#7055a4;">Secondary ></a>
+          <a href="#" style="display:inline-flex;align-items:center;gap:8px;font-size:0.8125rem;font-weight:500;border:none;padding:8px 20px;border-radius:980px;cursor:pointer;text-decoration:none;transition:all 0.2s;background:#7055a4;color:#fff;">Nav CTA</a>
+        </div>
+      </div>
+      <p class="ds-hint">border-radius: 980px / Primary: bg accent, color white / Secondary: transparent, accent text, ::after ' >' / Hover primary: scale(1.02)</p>
+
+      <h3 class="ds-section-heading">Legacy (iprm-btn)</h3>
+      <div class="ds-demo">
+        <div class="ds-row">
+          <a href="#" class="iprm-btn iprm-btn--primary"><span class="iprm-btn__arrow">&#x2197;</span> Primary</a>
+          <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm"><span class="iprm-btn__arrow">&#x2197;</span> Small</a>
+          <a href="#" class="iprm-btn iprm-btn--secondary">Secondary</a>
+          <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--disabled"><span class="iprm-btn__arrow">&#x2197;</span> Disabled</a>
+        </div>
+      </div>
+      <p class="ds-hint">border-radius: 10px / bg: var(--iprm-btn-bg) / Збережено для адмін-панелі та внутрішніх сторінок</p>
+
+      <h3 class="ds-section-heading">Link-style</h3>
+      <div class="ds-demo">
+        <div class="ds-row">
+          <a href="#" style="font-size:0.875rem;font-weight:500;color:#7055a4;text-decoration:none;">На сторінку клініки ></a>
+        </div>
+      </div>
+      <p class="ds-hint">font-size: 0.875rem / weight: 500 / color: accent / ::after ' >' / Hover: accent-hover</p>
     </div>
-    <p class="ds-hint">padding: 4px 18px / border-radius: 10px / bg: var(--iprm-btn-bg) / color: #fff / no shadow</p>
-    <div class="ds-row ds-dark-demo">
-      <a href="#" class="iprm-btn iprm-btn--primary"><span class="iprm-btn__arrow">&#x2197;</span> Primary (on dark)</a>
-    </div>
-    <p class="ds-hint">Primary button on hero dark backgrounds</p>
-    <h3 class="ds-section-heading">Tags</h3>
-    <div class="ds-row">
-      <span class="iprm-tag">Tag Label</span>
-      <span class="iprm-tag">Another Tag</span>
-    </div>
-    <p class="ds-hint">padding: 4px 12px / border: 1px solid var(--iprm-border) / border-radius: 10px</p>
-    <h3 class="ds-section-heading">Price Badge</h3>
-    <div class="ds-row ds-dark-demo">
-      <span class="iprm-hero__price">7500 &#8372; за курс</span>
-    </div>
-    <p class="ds-hint">bg: #fff / border-radius: 10px / font-weight: 600</p>
   </div>
 
-  <!-- ===== CARDS ===== -->
-  <div class="ds-section" id="cards">
+  <!-- ===== BADGES & TAGS ===== -->
+  <div class="ds-section" id="badges">
     <p class="ds-label">Components</p>
-    <h2 class="ds-title">Картки (icon cards)</h2>
-    <div class="iprm-cards" style="margin-bottom: 24px;">
-      <div class="iprm-card iprm-card--left"><div class="iprm-card__icon">[icon]</div><p class="iprm-card__text">Текст картки з іконкою по лівому краю</p></div>
-      <div class="iprm-card"><div class="iprm-card__icon">[icon]</div><p class="iprm-card__text">Текст картки з іконкою по центру</p></div>
-      <div class="iprm-card iprm-card--left"><div class="iprm-card__icon">[icon]</div><p class="iprm-card__text">Ще одна картка</p></div>
+    <h2 class="ds-title">Бейджі та теги</h2>
+
+    <h3 class="ds-section-heading">Hero Badge / Price Pill</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <span style="display:inline-block;font-size:0.8125rem;font-weight:500;color:#7055a4;background:#ede9f6;padding:6px 16px;border-radius:980px;">Бали БПР</span>
+        <span style="display:inline-flex;align-items:center;gap:8px;font-size:1rem;font-weight:600;color:#7055a4;background:#ede9f6;padding:8px 24px;border-radius:980px;">7 500 &#8372; за курс</span>
+      </div>
     </div>
-    <p class="ds-hint">bg: var(--iprm-card-bg) / border-radius: 4% / padding: 24px / icon: 80x80</p>
+    <p class="ds-hint">border-radius: 980px / bg: accent-light / color: accent / Використовуються в hero</p>
+
+    <h3 class="ds-section-heading">Теги</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <span class="iprm-tag">Очні курси</span>
+        <span class="iprm-tag">Онлайн курси</span>
+        <span class="iprm-tag iprm-tag--accent">Accent тег</span>
+      </div>
+    </div>
+    <p class="ds-hint">.iprm-tag: border 1px solid / .iprm-tag--accent: bg accent-light, color accent</p>
+
+    <h3 class="ds-section-heading">Бейджі статусу (адмін)</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <span class="badge badge--draft">Чернетка</span>
+        <span class="badge badge--published">Опубліковано</span>
+        <span class="badge badge--active">Активний</span>
+        <span class="badge badge--completed">Завершено</span>
+        <span class="badge badge--cancelled">Скасовано</span>
+      </div>
+    </div>
+    <p class="ds-hint">padding: 3px 10px / font-size: 12px / border-radius: 10px / CSS-змінні --iprm-badge-*</p>
   </div>
 
   <!-- ===== HERO ===== -->
-  <div class="ds-section" id="hero">
-    <p class="ds-label">Components</p>
-    <h2 class="ds-title">Hero Block</h2>
-    <div class="iprm-hero-wrap" style="margin-bottom: 24px;">
-      <section class="iprm-hero" style="height: 300px;">
-        <div class="iprm-hero__bg"></div>
-        <div class="iprm-hero__content">
-          <span class="iprm-hero__price">7500 &#8372; за курс</span>
-          <h1 class="iprm-hero__title">Заголовок Hero блоку</h1>
-          <p class="iprm-hero__subtitle">Опис під заголовком hero блоку з додатковою інформацією</p>
-          <a href="#" class="iprm-btn iprm-btn--primary"><span class="iprm-btn__arrow">&#x2197;</span> Call to Action</a>
+  <div class="ds-section-alt">
+    <div class="ds-section" id="hero">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Hero</h2>
+
+      <h3 class="ds-section-heading">Apple-style (fullscreen, white bg)</h3>
+      <div class="ds-demo" style="text-align:center; padding: 80px 32px; position: relative; overflow: hidden; min-height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="display:inline-block;font-size:0.8125rem;font-weight:500;color:#7055a4;background:#ede9f6;padding:6px 16px;border-radius:980px;margin-bottom:24px;">Бали БПР -- Сертифіковані курси</div>
+        <div style="font-size:clamp(2rem, 5vw, 3rem);font-weight:800;letter-spacing:-0.04em;line-height:1.08;color:#1d1d1f;max-width:700px;">Плазмотерапія.<br><span style="background:linear-gradient(135deg,#7055a4 0%,#9b59b6 40%,#e8913a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Регенерація.</span></div>
+        <div style="font-size:1.0625rem;color:#86868b;max-width:500px;line-height:1.55;margin-top:16px;">Курси післядипломної освіти для лікарів та персоналізована регенеративна терапія</div>
+        <div style="display:flex;gap:16px;margin-top:32px;">
+          <a href="#" style="font-size:1.0625rem;font-weight:500;color:#fff;background:#7055a4;padding:14px 32px;border-radius:980px;text-decoration:none;">Обрати курс</a>
+          <a href="#" style="font-size:1.0625rem;font-weight:500;color:#7055a4;padding:14px 32px;border-radius:980px;text-decoration:none;">Про лабораторії ></a>
         </div>
-        <div class="iprm-hero__nav">
-          <button class="iprm-hero__arrow iprm-hero__arrow--prev">&#8249;</button>
-          <div class="iprm-hero__dots">
-            <span class="iprm-hero__dot iprm-hero__dot--active"></span>
-            <span class="iprm-hero__dot"></span>
-            <span class="iprm-hero__dot"></span>
-          </div>
-          <button class="iprm-hero__arrow iprm-hero__arrow--next">&#8250;</button>
+      </div>
+      <p class="ds-hint">min-height: 100vh / text-align: center / Badge -> h1 (gradient-text) -> subtitle -> actions / fadeUp animation з послідовним delay</p>
+
+      <h3 class="ds-section-heading">Legacy (dark)</h3>
+      <div class="ds-demo ds-demo--flush">
+        <div class="iprm-hero-wrap" style="margin: 0;">
+          <section class="iprm-hero" style="height: 300px;">
+            <div class="iprm-hero__bg"></div>
+            <div class="iprm-hero__content">
+              <span class="iprm-hero__price">7500 &#8372; за курс</span>
+              <h1 class="iprm-hero__title">Заголовок Hero блоку</h1>
+              <p class="iprm-hero__subtitle">Опис під заголовком hero блоку</p>
+              <a href="#" class="iprm-btn iprm-btn--primary"><span class="iprm-btn__arrow">&#x2197;</span> Call to Action</a>
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
+      <p class="ds-hint">Збережено для адмін-панелі. bg: dark gradient / border-radius: 12px / dots navigation</p>
     </div>
-    <p class="ds-hint">Grey wrap (var(--iprm-card-bg)) full-width / dark container max-width: 1200px / border-radius: 12px / dots: outline, active: filled</p>
   </div>
 
-  <!-- ===== PHOTO CARDS ===== -->
-  <div class="ds-section" id="photo-cards">
+  <!-- ===== FEATURE CARDS ===== -->
+  <div class="ds-section" id="feature-cards">
     <p class="ds-label">Components</p>
-    <h2 class="ds-title">Фото-картки (клініка)</h2>
-    <div class="iprm-photo-cards" style="margin-bottom: 24px;">
-      <div class="iprm-photo-card">
-        <div class="iprm-photo-card__image">[photo]</div>
-        <div class="iprm-photo-card__body">
-          <p class="iprm-photo-card__title">Назва відділення або напрямку</p>
-          <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm"><span class="iprm-btn__arrow">&#x2197;</span> На сторінку</a>
+    <h2 class="ds-title">Feature Cards (2-col grid)</h2>
+    <div class="ds-demo" style="background: #f5f5f7;">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:900px;">
+        <div style="background:#fff;border-radius:24px;padding:40px 32px;grid-column:span 2;background:linear-gradient(135deg,#2d1b4e 0%,#3b2368 50%,#4a2d80 100%);color:#fff;">
+          <div style="width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:24px;background:rgba(255,255,255,0.12);color:#c4b5fd;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/></svg>
+          </div>
+          <div style="font-size:1.5rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:12px;">Featured Card (span 2)</div>
+          <div style="font-size:0.9375rem;color:#d2d2d7;line-height:1.6;">Картка на 2 колонки з темним gradient-фоном. Іконка з rgba(255,255,255,0.12) фоном.</div>
         </div>
-      </div>
-      <div class="iprm-photo-card">
-        <div class="iprm-photo-card__image">[photo]</div>
-        <div class="iprm-photo-card__body">
-          <p class="iprm-photo-card__title">Друга картка</p>
-          <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm"><span class="iprm-btn__arrow">&#x2197;</span> На сторінку</a>
+        <div style="background:#fff;border-radius:24px;padding:40px 32px;">
+          <div style="width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:24px;background:#ede9f6;color:#7055a4;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <div style="font-size:1.5rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:12px;">Standard Card</div>
+          <div style="font-size:0.9375rem;color:#86868b;line-height:1.6;">Звичайна картка з іконкою, заголовком та описом.</div>
+        </div>
+        <div style="background:#fff;border-radius:24px;padding:40px 32px;">
+          <div style="width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:24px;background:#ede9f6;color:#7055a4;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div style="font-size:1.5rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:12px;">Another Card</div>
+          <div style="font-size:0.9375rem;color:#86868b;line-height:1.6;">Ще одна картка в сітці.</div>
         </div>
       </div>
     </div>
-    <p class="ds-hint">bg: var(--iprm-card-bg) / image aspect-ratio: 1:1 / padding: 16px</p>
+    <p class="ds-hint">grid: repeat(2, 1fr) / gap: 20px / border-radius: 24px / padding: 48px 36px / Hover: translateY(-4px) + shadow / Featured: span 2, dark gradient bg</p>
+  </div>
+
+  <!-- ===== BENTO GRID ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="bento">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Bento Grid (3-col)</h2>
+      <div class="ds-demo" style="background: #f5f5f7;">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+          <div style="grid-column:span 3;min-height:240px;background:linear-gradient(135deg,#2d1b4e 0%,#3b2368 40%,#4a2d80 100%);color:#fff;border-radius:24px;padding:40px 32px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+            <div style="width:80px;height:80px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.08);margin-bottom:24px;">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/></svg>
+            </div>
+            <div style="font-size:clamp(1.5rem, 3vw, 2rem);font-weight:800;letter-spacing:-0.03em;">Hero Bento Card (span 3)</div>
+            <div style="font-size:0.875rem;color:rgba(255,255,255,0.6);margin-top:8px;">Темна hero-картка на всю ширину</div>
+          </div>
+          <div style="background:#fff;border-radius:24px;padding:32px 24px;min-height:200px;display:flex;flex-direction:column;justify-content:flex-end;">
+            <div style="font-size:1.25rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:6px;">Bento Card</div>
+            <div style="font-size:0.875rem;color:#86868b;line-height:1.5;">Опис картки</div>
+          </div>
+          <div style="background:#fff;border-radius:24px;padding:32px 24px;min-height:200px;display:flex;flex-direction:column;justify-content:flex-end;">
+            <div style="font-size:1.25rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:6px;">Bento Card</div>
+            <div style="font-size:0.875rem;color:#86868b;line-height:1.5;">Опис картки</div>
+          </div>
+          <div style="background:#fff;border-radius:24px;padding:32px 24px;min-height:200px;display:flex;flex-direction:column;justify-content:flex-end;">
+            <div style="font-size:1.25rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:6px;">Bento Card</div>
+            <div style="font-size:0.875rem;color:#86868b;line-height:1.5;">Опис картки</div>
+          </div>
+        </div>
+      </div>
+      <p class="ds-hint">grid: repeat(3, 1fr) / gap: 20px / min-height: 320px / Hero: span 3, dark gradient, centered / Hover: scale(1.01) / Visual area з gradient bg зверху</p>
+    </div>
+  </div>
+
+  <!-- ===== STATS ===== -->
+  <div class="ds-section-dark">
+    <div class="ds-section" id="stats">
+      <p class="ds-label" style="color: #c4b5fd;">Components</p>
+      <h2 class="ds-title">Stats Row</h2>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:48px;text-align:center;max-width:800px;margin:0 auto 24px;">
+        <div>
+          <div style="font-size:clamp(2rem, 4vw, 3rem);font-weight:800;letter-spacing:-0.04em;background:linear-gradient(135deg,#c4b5fd,#e8913a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">2015</div>
+          <div style="font-size:0.9375rem;color:#d2d2d7;margin-top:8px;">Рік заснування</div>
+        </div>
+        <div>
+          <div style="font-size:clamp(2rem, 4vw, 3rem);font-weight:800;letter-spacing:-0.04em;background:linear-gradient(135deg,#c4b5fd,#e8913a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">10+</div>
+          <div style="font-size:0.9375rem;color:#d2d2d7;margin-top:8px;">Років досліджень</div>
+        </div>
+        <div>
+          <div style="font-size:clamp(2rem, 4vw, 3rem);font-weight:800;letter-spacing:-0.04em;background:linear-gradient(135deg,#c4b5fd,#e8913a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">3</div>
+          <div style="font-size:0.9375rem;color:#d2d2d7;margin-top:8px;">Лабораторії</div>
+        </div>
+        <div>
+          <div style="font-size:clamp(2rem, 4vw, 3rem);font-weight:800;letter-spacing:-0.04em;background:linear-gradient(135deg,#c4b5fd,#e8913a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">50+</div>
+          <div style="font-size:0.9375rem;color:#d2d2d7;margin-top:8px;">Курсів</div>
+        </div>
+      </div>
+      <p class="ds-hint">Dark section / grid: repeat(4, 1fr) / Numbers: gradient text (light purple -> orange) / Counter animation з easeOutCubic</p>
+    </div>
+  </div>
+
+  <!-- ===== CLINIC CARDS ===== -->
+  <div class="ds-section" id="clinic-cards">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Clinic Cards (3-col)</h2>
+    <div class="ds-demo">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px;">
+        <div style="border-radius:24px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+          <div style="height:180px;background:linear-gradient(135deg,#ede9f6 0%,#fef0e6 100%);display:flex;align-items:center;justify-content:center;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7055a4" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg>
+          </div>
+          <div style="padding:24px 20px;">
+            <div style="font-size:1.125rem;font-weight:700;letter-spacing:-0.01em;line-height:1.3;margin-bottom:12px;color:#1d1d1f;">Назва відділення</div>
+            <a href="#" style="font-size:0.875rem;font-weight:500;color:#7055a4;text-decoration:none;">На сторінку клініки ></a>
+          </div>
+        </div>
+        <div style="border-radius:24px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+          <div style="height:180px;background:linear-gradient(135deg,#ede9f6 0%,#fef0e6 100%);display:flex;align-items:center;justify-content:center;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7055a4" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2"/></svg>
+          </div>
+          <div style="padding:24px 20px;">
+            <div style="font-size:1.125rem;font-weight:700;letter-spacing:-0.01em;line-height:1.3;margin-bottom:12px;color:#1d1d1f;">Друге відділення</div>
+            <a href="#" style="font-size:0.875rem;font-weight:500;color:#7055a4;text-decoration:none;">На сторінку клініки ></a>
+          </div>
+        </div>
+        <div style="border-radius:24px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+          <div style="height:180px;background:linear-gradient(135deg,#ede9f6 0%,#fef0e6 100%);display:flex;align-items:center;justify-content:center;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7055a4" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/></svg>
+          </div>
+          <div style="padding:24px 20px;">
+            <div style="font-size:1.125rem;font-weight:700;letter-spacing:-0.01em;line-height:1.3;margin-bottom:12px;color:#1d1d1f;">Третє відділення</div>
+            <a href="#" style="font-size:0.875rem;font-weight:500;color:#7055a4;text-decoration:none;">На сторінку клініки ></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">grid: repeat(3, 1fr) / border-radius: 24px / Image: 220px, gradient placeholder / Hover: translateY(-4px) + shadow / Link: accent color + ' >'</p>
   </div>
 
   <!-- ===== COURSE CARDS ===== -->
-  <div class="ds-section" id="course-cards">
-    <p class="ds-label">Components</p>
-    <h2 class="ds-title">Картки курсів</h2>
-    <div class="iprm-course-cards" style="margin-bottom: 24px;">
-      <div class="iprm-course-card">
-        <div class="iprm-course-card__image">[photo]</div>
-        <p class="iprm-course-card__title">Назва курсу</p>
-        <div class="iprm-course-card__tags"><span class="iprm-tag">Очні курси</span><span class="iprm-tag">Онлайн курси</span><span class="iprm-tag">Платформа SYNTEGRUM</span></div>
+  <div class="ds-section-alt">
+    <div class="ds-section" id="course-cards">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Course Cards (3-col)</h2>
+      <div class="ds-demo" style="background: #f5f5f7;">
+        <div class="iprm-course-cards" style="margin: 0; max-width: 900px;">
+          <div class="iprm-course-card" style="border:none;border-radius:24px;padding:0;overflow:hidden;">
+            <div class="iprm-course-card__image" style="height:180px;aspect-ratio:auto;border:none;border-radius:0;margin:0;"></div>
+            <div style="padding: 20px;">
+              <p class="iprm-course-card__title" style="font-size:1.125rem;font-weight:700;">Назва курсу</p>
+              <div class="iprm-course-card__tags"><span class="iprm-tag">Очні курси</span><span class="iprm-tag">Онлайн</span></div>
+            </div>
+          </div>
+          <div class="iprm-course-card" style="border:none;border-radius:24px;padding:0;overflow:hidden;">
+            <div class="iprm-course-card__image" style="height:180px;aspect-ratio:auto;border:none;border-radius:0;margin:0;"></div>
+            <div style="padding: 20px;">
+              <p class="iprm-course-card__title" style="font-size:1.125rem;font-weight:700;">Другий курс</p>
+              <div class="iprm-course-card__tags"><span class="iprm-tag">Очні курси</span></div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="iprm-course-card">
-        <div class="iprm-course-card__image">[photo]</div>
-        <p class="iprm-course-card__title">Другий курс</p>
-        <div class="iprm-course-card__tags"><span class="iprm-tag">Очні курси</span><span class="iprm-tag">Онлайн курси</span></div>
-      </div>
+      <p class="ds-hint">border-radius: 24px / overflow: hidden / Image: gradient placeholder, no border / Hover: translateY(-4px) + shadow / Tags в нижній частині</p>
     </div>
-    <p class="ds-hint">image aspect-ratio: 4:3 / tags with border / clickable as &lt;a&gt;</p>
   </div>
 
   <!-- ===== TARGET GRID ===== -->
   <div class="ds-section" id="target">
     <p class="ds-label">Components</p>
-    <h2 class="ds-title">Target Grid (Для кого / Що ви отримаєте)</h2>
-    <div class="iprm-target-grid" style="margin-bottom: 24px;">
-      <div class="iprm-target-card"><p>Картка 2-колонкового grid з текстом</p></div>
-      <div class="iprm-target-card"><p>Друга картка поруч</p></div>
-      <div class="iprm-target-card iprm-target-card--full"><p>Картка на всю ширину (--full)</p></div>
+    <h2 class="ds-title">Audience Cards (2-col)</h2>
+    <div class="ds-demo" style="background: #f5f5f7;">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:800px;">
+        <div style="background:#fff;border-radius:20px;padding:36px 32px;">
+          <div style="font-size:0.6875rem;font-weight:600;color:#7055a4;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;">01</div>
+          <div style="font-size:1rem;color:#424245;line-height:1.55;">Текст для цільової аудиторії</div>
+        </div>
+        <div style="background:#fff;border-radius:20px;padding:36px 32px;">
+          <div style="font-size:0.6875rem;font-weight:600;color:#7055a4;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;">02</div>
+          <div style="font-size:1rem;color:#424245;line-height:1.55;">Друга картка аудиторії</div>
+        </div>
+      </div>
     </div>
-    <p class="ds-hint">grid 2 columns / gap: 12px / --full spans both columns</p>
+    <p class="ds-hint">grid: repeat(2, 1fr) / gap: 16px / border-radius: 20px / Нумерація 01-04 / Hover: translateY(-3px) + shadow</p>
   </div>
 
   <!-- ===== TRAINER ===== -->
-  <div class="ds-section" id="trainer">
-    <p class="ds-label">Components</p>
-    <h2 class="ds-title">Тренер курсу</h2>
-    <div class="iprm-trainer" style="margin-bottom: 24px;">
-      <div class="iprm-trainer__photo">[photo]</div>
-      <div class="iprm-trainer__info">
-        <h3 class="iprm-trainer__name">Прізвище Ім'я По батькові</h3>
-        <p class="iprm-trainer__role">Спеціалізація, досвід</p>
-        <p class="iprm-trainer__desc">Розгорнутий опис (опціональний). Може бути відсутнім на деяких сторінках.</p>
-        <a href="#" class="iprm-btn iprm-btn--primary"><span class="iprm-btn__arrow">&#x2197;</span> Реєстрація на курс</a>
+  <div class="ds-section-alt">
+    <div class="ds-section" id="trainer">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Trainer (split layout)</h2>
+      <div class="ds-demo">
+        <div style="display:grid;grid-template-columns:240px 1fr;gap:40px;align-items:center;max-width:700px;">
+          <div style="border-radius:24px;overflow:hidden;aspect-ratio:3/4;background:linear-gradient(135deg,#ede9f6,#fef0e6);display:flex;align-items:center;justify-content:center;">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#7055a4" stroke-width="0.8" style="opacity:0.15;"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+          </div>
+          <div>
+            <div style="font-size:clamp(1.5rem,3vw,2rem);font-weight:800;letter-spacing:-0.02em;margin-bottom:6px;color:#1d1d1f;">Прізвище Ім'я По батькові</div>
+            <div style="font-size:0.9375rem;font-weight:500;color:#7055a4;margin-bottom:20px;">Спеціалізація</div>
+            <div style="font-size:1rem;color:#424245;line-height:1.65;margin-bottom:28px;">Опис тренера з досвідом та кваліфікацією.</div>
+            <a href="#" style="display:inline-flex;font-size:1.0625rem;font-weight:500;color:#fff;background:#7055a4;padding:14px 32px;border-radius:980px;text-decoration:none;">Реєстрація на курс</a>
+          </div>
+        </div>
       </div>
+      <p class="ds-hint">grid: 320px 1fr / gap: 48px / Photo: border-radius 24px, aspect-ratio 3/4, gradient placeholder / Role: accent color / Mobile: 1 колонка, photo square</p>
     </div>
-    <p class="ds-hint">photo: 180x220 / flex row / desc is optional</p>
   </div>
 
   <!-- ===== PROGRAM ===== -->
   <div class="ds-section" id="program">
     <p class="ds-label">Components</p>
-    <h2 class="ds-title">Програма курсу</h2>
-    <div class="iprm-program" style="margin-bottom: 24px;">
-      <div class="iprm-program__block">
-        <h3 class="iprm-program__heading">Назва блоку</h3>
-        <ul class="iprm-program__list">
-          <li>Пункт програми перший</li>
-          <li>Пункт програми другий</li>
-          <li>Пункт програми третій</li>
+    <h2 class="ds-title">Program Blocks (2-col)</h2>
+    <div class="ds-demo" style="background: #f5f5f7;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:800px;">
+        <div style="background:#fff;border-radius:24px;padding:40px 36px;">
+          <div style="font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#7055a4;margin-bottom:8px;">Частина 1</div>
+          <div style="font-size:1.375rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:20px;color:#1d1d1f;">Теоретична частина</div>
+          <ul style="list-style:none;padding:0;margin:0;">
+            <li style="font-size:0.9375rem;color:#424245;line-height:1.6;padding:10px 0 10px 20px;border-top:1px solid rgba(0,0,0,0.05);position:relative;"><span style="position:absolute;left:0;top:18px;width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#7055a4,#e8913a);display:block;"></span>Пункт програми</li>
+            <li style="font-size:0.9375rem;color:#424245;line-height:1.6;padding:10px 0 10px 20px;border-top:1px solid rgba(0,0,0,0.05);position:relative;"><span style="position:absolute;left:0;top:18px;width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#7055a4,#e8913a);display:block;"></span>Другий пункт</li>
+          </ul>
+        </div>
+        <div style="background:#fff;border-radius:24px;padding:40px 36px;">
+          <div style="font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#7055a4;margin-bottom:8px;">Частина 2</div>
+          <div style="font-size:1.375rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:20px;color:#1d1d1f;">Практична частина</div>
+          <ul style="list-style:none;padding:0;margin:0;">
+            <li style="font-size:0.9375rem;color:#424245;line-height:1.6;padding:10px 0 10px 20px;border-top:1px solid rgba(0,0,0,0.05);position:relative;"><span style="position:absolute;left:0;top:18px;width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#7055a4,#e8913a);display:block;"></span>Практичний пункт</li>
+            <li style="font-size:0.9375rem;color:#424245;line-height:1.6;padding:10px 0 10px 20px;border-top:1px solid rgba(0,0,0,0.05);position:relative;"><span style="position:absolute;left:0;top:18px;width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#7055a4,#e8913a);display:block;"></span>Ще один пункт</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">grid: 1fr 1fr / gap: 24px / border-radius: 24px / Tag: uppercase label / Markers: gradient dots 6x6 / Separator: 1px rgba(0,0,0,0.05)</p>
+  </div>
+
+  <!-- ===== CTA ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="cta">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">CTA Section</h2>
+      <div class="ds-demo" style="text-align:center;padding:80px 32px;">
+        <div style="max-width:600px;margin:0 auto;">
+          <div style="font-size:clamp(2rem, 5vw, 3rem);font-weight:800;letter-spacing:-0.04em;line-height:1.1;color:#1d1d1f;">Почни навчання<br><span style="background:linear-gradient(135deg,#7055a4,#e8913a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">сьогодні.</span></div>
+          <div style="font-size:1.0625rem;color:#86868b;margin-top:16px;line-height:1.5;">Обери курс та отримай сертифікат з балами БПР.</div>
+          <div style="display:flex;gap:16px;justify-content:center;margin-top:32px;">
+            <a href="#" style="font-size:1.0625rem;font-weight:500;color:#fff;background:#7055a4;padding:14px 32px;border-radius:980px;text-decoration:none;">Обрати курс</a>
+            <a href="#" style="font-size:1.0625rem;font-weight:500;color:#7055a4;padding:14px 32px;border-radius:980px;text-decoration:none;">Дізнатись більше ></a>
+          </div>
+        </div>
+      </div>
+      <p class="ds-hint">text-align: center / max-width: 700px / h2 + gradient-text + subtitle + actions / Фінальна секція перед footer</p>
+    </div>
+  </div>
+
+  <!-- ===== ABOUT TEXT ===== -->
+  <div class="ds-section" id="about">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">About / History Text</h2>
+    <div class="ds-demo">
+      <div style="max-width:700px;">
+        <div style="font-size:clamp(1.5rem,3vw,2rem);font-weight:800;letter-spacing:-0.03em;text-align:center;margin-bottom:40px;color:#1d1d1f;">Заголовок секції</div>
+        <div style="font-size:1.0625rem;color:#424245;line-height:1.7;margin-bottom:20px;">Основний текст з описом. Може містити кілька абзаців.</div>
+        <ul style="list-style:none;padding:0;margin:24px 0;">
+          <li style="font-size:1.0625rem;color:#424245;line-height:1.7;padding:8px 0 8px 28px;position:relative;"><span style="position:absolute;left:0;top:16px;width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#7055a4,#e8913a);display:block;"></span>Пункт списку з gradient маркером</li>
+          <li style="font-size:1.0625rem;color:#424245;line-height:1.7;padding:8px 0 8px 28px;position:relative;"><span style="position:absolute;left:0;top:16px;width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#7055a4,#e8913a);display:block;"></span>Другий пункт</li>
         </ul>
       </div>
     </div>
-    <p class="ds-hint">Stacked blocks / middot bullets / gap: 12px between blocks</p>
-  </div>
-
-  <!-- ===== EMPTY STATE ===== -->
-  <div class="ds-section" id="empty-state">
-    <p class="ds-label">Components</p>
-    <h2 class="ds-title">Порожній стан</h2>
-    <div class="iprm-empty-state" style="background: var(--iprm-card-bg); border-radius: var(--iprm-radius); margin-bottom: 24px;">
-      <p>Iнформація скоро з'явиться</p>
-    </div>
-    <p class="ds-hint">text-align: center / padding: 48px 24px / color: var(--iprm-text-light) / font-size: 15px</p>
-  </div>
-
-  <!-- ===== BADGES ===== -->
-  <div class="ds-section" id="badges">
-    <p class="ds-label">Components</p>
-    <h2 class="ds-title">Бейджі статусу</h2>
-    <div class="ds-row" style="margin-bottom: 24px;">
-      <span class="badge badge--draft">Чернетка</span>
-      <span class="badge badge--published">Опубліковано</span>
-      <span class="badge badge--active">Активний</span>
-      <span class="badge badge--completed">Завершено</span>
-      <span class="badge badge--cancelled">Скасовано</span>
-    </div>
-    <p class="ds-hint">padding: 3px 10px / font-size: 12px / border-radius: 10px / CSS-змінні --iprm-badge-*</p>
-    <h3 class="ds-section-heading">Tag-модифікатори</h3>
-    <div class="ds-row">
-      <span class="iprm-tag">Звичайний тег</span>
-      <span class="iprm-tag iprm-tag--accent">Accent тег</span>
-    </div>
-    <p class="ds-hint">.iprm-tag--accent: bg: var(--iprm-accent-light) / color: var(--iprm-accent)</p>
+    <p class="ds-hint">max-width: 800px / h2 centered / body: 1.0625rem, gray-dark / List: gradient dots 8x8 / padding-left: 28px</p>
   </div>
 
   <!-- ===== ALERTS ===== -->
-  <div class="ds-section" id="alerts">
-    <p class="ds-label">Components</p>
-    <h2 class="ds-title">Алерти / повідомлення</h2>
-    <div class="ds-col" style="max-width: 600px; margin-bottom: 24px;">
-      <div class="alert alert--error">Помилка: щось пішло не так</div>
-      <div class="alert alert--success">Операцію виконано успішно</div>
-      <div class="alert alert--info">Зверніть увагу на цю інформацію</div>
+  <div class="ds-section-alt">
+    <div class="ds-section" id="alerts">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Алерти</h2>
+      <div class="ds-demo" style="max-width: 600px;">
+        <div class="ds-col">
+          <div class="alert alert--error">Помилка: щось пішло не так</div>
+          <div class="alert alert--success">Операцію виконано успішно</div>
+          <div class="alert alert--info">Зверніть увагу на цю інформацію</div>
+        </div>
+      </div>
+      <p class="ds-hint">padding: 12px 16px / border-radius: var(--iprm-radius-sm) / CSS-змінні --iprm-error-*, --iprm-success-*, --iprm-info-*</p>
     </div>
-    <p class="ds-hint">padding: 12px 16px / border-radius: var(--iprm-radius-sm) / CSS-змінні --iprm-error-*, --iprm-success-*, --iprm-info-*</p>
   </div>
 
-  <!-- ===== FORM SECTION ===== -->
+  <!-- ===== FORMS ===== -->
   <div class="ds-section" id="form-section">
     <p class="ds-label">Components</p>
-    <h2 class="ds-title">Секція форми</h2>
-    <div class="form-section" style="margin-bottom: 24px;">
-      <h3 class="form-section__title">Заголовок секції</h3>
-      <div class="form-section__grid">
-        <div class="form-group">
-          <label>Поле 1 <span class="required">*</span></label>
-          <input type="text" class="form-input" placeholder="Введіть значення">
-        </div>
-        <div class="form-group">
-          <label>Поле 2</label>
-          <input type="text" class="form-input" placeholder="Введіть значення">
-        </div>
-        <div class="form-group form-section__full">
-          <label>Поле на всю ширину</label>
-          <input type="text" class="form-input" placeholder="Широке поле">
-          <div class="form-hint">Підказка для поля</div>
+    <h2 class="ds-title">Форми</h2>
+    <div class="ds-demo">
+      <div class="form-section" style="margin: 0;">
+        <h3 class="form-section__title">Заголовок секції</h3>
+        <div class="form-section__grid">
+          <div class="form-group">
+            <label>Поле 1 <span class="required">*</span></label>
+            <input type="text" class="form-input" placeholder="Введіть значення">
+          </div>
+          <div class="form-group">
+            <label>Поле 2</label>
+            <input type="text" class="form-input" placeholder="Введіть значення">
+          </div>
+          <div class="form-group form-section__full">
+            <label>Поле на всю ширину</label>
+            <input type="text" class="form-input" placeholder="Широке поле">
+            <div class="form-hint">Підказка для поля</div>
+          </div>
         </div>
       </div>
     </div>
     <p class="ds-hint">bg: var(--iprm-card-bg) / padding: 28px / grid: 2col / input: 10px 14px / focus: accent ring</p>
   </div>
 
-  <!-- ===== SECONDARY BUTTON ===== -->
-  <div class="ds-section" id="secondary-btn">
-    <p class="ds-label">Components</p>
-    <h2 class="ds-title">Кнопка Secondary</h2>
-    <div class="ds-row" style="margin-bottom: 24px;">
-      <a href="#" class="iprm-btn iprm-btn--primary"><span class="iprm-btn__arrow">&#x2197;</span> Primary</a>
-      <a href="#" class="iprm-btn iprm-btn--secondary">Secondary</a>
-      <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--disabled"><span class="iprm-btn__arrow">&#x2197;</span> Disabled</a>
+  <!-- ===== EMPTY STATE ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="empty-state">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Порожній стан</h2>
+      <div class="ds-demo">
+        <div class="iprm-empty-state" style="background: var(--iprm-card-bg); border-radius: var(--iprm-radius);">
+          <p>Інформація скоро з'явиться</p>
+        </div>
+      </div>
+      <p class="ds-hint">text-align: center / padding: 48px 24px / color: var(--iprm-text-light)</p>
     </div>
-    <p class="ds-hint">.iprm-btn--secondary: bg white / border: 1px solid var(--iprm-border) / color: var(--iprm-text)</p>
   </div>
 
-  <!-- ===== ADMIN TODO LIST ===== -->
-  <div class="ds-section" id="admin-todo">
-    <p class="ds-label">Admin Components</p>
-    <h2 class="ds-title">Todo List (адмін)</h2>
-    <div class="form-section" style="margin-bottom: 24px;">
-      <ul class="admin-todo">
-        <li>Перший пункт завдання</li>
-        <li>Другий пункт завдання</li>
-        <li>Третій пункт завдання</li>
-      </ul>
-    </div>
-    <p class="ds-hint">.admin-todo: list-style none / checkbox-like ::before / border-bottom separator</p>
-  </div>
+  <!-- ===== ANIMATIONS ===== -->
+  <div class="ds-section" id="animations">
+    <p class="ds-label">Interactions</p>
+    <h2 class="ds-title">Анімації та переходи</h2>
 
-  <!-- ===== ADMIN STATS BAR ===== -->
-  <div class="ds-section" id="admin-stats-bar">
-    <p class="ds-label">Admin Components</p>
-    <h2 class="ds-title">Stats Bar (адмін)</h2>
-    <div class="admin-stats-bar" style="margin-bottom: 24px;">
-      <span>Всього: <strong>42</strong></span>
-      <span>Підтверджено: <strong>35</strong></span>
-      <span>Очікує: <strong>7</strong></span>
-    </div>
-    <p class="ds-hint">.admin-stats-bar: flex / gap: 16px / font-size: 14px / color: var(--iprm-text-light)</p>
-  </div>
-
-  <!-- ===== ADMIN STAT CARDS ===== -->
-  <div class="ds-section" id="admin-stat-cards">
-    <p class="ds-label">Admin Components</p>
-    <h2 class="ds-title">Stat Cards (адмін)</h2>
-    <div class="admin-stat-cards" style="margin-bottom: 24px;">
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">128</span>
-        <span class="admin-stat-card__label">Всього</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--success">
-        <span class="admin-stat-card__value">96</span>
-        <span class="admin-stat-card__label">Оплачено</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--warning">
-        <span class="admin-stat-card__value">24</span>
-        <span class="admin-stat-card__label">Очікує</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--danger">
-        <span class="admin-stat-card__value">8</span>
-        <span class="admin-stat-card__label">Повернено</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--accent">
-        <span class="admin-stat-card__value">45 200 &#8372;</span>
-        <span class="admin-stat-card__label">Загальна сума</span>
+    <h3 class="ds-section-heading">Scroll Reveal</h3>
+    <div class="ds-demo">
+      <div style="font-size:0.9375rem;color:#424245;line-height:1.8;">
+        <code style="background:#f5f5f7;padding:2px 8px;border-radius:6px;font-size:0.8125rem;">.apple-reveal</code> -- opacity: 0, translateY(40px) -> visible: opacity 1, translateY(0)<br>
+        Trigger: IntersectionObserver, threshold: 0.15, rootMargin: '0px 0px -60px 0px'<br>
+        Duration: 0.8s ease, one-time (unobserve after)
       </div>
     </div>
-    <p class="ds-hint">.admin-stat-cards: grid 5 cols / .admin-stat-card: card-bg, border, padding 16px / --success, --warning, --danger, --accent модифікатори кольору</p>
+
+    <h3 class="ds-section-heading">Hero fadeUp</h3>
+    <div class="ds-demo">
+      <div style="font-size:0.9375rem;color:#424245;line-height:1.8;">
+        <code style="background:#f5f5f7;padding:2px 8px;border-radius:6px;font-size:0.8125rem;">@keyframes appleHeroFadeUp</code> -- послідовна поява елементів<br>
+        Badge: delay 0s / h1: 0.15s / subtitle: 0.3s / actions: 0.45s<br>
+        Duration: 0.8s ease
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">Hover ефекти</h3>
+    <div class="ds-demo">
+      <div style="font-size:0.9375rem;color:#424245;line-height:1.8;">
+        Cards: <code style="background:#f5f5f7;padding:2px 8px;border-radius:6px;font-size:0.8125rem;">translateY(-4px) + box-shadow</code> -- 0.3s<br>
+        Bento: <code style="background:#f5f5f7;padding:2px 8px;border-radius:6px;font-size:0.8125rem;">scale(1.01)</code> -- 0.3s<br>
+        Buttons: <code style="background:#f5f5f7;padding:2px 8px;border-radius:6px;font-size:0.8125rem;">scale(1.02)</code> -- 0.2s<br>
+        Links: <code style="background:#f5f5f7;padding:2px 8px;border-radius:6px;font-size:0.8125rem;">color transition</code> -- 0.2s
+      </div>
+    </div>
+    <p class="ds-hint">prefers-reduced-motion: всі анімації вимикаються, елементи одразу видимі</p>
   </div>
 
-  <!-- ===== ADMIN PROGRAM BLOCK ===== -->
-  <div class="ds-section" id="admin-program-block">
+  <!-- ===== SPACING ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="spacing">
+      <p class="ds-label">Foundations</p>
+      <h2 class="ds-title">Spacing та Layout</h2>
+      <div class="ds-demo">
+        <div style="font-size:0.9375rem;color:#424245;line-height:2.2;">
+          <strong>Section padding:</strong> Desktop 120px 24px / Tablet 80px 24px / Mobile 64px 16px<br>
+          <strong>Section header margin:</strong> 0 auto 72px (desktop), 48px (mobile)<br>
+          <strong>Content max-width:</strong> 1200px (grid), 800px (text), 700px (section header)<br>
+          <strong>Card border-radius:</strong> 24px (cards), 20px (audience), 980px (buttons/badges)<br>
+          <strong>Card padding:</strong> 48px 36px (features), 40px 32px (bento/program), 28px 24px (body)<br>
+          <strong>Grid gaps:</strong> 20px (cards), 16px (audience), 24px (program), 48px (stats)
+        </div>
+      </div>
+
+      <h3 class="ds-section-heading">Секції чергують фони</h3>
+      <div style="display:flex;gap:4px;margin-bottom:16px;border-radius:12px;overflow:hidden;">
+        <div style="flex:1;height:48px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:#86868b;">White</div>
+        <div style="flex:1;height:48px;background:#f5f5f7;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:#86868b;">Gray</div>
+        <div style="flex:1;height:48px;background:#1a1a2e;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:#d2d2d7;">Dark</div>
+        <div style="flex:1;height:48px;background:#f5f5f7;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:#86868b;">Gray</div>
+        <div style="flex:1;height:48px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:#86868b;">White</div>
+        <div style="flex:1;height:48px;background:#f5f5f7;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:#86868b;">Gray</div>
+        <div style="flex:1;height:48px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:#86868b;">White</div>
+      </div>
+      <p class="ds-hint">Ритм: hero (white) -> features (gray) -> stats (dark) -> courses (white) -> labs (gray) -> clinic (white) -> history (gray) -> cta (white)</p>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN COMPONENTS ===== -->
+  <div class="ds-section" id="admin">
     <p class="ds-label">Admin Components</p>
-    <h2 class="ds-title">Program Block (адмін)</h2>
-    <div class="admin-program-block" style="margin-bottom: 24px;">
-      <div class="admin-form__grid">
-        <div class="form-group" style="grid-column: 1 / -1;">
-          <label>Заголовок блоку</label>
-          <div class="admin-program-block__header">
-            <input type="text" class="form-input" value="Теоретична частина" readonly>
-            <button type="button" class="btn-admin btn-admin--danger btn-admin--sm">X</button>
+    <h2 class="ds-title">Адмін-панель</h2>
+    <p style="font-size:0.9375rem;color:#86868b;margin-bottom:32px;">Адмін-компоненти зберігають legacy-стиль (iprm-btn, square corners, dark hero). Не підлягають Apple-style редизайну.</p>
+
+    <h3 class="ds-section-heading">Todo List</h3>
+    <div class="ds-demo">
+      <div class="form-section" style="margin: 0;">
+        <ul class="admin-todo">
+          <li>Перший пункт завдання</li>
+          <li>Другий пункт завдання</li>
+          <li>Третій пункт завдання</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">Stats Bar</h3>
+    <div class="ds-demo">
+      <div class="admin-stats-bar">
+        <span>Всього: <strong>42</strong></span>
+        <span>Підтверджено: <strong>35</strong></span>
+        <span>Очікує: <strong>7</strong></span>
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">Stat Cards</h3>
+    <div class="ds-demo">
+      <div class="admin-stat-cards">
+        <div class="admin-stat-card">
+          <span class="admin-stat-card__value">128</span>
+          <span class="admin-stat-card__label">Всього</span>
+        </div>
+        <div class="admin-stat-card admin-stat-card--success">
+          <span class="admin-stat-card__value">96</span>
+          <span class="admin-stat-card__label">Оплачено</span>
+        </div>
+        <div class="admin-stat-card admin-stat-card--warning">
+          <span class="admin-stat-card__value">24</span>
+          <span class="admin-stat-card__label">Очікує</span>
+        </div>
+        <div class="admin-stat-card admin-stat-card--danger">
+          <span class="admin-stat-card__value">8</span>
+          <span class="admin-stat-card__label">Повернено</span>
+        </div>
+        <div class="admin-stat-card admin-stat-card--accent">
+          <span class="admin-stat-card__value">45 200 &#8372;</span>
+          <span class="admin-stat-card__label">Загальна сума</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">Program Block</h3>
+    <div class="ds-demo">
+      <div class="admin-program-block" style="margin: 0;">
+        <div class="admin-form__grid">
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label>Заголовок блоку</label>
+            <div class="admin-program-block__header">
+              <input type="text" class="form-input" value="Теоретична частина" readonly>
+              <button type="button" class="btn-admin btn-admin--danger btn-admin--sm">X</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
-    <p class="ds-hint">.admin-program-block: bg white / border / padding: 20px / header flex with remove button</p>
   </div>
 
   <!-- ===== FOOTER ===== -->
-  <div class="ds-section" id="footer">
-    <p class="ds-label">Components</p>
-    <h2 class="ds-title">Футер</h2>
+  <div class="ds-section-alt">
+    <div class="ds-section" id="footer">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Footer</h2>
+      <p class="ds-hint">border-top: 1px solid rgba(0,0,0,0.06) / padding: 48px 24px / flex space-between / font-size: 0.8125rem / color: gray / Links hover: accent</p>
+    </div>
   </div>
