@@ -9,6 +9,7 @@
   --iprm-white: #fff;
   --iprm-border: rgba(0, 0, 0, 0.06);
   --iprm-radius: 24px;
+  --iprm-radius-md: 16px;
   --iprm-radius-sm: 12px;
   --iprm-transition: 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --iprm-max-content: 1200px;
@@ -398,7 +399,7 @@ a {
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border: 1px solid var(--iprm-border);
-  border-radius: 12px;
+  border-radius: var(--iprm-radius-sm);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   list-style: none;
   padding: 6px 0;
@@ -900,7 +901,7 @@ a {
 }
 
 .iprm-content-page__inner {
-  background: #fff;
+  background: var(--iprm-white);
   border-radius: 28px;
   padding: 64px 56px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -910,13 +911,13 @@ a {
   font-size: clamp(1.75rem, 4vw, 2.25rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: #1d1d1f;
+  color: var(--apple-black);
   margin-bottom: 12px;
 }
 
 .iprm-content-page__subtitle {
   font-size: 0.9375rem;
-  color: #86868b;
+  color: var(--apple-gray);
   margin-bottom: 32px;
   padding-bottom: 24px;
   border-bottom: 1px solid var(--iprm-border);
@@ -1399,6 +1400,6 @@ a {
   .cookie-banner {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border: 2px solid #fff;
+    border: 2px solid var(--iprm-white);
   }
 }

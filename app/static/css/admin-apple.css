@@ -167,7 +167,7 @@
 
 .admin-empty {
   background: var(--apple-section-bg);
-  border-radius: 24px;
+  border-radius: var(--iprm-radius);
   padding: 80px 32px;
 }
 
@@ -188,7 +188,7 @@
 
 .admin-stat-card {
   background: var(--iprm-white);
-  border-radius: 16px;
+  border-radius: var(--iprm-radius-md);
   border: 1px solid var(--iprm-border);
   transition: box-shadow 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
 }
@@ -228,7 +228,7 @@
 /* ========== INTEGRATION CARDS ========== */
 
 .admin-integration-card {
-  border-radius: 16px;
+  border-radius: var(--iprm-radius-md);
   border: 1px solid var(--iprm-border);
   transition:
     border-color 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
@@ -252,7 +252,7 @@
   padding: 10px 14px;
   font-size: 0.875rem;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
+  border-radius: var(--iprm-radius-sm);
   background: var(--iprm-white);
   color: var(--apple-black);
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -288,7 +288,7 @@
 /* ========== FORM OVERRIDES ========== */
 
 .admin-form .form-checkbox {
-  border-radius: 12px;
+  border-radius: var(--iprm-radius-sm);
   border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
@@ -314,7 +314,7 @@
 
 .admin-program-block {
   border: 1px solid var(--iprm-border);
-  border-radius: 16px;
+  border-radius: var(--iprm-radius-md);
 }
 
 /* ========== TODO LIST ========== */
@@ -332,7 +332,7 @@
 /* ========== FILTER FORM ========== */
 
 .admin-filter-form .form-input {
-  border-radius: 12px;
+  border-radius: var(--iprm-radius-sm);
   border: 1px solid rgba(0, 0, 0, 0.08);
 }
 

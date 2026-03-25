@@ -189,7 +189,7 @@
 .apple-page .iprm-course-card {
   background: var(--iprm-white);
   border: none;
-  border-radius: 24px;
+  border-radius: var(--iprm-radius);
   padding: 0;
   overflow: hidden;
   transition:
@@ -255,7 +255,7 @@
 
 .apple-page .apple-feature-card {
   background: var(--iprm-white);
-  border-radius: 24px;
+  border-radius: var(--iprm-radius);
   padding: 48px 36px;
   transition:
     transform 0.3s var(--ease-interact),
@@ -275,7 +275,7 @@
 .apple-page .apple-feature-icon {
   width: 56px;
   height: 56px;
-  border-radius: 16px;
+  border-radius: var(--iprm-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -312,7 +312,7 @@
 .apple-page .iprm-trainer__photo {
   width: auto;
   height: auto;
-  border-radius: 24px;
+  border-radius: var(--iprm-radius);
   overflow: hidden;
   aspect-ratio: 3 / 4;
   background: linear-gradient(135deg, var(--iprm-accent-light), var(--apple-orange-light));
@@ -362,7 +362,7 @@
 
 .apple-page .iprm-trainer-card {
   background: var(--iprm-white);
-  border-radius: 24px;
+  border-radius: var(--iprm-radius);
   overflow: hidden;
   transition:
     transform 0.3s var(--ease-interact),
@@ -455,7 +455,7 @@
 
 .apple-page .iprm-program__block {
   background: var(--iprm-white);
-  border-radius: 24px;
+  border-radius: var(--iprm-radius);
   padding: 40px 36px;
   border: none;
   transition:
@@ -521,7 +521,7 @@
 }
 
 .apple-page .apple-clinic-card {
-  border-radius: 24px;
+  border-radius: var(--iprm-radius);
   overflow: hidden;
   background: var(--iprm-white);
   transition:
@@ -647,7 +647,7 @@
   font-size: 17px;
   color: var(--apple-gray);
   background: var(--apple-section-bg);
-  border-radius: 24px;
+  border-radius: var(--iprm-radius);
 }
 
 /* ========== DESCRIPTION TEXT ========== */

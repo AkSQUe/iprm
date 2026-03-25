@@ -232,7 +232,7 @@
 
 .page-index .apple-bento-card {
   background: var(--iprm-white);
-  border-radius: 24px;
+  border-radius: var(--iprm-radius);
   padding: 40px 32px;
   display: flex;
   flex-direction: column;
@@ -280,7 +280,7 @@
   left: 24px;
   right: 24px;
   bottom: 140px;
-  border-radius: 16px;
+  border-radius: var(--iprm-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -21,7 +21,7 @@
 .ds-nav__title {
   font-size: 1.0625rem;
   font-weight: 700;
-  color: #7055a4;
+  color: var(--iprm-nav-active);
   white-space: nowrap;
   margin-right: 32px;
   letter-spacing: -0.02em;
@@ -30,7 +30,7 @@
 .ds-nav a {
   font-size: 0.8125rem;
   font-weight: 400;
-  color: #424245;
+  color: var(--apple-gray-dark);
   white-space: nowrap;
   padding: 16px 12px;
   transition: color 0.2s;
@@ -38,11 +38,11 @@
 }
 
 .ds-nav a:hover {
-  color: #7055a4;
+  color: var(--iprm-nav-active);
 }
 
 .ds-nav a.active {
-  color: #7055a4;
+  color: var(--iprm-nav-active);
 }
 
 .ds-nav a.active::after {
@@ -52,15 +52,15 @@
   left: 12px;
   right: 12px;
   height: 2px;
-  background: #7055a4;
+  background: var(--iprm-nav-active);
   border-radius: 1px;
 }
 
 /* ========== SECTIONS ========== */
 
 .ds-section {
-  padding: 80px 32px;
-  max-width: 1200px;
+  padding: 80px 48px;
+  max-width: 1440px;
   margin: 0 auto;
 }
 
@@ -91,14 +91,14 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #7055a4;
+  color: var(--iprm-nav-active);
   margin-bottom: 8px;
 }
 
 .ds-title {
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;
-  color: #1d1d1f;
+  color: var(--apple-black);
   letter-spacing: -0.03em;
   margin-bottom: 32px;
 }
@@ -109,18 +109,18 @@
 
 .ds-hint {
   font-size: 0.8125rem;
-  color: #86868b;
+  color: var(--apple-gray);
   margin-top: 16px;
   padding: 12px 16px;
   background: #f5f5f7;
-  border-radius: 12px;
+  border-radius: var(--iprm-radius-sm);
   font-family: 'SF Mono', 'Fira Code', monospace;
   line-height: 1.6;
 }
 
 .ds-section-dark .ds-hint {
   background: rgba(255, 255, 255, 0.06);
-  color: #d2d2d7;
+  color: var(--apple-gray-light);
 }
 
 /* ========== LAYOUT HELPERS ========== */
@@ -154,7 +154,7 @@
   align-items: center;
   gap: 14px;
   background: #fff;
-  border-radius: 16px;
+  border-radius: var(--iprm-radius-md);
   padding: 12px 16px;
   transition: transform 0.2s;
 }
@@ -166,7 +166,7 @@
 .ds-swatch__color {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: var(--iprm-radius-sm);
   border: 1px solid rgba(0, 0, 0, 0.06);
   flex-shrink: 0;
 }
@@ -174,7 +174,7 @@
 .ds-swatch__info {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #1d1d1f;
+  color: var(--apple-black);
   line-height: 1.4;
 }
 
@@ -182,7 +182,7 @@
   display: block;
   font-size: 0.75rem;
   font-weight: 400;
-  color: #86868b;
+  color: var(--apple-gray);
   font-family: 'SF Mono', 'Fira Code', monospace;
 }
 
@@ -202,7 +202,7 @@
   display: block;
   font-size: 0.6875rem;
   font-weight: 400;
-  color: #86868b;
+  color: var(--apple-gray);
   margin-top: 2px;
   font-family: 'SF Mono', 'Fira Code', monospace;
 }
@@ -217,7 +217,7 @@
 
 .ds-gradient-sample {
   height: 56px;
-  border-radius: 16px;
+  border-radius: var(--iprm-radius-md);
   flex: 1;
   display: flex;
   align-items: center;
@@ -252,7 +252,7 @@
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #1d1d1f;
+  color: var(--apple-black);
   margin-top: 40px;
   margin-bottom: 16px;
 }
@@ -271,23 +271,23 @@
   gap: 8px;
   padding: 16px 20px;
   background: #fff;
-  border-radius: 16px;
+  border-radius: var(--iprm-radius-md);
   font-size: 0.9375rem;
   font-weight: 500;
-  color: #1d1d1f;
+  color: var(--apple-black);
   transition: all 0.2s;
 }
 
 .ds-pages a:hover {
   background: #ede9f6;
-  color: #7055a4;
+  color: var(--iprm-nav-active);
   transform: translateY(-2px);
 }
 
 .ds-pages a::after {
   content: '>';
   margin-left: auto;
-  color: #86868b;
+  color: var(--apple-gray);
   font-size: 0.75rem;
 }
 
@@ -367,7 +367,7 @@
 
   .ds-demo {
     padding: 16px;
-    border-radius: 16px;
+    border-radius: var(--iprm-radius-md);
   }
 
   .ds-swatch {
