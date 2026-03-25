@@ -18,18 +18,13 @@ def notifications():
     """Dashboard: stats, settings form, recent sends, scheduler."""
     settings = EmailSettings.get()
 
-    total = db.session.query(sa_func.count(EmailLog.id)).scalar() or 0
-    sent = db.session.query(sa_func.count(EmailLog.id)).filter(
-        EmailLog.status == 'sent'
-    ).scalar() or 0
-    failed = db.session.query(sa_func.count(EmailLog.id)).filter(
-        EmailLog.status == 'failed'
-    ).scalar() or 0
-    pending = db.session.query(sa_func.count(EmailLog.id)).filter(
-        EmailLog.status == 'pending'
-    ).scalar() or 0
-
-    stats = {'total': total, 'sent': sent, 'failed': failed, 'pending': pending}
+    row = db.session.query(
+        sa_func.count(EmailLog.id).label('total'),
+        sa_func.count(sa_func.nullif(EmailLog.status != 'sent', True)).label('sent'),
+        sa_func.count(sa_func.nullif(EmailLog.status != 'failed', True)).label('failed'),
+        sa_func.count(sa_func.nullif(EmailLog.status != 'pending', True)).label('pending'),
+    ).one()
+    stats = {'total': row.total, 'sent': row.sent, 'failed': row.failed, 'pending': row.pending}
 
     recent = EmailLog.query.order_by(
         EmailLog.created_at.desc()
