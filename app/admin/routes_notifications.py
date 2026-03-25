@@ -118,8 +118,16 @@ def notifications_test():
         EmailService.send_test_email(to)
         audit_logger.info('Admin %s sent test email to %s', current_user.email, to)
         flash(f'Тестовий лист відправлено на {to}', 'success')
+    except RuntimeError as exc:
+        flash(str(exc), 'error')
     except Exception as exc:
-        flash(f'Помилка: {exc}', 'error')
+        error_msg = str(exc)
+        if 'Authentication' in error_msg or '535' in error_msg:
+            flash('SMTP: невірний логін або пароль. Перевірте налаштування.', 'error')
+        elif 'Connection' in error_msg or 'timed out' in error_msg:
+            flash(f'SMTP: не вдалося підключитися до сервера. {error_msg}', 'error')
+        else:
+            flash(f'Помилка відправки: {error_msg}', 'error')
 
     return redirect(url_for('admin.notifications'))
 

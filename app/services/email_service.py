@@ -171,10 +171,52 @@ class EmailService:
 
     @staticmethod
     def send_test_email(to):
-        return EmailService.send_email(
-            to=to,
+        """Send test email synchronously so SMTP errors propagate to caller."""
+        app = current_app._get_current_object()
+        settings = EmailService._load_settings(app)
+
+        if not settings.is_enabled:
+            log_entry = EmailLog(
+                to_email=to,
+                subject='IPRM: Тестовий лист',
+                template_name='test',
+                status='failed',
+                error_message='Email sending is disabled in settings',
+                trigger='test',
+            )
+            db.session.add(log_entry)
+            db.session.commit()
+            raise RuntimeError('Email sending is disabled in settings')
+
+        html_body = render_template('emails/test.html', to_email=to)
+        sender = app.config.get('MAIL_DEFAULT_SENDER')
+        msg = Message(
+            subject='IPRM: Тестовий лист',
+            recipients=[to],
+            html=html_body,
+            sender=sender,
+        )
+
+        log_entry = EmailLog(
+            to_email=to,
             subject='IPRM: Тестовий лист',
             template_name='test',
-            context={'to_email': to},
+            status='pending',
             trigger='test',
         )
+        db.session.add(log_entry)
+        db.session.commit()
+
+        try:
+            mail.send(msg)
+            log_entry.status = 'sent'
+            log_entry.sent_at = datetime.now(timezone.utc)
+            db.session.commit()
+            logger.info('Test email sent to %s', to)
+        except Exception as exc:
+            log_entry.status = 'failed'
+            log_entry.error_message = str(exc)[:500]
+            db.session.commit()
+            logger.exception('Failed to send test email to %s', to)
+            raise
+        return log_entry
