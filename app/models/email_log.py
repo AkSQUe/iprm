@@ -20,7 +20,21 @@ class EmailLog(TimestampMixin, db.Model):
         index=True,
     )
 
-    registration = db.relationship('EventRegistration', backref='email_logs')
+    registration = db.relationship(
+        'EventRegistration', back_populates='email_logs',
+    )
+
+    __table_args__ = (
+        db.CheckConstraint(
+            "status IN ('pending', 'sent', 'failed')",
+            name='ck_email_logs_status',
+        ),
+        db.CheckConstraint(
+            "trigger IN ('registration', 'payment', 'reminder', 'status_change', 'test')",
+            name='ck_email_logs_trigger',
+        ),
+        db.Index('ix_email_logs_created_at', 'created_at'),
+    )
 
     STATUSES = [
         ('pending', 'Очікує'),

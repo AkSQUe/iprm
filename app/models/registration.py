@@ -27,6 +27,7 @@ class EventRegistration(TimestampMixin, db.Model):
 
     user = db.relationship('User', back_populates='registrations')
     event = db.relationship('Event', back_populates='registrations')
+    email_logs = db.relationship('EmailLog', back_populates='registration')
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'event_id', name='uq_user_event_registration'),

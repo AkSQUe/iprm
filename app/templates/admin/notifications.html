@@ -62,8 +62,8 @@
       </div>
       <div class="form-group">
         <label for="smtp_password">Пароль</label>
-        <input type="password" name="smtp_password" id="smtp_password" class="form-input" placeholder="{% if settings.smtp_password %}(збережено){% else %}Введіть пароль{% endif %}">
-        {% if settings.smtp_password %}
+        <input type="password" name="smtp_password" id="smtp_password" class="form-input" placeholder="{% if settings.has_password %}(збережено){% else %}Введіть пароль{% endif %}">
+        {% if settings.has_password %}
         <div class="form-hint">Залиште порожнім щоб не змінювати</div>
         {% endif %}
       </div>

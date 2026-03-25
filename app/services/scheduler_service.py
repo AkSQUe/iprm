@@ -58,6 +58,7 @@ def send_course_reminders():
     """Scan for upcoming events and send reminders."""
     app = scheduler._app
     with app.app_context():
+        from sqlalchemy.orm import joinedload
         from app.models.event import Event
         from app.models.registration import EventRegistration
         from app.models.email_log import EmailLog
@@ -66,38 +67,52 @@ def send_course_reminders():
 
         reminder_days = app.config.get('SCHEDULER_REMINDER_DAYS', [7, 3, 1])
         now = datetime.now(timezone.utc)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
         for days in reminder_days:
             target_date = now + timedelta(days=days)
             window_start = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
             window_end = target_date.replace(hour=23, minute=59, second=59, microsecond=999999)
 
-            events = Event.query.filter(
-                Event.start_date.between(window_start, window_end),
-                Event.status.in_(['published', 'active']),
-            ).all()
-
-            for event in events:
-                registrations = EventRegistration.query.filter(
-                    EventRegistration.event_id == event.id,
+            # Один запит: реєстрації з event та user (замість N+1)
+            registrations = (
+                EventRegistration.query
+                .join(Event)
+                .options(
+                    joinedload(EventRegistration.event),
+                    joinedload(EventRegistration.user),
+                )
+                .filter(
+                    Event.start_date.between(window_start, window_end),
+                    Event.status.in_(['published', 'active']),
                     EventRegistration.status.in_(['confirmed', 'completed']),
+                )
+                .all()
+            )
+
+            if not registrations:
+                continue
+
+            # Batch: одним запитом отримуємо всі вже відправлені reminders
+            reg_ids = [r.id for r in registrations]
+            already_sent_ids = set(
+                row[0] for row in
+                db.session.query(EmailLog.registration_id).filter(
+                    EmailLog.registration_id.in_(reg_ids),
+                    EmailLog.trigger == 'reminder',
+                    EmailLog.created_at >= today_start,
                 ).all()
+            )
 
-                for reg in registrations:
-                    already_sent = EmailLog.query.filter(
-                        EmailLog.registration_id == reg.id,
-                        EmailLog.trigger == 'reminder',
-                        EmailLog.created_at >= now.replace(hour=0, minute=0, second=0),
-                    ).first()
-
-                    if not already_sent:
-                        try:
-                            EmailService.send_course_reminder(reg, days)
-                            logger.info(
-                                'Reminder: reg=%d event=%d days=%d',
-                                reg.id, event.id, days,
-                            )
-                        except Exception:
-                            logger.exception('Reminder failed: reg=%d', reg.id)
+            for reg in registrations:
+                if reg.id not in already_sent_ids:
+                    try:
+                        EmailService.send_course_reminder(reg, days)
+                        logger.info(
+                            'Reminder: reg=%d event=%d days=%d',
+                            reg.id, reg.event_id, days,
+                        )
+                    except Exception:
+                        logger.exception('Reminder failed: reg=%d', reg.id)
 
         logger.info('Course reminder job completed')
