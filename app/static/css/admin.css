@@ -393,7 +393,7 @@
 
 .admin-integration-card--link:hover {
   border-color: var(--iprm-accent);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 16px var(--iprm-border);
 }
 
 /* Картка запланованої інтеграції */
@@ -489,6 +489,10 @@
 /* ========== IMAGE DROPZONE ========== */
 
 .admin-dropzone {
+  /* Токени для overlay-кнопки видалення */
+  --dropzone-overlay: rgba(0, 0, 0, 0.6);
+  --dropzone-remove-hover: rgba(239, 68, 68, 0.9);
+
   position: relative;
   border: 2px dashed var(--iprm-border);
   border-radius: var(--iprm-radius);
@@ -561,6 +565,16 @@
   border-radius: calc(var(--iprm-radius) - 2px);
 }
 
+/* Стан активного превью (замість inline style="display:block") */
+.admin-dropzone__preview--active {
+  display: block;
+}
+
+/* Прихований prompt (замість inline style="display:none") */
+.admin-dropzone__prompt--hidden {
+  display: none;
+}
+
 .admin-dropzone__remove {
   position: absolute;
   top: 8px;
@@ -569,7 +583,7 @@
   height: 28px;
   border-radius: 50%;
   border: none;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--dropzone-overlay);
   color: var(--iprm-white);
   font-size: 12px;
   font-weight: 700;
@@ -581,7 +595,7 @@
 }
 
 .admin-dropzone__remove:hover {
-  background: rgba(239, 68, 68, 0.9);
+  background: var(--dropzone-remove-hover);
 }
 
 /* ========== STAT CARDS (статистика, дашборд) ========== */

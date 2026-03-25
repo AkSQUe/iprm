@@ -242,6 +242,23 @@
   outline-offset: 4px;
 }
 
+/* Контурний варіант кнопки авторизації */
+.btn-auth--outline {
+  background: transparent;
+  color: var(--iprm-nav-active);
+  border: 2px solid var(--iprm-nav-active);
+}
+
+.btn-auth--outline:hover {
+  background: var(--iprm-accent-light);
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-auth--outline:active {
+  transform: scale(0.98);
+}
+
 /* Footer links */
 .auth-card__footer {
   text-align: center;

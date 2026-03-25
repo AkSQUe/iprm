@@ -65,9 +65,9 @@
     removeBtn.addEventListener('click', function(e) {
       e.stopPropagation();
       hiddenInput.value = '';
-      preview.style.display = 'none';
+      preview.classList.remove('admin-dropzone__preview--active');
       if (previewImg) previewImg.src = '';
-      prompt.style.display = 'flex';
+      prompt.classList.remove('admin-dropzone__prompt--hidden');
     });
 
     function uploadFile(file) {
@@ -91,8 +91,8 @@
           preview.insertBefore(previewImg, preview.firstChild);
         }
         previewImg.src = e.target.result;
-        preview.style.display = 'block';
-        prompt.style.display = 'none';
+        preview.classList.add('admin-dropzone__preview--active');
+        prompt.classList.add('admin-dropzone__prompt--hidden');
       };
       reader.readAsDataURL(file);
 
@@ -123,8 +123,8 @@
           alert(result.data.error || 'Помилка завантаження');
           // Повертаємо prompt якщо раніше не було зображення
           if (!hiddenInput.value) {
-            preview.style.display = 'none';
-            prompt.style.display = 'flex';
+            preview.classList.remove('admin-dropzone__preview--active');
+            prompt.classList.remove('admin-dropzone__prompt--hidden');
           }
         }
       })

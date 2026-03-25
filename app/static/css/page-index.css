@@ -96,7 +96,13 @@
 }
 
 .page-index .apple-section-dark {
-  background: linear-gradient(180deg, var(--apple-black) 0%, #2d2d2f 40%, var(--iprm-dark) 100%);
+  /* Токени для темної секції */
+  --section-dark-mid: #2d2d2f;
+  --white-alpha-60: rgba(255, 255, 255, 0.6);
+  --white-alpha-12: rgba(255, 255, 255, 0.12);
+  --white-alpha-08: rgba(255, 255, 255, 0.08);
+
+  background: linear-gradient(180deg, var(--apple-black) 0%, var(--section-dark-mid) 40%, var(--iprm-dark) 100%);
   color: var(--iprm-white);
   position: relative;
 }
@@ -152,13 +158,15 @@
 /* hover/active визначено в apple-pages.css (.apple-page .apple-feature-card) */
 
 .page-index .apple-feature-card--featured {
+  --white-alpha-12: rgba(255, 255, 255, 0.12);
+
   grid-column: span 2;
   background: linear-gradient(135deg, var(--apple-grad-dark-1) 0%, var(--apple-grad-dark-2) 50%, var(--apple-grad-dark-3) 100%);
   color: var(--iprm-white);
 }
 
 .page-index .apple-feature-card--featured .apple-feature-icon {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--white-alpha-12);
   color: var(--apple-purple-light);
 }
 
@@ -240,6 +248,10 @@
 }
 
 .page-index .apple-bento-card--hero {
+  /* Токени для темного bento */
+  --white-alpha-60: rgba(255, 255, 255, 0.6);
+  --white-alpha-08: rgba(255, 255, 255, 0.08);
+
   grid-column: span 3;
   min-height: 400px;
   background: linear-gradient(135deg, var(--apple-grad-dark-1) 0%, var(--apple-grad-dark-2) 40%, var(--apple-grad-dark-3) 100%);
@@ -257,7 +269,7 @@
 }
 
 .page-index .apple-bento-card--hero p {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-alpha-60);
   max-width: 500px;
   margin-top: 12px;
 }
@@ -285,7 +297,7 @@
   height: 100px;
   border-radius: 28px;
   margin-bottom: 28px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--white-alpha-08);
 }
 
 .page-index .apple-bento-visual svg {
@@ -294,7 +306,7 @@
 
 .page-index .apple-bento-card--hero .apple-bento-visual svg {
   opacity: 0.4;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-alpha-60);
 }
 
 .page-index .apple-bento-card h3 {
