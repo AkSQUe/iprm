@@ -99,7 +99,7 @@
       <span class="template-preview__meta"><strong>Тригер:</strong> {{ tpl.trigger }}</span>
       <span class="template-preview__meta"><strong>Тема:</strong> {{ tpl.subject }}</span>
     </div>
-    <iframe class="template-preview__frame" srcdoc="{{ tpl.html | e }}"></iframe>
+    <iframe class="template-preview__frame" data-html="{{ tpl.html | e }}"></iframe>
   </div>
   {% endfor %}
 
@@ -107,9 +107,18 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% block molecular_js %}
 <script>
 (function() {
+  // Blob URL замість srcdoc — уникає sandbox обмежень браузера
+  document.querySelectorAll('iframe[data-html]').forEach(function(frame) {
+    var html = frame.getAttribute('data-html');
+    if (!html) return;
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    frame.src = URL.createObjectURL(blob);
+    frame.removeAttribute('data-html');
+  });
+
   var tabs = document.querySelectorAll('.template-tab');
   var panels = document.querySelectorAll('.template-preview');
   tabs.forEach(function(tab) {
