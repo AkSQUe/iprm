@@ -193,11 +193,12 @@
   background: var(--iprm-white);
   border-radius: var(--iprm-radius);
   padding: 32px;
-  transition: box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform 0.3s var(--ease-interact), box-shadow 0.3s var(--ease-interact);
 }
 
 .account-card:hover {
-  box-shadow: 0 8px 32px rgba(var(--apple-accent-rgb), 0.08);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
 }
 
 .account-card__title {

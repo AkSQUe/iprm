@@ -151,7 +151,7 @@
 .apple-page .apple-btn--primary:hover {
   background: var(--iprm-accent-hover);
   transform: scale(1.02) translateY(-1px);
-  box-shadow: 0 8px 24px rgba(var(--apple-accent-rgb), 0.25);
+  box-shadow: 0 8px 24px rgba(var(--apple-accent-rgb), 0.18);
 }
 
 .apple-page .apple-btn--primary:active {
@@ -195,7 +195,7 @@
 
 .apple-page .iprm-course-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(var(--apple-accent-rgb), 0.12);
+  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
 }
 
 .apple-page .iprm-course-card__image {
@@ -391,7 +391,7 @@
 
 .apple-page .iprm-trainer-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(var(--apple-accent-rgb), 0.12);
+  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
 }
 
 .apple-page .iprm-trainer-card__photo {
@@ -459,8 +459,8 @@
 }
 
 .apple-page .iprm-target-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 32px rgba(var(--apple-accent-rgb), 0.08);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
 }
 
 .apple-page .iprm-target-card p {
@@ -490,8 +490,8 @@
 }
 
 .apple-page .iprm-program__block:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 32px rgba(var(--apple-accent-rgb), 0.08);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
 }
 
 .apple-page .iprm-program__tag {
@@ -557,7 +557,7 @@
 
 .apple-page .apple-clinic-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(var(--apple-accent-rgb), 0.12);
+  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
 }
 
 .apple-page .apple-clinic-card__image {
