@@ -150,19 +150,32 @@
 
 .scramble-text {
   display: inline-flex;
+  align-items: baseline;
 }
 
 .scramble-text__char {
   display: inline-block;
   overflow: hidden;
-  height: 1.1em;
-  line-height: 1.1em;
-  vertical-align: bottom;
+  height: 1.15em;
+  line-height: 1.07;
+  vertical-align: baseline;
 }
 
 .scramble-text__inner {
-  display: inline-block;
-  transition: transform 0.25s cubic-bezier(0.28, 0.11, 0.32, 1);
+  display: block;
+}
+
+/* Градієнт для кожного символу scramble */
+.scramble-text.apple-gradient-text {
+  background: none;
+  -webkit-text-fill-color: unset;
+}
+
+.scramble-text.apple-gradient-text .scramble-text__inner {
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 40%, var(--apple-orange) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* ========== FEATURES GRID -- 2-col with featured ========== */
@@ -267,7 +280,7 @@
   font-size: clamp(2.5rem, 6vw, 4rem);
   font-weight: 800;
   letter-spacing: -0.04em;
-  background: linear-gradient(135deg, #d8b4fe, #f59e0b);
+  background: linear-gradient(135deg, #a78bfa, #c084fc, #e8913a);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
