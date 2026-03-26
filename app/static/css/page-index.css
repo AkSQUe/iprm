@@ -146,39 +146,6 @@
   color: var(--apple-gray-light);
 }
 
-/* ========== SCRAMBLE TEXT (ефект циферблату) ========== */
-
-.scramble-text {
-  display: inline-flex;
-  align-items: baseline;
-}
-
-.scramble-text__char {
-  display: inline-block;
-  overflow: hidden;
-  height: 1.15em;
-  line-height: 1.07;
-  vertical-align: baseline;
-}
-
-.scramble-text__inner {
-  display: block;
-}
-
-/* Градієнт -- до scramble (початковий стан) */
-.scramble-text.apple-gradient-text {
-  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 40%, var(--apple-orange) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Градієнт -- після scramble (JS додає клас) */
-.scramble-text--active.apple-gradient-text .scramble-text__char,
-.scramble-text--active.apple-gradient-text .scramble-text__inner {
-  -webkit-text-fill-color: transparent;
-}
-
 /* ========== FEATURES GRID -- 2-col with featured ========== */
 
 .page-index .apple-features-grid {
