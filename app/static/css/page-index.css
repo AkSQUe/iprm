@@ -573,6 +573,23 @@
     left: -12px;
   }
 
+  .page-index .apple-feature-card--icon-topleft .apple-feature-card__icon {
+    width: 80px;
+    height: 80px;
+    top: -16px;
+    left: -12px;
+  }
+
+  .page-index .apple-feature-card--icon-right {
+    padding-right: 100px;
+  }
+
+  .page-index .apple-feature-card--icon-right .apple-feature-card__icon {
+    width: 100px;
+    height: 100px;
+    right: -12px;
+  }
+
   .page-index .apple-feature-card {
     padding: 36px 28px;
   }
@@ -642,6 +659,27 @@
   .page-index .apple-feature-card--image-left .apple-feature-card__image {
     right: auto;
     left: -8px;
+  }
+
+  .page-index .apple-feature-card--icon-topleft .apple-feature-card__icon {
+    width: 64px;
+    height: 64px;
+    top: -12px;
+    left: -8px;
+  }
+
+  .page-index .apple-feature-card--icon-topleft {
+    padding-top: 48px;
+  }
+
+  .page-index .apple-feature-card--icon-right {
+    padding-right: 80px;
+  }
+
+  .page-index .apple-feature-card--icon-right .apple-feature-card__icon {
+    width: 80px;
+    height: 80px;
+    right: -8px;
   }
 
   .page-index .apple-feature-card {
