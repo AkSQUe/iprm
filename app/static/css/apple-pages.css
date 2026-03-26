@@ -399,6 +399,7 @@
   background: var(--iprm-white);
   border-radius: var(--iprm-radius);
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition:
     transform 0.3s var(--ease-interact),
     box-shadow 0.3s var(--ease-interact);
