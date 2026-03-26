@@ -213,21 +213,6 @@
         loadColorsFromCss();
         colorMode = getColorMode();
 
-        /* Оновлення кольорів при зміні теми */
-        var observer = new MutationObserver(function (mutations) {
-            for (var i = 0; i < mutations.length; i++) {
-                if (mutations[i].attributeName === 'data-theme') {
-                    loadColorsFromCss();
-                    for (var j = 0; j < nodes.length; j++) {
-                        nodes[j].color = pickNodeColor();
-                    }
-                    updateToggleLabels();
-                    break;
-                }
-            }
-        });
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
         var reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
         var prefersReducedMotion = reducedMotionQuery.matches;
         var targetFps = prefersReducedMotion ? 10 : 60;
