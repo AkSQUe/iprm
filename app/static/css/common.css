@@ -855,16 +855,6 @@ a {
   transform: scale(1.1);
 }
 
-/* Facebook -- корпоративний синій */
-.iprm-footer__social-icon--fb {
-  color: #1877f2;
-}
-
-/* Instagram -- градієнт у кольорах сайту */
-.iprm-footer__social-icon--ig svg {
-  fill: url(#ig-gradient);
-}
-
 .iprm-footer__social-icon img {
   width: 100%;
   height: 100%;
