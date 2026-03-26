@@ -129,8 +129,8 @@
 
 /* Skip-link (доступна навігація клавіатурою) */
 .skip-link {
-  position: absolute;
-  top: -100%;
+  position: fixed;
+  top: -100px;
   left: 16px;
   z-index: 10000;
   padding: 12px 24px;
@@ -142,7 +142,8 @@
   transition: top 0.2s;
 }
 
-.skip-link:focus {
+.skip-link:focus,
+.skip-link:focus-visible {
   top: 0;
 }
 
