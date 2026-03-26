@@ -1,6 +1,8 @@
 from app.models.event import Event
+from app.models.user import User
 from app.models.trainer import Trainer
 from app.models.clinic import Clinic
+from app.models.email_log import EmailLog
 
 
 class TestIndexedOrderBy:
@@ -55,3 +57,49 @@ class TestIndexedOrderBy:
         slugs = [e.slug for e in published]
         assert 'e-idx-pub' in slugs
         assert 'e-idx-draft' not in slugs
+
+    def test_events_order_by_created_at(self, db_session):
+        """Сортування заходів по індексованому created_at (admin)."""
+        e1 = Event(title='First', slug='e-idx-ca-1')
+        db_session.add(e1)
+        db_session.flush()
+
+        e2 = Event(title='Second', slug='e-idx-ca-2')
+        db_session.add(e2)
+        db_session.flush()
+
+        events = Event.query.order_by(Event.created_at.desc()).all()
+        assert len(events) >= 2
+
+    def test_users_order_by_created_at(self, db_session):
+        """Сортування користувачів по індексованому created_at (admin)."""
+        u1 = User(email='idx-u1@test.com', password='pass1234')
+        db_session.add(u1)
+        db_session.flush()
+
+        u2 = User(email='idx-u2@test.com', password='pass1234')
+        db_session.add(u2)
+        db_session.flush()
+
+        users = User.query.order_by(User.created_at.desc()).all()
+        assert len(users) >= 2
+
+    def test_email_logs_filter_by_status_and_trigger(self, db_session):
+        """Фільтрація email_logs по composite index (status, trigger)."""
+        log1 = EmailLog(
+            to_email='a@test.com', subject='S1',
+            template_name='t1', status='sent', trigger='registration',
+        )
+        log2 = EmailLog(
+            to_email='b@test.com', subject='S2',
+            template_name='t2', status='failed', trigger='payment',
+        )
+        db_session.add_all([log1, log2])
+        db_session.flush()
+
+        results = EmailLog.query.filter(
+            EmailLog.status == 'sent',
+            EmailLog.trigger == 'registration',
+        ).all()
+        assert len(results) >= 1
+        assert all(r.status == 'sent' and r.trigger == 'registration' for r in results)

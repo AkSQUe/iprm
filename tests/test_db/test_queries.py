@@ -175,6 +175,21 @@ class TestUserRegistrationCount:
 
         assert rows[0][1] == 1
 
+    def test_user_with_registration_count_excludes_cancelled(self, db_session, sample_user, sample_event):
+        """User subquery count не рахує скасовані реєстрації."""
+        reg = EventRegistration(
+            user_id=sample_user.id, event_id=sample_event.id,
+            phone='+380', specialty='S', workplace='W',
+            status='cancelled',
+        )
+        db_session.add(reg)
+        db_session.flush()
+
+        reg_count = User.with_registration_count()
+        rows = db.session.query(User, reg_count).filter(User.id == sample_user.id).all()
+
+        assert rows[0][1] == 0
+
     def test_user_cached_reg_count_used_by_property(self, db_session, sample_user):
         """registration_count property використовує _cached_reg_count якщо встановлено."""
         sample_user._cached_reg_count = 7

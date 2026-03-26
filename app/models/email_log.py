@@ -53,6 +53,7 @@ class EmailLog(TimestampMixin, db.Model):
             name='ck_email_logs_trigger',
         ),
         db.Index('ix_email_logs_created_at', 'created_at'),
+        db.Index('ix_email_logs_status_trigger', 'status', 'trigger'),
     )
 
     STATUSES = [

@@ -8,6 +8,10 @@ from app.models.mixins import TimestampMixin, BigIntPK
 class User(TimestampMixin, UserMixin, db.Model):
     __tablename__ = 'users'
 
+    __table_args__ = (
+        db.Index('ix_users_created_at', 'created_at'),
+    )
+
     id = db.Column(BigIntPK, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
@@ -45,7 +49,10 @@ class User(TimestampMixin, UserMixin, db.Model):
         from app.models.registration import EventRegistration
         return (
             select(func.count(EventRegistration.id))
-            .where(EventRegistration.user_id == cls.id)
+            .where(
+                EventRegistration.user_id == cls.id,
+                EventRegistration.status.notin_(['cancelled']),
+            )
             .correlate(cls)
             .scalar_subquery()
             .label('_registration_count')

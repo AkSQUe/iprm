@@ -35,6 +35,7 @@ class Event(TimestampMixin, db.Model):
 
     __table_args__ = (
         db.Index('ix_events_active_status', 'is_active', 'status'),
+        db.Index('ix_events_created_at', 'created_at'),
         db.CheckConstraint(
             "event_type IN ('seminar', 'webinar', 'course', 'masterclass', 'conference')",
             name='ck_events_event_type',
