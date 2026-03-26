@@ -225,6 +225,11 @@ a {
   width: auto;
 }
 
+/* На desktop -- simple іконка, на mobile -- complex */
+.iprm-header__logo-icon--mobile {
+  display: none;
+}
+
 .iprm-header__nav {
   display: flex;
   flex: 1;
@@ -296,6 +301,11 @@ a {
 .iprm-header__logout-form {
   display: flex;
   align-items: center;
+}
+
+/* Мобільний блок акаунту в бургер-меню (прихований на desktop) */
+.iprm-nav__mobile-account {
+  display: none;
 }
 
 /* Burger (mobile) */
@@ -838,18 +848,26 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.5;
-  transition: opacity 0.2s;
+  transition: transform 0.2s;
 }
 
 .iprm-footer__social-icon:hover {
-  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Facebook -- корпоративний синій */
+.iprm-footer__social-icon--fb {
+  color: #1877f2;
+}
+
+/* Instagram -- градієнт у кольорах сайту */
+.iprm-footer__social-icon--ig svg {
+  fill: url(#ig-gradient);
 }
 
 .iprm-footer__social-icon img {
   width: 100%;
   height: 100%;
-  filter: brightness(0) saturate(100%) invert(30%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(90%);
 }
 
 .iprm-footer__link {
@@ -984,15 +1002,22 @@ a {
 
 .iprm-course-card__tags {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 6px;
+}
+
+/* Перший тег -- акцентний з градієнтом */
+.iprm-course-card__tags .iprm-tag:first-child {
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 100%);
+  color: var(--iprm-white);
+  border-color: transparent;
 }
 
 /* ========== TAGS ========== */
 
 .iprm-tag {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 6px 12px;
   font-size: 12px;
   font-weight: 500;
   color: var(--iprm-text);
@@ -1220,6 +1245,15 @@ a {
     display: none;
   }
 
+  .iprm-header__logo-icon--desktop {
+    display: none;
+  }
+
+  .iprm-header__logo-icon--mobile {
+    display: block;
+    height: 32px;
+  }
+
   .iprm-header__burger {
     display: flex;
   }
@@ -1249,6 +1283,59 @@ a {
 
   .iprm-header__actions {
     display: none;
+  }
+
+  /* Мобільний блок акаунту */
+  .iprm-nav__mobile-account {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--iprm-border);
+  }
+
+  .iprm-nav__mobile-link {
+    display: block;
+    padding: 10px 0;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--apple-black);
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    width: 100%;
+    transition: color 0.2s;
+  }
+
+  .iprm-nav__mobile-link:hover {
+    color: var(--iprm-nav-active);
+  }
+
+  .iprm-nav__mobile-link--admin {
+    color: var(--iprm-nav-active);
+    font-weight: 600;
+  }
+
+  .iprm-nav__mobile-link--cta {
+    color: var(--iprm-white);
+    background: var(--iprm-nav-active);
+    border-radius: 980px;
+    padding: 12px 24px;
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  .iprm-nav__mobile-link--cta:hover {
+    background: var(--iprm-accent-hover);
+    color: var(--iprm-white);
+  }
+
+  .iprm-nav__mobile-link--logout {
+    color: var(--apple-gray);
   }
 
   .iprm-hero-wrap {
@@ -1321,8 +1408,10 @@ a {
   }
 
   .iprm-footer__legal {
-    justify-content: center;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px 12px;
+    text-align: center;
   }
 
   .iprm-footer__right {

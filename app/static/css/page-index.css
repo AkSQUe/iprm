@@ -165,17 +165,17 @@
   display: block;
 }
 
-/* Градієнт для кожного символу scramble */
+/* Градієнт через весь scramble-текст */
 .scramble-text.apple-gradient-text {
-  background: none;
-  -webkit-text-fill-color: unset;
-}
-
-.scramble-text.apple-gradient-text .scramble-text__inner {
   background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 40%, var(--apple-orange) 100%);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.scramble-text.apple-gradient-text .scramble-text__char,
+.scramble-text.apple-gradient-text .scramble-text__inner {
+  -webkit-text-fill-color: transparent;
 }
 
 /* ========== FEATURES GRID -- 2-col with featured ========== */
@@ -567,34 +567,40 @@
     grid-column: span 1;
   }
 
+  /* Обрізати зображення в межах картки на мобільних */
+  .page-index .apple-feature-card--has-image,
+  .page-index .apple-feature-card--icon-right {
+    overflow: hidden;
+  }
+
   .page-index .apple-feature-card__text {
-    padding-right: 140px;
+    padding-right: 120px;
   }
 
   .page-index .apple-feature-card--image-left .apple-feature-card__text {
     padding-right: 0;
-    padding-left: 140px;
+    padding-left: 120px;
   }
 
   .page-index .apple-feature-card__image {
-    width: 160px;
-    right: -12px;
-    bottom: -16px;
+    width: 150px;
+    right: -16px;
+    bottom: -20px;
   }
 
   .page-index .apple-feature-card--image-left .apple-feature-card__image {
     right: auto;
-    left: -12px;
+    left: -16px;
   }
 
   .page-index .apple-feature-card--icon-right {
-    padding-right: 100px;
+    padding-right: 90px;
   }
 
   .page-index .apple-feature-card--icon-right .apple-feature-card__icon {
-    width: 100px;
-    height: 100px;
-    right: -12px;
+    width: 90px;
+    height: 90px;
+    right: -8px;
   }
 
   .page-index .apple-feature-card {
@@ -619,8 +625,25 @@
     height: 200px;
   }
 
+  /* Зображення над текстом замість absolute */
   .page-index .apple-bento-card {
-    min-height: 240px;
+    min-height: auto;
+    padding: 0;
+  }
+
+  .page-index .apple-bento-visual {
+    position: static;
+    height: 180px;
+    border-radius: 0;
+  }
+
+  .page-index .apple-bento-card h3,
+  .page-index .apple-bento-card p {
+    padding: 0 24px;
+  }
+
+  .page-index .apple-bento-card p {
+    padding-bottom: 24px;
   }
 
   .page-index .apple-clinic-grid .apple-clinic-card:last-child {
@@ -649,33 +672,33 @@
   }
 
   .page-index .apple-feature-card__text {
-    padding-right: 100px;
+    padding-right: 90px;
   }
 
   .page-index .apple-feature-card--image-left .apple-feature-card__text {
     padding-right: 0;
-    padding-left: 100px;
+    padding-left: 90px;
   }
 
   .page-index .apple-feature-card__image {
-    width: 120px;
-    right: -8px;
-    bottom: -12px;
+    width: 110px;
+    right: -12px;
+    bottom: -16px;
   }
 
   .page-index .apple-feature-card--image-left .apple-feature-card__image {
     right: auto;
-    left: -8px;
+    left: -12px;
   }
 
   .page-index .apple-feature-card--icon-right {
-    padding-right: 80px;
+    padding-right: 70px;
   }
 
   .page-index .apple-feature-card--icon-right .apple-feature-card__icon {
-    width: 80px;
-    height: 80px;
-    right: -8px;
+    width: 70px;
+    height: 70px;
+    right: -4px;
   }
 
   .page-index .apple-feature-card {
@@ -691,20 +714,20 @@
     gap: 16px;
   }
 
-  .page-index .apple-bento-card {
-    min-height: 200px;
-    padding: 28px 20px;
+  .page-index .apple-bento-card h3,
+  .page-index .apple-bento-card p {
+    padding: 0 16px;
   }
 
-  .page-index .apple-bento-card--hero {
-    min-height: auto;
+  .page-index .apple-bento-card p {
+    padding-bottom: 20px;
+  }
+
+  .page-index .apple-bento-visual {
+    height: 150px;
   }
 
   .page-index .apple-bento-card--hero .apple-bento-visual {
     height: 160px;
-  }
-
-  .page-index .apple-bento-visual {
-    bottom: 110px;
   }
 }
