@@ -566,6 +566,12 @@
     margin-bottom: 36px;
   }
 
+  .page-index .apple-feature-card__image {
+    width: 120px;
+    right: -8px;
+    bottom: -12px;
+  }
+
   .page-index .apple-feature-card {
     padding: 28px 20px;
   }
