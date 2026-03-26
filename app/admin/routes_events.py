@@ -81,6 +81,7 @@ def event_edit(event_id):
     if request.method == 'GET':
         form.target_audience_text.data = event_service.list_to_lines(event.target_audience)
         form.tags_text.data = event_service.list_to_lines(event.tags)
+        form.faq_text.data = event_service.faq_list_to_text(event.faq)
 
     if form.validate_on_submit():
         slug = form.slug.data.strip()

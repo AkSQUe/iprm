@@ -25,6 +25,34 @@ def list_to_lines(items):
     return '\n'.join(items)
 
 
+def faq_text_to_list(text):
+    """Parse FAQ text into list of {question, answer} dicts.
+
+    Format: blocks separated by empty lines, first line = question, rest = answer.
+    """
+    if not text:
+        return []
+    blocks = text.strip().split('\n\n')
+    faq = []
+    for block in blocks:
+        lines = [l.strip() for l in block.strip().splitlines() if l.strip()]
+        if len(lines) >= 2:
+            faq.append({'question': lines[0], 'answer': '\n'.join(lines[1:])})
+    return faq
+
+
+def faq_list_to_text(items):
+    """Convert list of {question, answer} dicts to editable text."""
+    if not items:
+        return ''
+    blocks = []
+    for item in items:
+        q = item.get('question', '')
+        a = item.get('answer', '')
+        blocks.append(f'{q}\n{a}' if a else q)
+    return '\n\n'.join(blocks)
+
+
 def populate_event_from_form(event, form):
     """Map form data onto an Event model instance."""
     event.title = form.title.data.strip()
@@ -48,6 +76,7 @@ def populate_event_from_form(event, form):
     event.tags = lines_to_list(form.tags_text.data)
     event.speaker_info = form.speaker_info.data
     event.agenda = form.agenda.data
+    event.faq = faq_text_to_list(form.faq_text.data)
     event.is_featured = form.is_featured.data
 
 

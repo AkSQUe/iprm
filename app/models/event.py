@@ -28,6 +28,7 @@ class Event(TimestampMixin, db.Model):
     tags = db.Column(db.JSON, default=list)
     speaker_info = db.Column(db.Text)
     agenda = db.Column(db.Text)
+    faq = db.Column(db.JSON, default=list)
     is_featured = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True, index=True)
     created_by = db.Column(db.BigInteger, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True, index=True)

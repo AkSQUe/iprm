@@ -211,6 +211,12 @@
           <label for="agenda">Програма заходу (текст)</label>
           {{ form.agenda(class="form-input", id="agenda", rows="4", placeholder="10:00-11:00 - Реєстрація") }}
         </div>
+
+        <div class="form-group admin-form__full">
+          <label for="faq_text">FAQ (Питання-Відповіді)</label>
+          {{ form.faq_text(class="form-input", id="faq_text", rows="8", placeholder="У якому форматі буде проходити захід?\nМайстер-клас відбудеться у форматі онлайн.\n\nЯк отримати сертифікат?\nПісля успішного проходження тестування.") }}
+          <div class="form-hint">Блоки розділяються порожнім рядком. Перший рядок блоку -- питання, решта -- відповідь</div>
+        </div>
       </div>
     </div>
 

@@ -133,4 +133,9 @@ class EventForm(FlaskForm):
         'Програма заходу',
         validators=[Optional()],
     )
+    faq_text = TextAreaField(
+        'FAQ (Питання-Відповіді)',
+        validators=[Optional()],
+        description='Формат: Питання?\\nВідповідь\\n\\nПитання?\\nВідповідь',
+    )
     is_featured = BooleanField('Рекомендований')
