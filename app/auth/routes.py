@@ -121,6 +121,12 @@ def account():
     return render_template('auth/account.html', registrations=registrations)
 
 
+@auth_bp.route('/settings')
+@login_required
+def settings():
+    return render_template('auth/settings.html')
+
+
 @auth_bp.route('/confirm/<token>')
 @limiter.limit('10 per minute')
 def confirm_email(token):

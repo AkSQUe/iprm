@@ -1,0 +1,148 @@
+/* Сторінка налаштувань -- IPRM */
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 800px;
+  margin: 0 auto 40px;
+}
+
+.settings-card {
+  background: var(--iprm-white);
+  border-radius: var(--iprm-radius);
+  padding: 32px;
+}
+
+.settings-card__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--apple-black);
+  margin-bottom: 6px;
+}
+
+.settings-card__desc {
+  font-size: 0.875rem;
+  color: var(--apple-gray);
+  margin-bottom: 24px;
+}
+
+.settings-switcher {
+  display: flex;
+  gap: 12px;
+}
+
+.settings-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 16px;
+  background: var(--apple-section-bg);
+  border: 2px solid transparent;
+  border-radius: var(--iprm-radius-sm);
+  cursor: pointer;
+  transition:
+    border-color 0.2s var(--iprm-transition),
+    box-shadow 0.2s var(--iprm-transition),
+    transform 0.2s var(--iprm-transition);
+  font-family: inherit;
+}
+
+.settings-option:hover {
+  border-color: var(--iprm-border);
+  transform: translateY(-2px);
+}
+
+.settings-option.is-active {
+  border-color: var(--iprm-nav-active);
+  box-shadow: 0 0 0 3px rgba(var(--apple-accent-rgb), 0.15);
+  background: var(--iprm-white);
+}
+
+/* Превью шрифтів */
+.settings-option__preview {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--apple-black);
+  background: var(--iprm-white);
+  border-radius: var(--iprm-radius-sm);
+}
+
+.settings-option__preview--inter {
+  font-family: 'Inter', sans-serif;
+}
+
+.settings-option__preview--fixel {
+  font-family: 'Fixel', sans-serif;
+}
+
+/* Превью теми */
+.settings-option__preview--legacy,
+.settings-option__preview--branded {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--iprm-radius-sm);
+}
+
+.settings-option__preview--legacy {
+  background: linear-gradient(135deg, var(--iprm-accent), var(--iprm-accent-hover));
+}
+
+.settings-option__preview--branded {
+  background: linear-gradient(135deg, #7055a4, #9b59b6, #e8913a);
+}
+
+.settings-option__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--apple-gray-dark);
+}
+
+.settings-back {
+  display: block;
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-card {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-card {
+    padding: 20px;
+  }
+
+  .settings-option__preview {
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+  }
+
+  .settings-option__preview--legacy,
+  .settings-option__preview--branded {
+    width: 48px;
+    height: 48px;
+  }
+
+  .settings-option {
+    padding: 16px 12px;
+  }
+}

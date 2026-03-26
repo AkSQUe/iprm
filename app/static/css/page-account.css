@@ -3,6 +3,14 @@
 /* ========== КНОПКИ ========== */
 /* btn-auth--outline перенесено в auth.css */
 
+/* Картка-посилання */
+.account-card--link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
 .form-logout {
   display: inline;
 }

@@ -95,10 +95,10 @@
     <div class="iprm-section__inner">
       <h2 id="account-settings-title" class="iprm-section__title visually-hidden">Обліковий запис</h2>
       <div class="account-grid">
-        <div class="account-card apple-reveal">
+        <a href="{{ url_for('auth.settings') }}" class="account-card account-card--link apple-reveal">
           <h3 class="account-card__title">Налаштування</h3>
-          <p class="account-card__text">Редагування профілю</p>
-        </div>
+          <p class="account-card__text">Персоналізація інтерфейсу</p>
+        </a>
         <div class="account-card apple-reveal">
           <h3 class="account-card__title">Сертифікати</h3>
           <p class="account-card__text">Ваші сертифікати</p>

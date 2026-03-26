@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Налаштування | IPRM{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-settings.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero iprm-hero--compact" aria-label="Settings hero">
+      <div class="iprm-hero__content">
+        <h1 class="iprm-hero__title"><span class="apple-gradient-text">Налаштування</span></h1>
+        <p class="iprm-hero__subtitle">Персоналізація інтерфейсу</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="iprm-section">
+    <div class="iprm-section__inner">
+      <div class="settings-grid">
+
+        <div class="settings-card">
+          <h2 class="settings-card__title">Шрифт</h2>
+          <p class="settings-card__desc">Оберіть шрифт для всього сайту</p>
+          <div class="settings-switcher">
+            <button class="settings-option" data-font-select="inter" type="button">
+              <span class="settings-option__preview settings-option__preview--inter">Aa</span>
+              <span class="settings-option__label">Inter</span>
+            </button>
+            <button class="settings-option" data-font-select="fixel" type="button">
+              <span class="settings-option__preview settings-option__preview--fixel">Aa</span>
+              <span class="settings-option__label">Fixel</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="settings-card__title">Тема оформлення</h2>
+          <p class="settings-card__desc">Оберіть колірну схему інтерфейсу</p>
+          <div class="settings-switcher">
+            <button class="settings-option" data-theme-select="legacy" type="button">
+              <span class="settings-option__preview settings-option__preview--legacy"></span>
+              <span class="settings-option__label">Legacy</span>
+            </button>
+            <button class="settings-option" data-theme-select="branded" type="button">
+              <span class="settings-option__preview settings-option__preview--branded"></span>
+              <span class="settings-option__label">Branded</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--secondary settings-back">Повернутися до кабінету</a>
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/settings.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}
