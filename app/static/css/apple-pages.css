@@ -295,11 +295,6 @@
   object-fit: contain;
   margin-bottom: 16px;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
-  transition: transform 0.3s var(--ease-interact);
-}
-
-.apple-page .apple-feature-card:hover .apple-feature-card__icon {
-  transform: scale(1.1) translateY(-4px);
 }
 
 .apple-page .apple-feature-card h3 {
