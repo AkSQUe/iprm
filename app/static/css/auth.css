@@ -67,11 +67,11 @@
 .auth-card__logo {
   display: flex;
   justify-content: center;
-  margin-bottom: 32px;
+  margin-bottom: 8px;
 }
 
 .auth-card__logo img {
-  height: 48px;
+  height: 96px;
   width: auto;
 }
 
