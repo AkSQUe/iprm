@@ -297,6 +297,23 @@
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
 }
 
+/* Збільшена іконка з виходом за межі картки */
+.apple-page .apple-feature-card--icon-float {
+  position: relative;
+  overflow: visible;
+  padding-top: 72px;
+}
+
+.apple-page .apple-feature-card--icon-float .apple-feature-card__icon {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 120px;
+  margin-bottom: 0;
+}
+
 .apple-page .apple-feature-card h3 {
   font-size: 1.25rem;
   font-weight: 700;
