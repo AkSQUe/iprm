@@ -212,13 +212,13 @@
   display: block;
   font-size: 2rem;
   font-weight: 800;
-  color: var(--iprm-accent);
   margin-bottom: 8px;
 }
 
 .iprm-trust-stats__label {
   display: block;
   font-size: 0.8125rem;
+  font-weight: 300;
   line-height: 1.4;
   color: var(--iprm-text-light);
 }
@@ -319,5 +319,13 @@
   .iprm-faq__answer {
     padding: 0 14px 12px;
     font-size: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .iprm-anchor-nav {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
