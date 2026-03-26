@@ -693,8 +693,24 @@
   padding: 80px 24px;
 }
 
-.iprm-error-page__code {
-  font-size: clamp(5rem, 15vw, 10rem);
+/* Зображення або placeholder */
+.iprm-error-page__image {
+  margin-bottom: 32px;
+}
+
+.iprm-error-page__image img {
+  width: 280px;
+  height: 280px;
+  object-fit: contain;
+}
+
+.iprm-error-page__placeholder {
+  width: 280px;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(4rem, 12vw, 7rem);
   font-weight: 800;
   letter-spacing: -0.06em;
   line-height: 1;
@@ -702,7 +718,6 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 16px;
 }
 
 .iprm-error-page__title {

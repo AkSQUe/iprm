@@ -5,9 +5,11 @@
 
 {% block content %}
   <div class="iprm-error-page">
-    <div class="iprm-error-page__code">500</div>
-    <h1 class="iprm-error-page__title">Внутрішня помилка сервера</h1>
-    <p class="iprm-error-page__subtitle">Ми вже працюємо над вирішенням проблеми</p>
+    <div class="iprm-error-page__image">
+      <img src="{{ url_for('static', filename='images/error-pages/500.webp') }}" alt="500" width="280" height="280">
+    </div>
+    <h1 class="iprm-error-page__title">Проводимо технічне <span class="apple-gradient-text">обслуговування</span></h1>
+    <p class="iprm-error-page__subtitle">Наші спеціалісти вже працюють над відновленням</p>
     <nav class="iprm-error-page__actions">
       <a href="{{ url_for('main.index') }}" class="apple-btn apple-btn--primary">На головну</a>
       <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary">Курси</a>

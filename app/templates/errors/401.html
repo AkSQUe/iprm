@@ -5,9 +5,11 @@
 
 {% block content %}
   <div class="iprm-error-page">
-    <div class="iprm-error-page__code">401</div>
-    <h1 class="iprm-error-page__title">Необхідна авторизація</h1>
-    <p class="iprm-error-page__subtitle">Увійдіть до свого облікового запису для доступу до цієї сторінки</p>
+    <div class="iprm-error-page__image">
+      <img src="{{ url_for('static', filename='images/error-pages/401.webp') }}" alt="401" width="280" height="280">
+    </div>
+    <h1 class="iprm-error-page__title">Доступ потребує <span class="apple-gradient-text">ідентифікації</span></h1>
+    <p class="iprm-error-page__subtitle">Увійдіть до облікового запису, щоб продовжити</p>
     <nav class="iprm-error-page__actions">
       <a href="{{ url_for('auth.login') }}" class="apple-btn apple-btn--primary">Увійти</a>
       <a href="{{ url_for('main.index') }}" class="apple-btn apple-btn--secondary">На головну</a>

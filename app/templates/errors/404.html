@@ -5,7 +5,9 @@
 
 {% block content %}
   <div class="iprm-error-page">
-    <div class="iprm-error-page__code">404</div>
+    <div class="iprm-error-page__image">
+      <img src="{{ url_for('static', filename='images/error-pages/404.webp') }}" alt="404" width="280" height="280">
+    </div>
     <h1 class="iprm-error-page__title">Сторінка перебуває на стадії <span class="apple-gradient-text">репаративної регенерації</span></h1>
     <p class="iprm-error-page__subtitle">Буде здоровою й красивою найближчим часом</p>
     <nav class="iprm-error-page__actions">
