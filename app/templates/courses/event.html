@@ -36,6 +36,19 @@
   },
   {% endif %}
   "inLanguage": "uk",
+  {% if event.start_date %}
+  "hasCourseInstance": {
+    "@type": "CourseInstance",
+    "courseMode": "{{ event.event_format or 'offline' }}",
+    "startDate": "{{ event.start_date.strftime('%Y-%m-%d') }}"{% if event.end_date %},
+    "endDate": "{{ event.end_date.strftime('%Y-%m-%d') }}"{% endif %}{% if event.location %},
+    "location": {
+      "@type": "Place",
+      "name": "{{ event.location }}"
+    }{% endif %}
+
+  },
+  {% endif %}
   "url": "{{ url_for('courses.course_by_slug', slug=event.slug, _external=True) }}"
 }
 </script>
@@ -50,6 +63,26 @@
   ]
 }
 </script>
+{% if event.faq is not none and event.faq | length %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {% for item in event.faq %}{% if item.question and item.answer %}{% if not loop.first %},{% endif %}
+    {
+      "@type": "Question",
+      "name": "{{ item.question }}",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "{{ item.answer }}"
+      }
+    }{% endif %}{% endfor %}
+
+  ]
+}
+</script>
+{% endif %}
 {% endblock %}
 
 {% block content %}
