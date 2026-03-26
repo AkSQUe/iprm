@@ -1401,6 +1401,14 @@ a {
     gap: 8px;
   }
 
+  .iprm-footer__brand {
+    padding: 0;
+  }
+
+  .iprm-footer__logo {
+    height: 72px;
+  }
+
   .iprm-footer__legal {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
