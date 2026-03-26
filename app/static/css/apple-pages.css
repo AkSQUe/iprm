@@ -668,13 +668,13 @@
 
 .apple-page .apple-reveal {
   opacity: 0;
-  transform: translateY(32px);
-  transition: opacity 0.7s var(--ease-reveal), transform 0.7s var(--ease-reveal);
+  translate: 0 32px;
+  transition: opacity 0.7s var(--ease-reveal), translate 0.7s var(--ease-reveal);
 }
 
 .apple-page .apple-reveal.visible {
   opacity: 1;
-  transform: translateY(0);
+  translate: 0 0;
 }
 
 /* ========== EMPTY STATE ========== */
@@ -795,7 +795,7 @@
   .apple-page .apple-reveal {
     transition: none;
     opacity: 1;
-    transform: none;
+    translate: none;
   }
 
   .apple-page .apple-feature-card,

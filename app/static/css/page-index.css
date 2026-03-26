@@ -430,8 +430,8 @@
 /* ========== SCROLL REVEAL ========== */
 
 .page-index .apple-reveal {
-  transform: translateY(40px);
-  transition: opacity 0.8s var(--ease-reveal), transform 0.8s var(--ease-reveal);
+  translate: 0 40px;
+  transition: opacity 0.8s var(--ease-reveal), translate 0.8s var(--ease-reveal);
 }
 
 /* Button states, focus та selection визначено в apple-pages.css (.apple-page) */
@@ -448,7 +448,7 @@
   .page-index .apple-reveal {
     transition: none;
     opacity: 1;
-    transform: none;
+    translate: none;
   }
 
   .page-index .iprm-hero__badge,
