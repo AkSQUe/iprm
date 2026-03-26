@@ -398,10 +398,10 @@ border-radius: 980px;
 ```
 
 - `border-top: 1px solid rgba(0, 0, 0, 0.06)`
-- Padding `48px 24px`
-- Flex, space-between, three columns
+- Padding `0 24px 24px` (лого виконує роль верхнього відступу)
+- Flex column layout: row (brand + socials), legal links grid, copy
 - Font-size `0.8125rem`, color `var(--gray)`
-- Brand "IPRM" текстом, не SVG logo
+- Brand: SVG complex logo (84px height), не текст
 
 ### 5.14 Cookie Banner (floating glass)
 
