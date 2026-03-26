@@ -53,7 +53,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/apple-pages.css') }}?v={{ assets_version }}">
   {% block extra_css %}{% endblock %}
   <script>
-    (function(){try{var t=localStorage.getItem('iprm-theme');if(t==='branded')document.documentElement.setAttribute('data-theme','branded');var f=localStorage.getItem('iprm-font');if(f==='fixel')document.documentElement.setAttribute('data-font','fixel');}catch(e){}})();
+    (function(){try{var f=localStorage.getItem('iprm-font');if(f==='fixel')document.documentElement.setAttribute('data-font','fixel');}catch(e){}})();
   </script>
   {% block extra_head %}{% endblock %}
 </head>
@@ -79,7 +79,6 @@
 
   {% include 'partials/cookie_banner.html' %}
 
-  <script src="{{ url_for('static', filename='js/theme-toggle.js') }}?v={{ assets_version }}"></script>
   {% block molecular_js %}
   <script defer src="{{ url_for('static', filename='js/molecular-background.js') }}?v={{ assets_version }}"></script>
   {% endblock %}

@@ -84,22 +84,6 @@
   font-family: 'Fixel', sans-serif;
 }
 
-/* Превью теми */
-.settings-option__preview--legacy,
-.settings-option__preview--branded {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--iprm-radius-sm);
-}
-
-.settings-option__preview--legacy {
-  background: linear-gradient(135deg, var(--iprm-accent), var(--iprm-accent-hover));
-}
-
-.settings-option__preview--branded {
-  background: linear-gradient(135deg, #7055a4, #9b59b6, #e8913a);
-}
-
 .settings-option__label {
   font-size: 0.875rem;
   font-weight: 600;
@@ -134,12 +118,6 @@
     width: 48px;
     height: 48px;
     font-size: 1.25rem;
-  }
-
-  .settings-option__preview--legacy,
-  .settings-option__preview--branded {
-    width: 48px;
-    height: 48px;
   }
 
   .settings-option {

@@ -25,20 +25,20 @@
   --apple-orange-light: #fef0e6;
   --apple-purple-mid: #9b59b6;
 
-  /* Theme-switchable colors (legacy = default) */
-  --iprm-accent: #0ea5e9;
-  --iprm-accent-hover: #0284c7;
-  --iprm-accent-light: #e0f2fe;
-  --iprm-btn-bg: #000;
-  --iprm-btn-bg-hover: #222;
+  /* Brand colors */
+  --iprm-accent: #7055a4;
+  --iprm-accent-hover: #5d4691;
+  --iprm-accent-light: #ede9f6;
+  --iprm-btn-bg: #7055a4;
+  --iprm-btn-bg-hover: #5d4691;
   --iprm-nav-active: #7055a4;
-  --iprm-hero-grad-1: #1a1a2e;
-  --iprm-hero-grad-2: #16213e;
-  --iprm-hero-grad-3: #0f3460;
-  --iprm-hero-glow: rgba(14, 165, 233, 0.15);
-  --iprm-hero-glow-dim: rgba(14, 165, 233, 0.08);
-  --iprm-placeholder-grad: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 50%, #cffafe 100%);
-  --iprm-molecular-rgb: 180, 180, 180;
+  --iprm-hero-grad-1: #2d1b4e;
+  --iprm-hero-grad-2: #3b2368;
+  --iprm-hero-grad-3: #4a2d80;
+  --iprm-hero-glow: rgba(112, 85, 164, 0.2);
+  --iprm-hero-glow-dim: rgba(232, 121, 58, 0.1);
+  --iprm-placeholder-grad: linear-gradient(135deg, #ede9f6 0%, #e8e0f4 50%, #fef0e6 100%);
+  --iprm-molecular-rgb: 140, 110, 180;
 
   /* Status / feedback colors */
   --iprm-error: #ef4444;
@@ -88,22 +88,6 @@
   --ease-reveal: cubic-bezier(0.28, 0.11, 0.32, 1);
   --ease-interact: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --ease-spring: cubic-bezier(0.32, 0.08, 0.24, 1);
-}
-
-[data-theme="branded"] {
-  --iprm-accent: #7055a4;
-  --iprm-accent-hover: #5d4691;
-  --iprm-accent-light: #ede9f6;
-  --iprm-btn-bg: #7055a4;
-  --iprm-btn-bg-hover: #5d4691;
-  --iprm-nav-active: #7055a4;
-  --iprm-hero-grad-1: #2d1b4e;
-  --iprm-hero-grad-2: #3b2368;
-  --iprm-hero-grad-3: #4a2d80;
-  --iprm-hero-glow: rgba(112, 85, 164, 0.2);
-  --iprm-hero-glow-dim: rgba(232, 121, 58, 0.1);
-  --iprm-placeholder-grad: linear-gradient(135deg, #ede9f6 0%, #e8e0f4 50%, #fef0e6 100%);
-  --iprm-molecular-rgb: 140, 110, 180;
 }
 
 /* Перемикач шрифту */
