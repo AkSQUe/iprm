@@ -176,6 +176,7 @@
 .page-index .apple-feature-card__text {
   flex: 1;
   min-width: 0;
+  padding-right: 200px;
 }
 
 .page-index .apple-feature-card__image {
@@ -188,13 +189,52 @@
   filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.3));
 }
 
-/* Зображення-іконка замість SVG у звичайних картках */
-.page-index .apple-feature-card__icon {
-  width: 80px;
-  height: 80px;
+/* Зображення зліва */
+.page-index .apple-feature-card--image-left .apple-feature-card__text {
+  padding-right: 0;
+  padding-left: 200px;
+}
+
+.page-index .apple-feature-card--image-left .apple-feature-card__image {
+  right: auto;
+  left: -24px;
+}
+
+/* Іконка зліва зверху -- виходить за межі картки */
+.page-index .apple-feature-card--icon-topleft {
+  position: relative;
+  overflow: visible;
+  padding-top: 64px;
+}
+
+.page-index .apple-feature-card--icon-topleft .apple-feature-card__icon {
+  position: absolute;
+  top: -20px;
+  left: -16px;
+  width: 100px;
+  height: 100px;
   object-fit: contain;
-  margin-bottom: 16px;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+  pointer-events: none;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.12));
+}
+
+/* Іконка справа від тексту */
+.page-index .apple-feature-card--icon-right {
+  position: relative;
+  overflow: visible;
+  padding-right: 120px;
+}
+
+.page-index .apple-feature-card--icon-right .apple-feature-card__icon {
+  position: absolute;
+  right: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.12));
 }
 
 .page-index .apple-feature-card--featured h3 {
@@ -513,10 +553,24 @@
     grid-column: span 1;
   }
 
+  .page-index .apple-feature-card__text {
+    padding-right: 140px;
+  }
+
+  .page-index .apple-feature-card--image-left .apple-feature-card__text {
+    padding-right: 0;
+    padding-left: 140px;
+  }
+
   .page-index .apple-feature-card__image {
     width: 160px;
     right: -12px;
     bottom: -16px;
+  }
+
+  .page-index .apple-feature-card--image-left .apple-feature-card__image {
+    right: auto;
+    left: -12px;
   }
 
   .page-index .apple-feature-card {
@@ -570,10 +624,24 @@
     margin-bottom: 36px;
   }
 
+  .page-index .apple-feature-card__text {
+    padding-right: 100px;
+  }
+
+  .page-index .apple-feature-card--image-left .apple-feature-card__text {
+    padding-right: 0;
+    padding-left: 100px;
+  }
+
   .page-index .apple-feature-card__image {
     width: 120px;
     right: -8px;
     bottom: -12px;
+  }
+
+  .page-index .apple-feature-card--image-left .apple-feature-card__image {
+    right: auto;
+    left: -8px;
   }
 
   .page-index .apple-feature-card {
