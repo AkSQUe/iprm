@@ -562,13 +562,44 @@
   }
 
   .page-index .apple-feature-card--icon-right {
-    padding-right: 90px;
+    padding-right: 80px;
   }
 
   .page-index .apple-feature-card--icon-right .apple-feature-card__icon {
-    width: 90px;
-    height: 90px;
+    width: 80px;
+    height: 80px;
     right: -8px;
+  }
+
+  /* Очно та онлайн -- вправо вверх */
+  .page-index .apple-feature-card--icon-topright .apple-feature-card__icon {
+    top: -16px;
+    bottom: auto;
+    transform: none;
+  }
+
+  /* Сучасна інформація -- вправо вниз */
+  .page-index .apple-feature-card--icon-bottomright .apple-feature-card__icon {
+    top: auto;
+    bottom: -16px;
+    transform: none;
+  }
+
+  /* Висококваліфіковані спеціалісти -- іконка вправо вверх, без відступу */
+  .page-index .apple-feature-card--has-image:not(.apple-feature-card--image-left) .apple-feature-card__text {
+    padding-right: 0;
+  }
+
+  .page-index .apple-feature-card--has-image:not(.apple-feature-card--image-left) .apple-feature-card__image {
+    width: 120px;
+    right: -12px;
+    top: -20px;
+    bottom: auto;
+  }
+
+  /* Сертифікати з балами БПР -- менший відступ */
+  .page-index .apple-feature-card--image-left .apple-feature-card__text {
+    padding-right: 80px;
   }
 
   .page-index .apple-feature-card {
@@ -660,13 +691,31 @@
   }
 
   .page-index .apple-feature-card--icon-right {
-    padding-right: 70px;
+    padding-right: 60px;
   }
 
   .page-index .apple-feature-card--icon-right .apple-feature-card__icon {
-    width: 70px;
-    height: 70px;
+    width: 60px;
+    height: 60px;
     right: -4px;
+  }
+
+  .page-index .apple-feature-card--icon-topright .apple-feature-card__icon {
+    top: -12px;
+  }
+
+  .page-index .apple-feature-card--icon-bottomright .apple-feature-card__icon {
+    bottom: -12px;
+  }
+
+  .page-index .apple-feature-card--has-image:not(.apple-feature-card--image-left) .apple-feature-card__image {
+    width: 100px;
+    right: -8px;
+    top: -16px;
+  }
+
+  .page-index .apple-feature-card--image-left .apple-feature-card__text {
+    padding-right: 60px;
   }
 
   .page-index .apple-feature-card {
