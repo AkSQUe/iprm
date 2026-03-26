@@ -53,12 +53,15 @@
         <h3>Сучасна інформація</h3>
         <p>Слухачі курсів отримують максимум сучасної інформації по вибраних темах регенеративної медицини.</p>
       </div>
-      <div class="apple-feature-card apple-feature-card--featured apple-reveal">
-        <div class="apple-feature-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+      <div class="apple-feature-card apple-feature-card--featured apple-feature-card--has-image apple-reveal">
+        <div class="apple-feature-card__text">
+          <div class="apple-feature-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <h3>Сертифікати з балами БПР</h3>
+          <p>Після проходження вибраного курсу слухачі отримують сертифікати з балами БПР (безперервний професійний розвиток), що підтверджують підвищення кваліфікації.</p>
         </div>
-        <h3>Сертифікати з балами БПР</h3>
-        <p>Після проходження вибраного курсу слухачі отримують сертифікати з балами БПР (безперервний професійний розвиток), що підтверджують підвищення кваліфікації.</p>
+        <img class="apple-feature-card__image" src="{{ url_for('static', filename='images/main/BPR-points.webp') }}" alt="Сертифікат з балами БПР" width="280" height="280" loading="lazy">
       </div>
     </div>
   </section>
@@ -131,7 +134,7 @@
       <!-- Lab 1: hero -->
       <div class="apple-bento-card apple-bento-card--hero apple-reveal">
         <div class="apple-bento-visual">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><circle cx="10" cy="13" r="0.5"/><circle cx="14" cy="16" r="0.5"/><circle cx="10" cy="19" r="0.5"/></svg>
+          <img src="{{ url_for('static', filename='images/labs/biological-age-and-disease-prediction.jpg') }}" alt="Лабораторія біологічного віку" width="600" height="400" loading="lazy">
         </div>
         <h3>Лабораторія біологічного віку та прогнозування захворювань</h3>
         <p>Епігенетика, фізіологія, біохімія та імунологія процесів старіння</p>
@@ -146,7 +149,7 @@
       </div>
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M15 2v2M15 20v2M9 2v2M9 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg>
+          <img src="{{ url_for('static', filename='images/labs/bioinformatics-ai.jpg') }}" alt="Біоінформатика та ШІ" width="400" height="300" loading="lazy">
         </div>
         <h3>Біоінформатика та ШІ</h3>
         <p>Інтегральний аналіз даних досліджень з використанням штучного інтелекту</p>
@@ -154,21 +157,21 @@
       <!-- Lab 2: cards -->
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg>
+          <img src="{{ url_for('static', filename='images/labs/aging-biomarcers.jpg') }}" alt="Біомаркери старіння" width="400" height="300" loading="lazy">
         </div>
         <h3>Біомаркери старіння</h3>
         <p>Пошук, апробація, валідація нових біомаркерів старіння та геропротекторів</p>
       </div>
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-15.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m12.73-12.73 1.41-1.41"/></svg>
+          <img src="{{ url_for('static', filename='images/labs/anti-age-protocols.jpg') }}" alt="Anti-age протоколи" width="400" height="300" loading="lazy">
         </div>
         <h3>Anti-age протоколи</h3>
         <p>Дослідження ефективності нових anti-age протоколів та процесів старіння на клітинному рівні</p>
       </div>
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          <img src="{{ url_for('static', filename='images/labs/cell-aging.jpg') }}" alt="Клітинне старіння" width="400" height="300" loading="lazy">
         </div>
         <h3>Клітинне старіння</h3>
         <p>Дослідження процесів старіння на клітинному рівні з використанням сучасних методів</p>
