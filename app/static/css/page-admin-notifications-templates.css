@@ -11,8 +11,8 @@
 .template-tab {
   display: inline-block;
   padding: 8px 20px;
-  border-radius: 980px;
-  font-size: 14px;
+  border-radius: var(--iprm-radius-pill);
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--apple-gray-dark);
   background: var(--apple-section-bg);
@@ -62,7 +62,7 @@
 }
 
 .template-preview__meta {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--apple-gray);
 }
 
@@ -81,7 +81,7 @@
 
   .template-tab {
     padding: 6px 16px;
-    font-size: 13px;
+    font-size: 0.8125rem;
   }
 
   .template-preview__frame {

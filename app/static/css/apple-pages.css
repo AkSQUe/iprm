@@ -83,7 +83,7 @@
   color: var(--iprm-nav-active);
   background: var(--iprm-accent-light);
   padding: 8px 24px;
-  border-radius: 980px;
+  border-radius: var(--iprm-radius-pill);
   margin-bottom: 20px;
   border: none;
 }
@@ -132,7 +132,7 @@
   font-weight: 500;
   border: none;
   padding: 14px 32px;
-  border-radius: 980px;
+  border-radius: var(--iprm-radius-pill);
   cursor: pointer;
   text-decoration: none;
   font-family: var(--iprm-font);

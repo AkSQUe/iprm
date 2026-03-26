@@ -22,7 +22,7 @@
 }
 
 .liqpay-config__label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--iprm-dark);
   min-width: 120px;
@@ -30,13 +30,13 @@
 }
 
 .liqpay-config__value {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--iprm-text);
 }
 
 .liqpay-config__value--mono {
   font-family: 'Courier New', monospace;
-  font-size: 13px;
+  font-size: 0.8125rem;
   background: var(--iprm-white);
   padding: 4px 10px;
   border: 1px solid var(--iprm-border);
@@ -63,7 +63,7 @@
 
 @media (max-width: 480px) {
   .liqpay-config__value--mono {
-    font-size: 12px;
+    font-size: 0.75rem;
     padding: 3px 8px;
   }
 }

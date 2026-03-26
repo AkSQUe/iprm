@@ -18,8 +18,8 @@
 /* ========== БАНЕР ПІДТВЕРДЖЕННЯ EMAIL ========== */
 
 .account-confirm-banner {
-  background: #fef3c7;
-  border-bottom: 1px solid #fcd34d;
+  background: var(--iprm-warning-bg);
+  border-bottom: 1px solid var(--iprm-warning-border);
   padding: 16px 24px;
 }
 
@@ -35,7 +35,7 @@
 .account-confirm-banner__text {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #92400e;
+  color: var(--iprm-warning-text);
   margin: 0;
 }
 
@@ -47,9 +47,9 @@
   padding: 6px 16px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #92400e;
+  color: var(--iprm-warning-text);
   background: transparent;
-  border: 1.5px solid #d97706;
+  border: 1.5px solid var(--iprm-warning);
   border-radius: var(--iprm-radius-sm);
   cursor: pointer;
   transition: background 0.2s ease;

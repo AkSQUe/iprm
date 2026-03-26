@@ -68,7 +68,7 @@
 /* ========== BUTTONS ========== */
 
 .btn-admin {
-  border-radius: 980px;
+  border-radius: var(--iprm-radius-pill);
   font-weight: 500;
   font-size: 0.875rem;
   transition:

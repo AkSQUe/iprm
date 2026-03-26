@@ -11,6 +11,7 @@
   --iprm-radius: 24px;
   --iprm-radius-md: 16px;
   --iprm-radius-sm: 12px;
+  --iprm-radius-pill: 980px;
   --iprm-transition: 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --iprm-max-content: 1200px;
   --iprm-card-bg: #f5f5f7;
@@ -54,6 +55,8 @@
   --iprm-placeholder-text: #bbb;
   --iprm-warning-bg: #fef3c7;
   --iprm-warning-text: #92400e;
+  --iprm-warning-border: #fcd34d;
+  --iprm-warning: #d97706;
   --iprm-neutral-bg: #e5e7eb;
   --iprm-neutral-text: #4b5563;
 
@@ -298,7 +301,6 @@ a {
   border: none;
   cursor: pointer;
   font-family: var(--iprm-font);
-  line-height: 1;
   transition: color 0.2s;
   padding: 0;
 }
@@ -311,7 +313,7 @@ a {
   color: var(--iprm-white);
   background: var(--iprm-nav-active);
   padding: 8px 20px;
-  border-radius: 980px;
+  border-radius: var(--iprm-radius-pill);
 }
 
 .iprm-header__auth-link--cta:hover {
@@ -632,7 +634,7 @@ a {
   line-height: 1;
   border: none;
   padding: 14px 32px;
-  border-radius: 980px;
+  border-radius: var(--iprm-radius-pill);
   cursor: pointer;
   text-decoration: none;
   transition: transform 0.15s var(--ease-interact),
@@ -690,7 +692,7 @@ a {
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  border-radius: 980px;
+  border-radius: var(--iprm-radius-pill);
 }
 
 .badge--draft {
@@ -1201,7 +1203,7 @@ a {
   font-size: 0.8125rem;
   font-weight: 500;
   font-family: var(--iprm-font);
-  border-radius: 980px;
+  border-radius: var(--iprm-radius-pill);
   border: none;
   cursor: pointer;
   transition: all 0.2s;
@@ -1356,7 +1358,7 @@ a {
   .iprm-nav__mobile-link--cta {
     color: var(--iprm-white);
     background: var(--iprm-nav-active);
-    border-radius: 980px;
+    border-radius: var(--iprm-radius-pill);
     padding: 12px 24px;
     text-align: center;
     margin-top: 8px;
