@@ -431,7 +431,8 @@
 
 .page-index .apple-reveal {
   translate: 0 40px;
-  transition: opacity 0.8s var(--ease-reveal), translate 0.8s var(--ease-reveal);
+  transition: opacity 0.8s var(--ease-reveal), translate 0.8s var(--ease-reveal),
+    transform 0.3s var(--ease-interact), box-shadow 0.3s var(--ease-interact);
 }
 
 /* Button states, focus та selection визначено в apple-pages.css (.apple-page) */

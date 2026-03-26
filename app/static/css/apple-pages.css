@@ -669,7 +669,8 @@
 .apple-page .apple-reveal {
   opacity: 0;
   translate: 0 32px;
-  transition: opacity 0.7s var(--ease-reveal), translate 0.7s var(--ease-reveal);
+  transition: opacity 0.7s var(--ease-reveal), translate 0.7s var(--ease-reveal),
+    transform 0.3s var(--ease-interact), box-shadow 0.3s var(--ease-interact);
 }
 
 .apple-page .apple-reveal.visible {
