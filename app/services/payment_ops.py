@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 
 from app.extensions import db
 from app.models.registration import EventRegistration
+from app.models.payment_transaction import PaymentTransaction
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
@@ -44,6 +45,26 @@ def _fail(msg):
 def _noop(msg):
     db.session.rollback()
     return True, msg
+
+
+def _log_transaction(reg_id, order_id, mapped_status, source,
+                     liqpay_status=None, payment_id=None,
+                     amount=None, raw_payload=None):
+    """Зберегти запис в журнал платіжних транзакцій."""
+    try:
+        txn = PaymentTransaction(
+            registration_id=reg_id,
+            order_id=order_id,
+            liqpay_status=liqpay_status,
+            mapped_status=mapped_status,
+            source=source,
+            payment_id=payment_id,
+            amount=amount,
+            raw_payload=raw_payload,
+        )
+        db.session.add(txn)
+    except Exception:
+        logger.exception('Failed to log payment transaction for REG-%d', reg_id)
 
 
 class PaymentOps:
@@ -89,9 +110,12 @@ class PaymentOps:
         callback_amount = payload.get('amount')
         return self.update_payment_status(
             reg, new_status, payment_id, amount=callback_amount,
+            source='callback', liqpay_status=liqpay_status,
+            raw_payload=payload,
         )
 
-    def update_payment_status(self, reg, new_status, payment_id=None, amount=None):
+    def update_payment_status(self, reg, new_status, payment_id=None, amount=None,
+                              source='manual', liqpay_status=None, raw_payload=None):
         if new_status == 'paid' and reg.payment_amount:
             try:
                 if amount is not None and abs(float(amount) - float(reg.payment_amount)) > 0.01:
@@ -120,6 +144,17 @@ class PaymentOps:
             reg.status = 'confirmed'
         elif new_status == 'refunded':
             reg.status = 'cancelled'
+
+        _log_transaction(
+            reg_id=reg.id,
+            order_id=f'REG-{reg.id}',
+            mapped_status=new_status,
+            source=source,
+            liqpay_status=liqpay_status,
+            payment_id=payment_id,
+            amount=amount,
+            raw_payload=raw_payload,
+        )
 
         try:
             db.session.commit()
@@ -159,6 +194,8 @@ class PaymentOps:
 
         return self.update_payment_status(
             locked_reg, new_status, payment_id, amount=callback_amount,
+            source='status_check', liqpay_status=lp_status,
+            raw_payload=status_data,
         )
 
     def initiate_refund(self, reg, admin_user):
@@ -176,7 +213,11 @@ class PaymentOps:
 
         lp_status = result.get('status', '')
         if lp_status in ('reversed', 'sandbox'):
-            ok, msg = self.update_payment_status(locked_reg, 'refunded')
+            ok, msg = self.update_payment_status(
+                locked_reg, 'refunded',
+                source='refund', liqpay_status=lp_status,
+                raw_payload=result,
+            )
             if ok:
                 audit_logger.info(
                     'Admin %s refunded REG-%d (%s UAH)',

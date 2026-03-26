@@ -7,8 +7,10 @@ from app.models.registration import EventRegistration
 from app.models.clinic import Clinic
 from app.models.email_log import EmailLog
 from app.models.email_settings import EmailSettings
+from app.models.payment_transaction import PaymentTransaction
 
 __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'Event', 'Trainer',
     'ProgramBlock', 'EventRegistration', 'Clinic', 'EmailLog', 'EmailSettings',
+    'PaymentTransaction',
 ]

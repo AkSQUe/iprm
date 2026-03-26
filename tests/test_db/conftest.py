@@ -2,6 +2,8 @@ import pytest
 from app.models.user import User
 from app.models.event import Event
 from app.models.trainer import Trainer
+from app.models.registration import EventRegistration
+from app.models.payment_transaction import PaymentTransaction
 
 
 @pytest.fixture
@@ -31,7 +33,42 @@ def sample_event(db_session, sample_trainer):
         status='published',
         is_active=True,
         trainer_id=sample_trainer.id,
+        price=500,
     )
     db_session.add(event)
     db_session.flush()
     return event
+
+
+@pytest.fixture
+def sample_registration(db_session, sample_user, sample_event):
+    """Базова реєстрація для db-тестів."""
+    reg = EventRegistration(
+        user_id=sample_user.id,
+        event_id=sample_event.id,
+        phone='+380501234567',
+        specialty='Cardiology',
+        workplace='City Hospital',
+        status='confirmed',
+        payment_status='paid',
+        payment_amount=500,
+    )
+    db_session.add(reg)
+    db_session.flush()
+    return reg
+
+
+@pytest.fixture
+def sample_transaction(db_session, sample_registration):
+    """Базова платіжна транзакція для db-тестів."""
+    txn = PaymentTransaction(
+        registration_id=sample_registration.id,
+        order_id=f'REG-{sample_registration.id}',
+        liqpay_status='success',
+        mapped_status='paid',
+        amount=500,
+        source='callback',
+    )
+    db_session.add(txn)
+    db_session.flush()
+    return txn

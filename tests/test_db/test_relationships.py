@@ -1,8 +1,10 @@
+import pytest
 from app.models.user import User
 from app.models.event import Event
 from app.models.trainer import Trainer
 from app.models.program_block import ProgramBlock
 from app.models.registration import EventRegistration
+from app.models.payment_transaction import PaymentTransaction
 
 
 class TestEventRelationships:
@@ -88,6 +90,75 @@ class TestRegistrationRelationships:
 
         assert reg.user.email == sample_user.email
         assert sample_user.registrations.count() == 1
+
+
+class TestPaymentTransactionRelationships:
+    """Зв'язки моделі PaymentTransaction."""
+
+    def test_transaction_registration_back_populates(self, db_session, sample_registration):
+        """Двосторонній зв'язок PaymentTransaction <-> EventRegistration."""
+        txn = PaymentTransaction(
+            registration_id=sample_registration.id,
+            order_id=f'REG-{sample_registration.id}',
+            mapped_status='paid',
+            source='callback',
+        )
+        db_session.add(txn)
+        db_session.flush()
+
+        assert txn.registration.id == sample_registration.id
+        assert sample_registration.payment_transactions.count() == 1
+
+    def test_transaction_cascade_on_registration_delete(self, db_session, sample_user):
+        """CASCADE: FK ondelete='CASCADE' налаштовано на payment_transactions.registration_id."""
+        from app.extensions import db as _db
+
+        event = Event(title='E', slug='e-txn-cascade', price=100)
+        db_session.add(event)
+        db_session.flush()
+
+        reg = EventRegistration(
+            user_id=sample_user.id, event_id=event.id,
+            phone='+380', specialty='S', workplace='W',
+            payment_amount=100,
+        )
+        db_session.add(reg)
+        db_session.flush()
+
+        txn = PaymentTransaction(
+            registration_id=reg.id,
+            order_id=f'REG-{reg.id}',
+            mapped_status='paid',
+            source='callback',
+        )
+        db_session.add(txn)
+        db_session.flush()
+
+        fk = PaymentTransaction.__table__.c.registration_id.foreign_keys
+        fk_obj = next(iter(fk))
+        assert fk_obj.ondelete == 'CASCADE'
+        assert txn.registration_id == reg.id
+
+    def test_multiple_transactions_per_registration(self, db_session, sample_registration):
+        """Одна реєстрація може мати кілька транзакцій (аудит)."""
+        txn1 = PaymentTransaction(
+            registration_id=sample_registration.id,
+            order_id=f'REG-{sample_registration.id}',
+            mapped_status='pending',
+            source='callback',
+            liqpay_status='processing',
+        )
+        txn2 = PaymentTransaction(
+            registration_id=sample_registration.id,
+            order_id=f'REG-{sample_registration.id}',
+            mapped_status='paid',
+            source='callback',
+            liqpay_status='success',
+        )
+        db_session.add_all([txn1, txn2])
+        db_session.flush()
+
+        assert sample_registration.payment_transactions.count() == 2
 
 
 class TestProgramBlockRelationships:

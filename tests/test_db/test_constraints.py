@@ -4,6 +4,7 @@ from app.models.event import Event
 from app.models.trainer import Trainer
 from app.models.clinic import Clinic
 from app.models.registration import EventRegistration
+from app.models.payment_transaction import PaymentTransaction
 
 
 class TestUniqueConstraints:
@@ -190,6 +191,74 @@ class TestCheckConstraints:
         db_session.add(reg)
         with pytest.raises(Exception):
             db_session.flush()
+
+
+class TestPaymentTransactionConstraints:
+    """Перевірка CHECK constraints на PaymentTransaction."""
+
+    def test_source_valid_values(self, db_session, sample_registration):
+        """CHECK constraint: source тільки з дозволеного списку."""
+        txn = PaymentTransaction(
+            registration_id=sample_registration.id,
+            order_id=f'REG-{sample_registration.id}',
+            mapped_status='paid',
+            source='callback',
+        )
+        db_session.add(txn)
+        db_session.flush()
+        assert txn.id is not None
+
+    def test_source_invalid_rejected(self, db_session, sample_registration):
+        """CHECK constraint: невалідний source відхиляється."""
+        txn = PaymentTransaction(
+            registration_id=sample_registration.id,
+            order_id=f'REG-{sample_registration.id}',
+            mapped_status='paid',
+            source='invalid_source',
+        )
+        db_session.add(txn)
+        with pytest.raises(Exception):
+            db_session.flush()
+
+    def test_mapped_status_valid_values(self, db_session, sample_registration):
+        """CHECK constraint: mapped_status тільки з дозволеного списку."""
+        for status in ('unpaid', 'pending', 'paid', 'refunded'):
+            db_session.rollback()
+            txn = PaymentTransaction(
+                registration_id=sample_registration.id,
+                order_id=f'REG-{sample_registration.id}',
+                mapped_status=status,
+                source='manual',
+            )
+            db_session.add(txn)
+            db_session.flush()
+            assert txn.id is not None
+
+    def test_mapped_status_invalid_rejected(self, db_session, sample_registration):
+        """CHECK constraint: невалідний mapped_status відхиляється."""
+        txn = PaymentTransaction(
+            registration_id=sample_registration.id,
+            order_id=f'REG-{sample_registration.id}',
+            mapped_status='invalid',
+            source='callback',
+        )
+        db_session.add(txn)
+        with pytest.raises(Exception):
+            db_session.flush()
+
+    def test_payment_transaction_defaults(self, db_session, sample_registration):
+        """PaymentTransaction створюється з timestamps."""
+        txn = PaymentTransaction(
+            registration_id=sample_registration.id,
+            order_id=f'REG-{sample_registration.id}',
+            mapped_status='paid',
+            source='callback',
+        )
+        db_session.add(txn)
+        db_session.flush()
+
+        assert txn.created_at is not None
+        assert txn.updated_at is not None
 
 
 class TestTimestamps:
