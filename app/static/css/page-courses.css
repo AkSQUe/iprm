@@ -1,7 +1,323 @@
-/* page-courses.css -- Apple-style v2 overrides for course detail page */
+/* page-courses.css -- Apple-style overrides for course detail page */
 /* Base styles defined in apple-pages.css (.apple-page scope) */
+
+/* Scroll offset для anchor-навігації: header (56px) + anchor-nav (~46px) */
+.apple-page {
+  scroll-padding-top: 110px;
+}
 
 /* Target card full-width modifier */
 .iprm-target-card--full {
   grid-column: 1 / -1;
+}
+
+/* ========== ANCHOR NAV ========== */
+
+.iprm-anchor-nav {
+  position: sticky;
+  top: 56px;
+  z-index: 90;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid var(--iprm-border);
+}
+
+.iprm-anchor-nav__inner {
+  display: flex;
+  gap: 4px;
+  max-width: var(--iprm-max-content);
+  margin: 0 auto;
+  padding: 0 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.iprm-anchor-nav__inner::-webkit-scrollbar {
+  display: none;
+}
+
+.iprm-anchor-nav__link {
+  padding: 12px 16px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--apple-gray-dark);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color var(--iprm-transition), border-color var(--iprm-transition);
+}
+
+.iprm-anchor-nav__link:hover {
+  color: var(--iprm-accent);
+  border-bottom-color: var(--iprm-accent);
+}
+
+/* ========== FAQ ========== */
+
+.iprm-faq {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.iprm-faq__item {
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  overflow: hidden;
+}
+
+.iprm-faq__question {
+  padding: 16px 20px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--iprm-dark);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.iprm-faq__question::-webkit-details-marker {
+  display: none;
+}
+
+.iprm-faq__question::after {
+  content: '+';
+  font-size: 1.25rem;
+  font-weight: 300;
+  color: var(--iprm-text-light);
+  flex-shrink: 0;
+  transition: color var(--iprm-transition);
+}
+
+.iprm-faq__item[open] .iprm-faq__question::after {
+  content: '-';
+}
+
+.iprm-faq__answer {
+  padding: 0 20px 16px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--iprm-text-light);
+  white-space: pre-line;
+}
+
+/* ========== EVENT META (характеристика заходу) ========== */
+
+.iprm-event-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.iprm-event-meta__item {
+  background: var(--iprm-card-bg);
+  border-radius: var(--iprm-radius-md);
+  padding: 20px 24px;
+  text-align: center;
+  border: 1px solid var(--iprm-border);
+}
+
+.iprm-event-meta__label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--iprm-text-light);
+  margin-bottom: 6px;
+}
+
+.iprm-event-meta__value {
+  display: block;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--iprm-dark);
+}
+
+.iprm-event-meta__value--accent {
+  color: var(--iprm-accent);
+}
+
+.iprm-event-meta__value--warning {
+  color: var(--iprm-warning);
+}
+
+/* ========== STEPS (умови отримання сертифікату) ========== */
+
+.iprm-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.iprm-steps__item {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.iprm-steps__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--iprm-accent);
+  color: var(--iprm-white);
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.iprm-steps__heading {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--iprm-dark);
+  margin-bottom: 8px;
+}
+
+.iprm-steps__text {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--iprm-text-light);
+}
+
+/* ========== TRUST STATS ========== */
+
+.iprm-trust-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.iprm-trust-stats__item {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.iprm-trust-stats__value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--iprm-accent);
+  margin-bottom: 8px;
+}
+
+.iprm-trust-stats__label {
+  display: block;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--iprm-text-light);
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+  .iprm-anchor-nav__link {
+    padding: 10px 12px;
+    font-size: 0.75rem;
+  }
+
+  .iprm-faq__question {
+    font-size: 0.875rem;
+    padding: 14px 16px;
+  }
+
+  .iprm-faq__answer {
+    padding: 0 16px 14px;
+    font-size: 0.8125rem;
+  }
+
+  .iprm-event-meta {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .iprm-event-meta__item {
+    padding: 16px;
+  }
+
+  .iprm-event-meta__value {
+    font-size: 0.9375rem;
+  }
+
+  .iprm-steps {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .iprm-trust-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .iprm-trust-stats__value {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .iprm-event-meta {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .iprm-event-meta__item {
+    padding: 14px 12px;
+  }
+
+  .iprm-event-meta__label {
+    font-size: 0.6875rem;
+  }
+
+  .iprm-event-meta__value {
+    font-size: 0.875rem;
+  }
+
+  .iprm-steps {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .iprm-steps__number {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .iprm-steps__heading {
+    font-size: 0.875rem;
+  }
+
+  .iprm-trust-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .iprm-trust-stats__value {
+    font-size: 1.5rem;
+  }
+
+  .iprm-faq__question {
+    font-size: 0.8125rem;
+    padding: 12px 14px;
+  }
+
+  .iprm-faq__answer {
+    padding: 0 14px 12px;
+    font-size: 0.75rem;
+  }
 }

@@ -75,9 +75,79 @@
     </section>
   </div>
 
+  <!-- ===== ANCHOR NAV ===== -->
+  <nav class="iprm-anchor-nav" aria-label="Навігація по секціях">
+    <div class="iprm-anchor-nav__inner">
+      <a href="#event-meta" class="iprm-anchor-nav__link">Характеристика</a>
+      {% if event.target_audience %}
+      <a href="#target-audience" class="iprm-anchor-nav__link">Для кого</a>
+      {% endif %}
+      {% if event.trainer %}
+      <a href="#course-trainer" class="iprm-anchor-nav__link">Тренер</a>
+      {% endif %}
+      {% if event.program_blocks %}
+      <a href="#course-program" class="iprm-anchor-nav__link">Програма</a>
+      {% endif %}
+      {% if event.cpd_points %}
+      <a href="#certificate" class="iprm-anchor-nav__link">Сертифікат</a>
+      {% endif %}
+      {% if event.faq is not none and event.faq | length %}
+      <a href="#faq" class="iprm-anchor-nav__link">FAQ</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- ===== EVENT META ===== -->
+  <section class="iprm-section iprm-section--compact" id="event-meta" aria-label="Характеристика заходу">
+    <div class="iprm-section__inner">
+      <div class="iprm-event-meta">
+        {% if event.event_type %}
+        <div class="iprm-event-meta__item apple-reveal">
+          <span class="iprm-event-meta__label">Вид навчання</span>
+          <span class="iprm-event-meta__value">{{ event.event_type_label }}</span>
+        </div>
+        {% endif %}
+        {% if event.event_format %}
+        <div class="iprm-event-meta__item apple-reveal">
+          <span class="iprm-event-meta__label">Формат</span>
+          <span class="iprm-event-meta__value">{{ event.format_label }}</span>
+        </div>
+        {% endif %}
+        {% if event.start_date %}
+        <div class="iprm-event-meta__item apple-reveal">
+          <span class="iprm-event-meta__label">Дата проведення</span>
+          <span class="iprm-event-meta__value">{{ event.start_date.strftime('%d.%m.%Y') }}</span>
+        </div>
+        {% endif %}
+        {% if event.start_date and event.end_date %}
+        {% set duration_hours = ((event.end_date - event.start_date).total_seconds() / 3600) | round(1) %}
+        {% if duration_hours > 0 %}
+        <div class="iprm-event-meta__item apple-reveal">
+          <span class="iprm-event-meta__label">Тривалість</span>
+          <span class="iprm-event-meta__value">{{ duration_hours | int if duration_hours == duration_hours | int else duration_hours }} год.</span>
+        </div>
+        {% endif %}
+        {% endif %}
+        {% if event.cpd_points %}
+        <div class="iprm-event-meta__item apple-reveal">
+          <span class="iprm-event-meta__label">Бали БПР</span>
+          <span class="iprm-event-meta__value iprm-event-meta__value--accent">{{ event.cpd_points }}</span>
+        </div>
+        {% endif %}
+        {% if event.max_participants %}
+        <div class="iprm-event-meta__item apple-reveal">
+          <span class="iprm-event-meta__label">Вільних місць</span>
+          {% set spots_left = event.max_participants - event.registration_count %}
+          <span class="iprm-event-meta__value{% if spots_left <= 5 %} iprm-event-meta__value--warning{% endif %}">{{ spots_left }} / {{ event.max_participants }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
   <!-- ===== TARGET AUDIENCE ===== -->
   {% if event.target_audience %}
-  <section class="iprm-section apple-section-gray" aria-labelledby="target-audience-title">
+  <section class="iprm-section apple-section-gray" id="target-audience" aria-labelledby="target-audience-title">
     <div class="iprm-section__inner">
       <h2 id="target-audience-title" class="iprm-section__title">Для <span class="apple-gradient-text">кого</span></h2>
       <p class="iprm-section__subtitle">Спеціалісти, яким курс принесе найбільше користі</p>
@@ -94,7 +164,7 @@
 
   <!-- ===== TRAINER ===== -->
   {% if event.trainer %}
-  <section class="iprm-section" aria-labelledby="course-trainer-title">
+  <section class="iprm-section" id="course-trainer" aria-labelledby="course-trainer-title">
     <div class="iprm-section__inner">
       <h2 id="course-trainer-title" class="iprm-section__title">Тренер <span class="apple-gradient-text">курсу</span></h2>
       <div class="iprm-trainer apple-reveal">
@@ -122,7 +192,7 @@
 
   <!-- ===== PROGRAM ===== -->
   {% if event.program_blocks %}
-  <section class="iprm-section apple-section-gray" aria-labelledby="course-program-title">
+  <section class="iprm-section apple-section-gray" id="course-program" aria-labelledby="course-program-title">
     <div class="iprm-section__inner">
       <h2 id="course-program-title" class="iprm-section__title">Програма <span class="apple-gradient-text">курсу</span></h2>
       <div class="iprm-program">
@@ -147,6 +217,32 @@
   </section>
   {% endif %}
 
+  <!-- ===== SPEAKER INFO ===== -->
+  <!-- SECURITY: safe фільтр -- поля заповнюються лише адмінами (довірені користувачі).
+       TODO: додати серверну HTML-санітизацію (bleach) перед збереженням -->
+  {% if event.speaker_info %}
+  <section class="iprm-section" aria-labelledby="speaker-info-title">
+    <div class="iprm-section__inner">
+      <h2 id="speaker-info-title" class="iprm-section__title">Про <span class="apple-gradient-text">спікера</span></h2>
+      <div class="iprm-history__text apple-reveal">
+        {{ event.speaker_info | safe }}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== AGENDA ===== -->
+  {% if event.agenda %}
+  <section class="iprm-section apple-section-gray" aria-labelledby="agenda-title">
+    <div class="iprm-section__inner">
+      <h2 id="agenda-title" class="iprm-section__title">Розклад <span class="apple-gradient-text">заходу</span></h2>
+      <div class="iprm-history__text apple-reveal">
+        {{ event.agenda | safe }}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- ===== DESCRIPTION ===== -->
   {% if event.description %}
   <section class="iprm-section">
@@ -157,6 +253,36 @@
     </div>
   </section>
   {% endif %}
+
+  <!-- ===== KEY FEATURES ===== -->
+  {% include 'partials/_event_features.html' %}
+
+  <!-- ===== CERTIFICATE CONDITIONS ===== -->
+  {% if event.cpd_points %}
+  {% include 'partials/_event_certificate.html' %}
+  {% endif %}
+
+  <!-- ===== FAQ ===== -->
+  {% if event.faq is not none and event.faq | length %}
+  <section class="iprm-section apple-section-gray" id="faq" aria-labelledby="faq-title">
+    <div class="iprm-section__inner">
+      <h2 id="faq-title" class="iprm-section__title">Питання та <span class="apple-gradient-text">відповіді</span></h2>
+      <div class="iprm-faq">
+        {% for item in event.faq %}
+        {% if item.question and item.answer %}
+        <details class="iprm-faq__item apple-reveal">
+          <summary class="iprm-faq__question">{{ item.question }}</summary>
+          <div class="iprm-faq__answer">{{ item.answer }}</div>
+        </details>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== TRUST BLOCK ===== -->
+  {% include 'partials/_event_trust.html' %}
 
 </div>
 {% endblock %}
