@@ -210,7 +210,8 @@
 .page-index .apple-feature-card--icon-topleft .apple-feature-card__icon {
   position: absolute;
   top: -20px;
-  left: -16px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100px;
   height: 100px;
   object-fit: contain;
@@ -577,7 +578,6 @@
     width: 80px;
     height: 80px;
     top: -16px;
-    left: -12px;
   }
 
   .page-index .apple-feature-card--icon-right {
@@ -665,7 +665,6 @@
     width: 64px;
     height: 64px;
     top: -12px;
-    left: -8px;
   }
 
   .page-index .apple-feature-card--icon-topleft {
