@@ -970,13 +970,6 @@
       animation-range: entry 0% entry 40%;
     }
 
-    /* JS .visible не конфліктує -- animation керує opacity та translate */
-    .apple-page .apple-reveal.visible,
-    .page-index .apple-reveal.visible {
-      opacity: unset;
-      translate: unset;
-    }
-
     @keyframes enter-view {
       to { opacity: 1; translate: 0 0; }
     }

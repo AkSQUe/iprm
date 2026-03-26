@@ -2,6 +2,7 @@
 /* Fallback for browsers without CSS animation-timeline: view() support */
 (function () {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (CSS.supports('animation-timeline', 'view()')) return;
 
   var els = document.querySelectorAll('.apple-reveal');
   if (!els.length) return;
