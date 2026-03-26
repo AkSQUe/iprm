@@ -248,7 +248,7 @@
   font-size: clamp(2.5rem, 6vw, 4rem);
   font-weight: 800;
   letter-spacing: -0.04em;
-  background: linear-gradient(135deg, #a78bfa, #c084fc, #e8913a);
+  background: linear-gradient(135deg, var(--iprm-nav-active), var(--apple-purple-mid), var(--apple-orange));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

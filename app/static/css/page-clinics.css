@@ -25,7 +25,8 @@
 }
 
 .iprm-clinic-card:hover {
-  transform: scale(1.01);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(var(--apple-accent-rgb), 0.12);
 }
 
 .iprm-clinic-card__photo {

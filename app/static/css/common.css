@@ -83,6 +83,11 @@
   --iprm-badge-active-text: #059669;
   --iprm-badge-completed-bg: #e0e7ff;
   --iprm-badge-completed-text: #4338ca;
+
+  /* Apple easing curves (global) */
+  --ease-reveal: cubic-bezier(0.28, 0.11, 0.32, 1);
+  --ease-interact: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-spring: cubic-bezier(0.32, 0.08, 0.24, 1);
 }
 
 [data-theme="branded"] {
@@ -120,6 +125,31 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* Skip-link (доступна навігація клавіатурою) */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  z-index: 10000;
+  padding: 12px 24px;
+  background: var(--iprm-nav-active);
+  color: var(--iprm-white);
+  border-radius: 0 0 var(--iprm-radius-sm) var(--iprm-radius-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.2s;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Selection */
+::selection {
+  background: var(--iprm-accent-light);
+  color: var(--apple-black);
 }
 
 html {
@@ -613,8 +643,21 @@ a {
   border-radius: 980px;
   cursor: pointer;
   text-decoration: none;
-  transition: all 0.2s;
+  transition: transform 0.15s var(--ease-interact),
+    box-shadow 0.15s var(--ease-interact),
+    background-color 0.15s var(--ease-interact),
+    color 0.15s var(--ease-interact);
   font-family: var(--iprm-font);
+}
+
+.apple-btn:active {
+  transform: scale(0.98) translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.apple-btn:focus-visible {
+  outline: 2px solid var(--iprm-nav-active);
+  outline-offset: 3px;
 }
 
 .apple-btn--primary {
@@ -623,8 +666,9 @@ a {
 }
 
 .apple-btn--primary:hover {
-  background: var(--iprm-accent-hover);
-  transform: scale(1.02);
+  background: color-mix(in oklch, var(--iprm-nav-active), black 15%);
+  transform: scale(1.02) translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
 .apple-btn--secondary {
@@ -707,6 +751,8 @@ a {
 
 .iprm-section {
   padding: 32px 32px;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
 }
 
 
@@ -1502,4 +1548,26 @@ a {
     -webkit-backdrop-filter: none;
     border: 2px solid var(--iprm-white);
   }
+}
+
+/* ========== VIEW TRANSITIONS ========== */
+
+@view-transition {
+  navigation: auto;
+}
+
+@keyframes vt-fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes vt-fade-in {
+  from { opacity: 0; }
+}
+
+::view-transition-old(root) {
+  animation: vt-fade-out 0.25s ease-out;
+}
+
+::view-transition-new(root) {
+  animation: vt-fade-in 0.25s ease-in;
 }

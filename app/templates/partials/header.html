@@ -6,7 +6,7 @@
       <span>Інститут Плазмотерапії та Регенеративної Медицини</span>
     </a>
 
-    <nav class="iprm-header__nav" id="main-nav">
+    <nav class="iprm-header__nav" id="main-nav" aria-label="Головна навігація">
       <ul class="iprm-nav">
         <li><a href="{{ url_for('main.index') }}"{% if active_nav == 'labs' %} class="iprm-nav--active"{% endif %}>Лабораторії</a></li>
         <li><a href="{{ url_for('clinics.clinic_list') }}"{% if active_nav == 'clinics' %} class="iprm-nav--active"{% endif %}>Клініки</a></li>

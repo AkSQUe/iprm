@@ -1,12 +1,5 @@
 /* apple-pages.css -- Apple-style shared styles for all public pages (concept v2) */
-
-/* ========== APPLE EASING CURVES (global) ========== */
-
-:root {
-  --ease-reveal: cubic-bezier(0.28, 0.11, 0.32, 1);
-  --ease-interact: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  --ease-spring: cubic-bezier(0.32, 0.08, 0.24, 1);
-}
+/* Easing curves defined in common.css :root */
 
 /* ========== INTERNAL HERO (92vh, white, centered) ========== */
 
@@ -126,7 +119,7 @@
   font-size: 17px;
   color: var(--apple-gray);
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 64px;
 }
 
 /* ========== APPLE BUTTONS (global, 3-state) ========== */
@@ -201,7 +194,8 @@
 }
 
 .apple-page .iprm-course-card:hover {
-  transform: scale(1.01);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(var(--apple-accent-rgb), 0.12);
 }
 
 .apple-page .iprm-course-card__image {
@@ -278,7 +272,8 @@
 }
 
 .apple-page .apple-feature-card:hover {
-  transform: scale(1.01);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
 }
 
 .apple-page .apple-feature-card:active {
@@ -400,7 +395,8 @@
 }
 
 .apple-page .iprm-trainer-card:hover {
-  transform: scale(1.01);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(var(--apple-accent-rgb), 0.12);
 }
 
 .apple-page .iprm-trainer-card__photo {
@@ -565,7 +561,8 @@
 }
 
 .apple-page .apple-clinic-card:hover {
-  transform: scale(1.01);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(var(--apple-accent-rgb), 0.12);
 }
 
 .apple-page .apple-clinic-card__image {
@@ -947,5 +944,32 @@
   .apple-page .apple-btn {
     padding: 12px 24px;
     font-size: 1rem;
+  }
+}
+
+/* ========== WILL-CHANGE (only on hover, never permanent) ========== */
+
+.apple-page .iprm-course-card:hover,
+.apple-page .iprm-trainer-card:hover,
+.apple-page .apple-clinic-card:hover,
+.apple-page .apple-feature-card:hover {
+  will-change: transform;
+}
+
+/* ========== CSS SCROLL-DRIVEN ANIMATIONS (progressive enhancement) ========== */
+
+@supports (animation-timeline: view()) {
+  @media not (prefers-reduced-motion: reduce) {
+    .apple-reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      animation: enter-view linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+
+    @keyframes enter-view {
+      to { opacity: 1; transform: translateY(0); }
+    }
   }
 }
