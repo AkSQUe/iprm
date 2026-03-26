@@ -61,6 +61,7 @@
 
     /* Побудувати DOM: кожен символ -- окремий слот */
     el.textContent = '';
+    el.classList.add('scramble-text--active');
     var slots = [];
     chars.forEach(function (ch, i) {
       var wrap = document.createElement('span');

@@ -165,7 +165,7 @@
   display: block;
 }
 
-/* Градієнт через весь scramble-текст */
+/* Градієнт -- до scramble (початковий стан) */
 .scramble-text.apple-gradient-text {
   background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 40%, var(--apple-orange) 100%);
   -webkit-background-clip: text;
@@ -173,8 +173,9 @@
   -webkit-text-fill-color: transparent;
 }
 
-.scramble-text.apple-gradient-text .scramble-text__char,
-.scramble-text.apple-gradient-text .scramble-text__inner {
+/* Градієнт -- після scramble (JS додає клас) */
+.scramble-text--active.apple-gradient-text .scramble-text__char,
+.scramble-text--active.apple-gradient-text .scramble-text__inner {
   -webkit-text-fill-color: transparent;
 }
 
@@ -578,8 +579,8 @@
   }
 
   .page-index .apple-feature-card--image-left .apple-feature-card__text {
-    padding-right: 0;
-    padding-left: 120px;
+    padding-left: 0;
+    padding-right: 120px;
   }
 
   .page-index .apple-feature-card__image {
@@ -589,8 +590,8 @@
   }
 
   .page-index .apple-feature-card--image-left .apple-feature-card__image {
-    right: auto;
-    left: -16px;
+    left: auto;
+    right: -16px;
   }
 
   .page-index .apple-feature-card--icon-right {
@@ -676,8 +677,8 @@
   }
 
   .page-index .apple-feature-card--image-left .apple-feature-card__text {
-    padding-right: 0;
-    padding-left: 90px;
+    padding-left: 0;
+    padding-right: 90px;
   }
 
   .page-index .apple-feature-card__image {
@@ -687,8 +688,8 @@
   }
 
   .page-index .apple-feature-card--image-left .apple-feature-card__image {
-    right: auto;
-    left: -12px;
+    left: auto;
+    right: -12px;
   }
 
   .page-index .apple-feature-card--icon-right {
