@@ -406,6 +406,13 @@
 
 .apple-page .iprm-trainer-card__body {
   padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.apple-page .iprm-trainer-card__body .iprm-tag {
+  margin-top: auto;
 }
 
 .apple-page .iprm-trainer-card__name {
