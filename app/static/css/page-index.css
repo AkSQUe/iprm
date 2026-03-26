@@ -112,7 +112,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(var(--apple-accent-rgb), 0.12) 0%, transparent 70%);
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(var(--apple-accent-rgb), 0.18) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -144,6 +144,25 @@
 
 .page-index .apple-section-dark .apple-section-header p {
   color: var(--apple-gray-light);
+}
+
+/* ========== SCRAMBLE TEXT (ефект циферблату) ========== */
+
+.scramble-text {
+  display: inline-flex;
+}
+
+.scramble-text__char {
+  display: inline-block;
+  overflow: hidden;
+  height: 1.1em;
+  line-height: 1.1em;
+  vertical-align: bottom;
+}
+
+.scramble-text__inner {
+  display: inline-block;
+  transition: transform 0.25s cubic-bezier(0.28, 0.11, 0.32, 1);
 }
 
 /* ========== FEATURES GRID -- 2-col with featured ========== */
@@ -200,25 +219,6 @@
   left: -24px;
 }
 
-/* Іконка зліва зверху -- виходить за межі картки */
-.page-index .apple-feature-card--icon-topleft {
-  position: relative;
-  overflow: visible;
-  padding-top: 64px;
-}
-
-.page-index .apple-feature-card--icon-topleft .apple-feature-card__icon {
-  position: absolute;
-  top: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100px;
-  height: 100px;
-  object-fit: contain;
-  pointer-events: none;
-  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.12));
-}
-
 /* Іконка справа від тексту */
 .page-index .apple-feature-card--icon-right {
   position: relative;
@@ -267,7 +267,7 @@
   font-size: clamp(2.5rem, 6vw, 4rem);
   font-weight: 800;
   letter-spacing: -0.04em;
-  background: linear-gradient(135deg, var(--apple-purple-light), var(--apple-orange));
+  background: linear-gradient(135deg, #d8b4fe, #f59e0b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -276,7 +276,7 @@
 .page-index .apple-stat p {
   font-size: 0.9375rem;
   font-weight: 300;
-  color: var(--apple-gray-light);
+  color: #e5e7eb;
   margin-top: 8px;
   letter-spacing: 0.01em;
 }
@@ -574,12 +574,6 @@
     left: -12px;
   }
 
-  .page-index .apple-feature-card--icon-topleft .apple-feature-card__icon {
-    width: 80px;
-    height: 80px;
-    top: -16px;
-  }
-
   .page-index .apple-feature-card--icon-right {
     padding-right: 100px;
   }
@@ -659,16 +653,6 @@
   .page-index .apple-feature-card--image-left .apple-feature-card__image {
     right: auto;
     left: -8px;
-  }
-
-  .page-index .apple-feature-card--icon-topleft .apple-feature-card__icon {
-    width: 64px;
-    height: 64px;
-    top: -12px;
-  }
-
-  .page-index .apple-feature-card--icon-topleft {
-    padding-top: 48px;
   }
 
   .page-index .apple-feature-card--icon-right {
