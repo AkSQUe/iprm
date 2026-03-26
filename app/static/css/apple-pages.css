@@ -284,6 +284,15 @@
   color: var(--iprm-nav-active);
 }
 
+/* Зображення-іконка замість SVG */
+.apple-page .apple-feature-card__icon {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+}
+
 .apple-page .apple-feature-card h3 {
   font-size: 1.25rem;
   font-weight: 700;
