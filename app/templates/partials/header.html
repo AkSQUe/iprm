@@ -1,7 +1,8 @@
 <header class="iprm-header">
   <div class="iprm-header__inner">
     <a href="{{ url_for('main.index') }}" class="iprm-header__logo">
-      <img src="{{ url_for('static', filename='svg/IPRM-logo-simple.svg') }}" alt="IPRM" class="iprm-header__logo-icon" width="40" height="40">
+      <img src="{{ url_for('static', filename='svg/IPRM-logo-simple.svg') }}" alt="IPRM" class="iprm-header__logo-icon iprm-header__logo-icon--desktop" width="40" height="40">
+      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="IPRM" class="iprm-header__logo-icon iprm-header__logo-icon--mobile" height="32">
       <span>Інститут Плазмотерапії та Регенеративної Медицини</span>
     </a>
 
@@ -13,6 +14,20 @@
         <li><a href="{{ url_for('trainers.trainer_list') }}"{% if active_nav == 'trainers' %} class="iprm-nav--active"{% endif %}>Тренери</a></li>
         <li><a href="{{ url_for('main.contact') }}"{% if active_nav == 'contact' %} class="iprm-nav--active"{% endif %}>Контакти</a></li>
       </ul>
+      <div class="iprm-nav__mobile-account">
+        {% if current_user.is_authenticated %}
+          {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.dashboard') }}" class="iprm-nav__mobile-link iprm-nav__mobile-link--admin">Панель адміністратора</a>
+          {% endif %}
+          <a href="{{ url_for('auth.account') }}" class="iprm-nav__mobile-link">Особистий кабінет</a>
+          <form method="POST" action="{{ url_for('auth.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="iprm-nav__mobile-link iprm-nav__mobile-link--logout">Вийти</button>
+          </form>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}" class="iprm-nav__mobile-link iprm-nav__mobile-link--cta">Увійти</a>
+        {% endif %}
+      </div>
     </nav>
 
     <div class="iprm-header__actions">
