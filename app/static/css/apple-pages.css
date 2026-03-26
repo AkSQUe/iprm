@@ -193,6 +193,8 @@
   border-radius: var(--iprm-radius);
   padding: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   transition:
     transform 0.3s var(--ease-interact),
     box-shadow 0.3s var(--ease-interact);
@@ -221,10 +223,28 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.4s var(--ease-interact);
+}
+
+.apple-page .iprm-course-card:hover .iprm-course-card__image img {
+  transform: scale(1.05);
+}
+
+.apple-page .iprm-course-card > a {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .apple-page .apple-card-body {
   padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.apple-page .apple-card-body .iprm-course-card__tags {
+  margin-top: auto;
 }
 
 .apple-page .iprm-course-card__title {
@@ -292,6 +312,11 @@
   object-fit: contain;
   margin-bottom: 16px;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+  transition: transform 0.3s var(--ease-interact);
+}
+
+.apple-page .apple-feature-card:hover .apple-feature-card__icon {
+  transform: scale(1.1) translateY(-4px);
 }
 
 .apple-page .apple-feature-card h3 {
@@ -402,6 +427,11 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.4s var(--ease-interact);
+}
+
+.apple-page .iprm-trainer-card:hover .iprm-trainer-card__photo img {
+  transform: scale(1.05);
 }
 
 .apple-page .iprm-trainer-card__body {
@@ -569,6 +599,11 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.4s var(--ease-interact);
+}
+
+.apple-page .apple-clinic-card:hover .apple-clinic-card__image img {
+  transform: scale(1.05);
 }
 
 .apple-page .apple-clinic-card__image svg {
@@ -607,7 +642,7 @@
 /* ========== ABOUT TEXT ========== */
 
 .apple-page .apple-about {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
