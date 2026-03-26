@@ -960,12 +960,21 @@
 
 @supports (animation-timeline: view()) {
   @media not (prefers-reduced-motion: reduce) {
-    .apple-reveal {
+    .apple-page .apple-reveal,
+    .page-index .apple-reveal {
       opacity: 0;
       translate: 0 24px;
+      transition: none;
       animation: enter-view linear both;
       animation-timeline: view();
       animation-range: entry 0% entry 40%;
+    }
+
+    /* JS .visible не конфліктує -- animation керує opacity та translate */
+    .apple-page .apple-reveal.visible,
+    .page-index .apple-reveal.visible {
+      opacity: unset;
+      translate: unset;
     }
 
     @keyframes enter-view {
