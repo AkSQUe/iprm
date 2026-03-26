@@ -59,6 +59,8 @@
 </head>
 <body>
 
+  <a href="#main-content" class="skip-link">Перейти до вмісту</a>
+
   {% block molecular_bg %}
   <div id="molecular-background" aria-hidden="true"></div>
   {% endblock %}
@@ -67,7 +69,7 @@
   {% include 'partials/header.html' %}
   {% endblock %}
 
-  <main>
+  <main id="main-content">
   {% block content %}{% endblock %}
   </main>
 
