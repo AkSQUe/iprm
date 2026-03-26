@@ -566,11 +566,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s var(--ease-interact);
-}
-
-.apple-page .apple-clinic-card:hover .apple-clinic-card__image img {
-  transform: scale(1.05);
 }
 
 .apple-page .apple-clinic-card__image svg {
