@@ -71,6 +71,7 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  padding-block: 0.05em;
 }
 
 .apple-page .iprm-hero__subtitle {
