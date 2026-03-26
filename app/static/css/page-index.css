@@ -188,9 +188,13 @@
   filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.3));
 }
 
-.page-index .apple-feature-card--featured .apple-feature-icon {
-  background: var(--white-alpha-12);
-  color: var(--apple-purple-light);
+/* Зображення-іконка замість SVG у звичайних картках */
+.page-index .apple-feature-card__icon {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
 }
 
 .page-index .apple-feature-card--featured h3 {
