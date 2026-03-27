@@ -566,7 +566,7 @@
     left: auto;
     top: auto;
     width: 140px;
-    margin: 16px auto -48px;
+    margin: 0 auto -48px;
   }
 
   .page-index .apple-feature-card--image-left .apple-feature-card__image {
@@ -592,7 +592,7 @@
     transform: none;
     width: 100px;
     height: 100px;
-    margin: -40px auto 16px;
+    margin: -56px auto 0;
   }
 
   .page-index .apple-feature-card {
