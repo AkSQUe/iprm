@@ -544,9 +544,9 @@
     overflow: visible;
   }
 
-  /* Featured-картки: текст зверху, зображення знизу по центру */
+  /* Featured-картки: зображення зверху, текст знизу */
   .page-index .apple-feature-card--has-image {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
 
   .page-index .apple-feature-card__text {
@@ -566,7 +566,7 @@
     left: auto;
     top: auto;
     width: 140px;
-    margin: 0 auto -48px;
+    margin: -56px auto 0;
   }
 
   .page-index .apple-feature-card--image-left .apple-feature-card__image {
