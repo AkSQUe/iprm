@@ -37,7 +37,7 @@
     {{ alert_warning("До оплати", (event.price | int) ~ " UAH") }}
     {% endif %}
 
-    {{ button_primary("Перейти на сайт", "https://iprm.space") }}
+    {{ button_primary("Перейти на сайт", site_settings.website_url) }}
 
     {{ spacer(16) }}
 

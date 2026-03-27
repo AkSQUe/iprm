@@ -17,17 +17,17 @@
   "url": "{{ url_for('main.contact', _external=True) }}",
   "mainEntity": {
     "@type": "EducationalOrganization",
-    "name": "ІПРМ",
-    "alternateName": "Інститут Плазмотерапії та Регенеративної Медицини",
-    "telephone": "+380670050707",
+    "name": "{{ site_settings.company_name }}",
+    "alternateName": "{{ site_settings.company_full_name }}",
+    "telephone": "{{ site_settings.phone_primary }}",
     "address": {
       "@type": "PostalAddress",
       "addressCountry": "UA",
-      "addressLocality": "Київ"
+      "addressLocality": "{{ site_settings.city }}"
     },
     "contactPoint": {
       "@type": "ContactPoint",
-      "telephone": "+380670050707",
+      "telephone": "{{ site_settings.phone_primary }}",
       "contactType": "customer service",
       "availableLanguage": "Ukrainian"
     }
@@ -58,7 +58,7 @@
           <div>
             <div class="contact-page__info-label">Телефон</div>
             <div class="contact-page__info-value">
-              <a href="tel:+380670050707">+38067 005 07 07</a>
+              <a href="tel:{{ site_settings.phone_primary }}">{{ site_settings.phone_primary }}</a>
               <small class="contact-page__info-messengers">WhatsApp, Viber, Telegram</small>
             </div>
           </div>
@@ -70,7 +70,7 @@
           </div>
           <div>
             <div class="contact-page__info-label">Адреса</div>
-            <div class="contact-page__info-value">Київ, Україна</div>
+            <div class="contact-page__info-value">{{ site_settings.city }}</div>
           </div>
         </div>
 
@@ -78,12 +78,16 @@
           <div>
             <div class="contact-page__info-label">Соціальні мережі</div>
             <div class="contact-page__socials">
-              <a href="https://www.facebook.com/profile.php?id=61583812599479" class="contact-page__social-link" aria-label="ІПРМ у Facebook" target="_blank" rel="noopener noreferrer">
+              {% if site_settings.facebook_url %}
+              <a href="{{ site_settings.facebook_url }}" class="contact-page__social-link" aria-label="{{ site_settings.company_name }} у Facebook" target="_blank" rel="noopener noreferrer">
                 <img src="{{ url_for('static', filename='svg/social/facebook.svg') }}" alt="Facebook" width="20" height="20">
               </a>
-              <a href="https://www.instagram.com/Plasmotherapy/" class="contact-page__social-link" aria-label="ІПРМ в Instagram" target="_blank" rel="noopener noreferrer">
+              {% endif %}
+              {% if site_settings.instagram_url %}
+              <a href="{{ site_settings.instagram_url }}" class="contact-page__social-link" aria-label="{{ site_settings.company_name }} в Instagram" target="_blank" rel="noopener noreferrer">
                 <img src="{{ url_for('static', filename='svg/social/instagram.svg') }}" alt="Instagram" width="20" height="20">
               </a>
+              {% endif %}
             </div>
           </div>
         </div>

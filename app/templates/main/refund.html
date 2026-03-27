@@ -11,11 +11,11 @@
 <div class="apple-page legal-page iprm-content-page">
   <div class="iprm-content-page__inner">
     <h1 class="iprm-content-page__title">Політика повернення коштів за <span class="apple-gradient-text">послуги</span></h1>
-    <p class="iprm-content-page__subtitle">ПО "ІПРМ" | Чинна редакція від 12 березня 2026 року</p>
+    <p class="iprm-content-page__subtitle">{{ site_settings.company_legal_name }} | Чинна редакція від 12 березня 2026 року</p>
 
     <section class="legal-section">
       <h2>1. Загальні положення</h2>
-      <p><strong>1.1</strong> Ця Політика повернення коштів за послуги (далі &mdash; Політика) визначає умови та порядок повернення коштів, сплачених за послуги, що надаються ПО "ІПРМ" (далі &mdash; Організатор).</p>
+      <p><strong>1.1</strong> Ця Політика повернення коштів за послуги (далі &mdash; Політика) визначає умови та порядок повернення коштів, сплачених за послуги, що надаються {{ site_settings.company_legal_name }} (далі &mdash; Організатор).</p>
       <p><strong>1.2</strong> Політика поширюється на такі види послуг:</p>
       <ul>
         <li>семінари;</li>
@@ -88,7 +88,7 @@
     <section class="legal-section">
       <h2>5. Цифрові продукти</h2>
       <p><strong>5.1</strong> Повернення коштів за цифрові продукти (відеозаписи, навчальні матеріали, методичні посібники в електронному форматі) не здійснюється після надання доступу до відповідного контенту.</p>
-      <p><strong>5.2</strong> Послуга з надання цифрового продукту вважається наданою з моменту відкриття доступу до матеріалів в особистому кабінеті учасника на веб-сайті <a href="https://iprm.space">iprm.space</a>.</p>
+      <p><strong>5.2</strong> Послуга з надання цифрового продукту вважається наданою з моменту відкриття доступу до матеріалів в особистому кабінеті учасника на веб-сайті <a href="{{ site_settings.website_url }}">{{ site_settings.website_url | replace('https://', '') }}</a>.</p>
       <p><strong>5.3</strong> Зазначене обмеження встановлено відповідно до Закону України "Про електронну комерцію" No 3321-IX, який передбачає, що споживач не може відмовитися від договору про надання послуг після їх повного виконання, якщо виконання було розпочато за попередньою прямою згодою споживача.</p>
       <p><strong>5.4</strong> До моменту надання доступу до цифрового продукту учасник має право відмовитися від послуги та отримати повне повернення коштів.</p>
     </section>
@@ -97,8 +97,8 @@
       <h2>6. Порядок подання заявки на повернення</h2>
       <p><strong>6.1</strong> Для подання заявки на повернення коштів учасник повинен звернутися:</p>
       <table class="legal-details">
-        <tr><td>Електронна пошта:</td><td>office@iprm.com</td></tr>
-        <tr><td>Телефон:</td><td>+380 96 090 0007</td></tr>
+        <tr><td>Електронна пошта:</td><td>{{ site_settings.email }}</td></tr>
+        <tr><td>Телефон:</td><td>{{ site_settings.phone_secondary }}</td></tr>
       </table>
       <p><strong>6.2</strong> Заявка на повернення коштів повинна містити:</p>
       <ul>
@@ -120,18 +120,18 @@
     </section>
 
     <section class="legal-section">
-      <h2>8. Контакти ПО "ІПРМ"</h2>
+      <h2>8. Контакти {{ site_settings.company_legal_name }}</h2>
       <table class="legal-details">
-        <tr><td>Повне найменування:</td><td>ПО "ІПРМ"</td></tr>
-        <tr><td>Код ЄДРПОУ:</td><td>45871060</td></tr>
-        <tr><td>Юридична адреса:</td><td>02002, м. Київ, вул. Микільсько-слобідська, 2б, кв. 246</td></tr>
-        <tr><td>Електронна пошта:</td><td>office@iprm.com</td></tr>
-        <tr><td>Телефон:</td><td>+380 96 090 0007</td></tr>
-        <tr><td>Веб-сайт:</td><td><a href="https://iprm.space">https://iprm.space</a></td></tr>
+        <tr><td>Повне найменування:</td><td>{{ site_settings.company_legal_name }}</td></tr>
+        <tr><td>Код ЄДРПОУ:</td><td>{{ site_settings.edrpou }}</td></tr>
+        <tr><td>Юридична адреса:</td><td>{{ site_settings.address }}</td></tr>
+        <tr><td>Електронна пошта:</td><td>{{ site_settings.email }}</td></tr>
+        <tr><td>Телефон:</td><td>{{ site_settings.phone_secondary }}</td></tr>
+        <tr><td>Веб-сайт:</td><td><a href="{{ site_settings.website_url }}">{{ site_settings.website_url }}</a></td></tr>
       </table>
     </section>
 
-    <p class="legal-page__closing">Ця Політика набуває чинності з 12 березня 2026 року та діє до моменту її заміни оновленою версією, про що учасники будуть повідомлені через веб-сайт iprm.space.</p>
+    <p class="legal-page__closing">Ця Політика набуває чинності з 12 березня 2026 року та діє до моменту її заміни оновленою версією, про що учасники будуть повідомлені через веб-сайт {{ site_settings.website_url | replace('https://', '') }}.</p>
   </div>
 </div>
 {% endblock %}

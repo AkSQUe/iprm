@@ -11,10 +11,10 @@
 <div class="apple-page legal-page iprm-content-page">
   <div class="iprm-content-page__inner">
     <h1 class="iprm-content-page__title">Політика <span class="apple-gradient-text">Cookie</span></h1>
-    <p class="iprm-content-page__subtitle">Використання файлів Cookie на веб-сайті iprm.space | ПО "ІПРМ" | Чинна редакція від 12 березня 2026 року</p>
+    <p class="iprm-content-page__subtitle">Використання файлів Cookie на веб-сайті {{ site_settings.website_url | replace('https://', '') }} | {{ site_settings.company_legal_name }} | Чинна редакція від 12 березня 2026 року</p>
 
     <div class="legal-page__preamble">
-      <p>Ця Політика Cookie описує порядок використання файлів Cookie та подібних технологій на веб-сайті <a href="https://iprm.space">https://iprm.space</a>. Політика є невід'ємною частиною <a href="{{ url_for('main.privacy') }}">Політики конфіденційності</a> Сайту та розроблена відповідно до вимог Закону України "Про захист персональних даних".</p>
+      <p>Ця Політика Cookie описує порядок використання файлів Cookie та подібних технологій на веб-сайті <a href="{{ site_settings.website_url }}">{{ site_settings.website_url }}</a>. Політика є невід'ємною частиною <a href="{{ url_for('main.privacy') }}">Політики конфіденційності</a> Сайту та розроблена відповідно до вимог Закону України "Про захист персональних даних".</p>
     </div>
 
     <section class="legal-section">
@@ -78,7 +78,7 @@
       <h3>GeoIP</h3>
       <p>Технологія визначення приблизного географічного розташування Користувача на основі IP-адреси. Не встановлює окремих файлів Cookie.</p>
 
-      <p><strong>3.2</strong> Сайт також використовує власну систему аналітики. Дані зберігаються виключно на серверах ПО "ІПРМ" та не передаються третім особам.</p>
+      <p><strong>3.2</strong> Сайт також використовує власну систему аналітики. Дані зберігаються виключно на серверах {{ site_settings.company_legal_name }} та не передаються третім особам.</p>
     </section>
 
     <section class="legal-section">
@@ -119,7 +119,7 @@
 
     <section class="legal-section">
       <h2>6. Зміни до Політики Cookie</h2>
-      <p><strong>6.1</strong> ПО "ІПРМ" залишає за собою право вносити зміни до цієї Політики. Оновлена Політика публікується на Сайті із зазначенням дати останньої редакції.</p>
+      <p><strong>6.1</strong> {{ site_settings.company_legal_name }} залишає за собою право вносити зміни до цієї Політики. Оновлена Політика публікується на Сайті із зазначенням дати останньої редакції.</p>
       <p><strong>6.2</strong> У разі істотних змін cookie-банер може бути повторно відображений для отримання оновленої згоди Користувача.</p>
       <p><strong>6.3</strong> Продовження використання Сайту після публікації оновленої Політики означає згоду Користувача з її новою редакцією.</p>
     </section>
@@ -127,15 +127,15 @@
     <section class="legal-section">
       <h2>7. Контактна інформація</h2>
       <table class="legal-details">
-        <tr><td>Повне найменування:</td><td>ПО "ІПРМ"</td></tr>
-        <tr><td>Код ЄДРПОУ:</td><td>45871060</td></tr>
-        <tr><td>Адреса електронної пошти:</td><td>office@iprm.com</td></tr>
-        <tr><td>Контактні телефони:</td><td>+380 96 090 0007</td></tr>
+        <tr><td>Повне найменування:</td><td>{{ site_settings.company_legal_name }}</td></tr>
+        <tr><td>Код ЄДРПОУ:</td><td>{{ site_settings.edrpou }}</td></tr>
+        <tr><td>Адреса електронної пошти:</td><td>{{ site_settings.email }}</td></tr>
+        <tr><td>Контактні телефони:</td><td>{{ site_settings.phone_secondary }}</td></tr>
       </table>
       <p>Додаткову інформацію про обробку та захист персональних даних можна знайти у <a href="{{ url_for('main.privacy') }}">Політиці конфіденційності</a>.</p>
     </section>
 
-    <p class="legal-page__closing">Використовуючи веб-сайт iprm.space, Ви підтверджуєте, що ознайомилися з цією Політикою Cookie та погоджуєтеся з використанням файлів Cookie відповідно до умов, викладених у цьому документі.</p>
+    <p class="legal-page__closing">Використовуючи веб-сайт {{ site_settings.website_url | replace('https://', '') }}, Ви підтверджуєте, що ознайомилися з цією Політикою Cookie та погоджуєтеся з використанням файлів Cookie відповідно до умов, викладених у цьому документі.</p>
   </div>
 </div>
 {% endblock %}

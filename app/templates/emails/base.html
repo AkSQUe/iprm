@@ -67,8 +67,8 @@
                     <tr>
                         <td style="padding: 32px 40px 24px 40px; text-align: center; border-bottom: 1px solid #E5E7EB;">
                             {% block header %}
-                            <a href="https://iprm.space" style="text-decoration: none;">
-                                <img src="https://iprm.space/static/img/email-logo.png"
+                            <a href="{{ site_settings.website_url }}" style="text-decoration: none;">
+                                <img src="{{ site_settings.website_url }}/static/img/email-logo.png"
                                      alt="ІПРМ" width="120" height="30"
                                      style="width: 120px; max-width: 120px; height: auto; display: block; margin: 0 auto; border: 0;">
                             </a>
@@ -91,7 +91,7 @@
                                 <tr>
                                     <td style="text-align: center; padding-bottom: 16px;">
                                         <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #6B7280;">
-                                            ІПРМ &mdash; Інститут Плазмотерапії та Регенеративної Медицини
+                                            {{ site_settings.company_name }} &mdash; {{ site_settings.company_full_name }}
                                         </p>
                                     </td>
                                 </tr>
@@ -100,11 +100,11 @@
                                         <table role="presentation" style="margin: auto;" cellpadding="0" cellspacing="0" border="0">
                                             <tr>
                                                 <td style="padding: 0 8px;">
-                                                    <a href="https://iprm.space" style="text-decoration: none; color: #7055a4; font-size: 14px; font-weight: 500;">Сайт</a>
+                                                    <a href="{{ site_settings.website_url }}" style="text-decoration: none; color: #7055a4; font-size: 14px; font-weight: 500;">Сайт</a>
                                                 </td>
                                                 <td style="padding: 0 8px; color: #D1D5DB;">|</td>
                                                 <td style="padding: 0 8px;">
-                                                    <a href="https://iprm.space/contact" style="text-decoration: none; color: #6B7280; font-size: 14px;">Контакти</a>
+                                                    <a href="{{ site_settings.website_url }}/contact" style="text-decoration: none; color: #6B7280; font-size: 14px;">Контакти</a>
                                                 </td>
                                             </tr>
                                         </table>

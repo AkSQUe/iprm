@@ -29,15 +29,15 @@
   {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
-    "name": "ІПРМ",
-    "alternateName": "Інститут Плазмотерапії та Регенеративної Медицини",
+    "name": "{{ site_settings.company_name }}",
+    "alternateName": "{{ site_settings.company_full_name }}",
     "url": "{{ url_for('main.index', _external=True) }}",
     "logo": "{{ url_for('static', filename='svg/IPRM-logo-complex.svg', _external=True) }}",
-    "telephone": "+380670050707",
+    "telephone": "{{ site_settings.phone_primary }}",
     "address": {
       "@type": "PostalAddress",
       "addressCountry": "UA",
-      "addressLocality": "Київ"
+      "addressLocality": "{{ site_settings.city }}"
     }
   }
   </script>

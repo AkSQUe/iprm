@@ -72,7 +72,7 @@
         <div class="form-checkbox">
           {{ form.consent_data(id="consent_data") }}
           <label for="consent_data">
-            Я надаю добровільну, інформовану та однозначну згоду ПО "ІПРМ" (ЄДРПОУ 45871060) на збір та обробку моїх персональних даних з метою ідентифікації та забезпечення роботи облікового запису відповідно до Закону України "Про захист персональних даних". Ознайомлений(а) з <a href="{{ url_for('main.privacy') }}" target="_blank" rel="noopener noreferrer">Політикою конфіденційності</a>. <span class="required">*</span>
+            Я надаю добровільну, інформовану та однозначну згоду {{ site_settings.company_legal_name }} (ЄДРПОУ {{ site_settings.edrpou }}) на збір та обробку моїх персональних даних з метою ідентифікації та забезпечення роботи облікового запису відповідно до Закону України "Про захист персональних даних". Ознайомлений(а) з <a href="{{ url_for('main.privacy') }}" target="_blank" rel="noopener noreferrer">Політикою конфіденційності</a>. <span class="required">*</span>
           </label>
         </div>
         {% for error in form.consent_data.errors %}

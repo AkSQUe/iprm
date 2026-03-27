@@ -8,14 +8,18 @@
       </div>
       <div class="iprm-footer__right">
         <div class="iprm-footer__socials">
-          <a href="https://www.facebook.com/profile.php?id=61583812599479" class="iprm-footer__social-icon" aria-label="ІПРМ у Facebook" target="_blank" rel="noopener noreferrer">
+          {% if site_settings.facebook_url %}
+          <a href="{{ site_settings.facebook_url }}" class="iprm-footer__social-icon" aria-label="{{ site_settings.company_name }} у Facebook" target="_blank" rel="noopener noreferrer">
             <img src="{{ url_for('static', filename='svg/social/facebook.svg') }}" alt="Facebook" width="24" height="24">
           </a>
-          <a href="https://www.instagram.com/Plasmotherapy/" class="iprm-footer__social-icon" aria-label="ІПРМ в Instagram" target="_blank" rel="noopener noreferrer">
+          {% endif %}
+          {% if site_settings.instagram_url %}
+          <a href="{{ site_settings.instagram_url }}" class="iprm-footer__social-icon" aria-label="{{ site_settings.company_name }} в Instagram" target="_blank" rel="noopener noreferrer">
             <img src="{{ url_for('static', filename='svg/social/instagram.svg') }}" alt="Instagram" width="24" height="24">
           </a>
+          {% endif %}
         </div>
-        <a href="tel:+380670050707" class="iprm-footer__phone">+38067 005 07 07</a>
+        <a href="tel:{{ site_settings.phone_primary }}" class="iprm-footer__phone">{{ site_settings.phone_primary }}</a>
       </div>
     </div>
     <div class="iprm-footer__legal">
