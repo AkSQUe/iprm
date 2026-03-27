@@ -531,7 +531,7 @@
 
   .page-index .apple-features-grid {
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: 40px;
   }
 
   .page-index .apple-feature-card--featured {
