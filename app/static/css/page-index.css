@@ -537,10 +537,10 @@
     grid-column: span 1;
   }
 
-  /* Обрізати зображення в межах картки на мобільних */
+  /* Зображення виступають за межі картки на мобільних */
   .page-index .apple-feature-card--has-image,
   .page-index .apple-feature-card--icon-right {
-    overflow: hidden;
+    overflow: visible;
   }
 
   .page-index .apple-feature-card__text {
