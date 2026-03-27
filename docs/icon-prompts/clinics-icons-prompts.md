@@ -1,6 +1,6 @@
-# Clinics Page Feature Icons - AI Generation Prompts
+# Clinics Page Feature Illustrations - AI Generation Prompts
 
-Промти для генерації frosted glass іконок секції "Переваги клініки"
+Промти для генерації frosted glass ілюстрацій секції "Переваги клініки"
 на сторінці клінік (nano-banana 2).
 Стиль: Apple Liquid Glass (WWDC 2025), відповідно до `apple-style-concept.md`.
 
@@ -9,6 +9,8 @@
 ---
 
 ## Персоналізований підхід
+
+Файл: `clinics-personalized-dna`
 
 Індивідуальний підхід до кожного пацієнта з урахуванням індивідуальних біомаркерів.
 
@@ -36,6 +38,8 @@ precision. Centered composition, square format, 512x512px.
 ---
 
 ## Сертифіковані протоколи
+
+Файл: `clinics-certified-protocols`
 
 Протоколи лікування, підтверджені клінічними дослідженнями.
 
@@ -65,6 +69,8 @@ Centered composition, square format, 512x512px.
 ---
 
 ## Досвідчена команда
+
+Файл: `clinics-expert-team`
 
 Фахівці з багаторічним досвідом у регенеративній та клітинній медицині.
 

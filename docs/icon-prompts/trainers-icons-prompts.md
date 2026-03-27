@@ -1,6 +1,6 @@
-# Trainers Page Feature Icons - AI Generation Prompts
+# Trainers Page Feature Illustrations - AI Generation Prompts
 
-Промти для генерації frosted glass іконок секції "Чому варто навчатися саме у нас"
+Промти для генерації frosted glass ілюстрацій секції "Чому варто навчатися саме у нас"
 на сторінці тренерів (nano-banana 2).
 Стиль: Apple Liquid Glass (WWDC 2025), відповідно до `apple-style-concept.md`.
 
@@ -29,6 +29,8 @@ format, 512x512px.
 
 ## Практикуючі лікарі
 
+Файл: `trainers-clinical-heart`
+
 Тренери з клінічним досвідом у плазмотерапії та регенеративній медицині.
 
 ```
@@ -54,6 +56,8 @@ and warmth. Centered composition, square format, 512x512px.
 ---
 
 ## Авторські методики
+
+Файл: `trainers-evidence-document`
 
 Протоколи, підтверджені результатами клінічних досліджень.
 
@@ -81,6 +85,8 @@ evidence-based confidence. Centered composition, square format, 512x512px.
 ---
 
 ## Індивідуальний підхід
+
+Файл: `trainers-journey-path`
 
 Супровід кожного слухача від початку до отримання сертифікату.
 

@@ -1,6 +1,6 @@
-# Error Page Icons - AI Generation Prompts
+# Error Page Illustrations - AI Generation Prompts
 
-Промти для генерації frosted glass іконок сторінок помилок (nano-banana 2).
+Промти для генерації frosted glass ілюстрацій сторінок помилок (nano-banana 2).
 Стиль: Apple Liquid Glass (WWDC 2025), відповідно до `apple-style-concept.md`.
 
 ---
@@ -21,7 +21,7 @@ tone depending on glass thickness. Very subtle white specular highlight on
 top edges, faint ambient occlusion where elements meet. Solid white
 (#ffffff) background. No frame, no rounded square border, no
 background shape -- the object floats freely with no shadow beneath. No water, no liquid, no ripples, no wet surface -- dry
-frosted glass only. Clean minimal composition, Apple SF Symbols aesthetic.
+frosted glass only. Clean minimal composition, not an app icon.
 The overall mood is [EMOTION]. Centered composition, square format,
 512x512px.
 ```
@@ -39,6 +39,8 @@ The overall mood is [EMOTION]. Centered composition, square format,
 
 ## 401 - Необхідна авторизація
 
+Файл: `error-401-keyhole`
+
 ```
 A single frosted glass composition featuring the number "401" as the
 central element, integrated with a keyhole built into the zero digit. The
@@ -49,7 +51,7 @@ locked padlock body -- the top arch of the "0" forms the padlock shackle,
 slightly thicker than the digit stroke. A classic keyhole cutout sits in
 the center of the "0", revealing the gradient color beneath. A small
 frosted glass key floats at a slight angle beside the "1", attached by a
-barely visible frosted chain of 3-4 links. The "4" has a subtle lock icon
+barely visible frosted chain of 3-4 links. The "4" has a subtle lock symbol
 engraved into its vertical stroke. The glass has visible thickness and
 layered depth -- the digits are elevated above a faint frosted circular
 plate beneath them. A delicate frost texture on the surface. Soft
@@ -59,7 +61,7 @@ padlock more purple. Very subtle white specular highlight on top edges,
 faint ambient occlusion where the key overlaps the digits. Solid white
 (#ffffff) background. No frame, no rounded square border, no
 background shape -- the object floats freely with no shadow beneath. No water, no liquid, no ripples, no wet surface -- dry frosted glass only.
-Clean minimal composition, Apple SF Symbols aesthetic. The
+Clean minimal composition, not an app icon. The
 overall mood is gentle security, calm invitation to authenticate. Centered
 composition, square format, 512x512px.
 ```
@@ -67,6 +69,8 @@ composition, square format, 512x512px.
 ---
 
 ## 403 - Доступ заборонено
+
+Файл: `error-403-shield`
 
 ```
 A single frosted glass composition featuring the number "403" as the
@@ -89,7 +93,7 @@ warmer. Very subtle white specular highlight on top edges, faint ambient
 occlusion where digits rest on the shield. Solid white (#ffffff)
 background. No frame, no rounded square border, no background
 shape -- the object floats freely with no shadow beneath. No water, no liquid, no ripples, no wet surface -- dry frosted glass only.
-Clean minimal composition, Apple SF Symbols aesthetic. The overall
+Clean minimal composition, not an app icon. The overall
 mood is firm but polite restriction, professional boundary. Centered
 composition, square format, 512x512px.
 ```
@@ -97,6 +101,8 @@ composition, square format, 512x512px.
 ---
 
 ## 404 - Сторінку не знайдено
+
+Файл: `error-404-bandage`
 
 ```
 A single frosted glass composition featuring the number "404" as the
@@ -120,7 +126,7 @@ digits cooler purple. Very subtle white specular highlight on top edges,
 faint ambient occlusion where the bandage meets the digit. Solid white
 (#ffffff) background. No frame, no rounded square border, no
 background shape -- the object floats freely with no shadow beneath. No water, no liquid, no ripples, no wet surface -- dry frosted glass only.
-Clean minimal composition, Apple SF Symbols aesthetic. The
+Clean minimal composition, not an app icon. The
 overall mood is healing and recovery, the page is being repaired --
 medical warmth specific to a regenerative medicine institute. Centered
 composition, square format, 512x512px.
@@ -129,6 +135,8 @@ composition, square format, 512x512px.
 ---
 
 ## 500 - Помилка сервера
+
+Файл: `error-500-wrench`
 
 ```
 A single frosted glass composition featuring the number "500" as the
@@ -152,7 +160,7 @@ the digits cooler purple (stable). Very subtle white specular highlight on
 top edges, faint ambient occlusion where tools touch digits. Solid white
 (#ffffff) background. No frame, no rounded square border, no
 background shape -- the object floats freely with no shadow beneath. No water, no liquid, no ripples, no wet surface -- dry frosted glass only.
-Clean minimal composition, Apple SF Symbols aesthetic. The
+Clean minimal composition, not an app icon. The
 overall mood is technical care, active maintenance, calm problem-solving.
 Centered composition, square format, 512x512px.
 ```
