@@ -531,77 +531,66 @@
 
   .page-index .apple-features-grid {
     grid-template-columns: 1fr;
+    gap: 32px;
   }
 
   .page-index .apple-feature-card--featured {
     grid-column: span 1;
   }
 
-  /* Зображення виступають за межі картки на мобільних */
+  /* Зображення по центру зверху на мобільних */
   .page-index .apple-feature-card--has-image,
   .page-index .apple-feature-card--icon-right {
     overflow: visible;
   }
 
+  .page-index .apple-feature-card--has-image {
+    flex-direction: column;
+  }
+
   .page-index .apple-feature-card__text {
-    padding-right: 120px;
+    padding-right: 0;
+    padding-left: 0;
   }
 
   .page-index .apple-feature-card--image-left .apple-feature-card__text {
     padding-left: 0;
-    padding-right: 120px;
-  }
-
-  .page-index .apple-feature-card__image {
-    width: 150px;
-    right: -16px;
-    bottom: -20px;
-  }
-
-  .page-index .apple-feature-card--image-left .apple-feature-card__image {
-    left: auto;
-    right: -16px;
-  }
-
-  .page-index .apple-feature-card--icon-right {
-    padding-right: 80px;
-  }
-
-  .page-index .apple-feature-card--icon-right .apple-feature-card__icon {
-    width: 80px;
-    height: 80px;
-    right: -8px;
-  }
-
-  /* Очно та онлайн -- вправо вверх */
-  .page-index .apple-feature-card--icon-topright .apple-feature-card__icon {
-    top: -16px;
-    bottom: auto;
-    transform: none;
-  }
-
-  /* Сучасна інформація -- вправо вниз */
-  .page-index .apple-feature-card--icon-bottomright .apple-feature-card__icon {
-    top: auto;
-    bottom: -16px;
-    transform: none;
-  }
-
-  /* Висококваліфіковані спеціалісти -- іконка вправо вверх, без відступу */
-  .page-index .apple-feature-card--has-image:not(.apple-feature-card--image-left) .apple-feature-card__text {
     padding-right: 0;
   }
 
-  .page-index .apple-feature-card--has-image:not(.apple-feature-card--image-left) .apple-feature-card__image {
-    width: 120px;
-    right: -12px;
-    top: -20px;
+  .page-index .apple-feature-card__image {
+    position: relative;
+    right: auto;
     bottom: auto;
+    left: auto;
+    top: auto;
+    width: 140px;
+    margin: -48px auto 16px;
   }
 
-  /* Сертифікати з балами БПР -- менший відступ */
-  .page-index .apple-feature-card--image-left .apple-feature-card__text {
-    padding-right: 80px;
+  .page-index .apple-feature-card--image-left .apple-feature-card__image {
+    right: auto;
+    left: auto;
+  }
+
+  .page-index .apple-feature-card--has-image:not(.apple-feature-card--image-left) .apple-feature-card__image {
+    right: auto;
+    top: auto;
+  }
+
+  .page-index .apple-feature-card--icon-right {
+    padding-right: 0;
+  }
+
+  .page-index .apple-feature-card--icon-right .apple-feature-card__icon {
+    position: relative;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    transform: none;
+    width: 100px;
+    height: 100px;
+    margin: -40px auto 16px;
   }
 
   .page-index .apple-feature-card {
@@ -672,52 +661,13 @@
     margin-bottom: 36px;
   }
 
-  .page-index .apple-feature-card__text {
-    padding-right: 90px;
-  }
-
-  .page-index .apple-feature-card--image-left .apple-feature-card__text {
-    padding-left: 0;
-    padding-right: 90px;
-  }
-
   .page-index .apple-feature-card__image {
-    width: 110px;
-    right: -12px;
-    bottom: -16px;
-  }
-
-  .page-index .apple-feature-card--image-left .apple-feature-card__image {
-    left: auto;
-    right: -12px;
-  }
-
-  .page-index .apple-feature-card--icon-right {
-    padding-right: 60px;
+    width: 120px;
   }
 
   .page-index .apple-feature-card--icon-right .apple-feature-card__icon {
-    width: 60px;
-    height: 60px;
-    right: -4px;
-  }
-
-  .page-index .apple-feature-card--icon-topright .apple-feature-card__icon {
-    top: -12px;
-  }
-
-  .page-index .apple-feature-card--icon-bottomright .apple-feature-card__icon {
-    bottom: -12px;
-  }
-
-  .page-index .apple-feature-card--has-image:not(.apple-feature-card--image-left) .apple-feature-card__image {
-    width: 100px;
-    right: -8px;
-    top: -16px;
-  }
-
-  .page-index .apple-feature-card--image-left .apple-feature-card__text {
-    padding-right: 60px;
+    width: 80px;
+    height: 80px;
   }
 
   .page-index .apple-feature-card {
