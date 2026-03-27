@@ -19,7 +19,7 @@
   height: 100%;
 }
 
-body > *:not(#molecular-background):not(script):not(.iprm-header) {
+body > *:not(#molecular-background):not(script):not(.iprm-header):not(.cookie-banner) {
   position: relative;
   z-index: 1;
 }

@@ -847,6 +847,13 @@
     grid-template-columns: 1fr;
   }
 
+  .apple-page .apple-feature-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
   .apple-page .iprm-target-grid {
     grid-template-columns: 1fr;
   }
@@ -864,8 +871,24 @@
 
   .apple-page .iprm-trainer__photo {
     aspect-ratio: 1;
-    max-width: 280px;
+    width: 280px;
+    max-width: 100%;
     margin: 0 auto;
+  }
+
+  .apple-page .iprm-trainer__photo:not(:has(img))::after {
+    content: '';
+    display: block;
+    width: 64px;
+    height: 64px;
+    opacity: 0.3;
+    background: currentColor;
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5'%3E%3Cpath d='M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0zM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632z'/%3E%3C/svg%3E");
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5'%3E%3Cpath d='M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0zM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632z'/%3E%3C/svg%3E");
+    mask-size: contain;
+    -webkit-mask-size: contain;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
   }
 
   .apple-page .apple-section-cta {
