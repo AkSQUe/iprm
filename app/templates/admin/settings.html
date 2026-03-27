@@ -1,0 +1,141 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Налаштування сайту | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+  <div class="admin-hero">
+    <div>
+      <h1 class="admin-hero__title">Налаштування сайту</h1>
+      <p class="admin-hero__subtitle">Контактна інформація та реквізити компанії</p>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <form method="POST" class="admin-form">
+    {{ form.hidden_tag() }}
+
+    <!-- Company info -->
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Інформація про компанію</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group">
+          <label for="company_name">Коротка назва <span class="required">*</span></label>
+          {{ form.company_name(class="form-input" + (" is-invalid" if form.company_name.errors else ""), id="company_name", placeholder="ІПРМ") }}
+          {% for error in form.company_name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="edrpou">Код ЄДРПОУ</label>
+          {{ form.edrpou(class="form-input", id="edrpou", placeholder="45871060") }}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="company_full_name">Повна назва</label>
+          {{ form.company_full_name(class="form-input", id="company_full_name", placeholder="Інститут Плазмотерапії та Регенеративної Медицини") }}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="company_legal_name">Юридична назва</label>
+          {{ form.company_legal_name(class="form-input", id="company_legal_name", placeholder='ПО "ІПРМ"') }}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Contacts -->
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Контактна інформація</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group">
+          <label for="phone_primary">Основний телефон</label>
+          {{ form.phone_primary(class="form-input", id="phone_primary", placeholder="+380670050707") }}
+        </div>
+
+        <div class="form-group">
+          <label for="phone_secondary">Додатковий телефон</label>
+          {{ form.phone_secondary(class="form-input", id="phone_secondary", placeholder="+380 96 090 0007") }}
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          {{ form.email(class="form-input", id="email", placeholder="office@iprm.com") }}
+        </div>
+
+        <div class="form-group">
+          <label for="city">Місто</label>
+          {{ form.city(class="form-input", id="city", placeholder="Київ, Україна") }}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="address">Адреса</label>
+          {{ form.address(class="form-input", id="address", rows="2", placeholder="02002, Україна, місто Київ, вулиця Микільсько-слобідська, будинок 2б, квартира 246") }}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Social media -->
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Соціальні мережі</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group admin-form__full">
+          <label for="facebook_url">Facebook</label>
+          {{ form.facebook_url(class="form-input", id="facebook_url", placeholder="https://www.facebook.com/...") }}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="instagram_url">Instagram</label>
+          {{ form.instagram_url(class="form-input", id="instagram_url", placeholder="https://www.instagram.com/...") }}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="telegram_url">Telegram</label>
+          {{ form.telegram_url(class="form-input", id="telegram_url", placeholder="https://t.me/...") }}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Business -->
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Бізнес-інформація</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group">
+          <label for="business_hours">Графік роботи</label>
+          {{ form.business_hours(class="form-input", id="business_hours", placeholder="Пн-Пт: 09:00-18:00") }}
+        </div>
+
+        <div class="form-group">
+          <label for="website_url">Вебсайт</label>
+          {{ form.website_url(class="form-input", id="website_url", placeholder="https://iprm.space") }}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="admin-form__actions">
+      <a href="{{ url_for('admin.events_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      <button type="submit" class="btn-admin btn-admin--primary">
+        <span class="iprm-btn__arrow">&#x2197;</span>
+        Зберегти налаштування
+      </button>
+    </div>
+  </form>
+  </div>
+</div>
+{% endblock %}

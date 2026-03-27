@@ -94,12 +94,3 @@ def integrations():
     return render_template('admin/integrations.html', liqpay_status=liqpay_status)
 
 
-@admin_bp.route('/settings')
-@admin_required
-def settings():
-    return render_template(
-        'admin/stub.html',
-        admin_section='settings',
-        page_title='Налаштування',
-        page_subtitle='Загальні налаштування системи',
-    )

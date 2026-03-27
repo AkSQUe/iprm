@@ -114,6 +114,11 @@ def create_app(config_name=None):
             version = get_assets_version(app.static_folder)
         return {'assets_version': version}
 
+    @app.context_processor
+    def inject_site_settings():
+        from app.models.site_settings import SiteSettings
+        return {'site_settings': SiteSettings.get()}
+
     @app.after_request
     def set_security_headers(response):
         response.headers['X-Content-Type-Options'] = 'nosniff'

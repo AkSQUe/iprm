@@ -139,3 +139,69 @@ class EventForm(FlaskForm):
         description='Формат: Питання?\\nВідповідь\\n\\nПитання?\\nВідповідь',
     )
     is_featured = BooleanField('Рекомендований')
+
+
+class SiteSettingsForm(FlaskForm):
+    # Company info
+    company_name = StringField(
+        'Коротка назва',
+        validators=[DataRequired(message='Назва обов\'язкова'), Length(max=100)],
+    )
+    company_full_name = StringField(
+        'Повна назва',
+        validators=[Optional(), Length(max=500)],
+    )
+    company_legal_name = StringField(
+        'Юридична назва',
+        validators=[Optional(), Length(max=500)],
+    )
+    edrpou = StringField(
+        'Код ЄДРПОУ',
+        validators=[Optional(), Length(max=20)],
+    )
+
+    # Contacts
+    phone_primary = StringField(
+        'Основний телефон',
+        validators=[Optional(), Length(max=50)],
+    )
+    phone_secondary = StringField(
+        'Додатковий телефон',
+        validators=[Optional(), Length(max=50)],
+    )
+    email = StringField(
+        'Email',
+        validators=[Optional(), Length(max=255)],
+    )
+    address = TextAreaField(
+        'Адреса',
+        validators=[Optional()],
+    )
+    city = StringField(
+        'Місто',
+        validators=[Optional(), Length(max=200)],
+    )
+
+    # Social media
+    facebook_url = StringField(
+        'Facebook',
+        validators=[Optional(), Length(max=500)],
+    )
+    instagram_url = StringField(
+        'Instagram',
+        validators=[Optional(), Length(max=500)],
+    )
+    telegram_url = StringField(
+        'Telegram',
+        validators=[Optional(), Length(max=500)],
+    )
+
+    # Business
+    business_hours = StringField(
+        'Графік роботи',
+        validators=[Optional(), Length(max=200)],
+    )
+    website_url = StringField(
+        'Вебсайт',
+        validators=[Optional(), Length(max=500)],
+    )

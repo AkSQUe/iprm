@@ -5,3 +5,4 @@ from app.admin import routes_payments  # noqa: F401
 from app.admin import routes_stubs  # noqa: F401
 from app.admin import routes_uploads  # noqa: F401
 from app.admin import routes_notifications  # noqa: F401
+from app.admin import routes_settings  # noqa: F401
