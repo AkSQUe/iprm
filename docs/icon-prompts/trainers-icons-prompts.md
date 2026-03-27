@@ -11,7 +11,7 @@
 ## Загальний промт
 
 ```
-A floating frosted glass object, not an app icon, of [SUBJECT], translucent
+A floating frosted glass illustration of [SUBJECT], translucent
 glass material with soft refraction and subtle light diffusion inside.
 Isolated on clean white (#ffffff) background, no container, no frame, no
 border, no card shape. Bold, clean geometry with soft rounded corners. Soft
@@ -32,7 +32,7 @@ format, 512x512px.
 Тренери з клінічним досвідом у плазмотерапії та регенеративній медицині.
 
 ```
-A floating frosted glass object, not an app icon, of a heart with a
+A floating frosted glass illustration of a heart with a
 medical cross inside it and a small stethoscope draped over the top curve,
 translucent glass material with soft refraction and subtle light diffusion
 inside. The heart shape has soft rounded contours, the cross is slightly
@@ -45,7 +45,7 @@ corners. Soft purple-to-orange gradient (from #7055a4 through #9b59b6 to
 stethoscope warmer orange. Very subtle white specular highlight on the top
 edge. The glass has visible thickness and a delicate frost texture on the
 surface. No hard shadows, no reflections on surface, no extra decoration.
-The object floats freely with a very faint contact shadow beneath. No
+The object floats freely with no shadow beneath. No
 water, no liquid, no ripples, no wet surface -- dry frosted glass only.
 Clean minimal composition. The overall mood is clinical expertise, trust,
 and warmth. Centered composition, square format, 512x512px.
@@ -58,7 +58,7 @@ and warmth. Centered composition, square format, 512x512px.
 Протоколи, підтверджені результатами клінічних досліджень.
 
 ```
-A floating frosted glass object, not an app icon, of a document page with
+A floating frosted glass illustration of a document page with
 a heartbeat pulse line running across it and a small pen resting diagonally
 on top, translucent glass material with soft refraction and subtle light
 diffusion inside. The document has slightly curled top-right corner showing
@@ -85,7 +85,7 @@ evidence-based confidence. Centered composition, square format, 512x512px.
 Супровід кожного слухача від початку до отримання сертифікату.
 
 ```
-A floating frosted glass object, not an app icon, of a curved ascending
+A floating frosted glass illustration of a curved ascending
 path with three milestone markers along it, leading to a frosted
 certificate with a ribbon at the top. Translucent glass material with soft
 refraction and subtle light diffusion inside. The path starts at the

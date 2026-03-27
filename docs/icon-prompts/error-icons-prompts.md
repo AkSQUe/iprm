@@ -19,9 +19,8 @@ with micro-scratches barely visible. Soft purple-to-orange gradient (from
 #7055a4 through #9b59b6 to #e8913a) visible through the glass, shifting
 tone depending on glass thickness. Very subtle white specular highlight on
 top edges, faint ambient occlusion where elements meet. Solid white
-(#ffffff) background. No app icon frame, no rounded square border, no
-background shape -- the object floats freely with a very faint contact
-shadow beneath. No water, no liquid, no ripples, no wet surface -- dry
+(#ffffff) background. No frame, no rounded square border, no
+background shape -- the object floats freely with no shadow beneath. No water, no liquid, no ripples, no wet surface -- dry
 frosted glass only. Clean minimal composition, Apple SF Symbols aesthetic.
 The overall mood is [EMOTION]. Centered composition, square format,
 512x512px.
@@ -58,9 +57,8 @@ purple-to-orange gradient (from #7055a4 through #9b59b6 to #e8913a)
 visible through the glass, the key tinted slightly more orange, the
 padlock more purple. Very subtle white specular highlight on top edges,
 faint ambient occlusion where the key overlaps the digits. Solid white
-(#ffffff) background. No app icon frame, no rounded square border, no
-background shape -- the object floats freely with a very faint contact
-shadow beneath. No water, no liquid, no ripples, no wet surface -- dry frosted glass only.
+(#ffffff) background. No frame, no rounded square border, no
+background shape -- the object floats freely with no shadow beneath. No water, no liquid, no ripples, no wet surface -- dry frosted glass only.
 Clean minimal composition, Apple SF Symbols aesthetic. The
 overall mood is gentle security, calm invitation to authenticate. Centered
 composition, square format, 512x512px.
@@ -89,9 +87,8 @@ purple-to-orange gradient (from #7055a4 through #9b59b6 to #e8913a)
 visible through the glass, the shield tinted cooler purple, the digits
 warmer. Very subtle white specular highlight on top edges, faint ambient
 occlusion where digits rest on the shield. Solid white (#ffffff)
-background. No app icon frame, no rounded square border, no background
-shape -- the object floats freely with a very faint contact shadow
-beneath. No water, no liquid, no ripples, no wet surface -- dry frosted glass only.
+background. No frame, no rounded square border, no background
+shape -- the object floats freely with no shadow beneath. No water, no liquid, no ripples, no wet surface -- dry frosted glass only.
 Clean minimal composition, Apple SF Symbols aesthetic. The overall
 mood is firm but polite restriction, professional boundary. Centered
 composition, square format, 512x512px.
@@ -121,9 +118,8 @@ the surface. Soft purple-to-orange gradient (from #7055a4 through #9b59b6
 to #e8913a) visible through the glass, the bandage tinted warm orange, the
 digits cooler purple. Very subtle white specular highlight on top edges,
 faint ambient occlusion where the bandage meets the digit. Solid white
-(#ffffff) background. No app icon frame, no rounded square border, no
-background shape -- the object floats freely with a very faint contact
-shadow beneath. No water, no liquid, no ripples, no wet surface -- dry frosted glass only.
+(#ffffff) background. No frame, no rounded square border, no
+background shape -- the object floats freely with no shadow beneath. No water, no liquid, no ripples, no wet surface -- dry frosted glass only.
 Clean minimal composition, Apple SF Symbols aesthetic. The
 overall mood is healing and recovery, the page is being repaired --
 medical warmth specific to a regenerative medicine institute. Centered
@@ -154,9 +150,8 @@ purple-to-orange gradient (from #7055a4 through #9b59b6 to #e8913a)
 visible through the glass, the tools tinted more orange (warm, active),
 the digits cooler purple (stable). Very subtle white specular highlight on
 top edges, faint ambient occlusion where tools touch digits. Solid white
-(#ffffff) background. No app icon frame, no rounded square border, no
-background shape -- the object floats freely with a very faint contact
-shadow beneath. No water, no liquid, no ripples, no wet surface -- dry frosted glass only.
+(#ffffff) background. No frame, no rounded square border, no
+background shape -- the object floats freely with no shadow beneath. No water, no liquid, no ripples, no wet surface -- dry frosted glass only.
 Clean minimal composition, Apple SF Symbols aesthetic. The
 overall mood is technical care, active maintenance, calm problem-solving.
 Centered composition, square format, 512x512px.
