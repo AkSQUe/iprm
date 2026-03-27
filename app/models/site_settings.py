@@ -45,7 +45,7 @@ class SiteSettings(TimestampMixin, db.Model):
     @classmethod
     def get(cls):
         """Get or create singleton settings row."""
-        settings = cls.query.get(1)
+        settings = db.session.get(cls, 1)
         if not settings:
             settings = cls(id=1)
             db.session.add(settings)

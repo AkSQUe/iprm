@@ -116,8 +116,11 @@ def create_app(config_name=None):
 
     @app.context_processor
     def inject_site_settings():
-        from app.models.site_settings import SiteSettings
-        return {'site_settings': SiteSettings.get()}
+        from flask import g
+        if not hasattr(g, '_site_settings'):
+            from app.models.site_settings import SiteSettings
+            g._site_settings = SiteSettings.get()
+        return {'site_settings': g._site_settings}
 
     @app.after_request
     def set_security_headers(response):

@@ -1,6 +1,6 @@
 import logging
 
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
 
 from app.admin import admin_bp
@@ -16,7 +16,7 @@ audit_logger = logging.getLogger('audit')
 @admin_required
 def settings():
     site = SiteSettings.get()
-    form = SiteSettingsForm(obj=site)
+    form = SiteSettingsForm(obj=site) if request.method == 'GET' else SiteSettingsForm()
 
     if form.validate_on_submit():
         form.populate_obj(site)

@@ -92,5 +92,3 @@ def integrations():
         'sandbox': liqpay_service.sandbox,
     }
     return render_template('admin/integrations.html', liqpay_status=liqpay_status)
-
-
