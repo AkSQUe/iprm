@@ -3,7 +3,7 @@
 
 {% block title %}Підтвердіть ваш email{% endblock %}
 
-{% block preview_text %}Підтвердіть email для доступу до всіх функцій IPRM{% endblock %}
+{% block preview_text %}Підтвердіть email для доступу до всіх функцій ІПРМ{% endblock %}
 
 {% block content %}
     <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
@@ -11,7 +11,7 @@
     </h1>
 
     <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
-        {{ user.first_name or 'Вітаємо' }}, дякуємо за реєстрацію в IPRM. Натисніть кнопку нижче, щоб підтвердити вашу email-адресу.
+        {{ user.first_name or 'Вітаємо' }}, дякуємо за реєстрацію в ІПРМ. Натисніть кнопку нижче, щоб підтвердити вашу email-адресу.
     </p>
 
     {{ button_primary("Підтвердити email", confirm_url) }}
@@ -19,7 +19,7 @@
     {{ spacer(16) }}
 
     <p style="margin: 0 0 8px 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
-        Посилання дійсне протягом 24 годин. Якщо ви не реєструвалися на IPRM, просто проігноруйте цей лист.
+        Посилання дійсне протягом 24 годин. Якщо ви не реєструвалися на ІПРМ, просто проігноруйте цей лист.
     </p>
 
     <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">

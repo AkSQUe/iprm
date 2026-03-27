@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='svg/IPRM-logo-simple.svg') }}">
-  <title>{% block title %}IPRM | Інститут Плазмотерапії та Регенеративної Медицини{% endblock %}</title>
+  <title>{% block title %}ІПРМ | Інститут Плазмотерапії та Регенеративної Медицини{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}Інститут Плазмотерапії та Регенеративної Медицини. Курси післядипломної освіти для лікарів з нарахуванням балів БПР.{% endblock %}">
   <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
   <meta property="og:description" content="{% block og_description %}{{ self.meta_description() }}{% endblock %}">
@@ -14,9 +14,9 @@
   <meta property="og:image:height" content="630">
   <meta property="og:url" content="{% block og_url %}{{ request.url }}{% endblock %}">
   <meta property="og:locale" content="uk_UA">
-  <meta property="og:site_name" content="IPRM">
+  <meta property="og:site_name" content="ІПРМ">
   <meta property="og:image:type" content="image/png">
-  <meta property="og:image:alt" content="IPRM - Інститут Плазмотерапії та Регенеративної Медицини">
+  <meta property="og:image:alt" content="ІПРМ - Інститут Плазмотерапії та Регенеративної Медицини">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{ self.title() }}">
   <meta name="twitter:description" content="{{ self.meta_description() }}">
@@ -29,7 +29,7 @@
   {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
-    "name": "IPRM",
+    "name": "ІПРМ",
     "alternateName": "Інститут Плазмотерапії та Регенеративної Медицини",
     "url": "{{ url_for('main.index', _external=True) }}",
     "logo": "{{ url_for('static', filename='svg/IPRM-logo-complex.svg', _external=True) }}",

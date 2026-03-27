@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Контакти | IPRM{% endblock %}
+{% block title %}Контакти | ІПРМ{% endblock %}
 {% block meta_description %}Зв'яжіться з Інститутом Плазмотерапії та Регенеративної Медицини. Телефон, адреса, форма зворотного зв'язку.{% endblock %}
 
 {% block extra_css %}
@@ -13,11 +13,11 @@
 {
   "@context": "https://schema.org",
   "@type": "ContactPage",
-  "name": "Контакти IPRM",
+  "name": "Контакти ІПРМ",
   "url": "{{ url_for('main.contact', _external=True) }}",
   "mainEntity": {
     "@type": "EducationalOrganization",
-    "name": "IPRM",
+    "name": "ІПРМ",
     "alternateName": "Інститут Плазмотерапії та Регенеративної Медицини",
     "telephone": "+380670050707",
     "address": {
@@ -78,10 +78,10 @@
           <div>
             <div class="contact-page__info-label">Соціальні мережі</div>
             <div class="contact-page__socials">
-              <a href="https://www.facebook.com/profile.php?id=61583812599479" class="contact-page__social-link" aria-label="IPRM у Facebook" target="_blank" rel="noopener noreferrer">
+              <a href="https://www.facebook.com/profile.php?id=61583812599479" class="contact-page__social-link" aria-label="ІПРМ у Facebook" target="_blank" rel="noopener noreferrer">
                 <img src="{{ url_for('static', filename='svg/social/facebook.svg') }}" alt="Facebook" width="20" height="20">
               </a>
-              <a href="https://www.instagram.com/Plasmotherapy/" class="contact-page__social-link" aria-label="IPRM в Instagram" target="_blank" rel="noopener noreferrer">
+              <a href="https://www.instagram.com/Plasmotherapy/" class="contact-page__social-link" aria-label="ІПРМ в Instagram" target="_blank" rel="noopener noreferrer">
                 <img src="{{ url_for('static', filename='svg/social/instagram.svg') }}" alt="Instagram" width="20" height="20">
               </a>
             </div>

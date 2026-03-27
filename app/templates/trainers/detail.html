@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ trainer.full_name }} | IPRM{% endblock %}
+{% block title %}{{ trainer.full_name }} | ІПРМ{% endblock %}
 {% block meta_description %}{{ trainer.role or trainer.full_name }}. Тренер Інституту Плазмотерапії та Регенеративної Медицини.{% endblock %}
 
 {% block extra_css %}
@@ -17,7 +17,7 @@
   {% if trainer.bio %}"description": "{{ trainer.bio[:200] }}",{% endif %}
   "worksFor": {
     "@type": "EducationalOrganization",
-    "name": "IPRM"
+    "name": "ІПРМ"
   },
   "url": "{{ url_for('trainers.trainer_detail', slug=trainer.slug, _external=True) }}"
 }
@@ -27,7 +27,7 @@
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   "itemListElement": [
-    {"@type": "ListItem", "position": 1, "name": "IPRM", "item": "{{ url_for('main.index', _external=True) }}"},
+    {"@type": "ListItem", "position": 1, "name": "ІПРМ", "item": "{{ url_for('main.index', _external=True) }}"},
     {"@type": "ListItem", "position": 2, "name": "Тренери", "item": "{{ url_for('trainers.trainer_list', _external=True) }}"},
     {"@type": "ListItem", "position": 3, "name": "{{ trainer.full_name }}"}
   ]
