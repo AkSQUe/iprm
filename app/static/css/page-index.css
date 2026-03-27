@@ -538,12 +538,13 @@
     grid-column: span 1;
   }
 
-  /* Зображення по центру зверху на мобільних */
+  /* Мобільний layout: зображення по центру */
   .page-index .apple-feature-card--has-image,
   .page-index .apple-feature-card--icon-right {
     overflow: visible;
   }
 
+  /* Featured-картки: текст зверху, зображення знизу по центру */
   .page-index .apple-feature-card--has-image {
     flex-direction: column;
   }
@@ -565,7 +566,7 @@
     left: auto;
     top: auto;
     width: 140px;
-    margin: -48px auto 16px;
+    margin: 16px auto -48px;
   }
 
   .page-index .apple-feature-card--image-left .apple-feature-card__image {
@@ -578,6 +579,7 @@
     top: auto;
   }
 
+  /* Звичайні картки: іконка зверху по центру */
   .page-index .apple-feature-card--icon-right {
     padding-right: 0;
   }
