@@ -117,11 +117,14 @@
           <td title="{{ log.url }}">{{ (log.url or '')[-60:] }}</td>
           <td>{{ log.created_at.strftime('%d.%m %H:%M') if log.created_at else '' }}</td>
           <td>
-            {% if log.resolved %}
-            <span class="badge badge--success">Вирішено</span>
-            {% else %}
-            <span class="badge badge--draft">Відкрита</span>
-            {% endif %}
+            <form method="POST" action="{{ url_for('admin.resolve_error', error_id=log.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              {% if log.resolved %}
+              <button type="submit" class="badge badge--success admin-copy-error" title="Повернути у відкриті">Вирішено</button>
+              {% else %}
+              <button type="submit" class="badge badge--draft admin-copy-error" title="Позначити вирішеною">Відкрита</button>
+              {% endif %}
+            </form>
           </td>
           <td>
             <div class="admin-table__actions">

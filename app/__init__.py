@@ -52,6 +52,10 @@ def create_app(config_name=None):
     app.config.from_object(config[config_name])
     _configure_logging(app)
 
+    if config_name == 'production':
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=0, x_prefix=0)
+
     if hasattr(config[config_name], 'init_app'):
         config[config_name].init_app(app)
 

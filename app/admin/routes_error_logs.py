@@ -87,7 +87,15 @@ def resolve_error(error_id):
         flash('Запис не знайдено', 'error')
         return redirect(url_for('admin.error_logs'))
 
-    if not error_log.resolved:
+    if error_log.resolved:
+        error_log.resolved = False
+        error_log.resolved_at = None
+        error_log.resolved_by_id = None
+        error_log.resolution_notes = None
+        db.session.commit()
+        audit_logger.info('Admin %s reopened error %s', current_user.email, error_id)
+        flash('Помилку повернено у статус "Відкрита"', 'info')
+    else:
         error_log.resolved = True
         error_log.resolved_at = datetime.now(timezone.utc)
         error_log.resolved_by_id = current_user.id
@@ -96,6 +104,9 @@ def resolve_error(error_id):
         audit_logger.info('Admin %s resolved error %s', current_user.email, error_id)
         flash('Помилку позначено як вирішену', 'success')
 
+    referer = request.referrer
+    if referer and 'error-logs' in referer and str(error_id) not in referer:
+        return redirect(url_for('admin.error_logs'))
     return redirect(url_for('admin.error_log_detail', error_id=error_id))
 
 
