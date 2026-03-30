@@ -134,14 +134,7 @@
   flex-wrap: wrap;
 }
 
-.admin-import-form {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.admin-file-label {
-  position: relative;
+.admin-import-btn {
   cursor: pointer;
 }
 
@@ -153,26 +146,7 @@
   overflow: hidden;
 }
 
-.admin-file-label__text {
-  display: inline-block;
-  padding: 8px 20px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--apple-gray-dark);
-  background: var(--iprm-white);
-  border: 1px dashed rgba(0, 0, 0, 0.15);
-  border-radius: var(--iprm-radius-pill);
-  transition:
-    border-color 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
-    background-color 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
-}
-
-.admin-file-label__text:hover {
-  border-color: rgba(0, 0, 0, 0.25);
-  background: var(--apple-section-bg);
-}
-
-.admin-file-input:focus-visible + .admin-file-label__text {
+.admin-file-input:focus-visible + span {
   outline: 2px solid var(--iprm-nav-active);
   outline-offset: 3px;
 }
