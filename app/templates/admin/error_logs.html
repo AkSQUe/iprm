@@ -1,0 +1,146 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Журнал помилок | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <h1 class="admin-hero__title">Журнал помилок</h1>
+      <p class="admin-hero__subtitle">
+        За {{ filters.days }} днів: {{ stats.total_errors }} помилок, {{ stats.unresolved_errors }} невирішених
+      </p>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <!-- Статистика -->
+  <div class="admin-stat-cards admin-stat-cards--4">
+    <div class="admin-stat-card admin-stat-card--danger">
+      <div class="admin-stat-card__value">{{ stats.by_code.get('500', 0) }}</div>
+      <div class="admin-stat-card__label">500 Server</div>
+    </div>
+    <div class="admin-stat-card admin-stat-card--warning">
+      <div class="admin-stat-card__value">{{ stats.by_code.get('404', 0) }}</div>
+      <div class="admin-stat-card__label">404 Not Found</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-card__value">{{ stats.unresolved_errors }}</div>
+      <div class="admin-stat-card__label">Невирішені</div>
+    </div>
+    <div class="admin-stat-card admin-stat-card--success">
+      <div class="admin-stat-card__value">{{ stats.total_errors - stats.unresolved_errors }}</div>
+      <div class="admin-stat-card__label">Вирішені</div>
+    </div>
+  </div>
+
+  <!-- Фільтри -->
+  <div class="admin-stats-bar">
+    <form method="GET" action="{{ url_for('admin.error_logs') }}" class="admin-filter-form">
+      <select name="error_code" class="form-input form-input--sm">
+        <option value="">Всі коди</option>
+        {% for code in ['400', '401', '403', '404', '405', '429', '500', '503'] %}
+        <option value="{{ code }}"{% if filters.error_code == code|int %} selected{% endif %}>{{ code }}</option>
+        {% endfor %}
+      </select>
+      <select name="resolved" class="form-input form-input--sm">
+        <option value="">Всі статуси</option>
+        <option value="false"{% if filters.resolved == 'false' %} selected{% endif %}>Невирішені</option>
+        <option value="true"{% if filters.resolved == 'true' %} selected{% endif %}>Вирішені</option>
+      </select>
+      <select name="days" class="form-input form-input--sm">
+        <option value="1"{% if filters.days == 1 %} selected{% endif %}>1 день</option>
+        <option value="7"{% if filters.days == 7 %} selected{% endif %}>7 днів</option>
+        <option value="30"{% if filters.days == 30 %} selected{% endif %}>30 днів</option>
+        <option value="90"{% if filters.days == 90 %} selected{% endif %}>90 днів</option>
+        <option value="0"{% if filters.days == 0 %} selected{% endif %}>За весь час</option>
+      </select>
+      <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Фільтрувати</button>
+      {% if filters.error_code or filters.resolved %}
+      <a href="{{ url_for('admin.error_logs') }}" class="btn-admin btn-admin--sm">Скинути</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Таблиця -->
+  {% if logs %}
+  <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Код</th>
+          <th>Тип</th>
+          <th>Повідомлення</th>
+          <th>URL</th>
+          <th>Час</th>
+          <th>Статус</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>
+            {% if log.error_code >= 500 %}
+            <span class="badge badge--danger">{{ log.error_code }}</span>
+            {% elif log.error_code >= 400 %}
+            <span class="badge badge--warning">{{ log.error_code }}</span>
+            {% else %}
+            <span class="badge badge--draft">{{ log.error_code }}</span>
+            {% endif %}
+          </td>
+          <td><code>{{ log.error_type }}</code></td>
+          <td title="{{ log.error_message }}">{{ log.error_message[:80] }}{% if log.error_message|length > 80 %}...{% endif %}</td>
+          <td title="{{ log.url }}">{{ (log.url or '')[-60:] }}</td>
+          <td>{{ log.created_at.strftime('%d.%m %H:%M') if log.created_at else '' }}</td>
+          <td>
+            {% if log.resolved %}
+            <span class="badge badge--success">Вирішено</span>
+            {% else %}
+            <span class="badge badge--draft">Відкрита</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="admin-table__actions">
+              <a href="{{ url_for('admin.error_log_detail', error_id=log.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Деталі</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Пагінація -->
+  {% if pagination.pages > 1 %}
+  <nav class="admin-pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.error_logs', page=pagination.prev_num, error_code=filters.error_code, resolved=filters.resolved, days=filters.days) }}" class="btn-admin btn-admin--secondary btn-admin--sm">&larr;</a>
+    {% endif %}
+    <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }}</span>
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.error_logs', page=pagination.next_num, error_code=filters.error_code, resolved=filters.resolved, days=filters.days) }}" class="btn-admin btn-admin--secondary btn-admin--sm">&rarr;</a>
+    {% endif %}
+  </nav>
+  {% endif %}
+
+  {% else %}
+  <div class="admin-empty">
+    <h3 class="admin-empty__title">Помилок не знайдено</h3>
+    <p>Немає записів{% if filters.error_code or filters.resolved %} за обраними фільтрами. <a href="{{ url_for('admin.error_logs') }}">Скинути</a>{% endif %}</p>
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}
