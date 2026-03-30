@@ -19,6 +19,7 @@
 
 {% block extra_css %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/page-clinics.css') }}?v={{ assets_version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
@@ -62,6 +63,71 @@
           <p>Інформація про відділення скоро з'явиться</p>
         </div>
         {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MISSION ===== -->
+  <section class="iprm-section" aria-labelledby="clinic-mission-title">
+    <div class="iprm-section__inner">
+      <h2 id="clinic-mission-title" class="iprm-section__title">Місія <span class="apple-gradient-text">клініки</span></h2>
+      <p class="iprm-section__subtitle">Безпечне, стандартизоване застосування регенеративних методик для відновлення функції тканин і профілактики вікових змін</p>
+      <div class="apple-features-grid">
+        <div class="apple-feature-card apple-reveal">
+          <h3>Ортобіологія</h3>
+          <p>Опорно-руховий апарат: тендінопатії, остеоартроз у межах чинних рекомендацій.</p>
+        </div>
+        <div class="apple-feature-card apple-reveal">
+          <h3>Дерматологія та трихологія</h3>
+          <p>Стимуляція регенерації шкіри та волосяних фолікулів.</p>
+        </div>
+        <div class="apple-feature-card apple-reveal">
+          <h3>Здорове старіння</h3>
+          <p>Індивідуальні програми на основі даних біологічного віку.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PATIENT PROCESS ===== -->
+  <section class="iprm-section apple-section-gray" aria-labelledby="clinic-process-title">
+    <div class="iprm-section__inner">
+      <h2 id="clinic-process-title" class="iprm-section__title">Процес <span class="apple-gradient-text">пацієнта</span></h2>
+      <p class="iprm-section__subtitle">Доказовість, інформована згода, поетапні цілі з об'єктивними метриками</p>
+      <div class="iprm-steps">
+        <div class="iprm-steps__item apple-reveal">
+          <span class="iprm-steps__number">1</span>
+          <h3 class="iprm-steps__heading">Первинний скринінг</h3>
+          <p class="iprm-steps__text">Збір анамнезу та первинне обстеження пацієнта.</p>
+        </div>
+        <div class="iprm-steps__item apple-reveal">
+          <span class="iprm-steps__number">2</span>
+          <h3 class="iprm-steps__heading">Лабораторний профіль</h3>
+          <p class="iprm-steps__text">Оцінка біологічного віку та лабораторні дослідження за потреби.</p>
+        </div>
+        <div class="iprm-steps__item apple-reveal">
+          <span class="iprm-steps__number">3</span>
+          <h3 class="iprm-steps__heading">План лікування</h3>
+          <p class="iprm-steps__text">PRP/PPP, біоактивні фракції, реабілітація, нутриціональні рекомендації.</p>
+        </div>
+        <div class="iprm-steps__item apple-reveal">
+          <span class="iprm-steps__number">4</span>
+          <h3 class="iprm-steps__heading">Контрольні точки</h3>
+          <p class="iprm-steps__text">Об'єктивні тести на 4-12 тижнях: шкали болю, дерматоскопія, функціональні тести.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== APPOINTMENT ===== -->
+  <section class="iprm-section" aria-labelledby="appointment-title">
+    <div class="iprm-section__inner">
+      <div class="apple-cta apple-reveal">
+        <h2 id="appointment-title">Запис на <span class="apple-gradient-text">прийом</span></h2>
+        <p>Прийом пацієнтів фахівцями інституту здійснюється за попереднім записом</p>
+        <div class="apple-cta__actions">
+          <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--primary">Записатися на прийом</a>
+        </div>
       </div>
     </div>
   </section>
