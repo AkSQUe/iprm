@@ -169,15 +169,15 @@ def import_events_from_xlsx(file_stream, user_id):
     trainer_cache = _build_trainer_cache()
 
     for row_idx in range(header_row + 1, ws.max_row + 1):
-        row_data = _read_row(ws, row_idx, col_map)
-        if not row_data:
-            continue
-
-        stats['total_rows'] += 1
-
         try:
+            row_data = _read_row(ws, row_idx, col_map)
+            if not row_data:
+                continue
+
+            stats['total_rows'] += 1
             _process_row(row_data, row_idx, user_id, trainer_cache, stats)
         except Exception as exc:
+            stats['total_rows'] += 1
             stats['errors'].append(f'Row {row_idx}: {exc}')
             stats['skipped'] += 1
 
