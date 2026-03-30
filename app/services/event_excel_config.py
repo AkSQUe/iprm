@@ -23,16 +23,16 @@ def convert_bool_ua(value):
         return bool(value)
     if isinstance(value, str):
         val = value.strip().lower()
-        if val in ('tak', 'yes', 'true', '1'):
+        if val in ('\u0442\u0430\u043a', 'tak', 'yes', 'true', '1'):
             return True
-        if val in ('ni', 'no', 'false', '0'):
+        if val in ('\u043d\u0456', 'ni', 'no', 'false', '0'):
             return False
     return False
 
 
 def bool_to_ua(value):
     """Convert boolean to Ukrainian string for export."""
-    return 'Tak' if value else 'Ni'
+    return '\u0422\u0430\u043a' if value else '\u041d\u0456'
 
 
 def convert_datetime_ua(value):
@@ -98,28 +98,28 @@ def list_to_semicolon(items):
 
 COLUMNS_CONFIG = [
     ('id', 'ID', 8, 'id', convert_int, None),
-    ('title', 'Nazva', 40, 'title', str, None),
+    ('title', '\u041d\u0430\u0437\u0432\u0430', 40, 'title', str, None),
     ('slug', 'Slug', 30, 'slug', str, None),
-    ('subtitle', 'Pidzaholovok', 40, 'subtitle', str, None),
-    ('short_description', 'Korotkyi opys', 40, 'short_description', str, None),
-    ('description', 'Opys', 50, 'description', str, None),
-    ('event_type', 'Typ zakhodu', 18, 'event_type', str, None),
-    ('event_format', 'Format', 14, 'event_format', str, None),
-    ('status', 'Status', 14, 'status', str, 'draft'),
-    ('start_date', 'Data pochatku', 20, 'start_date', convert_datetime_ua, None),
-    ('end_date', 'Data zakinchennia', 20, 'end_date', convert_datetime_ua, None),
-    ('max_participants', 'Maks. uchasnykiv', 16, 'max_participants', convert_int, None),
-    ('price', 'Tsina', 12, 'price', convert_decimal, Decimal('0')),
-    ('location', 'Mistse', 30, 'location', str, None),
-    ('online_link', 'Posylannia', 30, 'online_link', str, None),
-    ('hero_image', 'Hero zobrazhennia', 30, 'hero_image', str, None),
-    ('card_image', 'Card zobrazhennia', 30, 'card_image', str, None),
-    ('cpd_points', 'CPD baly', 10, 'cpd_points', convert_int, None),
-    ('target_audience', 'Tsilova audytoriia', 30, 'target_audience', semicolon_to_list, []),
-    ('tags', 'Tehy', 30, 'tags', semicolon_to_list, []),
-    ('trainer_name', 'Trener', 25, 'trainer_name', str, None),
-    ('is_featured', 'Rekomendovanyi', 14, 'is_featured', convert_bool_ua, False),
-    ('is_active', 'Aktyvnyi', 12, 'is_active', convert_bool_ua, True),
+    ('subtitle', '\u041f\u0456\u0434\u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043e\u043a', 40, 'subtitle', str, None),
+    ('short_description', '\u041a\u043e\u0440\u043e\u0442\u043a\u0438\u0439 \u043e\u043f\u0438\u0441', 40, 'short_description', str, None),
+    ('description', '\u041e\u043f\u0438\u0441', 50, 'description', str, None),
+    ('event_type', '\u0422\u0438\u043f \u0437\u0430\u0445\u043e\u0434\u0443', 18, 'event_type', str, None),
+    ('event_format', '\u0424\u043e\u0440\u043c\u0430\u0442', 14, 'event_format', str, None),
+    ('status', '\u0421\u0442\u0430\u0442\u0443\u0441', 14, 'status', str, 'draft'),
+    ('start_date', '\u0414\u0430\u0442\u0430 \u043f\u043e\u0447\u0430\u0442\u043a\u0443', 20, 'start_date', convert_datetime_ua, None),
+    ('end_date', '\u0414\u0430\u0442\u0430 \u0437\u0430\u043a\u0456\u043d\u0447\u0435\u043d\u043d\u044f', 20, 'end_date', convert_datetime_ua, None),
+    ('max_participants', '\u041c\u0430\u043a\u0441. \u0443\u0447\u0430\u0441\u043d\u0438\u043a\u0456\u0432', 16, 'max_participants', convert_int, None),
+    ('price', '\u0426\u0456\u043d\u0430', 12, 'price', convert_decimal, Decimal('0')),
+    ('location', '\u041c\u0456\u0441\u0446\u0435', 30, 'location', str, None),
+    ('online_link', '\u041f\u043e\u0441\u0438\u043b\u0430\u043d\u043d\u044f', 30, 'online_link', str, None),
+    ('hero_image', 'Hero \u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u043d\u044f', 30, 'hero_image', str, None),
+    ('card_image', 'Card \u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u043d\u044f', 30, 'card_image', str, None),
+    ('cpd_points', 'CPD \u0431\u0430\u043b\u0438', 10, 'cpd_points', convert_int, None),
+    ('target_audience', '\u0426\u0456\u043b\u044c\u043e\u0432\u0430 \u0430\u0443\u0434\u0438\u0442\u043e\u0440\u0456\u044f', 30, 'target_audience', semicolon_to_list, []),
+    ('tags', '\u0422\u0435\u0433\u0438', 30, 'tags', semicolon_to_list, []),
+    ('trainer_name', '\u0422\u0440\u0435\u043d\u0435\u0440', 25, 'trainer_name', str, None),
+    ('is_featured', '\u0420\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u043e\u0432\u0430\u043d\u0438\u0439', 14, 'is_featured', convert_bool_ua, False),
+    ('is_active', '\u0410\u043a\u0442\u0438\u0432\u043d\u0438\u0439', 12, 'is_active', convert_bool_ua, True),
 ]
 
 
