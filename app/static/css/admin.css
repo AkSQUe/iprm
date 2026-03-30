@@ -138,6 +138,17 @@
   background: var(--iprm-error-bg);
 }
 
+.btn-admin--success {
+  background: var(--iprm-white);
+  color: #34c759;
+  border: 1px solid rgba(52, 199, 89, 0.3);
+}
+
+.btn-admin--success:hover {
+  background: #f0faf3;
+  border-color: rgba(52, 199, 89, 0.5);
+}
+
 .btn-admin--sm {
   padding: 5px 14px;
   font-size: 13px;
