@@ -20,7 +20,15 @@
       <h1 class="admin-hero__title">Заходи</h1>
       <p class="admin-hero__subtitle">Управління заходами інституту</p>
     </div>
-    <a href="{{ url_for('admin.event_create') }}" class="btn-admin btn-admin--primary">+ Додати захід</a>
+    <div class="admin-hero__actions" style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+      <a href="{{ url_for('admin.event_create') }}" class="btn-admin btn-admin--primary">+ Додати захід</a>
+      <a href="{{ url_for('admin.events_export') }}" class="btn-admin btn-admin--secondary">Експорт XLSX</a>
+      <form method="POST" action="{{ url_for('admin.events_import') }}" enctype="multipart/form-data" style="display:inline-flex; gap:0.5rem; align-items:center;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="file" name="file" accept=".xlsx" required class="admin-file-input">
+        <button type="submit" class="btn-admin btn-admin--secondary">Імпорт XLSX</button>
+      </form>
+    </div>
   </div>
 
   {% if events %}
