@@ -5,12 +5,11 @@ from app.extensions import limiter
 from app.main import main_bp
 from app.main.forms import ContactForm
 from app.models.event import Event
-from app.models.trainer import Trainer
 
 
 @main_bp.route('/')
 def index():
-    return redirect(url_for('courses.course_list'))
+    return redirect(url_for('courses.course_list'), code=301)
 
 
 @main_bp.route('/labs')
