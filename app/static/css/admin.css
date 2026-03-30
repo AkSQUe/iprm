@@ -232,6 +232,28 @@
   word-break: break-word;
 }
 
+/* Copy error button (inline in table) */
+.admin-copy-error {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.admin-copy-error:hover {
+  color: var(--iprm-accent);
+}
+
+.admin-copy-error--copied {
+  color: var(--iprm-success);
+}
+
 /* ========== EMPTY STATE ========== */
 
 .admin-empty {

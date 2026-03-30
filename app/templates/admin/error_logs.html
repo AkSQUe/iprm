@@ -100,7 +100,20 @@
             {% endif %}
           </td>
           <td><code>{{ log.error_type }}</code></td>
-          <td title="{{ log.error_message }}">{{ log.error_message[:80] }}{% if log.error_message|length > 80 %}...{% endif %}</td>
+          <td>
+            <button type="button" class="admin-copy-error"
+                    title="Копіювати для ШІ"
+                    data-error-id="{{ log.id }}"
+                    data-error-code="{{ log.error_code }}"
+                    data-error-type="{{ log.error_type | e }}"
+                    data-error-message="{{ log.error_message | e }}"
+                    data-error-url="{{ (log.url or '') | e }}"
+                    data-error-method="{{ log.method or 'GET' }}"
+                    data-error-time="{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else '' }}"
+                    {% if log.traceback %}data-traceback="{{ log.traceback | e }}"{% endif %}>
+              {{ log.error_message[:80] }}{% if log.error_message|length > 80 %}...{% endif %}
+            </button>
+          </td>
           <td title="{{ log.url }}">{{ (log.url or '')[-60:] }}</td>
           <td>{{ log.created_at.strftime('%d.%m %H:%M') if log.created_at else '' }}</td>
           <td>
@@ -143,4 +156,8 @@
 
   </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/admin-error-logs.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

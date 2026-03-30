@@ -37,6 +37,7 @@
         <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Позначити вирішеною</button>
       </form>
       {% endif %}
+      <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" id="copy-for-ai">Копіювати для ШІ</button>
       <form method="POST" action="{{ url_for('admin.delete_error_log', error_id=error_log.id) }}" onsubmit="return confirm('Видалити цей запис?')">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
