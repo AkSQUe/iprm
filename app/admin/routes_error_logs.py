@@ -18,6 +18,7 @@ audit_logger = logging.getLogger('audit')
 @admin_bp.route('/error-logs')
 @admin_required
 def error_logs():
+    # Workaround: PostgreSQL InFailedSqlTransaction після попередніх помилок
     try:
         db.session.rollback()
     except Exception:

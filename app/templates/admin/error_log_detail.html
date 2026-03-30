@@ -90,21 +90,21 @@
     {% if error_log.traceback %}
     <div class="form-section admin-form__section">
       <h3 class="admin-form__section-title">Traceback</h3>
-      <pre style="background:var(--iprm-card-bg);padding:16px;border-radius:var(--iprm-radius-sm);font-size:0.75rem;overflow-x:auto;white-space:pre-wrap;word-break:break-word">{{ error_log.traceback }}</pre>
+      <pre class="admin-code-block">{{ error_log.traceback }}</pre>
     </div>
     {% endif %}
 
     {% if request_data %}
     <div class="form-section admin-form__section">
       <h3 class="admin-form__section-title">Request Data</h3>
-      <pre style="background:var(--iprm-card-bg);padding:16px;border-radius:var(--iprm-radius-sm);font-size:0.75rem;overflow-x:auto;white-space:pre-wrap;word-break:break-word">{{ request_data | tojson(indent=2) if request_data is mapping else request_data }}</pre>
+      <pre class="admin-code-block">{{ request_data | tojson(indent=2) if request_data is mapping else request_data }}</pre>
     </div>
     {% endif %}
 
     {% if headers %}
     <div class="form-section admin-form__section">
       <h3 class="admin-form__section-title">Headers</h3>
-      <pre style="background:var(--iprm-card-bg);padding:16px;border-radius:var(--iprm-radius-sm);font-size:0.75rem;overflow-x:auto;white-space:pre-wrap;word-break:break-word">{{ headers | tojson(indent=2) if headers is mapping else headers }}</pre>
+      <pre class="admin-code-block">{{ headers | tojson(indent=2) if headers is mapping else headers }}</pre>
     </div>
     {% endif %}
 

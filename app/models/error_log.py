@@ -2,7 +2,7 @@
 import json
 from datetime import datetime, timezone
 
-from sqlalchemy import Index, text, func
+from sqlalchemy import Index, func
 
 from app.extensions import db
 
