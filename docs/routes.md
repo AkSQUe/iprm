@@ -4,7 +4,9 @@
 
 | Метод | URL | Опис |
 |-------|-----|------|
-| GET | `/` | Головна сторінка |
+| GET | `/` | Redirect 301 -> /courses/ |
+| GET | `/labs` | Сторінка Лабораторії |
+| GET/POST | `/contact` | Контактна форма |
 | GET | `/design-system` | Дизайн-система |
 | GET | `/offer` | Публічна оферта |
 | GET | `/privacy` | Політика конфіденційності |
@@ -20,6 +22,8 @@
 | GET/POST | `/auth/register` | Реєстрація |
 | POST | `/auth/logout` | Вихід |
 | GET | `/auth/account` | Обліковий запис |
+| GET | `/auth/settings` | Налаштування профілю |
+| GET | `/auth/confirm-email/<token>` | Підтвердження email |
 
 ## Courses
 
@@ -85,13 +89,29 @@
 | GET | `/admin/reviews` | Відгуки (stub) |
 | GET | `/admin/marketing` | Маркетинг |
 | GET | `/admin/integrations` | Інтеграції |
-| GET | `/admin/settings` | Налаштування (stub) |
+| GET/POST | `/admin/settings` | Налаштування сайту |
+| GET | `/admin/error-logs` | Журнал помилок |
+| GET | `/admin/error-logs/<id>` | Деталі помилки |
+| POST | `/admin/error-logs/<id>/resolve` | Позначити помилку вирішеною |
+| POST | `/admin/error-logs/<id>/delete` | Видалити запис помилки |
+| POST | `/admin/error-logs/bulk-action` | Масові операції з помилками |
+| GET | `/admin/notifications` | Налаштування сповіщень |
+| GET | `/admin/notifications/log` | Лог сповіщень |
+| GET | `/admin/notifications/templates` | Шаблони листів |
+| POST | `/admin/events/<id>/export` | Експорт заходу в XLSX |
+| POST | `/admin/events/import` | Імпорт заходів з XLSX |
 
 ## Errors
 
 | Код | Шаблон | Опис |
 |-----|--------|------|
+| 400 | `errors/500.html` | Bad Request |
 | 401 | `errors/401.html` | Unauthorized |
 | 403 | `errors/403.html` | Forbidden |
 | 404 | `errors/404.html` | Not Found |
+| 405 | `errors/500.html` | Method Not Allowed |
+| 429 | `errors/500.html` | Too Many Requests |
 | 500 | `errors/500.html` | Internal Server Error |
+| 503 | `errors/500.html` | Service Unavailable |
+
+Всі помилки автоматично записуються в ErrorLog (з rate limiting та фільтрацією сканерів).
