@@ -3,6 +3,8 @@
 import logging
 from io import BytesIO
 
+from urllib.parse import quote
+
 from flask import flash, redirect, request, send_file, url_for
 from flask_login import current_user
 
@@ -28,12 +30,17 @@ def events_export():
     audit_logger.info(
         'Admin %s exported events to XLSX', current_user.email,
     )
-    return send_file(
+    response = send_file(
         stream,
         as_attachment=True,
         download_name=filename,
         mimetype=XLSX_MIMETYPE,
     )
+    encoded = quote(filename)
+    response.headers['Content-Disposition'] = (
+        f"attachment; filename*=UTF-8''{encoded}"
+    )
+    return response
 
 
 @admin_bp.route('/events/import', methods=['POST'])

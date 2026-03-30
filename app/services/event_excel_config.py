@@ -53,7 +53,7 @@ def convert_datetime_ua(value):
                 return datetime.strptime(value, fmt)
             except ValueError:
                 continue
-        raise ValueError(f"Cannot parse date: '{value}'")
+        raise ValueError(f"\u043d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u0440\u043e\u0437\u043f\u0456\u0437\u043d\u0430\u0442\u0438 \u0434\u0430\u0442\u0443 '{value}'")
     return None
 
 
@@ -66,7 +66,7 @@ def convert_decimal(value):
     try:
         return Decimal(str(value))
     except (InvalidOperation, ValueError):
-        raise ValueError(f"Invalid price value: '{value}'")
+        raise ValueError(f"\u043d\u0435\u043a\u043e\u0440\u0435\u043a\u0442\u043d\u0430 \u0446\u0456\u043d\u0430: '{value}'")
 
 
 def convert_int(value):

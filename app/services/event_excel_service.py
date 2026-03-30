@@ -149,21 +149,21 @@ def import_events_from_xlsx(file_stream, user_id):
             keep_links=False,
         )
     except Exception as exc:
-        stats['errors'].append(f'Cannot open file: {exc}')
+        stats['errors'].append(f'\u041d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u0432\u0456\u0434\u043a\u0440\u0438\u0442\u0438 \u0444\u0430\u0439\u043b: {exc}')
         return stats
 
     ws = wb.active
     if ws.max_row is None or ws.max_row < 2:
-        stats['errors'].append('File is empty or has no data rows')
+        stats['errors'].append('\u0424\u0430\u0439\u043b \u043f\u043e\u0440\u043e\u0436\u043d\u0456\u0439 \u0430\u0431\u043e \u043d\u0435 \u043c\u0456\u0441\u0442\u0438\u0442\u044c \u0434\u0430\u043d\u0438\u0445')
         return stats
 
     if ws.max_row > 10000:
-        stats['errors'].append('File exceeds maximum 10,000 rows')
+        stats['errors'].append('\u0424\u0430\u0439\u043b \u043f\u0435\u0440\u0435\u0432\u0438\u0449\u0443\u0454 \u043c\u0430\u043a\u0441\u0438\u043c\u0443\u043c 10 000 \u0440\u044f\u0434\u043a\u0456\u0432')
         return stats
 
     header_row, col_map = _find_headers(ws)
     if header_row is None:
-        stats['errors'].append("Header row not found (looking for '\u041d\u0430\u0437\u0432\u0430' column)")
+        stats['errors'].append("\u0420\u044f\u0434\u043e\u043a \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043a\u0456\u0432 \u043d\u0435 \u0437\u043d\u0430\u0439\u0434\u0435\u043d\u043e (\u043f\u043e\u0442\u0440\u0456\u0431\u043d\u0430 \u043a\u043e\u043b\u043e\u043d\u043a\u0430 '\u041d\u0430\u0437\u0432\u0430')")
         return stats
 
     trainer_cache = _build_trainer_cache()
@@ -178,14 +178,14 @@ def import_events_from_xlsx(file_stream, user_id):
             _process_row(row_data, row_idx, user_id, trainer_cache, stats)
         except Exception as exc:
             stats['total_rows'] += 1
-            stats['errors'].append(f'Row {row_idx}: {exc}')
+            stats['errors'].append(f'\u0420\u044f\u0434\u043e\u043a {row_idx}: {exc}')
             stats['skipped'] += 1
 
     try:
         db.session.commit()
     except Exception as exc:
         db.session.rollback()
-        stats['errors'].append(f'Database error: {exc}')
+        stats['errors'].append(f'\u041f\u043e\u043c\u0438\u043b\u043a\u0430 \u0431\u0430\u0437\u0438 \u0434\u0430\u043d\u0438\u0445: {exc}')
         stats['created'] = 0
         stats['updated'] = 0
 
@@ -240,7 +240,7 @@ def _read_row(ws, row_idx, col_map):
             data[db_field] = converter(raw) if converter else raw
         except (ValueError, TypeError) as exc:
             header = ws.cell(row=1, column=col_idx).value or db_field
-            raise ValueError(f"column '{header}': {exc}") from exc
+            raise ValueError(f"\u043a\u043e\u043b\u043e\u043d\u043a\u0430 '{header}': {exc}") from exc
 
     return data if has_value else None
 
@@ -253,16 +253,16 @@ def _process_row(row_data, row_idx, user_id, trainer_cache, stats):
         try:
             event_id = int(event_id)
         except (ValueError, TypeError):
-            raise ValueError(f"Invalid ID value: '{event_id}'")
+            raise ValueError(f"\u041d\u0435\u043a\u043e\u0440\u0435\u043a\u0442\u043d\u0435 \u0437\u043d\u0430\u0447\u0435\u043d\u043d\u044f ID: '{event_id}'")
         event = db.session.get(Event, event_id)
         if not event:
-            raise ValueError(f'Event ID {event_id} not found')
+            raise ValueError(f'\u0417\u0430\u0445\u0456\u0434 \u0437 ID {event_id} \u043d\u0435 \u0437\u043d\u0430\u0439\u0434\u0435\u043d\u043e')
         _update_event(event, row_data, trainer_cache, stats)
         stats['updated'] += 1
     else:
         title = row_data.get('title')
         if not title:
-            raise ValueError('Title is required for new events')
+            raise ValueError('\u041d\u0430\u0437\u0432\u0430 \u043e\u0431\u043e\u0432\u044f\u0437\u043a\u043e\u0432\u0430 \u0434\u043b\u044f \u043d\u043e\u0432\u0438\u0445 \u0437\u0430\u0445\u043e\u0434\u0456\u0432')
         _create_event(row_data, user_id, trainer_cache, stats)
         stats['created'] += 1
 
@@ -272,22 +272,22 @@ def _validate_constrained_fields(row_data):
     event_type = row_data.get('event_type')
     if event_type and event_type not in VALID_EVENT_TYPES:
         raise ValueError(
-            f"Invalid event_type '{event_type}'. "
-            f"Allowed: {', '.join(VALID_EVENT_TYPES)}"
+            f"\u041d\u0435\u0432\u0456\u0440\u043d\u0438\u0439 \u0442\u0438\u043f \u0437\u0430\u0445\u043e\u0434\u0443 '{event_type}'. "
+            f"\u0414\u043e\u0437\u0432\u043e\u043b\u0435\u043d\u0456: {', '.join(VALID_EVENT_TYPES)}"
         )
 
     event_format = row_data.get('event_format')
     if event_format and event_format not in VALID_FORMATS:
         raise ValueError(
-            f"Invalid event_format '{event_format}'. "
-            f"Allowed: {', '.join(VALID_FORMATS)}"
+            f"\u041d\u0435\u0432\u0456\u0440\u043d\u0438\u0439 \u0444\u043e\u0440\u043c\u0430\u0442 '{event_format}'. "
+            f"\u0414\u043e\u0437\u0432\u043e\u043b\u0435\u043d\u0456: {', '.join(VALID_FORMATS)}"
         )
 
     status = row_data.get('status')
     if status and status not in VALID_STATUSES:
         raise ValueError(
-            f"Invalid status '{status}'. "
-            f"Allowed: {', '.join(VALID_STATUSES)}"
+            f"\u041d\u0435\u0432\u0456\u0440\u043d\u0438\u0439 \u0441\u0442\u0430\u0442\u0443\u0441 '{status}'. "
+            f"\u0414\u043e\u0437\u0432\u043e\u043b\u0435\u043d\u0456: {', '.join(VALID_STATUSES)}"
         )
 
 
@@ -302,7 +302,7 @@ def _resolve_trainer(row_data, trainer_cache, stats):
         return trainer.id
 
     stats['errors'].append(
-        f"Trainer '{trainer_name}' not found (warning, skipping trainer assignment)"
+        f"\u0422\u0440\u0435\u043d\u0435\u0440 '{trainer_name}' \u043d\u0435 \u0437\u043d\u0430\u0439\u0434\u0435\u043d\u043e, \u043f\u0440\u0438\u0437\u043d\u0430\u0447\u0435\u043d\u043d\u044f \u043f\u0440\u043e\u043f\u0443\u0449\u0435\u043d\u043e"
     )
     return None
 
@@ -345,7 +345,7 @@ def _create_event(row_data, user_id, trainer_cache, stats):
                     slug = candidate
                     break
             else:
-                raise ValueError(f"Cannot generate unique slug for '{title}'")
+                raise ValueError(f"\u041d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u0437\u0433\u0435\u043d\u0435\u0440\u0443\u0432\u0430\u0442\u0438 \u0443\u043d\u0456\u043a\u0430\u043b\u044c\u043d\u0438\u0439 slug \u0434\u043b\u044f '{title}'")
 
     event = Event(
         title=title,
