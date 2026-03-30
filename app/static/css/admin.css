@@ -254,6 +254,13 @@
   color: var(--iprm-success);
 }
 
+/* Toggle status button (badge as submit) */
+.admin-toggle-status {
+  cursor: pointer;
+  border: none;
+  font: inherit;
+}
+
 /* ========== EMPTY STATE ========== */
 
 .admin-empty {
