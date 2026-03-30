@@ -67,6 +67,51 @@
     </div>
   </section>
 
+  <!-- ===== SCHEDULE ===== -->
+  <section class="iprm-section" aria-labelledby="schedule-title">
+    <div class="iprm-section__inner">
+      <h2 id="schedule-title" class="iprm-section__title">Графік <span class="apple-gradient-text">курсів</span></h2>
+      <p class="iprm-section__subtitle">Розклад найближчих заходів інституту</p>
+
+      {% if events %}
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Курс</th>
+              <th>Формат</th>
+              <th>Дата</th>
+              <th>Ціна</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for event in events %}
+            <tr>
+              <td><a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}">{{ event.title }}</a></td>
+              <td>{{ event.format_label if event.event_format else '-' }}</td>
+              <td>{{ event.start_date.strftime('%d.%m.%Y') if event.start_date else 'TBD' }}</td>
+              <td>{% if event.price and event.price > 0 %}{{ event.price | int }} &#8372;{% else %}Безкоштовно{% endif %}</td>
+              <td>
+                {% if event.is_registration_open %}
+                <a href="{{ url_for('registration.register', event_id=event.id) }}" class="iprm-btn iprm-btn--primary iprm-btn--sm">Реєстрація</a>
+                {% else %}
+                <span class="badge badge--draft">Реєстрацію закрито</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="iprm-empty-state">
+        <p>Графік курсів формується. Слідкуйте за оновленнями.</p>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
   <!-- ===== WHY US ===== -->
   <section class="iprm-section" aria-labelledby="why-us-title">
     <div class="iprm-section__inner">
