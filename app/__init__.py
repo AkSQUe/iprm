@@ -82,8 +82,8 @@ def create_app(config_name=None):
     from app.courses import courses_bp
     app.register_blueprint(courses_bp)
 
-    from app.errors import errors_bp
-    app.register_blueprint(errors_bp)
+    from app.services.error_handler import init_error_handlers
+    init_error_handlers(app)
 
     from app.auth import auth_bp
     app.register_blueprint(auth_bp)

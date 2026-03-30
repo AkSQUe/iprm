@@ -1,0 +1,137 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Помилка #{{ error_log.id }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.error_logs') }}" class="admin-breadcrumb__link">Журнал помилок</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">#{{ error_log.id }}</span>
+      </div>
+      <h1 class="admin-hero__title">
+        {% if error_log.error_code >= 500 %}
+        <span class="badge badge--danger">{{ error_log.error_code }}</span>
+        {% else %}
+        <span class="badge badge--warning">{{ error_log.error_code }}</span>
+        {% endif %}
+        {{ error_log.error_type }}
+      </h1>
+      <p class="admin-hero__subtitle">{{ error_log.created_at.strftime('%d.%m.%Y %H:%M:%S') if error_log.created_at else '' }}</p>
+    </div>
+    <div class="admin-hero__actions">
+      {% if not error_log.resolved %}
+      <form method="POST" action="{{ url_for('admin.resolve_error', error_id=error_log.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Позначити вирішеною</button>
+      </form>
+      {% endif %}
+      <form method="POST" action="{{ url_for('admin.delete_error_log', error_id=error_log.id) }}" onsubmit="return confirm('Видалити цей запис?')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
+      </form>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <!-- Статус -->
+  {% if error_log.resolved %}
+  <div class="alert alert--success">
+    Вирішено {{ error_log.resolved_at.strftime('%d.%m.%Y %H:%M') if error_log.resolved_at else '' }}
+    {% if error_log.resolved_by %}користувачем {{ error_log.resolved_by.email }}{% endif %}
+    {% if error_log.resolution_notes %}<br>{{ error_log.resolution_notes }}{% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Основна інформація -->
+  <div class="admin-form">
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Інформація про помилку</h3>
+      <div class="admin-form__grid">
+        <div class="form-group">
+          <label>Код</label>
+          <div class="form-input" class="admin-field-readonly">{{ error_log.error_code }}</div>
+        </div>
+        <div class="form-group">
+          <label>Тип</label>
+          <div class="form-input" class="admin-field-readonly">{{ error_log.error_type }}</div>
+        </div>
+        <div class="form-group">
+          <label>Метод</label>
+          <div class="form-input" class="admin-field-readonly">{{ error_log.method or '-' }}</div>
+        </div>
+        <div class="form-group">
+          <label>IP</label>
+          <div class="form-input" class="admin-field-readonly">{{ error_log.ip_address or '-' }}</div>
+        </div>
+        <div class="form-group admin-form__full">
+          <label>URL</label>
+          <div class="form-input" class="admin-field-readonly">{{ error_log.url or '-' }}</div>
+        </div>
+        <div class="form-group admin-form__full">
+          <label>Повідомлення</label>
+          <div class="form-input admin-field-readonly admin-code-block">{{ error_log.error_message }}</div>
+        </div>
+      </div>
+    </div>
+
+    {% if error_log.traceback %}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Traceback</h3>
+      <pre style="background:var(--iprm-card-bg);padding:16px;border-radius:var(--iprm-radius-sm);font-size:0.75rem;overflow-x:auto;white-space:pre-wrap;word-break:break-word">{{ error_log.traceback }}</pre>
+    </div>
+    {% endif %}
+
+    {% if request_data %}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Request Data</h3>
+      <pre style="background:var(--iprm-card-bg);padding:16px;border-radius:var(--iprm-radius-sm);font-size:0.75rem;overflow-x:auto;white-space:pre-wrap;word-break:break-word">{{ request_data | tojson(indent=2) if request_data is mapping else request_data }}</pre>
+    </div>
+    {% endif %}
+
+    {% if headers %}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Headers</h3>
+      <pre style="background:var(--iprm-card-bg);padding:16px;border-radius:var(--iprm-radius-sm);font-size:0.75rem;overflow-x:auto;white-space:pre-wrap;word-break:break-word">{{ headers | tojson(indent=2) if headers is mapping else headers }}</pre>
+    </div>
+    {% endif %}
+
+    {% if error_log.user_agent %}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">User Agent</h3>
+      <div class="admin-text-muted">{{ error_log.user_agent }}</div>
+    </div>
+    {% endif %}
+
+    {% if not error_log.resolved %}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Вирішити помилку</h3>
+      <form method="POST" action="{{ url_for('admin.resolve_error', error_id=error_log.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+          <label for="resolution_notes">Коментар</label>
+          <textarea name="resolution_notes" id="resolution_notes" class="form-input" rows="3" placeholder="Що було зроблено для вирішення..."></textarea>
+        </div>
+        <div class="admin-form__actions">
+          <button type="submit" class="btn-admin btn-admin--primary">Позначити вирішеною</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  </div>
+</div>
+{% endblock %}

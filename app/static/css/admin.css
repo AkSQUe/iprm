@@ -216,6 +216,22 @@
   font-size: 13px;
 }
 
+/* Readonly field display */
+.admin-field-readonly {
+  pointer-events: none;
+}
+
+/* Code/traceback block */
+.admin-code-block {
+  background: var(--iprm-card-bg);
+  padding: 16px;
+  border-radius: var(--iprm-radius-sm);
+  font-size: 0.75rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* ========== EMPTY STATE ========== */
 
 .admin-empty {

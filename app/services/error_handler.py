@@ -81,7 +81,8 @@ def _should_log(status_code, url, message):
         now = datetime.now(timezone.utc)
         if (now - _cache_cleanup_at).total_seconds() > 300:
             cutoff = now - timedelta(seconds=_COOLDOWN * 2)
-            _error_cache.clear()
+            for k in [k for k, v in _error_cache.items() if v < cutoff]:
+                del _error_cache[k]
             _cache_cleanup_at = now
 
         if sig in _error_cache:
@@ -103,11 +104,17 @@ def _log_to_db(error, status_code, message):
             except Exception:
                 return None
 
-        url = request.url if request else 'unknown'
+        try:
+            url = request.url
+        except RuntimeError:
+            url = 'unknown'
         if not _should_log(status_code, url, message):
             return None
 
-        user = current_user if current_user.is_authenticated else None
+        try:
+            user = current_user if current_user.is_authenticated else None
+        except Exception:
+            user = None
         return ErrorLog.log_error(
             exception=error,
             request=request,
