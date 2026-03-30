@@ -46,6 +46,11 @@ class SiteSettings(TimestampMixin, db.Model):
     show_labs = db.Column(db.Boolean, default=True)
     show_clinics = db.Column(db.Boolean, default=True)
 
+    # LiqPay
+    liqpay_public_key = db.Column(db.String(255), default='')
+    liqpay_private_key = db.Column(db.String(255), default='')
+    liqpay_sandbox = db.Column(db.Boolean, default=True)
+
     @classmethod
     def get(cls):
         """Get or create singleton settings row."""

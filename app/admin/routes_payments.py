@@ -6,9 +6,9 @@ from app.admin import admin_bp
 from app.admin.decorators import admin_required
 from app.extensions import db
 from app.models.registration import EventRegistration
+from app.models.site_settings import SiteSettings
 from app.services.liqpay import get_liqpay_service
 from app.services.payment_ops import PaymentOps
-from app.utils import update_env_key
 
 audit_logger = logging.getLogger('audit')
 
@@ -59,9 +59,6 @@ def liqpay():
 @admin_bp.route('/liqpay/save-keys', methods=['POST'])
 @admin_required
 def liqpay_save_keys():
-    import os
-    from flask import current_app
-
     public_key = request.form.get('public_key', '').strip()
     private_key = request.form.get('private_key', '').strip()
     sandbox = request.form.get('sandbox') == 'on'
@@ -70,17 +67,19 @@ def liqpay_save_keys():
         flash('Обидва ключі обов\'язкові', 'error')
         return redirect(url_for('admin.liqpay'))
 
-    env_path = os.path.join(current_app.root_path, '..', '.env')
-    update_env_key(env_path, 'LIQPAY_PUBLIC_KEY', public_key)
-    update_env_key(env_path, 'LIQPAY_PRIVATE_KEY', private_key)
-    update_env_key(env_path, 'LIQPAY_SANDBOX', 'true' if sandbox else 'false')
+    settings = SiteSettings.get()
+    settings.liqpay_public_key = public_key
+    settings.liqpay_private_key = private_key
+    settings.liqpay_sandbox = sandbox
 
-    current_app.config['LIQPAY_PUBLIC_KEY'] = public_key
-    current_app.config['LIQPAY_PRIVATE_KEY'] = private_key
-    current_app.config['LIQPAY_SANDBOX'] = sandbox
+    try:
+        db.session.commit()
+        audit_logger.info('Admin %s updated LiqPay keys (sandbox=%s)', current_user.email, sandbox)
+        flash('Ключі LiqPay збережено', 'success')
+    except Exception:
+        db.session.rollback()
+        flash('Помилка при збереженні ключів', 'error')
 
-    audit_logger.info('Admin %s updated LiqPay keys (sandbox=%s)', current_user.email, sandbox)
-    flash('Ключі LiqPay збережено', 'success')
     return redirect(url_for('admin.liqpay'))
 
 

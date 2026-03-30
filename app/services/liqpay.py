@@ -118,9 +118,17 @@ class LiqPayService:
 
 def get_liqpay_service(app=None):
     from flask import current_app
+    from app.models.site_settings import SiteSettings
+
     cfg = (app or current_app).config
+    settings = SiteSettings.get()
+
+    public_key = settings.liqpay_public_key or cfg.get('LIQPAY_PUBLIC_KEY', '')
+    private_key = settings.liqpay_private_key or cfg.get('LIQPAY_PRIVATE_KEY', '')
+    sandbox = settings.liqpay_sandbox if settings.liqpay_public_key else cfg.get('LIQPAY_SANDBOX', True)
+
     return LiqPayService(
-        public_key=cfg.get('LIQPAY_PUBLIC_KEY', ''),
-        private_key=cfg.get('LIQPAY_PRIVATE_KEY', ''),
-        sandbox=cfg.get('LIQPAY_SANDBOX', True),
+        public_key=public_key,
+        private_key=private_key,
+        sandbox=sandbox,
     )
