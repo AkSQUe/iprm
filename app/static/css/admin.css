@@ -139,8 +139,9 @@
 }
 
 .btn-admin--sm {
-  padding: 4px 14px;
+  padding: 5px 14px;
   font-size: 13px;
+  line-height: 1;
 }
 
 /* ========== TABLE ========== */

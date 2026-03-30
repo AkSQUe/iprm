@@ -116,8 +116,9 @@
 }
 
 .btn-admin--sm {
-  padding: 4px 14px;
+  padding: 5px 14px;
   font-size: 0.8125rem;
+  line-height: 1;
 }
 
 .btn-admin:focus-visible {
