@@ -127,6 +127,28 @@
       </div>
     </div>
 
+    <!-- Navigation sections -->
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Навігація сайту</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            {{ form.show_labs(id="show_labs") }}
+            <label for="show_labs">Показувати розділ "Лабораторії" у навігації</label>
+          </div>
+        </div>
+
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            {{ form.show_clinics(id="show_clinics") }}
+            <label for="show_clinics">Показувати розділ "Клініки" у навігації</label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <!-- Actions -->
     <div class="admin-form__actions">
       <a href="{{ url_for('admin.events_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>

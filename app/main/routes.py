@@ -10,6 +10,11 @@ from app.models.trainer import Trainer
 
 @main_bp.route('/')
 def index():
+    return redirect(url_for('courses.course_list'))
+
+
+@main_bp.route('/labs')
+def labs():
     events = Event.query.options(
         joinedload(Event.trainer),
     ).filter(

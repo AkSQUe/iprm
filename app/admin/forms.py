@@ -205,3 +205,7 @@ class SiteSettingsForm(FlaskForm):
         'Вебсайт',
         validators=[Optional(), Length(max=500)],
     )
+
+    # Секції навігації
+    show_labs = BooleanField('Показувати розділ "Лабораторії"', default=True)
+    show_clinics = BooleanField('Показувати розділ "Клініки"', default=True)

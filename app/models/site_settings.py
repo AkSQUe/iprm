@@ -42,6 +42,10 @@ class SiteSettings(TimestampMixin, db.Model):
     business_hours = db.Column(db.String(200), default='Пн-Пт: 09:00-18:00')
     website_url = db.Column(db.String(500), default='https://iprm.space')
 
+    # Секції навігації
+    show_labs = db.Column(db.Boolean, default=True)
+    show_clinics = db.Column(db.Boolean, default=True)
+
     @classmethod
     def get(cls):
         """Get or create singleton settings row."""

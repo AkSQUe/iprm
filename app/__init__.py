@@ -114,13 +114,16 @@ def create_app(config_name=None):
             version = get_assets_version(app.static_folder)
         return {'assets_version': version}
 
+    @app.before_request
+    def preload_site_settings():
+        from flask import g
+        from app.models.site_settings import SiteSettings
+        g.site_settings = SiteSettings.get()
+
     @app.context_processor
     def inject_site_settings():
         from flask import g
-        if not hasattr(g, '_site_settings'):
-            from app.models.site_settings import SiteSettings
-            g._site_settings = SiteSettings.get()
-        return {'site_settings': g._site_settings}
+        return {'site_settings': g.site_settings}
 
     @app.after_request
     def set_security_headers(response):
