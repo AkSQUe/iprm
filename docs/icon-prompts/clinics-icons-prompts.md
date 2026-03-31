@@ -15,7 +15,7 @@
 Індивідуальний підхід до кожного пацієнта з урахуванням індивідуальних біомаркерів.
 
 ```
-A floating frosted glass illustration of a human silhouette
+A single frosted glass composition of a human silhouette
 with a DNA helix gently wrapping around it, translucent glass material
 with soft refraction and subtle light diffusion inside. The silhouette is
 centered, simple and geometric. The DNA double helix curves around the
@@ -31,7 +31,7 @@ orange. Very subtle white specular highlight on the top edge. The glass
 has visible thickness and a delicate frost texture on the surface. No hard
 shadows, no reflections on surface, no extra decoration. The object floats freely with no shadow beneath. No water, no liquid, no
 ripples, no wet surface -- dry frosted glass only. Clean minimal
-composition. The overall mood is personalized medicine, individual care,
+composition, not an app icon. The overall mood is personalized medicine, individual care,
 precision. Centered composition, square format, 512x512px.
 ```
 
@@ -44,7 +44,7 @@ precision. Centered composition, square format, 512x512px.
 Протоколи лікування, підтверджені клінічними дослідженнями.
 
 ```
-A floating frosted glass illustration of a clipboard with a
+A single frosted glass composition of a clipboard with a
 checklist and a small microscope beside it, translucent glass material
 with soft refraction and subtle light diffusion inside. The clipboard has
 three checked items -- frosted checkmarks in small squares, evenly spaced.
@@ -75,7 +75,7 @@ Centered composition, square format, 512x512px.
 Фахівці з багаторічним досвідом у регенеративній та клітинній медицині.
 
 ```
-A floating frosted glass illustration of a graduation cap
+A single frosted glass composition of a graduation cap
 resting on top of a medical cross, with two small abstract person
 silhouettes standing on either side, translucent glass material with soft
 refraction and subtle light diffusion inside. The graduation cap is tilted
