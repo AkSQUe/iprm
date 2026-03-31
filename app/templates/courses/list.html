@@ -17,6 +17,10 @@
 </script>
 {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}?v={{ assets_version }}">
+{% endblock %}
+
 {% block content %}
 <div class="apple-page">
 
@@ -74,35 +78,45 @@
       <p class="iprm-section__subtitle">Розклад найближчих заходів інституту</p>
 
       {% if events %}
-      <div class="admin-table-wrap">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Курс</th>
-              <th>Формат</th>
-              <th>Дата</th>
-              <th>Ціна</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for event in events %}
-            <tr>
-              <td><a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}">{{ event.title }}</a></td>
-              <td>{{ event.format_label if event.event_format else '-' }}</td>
-              <td>{{ event.start_date.strftime('%d.%m.%Y') if event.start_date else 'TBD' }}</td>
-              <td>{% if event.price and event.price > 0 %}{{ event.price | int }} &#8372;{% else %}Безкоштовно{% endif %}</td>
-              <td>
-                {% if event.is_registration_open %}
-                <a href="{{ url_for('registration.register', event_id=event.id) }}" class="iprm-btn iprm-btn--primary iprm-btn--sm">Реєстрація</a>
-                {% else %}
-                <span class="badge badge--draft">Реєстрацію закрито</span>
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="iprm-schedule">
+        {% for event in events %}
+        <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-schedule__item apple-reveal{% if event.status == 'completed' %} iprm-schedule__item--past{% endif %}">
+          <div class="iprm-schedule__date">
+            {% if event.start_date %}
+            <span class="iprm-schedule__day">{{ event.start_date.strftime('%d') }}</span>
+            <span class="iprm-schedule__month">{{ event.start_date.strftime('%m.%Y') }}</span>
+            {% else %}
+            <span class="iprm-schedule__day">TBD</span>
+            {% endif %}
+          </div>
+          <div class="iprm-schedule__content">
+            <h3 class="iprm-schedule__title">{{ event.title }}</h3>
+            <div class="iprm-schedule__meta">
+              {% if event.event_format %}
+              <span class="iprm-schedule__tag iprm-schedule__tag--format">{{ event.format_label }}</span>
+              {% endif %}
+              {% if event.event_type %}
+              <span class="iprm-schedule__tag iprm-schedule__tag--type">{{ event.event_type_label }}</span>
+              {% endif %}
+              {% if event.cpd_points %}
+              <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ event.cpd_points }} балів БПР</span>
+              {% endif %}
+              {% if event.price and event.price > 0 %}
+              <span class="iprm-schedule__price">{{ event.price | int }} &#8372;</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="iprm-schedule__action">
+            {% if event.is_registration_open %}
+            <span class="iprm-btn iprm-btn--primary iprm-btn--sm">Реєстрація</span>
+            {% elif event.status == 'completed' %}
+            <span class="iprm-btn iprm-btn--sm iprm-btn--disabled">Завершено</span>
+            {% else %}
+            <span class="badge badge--draft">Реєстрацію закрито</span>
+            {% endif %}
+          </div>
+        </a>
+        {% endfor %}
       </div>
       {% else %}
       <div class="iprm-empty-state">

@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Графік курсів | ІПРМ — Apple Style Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --black: #1d1d1f;
+            --dark: #1a1a2e;
+            --gray-dark: #424245;
+            --gray: #86868b;
+            --gray-light: #d2d2d7;
+            --white: #fbfbfd;
+            --section-bg: #f5f5f7;
+            --accent: #7055a4;
+            --accent-hover: #5d4691;
+            --accent-light: #ede9f6;
+            --orange: #e8913a;
+            --orange-light: #fef0e6;
+            --green: #34c759;
+            --green-light: #d1fae5;
+            --red: #ef4444;
+            --border: rgba(0, 0, 0, 0.06);
+            --ease-interact: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --ease-reveal: cubic-bezier(0.28, 0.11, 0.32, 1);
+        }
+
+        html { scroll-behavior: smooth; font-size: 16px; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--black);
+            background: #fff;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ========== SECTION ========== */
+        .section {
+            padding: 100px 24px;
+        }
+        .section--gray { background: var(--section-bg); }
+        .section__inner {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* ========== SECTION HEADER ========== */
+        .section-header {
+            text-align: center;
+            max-width: 780px;
+            margin: 0 auto 64px;
+        }
+        .section-header h2 {
+            font-size: clamp(2rem, 5vw, 3.25rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.07;
+            margin-bottom: 16px;
+        }
+        .section-header p {
+            font-size: 0.9375rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, var(--accent) 0%, #9b59b6 40%, var(--orange) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ========== SCHEDULE TIMELINE ========== */
+        .schedule {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .schedule-item {
+            display: grid;
+            grid-template-columns: 120px 1fr auto;
+            gap: 24px;
+            align-items: center;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px 32px;
+            transition: transform 0.3s var(--ease-interact), box-shadow 0.3s var(--ease-interact);
+        }
+        .schedule-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Дата */
+        .schedule-item__date {
+            text-align: center;
+        }
+        .schedule-item__day {
+            display: block;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+        }
+        .schedule-item__month {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--gray);
+            margin-top: 4px;
+        }
+
+        /* Контент */
+        .schedule-item__content {
+            min-width: 0;
+        }
+        .schedule-item__title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--black);
+            margin-bottom: 8px;
+        }
+        .schedule-item__meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .schedule-item__tag {
+            display: inline-block;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 4px 12px;
+            border-radius: 980px;
+        }
+        .schedule-item__tag--format {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+        .schedule-item__tag--type {
+            background: var(--orange-light);
+            color: var(--orange);
+        }
+        .schedule-item__tag--cpd {
+            background: var(--green-light);
+            color: #059669;
+        }
+        .schedule-item__price {
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--gray);
+        }
+
+        /* CTA */
+        .schedule-item__action {
+            flex-shrink: 0;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border-radius: 980px;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s var(--ease-interact);
+        }
+        .btn--primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn--primary:hover {
+            background: var(--accent-hover);
+            transform: scale(1.02) translateY(-1px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+        }
+        .btn--secondary {
+            background: transparent;
+            color: var(--accent);
+            padding: 12px 0;
+        }
+        .btn--secondary::after { content: ' >'; }
+        .btn--secondary:hover { color: var(--accent-hover); }
+        .btn--sm {
+            padding: 8px 20px;
+            font-size: 0.8125rem;
+        }
+        .btn--disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* Status */
+        .schedule-item--past {
+            opacity: 0.5;
+        }
+        .schedule-item--past .schedule-item__day {
+            color: var(--gray);
+        }
+
+        /* Separator between months */
+        .schedule-separator {
+            text-align: center;
+            padding: 16px 0;
+        }
+        .schedule-separator__label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gray);
+            position: relative;
+            display: inline-block;
+            padding: 0 16px;
+        }
+        .schedule-separator__label::before,
+        .schedule-separator__label::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 80px;
+            height: 1px;
+            background: var(--border);
+        }
+        .schedule-separator__label::before { right: 100%; }
+        .schedule-separator__label::after { left: 100%; }
+
+        /* ========== FILTER TABS ========== */
+        .filter-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 48px;
+            flex-wrap: wrap;
+        }
+        .filter-tab {
+            padding: 8px 20px;
+            border-radius: 980px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s var(--ease-interact);
+            background: var(--section-bg);
+            color: var(--gray-dark);
+        }
+        .filter-tab:hover {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+        .filter-tab--active {
+            background: var(--accent);
+            color: #fff;
+        }
+        .filter-tab--active:hover {
+            background: var(--accent-hover);
+            color: #fff;
+        }
+
+        /* ========== EMPTY STATE ========== */
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+            color: var(--gray);
+            font-size: 0.9375rem;
+        }
+
+        /* ========== CTA SECTION ========== */
+        .cta {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .cta h2 {
+            font-size: clamp(2rem, 5vw, 3.25rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.07;
+            margin-bottom: 16px;
+        }
+        .cta p {
+            font-size: 17px;
+            color: var(--gray-dark);
+            line-height: 1.65;
+            margin-bottom: 32px;
+        }
+        .cta__actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            .section { padding: 64px 16px; }
+            .section-header { margin-bottom: 48px; }
+
+            .schedule-item {
+                grid-template-columns: 80px 1fr;
+                gap: 16px;
+                padding: 20px;
+            }
+            .schedule-item__action {
+                grid-column: 1 / -1;
+                text-align: center;
+            }
+            .schedule-item__day { font-size: 1.5rem; }
+            .schedule-item__title { font-size: 1rem; }
+            .schedule-item__meta { gap: 8px; }
+        }
+
+        @media (max-width: 480px) {
+            .schedule-item {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .schedule-item__date {
+                display: flex;
+                align-items: baseline;
+                justify-content: center;
+                gap: 8px;
+            }
+            .schedule-item__month { margin-top: 0; }
+            .schedule-item__meta { justify-content: center; }
+
+            .filter-tabs { gap: 6px; }
+            .filter-tab { padding: 6px 14px; font-size: 0.75rem; }
+        }
+
+        /* ========== REVEAL ANIMATION ========== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s var(--ease-reveal), transform 0.6s var(--ease-reveal);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== SCHEDULE SECTION ===== -->
+    <section class="section section--gray">
+        <div class="section__inner">
+            <div class="section-header reveal">
+                <h2>Графік <span class="gradient-text">курсів</span></h2>
+                <p>Розклад найближчих заходів інституту плазмотерапії та регенеративної медицини</p>
+            </div>
+
+            <!-- Filter tabs -->
+            <div class="filter-tabs reveal">
+                <button class="filter-tab filter-tab--active">Всі</button>
+                <button class="filter-tab">Онлайн</button>
+                <button class="filter-tab">Офлайн</button>
+                <button class="filter-tab">Майстер-класи</button>
+                <button class="filter-tab">Курси</button>
+            </div>
+
+            <!-- Schedule timeline -->
+            <div class="schedule">
+
+                <!-- Month separator -->
+                <div class="schedule-separator">
+                    <span class="schedule-separator__label">Квітень 2026</span>
+                </div>
+
+                <div class="schedule-item reveal">
+                    <div class="schedule-item__date">
+                        <span class="schedule-item__day">12</span>
+                        <span class="schedule-item__month">Квітень</span>
+                    </div>
+                    <div class="schedule-item__content">
+                        <h3 class="schedule-item__title">Плазмотерапія в практиці лікаря-гінеколога</h3>
+                        <div class="schedule-item__meta">
+                            <span class="schedule-item__tag schedule-item__tag--format">Онлайн</span>
+                            <span class="schedule-item__tag schedule-item__tag--type">Курс</span>
+                            <span class="schedule-item__tag schedule-item__tag--cpd">12 балів БПР</span>
+                            <span class="schedule-item__price">4 500 &#8372;</span>
+                        </div>
+                    </div>
+                    <div class="schedule-item__action">
+                        <a href="#" class="btn btn--primary btn--sm">Реєстрація</a>
+                    </div>
+                </div>
+
+                <div class="schedule-item reveal">
+                    <div class="schedule-item__date">
+                        <span class="schedule-item__day">19</span>
+                        <span class="schedule-item__month">Квітень</span>
+                    </div>
+                    <div class="schedule-item__content">
+                        <h3 class="schedule-item__title">Плазмотерапія в стоматології</h3>
+                        <div class="schedule-item__meta">
+                            <span class="schedule-item__tag schedule-item__tag--format">Офлайн</span>
+                            <span class="schedule-item__tag schedule-item__tag--type">Курс</span>
+                            <span class="schedule-item__tag schedule-item__tag--cpd">16 балів БПР</span>
+                            <span class="schedule-item__price">6 000 &#8372;</span>
+                        </div>
+                    </div>
+                    <div class="schedule-item__action">
+                        <a href="#" class="btn btn--primary btn--sm">Реєстрація</a>
+                    </div>
+                </div>
+
+                <div class="schedule-item reveal">
+                    <div class="schedule-item__date">
+                        <span class="schedule-item__day">26</span>
+                        <span class="schedule-item__month">Квітень</span>
+                    </div>
+                    <div class="schedule-item__content">
+                        <h3 class="schedule-item__title">PRP-терапія при тендінопатіях та остеоартрозі</h3>
+                        <div class="schedule-item__meta">
+                            <span class="schedule-item__tag schedule-item__tag--format">Онлайн</span>
+                            <span class="schedule-item__tag schedule-item__tag--type">Майстер-клас</span>
+                            <span class="schedule-item__tag schedule-item__tag--cpd">4 бали БПР</span>
+                            <span class="schedule-item__price">1 200 &#8372;</span>
+                        </div>
+                    </div>
+                    <div class="schedule-item__action">
+                        <a href="#" class="btn btn--primary btn--sm">Реєстрація</a>
+                    </div>
+                </div>
+
+                <!-- Month separator -->
+                <div class="schedule-separator">
+                    <span class="schedule-separator__label">Травень 2026</span>
+                </div>
+
+                <div class="schedule-item reveal">
+                    <div class="schedule-item__date">
+                        <span class="schedule-item__day">10</span>
+                        <span class="schedule-item__month">Травень</span>
+                    </div>
+                    <div class="schedule-item__content">
+                        <h3 class="schedule-item__title">Плазмотерапія в ортопедії та спортивній медицині</h3>
+                        <div class="schedule-item__meta">
+                            <span class="schedule-item__tag schedule-item__tag--format">Офлайн</span>
+                            <span class="schedule-item__tag schedule-item__tag--type">Курс</span>
+                            <span class="schedule-item__tag schedule-item__tag--cpd">16 балів БПР</span>
+                            <span class="schedule-item__price">6 000 &#8372;</span>
+                        </div>
+                    </div>
+                    <div class="schedule-item__action">
+                        <a href="#" class="btn btn--primary btn--sm">Реєстрація</a>
+                    </div>
+                </div>
+
+                <div class="schedule-item reveal">
+                    <div class="schedule-item__date">
+                        <span class="schedule-item__day">24</span>
+                        <span class="schedule-item__month">Травень</span>
+                    </div>
+                    <div class="schedule-item__content">
+                        <h3 class="schedule-item__title">Екзосоми в регенеративній дерматології</h3>
+                        <div class="schedule-item__meta">
+                            <span class="schedule-item__tag schedule-item__tag--format">Онлайн</span>
+                            <span class="schedule-item__tag schedule-item__tag--type">Майстер-клас</span>
+                            <span class="schedule-item__tag schedule-item__tag--cpd">4 бали БПР</span>
+                            <span class="schedule-item__price">1 500 &#8372;</span>
+                        </div>
+                    </div>
+                    <div class="schedule-item__action">
+                        <a href="#" class="btn btn--primary btn--sm">Реєстрація</a>
+                    </div>
+                </div>
+
+                <!-- Past event example -->
+                <div class="schedule-separator">
+                    <span class="schedule-separator__label">Березень 2026 (минулі)</span>
+                </div>
+
+                <div class="schedule-item schedule-item--past reveal">
+                    <div class="schedule-item__date">
+                        <span class="schedule-item__day">15</span>
+                        <span class="schedule-item__month">Березень</span>
+                    </div>
+                    <div class="schedule-item__content">
+                        <h3 class="schedule-item__title">Основи плазмотерапії для сімейного лікаря</h3>
+                        <div class="schedule-item__meta">
+                            <span class="schedule-item__tag schedule-item__tag--format">Онлайн</span>
+                            <span class="schedule-item__tag schedule-item__tag--type">Курс</span>
+                            <span class="schedule-item__tag schedule-item__tag--cpd">8 балів БПР</span>
+                        </div>
+                    </div>
+                    <div class="schedule-item__action">
+                        <span class="btn btn--sm btn--disabled">Завершено</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== CTA ===== -->
+    <section class="section">
+        <div class="section__inner">
+            <div class="cta reveal">
+                <h2>Не знайшли<br>потрібний <span class="gradient-text">курс?</span></h2>
+                <p>Залиште заявку і ми повідомимо вас, коли з'явиться курс за вашою спеціальністю</p>
+                <div class="cta__actions">
+                    <a href="#" class="btn btn--primary">Залишити заявку</a>
+                    <a href="#" class="btn btn--secondary">Всі курси</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        var els = document.querySelectorAll('.reveal');
+        var obs = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        els.forEach(function (el) { obs.observe(el); });
+    </script>
+</body>
+</html>
