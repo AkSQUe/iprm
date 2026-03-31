@@ -73,9 +73,9 @@
             <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" data-confirm="{{ 'Зняти адмін-повноваження?' if user.is_admin else 'Надати адмін-повноваження?' }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               {% if user.is_admin %}
-                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Зняти адмін</button>
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm"><span class="material-symbols-rounded">remove_moderator</span> Зняти адмін</button>
               {% else %}
-                <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Зробити адміном</button>
+                <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm"><span class="material-symbols-rounded">add_moderator</span> Зробити адміном</button>
               {% endif %}
             </form>
             {% else %}
@@ -89,6 +89,7 @@
     </div>
     {% else %}
     <div class="admin-empty">
+      <span class="material-symbols-rounded admin-empty__icon">group</span>
       <h3 class="admin-empty__title">Користувачів ще немає</h3>
     </div>
     {% endif %}

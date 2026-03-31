@@ -24,12 +24,13 @@
       <p class="admin-hero__subtitle">Управління заходами інституту</p>
     </div>
     <div class="admin-hero__actions">
-      <a href="{{ url_for('admin.event_create') }}" class="btn-admin btn-admin--primary">+ Додати захід</a>
-      <a href="{{ url_for('admin.events_export') }}" class="btn-admin btn-admin--secondary">Експорт XLSX</a>
+      <a href="{{ url_for('admin.event_create') }}" class="btn-admin btn-admin--primary"><span class="material-symbols-rounded">add</span> Додати захід</a>
+      <a href="{{ url_for('admin.events_export') }}" class="btn-admin btn-admin--secondary"><span class="material-symbols-rounded">download</span> Експорт XLSX</a>
       <form method="POST" action="{{ url_for('admin.events_import') }}" enctype="multipart/form-data" class="admin-import-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label class="btn-admin btn-admin--success admin-import-btn">
           <input type="file" name="file" accept=".xlsx" class="admin-file-input">
+          <span class="material-symbols-rounded">upload</span>
           <span>Імпорт XLSX</span>
         </label>
       </form>
@@ -67,11 +68,11 @@
         </td>
         <td>
           <div class="admin-table__actions">
-            <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm" target="_blank" rel="noopener noreferrer">Перегляд</a>
-            <a href="{{ url_for('admin.event_edit', event_id=event.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Редагувати</a>
+            <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm" target="_blank" rel="noopener noreferrer"><span class="material-symbols-rounded">visibility</span></a>
+            <a href="{{ url_for('admin.event_edit', event_id=event.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">edit</span></a>
             <form method="POST" action="{{ url_for('admin.event_delete', event_id=event.id) }}" data-confirm="Видалити захід?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm"><span class="material-symbols-rounded">delete</span></button>
             </form>
           </div>
         </td>
@@ -82,6 +83,7 @@
   </div>
   {% else %}
   <div class="admin-empty">
+    <span class="material-symbols-rounded admin-empty__icon">event</span>
     <h3 class="admin-empty__title">Заходів ще немає</h3>
     <p>Створіть перший захід натиснувши кнопку вище</p>
   </div>

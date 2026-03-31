@@ -24,7 +24,7 @@
       <p class="admin-hero__subtitle">Управління тренерами інституту</p>
     </div>
     <div class="admin-hero__actions">
-      <a href="{{ url_for('admin.trainer_create') }}" class="btn-admin btn-admin--primary">+ Додати тренера</a>
+      <a href="{{ url_for('admin.trainer_create') }}" class="btn-admin btn-admin--primary"><span class="material-symbols-rounded">add</span> Додати тренера</a>
     </div>
   </div>
 
@@ -57,10 +57,10 @@
         </td>
         <td>
           <div class="admin-table__actions">
-            <a href="{{ url_for('admin.trainer_edit', trainer_id=trainer.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Редагувати</a>
+            <a href="{{ url_for('admin.trainer_edit', trainer_id=trainer.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">edit</span></a>
             <form method="POST" action="{{ url_for('admin.trainer_delete', trainer_id=trainer.id) }}" data-confirm="Видалити тренера?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm"><span class="material-symbols-rounded">delete</span></button>
             </form>
           </div>
         </td>
@@ -71,6 +71,7 @@
   </div>
   {% else %}
   <div class="admin-empty">
+    <span class="material-symbols-rounded admin-empty__icon">school</span>
     <h3 class="admin-empty__title">Тренерів ще немає</h3>
     <p>Додайте першого тренера натиснувши кнопку вище</p>
   </div>

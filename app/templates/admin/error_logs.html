@@ -70,9 +70,9 @@
         <option value="90"{% if filters.days == 90 %} selected{% endif %}>90 днів</option>
         <option value="0"{% if filters.days == 0 %} selected{% endif %}>За весь час</option>
       </select>
-      <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Фільтрувати</button>
+      <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">filter_list</span> Фільтрувати</button>
       {% if filters.error_code or filters.resolved %}
-      <a href="{{ url_for('admin.error_logs') }}" class="btn-admin btn-admin--sm">Скинути</a>
+      <a href="{{ url_for('admin.error_logs') }}" class="btn-admin btn-admin--sm"><span class="material-symbols-rounded">clear</span> Скинути</a>
       {% endif %}
     </form>
   </div>

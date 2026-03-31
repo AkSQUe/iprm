@@ -23,7 +23,7 @@
       <p class="admin-hero__subtitle">{{ event.title }}</p>
     </div>
     <div class="admin-hero__actions">
-      <a href="{{ url_for('admin.events_list') }}" class="btn-admin btn-admin--secondary">Назад до заходів</a>
+      <a href="{{ url_for('admin.events_list') }}" class="btn-admin btn-admin--secondary"><span class="material-symbols-rounded">arrow_back</span> Назад до заходів</a>
     </div>
   </div>
 
@@ -67,21 +67,21 @@
             <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="status" value="confirmed">
-              <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Підтвердити</button>
+              <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm" title="Підтвердити"><span class="material-symbols-rounded">check</span></button>
             </form>
             {% endif %}
             {% if reg.status in ('confirmed', 'pending') and not reg.attended %}
             <form method="POST" action="{{ url_for('admin.registration_attendance', reg_id=reg.id) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="cpd_points" value="{{ event.cpd_points or 0 }}">
-              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">БПР</button>
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" title="Безперервний професійний розвиток"><span class="material-symbols-rounded">verified</span></button>
             </form>
             {% endif %}
             {% if reg.status != 'cancelled' %}
             <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}" data-confirm="Скасувати реєстрацію?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="status" value="cancelled">
-              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">X</button>
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" title="Скасувати"><span class="material-symbols-rounded">close</span></button>
             </form>
             {% endif %}
           </div>
@@ -93,6 +93,7 @@
   </div>
   {% else %}
   <div class="admin-empty">
+    <span class="material-symbols-rounded admin-empty__icon">how_to_reg</span>
     <h3 class="admin-empty__title">Реєстрацій ще немає</h3>
     <p>Учасники зможуть реєструватися на опубліковані заходи</p>
   </div>

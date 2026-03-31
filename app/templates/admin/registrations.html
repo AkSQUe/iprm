@@ -74,9 +74,9 @@
             <option value="{{ event.id }}"{% if filters.event_id == event.id %} selected{% endif %}>{{ event.title }}</option>
           {% endfor %}
         </select>
-        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Фільтрувати</button>
+        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">filter_list</span> Фільтрувати</button>
         {% if filters.status or filters.payment or filters.event_id %}
-          <a href="{{ url_for('admin.registrations_all') }}" class="btn-admin btn-admin--sm">Скинути</a>
+          <a href="{{ url_for('admin.registrations_all') }}" class="btn-admin btn-admin--sm"><span class="material-symbols-rounded">clear</span> Скинути</a>
         {% endif %}
       </form>
     </div>
@@ -133,7 +133,7 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="status" value="confirmed">
                 <input type="hidden" name="next" value="registrations_all">
-                <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Підтвердити</button>
+                <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm" title="Підтвердити"><span class="material-symbols-rounded">check</span></button>
               </form>
               {% endif %}
               {% if reg.status in ('confirmed', 'pending') and not reg.attended %}
@@ -141,7 +141,7 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="cpd_points" value="{{ reg.event.cpd_points or 0 }}">
                 <input type="hidden" name="next" value="registrations_all">
-                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">БПР</button>
+                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" title="Безперервний професійний розвиток"><span class="material-symbols-rounded">verified</span></button>
               </form>
               {% endif %}
               {% if reg.status != 'cancelled' %}
@@ -149,7 +149,7 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="status" value="cancelled">
                 <input type="hidden" name="next" value="registrations_all">
-                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">X</button>
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" title="Скасувати"><span class="material-symbols-rounded">close</span></button>
               </form>
               {% endif %}
             </div>
@@ -161,6 +161,7 @@
     </div>
     {% else %}
     <div class="admin-empty">
+      <span class="material-symbols-rounded admin-empty__icon">how_to_reg</span>
       <h3 class="admin-empty__title">Реєстрацій не знайдено</h3>
       {% if filters.status or filters.payment or filters.event_id %}
         <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.registrations_all') }}">скинути їх</a></p>
