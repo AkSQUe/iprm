@@ -152,6 +152,42 @@
     </div>
   </section>
 
+  <!-- ===== DEPARTMENTS ===== -->
+  <section class="iprm-section apple-section-gray" aria-labelledby="departments-title">
+    <div class="iprm-section__inner">
+      <h2 id="departments-title" class="iprm-section__title">Відділення <span class="apple-gradient-text">інституту</span></h2>
+      <p class="iprm-section__subtitle">Курси проводяться спеціалістами наших відділень та лабораторій</p>
+      <div class="iprm-departments-grid">
+        <div class="iprm-departments-card apple-reveal">
+          <h3>Відділення PRP-, плазмотерапії та терапії екзосомами</h3>
+          <p>Сучасні методи плазмотерапії для відновлення тканин та лікування запальних процесів.</p>
+        </div>
+        <div class="iprm-departments-card apple-reveal">
+          <h3>Відділення терапії мезенхімальними стовбуровими клітинами</h3>
+          <p>Клітинні технології для регенерації хрящової, кісткової тканини та шкіри.</p>
+        </div>
+        <div class="iprm-departments-card apple-reveal">
+          <h3>Відділення персоніфікованої інфузійної терапії</h3>
+          <p>Індивідуальні інфузійні програми для підтримки здоров'я та відновлення.</p>
+        </div>
+      </div>
+      <div class="apple-section-cta">
+        <a href="{{ url_for('clinics.clinic_list') }}" class="apple-btn apple-btn--secondary">Більше про клініку</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== APPOINTMENT CTA ===== -->
+  <section class="iprm-section" aria-labelledby="courses-appointment-title">
+    <div class="iprm-section__inner">
+      <div class="iprm-appointment apple-reveal">
+        <h2 id="courses-appointment-title">Запис на <span class="apple-gradient-text">прийом</span></h2>
+        <p>Прийом пацієнтів фахівцями інституту здійснюється за попереднім записом</p>
+        <a href="{{ url_for('main.contact') }}" class="iprm-appointment__btn">Записатися на прийом</a>
+      </div>
+    </div>
+  </section>
+
 </div>
 {% endblock %}
 

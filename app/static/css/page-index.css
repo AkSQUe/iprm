@@ -622,6 +622,73 @@
   }
 }
 
+/* ========== LAB DETAIL SECTIONS ========== */
+
+.iprm-lab-tag {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--iprm-nav-active);
+  margin-bottom: 12px;
+}
+
+.iprm-lab-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.iprm-lab-list li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--apple-gray-dark);
+}
+
+.iprm-lab-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--iprm-nav-active), var(--apple-orange));
+}
+
+.iprm-lab-impact {
+  max-width: 800px;
+  margin: 48px auto 0;
+  text-align: center;
+}
+
+.iprm-lab-impact h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--apple-black);
+  margin-bottom: 16px;
+}
+
+.iprm-lab-impact p {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--apple-gray-dark);
+}
+
+.iprm-lab-impact__note {
+  margin-top: 16px;
+  font-size: 0.9375rem;
+  color: var(--apple-gray);
+  font-style: italic;
+}
+
 @media (max-width: 768px) {
   .page-index .iprm-hero {
     min-height: 80vh;

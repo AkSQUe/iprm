@@ -317,7 +317,48 @@
   }
 }
 
+/* ========== EXPECTED RESULTS ========== */
+
+.iprm-results-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.iprm-results-card {
+  background: var(--apple-section-bg);
+  border-radius: var(--iprm-radius);
+  padding: 32px 28px;
+  text-align: center;
+}
+
+.iprm-results-card h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--apple-black);
+  margin-bottom: 8px;
+}
+
+.iprm-results-card p {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--apple-gray-dark);
+}
+
+@media (max-width: 1024px) {
+  .iprm-results-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
+  .iprm-results-grid {
+    grid-template-columns: 1fr;
+  }
+
   .iprm-clinic-cards {
     grid-template-columns: 1fr;
   }
