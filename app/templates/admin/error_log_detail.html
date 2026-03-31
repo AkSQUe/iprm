@@ -20,15 +20,15 @@
         <span class="admin-breadcrumb__sep">/</span>
         <span class="admin-breadcrumb__current">#{{ error_log.id }}</span>
       </div>
-      <h1 class="admin-hero__title">
+      <h1 class="admin-hero__title">{{ error_log.error_type }}</h1>
+      <p class="admin-hero__subtitle">
         {% if error_log.error_code >= 500 %}
         <span class="badge badge--danger">{{ error_log.error_code }}</span>
         {% else %}
         <span class="badge badge--warning">{{ error_log.error_code }}</span>
         {% endif %}
-        {{ error_log.error_type }}
-      </h1>
-      <p class="admin-hero__subtitle">{{ error_log.created_at.strftime('%d.%m.%Y %H:%M:%S') if error_log.created_at else '' }}</p>
+        {{ error_log.created_at.strftime('%d.%m.%Y %H:%M:%S') if error_log.created_at else '' }}
+      </p>
     </div>
     <div class="admin-hero__actions">
       {% if not error_log.resolved %}
@@ -63,23 +63,23 @@
       <div class="admin-form__grid">
         <div class="form-group">
           <label>Код</label>
-          <div class="form-input" class="admin-field-readonly">{{ error_log.error_code }}</div>
+          <div class="form-input admin-field-readonly">{{ error_log.error_code }}</div>
         </div>
         <div class="form-group">
           <label>Тип</label>
-          <div class="form-input" class="admin-field-readonly">{{ error_log.error_type }}</div>
+          <div class="form-input admin-field-readonly">{{ error_log.error_type }}</div>
         </div>
         <div class="form-group">
           <label>Метод</label>
-          <div class="form-input" class="admin-field-readonly">{{ error_log.method or '-' }}</div>
+          <div class="form-input admin-field-readonly">{{ error_log.method or '-' }}</div>
         </div>
         <div class="form-group">
           <label>IP</label>
-          <div class="form-input" class="admin-field-readonly">{{ error_log.ip_address or '-' }}</div>
+          <div class="form-input admin-field-readonly">{{ error_log.ip_address or '-' }}</div>
         </div>
         <div class="form-group admin-form__full">
           <label>URL</label>
-          <div class="form-input" class="admin-field-readonly">{{ error_log.url or '-' }}</div>
+          <div class="form-input admin-field-readonly">{{ error_log.url or '-' }}</div>
         </div>
         <div class="form-group admin-form__full">
           <label>Повідомлення</label>

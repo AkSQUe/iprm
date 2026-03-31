@@ -22,9 +22,9 @@
       <h1 class="admin-hero__title">Реєстрації</h1>
       <p class="admin-hero__subtitle">{{ event.title }}</p>
     </div>
-    <a href="{{ url_for('admin.dashboard') }}" class="btn-admin btn-admin--secondary">
-      <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Назад
-    </a>
+    <div class="admin-hero__actions">
+      <a href="{{ url_for('admin.events_list') }}" class="btn-admin btn-admin--secondary">Назад до заходів</a>
+    </div>
   </div>
 
   {% include 'partials/flash_messages.html' %}

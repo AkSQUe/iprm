@@ -13,32 +13,34 @@
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
   <div class="admin-layout">
-    {% include 'partials/flash_messages.html' %}
-
-    <nav class="admin-breadcrumb">
-      <a href="{{ url_for('admin.integrations') }}" class="admin-breadcrumb__link">Інтеграції</a>
-      <span class="admin-breadcrumb__sep">/</span>
-      <span class="admin-breadcrumb__current">LiqPay</span>
-    </nav>
-
     <div class="admin-hero">
       <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.integrations') }}" class="admin-breadcrumb__link">Інтеграції</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">LiqPay</span>
+        </div>
         <h1 class="admin-hero__title">LiqPay</h1>
-        <p class="admin-hero__subtitle">Платіжна інтеграція</p>
+        <p class="admin-hero__subtitle">
+          Платіжна інтеграція
+          {% if cfg.is_configured %}
+            <span class="badge badge--active">Налаштовано</span>
+          {% else %}
+            <span class="badge badge--draft">Не налаштовано</span>
+          {% endif %}
+          {% if cfg.sandbox %}
+            <span class="badge badge--published">Sandbox</span>
+          {% else %}
+            <span class="badge badge--active">Production</span>
+          {% endif %}
+        </p>
       </div>
-      <div class="liqpay-status-badges">
-        {% if cfg.is_configured %}
-          <span class="badge badge--active">Налаштовано</span>
-        {% else %}
-          <span class="badge badge--draft">Не налаштовано</span>
-        {% endif %}
-        {% if cfg.sandbox %}
-          <span class="badge badge--published">Sandbox</span>
-        {% else %}
-          <span class="badge badge--active">Production</span>
-        {% endif %}
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.integrations') }}" class="btn-admin btn-admin--secondary">Назад до інтеграцій</a>
       </div>
     </div>
+
+    {% include 'partials/flash_messages.html' %}
 
     <!-- Statistics -->
     <div class="admin-stat-cards">
@@ -111,12 +113,12 @@
                    placeholder="sandbox_000000000000000000000000" autocomplete="off">
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-checkbox">
-            <input type="checkbox" name="sandbox" checked>
-            Sandbox (тестовий режим)
-          </label>
-          <p class="form-hint">Вимкніть для прийому реальних платежів. Ключі зберігаються у .env файлі на сервері.</p>
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            <input type="checkbox" name="sandbox" id="sandbox" checked>
+            <label for="sandbox">Sandbox (тестовий режим)</label>
+          </div>
+          <p class="form-hint">Вимкніть для прийому реальних платежів. Ключі зберігаються у базі даних (SiteSettings).</p>
         </div>
         <div class="admin-form__actions">
           <button type="submit" class="btn-admin btn-admin--primary" onclick="return confirm('Зберегти нові ключі LiqPay?')">Зберегти ключі</button>

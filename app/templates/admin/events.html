@@ -13,8 +13,6 @@
   {% include 'admin/partials/_sidebar.html' %}
   <div class="admin-layout">
 
-  {% include 'partials/flash_messages.html' %}
-
   <div class="admin-hero">
     <div>
       <div class="admin-breadcrumb">
@@ -26,8 +24,8 @@
       <p class="admin-hero__subtitle">Управління заходами інституту</p>
     </div>
     <div class="admin-hero__actions">
-      <a href="{{ url_for('admin.event_create') }}" class="btn-admin btn-admin--secondary">+ Додати захід</a>
-      <a href="{{ url_for('admin.events_export') }}" class="btn-admin btn-admin--primary">Експорт XLSX</a>
+      <a href="{{ url_for('admin.event_create') }}" class="btn-admin btn-admin--primary">+ Додати захід</a>
+      <a href="{{ url_for('admin.events_export') }}" class="btn-admin btn-admin--secondary">Експорт XLSX</a>
       <form method="POST" action="{{ url_for('admin.events_import') }}" enctype="multipart/form-data" class="admin-import-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label class="btn-admin btn-admin--success admin-import-btn">
@@ -37,6 +35,8 @@
       </form>
     </div>
   </div>
+
+  {% include 'partials/flash_messages.html' %}
 
   {% if events %}
   <div class="admin-table-wrap">

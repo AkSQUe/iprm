@@ -4,8 +4,13 @@
 /* ========== SIDEBAR ========== */
 
 .admin-sidebar {
+  width: 240px;
   background: var(--iprm-white);
   border-right: 1px solid var(--iprm-border);
+  position: sticky;
+  top: 52px;
+  height: calc(100vh - 52px);
+  overflow-y: auto;
 }
 
 .admin-sidebar__brand {
@@ -20,6 +25,10 @@
   letter-spacing: -0.01em;
 }
 
+.admin-sidebar__group {
+  padding: 0 12px;
+}
+
 .admin-sidebar__group-title {
   font-size: 0.6875rem;
   font-weight: 600;
@@ -29,6 +38,10 @@
 }
 
 .admin-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
   font-size: 0.8125rem;
   font-weight: 400;
   color: var(--apple-gray-dark);
@@ -56,6 +69,7 @@
 
 .admin-layout {
   padding: 40px 48px;
+  max-width: 960px;
   background: var(--apple-section-bg);
 }
 
@@ -81,6 +95,7 @@
 /* ========== BUTTONS ========== */
 
 .btn-admin {
+  padding: 10px 24px;
   border-radius: var(--iprm-radius-pill);
   font-weight: 500;
   font-size: 0.875rem;
@@ -137,7 +152,7 @@
 }
 
 .btn-admin--sm {
-  padding: 5px 14px;
+  padding: 6px 16px;
   font-size: 0.8125rem;
   line-height: 1;
 }
@@ -151,8 +166,9 @@
 
 .admin-hero__actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
+  flex-shrink: 0;
   flex-wrap: wrap;
 }
 
@@ -233,7 +249,8 @@
 }
 
 /* Select dropdown */
-.admin-form select.form-input {
+.admin-form select.form-input,
+.admin-filter-form select.form-input {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
@@ -371,6 +388,7 @@
 /* ========== BREADCRUMB ========== */
 
 .admin-breadcrumb {
+  font-size: 0.8125rem;
   margin-bottom: 8px;
 }
 
@@ -444,6 +462,16 @@
   background: var(--apple-section-bg);
   min-height: 200px;
   transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
+}
+
+.admin-dropzone__remove {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.admin-dropzone__preview--active:hover .admin-dropzone__remove {
+  opacity: 1;
 }
 
 .admin-dropzone:hover,
@@ -485,6 +513,31 @@
   border-color: rgba(239, 68, 68, 0.2);
 }
 
+/* ========== ADD BLOCK BUTTON ========== */
+
+#add-program-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  border: 2px dashed var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  background: none;
+  color: var(--apple-gray);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#add-program-block:hover {
+  border-color: var(--iprm-nav-active);
+  color: var(--iprm-nav-active);
+  background: var(--iprm-accent-light);
+}
+
 /* ========== TODO LIST ========== */
 
 .admin-todo li {
@@ -518,6 +571,33 @@
 
 .alert {
   border-radius: var(--iprm-radius-sm);
+  padding: 16px 20px;
+  font-size: 0.875rem;
+  margin-bottom: 24px;
+}
+
+.alert--success {
+  background: var(--iprm-badge-active-bg);
+  color: var(--iprm-badge-active-text);
+  border: 1px solid rgba(52, 199, 89, 0.2);
+}
+
+/* ========== QUEUE ALERT ========== */
+
+.admin-queue-alert {
+  margin-bottom: 24px;
+}
+
+.admin-queue-alert--warning {
+  border-color: var(--iprm-warning-border);
+}
+
+.admin-queue-alert--error {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.admin-queue-alert__title--error {
+  color: var(--iprm-error);
 }
 
 /* ========== RESPONSIVE ========== */
@@ -530,6 +610,9 @@
 
 @media (max-width: 768px) {
   .admin-sidebar {
+    width: 100%;
+    position: static;
+    height: auto;
     border-bottom: 1px solid var(--iprm-border);
     border-right: none;
   }

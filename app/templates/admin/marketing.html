@@ -12,7 +12,6 @@
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
   <div class="admin-layout">
-    {% include 'partials/flash_messages.html' %}
     <div class="admin-hero">
       <div>
         <div class="admin-breadcrumb">
@@ -24,6 +23,8 @@
         <p class="admin-hero__subtitle">Розсилки, нагадування та аналітика</p>
       </div>
     </div>
+
+    {% include 'partials/flash_messages.html' %}
 
     <div class="form-section admin-form__section">
       <h3 class="admin-form__section-title">TODO: Email-розсилки</h3>

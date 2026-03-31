@@ -24,7 +24,9 @@
       <h1 class="admin-hero__title">Шаблони листів</h1>
       <p class="admin-hero__subtitle">Попередній перегляд email-шаблонів</p>
     </div>
-    <a href="{{ url_for('admin.notifications') }}" class="btn-admin btn-admin--secondary">Назад до сповіщень</a>
+    <div class="admin-hero__actions">
+      <a href="{{ url_for('admin.notifications') }}" class="btn-admin btn-admin--secondary">Назад до сповіщень</a>
+    </div>
   </div>
 
   <div class="template-tabs" role="tablist">
@@ -53,6 +55,6 @@
 </div>
 {% endblock %}
 
-{% block molecular_js %}
+{% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/admin-notifications-templates.js') }}?v={{ assets_version }}"></script>
 {% endblock %}

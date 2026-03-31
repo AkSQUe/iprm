@@ -13,8 +13,6 @@
   {% include 'admin/partials/_sidebar.html' %}
   <div class="admin-layout">
 
-  {% include 'partials/flash_messages.html' %}
-
   <div class="admin-hero">
     <div>
       <div class="admin-breadcrumb">
@@ -25,8 +23,12 @@
       <h1 class="admin-hero__title">Тренери</h1>
       <p class="admin-hero__subtitle">Управління тренерами інституту</p>
     </div>
-    <a href="{{ url_for('admin.trainer_create') }}" class="btn-admin btn-admin--primary">+ Додати тренера</a>
+    <div class="admin-hero__actions">
+      <a href="{{ url_for('admin.trainer_create') }}" class="btn-admin btn-admin--primary">+ Додати тренера</a>
+    </div>
   </div>
+
+  {% include 'partials/flash_messages.html' %}
 
   {% if trainers %}
   <div class="admin-table-wrap">
