@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редагування заходу | ІПРМ Admin — Apple Style Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --black: #1d1d1f;
+            --gray-dark: #424245;
+            --gray: #86868b;
+            --gray-light: #d2d2d7;
+            --white: #fff;
+            --bg: #f5f5f7;
+            --card-bg: #f5f5f7;
+            --border: rgba(0, 0, 0, 0.06);
+            --accent: #7055a4;
+            --accent-hover: #5d4691;
+            --accent-light: #ede9f6;
+            --error: #ef4444;
+            --error-bg: #fef2f2;
+            --success: #16a34a;
+            --radius: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --radius-pill: 980px;
+            --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        html { font-size: 16px; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--black);
+            background: var(--bg);
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+
+        /* ========== LAYOUT ========== */
+        .admin-shell {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ========== SIDEBAR ========== */
+        .sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            background: var(--white);
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .sidebar__brand {
+            padding: 0 20px 24px;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: -0.01em;
+        }
+        .sidebar__group {
+            margin-bottom: 24px;
+            padding: 0 12px;
+        }
+        .sidebar__group-title {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gray);
+            padding: 0 12px;
+            margin-bottom: 6px;
+        }
+        .sidebar__link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            font-size: 0.8125rem;
+            font-weight: 400;
+            color: var(--gray-dark);
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.2s var(--ease);
+        }
+        .sidebar__link:hover {
+            background: rgba(0, 0, 0, 0.04);
+            color: var(--black);
+        }
+        .sidebar__link--active {
+            background: var(--accent);
+            color: var(--white);
+            font-weight: 500;
+        }
+        .sidebar__link--active:hover {
+            background: var(--accent-hover);
+            color: var(--white);
+        }
+        .sidebar__icon {
+            width: 18px;
+            height: 18px;
+            opacity: 0.6;
+        }
+        .sidebar__link--active .sidebar__icon { opacity: 1; }
+
+        /* ========== MAIN CONTENT ========== */
+        .main {
+            flex: 1;
+            padding: 40px 48px;
+            max-width: 960px;
+        }
+
+        /* ========== PAGE HEADER ========== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+        }
+        .page-header__title {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--black);
+        }
+        .page-header__subtitle {
+            font-size: 0.9375rem;
+            color: var(--gray);
+            margin-top: 4px;
+        }
+        .page-header__actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        /* ========== BUTTONS ========== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border-radius: var(--radius-pill);
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s var(--ease);
+            font-family: inherit;
+        }
+        .btn--primary {
+            background: var(--accent);
+            color: var(--white);
+        }
+        .btn--primary:hover {
+            background: var(--accent-hover);
+            transform: scale(1.02) translateY(-1px);
+            box-shadow: 0 4px 16px rgba(112, 85, 164, 0.25);
+        }
+        .btn--primary:active { transform: scale(0.98); }
+        .btn--secondary {
+            background: var(--white);
+            color: var(--gray-dark);
+            border: 1px solid var(--border);
+        }
+        .btn--secondary:hover {
+            background: var(--card-bg);
+        }
+        .btn--danger {
+            background: var(--white);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .btn--danger:hover {
+            background: var(--error-bg);
+        }
+        .btn--sm {
+            padding: 6px 16px;
+            font-size: 0.8125rem;
+        }
+        .btn__arrow { font-size: 1rem; }
+
+        /* ========== FORM SECTIONS ========== */
+        .form-section {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+        .form-section__title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--black);
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .form-grid--full {
+            grid-column: 1 / -1;
+        }
+
+        /* ========== FORM CONTROLS ========== */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .form-label {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--black);
+        }
+        .form-label .required {
+            color: var(--accent);
+            margin-left: 2px;
+        }
+        .form-hint {
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+        .form-input {
+            padding: 10px 14px;
+            font-size: 0.9375rem;
+            font-family: inherit;
+            color: var(--black);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        .form-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+        .form-input::placeholder {
+            color: var(--gray-light);
+        }
+        select.form-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+        textarea.form-input {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Checkbox */
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+        }
+        .form-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .form-checkbox label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-dark);
+            cursor: pointer;
+        }
+
+        /* ========== IMAGE DROPZONE ========== */
+        .dropzone {
+            position: relative;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-md);
+            background: var(--bg);
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.2s, background 0.2s;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .dropzone:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+        .dropzone__prompt {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--gray);
+        }
+        .dropzone__prompt svg {
+            opacity: 0.4;
+        }
+        .dropzone__prompt span {
+            font-size: 0.8125rem;
+        }
+        .dropzone__prompt a {
+            color: var(--accent);
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        /* Dropzone with preview */
+        .dropzone--has-image {
+            border-style: solid;
+            border-color: transparent;
+        }
+        .dropzone--has-image img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: calc(var(--radius-md) - 2px);
+        }
+        .dropzone__remove {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            color: var(--white);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .dropzone--has-image:hover .dropzone__remove {
+            opacity: 1;
+        }
+
+        /* ========== PROGRAM BLOCKS ========== */
+        .program-block {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            margin-bottom: 12px;
+        }
+        .program-block__header {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .program-block__header input {
+            flex: 1;
+        }
+        .program-block__remove {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--white);
+            color: var(--gray);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .program-block__remove:hover {
+            background: var(--error-bg);
+            color: var(--error);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-add-block {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 14px;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
+            background: none;
+            color: var(--gray);
+            font-size: 0.875rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            justify-content: center;
+        }
+        .btn-add-block:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        /* ========== FORM ACTIONS (sticky bottom) ========== */
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding: 24px 0;
+            position: sticky;
+            bottom: 0;
+            background: linear-gradient(to top, var(--bg) 60%, transparent);
+            padding-bottom: 40px;
+        }
+
+        /* ========== BADGE ========== */
+        .badge {
+            display: inline-block;
+            padding: 3px 12px;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            border-radius: var(--radius-pill);
+        }
+        .badge--published {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        .badge--active {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .badge--draft {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        /* ========== BREADCRUMB ========== */
+        .breadcrumb {
+            display: flex;
+            gap: 8px;
+            font-size: 0.8125rem;
+            margin-bottom: 8px;
+        }
+        .breadcrumb a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .breadcrumb a:hover { color: var(--accent-hover); }
+        .breadcrumb__sep { color: var(--gray-light); }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 1024px) {
+            .main { padding: 32px 24px; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { padding: 24px 16px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .page-header { flex-direction: column; gap: 16px; }
+            .form-section { padding: 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-shell">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar__brand">ІПРМ Admin</div>
+
+            <div class="sidebar__group">
+                <div class="sidebar__group-title">Контент</div>
+                <a href="#" class="sidebar__link sidebar__link--active">
+                    <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    Заходи
+                </a>
+                <a href="#" class="sidebar__link">
+                    <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    Тренери
+                </a>
+            </div>
+
+            <div class="sidebar__group">
+                <div class="sidebar__group-title">Продажі</div>
+                <a href="#" class="sidebar__link">
+                    <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg>
+                    Реєстрації
+                </a>
+            </div>
+
+            <div class="sidebar__group">
+                <div class="sidebar__group-title">Система</div>
+                <a href="#" class="sidebar__link">
+                    <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                    Маркетинг
+                </a>
+                <a href="#" class="sidebar__link">
+                    <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>
+                    Сповіщення
+                </a>
+                <a href="#" class="sidebar__link">
+                    <svg class="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    Налаштування
+                </a>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main">
+
+            <!-- Page header -->
+            <div class="page-header">
+                <div>
+                    <div class="breadcrumb">
+                        <a href="#">Заходи</a>
+                        <span class="breadcrumb__sep">/</span>
+                        <span style="color: var(--gray);">Редагування</span>
+                    </div>
+                    <h1 class="page-header__title">Редагування заходу</h1>
+                    <p class="page-header__subtitle">Плазмотерапія в ортопедії, неврології та реабілітації <span class="badge badge--published">Опубліковано</span></p>
+                </div>
+                <div class="page-header__actions">
+                    <a href="#" class="btn btn--secondary">Назад до списку</a>
+                </div>
+            </div>
+
+            <!-- Section 1: Basic info -->
+            <div class="form-section">
+                <h3 class="form-section__title">Основна інформація</h3>
+                <div class="form-grid">
+                    <div class="form-group form-grid--full">
+                        <label class="form-label">Назва заходу <span class="required">*</span></label>
+                        <input type="text" class="form-input" value="Плазмотерапія в ортопедії, неврології та реабілітації">
+                    </div>
+                    <div class="form-group form-grid--full">
+                        <label class="form-label">Підзаголовок</label>
+                        <input type="text" class="form-input" value="Знімаємо біль і запалення, максимально відновлюємо рухливість">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Slug (URL) <span class="required">*</span></label>
+                        <input type="text" class="form-input" value="plazmoterapiya-v-ortopedii">
+                        <span class="form-hint">Автоматично генерується з назви</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Тип заходу <span class="required">*</span></label>
+                        <select class="form-input">
+                            <option>Семінар</option>
+                            <option>Вебінар</option>
+                            <option selected>Курс</option>
+                            <option>Майстер-клас</option>
+                            <option>Конференція</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Формат <span class="required">*</span></label>
+                        <select class="form-input">
+                            <option>Онлайн</option>
+                            <option selected>Офлайн</option>
+                            <option>Гібрид</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Статус <span class="required">*</span></label>
+                        <select class="form-input">
+                            <option>Чернетка</option>
+                            <option selected>Опубліковано</option>
+                            <option>Активний</option>
+                            <option>Завершено</option>
+                            <option>Скасовано</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Schedule & Price -->
+            <div class="form-section">
+                <h3 class="form-section__title">Розклад та вартість</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Дата початку <span class="required">*</span></label>
+                        <input type="datetime-local" class="form-input" value="2026-04-01T12:00">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Дата закінчення</label>
+                        <input type="datetime-local" class="form-input" value="2026-04-01T14:00">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ціна (UAH)</label>
+                        <input type="number" class="form-input" value="7500" min="0">
+                        <span class="form-hint">0 для безкоштовного заходу</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Макс. учасників</label>
+                        <input type="number" class="form-input" placeholder="Без обмежень">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Локація</label>
+                        <input type="text" class="form-input" placeholder="Київ, вул. ...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Посилання на онлайн</label>
+                        <input type="url" class="form-input" placeholder="https://zoom.us/j/...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Trainer -->
+            <div class="form-section">
+                <h3 class="form-section__title">Тренер та сертифікація</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Тренер</label>
+                        <select class="form-input">
+                            <option>--- Без тренера ---</option>
+                            <option selected>Абрамович Євген Олександрович</option>
+                            <option>Іваненко Марія Петрівна</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">CPD балів</label>
+                        <input type="number" class="form-input" value="16" min="0">
+                    </div>
+                    <div class="form-group form-grid--full">
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="featured">
+                            <label for="featured">Рекомендований захід</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Images -->
+            <div class="form-section">
+                <h3 class="form-section__title">Зображення</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Hero зображення</label>
+                        <div class="dropzone dropzone--has-image">
+                            <img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&h=300&fit=crop" alt="Hero">
+                            <button class="dropzone__remove">&times;</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Зображення картки</label>
+                        <div class="dropzone">
+                            <div class="dropzone__prompt">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                                <span>Перетягніть або <a href="#">оберіть файл</a></span>
+                                <span style="font-size: 0.6875rem; color: var(--gray-light);">PNG, JPG, WebP до 5 МБ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 5: Content -->
+            <div class="form-section">
+                <h3 class="form-section__title">Контент</h3>
+                <div class="form-grid">
+                    <div class="form-group form-grid--full">
+                        <label class="form-label">Короткий опис</label>
+                        <textarea class="form-input" rows="3" placeholder="Для карток (макс 500 символів)"></textarea>
+                    </div>
+                    <div class="form-group form-grid--full">
+                        <label class="form-label">Повний опис</label>
+                        <textarea class="form-input" rows="5" placeholder="Детальний опис заходу"></textarea>
+                    </div>
+                    <div class="form-group form-grid--full">
+                        <label class="form-label">Цільова аудиторія (Для кого)</label>
+                        <textarea class="form-input" rows="4">Збільшите свій прибуток за рахунок запропонованої натуральної процедури із вираженим терапевтичним ефектом
+Станете експертом у виборі пробірок, режимах центрифугування, техніках впливу на необхідні ділянки
+Дізнаєтесь про біомеханіку аутологічної плазми та її складових</textarea>
+                        <span class="form-hint">Кожен рядок стане окремою карткою на сторінці курсу</span>
+                    </div>
+                    <div class="form-group form-grid--full">
+                        <label class="form-label">Теги курсу</label>
+                        <textarea class="form-input" rows="3">Очні курси з практичними заняттями
+Онлайн курси з відеодемонстраціями
+Курси на платформі SYNTEGRUM</textarea>
+                        <span class="form-hint">Кожен рядок стане тегом на картці курсу у списку</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 6: Program Blocks -->
+            <div class="form-section">
+                <h3 class="form-section__title">Блоки програми курсу</h3>
+                <div class="program-block">
+                    <div class="form-group">
+                        <label class="form-label">Заголовок блоку <span class="required">*</span></label>
+                        <div class="program-block__header">
+                            <input type="text" class="form-input" value="Теоретична частина">
+                            <button class="program-block__remove">&times;</button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 12px;">
+                        <label class="form-label">Пункти програми</label>
+                        <textarea class="form-input" rows="3">Біомеханіка аутологічної плазми
+Покази та протипокази до PRP-терапії
+Огляд сучасних протоколів</textarea>
+                    </div>
+                </div>
+                <div class="program-block">
+                    <div class="form-group">
+                        <label class="form-label">Заголовок блоку <span class="required">*</span></label>
+                        <div class="program-block__header">
+                            <input type="text" class="form-input" value="Практична частина">
+                            <button class="program-block__remove">&times;</button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 12px;">
+                        <label class="form-label">Пункти програми</label>
+                        <textarea class="form-input" rows="3">Вибір пробірок та центрифугування
+Техніки ін'єкцій на моделях
+Постановка руки та відпрацювання</textarea>
+                    </div>
+                </div>
+                <button class="btn-add-block">+ Додати блок програми</button>
+            </div>
+
+            <!-- Actions -->
+            <div class="form-actions">
+                <a href="#" class="btn btn--danger btn--sm">Видалити захід</a>
+                <a href="#" class="btn btn--secondary">Скасувати</a>
+                <button class="btn btn--primary">
+                    <span class="btn__arrow">&#x2197;</span>
+                    Зберегти зміни
+                </button>
+            </div>
+
+        </main>
+    </div>
+</body>
+</html>
