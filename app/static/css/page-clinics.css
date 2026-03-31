@@ -164,7 +164,7 @@
   background: var(--iprm-white);
   border-radius: var(--iprm-radius);
   padding: 40px 32px;
-  padding-top: 56px;
+  padding-top: 72px;
   border: 1px solid var(--iprm-border);
   overflow: visible;
   transition: transform 0.3s var(--iprm-transition), box-shadow 0.3s var(--iprm-transition);
