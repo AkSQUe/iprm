@@ -264,6 +264,11 @@
   flex-shrink: 0;
 }
 
+.iprm-schedule__action .iprm-btn {
+  padding: 8px 24px;
+  font-size: 0.875rem;
+}
+
 /* ========== TRUST STATS ========== */
 
 .iprm-trust-stats {
@@ -294,12 +299,80 @@
   color: var(--iprm-text-light);
 }
 
+/* ========== APPOINTMENT CTA (shared with clinics) ========== */
+
+.iprm-appointment {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+  background: linear-gradient(135deg, var(--iprm-dark) 0%, #2d2350 50%, #3b2368 100%);
+  border-radius: var(--iprm-radius);
+  padding: 64px 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.iprm-appointment::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 80% at 50% 0%, rgba(112, 85, 164, 0.25) 0%, transparent 70%);
+}
+
+.iprm-appointment > * {
+  position: relative;
+  z-index: 1;
+}
+
+.iprm-appointment h2 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--iprm-white);
+  margin-bottom: 12px;
+}
+
+.iprm-appointment p {
+  font-size: 17px;
+  color: var(--apple-gray-light);
+  line-height: 1.65;
+  margin-bottom: 32px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.iprm-appointment__btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 14px 32px;
+  border-radius: var(--iprm-radius-pill);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  text-decoration: none;
+  background: var(--iprm-white);
+  color: var(--iprm-accent);
+  transition: all 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+}
+
+.iprm-appointment__btn:focus-visible {
+  outline: 2px solid var(--iprm-white);
+  outline-offset: 3px;
+}
+
+.iprm-appointment__btn:hover {
+  background: var(--iprm-accent-light);
+  transform: scale(1.02) translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
 /* ========== DEPARTMENTS GRID ========== */
 
 .iprm-departments-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 24px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -307,7 +380,7 @@
 .iprm-departments-card {
   background: var(--iprm-white);
   border-radius: var(--iprm-radius);
-  padding: 32px 28px;
+  padding: 32px;
   border: 1px solid var(--iprm-border);
   transition:
     transform 0.3s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
@@ -320,7 +393,7 @@
 }
 
 .iprm-departments-card h3 {
-  font-size: 1.0625rem;
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--apple-black);
@@ -342,6 +415,10 @@
 }
 
 @media (max-width: 768px) {
+  .iprm-appointment {
+    padding: 48px 24px;
+  }
+
   .iprm-schedule__item {
     grid-template-columns: 80px 1fr;
     gap: 16px;
@@ -459,6 +536,12 @@
   .iprm-faq__answer {
     padding: 0 14px 12px;
     font-size: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iprm-departments-card {
+    transition: none;
   }
 }
 

@@ -631,7 +631,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--iprm-nav-active);
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .iprm-lab-list {
@@ -640,12 +640,12 @@
   margin: 16px 0 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .iprm-lab-list li {
   position: relative;
-  padding-left: 20px;
+  padding-left: 24px;
   font-size: 0.9375rem;
   line-height: 1.5;
   color: var(--apple-gray-dark);

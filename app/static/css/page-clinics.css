@@ -322,20 +322,28 @@
 .iprm-results-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 24px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .iprm-results-card {
-  background: var(--apple-section-bg);
+  background: var(--iprm-white);
   border-radius: var(--iprm-radius);
-  padding: 32px 28px;
+  padding: 32px;
   text-align: center;
+  transition:
+    transform 0.3s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
+    box-shadow 0.3s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+}
+
+.iprm-results-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
 }
 
 .iprm-results-card h3 {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--apple-black);
@@ -417,7 +425,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .iprm-clinic-card {
+  .iprm-clinic-card,
+  .iprm-results-card {
     transition: none;
   }
 }
