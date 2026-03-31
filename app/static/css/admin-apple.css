@@ -4,7 +4,7 @@
 /* ========== SIDEBAR ========== */
 
 .admin-sidebar {
-  background: var(--apple-section-bg);
+  background: var(--iprm-white);
   border-right: 1px solid var(--iprm-border);
 }
 
@@ -32,6 +32,7 @@
 .admin-sidebar__link--active {
   background: var(--iprm-nav-active);
   color: var(--iprm-white);
+  font-weight: 500;
 }
 
 .admin-sidebar__link--active:hover {
@@ -42,8 +43,8 @@
 /* ========== LAYOUT ========== */
 
 .admin-layout {
-  padding: 40px;
-  background: var(--iprm-white);
+  padding: 40px 48px;
+  background: var(--apple-section-bg);
 }
 
 /* ========== HERO ========== */
@@ -85,7 +86,7 @@
 .btn-admin--primary:hover {
   background: var(--iprm-accent-hover);
   transform: scale(1.02) translateY(-1px);
-  box-shadow: 0 4px 16px rgba(var(--apple-accent-rgb), 0.2);
+  box-shadow: 0 4px 16px rgba(var(--apple-accent-rgb), 0.25);
 }
 
 .btn-admin--primary:active {
@@ -96,23 +97,21 @@
 .btn-admin--secondary {
   background: var(--iprm-white);
   color: var(--apple-gray-dark);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--iprm-border);
 }
 
 .btn-admin--secondary:hover {
   background: var(--apple-section-bg);
-  border-color: rgba(0, 0, 0, 0.15);
 }
 
 .btn-admin--danger {
   background: var(--iprm-white);
   color: var(--iprm-error);
-  border: 1px solid rgba(255, 59, 48, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .btn-admin--danger:hover {
   background: var(--iprm-error-bg);
-  border-color: rgba(255, 59, 48, 0.4);
 }
 
 .btn-admin--success {
@@ -123,7 +122,6 @@
 
 .btn-admin--success:hover {
   background: #f0faf3;
-  border-color: rgba(52, 199, 89, 0.5);
 }
 
 .btn-admin--sm {
@@ -161,6 +159,100 @@
 .admin-file-input:focus-visible + span {
   outline: 2px solid var(--iprm-nav-active);
   outline-offset: 3px;
+}
+
+/* ========== FORM SECTIONS ========== */
+
+.form-section {
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  padding: 32px;
+}
+
+.form-section__title,
+.admin-form__section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--apple-black);
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--iprm-border);
+}
+
+/* ========== FORM CONTROLS ========== */
+
+.form-section .form-group label,
+.admin-form .form-group label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--apple-black);
+}
+
+.form-section .form-input,
+.admin-form .form-input,
+.admin-filter-form .form-input {
+  padding: 10px 14px;
+  font-size: 0.9375rem;
+  color: var(--apple-black);
+  background: var(--apple-section-bg);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-section .form-input:focus,
+.admin-form .form-input:focus,
+.admin-filter-form .form-input:focus {
+  border-color: var(--iprm-nav-active);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light);
+  outline: none;
+}
+
+.form-section .form-input::placeholder,
+.admin-form .form-input::placeholder {
+  color: var(--apple-gray-light);
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--apple-gray);
+}
+
+/* Select dropdown */
+.admin-form select.form-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+/* Checkbox */
+.admin-form .form-checkbox {
+  border-radius: var(--iprm-radius-sm);
+  border: 1px solid var(--iprm-border);
+  background: var(--apple-section-bg);
+}
+
+.admin-form .form-checkbox:hover {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.admin-form .form-checkbox label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--apple-gray-dark);
+}
+
+/* ========== FORM ACTIONS (sticky bottom) ========== */
+
+.admin-form__actions {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(to top, var(--apple-section-bg) 60%, transparent);
+  padding: 24px 0 40px;
+  z-index: 10;
 }
 
 /* ========== TABLE ========== */
@@ -201,10 +293,21 @@
   gap: 6px;
 }
 
+.admin-table a {
+  color: var(--iprm-nav-active);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.admin-table a:hover {
+  color: var(--iprm-accent-hover);
+}
+
 /* ========== EMPTY STATE ========== */
 
 .admin-empty {
-  background: var(--apple-section-bg);
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
   padding: 80px 32px;
 }
@@ -250,8 +353,13 @@
 
 /* ========== BREADCRUMB ========== */
 
+.admin-breadcrumb {
+  margin-bottom: 8px;
+}
+
 .admin-breadcrumb__link {
   color: var(--iprm-nav-active);
+  font-weight: 500;
 }
 
 .admin-breadcrumb__link:hover {
@@ -266,6 +374,7 @@
 /* ========== INTEGRATION CARDS ========== */
 
 .admin-integration-card {
+  background: var(--iprm-white);
   border-radius: var(--iprm-radius-md);
   border: 1px solid var(--iprm-border);
   transition:
@@ -287,19 +396,6 @@
 
 .admin-integration-card .form-input {
   width: 100%;
-  padding: 10px 14px;
-  font-size: 0.875rem;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: var(--iprm-radius-sm);
-  background: var(--iprm-white);
-  color: var(--apple-black);
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.admin-integration-card .form-input:focus {
-  outline: none;
-  border-color: var(--iprm-nav-active);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
 }
 
 .admin-integration-card .admin-table {
@@ -323,23 +419,14 @@
   color: var(--apple-gray);
 }
 
-/* ========== FORM OVERRIDES ========== */
-
-.admin-form .form-checkbox {
-  border-radius: var(--iprm-radius-sm);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.admin-form .form-checkbox:hover {
-  border-color: rgba(0, 0, 0, 0.15);
-}
-
 /* ========== DROPZONE ========== */
 
 .admin-dropzone {
-  border: 2px dashed rgba(0, 0, 0, 0.1);
-  border-radius: var(--iprm-radius);
+  border: 2px dashed var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
   background: var(--apple-section-bg);
+  min-height: 200px;
+  transition: border-color 0.2s, background 0.2s;
 }
 
 .admin-dropzone:hover,
@@ -348,11 +435,37 @@
   background: var(--iprm-accent-light);
 }
 
+.admin-dropzone__prompt {
+  color: var(--apple-gray);
+}
+
+.admin-dropzone__link {
+  color: var(--iprm-nav-active);
+  font-weight: 500;
+}
+
 /* ========== PROGRAM BLOCK ========== */
 
 .admin-program-block {
+  background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-md);
+  border-radius: var(--iprm-radius-sm);
+}
+
+.admin-program-block__remove {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--iprm-border);
+  background: var(--iprm-white);
+  color: var(--apple-gray);
+  transition: all 0.2s;
+}
+
+.admin-program-block__remove:hover {
+  background: var(--iprm-error-bg);
+  color: var(--iprm-error);
+  border-color: rgba(239, 68, 68, 0.2);
 }
 
 /* ========== TODO LIST ========== */
@@ -367,19 +480,36 @@
   border-radius: 4px;
 }
 
-/* ========== FILTER FORM ========== */
+/* ========== PAGINATION ========== */
 
-.admin-filter-form .form-input {
-  border-radius: var(--iprm-radius-sm);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+.admin-pagination {
+  margin-top: 32px;
 }
 
-.admin-filter-form .form-input:focus {
-  border-color: var(--iprm-nav-active);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
+.admin-pagination__info {
+  font-size: 0.875rem;
+  color: var(--apple-gray);
+}
+
+/* ========== FILTER BAR ========== */
+
+.admin-stats-bar {
+  margin-bottom: 24px;
+}
+
+/* ========== ALERTS ========== */
+
+.alert {
+  border-radius: var(--iprm-radius-sm);
 }
 
 /* ========== RESPONSIVE ========== */
+
+@media (max-width: 1024px) {
+  .admin-layout {
+    padding: 32px 24px;
+  }
+}
 
 @media (max-width: 768px) {
   .admin-sidebar {
@@ -390,11 +520,21 @@
   .admin-layout {
     padding: 24px 16px;
   }
+
+  .admin-form__actions {
+    position: static;
+    background: none;
+    padding: 24px 0 0;
+  }
 }
 
 @media (max-width: 480px) {
   .admin-layout {
     padding: 16px 12px;
+  }
+
+  .form-section {
+    padding: 24px 20px;
   }
 }
 
