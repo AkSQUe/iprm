@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Клініка: Місія, Процес, Запис | ІПРМ — Apple Style Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --black: #1d1d1f;
+            --dark: #1a1a2e;
+            --gray-dark: #424245;
+            --gray: #86868b;
+            --gray-light: #d2d2d7;
+            --section-bg: #f5f5f7;
+            --white: #fff;
+            --accent: #7055a4;
+            --accent-hover: #5d4691;
+            --accent-light: #ede9f6;
+            --orange: #e8913a;
+            --orange-light: #fef0e6;
+            --border: rgba(0, 0, 0, 0.06);
+            --radius: 24px;
+            --radius-md: 16px;
+            --ease-interact: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --ease-reveal: cubic-bezier(0.28, 0.11, 0.32, 1);
+        }
+
+        html { scroll-behavior: smooth; font-size: 16px; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--black);
+            background: #fff;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ========== SECTION ========== */
+        .section { padding: 100px 24px; }
+        .section--gray { background: var(--section-bg); }
+        .section__inner { max-width: 1200px; margin: 0 auto; }
+
+        /* ========== SECTION HEADER ========== */
+        .section-header {
+            text-align: center;
+            max-width: 780px;
+            margin: 0 auto 64px;
+        }
+        .section-header h2 {
+            font-size: clamp(2rem, 5vw, 3.25rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.07;
+            margin-bottom: 16px;
+        }
+        .section-header p {
+            font-size: 17px;
+            color: var(--gray);
+            line-height: 1.65;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, var(--accent) 0%, #9b59b6 40%, var(--orange) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ========== DIRECTIONS GRID ========== */
+        .directions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .direction-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 40px 32px;
+            border: 1px solid var(--border);
+            transition: transform 0.3s var(--ease-interact), box-shadow 0.3s var(--ease-interact);
+        }
+        .direction-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(112, 85, 164, 0.08);
+        }
+
+        .direction-card__icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            background: var(--accent-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            color: var(--accent);
+        }
+
+        .direction-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            color: var(--black);
+        }
+        .direction-card p {
+            font-size: 0.9375rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* ========== PROCESS STEPS ========== */
+        .process {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Connecting line */
+        .process::before {
+            content: '';
+            position: absolute;
+            top: 32px;
+            left: calc(12.5% + 24px);
+            right: calc(12.5% + 24px);
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--orange));
+            opacity: 0.2;
+        }
+
+        .process-step {
+            text-align: center;
+            position: relative;
+        }
+
+        .process-step__number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 1;
+        }
+        .process-step .process-step__number {
+            background: var(--accent);
+            color: var(--white);
+        }
+
+        .process-step h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--black);
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+        .process-step p {
+            font-size: 0.8125rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* ========== APPOINTMENT CTA ========== */
+        .appointment {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            background: linear-gradient(135deg, var(--dark) 0%, #2d2350 50%, #3b2368 100%);
+            border-radius: var(--radius);
+            padding: 64px 48px;
+            position: relative;
+            overflow: hidden;
+        }
+        .appointment::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 60% 80% at 50% 0%, rgba(112, 85, 164, 0.25) 0%, transparent 70%);
+        }
+        .appointment > * { position: relative; z-index: 1; }
+
+        .appointment h2 {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            color: var(--white);
+            margin-bottom: 12px;
+        }
+        .appointment p {
+            font-size: 17px;
+            color: var(--gray-light);
+            line-height: 1.65;
+            margin-bottom: 32px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .appointment .btn {
+            background: var(--white);
+            color: var(--accent);
+        }
+        .appointment .btn:hover {
+            background: var(--accent-light);
+            transform: scale(1.02) translateY(-1px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ========== PRINCIPLES ========== */
+        .principles {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .principle {
+            text-align: center;
+            padding: 20px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background: var(--section-bg);
+            transition: border-color 0.2s var(--ease-interact);
+        }
+        .principle:hover {
+            border-color: var(--accent-light);
+        }
+        .principle__icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+        .principle span {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--gray-dark);
+            letter-spacing: -0.01em;
+        }
+
+        /* ========== BUTTON ========== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            border-radius: 980px;
+            font-size: 1.0625rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s var(--ease-interact);
+        }
+        .btn--primary {
+            background: var(--accent);
+            color: var(--white);
+        }
+        .btn--primary:hover {
+            background: var(--accent-hover);
+            transform: scale(1.02) translateY(-1px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+        }
+        .btn--secondary {
+            background: transparent;
+            color: var(--accent);
+        }
+        .btn--secondary::after { content: ' >'; }
+        .btn--secondary:hover { color: var(--accent-hover); }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            .section { padding: 64px 16px; }
+            .section-header { margin-bottom: 48px; }
+
+            .directions {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .direction-card {
+                padding: 32px 24px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .process {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 32px 24px;
+            }
+            .process::before { display: none; }
+
+            .appointment { padding: 48px 24px; }
+
+            .principles { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 480px) {
+            .process {
+                grid-template-columns: 1fr 1fr;
+                gap: 24px 16px;
+            }
+            .process-step__number {
+                width: 48px;
+                height: 48px;
+                font-size: 1.125rem;
+            }
+            .process-step h3 { font-size: 0.875rem; }
+
+            .appointment { padding: 40px 20px; }
+            .appointment h2 { font-size: 1.5rem; }
+        }
+
+        /* ========== REVEAL ========== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s var(--ease-reveal), transform 0.6s var(--ease-reveal);
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+    <!-- ===== MISSION ===== -->
+    <section class="section">
+        <div class="section__inner">
+            <div class="section-header reveal">
+                <h2>Місія <span class="gradient-text">клініки</span></h2>
+                <p>Безпечне, стандартизоване застосування регенеративних методик для відновлення функції тканин і профілактики вікових змін</p>
+            </div>
+
+            <div class="directions">
+                <div class="direction-card reveal">
+                    <div class="direction-card__icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                    </div>
+                    <h3>Ортобіологія</h3>
+                    <p>Опорно-руховий апарат: тендінопатії, остеоартроз у межах чинних рекомендацій.</p>
+                </div>
+                <div class="direction-card reveal">
+                    <div class="direction-card__icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg>
+                    </div>
+                    <h3>Дерматологія та трихологія</h3>
+                    <p>Стимуляція регенерації шкіри та волосяних фолікулів.</p>
+                </div>
+                <div class="direction-card reveal">
+                    <div class="direction-card__icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                    </div>
+                    <h3>Здорове старіння</h3>
+                    <p>Індивідуальні програми на основі даних біологічного віку.</p>
+                </div>
+            </div>
+
+            <!-- Принципи -->
+            <div class="principles reveal" style="margin-top: 48px;">
+                <div class="principle">
+                    <div class="principle__icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <span>Доказовість</span>
+                </div>
+                <div class="principle">
+                    <div class="principle__icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg>
+                    </div>
+                    <span>Інформована згода</span>
+                </div>
+                <div class="principle">
+                    <div class="principle__icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+                    </div>
+                    <span>Поетапні цілі</span>
+                </div>
+                <div class="principle">
+                    <div class="principle__icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                    </div>
+                    <span>Об'єктивні метрики</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== PROCESS ===== -->
+    <section class="section section--gray">
+        <div class="section__inner">
+            <div class="section-header reveal">
+                <h2>Процес <span class="gradient-text">пацієнта</span></h2>
+                <p>Від первинного скринінгу до контрольних точок з об'єктивними метриками</p>
+            </div>
+
+            <div class="process">
+                <div class="process-step reveal">
+                    <div class="process-step__number">1</div>
+                    <h3>Первинний скринінг</h3>
+                    <p>Збір анамнезу та первинне обстеження пацієнта</p>
+                </div>
+                <div class="process-step reveal">
+                    <div class="process-step__number">2</div>
+                    <h3>Лабораторний профіль</h3>
+                    <p>Оцінка біологічного віку та лабораторні дослідження за потреби</p>
+                </div>
+                <div class="process-step reveal">
+                    <div class="process-step__number">3</div>
+                    <h3>План лікування</h3>
+                    <p>PRP/PPP, біоактивні фракції, реабілітація, нутриціональні рекомендації</p>
+                </div>
+                <div class="process-step reveal">
+                    <div class="process-step__number">4</div>
+                    <h3>Контрольні точки</h3>
+                    <p>Об'єктивні тести на 4-12 тижнях: шкали болю, дерматоскопія</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== APPOINTMENT CTA ===== -->
+    <section class="section">
+        <div class="section__inner">
+            <div class="appointment reveal">
+                <h2>Запис на <span class="gradient-text">прийом</span></h2>
+                <p>Прийом пацієнтів фахівцями інституту здійснюється за попереднім записом</p>
+                <a href="#" class="btn">Записатися на прийом</a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        var els = document.querySelectorAll('.reveal');
+        var obs = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        els.forEach(function (el) { obs.observe(el); });
+    </script>
+</body>
+</html>

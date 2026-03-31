@@ -149,6 +149,161 @@
   margin-bottom: 16px;
 }
 
+/* ========== DIRECTIONS (напрями клініки) ========== */
+
+.iprm-directions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.iprm-directions__card {
+  background: var(--iprm-white);
+  border-radius: var(--iprm-radius);
+  padding: 40px 32px;
+  border: 1px solid var(--iprm-border);
+  transition: transform 0.3s var(--iprm-transition), box-shadow 0.3s var(--iprm-transition);
+}
+
+.iprm-directions__card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(112, 85, 164, 0.08);
+}
+
+.iprm-directions__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--iprm-radius-md);
+  background: var(--iprm-accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  color: var(--iprm-accent);
+}
+
+.iprm-directions__card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+  color: var(--iprm-dark);
+}
+
+.iprm-directions__card p {
+  font-size: 0.9375rem;
+  color: var(--iprm-text-light);
+  line-height: 1.5;
+}
+
+/* ========== PRINCIPLES (принципи) ========== */
+
+.iprm-principles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  max-width: 900px;
+  margin: 48px auto 0;
+}
+
+.iprm-principles__item {
+  text-align: center;
+  padding: 20px 16px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
+  background: var(--iprm-card-bg);
+  transition: border-color 0.2s var(--iprm-transition);
+}
+
+.iprm-principles__item:hover {
+  border-color: var(--iprm-accent-light);
+}
+
+.iprm-principles__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
+  margin-bottom: 12px;
+}
+
+.iprm-principles__item span {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--apple-gray-dark);
+  letter-spacing: -0.01em;
+}
+
+/* ========== APPOINTMENT CTA ========== */
+
+.iprm-appointment {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+  background: linear-gradient(135deg, var(--iprm-dark) 0%, #2d2350 50%, #3b2368 100%);
+  border-radius: var(--iprm-radius);
+  padding: 64px 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.iprm-appointment::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 80% at 50% 0%, rgba(112, 85, 164, 0.25) 0%, transparent 70%);
+}
+
+.iprm-appointment > * {
+  position: relative;
+  z-index: 1;
+}
+
+.iprm-appointment h2 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--iprm-white);
+  margin-bottom: 12px;
+}
+
+.iprm-appointment p {
+  font-size: 17px;
+  color: var(--apple-gray-light);
+  line-height: 1.65;
+  margin-bottom: 32px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.iprm-appointment__btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 14px 32px;
+  border-radius: var(--iprm-radius-pill);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  text-decoration: none;
+  background: var(--iprm-white);
+  color: var(--iprm-accent);
+  transition: all 0.2s var(--iprm-transition);
+}
+
+.iprm-appointment__btn:hover {
+  background: var(--iprm-accent-light);
+  transform: scale(1.02) translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 1024px) {
@@ -167,6 +322,27 @@
     grid-template-columns: 1fr;
   }
 
+  .iprm-directions {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .iprm-directions__card {
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .iprm-principles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .iprm-appointment {
+    padding: 48px 24px;
+  }
+
   .iprm-clinic-detail {
     grid-template-columns: 1fr;
     max-width: 500px;
@@ -183,6 +359,19 @@
 @media (max-width: 480px) {
   .iprm-clinic-card__body {
     padding: 16px;
+  }
+
+  .iprm-principles {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .iprm-appointment {
+    padding: 40px 20px;
+  }
+
+  .iprm-appointment h2 {
+    font-size: 1.5rem;
   }
 }
 
