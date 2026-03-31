@@ -133,7 +133,7 @@
           </td>
           <td>
             <div class="admin-table__actions">
-              <a href="{{ url_for('admin.error_log_detail', error_id=log.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Деталі</a>
+              <a href="{{ url_for('admin.error_log_detail', error_id=log.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">info</span></a>
             </div>
           </td>
         </tr>
@@ -146,17 +146,18 @@
   {% if pagination.pages > 1 %}
   <nav class="admin-pagination">
     {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.error_logs', page=pagination.prev_num, error_code=filters.error_code, resolved=filters.resolved, days=filters.days) }}" class="btn-admin btn-admin--secondary btn-admin--sm">&larr;</a>
+    <a href="{{ url_for('admin.error_logs', page=pagination.prev_num, error_code=filters.error_code, resolved=filters.resolved, days=filters.days) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_left</span></a>
     {% endif %}
     <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }}</span>
     {% if pagination.has_next %}
-    <a href="{{ url_for('admin.error_logs', page=pagination.next_num, error_code=filters.error_code, resolved=filters.resolved, days=filters.days) }}" class="btn-admin btn-admin--secondary btn-admin--sm">&rarr;</a>
+    <a href="{{ url_for('admin.error_logs', page=pagination.next_num, error_code=filters.error_code, resolved=filters.resolved, days=filters.days) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_right</span></a>
     {% endif %}
   </nav>
   {% endif %}
 
   {% else %}
   <div class="admin-empty">
+    <span class="material-symbols-rounded admin-empty__icon">bug_report</span>
     <h3 class="admin-empty__title">Помилок не знайдено</h3>
     <p>Немає записів{% if filters.error_code or filters.resolved %} за обраними фільтрами. <a href="{{ url_for('admin.error_logs') }}">Скинути</a>{% endif %}</p>
   </div>

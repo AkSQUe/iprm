@@ -98,6 +98,9 @@
 /* ========== BUTTONS ========== */
 
 .btn-admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 10px 24px;
   border-radius: var(--iprm-radius-pill);
   font-weight: 500;
@@ -106,6 +109,14 @@
     transform 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
     box-shadow 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
     background-color 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+}
+
+.btn-admin .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.btn-admin--sm .material-symbols-rounded {
+  font-size: 16px;
 }
 
 .btn-admin--primary {
@@ -347,6 +358,12 @@
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
   padding: 80px 32px;
+}
+
+.admin-empty__icon {
+  font-size: 48px;
+  color: var(--apple-gray-light);
+  margin-bottom: 16px;
 }
 
 .admin-empty__title {
