@@ -276,19 +276,7 @@
   box-shadow: 0 4px 16px rgba(var(--apple-accent-rgb), 0.06);
 }
 
-.apple-page .apple-feature-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--iprm-radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-  background: var(--iprm-accent-light);
-  color: var(--iprm-nav-active);
-}
-
-/* Зображення-іконка замість SVG */
+/* Зображення-іконка */
 .apple-page .apple-feature-card__icon {
   width: 80px;
   height: 80px;
@@ -535,120 +523,6 @@
 
 /* ========== CLINIC CARDS ========== */
 
-.apple-page .apple-clinic-grid {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-.apple-page .apple-clinic-card {
-  border-radius: var(--iprm-radius);
-  overflow: hidden;
-  background: var(--iprm-white);
-  transition:
-    transform 0.3s var(--ease-interact),
-    box-shadow 0.3s var(--ease-interact);
-}
-
-.apple-page .apple-clinic-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
-}
-
-.apple-page .apple-clinic-card__image {
-  height: 220px;
-  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--apple-orange-light) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.apple-page .apple-clinic-card__image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s var(--ease-interact);
-}
-
-.apple-page .apple-clinic-card:hover .apple-clinic-card__image img {
-  transform: scale(1.05);
-}
-
-.apple-page .apple-clinic-card__image svg {
-  opacity: 0.3;
-}
-
-.apple-page .apple-clinic-card__body {
-  padding: 28px 24px;
-}
-
-.apple-page .apple-clinic-card__body h3 {
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.3;
-  margin-bottom: 16px;
-  color: var(--apple-black);
-}
-
-.apple-page .apple-clinic-link {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--iprm-nav-active);
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.apple-page .apple-clinic-link::after {
-  content: ' >';
-}
-
-.apple-page .apple-clinic-link:hover {
-  color: var(--iprm-accent-hover);
-}
-
-/* ========== ABOUT TEXT ========== */
-
-.apple-page .apple-about {
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.apple-page .apple-about p {
-  font-size: 17px;
-  color: var(--apple-gray-dark);
-  line-height: 1.65;
-  margin-bottom: 20px;
-}
-
-.apple-page .apple-about ul {
-  list-style: none;
-  padding: 0;
-  margin: 24px 0;
-}
-
-.apple-page .apple-about ul li {
-  font-size: 17px;
-  color: var(--apple-gray-dark);
-  line-height: 1.65;
-  padding: 8px 0 8px 28px;
-  position: relative;
-}
-
-.apple-page .apple-about ul li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 16px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--iprm-nav-active), var(--apple-orange));
-}
-
 /* CTA centered */
 .apple-page .apple-section-cta {
   display: flex;
@@ -792,7 +666,6 @@
   }
 
   .apple-page .apple-feature-card,
-  .apple-page .apple-clinic-card,
   .apple-page .apple-bento-card,
   .apple-page .iprm-course-card,
   .apple-page .iprm-trainer-card,
@@ -818,10 +691,6 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .apple-page .apple-clinic-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .apple-page .iprm-trainer-cards {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -842,7 +711,6 @@
 
   .apple-page .iprm-course-cards,
   .apple-page .apple-features-grid,
-  .apple-page .apple-clinic-grid,
   .apple-page .iprm-trainer-cards {
     grid-template-columns: 1fr;
   }
@@ -941,10 +809,6 @@
     padding: 28px 20px;
   }
 
-  .apple-page .apple-clinic-card__body {
-    padding: 20px 16px;
-  }
-
   .apple-page .iprm-trainer-card__photo {
     height: 220px;
   }
@@ -967,7 +831,6 @@
 
 .apple-page .iprm-course-card:hover,
 .apple-page .iprm-trainer-card:hover,
-.apple-page .apple-clinic-card:hover,
 .apple-page .apple-feature-card:hover {
   will-change: transform;
 }

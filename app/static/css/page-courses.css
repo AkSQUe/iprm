@@ -151,48 +151,6 @@
   color: var(--iprm-warning);
 }
 
-/* ========== STEPS (умови отримання сертифікату) ========== */
-
-.iprm-steps {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.iprm-steps__item {
-  text-align: center;
-  padding: 24px 16px;
-}
-
-.iprm-steps__number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--iprm-accent);
-  color: var(--iprm-white);
-  font-size: 1.125rem;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.iprm-steps__heading {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--iprm-dark);
-  margin-bottom: 8px;
-}
-
-.iprm-steps__text {
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  color: var(--iprm-text-light);
-}
-
 /* ========== TRUST STATS ========== */
 
 .iprm-trust-stats {
@@ -254,11 +212,6 @@
     font-size: 0.9375rem;
   }
 
-  .iprm-steps {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-  }
-
   .iprm-trust-stats {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
@@ -284,21 +237,6 @@
   }
 
   .iprm-event-meta__value {
-    font-size: 0.875rem;
-  }
-
-  .iprm-steps {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .iprm-steps__number {
-    width: 36px;
-    height: 36px;
-    font-size: 1rem;
-  }
-
-  .iprm-steps__heading {
     font-size: 0.875rem;
   }
 
