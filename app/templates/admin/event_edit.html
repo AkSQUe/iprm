@@ -14,12 +14,17 @@
   <div class="admin-layout">
   <div class="admin-hero">
     <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.events_list') }}" class="admin-breadcrumb__link">Заходи</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">{% if event %}Редагування{% else %}Новий{% endif %}</span>
+      </div>
       <h1 class="admin-hero__title">{% if event %}Редагування заходу{% else %}Новий захід{% endif %}</h1>
-      <p class="admin-hero__subtitle">{% if event %}{{ event.title }}{% else %}Створення нового заходу{% endif %}</p>
+      <p class="admin-hero__subtitle">{% if event %}{{ event.title }} <span class="badge badge--{{ event.status }}">{{ event.status_label }}</span>{% else %}Створення нового заходу{% endif %}</p>
     </div>
-    <a href="{{ url_for('admin.dashboard') }}" class="btn-admin btn-admin--secondary">
-      <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Назад до списку
-    </a>
+    <div class="admin-hero__actions">
+      <a href="{{ url_for('admin.events_list') }}" class="btn-admin btn-admin--secondary">Назад до списку</a>
+    </div>
   </div>
 
   {% include 'partials/flash_messages.html' %}
@@ -251,7 +256,10 @@
 
     <!-- Actions -->
     <div class="admin-form__actions">
-      <a href="{{ url_for('admin.dashboard') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      {% if event %}
+      <a href="{{ url_for('admin.event_delete', event_id=event.id) }}" class="btn-admin btn-admin--danger btn-admin--sm" onclick="return confirm('Видалити захід?')">Видалити захід</a>
+      {% endif %}
+      <a href="{{ url_for('admin.events_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
       <button type="submit" class="btn-admin btn-admin--primary">
         <span class="iprm-btn__arrow">&#x2197;</span>
         {% if event %}Зберегти зміни{% else %}Створити захід{% endif %}

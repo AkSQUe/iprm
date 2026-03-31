@@ -14,6 +14,11 @@
   <div class="admin-layout">
     <div class="admin-hero">
       <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.events_list') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Користувачі</span>
+        </div>
         <h1 class="admin-hero__title">Користувачі</h1>
         <p class="admin-hero__subtitle">Всього: {{ users | length }}</p>
       </div>

@@ -14,12 +14,17 @@
   <div class="admin-layout">
   <div class="admin-hero">
     <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.trainers_list') }}" class="admin-breadcrumb__link">Тренери</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">{% if trainer %}Редагування{% else %}Новий{% endif %}</span>
+      </div>
       <h1 class="admin-hero__title">{% if trainer %}Редагування тренера{% else %}Новий тренер{% endif %}</h1>
       <p class="admin-hero__subtitle">{% if trainer %}{{ trainer.full_name }}{% else %}Додавання нового тренера{% endif %}</p>
     </div>
-    <a href="{{ url_for('admin.dashboard') }}" class="btn-admin btn-admin--secondary">
-      <span class="iprm-btn__arrow iprm-btn__arrow--back">&#x2197;</span> Назад до списку
-    </a>
+    <div class="admin-hero__actions">
+      <a href="{{ url_for('admin.trainers_list') }}" class="btn-admin btn-admin--secondary">Назад до списку</a>
+    </div>
   </div>
 
   {% include 'partials/flash_messages.html' %}
@@ -85,7 +90,10 @@
 
     <!-- Actions -->
     <div class="admin-form__actions">
-      <a href="{{ url_for('admin.dashboard') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      {% if trainer %}
+      <a href="{{ url_for('admin.trainer_delete', trainer_id=trainer.id) }}" class="btn-admin btn-admin--danger btn-admin--sm" onclick="return confirm('Видалити тренера?')">Видалити тренера</a>
+      {% endif %}
+      <a href="{{ url_for('admin.trainers_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
       <button type="submit" class="btn-admin btn-admin--primary">
         <span class="iprm-btn__arrow">&#x2197;</span>
         {% if trainer %}Зберегти зміни{% else %}Додати тренера{% endif %}

@@ -1,5 +1,8 @@
 {% set ep = request.endpoint or '' %}
 <aside class="admin-sidebar">
+  <div class="admin-sidebar__brand">
+    <a href="{{ url_for('admin.dashboard') }}">ІПРМ Admin</a>
+  </div>
   <nav class="admin-sidebar__nav">
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Контент</p>

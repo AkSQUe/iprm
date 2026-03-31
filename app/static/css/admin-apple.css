@@ -8,6 +8,18 @@
   border-right: 1px solid var(--iprm-border);
 }
 
+.admin-sidebar__brand {
+  padding: 0 20px 24px;
+}
+
+.admin-sidebar__brand a {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--iprm-nav-active);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
 .admin-sidebar__group-title {
   font-size: 0.6875rem;
   font-weight: 600;
@@ -253,6 +265,11 @@
   background: linear-gradient(to top, var(--apple-section-bg) 60%, transparent);
   padding: 24px 0 40px;
   z-index: 10;
+}
+
+/* Danger кнопка зліва, решта справа */
+.admin-form__actions .btn-admin--danger {
+  margin-right: auto;
 }
 
 /* ========== TABLE ========== */
