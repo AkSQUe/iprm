@@ -65,6 +65,10 @@
   color: var(--iprm-white);
 }
 
+.admin-sidebar__link .material-symbols-rounded {
+  font-size: 20px;
+}
+
 /* ========== LAYOUT ========== */
 
 .admin-layout {

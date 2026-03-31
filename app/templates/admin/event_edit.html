@@ -257,7 +257,7 @@
     <!-- Actions -->
     <div class="admin-form__actions">
       {% if event %}
-      <a href="{{ url_for('admin.event_delete', event_id=event.id) }}" class="btn-admin btn-admin--danger btn-admin--sm" onclick="return confirm('Видалити захід?')">Видалити захід</a>
+      <a href="{{ url_for('admin.event_delete', event_id=event.id) }}" class="btn-admin btn-admin--danger btn-admin--sm" data-confirm="Видалити захід?">Видалити захід</a>
       {% endif %}
       <a href="{{ url_for('admin.events_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
       <button type="submit" class="btn-admin btn-admin--primary">

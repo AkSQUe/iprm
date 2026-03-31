@@ -70,7 +70,7 @@
           </td>
           <td>
             {% if user.id != current_user.id %}
-            <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" onsubmit="return confirm('{{ 'Зняти адмін-повноваження?' if user.is_admin else 'Надати адмін-повноваження?' }}')">
+            <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" data-confirm="{{ 'Зняти адмін-повноваження?' if user.is_admin else 'Надати адмін-повноваження?' }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               {% if user.is_admin %}
                 <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Зняти адмін</button>

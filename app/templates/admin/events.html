@@ -29,7 +29,7 @@
       <form method="POST" action="{{ url_for('admin.events_import') }}" enctype="multipart/form-data" class="admin-import-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label class="btn-admin btn-admin--success admin-import-btn">
-          <input type="file" name="file" accept=".xlsx" class="admin-file-input" onchange="this.form.submit()">
+          <input type="file" name="file" accept=".xlsx" class="admin-file-input">
           <span>Імпорт XLSX</span>
         </label>
       </form>
@@ -69,7 +69,7 @@
           <div class="admin-table__actions">
             <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm" target="_blank" rel="noopener noreferrer">Перегляд</a>
             <a href="{{ url_for('admin.event_edit', event_id=event.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Редагувати</a>
-            <form method="POST" action="{{ url_for('admin.event_delete', event_id=event.id) }}" onsubmit="return confirm('Видалити захід?')">
+            <form method="POST" action="{{ url_for('admin.event_delete', event_id=event.id) }}" data-confirm="Видалити захід?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
             </form>

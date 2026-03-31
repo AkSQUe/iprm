@@ -78,7 +78,7 @@
             </form>
             {% endif %}
             {% if reg.status != 'cancelled' %}
-            <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}" onsubmit="return confirm('Скасувати реєстрацію?')">
+            <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}" data-confirm="Скасувати реєстрацію?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="status" value="cancelled">
               <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">X</button>

@@ -121,7 +121,7 @@
           <p class="form-hint">Вимкніть для прийому реальних платежів. Ключі зберігаються у базі даних (SiteSettings).</p>
         </div>
         <div class="admin-form__actions">
-          <button type="submit" class="btn-admin btn-admin--primary" onclick="return confirm('Зберегти нові ключі LiqPay?')">Зберегти ключі</button>
+          <button type="submit" class="btn-admin btn-admin--primary" data-confirm="Зберегти нові ключі LiqPay?">Зберегти ключі</button>
         </div>
       </form>
     </div>
@@ -159,7 +159,7 @@
             <td>{{ reg.paid_at.strftime('%d.%m.%Y %H:%M') if reg.paid_at else reg.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
             <td>
               {% if reg.payment_status == 'paid' %}
-              <form method="POST" action="{{ url_for('admin.liqpay_refund', reg_id=reg.id) }}" onsubmit="return confirm('Повернути {{ reg.payment_amount | int }} грн?')">
+              <form method="POST" action="{{ url_for('admin.liqpay_refund', reg_id=reg.id) }}" data-confirm="Повернути {{ reg.payment_amount | int }} грн?">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Повернення</button>
               </form>

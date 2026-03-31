@@ -91,7 +91,7 @@
     <!-- Actions -->
     <div class="admin-form__actions">
       {% if trainer %}
-      <a href="{{ url_for('admin.trainer_delete', trainer_id=trainer.id) }}" class="btn-admin btn-admin--danger btn-admin--sm" onclick="return confirm('Видалити тренера?')">Видалити тренера</a>
+      <a href="{{ url_for('admin.trainer_delete', trainer_id=trainer.id) }}" class="btn-admin btn-admin--danger btn-admin--sm" data-confirm="Видалити тренера?">Видалити тренера</a>
       {% endif %}
       <a href="{{ url_for('admin.trainers_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
       <button type="submit" class="btn-admin btn-admin--primary">

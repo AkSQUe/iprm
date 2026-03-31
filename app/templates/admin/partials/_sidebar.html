@@ -7,9 +7,11 @@
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Контент</p>
       <a href="{{ url_for('admin.events_list') }}" class="admin-sidebar__link{% if ep in ('admin.events_list', 'admin.event_create', 'admin.event_edit', 'admin.event_delete') %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">event</span>
         Заходи
       </a>
       <a href="{{ url_for('admin.trainers_list') }}" class="admin-sidebar__link{% if ep in ('admin.trainers_list', 'admin.trainer_create', 'admin.trainer_edit', 'admin.trainer_delete') %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">school</span>
         Тренери
       </a>
     </div>
@@ -17,9 +19,11 @@
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Продажі</p>
       <a href="{{ url_for('admin.registrations_all') }}" class="admin-sidebar__link{% if ep in ('admin.registrations_all', 'admin.event_registrations', 'admin.registration_status', 'admin.registration_attendance') %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">how_to_reg</span>
         Реєстрації
       </a>
       <a href="{{ url_for('admin.certificates') }}" class="admin-sidebar__link{% if ep == 'admin.certificates' %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">workspace_premium</span>
         Сертифікати
       </a>
     </div>
@@ -27,9 +31,11 @@
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Аудиторія</p>
       <a href="{{ url_for('admin.users') }}" class="admin-sidebar__link{% if ep == 'admin.users' %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">group</span>
         Користувачі
       </a>
       <a href="{{ url_for('admin.reviews') }}" class="admin-sidebar__link{% if ep == 'admin.reviews' %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">reviews</span>
         Відгуки
       </a>
     </div>
@@ -37,18 +43,23 @@
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Система</p>
       <a href="{{ url_for('admin.marketing') }}" class="admin-sidebar__link{% if ep == 'admin.marketing' %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">campaign</span>
         Маркетинг
       </a>
       <a href="{{ url_for('admin.notifications') }}" class="admin-sidebar__link{% if ep in ('admin.notifications', 'admin.notifications_log', 'admin.notifications_test', 'admin.notifications_settings', 'admin.notifications_templates') %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">notifications</span>
         Сповіщення
       </a>
       <a href="{{ url_for('admin.integrations') }}" class="admin-sidebar__link{% if ep in ('admin.integrations', 'admin.liqpay', 'admin.liqpay_save_keys', 'admin.liqpay_test', 'admin.liqpay_refund') %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">hub</span>
         Інтеграції
       </a>
       <a href="{{ url_for('admin.error_logs') }}" class="admin-sidebar__link{% if ep in ('admin.error_logs', 'admin.error_log_detail') %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">bug_report</span>
         Журнал помилок
       </a>
       <a href="{{ url_for('admin.settings') }}" class="admin-sidebar__link{% if ep == 'admin.settings' %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">settings</span>
         Налаштування
       </a>
     </div>

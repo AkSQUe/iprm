@@ -1,12 +1,6 @@
 /* Admin LiqPay Dashboard */
 /* Компонент .admin-stat-card перенесено до admin.css */
 
-.liqpay-status-badges {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
 /* Configuration display */
 .liqpay-config {
   display: flex;
@@ -56,9 +50,6 @@
     min-width: 0;
   }
 
-  .liqpay-status-badges {
-    flex-wrap: wrap;
-  }
 }
 
 @media (max-width: 480px) {
