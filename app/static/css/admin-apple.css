@@ -65,6 +65,14 @@
   color: var(--iprm-white);
 }
 
+.material-symbols-rounded {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: middle;
+  overflow: hidden;
+}
+
 .admin-sidebar__link .material-symbols-rounded {
   font-size: 24px;
 }
