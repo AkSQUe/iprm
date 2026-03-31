@@ -66,7 +66,7 @@
 }
 
 .admin-sidebar__link .material-symbols-rounded {
-  font-size: 20px;
+  font-size: 24px;
 }
 
 /* ========== LAYOUT ========== */
@@ -112,11 +112,11 @@
 }
 
 .btn-admin .material-symbols-rounded {
-  font-size: 18px;
+  font-size: 24px;
 }
 
 .btn-admin--sm .material-symbols-rounded {
-  font-size: 16px;
+  font-size: 20px;
 }
 
 .btn-admin--primary {
