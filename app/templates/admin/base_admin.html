@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20,100,0,0" />
+{% endblock %}
+
 {% block molecular_css %}{% endblock %}
 {% block molecular_bg %}{% endblock %}
 {% block molecular_js %}{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/admin-confirm.js') }}?v={{ assets_version }}"></script>
+{% endblock %}

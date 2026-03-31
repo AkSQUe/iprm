@@ -56,5 +56,6 @@
 {% endblock %}
 
 {% block extra_scripts %}
+{{ super() }}
 <script src="{{ url_for('static', filename='js/admin-notifications-templates.js') }}?v={{ assets_version }}"></script>
 {% endblock %}
