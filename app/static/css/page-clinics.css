@@ -160,10 +160,13 @@
 }
 
 .iprm-directions__card {
+  position: relative;
   background: var(--iprm-white);
   border-radius: var(--iprm-radius);
   padding: 40px 32px;
+  padding-top: 56px;
   border: 1px solid var(--iprm-border);
+  overflow: visible;
   transition: transform 0.3s var(--iprm-transition), box-shadow 0.3s var(--iprm-transition);
 }
 
@@ -173,10 +176,12 @@
 }
 
 .iprm-directions__img {
+  position: absolute;
+  top: -28px;
+  left: -12px;
   width: 96px;
   height: 96px;
   object-fit: contain;
-  margin-bottom: 24px;
 }
 
 .iprm-directions__card h3 {
@@ -204,11 +209,13 @@
 }
 
 .iprm-principles__item {
+  position: relative;
   text-align: center;
-  padding: 20px 16px;
+  padding: 48px 16px 20px;
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-md);
   background: var(--iprm-card-bg);
+  overflow: visible;
   transition: border-color 0.2s var(--iprm-transition);
 }
 
@@ -217,10 +224,13 @@
 }
 
 .iprm-principles__img {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 64px;
   height: 64px;
   object-fit: contain;
-  margin-bottom: 12px;
 }
 
 .iprm-principles__item span {
