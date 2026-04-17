@@ -23,8 +23,10 @@ def settings():
         # so populate_obj would wipe them. Handle manually.
         new_api_key = form.partner_api_key.data
         new_prefill_secret = form.partner_prefill_secret.data
+        new_webhook_secret = form.partner_webhook_secret.data
         form.partner_api_key.data = ''
         form.partner_prefill_secret.data = ''
+        form.partner_webhook_secret.data = ''
 
         form.populate_obj(site)
 
@@ -32,6 +34,8 @@ def settings():
             site.partner_api_key = new_api_key.strip()
         if new_prefill_secret and new_prefill_secret.strip():
             site.partner_prefill_secret = new_prefill_secret.strip()
+        if new_webhook_secret and new_webhook_secret.strip():
+            site.partner_webhook_secret = new_webhook_secret.strip()
 
         try:
             db.session.commit()

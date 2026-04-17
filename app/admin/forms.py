@@ -234,3 +234,25 @@ class SiteSettingsForm(FlaskForm):
             'Рекомендована довжина: 64+ символи.'
         ),
     )
+    partner_webhook_enabled = BooleanField(
+        'Надсилати webhook при зміні заходів',
+        default=False,
+    )
+    partner_webhook_url = StringField(
+        'URL webhook партнера',
+        validators=[Optional(), Length(max=500)],
+        description=(
+            'HTTPS URL на партнерському сайті, куди IPRM POST-ить '
+            'подію при створенні/зміні/видаленні заходу. '
+            'Напр. https://mm-medic.com/api/webhooks/iprm/events'
+        ),
+    )
+    partner_webhook_secret = StringField(
+        'Секрет підпису webhook',
+        validators=[Optional(), Length(max=255)],
+        description=(
+            'HMAC-SHA256 ключ, яким IPRM підписує webhook-тіло. '
+            'Має збігатися з секретом на партнерському сайті. '
+            'Залиште порожнім, щоб не змінювати. Рекомендовано: 64+ hex символи.'
+        ),
+    )

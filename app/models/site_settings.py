@@ -73,6 +73,13 @@ class SiteSettings(TimestampMixin, db.Model):
         'partner_prefill_secret', db.String(500), default=''
     )
 
+    # Webhook delivery to partner (e.g. notify mm-medic on event change)
+    partner_webhook_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    partner_webhook_url = db.Column(db.String(500), default='')
+    _partner_webhook_secret_encrypted = db.Column(
+        'partner_webhook_secret', db.String(500), default=''
+    )
+
     @property
     def partner_api_key(self):
         if not self._partner_api_key_encrypted:
@@ -108,6 +115,27 @@ class SiteSettings(TimestampMixin, db.Model):
             self._partner_prefill_secret_encrypted = ''
             return
         self._partner_prefill_secret_encrypted = _get_fernet().encrypt(
+            value.encode()
+        ).decode()
+
+    @property
+    def partner_webhook_secret(self):
+        if not self._partner_webhook_secret_encrypted:
+            return ''
+        try:
+            return _get_fernet().decrypt(
+                self._partner_webhook_secret_encrypted.encode()
+            ).decode()
+        except (InvalidToken, Exception):
+            logger.warning('Failed to decrypt partner_webhook_secret')
+            return ''
+
+    @partner_webhook_secret.setter
+    def partner_webhook_secret(self, value):
+        if not value:
+            self._partner_webhook_secret_encrypted = ''
+            return
+        self._partner_webhook_secret_encrypted = _get_fernet().encrypt(
             value.encode()
         ).decode()
 

@@ -178,6 +178,25 @@
           {% if form.partner_prefill_secret.description %}<small class="form-hint">{{ form.partner_prefill_secret.description }}</small>{% endif %}
         </div>
 
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            {{ form.partner_webhook_enabled(id="partner_webhook_enabled") }}
+            <label for="partner_webhook_enabled">{{ form.partner_webhook_enabled.label.text }}</label>
+          </div>
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="partner_webhook_url">{{ form.partner_webhook_url.label.text }}</label>
+          {{ form.partner_webhook_url(class="form-input", id="partner_webhook_url", placeholder="https://mm-medic.com/api/webhooks/iprm/events") }}
+          {% if form.partner_webhook_url.description %}<small class="form-hint">{{ form.partner_webhook_url.description }}</small>{% endif %}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="partner_webhook_secret">{{ form.partner_webhook_secret.label.text }}</label>
+          {{ form.partner_webhook_secret(class="form-input", id="partner_webhook_secret", placeholder=("••••••• (значення збережено, залиште порожнім щоб не змінювати)" if site.partner_webhook_secret else "Напр. 64-символьний hex-рядок"), autocomplete="off") }}
+          {% if form.partner_webhook_secret.description %}<small class="form-hint">{{ form.partner_webhook_secret.description }}</small>{% endif %}
+        </div>
+
       </div>
     </div>
 
