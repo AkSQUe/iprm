@@ -3,12 +3,22 @@ from flask import url_for
 
 
 def _image_url(path: str) -> str | None:
-    """Convert stored image path to absolute URL."""
+    """Convert stored image path to absolute URL.
+
+    Handles three storage conventions in IPRM:
+      1. Absolute URL already — pass through.
+      2. 'static/images/...' or '/static/images/...' — strip 'static/' prefix
+         because url_for('static', ...) adds it; otherwise we get
+         '/static/static/images/...'.
+      3. 'images/courses/...' or similar — plain filename relative to static.
+    """
     if not path:
         return None
     if path.startswith(('http://', 'https://')):
         return path
     normalized = path.lstrip('/')
+    if normalized.startswith('static/'):
+        normalized = normalized[len('static/'):]
     return url_for('static', filename=normalized, _external=True)
 
 
