@@ -32,7 +32,7 @@ def list_events():
         statuses = ['published', 'active']
 
     query = (
-        Event.query
+        Event.query.options(joinedload(Event.trainer))
         .filter(Event.is_active.is_(True), Event.status.in_(statuses))
         .order_by(Event.start_date.asc().nulls_last())
     )

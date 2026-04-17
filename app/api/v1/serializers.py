@@ -58,6 +58,7 @@ def serialize_event_card(event) -> dict:
         'seats_left': _seats_left(event),
         'registration_url': _registration_url(event),
         'detail_url': _detail_url(event),
+        'trainer': serialize_trainer(event.trainer),
     }
 
 
