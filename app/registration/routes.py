@@ -1,6 +1,6 @@
 import logging
-from flask import render_template, redirect, url_for, flash, abort
-from flask_login import login_required, current_user
+from flask import render_template, redirect, url_for, flash, abort, request
+from flask_login import login_required, current_user, login_user
 from sqlalchemy.orm import joinedload
 from app.registration import registration_bp
 from app.registration.forms import EventRegistrationForm
@@ -8,14 +8,48 @@ from app.extensions import db, limiter
 from app.models.event import Event
 from app.models.registration import EventRegistration
 from app.services import registration_service
+from app.services.partner_auth import (
+    PrefillTokenError,
+    decode_prefill_token,
+    get_or_create_partner_user,
+)
 
 logger = logging.getLogger(__name__)
 
 
+def _maybe_consume_prefill_token():
+    """If ?prefill=<jwt> is present, auto-login / create user and return payload.
+
+    Returns dict with prefill fields for form rendering, or None.
+    On invalid token: logs warning and silently drops prefill (user sees login page).
+    """
+    token = request.args.get('prefill')
+    if not token:
+        return None
+    try:
+        payload = decode_prefill_token(token)
+    except PrefillTokenError as exc:
+        logger.warning('Prefill token rejected: %s', exc)
+        return None
+
+    user = get_or_create_partner_user(payload)
+    if not current_user.is_authenticated or current_user.id != user.id:
+        login_user(user)
+    return {
+        'phone': payload.phone or '',
+        'first_name': payload.first_name or '',
+        'last_name': payload.last_name or '',
+    }
+
+
 @registration_bp.route('/<int:event_id>/register', methods=['GET', 'POST'])
-@login_required
 @limiter.limit("10 per hour", methods=['POST'])
 def register(event_id):
+    prefill = _maybe_consume_prefill_token() if request.method == 'GET' else None
+
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login', next=request.full_path))
+
     if not current_user.email_confirmed:
         flash('Для реєстрації на курс необхідно підтвердити email', 'warning')
         return redirect(url_for('auth.account'))
@@ -34,7 +68,7 @@ def register(event_id):
         flash('Реєстрацію на цей захід закрито', 'error')
         return redirect(url_for('courses.course_by_slug', slug=event.slug))
 
-    form = EventRegistrationForm()
+    form = EventRegistrationForm(data=prefill) if prefill else EventRegistrationForm()
 
     if form.validate_on_submit():
         has_capacity, _ = registration_service.check_capacity(event_id)

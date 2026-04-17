@@ -154,6 +154,33 @@
       </div>
     </div>
 
+    <!-- Partner integration -->
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Інтеграція з партнерами (MM Medic)</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            {{ form.partner_integration_enabled(id="partner_integration_enabled") }}
+            <label for="partner_integration_enabled">{{ form.partner_integration_enabled.label.text }}</label>
+          </div>
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="partner_api_key">{{ form.partner_api_key.label.text }}</label>
+          {{ form.partner_api_key(class="form-input", id="partner_api_key", placeholder=("••••••• (значення збережено, залиште порожнім щоб не змінювати)" if site.partner_api_key else "Напр. 64-символьний hex-рядок"), autocomplete="off") }}
+          {% if form.partner_api_key.description %}<small class="form-hint">{{ form.partner_api_key.description }}</small>{% endif %}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="partner_prefill_secret">{{ form.partner_prefill_secret.label.text }}</label>
+          {{ form.partner_prefill_secret(class="form-input", id="partner_prefill_secret", placeholder=("••••••• (значення збережено, залиште порожнім щоб не змінювати)" if site.partner_prefill_secret else "Напр. 64-символьний hex-рядок"), autocomplete="off") }}
+          {% if form.partner_prefill_secret.description %}<small class="form-hint">{{ form.partner_prefill_secret.description }}</small>{% endif %}
+        </div>
+
+      </div>
+    </div>
+
     <!-- Actions -->
     <div class="admin-form__actions">
       <a href="{{ url_for('admin.events_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>

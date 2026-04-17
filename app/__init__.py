@@ -4,6 +4,7 @@ import os
 import time
 
 from flask import Flask
+from flask_cors import CORS
 from config import config
 from app.extensions import db, login_manager, csrf, migrate, limiter, mail
 
@@ -106,6 +107,22 @@ def create_app(config_name=None):
 
     from app.payments import payments_bp
     app.register_blueprint(payments_bp)
+
+    from app.api.v1 import api_v1_bp
+    app.register_blueprint(api_v1_bp)
+    _partner_origins = [
+        o.strip() for o in os.environ.get(
+            'PARTNER_CORS_ORIGINS',
+            'https://mm-medic.com,https://www.mm-medic.com',
+        ).split(',') if o.strip()
+    ]
+    CORS(
+        app,
+        resources={r'/api/v1/*': {'origins': _partner_origins}},
+        methods=['GET', 'OPTIONS'],
+        allow_headers=['X-API-Key', 'Content-Type'],
+        max_age=3600,
+    )
 
     from app.cli import seed_courses
     app.cli.add_command(seed_courses)

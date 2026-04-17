@@ -19,7 +19,20 @@ def settings():
     form = SiteSettingsForm(obj=site) if request.method == 'GET' else SiteSettingsForm()
 
     if form.validate_on_submit():
+        # Encrypted secrets: empty form value means "keep existing",
+        # so populate_obj would wipe them. Handle manually.
+        new_api_key = form.partner_api_key.data
+        new_prefill_secret = form.partner_prefill_secret.data
+        form.partner_api_key.data = ''
+        form.partner_prefill_secret.data = ''
+
         form.populate_obj(site)
+
+        if new_api_key and new_api_key.strip():
+            site.partner_api_key = new_api_key.strip()
+        if new_prefill_secret and new_prefill_secret.strip():
+            site.partner_prefill_secret = new_prefill_secret.strip()
+
         try:
             db.session.commit()
             audit_logger.info(
@@ -32,4 +45,4 @@ def settings():
             flash('Помилка при збереженні', 'error')
         return redirect(url_for('admin.settings'))
 
-    return render_template('admin/settings.html', form=form)
+    return render_template('admin/settings.html', form=form, site=site)

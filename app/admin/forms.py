@@ -209,3 +209,28 @@ class SiteSettingsForm(FlaskForm):
     # Секції навігації
     show_labs = BooleanField('Показувати розділ "Лабораторії"', default=True)
     show_clinics = BooleanField('Показувати розділ "Клініки"', default=True)
+
+    # Partner integration (MM Medic та інші)
+    partner_integration_enabled = BooleanField(
+        'Увімкнути інтеграцію з партнерськими сайтами',
+        default=False,
+    )
+    partner_api_key = StringField(
+        'API-ключ для партнерів',
+        validators=[Optional(), Length(max=255)],
+        description=(
+            'Використовується партнерськими сайтами у заголовку X-API-Key '
+            'при запитах до /api/v1/events. '
+            'Залиште порожнім, щоб не змінювати поточне значення.'
+        ),
+    )
+    partner_prefill_secret = StringField(
+        'Секрет для підписаних токенів реєстрації',
+        validators=[Optional(), Length(max=255)],
+        description=(
+            'HS256-ключ, яким партнерські сайти підписують JWT для '
+            'автоматичної передачі даних користувача. '
+            'Залиште порожнім, щоб не змінювати. '
+            'Рекомендована довжина: 64+ символи.'
+        ),
+    )

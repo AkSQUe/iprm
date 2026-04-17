@@ -1,5 +1,20 @@
+import base64
+import hashlib
+import logging
+
+from cryptography.fernet import Fernet, InvalidToken
+from flask import current_app
+
 from app.extensions import db
 from app.models.mixins import TimestampMixin
+
+logger = logging.getLogger(__name__)
+
+
+def _get_fernet():
+    secret = current_app.config['SECRET_KEY']
+    key = hashlib.sha256(secret.encode()).digest()
+    return Fernet(base64.urlsafe_b64encode(key))
 
 
 class SiteSettings(TimestampMixin, db.Model):
@@ -50,6 +65,51 @@ class SiteSettings(TimestampMixin, db.Model):
     liqpay_public_key = db.Column(db.String(255), default='')
     liqpay_private_key = db.Column(db.String(255), default='')
     liqpay_sandbox = db.Column(db.Boolean, default=True)
+
+    # Partner integration (MM Medic etc.)
+    partner_integration_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    _partner_api_key_encrypted = db.Column('partner_api_key', db.String(500), default='')
+    _partner_prefill_secret_encrypted = db.Column(
+        'partner_prefill_secret', db.String(500), default=''
+    )
+
+    @property
+    def partner_api_key(self):
+        if not self._partner_api_key_encrypted:
+            return ''
+        try:
+            return _get_fernet().decrypt(self._partner_api_key_encrypted.encode()).decode()
+        except (InvalidToken, Exception):
+            logger.warning('Failed to decrypt partner_api_key')
+            return ''
+
+    @partner_api_key.setter
+    def partner_api_key(self, value):
+        if not value:
+            self._partner_api_key_encrypted = ''
+            return
+        self._partner_api_key_encrypted = _get_fernet().encrypt(value.encode()).decode()
+
+    @property
+    def partner_prefill_secret(self):
+        if not self._partner_prefill_secret_encrypted:
+            return ''
+        try:
+            return _get_fernet().decrypt(
+                self._partner_prefill_secret_encrypted.encode()
+            ).decode()
+        except (InvalidToken, Exception):
+            logger.warning('Failed to decrypt partner_prefill_secret')
+            return ''
+
+    @partner_prefill_secret.setter
+    def partner_prefill_secret(self, value):
+        if not value:
+            self._partner_prefill_secret_encrypted = ''
+            return
+        self._partner_prefill_secret_encrypted = _get_fernet().encrypt(
+            value.encode()
+        ).decode()
 
     @classmethod
     def get(cls):
