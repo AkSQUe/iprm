@@ -12,6 +12,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Verify requirements.lock is in sync
+        # Hard gate: fail before rsync so we never ship a lock that will break
+        # `pip install -r requirements.lock` on the VPS.
+        run: python3 scripts/verify-lock.py
+
       - name: Deploy via rsync
         uses: burnett01/rsync-deployments@7.0.1
         with:
