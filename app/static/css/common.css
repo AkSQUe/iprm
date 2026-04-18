@@ -1036,7 +1036,7 @@ a {
 .iprm-tag.iprm-tag--active {
   background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 50%, var(--apple-orange) 100%);
   color: var(--iprm-white);
-  border: 1px solid transparent;
+  border: none;
 }
 
 /* ========== FORM SECTIONS (структуровані форми) ========== */
