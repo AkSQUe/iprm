@@ -380,7 +380,6 @@
 }
 
 .apple-page .iprm-trainer-card__photo {
-  height: 280px;
   background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--apple-orange-light) 100%);
   display: flex;
   align-items: center;
