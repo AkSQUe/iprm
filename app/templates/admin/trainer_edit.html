@@ -75,7 +75,7 @@
 
         <div class="form-group">
           <label>Фото тренера</label>
-          <div class="admin-dropzone" id="dropzone-photo" data-target="photo">
+          <div class="admin-dropzone admin-dropzone--square" id="dropzone-photo" data-target="photo">
             <div class="admin-dropzone__preview{% if form.photo.data %} admin-dropzone__preview--active{% endif %}" id="preview-photo">
               {% if form.photo.data %}
               <img src="{{ form.photo.data }}" alt="Фото тренера">
