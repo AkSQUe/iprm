@@ -992,13 +992,6 @@ a {
   gap: 6px;
 }
 
-/* Активний тег (обраний фільтр) */
-.iprm-tag--active {
-  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 50%, var(--apple-orange) 100%);
-  color: var(--iprm-white);
-  border: none;
-}
-
 /* Клікабельний тег-фільтр */
 .iprm-tag[data-tag-filter] {
   cursor: pointer;
@@ -1027,6 +1020,13 @@ a {
   color: var(--iprm-accent);
   background: var(--iprm-accent-light);
   border-color: var(--iprm-accent-light);
+}
+
+/* Активний тег-фільтр (градієнтна заливка) */
+.iprm-tag.iprm-tag--active {
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 50%, var(--apple-orange) 100%);
+  color: var(--iprm-white);
+  border-color: transparent;
 }
 
 /* ========== FORM SECTIONS (структуровані форми) ========== */

@@ -198,6 +198,11 @@
   box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
 }
 
+/* Приховати картку при фільтрації (перекриває display: flex вище) */
+.apple-page .iprm-course-card[hidden] {
+  display: none;
+}
+
 .apple-page .iprm-course-card__image {
   height: 200px;
   aspect-ratio: auto;
