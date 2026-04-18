@@ -1003,6 +1003,16 @@ a {
   transform: translateY(-1px);
 }
 
+/* Прибрати focus-outline після кліку мишею (обрізався батьківським overflow: hidden) */
+.iprm-tag[data-tag-filter]:focus {
+  outline: none;
+}
+
+.iprm-tag[data-tag-filter]:focus-visible {
+  outline: 2px solid var(--iprm-nav-active);
+  outline-offset: 2px;
+}
+
 /* ========== TAGS ========== */
 
 .iprm-tag {
@@ -1026,7 +1036,7 @@ a {
 .iprm-tag.iprm-tag--active {
   background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 50%, var(--apple-orange) 100%);
   color: var(--iprm-white);
-  border-color: transparent;
+  border: 1px solid transparent;
 }
 
 /* ========== FORM SECTIONS (структуровані форми) ========== */
