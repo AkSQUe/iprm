@@ -44,7 +44,7 @@
 
       <div class="iprm-course-cards" data-filterable="courses">
         {% for event in events %}
-        <article class="iprm-course-card apple-reveal" data-tags="{{ event.tags | tojson }}">
+        <article class="iprm-course-card apple-reveal" data-tags='{{ event.tags | tojson }}'>
           <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}">
             <div class="iprm-course-card__image">
               {% if event.card_image %}
