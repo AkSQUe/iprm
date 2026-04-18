@@ -42,9 +42,9 @@
       <h2 id="courses-title" class="iprm-section__title">Доступні <span class="apple-gradient-text">курси</span></h2>
       <p class="iprm-section__subtitle">Оберіть курс та підвищіть свою кваліфікацію</p>
 
-      <div class="iprm-course-cards">
+      <div class="iprm-course-cards" data-filterable="courses">
         {% for event in events %}
-        <article class="iprm-course-card apple-reveal">
+        <article class="iprm-course-card apple-reveal" data-tags="{{ event.tags | tojson }}">
           <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}">
             <div class="iprm-course-card__image">
               {% if event.card_image %}
@@ -56,7 +56,7 @@
               {% if event.tags %}
               <div class="iprm-course-card__tags">
                 {% for tag in event.tags %}
-                  <span class="iprm-tag">{{ tag }}</span>
+                  <span class="iprm-tag" data-tag-filter="{{ tag }}" role="button" tabindex="0">{{ tag }}</span>
                 {% endfor %}
               </div>
               {% endif %}
@@ -68,6 +68,9 @@
           <p>Наразі немає доступних курсів</p>
         </div>
         {% endfor %}
+        <div class="iprm-empty-state iprm-empty-state--full" data-filter-empty hidden>
+          <p>Немає курсів з обраними фільтрами</p>
+        </div>
       </div>
     </div>
   </section>
@@ -194,4 +197,5 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/page-courses-filter.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

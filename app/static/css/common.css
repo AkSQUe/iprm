@@ -988,15 +988,26 @@ a {
 
 .iprm-course-card__tags {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
-/* Перший тег -- акцентний з градієнтом */
-.iprm-course-card__tags .iprm-tag:first-child {
+/* Активний тег (обраний фільтр) */
+.iprm-tag--active {
   background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 50%, var(--apple-orange) 100%);
   color: var(--iprm-white);
   border: none;
+}
+
+/* Клікабельний тег-фільтр */
+.iprm-tag[data-tag-filter] {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+}
+
+.iprm-tag[data-tag-filter]:hover {
+  transform: translateY(-1px);
 }
 
 /* ========== TAGS ========== */
