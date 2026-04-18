@@ -20,3 +20,18 @@ def upload_course_image():
 
     audit_logger.info('Uploaded course image: %s', url)
     return jsonify({'url': url}), 200
+
+
+@admin_bp.route('/upload/trainer-image', methods=['POST'])
+@admin_required
+def upload_trainer_image():
+    """Upload a trainer photo to images/trainers/{slug}/."""
+    file = request.files.get('file')
+    slug = request.form.get('slug', '').strip()
+
+    url, error = file_service.upload_trainer_image(file, slug)
+    if error:
+        return jsonify({'error': error}), 400
+
+    audit_logger.info('Uploaded trainer image: %s', url)
+    return jsonify({'url': url}), 200

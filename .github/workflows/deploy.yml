@@ -20,7 +20,7 @@ jobs:
       - name: Deploy via rsync
         uses: burnett01/rsync-deployments@7.0.1
         with:
-          switches: -avz --delete --exclude='.git' --exclude='keys/' --exclude='.env' --exclude='venv/' --exclude='iprm.sock' --exclude='app/static/images/courses/'
+          switches: -avz --delete --exclude='.git' --exclude='keys/' --exclude='.env' --exclude='venv/' --exclude='iprm.sock' --exclude='app/static/images/courses/' --exclude='app/static/images/trainers/'
           path: ./
           remote_path: /var/www/iprm/
           remote_host: ${{ secrets.VPS_HOST }}
