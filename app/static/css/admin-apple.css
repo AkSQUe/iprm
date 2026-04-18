@@ -502,6 +502,23 @@
   opacity: 1;
 }
 
+/* Квадратний варіант (для фото тренера тощо) */
+.admin-dropzone--square {
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+}
+
+.admin-dropzone--square .admin-dropzone__preview,
+.admin-dropzone--square .admin-dropzone__preview img {
+  width: 100%;
+  height: 100%;
+}
+
+.admin-dropzone--square .admin-dropzone__preview img {
+  object-fit: cover;
+  object-position: center top;
+}
+
 .admin-dropzone:hover,
 .admin-dropzone--dragover {
   border-color: var(--iprm-nav-active);
