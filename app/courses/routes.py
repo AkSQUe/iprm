@@ -12,7 +12,7 @@ def course_list():
     ).filter(
         Event.is_active.is_(True),
         Event.status.in_(['published', 'active', 'completed']),
-    ).order_by(Event.start_date.desc()).all()
+    ).order_by(Event.start_date).all()
     return render_template('courses/list.html', active_nav='courses', events=events)
 
 
