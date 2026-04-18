@@ -11,8 +11,8 @@ def course_list():
         joinedload(Event.trainer),
     ).filter(
         Event.is_active.is_(True),
-        Event.status.in_(['published', 'active']),
-    ).order_by(Event.start_date).all()
+        Event.status.in_(['published', 'active', 'completed']),
+    ).order_by(Event.start_date.desc()).all()
     return render_template('courses/list.html', active_nav='courses', events=events)
 
 
