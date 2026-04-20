@@ -6,37 +6,41 @@ from sqlalchemy.orm import joinedload
 
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
+from app.extensions import db
+from app.models.course_instance import CourseInstance
+from app.models.registration import EventRegistration
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
-from app.extensions import db
-from app.models.event import Event
-from app.models.registration import EventRegistration
 
 
 def _redirect_after_action(reg):
     if request.form.get('next') == 'registrations_all':
         return redirect(url_for('admin.registrations_all'))
-    return redirect(url_for('admin.event_registrations', event_id=reg.event_id))
+    if reg.instance_id:
+        return redirect(url_for('admin.instance_registrations', instance_id=reg.instance_id))
+    return redirect(url_for('admin.registrations_all'))
 
 
-@admin_bp.route('/events/<int:event_id>/registrations')
+@admin_bp.route('/instances/<int:instance_id>/registrations')
 @admin_required
-def event_registrations(event_id):
-    event = db.session.get(Event, event_id)
-    if not event:
-        flash('Захід не знайдено', 'error')
-        return redirect(url_for('admin.dashboard'))
+def instance_registrations(instance_id):
+    instance = db.session.query(CourseInstance).options(
+        joinedload(CourseInstance.course),
+    ).filter_by(id=instance_id).first()
+    if not instance:
+        flash('Проведення не знайдено', 'error')
+        return redirect(url_for('admin.instances_list'))
 
     registrations = EventRegistration.query.options(
         joinedload(EventRegistration.user),
-    ).filter_by(event_id=event.id).order_by(
+    ).filter_by(instance_id=instance.id).order_by(
         EventRegistration.created_at.desc()
     ).all()
 
     return render_template(
-        'admin/event_registrations.html',
-        event=event,
+        'admin/instance_registrations.html',
+        instance=instance,
         registrations=registrations,
     )
 
@@ -86,11 +90,13 @@ def registration_attendance(reg_id):
     reg.attended = True
     reg.status = 'completed'
     cpd = request.form.get('cpd_points', type=int)
-    max_cpd = (reg.event.cpd_points or 0) * 2
+    # max cap = 2x the instance's effective cpd (або принаймні 100)
+    base_cpd = reg.instance.effective_cpd_points if reg.instance else 0
+    max_cpd = (base_cpd or 0) * 2
     if cpd is not None and (cpd < 0 or cpd > max(max_cpd, 100)):
         flash('Некоректна кількість балів БПР', 'error')
         return _redirect_after_action(reg)
-    reg.cpd_points_awarded = cpd if cpd is not None else reg.event.cpd_points
+    reg.cpd_points_awarded = cpd if cpd is not None else base_cpd
 
     try:
         db.session.commit()
@@ -112,7 +118,7 @@ def registration_attendance(reg_id):
 def registrations_all():
     status_filter = request.args.get('status', '')
     payment_filter = request.args.get('payment', '')
-    event_id_filter = request.args.get('event_id', type=int)
+    instance_id_filter = request.args.get('instance_id', type=int)
 
     stats = db.session.query(
         func.count().label('total'),
@@ -127,27 +133,29 @@ def registrations_all():
 
     query = EventRegistration.query.options(
         joinedload(EventRegistration.user),
-        joinedload(EventRegistration.event),
+        joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
     )
     if status_filter and status_filter in dict(EventRegistration.STATUSES):
         query = query.filter(EventRegistration.status == status_filter)
     if payment_filter and payment_filter in dict(EventRegistration.PAYMENT_STATUSES):
         query = query.filter(EventRegistration.payment_status == payment_filter)
-    if event_id_filter:
-        query = query.filter(EventRegistration.event_id == event_id_filter)
+    if instance_id_filter:
+        query = query.filter(EventRegistration.instance_id == instance_id_filter)
 
     registrations = query.order_by(EventRegistration.created_at.desc()).all()
 
-    events = Event.query.order_by(Event.start_date.desc()).all()
+    instances = db.session.query(CourseInstance).options(
+        joinedload(CourseInstance.course),
+    ).order_by(CourseInstance.start_date.desc()).all()
 
     return render_template(
         'admin/registrations.html',
         registrations=registrations,
         stats=stats,
-        events=events,
+        instances=instances,
         filters={
             'status': status_filter,
             'payment': payment_filter,
-            'event_id': event_id_filter,
+            'instance_id': instance_id_filter,
         },
     )

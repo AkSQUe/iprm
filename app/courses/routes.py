@@ -8,7 +8,6 @@ from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest
-from app.models.event import Event
 
 
 @courses_bp.route('/')
@@ -55,10 +54,6 @@ def course_by_slug(slug):
     ).filter_by(slug=slug, is_active=True).first()
 
     if not course:
-        # Легасі: якщо Course не знайдено, пробуємо Event (старий URL)
-        event = Event.query.filter_by(slug=slug, is_active=True).first()
-        if event:
-            return render_template('courses/event.html', event=event, active_nav='courses')
         abort(404)
 
     now = datetime.now(timezone.utc)
@@ -76,17 +71,12 @@ def course_by_slug(slug):
         reverse=True,
     )
 
-    # Для кнопки "Реєстрація" мапимо instance -> legacy event (за slug)
-    legacy_event = Event.query.filter_by(slug=slug, is_active=True).first()
-    legacy_event_id = legacy_event.id if legacy_event else None
-
     return render_template(
         'courses/detail.html',
         active_nav='courses',
         course=course,
         upcoming_instances=upcoming_instances,
         past_instances=past_instances,
-        legacy_event_id=legacy_event_id,
     )
 
 

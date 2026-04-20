@@ -42,7 +42,7 @@ def liqpay():
     stats = EventRegistration.payment_stats()
 
     recent = EventRegistration.query.options(
-        joinedload(EventRegistration.event),
+        joinedload(EventRegistration.instance),
         joinedload(EventRegistration.user),
     ).filter(
         EventRegistration.payment_amount > 0,

@@ -53,7 +53,7 @@ def success():
         return redirect(url_for('main.index'))
 
     reg = db.session.query(EventRegistration).options(
-        joinedload(EventRegistration.event),
+        joinedload(EventRegistration.instance),
     ).filter_by(id=reg_id).first()
 
     if not reg or reg.user_id != current_user.id:
@@ -68,7 +68,7 @@ def success():
             logger.exception('Failed to poll LiqPay for REG-%d on success page', reg_id)
 
     if reg.payment_status == 'paid':
-        return render_template('payments/success.html', reg=reg, event=reg.event)
+        return render_template('payments/success.html', reg=reg, event=reg.instance)
 
     flash('Оплата ще обробляється. Оновіть сторінку через хвилину.', 'info')
     return redirect(url_for('registration.confirmation', registration_id=reg.id))
@@ -83,7 +83,7 @@ def failure():
     try:
         reg_id = _parse_order_id(order_id)
         reg = db.session.query(EventRegistration).options(
-            joinedload(EventRegistration.event),
+            joinedload(EventRegistration.instance),
         ).filter_by(id=reg_id).first()
         if reg and reg.user_id != current_user.id:
             reg = None

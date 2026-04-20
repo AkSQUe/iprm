@@ -1,7 +1,7 @@
 from flask import render_template, abort
 
 from app.trainers import trainers_bp
-from app.models.event import Event
+from app.models.course import Course
 from app.models.trainer import Trainer
 
 
@@ -16,12 +16,12 @@ def trainer_detail(slug):
     trainer = Trainer.query.filter_by(slug=slug, is_active=True).first()
     if not trainer:
         abort(404)
-    events = Event.query.filter_by(
+    courses = Course.query.filter_by(
         trainer_id=trainer.id, is_active=True,
-    ).order_by(Event.start_date).all()
+    ).order_by(Course.title).all()
     return render_template(
         'trainers/detail.html',
         active_nav='trainers',
         trainer=trainer,
-        events=events,
+        courses=courses,
     )

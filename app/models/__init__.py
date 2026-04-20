@@ -1,6 +1,5 @@
 from app.models.mixins import TimestampMixin, BigIntPK, utcnow
 from app.models.user import User
-from app.models.event import Event
 from app.models.trainer import Trainer
 from app.models.program_block import ProgramBlock
 from app.models.registration import EventRegistration
@@ -15,7 +14,7 @@ from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest
 
 __all__ = [
-    'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'Event', 'Trainer',
+    'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'Trainer',
     'ProgramBlock', 'EventRegistration', 'Clinic', 'EmailLog', 'EmailSettings',
     'PaymentTransaction', 'SiteSettings', 'ErrorLog',
     'Course', 'CourseInstance', 'CourseRequest',

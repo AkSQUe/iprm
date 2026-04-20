@@ -23,7 +23,11 @@ class User(TimestampMixin, UserMixin, db.Model):
     last_login_at = db.Column(db.DateTime(timezone=True))
 
     registrations = db.relationship('EventRegistration', back_populates='user', lazy='dynamic')
-    created_events = db.relationship('Event', back_populates='creator', foreign_keys='Event.created_by')
+    created_courses = db.relationship(
+        'Course',
+        foreign_keys='Course.created_by',
+        back_populates='creator',
+    )
 
     def __init__(self, email, password=None, **kwargs):
         super().__init__(**kwargs)

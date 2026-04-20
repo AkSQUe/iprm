@@ -67,8 +67,12 @@ class Course(TimestampMixin, db.Model):
         ),
     )
 
-    trainer = db.relationship('Trainer', foreign_keys=[trainer_id])
-    creator = db.relationship('User', foreign_keys=[created_by])
+    trainer = db.relationship(
+        'Trainer', foreign_keys=[trainer_id], back_populates='courses',
+    )
+    creator = db.relationship(
+        'User', foreign_keys=[created_by], back_populates='created_courses',
+    )
     instances = db.relationship(
         'CourseInstance',
         back_populates='course',

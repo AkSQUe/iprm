@@ -67,7 +67,7 @@ def send_course_reminders():
     app = scheduler._app
     with app.app_context():
         from sqlalchemy.orm import joinedload
-        from app.models.event import Event
+        from app.models.course_instance import CourseInstance
         from app.models.registration import EventRegistration
         from app.models.email_log import EmailLog
         from app.models.email_settings import EmailSettings
@@ -87,14 +87,14 @@ def send_course_reminders():
 
             registrations = (
                 EventRegistration.query
-                .join(Event)
+                .join(CourseInstance, EventRegistration.instance_id == CourseInstance.id)
                 .options(
-                    joinedload(EventRegistration.event),
+                    joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
                     joinedload(EventRegistration.user),
                 )
                 .filter(
-                    Event.start_date.between(window_start, window_end),
-                    Event.status.in_(['published', 'active']),
+                    CourseInstance.start_date.between(window_start, window_end),
+                    CourseInstance.status.in_(['published', 'active']),
                     EventRegistration.status.in_(['confirmed', 'completed']),
                 )
                 .all()
@@ -118,8 +118,8 @@ def send_course_reminders():
                     try:
                         EmailService.send_course_reminder(reg, days)
                         logger.info(
-                            'Reminder: reg=%d event=%d days=%d',
-                            reg.id, reg.event_id, days,
+                            'Reminder: reg=%d instance=%d days=%d',
+                            reg.id, reg.instance_id, days,
                         )
                     except Exception:
                         logger.exception('Reminder failed: reg=%d', reg.id)

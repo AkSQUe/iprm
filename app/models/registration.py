@@ -5,15 +5,26 @@ from app.models.mixins import TimestampMixin, BigIntPK
 
 
 class EventRegistration(TimestampMixin, db.Model):
+    """Реєстрація на CourseInstance.
+
+    Ім'я класу (EventRegistration) і таблиці (event_registrations)
+    збережено з історичних причин -- занадто багато FK і email-логів
+    посилаються на них. Насправді тут реєстрація на конкретне
+    проведення (CourseInstance).
+    """
     __tablename__ = 'event_registrations'
 
     id = db.Column(BigIntPK, primary_key=True)
-    user_id = db.Column(db.BigInteger, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
-    event_id = db.Column(db.BigInteger, db.ForeignKey('events.id', ondelete='CASCADE'), nullable=True, index=True)
+    user_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
     instance_id = db.Column(
         db.BigInteger,
         db.ForeignKey('course_instances.id', ondelete='CASCADE'),
-        nullable=True,
+        nullable=False,
         index=True,
     )
 
@@ -34,7 +45,6 @@ class EventRegistration(TimestampMixin, db.Model):
     admin_notes = db.Column(db.Text)
 
     user = db.relationship('User', back_populates='registrations')
-    event = db.relationship('Event', foreign_keys=[event_id], back_populates='registrations')
     instance = db.relationship(
         'CourseInstance',
         foreign_keys=[instance_id],
@@ -44,12 +54,8 @@ class EventRegistration(TimestampMixin, db.Model):
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'instance_id', name='uq_user_instance_registration'),
-        db.Index('ix_registrations_event_status', 'event_id', 'status'),
+        db.Index('ix_registrations_instance_status', 'instance_id', 'status'),
         db.Index('ix_registrations_created_at', 'created_at'),
-        db.CheckConstraint(
-            'event_id IS NOT NULL OR instance_id IS NOT NULL',
-            name='ck_registrations_target_not_null',
-        ),
         db.CheckConstraint(
             "status IN ('pending', 'confirmed', 'cancelled', 'completed')",
             name='ck_registrations_status',
@@ -116,31 +122,21 @@ class EventRegistration(TimestampMixin, db.Model):
 
     @property
     def target_title(self):
-        """Назва (з Course-instance або legacy Event)."""
         if self.instance and self.instance.course:
             return self.instance.course.title
-        if self.event:
-            return self.event.title
         return ''
 
     @property
     def target_slug(self):
         if self.instance and self.instance.course:
             return self.instance.course.slug
-        if self.event:
-            return self.event.slug
         return ''
 
     @property
     def target_start_date(self):
-        if self.instance and self.instance.start_date:
+        if self.instance:
             return self.instance.start_date
-        if self.event:
-            return self.event.start_date
         return None
 
     def __repr__(self):
-        return (
-            f'<EventRegistration user={self.user_id} '
-            f'instance={self.instance_id} event={self.event_id}>'
-        )
+        return f'<EventRegistration user={self.user_id} instance={self.instance_id}>'

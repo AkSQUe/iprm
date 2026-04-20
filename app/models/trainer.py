@@ -21,7 +21,12 @@ class Trainer(TimestampMixin, db.Model):
         ),
     )
 
-    events = db.relationship('Event', back_populates='trainer', lazy='dynamic')
+    courses = db.relationship(
+        'Course',
+        foreign_keys='Course.trainer_id',
+        back_populates='trainer',
+        lazy='dynamic',
+    )
 
     def __repr__(self):
         return f'<Trainer {self.full_name}>'

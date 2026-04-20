@@ -4,7 +4,7 @@ from sqlalchemy.orm import joinedload
 from app.extensions import limiter
 from app.main import main_bp
 from app.main.forms import ContactForm
-from app.models.event import Event
+from app.models.course import Course
 
 
 @main_bp.route('/')
@@ -14,13 +14,10 @@ def index():
 
 @main_bp.route('/labs')
 def labs():
-    events = Event.query.options(
-        joinedload(Event.trainer),
-    ).filter(
-        Event.is_active.is_(True),
-        Event.status.in_(['published', 'active']),
-    ).order_by(Event.start_date).limit(6).all()
-    return render_template('main/index.html', active_nav='labs', events=events)
+    courses = Course.query.options(
+        joinedload(Course.trainer),
+    ).filter(Course.is_active.is_(True)).order_by(Course.title).limit(6).all()
+    return render_template('main/index.html', active_nav='labs', courses=courses)
 
 
 @main_bp.route('/offer')

@@ -8,7 +8,8 @@ from app.auth import auth_bp
 from app.auth.forms import LoginForm, RegistrationForm
 from app.extensions import db, limiter
 from app.models.user import User
-from app.models.event import Event
+from app.models.course import Course
+from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
 from app.services.token_service import generate_confirmation_token, confirm_token
 from app.services.email_service import EmailService
@@ -113,9 +114,9 @@ def account():
         EventRegistration.query
         .filter_by(user_id=current_user.id)
         .filter(EventRegistration.status != 'cancelled')
-        .join(Event)
-        .options(contains_eager(EventRegistration.event))
-        .order_by(Event.start_date.desc())
+        .join(CourseInstance, EventRegistration.instance_id == CourseInstance.id)
+        .options(contains_eager(EventRegistration.instance).joinedload(CourseInstance.course))
+        .order_by(CourseInstance.start_date.desc())
         .all()
     )
     return render_template('auth/account.html', registrations=registrations)
