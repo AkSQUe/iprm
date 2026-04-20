@@ -1,30 +1,35 @@
-"""HTTP webhook dispatcher — notifies partner sites on Course changes.
+"""HTTP webhook dispatcher для партнерських інтеграцій.
 
-Fire-and-forget: failures are logged but never bubble up to the caller. Pull
-beat on the partner side acts as safety net if a webhook is lost.
+Відправляє HMAC-підписані HTTP POST на партнерський URL. Публічний
+контракт:
+    POST <partner_webhook_url>
+    Headers:
+        Content-Type: application/json; charset=utf-8
+        X-IPRM-Signature: HMAC-SHA256(body, partner_webhook_secret) hex
+        X-IPRM-Event-Id: event_uuid (партнер дедуплікує по ньому -- **stable**
+                                     між повторними спробами)
+        User-Agent: iprm-webhook/1.0
 
-Payload schema (схема збережена з часів Event-моделі для сумісності з
-партнерськими споживачами; `event_id` тепер містить Course.id):
-    {
-        "event_type": "event.updated" | "event.deleted" | "event.created",
-        "slug": "plazmoterapiya-v-ortopedii",
-        "event_id": 3,
-        "timestamp": "2026-04-17T14:38:00+00:00"
-    }
+    Body:
+        {
+            "event_type": "event.updated" | "event.deleted" | "event.created",
+            "slug": "plazmoterapiya-v-ortopedii",
+            "event_id": 3,
+            "timestamp": "2026-04-17T14:38:00+00:00"
+        }
 
-Будь-яка зміна Course АБО CourseInstance тригерить webhook `event.updated`
-на курс (щоб партнер оновив і контент, і розклад через /api/v1/events/<slug>).
+Payload schema збережена з часів Event-моделі (field `event_id` містить
+Course.id). Будь-яка зміна Course АБО CourseInstance тригерить
+webhook `event.updated`.
 
-Headers:
-    X-IPRM-Signature: HMAC-SHA256(body, partner_webhook_secret) in hex
-    X-IPRM-Event-Id: UUID4 (partner deduplicates on this)
-    Content-Type: application/json
+Dispatch сам по собі НЕ робить retry -- викликач (scheduler job, що
+обробляє чергу WebhookDelivery) керує повторами з exponential backoff.
 """
 import hashlib
 import hmac
 import json
 import logging
-import uuid
+from dataclasses import dataclass
 from datetime import datetime, timezone
 
 import requests
@@ -34,78 +39,98 @@ logger = logging.getLogger(__name__)
 TIMEOUT = (3.0, 10.0)  # (connect, read)
 
 
-def dispatch_event_webhook(event_id: int, event_slug: str, action: str) -> None:
-    """Fire a webhook for Event {created,updated,deleted}.
+@dataclass
+class DispatchResult:
+    """Результат спроби відправки. Use-cases:
 
-    Args:
-        event_id: Event.id at commit time. For deletes, provided before row is gone.
-        event_slug: Event.slug snapshot (deleted rows still need this in payload).
-        action: 'created' | 'updated' | 'deleted'.
-
-    Safe to call from anywhere — all exceptions are caught and logged.
-    Returns nothing; caller has no way to tell if the POST succeeded.
+    * ok=True: партнер відповів 2xx; permanent success
+    * ok=False + retryable=True: transient (5xx, timeout, conn error);
+      caller планує retry
+    * ok=False + retryable=False: permanent fail (4xx у партнера, неправильний
+      URL, etc.); caller ставить final 'failed'
     """
+    ok: bool
+    retryable: bool
+    http_status: int | None
+    error: str | None
+
+
+def _build_payload(course_id, course_slug, action, event_uuid):
+    payload = {
+        'event_type': f'event.{action}',
+        'slug': course_slug,
+        'event_id': course_id,
+        'timestamp': datetime.now(timezone.utc).isoformat(),
+    }
+    body = json.dumps(payload, separators=(',', ':'), ensure_ascii=False)
+    return body, event_uuid
+
+
+def _sign(body_str, secret):
+    return hmac.new(
+        secret.encode('utf-8'),
+        body_str.encode('utf-8'),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def dispatch_one(course_id, course_slug, action, target_url, secret, event_uuid):
+    """Одна спроба відправки. Повертає DispatchResult.
+
+    НЕ робить retry самостійно; НЕ пише в DB. Caller (process_webhook_queue)
+    оновлює WebhookDelivery стан згідно результату.
+    """
+    # Фаза 1: зібрати payload + підпис.
     try:
-        from app.models.site_settings import SiteSettings
-        settings = SiteSettings.get()
+        body, _ = _build_payload(course_id, course_slug, action, event_uuid)
+        signature = _sign(body, secret)
+    except Exception as exc:  # noqa: BLE001 -- кеш для будь-якого збою
+        logger.exception(
+            'Webhook build error course=%s action=%s: %s',
+            course_id, action, exc,
+        )
+        return DispatchResult(ok=False, retryable=False, http_status=None, error=str(exc)[:500])
 
-        if not settings.partner_webhook_enabled:
-            return
-        url = (settings.partner_webhook_url or '').strip()
-        secret = settings.partner_webhook_secret
-        if not url or not secret:
-            logger.warning(
-                'partner_webhook_enabled=True but url/secret missing — skipping'
-            )
-            return
-
-        payload = {
-            'event_type': f'event.{action}',
-            'slug': event_slug,
-            'event_id': event_id,
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-        }
-        body = json.dumps(payload, separators=(',', ':'), ensure_ascii=False)
-
-        signature = hmac.new(
-            secret.encode('utf-8'),
-            body.encode('utf-8'),
-            hashlib.sha256,
-        ).hexdigest()
-
-        headers = {
-            'Content-Type': 'application/json; charset=utf-8',
-            'X-IPRM-Signature': signature,
-            'X-IPRM-Event-Id': uuid.uuid4().hex,
-            'User-Agent': 'iprm-webhook/1.0',
-        }
-
+    # Фаза 2: HTTP POST.
+    headers = {
+        'Content-Type': 'application/json; charset=utf-8',
+        'X-IPRM-Signature': signature,
+        'X-IPRM-Event-Id': event_uuid,
+        'User-Agent': 'iprm-webhook/1.0',
+    }
+    try:
         response = requests.post(
-            url,
+            target_url,
             data=body.encode('utf-8'),
             headers=headers,
             timeout=TIMEOUT,
         )
-        if response.ok:
-            logger.info(
-                'Webhook delivered: %s event_id=%s status=%d',
-                action, event_id, response.status_code,
-            )
-        else:
-            # Not fatal — pull beat will catch up within 30 min.
-            logger.warning(
-                'Webhook non-2xx response: %s event_id=%s status=%d body=%s',
-                action, event_id, response.status_code, response.text[:200],
-            )
+    except requests.Timeout as exc:
+        return DispatchResult(
+            ok=False, retryable=True, http_status=None,
+            error=f'timeout: {exc}',
+        )
+    except requests.ConnectionError as exc:
+        return DispatchResult(
+            ok=False, retryable=True, http_status=None,
+            error=f'connection error: {exc}',
+        )
     except requests.RequestException as exc:
-        logger.warning(
-            'Webhook HTTP error: %s event_id=%s err=%s',
-            action, event_id, exc,
+        return DispatchResult(
+            ok=False, retryable=False, http_status=None,
+            error=f'request error: {exc}',
         )
-    except Exception as exc:
-        # Absolutely never raise from here — Event commit must succeed
-        # regardless of downstream partner availability.
-        logger.exception(
-            'Webhook dispatcher crashed for %s event_id=%s: %s',
-            action, event_id, exc,
+
+    # Фаза 3: обробка статусу.
+    if response.ok:
+        return DispatchResult(
+            ok=True, retryable=False, http_status=response.status_code, error=None,
         )
+    # 5xx retryable, 4xx -- ні (партнер відхилив остаточно).
+    retryable = response.status_code >= 500
+    return DispatchResult(
+        ok=False,
+        retryable=retryable,
+        http_status=response.status_code,
+        error=(response.text or '')[:500],
+    )

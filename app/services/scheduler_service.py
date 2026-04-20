@@ -57,6 +57,14 @@ def init_scheduler(app):
         name='Обслуговування черги email',
     )
 
+    scheduler.add_job(
+        process_webhook_queue,
+        trigger=CronTrigger(minute='*'),  # every minute
+        id='webhook_queue_worker',
+        replace_existing=True,
+        name='Відправка webhook-ів партнерам',
+    )
+
     scheduler.start()
     _initialized = True
     logger.info('APScheduler started with SQLAlchemy jobstore')
@@ -155,3 +163,16 @@ def email_queue_maintenance():
                 'Email maintenance: %d stale cleaned, %d retried',
                 stale_count, retry_count,
             )
+
+
+def process_webhook_queue():
+    """Periodic job: dispatch pending + retrying webhook deliveries."""
+    app = scheduler._app
+    with app.app_context():
+        from app.services.webhook_queue import process_queue
+        try:
+            stats = process_queue()
+            if stats.get('processed'):
+                logger.info('Webhook queue: %s', stats)
+        except Exception:
+            logger.exception('process_webhook_queue failed')

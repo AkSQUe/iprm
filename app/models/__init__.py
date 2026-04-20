@@ -12,10 +12,12 @@ from app.models.error_log import ErrorLog
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest, CourseRequestAudit
+from app.models.webhook_delivery import WebhookDelivery
 
 __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'Trainer',
     'ProgramBlock', 'EventRegistration', 'Clinic', 'EmailLog', 'EmailSettings',
     'PaymentTransaction', 'SiteSettings', 'ErrorLog',
-    'Course', 'CourseInstance', 'CourseRequest',
+    'Course', 'CourseInstance', 'CourseRequest', 'CourseRequestAudit',
+    'WebhookDelivery',
 ]

@@ -1,24 +1,23 @@
-"""SQLAlchemy listeners: при зміні Course або CourseInstance оповіщаємо
-партнерські сайти через webhook.
+"""SQLAlchemy listeners: при зміні Course або CourseInstance ставимо
+рядок у чергу WebhookDelivery.
 
-Dispatch відбувається AFTER transaction commit (ніколи не всередині) --
-щоб збій webhook не відкочував адмінські зміни. session.info збирає
-pending-події під час транзакції, flush-ує їх у after_commit у фоновому
-треді (щоб таймаути HTTP не блокували HTTP-відповідь адміну).
+Після COMMIT `session` викликаємо `webhook_queue.enqueue(...)` для кожного
+зібраного за час транзакції сповіщення. Реальна доставка -- scheduler job
+`process_webhook_queue` (періодично), з retry/backoff/circuit breaker.
 
-Legacy: раніше listener слухав Event. Тепер слухає Course (контент) і
-CourseInstance (розклад). Payload все ще має поле `event_id` для
-зворотної сумісності з партнерами -- у нього пишеться course.id.
+Переваги queue-based підходу:
+    * При crash додатку під час HTTP POST не губимо подію;
+    * Адмін бачить історію в таблиці webhook_deliveries;
+    * Multiple workers можуть спокійно обробляти чергу;
+    * Ретраї прозорі (не треба тримати thread у памяті).
 """
 import logging
-import threading
 
-from flask import current_app, has_app_context
+from flask import has_app_context
 from sqlalchemy import event as sa_event
 
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
-from app.services.webhook_dispatcher import dispatch_event_webhook
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +25,14 @@ _PENDING_KEY = '_iprm_webhook_pending'
 _PENDING_SEEN_KEY = '_iprm_webhook_seen_keys'
 
 
+def _session_of(target, fallback_session):
+    """Повертає session, до якої прикріплений target, з fallback на default."""
+    from app.extensions import db
+    return db.session.object_session(target) or fallback_session
+
+
 def _queue(session, course_id, course_slug, action):
-    """Додати pending webhook; дедуплікує за (course_id, action) через set -- O(1)."""
+    """Додати pending webhook у session-scoped queue. Дедуплікує O(1) через set."""
     pending = session.info.setdefault(_PENDING_KEY, [])
     seen = session.info.setdefault(_PENDING_SEEN_KEY, set())
     key = (course_id, action)
@@ -45,61 +50,39 @@ def _course_from_instance(instance):
     return db.session.get(Course, instance.course_id)
 
 
-def _dispatch_all(pending, app):
-    """Послідовно відправити усі pending webhooks у власному app context.
-
-    Виконується у фоновому треді. Помилки логуються, не кидаються.
-    """
-    with app.app_context():
-        for course_id, course_slug, action in pending:
-            try:
-                dispatch_event_webhook(course_id, course_slug, action)
-            except Exception:
-                logger.exception(
-                    'Webhook dispatch crashed for %s/%s (course=%s)',
-                    action, course_slug, course_id,
-                )
-
-
 def register_course_listeners(db) -> None:
     """Прив'язати after_{insert,update,delete} + after_commit hooks до
     Course та CourseInstance."""
 
     @sa_event.listens_for(Course, 'after_insert')
     def _on_course_insert(mapper, connection, target):
-        session = db.session.object_session(target) or db.session
-        _queue(session, target.id, target.slug, 'created')
+        _queue(_session_of(target, db.session), target.id, target.slug, 'created')
 
     @sa_event.listens_for(Course, 'after_update')
     def _on_course_update(mapper, connection, target):
-        session = db.session.object_session(target) or db.session
-        _queue(session, target.id, target.slug, 'updated')
+        _queue(_session_of(target, db.session), target.id, target.slug, 'updated')
 
     @sa_event.listens_for(Course, 'after_delete')
     def _on_course_delete(mapper, connection, target):
-        session = db.session.object_session(target) or db.session
-        _queue(session, target.id, target.slug, 'deleted')
+        _queue(_session_of(target, db.session), target.id, target.slug, 'deleted')
 
     @sa_event.listens_for(CourseInstance, 'after_insert')
     def _on_instance_insert(mapper, connection, target):
-        session = db.session.object_session(target) or db.session
         course = _course_from_instance(target)
         if course:
-            _queue(session, course.id, course.slug, 'updated')
+            _queue(_session_of(target, db.session), course.id, course.slug, 'updated')
 
     @sa_event.listens_for(CourseInstance, 'after_update')
     def _on_instance_update(mapper, connection, target):
-        session = db.session.object_session(target) or db.session
         course = _course_from_instance(target)
         if course:
-            _queue(session, course.id, course.slug, 'updated')
+            _queue(_session_of(target, db.session), course.id, course.slug, 'updated')
 
     @sa_event.listens_for(CourseInstance, 'after_delete')
     def _on_instance_delete(mapper, connection, target):
-        session = db.session.object_session(target) or db.session
         course = _course_from_instance(target)
         if course:
-            _queue(session, course.id, course.slug, 'updated')
+            _queue(_session_of(target, db.session), course.id, course.slug, 'updated')
 
     @sa_event.listens_for(db.session, 'after_commit')
     def _on_commit(session):
@@ -107,20 +90,28 @@ def register_course_listeners(db) -> None:
         session.info.pop(_PENDING_SEEN_KEY, None)
         if not pending:
             return
-        # Передаємо snapshot у фоновий тред разом із app proxy; inside
-        # thread викличемо app.app_context() щоб логер та dispatcher
-        # мали контекст.
-        app = current_app._get_current_object() if has_app_context() else None
-        if app is None:
-            # Не в запиті (scheduler, CLI) -- dispatch синхронно.
-            _dispatch_all(pending, current_app._get_current_object())
+        if not has_app_context():
+            # CLI/scheduler випадок -- ми вже поза request context. Enqueue
+            # не працює без app context (SiteSettings.get() потребує БД).
+            # У цьому випадку події губляться, але scheduler process_queue
+            # все одно не зможе нічого зробити без зовнішнього тригера.
+            logger.warning(
+                'commit without app context -- dropping %d pending webhook(s)',
+                len(pending),
+            )
             return
-        threading.Thread(
-            target=_dispatch_all,
-            args=(pending, app),
-            daemon=True,
-            name='webhook-dispatch',
-        ).start()
+        # Enqueue у ТІЙ САМІЙ сесії/транзакції не можна -- ми вже після commit.
+        # Відкриваємо нову міні-транзакцію для кожного enqueue у тій самій
+        # сесії (db.session).
+        from app.services.webhook_queue import enqueue
+        for course_id, course_slug, action in pending:
+            try:
+                enqueue(course_id, course_slug, action)
+            except Exception:
+                logger.exception(
+                    'Failed to enqueue webhook course=%s action=%s',
+                    course_slug, action,
+                )
 
     @sa_event.listens_for(db.session, 'after_rollback')
     def _on_rollback(session):
