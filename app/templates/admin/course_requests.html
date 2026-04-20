@@ -52,19 +52,16 @@
   {% endif %}
 
   <!-- Filters -->
-  <form method="GET" action="{{ url_for('admin.course_requests_list') }}" class="admin-filter-bar">
-    <div class="form-group">
-      <label for="filter-status">Статус</label>
-      <select name="status" id="filter-status" class="form-input" onchange="this.form.submit()">
-        <option value="">Всі</option>
-        <option value="pending"{% if filter_status == 'pending' %} selected{% endif %}>Нові</option>
-        <option value="responded"{% if filter_status == 'responded' %} selected{% endif %}>Оброблені</option>
-        <option value="scheduled"{% if filter_status == 'scheduled' %} selected{% endif %}>Заплановані</option>
-        <option value="dismissed"{% if filter_status == 'dismissed' %} selected{% endif %}>Відхилені</option>
-      </select>
-    </div>
+  <form method="GET" action="{{ url_for('admin.course_requests_list') }}" class="admin-filter-form">
+    <select name="status" class="form-input form-input--sm" aria-label="Фільтр за статусом" onchange="this.form.submit()">
+      <option value="">Всі статуси</option>
+      <option value="pending"{% if filter_status == 'pending' %} selected{% endif %}>Нові</option>
+      <option value="responded"{% if filter_status == 'responded' %} selected{% endif %}>Оброблені</option>
+      <option value="scheduled"{% if filter_status == 'scheduled' %} selected{% endif %}>Заплановані</option>
+      <option value="dismissed"{% if filter_status == 'dismissed' %} selected{% endif %}>Відхилені</option>
+    </select>
     {% if filter_status %}
-    <a href="{{ url_for('admin.course_requests_list') }}" class="btn-admin btn-admin--secondary">Очистити</a>
+    <a href="{{ url_for('admin.course_requests_list') }}" class="btn-admin btn-admin--secondary btn-admin--sm">Очистити</a>
     {% endif %}
   </form>
 
