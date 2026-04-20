@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from flask import render_template, abort, redirect, url_for
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -13,7 +15,19 @@ def course_list():
         Event.is_active.is_(True),
         Event.status.in_(['published', 'active', 'completed']),
     ).order_by(Event.start_date).all()
-    return render_template('courses/list.html', active_nav='courses', events=events)
+
+    now = datetime.now(timezone.utc)
+    upcoming_events = [
+        e for e in events
+        if e.status != 'completed' and (e.start_date is None or e.start_date >= now)
+    ]
+
+    return render_template(
+        'courses/list.html',
+        active_nav='courses',
+        events=events,
+        upcoming_events=upcoming_events,
+    )
 
 
 @courses_bp.route('/<slug>')

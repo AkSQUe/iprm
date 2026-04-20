@@ -81,10 +81,10 @@
       <h2 id="schedule-title" class="iprm-section__title">Графік <span class="apple-gradient-text">курсів</span></h2>
       <p class="iprm-section__subtitle">Розклад найближчих заходів інституту</p>
 
-      {% if events %}
+      {% if upcoming_events %}
       <div class="iprm-schedule">
-        {% for event in events %}
-        <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-schedule__item apple-reveal{% if event.status == 'completed' %} iprm-schedule__item--past{% endif %}">
+        {% for event in upcoming_events %}
+        <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-schedule__item apple-reveal">
           <div class="iprm-schedule__date">
             {% if event.start_date %}
             <span class="iprm-schedule__day">{{ event.start_date.strftime('%d') }}</span>
