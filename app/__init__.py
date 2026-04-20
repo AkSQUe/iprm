@@ -175,9 +175,10 @@ def create_app(config_name=None):
     from app.services.scheduler_service import init_scheduler
     init_scheduler(app)
 
-    # Register SQLAlchemy listeners that fire partner webhooks on Event
-    # {insert,update,delete}. Best-effort — failures are logged, not raised.
-    from app.services.event_webhook_listener import register_event_listeners
-    register_event_listeners(db)
+    # Register SQLAlchemy listeners that fire partner webhooks on Course
+    # and CourseInstance {insert,update,delete}. Best-effort — failures
+    # are logged, not raised.
+    from app.services.course_webhook_listener import register_course_listeners
+    register_course_listeners(db)
 
     return app

@@ -5,14 +5,54 @@ from flask import request
 
 from app.extensions import db
 from app.models.course import Course
-from app.models.course_instance import CourseInstance
 from app.models.program_block import ProgramBlock
-from app.services.event_service import (
-    lines_to_list, list_to_lines, faq_text_to_list, faq_list_to_text,
-)
 from app.utils import slugify
 
 logger = logging.getLogger(__name__)
+
+
+# ========== Shared helpers (text <-> list/faq conversions) ==========
+
+def lines_to_list(text):
+    """Convert newline-separated text to a list of stripped strings."""
+    if not text:
+        return []
+    return [line.strip() for line in text.strip().splitlines() if line.strip()]
+
+
+def list_to_lines(items):
+    """Convert a list of strings to newline-separated text."""
+    if not items:
+        return ''
+    return '\n'.join(items)
+
+
+def faq_text_to_list(text):
+    """Parse FAQ text into list of {question, answer} dicts.
+
+    Format: blocks separated by empty lines, first line = question, rest = answer.
+    """
+    if not text:
+        return []
+    blocks = text.strip().split('\n\n')
+    faq = []
+    for block in blocks:
+        lines = [l.strip() for l in block.strip().splitlines() if l.strip()]
+        if len(lines) >= 2:
+            faq.append({'question': lines[0], 'answer': '\n'.join(lines[1:])})
+    return faq
+
+
+def faq_list_to_text(items):
+    """Convert list of {question, answer} dicts to editable text."""
+    if not items:
+        return ''
+    blocks = []
+    for item in items:
+        q = item.get('question', '')
+        a = item.get('answer', '')
+        blocks.append(f'{q}\n{a}' if a else q)
+    return '\n\n'.join(blocks)
 
 
 class InvalidStatusTransition(ValueError):

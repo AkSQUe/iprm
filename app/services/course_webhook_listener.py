@@ -41,11 +41,9 @@ def _course_from_instance(instance):
     return db.session.get(Course, instance.course_id)
 
 
-def register_event_listeners(db) -> None:
-    """Прив'язати after_{insert,update,delete} + after_commit hooks.
-
-    Ім'я функції збережено для зворотної сумісності з викликом в `create_app`.
-    """
+def register_course_listeners(db) -> None:
+    """Прив'язати after_{insert,update,delete} + after_commit hooks до
+    Course і CourseInstance."""
 
     @sa_event.listens_for(Course, 'after_insert')
     def _on_course_insert(mapper, connection, target):
