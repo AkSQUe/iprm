@@ -135,6 +135,9 @@ def create_app(config_name=None):
             version = get_assets_version(app.static_folder)
         return {'assets_version': version}
 
+    from app.utils import sanitize_rich_text
+    app.jinja_env.filters['sanitize_rich_text'] = sanitize_rich_text
+
     @app.before_request
     def preload_site_settings():
         from flask import g

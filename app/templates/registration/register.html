@@ -14,9 +14,13 @@
   <h1 class="reg-confirmation__title">Реєстрація на курс</h1>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-      <div class="alert alert--{{ category }}">{{ message }}</div>
-    {% endfor %}
+    {% if messages %}
+    <div role="alert" aria-live="polite">
+      {% for category, message in messages %}
+        <div class="alert alert--{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
   {% endwith %}
 
   <!-- Event summary -->
@@ -53,7 +57,7 @@
   </div>
 
   <!-- Registration form -->
-  <form method="POST" action="{{ url_for('registration.register', event_id=event.id) }}">
+  <form method="POST" action="{{ url_for('registration.register_instance', instance_id=event.id) }}" data-single-submit>
     {{ form.hidden_tag() }}
 
     <div class="form-section reg-form-section">

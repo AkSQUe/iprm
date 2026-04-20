@@ -1,5 +1,65 @@
 import os
 import re
+from datetime import timezone
+
+import bleach
+from markupsafe import Markup
+
+
+def ensure_utc(dt):
+    """Нормалізує datetime до timezone-aware UTC.
+
+    Потрібно для порівнянь start_date з `datetime.now(timezone.utc)`:
+    SQLite зберігає datetime без tz, тож при читанні приходить naive.
+    На PostgreSQL це no-op -- колонка вже timezone-aware.
+    """
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+# Whitelist тегів, дозволених у rich-text полях адмінки (course.description,
+# faq.answer). Все інше (скрипти, iframe, event handlers) видаляється.
+RICH_TEXT_ALLOWED_TAGS = frozenset({
+    'p', 'br', 'hr',
+    'strong', 'b', 'em', 'i', 'u', 's', 'sub', 'sup', 'mark',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'ul', 'ol', 'li',
+    'blockquote', 'code', 'pre',
+    'a', 'span', 'div',
+    'table', 'thead', 'tbody', 'tr', 'th', 'td',
+    'img',
+})
+
+RICH_TEXT_ALLOWED_ATTRIBUTES = {
+    '*': ['class'],
+    'a': ['href', 'title', 'target', 'rel'],
+    'img': ['src', 'alt', 'title', 'width', 'height', 'loading'],
+    'td': ['colspan', 'rowspan'],
+    'th': ['colspan', 'rowspan', 'scope'],
+}
+
+RICH_TEXT_ALLOWED_PROTOCOLS = frozenset({'http', 'https', 'mailto', 'tel'})
+
+
+def sanitize_rich_text(raw):
+    """Повертає безпечний HTML-рядок, придатний для `| safe` у Jinja.
+
+    Видаляє всі script/iframe/on* атрибути та невідомі теги. Якщо вхід
+    порожній або None -- повертає порожній Markup.
+    """
+    if not raw:
+        return Markup('')
+    cleaned = bleach.clean(
+        raw,
+        tags=RICH_TEXT_ALLOWED_TAGS,
+        attributes=RICH_TEXT_ALLOWED_ATTRIBUTES,
+        protocols=RICH_TEXT_ALLOWED_PROTOCOLS,
+        strip=True,
+        strip_comments=True,
+    )
+    return Markup(cleaned)
 
 
 def slugify(text):

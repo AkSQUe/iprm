@@ -45,7 +45,7 @@
       <div class="iprm-course-cards" data-filterable="courses">
         {% for course in courses %}
         <article class="iprm-course-card apple-reveal" data-tags='{{ course.tags | tojson }}'>
-          <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">
+          <a class="iprm-course-card__link" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" aria-label="{{ course.title }}">
             <div class="iprm-course-card__image">
               {% if course.card_image %}
                 <img src="{{ course.card_image }}" alt="{{ course.title }}" loading="lazy" width="400" height="200">
@@ -53,15 +53,15 @@
             </div>
             <div class="apple-card-body">
               <p class="iprm-course-card__title">{{ course.title }}</p>
-              {% if course.tags %}
-              <div class="iprm-course-card__tags">
-                {% for tag in course.tags %}
-                  <span class="iprm-tag" data-tag-filter="{{ tag }}" role="button" tabindex="0">{{ tag }}</span>
-                {% endfor %}
-              </div>
-              {% endif %}
             </div>
           </a>
+          {% if course.tags %}
+          <div class="iprm-course-card__tags" role="group" aria-label="Фільтр за тегами">
+            {% for tag in course.tags %}
+              <button type="button" class="iprm-tag" data-tag-filter="{{ tag }}" aria-pressed="false">{{ tag }}</button>
+            {% endfor %}
+          </div>
+          {% endif %}
         </article>
         {% else %}
         <div class="iprm-empty-state iprm-empty-state--full">
@@ -84,7 +84,9 @@
       {% if upcoming_instances %}
       <div class="iprm-schedule">
         {% for inst in upcoming_instances %}
-        <a href="{{ url_for('courses.course_by_slug', slug=inst.course.slug) }}" class="iprm-schedule__item apple-reveal">
+        {% set is_open = inst.id in open_instance_ids %}
+        {% set item_href = url_for('registration.register_instance', instance_id=inst.id) if is_open else url_for('courses.course_by_slug', slug=inst.course.slug) %}
+        <a href="{{ item_href }}" class="iprm-schedule__item apple-reveal" aria-label="{{ inst.course.title }}">
           <div class="iprm-schedule__date">
             {% if inst.start_date %}
             <span class="iprm-schedule__day">{{ inst.start_date.strftime('%d') }}</span>
@@ -111,7 +113,7 @@
             </div>
           </div>
           <div class="iprm-schedule__action">
-            {% if inst.is_registration_open %}
+            {% if is_open %}
             <span class="iprm-btn iprm-btn--primary iprm-btn--sm">Реєстрація</span>
             {% else %}
             <span class="badge badge--draft">Реєстрацію закрито</span>

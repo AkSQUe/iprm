@@ -698,3 +698,79 @@
     -webkit-backdrop-filter: none;
   }
 }
+
+/* ========== UTILITY OVERRIDES (замість inline-стилів) ========== */
+
+.iprm-course-card__tags--center {
+  justify-content: center;
+}
+
+.iprm-hero__actions--detail {
+  margin-top: 32px;
+}
+
+.iprm-empty-state__cta {
+  margin-top: 16px;
+}
+
+.iprm-schedule--history {
+  margin-top: 24px;
+}
+
+.iprm-section__title--inline {
+  display: inline;
+}
+
+/* Теги як кнопки у картках каталогу (поза <a>). */
+.iprm-course-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 16px 16px;
+}
+
+/* Переозначаємо button-браузерні дефолти, щоб вигляд співпадав зі span. */
+button.iprm-tag {
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+}
+
+button.iprm-tag:focus-visible {
+  outline: 2px solid var(--iprm-accent);
+  outline-offset: 2px;
+}
+
+/* Картка-посилання повинна мати клікабельну площу */
+.iprm-course-card__link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Попередження про малу кількість місць */
+.iprm-schedule__tag--warning {
+  background: #fff4e5;
+  color: #b25c00;
+}
+
+/* Honeypot: повністю приховано від користувачів, але доступно для ботів */
+.iprm-request-form__honeypot {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.iprm-request-form__alerts {
+  margin-bottom: 16px;
+}
+
+/* Loading state для кнопки в момент submit */
+form[data-single-submit][data-submitting='true'] button[type='submit'] {
+  opacity: 0.6;
+  cursor: progress;
+}
+

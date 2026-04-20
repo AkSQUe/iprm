@@ -56,16 +56,6 @@
     var tag = e.target.closest('.iprm-tag[data-tag-filter]');
     if (!tag) return;
     e.preventDefault();
-    e.stopPropagation();
-    toggle(tag.getAttribute('data-tag-filter'));
-  });
-
-  grid.addEventListener('keydown', function(e) {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    var tag = e.target.closest('.iprm-tag[data-tag-filter]');
-    if (!tag) return;
-    e.preventDefault();
-    e.stopPropagation();
     toggle(tag.getAttribute('data-tag-filter'));
   });
 
