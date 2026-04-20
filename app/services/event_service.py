@@ -11,6 +11,33 @@ from app.utils import slugify
 logger = logging.getLogger(__name__)
 
 
+class InvalidStatusTransition(ValueError):
+    """Невалідний перехід між статусами заходу."""
+
+
+def change_status(event, new_status):
+    """Змінити статус заходу з валідацією переходу.
+
+    Повертає tuple (old_status, new_status). Кидає InvalidStatusTransition
+    якщо перехід заборонений або статус невідомий. Коміт — відповідальність caller.
+    """
+    valid = dict(Event.STATUSES)
+    if new_status not in valid:
+        raise InvalidStatusTransition(f'Невідомий статус: {new_status}')
+
+    old_status = event.status
+    if old_status == new_status:
+        return old_status, new_status
+
+    if not event.can_transition_to(new_status):
+        raise InvalidStatusTransition(
+            f'Перехід {old_status} -> {new_status} заборонений'
+        )
+
+    event.status = new_status
+    return old_status, new_status
+
+
 def lines_to_list(text):
     """Convert newline-separated text to a list of stripped strings."""
     if not text:

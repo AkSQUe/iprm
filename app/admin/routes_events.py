@@ -1,15 +1,25 @@
 import logging
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import current_user
 from sqlalchemy.orm import joinedload
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
 from app.admin.forms import EventForm
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models.event import Event
 from app.services import event_service
+from app.services.event_service import InvalidStatusTransition
 
 audit_logger = logging.getLogger('audit')
+logger = logging.getLogger(__name__)
+
+
+def _wants_json():
+    """Клієнт очікує JSON (AJAX), а не redirect (noscript fallback)."""
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return True
+    accept = request.accept_mimetypes
+    return accept.best_match(['application/json', 'text/html']) == 'application/json'
 
 
 def _populate_trainer_choices(form):
@@ -104,6 +114,62 @@ def event_edit(event_id):
             flash('Помилка при збереженні', 'error')
 
     return render_template('admin/event_edit.html', form=form, event=event)
+
+
+@admin_bp.route('/events/<int:event_id>/status', methods=['POST'])
+@admin_required
+@limiter.limit('60 per minute')
+def event_status_update(event_id):
+    wants_json = _wants_json()
+    event = db.session.get(Event, event_id)
+    if not event:
+        if wants_json:
+            return jsonify({'ok': False, 'error': 'Захід не знайдено'}), 404
+        flash('Захід не знайдено', 'error')
+        return redirect(url_for('admin.events_list'))
+
+    new_status = (request.form.get('status') or '').strip()
+
+    try:
+        old_status, _ = event_service.change_status(event, new_status)
+    except InvalidStatusTransition as exc:
+        if wants_json:
+            return jsonify({'ok': False, 'error': str(exc)}), 400
+        flash(str(exc), 'error')
+        return redirect(url_for('admin.events_list'))
+
+    if old_status == new_status:
+        if wants_json:
+            return jsonify({
+                'ok': True,
+                'status': event.status,
+                'status_label': event.status_label,
+            })
+        return redirect(url_for('admin.events_list'))
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception('Failed to update event %s status', event_id)
+        if wants_json:
+            return jsonify({'ok': False, 'error': 'Помилка при збереженні'}), 500
+        flash('Помилка при збереженні', 'error')
+        return redirect(url_for('admin.events_list'))
+
+    audit_logger.info(
+        'Admin %s changed event %s status: %s -> %s',
+        current_user.email, event_id, old_status, new_status,
+    )
+
+    if wants_json:
+        return jsonify({
+            'ok': True,
+            'status': event.status,
+            'status_label': event.status_label,
+        })
+    flash(f'Статус змінено на "{event.status_label}"', 'success')
+    return redirect(url_for('admin.events_list'))
 
 
 @admin_bp.route('/events/<int:event_id>/delete', methods=['POST'])

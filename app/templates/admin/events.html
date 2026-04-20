@@ -8,6 +8,11 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% block extra_scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin-status-select.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -60,7 +65,24 @@
         <td>{{ event.event_type_label }}</td>
         <td>{{ event.format_label }}</td>
         <td>{{ event.start_date.strftime('%d.%m.%Y %H:%M') if event.start_date else '---' }}</td>
-        <td><span class="badge badge--{{ event.status }}">{{ event.status_label }}</span></td>
+        <td>
+          <form method="POST"
+                action="{{ url_for('admin.event_status_update', event_id=event.id) }}"
+                class="badge-select-form"
+                data-status-form>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="status"
+                    class="badge badge-select badge-select--{{ event.status }}"
+                    aria-label="Статус: {{ event.title }}">
+              {% for value, label in event.STATUSES %}
+              <option value="{{ value }}"{% if event.status == value %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <noscript>
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">OK</button>
+            </noscript>
+          </form>
+        </td>
         <td>
           <a href="{{ url_for('admin.event_registrations', event_id=event.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">
             {{ event.registration_count }}
