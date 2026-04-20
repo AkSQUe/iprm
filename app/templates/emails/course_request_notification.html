@@ -1,0 +1,53 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, spacer %}
+
+{% block title %}Новий запит на курс{% endblock %}
+
+{% block preview_text %}{{ course.title if course else 'Новий запит' }} -- залишена клієнтська заявка{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
+        Новий запит на курс
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+        Клієнт залишив заявку через форму на сторінці курсу.
+        Запит очікує обробки в адмінці.
+    </p>
+
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
+        Курс
+    </p>
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">
+                    {{ course.title if course else '---' }}
+                </p>
+                {{ detail_row("Email клієнта", request_obj.email) }}
+                {% if request_obj.phone %}
+                {{ detail_row("Телефон", request_obj.phone) }}
+                {% endif %}
+                {{ detail_row("Отримано", request_obj.created_at.strftime('%d.%m.%Y %H:%M')) }}
+            </td>
+        </tr>
+    </table>
+
+    {% if request_obj.message %}
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
+        Повідомлення клієнта
+    </p>
+    <div style="padding: 16px 20px; background-color: #F9FAFB; border-left: 3px solid #7055a4; border-radius: 4px; margin-bottom: 24px; font-size: 15px; color: #374151; line-height: 1.6; white-space: pre-line;">{{ request_obj.message }}</div>
+    {% endif %}
+
+    {{ button_primary(
+        "Відкрити запит в адмінці",
+        site_settings.website_url ~ url_for('admin.course_request_edit', request_id=request_obj.id)
+    ) }}
+
+    {{ spacer(16) }}
+
+    <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
+        Якщо попит на курс високий -- зайдіть в адмінку та заплануйте нове проведення.
+    </p>
+{% endblock %}

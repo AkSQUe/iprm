@@ -125,8 +125,8 @@ def course_by_slug(slug):
     upcoming_instances = sorted(
         [i for i in course.instances
          if i.status in ('published', 'active')
-         and (i.start_date is None or i.start_date >= now)],
-        key=lambda i: i.start_date or datetime.max.replace(tzinfo=timezone.utc),
+         and (i.start_date is None or ensure_utc(i.start_date) >= now)],
+        key=lambda i: ensure_utc(i.start_date) or datetime.max.replace(tzinfo=timezone.utc),
     )
     # Минулі проведення: completed (фінальний стан) або published/active з датою
     # в минулому. Виключаємо draft (внутрішня кухня) та cancelled (скасовані).
@@ -134,8 +134,8 @@ def course_by_slug(slug):
         [i for i in course.instances
          if i.status == 'completed'
          or (i.status in ('published', 'active')
-             and i.start_date and i.start_date < now)],
-        key=lambda i: i.start_date or datetime.min.replace(tzinfo=timezone.utc),
+             and i.start_date and ensure_utc(i.start_date) < now)],
+        key=lambda i: ensure_utc(i.start_date) or datetime.min.replace(tzinfo=timezone.utc),
         reverse=True,
     )
 

@@ -78,10 +78,11 @@ def list_events():
 
     # Сортуємо курси по даті представницького instance (найближчі спершу)
     from datetime import datetime, timezone
+    from app.utils import ensure_utc
     courses_sorted = sorted(
         courses,
         key=lambda c: (
-            picked[c.id].start_date if picked[c.id] and picked[c.id].start_date
+            ensure_utc(picked[c.id].start_date) if picked[c.id] and picked[c.id].start_date
             else datetime.max.replace(tzinfo=timezone.utc)
         ),
     )

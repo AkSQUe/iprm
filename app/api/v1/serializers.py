@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 
 from flask import url_for
 
+from app.utils import ensure_utc
+
 
 def _image_url(path: str) -> str | None:
     """Convert stored image path to absolute URL.
@@ -56,16 +58,16 @@ def pick_representative_instance(course):
     upcoming = [
         i for i in course.instances
         if i.status in ('published', 'active')
-        and (i.start_date is None or i.start_date >= now)
+        and (i.start_date is None or ensure_utc(i.start_date) >= now)
     ]
     if upcoming:
         return min(
             upcoming,
-            key=lambda i: i.start_date or datetime.max.replace(tzinfo=timezone.utc),
+            key=lambda i: ensure_utc(i.start_date) or datetime.max.replace(tzinfo=timezone.utc),
         )
     past = sorted(
         course.instances,
-        key=lambda i: i.start_date or datetime.min.replace(tzinfo=timezone.utc),
+        key=lambda i: ensure_utc(i.start_date) or datetime.min.replace(tzinfo=timezone.utc),
         reverse=True,
     )
     return past[0] if past else None

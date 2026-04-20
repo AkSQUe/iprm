@@ -304,6 +304,49 @@ class EmailService:
         )
 
     @staticmethod
+    def send_course_request_notification(course_request):
+        """Повідомити адмінів про новий CourseRequest (клієнт залишив запит).
+
+        Отримувач -- SiteSettings.email (контактний email інституту). Якщо
+        не заповнений -- шлемо на всіх User.is_admin=True. Якщо і таких
+        немає -- пропускаємо з warning.
+        """
+        from app.models.site_settings import SiteSettings
+        from app.models.user import User
+
+        recipients = []
+        settings = SiteSettings.get()
+        if settings.email:
+            recipients.append(settings.email.strip())
+        else:
+            admins = User.query.filter_by(is_admin=True, is_active=True).all()
+            recipients = [u.email for u in admins if u.email]
+
+        if not recipients:
+            logger.warning(
+                'No admin recipients configured for CourseRequest #%s notification',
+                course_request.id,
+            )
+            return []
+
+        course = course_request.course
+        subject = f'Новий запит на курс: {course.title if course else course_request.course_id}'
+        results = []
+        for to in recipients:
+            entry = EmailService.send_email(
+                to=to,
+                subject=subject,
+                template_name='course_request_notification',
+                context={
+                    'request_obj': course_request,
+                    'course': course,
+                },
+                trigger='course_request',
+            )
+            results.append(entry)
+        return results
+
+    @staticmethod
     def send_test_email(to):
         """Send test email synchronously so SMTP errors propagate to caller."""
         app = current_app._get_current_object()
