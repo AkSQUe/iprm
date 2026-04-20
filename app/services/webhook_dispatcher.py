@@ -1,15 +1,19 @@
-"""HTTP webhook dispatcher — notifies partner sites (MM Medic) on Event changes.
+"""HTTP webhook dispatcher — notifies partner sites on Course changes.
 
 Fire-and-forget: failures are logged but never bubble up to the caller. Pull
 beat on the partner side acts as safety net if a webhook is lost.
 
-Payload schema:
+Payload schema (схема збережена з часів Event-моделі для сумісності з
+партнерськими споживачами; `event_id` тепер містить Course.id):
     {
         "event_type": "event.updated" | "event.deleted" | "event.created",
         "slug": "plazmoterapiya-v-ortopedii",
         "event_id": 3,
         "timestamp": "2026-04-17T14:38:00+00:00"
     }
+
+Будь-яка зміна Course АБО CourseInstance тригерить webhook `event.updated`
+на курс (щоб партнер оновив і контент, і розклад через /api/v1/events/<slug>).
 
 Headers:
     X-IPRM-Signature: HMAC-SHA256(body, partner_webhook_secret) in hex

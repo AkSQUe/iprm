@@ -33,6 +33,14 @@ def _populate_trainer_choices(form):
 @admin_bp.route('/events')
 @admin_required
 def events_list():
+    """Legacy redirect -- старий UI замінено на /admin/courses."""
+    return redirect(url_for('admin.courses_list'), code=301)
+
+
+@admin_bp.route('/events/legacy')
+@admin_required
+def events_list_legacy():
+    """Прямий доступ до старого UI (перевірка legacy даних при потребі)."""
     reg_count = Event.with_registration_count()
     rows = db.session.query(Event, reg_count).options(
         joinedload(Event.trainer),
