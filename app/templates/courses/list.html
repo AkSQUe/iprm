@@ -42,6 +42,13 @@
       <h2 id="courses-title" class="iprm-section__title">Доступні <span class="apple-gradient-text">курси</span></h2>
       <p class="iprm-section__subtitle">Оберіть курс та підвищіть свою кваліфікацію</p>
 
+      <form class="iprm-course-search" role="search" aria-label="Пошук курсів">
+        <label for="course-search" class="iprm-course-search__label">Пошук за назвою</label>
+        <input type="search" id="course-search" class="iprm-course-search__input form-input"
+               placeholder="Введіть назву курсу..." autocomplete="off"
+               data-course-search>
+      </form>
+
       <div class="iprm-course-cards" data-filterable="courses">
         {% for course in courses %}
         <article class="iprm-course-card apple-reveal" data-tags='{{ course.tags | tojson }}'>
