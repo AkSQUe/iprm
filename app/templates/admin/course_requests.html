@@ -1,0 +1,116 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Запити на курси | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Запити на курси</span>
+      </div>
+      <h1 class="admin-hero__title">Запити на проведення курсів</h1>
+      <p class="admin-hero__subtitle">Клієнтські заявки з публічних сторінок курсів</p>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {% if counts_by_course %}
+  <div class="form-section admin-form__section">
+    <h3 class="admin-form__section-title">Найбільш запитувані курси</h3>
+    <table class="admin-table">
+      <thead>
+        <tr><th>Курс</th><th>Нових запитів</th><th>Дії</th></tr>
+      </thead>
+      <tbody>
+        {% for course, count in counts_by_course %}
+        <tr>
+          <td><strong>{{ course.title if course else '---' }}</strong></td>
+          <td><span class="badge badge--warning">{{ count }}</span></td>
+          <td>
+            {% if course %}
+            <a href="{{ url_for('admin.instance_create', course_id=course.id) }}" class="btn-admin btn-admin--primary btn-admin--sm">+ Запланувати проведення</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- Filters -->
+  <form method="GET" action="{{ url_for('admin.course_requests_list') }}" class="admin-filter-bar">
+    <div class="form-group">
+      <label for="filter-status">Статус</label>
+      <select name="status" id="filter-status" class="form-input" onchange="this.form.submit()">
+        <option value="">Всі</option>
+        <option value="pending"{% if filter_status == 'pending' %} selected{% endif %}>Нові</option>
+        <option value="responded"{% if filter_status == 'responded' %} selected{% endif %}>Оброблені</option>
+        <option value="scheduled"{% if filter_status == 'scheduled' %} selected{% endif %}>Заплановані</option>
+        <option value="dismissed"{% if filter_status == 'dismissed' %} selected{% endif %}>Відхилені</option>
+      </select>
+    </div>
+    {% if filter_status %}
+    <a href="{{ url_for('admin.course_requests_list') }}" class="btn-admin btn-admin--secondary">Очистити</a>
+    {% endif %}
+  </form>
+
+  {% if requests %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Дата</th>
+        <th>Курс</th>
+        <th>Email</th>
+        <th>Телефон</th>
+        <th>Статус</th>
+        <th>Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for req in requests %}
+      <tr>
+        <td>{{ req.created_at.strftime('%d.%m.%Y %H:%M') if req.created_at else '---' }}</td>
+        <td>{{ req.course.title if req.course else '---' }}</td>
+        <td>{{ req.email }}</td>
+        <td>{{ req.phone or '---' }}</td>
+        <td><span class="badge badge--{{ req.status }}">{{ req.status_label }}</span></td>
+        <td>
+          <div class="admin-table__actions">
+            <a href="{{ url_for('admin.course_request_edit', request_id=req.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">edit</span></a>
+            <form method="POST" action="{{ url_for('admin.course_request_delete', request_id=req.id) }}" data-confirm="Видалити запит?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm"><span class="material-symbols-rounded">delete</span></button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="admin-empty">
+    <span class="material-symbols-rounded admin-empty__icon">inbox</span>
+    <h3 class="admin-empty__title">Запитів немає</h3>
+    <p>Коли користувачі залишать заявку на проведення курсу — вона з'явиться тут.</p>
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}

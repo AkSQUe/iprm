@@ -1,0 +1,109 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Розклад | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Розклад</span>
+      </div>
+      <h1 class="admin-hero__title">Розклад проведень</h1>
+      <p class="admin-hero__subtitle">Конкретні дати, формат, статус реєстрації для курсів</p>
+    </div>
+    <div class="admin-hero__actions">
+      <a href="{{ url_for('admin.instance_create') }}" class="btn-admin btn-admin--primary"><span class="material-symbols-rounded">add</span> Додати проведення</a>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <!-- Filters -->
+  <form method="GET" action="{{ url_for('admin.instances_list') }}" class="admin-filter-bar">
+    <div class="form-group">
+      <label for="filter-course">Курс</label>
+      <select name="course_id" id="filter-course" class="form-input" onchange="this.form.submit()">
+        <option value="">Всі курси</option>
+        {% for c in courses %}
+        <option value="{{ c.id }}"{% if filter_course_id == c.id %} selected{% endif %}>{{ c.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="filter-status">Статус</label>
+      <select name="status" id="filter-status" class="form-input" onchange="this.form.submit()">
+        <option value="">Всі</option>
+        <option value="draft"{% if filter_status == 'draft' %} selected{% endif %}>Чернетка</option>
+        <option value="published"{% if filter_status == 'published' %} selected{% endif %}>Опубліковано</option>
+        <option value="active"{% if filter_status == 'active' %} selected{% endif %}>Активний</option>
+        <option value="completed"{% if filter_status == 'completed' %} selected{% endif %}>Завершено</option>
+        <option value="cancelled"{% if filter_status == 'cancelled' %} selected{% endif %}>Скасовано</option>
+      </select>
+    </div>
+    {% if filter_course_id or filter_status %}
+    <a href="{{ url_for('admin.instances_list') }}" class="btn-admin btn-admin--secondary">Очистити</a>
+    {% endif %}
+  </form>
+
+  {% if instances %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Дата</th>
+        <th>Курс</th>
+        <th>Формат</th>
+        <th>Статус</th>
+        <th>Реєстрацій</th>
+        <th>Локація</th>
+        <th>Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for inst in instances %}
+      <tr>
+        <td>{{ inst.start_date.strftime('%d.%m.%Y %H:%M') if inst.start_date else '---' }}</td>
+        <td><strong>{{ inst.course.title if inst.course else '---' }}</strong></td>
+        <td>{{ inst.format_label or '---' }}</td>
+        <td>
+          <span class="badge badge--{{ inst.status }}">{{ inst.status_label }}</span>
+        </td>
+        <td>{{ inst.registration_count }}</td>
+        <td>{{ inst.location or '---' }}</td>
+        <td>
+          <div class="admin-table__actions">
+            <a href="{{ url_for('admin.instance_edit', instance_id=inst.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">edit</span></a>
+            <form method="POST" action="{{ url_for('admin.instance_delete', instance_id=inst.id) }}" data-confirm="Видалити проведення?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm"><span class="material-symbols-rounded">delete</span></button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="admin-empty">
+    <span class="material-symbols-rounded admin-empty__icon">event</span>
+    <h3 class="admin-empty__title">Проведень не знайдено</h3>
+    <p>Додайте перше проведення натиснувши кнопку вище</p>
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{% if instance %}Редагування проведення{% else %}Нове проведення{% endif %} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.instances_list') }}" class="admin-breadcrumb__link">Розклад</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">{% if instance %}Редагування{% else %}Нове{% endif %}</span>
+      </div>
+      <h1 class="admin-hero__title">{% if instance %}Редагування проведення{% else %}Нове проведення{% endif %}</h1>
+      <p class="admin-hero__subtitle">
+        {% if instance %}
+          {{ instance.course.title if instance.course else '' }}
+          <span class="badge badge--{{ instance.status }}">{{ instance.status_label }}</span>
+        {% else %}
+          Створення нового запланованого проведення
+        {% endif %}
+      </p>
+    </div>
+    <div class="admin-hero__actions">
+      <a href="{{ url_for('admin.instances_list') }}" class="btn-admin btn-admin--secondary">Назад до розкладу</a>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <form method="POST" class="admin-form">
+    {{ form.hidden_tag() }}
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Основні параметри</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group admin-form__full">
+          <label for="course_id">Курс <span class="required">*</span></label>
+          {{ form.course_id(class="form-input" + (" is-invalid" if form.course_id.errors else ""), id="course_id") }}
+          {% for error in form.course_id.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="start_date">Дата початку <span class="required">*</span></label>
+          {{ form.start_date(class="form-input" + (" is-invalid" if form.start_date.errors else ""), id="start_date") }}
+          {% for error in form.start_date.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="end_date">Дата закінчення</label>
+          {{ form.end_date(class="form-input", id="end_date") }}
+        </div>
+
+        <div class="form-group">
+          <label for="event_format">Формат <span class="required">*</span></label>
+          {{ form.event_format(class="form-input", id="event_format") }}
+        </div>
+
+        <div class="form-group">
+          <label for="status">Статус <span class="required">*</span></label>
+          {{ form.status(class="form-input", id="status") }}
+        </div>
+
+        <div class="form-group">
+          <label for="location">Локація</label>
+          {{ form.location(class="form-input", id="location", placeholder="Київ, вул. ...") }}
+        </div>
+
+        <div class="form-group">
+          <label for="online_link">Посилання на онлайн</label>
+          {{ form.online_link(class="form-input", id="online_link", placeholder="https://zoom.us/j/...") }}
+        </div>
+
+      </div>
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Override default-значень курсу</h3>
+      <p class="form-hint" style="margin-top: -12px; margin-bottom: 16px;">Залиште порожнім щоб використати default з налаштувань курсу.</p>
+      <div class="admin-form__grid">
+
+        <div class="form-group">
+          <label for="price">Ціна (UAH)</label>
+          {{ form.price(class="form-input", id="price", step="0.01") }}
+        </div>
+
+        <div class="form-group">
+          <label for="cpd_points">Бали БПР</label>
+          {{ form.cpd_points(class="form-input", id="cpd_points") }}
+        </div>
+
+        <div class="form-group">
+          <label for="max_participants">Макс. учасників</label>
+          {{ form.max_participants(class="form-input", id="max_participants") }}
+        </div>
+
+        <div class="form-group">
+          <label for="trainer_id">Тренер</label>
+          {{ form.trainer_id(class="form-input", id="trainer_id") }}
+        </div>
+
+      </div>
+    </div>
+
+    <div class="admin-form__actions">
+      {% if instance %}
+      <form method="POST" action="{{ url_for('admin.instance_delete', instance_id=instance.id) }}" data-confirm="Видалити проведення?" style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити проведення</button>
+      </form>
+      {% endif %}
+      <a href="{{ url_for('admin.instances_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      <button type="submit" class="btn-admin btn-admin--primary">
+        {% if instance %}Зберегти{% else %}Створити{% endif %}
+      </button>
+    </div>
+  </form>
+  </div>
+</div>
+{% endblock %}

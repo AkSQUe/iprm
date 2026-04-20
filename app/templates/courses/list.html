@@ -43,19 +43,19 @@
       <p class="iprm-section__subtitle">Оберіть курс та підвищіть свою кваліфікацію</p>
 
       <div class="iprm-course-cards" data-filterable="courses">
-        {% for event in events %}
-        <article class="iprm-course-card apple-reveal" data-tags='{{ event.tags | tojson }}'>
-          <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}">
+        {% for course in courses %}
+        <article class="iprm-course-card apple-reveal" data-tags='{{ course.tags | tojson }}'>
+          <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">
             <div class="iprm-course-card__image">
-              {% if event.card_image %}
-                <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy" width="400" height="200">
+              {% if course.card_image %}
+                <img src="{{ course.card_image }}" alt="{{ course.title }}" loading="lazy" width="400" height="200">
               {% endif %}
             </div>
             <div class="apple-card-body">
-              <p class="iprm-course-card__title">{{ event.title }}</p>
-              {% if event.tags %}
+              <p class="iprm-course-card__title">{{ course.title }}</p>
+              {% if course.tags %}
               <div class="iprm-course-card__tags">
-                {% for tag in event.tags %}
+                {% for tag in course.tags %}
                   <span class="iprm-tag" data-tag-filter="{{ tag }}" role="button" tabindex="0">{{ tag }}</span>
                 {% endfor %}
               </div>
@@ -81,40 +81,38 @@
       <h2 id="schedule-title" class="iprm-section__title">Графік <span class="apple-gradient-text">курсів</span></h2>
       <p class="iprm-section__subtitle">Розклад найближчих заходів інституту</p>
 
-      {% if upcoming_events %}
+      {% if upcoming_instances %}
       <div class="iprm-schedule">
-        {% for event in upcoming_events %}
-        <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="iprm-schedule__item apple-reveal">
+        {% for inst in upcoming_instances %}
+        <a href="{{ url_for('courses.course_by_slug', slug=inst.course.slug) }}" class="iprm-schedule__item apple-reveal">
           <div class="iprm-schedule__date">
-            {% if event.start_date %}
-            <span class="iprm-schedule__day">{{ event.start_date.strftime('%d') }}</span>
-            <span class="iprm-schedule__month">{{ event.start_date.strftime('%m.%Y') }}</span>
+            {% if inst.start_date %}
+            <span class="iprm-schedule__day">{{ inst.start_date.strftime('%d') }}</span>
+            <span class="iprm-schedule__month">{{ inst.start_date.strftime('%m.%Y') }}</span>
             {% else %}
             <span class="iprm-schedule__day">TBD</span>
             {% endif %}
           </div>
           <div class="iprm-schedule__content">
-            <h3 class="iprm-schedule__title">{{ event.title }}</h3>
+            <h3 class="iprm-schedule__title">{{ inst.course.title }}</h3>
             <div class="iprm-schedule__meta">
-              {% if event.event_format %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--format">{{ event.format_label }}</span>
+              {% if inst.event_format %}
+              <span class="iprm-schedule__tag iprm-schedule__tag--format">{{ inst.format_label }}</span>
               {% endif %}
-              {% if event.event_type %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--type">{{ event.event_type_label }}</span>
+              {% if inst.course.event_type %}
+              <span class="iprm-schedule__tag iprm-schedule__tag--type">{{ inst.course.event_type_label }}</span>
               {% endif %}
-              {% if event.cpd_points %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ event.cpd_points }} балів БПР</span>
+              {% if inst.effective_cpd_points %}
+              <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} балів БПР</span>
               {% endif %}
-              {% if event.price and event.price > 0 %}
-              <span class="iprm-schedule__price">{{ event.price | int }} &#8372;</span>
+              {% if inst.effective_price and inst.effective_price > 0 %}
+              <span class="iprm-schedule__price">{{ inst.effective_price | int }} &#8372;</span>
               {% endif %}
             </div>
           </div>
           <div class="iprm-schedule__action">
-            {% if event.is_registration_open %}
+            {% if inst.is_registration_open %}
             <span class="iprm-btn iprm-btn--primary iprm-btn--sm">Реєстрація</span>
-            {% elif event.status == 'completed' %}
-            <span class="iprm-btn iprm-btn--sm iprm-btn--disabled">Завершено</span>
             {% else %}
             <span class="badge badge--draft">Реєстрацію закрито</span>
             {% endif %}

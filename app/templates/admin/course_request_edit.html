@@ -1,0 +1,75 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Запит #{{ request_obj.id }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.course_requests_list') }}" class="admin-breadcrumb__link">Запити</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">#{{ request_obj.id }}</span>
+      </div>
+      <h1 class="admin-hero__title">Запит на курс</h1>
+      <p class="admin-hero__subtitle">
+        {{ request_obj.course.title if request_obj.course else '---' }}
+        <span class="badge badge--{{ request_obj.status }}">{{ request_obj.status_label }}</span>
+      </p>
+    </div>
+    <div class="admin-hero__actions">
+      {% if request_obj.course %}
+      <a href="{{ url_for('admin.instance_create', course_id=request_obj.course.id) }}" class="btn-admin btn-admin--primary"><span class="material-symbols-rounded">event_available</span> Запланувати проведення</a>
+      {% endif %}
+      <a href="{{ url_for('admin.course_requests_list') }}" class="btn-admin btn-admin--secondary">Назад</a>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <div class="form-section admin-form__section">
+    <h3 class="admin-form__section-title">Дані запиту</h3>
+    <div class="admin-form__grid">
+      <div class="form-group"><label>Email</label><div class="form-readonly">{{ request_obj.email }}</div></div>
+      <div class="form-group"><label>Телефон</label><div class="form-readonly">{{ request_obj.phone or '---' }}</div></div>
+      <div class="form-group admin-form__full"><label>Повідомлення</label>
+        <div class="form-readonly">{{ request_obj.message or '---' }}</div>
+      </div>
+      <div class="form-group"><label>Створено</label><div class="form-readonly">{{ request_obj.created_at.strftime('%d.%m.%Y %H:%M') if request_obj.created_at else '' }}</div></div>
+      <div class="form-group"><label>Оброблено</label><div class="form-readonly">
+        {% if request_obj.resolved_at %}{{ request_obj.resolved_at.strftime('%d.%m.%Y %H:%M') }} ({{ request_obj.resolver.email if request_obj.resolver else '---' }}){% else %}---{% endif %}
+      </div></div>
+    </div>
+  </div>
+
+  <form method="POST" class="admin-form">
+    {{ form.hidden_tag() }}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Обробка</h3>
+      <div class="admin-form__grid">
+        <div class="form-group">
+          <label for="status">Статус <span class="required">*</span></label>
+          {{ form.status(class="form-input", id="status") }}
+        </div>
+        <div class="form-group admin-form__full">
+          <label for="admin_notes">Нотатки адміна</label>
+          {{ form.admin_notes(class="form-input", id="admin_notes", rows="4") }}
+        </div>
+      </div>
+    </div>
+    <div class="admin-form__actions">
+      <a href="{{ url_for('admin.course_requests_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      <button type="submit" class="btn-admin btn-admin--primary">Зберегти</button>
+    </div>
+  </form>
+  </div>
+</div>
+{% endblock %}

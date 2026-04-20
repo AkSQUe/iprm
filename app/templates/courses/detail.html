@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ course.title }} | ІПРМ{% endblock %}
+{% block meta_description %}{{ course.subtitle or course.short_description or course.title }}{% endblock %}
+{% if course.card_image %}{% block og_image %}{{ course.card_image }}{% endblock %}{% endif %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block jsonld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Course",
+  "name": "{{ course.title }}",
+  "description": "{{ course.subtitle or course.short_description or '' }}",
+  "provider": {
+    "@type": "EducationalOrganization",
+    "name": "ІПРМ",
+    "url": "{{ url_for('main.index', _external=True) }}"
+  },
+  {% if course.base_price and course.base_price > 0 %}
+  "offers": {
+    "@type": "Offer",
+    "price": "{{ course.base_price }}",
+    "priceCurrency": "UAH",
+    "availability": "https://schema.org/InStock"
+  },
+  {% endif %}
+  {% if course.trainer %}
+  "instructor": {
+    "@type": "Person",
+    "name": "{{ course.trainer.full_name }}",
+    "jobTitle": "{{ course.trainer.role or '' }}"
+  },
+  {% endif %}
+  "inLanguage": "uk",
+  {% if upcoming_instances %}
+  "hasCourseInstance": [
+    {% for inst in upcoming_instances %}
+    {
+      "@type": "CourseInstance",
+      "courseMode": "{{ inst.event_format or 'offline' }}"{% if inst.start_date %},
+      "startDate": "{{ inst.start_date.strftime('%Y-%m-%d') }}"{% endif %}{% if inst.end_date %},
+      "endDate": "{{ inst.end_date.strftime('%Y-%m-%d') }}"{% endif %}{% if inst.location %},
+      "location": {"@type": "Place", "name": "{{ inst.location }}"}{% endif %}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ],
+  {% endif %}
+  "url": "{{ url_for('courses.course_by_slug', slug=course.slug, _external=True) }}"
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+
+  <!-- ===== HERO ===== -->
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero" aria-label="Hero">
+      <div class="iprm-hero__content">
+        {% set title_words = course.title.rsplit(' ', 1) %}
+        <h1 class="iprm-hero__title">
+          {% if title_words|length > 1 %}{{ title_words[0] }}<br><span class="apple-gradient-text">{{ title_words[1] }}.</span>
+          {% else %}<span class="apple-gradient-text">{{ course.title }}</span>{% endif %}
+        </h1>
+        {% if course.subtitle %}
+        <p class="iprm-hero__subtitle">{{ course.subtitle }}</p>
+        {% endif %}
+        {% if course.tags %}
+        <div class="iprm-course-card__tags" style="justify-content:center;">
+          {% for tag in course.tags %}<span class="iprm-tag">{{ tag }}</span>{% endfor %}
+        </div>
+        {% endif %}
+        <div class="iprm-hero__actions" style="margin-top:32px;">
+          {% if upcoming_instances %}
+          <a href="#schedule" class="apple-btn apple-btn--primary">Найближчі дати</a>
+          {% else %}
+          <a href="#request" class="apple-btn apple-btn--primary">Залишити запит</a>
+          {% endif %}
+          <a href="#about" class="apple-btn apple-btn--secondary">Про курс</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== ABOUT ===== -->
+  <section id="about" class="iprm-section apple-section-gray" aria-labelledby="about-title">
+    <div class="iprm-section__inner">
+      <h2 id="about-title" class="iprm-section__title">Про <span class="apple-gradient-text">курс</span></h2>
+      {% if course.description %}
+      <div class="iprm-prose apple-reveal">{{ course.description | safe }}</div>
+      {% endif %}
+      {% if course.target_audience %}
+      <h3 class="iprm-subsection-title">Для кого цей курс</h3>
+      <div class="apple-features-grid">
+        {% for item in course.target_audience %}
+        <div class="apple-feature-card apple-reveal">
+          <p>{{ item }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- ===== SCHEDULE (upcoming instances) ===== -->
+  <section id="schedule" class="iprm-section" aria-labelledby="schedule-title">
+    <div class="iprm-section__inner">
+      <h2 id="schedule-title" class="iprm-section__title">Найближчі <span class="apple-gradient-text">дати</span></h2>
+      {% if upcoming_instances %}
+      <div class="iprm-schedule">
+        {% for inst in upcoming_instances %}
+        <div class="iprm-schedule__item apple-reveal">
+          <div class="iprm-schedule__date">
+            {% if inst.start_date %}
+            <span class="iprm-schedule__day">{{ inst.start_date.strftime('%d') }}</span>
+            <span class="iprm-schedule__month">{{ inst.start_date.strftime('%m.%Y') }}</span>
+            {% else %}
+            <span class="iprm-schedule__day">TBD</span>
+            {% endif %}
+          </div>
+          <div class="iprm-schedule__content">
+            <h3 class="iprm-schedule__title">{{ course.title }}</h3>
+            <div class="iprm-schedule__meta">
+              {% if inst.event_format %}<span class="iprm-schedule__tag iprm-schedule__tag--format">{{ inst.format_label }}</span>{% endif %}
+              {% if inst.location %}<span class="iprm-schedule__tag">{{ inst.location }}</span>{% endif %}
+              {% if inst.effective_cpd_points %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} балів БПР</span>{% endif %}
+              {% if inst.effective_price and inst.effective_price > 0 %}<span class="iprm-schedule__price">{{ inst.effective_price | int }} &#8372;</span>{% endif %}
+            </div>
+          </div>
+          <div class="iprm-schedule__action">
+            {% if inst.is_registration_open and legacy_event_id %}
+            <a href="{{ url_for('registration.register', event_id=legacy_event_id) }}" class="iprm-btn iprm-btn--primary iprm-btn--sm">Реєстрація</a>
+            {% else %}
+            <span class="badge badge--draft">Реєстрацію закрито</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="iprm-empty-state">
+        <p>Наразі немає запланованих проведень цього курсу.</p>
+        <p><a href="#request" class="apple-btn apple-btn--primary" style="margin-top:16px;">Залишити запит на проведення</a></p>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- ===== PROGRAM BLOCKS ===== -->
+  {% if course.program_blocks %}
+  <section class="iprm-section apple-section-gray" aria-labelledby="program-title">
+    <div class="iprm-section__inner">
+      <h2 id="program-title" class="iprm-section__title">Програма <span class="apple-gradient-text">курсу</span></h2>
+      <div class="iprm-program-grid">
+        {% for block in course.program_blocks %}
+        <div class="iprm-program-card apple-reveal">
+          <h3>{{ block.heading }}</h3>
+          <ul>
+            {% for item in block.items %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== TRAINER ===== -->
+  {% if course.trainer %}
+  <section class="iprm-section" aria-labelledby="trainer-title">
+    <div class="iprm-section__inner">
+      <h2 id="trainer-title" class="iprm-section__title">Ваш <span class="apple-gradient-text">тренер</span></h2>
+      <div class="iprm-trainer-block apple-reveal">
+        {% if course.trainer.photo %}
+        <img src="{{ course.trainer.photo }}" alt="{{ course.trainer.full_name }}" class="iprm-trainer-block__photo" loading="lazy" width="280" height="280">
+        {% endif %}
+        <div class="iprm-trainer-block__body">
+          <h3>{{ course.trainer.full_name }}</h3>
+          {% if course.trainer.role %}<p class="iprm-trainer-block__role">{{ course.trainer.role }}</p>{% endif %}
+          {% if course.trainer.bio %}<p>{{ course.trainer.bio }}</p>{% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== FAQ ===== -->
+  {% if course.faq is not none and course.faq | length %}
+  <section class="iprm-section apple-section-gray" aria-labelledby="faq-title">
+    <div class="iprm-section__inner">
+      <h2 id="faq-title" class="iprm-section__title">Поширені <span class="apple-gradient-text">запитання</span></h2>
+      <div class="iprm-faq apple-reveal">
+        {% for item in course.faq %}{% if item.question %}
+        <details class="iprm-faq__item">
+          <summary class="iprm-faq__question">{{ item.question }}</summary>
+          <div class="iprm-faq__answer">{{ item.answer | default('', true) | replace('\n', '<br>') | safe }}</div>
+        </details>
+        {% endif %}{% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== PAST INSTANCES (history) ===== -->
+  {% if past_instances %}
+  <section class="iprm-section" aria-labelledby="history-title">
+    <div class="iprm-section__inner">
+      <details class="iprm-history-details">
+        <summary><h2 id="history-title" class="iprm-section__title" style="display:inline;">Історія <span class="apple-gradient-text">проведень</span> ({{ past_instances | length }})</h2></summary>
+        <div class="iprm-schedule" style="margin-top:24px;">
+          {% for inst in past_instances %}
+          <div class="iprm-schedule__item iprm-schedule__item--past">
+            <div class="iprm-schedule__date">
+              {% if inst.start_date %}
+              <span class="iprm-schedule__day">{{ inst.start_date.strftime('%d') }}</span>
+              <span class="iprm-schedule__month">{{ inst.start_date.strftime('%m.%Y') }}</span>
+              {% endif %}
+            </div>
+            <div class="iprm-schedule__content">
+              <h3 class="iprm-schedule__title">{{ course.title }}</h3>
+              <div class="iprm-schedule__meta">
+                {% if inst.event_format %}<span class="iprm-schedule__tag">{{ inst.format_label }}</span>{% endif %}
+                {% if inst.location %}<span class="iprm-schedule__tag">{{ inst.location }}</span>{% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </details>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== REQUEST FORM ===== -->
+  <section id="request" class="iprm-section apple-section-gray" aria-labelledby="request-title">
+    <div class="iprm-section__inner">
+      <div class="iprm-appointment apple-reveal">
+        <h2 id="request-title">
+          {% if upcoming_instances %}Хочете провести курс <span class="apple-gradient-text">в інший час?</span>
+          {% else %}Залиште запит <span class="apple-gradient-text">на курс</span>{% endif %}
+        </h2>
+        <p>Заповніть форму нижче — ми повідомимо вас коли буде заплановано чергове проведення.</p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, msg in messages %}
+          <div class="iprm-alert iprm-alert--{{ category }}" style="margin-bottom:16px;">{{ msg }}</div>
+          {% endfor %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('courses.course_request', slug=course.slug) }}" class="iprm-request-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="iprm-request-form__row">
+            <div class="form-group">
+              <label for="req-email">Email <span class="required">*</span></label>
+              <input type="email" name="email" id="req-email" class="form-input" required
+                     value="{% if current_user.is_authenticated %}{{ current_user.email }}{% endif %}">
+            </div>
+            <div class="form-group">
+              <label for="req-phone">Телефон</label>
+              <input type="tel" name="phone" id="req-phone" class="form-input" placeholder="+380...">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="req-message">Повідомлення</label>
+            <textarea name="message" id="req-message" class="form-input" rows="4" placeholder="Опціонально: що саме вас цікавить"></textarea>
+          </div>
+          <button type="submit" class="apple-btn apple-btn--primary">Надіслати запит</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
+{% endblock %}

@@ -10,9 +10,13 @@ from app.models.email_settings import EmailSettings
 from app.models.payment_transaction import PaymentTransaction
 from app.models.site_settings import SiteSettings
 from app.models.error_log import ErrorLog
+from app.models.course import Course
+from app.models.course_instance import CourseInstance
+from app.models.course_request import CourseRequest
 
 __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'Event', 'Trainer',
     'ProgramBlock', 'EventRegistration', 'Clinic', 'EmailLog', 'EmailSettings',
     'PaymentTransaction', 'SiteSettings', 'ErrorLog',
+    'Course', 'CourseInstance', 'CourseRequest',
 ]

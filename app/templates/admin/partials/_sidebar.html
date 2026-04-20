@@ -6,13 +6,25 @@
   <nav class="admin-sidebar__nav">
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Контент</p>
-      <a href="{{ url_for('admin.events_list') }}" class="admin-sidebar__link{% if ep in ('admin.events_list', 'admin.event_create', 'admin.event_edit', 'admin.event_delete') %} admin-sidebar__link--active{% endif %}">
+      <a href="{{ url_for('admin.courses_list') }}" class="admin-sidebar__link{% if ep in ('admin.courses_list', 'admin.course_create', 'admin.course_edit', 'admin.course_delete') %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">menu_book</span>
+        Курси
+      </a>
+      <a href="{{ url_for('admin.instances_list') }}" class="admin-sidebar__link{% if ep in ('admin.instances_list', 'admin.instance_create', 'admin.instance_edit', 'admin.instance_delete') %} admin-sidebar__link--active{% endif %}">
         <span class="material-symbols-rounded">event</span>
-        Заходи
+        Розклад
+      </a>
+      <a href="{{ url_for('admin.course_requests_list') }}" class="admin-sidebar__link{% if ep in ('admin.course_requests_list', 'admin.course_request_edit', 'admin.course_request_delete') %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">inbox</span>
+        Запити на курси
       </a>
       <a href="{{ url_for('admin.trainers_list') }}" class="admin-sidebar__link{% if ep in ('admin.trainers_list', 'admin.trainer_create', 'admin.trainer_edit', 'admin.trainer_delete') %} admin-sidebar__link--active{% endif %}">
         <span class="material-symbols-rounded">school</span>
         Тренери
+      </a>
+      <a href="{{ url_for('admin.events_list') }}" class="admin-sidebar__link{% if ep in ('admin.events_list', 'admin.event_create', 'admin.event_edit', 'admin.event_delete') %} admin-sidebar__link--active{% endif %}" title="Legacy -- буде видалено">
+        <span class="material-symbols-rounded">archive</span>
+        Заходи (legacy)
       </a>
     </div>
 

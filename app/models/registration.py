@@ -9,7 +9,13 @@ class EventRegistration(TimestampMixin, db.Model):
 
     id = db.Column(BigIntPK, primary_key=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
-    event_id = db.Column(db.BigInteger, db.ForeignKey('events.id', ondelete='CASCADE'), nullable=False, index=True)
+    event_id = db.Column(db.BigInteger, db.ForeignKey('events.id', ondelete='CASCADE'), nullable=True, index=True)
+    instance_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('course_instances.id', ondelete='CASCADE'),
+        nullable=True,
+        index=True,
+    )
 
     phone = db.Column(db.String(20), nullable=False)
     specialty = db.Column(db.String(200), nullable=False)
@@ -28,13 +34,22 @@ class EventRegistration(TimestampMixin, db.Model):
     admin_notes = db.Column(db.Text)
 
     user = db.relationship('User', back_populates='registrations')
-    event = db.relationship('Event', back_populates='registrations')
+    event = db.relationship('Event', foreign_keys=[event_id], back_populates='registrations')
+    instance = db.relationship(
+        'CourseInstance',
+        foreign_keys=[instance_id],
+        back_populates='registrations',
+    )
     email_logs = db.relationship('EmailLog', back_populates='registration')
 
     __table_args__ = (
-        db.UniqueConstraint('user_id', 'event_id', name='uq_user_event_registration'),
+        db.UniqueConstraint('user_id', 'instance_id', name='uq_user_instance_registration'),
         db.Index('ix_registrations_event_status', 'event_id', 'status'),
         db.Index('ix_registrations_created_at', 'created_at'),
+        db.CheckConstraint(
+            'event_id IS NOT NULL OR instance_id IS NOT NULL',
+            name='ck_registrations_target_not_null',
+        ),
         db.CheckConstraint(
             "status IN ('pending', 'confirmed', 'cancelled', 'completed')",
             name='ck_registrations_status',
@@ -99,5 +114,33 @@ class EventRegistration(TimestampMixin, db.Model):
             cls.payment_amount > 0,
         ).one()
 
+    @property
+    def target_title(self):
+        """Назва (з Course-instance або legacy Event)."""
+        if self.instance and self.instance.course:
+            return self.instance.course.title
+        if self.event:
+            return self.event.title
+        return ''
+
+    @property
+    def target_slug(self):
+        if self.instance and self.instance.course:
+            return self.instance.course.slug
+        if self.event:
+            return self.event.slug
+        return ''
+
+    @property
+    def target_start_date(self):
+        if self.instance and self.instance.start_date:
+            return self.instance.start_date
+        if self.event:
+            return self.event.start_date
+        return None
+
     def __repr__(self):
-        return f'<EventRegistration user={self.user_id} event={self.event_id}>'
+        return (
+            f'<EventRegistration user={self.user_id} '
+            f'instance={self.instance_id} event={self.event_id}>'
+        )

@@ -8,3 +8,6 @@ from app.admin import routes_uploads  # noqa: F401
 from app.admin import routes_notifications  # noqa: F401
 from app.admin import routes_settings  # noqa: F401
 from app.admin import routes_error_logs  # noqa: F401
+from app.admin import routes_courses  # noqa: F401
+from app.admin import routes_instances  # noqa: F401
+from app.admin import routes_course_requests  # noqa: F401
