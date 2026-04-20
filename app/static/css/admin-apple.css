@@ -231,6 +231,21 @@
   border-bottom: 1px solid var(--iprm-border);
 }
 
+.admin-form__section-hint {
+  margin-top: -12px;
+  margin-bottom: 16px;
+  font-size: 0.8125rem;
+  color: var(--apple-gray);
+}
+
+.admin-form__danger-zone {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--iprm-border);
+}
+
 /* ========== FORM CONTROLS ========== */
 
 .form-section .form-group label,

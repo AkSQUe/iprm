@@ -1,0 +1,8 @@
+{% macro status_filter(statuses, selected, field_name='status', label='Фільтр за статусом') %}
+<select name="{{ field_name }}" class="form-input form-input--sm" aria-label="{{ label }}" onchange="this.form.submit()">
+  <option value="">Всі статуси</option>
+  {% for value, label in statuses %}
+  <option value="{{ value }}"{% if selected == value %} selected{% endif %}>{{ label }}</option>
+  {% endfor %}
+</select>
+{% endmacro %}

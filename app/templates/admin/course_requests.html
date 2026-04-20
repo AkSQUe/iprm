@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block content %}
+{% from 'admin/partials/_status_filter.html' import status_filter %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
   <div class="admin-layout">
@@ -51,16 +52,15 @@
   </div>
   {% endif %}
 
-  <!-- Filters -->
   <form method="GET" action="{{ url_for('admin.course_requests_list') }}" class="admin-filter-form">
-    <select name="status" class="form-input form-input--sm" aria-label="Фільтр за статусом" onchange="this.form.submit()">
-      <option value="">Всі статуси</option>
-      <option value="pending"{% if filter_status == 'pending' %} selected{% endif %}>Нові</option>
-      <option value="responded"{% if filter_status == 'responded' %} selected{% endif %}>Оброблені</option>
-      <option value="scheduled"{% if filter_status == 'scheduled' %} selected{% endif %}>Заплановані</option>
-      <option value="dismissed"{% if filter_status == 'dismissed' %} selected{% endif %}>Відхилені</option>
+    <select name="course_id" class="form-input form-input--sm" aria-label="Фільтр за курсом" onchange="this.form.submit()">
+      <option value="">Всі курси</option>
+      {% for c in courses %}
+      <option value="{{ c.id }}"{% if filter_course_id == c.id %} selected{% endif %}>{{ c.title }}</option>
+      {% endfor %}
     </select>
-    {% if filter_status %}
+    {{ status_filter(statuses, filter_status) }}
+    {% if filter_status or filter_course_id %}
     <a href="{{ url_for('admin.course_requests_list') }}" class="btn-admin btn-admin--secondary btn-admin--sm">Очистити</a>
     {% endif %}
   </form>
@@ -75,6 +75,7 @@
         <th>Email</th>
         <th>Телефон</th>
         <th>Статус</th>
+        <th>Оновлено</th>
         <th>Дії</th>
       </tr>
     </thead>
@@ -86,6 +87,7 @@
         <td>{{ req.email }}</td>
         <td>{{ req.phone or '---' }}</td>
         <td><span class="badge badge--{{ req.status }}">{{ req.status_label }}</span></td>
+        <td>{{ req.updated_at.strftime('%d.%m.%Y %H:%M') if req.updated_at else '---' }}</td>
         <td>
           <div class="admin-table__actions">
             <a href="{{ url_for('admin.course_request_edit', request_id=req.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">edit</span></a>

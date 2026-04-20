@@ -85,7 +85,7 @@
 
     <div class="form-section admin-form__section">
       <h3 class="admin-form__section-title">Override default-значень курсу</h3>
-      <p class="form-hint" style="margin-top: -12px; margin-bottom: 16px;">Залиште порожнім щоб використати default з налаштувань курсу.</p>
+      <p class="admin-form__section-hint">Залиште порожнім щоб використати default з налаштувань курсу.</p>
       <div class="admin-form__grid">
 
         <div class="form-group">
@@ -112,18 +112,19 @@
     </div>
 
     <div class="admin-form__actions">
-      {% if instance %}
-      <form method="POST" action="{{ url_for('admin.instance_delete', instance_id=instance.id) }}" data-confirm="Видалити проведення?" style="display:inline">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити проведення</button>
-      </form>
-      {% endif %}
       <a href="{{ url_for('admin.instances_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
       <button type="submit" class="btn-admin btn-admin--primary">
         {% if instance %}Зберегти{% else %}Створити{% endif %}
       </button>
     </div>
   </form>
+
+  {% if instance %}
+  <form method="POST" action="{{ url_for('admin.instance_delete', instance_id=instance.id) }}" class="admin-form__danger-zone" data-confirm="Видалити проведення?">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити проведення</button>
+  </form>
+  {% endif %}
   </div>
 </div>
 {% endblock %}

@@ -1,7 +1,9 @@
 """Course — каталожна сутність. Описує продукт (що за курс),
 не має дати. Проведення (CourseInstance) прив'язуються до Course.
 """
-from sqlalchemy import func, select
+from datetime import datetime, timezone
+
+from sqlalchemy import func
 
 from app.extensions import db
 from app.models.mixins import TimestampMixin, BigIntPK
@@ -105,7 +107,6 @@ class Course(TimestampMixin, db.Model):
 
     @property
     def upcoming_instances(self):
-        from datetime import datetime, timezone
         now = datetime.now(timezone.utc)
         return [
             i for i in self.instances

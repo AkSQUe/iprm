@@ -70,6 +70,31 @@
       <button type="submit" class="btn-admin btn-admin--primary">Зберегти</button>
     </div>
   </form>
+
+  {% if request_obj.audits %}
+  <div class="form-section admin-form__section">
+    <h3 class="admin-form__section-title">Історія змін ({{ request_obj.audits | length }})</h3>
+    <table class="admin-table">
+      <thead>
+        <tr><th>Коли</th><th>Хто</th><th>Перехід</th><th>Нотатка</th></tr>
+      </thead>
+      <tbody>
+        {% for audit in request_obj.audits %}
+        <tr>
+          <td>{{ audit.created_at.strftime('%d.%m.%Y %H:%M') if audit.created_at else '---' }}</td>
+          <td>{{ audit.changed_by.email if audit.changed_by else '---' }}</td>
+          <td>
+            {% if audit.from_status %}<span class="badge badge--{{ audit.from_status }}">{{ audit.from_status }}</span>{% else %}---{% endif %}
+            <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+            <span class="badge badge--{{ audit.to_status }}">{{ audit.to_status }}</span>
+          </td>
+          <td>{{ audit.notes or '---' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
   </div>
 </div>
 {% endblock %}

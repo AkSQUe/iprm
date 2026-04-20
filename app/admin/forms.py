@@ -3,10 +3,18 @@ from wtforms import (
     StringField, TextAreaField, SelectField, IntegerField,
     DecimalField, BooleanField, DateTimeLocalField, HiddenField
 )
-from wtforms.validators import DataRequired, Length, Optional, NumberRange, Email
+from wtforms.validators import (
+    DataRequired, Length, Optional, NumberRange, Email, URL,
+    ValidationError,
+)
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest
+
+
+def _optional_url(message='Невалідний URL'):
+    """URL-валідатор, що не спрацьовує на порожньому значенні."""
+    return URL(require_tld=True, message=message)
 
 
 class TrainerForm(FlaskForm):
@@ -185,11 +193,11 @@ class CourseForm(FlaskForm):
     )
     hero_image = StringField(
         'Hero зображення (URL)',
-        validators=[Optional(), Length(max=500)],
+        validators=[Optional(), Length(max=500), _optional_url()],
     )
     card_image = StringField(
         'Зображення картки (URL)',
-        validators=[Optional(), Length(max=500)],
+        validators=[Optional(), Length(max=500), _optional_url()],
     )
     target_audience_text = TextAreaField(
         'Цільова аудиторія',
@@ -285,7 +293,7 @@ class CourseInstanceForm(FlaskForm):
     )
     online_link = StringField(
         'Посилання на онлайн',
-        validators=[Optional(), Length(max=500)],
+        validators=[Optional(), Length(max=500), _optional_url()],
     )
     trainer_id = SelectField(
         'Тренер',
@@ -293,6 +301,10 @@ class CourseInstanceForm(FlaskForm):
         validators=[Optional()],
         description='Залиште порожнім щоб взяти default-тренера курсу',
     )
+
+    def validate_end_date(self, field):
+        if field.data and self.start_date.data and field.data <= self.start_date.data:
+            raise ValidationError('Дата закінчення має бути пізніше дати початку')
 
 
 class CourseRequestForm(FlaskForm):

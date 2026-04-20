@@ -11,7 +11,7 @@ from app.models.site_settings import SiteSettings
 from app.models.error_log import ErrorLog
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
-from app.models.course_request import CourseRequest
+from app.models.course_request import CourseRequest, CourseRequestAudit
 
 __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'Trainer',

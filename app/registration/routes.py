@@ -1,12 +1,14 @@
 import logging
-from flask import render_template, redirect, url_for, flash, abort, request
-from flask_login import login_required, current_user, login_user
+
+from flask import abort, flash, redirect, render_template, request, url_for
+from flask_login import current_user, login_required, login_user
 from sqlalchemy.orm import joinedload
-from app.registration import registration_bp
-from app.registration.forms import EventRegistrationForm
+
 from app.extensions import db, limiter
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
+from app.registration import registration_bp
+from app.registration.forms import EventRegistrationForm
 from app.services import registration_service
 from app.services.partner_auth import (
     PrefillTokenError,
@@ -15,6 +17,40 @@ from app.services.partner_auth import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class EventAdapter:
+    """Сумісне представлення CourseInstance для шаблонів register/confirmation.
+
+    Шаблони історично оперують сутністю `event` із полями `title`, `price`,
+    `start_date` тощо. Адаптер проксує їх із CourseInstance+Course, не
+    засмічуючи модель сумісними властивостями.
+    """
+
+    def __init__(self, instance):
+        self._inst = instance
+        course = instance.course
+        self.id = instance.id
+        self.slug = course.slug if course else None
+        self.title = course.title if course else ''
+        self.subtitle = course.subtitle if course else None
+        self.description = course.description if course else None
+        self.short_description = course.short_description if course else None
+        self.start_date = instance.start_date
+        self.end_date = instance.end_date
+        self.event_format = instance.event_format
+        self.format_label = instance.format_label
+        self.location = instance.location
+        self.online_link = instance.online_link
+        self.price = instance.effective_price
+        self.cpd_points = instance.effective_cpd_points
+        self.max_participants = instance.effective_max_participants
+        self.trainer = instance.effective_trainer
+        self.card_image = course.card_image if course else None
+        self.hero_image = course.hero_image if course else None
+        self.tags = course.tags if course else []
+        self.target_audience = course.target_audience if course else []
+        self.faq = course.faq if course else []
 
 
 def _maybe_consume_prefill_token():
@@ -42,6 +78,17 @@ def _maybe_consume_prefill_token():
     }
 
 
+def _login_next_path():
+    """Будує `next`-URL для редіректу на /login, прибираючи `prefill`-токен.
+
+    Prefill-токени одноразові: передавати їх через login flow нема сенсу
+    (і небезпечно, бо токен залишиться в session-history).
+    """
+    args = request.args.to_dict(flat=True)
+    args.pop('prefill', None)
+    return url_for(request.endpoint, **request.view_args, **args)
+
+
 @registration_bp.route('/<int:event_id>/register')
 def register_legacy(event_id):
     """Legacy URL: /registration/<event_id>/register -> redirect на catalog.
@@ -60,7 +107,7 @@ def register_instance(instance_id):
     prefill = _maybe_consume_prefill_token() if request.method == 'GET' else None
 
     if not current_user.is_authenticated:
-        return redirect(url_for('auth.login', next=request.full_path))
+        return redirect(url_for('auth.login', next=_login_next_path()))
 
     if not current_user.email_confirmed:
         flash('Для реєстрації на курс необхідно підтвердити email', 'warning')
@@ -103,6 +150,7 @@ def register_instance(instance_id):
             reg, is_free = registration_service.create_or_reactivate(
                 current_user.id, instance, form_data, existing,
             )
+            db.session.commit()
             if is_free:
                 flash('Реєстрацію підтверджено', 'success')
             else:
@@ -113,37 +161,10 @@ def register_instance(instance_id):
             db.session.rollback()
             flash('Помилка при реєстрації. Спробуйте ще раз.', 'error')
 
-    # Для сумісності шаблону -- передаємо CourseInstance під ім'ям event
-    # (шаблон використовує event.title, event.price, event.start_date тощо).
-    # Будуємо адаптер-об'єкт з такими ж властивостями.
-    class _EventAdapter:
-        def __init__(self, inst):
-            self._inst = inst
-            self.slug = inst.course.slug
-            self.title = inst.course.title
-            self.subtitle = inst.course.subtitle
-            self.description = inst.course.description
-            self.short_description = inst.course.short_description
-            self.start_date = inst.start_date
-            self.end_date = inst.end_date
-            self.event_format = inst.event_format
-            self.format_label = inst.format_label
-            self.location = inst.location
-            self.online_link = inst.online_link
-            self.price = inst.effective_price
-            self.cpd_points = inst.effective_cpd_points
-            self.max_participants = inst.effective_max_participants
-            self.trainer = inst.effective_trainer
-            self.card_image = inst.course.card_image
-            self.hero_image = inst.course.hero_image
-            self.tags = inst.course.tags
-            self.target_audience = inst.course.target_audience
-            self.faq = inst.course.faq
-
     return render_template(
         'registration/register.html',
         form=form,
-        event=_EventAdapter(instance),
+        event=EventAdapter(instance),
     )
 
 
@@ -187,8 +208,7 @@ def confirmation(registration_id):
                 )
             )
 
-    # Шаблон очікує `event` -- передаємо instance.course як зручну обгортку
-    template_event = reg.instance if reg.instance else None
+    template_event = EventAdapter(reg.instance) if reg.instance else None
 
     return render_template(
         'registration/confirmation.html',

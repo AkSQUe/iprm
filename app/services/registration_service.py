@@ -60,16 +60,25 @@ def create_or_reactivate(user_id, instance, form_data, existing=None):
         instance: CourseInstance model instance.
         form_data: Dict (phone, specialty, workplace, experience_years, license_number).
         existing: Існуюча cancelled-реєстрація для реактивації, або None.
+            Якщо не-cancelled -- ValueError (caller порушив інваріант).
 
     Returns:
-        (registration, is_free) tuple.
+        (registration, is_free) tuple. Caller мусить сам викликати
+        db.session.commit() для персистенції -- сервіс лише мутує сесію
+        для кращої композиції з іншими операціями (audit, email, webhook).
     """
+    if existing is not None and existing.status != 'cancelled':
+        raise ValueError(
+            f'create_or_reactivate: existing registration status={existing.status!r} '
+            'is not cancelled -- caller must check before passing existing.'
+        )
+
     price = instance.effective_price or 0
     is_free = price == 0
     new_status = 'confirmed' if is_free else 'pending'
     new_payment = 'paid' if is_free else 'unpaid'
 
-    if existing and existing.status == 'cancelled':
+    if existing is not None:
         existing.phone = form_data['phone']
         existing.specialty = form_data['specialty']
         existing.workplace = form_data['workplace']
@@ -96,5 +105,4 @@ def create_or_reactivate(user_id, instance, form_data, existing=None):
         )
         db.session.add(reg)
 
-    db.session.commit()
     return reg, is_free

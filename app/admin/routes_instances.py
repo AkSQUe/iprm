@@ -1,21 +1,23 @@
 """Admin CRUD для CourseInstance (проведення)."""
 import logging
 
-from flask import render_template, redirect, url_for, flash, request, jsonify
+from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import current_user
+from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
 from app.admin import admin_bp
+from app.admin._helpers import try_commit, populate_trainer_choices
 from app.admin.decorators import admin_required
 from app.admin.forms import CourseInstanceForm
 from app.extensions import db, limiter
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
+from app.models.registration import EventRegistration
 from app.services import course_service
 from app.services.course_service import InvalidStatusTransition
 
 audit_logger = logging.getLogger('audit')
-logger = logging.getLogger(__name__)
 
 
 def _wants_json():
@@ -27,16 +29,16 @@ def _wants_json():
 
 
 def _populate_choices(form, preselected_course_id=None):
-    from app.models.trainer import Trainer
-    courses = Course.query.filter_by(is_active=True).order_by(Course.title).all()
+    courses = (
+        Course.query.filter_by(is_active=True)
+        .order_by(Course.title)
+        .all()
+    )
     form.course_id.choices = [(c.id, c.title) for c in courses]
     if preselected_course_id and not form.course_id.data:
         form.course_id.data = preselected_course_id
 
-    trainers = Trainer.query.filter_by(is_active=True).order_by(Trainer.full_name).all()
-    form.trainer_id.choices = [(0, '--- Тренер курсу (default) ---')] + [
-        (t.id, t.full_name) for t in trainers
-    ]
+    populate_trainer_choices(form, empty_label='--- Тренер курсу (default) ---')
 
 
 @admin_bp.route('/instances')
@@ -55,13 +57,38 @@ def instances_list():
         query = query.filter(CourseInstance.status == filter_status)
 
     instances = query.order_by(CourseInstance.start_date.desc()).all()
-    courses = Course.query.order_by(Course.title).all()
+
+    # Batch COUNT активних реєстрацій -- інакше шаблон запускає N+1
+    # COUNT-ів через inst.registration_count (lazy='dynamic' property).
+    if instances:
+        reg_counts = dict(
+            db.session.query(
+                EventRegistration.instance_id,
+                func.count(EventRegistration.id),
+            )
+            .filter(
+                EventRegistration.instance_id.in_([i.id for i in instances]),
+                EventRegistration.status.notin_(['cancelled']),
+            )
+            .group_by(EventRegistration.instance_id)
+            .all()
+        )
+    else:
+        reg_counts = {}
+
+    courses = (
+        Course.query.filter_by(is_active=True)
+        .order_by(Course.title)
+        .all()
+    )
     return render_template(
         'admin/instances.html',
         instances=instances,
         courses=courses,
+        reg_counts=reg_counts,
         filter_course_id=filter_course_id,
         filter_status=filter_status,
+        statuses=CourseInstance.STATUSES,
     )
 
 
@@ -76,17 +103,13 @@ def instance_create():
         instance = CourseInstance()
         course_service.populate_instance_from_form(instance, form)
         db.session.add(instance)
-        try:
-            db.session.commit()
+        if try_commit(log_context=f'instance_create course={form.course_id.data}'):
             audit_logger.info(
                 'Admin %s created instance %s (course=%s start=%s)',
                 current_user.email, instance.id, instance.course_id, instance.start_date,
             )
             flash('Проведення створено', 'success')
             return redirect(url_for('admin.instances_list'))
-        except Exception:
-            db.session.rollback()
-            flash('Помилка при збереженні', 'error')
 
     return render_template('admin/instance_edit.html', form=form, instance=None)
 
@@ -104,16 +127,12 @@ def instance_edit(instance_id):
 
     if form.validate_on_submit():
         course_service.populate_instance_from_form(instance, form)
-        try:
-            db.session.commit()
+        if try_commit(log_context=f'instance_edit id={instance.id}'):
             audit_logger.info(
                 'Admin %s updated instance %s', current_user.email, instance.id,
             )
             flash('Проведення оновлено', 'success')
             return redirect(url_for('admin.instances_list'))
-        except Exception:
-            db.session.rollback()
-            flash('Помилка при збереженні', 'error')
 
     return render_template('admin/instance_edit.html', form=form, instance=instance)
 
@@ -153,7 +172,7 @@ def instance_status_update(instance_id):
         db.session.commit()
     except Exception:
         db.session.rollback()
-        logger.exception('Failed to update instance %s status', instance_id)
+        current_app.logger.exception('Failed to update instance %s status', instance_id)
         if wants_json:
             return jsonify({'ok': False, 'error': 'Помилка при збереженні'}), 500
         flash('Помилка при збереженні', 'error')
@@ -178,13 +197,17 @@ def instance_status_update(instance_id):
 @admin_required
 def instance_delete(instance_id):
     instance = db.session.get(CourseInstance, instance_id)
-    if instance:
-        db.session.delete(instance)
-        try:
-            db.session.commit()
-            audit_logger.info('Admin %s deleted instance %s', current_user.email, instance_id)
-            flash('Проведення видалено', 'success')
-        except Exception:
-            db.session.rollback()
-            flash('Помилка при видаленні', 'error')
+    if not instance:
+        flash('Проведення не знайдено', 'error')
+        return redirect(url_for('admin.instances_list'))
+
+    db.session.delete(instance)
+    if try_commit(
+        log_context=f'instance_delete id={instance_id}',
+        error_msg='Помилка при видаленні',
+    ):
+        audit_logger.info(
+            'Admin %s deleted instance %s', current_user.email, instance_id,
+        )
+        flash('Проведення видалено', 'success')
     return redirect(url_for('admin.instances_list'))

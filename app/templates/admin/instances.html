@@ -14,6 +14,7 @@
 {% endblock %}
 
 {% block content %}
+{% from 'admin/partials/_status_filter.html' import status_filter %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
   <div class="admin-layout">
@@ -35,7 +36,6 @@
 
   {% include 'partials/flash_messages.html' %}
 
-  <!-- Filters -->
   <form method="GET" action="{{ url_for('admin.instances_list') }}" class="admin-filter-form">
     <select name="course_id" class="form-input form-input--sm" aria-label="Фільтр за курсом" onchange="this.form.submit()">
       <option value="">Всі курси</option>
@@ -43,14 +43,7 @@
       <option value="{{ c.id }}"{% if filter_course_id == c.id %} selected{% endif %}>{{ c.title }}</option>
       {% endfor %}
     </select>
-    <select name="status" class="form-input form-input--sm" aria-label="Фільтр за статусом" onchange="this.form.submit()">
-      <option value="">Всі статуси</option>
-      <option value="draft"{% if filter_status == 'draft' %} selected{% endif %}>Чернетка</option>
-      <option value="published"{% if filter_status == 'published' %} selected{% endif %}>Опубліковано</option>
-      <option value="active"{% if filter_status == 'active' %} selected{% endif %}>Активний</option>
-      <option value="completed"{% if filter_status == 'completed' %} selected{% endif %}>Завершено</option>
-      <option value="cancelled"{% if filter_status == 'cancelled' %} selected{% endif %}>Скасовано</option>
-    </select>
+    {{ status_filter(statuses, filter_status) }}
     {% if filter_course_id or filter_status %}
     <a href="{{ url_for('admin.instances_list') }}" class="btn-admin btn-admin--secondary btn-admin--sm">Очистити</a>
     {% endif %}
@@ -94,7 +87,7 @@
             </noscript>
           </form>
         </td>
-        <td>{{ inst.registration_count }}</td>
+        <td>{{ reg_counts.get(inst.id, 0) }}</td>
         <td>{{ inst.location or '---' }}</td>
         <td>
           <div class="admin-table__actions">

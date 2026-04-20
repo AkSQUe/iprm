@@ -2,8 +2,17 @@
 Використовується коли немає запланованого CourseInstance або клієнт хоче
 ще одне проведення. Адмін бачить кількість запитів і вирішує створити instance.
 """
+import re
+
+from sqlalchemy.orm import validates
+
 from app.extensions import db
 from app.models.mixins import TimestampMixin, BigIntPK
+
+# Проста перевірка структури: local@domain.tld. Повна перевірка --
+# у формі через email_validator; ця -- defense-in-depth при прямих
+# вставках (CLI, data migration, тощо).
+_EMAIL_RE = re.compile(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
 
 
 class CourseRequest(TimestampMixin, db.Model):
@@ -61,5 +70,80 @@ class CourseRequest(TimestampMixin, db.Model):
     def status_label(self):
         return dict(self.STATUSES).get(self.status, self.status)
 
+    @validates('email')
+    def _validate_email(self, _key, value):
+        if value is None:
+            raise ValueError('email є обов\'язковим')
+        normalized = value.strip().lower()
+        if not normalized:
+            raise ValueError('email є обов\'язковим')
+        if len(normalized) > 255:
+            raise ValueError('email задовгий (макс. 255)')
+        if not _EMAIL_RE.match(normalized):
+            raise ValueError(f'невалідний email: {value!r}')
+        return normalized
+
+    @validates('status')
+    def _validate_status(self, _key, value):
+        valid = {code for code, _ in self.STATUSES}
+        if value not in valid:
+            raise ValueError(
+                f'невідомий status: {value!r}; очікується одне з {sorted(valid)}'
+            )
+        return value
+
+    @validates('phone')
+    def _validate_phone(self, _key, value):
+        if value is None:
+            return None
+        stripped = value.strip()
+        if not stripped:
+            return None
+        if len(stripped) > 20:
+            raise ValueError('phone задовгий (макс. 20)')
+        return stripped
+
     def __repr__(self):
         return f'<CourseRequest course={self.course_id} email={self.email}>'
+
+
+class CourseRequestAudit(TimestampMixin, db.Model):
+    """Журнал змін статусу CourseRequest.
+
+    Один рядок на кожну зміну (pending -> responded, responded -> scheduled, ...).
+    Використовується для детективної діагностики: хто і коли обробив запит.
+    """
+    __tablename__ = 'course_request_audits'
+
+    id = db.Column(BigIntPK, primary_key=True)
+    request_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('course_requests.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
+    from_status = db.Column(db.String(20))
+    to_status = db.Column(db.String(20), nullable=False)
+    changed_by_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('users.id', ondelete='SET NULL'),
+        nullable=True,
+        index=True,
+    )
+    notes = db.Column(db.Text)
+
+    request = db.relationship(
+        'CourseRequest',
+        backref=db.backref(
+            'audits',
+            order_by='CourseRequestAudit.created_at.desc()',
+            cascade='all, delete-orphan',
+        ),
+    )
+    changed_by = db.relationship('User', foreign_keys=[changed_by_id])
+
+    def __repr__(self):
+        return (
+            f'<CourseRequestAudit request={self.request_id} '
+            f'{self.from_status}->{self.to_status}>'
+        )

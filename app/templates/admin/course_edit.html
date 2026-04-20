@@ -81,7 +81,7 @@
 
     <div class="form-section admin-form__section">
       <h3 class="admin-form__section-title">Default-налаштування для проведень</h3>
-      <p class="form-hint" style="margin-top: -12px; margin-bottom: 16px;">Ці значення використовуються як default, якщо в конкретному проведенні не задано інше.</p>
+      <p class="admin-form__section-hint">Ці значення використовуються як default, якщо в конкретному проведенні не задано інше.</p>
       <div class="admin-form__grid">
 
         <div class="form-group">
@@ -244,15 +244,19 @@
     {% endif %}
 
     <div class="admin-form__actions">
-      {% if course %}
-      <a href="{{ url_for('admin.course_delete', course_id=course.id) }}" class="btn-admin btn-admin--danger btn-admin--sm" data-confirm="Видалити курс з усіма його проведеннями?">Видалити курс</a>
-      {% endif %}
       <a href="{{ url_for('admin.courses_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
       <button type="submit" class="btn-admin btn-admin--primary">
         {% if course %}Зберегти зміни{% else %}Створити курс{% endif %}
       </button>
     </div>
   </form>
+
+  {% if course %}
+  <form method="POST" action="{{ url_for('admin.course_delete', course_id=course.id) }}" class="admin-form__danger-zone" data-confirm="Видалити курс з усіма його проведеннями?">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити курс</button>
+  </form>
+  {% endif %}
   </div>
 </div>
 
