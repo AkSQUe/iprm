@@ -5,8 +5,10 @@
 Дані джерела:
   * Контент (title, description, tags, ...) -- з Course
   * Дата/локація/формат -- з представницького CourseInstance
-    (найближчий майбутній; якщо немає -- найсвіжіший минулий)
+    (найближчий майбутній; якщо немає -- найсвіжіший минулий із дозволених)
   * registration_url -- вказує на new-flow /registration/instance/<id>
+
+Публічний контракт -- `api_version`. Breaking change -> новий major.
 """
 from datetime import datetime, timezone
 
@@ -14,16 +16,22 @@ from flask import url_for
 
 from app.utils import ensure_utc
 
+API_VERSION = '1.0'
+
+_DEFAULT_UPCOMING_STATUSES = ('published', 'active')
+_FAR_FUTURE = datetime.max.replace(tzinfo=timezone.utc)
+_FAR_PAST = datetime.min.replace(tzinfo=timezone.utc)
+
 
 def _image_url(path: str) -> str | None:
     """Convert stored image path to absolute URL.
 
     Handles three storage conventions in IPRM:
-      1. Absolute URL already — pass through.
-      2. 'static/images/...' or '/static/images/...' — strip 'static/' prefix
+      1. Absolute URL already -- pass through.
+      2. 'static/images/...' or '/static/images/...' -- strip 'static/' prefix
          because url_for('static', ...) adds it; otherwise we get
          '/static/static/images/...'.
-      3. 'images/courses/...' or similar — plain filename relative to static.
+      3. 'images/courses/...' or similar -- plain filename relative to static.
     """
     if not path:
         return None
@@ -46,39 +54,82 @@ def serialize_trainer(trainer) -> dict | None:
     }
 
 
-def pick_representative_instance(course):
+def _has_upcoming(instance) -> bool:
+    """Чи instance планується в майбутньому (published/active + дата >= now)."""
+    if not instance:
+        return False
+    if instance.status not in _DEFAULT_UPCOMING_STATUSES:
+        return False
+    if instance.start_date is None:
+        return True  # TBD -- considered upcoming until date set
+    return ensure_utc(instance.start_date) >= datetime.now(timezone.utc)
+
+
+def pick_representative_instance(course, allowed_statuses=None):
     """Вибрати найрелевантніший instance курсу для API-відповіді.
 
     Пріоритет: найближчий майбутній (published/active). Fallback --
-    найсвіжіший минулий (completed). None якщо зовсім немає instances.
+    найсвіжіший минулий з числа `allowed_statuses` (або 'completed' по
+    замовчуванню). None якщо нічого не підходить.
+
+    Args:
+        course: Course model (instances мають бути preloaded).
+        allowed_statuses: iterable статусів, які дозволено віддавати клієнту.
+            Якщо None -- по замовчуванню ('published', 'active', 'completed').
+            Фільтр застосовується і до upcoming (гарантія), і до past (fallback).
     """
     if not course.instances:
         return None
+
+    allowed = set(allowed_statuses) if allowed_statuses else {
+        'published', 'active', 'completed',
+    }
     now = datetime.now(timezone.utc)
+
     upcoming = [
         i for i in course.instances
-        if i.status in ('published', 'active')
+        if i.status in _DEFAULT_UPCOMING_STATUSES
+        and i.status in allowed
         and (i.start_date is None or ensure_utc(i.start_date) >= now)
     ]
     if upcoming:
         return min(
             upcoming,
-            key=lambda i: ensure_utc(i.start_date) or datetime.max.replace(tzinfo=timezone.utc),
+            key=lambda i: ensure_utc(i.start_date) or _FAR_FUTURE,
         )
+
     past = sorted(
-        course.instances,
-        key=lambda i: ensure_utc(i.start_date) or datetime.min.replace(tzinfo=timezone.utc),
+        (i for i in course.instances if i.status in allowed),
+        key=lambda i: ensure_utc(i.start_date) or _FAR_PAST,
         reverse=True,
     )
     return past[0] if past else None
 
 
+def serialize_instance(instance) -> dict:
+    """Компактна серіалізація одного CourseInstance для API."""
+    return {
+        'id': instance.id,
+        'start_date': instance.start_date.isoformat() if instance.start_date else None,
+        'end_date': instance.end_date.isoformat() if instance.end_date else None,
+        'event_format': instance.event_format,
+        'status': instance.status,
+        'location': instance.location,
+        'online_link': instance.online_link,
+        'price': (
+            float(instance.effective_price)
+            if instance.effective_price is not None else 0.0
+        ),
+        'registration_url': _registration_url(instance),
+    }
+
+
 def serialize_event_card(course, instance=None) -> dict:
-    """Compact representation for event list (no heavy fields).
+    """Compact representation для event list (no heavy fields).
 
     Args:
         course: Course model.
-        instance: Optional CourseInstance (pre-picked for N+1 avoidance).
+        instance: Optional CourseInstance (pre-picked для N+1 avoidance).
                   If None, `pick_representative_instance` вибере сам.
     """
     if instance is None:
@@ -121,15 +172,13 @@ def serialize_event_card(course, instance=None) -> dict:
         'trainer': serialize_trainer(
             instance.effective_trainer if instance else course.trainer
         ),
-        # Додаткові поля для нової моделі (partner може ігнорувати)
         'instance_id': instance.id if instance else None,
-        'has_upcoming': bool(instance and instance.status in ('published', 'active')
-                             and (instance.start_date is None or ensure_utc(instance.start_date) >= datetime.now(timezone.utc))),
+        'has_upcoming': _has_upcoming(instance),
     }
 
 
 def serialize_event_detail(course, instance=None) -> dict:
-    """Full representation for event detail (modal + redirect)."""
+    """Full representation для event detail (modal + redirect)."""
     if instance is None:
         instance = pick_representative_instance(course)
 
@@ -148,22 +197,12 @@ def serialize_event_detail(course, instance=None) -> dict:
             }
             for block in sorted(course.program_blocks, key=lambda b: b.sort_order or 0)
         ],
-        # Всі available instances (partner може відобразити розклад)
+        # Всі published/active/completed instances (partner відображає розклад)
         'instances': [
-            {
-                'id': i.id,
-                'start_date': i.start_date.isoformat() if i.start_date else None,
-                'end_date': i.end_date.isoformat() if i.end_date else None,
-                'event_format': i.event_format,
-                'status': i.status,
-                'location': i.location,
-                'online_link': i.online_link,
-                'price': float(i.effective_price) if i.effective_price is not None else 0.0,
-                'registration_url': _registration_url(i),
-            }
+            serialize_instance(i)
             for i in sorted(
                 course.instances,
-                key=lambda i: i.start_date or datetime.min.replace(tzinfo=timezone.utc),
+                key=lambda i: ensure_utc(i.start_date) or _FAR_PAST,
             )
             if i.status in ('published', 'active', 'completed')
         ],

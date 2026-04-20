@@ -121,12 +121,15 @@ class TestEventsList:
         assert card['detail_url'].endswith(f'/courses/{published_event.slug}')
 
     def test_pagination_bounds(self, client, partner_settings, published_event):
+        """per_page > MAX_PER_PAGE -> 400 Bad Request з error-повідомленням."""
         resp = client.get(
             '/api/v1/events?per_page=9999',
             headers={'X-API-Key': API_KEY},
         )
+        assert resp.status_code == 400
         data = resp.get_json()
-        assert data['per_page'] == 100  # capped
+        assert 'error' in data
+        assert 'per_page' in data['error']
 
 
 class TestEventDetail:
