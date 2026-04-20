@@ -8,6 +8,11 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% block extra_scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin-status-select.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -72,7 +77,22 @@
         <td><strong>{{ inst.course.title if inst.course else '---' }}</strong></td>
         <td>{{ inst.format_label or '---' }}</td>
         <td>
-          <span class="badge badge--{{ inst.status }}">{{ inst.status_label }}</span>
+          <form method="POST"
+                action="{{ url_for('admin.instance_status_update', instance_id=inst.id) }}"
+                class="badge-select-form"
+                data-status-form>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="status"
+                    class="badge badge-select badge-select--{{ inst.status }}"
+                    aria-label="Статус проведення {{ inst.course.title if inst.course else '' }}">
+              {% for value, label in inst.STATUSES %}
+              <option value="{{ value }}"{% if inst.status == value %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <noscript>
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">OK</button>
+            </noscript>
+          </form>
         </td>
         <td>{{ inst.registration_count }}</td>
         <td>{{ inst.location or '---' }}</td>

@@ -8,12 +8,15 @@ from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.program_block import ProgramBlock
 from app.services.event_service import (
-    InvalidStatusTransition,
     lines_to_list, list_to_lines, faq_text_to_list, faq_list_to_text,
 )
 from app.utils import slugify
 
 logger = logging.getLogger(__name__)
+
+
+class InvalidStatusTransition(ValueError):
+    """Невалідний перехід між статусами проведення."""
 
 
 def change_instance_status(instance, new_status):
