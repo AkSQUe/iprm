@@ -16,7 +16,7 @@
     <div class="admin-hero">
       <div>
         <div class="admin-breadcrumb">
-          <a href="{{ url_for('admin.events_list') }}" class="admin-breadcrumb__link">Панель</a>
+          <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Панель</a>
           <span class="admin-breadcrumb__sep">/</span>
           <span class="admin-breadcrumb__current">Реєстрації</span>
         </div>
@@ -101,8 +101,8 @@
         {% for reg in registrations %}
         <tr>
           <td>
-            {% if reg.event %}
-              <a href="{{ url_for('admin.event_registrations', event_id=reg.event_id) }}">{{ reg.event.title }}</a>
+            {% if reg.instance_id and reg.target_title %}
+              <a href="{{ url_for('admin.instance_registrations', instance_id=reg.instance_id) }}">{{ reg.target_title }}</a>
             {% else %}
               <span class="admin-text-muted">---</span>
             {% endif %}
@@ -139,7 +139,7 @@
               {% if reg.status in ('confirmed', 'pending') and not reg.attended %}
               <form method="POST" action="{{ url_for('admin.registration_attendance', reg_id=reg.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="cpd_points" value="{{ reg.event.cpd_points or 0 }}">
+                <input type="hidden" name="cpd_points" value="{{ (reg.instance.effective_cpd_points if reg.instance else 0) or 0 }}">
                 <input type="hidden" name="next" value="registrations_all">
                 <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" title="Безперервний професійний розвиток"><span class="material-symbols-rounded">verified</span></button>
               </form>

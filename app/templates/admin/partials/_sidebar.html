@@ -26,7 +26,7 @@
 
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Продажі</p>
-      <a href="{{ url_for('admin.registrations_all') }}" class="admin-sidebar__link{% if ep in ('admin.registrations_all', 'admin.event_registrations', 'admin.registration_status', 'admin.registration_attendance') %} admin-sidebar__link--active{% endif %}">
+      <a href="{{ url_for('admin.registrations_all') }}" class="admin-sidebar__link{% if ep in ('admin.registrations_all', 'admin.instance_registrations', 'admin.registration_status', 'admin.registration_attendance') %} admin-sidebar__link--active{% endif %}">
         <span class="material-symbols-rounded">how_to_reg</span>
         Реєстрації
       </a>
