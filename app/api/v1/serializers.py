@@ -124,7 +124,7 @@ def serialize_event_card(course, instance=None) -> dict:
         # Додаткові поля для нової моделі (partner може ігнорувати)
         'instance_id': instance.id if instance else None,
         'has_upcoming': bool(instance and instance.status in ('published', 'active')
-                             and (instance.start_date is None or instance.start_date >= datetime.now(timezone.utc))),
+                             and (instance.start_date is None or ensure_utc(instance.start_date) >= datetime.now(timezone.utc))),
     }
 
 
