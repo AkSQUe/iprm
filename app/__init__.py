@@ -147,7 +147,13 @@ def create_app(config_name=None):
     @app.context_processor
     def inject_site_settings():
         from flask import g
-        return {'site_settings': g.site_settings}
+        from app.models.site_settings import SiteSettings
+        # g.site_settings заповнюється @app.before_request для HTTP-запитів;
+        # для background-render (scheduler, thread) g пустий -- підвантажуємо напряму.
+        settings = getattr(g, 'site_settings', None)
+        if settings is None:
+            settings = SiteSettings.get()
+        return {'site_settings': settings}
 
     @app.after_request
     def set_security_headers(response):

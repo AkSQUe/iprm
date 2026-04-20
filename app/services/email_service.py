@@ -124,7 +124,14 @@ class EmailService:
         Returns None if dedup skipped.
         """
         app = current_app._get_current_object()
-        ctx = context or {}
+        ctx = dict(context or {})
+        # Email-шаблони використовують site_settings (website_url, socials,
+        # copy). У request-flow це заповнює @app.before_request через g;
+        # у background/scheduler контексті g.site_settings немає, тому
+        # ін'єктимо явно, якщо caller не передав.
+        if 'site_settings' not in ctx:
+            from app.models.site_settings import SiteSettings
+            ctx['site_settings'] = SiteSettings.get()
 
         with app.app_context():
             smtp_cfg = _get_smtp_config(app)
@@ -234,8 +241,39 @@ class EmailService:
     # ---- Convenience senders ----
 
     @staticmethod
+    def _event_from_registration(registration):
+        """Шаблони очікують об'єкт `event` з полями title/start_date/location/...
+
+        Адаптуємо CourseInstance + Course до цієї форми без змін шаблонів.
+        """
+        instance = registration.instance
+        if instance is None or instance.course is None:
+            return None
+        course = instance.course
+
+        class _EventShape:
+            title = course.title
+            subtitle = course.subtitle
+            slug = course.slug
+            start_date = instance.start_date
+            end_date = instance.end_date
+            location = instance.location
+            online_link = instance.online_link
+            event_format = instance.event_format
+            price = instance.effective_price
+            cpd_points = instance.effective_cpd_points
+
+        return _EventShape()
+
+    @staticmethod
     def send_registration_confirmation(registration):
-        event = registration.event
+        event = EmailService._event_from_registration(registration)
+        if event is None:
+            logger.warning(
+                'Cannot send registration_confirmed: reg=%s has no instance/course',
+                registration.id,
+            )
+            return None
         user = registration.user
         return EmailService.send_email(
             to=user.email,
@@ -258,7 +296,13 @@ class EmailService:
 
     @staticmethod
     def send_payment_confirmation(registration):
-        event = registration.event
+        event = EmailService._event_from_registration(registration)
+        if event is None:
+            logger.warning(
+                'Cannot send payment_confirmed: reg=%s has no instance/course',
+                registration.id,
+            )
+            return None
         user = registration.user
         return EmailService.send_email(
             to=user.email,
@@ -271,7 +315,13 @@ class EmailService:
 
     @staticmethod
     def send_course_reminder(registration, days_until):
-        event = registration.event
+        event = EmailService._event_from_registration(registration)
+        if event is None:
+            logger.warning(
+                'Cannot send course_reminder: reg=%s has no instance/course',
+                registration.id,
+            )
+            return None
         user = registration.user
         return EmailService.send_email(
             to=user.email,
@@ -287,7 +337,13 @@ class EmailService:
 
     @staticmethod
     def send_status_change(registration, old_status, new_status):
-        event = registration.event
+        event = EmailService._event_from_registration(registration)
+        if event is None:
+            logger.warning(
+                'Cannot send status_changed: reg=%s has no instance/course',
+                registration.id,
+            )
+            return None
         user = registration.user
         label = dict(registration.STATUSES).get(new_status, new_status)
         return EmailService.send_email(
