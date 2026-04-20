@@ -11,7 +11,7 @@ audit_logger = logging.getLogger('audit')
 @admin_bp.route('/')
 @admin_required
 def dashboard():
-    return redirect(url_for('admin.events_list'))
+    return redirect(url_for('admin.courses_list'))
 
 
 @admin_bp.route('/certificates')
