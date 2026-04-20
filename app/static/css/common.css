@@ -647,7 +647,7 @@ a {
   margin: 0;
 }
 
-/* SVG-шеврон з явним кольором: currentColor у data-URL не успадковується. */
+/* Native стрілку прибираємо; додаємо ::after-шеврон через обгортку. */
 select.badge-select {
   appearance: none;
   -webkit-appearance: none;
@@ -661,12 +661,55 @@ select.badge-select {
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1.4;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%2386868b' d='M0 0l5 6 5-6z'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 8px 5px;
+  background-color: inherit;
   transition: background-color 0.18s ease, color 0.18s ease, outline-color 0.18s ease;
 }
+
+/* Firefox: прибрати пунктирну рамку фокусу */
+select.badge-select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 currentColor;
+}
+
+/* Шеврон як ::after на обгортці (select -- replaced element, псевдо на ньому
+   не рендериться). Колір успадковує від поточного кольору тексту badge --
+   автоматично узгоджується зі статусом (draft/published/active/...). */
+.badge-select-form {
+  position: relative;
+}
+
+.badge-select-form::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 8px;
+  height: 5px;
+  transform: translateY(-50%);
+  background-color: currentColor;
+  -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M0 0l5 6 5-6z'/></svg>");
+          mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M0 0l5 6 5-6z'/></svg>");
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+          mask-size: contain;
+  pointer-events: none;
+  opacity: 0.7;
+  transition: opacity 0.18s ease;
+}
+
+.badge-select-form:hover::after,
+.badge-select-form:focus-within::after {
+  opacity: 1;
+}
+
+/* Успадкування кольору: badge-select-form сам по собі не має color --
+   беремо від вкладеного select (задається .badge-select--<status>). */
+.badge-select-form:has(.badge-select--draft) { color: var(--iprm-badge-draft-text); }
+.badge-select-form:has(.badge-select--published) { color: var(--iprm-badge-published-text); }
+.badge-select-form:has(.badge-select--active) { color: var(--iprm-badge-active-text); }
+.badge-select-form:has(.badge-select--completed) { color: var(--iprm-badge-completed-text); }
+.badge-select-form:has(.badge-select--cancelled) { color: var(--iprm-error-text); }
 
 select.badge-select:focus-visible {
   outline: 2px solid var(--iprm-accent);
