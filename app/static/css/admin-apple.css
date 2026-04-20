@@ -509,6 +509,45 @@
   color: var(--apple-gray);
 }
 
+/* Header картки: розсунути заголовок і statusbadge */
+.admin-integration-card__header {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--iprm-border);
+}
+
+/* Вбудована таблиця cron-job-ів у картці "Планувальник":
+   м'які рядки без хедера, щоб не виглядало як повноцінний data-grid */
+.admin-integration-card__jobs {
+  width: 100%;
+  border-collapse: collapse;
+  background: transparent;
+  box-shadow: none;
+  margin: 0 0 16px;
+}
+
+.admin-integration-card__jobs tr {
+  border-bottom: 1px solid var(--iprm-border);
+}
+
+.admin-integration-card__jobs tr:last-child {
+  border-bottom: none;
+}
+
+.admin-integration-card__jobs td {
+  padding: 12px 0;
+  font-size: 0.875rem;
+  color: var(--apple-black);
+  background: transparent;
+}
+
+.admin-integration-card__job-time {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--apple-gray-dark);
+  white-space: nowrap;
+}
+
 /* ========== DROPZONE ========== */
 
 .admin-dropzone {

@@ -128,51 +128,57 @@
   </form>
 
   <!-- Test & Scheduler -->
-  <div class="admin-form__grid admin-form__grid--spaced">
-    <div class="admin-integration-card">
-      <div class="admin-integration-card__header">
-        <h3 class="admin-integration-card__title">Тестовий лист</h3>
-      </div>
-      <form method="POST" action="{{ url_for('admin.notifications_test') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="form-group">
-          <label for="test-email">Email адреса</label>
-          <input type="email" name="to" id="test-email" class="form-input" value="{{ current_user.email }}" placeholder="email@example.com">
+  <div class="form-section admin-form__section">
+    <h3 class="admin-form__section-title">Діагностика</h3>
+    <p class="admin-form__section-hint">Перевірка налаштувань відправки та статус фонового планувальника</p>
+    <div class="admin-form__grid admin-form__grid--spaced">
+      <div class="admin-integration-card">
+        <div class="admin-integration-card__header">
+          <h3 class="admin-integration-card__title">Тестовий лист</h3>
         </div>
-        <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm"{% if not settings.is_enabled %} disabled title="Увімкніть відправку в налаштуваннях"{% endif %}>Надіслати тестовий лист</button>
-      </form>
-    </div>
+        <form method="POST" action="{{ url_for('admin.notifications_test') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="form-group">
+            <label for="test-email">Email адреса</label>
+            <input type="email" name="to" id="test-email" class="form-input" value="{{ current_user.email }}" placeholder="email@example.com">
+          </div>
+          <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm"{% if not settings.is_enabled %} disabled title="Увімкніть відправку в налаштуваннях"{% endif %}>Надіслати тестовий лист</button>
+        </form>
+      </div>
 
-    <div class="admin-integration-card">
-      <div class="admin-integration-card__header">
-        <h3 class="admin-integration-card__title">Планувальник</h3>
+      <div class="admin-integration-card">
+        <div class="admin-integration-card__header">
+          <h3 class="admin-integration-card__title">Планувальник</h3>
+          {% if scheduler_running %}
+          <span class="badge badge--success">Працює</span>
+          {% else %}
+          <span class="badge badge--danger">Зупинено</span>
+          {% endif %}
+        </div>
+        {% if jobs %}
+        <table class="admin-table admin-integration-card__jobs">
+          <tbody>
+            {% for job in jobs %}
+            <tr>
+              <td>{{ job.name }}</td>
+              <td class="admin-integration-card__job-time">{{ job.next_run_time.strftime('%d.%m.%Y %H:%M') if job.next_run_time else 'Призупинено' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
         {% if scheduler_running %}
-        <span class="badge badge--success">Працює</span>
+        <form method="POST" action="{{ url_for('admin.scheduler_pause') }}" class="admin-form--compact">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Призупинити</button>
+        </form>
         {% else %}
-        <span class="badge badge--danger">Зупинено</span>
+        <form method="POST" action="{{ url_for('admin.scheduler_resume') }}" class="admin-form--compact">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Відновити</button>
+        </form>
         {% endif %}
       </div>
-      {% if jobs %}
-      <table class="admin-table">
-        {% for job in jobs %}
-        <tr>
-          <td>{{ job.name }}</td>
-          <td>{{ job.next_run_time.strftime('%d.%m.%Y %H:%M') if job.next_run_time else 'Призупинено' }}</td>
-        </tr>
-        {% endfor %}
-      </table>
-      {% endif %}
-      {% if scheduler_running %}
-      <form method="POST" action="{{ url_for('admin.scheduler_pause') }}" class="admin-form--compact">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Призупинити</button>
-      </form>
-      {% else %}
-      <form method="POST" action="{{ url_for('admin.scheduler_resume') }}" class="admin-form--compact">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Відновити</button>
-      </form>
-      {% endif %}
     </div>
   </div>
 
