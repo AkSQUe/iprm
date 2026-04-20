@@ -1,16 +1,20 @@
-"""SQLAlchemy listeners that fire partner webhooks after Event changes commit.
+"""SQLAlchemy listeners: при зміні Course або CourseInstance оповіщаємо
+партнерські сайти через webhook.
 
-Dispatch runs AFTER transaction commit — never inside — so that a failing
-webhook cannot rollback the admin's save. Uses session.info to collect
-pending dispatches during the transaction, then flushes them on after_commit.
+Dispatch відбувається AFTER transaction commit (ніколи не всередині) --
+щоб збій webhook не відкочував адмінські зміни. session.info збирає
+pending-події під час транзакції, flush-ує їх у after_commit.
 
-Register once at app startup via `register_event_listeners(db)`.
+Legacy: раніше listener слухав Event. Тепер слухає Course (контент) і
+CourseInstance (розклад). Payload все ще має поле `event_id` для
+зворотної сумісності з партнерами -- у нього пишеться course.id.
 """
 import logging
 
 from sqlalchemy import event as sa_event
 
-from app.models.event import Event
+from app.models.course import Course
+from app.models.course_instance import CourseInstance
 from app.services.webhook_dispatcher import dispatch_event_webhook
 
 logger = logging.getLogger(__name__)
@@ -18,54 +22,82 @@ logger = logging.getLogger(__name__)
 _PENDING_KEY = '_iprm_webhook_pending'
 
 
-def _queue(session, event_id, event_slug, action):
+def _queue(session, course_id, course_slug, action):
+    """Додати pending webhook (дедуплікує по ключу course_id+action)."""
     pending = session.info.setdefault(_PENDING_KEY, [])
-    pending.append((event_id, event_slug, action))
+    key = (course_id, action)
+    # Дедуплікація: якщо за одну транзакцію кілька змін одного курсу --
+    # відправимо webhook лише раз
+    if any((p[0], p[2]) == key for p in pending):
+        return
+    pending.append((course_id, course_slug, action))
+
+
+def _course_from_instance(instance):
+    """Отримати Course з CourseInstance, навіть якщо relationship ще не завантажений."""
+    if instance.course is not None:
+        return instance.course
+    from app.extensions import db
+    return db.session.get(Course, instance.course_id)
 
 
 def register_event_listeners(db) -> None:
-    """Attach after_{insert,update,delete} + after_commit hooks to Event."""
+    """Прив'язати after_{insert,update,delete} + after_commit hooks.
 
-    @sa_event.listens_for(Event, 'after_insert')
-    def _on_insert(mapper, connection, target):
-        session = db.session.object_session(target)
-        if session is None:
-            session = db.session
+    Ім'я функції збережено для зворотної сумісності з викликом в `create_app`.
+    """
+
+    @sa_event.listens_for(Course, 'after_insert')
+    def _on_course_insert(mapper, connection, target):
+        session = db.session.object_session(target) or db.session
         _queue(session, target.id, target.slug, 'created')
 
-    @sa_event.listens_for(Event, 'after_update')
-    def _on_update(mapper, connection, target):
-        session = db.session.object_session(target)
-        if session is None:
-            session = db.session
+    @sa_event.listens_for(Course, 'after_update')
+    def _on_course_update(mapper, connection, target):
+        session = db.session.object_session(target) or db.session
         _queue(session, target.id, target.slug, 'updated')
 
-    @sa_event.listens_for(Event, 'after_delete')
-    def _on_delete(mapper, connection, target):
-        session = db.session.object_session(target)
-        if session is None:
-            session = db.session
-        # Snapshot id/slug now — row will be gone after commit.
+    @sa_event.listens_for(Course, 'after_delete')
+    def _on_course_delete(mapper, connection, target):
+        session = db.session.object_session(target) or db.session
         _queue(session, target.id, target.slug, 'deleted')
+
+    # Зміни розкладу трактуємо як updated курсу
+    @sa_event.listens_for(CourseInstance, 'after_insert')
+    def _on_instance_insert(mapper, connection, target):
+        session = db.session.object_session(target) or db.session
+        course = _course_from_instance(target)
+        if course:
+            _queue(session, course.id, course.slug, 'updated')
+
+    @sa_event.listens_for(CourseInstance, 'after_update')
+    def _on_instance_update(mapper, connection, target):
+        session = db.session.object_session(target) or db.session
+        course = _course_from_instance(target)
+        if course:
+            _queue(session, course.id, course.slug, 'updated')
+
+    @sa_event.listens_for(CourseInstance, 'after_delete')
+    def _on_instance_delete(mapper, connection, target):
+        session = db.session.object_session(target) or db.session
+        course = _course_from_instance(target)
+        if course:
+            _queue(session, course.id, course.slug, 'updated')
 
     @sa_event.listens_for(db.session, 'after_commit')
     def _on_commit(session):
         pending = session.info.pop(_PENDING_KEY, None)
         if not pending:
             return
-        # Dispatch synchronously (fire-and-forget inside dispatcher).
-        # If this becomes a latency problem, wrap in threading.Thread or
-        # replace with Celery/APScheduler job enqueueing.
-        for event_id, event_slug, action in pending:
+        for course_id, course_slug, action in pending:
             try:
-                dispatch_event_webhook(event_id, event_slug, action)
+                dispatch_event_webhook(course_id, course_slug, action)
             except Exception:
                 logger.exception(
                     'Webhook dispatch crashed unexpectedly for %s/%s',
-                    action, event_slug,
+                    action, course_slug,
                 )
 
     @sa_event.listens_for(db.session, 'after_rollback')
     def _on_rollback(session):
-        # If the transaction rolled back, no webhook fires.
         session.info.pop(_PENDING_KEY, None)

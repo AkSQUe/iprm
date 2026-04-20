@@ -1,12 +1,22 @@
-"""Public API v1 — events listing & detail for partner sites."""
+"""Public API v1 — courses listing & detail for partner sites.
+
+Endpoint назви (`/events`, `/events/<slug>`) збережено для зворотної
+сумісності з MM Medic та іншими партнерами. Джерело даних --
+Course + CourseInstance (нова модель).
+"""
 from flask import abort, jsonify, request
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.api.v1 import api_v1_bp
 from app.api.v1.auth import require_api_key
-from app.api.v1.serializers import serialize_event_card, serialize_event_detail
+from app.api.v1.serializers import (
+    pick_representative_instance,
+    serialize_event_card,
+    serialize_event_detail,
+)
 from app.extensions import csrf, db, limiter
-from app.models.event import Event
+from app.models.course import Course
+from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
 from sqlalchemy import func
 
@@ -16,12 +26,12 @@ from sqlalchemy import func
 @require_api_key
 @limiter.limit('60 per minute')
 def list_events():
-    """List published/active events visible to partners.
+    """List active courses visible to partners (схема -- "event-shape" legacy).
 
     Query params:
       page (int, default 1)
       per_page (int, default 50, max 100)
-      status (comma-separated: published,active,completed — default: published,active)
+      status (comma-separated: published,active,completed -- статус instance)
     """
     page = max(1, request.args.get('page', 1, type=int))
     per_page = min(100, max(1, request.args.get('per_page', 50, type=int)))
@@ -31,33 +41,53 @@ def list_events():
     if not statuses:
         statuses = ['published', 'active']
 
+    # Показуємо тільки активні курси, у яких є хоча б один instance з бажаним статусом
     query = (
-        Event.query.options(joinedload(Event.trainer))
-        .filter(Event.is_active.is_(True), Event.status.in_(statuses))
-        .order_by(Event.start_date.asc().nulls_last())
+        Course.query
+        .options(
+            joinedload(Course.trainer),
+            selectinload(Course.instances).joinedload(CourseInstance.trainer),
+        )
+        .filter(Course.is_active.is_(True))
+        .filter(Course.instances.any(CourseInstance.status.in_(statuses)))
     )
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-    events = pagination.items
+    courses = pagination.items
 
-    # Batch-fetch registration counts to avoid N+1.
-    if events:
+    # Для кожного курсу обираємо представницький instance
+    picked = {c.id: pick_representative_instance(c) for c in courses}
+
+    # Batch-fetch registration counts per instance
+    instance_ids = [i.id for i in picked.values() if i]
+    if instance_ids:
         counts = dict(
             db.session.query(
-                EventRegistration.event_id,
+                EventRegistration.instance_id,
                 func.count(EventRegistration.id),
             )
             .filter(
-                EventRegistration.event_id.in_([e.id for e in events]),
+                EventRegistration.instance_id.in_(instance_ids),
                 EventRegistration.status.notin_(['cancelled']),
             )
-            .group_by(EventRegistration.event_id)
+            .group_by(EventRegistration.instance_id)
             .all()
         )
-        for ev in events:
-            ev._cached_reg_count = counts.get(ev.id, 0)
+        for instance in picked.values():
+            if instance:
+                instance._cached_reg_count = counts.get(instance.id, 0)
+
+    # Сортуємо курси по даті представницького instance (найближчі спершу)
+    from datetime import datetime, timezone
+    courses_sorted = sorted(
+        courses,
+        key=lambda c: (
+            picked[c.id].start_date if picked[c.id] and picked[c.id].start_date
+            else datetime.max.replace(tzinfo=timezone.utc)
+        ),
+    )
 
     return jsonify({
-        'items': [serialize_event_card(e) for e in events],
+        'items': [serialize_event_card(c, picked[c.id]) for c in courses_sorted],
         'page': pagination.page,
         'per_page': pagination.per_page,
         'total': pagination.total,
@@ -70,25 +100,29 @@ def list_events():
 @require_api_key
 @limiter.limit('120 per minute')
 def get_event(slug):
-    event = (
-        Event.query.options(
-            joinedload(Event.trainer),
-            selectinload(Event.program_blocks),
+    course = (
+        Course.query
+        .options(
+            joinedload(Course.trainer),
+            selectinload(Course.instances).joinedload(CourseInstance.trainer),
+            selectinload(Course.program_blocks),
         )
         .filter_by(slug=slug, is_active=True)
         .first()
     )
-    if not event or event.status not in {'published', 'active', 'completed'}:
+    if not course:
         abort(404)
 
-    event._cached_reg_count = (
-        db.session.query(func.count(EventRegistration.id))
-        .filter(
-            EventRegistration.event_id == event.id,
-            EventRegistration.status.notin_(['cancelled']),
+    instance = pick_representative_instance(course)
+    if instance:
+        instance._cached_reg_count = (
+            db.session.query(func.count(EventRegistration.id))
+            .filter(
+                EventRegistration.instance_id == instance.id,
+                EventRegistration.status.notin_(['cancelled']),
+            )
+            .scalar()
+            or 0
         )
-        .scalar()
-        or 0
-    )
 
-    return jsonify(serialize_event_detail(event))
+    return jsonify(serialize_event_detail(course, instance))
