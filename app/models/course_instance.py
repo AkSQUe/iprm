@@ -87,9 +87,23 @@ class CourseInstance(TimestampMixin, db.Model):
         ('cancelled', 'Скасовано'),
     ]
 
+    # `completed` — фінальний; історію завершених проведень не переписуємо.
+    STATUS_TRANSITIONS = {
+        'draft': {'published', 'active', 'cancelled'},
+        'published': {'draft', 'active', 'completed', 'cancelled'},
+        'active': {'published', 'completed', 'cancelled'},
+        'completed': set(),
+        'cancelled': {'draft', 'published'},
+    }
+
     @property
     def status_label(self):
         return dict(self.STATUSES).get(self.status, self.status)
+
+    def can_transition_to(self, new_status):
+        if new_status == self.status:
+            return True
+        return new_status in self.STATUS_TRANSITIONS.get(self.status, set())
 
     @property
     def format_label(self):

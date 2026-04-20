@@ -5,13 +5,38 @@ from flask import request
 
 from app.extensions import db
 from app.models.course import Course
+from app.models.course_instance import CourseInstance
 from app.models.program_block import ProgramBlock
 from app.services.event_service import (
+    InvalidStatusTransition,
     lines_to_list, list_to_lines, faq_text_to_list, faq_list_to_text,
 )
 from app.utils import slugify
 
 logger = logging.getLogger(__name__)
+
+
+def change_instance_status(instance, new_status):
+    """Змінити статус проведення з валідацією переходу.
+
+    Повертає tuple (old_status, new_status). Кидає InvalidStatusTransition
+    якщо перехід заборонений. Коміт — відповідальність caller.
+    """
+    valid = dict(CourseInstance.STATUSES)
+    if new_status not in valid:
+        raise InvalidStatusTransition(f'Невідомий статус: {new_status}')
+
+    old_status = instance.status
+    if old_status == new_status:
+        return old_status, new_status
+
+    if not instance.can_transition_to(new_status):
+        raise InvalidStatusTransition(
+            f'Перехід {old_status} -> {new_status} заборонений'
+        )
+
+    instance.status = new_status
+    return old_status, new_status
 
 
 def populate_course_from_form(course, form):
