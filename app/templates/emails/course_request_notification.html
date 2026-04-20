@@ -40,10 +40,7 @@
     <div style="padding: 16px 20px; background-color: #F9FAFB; border-left: 3px solid #7055a4; border-radius: 4px; margin-bottom: 24px; font-size: 15px; color: #374151; line-height: 1.6; white-space: pre-line;">{{ request_obj.message }}</div>
     {% endif %}
 
-    {{ button_primary(
-        "Відкрити запит в адмінці",
-        site_settings.website_url ~ url_for('admin.course_request_edit', request_id=request_obj.id)
-    ) }}
+    {{ button_primary("Відкрити запит в адмінці", admin_url) }}
 
     {{ spacer(16) }}
 

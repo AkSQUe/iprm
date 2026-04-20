@@ -387,6 +387,21 @@ class EmailService:
 
         course = course_request.course
         subject = f'Новий запит на курс: {course.title if course else course_request.course_id}'
+
+        # Pre-build admin URL у request-context caller-а, щоб шаблон
+        # не залежав від url_for (може не мати SERVER_NAME при background-render).
+        from flask import has_request_context, url_for
+        if has_request_context():
+            admin_url = url_for(
+                'admin.course_request_edit',
+                request_id=course_request.id,
+                _external=True,
+            )
+        else:
+            # Fallback: будуємо з site_settings.website_url
+            base = (settings.website_url or '').rstrip('/')
+            admin_url = f'{base}/admin/course-requests/{course_request.id}/edit'
+
         results = []
         for to in recipients:
             entry = EmailService.send_email(
@@ -396,6 +411,7 @@ class EmailService:
                 context={
                     'request_obj': course_request,
                     'course': course,
+                    'admin_url': admin_url,
                 },
                 trigger='course_request',
             )
