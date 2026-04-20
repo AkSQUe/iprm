@@ -15,7 +15,62 @@
 | `updated_at` | DateTime (UTC) | Дата оновлення (TimestampMixin) |
 | `last_login_at` | DateTime (UTC) | Останній вхід |
 
-## Event
+## Course (каталог)
+
+Представляє навчальний продукт в каталозі — без дати. Має багато CourseInstance-ів (проведень).
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInt | PK |
+| `title` | String(255) | Назва курсу |
+| `slug` | String(200) unique | URL-частина, `/courses/<slug>` |
+| `subtitle` | String(500) | Підзаголовок |
+| `description` | Text | Повний опис |
+| `short_description` | String(500) | Короткий опис для карток |
+| `event_type` | String(30) | seminar/webinar/course/masterclass/conference |
+| `hero_image`, `card_image` | String(500) | URL зображень |
+| `target_audience`, `tags`, `faq` | JSON | Списки |
+| `speaker_info`, `agenda` | Text | Текстові блоки |
+| `base_price` | Numeric(10,2) | Default-ціна (instance може перевизначити) |
+| `cpd_points` | Integer | Default бали БПР |
+| `max_participants` | Integer | Default обмеження |
+| `trainer_id` | FK trainers | Default-тренер |
+| `created_by` | FK users | Хто створив |
+| `is_active` | Boolean | Видимий у каталозі |
+| `is_featured` | Boolean | Рекомендований |
+
+## CourseInstance (проведення)
+
+Конкретне проведення курсу: коли, де, у якому форматі.
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInt | PK |
+| `course_id` | FK courses | Батьківський курс |
+| `start_date`, `end_date` | DateTime | Дати проведення |
+| `event_format` | String(20) | online/offline/hybrid |
+| `price`, `cpd_points`, `max_participants` | Overrides | null = взяти з Course |
+| `location`, `online_link` | String | Локація |
+| `trainer_id` | FK trainers | Override тренера |
+| `status` | String(20) | draft/published/active/completed/cancelled |
+
+## CourseRequest (запит на курс)
+
+Клієнтська заявка на проведення курсу, коли немає запланованих дат.
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInt | PK |
+| `course_id` | FK courses | Курс |
+| `user_id` | FK users nullable | Автентифікований користувач (або null для гостя) |
+| `email`, `phone`, `message` | Text | Контактні дані |
+| `status` | String(20) | pending/responded/scheduled/dismissed |
+| `admin_notes` | Text | Нотатки адміна |
+| `resolved_by_id`, `resolved_at` | FK + DateTime | Хто і коли обробив |
+
+## Event (LEGACY)
+
+**Застаріла модель** — на шляху видалення. Збережена для сумісності з API, webhooks, legacy URL. Нові курси створюються як Course + CourseInstance.
 
 | Поле | Тип | Опис |
 |------|-----|------|

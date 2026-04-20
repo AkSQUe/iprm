@@ -2,7 +2,7 @@
 from flask import url_for
 
 from app.models.clinic import Clinic
-from app.models.event import Event
+from app.models.course import Course
 from app.models.trainer import Trainer
 
 
@@ -31,16 +31,13 @@ def generate_pages():
             'changefreq': freq,
         })
 
-    events = Event.query.filter(
-        Event.is_active.is_(True),
-        Event.status.in_(['published', 'active']),
-    ).all()
-    for event in events:
+    courses = Course.query.filter_by(is_active=True).all()
+    for course in courses:
         pages.append({
-            'loc': url_for('courses.course_by_slug', slug=event.slug, _external=True),
+            'loc': url_for('courses.course_by_slug', slug=course.slug, _external=True),
             'priority': '0.8',
             'changefreq': 'weekly',
-            'lastmod': event.updated_at.strftime('%Y-%m-%d') if event.updated_at else None,
+            'lastmod': course.updated_at.strftime('%Y-%m-%d') if course.updated_at else None,
         })
 
     trainers = Trainer.query.filter_by(is_active=True).all()

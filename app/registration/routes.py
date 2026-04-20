@@ -6,6 +6,7 @@ from app.registration import registration_bp
 from app.registration.forms import EventRegistrationForm
 from app.extensions import db, limiter
 from app.models.event import Event
+from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
 from app.services import registration_service
 from app.services.partner_auth import (
@@ -45,6 +46,7 @@ def _maybe_consume_prefill_token():
 @registration_bp.route('/<int:event_id>/register', methods=['GET', 'POST'])
 @limiter.limit("10 per hour", methods=['POST'])
 def register(event_id):
+    """Legacy URL: реєстрація на Event. Залишаємо для сумісності."""
     prefill = _maybe_consume_prefill_token() if request.method == 'GET' else None
 
     if not current_user.is_authenticated:
@@ -58,7 +60,7 @@ def register(event_id):
     if not event or not event.is_active:
         abort(404)
 
-    existing = registration_service.find_existing(current_user.id, event.id)
+    existing = registration_service.find_existing_by_event(current_user.id, event.id)
 
     if existing and existing.status != 'cancelled':
         flash('Ви вже зареєстровані на цей захід', 'info')
@@ -71,7 +73,7 @@ def register(event_id):
     form = EventRegistrationForm(data=prefill) if prefill else EventRegistrationForm()
 
     if form.validate_on_submit():
-        has_capacity, _ = registration_service.check_capacity(event_id)
+        has_capacity, _ = registration_service.check_capacity_event(event_id)
         if not has_capacity:
             db.session.rollback()
             flash('На жаль, місць більше немає', 'error')
@@ -85,7 +87,7 @@ def register(event_id):
                 'experience_years': form.experience_years.data,
                 'license_number': form.license_number.data,
             }
-            reg, is_free = registration_service.create_or_reactivate(
+            reg, is_free = registration_service.create_or_reactivate_event(
                 current_user.id, event, form_data, existing,
             )
             if is_free:
@@ -102,6 +104,100 @@ def register(event_id):
         'registration/register.html',
         form=form,
         event=event,
+    )
+
+
+@registration_bp.route('/instance/<int:instance_id>/register', methods=['GET', 'POST'])
+@limiter.limit("10 per hour", methods=['POST'])
+def register_instance(instance_id):
+    """Нова модель: реєстрація на конкретне проведення курсу (CourseInstance)."""
+    prefill = _maybe_consume_prefill_token() if request.method == 'GET' else None
+
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login', next=request.full_path))
+
+    if not current_user.email_confirmed:
+        flash('Для реєстрації на курс необхідно підтвердити email', 'warning')
+        return redirect(url_for('auth.account'))
+
+    instance = db.session.query(CourseInstance).options(
+        joinedload(CourseInstance.course),
+        joinedload(CourseInstance.trainer),
+    ).filter_by(id=instance_id).first()
+    if not instance or not instance.course or not instance.course.is_active:
+        abort(404)
+
+    existing = registration_service.find_existing_by_instance(current_user.id, instance.id)
+
+    if existing and existing.status != 'cancelled':
+        flash('Ви вже зареєстровані на цей курс', 'info')
+        return redirect(url_for('registration.confirmation', registration_id=existing.id))
+
+    if not instance.is_registration_open:
+        flash('Реєстрацію на цей курс закрито', 'error')
+        return redirect(url_for('courses.course_by_slug', slug=instance.course.slug))
+
+    form = EventRegistrationForm(data=prefill) if prefill else EventRegistrationForm()
+
+    if form.validate_on_submit():
+        has_capacity, _ = registration_service.check_capacity_instance(instance_id)
+        if not has_capacity:
+            db.session.rollback()
+            flash('На жаль, місць більше немає', 'error')
+            return redirect(url_for('courses.course_by_slug', slug=instance.course.slug))
+
+        try:
+            form_data = {
+                'phone': form.phone.data.strip(),
+                'specialty': form.specialty.data.strip(),
+                'workplace': form.workplace.data.strip(),
+                'experience_years': form.experience_years.data,
+                'license_number': form.license_number.data,
+            }
+            reg, is_free = registration_service.create_or_reactivate_instance(
+                current_user.id, instance, form_data, existing,
+            )
+            if is_free:
+                flash('Реєстрацію підтверджено', 'success')
+            else:
+                flash('Реєстрацію створено. Очікує оплати.', 'info')
+            return redirect(url_for('registration.confirmation', registration_id=reg.id))
+        except Exception:
+            logger.exception('Failed to register user %d for instance %d', current_user.id, instance_id)
+            db.session.rollback()
+            flash('Помилка при реєстрації. Спробуйте ще раз.', 'error')
+
+    # Для сумісності шаблону -- передаємо CourseInstance під ім'ям event
+    # (шаблон використовує event.title, event.price, event.start_date тощо).
+    # Будуємо адаптер-об'єкт з такими ж властивостями.
+    class _EventAdapter:
+        def __init__(self, inst):
+            self._inst = inst
+            self.slug = inst.course.slug
+            self.title = inst.course.title
+            self.subtitle = inst.course.subtitle
+            self.description = inst.course.description
+            self.short_description = inst.course.short_description
+            self.start_date = inst.start_date
+            self.end_date = inst.end_date
+            self.event_format = inst.event_format
+            self.format_label = inst.format_label
+            self.location = inst.location
+            self.online_link = inst.online_link
+            self.price = inst.effective_price
+            self.cpd_points = inst.effective_cpd_points
+            self.max_participants = inst.effective_max_participants
+            self.trainer = inst.effective_trainer
+            self.card_image = inst.course.card_image
+            self.hero_image = inst.course.hero_image
+            self.tags = inst.course.tags
+            self.target_audience = inst.course.target_audience
+            self.faq = inst.course.faq
+
+    return render_template(
+        'registration/register.html',
+        form=form,
+        event=_EventAdapter(instance),
     )
 
 
