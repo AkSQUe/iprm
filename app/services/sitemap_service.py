@@ -46,6 +46,7 @@ def generate_pages():
             'loc': url_for('trainers.trainer_detail', slug=trainer.slug, _external=True),
             'priority': '0.6',
             'changefreq': 'monthly',
+            'lastmod': trainer.updated_at.strftime('%Y-%m-%d') if trainer.updated_at else None,
         })
 
     clinics = Clinic.query.filter_by(is_active=True).all()
@@ -54,6 +55,7 @@ def generate_pages():
             'loc': url_for('clinics.clinic_detail', slug=clinic.slug, _external=True),
             'priority': '0.6',
             'changefreq': 'monthly',
+            'lastmod': clinic.updated_at.strftime('%Y-%m-%d') if clinic.updated_at else None,
         })
 
     return pages

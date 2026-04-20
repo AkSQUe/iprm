@@ -88,4 +88,6 @@ def sitemap():
     pages = generate_pages()
     resp = make_response(render_template('sitemap.xml', pages=pages))
     resp.headers['Content-Type'] = 'application/xml; charset=utf-8'
+    # Боти не повинні бити БД щохвилини -- 1 година кешу в CDN/browser.
+    resp.headers['Cache-Control'] = 'public, max-age=3600'
     return resp
