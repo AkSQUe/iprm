@@ -151,6 +151,14 @@ def register_instance(instance_id):
                 current_user.id, instance, form_data, existing,
             )
             db.session.commit()
+            # Best-effort email-підтвердження. Збій SMTP не ламає реєстрацію.
+            try:
+                from app.services.email_service import EmailService
+                EmailService.send_registration_confirmation(reg)
+            except Exception:
+                logger.exception(
+                    'Failed to queue confirmation email for reg %d', reg.id,
+                )
             if is_free:
                 flash('Реєстрацію підтверджено', 'success')
             else:
