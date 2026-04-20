@@ -1,16 +1,18 @@
-"""Tests for app.services.registration_service."""
-import pytest
+"""Tests for app.services.registration_service (Course+CourseInstance era)."""
 from uuid import uuid4
+
+import pytest
+
 from app.extensions import db
-from app.models.user import User
-from app.models.event import Event
+from app.models.course import Course
+from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
+from app.models.user import User
 from app.services import registration_service
 
 
 @pytest.fixture
 def user(app):
-    from uuid import uuid4
     u = User(email=f'reg-{uuid4().hex[:6]}@test.com', first_name='Reg', last_name='User')
     u.set_password('password123')
     db.session.add(u)
@@ -18,28 +20,30 @@ def user(app):
     return u
 
 
-@pytest.fixture
-def free_event(app, user):
-    e = Event(
-        title='Free Event', slug=f'free-evt-{uuid4().hex[:6]}',
-        event_type='course', event_format='offline', status='active',
-        price=0, is_active=True, created_by=user.id,
-    )
-    db.session.add(e)
+def _make_course_instance(course_kwargs, instance_kwargs):
+    course = Course(slug=f'evt-{uuid4().hex[:6]}', is_active=True, **course_kwargs)
+    db.session.add(course)
     db.session.flush()
-    return e
+    inst = CourseInstance(course_id=course.id, status='active', **instance_kwargs)
+    db.session.add(inst)
+    db.session.flush()
+    return inst
 
 
 @pytest.fixture
-def paid_event(app, user):
-    e = Event(
-        title='Paid Event', slug=f'paid-evt-{uuid4().hex[:6]}',
-        event_type='course', event_format='offline', status='active',
-        price=5000, max_participants=2, is_active=True, created_by=user.id,
+def free_instance(app):
+    return _make_course_instance(
+        {'title': 'Free Event', 'base_price': 0},
+        {'event_format': 'offline', 'price': 0},
     )
-    db.session.add(e)
-    db.session.flush()
-    return e
+
+
+@pytest.fixture
+def paid_instance(app):
+    return _make_course_instance(
+        {'title': 'Paid Event', 'base_price': 5000, 'max_participants': 2},
+        {'event_format': 'offline', 'price': 5000, 'max_participants': 2},
+    )
 
 
 @pytest.fixture
@@ -54,74 +58,73 @@ def form_data():
 
 
 class TestFindExisting:
-    def test_no_existing(self, app, user, free_event):
-        result = registration_service.find_existing(user.id, free_event.id)
+    def test_no_existing(self, app, user, free_instance):
+        result = registration_service.find_existing(user.id, free_instance.id)
         assert result is None
 
-    def test_finds_existing(self, app, user, free_event):
+    def test_finds_existing(self, app, user, free_instance):
         reg = EventRegistration(
-            user_id=user.id, event_id=free_event.id,
+            user_id=user.id, instance_id=free_instance.id,
             phone='+380000', specialty='Test', workplace='Test',
             status='confirmed', payment_status='paid',
         )
         db.session.add(reg)
         db.session.flush()
 
-        result = registration_service.find_existing(user.id, free_event.id)
+        result = registration_service.find_existing(user.id, free_instance.id)
         assert result is not None
         assert result.id == reg.id
 
 
 class TestCheckCapacity:
-    def test_unlimited_capacity(self, app, free_event):
-        has, _ = registration_service.check_capacity(free_event.id)
+    def test_unlimited_capacity(self, app, free_instance):
+        has, _ = registration_service.check_capacity(free_instance.id)
         assert has is True
 
-    def test_has_capacity(self, app, paid_event):
-        has, _ = registration_service.check_capacity(paid_event.id)
+    def test_has_capacity(self, app, paid_instance):
+        has, _ = registration_service.check_capacity(paid_instance.id)
         assert has is True
 
-    def test_full_capacity(self, app, user, paid_event):
+    def test_full_capacity(self, app, user, paid_instance):
         for i in range(2):
-            from uuid import uuid4 as _u4
-            u = User(email=f'fill-{_u4().hex[:6]}@test.com', first_name='Fill', last_name=str(i))
+            u = User(email=f'fill-{uuid4().hex[:6]}@test.com', first_name='Fill', last_name=str(i))
             u.set_password('pass')
             db.session.add(u)
             db.session.flush()
             reg = EventRegistration(
-                user_id=u.id, event_id=paid_event.id,
+                user_id=u.id, instance_id=paid_instance.id,
                 phone='+380000', specialty='Test', workplace='Test',
                 status='confirmed', payment_status='paid',
             )
             db.session.add(reg)
         db.session.flush()
 
-        has, _ = registration_service.check_capacity(paid_event.id)
+        has, _ = registration_service.check_capacity(paid_instance.id)
         assert has is False
 
 
 class TestCreateOrReactivate:
-    def test_create_free_registration(self, app, user, free_event, form_data):
+    def test_create_free_registration(self, app, user, free_instance, form_data):
         reg, is_free = registration_service.create_or_reactivate(
-            user.id, free_event, form_data,
+            user.id, free_instance, form_data,
         )
         assert is_free is True
         assert reg.status == 'confirmed'
         assert reg.payment_status == 'paid'
         assert reg.phone == '+380501234567'
 
-    def test_create_paid_registration(self, app, user, paid_event, form_data):
+    def test_create_paid_registration(self, app, user, paid_instance, form_data):
         reg, is_free = registration_service.create_or_reactivate(
-            user.id, paid_event, form_data,
+            user.id, paid_instance, form_data,
         )
         assert is_free is False
         assert reg.status == 'pending'
         assert reg.payment_status == 'unpaid'
         assert reg.payment_amount == 5000
 
-    def test_reactivate_cancelled(self, app, user, free_event, form_data):
+    def test_reactivate_cancelled(self, app, user, free_instance, form_data):
         cancelled = EventRegistration(
-            user_id=user.id, event_id=free_event.id,
+            user_id=user.id, instance_id=free_instance.id,
             phone='+380old', specialty='Old', workplace='Old',
             status='cancelled', payment_status='unpaid',
         )
@@ -129,7 +132,7 @@ class TestCreateOrReactivate:
         db.session.flush()
 
         reg, is_free = registration_service.create_or_reactivate(
-            user.id, free_event, form_data, existing=cancelled,
+            user.id, free_instance, form_data, existing=cancelled,
         )
         assert reg.id == cancelled.id
         assert reg.status == 'confirmed'

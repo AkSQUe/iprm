@@ -1,47 +1,48 @@
-from sqlalchemy.orm import joinedload, selectinload, contains_eager
+from sqlalchemy.orm import contains_eager, joinedload, selectinload
 
 from app.extensions import db
-from app.models.event import Event
-from app.models.user import User
-from app.models.trainer import Trainer
-from app.models.registration import EventRegistration
+from app.models.course import Course
+from app.models.course_instance import CourseInstance
 from app.models.program_block import ProgramBlock
+from app.models.registration import EventRegistration
+from app.models.trainer import Trainer
+from app.models.user import User
 
 
 class TestJoinedLoadQueries:
     """Перевірка що joinedload/selectinload запити працюють коректно."""
 
-    def test_events_with_joinedload_trainer(self, db_session, sample_event):
-        """joinedload(Event.trainer) повертає event з trainer без N+1."""
-        events = Event.query.options(
-            joinedload(Event.trainer),
-        ).filter(Event.is_active.is_(True)).all()
+    def test_courses_with_joinedload_trainer(self, db_session, sample_course):
+        """joinedload(Course.trainer) повертає course з trainer без N+1."""
+        courses = Course.query.options(
+            joinedload(Course.trainer),
+        ).filter(Course.is_active.is_(True)).all()
 
-        assert len(events) >= 1
-        for event in events:
-            if event.trainer:
-                assert event.trainer.full_name is not None
+        assert len(courses) >= 1
+        for course in courses:
+            if course.trainer:
+                assert course.trainer.full_name is not None
 
-    def test_events_with_selectinload_program_blocks(self, db_session):
-        """selectinload(Event.program_blocks) завантажує блоки."""
-        event = Event(title='E', slug='e-sel-pb')
-        db_session.add(event)
+    def test_courses_with_selectinload_program_blocks(self, db_session):
+        """selectinload(Course.program_blocks) завантажує блоки."""
+        course = Course(title='C', slug='c-sel-pb')
+        db_session.add(course)
         db_session.flush()
 
-        block = ProgramBlock(event_id=event.id, heading='B', items=['i1'])
+        block = ProgramBlock(course_id=course.id, heading='B', items=['i1'])
         db_session.add(block)
         db_session.flush()
 
-        loaded = Event.query.options(
-            selectinload(Event.program_blocks),
-        ).filter_by(id=event.id).first()
+        loaded = Course.query.options(
+            selectinload(Course.program_blocks),
+        ).filter_by(id=course.id).first()
 
         assert len(loaded.program_blocks) == 1
 
-    def test_registrations_with_joinedload_user(self, db_session, sample_user, sample_event):
+    def test_registrations_with_joinedload_user(self, db_session, sample_user, sample_instance):
         """joinedload(EventRegistration.user) повертає user без N+1."""
         reg = EventRegistration(
-            user_id=sample_user.id, event_id=sample_event.id,
+            user_id=sample_user.id, instance_id=sample_instance.id,
             phone='+380', specialty='S', workplace='W',
         )
         db_session.add(reg)
@@ -49,16 +50,15 @@ class TestJoinedLoadQueries:
 
         regs = EventRegistration.query.options(
             joinedload(EventRegistration.user),
-        ).filter_by(event_id=sample_event.id).all()
+        ).filter_by(instance_id=sample_instance.id).all()
 
         assert len(regs) == 1
         assert regs[0].user.email == sample_user.email
 
-
-    def test_registrations_with_contains_eager_event(self, db_session, sample_user, sample_event):
-        """contains_eager(EventRegistration.event) завантажує event через існуючий JOIN."""
+    def test_registrations_with_contains_eager_instance(self, db_session, sample_user, sample_instance):
+        """contains_eager(EventRegistration.instance) завантажує instance через JOIN."""
         reg = EventRegistration(
-            user_id=sample_user.id, event_id=sample_event.id,
+            user_id=sample_user.id, instance_id=sample_instance.id,
             phone='+380', specialty='S', workplace='W',
         )
         db_session.add(reg)
@@ -67,36 +67,47 @@ class TestJoinedLoadQueries:
         regs = (
             EventRegistration.query
             .filter_by(user_id=sample_user.id)
-            .join(Event)
-            .options(contains_eager(EventRegistration.event))
-            .order_by(Event.start_date.desc())
+            .join(CourseInstance)
+            .options(contains_eager(EventRegistration.instance))
+            .order_by(CourseInstance.start_date.desc())
             .all()
         )
 
         assert len(regs) == 1
-        assert regs[0].event.title == sample_event.title
+        assert regs[0].instance.id == sample_instance.id
 
 
 class TestFilterQueries:
     """Перевірка фільтрів що використовуються в routes."""
 
-    def test_active_published_events_filter(self, db_session):
-        """Фільтрація активних опублікованих заходів (головна + courses)."""
-        e1 = Event(title='Active', slug='e-flt-active', is_active=True, status='published')
-        e2 = Event(title='Draft', slug='e-flt-draft', is_active=True, status='draft')
-        e3 = Event(title='Inactive', slug='e-flt-inactive', is_active=False, status='published')
-        db_session.add_all([e1, e2, e3])
+    def test_active_courses_filter(self, db_session):
+        """Фільтрація активних курсів (головна + catalog)."""
+        c1 = Course(title='Active', slug='c-flt-active', is_active=True)
+        c2 = Course(title='Inactive', slug='c-flt-inactive', is_active=False)
+        db_session.add_all([c1, c2])
         db_session.flush()
 
-        events = Event.query.filter(
-            Event.is_active.is_(True),
-            Event.status.in_(['published', 'active']),
-        ).all()
+        courses = Course.query.filter(Course.is_active.is_(True)).all()
+        slugs = [c.slug for c in courses]
+        assert 'c-flt-active' in slugs
+        assert 'c-flt-inactive' not in slugs
 
-        slugs = [e.slug for e in events]
-        assert 'e-flt-active' in slugs
-        assert 'e-flt-draft' not in slugs
-        assert 'e-flt-inactive' not in slugs
+    def test_published_instances_filter(self, db_session, sample_course):
+        """Фільтрація published/active instances (public routes)."""
+        i1 = CourseInstance(course_id=sample_course.id, status='published')
+        i2 = CourseInstance(course_id=sample_course.id, status='draft')
+        i3 = CourseInstance(course_id=sample_course.id, status='active')
+        db_session.add_all([i1, i2, i3])
+        db_session.flush()
+
+        visible = CourseInstance.query.filter(
+            CourseInstance.course_id == sample_course.id,
+            CourseInstance.status.in_(['published', 'active']),
+        ).all()
+        ids = [i.id for i in visible]
+        assert i1.id in ids
+        assert i3.id in ids
+        assert i2.id not in ids
 
     def test_trainer_active_filter(self, db_session):
         """Фільтрація активних тренерів."""
@@ -112,41 +123,41 @@ class TestFilterQueries:
 
 
 class TestSubqueryCount:
-    """Перевірка with_registration_count() -- subquery замість N+1."""
+    """Перевірка CourseInstance.with_registration_count() -- subquery без N+1."""
 
-    def test_with_registration_count_zero(self, db_session):
-        """Event без реєстрацій повертає count=0."""
-        event = Event(title='E', slug='e-cnt-zero', is_active=True, status='published')
-        db_session.add(event)
+    def test_with_registration_count_zero(self, db_session, sample_course):
+        """Instance без реєстрацій повертає count=0."""
+        inst = CourseInstance(
+            course_id=sample_course.id, status='published',
+        )
+        db_session.add(inst)
         db_session.flush()
 
-        reg_count = Event.with_registration_count()
-        rows = db.session.query(Event, reg_count).filter(Event.id == event.id).all()
+        reg_count = CourseInstance.with_registration_count()
+        rows = db.session.query(CourseInstance, reg_count).filter(CourseInstance.id == inst.id).all()
 
         assert len(rows) == 1
         assert rows[0][1] == 0
 
-    def test_with_registration_count_excludes_cancelled(self, db_session, sample_user, sample_event):
+    def test_with_registration_count_excludes_cancelled(self, db_session, sample_user, sample_instance):
         """Subquery count не рахує скасовані реєстрації."""
         reg1 = EventRegistration(
-            user_id=sample_user.id, event_id=sample_event.id,
+            user_id=sample_user.id, instance_id=sample_instance.id,
             phone='+380', specialty='S', workplace='W',
             status='confirmed',
         )
         db_session.add(reg1)
         db_session.flush()
 
-        reg_count = Event.with_registration_count()
-        rows = db.session.query(Event, reg_count).filter(Event.id == sample_event.id).all()
+        reg_count = CourseInstance.with_registration_count()
+        rows = db.session.query(CourseInstance, reg_count).filter(CourseInstance.id == sample_instance.id).all()
 
         assert rows[0][1] == 1
 
-    def test_cached_reg_count_used_by_property(self, db_session):
+    def test_cached_reg_count_used_by_property(self, db_session, sample_instance):
         """registration_count property використовує _cached_reg_count якщо встановлено."""
-        event = Event(title='E', slug='e-cached-cnt')
-        event._cached_reg_count = 42
-
-        assert event.registration_count == 42
+        sample_instance._cached_reg_count = 42
+        assert sample_instance.registration_count == 42
 
 
 class TestUserRegistrationCount:
@@ -160,10 +171,10 @@ class TestUserRegistrationCount:
         assert len(rows) == 1
         assert rows[0][1] == 0
 
-    def test_user_with_registration_count(self, db_session, sample_user, sample_event):
+    def test_user_with_registration_count(self, db_session, sample_user, sample_instance):
         """User з реєстраціями повертає правильний count."""
         reg = EventRegistration(
-            user_id=sample_user.id, event_id=sample_event.id,
+            user_id=sample_user.id, instance_id=sample_instance.id,
             phone='+380', specialty='S', workplace='W',
             status='confirmed',
         )
@@ -175,10 +186,10 @@ class TestUserRegistrationCount:
 
         assert rows[0][1] == 1
 
-    def test_user_with_registration_count_excludes_cancelled(self, db_session, sample_user, sample_event):
+    def test_user_with_registration_count_excludes_cancelled(self, db_session, sample_user, sample_instance):
         """User subquery count не рахує скасовані реєстрації."""
         reg = EventRegistration(
-            user_id=sample_user.id, event_id=sample_event.id,
+            user_id=sample_user.id, instance_id=sample_instance.id,
             phone='+380', specialty='S', workplace='W',
             status='cancelled',
         )

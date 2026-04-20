@@ -1,12 +1,15 @@
 """Tests for app.services.payment_ops -- payment state machine."""
-import pytest
-from uuid import uuid4
 from unittest.mock import MagicMock
+from uuid import uuid4
+
+import pytest
+
 from app.extensions import db
-from app.models.user import User
-from app.models.event import Event
+from app.models.course import Course
+from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
-from app.services.payment_ops import PaymentOps, STATUS_MAP, ALLOWED_TRANSITIONS
+from app.models.user import User
+from app.services.payment_ops import ALLOWED_TRANSITIONS, PaymentOps, STATUS_MAP
 
 
 def _uid():
@@ -23,21 +26,26 @@ def user(app):
 
 
 @pytest.fixture
-def event(app, user):
-    e = Event(
-        title='Test Event', slug=f'test-event-{_uid()}',
-        event_type='course', event_format='offline', status='active',
-        price=1000, is_active=True, created_by=user.id,
+def instance(app, user):
+    c = Course(
+        title='Test Course', slug=f'test-course-{_uid()}',
+        event_type='course', base_price=1000, is_active=True,
+        created_by=user.id,
     )
-    db.session.add(e)
+    db.session.add(c)
     db.session.flush()
-    return e
+    inst = CourseInstance(
+        course_id=c.id, status='active', event_format='offline', price=1000,
+    )
+    db.session.add(inst)
+    db.session.flush()
+    return inst
 
 
 @pytest.fixture
-def registration(app, user, event):
+def registration(app, user, instance):
     reg = EventRegistration(
-        user_id=user.id, event_id=event.id,
+        user_id=user.id, instance_id=instance.id,
         phone='+380000000000', specialty='Test', workplace='Test',
         status='pending', payment_status='unpaid', payment_amount=1000,
     )

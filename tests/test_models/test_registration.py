@@ -1,19 +1,31 @@
 import pytest
-from app.models.user import User
-from app.models.event import Event
+
+from app.models.course import Course
+from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
+from app.models.user import User
+
+
+def _make_course_with_instance(db_session, slug):
+    course = Course(title='C', slug=slug)
+    db_session.add(course)
+    db_session.flush()
+    inst = CourseInstance(course_id=course.id, status='published')
+    db_session.add(inst)
+    db_session.flush()
+    return inst
 
 
 def test_registration_creation(db_session):
-    """Створення реєстрації."""
+    """Створення реєстрації (прив'язана до CourseInstance)."""
     user = User(email='reg@test.com', password='pass1234')
-    event = Event(title='E', slug='e-reg')
-    db_session.add_all([user, event])
+    inst = _make_course_with_instance(db_session, 'e-reg')
+    db_session.add(user)
     db_session.flush()
 
     reg = EventRegistration(
         user_id=user.id,
-        event_id=event.id,
+        instance_id=inst.id,
         phone='+380501234567',
         specialty='Dentist',
         workplace='Clinic X',
@@ -29,21 +41,21 @@ def test_registration_creation(db_session):
 
 
 def test_registration_unique_constraint(db_session):
-    """Один користувач -- одна реєстрація на захід."""
+    """Один користувач -- одна реєстрація на конкретне проведення."""
     user = User(email='dup@test.com', password='pass1234')
-    event = Event(title='E', slug='e-dup')
-    db_session.add_all([user, event])
+    inst = _make_course_with_instance(db_session, 'e-dup')
+    db_session.add(user)
     db_session.flush()
 
     reg1 = EventRegistration(
-        user_id=user.id, event_id=event.id,
+        user_id=user.id, instance_id=inst.id,
         phone='+380', specialty='S', workplace='W',
     )
     db_session.add(reg1)
     db_session.flush()
 
     reg2 = EventRegistration(
-        user_id=user.id, event_id=event.id,
+        user_id=user.id, instance_id=inst.id,
         phone='+380', specialty='S', workplace='W',
     )
     db_session.add(reg2)
@@ -52,18 +64,18 @@ def test_registration_unique_constraint(db_session):
 
 
 def test_registration_relationships(db_session):
-    """Зв'язки user та event."""
+    """Зв'язки user та instance.course."""
     user = User(email='rel@test.com', password='pass1234')
-    event = Event(title='E', slug='e-rel')
-    db_session.add_all([user, event])
+    inst = _make_course_with_instance(db_session, 'e-rel')
+    db_session.add(user)
     db_session.flush()
 
     reg = EventRegistration(
-        user_id=user.id, event_id=event.id,
+        user_id=user.id, instance_id=inst.id,
         phone='+380', specialty='S', workplace='W',
     )
     db_session.add(reg)
     db_session.flush()
 
     assert reg.user.email == 'rel@test.com'
-    assert reg.event.title == 'E'
+    assert reg.instance.course.slug == 'e-rel'

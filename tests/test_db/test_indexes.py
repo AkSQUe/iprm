@@ -1,25 +1,26 @@
-from app.models.event import Event
-from app.models.user import User
-from app.models.trainer import Trainer
 from app.models.clinic import Clinic
+from app.models.course import Course
+from app.models.course_instance import CourseInstance
 from app.models.email_log import EmailLog
+from app.models.trainer import Trainer
+from app.models.user import User
 
 
 class TestIndexedOrderBy:
     """Перевірка що order_by на індексованих колонках працює коректно."""
 
-    def test_events_order_by_start_date(self, db_session):
-        """Сортування заходів по індексованому start_date."""
+    def test_instances_order_by_start_date(self, db_session, sample_course):
+        """Сортування проведень по індексованому start_date."""
         from datetime import datetime, timezone, timedelta
         now = datetime.now(timezone.utc)
 
-        e1 = Event(title='Later', slug='e-idx-later', start_date=now + timedelta(days=7))
-        e2 = Event(title='Sooner', slug='e-idx-sooner', start_date=now + timedelta(days=1))
-        db_session.add_all([e1, e2])
+        i1 = CourseInstance(course_id=sample_course.id, start_date=now + timedelta(days=7))
+        i2 = CourseInstance(course_id=sample_course.id, start_date=now + timedelta(days=1))
+        db_session.add_all([i1, i2])
         db_session.flush()
 
-        events = Event.query.order_by(Event.start_date).all()
-        dates = [e.start_date for e in events if e.start_date]
+        instances = CourseInstance.query.filter_by(course_id=sample_course.id).order_by(CourseInstance.start_date).all()
+        dates = [i.start_date for i in instances if i.start_date]
         assert dates == sorted(dates)
 
     def test_trainers_order_by_full_name(self, db_session):
@@ -46,30 +47,31 @@ class TestIndexedOrderBy:
         assert clinics[1].name == 'Second'
         assert clinics[2].name == 'Third'
 
-    def test_events_filter_by_status_indexed(self, db_session):
+    def test_instances_filter_by_status_indexed(self, db_session, sample_course):
         """Фільтрація по індексованому полю status."""
-        e1 = Event(title='Pub', slug='e-idx-pub', status='published')
-        e2 = Event(title='Draft', slug='e-idx-draft', status='draft')
-        db_session.add_all([e1, e2])
+        i1 = CourseInstance(course_id=sample_course.id, status='published')
+        i2 = CourseInstance(course_id=sample_course.id, status='draft')
+        db_session.add_all([i1, i2])
         db_session.flush()
 
-        published = Event.query.filter_by(status='published').all()
-        slugs = [e.slug for e in published]
-        assert 'e-idx-pub' in slugs
-        assert 'e-idx-draft' not in slugs
+        published = CourseInstance.query.filter_by(
+            course_id=sample_course.id, status='published',
+        ).all()
+        assert len(published) == 1
+        assert published[0].id == i1.id
 
-    def test_events_order_by_created_at(self, db_session):
-        """Сортування заходів по індексованому created_at (admin)."""
-        e1 = Event(title='First', slug='e-idx-ca-1')
-        db_session.add(e1)
+    def test_courses_order_by_created_at(self, db_session):
+        """Сортування курсів по індексованому created_at (admin)."""
+        c1 = Course(title='First', slug='c-idx-ca-1')
+        db_session.add(c1)
         db_session.flush()
 
-        e2 = Event(title='Second', slug='e-idx-ca-2')
-        db_session.add(e2)
+        c2 = Course(title='Second', slug='c-idx-ca-2')
+        db_session.add(c2)
         db_session.flush()
 
-        events = Event.query.order_by(Event.created_at.desc()).all()
-        assert len(events) >= 2
+        courses = Course.query.order_by(Course.created_at.desc()).all()
+        assert len(courses) >= 2
 
     def test_users_order_by_created_at(self, db_session):
         """Сортування користувачів по індексованому created_at (admin)."""
