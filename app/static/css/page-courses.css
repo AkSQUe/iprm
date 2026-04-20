@@ -367,6 +367,126 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
+/* ========== REQUEST FORM (на темному фоні .iprm-appointment) ========== */
+
+.iprm-request-form {
+  max-width: 520px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.iprm-request-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.iprm-request-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.iprm-request-form .form-group label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.01em;
+}
+
+.iprm-request-form .form-group label .required {
+  color: var(--apple-orange);
+  margin-left: 2px;
+}
+
+.iprm-request-form .form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--iprm-radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--iprm-white);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.iprm-request-form .form-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.iprm-request-form .form-input:focus,
+.iprm-request-form .form-input:focus-visible {
+  outline: none;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+.iprm-request-form textarea.form-input {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.iprm-request-form .apple-btn {
+  margin-top: 8px;
+}
+
+/* ========== TRAINER BLOCK (на сторінці курсу) ========== */
+
+.iprm-trainer-block {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 48px;
+  align-items: center;
+  background: var(--iprm-white);
+  border-radius: var(--iprm-radius);
+  padding: 40px;
+  border: 1px solid var(--iprm-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.iprm-trainer-block__photo {
+  width: 280px;
+  height: 280px;
+  object-fit: cover;
+  border-radius: var(--iprm-radius-md);
+  background: linear-gradient(135deg, var(--iprm-accent-light), var(--apple-orange-light));
+  display: block;
+}
+
+.iprm-trainer-block__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.iprm-trainer-block__body h3 {
+  font-size: clamp(1.5rem, 2.8vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--apple-black);
+  margin: 0;
+}
+
+.iprm-trainer-block__role {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--iprm-nav-active);
+  margin: 0;
+}
+
+.iprm-trainer-block__body p:not(.iprm-trainer-block__role) {
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--apple-gray-dark);
+  margin: 0;
+}
+
 /* ========== DEPARTMENTS GRID ========== */
 
 .iprm-departments-grid {
@@ -411,6 +531,32 @@
 @media (max-width: 1024px) {
   .iprm-departments-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .iprm-request-form__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .iprm-trainer-block {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .iprm-trainer-block__photo {
+    width: min(220px, 100%);
+    height: auto;
+    aspect-ratio: 1 / 1;
+    margin: 0 auto;
+  }
+
+  .iprm-trainer-block__body {
+    align-items: center;
   }
 }
 
