@@ -794,6 +794,26 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
 
 .iprm-course-search__input {
   width: 100%;
+  padding: 12px 20px;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--apple-black);
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-pill);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.iprm-course-search__input::placeholder {
+  color: var(--apple-gray);
+}
+
+.iprm-course-search__input:focus {
+  outline: none;
+  border-color: var(--iprm-accent);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light);
 }
 
 .iprm-course-search__input:focus-visible {
