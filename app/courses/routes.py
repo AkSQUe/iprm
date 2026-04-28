@@ -85,13 +85,44 @@ def course_list():
         for c in courses
     }
 
-    # Плоский список найближчих instances для секції "Графік"
-    upcoming_instances = sorted(
+    # Плоский список найближчих instances для секції "Графік".
+    # `upcoming_instances` -- топ-5 для view-режиму "Список".
+    # `upcoming_instances_all` -- усі майбутні для view-режиму "Календар".
+    upcoming_instances_all = sorted(
         [i for c in courses for i in upcoming_by_course[c.id]],
         key=lambda i: ensure_utc(i.start_date) or datetime.max.replace(tzinfo=timezone.utc),
     )
+    upcoming_instances = upcoming_instances_all[:5]
 
     open_ids = _open_instance_ids([c.id for c in courses])
+
+    # JSON-серіалізована стрічка подій для view-режиму "Календар".
+    # Місце серіалізації -- route, бо Jinja2 не підтримує list comprehension.
+    schedule_events = [
+        {
+            'id': inst.id,
+            'date': inst.start_date.strftime('%Y-%m-%d'),
+            'title': inst.course.title,
+            'slug': inst.course.slug,
+            'format': inst.event_format,
+            'format_label': inst.format_label,
+            'event_type_label': inst.course.event_type_label,
+            'price': (
+                int(inst.effective_price)
+                if inst.effective_price and inst.effective_price > 0
+                else None
+            ),
+            'location': inst.location or '',
+            'is_open': inst.id in open_ids,
+            'register_url': url_for(
+                'registration.register_instance', instance_id=inst.id,
+            ),
+            'course_url': url_for(
+                'courses.course_by_slug', slug=inst.course.slug,
+            ),
+        }
+        for inst in upcoming_instances_all if inst.start_date
+    ]
 
     return render_template(
         'courses/list.html',
@@ -99,6 +130,7 @@ def course_list():
         courses=courses,
         upcoming_by_course=upcoming_by_course,
         upcoming_instances=upcoming_instances,
+        schedule_events=schedule_events,
         open_instance_ids=open_ids,
     )
 

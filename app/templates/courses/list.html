@@ -89,7 +89,15 @@
       <p class="iprm-section__subtitle">Розклад найближчих заходів інституту</p>
 
       {% if upcoming_instances %}
-      <div class="iprm-schedule">
+      <div class="iprm-schedule-toggle" role="tablist" aria-label="Режим перегляду графіка">
+        <button type="button" class="iprm-schedule-toggle__btn iprm-schedule-toggle__btn--active"
+                data-schedule-view="list" role="tab" aria-selected="true">Список</button>
+        <button type="button" class="iprm-schedule-toggle__btn"
+                data-schedule-view="calendar" role="tab" aria-selected="false">Календар</button>
+      </div>
+
+      <!-- View: Список -->
+      <div class="iprm-schedule" data-schedule-pane="list">
         {% for inst in upcoming_instances %}
         {% set is_open = inst.id in open_instance_ids %}
         {% set item_href = url_for('registration.register_instance', instance_id=inst.id) if is_open else url_for('courses.course_by_slug', slug=inst.course.slug) %}
@@ -129,6 +137,24 @@
         </a>
         {% endfor %}
       </div>
+
+      <!-- View: Календар (наповнюється JS-ом з data-schedule-events) -->
+      <div class="iprm-calendar" data-schedule-pane="calendar" hidden>
+        <div class="iprm-calendar__header">
+          <button type="button" class="iprm-calendar__nav-btn" data-calendar-prev aria-label="Попередній місяць">&lsaquo;</button>
+          <h3 class="iprm-calendar__title" data-calendar-title aria-live="polite"></h3>
+          <button type="button" class="iprm-calendar__nav-btn" data-calendar-next aria-label="Наступний місяць">&rsaquo;</button>
+        </div>
+        <div class="iprm-calendar__weekdays" aria-hidden="true">
+          <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Нд</span>
+        </div>
+        <div class="iprm-calendar__grid" data-calendar-grid role="grid"></div>
+        <div class="iprm-calendar__details" data-calendar-details aria-live="polite"></div>
+      </div>
+
+      <script type="application/json" data-schedule-events>
+        {{ {'events': schedule_events} | tojson }}
+      </script>
       {% else %}
       <div class="iprm-empty-state">
         <p>Графік курсів формується. Слідкуйте за оновленнями.</p>
@@ -205,4 +231,5 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/page-courses-filter.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/page-courses-schedule.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

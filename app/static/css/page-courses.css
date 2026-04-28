@@ -774,6 +774,293 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
   cursor: progress;
 }
 
+/* ========== SCHEDULE TOGGLE (Список / Календар) ========== */
+
+.iprm-schedule-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 auto 24px;
+  background: var(--apple-section-bg);
+  border-radius: var(--iprm-radius-pill);
+  align-self: center;
+}
+
+/* Wrapper, що центрує toggle (бо .iprm-section__inner -- block). */
+.iprm-section__inner > .iprm-schedule-toggle {
+  display: flex;
+  width: max-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.iprm-schedule-toggle__btn {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--iprm-text-light);
+  padding: 8px 20px;
+  border-radius: var(--iprm-radius-pill);
+  cursor: pointer;
+  transition: background var(--iprm-transition), color var(--iprm-transition);
+}
+
+.iprm-schedule-toggle__btn:hover {
+  color: var(--apple-black);
+}
+
+.iprm-schedule-toggle__btn--active {
+  background: var(--iprm-white);
+  color: var(--iprm-accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.iprm-schedule-toggle__btn:focus-visible {
+  outline: 2px solid var(--iprm-accent);
+  outline-offset: 2px;
+}
+
+/* ========== CALENDAR VIEW ========== */
+
+.iprm-calendar {
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  padding: 24px;
+}
+
+.iprm-calendar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.iprm-calendar__title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--apple-black);
+  text-transform: capitalize;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.iprm-calendar__nav-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--iprm-border);
+  background: var(--iprm-white);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--iprm-radius-pill);
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--apple-black);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--iprm-transition), border-color var(--iprm-transition), opacity var(--iprm-transition);
+}
+
+.iprm-calendar__nav-btn:hover:not(:disabled) {
+  background: var(--apple-section-bg);
+  border-color: var(--apple-gray-light);
+}
+
+.iprm-calendar__nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.iprm-calendar__nav-btn:focus-visible {
+  outline: 2px solid var(--iprm-accent);
+  outline-offset: 2px;
+}
+
+.iprm-calendar__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.iprm-calendar__weekdays > span {
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--iprm-text-light);
+  padding: 4px 0;
+}
+
+.iprm-calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.iprm-calendar__day {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  font: inherit;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: var(--iprm-radius-sm);
+  font-size: 0.875rem;
+  color: var(--apple-black);
+  cursor: default;
+  position: relative;
+  transition: background var(--iprm-transition), border-color var(--iprm-transition);
+}
+
+.iprm-calendar__day--out {
+  color: var(--apple-gray-light);
+}
+
+.iprm-calendar__day--has-event {
+  cursor: pointer;
+  font-weight: 600;
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
+}
+
+.iprm-calendar__day--has-event:hover {
+  background: var(--iprm-accent);
+  color: var(--iprm-white);
+}
+
+.iprm-calendar__day--today {
+  border-color: var(--iprm-accent);
+}
+
+.iprm-calendar__day--selected {
+  background: var(--iprm-accent);
+  color: var(--iprm-white);
+  font-weight: 700;
+}
+
+.iprm-calendar__day--selected:hover {
+  background: var(--iprm-accent-hover);
+}
+
+.iprm-calendar__day:focus-visible {
+  outline: 2px solid var(--iprm-accent);
+  outline-offset: 2px;
+}
+
+.iprm-calendar__day-num {
+  display: block;
+  line-height: 1;
+}
+
+.iprm-calendar__day-dot {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.85;
+}
+
+.iprm-calendar__day--selected .iprm-calendar__day-dot {
+  background: var(--iprm-white);
+}
+
+.iprm-calendar__details {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--iprm-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.iprm-calendar__details:empty {
+  display: none;
+}
+
+.iprm-calendar__event {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--apple-section-bg);
+  border-radius: var(--iprm-radius-sm);
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--iprm-transition);
+}
+
+.iprm-calendar__event:hover {
+  background: var(--iprm-accent-light);
+}
+
+.iprm-calendar__event-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--apple-black);
+  margin: 0 0 6px;
+  line-height: 1.35;
+}
+
+.iprm-calendar__event-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--iprm-text-light);
+}
+
+.iprm-calendar__details-empty {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--iprm-text-light);
+  padding: 8px 0;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .iprm-calendar {
+    padding: 16px;
+  }
+
+  .iprm-calendar__title {
+    font-size: 1rem;
+  }
+
+  .iprm-calendar__day {
+    font-size: 0.8125rem;
+  }
+
+  .iprm-calendar__event {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .iprm-calendar__event .iprm-btn,
+  .iprm-calendar__event .badge {
+    justify-self: start;
+  }
+}
+
 /* ========== COURSE SEARCH ========== */
 
 .iprm-course-search {
