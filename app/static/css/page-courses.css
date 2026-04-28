@@ -161,6 +161,13 @@
   margin: 0 auto;
 }
 
+/* `display: flex` на .iprm-schedule перевизначає браузерне правило для
+   атрибута [hidden]. Повертаємо очікувану поведінку для обох панелей. */
+.iprm-schedule[hidden],
+.iprm-calendar[hidden] {
+  display: none;
+}
+
 .iprm-schedule__item {
   display: grid;
   grid-template-columns: 120px 1fr auto;

@@ -191,8 +191,10 @@
       if (ev.location) meta.push(escapeHtml(ev.location));
       if (ev.price) meta.push(ev.price + ' ₴');
 
+      // Не використовуємо вкладений <a> -- картка вже є посиланням; інакше
+      // браузер розриває зовнішній <a> (HTML5 nested anchor invalidation).
       var actionHtml = ev.is_open
-        ? '<a class="iprm-btn iprm-btn--primary iprm-btn--sm" href="' + escapeHtml(ev.register_url) + '">Реєстрація</a>'
+        ? '<span class="iprm-btn iprm-btn--primary iprm-btn--sm">Реєстрація</span>'
         : '<span class="badge badge--draft">Реєстрацію закрито</span>';
 
       var courseUrl = ev.is_open ? ev.register_url : ev.course_url;
