@@ -49,7 +49,8 @@ class EmailLog(TimestampMixin, db.Model):
             name='ck_email_logs_status',
         ),
         db.CheckConstraint(
-            "trigger IN ('registration', 'payment', 'reminder', 'status_change', 'email_confirm', 'test')",
+            "trigger IN ('registration', 'payment', 'reminder', 'status_change', "
+            "'email_confirm', 'course_request', 'test')",
             name='ck_email_logs_trigger',
         ),
         db.Index('ix_email_logs_created_at', 'created_at'),
@@ -68,6 +69,7 @@ class EmailLog(TimestampMixin, db.Model):
         ('reminder', 'Нагадування'),
         ('status_change', 'Зміна статусу'),
         ('email_confirm', 'Підтвердження email'),
+        ('course_request', 'Запит на курс'),
         ('test', 'Тест'),
     ]
 
