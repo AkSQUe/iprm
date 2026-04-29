@@ -419,6 +419,54 @@ class EmailService:
         return results
 
     @staticmethod
+    def send_course_request_received(course_request):
+        """Підтвердити клієнту, що його запит на курс отримано.
+
+        Шлеться на email, який клієнт ввів у форму. Окремий лист від
+        admin-нотифікації -- різні to_email і шаблон, але той самий
+        trigger='course_request' (бізнес-подія одна).
+        """
+        if not course_request.email:
+            logger.warning(
+                'CourseRequest #%s has no client email -- skipping ack',
+                course_request.id,
+            )
+            return None
+
+        course = course_request.course
+        subject = (
+            f'Ми отримали ваш запит: {course.title}'
+            if course else 'Ми отримали ваш запит'
+        )
+
+        from flask import has_request_context, url_for
+        from app.models.site_settings import SiteSettings
+
+        course_url = None
+        if course is not None:
+            if has_request_context():
+                course_url = url_for(
+                    'courses.course_by_slug',
+                    slug=course.slug,
+                    _external=True,
+                )
+            else:
+                base = (SiteSettings.get().website_url or '').rstrip('/')
+                course_url = f'{base}/courses/{course.slug}' if base else None
+
+        return EmailService.send_email(
+            to=course_request.email,
+            subject=subject,
+            template_name='course_request_received',
+            context={
+                'request_obj': course_request,
+                'course': course,
+                'course_url': course_url,
+            },
+            trigger='course_request',
+        )
+
+    @staticmethod
     def send_test_email(to):
         """Send test email synchronously so SMTP errors propagate to caller."""
         app = current_app._get_current_object()

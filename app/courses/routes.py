@@ -240,14 +240,21 @@ def course_request(slug):
     try:
         db.session.commit()
         flash('Дякуємо! Ми повідомимо вас коли буде запланована дата.', 'success')
-        # Best-effort нотифікація адміну. Падіння SMTP не впливає на UX
-        # користувача -- запит вже збережено.
+        # Best-effort нотифікації (admin + клієнтське ack). Падіння SMTP не
+        # впливає на UX користувача -- запит уже збережено. Кожна гілка
+        # обгорнута власним try, щоб збій однієї не блокував іншу.
+        from app.services.email_service import EmailService
         try:
-            from app.services.email_service import EmailService
             EmailService.send_course_request_notification(req)
         except Exception:
             current_app.logger.exception(
                 'Failed to send admin notification for CourseRequest #%s', req.id,
+            )
+        try:
+            EmailService.send_course_request_received(req)
+        except Exception:
+            current_app.logger.exception(
+                'Failed to send client ack for CourseRequest #%s', req.id,
             )
     except Exception:
         db.session.rollback()

@@ -1,0 +1,55 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, alert_success, detail_row, spacer %}
+
+{% block title %}Запит отримано{% endblock %}
+
+{% block preview_text %}Дякуємо! Ми отримали ваш запит на курс "{{ course.title if course else '' }}".{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
+        Дякуємо за ваш запит!
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+        Ми отримали ваш запит на курс і вже опрацьовуємо його.
+        Як тільки буде заплановано чергове проведення -- ми обов'язково зв'яжемось з вами на цю адресу.
+    </p>
+
+    {{ alert_success("Запит зареєстровано", "Ваше повідомлення успішно надіслано команді ІПРМ.") }}
+
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
+        Деталі запиту
+    </p>
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">
+                    {{ course.title if course else '---' }}
+                </p>
+                {{ detail_row("Email", request_obj.email) }}
+                {% if request_obj.phone %}
+                {{ detail_row("Телефон", request_obj.phone) }}
+                {% endif %}
+                {{ detail_row("Отримано", request_obj.created_at.strftime('%d.%m.%Y %H:%M')) }}
+            </td>
+        </tr>
+    </table>
+
+    {% if request_obj.message %}
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
+        Ваше повідомлення
+    </p>
+    <div style="padding: 16px 20px; background-color: #F9FAFB; border-left: 3px solid #7055a4; border-radius: 4px; margin-bottom: 24px; font-size: 15px; color: #374151; line-height: 1.6; white-space: pre-line;">{{ request_obj.message }}</div>
+    {% endif %}
+
+    {% if course_url %}
+    {{ button_primary("Сторінка курсу", course_url) }}
+    {% endif %}
+
+    {{ spacer(8) }}
+
+    <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
+        Якщо ви не залишали цей запит -- проігноруйте лист. Це автоматичне повідомлення,
+        відповідати на нього не обов'язково.
+    </p>
+{% endblock %}
