@@ -388,19 +388,15 @@ class EmailService:
         course = course_request.course
         subject = f'Новий запит на курс: {course.title if course else course_request.course_id}'
 
-        # Pre-build admin URL у request-context caller-а, щоб шаблон
-        # не залежав від url_for (може не мати SERVER_NAME при background-render).
-        from flask import has_request_context, url_for
-        if has_request_context():
-            admin_url = url_for(
-                'admin.course_request_edit',
-                request_id=course_request.id,
-                _external=True,
-            )
-        else:
-            # Fallback: будуємо з site_settings.website_url
-            base = (settings.website_url or '').rstrip('/')
-            admin_url = f'{base}/admin/course-requests/{course_request.id}/edit'
+        # site_settings.website_url -- стабільний джерело правди для public URL.
+        # url_for(_external=True) у проді повертає https://localhost/..., бо
+        # SERVER_NAME не сконфігуровано (у Flask request-context хост береться
+        # з заголовка, але background email-thread не має реального request).
+        base = (settings.website_url or '').rstrip('/')
+        admin_url = (
+            f'{base}/admin/course-requests/{course_request.id}/edit'
+            if base else f'/admin/course-requests/{course_request.id}/edit'
+        )
 
         results = []
         for to in recipients:
@@ -439,20 +435,14 @@ class EmailService:
             if course else 'Ми отримали ваш запит'
         )
 
-        from flask import has_request_context, url_for
+        # Завжди беремо base з site_settings.website_url (див. коментар у
+        # send_course_request_notification щодо url_for vs SERVER_NAME).
         from app.models.site_settings import SiteSettings
-
-        course_url = None
-        if course is not None:
-            if has_request_context():
-                course_url = url_for(
-                    'courses.course_by_slug',
-                    slug=course.slug,
-                    _external=True,
-                )
-            else:
-                base = (SiteSettings.get().website_url or '').rstrip('/')
-                course_url = f'{base}/courses/{course.slug}' if base else None
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        course_url = (
+            f'{base}/courses/{course.slug}'
+            if course is not None and base else None
+        )
 
         return EmailService.send_email(
             to=course_request.email,
