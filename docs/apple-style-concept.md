@@ -156,7 +156,7 @@ Apple свідомо НЕ робить body text fluid. Body text залишає
 
 - **Статичні заголовки:** вручну обрати ключове слово
   ```html
-  <h1>Курси післядипломної<br><span class="apple-gradient-text">освіти.</span></h1>
+  <h1>Курси після дипломної<br><span class="apple-gradient-text">освіти.</span></h1>
   ```
 - **Динамічні заголовки:** виділяти останнє слово через Jinja `rsplit(' ', 1)`:
   ```jinja2

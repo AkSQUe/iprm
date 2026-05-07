@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Інститут Плазмотерапії та Регенеративної Медицини | ІПРМ{% endblock %}
-{% block meta_description %}Курси післядипломної освіти з плазмотерапії для лікарів. Лабораторії біологічного віку, клініка регенеративних технологій. Офіційне нарахування балів БПР.{% endblock %}
+{% block meta_description %}Курси після дипломної освіти з плазмотерапії для лікарів. Лабораторії біологічного віку, клініка регенеративних технологій. Офіційне нарахування балів БПР.{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-index.css') }}?v={{ assets_version }}">
@@ -16,7 +16,7 @@
       <div class="iprm-hero__content">
         <div class="iprm-hero__badge">Бали БПР — Сертифіковані курси</div>
         <h1 class="iprm-hero__title">Плазмотерапія.<br><span class="apple-gradient-text">Регенерація.</span></h1>
-        <p class="iprm-hero__subtitle">Курси післядипломної освіти для лікарів, дослідження біологічного віку та персоналізована регенеративна терапія</p>
+        <p class="iprm-hero__subtitle">Курси після дипломної освіти для лікарів, дослідження біологічного віку та персоналізована регенеративна терапія</p>
         <div class="iprm-hero__actions">
           <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Обрати курс</a>
           <a href="#labs" class="apple-btn apple-btn--secondary">Про лабораторії</a>
@@ -88,7 +88,7 @@
   <!-- ===== COURSE CARDS ===== -->
   <section class="iprm-section" aria-labelledby="courses-title">
     <div class="apple-section-header apple-reveal">
-      <h2 id="courses-title">Курси післядипломної освіти</h2>
+      <h2 id="courses-title">Курси після дипломної освіти</h2>
       <p>Оберіть курс та підвищіть свою кваліфікацію</p>
     </div>
     <div class="iprm-course-cards">
@@ -312,7 +312,7 @@
   <section class="iprm-section" aria-label="Call to action">
     <div class="apple-cta apple-reveal">
       <h2>Почни навчання<br><span class="apple-gradient-text">сьогодні.</span></h2>
-      <p>Обери курс післядипломної освіти та отримай сертифікат з балами БПР від Інституту плазмотерапії та регенеративної медицини.</p>
+      <p>Обери курс після дипломної освіти та отримай сертифікат з балами БПР від Інституту плазмотерапії та регенеративної медицини.</p>
       <div class="apple-cta__actions">
         <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Обрати курс</a>
         <a href="#labs" class="apple-btn apple-btn--secondary">Дізнатись більше</a>
