@@ -13,8 +13,27 @@ from app.models.course_request import CourseRequest
 
 
 def _optional_url(message='Невалідний URL'):
-    """URL-валідатор, що не спрацьовує на порожньому значенні."""
-    return URL(require_tld=True, message=message)
+    """URL-валідатор, що приймає або повний URL (http/https), або
+    відносний шлях, що починається з '/'.
+
+    Для зображень курсу/тренера ми зберігаємо саме relative paths
+    типу /static/images/courses/<slug>/file.webp -- це не валідні URL за
+    require_tld, тому стандартний URL-валідатор тут НЕ підходить.
+    Порожнє значення короткозамикається Optional() у списку валідаторів
+    (тут не торкаємось).
+    """
+    abs_url = URL(require_tld=True, message=message)
+
+    def _check(form, field):
+        value = (field.data or '').strip()
+        if not value:
+            return
+        if value.startswith('/'):
+            # відносний шлях від кореня сайту -- OK
+            return
+        abs_url(form, field)
+
+    return _check
 
 
 class TrainerForm(FlaskForm):
