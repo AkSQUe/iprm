@@ -38,6 +38,7 @@
 
   <form method="POST" class="admin-form">
     {{ form.hidden_tag() }}
+    {% include 'admin/partials/_form_errors.html' %}
 
     <div class="form-section admin-form__section">
       <h3 class="admin-form__section-title">Основні параметри</h3>

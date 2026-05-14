@@ -1,0 +1,24 @@
+{# Summary помилок WTForms для admin-форм. Підключати одразу після
+   відкривального <form> тегу й form.hidden_tag().
+
+   Показується тільки коли form.errors не порожній. Пропускає csrf_token
+   (його повідомлення нічого не каже користувачу). Для кожного поля
+   виводить його label (якщо є) і список помилок. #}
+{% set _errors = {} %}
+{% for fname, msgs in form.errors.items() if fname != 'csrf_token' %}
+  {% set _ = _errors.update({fname: msgs}) %}
+{% endfor %}
+{% if _errors %}
+<div class="admin-form__errors" role="alert" aria-live="polite">
+  <strong class="admin-form__errors-title">Не вдалося зберегти. Перевірте поля:</strong>
+  <ul class="admin-form__errors-list">
+    {% for fname, msgs in _errors.items() %}
+    {% set field = form[fname] %}
+    <li>
+      <strong>{{ field.label.text if field.label else fname }}:</strong>
+      {{ msgs | join('; ') }}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
