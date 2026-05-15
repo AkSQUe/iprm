@@ -10,3 +10,4 @@ from app.admin import routes_courses  # noqa: F401
 from app.admin import routes_instances  # noqa: F401
 from app.admin import routes_course_requests  # noqa: F401
 from app.admin import routes_webhooks  # noqa: F401
+from app.admin import routes_xlsx  # noqa: F401

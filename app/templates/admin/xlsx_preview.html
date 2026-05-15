@@ -1,0 +1,155 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{{ title }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ back_url }}" class="admin-breadcrumb__link">Назад</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">{{ title }}</span>
+      </div>
+      <h1 class="admin-hero__title">{{ title }}: попередній перегляд</h1>
+      <p class="admin-hero__subtitle">Перевірте зміни нижче. Поки ви не натиснете «Підтвердити імпорт», нічого в БД не змінюється.</p>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {# ---- Summary ---- #}
+  {% set c = plan.counts %}
+  <div class="admin-xlsx-summary">
+    <div class="admin-xlsx-summary__item admin-xlsx-summary__item--create">
+      <span class="admin-xlsx-summary__num">{{ c.create }}</span>
+      <span class="admin-xlsx-summary__label">Створити</span>
+    </div>
+    <div class="admin-xlsx-summary__item admin-xlsx-summary__item--update">
+      <span class="admin-xlsx-summary__num">{{ c.update }}</span>
+      <span class="admin-xlsx-summary__label">Оновити</span>
+    </div>
+    <div class="admin-xlsx-summary__item">
+      <span class="admin-xlsx-summary__num">{{ c.unchanged }}</span>
+      <span class="admin-xlsx-summary__label">Без змін</span>
+    </div>
+    {% if c.error %}
+    <div class="admin-xlsx-summary__item admin-xlsx-summary__item--error">
+      <span class="admin-xlsx-summary__num">{{ c.error }}</span>
+      <span class="admin-xlsx-summary__label">Помилки</span>
+    </div>
+    {% endif %}
+  </div>
+
+  {# ---- Errors block (blocks apply) ---- #}
+  {% if plan.errors %}
+  <div class="admin-form__errors" role="alert">
+    <strong class="admin-form__errors-title">Імпорт неможливий. Виправте такі помилки у файлі:</strong>
+    <ul class="admin-form__errors-list">
+      {% for err in plan.errors %}
+      <li>{{ err }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# ---- Changes list ---- #}
+  {% if plan.changes %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th style="width:90px;">Дія</th>
+        {% if entity == 'courses' %}
+        <th>Slug</th>
+        <th>Змінені поля</th>
+        {% else %}
+        <th>Дата</th>
+        <th>Курс</th>
+        <th>Змінені поля</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for ch in plan.changes %}
+      <tr>
+        <td>
+          {% if ch.action == 'create' %}
+          <span class="badge badge--success">Створити</span>
+          {% elif ch.action == 'update' %}
+          <span class="badge badge--published">Оновити</span>
+          {% elif ch.action == 'unchanged' %}
+          <span class="badge badge--draft">Без змін</span>
+          {% elif ch.action == 'error' %}
+          <span class="badge badge--cancelled">Помилка</span>
+          {% endif %}
+        </td>
+        {% if entity == 'courses' %}
+        <td><code>{{ ch.slug }}</code></td>
+        <td>
+          {% if ch.action == 'error' %}<span class="form-error">{{ ch.error }}</span>
+          {% elif ch.fields_changed %}{{ ch.fields_changed | join(', ') }}
+          {% else %}—{% endif %}
+        </td>
+        {% else %}
+        <td>{{ ch.start_date or '—' }}</td>
+        <td><code>{{ ch.course_slug }}</code></td>
+        <td>
+          {% if ch.action == 'error' %}<span class="form-error">{{ ch.error }}</span>
+          {% elif ch.fields_changed %}{{ ch.fields_changed | join(', ') }}
+          {% else %}—{% endif %}
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+
+  {% if entity == 'courses' and plan.program_slugs_in_file %}
+  <div class="admin-xlsx-note">
+    <strong>Program blocks:</strong> для {{ plan.program_slugs_in_file | length }} курс(ів) у файлі є відповідні рядки.
+    Існуючі блоки цих курсів буде <strong>повністю замінено</strong> на ті, що в xlsx.
+    Курси, не згадані в sheet «Program blocks», не торкаються.
+  </div>
+  {% endif %}
+
+  {% if entity == 'courses' and plan.faq_slugs_in_file %}
+  <div class="admin-xlsx-note">
+    <strong>FAQ:</strong> для {{ plan.faq_slugs_in_file | length }} курс(ів) у файлі є відповідні рядки.
+    Існуючий FAQ цих курсів буде <strong>повністю замінено</strong>.
+  </div>
+  {% endif %}
+
+  {# ---- Actions ---- #}
+  <div class="admin-xlsx-actions">
+    <form method="POST" action="{{ cancel_url }}" style="display:inline;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn-admin btn-admin--secondary">Скасувати</button>
+    </form>
+    {% if plan.is_valid and (c.create or c.update) %}
+    <form method="POST" action="{{ apply_url }}" style="display:inline;" data-confirm="Застосувати імпорт? Зміни в БД не можна буде відкотити автоматично.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn-admin btn-admin--primary">Підтвердити імпорт</button>
+    </form>
+    {% elif not plan.is_valid %}
+    <button type="button" class="btn-admin btn-admin--primary" disabled>Підтвердити імпорт</button>
+    {% else %}
+    <span class="form-hint">Жодних змін у файлі немає — імпортувати нічого.</span>
+    {% endif %}
+  </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/admin-confirm.js') }}?v={{ assets_version }}"></script>
+{% endblock %}

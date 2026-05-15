@@ -24,6 +24,25 @@
       <p class="admin-hero__subtitle">Контент курсів інституту. Дати проведення керуються в розділі "Розклад".</p>
     </div>
     <div class="admin-hero__actions">
+      <div class="admin-xlsx-toolbar">
+        <details class="admin-xlsx-menu">
+          <summary class="btn-admin btn-admin--secondary" title="Завантажити xlsx з курсами">
+            <span class="material-symbols-rounded">download</span> Експорт XLSX
+          </summary>
+          <div class="admin-xlsx-menu__items">
+            <a href="{{ url_for('admin.courses_export') }}">Усі курси</a>
+            <a href="{{ url_for('admin.courses_export', active='true') }}">Лише активні</a>
+            <a href="{{ url_for('admin.courses_export', active='false') }}">Лише неактивні</a>
+          </div>
+        </details>
+        <form method="POST" action="{{ url_for('admin.courses_import_upload') }}" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="file" name="xlsx" id="courses-xlsx-input" accept=".xlsx" onchange="this.form.submit()">
+          <label for="courses-xlsx-input" class="btn-admin btn-admin--secondary" style="cursor:pointer;" title="Завантажити змінений xlsx">
+            <span class="material-symbols-rounded">upload</span> Імпорт XLSX
+          </label>
+        </form>
+      </div>
       <a href="{{ url_for('admin.course_create') }}" class="btn-admin btn-admin--primary"><span class="material-symbols-rounded">add</span> Додати курс</a>
     </div>
   </div>

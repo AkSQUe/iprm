@@ -99,6 +99,14 @@ def init_scheduler(app):
         name='Відправка webhook-ів партнерам',
     )
 
+    scheduler.add_job(
+        cleanup_xlsx_uploads,
+        trigger=CronTrigger(minute='*/15'),  # every 15 minutes
+        id='xlsx_uploads_cleanup',
+        replace_existing=True,
+        name='Очищення тимчасових xlsx-вивантажень',
+    )
+
     scheduler.start()
     _initialized = True
     logger.info('APScheduler started with SQLAlchemy jobstore')
@@ -226,3 +234,18 @@ def process_webhook_queue():
                     logger.info('Webhook queue: %s', stats)
             except Exception:
                 logger.exception('process_webhook_queue failed')
+
+
+def cleanup_xlsx_uploads():
+    """Periodic job: delete admin xlsx-import temp files older than 30 min."""
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('xlsx_uploads_cleanup') as got:
+            if not got:
+                logger.debug('xlsx_cleanup: another worker holds the lock, skipping')
+                return
+            from app.services.xlsx_io import cleanup_stale_xlsx_uploads
+            try:
+                cleanup_stale_xlsx_uploads(max_age_minutes=30)
+            except Exception:
+                logger.exception('cleanup_xlsx_uploads failed')

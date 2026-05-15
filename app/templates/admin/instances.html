@@ -30,6 +30,26 @@
       <p class="admin-hero__subtitle">Конкретні дати, формат, статус реєстрації для курсів</p>
     </div>
     <div class="admin-hero__actions">
+      <div class="admin-xlsx-toolbar">
+        <details class="admin-xlsx-menu">
+          <summary class="btn-admin btn-admin--secondary" title="Завантажити xlsx з розкладом">
+            <span class="material-symbols-rounded">download</span> Експорт XLSX
+          </summary>
+          <div class="admin-xlsx-menu__items">
+            <a href="{{ url_for('admin.instances_export') }}">Увесь розклад</a>
+            <a href="{{ url_for('admin.instances_export', upcoming='true') }}">Лише майбутні</a>
+            <a href="{{ url_for('admin.instances_export', year=2026) }}">Тільки 2026</a>
+            <a href="{{ url_for('admin.instances_export', status='published') }}">Лише опубліковані</a>
+          </div>
+        </details>
+        <form method="POST" action="{{ url_for('admin.instances_import_upload') }}" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="file" name="xlsx" id="instances-xlsx-input" accept=".xlsx" onchange="this.form.submit()">
+          <label for="instances-xlsx-input" class="btn-admin btn-admin--secondary" style="cursor:pointer;" title="Завантажити змінений xlsx">
+            <span class="material-symbols-rounded">upload</span> Імпорт XLSX
+          </label>
+        </form>
+      </div>
       <a href="{{ url_for('admin.instance_create') }}" class="btn-admin btn-admin--primary"><span class="material-symbols-rounded">add</span> Додати проведення</a>
     </div>
   </div>

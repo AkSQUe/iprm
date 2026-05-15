@@ -422,6 +422,148 @@
 }
 
 
+/* ========== XLSX IMPORT/EXPORT ========== */
+
+.admin-xlsx-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-xlsx-toolbar form {
+  display: inline;
+}
+
+.admin-xlsx-toolbar input[type="file"] {
+  display: none;
+}
+
+/* Native <details>-based dropdown для пресетів експорту. */
+.admin-xlsx-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.admin-xlsx-menu > summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.admin-xlsx-menu > summary::-webkit-details-marker,
+.admin-xlsx-menu > summary::marker {
+  display: none;
+  content: '';
+}
+
+.admin-xlsx-menu__items {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  min-width: 200px;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-xlsx-menu__items a {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--apple-black);
+  text-decoration: none;
+  border-radius: var(--iprm-radius-sm);
+  white-space: nowrap;
+}
+
+.admin-xlsx-menu__items a:hover {
+  background: var(--iprm-bg);
+  color: var(--iprm-accent);
+}
+
+/* Закриваємо dropdown при кліку поза ним -- chunk JS у admin-confirm.js
+   або окремий обробник, але base case: користувач клікає всередині й
+   браузер сам збереже state до перевідкриття. На клік поза дропом
+   деталі залишаться відкритими, що нормально. */
+
+.admin-xlsx-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.admin-xlsx-summary__item {
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  padding: 16px 20px;
+  text-align: center;
+}
+
+.admin-xlsx-summary__num {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--apple-black);
+  line-height: 1;
+}
+
+.admin-xlsx-summary__label {
+  display: block;
+  font-size: 12px;
+  color: var(--iprm-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+}
+
+.admin-xlsx-summary__item--create {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.admin-xlsx-summary__item--create .admin-xlsx-summary__num { color: #16a34a; }
+
+.admin-xlsx-summary__item--update {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.admin-xlsx-summary__item--update .admin-xlsx-summary__num { color: #2563eb; }
+
+.admin-xlsx-summary__item--error {
+  background: var(--iprm-error-bg);
+  border-color: var(--iprm-error-light);
+}
+
+.admin-xlsx-summary__item--error .admin-xlsx-summary__num { color: var(--iprm-error-text); }
+
+.admin-xlsx-note {
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  padding: 12px 16px;
+  margin: 16px 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #92400e;
+  border-radius: var(--iprm-radius-sm);
+}
+
+.admin-xlsx-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 24px;
+  border-top: 1px solid var(--iprm-border);
+  margin-top: 24px;
+}
+
+
 /* ========== ТАБЛИЦЯ: обгортка для горизонтальної прокрутки ========== */
 
 .admin-table-wrap {
