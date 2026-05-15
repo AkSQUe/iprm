@@ -28,7 +28,7 @@ import logging
 import os
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
@@ -38,6 +38,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.worksheet.table import Table, TableStyleInfo
 
 from app.extensions import db
 from app.models.course import Course
@@ -52,13 +53,125 @@ logger = logging.getLogger(__name__)
 # Загальні константи / утиліти
 # ----------------------------------------------------------------------
 
+KYIV = timezone(timedelta(hours=3))  # UTC+3
+
 HEADER_FILL = PatternFill('solid', fgColor='4F46E5')
 HEADER_FONT = Font(color='FFFFFF', bold=True)
 WRAP = Alignment(wrap_text=True, vertical='top')
 
+# ----- Number formats ------------------------------------------------
+# Дроблені формати для різних типів даних. Use cell.number_format = ...
+FMT_INT = '0'
+FMT_CURRENCY_UAH = '#,##0 "₴"'
+FMT_DATETIME = 'YYYY-MM-DD HH:MM'
+
+# Per-key number_format мапа. Якщо ключ відсутній — формат не виставляємо
+# (текстовий за замовчуванням).
+NUMBER_FORMATS = {
+    # Courses
+    'id': FMT_INT,
+    'base_price': FMT_CURRENCY_UAH,
+    'cpd_points': FMT_INT,
+    'max_participants': FMT_INT,
+    # Instances
+    'price': FMT_CURRENCY_UAH,
+    'start_date': FMT_DATETIME,
+    'end_date': FMT_DATETIME,
+    # Program blocks
+    'sort_order': FMT_INT,
+}
+
+# ----- Color fills для enum-полів ------------------------------------
+def _fill(hex_color: str) -> PatternFill:
+    return PatternFill('solid', fgColor=hex_color)
+
+EVENT_TYPE_FILLS = {
+    'course': _fill('DBEAFE'),       # blue-100
+    'seminar': _fill('FED7AA'),      # orange-200
+    'webinar': _fill('D1FAE5'),      # green-100 (для онлайн-формату)
+    'masterclass': _fill('E9D5FF'),  # purple-200
+    'conference': _fill('FEF3C7'),   # yellow-100
+}
+
+EVENT_FORMAT_FILLS = {
+    'online': _fill('DBEAFE'),       # blue
+    'offline': _fill('D1FAE5'),      # green
+    'hybrid': _fill('E9D5FF'),       # purple
+}
+
+STATUS_FILLS = {
+    'draft': _fill('F3F4F6'),        # gray
+    'published': _fill('DBEAFE'),    # blue
+    'active': _fill('D1FAE5'),       # green
+    'completed': _fill('A7F3D0'),    # darker green
+    'cancelled': _fill('FECACA'),    # red
+}
+
+BOOL_TRUE_FILL = _fill('D1FAE5')     # light green
+BOOL_FALSE_FILL = _fill('FEE2E2')    # light red
+
+# ----- Column widths (ширина = "шт. символів"). ----------------------
+# Дають xlsx-у форму "зручний для перегляду", не "ALL DEFAULT 14".
+COURSE_WIDTHS = {
+    'id': 6,
+    'slug': 32,
+    'title': 55,
+    'subtitle': 40,
+    'short_description': 50,
+    'description': 60,
+    'event_type': 16,
+    'base_price': 14,
+    'cpd_points': 10,
+    'max_participants': 12,
+    'trainer_slug': 24,
+    'hero_image': 50,
+    'card_image': 50,
+    'speaker_info': 40,
+    'agenda': 40,
+    'target_audience': 50,
+    'tags': 28,
+    'is_active': 12,
+    'is_featured': 14,
+}
+
+INSTANCE_WIDTHS = {
+    'id': 6,
+    'course_slug': 32,
+    'start_date': 22,
+    'end_date': 22,
+    'event_format': 14,
+    'price': 14,
+    'cpd_points': 10,
+    'max_participants': 12,
+    'trainer_slug': 24,
+    'location': 18,
+    'online_link': 40,
+    'status': 14,
+}
+
+PROGRAM_WIDTHS = {
+    'course_slug': 32,
+    'sort_order': 10,
+    'heading': 40,
+    'items': 70,
+}
+
+FAQ_WIDTHS = {
+    'course_slug': 32,
+    'question': 50,
+    'answer': 70,
+}
+
+TRAINER_WIDTHS = {'slug': 28, 'full_name': 36, 'role': 50}
+
 VALID_EVENT_TYPES = {t[0] for t in Course.EVENT_TYPES}
 VALID_FORMATS = {t[0] for t in CourseInstance.FORMATS}
 VALID_STATUSES = {t[0] for t in CourseInstance.STATUSES}
+
+# key -> Ukrainian label (для відображення в xlsx).
+EVENT_TYPE_LABEL = dict(Course.EVENT_TYPES)
+# Ukrainian label -> key (для парсингу xlsx).
+EVENT_TYPE_KEY_BY_LABEL = {v: k for k, v in EVENT_TYPE_LABEL.items()}
 
 
 def _import_dir() -> Path:
@@ -116,17 +229,75 @@ def cleanup_stale_xlsx_uploads(max_age_minutes: int = 30) -> int:
 
 
 def _style_header(ws, columns: list[str], labels: dict[str, str] | None = None) -> None:
-    """Записати заголовки. `columns` -- internal keys; `labels` (опціонально) --
-    map key -> українська назва. Якщо labels не передано, пишемо самі keys
-    (для зворотньої сумісності з тестами).
+    """Записати заголовки (без виставлення ширин — ширини окремо через
+    `_set_column_widths`, бо вони залежать від типу контенту).
     """
     for col_idx, key in enumerate(columns, start=1):
         display = labels.get(key, key) if labels else key
         cell = ws.cell(row=1, column=col_idx, value=display)
         cell.fill = HEADER_FILL
         cell.font = HEADER_FONT
-        ws.column_dimensions[get_column_letter(col_idx)].width = max(14, len(display) + 2)
+        cell.alignment = Alignment(vertical='center', horizontal='left')
     ws.freeze_panes = 'A2'
+    # Висота header-рядка для зручності
+    ws.row_dimensions[1].height = 22
+
+
+def _set_column_widths(ws, columns: list[str], widths: dict[str, int]) -> None:
+    """Виставити ширину кожної колонки за мапою `widths`. Якщо ключа немає,
+    використовуємо дефолт 14."""
+    for col_idx, key in enumerate(columns, start=1):
+        ws.column_dimensions[get_column_letter(col_idx)].width = widths.get(key, 14)
+
+
+def _apply_number_formats(ws, columns: list[str], last_row: int) -> None:
+    """Призначити number_format на кожну колонку (одразу на всі дата-клітинки
+    від рядка 2 до last_row), якщо key є в NUMBER_FORMATS."""
+    if last_row < 2:
+        return
+    for col_idx, key in enumerate(columns, start=1):
+        fmt = NUMBER_FORMATS.get(key)
+        if not fmt:
+            continue
+        for r in range(2, last_row + 1):
+            ws.cell(row=r, column=col_idx).number_format = fmt
+
+
+def _apply_table_style(ws, columns: list[str], table_name: str, last_data_row: int) -> None:
+    """Перетворити діапазон A1:<last_col><last_data_row> на Excel-Table.
+
+    Дає:
+      - Авто-фільтри в заголовку
+      - Зебра (banded rows) -- автоматична для непарних рядків
+      - Названий range, на який можна посилатись формулами
+
+    Якщо даних немає (last_data_row<2), таблицю не створюємо -- бо Excel
+    не любить порожні таблиці.
+    """
+    if last_data_row < 2:
+        return
+    last_col = get_column_letter(len(columns))
+    ref = f'A1:{last_col}{last_data_row}'
+    table = Table(displayName=table_name, ref=ref)
+    table.tableStyleInfo = TableStyleInfo(
+        name='TableStyleLight15',
+        showFirstColumn=False,
+        showLastColumn=False,
+        showRowStripes=True,
+        showColumnStripes=False,
+    )
+    ws.add_table(table)
+
+
+def _to_kyiv_naive(dt):
+    """Зняти TZ, попередньо переконвертувавши в Київ. openpyxl попереджує
+    про tz-aware datetimes; у клітинці маємо bare datetime, який Excel
+    розуміє як «локальний час»."""
+    if dt is None:
+        return None
+    if dt.tzinfo is not None:
+        return dt.astimezone(KYIV).replace(tzinfo=None)
+    return dt
 
 
 def _str(v) -> str | None:
@@ -189,8 +360,7 @@ def _dt(v) -> datetime | None:
             raise ValueError(f'неможливо розпарсити дату: {v!r}')
     if dt.tzinfo is None:
         # припускаємо Київ (UTC+3), щоб збігалось з seed-розкладом
-        from datetime import timedelta
-        dt = dt.replace(tzinfo=timezone(timedelta(hours=3)))
+        dt = dt.replace(tzinfo=KYIV)
     return dt
 
 
@@ -291,10 +461,40 @@ def _add_trainers_sheet(wb) -> int:
         ws.cell(row=row_idx, column=2, value=t.full_name).alignment = WRAP
         ws.cell(row=row_idx, column=3, value=t.role or '').alignment = WRAP
 
-    # Розширюємо ширину колонок під ПІБ/посаду
-    ws.column_dimensions['B'].width = 36
-    ws.column_dimensions['C'].width = 50
+    cols = ['slug', 'full_name', 'role']
+    _set_column_widths(ws, cols, TRAINER_WIDTHS)
+    _apply_table_style(ws, cols, 'tblTrainers', last_data_row=1 + len(trainers))
     return 1 + len(trainers)
+
+
+def _add_inline_dropdown(ws, column_key: str, columns: list[str],
+                         options: list[str], last_data_row: int,
+                         title: str = '', hint: str = '') -> None:
+    """Прикріпити drop-down зі статичним списком значень.
+
+    Використовується для невеликих enum-полів (event_type, формат, статус).
+    Excel-обмеження inline-list у formula1 -- 255 символів; для довших
+    списків потрібен окремий sheet з reference-значеннями.
+    """
+    if not options:
+        return
+    col_letter = get_column_letter(columns.index(column_key) + 1)
+    # Inline-list у formula1 має бути обгорнутий лапками й розділений комами.
+    formula = '"' + ','.join(options) + '"'
+    dv = DataValidation(
+        type='list',
+        formula1=formula,
+        allow_blank=False,
+        showDropDown=False,  # False у XML = ПОКАЗУВАТИ стрілочку
+        errorStyle='stop',
+        error=f'Оберіть значення зі списку: {", ".join(options)}',
+        errorTitle='Невалідне значення',
+        prompt=hint,
+        promptTitle=title,
+    )
+    final_row = max(last_data_row, 1) + _DROPDOWN_BUFFER_ROWS
+    dv.add(f'{col_letter}2:{col_letter}{final_row}')
+    ws.add_data_validation(dv)
 
 
 def _add_trainer_dropdown(ws, column_key: str, columns: list[str],
@@ -382,7 +582,7 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             c.subtitle or '',
             c.short_description or '',
             c.description or '',
-            c.event_type or '',
+            EVENT_TYPE_LABEL.get(c.event_type, c.event_type or ''),
             float(c.base_price) if c.base_price is not None else 0,
             c.cpd_points,
             c.max_participants,
@@ -400,6 +600,25 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             cell = ws.cell(row=row_idx, column=col_idx, value=v)
             cell.alignment = WRAP
 
+        # ----- Кольори за значенням ----------------------------------
+        # event_type (колонка 7)
+        et_col = COURSE_COLS.index('event_type') + 1
+        if c.event_type and c.event_type in EVENT_TYPE_FILLS:
+            ws.cell(row=row_idx, column=et_col).fill = EVENT_TYPE_FILLS[c.event_type]
+        # is_active (колонка 18)
+        ia_col = COURSE_COLS.index('is_active') + 1
+        ws.cell(row=row_idx, column=ia_col).fill = (
+            BOOL_TRUE_FILL if c.is_active else BOOL_FALSE_FILL
+        )
+        # is_featured -- лише позитивна заливка, якщо True
+        if c.is_featured:
+            if_col = COURSE_COLS.index('is_featured') + 1
+            ws.cell(row=row_idx, column=if_col).fill = BOOL_TRUE_FILL
+
+    courses_last_row = ws.max_row
+    _set_column_widths(ws, COURSE_COLS, COURSE_WIDTHS)
+    _apply_number_formats(ws, COURSE_COLS, courses_last_row)
+
     # Program blocks
     ws_p = wb.create_sheet('Блоки програми')
     _style_header(ws_p, PROGRAM_COLS, PROGRAM_LABELS)
@@ -411,6 +630,9 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             ws_p.cell(row=row_idx, column=3, value=b.heading or '').alignment = WRAP
             ws_p.cell(row=row_idx, column=4, value=_to_lines(b.items)).alignment = WRAP
             row_idx += 1
+    program_last_row = ws_p.max_row
+    _set_column_widths(ws_p, PROGRAM_COLS, PROGRAM_WIDTHS)
+    _apply_number_formats(ws_p, PROGRAM_COLS, program_last_row)
 
     # FAQ
     ws_f = wb.create_sheet('FAQ')
@@ -424,14 +646,30 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             ws_f.cell(row=row_idx, column=2, value=item.get('question') or '').alignment = WRAP
             ws_f.cell(row=row_idx, column=3, value=item.get('answer') or '').alignment = WRAP
             row_idx += 1
+    faq_last_row = ws_f.max_row
+    _set_column_widths(ws_f, FAQ_COLS, FAQ_WIDTHS)
 
-    # Reference sheet з тренерами + drop-down у колонці trainer_slug курсів.
+    # Reference sheet з тренерами (вже з Table) + drop-down у колонці trainer_slug.
     trainers_last_row = _add_trainers_sheet(wb)
     _add_trainer_dropdown(
         ws, 'trainer_slug', COURSE_COLS,
-        last_data_row=ws.max_row,
+        last_data_row=courses_last_row,
         trainers_last_row=trainers_last_row,
     )
+
+    # Drop-down для типу заходу.
+    _add_inline_dropdown(
+        ws, 'event_type', COURSE_COLS,
+        options=[label for _key, label in Course.EVENT_TYPES],
+        last_data_row=courses_last_row,
+        title='Тип заходу',
+        hint='Оберіть зі списку: Семінар, Вебінар, Курс, Майстер-клас, Конференція',
+    )
+
+    # Excel Tables (forматовані з зеброю + auto-filter).
+    _apply_table_style(ws, COURSE_COLS, 'tblCourses', courses_last_row)
+    _apply_table_style(ws_p, PROGRAM_COLS, 'tblProgramBlocks', program_last_row)
+    _apply_table_style(ws_f, FAQ_COLS, 'tblFAQ', faq_last_row)
 
     out = io.BytesIO()
     wb.save(out)
@@ -518,11 +756,14 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
                 raise ValueError(f'дублюючий slug у файлі: {slug!r}')
             seen_slugs.add(slug)
 
-            event_type = _str(raw.get('event_type')) or 'course'
+            event_type_raw = _str(raw.get('event_type')) or 'course'
+            # Приймаємо і англ. internal key ('course'), і українську назву
+            # з drop-down ('Курс'). Нормалізуємо у key.
+            event_type = EVENT_TYPE_KEY_BY_LABEL.get(event_type_raw, event_type_raw)
             if event_type not in VALID_EVENT_TYPES:
+                allowed = sorted(VALID_EVENT_TYPES) + sorted(EVENT_TYPE_KEY_BY_LABEL.keys())
                 raise ValueError(
-                    f'event_type={event_type!r} -- допустимі: '
-                    f'{sorted(VALID_EVENT_TYPES)}'
+                    f'event_type={event_type_raw!r} -- допустимі: {allowed}'
                 )
 
             trainer_slug = _str(raw.get('trainer_slug'))
@@ -866,10 +1107,10 @@ def export_instances_xlsx(
         values = [
             i.id,
             course_slug_by_id.get(i.course_id, ''),
-            i.start_date.isoformat() if i.start_date else '',
-            i.end_date.isoformat() if i.end_date else '',
+            _to_kyiv_naive(i.start_date),
+            _to_kyiv_naive(i.end_date),
             i.event_format or '',
-            float(i.price) if i.price is not None else '',
+            float(i.price) if i.price is not None else None,
             i.cpd_points,
             i.max_participants,
             trainer_slug_by_id.get(i.trainer_id, '') if i.trainer_id else '',
@@ -881,13 +1122,44 @@ def export_instances_xlsx(
             cell = ws.cell(row=row_idx, column=col_idx, value=v)
             cell.alignment = WRAP
 
+        # Кольори за event_format і status.
+        if i.event_format in EVENT_FORMAT_FILLS:
+            fmt_col = INSTANCE_COLS.index('event_format') + 1
+            ws.cell(row=row_idx, column=fmt_col).fill = EVENT_FORMAT_FILLS[i.event_format]
+        if i.status in STATUS_FILLS:
+            st_col = INSTANCE_COLS.index('status') + 1
+            ws.cell(row=row_idx, column=st_col).fill = STATUS_FILLS[i.status]
+
+    instances_last_row = ws.max_row
+    _set_column_widths(ws, INSTANCE_COLS, INSTANCE_WIDTHS)
+    _apply_number_formats(ws, INSTANCE_COLS, instances_last_row)
+
     # Reference sheet з тренерами + drop-down у колонці trainer_slug розкладу.
     trainers_last_row = _add_trainers_sheet(wb)
     _add_trainer_dropdown(
         ws, 'trainer_slug', INSTANCE_COLS,
-        last_data_row=ws.max_row,
+        last_data_row=instances_last_row,
         trainers_last_row=trainers_last_row,
     )
+
+    # Drop-down для формату та статусу.
+    _add_inline_dropdown(
+        ws, 'event_format', INSTANCE_COLS,
+        options=[k for k, _ in CourseInstance.FORMATS],
+        last_data_row=instances_last_row,
+        title='Формат',
+        hint='online / offline / hybrid',
+    )
+    _add_inline_dropdown(
+        ws, 'status', INSTANCE_COLS,
+        options=[k for k, _ in CourseInstance.STATUSES],
+        last_data_row=instances_last_row,
+        title='Статус',
+        hint='draft / published / active / completed / cancelled',
+    )
+
+    # Excel Table style.
+    _apply_table_style(ws, INSTANCE_COLS, 'tblSchedule', instances_last_row)
 
     out = io.BytesIO()
     wb.save(out)
