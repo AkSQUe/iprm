@@ -110,6 +110,11 @@ STATUS_FILLS = {
 BOOL_TRUE_FILL = _fill('D1FAE5')     # light green
 BOOL_FALSE_FILL = _fill('FEE2E2')    # light red
 
+# Ledь-помітна зебра для непарних data-рядків. Робимо її вручну (а не
+# через Excel TableStyle), бо вбудовані стилі дають занадто помітне
+# банінг -- ledь-помітної опції серед них нема.
+ZEBRA_FILL = _fill('FAFAFA')
+
 # ----- Column widths (ширина = "шт. символів"). ----------------------
 # Дають xlsx-у форму "зручний для перегляду", не "ALL DEFAULT 14".
 COURSE_WIDTHS = {
@@ -170,8 +175,13 @@ VALID_STATUSES = {t[0] for t in CourseInstance.STATUSES}
 
 # key -> Ukrainian label (для відображення в xlsx).
 EVENT_TYPE_LABEL = dict(Course.EVENT_TYPES)
-# Ukrainian label -> key (для парсингу xlsx).
 EVENT_TYPE_KEY_BY_LABEL = {v: k for k, v in EVENT_TYPE_LABEL.items()}
+
+FORMAT_LABEL = dict(CourseInstance.FORMATS)  # 'online' -> 'Онлайн' тощо
+FORMAT_KEY_BY_LABEL = {v: k for k, v in FORMAT_LABEL.items()}
+
+STATUS_LABEL = dict(CourseInstance.STATUSES)  # 'draft' -> 'Чернетка' тощо
+STATUS_KEY_BY_LABEL = {v: k for k, v in STATUS_LABEL.items()}
 
 
 def _import_dir() -> Path:
@@ -266,13 +276,8 @@ def _apply_number_formats(ws, columns: list[str], last_row: int) -> None:
 def _apply_table_style(ws, columns: list[str], table_name: str, last_data_row: int) -> None:
     """Перетворити діапазон A1:<last_col><last_data_row> на Excel-Table.
 
-    Дає:
-      - Авто-фільтри в заголовку
-      - Зебра (banded rows) -- автоматична для непарних рядків
-      - Названий range, на який можна посилатись формулами
-
-    Якщо даних немає (last_data_row<2), таблицю не створюємо -- бо Excel
-    не любить порожні таблиці.
+    Дає авто-фільтри в заголовку + іменований range. Зебру самі малюємо
+    через `_apply_zebra` (бо вбудоване Excel-банінг -- надто помітне).
     """
     if last_data_row < 2:
         return
@@ -280,13 +285,27 @@ def _apply_table_style(ws, columns: list[str], table_name: str, last_data_row: i
     ref = f'A1:{last_col}{last_data_row}'
     table = Table(displayName=table_name, ref=ref)
     table.tableStyleInfo = TableStyleInfo(
-        name='TableStyleLight15',
+        name='TableStyleLight1',   # майже-білий, без сильних кольорів
         showFirstColumn=False,
         showLastColumn=False,
-        showRowStripes=True,
+        showRowStripes=False,      # ВЛАСНА зебра нижче
         showColumnStripes=False,
     )
     ws.add_table(table)
+
+
+def _apply_zebra(ws, n_cols: int, first_data_row: int, last_data_row: int) -> None:
+    """Заповнити кожен 2-й data-рядок ledь-помітним сірим. Викликати
+    ПЕРЕД призначенням enum-fills, щоб кольорові клітинки (event_type,
+    status, is_active, ...) перекривали zebra-fill своїм кольором.
+    """
+    if last_data_row < first_data_row:
+        return
+    # Колір на другому, четвертому, шостому data-рядку
+    # (visually -- стовпчик `1st row=white, 2nd row=gray, 3rd=white...`).
+    for row in range(first_data_row + 1, last_data_row + 1, 2):
+        for col in range(1, n_cols + 1):
+            ws.cell(row, col).fill = ZEBRA_FILL
 
 
 def _to_kyiv_naive(dt):
@@ -390,7 +409,7 @@ COURSE_LABELS = {
     'base_price': 'Ціна (грн)',
     'cpd_points': 'Бали БПР',
     'max_participants': 'Макс. учасників',
-    'trainer_slug': 'Тренер (slug)',
+    'trainer_slug': 'Тренер',
     'hero_image': 'Hero-зображення',
     'card_image': 'Зображення картки',
     'speaker_info': 'Інфо про спікера',
@@ -441,14 +460,15 @@ _TRAINERS_SHEET_NAME = 'Тренери'
 
 
 def _add_trainers_sheet(wb) -> int:
-    """Додати reference-sheet з активними тренерами. Повертає номер
-    останнього рядка з даними (для побудови formula1 у DataValidation).
-    """
+    """Додати reference-sheet з активними тренерами. ПІБ йде в колонці A,
+    щоб саме воно потрапляло у drop-down тренерів. Slug -- у колонці B
+    (для довідки). Повертає номер останнього рядка з даними."""
     ws = wb.create_sheet(_TRAINERS_SHEET_NAME)
+    cols = ['full_name', 'slug', 'role']
     _style_header(
         ws,
-        ['slug', 'full_name', 'role'],
-        {'slug': 'Slug (значення)', 'full_name': 'ПІБ', 'role': 'Посада'},
+        cols,
+        {'full_name': 'ПІБ (значення)', 'slug': 'Slug', 'role': 'Посада'},
     )
 
     trainers = (
@@ -457,12 +477,13 @@ def _add_trainers_sheet(wb) -> int:
         .all()
     )
     for row_idx, t in enumerate(trainers, start=2):
-        ws.cell(row=row_idx, column=1, value=t.slug)
-        ws.cell(row=row_idx, column=2, value=t.full_name).alignment = WRAP
+        ws.cell(row=row_idx, column=1, value=t.full_name).alignment = WRAP
+        ws.cell(row=row_idx, column=2, value=t.slug)
         ws.cell(row=row_idx, column=3, value=t.role or '').alignment = WRAP
 
-    cols = ['slug', 'full_name', 'role']
-    _set_column_widths(ws, cols, TRAINER_WIDTHS)
+    widths = {'full_name': 36, 'slug': 28, 'role': 50}
+    _set_column_widths(ws, cols, widths)
+    _apply_zebra(ws, len(cols), first_data_row=2, last_data_row=1 + len(trainers))
     _apply_table_style(ws, cols, 'tblTrainers', last_data_row=1 + len(trainers))
     return 1 + len(trainers)
 
@@ -566,7 +587,8 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
     ws.title = 'Курси'
     _style_header(ws, COURSE_COLS, COURSE_LABELS)
 
-    trainer_slug_by_id = {t.id: t.slug for t in Trainer.query.all()}
+    # Тренер у клітинці — ПІБ (Ukrainian). На імпорті повертаємо в slug.
+    trainer_name_by_id = {t.id: t.full_name for t in Trainer.query.all()}
 
     q = Course.query.order_by(Course.id)
     if active == 'true':
@@ -586,7 +608,7 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             float(c.base_price) if c.base_price is not None else 0,
             c.cpd_points,
             c.max_participants,
-            trainer_slug_by_id.get(c.trainer_id, ''),
+            trainer_name_by_id.get(c.trainer_id, '') if c.trainer_id else '',
             c.hero_image or '',
             c.card_image or '',
             c.speaker_info or '',
@@ -600,22 +622,24 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             cell = ws.cell(row=row_idx, column=col_idx, value=v)
             cell.alignment = WRAP
 
-        # ----- Кольори за значенням ----------------------------------
-        # event_type (колонка 7)
-        et_col = COURSE_COLS.index('event_type') + 1
+    courses_last_row = ws.max_row
+
+    # ЗЕБРА перед enum-кольорами, щоб enum-fills перекрили її на своїх клітинках.
+    _apply_zebra(ws, len(COURSE_COLS), first_data_row=2, last_data_row=courses_last_row)
+
+    # ----- Кольори за значенням -----------------------------------------
+    et_col = COURSE_COLS.index('event_type') + 1
+    ia_col = COURSE_COLS.index('is_active') + 1
+    if_col = COURSE_COLS.index('is_featured') + 1
+    for row_idx, c in enumerate(courses, start=2):
         if c.event_type and c.event_type in EVENT_TYPE_FILLS:
             ws.cell(row=row_idx, column=et_col).fill = EVENT_TYPE_FILLS[c.event_type]
-        # is_active (колонка 18)
-        ia_col = COURSE_COLS.index('is_active') + 1
         ws.cell(row=row_idx, column=ia_col).fill = (
             BOOL_TRUE_FILL if c.is_active else BOOL_FALSE_FILL
         )
-        # is_featured -- лише позитивна заливка, якщо True
         if c.is_featured:
-            if_col = COURSE_COLS.index('is_featured') + 1
             ws.cell(row=row_idx, column=if_col).fill = BOOL_TRUE_FILL
 
-    courses_last_row = ws.max_row
     _set_column_widths(ws, COURSE_COLS, COURSE_WIDTHS)
     _apply_number_formats(ws, COURSE_COLS, courses_last_row)
 
@@ -631,6 +655,7 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             ws_p.cell(row=row_idx, column=4, value=_to_lines(b.items)).alignment = WRAP
             row_idx += 1
     program_last_row = ws_p.max_row
+    _apply_zebra(ws_p, len(PROGRAM_COLS), first_data_row=2, last_data_row=program_last_row)
     _set_column_widths(ws_p, PROGRAM_COLS, PROGRAM_WIDTHS)
     _apply_number_formats(ws_p, PROGRAM_COLS, program_last_row)
 
@@ -647,6 +672,7 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             ws_f.cell(row=row_idx, column=3, value=item.get('answer') or '').alignment = WRAP
             row_idx += 1
     faq_last_row = ws_f.max_row
+    _apply_zebra(ws_f, len(FAQ_COLS), first_data_row=2, last_data_row=faq_last_row)
     _set_column_widths(ws_f, FAQ_COLS, FAQ_WIDTHS)
 
     # Reference sheet з тренерами (вже з Table) + drop-down у колонці trainer_slug.
@@ -742,7 +768,9 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
         plan.errors.append(str(exc))
         return plan
 
-    trainer_id_by_slug = {t.slug: t.id for t in Trainer.query.all()}
+    _all_trainers = Trainer.query.all()
+    trainer_id_by_slug = {t.slug: t.id for t in _all_trainers}
+    trainer_id_by_name = {t.full_name: t.id for t in _all_trainers}
     existing_by_id = {c.id: c for c in Course.query.all()}
     existing_by_slug = {c.slug: c for c in existing_by_id.values()}
 
@@ -766,13 +794,20 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
                     f'event_type={event_type_raw!r} -- допустимі: {allowed}'
                 )
 
-            trainer_slug = _str(raw.get('trainer_slug'))
+            # Колонка "Тренер" може містити або slug (старі файли), або ПІБ
+            # (новий експорт + drop-down). Спершу шукаємо за slug, потім за
+            # full_name -- так покриваємо обидва формати.
+            trainer_raw = _str(raw.get('trainer_slug'))
             trainer_id = None
-            if trainer_slug:
-                trainer_id = trainer_id_by_slug.get(trainer_slug)
+            if trainer_raw:
+                trainer_id = (
+                    trainer_id_by_slug.get(trainer_raw)
+                    or trainer_id_by_name.get(trainer_raw)
+                )
                 if trainer_id is None:
                     raise ValueError(
-                        f'тренера за slug={trainer_slug!r} не знайдено'
+                        f'тренера {trainer_raw!r} не знайдено '
+                        f'(ні за slug, ні за ПІБ)'
                     )
 
             parsed = {
@@ -1034,7 +1069,7 @@ INSTANCE_LABELS = {
     'price': 'Ціна (грн)',
     'cpd_points': 'Бали БПР',
     'max_participants': 'Макс. учасників',
-    'trainer_slug': 'Тренер (slug)',
+    'trainer_slug': 'Тренер',
     'location': 'Локація',
     'online_link': 'Онлайн-лінк',
     'status': 'Статус',
@@ -1087,11 +1122,10 @@ def export_instances_xlsx(
     _style_header(ws, INSTANCE_COLS, INSTANCE_LABELS)
 
     course_slug_by_id = {c.id: c.slug for c in Course.query.all()}
-    trainer_slug_by_id = {t.id: t.slug for t in Trainer.query.all()}
+    trainer_name_by_id = {t.id: t.full_name for t in Trainer.query.all()}
 
     q = CourseInstance.query.order_by(CourseInstance.start_date)
     if year:
-        from datetime import timedelta as _td
         start = datetime(year, 1, 1, tzinfo=timezone.utc)
         end = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
         q = q.filter(
@@ -1109,28 +1143,33 @@ def export_instances_xlsx(
             course_slug_by_id.get(i.course_id, ''),
             _to_kyiv_naive(i.start_date),
             _to_kyiv_naive(i.end_date),
-            i.event_format or '',
+            FORMAT_LABEL.get(i.event_format, i.event_format or ''),
             float(i.price) if i.price is not None else None,
             i.cpd_points,
             i.max_participants,
-            trainer_slug_by_id.get(i.trainer_id, '') if i.trainer_id else '',
+            trainer_name_by_id.get(i.trainer_id, '') if i.trainer_id else '',
             i.location or '',
             i.online_link or '',
-            i.status or 'draft',
+            STATUS_LABEL.get(i.status, i.status or 'draft'),
         ]
         for col_idx, v in enumerate(values, start=1):
             cell = ws.cell(row=row_idx, column=col_idx, value=v)
             cell.alignment = WRAP
 
-        # Кольори за event_format і status.
+    instances_last_row = ws.max_row
+
+    # ЗЕБРА до enum-кольорів, щоб ті перекрили її.
+    _apply_zebra(ws, len(INSTANCE_COLS), first_data_row=2, last_data_row=instances_last_row)
+
+    # ----- Кольори за значенням -----------------------------------------
+    fmt_col = INSTANCE_COLS.index('event_format') + 1
+    st_col = INSTANCE_COLS.index('status') + 1
+    for row_idx, i in enumerate(instances, start=2):
         if i.event_format in EVENT_FORMAT_FILLS:
-            fmt_col = INSTANCE_COLS.index('event_format') + 1
             ws.cell(row=row_idx, column=fmt_col).fill = EVENT_FORMAT_FILLS[i.event_format]
         if i.status in STATUS_FILLS:
-            st_col = INSTANCE_COLS.index('status') + 1
             ws.cell(row=row_idx, column=st_col).fill = STATUS_FILLS[i.status]
 
-    instances_last_row = ws.max_row
     _set_column_widths(ws, INSTANCE_COLS, INSTANCE_WIDTHS)
     _apply_number_formats(ws, INSTANCE_COLS, instances_last_row)
 
@@ -1142,20 +1181,20 @@ def export_instances_xlsx(
         trainers_last_row=trainers_last_row,
     )
 
-    # Drop-down для формату та статусу.
+    # Drop-down для формату та статусу — українські labels.
     _add_inline_dropdown(
         ws, 'event_format', INSTANCE_COLS,
-        options=[k for k, _ in CourseInstance.FORMATS],
+        options=[label for _key, label in CourseInstance.FORMATS],
         last_data_row=instances_last_row,
         title='Формат',
-        hint='online / offline / hybrid',
+        hint='Оберіть формат: Онлайн / Офлайн / Гібрид',
     )
     _add_inline_dropdown(
         ws, 'status', INSTANCE_COLS,
-        options=[k for k, _ in CourseInstance.STATUSES],
+        options=[label for _key, label in CourseInstance.STATUSES],
         last_data_row=instances_last_row,
         title='Статус',
-        hint='draft / published / active / completed / cancelled',
+        hint='Чернетка / Опубліковано / Активний / Завершено / Скасовано',
     )
 
     # Excel Table style.
@@ -1187,7 +1226,9 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
         return plan
 
     course_id_by_slug = {c.slug: c.id for c in Course.query.all()}
-    trainer_id_by_slug = {t.slug: t.id for t in Trainer.query.all()}
+    _all_trainers = Trainer.query.all()
+    trainer_id_by_slug = {t.slug: t.id for t in _all_trainers}
+    trainer_id_by_name = {t.full_name: t.id for t in _all_trainers}
     existing_by_id = {i.id: i for i in CourseInstance.query.all()}
 
     for line_no, raw in enumerate(rows, start=2):
@@ -1209,11 +1250,17 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
                     f'start_date ({start_date.isoformat()})'
                 )
 
-            event_format = _str(raw.get('event_format'))
+            event_format_raw = _str(raw.get('event_format'))
+            # Приймаємо як ('Онлайн','Офлайн','Гібрид'), так і ('online',
+            # 'offline','hybrid') -- нормалізуємо у internal key.
+            event_format = (
+                FORMAT_KEY_BY_LABEL.get(event_format_raw, event_format_raw)
+                if event_format_raw else None
+            )
             if event_format and event_format not in VALID_FORMATS:
+                allowed = sorted(VALID_FORMATS) + sorted(FORMAT_KEY_BY_LABEL.keys())
                 raise ValueError(
-                    f'event_format={event_format!r} -- допустимі: '
-                    f'{sorted(VALID_FORMATS)}'
+                    f'event_format={event_format_raw!r} -- допустимі: {allowed}'
                 )
 
             online_link = _str(raw.get('online_link'))
@@ -1224,20 +1271,26 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
             # замовчуванням; порожній online_link можна допилити в адмінці.
             # Hard-error лише на end_date < start_date (вище).
 
-            status = _str(raw.get('status')) or 'draft'
+            status_raw = _str(raw.get('status')) or 'draft'
+            status = STATUS_KEY_BY_LABEL.get(status_raw, status_raw)
             if status not in VALID_STATUSES:
+                allowed = sorted(VALID_STATUSES) + sorted(STATUS_KEY_BY_LABEL.keys())
                 raise ValueError(
-                    f'status={status!r} -- допустимі: '
-                    f'{sorted(VALID_STATUSES)}'
+                    f'status={status_raw!r} -- допустимі: {allowed}'
                 )
 
-            trainer_slug = _str(raw.get('trainer_slug'))
+            # Колонка "Тренер" -- ПІБ (новий формат) або slug (старий).
+            trainer_raw = _str(raw.get('trainer_slug'))
             trainer_id = None
-            if trainer_slug:
-                trainer_id = trainer_id_by_slug.get(trainer_slug)
+            if trainer_raw:
+                trainer_id = (
+                    trainer_id_by_slug.get(trainer_raw)
+                    or trainer_id_by_name.get(trainer_raw)
+                )
                 if trainer_id is None:
                     raise ValueError(
-                        f'тренера за slug={trainer_slug!r} не знайдено'
+                        f'тренера {trainer_raw!r} не знайдено '
+                        f'(ні за slug, ні за ПІБ)'
                     )
 
             parsed = {
