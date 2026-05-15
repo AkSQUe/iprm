@@ -36,11 +36,15 @@ def courses_export():
         current_user.email, active,
     )
     suffix = f'-active' if active == 'true' else ('-inactive' if active == 'false' else '')
+    # max_age=0: SEND_FILE_MAX_AGE_DEFAULT у Flask = 1 рік; без явного override
+    # браузер кешує xlsx-download з тією ж URL надовго і повторні клік-експорти
+    # повертають закешований стейл-файл замість нової генерації.
     return send_file(
         data,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         as_attachment=True,
         download_name=f'courses{suffix}-{datetime.now().strftime("%Y%m%d-%H%M")}.xlsx',
+        max_age=0,
     )
 
 
@@ -170,6 +174,7 @@ def instances_export():
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         as_attachment=True,
         download_name='-'.join(parts) + '.xlsx',
+        max_age=0,
     )
 
 
