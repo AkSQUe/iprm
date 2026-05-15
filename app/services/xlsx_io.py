@@ -37,6 +37,7 @@ from flask import current_app
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.datavalidation import DataValidation
 
 from app.extensions import db
 from app.models.course import Course
@@ -114,13 +115,17 @@ def cleanup_stale_xlsx_uploads(max_age_minutes: int = 30) -> int:
     return removed
 
 
-def _style_header(ws, columns: list[str]) -> None:
-    for col_idx, name in enumerate(columns, start=1):
-        cell = ws.cell(row=1, column=col_idx, value=name)
+def _style_header(ws, columns: list[str], labels: dict[str, str] | None = None) -> None:
+    """Записати заголовки. `columns` -- internal keys; `labels` (опціонально) --
+    map key -> українська назва. Якщо labels не передано, пишемо самі keys
+    (для зворотньої сумісності з тестами).
+    """
+    for col_idx, key in enumerate(columns, start=1):
+        display = labels.get(key, key) if labels else key
+        cell = ws.cell(row=1, column=col_idx, value=display)
         cell.fill = HEADER_FILL
         cell.font = HEADER_FONT
-        # ширина за замовчуванням пропорційна назві + запас
-        ws.column_dimensions[get_column_letter(col_idx)].width = max(12, len(name) + 2)
+        ws.column_dimensions[get_column_letter(col_idx)].width = max(14, len(display) + 2)
     ws.freeze_panes = 'A2'
 
 
@@ -200,8 +205,122 @@ COURSE_COLS = [
     'target_audience', 'tags', 'is_active', 'is_featured',
 ]
 
+# Українські назви колонок для заголовків xlsx. Імпорт приймає обидва
+# варіанти (англ. internal key АБО українську підпис) -- це гарантує
+# що файли, експортовані раніше зі старими заголовками, ще можна
+# завантажувати.
+COURSE_LABELS = {
+    'id': 'ID',
+    'slug': 'Slug (URL)',
+    'title': 'Назва',
+    'subtitle': 'Підзаголовок',
+    'short_description': 'Короткий опис',
+    'description': 'Повний опис',
+    'event_type': 'Тип',
+    'base_price': 'Ціна (грн)',
+    'cpd_points': 'Бали БПР',
+    'max_participants': 'Макс. учасників',
+    'trainer_slug': 'Тренер (slug)',
+    'hero_image': 'Hero-зображення',
+    'card_image': 'Зображення картки',
+    'speaker_info': 'Інфо про спікера',
+    'agenda': 'Програма (опис)',
+    'target_audience': 'Цільова аудиторія',
+    'tags': 'Теги',
+    'is_active': 'Активний',
+    'is_featured': 'Рекомендований',
+}
+
 PROGRAM_COLS = ['course_slug', 'sort_order', 'heading', 'items']
+PROGRAM_LABELS = {
+    'course_slug': 'Курс (slug)',
+    'sort_order': 'Порядок',
+    'heading': 'Заголовок',
+    'items': 'Пункти',
+}
+
 FAQ_COLS = ['course_slug', 'question', 'answer']
+FAQ_LABELS = {
+    'course_slug': 'Курс (slug)',
+    'question': 'Запитання',
+    'answer': 'Відповідь',
+}
+
+# Назви sheet-ів. Експортуємо в українській, парсинг приймає обидва.
+SHEET_ALIASES = {
+    'courses': ['Курси', 'Courses'],
+    'program_blocks': ['Блоки програми', 'Program blocks'],
+    'faq': ['FAQ'],
+    'instances': ['Розклад', 'Instances'],
+}
+
+
+def _find_sheet(wb, key: str):
+    """Знайти sheet за будь-яким з прийнятних псевдонімів."""
+    for name in SHEET_ALIASES.get(key, []):
+        if name in wb.sheetnames:
+            return wb[name]
+    return None
+
+
+# Кількість рядків, на які поширюється data-validation drop-down у
+# колонці trainer_slug. Менеджер може дописувати нові рядки знизу --
+# валідація все одно покриватиме. 500 з запасом.
+_DROPDOWN_BUFFER_ROWS = 500
+_TRAINERS_SHEET_NAME = 'Тренери'
+
+
+def _add_trainers_sheet(wb) -> int:
+    """Додати reference-sheet з активними тренерами. Повертає номер
+    останнього рядка з даними (для побудови formula1 у DataValidation).
+    """
+    ws = wb.create_sheet(_TRAINERS_SHEET_NAME)
+    _style_header(
+        ws,
+        ['slug', 'full_name', 'role'],
+        {'slug': 'Slug (значення)', 'full_name': 'ПІБ', 'role': 'Посада'},
+    )
+
+    trainers = (
+        Trainer.query.filter_by(is_active=True)
+        .order_by(Trainer.full_name)
+        .all()
+    )
+    for row_idx, t in enumerate(trainers, start=2):
+        ws.cell(row=row_idx, column=1, value=t.slug)
+        ws.cell(row=row_idx, column=2, value=t.full_name).alignment = WRAP
+        ws.cell(row=row_idx, column=3, value=t.role or '').alignment = WRAP
+
+    # Розширюємо ширину колонок під ПІБ/посаду
+    ws.column_dimensions['B'].width = 36
+    ws.column_dimensions['C'].width = 50
+    return 1 + len(trainers)
+
+
+def _add_trainer_dropdown(ws, column_key: str, columns: list[str],
+                          last_data_row: int, trainers_last_row: int) -> None:
+    """Прикріпити data-validation drop-down з тренерами до вказаної
+    колонки. range покриває існуючі рядки + буфер для додавання нових.
+    """
+    if trainers_last_row < 2:  # порожній список тренерів
+        return
+    col_letter = get_column_letter(columns.index(column_key) + 1)
+    formula = f"={_TRAINERS_SHEET_NAME}!$A$2:$A${trainers_last_row}"
+    dv = DataValidation(
+        type='list',
+        formula1=formula,
+        allow_blank=True,
+        # showDropDown у OOXML інвертоване: False = ПОКАЗУВАТИ стрілочку
+        showDropDown=False,
+        errorStyle='warning',
+        error='Тренер з таким slug відсутній у sheet "Тренери".',
+        errorTitle='Невідомий тренер',
+        prompt='Оберіть тренера зі списку (натисніть стрілочку)',
+        promptTitle='Тренер',
+    )
+    final_row = max(last_data_row, 1) + _DROPDOWN_BUFFER_ROWS
+    dv.add(f'{col_letter}2:{col_letter}{final_row}')
+    ws.add_data_validation(dv)
 
 
 @dataclass
@@ -244,8 +363,8 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
     """
     wb = Workbook()
     ws = wb.active
-    ws.title = 'Courses'
-    _style_header(ws, COURSE_COLS)
+    ws.title = 'Курси'
+    _style_header(ws, COURSE_COLS, COURSE_LABELS)
 
     trainer_slug_by_id = {t.id: t.slug for t in Trainer.query.all()}
 
@@ -282,8 +401,8 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             cell.alignment = WRAP
 
     # Program blocks
-    ws_p = wb.create_sheet('Program blocks')
-    _style_header(ws_p, PROGRAM_COLS)
+    ws_p = wb.create_sheet('Блоки програми')
+    _style_header(ws_p, PROGRAM_COLS, PROGRAM_LABELS)
     row_idx = 2
     for c in courses:
         for b in sorted(c.program_blocks, key=lambda x: x.sort_order or 0):
@@ -295,7 +414,7 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
 
     # FAQ
     ws_f = wb.create_sheet('FAQ')
-    _style_header(ws_f, FAQ_COLS)
+    _style_header(ws_f, FAQ_COLS, FAQ_LABELS)
     row_idx = 2
     for c in courses:
         for item in (c.faq or []):
@@ -306,24 +425,56 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             ws_f.cell(row=row_idx, column=3, value=item.get('answer') or '').alignment = WRAP
             row_idx += 1
 
+    # Reference sheet з тренерами + drop-down у колонці trainer_slug курсів.
+    trainers_last_row = _add_trainers_sheet(wb)
+    _add_trainer_dropdown(
+        ws, 'trainer_slug', COURSE_COLS,
+        last_data_row=ws.max_row,
+        trainers_last_row=trainers_last_row,
+    )
+
     out = io.BytesIO()
     wb.save(out)
     out.seek(0)
     return out
 
 
-def _read_sheet(ws, columns: list[str]) -> list[dict]:
-    """Прочитати sheet у list[dict], колонки очікуються рівно як в `columns`."""
+def _read_sheet(ws, columns: list[str], labels: dict[str, str] | None = None) -> list[dict]:
+    """Прочитати sheet у list[dict].
+
+    Заголовки приймаються або як internal key (англ., 'slug'), або як
+    українські labels (з `labels`), для зворотньої сумісності зі старими
+    xlsx-файлами.
+    """
     if ws.max_row < 2:
         return []
     header = [c.value for c in ws[1]]
-    # m: name -> col index (1-based)
-    col_idx = {name: i + 1 for i, name in enumerate(header) if name}
+
+    # accepted: будь-яка валідна назва заголовка -> internal key
+    accepted: dict[str, str] = {}
+    for key in columns:
+        accepted[key] = key
+        accepted[key.lower()] = key
+        if labels and key in labels:
+            ua = labels[key]
+            accepted[ua] = key
+            accepted[ua.lower()] = key
+
+    col_idx: dict[str, int] = {}
+    for i, hv in enumerate(header):
+        if hv is None:
+            continue
+        key = accepted.get(str(hv).strip()) or accepted.get(str(hv).strip().lower())
+        if key:
+            col_idx[key] = i + 1
+
     missing = [c for c in columns if c not in col_idx]
     if missing:
+        pretty = [(labels.get(k, k) if labels else k) for k in missing]
         raise ValueError(
-            f'Sheet "{ws.title}": бракує колонок: {", ".join(missing)}'
+            f'Sheet "{ws.title}": бракує колонок: {", ".join(pretty)}'
         )
+
     rows = []
     for row in ws.iter_rows(min_row=2, values_only=True):
         if not any(v is not None and str(v).strip() for v in row):
@@ -342,12 +493,13 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
         return plan
 
     # ---- Courses sheet ----
-    if 'Courses' not in wb.sheetnames:
-        plan.errors.append('Відсутній sheet "Courses"')
+    ws_c = _find_sheet(wb, 'courses')
+    if ws_c is None:
+        plan.errors.append('Відсутній sheet "Курси"')
         return plan
 
     try:
-        rows = _read_sheet(wb['Courses'], COURSE_COLS)
+        rows = _read_sheet(ws_c, COURSE_COLS, COURSE_LABELS)
     except ValueError as exc:
         plan.errors.append(str(exc))
         return plan
@@ -446,9 +598,10 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
             ))
 
     # ---- Program blocks sheet ----
-    if 'Program blocks' in wb.sheetnames:
+    ws_p = _find_sheet(wb, 'program_blocks')
+    if ws_p is not None:
         try:
-            p_rows = _read_sheet(wb['Program blocks'], PROGRAM_COLS)
+            p_rows = _read_sheet(ws_p, PROGRAM_COLS, PROGRAM_LABELS)
         except ValueError as exc:
             plan.errors.append(str(exc))
             p_rows = []
@@ -472,9 +625,10 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
                 plan.errors.append(f'Рядок {line_no} (Program blocks): {exc}')
 
     # ---- FAQ sheet ----
-    if 'FAQ' in wb.sheetnames:
+    ws_f = _find_sheet(wb, 'faq')
+    if ws_f is not None:
         try:
-            f_rows = _read_sheet(wb['FAQ'], FAQ_COLS)
+            f_rows = _read_sheet(ws_f, FAQ_COLS, FAQ_LABELS)
         except ValueError as exc:
             plan.errors.append(str(exc))
             f_rows = []
@@ -630,6 +784,21 @@ INSTANCE_COLS = [
     'location', 'online_link', 'status',
 ]
 
+INSTANCE_LABELS = {
+    'id': 'ID',
+    'course_slug': 'Курс (slug)',
+    'start_date': 'Початок',
+    'end_date': 'Кінець',
+    'event_format': 'Формат',
+    'price': 'Ціна (грн)',
+    'cpd_points': 'Бали БПР',
+    'max_participants': 'Макс. учасників',
+    'trainer_slug': 'Тренер (slug)',
+    'location': 'Локація',
+    'online_link': 'Онлайн-лінк',
+    'status': 'Статус',
+}
+
 
 @dataclass
 class InstanceChange:
@@ -673,8 +842,8 @@ def export_instances_xlsx(
     """
     wb = Workbook()
     ws = wb.active
-    ws.title = 'Instances'
-    _style_header(ws, INSTANCE_COLS)
+    ws.title = 'Розклад'
+    _style_header(ws, INSTANCE_COLS, INSTANCE_LABELS)
 
     course_slug_by_id = {c.id: c.slug for c in Course.query.all()}
     trainer_slug_by_id = {t.id: t.slug for t in Trainer.query.all()}
@@ -712,6 +881,14 @@ def export_instances_xlsx(
             cell = ws.cell(row=row_idx, column=col_idx, value=v)
             cell.alignment = WRAP
 
+    # Reference sheet з тренерами + drop-down у колонці trainer_slug розкладу.
+    trainers_last_row = _add_trainers_sheet(wb)
+    _add_trainer_dropdown(
+        ws, 'trainer_slug', INSTANCE_COLS,
+        last_data_row=ws.max_row,
+        trainers_last_row=trainers_last_row,
+    )
+
     out = io.BytesIO()
     wb.save(out)
     out.seek(0)
@@ -726,12 +903,13 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
         plan.errors.append(f'Не вдалося відкрити xlsx: {exc}')
         return plan
 
-    if 'Instances' not in wb.sheetnames:
-        plan.errors.append('Відсутній sheet "Instances"')
+    ws_i = _find_sheet(wb, 'instances')
+    if ws_i is None:
+        plan.errors.append('Відсутній sheet "Розклад"')
         return plan
 
     try:
-        rows = _read_sheet(wb['Instances'], INSTANCE_COLS)
+        rows = _read_sheet(ws_i, INSTANCE_COLS, INSTANCE_LABELS)
     except ValueError as exc:
         plan.errors.append(str(exc))
         return plan
