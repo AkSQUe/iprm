@@ -13,6 +13,22 @@
 
   <h1 class="reg-confirmation__title">Реєстрація на курс</h1>
 
+  {# ===== 3-крокова смуга прогресу ===== #}
+  <ol class="reg-steps" aria-label="Процес реєстрації">
+    <li class="reg-steps__item reg-steps__item--current">
+      <span class="reg-steps__num">1</span>
+      <span class="reg-steps__label">Заповніть форму</span>
+    </li>
+    <li class="reg-steps__item">
+      <span class="reg-steps__num">2</span>
+      <span class="reg-steps__label">Оплатіть участь</span>
+    </li>
+    <li class="reg-steps__item">
+      <span class="reg-steps__num">3</span>
+      <span class="reg-steps__label">Отримайте підтвердження</span>
+    </li>
+  </ol>
+
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     <div role="alert" aria-live="polite">
@@ -23,7 +39,7 @@
     {% endif %}
   {% endwith %}
 
-  <!-- Event summary -->
+  {# ===== Event summary ===== #}
   <div class="reg-event-card">
     <h2 class="reg-event-card__title">{{ event.title }}</h2>
     <div class="reg-event-card__meta">
@@ -44,42 +60,96 @@
     </div>
   </div>
 
-  <!-- User info (read-only) -->
-  <div class="reg-user-info">
-    <div class="reg-user-info__item">
-      <span>Ім'я</span>
-      {{ current_user.first_name }} {{ current_user.last_name }}
-    </div>
-    <div class="reg-user-info__item">
-      <span>Email</span>
-      {{ current_user.email }}
-    </div>
-  </div>
+  {# ===== МОЗ-нотис (вимоги номенклатури) ===== #}
+  <aside class="reg-moh-notice" role="note">
+    <div class="reg-moh-notice__icon" aria-hidden="true">i</div>
+    <p>
+      У зв'язку з новими вимогами МОЗ України —
+      «<strong>№725 «Про затвердження Положення про систему безперервного
+      професійного розвитку медичних та фармацевтичних працівників»</strong>
+      зі змінами» п. 13, просимо Вас заповнити вказані поля нижче.
+    </p>
+  </aside>
 
-  <!-- Registration form -->
+  <p class="reg-attention">
+    <strong>Будьте уважні!</strong> Одна реєстрація — одне підключення.
+    Будь ласка, вказуйте контактні дані саме учасника заходу.
+  </p>
+
+  {# ===== Registration form ===== #}
   <form method="POST" action="{{ url_for('registration.register_instance', instance_id=event.id) }}" data-single-submit>
     {{ form.hidden_tag() }}
 
+    {# ----- Тип учасника ----- #}
     <div class="form-section reg-form-section">
-      <h3 class="form-section__title reg-form-section__title">Професійна інформація</h3>
+      <h3 class="form-section__title reg-form-section__title">Тип учасника</h3>
+      <div class="reg-user-type">
+        {% for code, label in form.user_type.choices if code %}
+          <label class="reg-user-type__option">
+            <input type="radio" name="user_type" value="{{ code }}"
+                   {% if form.user_type.data == code %}checked{% endif %}>
+            <span>{{ label }}</span>
+          </label>
+        {% endfor %}
+      </div>
+      {% for error in form.user_type.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+    </div>
+
+    {# ----- ПІБ + контакти ----- #}
+    <div class="form-section reg-form-section">
+      <h3 class="form-section__title reg-form-section__title">Особисті дані</h3>
       <div class="form-section__grid">
+        <div class="form-group">
+          <label for="last_name">Прізвище <span class="required">*</span></label>
+          {{ form.last_name(class="form-input" + (" is-invalid" if form.last_name.errors else ""), id="last_name") }}
+          {% for e in form.last_name.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="first_name">Ім'я <span class="required">*</span></label>
+          {{ form.first_name(class="form-input" + (" is-invalid" if form.first_name.errors else ""), id="first_name") }}
+          {% for e in form.first_name.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="middle_name">По батькові</label>
+          {{ form.middle_name(class="form-input", id="middle_name") }}
+        </div>
 
         <div class="form-group">
           <label for="phone">Телефон <span class="required">*</span></label>
-          {{ form.phone(class="form-input" + (" is-invalid" if form.phone.errors else ""), id="phone", autocomplete="tel") }}
-          {% for error in form.phone.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          {{ form.phone(class="form-input" + (" is-invalid" if form.phone.errors else ""), id="phone") }}
+          {% for e in form.phone.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group">
-          <label for="specialty">Спеціальність <span class="required">*</span></label>
-          {{ form.specialty(class="form-input" + (" is-invalid" if form.specialty.errors else ""), id="specialty", autocomplete="organization-title") }}
-          {% for error in form.specialty.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          <label for="birth_date">Дата народження <span class="required">*</span></label>
+          {{ form.birth_date(class="form-input" + (" is-invalid" if form.birth_date.errors else ""), id="birth_date", type="date") }}
+          {% for e in form.birth_date.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# ----- Освіта і місце роботи ----- #}
+    <div class="form-section reg-form-section">
+      <h3 class="form-section__title reg-form-section__title">Освіта та робота</h3>
+      <div class="form-section__grid">
+        <div class="form-group form-section__full">
+          <label for="education">Освіта (рік закінчення та назва ВНЗ) <span class="required">*</span></label>
+          {{ form.education(class="form-input" + (" is-invalid" if form.education.errors else ""), id="education") }}
+          {% for e in form.education.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group form-section__full">
-          <label for="workplace">Місце роботи <span class="required">*</span></label>
-          {{ form.workplace(class="form-input" + (" is-invalid" if form.workplace.errors else ""), id="workplace", autocomplete="organization") }}
-          {% for error in form.workplace.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          <label for="workplace">Місце роботи (назва ЗОЗу) <span class="required">*</span></label>
+          {{ form.workplace(class="form-input" + (" is-invalid" if form.workplace.errors else ""), id="workplace") }}
+          {% for e in form.workplace.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="position">Займана посада <span class="required">*</span></label>
+          {{ form.position(class="form-input" + (" is-invalid" if form.position.errors else ""), id="position") }}
+          {% for e in form.position.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group">
@@ -87,19 +157,43 @@
           {{ form.experience_years(class="form-input", id="experience_years") }}
         </div>
 
-        <div class="form-group">
-          <label for="license_number">Номер ліцензії</label>
+        <div class="form-group form-section__full">
+          <label for="license_number">Номер ліцензії <span class="form-hint-inline">(опціонально)</span></label>
           {{ form.license_number(class="form-input", id="license_number") }}
         </div>
-
       </div>
     </div>
 
+    {# ----- Спеціалізації (multi-select як checkbox-grid) ----- #}
+    <div class="form-section reg-form-section">
+      <h3 class="form-section__title reg-form-section__title">
+        Спеціалізації <span class="required">*</span>
+      </h3>
+      <p class="reg-form-section__hint">Можна обрати декілька. Пошук — Ctrl+F у браузері.</p>
+      <div class="reg-specializations" data-spec-list>
+        {% set selected_specs = form.specializations.data or [] %}
+        {% for code, label in form.specializations.choices %}
+          <label class="reg-specializations__item">
+            <input type="checkbox" name="specializations" value="{{ code }}"
+                   {% if code in selected_specs %}checked{% endif %}>
+            <span>{{ label }}</span>
+          </label>
+        {% endfor %}
+      </div>
+      {% for e in form.specializations.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+    </div>
+
+    {# ----- Згоди ----- #}
     <div class="form-consent">
       <div class="form-checkbox">
         {{ form.consent_data(id="consent_data") }}
         <label for="consent_data">
-          Я надаю згоду на обробку моїх персональних даних (прізвище, ім'я, електронна пошта, номер телефону, спеціальність, місце роботи) з метою оформлення та виконання реєстрації на захід, а також обробки платежу через платіжну систему LiqPay. Ознайомлений(а) з <a href="{{ url_for('main.privacy') }}" target="_blank" rel="noopener noreferrer">Політикою конфіденційності</a>. <span class="required">*</span>
+          Я надаю згоду на обробку моїх персональних даних (ПІБ, дата народження,
+          електронна пошта, номер телефону, освіта, спеціалізація, місце роботи)
+          з метою оформлення та виконання реєстрації на захід, а також обробки
+          платежу через платіжну систему LiqPay. Ознайомлений(а) з
+          <a href="{{ url_for('main.privacy') }}" target="_blank" rel="noopener noreferrer">Політикою конфіденційності</a>.
+          <span class="required">*</span>
         </label>
       </div>
       {% for error in form.consent_data.errors %}
@@ -109,9 +203,21 @@
       <div class="form-checkbox">
         {{ form.consent_marketing(id="consent_marketing") }}
         <label for="consent_marketing">
-          Я надаю згоду на отримання інформації про акції, спеціальні пропозиції та новини від {{ site_settings.company_legal_name }} на вказану електронну адресу та/або номер телефону. Цю згоду можна відкликати в будь-який момент.
+          Я надаю згоду на отримання інформації про акції, спеціальні пропозиції
+          та новини від {{ site_settings.company_legal_name }} на вказану
+          електронну адресу та/або номер телефону. Цю згоду можна відкликати
+          в будь-який момент.
         </label>
       </div>
+    </div>
+
+    {# ----- Payment-логотипи + submit ----- #}
+    <div class="reg-payment-logos" aria-label="Безпечна оплата через LiqPay (Visa, Mastercard, Google Pay, Apple Pay)">
+      <span class="reg-payment-logos__label">Безпечна оплата:</span>
+      <span class="reg-payment-logos__brand reg-payment-logos__brand--visa">VISA</span>
+      <span class="reg-payment-logos__brand reg-payment-logos__brand--mc">Mastercard</span>
+      <span class="reg-payment-logos__brand">Google Pay</span>
+      <span class="reg-payment-logos__brand">Apple Pay</span>
     </div>
 
     <div class="reg-actions">
@@ -125,6 +231,11 @@
       </button>
     </div>
   </form>
+
+  <p class="reg-contact-cta">
+    Маєте питання?
+    <a href="{{ url_for('main.contact') }}">Зворотній зв'язок</a>
+  </p>
 
 </div>
 {% endblock %}

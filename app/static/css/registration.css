@@ -233,3 +233,386 @@
     padding: 24px 16px;
   }
 }
+
+
+/* ===========================================================
+   Phase 2: новий реєстраційний flow (під evopro-подібний UX)
+   =========================================================== */
+
+/* ---------- 3-step progress indicator ---------- */
+.reg-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 32px;
+  counter-reset: step;
+}
+
+.reg-steps__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  color: var(--apple-gray);
+  position: relative;
+}
+
+.reg-steps__item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: calc(50% + 28px);
+  right: calc(-50% + 28px);
+  height: 2px;
+  background: var(--iprm-border);
+  z-index: 0;
+}
+
+.reg-steps__num {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: var(--iprm-white);
+  border: 2px solid var(--iprm-border);
+  color: var(--apple-gray);
+  position: relative;
+  z-index: 1;
+}
+
+.reg-steps__item--current .reg-steps__num {
+  background: var(--iprm-accent);
+  border-color: var(--iprm-accent);
+  color: var(--iprm-white);
+}
+
+.reg-steps__item--current {
+  color: var(--apple-black);
+}
+
+.reg-steps__item--done .reg-steps__num {
+  background: var(--iprm-accent-light);
+  border-color: var(--iprm-accent);
+  color: var(--iprm-accent);
+}
+
+.reg-steps__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 640px) {
+  .reg-steps {
+    gap: 8px;
+  }
+  .reg-steps__item::after { display: none; }
+  .reg-steps__num { width: 36px; height: 36px; font-size: 1rem; }
+  .reg-steps__label { font-size: 0.6875rem; letter-spacing: 0.04em; }
+}
+
+/* ---------- МОЗ нотис ---------- */
+.reg-moh-notice {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 16px;
+  align-items: start;
+  background: var(--iprm-accent-light);
+  border-left: 4px solid var(--iprm-accent);
+  border-radius: var(--iprm-radius-sm);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--apple-black);
+}
+
+.reg-moh-notice__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--iprm-accent);
+  color: var(--iprm-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: italic;
+  font-weight: 700;
+  font-family: serif;
+}
+
+.reg-moh-notice p { margin: 0; }
+
+.reg-attention {
+  font-size: 0.9375rem;
+  color: var(--iprm-text-light);
+  margin: 0 0 24px;
+  padding: 12px 16px;
+  background: var(--apple-section-bg);
+  border-radius: var(--iprm-radius-sm);
+}
+
+.reg-attention strong { color: var(--apple-black); }
+
+/* ---------- Тип учасника (radio chips) ---------- */
+.reg-user-type {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.reg-user-type__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  cursor: pointer;
+  font-size: 0.9375rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.reg-user-type__option:hover {
+  border-color: var(--apple-gray-light);
+}
+
+.reg-user-type__option:has(input:checked) {
+  border-color: var(--iprm-accent);
+  background: var(--iprm-accent-light);
+}
+
+.reg-user-type__option input[type="radio"] {
+  accent-color: var(--iprm-accent);
+}
+
+/* ---------- Multi-select спеціалізацій (checkbox-grid) ---------- */
+.reg-specializations {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 6px 12px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 16px;
+  background: var(--apple-section-bg);
+  border-radius: var(--iprm-radius-sm);
+  border: 1px solid var(--iprm-border);
+}
+
+.reg-specializations__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.reg-specializations__item:hover {
+  background: rgba(112, 85, 164, 0.06);
+}
+
+.reg-specializations__item:has(input:checked) {
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
+  font-weight: 500;
+}
+
+.reg-specializations__item input[type="checkbox"] {
+  accent-color: var(--iprm-accent);
+}
+
+.reg-form-section__hint {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  color: var(--apple-gray);
+}
+
+.form-hint-inline {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--apple-gray);
+}
+
+/* ---------- Payment logos ---------- */
+.reg-payment-logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 0;
+  margin: 16px 0;
+  border-top: 1px solid var(--iprm-border);
+  border-bottom: 1px solid var(--iprm-border);
+  font-size: 0.875rem;
+  color: var(--apple-gray);
+}
+
+.reg-payment-logos__label {
+  font-weight: 500;
+  color: var(--apple-black);
+}
+
+.reg-payment-logos__brand {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  color: var(--apple-black);
+  text-transform: uppercase;
+}
+
+.reg-payment-logos__brand--visa {
+  color: #1A1F71;
+  background: #fff;
+  border-color: #1A1F71;
+}
+
+.reg-payment-logos__brand--mc {
+  color: #EB001B;
+  border-color: #EB001B;
+}
+
+/* ---------- Контакт-CTA ---------- */
+.reg-contact-cta {
+  text-align: center;
+  margin: 24px 0 0;
+  font-size: 0.9375rem;
+  color: var(--apple-gray);
+}
+
+.reg-contact-cta a {
+  color: var(--iprm-accent);
+  font-weight: 500;
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.reg-contact-cta a:hover { text-decoration: underline; }
+
+/* ---------- Success banner на confirmation page ---------- */
+.reg-success-banner {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(135deg, #d9b3ff 0%, #c178f0 50%, #a04ad8 100%);
+  border-radius: var(--iprm-radius);
+  padding: 32px 36px;
+  margin-bottom: 32px;
+  color: var(--iprm-white);
+  box-shadow: 0 8px 24px rgba(160, 74, 216, 0.18);
+}
+
+.reg-success-banner__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #16a34a;
+  color: var(--iprm-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.reg-success-banner__title {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #16a34a;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.reg-success-banner__subtitle {
+  margin: 0 0 4px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #166534;
+}
+
+.reg-success-banner__amount {
+  margin: 8px 0 0;
+  font-size: 1rem;
+  color: #166534;
+}
+
+.reg-success-banner__amount strong { font-size: 1.125rem; }
+
+.reg-success-banner--confirmed { background: linear-gradient(135deg, #d1fae5 0%, #6ee7b7 100%); }
+.reg-success-banner--cancelled { background: linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%); }
+.reg-success-banner--cancelled .reg-success-banner__title { color: #dc2626; }
+
+/* ---------- Велика кнопка "Оплатити" ---------- */
+.reg-pay-cta {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.reg-pay-cta__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: #16a34a;
+  color: var(--iprm-white);
+  border: none;
+  border-radius: var(--iprm-radius-sm);
+  padding: 20px 56px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
+}
+
+.reg-pay-cta__btn:hover {
+  background: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.35);
+}
+
+.reg-pay-cta__arrow {
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.reg-pay-cta__note {
+  margin: 16px 0 0;
+  font-size: 0.8125rem;
+  color: var(--apple-gray);
+}
+
+.reg-pay-cta--processing {
+  padding: 24px;
+  background: var(--iprm-warning-bg, #fef3c7);
+  border-radius: var(--iprm-radius-sm);
+}
+
+@media (max-width: 640px) {
+  .reg-success-banner {
+    grid-template-columns: 1fr;
+    text-align: center;
+    padding: 24px;
+  }
+  .reg-success-banner__icon { margin: 0 auto; }
+  .reg-pay-cta__btn {
+    padding: 16px 32px;
+    font-size: 1.0625rem;
+  }
+  .reg-specializations { max-height: 240px; }
+}

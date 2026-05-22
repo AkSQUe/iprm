@@ -78,6 +78,50 @@ def _maybe_consume_prefill_token():
     }
 
 
+def _initial_form_data_from_user(user):
+    """Зібрати pre-fill для EventRegistrationForm з User-профілю.
+
+    Викликається на GET (показати форму) — користувач бачить попередньо
+    заповнені поля з минулих реєстрацій і не вводить дані повторно.
+    """
+    return {
+        'user_type': user.user_type or '',
+        'last_name': user.last_name or '',
+        'first_name': user.first_name or '',
+        'middle_name': user.middle_name or '',
+        'phone': user.phone or '',
+        'birth_date': user.birth_date,
+        'education': user.education or '',
+        'workplace': user.workplace or '',
+        'position': user.position or '',
+        'specializations': user.specializations or [],
+    }
+
+
+def _sync_user_profile_from_form(user, form):
+    """Записати медичні поля назад у User. Викликається на POST перед
+    створенням Registration. Це eager-update: якщо користувач щось
+    змінив на формі (новий телефон, нова посада) -- профіль теж оновиться.
+    """
+    user.user_type = form.user_type.data
+    user.last_name = (form.last_name.data or '').strip() or None
+    user.first_name = (form.first_name.data or '').strip() or None
+    user.middle_name = (form.middle_name.data or '').strip() or None
+    user.phone = (form.phone.data or '').strip() or None
+    user.birth_date = form.birth_date.data
+    user.education = (form.education.data or '').strip() or None
+    user.workplace = (form.workplace.data or '').strip() or None
+    user.position = (form.position.data or '').strip() or None
+    user.specializations = list(form.specializations.data or [])
+
+
+def _spec_labels(codes):
+    """Локально імпортуємо щоб не тягнути specializations при cold-import
+    routes.py під test-collection."""
+    from app.models.specializations import labels_for_codes
+    return labels_for_codes(codes)
+
+
 def _login_next_path():
     """Будує `next`-URL для редіректу на /login, прибираючи `prefill`-токен.
 
@@ -130,7 +174,13 @@ def register_instance(instance_id):
         flash('Реєстрацію на цей курс закрито', 'error')
         return redirect(url_for('courses.course_by_slug', slug=instance.course.slug))
 
-    form = EventRegistrationForm(data=prefill) if prefill else EventRegistrationForm()
+    # Pre-fill: спершу беремо з User-профілю, потім партнерський токен (вища
+    # пріоритетність -- зовнішня система знає актуальні дані краще, ніж
+    # старий снапшот в User).
+    initial = _initial_form_data_from_user(current_user)
+    if prefill:
+        initial.update({k: v for k, v in prefill.items() if v})
+    form = EventRegistrationForm(data=initial)
 
     if form.validate_on_submit():
         has_capacity, _ = registration_service.check_capacity(instance_id)
@@ -140,9 +190,20 @@ def register_instance(instance_id):
             return redirect(url_for('courses.course_by_slug', slug=instance.course.slug))
 
         try:
+            # 1) Оновити User-профіль медичними полями (одноразовий збір
+            #    з пре-філом для наступних реєстрацій).
+            _sync_user_profile_from_form(current_user, form)
+
+            # 2) Створити CourseRegistration. EventRegistration зберігає
+            #    snapshot fields для історичної консистентності (snapshot
+            #    показує що було під час події, навіть якщо профіль зміниться).
+            specializations = form.specializations.data or []
+            specialty_snapshot = ', '.join(
+                _spec_labels(specializations)
+            ) or (form.position.data or '').strip()
             form_data = {
                 'phone': form.phone.data.strip(),
-                'specialty': form.specialty.data.strip(),
+                'specialty': specialty_snapshot,
                 'workplace': form.workplace.data.strip(),
                 'experience_years': form.experience_years.data,
                 'license_number': form.license_number.data,

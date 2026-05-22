@@ -10,25 +10,85 @@
 {% block content %}
 <div class="apple-page reg-layout">
 
-  <div class="reg-confirmation">
-    {% if reg.status == 'confirmed' %}
-      <h1 class="reg-confirmation__title">Реєстрацію підтверджено</h1>
-      <p class="reg-confirmation__subtitle">Ви зареєстровані на курс. Очікуйте деталі на email.</p>
-    {% elif reg.status == 'pending' %}
-      <h1 class="reg-confirmation__title">Реєстрацію створено</h1>
-      <p class="reg-confirmation__subtitle">Для підтвердження необхідно здійснити оплату.</p>
-    {% elif reg.status == 'cancelled' %}
-      <h1 class="reg-confirmation__title">Реєстрацію скасовано</h1>
-      <p class="reg-confirmation__subtitle">Ваша реєстрація була скасована.</p>
-    {% elif reg.status == 'completed' %}
-      <h1 class="reg-confirmation__title">Захід завершено</h1>
-      {% if reg.attended and reg.cpd_points_awarded %}
-        <p class="reg-confirmation__subtitle">Вам нараховано {{ reg.cpd_points_awarded }} балів БПР.</p>
-      {% endif %}
-    {% endif %}
-  </div>
+  {# ===== 3-step progress (другий крок активний, поки не оплачено) ===== #}
+  {% set _is_paid = reg.payment_status == 'paid' %}
+  {% set _needs_pay = reg.status == 'pending' and reg.payment_status == 'unpaid' and reg.payment_amount and reg.payment_amount > 0 %}
+  <ol class="reg-steps" aria-label="Процес реєстрації">
+    <li class="reg-steps__item reg-steps__item--done">
+      <span class="reg-steps__num">1</span>
+      <span class="reg-steps__label">Заповніть форму</span>
+    </li>
+    <li class="reg-steps__item {% if _needs_pay %}reg-steps__item--current{% elif _is_paid %}reg-steps__item--done{% endif %}">
+      <span class="reg-steps__num">2</span>
+      <span class="reg-steps__label">Оплатіть участь</span>
+    </li>
+    <li class="reg-steps__item {% if _is_paid or reg.status == 'confirmed' %}reg-steps__item--current{% endif %}">
+      <span class="reg-steps__num">3</span>
+      <span class="reg-steps__label">Отримайте підтвердження</span>
+    </li>
+  </ol>
 
-  <!-- Status details -->
+  {# ===== Великий банер статусу ===== #}
+  {% if _needs_pay %}
+    <div class="reg-success-banner">
+      <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>
+      <div class="reg-success-banner__body">
+        <p class="reg-success-banner__title">Заявка на участь успішно подана.</p>
+        <p class="reg-success-banner__subtitle">Другим кроком реєстрації необхідно оплатити участь.</p>
+        <p class="reg-success-banner__amount">Сума до сплати: <strong>{{ reg.payment_amount | int }} грн.</strong></p>
+      </div>
+    </div>
+  {% elif reg.status == 'confirmed' %}
+    <div class="reg-success-banner reg-success-banner--confirmed">
+      <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>
+      <div class="reg-success-banner__body">
+        <p class="reg-success-banner__title">Реєстрацію підтверджено</p>
+        <p class="reg-success-banner__subtitle">Ви зареєстровані на курс. Деталі надіслано на email.</p>
+      </div>
+    </div>
+  {% elif reg.status == 'cancelled' %}
+    <div class="reg-success-banner reg-success-banner--cancelled">
+      <div class="reg-success-banner__body">
+        <p class="reg-success-banner__title">Реєстрацію скасовано</p>
+      </div>
+    </div>
+  {% elif reg.status == 'completed' %}
+    <div class="reg-success-banner reg-success-banner--confirmed">
+      <div class="reg-success-banner__body">
+        <p class="reg-success-banner__title">Захід завершено</p>
+        {% if reg.attended and reg.cpd_points_awarded %}
+        <p class="reg-success-banner__subtitle">Вам нараховано {{ reg.cpd_points_awarded }} балів БПР.</p>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  {# ===== LiqPay-кнопка ===== #}
+  {% if _needs_pay %}
+    {% if liqpay_data and liqpay_signature %}
+    <div class="reg-pay-cta">
+      <form method="POST" action="{{ liqpay_checkout_url }}" accept-charset="utf-8">
+        <input type="hidden" name="data" value="{{ liqpay_data }}">
+        <input type="hidden" name="signature" value="{{ liqpay_signature }}">
+        <button type="submit" class="reg-pay-cta__btn">
+          <span class="reg-pay-cta__arrow" aria-hidden="true">&raquo;</span>
+          Оплатити
+        </button>
+      </form>
+      <p class="reg-pay-cta__note">Безпечна оплата через LiqPay — Visa, Mastercard, Google Pay, Apple Pay</p>
+    </div>
+    {% else %}
+    <div class="reg-liqpay-placeholder">
+      Оплата через LiqPay буде доступна найближчим часом
+    </div>
+    {% endif %}
+  {% elif reg.payment_status == 'pending' %}
+  <div class="reg-pay-cta reg-pay-cta--processing">
+    <p>Оплата обробляється. Оновіть сторінку через декілька хвилин.</p>
+  </div>
+  {% endif %}
+
+  {# ===== Деталі реєстрації ===== #}
   <div class="reg-status-card">
     <div class="reg-status-card__row">
       <span class="reg-status-card__label">Курс</span>
@@ -73,33 +133,9 @@
     </div>
   </div>
 
-  <!-- LiqPay payment -->
-  {% if reg.status == 'pending' and reg.payment_status == 'unpaid' and reg.payment_amount and reg.payment_amount > 0 %}
-    {% if liqpay_data and liqpay_signature %}
-    <div class="reg-liqpay-payment">
-      <p class="reg-liqpay-payment__label">Для підтвердження реєстрації необхідно здійснити оплату</p>
-      <form method="POST" action="{{ liqpay_checkout_url }}" accept-charset="utf-8">
-        <input type="hidden" name="data" value="{{ liqpay_data }}">
-        <input type="hidden" name="signature" value="{{ liqpay_signature }}">
-        <button type="submit" class="apple-btn apple-btn--primary reg-liqpay-payment__btn">
-          Оплатити {{ reg.payment_amount | int }} &#8372;
-        </button>
-      </form>
-      <p class="reg-liqpay-payment__note">Безпечна оплата через LiqPay (Visa, Mastercard, Google Pay, Apple Pay)</p>
-    </div>
-    {% else %}
-    <div class="reg-liqpay-placeholder">
-      Оплата через LiqPay буде доступна найближчим часом
-    </div>
-    {% endif %}
-  {% elif reg.payment_status == 'pending' %}
-  <div class="reg-liqpay-payment reg-liqpay-payment--processing">
-    <p>Оплата обробляється. Оновіть сторінку через декілька хвилин.</p>
-  </div>
-  {% endif %}
-
   <div class="reg-actions reg-actions--center">
     <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="apple-btn apple-btn--secondary">Повернутися до курсу</a>
+    <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--secondary">Зворотній зв'язок</a>
   </div>
 
 </div>
