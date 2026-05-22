@@ -23,6 +23,9 @@
         <tr>
             <td style="padding: 20px 24px;">
                 <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">{{ event.title }}</p>
+                {% if registration.place_number %}
+                {{ detail_row("Номер місця", "№" ~ registration.place_number) }}
+                {% endif %}
                 {% if event.start_date %}
                 {{ detail_row("Дата", event.start_date.strftime('%d.%m.%Y %H:%M')) }}
                 {% endif %}

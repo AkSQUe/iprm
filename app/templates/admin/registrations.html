@@ -88,6 +88,7 @@
       <thead>
         <tr>
           <th>Захід</th>
+          <th>№</th>
           <th>Учасник</th>
           <th>Телефон</th>
           <th>Статус</th>
@@ -105,6 +106,13 @@
               <a href="{{ url_for('admin.instance_registrations', instance_id=reg.instance_id) }}">{{ reg.target_title }}</a>
             {% else %}
               <span class="admin-text-muted">---</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if reg.place_number %}
+              <strong>№{{ reg.place_number }}</strong>
+            {% else %}
+              <span class="admin-text-muted">—</span>
             {% endif %}
           </td>
           <td>

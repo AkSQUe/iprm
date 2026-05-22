@@ -44,6 +44,11 @@
       <div class="reg-success-banner__body">
         <p class="reg-success-banner__title">Реєстрацію підтверджено</p>
         <p class="reg-success-banner__subtitle">Ви зареєстровані на курс. Деталі надіслано на email.</p>
+        {% if reg.place_number %}
+        <p class="reg-success-banner__amount">
+          Ваш номер місця: <strong>№{{ reg.place_number }}</strong>
+        </p>
+        {% endif %}
       </div>
     </div>
   {% elif reg.status == 'cancelled' %}
@@ -90,6 +95,12 @@
 
   {# ===== Деталі реєстрації ===== #}
   <div class="reg-status-card">
+    {% if reg.place_number %}
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">Номер місця</span>
+      <span class="reg-status-card__value"><strong>№{{ reg.place_number }}</strong></span>
+    </div>
+    {% endif %}
     <div class="reg-status-card__row">
       <span class="reg-status-card__label">Курс</span>
       <span class="reg-status-card__value">{{ event.title }}</span>

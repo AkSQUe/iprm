@@ -44,6 +44,12 @@ class EventRegistration(TimestampMixin, db.Model):
     cpd_points_awarded = db.Column(db.Integer)
     admin_notes = db.Column(db.Text)
 
+    # Унікальний порядковий номер місця у межах конкретного CourseInstance.
+    # Призначається в момент `payment_status='paid'`. Для безкоштовних подій
+    # -- одразу при створенні. Унікальність гарантовано partial-index-ом
+    # (instance_id, place_number) WHERE place_number IS NOT NULL.
+    place_number = db.Column(db.Integer)
+
     user = db.relationship('User', back_populates='registrations')
     instance = db.relationship(
         'CourseInstance',
@@ -56,6 +62,14 @@ class EventRegistration(TimestampMixin, db.Model):
         db.UniqueConstraint('user_id', 'instance_id', name='uq_user_instance_registration'),
         db.Index('ix_registrations_instance_status', 'instance_id', 'status'),
         db.Index('ix_registrations_created_at', 'created_at'),
+        # Partial unique index: place_number унікальний у межах instance
+        # (NULL дозволено для не-оплачених/скасованих реєстрацій).
+        db.Index(
+            'uq_registrations_instance_place',
+            'instance_id', 'place_number',
+            unique=True,
+            postgresql_where=db.text('place_number IS NOT NULL'),
+        ),
         db.CheckConstraint(
             "status IN ('pending', 'confirmed', 'cancelled', 'completed')",
             name='ck_registrations_status',

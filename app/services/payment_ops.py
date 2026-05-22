@@ -142,6 +142,16 @@ class PaymentOps:
         if new_status == 'paid':
             reg.paid_at = datetime.now(timezone.utc)
             reg.status = 'confirmed'
+            # Призначити порядковий номер місця per-instance. Робимо до
+            # commit, щоб номер опинився в одній транзакції з статусом.
+            try:
+                from app.services.registration_service import assign_place_number
+                assign_place_number(reg)
+            except Exception:
+                logger.exception(
+                    'Failed to assign place_number for REG-%d', reg.id,
+                )
+                # не блокуючий збій -- статус оновимо, номер можна вручну
         elif new_status == 'refunded':
             reg.status = 'cancelled'
 

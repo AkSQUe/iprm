@@ -15,6 +15,43 @@ from app.models.registration import EventRegistration
 logger = logging.getLogger(__name__)
 
 
+def assign_place_number(reg):
+    """Призначити sequential place_number у межах CourseInstance.
+
+    Викликається в момент 'paid'-транзишн (LiqPay callback) або одразу
+    для безкоштовних подій. Номер: 1, 2, 3, ... per-instance.
+
+    Атомарність: SELECT FOR UPDATE на CourseInstance-row серіалізує
+    паралельні виклики на той самий курс. Якщо partial-unique-index
+    впав на race -- caller отримає IntegrityError і має зробити retry.
+
+    Idempotent: якщо place_number вже встановлено -- повертаємо
+    наявний без перепризначення.
+    """
+    if reg.place_number is not None:
+        return reg.place_number
+
+    # Row-lock на CourseInstance: серіалізує паралельні assign на тому
+    # самому instance. Інші instances не зачіпаються (нема contention).
+    db.session.query(CourseInstance).filter_by(
+        id=reg.instance_id
+    ).with_for_update().one()
+
+    max_n = db.session.query(
+        func.coalesce(func.max(EventRegistration.place_number), 0)
+    ).filter(
+        EventRegistration.instance_id == reg.instance_id,
+        EventRegistration.place_number.isnot(None),
+    ).scalar() or 0
+
+    reg.place_number = int(max_n) + 1
+    logger.info(
+        'Assigned place_number=%d to REG-%d (instance=%d)',
+        reg.place_number, reg.id, reg.instance_id,
+    )
+    return reg.place_number
+
+
 def find_existing(user_id, instance_id):
     """Знайти існуючу реєстрацію user+instance, або None."""
     return EventRegistration.query.filter_by(
@@ -104,5 +141,18 @@ def create_or_reactivate(user_id, instance, form_data, existing=None):
             payment_status=new_payment,
         )
         db.session.add(reg)
+
+    # Для безкоштовних подій -- одразу присвоюємо номер місця, бо немає
+    # окремого 'paid'-транзишн (платіж не очікується). Робиться ДО commit
+    # caller-ом; flush щоб reg отримав id.
+    if is_free:
+        db.session.flush()
+        try:
+            assign_place_number(reg)
+        except Exception:
+            logger.exception(
+                'Failed to assign place_number for free REG-%d', reg.id,
+            )
+            # не критично -- адмін зможе виставити вручну
 
     return reg, is_free
