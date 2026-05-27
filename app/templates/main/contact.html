@@ -42,11 +42,7 @@
     <h1 class="iprm-content-page__title"><span class="apple-gradient-text">Контакти</span></h1>
     <p class="iprm-content-page__subtitle">Зв'яжіться з нами будь-яким зручним способом</p>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% for category, message in messages %}
-        <div class="alert alert--{{ category }}">{{ message }}</div>
-      {% endfor %}
-    {% endwith %}
+    {# Flash-повідомлення показуються як toast (base.html + ui-feedback.js) #}
 
     <div class="contact-page__grid">
 

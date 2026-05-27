@@ -273,16 +273,8 @@
           {% else %}Залиште запит <span class="apple-gradient-text">на курс</span>{% endif %}
         </h2>
         <p>Заповніть форму нижче — ми повідомимо вас коли буде заплановано чергове проведення.</p>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-          <div role="alert" aria-live="polite" class="iprm-request-form__alerts">
-            {% for category, msg in messages %}
-            <div class="iprm-alert iprm-alert--{{ category }}">{{ msg }}</div>
-            {% endfor %}
-          </div>
-          {% endif %}
-        {% endwith %}
-        <form method="POST" action="{{ url_for('courses.course_request', slug=course.slug) }}" class="iprm-request-form" data-single-submit>
+        {# Flash-повідомлення показуються як toast (base.html + ui-feedback.js) #}
+        <form method="POST" action="{{ url_for('courses.course_request', slug=course.slug) }}" class="iprm-request-form" data-validate data-single-submit>
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="iprm-request-form__honeypot" aria-hidden="true">
             <label for="req-website">Website</label>

@@ -29,15 +29,7 @@
     </li>
   </ol>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div role="alert" aria-live="polite">
-      {% for category, message in messages %}
-        <div class="alert alert--{{ category }}">{{ message }}</div>
-      {% endfor %}
-    </div>
-    {% endif %}
-  {% endwith %}
+  {# Flash-повідомлення показуються як toast (див. base.html + ui-feedback.js) #}
 
   {# ===== Event summary ===== #}
   <div class="reg-event-card">
@@ -77,13 +69,16 @@
   </p>
 
   {# ===== Registration form ===== #}
-  <form method="POST" action="{{ url_for('registration.register_instance', instance_id=event.id) }}" data-single-submit>
+  <form method="POST" action="{{ url_for('registration.register_instance', instance_id=event.id) }}" data-validate data-single-submit>
     {{ form.hidden_tag() }}
 
     {# ----- Тип учасника ----- #}
     <div class="form-section reg-form-section">
-      <h3 class="form-section__title reg-form-section__title">Тип учасника</h3>
-      <div class="reg-user-type">
+      <h3 class="form-section__title reg-form-section__title">
+        Тип учасника
+        <span class="iprm-tooltip-trigger" data-tooltip="Оберіть вашу категорію згідно з МОЗ №725. Від цього залежить, які бали БПР нараховуються після заходу.">i</span>
+      </h3>
+      <div class="reg-user-type" data-required-group="radio" data-hint="Оберіть тип учасника — це обов'язково">
         {% for code, label in form.user_type.choices if code %}
           <label class="reg-user-type__option">
             <input type="radio" name="user_type" value="{{ code }}"
@@ -101,13 +96,13 @@
       <div class="form-section__grid">
         <div class="form-group">
           <label for="last_name">Прізвище <span class="required">*</span></label>
-          {{ form.last_name(class="form-input" + (" is-invalid" if form.last_name.errors else ""), id="last_name") }}
+          {{ form.last_name(class="form-input" + (" is-invalid" if form.last_name.errors else ""), id="last_name", required=true) }}
           {% for e in form.last_name.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group">
           <label for="first_name">Ім'я <span class="required">*</span></label>
-          {{ form.first_name(class="form-input" + (" is-invalid" if form.first_name.errors else ""), id="first_name") }}
+          {{ form.first_name(class="form-input" + (" is-invalid" if form.first_name.errors else ""), id="first_name", required=true) }}
           {% for e in form.first_name.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
@@ -117,14 +112,20 @@
         </div>
 
         <div class="form-group">
-          <label for="phone">Телефон <span class="required">*</span></label>
-          {{ form.phone(class="form-input" + (" is-invalid" if form.phone.errors else ""), id="phone") }}
+          <label for="phone">
+            Телефон <span class="required">*</span>
+            <span class="iprm-tooltip-trigger" data-tooltip="Вкажіть номер саме учасника заходу — на нього ми надішлемо нагадування та деталі підключення.">i</span>
+          </label>
+          {{ form.phone(class="form-input" + (" is-invalid" if form.phone.errors else ""), id="phone", required=true) }}
           {% for e in form.phone.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group">
-          <label for="birth_date">Дата народження <span class="required">*</span></label>
-          {{ form.birth_date(class="form-input" + (" is-invalid" if form.birth_date.errors else ""), id="birth_date", type="date") }}
+          <label for="birth_date">
+            Дата народження <span class="required">*</span>
+            <span class="iprm-tooltip-trigger" data-tooltip="Потрібна для ідентифікації у системі БПР МОЗ при нарахуванні балів.">i</span>
+          </label>
+          {{ form.birth_date(class="form-input" + (" is-invalid" if form.birth_date.errors else ""), id="birth_date", type="date", required=true) }}
           {% for e in form.birth_date.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
       </div>
@@ -135,20 +136,23 @@
       <h3 class="form-section__title reg-form-section__title">Освіта та робота</h3>
       <div class="form-section__grid">
         <div class="form-group form-section__full">
-          <label for="education">Освіта (рік закінчення та назва ВНЗ) <span class="required">*</span></label>
-          {{ form.education(class="form-input" + (" is-invalid" if form.education.errors else ""), id="education") }}
+          <label for="education">
+            Освіта (рік закінчення та назва ВНЗ) <span class="required">*</span>
+            <span class="iprm-tooltip-trigger" data-tooltip="Наприклад: 2014, НМУ ім. О.О. Богомольця. Вкажіть рік випуску та повну назву закладу.">i</span>
+          </label>
+          {{ form.education(class="form-input" + (" is-invalid" if form.education.errors else ""), id="education", required=true) }}
           {% for e in form.education.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group form-section__full">
           <label for="workplace">Місце роботи (назва ЗОЗу) <span class="required">*</span></label>
-          {{ form.workplace(class="form-input" + (" is-invalid" if form.workplace.errors else ""), id="workplace") }}
+          {{ form.workplace(class="form-input" + (" is-invalid" if form.workplace.errors else ""), id="workplace", required=true) }}
           {% for e in form.workplace.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group">
           <label for="position">Займана посада <span class="required">*</span></label>
-          {{ form.position(class="form-input" + (" is-invalid" if form.position.errors else ""), id="position") }}
+          {{ form.position(class="form-input" + (" is-invalid" if form.position.errors else ""), id="position", required=true) }}
           {% for e in form.position.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
@@ -168,9 +172,10 @@
     <div class="form-section reg-form-section">
       <h3 class="form-section__title reg-form-section__title">
         Спеціалізації <span class="required">*</span>
+        <span class="iprm-tooltip-trigger" data-tooltip="Оберіть усі ваші спеціалізації — за ними система БПР перевіряє відповідність заходу вашому фаху. Можна позначити декілька.">i</span>
       </h3>
       <p class="reg-form-section__hint">Можна обрати декілька. Пошук — Ctrl+F у браузері.</p>
-      <div class="reg-specializations" data-spec-list>
+      <div class="reg-specializations" data-spec-list data-required-group="checkbox" data-hint="Оберіть хоча б одну спеціалізацію">
         {% set selected_specs = form.specializations.data or [] %}
         {% for code, label in form.specializations.choices %}
           <label class="reg-specializations__item">
@@ -186,7 +191,7 @@
     {# ----- Згоди ----- #}
     <div class="form-consent">
       <div class="form-checkbox">
-        {{ form.consent_data(id="consent_data") }}
+        {{ form.consent_data(id="consent_data", required=true, **{'data-hint': 'Без згоди на обробку даних реєстрація неможлива'}) }}
         <label for="consent_data">
           Я надаю згоду на обробку моїх персональних даних (ПІБ, дата народження,
           електронна пошта, номер телефону, освіта, спеціалізація, місце роботи)
