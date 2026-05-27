@@ -482,7 +482,7 @@
     box-shadow 0.3s var(--ease-interact);
 }
 
-/* Тонка градієнтна смужка-акцент зверху картки */
+/* Тонка смужка-акцент зверху картки */
 .apple-page .iprm-program__block::before {
   content: '';
   position: absolute;
@@ -490,7 +490,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--iprm-nav-active), var(--apple-orange));
+  background: var(--iprm-accent);
   opacity: 0;
   transition: opacity 0.3s var(--ease-interact);
 }
@@ -523,7 +523,7 @@
   font-size: 1.25rem;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(135deg, var(--iprm-nav-active), var(--apple-orange));
+  background: var(--iprm-accent);
   box-shadow: 0 6px 16px rgba(var(--apple-accent-rgb), 0.28);
 }
 
@@ -570,29 +570,32 @@
   border-top: none;
 }
 
-/* Чек-маркер: градієнтне коло з білою галочкою */
+/* Чек-маркер: кольорове коло з білою галочкою */
 .apple-page .iprm-program__item::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 14px;
-  width: 18px;
-  height: 18px;
+  top: 13px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--iprm-nav-active), var(--apple-orange));
+  background: var(--iprm-accent);
 }
 
-/* Біла галочка поверх кола */
+/* Біла галочка, відцентрована в колі (коло: left 0..20, top 13..33,
+   центр (10, 23)). Класичний check = box з right+bottom border, rotate 45.
+   transform-origin center => після повороту центр box лишається на місці,
+   тож box-центр ставимо в центр кола з легким зсувом угору для оптики. */
 .apple-page .iprm-program__item::after {
   content: '';
   position: absolute;
-  left: 5.5px;
-  top: 18px;
-  width: 7px;
-  height: 3.5px;
-  border-left: 2px solid #fff;
-  border-bottom: 2px solid #fff;
-  transform: rotate(-45deg);
+  left: 7px;
+  top: 17px;
+  width: 6px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 .apple-page .iprm-program__block:hover .iprm-program__item {

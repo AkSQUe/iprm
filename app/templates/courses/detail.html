@@ -187,21 +187,10 @@
       <p class="iprm-section__subtitle">Структура навчання — від теорії до практичних навичок</p>
       <div class="iprm-program">
         {% for block in course.program_blocks %}
-        {% set n = block.items | length %}
         <article class="iprm-program__block apple-reveal">
           <header class="iprm-program__head">
             <span class="iprm-program__badge" aria-hidden="true">{{ loop.index }}</span>
-            <div class="iprm-program__head-text">
-              {% if n %}
-              <span class="iprm-program__tag">
-                {{ n }}
-                {%- if n % 10 == 1 and n % 100 != 11 %} пункт
-                {%- elif n % 10 in [2,3,4] and n % 100 not in [12,13,14] %} пункти
-                {%- else %} пунктів{% endif %}
-              </span>
-              {% endif %}
-              <h3 class="iprm-program__heading">{{ block.heading }}</h3>
-            </div>
+            <h3 class="iprm-program__heading">{{ block.heading }}</h3>
           </header>
           <ul class="iprm-program__list">
             {% for item in block.items %}
