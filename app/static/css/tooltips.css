@@ -1,0 +1,66 @@
+/* tooltips.css — стилі спливаючих підказок. Парний до tooltips.js. */
+
+/* Тригер — маленька «i»-іконка біля label */
+.iprm-tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--iprm-accent-light, #ede9f6);
+  color: var(--iprm-accent, #7055a4);
+  font-size: 11px;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, serif;
+  cursor: help;
+  user-select: none;
+  vertical-align: middle;
+  transition: background 0.15s, color 0.15s;
+}
+.iprm-tooltip-trigger:hover,
+.iprm-tooltip-trigger:focus-visible {
+  background: var(--iprm-accent, #7055a4);
+  color: #fff;
+  outline: none;
+}
+
+/* Спливаюча підказка (JS позиціонує по body) */
+.iprm-tooltip-bubble {
+  position: absolute;
+  z-index: 10000;
+  max-width: 280px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--iprm-dark, #1a1a2e);
+  color: #fff;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+}
+.iprm-tooltip-bubble.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* стрілочка знизу (підказка над тригером) */
+.iprm-tooltip-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--iprm-dark, #1a1a2e);
+}
+.iprm-tooltip-bubble--below::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: var(--iprm-dark, #1a1a2e);
+}

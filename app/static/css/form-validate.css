@@ -1,0 +1,52 @@
+/* form-validate.css — стилі клієнтської валідації форм. Парний до form-validate.js. */
+
+/* Підказка під полем (JS-генерована) */
+.field-hint {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  margin-top: 6px;
+  color: var(--iprm-error-text, #dc2626);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field-hint--js::before {
+  content: '⚠';
+  font-size: 0.875rem;
+}
+
+/* Підсвічування невалідного поля */
+.field-invalid,
+input.field-invalid,
+select.field-invalid,
+textarea.field-invalid {
+  border-color: var(--iprm-error, #ef4444) !important;
+  box-shadow: 0 0 0 3px var(--iprm-error-bg, #fef2f2) !important;
+  background-color: #fffafa;
+}
+
+/* Для груп (radio/checkbox) підсвічуємо контейнер */
+[data-required-group].field-invalid {
+  outline: 2px solid var(--iprm-error, #ef4444);
+  outline-offset: 4px;
+  border-radius: var(--iprm-radius-sm, 12px);
+}
+
+/* Анімація трясіння при помилці */
+@keyframes iprm-field-shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-8px); }
+  30% { transform: translateX(7px); }
+  45% { transform: translateX(-5px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+
+.field-shake {
+  animation: iprm-field-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field-shake { animation: none; }
+}

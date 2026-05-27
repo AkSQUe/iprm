@@ -49,7 +49,9 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/molecular-background.css') }}?v={{ assets_version }}">
   {% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/apple-pages.css') }}?v={{ assets_version }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/ui-feedback.css') }}?v={{ assets_version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/toast.css') }}?v={{ assets_version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/form-validate.css') }}?v={{ assets_version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tooltips.css') }}?v={{ assets_version }}">
   {% block extra_css %}{% endblock %}
   <script>
     (function(){try{var f=localStorage.getItem('iprm-font');if(f==='fixel')document.documentElement.setAttribute('data-font','fixel');}catch(e){}})();
@@ -90,7 +92,10 @@
   {% block molecular_js %}
   <script defer src="{{ url_for('static', filename='js/molecular-background.js') }}?v={{ assets_version }}"></script>
   {% endblock %}
-  <script defer src="{{ url_for('static', filename='js/ui-feedback.js') }}?v={{ assets_version }}"></script>
+  {# toast.js перший — form-validate.js використовує window.iprmToast #}
+  <script defer src="{{ url_for('static', filename='js/toast.js') }}?v={{ assets_version }}"></script>
+  <script defer src="{{ url_for('static', filename='js/form-validate.js') }}?v={{ assets_version }}"></script>
+  <script defer src="{{ url_for('static', filename='js/tooltips.js') }}?v={{ assets_version }}"></script>
   {% block extra_scripts %}{% endblock %}
 </body>
 </html>

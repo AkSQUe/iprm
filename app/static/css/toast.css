@@ -1,0 +1,112 @@
+/* toast.css — стилі toast-нотифікацій. Парний до toast.js. */
+
+.iprm-toasts {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(400px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.iprm-toast {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: 28px 1fr 24px;
+  align-items: start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--iprm-radius-sm, 12px);
+  background: var(--iprm-white, #fff);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+  border-left: 4px solid var(--apple-gray, #86868b);
+  opacity: 0;
+  transform: translateX(120%);
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.iprm-toast.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.iprm-toast.is-leaving {
+  opacity: 0;
+  transform: translateX(120%);
+}
+
+.iprm-toast__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--apple-gray, #86868b);
+}
+
+.iprm-toast__body { min-width: 0; }
+
+.iprm-toast__title {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--apple-black, #1d1d1f);
+}
+
+.iprm-toast__msg {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--iprm-text-light, #424245);
+  word-wrap: break-word;
+}
+
+.iprm-toast__close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--apple-gray, #86868b);
+  padding: 2px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.iprm-toast__close:hover {
+  color: var(--apple-black, #1d1d1f);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.iprm-toast--success { border-left-color: #16a34a; }
+.iprm-toast--success .iprm-toast__icon { background: #16a34a; }
+.iprm-toast--error { border-left-color: var(--iprm-error, #ef4444); }
+.iprm-toast--error .iprm-toast__icon { background: var(--iprm-error, #ef4444); }
+.iprm-toast--warning { border-left-color: #d97706; }
+.iprm-toast--warning .iprm-toast__icon { background: #d97706; }
+.iprm-toast--info { border-left-color: var(--iprm-accent, #7055a4); }
+.iprm-toast--info .iprm-toast__icon { background: var(--iprm-accent, #7055a4); }
+
+@media (max-width: 520px) {
+  .iprm-toasts {
+    top: auto;
+    bottom: 16px;
+    right: 12px;
+    left: 12px;
+    max-width: none;
+  }
+  .iprm-toast { transform: translateY(140%); }
+  .iprm-toast.is-leaving { transform: translateY(140%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iprm-toast { transition: opacity 0.2s ease; transform: none; }
+  .iprm-toast.is-leaving { transform: none; }
+}
