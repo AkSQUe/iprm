@@ -184,14 +184,31 @@
   <section class="iprm-section apple-section-gray" aria-labelledby="program-title">
     <div class="iprm-section__inner">
       <h2 id="program-title" class="iprm-section__title">Програма <span class="apple-gradient-text">курсу</span></h2>
-      <div class="iprm-program-grid">
+      <p class="iprm-section__subtitle">Структура навчання — від теорії до практичних навичок</p>
+      <div class="iprm-program">
         {% for block in course.program_blocks %}
-        <div class="iprm-program-card apple-reveal">
-          <h3>{{ block.heading }}</h3>
-          <ul>
-            {% for item in block.items %}<li>{{ item }}</li>{% endfor %}
+        {% set n = block.items | length %}
+        <article class="iprm-program__block apple-reveal">
+          <header class="iprm-program__head">
+            <span class="iprm-program__badge" aria-hidden="true">{{ loop.index }}</span>
+            <div class="iprm-program__head-text">
+              {% if n %}
+              <span class="iprm-program__tag">
+                {{ n }}
+                {%- if n % 10 == 1 and n % 100 != 11 %} пункт
+                {%- elif n % 10 in [2,3,4] and n % 100 not in [12,13,14] %} пункти
+                {%- else %} пунктів{% endif %}
+              </span>
+              {% endif %}
+              <h3 class="iprm-program__heading">{{ block.heading }}</h3>
+            </div>
+          </header>
+          <ul class="iprm-program__list">
+            {% for item in block.items %}
+            <li class="iprm-program__item">{{ item }}</li>
+            {% endfor %}
           </ul>
-        </div>
+        </article>
         {% endfor %}
       </div>
     </div>
