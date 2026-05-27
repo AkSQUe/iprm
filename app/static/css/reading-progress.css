@@ -1,0 +1,61 @@
+/* reading-progress.css — прогрес читання + кнопка «нагору». Парний до reading-progress.js. */
+
+.iprm-reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 9995;
+  background: transparent;
+  pointer-events: none;
+}
+
+.iprm-reading-progress span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--iprm-accent, #7055a4), var(--apple-purple-mid, #9b59b6));
+  transition: width 0.1s linear;
+}
+
+.iprm-to-top {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 90;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: var(--iprm-accent, #7055a4);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.15s;
+}
+
+.iprm-to-top.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.iprm-to-top:hover {
+  background: var(--iprm-accent-hover, #5d4691);
+}
+
+.iprm-to-top:focus-visible {
+  outline: 2px solid var(--iprm-accent, #7055a4);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iprm-to-top { transition: opacity 0.2s ease; transform: none; }
+  .iprm-reading-progress span { transition: none; }
+}
