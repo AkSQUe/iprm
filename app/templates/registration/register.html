@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'partials/_location_badge.html' import location_badge %}
 
 {% block title %}Реєстрація на курс | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -6,6 +7,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form-progress.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
@@ -34,12 +36,12 @@
   {# ===== Event summary ===== #}
   <div class="reg-event-card">
     <h2 class="reg-event-card__title">{{ event.title }}</h2>
+    <div class="reg-event-card__location">
+      {{ location_badge(event.event_format, event.location, size='lg') }}
+    </div>
     <div class="reg-event-card__meta">
       {% if event.start_date %}
         <div>Дата: <strong>{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</strong></div>
-      {% endif %}
-      {% if event.format_label %}
-        <div>Формат: <strong>{{ event.format_label }}</strong></div>
       {% endif %}
       {% if event.price and event.price > 0 %}
         <div>Вартість: <strong>{{ event.price | int }} &#8372;</strong></div>
@@ -51,6 +53,22 @@
       {% endif %}
     </div>
   </div>
+
+  {# ===== Наголос на місто проведення (для офлайн/гібрид) ===== #}
+  {% if event.event_format != 'online' %}
+  <aside class="reg-location-callout" role="note">
+    <svg class="reg-location-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    <div class="reg-location-callout__body">
+      <p class="reg-location-callout__title">
+        Захід проходить <strong>ОФЛАЙН</strong>{% if event.location %} у місті <strong>{{ event.location }}</strong>{% endif %}
+      </p>
+      <p class="reg-location-callout__text">
+        Це очний захід — потрібна особиста присутність{% if event.location %} у м. {{ event.location }}{% endif %}.
+        Переконайтесь, що зможете прибути у вказану дату.
+      </p>
+    </div>
+  </aside>
+  {% endif %}
 
   {# ===== МОЗ-нотис (вимоги номенклатури) ===== #}
   <aside class="reg-moh-notice" role="note">
@@ -67,6 +85,9 @@
     <strong>Будьте уважні!</strong> Одна реєстрація — одне підключення.
     Будь ласка, вказуйте контактні дані саме учасника заходу.
   </p>
+
+  {# Прогрес заповнення форми #}
+  <div class="form-progress" data-form-progress="form[data-validate]" aria-hidden="true"></div>
 
   {# ===== Registration form ===== #}
   <form method="POST" action="{{ url_for('registration.register_instance', instance_id=event.id) }}" data-validate data-single-submit>
@@ -188,6 +209,32 @@
       {% for e in form.specializations.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
     </div>
 
+    {# ----- Подвійне підтвердження міста (офлайн/гібрид) ----- #}
+    {% if event.event_format != 'online' %}
+    <div class="form-consent reg-location-confirm">
+      <p class="reg-location-confirm__title">
+        Підтвердження участі в очному заході{% if event.location %} (м. {{ event.location }}){% endif %}
+      </p>
+      <div class="form-checkbox">
+        <input type="checkbox" id="confirm_offline" name="confirm_offline" required
+               data-hint="Підтвердіть, що розумієте офлайн-формат">
+        <label for="confirm_offline">
+          Я розумію, що це <strong>ОЧНИЙ (офлайн)</strong> захід і потребує особистої присутності.
+          <span class="required">*</span>
+        </label>
+      </div>
+      <div class="form-checkbox">
+        <input type="checkbox" id="confirm_city" name="confirm_city" required
+               data-hint="Підтвердіть, що зможете прибути у вказане місто">
+        <label for="confirm_city">
+          Підтверджую, що зможу прибути{% if event.location %} до <strong>м. {{ event.location }}</strong>{% else %} до місця проведення{% endif %}
+          у дату заходу{% if event.start_date %} — <strong>{{ event.start_date.strftime('%d.%m.%Y') }}</strong>{% endif %}.
+          <span class="required">*</span>
+        </label>
+      </div>
+    </div>
+    {% endif %}
+
     {# ----- Згоди ----- #}
     <div class="form-consent">
       <div class="form-checkbox">
@@ -243,4 +290,9 @@
   </p>
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/form-single-submit.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/form-progress.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

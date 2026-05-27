@@ -362,6 +362,69 @@
 
 .reg-attention strong { color: var(--apple-black); }
 
+/* ---------- Місце проведення (наголос) ---------- */
+.reg-event-card__location {
+  margin: 4px 0 16px;
+}
+
+.reg-location-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 0 0 24px;
+  padding: 18px 22px;
+  border-radius: var(--iprm-radius-md, 16px);
+  background: #fff1e6;
+  border: 2px solid #fdba74;
+}
+
+.reg-location-callout__icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  color: #c2410c;
+  margin-top: 2px;
+}
+
+.reg-location-callout__title {
+  margin: 0 0 4px;
+  font-size: 1.0625rem;
+  color: #9a3412;
+}
+
+.reg-location-callout__title strong { color: #c2410c; }
+
+.reg-location-callout__text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #9a3412;
+}
+
+/* ---------- Подвійне підтвердження міста ---------- */
+.reg-location-confirm {
+  border: 2px solid #fed7aa;
+  border-radius: var(--iprm-radius-md, 16px);
+  padding: 16px 20px;
+  background: #fffaf5;
+  margin-bottom: 16px;
+}
+
+.reg-location-confirm__title {
+  margin: 0 0 12px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #9a3412;
+}
+
+.reg-location-confirm .form-checkbox {
+  margin-bottom: 10px;
+}
+
+.reg-location-confirm .form-checkbox:last-child {
+  margin-bottom: 0;
+}
+
 /* ---------- Тип учасника (radio chips) ---------- */
 .reg-user-type {
   display: grid;

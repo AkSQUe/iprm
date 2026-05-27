@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'partials/_location_badge.html' import location_badge %}
 
 {% block title %}{{ course.title }} | ІПРМ{% endblock %}
 {% block meta_description %}{{ course.subtitle or course.short_description or course.title }}{% endblock %}
@@ -95,7 +96,7 @@
           {% for tag in course.tags %}<span class="iprm-tag">{{ tag }}</span>{% endfor %}
         </div>
         {% endif %}
-        <div class="iprm-hero__actions iprm-hero__actions--detail">
+        <div class="iprm-hero__actions iprm-hero__actions--detail" data-sticky-cta-anchor>
           {% if upcoming_instances %}
           <a href="#schedule" class="apple-btn apple-btn--primary">Найближчі дати</a>
           {% else %}
@@ -151,8 +152,7 @@
           <div class="iprm-schedule__content">
             <h3 class="iprm-schedule__title">{{ course.title }}</h3>
             <div class="iprm-schedule__meta">
-              {% if inst.event_format %}<span class="iprm-schedule__tag iprm-schedule__tag--format">{{ inst.format_label }}</span>{% endif %}
-              {% if inst.location %}<span class="iprm-schedule__tag">{{ inst.location }}</span>{% endif %}
+              {{ location_badge(inst.event_format, inst.location) }}
               {% if inst.effective_cpd_points %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} балів БПР</span>{% endif %}
               {% if inst.effective_price and inst.effective_price > 0 %}<span class="iprm-schedule__price">{{ inst.effective_price | int }} &#8372;</span>{% endif %}
               {% if remaining is not none and remaining > 0 and remaining <= 5 %}
@@ -252,8 +252,7 @@
             <div class="iprm-schedule__content">
               <h3 class="iprm-schedule__title">{{ course.title }}</h3>
               <div class="iprm-schedule__meta">
-                {% if inst.event_format %}<span class="iprm-schedule__tag">{{ inst.format_label }}</span>{% endif %}
-                {% if inst.location %}<span class="iprm-schedule__tag">{{ inst.location }}</span>{% endif %}
+                {{ location_badge(inst.event_format, inst.location) }}
               </div>
             </div>
           </div>
@@ -269,7 +268,7 @@
     <div class="iprm-section__inner">
       <div class="iprm-appointment apple-reveal">
         <h2 id="request-title">
-          {% if upcoming_instances %}Хочете провести курс <span class="apple-gradient-text">в інший час?</span>
+          {% if upcoming_instances %}Хочете, щоб курс був проведений <span class="apple-gradient-text">в інший час?</span>
           {% else %}Залиште запит <span class="apple-gradient-text">на курс</span>{% endif %}
         </h2>
         <p>Заповніть форму нижче — ми повідомимо вас коли буде заплановано чергове проведення.</p>
@@ -302,10 +301,25 @@
     </div>
   </section>
 
+  {# ===== STICKY MOBILE CTA ===== #}
+  <div class="iprm-sticky-cta" data-sticky-cta hidden>
+    <div class="iprm-sticky-cta__info">
+      <span class="iprm-sticky-cta__title">{{ course.title }}</span>
+      {% if course.base_price and course.base_price > 0 %}
+      <span class="iprm-sticky-cta__price">{{ course.base_price | int }} &#8372;</span>
+      {% endif %}
+    </div>
+    <a href="{% if upcoming_instances %}#schedule{% else %}#request{% endif %}" class="iprm-sticky-cta__btn">
+      {% if upcoming_instances %}Реєстрація{% else %}Залишити запит{% endif %}
+    </a>
+  </div>
+
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/form-single-submit.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/sticky-cta.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/faq-accordion.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

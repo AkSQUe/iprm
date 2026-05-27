@@ -6,12 +6,23 @@
   var els = document.querySelectorAll('.apple-reveal');
   if (!els.length) return;
 
+  // Stagger: елементи, що входять у viewport в одному «пакеті»
+  // IntersectionObserver-callback-у, з'являються каскадом (0, 70, 140мс...).
+  // Затримку обмежуємо, щоб довгі списки не тягнулись надто довго.
+  var STAGGER_MS = 70;
+  var STAGGER_MAX = 6; // максимум кроків затримки
+
   var obs = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (e.isIntersecting) {
-        e.target.classList.add('visible');
-        obs.unobserve(e.target);
-      }
+    var batch = entries.filter(function (e) { return e.isIntersecting; });
+    batch.forEach(function (e, i) {
+      var delay = Math.min(i, STAGGER_MAX) * STAGGER_MS;
+      e.target.style.transitionDelay = delay + 'ms';
+      e.target.classList.add('visible');
+      obs.unobserve(e.target);
+      // прибираємо delay після появи, щоб hover-transition не лагали
+      window.setTimeout(function () {
+        e.target.style.transitionDelay = '';
+      }, delay + 800);
     });
   }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
 

@@ -9,9 +9,20 @@
   var cards = grid.querySelectorAll('.iprm-course-card');
   var emptyState = grid.querySelector('[data-filter-empty]');
   var searchInput = document.querySelector('[data-course-search]');
+  var resultBar = document.querySelector('[data-filter-resultbar]');
+  var countEl = document.querySelector('[data-filter-count]');
+  var resetBtn = document.querySelector('[data-filter-reset]');
 
   var activeTags = new Set();
   var searchQuery = '';
+
+  function pluralCourses(n) {
+    var m10 = n % 10, m100 = n % 100;
+    if (m100 >= 11 && m100 <= 14) return n + ' курсів';
+    if (m10 === 1) return n + ' курс';
+    if (m10 >= 2 && m10 <= 4) return n + ' курси';
+    return n + ' курсів';
+  }
 
   // Cache lowercased course titles per card (одноразово).
   cards.forEach(function (card) {
@@ -61,6 +72,23 @@
     });
     var hasActiveFilter = activeTags.size > 0 || !!searchQuery;
     if (emptyState) emptyState.hidden = !hasActiveFilter || visible > 0;
+
+    // Result-bar з лічильником + reset показуємо лише коли є активний фільтр.
+    if (resultBar) resultBar.hidden = !hasActiveFilter;
+    if (countEl && hasActiveFilter) {
+      countEl.textContent = visible > 0
+        ? 'Знайдено ' + pluralCourses(visible)
+        : 'Нічого не знайдено';
+    }
+  }
+
+  function resetFilters() {
+    activeTags.clear();
+    searchQuery = '';
+    if (searchInput) searchInput.value = '';
+    syncTagButtons();
+    applyFilter();
+    if (searchInput) searchInput.focus();
   }
 
   function toggleTag(tagName) {
@@ -94,6 +122,10 @@
         applyFilter();
       }
     });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', resetFilters);
   }
 
   syncTagButtons();

@@ -1,0 +1,36 @@
+/* form-progress.css — індикатор заповнення форми. Парний до form-progress.js. */
+
+.form-progress {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 24px;
+}
+
+.form-progress__bar {
+  flex: 1;
+  height: 8px;
+  background: var(--apple-gray-light, #d2d2d7);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.form-progress__bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 4px;
+  background: var(--iprm-accent, #7055a4);
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.form-progress__label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--iprm-accent, #7055a4);
+  min-width: 96px;
+  text-align: right;
+}
+
+.form-progress--complete .form-progress__bar span { background: #16a34a; }
+.form-progress--complete .form-progress__label { color: #16a34a; }

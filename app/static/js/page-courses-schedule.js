@@ -164,6 +164,22 @@
       .replace(/'/g, '&#39;');
   }
 
+  // Помітний badge місця проведення (дзеркалить Jinja-макрос _location_badge).
+  var PIN_SVG = '<svg class="iprm-loc-badge__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+  var MONITOR_SVG = '<svg class="iprm-loc-badge__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+
+  function locationBadge(format, location) {
+    if (format === 'online') {
+      return '<span class="iprm-loc-badge iprm-loc-badge--online">' + MONITOR_SVG +
+        '<span class="iprm-loc-badge__text">Онлайн</span></span>';
+    }
+    var tbd = location ? '' : ' iprm-loc-badge--tbd';
+    var text = escapeHtml(location || 'Місто уточнюється');
+    var sub = format === 'hybrid' ? '<span class="iprm-loc-badge__sub">+ онлайн</span>' : '';
+    return '<span class="iprm-loc-badge iprm-loc-badge--offline' + tbd + '">' + PIN_SVG +
+      '<span class="iprm-loc-badge__text">' + text + '</span>' + sub + '</span>';
+  }
+
   function renderDetails() {
     if (!selectedDate) {
       detailsEl.innerHTML = '<p class="iprm-calendar__details-empty">' +
@@ -186,9 +202,7 @@
 
     dayEvents.forEach(function (ev) {
       var meta = [];
-      if (ev.format_label) meta.push(escapeHtml(ev.format_label));
       if (ev.event_type_label) meta.push(escapeHtml(ev.event_type_label));
-      if (ev.location) meta.push(escapeHtml(ev.location));
       if (ev.price) meta.push(ev.price + ' ₴');
 
       // Не використовуємо вкладений <a> -- картка вже є посиланням; інакше
@@ -203,6 +217,7 @@
         '<a class="iprm-calendar__event" href="' + escapeHtml(courseUrl) + '">' +
           '<div>' +
             '<h4 class="iprm-calendar__event-title">' + escapeHtml(ev.title) + '</h4>' +
+            locationBadge(ev.format, ev.location) +
             (meta.length
               ? '<div class="iprm-calendar__event-meta">' + meta.join(' &middot; ') + '</div>'
               : '') +

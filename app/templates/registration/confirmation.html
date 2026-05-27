@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'partials/_location_badge.html' import location_badge %}
 
 {% block title %}Реєстрація: {{ event.title }} | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -72,7 +73,7 @@
   {% if _needs_pay %}
     {% if liqpay_data and liqpay_signature %}
     <div class="reg-pay-cta">
-      <form method="POST" action="{{ liqpay_checkout_url }}" accept-charset="utf-8">
+      <form method="POST" action="{{ liqpay_checkout_url }}" accept-charset="utf-8" data-single-submit>
         <input type="hidden" name="data" value="{{ liqpay_data }}">
         <input type="hidden" name="signature" value="{{ liqpay_signature }}">
         <button type="submit" class="reg-pay-cta__btn">
@@ -105,6 +106,12 @@
       <span class="reg-status-card__label">Курс</span>
       <span class="reg-status-card__value">{{ event.title }}</span>
     </div>
+    {% if event.event_format %}
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">{% if event.event_format == 'online' %}Формат{% else %}Місце{% endif %}</span>
+      <span class="reg-status-card__value">{{ location_badge(event.event_format, event.location) }}</span>
+    </div>
+    {% endif %}
     {% if event.start_date %}
     <div class="reg-status-card__row">
       <span class="reg-status-card__label">Дата</span>
@@ -150,4 +157,8 @@
   </div>
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/form-single-submit.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

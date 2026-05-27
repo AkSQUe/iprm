@@ -52,6 +52,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/toast.css') }}?v={{ assets_version }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/form-validate.css') }}?v={{ assets_version }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/tooltips.css') }}?v={{ assets_version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/confirm-action.css') }}?v={{ assets_version }}">
   {% block extra_css %}{% endblock %}
   <script>
     (function(){try{var f=localStorage.getItem('iprm-font');if(f==='fixel')document.documentElement.setAttribute('data-font','fixel');}catch(e){}})();
@@ -97,6 +98,7 @@
   <script defer src="{{ url_for('static', filename='js/form-validate.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/tooltips.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/copy-to-clipboard.js') }}?v={{ assets_version }}"></script>
+  <script defer src="{{ url_for('static', filename='js/confirm-action.js') }}?v={{ assets_version }}"></script>
   {% block extra_scripts %}{% endblock %}
 </body>
 </html>

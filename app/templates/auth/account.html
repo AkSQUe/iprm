@@ -111,7 +111,8 @@
       </div>
 
       <div class="account-actions">
-        <form method="POST" action="{{ url_for('auth.logout') }}" class="form-logout">
+        <form method="POST" action="{{ url_for('auth.logout') }}" class="form-logout"
+              data-confirm="Вийти з облікового запису?" data-confirm-ok="Вийти" data-confirm-cancel="Залишитись">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="btn-auth btn-auth--outline">Вийти з облікового запису</button>
         </form>
