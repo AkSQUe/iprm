@@ -12,6 +12,7 @@ STATIC_URLS = [
     ('trainers.trainer_list', '0.8', 'weekly'),
     ('clinics.clinic_list', '0.8', 'monthly'),
     ('main.contact', '0.7', 'monthly'),
+    ('main.bpr_documents', '0.4', 'yearly'),
     ('main.offer', '0.3', 'yearly'),
     ('main.privacy', '0.3', 'yearly'),
     ('main.refund', '0.3', 'yearly'),

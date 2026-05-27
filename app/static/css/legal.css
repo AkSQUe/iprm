@@ -220,3 +220,48 @@
     border-radius: var(--iprm-radius-sm);
   }
 }
+
+
+/* ===== Документи БПР (окрема сторінка) ===== */
+
+.bpr-docs-page__list {
+  list-style: decimal;
+  padding-left: 28px;
+  margin: 24px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--apple-gray-dark);
+}
+
+.bpr-docs-page__list li {
+  padding-left: 6px;
+}
+
+.bpr-docs-page__list li::marker {
+  color: var(--iprm-accent);
+  font-weight: 700;
+}
+
+.bpr-docs-page__list a {
+  color: var(--apple-black);
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 0, 0, 0.2);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+
+.bpr-docs-page__list a:hover {
+  color: var(--iprm-accent);
+  text-decoration-color: var(--iprm-accent);
+}
+
+.bpr-docs-page__list a::after {
+  content: '\00a0↗';
+  font-size: 0.85em;
+  color: var(--apple-gray);
+  margin-left: 2px;
+}

@@ -22,56 +22,8 @@
         <a href="tel:{{ site_settings.phone_primary }}" class="iprm-footer__phone">{{ site_settings.phone_primary }}</a>
       </div>
     </div>
-    <section class="iprm-footer__bpr-docs" aria-labelledby="footer-bpr-title">
-      <h3 id="footer-bpr-title" class="iprm-footer__bpr-docs-title">Документи БПР</h3>
-      <ol class="iprm-footer__bpr-docs-list">
-        <li>
-          <a href="{{ url_for('static', filename='bpr-documents/3-dobrochesnist.pdf') }}"
-             target="_blank" rel="noopener noreferrer">
-            Положення про оцінку заходів БПР на ознаки академічної доброчесності
-            та дотримання принципів доказової медицини
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('static', filename='bpr-documents/4-metodolohiya.pdf') }}"
-             target="_blank" rel="noopener noreferrer">
-            Методологія оцінювання набутих знань, компетентностей та практичних
-            навичок працівників сфери охорони здоров'я
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('static', filename='bpr-documents/6-zayava-zasnovnykiv.pdf') }}"
-             target="_blank" rel="noopener noreferrer">
-            Заява засновників (учасників, власників), посадових осіб про
-            відсутність конфлікту інтересів
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('static', filename='bpr-documents/5-konflikt-interesiv.pdf') }}"
-             target="_blank" rel="noopener noreferrer">
-            Положення про запобігання конфлікту інтересів під час проведення
-            заходів БПР та недопущення залучення і використання коштів
-            фізичних (юридичних) осіб для реклами лікарських засобів,
-            медичних виробів або медичних послуг
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('static', filename='bpr-documents/1-zayava-pro-namir.pdf') }}"
-             target="_blank" rel="noopener noreferrer">
-            Заява про намір провадити діяльність з безперервного професійного
-            розвитку
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('static', filename='bpr-documents/2-vytyah-iprm-opendatabot.pdf') }}"
-             target="_blank" rel="noopener noreferrer">
-            Витяг з реєстру юридичних осіб (OpenDataBot)
-          </a>
-        </li>
-      </ol>
-    </section>
-
     <div class="iprm-footer__legal">
+      <a href="{{ url_for('main.bpr_documents') }}" class="iprm-footer__link">Документи БПР</a>
       <a href="{{ url_for('main.offer') }}" class="iprm-footer__link">Оферта</a>
       <a href="{{ url_for('main.privacy') }}" class="iprm-footer__link">Конфіденційність</a>
       <a href="{{ url_for('main.refund') }}" class="iprm-footer__link">Повернення</a>

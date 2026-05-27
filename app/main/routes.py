@@ -45,6 +45,14 @@ def cookies():
     return render_template('main/cookies.html')
 
 
+@main_bp.route('/bpr-documents')
+def bpr_documents():
+    """Окрема сторінка зі списком документів БПР (Положення про оцінку,
+    методологія, конфлікт інтересів, тощо). Файли в app/static/bpr-documents/.
+    """
+    return render_template('main/bpr_documents.html', active_nav='bpr_documents')
+
+
 @main_bp.route('/contact', methods=['GET', 'POST'])
 @limiter.limit("5 per hour", methods=['POST'])
 def contact():
