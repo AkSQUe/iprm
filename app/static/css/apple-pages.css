@@ -504,7 +504,7 @@
   opacity: 1;
 }
 
-/* Шапка картки: градієнтний нумерований бейдж + заголовок */
+/* Шапка картки: нумерований бейдж + заголовок */
 .apple-page .iprm-program__head {
   display: flex;
   align-items: center;
@@ -525,20 +525,6 @@
   color: #fff;
   background: var(--iprm-accent);
   box-shadow: 0 6px 16px rgba(var(--apple-accent-rgb), 0.28);
-}
-
-.apple-page .iprm-program__head-text {
-  min-width: 0;
-}
-
-.apple-page .iprm-program__tag {
-  display: block;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--iprm-nav-active);
-  margin-bottom: 4px;
 }
 
 .apple-page .iprm-program__heading {
