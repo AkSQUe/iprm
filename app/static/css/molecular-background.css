@@ -19,7 +19,13 @@
   height: 100%;
 }
 
-body > *:not(#molecular-background):not(script):not(.iprm-header):not(.cookie-banner) {
+/* Підіймаємо контент потоку над фоновим canvas (#molecular-background,
+   z-index:0). Виключаємо JS-ін'єктовані оверлеї рівня body, які самі
+   керують стекінгом через position:fixed + високий z-index — інакше
+   це правило перебиває їх (вища специфічність) і ламає позиціонування
+   (напр. tooltip-bubble отримував position:relative і йшов під footer).
+   Нові body-level fixed-оверлеї додавайте сюди у :not(). */
+body > *:not(#molecular-background):not(script):not(.iprm-header):not(.cookie-banner):not(.iprm-tooltip-bubble):not(.iprm-toasts):not(.iprm-reading-progress):not(.iprm-to-top):not(.iprm-confirm):not(.admin-toast-container) {
   position: relative;
   z-index: 1;
 }

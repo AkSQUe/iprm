@@ -7,6 +7,11 @@
   margin: 0 0 24px;
 }
 
+/* display:flex перебиває UA [hidden]{display:none}; ховаємо явно. */
+.form-progress[hidden] {
+  display: none;
+}
+
 .form-progress__bar {
   flex: 1;
   height: 8px;
