@@ -27,9 +27,11 @@
   outline: none;
 }
 
-/* Спливаюча підказка (JS позиціонує по body) */
+/* Спливаюча підказка. position: fixed — координати у viewport, JS їх
+   виставляє. Fixed не впливає на висоту документа (без «порожнечі» під
+   footer і без розтягування сторінки). */
 .iprm-tooltip-bubble {
-  position: absolute;
+  position: fixed;
   z-index: 10000;
   max-width: 280px;
   padding: 10px 14px;

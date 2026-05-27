@@ -26,12 +26,20 @@
         bubble.className = 'iprm-tooltip-bubble';
         bubble.textContent = trigger.getAttribute('data-tooltip');
         document.body.appendChild(bubble);
+        // position: fixed => координати у системі viewport (без scrollX/Y).
+        // Fixed-елемент не контрибутить у scroll-розмір документа, тож
+        // сторінка не «розтягується» й не з'являється порожнеча під footer.
         var r = trigger.getBoundingClientRect();
-        var top = window.scrollY + r.top - bubble.offsetHeight - 10;
-        var left = window.scrollX + r.left + r.width / 2 - bubble.offsetWidth / 2;
-        left = Math.max(8, left);
-        if (top < window.scrollY + 4) {
-          top = window.scrollY + r.bottom + 10;
+        var bw = bubble.offsetWidth;
+        var bh = bubble.offsetHeight;
+        var vw = document.documentElement.clientWidth;
+        var top = r.top - bh - 10;
+        var left = r.left + r.width / 2 - bw / 2;
+        // тримаємо в межах вьюпорта по горизонталі
+        left = Math.max(8, Math.min(left, vw - bw - 8));
+        // якщо зверху не влазить — показуємо знизу
+        if (top < 4) {
+          top = r.bottom + 10;
           bubble.classList.add('iprm-tooltip-bubble--below');
         }
         bubble.style.top = top + 'px';
