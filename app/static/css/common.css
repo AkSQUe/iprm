@@ -935,6 +935,54 @@ select.badge-select:disabled {
   text-align: center;
 }
 
+.iprm-footer__bpr-docs {
+  padding-top: 24px;
+  border-top: 1px solid var(--iprm-border);
+}
+
+.iprm-footer__bpr-docs-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--apple-black);
+  margin: 0 0 12px;
+}
+
+.iprm-footer__bpr-docs-list {
+  list-style: decimal;
+  padding-left: 24px;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 32px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--apple-gray-dark);
+}
+
+.iprm-footer__bpr-docs-list li {
+  padding-left: 4px;
+}
+
+.iprm-footer__bpr-docs-list a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 0, 0, 0.15);
+  text-underline-offset: 2px;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+
+.iprm-footer__bpr-docs-list a:hover {
+  color: var(--iprm-accent);
+  text-decoration-color: var(--iprm-accent);
+}
+
+@media (max-width: 768px) {
+  .iprm-footer__bpr-docs-list {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
 .iprm-footer__legal {
   display: flex;
   justify-content: flex-end;
