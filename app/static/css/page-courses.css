@@ -1145,6 +1145,11 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
 
 /* ========== COURSE SEARCH RESULT BAR ========== */
 
+/* display:flex перекриває браузерне [hidden]{display:none} -- повертаємо. */
+.iprm-course-resultbar[hidden] {
+  display: none;
+}
+
 .iprm-course-resultbar {
   display: flex;
   align-items: center;
