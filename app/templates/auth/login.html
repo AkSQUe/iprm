@@ -19,14 +19,14 @@
     <h1 class="auth-card__title">Вхід</h1>
     <p class="auth-card__subtitle">Увійдіть до вашого облікового запису</p>
 
-    {% include 'partials/flash_messages.html' %}
+    {# Flash → toast (base.html) #}
 
-    <form method="POST" action="{{ url_for('auth.login') }}">
+    <form method="POST" action="{{ url_for('auth.login') }}" data-validate>
       {{ form.hidden_tag() }}
 
       <div class="form-group">
         <label for="email">Email <span class="required">*</span></label>
-        {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email", autocomplete="email") }}
+        {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email", autocomplete="email", required=true) }}
         {% for error in form.email.errors %}
           <div class="form-error">{{ error }}</div>
         {% endfor %}
@@ -34,7 +34,7 @@
 
       <div class="form-group">
         <label for="password">Пароль <span class="required">*</span></label>
-        {{ form.password(class="form-input" + (" is-invalid" if form.password.errors else ""), id="password", autocomplete="current-password") }}
+        {{ form.password(class="form-input" + (" is-invalid" if form.password.errors else ""), id="password", autocomplete="current-password", required=true) }}
         {% for error in form.password.errors %}
           <div class="form-error">{{ error }}</div>
         {% endfor %}

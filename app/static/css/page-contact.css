@@ -76,6 +76,31 @@
   color: var(--iprm-accent-hover);
 }
 
+.contact-page__copy-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  margin-left: 8px;
+  padding: 2px 6px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--apple-gray);
+  border-radius: 5px;
+  vertical-align: middle;
+  transition: color 0.15s, background 0.15s;
+}
+
+.contact-page__copy-btn:hover {
+  color: var(--iprm-accent);
+  background: var(--iprm-accent-light);
+}
+
+.contact-page__copy-btn:focus-visible {
+  outline: 2px solid var(--iprm-accent);
+  outline-offset: 2px;
+}
+
 /* ========== SOCIAL LINKS ========== */
 
 .contact-page__socials {

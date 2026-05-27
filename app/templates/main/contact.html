@@ -55,6 +55,7 @@
             <div class="contact-page__info-label">Телефон</div>
             <div class="contact-page__info-value">
               <a href="tel:{{ site_settings.phone_primary }}">{{ site_settings.phone_primary }}</a>
+              <button type="button" class="contact-page__copy-btn" data-copy="{{ site_settings.phone_primary }}" aria-label="Скопіювати номер телефону" title="Скопіювати">⧉</button>
               <small class="contact-page__info-messengers">WhatsApp, Viber, Telegram</small>
             </div>
           </div>
@@ -90,18 +91,18 @@
       </div>
 
       <div class="contact-page__form-wrap">
-        <form method="POST" action="{{ url_for('main.contact') }}">
+        <form method="POST" action="{{ url_for('main.contact') }}" data-validate>
           {{ form.hidden_tag() }}
 
           <div class="form-group">
             <label for="name">Ім'я <span class="required">*</span></label>
-            {{ form.name(class="form-input" + (" is-invalid" if form.name.errors else ""), id="name", autocomplete="name") }}
+            {{ form.name(class="form-input" + (" is-invalid" if form.name.errors else ""), id="name", autocomplete="name", required=true) }}
             {% for error in form.name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
           </div>
 
           <div class="form-group">
             <label for="email">Email <span class="required">*</span></label>
-            {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email", autocomplete="email") }}
+            {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email", autocomplete="email", required=true) }}
             {% for error in form.email.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
           </div>
 
@@ -119,13 +120,13 @@
 
           <div class="form-group">
             <label for="message">Повідомлення <span class="required">*</span></label>
-            {{ form.message(class="form-input" + (" is-invalid" if form.message.errors else ""), id="message") }}
+            {{ form.message(class="form-input" + (" is-invalid" if form.message.errors else ""), id="message", required=true) }}
             {% for error in form.message.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
           </div>
 
           <div class="form-consent">
             <div class="form-checkbox">
-              {{ form.consent_data(id="consent_data") }}
+              {{ form.consent_data(id="consent_data", required=true, **{'data-hint': 'Без згоди ми не можемо обробити звернення'}) }}
               <label for="consent_data">
                 Я надаю згоду на обробку моїх персональних даних з метою обробки мого звернення. Ознайомлений(а) з <a href="{{ url_for('main.privacy') }}" target="_blank" rel="noopener noreferrer">Політикою конфіденційності</a>. <span class="required">*</span>
               </label>
