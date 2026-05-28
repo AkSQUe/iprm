@@ -113,7 +113,7 @@
             <p class="form-hint">Стандарт Google -- 0.5. Нижче = бот. Вище = жорсткіше, ризик false-positives.</p>
           </div>
           <div class="form-group">
-            <div class="form-checkbox" style="margin-top:30px;">
+            <div class="form-checkbox form-checkbox--row-align">
               <input type="checkbox" name="enabled" id="enabled" {% if cfg.enabled %}checked{% endif %}>
               <label for="enabled">Увімкнути reCAPTCHA</label>
             </div>
@@ -126,7 +126,7 @@
                   data-confirm="Зберегти налаштування reCAPTCHA?">Зберегти налаштування</button>
         </div>
 
-        <p class="form-hint" style="margin-top:18px;">
+        <p class="form-hint form-hint--spaced">
           Отримати ключі: <a href="https://www.google.com/recaptcha/admin/create" target="_blank" rel="noopener">google.com/recaptcha/admin/create</a>
           -- оберіть тип <strong>reCAPTCHA v3</strong>, додайте домени (включно з локальним <code>127.0.0.1</code> для розробки).
         </p>

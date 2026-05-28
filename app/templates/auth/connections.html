@@ -51,11 +51,11 @@
               <form method="POST" action="{{ url_for('auth.google_unlink') }}"
                     data-confirm="Від'єднати Google від акаунта?">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn--secondary btn--sm">Від'єднати</button>
+                <button type="submit" class="apple-btn apple-btn--outline apple-btn--sm">Від'єднати</button>
               </form>
             {% elif google_oauth_available %}
               <a href="{{ url_for('auth.google_start', action='link') }}"
-                 class="btn btn--primary btn--sm">Прив'язати Google</a>
+                 class="apple-btn apple-btn--primary apple-btn--sm">Прив'язати Google</a>
             {% else %}
               <span class="badge badge--pending">Не налаштовано</span>
             {% endif %}
@@ -74,11 +74,11 @@
               <form method="POST" action="{{ url_for('auth.apple_unlink') }}"
                     data-confirm="Від'єднати Apple від акаунта?">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn--secondary btn--sm">Від'єднати</button>
+                <button type="submit" class="apple-btn apple-btn--outline apple-btn--sm">Від'єднати</button>
               </form>
             {% elif apple_signin_available %}
               <a href="{{ url_for('auth.apple_start', action='link') }}"
-                 class="btn btn--primary btn--sm">Прив'язати Apple</a>
+                 class="apple-btn apple-btn--primary apple-btn--sm">Прив'язати Apple</a>
             {% else %}
               <span class="badge badge--pending">Не налаштовано</span>
             {% endif %}

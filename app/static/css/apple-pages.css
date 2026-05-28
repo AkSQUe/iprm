@@ -178,6 +178,31 @@
   pointer-events: none;
 }
 
+/* Outline-варіант + compact-розмір. Дублюємо тут із .apple-page-префіксом,
+   бо базова .apple-btn (specificity 0,1,1) у цьому файлі перебиває
+   common.css варіант (0,0,1). */
+.apple-page .apple-btn--outline {
+  background: transparent;
+  color: var(--iprm-nav-active);
+  border: 2px solid var(--iprm-nav-active);
+  padding: 12px 30px; /* -2px на border */
+}
+
+.apple-page .apple-btn--outline:hover {
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent-hover);
+  transform: scale(1.02) translateY(-1px);
+}
+
+.apple-page .apple-btn--sm {
+  padding: 8px 18px;
+  font-size: 0.875rem;
+}
+
+.apple-page .apple-btn--outline.apple-btn--sm {
+  padding: 6px 16px; /* -2px на border */
+}
+
 /* ========== CARD OVERRIDES ========== */
 
 .apple-page .iprm-course-card {

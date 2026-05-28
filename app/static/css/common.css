@@ -579,6 +579,31 @@ a {
   pointer-events: none;
 }
 
+/* Outline-варіант (без ::after-стрілки apple-btn--secondary -- для
+   повноцінних action-кнопок типу "Від'єднати"). */
+.apple-btn--outline {
+  background: transparent;
+  color: var(--iprm-nav-active);
+  border: 2px solid var(--iprm-nav-active);
+  padding: 12px 30px; /* -2px на border */
+}
+
+.apple-btn--outline:hover {
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent-hover);
+  transform: scale(1.02) translateY(-1px);
+}
+
+/* Compact-розмір (для inline-кнопок у row-ах, card-ах, badge-зонах). */
+.apple-btn--sm {
+  padding: 8px 18px;
+  font-size: 0.875rem;
+}
+
+.apple-btn--outline.apple-btn--sm {
+  padding: 6px 16px; /* -2px на border */
+}
+
 /* ========== BADGES ========== */
 
 .badge {

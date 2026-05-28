@@ -350,6 +350,18 @@
   flex: 1;
 }
 
+/* Вертикальне вирівнювання form-checkbox у grid-row з полем зліва,
+   що має label зверху (label-висота + gap). */
+.admin-form .form-checkbox--row-align {
+  margin-top: 30px;
+}
+
+/* form-hint з збільшеним відступом для футер-нот, відокремлених
+   від form-actions блоку (стандартний margin-top: 4px замалий). */
+.admin-form .form-hint--spaced {
+  margin-top: 18px;
+}
+
 .admin-form .form-checkbox {
   display: flex;
   align-items: center;
