@@ -26,7 +26,7 @@
   <div class="account-confirm-banner">
     <div class="account-confirm-banner__inner">
       <p class="account-confirm-banner__text">Підтвердіть ваш email для повного доступу до функцій сайту</p>
-      <form method="POST" action="{{ url_for('auth.resend_confirmation') }}" class="account-confirm-banner__form">
+      <form method="POST" action="{{ url_for('auth.resend_confirmation') }}" class="account-confirm-banner__form" data-recaptcha-action="resend_confirmation">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="account-confirm-banner__btn">Надіслати лист повторно</button>
       </form>

@@ -174,6 +174,10 @@ def resend_confirmation():
         flash('Email вже підтверджено', 'info')
         return redirect(url_for('auth.account'))
 
+    if not verify_recaptcha(action='resend_confirmation'):
+        flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+        return redirect(url_for('auth.account'))
+
     try:
         token = generate_confirmation_token(current_user.id)
         confirm_url = url_for('auth.confirm_email', token=token, _external=True)
