@@ -21,7 +21,7 @@
 
     {# Flash → toast (base.html) #}
 
-    <form method="POST" action="{{ url_for('auth.login') }}" data-validate>
+    <form method="POST" action="{{ url_for('auth.login') }}" data-validate data-recaptcha-action="login">
       {{ form.hidden_tag() }}
 
       <div class="form-group">

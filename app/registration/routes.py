@@ -10,6 +10,7 @@ from app.models.registration import EventRegistration
 from app.registration import registration_bp
 from app.registration.forms import EventRegistrationForm
 from app.services import registration_service
+from app.services.recaptcha import verify_request as verify_recaptcha
 from app.services.partner_auth import (
     PrefillTokenError,
     decode_prefill_token,
@@ -183,6 +184,12 @@ def register_instance(instance_id):
     form = EventRegistrationForm(data=initial)
 
     if form.validate_on_submit():
+        if not verify_recaptcha(action='event_register'):
+            flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+            return render_template(
+                'registration/register.html',
+                form=form, event=EventAdapter(instance),
+            )
         has_capacity, _ = registration_service.check_capacity(instance_id)
         if not has_capacity:
             db.session.rollback()

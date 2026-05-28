@@ -90,7 +90,7 @@
   <div class="form-progress" data-form-progress="form[data-validate]" aria-hidden="true"></div>
 
   {# ===== Registration form ===== #}
-  <form method="POST" action="{{ url_for('registration.register_instance', instance_id=event.id) }}" data-validate data-single-submit>
+  <form method="POST" action="{{ url_for('registration.register_instance', instance_id=event.id) }}" data-validate data-single-submit data-recaptcha-action="event_register">
     {{ form.hidden_tag() }}
 
     {# ----- Тип учасника ----- #}

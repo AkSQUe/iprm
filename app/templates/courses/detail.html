@@ -355,7 +355,7 @@
         </h2>
         <p>Заповніть форму нижче — ми повідомимо вас коли буде заплановано чергове проведення.</p>
         {# Flash-повідомлення показуються як toast (base.html + ui-feedback.js) #}
-        <form method="POST" action="{{ url_for('courses.course_request', slug=course.slug) }}" class="iprm-request-form" data-validate data-single-submit>
+        <form method="POST" action="{{ url_for('courses.course_request', slug=course.slug) }}" class="iprm-request-form" data-validate data-single-submit data-recaptcha-action="course_request">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="iprm-request-form__honeypot" aria-hidden="true">
             <label for="req-website">Website</label>

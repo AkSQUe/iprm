@@ -91,7 +91,7 @@
       </div>
 
       <div class="contact-page__form-wrap">
-        <form method="POST" action="{{ url_for('main.contact') }}" data-validate>
+        <form method="POST" action="{{ url_for('main.contact') }}" data-validate data-recaptcha-action="contact">
           {{ form.hidden_tag() }}
 
           <div class="form-group">
