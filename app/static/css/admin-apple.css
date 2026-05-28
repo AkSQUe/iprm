@@ -220,6 +220,13 @@
   padding: 32px;
 }
 
+/* Gap між послідовними form-section картками (admin-сторінки часто мають
+   2+ form-section підряд: "Поточна конфігурація", "Оновити ключі" тощо).
+   Через adjacent-sibling -- нульова регресія для одиночних sections. */
+.form-section + .form-section {
+  margin-top: 24px;
+}
+
 .form-section__title,
 .admin-form__section-title {
   font-size: 1.125rem;
