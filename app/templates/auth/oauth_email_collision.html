@@ -7,27 +7,43 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
 {% block content %}
-<div class="apple-page">
-  <section class="iprm-section" aria-labelledby="collision-title">
-    <div class="iprm-section__inner iprm-section__inner--narrow">
-      <h1 id="collision-title" class="iprm-section__title">Email уже зареєстровано</h1>
-      <p>
-        Email <strong>{{ email }}</strong> уже має обліковий запис, створений
-        через <strong>пароль</strong>. З міркувань безпеки ми не зливаємо
-        акаунти автоматично.
-      </p>
-      <p>Щоб додати вхід через {{ provider }}:</p>
-      <ol>
-        <li>Увійдіть з паролем за допомогою кнопки нижче.</li>
-        <li>Перейдіть у <em>Способи входу</em>.</li>
-        <li>Натисніть <em>Прив'язати {{ provider }}</em>.</li>
-      </ol>
-      <div class="form-actions">
-        <a href="{{ url_for('auth.login') }}" class="btn btn--primary">Увійти з паролем</a>
-        <a href="{{ url_for('main.index') }}" class="btn btn--secondary">На головну</a>
-      </div>
+<div class="apple-page auth-page">
+  <div class="auth-card auth-card--collision">
+    <a href="{{ url_for('main.index') }}" class="auth-card__logo">
+      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="ІПРМ" class="auth-card__logo-img">
+    </a>
+
+    <div class="auth-collision__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 8v4"/>
+        <circle cx="12" cy="16" r="0.5" fill="currentColor" stroke="none"/>
+      </svg>
     </div>
-  </section>
+
+    <h1 class="auth-card__title">Email уже зареєстровано</h1>
+
+    <p class="auth-card__subtitle">
+      <span class="auth-collision__email">{{ email }}</span>
+      уже має обліковий запис, створений через <strong>пароль</strong>.
+      З міркувань безпеки ми не зливаємо акаунти автоматично.
+    </p>
+
+    <h2 class="auth-collision__heading">Щоб додати вхід через {{ provider }}</h2>
+    <ol class="auth-collision__steps">
+      <li>Увійдіть з паролем за допомогою кнопки нижче.</li>
+      <li>У кабінеті перейдіть у розділ <em>«Способи входу»</em>.</li>
+      <li>Натисніть <em>«Прив'язати {{ provider }}»</em> і підтвердьте доступ.</li>
+    </ol>
+
+    <div class="auth-collision__actions">
+      <a href="{{ url_for('auth.login') }}" class="btn-auth">Увійти з паролем</a>
+      <a href="{{ url_for('main.index') }}" class="btn-auth btn-auth--outline">На головну</a>
+    </div>
+  </div>
 </div>
 {% endblock %}

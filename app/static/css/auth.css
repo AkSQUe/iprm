@@ -291,6 +291,130 @@
   color: var(--iprm-nav-active);
 }
 
+/* ========== OAUTH EMAIL COLLISION (oauth_email_collision.html) ========== */
+
+/* Лівий-вирівняний контент картки; ширше за дефолтну auth-card бо текст. */
+.auth-card--collision {
+  max-width: 540px;
+  text-align: left;
+}
+
+/* Інформаційна іконка у кружечку-акценті */
+.auth-collision__icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
+}
+
+.auth-collision__icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+/* Title/subtitle лишаються центровані (override left-align батька) */
+.auth-card--collision .auth-card__title,
+.auth-card--collision .auth-card__subtitle {
+  text-align: center;
+}
+
+.auth-card--collision .auth-card__subtitle {
+  margin-bottom: 32px;
+}
+
+/* Email як акцентний pill */
+.auth-collision__email {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9375rem;
+  letter-spacing: -0.005em;
+}
+
+/* Підзаголовок над списком кроків */
+.auth-collision__heading {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--apple-black);
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+/* Нумеровані кроки -- кружечок-акцент з білою цифрою + текст */
+.auth-collision__steps {
+  list-style: none;
+  counter-reset: step;
+  padding: 0;
+  margin: 0 0 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-collision__steps li {
+  counter-increment: step;
+  position: relative;
+  /* padding-left 56px резервує місце для absolute-кружечка з номером;
+     не використовуємо flex, бо він колапсить whitespace між <em>«...»</em>
+     і сусіднім текстом. */
+  padding: 16px 16px 16px 56px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: var(--iprm-radius-sm);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--apple-gray-dark);
+  min-height: 60px;
+}
+
+.auth-collision__steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--iprm-accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-feature-settings: 'tnum';
+}
+
+.auth-collision__steps em {
+  font-style: normal;
+  color: var(--apple-black);
+  font-weight: 600;
+}
+
+/* Дві кнопки у ряд (на mobile wrap) */
+.auth-collision__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.auth-collision__actions .btn-auth {
+  flex: 1;
+  min-width: 180px;
+  width: auto;
+}
+
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
@@ -317,6 +441,26 @@
 
   .auth-card__title {
     font-size: 1.25rem;
+  }
+
+  .auth-collision__icon {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 20px;
+  }
+
+  .auth-collision__icon svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .auth-collision__steps li {
+    padding: 12px 14px 12px 50px;
+    font-size: 0.875rem;
+  }
+
+  .auth-collision__actions .btn-auth {
+    flex: 1 1 100%;
   }
 }
 
