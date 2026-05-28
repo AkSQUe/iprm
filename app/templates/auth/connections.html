@@ -62,12 +62,26 @@
           </div>
         </div>
 
-        <!-- Apple (Phase 5) -->
-        <div class="connection-item connection-item--planned">
+        <!-- Apple -->
+        <div class="connection-item">
           <div class="connection-item__title">Apple</div>
-          <div class="connection-item__email">--</div>
+          <div class="connection-item__email">
+            {% if has_apple %}{{ by_provider['apple'].email or 'через Apple ID' }}{% else %}--{% endif %}
+          </div>
           <div class="connection-item__status">
-            <span class="badge badge--pending">Скоро</span>
+            {% if has_apple %}
+              <span class="badge badge--active">Прив'язано</span>
+              <form method="POST" action="{{ url_for('auth.apple_unlink') }}"
+                    data-confirm="Від'єднати Apple від акаунта?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn--secondary btn--sm">Від'єднати</button>
+              </form>
+            {% elif apple_signin_available %}
+              <a href="{{ url_for('auth.apple_start', action='link') }}"
+                 class="btn btn--primary btn--sm">Прив'язати Apple</a>
+            {% else %}
+              <span class="badge badge--pending">Не налаштовано</span>
+            {% endif %}
           </div>
         </div>
 

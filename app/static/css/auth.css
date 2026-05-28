@@ -388,6 +388,23 @@
   flex-shrink: 0;
 }
 
+/* Apple Sign In: чорна кнопка з білим текстом, HIG-стиль. */
+.oauth-btn--apple {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+  margin-top: 10px;
+}
+
+.oauth-btn--apple:hover {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+}
+
+.oauth-btn--apple .oauth-btn__icon {
+  color: #fff;
+}
+
 /* ========== Connections page ========== */
 
 .connections-list {

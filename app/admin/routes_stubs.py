@@ -106,10 +106,15 @@ def integrations():
         'is_configured': settings.is_google_oauth_configured,
         'enabled': settings.google_oauth_enabled,
     }
+    apple_status = {
+        'is_configured': settings.is_apple_signin_configured,
+        'enabled': settings.apple_signin_enabled,
+    }
     return render_template(
         'admin/integrations.html',
         liqpay_status=liqpay_status,
         ga_status=ga_status,
         recaptcha_status=recaptcha_status,
         google_oauth_status=google_oauth_status,
+        apple_status=apple_status,
     )

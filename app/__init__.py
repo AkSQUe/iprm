@@ -71,6 +71,8 @@ def create_app(config_name=None):
     # підтягувалися з SiteSettings (DB-first) без рестарту.
     from app.services.google_oauth import init_oauth
     init_oauth(app)
+    from app.services.apple_signin import init_apple_oauth
+    init_apple_oauth(app)
 
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Будь ласка, увійдіть для доступу до цієї сторінки.'

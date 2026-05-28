@@ -82,6 +82,19 @@ class SiteSettings(TimestampMixin, db.Model):
         'google_oauth_client_secret', db.String(500), default=''
     )
 
+    # Apple Sign In (Phase 5). На відміну від Google, client_secret -- це
+    # короткий JWT, що генерується на льоту з team_id + services_id +
+    # key_id + ES256-підписом приватним ключем (.p8 з developer.apple.com).
+    # Приватний ключ -- PEM-блок ~300 байт; шифруємо Fernet. Усе інше --
+    # публічні ідентифікатори (видно у HTML/URLs).
+    apple_signin_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    apple_team_id = db.Column(db.String(50), default='')
+    apple_services_id = db.Column(db.String(255), default='')
+    apple_key_id = db.Column(db.String(50), default='')
+    _apple_private_key_encrypted = db.Column(
+        'apple_private_key', db.Text, default=''
+    )
+
     # reCAPTCHA v3 (Google). Site key -- публічний (вшиваємо у HTML),
     # secret key -- шифруємо Fernet. Поріг score 0..1 (нижче = бот).
     recaptcha_enabled = db.Column(db.Boolean, default=False, nullable=False)
@@ -192,6 +205,40 @@ class SiteSettings(TimestampMixin, db.Model):
             self.google_oauth_enabled
             and self.google_oauth_client_id
             and self.google_oauth_client_secret
+        )
+
+    @property
+    def apple_private_key(self):
+        """Apple Sign In .p8 приватний ключ (PEM). Розшифровуємо з БД.
+        Якщо decrypt fails -- логуємо і повертаємо ''."""
+        if not self._apple_private_key_encrypted:
+            return ''
+        try:
+            return _get_fernet().decrypt(
+                self._apple_private_key_encrypted.encode()
+            ).decode()
+        except (InvalidToken, Exception):
+            logger.warning('Failed to decrypt apple_private_key')
+            return ''
+
+    @apple_private_key.setter
+    def apple_private_key(self, value):
+        if not value:
+            self._apple_private_key_encrypted = ''
+            return
+        self._apple_private_key_encrypted = _get_fernet().encrypt(
+            value.encode()
+        ).decode()
+
+    @property
+    def is_apple_signin_configured(self):
+        """Apple Sign In готовий: enabled + усі 4 ідентифікатори + ключ."""
+        return bool(
+            self.apple_signin_enabled
+            and self.apple_team_id
+            and self.apple_services_id
+            and self.apple_key_id
+            and self.apple_private_key
         )
 
     @property

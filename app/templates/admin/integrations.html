@@ -92,13 +92,19 @@
         </a>
 
         <!-- Apple Sign In -->
-        <div class="admin-integration-card admin-integration-card--planned">
+        <a href="{{ url_for('admin.apple_signin') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">Apple Sign In</h4>
-            <span class="badge badge--pending">Планується</span>
+            {% if apple_status.is_configured %}
+              <span class="badge badge--active">Активно</span>
+            {% elif apple_status.enabled %}
+              <span class="badge badge--published">Потребує ключів</span>
+            {% else %}
+              <span class="badge badge--draft">Не налаштовано</span>
+            {% endif %}
           </div>
           <p>Авторизація через Apple ID. Service ID, Team ID, relay email.</p>
-        </div>
+        </a>
 
         <!-- Microsoft Clarity -->
         <div class="admin-integration-card admin-integration-card--planned">

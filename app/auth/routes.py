@@ -164,12 +164,18 @@ def connections():
         has_google=has_google,
         has_apple=has_apple,
         google_oauth_available=_google_oauth_available(),
+        apple_signin_available=_apple_signin_available(),
     )
 
 
 def _google_oauth_available():
     from app.models.site_settings import SiteSettings
     return SiteSettings.get().is_google_oauth_configured
+
+
+def _apple_signin_available():
+    from app.models.site_settings import SiteSettings
+    return SiteSettings.get().is_apple_signin_configured
 
 
 @auth_bp.route('/confirm/<token>')

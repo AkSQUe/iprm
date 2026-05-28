@@ -2,9 +2,12 @@
    адмінці включено відповідного провайдера. Параметр `next` -- куди
    повертати після успішного входу (наприклад event-registration URL). #}
 {% set _google_available = site_settings.is_google_oauth_configured %}
-{% if _google_available %}
+{% set _apple_available = site_settings.is_apple_signin_configured %}
+{% if _google_available or _apple_available %}
 <div class="oauth-buttons">
   <div class="oauth-divider"><span>або</span></div>
+
+  {% if _google_available %}
   <a href="{{ url_for('auth.google_start', next=request.args.get('next', '')) }}"
      class="oauth-btn oauth-btn--google" rel="nofollow">
     <svg class="oauth-btn__icon" viewBox="0 0 18 18" aria-hidden="true">
@@ -15,5 +18,17 @@
     </svg>
     Продовжити з Google
   </a>
+  {% endif %}
+
+  {% if _apple_available %}
+  <a href="{{ url_for('auth.apple_start', next=request.args.get('next', '')) }}"
+     class="oauth-btn oauth-btn--apple" rel="nofollow">
+    <svg class="oauth-btn__icon" viewBox="0 0 17 21" aria-hidden="true" fill="currentColor">
+      <path d="M14.05 11.16c-.03-2.7 2.2-4 2.3-4.06-1.26-1.84-3.21-2.09-3.9-2.12-1.66-.17-3.24.97-4.08.97-.85 0-2.15-.95-3.54-.92-1.82.03-3.5 1.06-4.43 2.69-1.89 3.28-.48 8.14 1.36 10.8.9 1.3 1.97 2.76 3.37 2.71 1.36-.06 1.87-.88 3.51-.88 1.63 0 2.1.88 3.54.85 1.46-.03 2.39-1.32 3.28-2.63 1.04-1.51 1.46-2.97 1.49-3.05-.03-.01-2.85-1.09-2.9-4.36zM11.39 3.4c.75-.92 1.26-2.18 1.12-3.45-1.08.05-2.4.73-3.18 1.64-.69.8-1.31 2.09-1.15 3.32 1.21.09 2.45-.61 3.21-1.51z"/>
+    </svg>
+    Продовжити з Apple
+  </a>
+  {% endif %}
+
 </div>
 {% endif %}
