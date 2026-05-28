@@ -1,4 +1,4 @@
-"""Google OAuth 2.0 service (Phase 3 of auth unification).
+"""Google OAuth 2.0 service (Phase 3+6 of auth unification).
 
 Тонкий wrapper навколо Authlib's OAuth flask client. Реєструє Google як
 provider динамічно на основі SiteSettings (client_id/secret з адмінки),
@@ -8,17 +8,31 @@ Discovery URL Google -- стандартний OIDC well-known endpoint, що м
 endpoints (authorize, token, userinfo, jwks) і автоматично оновлюється
 Authlib-ом.
 
-Викликати `init_oauth(app)` у фабриці додатку. У роутах -- `get_google_client()`
-повертає OAuth client для startauth/callback flows.
+Викликати `init_oauth(app)` у фабриці додатку. У роутах --
+`get_google_client()` повертає OAuth client для redirect-flow.
+
+Phase 6 (One Tap): `verify_google_id_token()` верифікує id_token JWT, що
+приходить з фронта через Google's GSI library. Перевіряє підпис проти
+поточного JWKS Google, iss і aud claim-и.
 """
 import logging
+import time
+
+import requests
 from authlib.integrations.flask_client import OAuth
+from authlib.jose import jwt as jose_jwt, JsonWebKey
 
 logger = logging.getLogger(__name__)
 
 # Google OIDC discovery (відповідає OAuth 2.0 + OpenID Connect). Authlib
 # автоматично читає authorization_endpoint, token_endpoint, jwks_uri.
 GOOGLE_DISCOVERY_URL = 'https://accounts.google.com/.well-known/openid-configuration'
+GOOGLE_JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs'
+
+# JWKS-кеш у пам'яті процесу. Google ротує ключі рідко (~раз на місяць);
+# рефрешимо раз на годину.
+_JWKS_CACHE = {'fetched_at': 0, 'key_set': None}
+_JWKS_TTL_SECONDS = 3600
 
 _oauth = OAuth()
 
@@ -63,3 +77,48 @@ def get_google_client():
         },
     )
     return _oauth.google
+
+
+def _get_google_key_set():
+    """Повертає JsonWebKey set з JWKS Google. Кешуємо у пам'яті процесу
+    на годину, бо ключі ротуються рідко і HTTP-запит на кожен One Tap
+    був би марнотратним."""
+    now = time.time()
+    if (_JWKS_CACHE['key_set'] is not None
+            and now - _JWKS_CACHE['fetched_at'] < _JWKS_TTL_SECONDS):
+        return _JWKS_CACHE['key_set']
+    resp = requests.get(GOOGLE_JWKS_URL, timeout=5)
+    resp.raise_for_status()
+    key_set = JsonWebKey.import_key_set(resp.json())
+    _JWKS_CACHE['key_set'] = key_set
+    _JWKS_CACHE['fetched_at'] = now
+    return key_set
+
+
+def verify_google_id_token(token, expected_audience):
+    """Phase 6: верифікація id_token JWT від Google One Tap.
+
+    Перевіряємо:
+    - підпис проти поточного JWKS Google;
+    - iss == accounts.google.com (або https://accounts.google.com);
+    - aud == наш OAuth client_id;
+    - exp/nbf (виконує claims.validate()).
+
+    Повертає dict з claims (sub, email, email_verified, given_name, etc.).
+    Кидає виключення при помилці валідації -- caller відповідальний за
+    логування і HTTP-відповідь.
+    """
+    key_set = _get_google_key_set()
+    claims = jose_jwt.decode(
+        token,
+        key_set,
+        claims_options={
+            'iss': {
+                'essential': True,
+                'values': ['https://accounts.google.com', 'accounts.google.com'],
+            },
+            'aud': {'essential': True, 'value': expected_audience},
+        },
+    )
+    claims.validate()  # перевіряє exp, nbf
+    return dict(claims)

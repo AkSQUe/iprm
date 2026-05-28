@@ -1,0 +1,23 @@
+{# Google One Tap (Phase 6).
+
+   Умовно показуємо тільки коли:
+   - Google OAuth налаштовано і увімкнено (`is_google_oauth_configured`);
+   - юзер не залогінений (`current_user.is_anonymous`) -- бо для логіненого
+     One Tap не має сенсу.
+
+   GSI library від Google сама керує: коли показати prompt, коли його
+   приховати, як часто. Ми лише вставляємо її і реєструємо callback.
+   Дані credential обробляє /static/js/google-onetap.js, бекенд --
+   /auth/google/onetap. #}
+{% if site_settings.is_google_oauth_configured and current_user.is_anonymous %}
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script defer
+        src="{{ url_for('static', filename='js/google-onetap.js') }}?v={{ assets_version }}"
+        data-onetap-url="{{ url_for('auth.google_onetap') }}"></script>
+<div id="g_id_onload"
+     data-client_id="{{ site_settings.google_oauth_client_id }}"
+     data-callback="iprmGoogleOneTap"
+     data-auto_select="true"
+     data-itp_support="true"
+     data-cancel_on_tap_outside="false"></div>
+{% endif %}

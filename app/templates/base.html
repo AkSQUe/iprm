@@ -108,6 +108,7 @@
   <script defer src="{{ url_for('static', filename='js/copy-to-clipboard.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/confirm-action.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/reading-progress.js') }}?v={{ assets_version }}"></script>
+  {% include 'partials/_google_onetap.html' %}
   {% block extra_scripts %}{% endblock %}
 </body>
 </html>

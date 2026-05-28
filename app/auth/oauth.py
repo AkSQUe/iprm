@@ -39,7 +39,7 @@ from app.auth import auth_bp
 from app.extensions import db, csrf
 from app.models.auth_identity import AuthIdentity
 from app.models.user import User
-from app.services.google_oauth import get_google_client
+from app.services.google_oauth import get_google_client, verify_google_id_token
 from app.services.apple_signin import get_apple_client
 
 logger = logging.getLogger(__name__)
@@ -295,6 +295,102 @@ def _unlink_provider(provider):
 @login_required
 def google_unlink():
     return _unlink_provider(AuthIdentity.PROVIDER_GOOGLE)
+
+
+# =============================================================
+# Google One Tap (Phase 6)
+# =============================================================
+
+@auth_bp.route('/google/onetap', methods=['POST'])
+@csrf.exempt
+def google_onetap():
+    """Прийом credential JWT від Google One Tap (GSI library).
+
+    JWT уже містить підпис Google + state-binding (nonce), тож CSRF-захист
+    не потрібен -- сам credential і є аутентифікація запиту.
+
+    Логіка lookup-or-create -- паралельна _handle_login() з redirect-flow,
+    але без HTTP-redirect (повертаємо JSON, фронт сам редіректить).
+    email-collision -- НЕ зливаємо автоматично; повертаємо 409 + URL
+    логіну для ручної прив'язки.
+    """
+    from flask import jsonify
+    from app.models.site_settings import SiteSettings
+
+    settings = SiteSettings.get()
+    if not settings.is_google_oauth_configured:
+        return jsonify({'ok': False, 'error': 'not_configured'}), 503
+
+    data = request.get_json(silent=True) or {}
+    credential = data.get('credential')
+    if not credential:
+        return jsonify({'ok': False, 'error': 'missing_credential'}), 400
+
+    try:
+        claims = verify_google_id_token(
+            credential, settings.google_oauth_client_id,
+        )
+    except Exception as exc:
+        logger.warning('One Tap JWT verification failed: %s', exc)
+        return jsonify({'ok': False, 'error': 'invalid_credential'}), 401
+
+    sub = claims.get('sub')
+    email = (claims.get('email') or '').lower().strip()
+    email_verified = bool(claims.get('email_verified'))
+    given_name = claims.get('given_name')
+    family_name = claims.get('family_name')
+
+    if not sub or not email:
+        return jsonify({'ok': False, 'error': 'incomplete_claims'}), 400
+
+    safe_claims = {
+        k: claims.get(k) for k in
+        ('sub', 'email', 'email_verified', 'given_name', 'family_name', 'locale')
+        if claims.get(k) is not None
+    }
+
+    identity = AuthIdentity.find_by_provider_sub(
+        AuthIdentity.PROVIDER_GOOGLE, sub,
+    )
+
+    if identity:
+        user = identity.user
+        if not user.is_active:
+            return jsonify({'ok': False, 'error': 'inactive'}), 403
+        identity.email = email
+        identity.email_verified = email_verified
+        identity.raw_claims = safe_claims
+        identity.touch()
+    else:
+        if AuthIdentity.find_password_identity_by_email(email):
+            return jsonify({
+                'ok': False,
+                'error': 'email_collision',
+                'login_url': url_for('auth.login'),
+            }), 409
+        try:
+            user = User.create_with_oauth(
+                provider=AuthIdentity.PROVIDER_GOOGLE,
+                sub=sub, email=email, email_verified=email_verified,
+                first_name=given_name, last_name=family_name,
+                raw_claims=safe_claims,
+            )
+            logger.info('One Tap created user id=%d email=%s', user.id, user.email)
+        except Exception:
+            db.session.rollback()
+            logger.exception('One Tap: failed to create user')
+            return jsonify({'ok': False, 'error': 'create_failed'}), 500
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception('One Tap: db.commit failed')
+        return jsonify({'ok': False, 'error': 'db_error'}), 500
+
+    session.clear()
+    login_user(user, remember=True)
+    return jsonify({'ok': True, 'next': url_for('auth.account')})
 
 
 # =============================================================
