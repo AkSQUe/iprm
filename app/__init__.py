@@ -155,20 +155,41 @@ def create_app(config_name=None):
             settings = SiteSettings.get()
         return {'site_settings': settings}
 
+    @app.context_processor
+    def inject_recaptcha():
+        """Експозиція reCAPTCHA-сервісу в шаблони (для _recaptcha.html partial
+        у <head> та можливих умовних рендерів). Сервіс легкий -- ні мережі,
+        ні шифрування на read-only properties."""
+        from app.services.recaptcha import get_recaptcha_service
+        return {'recaptcha': get_recaptcha_service()}
+
     @app.after_request
     def set_security_headers(response):
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-Frame-Options'] = 'DENY'
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         response.headers['X-XSS-Protection'] = '1; mode=block'
+
+        # reCAPTCHA-v3 потребує script-src/frame-src/connect-src для Google,
+        # тому розширюємо CSP лише коли інтеграція active (інакше -- зайва дірка).
+        from app.services.recaptcha import get_recaptcha_service
+        try:
+            recaptcha_active = get_recaptcha_service().is_active
+        except Exception:
+            recaptcha_active = False
+        gstatic = ' https://www.google.com https://www.gstatic.com' if recaptcha_active else ''
+        gframe = ' https://www.google.com' if recaptcha_active else ''
+        gconn = ' https://www.google.com' if recaptcha_active else ''
+
         csp = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'; "
+            "script-src 'self' 'unsafe-inline'" + gstatic + "; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "
             "img-src 'self' data:; "
-            "frame-src 'self' blob: https://www.liqpay.ua https://checkout.liqpay.ua; "
-            "connect-src 'self'"
+            "frame-src 'self' blob: https://www.liqpay.ua https://checkout.liqpay.ua"
+            + gframe + "; "
+            "connect-src 'self'" + gconn
         )
         response.headers['Content-Security-Policy'] = csp
         if not app.debug:

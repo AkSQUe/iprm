@@ -1,0 +1,11 @@
+{# Conditional include: рендериться у <head> base.html.
+   Вшиваємо grecaptcha JS + meta з site_key, ТІЛЬКИ якщо інтеграція active. #}
+{% if recaptcha and recaptcha.is_active %}
+<meta name="recaptcha-site-key" content="{{ recaptcha.site_key }}">
+<script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha.site_key }}" async defer></script>
+<style>
+  /* За ToS Google: badge можна приховати, якщо в підвалі є текст про
+     reCAPTCHA з посиланнями на Privacy і Terms (див. footer.html). */
+  .grecaptcha-badge { visibility: hidden; }
+</style>
+{% endif %}

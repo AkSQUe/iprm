@@ -86,9 +86,24 @@ def marketing():
 @admin_required
 def integrations():
     from app.services.liqpay import get_liqpay_service
+    from app.services.recaptcha import get_recaptcha_service
+    from app.models.site_settings import SiteSettings
     liqpay_service = get_liqpay_service()
     liqpay_status = {
         'is_configured': liqpay_service.is_configured,
         'sandbox': liqpay_service.sandbox,
     }
-    return render_template('admin/integrations.html', liqpay_status=liqpay_status)
+    ga_status = {
+        'is_configured': bool(SiteSettings.get().effective_google_analytics_id),
+    }
+    recaptcha_service = get_recaptcha_service()
+    recaptcha_status = {
+        'is_configured': recaptcha_service.is_configured,
+        'is_active': recaptcha_service.is_active,
+    }
+    return render_template(
+        'admin/integrations.html',
+        liqpay_status=liqpay_status,
+        ga_status=ga_status,
+        recaptcha_status=recaptcha_status,
+    )

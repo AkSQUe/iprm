@@ -21,6 +21,19 @@ class Config:
     LIQPAY_PRIVATE_KEY = os.environ.get('LIQPAY_PRIVATE_KEY', '')
     LIQPAY_SANDBOX = os.environ.get('LIQPAY_SANDBOX', 'true').lower() == 'true'
 
+    # reCAPTCHA v3 -- fallback на env, якщо в БД (SiteSettings) пусто.
+    # RECAPTCHA_ENABLED = 'true' активує перевірку (за наявності ключів).
+    RECAPTCHA_ENABLED = os.environ.get('RECAPTCHA_ENABLED', 'false').lower() == 'true'
+    RECAPTCHA_SITE_KEY = os.environ.get('RECAPTCHA_SITE_KEY', '')
+    RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY', '')
+    RECAPTCHA_SCORE_THRESHOLD = float(os.environ.get('RECAPTCHA_SCORE_THRESHOLD', '0.5'))
+
+    # Google Analytics 4 Measurement ID (публічний; вшитий у HTML на кожній
+    # сторінці). Порожній рядок -- GA вимкнено. Дефолт у базі -- порожній,
+    # щоб dev/test не слали події у прод-аналітику. ProductionConfig
+    # переозначає реальний ID.
+    GOOGLE_ANALYTICS_ID = os.environ.get('GOOGLE_ANALYTICS_ID', '')
+
     # Mail -- налаштування зберігаються в БД (EmailSettings),
     # Flask-Mail ініціалізується з дефолтами, потім перевизначається через apply_to_app()
     MAIL_SUPPRESS_SEND = True  # Вимкнено за замовчуванням, вмикається через адмінку
@@ -37,6 +50,7 @@ class ProductionConfig(Config):
     REMEMBER_COOKIE_SECURE = True
     PREFERRED_URL_SCHEME = 'https'
     SEND_FILE_MAX_AGE_DEFAULT = 31536000
+    GOOGLE_ANALYTICS_ID = os.environ.get('GOOGLE_ANALYTICS_ID', 'G-T2LHJ436ZG')
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_size': 10,
         'pool_recycle': 3600,

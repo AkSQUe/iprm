@@ -1,12 +1,15 @@
 import base64
 import hashlib
 import logging
+import re
 
 from cryptography.fernet import Fernet, InvalidToken
 from flask import current_app
 
 from app.extensions import db
 from app.models.mixins import TimestampMixin
+
+GA_ID_RE = re.compile(r'^G-[A-Z0-9]{4,20}$')
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +69,19 @@ class SiteSettings(TimestampMixin, db.Model):
     liqpay_private_key = db.Column(db.String(255), default='')
     liqpay_sandbox = db.Column(db.Boolean, default=True)
 
+    # Google Analytics 4 Measurement ID (формат "G-XXXXXXXXXX"). Публічний
+    # ідентифікатор, що віддається у HTML на кожній сторінці.
+    google_analytics_id = db.Column(db.String(50), default='', nullable=False)
+
+    # reCAPTCHA v3 (Google). Site key -- публічний (вшиваємо у HTML),
+    # secret key -- шифруємо Fernet. Поріг score 0..1 (нижче = бот).
+    recaptcha_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    recaptcha_site_key = db.Column(db.String(255), default='')
+    _recaptcha_secret_key_encrypted = db.Column(
+        'recaptcha_secret_key', db.String(500), default=''
+    )
+    recaptcha_score_threshold = db.Column(db.Float, default=0.5, nullable=False)
+
     # Partner integration (MM Medic etc.)
     partner_integration_enabled = db.Column(db.Boolean, default=False, nullable=False)
     _partner_api_key_encrypted = db.Column('partner_api_key', db.String(500), default='')
@@ -119,6 +135,27 @@ class SiteSettings(TimestampMixin, db.Model):
         ).decode()
 
     @property
+    def recaptcha_secret_key(self):
+        if not self._recaptcha_secret_key_encrypted:
+            return ''
+        try:
+            return _get_fernet().decrypt(
+                self._recaptcha_secret_key_encrypted.encode()
+            ).decode()
+        except (InvalidToken, Exception):
+            logger.warning('Failed to decrypt recaptcha_secret_key')
+            return ''
+
+    @recaptcha_secret_key.setter
+    def recaptcha_secret_key(self, value):
+        if not value:
+            self._recaptcha_secret_key_encrypted = ''
+            return
+        self._recaptcha_secret_key_encrypted = _get_fernet().encrypt(
+            value.encode()
+        ).decode()
+
+    @property
     def partner_webhook_secret(self):
         if not self._partner_webhook_secret_encrypted:
             return ''
@@ -138,6 +175,22 @@ class SiteSettings(TimestampMixin, db.Model):
         self._partner_webhook_secret_encrypted = _get_fernet().encrypt(
             value.encode()
         ).decode()
+
+    @property
+    def effective_google_analytics_id(self):
+        """GA Measurement ID -- спершу з БД, інакше з config (env-var).
+        Порожній рядок => GA вимкнено."""
+        if self.google_analytics_id:
+            return self.google_analytics_id
+        return current_app.config.get('GOOGLE_ANALYTICS_ID', '') or ''
+
+    @staticmethod
+    def is_valid_ga_id(value):
+        """GA4 Measurement ID має формат G-XXXXXXXXXX. Порожній рядок
+        вважається валідним (означає вимкнення)."""
+        if not value:
+            return True
+        return bool(GA_ID_RE.match(value))
 
     @classmethod
     def get(cls):

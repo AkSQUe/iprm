@@ -1,0 +1,13 @@
+{# Google Analytics 4 -- умовно вмикається, якщо налаштовано Measurement ID
+   або в БД (SiteSettings.google_analytics_id), або через env-fallback
+   (config.GOOGLE_ANALYTICS_ID). Логіку вибору інкапсулює
+   site_settings.effective_google_analytics_id.
+
+   Скрипт gtag.js -- з CDN Google (async). Ініціалізація dataLayer
+   виконується у власному /static/js/analytics.js, який читає ID з
+   data-ga-id (CLAUDE.md: No Inline Policy). #}
+{% set _ga_id = site_settings.effective_google_analytics_id %}
+{% if _ga_id %}
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ _ga_id }}"></script>
+<script async src="{{ url_for('static', filename='js/analytics.js') }}?v={{ assets_version }}" data-ga-id="{{ _ga_id }}"></script>
+{% endif %}

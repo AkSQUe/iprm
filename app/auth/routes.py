@@ -13,6 +13,7 @@ from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
 from app.services.token_service import generate_confirmation_token, confirm_token
 from app.services.email_service import EmailService
+from app.services.recaptcha import verify_request as verify_recaptcha
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,9 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
+        if not verify_recaptcha(action='login'):
+            flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+            return render_template('auth/login.html', form=form)
         user = User.query.filter_by(email=form.email.data.lower().strip()).first()
 
         if user and user.check_password(form.password.data):
@@ -65,6 +69,9 @@ def register():
 
     form = RegistrationForm()
     if form.validate_on_submit():
+        if not verify_recaptcha(action='register'):
+            flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+            return render_template('auth/register.html', form=form)
         user = User(
             email=form.email.data,
             password=form.password.data,

@@ -11,6 +11,7 @@ from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest
 from app.models.registration import EventRegistration
+from app.services.recaptcha import verify_request as verify_recaptcha
 from app.utils import ensure_utc
 from sqlalchemy import func
 
@@ -208,6 +209,10 @@ def course_request(slug):
         # Мовчки приймаємо (відповідаємо redirect'ом як при успіху), щоб не
         # давати боту сигнал про detection.
         return redirect(url_for('courses.course_by_slug', slug=slug) + '#request-sent')
+
+    if not verify_recaptcha(action='course_request'):
+        flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+        return redirect(url_for('courses.course_by_slug', slug=slug) + '#request')
 
     email_raw = (request.form.get('email') or '').strip()
     phone_raw = (request.form.get('phone') or '').strip()

@@ -59,6 +59,8 @@
   <script>
     (function(){try{var f=localStorage.getItem('iprm-font');if(f==='fixel')document.documentElement.setAttribute('data-font','fixel');}catch(e){}})();
   </script>
+  {% include 'partials/_analytics.html' %}
+  {% include 'partials/_recaptcha.html' %}
   {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -98,6 +100,9 @@
   {# toast.js перший — form-validate.js використовує window.iprmToast #}
   <script defer src="{{ url_for('static', filename='js/toast.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/form-validate.js') }}?v={{ assets_version }}"></script>
+  {# recaptcha-v3 ПІСЛЯ form-validate -- щоб submit-listener form-validate
+     зареєструвався першим (capture-phase fires in registration order). #}
+  <script defer src="{{ url_for('static', filename='js/recaptcha-v3.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/tooltips.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/tabs.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/copy-to-clipboard.js') }}?v={{ assets_version }}"></script>

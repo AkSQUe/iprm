@@ -32,5 +32,12 @@
       <a href="{{ url_for('main.contact') }}" class="iprm-footer__link">Контакти</a>
     </div>
     <span class="iprm-footer__copy">&copy; 2026 ІПРМ</span>
+    {% if recaptcha and recaptcha.is_active %}
+    <small class="iprm-footer__legal">
+      Цей сайт захищено reCAPTCHA, застосовуються
+      <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a> і
+      <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> Google.
+    </small>
+    {% endif %}
   </div>
 </footer>

@@ -5,6 +5,7 @@ from app.extensions import limiter
 from app.main import main_bp
 from app.main.forms import ContactForm
 from app.models.course import Course
+from app.services.recaptcha import verify_request as verify_recaptcha
 
 
 @main_bp.route('/')
@@ -58,6 +59,9 @@ def bpr_documents():
 def contact():
     form = ContactForm()
     if form.validate_on_submit():
+        if not verify_recaptcha(action='contact'):
+            flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+            return render_template('main/contact.html', form=form, active_nav='contact')
         flash(
             'Дякуємо за ваше повідомлення! Ми зв\'яжемося з вами найближчим часом.',
             'success',
