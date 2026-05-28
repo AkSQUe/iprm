@@ -80,30 +80,49 @@ def _maybe_consume_prefill_token():
 
 
 def _initial_form_data_from_user(user):
-    """Зібрати pre-fill для EventRegistrationForm з User-профілю.
+    """Зібрати pre-fill для EventRegistrationForm.
 
-    Викликається на GET (показати форму) — користувач бачить попередньо
-    заповнені поля з минулих реєстрацій і не вводить дані повторно.
+    Phase 4: canonical джерело -- MedicalProfile. Якщо профіль порожній/
+    відсутній, дивимось у legacy-колонки User (юзери до Phase 1 backfill
+    і нові OAuth-юзери з порожнім профілем). Це робить пре-філ стабільним
+    у перехідному dual-write періоді.
     """
+    profile = user.medical_profile
+
+    def pick(field):
+        """MedicalProfile-first з fallback на User shadow."""
+        if profile is not None:
+            v = getattr(profile, field, None)
+            if v not in (None, '', []):
+                return v
+        # Fallback: legacy User-колонка. Для participant_type -- це user_type.
+        legacy_field = 'user_type' if field == 'participant_type' else field
+        return getattr(user, legacy_field, None)
+
     return {
-        'user_type': user.user_type or '',
+        'user_type': pick('participant_type') or '',
         'last_name': user.last_name or '',
         'first_name': user.first_name or '',
-        'middle_name': user.middle_name or '',
-        'phone': user.phone or '',
-        'birth_date': user.birth_date,
-        'education': user.education or '',
-        'workplace': user.workplace or '',
-        'position': user.position or '',
-        'specializations': user.specializations or [],
+        'middle_name': pick('middle_name') or '',
+        'phone': pick('phone') or '',
+        'birth_date': pick('birth_date'),
+        'education': pick('education') or '',
+        'workplace': pick('workplace') or '',
+        'position': pick('position') or '',
+        'specializations': pick('specializations') or [],
     }
 
 
-def _sync_user_profile_from_form(user, form):
-    """Записати медичні поля назад у User. Викликається на POST перед
-    створенням Registration. Це eager-update: якщо користувач щось
-    змінив на формі (новий телефон, нова посада) -- профіль теж оновиться.
+def _sync_medical_profile_from_form(user, form):
+    """Dual-write медичних полів: canonical у MedicalProfile, shadow у
+    User (Phase 1-7 transitional). Якщо MedicalProfile не існує (юзер з
+    допрофільної ери або щось пішло не так у backfill) -- створюємо.
+    Виставляємо completed_at, коли всі обов'язкові БПР-поля заповнені.
     """
+    from datetime import datetime, timezone
+    from app.models.medical_profile import MedicalProfile
+
+    # Shadow write до User (legacy-код досі може це читати).
     user.user_type = form.user_type.data
     user.last_name = (form.last_name.data or '').strip() or None
     user.first_name = (form.first_name.data or '').strip() or None
@@ -114,6 +133,24 @@ def _sync_user_profile_from_form(user, form):
     user.workplace = (form.workplace.data or '').strip() or None
     user.position = (form.position.data or '').strip() or None
     user.specializations = list(form.specializations.data or [])
+
+    # Canonical write до MedicalProfile.
+    profile = user.medical_profile
+    if profile is None:
+        profile = MedicalProfile(user_id=user.id, source=MedicalProfile.SOURCE_SELF)
+        db.session.add(profile)
+        user.medical_profile = profile
+    profile.participant_type = form.user_type.data
+    profile.middle_name = (form.middle_name.data or '').strip() or None
+    profile.phone = (form.phone.data or '').strip() or None
+    profile.birth_date = form.birth_date.data
+    profile.education = (form.education.data or '').strip() or None
+    profile.workplace = (form.workplace.data or '').strip() or None
+    profile.position = (form.position.data or '').strip() or None
+    profile.specializations = list(form.specializations.data or [])
+
+    if profile.is_complete and profile.completed_at is None:
+        profile.completed_at = datetime.now(timezone.utc)
 
 
 def _spec_labels(codes):
@@ -189,6 +226,10 @@ def register_instance(instance_id):
             return render_template(
                 'registration/register.html',
                 form=form, event=EventAdapter(instance),
+                profile_complete=bool(
+                    current_user.medical_profile
+                    and current_user.medical_profile.is_complete
+                ),
             )
         has_capacity, _ = registration_service.check_capacity(instance_id)
         if not has_capacity:
@@ -197,9 +238,10 @@ def register_instance(instance_id):
             return redirect(url_for('courses.course_by_slug', slug=instance.course.slug))
 
         try:
-            # 1) Оновити User-профіль медичними полями (одноразовий збір
-            #    з пре-філом для наступних реєстрацій).
-            _sync_user_profile_from_form(current_user, form)
+            # 1) Phase 4: dual-write медичних полів у MedicalProfile
+            #    (canonical) і User (shadow). Заповнює completed_at коли
+            #    профіль стає повним (для майбутніх 2-click реєстрацій).
+            _sync_medical_profile_from_form(current_user, form)
 
             # 2) Створити CourseRegistration. EventRegistration зберігає
             #    snapshot fields для історичної консистентності (snapshot
@@ -237,10 +279,15 @@ def register_instance(instance_id):
             db.session.rollback()
             flash('Помилка при реєстрації. Спробуйте ще раз.', 'error')
 
+    profile_complete = bool(
+        current_user.medical_profile
+        and current_user.medical_profile.is_complete
+    )
     return render_template(
         'registration/register.html',
         form=form,
         event=EventAdapter(instance),
+        profile_complete=profile_complete,
     )
 
 
