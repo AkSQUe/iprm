@@ -80,61 +80,39 @@ def _maybe_consume_prefill_token():
 
 
 def _initial_form_data_from_user(user):
-    """Зібрати pre-fill для EventRegistrationForm.
-
-    Phase 4: canonical джерело -- MedicalProfile. Якщо профіль порожній/
-    відсутній, дивимось у legacy-колонки User (юзери до Phase 1 backfill
-    і нові OAuth-юзери з порожнім профілем). Це робить пре-філ стабільним
-    у перехідному dual-write періоді.
+    """Pre-fill EventRegistrationForm з MedicalProfile (canonical) + User
+    identity-полів (last_name/first_name). Phase 7: жодних fallback'ів
+    на legacy-колонки User -- вони дропнуті.
     """
     profile = user.medical_profile
-
-    def pick(field):
-        """MedicalProfile-first з fallback на User shadow."""
-        if profile is not None:
-            v = getattr(profile, field, None)
-            if v not in (None, '', []):
-                return v
-        # Fallback: legacy User-колонка. Для participant_type -- це user_type.
-        legacy_field = 'user_type' if field == 'participant_type' else field
-        return getattr(user, legacy_field, None)
-
     return {
-        'user_type': pick('participant_type') or '',
+        'user_type': (profile.participant_type if profile else '') or '',
         'last_name': user.last_name or '',
         'first_name': user.first_name or '',
-        'middle_name': pick('middle_name') or '',
-        'phone': pick('phone') or '',
-        'birth_date': pick('birth_date'),
-        'education': pick('education') or '',
-        'workplace': pick('workplace') or '',
-        'position': pick('position') or '',
-        'specializations': pick('specializations') or [],
+        'middle_name': (profile.middle_name if profile else '') or '',
+        'phone': (profile.phone if profile else '') or '',
+        'birth_date': profile.birth_date if profile else None,
+        'education': (profile.education if profile else '') or '',
+        'workplace': (profile.workplace if profile else '') or '',
+        'position': (profile.position if profile else '') or '',
+        'specializations': (profile.specializations if profile else []) or [],
     }
 
 
 def _sync_medical_profile_from_form(user, form):
-    """Dual-write медичних полів: canonical у MedicalProfile, shadow у
-    User (Phase 1-7 transitional). Якщо MedicalProfile не існує (юзер з
-    допрофільної ери або щось пішло не так у backfill) -- створюємо.
-    Виставляємо completed_at, коли всі обов'язкові БПР-поля заповнені.
+    """Записати медичні поля у MedicalProfile + identity-поля
+    (last_name/first_name) у User. Створює MedicalProfile, якщо відсутній.
+    Виставляє completed_at, коли профіль стає повним.
     """
     from datetime import datetime, timezone
     from app.models.medical_profile import MedicalProfile
 
-    # Shadow write до User (legacy-код досі може це читати).
-    user.user_type = form.user_type.data
+    # User-level identity поля (last/first name -- частина identity, а
+    # не медпрофілю).
     user.last_name = (form.last_name.data or '').strip() or None
     user.first_name = (form.first_name.data or '').strip() or None
-    user.middle_name = (form.middle_name.data or '').strip() or None
-    user.phone = (form.phone.data or '').strip() or None
-    user.birth_date = form.birth_date.data
-    user.education = (form.education.data or '').strip() or None
-    user.workplace = (form.workplace.data or '').strip() or None
-    user.position = (form.position.data or '').strip() or None
-    user.specializations = list(form.specializations.data or [])
 
-    # Canonical write до MedicalProfile.
+    # Canonical: MedicalProfile.
     profile = user.medical_profile
     if profile is None:
         profile = MedicalProfile(user_id=user.id, source=MedicalProfile.SOURCE_SELF)

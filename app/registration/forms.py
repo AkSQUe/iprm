@@ -5,19 +5,19 @@ from wtforms import (
 )
 from wtforms.validators import DataRequired, Length, Optional, NumberRange
 
-from app.models.user import User
+from app.models.medical_profile import MedicalProfile
 from app.models.specializations import SPECIALIZATIONS
 
 
 class EventRegistrationForm(FlaskForm):
     """Реєстрація на CourseInstance. Поля медичної анкети (МОЗ України
-    №725 п.13) є першочергово збираються тут, паралельно зберігаються у
-    User.profile для пре-філу майбутніх реєстрацій.
+    №725 п.13) збираються тут і зберігаються у MedicalProfile користувача
+    для пре-філу майбутніх реєстрацій.
     """
     # ----- Тип користувача (МОЗ) -----
     user_type = SelectField(
         'Тип учасника',
-        choices=[('', '— оберіть —')] + User.USER_TYPES,
+        choices=[('', '— оберіть —')] + MedicalProfile.PARTICIPANT_TYPES,
         validators=[DataRequired(message='Оберіть тип учасника')],
     )
 

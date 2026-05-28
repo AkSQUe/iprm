@@ -10,42 +10,26 @@ class User(TimestampMixin, UserMixin, db.Model):
 
     id = db.Column(BigIntPK, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(255), nullable=False)
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
+    # Email-verification стан зберігаємо на User-рівні (а не identity),
+    # бо це факт про реального власника email, не про конкретний спосіб
+    # автентифікації. OAuth-identity-и також мають email_verified --
+    # це claim від провайдера, окреме поняття.
     email_confirmed = db.Column(db.Boolean, default=False, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     is_admin = db.Column(db.Boolean, default=False)
     last_login_at = db.Column(db.DateTime(timezone=True))
 
-    # Поля медичної анкети (МОЗ України №725 п.13). Усі nullable -- історичні
-    # користувачі без цих даних мають дозаповнити їх перед реєстрацією на
-    # платний захід (валідація на рівні форми, не на рівні БД).
-    user_type = db.Column(db.String(20))            # USER_TYPES.keys()
-    middle_name = db.Column(db.String(100))          # По батькові
-    birth_date = db.Column(db.Date)                  # Дата народження
-    education = db.Column(db.String(500))            # «2014, НМУ ім. Богомольця»
-    workplace = db.Column(db.String(300))            # Назва ЗОЗу
-    position = db.Column(db.String(200))             # Займана посада
-    phone = db.Column(db.String(20))                 # Контактний телефон
-    # Список codes з SPECIALIZATIONS. JSON -- найгнучкіше для multi-select.
-    specializations = db.Column(db.JSON, default=list)
+    # Phase 7 cleanup: усі legacy-колонки (password_hash, user_type,
+    # middle_name, birth_date, education, workplace, position, phone,
+    # specializations) дропнуто. Canonical джерела:
+    #   - password -> AuthIdentity(provider='password').password_hash
+    #   - медичні поля -> MedicalProfile.*
 
     __table_args__ = (
         db.Index('ix_users_created_at', 'created_at'),
-        db.CheckConstraint(
-            "user_type IN ('doctor', 'specialist', 'intern', 'student') "
-            "OR user_type IS NULL",
-            name='ck_users_user_type',
-        ),
     )
-
-    USER_TYPES = [
-        ('doctor', 'Лікар'),
-        ('specialist', 'Молодший спеціаліст з медичною освітою'),
-        ('intern', 'Інтерн'),
-        ('student', 'Студент'),
-    ]
 
     registrations = db.relationship('EventRegistration', back_populates='user', lazy='dynamic')
     created_courses = db.relationship(
@@ -53,10 +37,6 @@ class User(TimestampMixin, UserMixin, db.Model):
         foreign_keys='Course.created_by',
         back_populates='creator',
     )
-    # Phase 1 auth unification: identity-сутності і медпрофіль -- у власних
-    # таблицях. Поки що в shadow mode -- колонки User (password_hash,
-    # user_type, birth_date, ...) лишаються джерелом істини; нові таблиці
-    # читаються/пишуться паралельно. Дроп legacy-колонок -- після Фази 4.
     identities = db.relationship(
         'AuthIdentity',
         back_populates='user',
@@ -69,61 +49,71 @@ class User(TimestampMixin, UserMixin, db.Model):
         cascade='all, delete-orphan',
     )
 
-    def __init__(self, email, password=None, **kwargs):
+    def __init__(self, email, **kwargs):
+        """Construct User зі strip+lower email. Пароль НЕ приймаємо тут
+        (після Phase 7 password живе в AuthIdentity, не в User). Для
+        створення з паролем -- use User.create_with_password()."""
+        # Backward-compat: якщо хтось ще передає password= -- ігноруємо
+        # тихо, бо без id неможливо створити identity у __init__.
+        kwargs.pop('password', None)
         super().__init__(**kwargs)
         self.email = email.lower().strip()
-        if password:
-            self.set_password(password)
 
     def set_password(self, password):
-        """Записати hash пароля. Dual-write на час перехідного періоду
-        (Phase 2-7): canonical store -- auth_identities.password_hash;
-        users.password_hash лишається як shadow на випадок rollback. Для
-        НОВОГО юзера (self.id is None у __init__) -- identity створюється
-        у create_with_password() після flush, бо потрібен user.id для FK."""
-        new_hash = generate_password_hash(password)
-        self.password_hash = new_hash  # shadow write
-        if self.id:
-            from app.models.auth_identity import AuthIdentity
-            ident = AuthIdentity.query.filter_by(
-                user_id=self.id,
-                provider=AuthIdentity.PROVIDER_PASSWORD,
-            ).first()
-            if ident:
-                ident.password_hash = new_hash
-                ident.email = self.email
-
-    def check_password(self, password):
-        """Перевірка пароля. Identity-first: дивимось у password-identity
-        (canonical після Phase 2); fallback на User.password_hash для
-        edge-кейсів (юзер без identity -- напр. створений напряму повз
-        фабрику)."""
+        """Встановити пароль (оновити password-identity).
+        Вимагає persisted User (self.id is not None) -- для нових юзерів
+        викликайте User.create_with_password() замість __init__+set_password."""
         from app.models.auth_identity import AuthIdentity
+        if not self.id:
+            raise RuntimeError(
+                'set_password() requires a persisted user. '
+                'For new users use User.create_with_password().'
+            )
+        new_hash = generate_password_hash(password)
         ident = AuthIdentity.query.filter_by(
             user_id=self.id,
             provider=AuthIdentity.PROVIDER_PASSWORD,
-        ).first() if self.id else None
-        if ident and ident.password_hash:
-            return check_password_hash(ident.password_hash, password)
-        if self.password_hash:
-            return check_password_hash(self.password_hash, password)
-        return False
+        ).first()
+        if ident:
+            ident.password_hash = new_hash
+            ident.email = self.email
+        else:
+            # OAuth-only юзер встановлює пароль вперше -- створюємо identity.
+            db.session.add(AuthIdentity(
+                user_id=self.id,
+                provider=AuthIdentity.PROVIDER_PASSWORD,
+                provider_sub=str(self.id),
+                email=self.email,
+                email_verified=bool(self.email_confirmed),
+                password_hash=new_hash,
+            ))
+
+    def check_password(self, password):
+        """Перевірка пароля. Дивимось у password-identity. Юзер без
+        password-identity (OAuth-only, ще не встановив) -- завжди False."""
+        from app.models.auth_identity import AuthIdentity
+        if not self.id:
+            return False
+        ident = AuthIdentity.query.filter_by(
+            user_id=self.id,
+            provider=AuthIdentity.PROVIDER_PASSWORD,
+        ).first()
+        if not ident or not ident.password_hash:
+            return False
+        return check_password_hash(ident.password_hash, password)
 
     @classmethod
     def create_with_password(cls, email, password, **user_kwargs):
         """Створити User + password-identity + порожній MedicalProfile в
-        одній транзакції. НЕ комітить -- caller відповідальний за commit
-        (щоб поєднати з іншими операціями типу email-token, audit-log).
+        одній транзакції. НЕ комітить -- caller робить commit (щоб
+        поєднати з email-token, audit-log тощо).
 
         Прокидує додаткові kwargs у конструктор User (first_name,
-        last_name, email_confirmed, is_active, ...).
-
-        Повертає створений User (з заасайненим id після flush)."""
-        from app.extensions import db
+        last_name, email_confirmed, is_active, ...)."""
         from app.models.auth_identity import AuthIdentity
         from app.models.medical_profile import MedicalProfile
 
-        user = cls(email=email, password=password, **user_kwargs)
+        user = cls(email=email, **user_kwargs)
         db.session.add(user)
         db.session.flush()  # призначає user.id без commit
 
@@ -133,7 +123,7 @@ class User(TimestampMixin, UserMixin, db.Model):
             provider_sub=str(user.id),
             email=user.email,
             email_verified=bool(user_kwargs.get('email_confirmed', False)),
-            password_hash=user.password_hash,
+            password_hash=generate_password_hash(password),
         ))
         db.session.add(MedicalProfile(
             user_id=user.id,
@@ -147,23 +137,12 @@ class User(TimestampMixin, UserMixin, db.Model):
         """Створити User через OAuth-провайдера (Phase 3+). Створює
         User + AuthIdentity(provider=<...>) + порожній MedicalProfile.
         Password-identity НЕ створюється -- юзер логіниться лише через
-        OAuth (або встановить пароль пізніше через "Forgot password").
-
-        User.password_hash NOT NULL у схемі (legacy), тому ставимо
-        випадковий 48-байтовий токен -- ним ніхто не залогіниться, бо
-        password-identity відсутня (check_password шукає identity first;
-        fallback на User.password_hash -- з невідомим токеном, не пройде).
-        Після Phase 7 ця колонка дропнеться.
-
-        НЕ комітить -- caller робить commit."""
-        from app.extensions import db
+        OAuth (або встановить пароль пізніше через "Забули пароль")."""
         from app.models.auth_identity import AuthIdentity
         from app.models.medical_profile import MedicalProfile
-        import secrets
 
         user = cls(
             email=email,
-            password=secrets.token_urlsafe(48),  # shadow-only, недосяжний
             first_name=first_name or '',
             last_name=last_name or '',
             email_confirmed=bool(email_verified),
@@ -186,20 +165,21 @@ class User(TimestampMixin, UserMixin, db.Model):
         return user
 
     @property
-    def user_type_label(self):
-        return dict(self.USER_TYPES).get(self.user_type, self.user_type or '')
-
-    @property
     def full_name(self):
-        """ПІБ у канонічному порядку: Прізвище Ім'я По-батькові."""
-        parts = [self.last_name, self.first_name, self.middle_name]
+        """ПІБ у канонічному порядку: Прізвище Ім'я По-батькові.
+        По-батькові живе у MedicalProfile (Phase 1+); якщо профілю нема
+        чи поле порожнє -- лише Прізвище Ім'я."""
+        parts = [self.last_name, self.first_name]
+        if self.medical_profile and self.medical_profile.middle_name:
+            parts.append(self.medical_profile.middle_name)
         return ' '.join(p for p in parts if p)
 
     @property
     def specialization_labels(self):
-        """Список людських назв спеціалізацій з User.specializations."""
-        from app.models.specializations import labels_for_codes
-        return labels_for_codes(self.specializations or [])
+        """Список людських назв спеціалізацій. Делегує у MedicalProfile."""
+        if self.medical_profile:
+            return self.medical_profile.specialization_labels
+        return []
 
     @property
     def registration_count(self):
