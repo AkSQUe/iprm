@@ -8,6 +8,7 @@ from app.auth import auth_bp
 from app.auth.forms import LoginForm, RegistrationForm
 from app.extensions import db, limiter
 from app.models.user import User
+from app.models.auth_identity import AuthIdentity
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
@@ -38,12 +39,20 @@ def login():
         if not verify_recaptcha(action='login'):
             flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
             return render_template('auth/login.html', form=form)
-        user = User.query.filter_by(email=form.email.data.lower().strip()).first()
+
+        # Identity-first lookup (Phase 2): шукаємо password-identity за
+        # email. Fallback на User.query для дефенсивних випадків (юзер з
+        # backfill ще не отримав identity з якоїсь причини).
+        email = form.email.data.lower().strip()
+        identity = AuthIdentity.find_password_identity_by_email(email)
+        user = identity.user if identity else User.query.filter_by(email=email).first()
 
         if user and user.check_password(form.password.data):
             session.clear()
             login_user(user, remember=form.remember.data)
             user.last_login_at = datetime.now(timezone.utc)
+            if identity:
+                identity.touch()
 
             try:
                 db.session.commit()
@@ -72,13 +81,15 @@ def register():
         if not verify_recaptcha(action='register'):
             flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
             return render_template('auth/register.html', form=form)
-        user = User(
+        # Phase 2: фабрика створює User + password-identity + порожній
+        # MedicalProfile у одній транзакції. Identity-row буде використано
+        # для логіну, MedicalProfile -- для gate-у на event-registration.
+        user = User.create_with_password(
             email=form.email.data,
             password=form.password.data,
             first_name=form.first_name.data.strip(),
             last_name=form.last_name.data.strip(),
         )
-        db.session.add(user)
 
         try:
             db.session.commit()

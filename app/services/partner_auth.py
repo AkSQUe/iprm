@@ -90,7 +90,11 @@ def get_or_create_partner_user(payload: PrefillPayload) -> User:
         return user
 
     import secrets
-    user = User(
+    # Phase 2: фабрика створює User + password-identity + порожній
+    # MedicalProfile. Партнер-юзери мають password з token_urlsafe (для
+    # внутрішнього використання); у Фазі 3+ можна додати окремий
+    # provider='partner' identity замість password.
+    user = User.create_with_password(
         email=payload.email,
         password=secrets.token_urlsafe(32),
         first_name=payload.first_name or '',
@@ -98,7 +102,6 @@ def get_or_create_partner_user(payload: PrefillPayload) -> User:
         email_confirmed=True,
         is_active=True,
     )
-    db.session.add(user)
     db.session.commit()
     logger.info(
         'Created partner-linked user id=%d email=%s from issuer=%s',

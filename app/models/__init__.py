@@ -1,5 +1,7 @@
 from app.models.mixins import TimestampMixin, BigIntPK, utcnow
 from app.models.user import User
+from app.models.auth_identity import AuthIdentity
+from app.models.medical_profile import MedicalProfile
 from app.models.trainer import Trainer
 from app.models.program_block import ProgramBlock
 from app.models.registration import EventRegistration
@@ -15,8 +17,9 @@ from app.models.course_request import CourseRequest, CourseRequestAudit
 from app.models.webhook_delivery import WebhookDelivery
 
 __all__ = [
-    'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'Trainer',
-    'ProgramBlock', 'EventRegistration', 'Clinic', 'EmailLog', 'EmailSettings',
+    'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'AuthIdentity',
+    'MedicalProfile', 'Trainer', 'ProgramBlock', 'EventRegistration',
+    'Clinic', 'EmailLog', 'EmailSettings',
     'PaymentTransaction', 'SiteSettings', 'ErrorLog',
     'Course', 'CourseInstance', 'CourseRequest', 'CourseRequestAudit',
     'WebhookDelivery',

@@ -53,6 +53,21 @@ class User(TimestampMixin, UserMixin, db.Model):
         foreign_keys='Course.created_by',
         back_populates='creator',
     )
+    # Phase 1 auth unification: identity-сутності і медпрофіль -- у власних
+    # таблицях. Поки що в shadow mode -- колонки User (password_hash,
+    # user_type, birth_date, ...) лишаються джерелом істини; нові таблиці
+    # читаються/пишуться паралельно. Дроп legacy-колонок -- після Фази 4.
+    identities = db.relationship(
+        'AuthIdentity',
+        back_populates='user',
+        cascade='all, delete-orphan',
+    )
+    medical_profile = db.relationship(
+        'MedicalProfile',
+        back_populates='user',
+        uselist=False,
+        cascade='all, delete-orphan',
+    )
 
     def __init__(self, email, password=None, **kwargs):
         super().__init__(**kwargs)
@@ -61,10 +76,70 @@ class User(TimestampMixin, UserMixin, db.Model):
             self.set_password(password)
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        """Записати hash пароля. Dual-write на час перехідного періоду
+        (Phase 2-7): canonical store -- auth_identities.password_hash;
+        users.password_hash лишається як shadow на випадок rollback. Для
+        НОВОГО юзера (self.id is None у __init__) -- identity створюється
+        у create_with_password() після flush, бо потрібен user.id для FK."""
+        new_hash = generate_password_hash(password)
+        self.password_hash = new_hash  # shadow write
+        if self.id:
+            from app.models.auth_identity import AuthIdentity
+            ident = AuthIdentity.query.filter_by(
+                user_id=self.id,
+                provider=AuthIdentity.PROVIDER_PASSWORD,
+            ).first()
+            if ident:
+                ident.password_hash = new_hash
+                ident.email = self.email
 
     def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+        """Перевірка пароля. Identity-first: дивимось у password-identity
+        (canonical після Phase 2); fallback на User.password_hash для
+        edge-кейсів (юзер без identity -- напр. створений напряму повз
+        фабрику)."""
+        from app.models.auth_identity import AuthIdentity
+        ident = AuthIdentity.query.filter_by(
+            user_id=self.id,
+            provider=AuthIdentity.PROVIDER_PASSWORD,
+        ).first() if self.id else None
+        if ident and ident.password_hash:
+            return check_password_hash(ident.password_hash, password)
+        if self.password_hash:
+            return check_password_hash(self.password_hash, password)
+        return False
+
+    @classmethod
+    def create_with_password(cls, email, password, **user_kwargs):
+        """Створити User + password-identity + порожній MedicalProfile в
+        одній транзакції. НЕ комітить -- caller відповідальний за commit
+        (щоб поєднати з іншими операціями типу email-token, audit-log).
+
+        Прокидує додаткові kwargs у конструктор User (first_name,
+        last_name, email_confirmed, is_active, ...).
+
+        Повертає створений User (з заасайненим id після flush)."""
+        from app.extensions import db
+        from app.models.auth_identity import AuthIdentity
+        from app.models.medical_profile import MedicalProfile
+
+        user = cls(email=email, password=password, **user_kwargs)
+        db.session.add(user)
+        db.session.flush()  # призначає user.id без commit
+
+        db.session.add(AuthIdentity(
+            user_id=user.id,
+            provider=AuthIdentity.PROVIDER_PASSWORD,
+            provider_sub=str(user.id),
+            email=user.email,
+            email_verified=bool(user_kwargs.get('email_confirmed', False)),
+            password_hash=user.password_hash,
+        ))
+        db.session.add(MedicalProfile(
+            user_id=user.id,
+            source=MedicalProfile.SOURCE_SELF,
+        ))
+        return user
 
     @property
     def user_type_label(self):
