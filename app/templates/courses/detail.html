@@ -109,20 +109,96 @@
   </div>
 
   <!-- ===== ABOUT ===== -->
+  {% set about_lead = course.short_description if course.short_description and course.short_description != course.subtitle else '' %}
+  {% set about_image = course.hero_image or course.card_image %}
+  {% set has_desc = course.description %}
+  {% set has_audience = course.target_audience %}
+  {% set has_benefits = course.cpd_points or course.program_blocks %}
   <section id="about" class="iprm-section apple-section-gray" aria-labelledby="about-title">
     <div class="iprm-section__inner">
       <h2 id="about-title" class="iprm-section__title">Про <span class="apple-gradient-text">курс</span></h2>
-      {% if course.description %}
-      <div class="iprm-prose apple-reveal">{{ course.description | sanitize_rich_text }}</div>
-      {% endif %}
-      {% if course.target_audience %}
-      <h3 class="iprm-subsection-title">Для кого цей курс</h3>
-      <div class="apple-features-grid">
-        {% for item in course.target_audience %}
-        <div class="apple-feature-card apple-reveal">
-          <p>{{ item }}</p>
+
+      {# Hero summary: ліворуч ілюстрація (якщо є), праворуч лід + ключові факти #}
+      <div class="iprm-about-hero apple-reveal{% if not about_image %} iprm-about-hero--no-media{% endif %}">
+        {% if about_image %}
+        <div class="iprm-about-hero__media">
+          <img src="{{ about_image }}" alt="{{ course.title }}" loading="lazy">
         </div>
-        {% endfor %}
+        {% endif %}
+        <div class="iprm-about-hero__info">
+          {% if about_lead %}
+          <p class="iprm-about-hero__lead">{{ about_lead }}</p>
+          {% endif %}
+          <div class="iprm-stat-grid">
+            {% if course.event_type %}
+            <div class="iprm-stat-card">
+              <span class="iprm-stat-card__value">{{ course.event_type_label }}</span>
+              <span class="iprm-stat-card__label">формат заходу</span>
+            </div>
+            {% endif %}
+            {% if course.cpd_points %}
+            <div class="iprm-stat-card">
+              <span class="iprm-stat-card__value">{{ course.cpd_points }}</span>
+              <span class="iprm-stat-card__label">балів БПР</span>
+            </div>
+            {% endif %}
+            {% if course.program_blocks %}
+            <div class="iprm-stat-card">
+              <span class="iprm-stat-card__value">{{ course.program_blocks|length }}</span>
+              <span class="iprm-stat-card__label">тематичних блоків</span>
+            </div>
+            {% endif %}
+            {% if course.max_participants %}
+            <div class="iprm-stat-card">
+              <span class="iprm-stat-card__value">до {{ course.max_participants }}</span>
+              <span class="iprm-stat-card__label">учасників у групі</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {# Tabs: показуємо лише ті, для яких є дані #}
+      {% if has_desc or has_audience or has_benefits %}
+      <div class="iprm-about-tabs apple-reveal" data-iprm-tabs>
+        <div class="iprm-tabs__list" role="tablist" aria-label="Розділи опису курсу">
+          {% if has_desc %}
+          <button type="button" class="iprm-tabs__trigger" data-tab-trigger="desc" data-tab-default>Детальний опис</button>
+          {% endif %}
+          {% if has_audience %}
+          <button type="button" class="iprm-tabs__trigger" data-tab-trigger="audience"{% if not has_desc %} data-tab-default{% endif %}>Для кого курс</button>
+          {% endif %}
+          {% if has_benefits %}
+          <button type="button" class="iprm-tabs__trigger" data-tab-trigger="benefits"{% if not has_desc and not has_audience %} data-tab-default{% endif %}>Що ви отримаєте</button>
+          {% endif %}
+        </div>
+
+        {% if has_desc %}
+        <div class="iprm-tabs__panel" data-tab-panel="desc">
+          <div class="iprm-prose">{{ course.description | sanitize_rich_text }}</div>
+        </div>
+        {% endif %}
+
+        {% if has_audience %}
+        <div class="iprm-tabs__panel" data-tab-panel="audience">
+          <div class="iprm-pill-row">
+            {% for item in course.target_audience %}
+            <span class="iprm-pill-chip">{{ item }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if has_benefits %}
+        <div class="iprm-tabs__panel" data-tab-panel="benefits">
+          <ul class="iprm-benefit-list">
+            {% if course.cpd_points %}<li>Сертифікат БПР на {{ course.cpd_points }} балів</li>{% endif %}
+            {% if course.program_blocks %}<li>{{ course.program_blocks|length }} тематичних блоків — від теорії до практики</li>{% endif %}
+            <li>Розбір клінічних кейсів та відповіді лектора на запитання</li>
+            <li>Доступ до додаткових навчальних матеріалів і презентацій</li>
+          </ul>
+        </div>
+        {% endif %}
       </div>
       {% endif %}
     </div>

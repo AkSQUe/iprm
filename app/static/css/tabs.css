@@ -1,0 +1,81 @@
+/* tabs.css — табовий перемикач (apple-style underline tabs).
+   Парний до tabs.js. Single Responsibility: лише вигляд табів. */
+
+.iprm-tabs {
+  width: 100%;
+}
+
+/* Список тригерів — горизонтальний рядок з нижньою лінією */
+.iprm-tabs__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  margin-bottom: 24px;
+}
+
+/* Кнопка-таб */
+.iprm-tabs__trigger {
+  position: relative;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 12px 18px;
+  margin-bottom: -1px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--apple-gray-dark, #6e6e73);
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  border-bottom: 2px solid transparent;
+  transition:
+    color 0.18s var(--ease-interact, ease),
+    border-color 0.18s var(--ease-interact, ease);
+}
+
+.iprm-tabs__trigger:hover {
+  color: var(--apple-black, #1d1d1f);
+}
+
+.iprm-tabs__trigger:focus-visible {
+  outline: 2px solid var(--iprm-accent, #7055a4);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.iprm-tabs__trigger[aria-selected='true'] {
+  color: var(--iprm-accent, #7055a4);
+  border-bottom-color: var(--iprm-accent, #7055a4);
+}
+
+/* Панель — за замовчуванням прихована, показуємо активну */
+.iprm-tabs__panel {
+  display: none;
+  animation: iprmTabFade 0.24s var(--ease-interact, ease);
+}
+
+.iprm-tabs__panel.is-active {
+  display: block;
+}
+
+@keyframes iprmTabFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile: горизонтальний скрол якщо табів багато */
+@media (max-width: 540px) {
+  .iprm-tabs__list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .iprm-tabs__list::-webkit-scrollbar { display: none; }
+  .iprm-tabs__trigger {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    font-size: 0.875rem;
+  }
+}

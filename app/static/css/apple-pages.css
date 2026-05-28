@@ -915,3 +915,180 @@
 /* CSS Scroll-Driven Animations (animation-timeline: view()) removed:
    fill-mode: both blocks JS .visible class from overriding opacity/translate.
    JS IntersectionObserver (apple-reveal.js) handles scroll-reveal reliably. */
+
+/* ========== ABOUT HERO (summary + stat-grid) ========== */
+
+.apple-page .iprm-about-hero {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) 1fr;
+  gap: 40px;
+  align-items: start;
+  margin-bottom: 48px;
+}
+
+/* Без зображення -- центруємо info в одну колонку обмеженої ширини */
+.apple-page .iprm-about-hero--no-media {
+  grid-template-columns: 1fr;
+  max-width: 920px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.apple-page .iprm-about-hero__media {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: #f5f5f7;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
+}
+
+.apple-page .iprm-about-hero__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.apple-page .iprm-about-hero__info {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.apple-page .iprm-about-hero__lead {
+  font-size: 1.125rem;
+  line-height: 1.55;
+  color: var(--apple-gray-dark);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+/* Stat-grid -- 2..4 колонки auto-fit */
+.apple-page .iprm-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.apple-page .iprm-stat-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition:
+    transform 0.2s var(--ease-interact),
+    box-shadow 0.2s var(--ease-interact);
+}
+
+.apple-page .iprm-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(var(--apple-accent-rgb), 0.08);
+}
+
+.apple-page .iprm-stat-card__value {
+  font-size: 1.625rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--iprm-accent);
+  line-height: 1.1;
+}
+
+.apple-page .iprm-stat-card__label {
+  font-size: 0.8125rem;
+  color: var(--apple-gray-dark);
+  letter-spacing: -0.005em;
+}
+
+/* ========== ABOUT TABS (вміст панелей) ========== */
+
+.apple-page .iprm-about-tabs {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+/* Pill-chips для target_audience */
+.apple-page .iprm-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.apple-page .iprm-pill-chip {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--iprm-accent-light, #ede9f6);
+  color: var(--iprm-accent, #7055a4);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+/* Benefits list -- картки з чек-маркером (той самий рецепт що в program__item) */
+.apple-page .iprm-benefit-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.apple-page .iprm-benefit-list li {
+  position: relative;
+  padding: 14px 16px 14px 48px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 0.9375rem;
+  color: var(--apple-gray-dark);
+  line-height: 1.5;
+  min-height: 50px;
+}
+
+.apple-page .iprm-benefit-list li::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 15px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--iprm-accent);
+}
+
+.apple-page .iprm-benefit-list li::after {
+  content: '';
+  position: absolute;
+  left: 21px;
+  top: 19px;
+  width: 6px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Mobile */
+@media (max-width: 720px) {
+  .apple-page .iprm-about-hero {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .apple-page .iprm-about-hero__media {
+    aspect-ratio: 16 / 9;
+  }
+  .apple-page .iprm-about-hero__lead {
+    font-size: 1.0625rem;
+  }
+  .apple-page .iprm-stat-card {
+    padding: 14px 16px;
+  }
+  .apple-page .iprm-stat-card__value {
+    font-size: 1.375rem;
+  }
+}
