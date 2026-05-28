@@ -93,17 +93,23 @@ def integrations():
         'is_configured': liqpay_service.is_configured,
         'sandbox': liqpay_service.sandbox,
     }
+    settings = SiteSettings.get()
     ga_status = {
-        'is_configured': bool(SiteSettings.get().effective_google_analytics_id),
+        'is_configured': bool(settings.effective_google_analytics_id),
     }
     recaptcha_service = get_recaptcha_service()
     recaptcha_status = {
         'is_configured': recaptcha_service.is_configured,
         'is_active': recaptcha_service.is_active,
     }
+    google_oauth_status = {
+        'is_configured': settings.is_google_oauth_configured,
+        'enabled': settings.google_oauth_enabled,
+    }
     return render_template(
         'admin/integrations.html',
         liqpay_status=liqpay_status,
         ga_status=ga_status,
         recaptcha_status=recaptcha_status,
+        google_oauth_status=google_oauth_status,
     )

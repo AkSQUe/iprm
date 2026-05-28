@@ -332,3 +332,106 @@
     transition: none;
   }
 }
+
+/* ========== OAuth-кнопки (Phase 3) ========== */
+
+.oauth-buttons {
+  margin-top: 20px;
+}
+
+.oauth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  color: var(--iprm-text-light);
+  font-size: 0.8125rem;
+}
+
+.oauth-divider::before,
+.oauth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--iprm-border);
+}
+
+.oauth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  background: #fff;
+  color: var(--apple-black);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.oauth-btn:hover {
+  background: #fafafa;
+  border-color: var(--iprm-text-light);
+}
+
+.oauth-btn:active {
+  transform: scale(0.99);
+}
+
+.oauth-btn__icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* ========== Connections page ========== */
+
+.connections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.connection-item {
+  display: grid;
+  grid-template-columns: 160px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 20px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  background: #fff;
+}
+
+.connection-item--planned {
+  opacity: 0.6;
+}
+
+.connection-item__title {
+  font-weight: 600;
+}
+
+.connection-item__email {
+  color: var(--iprm-text-light);
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+
+.connection-item__status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .connection-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

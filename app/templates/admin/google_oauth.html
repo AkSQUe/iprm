@@ -1,0 +1,102 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Google OAuth | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.integrations') }}" class="admin-breadcrumb__link">Інтеграції</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Google OAuth</span>
+        </div>
+        <h1 class="admin-hero__title">Google OAuth 2.0</h1>
+        <p class="admin-hero__subtitle">
+          Вхід через Google акаунт
+          {% if cfg.is_configured %}
+            <span class="badge badge--active">Активно</span>
+          {% elif cfg.enabled %}
+            <span class="badge badge--published">Увімкнено, потребує ключів</span>
+          {% else %}
+            <span class="badge badge--draft">Не налаштовано</span>
+          {% endif %}
+        </p>
+      </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.integrations') }}" class="btn-admin btn-admin--secondary">Назад до інтеграцій</a>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Поточна конфігурація</h3>
+      <div class="liqpay-config">
+        <div class="liqpay-config__row">
+          <span class="liqpay-config__label">Client ID</span>
+          <code class="liqpay-config__value">{{ cfg.client_id or 'Не встановлено' }}</code>
+        </div>
+        <div class="liqpay-config__row">
+          <span class="liqpay-config__label">Client Secret</span>
+          <code class="liqpay-config__value">{{ cfg.client_secret_mask or 'Не встановлено' }}</code>
+        </div>
+        <div class="liqpay-config__row">
+          <span class="liqpay-config__label">Authorized redirect URI</span>
+          <code class="liqpay-config__value liqpay-config__value--mono">{{ cfg.redirect_uri }}</code>
+        </div>
+      </div>
+      <p class="form-hint">
+        Створіть OAuth 2.0 Client ID у
+        <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud Console</a>:
+        application type -- Web application; до Authorized redirect URIs додайте <strong>{{ cfg.redirect_uri }}</strong>.
+        Scopes -- OpenID/email/profile (підставляється автоматично, нічого тут вмикати не треба).
+      </p>
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Оновити ключі</h3>
+      <form method="POST" action="{{ url_for('admin.google_oauth_save') }}" class="admin-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="admin-form__grid">
+          <div class="form-group">
+            <label for="client_id">Client ID</label>
+            <input type="text" name="client_id" id="client_id" class="form-input"
+                   value="{{ cfg.client_id }}"
+                   placeholder="123456-xxxxx.apps.googleusercontent.com"
+                   autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="client_secret">Client Secret</label>
+            <input type="password" name="client_secret" id="client_secret" class="form-input"
+                   placeholder="{% if cfg.client_secret_mask %}залиште порожнім, щоб не змінювати{% else %}GOCSPX-...{% endif %}"
+                   autocomplete="off">
+            <p class="form-hint">Шифрується Fernet, у БД зберігається у вигляді шифротексту.</p>
+          </div>
+        </div>
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            <input type="checkbox" name="enabled" id="enabled" {% if cfg.enabled %}checked{% endif %}>
+            <label for="enabled">Увімкнено (показувати кнопку "Continue with Google")</label>
+          </div>
+        </div>
+        <div class="admin-form__actions">
+          <button type="submit" class="btn-admin btn-admin--primary"
+                  data-confirm="Зберегти Google OAuth конфігурацію?">
+            Зберегти
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
