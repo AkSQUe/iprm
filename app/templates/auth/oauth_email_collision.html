@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Цей email уже зареєстровано | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <section class="iprm-section" aria-labelledby="collision-title">
+    <div class="iprm-section__inner iprm-section__inner--narrow">
+      <h1 id="collision-title" class="iprm-section__title">Email уже зареєстровано</h1>
+      <p>
+        Email <strong>{{ email }}</strong> уже має обліковий запис, створений
+        через <strong>пароль</strong>. З міркувань безпеки ми не зливаємо
+        акаунти автоматично.
+      </p>
+      <p>Щоб додати вхід через {{ provider }}:</p>
+      <ol>
+        <li>Увійдіть з паролем за допомогою кнопки нижче.</li>
+        <li>Перейдіть у <em>Способи входу</em>.</li>
+        <li>Натисніть <em>Прив'язати {{ provider }}</em>.</li>
+      </ol>
+      <div class="form-actions">
+        <a href="{{ url_for('auth.login') }}" class="btn btn--primary">Увійти з паролем</a>
+        <a href="{{ url_for('main.index') }}" class="btn btn--secondary">На головну</a>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

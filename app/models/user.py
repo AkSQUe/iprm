@@ -141,6 +141,50 @@ class User(TimestampMixin, UserMixin, db.Model):
         ))
         return user
 
+    @classmethod
+    def create_with_oauth(cls, provider, sub, email, email_verified=False,
+                          first_name=None, last_name=None, raw_claims=None):
+        """Створити User через OAuth-провайдера (Phase 3+). Створює
+        User + AuthIdentity(provider=<...>) + порожній MedicalProfile.
+        Password-identity НЕ створюється -- юзер логіниться лише через
+        OAuth (або встановить пароль пізніше через "Forgot password").
+
+        User.password_hash NOT NULL у схемі (legacy), тому ставимо
+        випадковий 48-байтовий токен -- ним ніхто не залогіниться, бо
+        password-identity відсутня (check_password шукає identity first;
+        fallback на User.password_hash -- з невідомим токеном, не пройде).
+        Після Phase 7 ця колонка дропнеться.
+
+        НЕ комітить -- caller робить commit."""
+        from app.extensions import db
+        from app.models.auth_identity import AuthIdentity
+        from app.models.medical_profile import MedicalProfile
+        import secrets
+
+        user = cls(
+            email=email,
+            password=secrets.token_urlsafe(48),  # shadow-only, недосяжний
+            first_name=first_name or '',
+            last_name=last_name or '',
+            email_confirmed=bool(email_verified),
+        )
+        db.session.add(user)
+        db.session.flush()
+
+        db.session.add(AuthIdentity(
+            user_id=user.id,
+            provider=provider,
+            provider_sub=str(sub),
+            email=email,
+            email_verified=bool(email_verified),
+            raw_claims=raw_claims,
+        ))
+        db.session.add(MedicalProfile(
+            user_id=user.id,
+            source=MedicalProfile.SOURCE_SELF,
+        ))
+        return user
+
     @property
     def user_type_label(self):
         return dict(self.USER_TYPES).get(self.user_type, self.user_type or '')

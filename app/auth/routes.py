@@ -146,6 +146,32 @@ def settings():
     return render_template('auth/settings.html')
 
 
+@auth_bp.route('/account/connections')
+@login_required
+def connections():
+    """Перелік прив'язаних identity-провайдерів + link/unlink дії.
+    Власник цієї сторінки -- сам юзер. Адмін не керує чужими identity."""
+    idents = AuthIdentity.query.filter_by(user_id=current_user.id).all()
+    by_provider = {i.provider: i for i in idents}
+    has_password = AuthIdentity.PROVIDER_PASSWORD in by_provider
+    has_google = AuthIdentity.PROVIDER_GOOGLE in by_provider
+    has_apple = AuthIdentity.PROVIDER_APPLE in by_provider
+    return render_template(
+        'auth/connections.html',
+        identities=idents,
+        by_provider=by_provider,
+        has_password=has_password,
+        has_google=has_google,
+        has_apple=has_apple,
+        google_oauth_available=_google_oauth_available(),
+    )
+
+
+def _google_oauth_available():
+    from app.models.site_settings import SiteSettings
+    return SiteSettings.get().is_google_oauth_configured
+
+
 @auth_bp.route('/confirm/<token>')
 @limiter.limit('10 per minute')
 def confirm_email(token):

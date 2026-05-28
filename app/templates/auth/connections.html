@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Способи входу | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-account.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero iprm-hero--compact" aria-label="Connections hero">
+      <div class="iprm-hero__content">
+        <h1 class="iprm-hero__title">Способи <span class="apple-gradient-text">входу</span></h1>
+        <p class="iprm-hero__subtitle">Керуйте, як ви входите в обліковий запис</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="iprm-section" aria-labelledby="connections-title">
+    <div class="iprm-section__inner">
+      <h2 id="connections-title" class="iprm-section__title sr-only">Прив'язані провайдери</h2>
+
+      <div class="connections-list">
+
+        <!-- Password -->
+        <div class="connection-item">
+          <div class="connection-item__title">Email і пароль</div>
+          <div class="connection-item__email">{{ current_user.email }}</div>
+          <div class="connection-item__status">
+            {% if has_password %}
+              <span class="badge badge--active">Активно</span>
+            {% else %}
+              <span class="badge badge--draft">Не встановлено</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Google -->
+        <div class="connection-item">
+          <div class="connection-item__title">Google</div>
+          <div class="connection-item__email">
+            {% if has_google %}{{ by_provider['google'].email }}{% else %}--{% endif %}
+          </div>
+          <div class="connection-item__status">
+            {% if has_google %}
+              <span class="badge badge--active">Прив'язано</span>
+              <form method="POST" action="{{ url_for('auth.google_unlink') }}"
+                    data-confirm="Від'єднати Google від акаунта?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn--secondary btn--sm">Від'єднати</button>
+              </form>
+            {% elif google_oauth_available %}
+              <a href="{{ url_for('auth.google_start', action='link') }}"
+                 class="btn btn--primary btn--sm">Прив'язати Google</a>
+            {% else %}
+              <span class="badge badge--pending">Не налаштовано</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Apple (Phase 5) -->
+        <div class="connection-item connection-item--planned">
+          <div class="connection-item__title">Apple</div>
+          <div class="connection-item__email">--</div>
+          <div class="connection-item__status">
+            <span class="badge badge--pending">Скоро</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

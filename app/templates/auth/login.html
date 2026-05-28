@@ -48,6 +48,8 @@
       <button type="submit" class="btn-auth">Увійти</button>
     </form>
 
+    {% include 'partials/_oauth_buttons.html' %}
+
     <div class="auth-card__footer">
       <span>Ще не маєте акаунта? </span>
       <a href="{{ url_for('auth.register') }}">Зареєструватися</a>

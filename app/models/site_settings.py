@@ -73,6 +73,15 @@ class SiteSettings(TimestampMixin, db.Model):
     # ідентифікатор, що віддається у HTML на кожній сторінці.
     google_analytics_id = db.Column(db.String(50), default='', nullable=False)
 
+    # Google OAuth 2.0 (sign-in). Client ID -- публічний (видно у redirect-
+    # URI), client_secret -- Fernet-зашифрований. Якщо обидва порожні --
+    # OAuth вимкнено (кнопка "Continue with Google" не показується).
+    google_oauth_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    google_oauth_client_id = db.Column(db.String(255), default='')
+    _google_oauth_client_secret_encrypted = db.Column(
+        'google_oauth_client_secret', db.String(500), default=''
+    )
+
     # reCAPTCHA v3 (Google). Site key -- публічний (вшиваємо у HTML),
     # secret key -- шифруємо Fernet. Поріг score 0..1 (нижче = бот).
     recaptcha_enabled = db.Column(db.Boolean, default=False, nullable=False)
@@ -154,6 +163,36 @@ class SiteSettings(TimestampMixin, db.Model):
         self._recaptcha_secret_key_encrypted = _get_fernet().encrypt(
             value.encode()
         ).decode()
+
+    @property
+    def google_oauth_client_secret(self):
+        if not self._google_oauth_client_secret_encrypted:
+            return ''
+        try:
+            return _get_fernet().decrypt(
+                self._google_oauth_client_secret_encrypted.encode()
+            ).decode()
+        except (InvalidToken, Exception):
+            logger.warning('Failed to decrypt google_oauth_client_secret')
+            return ''
+
+    @google_oauth_client_secret.setter
+    def google_oauth_client_secret(self, value):
+        if not value:
+            self._google_oauth_client_secret_encrypted = ''
+            return
+        self._google_oauth_client_secret_encrypted = _get_fernet().encrypt(
+            value.encode()
+        ).decode()
+
+    @property
+    def is_google_oauth_configured(self):
+        """OAuth готовий до використання: enabled + є client_id і secret."""
+        return bool(
+            self.google_oauth_enabled
+            and self.google_oauth_client_id
+            and self.google_oauth_client_secret
+        )
 
     @property
     def partner_webhook_secret(self):

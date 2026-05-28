@@ -66,6 +66,12 @@ def create_app(config_name=None):
     limiter.init_app(app)
     mail.init_app(app)
 
+    # Authlib OAuth (Phase 3+): провайдери реєструються ліниво у
+    # get_google_client()/get_apple_client(), щоб client_id/secret
+    # підтягувалися з SiteSettings (DB-first) без рестарту.
+    from app.services.google_oauth import init_oauth
+    init_oauth(app)
+
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Будь ласка, увійдіть для доступу до цієї сторінки.'
     login_manager.login_message_category = 'info'
