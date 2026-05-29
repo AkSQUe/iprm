@@ -399,7 +399,7 @@
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
-  padding: 80px 32px;
+  padding: 56px 32px;
 }
 
 .admin-empty__icon {
