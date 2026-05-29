@@ -164,12 +164,20 @@
   color: var(--iprm-nav-active);
 }
 
-.apple-page .apple-btn--secondary::after {
-  content: ' >';
-}
-
 .apple-page .apple-btn--secondary:hover {
   color: var(--iprm-accent-hover);
+}
+
+/* Opt-in arrow (як у common.css; дублюємо з .apple-page префіксом, бо
+   .apple-page .apple-btn (specificity 0,1,1) перебиває common-вариант). */
+.apple-page .apple-btn--arrow::after {
+  content: ' >';
+  margin-left: 2px;
+  transition: transform 0.15s var(--ease-interact);
+}
+
+.apple-page .apple-btn--arrow:hover::after {
+  transform: translateX(2px);
 }
 
 .apple-page .apple-btn--disabled {

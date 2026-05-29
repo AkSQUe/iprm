@@ -565,12 +565,22 @@ a {
   color: var(--iprm-nav-active);
 }
 
-.apple-btn--secondary::after {
-  content: ' >';
-}
-
 .apple-btn--secondary:hover {
   color: var(--iprm-accent-hover);
+}
+
+/* Opt-in arrow для forward-CTA ("Learn more"-pattern, як у apple.com).
+   НЕ дефолтна на --secondary, бо багато navigational-кнопок ("Назад",
+   "На головну", "Повернутися...") з arrow виглядають як when-cognitive-
+   dissonance. Додайте клас явно тільки коли кнопка веде вперед/глибше. */
+.apple-btn--arrow::after {
+  content: ' >';
+  margin-left: 2px;
+  transition: transform 0.15s var(--ease-interact);
+}
+
+.apple-btn--arrow:hover::after {
+  transform: translateX(2px);
 }
 
 .apple-btn--disabled {
