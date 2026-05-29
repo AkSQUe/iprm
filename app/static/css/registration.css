@@ -567,25 +567,30 @@
 
 .reg-contact-cta a:hover { text-decoration: underline; }
 
-/* ---------- Success banner на confirmation page ---------- */
+/* ---------- Status banner на confirmation page ----------
+   Базовий стан = "очікує оплати" (warning/amber). Модифікатори
+   --confirmed (success/green) і --cancelled (danger/red) міняють
+   паліту цілком. Усе на semantic-tokens, без градієнтів і text-shadow
+   (попередня версія компенсувала поганий contrast green-on-violet
+   через text-shadow -- з нормальним flat-фоном це не потрібно). */
 .reg-success-banner {
   display: grid;
   grid-template-columns: 56px 1fr;
   align-items: center;
   gap: 20px;
-  background: linear-gradient(135deg, #d9b3ff 0%, #c178f0 50%, #a04ad8 100%);
+  background: var(--iprm-warning-bg);
+  border: 1px solid var(--iprm-warning-border);
   border-radius: var(--iprm-radius);
-  padding: 32px 36px;
+  padding: 28px 32px;
   margin-bottom: 32px;
-  color: var(--iprm-white);
-  box-shadow: 0 8px 24px rgba(160, 74, 216, 0.18);
+  color: var(--iprm-warning-text);
 }
 
 .reg-success-banner__icon {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #16a34a;
+  background: var(--iprm-warning);
   color: var(--iprm-white);
   display: flex;
   align-items: center;
@@ -598,28 +603,47 @@
   margin: 0 0 4px;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #16a34a;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+  color: var(--iprm-warning-text);
 }
 
 .reg-success-banner__subtitle {
   margin: 0 0 4px;
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #166534;
+  color: var(--iprm-warning-text);
+  opacity: 0.85;
 }
 
 .reg-success-banner__amount {
   margin: 8px 0 0;
   font-size: 1rem;
-  color: #166534;
+  color: var(--iprm-warning-text);
+  opacity: 0.9;
 }
 
-.reg-success-banner__amount strong { font-size: 1.125rem; }
+.reg-success-banner__amount strong { font-size: 1.125rem; opacity: 1; }
 
-.reg-success-banner--confirmed { background: linear-gradient(135deg, #d1fae5 0%, #6ee7b7 100%); }
-.reg-success-banner--cancelled { background: linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%); }
-.reg-success-banner--cancelled .reg-success-banner__title { color: #dc2626; }
+/* --confirmed: success palette */
+.reg-success-banner--confirmed {
+  background: var(--iprm-success-bg);
+  border-color: var(--iprm-success-light);
+  color: var(--iprm-success);
+}
+.reg-success-banner--confirmed .reg-success-banner__icon { background: var(--iprm-success); }
+.reg-success-banner--confirmed .reg-success-banner__title,
+.reg-success-banner--confirmed .reg-success-banner__subtitle,
+.reg-success-banner--confirmed .reg-success-banner__amount { color: var(--iprm-success); }
+
+/* --cancelled: danger palette */
+.reg-success-banner--cancelled {
+  background: var(--iprm-error-bg);
+  border-color: var(--iprm-error-light);
+  color: var(--iprm-error-text);
+}
+.reg-success-banner--cancelled .reg-success-banner__icon { background: var(--iprm-error-text); }
+.reg-success-banner--cancelled .reg-success-banner__title,
+.reg-success-banner--cancelled .reg-success-banner__subtitle,
+.reg-success-banner--cancelled .reg-success-banner__amount { color: var(--iprm-error-text); }
 
 /* ---------- Велика кнопка "Оплатити" ---------- */
 .reg-pay-cta {

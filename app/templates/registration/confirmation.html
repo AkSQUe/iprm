@@ -54,12 +54,14 @@
     </div>
   {% elif reg.status == 'cancelled' %}
     <div class="reg-success-banner reg-success-banner--cancelled">
+      <div class="reg-success-banner__icon" aria-hidden="true">&#10005;</div>
       <div class="reg-success-banner__body">
         <p class="reg-success-banner__title">Реєстрацію скасовано</p>
       </div>
     </div>
   {% elif reg.status == 'completed' %}
     <div class="reg-success-banner reg-success-banner--confirmed">
+      <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>
       <div class="reg-success-banner__body">
         <p class="reg-success-banner__title">Захід завершено</p>
         {% if reg.attended and reg.cpd_points_awarded %}
