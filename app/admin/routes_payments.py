@@ -4,21 +4,17 @@ from flask_login import current_user
 from sqlalchemy.orm import joinedload
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
-from app.extensions import db
+from app.admin._helpers import (
+    mask_secret, rotation_status, save_integration_settings,
+    validate_liqpay_credentials,
+)
+from app.extensions import db, limiter
 from app.models.registration import EventRegistration
 from app.models.site_settings import SiteSettings
 from app.services.liqpay import get_liqpay_service
 from app.services.payment_ops import PaymentOps
 
 audit_logger = logging.getLogger('audit')
-
-
-def _mask_key(key):
-    if not key:
-        return ''
-    if len(key) <= 4:
-        return '****'
-    return '****' + key[-4:]
 
 
 @admin_bp.route('/payments')
@@ -31,12 +27,19 @@ def payments():
 @admin_required
 def liqpay():
     service = get_liqpay_service()
+    from app.models.site_settings import SiteSettings
+    settings = SiteSettings.get()
     cfg = {
-        'public_key': _mask_key(service.public_key),
-        'private_key': _mask_key(service.private_key),
+        'public_key': mask_secret(service.public_key),
+        'private_key': mask_secret(service.private_key),
         'sandbox': service.sandbox,
         'is_configured': service.is_configured,
         'webhook_url': url_for('payments.liqpay_callback', _external=True),
+        'rotation': rotation_status(
+            settings.liqpay_private_key_set_at,
+            threshold_key='liqpay_private_key',
+            is_secret_present=bool(settings.liqpay_private_key),
+        ),
     }
 
     stats = EventRegistration.payment_stats()
@@ -63,28 +66,57 @@ def liqpay_save_keys():
     private_key = request.form.get('private_key', '').strip()
     sandbox = request.form.get('sandbox') == 'on'
 
-    if not public_key or not private_key:
-        flash('Обидва ключі обов\'язкові', 'error')
+    settings = SiteSettings.get()
+
+    # Враховуємо існуючі значення -- порожні поля у формі НЕ затирають
+    # вже збережені ключі (mirror Google OAuth / Apple Sign In паттерн).
+    # Це дозволяє адміну поміняти лише sandbox-toggle, не вводячи ключі
+    # повторно.
+    final_public = public_key or settings.liqpay_public_key
+    final_private = private_key or settings.liqpay_private_key
+    if not final_public or not final_private:
+        flash('Обидва ключі обов\'язкові (хоча б один раз треба ввести)', 'error')
         return redirect(url_for('admin.liqpay'))
 
-    settings = SiteSettings.get()
-    settings.liqpay_public_key = public_key
-    settings.liqpay_private_key = private_key
-    settings.liqpay_sandbox = sandbox
+    # Phase A: validate-before-save -- викликаємо check_status з новими
+    # ключами. Робимо ТІЛЬКИ якщо обидва ключі задано (нові або хоча б
+    # один новий + один зі збереженого), щоб уникнути тестування з
+    # неконсистентною комбінацією.
+    if public_key or private_key:
+        final_public = public_key or settings.liqpay_public_key
+        final_private = private_key or settings.liqpay_private_key
+        if final_public and final_private:
+            ok, msg = validate_liqpay_credentials(
+                final_public, final_private, sandbox,
+            )
+            if not ok:
+                flash(f'Валідація LiqPay ключів не пройшла: {msg}', 'error')
+                return redirect(url_for('admin.liqpay'))
 
-    try:
-        db.session.commit()
-        audit_logger.info('Admin %s updated LiqPay keys (sandbox=%s)', current_user.email, sandbox)
-        flash('Ключі LiqPay збережено', 'success')
-    except Exception:
-        db.session.rollback()
-        flash('Помилка при збереженні ключів', 'error')
+    updates = {'liqpay_sandbox': sandbox}
+    if public_key:
+        updates['liqpay_public_key'] = public_key
+    if private_key:
+        updates['liqpay_private_key'] = private_key
 
+    save_integration_settings(
+        provider='liqpay',
+        settings=settings,
+        updates=updates,
+        audit_summary={
+            'sandbox': sandbox,
+            'public_key_set': bool(public_key),
+            'private_key_set': bool(private_key),
+        },
+        success_msg='Ключі LiqPay збережено',
+        error_msg='Помилка при збереженні ключів',
+    )
     return redirect(url_for('admin.liqpay'))
 
 
 @admin_bp.route('/liqpay/test', methods=['POST'])
 @admin_required
+@limiter.limit("5 per minute")
 def liqpay_test():
     service = get_liqpay_service()
     if not service.is_configured:

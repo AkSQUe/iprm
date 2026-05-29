@@ -1,93 +1,65 @@
-{% extends "admin/base_admin.html" %}
+{% extends "admin/_integration_page.html" %}
 
 {% block title %}Google Analytics | ІПРМ{% endblock %}
-{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block integration_title %}Google Analytics 4{% endblock %}
+{% block integration_subtitle_lead %}Веб-аналітика{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% block integration_status_badges %}
+  {% if cfg.is_configured %}
+    <span class="badge badge--active">Активно</span>
+    {% if cfg.source == 'db' %}
+      <span class="badge badge--published">З БД</span>
+    {% elif cfg.source == 'env' %}
+      <span class="badge badge--pending">З env (fallback)</span>
+    {% endif %}
+  {% else %}
+    <span class="badge badge--draft">Не налаштовано</span>
+  {% endif %}
 {% endblock %}
 
-{% block content %}
-<div class="admin-with-sidebar">
-  {% include 'admin/partials/_sidebar.html' %}
-  <div class="admin-layout">
-    <div class="admin-hero">
-      <div>
-        <div class="admin-breadcrumb">
-          <a href="{{ url_for('admin.integrations') }}" class="admin-breadcrumb__link">Інтеграції</a>
-          <span class="admin-breadcrumb__sep">/</span>
-          <span class="admin-breadcrumb__current">Google Analytics</span>
-        </div>
-        <h1 class="admin-hero__title">Google Analytics 4</h1>
-        <p class="admin-hero__subtitle">
-          Веб-аналітика
-          {% if cfg.is_configured %}
-            <span class="badge badge--active">Активно</span>
-            {% if cfg.source == 'db' %}
-              <span class="badge badge--published">З БД</span>
-            {% elif cfg.source == 'env' %}
-              <span class="badge badge--pending">З env (fallback)</span>
-            {% endif %}
-          {% else %}
-            <span class="badge badge--draft">Не налаштовано</span>
-          {% endif %}
-        </p>
-      </div>
-      <div class="admin-hero__actions">
-        <a href="{{ url_for('admin.integrations') }}" class="btn-admin btn-admin--secondary">Назад до інтеграцій</a>
-      </div>
-    </div>
-
-    {% include 'partials/flash_messages.html' %}
-
-    <div class="form-section admin-form__section">
-      <h3 class="admin-form__section-title">Поточна конфігурація</h3>
-      <div class="liqpay-config">
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Measurement ID (БД)</span>
-          <code class="liqpay-config__value">{{ cfg.db_id or 'Не задано' }}</code>
-        </div>
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Fallback з env (GOOGLE_ANALYTICS_ID)</span>
-          <code class="liqpay-config__value">{{ cfg.env_id or 'Не задано' }}</code>
-        </div>
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Активний ID</span>
-          <code class="liqpay-config__value">{{ cfg.effective_id or 'GA вимкнено' }}</code>
-        </div>
-      </div>
-      <p class="form-hint">
-        Спочатку береться значення з БД. Якщо порожнє -- беремо з env-змінної
-        <code>GOOGLE_ANALYTICS_ID</code>. Якщо обидва порожні -- GA не вмикається.
-      </p>
-    </div>
-
-    <div class="form-section admin-form__section">
-      <h3 class="admin-form__section-title">Встановити Measurement ID</h3>
-      <form method="POST" action="{{ url_for('admin.google_analytics_save') }}" class="admin-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="form-group admin-form__full">
-          <label for="google_analytics_id">GA4 Measurement ID</label>
-          <input type="text" name="google_analytics_id" id="google_analytics_id"
-                 class="form-input" pattern="^G-[A-Z0-9]{4,20}$"
-                 value="{{ cfg.db_id }}"
-                 placeholder="G-XXXXXXXXXX" autocomplete="off">
-          <p class="form-hint">
-            Формат: <code>G-XXXXXXXXXX</code>. Знайти можна в Google Analytics:
-            Admin → Data Streams → Web → Measurement ID. Залиште порожнім, щоб
-            використати fallback з env або вимкнути GA.
-          </p>
-        </div>
-        <div class="admin-form__actions">
-          <button type="submit" class="btn-admin btn-admin--primary"
-                  data-confirm="Зберегти Measurement ID?">
-            Зберегти
-          </button>
-        </div>
-      </form>
-    </div>
-
+{% block integration_readonly_rows %}
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Measurement ID (БД)</span>
+    <code class="admin-readonly-config__value">{{ cfg.db_id or 'Не задано' }}</code>
   </div>
-</div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Fallback з env (GOOGLE_ANALYTICS_ID)</span>
+    <code class="admin-readonly-config__value">{{ cfg.env_id or 'Не задано' }}</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Активний ID</span>
+    <code class="admin-readonly-config__value">{{ cfg.effective_id or 'GA вимкнено' }}</code>
+  </div>
+{% endblock %}
+
+{% block integration_readonly_hint %}
+<p class="form-hint">
+  Спочатку береться значення з БД. Якщо порожнє -- беремо з env-змінної
+  <code>GOOGLE_ANALYTICS_ID</code>. Якщо обидва порожні -- GA не вмикається.
+</p>
+{% endblock %}
+
+{% block integration_edit_title %}Встановити Measurement ID{% endblock %}
+{% block integration_edit_form %}
+<form method="POST" action="{{ url_for('admin.google_analytics_save') }}" class="admin-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="form-group admin-form__full">
+    <label for="google_analytics_id">GA4 Measurement ID</label>
+    <input type="text" name="google_analytics_id" id="google_analytics_id"
+           class="form-input" pattern="^G-[A-Z0-9]{4,20}$"
+           value="{{ cfg.db_id }}"
+           placeholder="G-XXXXXXXXXX" autocomplete="off">
+    <p class="form-hint">
+      Формат: <code>G-XXXXXXXXXX</code>. Знайти можна в Google Analytics:
+      Admin → Data Streams → Web → Measurement ID. Залиште порожнім, щоб
+      використати fallback з env або вимкнути GA.
+    </p>
+  </div>
+  <div class="admin-form__actions">
+    <button type="submit" class="btn-admin btn-admin--primary"
+            data-confirm="Зберегти Measurement ID?">
+      Зберегти
+    </button>
+  </div>
+</form>
 {% endblock %}

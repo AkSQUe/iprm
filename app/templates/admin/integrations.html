@@ -22,6 +22,12 @@
         <h1 class="admin-hero__title">Інтеграції</h1>
         <p class="admin-hero__subtitle">Зовнішні сервіси та API</p>
       </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.integrations_health') }}"
+           class="btn-admin btn-admin--secondary">Health-check</a>
+        <a href="{{ url_for('admin.integrations_io') }}"
+           class="btn-admin btn-admin--secondary">Export/Import</a>
+      </div>
     </div>
 
     {% include 'partials/flash_messages.html' %}
@@ -35,7 +41,9 @@
         <a href="{{ url_for('admin.liqpay') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">LiqPay</h4>
-            {% if liqpay_status.is_configured %}
+            {% if liqpay_status.error %}
+              <span class="badge badge--draft" title="Статус недоступний">Статус недоступний</span>
+            {% elif liqpay_status.is_configured %}
               {% if liqpay_status.sandbox %}
                 <span class="badge badge--published">Sandbox</span>
               {% else %}
@@ -44,6 +52,7 @@
             {% else %}
               <span class="badge badge--draft">Не налаштовано</span>
             {% endif %}
+            {% with rotation=liqpay_status.rotation %}{% include 'admin/_rotation_hint.html' %}{% endwith %}
           </div>
           <p>Платіжна система: оплата картою, Google Pay, Apple Pay. Webhook, рефанди.</p>
         </a>
@@ -52,13 +61,16 @@
         <a href="{{ url_for('admin.google_oauth') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">Google OAuth</h4>
-            {% if google_oauth_status.is_configured %}
+            {% if google_oauth_status.error %}
+              <span class="badge badge--draft">Статус недоступний</span>
+            {% elif google_oauth_status.is_configured %}
               <span class="badge badge--active">Активно</span>
             {% elif google_oauth_status.enabled %}
               <span class="badge badge--published">Потребує ключів</span>
             {% else %}
               <span class="badge badge--draft">Не налаштовано</span>
             {% endif %}
+            {% with rotation=google_oauth_status.rotation %}{% include 'admin/_rotation_hint.html' %}{% endwith %}
           </div>
           <p>Вхід через Google-акаунт. Client ID, redirect URI, One Tap.</p>
         </a>
@@ -67,7 +79,9 @@
         <a href="{{ url_for('admin.google_analytics') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">Google Analytics</h4>
-            {% if ga_status.is_configured %}
+            {% if ga_status.error %}
+              <span class="badge badge--draft">Статус недоступний</span>
+            {% elif ga_status.is_configured %}
               <span class="badge badge--active">Активно</span>
             {% else %}
               <span class="badge badge--draft">Не налаштовано</span>
@@ -80,13 +94,16 @@
         <a href="{{ url_for('admin.recaptcha') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">reCAPTCHA v3</h4>
-            {% if recaptcha_status.is_configured %}
+            {% if recaptcha_status.error %}
+              <span class="badge badge--draft">Статус недоступний</span>
+            {% elif recaptcha_status.is_configured %}
               <span class="badge badge--active">Активна</span>
             {% elif recaptcha_status.is_active %}
               <span class="badge badge--published">Site key встановлено</span>
             {% else %}
               <span class="badge badge--draft">Не налаштовано</span>
             {% endif %}
+            {% with rotation=recaptcha_status.rotation %}{% include 'admin/_rotation_hint.html' %}{% endwith %}
           </div>
           <p>Захист форм від ботів. Site Key, Secret Key, поріг score.</p>
         </a>
@@ -95,13 +112,16 @@
         <a href="{{ url_for('admin.apple_signin') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">Apple Sign In</h4>
-            {% if apple_status.is_configured %}
+            {% if apple_status.error %}
+              <span class="badge badge--draft">Статус недоступний</span>
+            {% elif apple_status.is_configured %}
               <span class="badge badge--active">Активно</span>
             {% elif apple_status.enabled %}
               <span class="badge badge--published">Потребує ключів</span>
             {% else %}
               <span class="badge badge--draft">Не налаштовано</span>
             {% endif %}
+            {% with rotation=apple_status.rotation %}{% include 'admin/_rotation_hint.html' %}{% endwith %}
           </div>
           <p>Авторизація через Apple ID. Service ID, Team ID, relay email.</p>
         </a>

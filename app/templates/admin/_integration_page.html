@@ -1,0 +1,77 @@
+{# Базовий шаблон для admin/integrations-сторінок. Виносить спільну
+   структуру (hero, breadcrumb, flash, layout) у блоки.
+
+   Кожна конкретна сторінка (google_oauth, apple_signin, recaptcha,
+   google_analytics, liqpay) extend'ить цей шаблон і перевизначає блоки:
+
+     integration_title             -- h1 заголовок
+     integration_subtitle_lead     -- текст-лід перед бейджами
+     integration_status_badges     -- блок з <span class="badge">
+     integration_readonly_title    -- h3 для read-only section
+     integration_readonly_rows     -- рядки .admin-readonly-config__row
+     integration_readonly_hint     -- опційний <p class="form-hint">
+     integration_edit_title        -- h3 для edit section
+     integration_edit_form         -- <form>...</form>
+     integration_extra             -- додаткові секції (для LiqPay -- stats, recent)
+     integration_body              -- ПОВНИЙ override body, якщо нестандартний layout
+
+   `integration_extra_css` -- щоб додати page-specific CSS, не дублюючи
+   три базових <link> тегу.
+
+   У роуті обовʼязково передавати у render_template контекст з cfg-dict
+   (як уже зроблено в усіх роутах). #}
+{% extends "admin/base_admin.html" %}
+
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-integration.css') }}?v={{ assets_version }}">
+{% block integration_extra_css %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.integrations') }}" class="admin-breadcrumb__link">Інтеграції</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">{% block integration_breadcrumb_current %}{% block integration_title %}{% endblock %}{% endblock %}</span>
+        </div>
+        <h1 class="admin-hero__title">{{ self.integration_title() }}</h1>
+        <p class="admin-hero__subtitle">
+          {% block integration_subtitle_lead %}{% endblock %}
+          {% block integration_status_badges %}{% endblock %}
+        </p>
+      </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.integrations') }}" class="btn-admin btn-admin--secondary">Назад до інтеграцій</a>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    {% block integration_body %}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">{% block integration_readonly_title %}Поточна конфігурація{% endblock %}</h3>
+      <div class="admin-readonly-config">
+        {% block integration_readonly_rows %}{% endblock %}
+      </div>
+      {% block integration_readonly_hint %}{% endblock %}
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">{% block integration_edit_title %}Оновити налаштування{% endblock %}</h3>
+      {% block integration_edit_form %}{% endblock %}
+    </div>
+
+    {% block integration_extra %}{% endblock %}
+    {% endblock %}
+
+  </div>
+</div>
+{% endblock %}

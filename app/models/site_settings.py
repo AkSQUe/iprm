@@ -7,7 +7,7 @@ from cryptography.fernet import Fernet, InvalidToken
 from flask import current_app
 
 from app.extensions import db
-from app.models.mixins import TimestampMixin
+from app.models.mixins import TimestampMixin, utcnow
 
 GA_ID_RE = re.compile(r'^G-[A-Z0-9]{4,20}$')
 
@@ -64,10 +64,17 @@ class SiteSettings(TimestampMixin, db.Model):
     show_labs = db.Column(db.Boolean, default=True)
     show_clinics = db.Column(db.Boolean, default=True)
 
-    # LiqPay
+    # LiqPay. Public key -- відкритий ідентифікатор, plaintext. Private
+    # key -- секрет з доступом до коштів; зберігаємо Fernet-зашифрованим
+    # (як recaptcha/apple/partner). DB-колонка лишається 'liqpay_private_key'
+    # для сумісності з env-fallback у services/liqpay.py.
     liqpay_public_key = db.Column(db.String(255), default='')
-    liqpay_private_key = db.Column(db.String(255), default='')
+    _liqpay_private_key_encrypted = db.Column(
+        'liqpay_private_key', db.String(500), default=''
+    )
     liqpay_sandbox = db.Column(db.Boolean, default=True)
+    # Rotation reminders -- timestamp коли секрет востаннє оновлювали.
+    liqpay_private_key_set_at = db.Column(db.DateTime(timezone=True))
 
     # Google Analytics 4 Measurement ID (формат "G-XXXXXXXXXX"). Публічний
     # ідентифікатор, що віддається у HTML на кожній сторінці.
@@ -81,6 +88,7 @@ class SiteSettings(TimestampMixin, db.Model):
     _google_oauth_client_secret_encrypted = db.Column(
         'google_oauth_client_secret', db.String(500), default=''
     )
+    google_oauth_client_secret_set_at = db.Column(db.DateTime(timezone=True))
 
     # Apple Sign In (Phase 5). На відміну від Google, client_secret -- це
     # короткий JWT, що генерується на льоту з team_id + services_id +
@@ -94,6 +102,7 @@ class SiteSettings(TimestampMixin, db.Model):
     _apple_private_key_encrypted = db.Column(
         'apple_private_key', db.Text, default=''
     )
+    apple_private_key_set_at = db.Column(db.DateTime(timezone=True))
 
     # reCAPTCHA v3 (Google). Site key -- публічний (вшиваємо у HTML),
     # secret key -- шифруємо Fernet. Поріг score 0..1 (нижче = бот).
@@ -103,6 +112,7 @@ class SiteSettings(TimestampMixin, db.Model):
         'recaptcha_secret_key', db.String(500), default=''
     )
     recaptcha_score_threshold = db.Column(db.Float, default=0.5, nullable=False)
+    recaptcha_secret_key_set_at = db.Column(db.DateTime(timezone=True))
 
     # Partner integration (MM Medic etc.)
     partner_integration_enabled = db.Column(db.Boolean, default=False, nullable=False)
@@ -172,10 +182,44 @@ class SiteSettings(TimestampMixin, db.Model):
     def recaptcha_secret_key(self, value):
         if not value:
             self._recaptcha_secret_key_encrypted = ''
+            self.recaptcha_secret_key_set_at = None
             return
         self._recaptcha_secret_key_encrypted = _get_fernet().encrypt(
             value.encode()
         ).decode()
+        self.recaptcha_secret_key_set_at = utcnow()
+
+    @property
+    def has_recaptcha_secret_key(self):
+        """Чи є збережений секрет у БД (без decrypt). Для admin UI --
+        показати чи є секрет, не розшифровуючи його даремно."""
+        return bool(self._recaptcha_secret_key_encrypted)
+
+    @property
+    def liqpay_private_key(self):
+        """LiqPay private key (decrypted on read).
+        Якщо decrypt fails -- логуємо warning і повертаємо '' (LiqPay
+        просто не сконфігурований)."""
+        if not self._liqpay_private_key_encrypted:
+            return ''
+        try:
+            return _get_fernet().decrypt(
+                self._liqpay_private_key_encrypted.encode()
+            ).decode()
+        except (InvalidToken, Exception):
+            logger.warning('Failed to decrypt liqpay_private_key')
+            return ''
+
+    @liqpay_private_key.setter
+    def liqpay_private_key(self, value):
+        if not value:
+            self._liqpay_private_key_encrypted = ''
+            self.liqpay_private_key_set_at = None
+            return
+        self._liqpay_private_key_encrypted = _get_fernet().encrypt(
+            value.encode()
+        ).decode()
+        self.liqpay_private_key_set_at = utcnow()
 
     @property
     def google_oauth_client_secret(self):
@@ -193,10 +237,12 @@ class SiteSettings(TimestampMixin, db.Model):
     def google_oauth_client_secret(self, value):
         if not value:
             self._google_oauth_client_secret_encrypted = ''
+            self.google_oauth_client_secret_set_at = None
             return
         self._google_oauth_client_secret_encrypted = _get_fernet().encrypt(
             value.encode()
         ).decode()
+        self.google_oauth_client_secret_set_at = utcnow()
 
     @property
     def is_google_oauth_configured(self):
@@ -225,10 +271,12 @@ class SiteSettings(TimestampMixin, db.Model):
     def apple_private_key(self, value):
         if not value:
             self._apple_private_key_encrypted = ''
+            self.apple_private_key_set_at = None
             return
         self._apple_private_key_encrypted = _get_fernet().encrypt(
             value.encode()
         ).decode()
+        self.apple_private_key_set_at = utcnow()
 
     @property
     def is_apple_signin_configured(self):

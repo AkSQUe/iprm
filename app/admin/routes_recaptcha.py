@@ -11,37 +11,40 @@ from flask_login import current_user
 
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
-from app.extensions import db
+from app.admin._helpers import (
+    mask_secret, rotation_status, save_integration_settings,
+    validate_recaptcha_secret,
+)
+from app.extensions import limiter
 from app.models.site_settings import SiteSettings
 from app.services.recaptcha import get_recaptcha_service
 
 audit_logger = logging.getLogger('audit')
 
 
-def _mask_key(key):
-    if not key:
-        return ''
-    if len(key) <= 4:
-        return '****'
-    return '****' + key[-4:]
-
-
 @admin_bp.route('/recaptcha')
 @admin_required
 def recaptcha():
-    service = get_recaptcha_service()
+    # Один SiteSettings.get() замість двох (через get_recaptcha_service +
+    # власний виклик).
     settings = SiteSettings.get()
+    service = get_recaptcha_service(settings=settings)
 
     cfg = {
         'enabled': service.enabled,
         'site_key': service.site_key,
-        'site_key_masked': _mask_key(service.site_key),
-        'secret_key_masked': _mask_key(service.secret_key),
+        'site_key_masked': mask_secret(service.site_key),
+        'secret_key_masked': mask_secret(service.secret_key),
         'score_threshold': service.score_threshold,
         'is_configured': service.is_configured,
         'is_active': service.is_active,
         'source_db_site': bool(settings.recaptcha_site_key),
-        'source_db_secret': bool(settings._recaptcha_secret_key_encrypted),
+        'source_db_secret': settings.has_recaptcha_secret_key,
+        'rotation': rotation_status(
+            settings.recaptcha_secret_key_set_at,
+            threshold_key='recaptcha_secret_key',
+            is_secret_present=settings.has_recaptcha_secret_key,
+        ),
     }
     return render_template('admin/recaptcha.html', cfg=cfg)
 
@@ -63,53 +66,76 @@ def recaptcha_save_keys():
         flash('Поріг score має бути в межах 0.0..1.0', 'error')
         return redirect(url_for('admin.recaptcha'))
 
-    if enabled and (not site_key or not secret_key):
+    settings = SiteSettings.get()
+
+    # Перевіряємо що буде у БД ПІСЛЯ збереження (порожнє secret-поле
+    # зберігає існуюче), щоб правило "enabled вимагає обидва" враховувало
+    # вже збережений секрет.
+    final_secret = secret_key or settings.recaptcha_secret_key
+    if enabled and (not site_key or not final_secret):
         flash(
             'Щоб увімкнути reCAPTCHA, обидва ключі мають бути заповнені',
             'error',
         )
         return redirect(url_for('admin.recaptcha'))
 
-    settings = SiteSettings.get()
-    settings.recaptcha_site_key = site_key
-    # setter сам зашифрує (або очистить при пустому value)
-    settings.recaptcha_secret_key = secret_key
-    settings.recaptcha_enabled = enabled
-    settings.recaptcha_score_threshold = threshold
+    # Phase A: validate-before-save -- якщо адмін ввів новий secret,
+    # перевіряємо через siteverify ДО запису у БД. Якщо невалідний --
+    # не зберігаємо, інтеграція не ламається.
+    if secret_key:
+        ok, msg = validate_recaptcha_secret(secret_key)
+        if not ok:
+            flash(f'Валідація secret key не пройшла: {msg}', 'error')
+            return redirect(url_for('admin.recaptcha'))
 
-    try:
-        db.session.commit()
-        audit_logger.info(
-            'Admin %s updated reCAPTCHA settings (enabled=%s, threshold=%.2f)',
-            current_user.email, enabled, threshold,
-        )
-        flash('Налаштування reCAPTCHA збережено', 'success')
-    except Exception:
-        db.session.rollback()
-        flash('Помилка при збереженні налаштувань', 'error')
+    # Guard: порожнє secret-поле НЕ затирає існуючий ключ.
+    updates = {
+        'recaptcha_site_key': site_key,
+        'recaptcha_enabled': enabled,
+        'recaptcha_score_threshold': threshold,
+    }
+    if secret_key:
+        updates['recaptcha_secret_key'] = secret_key
 
+    save_integration_settings(
+        provider='recaptcha',
+        settings=settings,
+        updates=updates,
+        audit_summary={
+            'enabled': enabled,
+            'site_key_set': bool(site_key),
+            'secret_key_set': bool(secret_key),
+            'threshold': threshold,
+        },
+        success_msg='Налаштування reCAPTCHA збережено',
+    )
     return redirect(url_for('admin.recaptcha'))
 
 
 @admin_bp.route('/recaptcha/test', methods=['POST'])
 @admin_required
+@limiter.limit("5 per minute")
 def recaptcha_test():
     """Перевірка через siteverify з заздалегідь невалідним токеном.
     Google відповідає success=false + error-codes -- значить мережа й secret OK.
+
+    Тест працює навіть коли reCAPTCHA вимкнено (enabled=False) -- щоб
+    адмін міг перевірити секрет ПЕРЕД його активацією.
     """
     service = get_recaptcha_service()
     if not service.secret_key:
         flash('Спочатку збережіть Secret Key', 'error')
         return redirect(url_for('admin.recaptcha'))
 
-    ok, info = service.verify('___connection_test___', expected_action=None)
+    # Викликаємо verify напряму, обходячи is_configured-гейт. Бо
+    # service.verify() повертає (True, skipped=True) для не-enabled
+    # стану, а нам тут потрібна реальна siteverify-перевірка.
+    body_encoded = service._build_request_body('___connection_test___', remote_ip='')
+    info = service._call_siteverify(body_encoded)
     audit_logger.info('Admin %s tested reCAPTCHA connection', current_user.email)
 
-    if info.get('skipped'):
-        if info.get('error') == 'network':
-            flash('Не вдалося з\'єднатися з Google API. Перевірте мережу.', 'error')
-        else:
-            flash('reCAPTCHA не сконфігурована (увімкніть і збережіть ключі)', 'warning')
+    if info.get('error') == 'network':
+        flash('Не вдалося з\'єднатися з Google API. Перевірте мережу.', 'error')
     elif info.get('error_codes'):
         codes = info['error_codes']
         if 'invalid-input-secret' in codes:
@@ -118,6 +144,9 @@ def recaptcha_test():
             flash('З\'єднання з siteverify успішне (тестовий токен очікувано відхилено)', 'success')
         else:
             flash(f'Google повернув помилки: {", ".join(codes)}', 'warning')
+    elif info.get('success') is False:
+        # Без error_codes, але success=false -- секрет невалідний.
+        flash('Secret Key неробочий (Google відхилив без коду помилки)', 'error')
     else:
         flash('Несподівана відповідь від Google API', 'warning')
 

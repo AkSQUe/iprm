@@ -1,0 +1,8 @@
+{# Маленька rotation-помітка для hub-карти інтеграції. Показуємо лише
+   коли стан aging/stale -- "tightening" UI signals (адмін має зайняти
+   увагу). Очікує `rotation` у контексті. #}
+{% if rotation and rotation.status in ('aging', 'stale') %}
+  <span class="badge {{ rotation.badge_class }} badge--sm">
+    {% if rotation.status == 'aging' %}Розгляньте ротацію{% else %}Ротувати!{% endif %}
+  </span>
+{% endif %}

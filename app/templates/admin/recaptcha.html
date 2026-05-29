@@ -1,155 +1,125 @@
-{% extends "admin/base_admin.html" %}
+{% extends "admin/_integration_page.html" %}
 
 {% block title %}reCAPTCHA v3 | ІПРМ{% endblock %}
-{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block integration_title %}reCAPTCHA v3{% endblock %}
+{% block integration_subtitle_lead %}Захист публічних форм від ботів{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-liqpay.css') }}?v={{ assets_version }}">
+{% block integration_status_badges %}
+  {% if cfg.is_configured %}
+    <span class="badge badge--active">Активна</span>
+  {% elif cfg.is_active %}
+    <span class="badge badge--published">Site key встановлено</span>
+  {% else %}
+    <span class="badge badge--draft">Не налаштовано</span>
+  {% endif %}
 {% endblock %}
 
-{% block content %}
-<div class="admin-with-sidebar">
-  {% include 'admin/partials/_sidebar.html' %}
-  <div class="admin-layout">
-    <div class="admin-hero">
-      <div>
-        <div class="admin-breadcrumb">
-          <a href="{{ url_for('admin.integrations') }}" class="admin-breadcrumb__link">Інтеграції</a>
-          <span class="admin-breadcrumb__sep">/</span>
-          <span class="admin-breadcrumb__current">reCAPTCHA v3</span>
-        </div>
-        <h1 class="admin-hero__title">reCAPTCHA v3</h1>
-        <p class="admin-hero__subtitle">
-          Захист публічних форм від ботів
-          {% if cfg.is_configured %}
-            <span class="badge badge--active">Активна</span>
-          {% elif cfg.is_active %}
-            <span class="badge badge--published">Site key встановлено</span>
-          {% else %}
-            <span class="badge badge--draft">Не налаштовано</span>
-          {% endif %}
-        </p>
-      </div>
-      <div class="admin-hero__actions">
-        <a href="{{ url_for('admin.integrations') }}" class="btn-admin btn-admin--secondary">Назад до інтеграцій</a>
-      </div>
-    </div>
-
-    {% include 'partials/flash_messages.html' %}
-
-    <!-- Current config (read-only) -->
-    <div class="form-section admin-form__section">
-      <h3 class="admin-form__section-title">Поточна конфігурація</h3>
-      <div class="liqpay-config">
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Статус</span>
-          <span class="liqpay-config__value">
-            {% if cfg.enabled %}Увімкнено{% else %}Вимкнено{% endif %}
-          </span>
-        </div>
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Site Key</span>
-          <code class="liqpay-config__value">{{ cfg.site_key_masked or 'Не встановлено' }}</code>
-        </div>
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Secret Key</span>
-          <code class="liqpay-config__value">{{ cfg.secret_key_masked or 'Не встановлено' }}</code>
-        </div>
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Поріг score</span>
-          <span class="liqpay-config__value">{{ '%.2f'|format(cfg.score_threshold) }} (нижче -- бот)</span>
-        </div>
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Джерело</span>
-          <span class="liqpay-config__value">
-            {% if cfg.source_db_site or cfg.source_db_secret %}
-              База даних (SiteSettings)
-            {% else %}
-              Змінні оточення (.env)
-            {% endif %}
-          </span>
-        </div>
-      </div>
-
-      {% if cfg.secret_key_masked %}
-      <form method="POST" action="{{ url_for('admin.recaptcha_test') }}" class="liqpay-test-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn-admin btn-admin--secondary">Тестувати з'єднання</button>
-      </form>
-      {% endif %}
-    </div>
-
-    <!-- Update keys -->
-    <div class="form-section admin-form__section">
-      <h3 class="admin-form__section-title">Налаштування</h3>
-      <form method="POST" action="{{ url_for('admin.recaptcha_save_keys') }}" class="admin-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-        <div class="admin-form__grid">
-          <div class="form-group">
-            <label for="site_key">Site Key <span class="required">*</span></label>
-            <input type="text" name="site_key" id="site_key" class="form-input"
-                   value="{{ cfg.site_key }}"
-                   placeholder="6Lc..." autocomplete="off">
-            <p class="form-hint">Публічний ключ. Вшивається у HTML сторінок.</p>
-          </div>
-          <div class="form-group">
-            <label for="secret_key">Secret Key <span class="required">*</span></label>
-            <input type="password" name="secret_key" id="secret_key" class="form-input"
-                   placeholder="{% if cfg.secret_key_masked %}залиште пустим, щоб не змінювати{% else %}6Lc...{% endif %}"
-                   autocomplete="off">
-            <p class="form-hint">Серверний ключ. Зберігається зашифрованим у БД (Fernet/SECRET_KEY).</p>
-          </div>
-        </div>
-
-        <div class="admin-form__grid">
-          <div class="form-group">
-            <label for="score_threshold">Поріг score (0.0 -- 1.0)</label>
-            <input type="number" name="score_threshold" id="score_threshold" class="form-input"
-                   min="0" max="1" step="0.05"
-                   value="{{ '%.2f'|format(cfg.score_threshold) }}">
-            <p class="form-hint">Стандарт Google -- 0.5. Нижче = бот. Вище = жорсткіше, ризик false-positives.</p>
-          </div>
-          <div class="form-group">
-            <div class="form-checkbox form-checkbox--row-align">
-              <input type="checkbox" name="enabled" id="enabled" {% if cfg.enabled %}checked{% endif %}>
-              <label for="enabled">Увімкнути reCAPTCHA</label>
-            </div>
-            <p class="form-hint">Без цього скрипт grecaptcha не вшивається у HTML і forms не перевіряються.</p>
-          </div>
-        </div>
-
-        <div class="admin-form__actions">
-          <button type="submit" class="btn-admin btn-admin--primary"
-                  data-confirm="Зберегти налаштування reCAPTCHA?">Зберегти налаштування</button>
-        </div>
-
-        <p class="form-hint form-hint--spaced">
-          Отримати ключі: <a href="https://www.google.com/recaptcha/admin/create" target="_blank" rel="noopener">google.com/recaptcha/admin/create</a>
-          -- оберіть тип <strong>reCAPTCHA v3</strong>, додайте домени (включно з локальним <code>127.0.0.1</code> для розробки).
-        </p>
-      </form>
-    </div>
-
-    <!-- Захищені форми -->
-    <div class="form-section admin-form__section">
-      <h3 class="admin-form__section-title">Захищені форми</h3>
-      <p>Перевірка автоматично застосовується до наступних форм:</p>
-      <ul>
-        <li><code>login</code> -- /login (вхід)</li>
-        <li><code>register</code> -- /register (створення акаунта)</li>
-        <li><code>contact</code> -- /contact (контактна форма)</li>
-        <li><code>course_request</code> -- /courses/&lt;slug&gt;/request (запит на проведення)</li>
-        <li><code>event_register</code> -- /register-instance (реєстрація на захід)</li>
-      </ul>
-      <p class="form-hint">
-        При <em>fail-open</em>: якщо Google API недоступний -- сабміт пропускається (щоб не блокувати реальних користувачів).
-        Усі рішення логуються в audit-логи.
-      </p>
-    </div>
-
+{% block integration_readonly_rows %}
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Статус</span>
+    <span class="admin-readonly-config__value">
+      {% if cfg.enabled %}Увімкнено{% else %}Вимкнено{% endif %}
+    </span>
   </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Site Key</span>
+    <code class="admin-readonly-config__value">{{ cfg.site_key_masked or 'Не встановлено' }}</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Secret Key</span>
+    <code class="admin-readonly-config__value">{{ cfg.secret_key_masked or 'Не встановлено' }}</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Поріг score</span>
+    <span class="admin-readonly-config__value">{{ '%.2f'|format(cfg.score_threshold) }} (нижче -- бот)</span>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Джерело</span>
+    <span class="admin-readonly-config__value">
+      {% if cfg.source_db_site or cfg.source_db_secret %}
+        База даних (SiteSettings)
+      {% else %}
+        Змінні оточення (.env)
+      {% endif %}
+    </span>
+  </div>
+  {% with rotation=cfg.rotation %}{% include 'admin/_rotation_row.html' %}{% endwith %}
+{% endblock %}
+
+{% block integration_readonly_hint %}
+{% if cfg.secret_key_masked %}
+<form method="POST" action="{{ url_for('admin.recaptcha_test') }}" class="liqpay-test-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button type="submit" class="btn-admin btn-admin--secondary">Тестувати з'єднання</button>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block integration_edit_title %}Налаштування{% endblock %}
+{% block integration_edit_form %}
+<form method="POST" action="{{ url_for('admin.recaptcha_save_keys') }}" class="admin-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="admin-form__grid">
+    <div class="form-group">
+      <label for="site_key">Site Key <span class="required">*</span></label>
+      <input type="text" name="site_key" id="site_key" class="form-input"
+             value="{{ cfg.site_key }}"
+             placeholder="6Lc..." autocomplete="off">
+      <p class="form-hint">Публічний ключ. Вшивається у HTML сторінок.</p>
+    </div>
+    <div class="form-group">
+      <label for="secret_key">Secret Key <span class="required">*</span></label>
+      <input type="password" name="secret_key" id="secret_key" class="form-input"
+             placeholder="{% if cfg.secret_key_masked %}залиште пустим, щоб не змінювати{% else %}6Lc...{% endif %}"
+             autocomplete="off">
+      <p class="form-hint">Серверний ключ. Зберігається зашифрованим у БД (Fernet/SECRET_KEY).</p>
+    </div>
+  </div>
+
+  <div class="admin-form__grid">
+    <div class="form-group">
+      <label for="score_threshold">Поріг score (0.0 -- 1.0)</label>
+      <input type="number" name="score_threshold" id="score_threshold" class="form-input"
+             min="0" max="1" step="0.05"
+             value="{{ '%.2f'|format(cfg.score_threshold) }}">
+      <p class="form-hint">Стандарт Google -- 0.5. Нижче = бот. Вище = жорсткіше, ризик false-positives.</p>
+    </div>
+    <div class="form-group">
+      <div class="form-checkbox form-checkbox--row-align">
+        <input type="checkbox" name="enabled" id="enabled" {% if cfg.enabled %}checked{% endif %}>
+        <label for="enabled">Увімкнути reCAPTCHA</label>
+      </div>
+      <p class="form-hint">Без цього скрипт grecaptcha не вшивається у HTML і forms не перевіряються.</p>
+    </div>
+  </div>
+
+  <div class="admin-form__actions">
+    <button type="submit" class="btn-admin btn-admin--primary"
+            data-confirm="Зберегти налаштування reCAPTCHA?">Зберегти налаштування</button>
+  </div>
+
+  <p class="form-hint form-hint--spaced">
+    Отримати ключі: <a href="https://www.google.com/recaptcha/admin/create" target="_blank" rel="noopener">google.com/recaptcha/admin/create</a>
+    -- оберіть тип <strong>reCAPTCHA v3</strong>, додайте домени (включно з локальним <code>127.0.0.1</code> для розробки).
+  </p>
+</form>
+{% endblock %}
+
+{% block integration_extra %}
+<div class="form-section admin-form__section">
+  <h3 class="admin-form__section-title">Захищені форми</h3>
+  <p>Перевірка автоматично застосовується до наступних форм:</p>
+  <ul>
+    <li><code>login</code> -- /login (вхід)</li>
+    <li><code>register</code> -- /register (створення акаунта)</li>
+    <li><code>contact</code> -- /contact (контактна форма)</li>
+    <li><code>course_request</code> -- /courses/&lt;slug&gt;/request (запит на проведення)</li>
+    <li><code>event_register</code> -- /register-instance (реєстрація на захід)</li>
+  </ul>
+  <p class="form-hint">
+    При <em>fail-open</em>: якщо Google API недоступний -- сабміт пропускається (щоб не блокувати реальних користувачів).
+    Усі рішення логуються в audit-логи.
+  </p>
 </div>
 {% endblock %}

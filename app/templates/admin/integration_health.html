@@ -1,0 +1,89 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Health-check інтеграцій | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-integration.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.integrations') }}" class="admin-breadcrumb__link">Інтеграції</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Health-check</span>
+        </div>
+        <h1 class="admin-hero__title">Health-check інтеграцій</h1>
+        <p class="admin-hero__subtitle">
+          Живі перевірки зовнішніх API. Кеш 60 секунд.
+          {% if refreshed %}
+            <span class="badge badge--active">Свіже сканування</span>
+          {% else %}
+            <span class="badge badge--pending">Можливо з кешу</span>
+          {% endif %}
+        </p>
+      </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.integrations_health', refresh=1) }}"
+           class="btn-admin btn-admin--primary">Перевірити заново</a>
+        <a href="{{ url_for('admin.integrations') }}"
+           class="btn-admin btn-admin--secondary">Назад до інтеграцій</a>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <div class="health-grid">
+      {% for key, result in results.items() %}
+        <div class="health-card health-card--{{ result.status }}">
+          <div class="health-card__header">
+            <span class="health-card__dot health-card__dot--{{ result.status }}" aria-hidden="true"></span>
+            <h3 class="health-card__title">{{ result.label }}</h3>
+            <span class="health-card__status-badge">
+              {% if result.status == 'ok' %}OK
+              {% elif result.status == 'degraded' %}Degraded
+              {% elif result.status == 'down' %}Down
+              {% else %}Не налаштовано
+              {% endif %}
+            </span>
+          </div>
+
+          {% if result.detail %}
+            <p class="health-card__detail">{{ result.detail }}</p>
+          {% endif %}
+          {% if result.error %}
+            <p class="health-card__error"><strong>Помилка:</strong> {{ result.error }}</p>
+          {% endif %}
+
+          <p class="health-card__meta">
+            Перевірено: {{ result.checked_at.strftime('%H:%M:%S %d.%m.%Y') }} UTC
+          </p>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Як інтерпретувати</h3>
+      <ul>
+        <li><strong>OK</strong> -- API доступне, наші ключі приймаються.</li>
+        <li><strong>Degraded</strong> -- зв'язок з API є, але отримана відповідь несподівана (можливі змінені формати, частковий збій).</li>
+        <li><strong>Down</strong> -- API недоступне або наші ключі/конфіг невалідні. Дивись поле "Помилка" для деталей.</li>
+        <li><strong>Не налаштовано</strong> -- інтеграція ще не активована; перейдіть у відповідну admin-сторінку для конфігурації.</li>
+      </ul>
+      <p class="form-hint">
+        Health-check робить мінімально-інвазивні запити (discovery / siteverify з відомо невалідним токеном /
+        check_status неіснуючого платежу). Жодних реальних транзакцій або відомостей про користувачів не зачіпає.
+      </p>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

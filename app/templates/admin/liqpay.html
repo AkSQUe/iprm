@@ -1,186 +1,163 @@
-{% extends "admin/base_admin.html" %}
+{% extends "admin/_integration_page.html" %}
 
 {% block title %}LiqPay | ІПРМ{% endblock %}
-{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block integration_title %}LiqPay{% endblock %}
+{% block integration_subtitle_lead %}Платіжна інтеграція{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-liqpay.css') }}?v={{ assets_version }}">
+{% block integration_status_badges %}
+  {% if cfg.is_configured %}
+    <span class="badge badge--active">Налаштовано</span>
+  {% else %}
+    <span class="badge badge--draft">Не налаштовано</span>
+  {% endif %}
+  {% if cfg.sandbox %}
+    <span class="badge badge--published">Sandbox</span>
+  {% else %}
+    <span class="badge badge--active">Production</span>
+  {% endif %}
 {% endblock %}
 
-{% block content %}
-<div class="admin-with-sidebar">
-  {% include 'admin/partials/_sidebar.html' %}
-  <div class="admin-layout">
-    <div class="admin-hero">
-      <div>
-        <div class="admin-breadcrumb">
-          <a href="{{ url_for('admin.integrations') }}" class="admin-breadcrumb__link">Інтеграції</a>
-          <span class="admin-breadcrumb__sep">/</span>
-          <span class="admin-breadcrumb__current">LiqPay</span>
-        </div>
-        <h1 class="admin-hero__title">LiqPay</h1>
-        <p class="admin-hero__subtitle">
-          Платіжна інтеграція
-          {% if cfg.is_configured %}
-            <span class="badge badge--active">Налаштовано</span>
-          {% else %}
-            <span class="badge badge--draft">Не налаштовано</span>
-          {% endif %}
-          {% if cfg.sandbox %}
-            <span class="badge badge--published">Sandbox</span>
-          {% else %}
-            <span class="badge badge--active">Production</span>
-          {% endif %}
-        </p>
-      </div>
-      <div class="admin-hero__actions">
-        <a href="{{ url_for('admin.integrations') }}" class="btn-admin btn-admin--secondary">Назад до інтеграцій</a>
-      </div>
-    </div>
-
-    {% include 'partials/flash_messages.html' %}
-
-    <!-- Statistics -->
-    <div class="admin-stat-cards">
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ stats.total }}</span>
-        <span class="admin-stat-card__label">Всього</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--success">
-        <span class="admin-stat-card__value">{{ stats.paid }}</span>
-        <span class="admin-stat-card__label">Оплачено</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--warning">
-        <span class="admin-stat-card__value">{{ stats.pending }}</span>
-        <span class="admin-stat-card__label">Очікує</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--danger">
-        <span class="admin-stat-card__value">{{ stats.refunded }}</span>
-        <span class="admin-stat-card__label">Повернено</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--accent">
-        <span class="admin-stat-card__value">{{ stats.total_amount | int }} &#8372;</span>
-        <span class="admin-stat-card__label">Загальна сума</span>
-      </div>
-    </div>
-
-    <!-- Current config (read-only) -->
-    <div class="form-section admin-form__section">
-      <h3 class="admin-form__section-title">Поточна конфігурація</h3>
-      <div class="liqpay-config">
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Public Key</span>
-          <code class="liqpay-config__value">{{ cfg.public_key or 'Не встановлено' }}</code>
-        </div>
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Private Key</span>
-          <code class="liqpay-config__value">{{ cfg.private_key or 'Не встановлено' }}</code>
-        </div>
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Режим</span>
-          <span class="liqpay-config__value">{{ 'Sandbox (тестовий)' if cfg.sandbox else 'Production' }}</span>
-        </div>
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Webhook URL</span>
-          <code class="liqpay-config__value liqpay-config__value--mono">{{ cfg.webhook_url }}</code>
-        </div>
-      </div>
-
-      {% if cfg.is_configured %}
-      <form method="POST" action="{{ url_for('admin.liqpay_test') }}" class="liqpay-test-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn-admin btn-admin--secondary">Тестувати з'єднання</button>
-      </form>
-      {% endif %}
-    </div>
-
-    <!-- Update keys -->
-    <div class="form-section admin-form__section">
-      <h3 class="admin-form__section-title">Встановити ключі</h3>
-      <form method="POST" action="{{ url_for('admin.liqpay_save_keys') }}" class="admin-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="admin-form__grid">
-          <div class="form-group">
-            <label for="public_key">Public Key <span class="required">*</span></label>
-            <input type="text" name="public_key" id="public_key" class="form-input"
-                   placeholder="sandbox_i00000000000" autocomplete="off">
-          </div>
-          <div class="form-group">
-            <label for="private_key">Private Key <span class="required">*</span></label>
-            <input type="password" name="private_key" id="private_key" class="form-input"
-                   placeholder="sandbox_000000000000000000000000" autocomplete="off">
-          </div>
-        </div>
-        <div class="form-group admin-form__full">
-          <div class="form-checkbox">
-            <input type="checkbox" name="sandbox" id="sandbox" checked>
-            <label for="sandbox">Sandbox (тестовий режим)</label>
-          </div>
-          <p class="form-hint">Вимкніть для прийому реальних платежів. Ключі зберігаються у базі даних (SiteSettings).</p>
-        </div>
-        <div class="admin-form__actions">
-          <button type="submit" class="btn-admin btn-admin--primary" data-confirm="Зберегти нові ключі LiqPay?">Зберегти ключі</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Recent payments -->
-    <div class="form-section admin-form__section">
-      <h3 class="admin-form__section-title">Останні платежі</h3>
-
-      {% if recent %}
-      <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Захід</th>
-            <th>Учасник</th>
-            <th>Сума</th>
-            <th>Статус</th>
-            <th>Дата</th>
-            <th>Дії</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for reg in recent %}
-          <tr>
-            <td>REG-{{ reg.id }}</td>
-            <td>{{ reg.target_title or '---' }}</td>
-            <td>{{ reg.user.first_name }} {{ reg.user.last_name }}</td>
-            <td>{{ reg.payment_amount | int }} &#8372;</td>
-            <td>
-              <span class="badge badge--{{ 'active' if reg.payment_status == 'paid' else ('published' if reg.payment_status == 'pending' else ('cancelled' if reg.payment_status == 'refunded' else 'draft')) }}">
-                {{ reg.payment_status_label }}
-              </span>
-            </td>
-            <td>{{ reg.paid_at.strftime('%d.%m.%Y %H:%M') if reg.paid_at else reg.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
-            <td>
-              {% if reg.payment_status == 'paid' %}
-              <form method="POST" action="{{ url_for('admin.liqpay_refund', reg_id=reg.id) }}" data-confirm="Повернути {{ reg.payment_amount | int }} грн?">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Повернення</button>
-              </form>
-              {% elif reg.payment_status == 'refunded' %}
-              <span class="admin-text-muted">Повернено</span>
-              {% else %}
-              <span class="admin-text-muted">--</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      </div>
-      {% else %}
-      <div class="admin-empty">
-        <p>Платежів ще немає</p>
-      </div>
-      {% endif %}
-    </div>
-
+{# Кастомний body: статистика + readonly + edit + recent payments. #}
+{% block integration_body %}
+<div class="admin-stat-cards">
+  <div class="admin-stat-card">
+    <span class="admin-stat-card__value">{{ stats.total }}</span>
+    <span class="admin-stat-card__label">Всього</span>
   </div>
+  <div class="admin-stat-card admin-stat-card--success">
+    <span class="admin-stat-card__value">{{ stats.paid }}</span>
+    <span class="admin-stat-card__label">Оплачено</span>
+  </div>
+  <div class="admin-stat-card admin-stat-card--warning">
+    <span class="admin-stat-card__value">{{ stats.pending }}</span>
+    <span class="admin-stat-card__label">Очікує</span>
+  </div>
+  <div class="admin-stat-card admin-stat-card--danger">
+    <span class="admin-stat-card__value">{{ stats.refunded }}</span>
+    <span class="admin-stat-card__label">Повернено</span>
+  </div>
+  <div class="admin-stat-card admin-stat-card--accent">
+    <span class="admin-stat-card__value">{{ stats.total_amount | int }} &#8372;</span>
+    <span class="admin-stat-card__label">Загальна сума</span>
+  </div>
+</div>
+
+<!-- Current config (read-only) -->
+<div class="form-section admin-form__section">
+  <h3 class="admin-form__section-title">Поточна конфігурація</h3>
+  <div class="admin-readonly-config">
+    <div class="admin-readonly-config__row">
+      <span class="admin-readonly-config__label">Public Key</span>
+      <code class="admin-readonly-config__value">{{ cfg.public_key or 'Не встановлено' }}</code>
+    </div>
+    <div class="admin-readonly-config__row">
+      <span class="admin-readonly-config__label">Private Key</span>
+      <code class="admin-readonly-config__value">{{ cfg.private_key or 'Не встановлено' }}</code>
+    </div>
+    <div class="admin-readonly-config__row">
+      <span class="admin-readonly-config__label">Режим</span>
+      <span class="admin-readonly-config__value">{{ 'Sandbox (тестовий)' if cfg.sandbox else 'Production' }}</span>
+    </div>
+    <div class="admin-readonly-config__row">
+      <span class="admin-readonly-config__label">Webhook URL</span>
+      <code class="admin-readonly-config__value admin-readonly-config__value--mono">{{ cfg.webhook_url }}</code>
+    </div>
+    {% with rotation=cfg.rotation %}{% include 'admin/_rotation_row.html' %}{% endwith %}
+  </div>
+
+  {% if cfg.is_configured %}
+  <form method="POST" action="{{ url_for('admin.liqpay_test') }}" class="liqpay-test-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn-admin btn-admin--secondary">Тестувати з'єднання</button>
+  </form>
+  {% endif %}
+</div>
+
+<!-- Update keys -->
+<div class="form-section admin-form__section">
+  <h3 class="admin-form__section-title">Встановити ключі</h3>
+  <form method="POST" action="{{ url_for('admin.liqpay_save_keys') }}" class="admin-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="admin-form__grid">
+      <div class="form-group">
+        <label for="public_key">Public Key <span class="required">*</span></label>
+        <input type="text" name="public_key" id="public_key" class="form-input"
+               placeholder="{% if cfg.public_key %}залиште порожнім, щоб не змінювати{% else %}sandbox_i00000000000{% endif %}"
+               autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="private_key">Private Key <span class="required">*</span></label>
+        <input type="password" name="private_key" id="private_key" class="form-input"
+               placeholder="{% if cfg.private_key %}залиште порожнім, щоб не змінювати{% else %}sandbox_000000000000000000000000{% endif %}"
+               autocomplete="off">
+        <p class="form-hint">Шифрується Fernet, у БД зберігається у вигляді шифротексту.</p>
+      </div>
+    </div>
+    <div class="form-group admin-form__full">
+      <div class="form-checkbox">
+        <input type="checkbox" name="sandbox" id="sandbox" {% if cfg.sandbox %}checked{% endif %}>
+        <label for="sandbox">Sandbox (тестовий режим)</label>
+      </div>
+      <p class="form-hint">Вимкніть для прийому реальних платежів.</p>
+    </div>
+    <div class="admin-form__actions">
+      <button type="submit" class="btn-admin btn-admin--primary" data-confirm="Зберегти нові ключі LiqPay?">Зберегти ключі</button>
+    </div>
+  </form>
+</div>
+
+<!-- Recent payments -->
+<div class="form-section admin-form__section">
+  <h3 class="admin-form__section-title">Останні платежі</h3>
+
+  {% if recent %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Захід</th>
+        <th>Учасник</th>
+        <th>Сума</th>
+        <th>Статус</th>
+        <th>Дата</th>
+        <th>Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for reg in recent %}
+      <tr>
+        <td>REG-{{ reg.id }}</td>
+        <td>{{ reg.target_title or '---' }}</td>
+        <td>{{ reg.user.first_name }} {{ reg.user.last_name }}</td>
+        <td>{{ reg.payment_amount | int }} &#8372;</td>
+        <td>
+          <span class="badge badge--{{ 'active' if reg.payment_status == 'paid' else ('published' if reg.payment_status == 'pending' else ('cancelled' if reg.payment_status == 'refunded' else 'draft')) }}">
+            {{ reg.payment_status_label }}
+          </span>
+        </td>
+        <td>{{ reg.paid_at.strftime('%d.%m.%Y %H:%M') if reg.paid_at else reg.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+        <td>
+          {% if reg.payment_status == 'paid' %}
+          <form method="POST" action="{{ url_for('admin.liqpay_refund', reg_id=reg.id) }}" data-confirm="Повернути {{ reg.payment_amount | int }} грн?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Повернення</button>
+          </form>
+          {% elif reg.payment_status == 'refunded' %}
+          <span class="admin-text-muted">Повернено</span>
+          {% else %}
+          <span class="admin-text-muted">--</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="admin-empty">
+    <p>Платежів ще немає</p>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

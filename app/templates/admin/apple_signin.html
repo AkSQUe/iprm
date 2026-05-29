@@ -1,128 +1,101 @@
-{% extends "admin/base_admin.html" %}
+{% extends "admin/_integration_page.html" %}
 
 {% block title %}Apple Sign In | ІПРМ{% endblock %}
-{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block integration_title %}Apple Sign In{% endblock %}
+{% block integration_subtitle_lead %}Вхід через Apple ID{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% block integration_status_badges %}
+  {% if cfg.is_configured %}
+    <span class="badge badge--active">Активно</span>
+  {% elif cfg.enabled %}
+    <span class="badge badge--published">Увімкнено, потребує ключів</span>
+  {% else %}
+    <span class="badge badge--draft">Не налаштовано</span>
+  {% endif %}
 {% endblock %}
 
-{% block content %}
-<div class="admin-with-sidebar">
-  {% include 'admin/partials/_sidebar.html' %}
-  <div class="admin-layout">
-    <div class="admin-hero">
-      <div>
-        <div class="admin-breadcrumb">
-          <a href="{{ url_for('admin.integrations') }}" class="admin-breadcrumb__link">Інтеграції</a>
-          <span class="admin-breadcrumb__sep">/</span>
-          <span class="admin-breadcrumb__current">Apple Sign In</span>
-        </div>
-        <h1 class="admin-hero__title">Apple Sign In</h1>
-        <p class="admin-hero__subtitle">
-          Вхід через Apple ID
-          {% if cfg.is_configured %}
-            <span class="badge badge--active">Активно</span>
-          {% elif cfg.enabled %}
-            <span class="badge badge--published">Увімкнено, потребує ключів</span>
-          {% else %}
-            <span class="badge badge--draft">Не налаштовано</span>
-          {% endif %}
-        </p>
-      </div>
-      <div class="admin-hero__actions">
-        <a href="{{ url_for('admin.integrations') }}" class="btn-admin btn-admin--secondary">Назад до інтеграцій</a>
-      </div>
-    </div>
-
-    {% include 'partials/flash_messages.html' %}
-
-    <div class="form-section admin-form__section">
-      <h3 class="admin-form__section-title">Поточна конфігурація</h3>
-      <div class="liqpay-config">
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Team ID</span>
-          <code class="liqpay-config__value">{{ cfg.team_id or 'Не встановлено' }}</code>
-        </div>
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Services ID</span>
-          <code class="liqpay-config__value">{{ cfg.services_id or 'Не встановлено' }}</code>
-        </div>
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Key ID</span>
-          <code class="liqpay-config__value">{{ cfg.key_id or 'Не встановлено' }}</code>
-        </div>
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Private key (.p8)</span>
-          <code class="liqpay-config__value">{{ cfg.private_key_mask or 'Не встановлено' }}</code>
-        </div>
-        <div class="liqpay-config__row">
-          <span class="liqpay-config__label">Return URL</span>
-          <code class="liqpay-config__value liqpay-config__value--mono">{{ cfg.redirect_uri }}</code>
-        </div>
-      </div>
-      <p class="form-hint">
-        Налаштування у
-        <a href="https://developer.apple.com/account/resources/identifiers/list/serviceId" target="_blank" rel="noopener">Apple Developer Console</a>:
-      </p>
-      <ol class="form-hint">
-        <li>Створіть <strong>Services ID</strong> (Identifiers → +) -- це і буде поле "Services ID".</li>
-        <li>У властивостях Services ID увімкніть <em>Sign In with Apple</em> і у Configure додайте Return URL: <strong>{{ cfg.redirect_uri }}</strong>.</li>
-        <li>Створіть <strong>Key</strong> (Keys → +) з увімкненим <em>Sign In with Apple</em>. Завантажте .p8-файл -- його вміст вставте у поле "Private key" нижче. <strong>Файл завантажується ОДИН раз -- зберігайте копію локально.</strong></li>
-        <li>Team ID знаходиться у верхньому правому куті Developer Console.</li>
-      </ol>
-    </div>
-
-    <div class="form-section admin-form__section">
-      <h3 class="admin-form__section-title">Оновити параметри</h3>
-      <form method="POST" action="{{ url_for('admin.apple_signin_save') }}" class="admin-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="admin-form__grid">
-          <div class="form-group">
-            <label for="team_id">Team ID</label>
-            <input type="text" name="team_id" id="team_id" class="form-input"
-                   value="{{ cfg.team_id }}" placeholder="ABCDE12345"
-                   pattern="^[A-Z0-9]{10}$" autocomplete="off">
-            <p class="form-hint">10-символьний ID розробника.</p>
-          </div>
-          <div class="form-group">
-            <label for="services_id">Services ID</label>
-            <input type="text" name="services_id" id="services_id" class="form-input"
-                   value="{{ cfg.services_id }}"
-                   placeholder="com.example.web" autocomplete="off">
-            <p class="form-hint">Bundle ID для web (не iOS-bundle).</p>
-          </div>
-          <div class="form-group">
-            <label for="key_id">Key ID</label>
-            <input type="text" name="key_id" id="key_id" class="form-input"
-                   value="{{ cfg.key_id }}" placeholder="ABCDE12345"
-                   pattern="^[A-Z0-9]{10}$" autocomplete="off">
-            <p class="form-hint">ID приватного ключа з Keys-таблиці.</p>
-          </div>
-        </div>
-        <div class="form-group admin-form__full">
-          <label for="private_key">Private Key (.p8)</label>
-          <textarea name="private_key" id="private_key" class="form-input" rows="8"
-                    placeholder="{% if cfg.private_key_mask %}залиште порожнім, щоб не змінювати{% else %}-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----{% endif %}"
-                    autocomplete="off"></textarea>
-          <p class="form-hint">PEM-блок з .p8 файлу. Шифрується Fernet перед збереженням у БД.</p>
-        </div>
-        <div class="form-group admin-form__full">
-          <div class="form-checkbox">
-            <input type="checkbox" name="enabled" id="enabled" {% if cfg.enabled %}checked{% endif %}>
-            <label for="enabled">Увімкнено (показувати кнопку "Continue with Apple")</label>
-          </div>
-        </div>
-        <div class="admin-form__actions">
-          <button type="submit" class="btn-admin btn-admin--primary"
-                  data-confirm="Зберегти Apple Sign In конфігурацію?">
-            Зберегти
-          </button>
-        </div>
-      </form>
-    </div>
-
+{% block integration_readonly_rows %}
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Team ID</span>
+    <code class="admin-readonly-config__value">{{ cfg.team_id or 'Не встановлено' }}</code>
   </div>
-</div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Services ID</span>
+    <code class="admin-readonly-config__value">{{ cfg.services_id or 'Не встановлено' }}</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Key ID</span>
+    <code class="admin-readonly-config__value">{{ cfg.key_id or 'Не встановлено' }}</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Private key (.p8)</span>
+    <code class="admin-readonly-config__value">{{ cfg.private_key_mask or 'Не встановлено' }}</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Return URL</span>
+    <code class="admin-readonly-config__value admin-readonly-config__value--mono">{{ cfg.redirect_uri }}</code>
+  </div>
+  {% with rotation=cfg.rotation %}{% include 'admin/_rotation_row.html' %}{% endwith %}
+{% endblock %}
+
+{% block integration_readonly_hint %}
+<p class="form-hint">
+  Налаштування у
+  <a href="https://developer.apple.com/account/resources/identifiers/list/serviceId" target="_blank" rel="noopener">Apple Developer Console</a>:
+</p>
+<ol class="form-hint">
+  <li>Створіть <strong>Services ID</strong> (Identifiers → +) -- це і буде поле "Services ID".</li>
+  <li>У властивостях Services ID увімкніть <em>Sign In with Apple</em> і у Configure додайте Return URL: <strong>{{ cfg.redirect_uri }}</strong>.</li>
+  <li>Створіть <strong>Key</strong> (Keys → +) з увімкненим <em>Sign In with Apple</em>. Завантажте .p8-файл -- його вміст вставте у поле "Private key" нижче. <strong>Файл завантажується ОДИН раз -- зберігайте копію локально.</strong></li>
+  <li>Team ID знаходиться у верхньому правому куті Developer Console.</li>
+</ol>
+{% endblock %}
+
+{% block integration_edit_title %}Оновити параметри{% endblock %}
+{% block integration_edit_form %}
+<form method="POST" action="{{ url_for('admin.apple_signin_save') }}" class="admin-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="admin-form__grid">
+    <div class="form-group">
+      <label for="team_id">Team ID</label>
+      <input type="text" name="team_id" id="team_id" class="form-input"
+             value="{{ cfg.team_id }}" placeholder="ABCDE12345"
+             pattern="^[A-Z0-9]{10}$" autocomplete="off">
+      <p class="form-hint">10-символьний ID розробника.</p>
+    </div>
+    <div class="form-group">
+      <label for="services_id">Services ID</label>
+      <input type="text" name="services_id" id="services_id" class="form-input"
+             value="{{ cfg.services_id }}"
+             placeholder="com.example.web" autocomplete="off">
+      <p class="form-hint">Bundle ID для web (не iOS-bundle).</p>
+    </div>
+    <div class="form-group">
+      <label for="key_id">Key ID</label>
+      <input type="text" name="key_id" id="key_id" class="form-input"
+             value="{{ cfg.key_id }}" placeholder="ABCDE12345"
+             pattern="^[A-Z0-9]{10}$" autocomplete="off">
+      <p class="form-hint">ID приватного ключа з Keys-таблиці.</p>
+    </div>
+  </div>
+  <div class="form-group admin-form__full">
+    <label for="private_key">Private Key (.p8)</label>
+    <textarea name="private_key" id="private_key" class="form-input" rows="8"
+              placeholder="{% if cfg.private_key_mask %}залиште порожнім, щоб не змінювати{% else %}-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----{% endif %}"
+              autocomplete="off"></textarea>
+    <p class="form-hint">PEM-блок з .p8 файлу. Шифрується Fernet перед збереженням у БД.</p>
+  </div>
+  <div class="form-group admin-form__full">
+    <div class="form-checkbox">
+      <input type="checkbox" name="enabled" id="enabled" {% if cfg.enabled %}checked{% endif %}>
+      <label for="enabled">Увімкнено (показувати кнопку "Continue with Apple")</label>
+    </div>
+  </div>
+  <div class="admin-form__actions">
+    <button type="submit" class="btn-admin btn-admin--primary"
+            data-confirm="Зберегти Apple Sign In конфігурацію?">
+      Зберегти
+    </button>
+  </div>
+</form>
 {% endblock %}

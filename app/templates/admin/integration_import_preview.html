@@ -1,0 +1,116 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Import preview | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-integration.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.integrations') }}" class="admin-breadcrumb__link">Інтеграції</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <a href="{{ url_for('admin.integrations_io') }}" class="admin-breadcrumb__link">Export/Import</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Preview</span>
+        </div>
+        <h1 class="admin-hero__title">Diff перед import</h1>
+        <p class="admin-hero__subtitle">
+          {% if changes_count > 0 %}
+            <span class="badge badge--published">{{ changes_count }} зміни</span>
+          {% else %}
+            <span class="badge badge--draft">Без змін</span>
+          {% endif %}
+        </p>
+      </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.integrations_io') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Що зміниться</h3>
+      {% if diff %}
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Ключ</th>
+              <th>Зараз</th>
+              <th>Стане</th>
+              <th>Зміна</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in diff %}
+            <tr class="{% if row.changed %}diff-row--changed{% endif %}">
+              <td><code>{{ row.key }}</code>{% if row.is_secret %} <span class="badge badge--draft badge--sm">секрет</span>{% endif %}</td>
+              <td>
+                <code class="diff-value">
+                  {% if row.is_secret and row.before %}
+                    **** ({{ row.before|string|length }} chars)
+                  {% else %}
+                    {{ row.before|default('(порожньо)', true) }}
+                  {% endif %}
+                </code>
+              </td>
+              <td>
+                <code class="diff-value">
+                  {% if row.is_secret and row.after %}
+                    **** ({{ row.after|string|length }} chars)
+                  {% else %}
+                    {{ row.after|default('(порожньо)', true) }}
+                  {% endif %}
+                </code>
+              </td>
+              <td>
+                {% if row.changed %}
+                  <span class="badge badge--published">Так</span>
+                {% else %}
+                  <span class="admin-text-muted">--</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="admin-empty">
+        <p>Розпізнаних ключів немає у paste'нутому тексті.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if changes_count > 0 %}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Підтвердити імпорт</h3>
+      <form method="POST" action="{{ url_for('admin.integrations_import_apply') }}" class="admin-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="env_text" value="{{ env_text }}">
+        <p>Зберегти всі {{ changes_count }} зміни у БД (нинішні значення буде перезаписано).</p>
+        <div class="admin-form__actions">
+          <a href="{{ url_for('admin.integrations_io') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+          <button type="submit" class="btn-admin btn-admin--primary"
+                  data-confirm="Записати {{ changes_count }} змін у БД?">
+            Підтвердити та імпортувати
+          </button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

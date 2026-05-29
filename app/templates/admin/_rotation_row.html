@@ -1,0 +1,23 @@
+{# Rotation-status рядок для admin/integrations readonly-config block.
+   Використання: {% include 'admin/_rotation_row.html' with context %}
+   Очікує у контексті rotation -- dict з результату _helpers.rotation_status. #}
+<div class="admin-readonly-config__row">
+  <span class="admin-readonly-config__label">Ротація</span>
+  <span class="admin-readonly-config__value">
+    {% if rotation.status == 'fresh' %}
+      <span class="badge {{ rotation.badge_class }}">Свіжо</span>
+    {% elif rotation.status == 'aging' %}
+      <span class="badge {{ rotation.badge_class }}">Розгляньте ротацію</span>
+    {% elif rotation.status == 'stale' %}
+      <span class="badge {{ rotation.badge_class }}">Рекомендуємо ротувати</span>
+    {% elif rotation.status == 'unknown' %}
+      <span class="badge {{ rotation.badge_class }}">Дата невідома</span>
+    {% else %}
+      <span class="badge {{ rotation.badge_class }}">Секрет не встановлено</span>
+    {% endif %}
+    <span class="admin-text-muted">&nbsp;{{ rotation.label }}</span>
+    {% if rotation.next_rotation_days is not none and rotation.next_rotation_days > 0 and rotation.status != 'stale' %}
+      <span class="admin-text-muted">(через {{ rotation.next_rotation_days }} дн.)</span>
+    {% endif %}
+  </span>
+</div>

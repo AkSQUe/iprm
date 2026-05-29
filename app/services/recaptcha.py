@@ -35,6 +35,33 @@ class RecaptchaService:
         """Public-side: чи треба вшивати JS у HTML (site_key є)."""
         return self.enabled and bool(self.site_key)
 
+    def _build_request_body(self, token, remote_ip=None):
+        """Url-encoded body для siteverify. Виносимо у helper, щоб admin
+        test-endpoint міг обходити is_configured-гейт verify()."""
+        return urlencode({
+            'secret': self.secret_key,
+            'response': token,
+            'remoteip': remote_ip or '',
+        }).encode('utf-8')
+
+    def _call_siteverify(self, body, timeout=5):
+        """Низькорівневий виклик API. Повертає info-dict (success, score,
+        action, error_codes) або {'error': 'network'} при failure."""
+        try:
+            req = Request(VERIFY_URL, data=body, method='POST')
+            req.add_header('Content-Type', 'application/x-www-form-urlencoded')
+            with urlopen(req, timeout=timeout) as resp:
+                data = json.loads(resp.read())
+        except (URLError, json.JSONDecodeError, TimeoutError) as e:
+            logger.warning('reCAPTCHA siteverify network/parse error: %s', e)
+            return {'error': 'network'}
+        return {
+            'success': bool(data.get('success')),
+            'score': float(data.get('score') or 0.0),
+            'action': data.get('action', ''),
+            'error_codes': data.get('error-codes', []) or [],
+        }
+
     def verify(self, token, expected_action=None, remote_ip=None, timeout=5):
         """Повертає (ok: bool, info: dict). Якщо не сконфігуровано -- (True, {'skipped': True}).
 
@@ -47,19 +74,10 @@ class RecaptchaService:
             audit_logger.info('reCAPTCHA: missing token (action=%s)', expected_action)
             return False, {'error': 'missing_token'}
 
-        body = urlencode({
-            'secret': self.secret_key,
-            'response': token,
-            'remoteip': remote_ip or '',
-        }).encode('utf-8')
+        body = self._build_request_body(token, remote_ip)
+        info = self._call_siteverify(body, timeout=timeout)
 
-        try:
-            req = Request(VERIFY_URL, data=body, method='POST')
-            req.add_header('Content-Type', 'application/x-www-form-urlencoded')
-            with urlopen(req, timeout=timeout) as resp:
-                data = json.loads(resp.read())
-        except (URLError, json.JSONDecodeError, TimeoutError) as e:
-            logger.warning('reCAPTCHA verify network/parse error: %s', e)
+        if info.get('error') == 'network':
             # Fail-open при недоступності Google API -- не блокуємо реальних
             # користувачів, але логуємо.
             audit_logger.warning(
@@ -68,18 +86,11 @@ class RecaptchaService:
             )
             return True, {'skipped': True, 'error': 'network'}
 
-        success = bool(data.get('success'))
-        score = float(data.get('score') or 0.0)
-        action = data.get('action', '')
-        error_codes = data.get('error-codes', []) or []
-
-        info = {
-            'success': success,
-            'score': score,
-            'action': action,
-            'error_codes': error_codes,
-            'threshold': self.score_threshold,
-        }
+        success = info.get('success', False)
+        score = info.get('score', 0.0)
+        action = info.get('action', '')
+        error_codes = info.get('error_codes', [])
+        info['threshold'] = self.score_threshold
 
         if not success:
             audit_logger.info(
@@ -105,13 +116,19 @@ class RecaptchaService:
         return True, info
 
 
-def get_recaptcha_service(app=None):
-    """SiteSettings -> Flask config fallback. Singleton-style фабрика."""
+def get_recaptcha_service(app=None, settings=None):
+    """SiteSettings -> Flask config fallback. Singleton-style фабрика.
+
+    `settings` -- опційно вже завантажений SiteSettings, щоб уникнути
+    повторного запиту коли caller вже має об'єкт (наприклад
+    integrations-hub-роут).
+    """
     from flask import current_app
     from app.models.site_settings import SiteSettings
 
     cfg = (app or current_app).config
-    settings = SiteSettings.get()
+    if settings is None:
+        settings = SiteSettings.get()
 
     site_key = settings.recaptcha_site_key or cfg.get('RECAPTCHA_SITE_KEY', '')
     secret_key = settings.recaptcha_secret_key or cfg.get('RECAPTCHA_SECRET_KEY', '')

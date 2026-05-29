@@ -1,0 +1,82 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Export/Import конфіг | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-integration.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.integrations') }}" class="admin-breadcrumb__link">Інтеграції</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Export/Import</span>
+        </div>
+        <h1 class="admin-hero__title">Export / Import конфігурації</h1>
+        <p class="admin-hero__subtitle">Backup поточних налаштувань або bootstrap нової інстанції</p>
+      </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.integrations') }}" class="btn-admin btn-admin--secondary">Назад до інтеграцій</a>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Export → .env download</h3>
+      <p>Згенерувати <code>.env</code>-блок з поточних налаштувань для бекапу або bootstrap'у staging-інстанції.</p>
+
+      <form method="POST" action="{{ url_for('admin.integrations_export') }}" class="admin-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            <input type="checkbox" name="include_secrets" id="include_secrets">
+            <label for="include_secrets">Включити секрети (приватні ключі, client_secret-и)</label>
+          </div>
+          <p class="form-hint">
+            БЕЗ секретів: безпечно зберігати у git (тільки публічні значення -- client_id, services_id, GA ID).
+            З секретами: тільки у secret-store; treat as confidential.
+          </p>
+        </div>
+        <div class="admin-form__actions">
+          <button type="submit" class="btn-admin btn-admin--primary"
+                  data-confirm="Згенерувати .env download?">
+            Завантажити .env
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Import ← paste .env</h3>
+      <p>Вставити <code>.env</code>-блок для оновлення налаштувань. Спочатку покажемо diff -- ви побачите що зміниться перш ніж підтвердити.</p>
+
+      <form method="POST" action="{{ url_for('admin.integrations_import_preview') }}" class="admin-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group admin-form__full">
+          <label for="env_text">Зміст .env-файлу</label>
+          <textarea name="env_text" id="env_text" class="form-input" rows="14"
+                    placeholder="GOOGLE_OAUTH_CLIENT_ID=12345-abc.apps.googleusercontent.com&#10;APPLE_TEAM_ID=ABCDE12345&#10;..."
+                    autocomplete="off"></textarea>
+          <p class="form-hint">
+            Розпізнаються лише відомі ключі (GOOGLE_OAUTH_*, APPLE_*, LIQPAY_*, RECAPTCHA_*, GOOGLE_ANALYTICS_ID).
+            Невідомі або коментарі ігноруємо.
+          </p>
+        </div>
+        <div class="admin-form__actions">
+          <button type="submit" class="btn-admin btn-admin--primary">Показати diff</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

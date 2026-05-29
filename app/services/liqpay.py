@@ -116,12 +116,15 @@ class LiqPayService:
         return bool(self.public_key and self.private_key)
 
 
-def get_liqpay_service(app=None):
+def get_liqpay_service(app=None, settings=None):
+    """settings -- опційно вже завантажений SiteSettings (для уникнення
+    дубль-запитів у admin/integrations-hub)."""
     from flask import current_app
     from app.models.site_settings import SiteSettings
 
     cfg = (app or current_app).config
-    settings = SiteSettings.get()
+    if settings is None:
+        settings = SiteSettings.get()
 
     public_key = settings.liqpay_public_key or cfg.get('LIQPAY_PUBLIC_KEY', '')
     private_key = settings.liqpay_private_key or cfg.get('LIQPAY_PRIVATE_KEY', '')

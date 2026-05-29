@@ -1,0 +1,176 @@
+/* Admin Integration Config (LiqPay, Google OAuth, Apple Sign In, reCAPTCHA, GA).
+   Спільний readonly-grid для відображення поточних значень з маскою.
+   Раніше називався page-admin-liqpay.css; переіменовано у Phase Q4 щоб
+   ім'я не leak'ило liqpay у інші інтеграційні сторінки. */
+
+/* Configuration display */
+.admin-readonly-config {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.admin-readonly-config__row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-readonly-config__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--iprm-dark);
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.admin-readonly-config__value {
+  font-size: 0.875rem;
+  color: var(--iprm-text);
+}
+
+.admin-readonly-config__value--mono {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8125rem;
+  background: var(--iprm-white);
+  padding: 4px 10px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  word-break: break-all;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-readonly-config__row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .admin-readonly-config__label {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-readonly-config__value--mono {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+  }
+}
+
+/* ===== Health-check dashboard ===== */
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.health-card {
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-left-width: 4px;
+  border-radius: var(--iprm-radius);
+  padding: 16px 20px;
+  transition: box-shadow 0.15s;
+}
+
+.health-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.health-card--ok { border-left-color: #16a34a; }
+.health-card--degraded { border-left-color: #f59e0b; }
+.health-card--down { border-left-color: #dc2626; }
+.health-card--not_configured { border-left-color: var(--iprm-border); opacity: 0.85; }
+
+.health-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.health-card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+}
+
+.health-card__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.health-card__dot--ok { background: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.18); }
+.health-card__dot--degraded { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.2); }
+.health-card__dot--down { background: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.2); }
+.health-card__dot--not_configured { background: var(--iprm-text-light); }
+
+.health-card__status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--iprm-bg, rgba(0,0,0,0.04));
+  color: var(--iprm-text-light);
+}
+
+.health-card--ok .health-card__status-badge { background: rgba(22,163,74,0.1); color: #16a34a; }
+.health-card--degraded .health-card__status-badge { background: rgba(245,158,11,0.12); color: #b45309; }
+.health-card--down .health-card__status-badge { background: rgba(220,38,38,0.1); color: #dc2626; }
+
+.health-card__detail {
+  font-size: 0.875rem;
+  color: var(--apple-black);
+  margin: 6px 0;
+  line-height: 1.45;
+}
+
+.health-card__error {
+  font-size: 0.875rem;
+  color: #dc2626;
+  margin: 6px 0;
+  word-break: break-word;
+  line-height: 1.45;
+}
+
+.health-card__meta {
+  font-size: 0.75rem;
+  color: var(--iprm-text-light);
+  margin: 10px 0 0;
+}
+
+/* Маленька версія бейджа для rotation-hint у hub-картках. */
+.badge--sm {
+  font-size: 0.625rem;
+  padding: 2px 6px;
+  margin-left: 6px;
+}
+
+/* Import diff table */
+.diff-row--changed {
+  background: rgba(245, 158, 11, 0.06);
+}
+.diff-row--changed td:first-child {
+  border-left: 3px solid #f59e0b;
+}
+
+.diff-value {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8125rem;
+  background: var(--iprm-white);
+  padding: 2px 6px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  word-break: break-all;
+  display: inline-block;
+  max-width: 100%;
+}
