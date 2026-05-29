@@ -195,6 +195,7 @@
             <th>Тригер</th>
             <th>Статус</th>
             <th>Дата</th>
+            <th>Дії</th>
           </tr>
         </thead>
         <tbody>
@@ -213,6 +214,17 @@
               {% endif %}
             </td>
             <td>{{ log.created_at.strftime('%d.%m %H:%M') if log.created_at else '' }}</td>
+            <td>
+              {% if log.status == 'failed' and log.html_body %}
+              <form method="POST" action="{{ url_for('admin.notifications_log_resend', log_id=log.id) }}"
+                    data-confirm="Переслати лист #{{ log.id }} на {{ log.to_email }}?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Переслати</button>
+              </form>
+              {% else %}
+              <span class="admin-text-muted">--</span>
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>

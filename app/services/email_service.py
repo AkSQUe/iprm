@@ -605,3 +605,54 @@ class EmailService:
             logger.info('Retried %d/%d failed emails', retried, len(failed))
 
         return retried
+
+    @staticmethod
+    def manual_resend(log_id):
+        """Manual one-shot resend (admin-trigger). На відміну від
+        retry_failed_emails -- без cutoff/MAX_RETRIES/circuit-breaker
+        обмежень: адмін явно тисне кнопку, тож обмеження не доречні.
+
+        Повертає (ok: bool, message: str). Не raise -- caller flash-ить
+        результат.
+        """
+        from app.models.email_settings import EmailSettings
+
+        entry = db.session.get(EmailLog, log_id)
+        if not entry:
+            return False, 'Лог не знайдено'
+
+        if not entry.html_body:
+            return False, 'Немає збереженого html_body для повторної відправки'
+
+        settings = EmailSettings.get()
+        if not settings.is_enabled:
+            return False, 'SMTP-відправку вимкнено в налаштуваннях'
+
+        smtp_cfg = _get_smtp_config(current_app._get_current_object())
+
+        entry.retry_count = (entry.retry_count or 0) + 1
+        entry.status = 'pending'
+        db.session.flush()
+
+        try:
+            plain_body = _html_to_plaintext(entry.html_body)
+            msg = Message(
+                subject=entry.subject,
+                recipients=[entry.to_email],
+                html=entry.html_body,
+                body=plain_body,
+                sender=smtp_cfg['sender'],
+            )
+            _smtp_send(msg, smtp_cfg)
+            entry.status = 'sent'
+            entry.sent_at = datetime.now(timezone.utc)
+            entry.error_message = (entry.error_message or '') + '\n[admin-resend OK]'
+            db.session.commit()
+            logger.info('Manual resend OK: id=%s to=%s', entry.id, entry.to_email)
+            return True, f'Лист #{entry.id} відправлено на {entry.to_email}'
+        except Exception as exc:
+            entry.status = 'failed'
+            entry.error_message = f'Manual resend failed: {str(exc)[:400]}'
+            db.session.commit()
+            logger.warning('Manual resend FAILED: id=%s: %s', entry.id, exc)
+            return False, f'Помилка при відправці: {str(exc)[:200]}'

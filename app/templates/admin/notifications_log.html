@@ -64,6 +64,7 @@
           <th>Тригер</th>
           <th>Статус</th>
           <th>Дата</th>
+          <th>Дії</th>
         </tr>
       </thead>
       <tbody>
@@ -77,12 +78,23 @@
             {% if log.status == 'sent' %}
             <span class="badge badge--success">{{ log.status_label }}</span>
             {% elif log.status == 'failed' %}
-            <span class="badge badge--danger" title="{{ log.error_message or '' }}">{{ log.status_label }}</span>
+            <span class="badge badge--danger" title="{{ log.error_message or '' }}">{{ log.status_label }}{% if log.retry_count > 0 %} ({{ log.retry_count }}x){% endif %}</span>
             {% else %}
             <span class="badge badge--warning">{{ log.status_label }}</span>
             {% endif %}
           </td>
           <td>{{ (log.sent_at or log.created_at).strftime('%d.%m.%Y %H:%M') if (log.sent_at or log.created_at) else '' }}</td>
+          <td>
+            {% if log.status == 'failed' and log.html_body %}
+            <form method="POST" action="{{ url_for('admin.notifications_log_resend', log_id=log.id) }}"
+                  data-confirm="Переслати лист #{{ log.id }} на {{ log.to_email }}?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Переслати</button>
+            </form>
+            {% else %}
+            <span class="admin-text-muted">--</span>
+            {% endif %}
+          </td>
         </tr>
         {% endfor %}
       </tbody>

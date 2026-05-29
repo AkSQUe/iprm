@@ -148,6 +148,23 @@ def notifications_log():
     )
 
 
+@admin_bp.route('/notifications/log/<int:log_id>/resend', methods=['POST'])
+@admin_required
+def notifications_log_resend(log_id):
+    """Ручний resend конкретного failed-листа (адмін-кнопка).
+    Без cutoff/MAX_RETRIES обмежень -- адмін явно тисне.
+    """
+    from app.services.email_service import EmailService
+    ok, msg = EmailService.manual_resend(log_id)
+    audit_logger.info(
+        'Admin %s manual-resent EmailLog id=%s -> %s',
+        current_user.email, log_id, 'OK' if ok else 'FAIL'
+    )
+    flash(msg, 'success' if ok else 'error')
+    # Повертаємось туди, звідки прийшли (notifications dashboard або full-log).
+    return redirect(request.referrer or url_for('admin.notifications_log'))
+
+
 @admin_bp.route('/notifications/test', methods=['POST'])
 @admin_required
 def notifications_test():
