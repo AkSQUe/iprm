@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<title>Сертифікат {{ certificate.number }}</title>
+<style>
+  /* Заокруглений шрифт Nunito (base_url = app/static), підтримує кирилицю. */
+  @font-face { font-family: 'Nunito'; font-weight: 400; src: url('fonts/nunito-400.woff2') format('woff2'); }
+  @font-face { font-family: 'Nunito'; font-weight: 600; src: url('fonts/nunito-600.woff2') format('woff2'); }
+  @font-face { font-family: 'Nunito'; font-weight: 700; src: url('fonts/nunito-700.woff2') format('woff2'); }
+  @font-face { font-family: 'Nunito'; font-weight: 800; src: url('fonts/nunito-800.woff2') format('woff2'); }
+
+  @page { size: A4 portrait; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 210mm; height: 297mm;
+    font-family: 'Nunito', sans-serif;
+    color: #1d1d1f; background: #ffffff;
+  }
+
+  .cert {
+    position: relative;
+    width: 210mm; height: 297mm;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  /* Фон-молекули -- суцільний фон на всю сторінку (рамка перекриває їх) */
+  .cert__bg { position: absolute; top: 0; left: 0; width: 210mm; height: 297mm; z-index: 0; }
+  .cert__bg svg { width: 210mm; height: 297mm; display: block; }
+
+  /* Градієнтна рамка -- SVG-кільце з заливкою (порожній центр): молекули
+     видно крізь нього, рамка перекриває їх по краях. Однакова товщина з усіх
+     боків + заокруглені кути. */
+  .cert__frame { position: absolute; top: 0; left: 0; width: 210mm; height: 297mm; z-index: 1; }
+  .cert__frame svg { width: 210mm; height: 297mm; display: block; }
+
+  .cert__inner { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; padding-top: 16mm; }
+
+  /* Шапка: логотип зліва, бейдж балів справа */
+  .cert__header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 16mm; margin-bottom: 8mm;
+  }
+  .cert__logo { height: 51mm; width: auto; }
+
+  /* Градієнтна стрічка СЕРТИФІКАТ -- на всю ширину */
+  .cert__banner {
+    width: 210mm; height: 36mm;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(90deg, #f0a02a 0%, #d9743f 28%, #b85a7e 60%, #7a51a6 100%);
+    margin-bottom: 5mm;
+  }
+  .cert__banner span {
+    font-family: 'Nunito', sans-serif; font-weight: 800;
+    font-size: 63pt; letter-spacing: 0.06em;
+    color: #ffffff; line-height: 1;
+  }
+
+  .cert__body { padding: 0 22mm; text-align: center; }
+
+  .cert__eyebrow { font-size: 12pt; color: #9b8ac0; margin-bottom: 21mm; }
+
+  .cert__name {
+    font-family: 'Nunito', sans-serif; font-weight: 700;
+    font-size: 30pt; color: #5d4691; line-height: 1.12;
+    margin-bottom: 8mm;
+  }
+
+  .cert__lead { font-size: 12pt; color: #9b8ac0; margin-bottom: 3.5mm; }
+
+  .cert__event {
+    font-family: 'Nunito', sans-serif; font-weight: 600;
+    font-size: 31.5pt; color: #6a4fa0; line-height: 1.3;
+  }
+
+  .cert__points {
+    display: inline-block;
+    font-size: 15pt; font-weight: 800; color: #7055a4;
+    line-height: 1.3; text-align: center;
+    /* Непрозорі кольори: напівпрозора рамка (rgba) у WeasyPrint
+       знебарвлювала градієнт стрічки (баг композитингу). */
+    background: #f1eef6;
+    border: 0.5mm solid #c6bbdb;
+    border-radius: 8mm;
+    padding: 5mm 12mm;
+  }
+  .cert__points-num { font-size: 28pt; line-height: 1.05; }
+
+  /* Футер: підпис | печатка+дата | підпис */
+  .cert__footer {
+    position: absolute; left: 0; right: 0; bottom: 16mm;
+    padding: 0 16mm;
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .cert__col { width: 54mm; text-align: center; }
+  .cert__col--center { width: 60mm; }
+
+  /* TODO: замінити плейсхолдер на <img> підпису */
+  .cert__sign-ph {
+    height: 16mm;
+    display: flex; align-items: flex-end; justify-content: center;
+    font-size: 9pt; font-style: italic; color: #b3a6cc;
+  }
+  .cert__person { font-weight: 700; font-size: 11pt; color: #5d4691; margin-top: 2.5mm; }
+  .cert__role { font-size: 9.5pt; color: #9b8ac0; margin-top: 0.5mm; }
+
+  /* TODO: замінити плейсхолдер на <img> печатки */
+  .cert__stamp-ph {
+    width: 30mm; height: 30mm; margin: 0 auto 3mm;
+    border: 0.4mm dashed #bfb3d6; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8.5pt; color: #b3a6cc;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .cert__date { font-size: 10.5pt; font-weight: 600; color: #5d4691; }
+  .cert__city { font-size: 9.5pt; color: #9b8ac0; margin-top: 0.5mm; }
+
+  .cert__serial {
+    position: absolute; left: 0; right: 0; bottom: 8mm;
+    text-align: center; font-size: 7.5pt; color: #b3a6cc; letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+  <div class="cert">
+    <div class="cert__bg">{{ molecules_svg|safe }}</div>
+    <div class="cert__frame">{{ frame_svg|safe }}</div>
+
+    <div class="cert__inner">
+      <!-- Шапка: логотип зліва, бали БПР справа -->
+      <div class="cert__header">
+        <img class="cert__logo" src="svg/IPRM-logo-complex.svg" alt="ІПРМ">
+        {% if certificate.cpd_points %}
+        <div class="cert__points"><span class="cert__points-num">{{ certificate.cpd_points }}</span><br>балів БПР</div>
+        {% endif %}
+      </div>
+
+      <div class="cert__banner"><span>СЕРТИФІКАТ</span></div>
+
+      <div class="cert__body">
+        <p class="cert__eyebrow">виданий</p>
+        <p class="cert__name">{{ certificate.recipient_name }}</p>
+        <p class="cert__lead">про успішне завершення заходу</p>
+        <p class="cert__event">«{{ certificate.event_title }}»</p>
+      </div>
+
+      <div class="cert__footer">
+        <!-- Підпис 1: Директор (зображення підпису -- плейсхолдер) -->
+        <div class="cert__col">
+          <div class="cert__sign-ph">[ підпис ]</div>
+          <div class="cert__person">Заболотня Д.О.</div>
+          <div class="cert__role">Директор Інституту</div>
+        </div>
+        <!-- Печатка (плейсхолдер) + дата -->
+        <div class="cert__col cert__col--center">
+          <div class="cert__stamp-ph">печатка</div>
+          <div class="cert__date">{{ issued_date }}</div>
+          <div class="cert__city">м. Київ</div>
+        </div>
+        <!-- Підпис 2: Лектор (ім'я тренера заходу; підпис -- плейсхолдер) -->
+        <div class="cert__col">
+          <div class="cert__sign-ph">[ підпис ]</div>
+          <div class="cert__person">{{ certificate.lecturer_name or '[ ПІБ ]' }}</div>
+          <div class="cert__role">Лектор</div>
+        </div>
+      </div>
+
+      <div class="cert__serial">№ {{ certificate.number }}</div>
+    </div>
+  </div>
+</body>
+</html>

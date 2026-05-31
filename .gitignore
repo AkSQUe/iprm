@@ -18,8 +18,10 @@ instance/
 *.sqlite3
 migrations/versions/*.pyc
 
-# Generated certificate PDFs (private, persisted on server, not in repo)
-certificates/
+# Generated certificate PDFs (private, persisted on server, not in repo).
+# Leading slash anchors to repo root so app/templates/certificates/ -- where
+# the Jinja template lives -- is NOT ignored.
+/certificates/
 
 # Environment
 .env
