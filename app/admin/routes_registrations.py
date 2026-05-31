@@ -35,6 +35,7 @@ def instance_registrations(instance_id):
 
     registrations = EventRegistration.query.options(
         joinedload(EventRegistration.user),
+        joinedload(EventRegistration.certificate),
     ).filter_by(instance_id=instance.id).order_by(
         EventRegistration.created_at.desc()
     ).all()
