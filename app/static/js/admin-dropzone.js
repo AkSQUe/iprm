@@ -2,6 +2,16 @@
    Requires markup per .admin-dropzone convention (see admin-apple.css).
    Caller must provide: upload endpoint URL, slug source function. */
 (function() {
+  /* Сповіщення через toast-систему сайту (window.iprmToast), а не нативний
+     alert(). Фолбек на alert лише якщо toast чомусь недоступний. */
+  function notifyError(msg) {
+    if (typeof window.iprmToast === 'function') {
+      window.iprmToast(msg, 'error');
+    } else {
+      alert(msg);
+    }
+  }
+
   window.initAdminDropzones = function(opts) {
     var endpoint = opts.endpoint;
     var getSlug = opts.getSlug;
@@ -55,11 +65,11 @@
       function uploadFile(file) {
         var allowed = ['image/png', 'image/jpeg', 'image/webp'];
         if (allowed.indexOf(file.type) === -1) {
-          alert('Дозволені формати: PNG, JPG, WebP');
+          notifyError('Дозволені формати: PNG, JPG, WebP');
           return;
         }
         if (file.size > 5 * 1024 * 1024) {
-          alert('Максимальний розмір: 5 MB');
+          notifyError('Максимальний розмір: 5 MB');
           return;
         }
 
@@ -78,7 +88,7 @@
 
         var slug = getSlug();
         if (!slug) {
-          alert(slugMissingMsg);
+          notifyError(slugMissingMsg);
           return;
         }
 
@@ -99,7 +109,7 @@
           if (result.ok) {
             hiddenInput.value = result.data.url;
           } else {
-            alert(result.data.error || 'Помилка завантаження');
+            notifyError(result.data.error || 'Помилка завантаження');
             if (!hiddenInput.value) {
               preview.classList.remove('admin-dropzone__preview--active');
               prompt.classList.remove('admin-dropzone__prompt--hidden');
@@ -108,7 +118,7 @@
         })
         .catch(function() {
           zone.classList.remove('admin-dropzone--uploading');
-          alert('Помилка мережі');
+          notifyError('Помилка мережі');
         });
       }
     });
