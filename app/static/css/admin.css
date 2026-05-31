@@ -207,8 +207,9 @@
 
 .admin-table__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 /* ========== FILTER FORM ========== */
