@@ -131,16 +131,32 @@ def registration_certificate_issue(reg_id):
     try:
         from app.services.certificate_service import issue_certificate
         cert = issue_certificate(reg, issued_by=current_user)
+        # Капчимо локально до email-call: якщо send_certificate упаде і
+        # залишить сесію в rolled-back-стані, лінива перезагрузка cert.number
+        # у flash нижче кине PendingRollbackError.
+        cert_number = cert.number
         audit_logger.info(
             'Admin %s issued certificate %s for reg %d',
-            current_user.email, cert.number, reg_id,
+            current_user.email, cert_number, reg_id,
         )
         try:
             from app.services.email_service import EmailService
             EmailService.send_certificate(cert)
+            email_sent = True
         except Exception:
+            # Сертифікат уже у БД (issue_certificate commit-нув). Email -- best-
+            # effort, тож відкочуємо тільки failed-INSERT email_logs.
+            db.session.rollback()
             logger.exception('Failed to email certificate for reg %d', reg_id)
-        flash(f'Сертифікат {cert.number} видано та надіслано на email', 'success')
+            email_sent = False
+        if email_sent:
+            flash(f'Сертифікат {cert_number} видано та надіслано на email', 'success')
+        else:
+            flash(
+                f'Сертифікат {cert_number} видано. Email не відправлено -- '
+                'надішліть повторно з картки реєстрації.',
+                'warning',
+            )
     except Exception:
         logger.exception('Failed to issue certificate for reg %d', reg_id)
         db.session.rollback()
