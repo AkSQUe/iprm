@@ -152,6 +152,20 @@
                 <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" title="Безперервний професійний розвиток"><span class="material-symbols-rounded">verified</span></button>
               </form>
               {% endif %}
+              {% if reg.certificate and not reg.certificate.revoked %}
+              <a href="{{ url_for('admin.registration_certificate_download', reg_id=reg.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Завантажити сертифікат {{ reg.certificate.number }}"><span class="material-symbols-rounded">workspace_premium</span></a>
+              <form method="POST" action="{{ url_for('admin.registration_certificate_resend', reg_id=reg.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="next" value="registrations_all">
+                <button type="submit" class="btn-admin btn-admin--sm" title="Переслати сертифікат на email"><span class="material-symbols-rounded">forward_to_inbox</span></button>
+              </form>
+              {% elif reg.status != 'cancelled' %}
+              <form method="POST" action="{{ url_for('admin.registration_certificate_issue', reg_id=reg.id) }}" data-confirm="Видати сертифікат і надіслати на email?" data-confirm-ok="Видати">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="next" value="registrations_all">
+                <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm" title="Видати сертифікат"><span class="material-symbols-rounded">workspace_premium</span></button>
+              </form>
+              {% endif %}
               {% if reg.status != 'cancelled' %}
               <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}" data-confirm="Скасувати реєстрацію?">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

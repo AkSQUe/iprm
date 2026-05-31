@@ -11,6 +11,13 @@ class Config:
     STATIC_URL_PATH = '/static'
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB
     UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app', 'static', 'images')
+    # Generated certificate PDFs. Stored OUTSIDE app/static (private documents
+    # served only through an auth-gated route). Kept at project root and
+    # excluded from rsync --delete (see .github/workflows/deploy.yml) so issued
+    # certificates persist across deploys. Override with CERTIFICATE_FOLDER env.
+    CERTIFICATE_FOLDER = os.environ.get('CERTIFICATE_FOLDER') or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'certificates',
+    )
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     REMEMBER_COOKIE_HTTPONLY = True

@@ -21,6 +21,7 @@ openpyxl==3.1.5
 requests==2.32.3
 bleach==6.2.0
 Authlib==1.7.2
+WeasyPrint==66.0
 
 # Transitive dependencies
 joserfc==1.6.8
@@ -44,3 +45,16 @@ certifi==2024.8.30
 charset-normalizer==3.4.0
 idna==3.10
 urllib3==2.2.3
+
+# WeasyPrint transitive dependencies
+pydyf==0.11.0
+cssselect2==0.8.0
+tinycss2==1.4.0
+Pyphen==0.17.2
+Pillow==10.4.0
+fonttools==4.60.1
+cffi==1.17.1
+pycparser==2.22
+Brotli==1.1.0
+zopfli==0.2.3.post1
+tinyhtml5==2.0.0

@@ -18,6 +18,9 @@ instance/
 *.sqlite3
 migrations/versions/*.pyc
 
+# Generated certificate PDFs (private, persisted on server, not in repo)
+certificates/
+
 # Environment
 .env
 .env.*

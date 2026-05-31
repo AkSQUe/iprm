@@ -95,6 +95,26 @@
     </div>
   </section>
 
+  <!-- ===== MY CERTIFICATES ===== -->
+  {% if certificates %}
+  <section class="iprm-section" aria-labelledby="my-certs-title">
+    <div class="iprm-section__inner">
+      <h2 id="my-certs-title" class="iprm-section__title">Мої сертифікати</h2>
+      <div class="account-grid">
+        {% for cert in certificates %}
+        <a href="{{ url_for('auth.certificate_download', cert_id=cert.id) }}" class="account-card account-card--link apple-reveal">
+          <h3 class="account-card__title">{{ cert.event_title }}</h3>
+          <p class="account-card__text">
+            № {{ cert.number }}{% if cert.cpd_points %} &middot; {{ cert.cpd_points }} балів БПР{% endif %}
+          </p>
+          <p class="account-card__text">Завантажити PDF &#8595;</p>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- ===== ACCOUNT CARDS ===== -->
   <section class="iprm-section" aria-labelledby="account-settings-title">
     <div class="iprm-section__inner">
@@ -106,7 +126,9 @@
         </a>
         <div class="account-card apple-reveal">
           <h3 class="account-card__title">Сертифікати</h3>
-          <p class="account-card__text">Ваші сертифікати</p>
+          <p class="account-card__text">
+            {% if certificates %}Видано: {{ certificates|length }}. Завантажуйте у розділі «Мої сертифікати».{% else %}З'являться тут після видачі за участь у заході{% endif %}
+          </p>
         </div>
       </div>
 

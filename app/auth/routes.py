@@ -1,7 +1,8 @@
 import logging
+import os
 from datetime import datetime, timezone
 from urllib.parse import urlparse
-from flask import render_template, redirect, url_for, flash, request, session
+from flask import render_template, redirect, url_for, flash, request, session, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy.orm import contains_eager
 from app.auth import auth_bp
@@ -12,6 +13,7 @@ from app.models.auth_identity import AuthIdentity
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
+from app.models.certificate import Certificate
 from app.services.token_service import generate_confirmation_token, confirm_token
 from app.services.email_service import EmailService
 from app.services.recaptcha import verify_request as verify_recaptcha
@@ -137,7 +139,38 @@ def account():
         .order_by(CourseInstance.start_date.desc())
         .all()
     )
-    return render_template('auth/account.html', registrations=registrations)
+    certificates = (
+        Certificate.query
+        .filter_by(user_id=current_user.id, revoked=False)
+        .order_by(Certificate.issued_at.desc())
+        .all()
+    )
+    return render_template(
+        'auth/account.html',
+        registrations=registrations,
+        certificates=certificates,
+    )
+
+
+@auth_bp.route('/account/certificates/<int:cert_id>/download')
+@login_required
+def certificate_download(cert_id):
+    """Завантажити власний сертифікат (перевірка володіння)."""
+    cert = db.session.get(Certificate, cert_id)
+    if cert is None or cert.user_id != current_user.id or cert.revoked:
+        flash('Сертифікат не знайдено', 'error')
+        return redirect(url_for('auth.account'))
+
+    from app.services.certificate_service import certificate_abs_path, regenerate_pdf
+    path = certificate_abs_path(cert)
+    if not os.path.exists(path):
+        regenerate_pdf(cert)
+    return send_file(
+        path,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f'{cert.number}.pdf',
+    )
 
 
 @auth_bp.route('/settings')

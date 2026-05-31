@@ -48,3 +48,25 @@ cd /var/www/iprm
 | `VPS_HOST` | `173.242.58.186` |
 | `VPS_USER` | `root` |
 | `VPS_SSH_KEY` | Вміст `keys/iprm-key` |
+
+## Сертифікати (WeasyPrint)
+
+Генерація PDF-сертифікатів використовує **WeasyPrint**, який потребує
+системних нативних бібліотек (Pango/Cairo/GDK-PixBuf). Їх треба встановити
+на VPS **один раз** (pip їх не ставить):
+
+```bash
+apt-get update
+apt-get install -y libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libffi-dev libcairo2 libpangoft2-1.0-0
+```
+
+Якщо бібліотек немає, `import weasyprint` падає, а видача сертифіката
+завершиться помилкою (інша частина застосунку працює -- імпорт лінивий).
+
+### Сховище згенерованих PDF
+
+- Шлях: `CERTIFICATE_FOLDER` (env), за замовчуванням `/var/www/iprm/certificates/`.
+- Тека приватна (поза `app/static`), віддається лише через авторизований роут.
+- **Виключена** з `rsync --delete` (`.github/workflows/deploy.yml`), тож видані
+  сертифікати **переживають деплой**. У git не комітиться (`.gitignore`).
+- Власник процесу gunicorn (root) має мати право запису в цю теку.

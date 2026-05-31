@@ -21,7 +21,8 @@
 | GET/POST | `/auth/login` | Вхід |
 | GET/POST | `/auth/register` | Реєстрація |
 | POST | `/auth/logout` | Вихід |
-| GET | `/auth/account` | Обліковий запис |
+| GET | `/auth/account` | Обліковий запис (курси + сертифікати) |
+| GET | `/auth/account/certificates/<id>/download` | Завантажити власний сертифікат (PDF) |
 | GET | `/auth/settings` | Налаштування профілю |
 | GET | `/auth/confirm-email/<token>` | Підтвердження email |
 
@@ -80,6 +81,9 @@
 | POST | `/admin/trainers/<id>/delete` | Видалення тренера |
 | POST | `/admin/registrations/<id>/status` | Зміна статусу реєстрації |
 | POST | `/admin/registrations/<id>/attendance` | Підтвердження присутності |
+| POST | `/admin/registrations/<id>/certificate` | Видати сертифікат (+ email) |
+| POST | `/admin/registrations/<id>/certificate/resend` | Повторно надіслати сертифікат |
+| GET | `/admin/registrations/<id>/certificate/download` | Завантажити сертифікат (адмін) |
 | GET | `/admin/registrations` | Всі реєстрації (stub) |
 | GET | `/admin/payments` | Redirect на LiqPay |
 | GET | `/admin/liqpay` | Дашборд LiqPay |

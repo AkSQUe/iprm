@@ -1,5 +1,6 @@
 import logging
-from flask import render_template, redirect, url_for, flash, request
+import os
+from flask import render_template, redirect, url_for, flash, request, send_file
 from flask_login import current_user
 from sqlalchemy import case, func
 from sqlalchemy.orm import joinedload
@@ -113,6 +114,86 @@ def registration_attendance(reg_id):
     return _redirect_after_action(reg)
 
 
+@admin_bp.route('/registrations/<int:reg_id>/certificate', methods=['POST'])
+@admin_required
+def registration_certificate_issue(reg_id):
+    """Видати сертифікат: створити запис, згенерувати PDF, надіслати email."""
+    reg = db.session.get(EventRegistration, reg_id)
+    if not reg:
+        flash('Реєстрацію не знайдено', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+    if reg.status == 'cancelled':
+        flash('Не можна видати сертифікат для скасованої реєстрації', 'error')
+        return _redirect_after_action(reg)
+
+    try:
+        from app.services.certificate_service import issue_certificate
+        cert = issue_certificate(reg, issued_by=current_user)
+        audit_logger.info(
+            'Admin %s issued certificate %s for reg %d',
+            current_user.email, cert.number, reg_id,
+        )
+        try:
+            from app.services.email_service import EmailService
+            EmailService.send_certificate(cert)
+        except Exception:
+            logger.exception('Failed to email certificate for reg %d', reg_id)
+        flash(f'Сертифікат {cert.number} видано та надіслано на email', 'success')
+    except Exception:
+        logger.exception('Failed to issue certificate for reg %d', reg_id)
+        db.session.rollback()
+        flash('Помилка при видачі сертифіката', 'error')
+
+    return _redirect_after_action(reg)
+
+
+@admin_bp.route('/registrations/<int:reg_id>/certificate/resend', methods=['POST'])
+@admin_required
+def registration_certificate_resend(reg_id):
+    """Повторно надіслати вже виданий сертифікат на email."""
+    reg = db.session.get(EventRegistration, reg_id)
+    if not reg or reg.certificate is None:
+        flash('Сертифікат не знайдено', 'error')
+        return redirect(url_for('admin.registrations_all'))
+
+    try:
+        from app.services.email_service import EmailService
+        EmailService.send_certificate(reg.certificate)
+        audit_logger.info(
+            'Admin %s resent certificate %s for reg %d',
+            current_user.email, reg.certificate.number, reg_id,
+        )
+        flash('Сертифікат повторно надіслано на email', 'success')
+    except Exception:
+        logger.exception('Failed to resend certificate for reg %d', reg_id)
+        flash('Помилка при надсиланні сертифіката', 'error')
+
+    return _redirect_after_action(reg)
+
+
+@admin_bp.route('/registrations/<int:reg_id>/certificate/download')
+@admin_required
+def registration_certificate_download(reg_id):
+    """Завантажити PDF сертифіката (адмін)."""
+    reg = db.session.get(EventRegistration, reg_id)
+    if not reg or reg.certificate is None:
+        flash('Сертифікат не знайдено', 'error')
+        return redirect(url_for('admin.registrations_all'))
+
+    from app.services.certificate_service import certificate_abs_path, regenerate_pdf
+    cert = reg.certificate
+    path = certificate_abs_path(cert)
+    if not os.path.exists(path):
+        regenerate_pdf(cert)
+    return send_file(
+        path,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f'{cert.number}.pdf',
+    )
+
+
 @admin_bp.route('/registrations')
 @admin_required
 def registrations_all():
@@ -134,6 +215,7 @@ def registrations_all():
     query = EventRegistration.query.options(
         joinedload(EventRegistration.user),
         joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
+        joinedload(EventRegistration.certificate),
     )
     if status_filter and status_filter in dict(EventRegistration.STATUSES):
         query = query.filter(EventRegistration.status == status_filter)

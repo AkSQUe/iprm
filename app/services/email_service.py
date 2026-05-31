@@ -115,11 +115,13 @@ class EmailService:
 
     @staticmethod
     def send_email(to, subject, template_name, context=None,
-                   trigger=None, registration_id=None):
+                   trigger=None, registration_id=None, attachments=None):
         """
         Render email template and send via SMTP in background thread.
 
         Guards: disabled check, deduplication, circuit breaker.
+        attachments -- optional list of (filename, mimetype, data_bytes) tuples,
+        attached to the message before sending (e.g. certificate PDF).
         Returns EmailLog instance (status may still be 'pending' if async).
         Returns None if dedup skipped.
         """
@@ -208,6 +210,10 @@ class EmailService:
             body=plain_body,
             sender=smtp_cfg['sender'],
         )
+
+        for attachment in (attachments or []):
+            filename, mimetype, data = attachment
+            msg.attach(filename, mimetype, data)
 
         thread = Thread(
             target=EmailService._send_in_thread,
@@ -357,6 +363,33 @@ class EmailService:
             },
             trigger='status_change',
             registration_id=registration.id,
+        )
+
+    @staticmethod
+    def send_certificate(certificate):
+        """Надіслати користувачу лист з PDF-сертифікатом у вкладенні."""
+        from app.services.certificate_service import read_pdf_bytes
+
+        user = certificate.user
+        if user is None:
+            logger.warning('Cannot send certificate %s: no user', certificate.id)
+            return None
+
+        try:
+            pdf_bytes = read_pdf_bytes(certificate)
+        except Exception:
+            logger.exception('Failed to read/generate certificate PDF %s', certificate.id)
+            return None
+
+        filename = f'{certificate.number}.pdf'
+        return EmailService.send_email(
+            to=user.email,
+            subject=f'Ваш сертифікат: {certificate.event_title}',
+            template_name='certificate_issued',
+            context={'user': user, 'certificate': certificate},
+            trigger='certificate',
+            registration_id=certificate.registration_id,
+            attachments=[(filename, 'application/pdf', pdf_bytes)],
         )
 
     @staticmethod

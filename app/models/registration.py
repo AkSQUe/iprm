@@ -57,6 +57,12 @@ class EventRegistration(TimestampMixin, db.Model):
         back_populates='registrations',
     )
     email_logs = db.relationship('EmailLog', back_populates='registration')
+    certificate = db.relationship(
+        'Certificate',
+        back_populates='registration',
+        uselist=False,
+        cascade='all, delete-orphan',
+    )
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'instance_id', name='uq_user_instance_registration'),

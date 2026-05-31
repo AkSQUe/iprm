@@ -149,6 +149,33 @@
 | `created_at` | DateTime (UTC) | TimestampMixin |
 | `updated_at` | DateTime (UTC) | TimestampMixin |
 
+Зв'язок: `certificate` -> Certificate (one-to-one, cascade delete-orphan).
+
+## Certificate
+
+Сертифікат учасника. Видається адміністратором вручну для реєстрації; видача
+відкриває доступ у кабінеті та надсилає лист з PDF. Поля-знімки незмінні після
+видачі (правки курсу/користувача не змінюють виданий сертифікат). PDF
+генерується WeasyPrint (HTML -> PDF), зберігається у `CERTIFICATE_FOLDER`.
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ |
+| `registration_id` | FK -> event_registrations.id (CASCADE), unique | Одна реєстрація = один сертифікат |
+| `user_id` | FK -> users.id (CASCADE) | Власник (денормалізовано) |
+| `number` | String(40) unique | Людиночитний номер, напр. `IPRM-2026-000123` |
+| `recipient_name` | String(255) | Знімок ПІБ на момент видачі |
+| `event_title` | String(500) | Знімок назви заходу |
+| `event_date` | DateTime (UTC) | Знімок дати заходу |
+| `cpd_points` | Integer | Знімок балів БПР |
+| `lecturer_name` | String(200) | Знімок імені лектора (тренер проведення) |
+| `issued_at` | DateTime (UTC) | Дата видачі |
+| `issued_by_id` | FK -> users.id (SET NULL) | Адмін, що видав |
+| `pdf_path` | String(255) | Шлях до PDF (posix) відносно CERTIFICATE_FOLDER |
+| `revoked` | Boolean | Відкликано |
+| `revoked_at` | DateTime (UTC) | Дата відкликання |
+| `created_at`, `updated_at` | DateTime (UTC) | TimestampMixin |
+
 ## Clinic
 
 | Поле | Тип | Опис |
