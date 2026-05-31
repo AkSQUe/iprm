@@ -60,6 +60,15 @@
   color: var(--iprm-white);
 }
 
+/* Sub-link: візуальний відступ для пунктів, вкладених під батьківським
+   розділом (напр. "Одержувачі" під "Сповіщення"). Меншe font-size і
+   ліві паддінги показують ієрархію без зміни DOM-структури. */
+.admin-sidebar__link--sub {
+  padding-left: 32px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 /* ========== CONTENT LAYOUT ========== */
 
 .admin-layout {
@@ -212,6 +221,34 @@
   justify-content: flex-end;
 }
 
+/* Сортовані заголовки (admin-table-sort.js) */
+.admin-th--sortable {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.admin-th--sortable:hover {
+  color: var(--iprm-accent);
+}
+
+.admin-th--sortable::after {
+  content: '↕';
+  margin-left: 6px;
+  font-size: 11px;
+  opacity: 0.35;
+}
+
+.admin-th--sortable.is-asc::after {
+  content: '↑';
+  opacity: 1;
+}
+
+.admin-th--sortable.is-desc::after {
+  content: '↓';
+  opacity: 1;
+}
+
 /* ========== FILTER FORM ========== */
 
 .admin-filter-form {
@@ -219,6 +256,13 @@
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+/* Коли фільтр-форма вкладена у .admin-stats-bar (вже має margin-bottom),
+   не подвоюємо відступ. */
+.admin-stats-bar .admin-filter-form {
+  margin-bottom: 0;
 }
 
 .admin-filter-form .form-input {

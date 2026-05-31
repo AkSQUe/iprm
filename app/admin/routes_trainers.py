@@ -37,6 +37,7 @@ def trainer_create():
             bio=form.bio.data,
             photo=form.photo.data,
             experience_years=form.experience_years.data,
+            email=(form.email.data or '').strip().lower() or None,
             is_active=form.is_active.data,
         )
         db.session.add(trainer)
@@ -77,6 +78,7 @@ def trainer_edit(trainer_id):
         trainer.bio = form.bio.data
         trainer.photo = form.photo.data
         trainer.experience_years = form.experience_years.data
+        trainer.email = (form.email.data or '').strip().lower() or None
         trainer.is_active = form.is_active.data
 
         try:

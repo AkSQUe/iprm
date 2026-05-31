@@ -61,6 +61,10 @@ class TrainerForm(FlaskForm):
         'Стаж (років)',
         validators=[Optional(), NumberRange(min=0)],
     )
+    email = StringField(
+        'Email (для admin-сповіщень)',
+        validators=[Optional(), Email(message='Невалідний email'), Length(max=255)],
+    )
     is_active = BooleanField('Активний', default=True)
 
 

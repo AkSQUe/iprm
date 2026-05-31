@@ -1,0 +1,197 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Одержувачі сповіщень | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-notifications.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <a href="{{ url_for('admin.notifications') }}" class="admin-breadcrumb__link">Сповіщення</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Одержувачі</span>
+        </div>
+        <h1 class="admin-hero__title">Одержувачі admin-сповіщень</h1>
+        <p class="admin-hero__subtitle">Хто отримує лист на кожну подію в системі</p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+    {% include 'admin/partials/_form_errors.html' ignore missing %}
+
+    {# ----- Глобальний пул менеджерів ----- #}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Менеджери заходів</h3>
+      <p class="admin-text-muted recipients-managers__hint">
+        Глобальний пул email-ів менеджерів. На цей список посилається прапор
+        <strong>«Менеджери заходів»</strong> у правилах подій нижче.
+        По одному email-у на рядок або через кому.
+      </p>
+      <form method="POST" action="{{ url_for('admin.notifications_recipients_managers_save') }}" class="admin-form admin-form--compact">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+          <textarea name="manager_emails" class="form-input" rows="4"
+                    placeholder="manager@iprm.com&#10;events@iprm.com">{{ manager_emails | join('\n') }}</textarea>
+        </div>
+        <div class="admin-form__actions recipients-form__actions">
+          <button type="submit" class="btn-admin btn-admin--primary">Зберегти менеджерів</button>
+        </div>
+      </form>
+    </div>
+
+    {# ----- Правила по подіях ----- #}
+    <form method="POST" action="{{ url_for('admin.notifications_recipients_save') }}" class="admin-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      {% for event_type, label in event_types %}
+        {% set rule = rules[event_type] %}
+        {% set preview_data = previews.get(event_type) %}
+        <div class="form-section admin-form__section" data-event-type="{{ event_type }}">
+          <h3 class="admin-form__section-title">{{ label }}</h3>
+
+          <div class="form-checkbox recipients-rule__enabled">
+            <input type="checkbox" id="rule__{{ event_type }}__enabled"
+                   name="rule__{{ event_type }}__enabled"
+                   data-recipients-toggle
+                   {% if rule.enabled %}checked{% endif %}>
+            <label for="rule__{{ event_type }}__enabled">
+              <strong>Сповіщення увімкнено</strong>
+              <span class="admin-text-muted">— якщо вимкнено, на подію не шлеться нічого</span>
+            </label>
+          </div>
+
+          <div class="form-checkbox">
+            <input type="checkbox" id="rule__{{ event_type }}__notify_admins"
+                   name="rule__{{ event_type }}__notify_admins"
+                   data-recipients-toggle
+                   {% if rule.notify_admins %}checked{% endif %}>
+            <label for="rule__{{ event_type }}__notify_admins">Адміністратори (User.is_admin)</label>
+          </div>
+
+          <div class="form-checkbox">
+            <input type="checkbox" id="rule__{{ event_type }}__notify_managers"
+                   name="rule__{{ event_type }}__notify_managers"
+                   data-recipients-toggle
+                   {% if rule.notify_managers %}checked{% endif %}>
+            <label for="rule__{{ event_type }}__notify_managers">
+              Менеджери заходів
+              <span class="admin-text-muted">({{ manager_emails | length }} email-ів у списку вище)</span>
+            </label>
+          </div>
+
+          <div class="form-checkbox">
+            <input type="checkbox" id="rule__{{ event_type }}__notify_event_trainer"
+                   name="rule__{{ event_type }}__notify_event_trainer"
+                   data-recipients-toggle
+                   {% if rule.notify_event_trainer %}checked{% endif %}>
+            <label for="rule__{{ event_type }}__notify_event_trainer">
+              Тренер заходу <span class="admin-text-muted">(береться з CourseInstance, якщо у тренера заповнено email)</span>
+            </label>
+          </div>
+
+          {# Для status_change -- вибір списку переходів-тригерів #}
+          {% if event_type == 'status_change' %}
+            {% set current_statuses = rule.effective_trigger_statuses %}
+            <div class="recipients-rule__trigger-statuses">
+              <span class="recipients-rule__trigger-statuses-title">
+                Реагувати на переходи в статуси:
+              </span>
+              {% for st in allowed_trigger_statuses %}
+                <div class="form-checkbox">
+                  <input type="checkbox"
+                         id="rule__{{ event_type }}__trigger_statuses__{{ st }}"
+                         name="rule__{{ event_type }}__trigger_statuses"
+                         value="{{ st }}"
+                         {% if st in current_statuses %}checked{% endif %}>
+                  <label for="rule__{{ event_type }}__trigger_statuses__{{ st }}">{{ st }}</label>
+                </div>
+              {% endfor %}
+              <p class="admin-text-muted">
+                Порожній вибір прирівнюється до дефолту: <code>{{ default_trigger_statuses | join(', ') }}</code>.
+              </p>
+            </div>
+          {% endif %}
+
+          <div class="form-group recipients-rule__extra">
+            <label class="form-label" for="rule__{{ event_type }}__extra_emails">
+              Додаткові email-и
+              <span class="admin-text-muted">— по одному на рядок або через кому</span>
+            </label>
+            <textarea id="rule__{{ event_type }}__extra_emails"
+                      name="rule__{{ event_type }}__extra_emails"
+                      class="form-input"
+                      data-recipients-extra
+                      rows="3"
+                      placeholder="someone@example.com">{{ (rule.extra_emails or []) | join('\n') }}</textarea>
+          </div>
+
+          {# Live-preview (заповнюється JS-ом на toggle/edit, початковий рендер -- server-side) #}
+          <div class="recipients-preview" data-recipients-preview>
+            {% if preview_data and preview_data.total %}
+              <span class="recipients-preview__total">Поточних одержувачів: {{ preview_data.total }}</span>
+              {% if preview_data.sources.admins %}
+                <br><span class="recipients-preview__source-label">Адміни:</span>
+                <span class="recipients-preview__emails">{{ preview_data.sources.admins | join(', ') }}</span>
+              {% endif %}
+              {% if preview_data.sources.managers %}
+                <br><span class="recipients-preview__source-label">Менеджери:</span>
+                <span class="recipients-preview__emails">{{ preview_data.sources.managers | join(', ') }}</span>
+              {% endif %}
+              {% if preview_data.sources.trainer %}
+                <br><span class="recipients-preview__source-label">Тренер:</span>
+                <span class="recipients-preview__emails">{{ preview_data.sources.trainer | join(', ') }}</span>
+              {% endif %}
+              {% if preview_data.sources.extra %}
+                <br><span class="recipients-preview__source-label">Додаткові:</span>
+                <span class="recipients-preview__emails">{{ preview_data.sources.extra | join(', ') }}</span>
+              {% endif %}
+            {% else %}
+              <span class="recipients-preview--empty">Нікого не охоплено -- правило вимкнено або всі джерела порожні.</span>
+            {% endif %}
+          </div>
+
+          <div class="recipients-rule__actions">
+            <button type="submit" form="test-form-{{ event_type }}"
+                    class="btn-admin btn-admin--secondary">
+              <span class="material-symbols-rounded">send</span> Тест-надіслати
+            </button>
+          </div>
+        </div>
+      {% endfor %}
+
+      <div class="admin-form__actions recipients-form__actions">
+        <button type="submit" class="btn-admin btn-admin--primary">Зберегти правила</button>
+      </div>
+    </form>
+
+    {# Hidden-форми для test-надсилання. data-confirm на формі -- глобальний
+       confirm-action.js перехоплює submit і показує стилізовану модалку. #}
+    {% for event_type, label in event_types %}
+    <form method="POST" id="test-form-{{ event_type }}"
+          action="{{ url_for('admin.notifications_recipients_test', event_type=event_type) }}"
+          data-confirm="Надіслати тестовий лист на поточних одержувачів події «{{ label }}»?"
+          data-confirm-ok="Надіслати"
+          hidden>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+    {% endfor %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script defer src="{{ url_for('static', filename='js/page-admin-recipients.js') }}?v={{ assets_version }}"></script>
+{% endblock %}

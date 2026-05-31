@@ -281,7 +281,7 @@ class EmailService:
             )
             return None
         user = registration.user
-        return EmailService.send_email(
+        result = EmailService.send_email(
             to=user.email,
             subject=f'Реєстрацію підтверджено: {event.title}',
             template_name='registration_confirmed',
@@ -289,6 +289,13 @@ class EmailService:
             trigger='registration',
             registration_id=registration.id,
         )
+        EmailService.notify_admins_event(
+            event_type='registration',
+            registration=registration,
+            event=event,
+            kind_label='Нова реєстрація на захід',
+        )
+        return result
 
     @staticmethod
     def send_email_confirmation(user, confirm_url):
@@ -310,7 +317,7 @@ class EmailService:
             )
             return None
         user = registration.user
-        return EmailService.send_email(
+        result = EmailService.send_email(
             to=user.email,
             subject=f'Оплату підтверджено: {event.title}',
             template_name='payment_confirmed',
@@ -318,6 +325,13 @@ class EmailService:
             trigger='payment',
             registration_id=registration.id,
         )
+        EmailService.notify_admins_event(
+            event_type='payment',
+            registration=registration,
+            event=event,
+            kind_label='Підтверджена оплата',
+        )
+        return result
 
     @staticmethod
     def send_course_reminder(registration, days_until):
@@ -352,7 +366,7 @@ class EmailService:
             return None
         user = registration.user
         label = dict(registration.STATUSES).get(new_status, new_status)
-        return EmailService.send_email(
+        result = EmailService.send_email(
             to=user.email,
             subject=f'Статус реєстрації змінено: {event.title}',
             template_name='status_changed',
@@ -364,6 +378,19 @@ class EmailService:
             trigger='status_change',
             registration_id=registration.id,
         )
+        # Admin-нотифікацію шлемо за фільтром rule.trigger_statuses
+        # (за замовчуванням -- лише 'cancelled'). resolve() сам відсіє,
+        # якщо new_status не в списку.
+        EmailService.notify_admins_event(
+            event_type='status_change',
+            registration=registration,
+            event=event,
+            kind_label='Скасування реєстрації' if new_status == 'cancelled'
+                else f'Зміна статусу: {label}',
+            extra_context={'new_status_label': label},
+            new_status=new_status,
+        )
+        return result
 
     @staticmethod
     def send_certificate(certificate):
@@ -396,56 +423,165 @@ class EmailService:
     def send_course_request_notification(course_request):
         """Повідомити адмінів про новий CourseRequest (клієнт залишив запит).
 
-        Отримувач -- SiteSettings.email (контактний email інституту). Якщо
-        не заповнений -- шлемо на всіх User.is_admin=True. Якщо і таких
-        немає -- пропускаємо з warning.
+        Делегує у notify_admins_with_template (course_request не має
+        registration/instance/trainer-контексту, тож шлемо event-specific
+        шаблон course_request_notification.html напряму).
         """
         from app.models.site_settings import SiteSettings
-        from app.models.user import User
-
-        recipients = []
         settings = SiteSettings.get()
-        if settings.email:
-            recipients.append(settings.email.strip())
-        else:
-            admins = User.query.filter_by(is_admin=True, is_active=True).all()
-            recipients = [u.email for u in admins if u.email]
-
-        if not recipients:
-            logger.warning(
-                'No admin recipients configured for CourseRequest #%s notification',
-                course_request.id,
-            )
-            return []
-
-        course = course_request.course
-        subject = f'Новий запит на курс: {course.title if course else course_request.course_id}'
-
-        # site_settings.website_url -- стабільний джерело правди для public URL.
-        # url_for(_external=True) у проді повертає https://localhost/..., бо
-        # SERVER_NAME не сконфігуровано (у Flask request-context хост береться
-        # з заголовка, але background email-thread не має реального request).
         base = (settings.website_url or '').rstrip('/')
         admin_url = (
             f'{base}/admin/course-requests/{course_request.id}/edit'
             if base else f'/admin/course-requests/{course_request.id}/edit'
         )
+        course = course_request.course
+        subject = (
+            f'Новий запит на курс: '
+            f'{course.title if course else course_request.course_id}'
+        )
+        return EmailService.notify_admins_with_template(
+            event_type='course_request',
+            subject=subject,
+            template_name='course_request_notification',
+            context={
+                'request_obj': course_request,
+                'course': course,
+                'admin_url': admin_url,
+            },
+        )
 
+    # ------------------------------------------------------------------
+    # ADMIN NOTIFICATION HELPERS (Phase 2 refactor)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _build_admin_subject(event_type, event, user):
+        """Спільне правило формування subject для admin-нотифікації.
+
+        Замість того, щоб кожен send_* конструював свій рядок (DRY),
+        формат уніфіковано: '<префікс>: <event-title> -- <user>'.
+        Префікс залежить від event_type, fallback -- 'Подія'.
+        """
+        prefixes = {
+            'registration': 'Нова реєстрація',
+            'payment': 'Оплата отримана',
+            'status_change': 'Зміна статусу реєстрації',
+        }
+        prefix = prefixes.get(event_type, 'Подія')
+        title = event.title if event is not None else event_type
+        who = (user.full_name if user is not None else None) or \
+              (user.email if user is not None else 'unknown')
+        return f'{prefix}: {title} -- {who}'
+
+    @staticmethod
+    def _admin_url_for_registration(registration):
+        """Deep-link на сторінку реєстрацій конкретного instance, з
+        fallback на загальний список -- якщо немає website_url або
+        instance_id."""
+        from app.models.site_settings import SiteSettings
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        if registration is not None and registration.instance_id is not None:
+            tail = f'/admin/instances/{registration.instance_id}/registrations'
+        else:
+            tail = '/admin/registrations'
+        return f'{base}{tail}' if base else tail
+
+    @staticmethod
+    def _send_to_recipients(recipients, *, subject, template_name,
+                            context, trigger, registration_id):
+        """Циклічно шле send_email кожному адресату з ізоляцією помилок.
+
+        send_email самостійно ловить шаблонні помилки, але INSERT
+        email_logs (CHECK / IntegrityError) і несподіванки залишають
+        сесію у failed-state -- наступний send_email впав би
+        PendingRollbackError. Огортаємо кожну ітерацію у try з
+        rollback, щоб провал на одній адресі не блокував решту.
+        """
         results = []
         for to in recipients:
-            entry = EmailService.send_email(
-                to=to,
-                subject=subject,
-                template_name='course_request_notification',
-                context={
-                    'request_obj': course_request,
-                    'course': course,
-                    'admin_url': admin_url,
-                },
-                trigger='course_request',
-            )
-            results.append(entry)
+            try:
+                entry = EmailService.send_email(
+                    to=to,
+                    subject=subject,
+                    template_name=template_name,
+                    context=context,
+                    trigger=trigger,
+                    registration_id=registration_id,
+                )
+                results.append(entry)
+            except Exception:
+                db.session.rollback()
+                logger.exception(
+                    'notify_admins: send_email failed for to=%s trigger=%s',
+                    to, trigger,
+                )
+                results.append(None)
         return results
+
+    @staticmethod
+    def notify_admins_event(event_type, registration=None, event=None,
+                            kind_label=None, extra_context=None,
+                            new_status=None):
+        """Generic admin-нотифікація з шаблоном admin_event_notification.html.
+
+        Використовується для registration / payment / status_change. Усе,
+        що потрібно, тримається у registration (з якого витягуємо instance,
+        user, instance_id). subject формується через _build_admin_subject.
+        new_status передається у resolve() для status_change-фільтрації.
+        """
+        from app.services.notification_recipients import resolve
+
+        instance = registration.instance if registration is not None else None
+        recipients = resolve(event_type, instance=instance, new_status=new_status)
+        if not recipients:
+            return []
+
+        user = registration.user if registration is not None else None
+        subject = EmailService._build_admin_subject(event_type, event, user)
+        ctx = {
+            'kind_label': kind_label or event_type,
+            'registration': registration,
+            'event': event,
+            'admin_url': EmailService._admin_url_for_registration(registration),
+        }
+        if extra_context:
+            ctx.update(extra_context)
+
+        return EmailService._send_to_recipients(
+            recipients,
+            subject=subject,
+            template_name='admin_event_notification',
+            context=ctx,
+            trigger=event_type,
+            registration_id=registration.id if registration is not None else None,
+        )
+
+    @staticmethod
+    def notify_admins_with_template(event_type, subject, template_name,
+                                    context, registration=None,
+                                    new_status=None):
+        """Admin-нотифікація з event-specific шаблоном і власним subject.
+
+        Використовується для course_request (з шаблоном
+        course_request_notification.html, що передує цьому рефактору
+        і має власний дизайн). Caller повністю контролює subject і
+        context; ми лише резолвимо адресатів і шлемо.
+        """
+        from app.services.notification_recipients import resolve
+
+        instance = registration.instance if registration is not None else None
+        recipients = resolve(event_type, instance=instance, new_status=new_status)
+        if not recipients:
+            return []
+
+        return EmailService._send_to_recipients(
+            recipients,
+            subject=subject,
+            template_name=template_name,
+            context=context,
+            trigger=event_type,
+            registration_id=registration.id if registration is not None else None,
+        )
 
     @staticmethod
     def send_course_request_received(course_request):

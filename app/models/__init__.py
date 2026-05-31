@@ -9,6 +9,7 @@ from app.models.certificate import Certificate
 from app.models.clinic import Clinic
 from app.models.email_log import EmailLog
 from app.models.email_settings import EmailSettings
+from app.models.notification_rule import NotificationRule
 from app.models.payment_transaction import PaymentTransaction
 from app.models.site_settings import SiteSettings
 from app.models.error_log import ErrorLog
@@ -21,7 +22,7 @@ __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'AuthIdentity',
     'MedicalProfile', 'Trainer', 'ProgramBlock', 'EventRegistration',
     'Certificate',
-    'Clinic', 'EmailLog', 'EmailSettings',
+    'Clinic', 'EmailLog', 'EmailSettings', 'NotificationRule',
     'PaymentTransaction', 'SiteSettings', 'ErrorLog',
     'Course', 'CourseInstance', 'CourseRequest', 'CourseRequestAudit',
     'WebhookDelivery',

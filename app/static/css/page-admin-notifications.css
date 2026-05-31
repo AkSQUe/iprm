@@ -21,3 +21,88 @@
 .admin-queue-alert__title--error {
   color: var(--iprm-error-text);
 }
+
+/* ========== /admin/notifications/recipients ========== */
+
+.recipients-managers__hint {
+  margin-bottom: 16px;
+}
+
+.recipients-form__actions {
+  text-align: right;
+}
+
+.recipients-rule__enabled {
+  margin-bottom: 16px;
+}
+
+.recipients-rule__extra {
+  margin-top: 16px;
+}
+
+.recipients-rule__trigger-statuses {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: var(--iprm-bg, #f7f7f8);
+  border-radius: var(--iprm-radius-sm, 8px);
+}
+
+.recipients-rule__trigger-statuses-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.recipients-rule__trigger-statuses .form-checkbox {
+  display: inline-flex;
+  margin-right: 16px;
+  margin-bottom: 0;
+}
+
+/* Live-preview одержувачів (заповнюється з /preview JSON) */
+.recipients-preview {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: var(--iprm-accent-light, #f1eeff);
+  border: 1px solid var(--iprm-border, #e3e3ea);
+  border-radius: var(--iprm-radius-sm, 8px);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.recipients-preview__total {
+  font-weight: 700;
+  color: var(--iprm-accent, #7055a4);
+}
+
+.recipients-preview__source-label {
+  display: inline-block;
+  font-weight: 600;
+  color: var(--iprm-text-light, #6b6b73);
+  margin-right: 6px;
+}
+
+.recipients-preview__emails {
+  font-family: var(--iprm-font-mono, monospace);
+  font-size: 12px;
+  color: var(--iprm-text, #222);
+  word-break: break-all;
+}
+
+.recipients-preview--empty {
+  color: var(--iprm-text-light);
+  font-style: italic;
+}
+
+.recipients-rule__actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.recipients-rule__test-form {
+  display: inline-block;
+}

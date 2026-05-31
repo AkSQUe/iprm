@@ -114,6 +114,11 @@ class SiteSettings(TimestampMixin, db.Model):
     recaptcha_score_threshold = db.Column(db.Float, default=0.5, nullable=False)
     recaptcha_secret_key_set_at = db.Column(db.DateTime(timezone=True))
 
+    # Глобальний пул менеджерських email-ів. На цей список посилається
+    # прапор notify_managers у NotificationRule -- адмін веде його один раз
+    # і вмикає/вимикає в потрібних подіях.
+    event_manager_emails = db.Column(db.JSON, default=list, nullable=False)
+
     # Partner integration (MM Medic etc.)
     partner_integration_enabled = db.Column(db.Boolean, default=False, nullable=False)
     _partner_api_key_encrypted = db.Column('partner_api_key', db.String(500), default='')

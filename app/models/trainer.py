@@ -12,6 +12,10 @@ class Trainer(TimestampMixin, db.Model):
     bio = db.Column(db.Text)
     photo = db.Column(db.String(500))
     experience_years = db.Column(db.Integer)
+    # Email тренера -- для admin-нотифікації про реєстрацію/скасування на
+    # його захід (NotificationRule.notify_event_trainer). Nullable, бо
+    # історично тренерів додавали без контактної пошти.
+    email = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True, index=True)
 
     __table_args__ = (

@@ -1,0 +1,55 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, spacer %}
+
+{% block title %}{{ kind_label or 'Admin сповіщення' }}{% endblock %}
+
+{% block preview_text %}{{ kind_label or 'Подія в системі' }}: {{ event.title if event else 'захід' }}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 26px; font-weight: 700; color: #111827; line-height: 1.25;">
+        {{ kind_label or 'Adminсповіщення' }}
+    </h1>
+
+    {% if event %}
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+        {{ event.title }}
+    </p>
+    {% endif %}
+
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
+        Деталі
+    </p>
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                {% if registration %}
+                {{ detail_row("Учасник", registration.user.full_name or registration.user.email if registration.user else '---') }}
+                {% if registration.user and registration.user.email %}
+                {{ detail_row("Email", registration.user.email) }}
+                {% endif %}
+                {{ detail_row("№ реєстрації", registration.id) }}
+                {% if new_status_label %}
+                {{ detail_row("Новий статус", new_status_label) }}
+                {% endif %}
+                {% endif %}
+                {% if event and event.start_date %}
+                {{ detail_row("Дата заходу", event.start_date.strftime('%d.%m.%Y %H:%M')) }}
+                {% endif %}
+                {% if event and event.location %}
+                {{ detail_row("Місце", event.location) }}
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    {% if admin_url %}
+    {{ button_primary("Відкрити в адмінці", admin_url) }}
+    {% endif %}
+
+    {{ spacer(8) }}
+
+    <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
+        Автоматичне сповіщення. Налаштувати одержувачів можна у
+        розділі «Сповіщення → Одержувачі» адмінки.
+    </p>
+{% endblock %}
