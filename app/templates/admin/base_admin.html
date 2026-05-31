@@ -13,4 +13,5 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/admin-confirm.js') }}?v={{ assets_version }}"></script>
+<script src="{{ url_for('static', filename='js/admin-table-sort.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
