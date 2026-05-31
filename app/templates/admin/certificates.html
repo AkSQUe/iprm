@@ -1,0 +1,119 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Сертифікати | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Сертифікати</span>
+        </div>
+        <h1 class="admin-hero__title">Сертифікати</h1>
+        <p class="admin-hero__subtitle">Видані сертифікати слухачів</p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <!-- Statistics -->
+    <div class="admin-stat-cards">
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ stats.total }}</span>
+        <span class="admin-stat-card__label">Всього</span>
+      </div>
+      <div class="admin-stat-card admin-stat-card--success">
+        <span class="admin-stat-card__value">{{ stats.active }}</span>
+        <span class="admin-stat-card__label">Дійсні</span>
+      </div>
+      <div class="admin-stat-card admin-stat-card--danger">
+        <span class="admin-stat-card__value">{{ stats.revoked }}</span>
+        <span class="admin-stat-card__label">Відкликані</span>
+      </div>
+    </div>
+
+    {% if certificates %}
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Номер</th>
+          <th>Учасник</th>
+          <th>Захід</th>
+          <th>БПР</th>
+          <th>Видано</th>
+          <th>Ким</th>
+          <th>Статус</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cert in certificates %}
+        <tr>
+          <td><strong>{{ cert.number }}</strong></td>
+          <td>
+            <strong>{{ cert.recipient_name }}</strong>
+            {% if cert.user %}<br><small>{{ cert.user.email }}</small>{% endif %}
+          </td>
+          <td>{{ cert.event_title }}</td>
+          <td>
+            {% if cert.cpd_points %}{{ cert.cpd_points }}{% else %}<span class="admin-text-muted">--</span>{% endif %}
+          </td>
+          <td>{{ cert.issued_at.strftime('%d.%m.%Y') }}</td>
+          <td>
+            {% if cert.issued_by %}<small>{{ cert.issued_by.email }}</small>{% else %}<span class="admin-text-muted">--</span>{% endif %}
+          </td>
+          <td>
+            {% if cert.revoked %}
+              <span class="badge badge--cancelled">Відкликано</span>
+            {% else %}
+              <span class="badge badge--active">Дійсний</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="admin-table__actions">
+              <a href="{{ url_for('admin.registration_certificate_download', reg_id=cert.registration_id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Завантажити PDF"><span class="material-symbols-rounded">download</span></a>
+              {% if not cert.revoked %}
+              <form method="POST" action="{{ url_for('admin.registration_certificate_resend', reg_id=cert.registration_id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--sm" title="Переслати на email"><span class="material-symbols-rounded">forward_to_inbox</span></button>
+              </form>
+              <form method="POST" action="{{ url_for('admin.certificate_revoke', cert_id=cert.id) }}" data-confirm="Відкликати сертифікат? Доступ користувача буде закрито.">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" title="Відкликати"><span class="material-symbols-rounded">block</span></button>
+              </form>
+              {% else %}
+              <form method="POST" action="{{ url_for('admin.certificate_revoke', cert_id=cert.id) }}" data-confirm="Відновити сертифікат?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm" title="Відновити"><span class="material-symbols-rounded">restart_alt</span></button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div class="admin-empty">
+      <span class="material-symbols-rounded admin-empty__icon">workspace_premium</span>
+      <h3 class="admin-empty__title">Сертифікатів ще немає</h3>
+      <p>Видавайте сертифікати на сторінці <a href="{{ url_for('admin.registrations_all') }}">Реєстрації</a> кнопкою «Видати сертифікат»</p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

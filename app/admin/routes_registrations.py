@@ -194,6 +194,35 @@ def registration_certificate_download(reg_id):
     )
 
 
+@admin_bp.route('/certificates/<int:cert_id>/revoke', methods=['POST'])
+@admin_required
+def certificate_revoke(cert_id):
+    """Відкликати або відновити сертифікат (toggle)."""
+    from app.models.certificate import Certificate
+    from app.models.mixins import utcnow
+
+    cert = db.session.get(Certificate, cert_id)
+    if not cert:
+        flash('Сертифікат не знайдено', 'error')
+        return redirect(url_for('admin.certificates'))
+
+    cert.revoked = not cert.revoked
+    cert.revoked_at = utcnow() if cert.revoked else None
+    try:
+        db.session.commit()
+        action = 'відкликано' if cert.revoked else 'відновлено'
+        audit_logger.info(
+            'Admin %s %s certificate %s', current_user.email, action, cert.number,
+        )
+        flash(f'Сертифікат {cert.number} {action}', 'success')
+    except Exception:
+        logger.exception('Failed to toggle revoke for certificate %d', cert_id)
+        db.session.rollback()
+        flash('Помилка при оновленні', 'error')
+
+    return redirect(url_for('admin.certificates'))
+
+
 @admin_bp.route('/registrations')
 @admin_required
 def registrations_all():

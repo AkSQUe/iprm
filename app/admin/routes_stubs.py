@@ -18,12 +18,21 @@ def dashboard():
 @admin_bp.route('/certificates')
 @admin_required
 def certificates():
-    return render_template(
-        'admin/stub.html',
-        admin_section='certificates',
-        page_title='Сертифікати',
-        page_subtitle='Управління сертифікатами слухачів',
+    from sqlalchemy.orm import joinedload
+    from app.models.certificate import Certificate
+
+    certs = (
+        Certificate.query
+        .options(
+            joinedload(Certificate.user),
+            joinedload(Certificate.issued_by),
+        )
+        .order_by(Certificate.issued_at.desc())
+        .all()
     )
+    active = sum(1 for c in certs if not c.revoked)
+    stats = {'total': len(certs), 'active': active, 'revoked': len(certs) - active}
+    return render_template('admin/certificates.html', certificates=certs, stats=stats)
 
 
 @admin_bp.route('/users')
