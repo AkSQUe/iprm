@@ -70,3 +70,49 @@ apt-get install -y libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libffi
 - **Виключена** з `rsync --delete` (`.github/workflows/deploy.yml`), тож видані
   сертифікати **переживають деплой**. У git не комітиться (`.gitignore`).
 - Власник процесу gunicorn (root) має мати право запису в цю теку.
+
+## Google Analytics -- first-party проксі (nginx)
+
+Блокувальники відстеження (Brave, Firefox ETP, uBlock, AdGuard, DNS-блок)
+ріжуть запити до `googletagmanager.com` / `google-analytics.com` за доменом,
+тож частина трафіку не потрапляє в GA4. Щоб це оминути, лоадер `gtag.js` і
+маяки збору (`/g/collect`) віддаються через **власний домен** (`/ngx-i/...`),
+а nginx проксує їх на Google. Для блокувальників це first-party-запити.
+
+Код застосунку вже налаштований ([partials/_analytics.html](../app/templates/partials/_analytics.html)
++ [analytics.js](../app/static/js/analytics.js)): лоадер вантажиться з
+`/ngx-i/loader.js`, а `transport_url` вказує на `/ngx-i`. Залишилось додати
+проксі-локації в nginx (у `server {}` сайту, **вище** за `location /`):
+
+```nginx
+# --- Google Analytics first-party proxy ---
+# Лоадер gtag.js: /ngx-i/loader.js?id=... -> googletagmanager
+location = /ngx-i/loader.js {
+    proxy_pass https://www.googletagmanager.com/gtag/js;
+    proxy_set_header Host www.googletagmanager.com;
+    proxy_ssl_server_name on;
+    proxy_set_header Accept-Encoding "";
+    expires 15m;
+}
+# Маяки збору: /ngx-i/g/collect -> google-analytics
+location /ngx-i/g/ {
+    proxy_pass https://www.google-analytics.com/g/;
+    proxy_set_header Host www.google-analytics.com;
+    proxy_ssl_server_name on;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    add_header Cache-Control "no-store" always;
+}
+```
+
+Застосувати: вставити блоки в конфіг сайту, далі `nginx -t && systemctl reload nginx`.
+
+**Порядок:** додайте nginx-локації **перед** деплоєм коду (без коду вони просто
+не використовуються), інакше буде вікно, коли `/ngx-i/loader.js` віддаватиме 404.
+
+**Перевірка:** `curl -sI https://plasma-regen.com/ngx-i/loader.js?id=G-T2LHJ436ZG`
+-> `200` і `content-type: application/javascript`.
+
+**Обмеження (geo):** через проксі Google бачить IP сервера, тож геолокація
+користувачів може показуватись як локація сервера (Київ). Кількість візитів і
+події відновлюються коректно. Для точного geo потрібен server-side GTM
+(окремий сервіс) -- виходить за межі цього проксі.

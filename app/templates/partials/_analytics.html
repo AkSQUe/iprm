@@ -8,6 +8,11 @@
    data-ga-id (CLAUDE.md: No Inline Policy). #}
 {% set _ga_id = site_settings.effective_google_analytics_id %}
 {% if _ga_id %}
-<script async src="https://www.googletagmanager.com/gtag/js?id={{ _ga_id }}"></script>
-<script async src="{{ url_for('static', filename='js/analytics.js') }}?v={{ assets_version }}" data-ga-id="{{ _ga_id }}"></script>
+{# First-party проксі (nginx): лоадер і collect-маяки йдуть через власний
+   домен (/ngx-i/...), щоб оминути блокувальники, що ріжуть google-домени.
+   Конфіг nginx -- у docs/deployment.md. Базу транспорту передаємо в
+   analytics.js через data-ga-transport (там виставляється transport_url). #}
+<script async src="/ngx-i/loader.js?id={{ _ga_id }}"></script>
+<script async src="{{ url_for('static', filename='js/analytics.js') }}?v={{ assets_version }}"
+        data-ga-id="{{ _ga_id }}" data-ga-transport="/ngx-i"></script>
 {% endif %}

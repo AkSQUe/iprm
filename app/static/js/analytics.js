@@ -20,5 +20,14 @@
   window.dataLayer = window.dataLayer || [];
   window.gtag = function () { window.dataLayer.push(arguments); };
   window.gtag('js', new Date());
-  window.gtag('config', id);
+
+  // First-party транспорт: маяки collect шлемо на власний домен (nginx
+  // проксує їх на google-analytics.com), щоб оминути блокувальники.
+  var transport = cur.getAttribute('data-ga-transport');
+  var cfg = {};
+  if (transport) {
+    cfg.transport_url = window.location.origin + transport;
+    cfg.first_party_collection = true;
+  }
+  window.gtag('config', id, cfg);
 })();
