@@ -192,29 +192,38 @@ def create_app(config_name=None):
         # Google Analytics 4 (gtag.js): домени додаємо лише коли GA увімкнено
         # (інакше gtag.js і маяки збору даних блокуються CSP -> нуль даних у GA).
         from flask import g
+        ga_active = False
+        gsi_active = False
         try:
             settings = getattr(g, 'site_settings', None)
             if settings is None:
                 from app.models.site_settings import SiteSettings
                 settings = SiteSettings.get()
             ga_active = bool(settings.effective_google_analytics_id)
+            # Google One Tap (GSI) вставляє gsi/client лише коли OAuth налаштовано.
+            gsi_active = settings.is_google_oauth_configured
         except Exception:
-            ga_active = False
+            pass
         ga_script = ' https://www.googletagmanager.com' if ga_active else ''
         ga_img = (' https://www.googletagmanager.com https://www.google-analytics.com'
                   ' https://*.google-analytics.com') if ga_active else ''
         ga_conn = (' https://www.googletagmanager.com https://www.google-analytics.com'
                    ' https://*.google-analytics.com https://*.analytics.google.com') if ga_active else ''
 
+        # Google One Tap / Sign-In (GSI): script + style + frame + connect з
+        # accounts.google.com, аватарки -- з googleusercontent.
+        gsi = ' https://accounts.google.com' if gsi_active else ''
+        gsi_img = ' https://*.googleusercontent.com' if gsi_active else ''
+
         csp = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'" + gstatic + ga_script + "; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "script-src 'self' 'unsafe-inline'" + gstatic + ga_script + gsi + "; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com" + gsi + "; "
             "font-src 'self' https://fonts.gstatic.com; "
-            "img-src 'self' data:" + ga_img + "; "
+            "img-src 'self' data:" + ga_img + gsi_img + "; "
             "frame-src 'self' blob: https://www.liqpay.ua https://checkout.liqpay.ua"
-            + gframe + "; "
-            "connect-src 'self'" + gconn + ga_conn
+            + gframe + gsi + "; "
+            "connect-src 'self'" + gconn + ga_conn + gsi
         )
         response.headers['Content-Security-Policy'] = csp
         if not app.debug:
