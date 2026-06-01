@@ -192,6 +192,24 @@ def _event_snapshot(registration):
     return title, event_date, cpd, lecturer
 
 
+_POINTS_BADGE_DIR = ('images', 'certificates')
+_POINTS_BADGE_DEFAULT = 10
+
+
+def points_badge_url(cpd_points):
+    """Відносний (від static) шлях до розетки балів БПР під цю кількість.
+
+    Конвенція файлів: images/certificates/{N}-points-BPR.webp.
+    Якщо файлу під конкретну кількість ще немає -- беремо дефолт (10 балів).
+    """
+    base = os.path.join(current_app.static_folder, *_POINTS_BADGE_DIR)
+    points = cpd_points or _POINTS_BADGE_DEFAULT
+    fname = f'{points}-points-BPR.webp'
+    if not os.path.exists(os.path.join(base, fname)):
+        fname = f'{_POINTS_BADGE_DEFAULT}-points-BPR.webp'
+    return '/'.join(_POINTS_BADGE_DIR) + '/' + fname
+
+
 def certificate_abs_path(certificate):
     """Абсолютний шлях до збереженого PDF.
 
@@ -211,6 +229,7 @@ def render_certificate_html(certificate):
         event_date=format_ua_date(certificate.event_date),
         molecules_svg=molecular_svg(certificate.number),
         frame_svg=frame_ring_svg(),
+        points_badge=points_badge_url(certificate.cpd_points),
     )
 
 
