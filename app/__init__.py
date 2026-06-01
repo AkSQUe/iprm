@@ -189,15 +189,32 @@ def create_app(config_name=None):
         gframe = ' https://www.google.com' if recaptcha_active else ''
         gconn = ' https://www.google.com' if recaptcha_active else ''
 
+        # Google Analytics 4 (gtag.js): домени додаємо лише коли GA увімкнено
+        # (інакше gtag.js і маяки збору даних блокуються CSP -> нуль даних у GA).
+        from flask import g
+        try:
+            settings = getattr(g, 'site_settings', None)
+            if settings is None:
+                from app.models.site_settings import SiteSettings
+                settings = SiteSettings.get()
+            ga_active = bool(settings.effective_google_analytics_id)
+        except Exception:
+            ga_active = False
+        ga_script = ' https://www.googletagmanager.com' if ga_active else ''
+        ga_img = (' https://www.googletagmanager.com https://www.google-analytics.com'
+                  ' https://*.google-analytics.com') if ga_active else ''
+        ga_conn = (' https://www.googletagmanager.com https://www.google-analytics.com'
+                   ' https://*.google-analytics.com https://*.analytics.google.com') if ga_active else ''
+
         csp = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'" + gstatic + "; "
+            "script-src 'self' 'unsafe-inline'" + gstatic + ga_script + "; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "
-            "img-src 'self' data:; "
+            "img-src 'self' data:" + ga_img + "; "
             "frame-src 'self' blob: https://www.liqpay.ua https://checkout.liqpay.ua"
             + gframe + "; "
-            "connect-src 'self'" + gconn
+            "connect-src 'self'" + gconn + ga_conn
         )
         response.headers['Content-Security-Policy'] = csp
         if not app.debug:
