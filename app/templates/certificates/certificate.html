@@ -103,11 +103,14 @@
   /* Печатка і підписи -- overlay (absolute): не впливають на потік тексту,
      прив'язані до низу колонки (над ПІБ / датою), можуть накладатися. */
   .cert__stamp-img {
-    position: absolute; left: 50%; bottom: 8mm; transform: translateX(-50%);
+    position: absolute; left: 6mm; bottom: 8mm;
     height: 39mm; width: auto;
   }
+  /* Anchor від правого краю футера (а не від колонки) -- WeasyPrint у нас
+     не виставляє .cert__col як position context, тож left:50% колонки
+     рахується від футера. Зсуваємо підпис вправо за правим краєм. */
   .cert__sign-img {
-    position: absolute; left: calc(50% + 4mm); bottom: 8mm; transform: translateX(-50%);
+    position: absolute; right: 0; bottom: 2mm;
     height: 45mm; width: auto;
   }
   .cert__date { font-size: 10.5pt; font-weight: 600; color: #5d4691; }
@@ -144,14 +147,14 @@
       </div>
 
       <div class="cert__footer">
-        <!-- Підпис 1: Директор (підпис директора -- на печатці в центрі) -->
+        <!-- Підпис 1: Директор (печатка тут -- overlay над текстом колонки) -->
         <div class="cert__col">
+          <img class="cert__stamp-img" src="images/certificates/IPRM-stamp.webp" alt="Печатка">
           <div class="cert__person">Заболотня Д.О.</div>
           <div class="cert__role">Директор Інституту</div>
         </div>
-        <!-- Печатка + дата -->
+        <!-- Дата + місто -->
         <div class="cert__col cert__col--center">
-          <img class="cert__stamp-img" src="images/certificates/IPRM-stamp.webp" alt="Печатка">
           <div class="cert__date">{{ issued_date }}</div>
           <div class="cert__city">м. Київ</div>
         </div>
