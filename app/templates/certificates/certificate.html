@@ -58,17 +58,23 @@
     color: #ffffff; line-height: 1;
   }
 
+  /* Однаковий відступ між усіма рядками тіла. */
   .cert__body { padding: 0 22mm; text-align: center; }
+  .cert__body > p { margin-bottom: 9mm; }
+  .cert__body > p:last-child { margin-bottom: 0; }
 
-  .cert__eyebrow { font-size: 12pt; color: #9b8ac0; margin-bottom: 21mm; }
+  /* Єдиний стиль другорядного тексту (eyebrow / lead / рядок про бали). */
+  .cert__eyebrow,
+  .cert__lead,
+  .cert__points-text {
+    font-size: 12pt; font-weight: 400; color: #9b8ac0;
+  }
+  .cert__points-text strong { font-weight: 700; color: #6a4fa0; }
 
   .cert__name {
     font-family: 'Nunito', sans-serif; font-weight: 700;
     font-size: 30pt; color: #5d4691; line-height: 1.12;
-    margin-bottom: 8mm;
   }
-
-  .cert__lead { font-size: 12pt; color: #9b8ac0; margin-bottom: 3.5mm; }
 
   .cert__event {
     font-family: 'Nunito', sans-serif; font-weight: 600;
@@ -91,16 +97,18 @@
   .cert__col { width: 54mm; text-align: center; }
   .cert__col--center { width: 60mm; }
 
-  /* TODO: замінити плейсхолдер на <img> підпису */
   .cert__sign-ph {
     height: 16mm;
     display: flex; align-items: flex-end; justify-content: center;
     font-size: 9pt; font-style: italic; color: #b3a6cc;
   }
+  .cert__sign-img { height: 45mm; width: auto; transform: translateX(4mm); }
   .cert__person { font-weight: 700; font-size: 11pt; color: #5d4691; margin-top: 2.5mm; }
   .cert__role { font-size: 9.5pt; color: #9b8ac0; margin-top: 0.5mm; }
 
-  /* TODO: замінити плейсхолдер на <img> печатки */
+  /* Печатка (зображення) */
+  .cert__stamp-img { height: 39mm; width: auto; display: block; margin: 0 auto 2mm; }
+  /* Плейсхолдер печатки (якщо зображення відсутнє) */
   .cert__stamp-ph {
     width: 30mm; height: 30mm; margin: 0 auto 3mm;
     border: 0.4mm dashed #bfb3d6; border-radius: 50%;
@@ -132,10 +140,13 @@
       <div class="cert__banner"><span>СЕРТИФІКАТ</span></div>
 
       <div class="cert__body">
-        <p class="cert__eyebrow">виданий</p>
+        <p class="cert__eyebrow">Цей сертифікат засвідчує, що</p>
         <p class="cert__name">{{ certificate.recipient_name }}</p>
-        <p class="cert__lead">про успішне завершення заходу</p>
+        <p class="cert__lead">успішно завершив(-ла) захід</p>
         <p class="cert__event">«{{ certificate.event_title }}»</p>
+        {% if certificate.cpd_points %}
+        <p class="cert__points-text">та отримав(-ла) <strong>{{ certificate.cpd_points }} балів БПР</strong></p>
+        {% endif %}
       </div>
 
       <div class="cert__footer">
@@ -145,15 +156,22 @@
           <div class="cert__person">Заболотня Д.О.</div>
           <div class="cert__role">Директор Інституту</div>
         </div>
-        <!-- Печатка (плейсхолдер) + дата -->
+        <!-- Печатка + дата -->
         <div class="cert__col cert__col--center">
-          <div class="cert__stamp-ph">печатка</div>
+          <img class="cert__stamp-img" src="images/certificates/IPRM-stamp.webp" alt="Печатка">
           <div class="cert__date">{{ issued_date }}</div>
           <div class="cert__city">м. Київ</div>
         </div>
-        <!-- Підпис 2: Лектор (ім'я тренера заходу; підпис -- плейсхолдер) -->
+        <!-- Підпис 2: Лектор (ім'я тренера заходу) -->
+        {# TODO: Додати підписи всіх лекторів і підставляти підпис відповідно
+           до лектора заходу (за аналогією з розеткою балів points_badge_url):
+           зберігати файл підпису для кожного тренера (напр.
+           images/certificates/signatures/{trainer_slug}.webp або поле в моделі
+           Trainer), у сервісі резолвити шлях за instance.effective_trainer і
+           передавати в шаблон як lecturer_sign; тут підставляти {{ lecturer_sign }}.
+           Зараз -- єдиний спільний trainer-sign.webp. #}
         <div class="cert__col">
-          <div class="cert__sign-ph">[ підпис ]</div>
+          <div class="cert__sign-ph"><img class="cert__sign-img" src="images/certificates/trainer-sign.webp" alt="Підпис"></div>
           <div class="cert__person">{{ certificate.lecturer_name or '[ ПІБ ]' }}</div>
           <div class="cert__role">Лектор</div>
         </div>
