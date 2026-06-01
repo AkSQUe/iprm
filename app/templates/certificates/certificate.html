@@ -94,27 +94,21 @@
     padding: 0 16mm;
     display: flex; justify-content: space-between; align-items: flex-end;
   }
-  .cert__col { width: 54mm; text-align: center; }
+  .cert__col { width: 54mm; text-align: center; position: relative; }
   .cert__col--center { width: 60mm; }
 
-  .cert__sign-ph {
-    height: 16mm;
-    display: flex; align-items: flex-end; justify-content: center;
-    font-size: 9pt; font-style: italic; color: #b3a6cc;
-  }
-  .cert__sign-img { height: 45mm; width: auto; transform: translateX(4mm); }
-  .cert__person { font-weight: 700; font-size: 11pt; color: #5d4691; margin-top: 2.5mm; }
+  .cert__person { font-weight: 700; font-size: 11pt; color: #5d4691; }
   .cert__role { font-size: 9.5pt; color: #9b8ac0; margin-top: 0.5mm; }
 
-  /* Печатка (зображення) */
-  .cert__stamp-img { height: 39mm; width: auto; display: block; margin: 0 auto 2mm; }
-  /* Плейсхолдер печатки (якщо зображення відсутнє) */
-  .cert__stamp-ph {
-    width: 30mm; height: 30mm; margin: 0 auto 3mm;
-    border: 0.4mm dashed #bfb3d6; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 8.5pt; color: #b3a6cc;
-    text-transform: uppercase; letter-spacing: 0.08em;
+  /* Печатка і підписи -- overlay (absolute): не впливають на потік тексту,
+     прив'язані до низу колонки (над ПІБ / датою), можуть накладатися. */
+  .cert__stamp-img {
+    position: absolute; left: 50%; bottom: 8mm; transform: translateX(-50%);
+    height: 39mm; width: auto;
+  }
+  .cert__sign-img {
+    position: absolute; left: calc(50% + 4mm); bottom: 8mm; transform: translateX(-50%);
+    height: 45mm; width: auto;
   }
   .cert__date { font-size: 10.5pt; font-weight: 600; color: #5d4691; }
   .cert__city { font-size: 9.5pt; color: #9b8ac0; margin-top: 0.5mm; }
@@ -150,9 +144,8 @@
       </div>
 
       <div class="cert__footer">
-        <!-- Підпис 1: Директор (зображення підпису -- плейсхолдер) -->
+        <!-- Підпис 1: Директор (підпис директора -- на печатці в центрі) -->
         <div class="cert__col">
-          <div class="cert__sign-ph">[ підпис ]</div>
           <div class="cert__person">Заболотня Д.О.</div>
           <div class="cert__role">Директор Інституту</div>
         </div>
@@ -171,7 +164,7 @@
            передавати в шаблон як lecturer_sign; тут підставляти {{ lecturer_sign }}.
            Зараз -- єдиний спільний trainer-sign.webp. #}
         <div class="cert__col">
-          <div class="cert__sign-ph"><img class="cert__sign-img" src="images/certificates/trainer-sign.webp" alt="Підпис"></div>
+          <img class="cert__sign-img" src="images/certificates/trainer-sign.webp" alt="Підпис">
           <div class="cert__person">{{ certificate.lecturer_name or '[ ПІБ ]' }}</div>
           <div class="cert__role">Лектор</div>
         </div>
