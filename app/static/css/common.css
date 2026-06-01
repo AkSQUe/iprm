@@ -979,6 +979,17 @@ select.badge-select:disabled {
   border-top: 1px solid var(--iprm-border);
 }
 
+/* На mobile float-бейдж reCAPTCHA перекриває submit-кнопки реєстрації.
+   Google дозволяє приховати бейдж за умови, що сторінка містить
+   дисклеймер з посиланнями на Privacy Policy / Terms -- у нас він
+   рендериться у .iprm-footer__legal коли reCAPTCHA активна.
+   visibility замість display, щоб GIS-скрипт не плутався у layout. */
+@media (max-width: 768px) {
+  .grecaptcha-badge {
+    visibility: hidden !important;
+  }
+}
+
 .iprm-footer__right {
   display: flex;
   align-items: center;
