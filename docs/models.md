@@ -163,7 +163,7 @@
 | `id` | BigInteger | Первинний ключ |
 | `registration_id` | FK -> event_registrations.id (CASCADE), unique | Одна реєстрація = один сертифікат |
 | `user_id` | FK -> users.id (CASCADE) | Власник (денормалізовано) |
-| `number` | String(40) unique | Людиночитний номер, напр. `IPRM-2026-000123` |
+| `number` | String(40) unique | Номер БПР: `РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ` (рік заходу - провайдер - захід - глобальний № учасника), напр. `2026-2738-1028974-000001` |
 | `recipient_name` | String(255) | Знімок ПІБ на момент видачі |
 | `event_title` | String(500) | Знімок назви заходу |
 | `event_date` | DateTime (UTC) | Знімок дати заходу |

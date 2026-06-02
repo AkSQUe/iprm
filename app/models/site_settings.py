@@ -80,6 +80,10 @@ class SiteSettings(TimestampMixin, db.Model):
     # ідентифікатор, що віддається у HTML на кожній сторінці.
     google_analytics_id = db.Column(db.String(50), default='', nullable=False)
 
+    # Реєстраційний номер провайдера БПР (4 цифри) -- сегмент номера
+    # сертифіката (формат РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ).
+    bpr_provider_number = db.Column(db.String(20), default='', nullable=False)
+
     # Google OAuth 2.0 (sign-in). Client ID -- публічний (видно у redirect-
     # URI), client_secret -- Fernet-зашифрований. Якщо обидва порожні --
     # OAuth вимкнено (кнопка "Continue with Google" не показується).

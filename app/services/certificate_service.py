@@ -283,6 +283,20 @@ def issue_certificate(registration, issued_by=None):
     title, event_date, cpd, lecturer = _event_snapshot(registration)
     issued_at = utcnow()
 
+    # Сегменти номера БПР: рік проведення, номер провайдера, номер заходу.
+    from app.models.site_settings import SiteSettings
+    instance = registration.instance
+    course = instance.course if instance else None
+    provider = (SiteSettings.get().bpr_provider_number or '').strip()
+    event_num = (course.bpr_event_number or '').strip() if course and course.bpr_event_number else ''
+    year = (event_date or issued_at).year
+    if not provider:
+        raise ValueError('Не задано реєстраційний номер провайдера БПР '
+                         '(Адмінка -> Налаштування сайту).')
+    if not event_num:
+        raise ValueError('Не задано реєстраційний номер заходу БПР '
+                         '(Адмінка -> Курс -> редагувати).')
+
     # Якщо є відкликаний сертифікат -- повторно використовуємо запис.
     cert = existing if existing is not None else Certificate(
         registration_id=registration.id,
@@ -300,7 +314,7 @@ def issue_certificate(registration, issued_by=None):
 
     # Номер + шлях. Retry на випадок гонки за унікальним номером.
     for attempt in range(5):
-        number = Certificate.generate_number(issued_at)
+        number = Certificate.generate_number(year, provider, event_num)
         cert.number = number
         # posix-формат (прямі слеші) -- незалежно від ОС генерації.
         cert.pdf_path = f'{issued_at.year}/{number}.pdf'

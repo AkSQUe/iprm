@@ -101,6 +101,12 @@
         </div>
 
         <div class="form-group">
+          <label for="bpr_event_number">Реєстраційний номер заходу БПР</label>
+          {{ form.bpr_event_number(class="form-input", id="bpr_event_number", placeholder="1028974") }}
+          <small class="form-hint">7 цифр. Використовується у номері сертифіката (РРРР-ПППП-<b>ЗЗЗЗЗЗЗ</b>-УУУУУУ).</small>
+        </div>
+
+        <div class="form-group">
           <label for="trainer_id">Тренер (default)</label>
           {{ form.trainer_id(class="form-input", id="trainer_id") }}
         </div>

@@ -34,6 +34,8 @@ class Course(TimestampMixin, db.Model):
     base_price = db.Column(db.Numeric(10, 2), default=0)
     cpd_points = db.Column(db.Integer)
     max_participants = db.Column(db.Integer)
+    # Реєстраційний номер заходу БПР (7 цифр) -- сегмент номера сертифіката.
+    bpr_event_number = db.Column(db.String(20))
 
     trainer_id = db.Column(
         db.BigInteger,

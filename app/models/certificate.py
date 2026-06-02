@@ -69,21 +69,24 @@ class Certificate(TimestampMixin, db.Model):
     user = db.relationship('User', foreign_keys=[user_id])
     issued_by = db.relationship('User', foreign_keys=[issued_by_id])
 
-    NUMBER_PREFIX = 'IPRM'
-
     @classmethod
-    def generate_number(cls, issued_at):
-        """Сформувати наступний номер виду IPRM-2026-000123.
+    def generate_number(cls, year, provider, event):
+        """Сформувати номер у форматі БПР: РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ.
 
-        Послідовність у межах року. Можливі гонки під паралельними
-        видачами знімаються unique-constraint-ом + retry у сервісі.
+        * РРРР -- рік проведення заходу;
+        * ПППП -- реєстраційний номер провайдера (4 цифри);
+        * ЗЗЗЗЗЗЗ -- реєстраційний номер заходу БПР (7 цифр);
+        * УУУУУУ -- порядковий номер учасника: ГЛОБАЛЬНИЙ лічильник усіх
+          виданих сертифікатів (6 цифр).
+
+        Гонки за номером знімаються unique-constraint-ом + retry у сервісі.
         """
-        year = issued_at.year
-        like = f'{cls.NUMBER_PREFIX}-{year}-%'
-        count = db.session.query(sa_func.count(cls.id)).filter(
-            cls.number.like(like)
-        ).scalar() or 0
-        return f'{cls.NUMBER_PREFIX}-{year}-{count + 1:06d}'
+        total = db.session.query(sa_func.count(cls.id)).scalar() or 0
+        participant = total + 1
+        return (
+            f'{year}-{str(provider).strip().zfill(4)}'
+            f'-{str(event).strip().zfill(7)}-{participant:06d}'
+        )
 
     @property
     def is_valid(self):

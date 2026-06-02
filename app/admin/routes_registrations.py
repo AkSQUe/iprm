@@ -157,6 +157,10 @@ def registration_certificate_issue(reg_id):
                 'надішліть повторно з картки реєстрації.',
                 'warning',
             )
+    except ValueError as exc:
+        # Відсутні дані для номера БПР (провайдер/захід) -- показуємо причину.
+        db.session.rollback()
+        flash(str(exc), 'error')
     except Exception:
         logger.exception('Failed to issue certificate for reg %d', reg_id)
         db.session.rollback()

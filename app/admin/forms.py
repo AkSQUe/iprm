@@ -86,6 +86,11 @@ class SiteSettingsForm(FlaskForm):
         'Код ЄДРПОУ',
         validators=[Optional(), Length(max=20)],
     )
+    bpr_provider_number = StringField(
+        'Реєстраційний номер провайдера БПР',
+        validators=[Optional(), Length(max=20)],
+        description='4 цифри. Використовується у номері сертифіката (напр. 2738).',
+    )
 
     # Contacts
     phone_primary = StringField(
@@ -258,6 +263,11 @@ class CourseForm(FlaskForm):
     max_participants = IntegerField(
         'Макс. учасників (default)',
         validators=[Optional(), NumberRange(min=1)],
+    )
+    bpr_event_number = StringField(
+        'Реєстраційний номер заходу БПР',
+        validators=[Optional(), Length(max=20)],
+        description='7 цифр. Використовується у номері сертифіката (напр. 1028974).',
     )
     trainer_id = SelectField(
         'Тренер (default)',

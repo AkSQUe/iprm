@@ -46,6 +46,12 @@
           {{ form.edrpou(class="form-input", id="edrpou", placeholder="45871060") }}
         </div>
 
+        <div class="form-group">
+          <label for="bpr_provider_number">Реєстраційний номер провайдера БПР</label>
+          {{ form.bpr_provider_number(class="form-input", id="bpr_provider_number", placeholder="2738") }}
+          <small class="form-hint">4 цифри. Використовується у номері сертифіката (РРРР-<b>ПППП</b>-ЗЗЗЗЗЗЗ-УУУУУУ).</small>
+        </div>
+
         <div class="form-group admin-form__full">
           <label for="company_full_name">Повна назва</label>
           {{ form.company_full_name(class="form-input", id="company_full_name", placeholder="Інститут Плазмотерапії та Регенеративної Медицини") }}
