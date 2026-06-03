@@ -106,6 +106,12 @@
           <small class="form-hint">7 цифр. Використовується у номері сертифіката (РРРР-ПППП-<b>ЗЗЗЗЗЗЗ</b>-УУУУУУ).</small>
         </div>
 
+        <div class="form-group admin-form__full">
+          <label for="bpr_specialties">Спеціальності (для сертифіката)</label>
+          {{ form.bpr_specialties(class="form-input", id="bpr_specialties", placeholder="усі лікарські спеціальності") }}
+          <small class="form-hint">Друкується рядком «Спеціальності: …» на сертифікаті.</small>
+        </div>
+
         <div class="form-group">
           <label for="trainer_id">Тренер (default)</label>
           {{ form.trainer_id(class="form-input", id="trainer_id") }}

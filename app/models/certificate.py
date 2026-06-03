@@ -47,6 +47,8 @@ class Certificate(TimestampMixin, db.Model):
     cpd_points = db.Column(db.Integer)
     # Знімок імені лектора (тренера проведення) на момент видачі.
     lecturer_name = db.Column(db.String(200))
+    # Знімок спеціальностей заходу (напр. "усі лікарські спеціальності").
+    specialties = db.Column(db.String(500))
 
     issued_at = db.Column(
         db.DateTime(timezone=True), default=utcnow, nullable=False,

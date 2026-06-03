@@ -269,6 +269,11 @@ class CourseForm(FlaskForm):
         validators=[Optional(), Length(max=20)],
         description='7 цифр. Використовується у номері сертифіката (напр. 1028974).',
     )
+    bpr_specialties = StringField(
+        'Спеціальності (для сертифіката)',
+        validators=[Optional(), Length(max=500)],
+        description='Напр. "усі лікарські спеціальності". Друкується на сертифікаті.',
+    )
     trainer_id = SelectField(
         'Тренер (default)',
         coerce=int,

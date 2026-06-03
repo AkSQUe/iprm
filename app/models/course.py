@@ -36,6 +36,8 @@ class Course(TimestampMixin, db.Model):
     max_participants = db.Column(db.Integer)
     # Реєстраційний номер заходу БПР (7 цифр) -- сегмент номера сертифіката.
     bpr_event_number = db.Column(db.String(20))
+    # Спеціальності заходу БПР для сертифіката (напр. "усі лікарські спеціальності").
+    bpr_specialties = db.Column(db.String(500))
 
     trainer_id = db.Column(
         db.BigInteger,
