@@ -100,8 +100,14 @@
 
   .cert__event {
     font-family: 'Nunito', sans-serif; font-weight: 600;
-    font-size: 31.5pt; color: #6a4fa0; line-height: 1.3;
+    color: #6a4fa0; line-height: 1.25;
   }
+  /* Адаптивний розмір назви заходу (клас задає сервіс за довжиною назви). */
+  .cert__event--xl { font-size: 31.5pt; }
+  .cert__event--lg { font-size: 26pt; }
+  .cert__event--md { font-size: 21pt; }
+  .cert__event--sm { font-size: 17pt; }
+  .cert__event--xs { font-size: 14pt; }
 
   /* Футер: підпис | печатка+дата | підпис */
   .cert__footer {
@@ -181,7 +187,7 @@
         <p class="cert__eyebrow">Цей сертифікат засвідчує, що</p>
         <p class="cert__name">{{ certificate.recipient_name }}</p>
         <p class="cert__lead">успішно завершив(-ла) {{ event_type or 'захід' }}</p>
-        <p class="cert__event">«{{ certificate.event_title }}»</p>
+        <p class="cert__event {{ event_size_class }}">«{{ certificate.event_title }}»</p>
         {% if certificate.cpd_points %}
         <p class="cert__points-text">та отримав(-ла) <strong>{{ certificate.cpd_points }} балів БПР</strong></p>
         {% endif %}

@@ -314,6 +314,21 @@ def _meta_date(dt):
     return f'{dt.day} {_UA_MONTHS[dt.month]} {dt.year} р.'
 
 
+def _event_size_class(title):
+    """Адаптивний CSS-клас розміру для назви заходу: довші назви -- дрібніший
+    шрифт, щоб не переповнювати блок тіла (класи визначені у шаблоні)."""
+    n = len(title or '')
+    if n <= 38:
+        return 'cert__event--xl'
+    if n <= 70:
+        return 'cert__event--lg'
+    if n <= 110:
+        return 'cert__event--md'
+    if n <= 160:
+        return 'cert__event--sm'
+    return 'cert__event--xs'
+
+
 def render_certificate_html(certificate):
     """Відрендерити HTML сертифіката для WeasyPrint.
 
@@ -335,6 +350,7 @@ def render_certificate_html(certificate):
         specialties=getattr(certificate, 'specialties', None),
         event_type=getattr(certificate, 'event_type_label', None),
         event_place=getattr(certificate, 'event_place', None),
+        event_size_class=_event_size_class(certificate.event_title),
         provider_number=provider_number,
         event_number=event_number,
         qr_svg=qr_svg(_site_url()),
