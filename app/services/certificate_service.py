@@ -233,8 +233,8 @@ def render_certificate_html(certificate):
     )
 
 
-def _write_pdf(certificate):
-    """Згенерувати PDF і записати у файл. Повертає абсолютний шлях.
+def render_pdf_bytes(certificate):
+    """Згенерувати PDF-байти сертифіката (без запису у файл).
 
     WeasyPrint імпортується ліниво: на машинах без нативних GTK-бібліотек
     імпорт може падати, і ми хочемо, щоб решта застосунку працювала.
@@ -242,11 +242,32 @@ def _write_pdf(certificate):
     from weasyprint import HTML  # noqa: WPS433 (ліниво)
 
     html = render_certificate_html(certificate)
-    pdf_bytes = HTML(
-        string=html,
-        base_url=current_app.static_folder,
-    ).write_pdf()
+    return HTML(string=html, base_url=current_app.static_folder).write_pdf()
 
+
+def render_adhoc_pdf(*, number, recipient_name, event_title, event_date=None,
+                     cpd_points=None, lecturer_name=None, issued_at=None):
+    """Згенерувати PDF із довільних даних (без запису в БД).
+
+    Використовується генератором сертифікатів з xlsx. Передаємо легкий
+    обʼєкт із потрібними атрибутами у той самий шаблон/рендер.
+    """
+    from types import SimpleNamespace
+    cert = SimpleNamespace(
+        number=number,
+        recipient_name=recipient_name,
+        event_title=event_title,
+        event_date=event_date,
+        cpd_points=cpd_points,
+        lecturer_name=lecturer_name,
+        issued_at=issued_at or utcnow(),
+    )
+    return render_pdf_bytes(cert)
+
+
+def _write_pdf(certificate):
+    """Згенерувати PDF і записати у файл. Повертає абсолютний шлях."""
+    pdf_bytes = render_pdf_bytes(certificate)
     abs_path = certificate_abs_path(certificate)
     os.makedirs(os.path.dirname(abs_path), exist_ok=True)
     with open(abs_path, 'wb') as fh:

@@ -69,24 +69,27 @@ class Certificate(TimestampMixin, db.Model):
     user = db.relationship('User', foreign_keys=[user_id])
     issued_by = db.relationship('User', foreign_keys=[issued_by_id])
 
-    @classmethod
-    def generate_number(cls, year, provider, event):
-        """Сформувати номер у форматі БПР: РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ.
+    @staticmethod
+    def format_number(year, provider, event, participant):
+        """Зібрати номер БПР: РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ.
 
         * РРРР -- рік проведення заходу;
         * ПППП -- реєстраційний номер провайдера (4 цифри);
         * ЗЗЗЗЗЗЗ -- реєстраційний номер заходу БПР (7 цифр);
-        * УУУУУУ -- порядковий номер учасника: ГЛОБАЛЬНИЙ лічильник усіх
-          виданих сертифікатів (6 цифр).
-
-        Гонки за номером знімаються unique-constraint-ом + retry у сервісі.
+        * УУУУУУ -- порядковий номер учасника (6 цифр).
         """
-        total = db.session.query(sa_func.count(cls.id)).scalar() or 0
-        participant = total + 1
         return (
             f'{year}-{str(provider).strip().zfill(4)}'
-            f'-{str(event).strip().zfill(7)}-{participant:06d}'
+            f'-{str(event).strip().zfill(7)}-{int(participant):06d}'
         )
+
+    @classmethod
+    def generate_number(cls, year, provider, event):
+        """Номер для видачі з реєстрації: учасник = ГЛОБАЛЬНИЙ лічильник усіх
+        виданих сертифікатів. Гонки знімаються unique-constraint + retry.
+        """
+        total = db.session.query(sa_func.count(cls.id)).scalar() or 0
+        return cls.format_number(year, provider, event, total + 1)
 
     @property
     def is_valid(self):

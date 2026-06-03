@@ -1,0 +1,96 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Генератор сертифікатів | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Інструменти</span>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Генератор сертифікатів</span>
+        </div>
+        <h1 class="admin-hero__title">Генератор сертифікатів</h1>
+        <p class="admin-hero__subtitle">Масова генерація PDF-сертифікатів з xlsx-таблиці (рядок = сертифікат)</p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    {% if not provider_number %}
+    <div class="admin-empty" style="padding:24px;text-align:left;">
+      <h3 class="admin-empty__title">Спочатку задайте номер провайдера БПР</h3>
+      <p>Номер провайдера (4 цифри) використовується у номері кожного сертифіката.
+         Задайте його в <a href="{{ url_for('admin.settings') }}">Налаштуваннях сайту</a>.</p>
+    </div>
+    {% endif %}
+
+    <!-- Крок 1 -->
+    <div class="form-section">
+      <h2 class="admin-form__section-title">Крок 1. Завантажте шаблон</h2>
+      <p class="admin-text-muted" style="margin-bottom:16px;">
+        Скачайте xlsx-шаблон, заповніть по одному рядку на учасника й збережіть.
+      </p>
+      <a href="{{ url_for('admin.tool_certificate_generator_template') }}" class="btn-admin btn-admin--secondary">
+        <span class="material-symbols-rounded">download</span> Завантажити шаблон .xlsx
+      </a>
+    </div>
+
+    <!-- Крок 2 -->
+    <div class="form-section" style="margin-top:24px;">
+      <h2 class="admin-form__section-title">Крок 2. Завантажте заповнену таблицю</h2>
+      <p class="admin-text-muted" style="margin-bottom:16px;">
+        На виході отримаєте ZIP-архів з PDF-сертифікатом для кожного рядка.
+      </p>
+      <form method="POST" action="{{ url_for('admin.tool_certificate_generator_run') }}"
+            enctype="multipart/form-data" class="admin-filter-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="file" name="xlsx" accept=".xlsx" required
+               class="form-input" style="max-width:360px;">
+        <button type="submit" class="btn-admin btn-admin--primary"{% if not provider_number %} disabled{% endif %}>
+          <span class="material-symbols-rounded">workspace_premium</span> Згенерувати сертифікати
+        </button>
+      </form>
+    </div>
+
+    <!-- Довідка -->
+    <div class="form-section" style="margin-top:24px;">
+      <h2 class="admin-form__section-title">Колонки таблиці</h2>
+      <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Колонка</th><th>Обов'язкова</th><th>Опис</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>ПІБ учасника</strong></td><td>так</td><td>Прізвище Ім'я По-батькові</td></tr>
+          <tr><td><strong>Назва заходу</strong></td><td>так</td><td>Тема, що друкується на сертифікаті</td></tr>
+          <tr><td><strong>Дата проведення</strong></td><td>так</td><td>Формат ДД.ММ.РРРР. Рік іде в номер сертифіката</td></tr>
+          <tr><td><strong>Бали БПР</strong></td><td>ні</td><td>Число; обирає відповідну розетку (за замовч. 10)</td></tr>
+          <tr><td><strong>ПІБ лектора</strong></td><td>ні</td><td>Підставляється у блок «Лектор»</td></tr>
+          <tr><td><strong>Номер заходу БПР</strong></td><td>так</td><td>7 цифр — сегмент номера сертифіката</td></tr>
+          <tr><td><strong>Номер учасника</strong></td><td>так</td><td>До 6 цифр — сегмент номера сертифіката</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="admin-text-muted" style="margin-top:12px;">
+        Номер формується як <code>РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ</code>, де ПППП — номер провайдера
+        {% if provider_number %}(<strong>{{ provider_number }}</strong>){% endif %} з налаштувань сайту.
+        Сертифікати <strong>не зберігаються</strong> в системі — це разова генерація PDF.
+      </p>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

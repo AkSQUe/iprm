@@ -49,6 +49,14 @@
     </div>
 
     <div class="admin-sidebar__group">
+      <p class="admin-sidebar__group-title">Інструменти</p>
+      <a href="{{ url_for('admin.tool_certificate_generator') }}" class="admin-sidebar__link{% if ep in ('admin.tool_certificate_generator', 'admin.tool_certificate_generator_template', 'admin.tool_certificate_generator_run') %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">workspace_premium</span>
+        Генератор сертифікатів
+      </a>
+    </div>
+
+    <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Система</p>
       <a href="{{ url_for('admin.marketing') }}" class="admin-sidebar__link{% if ep == 'admin.marketing' %} admin-sidebar__link--active{% endif %}">
         <span class="material-symbols-rounded">campaign</span>
