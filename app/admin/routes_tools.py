@@ -14,10 +14,12 @@ from flask_login import current_user
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.datavalidation import DataValidation
 
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
 from app.models.site_settings import SiteSettings
+from app.models.trainer import Trainer
 from app.services import certificate_batch as batch
 
 logger = logging.getLogger(__name__)
@@ -59,6 +61,23 @@ def tool_certificate_generator_template():
     for i, w in enumerate(batch.COLUMN_WIDTHS, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = 'A2'
+
+    # Випадаючий список лекторів у колонці "ПІБ лектора": ПІБ тренерів
+    # тримаємо на прихованому аркуші, на колонку вішаємо list-валідацію.
+    names = [t.full_name for t in Trainer.query
+             .filter_by(is_active=True).order_by(Trainer.full_name).all()]
+    if names:
+        ref = wb.create_sheet('lectors')
+        for i, nm in enumerate(names, start=1):
+            ref.cell(row=i, column=1, value=nm)
+        ref.sheet_state = 'hidden'
+        col = get_column_letter(batch.COLUMNS.index('ПІБ лектора') + 1)
+        dv = DataValidation(
+            type='list', formula1=f'=lectors!$A$1:$A${len(names)}',
+            allow_blank=True,
+        )
+        ws.add_data_validation(dv)
+        dv.add(f'{col}2:{col}1000')
 
     buf = io.BytesIO()
     wb.save(buf)

@@ -220,16 +220,12 @@
           </div>
           <div class="cert__site">{{ site_domain }}</div>
         </div>
-        <!-- Підпис 2: Лектор (ім'я тренера заходу) -->
-        {# TODO: Додати підписи всіх лекторів і підставляти підпис відповідно
-           до лектора заходу (за аналогією з розеткою балів points_badge_url):
-           зберігати файл підпису для кожного тренера (напр.
-           images/certificates/signatures/{trainer_slug}.webp або поле в моделі
-           Trainer), у сервісі резолвити шлях за instance.effective_trainer і
-           передавати в шаблон як lecturer_sign; тут підставляти {{ lecturer_sign }}.
-           Зараз -- єдиний спільний trainer-sign.webp. #}
+        <!-- Підпис 2: Лектор. lecturer_signature -- підпис тренера заходу
+             (Trainer.signature), знятий у сертифікат на момент видачі; для
+             adhoc-генерації резолвиться за ПІБ. Фолбек -- спільний
+             trainer-sign.webp (див. _DEFAULT_SIGNATURE у сервісі). -->
         <div class="cert__col">
-          <img class="cert__sign-img" src="images/certificates/trainer-sign.webp" alt="Підпис">
+          <img class="cert__sign-img" src="{{ lecturer_signature }}" alt="Підпис">
           <div class="cert__person">{{ certificate.lecturer_name or '[ ПІБ ]' }}</div>
           <div class="cert__role">Лектор</div>
         </div>

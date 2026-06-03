@@ -254,6 +254,7 @@ def _run(app, job_id, provider):
                         number=number, recipient_name=r['name'],
                         event_title=r['title'], event_date=r['date'],
                         cpd_points=r['cpd'], lecturer_name=r['lecturer'],
+                        lecturer_signature=cs.resolve_signature(r['lecturer']),
                         specialties=r['specialties'], event_type=r['event_type'],
                         event_place=r['place'],
                         issued_at=r['date'], font_config=font_config,

@@ -36,6 +36,7 @@ def trainer_create():
             role=form.role.data,
             bio=form.bio.data,
             photo=form.photo.data,
+            signature=(form.signature.data or '').strip() or None,
             experience_years=form.experience_years.data,
             email=(form.email.data or '').strip().lower() or None,
             is_active=form.is_active.data,
@@ -77,6 +78,7 @@ def trainer_edit(trainer_id):
         trainer.role = form.role.data
         trainer.bio = form.bio.data
         trainer.photo = form.photo.data
+        trainer.signature = (form.signature.data or '').strip() or None
         trainer.experience_years = form.experience_years.data
         trainer.email = (form.email.data or '').strip().lower() or None
         trainer.is_active = form.is_active.data

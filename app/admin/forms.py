@@ -57,6 +57,10 @@ class TrainerForm(FlaskForm):
         'Фото (URL)',
         validators=[Optional(), Length(max=500)],
     )
+    signature = StringField(
+        'Підпис (шлях відносно static, напр. images/trainers/slug/signature.webp)',
+        validators=[Optional(), Length(max=500)],
+    )
     experience_years = IntegerField(
         'Стаж (років)',
         validators=[Optional(), NumberRange(min=0)],

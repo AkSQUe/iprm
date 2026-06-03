@@ -189,14 +189,18 @@ def _event_snapshot(registration):
         cpd = instance.effective_cpd_points
     trainer = instance.effective_trainer if instance else None
     lecturer = trainer.full_name if trainer else None
+    signature = (trainer.signature or '').strip() if trainer and trainer.signature else None
     specialties = (course.bpr_specialties or '').strip() if course and course.bpr_specialties else None
     event_type = course.event_type_label.lower() if course and course.event_type else None
     place = (instance.location or '').strip() if instance and instance.location else None
-    return title, event_date, cpd, lecturer, specialties, event_type, place
+    return title, event_date, cpd, lecturer, signature, specialties, event_type, place
 
 
 _POINTS_BADGE_DIR = ('images', 'certificates')
 _POINTS_BADGE_DEFAULT = 10
+
+# Запасний підпис (коли у тренера немає власного) -- спільне зображення.
+_DEFAULT_SIGNATURE = 'images/certificates/trainer-sign.webp'
 
 
 def points_badge_url(cpd_points):
@@ -329,6 +333,37 @@ def _event_size_class(title):
     return 'cert__event--xs'
 
 
+def resolve_signature(lecturer_name):
+    """Знайти шлях до підпису тренера за ПІБ лектора (для adhoc-генерації).
+
+    Спершу точний збіг повного імені (так лектор обирається з випадаючого
+    списку в xlsx). Як запасний варіант -- збіг за прізвищем + ініціалами
+    (напр. "Гусак В.С." -> "Гусак Валерія Сергіївна"). Повертає шлях або None.
+    """
+    name = (lecturer_name or '').strip()
+    if not name:
+        return None
+    from app.models.trainer import Trainer
+    exact = Trainer.query.filter(
+        Trainer.signature.isnot(None), Trainer.full_name == name,
+    ).first()
+    if exact and exact.signature:
+        return exact.signature.strip()
+    tokens = [t for t in name.replace('.', ' ').split() if t]
+    if not tokens:
+        return None
+    surname = tokens[0].lower()
+    inits = [t[0].lower() for t in tokens[1:]]
+    for t in Trainer.query.filter(Trainer.signature.isnot(None)).all():
+        ftoks = t.full_name.split()
+        if not ftoks or ftoks[0].lower() != surname:
+            continue
+        finits = [x[0].lower() for x in ftoks[1:]]
+        if inits and finits[:len(inits)] == inits and t.signature:
+            return t.signature.strip()
+    return None
+
+
 def render_certificate_html(certificate):
     """Відрендерити HTML сертифіката для WeasyPrint.
 
@@ -351,6 +386,8 @@ def render_certificate_html(certificate):
         event_type=getattr(certificate, 'event_type_label', None),
         event_place=getattr(certificate, 'event_place', None),
         event_size_class=_event_size_class(certificate.event_title),
+        lecturer_signature=(getattr(certificate, 'lecturer_signature', None)
+                            or _DEFAULT_SIGNATURE),
         provider_number=provider_number,
         event_number=event_number,
         qr_svg=qr_svg(_site_url()),
@@ -374,8 +411,8 @@ def render_pdf_bytes(certificate, font_config=None):
 
 
 def render_adhoc_pdf(*, number, recipient_name, event_title, event_date=None,
-                     cpd_points=None, lecturer_name=None, specialties=None,
-                     event_type=None, event_place=None,
+                     cpd_points=None, lecturer_name=None, lecturer_signature=None,
+                     specialties=None, event_type=None, event_place=None,
                      issued_at=None, font_config=None):
     """Згенерувати PDF із довільних даних (без запису в БД).
 
@@ -390,6 +427,7 @@ def render_adhoc_pdf(*, number, recipient_name, event_title, event_date=None,
         event_date=event_date,
         cpd_points=cpd_points,
         lecturer_name=lecturer_name,
+        lecturer_signature=lecturer_signature,
         specialties=specialties,
         event_type_label=event_type,
         event_place=event_place,
@@ -434,7 +472,7 @@ def issue_certificate(registration, issued_by=None):
     if existing is not None and not existing.revoked:
         return existing
 
-    (title, event_date, cpd, lecturer, specialties,
+    (title, event_date, cpd, lecturer, signature, specialties,
      event_type, place) = _event_snapshot(registration)
     issued_at = utcnow()
 
@@ -462,6 +500,7 @@ def issue_certificate(registration, issued_by=None):
     cert.event_date = event_date
     cert.cpd_points = cpd
     cert.lecturer_name = lecturer
+    cert.lecturer_signature = signature
     cert.specialties = specialties
     cert.event_type_label = event_type
     cert.event_place = place

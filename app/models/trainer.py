@@ -11,6 +11,9 @@ class Trainer(TimestampMixin, db.Model):
     role = db.Column(db.String(300))
     bio = db.Column(db.Text)
     photo = db.Column(db.String(500))
+    # Підпис тренера (шлях відносно static) -- друкується на сертифікатах
+    # його заходів. Напр. "images/trainers/<slug>/signature.webp".
+    signature = db.Column(db.String(500))
     experience_years = db.Column(db.Integer)
     # Email тренера -- для admin-нотифікації про реєстрацію/скасування на
     # його захід (NotificationRule.notify_event_trainer). Nullable, бо
