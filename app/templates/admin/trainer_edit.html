@@ -44,6 +44,13 @@
           {% for error in form.full_name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
         </div>
 
+        <div class="form-group admin-form__full">
+          <label for="full_name_dative">ПІБ у давальному відмінку</label>
+          {{ form.full_name_dative(class="form-input", id="full_name_dative", placeholder="Степаненко Альоні Ігорівні") }}
+          <div class="form-hint">Для сертифіката лектора («виданий ...»). Якщо порожньо — береться звичайне ПІБ.</div>
+          {% for error in form.full_name_dative.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
         <div class="form-group">
           <label for="slug">Slug (URL) <span class="required">*</span></label>
           {{ form.slug(class="form-input" + (" is-invalid" if form.slug.errors else ""), id="slug", placeholder="stepanenko-alona") }}

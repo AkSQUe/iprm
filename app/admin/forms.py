@@ -41,6 +41,10 @@ class TrainerForm(FlaskForm):
         'ПІБ',
         validators=[DataRequired(message='ПІБ обов\'язкове'), Length(max=200)],
     )
+    full_name_dative = StringField(
+        'ПІБ у давальному відмінку (для серта лектора, напр. "Гусак Валерії")',
+        validators=[Optional(), Length(max=200)],
+    )
     slug = StringField(
         'Slug (URL)',
         validators=[DataRequired(message='Slug обов\'язковий'), Length(max=200)],
@@ -277,6 +281,11 @@ class CourseForm(FlaskForm):
         'Спеціальності (для сертифіката)',
         validators=[Optional(), Length(max=500)],
         description='Напр. "усі лікарські спеціальності". Друкується на сертифікаті.',
+    )
+    bpr_lecturer_points = IntegerField(
+        'Бали БПР лектору',
+        validators=[Optional(), NumberRange(min=0)],
+        description='Бали, що нараховуються лектору заходу (відрізняються від балів учасника).',
     )
     trainer_id = SelectField(
         'Тренер (default)',

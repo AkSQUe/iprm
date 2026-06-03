@@ -194,9 +194,15 @@
       </div>
 
       <div class="cert__body">
+        {% if cert_kind == 'lecturer' %}
+        <p class="cert__eyebrow">виданий</p>
+        <p class="cert__name">{{ certificate.recipient_name }}</p>
+        <p class="cert__lead">лектору(-ці) {{ event_type or 'заходу' }}</p>
+        {% else %}
         <p class="cert__eyebrow">Цей сертифікат засвідчує, що</p>
         <p class="cert__name">{{ certificate.recipient_name }}</p>
         <p class="cert__lead">успішно завершив(-ла) {{ event_type or 'захід' }}</p>
+        {% endif %}
         <p class="cert__event {{ event_size_class }}">«{{ certificate.event_title }}»</p>
         {% if certificate.cpd_points %}
         <p class="cert__got">та отримав(-ла)</p>
@@ -233,9 +239,11 @@
              adhoc-генерації резолвиться за ПІБ. Фолбек -- спільний
              trainer-sign.webp (див. _DEFAULT_SIGNATURE у сервісі). -->
         <div class="cert__col">
+          {% if cert_kind != 'lecturer' %}
           <img class="cert__sign-img" src="{{ lecturer_signature }}" alt="Підпис">
           <div class="cert__person">{{ certificate.lecturer_name or '[ ПІБ ]' }}</div>
           <div class="cert__role">Лектор</div>
+          {% endif %}
         </div>
       </div>
 

@@ -333,6 +333,30 @@ def _event_size_class(title):
     return 'cert__event--xs'
 
 
+# Родовий відмінок типу заходу для рядка "лектору(-ці) <тип>" на лекторському
+# сертифікаті (напр. "тренінг" -> "тренінгу"). Невідомий тип -> як є.
+_EVENT_TYPE_GENITIVE = {
+    'семінар': 'семінару',
+    'вебінар': 'вебінару',
+    'курс': 'курсу',
+    'майстер-клас': 'майстер-класу',
+    'конференція': 'конференції',
+    'конгрес': 'конгресу',
+    'симпозіум': 'симпозіуму',
+    'тренінг': 'тренінгу',
+    'фахова школа': 'фахової школи',
+    'фахову школу': 'фахової школи',
+}
+
+
+def event_type_genitive(label):
+    """Родовий відмінок типу заходу для лекторського серта ('заходу' за умовч.)."""
+    key = (label or '').strip().lower()
+    if not key:
+        return 'заходу'
+    return _EVENT_TYPE_GENITIVE.get(key, key)
+
+
 def resolve_signature(lecturer_name):
     """Знайти шлях до підпису тренера за ПІБ лектора (для adhoc-генерації).
 
@@ -364,8 +388,11 @@ def resolve_signature(lecturer_name):
     return None
 
 
-def render_certificate_html(certificate):
+def render_certificate_html(certificate, kind='participant'):
     """Відрендерити HTML сертифіката для WeasyPrint.
+
+    kind: 'participant' (учасник, за замовчуванням) або 'lecturer' (лектор --
+    інший текст тіла, лише підпис Директора). Стиль/верстка спільні.
 
     Номери провайдера й заходу беремо із сегментів номера сертифіката
     (РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ) -- працює і для БД-, і для adhoc-рендеру.
@@ -376,6 +403,7 @@ def render_certificate_html(certificate):
     return render_template(
         'certificates/certificate.html',
         certificate=certificate,
+        cert_kind=kind,
         issued_date=format_ua_date(certificate.issued_at),
         event_date=format_ua_date(certificate.event_date),
         event_date_short=(certificate.event_date.strftime('%d.%m.%Y')
@@ -397,7 +425,7 @@ def render_certificate_html(certificate):
     )
 
 
-def render_pdf_bytes(certificate, font_config=None):
+def render_pdf_bytes(certificate, font_config=None, kind='participant'):
     """Згенерувати PDF-байти сертифіката (без запису у файл).
 
     font_config -- спільний weasyprint FontConfiguration; передається у
@@ -406,7 +434,7 @@ def render_pdf_bytes(certificate, font_config=None):
     """
     from weasyprint import HTML  # noqa: WPS433 (ліниво)
 
-    html = render_certificate_html(certificate)
+    html = render_certificate_html(certificate, kind=kind)
     return HTML(string=html, base_url=current_app.static_folder).write_pdf(
         font_config=font_config,
     )
@@ -415,11 +443,11 @@ def render_pdf_bytes(certificate, font_config=None):
 def render_adhoc_pdf(*, number, recipient_name, event_title, event_date=None,
                      cpd_points=None, lecturer_name=None, lecturer_signature=None,
                      specialties=None, event_type=None, event_place=None,
-                     issued_at=None, font_config=None):
+                     issued_at=None, font_config=None, kind='participant'):
     """Згенерувати PDF із довільних даних (без запису в БД).
 
-    Використовується генератором сертифікатів з xlsx. Передаємо легкий
-    обʼєкт із потрібними атрибутами у той самий шаблон/рендер.
+    Використовується генератором сертифікатів з xlsx та для лекторського
+    серта (kind='lecturer'). Передаємо легкий обʼєкт у той самий рендер.
     """
     from types import SimpleNamespace
     cert = SimpleNamespace(
@@ -435,7 +463,7 @@ def render_adhoc_pdf(*, number, recipient_name, event_title, event_date=None,
         event_place=event_place,
         issued_at=issued_at or utcnow(),
     )
-    return render_pdf_bytes(cert, font_config=font_config)
+    return render_pdf_bytes(cert, font_config=font_config, kind=kind)
 
 
 def _write_pdf(certificate):
@@ -537,3 +565,95 @@ def issue_certificate(registration, issued_by=None):
         cert.number, registration.id, issued_by.email if issued_by else 'system',
     )
     return cert
+
+
+# ---- Лекторський сертифікат ----
+def issue_lecturer_certificate(instance, issued_by=None):
+    """Видати (або повернути наявний) сертифікат лектора для проведення.
+
+    Один запис на instance (повторна видача -> той самий номер). Дані -- знімки
+    з курсу/проведення/тренера на момент видачі. Номер учасника у діапазоні
+    1xxxxx (окремий лічильник). Тип заходу зберігаємо у родовому відмінку.
+    """
+    from app.models.site_settings import SiteSettings
+    from app.models.lecturer_certificate import LecturerCertificate
+
+    existing = LecturerCertificate.query.filter_by(instance_id=instance.id).first()
+    if existing is not None:
+        return existing
+
+    course = instance.course
+    trainer = instance.effective_trainer
+    if trainer is None:
+        raise ValueError('У проведення не задано лектора (тренера).')
+    provider = (SiteSettings.get().bpr_provider_number or '').strip()
+    event_num = (course.bpr_event_number or '').strip() if course and course.bpr_event_number else ''
+    if not provider:
+        raise ValueError('Не задано реєстраційний номер провайдера БПР '
+                         '(Адмінка -> Налаштування сайту).')
+    if not event_num:
+        raise ValueError('Не задано реєстраційний номер заходу БПР '
+                         '(Адмінка -> Курс -> редагувати).')
+    points = course.bpr_lecturer_points if course else None
+    if points is None:
+        raise ValueError('Не задано бали БПР лектору '
+                         '(Адмінка -> Курс -> редагувати).')
+
+    issued_at = utcnow()
+    event_date = instance.start_date
+    year = (event_date or issued_at).year
+    event_type = event_type_genitive(course.event_type_label) if course and course.event_type else None
+
+    lc = LecturerCertificate(
+        instance_id=instance.id,
+        trainer_id=trainer.id,
+        recipient_name=(trainer.full_name_dative or '').strip() or trainer.full_name,
+        event_title=course.title if course else (instance.title or 'Захід'),
+        event_date=event_date,
+        cpd_points=points,
+        specialties=(course.bpr_specialties or '').strip() if course and course.bpr_specialties else None,
+        event_type_label=event_type,
+        event_place=(instance.location or '').strip() or None,
+        issued_at=issued_at,
+        issued_by_id=issued_by.id if issued_by else None,
+    )
+
+    for attempt in range(5):
+        lc.number = LecturerCertificate.generate_number(year, provider, event_num)
+        if attempt == 0:
+            db.session.add(lc)
+        try:
+            db.session.flush()
+            break
+        except IntegrityError:
+            db.session.rollback()
+            # instance_id-unique міг спрацювати, якщо паралельно вже створили.
+            dup = LecturerCertificate.query.filter_by(instance_id=instance.id).first()
+            if dup is not None:
+                return dup
+            db.session.add(lc)
+            logger.warning('Lecturer cert number collision (%s), retrying', lc.number)
+    else:
+        raise RuntimeError('Не вдалося згенерувати унікальний номер серта лектора')
+
+    db.session.commit()
+    logger.info('Lecturer certificate %s issued for instance=%s by=%s',
+                lc.number, instance.id, issued_by.email if issued_by else 'system')
+    return lc
+
+
+def render_lecturer_pdf(lecturer_cert, font_config=None):
+    """PDF лекторського серта зі збереженого запису (рендер за знімками)."""
+    return render_adhoc_pdf(
+        kind='lecturer',
+        number=lecturer_cert.number,
+        recipient_name=lecturer_cert.recipient_name,
+        event_title=lecturer_cert.event_title,
+        event_date=lecturer_cert.event_date,
+        cpd_points=lecturer_cert.cpd_points,
+        specialties=lecturer_cert.specialties,
+        event_type=lecturer_cert.event_type_label,
+        event_place=lecturer_cert.event_place,
+        issued_at=lecturer_cert.issued_at,
+        font_config=font_config,
+    )

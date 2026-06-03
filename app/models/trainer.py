@@ -7,6 +7,9 @@ class Trainer(TimestampMixin, db.Model):
 
     id = db.Column(BigIntPK, primary_key=True)
     full_name = db.Column(db.String(200), nullable=False, index=True)
+    # ПІБ у давальному відмінку для лекторського серта ("Гусак Валерії").
+    # Автовідмінювання ненадійне -> зберігаємо вручну.
+    full_name_dative = db.Column(db.String(200))
     slug = db.Column(db.String(200), unique=True, nullable=False)
     role = db.Column(db.String(300))
     bio = db.Column(db.Text)

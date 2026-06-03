@@ -6,6 +6,7 @@ from app.models.trainer import Trainer
 from app.models.program_block import ProgramBlock
 from app.models.registration import EventRegistration
 from app.models.certificate import Certificate
+from app.models.lecturer_certificate import LecturerCertificate
 from app.models.clinic import Clinic
 from app.models.email_log import EmailLog
 from app.models.email_settings import EmailSettings
@@ -21,7 +22,7 @@ from app.models.webhook_delivery import WebhookDelivery
 __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'AuthIdentity',
     'MedicalProfile', 'Trainer', 'ProgramBlock', 'EventRegistration',
-    'Certificate',
+    'Certificate', 'LecturerCertificate',
     'Clinic', 'EmailLog', 'EmailSettings', 'NotificationRule',
     'PaymentTransaction', 'SiteSettings', 'ErrorLog',
     'Course', 'CourseInstance', 'CourseRequest', 'CourseRequestAudit',

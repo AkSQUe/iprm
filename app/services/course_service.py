@@ -112,6 +112,7 @@ def populate_course_from_form(course, form):
     course.max_participants = form.max_participants.data
     course.bpr_event_number = _clean_text(form.bpr_event_number.data)
     course.bpr_specialties = _clean_text(form.bpr_specialties.data)
+    course.bpr_lecturer_points = form.bpr_lecturer_points.data
     course.trainer_id = form.trainer_id.data or None
     course.is_active = form.is_active.data
     course.is_featured = form.is_featured.data

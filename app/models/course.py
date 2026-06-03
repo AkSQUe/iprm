@@ -38,6 +38,9 @@ class Course(TimestampMixin, db.Model):
     bpr_event_number = db.Column(db.String(20))
     # Спеціальності заходу БПР для сертифіката (напр. "усі лікарські спеціальності").
     bpr_specialties = db.Column(db.String(500))
+    # Бали БПР, що нараховуються ЛЕКТОРУ заходу (відрізняються від балів
+    # учасника) -- для лекторського сертифіката.
+    bpr_lecturer_points = db.Column(db.Integer)
 
     trainer_id = db.Column(
         db.BigInteger,

@@ -32,6 +32,7 @@ def trainer_create():
 
         trainer = Trainer(
             full_name=form.full_name.data.strip(),
+            full_name_dative=(form.full_name_dative.data or '').strip() or None,
             slug=slug,
             role=form.role.data,
             bio=form.bio.data,
@@ -74,6 +75,7 @@ def trainer_edit(trainer_id):
             return render_template('admin/trainer_edit.html', form=form, trainer=trainer)
 
         trainer.full_name = form.full_name.data.strip()
+        trainer.full_name_dative = (form.full_name_dative.data or '').strip() or None
         trainer.slug = slug
         trainer.role = form.role.data
         trainer.bio = form.bio.data
