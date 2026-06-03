@@ -30,6 +30,14 @@
       </p>
     </div>
     <div class="admin-hero__actions">
+      {% if instance %}
+      <form method="POST" action="{{ url_for('admin.instance_lecturer_certificate', instance_id=instance.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--secondary">
+          <span class="material-symbols-rounded">workspace_premium</span> Сертифікат лектора
+        </button>
+      </form>
+      {% endif %}
       <a href="{{ url_for('admin.instances_list') }}" class="btn-admin btn-admin--secondary">Назад до розкладу</a>
     </div>
   </div>

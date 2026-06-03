@@ -137,6 +137,35 @@ def instance_edit(instance_id):
     return render_template('admin/instance_edit.html', form=form, instance=instance)
 
 
+@admin_bp.route('/instances/<int:instance_id>/lecturer-certificate', methods=['POST'])
+@admin_required
+def instance_lecturer_certificate(instance_id):
+    """Видати/завантажити сертифікат лектора для проведення (PDF)."""
+    import io
+    from flask import send_file
+    from app.services import certificate_service as cs
+
+    instance = db.session.get(CourseInstance, instance_id)
+    if not instance:
+        flash('Проведення не знайдено', 'error')
+        return redirect(url_for('admin.instances_list'))
+    try:
+        lc = cs.issue_lecturer_certificate(instance, issued_by=current_user)
+        pdf = cs.render_lecturer_pdf(lc)
+    except ValueError as exc:
+        flash(str(exc), 'error')
+        return redirect(url_for('admin.instance_edit', instance_id=instance_id))
+    except Exception:
+        current_app.logger.exception('lecturer cert generation failed')
+        flash('Не вдалося згенерувати сертифікат лектора', 'error')
+        return redirect(url_for('admin.instance_edit', instance_id=instance_id))
+
+    audit_logger.info('Admin %s issued lecturer cert %s instance=%s',
+                      current_user.email, lc.number, instance_id)
+    return send_file(io.BytesIO(pdf), mimetype='application/pdf',
+                     as_attachment=True, download_name=f'lecturer-{lc.number}.pdf')
+
+
 @admin_bp.route('/instances/<int:instance_id>/status', methods=['POST'])
 @admin_required
 @limiter.limit('60 per minute')
