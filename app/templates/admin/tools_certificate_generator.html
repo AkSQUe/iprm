@@ -52,15 +52,16 @@
     <div class="form-section" style="margin-top:24px;">
       <h2 class="admin-form__section-title">Крок 2. Завантажте заповнену таблицю</h2>
       <p class="admin-text-muted" style="margin-bottom:16px;">
-        На виході отримаєте ZIP-архів з PDF-сертифікатом для кожного рядка.
+        Спершу побачите прев'ю розпарсених рядків (з перевіркою), потім запустите
+        генерацію. На виході — ZIP-архів з PDF-сертифікатом для кожного рядка.
       </p>
-      <form method="POST" action="{{ url_for('admin.tool_certificate_generator_run') }}"
+      <form method="POST" action="{{ url_for('admin.tool_certificate_generator_preview') }}"
             enctype="multipart/form-data" class="admin-filter-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="file" name="xlsx" accept=".xlsx" required
                class="form-input" style="max-width:360px;">
         <button type="submit" class="btn-admin btn-admin--primary"{% if not provider_number %} disabled{% endif %}>
-          <span class="material-symbols-rounded">workspace_premium</span> Згенерувати сертифікати
+          <span class="material-symbols-rounded">visibility</span> Завантажити й переглянути
         </button>
       </form>
     </div>

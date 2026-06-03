@@ -1,0 +1,97 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Прев'ю генерації | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.tool_certificate_generator') }}" class="admin-breadcrumb__link">Генератор сертифікатів</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Прев'ю</span>
+        </div>
+        <h1 class="admin-hero__title">Прев'ю генерації</h1>
+        <p class="admin-hero__subtitle">Перевірте рядки перед генерацією PDF</p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <div class="admin-stat-cards">
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ rows|length }}</span>
+        <span class="admin-stat-card__label">Рядків</span>
+      </div>
+      <div class="admin-stat-card admin-stat-card--success">
+        <span class="admin-stat-card__value">{{ ok_count }}</span>
+        <span class="admin-stat-card__label">Готові</span>
+      </div>
+      <div class="admin-stat-card admin-stat-card--danger">
+        <span class="admin-stat-card__value">{{ err_count }}</span>
+        <span class="admin-stat-card__label">З помилками</span>
+      </div>
+    </div>
+
+    <div class="admin-stats-bar" style="gap:12px;align-items:center;">
+      <form method="POST" action="{{ url_for('admin.tool_certificate_generator_run') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="job_id" value="{{ job_id }}">
+        <button type="submit" class="btn-admin btn-admin--primary"{% if ok_count == 0 %} disabled{% endif %}>
+          <span class="material-symbols-rounded">workspace_premium</span>
+          Згенерувати {{ ok_count }} сертифікат(ів)
+        </button>
+      </form>
+      <a href="{{ url_for('admin.tool_certificate_generator') }}" class="btn-admin btn-admin--secondary btn-admin--sm">
+        <span class="material-symbols-rounded">upload_file</span> Інший файл
+      </a>
+      {% if err_count %}
+      <span class="admin-text-muted">Рядки з помилками буде пропущено.</span>
+      {% endif %}
+    </div>
+
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>№</th><th>ПІБ учасника</th><th>Захід</th><th>Дата</th>
+          <th>Бали</th><th>Лектор</th><th>Спеціальності</th><th>Захід БПР</th><th>Учасник</th><th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.row }}</td>
+          <td><strong>{{ r.name or '—' }}</strong></td>
+          <td>{{ r.title or '—' }}</td>
+          <td>{{ r.date_str or '—' }}</td>
+          <td>{{ r.cpd if r.cpd is not none else '—' }}</td>
+          <td>{{ r.lecturer or '—' }}</td>
+          <td>{{ r.specialties or '—' }}</td>
+          <td>{{ r.event or '—' }}</td>
+          <td>{{ r.part or '—' }}</td>
+          <td>
+            {% if r.status == 'ok' %}
+              <span class="badge badge--active">OK</span>
+            {% else %}
+              <span class="badge badge--cancelled">{{ r.problems | join(', ') }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

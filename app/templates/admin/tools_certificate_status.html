@@ -1,0 +1,65 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Генерація сертифікатів | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin-cert-status.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.tool_certificate_generator') }}" class="admin-breadcrumb__link">Генератор сертифікатів</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Генерація</span>
+        </div>
+        <h1 class="admin-hero__title">Генерація сертифікатів</h1>
+        <p class="admin-hero__subtitle">Зачекайте — створюються PDF. Сторінку можна не закривати.</p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <div class="cert-progress"
+         data-status-url="{{ url_for('admin.tool_certificate_generator_job_status', job_id=job_id) }}">
+      <div class="cert-progress__track">
+        <div id="cert-progress-bar" class="cert-progress__fill"
+             style="width: {% if status.status == 'done' %}100{% elif status.total %}{{ (status.done * 100 // status.total) }}{% else %}5{% endif %}%;"></div>
+      </div>
+      <p id="cert-progress-text" class="cert-progress__text">
+        {% if status.status == 'done' %}Готово: {{ status.total }} сертифікат(ів)
+        {% elif status.status == 'failed' %}Помилка генерації
+        {% else %}Генерація… {{ status.done }} / {{ status.total or '?' }}{% endif %}
+      </p>
+
+      <div id="cert-progress-done" {% if status.status != 'done' %}hidden{% endif %}>
+        <a href="{{ url_for('admin.tool_certificate_generator_job_download', job_id=job_id) }}"
+           class="btn-admin btn-admin--primary">
+          <span class="material-symbols-rounded">download</span> Завантажити ZIP
+        </a>
+        <a href="{{ url_for('admin.tool_certificate_generator') }}" class="btn-admin btn-admin--secondary">
+          <span class="material-symbols-rounded">add</span> Згенерувати ще
+        </a>
+      </div>
+
+      <div id="cert-progress-failed" {% if status.status != 'failed' %}hidden{% endif %}>
+        <p class="admin-text-muted">Помилка: <span id="cert-error">{{ status.error or '' }}</span></p>
+        <a href="{{ url_for('admin.tool_certificate_generator') }}" class="btn-admin btn-admin--secondary">Спробувати знову</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

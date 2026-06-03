@@ -1,53 +1,40 @@
-"""Адмін-інструменти. Наразі: генератор сертифікатів з xlsx.
+"""Адмін-інструменти: генератор сертифікатів з xlsx.
 
-Завантажується заповнена xlsx-таблиця (рядок = сертифікат), на виході --
-ZIP з PDF-сертифікатами. Standalone: записів у БД не створює (для разових
-чи зовнішніх заходів). Номер будується у форматі БПР; провайдер береться
-з налаштувань сайту, решта сегментів -- з рядка таблиці.
+Потік: завантаження -> прев'ю (dry-run з OK/помилками) -> фонова генерація
+(сторінка статусу з прогресом) -> ZIP з PDF. Логіка батчу -- у
+app/services/certificate_batch.py. Сертифікати в БД не зберігаються.
 """
 import io
 import logging
-import zipfile
-from datetime import datetime
 
 from flask import (
-    flash, redirect, render_template, request, send_file, url_for,
+    abort, flash, jsonify, redirect, render_template, request, send_file, url_for,
 )
 from flask_login import current_user
-from openpyxl import Workbook, load_workbook
+from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
-from app.models.certificate import Certificate
 from app.models.site_settings import SiteSettings
-from app.services import certificate_service as cs
+from app.services import certificate_batch as batch
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
 
-# Колонки шаблону (порядок фіксований).
-COLUMNS = [
-    'ПІБ учасника',
-    'Назва заходу',
-    'Дата проведення (ДД.ММ.РРРР)',
-    'Бали БПР',
-    'ПІБ лектора',
-    'Номер заходу БПР (7 цифр)',
-    'Номер учасника (6 цифр)',
-]
-_WIDTHS = [28, 42, 26, 10, 24, 24, 22]
+
+def _provider():
+    return (SiteSettings.get().bpr_provider_number or '').strip()
 
 
 @admin_bp.route('/tools/certificate-generator')
 @admin_required
 def tool_certificate_generator():
-    provider = (SiteSettings.get().bpr_provider_number or '').strip()
     return render_template(
         'admin/tools_certificate_generator.html',
-        columns=COLUMNS,
-        provider_number=provider,
+        columns=batch.COLUMNS,
+        provider_number=_provider(),
     )
 
 
@@ -58,7 +45,7 @@ def tool_certificate_generator_template():
     wb = Workbook()
     ws = wb.active
     ws.title = 'Сертифікати'
-    ws.append(COLUMNS)
+    ws.append(batch.COLUMNS)
     head_font = Font(bold=True, color='FFFFFF')
     head_fill = PatternFill('solid', fgColor='7055A4')
     for cell in ws[1]:
@@ -66,9 +53,10 @@ def tool_certificate_generator_template():
         cell.fill = head_fill
     ws.append([
         'Шевченко Тарас Григорович', 'Сучасні протоколи PRP-терапії',
-        '15.05.2026', 10, 'Абрамович Є.В.', '1028974', '1',
+        '15.05.2026', 10, 'Абрамович Є.В.', 'усі лікарські спеціальності',
+        '1028974', '1',
     ])
-    for i, w in enumerate(_WIDTHS, start=1):
+    for i, w in enumerate(batch.COLUMN_WIDTHS, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = 'A2'
 
@@ -83,25 +71,11 @@ def tool_certificate_generator_template():
     )
 
 
-def _parse_date(val):
-    if val in (None, ''):
-        return None
-    if isinstance(val, datetime):
-        return val
-    s = str(val).strip()
-    for fmt in ('%d.%m.%Y', '%Y-%m-%d', '%d/%m/%Y', '%d.%m.%y'):
-        try:
-            return datetime.strptime(s, fmt)
-        except ValueError:
-            continue
-    return None
-
-
-@admin_bp.route('/tools/certificate-generator/generate', methods=['POST'])
+@admin_bp.route('/tools/certificate-generator/preview', methods=['POST'])
 @admin_required
-def tool_certificate_generator_run():
-    provider = (SiteSettings.get().bpr_provider_number or '').strip()
-    if not provider:
+def tool_certificate_generator_preview():
+    """Розібрати завантажений xlsx і показати таблицю OK/помилки (dry-run)."""
+    if not _provider():
         flash('Спочатку задайте реєстраційний номер провайдера БПР '
               '(Налаштування сайту)', 'error')
         return redirect(url_for('admin.tool_certificate_generator'))
@@ -115,89 +89,77 @@ def tool_certificate_generator_run():
         return redirect(url_for('admin.tool_certificate_generator'))
 
     try:
-        wb = load_workbook(file, read_only=True, data_only=True)
-        ws = wb.active
-        raw_rows = list(ws.iter_rows(min_row=2, values_only=True))
+        job_id = batch.create_job(file)
+        rows = batch.parse_workbook(job_id)
     except Exception:
-        logger.exception('certificate-generator: failed to read xlsx')
+        logger.exception('certificate-generator: failed to parse xlsx')
         flash('Не вдалося прочитати xlsx-файл', 'error')
         return redirect(url_for('admin.tool_certificate_generator'))
 
-    items, errors = [], []
-    for idx, row in enumerate(raw_rows, start=2):
-        if not row or all(c is None or str(c).strip() == '' for c in row):
-            continue
-        cells = list(row) + [None] * (7 - len(row))
-        name, title, date_raw, cpd_raw, lecturer, event_raw, part_raw = cells[:7]
-        name = str(name).strip() if name is not None else ''
-        title = str(title).strip() if title is not None else ''
-        dt = _parse_date(date_raw)
-        event_num = str(event_raw).strip() if event_raw is not None else ''
-        part_num = str(part_raw).strip() if part_raw is not None else ''
+    ok = sum(1 for r in rows if r['status'] == 'ok')
+    return render_template(
+        'admin/tools_certificate_preview.html',
+        rows=rows, job_id=job_id,
+        ok_count=ok, err_count=len(rows) - ok,
+        provider_number=_provider(),
+    )
 
-        problems = []
-        if not name:
-            problems.append('немає ПІБ учасника')
-        if not title:
-            problems.append('немає назви заходу')
-        if dt is None:
-            problems.append('некоректна дата')
-        if not event_num:
-            problems.append('немає номера заходу')
-        if not part_num:
-            problems.append('немає номера учасника')
-        cpd = None
-        if cpd_raw not in (None, ''):
-            try:
-                cpd = int(float(str(cpd_raw).strip().replace(',', '.')))
-            except ValueError:
-                problems.append('бали БПР не число')
 
-        if problems:
-            errors.append(f'Рядок {idx}: ' + ', '.join(problems))
-            continue
-        items.append({
-            'name': name, 'title': title, 'dt': dt, 'cpd': cpd,
-            'lecturer': str(lecturer).strip() if lecturer else None,
-            'event': event_num, 'part': part_num,
-        })
-
-    if errors:
-        for e in errors[:25]:
-            flash(e, 'error')
-        return redirect(url_for('admin.tool_certificate_generator'))
-    if not items:
-        flash('У таблиці немає рядків з даними', 'error')
+@admin_bp.route('/tools/certificate-generator/generate', methods=['POST'])
+@admin_required
+def tool_certificate_generator_run():
+    """Запустити фонову генерацію для job-а з прев'ю."""
+    provider = _provider()
+    if not provider:
+        flash('Не задано номер провайдера БПР', 'error')
         return redirect(url_for('admin.tool_certificate_generator'))
 
+    job_id = request.form.get('job_id', '')
     try:
-        zbuf = io.BytesIO()
-        with zipfile.ZipFile(zbuf, 'w', zipfile.ZIP_DEFLATED) as zf:
-            for it in items:
-                number = Certificate.format_number(
-                    it['dt'].year, provider, it['event'], it['part'],
-                )
-                pdf = cs.render_adhoc_pdf(
-                    number=number,
-                    recipient_name=it['name'],
-                    event_title=it['title'],
-                    event_date=it['dt'],
-                    cpd_points=it['cpd'],
-                    lecturer_name=it['lecturer'],
-                    issued_at=it['dt'],
-                )
-                zf.writestr(f'{number}.pdf', pdf)
-        zbuf.seek(0)
+        rows = batch.parse_workbook(job_id)
     except Exception:
-        logger.exception('certificate-generator: failed to render PDFs')
-        flash('Помилка генерації PDF (перевірте, що WeasyPrint встановлено)', 'error')
+        flash('Сесію генерації не знайдено. Завантажте файл повторно.', 'error')
         return redirect(url_for('admin.tool_certificate_generator'))
 
-    audit_logger.info(
-        'Admin %s generated %d certificates via xlsx tool',
-        current_user.email, len(items),
-    )
-    return send_file(
-        zbuf, mimetype='application/zip',
-        as_attachment=True, download_name='certificates.zip',
-    )
+    if not any(r['status'] == 'ok' for r in rows):
+        flash('Немає валідних рядків для генерації', 'error')
+        return redirect(url_for('admin.tool_certificate_generator'))
+
+    batch.start_job(job_id, provider)
+    audit_logger.info('Admin %s started cert batch %s', current_user.email, job_id)
+    return redirect(url_for('admin.tool_certificate_generator_job', job_id=job_id))
+
+
+@admin_bp.route('/tools/certificate-generator/job/<job_id>')
+@admin_required
+def tool_certificate_generator_job(job_id):
+    status = batch.read_status(job_id)
+    if status is None:
+        flash('Завдання не знайдено', 'error')
+        return redirect(url_for('admin.tool_certificate_generator'))
+    return render_template('admin/tools_certificate_status.html',
+                           job_id=job_id, status=status)
+
+
+@admin_bp.route('/tools/certificate-generator/job/<job_id>/status')
+@admin_required
+def tool_certificate_generator_job_status(job_id):
+    status = batch.read_status(job_id)
+    if status is None:
+        return jsonify({'status': 'unknown'}), 404
+    return jsonify(status)
+
+
+@admin_bp.route('/tools/certificate-generator/job/<job_id>/download')
+@admin_required
+def tool_certificate_generator_job_download(job_id):
+    status = batch.read_status(job_id)
+    if status is None or status.get('status') != 'done':
+        flash('Архів ще не готовий', 'error')
+        return redirect(url_for('admin.tool_certificate_generator_job', job_id=job_id))
+    try:
+        path = batch.zip_path(job_id)
+    except ValueError:
+        abort(404)
+    return send_file(path, mimetype='application/zip',
+                     as_attachment=True, download_name='certificates.zip')

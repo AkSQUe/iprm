@@ -249,6 +249,36 @@
   opacity: 1;
 }
 
+/* ========== Прогрес фонової генерації сертифікатів ========== */
+.cert-progress {
+  max-width: 560px;
+}
+.cert-progress__track {
+  height: 14px;
+  background: var(--iprm-border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.cert-progress__fill {
+  height: 100%;
+  width: 5%;
+  background: linear-gradient(90deg, #f0a02a, #b85a7e, #7055a4);
+  transition: width 0.4s ease;
+}
+.cert-progress__text {
+  font-size: 14px;
+  color: var(--iprm-text);
+  margin-bottom: 16px;
+}
+#cert-progress-done,
+#cert-progress-failed {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 /* ========== FILTER FORM ========== */
 
 .admin-filter-form {
