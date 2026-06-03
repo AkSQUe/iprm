@@ -63,7 +63,7 @@
     <table class="admin-table">
       <thead>
         <tr>
-          <th>№</th><th>ПІБ учасника</th><th>Захід</th><th>Дата</th>
+          <th>№</th><th>ПІБ учасника</th><th>Тип</th><th>Захід</th><th>Дата</th><th>Місце</th>
           <th>Бали</th><th>Лектор</th><th>Спеціальності</th><th>Захід БПР</th><th>Учасник</th><th>Статус</th>
         </tr>
       </thead>
@@ -72,8 +72,10 @@
         <tr>
           <td>{{ r.row }}</td>
           <td><strong>{{ r.name or '—' }}</strong></td>
+          <td>{{ r.event_type or '—' }}</td>
           <td>{{ r.title or '—' }}</td>
           <td>{{ r.date_str or '—' }}</td>
+          <td>{{ r.place or '—' }}</td>
           <td>{{ r.cpd if r.cpd is not none else '—' }}</td>
           <td>{{ r.lecturer or '—' }}</td>
           <td>{{ r.specialties or '—' }}</td>

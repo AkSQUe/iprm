@@ -52,9 +52,9 @@ def tool_certificate_generator_template():
         cell.font = head_font
         cell.fill = head_fill
     ws.append([
-        'Шевченко Тарас Григорович', 'Сучасні протоколи PRP-терапії',
-        '15.05.2026', 10, 'Абрамович Є.В.', 'усі лікарські спеціальності',
-        '1028974', '1',
+        'Шевченко Тарас Григорович', 'семінар', 'Сучасні протоколи PRP-терапії',
+        '15.05.2026', 'м. Київ', 10, 'Абрамович Є.В.',
+        'усі лікарські спеціальності', '1028974', '1',
     ])
     for i, w in enumerate(batch.COLUMN_WIDTHS, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w

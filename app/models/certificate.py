@@ -49,6 +49,10 @@ class Certificate(TimestampMixin, db.Model):
     lecturer_name = db.Column(db.String(200))
     # Знімок спеціальностей заходу (напр. "усі лікарські спеціальності").
     specialties = db.Column(db.String(500))
+    # Знімок типу заходу (семінар/конгрес/фахова школа...) для тексту й мета-блоку.
+    event_type_label = db.Column(db.String(100))
+    # Знімок місця проведення (напр. "м. Київ").
+    event_place = db.Column(db.String(255))
 
     issued_at = db.Column(
         db.DateTime(timezone=True), default=utcnow, nullable=False,

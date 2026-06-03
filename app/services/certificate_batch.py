@@ -30,15 +30,17 @@ logger = logging.getLogger(__name__)
 # Колонки шаблону (порядок фіксований).
 COLUMNS = [
     'ПІБ учасника',
+    'Тип заходу',
     'Назва заходу',
     'Дата проведення (ДД.ММ.РРРР)',
+    'Місце проведення',
     'Бали БПР',
     'ПІБ лектора',
     'Спеціальності',
     'Номер заходу БПР (7 цифр)',
     'Номер учасника (6 цифр)',
 ]
-COLUMN_WIDTHS = [28, 42, 26, 10, 24, 30, 24, 22]
+COLUMN_WIDTHS = [28, 18, 38, 24, 20, 10, 24, 28, 22, 20]
 _NCOLS = len(COLUMNS)
 
 MAX_ROWS = 2000  # запобіжник проти величезних файлів
@@ -166,15 +168,15 @@ def parse_workbook(job_id):
         if not raw or all(c is None or str(c).strip() == '' for c in raw):
             continue
         if len(rows) >= MAX_ROWS:
-            rows.append({'row': idx, 'name': '', 'title': '', 'date': None,
-                         'date_str': '', 'cpd': None, 'lecturer': None,
-                         'specialties': None, 'event': '', 'part': '',
-                         'status': 'error',
+            rows.append({'row': idx, 'name': '', 'event_type': None, 'title': '',
+                         'date': None, 'date_str': '', 'place': None, 'cpd': None,
+                         'lecturer': None, 'specialties': None, 'event': '',
+                         'part': '', 'status': 'error',
                          'problems': [f'перевищено ліміт {MAX_ROWS} рядків']})
             break
         cells = list(raw) + [None] * (_NCOLS - len(raw))
-        (name, title, date_raw, cpd_raw, lecturer,
-         spec_raw, event_raw, part_raw) = cells[:_NCOLS]
+        (name, event_type_raw, title, date_raw, place_raw, cpd_raw,
+         lecturer, spec_raw, event_raw, part_raw) = cells[:_NCOLS]
         name = str(name).strip() if name is not None else ''
         title = str(title).strip() if title is not None else ''
         dt = _parse_date(date_raw)
@@ -205,8 +207,11 @@ def parse_workbook(job_id):
             else:
                 seen_part[key] = idx
         rows.append({
-            'row': idx, 'name': name, 'title': title, 'date': dt,
+            'row': idx, 'name': name,
+            'event_type': str(event_type_raw).strip() if event_type_raw else None,
+            'title': title, 'date': dt,
             'date_str': dt.strftime('%d.%m.%Y') if dt else (str(date_raw).strip() if date_raw else ''),
+            'place': str(place_raw).strip() if place_raw else None,
             'cpd': cpd, 'lecturer': str(lecturer).strip() if lecturer else None,
             'specialties': str(spec_raw).strip() if spec_raw else None,
             'event': event_num, 'part': part_num,
@@ -249,7 +254,8 @@ def _run(app, job_id, provider):
                         number=number, recipient_name=r['name'],
                         event_title=r['title'], event_date=r['date'],
                         cpd_points=r['cpd'], lecturer_name=r['lecturer'],
-                        specialties=r['specialties'],
+                        specialties=r['specialties'], event_type=r['event_type'],
+                        event_place=r['place'],
                         issued_at=r['date'], font_config=font_config,
                     )
                     fname = f"{transliterate(r['name'])}_{number}.pdf"

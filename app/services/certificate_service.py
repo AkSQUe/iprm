@@ -190,7 +190,9 @@ def _event_snapshot(registration):
     trainer = instance.effective_trainer if instance else None
     lecturer = trainer.full_name if trainer else None
     specialties = (course.bpr_specialties or '').strip() if course and course.bpr_specialties else None
-    return title, event_date, cpd, lecturer, specialties
+    event_type = course.event_type_label.lower() if course and course.event_type else None
+    place = (instance.location or '').strip() if instance and instance.location else None
+    return title, event_date, cpd, lecturer, specialties, event_type, place
 
 
 _POINTS_BADGE_DIR = ('images', 'certificates')
@@ -305,17 +307,36 @@ def certificate_abs_path(certificate):
     return os.path.join(base, *certificate.pdf_path.split('/'))
 
 
+def _meta_date(dt):
+    """28 листопада 2025 р. (для мета-блоку). '' для None."""
+    if not dt:
+        return ''
+    return f'{dt.day} {_UA_MONTHS[dt.month]} {dt.year} р.'
+
+
 def render_certificate_html(certificate):
-    """Відрендерити HTML сертифіката для WeasyPrint."""
+    """Відрендерити HTML сертифіката для WeasyPrint.
+
+    Номери провайдера й заходу беремо із сегментів номера сертифіката
+    (РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ) -- працює і для БД-, і для adhoc-рендеру.
+    """
+    parts = (certificate.number or '').split('-')
+    provider_number = parts[1] if len(parts) >= 2 else ''
+    event_number = parts[2].lstrip('0') or parts[2] if len(parts) >= 3 else ''
     return render_template(
         'certificates/certificate.html',
         certificate=certificate,
         issued_date=format_ua_date(certificate.issued_at),
         event_date=format_ua_date(certificate.event_date),
+        meta_date=_meta_date(certificate.event_date),
         molecules_svg=molecular_svg(certificate.number),
         frame_svg=frame_ring_svg(),
         points_badge=points_badge_url(certificate.cpd_points),
         specialties=getattr(certificate, 'specialties', None),
+        event_type=getattr(certificate, 'event_type_label', None),
+        event_place=getattr(certificate, 'event_place', None),
+        provider_number=provider_number,
+        event_number=event_number,
         qr_svg=qr_svg(_site_url()),
         site_domain=_site_url().split('://')[-1].rstrip('/'),
     )
@@ -338,6 +359,7 @@ def render_pdf_bytes(certificate, font_config=None):
 
 def render_adhoc_pdf(*, number, recipient_name, event_title, event_date=None,
                      cpd_points=None, lecturer_name=None, specialties=None,
+                     event_type=None, event_place=None,
                      issued_at=None, font_config=None):
     """Згенерувати PDF із довільних даних (без запису в БД).
 
@@ -353,6 +375,8 @@ def render_adhoc_pdf(*, number, recipient_name, event_title, event_date=None,
         cpd_points=cpd_points,
         lecturer_name=lecturer_name,
         specialties=specialties,
+        event_type_label=event_type,
+        event_place=event_place,
         issued_at=issued_at or utcnow(),
     )
     return render_pdf_bytes(cert, font_config=font_config)
@@ -394,7 +418,8 @@ def issue_certificate(registration, issued_by=None):
     if existing is not None and not existing.revoked:
         return existing
 
-    title, event_date, cpd, lecturer, specialties = _event_snapshot(registration)
+    (title, event_date, cpd, lecturer, specialties,
+     event_type, place) = _event_snapshot(registration)
     issued_at = utcnow()
 
     # Сегменти номера БПР: рік проведення, номер провайдера, номер заходу.
@@ -422,6 +447,8 @@ def issue_certificate(registration, issued_by=None):
     cert.cpd_points = cpd
     cert.lecturer_name = lecturer
     cert.specialties = specialties
+    cert.event_type_label = event_type
+    cert.event_place = place
     cert.issued_at = issued_at
     cert.issued_by_id = issued_by.id if issued_by else None
     cert.revoked = False
