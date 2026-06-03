@@ -378,6 +378,8 @@ def render_certificate_html(certificate):
         certificate=certificate,
         issued_date=format_ua_date(certificate.issued_at),
         event_date=format_ua_date(certificate.event_date),
+        event_date_short=(certificate.event_date.strftime('%d.%m.%Y')
+                          if certificate.event_date else ''),
         meta_date=_meta_date(certificate.event_date),
         molecules_svg=molecular_svg(certificate.number),
         frame_svg=frame_ring_svg(),

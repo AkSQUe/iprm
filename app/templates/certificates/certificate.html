@@ -52,50 +52,66 @@
     margin-left: 1.5mm; text-transform: uppercase; letter-spacing: 0.01em;
   }
 
-  /* Градієнтна стрічка СЕРТИФІКАТ -- на всю ширину */
+  /* Градієнтна стрічка СЕРТИФІКАТ -- на всю ширину; під заголовком номер+дата. */
   .cert__banner {
-    width: 210mm; height: 36mm;
-    display: flex; align-items: center; justify-content: center;
+    width: 210mm; height: 38mm;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
     background: linear-gradient(90deg, #f0a02a 0%, #d9743f 28%, #b85a7e 60%, #7a51a6 100%);
-    margin-bottom: 5mm;
+    margin-bottom: 1mm;
   }
-  .cert__banner span {
+  .cert__banner-title {
     font-family: 'Nunito', sans-serif; font-weight: 800;
-    font-size: 63pt; letter-spacing: 0.06em;
+    font-size: 60pt; letter-spacing: 0.06em;
     color: #ffffff; line-height: 1;
   }
-
-  /* Тіло -- абсолютна flex-колонка від низу банера до зони номера у футері.
-     Верхня група (eyebrow..бали) тримається зверху, мета-блок центрується
-     між нею та номером сертифіката розпірками (.cert__spacer), незалежно
-     від кількості рядків у назві заходу. */
-  .cert__body {
-    position: absolute; left: 0; right: 0; top: 90mm; bottom: 78mm;
-    padding: 0 22mm; text-align: center; z-index: 2;
-    display: flex; flex-direction: column;
+  .cert__banner-number {
+    font-family: 'Nunito', sans-serif; font-weight: 700;
+    font-size: 12.5pt; letter-spacing: 0.04em;
+    color: #ffffff; margin-top: 3mm;
   }
-  .cert__body > p { margin-bottom: 5mm; }
-  .cert__spacer { flex: 1 1 0; }
 
-  /* Єдиний стиль другорядного тексту (eyebrow / lead / рядок про бали). */
+  /* Тіло -- природний потік одразу під банером. Висота змінна (залежить від
+     довжини назви та кількості рядків), маржини схлопуються -> компактно й
+     без накладань. Футер/дата лишаються absolute унизу. */
+  .cert__body { padding: 0 22mm; text-align: center; }
+  .cert__body > p { margin-bottom: 4mm; }
+
+  /* Єдиний стиль другорядного тексту (eyebrow / lead / "та отримав"). */
   .cert__eyebrow,
   .cert__lead,
-  .cert__points-text {
+  .cert__got {
     font-size: 12pt; font-weight: 400; color: #9b8ac0;
   }
-  .cert__points-text strong { font-weight: 700; color: #6a4fa0; }
+
+  /* Бали БПР: "та отримав(-ла)" -> число -> "балів БПР" на градієнтному
+     банері (full-bleed на ширину тіла; стиль -- світлий відлунок банера). */
+  .cert__got { margin-bottom: 2mm; }
+  .cert__points-band {
+    margin: 0 -22mm; padding: 4mm 0;
+    background: linear-gradient(90deg,
+      rgba(240,160,42,0.14) 0%, rgba(184,90,126,0.14) 55%, rgba(122,81,166,0.18) 100%);
+    text-align: center;
+  }
+  .cert__points-num {
+    font-family: 'Nunito', sans-serif; font-weight: 800;
+    font-size: 34pt; color: #5d4691; line-height: 1;
+  }
+  .cert__points-label {
+    font-family: 'Nunito', sans-serif; font-weight: 700;
+    font-size: 14pt; color: #6a4fa0; letter-spacing: 0.05em; margin-top: 1.5mm;
+  }
 
   /* Мета-блок БПР: жирний текст, вирівняний по лівому краю тіла сертифіката. */
-  .cert__meta { display: block; text-align: left; }
+  .cert__meta { display: block; text-align: left; margin-top: 5mm; }
   .cert__meta p {
     font-family: 'Nunito', sans-serif; font-weight: 700;
-    font-size: 12.5pt; color: #3a3344; line-height: 1.75;
+    font-size: 12.5pt; color: #3a3344; line-height: 1.5;
   }
 
   .cert__name {
     font-family: 'Nunito', sans-serif; font-weight: 700;
     font-size: 30pt; color: #5d4691; line-height: 1.12;
-    margin-top: 0mm; margin-bottom: 16mm;
+    margin-top: 6mm; margin-bottom: 9mm;
   }
 
   .cert__event {
@@ -115,8 +131,9 @@
     padding: 0 16mm;
     display: flex; justify-content: space-between; align-items: flex-end;
   }
-  .cert__col { width: 54mm; text-align: center; position: relative; }
-  .cert__col--center { width: 60mm; }
+  /* Бічні колонки (Директор / Лектор) опущені нижче за центральну (QR). */
+  .cert__col { width: 54mm; text-align: center; position: relative; top: 28mm; }
+  .cert__col--center { width: 60mm; top: 0; }
 
   .cert__person { font-weight: 700; font-size: 11pt; color: #5d4691; }
   .cert__role { font-size: 9.5pt; color: #9b8ac0; margin-top: 0.5mm; }
@@ -138,16 +155,6 @@
   .cert__issued { position: absolute; left: 0; right: 0; bottom: 8mm; text-align: center; }
   .cert__date { font-size: 10.5pt; font-weight: 600; color: #5d4691; }
   .cert__city { font-size: 9.5pt; color: #9b8ac0; margin-top: 0.5mm; }
-
-  /* Номер сертифіката -- над QR у центральній колонці футера, з відступом,
-     щоб не прилипав до QR. Номер і QR -- сусіди у колонці, тож не перекриються
-     (тіло сертифіката не впливає на їх взаємне розташування). */
-  .cert__number { margin-bottom: 4mm; }
-  .cert__number-label { display: block; font-size: 9pt; font-weight: 600;
-                        color: #9b8ac0; letter-spacing: 0.02em; }
-  .cert__number-value { display: block; font-size: 13pt; font-weight: 800;
-                        color: #5d4691; letter-spacing: 0.03em;
-                        white-space: nowrap; margin-top: 0.8mm; }
 
   /* QR на сайт -- над датою у центральній колонці футера. */
   .cert__qr { position: relative; width: 27mm; margin: 0 auto 2.5mm; }
@@ -181,7 +188,10 @@
         <span class="cert__org">Інститут плазмотерапії та регенеративної медицини</span>
       </div>
 
-      <div class="cert__banner"><span>СЕРТИФІКАТ</span></div>
+      <div class="cert__banner">
+        <span class="cert__banner-title">СЕРТИФІКАТ</span>
+        <span class="cert__banner-number">{{ certificate.number }}{% if event_date_short %} від {{ event_date_short }} р.{% endif %}</span>
+      </div>
 
       <div class="cert__body">
         <p class="cert__eyebrow">Цей сертифікат засвідчує, що</p>
@@ -189,16 +199,18 @@
         <p class="cert__lead">успішно завершив(-ла) {{ event_type or 'захід' }}</p>
         <p class="cert__event {{ event_size_class }}">«{{ certificate.event_title }}»</p>
         {% if certificate.cpd_points %}
-        <p class="cert__points-text">та отримав(-ла) <strong>{{ certificate.cpd_points }} балів БПР</strong></p>
+        <p class="cert__got">та отримав(-ла)</p>
+        <div class="cert__points-band">
+          <div class="cert__points-num">{{ certificate.cpd_points }}</div>
+          <div class="cert__points-label">балів БПР</div>
+        </div>
         {% endif %}
-        <div class="cert__spacer"></div>
         <div class="cert__meta">
           <p>Реєстраційний № заходу: {{ event_number }}</p>
           {% if specialties %}<p>Спеціальності: {{ specialties }}</p>{% endif %}
           <p>Провайдер: Реєстраційний № {{ provider_number }}</p>
           <p>Дата та місце проведення: {{ meta_date }}{% if event_place %}, {{ event_place }}{% endif %}</p>
         </div>
-        <div class="cert__spacer"></div>
       </div>
 
       <div class="cert__footer">
@@ -210,10 +222,6 @@
         </div>
         <!-- Дата + місто -->
         <div class="cert__col cert__col--center">
-          <div class="cert__number">
-            <span class="cert__number-label">Номер сертифікату</span>
-            <span class="cert__number-value">{{ certificate.number }}</span>
-          </div>
           <div class="cert__qr">
             {{ qr_svg|safe }}
             <img class="cert__qr-logo" src="svg/IPRM-logo-simple.svg" alt="">
