@@ -287,6 +287,49 @@
   color: var(--apple-gray-light);
 }
 
+/* File input -- нативну кнопку вибору файлу стилізуємо під вторинну кнопку
+   дизайн-системи (.btn-admin--secondary: white + border + pill). Стандартний
+   ::file-selector-button і -webkit- варіант пишемо ОКРЕМИМИ правилами: невідомий
+   псевдоелемент у списку селекторів інвалідує весь список. */
+.form-input[type="file"] {
+  padding: 6px 8px;
+  cursor: pointer;
+}
+.form-input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 18px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--apple-gray-dark);
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-pill);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.form-input[type="file"]::file-selector-button:hover {
+  background: var(--apple-section-bg);
+  border-color: var(--iprm-nav-active);
+}
+.form-input[type="file"]::-webkit-file-upload-button {
+  margin-right: 12px;
+  padding: 8px 18px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--apple-gray-dark);
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-pill);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.form-input[type="file"]::-webkit-file-upload-button:hover {
+  background: var(--apple-section-bg);
+  border-color: var(--iprm-nav-active);
+}
+
 .form-hint {
   font-size: 0.75rem;
   color: var(--apple-gray);
