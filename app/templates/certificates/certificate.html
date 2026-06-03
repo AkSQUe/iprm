@@ -187,10 +187,10 @@
         {% endif %}
         <div class="cert__spacer"></div>
         <div class="cert__meta">
-          <p>Реєстраційний № заходу — {{ event_number }}</p>
+          <p>Реєстраційний № заходу: {{ event_number }}</p>
           {% if specialties %}<p>Спеціальності: {{ specialties }}</p>{% endif %}
-          <p>Провайдер — Реєстраційний № {{ provider_number }}</p>
-          <p>Дата та місце проведення — {{ meta_date }}{% if event_place %}, {{ event_place }}{% endif %}</p>
+          <p>Провайдер: Реєстраційний № {{ provider_number }}</p>
+          <p>Дата та місце проведення: {{ meta_date }}{% if event_place %}, {{ event_place }}{% endif %}</p>
         </div>
         <div class="cert__spacer"></div>
       </div>
