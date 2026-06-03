@@ -189,7 +189,8 @@ def _event_snapshot(registration):
         cpd = instance.effective_cpd_points
     trainer = instance.effective_trainer if instance else None
     lecturer = trainer.full_name if trainer else None
-    return title, event_date, cpd, lecturer
+    specialties = (course.bpr_specialties or '').strip() if course and course.bpr_specialties else None
+    return title, event_date, cpd, lecturer, specialties
 
 
 _POINTS_BADGE_DIR = ('images', 'certificates')
@@ -208,6 +209,90 @@ def points_badge_url(cpd_points):
     if not os.path.exists(os.path.join(base, fname)):
         fname = f'{_POINTS_BADGE_DEFAULT}-points-BPR.webp'
     return '/'.join(_POINTS_BADGE_DIR) + '/' + fname
+
+
+_QR_FALLBACK_URL = 'https://iprm.space'
+
+
+def _site_url():
+    """Канонічна адреса сайту з налаштувань (fallback -- iprm.space).
+
+    Той самий патерн, що в email_service: беремо website_url із SiteSettings,
+    щоб QR вів на бойовий домен незалежно від SERVER_NAME у конфігу.
+    """
+    from app.models.site_settings import SiteSettings
+    return (SiteSettings.get().website_url or '').strip().rstrip('/') or _QR_FALLBACK_URL
+
+
+def qr_svg(url, border=2):
+    """Inline-SVG QR-коду на задану адресу, у брендовому градієнті.
+
+    Модулі малюємо як залиті квадрати одним path із fill="url(#qrGrad)"
+    (той самий помаранчево-рожево-фіолетовий градієнт, що й рамка). Свідомо
+    НЕ використовуємо segno.svg_inline (там модулі -- stroke-лінії): WeasyPrint
+    непослідовно рендерить градієнт на stroke, але стабільно -- на fill
+    (як у frame_ring_svg). error='h' дає корекцію до 30% -- запас під друк,
+    скан і логотип у центрі (overlay в шаблоні). Розмір задається через CSS.
+    """
+    import segno
+    matrix = list(segno.make(url, error='h').matrix)
+    n = len(matrix)
+    size = n + 2 * border
+
+    # Заокруглені модулі зі злиттям: кут заокруглюється ЛИШЕ коли обидва
+    # сусіди, що його утворюють, відсутні. Якщо поряд є модуль -- кут на стику
+    # лишається прямим, тож сусідні модулі зливаються у суцільні лінії.
+    rad = 0.5
+
+    def filled(r, c):
+        return 0 <= r < n and 0 <= c < len(matrix[r]) and matrix[r][c]
+
+    def module(r, c):
+        x, y = c + border, r + border
+        up, down = not filled(r - 1, c), not filled(r + 1, c)
+        left, right = not filled(r, c - 1), not filled(r, c + 1)
+        tl = rad if up and left else 0
+        tr = rad if up and right else 0
+        br = rad if down and right else 0
+        bl = rad if down and left else 0
+        # Обхід контуру за годинниковою; дуга лише за ненульового радіуса.
+        p = [f'M{x + tl:.2f},{y:.2f}', f'h{1 - tl - tr:.2f}']
+        if tr:
+            p.append(f'a{rad},{rad} 0 0 1 {rad},{rad}')
+        p.append(f'v{1 - tr - br:.2f}')
+        if br:
+            p.append(f'a{rad},{rad} 0 0 1 -{rad},{rad}')
+        p.append(f'h-{1 - br - bl:.2f}')
+        if bl:
+            p.append(f'a{rad},{rad} 0 0 1 -{rad},-{rad}')
+        p.append(f'v-{1 - bl - tl:.2f}')
+        if tl:
+            p.append(f'a{rad},{rad} 0 0 1 {rad},-{rad}')
+        p.append('z')
+        return ''.join(p)
+
+    squares = ''.join(
+        module(r, c)
+        for r, row in enumerate(matrix)
+        for c, val in enumerate(row) if val
+    )
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}" '
+        f'width="{size}" height="{size}">'
+        # userSpaceOnUse + spreadMethod=pad: градієнт прив'язаний до всього
+        # холста (0,0)->(size,size), а не до bounding box шляху. Інакше
+        # WeasyPrint при objectBoundingBox дає зсув на 1-2px і протікання
+        # помаранчевого (offset 0) тонкою смугою з протилежного краю.
+        f'<defs><linearGradient id="qrGrad" gradientUnits="userSpaceOnUse" '
+        f'x1="0" y1="0" x2="{size}" y2="{size}" spreadMethod="pad">'
+        '<stop offset="0" stop-color="#f0a02a"/>'
+        '<stop offset="0.5" stop-color="#b85a7e"/>'
+        '<stop offset="1" stop-color="#7055a4"/>'
+        '</linearGradient></defs>'
+        f'<rect width="{size}" height="{size}" fill="#ffffff"/>'
+        f'<path fill="url(#qrGrad)" d="{squares}"/>'
+        '</svg>'
+    )
 
 
 def certificate_abs_path(certificate):
@@ -230,23 +315,30 @@ def render_certificate_html(certificate):
         molecules_svg=molecular_svg(certificate.number),
         frame_svg=frame_ring_svg(),
         points_badge=points_badge_url(certificate.cpd_points),
+        specialties=getattr(certificate, 'specialties', None),
+        qr_svg=qr_svg(_site_url()),
+        site_domain=_site_url().split('://')[-1].rstrip('/'),
     )
 
 
-def render_pdf_bytes(certificate):
+def render_pdf_bytes(certificate, font_config=None):
     """Згенерувати PDF-байти сертифіката (без запису у файл).
 
-    WeasyPrint імпортується ліниво: на машинах без нативних GTK-бібліотек
-    імпорт може падати, і ми хочемо, щоб решта застосунку працювала.
+    font_config -- спільний weasyprint FontConfiguration; передається у
+    батч-генерації, щоб не перепарсювати шрифти на кожному сертифікаті.
+    WeasyPrint імпортується ліниво (на машинах без GTK імпорт може падати).
     """
     from weasyprint import HTML  # noqa: WPS433 (ліниво)
 
     html = render_certificate_html(certificate)
-    return HTML(string=html, base_url=current_app.static_folder).write_pdf()
+    return HTML(string=html, base_url=current_app.static_folder).write_pdf(
+        font_config=font_config,
+    )
 
 
 def render_adhoc_pdf(*, number, recipient_name, event_title, event_date=None,
-                     cpd_points=None, lecturer_name=None, issued_at=None):
+                     cpd_points=None, lecturer_name=None, specialties=None,
+                     issued_at=None, font_config=None):
     """Згенерувати PDF із довільних даних (без запису в БД).
 
     Використовується генератором сертифікатів з xlsx. Передаємо легкий
@@ -260,9 +352,10 @@ def render_adhoc_pdf(*, number, recipient_name, event_title, event_date=None,
         event_date=event_date,
         cpd_points=cpd_points,
         lecturer_name=lecturer_name,
+        specialties=specialties,
         issued_at=issued_at or utcnow(),
     )
-    return render_pdf_bytes(cert)
+    return render_pdf_bytes(cert, font_config=font_config)
 
 
 def _write_pdf(certificate):
@@ -301,7 +394,7 @@ def issue_certificate(registration, issued_by=None):
     if existing is not None and not existing.revoked:
         return existing
 
-    title, event_date, cpd, lecturer = _event_snapshot(registration)
+    title, event_date, cpd, lecturer, specialties = _event_snapshot(registration)
     issued_at = utcnow()
 
     # Сегменти номера БПР: рік проведення, номер провайдера, номер заходу.
@@ -328,6 +421,7 @@ def issue_certificate(registration, issued_by=None):
     cert.event_date = event_date
     cert.cpd_points = cpd
     cert.lecturer_name = lecturer
+    cert.specialties = specialties
     cert.issued_at = issued_at
     cert.issued_by_id = issued_by.id if issued_by else None
     cert.revoked = False

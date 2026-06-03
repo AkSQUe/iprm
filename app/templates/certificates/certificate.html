@@ -36,12 +36,14 @@
   .cert__frame { position: absolute; top: 0; left: 0; width: 210mm; height: 297mm; z-index: 1; }
   .cert__frame svg { width: 210mm; height: 297mm; display: block; }
 
-  .cert__inner { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; padding-top: 16mm; }
+  .cert__inner { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; padding-top: 10mm; }
 
-  /* Шапка: логотип зліва, бейдж балів справа */
+  /* Шапка: логотип по центру. text-align замість flex -- flexbox у WeasyPrint
+     ненадійний (див. примітку про дві img нижче), а інлайнова img стабільно
+     центрується через text-align. */
   .cert__header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 0 16mm; margin-bottom: 8mm;
+    text-align: center;
+    padding: 0 16mm; margin-bottom: 3mm;
   }
   .cert__logo { height: 51mm; width: auto; }
 
@@ -60,7 +62,7 @@
 
   /* Однаковий відступ між усіма рядками тіла. */
   .cert__body { padding: 0 22mm; text-align: center; }
-  .cert__body > p { margin-bottom: 9mm; }
+  .cert__body > p { margin-bottom: 5mm; }
   .cert__body > p:last-child { margin-bottom: 0; }
 
   /* Єдиний стиль другорядного тексту (eyebrow / lead / рядок про бали). */
@@ -79,13 +81,6 @@
   .cert__event {
     font-family: 'Nunito', sans-serif; font-weight: 600;
     font-size: 31.5pt; color: #6a4fa0; line-height: 1.3;
-  }
-
-  /* Розетка балів БПР (images/certificates/{N}-points-BPR.webp) -- абсолютно
-     у правому верхньому куті (flex із двома img у WeasyPrint ненадійний). */
-  .cert__points-img {
-    position: absolute; top: 16mm; right: 16mm; z-index: 3;
-    height: 51mm; width: auto;
   }
 
   /* Футер: підпис | печатка+дата | підпис */
@@ -116,9 +111,33 @@
   .cert__date { font-size: 10.5pt; font-weight: 600; color: #5d4691; }
   .cert__city { font-size: 9.5pt; color: #9b8ac0; margin-top: 0.5mm; }
 
-  .cert__serial {
+  /* Номер сертифіката -- над QR у центральній колонці футера, з відступом,
+     щоб не прилипав до QR. Номер і QR -- сусіди у колонці, тож не перекриються
+     (тіло сертифіката не впливає на їх взаємне розташування). */
+  .cert__number { margin-bottom: 4mm; }
+  .cert__number-label { display: block; font-size: 9pt; font-weight: 600;
+                        color: #9b8ac0; letter-spacing: 0.02em; }
+  .cert__number-value { display: block; font-size: 13pt; font-weight: 800;
+                        color: #5d4691; letter-spacing: 0.03em;
+                        white-space: nowrap; margin-top: 0.8mm; }
+
+  /* QR на сайт -- над датою у центральній колонці футера. */
+  .cert__qr { position: relative; width: 27mm; margin: 0 auto 2.5mm; }
+  .cert__qr svg { width: 27mm; height: 27mm; display: block; }
+  /* Логотип у центрі QR (error='h' лишає запас корекції). Біла підкладка,
+     щоб модулі під ним не заважали скануванню. */
+  .cert__qr-logo {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 7.5mm; height: 7.5mm; padding: 0.9mm;
+    background: #ffffff; border-radius: 0.9mm;
+  }
+
+  /* Адреса сайту -- внизу сертифіката. */
+  .cert__site {
     position: absolute; left: 0; right: 0; bottom: 8mm;
-    text-align: center; font-size: 7.5pt; color: #b3a6cc; letter-spacing: 0.04em;
+    text-align: center; font-size: 10pt; font-weight: 700;
+    color: #8a76b8; letter-spacing: 0.06em;
   }
 </style>
 </head>
@@ -128,10 +147,9 @@
     <div class="cert__frame">{{ frame_svg|safe }}</div>
 
     <div class="cert__inner">
-      <!-- Шапка: логотип зліва, бали БПР справа -->
+      <!-- Шапка: логотип по центру -->
       <div class="cert__header">
         <img class="cert__logo" src="svg/IPRM-logo-complex.svg" alt="ІПРМ">
-        <img class="cert__points-img" src="{{ points_badge }}" alt="{{ certificate.cpd_points or 10 }} балів БПР">
       </div>
 
       <div class="cert__banner"><span>СЕРТИФІКАТ</span></div>
@@ -144,6 +162,9 @@
         {% if certificate.cpd_points %}
         <p class="cert__points-text">та отримав(-ла) <strong>{{ certificate.cpd_points }} балів БПР</strong></p>
         {% endif %}
+        {% if specialties %}
+        <p class="cert__lead">Спеціальності: {{ specialties }}</p>
+        {% endif %}
       </div>
 
       <div class="cert__footer">
@@ -155,6 +176,14 @@
         </div>
         <!-- Дата + місто -->
         <div class="cert__col cert__col--center">
+          <div class="cert__number">
+            <span class="cert__number-label">Номер сертифікату</span>
+            <span class="cert__number-value">{{ certificate.number }}</span>
+          </div>
+          <div class="cert__qr">
+            {{ qr_svg|safe }}
+            <img class="cert__qr-logo" src="svg/IPRM-logo-simple.svg" alt="">
+          </div>
           <div class="cert__date">{{ issued_date }}</div>
           <div class="cert__city">м. Київ</div>
         </div>
@@ -173,7 +202,7 @@
         </div>
       </div>
 
-      <div class="cert__serial">№ {{ certificate.number }}</div>
+      <div class="cert__site">{{ site_domain }}</div>
     </div>
   </div>
 </body>
