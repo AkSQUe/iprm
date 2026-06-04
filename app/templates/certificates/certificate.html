@@ -76,33 +76,16 @@
   .cert__body { padding: 0 22mm; text-align: center; }
   .cert__body > p { margin-bottom: 4mm; }
 
-  /* Єдиний стиль другорядного тексту (eyebrow / lead / "та отримав"). */
+  /* Єдиний стиль другорядного тексту (eyebrow / lead / рядок про бали). */
   .cert__eyebrow,
   .cert__lead,
-  .cert__got {
+  .cert__points-text {
     font-size: 12pt; font-weight: 400; color: #9b8ac0;
   }
-
-  /* Бали БПР: "та отримав(-ла)" -> число -> "балів БПР" на градієнтному
-     банері (full-bleed на ширину тіла; стиль -- світлий відлунок банера). */
-  .cert__got { margin-bottom: 2mm; }
-  .cert__points-band {
-    margin: 0 -22mm; padding: 4mm 0;
-    background: linear-gradient(90deg,
-      rgba(240,160,42,0.14) 0%, rgba(184,90,126,0.14) 55%, rgba(122,81,166,0.18) 100%);
-    text-align: center;
-  }
-  .cert__points-num {
-    font-family: 'Nunito', sans-serif; font-weight: 800;
-    font-size: 34pt; color: #5d4691; line-height: 1;
-  }
-  .cert__points-label {
-    font-family: 'Nunito', sans-serif; font-weight: 700;
-    font-size: 14pt; color: #6a4fa0; letter-spacing: 0.05em; margin-top: 1.5mm;
-  }
+  .cert__points-text strong { font-weight: 700; color: #6a4fa0; }
 
   /* Мета-блок БПР: жирний текст, вирівняний по лівому краю тіла сертифіката. */
-  .cert__meta { display: block; text-align: left; margin-top: 5mm; }
+  .cert__meta { display: block; text-align: left; margin-top: 14mm; }
   .cert__meta p {
     font-family: 'Nunito', sans-serif; font-weight: 700;
     font-size: 12.5pt; color: #3a3344; line-height: 1.5;
@@ -111,12 +94,13 @@
   .cert__name {
     font-family: 'Nunito', sans-serif; font-weight: 700;
     font-size: 30pt; color: #5d4691; line-height: 1.12;
-    margin-top: 6mm; margin-bottom: 9mm;
+    margin-top: 14mm; margin-bottom: 21mm;
   }
 
   .cert__event {
     font-family: 'Nunito', sans-serif; font-weight: 600;
     color: #6a4fa0; line-height: 1.25;
+    margin-top: 14mm; margin-bottom: 14mm;
   }
   /* Адаптивний розмір назви заходу (клас задає сервіс за довжиною назви). */
   .cert__event--xl { font-size: 31.5pt; }
@@ -190,7 +174,7 @@
 
       <div class="cert__banner">
         <span class="cert__banner-title">СЕРТИФІКАТ</span>
-        <span class="cert__banner-number">{{ certificate.number }}{% if event_date_short %} від {{ event_date_short }} р.{% endif %}</span>
+        <span class="cert__banner-number">{{ certificate.number }}</span>
       </div>
 
       <div class="cert__body">
@@ -205,11 +189,7 @@
         {% endif %}
         <p class="cert__event {{ event_size_class }}">«{{ certificate.event_title }}»</p>
         {% if certificate.cpd_points %}
-        <p class="cert__got">та отримав(-ла)</p>
-        <div class="cert__points-band">
-          <div class="cert__points-num">{{ certificate.cpd_points }}</div>
-          <div class="cert__points-label">балів БПР</div>
-        </div>
+        <p class="cert__points-text">та отримав(-ла) <strong>{{ certificate.cpd_points }} балів БПР</strong></p>
         {% endif %}
         <div class="cert__meta">
           <p>Реєстраційний № заходу: {{ event_number }}</p>
