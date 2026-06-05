@@ -36,7 +36,7 @@
   .cert__frame { position: absolute; top: 0; left: 0; width: 210mm; height: 297mm; z-index: 1; }
   .cert__frame svg { width: 210mm; height: 297mm; display: block; }
 
-  .cert__inner { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; padding-top: 18mm; }
+  .cert__inner { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; padding-top: 16mm; }
 
   /* Шапка: логотип по центру. text-align замість flex -- flexbox у WeasyPrint
      ненадійний (див. примітку про дві img нижче), а інлайнова img стабільно
@@ -73,8 +73,12 @@
   /* Тіло -- природний потік одразу під банером. Висота змінна (залежить від
      довжини назви та кількості рядків), маржини схлопуються -> компактно й
      без накладань. Футер/дата лишаються absolute унизу. */
-  .cert__body { padding: 0 22mm; text-align: center; }
-  .cert__body > p { margin-bottom: 4mm; }
+  /* Рядки тіла -- flex-колонка з рівним проміжком: ПІБ і тема автоматично
+     по центру між сусідніми блоками. Мета-блоку додаємо трохи більший відступ. */
+  .cert__body {
+    padding: 0 22mm; text-align: center;
+    display: flex; flex-direction: column; gap: 11mm;
+  }
 
   /* Єдиний стиль другорядного тексту (eyebrow / lead / рядок про бали). */
   .cert__eyebrow,
@@ -85,7 +89,7 @@
   .cert__points-text strong { font-weight: 700; color: #6a4fa0; }
 
   /* Мета-блок БПР: жирний текст, вирівняний по лівому краю тіла сертифіката. */
-  .cert__meta { display: block; text-align: left; margin-top: 14mm; }
+  .cert__meta { display: block; text-align: left; }
   .cert__meta p {
     font-family: 'Nunito', sans-serif; font-weight: 700;
     font-size: 12.5pt; color: #3a3344; line-height: 1.5;
@@ -94,13 +98,11 @@
   .cert__name {
     font-family: 'Nunito', sans-serif; font-weight: 700;
     font-size: 30pt; color: #5d4691; line-height: 1.12;
-    margin-top: 14mm; margin-bottom: 21mm;
   }
 
   .cert__event {
     font-family: 'Nunito', sans-serif; font-weight: 600;
     color: #6a4fa0; line-height: 1.25;
-    margin-top: 14mm; margin-bottom: 14mm;
   }
   /* Адаптивний розмір назви заходу (клас задає сервіс за довжиною назви). */
   .cert__event--xl { font-size: 31.5pt; }
@@ -138,7 +140,6 @@
   /* Дата + місце видачі -- внизу сертифіката (на місці колишньої адреси). */
   .cert__issued { position: absolute; left: 0; right: 0; bottom: 8mm; text-align: center; }
   .cert__date { font-size: 10.5pt; font-weight: 600; color: #5d4691; }
-  .cert__city { font-size: 9.5pt; color: #9b8ac0; margin-top: 0.5mm; }
 
   /* QR на сайт -- над датою у центральній колонці футера. */
   .cert__qr { position: relative; width: 27mm; margin: 0 auto 2.5mm; }
@@ -229,7 +230,6 @@
 
       <div class="cert__issued">
         <div class="cert__date">{{ issued_date }}</div>
-        <div class="cert__city">м. Київ</div>
       </div>
     </div>
   </div>
