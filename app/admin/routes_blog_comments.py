@@ -18,6 +18,19 @@ logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
 
 
+def _back():
+    """Безпечний редірект назад до списку зі збереженням фільтра статусу.
+
+    НЕ використовуємо request.referrer (керований клієнтом -> open redirect):
+    будуємо URL через url_for з валідованим status із форми.
+    """
+    status = request.form.get('status')
+    if status not in BlogComment.STATUSES and status != 'all':
+        status = None
+    return redirect(url_for('admin.blog_comments', status=status) if status
+                    else url_for('admin.blog_comments'))
+
+
 @admin_bp.route('/blog/comments')
 @admin_required
 def blog_comments():
@@ -51,14 +64,14 @@ def _set_status(comment_id, new_status):
 @admin_required
 def blog_comment_approve(comment_id):
     _set_status(comment_id, BlogComment.STATUS_APPROVED)
-    return redirect(request.referrer or url_for('admin.blog_comments'))
+    return _back()
 
 
 @admin_bp.route('/blog/comments/<int:comment_id>/spam', methods=['POST'])
 @admin_required
 def blog_comment_spam(comment_id):
     _set_status(comment_id, BlogComment.STATUS_SPAM)
-    return redirect(request.referrer or url_for('admin.blog_comments'))
+    return _back()
 
 
 @admin_bp.route('/blog/comments/<int:comment_id>/delete', methods=['POST'])
@@ -75,4 +88,4 @@ def blog_comment_delete(comment_id):
             logger.exception('Failed to delete comment %d', comment_id)
             db.session.rollback()
             flash('Помилка при видаленні', 'error')
-    return redirect(request.referrer or url_for('admin.blog_comments'))
+    return _back()

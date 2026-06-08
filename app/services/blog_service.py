@@ -67,7 +67,9 @@ _YT_ID_RE = re.compile(r'^[A-Za-z0-9_-]{11}$')
 _YT_URL_RE = re.compile(
     r'(?:youtube\.com/(?:watch\?v=|embed/|shorts/)|youtu\.be/)([A-Za-z0-9_-]{11})'
 )
-_LOCAL_IMG_RE = re.compile(r'^/static/images/blog/[\w./-]+$')
+# Локальний шлях до зображення блогу. Негативний lookahead (?!.*\.\.) блокує
+# обхід каталогів (..), плюс вимагаємо відоме розширення зображення.
+_LOCAL_IMG_RE = re.compile(r'^/static/images/blog/(?!.*\.\.)[\w./-]+\.(?:webp|jpe?g|png)$')
 
 ALLOWED_BLOCK_TYPES = {
     'heading', 'paragraph', 'list', 'quote',

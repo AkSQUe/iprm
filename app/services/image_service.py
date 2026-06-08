@@ -79,25 +79,31 @@ def process_blog_image(file, slug):
 
     from PIL import Image, UnidentifiedImageError
 
-    try:
-        img = Image.open(file.stream)
-        img = _normalize(img)
-    except (UnidentifiedImageError, OSError) as exc:
-        logger.warning('Bad image upload (%s): %s', file.filename, exc)
-        return None, 'Не вдалося прочитати зображення'
-
     safe_slug = secure_filename(slug) or 'post'
     base = uuid4().hex[:12]
     upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'blog', safe_slug)
-    os.makedirs(upload_dir, exist_ok=True)
-
-    full = _fit(img, _FULL_MAX)
-    thumb = _fit(img, _THUMB_MAX)
-
     full_name = f'{base}.webp'
     thumb_name = f'{base}_thumb.webp'
-    full.save(os.path.join(upload_dir, full_name), 'WEBP', quality=_FULL_QUALITY, method=6)
-    thumb.save(os.path.join(upload_dir, thumb_name), 'WEBP', quality=_THUMB_QUALITY, method=6)
+
+    # Уся обробка під try: open/normalize можуть кинути DecompressionBombError
+    # (величезне/зловмисне зображення), а resize/save -- OSError. Будь-яка з них
+    # без обробки давала б 500; повертаємо керовану помилку.
+    try:
+        img = _normalize(Image.open(file.stream))
+        full = _fit(img, _FULL_MAX)
+        thumb = _fit(img, _THUMB_MAX)
+        os.makedirs(upload_dir, exist_ok=True)
+        full.save(os.path.join(upload_dir, full_name), 'WEBP', quality=_FULL_QUALITY, method=6)
+        thumb.save(os.path.join(upload_dir, thumb_name), 'WEBP', quality=_THUMB_QUALITY, method=6)
+    except Image.DecompressionBombError as exc:
+        logger.warning('Image too large (%s): %s', file.filename, exc)
+        return None, 'Зображення завелике для обробки'
+    except (UnidentifiedImageError, OSError, ValueError) as exc:
+        logger.warning('Bad image upload (%s): %s', file.filename, exc)
+        return None, 'Не вдалося прочитати зображення'
+    except Exception:
+        logger.exception('Unexpected error processing image %s', file.filename)
+        return None, 'Помилка обробки зображення'
 
     rel = f'/static/images/blog/{safe_slug}'
     logger.info('Blog image saved: %s/%s (%dx%d)', rel, full_name, full.width, full.height)
