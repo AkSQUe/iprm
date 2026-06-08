@@ -1,6 +1,7 @@
 """Публічний блог: список опублікованих дописів та сторінка допису.
 
 Сабміт коментарів і їх показ -- у routes_comments (Фаза 5)."""
+from collections import defaultdict
 from datetime import datetime, timezone
 
 from flask import render_template, abort, request
@@ -8,8 +9,27 @@ from flask import render_template, abort, request
 from app.blog import blog_bp
 from app.extensions import db
 from app.models.blog_post import BlogPost
+from app.models.blog_comment import BlogComment
 
 _PER_PAGE = 9
+
+
+def _approved_comment_tree(post_id):
+    """Схвалені коментарі допису -> (children_map, roots, count).
+
+    children_map[parent_id] = [коментарі...]; roots = children_map[None].
+    Один запит, дерево будуємо в памʼяті (без N+1).
+    """
+    rows = (
+        BlogComment.query
+        .filter_by(post_id=post_id, status=BlogComment.STATUS_APPROVED)
+        .order_by(BlogComment.created_at.asc())
+        .all()
+    )
+    children = defaultdict(list)
+    for c in rows:
+        children[c.parent_id].append(c)
+    return children, children.get(None, []), len(rows)
 
 
 def _published_query():
@@ -53,8 +73,13 @@ def post_detail(slug):
     except Exception:
         db.session.rollback()
 
+    children, roots, comment_count = _approved_comment_tree(post.id)
     return render_template(
         'blog/post.html',
         active_nav='blog',
         post=post,
+        comment_children=children,
+        comment_roots=roots,
+        comment_count=comment_count,
+        max_comment_depth=BlogComment.MAX_DEPTH,
     )

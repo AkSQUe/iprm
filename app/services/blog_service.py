@@ -200,6 +200,15 @@ def sanitize_content(blocks):
     return cleaned
 
 
+def clean_comment_body(text, limit=4000):
+    """Текст коментаря: без HTML (екрануємо все), обрізаємо до limit."""
+    return bleach.clean(text or '', tags=[], strip=True).strip()[:limit]
+
+
+def clean_comment_name(text, limit=120):
+    return bleach.clean(text or '', tags=[], strip=True).strip()[:limit]
+
+
 def auto_excerpt(blocks, limit=200):
     """Витягти короткий опис із першого текстового блоку (для excerpt/SEO)."""
     for block in blocks or []:
