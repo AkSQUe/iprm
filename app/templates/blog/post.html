@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% from 'blog/_blocks.html' import render_blocks %}
+
+{% block title %}{{ post.meta_title or post.title }} | Блог ІПРМ{% endblock %}
+{% block meta_description %}{{ post.meta_description or post.excerpt or post.title }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_image %}{% if post.cover_image %}{{ request.url_root.rstrip('/') ~ post.cover_image }}{% else %}{{ super() }}{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <article class="blog-post">
+
+    <header class="blog-post__header">
+      <div class="blog-post__header-inner">
+        <a class="blog-post__back" href="{{ url_for('blog.index') }}">← Усі дописи</a>
+        <h1 class="blog-post__title">{{ post.title }}</h1>
+        {% if post.published_at %}
+        <time class="blog-post__date" datetime="{{ post.published_at.isoformat() }}">{{ post.published_at.strftime('%d.%m.%Y') }}</time>
+        {% endif %}
+      </div>
+    </header>
+
+    {% if post.cover_image %}
+    <div class="blog-post__cover">
+      <img src="{{ post.cover_image }}" alt="{{ post.title }}">
+    </div>
+    {% endif %}
+
+    <div class="blog-post__body">
+      {{ render_blocks(post.content or []) }}
+    </div>
+
+    {# Коментарі підключаються у Фазі 5 (blog/_comments.html). #}
+
+  </article>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script defer src="{{ url_for('static', filename='js/blog-lightbox.js') }}?v={{ assets_version }}"></script>
+{% endblock %}

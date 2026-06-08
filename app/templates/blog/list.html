@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Блог | ІПРМ{% endblock %}
+{% block meta_description %}Дайджести заходів, новини та статті Інституту плазмотерапії та регенеративної медицини.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero" aria-label="Hero">
+      <div class="iprm-hero__content">
+        <h1 class="iprm-hero__title">Блог <span class="apple-gradient-text">ІПРМ.</span></h1>
+        <p class="iprm-hero__subtitle">Дайджести проведених заходів, новини та корисні матеріали</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="iprm-section apple-section-gray">
+    <div class="iprm-section__inner">
+      {% if posts %}
+      <div class="blog-grid">
+        {% for post in posts %}
+        <article class="blog-card">
+          <a class="blog-card__link" href="{{ url_for('blog.post_detail', slug=post.slug) }}">
+            <div class="blog-card__cover">
+              {% if post.cover_image %}
+              <img src="{{ post.cover_image }}" alt="{{ post.title }}" loading="lazy">
+              {% else %}
+              <div class="blog-card__cover-placeholder" aria-hidden="true"></div>
+              {% endif %}
+            </div>
+            <div class="blog-card__body">
+              {% if post.published_at %}<time class="blog-card__date" datetime="{{ post.published_at.isoformat() }}">{{ post.published_at.strftime('%d.%m.%Y') }}</time>{% endif %}
+              <h2 class="blog-card__title">{{ post.title }}</h2>
+              {% if post.excerpt %}<p class="blog-card__excerpt">{{ post.excerpt }}</p>{% endif %}
+            </div>
+          </a>
+        </article>
+        {% endfor %}
+      </div>
+
+      {% if pagination and pagination.pages > 1 %}
+      <nav class="blog-pagination" aria-label="Сторінки">
+        {% if pagination.has_prev %}
+        <a class="apple-btn apple-btn--secondary" href="{{ url_for('blog.index', page=pagination.prev_num) }}">Новіші</a>
+        {% endif %}
+        <span class="blog-pagination__info">Сторінка {{ pagination.page }} з {{ pagination.pages }}</span>
+        {% if pagination.has_next %}
+        <a class="apple-btn apple-btn--secondary" href="{{ url_for('blog.index', page=pagination.next_num) }}">Старіші</a>
+        {% endif %}
+      </nav>
+      {% endif %}
+
+      {% else %}
+      <p class="blog-empty">Поки що немає дописів. Зазирніть пізніше.</p>
+      {% endif %}
+    </div>
+  </section>
+
+</div>
+{% endblock %}

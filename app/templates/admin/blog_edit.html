@@ -24,7 +24,11 @@
         <h1 class="admin-hero__title">{% if post %}Редагування допису{% else %}Новий допис{% endif %}</h1>
       </div>
       <div class="admin-hero__actions">
-        {# Кнопка "Переглянути" зʼявиться разом із публічним блогом (Фаза 4). #}
+        {% if post and post.is_published %}
+        <a href="{{ url_for('blog.post_detail', slug=post.slug) }}" target="_blank" rel="noopener" class="btn-admin btn-admin--secondary">
+          <span class="material-symbols-rounded">open_in_new</span> Переглянути
+        </a>
+        {% endif %}
         <a href="{{ url_for('admin.blog_list') }}" class="btn-admin btn-admin--secondary">Назад</a>
       </div>
     </div>

@@ -1,0 +1,65 @@
+{# Рендер блоків контенту допису. Текстові поля (text/caption/alt) -- plain,
+   Jinja їх екранує. Поля html (paragraph/callout/list-item) уже санітизовані
+   на збереженні (bleach, вузький whitelist) -> виводимо через |safe.
+   YouTube -- лише через youtube-nocookie з валідованим 11-символьним id. #}
+{% macro render_blocks(blocks) %}
+<div class="blog-content">
+  {% for block in blocks %}
+    {% set d = block.data %}
+    {% if block.type == 'heading' %}
+      {% if d.level == 3 %}<h3 class="blog-content__h3">{{ d.text }}</h3>
+      {% else %}<h2 class="blog-content__h2">{{ d.text }}</h2>{% endif %}
+
+    {% elif block.type == 'paragraph' %}
+      <p class="blog-content__p">{{ d.html|safe }}</p>
+
+    {% elif block.type == 'list' %}
+      {% if d.style == 'ordered' %}
+      <ol class="blog-content__list">{% for item in d['items'] %}<li>{{ item|safe }}</li>{% endfor %}</ol>
+      {% else %}
+      <ul class="blog-content__list">{% for item in d['items'] %}<li>{{ item|safe }}</li>{% endfor %}</ul>
+      {% endif %}
+
+    {% elif block.type == 'quote' %}
+      <blockquote class="blog-content__quote">
+        <p>{{ d.text }}</p>
+        {% if d.caption %}<cite>{{ d.caption }}</cite>{% endif %}
+      </blockquote>
+
+    {% elif block.type == 'image' %}
+      <figure class="blog-content__figure">
+        <img src="{{ d.url }}" alt="{{ d.alt }}" loading="lazy"
+             {% if d.width and d.height %}width="{{ d.width }}" height="{{ d.height }}"{% endif %}>
+        {% if d.caption %}<figcaption>{{ d.caption }}</figcaption>{% endif %}
+      </figure>
+
+    {% elif block.type == 'gallery' %}
+      <div class="blog-gallery" data-lightbox-group>
+        {% for img in d['images'] %}
+        <a class="blog-gallery__item" href="{{ img.url }}" data-lightbox
+           data-caption="{{ img.caption }}">
+          <img src="{{ img.thumb or img.url }}" alt="{{ img.alt }}" loading="lazy">
+        </a>
+        {% endfor %}
+      </div>
+
+    {% elif block.type == 'youtube' %}
+      <figure class="blog-content__video">
+        <div class="blog-video">
+          <iframe src="https://www.youtube-nocookie.com/embed/{{ d.video_id }}"
+                  title="{{ d.caption or 'YouTube' }}" loading="lazy"
+                  frameborder="0" allowfullscreen
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        </div>
+        {% if d.caption %}<figcaption>{{ d.caption }}</figcaption>{% endif %}
+      </figure>
+
+    {% elif block.type == 'callout' %}
+      <div class="blog-callout blog-callout--{{ d.style }}">{{ d.html|safe }}</div>
+
+    {% elif block.type == 'divider' %}
+      <hr class="blog-content__divider">
+    {% endif %}
+  {% endfor %}
+</div>
+{% endmacro %}

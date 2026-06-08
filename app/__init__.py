@@ -95,6 +95,9 @@ def create_app(config_name=None):
     from app.courses import courses_bp
     app.register_blueprint(courses_bp)
 
+    from app.blog import blog_bp
+    app.register_blueprint(blog_bp)
+
     from app.services.error_handler import init_error_handlers
     init_error_handlers(app)
 
@@ -222,6 +225,7 @@ def create_app(config_name=None):
             "font-src 'self' https://fonts.gstatic.com; "
             "img-src 'self' data:" + ga_img + gsi_img + "; "
             "frame-src 'self' blob: https://www.liqpay.ua https://checkout.liqpay.ua"
+            " https://www.youtube-nocookie.com"
             + gframe + gsi + "; "
             "connect-src 'self'" + gconn + ga_conn + gsi
         )
