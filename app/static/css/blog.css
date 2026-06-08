@@ -96,7 +96,35 @@
 .blog-lightbox__next { right: 16px; }
 .blog-lightbox__close { top: 18px; right: 18px; transform: none; width: 44px; height: 44px; }
 
+/* ---- Коментарі ---- */
+.blog-comments { max-width: 760px; margin: 56px auto 0; padding-top: 32px; border-top: 1px solid var(--iprm-border); }
+.blog-comments__title { font-size: 1.4rem; font-weight: 700; margin-bottom: 22px; color: var(--iprm-text, #1d1d1f); }
+.blog-comments__empty { color: var(--apple-gray); margin-bottom: 24px; }
+.blog-comments__list, .blog-comment__children { list-style: none; padding: 0; margin: 0; }
+.blog-comment { padding: 16px 0; border-bottom: 1px solid var(--iprm-border); }
+.blog-comment__children { margin-left: 24px; padding-left: 16px; border-left: 2px solid var(--iprm-border); margin-top: 12px; }
+.blog-comment__children .blog-comment:last-child { border-bottom: none; padding-bottom: 0; }
+.blog-comment__head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+.blog-comment__author { font-weight: 700; color: var(--iprm-text, #1d1d1f); }
+.blog-comment__date { font-size: 0.8rem; color: var(--apple-gray); }
+.blog-comment__body { white-space: pre-wrap; line-height: 1.6; color: var(--iprm-text, #1d1d1f); }
+.blog-comment__reply { margin-top: 8px; background: none; border: none; padding: 0; color: var(--iprm-accent); font-size: 0.85rem; cursor: pointer; }
+.blog-comment__reply:hover { text-decoration: underline; }
+
+.blog-comment-form { margin-top: 36px; background: var(--apple-section-bg); border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-md, 16px); padding: 24px; }
+.blog-comment-form__title { font-size: 1.15rem; font-weight: 700; margin-bottom: 14px; }
+.blog-comment-form__reply-to { font-size: 0.9rem; color: var(--apple-gray-dark); margin-bottom: 12px; }
+.blog-comment-form__cancel { background: none; border: none; color: var(--iprm-accent); cursor: pointer; font-size: 0.85rem; margin-left: 6px; }
+.blog-comment-form__row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.blog-comment-form__row .form-input { flex: 1 1 200px; }
+.blog-comment-form textarea.form-input { width: 100%; margin-bottom: 10px; resize: vertical; }
+.blog-comment-form__note { font-size: 0.8rem; color: var(--apple-gray); margin-bottom: 14px; }
+
+/* Honeypot -- прибрано з потоку і з-перед очей (але не display:none, щоб боти заповнювали) */
+.blog-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
 @media (max-width: 600px) {
   .blog-post__title { font-size: 1.6rem; }
   .blog-lightbox__btn { width: 40px; height: 40px; }
+  .blog-comment__children { margin-left: 12px; padding-left: 10px; }
 }

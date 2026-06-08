@@ -34,7 +34,9 @@
       {{ render_blocks(post.content or []) }}
     </div>
 
-    {# Коментарі підключаються у Фазі 5 (blog/_comments.html). #}
+    <div class="blog-post__comments-wrap">
+      {% include 'blog/_comments.html' %}
+    </div>
 
   </article>
 </div>
@@ -42,4 +44,5 @@
 
 {% block extra_scripts %}
 <script defer src="{{ url_for('static', filename='js/blog-lightbox.js') }}?v={{ assets_version }}"></script>
+<script defer src="{{ url_for('static', filename='js/blog-comments.js') }}?v={{ assets_version }}"></script>
 {% endblock %}
