@@ -16,6 +16,7 @@
         <li><a href="{{ url_for('clinics.clinic_list') }}"{% if active_nav == 'clinics' %} class="iprm-nav--active"{% endif %}>Клініки</a></li>
         {% endif %}
         <li><a href="{{ url_for('trainers.trainer_list') }}"{% if active_nav == 'trainers' %} class="iprm-nav--active"{% endif %}>Тренери</a></li>
+        <li><a href="{{ url_for('blog.index') }}"{% if active_nav == 'blog' %} class="iprm-nav--active"{% endif %}>Блог</a></li>
         <li><a href="{{ url_for('main.contact') }}"{% if active_nav == 'contact' %} class="iprm-nav--active"{% endif %}>Контакти</a></li>
       </ul>
       <div class="iprm-nav__mobile-account">

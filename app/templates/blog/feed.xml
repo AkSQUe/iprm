@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>{{ (site_settings.company_name or 'ІПРМ') }} — Блог</title>
+    <link>{{ feed_link }}</link>
+    <description>Дайджести заходів, новини та статті Інституту плазмотерапії та регенеративної медицини</description>
+    <language>uk</language>
+    {% if last_build %}<lastBuildDate>{{ last_build }}</lastBuildDate>{% endif %}
+    {% for item in items %}
+    <item>
+      <title>{{ item.title | e }}</title>
+      <link>{{ item.link }}</link>
+      <guid isPermaLink="true">{{ item.link }}</guid>
+      <description>{{ item.description | e }}</description>
+      {% if item.pub_date %}<pubDate>{{ item.pub_date }}</pubDate>{% endif %}
+    </item>
+    {% endfor %}
+  </channel>
+</rss>

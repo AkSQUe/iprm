@@ -1,6 +1,9 @@
 """Sitemap generation service."""
 from flask import url_for
 
+from datetime import datetime, timezone
+
+from app.models.blog_post import BlogPost
 from app.models.clinic import Clinic
 from app.models.course import Course
 from app.models.trainer import Trainer
@@ -10,6 +13,7 @@ STATIC_URLS = [
     ('courses.course_list', '1.0', 'weekly'),
     ('main.labs', '0.8', 'weekly'),
     ('trainers.trainer_list', '0.8', 'weekly'),
+    ('blog.index', '0.7', 'weekly'),
     ('clinics.clinic_list', '0.8', 'monthly'),
     ('main.contact', '0.7', 'monthly'),
     ('main.bpr_documents', '0.4', 'yearly'),
@@ -57,6 +61,21 @@ def generate_pages():
             'priority': '0.6',
             'changefreq': 'monthly',
             'lastmod': clinic.updated_at.strftime('%Y-%m-%d') if clinic.updated_at else None,
+        })
+
+    now = datetime.now(timezone.utc)
+    posts = (
+        BlogPost.query
+        .filter(BlogPost.status == BlogPost.STATUS_PUBLISHED)
+        .filter(BlogPost.published_at.isnot(None), BlogPost.published_at <= now)
+        .all()
+    )
+    for post in posts:
+        pages.append({
+            'loc': url_for('blog.post_detail', slug=post.slug, _external=True),
+            'priority': '0.7',
+            'changefreq': 'monthly',
+            'lastmod': post.updated_at.strftime('%Y-%m-%d') if post.updated_at else None,
         })
 
     return pages

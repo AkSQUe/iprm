@@ -7,6 +7,10 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% block extra_head %}
+<link rel="alternate" type="application/rss+xml" title="Блог ІПРМ" href="{{ url_for('blog.feed') }}">
+{% endblock %}
+
 {% block content %}
 <div class="apple-page">
 

@@ -3,8 +3,9 @@
 Сабміт коментарів і їх показ -- у routes_comments (Фаза 5)."""
 from collections import defaultdict
 from datetime import datetime, timezone
+from email.utils import format_datetime
 
-from flask import render_template, abort, request
+from flask import render_template, abort, request, url_for, Response
 
 from app.blog import blog_bp
 from app.extensions import db
@@ -12,6 +13,7 @@ from app.models.blog_post import BlogPost
 from app.models.blog_comment import BlogComment
 
 _PER_PAGE = 9
+_FEED_LIMIT = 20
 
 
 def _approved_comment_tree(post_id):
@@ -56,6 +58,34 @@ def index():
         posts=pagination.items,
         pagination=pagination,
     )
+
+
+@blog_bp.route('/feed.xml')
+def feed():
+    """RSS 2.0 стрічка останніх опублікованих дописів."""
+    posts = (
+        _published_query()
+        .order_by(BlogPost.published_at.desc())
+        .limit(_FEED_LIMIT)
+        .all()
+    )
+    items = [
+        {
+            'title': p.title,
+            'link': url_for('blog.post_detail', slug=p.slug, _external=True),
+            'description': p.excerpt or p.title,
+            'pub_date': format_datetime(p.published_at) if p.published_at else '',
+        }
+        for p in posts
+    ]
+    last_build = format_datetime(posts[0].published_at) if posts and posts[0].published_at else ''
+    xml = render_template(
+        'blog/feed.xml',
+        items=items,
+        feed_link=url_for('blog.index', _external=True),
+        last_build=last_build,
+    )
+    return Response(xml, mimetype='application/rss+xml')
 
 
 @blog_bp.route('/<slug>')
