@@ -107,10 +107,9 @@
 
       <div class="admin-form__actions">
         {% if post %}
-        <form method="POST" action="{{ url_for('admin.blog_delete', post_id=post.id) }}" class="admin-inline-form" data-confirm="Видалити допис?">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
-        </form>
+        {# Кнопка сабмітить ОКРЕМУ форму видалення (нижче), а не вкладену:
+           вкладені <form> -- невалідний HTML і ламають submit основної форми. #}
+        <button type="submit" form="blog-delete-form" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
         {% endif %}
         <a href="{{ url_for('admin.blog_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
         <button type="submit" class="btn-admin btn-admin--primary" form="blog-form">
@@ -118,6 +117,12 @@
         </button>
       </div>
     </form>
+
+    {% if post %}
+    <form id="blog-delete-form" method="POST" action="{{ url_for('admin.blog_delete', post_id=post.id) }}" data-confirm="Видалити допис?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+    {% endif %}
 
   </div>
 </div>
@@ -135,7 +140,10 @@
       window.initAdminDropzones({
         endpoint: "{{ url_for('admin.upload_blog_image') }}",
         getSlug: slugFallback,
-        slugMissingMsg: 'Спочатку вкажіть заголовок'
+        slugMissingMsg: 'Спочатку вкажіть заголовок',
+        allowed: ['image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif'],
+        allowedExt: /\.(png|jpe?g|webp|heic|heif)$/i,
+        allowedMsg: 'Дозволені формати: PNG, JPG, WebP, HEIC'
       });
     }
     if (window.initBlogEditor) {

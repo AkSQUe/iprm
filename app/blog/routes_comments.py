@@ -31,15 +31,21 @@ def _published_post(slug):
     )
 
 
+# Запобіжник від нескінченного циклу при пошкоджених даних (parent_id-цикл).
+_MAX_HOPS = BlogComment.MAX_DEPTH + 5
+
+
 def _comment_depth(comment):
-    """Глибина коментаря: корінь = 1 (рахуємо предків угору)."""
+    """Глибина коментаря: корінь = 1 (рахуємо предків угору, з лімітом hops)."""
     depth = 1
     node = comment
-    while node.parent_id is not None:
+    hops = 0
+    while node.parent_id is not None and hops < _MAX_HOPS:
         node = db.session.get(BlogComment, node.parent_id)
         if node is None:
             break
         depth += 1
+        hops += 1
     return depth
 
 
@@ -60,8 +66,10 @@ def _resolve_parent(post_id, raw_parent_id):
             or parent.status != BlogComment.STATUS_APPROVED):
         return None
     # дитина матиме глибину parent_depth + 1; тримаємо <= MAX_DEPTH
-    while parent is not None and _comment_depth(parent) + 1 > BlogComment.MAX_DEPTH:
+    hops = 0
+    while parent is not None and hops < _MAX_HOPS and _comment_depth(parent) + 1 > BlogComment.MAX_DEPTH:
         parent = db.session.get(BlogComment, parent.parent_id) if parent.parent_id else None
+        hops += 1
     return parent.id if parent else None
 
 

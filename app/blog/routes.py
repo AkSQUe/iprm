@@ -8,7 +8,6 @@ from email.utils import format_datetime
 from flask import render_template, abort, request, url_for, Response
 
 from app.blog import blog_bp
-from app.extensions import db
 from app.models.blog_post import BlogPost
 from app.models.blog_comment import BlogComment
 
@@ -28,10 +27,17 @@ def _approved_comment_tree(post_id):
         .order_by(BlogComment.created_at.asc())
         .all()
     )
+    approved_ids = {c.id for c in rows}
     children = defaultdict(list)
+    roots = []
     for c in rows:
-        children[c.parent_id].append(c)
-    return children, children.get(None, []), len(rows)
+        # Коментар -- корінь, якщо без батька АБО його батько не серед схвалених
+        # (напр. батько ще на модерації/спам) -- щоб схвалена відповідь не зникала.
+        if c.parent_id is None or c.parent_id not in approved_ids:
+            roots.append(c)
+        else:
+            children[c.parent_id].append(c)
+    return children, roots, len(rows)
 
 
 def _published_query():
@@ -93,15 +99,6 @@ def post_detail(slug):
     post = _published_query().filter(BlogPost.slug == slug).first()
     if not post:
         abort(404)
-
-    # Best-effort лічильник переглядів (не критично -- не валимо запит на помилці).
-    try:
-        BlogPost.query.filter_by(id=post.id).update(
-            {BlogPost.views: BlogPost.views + 1}, synchronize_session=False,
-        )
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
 
     children, roots, comment_count = _approved_comment_tree(post.id)
     return render_template(

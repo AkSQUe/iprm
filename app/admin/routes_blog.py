@@ -10,6 +10,7 @@ import logging
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
 from sqlalchemy import func, desc
+from sqlalchemy.exc import IntegrityError
 
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
@@ -80,6 +81,24 @@ def _apply_form(post, form):
     return None
 
 
+def _commit_post(post):
+    """Закомітити допис із ретраєм на гонку за unique slug.
+
+    Якщо два збереження одночасно взяли однаковий slug -- перший пройде,
+    другий впаде IntegrityError; регенеруємо slug і пробуємо ще раз. Інші
+    помилки прокидуються нагору (обробляються у viewʼю). Повертає True/False.
+    """
+    for _ in range(2):
+        try:
+            db.session.commit()
+            return True
+        except IntegrityError:
+            db.session.rollback()
+            post.slug = blog_service.generate_unique_slug(post.title, exclude_id=post.id)
+            db.session.add(post)
+    return False
+
+
 @admin_bp.route('/blog/new', methods=['GET', 'POST'])
 @admin_required
 def blog_create():
@@ -95,10 +114,11 @@ def blog_create():
             return render_template('admin/blog_edit.html', form=form, post=None)
         db.session.add(post)
         try:
-            db.session.commit()
-            audit_logger.info('Admin %s created blog post %s (%s)', current_user.email, post.id, post.slug)
-            flash('Допис створено', 'success')
-            return redirect(url_for('admin.blog_edit', post_id=post.id))
+            if _commit_post(post):
+                audit_logger.info('Admin %s created blog post %s (%s)', current_user.email, post.id, post.slug)
+                flash('Допис створено', 'success')
+                return redirect(url_for('admin.blog_edit', post_id=post.id))
+            flash('Не вдалося зберегти через колізію slug. Спробуйте інший slug.', 'error')
         except Exception:
             logger.exception('Failed to create blog post')
             db.session.rollback()
@@ -126,10 +146,11 @@ def blog_edit(post_id):
             flash(error, 'error')
             return render_template('admin/blog_edit.html', form=form, post=post)
         try:
-            db.session.commit()
-            audit_logger.info('Admin %s updated blog post %s (%s)', current_user.email, post.id, post.slug)
-            flash('Допис оновлено', 'success')
-            return redirect(url_for('admin.blog_edit', post_id=post.id))
+            if _commit_post(post):
+                audit_logger.info('Admin %s updated blog post %s (%s)', current_user.email, post.id, post.slug)
+                flash('Допис оновлено', 'success')
+                return redirect(url_for('admin.blog_edit', post_id=post.id))
+            flash('Не вдалося зберегти через колізію slug. Спробуйте інший slug.', 'error')
         except Exception:
             logger.exception('Failed to update blog post %d', post_id)
             db.session.rollback()

@@ -16,6 +16,11 @@
     var endpoint = opts.endpoint;
     var getSlug = opts.getSlug;
     var slugMissingMsg = opts.slugMissingMsg || 'Спочатку вкажіть slug';
+    // Дозволені типи можна перевизначити (напр. блог приймає HEIC). За
+    // замовчуванням -- як раніше (PNG/JPG/WebP), щоб не ламати інших викликів.
+    var allowedTypes = opts.allowed || ['image/png', 'image/jpeg', 'image/webp'];
+    var allowedExt = opts.allowedExt || null;  // RegExp на ім'я файлу (для HEIC, де type порожній)
+    var allowedMsg = opts.allowedMsg || 'Дозволені формати: PNG, JPG, WebP';
 
     var dropzones = document.querySelectorAll('.admin-dropzone');
     var csrfToken = document.querySelector('input[name="csrf_token"]');
@@ -63,9 +68,8 @@
       });
 
       function uploadFile(file) {
-        var allowed = ['image/png', 'image/jpeg', 'image/webp'];
-        if (allowed.indexOf(file.type) === -1) {
-          notifyError('Дозволені формати: PNG, JPG, WebP');
+        if (allowedTypes.indexOf(file.type) === -1 && !(allowedExt && allowedExt.test(file.name))) {
+          notifyError(allowedMsg);
           return;
         }
         if (file.size > 5 * 1024 * 1024) {
@@ -108,6 +112,11 @@
           zone.classList.remove('admin-dropzone--uploading');
           if (result.ok) {
             hiddenInput.value = result.data.url;
+            // Оновлюємо прев'ю реальним результатом із сервера: для HEIC
+            // локальний FileReader не рендериться, тож показуємо WebP-відповідь.
+            if (previewImg && (result.data.thumb || result.data.url)) {
+              previewImg.src = result.data.thumb || result.data.url;
+            }
           } else {
             notifyError(result.data.error || 'Помилка завантаження');
             if (!hiddenInput.value) {

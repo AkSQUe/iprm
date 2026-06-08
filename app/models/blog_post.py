@@ -63,18 +63,5 @@ class BlogPost(TimestampMixin, db.Model):
     def is_published(self):
         return self.status == self.STATUS_PUBLISHED and self.published_at is not None
 
-    @property
-    def approved_comment_count(self):
-        from app.models.blog_comment import BlogComment
-        from sqlalchemy import func
-        return (
-            db.session.query(func.count(BlogComment.id))
-            .filter(
-                BlogComment.post_id == self.id,
-                BlogComment.status == BlogComment.STATUS_APPROVED,
-            )
-            .scalar()
-        )
-
     def __repr__(self):
         return f'<BlogPost {self.slug}>'
