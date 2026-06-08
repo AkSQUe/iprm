@@ -396,3 +396,40 @@ class CourseRequestAdminForm(FlaskForm):
         'Нотатки адміна',
         validators=[Optional()],
     )
+
+
+class BlogPostForm(FlaskForm):
+    """Допис блогу. Контент (блоки) приходить як JSON у прихованому полі
+    `content` від блочного редактора; валідується/санітизується у сервісі."""
+    title = StringField(
+        'Заголовок',
+        validators=[DataRequired(message='Вкажіть заголовок'), Length(max=255)],
+    )
+    slug = StringField(
+        'Slug (URL)',
+        validators=[Optional(), Length(max=200)],
+        description='Автоматично генерується із заголовка, якщо порожньо',
+    )
+    excerpt = TextAreaField(
+        'Короткий опис',
+        validators=[Optional(), Length(max=500)],
+        description='Для картки в списку та соцмереж. Якщо порожньо -- візьметься з тексту',
+    )
+    cover_image = HiddenField(
+        'Обкладинка',
+        validators=[Optional(), _optional_url()],
+    )
+    content = HiddenField('Контент')
+    status = SelectField(
+        'Статус',
+        choices=[('draft', 'Чернетка'), ('published', 'Опубліковано')],
+        validators=[DataRequired()],
+    )
+    meta_title = StringField(
+        'SEO заголовок (title)',
+        validators=[Optional(), Length(max=200)],
+    )
+    meta_description = TextAreaField(
+        'SEO опис (meta description)',
+        validators=[Optional(), Length(max=500)],
+    )

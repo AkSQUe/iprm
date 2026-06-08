@@ -22,6 +22,14 @@
         <span class="material-symbols-rounded">school</span>
         Тренери
       </a>
+      <a href="{{ url_for('admin.blog_list') }}" class="admin-sidebar__link{% if ep in ('admin.blog_list', 'admin.blog_create', 'admin.blog_edit', 'admin.blog_delete') %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">article</span>
+        Блог
+      </a>
+      <a href="{{ url_for('admin.blog_comments') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.blog_comments', 'admin.blog_comment_approve', 'admin.blog_comment_spam', 'admin.blog_comment_delete') %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">forum</span>
+        Коментарі
+      </a>
     </div>
 
     <div class="admin-sidebar__group">

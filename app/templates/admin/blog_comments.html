@@ -1,0 +1,95 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Коментарі блогу | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.blog_list') }}" class="admin-breadcrumb__link">Блог</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Коментарі</span>
+        </div>
+        <h1 class="admin-hero__title">Коментарі</h1>
+        <p class="admin-hero__subtitle">Премодерація: схвалені коментарі показуються на сайті</p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <div class="form-section">
+      <div class="admin-filter-form" style="margin-bottom:16px;">
+        {% set tabs = [('pending','На модерації'),('approved','Схвалені'),('spam','Спам'),('all','Усі')] %}
+        {% for val, label in tabs %}
+        <a href="{{ url_for('admin.blog_comments', status=val) }}"
+           class="btn-admin btn-admin--{{ 'primary' if status == val else 'secondary' }} btn-admin--sm">{{ label }}</a>
+        {% endfor %}
+      </div>
+
+      {% if comments %}
+      <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Автор</th><th>Коментар</th><th>Допис</th><th>Дата</th><th>Статус</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for c in comments %}
+          <tr>
+            <td>
+              <strong>{{ c.author_name }}</strong>
+              {% if c.email %}<div class="admin-text-muted">{{ c.email }}</div>{% endif %}
+              {% if c.parent_id %}<div class="admin-text-muted">↳ відповідь</div>{% endif %}
+            </td>
+            <td style="max-width:360px;">{{ c.body }}</td>
+            <td>
+              {% if c.post %}<a href="{{ url_for('admin.blog_edit', post_id=c.post_id) }}">{{ c.post.title }}</a>{% else %}—{% endif %}
+            </td>
+            <td>{{ c.created_at.strftime('%d.%m.%Y %H:%M') if c.created_at else '—' }}</td>
+            <td>
+              {% if c.status == 'approved' %}<span class="admin-badge admin-badge--success">Схвалено</span>
+              {% elif c.status == 'spam' %}<span class="admin-badge admin-badge--danger">Спам</span>
+              {% else %}<span class="admin-badge admin-badge--warning">На модерації</span>{% endif %}
+            </td>
+            <td class="admin-table__actions">
+              {% if c.status != 'approved' %}
+              <form method="POST" action="{{ url_for('admin.blog_comment_approve', comment_id=c.id) }}" class="admin-inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--success btn-admin--sm">Схвалити</button>
+              </form>
+              {% endif %}
+              {% if c.status != 'spam' %}
+              <form method="POST" action="{{ url_for('admin.blog_comment_spam', comment_id=c.id) }}" class="admin-inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Спам</button>
+              </form>
+              {% endif %}
+              <form method="POST" action="{{ url_for('admin.blog_comment_delete', comment_id=c.id) }}" class="admin-inline-form" data-confirm="Видалити коментар?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      {% else %}
+      <div class="admin-empty" style="padding:24px;text-align:center;">
+        <p class="admin-text-muted">Немає коментарів у цій категорії.</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

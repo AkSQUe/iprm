@@ -1,0 +1,149 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{% if post %}Редагування: {{ post.title }}{% else %}Новий допис{% endif %} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blog-editor.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.blog_list') }}" class="admin-breadcrumb__link">Блог</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">{% if post %}Редагування{% else %}Новий{% endif %}</span>
+        </div>
+        <h1 class="admin-hero__title">{% if post %}Редагування допису{% else %}Новий допис{% endif %}</h1>
+      </div>
+      <div class="admin-hero__actions">
+        {# Кнопка "Переглянути" зʼявиться разом із публічним блогом (Фаза 4). #}
+        <a href="{{ url_for('admin.blog_list') }}" class="btn-admin btn-admin--secondary">Назад</a>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <form method="POST" class="admin-form" id="blog-form">
+      {{ form.hidden_tag() }}
+      {% include 'admin/partials/_form_errors.html' %}
+
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">Основне</h3>
+        <div class="admin-form__grid">
+          <div class="form-group admin-form__full">
+            <label for="title">Заголовок <span class="required">*</span></label>
+            {{ form.title(class="form-input" + (" is-invalid" if form.title.errors else ""), id="title", placeholder="Підсумки заходу...") }}
+            {% for e in form.title.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="form-group">
+            <label for="slug">Slug (URL)</label>
+            {{ form.slug(class="form-input", id="slug", placeholder="автоматично із заголовка") }}
+            {% for e in form.slug.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="form-group">
+            <label for="status">Статус</label>
+            {{ form.status(class="form-input", id="status") }}
+          </div>
+          <div class="form-group admin-form__full">
+            <label for="excerpt">Короткий опис</label>
+            {{ form.excerpt(class="form-input", id="excerpt", rows="2", placeholder="Якщо порожньо — візьметься з тексту") }}
+            {% for e in form.excerpt.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">Обкладинка</h3>
+        <div class="form-group">
+          <div class="admin-dropzone admin-dropzone--wide" id="dropzone-cover" data-target="cover_image">
+            <div class="admin-dropzone__preview{% if form.cover_image.data %} admin-dropzone__preview--active{% endif %}" id="preview-cover">
+              {% if form.cover_image.data %}<img src="{{ form.cover_image.data }}" alt="Обкладинка">{% endif %}
+              <button type="button" class="admin-dropzone__remove" aria-label="Видалити">X</button>
+            </div>
+            <div class="admin-dropzone__prompt{% if form.cover_image.data %} admin-dropzone__prompt--hidden{% endif %}">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p>Перетягніть зображення або <span class="admin-dropzone__link">оберіть файл</span></p>
+              <small>PNG, JPG, WebP, HEIC. Макс. 5 MB</small>
+            </div>
+            <input type="file" class="admin-dropzone__input" accept="image/png,image/jpeg,image/webp,.heic,.heif">
+          </div>
+          {{ form.cover_image(type="hidden", id="cover_image") }}
+        </div>
+      </div>
+
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">Контент</h3>
+        <p class="admin-text-muted" style="margin-bottom:12px;">Додавайте блоки кнопками нижче. Перетягуйте або рухайте стрілками, щоб змінити порядок.</p>
+        <div id="blog-editor" class="blog-editor"></div>
+        <div class="blog-editor__add" id="blog-editor-add"></div>
+        {{ form.content(id="blog-content-field") }}
+      </div>
+
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">SEO</h3>
+        <div class="admin-form__grid">
+          <div class="form-group admin-form__full">
+            <label for="meta_title">SEO заголовок</label>
+            {{ form.meta_title(class="form-input", id="meta_title", placeholder="Якщо порожньо — використовується заголовок") }}
+          </div>
+          <div class="form-group admin-form__full">
+            <label for="meta_description">SEO опис</label>
+            {{ form.meta_description(class="form-input", id="meta_description", rows="2") }}
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-form__actions">
+        {% if post %}
+        <form method="POST" action="{{ url_for('admin.blog_delete', post_id=post.id) }}" class="admin-inline-form" data-confirm="Видалити допис?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('admin.blog_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+        <button type="submit" class="btn-admin btn-admin--primary" form="blog-form">
+          {% if post %}Зберегти зміни{% else %}Створити допис{% endif %}
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/admin-dropzone.js') }}?v={{ assets_version }}"></script>
+<script src="{{ url_for('static', filename='js/blog-editor.js') }}?v={{ assets_version }}"></script>
+<script>
+  (function() {
+    function slugFallback() {
+      var s = document.getElementById('slug');
+      var t = document.getElementById('title');
+      return (s && s.value.trim()) || (t && t.value.trim()) || 'post';
+    }
+    if (window.initAdminDropzones) {
+      window.initAdminDropzones({
+        endpoint: "{{ url_for('admin.upload_blog_image') }}",
+        getSlug: slugFallback,
+        slugMissingMsg: 'Спочатку вкажіть заголовок'
+      });
+    }
+    if (window.initBlogEditor) {
+      window.initBlogEditor({
+        mount: document.getElementById('blog-editor'),
+        addBar: document.getElementById('blog-editor-add'),
+        field: document.getElementById('blog-content-field'),
+        form: document.getElementById('blog-form'),
+        uploadEndpoint: "{{ url_for('admin.upload_blog_image') }}",
+        getSlug: slugFallback
+      });
+    }
+  })();
+</script>
+{% endblock %}

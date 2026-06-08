@@ -1,0 +1,90 @@
+/* Блочний редактор блогу (admin). На токенах дизайн-системи. */
+
+.blog-editor { display: flex; flex-direction: column; gap: 14px; }
+
+.blog-editor__block {
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm, 10px);
+  background: var(--iprm-white);
+  overflow: hidden;
+}
+.blog-editor__block--drag { opacity: 0.5; }
+
+.blog-editor__bhead {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--apple-section-bg);
+  border-bottom: 1px solid var(--iprm-border);
+  cursor: grab;
+}
+.blog-editor__btype {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.8125rem; font-weight: 600; color: var(--apple-gray-dark);
+}
+.blog-editor__btype .material-symbols-rounded { font-size: 20px; }
+.blog-editor__bctrls { display: inline-flex; gap: 4px; }
+
+.blog-editor__ctrl {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px;
+  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm, 8px);
+  background: var(--iprm-white); color: var(--apple-gray-dark); cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+.blog-editor__ctrl:hover { background: var(--apple-section-bg); }
+.blog-editor__ctrl .material-symbols-rounded { font-size: 20px; }
+.blog-editor__ctrl--danger:hover { color: var(--iprm-error, #ef4444); border-color: rgba(239,68,68,0.3); }
+
+.blog-editor__block > div:not(.blog-editor__bhead) { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.blog-editor__row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.blog-editor__hsel { max-width: 200px; }
+
+/* Інлайн rich-text */
+.blog-editor__inline-bar { display: flex; gap: 4px; margin-bottom: 6px; }
+.blog-editor__ibtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 30px;
+  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm, 8px);
+  background: var(--iprm-white); cursor: pointer; color: var(--apple-gray-dark);
+}
+.blog-editor__ibtn:hover { background: var(--apple-section-bg); }
+.blog-editor__ibtn .material-symbols-rounded { font-size: 18px; }
+.blog-editor__rich {
+  min-height: 64px; padding: 10px 14px;
+  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm, 10px);
+  background: var(--apple-section-bg); font-size: 0.9375rem; line-height: 1.6;
+  color: var(--apple-black);
+}
+.blog-editor__rich:focus { outline: none; border-color: var(--iprm-nav-active); box-shadow: 0 0 0 3px var(--iprm-accent-light); }
+
+/* Зображення / галерея */
+.blog-editor__img-prev img { max-width: 240px; max-height: 160px; border-radius: var(--iprm-radius-sm, 8px); display: block; }
+.blog-editor__file { display: none; }
+.blog-editor__gallery { display: flex; flex-wrap: wrap; gap: 8px; }
+.blog-editor__g-item { position: relative; width: 110px; height: 90px; border-radius: var(--iprm-radius-sm, 8px); overflow: hidden; border: 1px solid var(--iprm-border); }
+.blog-editor__g-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.blog-editor__g-remove {
+  position: absolute; top: 4px; right: 4px;
+  width: 24px; height: 24px; border: none; border-radius: 50%;
+  background: rgba(0,0,0,0.55); color: #fff; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.blog-editor__g-remove .material-symbols-rounded { font-size: 16px; }
+.blog-editor__divider-prev { text-align: center; color: var(--apple-gray-light); letter-spacing: 0.3em; }
+
+/* Панель додавання блоків */
+.blog-editor__add { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.blog-editor__addbtn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  border: 1px dashed var(--iprm-border); border-radius: var(--iprm-radius-pill, 999px);
+  background: var(--iprm-white); color: var(--apple-gray-dark);
+  font-size: 0.8125rem; font-weight: 500; cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+.blog-editor__addbtn:hover { background: var(--apple-section-bg); border-color: var(--iprm-nav-active); color: var(--iprm-nav-active); }
+.blog-editor__addbtn .material-symbols-rounded { font-size: 20px; }
+
+/* Широкий dropzone обкладинки */
+.admin-dropzone--wide { max-width: 520px; aspect-ratio: 16 / 7; }
+.admin-dropzone--wide .admin-dropzone__preview img { width: 100%; height: 100%; object-fit: cover; }

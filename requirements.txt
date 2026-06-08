@@ -20,3 +20,4 @@ bleach>=6.1,<7.0
 WeasyPrint>=66,<67
 segno>=1.6,<2.0
 qrcode-artistic>=3.0,<4.0
+pillow-heif>=0.18,<1.0

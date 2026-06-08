@@ -1,0 +1,94 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Блог | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Блог</span>
+        </div>
+        <h1 class="admin-hero__title">Блог</h1>
+        <p class="admin-hero__subtitle">Дайджести заходів, новини, статті</p>
+      </div>
+      <div class="admin-hero__actions">
+        {% if total_pending %}
+        <a href="{{ url_for('admin.blog_comments') }}" class="btn-admin btn-admin--secondary">
+          <span class="material-symbols-rounded">forum</span> Коментарі на модерації: {{ total_pending }}
+        </a>
+        {% endif %}
+        <a href="{{ url_for('admin.blog_create') }}" class="btn-admin btn-admin--primary">
+          <span class="material-symbols-rounded">add</span> Новий допис
+        </a>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    {% if posts %}
+    <div class="form-section">
+      <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Заголовок</th><th>Статус</th><th>Опубліковано</th><th>Коментарі</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for post in posts %}
+          <tr>
+            <td>
+              <a href="{{ url_for('admin.blog_edit', post_id=post.id) }}"><strong>{{ post.title }}</strong></a>
+              <div class="admin-text-muted">/{{ post.slug }}</div>
+            </td>
+            <td>
+              {% if post.status == 'published' %}
+              <span class="admin-badge admin-badge--success">Опубліковано</span>
+              {% else %}
+              <span class="admin-badge">Чернетка</span>
+              {% endif %}
+            </td>
+            <td>{{ post.published_at.strftime('%d.%m.%Y') if post.published_at else '—' }}</td>
+            <td>
+              {% if pending_counts.get(post.id) %}
+              <span class="admin-badge admin-badge--warning">{{ pending_counts.get(post.id) }} на модерації</span>
+              {% else %}
+              <span class="admin-text-muted">—</span>
+              {% endif %}
+            </td>
+            <td class="admin-table__actions">
+              <a href="{{ url_for('admin.blog_edit', post_id=post.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Редагувати</a>
+              <form method="POST" action="{{ url_for('admin.blog_delete', post_id=post.id) }}" class="admin-inline-form" data-confirm="Видалити допис «{{ post.title }}»?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+    {% else %}
+    <div class="admin-empty" style="padding:32px;text-align:center;">
+      <h3 class="admin-empty__title">Ще немає дописів</h3>
+      <p class="admin-text-muted">Створіть перший допис блогу.</p>
+      <a href="{{ url_for('admin.blog_create') }}" class="btn-admin btn-admin--primary" style="margin-top:12px;">
+        <span class="material-symbols-rounded">add</span> Новий допис
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
