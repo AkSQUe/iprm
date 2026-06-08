@@ -99,6 +99,12 @@ class SiteSettingsForm(FlaskForm):
         validators=[Optional(), Length(max=20)],
         description='4 цифри. Використовується у номері сертифіката (напр. 2738).',
     )
+    certificate_format = SelectField(
+        'Формат сертифіката',
+        choices=[('a4', 'A4 (210x297 мм)'), ('compact', 'Компактний (180x240 мм)')],
+        validators=[Optional()],
+        description='Розмір сторінки сертифіката. Макет однаковий.',
+    )
 
     # Contacts
     phone_primary = StringField(

@@ -149,14 +149,17 @@ def _rounded_rect_path(x, y, w, h, r):
     )
 
 
-def frame_ring_svg(width=794, height=1123, inset_mm=7.0, thickness_mm=1.0, radius_mm=3.0):
+def frame_ring_svg(width=794, height=1123, width_mm=210.0,
+                   inset_mm=7.0, thickness_mm=1.0, radius_mm=3.0):
     """Градієнтна рамка як порожнє кільце (заливка path з evenodd-діркою).
 
     Перевага над stroke: рендериться як суцільна фігура -> однакова товщина
     з усіх боків (stroke у масштабованому SVG WeasyPrint робив верх/низ
     товщими). Кути заокруглені, центр прозорий -> молекули видно крізь нього.
+    width_mm -- фізична ширина канваса (мм) для коректного перерахунку
+    inset/товщини/радіуса у будь-якому форматі.
     """
-    u = width / 210.0  # мм -> одиниці viewBox
+    u = width / width_mm  # мм -> одиниці viewBox
     inset = inset_mm * u
     t = thickness_mm * u
     r_out = radius_mm * u
@@ -201,6 +204,34 @@ _POINTS_BADGE_DEFAULT = 10
 
 # Запасний підпис (коли у тренера немає власного) -- спільне зображення.
 _DEFAULT_SIGNATURE = 'images/certificates/trainer-sign.webp'
+
+_DEFAULT_FORMAT = 'a4'
+
+# Щільність канваса (px на мм): A4 210мм = 794px (96dpi). Однакова для всіх
+# форматів -> фон/рамка мають ідентичну фізичну щільність, без розтягнення.
+_PX_PER_MM = 794 / 210.0
+
+# Окремий файл-шаблон і розмір канваса (мм) на кожен формат.
+_FORMATS = {
+    'a4': {'template': 'certificates/certificate.html', 'w_mm': 210, 'h_mm': 297},
+    'compact': {'template': 'certificates/certificate_compact.html', 'w_mm': 180, 'h_mm': 240},
+}
+
+
+def _format_spec(fmt):
+    """Специфікація формату (template + розміри канваса)."""
+    return _FORMATS.get(fmt) or _FORMATS[_DEFAULT_FORMAT]
+
+
+def _active_format(cert_format=None):
+    """Формат сертифіката: явний аргумент або глобальне налаштування сайту."""
+    if cert_format:
+        return cert_format
+    try:
+        from app.models.site_settings import SiteSettings
+        return (SiteSettings.get().certificate_format or _DEFAULT_FORMAT).strip()
+    except Exception:
+        return _DEFAULT_FORMAT
 
 
 def points_badge_url(cpd_points):
@@ -388,11 +419,13 @@ def resolve_signature(lecturer_name):
     return None
 
 
-def render_certificate_html(certificate, kind='participant'):
+def render_certificate_html(certificate, kind='participant', cert_format=None):
     """Відрендерити HTML сертифіката для WeasyPrint.
 
     kind: 'participant' (учасник, за замовчуванням) або 'lecturer' (лектор --
     інший текст тіла, лише підпис Директора). Стиль/верстка спільні.
+    cert_format: 'a4'/'compact' або None (береться з налаштувань сайту) --
+    макет однаковий, канвас масштабується під обрану сторінку.
 
     Номери провайдера й заходу беремо із сегментів номера сертифіката
     (РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ) -- працює і для БД-, і для adhoc-рендеру.
@@ -400,8 +433,11 @@ def render_certificate_html(certificate, kind='participant'):
     parts = (certificate.number or '').split('-')
     provider_number = parts[1] if len(parts) >= 2 else ''
     event_number = parts[2].lstrip('0') or parts[2] if len(parts) >= 3 else ''
+    spec = _format_spec(_active_format(cert_format))
+    cw_px = round(spec['w_mm'] * _PX_PER_MM)
+    ch_px = round(spec['h_mm'] * _PX_PER_MM)
     return render_template(
-        'certificates/certificate.html',
+        spec['template'],
         certificate=certificate,
         cert_kind=kind,
         issued_date=format_ua_date(certificate.issued_at),
@@ -409,8 +445,8 @@ def render_certificate_html(certificate, kind='participant'):
         event_date_short=(certificate.event_date.strftime('%d.%m.%Y')
                           if certificate.event_date else ''),
         meta_date=_meta_date(certificate.event_date),
-        molecules_svg=molecular_svg(certificate.number),
-        frame_svg=frame_ring_svg(),
+        molecules_svg=molecular_svg(certificate.number, width=cw_px, height=ch_px),
+        frame_svg=frame_ring_svg(width=cw_px, height=ch_px, width_mm=spec['w_mm']),
         points_badge=points_badge_url(certificate.cpd_points),
         specialties=getattr(certificate, 'specialties', None),
         event_type=getattr(certificate, 'event_type_label', None),
@@ -425,7 +461,7 @@ def render_certificate_html(certificate, kind='participant'):
     )
 
 
-def render_pdf_bytes(certificate, font_config=None, kind='participant'):
+def render_pdf_bytes(certificate, font_config=None, kind='participant', cert_format=None):
     """Згенерувати PDF-байти сертифіката (без запису у файл).
 
     font_config -- спільний weasyprint FontConfiguration; передається у
@@ -434,7 +470,7 @@ def render_pdf_bytes(certificate, font_config=None, kind='participant'):
     """
     from weasyprint import HTML  # noqa: WPS433 (ліниво)
 
-    html = render_certificate_html(certificate, kind=kind)
+    html = render_certificate_html(certificate, kind=kind, cert_format=cert_format)
     return HTML(string=html, base_url=current_app.static_folder).write_pdf(
         font_config=font_config,
     )
@@ -443,7 +479,8 @@ def render_pdf_bytes(certificate, font_config=None, kind='participant'):
 def render_adhoc_pdf(*, number, recipient_name, event_title, event_date=None,
                      cpd_points=None, lecturer_name=None, lecturer_signature=None,
                      specialties=None, event_type=None, event_place=None,
-                     issued_at=None, font_config=None, kind='participant'):
+                     issued_at=None, font_config=None, kind='participant',
+                     cert_format=None):
     """Згенерувати PDF із довільних даних (без запису в БД).
 
     Використовується генератором сертифікатів з xlsx та для лекторського
@@ -463,7 +500,8 @@ def render_adhoc_pdf(*, number, recipient_name, event_title, event_date=None,
         event_place=event_place,
         issued_at=issued_at or utcnow(),
     )
-    return render_pdf_bytes(cert, font_config=font_config, kind=kind)
+    return render_pdf_bytes(cert, font_config=font_config, kind=kind,
+                            cert_format=cert_format)
 
 
 def _write_pdf(certificate):

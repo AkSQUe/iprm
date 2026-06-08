@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<title>Сертифікат {{ certificate.number }}</title>
+<style>
+  /* Заокруглений шрифт Nunito (base_url = app/static), підтримує кирилицю. */
+  @font-face { font-family: 'Nunito'; font-weight: 400; src: url('fonts/nunito-400.woff2') format('woff2'); }
+  @font-face { font-family: 'Nunito'; font-weight: 600; src: url('fonts/nunito-600.woff2') format('woff2'); }
+  @font-face { font-family: 'Nunito'; font-weight: 700; src: url('fonts/nunito-700.woff2') format('woff2'); }
+  @font-face { font-family: 'Nunito'; font-weight: 800; src: url('fonts/nunito-800.woff2') format('woff2'); }
+
+  /* КОМПАКТНИЙ формат 180x240 мм -- НАТИВНИЙ канвас (без масштабування/
+     розтягнення). Фон і рамку сервіс генерує під 180x240 з тією ж щільністю
+     мм, тож вигляд ідентичний A4, лише менша сторінка. */
+  @page { size: 180mm 240mm; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 180mm; height: 240mm;
+    font-family: 'Nunito', sans-serif;
+    color: #1d1d1f; background: #ffffff;
+  }
+
+  .cert {
+    position: relative;
+    width: 180mm; height: 240mm;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  /* Фон-молекули -- суцільний фон на всю сторінку (рамка перекриває їх) */
+  .cert__bg { position: absolute; top: 0; left: 0; width: 180mm; height: 240mm; z-index: 0; }
+  .cert__bg svg { width: 180mm; height: 240mm; display: block; }
+
+  /* Градієнтна рамка -- SVG-кільце з заливкою (порожній центр): молекули
+     видно крізь нього, рамка перекриває їх по краях. Однакова товщина з усіх
+     боків + заокруглені кути. */
+  .cert__frame { position: absolute; top: 0; left: 0; width: 180mm; height: 240mm; z-index: 1; }
+  .cert__frame svg { width: 180mm; height: 240mm; display: block; }
+
+  /* Внутрішній контент -- канвас 210x280, рівномірно масштабований ×0.857
+     (180/210), заповнює 180x240 ВПРИТУЛ і БЕЗ розтягнення (uniform scale).
+     Висота 280 = 240/0.857 -> футер/дата самі стають на місце. Усі внутрішні
+     значення -- ті самі, що в A4. Рамка й фон -- нативні 180x240 (не масштабуються). */
+  .cert__inner {
+    position: absolute; top: 0; left: 0;
+    width: 210mm; height: 280mm;
+    z-index: 2; padding-top: 16mm;
+    transform: scale(0.857143);
+    transform-origin: top left;
+  }
+
+  /* Шапка: логотип по центру. text-align замість flex -- flexbox у WeasyPrint
+     ненадійний (див. примітку про дві img нижче), а інлайнова img стабільно
+     центрується через text-align. */
+  .cert__header {
+    text-align: center; white-space: nowrap;
+    padding: 0 8mm; margin-bottom: 7mm;
+  }
+  .cert__logo-icon { height: 26mm; width: auto; vertical-align: middle; }
+  .cert__org {
+    font-family: 'Nunito', sans-serif; font-weight: 700;
+    font-size: 14.5pt; color: #5d4691; vertical-align: middle;
+    margin-left: -0.5mm; text-transform: uppercase; letter-spacing: 0.01em;
+  }
+
+  /* Градієнтна стрічка СЕРТИФІКАТ -- на всю ширину; під заголовком номер+дата. */
+  .cert__banner {
+    width: 210mm; height: 38mm;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: linear-gradient(90deg, #f0a02a 0%, #d9743f 28%, #b85a7e 60%, #7a51a6 100%);
+    margin-bottom: 1mm;
+  }
+  .cert__banner-title {
+    font-family: 'Nunito', sans-serif; font-weight: 800;
+    font-size: 60pt; letter-spacing: 0.06em;
+    color: #ffffff; line-height: 1;
+  }
+  .cert__banner-number {
+    font-family: 'Nunito', sans-serif; font-weight: 700;
+    font-size: 12.5pt; letter-spacing: 0.04em;
+    color: #ffffff; margin-top: 3mm;
+  }
+
+  /* Тіло -- природний потік одразу під банером. Висота змінна (залежить від
+     довжини назви та кількості рядків), маржини схлопуються -> компактно й
+     без накладань. Футер/дата лишаються absolute унизу. */
+  /* Рядки тіла -- flex-колонка з рівним проміжком: ПІБ і тема автоматично
+     по центру між сусідніми блоками. Мета-блоку додаємо трохи більший відступ. */
+  .cert__body {
+    padding: 0 22mm; text-align: center;
+    display: flex; flex-direction: column; gap: 8mm;
+  }
+
+  /* Єдиний стиль другорядного тексту (eyebrow / lead / рядок про бали). */
+  .cert__eyebrow,
+  .cert__lead,
+  .cert__points-text {
+    font-size: 12pt; font-weight: 400; color: #9b8ac0;
+  }
+  .cert__points-text strong { font-weight: 700; color: #6a4fa0; }
+
+  /* Мета-блок БПР: жирний текст, вирівняний по лівому краю тіла сертифіката. */
+  .cert__meta { display: block; text-align: left; }
+  .cert__meta p {
+    font-family: 'Nunito', sans-serif; font-weight: 700;
+    font-size: 12.5pt; color: #3a3344; line-height: 1.5;
+  }
+
+  .cert__name {
+    font-family: 'Nunito', sans-serif; font-weight: 700;
+    font-size: 30pt; color: #5d4691; line-height: 1.12;
+  }
+
+  .cert__event {
+    font-family: 'Nunito', sans-serif; font-weight: 600;
+    color: #6a4fa0; line-height: 1.25;
+  }
+  /* Адаптивний розмір назви заходу (клас задає сервіс за довжиною назви). */
+  .cert__event--xl { font-size: 31.5pt; }
+  .cert__event--lg { font-size: 26pt; }
+  .cert__event--md { font-size: 21pt; }
+  .cert__event--sm { font-size: 17pt; }
+  .cert__event--xs { font-size: 14pt; }
+
+  /* Футер: підпис | печатка+дата | підпис */
+  .cert__footer {
+    position: absolute; left: 0; right: 0; bottom: 22mm;
+    padding: 0 16mm;
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  /* Бічні колонки (Директор / Лектор) опущені нижче за центральну (QR). */
+  .cert__col { width: 54mm; text-align: center; position: relative; top: 16mm; }
+  .cert__col--center { width: 60mm; top: 0; }
+
+  .cert__person { font-weight: 700; font-size: 11pt; color: #5d4691; }
+  .cert__role { font-size: 9.5pt; color: #9b8ac0; margin-top: 0.5mm; }
+
+  /* Печатка і підписи -- overlay (absolute): не впливають на потік тексту,
+     прив'язані до низу колонки (над ПІБ / датою), можуть накладатися. */
+  .cert__stamp-img {
+    position: absolute; left: 6mm; bottom: 8mm;
+    height: 39mm; width: auto;
+  }
+  /* Anchor від правого краю футера (а не від колонки) -- WeasyPrint у нас
+     не виставляє .cert__col як position context, тож left:50% колонки
+     рахується від футера. Зсуваємо підпис вправо за правим краєм. */
+  .cert__sign-img {
+    position: absolute; right: 0; bottom: 2mm;
+    height: 45mm; width: auto;
+  }
+  /* Дата + місце видачі -- внизу сертифіката (на місці колишньої адреси). */
+  .cert__issued { position: absolute; left: 0; right: 0; bottom: 8mm; text-align: center; }
+  .cert__date { font-size: 10.5pt; font-weight: 600; color: #5d4691; }
+
+  /* QR на сайт -- над датою у центральній колонці футера. */
+  .cert__qr { position: relative; width: 27mm; margin: 0 auto 2.5mm; }
+  .cert__qr svg { width: 27mm; height: 27mm; display: block; }
+  /* Логотип у центрі QR (error='h' лишає запас корекції). Біла підкладка,
+     щоб модулі під ним не заважали скануванню. */
+  .cert__qr-logo {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 7.5mm; height: 7.5mm; padding: 0.9mm;
+    background: #ffffff; border-radius: 0.9mm;
+  }
+
+  /* Адреса сайту -- одразу під QR-кодом у центральній колонці футера. */
+  .cert__site {
+    margin-top: 1mm;
+    text-align: center; font-size: 10pt; font-weight: 700;
+    color: #8a76b8; letter-spacing: 0.06em;
+  }
+</style>
+</head>
+<body>
+  <div class="cert">
+    <div class="cert__bg">{{ molecules_svg|safe }}</div>
+    <div class="cert__frame">{{ frame_svg|safe }}</div>
+
+    <div class="cert__inner">
+      <!-- Шапка: іконка-логотип + назва інституту в один рядок -->
+      <div class="cert__header">
+        <img class="cert__logo-icon" src="svg/IPRM-logo-simple.svg" alt="">
+        <span class="cert__org">Інститут плазмотерапії та регенеративної медицини</span>
+      </div>
+
+      <div class="cert__banner">
+        <span class="cert__banner-title">СЕРТИФІКАТ</span>
+        <span class="cert__banner-number">{{ certificate.number }}</span>
+      </div>
+
+      <div class="cert__body">
+        {% if cert_kind == 'lecturer' %}
+        <p class="cert__eyebrow">виданий</p>
+        <p class="cert__name">{{ certificate.recipient_name }}</p>
+        <p class="cert__lead">лектору(-ці) {{ event_type or 'заходу' }}</p>
+        {% else %}
+        <p class="cert__eyebrow">Цей сертифікат засвідчує, що</p>
+        <p class="cert__name">{{ certificate.recipient_name }}</p>
+        <p class="cert__lead">успішно завершив(-ла) {{ event_type or 'захід' }}</p>
+        {% endif %}
+        <p class="cert__event {{ event_size_class }}">«{{ certificate.event_title }}»</p>
+        {% if certificate.cpd_points %}
+        <p class="cert__points-text">та отримав(-ла) <strong>{{ certificate.cpd_points }} балів БПР</strong></p>
+        {% endif %}
+        <div class="cert__meta">
+          <p>Реєстраційний № заходу: {{ event_number }}</p>
+          {% if specialties %}<p>Спеціальності: {{ specialties }}</p>{% endif %}
+          <p>Провайдер: Реєстраційний № {{ provider_number }}</p>
+          <p>Дата та місце проведення: {{ meta_date }}{% if event_place %}, {{ event_place }}{% endif %}</p>
+        </div>
+      </div>
+
+      <div class="cert__footer">
+        <!-- Підпис 1: Директор (печатка тут -- overlay над текстом колонки) -->
+        <div class="cert__col">
+          <img class="cert__stamp-img" src="images/certificates/IPRM-stamp.webp" alt="Печатка">
+          <div class="cert__person">Заболотня Д.О.</div>
+          <div class="cert__role">Директор Інституту</div>
+        </div>
+        <!-- Дата + місто -->
+        <div class="cert__col cert__col--center">
+          <div class="cert__qr">
+            {{ qr_svg|safe }}
+            <img class="cert__qr-logo" src="svg/IPRM-logo-simple.svg" alt="">
+          </div>
+          <div class="cert__site">{{ site_domain }}</div>
+        </div>
+        <!-- Підпис 2: Лектор. lecturer_signature -- підпис тренера заходу
+             (Trainer.signature), знятий у сертифікат на момент видачі; для
+             adhoc-генерації резолвиться за ПІБ. Фолбек -- спільний
+             trainer-sign.webp (див. _DEFAULT_SIGNATURE у сервісі). -->
+        <div class="cert__col">
+          {% if cert_kind != 'lecturer' %}
+          <img class="cert__sign-img" src="{{ lecturer_signature }}" alt="Підпис">
+          <div class="cert__person">{{ certificate.lecturer_name or '[ ПІБ ]' }}</div>
+          <div class="cert__role">Лектор</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="cert__issued">
+        <div class="cert__date">{{ issued_date }}</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

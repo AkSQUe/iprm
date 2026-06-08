@@ -52,6 +52,12 @@
           <small class="form-hint">4 цифри. Використовується у номері сертифіката (РРРР-<b>ПППП</b>-ЗЗЗЗЗЗЗ-УУУУУУ).</small>
         </div>
 
+        <div class="form-group">
+          <label for="certificate_format">Формат сертифіката</label>
+          {{ form.certificate_format(class="form-input", id="certificate_format") }}
+          <small class="form-hint">Розмір сторінки PDF. Макет однаковий. A4 — 210×297 мм, компактний — 180×240 мм.</small>
+        </div>
+
         <div class="form-group admin-form__full">
           <label for="company_full_name">Повна назва</label>
           {{ form.company_full_name(class="form-input", id="company_full_name", placeholder="Інститут Плазмотерапії та Регенеративної Медицини") }}
