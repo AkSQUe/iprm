@@ -27,6 +27,7 @@ def _apply_regalia(trainer, form):
     trainer.certificates = trainer_service.sanitize_certificates(_parse_json_list(form.certificates.data))
     trainer.patents = trainer_service.sanitize_links(_parse_json_list(form.patents.data))
     trainer.articles = trainer_service.sanitize_links(_parse_json_list(form.articles.data))
+    trainer.research = trainer_service.sanitize_research(form.research.data)
 
 
 def _load_regalia_into_form(trainer, form):
@@ -34,6 +35,7 @@ def _load_regalia_into_form(trainer, form):
     form.certificates.data = json.dumps(trainer.certificates or [], ensure_ascii=False)
     form.patents.data = json.dumps(trainer.patents or [], ensure_ascii=False)
     form.articles.data = json.dumps(trainer.articles or [], ensure_ascii=False)
+    form.research.data = '\n'.join(trainer.research or [])
 
 
 @admin_bp.route('/trainers')

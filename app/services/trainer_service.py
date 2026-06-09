@@ -44,6 +44,25 @@ def sanitize_links(items):
     return out
 
 
+def sanitize_research(text, max_items=50, max_len=600):
+    """Багаторядковий текст -> список пунктів (по рядку), без HTML.
+
+    Приймає або готовий список (з моделі), або рядок (з textarea адмінки).
+    """
+    if isinstance(text, list):
+        lines = [str(x) for x in text]
+    else:
+        lines = (text or '').splitlines()
+    out = []
+    for line in lines:
+        item = _clean_text(line, max_len)
+        if item:
+            out.append(item)
+        if len(out) >= max_items:
+            break
+    return out
+
+
 def sanitize_certificates(items):
     """[{url, thumb, caption}] -> валідні локальні зображення сертифікатів."""
     out = []

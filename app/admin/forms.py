@@ -78,6 +78,11 @@ class TrainerForm(FlaskForm):
     certificates = HiddenField()
     patents = HiddenField()
     articles = HiddenField()
+    # Наукова та дослідницька діяльність -- один пункт на рядок (textarea).
+    research = TextAreaField(
+        'Наукова та дослідницька діяльність',
+        validators=[Optional()],
+    )
 
 
 class SiteSettingsForm(FlaskForm):

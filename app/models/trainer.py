@@ -31,6 +31,8 @@ class Trainer(TimestampMixin, db.Model):
     certificates = db.Column(db.JSON, default=list)
     patents = db.Column(db.JSON, default=list)
     articles = db.Column(db.JSON, default=list)
+    # Наукова та дослідницька діяльність -- список текстових пунктів.
+    research = db.Column(db.JSON, default=list)
 
     __table_args__ = (
         db.CheckConstraint(

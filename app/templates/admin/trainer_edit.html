@@ -168,6 +168,12 @@
           {{ form.articles(id="regalia-art-field") }}
         </div>
 
+        <div class="form-group admin-form__full">
+          <label for="research">Наукова та дослідницька діяльність</label>
+          {{ form.research(class="form-input", id="research", rows="8", placeholder="Один пункт на рядок") }}
+          <small class="admin-form__hint">Кожен рядок -- окремий пункт списку. Порожньо -- блок не показується.</small>
+        </div>
+
       </div>
     </div>
 
