@@ -33,19 +33,33 @@
     var addBtn = document.getElementById('regalia-cert-add');
     if (certField && grid && fileInput && addBtn) {
       var certs = parse(certField.value);
+      var dragFrom = null;
       var sync = function() { certField.value = JSON.stringify(certs); };
       var render = function() {
         grid.innerHTML = '';
         certs.forEach(function(c, i) {
-          var img = el('img', {src: c.thumb || c.url, alt: ''});
+          var img = el('img', {src: c.thumb || c.url, alt: '', draggable: 'false'});
           var rm = el('button', {type: 'button', 'class': 'regalia-cert__remove', title: 'Видалити'}, [icon('close')]);
           rm.addEventListener('click', function() { certs.splice(i, 1); render(); sync(); });
           var cap = el('input', {'class': 'form-input regalia-cert__cap', type: 'text', placeholder: 'Підпис (необовʼязково)'});
           cap.value = c.caption || '';
           cap.addEventListener('input', function() { c.caption = cap.value; sync(); });
-          grid.appendChild(el('div', {'class': 'regalia-cert'}, [
-            el('div', {'class': 'regalia-cert__thumb'}, [img, rm]), cap,
-          ]));
+          // Перетягуємо за мініатюру (поле підпису лишається редагованим).
+          var thumb = el('div', {'class': 'regalia-cert__thumb', draggable: 'true', title: 'Перетягніть, щоб змінити порядок'}, [img, rm]);
+          thumb.addEventListener('dragstart', function(e) {
+            dragFrom = i; thumb.classList.add('regalia-cert__thumb--drag');
+            if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(i)); }
+          });
+          thumb.addEventListener('dragend', function() { thumb.classList.remove('regalia-cert__thumb--drag'); dragFrom = null; });
+          thumb.addEventListener('dragover', function(e) { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'; });
+          thumb.addEventListener('drop', function(e) {
+            e.preventDefault();
+            if (dragFrom === null || dragFrom === i) return;
+            var moved = certs.splice(dragFrom, 1)[0];
+            certs.splice(i, 0, moved);
+            render(); sync();
+          });
+          grid.appendChild(el('div', {'class': 'regalia-cert'}, [thumb, cap]));
         });
       };
       render();
