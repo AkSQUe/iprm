@@ -118,6 +118,29 @@
 .blog-comment-form__row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
 .blog-comment-form__row .form-input { flex: 1 1 200px; }
 .blog-comment-form textarea.form-input { width: 100%; margin-bottom: 10px; resize: vertical; }
+
+/* Поля коментаря використовують токени дизайн-системи (форма поза .form-section) */
+.blog-comment-form .form-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: var(--iprm-font);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  background: var(--iprm-white);
+  color: var(--iprm-text);
+  transition: border-color var(--iprm-transition), box-shadow var(--iprm-transition);
+}
+.blog-comment-form .form-input:focus {
+  outline: none;
+  border-color: var(--iprm-accent);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light);
+}
+.blog-comment-form .form-input.is-invalid {
+  border-color: var(--iprm-error);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+}
+.blog-comment-form .form-input::placeholder { color: var(--iprm-placeholder-text); }
 .blog-comment-form__note { font-size: 0.8rem; color: var(--apple-gray); margin-bottom: 14px; }
 
 /* Honeypot -- прибрано з потоку і з-перед очей (але не display:none, щоб боти заповнювали) */
