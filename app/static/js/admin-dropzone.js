@@ -21,6 +21,8 @@
     var allowedTypes = opts.allowed || ['image/png', 'image/jpeg', 'image/webp'];
     var allowedExt = opts.allowedExt || null;  // RegExp на ім'я файлу (для HEIC, де type порожній)
     var allowedMsg = opts.allowedMsg || 'Дозволені формати: PNG, JPG, WebP';
+    var maxBytes = opts.maxBytes || 5 * 1024 * 1024;
+    var maxMsg = opts.maxMsg || 'Максимальний розмір: 5 MB';
 
     var dropzones = document.querySelectorAll('.admin-dropzone');
     var csrfToken = document.querySelector('input[name="csrf_token"]');
@@ -72,8 +74,8 @@
           notifyError(allowedMsg);
           return;
         }
-        if (file.size > 5 * 1024 * 1024) {
-          notifyError('Максимальний розмір: 5 MB');
+        if (file.size > maxBytes) {
+          notifyError(maxMsg);
           return;
         }
 
@@ -107,7 +109,14 @@
           method: 'POST',
           body: formData
         })
-        .then(function(res) { return res.json().then(function(data) { return {ok: res.ok, data: data}; }); })
+        .then(function(res) {
+          if (res.status === 413) { return {ok: false, data: {error: maxMsg}}; }
+          // Не-JSON відповідь (HTML-помилка / редірект на логін) -> керована помилка
+          return res.json().then(
+            function(data) { return {ok: res.ok, data: data}; },
+            function() { return {ok: false, data: {error: 'Неочікувана відповідь сервера (код ' + res.status + ')'}}; }
+          );
+        })
         .then(function(result) {
           zone.classList.remove('admin-dropzone--uploading');
           if (result.ok) {

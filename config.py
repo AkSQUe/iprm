@@ -9,7 +9,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///iprm.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STATIC_URL_PATH = '/static'
-    MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB
+    MAX_CONTENT_LENGTH = 25 * 1024 * 1024  # 25 MB (фото із заходів, HEIC з iPhone)
     UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app', 'static', 'images')
     # Generated certificate PDFs. Stored OUTSIDE app/static (private documents
     # served only through an auth-gated route). Kept at project root and
