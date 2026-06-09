@@ -55,3 +55,22 @@ def upload_blog_image():
 
     audit_logger.info('Uploaded blog image: %s', data['url'])
     return jsonify(data), 200
+
+
+@admin_bp.route('/upload/trainer-certificate', methods=['POST'])
+@admin_required
+def upload_trainer_certificate():
+    """Завантажити сертифікат тренера: HEIC/JPG/PNG/WebP -> WebP (full + thumb).
+
+    Зберігається під trainers/{slug}/certificates/ (переживає деплої). Повертає
+    {url, thumb, width, height} -- використовується редактором регалій.
+    """
+    file = request.files.get('file')
+    slug = request.form.get('slug', '').strip()
+
+    data, error = image_service.process_trainer_certificate(file, slug)
+    if error:
+        return jsonify({'error': error}), 400
+
+    audit_logger.info('Uploaded trainer certificate: %s', data['url'])
+    return jsonify(data), 200

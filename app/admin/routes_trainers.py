@@ -1,15 +1,39 @@
+import json
 import logging
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
 from app.admin.forms import TrainerForm
 from app.extensions import db
 from app.models.trainer import Trainer
+from app.services import trainer_service
 from app.utils import slugify
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
+
+
+def _parse_json_list(raw):
+    try:
+        val = json.loads(raw or '[]')
+    except (ValueError, TypeError):
+        return []
+    return val if isinstance(val, list) else []
+
+
+def _apply_regalia(trainer, form):
+    """Санітизувати й перенести регалії з форми у модель."""
+    trainer.certificates = trainer_service.sanitize_certificates(_parse_json_list(form.certificates.data))
+    trainer.patents = trainer_service.sanitize_links(_parse_json_list(form.patents.data))
+    trainer.articles = trainer_service.sanitize_links(_parse_json_list(form.articles.data))
+
+
+def _load_regalia_into_form(trainer, form):
+    """Серіалізувати наявні регалії у приховані поля для редактора (GET)."""
+    form.certificates.data = json.dumps(trainer.certificates or [], ensure_ascii=False)
+    form.patents.data = json.dumps(trainer.patents or [], ensure_ascii=False)
+    form.articles.data = json.dumps(trainer.articles or [], ensure_ascii=False)
 
 
 @admin_bp.route('/trainers')
@@ -42,6 +66,7 @@ def trainer_create():
             email=(form.email.data or '').strip().lower() or None,
             is_active=form.is_active.data,
         )
+        _apply_regalia(trainer, form)
         db.session.add(trainer)
 
         try:
@@ -66,6 +91,8 @@ def trainer_edit(trainer_id):
         return redirect(url_for('admin.dashboard'))
 
     form = TrainerForm(obj=trainer)
+    if request.method == 'GET':
+        _load_regalia_into_form(trainer, form)
 
     if form.validate_on_submit():
         slug = form.slug.data.strip()
@@ -84,6 +111,7 @@ def trainer_edit(trainer_id):
         trainer.experience_years = form.experience_years.data
         trainer.email = (form.email.data or '').strip().lower() or None
         trainer.is_active = form.is_active.data
+        _apply_regalia(trainer, form)
 
         try:
             db.session.commit()

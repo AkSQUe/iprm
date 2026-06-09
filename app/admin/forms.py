@@ -74,6 +74,10 @@ class TrainerForm(FlaskForm):
         validators=[Optional(), Email(message='Невалідний email'), Length(max=255)],
     )
     is_active = BooleanField('Активний', default=True)
+    # Опційні регалії -- JSON із редактора (санітизація у trainer_service).
+    certificates = HiddenField()
+    patents = HiddenField()
+    articles = HiddenField()
 
 
 class SiteSettingsForm(FlaskForm):

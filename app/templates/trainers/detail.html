@@ -5,6 +5,9 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}?v={{ assets_version }}">
+{% if trainer.certificates %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}?v={{ assets_version }}">
+{% endif %}
 {% endblock %}
 
 {% block jsonld %}
@@ -75,27 +78,71 @@
     </div>
   </section>
 
+  <!-- ===== СЕРТИФІКАТИ ===== -->
+  {% if trainer.certificates %}
+  <section class="iprm-section" aria-labelledby="trainer-certs-title">
+    <div class="iprm-section__inner">
+      <h2 id="trainer-certs-title" class="iprm-section__title">Сертифікати</h2>
+      <div class="blog-gallery" data-lightbox-group>
+        {% for cert in trainer.certificates %}
+        <a class="blog-gallery__item" href="{{ cert.url }}" data-lightbox data-caption="{{ cert.caption }}">
+          <img src="{{ cert.thumb or cert.url }}" alt="{{ cert.caption or 'Сертифікат' }}" loading="lazy">
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== ВИНАХОДИ ТА ПАТЕНТИ ===== -->
+  {% if trainer.patents %}
+  <section class="iprm-section apple-section-gray" aria-labelledby="trainer-patents-title">
+    <div class="iprm-section__inner">
+      <h2 id="trainer-patents-title" class="iprm-section__title">Винаходи та <span class="apple-gradient-text">патенти</span></h2>
+      <ul class="iprm-regalia-links">
+        {% for link in trainer.patents %}
+        <li><a href="{{ link.url }}" target="_blank" rel="noopener nofollow">{{ link.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== НАУКОВІ СТАТТІ ===== -->
+  {% if trainer.articles %}
+  <section class="iprm-section" aria-labelledby="trainer-articles-title">
+    <div class="iprm-section__inner">
+      <h2 id="trainer-articles-title" class="iprm-section__title">Наукові <span class="apple-gradient-text">статті</span></h2>
+      <ul class="iprm-regalia-links">
+        {% for link in trainer.articles %}
+        <li><a href="{{ link.url }}" target="_blank" rel="noopener nofollow">{{ link.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- ===== TRAINER COURSES ===== -->
-  {% if events %}
+  {% if courses %}
   <section class="iprm-section" aria-labelledby="trainer-courses-title">
     <div class="iprm-section__inner">
       <h2 id="trainer-courses-title" class="iprm-section__title">Курси <span class="apple-gradient-text">тренера</span></h2>
       <p class="iprm-section__subtitle">Доступні програми навчання</p>
 
       <div class="iprm-course-cards">
-        {% for event in events %}
+        {% for course in courses %}
         <article class="iprm-course-card apple-reveal">
-          <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}">
+          <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">
             <div class="iprm-course-card__image">
-              {% if event.card_image %}
-                <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy" width="400" height="200">
+              {% if course.card_image %}
+                <img src="{{ course.card_image }}" alt="{{ course.title }}" loading="lazy" width="400" height="200">
               {% endif %}
             </div>
             <div class="apple-card-body">
-              <p class="iprm-course-card__title">{{ event.title }}</p>
-              {% if event.tags %}
+              <p class="iprm-course-card__title">{{ course.title }}</p>
+              {% if course.tags %}
               <div class="iprm-course-card__tags">
-                {% for tag in event.tags %}
+                {% for tag in course.tags %}
                   <span class="iprm-tag">{{ tag }}</span>
                 {% endfor %}
               </div>
@@ -121,4 +168,7 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
+{% if trainer.certificates %}
+<script defer src="{{ url_for('static', filename='js/blog-lightbox.js') }}?v={{ assets_version }}"></script>
+{% endif %}
 {% endblock %}

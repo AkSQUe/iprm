@@ -63,25 +63,27 @@ def _normalize(img):
     return img.convert('RGB')
 
 
-def process_blog_image(file, slug):
-    """Зберегти завантажене зображення як WebP (full + thumb) під blog/{slug}/.
-
-    Повертає (dict, None) при успіху або (None, error) при помилці.
-    """
+def _validate_upload(file):
+    """Спільна валідація завантаження. Повертає текст помилки або None."""
     if not file or not file.filename:
-        return None, 'Файл не вибрано'
+        return 'Файл не вибрано'
     if not allowed_file(file.filename):
-        return None, 'Дозволені формати: PNG, JPG, JPEG, WebP, HEIC'
+        return 'Дозволені формати: PNG, JPG, JPEG, WebP, HEIC'
     if _ext(file.filename) in ('heic', 'heif') and not _HEIF_OK:
-        return None, 'HEIC не підтримується на сервері (немає pillow-heif)'
-    if not slug:
-        slug = 'post'
+        return 'HEIC не підтримується на сервері (немає pillow-heif)'
+    return None
 
+
+def _save_processed(file, rel_dir):
+    """Обробити й зберегти WebP (full + thumb) під images/{rel_dir}/.
+
+    rel_dir -- posix-шлях відносно app/static/images (напр. 'blog/my-slug'
+    або 'trainers/x/certificates'). Повертає (dict, None) або (None, error).
+    """
     from PIL import Image, UnidentifiedImageError
 
-    safe_slug = secure_filename(slug) or 'post'
     base = uuid4().hex[:12]
-    upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'blog', safe_slug)
+    upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], *rel_dir.split('/'))
     full_name = f'{base}.webp'
     thumb_name = f'{base}_thumb.webp'
 
@@ -105,11 +107,29 @@ def process_blog_image(file, slug):
         logger.exception('Unexpected error processing image %s', file.filename)
         return None, 'Помилка обробки зображення'
 
-    rel = f'/static/images/blog/{safe_slug}'
-    logger.info('Blog image saved: %s/%s (%dx%d)', rel, full_name, full.width, full.height)
+    rel = f'/static/images/{rel_dir}'
+    logger.info('Image saved: %s/%s (%dx%d)', rel, full_name, full.width, full.height)
     return {
         'url': f'{rel}/{full_name}',
         'thumb': f'{rel}/{thumb_name}',
         'width': full.width,
         'height': full.height,
     }, None
+
+
+def process_blog_image(file, slug):
+    """WebP (full + thumb) під blog/{slug}/. Повертає (dict, None) або (None, error)."""
+    err = _validate_upload(file)
+    if err:
+        return None, err
+    safe_slug = secure_filename(slug or '') or 'post'
+    return _save_processed(file, f'blog/{safe_slug}')
+
+
+def process_trainer_certificate(file, slug):
+    """WebP (full + thumb) під trainers/{slug}/certificates/ (захищено в деплої)."""
+    err = _validate_upload(file)
+    if err:
+        return None, err
+    safe_slug = secure_filename(slug or '') or 'trainer'
+    return _save_processed(file, f'trainers/{safe_slug}/certificates')

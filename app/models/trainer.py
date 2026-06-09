@@ -24,6 +24,14 @@ class Trainer(TimestampMixin, db.Model):
     email = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True, index=True)
 
+    # Опційні регалії (показуються публічно лише якщо заповнені):
+    #   certificates -- [{url, thumb, caption}] завантажені зображення (lightbox)
+    #   patents      -- [{label, url}] активні гіперпосилання (винаходи/патенти)
+    #   articles     -- [{label, url}] посилання на наукові статті
+    certificates = db.Column(db.JSON, default=list)
+    patents = db.Column(db.JSON, default=list)
+    articles = db.Column(db.JSON, default=list)
+
     __table_args__ = (
         db.CheckConstraint(
             'experience_years >= 0',
