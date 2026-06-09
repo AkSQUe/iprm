@@ -59,14 +59,21 @@
         if (allowed.indexOf(file.type) === -1 && !okExt) {
           notify('Дозволені формати: PNG, JPG, WebP, HEIC'); reject(); return;
         }
-        if (file.size > 5 * 1024 * 1024) { notify('Максимальний розмір: 5 MB'); reject(); return; }
+        if (file.size > 25 * 1024 * 1024) { notify('Максимальний розмір: 25 MB'); reject(); return; }
         var fd = new FormData();
         fd.append('file', file);
         fd.append('slug', opts.getSlug ? opts.getSlug() : 'post');
         if (csrf) fd.append('csrf_token', csrf);
         fetch(opts.uploadEndpoint, {method: 'POST', body: fd})
-          .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, d: d}; }); })
+          .then(function(r) {
+            if (r.status === 413) { notify('Файл завеликий (макс. 25 MB)'); reject(); return null; }
+            // Не-JSON відповідь (HTML-помилка, редірект на логін тощо) -> інформативно
+            return r.json().then(function(d) { return {ok: r.ok, d: d}; }, function() {
+              notify('Сервер повернув неочікувану відповідь (код ' + r.status + ')'); reject(); return null;
+            });
+          })
           .then(function(res) {
+            if (!res) return;
             if (res.ok) resolve(res.d);
             else { notify(res.d.error || 'Помилка завантаження'); reject(); }
           })
@@ -246,7 +253,7 @@
         var i = indexOf(); if (i < blocks.length - 1) { blocks.splice(i, 1); blocks.splice(i + 1, 0, ctrl); reorderDom(); }
       });
       del.addEventListener('click', function() {
-        var i = indexOf(); if (i > -1) { blocks.splice(i, 1); mount.removeChild(wrap); }
+        var i = indexOf(); if (i > -1) { blocks.splice(i, 1); mount.removeChild(wrap); serialize(); }
       });
 
       // drag-reorder
@@ -267,12 +274,14 @@
 
     function reorderDom() {
       blocks.forEach(function(b) { mount.appendChild(b.el); });
+      serialize();
     }
 
     function addBlock(type, data) {
       var ctrl = makeBlock(type, data);
       blocks.push(ctrl);
       mount.appendChild(ctrl.el);
+      serialize();
       return ctrl;
     }
 
@@ -295,11 +304,12 @@
       initial.forEach(function(b) { if (b && b.type) addBlock(b.type, b.data || {}); });
     }
 
-    // ---- Серіалізація при сабміті ----
+    // ---- Серіалізація ----
     function serialize() {
       var out = [];
       blocks.forEach(function(b) {
-        var d = b.getData();
+        var d;
+        try { d = b.getData(); } catch (e) { return; }  // битий блок не зриває решту
         // пропускаємо очевидно порожні блоки
         if (b.type === 'paragraph' && !(d.html || '').trim()) return;
         if (b.type === 'heading' && !(d.text || '').trim()) return;
@@ -314,6 +324,16 @@
       field.value = JSON.stringify(out);
     }
 
+    // Тримаємо приховане поле синхронним при БУДЬ-ЯКІЙ зміні в редакторі
+    // (ввід тексту в contenteditable/input/textarea, зміна select, а також
+    // додавання/видалення/перестановка блоків -- через виклики serialize()
+    // у відповідних обробниках). Не покладаємось лише на submit-обробник:
+    // якщо submit перехопить сторонній скрипт, контент усе одно вже у полі.
+    mount.addEventListener('input', serialize);
+    mount.addEventListener('change', serialize);
     if (opts.form) opts.form.addEventListener('submit', serialize);
+
+    // Початкова синхронізація (на випадок редагування наявних блоків).
+    serialize();
   };
 })();
