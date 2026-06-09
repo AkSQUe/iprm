@@ -122,6 +122,20 @@
   </section>
   {% endif %}
 
+  <!-- ===== НАУКОВА ТА ДОСЛІДНИЦЬКА ДІЯЛЬНІСТЬ ===== -->
+  {% if trainer.research %}
+  <section class="iprm-section apple-section-gray" aria-labelledby="trainer-research-title">
+    <div class="iprm-section__inner">
+      <h2 id="trainer-research-title" class="iprm-section__title">Наукова та дослідницька <span class="apple-gradient-text">діяльність</span></h2>
+      <ul class="iprm-research-list">
+        {% for item in trainer.research %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- ===== TRAINER COURSES ===== -->
   {% if courses %}
   <section class="iprm-section" aria-labelledby="trainer-courses-title">
