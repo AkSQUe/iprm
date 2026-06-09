@@ -30,7 +30,7 @@
     {% include 'partials/flash_messages.html' %}
 
     {% if not provider_number %}
-    <div class="admin-empty" style="padding:24px;text-align:left;">
+    <div class="admin-empty admin-pad-24 admin-text-left">
       <h3 class="admin-empty__title">Спочатку задайте номер провайдера БПР</h3>
       <p>Номер провайдера (4 цифри) використовується у номері кожного сертифіката.
          Задайте його в <a href="{{ url_for('admin.settings') }}">Налаштуваннях сайту</a>.</p>
@@ -40,7 +40,7 @@
     <!-- Крок 1 -->
     <div class="form-section">
       <h2 class="admin-form__section-title">Крок 1. Завантажте шаблон</h2>
-      <p class="admin-text-muted" style="margin-bottom:16px;">
+      <p class="admin-text-muted admin-mb-md">
         Скачайте xlsx-шаблон, заповніть по одному рядку на учасника й збережіть.
       </p>
       <a href="{{ url_for('admin.tool_certificate_generator_template') }}" class="btn-admin btn-admin--secondary">
@@ -49,9 +49,9 @@
     </div>
 
     <!-- Крок 2 -->
-    <div class="form-section" style="margin-top:24px;">
+    <div class="form-section admin-mt-md">
       <h2 class="admin-form__section-title">Крок 2. Завантажте заповнену таблицю</h2>
-      <p class="admin-text-muted" style="margin-bottom:16px;">
+      <p class="admin-text-muted admin-mb-md">
         Спершу побачите прев'ю розпарсених рядків (з перевіркою), потім запустите
         генерацію. На виході — ZIP-архів з PDF-сертифікатом для кожного рядка.
       </p>
@@ -59,7 +59,7 @@
             enctype="multipart/form-data" class="admin-filter-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="file" name="xlsx" accept=".xlsx" required
-               class="form-input" style="max-width:360px;">
+               class="form-input admin-input-narrow">
         <button type="submit" class="btn-admin btn-admin--primary"{% if not provider_number %} disabled{% endif %}>
           <span class="material-symbols-rounded">visibility</span> Завантажити й переглянути
         </button>
@@ -67,7 +67,7 @@
     </div>
 
     <!-- Довідка -->
-    <div class="form-section" style="margin-top:24px;">
+    <div class="form-section admin-mt-md">
       <h2 class="admin-form__section-title">Колонки таблиці</h2>
       <div class="admin-table-wrap">
       <table class="admin-table">
@@ -86,7 +86,7 @@
         </tbody>
       </table>
       </div>
-      <p class="admin-text-muted" style="margin-top:12px;">
+      <p class="admin-text-muted admin-mt-sm">
         Номер формується як <code>РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ</code>, де ПППП — номер провайдера
         {% if provider_number %}(<strong>{{ provider_number }}</strong>){% endif %} з налаштувань сайту.
         Сертифікати <strong>не зберігаються</strong> в системі — це разова генерація PDF.

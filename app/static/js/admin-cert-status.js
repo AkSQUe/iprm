@@ -42,6 +42,12 @@
       .catch(function () {});
   }
 
+  // Початкова ширина з data-pct (раніше була inline style -- No Inline Policy).
+  if (bar) {
+    var initPct = parseInt(bar.getAttribute('data-pct'), 10);
+    if (!isNaN(initPct)) bar.style.width = initPct + '%';
+  }
+
   poll();
   timer = setInterval(poll, 2000);
 })();

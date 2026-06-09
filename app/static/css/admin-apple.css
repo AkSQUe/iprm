@@ -1,6 +1,21 @@
 /* admin-apple.css -- Apple-style v2 overlay for admin panel */
 /* Loaded AFTER admin.css, overrides legacy styles */
 
+/* ========== UTILITIES (No Inline Policy: заміна inline style=) ========== */
+.admin-mt-sm { margin-top: 12px; }
+.admin-mt-md { margin-top: 24px; }
+.admin-mb-sm { margin-bottom: 12px; }
+.admin-mb-md { margin-bottom: 16px; }
+.admin-text-center { text-align: center; }
+.admin-text-left { text-align: left; }
+.admin-pad-24 { padding: 24px; }
+.admin-pad-32 { padding: 32px; }
+.admin-input-narrow { max-width: 360px; }
+.admin-clickable { cursor: pointer; }
+.admin-inline { display: inline; }
+.admin-flex-center { display: flex; gap: 12px; align-items: center; }
+.admin-col-90 { width: 90px; }
+
 /* ========== SIDEBAR ========== */
 
 .admin-sidebar {

@@ -42,7 +42,7 @@
       </div>
     </div>
 
-    <div class="admin-stats-bar" style="gap:12px;align-items:center;">
+    <div class="admin-stats-bar admin-flex-center">
       <form method="POST" action="{{ url_for('admin.tool_certificate_generator_run') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="job_id" value="{{ job_id }}">

@@ -68,7 +68,7 @@
   <table class="admin-table">
     <thead>
       <tr>
-        <th style="width:90px;">Дія</th>
+        <th class="admin-col-90">Дія</th>
         {% if entity == 'courses' %}
         <th>Slug</th>
         <th>Змінені поля</th>
@@ -133,12 +133,12 @@
 
   {# ---- Actions ---- #}
   <div class="admin-xlsx-actions">
-    <form method="POST" action="{{ cancel_url }}" style="display:inline;">
+    <form method="POST" action="{{ cancel_url }}" class="admin-inline">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn-admin btn-admin--secondary">Скасувати</button>
     </form>
     {% if plan.is_valid and (c.create or c.update) %}
-    <form method="POST" action="{{ apply_url }}" style="display:inline;" data-confirm="Застосувати імпорт? Зміни в БД не можна буде відкотити автоматично.">
+    <form method="POST" action="{{ apply_url }}" class="admin-inline" data-confirm="Застосувати імпорт? Зміни в БД не можна буде відкотити автоматично.">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn-admin btn-admin--primary">Підтвердити імпорт</button>
     </form>

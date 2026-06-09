@@ -45,7 +45,7 @@
         <form method="POST" action="{{ url_for('admin.instances_import_upload') }}" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="file" name="xlsx" id="instances-xlsx-input" accept=".xlsx" onchange="this.form.submit()">
-          <label for="instances-xlsx-input" class="btn-admin btn-admin--secondary" style="cursor:pointer;" title="Завантажити змінений xlsx">
+          <label for="instances-xlsx-input" class="btn-admin btn-admin--secondary admin-clickable" title="Завантажити змінений xlsx">
             <span class="material-symbols-rounded">upload</span> Імпорт XLSX
           </label>
         </form>

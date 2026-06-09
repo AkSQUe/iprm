@@ -80,10 +80,10 @@
       </div>
     </div>
     {% else %}
-    <div class="admin-empty" style="padding:32px;text-align:center;">
+    <div class="admin-empty admin-pad-32 admin-text-center">
       <h3 class="admin-empty__title">Ще немає дописів</h3>
       <p class="admin-text-muted">Створіть перший допис блогу.</p>
-      <a href="{{ url_for('admin.blog_create') }}" class="btn-admin btn-admin--primary" style="margin-top:12px;">
+      <a href="{{ url_for('admin.blog_create') }}" class="btn-admin btn-admin--primary admin-mt-sm">
         <span class="material-symbols-rounded">add</span> Новий допис
       </a>
     </div>

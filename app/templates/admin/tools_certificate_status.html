@@ -36,7 +36,7 @@
          data-status-url="{{ url_for('admin.tool_certificate_generator_job_status', job_id=job_id) }}">
       <div class="cert-progress__track">
         <div id="cert-progress-bar" class="cert-progress__fill"
-             style="width: {% if status.status == 'done' %}100{% elif status.total %}{{ (status.done * 100 // status.total) }}{% else %}5{% endif %}%;"></div>
+             data-pct="{% if status.status == 'done' %}100{% elif status.total %}{{ (status.done * 100 // status.total) }}{% else %}5{% endif %}"></div>
       </div>
       <p id="cert-progress-text" class="cert-progress__text">
         {% if status.status == 'done' %}Готово: {{ status.total }} сертифікат(ів)

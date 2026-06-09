@@ -28,7 +28,7 @@
     {% include 'partials/flash_messages.html' %}
 
     <div class="form-section">
-      <div class="admin-filter-form" style="margin-bottom:16px;">
+      <div class="admin-filter-form admin-mb-md">
         {% set tabs = [('pending','На модерації'),('approved','Схвалені'),('spam','Спам'),('all','Усі')] %}
         {% for val, label in tabs %}
         <a href="{{ url_for('admin.blog_comments', status=val) }}"
@@ -50,7 +50,7 @@
               {% if c.email %}<div class="admin-text-muted">{{ c.email }}</div>{% endif %}
               {% if c.parent_id %}<div class="admin-text-muted">↳ відповідь</div>{% endif %}
             </td>
-            <td style="max-width:360px;">{{ c.body }}</td>
+            <td class="admin-input-narrow">{{ c.body }}</td>
             <td>
               {% if c.post %}<a href="{{ url_for('admin.blog_edit', post_id=c.post_id) }}">{{ c.post.title }}</a>{% else %}—{% endif %}
             </td>
@@ -87,7 +87,7 @@
       </table>
       </div>
       {% else %}
-      <div class="admin-empty" style="padding:24px;text-align:center;">
+      <div class="admin-empty admin-pad-24 admin-text-center">
         <p class="admin-text-muted">Немає коментарів у цій категорії.</p>
       </div>
       {% endif %}
