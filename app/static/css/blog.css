@@ -18,7 +18,7 @@
 .blog-card__cover { aspect-ratio: 16 / 9; background: var(--apple-section-bg); overflow: hidden; }
 .blog-card__cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .blog-card__cover-placeholder { width: 100%; height: 100%; background: var(--iprm-placeholder-grad, linear-gradient(135deg, #f0a02a, #7055a4)); opacity: 0.5; }
-.blog-card__body { padding: 18px 20px 22px; }
+.blog-card__body { padding: 18px 20px 22px; background: var(--iprm-white, #fff); }
 .blog-card__date { font-size: 0.8125rem; color: var(--apple-gray); }
 .blog-card__title { font-size: 1.2rem; font-weight: 700; color: var(--iprm-text, #1d1d1f); margin: 6px 0 8px; line-height: 1.3; }
 .blog-card__excerpt { font-size: 0.95rem; color: var(--iprm-text-light, #6e6e73); line-height: 1.55; }
