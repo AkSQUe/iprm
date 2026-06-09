@@ -25,7 +25,7 @@
    це правило перебиває їх (вища специфічність) і ламає позиціонування
    (напр. tooltip-bubble отримував position:relative і йшов під footer).
    Нові body-level fixed-оверлеї додавайте сюди у :not(). */
-body > *:not(#molecular-background):not(script):not(.iprm-header):not(.cookie-banner):not(.iprm-tooltip-bubble):not(.iprm-toasts):not(.iprm-reading-progress):not(.iprm-to-top):not(.iprm-confirm):not(.admin-toast-container):not(.blog-lightbox) {
+body > *:not(#molecular-background):not(script):not(.iprm-header):not(.cookie-banner):not(.iprm-tooltip-bubble):not(.iprm-toasts):not(.iprm-reading-progress):not(.iprm-to-top):not(.iprm-confirm):not(.admin-toast-container):not(.blog-lightbox):not(.upcoming-events) {
   position: relative;
   z-index: 1;
 }
