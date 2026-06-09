@@ -41,3 +41,42 @@
   word-break: break-word;
 }
 .iprm-regalia-links a:hover { text-decoration: underline; }
+
+/* Сертифікати: "як на стіні" -- однакова висота, повне зображення без
+   обрізки, по центру, у рамці. Клік -> lightbox. */
+.trainer-certs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 24px;
+}
+.trainer-certs__item {
+  display: block;
+  cursor: zoom-in;
+  background: #fff;
+  padding: 10px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm, 10px);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.10);
+  transition: transform 0.2s var(--ease-interact, ease), box-shadow 0.2s var(--ease-interact, ease);
+}
+.trainer-certs__item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
+}
+.trainer-certs__item img {
+  display: block;
+  height: 320px;
+  width: auto;
+  max-width: 100%;
+  border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+  .trainer-certs { gap: 16px; }
+  .trainer-certs__item img { height: 230px; }
+}
+@media (max-width: 480px) {
+  .trainer-certs__item img { height: 180px; }
+}

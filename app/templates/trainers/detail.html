@@ -82,11 +82,11 @@
   {% if trainer.certificates %}
   <section class="iprm-section" aria-labelledby="trainer-certs-title">
     <div class="iprm-section__inner">
-      <h2 id="trainer-certs-title" class="iprm-section__title">Сертифікати</h2>
-      <div class="blog-gallery" data-lightbox-group>
+      <h2 id="trainer-certs-title" class="iprm-section__title"><span class="apple-gradient-text">Сертифікати</span></h2>
+      <div class="trainer-certs" data-lightbox-group>
         {% for cert in trainer.certificates %}
-        <a class="blog-gallery__item" href="{{ cert.url }}" data-lightbox data-caption="{{ cert.caption }}">
-          <img src="{{ cert.thumb or cert.url }}" alt="{{ cert.caption or 'Сертифікат' }}" loading="lazy">
+        <a class="trainer-certs__item" href="{{ cert.url }}" data-lightbox data-caption="{{ cert.caption }}">
+          <img src="{{ cert.url }}" alt="{{ cert.caption or 'Сертифікат' }}" loading="lazy">
         </a>
         {% endfor %}
       </div>
