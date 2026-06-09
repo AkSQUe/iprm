@@ -21,11 +21,11 @@ jobs:
         uses: burnett01/rsync-deployments@7.0.1
         # trainers/ -- protect-фільтр (а не exclude): репозиторні зображення
         # (фото, підписи) доставляються, але --delete НЕ зносить завантажені
-        # через адмінку файли, яких немає в репозиторії. courses/ і
+        # через адмінку файли, яких немає в репозиторії. courses/, blog/ і
         # /certificates/ лишаються excluded: там лише серверні завантаження
         # та згенеровані PDF, репозиторного контенту немає.
         with:
-          switches: -avz --delete --exclude='.git' --exclude='keys/' --exclude='.env' --exclude='venv/' --exclude='iprm.sock' --exclude='app/static/images/courses/' --filter='protect app/static/images/trainers/**' --exclude='/certificates/'
+          switches: -avz --delete --exclude='.git' --exclude='keys/' --exclude='.env' --exclude='venv/' --exclude='iprm.sock' --exclude='app/static/images/courses/' --exclude='app/static/images/blog/' --filter='protect app/static/images/trainers/**' --exclude='/certificates/'
           path: ./
           remote_path: /var/www/iprm/
           remote_host: ${{ secrets.VPS_HOST }}
