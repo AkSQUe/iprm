@@ -13,9 +13,9 @@ def _uid():
 
 @pytest.fixture
 def user(app):
-    u = User(email=f'auth-{_uid()}@test.com', first_name='Test', last_name='User')
-    u.set_password('password123')
-    db.session.add(u)
+    u = User.create_with_password(
+        f'auth-{_uid()}@test.com', 'password123', first_name='Test', last_name='User',
+    )
     db.session.flush()
     return u
 

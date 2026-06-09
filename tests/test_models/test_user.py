@@ -3,8 +3,7 @@ from app.models.user import User
 
 def test_user_creation(db_session):
     """Створення користувача з паролем."""
-    user = User(email='Test@Example.com', password='secret123')
-    db_session.add(user)
+    user = User.create_with_password('Test@Example.com', 'secret123')
     db_session.flush()
 
     assert user.id is not None

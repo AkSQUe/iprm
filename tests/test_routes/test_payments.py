@@ -29,9 +29,9 @@ def _make_liqpay_data(payload, private_key='test_private_key'):
 
 @pytest.fixture
 def user(app):
-    u = User(email=f'pay-route-{_uid()}@test.com', first_name='Test', last_name='User')
-    u.set_password('password123')
-    db.session.add(u)
+    u = User.create_with_password(
+        f'pay-route-{_uid()}@test.com', 'password123', first_name='Test', last_name='User',
+    )
     db.session.flush()
     return u
 
@@ -119,9 +119,9 @@ class TestSuccessPage:
         assert resp.status_code == 302
 
     def test_other_users_registration_returns_404(self, client, registration):
-        other = User(email=f'other-{_uid()}@test.com', first_name='O', last_name='U')
-        other.set_password('password123')
-        db.session.add(other)
+        other = User.create_with_password(
+            f'other-{_uid()}@test.com', 'password123', first_name='O', last_name='U',
+        )
         db.session.flush()
         _login(client, other)
         resp = client.get(f'/payments/success?order_id=REG-{registration.id}')

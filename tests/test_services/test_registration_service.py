@@ -13,9 +13,9 @@ from app.services import registration_service
 
 @pytest.fixture
 def user(app):
-    u = User(email=f'reg-{uuid4().hex[:6]}@test.com', first_name='Reg', last_name='User')
-    u.set_password('password123')
-    db.session.add(u)
+    u = User.create_with_password(
+        f'reg-{uuid4().hex[:6]}@test.com', 'password123', first_name='Reg', last_name='User',
+    )
     db.session.flush()
     return u
 
@@ -87,9 +87,9 @@ class TestCheckCapacity:
 
     def test_full_capacity(self, app, user, paid_instance):
         for i in range(2):
-            u = User(email=f'fill-{uuid4().hex[:6]}@test.com', first_name='Fill', last_name=str(i))
-            u.set_password('pass')
-            db.session.add(u)
+            u = User.create_with_password(
+                f'fill-{uuid4().hex[:6]}@test.com', 'pass', first_name='Fill', last_name=str(i),
+            )
             db.session.flush()
             reg = EventRegistration(
                 user_id=u.id, instance_id=paid_instance.id,
