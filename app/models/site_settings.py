@@ -88,6 +88,10 @@ class SiteSettings(TimestampMixin, db.Model):
     # Макет ідентичний -- готовий канвас масштабується під обрану сторінку.
     certificate_format = db.Column(db.String(20), default='a4', nullable=False)
 
+    # Плаваючий блок "найближчі заходи" на публічних сторінках (2 найближчі
+    # майбутні проведення). Користувач може закрити (стан -- у localStorage).
+    show_upcoming_events = db.Column(db.Boolean, default=False, nullable=False)
+
     # Google OAuth 2.0 (sign-in). Client ID -- публічний (видно у redirect-
     # URI), client_secret -- Fernet-зашифрований. Якщо обидва порожні --
     # OAuth вимкнено (кнопка "Continue with Google" не показується).

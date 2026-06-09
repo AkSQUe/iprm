@@ -55,6 +55,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/tabs.css') }}?v={{ assets_version }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/confirm-action.css') }}?v={{ assets_version }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/reading-progress.css') }}?v={{ assets_version }}">
+  {% if upcoming_events %}<link rel="stylesheet" href="{{ url_for('static', filename='css/upcoming-events.css') }}?v={{ assets_version }}">{% endif %}
   {% block extra_css %}{% endblock %}
   <script>
     (function(){try{var f=localStorage.getItem('iprm-font');if(f==='fixel')document.documentElement.setAttribute('data-font','fixel');}catch(e){}})();
@@ -93,6 +94,7 @@
   {% endblock %}
 
   {% include 'partials/cookie_banner.html' %}
+  {% include 'partials/upcoming_events.html' %}
 
   {% block molecular_js %}
   <script defer src="{{ url_for('static', filename='js/molecular-background.js') }}?v={{ assets_version }}"></script>
@@ -108,6 +110,7 @@
   <script defer src="{{ url_for('static', filename='js/copy-to-clipboard.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/confirm-action.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/reading-progress.js') }}?v={{ assets_version }}"></script>
+  {% if upcoming_events %}<script defer src="{{ url_for('static', filename='js/upcoming-events.js') }}?v={{ assets_version }}"></script>{% endif %}
   {% include 'partials/_google_onetap.html' %}
   {% block extra_scripts %}{% endblock %}
 </body>

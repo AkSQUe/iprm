@@ -114,6 +114,10 @@ class SiteSettingsForm(FlaskForm):
         validators=[Optional()],
         description='Розмір сторінки сертифіката. Макет однаковий.',
     )
+    show_upcoming_events = BooleanField(
+        'Показувати блок «найближчі заходи»',
+        description='Плаваючий блок із 2 найближчими майбутніми заходами на публічних сторінках.',
+    )
 
     # Contacts
     phone_primary = StringField(

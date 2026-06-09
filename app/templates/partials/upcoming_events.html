@@ -1,0 +1,25 @@
+{# Плаваючий блок "найближчі заходи" (2 шт.). Рендериться лише коли
+   увімкнено в Налаштуваннях і є майбутні заходи (див. inject_upcoming_events).
+   Закриття -- через upcoming-events.js (стан у localStorage за підписом id). #}
+{% if upcoming_events %}
+<aside class="upcoming-events" id="upcoming-events"
+       data-signature="{{ upcoming_events | map(attribute='id') | join('-') }}"
+       aria-label="Найближчі заходи">
+  <div class="upcoming-events__head">
+    <span class="upcoming-events__title">Найближчі заходи</span>
+    <button type="button" class="upcoming-events__close" id="upcoming-events-close"
+            aria-label="Закрити">&times;</button>
+  </div>
+  <ul class="upcoming-events__list">
+    {% for ev in upcoming_events %}
+    <li class="upcoming-events__item">
+      <a class="upcoming-events__link" href="{{ ev.url }}">{{ ev.title }}</a>
+      <div class="upcoming-events__meta">
+        <span class="upcoming-events__when">{{ ev.when }}</span>
+        {% if ev.place %}<span class="upcoming-events__place">{{ ev.place }}</span>{% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</aside>
+{% endif %}

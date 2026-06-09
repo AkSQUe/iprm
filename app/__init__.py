@@ -174,6 +174,49 @@ def create_app(config_name=None):
         from app.services.recaptcha import get_recaptcha_service
         return {'recaptcha': get_recaptcha_service()}
 
+    @app.context_processor
+    def inject_upcoming_events():
+        """Два найближчі майбутні заходи для плаваючого блоку на ПУБЛІЧНИХ
+        сторінках (вмикається в Налаштуваннях сайту). Порожньо, якщо вимкнено,
+        на /admin, або заходів немає."""
+        from flask import g, request, url_for
+        try:
+            settings = getattr(g, 'site_settings', None)
+            if settings is None or not getattr(settings, 'show_upcoming_events', False):
+                return {'upcoming_events': []}
+            path = request.path or ''
+            if path.startswith('/admin') or path.startswith('/static'):
+                return {'upcoming_events': []}
+            from datetime import datetime, timezone
+            from app.models.course_instance import CourseInstance
+            now = datetime.now(timezone.utc)
+            rows = (
+                CourseInstance.query
+                .filter(CourseInstance.status.in_(('published', 'active')))
+                .filter(CourseInstance.start_date.isnot(None))
+                .filter(CourseInstance.start_date >= now)
+                .order_by(CourseInstance.start_date.asc())
+                .limit(2).all()
+            )
+            events = []
+            for inst in rows:
+                course = inst.course
+                if not course:
+                    continue
+                place = (inst.location or '').strip()
+                if not place and inst.event_format == 'online':
+                    place = 'Онлайн'
+                events.append({
+                    'id': inst.id,
+                    'title': course.title,
+                    'url': url_for('courses.course_by_slug', slug=course.slug),
+                    'when': inst.start_date.strftime('%d.%m.%Y, %H:%M'),
+                    'place': place,
+                })
+            return {'upcoming_events': events}
+        except Exception:
+            return {'upcoming_events': []}
+
     @app.after_request
     def set_security_headers(response):
         response.headers['X-Content-Type-Options'] = 'nosniff'
