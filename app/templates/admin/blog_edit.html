@@ -36,7 +36,10 @@
     {% include 'partials/flash_messages.html' %}
 
     <form method="POST" class="admin-form" id="blog-form">
-      {{ form.hidden_tag() }}
+      {# Лише CSRF. НЕ hidden_tag(): він рендерить ВСІ HiddenField (content,
+         cover_image), а ми рендеримо їх явно нижче -> були б дублі полів,
+         і WTForms брав би перше (порожнє) значення, втрачаючи контент. #}
+      {{ form.csrf_token }}
       {% include 'admin/partials/_form_errors.html' %}
 
       <div class="form-section admin-form__section">
