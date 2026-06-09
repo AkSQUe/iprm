@@ -24,6 +24,11 @@
         <h1 class="admin-hero__title">{% if post %}Редагування допису{% else %}Новий допис{% endif %}</h1>
       </div>
       <div class="admin-hero__actions">
+        {% if post %}
+        <a href="{{ url_for('admin.blog_preview', post_id=post.id) }}" target="_blank" rel="noopener" class="btn-admin btn-admin--secondary">
+          <span class="material-symbols-rounded">visibility</span> Прев'ю
+        </a>
+        {% endif %}
         {% if post and post.is_published %}
         <a href="{{ url_for('blog.post_detail', slug=post.slug) }}" target="_blank" rel="noopener" class="btn-admin btn-admin--secondary">
           <span class="material-symbols-rounded">open_in_new</span> Переглянути
@@ -132,35 +137,5 @@
 
 <script src="{{ url_for('static', filename='js/admin-dropzone.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/blog-editor.js') }}?v={{ assets_version }}"></script>
-<script>
-  (function() {
-    function slugFallback() {
-      var s = document.getElementById('slug');
-      var t = document.getElementById('title');
-      return (s && s.value.trim()) || (t && t.value.trim()) || 'post';
-    }
-    if (window.initAdminDropzones) {
-      window.initAdminDropzones({
-        endpoint: "{{ url_for('admin.upload_blog_image') }}",
-        getSlug: slugFallback,
-        slugMissingMsg: 'Спочатку вкажіть заголовок',
-        allowed: ['image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif'],
-        allowedExt: /\.(png|jpe?g|webp|heic|heif)$/i,
-        allowedMsg: 'Дозволені формати: PNG, JPG, WebP, HEIC',
-        maxBytes: 25 * 1024 * 1024,
-        maxMsg: 'Максимальний розмір: 25 MB'
-      });
-    }
-    if (window.initBlogEditor) {
-      window.initBlogEditor({
-        mount: document.getElementById('blog-editor'),
-        addBar: document.getElementById('blog-editor-add'),
-        field: document.getElementById('blog-content-field'),
-        form: document.getElementById('blog-form'),
-        uploadEndpoint: "{{ url_for('admin.upload_blog_image') }}",
-        getSlug: slugFallback
-      });
-    }
-  })();
-</script>
+<script src="{{ url_for('static', filename='js/admin-blog-edit.js') }}?v={{ assets_version }}"></script>
 {% endblock %}

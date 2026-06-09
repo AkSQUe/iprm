@@ -1,0 +1,40 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row %}
+
+{% block title %}Новий коментар у блозі{% endblock %}
+
+{% block preview_text %}{{ post.title }} -- новий коментар на модерації{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
+        Новий коментар у блозі
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+        Залишено коментар до допису. Він очікує модерації й не показується
+        публічно, доки ви його не схвалите.
+    </p>
+
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
+        Допис
+    </p>
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">
+                    {{ post.title }}
+                </p>
+                {{ detail_row("Автор", comment.author_name) }}
+                {% if comment.email %}{{ detail_row("Email", comment.email) }}{% endif %}
+                {{ detail_row("Отримано", comment.created_at.strftime('%d.%m.%Y %H:%M') if comment.created_at else '') }}
+            </td>
+        </tr>
+    </table>
+
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
+        Текст коментаря
+    </p>
+    <div style="padding: 16px 20px; background-color: #F9FAFB; border-left: 3px solid #7055a4; border-radius: 4px; margin-bottom: 24px; font-size: 15px; color: #374151; line-height: 1.6; white-space: pre-line;">{{ comment.body }}</div>
+
+    {% if admin_url %}{{ button_primary("Перейти до модерації", admin_url) }}{% endif %}
+{% endblock %}

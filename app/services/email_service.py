@@ -450,6 +450,29 @@ class EmailService:
             },
         )
 
+    @staticmethod
+    def send_blog_comment_notification(comment):
+        """Повідомити адміна про новий коментар у блозі (на модерації).
+
+        Шлемо на контактний email сайту (SiteSettings.email). Best-effort:
+        якщо пошту не налаштовано або email порожній -- тихо пропускаємо.
+        """
+        from app.models.site_settings import SiteSettings
+        settings = SiteSettings.get()
+        to = (settings.email or '').strip()
+        if not to:
+            return None
+        base = (settings.website_url or '').rstrip('/')
+        admin_url = f'{base}/admin/blog/comments' if base else '/admin/blog/comments'
+        post = comment.post
+        return EmailService.send_email(
+            to=to,
+            subject=f'Новий коментар у блозі: {post.title if post else ""}',
+            template_name='blog_comment_notification',
+            context={'comment': comment, 'post': post, 'admin_url': admin_url},
+            trigger='blog_comment',
+        )
+
     # ------------------------------------------------------------------
     # ADMIN NOTIFICATION HELPERS (Phase 2 refactor)
     # ------------------------------------------------------------------

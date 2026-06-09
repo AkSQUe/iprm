@@ -128,6 +128,12 @@ def submit_comment(slug):
     try:
         db.session.commit()
         flash('Дякуємо! Коментар надіслано на модерацію.', 'success')
+        # Best-effort нотифікація адміна; збій пошти не впливає на UX.
+        try:
+            from app.services.email_service import EmailService
+            EmailService.send_blog_comment_notification(comment)
+        except Exception:
+            current_app.logger.exception('Failed to send blog comment notification')
     except Exception:
         db.session.rollback()
         logger.exception('Failed to save blog comment for post_id=%s', post.id)

@@ -114,8 +114,12 @@
         label.value = data.label || '';
         var url = el('input', {'class': 'form-input regalia-link__url', type: 'url', placeholder: 'https://...'});
         url.value = data.url || '';
+        var up = el('button', {type: 'button', 'class': 'regalia-link__move', title: 'Вгору'}, [icon('keyboard_arrow_up')]);
+        var down = el('button', {type: 'button', 'class': 'regalia-link__move', title: 'Вниз'}, [icon('keyboard_arrow_down')]);
         var rm = el('button', {type: 'button', 'class': 'regalia-link__remove', title: 'Видалити'}, [icon('close')]);
-        var row = el('div', {'class': 'regalia-link'}, [label, url, rm]);
+        var row = el('div', {'class': 'regalia-link'}, [label, url, up, down, rm]);
+        up.addEventListener('click', function() { var prev = row.previousElementSibling; if (prev) { rowsBox.insertBefore(row, prev); syncLinks(); } });
+        down.addEventListener('click', function() { var next = row.nextElementSibling; if (next) { rowsBox.insertBefore(next, row); syncLinks(); } });
         rm.addEventListener('click', function() { rowsBox.removeChild(row); syncLinks(); });
         label.addEventListener('input', syncLinks);
         url.addEventListener('input', syncLinks);

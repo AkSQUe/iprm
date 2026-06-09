@@ -5,14 +5,11 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from email.utils import format_datetime
 
-from flask import render_template, abort, request, url_for, Response
+from flask import render_template, abort, request, url_for, Response, current_app
 
 from app.blog import blog_bp
 from app.models.blog_post import BlogPost
 from app.models.blog_comment import BlogComment
-
-_PER_PAGE = 9
-_FEED_LIMIT = 20
 
 
 def _approved_comment_tree(post_id):
@@ -56,7 +53,7 @@ def index():
     pagination = (
         _published_query()
         .order_by(BlogPost.published_at.desc())
-        .paginate(page=page, per_page=_PER_PAGE, error_out=False)
+        .paginate(page=page, per_page=current_app.config['BLOG_POSTS_PER_PAGE'], error_out=False)
     )
     return render_template(
         'blog/list.html',
@@ -72,7 +69,7 @@ def feed():
     posts = (
         _published_query()
         .order_by(BlogPost.published_at.desc())
-        .limit(_FEED_LIMIT)
+        .limit(current_app.config['BLOG_FEED_LIMIT'])
         .all()
     )
     items = [

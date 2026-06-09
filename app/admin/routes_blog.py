@@ -159,6 +159,27 @@ def blog_edit(post_id):
     return render_template('admin/blog_edit.html', form=form, post=post)
 
 
+@admin_bp.route('/blog/<int:post_id>/preview')
+@admin_required
+def blog_preview(post_id):
+    """Прев'ю допису публічним шаблоном незалежно від статусу (admin-only).
+
+    Дозволяє переглянути чернетку так, як вона виглядатиме на сайті, до
+    публікації. Доступ обмежено admin_required (без публічного токена)."""
+    post = db.session.get(BlogPost, post_id)
+    if not post:
+        flash('Допис не знайдено', 'error')
+        return redirect(url_for('admin.blog_list'))
+    from app.blog.routes import _approved_comment_tree
+    children, roots, count = _approved_comment_tree(post.id)
+    return render_template(
+        'blog/post.html',
+        active_nav='blog', post=post, preview=True,
+        comment_children=children, comment_roots=roots, comment_count=count,
+        max_comment_depth=BlogComment.MAX_DEPTH,
+    )
+
+
 @admin_bp.route('/blog/<int:post_id>/delete', methods=['POST'])
 @admin_required
 def blog_delete(post_id):
