@@ -66,7 +66,7 @@
         if (csrf) fd.append('csrf_token', csrf);
         fetch(opts.uploadEndpoint, {method: 'POST', body: fd})
           .then(function(r) {
-            if (r.status === 413) { notify('Файл завеликий (макс. 25 MB)'); reject(); return null; }
+            if (r.status === 413) { notify('Сервер відхилив файл (413): імовірно, ліміт nginx (client_max_body_size).'); reject(); return null; }
             // Не-JSON відповідь (HTML-помилка, редірект на логін тощо) -> інформативно
             return r.json().then(function(d) { return {ok: r.ok, d: d}; }, function() {
               notify('Сервер повернув неочікувану відповідь (код ' + r.status + ')'); reject(); return null;

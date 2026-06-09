@@ -110,7 +110,7 @@
           body: formData
         })
         .then(function(res) {
-          if (res.status === 413) { return {ok: false, data: {error: maxMsg}}; }
+          if (res.status === 413) { return {ok: false, data: {error: 'Сервер відхилив файл (413): імовірно, ліміт nginx (client_max_body_size).'}}; }
           // Не-JSON відповідь (HTML-помилка / редірект на логін) -> керована помилка
           return res.json().then(
             function(data) { return {ok: res.ok, data: data}; },
