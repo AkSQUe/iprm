@@ -53,3 +53,12 @@
 }
 .regalia-link__thumb:hover .regalia-link__upload { opacity: 1; }
 .regalia-link__upload .material-symbols-rounded { font-size: 20px; }
+/* Кнопка "прибрати скан" -- поверх мініатюри (показується лише коли є скан). */
+.regalia-link__thumb-clear {
+  position: absolute; top: 2px; right: 2px; z-index: 2;
+  width: 20px; height: 20px; padding: 0; border: none; border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6); color: #fff; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.regalia-link__thumb-clear:hover { background: var(--iprm-error, #ef4444); }
+.regalia-link__thumb-clear .material-symbols-rounded { font-size: 14px; }
