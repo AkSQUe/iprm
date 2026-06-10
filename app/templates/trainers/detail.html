@@ -77,7 +77,10 @@
     <div class="iprm-section__inner">
       <div class="iprm-trainer apple-reveal">
         <div class="iprm-trainer__photo">
-          {% if trainer.photo %}
+          {% if trainer.photo_media %}
+            <img src="{{ trainer.photo_media.variant_url('card') }}" alt="{{ trainer.full_name }}" loading="lazy" width="320" height="427"
+                 srcset="{{ trainer.photo_media.variant_url('thumb') }} 400w, {{ trainer.photo_media.variant_url('card') }} 800w" sizes="320px">
+          {% elif trainer.photo %}
             <img src="{{ trainer.photo }}" alt="{{ trainer.full_name }}" loading="lazy" width="320" height="427">
           {% endif %}
         </div>
@@ -105,7 +108,8 @@
       <div class="trainer-certs" data-lightbox-group>
         {% for cert in trainer.certificates %}
         <a class="trainer-certs__item" href="{{ cert.url }}" data-lightbox data-caption="{{ cert.caption }}">
-          <img src="{{ cert.url }}" alt="{{ cert.caption or 'Сертифікат' }}" loading="lazy">
+          <img src="{{ cert.card or cert.thumb or cert.url }}" alt="{{ cert.caption or 'Сертифікат' }}" loading="lazy"
+               {% if cert.card %}srcset="{{ cert.thumb }} 400w, {{ cert.card }} 800w" sizes="(max-width: 600px) 45vw, 280px"{% endif %}>
         </a>
         {% endfor %}
       </div>
@@ -125,7 +129,8 @@
         <div class="trainer-patent">
           {% if p.image %}
           <a class="trainer-patent__scan" href="{{ p.image }}" data-lightbox data-caption="{{ p.label }}">
-            <img src="{{ p.thumb or p.image }}" alt="{{ p.label }}" loading="lazy">
+            <img src="{{ p.card or p.thumb or p.image }}" alt="{{ p.label }}" loading="lazy"
+                 {% if p.card %}srcset="{{ p.thumb }} 400w, {{ p.card }} 800w" sizes="(max-width: 600px) 45vw, 280px"{% endif %}>
           </a>
           {% endif %}
           {% if p.url %}

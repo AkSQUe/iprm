@@ -286,8 +286,8 @@
     <div class="iprm-section__inner">
       <h2 id="trainer-title" class="iprm-section__title">Ваш <span class="apple-gradient-text">тренер</span></h2>
       <div class="iprm-trainer-block apple-reveal">
-        {% if course.trainer.photo %}
-        <img src="{{ course.trainer.photo }}" alt="{{ course.trainer.full_name }}" class="iprm-trainer-block__photo" loading="lazy" width="280" height="280">
+        {% if course.trainer.photo_src %}
+        <img src="{{ course.trainer.photo_src }}" alt="{{ course.trainer.full_name }}" class="iprm-trainer-block__photo" loading="lazy" width="280" height="280">
         {% endif %}
         <div class="iprm-trainer-block__body">
           <h3>{{ course.trainer.full_name }}</h3>

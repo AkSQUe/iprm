@@ -13,7 +13,14 @@ class Trainer(TimestampMixin, db.Model):
     slug = db.Column(db.String(200), unique=True, nullable=False)
     role = db.Column(db.String(300))
     bio = db.Column(db.Text)
+    # Legacy-рядок фото (/static|/media). Реєстровий аналог -- photo_media_id;
+    # рендер віддає перевагу photo_media (див. photo_src/photo_full нижче).
     photo = db.Column(db.String(500))
+    photo_media_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('media_files.id', ondelete='SET NULL'),
+        nullable=True,
+    )
     # Підпис тренера (шлях відносно static) -- друкується на сертифікатах
     # його заходів. Напр. "images/trainers/<slug>/signature.webp".
     signature = db.Column(db.String(500))
@@ -56,6 +63,21 @@ class Trainer(TimestampMixin, db.Model):
         back_populates='trainer',
         lazy='dynamic',
     )
+    photo_media = db.relationship('MediaFile', foreign_keys=[photo_media_id])
+
+    @property
+    def photo_src(self):
+        """URL фото для <img src> (card-варіант, якщо з реєстру)."""
+        if self.photo_media:
+            return self.photo_media.variant_url('card')
+        return self.photo
+
+    @property
+    def photo_full(self):
+        """URL повнорозмірного фото (для og/srcset 1600w)."""
+        if self.photo_media:
+            return self.photo_media.url
+        return self.photo
 
     def __repr__(self):
         return f'<Trainer {self.full_name}>'

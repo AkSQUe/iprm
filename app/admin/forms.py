@@ -61,6 +61,8 @@ class TrainerForm(FlaskForm):
         'Фото (URL)',
         validators=[Optional(), Length(max=500)],
     )
+    # media_id фото з реєстру (заповнює dropzone). Рядок -> int у routes.
+    photo_media_id = HiddenField('Фото (media)', validators=[Optional()])
     signature = StringField(
         'Підпис (шлях відносно static, напр. images/trainers/slug/signature.webp)',
         validators=[Optional(), Length(max=500)],

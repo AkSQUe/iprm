@@ -84,7 +84,7 @@
           })
           .then(function(res) {
             if (!res) return;
-            if (res.ok) { certs.push({url: res.d.url, thumb: res.d.thumb, caption: ''}); render(); sync(); }
+            if (res.ok) { certs.push({url: res.d.url, thumb: res.d.thumb, card: res.d.card, media_id: res.d.media_id, caption: ''}); render(); sync(); }
             else notify(res.d.error || 'Помилка завантаження');
           })
           .catch(function() { notify('Помилка мережі'); })
@@ -108,7 +108,12 @@
             label: row.querySelector('.regalia-link__label').value.trim(),
             url: row.querySelector('.regalia-link__url').value.trim(),
           };
-          if (withImages) { o.image = row.dataset.image || ''; o.thumb = row.dataset.thumb || ''; }
+          if (withImages) {
+            o.image = row.dataset.image || '';
+            o.thumb = row.dataset.thumb || '';
+            if (row.dataset.card) o.card = row.dataset.card;
+            if (row.dataset.media) o.media_id = row.dataset.media;
+          }
           return o;
         }).filter(function(l) { return l.url || l.image; });
         field.value = JSON.stringify(links);
@@ -121,6 +126,8 @@
         if (withImages) {
           row.dataset.image = data.image || '';
           row.dataset.thumb = data.thumb || '';
+          if (data.card) row.dataset.card = data.card;
+          if (data.media_id) row.dataset.media = data.media_id;
           var img = el('img', {'class': 'regalia-link__thumb-img', alt: ''});
           var setThumb = function() {
             var src = row.dataset.thumb || row.dataset.image;
@@ -149,7 +156,13 @@
               })
               .then(function(res) {
                 if (!res) return;
-                if (res.ok) { row.dataset.image = res.d.url; row.dataset.thumb = res.d.thumb || res.d.url; setThumb(); syncLinks(); }
+                if (res.ok) {
+                  row.dataset.image = res.d.url;
+                  row.dataset.thumb = res.d.thumb || res.d.url;
+                  if (res.d.card) row.dataset.card = res.d.card;
+                  if (res.d.media_id) row.dataset.media = res.d.media_id;
+                  setThumb(); syncLinks();
+                }
                 else notify(res.d.error || 'Помилка завантаження');
               })
               .catch(function() { notify('Помилка мережі'); })

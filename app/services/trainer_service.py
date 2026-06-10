@@ -11,9 +11,28 @@ from urllib.parse import urlparse
 import bleach
 
 _LOCAL_IMG_RE = re.compile(r'^/static/images/trainers/(?!.*\.\.)[\w./-]+\.(?:webp|jpe?g|png)$')
+# Зображення з медіа-реєстру (поза static, через /media/...). Лише WebP.
+_MEDIA_IMG_RE = re.compile(r'^/media/(?!.*\.\.)[\w./-]+\.webp$')
 
 # Запобіжник проти необмеженого зростання JSON-списків регалій/профілю.
 _MAX_ITEMS = 50
+
+
+def _is_img_url(value):
+    """URL зображення валідний, якщо це локальний static- або media-шлях."""
+    value = (value or '').strip()
+    return bool(_LOCAL_IMG_RE.match(value) or _MEDIA_IMG_RE.match(value))
+
+
+def _opt_media_id(value):
+    """media_id -> позитивний int або None (приймає int і рядок-цифри)."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int) and value > 0:
+        return value
+    if isinstance(value, str) and value.isdigit() and int(value) > 0:
+        return int(value)
+    return None
 
 
 def _clean_text(value, limit):
@@ -63,9 +82,9 @@ def sanitize_patents(items):
             continue
         image = (it.get('image') or '').strip()
         thumb = (it.get('thumb') or '').strip()
-        if not _LOCAL_IMG_RE.match(image):
+        if not _is_img_url(image):
             image = ''
-        if not _LOCAL_IMG_RE.match(thumb):
+        if not _is_img_url(thumb):
             thumb = image
         url = _clean_url(it.get('url'))
         label = _clean_text(it.get('label'), 300)
@@ -73,7 +92,14 @@ def sanitize_patents(items):
             continue
         if not label:
             label = url or 'Патент'
-        out.append({'image': image, 'thumb': thumb, 'label': label, 'url': url or ''})
+        rec = {'image': image, 'thumb': thumb, 'label': label, 'url': url or ''}
+        card = (it.get('card') or '').strip()
+        if _is_img_url(card):
+            rec['card'] = card
+        mid = _opt_media_id(it.get('media_id'))
+        if mid and image:
+            rec['media_id'] = mid
+        out.append(rec)
     return out
 
 
@@ -113,14 +139,39 @@ def sanitize_certificates(items):
         if not isinstance(it, dict):
             continue
         url = (it.get('url') or '').strip()
-        if not _LOCAL_IMG_RE.match(url):
+        if not _is_img_url(url):
             continue
         thumb = (it.get('thumb') or '').strip()
-        if not _LOCAL_IMG_RE.match(thumb):
+        if not _is_img_url(thumb):
             thumb = url
-        out.append({
+        rec = {
             'url': url,
             'thumb': thumb,
             'caption': _clean_text(it.get('caption'), 200),
-        })
+        }
+        card = (it.get('card') or '').strip()
+        if _is_img_url(card):
+            rec['card'] = card
+        mid = _opt_media_id(it.get('media_id'))
+        if mid:
+            rec['media_id'] = mid
+        out.append(rec)
+    return out
+
+
+def collect_media_ids(trainer):
+    """Зібрати media_id, на які посилається тренер (photo + certs + patents).
+
+    Повертає dict media_id -> usage_type для прив'язки MediaFile до тренера."""
+    out = {}
+    if getattr(trainer, 'photo_media_id', None):
+        out[trainer.photo_media_id] = 'photo'
+    for cert in (trainer.certificates or []):
+        mid = _opt_media_id((cert or {}).get('media_id'))
+        if mid:
+            out.setdefault(mid, 'certificate')
+    for pat in (trainer.patents or []):
+        mid = _opt_media_id((pat or {}).get('media_id'))
+        if mid:
+            out.setdefault(mid, 'patent')
     return out

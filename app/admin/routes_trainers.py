@@ -7,6 +7,7 @@ from app.admin.decorators import admin_required
 from app.admin.forms import TrainerForm
 from app.extensions import db
 from app.models.trainer import Trainer
+from app.models.media_file import MediaFile
 from app.services import trainer_service
 from app.utils import slugify
 
@@ -20,6 +21,36 @@ def _parse_json_list(raw):
     except (ValueError, TypeError):
         return []
     return val if isinstance(val, list) else []
+
+
+def _set_photo_media(trainer, form):
+    """Виставити photo_media_id з форми (лише якщо такий MediaFile існує)."""
+    mid = (form.photo_media_id.data or '').strip()
+    if mid.isdigit() and db.session.get(MediaFile, int(mid)):
+        trainer.photo_media_id = int(mid)
+    else:
+        trainer.photo_media_id = None
+
+
+def _attach_trainer_media(trainer):
+    """Прив'язати MediaFile (фото/сертифікати/патенти) до тренера після збереження.
+
+    Виставляє entity_type/entity_id/usage_type для всіх медіа, на які посилається
+    тренер. Відв'язані не видаляємо автоматично (керування -- через бібліотеку).
+    Ідемпотентно."""
+    assignments = trainer_service.collect_media_ids(trainer)
+    if not assignments:
+        return
+    rows = MediaFile.query.filter(MediaFile.id.in_(list(assignments))).all()
+    for m in rows:
+        m.entity_type = 'trainer'
+        m.entity_id = trainer.id
+        m.usage_type = assignments[m.id]
+    try:
+        db.session.commit()
+    except Exception:
+        logger.exception('Failed to attach media to trainer %s', trainer.id)
+        db.session.rollback()
 
 
 def _apply_profile_fields(trainer, form):
@@ -76,11 +107,13 @@ def trainer_create():
             email=(form.email.data or '').strip().lower() or None,
             is_active=form.is_active.data,
         )
+        _set_photo_media(trainer, form)
         _apply_profile_fields(trainer, form)
         db.session.add(trainer)
 
         try:
             db.session.commit()
+            _attach_trainer_media(trainer)
             audit_logger.info('Admin %s created trainer %s (%s)', current_user.email, trainer.id, trainer.full_name)
             flash('Тренера додано', 'success')
             return redirect(url_for('admin.dashboard'))
@@ -121,10 +154,12 @@ def trainer_edit(trainer_id):
         trainer.experience_years = form.experience_years.data
         trainer.email = (form.email.data or '').strip().lower() or None
         trainer.is_active = form.is_active.data
+        _set_photo_media(trainer, form)
         _apply_profile_fields(trainer, form)
 
         try:
             db.session.commit()
+            _attach_trainer_media(trainer)
             audit_logger.info('Admin %s updated trainer %s (%s)', current_user.email, trainer_id, trainer.full_name)
             flash('Тренера оновлено', 'success')
             return redirect(url_for('admin.dashboard'))

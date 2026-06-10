@@ -130,6 +130,102 @@ def blog_media_migrate(dry_run):
     )
 
 
+@click.command('trainer-media-migrate')
+@click.option('--dry-run', is_flag=True, help='Лише показати, що буде зроблено.')
+@with_appcontext
+def trainer_media_migrate(dry_run):
+    """Перенести фото та регалії-зображення тренерів зі static у медіа-реєстр.
+
+    Обробляє фото (photo), сертифікати (certificates) та скани патентів
+    (patents[].image), що ще посилаються на /static/images/trainers/. Файли
+    КОПІЮЮТЬСЯ у MEDIA_FOLDER, створюються MediaFile (+варіанти), посилання
+    переписуються на /media/... з media_id. Ідемпотентно; static лишається.
+    """
+    from flask import current_app
+    from app.extensions import db
+    from app.models.trainer import Trainer
+    from app.services import media_service
+
+    static_root = current_app.static_folder
+    prefix = '/static/'
+    stats = {'trainers': 0, 'photos': 0, 'certs': 0, 'patents': 0, 'missing': 0}
+
+    def _is_static(url):
+        return isinstance(url, str) and url.startswith('/static/images/trainers/')
+
+    def _ingest(url, trainer, usage):
+        src = os.path.join(static_root, *url[len(prefix):].split('/'))
+        if not os.path.isfile(src):
+            stats['missing'] += 1
+            click.echo(f'  ! файл відсутній: {url}')
+            return None
+        if dry_run:
+            click.echo(f'  + {usage}: {url}')
+            return None
+        media, err = media_service.create_from_path(
+            src, original_name=os.path.basename(src), entity_type='trainer',
+            entity_id=trainer.id, usage_type=usage,
+        )
+        if err:
+            click.echo(f'  ! помилка {url}: {err}')
+            return None
+        return media
+
+    for trainer in Trainer.query.order_by(Trainer.id.asc()).all():
+        changed = False
+        click.echo(f'Тренер #{trainer.id} "{trainer.full_name}"')
+
+        # --- Фото ---
+        if not trainer.photo_media_id and _is_static(trainer.photo):
+            media = _ingest(trainer.photo, trainer, 'photo')
+            if media:
+                trainer.photo_media_id = media.id
+                trainer.photo = media.variant_url('card')
+                stats['photos'] += 1
+                changed = True
+
+        # --- Сертифікати ---
+        new_certs = []
+        for cert in (trainer.certificates or []):
+            cert = dict(cert) if isinstance(cert, dict) else {}
+            if not cert.get('media_id') and _is_static(cert.get('url')):
+                media = _ingest(cert['url'], trainer, 'certificate')
+                if media:
+                    cert.update(url=media.url, thumb=media.variant_url('thumb'),
+                                card=media.variant_url('card'), media_id=media.id)
+                    stats['certs'] += 1
+                    changed = True
+            new_certs.append(cert)
+
+        # --- Скани патентів ---
+        new_patents = []
+        for pat in (trainer.patents or []):
+            pat = dict(pat) if isinstance(pat, dict) else {}
+            if not pat.get('media_id') and _is_static(pat.get('image')):
+                media = _ingest(pat['image'], trainer, 'patent')
+                if media:
+                    pat.update(image=media.url, thumb=media.variant_url('thumb'),
+                               card=media.variant_url('card'), media_id=media.id)
+                    stats['patents'] += 1
+                    changed = True
+            new_patents.append(pat)
+
+        if changed and not dry_run:
+            trainer.certificates = new_certs
+            trainer.patents = new_patents
+            stats['trainers'] += 1
+            db.session.commit()
+        elif changed:
+            stats['trainers'] += 1
+
+    click.echo(
+        f"\nГотово{' (DRY-RUN)' if dry_run else ''}: "
+        f"тренерів змінено={stats['trainers']}, фото={stats['photos']}, "
+        f"сертифікатів={stats['certs']}, патентів={stats['patents']}, "
+        f"відсутніх файлів={stats['missing']}"
+    )
+
+
 @click.command('seed-courses')
 @with_appcontext
 def seed_courses():
