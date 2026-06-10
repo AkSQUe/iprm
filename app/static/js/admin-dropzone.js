@@ -35,6 +35,9 @@
       var removeBtn = zone.querySelector('.admin-dropzone__remove');
       var targetId = zone.getAttribute('data-target');
       var hiddenInput = document.getElementById(targetId);
+      // Необов'язкове друге приховане поле для media_id (інтеграція з реєстром).
+      var mediaTargetId = zone.getAttribute('data-target-media');
+      var mediaInput = mediaTargetId ? document.getElementById(mediaTargetId) : null;
 
       zone.addEventListener('click', function(e) {
         if (e.target === removeBtn || e.target.closest('.admin-dropzone__remove')) return;
@@ -64,6 +67,7 @@
       removeBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         hiddenInput.value = '';
+        if (mediaInput) mediaInput.value = '';
         preview.classList.remove('admin-dropzone__preview--active');
         if (previewImg) previewImg.src = '';
         prompt.classList.remove('admin-dropzone__prompt--hidden');
@@ -121,6 +125,7 @@
           zone.classList.remove('admin-dropzone--uploading');
           if (result.ok) {
             hiddenInput.value = result.data.url;
+            if (mediaInput) mediaInput.value = result.data.media_id || '';
             // Оновлюємо прев'ю реальним результатом із сервера: для HEIC
             // локальний FileReader не рендериться, тож показуємо WebP-відповідь.
             if (previewImg && (result.data.thumb || result.data.url)) {

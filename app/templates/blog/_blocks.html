@@ -28,7 +28,10 @@
 
     {% elif block.type == 'image' %}
       <figure class="blog-content__figure">
-        <img src="{{ d.url }}" alt="{{ d.alt }}" loading="lazy"
+        {# Реєстрові блоки мають card-варіант -> віддаємо responsive srcset;
+           legacy-блоки (лише url) рендеряться як раніше. #}
+        <img src="{{ d.card or d.url }}" alt="{{ d.alt }}" loading="lazy"
+             {% if d.card %}srcset="{{ d.thumb }} 400w, {{ d.card }} 800w, {{ d.url }} 1600w" sizes="(max-width: 820px) 100vw, 800px"{% endif %}
              {% if d.width and d.height %}width="{{ d.width }}" height="{{ d.height }}"{% endif %}>
         {% if d.caption %}<figcaption>{{ d.caption }}</figcaption>{% endif %}
       </figure>

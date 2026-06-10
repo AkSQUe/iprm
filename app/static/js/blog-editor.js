@@ -168,7 +168,8 @@
         return {body: body5, getData: function() { return {video_id: yt.value.trim(), caption: ycap.value.trim()}; }};
       }
       if (type === 'image') {
-        var state = {url: data.url || '', thumb: data.thumb || '', width: data.width, height: data.height};
+        var state = {url: data.url || '', thumb: data.thumb || '', card: data.card || '',
+                     media_id: data.media_id, width: data.width, height: data.height};
         var prev = el('div', {'class': 'blog-editor__img-prev'});
         function renderPrev() {
           prev.innerHTML = '';
@@ -182,8 +183,9 @@
           if (!file.files.length) return;
           btn.disabled = true;
           uploadImage(file.files[0]).then(function(d) {
-            state.url = d.url; state.thumb = d.thumb; state.width = d.width; state.height = d.height;
-            renderPrev(); btn.disabled = false;
+            state.url = d.url; state.thumb = d.thumb; state.card = d.card;
+            state.media_id = d.media_id; state.width = d.width; state.height = d.height;
+            renderPrev(); btn.disabled = false; serialize();
           }).catch(function() { btn.disabled = false; });
         });
         var alt = el('input', {'class': 'form-input', type: 'text', placeholder: 'Alt (для SEO/доступності)'});
@@ -192,7 +194,8 @@
         cap2.value = data.caption || '';
         var body6 = el('div', {}, [prev, el('div', {'class': 'blog-editor__row'}, [btn]), alt, cap2, file]);
         return {body: body6, getData: function() {
-          return {url: state.url, thumb: state.thumb, width: state.width, height: state.height,
+          return {url: state.url, thumb: state.thumb, card: state.card, media_id: state.media_id,
+                  width: state.width, height: state.height,
                   alt: alt.value.trim(), caption: cap2.value.trim()};
         }};
       }
@@ -203,7 +206,7 @@
           grid.innerHTML = '';
           images.forEach(function(img, i) {
             var rm = el('button', {type: 'button', 'class': 'blog-editor__g-remove', title: 'Видалити'}, [icon('close')]);
-            rm.addEventListener('click', function() { images.splice(i, 1); renderGrid(); });
+            rm.addEventListener('click', function() { images.splice(i, 1); renderGrid(); serialize(); });
             grid.appendChild(el('div', {'class': 'blog-editor__g-item'}, [
               el('img', {src: img.thumb || img.url, alt: ''}), rm
             ]));
@@ -217,7 +220,8 @@
           var files = Array.prototype.slice.call(gfile.files);
           files.forEach(function(f) {
             uploadImage(f).then(function(d) {
-              images.push({url: d.url, thumb: d.thumb, alt: '', caption: ''}); renderGrid();
+              images.push({url: d.url, thumb: d.thumb, card: d.card, media_id: d.media_id, alt: '', caption: ''});
+              renderGrid(); serialize();
             }).catch(function() {});
           });
           gfile.value = '';

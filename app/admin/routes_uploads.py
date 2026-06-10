@@ -93,20 +93,41 @@ def upload_trainer_image():
 @admin_bp.route('/upload/blog-image', methods=['POST'])
 @admin_required
 def upload_blog_image():
-    """Завантажити зображення блогу: HEIC/JPG/PNG/WebP -> WebP (full + thumb).
+    """Завантажити зображення блогу у медіа-реєстр: HEIC/JPG/PNG/WebP -> WebP.
 
-    Повертає {url, thumb, width, height} -- використовується блочним редактором
-    (image/gallery-блоки) та dropzone обкладинки.
+    Тепер усі зображення блогу йдуть через MediaFile (durable, з варіантами).
+    Файл лишається без прив'язки (entity_id=None) до збереження допису, коли
+    routes_blog прив'язує його за media_id. Повертає {url, thumb, card,
+    media_id, width, height} -- блочний редактор і dropzone обкладинки.
     """
-    file = request.files.get('file')
-    slug = request.form.get('slug', '').strip()
+    from flask_login import current_user
 
-    data, error = image_service.process_blog_image(file, slug)
+    file = request.files.get('file')
+    media, error = media_service.create_from_upload(
+        file,
+        entity_type=None,
+        entity_id=None,
+        usage_type='inline',
+        uploader_id=current_user.id,
+    )
     if error:
         return jsonify({'error': error}), 400
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception('Failed to persist blog image upload')
+        return jsonify({'error': 'Помилка збереження'}), 500
 
-    audit_logger.info('Uploaded blog image: %s', data['url'])
-    return jsonify(data), 200
+    audit_logger.info('Uploaded blog image (media %s): %s', media.id, media.file_path)
+    return jsonify({
+        'url': media.url,
+        'thumb': media.variant_url('thumb'),
+        'card': media.variant_url('card'),
+        'media_id': media.id,
+        'width': media.width,
+        'height': media.height,
+    }), 200
 
 
 @admin_bp.route('/upload/trainer-certificate', methods=['POST'])

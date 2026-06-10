@@ -75,7 +75,7 @@
       <div class="form-section admin-form__section">
         <h3 class="admin-form__section-title">Обкладинка</h3>
         <div class="form-group">
-          <div class="admin-dropzone admin-dropzone--wide" id="dropzone-cover" data-target="cover_image">
+          <div class="admin-dropzone admin-dropzone--wide" id="dropzone-cover" data-target="cover_image" data-target-media="cover_media_id">
             <div class="admin-dropzone__preview{% if form.cover_image.data %} admin-dropzone__preview--active{% endif %}" id="preview-cover">
               {% if form.cover_image.data %}<img src="{{ form.cover_image.data }}" alt="Обкладинка">{% endif %}
               <button type="button" class="admin-dropzone__remove" aria-label="Видалити">X</button>
@@ -88,6 +88,7 @@
             <input type="file" class="admin-dropzone__input" accept="image/png,image/jpeg,image/webp,.heic,.heif">
           </div>
           {{ form.cover_image(type="hidden", id="cover_image") }}
+          {{ form.cover_media_id(type="hidden", id="cover_media_id") }}
         </div>
       </div>
 

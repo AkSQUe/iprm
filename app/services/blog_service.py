@@ -70,6 +70,13 @@ _YT_URL_RE = re.compile(
 # Локальний шлях до зображення блогу. Негативний lookahead (?!.*\.\.) блокує
 # обхід каталогів (..), плюс вимагаємо відоме розширення зображення.
 _LOCAL_IMG_RE = re.compile(r'^/static/images/blog/(?!.*\.\.)[\w./-]+\.(?:webp|jpe?g|png)$')
+# Зображення з медіа-реєстру (поза static, через /media/...). Лише WebP.
+_MEDIA_IMG_RE = re.compile(r'^/media/(?!.*\.\.)[\w./-]+\.webp$')
+
+
+def _is_img_url(url):
+    """URL зображення допису валідний, якщо це локальний static- або media-шлях."""
+    return bool(_LOCAL_IMG_RE.match(url) or _MEDIA_IMG_RE.match(url))
 
 ALLOWED_BLOCK_TYPES = {
     'heading', 'paragraph', 'list', 'quote',
@@ -99,14 +106,17 @@ def _extract_youtube_id(raw):
 
 
 def _clean_image_ref(item):
-    """Один елемент зображення: лише локальні URL + санітизовані підписи."""
+    """Один елемент зображення: лише локальні/media URL + санітизовані підписи.
+
+    Підтримує і legacy-блоки (static URL без media_id), і реєстрові
+    (url=/media/..., card=/media/... середній варіант, media_id=int)."""
     if not isinstance(item, dict):
         return None
     url = (item.get('url') or '').strip()
-    if not _LOCAL_IMG_RE.match(url):
+    if not _is_img_url(url):
         return None
     thumb = (item.get('thumb') or '').strip()
-    if not _LOCAL_IMG_RE.match(thumb):
+    if not _is_img_url(thumb):
         thumb = url
     out = {
         'url': url,
@@ -114,6 +124,16 @@ def _clean_image_ref(item):
         'alt': _clean_plain(item.get('alt'), 200),
         'caption': _clean_plain(item.get('caption'), 300),
     }
+    card = (item.get('card') or '').strip()
+    if _is_img_url(card):
+        out['card'] = card
+    mid = item.get('media_id')
+    if isinstance(mid, bool):
+        mid = None
+    elif isinstance(mid, str) and mid.isdigit():
+        mid = int(mid)
+    if isinstance(mid, int) and mid > 0:
+        out['media_id'] = mid
     for key in ('width', 'height'):
         val = item.get(key)
         if isinstance(val, int) and 0 < val <= 10000:
@@ -209,6 +229,32 @@ def clean_comment_body(text, limit=4000):
 
 def clean_comment_name(text, limit=120):
     return bleach.clean(text or '', tags=[], strip=True).strip()[:limit]
+
+
+def collect_media_ids(blocks):
+    """Зібрати всі media_id, на які посилається контент (image/gallery-блоки).
+
+    Повертає list унікальних int у порядку появи -- для прив'язки MediaFile до
+    допису при збереженні."""
+    ids = []
+    seen = set()
+
+    def _add(ref):
+        mid = (ref or {}).get('media_id')
+        if isinstance(mid, int) and mid not in seen:
+            seen.add(mid)
+            ids.append(mid)
+
+    for block in blocks or []:
+        if not isinstance(block, dict):
+            continue
+        data = block.get('data') or {}
+        if block.get('type') == 'image':
+            _add(data)
+        elif block.get('type') == 'gallery':
+            for img in (data.get('images') or []):
+                _add(img)
+    return ids
 
 
 def auto_excerpt(blocks, limit=200):

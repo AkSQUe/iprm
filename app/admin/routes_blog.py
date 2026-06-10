@@ -18,6 +18,7 @@ from app.admin.forms import BlogPostForm
 from app.extensions import db
 from app.models.blog_post import BlogPost
 from app.models.blog_comment import BlogComment
+from app.models.media_file import MediaFile
 from app.models.mixins import utcnow
 from app.services import blog_service
 
@@ -70,6 +71,12 @@ def _apply_form(post, form):
     post.slug = slug
     post.content = blocks
     post.cover_image = (form.cover_image.data or '').strip() or None
+    # Обкладинка з реєстру: приймаємо media_id лише якщо такий MediaFile існує.
+    cover_mid = (form.cover_media_id.data or '').strip()
+    if cover_mid.isdigit() and db.session.get(MediaFile, int(cover_mid)):
+        post.cover_media_id = int(cover_mid)
+    else:
+        post.cover_media_id = None
     post.excerpt = (form.excerpt.data or '').strip() or blog_service.auto_excerpt(blocks)
     post.meta_title = (form.meta_title.data or '').strip() or None
     post.meta_description = (form.meta_description.data or '').strip() or None
@@ -79,6 +86,48 @@ def _apply_form(post, form):
         post.published_at = utcnow()
     post.status = new_status
     return None
+
+
+def _attach_media(post):
+    """Прив'язати MediaFile (обкладинка + контент) до допису після збереження.
+
+    Виставляє entity_type/entity_id/usage_type/sort_order для всіх медіа, на які
+    посилається допис. Відв'язані не видаляємо автоматично (безпечніше: ними
+    керують через медіа-бібліотеку), тож втрати контенту через збій серіалізації
+    неможливі. Ідемпотентно."""
+    assignments = {}  # media_id -> (usage_type, sort_order)
+    if post.cover_media_id:
+        assignments[post.cover_media_id] = ('cover', 0)
+    order = 1
+    for block in (post.content or []):
+        if not isinstance(block, dict):
+            continue
+        data = block.get('data') or {}
+        if block.get('type') == 'image':
+            mid = data.get('media_id')
+            if isinstance(mid, int) and mid not in assignments:
+                assignments[mid] = ('inline', order)
+                order += 1
+        elif block.get('type') == 'gallery':
+            for img in (data.get('images') or []):
+                mid = (img or {}).get('media_id')
+                if isinstance(mid, int) and mid not in assignments:
+                    assignments[mid] = ('gallery', order)
+                    order += 1
+    if not assignments:
+        return
+    rows = MediaFile.query.filter(MediaFile.id.in_(list(assignments))).all()
+    for m in rows:
+        usage, sort = assignments[m.id]
+        m.entity_type = 'blog_post'
+        m.entity_id = post.id
+        m.usage_type = usage
+        m.sort_order = sort
+    try:
+        db.session.commit()
+    except Exception:
+        logger.exception('Failed to attach media to blog post %s', post.id)
+        db.session.rollback()
 
 
 def _commit_post(post):
@@ -115,6 +164,7 @@ def blog_create():
         db.session.add(post)
         try:
             if _commit_post(post):
+                _attach_media(post)
                 audit_logger.info('Admin %s created blog post %s (%s)', current_user.email, post.id, post.slug)
                 flash('Допис створено', 'success')
                 return redirect(url_for('admin.blog_edit', post_id=post.id))
@@ -147,6 +197,7 @@ def blog_edit(post_id):
             return render_template('admin/blog_edit.html', form=form, post=post)
         try:
             if _commit_post(post):
+                _attach_media(post)
                 audit_logger.info('Admin %s updated blog post %s (%s)', current_user.email, post.id, post.slug)
                 flash('Допис оновлено', 'success')
                 return redirect(url_for('admin.blog_edit', post_id=post.id))

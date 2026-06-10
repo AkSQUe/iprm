@@ -33,8 +33,8 @@
         <article class="blog-card">
           <a class="blog-card__link" href="{{ url_for('blog.post_detail', slug=post.slug) }}">
             <div class="blog-card__cover">
-              {% if post.cover_image %}
-              <img src="{{ post.cover_image }}" alt="{{ post.title }}" loading="lazy">
+              {% if post.cover_src %}
+              <img src="{{ post.cover_src }}" alt="{{ post.title }}" loading="lazy">
               {% else %}
               <div class="blog-card__cover-placeholder" aria-hidden="true"></div>
               {% endif %}

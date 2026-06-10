@@ -439,6 +439,8 @@ class BlogPostForm(FlaskForm):
         'Обкладинка',
         validators=[Optional(), _optional_url()],
     )
+    # media_id обкладинки з реєстру (заповнює dropzone). Рядок -> int у routes.
+    cover_media_id = HiddenField('Обкладинка (media)', validators=[Optional()])
     content = HiddenField('Контент')
     status = SelectField(
         'Статус',
