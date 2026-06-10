@@ -20,6 +20,7 @@ from app.models.course_request import CourseRequest, CourseRequestAudit
 from app.models.webhook_delivery import WebhookDelivery
 from app.models.blog_post import BlogPost
 from app.models.blog_comment import BlogComment
+from app.models.media_file import MediaFile
 
 __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'AuthIdentity',
@@ -28,5 +29,5 @@ __all__ = [
     'Clinic', 'EmailLog', 'EmailSettings', 'NotificationRule',
     'PaymentTransaction', 'SiteSettings', 'ErrorLog',
     'Course', 'CourseInstance', 'CourseRequest', 'CourseRequestAudit',
-    'WebhookDelivery', 'BlogPost', 'BlogComment',
+    'WebhookDelivery', 'BlogPost', 'BlogComment', 'MediaFile',
 ]

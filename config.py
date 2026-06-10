@@ -18,6 +18,14 @@ class Config:
     CERTIFICATE_FOLDER = os.environ.get('CERTIFICATE_FOLDER') or os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'certificates',
     )
+    # Медіа-реєстр (MediaFile). Зберігається ПОЗА app/static -- щоб деплой
+    # (rsync --delete) не зачіпав завантаження. На проді віддається nginx-alias
+    # (/media/ -> {root}/media/), у dev/fallback -- Flask-роутом media.serve.
+    # Кореневу теку виключено з rsync (як /certificates/). Override -- MEDIA_FOLDER.
+    MEDIA_FOLDER = os.environ.get('MEDIA_FOLDER') or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'media',
+    )
+    MEDIA_URL_PREFIX = '/media'
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     REMEMBER_COOKIE_HTTPONLY = True

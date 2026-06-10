@@ -2,10 +2,62 @@ import logging
 from flask import request, jsonify
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
+from app.extensions import db
 from app.services import file_service
 from app.services import image_service
+from app.services import media_service
 
+logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
+
+
+def _opt_int(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+@admin_bp.route('/upload/media', methods=['POST'])
+@admin_required
+def upload_media():
+    """Універсальне завантаження у медіа-реєстр (MediaFile).
+
+    Приймає file + опційні entity_type/entity_id/usage_type/alt/sort_order.
+    Конвертує у WebP (+варіанти), створює MediaFile. Повертає {id, url,
+    variants, width, height, alt}.
+    """
+    from flask_login import current_user
+
+    file = request.files.get('file')
+    media, error = media_service.create_from_upload(
+        file,
+        entity_type=(request.form.get('entity_type') or None),
+        entity_id=_opt_int(request.form.get('entity_id')),
+        usage_type=(request.form.get('usage_type') or 'main'),
+        alt_text=(request.form.get('alt') or None),
+        uploader_id=current_user.id,
+        sort_order=_opt_int(request.form.get('sort_order')) or 0,
+    )
+    if error:
+        return jsonify({'error': error}), 400
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception('Failed to persist uploaded media')
+        return jsonify({'error': 'Помилка збереження'}), 500
+
+    audit_logger.info('Uploaded media %s (%s)', media.id, media.file_path)
+    return jsonify({
+        'id': media.id,
+        'url': media.url,
+        'thumb': media.variant_url('thumb'),
+        'card': media.variant_url('card'),
+        'width': media.width,
+        'height': media.height,
+        'alt': media.alt_text or '',
+    }), 200
 
 
 @admin_bp.route('/upload/course-image', methods=['POST'])

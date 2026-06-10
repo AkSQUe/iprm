@@ -98,6 +98,9 @@ def create_app(config_name=None):
     from app.blog import blog_bp
     app.register_blueprint(blog_bp)
 
+    from app.media import media_bp
+    app.register_blueprint(media_bp)
+
     from app.services.error_handler import init_error_handlers
     init_error_handlers(app)
 
