@@ -93,3 +93,5 @@ class TestAttachOnSave:
         cm = db.session.get(MediaFile, card['media_id'])
         assert hm.entity_type == 'course' and hm.entity_id == c.id and hm.usage_type == 'hero'
         assert cm.entity_type == 'course' and cm.usage_type == 'card'
+        assert hm.file_path.endswith('-hero.webp')
+        assert cm.file_path.endswith('-card.webp')

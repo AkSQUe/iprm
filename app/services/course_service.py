@@ -44,11 +44,14 @@ def attach_course_media(course):
         assignments.setdefault(course.card_media_id, 'card')
     if not assignments:
         return
+    from app.services import media_service
     rows = MediaFile.query.filter(MediaFile.id.in_(list(assignments))).all()
     for m in rows:
         m.entity_type = 'course'
         m.entity_id = course.id
         m.usage_type = assignments[m.id]
+        # Читабельне ім'я файлу: {slug}-hero / {slug}-card (hero/card -- по одному).
+        media_service.rename_for_entity(m, course.slug)
     try:
         db.session.commit()
     except Exception:

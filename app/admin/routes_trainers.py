@@ -32,20 +32,54 @@ def _set_photo_media(trainer, form):
         trainer.photo_media_id = None
 
 
+def _remap_refs(items, mapping, keys):
+    """Замінити URL у dict-елементах JSON-списку за mapping {old: new}."""
+    if not isinstance(items, list) or not mapping:
+        return items
+    out = []
+    for it in items:
+        if isinstance(it, dict):
+            it = dict(it)
+            for k in keys:
+                if it.get(k) in mapping:
+                    it[k] = mapping[it[k]]
+        out.append(it)
+    return out
+
+
 def _attach_trainer_media(trainer):
     """Прив'язати MediaFile (фото/сертифікати/патенти) до тренера після збереження.
 
-    Виставляє entity_type/entity_id/usage_type для всіх медіа, на які посилається
-    тренер. Відв'язані не видаляємо автоматично (керування -- через бібліотеку).
-    Ідемпотентно."""
+    Виставляє entity_type/entity_id/usage_type, перейменовує файли у читабельну
+    схему ({slug}-photo, {slug}-certificate-N, ...) і оновлює URL у JSON-полях.
+    Відв'язані не видаляємо автоматично. Ідемпотентно."""
+    from app.services import media_service
+
     assignments = trainer_service.collect_media_ids(trainer)
     if not assignments:
         return
-    rows = MediaFile.query.filter(MediaFile.id.in_(list(assignments))).all()
-    for m in rows:
+    rows = {m.id: m for m in MediaFile.query.filter(MediaFile.id.in_(list(assignments))).all()}
+    # 1-based індекси в межах кожного usage (для імен -certificate-N / -patent-N).
+    cert_idx = {c['media_id']: i for i, c in enumerate(
+        [c for c in (trainer.certificates or []) if isinstance(c, dict) and c.get('media_id')], 1)}
+    pat_idx = {p['media_id']: i for i, p in enumerate(
+        [p for p in (trainer.patents or []) if isinstance(p, dict) and p.get('media_id')], 1)}
+
+    mapping = {}
+    for mid, usage in assignments.items():
+        m = rows.get(mid)
+        if not m:
+            continue
         m.entity_type = 'trainer'
         m.entity_id = trainer.id
-        m.usage_type = assignments[m.id]
+        m.usage_type = usage
+        idx = cert_idx.get(mid) if usage == 'certificate' else (
+            pat_idx.get(mid) if usage == 'patent' else None)
+        mapping.update(media_service.rename_for_entity(m, trainer.slug, idx))
+
+    if mapping:
+        trainer.certificates = _remap_refs(trainer.certificates, mapping, ('url', 'thumb', 'card'))
+        trainer.patents = _remap_refs(trainer.patents, mapping, ('image', 'thumb', 'card'))
     try:
         db.session.commit()
     except Exception:

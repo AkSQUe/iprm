@@ -121,3 +121,7 @@ class TestAttachOnSave:
         cm = db.session.get(MediaFile, cert['media_id'])
         assert pm.entity_type == 'trainer' and pm.entity_id == t.id and pm.usage_type == 'photo'
         assert cm.entity_type == 'trainer' and cm.usage_type == 'certificate'
+        # читабельні імена + оновлений JSON
+        assert pm.file_path.endswith('-photo.webp')
+        assert cm.file_path.endswith('-certificate-1.webp')
+        assert t.certificates[0]['url'] == cm.url

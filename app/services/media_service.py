@@ -9,6 +9,7 @@ PIL-хелпери (нормалізація EXIF/режиму, fit) перею�
 """
 import logging
 import os
+import re
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -149,6 +150,67 @@ def create_from_path(src_abs, *, original_name=None, entity_type=None,
         return None, 'Помилка обробки зображення'
 
     return media, None
+
+
+def _safe_slug(value, maxlen=60):
+    """Звести довільний slug/назву до безпечного для імені файлу токена."""
+    s = re.sub(r'[^a-z0-9]+', '-', (value or '').lower()).strip('-')
+    s = s[:maxlen].rstrip('-')
+    return s or 'media'
+
+
+def friendly_basename(slug, usage_type, index=None):
+    """Людиночитна основа імені файлу: {slug}-{usage}[-{index}] (без розширення)."""
+    base = f'{_safe_slug(slug)}-{usage_type}'
+    if index is not None:
+        base = f'{base}-{index}'
+    return base
+
+
+def _media_url(rel_path):
+    prefix = current_app.config.get('MEDIA_URL_PREFIX', '/media')
+    return f'{prefix}/{rel_path}'
+
+
+def rename_for_entity(media, slug, index=None):
+    """Перейменувати фізичні файли media у читабельну схему {slug}-{usage}[-N].
+
+    Перейменовує основний файл + усі responsive-варіанти у тій самій теці,
+    оновлює media.file_path / responsive_variants. Ідемпотентно (якщо ім'я вже
+    збігається -> нічого не робить). Повертає dict {старий_url: новий_url} для
+    оновлення посилань у JSON-полях (порожній, якщо без змін)."""
+    root = _media_root()
+    rel_dir = os.path.dirname(media.file_path) or ''
+    name = friendly_basename(slug, media.usage_type, index)
+    new_main = f'{rel_dir}/{name}.webp' if rel_dir else f'{name}.webp'
+    if new_main == media.file_path:
+        return {}
+    # Колізія з іншим файлом -> гарантуємо унікальність суфіксом id.
+    if os.path.exists(os.path.join(root, *new_main.split('/'))):
+        name = f'{name}-{media.id}'
+        new_main = f'{rel_dir}/{name}.webp' if rel_dir else f'{name}.webp'
+
+    mapping = {}
+    old_abs = os.path.join(root, *media.file_path.split('/'))
+    new_abs = os.path.join(root, *new_main.split('/'))
+    if os.path.exists(old_abs):
+        os.rename(old_abs, new_abs)
+    mapping[_media_url(media.file_path)] = _media_url(new_main)
+    media.file_path = new_main
+
+    new_variants = {}
+    for ctx, vpath in (media.responsive_variants or {}).items():
+        vdir = os.path.dirname(vpath) or ''
+        nvp = f'{vdir}/{name}_{ctx}.webp' if vdir else f'{name}_{ctx}.webp'
+        vsrc = os.path.join(root, *vpath.split('/'))
+        vdst = os.path.join(root, *nvp.split('/'))
+        if os.path.exists(vsrc):
+            os.rename(vsrc, vdst)
+        mapping[_media_url(vpath)] = _media_url(nvp)
+        new_variants[ctx] = nvp
+    media.responsive_variants = new_variants
+    logger.info('Renamed media %s -> %s', media.id, new_main)
+    return mapping
 
 
 def delete_media(media):

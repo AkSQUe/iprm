@@ -87,17 +87,48 @@ def _apply_form(post, form):
     return None
 
 
+def _remap_content(content, mapping):
+    """Замінити url/thumb/card у image/gallery-блоках за mapping {old: new}."""
+    out = []
+    for blk in (content or []):
+        if not isinstance(blk, dict):
+            out.append(blk)
+            continue
+        blk = dict(blk)
+        data = dict(blk.get('data') or {})
+        if blk.get('type') == 'image':
+            for k in ('url', 'thumb', 'card'):
+                if data.get(k) in mapping:
+                    data[k] = mapping[data[k]]
+            blk['data'] = data
+        elif blk.get('type') == 'gallery':
+            imgs = []
+            for img in (data.get('images') or []):
+                if isinstance(img, dict):
+                    img = dict(img)
+                    for k in ('url', 'thumb', 'card'):
+                        if img.get(k) in mapping:
+                            img[k] = mapping[img[k]]
+                imgs.append(img)
+            data['images'] = imgs
+            blk['data'] = data
+        out.append(blk)
+    return out
+
+
 def _attach_media(post):
     """Прив'язати MediaFile (обкладинка + контент) до допису після збереження.
 
-    Виставляє entity_type/entity_id/usage_type/sort_order для всіх медіа, на які
-    посилається допис. Відв'язані не видаляємо автоматично (безпечніше: ними
-    керують через медіа-бібліотеку), тож втрати контенту через збій серіалізації
-    неможливі. Ідемпотентно."""
-    assignments = {}  # media_id -> (usage_type, sort_order)
+    Виставляє entity_type/entity_id/usage_type/sort_order, перейменовує файли у
+    читабельну схему ({slug}-cover, {slug}-inline-N, {slug}-gallery-N) і оновлює
+    URL у JSON-контенті. Відв'язані не видаляємо автоматично. Ідемпотентно."""
+    from app.services import media_service
+
+    assignments = {}  # media_id -> (usage_type, sort_order, index|None)
     if post.cover_media_id:
-        assignments[post.cover_media_id] = ('cover', 0)
-    order = 1
+        assignments[post.cover_media_id] = ('cover', 0, None)
+    sort = 1
+    inline_i = gallery_i = 0
     for block in (post.content or []):
         if not isinstance(block, dict):
             continue
@@ -105,23 +136,31 @@ def _attach_media(post):
         if block.get('type') == 'image':
             mid = data.get('media_id')
             if isinstance(mid, int) and mid not in assignments:
-                assignments[mid] = ('inline', order)
-                order += 1
+                inline_i += 1
+                assignments[mid] = ('inline', sort, inline_i)
+                sort += 1
         elif block.get('type') == 'gallery':
             for img in (data.get('images') or []):
                 mid = (img or {}).get('media_id')
                 if isinstance(mid, int) and mid not in assignments:
-                    assignments[mid] = ('gallery', order)
-                    order += 1
+                    gallery_i += 1
+                    assignments[mid] = ('gallery', sort, gallery_i)
+                    sort += 1
     if not assignments:
         return
-    rows = MediaFile.query.filter(MediaFile.id.in_(list(assignments))).all()
-    for m in rows:
-        usage, sort = assignments[m.id]
+    rows = {m.id: m for m in MediaFile.query.filter(MediaFile.id.in_(list(assignments))).all()}
+    mapping = {}
+    for mid, (usage, sort_o, idx) in assignments.items():
+        m = rows.get(mid)
+        if not m:
+            continue
         m.entity_type = 'blog_post'
         m.entity_id = post.id
         m.usage_type = usage
-        m.sort_order = sort
+        m.sort_order = sort_o
+        mapping.update(media_service.rename_for_entity(m, post.slug, idx))
+    if mapping:
+        post.content = _remap_content(post.content, mapping)
     try:
         db.session.commit()
     except Exception:

@@ -73,6 +73,31 @@ class TestQueriesAndUrls:
         assert m.variant_url('nonexistent') == m.url  # fallback
 
 
+class TestRenameForEntity:
+    def test_rename_main_and_variants(self, media_root):
+        m, _ = media_service.create_from_upload(_png(), usage_type='photo')
+        db.session.flush()
+        old_url = m.url
+        mapping = media_service.rename_for_entity(m, 'ivan-petrenko')
+        db.session.flush()
+        # ім'я стало читабельним, фізичні файли на місці
+        assert m.file_path.endswith('ivan-petrenko-photo.webp')
+        assert os.path.exists(m.abs_path)
+        for rel in m.responsive_variants.values():
+            assert 'ivan-petrenko-photo' in rel
+            assert os.path.exists(os.path.join(media_root, *rel.split('/')))
+        # mapping містить старий->новий для основного + варіантів
+        assert mapping[old_url] == m.url
+        # ідемпотентність: повторний виклик нічого не змінює
+        assert media_service.rename_for_entity(m, 'ivan-petrenko') == {}
+
+    def test_rename_with_index(self, media_root):
+        m, _ = media_service.create_from_upload(_png(), usage_type='certificate')
+        db.session.flush()
+        media_service.rename_for_entity(m, 'ivan-petrenko', 3)
+        assert m.file_path.endswith('ivan-petrenko-certificate-3.webp')
+
+
 class TestDeleteAndServe:
     def test_delete_removes_files(self, media_root):
         m, _ = media_service.create_from_upload(_png())

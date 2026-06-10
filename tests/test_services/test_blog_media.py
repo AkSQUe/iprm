@@ -136,3 +136,9 @@ class TestAttachOnSave:
         assert cover_m.entity_type == 'blog_post' and cover_m.entity_id == post.id
         assert cover_m.usage_type == 'cover'
         assert img_m.entity_type == 'blog_post' and img_m.usage_type == 'inline'
+        # читабельні імена файлів
+        assert cover_m.file_path.endswith('-cover.webp')
+        assert img_m.file_path.endswith('-inline-1.webp')
+        # JSON-контент оновлено на нові URL
+        blk = post.content[0]['data']
+        assert blk['url'] == img_m.url and blk['url'].endswith('-inline-1.webp')
