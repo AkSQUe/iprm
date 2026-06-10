@@ -60,6 +60,7 @@ def course_create():
         course_service.save_program_blocks_for_course(course, blocks_data)
 
         if try_commit(log_context=f'course_create title={course.title}'):
+            course_service.attach_course_media(course)
             audit_logger.info(
                 'Admin %s created course %s (%s)',
                 current_user.email, course.id, course.title,
@@ -99,6 +100,7 @@ def course_edit(course_id):
         course_service.save_program_blocks_for_course(course, blocks_data)
 
         if try_commit(log_context=f'course_edit id={course.id}'):
+            course_service.attach_course_media(course)
             audit_logger.info(
                 'Admin %s updated course %s (%s)',
                 current_user.email, course.id, course.title,

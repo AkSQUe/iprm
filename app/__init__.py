@@ -138,10 +138,13 @@ def create_app(config_name=None):
         max_age=3600,
     )
 
-    from app.cli import seed_courses, blog_media_migrate, trainer_media_migrate
+    from app.cli import (
+        seed_courses, blog_media_migrate, trainer_media_migrate, course_media_migrate,
+    )
     app.cli.add_command(seed_courses)
     app.cli.add_command(blog_media_migrate)
     app.cli.add_command(trainer_media_migrate)
+    app.cli.add_command(course_media_migrate)
 
     @app.context_processor
     def inject_assets_version():

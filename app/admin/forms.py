@@ -263,6 +263,9 @@ class CourseForm(FlaskForm):
         'Зображення картки (URL)',
         validators=[Optional(), Length(max=500), _optional_url()],
     )
+    # media_id зображень з реєстру (заповнюють dropzone). Рядок -> int у service.
+    hero_media_id = HiddenField('Hero (media)', validators=[Optional()])
+    card_media_id = HiddenField('Картка (media)', validators=[Optional()])
     target_audience_text = TextAreaField(
         'Цільова аудиторія',
         validators=[Optional()],

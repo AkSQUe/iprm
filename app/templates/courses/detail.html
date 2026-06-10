@@ -3,15 +3,15 @@
 
 {% block title %}{{ course.title }} | ІПРМ{% endblock %}
 {% block meta_description %}{{ course.subtitle or course.short_description or course.title }}{% endblock %}
-{% if course.card_image %}{% block og_image %}{{ course.card_image }}{% endblock %}{% endif %}
+{% if course.card_src %}{% block og_image %}{{ course.card_src }}{% endblock %}{% endif %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block extra_head %}
-{% if course.hero_image %}
-<link rel="preload" as="image" href="{{ course.hero_image }}">
+{% if course.hero_src %}
+<link rel="preload" as="image" href="{{ course.hero_src }}">
 {% endif %}
 {% endblock %}
 
@@ -32,7 +32,7 @@
     'url': url_for('main.index', _external=True)
   }
 } %}
-{% if course.card_image %}{% set _ = course_schema.update({'image': course.card_image}) %}{% endif %}
+{% if course.card_src %}{% set _ = course_schema.update({'image': course.card_src}) %}{% endif %}
 {% if course.base_price and course.base_price > 0 %}{% set _ = course_schema.update({'offers': {
   '@type': 'Offer',
   'price': course.base_price|string,
@@ -110,7 +110,7 @@
 
   <!-- ===== ABOUT ===== -->
   {% set about_lead = course.short_description if course.short_description and course.short_description != course.subtitle else '' %}
-  {% set about_image = course.hero_image or course.card_image %}
+  {% set about_image = course.hero_src or course.card_src %}
   {% set has_desc = course.description %}
   {% set has_audience = course.target_audience %}
   {% set has_benefits = course.cpd_points or course.program_blocks %}

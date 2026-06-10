@@ -22,6 +22,40 @@ def _clean_text(value):
     return stripped if stripped else None
 
 
+def _opt_media_id(value):
+    """Рядок/int media_id -> існуючий MediaFile.id або None (валідуємо наявність)."""
+    from app.models.media_file import MediaFile
+    s = str(value or '').strip()
+    if s.isdigit() and db.session.get(MediaFile, int(s)):
+        return int(s)
+    return None
+
+
+def attach_course_media(course):
+    """Прив'язати MediaFile (hero/card) до курсу після збереження.
+
+    Виставляє entity_type/entity_id/usage_type для зображень курсу. Відв'язані
+    не видаляємо автоматично. Ідемпотентно."""
+    from app.models.media_file import MediaFile
+    assignments = {}
+    if course.hero_media_id:
+        assignments[course.hero_media_id] = 'hero'
+    if course.card_media_id:
+        assignments.setdefault(course.card_media_id, 'card')
+    if not assignments:
+        return
+    rows = MediaFile.query.filter(MediaFile.id.in_(list(assignments))).all()
+    for m in rows:
+        m.entity_type = 'course'
+        m.entity_id = course.id
+        m.usage_type = assignments[m.id]
+    try:
+        db.session.commit()
+    except Exception:
+        logger.exception('Failed to attach media to course %s', course.id)
+        db.session.rollback()
+
+
 # ========== Shared helpers (text <-> list/faq conversions) ==========
 
 def lines_to_list(text):
@@ -102,6 +136,8 @@ def populate_course_from_form(course, form):
     course.event_type = form.event_type.data
     course.hero_image = _clean_text(form.hero_image.data)
     course.card_image = _clean_text(form.card_image.data)
+    course.hero_media_id = _opt_media_id(form.hero_media_id.data)
+    course.card_media_id = _opt_media_id(form.card_media_id.data)
     course.target_audience = lines_to_list(form.target_audience_text.data)
     course.tags = lines_to_list(form.tags_text.data)
     course.speaker_info = _clean_text(form.speaker_info.data)
@@ -225,6 +261,8 @@ def clone_course(source, created_by_id):
         event_type=source.event_type,
         hero_image=source.hero_image,
         card_image=source.card_image,
+        hero_media_id=source.hero_media_id,
+        card_media_id=source.card_media_id,
         target_audience=list(source.target_audience or []),
         tags=list(source.tags or []),
         speaker_info=source.speaker_info,

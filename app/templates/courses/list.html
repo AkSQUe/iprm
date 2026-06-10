@@ -60,8 +60,8 @@
         <article class="iprm-course-card apple-reveal" data-tags='{{ course.tags | tojson }}'>
           <a class="iprm-course-card__link" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" aria-label="{{ course.title }}">
             <div class="iprm-course-card__image">
-              {% if course.card_image %}
-                <img src="{{ course.card_image }}" alt="{{ course.title }}" loading="lazy" width="400" height="200">
+              {% if course.card_src %}
+                <img src="{{ course.card_src }}" alt="{{ course.title }}" loading="lazy" width="400" height="200">
               {% endif %}
             </div>
             <div class="apple-card-body">

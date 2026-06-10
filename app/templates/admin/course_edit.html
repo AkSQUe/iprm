@@ -131,7 +131,7 @@
       <div class="admin-form__grid">
         <div class="form-group">
           <label>Hero зображення</label>
-          <div class="admin-dropzone" id="dropzone-hero" data-target="hero_image">
+          <div class="admin-dropzone" id="dropzone-hero" data-target="hero_image" data-target-media="hero_media_id">
             <div class="admin-dropzone__preview{% if form.hero_image.data %} admin-dropzone__preview--active{% endif %}" id="preview-hero">
               {% if form.hero_image.data %}<img src="{{ form.hero_image.data }}" alt="Hero preview">{% endif %}
               <button type="button" class="admin-dropzone__remove" aria-label="Видалити">X</button>
@@ -144,10 +144,11 @@
             <input type="file" class="admin-dropzone__input" accept="image/png,image/jpeg,image/webp">
           </div>
           {{ form.hero_image(type="hidden", id="hero_image") }}
+          {{ form.hero_media_id(type="hidden", id="hero_media_id") }}
         </div>
         <div class="form-group">
           <label>Зображення картки</label>
-          <div class="admin-dropzone" id="dropzone-card" data-target="card_image">
+          <div class="admin-dropzone" id="dropzone-card" data-target="card_image" data-target-media="card_media_id">
             <div class="admin-dropzone__preview{% if form.card_image.data %} admin-dropzone__preview--active{% endif %}" id="preview-card">
               {% if form.card_image.data %}<img src="{{ form.card_image.data }}" alt="Card preview">{% endif %}
               <button type="button" class="admin-dropzone__remove" aria-label="Видалити">X</button>
@@ -160,6 +161,7 @@
             <input type="file" class="admin-dropzone__input" accept="image/png,image/jpeg,image/webp">
           </div>
           {{ form.card_image(type="hidden", id="card_image") }}
+          {{ form.card_media_id(type="hidden", id="card_media_id") }}
         </div>
       </div>
     </div>

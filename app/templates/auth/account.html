@@ -45,8 +45,8 @@
         {% set course = reg.instance.course if reg.instance else None %}
         <div class="account-course apple-reveal">
           <div class="account-course__image">
-            {% if course and course.card_image %}
-              <img src="{{ course.card_image }}" alt="{{ course.title }}" loading="lazy" width="180" height="120">
+            {% if course and course.card_src %}
+              <img src="{{ course.card_src }}" alt="{{ course.title }}" loading="lazy" width="180" height="120">
             {% endif %}
           </div>
           <div class="account-course__body">

@@ -3,7 +3,6 @@ from flask import request, jsonify
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
 from app.extensions import db
-from app.services import file_service
 from app.services import media_service
 
 logger = logging.getLogger(__name__)
@@ -62,16 +61,32 @@ def upload_media():
 @admin_bp.route('/upload/course-image', methods=['POST'])
 @admin_required
 def upload_course_image():
-    """Upload a course image to images/courses/{slug}/."""
-    file = request.files.get('file')
-    slug = request.form.get('slug', '').strip()
+    """Завантажити зображення курсу (hero/card) у медіа-реєстр (WebP+варіанти).
 
-    url, error = file_service.upload_course_image(file, slug)
+    Без прив'язки до збереження курсу; usage коригується при збереженні.
+    Повертає {url, thumb, card, media_id, width, height}."""
+    from flask_login import current_user
+
+    file = request.files.get('file')
+    media, error = media_service.create_from_upload(
+        file, entity_type=None, entity_id=None, usage_type='hero',
+        uploader_id=current_user.id,
+    )
     if error:
         return jsonify({'error': error}), 400
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception('Failed to persist course image upload')
+        return jsonify({'error': 'Помилка збереження'}), 500
 
-    audit_logger.info('Uploaded course image: %s', url)
-    return jsonify({'url': url}), 200
+    audit_logger.info('Uploaded course image (media %s): %s', media.id, media.file_path)
+    return jsonify({
+        'url': media.url, 'thumb': media.variant_url('thumb'),
+        'card': media.variant_url('card'), 'media_id': media.id,
+        'width': media.width, 'height': media.height,
+    }), 200
 
 
 @admin_bp.route('/upload/trainer-image', methods=['POST'])

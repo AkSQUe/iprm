@@ -226,6 +226,79 @@ def trainer_media_migrate(dry_run):
     )
 
 
+@click.command('course-media-migrate')
+@click.option('--dry-run', is_flag=True, help='Лише показати, що буде зроблено.')
+@with_appcontext
+def course_media_migrate(dry_run):
+    """Перенести hero/card-зображення курсів зі static у медіа-реєстр (Фаза 5).
+
+    Обробляє hero_image та card_image, що ще посилаються на
+    /static/images/courses/. Файли КОПІЮЮТЬСЯ у MEDIA_FOLDER (+варіанти),
+    посилання переписуються на /media/... з *_media_id. Ідемпотентно.
+    """
+    from flask import current_app
+    from app.extensions import db
+    from app.models.course import Course
+    from app.services import media_service
+
+    static_root = current_app.static_folder
+    prefix = '/static/'
+    stats = {'courses': 0, 'images': 0, 'missing': 0}
+
+    def _is_static(url):
+        return isinstance(url, str) and url.startswith('/static/images/courses/')
+
+    def _ingest(url, course, usage):
+        src = os.path.join(static_root, *url[len(prefix):].split('/'))
+        if not os.path.isfile(src):
+            stats['missing'] += 1
+            click.echo(f'  ! файл відсутній: {url}')
+            return None
+        if dry_run:
+            click.echo(f'  + {usage}: {url}')
+            return None
+        media, err = media_service.create_from_path(
+            src, original_name=os.path.basename(src), entity_type='course',
+            entity_id=course.id, usage_type=usage,
+        )
+        if err:
+            click.echo(f'  ! помилка {url}: {err}')
+            return None
+        return media
+
+    for course in Course.query.order_by(Course.id.asc()).all():
+        changed = False
+        click.echo(f'Курс #{course.id} "{course.title}"')
+
+        if not course.hero_media_id and _is_static(course.hero_image):
+            media = _ingest(course.hero_image, course, 'hero')
+            if media:
+                course.hero_media_id = media.id
+                course.hero_image = media.url
+                stats['images'] += 1
+                changed = True
+
+        if not course.card_media_id and _is_static(course.card_image):
+            media = _ingest(course.card_image, course, 'card')
+            if media:
+                course.card_media_id = media.id
+                course.card_image = media.variant_url('card')
+                stats['images'] += 1
+                changed = True
+
+        if changed and not dry_run:
+            stats['courses'] += 1
+            db.session.commit()
+        elif changed:
+            stats['courses'] += 1
+
+    click.echo(
+        f"\nГотово{' (DRY-RUN)' if dry_run else ''}: "
+        f"курсів змінено={stats['courses']}, зображень={stats['images']}, "
+        f"відсутніх файлів={stats['missing']}"
+    )
+
+
 @click.command('seed-courses')
 @with_appcontext
 def seed_courses():

@@ -96,8 +96,8 @@
       <article class="iprm-course-card apple-reveal">
         <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}">
           <div class="iprm-course-card__image">
-            {% if event.card_image %}
-              <img src="{{ event.card_image }}" alt="{{ event.title }}" loading="lazy" width="400" height="200">
+            {% if event.card_src %}
+              <img src="{{ event.card_src }}" alt="{{ event.title }}" loading="lazy" width="400" height="200">
             {% endif %}
           </div>
           <div class="apple-course-body">
