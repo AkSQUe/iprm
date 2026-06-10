@@ -83,6 +83,13 @@ class TrainerForm(FlaskForm):
         'Наукова та дослідницька діяльність',
         validators=[Optional()],
     )
+    # Додаткові секції профілю -- один пункт на рядок (textarea).
+    skills = TextAreaField('Професійні навички', validators=[Optional()])
+    education = TextAreaField('Освіта та кваліфікація', validators=[Optional()])
+    additional_education = TextAreaField(
+        'Додаткова освіта та міжнародне стажування', validators=[Optional()],
+    )
+    work_experience = TextAreaField('Досвід роботи', validators=[Optional()])
 
 
 class SiteSettingsForm(FlaskForm):

@@ -5,7 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}?v={{ assets_version }}">
-{% if trainer.certificates %}
+{% if trainer.certificates or (trainer.patents and trainer.patents | selectattr('image') | list) %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}?v={{ assets_version }}">
 {% endif %}
 {% endblock %}
@@ -39,6 +39,25 @@
 {% endblock %}
 
 {% block content %}
+{# Спільний макрос timeline-секції (освіта / стажування / досвід): провідний
+   рік рядка стає бейджем (фільтр timeline_split). #}
+{% macro timeline_section(sid, title_head, title_accent, items, gray=False) %}
+{% if items %}
+<section class="iprm-section{% if gray %} apple-section-gray{% endif %}" aria-labelledby="{{ sid }}-title">
+  <div class="iprm-section__inner">
+    <h2 id="{{ sid }}-title" class="iprm-section__title">{{ title_head }} <span class="apple-gradient-text">{{ title_accent }}</span></h2>
+    <ul class="iprm-timeline">
+      {% for item in items %}{% set e = item | timeline_split %}
+      <li class="iprm-timeline__item">
+        {% if e.year %}<span class="iprm-timeline__year">{{ e.year }}</span>{% endif %}
+        <span class="iprm-timeline__text">{{ e.text }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+{% endmacro %}
 <div class="apple-page">
 
   <!-- ===== HERO ===== -->
@@ -99,11 +118,31 @@
   <section class="iprm-section apple-section-gray" aria-labelledby="trainer-patents-title">
     <div class="iprm-section__inner">
       <h2 id="trainer-patents-title" class="iprm-section__title">Винаходи та <span class="apple-gradient-text">патенти</span></h2>
+      {% set patents_with_img = trainer.patents | selectattr('image') | list %}
+      {% if patents_with_img %}
+      <div class="trainer-patents" data-lightbox-group>
+        {% for p in trainer.patents %}
+        <div class="trainer-patent">
+          {% if p.image %}
+          <a class="trainer-patent__scan" href="{{ p.image }}" data-lightbox data-caption="{{ p.label }}">
+            <img src="{{ p.thumb or p.image }}" alt="{{ p.label }}" loading="lazy">
+          </a>
+          {% endif %}
+          {% if p.url %}
+          <a class="trainer-patent__label" href="{{ p.url }}" target="_blank" rel="noopener nofollow">{{ p.label }}</a>
+          {% else %}
+          <span class="trainer-patent__label">{{ p.label }}</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
       <ul class="iprm-regalia-links">
         {% for link in trainer.patents %}
         <li><a href="{{ link.url }}" target="_blank" rel="noopener nofollow">{{ link.label }}</a></li>
         {% endfor %}
       </ul>
+      {% endif %}
     </div>
   </section>
   {% endif %}
@@ -135,6 +174,29 @@
     </div>
   </section>
   {% endif %}
+
+  <!-- ===== ПРОФЕСІЙНІ НАВИЧКИ ===== -->
+  {% if trainer.skills %}
+  <section class="iprm-section" aria-labelledby="trainer-skills-title">
+    <div class="iprm-section__inner">
+      <h2 id="trainer-skills-title" class="iprm-section__title">Професійні <span class="apple-gradient-text">навички</span></h2>
+      <ul class="iprm-skills-list">
+        {% for item in trainer.skills %}
+          {% if item.endswith(':') %}
+          <li class="iprm-skills-list__group">{{ item }}</li>
+          {% else %}
+          <li class="iprm-skills-list__item">{{ item }}</li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== ОСВІТА / СТАЖУВАННЯ / ДОСВІД (timeline) ===== -->
+  {{ timeline_section('trainer-edu', 'Освіта та', 'кваліфікація', trainer.education, gray=True) }}
+  {{ timeline_section('trainer-addedu', 'Додаткова освіта та', 'міжнародне стажування', trainer.additional_education) }}
+  {{ timeline_section('trainer-exp', 'Досвід', 'роботи', trainer.work_experience, gray=True) }}
 
   <!-- ===== TRAINER COURSES ===== -->
   {% if courses %}
@@ -182,7 +244,7 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
-{% if trainer.certificates %}
+{% if trainer.certificates or (trainer.patents and trainer.patents | selectattr('image') | list) %}
 <script defer src="{{ url_for('static', filename='js/blog-lightbox.js') }}?v={{ assets_version }}"></script>
 {% endif %}
 {% endblock %}

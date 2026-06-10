@@ -22,20 +22,28 @@ def _parse_json_list(raw):
     return val if isinstance(val, list) else []
 
 
-def _apply_regalia(trainer, form):
-    """Санітизувати й перенести регалії з форми у модель."""
+def _apply_profile_fields(trainer, form):
+    """Санітизувати й перенести регалії та профільні секції з форми у модель."""
     trainer.certificates = trainer_service.sanitize_certificates(_parse_json_list(form.certificates.data))
-    trainer.patents = trainer_service.sanitize_links(_parse_json_list(form.patents.data))
+    trainer.patents = trainer_service.sanitize_patents(_parse_json_list(form.patents.data))
     trainer.articles = trainer_service.sanitize_links(_parse_json_list(form.articles.data))
-    trainer.research = trainer_service.sanitize_research(form.research.data)
+    trainer.research = trainer_service.sanitize_text_list(form.research.data)
+    trainer.skills = trainer_service.sanitize_text_list(form.skills.data)
+    trainer.education = trainer_service.sanitize_text_list(form.education.data)
+    trainer.additional_education = trainer_service.sanitize_text_list(form.additional_education.data)
+    trainer.work_experience = trainer_service.sanitize_text_list(form.work_experience.data)
 
 
-def _load_regalia_into_form(trainer, form):
-    """Серіалізувати наявні регалії у приховані поля для редактора (GET)."""
+def _load_profile_into_form(trainer, form):
+    """Серіалізувати наявні регалії/профіль у поля редактора (GET)."""
     form.certificates.data = json.dumps(trainer.certificates or [], ensure_ascii=False)
     form.patents.data = json.dumps(trainer.patents or [], ensure_ascii=False)
     form.articles.data = json.dumps(trainer.articles or [], ensure_ascii=False)
     form.research.data = '\n'.join(trainer.research or [])
+    form.skills.data = '\n'.join(trainer.skills or [])
+    form.education.data = '\n'.join(trainer.education or [])
+    form.additional_education.data = '\n'.join(trainer.additional_education or [])
+    form.work_experience.data = '\n'.join(trainer.work_experience or [])
 
 
 @admin_bp.route('/trainers')
@@ -68,7 +76,7 @@ def trainer_create():
             email=(form.email.data or '').strip().lower() or None,
             is_active=form.is_active.data,
         )
-        _apply_regalia(trainer, form)
+        _apply_profile_fields(trainer, form)
         db.session.add(trainer)
 
         try:
@@ -94,7 +102,7 @@ def trainer_edit(trainer_id):
 
     form = TrainerForm(obj=trainer)
     if request.method == 'GET':
-        _load_regalia_into_form(trainer, form)
+        _load_profile_into_form(trainer, form)
 
     if form.validate_on_submit():
         slug = form.slug.data.strip()
@@ -113,7 +121,7 @@ def trainer_edit(trainer_id):
         trainer.experience_years = form.experience_years.data
         trainer.email = (form.email.data or '').strip().lower() or None
         trainer.is_active = form.is_active.data
-        _apply_regalia(trainer, form)
+        _apply_profile_fields(trainer, form)
 
         try:
             db.session.commit()

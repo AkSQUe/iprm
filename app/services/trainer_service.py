@@ -12,6 +12,9 @@ import bleach
 
 _LOCAL_IMG_RE = re.compile(r'^/static/images/trainers/(?!.*\.\.)[\w./-]+\.(?:webp|jpe?g|png)$')
 
+# Запобіжник проти необмеженого зростання JSON-списків регалій/профілю.
+_MAX_ITEMS = 50
+
 
 def _clean_text(value, limit):
     return bleach.clean(value or '', tags=[], strip=True).strip()[:limit]
@@ -34,6 +37,8 @@ def sanitize_links(items):
     if not isinstance(items, list):
         return out
     for it in items:
+        if len(out) >= _MAX_ITEMS:
+            break
         if not isinstance(it, dict):
             continue
         url = _clean_url(it.get('url'))
@@ -44,10 +49,40 @@ def sanitize_links(items):
     return out
 
 
-def sanitize_research(text, max_items=50, max_len=600):
+def sanitize_patents(items):
+    """[{image, thumb, label, url}] -> патенти: опційний скан-зображення
+    (локальне) + назва + опційне зовнішнє посилання. Запис лишаємо, якщо є
+    зображення АБО посилання."""
+    out = []
+    if not isinstance(items, list):
+        return out
+    for it in items:
+        if len(out) >= _MAX_ITEMS:
+            break
+        if not isinstance(it, dict):
+            continue
+        image = (it.get('image') or '').strip()
+        thumb = (it.get('thumb') or '').strip()
+        if not _LOCAL_IMG_RE.match(image):
+            image = ''
+        if not _LOCAL_IMG_RE.match(thumb):
+            thumb = image
+        url = _clean_url(it.get('url'))
+        label = _clean_text(it.get('label'), 300)
+        if not (image or url):
+            continue
+        if not label:
+            label = url or 'Патент'
+        out.append({'image': image, 'thumb': thumb, 'label': label, 'url': url or ''})
+    return out
+
+
+def sanitize_text_list(text, max_items=_MAX_ITEMS, max_len=600):
     """Багаторядковий текст -> список пунктів (по рядку), без HTML.
 
-    Приймає або готовий список (з моделі), або рядок (з textarea адмінки).
+    Універсальний санітайзер списків рядків: наукова діяльність, навички,
+    освіта, досвід тощо. Приймає або готовий список (з моделі), або рядок
+    (з textarea адмінки).
     """
     if isinstance(text, list):
         lines = [str(x) for x in text]
@@ -63,12 +98,18 @@ def sanitize_research(text, max_items=50, max_len=600):
     return out
 
 
+# Зворотна сумісність: історична назва для наукової діяльності.
+sanitize_research = sanitize_text_list
+
+
 def sanitize_certificates(items):
     """[{url, thumb, caption}] -> валідні локальні зображення сертифікатів."""
     out = []
     if not isinstance(items, list):
         return out
     for it in items:
+        if len(out) >= _MAX_ITEMS:
+            break
         if not isinstance(it, dict):
             continue
         url = (it.get('url') or '').strip()

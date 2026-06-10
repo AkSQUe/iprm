@@ -149,6 +149,20 @@ def create_app(config_name=None):
     from app.utils import sanitize_rich_text
     app.jinja_env.filters['sanitize_rich_text'] = sanitize_rich_text
 
+    import re as _re
+    # Лише правдоподібні роки (19xx/20xx), щоб не плутати інші 4-значні числа.
+    _YEAR_RE = _re.compile(
+        r'^\s*((?:19|20)\d{2}(?:\s*[–—-]\s*(?:19|20)\d{2})?(?:\s*р\.?)?)\s*[.—–-]*\s*(.*)$'
+    )
+
+    @app.template_filter('timeline_split')
+    def _timeline_split(line):
+        """Рядок -> {year, text}: виділяє провідний рік/діапазон у бейдж."""
+        m = _YEAR_RE.match(line or '')
+        if m and m.group(2).strip():
+            return {'year': m.group(1).strip(), 'text': m.group(2).strip()}
+        return {'year': '', 'text': (line or '').strip()}
+
     @app.before_request
     def preload_site_settings():
         from flask import g

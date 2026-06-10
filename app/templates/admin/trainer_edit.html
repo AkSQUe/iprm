@@ -147,13 +147,14 @@
         </div>
 
         <div class="form-group admin-form__full">
-          <label>Винаходи та патенти (посилання)</label>
-          <div class="regalia-links" data-target="regalia-pat-field">
+          <label>Винаходи та патенти</label>
+          <div class="regalia-links" data-target="regalia-pat-field" data-images="1">
             <div class="regalia-links__rows"></div>
             <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm regalia-links__add">
-              <span class="material-symbols-rounded">add_link</span> Додати посилання
+              <span class="material-symbols-rounded">add</span> Додати патент
             </button>
           </div>
+          <small class="admin-form__hint">Можна завантажити скан патенту (іконка зображення в рядку) і вказати назву та посилання. Скан необовʼязковий.</small>
           {{ form.patents(id="regalia-pat-field") }}
         </div>
 
@@ -172,6 +173,35 @@
           <label for="research">Наукова та дослідницька діяльність</label>
           {{ form.research(class="form-input", id="research", rows="8", placeholder="Один пункт на рядок") }}
           <small class="admin-form__hint">Кожен рядок -- окремий пункт списку. Порожньо -- блок не показується.</small>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Кваліфікація та досвід (опційно) -->
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Кваліфікація та досвід (опційно)</h3>
+      <p class="admin-text-muted admin-mb-md">Кожен рядок -- окремий пункт. Порожні блоки не показуються на сторінці тренера. У освіті/досвіді рядок, що починається з року (напр. «2021» чи «2009-2013»), показується як timeline із бейджем року. У навичках рядок, що закінчується «:», стає підзаголовком.</p>
+      <div class="admin-form__grid">
+
+        <div class="form-group admin-form__full">
+          <label for="skills">Професійні навички</label>
+          {{ form.skills(class="form-input", id="skills", rows="8", placeholder="Робота з різними видами тромбоконцентратів:&#10;Чиста збагачена тромбоцитами плазма (P-PRP)") }}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="education">Освіта та кваліфікація</label>
+          {{ form.education(class="form-input", id="education", rows="8", placeholder="2013-2015 Харківський Національний Медичний Університет ...") }}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="additional_education">Додаткова освіта та міжнародне стажування</label>
+          {{ form.additional_education(class="form-input", id="additional_education", rows="6", placeholder="2024 р. — Сертифікована програма ...") }}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="work_experience">Досвід роботи</label>
+          {{ form.work_experience(class="form-input", id="work_experience", rows="8", placeholder="2025 - тренер, Інститут плазмотерапії та регенеративної медицини") }}
         </div>
 
       </div>

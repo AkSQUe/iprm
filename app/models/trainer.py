@@ -33,6 +33,15 @@ class Trainer(TimestampMixin, db.Model):
     articles = db.Column(db.JSON, default=list)
     # Наукова та дослідницька діяльність -- список текстових пунктів.
     research = db.Column(db.JSON, default=list)
+    # Додаткові секції профілю (списки текстових пунктів, один рядок = пункт):
+    #   skills               -- професійні навички (рядок із ":" -> підзаголовок)
+    #   education            -- освіта та кваліфікація (рядок із роком -> timeline)
+    #   additional_education -- додаткова освіта та стажування (timeline)
+    #   work_experience      -- досвід роботи (timeline)
+    skills = db.Column(db.JSON, default=list)
+    education = db.Column(db.JSON, default=list)
+    additional_education = db.Column(db.JSON, default=list)
+    work_experience = db.Column(db.JSON, default=list)
 
     __table_args__ = (
         db.CheckConstraint(
