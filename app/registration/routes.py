@@ -47,8 +47,8 @@ class EventAdapter:
         self.cpd_points = instance.effective_cpd_points
         self.max_participants = instance.effective_max_participants
         self.trainer = instance.effective_trainer
-        self.card_image = course.card_image if course else None
-        self.hero_image = course.hero_image if course else None
+        self.card_image = course.card_src if course else None
+        self.hero_image = course.hero_src if course else None
         self.tags = course.tags if course else []
         self.target_audience = course.target_audience if course else []
         self.faq = course.faq if course else []

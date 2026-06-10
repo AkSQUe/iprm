@@ -26,17 +26,20 @@ _FAR_PAST = datetime.min.replace(tzinfo=timezone.utc)
 def _image_url(path: str) -> str | None:
     """Convert stored image path to absolute URL.
 
-    Handles three storage conventions in IPRM:
+    Handles storage conventions in IPRM:
       1. Absolute URL already -- pass through.
-      2. 'static/images/...' or '/static/images/...' -- strip 'static/' prefix
+      2. '/media/...' -- медіа-реєстр (Фаза 1+): абсолютний URL через blueprint.
+      3. 'static/images/...' or '/static/images/...' -- strip 'static/' prefix
          because url_for('static', ...) adds it; otherwise we get
          '/static/static/images/...'.
-      3. 'images/courses/...' or similar -- plain filename relative to static.
+      4. 'images/courses/...' or similar -- plain filename relative to static.
     """
     if not path:
         return None
     if path.startswith(('http://', 'https://')):
         return path
+    if path.startswith('/media/'):
+        return url_for('media.serve', filename=path[len('/media/'):], _external=True)
     normalized = path.lstrip('/')
     if normalized.startswith('static/'):
         normalized = normalized[len('static/'):]
@@ -50,7 +53,7 @@ def serialize_trainer(trainer) -> dict | None:
         'slug': trainer.slug,
         'full_name': trainer.full_name,
         'role': trainer.role,
-        'photo_url': _image_url(trainer.photo),
+        'photo_url': _image_url(trainer.photo_src),
     }
 
 
@@ -154,8 +157,8 @@ def serialize_event_card(course, instance=None) -> dict:
         'price': float(effective_price) if effective_price is not None else 0.0,
         'currency': 'UAH',
         'location': instance.location if instance else None,
-        'card_image_url': _image_url(course.card_image),
-        'hero_image_url': _image_url(course.hero_image),
+        'card_image_url': _image_url(course.card_src),
+        'hero_image_url': _image_url(course.hero_src),
         'cpd_points': (
             instance.effective_cpd_points if instance
             else course.cpd_points

@@ -1,10 +1,9 @@
 """Тести інтеграції блогу з медіа-реєстром (Фаза 3).
 
 Покриває: санітайзер приймає /media + media_id + card, collect_media_ids,
-прив'язку медіа до допису при збереженні та CLI-міграцію static -> реєстр.
+прив'язку медіа до допису при збереженні.
 """
 import io
-import os
 import tempfile
 from uuid import uuid4
 
@@ -15,7 +14,7 @@ from app.extensions import db
 from app.models.user import User
 from app.models.blog_post import BlogPost
 from app.models.media_file import MediaFile
-from app.services import blog_service, media_service
+from app.services import blog_service
 
 
 @pytest.fixture
@@ -125,7 +124,7 @@ class TestAttachOnSave:
         ) % (img['url'], img['thumb'], img['card'], img['media_id'])
         r = client.post('/admin/blog/new', data={
             'title': 'Допис із медіа', 'status': 'draft',
-            'cover_image': cov['url'], 'cover_media_id': str(cov['media_id']),
+            'cover_media_id': str(cov['media_id']),
             'content': content,
         }, follow_redirects=False)
         assert r.status_code in (302, 303)
@@ -137,41 +136,3 @@ class TestAttachOnSave:
         assert cover_m.entity_type == 'blog_post' and cover_m.entity_id == post.id
         assert cover_m.usage_type == 'cover'
         assert img_m.entity_type == 'blog_post' and img_m.usage_type == 'inline'
-
-
-class TestMigrationCLI:
-    def test_migrate_static_to_registry(self, app, media_root):
-        runner = app.test_cli_runner()
-        # Готуємо реальний static-файл блогу + допис, що на нього посилається.
-        blog_dir = os.path.join(app.static_folder, 'images', 'blog')
-        os.makedirs(blog_dir, exist_ok=True)
-        fname = f'{uuid4().hex[:8]}.webp'
-        Image.new('RGB', (640, 480), (200, 120, 60)).save(os.path.join(blog_dir, fname), 'WEBP')
-        url = f'/static/images/blog/{fname}'
-
-        post = BlogPost(
-            slug=f's-{uuid4().hex[:6]}', title='Старий допис', status='draft',
-            cover_image=url,
-            content=[{'type': 'image', 'data': {'url': url, 'thumb': url, 'alt': 'a'}}],
-        )
-        db.session.add(post)
-        db.session.commit()
-        pid = post.id
-
-        res = runner.invoke(args=['blog-media-migrate'])
-        assert res.exit_code == 0, res.output
-
-        migrated = db.session.get(BlogPost, pid)
-        assert migrated.cover_media_id is not None
-        assert migrated.cover_image.startswith('/media/')
-        blk = migrated.content[0]['data']
-        assert blk['url'].startswith('/media/') and blk['media_id']
-        m = db.session.get(MediaFile, blk['media_id'])
-        assert m.entity_type == 'blog_post' and m.entity_id == pid
-
-        # Ідемпотентність: повторний запуск нічого не змінює.
-        res2 = runner.invoke(args=['blog-media-migrate'])
-        assert res2.exit_code == 0
-        again = db.session.get(BlogPost, pid)
-        assert again.content[0]['data']['media_id'] == blk['media_id']
-        os.remove(os.path.join(blog_dir, fname))

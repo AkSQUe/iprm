@@ -80,8 +80,6 @@
           {% if trainer.photo_media %}
             <img src="{{ trainer.photo_media.variant_url('card') }}" alt="{{ trainer.full_name }}" loading="lazy" width="320" height="427"
                  srcset="{{ trainer.photo_media.variant_url('thumb') }} 400w, {{ trainer.photo_media.variant_url('card') }} 800w" sizes="320px">
-          {% elif trainer.photo %}
-            <img src="{{ trainer.photo }}" alt="{{ trainer.full_name }}" loading="lazy" width="320" height="427">
           {% endif %}
         </div>
         <div class="iprm-trainer__info">

@@ -91,23 +91,23 @@
           {{ form.bio(class="form-input", id="bio", rows="5", placeholder="Досвід, досягнення, спеціалізація") }}
         </div>
 
+        {% set photo_prev = trainer.photo_src if trainer else None %}
         <div class="form-group">
           <label>Фото тренера</label>
-          <div class="admin-dropzone admin-dropzone--square" id="dropzone-photo" data-target="photo" data-target-media="photo_media_id">
-            <div class="admin-dropzone__preview{% if form.photo.data %} admin-dropzone__preview--active{% endif %}" id="preview-photo">
-              {% if form.photo.data %}
-              <img src="{{ form.photo.data }}" alt="Фото тренера">
+          <div class="admin-dropzone admin-dropzone--square" id="dropzone-photo" data-target-media="photo_media_id">
+            <div class="admin-dropzone__preview{% if photo_prev %} admin-dropzone__preview--active{% endif %}" id="preview-photo">
+              {% if photo_prev %}
+              <img src="{{ photo_prev }}" alt="Фото тренера">
               {% endif %}
               <button type="button" class="admin-dropzone__remove" aria-label="Видалити">X</button>
             </div>
-            <div class="admin-dropzone__prompt{% if form.photo.data %} admin-dropzone__prompt--hidden{% endif %}">
+            <div class="admin-dropzone__prompt{% if photo_prev %} admin-dropzone__prompt--hidden{% endif %}">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <p>Перетягніть зображення або <span class="admin-dropzone__link">оберіть файл</span></p>
               <small>PNG, JPG, WebP. Макс. 5 MB</small>
             </div>
             <input type="file" class="admin-dropzone__input" accept="image/png,image/jpeg,image/webp">
           </div>
-          {{ form.photo(type="hidden", id="photo") }}
           {{ form.photo_media_id(type="hidden", id="photo_media_id") }}
         </div>
 

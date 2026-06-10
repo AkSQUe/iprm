@@ -39,11 +39,11 @@ def _published(slug='post', title='Допис'):
 class TestAdminBlog:
     def test_new_form_has_single_hidden_fields(self, client, admin):
         """Регресія: hidden_tag() дублював HiddenField -> контент губився.
-        Поля content/cover_image мають рендеритися РІВНО один раз."""
+        Поля content/cover_media_id мають рендеритися РІВНО один раз."""
         _login(client, admin)
         html = client.get('/admin/blog/new').get_data(as_text=True)
         assert html.count('name="content"') == 1
-        assert html.count('name="cover_image"') == 1
+        assert html.count('name="cover_media_id"') == 1
 
     def test_create_saves_content_blocks(self, client, admin):
         _login(client, admin)

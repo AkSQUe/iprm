@@ -70,7 +70,6 @@ def _apply_form(post, form):
     post.title = title
     post.slug = slug
     post.content = blocks
-    post.cover_image = (form.cover_image.data or '').strip() or None
     # Обкладинка з реєстру: приймаємо media_id лише якщо такий MediaFile існує.
     cover_mid = (form.cover_media_id.data or '').strip()
     if cover_mid.isdigit() and db.session.get(MediaFile, int(cover_mid)):

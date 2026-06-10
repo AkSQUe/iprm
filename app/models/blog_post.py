@@ -20,9 +20,7 @@ class BlogPost(TimestampMixin, db.Model):
     slug = db.Column(db.String(200), unique=True, nullable=False, index=True)
     title = db.Column(db.String(255), nullable=False)
     excerpt = db.Column(db.String(500))
-    # Legacy-рядок обкладинки (/static/...|/media/...). Реєстровий аналог --
-    # cover_media_id; рендер віддає перевагу cover_media (див. cover_* нижче).
-    cover_image = db.Column(db.String(500))
+    # Обкладинка -- лише через медіа-реєстр (Фаза 6: legacy cover_image прибрано).
     cover_media_id = db.Column(
         db.BigInteger,
         db.ForeignKey('media_files.id', ondelete='SET NULL'),
@@ -73,17 +71,13 @@ class BlogPost(TimestampMixin, db.Model):
 
     @property
     def cover_src(self):
-        """URL обкладинки для тегу <img src> (середній варіант, якщо з реєстру)."""
-        if self.cover_media:
-            return self.cover_media.variant_url('card')
-        return self.cover_image
+        """URL обкладинки для тегу <img src> (середній варіант). None, якщо немає."""
+        return self.cover_media.variant_url('card') if self.cover_media else None
 
     @property
     def cover_full(self):
         """URL повнорозмірної обкладинки (для og:image / srcset 1600w)."""
-        if self.cover_media:
-            return self.cover_media.url
-        return self.cover_image
+        return self.cover_media.url if self.cover_media else None
 
     def __repr__(self):
         return f'<BlogPost {self.slug}>'

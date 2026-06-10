@@ -42,15 +42,11 @@
       </div>
     </header>
 
-    {% if post.cover_src %}
+    {% if post.cover_media %}
     <div class="blog-post__cover">
-      {% if post.cover_media %}
       <img src="{{ post.cover_media.variant_url('card') }}" alt="{{ post.title }}"
            srcset="{{ post.cover_media.variant_url('card') }} 800w, {{ post.cover_media.url }} 1600w"
            sizes="(max-width: 980px) 100vw, 980px">
-      {% else %}
-      <img src="{{ post.cover_image }}" alt="{{ post.title }}">
-      {% endif %}
     </div>
     {% endif %}
 

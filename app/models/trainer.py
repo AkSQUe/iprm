@@ -13,9 +13,7 @@ class Trainer(TimestampMixin, db.Model):
     slug = db.Column(db.String(200), unique=True, nullable=False)
     role = db.Column(db.String(300))
     bio = db.Column(db.Text)
-    # Legacy-рядок фото (/static|/media). Реєстровий аналог -- photo_media_id;
-    # рендер віддає перевагу photo_media (див. photo_src/photo_full нижче).
-    photo = db.Column(db.String(500))
+    # Фото -- лише через медіа-реєстр (Фаза 6: legacy photo прибрано).
     photo_media_id = db.Column(
         db.BigInteger,
         db.ForeignKey('media_files.id', ondelete='SET NULL'),
@@ -67,17 +65,13 @@ class Trainer(TimestampMixin, db.Model):
 
     @property
     def photo_src(self):
-        """URL фото для <img src> (card-варіант, якщо з реєстру)."""
-        if self.photo_media:
-            return self.photo_media.variant_url('card')
-        return self.photo
+        """URL фото для <img src> (card-варіант). None, якщо немає."""
+        return self.photo_media.variant_url('card') if self.photo_media else None
 
     @property
     def photo_full(self):
         """URL повнорозмірного фото (для og/srcset 1600w)."""
-        if self.photo_media:
-            return self.photo_media.url
-        return self.photo
+        return self.photo_media.url if self.photo_media else None
 
     def __repr__(self):
         return f'<Trainer {self.full_name}>'

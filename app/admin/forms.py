@@ -57,10 +57,6 @@ class TrainerForm(FlaskForm):
         'Біографія',
         validators=[Optional()],
     )
-    photo = StringField(
-        'Фото (URL)',
-        validators=[Optional(), Length(max=500)],
-    )
     # media_id фото з реєстру (заповнює dropzone). Рядок -> int у routes.
     photo_media_id = HiddenField('Фото (media)', validators=[Optional()])
     signature = StringField(
@@ -255,14 +251,6 @@ class CourseForm(FlaskForm):
         choices=Course.EVENT_TYPES,
         validators=[DataRequired()],
     )
-    hero_image = StringField(
-        'Hero зображення (URL)',
-        validators=[Optional(), Length(max=500), _optional_url()],
-    )
-    card_image = StringField(
-        'Зображення картки (URL)',
-        validators=[Optional(), Length(max=500), _optional_url()],
-    )
     # media_id зображень з реєстру (заповнюють dropzone). Рядок -> int у service.
     hero_media_id = HiddenField('Hero (media)', validators=[Optional()])
     card_media_id = HiddenField('Картка (media)', validators=[Optional()])
@@ -439,10 +427,6 @@ class BlogPostForm(FlaskForm):
         'Короткий опис',
         validators=[Optional(), Length(max=500)],
         description='Для картки в списку та соцмереж. Якщо порожньо -- візьметься з тексту',
-    )
-    cover_image = HiddenField(
-        'Обкладинка',
-        validators=[Optional(), _optional_url()],
     )
     # media_id обкладинки з реєстру (заповнює dropzone). Рядок -> int у routes.
     cover_media_id = HiddenField('Обкладинка (media)', validators=[Optional()])

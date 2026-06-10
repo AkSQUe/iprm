@@ -22,10 +22,7 @@ class Course(TimestampMixin, db.Model):
 
     event_type = db.Column(db.String(30))
 
-    # Legacy-рядки зображень (/static|/media). Реєстрові аналоги -- *_media_id;
-    # рендер віддає перевагу *_media (див. hero_src/card_src нижче).
-    hero_image = db.Column(db.String(500))
-    card_image = db.Column(db.String(500))
+    # Зображення -- лише через медіа-реєстр (Фаза 6: legacy hero/card_image прибрано).
     hero_media_id = db.Column(
         db.BigInteger, db.ForeignKey('media_files.id', ondelete='SET NULL'), nullable=True,
     )
@@ -112,17 +109,13 @@ class Course(TimestampMixin, db.Model):
 
     @property
     def hero_src(self):
-        """URL hero для <img src> (повний варіант, якщо з реєстру)."""
-        if self.hero_media:
-            return self.hero_media.url
-        return self.hero_image
+        """URL hero для <img src> (повний варіант). None, якщо немає."""
+        return self.hero_media.url if self.hero_media else None
 
     @property
     def card_src(self):
-        """URL картки/прев'ю (card-варіант, якщо з реєстру)."""
-        if self.card_media:
-            return self.card_media.variant_url('card')
-        return self.card_image
+        """URL картки/прев'ю (card-варіант). None, якщо немає."""
+        return self.card_media.variant_url('card') if self.card_media else None
 
     EVENT_TYPES = [
         ('seminar', 'Семінар'),

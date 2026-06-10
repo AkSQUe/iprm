@@ -1,6 +1,5 @@
 """Тести інтеграції тренерів з медіа-реєстром (Фаза 4)."""
 import io
-import os
 import tempfile
 from uuid import uuid4
 
@@ -108,7 +107,7 @@ class TestAttachOnSave:
         ) % (cert['url'], cert['thumb'], cert['card'], cert['media_id'])
         r = client.post('/admin/trainers/new', data={
             'full_name': 'Тест Тренер', 'slug': f't-{uuid4().hex[:6]}',
-            'is_active': 'y', 'photo': photo['url'],
+            'is_active': 'y',
             'photo_media_id': str(photo['media_id']),
             'certificates': certs_json, 'patents': '[]', 'articles': '[]',
             'research': '', 'skills': '', 'education': '',
@@ -122,38 +121,3 @@ class TestAttachOnSave:
         cm = db.session.get(MediaFile, cert['media_id'])
         assert pm.entity_type == 'trainer' and pm.entity_id == t.id and pm.usage_type == 'photo'
         assert cm.entity_type == 'trainer' and cm.usage_type == 'certificate'
-
-
-class TestMigrationCLI:
-    def test_migrate_photo_and_cert(self, app, media_root):
-        runner = app.test_cli_runner()
-        tdir = os.path.join(app.static_folder, 'images', 'trainers', 'mig')
-        os.makedirs(tdir, exist_ok=True)
-        pf, cf = f'{uuid4().hex[:8]}.webp', f'{uuid4().hex[:8]}.webp'
-        Image.new('RGB', (320, 420), (1, 2, 3)).save(os.path.join(tdir, pf), 'WEBP')
-        Image.new('RGB', (600, 800), (4, 5, 6)).save(os.path.join(tdir, cf), 'WEBP')
-        purl = f'/static/images/trainers/mig/{pf}'
-        curl = f'/static/images/trainers/mig/{cf}'
-
-        t = Trainer(full_name='Старий', slug=f's-{uuid4().hex[:6]}',
-                    photo=purl, certificates=[{'url': curl, 'thumb': curl, 'caption': ''}])
-        db.session.add(t)
-        db.session.commit()
-        tid = t.id
-
-        res = runner.invoke(args=['trainer-media-migrate'])
-        assert res.exit_code == 0, res.output
-
-        m = db.session.get(Trainer, tid)
-        assert m.photo_media_id and m.photo.startswith('/media/')
-        c0 = m.certificates[0]
-        assert c0['url'].startswith('/media/') and c0['media_id']
-        mf = db.session.get(MediaFile, c0['media_id'])
-        assert mf.entity_type == 'trainer' and mf.entity_id == tid
-
-        # ідемпотентність
-        res2 = runner.invoke(args=['trainer-media-migrate'])
-        assert res2.exit_code == 0
-        assert db.session.get(Trainer, tid).certificates[0]['media_id'] == c0['media_id']
-        os.remove(os.path.join(tdir, pf))
-        os.remove(os.path.join(tdir, cf))

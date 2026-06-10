@@ -129,11 +129,17 @@
           if (data.card) row.dataset.card = data.card;
           if (data.media_id) row.dataset.media = data.media_id;
           var img = el('img', {'class': 'regalia-link__thumb-img', alt: ''});
+          var clearBtn = el('button', {type: 'button', 'class': 'regalia-link__thumb-clear', title: 'Прибрати скан'}, [icon('close')]);
           var setThumb = function() {
             var src = row.dataset.thumb || row.dataset.image;
-            if (src) { img.src = src; img.style.display = ''; }
-            else { img.removeAttribute('src'); img.style.display = 'none'; }
+            if (src) { img.src = src; img.style.display = ''; clearBtn.style.display = ''; }
+            else { img.removeAttribute('src'); img.style.display = 'none'; clearBtn.style.display = 'none'; }
           };
+          clearBtn.addEventListener('click', function() {
+            row.dataset.image = ''; row.dataset.thumb = '';
+            delete row.dataset.card; delete row.dataset.media;
+            setThumb(); syncLinks();
+          });
           setThumb();
           var fileIn = el('input', {type: 'file', 'class': 'regalia-hidden-file',
             accept: 'image/png,image/jpeg,image/webp,.heic,.heif'});
@@ -168,7 +174,7 @@
               .catch(function() { notify('Помилка мережі'); })
               .then(function() { upBtn.disabled = false; });
           });
-          row.appendChild(el('div', {'class': 'regalia-link__thumb'}, [img, upBtn, fileIn]));
+          row.appendChild(el('div', {'class': 'regalia-link__thumb'}, [img, upBtn, fileIn, clearBtn]));
         }
 
         var label = el('input', {'class': 'form-input regalia-link__label', type: 'text', placeholder: 'Назва'});

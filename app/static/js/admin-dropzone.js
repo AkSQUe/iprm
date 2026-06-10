@@ -33,9 +33,10 @@
       var preview = zone.querySelector('.admin-dropzone__preview');
       var previewImg = preview.querySelector('img');
       var removeBtn = zone.querySelector('.admin-dropzone__remove');
+      // URL-поле (data-target) опційне -- після Фази 6 dropzone'и зберігають
+      // лише media_id (data-target-media); URL більше не персиститься у формі.
       var targetId = zone.getAttribute('data-target');
-      var hiddenInput = document.getElementById(targetId);
-      // Необов'язкове друге приховане поле для media_id (інтеграція з реєстром).
+      var hiddenInput = targetId ? document.getElementById(targetId) : null;
       var mediaTargetId = zone.getAttribute('data-target-media');
       var mediaInput = mediaTargetId ? document.getElementById(mediaTargetId) : null;
 
@@ -66,7 +67,7 @@
 
       removeBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        hiddenInput.value = '';
+        if (hiddenInput) hiddenInput.value = '';
         if (mediaInput) mediaInput.value = '';
         preview.classList.remove('admin-dropzone__preview--active');
         if (previewImg) previewImg.src = '';
@@ -124,7 +125,7 @@
         .then(function(result) {
           zone.classList.remove('admin-dropzone--uploading');
           if (result.ok) {
-            hiddenInput.value = result.data.url;
+            if (hiddenInput) hiddenInput.value = result.data.url;
             if (mediaInput) mediaInput.value = result.data.media_id || '';
             // Оновлюємо прев'ю реальним результатом із сервера: для HEIC
             // локальний FileReader не рендериться, тож показуємо WebP-відповідь.
@@ -133,7 +134,8 @@
             }
           } else {
             notifyError(result.data.error || 'Помилка завантаження');
-            if (!hiddenInput.value) {
+            var hasValue = (hiddenInput && hiddenInput.value) || (mediaInput && mediaInput.value);
+            if (!hasValue) {
               preview.classList.remove('admin-dropzone__preview--active');
               prompt.classList.remove('admin-dropzone__prompt--hidden');
             }

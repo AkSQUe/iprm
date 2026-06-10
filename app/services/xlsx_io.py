@@ -43,10 +43,26 @@ from openpyxl.worksheet.table import Table, TableStyleInfo
 from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
+from app.models.media_file import MediaFile
 from app.models.program_block import ProgramBlock
 from app.models.trainer import Trainer
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_media_id(url):
+    """URL-зображення (/media/...) -> id MediaFile у реєстрі, або None.
+
+    Після Фази 6 курси зберігають зображення лише через media_id. У xlsx
+    лишається людиночитний URL; на імпорті резолвимо його назад у реєстр за
+    file_path. Невідомі/зовнішні URL -> None (адмін довантажує через UI)."""
+    url = (url or '').strip()
+    prefix = '/media/'
+    if not url.startswith(prefix):
+        return None
+    file_path = url[len(prefix):]
+    media = MediaFile.query.filter_by(file_path=file_path).first()
+    return media.id if media else None
 
 
 # ----------------------------------------------------------------------
@@ -609,8 +625,10 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             c.cpd_points,
             c.max_participants,
             trainer_name_by_id.get(c.trainer_id, '') if c.trainer_id else '',
-            c.hero_image or '',
-            c.card_image or '',
+            # Експортуємо ОСНОВНИЙ media-URL (не варіант) -> резолвиться назад
+            # у реєстр за file_path на імпорті (_resolve_media_id).
+            c.hero_media.url if c.hero_media else '',
+            c.card_media.url if c.card_media else '',
             c.speaker_info or '',
             c.agenda or '',
             _to_lines(c.target_audience),
@@ -999,8 +1017,8 @@ def apply_courses_plan(plan: CoursesImportPlan) -> dict:
             course.cpd_points = p['cpd_points']
             course.max_participants = p['max_participants']
             course.trainer_id = p['trainer_id']
-            course.hero_image = p['hero_image']
-            course.card_image = p['card_image']
+            course.hero_media_id = _resolve_media_id(p['hero_image'])
+            course.card_media_id = _resolve_media_id(p['card_image'])
             course.speaker_info = p['speaker_info']
             course.agenda = p['agenda']
             course.target_audience = p['target_audience']

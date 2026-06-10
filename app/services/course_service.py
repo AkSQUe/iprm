@@ -134,8 +134,6 @@ def populate_course_from_form(course, form):
     course.short_description = _clean_text(form.short_description.data)
     course.description = _clean_text(form.description.data)
     course.event_type = form.event_type.data
-    course.hero_image = _clean_text(form.hero_image.data)
-    course.card_image = _clean_text(form.card_image.data)
     course.hero_media_id = _opt_media_id(form.hero_media_id.data)
     course.card_media_id = _opt_media_id(form.card_media_id.data)
     course.target_audience = lines_to_list(form.target_audience_text.data)
@@ -259,8 +257,6 @@ def clone_course(source, created_by_id):
         short_description=source.short_description,
         description=source.description,
         event_type=source.event_type,
-        hero_image=source.hero_image,
-        card_image=source.card_image,
         hero_media_id=source.hero_media_id,
         card_media_id=source.card_media_id,
         target_audience=list(source.target_audience or []),
