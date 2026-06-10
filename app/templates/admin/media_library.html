@@ -1,0 +1,106 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Медіа | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-media.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Медіа</span>
+        </div>
+        <h1 class="admin-hero__title">Медіа-бібліотека</h1>
+        <p class="admin-hero__subtitle">Усього: {{ stats.total }} · без прив'язки: {{ stats.unattached }}</p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- Завантаження -->
+    <div class="form-section admin-mb-md">
+      <h2 class="admin-form__section-title">Завантажити</h2>
+      <div class="media-upload" id="media-upload">
+        <input type="file" id="media-upload-input" class="regalia-hidden-file" accept="image/png,image/jpeg,image/webp,.heic,.heif" multiple>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <p>Перетягніть зображення або <span class="admin-dropzone__link">оберіть файли</span></p>
+        <small class="admin-text-muted">PNG, JPG, WebP, HEIC. Конвертуються у WebP. Макс. 25 MB.</small>
+      </div>
+    </div>
+
+    <!-- Фільтри -->
+    <form method="GET" class="admin-filter-form admin-mb-md">
+      <select name="entity_type" class="form-input" onchange="this.form.submit()">
+        <option value="">Усі прив'язки</option>
+        <option value="none"{% if entity_type == 'none' %} selected{% endif %}>Без прив'язки</option>
+        <option value="blog_post"{% if entity_type == 'blog_post' %} selected{% endif %}>Блог</option>
+        <option value="trainer"{% if entity_type == 'trainer' %} selected{% endif %}>Тренери</option>
+        <option value="course"{% if entity_type == 'course' %} selected{% endif %}>Курси</option>
+      </select>
+      <select name="usage_type" class="form-input" onchange="this.form.submit()">
+        <option value="">Будь-яке використання</option>
+        {% for u in usage_types %}
+        <option value="{{ u }}"{% if usage_type == u %} selected{% endif %}>{{ u }}</option>
+        {% endfor %}
+      </select>
+    </form>
+
+    {% if items %}
+    <div class="media-grid">
+      {% for m in items %}
+      <div class="media-card" id="media-{{ m.id }}">
+        <a class="media-card__thumb" href="{{ m.url }}" target="_blank" rel="noopener">
+          <img src="{{ m.variant_url('thumb') }}" alt="{{ m.alt_text or '' }}" loading="lazy">
+        </a>
+        <div class="media-card__meta">
+          {% if m.width %}{{ m.width }}×{{ m.height }}{% endif %}
+          {% if m.entity_type %}· {{ m.entity_type }}#{{ m.entity_id }}/{{ m.usage_type }}{% else %}· без прив'язки{% endif %}
+        </div>
+        <input class="form-input media-card__alt" data-id="{{ m.id }}" value="{{ m.alt_text or '' }}" placeholder="Alt-текст" maxlength="255">
+        <form method="POST" action="{{ url_for('admin.media_delete', media_id=m.id) }}" class="admin-inline" data-confirm="Видалити медіафайл? Дію не можна скасувати.">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="entity_type" value="{{ entity_type }}">
+          <input type="hidden" name="usage_type" value="{{ usage_type }}">
+          <input type="hidden" name="page" value="{{ pagination.page }}">
+          <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <nav class="blog-pagination admin-mt-md" aria-label="Сторінки">
+      {% if pagination.has_prev %}
+      <a class="btn-admin btn-admin--secondary btn-admin--sm" href="{{ url_for('admin.media_library', page=pagination.prev_num, entity_type=entity_type, usage_type=usage_type) }}">Новіші</a>
+      {% endif %}
+      <span class="admin-text-muted">Сторінка {{ pagination.page }} з {{ pagination.pages }}</span>
+      {% if pagination.has_next %}
+      <a class="btn-admin btn-admin--secondary btn-admin--sm" href="{{ url_for('admin.media_library', page=pagination.next_num, entity_type=entity_type, usage_type=usage_type) }}">Старіші</a>
+      {% endif %}
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="admin-empty admin-pad-32 admin-text-center">
+      <p class="admin-text-muted">Немає медіафайлів за цим фільтром.</p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/admin-media-library.js') }}?v={{ assets_version }}"></script>
+{% endblock %}

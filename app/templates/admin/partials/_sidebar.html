@@ -30,6 +30,10 @@
         <span class="material-symbols-rounded">forum</span>
         Коментарі
       </a>
+      <a href="{{ url_for('admin.media_library') }}" class="admin-sidebar__link{% if ep in ('admin.media_library', 'admin.media_update_alt', 'admin.media_delete') %} admin-sidebar__link--active{% endif %}">
+        <span class="material-symbols-rounded">perm_media</span>
+        Медіа
+      </a>
     </div>
 
     <div class="admin-sidebar__group">

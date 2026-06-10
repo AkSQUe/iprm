@@ -1,0 +1,32 @@
+/* Адмін медіа-бібліотека. На токенах дизайн-системи. */
+
+.media-upload {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 28px; text-align: center; cursor: pointer;
+  border: 2px dashed var(--iprm-border); border-radius: var(--iprm-radius-sm, 10px);
+  background: var(--apple-section-bg); color: var(--apple-gray-dark);
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.media-upload:hover,
+.media-upload--drag { border-color: var(--iprm-nav-active); background: var(--iprm-white); }
+.media-upload--busy { opacity: 0.6; pointer-events: none; }
+.media-upload .admin-dropzone__link { color: var(--iprm-nav-active); text-decoration: underline; }
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+.media-card {
+  display: flex; flex-direction: column; gap: 8px;
+  background: var(--iprm-white); border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm, 10px); padding: 10px;
+}
+.media-card__thumb {
+  display: block; aspect-ratio: 4 / 3; overflow: hidden;
+  border-radius: var(--iprm-radius-sm, 8px); background: var(--apple-section-bg);
+}
+.media-card__thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.media-card__meta { font-size: 0.75rem; color: var(--apple-gray); line-height: 1.3; }
+.media-card__alt { font-size: 0.8125rem; padding: 6px 8px; }
+.media-card__alt--saved { border-color: #34c759; }
