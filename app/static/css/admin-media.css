@@ -16,16 +16,28 @@
    цій сторінці не підключений, тож дублюємо приховування тут. */
 .media-upload input[type="file"] { display: none; }
 
+.media-bulkbar {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.media-bulkbar__all { font-size: 0.875rem; color: var(--apple-gray-dark); cursor: pointer; }
+
 .media-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 16px;
 }
 .media-card {
+  position: relative;
   display: flex; flex-direction: column; gap: 8px;
   background: var(--iprm-white); border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-sm, 10px); padding: 10px;
 }
+.media-card__check {
+  position: absolute; top: 14px; left: 14px; z-index: 1;
+  width: 18px; height: 18px; cursor: pointer;
+}
+.media-card__used { color: var(--apple-gray-dark); }
 .media-card__thumb {
   display: block; aspect-ratio: 4 / 3; overflow: hidden;
   border-radius: var(--iprm-radius-sm, 8px); background: var(--apple-section-bg);
@@ -34,3 +46,49 @@
 .media-card__meta { font-size: 0.75rem; color: var(--apple-gray); line-height: 1.3; }
 .media-card__alt { font-size: 0.8125rem; padding: 6px 8px; }
 .media-card__alt--saved { border-color: #34c759; }
+
+/* ---- Пікер вибору з бібліотеки (модалка) ---- */
+.admin-dropzone__library {
+  display: inline-block; margin-top: 8px;
+  background: none; border: 1px solid var(--iprm-border); cursor: pointer;
+  border-radius: var(--iprm-radius-sm, 8px); padding: 4px 12px;
+  font-size: 0.8125rem; color: var(--iprm-nav-active);
+}
+.admin-dropzone__library:hover { background: var(--apple-section-bg); }
+
+.media-picker {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+}
+.media-picker[hidden] { display: none; }
+.media-picker__backdrop {
+  position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45);
+}
+.media-picker__dialog {
+  position: relative; z-index: 1; width: min(880px, 92vw); max-height: 86vh;
+  display: flex; flex-direction: column;
+  background: var(--iprm-white); border-radius: var(--iprm-radius-md, 14px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3); overflow: hidden;
+}
+.media-picker__head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--iprm-border);
+}
+.media-picker__title { margin: 0; font-size: 1rem; }
+.media-picker__close {
+  background: none; border: none; font-size: 1.5rem; line-height: 1;
+  cursor: pointer; color: var(--apple-gray); padding: 0 4px;
+}
+.media-picker__grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px; padding: 20px; overflow-y: auto;
+}
+.media-picker__item {
+  display: block; padding: 0; cursor: pointer; background: var(--apple-section-bg);
+  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm, 8px);
+  overflow: hidden; aspect-ratio: 1 / 1;
+}
+.media-picker__item:hover { border-color: var(--iprm-nav-active); }
+.media-picker__item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.media-picker__empty { padding: 0 20px 20px; color: var(--apple-gray); }
+.media-picker__foot { padding: 12px 20px; border-top: 1px solid var(--iprm-border); text-align: center; }

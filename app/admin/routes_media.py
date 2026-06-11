@@ -106,6 +106,35 @@ def media_library():
     )
 
 
+@admin_bp.route('/media/list.json')
+@admin_required
+def media_list_json():
+    """JSON-список медіа для пікера в редакторах (вибір наявного файлу)."""
+    entity_type = (request.args.get('entity_type') or '').strip()
+    usage_type = (request.args.get('usage_type') or '').strip()
+    page = request.args.get('page', 1, type=int)
+
+    q = MediaFile.query
+    if entity_type == 'none':
+        q = q.filter(MediaFile.entity_type.is_(None))
+    elif entity_type:
+        q = q.filter(MediaFile.entity_type == entity_type)
+    if usage_type:
+        q = q.filter(MediaFile.usage_type == usage_type)
+
+    pag = q.order_by(desc(MediaFile.created_at)).paginate(
+        page=page, per_page=_PER_PAGE, error_out=False,
+    )
+    return jsonify({
+        'items': [{
+            'id': m.id, 'url': m.url,
+            'thumb': m.variant_url('thumb'), 'card': m.variant_url('card'),
+            'alt': m.alt_text or '', 'width': m.width, 'height': m.height,
+        } for m in pag.items],
+        'has_next': pag.has_next, 'page': pag.page,
+    })
+
+
 @admin_bp.route('/media/<int:media_id>/alt', methods=['POST'])
 @admin_required
 def media_update_alt(media_id):
@@ -145,4 +174,33 @@ def media_delete(media_id):
         entity_type=(request.form.get('entity_type') or None),
         usage_type=(request.form.get('usage_type') or None),
         page=(request.form.get('page') or None),
+    ))
+
+
+@admin_bp.route('/media/bulk-delete', methods=['POST'])
+@admin_required
+def media_bulk_delete():
+    """Видалити кілька медіа за раз (мультивибір у бібліотеці)."""
+    ids = []
+    for raw in request.form.getlist('ids'):
+        if raw.isdigit():
+            ids.append(int(raw))
+    deleted = 0
+    if ids:
+        for media in MediaFile.query.filter(MediaFile.id.in_(ids)).all():
+            _detach_media_refs(media)
+            media_service.delete_media(media)
+            deleted += 1
+        try:
+            db.session.commit()
+            audit_logger.info('Admin %s bulk-deleted %d media', current_user.email, deleted)
+            flash('Видалено медіафайлів: %d' % deleted, 'success')
+        except Exception:
+            db.session.rollback()
+            logger.exception('Bulk media delete failed')
+            flash('Помилка при видаленні', 'error')
+    return redirect(url_for(
+        'admin.media_library',
+        entity_type=(request.form.get('entity_type') or None),
+        usage_type=(request.form.get('usage_type') or None),
     ))

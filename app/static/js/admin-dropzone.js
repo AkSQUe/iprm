@@ -74,6 +74,31 @@
         prompt.classList.remove('admin-dropzone__prompt--hidden');
       });
 
+      // Кнопка «З бібліотеки» -- лише для зон, що зберігають media_id, і якщо на
+      // сторінці є пікер (window.openMediaPicker з admin-media-picker.js).
+      if (mediaInput && typeof window.openMediaPicker === 'function') {
+        var libBtn = document.createElement('button');
+        libBtn.type = 'button';
+        libBtn.className = 'admin-dropzone__library';
+        libBtn.textContent = 'З бібліотеки';
+        libBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          window.openMediaPicker(function(media) {
+            if (hiddenInput) hiddenInput.value = media.url;
+            mediaInput.value = media.id;
+            if (!previewImg) {
+              previewImg = document.createElement('img');
+              previewImg.alt = 'Preview';
+              preview.insertBefore(previewImg, preview.firstChild);
+            }
+            previewImg.src = media.thumb || media.card || media.url;
+            preview.classList.add('admin-dropzone__preview--active');
+            prompt.classList.add('admin-dropzone__prompt--hidden');
+          });
+        });
+        prompt.appendChild(libBtn);
+      }
+
       function uploadFile(file) {
         if (allowedTypes.indexOf(file.type) === -1 && !(allowedExt && allowedExt.test(file.name))) {
           notifyError(allowedMsg);

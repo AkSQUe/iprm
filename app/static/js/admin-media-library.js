@@ -85,5 +85,37 @@
         }, 600);
       });
     });
+
+    // ---- Мультивибір + bulk-видалення ----
+    var checks = Array.prototype.slice.call(document.querySelectorAll('.media-card__check'));
+    var bulkForm = document.getElementById('media-bulk-form');
+    var bulkBtn = document.getElementById('media-bulk-delete');
+    var selCount = document.getElementById('media-sel-count');
+    var selectAll = document.getElementById('media-select-all');
+    if (checks.length && bulkForm && bulkBtn) {
+      var syncSelection = function () {
+        // Прибираємо попередні ids
+        Array.prototype.slice.call(bulkForm.querySelectorAll('input[name="ids"]')).forEach(function (el) { el.remove(); });
+        var n = 0;
+        checks.forEach(function (cb) {
+          if (cb.checked) {
+            n += 1;
+            var h = document.createElement('input');
+            h.type = 'hidden'; h.name = 'ids'; h.value = cb.value;
+            bulkForm.appendChild(h);
+          }
+        });
+        if (selCount) selCount.textContent = String(n);
+        bulkBtn.disabled = n === 0;
+      };
+      checks.forEach(function (cb) { cb.addEventListener('change', syncSelection); });
+      if (selectAll) {
+        selectAll.addEventListener('change', function () {
+          checks.forEach(function (cb) { cb.checked = selectAll.checked; });
+          syncSelection();
+        });
+      }
+      syncSelection();
+    }
   });
 })();

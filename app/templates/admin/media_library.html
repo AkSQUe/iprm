@@ -60,9 +60,22 @@
 
     {% set ent_labels = {'blog_post': 'Допис', 'trainer': 'Тренер', 'course': 'Курс'} %}
     {% if items %}
+    <div class="media-bulkbar">
+      <label class="media-bulkbar__all"><input type="checkbox" id="media-select-all"> Вибрати всі на сторінці</label>
+      <button type="submit" form="media-bulk-form" id="media-bulk-delete" class="btn-admin btn-admin--danger btn-admin--sm" disabled>
+        Видалити вибране (<span id="media-sel-count">0</span>)
+      </button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.media_bulk_delete') }}" id="media-bulk-form"
+          data-confirm="Видалити вибрані медіафайли? Прив'язані зникнуть із контенту.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="entity_type" value="{{ entity_type }}">
+      <input type="hidden" name="usage_type" value="{{ usage_type }}">
+    </form>
     <div class="media-grid">
       {% for m in items %}
       <div class="media-card" id="media-{{ m.id }}">
+        <input type="checkbox" class="media-card__check" value="{{ m.id }}" aria-label="Вибрати медіафайл {{ m.id }}">
         <a class="media-card__thumb" href="{{ m.url }}" target="_blank" rel="noopener">
           <img src="{{ m.variant_url('thumb') }}" alt="{{ m.alt_text or '' }}" loading="lazy">
         </a>

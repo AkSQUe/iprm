@@ -1,0 +1,17 @@
+{# Модалка вибору наявного медіа з реєстру. Відкривається з dropzone'ів
+   (admin-dropzone.js -> window.openMediaPicker). Розмітка без inline-стилів;
+   стилі -- admin-media.css, логіка -- admin-media-picker.js. #}
+<div class="media-picker" id="media-picker" hidden>
+  <div class="media-picker__backdrop" data-picker-close></div>
+  <div class="media-picker__dialog" role="dialog" aria-modal="true" aria-label="Медіа-бібліотека">
+    <div class="media-picker__head">
+      <h3 class="media-picker__title">Обрати з бібліотеки</h3>
+      <button type="button" class="media-picker__close" data-picker-close aria-label="Закрити">&times;</button>
+    </div>
+    <div class="media-picker__grid" id="media-picker-grid"></div>
+    <p class="media-picker__empty" id="media-picker-empty" hidden>У бібліотеці немає медіафайлів.</p>
+    <div class="media-picker__foot">
+      <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" id="media-picker-more" hidden>Завантажити ще</button>
+    </div>
+  </div>
+</div>

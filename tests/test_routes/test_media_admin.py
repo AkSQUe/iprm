@@ -70,6 +70,26 @@ class TestMediaAdmin:
         # без логіну -> редірект на логін (не 200)
         assert client.get('/admin/media').status_code in (301, 302)
 
+    def test_list_json(self, client, admin, media_root):
+        _login(client, admin)
+        client.post('/admin/upload/media', data={'file': (_png(), 'a.png')},
+                    content_type='multipart/form-data')
+        r = client.get('/admin/media/list.json')
+        assert r.status_code == 200
+        j = r.get_json()
+        assert 'items' in j and len(j['items']) >= 1
+        assert j['items'][0]['url'].startswith('/media/')
+
+    def test_bulk_delete(self, client, admin, media_root):
+        _login(client, admin)
+        id1 = client.post('/admin/upload/media', data={'file': (_png(), 'a.png')},
+                          content_type='multipart/form-data').get_json()['id']
+        id2 = client.post('/admin/upload/media', data={'file': (_png(), 'b.png')},
+                          content_type='multipart/form-data').get_json()['id']
+        client.post('/admin/media/bulk-delete', data={'ids': [str(id1), str(id2)]})
+        assert db.session.get(MediaFile, id1) is None
+        assert db.session.get(MediaFile, id2) is None
+
     def test_delete_attached_detaches_blog_content(self, client, admin, media_root):
         # Видалення медіа, що використовується в inline-блоці допису, прибирає
         # блок із контенту (без «битого» URL).

@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/blog-editor.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-media.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
@@ -136,6 +137,8 @@
   </div>
 </div>
 
+{% include 'admin/partials/_media_picker.html' %}
+<script src="{{ url_for('static', filename='js/admin-media-picker.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-dropzone.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/blog-editor.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-blog-edit.js') }}?v={{ assets_version }}"></script>

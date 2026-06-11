@@ -111,6 +111,38 @@ class TestRenameForEntity:
         assert os.path.exists(m1.abs_path) and os.path.exists(m2.abs_path)
 
 
+class TestPruneOrphans:
+    def test_prunes_old_unattached_only(self, app, media_root):
+        from datetime import timedelta
+        from app.models.mixins import utcnow
+        old, _ = media_service.create_from_upload(_png(), usage_type='inline')
+        recent, _ = media_service.create_from_upload(_png(), usage_type='inline')
+        attached, _ = media_service.create_from_upload(_png(), entity_type='blog_post',
+                                                       entity_id=1, usage_type='inline')
+        db.session.flush()
+        old.created_at = utcnow() - timedelta(days=40)
+        attached.created_at = utcnow() - timedelta(days=40)
+        db.session.commit()
+        old_id, recent_id, attached_id = old.id, recent.id, attached.id
+
+        res = app.test_cli_runner().invoke(args=['media-prune-orphans', '--days', '30'])
+        assert res.exit_code == 0, res.output
+        assert db.session.get(MediaFile, old_id) is None        # старий + unattached -> видалено
+        assert db.session.get(MediaFile, recent_id) is not None  # свіжий -> лишився
+        assert db.session.get(MediaFile, attached_id) is not None  # прив'язаний -> лишився
+
+    def test_dry_run_deletes_nothing(self, app, media_root):
+        from datetime import timedelta
+        from app.models.mixins import utcnow
+        m, _ = media_service.create_from_upload(_png(), usage_type='inline')
+        db.session.flush()
+        m.created_at = utcnow() - timedelta(days=99)
+        db.session.commit()
+        res = app.test_cli_runner().invoke(args=['media-prune-orphans', '--days', '30', '--dry-run'])
+        assert res.exit_code == 0
+        assert db.session.get(MediaFile, m.id) is not None
+
+
 class TestDeleteAndServe:
     def test_delete_removes_files(self, media_root):
         m, _ = media_service.create_from_upload(_png())
