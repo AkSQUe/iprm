@@ -1,7 +1,9 @@
 """Централізований обробник помилок з логуванням в БД."""
 import hashlib
+import re
 import threading
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlparse
 
 from flask import request, current_app
 from flask_login import current_user
@@ -12,13 +14,25 @@ from app.extensions import db
 from app.models.error_log import ErrorLog
 
 
-# Сегменти URL, характерні для сканерів
+# Сегменти URL, характерні для сканерів вразливостей
 _SCANNER_SEGMENTS = frozenset({
     'wp-admin', 'wp-login', 'wp-content', 'wp-includes', 'wp-json',
     'wordpress', 'xmlrpc', 'phpmyadmin', 'adminer', 'cgi-bin',
     'geoserver', 'solr', 'jenkins', 'actuator', 'manager',
     'telescope', 'vendor', 'node_modules', 'graphql', 'swagger',
+    # Часті цілі автосканерів (з реальних логів):
+    'phpinfo', '_profiler', 'containers', 'sdk', 'weblanguage',
+    'backup', 'credentials', 'eval-stdin', 'phpunit', 'thinkphp',
+    'struts', 'owa', 'autodiscover', 'boaform', 'console', 'server-status',
+    'weblanguage', 'systembc', 'login.action', 'hudson', 'dns-query',
 })
+
+# Ін'єкції у query/шляху (RCE/LFI спроби) -- завжди сканер
+_SCANNER_INJECTION_RE = re.compile(
+    r'php://|auto_prepend_file|allow_url_include|/etc/passwd|'
+    r'base64_decode|call_user_func|\$\{|%ad|\.\./',
+    re.IGNORECASE,
+)
 
 # HTTP-методи сканерів
 _SCANNER_METHODS = frozenset({
@@ -35,28 +49,35 @@ _MAX_CACHE = 10000
 
 
 def _is_junk_request(status_code, url):
-    """Перевіряє чи запит від сканера/бота."""
+    """Перевіряє чи запит від сканера/бота (RCE/LFI спроби, дотфайли,
+    відомі сканерські сегменти, сканерські HTTP-методи)."""
     if not url:
         return False
-    path = url.split('?', 1)[0].rstrip('/')
-    segments = path.strip('/').split('/')
 
-    if not segments or not segments[-1]:
+    if _SCANNER_INJECTION_RE.search(url):
+        return True
+
+    path = url.split('?', 1)[0].rstrip('/')
+    segments = [s for s in path.strip('/').split('/') if s]
+    if not segments:
         return False
 
-    last = segments[-1]
+    # Дотфайли/дотдиректорії: .git, .env, .aws, .ssh, .svn, .well-known тощо.
+    if any(s.startswith('.') for s in segments):
+        return True
 
+    lower_segments = {s.lower() for s in segments}
+    if lower_segments & _SCANNER_SEGMENTS:
+        return True
+
+    last = segments[-1]
     if status_code == 404:
-        if '.' in last:
+        if '.' in last:       # x.php, config.json, *.bak ...
             return True
         if len(last) <= 2:
             return True
         if '..' in path:
             return True
-
-    lower_segments = {s.lower() for s in segments}
-    if lower_segments & _SCANNER_SEGMENTS:
-        return True
 
     if status_code == 405:
         try:
@@ -68,11 +89,28 @@ def _is_junk_request(status_code, url):
     return False
 
 
+def _is_internal_referrer():
+    """Чи прийшов запит за внутрішнім посиланням (referrer з нашого домену).
+    Для 404/405 це ознака реально зламаного посилання, а не бота."""
+    try:
+        ref = request.referrer
+        if not ref:
+            return False
+        return urlparse(ref).netloc.split(':')[0] == request.host.split(':')[0]
+    except Exception:
+        return False
+
+
 def _should_log(status_code, url, message):
-    """Rate limiting: не логувати дублікати протягом 60с."""
+    """Чи писати помилку в БД. Відсіюємо ботів/сканерів і дублікати (60с)."""
     global _cache_cleanup_at
 
     if _is_junk_request(status_code, url):
+        return False
+
+    # 404/405 -- майже завжди автосканери. Логуємо лише коли це зламане
+    # ВНУТРІШНЄ посилання (referrer з нашого домену), інакше -- ігноруємо.
+    if status_code in (404, 405) and not _is_internal_referrer():
         return False
 
     sig = hashlib.sha256(f'{status_code}:{url}:{message}'.encode()).hexdigest()
