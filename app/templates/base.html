@@ -61,7 +61,9 @@
     (function(){try{var f=localStorage.getItem('iprm-font');if(f==='fixel')document.documentElement.setAttribute('data-font','fixel');}catch(e){}})();
   </script>
   {% include 'partials/_analytics.html' %}
-  {% include 'partials/_recaptcha.html' %}
+  {# reCAPTCHA вантажиться лише на сторінках із захищеною формою (вони
+     перевизначають цей блок). Так badge/iframe не зʼявляється глобально. #}
+  {% block recaptcha %}{% endblock %}
   {% block extra_head %}{% endblock %}
 </head>
 <body>

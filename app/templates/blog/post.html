@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 {% from 'blog/_blocks.html' import render_blocks %}
 
 {% block title %}{{ post.meta_title or post.title }} | Блог ІПРМ{% endblock %}
