@@ -22,6 +22,60 @@ audit_logger = logging.getLogger('audit')
 _PER_PAGE = 24
 
 
+def _strip_media_from_blocks(content, media_id):
+    """Прибрати з контенту блоку посилання на media_id (image/gallery)."""
+    out = []
+    for blk in (content or []):
+        if not isinstance(blk, dict):
+            out.append(blk)
+            continue
+        data = blk.get('data') or {}
+        if blk.get('type') == 'image' and data.get('media_id') == media_id:
+            continue  # цілий image-блок видаляємо
+        if blk.get('type') == 'gallery':
+            imgs = [i for i in (data.get('images') or [])
+                    if not (isinstance(i, dict) and i.get('media_id') == media_id)]
+            if not imgs:
+                continue  # порожня галерея -> прибираємо блок
+            blk = dict(blk)
+            blk['data'] = {**data, 'images': imgs}
+        out.append(blk)
+    return out
+
+
+def _detach_media_refs(media):
+    """Прибрати посилання на media з JSON-полів сутності перед видаленням.
+
+    FK-посилання (cover/photo/hero/card_media_id) обнуляються самою БД
+    (ondelete=SET NULL). Тут чистимо лише JSON, де FK немає -- щоб не лишилось
+    «битих» /media URL у контенті блогу та регаліях тренера."""
+    et, eid, mid = media.entity_type, media.entity_id, media.id
+    if not et or not eid:
+        return
+    if et == 'blog_post':
+        from app.models.blog_post import BlogPost
+        post = db.session.get(BlogPost, eid)
+        if post and post.content:
+            post.content = _strip_media_from_blocks(post.content, mid)
+    elif et == 'trainer':
+        from app.models.trainer import Trainer
+        t = db.session.get(Trainer, eid)
+        if not t:
+            return
+        if t.certificates:
+            t.certificates = [c for c in t.certificates
+                              if not (isinstance(c, dict) and c.get('media_id') == mid)]
+        if t.patents:
+            cleaned = []
+            for p in t.patents:
+                if isinstance(p, dict) and p.get('media_id') == mid:
+                    p = {k: v for k, v in p.items() if k not in ('image', 'thumb', 'card', 'media_id')}
+                    if not p.get('url'):
+                        continue  # патент без скана й без посилання -> прибираємо
+                cleaned.append(p)
+            t.patents = cleaned
+
+
 @admin_bp.route('/media')
 @admin_required
 def media_library():
@@ -73,11 +127,13 @@ def media_update_alt(media_id):
 def media_delete(media_id):
     media = db.session.get(MediaFile, media_id)
     if media:
+        was_attached = media.entity_type is not None
+        _detach_media_refs(media)
         media_service.delete_media(media)
         try:
             db.session.commit()
             audit_logger.info('Admin %s deleted media %s', current_user.email, media_id)
-            flash('Медіафайл видалено', 'success')
+            flash('Медіафайл видалено' + (' (відв\'язано від контенту)' if was_attached else ''), 'success')
         except Exception:
             db.session.rollback()
             logger.exception('Failed to delete media %s', media_id)

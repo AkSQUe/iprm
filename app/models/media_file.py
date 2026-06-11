@@ -10,7 +10,6 @@
 дані + запити + побудову URL).
 """
 import os
-import mimetypes
 
 from flask import current_app
 
@@ -23,7 +22,7 @@ class MediaFile(TimestampMixin, db.Model):
 
     USAGE_TYPES = (
         'main', 'gallery', 'cover', 'certificate', 'patent',
-        'inline', 'photo', 'hero', 'card', 'document',
+        'inline', 'photo', 'hero', 'card',
     )
 
     id = db.Column(BigIntPK, primary_key=True)
@@ -57,14 +56,12 @@ class MediaFile(TimestampMixin, db.Model):
 
     __table_args__ = (
         db.Index('ix_media_entity_usage_active', 'entity_type', 'entity_id', 'usage_type', 'is_active'),
+        # Сортування медіа-бібліотеки -- за датою створення (DESC у запиті).
+        db.Index('ix_media_files_created_at', 'created_at'),
         db.CheckConstraint('file_size >= 0', name='ck_media_files_size_non_negative'),
     )
 
     # ---- Властивості ----
-    @property
-    def is_image(self):
-        return bool(self.mime_type) and self.mime_type.startswith('image/')
-
     @property
     def abs_path(self):
         """Абсолютний шлях до файлу на диску."""
@@ -101,7 +98,3 @@ class MediaFile(TimestampMixin, db.Model):
 
     def __repr__(self):
         return f'<MediaFile {self.id} {self.entity_type}:{self.entity_id}/{self.usage_type}>'
-
-    @staticmethod
-    def guess_mime(filename):
-        return mimetypes.guess_type(filename or '')[0] or 'application/octet-stream'

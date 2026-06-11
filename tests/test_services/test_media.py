@@ -97,6 +97,19 @@ class TestRenameForEntity:
         media_service.rename_for_entity(m, 'ivan-petrenko', 3)
         assert m.file_path.endswith('ivan-petrenko-certificate-3.webp')
 
+    def test_rename_no_clobber(self, media_root):
+        # Два медіа з однаковим цільовим іменем -> друге отримує суфікс -{id}, не
+        # перезаписує перший файл.
+        m1, _ = media_service.create_from_upload(_png(), usage_type='photo')
+        m2, _ = media_service.create_from_upload(_png(), usage_type='photo')
+        db.session.flush()
+        media_service.rename_for_entity(m1, 'duo')
+        media_service.rename_for_entity(m2, 'duo')
+        assert m1.file_path != m2.file_path
+        assert m1.file_path.endswith('duo-photo.webp')
+        assert m2.file_path.endswith('duo-photo-%d.webp' % m2.id)
+        assert os.path.exists(m1.abs_path) and os.path.exists(m2.abs_path)
+
 
 class TestDeleteAndServe:
     def test_delete_removes_files(self, media_root):

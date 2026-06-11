@@ -14,7 +14,6 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from flask import current_app
-from werkzeug.utils import secure_filename
 
 from app.extensions import db
 from app.models.media_file import MediaFile
@@ -35,8 +34,11 @@ def _media_root():
 
 
 def _save_webp(img, abs_path, max_dim):
+    """Зберегти зменшену копію у WebP; повертає fitted-зображення (для розмірів)."""
     os.makedirs(os.path.dirname(abs_path), exist_ok=True)
-    _fit(img, max_dim).save(abs_path, 'WEBP', quality=_QUALITY, method=6)
+    fitted = _fit(img, max_dim)
+    fitted.save(abs_path, 'WEBP', quality=_QUALITY, method=6)
+    return fitted
 
 
 def _ingest_image(img, *, original_name, entity_type, entity_id, usage_type,
@@ -53,14 +55,13 @@ def _ingest_image(img, *, original_name, entity_type, entity_id, usage_type,
     file_rel = f'{rel_dir}/{filename}'
     root = _media_root()
 
-    _save_webp(img, os.path.join(root, *file_rel.split('/')), _FULL_MAX)
+    full = _save_webp(img, os.path.join(root, *file_rel.split('/')), _FULL_MAX)
+    width, height = full.width, full.height
     variants = {}
     for ctx, dim in _CONTEXTS.items():
         v_rel = f'{rel_dir}/variants/{ctx}/{base}_{ctx}.webp'
         _save_webp(img, os.path.join(root, *v_rel.split('/')), dim)
         variants[ctx] = v_rel
-    full = _fit(img, _FULL_MAX)
-    width, height = full.width, full.height
 
     size = os.path.getsize(os.path.join(root, *file_rel.split('/')))
     media = MediaFile(
@@ -172,42 +173,60 @@ def _media_url(rel_path):
     return f'{prefix}/{rel_path}'
 
 
+def _join(rel_dir, name):
+    return f'{rel_dir}/{name}' if rel_dir else name
+
+
 def rename_for_entity(media, slug, index=None):
     """Перейменувати фізичні файли media у читабельну схему {slug}-{usage}[-N].
 
     Перейменовує основний файл + усі responsive-варіанти у тій самій теці,
     оновлює media.file_path / responsive_variants. Ідемпотентно (якщо ім'я вже
     збігається -> нічого не робить). Повертає dict {старий_url: новий_url} для
-    оновлення посилань у JSON-полях (порожній, якщо без змін)."""
+    оновлення посилань у JSON-полях (порожній, якщо без змін).
+
+    Захищений: НЕ кидає винятків (щоб збій ФС не зривав збереження сутності і не
+    лишав ФС↔БД у розсинхроні) і НЕ перезаписує чужий файл (no-clobber)."""
     root = _media_root()
     rel_dir = os.path.dirname(media.file_path) or ''
     name = friendly_basename(slug, media.usage_type, index)
-    new_main = f'{rel_dir}/{name}.webp' if rel_dir else f'{name}.webp'
+    new_main = _join(rel_dir, f'{name}.webp')
     if new_main == media.file_path:
         return {}
-    # Колізія з іншим файлом -> гарантуємо унікальність суфіксом id.
+    # Колізія -> унікалізуємо суфіксом id; якщо й це зайнято -- не чіпаємо (no-clobber).
     if os.path.exists(os.path.join(root, *new_main.split('/'))):
         name = f'{name}-{media.id}'
-        new_main = f'{rel_dir}/{name}.webp' if rel_dir else f'{name}.webp'
+        new_main = _join(rel_dir, f'{name}.webp')
+        if os.path.exists(os.path.join(root, *new_main.split('/'))):
+            logger.warning('Skip rename media %s: target %s exists', media.id, new_main)
+            return {}
 
-    mapping = {}
     old_abs = os.path.join(root, *media.file_path.split('/'))
     new_abs = os.path.join(root, *new_main.split('/'))
-    if os.path.exists(old_abs):
-        os.rename(old_abs, new_abs)
-    mapping[_media_url(media.file_path)] = _media_url(new_main)
+    try:
+        if os.path.exists(old_abs):
+            os.rename(old_abs, new_abs)
+    except OSError:
+        logger.exception('Failed to rename media %s main file', media.id)
+        return {}  # media лишається з поточним іменем -- ФС↔БД консистентні
+
+    mapping = {_media_url(media.file_path): _media_url(new_main)}
     media.file_path = new_main
 
     new_variants = {}
     for ctx, vpath in (media.responsive_variants or {}).items():
         vdir = os.path.dirname(vpath) or ''
-        nvp = f'{vdir}/{name}_{ctx}.webp' if vdir else f'{name}_{ctx}.webp'
+        nvp = _join(vdir, f'{name}_{ctx}.webp')
         vsrc = os.path.join(root, *vpath.split('/'))
         vdst = os.path.join(root, *nvp.split('/'))
-        if os.path.exists(vsrc):
-            os.rename(vsrc, vdst)
-        mapping[_media_url(vpath)] = _media_url(nvp)
-        new_variants[ctx] = nvp
+        try:
+            if os.path.exists(vsrc):
+                os.rename(vsrc, vdst)
+            mapping[_media_url(vpath)] = _media_url(nvp)
+            new_variants[ctx] = nvp
+        except OSError:
+            logger.exception('Failed to rename media %s variant %s', media.id, ctx)
+            new_variants[ctx] = vpath  # лишаємо стару назву -- шлях у БД = шлях на диску
     media.responsive_variants = new_variants
     logger.info('Renamed media %s -> %s', media.id, new_main)
     return mapping

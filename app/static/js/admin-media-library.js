@@ -18,13 +18,15 @@
     var input = document.getElementById('media-upload-input');
     if (zone && input) {
       var pending = 0;
-      var hadError = false;
+      var succeeded = 0;
 
       var done = function () {
         pending -= 1;
         if (pending <= 0) {
           zone.classList.remove('media-upload--busy');
-          if (!hadError) window.location.reload();
+          // Перезавантажуємо, якщо хоч один файл завантажився -> часткові
+          // успіхи видно одразу. Якщо всі впали -- лишаємось, щоб показати toast.
+          if (succeeded > 0) window.location.reload();
         }
       };
 
@@ -39,14 +41,15 @@
         if (csrf) fd.append('csrf_token', csrf);
         fetch('/admin/upload/media', { method: 'POST', body: fd })
           .then(function (r) {
-            if (r.status === 413) { notify('Файл завеликий (макс. 25 MB)'); hadError = true; return null; }
+            if (r.status === 413) { notify('Файл завеликий (макс. 25 MB)'); return null; }
             return r.json().then(function (d) { return { ok: r.ok, d: d }; },
-              function () { notify('Неочікувана відповідь сервера (' + r.status + ')'); hadError = true; return null; });
+              function () { notify('Неочікувана відповідь сервера (' + r.status + ')'); return null; });
           })
           .then(function (res) {
-            if (res && !res.ok) { hadError = true; notify(res.d.error || 'Помилка завантаження'); }
+            if (res && res.ok) { succeeded += 1; }
+            else if (res && !res.ok) { notify(res.d.error || 'Помилка завантаження'); }
           })
-          .catch(function () { hadError = true; notify('Помилка мережі'); })
+          .catch(function () { notify('Помилка мережі'); })
           .then(done);
       };
 

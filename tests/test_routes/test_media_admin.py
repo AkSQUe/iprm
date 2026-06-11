@@ -69,3 +69,27 @@ class TestMediaAdmin:
     def test_requires_admin(self, client, media_root):
         # без логіну -> редірект на логін (не 200)
         assert client.get('/admin/media').status_code in (301, 302)
+
+    def test_delete_attached_detaches_blog_content(self, client, admin, media_root):
+        # Видалення медіа, що використовується в inline-блоці допису, прибирає
+        # блок із контенту (без «битого» URL).
+        from app.models.blog_post import BlogPost
+        _login(client, admin)
+        mid = client.post('/admin/upload/media',
+                          data={'file': (_png(), 'a.png')},
+                          content_type='multipart/form-data').get_json()['id']
+        media = db.session.get(MediaFile, mid)
+        media.entity_type = 'blog_post'
+        post = BlogPost(slug=f'p-{uuid4().hex[:6]}', title='T', status='draft',
+                        content=[{'type': 'image', 'data': {'url': media.url, 'media_id': mid}},
+                                 {'type': 'paragraph', 'data': {'html': 'текст'}}])
+        db.session.add(post)
+        db.session.flush()
+        media.entity_id = post.id
+        db.session.commit()
+
+        client.post(f'/admin/media/{mid}/delete', data={})
+        assert db.session.get(MediaFile, mid) is None
+        refreshed = db.session.get(BlogPost, post.id)
+        types = [b['type'] for b in refreshed.content]
+        assert 'image' not in types and 'paragraph' in types

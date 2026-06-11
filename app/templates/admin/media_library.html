@@ -58,6 +58,7 @@
       </select>
     </form>
 
+    {% set ent_labels = {'blog_post': 'Допис', 'trainer': 'Тренер', 'course': 'Курс'} %}
     {% if items %}
     <div class="media-grid">
       {% for m in items %}
@@ -67,10 +68,10 @@
         </a>
         <div class="media-card__meta">
           {% if m.width %}{{ m.width }}×{{ m.height }}{% endif %}
-          {% if m.entity_type %}· {{ m.entity_type }}#{{ m.entity_id }}/{{ m.usage_type }}{% else %}· без прив'язки{% endif %}
+          {% if m.entity_type %}· <span class="media-card__used">{{ ent_labels.get(m.entity_type, m.entity_type) }} #{{ m.entity_id }} · {{ m.usage_type }}</span>{% else %}· без прив'язки{% endif %}
         </div>
         <input class="form-input media-card__alt" data-id="{{ m.id }}" value="{{ m.alt_text or '' }}" placeholder="Alt-текст" maxlength="255">
-        <form method="POST" action="{{ url_for('admin.media_delete', media_id=m.id) }}" class="admin-inline" data-confirm="Видалити медіафайл? Дію не можна скасувати.">
+        <form method="POST" action="{{ url_for('admin.media_delete', media_id=m.id) }}" class="admin-inline" data-confirm="{% if m.entity_type %}Файл використовується ({{ ent_labels.get(m.entity_type, m.entity_type) }} #{{ m.entity_id }}) — після видалення зображення зникне з контенту. Продовжити?{% else %}Видалити медіафайл? Дію не можна скасувати.{% endif %}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="entity_type" value="{{ entity_type }}">
           <input type="hidden" name="usage_type" value="{{ usage_type }}">

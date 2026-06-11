@@ -11,6 +11,10 @@
 .media-upload--drag { border-color: var(--iprm-nav-active); background: var(--iprm-white); }
 .media-upload--busy { opacity: 0.6; pointer-events: none; }
 .media-upload .admin-dropzone__link { color: var(--iprm-nav-active); text-decoration: underline; }
+/* Нативний file-input приховано -- клік по зоні відкриває діалог (JS).
+   Клас .regalia-hidden-file у розмітці визначено в admin-regalia.css, який на
+   цій сторінці не підключений, тож дублюємо приховування тут. */
+.media-upload input[type="file"] { display: none; }
 
 .media-grid {
   display: grid;
