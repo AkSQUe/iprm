@@ -36,9 +36,9 @@
 
           <div class="sitemap-section__body">
             <ul class="sitemap-section__list">
-              {% for item in section.items %}
+              {% for link in section.links %}
               <li class="sitemap-section__item">
-                <a href="{{ item.url }}">{{ item.label }}</a>
+                <a href="{{ link.url }}">{{ link.label }}</a>
               </li>
               {% endfor %}
             </ul>

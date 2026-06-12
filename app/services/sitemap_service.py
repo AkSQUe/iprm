@@ -89,7 +89,7 @@ def generate_visual_sitemap():
     sections.append({
         'title': 'Курси',
         'icon': 'courses',
-        'items': [
+        'links': [
             {'label': 'Каталог курсів', 'url': url_for('courses.course_list')},
         ],
     })
@@ -104,7 +104,7 @@ def generate_visual_sitemap():
     sections.append({
         'title': 'Тренери',
         'icon': 'trainers',
-        'items': [
+        'links': [
             {'label': 'Список тренерів', 'url': url_for('trainers.trainer_list')},
         ],
     })
@@ -118,7 +118,7 @@ def generate_visual_sitemap():
     sections.append({
         'title': 'Блог',
         'icon': 'blog',
-        'items': [
+        'links': [
             {'label': 'Усі статті', 'url': url_for('blog.index')},
         ],
     })
@@ -140,7 +140,7 @@ def generate_visual_sitemap():
     sections.append({
         'title': 'Клініки',
         'icon': 'clinics',
-        'items': [
+        'links': [
             {'label': 'Каталог клінік', 'url': url_for('clinics.clinic_list')},
         ],
     })
@@ -154,7 +154,7 @@ def generate_visual_sitemap():
     sections.append({
         'title': 'Навчання',
         'icon': 'education',
-        'items': [
+        'links': [
             {'label': 'Лабораторії', 'url': url_for('main.labs')},
             {'label': 'Документи БПР', 'url': url_for('main.bpr_documents')},
         ],
@@ -163,7 +163,7 @@ def generate_visual_sitemap():
     sections.append({
         'title': 'Контакти',
         'icon': 'contacts',
-        'items': [
+        'links': [
             {'label': 'Зворотний зв\'язок', 'url': url_for('main.contact')},
         ],
     })
@@ -171,7 +171,7 @@ def generate_visual_sitemap():
     sections.append({
         'title': 'Інформація',
         'icon': 'info',
-        'items': [
+        'links': [
             {'label': 'Оферта', 'url': url_for('main.offer')},
             {'label': 'Конфіденційність', 'url': url_for('main.privacy')},
             {'label': 'Повернення коштів', 'url': url_for('main.refund')},
