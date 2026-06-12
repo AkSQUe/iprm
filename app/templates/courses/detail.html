@@ -4,7 +4,7 @@
 
 {% block title %}{{ course.title }} | ІПРМ{% endblock %}
 {% block meta_description %}{{ course.subtitle or course.short_description or course.title }}{% endblock %}
-{% if course.card_src %}{% block og_image %}{{ course.card_src }}{% endblock %}{% endif %}
+{% block og_image %}{% if course.card_src %}{{ request.url_root.rstrip('/') ~ course.card_src }}{% else %}{{ super() }}{% endif %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}?v={{ assets_version }}">

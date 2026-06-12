@@ -2,6 +2,7 @@
 
 {% block title %}{{ trainer.full_name }} | ІПРМ{% endblock %}
 {% block meta_description %}{{ trainer.role or trainer.full_name }}. Тренер Інституту Плазмотерапії та Регенеративної Медицини.{% endblock %}
+{% block og_image %}{% if trainer.photo_full %}{{ request.url_root.rstrip('/') ~ trainer.photo_full }}{% else %}{{ super() }}{% endif %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}?v={{ assets_version }}">
@@ -17,6 +18,7 @@
   "@type": "Person",
   "name": "{{ trainer.full_name }}",
   "jobTitle": "{{ trainer.role or '' }}",
+  {% if trainer.photo_full %}"image": "{{ request.url_root.rstrip('/') ~ trainer.photo_full }}",{% endif %}
   {% if trainer.bio %}"description": "{{ trainer.bio[:200] }}",{% endif %}
   "worksFor": {
     "@type": "EducationalOrganization",
