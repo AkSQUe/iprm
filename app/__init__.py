@@ -284,7 +284,7 @@ def create_app(config_name=None):
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline'" + gstatic + ga_script + gsi + "; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com" + gsi + "; "
-            "font-src 'self' https://fonts.gstatic.com; "
+            "font-src 'self' https://fonts.gstatic.com data:; "
             "img-src 'self' data:" + ga_img + gsi_img + "; "
             "frame-src 'self' blob: https://www.liqpay.ua https://checkout.liqpay.ua"
             " https://www.youtube-nocookie.com"

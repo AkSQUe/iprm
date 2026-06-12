@@ -164,7 +164,7 @@
 /* `display: flex` на .iprm-schedule перевизначає браузерне правило для
    атрибута [hidden]. Повертаємо очікувану поведінку для обох панелей. */
 .iprm-schedule[hidden],
-.iprm-calendar[hidden] {
+.iprm-calendar-wrap[hidden] {
   display: none;
 }
 
@@ -831,162 +831,237 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
   outline-offset: 2px;
 }
 
-/* ========== CALENDAR VIEW ========== */
+/* ========== CALENDAR VIEW (FullCalendar) ========== */
 
-.iprm-calendar {
-  max-width: 720px;
+.iprm-calendar-wrap {
+  max-width: 880px;
   margin: 0 auto;
-  background: var(--iprm-white);
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius);
-  padding: 24px;
 }
 
-.iprm-calendar__header {
+/* ----- Панель фільтрів ----- */
+.iprm-cal-filters {
+  margin-bottom: 24px;
+}
+
+.iprm-cal-filters__bar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.iprm-calendar__title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--apple-black);
-  text-transform: capitalize;
-  margin: 0;
-  flex: 1;
-  text-align: center;
-}
-
-.iprm-calendar__nav-btn {
-  appearance: none;
-  -webkit-appearance: none;
-  border: 1px solid var(--iprm-border);
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 18px 20px;
   background: var(--iprm-white);
-  width: 36px;
-  height: 36px;
-  border-radius: var(--iprm-radius-pill);
-  font-size: 1.25rem;
-  line-height: 1;
-  color: var(--apple-black);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background var(--iprm-transition), border-color var(--iprm-transition), opacity var(--iprm-transition);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
 }
 
-.iprm-calendar__nav-btn:hover:not(:disabled) {
-  background: var(--apple-section-bg);
-  border-color: var(--apple-gray-light);
+.iprm-cal-filters__group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.iprm-calendar__nav-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.iprm-calendar__nav-btn:focus-visible {
-  outline: 2px solid var(--iprm-accent);
-  outline-offset: 2px;
-}
-
-.iprm-calendar__weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  margin-bottom: 8px;
-}
-
-.iprm-calendar__weekdays > span {
-  text-align: center;
+.iprm-cal-filters__label {
   font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--iprm-text-light);
-  padding: 4px 0;
 }
 
-.iprm-calendar__grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+.iprm-cal-filters__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.iprm-calendar__day {
+.iprm-cal-chip {
   appearance: none;
   -webkit-appearance: none;
-  border: 1px solid transparent;
-  background: transparent;
-  font: inherit;
-  aspect-ratio: 1 / 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  border-radius: var(--iprm-radius-sm);
-  font-size: 0.875rem;
+  border: 1px solid var(--iprm-border);
+  background: var(--apple-section-bg);
   color: var(--apple-black);
-  cursor: default;
-  position: relative;
-  transition: background var(--iprm-transition), border-color var(--iprm-transition);
-}
-
-.iprm-calendar__day--out {
-  color: var(--apple-gray-light);
-}
-
-.iprm-calendar__day--has-event {
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1;
+  padding: 8px 14px;
+  border-radius: var(--iprm-radius-pill);
   cursor: pointer;
-  font-weight: 600;
-  background: var(--iprm-accent-light);
-  color: var(--iprm-accent);
+  transition: background var(--iprm-transition), color var(--iprm-transition), border-color var(--iprm-transition);
 }
 
-.iprm-calendar__day--has-event:hover {
+.iprm-cal-chip:hover {
+  border-color: var(--apple-gray-light);
+}
+
+.iprm-cal-chip[aria-pressed="true"] {
   background: var(--iprm-accent);
-  color: var(--iprm-white);
-}
-
-.iprm-calendar__day--today {
   border-color: var(--iprm-accent);
-}
-
-.iprm-calendar__day--selected {
-  background: var(--iprm-accent);
   color: var(--iprm-white);
-  font-weight: 700;
 }
 
-.iprm-calendar__day--selected:hover {
-  background: var(--iprm-accent-hover);
-}
-
-.iprm-calendar__day:focus-visible {
+.iprm-cal-chip:focus-visible {
   outline: 2px solid var(--iprm-accent);
   outline-offset: 2px;
 }
 
-.iprm-calendar__day-num {
-  display: block;
-  line-height: 1;
+.iprm-cal-filters__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 0 4px;
 }
 
-.iprm-calendar__day-dot {
-  display: block;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.85;
+.iprm-cal-filters__count {
+  font-size: 0.8125rem;
+  color: var(--iprm-text-light);
 }
 
-.iprm-calendar__day--selected .iprm-calendar__day-dot {
+.iprm-cal-filters__reset {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--iprm-accent);
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.iprm-cal-filters__reset:hover {
+  color: var(--iprm-accent-hover);
+}
+
+.iprm-cal-filters__reset:focus-visible {
+  outline: 2px solid var(--iprm-accent);
+  outline-offset: 2px;
+}
+
+/* ----- FullCalendar -- мапінг на дизайн-токени ----- */
+.iprm-fc {
+  --fc-border-color: var(--iprm-border);
+  --fc-page-bg-color: var(--iprm-white);
+  --fc-neutral-bg-color: var(--apple-section-bg);
+  --fc-today-bg-color: var(--iprm-accent-light);
+  --fc-list-event-hover-bg-color: var(--iprm-accent-light);
+  --fc-button-bg-color: var(--iprm-white);
+  --fc-button-border-color: var(--iprm-border);
+  --fc-button-text-color: var(--apple-black);
+  --fc-button-hover-bg-color: var(--apple-section-bg);
+  --fc-button-hover-border-color: var(--apple-gray-light);
+  --fc-button-active-bg-color: var(--iprm-accent);
+  --fc-button-active-border-color: var(--iprm-accent);
   background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  padding: 24px;
+  font-size: 0.875rem;
+}
+
+.iprm-fc .fc .fc-toolbar-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--apple-black);
+  text-transform: capitalize;
+}
+
+.iprm-fc .fc .fc-button {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: var(--iprm-radius-pill);
+  padding: 7px 14px;
+  box-shadow: none;
+  text-transform: none;
+  transition: background var(--iprm-transition), border-color var(--iprm-transition), color var(--iprm-transition);
+}
+
+.iprm-fc .fc .fc-button-primary:not(:disabled).fc-button-active,
+.iprm-fc .fc .fc-button-primary:not(:disabled):active {
+  color: var(--iprm-white);
+}
+
+.iprm-fc .fc .fc-button:focus,
+.iprm-fc .fc .fc-button:focus-visible {
+  outline: 2px solid var(--iprm-accent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+.iprm-fc .fc .fc-col-header-cell-cushion {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--iprm-text-light);
+  padding: 8px 4px;
+}
+
+.iprm-fc .fc .fc-daygrid-day-number {
+  font-size: 0.8125rem;
+  color: var(--apple-black);
+  padding: 6px 8px;
+}
+
+.iprm-fc .fc .fc-day-today .fc-daygrid-day-number {
+  font-weight: 700;
+  color: var(--iprm-accent);
+}
+
+.iprm-fc .fc .fc-daygrid-day.fc-day-other {
+  background: transparent;
+}
+
+.iprm-fc .fc .fc-daygrid-day.fc-day-other .fc-daygrid-day-number {
+  color: var(--apple-gray-light);
+}
+
+/* Події: блоки з кольоровим кодуванням за форматом */
+.iprm-fc .fc-event.iprm-fc-ev {
+  border: none;
+  border-radius: var(--iprm-radius-sm);
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.iprm-fc .fc-daygrid-event.iprm-fc-ev {
+  white-space: normal;
+}
+
+.iprm-fc-ev--online {
+  background: var(--iprm-accent);
+  color: var(--iprm-white);
+}
+
+.iprm-fc-ev--offline {
+  background: #d67e2e;
+  color: var(--iprm-white);
+}
+
+.iprm-fc-ev--hybrid {
+  background: #2e9e8f;
+  color: var(--iprm-white);
+}
+
+.iprm-fc .fc-event.iprm-fc-ev:hover {
+  filter: brightness(0.94);
+}
+
+.iprm-fc .fc .fc-list-event.iprm-fc-ev:hover td {
+  background: var(--iprm-accent-light);
+}
+
+/* Маркер-крапка події у list/daygrid dot-режимі успадковує колір блоку */
+.iprm-fc .fc .fc-daygrid-event-dot {
+  border-color: currentColor;
+}
+
+.iprm-fc .fc .fc-list-empty {
+  background: var(--apple-section-bg);
+  color: var(--iprm-text-light);
 }
 
 .iprm-calendar__details {
@@ -1045,16 +1120,29 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
 }
 
 @media (max-width: 640px) {
-  .iprm-calendar {
-    padding: 16px;
+  .iprm-fc {
+    padding: 14px;
   }
 
-  .iprm-calendar__title {
+  .iprm-fc .fc .fc-toolbar.fc-header-toolbar {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .iprm-fc .fc .fc-toolbar-title {
     font-size: 1rem;
+    text-align: center;
   }
 
-  .iprm-calendar__day {
-    font-size: 0.8125rem;
+  .iprm-fc .fc .fc-toolbar-chunk {
+    display: flex;
+    justify-content: center;
+  }
+
+  .iprm-cal-filters__bar {
+    flex-direction: column;
+    gap: 14px;
   }
 
   .iprm-calendar__event {

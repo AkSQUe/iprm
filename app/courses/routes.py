@@ -72,7 +72,7 @@ def course_list():
     """Каталог: всі активні курси (навіть без запланованих проведень)."""
     courses = Course.query.options(
         joinedload(Course.trainer),
-        selectinload(Course.instances),
+        selectinload(Course.instances).joinedload(CourseInstance.trainer),
     ).filter(Course.is_active.is_(True)).order_by(Course.title).all()
 
     now = datetime.now(timezone.utc)
@@ -97,8 +97,10 @@ def course_list():
 
     open_ids = _open_instance_ids([c.id for c in courses])
 
-    # JSON-серіалізована стрічка подій для view-режиму "Календар".
+    # JSON-серіалізована стрічка подій для view-режиму "Календар" (FullCalendar).
     # Місце серіалізації -- route, бо Jinja2 не підтримує list comprehension.
+    # `date` (YYYY-MM-DD) використовується як all-day start у FullCalendar:
+    # date-only рядок не конвертується по часових поясах -> жодного зсуву дати.
     schedule_events = [
         {
             'id': inst.id,
@@ -107,7 +109,14 @@ def course_list():
             'slug': inst.course.slug,
             'format': inst.event_format,
             'format_label': inst.format_label,
+            'event_type': inst.course.event_type,
             'event_type_label': inst.course.event_type_label,
+            'tags': inst.course.tags or [],
+            'trainer': (
+                inst.effective_trainer.full_name
+                if inst.effective_trainer else None
+            ),
+            'cpd': inst.effective_cpd_points,
             'price': (
                 int(inst.effective_price)
                 if inst.effective_price and inst.effective_price > 0

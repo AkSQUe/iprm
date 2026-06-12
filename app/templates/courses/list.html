@@ -142,17 +142,10 @@
         {% endfor %}
       </div>
 
-      <!-- View: Календар (наповнюється JS-ом з data-schedule-events) -->
-      <div class="iprm-calendar" data-schedule-pane="calendar" hidden>
-        <div class="iprm-calendar__header">
-          <button type="button" class="iprm-calendar__nav-btn" data-calendar-prev aria-label="Попередній місяць">&lsaquo;</button>
-          <h3 class="iprm-calendar__title" data-calendar-title aria-live="polite"></h3>
-          <button type="button" class="iprm-calendar__nav-btn" data-calendar-next aria-label="Наступний місяць">&rsaquo;</button>
-        </div>
-        <div class="iprm-calendar__weekdays" aria-hidden="true">
-          <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Нд</span>
-        </div>
-        <div class="iprm-calendar__grid" data-calendar-grid role="grid"></div>
+      <!-- View: Календар (FullCalendar + фільтри; наповнюється JS-ом з data-schedule-events) -->
+      <div class="iprm-calendar-wrap" data-schedule-pane="calendar" hidden>
+        <div class="iprm-cal-filters" data-cal-filters></div>
+        <div class="iprm-fc" data-calendar></div>
         <div class="iprm-calendar__details" data-calendar-details aria-live="polite"></div>
       </div>
 
@@ -235,5 +228,6 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/page-courses-filter.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='vendor/fullcalendar/index.global.min.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/page-courses-schedule.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
