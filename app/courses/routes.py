@@ -1,7 +1,10 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from urllib.parse import urljoin
 
 from email_validator import EmailNotValidError, validate_email
-from flask import abort, current_app, flash, redirect, render_template, request, url_for
+from flask import (
+    Response, abort, current_app, flash, redirect, render_template, request, url_for,
+)
 from flask_login import current_user
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -30,13 +33,15 @@ LEGACY_REDIRECTS = {
 }
 
 
-def _open_instance_ids(course_ids):
-    """Повертає set id CourseInstance.id, що відкриті для реєстрації.
+def _capacity_map(course_ids):
+    """Повертає {CourseInstance.id: seats_left} для published/active проведень.
 
-    Агрегує `COUNT(*)` активних реєстрацій одним запитом замість N+1.
+    seats_left == None -> місткість не задана (необмежено). Інакше -- скільки
+    вільних місць (>= 0). Агрегує `COUNT(*)` активних реєстрацій одним запитом
+    замість N+1.
     """
     if not course_ids:
-        return set()
+        return {}
     rows = (
         db.session.query(
             CourseInstance.id,
@@ -59,12 +64,106 @@ def _open_instance_ids(course_ids):
         .group_by(CourseInstance.id, CourseInstance.max_participants, Course.max_participants)
         .all()
     )
-    open_ids = set()
+    capacity = {}
     for inst_id, inst_max, course_max, active_count in rows:
         cap = inst_max if inst_max is not None else course_max
-        if cap is None or active_count < cap:
-            open_ids.add(inst_id)
-    return open_ids
+        capacity[inst_id] = None if cap is None else max(cap - active_count, 0)
+    return capacity
+
+
+def _open_from_capacity(capacity):
+    """Множина id проведень, відкритих для реєстрації (є вільні місця)."""
+    return {i for i, left in capacity.items() if left is None or left > 0}
+
+
+def _open_instance_ids(course_ids):
+    """Повертає set id проведень, відкритих для реєстрації."""
+    return _open_from_capacity(_capacity_map(course_ids))
+
+
+_ATTENDANCE_MODE = {
+    'online': 'https://schema.org/OnlineEventAttendanceMode',
+    'offline': 'https://schema.org/OfflineEventAttendanceMode',
+    'hybrid': 'https://schema.org/MixedEventAttendanceMode',
+}
+
+
+def _event_jsonld(inst, is_open):
+    """schema.org/EducationEvent-вузол для одного проведення (для SEO)."""
+    course = inst.course
+    course_url = url_for('courses.course_by_slug', slug=course.slug, _external=True)
+    node = {
+        '@context': 'https://schema.org',
+        '@type': 'EducationEvent',
+        'name': course.title,
+        'startDate': ensure_utc(inst.start_date).isoformat(),
+        'eventAttendanceMode': _ATTENDANCE_MODE.get(
+            inst.event_format, _ATTENDANCE_MODE['offline'],
+        ),
+        'eventStatus': 'https://schema.org/EventScheduled',
+        'organizer': {
+            '@type': 'Organization',
+            'name': 'ІПРМ',
+            'url': url_for('main.index', _external=True),
+        },
+        'url': course_url,
+    }
+    if inst.end_date:
+        node['endDate'] = ensure_utc(inst.end_date).isoformat()
+
+    description = course.short_description or course.subtitle
+    if description:
+        node['description'] = description
+
+    if course.card_src:
+        node['image'] = urljoin(request.url_root, course.card_src)
+
+    place = {
+        '@type': 'Place',
+        'name': inst.location or 'Україна',
+        'address': inst.location or 'Україна',
+    }
+    virtual = {'@type': 'VirtualLocation', 'url': inst.online_link or course_url}
+    if inst.event_format == 'online':
+        node['location'] = virtual
+    elif inst.event_format == 'hybrid':
+        node['location'] = [virtual, place]
+    else:
+        node['location'] = place
+
+    trainer = inst.effective_trainer
+    if trainer:
+        node['performer'] = {'@type': 'Person', 'name': trainer.full_name}
+
+    price = inst.effective_price
+    if price and price > 0:
+        offer = {
+            '@type': 'Offer',
+            'price': str(int(price)),
+            'priceCurrency': 'UAH',
+            'availability': (
+                'https://schema.org/InStock' if is_open
+                else 'https://schema.org/SoldOut'
+            ),
+            'url': url_for('registration.register_instance', instance_id=inst.id, _external=True),
+        }
+        if inst.created_at:
+            offer['validFrom'] = ensure_utc(inst.created_at).isoformat()
+        node['offers'] = offer
+
+    return node
+
+
+def _ics_escape(text):
+    """Екранування TEXT-значень за RFC 5545 (\\ ; , та переноси рядків)."""
+    return (
+        (text or '')
+        .replace('\\', '\\\\')
+        .replace(';', '\\;')
+        .replace(',', '\\,')
+        .replace('\r\n', '\\n')
+        .replace('\n', '\\n')
+    )
 
 
 @courses_bp.route('/')
@@ -95,16 +194,19 @@ def course_list():
     )
     upcoming_instances = upcoming_instances_all[:5]
 
-    open_ids = _open_instance_ids([c.id for c in courses])
+    capacity = _capacity_map([c.id for c in courses])
+    open_ids = _open_from_capacity(capacity)
 
     # JSON-серіалізована стрічка подій для view-режиму "Календар" (FullCalendar).
     # Місце серіалізації -- route, бо Jinja2 не підтримує list comprehension.
     # `date` (YYYY-MM-DD) використовується як all-day start у FullCalendar:
     # date-only рядок не конвертується по часових поясах -> жодного зсуву дати.
+    # `end` -- дата завершення (для багатоденних заходів суцільна смуга).
     schedule_events = [
         {
             'id': inst.id,
             'date': inst.start_date.strftime('%Y-%m-%d'),
+            'end': inst.end_date.strftime('%Y-%m-%d') if inst.end_date else None,
             'title': inst.course.title,
             'slug': inst.course.slug,
             'format': inst.event_format,
@@ -123,6 +225,7 @@ def course_list():
                 else None
             ),
             'location': inst.location or '',
+            'seats_left': capacity.get(inst.id),
             'is_open': inst.id in open_ids,
             'register_url': url_for(
                 'registration.register_instance', instance_id=inst.id,
@@ -130,7 +233,14 @@ def course_list():
             'course_url': url_for(
                 'courses.course_by_slug', slug=inst.course.slug,
             ),
+            'ics_url': url_for('courses.event_ics', instance_id=inst.id),
         }
+        for inst in upcoming_instances_all if inst.start_date
+    ]
+
+    # schema.org/EducationEvent для кожного проведення -> rich results у Google.
+    events_jsonld = [
+        _event_jsonld(inst, inst.id in open_ids)
         for inst in upcoming_instances_all if inst.start_date
     ]
 
@@ -141,6 +251,7 @@ def course_list():
         upcoming_by_course=upcoming_by_course,
         upcoming_instances=upcoming_instances,
         schedule_events=schedule_events,
+        events_jsonld=events_jsonld,
         open_instance_ids=open_ids,
     )
 
@@ -190,6 +301,67 @@ def course_by_slug(slug):
         upcoming_instances=upcoming_instances,
         past_instances=past_instances,
         open_instance_ids=open_ids,
+    )
+
+
+@courses_bp.route('/event/<int:instance_id>.ics')
+def event_ics(instance_id):
+    """Віддає .ics (iCalendar) для одного проведення -- кнопка 'Додати в календар'.
+
+    Подія -- all-day (VALUE=DATE), узгоджено з all-day рендером у календарі:
+    уникаємо неоднозначностей часових поясів. DTEND ексклюзивний.
+    """
+    inst = (
+        CourseInstance.query
+        .options(joinedload(CourseInstance.course))
+        .get(instance_id)
+    )
+    if (
+        inst is None
+        or inst.course is None
+        or not inst.course.is_active
+        or inst.status not in ('published', 'active')
+        or inst.start_date is None
+    ):
+        abort(404)
+
+    start = ensure_utc(inst.start_date)
+    end = ensure_utc(inst.end_date) if inst.end_date else start
+    # DTEND для all-day -- ексклюзивний: дата завершення + 1 день.
+    dtend_date = end.date() + timedelta(days=1)
+
+    course_url = url_for('courses.course_by_slug', slug=inst.course.slug, _external=True)
+    location = 'Онлайн' if inst.event_format == 'online' else (inst.location or 'Уточнюється')
+    description = inst.course.short_description or inst.course.subtitle or ''
+    description = (description + '\n' + course_url).strip()
+
+    lines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//IPRM//Courses//UK',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        'BEGIN:VEVENT',
+        'UID:course-instance-%d@iprm.com.ua' % inst.id,
+        'DTSTAMP:' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ'),
+        'DTSTART;VALUE=DATE:' + start.strftime('%Y%m%d'),
+        'DTEND;VALUE=DATE:' + dtend_date.strftime('%Y%m%d'),
+        'SUMMARY:' + _ics_escape(inst.course.title),
+        'DESCRIPTION:' + _ics_escape(description),
+        'LOCATION:' + _ics_escape(location),
+        'URL:' + course_url,
+        'END:VEVENT',
+        'END:VCALENDAR',
+    ]
+    body = '\r\n'.join(lines) + '\r\n'
+
+    return Response(
+        body,
+        mimetype='text/calendar',
+        headers={
+            'Content-Disposition': 'attachment; filename="iprm-event-%d.ics"' % inst.id,
+            'Cache-Control': 'public, max-age=600',
+        },
     )
 
 

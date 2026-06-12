@@ -17,6 +17,9 @@
   ]
 }
 </script>
+{% for node in events_jsonld %}
+<script type="application/ld+json">{{ node | tojson }}</script>
+{% endfor %}
 {% endblock %}
 
 {% block extra_css %}
@@ -145,7 +148,8 @@
       <!-- View: Календар (FullCalendar + фільтри; наповнюється JS-ом з data-schedule-events) -->
       <div class="iprm-calendar-wrap" data-schedule-pane="calendar" hidden>
         <div class="iprm-cal-filters" data-cal-filters></div>
-        <div class="iprm-fc" data-calendar></div>
+        <div class="iprm-fc" data-calendar
+             data-fc-src="{{ url_for('static', filename='vendor/fullcalendar/index.global.min.js') }}"></div>
         <div class="iprm-calendar__details" data-calendar-details aria-live="polite"></div>
       </div>
 
@@ -228,6 +232,5 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/page-courses-filter.js') }}?v={{ assets_version }}" defer></script>
-<script src="{{ url_for('static', filename='vendor/fullcalendar/index.global.min.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/page-courses-schedule.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

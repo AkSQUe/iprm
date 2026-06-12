@@ -68,6 +68,25 @@
       .replace(/'/g, '&#39;');
   }
 
+  function pad(n) { return n < 10 ? '0' + n : String(n); }
+
+  // Наступний день у форматі YYYY-MM-DD (через UTC, щоб уникнути DST-зсувів).
+  function nextDay(dstr) {
+    var p = dstr.split('-');
+    var d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+    d.setUTCDate(d.getUTCDate() + 1);
+    return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate());
+  }
+
+  // Українська множина: plural(1,'місце','місця','місць') -> 'місце'.
+  function plural(n, one, few, many) {
+    var mod10 = n % 10;
+    var mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return one;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+    return many;
+  }
+
   // Badge місця проведення (дзеркалить Jinja-макрос _location_badge).
   var PIN_SVG = '<svg class="iprm-loc-badge__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
   var MONITOR_SVG = '<svg class="iprm-loc-badge__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
@@ -128,7 +147,7 @@
   // FullCalendar event-обʼєкти з відфільтрованого набору.
   function fcEvents() {
     return events.filter(eventPasses).map(function (ev) {
-      return {
+      var obj = {
         id: String(ev.id),
         title: ev.title,
         start: ev.date,        // YYYY-MM-DD -> all-day (без зсуву по TZ)
@@ -136,6 +155,10 @@
         classNames: ['iprm-fc-ev', 'iprm-fc-ev--' + (ev.format || 'offline')],
         extendedProps: { ev: ev },
       };
+      // Багатоденний захід: FullCalendar all-day end -- ексклюзивний,
+      // тож беремо день ПІСЛЯ дати завершення.
+      if (ev.end && ev.end !== ev.date) obj.end = nextDay(ev.end);
+      return obj;
     });
   }
 
@@ -145,23 +168,55 @@
       'Оберіть захід у календарі, щоб побачити деталі та зареєструватися.</p>';
   }
 
+  var MONTHS_GEN = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',
+    'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];
+
+  function dayLabel(dstr) {
+    var p = dstr.split('-');
+    return parseInt(p[2], 10) + ' ' + MONTHS_GEN[parseInt(p[1], 10) - 1];
+  }
+
+  // Лінк "Google Календар" -- all-day подія (dates=YYYYMMDD/YYYYMMDD, end ексклюзивний).
+  function googleCalUrl(ev) {
+    var start = ev.date.replace(/-/g, '');
+    var end = nextDay(ev.end && ev.end !== ev.date ? ev.end : ev.date).replace(/-/g, '');
+    var loc = ev.format === 'online' ? 'Онлайн' : (ev.location || '');
+    var details = window.location.origin + ev.course_url;
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+      '&text=' + encodeURIComponent(ev.title) +
+      '&dates=' + start + '/' + end +
+      '&location=' + encodeURIComponent(loc) +
+      '&details=' + encodeURIComponent(details);
+  }
+
   function renderEventDetails(ev) {
     var meta = [];
     if (ev.event_type_label) meta.push(escapeHtml(ev.event_type_label));
     if (ev.cpd) meta.push(escapeHtml(ev.cpd) + ' балів БПР');
     if (ev.price) meta.push(ev.price + ' ₴');
+    if (ev.seats_left != null && ev.seats_left > 0) {
+      meta.push('залишилось ' + ev.seats_left + ' ' +
+        plural(ev.seats_left, 'місце', 'місця', 'місць'));
+    }
 
-    var dateLabel = (function () {
-      var p = ev.date.split('-');
-      var months = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',
-        'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];
-      return parseInt(p[2], 10) + ' ' + months[parseInt(p[1], 10) - 1] + ' ' + p[0];
-    })();
+    // Заголовок дати: одноденний "15 червня 2026", багатоденний "15--17 червня 2026".
+    var p = ev.date.split('-');
+    var dateLabel = (ev.end && ev.end !== ev.date)
+      ? dayLabel(ev.date) + ' – ' + dayLabel(ev.end) + ' ' + p[0]
+      : dayLabel(ev.date) + ' ' + p[0];
 
     var actionHtml = ev.is_open
       ? '<span class="iprm-btn iprm-btn--primary iprm-btn--sm">Реєстрація</span>'
       : '<span class="badge badge--draft">Реєстрацію закрито</span>';
     var href = ev.is_open ? ev.register_url : ev.course_url;
+
+    var addToCal =
+      '<div class="iprm-cal-addto">' +
+        '<span class="iprm-cal-addto__label">Додати в календар:</span>' +
+        '<a class="iprm-cal-addto__link" href="' + escapeHtml(ev.ics_url) + '">Apple / Outlook (.ics)</a>' +
+        '<a class="iprm-cal-addto__link" href="' + escapeHtml(googleCalUrl(ev)) +
+          '" target="_blank" rel="noopener">Google Календар</a>' +
+      '</div>';
 
     detailsEl.innerHTML =
       '<p class="iprm-calendar__details-empty"><strong>' + escapeHtml(dateLabel) + '</strong></p>' +
@@ -175,11 +230,40 @@
             : '') +
         '</div>' +
         '<div>' + actionHtml + '</div>' +
-      '</a>';
+      '</a>' +
+      addToCal;
   }
 
   // ----- calendar --------------------------------------------------------
   var calendar = null;
+  var fcLoading = null;
+
+  // Lazy-load: бандл FullCalendar (~280 KB) вантажимо лише при першому відкритті
+  // вкладки "Календар", а не на кожному заході сторінки.
+  function loadFullCalendar() {
+    if (typeof FullCalendar !== 'undefined') return Promise.resolve();
+    if (fcLoading) return fcLoading;
+    var src = calEl && calEl.getAttribute('data-fc-src');
+    if (!src) return Promise.reject(new Error('FullCalendar src missing'));
+    fcLoading = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = src;
+      s.onload = function () { resolve(); };
+      s.onerror = function () { reject(new Error('FullCalendar load failed')); };
+      document.head.appendChild(s);
+    });
+    return fcLoading;
+  }
+
+  function showCalendarFallback() {
+    if (filtersEl) filtersEl.hidden = true;
+    if (calEl) {
+      calEl.innerHTML = '<p class="iprm-calendar__details-empty">' +
+        'Не вдалося завантажити календар. Перегляньте розклад у режимі ' +
+        '&laquo;Список&raquo;.</p>';
+    }
+    if (detailsEl) detailsEl.innerHTML = '';
+  }
 
   function buildCalendar() {
     if (calendar || !calEl || typeof FullCalendar === 'undefined') return;
@@ -193,6 +277,7 @@
       initialDate: initialDate,
       height: 'auto',
       firstDay: 1,
+      eventInteractive: true,  // події фокусуються з клавіатури (a11y)
       headerToolbar: {
         left: 'prev,next today',
         center: 'title',
@@ -296,9 +381,7 @@
     var countEl = filtersEl ? filtersEl.querySelector('[data-cal-count]') : null;
     if (!countEl) return;
     var n = events.filter(eventPasses).length;
-    var word = (n % 10 === 1 && n % 100 !== 11) ? 'захід'
-      : ((n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? 'заходи' : 'заходів');
-    countEl.textContent = n + ' ' + word;
+    countEl.textContent = n + ' ' + plural(n, 'захід', 'заходи', 'заходів');
   }
 
   // ----- toggle: Список / Календар --------------------------------------
@@ -317,8 +400,8 @@
     if (view === 'calendar') {
       if (!calendarInited) {
         calendarInited = true;
-        buildFilters();
-        buildCalendar();
+        buildFilters();  // фільтри показуємо одразу, поки вантажиться бандл
+        loadFullCalendar().then(buildCalendar).catch(showCalendarFallback);
       } else if (calendar) {
         // FullCalendar рахує розміри від видимого контейнера; коли pane був
         // hidden, ширина = 0. Перерахунок після показу.

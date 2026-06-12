@@ -1119,6 +1119,42 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
   margin: 0;
 }
 
+/* ----- "Додати в календар" (.ics / Google) ----- */
+.iprm-cal-addto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 4px 4px 0;
+}
+
+.iprm-cal-addto__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--iprm-text-light);
+}
+
+.iprm-cal-addto__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--iprm-accent);
+  text-decoration: none;
+}
+
+.iprm-cal-addto__link:hover {
+  color: var(--iprm-accent-hover);
+  text-decoration: underline;
+}
+
+.iprm-cal-addto__link:focus-visible {
+  outline: 2px solid var(--iprm-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 @media (max-width: 640px) {
   .iprm-fc {
     padding: 14px;
