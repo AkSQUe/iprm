@@ -75,6 +75,13 @@ def design_system():
     return render_template('design_system/index.html')
 
 
+@main_bp.route('/sitemap-page')
+def sitemap_page():
+    from app.services.sitemap_service import generate_visual_sitemap
+    sections = generate_visual_sitemap()
+    return render_template('main/sitemap.html', sections=sections, active_nav='sitemap')
+
+
 @main_bp.route('/robots.txt')
 def robots():
     lines = [

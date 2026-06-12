@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Карта сайту | ІПРМ{% endblock %}
+{% block meta_description %}Інтерактивна карта сайту Інституту Плазмотерапії та Регенеративної Медицини. Швидкий доступ до курсів, тренерів, блогу та інших розділів.{% endblock %}
+
+{% block jsonld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SiteNavigationElement",
+  "name": "Карта сайту ІПРМ",
+  "url": "{{ url_for('main.sitemap_page', _external=True) }}"
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-sitemap.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <div class="iprm-content-page">
+    <div class="iprm-content-page__inner">
+      <h1 class="iprm-content-page__title"><span class="apple-gradient-text">Карта сайту</span></h1>
+      <p class="iprm-content-page__subtitle">Швидкий доступ до всіх розділів сайту</p>
+
+      <div class="sitemap-grid">
+        {% for section in sections %}
+        <div class="sitemap-section apple-reveal">
+          <button class="sitemap-section__header" type="button" aria-expanded="true" data-sitemap-toggle>
+            <span class="sitemap-section__icon sitemap-section__icon--{{ section.icon }}"></span>
+            <span class="sitemap-section__title">{{ section.title }}</span>
+            <span class="sitemap-section__chevron"></span>
+          </button>
+
+          <div class="sitemap-section__body">
+            <ul class="sitemap-section__list">
+              {% for item in section.items %}
+              <li class="sitemap-section__item">
+                <a href="{{ item.url }}">{{ item.label }}</a>
+              </li>
+              {% endfor %}
+            </ul>
+
+            {% if section.children %}
+            <button class="sitemap-section__more" type="button" data-sitemap-expand aria-expanded="false">
+              <span>Показати ще ({{ section.children|length }})</span>
+              <span class="sitemap-section__more-chevron"></span>
+            </button>
+            <ul class="sitemap-section__children" hidden>
+              {% for child in section.children %}
+              <li class="sitemap-section__child">
+                <a href="{{ child.url }}">{{ child.label }}</a>
+              </li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script defer src="{{ url_for('static', filename='js/apple-reveal.js') }}?v={{ assets_version }}"></script>
+<script defer src="{{ url_for('static', filename='js/sitemap.js') }}?v={{ assets_version }}"></script>
+{% endblock %}

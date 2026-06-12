@@ -16,6 +16,7 @@ STATIC_URLS = [
     ('blog.index', '0.7', 'weekly'),
     ('clinics.clinic_list', '0.8', 'monthly'),
     ('main.contact', '0.7', 'monthly'),
+    ('main.sitemap_page', '0.3', 'monthly'),
     ('main.bpr_documents', '0.4', 'yearly'),
     ('main.offer', '0.3', 'yearly'),
     ('main.privacy', '0.3', 'yearly'),
@@ -79,3 +80,104 @@ def generate_pages():
         })
 
     return pages
+
+
+def generate_visual_sitemap():
+    """Build structured data for the visual HTML sitemap page."""
+    sections = []
+
+    sections.append({
+        'title': 'Курси',
+        'icon': 'courses',
+        'items': [
+            {'label': 'Каталог курсів', 'url': url_for('courses.course_list')},
+        ],
+    })
+
+    courses = Course.query.filter_by(is_active=True).order_by(Course.title).all()
+    if courses:
+        sections[-1]['children'] = [
+            {'label': c.title, 'url': url_for('courses.course_by_slug', slug=c.slug)}
+            for c in courses
+        ]
+
+    sections.append({
+        'title': 'Тренери',
+        'icon': 'trainers',
+        'items': [
+            {'label': 'Список тренерів', 'url': url_for('trainers.trainer_list')},
+        ],
+    })
+    trainers = Trainer.query.filter_by(is_active=True).order_by(Trainer.full_name).all()
+    if trainers:
+        sections[-1]['children'] = [
+            {'label': t.full_name, 'url': url_for('trainers.trainer_detail', slug=t.slug)}
+            for t in trainers
+        ]
+
+    sections.append({
+        'title': 'Блог',
+        'icon': 'blog',
+        'items': [
+            {'label': 'Усі статті', 'url': url_for('blog.index')},
+        ],
+    })
+    now = datetime.now(timezone.utc)
+    posts = (
+        BlogPost.query
+        .filter(BlogPost.status == BlogPost.STATUS_PUBLISHED)
+        .filter(BlogPost.published_at.isnot(None), BlogPost.published_at <= now)
+        .order_by(BlogPost.published_at.desc())
+        .limit(20)
+        .all()
+    )
+    if posts:
+        sections[-1]['children'] = [
+            {'label': p.title, 'url': url_for('blog.post_detail', slug=p.slug)}
+            for p in posts
+        ]
+
+    sections.append({
+        'title': 'Клініки',
+        'icon': 'clinics',
+        'items': [
+            {'label': 'Каталог клінік', 'url': url_for('clinics.clinic_list')},
+        ],
+    })
+    clinics = Clinic.query.filter_by(is_active=True).order_by(Clinic.name).all()
+    if clinics:
+        sections[-1]['children'] = [
+            {'label': cl.name, 'url': url_for('clinics.clinic_detail', slug=cl.slug)}
+            for cl in clinics
+        ]
+
+    sections.append({
+        'title': 'Навчання',
+        'icon': 'education',
+        'items': [
+            {'label': 'Лабораторії', 'url': url_for('main.labs')},
+            {'label': 'Документи БПР', 'url': url_for('main.bpr_documents')},
+        ],
+    })
+
+    sections.append({
+        'title': 'Контакти',
+        'icon': 'contacts',
+        'items': [
+            {'label': 'Зворотний зв\'язок', 'url': url_for('main.contact')},
+        ],
+    })
+
+    sections.append({
+        'title': 'Інформація',
+        'icon': 'info',
+        'items': [
+            {'label': 'Оферта', 'url': url_for('main.offer')},
+            {'label': 'Конфіденційність', 'url': url_for('main.privacy')},
+            {'label': 'Повернення коштів', 'url': url_for('main.refund')},
+            {'label': 'Дисклеймер', 'url': url_for('main.disclaimer')},
+            {'label': 'Cookie', 'url': url_for('main.cookies')},
+        ],
+    })
+
+    return sections
