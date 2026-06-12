@@ -3,7 +3,8 @@ from urllib.parse import urljoin
 
 from email_validator import EmailNotValidError, validate_email
 from flask import (
-    Response, abort, current_app, flash, redirect, render_template, request, url_for,
+    Response, abort, current_app, flash, jsonify, redirect, render_template,
+    request, url_for,
 )
 from flask_login import current_user
 from sqlalchemy.orm import joinedload, selectinload
@@ -154,6 +155,42 @@ def _event_jsonld(inst, is_open):
     return node
 
 
+def _serialize_event(inst, capacity):
+    """Серіалізує CourseInstance у dict для календаря (inline + JSON-feed).
+
+    `capacity` -- мапа {instance_id: seats_left} з _capacity_map; для проведень
+    поза нею (напр. completed) вважаємо реєстрацію закритою.
+    """
+    seats_left = capacity.get(inst.id)
+    is_open = inst.id in capacity and (seats_left is None or seats_left > 0)
+    return {
+        'id': inst.id,
+        'date': inst.start_date.strftime('%Y-%m-%d'),
+        'end': inst.end_date.strftime('%Y-%m-%d') if inst.end_date else None,
+        'title': inst.course.title,
+        'slug': inst.course.slug,
+        'format': inst.event_format,
+        'format_label': inst.format_label,
+        'event_type': inst.course.event_type,
+        'event_type_label': inst.course.event_type_label,
+        'tags': inst.course.tags or [],
+        'trainer': inst.effective_trainer.full_name if inst.effective_trainer else None,
+        'cpd': inst.effective_cpd_points,
+        'price': (
+            int(inst.effective_price)
+            if inst.effective_price and inst.effective_price > 0
+            else None
+        ),
+        'location': inst.location or '',
+        'seats_left': seats_left,
+        'is_open': is_open,
+        'past': inst.status == 'completed',
+        'register_url': url_for('registration.register_instance', instance_id=inst.id),
+        'course_url': url_for('courses.course_by_slug', slug=inst.course.slug),
+        'ics_url': url_for('courses.event_ics', instance_id=inst.id),
+    }
+
+
 def _ics_escape(text):
     """Екранування TEXT-значень за RFC 5545 (\\ ; , та переноси рядків)."""
     return (
@@ -197,44 +234,12 @@ def course_list():
     capacity = _capacity_map([c.id for c in courses])
     open_ids = _open_from_capacity(capacity)
 
-    # JSON-серіалізована стрічка подій для view-режиму "Календар" (FullCalendar).
-    # Місце серіалізації -- route, бо Jinja2 не підтримує list comprehension.
-    # `date` (YYYY-MM-DD) використовується як all-day start у FullCalendar:
-    # date-only рядок не конвертується по часових поясах -> жодного зсуву дати.
-    # `end` -- дата завершення (для багатоденних заходів суцільна смуга).
+    # JSON-серіалізована стрічка майбутніх подій для inline-старту календаря.
+    # `date` (YYYY-MM-DD) -- all-day start у FullCalendar: date-only рядок не
+    # конвертується по часових поясах -> жодного зсуву дати. Архів минулих
+    # заходів довантажується ледаче через /courses/calendar.json.
     schedule_events = [
-        {
-            'id': inst.id,
-            'date': inst.start_date.strftime('%Y-%m-%d'),
-            'end': inst.end_date.strftime('%Y-%m-%d') if inst.end_date else None,
-            'title': inst.course.title,
-            'slug': inst.course.slug,
-            'format': inst.event_format,
-            'format_label': inst.format_label,
-            'event_type': inst.course.event_type,
-            'event_type_label': inst.course.event_type_label,
-            'tags': inst.course.tags or [],
-            'trainer': (
-                inst.effective_trainer.full_name
-                if inst.effective_trainer else None
-            ),
-            'cpd': inst.effective_cpd_points,
-            'price': (
-                int(inst.effective_price)
-                if inst.effective_price and inst.effective_price > 0
-                else None
-            ),
-            'location': inst.location or '',
-            'seats_left': capacity.get(inst.id),
-            'is_open': inst.id in open_ids,
-            'register_url': url_for(
-                'registration.register_instance', instance_id=inst.id,
-            ),
-            'course_url': url_for(
-                'courses.course_by_slug', slug=inst.course.slug,
-            ),
-            'ics_url': url_for('courses.event_ics', instance_id=inst.id),
-        }
+        _serialize_event(inst, capacity)
         for inst in upcoming_instances_all if inst.start_date
     ]
 
@@ -254,6 +259,55 @@ def course_list():
         events_jsonld=events_jsonld,
         open_instance_ids=open_ids,
     )
+
+
+def _parse_feed_date(raw):
+    """Парсить YYYY-MM-DD (FullCalendar шле ISO; беремо лише дату) -> aware UTC."""
+    if not raw:
+        return None
+    try:
+        return datetime.strptime(raw[:10], '%Y-%m-%d').replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
+@courses_bp.route('/calendar.json')
+def calendar_json():
+    """JSON-feed подій для FullCalendar у заданому діапазоні дат.
+
+    Включає completed-проведення -> перегляд архіву минулих заходів. Календар
+    кешує inline-майбутні події й довантажує цей feed лише для поточного/минулих
+    місяців (див. page-courses-schedule.js).
+    """
+    start_dt = _parse_feed_date(request.args.get('start'))
+    end_dt = _parse_feed_date(request.args.get('end'))
+
+    query = (
+        CourseInstance.query
+        .options(
+            joinedload(CourseInstance.course),
+            joinedload(CourseInstance.trainer),
+        )
+        .join(Course, Course.id == CourseInstance.course_id)
+        .filter(
+            Course.is_active.is_(True),
+            CourseInstance.status.in_(('published', 'active', 'completed')),
+            CourseInstance.start_date.isnot(None),
+        )
+    )
+    if start_dt is not None:
+        query = query.filter(CourseInstance.start_date >= start_dt)
+    if end_dt is not None:
+        query = query.filter(CourseInstance.start_date < end_dt)
+
+    # Стеля на захист від запитів без діапазону / надмірних вибірок.
+    instances = query.order_by(CourseInstance.start_date).limit(500).all()
+    capacity = _capacity_map(list({i.course_id for i in instances}))
+    events = [_serialize_event(inst, capacity) for inst in instances]
+
+    response = jsonify({'events': events})
+    response.headers['Cache-Control'] = 'public, max-age=300'
+    return response
 
 
 @courses_bp.route('/<slug>')

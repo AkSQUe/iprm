@@ -149,7 +149,8 @@
       <div class="iprm-calendar-wrap" data-schedule-pane="calendar" hidden>
         <div class="iprm-cal-filters" data-cal-filters></div>
         <div class="iprm-fc" data-calendar
-             data-fc-src="{{ url_for('static', filename='vendor/fullcalendar/index.global.min.js') }}"></div>
+             data-fc-src="{{ url_for('static', filename='vendor/fullcalendar/index.global.min.js') }}"
+             data-feed-url="{{ url_for('courses.calendar_json') }}"></div>
         <div class="iprm-calendar__details" data-calendar-details aria-live="polite"></div>
       </div>
 
