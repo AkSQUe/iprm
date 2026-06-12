@@ -960,14 +960,14 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
   font-size: 0.875rem;
 }
 
-.iprm-fc .fc .fc-toolbar-title {
+.iprm-fc .fc-toolbar-title {
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--apple-black);
   text-transform: capitalize;
 }
 
-.iprm-fc .fc .fc-button {
+.iprm-fc .fc-button {
   font-size: 0.8125rem;
   font-weight: 600;
   border-radius: var(--iprm-radius-pill);
@@ -977,19 +977,19 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
   transition: background var(--iprm-transition), border-color var(--iprm-transition), color var(--iprm-transition);
 }
 
-.iprm-fc .fc .fc-button-primary:not(:disabled).fc-button-active,
-.iprm-fc .fc .fc-button-primary:not(:disabled):active {
+.iprm-fc .fc-button-primary:not(:disabled).fc-button-active,
+.iprm-fc .fc-button-primary:not(:disabled):active {
   color: var(--iprm-white);
 }
 
-.iprm-fc .fc .fc-button:focus,
-.iprm-fc .fc .fc-button:focus-visible {
+.iprm-fc .fc-button:focus,
+.iprm-fc .fc-button:focus-visible {
   outline: 2px solid var(--iprm-accent);
   outline-offset: 2px;
   box-shadow: none;
 }
 
-.iprm-fc .fc .fc-col-header-cell-cushion {
+.iprm-fc .fc-col-header-cell-cushion {
   font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -998,22 +998,22 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
   padding: 8px 4px;
 }
 
-.iprm-fc .fc .fc-daygrid-day-number {
+.iprm-fc .fc-daygrid-day-number {
   font-size: 0.8125rem;
   color: var(--apple-black);
   padding: 6px 8px;
 }
 
-.iprm-fc .fc .fc-day-today .fc-daygrid-day-number {
+.iprm-fc .fc-day-today .fc-daygrid-day-number {
   font-weight: 700;
   color: var(--iprm-accent);
 }
 
-.iprm-fc .fc .fc-daygrid-day.fc-day-other {
+.iprm-fc .fc-daygrid-day.fc-day-other {
   background: transparent;
 }
 
-.iprm-fc .fc .fc-daygrid-day.fc-day-other .fc-daygrid-day-number {
+.iprm-fc .fc-daygrid-day.fc-day-other .fc-daygrid-day-number {
   color: var(--apple-gray-light);
 }
 
@@ -1050,16 +1050,16 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
   filter: brightness(0.94);
 }
 
-.iprm-fc .fc .fc-list-event.iprm-fc-ev:hover td {
+.iprm-fc .fc-list-event.iprm-fc-ev:hover td {
   background: var(--iprm-accent-light);
 }
 
 /* Маркер-крапка події у list/daygrid dot-режимі успадковує колір блоку */
-.iprm-fc .fc .fc-daygrid-event-dot {
+.iprm-fc .fc-daygrid-event-dot {
   border-color: currentColor;
 }
 
-.iprm-fc .fc .fc-list-empty {
+.iprm-fc .fc-list-empty {
   background: var(--apple-section-bg);
   color: var(--iprm-text-light);
 }
@@ -1160,18 +1160,18 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
     padding: 14px;
   }
 
-  .iprm-fc .fc .fc-toolbar.fc-header-toolbar {
+  .iprm-fc .fc-toolbar.fc-header-toolbar {
     flex-direction: column;
     gap: 10px;
     align-items: stretch;
   }
 
-  .iprm-fc .fc .fc-toolbar-title {
+  .iprm-fc .fc-toolbar-title {
     font-size: 1rem;
     text-align: center;
   }
 
-  .iprm-fc .fc .fc-toolbar-chunk {
+  .iprm-fc .fc-toolbar-chunk {
     display: flex;
     justify-content: center;
   }
