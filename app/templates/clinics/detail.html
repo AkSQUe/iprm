@@ -2,6 +2,7 @@
 
 {% block title %}{{ clinic.name }} | ІПРМ{% endblock %}
 {% block meta_description %}{{ clinic.short_description or clinic.name }}. Клініка Інституту Плазмотерапії та Регенеративної Медицини.{% endblock %}
+{% block og_image %}{% if clinic.photo %}{{ clinic.photo if '://' in clinic.photo else request.url_root.rstrip('/') ~ '/' ~ clinic.photo.lstrip('/') }}{% else %}{{ super() }}{% endif %}{% endblock %}
 
 {% block jsonld %}
 <script type="application/ld+json">
