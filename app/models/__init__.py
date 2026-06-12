@@ -21,6 +21,7 @@ from app.models.webhook_delivery import WebhookDelivery
 from app.models.blog_post import BlogPost
 from app.models.blog_comment import BlogComment
 from app.models.media_file import MediaFile
+from app.models.database_backup import DatabaseBackup
 
 __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'AuthIdentity',
@@ -30,4 +31,5 @@ __all__ = [
     'PaymentTransaction', 'SiteSettings', 'ErrorLog',
     'Course', 'CourseInstance', 'CourseRequest', 'CourseRequestAudit',
     'WebhookDelivery', 'BlogPost', 'BlogComment', 'MediaFile',
+    'DatabaseBackup',
 ]

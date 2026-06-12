@@ -62,6 +62,14 @@ class Config:
     # Flask-Mail ініціалізується з дефолтами, потім перевизначається через apply_to_app()
     MAIL_SUPPRESS_SEND = True  # Вимкнено за замовчуванням, вмикається через адмінку
 
+    # Database backup settings
+    BACKUP_STORAGE_PATH = os.environ.get('BACKUP_STORAGE_PATH') or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'backups',
+    )
+    BACKUP_RETENTION_DAYS = int(os.environ.get('BACKUP_RETENTION_DAYS', '30'))
+    BACKUP_OPERATION_TIMEOUT = int(os.environ.get('BACKUP_OPERATION_TIMEOUT', '3600'))
+    BACKUP_MAX_CONCURRENT = int(os.environ.get('BACKUP_MAX_CONCURRENT', '1'))
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

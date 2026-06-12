@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Резервні копії | Адмін-панель{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-backup.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+  <div class="admin-page__header">
+    <h1>Резервні копії бази даних</h1>
+    <p class="admin-page__subtitle">Створення, відновлення та управління резервними копіями PostgreSQL</p>
+  </div>
+
+  {# Stats cards #}
+  <div class="backup-stats">
+    <div class="backup-stats__card">
+      <div class="backup-stats__value">{{ stats.completed }}</div>
+      <div class="backup-stats__label">Успішних копій</div>
+    </div>
+    <div class="backup-stats__card">
+      <div class="backup-stats__value">{{ stats.total_size_bytes | filesizeformat if stats.total_size_bytes else '0 B' }}</div>
+      <div class="backup-stats__label">Загальний розмір</div>
+    </div>
+    <div class="backup-stats__card">
+      <div class="backup-stats__value">{{ stats.last_backup.created_at.strftime('%d.%m.%Y %H:%M') if stats.last_backup else 'Немає' }}</div>
+      <div class="backup-stats__label">Остання копія</div>
+    </div>
+    <div class="backup-stats__card">
+      <div class="backup-stats__value">{{ stats.disk_free | filesizeformat }}</div>
+      <div class="backup-stats__label">Вільне місце</div>
+    </div>
+  </div>
+
+  {# Actions #}
+  <div class="backup-actions">
+    <form method="POST" action="{{ url_for('admin.backup_create') }}" class="backup-actions__form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="backup-actions__row">
+        <select name="backup_type" class="form-input backup-actions__select">
+          <option value="full">Повна копія</option>
+          <option value="schema_only">Тільки схема</option>
+          <option value="data_only">Тільки дані</option>
+        </select>
+        <input type="text" name="description" class="form-input backup-actions__desc" placeholder="Опис (необов'язково)">
+        <button type="submit" class="apple-btn apple-btn--primary">Створити копію</button>
+      </div>
+    </form>
+
+    <form method="POST" action="{{ url_for('admin.backup_cleanup') }}" class="backup-actions__cleanup">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" name="dry_run" value="true" class="apple-btn apple-btn--outline apple-btn--sm">Перевірити очищення</button>
+      <button type="submit" class="apple-btn apple-btn--outline apple-btn--sm">Очистити старі копії</button>
+    </form>
+  </div>
+
+  {# Backup list #}
+  <div class="backup-table-wrap">
+    <table class="backup-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Тип</th>
+          <th>Статус</th>
+          <th>Розмір</th>
+          <th>Тривалість</th>
+          <th>Опис</th>
+          <th>Дата</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for backup in backups %}
+        <tr class="backup-table__row backup-table__row--{{ backup.status }}">
+          <td class="backup-table__id">#{{ backup.id }}</td>
+          <td>
+            <span class="backup-type backup-type--{{ backup.backup_type }}">
+              {% if backup.backup_type == 'full' %}Повна
+              {% elif backup.backup_type == 'schema_only' %}Схема
+              {% elif backup.backup_type == 'data_only' %}Дані
+              {% elif backup.backup_type == 'pre_restore' %}Pre-restore
+              {% endif %}
+            </span>
+          </td>
+          <td>
+            <span class="backup-status backup-status--{{ backup.status }}">
+              {% if backup.status == 'completed' %}Готово
+              {% elif backup.status == 'in_progress' %}В процесі
+              {% elif backup.status == 'failed' %}Помилка
+              {% elif backup.status == 'corrupted' %}Пошкоджено
+              {% endif %}
+            </span>
+          </td>
+          <td>{{ backup.file_size_display }}</td>
+          <td>{% if backup.duration_seconds %}{{ '%.1f' | format(backup.duration_seconds) }}с{% else %}-{% endif %}</td>
+          <td class="backup-table__desc">{{ backup.description or '-' }}</td>
+          <td>{{ backup.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+          <td class="backup-table__actions">
+            {% if backup.is_restorable %}
+            <form method="POST" action="{{ url_for('admin.backup_restore', backup_id=backup.id) }}" class="backup-action-form" data-confirm="Відновити базу даних з копії #{{ backup.id }}?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="backup-action-btn backup-action-btn--restore" title="Відновити">&#x21bb;</button>
+            </form>
+            {% endif %}
+            {% if backup.status == 'completed' %}
+            <a href="{{ url_for('admin.backup_download', backup_id=backup.id) }}" class="backup-action-btn backup-action-btn--download" title="Завантажити">&#x2193;</a>
+            <a href="{{ url_for('admin.backup_validate', backup_id=backup.id) }}" class="backup-action-btn backup-action-btn--validate" title="Перевірити">&#x2713;</a>
+            {% endif %}
+            <form method="POST" action="{{ url_for('admin.backup_delete', backup_id=backup.id) }}" class="backup-action-form" data-confirm="Видалити резервну копію #{{ backup.id }}?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="backup-action-btn backup-action-btn--delete" title="Видалити">&#x2715;</button>
+            </form>
+          </td>
+        </tr>
+        {% if backup.error_message %}
+        <tr class="backup-table__error">
+          <td colspan="8">
+            <details>
+              <summary>Помилка</summary>
+              <pre>{{ backup.error_message }}</pre>
+            </details>
+          </td>
+        </tr>
+        {% endif %}
+        {% else %}
+        <tr>
+          <td colspan="8" class="backup-table__empty">Резервних копій ще немає. Створіть першу копію вище.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Pagination #}
+  {% if pagination.pages > 1 %}
+  <div class="backup-pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.backups', page=pagination.prev_num) }}" class="backup-pagination__link">&laquo; Назад</a>
+    {% endif %}
+    <span class="backup-pagination__info">Сторінка {{ pagination.page }} з {{ pagination.pages }}</span>
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.backups', page=pagination.next_num) }}" class="backup-pagination__link">Далі &raquo;</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script defer src="{{ url_for('static', filename='js/admin-backup.js') }}?v={{ assets_version }}"></script>
+{% endblock %}

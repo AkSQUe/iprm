@@ -107,6 +107,22 @@ def init_scheduler(app):
         name='Очищення тимчасових xlsx-вивантажень',
     )
 
+    scheduler.add_job(
+        automatic_database_backup,
+        trigger=CronTrigger(hour=3, minute=0),  # daily at 3:00 AM
+        id='automatic_database_backup',
+        replace_existing=True,
+        name='Автоматичне резервне копіювання БД',
+    )
+
+    scheduler.add_job(
+        backup_cleanup,
+        trigger=CronTrigger(hour=4, minute=0),  # daily at 4:00 AM
+        id='backup_cleanup',
+        replace_existing=True,
+        name='Очищення старих резервних копій',
+    )
+
     scheduler.start()
     _initialized = True
     logger.info('APScheduler started with SQLAlchemy jobstore')
@@ -249,3 +265,91 @@ def cleanup_xlsx_uploads():
                 cleanup_stale_xlsx_uploads(max_age_minutes=30)
             except Exception:
                 logger.exception('cleanup_xlsx_uploads failed')
+
+
+def automatic_database_backup():
+    """Daily automatic full database backup with email notification on failure."""
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('automatic_database_backup') as got:
+            if not got:
+                logger.debug('auto_backup: another worker holds the lock, skipping')
+                return
+            from app.services.backup_service import BackupService, BackupError
+            try:
+                backup = BackupService.create_backup(
+                    backup_type='full',
+                    description='Автоматична щоденна копія',
+                )
+                logger.info(
+                    'Auto backup created: %s (%s, %.1fs)',
+                    backup.filename, backup.file_size_display, backup.duration_seconds or 0,
+                )
+            except BackupError as exc:
+                logger.exception('Automatic backup failed: %s', exc)
+                _notify_backup_failure(str(exc))
+            except Exception as exc:
+                logger.exception('Automatic backup failed unexpectedly')
+                _notify_backup_failure(str(exc))
+
+
+def backup_cleanup():
+    """Daily cleanup of old backups according to retention policy."""
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('backup_cleanup') as got:
+            if not got:
+                logger.debug('backup_cleanup: another worker holds the lock, skipping')
+                return
+            from app.services.backup_service import BackupService
+            try:
+                result = BackupService.cleanup_old_backups()
+                if result.get('deleted'):
+                    logger.info('Backup cleanup: deleted %d old backups', result['deleted'])
+            except Exception:
+                logger.exception('Backup cleanup failed')
+
+
+def _notify_backup_failure(error_message):
+    """Send email notification to admins about backup failure."""
+    try:
+        from app.models.email_settings import EmailSettings
+        from app.models.site_settings import SiteSettings
+        from app.services.email_service import EmailService
+        from flask import url_for
+
+        email_settings = EmailSettings.get()
+        if not email_settings.smtp_server:
+            return
+
+        site_settings = SiteSettings.get()
+        manager_emails = site_settings.event_manager_emails or []
+        if not manager_emails:
+            return
+
+        app = scheduler._app
+        with app.app_context():
+            try:
+                admin_url = url_for('admin.backups', _external=True)
+            except Exception:
+                admin_url = '/admin/backups'
+
+        subject = '[ІПРМ] Помилка автоматичного резервного копіювання'
+        context = {
+            'error_message': error_message,
+            'admin_url': admin_url,
+        }
+
+        for email in manager_emails:
+            try:
+                EmailService.send_email(
+                    to=email,
+                    subject=subject,
+                    template_name='backup_failure',
+                    context=context,
+                    trigger='backup_failure',
+                )
+            except Exception:
+                logger.exception('Failed to send backup failure notification to %s', email)
+    except Exception:
+        logger.exception('Failed to send backup failure notification')

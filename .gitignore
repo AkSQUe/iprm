@@ -23,6 +23,12 @@ migrations/versions/*.pyc
 # the Jinja template lives -- is NOT ignored.
 /certificates/
 
+# Database backups (created by backup service, persisted on server)
+/backups/
+
+# Media uploads (persisted on server via nginx alias)
+/media/
+
 # Environment
 .env
 .env.*

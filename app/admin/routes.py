@@ -20,3 +20,4 @@ from app.admin import routes_tools  # noqa: F401
 from app.admin import routes_blog  # noqa: F401
 from app.admin import routes_blog_comments  # noqa: F401
 from app.admin import routes_media  # noqa: F401
+from app.admin import routes_backup  # noqa: F401
