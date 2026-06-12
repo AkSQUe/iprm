@@ -279,7 +279,8 @@
 
 .form-section .form-input,
 .admin-form .form-input,
-.admin-filter-form .form-input {
+.admin-filter-form .form-input,
+.backup-actions__form .form-input {
   padding: 10px 14px;
   font-size: 0.9375rem;
   color: var(--apple-black);
@@ -291,14 +292,16 @@
 
 .form-section .form-input:focus,
 .admin-form .form-input:focus,
-.admin-filter-form .form-input:focus {
+.admin-filter-form .form-input:focus,
+.backup-actions__form .form-input:focus {
   border-color: var(--iprm-nav-active);
   box-shadow: 0 0 0 3px var(--iprm-accent-light);
   outline: none;
 }
 
 .form-section .form-input::placeholder,
-.admin-form .form-input::placeholder {
+.admin-form .form-input::placeholder,
+.backup-actions__form .form-input::placeholder {
   color: var(--apple-gray-light);
 }
 
@@ -353,7 +356,8 @@
 /* Select dropdown -- прибираємо native-стрілку браузера і малюємо свою.
    Без appearance:none було видно дві стрілки поруч (native + background-image). */
 .admin-form select.form-input,
-.admin-filter-form select.form-input {
+.admin-filter-form select.form-input,
+.backup-actions__form select.form-input {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -366,7 +370,8 @@
 
 /* Firefox: прибрати пунктирну рамку в фокусі на select */
 .admin-form select.form-input:-moz-focusring,
-.admin-filter-form select.form-input:-moz-focusring {
+.admin-filter-form select.form-input:-moz-focusring,
+.backup-actions__form select.form-input:-moz-focusring {
   color: transparent;
   text-shadow: 0 0 0 var(--apple-black);
 }

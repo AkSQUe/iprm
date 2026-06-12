@@ -44,7 +44,25 @@
 }
 .media-card__thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .media-card__meta { font-size: 0.75rem; color: var(--apple-gray); line-height: 1.3; }
-.media-card__alt { font-size: 0.8125rem; padding: 6px 8px; }
+/* Поле alt-тексту: компактний інпут (поза .admin-form-скоупом, тож стилізуємо
+   напряму під дизайн-систему). */
+.media-card__alt {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 0.8125rem;
+  padding: 6px 8px;
+  color: var(--apple-black);
+  background: var(--apple-section-bg);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.media-card__alt::placeholder { color: var(--apple-gray-light); }
+.media-card__alt:focus {
+  border-color: var(--iprm-nav-active);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light);
+  outline: none;
+}
 .media-card__alt--saved { border-color: #34c759; }
 
 /* ---- Пікер вибору з бібліотеки (модалка) ---- */
