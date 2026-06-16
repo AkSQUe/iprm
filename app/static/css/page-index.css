@@ -257,7 +257,7 @@
 .page-index .apple-stat p {
   font-size: 0.9375rem;
   font-weight: 300;
-  color: var(--iprm-neutral-bg);
+  color: var(--apple-gray-light);
   margin-top: 8px;
   letter-spacing: 0.01em;
 }
@@ -544,11 +544,8 @@
 
 /* ========== SCROLL REVEAL ========== */
 
-.page-index .apple-reveal {
-  translate: 0 40px;
-  transition: opacity 0.8s var(--ease-reveal), translate 0.8s var(--ease-reveal),
-    transform 0.3s var(--ease-interact), box-shadow 0.3s var(--ease-interact);
-}
+/* .apple-reveal визначено глобально в apple-pages.css (.apple-page .apple-reveal):
+   єдине значення translate, transition-duration та stagger для всіх сторінок. */
 
 /* Button states, focus та selection визначено в apple-pages.css (.apple-page) */
 

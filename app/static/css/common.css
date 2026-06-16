@@ -16,16 +16,6 @@
   --iprm-max-content: 1200px;
   --iprm-card-bg: #f5f5f7;
 
-  /* Apple Design Tokens */
-  --apple-black: #1d1d1f;
-  --apple-gray-dark: #424245;
-  --apple-gray: #86868b;
-  --apple-gray-light: #d2d2d7;
-  --apple-section-bg: #f5f5f7;
-  --apple-orange: #e8913a;
-  --apple-orange-light: #fef0e6;
-  --apple-purple-mid: #9b59b6;
-
   /* Brand colors */
   --iprm-accent: #7055a4;
   --iprm-accent-hover: #5d4691;
