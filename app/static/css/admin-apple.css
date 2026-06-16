@@ -242,6 +242,12 @@
   margin-top: 24px;
 }
 
+/* Відступ, коли за карткою-секцією одразу йде панель фільтрів (напр. сторінка
+   "Запити на курси": картка "Найбільш запитувані" -> фільтри). */
+.form-section + .admin-filter-form {
+  margin-top: 24px;
+}
+
 .form-section__title,
 .admin-form__section-title {
   font-size: 1.125rem;
@@ -355,6 +361,12 @@
 
 /* Select dropdown -- прибираємо native-стрілку браузера і малюємо свою.
    Без appearance:none було видно дві стрілки поруч (native + background-image). */
+/* Контроли панелі фільтрів розтягуються, заповнюючи ширину контейнера
+   (рядок flex-wrap). Кнопки-дії (.btn-admin) лишаються по контенту. */
+.admin-filter-form .form-input {
+  flex: 1 1 200px;
+}
+
 .admin-form select.form-input,
 .admin-filter-form select.form-input,
 .backup-actions__form select.form-input {
@@ -411,6 +423,8 @@
 /* ========== TABLE ========== */
 
 .admin-table {
+  width: 100%;
+  border-collapse: collapse;
   background: var(--iprm-white);
   border-radius: var(--iprm-radius);
   border: 1px solid var(--iprm-border);
@@ -446,13 +460,15 @@
   gap: 6px;
 }
 
-.admin-table a {
+/* :not(.btn-admin) -- щоб не перебивати власні кольори кнопок у таблиці
+   (інакше .btn-admin--primary отримує текст кольору акценту = фон -> невидимо). */
+.admin-table a:not(.btn-admin) {
   color: var(--iprm-nav-active);
   text-decoration: none;
   font-weight: 500;
 }
 
-.admin-table a:hover {
+.admin-table a:not(.btn-admin):hover {
   color: var(--iprm-accent-hover);
 }
 
