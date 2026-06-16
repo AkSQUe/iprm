@@ -39,6 +39,9 @@
         if (entry.isIntersecting) {
           var items = entry.target.querySelectorAll('.apple-stat h3');
           items.forEach(function (item) {
+            // data-static: значення не анімуємо (напр. рік заснування),
+            // бо лічильник 0→2015 виглядає безглуздо.
+            if (item.hasAttribute('data-static')) return;
             var target = parseInt(item.getAttribute('data-target'));
             var suffix = item.getAttribute('data-suffix') || '';
             if (target) animateCounter(item, target, suffix);

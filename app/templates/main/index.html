@@ -66,7 +66,7 @@
     </div>
     <div class="apple-stats-row apple-reveal" id="stats-row">
       <div class="apple-stat">
-        <h3 data-target="2015" data-suffix="">2015</h3>
+        <h3 data-static>2015</h3>
         <p>Рік заснування</p>
       </div>
       <div class="apple-stat">
@@ -84,7 +84,7 @@
     </div>
   </section>
 
-  {% if events %}
+  {% if courses %}
   <!-- ===== COURSE CARDS ===== -->
   <section class="iprm-section" aria-labelledby="courses-title">
     <div class="apple-section-header apple-reveal">
@@ -92,19 +92,19 @@
       <p>Оберіть курс та підвищіть свою кваліфікацію</p>
     </div>
     <div class="iprm-course-cards">
-      {% for event in events %}
+      {% for course in courses %}
       <article class="iprm-course-card apple-reveal">
-        <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}">
+        <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">
           <div class="iprm-course-card__image">
-            {% if event.card_src %}
-              <img src="{{ event.card_src }}" alt="{{ event.title }}" loading="lazy" width="400" height="200">
+            {% if course.card_src %}
+              <img src="{{ course.card_src }}" alt="{{ course.title }}" loading="lazy" width="400" height="200">
             {% endif %}
           </div>
           <div class="apple-course-body">
-            <h3 class="iprm-course-card__title">{{ event.title }}</h3>
-            {% if event.tags %}
+            <h3 class="iprm-course-card__title">{{ course.title }}</h3>
+            {% if course.tags %}
             <div class="iprm-course-card__tags">
-              {% for tag in event.tags %}
+              {% for tag in course.tags %}
                 <span class="iprm-tag">{{ tag }}</span>
               {% endfor %}
             </div>
@@ -272,7 +272,7 @@
       </div>
       <div class="apple-clinic-card apple-reveal">
         <div class="apple-clinic-card__image">
-          <img src="{{ url_for('static', filename='images/clinics/infusion therapy.webp') }}" alt="Відділення інфузійної терапії" width="400" height="300" loading="lazy">
+          <img src="{{ url_for('static', filename='images/clinics/infusion-therapy.webp') }}" alt="Відділення інфузійної терапії" width="400" height="300" loading="lazy">
         </div>
         <div class="apple-clinic-card__body">
           <h3>Відділення персоніфікованої інфузійної терапії</h3>
