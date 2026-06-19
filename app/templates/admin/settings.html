@@ -47,6 +47,22 @@
         </div>
 
         <div class="form-group">
+          <label for="bank_iban">IBAN (розрахунковий рахунок)</label>
+          {{ form.bank_iban(class="form-input", id="bank_iban", placeholder="UA213052990000026003006239637") }}
+          <small class="form-hint">Використовується у рахунку на оплату.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="bank_name">Назва банку</label>
+          {{ form.bank_name(class="form-input", id="bank_name", placeholder="АТКБ «ПРИВАТБАНК»") }}
+        </div>
+
+        <div class="form-group">
+          <label for="tax_status">Податковий статус</label>
+          {{ form.tax_status(class="form-input", id="tax_status", placeholder="Платник єдиного податку третьої групи (неплатник ПДВ)") }}
+        </div>
+
+        <div class="form-group">
           <label for="bpr_provider_number">Реєстраційний номер провайдера БПР</label>
           {{ form.bpr_provider_number(class="form-input", id="bpr_provider_number", placeholder="2738") }}
           <small class="form-hint">4 цифри. Використовується у номері сертифіката (РРРР-<b>ПППП</b>-ЗЗЗЗЗЗЗ-УУУУУУ).</small>

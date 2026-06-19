@@ -35,6 +35,19 @@ class SiteSettings(TimestampMixin, db.Model):
     company_legal_name = db.Column(db.String(500), default='ПО "ІПРМ"')
     edrpou = db.Column(db.String(20), default='45871060')
 
+    # Банківські реквізити -- для рахунка на оплату (invoice_service).
+    bank_iban = db.Column(
+        db.String(34), default='UA213052990000026003006239637', nullable=False,
+    )
+    bank_name = db.Column(
+        db.String(255), default='АТКБ «ПРИВАТБАНК»', nullable=False,
+    )
+    tax_status = db.Column(
+        db.String(255),
+        default='Платник єдиного податку третьої групи (неплатник ПДВ)',
+        nullable=False,
+    )
+
     # Contacts
     phone_primary = db.Column(db.String(50), default='+380670050707')
     phone_secondary = db.Column(db.String(50), default='+380 96 090 0007')

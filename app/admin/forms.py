@@ -116,6 +116,21 @@ class SiteSettingsForm(FlaskForm):
         'Код ЄДРПОУ',
         validators=[Optional(), Length(max=20)],
     )
+    # Банківські реквізити -- для рахунка на оплату.
+    bank_iban = StringField(
+        'IBAN (розрахунковий рахунок)',
+        validators=[Optional(), Length(max=34)],
+        description='Напр. UA213052990000026003006239637',
+    )
+    bank_name = StringField(
+        'Назва банку',
+        validators=[Optional(), Length(max=255)],
+    )
+    tax_status = StringField(
+        'Податковий статус',
+        validators=[Optional(), Length(max=255)],
+        description='Напр. Платник єдиного податку третьої групи (неплатник ПДВ).',
+    )
     bpr_provider_number = StringField(
         'Реєстраційний номер провайдера БПР',
         validators=[Optional(), Length(max=20)],

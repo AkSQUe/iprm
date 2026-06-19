@@ -1,7 +1,14 @@
+import secrets
+from datetime import timedelta, timezone
+
 from sqlalchemy import func as sa_func
 
 from app.extensions import db
-from app.models.mixins import TimestampMixin, BigIntPK
+from app.models.mixins import TimestampMixin, BigIntPK, utcnow
+
+
+# Термін дії токена посилання на самостійне завершення реєстрації учасником.
+COMPLETION_TOKEN_TTL_DAYS = 30
 
 
 class EventRegistration(TimestampMixin, db.Model):
@@ -43,6 +50,14 @@ class EventRegistration(TimestampMixin, db.Model):
     attended = db.Column(db.Boolean, default=False)
     cpd_points_awarded = db.Column(db.Integer)
     admin_notes = db.Column(db.Text)
+
+    # Альтернативний pipeline: менеджер створює учасника з мінімумом полів і
+    # надсилає посилання з токеном, за яким учасник сам завершує анкету та
+    # обирає спосіб оплати. Токен діє COMPLETION_TOKEN_TTL_DAYS; used_at --
+    # коли анкету вперше заповнено (інформативно, не блокує повторний вхід).
+    completion_token = db.Column(db.String(64), unique=True, index=True)
+    completion_token_expires_at = db.Column(db.DateTime(timezone=True))
+    completion_token_used_at = db.Column(db.DateTime(timezone=True))
 
     # Унікальний порядковий номер місця у межах конкретного CourseInstance.
     # Призначається в момент `payment_status='paid'`. Для безкоштовних подій
@@ -111,6 +126,30 @@ class EventRegistration(TimestampMixin, db.Model):
         ('paid', 'Оплачено'),
         ('refunded', 'Повернено'),
     ]
+
+    def issue_completion_token(self, ttl_days=COMPLETION_TOKEN_TTL_DAYS):
+        """Згенерувати (або перевипустити) токен завершення реєстрації.
+
+        Повертає рядок токена. Не комітить -- caller відповідає за commit."""
+        self.completion_token = secrets.token_urlsafe(32)
+        self.completion_token_expires_at = utcnow() + timedelta(days=ttl_days)
+        self.completion_token_used_at = None
+        return self.completion_token
+
+    def revoke_completion_token(self):
+        self.completion_token = None
+        self.completion_token_expires_at = None
+        self.completion_token_used_at = None
+
+    @property
+    def completion_token_active(self):
+        """True, якщо токен існує і ще не сплив (used_at не блокує)."""
+        if not self.completion_token or self.completion_token_expires_at is None:
+            return False
+        exp = self.completion_token_expires_at
+        if exp.tzinfo is None:  # SQLite повертає naive
+            exp = exp.replace(tzinfo=timezone.utc)
+        return utcnow() <= exp
 
     @property
     def status_label(self):
