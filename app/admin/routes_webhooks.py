@@ -9,7 +9,7 @@ from app.admin import admin_bp
 from app.admin._helpers import try_commit
 from app.admin.decorators import admin_required
 from app.extensions import db
-from app.models.webhook_delivery import WebhookDelivery
+from app.models.webhook_delivery import MAX_ATTEMPTS, WebhookDelivery
 
 audit_logger = logging.getLogger('audit')
 
@@ -39,6 +39,7 @@ def webhooks_list():
         deliveries=deliveries,
         counts=counts,
         filter_status=filter_status,
+        max_attempts=MAX_ATTEMPTS,
     )
 
 

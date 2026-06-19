@@ -6,12 +6,13 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-webhooks.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
-  <div class="admin-layout admin-layout--wide">
+  <div class="admin-layout admin-layout--wide admin-webhooks">
 
   <div class="admin-hero">
     <div>
@@ -21,96 +22,117 @@
         <span class="admin-breadcrumb__current">Webhooks</span>
       </div>
       <h1 class="admin-hero__title">Webhook черга</h1>
-      <p class="admin-hero__subtitle">
-        Партнерські сповіщення (POST на <code>partner_webhook_url</code>).
-        Обробляється scheduler-ом щохвилини з exp-backoff ретраями та circuit breaker.
-      </p>
+      <p class="admin-hero__subtitle">Партнерські сповіщення про зміни курсів</p>
     </div>
   </div>
 
   {% include 'partials/flash_messages.html' %}
 
-  <div class="admin-stats-row">
-    <div class="admin-stat">
-      <span class="admin-stat__value">{{ counts.get('pending', 0) }}</span>
-      <span class="admin-stat__label">Pending</span>
-    </div>
-    <div class="admin-stat">
-      <span class="admin-stat__value">{{ counts.get('retrying', 0) }}</span>
-      <span class="admin-stat__label">Retrying</span>
-    </div>
-    <div class="admin-stat">
-      <span class="admin-stat__value">{{ counts.get('sent', 0) }}</span>
-      <span class="admin-stat__label">Sent</span>
-    </div>
-    <div class="admin-stat">
-      <span class="admin-stat__value">{{ counts.get('failed', 0) }}</span>
-      <span class="admin-stat__label">Failed</span>
+  <div class="wh-info">
+    <span class="material-symbols-rounded wh-info__icon">bolt</span>
+    <div>
+      POST на <code>partner_webhook_url</code> формується при створенні, оновленні
+      чи видаленні курсу. Чергу обробляє планувальник щохвилини з експоненційним
+      backoff та circuit breaker -- записи не губляться при збоях, а ретраї
+      виконуються автоматично до {{ max_attempts }} спроб.
     </div>
   </div>
 
-  <form method="GET" action="{{ url_for('admin.webhooks_list') }}" class="admin-filter-form">
-    <div class="form-group">
-      <label for="filter-status">Статус</label>
-      <select name="status" id="filter-status" class="form-input" onchange="this.form.submit()">
-        <option value="">Всі</option>
-        {% for s in ('pending', 'retrying', 'sent', 'failed') %}
-        <option value="{{ s }}"{% if filter_status == s %} selected{% endif %}>{{ s }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    {% if filter_status %}
-    <a href="{{ url_for('admin.webhooks_list') }}" class="btn-admin btn-admin--secondary">Очистити</a>
-    {% endif %}
-  </form>
+  {# Stat-картки водночас є фільтром за статусом #}
+  {% set total = counts.values() | sum %}
+  {% set cards = [
+    {'key': '',         'label': 'Усі',      'value': total,                  'mod': 'admin-stat-card--accent'},
+    {'key': 'pending',  'label': 'Pending',  'value': counts.get('pending', 0),  'mod': ''},
+    {'key': 'retrying', 'label': 'Retrying', 'value': counts.get('retrying', 0), 'mod': 'admin-stat-card--warning'},
+    {'key': 'sent',     'label': 'Sent',     'value': counts.get('sent', 0),     'mod': 'admin-stat-card--success'},
+    {'key': 'failed',   'label': 'Failed',   'value': counts.get('failed', 0),   'mod': 'admin-stat-card--danger'}
+  ] %}
+  <div class="admin-stat-cards wh-stats">
+    {% for c in cards %}
+    {% set is_active = (filter_status == c.key) %}
+    <a href="{{ url_for('admin.webhooks_list', status=c.key) if c.key else url_for('admin.webhooks_list') }}"
+       class="admin-stat-card wh-stat-card {{ c.mod }}{{ ' is-active' if is_active }}"
+       {% if is_active %}aria-current="true"{% endif %}>
+      <span class="admin-stat-card__value">{{ c.value }}</span>
+      <span class="admin-stat-card__label">{{ c.label }}</span>
+    </a>
+    {% endfor %}
+  </div>
 
   {% if deliveries %}
+  <div class="wh-results-meta">
+    <span>
+      Показано {{ deliveries | length }}
+      {% if filter_status %}зі статусом <strong>{{ filter_status }}</strong>{% else %}останніх записів{% endif %}
+    </span>
+    {% if filter_status %}
+    <a href="{{ url_for('admin.webhooks_list') }}" class="wh-results-meta__clear">Скинути фільтр</a>
+    {% endif %}
+  </div>
+
   <div class="admin-table-wrap">
   <table class="admin-table">
     <thead>
       <tr>
-        <th>Створено</th>
-        <th>Курс</th>
-        <th>Дія</th>
+        <th>Подія</th>
+        <th>Курс / Дія</th>
         <th>Статус</th>
         <th>Спроб</th>
         <th>HTTP</th>
-        <th>Next retry</th>
+        <th>Час / ретрай</th>
         <th>Дії</th>
       </tr>
     </thead>
     <tbody>
       {% for d in deliveries %}
       <tr>
-        <td>{{ d.created_at.strftime('%d.%m.%Y %H:%M:%S') if d.created_at else '---' }}</td>
-        <td><code>{{ d.course_slug }}</code></td>
-        <td><code>{{ d.action }}</code></td>
+        <td class="wh-nowrap">
+          {{ d.created_at.strftime('%d.%m.%Y %H:%M:%S') if d.created_at else '---' }}
+          {% if d.event_uuid %}<span class="wh-uuid" title="event_uuid">{{ d.event_uuid[:12] }}</span>{% endif %}
+        </td>
+        <td>
+          <div class="wh-target">
+            <span class="wh-slug" title="{{ d.target_url }}">{{ d.course_slug }}</span>
+            <span class="wh-action wh-action--{{ d.action }}">{{ d.action }}</span>
+          </div>
+        </td>
         <td>
           <span class="badge badge--{{ d.status }}">{{ d.status }}</span>
           {% if d.last_error %}
-          <div class="admin-text-muted" title="{{ d.last_error }}">{{ d.last_error | truncate(60) }}</div>
+          <details class="wh-error">
+            <summary><span class="material-symbols-rounded">error</span>Деталі</summary>
+            <pre>{{ d.last_error }}</pre>
+          </details>
           {% endif %}
         </td>
-        <td>{{ d.attempts }}</td>
-        <td>{{ d.last_http_status or '---' }}</td>
         <td>
-          {% if d.next_retry_at %}
-            {{ d.next_retry_at.strftime('%d.%m %H:%M') }}
-          {% else %}---{% endif %}
+          <span class="wh-attempts{{ ' wh-attempts--max' if d.attempts >= max_attempts }}">
+            {{ d.attempts }} / {{ max_attempts }}
+          </span>
+        </td>
+        <td class="wh-http">{{ d.last_http_status or '---' }}</td>
+        <td class="wh-nowrap">
+          {% if d.status == 'sent' and d.sent_at %}
+            <span class="wh-muted">відправлено</span><br>{{ d.sent_at.strftime('%d.%m %H:%M') }}
+          {% elif d.next_retry_at %}
+            <span class="wh-muted">ретрай</span><br>{{ d.next_retry_at.strftime('%d.%m %H:%M') }}
+          {% else %}
+            <span class="wh-muted">---</span>
+          {% endif %}
         </td>
         <td>
-          <div class="admin-table__actions">
+          <div class="admin-table__actions admin-flex-center">
             {% if d.status in ('failed', 'retrying') %}
-            <form method="POST" action="{{ url_for('admin.webhook_retry', delivery_id=d.id) }}" data-confirm="Повторити відправку зараз?">
+            <form method="POST" action="{{ url_for('admin.webhook_retry', delivery_id=d.id) }}" class="admin-inline" data-confirm="Повторити відправку зараз?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Повторити">
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Повторити відправку" title="Повторити">
                 <span class="material-symbols-rounded">refresh</span>
               </button>
             </form>
             {% endif %}
-            <form method="POST" action="{{ url_for('admin.webhook_delete', delivery_id=d.id) }}" data-confirm="Видалити запис?">
+            <form method="POST" action="{{ url_for('admin.webhook_delete', delivery_id=d.id) }}" class="admin-inline" data-confirm="Видалити запис?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити">
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити запис" title="Видалити">
                 <span class="material-symbols-rounded">delete</span>
               </button>
             </form>
@@ -122,10 +144,18 @@
   </table>
   </div>
   {% else %}
-  <div class="admin-empty">
+  <div class="admin-empty admin-text-center">
     <span class="material-symbols-rounded admin-empty__icon">inbox</span>
-    <h3 class="admin-empty__title">Записів немає</h3>
-    <p>Доставки з'являться тут при зміні курсів, якщо увімкнено partner_webhook.</p>
+    <h3 class="admin-empty__title">
+      {% if filter_status %}Немає записів зі статусом "{{ filter_status }}"{% else %}Записів немає{% endif %}
+    </h3>
+    <p>
+      {% if filter_status %}
+        Спробуйте інший фільтр або <a href="{{ url_for('admin.webhooks_list') }}">показати всі</a>.
+      {% else %}
+        Доставки з'являться тут при зміні курсів, якщо увімкнено partner_webhook.
+      {% endif %}
+    </p>
   </div>
   {% endif %}
 

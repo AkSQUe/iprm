@@ -149,14 +149,10 @@ a.wh-stat-card:focus-visible {
   align-items: flex-start;
 }
 
-/* ===== Розгортуваний рядок помилки ===== */
-
-.wh-error-row td {
-  padding-top: 0;
-  border-top: none;
-}
+/* ===== Розгортувані деталі помилки (в комірці статусу) ===== */
 
 .wh-error {
+  margin-top: 6px;
   font-size: 0.8125rem;
 }
 
@@ -179,8 +175,9 @@ a.wh-stat-card:focus-visible {
 }
 
 .wh-error pre {
-  margin: 10px 0 4px;
-  padding: 12px 14px;
+  margin: 8px 0 2px;
+  padding: 10px 12px;
+  max-width: 360px;
   background: var(--iprm-error-bg);
   color: var(--iprm-error-text);
   border-radius: var(--iprm-radius-sm);
