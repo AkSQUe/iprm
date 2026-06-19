@@ -465,6 +465,96 @@
   color: var(--iprm-accent-hover);
 }
 
+/* ========== ACTIONS DROPDOWN (меню дій у рядку таблиці) ========== */
+
+.admin-actions-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.admin-actions-menu > summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.admin-actions-menu > summary::-webkit-details-marker,
+.admin-actions-menu > summary::marker {
+  display: none;
+}
+
+/* Панель позиціонується fixed через admin-row-menu.js -- щоб не обрізалась
+   контейнером .admin-table-wrap { overflow: auto }. */
+.admin-actions-menu__items {
+  position: fixed;
+  z-index: 1000;
+  min-width: 224px;
+  padding: 6px;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-actions-menu__items form {
+  margin: 0;
+  display: block;
+}
+
+.admin-actions-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  color: var(--apple-black);
+  background: none;
+  border: none;
+  border-radius: var(--iprm-radius-sm);
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-actions-menu__item .material-symbols-rounded {
+  font-size: 20px;
+  color: var(--apple-gray);
+}
+
+.admin-actions-menu__item:hover {
+  background: var(--apple-section-bg);
+  color: var(--iprm-nav-active);
+}
+
+.admin-actions-menu__item:hover .material-symbols-rounded {
+  color: var(--iprm-nav-active);
+}
+
+.admin-actions-menu__item--accent,
+.admin-actions-menu__item--accent .material-symbols-rounded {
+  color: var(--iprm-nav-active);
+}
+
+.admin-actions-menu__item--accent {
+  font-weight: 600;
+}
+
+.admin-actions-menu__item--danger,
+.admin-actions-menu__item--danger .material-symbols-rounded {
+  color: var(--iprm-error);
+}
+
+.admin-actions-menu__item--danger:hover {
+  background: var(--iprm-error-bg);
+  color: var(--iprm-error);
+}
+
 /* ========== EMPTY STATE ========== */
 
 .admin-empty {
