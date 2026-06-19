@@ -123,6 +123,24 @@
     </tbody>
   </table>
   </div>
+
+  {% if pagination.pages > 1 %}
+  <nav class="admin-pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.instances_list', page=pagination.prev_num, course_id=filter_course_id, status=filter_status) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_left</span></a>
+    {% endif %}
+    <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }} ({{ pagination.total }})</span>
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.instances_list', page=pagination.next_num, course_id=filter_course_id, status=filter_status) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_right</span></a>
+    {% endif %}
+  </nav>
+  {% endif %}
+  {% elif pagination.total %}
+  <div class="admin-empty">
+    <span class="material-symbols-rounded admin-empty__icon">event</span>
+    <h3 class="admin-empty__title">На цій сторінці немає проведень</h3>
+    <p><a href="{{ url_for('admin.instances_list', course_id=filter_course_id, status=filter_status) }}">Повернутись до першої сторінки</a></p>
+  </div>
   {% else %}
   <div class="admin-empty">
     <span class="material-symbols-rounded admin-empty__icon">event</span>

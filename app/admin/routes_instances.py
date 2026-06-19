@@ -41,11 +41,15 @@ def _populate_choices(form, preselected_course_id=None):
     populate_trainer_choices(form, empty_label='--- Тренер курсу (default) ---')
 
 
+_INSTANCES_PER_PAGE = 25
+
+
 @admin_bp.route('/instances')
 @admin_required
 def instances_list():
     filter_course_id = request.args.get('course_id', type=int)
     filter_status = request.args.get('status')
+    page = request.args.get('page', 1, type=int)
 
     query = CourseInstance.query.options(
         joinedload(CourseInstance.course),
@@ -56,10 +60,13 @@ def instances_list():
     if filter_status:
         query = query.filter(CourseInstance.status == filter_status)
 
-    instances = query.order_by(CourseInstance.start_date.desc()).all()
+    pagination = query.order_by(CourseInstance.start_date.desc()).paginate(
+        page=page, per_page=_INSTANCES_PER_PAGE, error_out=False,
+    )
+    instances = pagination.items
 
-    # Batch COUNT активних реєстрацій -- інакше шаблон запускає N+1
-    # COUNT-ів через inst.registration_count (lazy='dynamic' property).
+    # Batch COUNT активних реєстрацій лише для поточної сторінки -- інакше
+    # шаблон запускає N+1 COUNT-ів через inst.registration_count (lazy='dynamic').
     if instances:
         reg_counts = dict(
             db.session.query(
@@ -84,6 +91,7 @@ def instances_list():
     return render_template(
         'admin/instances.html',
         instances=instances,
+        pagination=pagination,
         courses=courses,
         reg_counts=reg_counts,
         filter_course_id=filter_course_id,
