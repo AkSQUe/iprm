@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import (
-    StringField, TextAreaField, SelectField, IntegerField,
-    DecimalField, BooleanField, DateTimeLocalField, HiddenField
+    StringField, TextAreaField, SelectField, SelectMultipleField, IntegerField,
+    DecimalField, BooleanField, DateField, DateTimeLocalField, HiddenField
 )
 from wtforms.validators import (
     DataRequired, Length, Optional, NumberRange, Email, URL,
@@ -10,6 +10,9 @@ from wtforms.validators import (
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest
+from app.models.medical_profile import MedicalProfile
+from app.models.registration import EventRegistration
+from app.models.specializations import SPECIALIZATIONS
 
 
 def _optional_url(message='Невалідний URL'):
@@ -443,4 +446,117 @@ class BlogPostForm(FlaskForm):
     meta_description = TextAreaField(
         'SEO опис (meta description)',
         validators=[Optional(), Length(max=500)],
+    )
+
+
+class ParticipantForm(FlaskForm):
+    """Ручне додавання/редагування учасника заходу (admin).
+
+    Об'єднує три сутності в одній формі: User (identity), MedicalProfile
+    (медичні дані) та EventRegistration (реєстрація на CourseInstance).
+    Email НЕ обов'язковий -- менеджер заповнює його пізніше; до того
+    користувачу присвоюється placeholder-email (див. routes_participants).
+
+    Більшість полів профілю опціональні: завдання форми -- швидко завести
+    учасника, а решту даних дозаповнити згодом через редагування.
+    """
+
+    # ----- Захід -----
+    # choices заповнюються в роуті. На сторінці, прив'язаній до конкретного
+    # заходу, та при редагуванні поле рендериться статично (захід не змінюємо).
+    instance_id = SelectField(
+        'Захід',
+        coerce=int,
+        validators=[DataRequired(message='Оберіть захід')],
+    )
+
+    # ----- Ідентифікація (User) -----
+    last_name = StringField(
+        'Прізвище',
+        validators=[DataRequired(message='Прізвище обов\'язкове'), Length(max=100)],
+    )
+    first_name = StringField(
+        'Ім\'я',
+        validators=[DataRequired(message='Ім\'я обов\'язкове'), Length(max=100)],
+    )
+    middle_name = StringField(
+        'По батькові',
+        validators=[Optional(), Length(max=100)],
+    )
+
+    # ----- Контакти -----
+    email = StringField(
+        'Email',
+        validators=[Optional(), Email(message='Невалідний email'), Length(max=255)],
+        render_kw={'placeholder': 'Необов\'язково -- можна додати пізніше'},
+    )
+    phone = StringField(
+        'Телефон',
+        validators=[DataRequired(message='Телефон обов\'язковий'), Length(max=20)],
+        render_kw={'placeholder': '+380XXXXXXXXX'},
+    )
+
+    # ----- Медичний профіль (MedicalProfile) -----
+    participant_type = SelectField(
+        'Тип учасника',
+        choices=[('', '— не вказано —')] + MedicalProfile.PARTICIPANT_TYPES,
+        validators=[Optional()],
+    )
+    birth_date = DateField(
+        'Дата народження',
+        validators=[Optional()],
+    )
+    education = StringField(
+        'Освіта (рік закінчення та ВНЗ)',
+        validators=[Optional(), Length(max=500)],
+        render_kw={'placeholder': '2014, НМУ ім. О.О. Богомольця'},
+    )
+    workplace = StringField(
+        'Місце роботи / місто',
+        validators=[Optional(), Length(max=300)],
+    )
+    position = StringField(
+        'Посада',
+        validators=[Optional(), Length(max=200)],
+    )
+    specializations = SelectMultipleField(
+        'Спеціалізації',
+        choices=SPECIALIZATIONS,
+        validators=[Optional()],
+    )
+
+    # ----- Реєстрація (EventRegistration) -----
+    status = SelectField(
+        'Статус реєстрації',
+        choices=EventRegistration.STATUSES,
+        default='confirmed',
+        validators=[DataRequired()],
+    )
+    payment_status = SelectField(
+        'Статус оплати',
+        choices=EventRegistration.PAYMENT_STATUSES,
+        default='unpaid',
+        validators=[DataRequired()],
+    )
+    payment_amount = DecimalField(
+        'Сума оплати (UAH)',
+        validators=[Optional(), NumberRange(min=0)],
+        places=2,
+    )
+    attended = BooleanField('Був присутній')
+    cpd_points_awarded = IntegerField(
+        'Нараховані бали БПР',
+        validators=[Optional(), NumberRange(min=0)],
+    )
+    experience_years = IntegerField(
+        'Стаж (років)',
+        validators=[Optional(), NumberRange(min=0, max=70)],
+    )
+    license_number = StringField(
+        'Номер ліцензії',
+        validators=[Optional(), Length(max=50)],
+    )
+    admin_notes = TextAreaField(
+        'Нотатки адміністратора',
+        validators=[Optional(), Length(max=2000)],
     )

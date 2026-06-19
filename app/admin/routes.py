@@ -1,5 +1,6 @@
 from app.admin import routes_trainers  # noqa: F401
 from app.admin import routes_registrations  # noqa: F401
+from app.admin import routes_participants  # noqa: F401
 from app.admin import routes_payments  # noqa: F401
 from app.admin import routes_recaptcha  # noqa: F401
 from app.admin import routes_analytics  # noqa: F401
