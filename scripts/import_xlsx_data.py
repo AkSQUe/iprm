@@ -335,8 +335,11 @@ def phase_registrations(report, session_map, user_map, user_info):
             continue
 
         info = user_info.get(uid, {})
-        status = 'confirmed' if row['Статус'].strip() == 'Підтверджено' else 'pending'
+        # Усі заходи минулі (completed). Оплачені реєстрації -> completed
+        # (людина відвідала); неоплачені ("Очікує") лишаємо pending -- це
+        # ліди, що не дійшли.
         paid = row['Оплата'].strip() == 'Оплачено'
+        status = 'completed' if paid else 'pending'
         amount = parse_decimal(row['Сума'])
         reg_dt = parse_dt(row['Дата реєстрації'])
         event_dt = parse_dt(row['Дата заходу'])
@@ -350,6 +353,7 @@ def phase_registrations(report, session_map, user_map, user_info):
             status=status,
             payment_status='paid' if paid else 'unpaid',
             payment_amount=amount,
+            attended=paid,
         )
         if reg_dt:
             reg.created_at = reg_dt
@@ -359,6 +363,7 @@ def phase_registrations(report, session_map, user_map, user_info):
         reg.admin_notes = f'Імпорт з xlsx. Менеджер: {manager}'.strip()
         db.session.add(reg)
         report['reg_new'] += 1
+        report['reg_completed' if paid else 'reg_pending'] += 1
 
     db.session.flush()
 
@@ -369,7 +374,8 @@ def main(apply):
         report = {
             'sched_new': [], 'sched_upd': [], 'sched_skip': [],
             'user_new': [], 'user_reused': [], 'user_merged': [], 'user_skip_junk': [],
-            'reg_new': 0, 'reg_kept': 0, 'reg_skip_s12': 0,
+            'reg_new': 0, 'reg_completed': 0, 'reg_pending': 0,
+            'reg_kept': 0, 'reg_skip_s12': 0,
             'reg_skip_nosession': 0, 'reg_skip_nouser': 0, 'reg_skip_dup': 0,
         }
 
@@ -398,7 +404,8 @@ def main(apply):
             print(f'    {uid}  {pib}')
 
         print('\n===== РЕЄСТРАЦІЇ =====')
-        print(f'  створено:                 {report["reg_new"]}')
+        print(f'  створено:                 {report["reg_new"]}'
+              f'  (completed={report["reg_completed"]}, pending={report["reg_pending"]})')
         print(f'  вже існували (kept):      {report["reg_kept"]}')
         print(f'  пропущено S001/S002:      {report["reg_skip_s12"]}')
         print(f'  пропущено (нема сесії):   {report["reg_skip_nosession"]}')
