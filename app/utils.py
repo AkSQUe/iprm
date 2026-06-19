@@ -6,6 +6,57 @@ import bleach
 from markupsafe import Markup
 
 
+# Канонічний формат українського номера: +380 та 9 цифр (12 цифр загалом).
+UA_PHONE_RE = re.compile(r'^\+380\d{9}$')
+# ПІБ: лише українська кирилиця, апостроф, дефіс і пробіл. Латиниця/цифри
+# заборонені (типова помилка -- розкладка клавіатури).
+CYRILLIC_NAME_RE = re.compile(r"^[А-ЯЇІЄҐа-яїієґ'’\- ]+$")
+
+
+def normalize_phone(value):
+    """Звести телефон до канонічного +380XXXXXXXXX, де це можливо.
+
+    Приймає поширені варіанти вводу (0XX..., 380..., з пробілами/дужками/
+    дефісами). Якщо однозначно нормалізувати не вдається -- повертає
+    '+<цифри>', і валідатор формату відхилить. None -> None, порожнє -> ''.
+    """
+    if value is None:
+        return None
+    digits = re.sub(r'\D', '', str(value))
+    if not digits:
+        return ''
+    if digits.startswith('380') and len(digits) == 12:
+        return '+' + digits
+    if digits.startswith('0') and len(digits) == 10:
+        return '+38' + digits            # 0XXXXXXXXX -> +380XXXXXXXXX
+    if len(digits) == 9:                 # XXXXXXXXX (без коду й 0)
+        return '+380' + digits
+    return '+' + digits                  # лишаємо -> валідатор вирішить
+
+
+def normalize_name(value):
+    """Нормалізувати частину ПІБ: trim, схлопнути пробіли, кожне слово -- з
+    великої літери (межі -- пробіл і дефіс), решта літер -- малі.
+
+    Апостроф усередині слова НЕ робить наступну літеру великою
+    (напр. «Мар'яна», а не «Мар'Яна»). Скасовує CAPS LOCK і
+    випадкові ВЕЛИКІ літери. None -> None, порожнє -> ''.
+    """
+    if value is None:
+        return None
+    s = re.sub(r'\s+', ' ', str(value).strip())
+    if not s:
+        return ''
+
+    def cap_word(word):
+        return '-'.join(
+            (seg[:1].upper() + seg[1:].lower()) if seg else seg
+            for seg in word.split('-')
+        )
+
+    return ' '.join(cap_word(w) for w in s.split(' '))
+
+
 def ensure_utc(dt):
     """Нормалізує datetime до timezone-aware UTC.
 

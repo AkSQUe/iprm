@@ -7,7 +7,10 @@ from wtforms import (
 )
 from wtforms.validators import (
     DataRequired, Length, Optional, NumberRange, Email, URL,
-    ValidationError,
+    ValidationError, Regexp,
+)
+from app.utils import (
+    normalize_name, normalize_phone, UA_PHONE_RE, CYRILLIC_NAME_RE,
 )
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
@@ -473,29 +476,50 @@ class ParticipantForm(FlaskForm):
     )
 
     # ----- Ідентифікація (User) -----
+    # Фільтр нормалізує (кирилиця з великої літери, без CAPS), Regexp вимагає
+    # лише українську кирилицю -- щоб менеджер не вводив латиницю/цифри.
+    _NAME_CYRILLIC = Regexp(
+        CYRILLIC_NAME_RE,
+        message='Лише українські літери (кирилиця), напр. «Іваненко».',
+    )
     last_name = StringField(
         'Прізвище',
-        validators=[DataRequired(message='Прізвище обов\'язкове'), Length(max=100)],
+        filters=[normalize_name],
+        validators=[DataRequired(message='Прізвище обов\'язкове'), Length(max=100),
+                    _NAME_CYRILLIC],
     )
     first_name = StringField(
         'Ім\'я',
-        validators=[DataRequired(message='Ім\'я обов\'язкове'), Length(max=100)],
+        filters=[normalize_name],
+        validators=[DataRequired(message='Ім\'я обов\'язкове'), Length(max=100),
+                    _NAME_CYRILLIC],
     )
     middle_name = StringField(
         'По батькові',
-        validators=[Optional(), Length(max=100)],
+        filters=[normalize_name],
+        validators=[Optional(), Length(max=100), _NAME_CYRILLIC],
     )
 
     # ----- Контакти -----
     email = StringField(
         'Email',
-        validators=[Optional(), Email(message='Невалідний email'), Length(max=255)],
-        render_kw={'placeholder': 'Необов\'язково -- можна додати пізніше'},
+        filters=[lambda v: v.strip().lower() if isinstance(v, str) else v],
+        validators=[Optional(), Email(message='Невалідний email, напр. name@example.com'),
+                    Length(max=255)],
+        render_kw={'placeholder': 'name@example.com', 'inputmode': 'email',
+                   'autocomplete': 'off'},
     )
     phone = StringField(
         'Телефон',
-        validators=[DataRequired(message='Телефон обов\'язковий'), Length(max=20)],
-        render_kw={'placeholder': '+380XXXXXXXXX'},
+        filters=[normalize_phone],
+        validators=[
+            DataRequired(message='Телефон обов\'язковий'),
+            Regexp(UA_PHONE_RE,
+                   message='Телефон у форматі +380XXXXXXXXX (12 цифр).'),
+            Length(max=20),
+        ],
+        render_kw={'placeholder': '+380XXXXXXXXX', 'inputmode': 'tel',
+                   'autocomplete': 'off'},
     )
 
     # ----- Медичний профіль (MedicalProfile) -----

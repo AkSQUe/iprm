@@ -69,6 +69,22 @@ class ParticipantError(Exception):
     """Доменна помилка операції над учасником (показується користувачу)."""
 
 
+def _normalize_data(data):
+    """Нормалізувати ПІБ і телефон у вхідному dict (форма + xlsx).
+
+    Гарантує єдиний канонічний формат у БД незалежно від джерела:
+    ПІБ -- кирилиця з великої літери, телефон -- +380XXXXXXXXX.
+    """
+    from app.utils import normalize_name, normalize_phone
+    data = dict(data)
+    for key in ('last_name', 'first_name', 'middle_name'):
+        if key in data:
+            data[key] = normalize_name(data.get(key))
+    if data.get('phone'):
+        data['phone'] = normalize_phone(data.get('phone'))
+    return data
+
+
 def _strip_or_none(value):
     if value is None:
         return None
@@ -196,6 +212,8 @@ def upsert_participant(data, reg=None, on_duplicate='error'):
     Returns:
         (registration, was_created).
     """
+    data = _normalize_data(data)
+
     # ----- EDIT -----
     if reg is not None:
         user = reg.user
