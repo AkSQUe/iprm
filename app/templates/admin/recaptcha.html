@@ -31,7 +31,7 @@
   </div>
   <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">Поріг score</span>
-    <span class="admin-readonly-config__value">{{ '%.2f'|format(cfg.score_threshold) }} (нижче -- бот)</span>
+    <span class="admin-readonly-config__value">{{ '%.2f'|format(cfg.score_threshold) }} (нижче – бот)</span>
   </div>
   <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">Джерело</span>
@@ -79,11 +79,11 @@
 
   <div class="admin-form__grid">
     <div class="form-group">
-      <label for="score_threshold">Поріг score (0.0 -- 1.0)</label>
+      <label for="score_threshold">Поріг score (0.0 – 1.0)</label>
       <input type="number" name="score_threshold" id="score_threshold" class="form-input"
              min="0" max="1" step="0.05"
              value="{{ '%.2f'|format(cfg.score_threshold) }}">
-      <p class="form-hint">Стандарт Google -- 0.5. Нижче = бот. Вище = жорсткіше, ризик false-positives.</p>
+      <p class="form-hint">Стандарт Google – 0.5. Нижче = бот. Вище = жорсткіше, ризик false-positives.</p>
     </div>
     <div class="form-group">
       <div class="form-checkbox form-checkbox--row-align">
@@ -101,7 +101,7 @@
 
   <p class="form-hint form-hint--spaced">
     Отримати ключі: <a href="https://www.google.com/recaptcha/admin/create" target="_blank" rel="noopener">google.com/recaptcha/admin/create</a>
-    -- оберіть тип <strong>reCAPTCHA v3</strong>, додайте домени (включно з локальним <code>127.0.0.1</code> для розробки).
+    – оберіть тип <strong>reCAPTCHA v3</strong>, додайте домени (включно з локальним <code>127.0.0.1</code> для розробки).
   </p>
 </form>
 {% endblock %}
@@ -111,14 +111,14 @@
   <h3 class="admin-form__section-title">Захищені форми</h3>
   <p>Перевірка автоматично застосовується до наступних форм:</p>
   <ul>
-    <li><code>login</code> -- /login (вхід)</li>
-    <li><code>register</code> -- /register (створення акаунта)</li>
-    <li><code>contact</code> -- /contact (контактна форма)</li>
-    <li><code>course_request</code> -- /courses/&lt;slug&gt;/request (запит на проведення)</li>
-    <li><code>event_register</code> -- /register-instance (реєстрація на захід)</li>
+    <li><code>login</code> – /login (вхід)</li>
+    <li><code>register</code> – /register (створення акаунта)</li>
+    <li><code>contact</code> – /contact (контактна форма)</li>
+    <li><code>course_request</code> – /courses/&lt;slug&gt;/request (запит на проведення)</li>
+    <li><code>event_register</code> – /register-instance (реєстрація на захід)</li>
   </ul>
   <p class="form-hint">
-    При <em>fail-open</em>: якщо Google API недоступний -- сабміт пропускається (щоб не блокувати реальних користувачів).
+    При <em>fail-open</em>: якщо Google API недоступний – сабміт пропускається (щоб не блокувати реальних користувачів).
     Усі рішення логуються в audit-логи.
   </p>
 </div>

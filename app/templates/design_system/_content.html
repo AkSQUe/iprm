@@ -262,7 +262,7 @@
         <span class="badge badge--warning">Warning</span>
       </div>
     </div>
-    <p class="ds-hint">.badge--success / .badge--danger / .badge--warning -- aliases для сповіщень та статусів</p>
+    <p class="ds-hint">.badge--success / .badge--danger / .badge--warning – aliases для сповіщень та статусів</p>
   </div>
 
   <!-- ===== HERO ===== -->
@@ -273,7 +273,7 @@
 
         <h3 class="ds-section-heading">Apple-style (fullscreen, white bg)</h3>
         <div class="ds-demo" style="text-align:center; padding: 80px 32px; position: relative; overflow: hidden; min-height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-          <div style="display:inline-block;font-size:0.8125rem;font-weight:500;color:#7055a4;background:#ede9f6;padding:6px 16px;border-radius:980px;margin-bottom:24px;">Бали БПР -- Сертифіковані курси</div>
+          <div style="display:inline-block;font-size:0.8125rem;font-weight:500;color:#7055a4;background:#ede9f6;padding:6px 16px;border-radius:980px;margin-bottom:24px;">Бали БПР – Сертифіковані курси</div>
           <div style="font-size:clamp(2rem, 5vw, 3rem);font-weight:800;letter-spacing:-0.04em;line-height:1.08;color:#1d1d1f;max-width:700px;">Плазмотерапія.<br><span style="background:linear-gradient(135deg,#7055a4 0%,#9b59b6 40%,#e8913a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Регенерація.</span></div>
           <div style="font-size:1.0625rem;color:#86868b;max-width:500px;line-height:1.55;margin-top:16px;">Курси після дипломної освіти для лікарів та персоналізована регенеративна терапія</div>
           <div style="display:flex;gap:16px;margin-top:32px;">
@@ -647,9 +647,9 @@
     <h3 class="ds-section-heading">Easing Curves (Apple-specific)</h3>
     <div class="ds-demo">
       <div style="font-size:0.9375rem;color:#424245;line-height:2;">
-        <code class="ds-code">--ease-reveal: cubic-bezier(0.28, 0.11, 0.32, 1)</code> -- Reveal / fade-in<br>
-        <code class="ds-code">--ease-interact: cubic-bezier(0.25, 0.46, 0.45, 0.94)</code> -- Interaction (hover, press)<br>
-        <code class="ds-code">--ease-spring: cubic-bezier(0.32, 0.08, 0.24, 1)</code> -- Spring-like bounce
+        <code class="ds-code">--ease-reveal: cubic-bezier(0.28, 0.11, 0.32, 1)</code> – Reveal / fade-in<br>
+        <code class="ds-code">--ease-interact: cubic-bezier(0.25, 0.46, 0.45, 0.94)</code> – Interaction (hover, press)<br>
+        <code class="ds-code">--ease-spring: cubic-bezier(0.32, 0.08, 0.24, 1)</code> – Spring-like bounce
       </div>
     </div>
     <p class="ds-hint">Apple NEVER uses generic ease or linear. Always specific cubic-bezier with deceleration at the end.</p>
@@ -661,9 +661,9 @@
         <code class="ds-code">.apple-reveal { animation: enter-view linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }</code><br>
         opacity: 0, translateY(24px) -> opacity: 1, translateY(0)<br><br>
         <strong>JS Fallback (IntersectionObserver):</strong><br>
-        <code class="ds-code">.apple-reveal</code> -- threshold: 0.12, rootMargin: '0px 0px -40px 0px'<br>
+        <code class="ds-code">.apple-reveal</code> – threshold: 0.12, rootMargin: '0px 0px -40px 0px'<br>
         Duration: 0.8s <code class="ds-code">cubic-bezier(0.28, 0.11, 0.32, 1)</code>, one-time (unobserve after)<br><br>
-        <strong>Default (no animation):</strong> .apple-reveal { opacity: 1; transform: none; } -- visible for reduced-motion and fallback
+        <strong>Default (no animation):</strong> .apple-reveal { opacity: 1; transform: none; } – visible for reduced-motion and fallback
       </div>
     </div>
 
@@ -680,10 +680,10 @@
     <h3 class="ds-section-heading">Hover ефекти</h3>
     <div class="ds-demo">
       <div style="font-size:0.9375rem;color:#424245;line-height:1.8;">
-        Cards: <code class="ds-code">translateY(-4px) + box-shadow 0 12px 40px rgba(0,0,0,0.1)</code> -- 0.3s<br>
-        Bento: <code class="ds-code">scale(1.01)</code> -- 0.3s<br>
-        Buttons: <code class="ds-code">scale(1.02) translateY(-1px)</code> -- 0.15s<br>
-        Links: <code class="ds-code">color transition</code> -- 0.2s<br>
+        Cards: <code class="ds-code">translateY(-4px) + box-shadow 0 12px 40px rgba(0,0,0,0.1)</code> – 0.3s<br>
+        Bento: <code class="ds-code">scale(1.01)</code> – 0.3s<br>
+        Buttons: <code class="ds-code">scale(1.02) translateY(-1px)</code> – 0.15s<br>
+        Links: <code class="ds-code">color transition</code> – 0.2s<br>
         Easing: <code class="ds-code">cubic-bezier(0.25, 0.46, 0.45, 0.94)</code> for all interactions
       </div>
     </div>
@@ -701,10 +701,10 @@
     <h3 class="ds-section-heading">4 правила Apple-руху</h3>
     <div class="ds-demo">
       <div style="font-size:0.9375rem;color:#424245;line-height:1.8;">
-        1. <strong>Duration &lt; 300ms</strong> для UI-відповідей -- довше відчувається повільним<br>
-        2. <strong>Ease curves, ніколи linear</strong> -- cubic-bezier з уповільненням в кінці<br>
-        3. <strong>Рух має сенс</strong> -- кожна анімація комунікує (зв'язок, стан, ієрархію)<br>
-        4. <strong>Субтильність &gt; спектакль</strong> -- найкращі анімації ті, що користувач відчуває, але не може описати
+        1. <strong>Duration &lt; 300ms</strong> для UI-відповідей – довше відчувається повільним<br>
+        2. <strong>Ease curves, ніколи linear</strong> – cubic-bezier з уповільненням в кінці<br>
+        3. <strong>Рух має сенс</strong> – кожна анімація комунікує (зв'язок, стан, ієрархію)<br>
+        4. <strong>Субтильність &gt; спектакль</strong> – найкращі анімації ті, що користувач відчуває, але не може описати
       </div>
     </div>
     <p class="ds-hint">prefers-reduced-motion: анімації ВИДАЛЯЮТЬСЯ, не сповільнюються. Сповільнені анімації можуть викликати більше нудоти у вестибулярно-чутливих користувачів.</p>
@@ -760,15 +760,15 @@
         <h3 class="ds-section-heading">Semantic HTML</h3>
         <div class="ds-demo">
           <div style="font-size:0.9375rem;color:#424245;line-height:2;">
-            <code class="ds-code">&lt;nav aria-label="..."&gt;</code> -- for each navigation region<br>
-            <code class="ds-code">&lt;main&gt;</code> -- with skip-link target<br>
-            <code class="ds-code">&lt;section aria-labelledby="..."&gt;</code> -- referencing h2<br>
-            <code class="ds-code">&lt;article&gt;</code> -- for course cards with heading hierarchy<br>
+            <code class="ds-code">&lt;nav aria-label="..."&gt;</code> – for each navigation region<br>
+            <code class="ds-code">&lt;main&gt;</code> – with skip-link target<br>
+            <code class="ds-code">&lt;section aria-labelledby="..."&gt;</code> – referencing h2<br>
+            <code class="ds-code">&lt;article&gt;</code> – for course cards with heading hierarchy<br>
             Burger: <code class="ds-code">aria-label="Menu" aria-expanded="true/false"</code><br>
             Contrast: WCAG AA (4.5:1 minimum, including after blur)
           </div>
         </div>
-        <p class="ds-hint">Skip-link: &lt;a href="#main" class="skip-link"&gt;Skip to content&lt;/a&gt; -- positioned off-screen, visible on :focus</p>
+        <p class="ds-hint">Skip-link: &lt;a href="#main" class="skip-link"&gt;Skip to content&lt;/a&gt; – positioned off-screen, visible on :focus</p>
     </div>
   </div>
 
@@ -824,7 +824,7 @@
         <div class="ds-demo">
           <div style="font-size:0.9375rem;color:#424245;line-height:1.8;">
             <code class="ds-code">.iprm-section { content-visibility: auto; contain-intrinsic-size: auto 600px; }</code><br>
-            Below-fold sections not rendered until needed -- significant paint time reduction.
+            Below-fold sections not rendered until needed – significant paint time reduction.
           </div>
         </div>
 
@@ -854,7 +854,7 @@
             Only during animation, never permanently. Permanent will-change consumes GPU memory.
           </div>
         </div>
-        <p class="ds-hint">Apple pattern: performance is invisible. Users should never notice optimization -- they should notice speed.</p>
+        <p class="ds-hint">Apple pattern: performance is invisible. Users should never notice optimization – they should notice speed.</p>
     </div>
   </div>
 
@@ -896,7 +896,7 @@
         Programmatic darkening without separate hover variables.
       </div>
     </div>
-    <p class="ds-hint">All modern CSS features use progressive enhancement -- fallbacks always provided for older browsers.</p>
+    <p class="ds-hint">All modern CSS features use progressive enhancement – fallbacks always provided for older browsers.</p>
   </div>
 
   <!-- ===== COOKIE BANNER ===== -->

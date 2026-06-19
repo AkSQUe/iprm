@@ -44,9 +44,9 @@
   <a href="https://developer.apple.com/account/resources/identifiers/list/serviceId" target="_blank" rel="noopener">Apple Developer Console</a>:
 </p>
 <ol class="form-hint">
-  <li>Створіть <strong>Services ID</strong> (Identifiers → +) -- це і буде поле "Services ID".</li>
+  <li>Створіть <strong>Services ID</strong> (Identifiers → +) – це і буде поле "Services ID".</li>
   <li>У властивостях Services ID увімкніть <em>Sign In with Apple</em> і у Configure додайте Return URL: <strong>{{ cfg.redirect_uri }}</strong>.</li>
-  <li>Створіть <strong>Key</strong> (Keys → +) з увімкненим <em>Sign In with Apple</em>. Завантажте .p8-файл -- його вміст вставте у поле "Private key" нижче. <strong>Файл завантажується ОДИН раз -- зберігайте копію локально.</strong></li>
+  <li>Створіть <strong>Key</strong> (Keys → +) з увімкненим <em>Sign In with Apple</em>. Завантажте .p8-файл – його вміст вставте у поле "Private key" нижче. <strong>Файл завантажується ОДИН раз – зберігайте копію локально.</strong></li>
   <li>Team ID знаходиться у верхньому правому куті Developer Console.</li>
 </ol>
 {% endblock %}
