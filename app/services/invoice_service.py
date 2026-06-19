@@ -8,6 +8,7 @@ Excel будується openpyxl за версткою IPRM-рахунка; PDF
 """
 import io
 import logging
+import re
 from decimal import Decimal
 
 from flask import current_app, render_template
@@ -120,32 +121,24 @@ def build_invoice_xlsx(reg) -> io.BytesIO:
 
     r = 1
 
-    # ----- Шапка: назва компанії + бейдж -----
-    ws.merge_cells(f'A{r}:D{r}')
-    ws[f'A{r}'].value = s.company_full_name or 'ІПРМ'
-    ws[f'A{r}'].font = _F_COMPANY
-    ws[f'A{r}'].alignment = _WRAP
-    ws.merge_cells(f'E{r}:F{r}')
-    ws[f'E{r}'].value = 'Документ для оплати'
-    ws[f'E{r}'].font = _F_MUTED
-    ws[f'E{r}'].alignment = _RIGHT
-    ws.row_dimensions[r].height = 22
+    # ----- Шапка: назва компанії (по центру, на всю ширину макета) -----
+    band(r, s.company_full_name or 'ІПРМ', font=_F_COMPANY, align=_CENTER, height=22)
     r += 1
-    band(r, f'код за ЄДРПОУ {s.edrpou}', font=_F_MUTED)
+    band(r, f'код за ЄДРПОУ {s.edrpou}', font=_F_MUTED, align=_CENTER)
     r += 2
 
-    # ----- Заголовок -----
-    band(r, 'РАХУНОК НА ОПЛАТУ', font=_F_TITLE, height=26)
+    # ----- Заголовок (по центру) -----
+    band(r, 'РАХУНОК НА ОПЛАТУ', font=_F_TITLE, align=_CENTER, height=26)
     r += 1
-    band(r, f'№ {ctx["number"]} від {_date_phrase(ctx["date"])}', font=_F_MUTED)
+    band(r, f'№ {ctx["number"]} від {_date_phrase(ctx["date"])}', font=_F_MUTED, align=_CENTER)
     r += 2
 
-    # ----- Попередження -----
+    # ----- Попередження (по центру) -----
     band(r, (
         'Увага! Оплата цього рахунку означає погодження з умовами надання послуг. '
         'Повідомлення про оплату є обов\'язковим. Послуга надається за фактом '
         'надходження коштів на рахунок Постачальника.'
-    ), font=_F_MUTED, align=_WRAP_TOP, height=34)
+    ), font=_F_MUTED, align=_CENTER, height=34)
     r += 2
 
     # ----- Реквізити для оплати (помаранчева картка) -----
@@ -298,5 +291,28 @@ def render_invoice_pdf(reg) -> bytes:
         raise InvoiceError(f'Помилка генерації PDF-рахунка: {exc}')
 
 
+def _safe_filename_part(text):
+    """Прибрати символи, неприпустимі у назвах файлів, і зайві пробіли."""
+    text = re.sub(r'[\\/:*?"<>|\r\n\t]+', '', str(text or ''))
+    return re.sub(r'\s+', ' ', text).strip()
+
+
 def invoice_filename(reg, ext):
-    return f'rahunok-{reg.id}.{ext}'
+    """Змістовна назва файлу рахунка: Рахунок-{Прізвище}-{сума}грн-{дата}.{ext}.
+
+    Кирилиця коректно віддається через send_file (RFC 5987). Дата -- дата
+    заходу; за відсутності опускається."""
+    last_name = ''
+    if reg.user:
+        last_name = (reg.user.last_name or '').strip()
+        if not last_name:
+            full = (reg.user.full_name or '').strip()
+            last_name = full.split(' ')[0] if full else (reg.user.email or '').split('@')[0]
+    last_name = _safe_filename_part(last_name) or 'учасник'
+
+    amount = int(Decimal(reg.payment_amount or 0))
+    parts = ['Рахунок', last_name, f'{amount}грн']
+    if reg.instance and reg.instance.start_date:
+        parts.append(ensure_utc(reg.instance.start_date).strftime('%d.%m.%Y'))
+
+    return f'{_safe_filename_part("-".join(parts))}.{ext}'

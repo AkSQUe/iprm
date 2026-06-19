@@ -4,8 +4,10 @@
   <meta charset="UTF-8">
   <title>Рахунок на оплату № {{ number }}</title>
   <style>
-    /* Поля сторінки: верхнє 1см, праве 1см, нижнє 1.5см, ліве 2см. */
-    @page { size: A4; margin: 1cm 1cm 1.5cm 2cm; }
+    /* Поля сторінки нульові, щоб градієнтна шапка йшла від краю до краю.
+       Поля документа (ліве 2см, праве 1см, нижнє 1.5см) задаємо padding-ом
+       контентного блоку .page; шапка лишається full-bleed. */
+    @page { size: A4; margin: 0; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'DejaVu Sans', Arial, sans-serif;
@@ -18,8 +20,9 @@
     .hero {
       background: linear-gradient(115deg, #7055a4 0%, #8a5fb0 48%, #e8913a 128%);
       color: #ffffff;
-      padding: 6mm 7mm;
-      border-radius: 12px;
+      /* Full-bleed: @page без полів -> шапка на всю ширину аркуша. Внутрішній
+         padding вирівнює текст шапки з полями тіла (ліво 2см, право 1см). */
+      padding: 10mm 1cm 9mm 2cm;
     }
     .hero__row { display: flex; justify-content: space-between; align-items: flex-start; }
     .hero__company { font-size: 11pt; font-weight: 700; letter-spacing: 0.2pt; }
@@ -32,7 +35,8 @@
     .hero__title { font-size: 16pt; font-weight: 800; letter-spacing: 0.3pt; margin-top: 4mm; }
     .hero__meta { font-size: 8.5pt; opacity: 0.92; margin-top: 1.2mm; }
 
-    .page { padding: 5mm 0 0; }
+    /* Поля документа: ліве 2см, праве 1см, нижнє 1.5см (верх -- одразу після шапки). */
+    .page { padding: 5mm 1cm 15mm 2cm; }
 
     /* ---- Картки ---- */
     .card {
