@@ -24,6 +24,7 @@ from app.models.registration import EventRegistration
 from app.models.user import User
 from app.services import participant_service, xlsx_io
 from app.services.participant_service import ParticipantError
+from app.utils import ensure_utc
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
@@ -48,7 +49,7 @@ def _all_instances():
     now = datetime.now(timezone.utc)
 
     def _order_key(inst):
-        sd = inst.start_date
+        sd = ensure_utc(inst.start_date)
         if sd is None:
             return (2, 0.0)            # без дати -- у кінець
         if sd >= now:
@@ -66,7 +67,8 @@ def _nearest_upcoming_id(instances):
     перший захід із датою у майбутньому і є найближчим."""
     now = datetime.now(timezone.utc)
     for inst in instances:
-        if inst.start_date is not None and inst.start_date >= now:
+        sd = ensure_utc(inst.start_date)
+        if sd is not None and sd >= now:
             return inst.id
     return None
 
