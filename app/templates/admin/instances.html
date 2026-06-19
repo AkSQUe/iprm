@@ -56,7 +56,30 @@
 
   {% include 'partials/flash_messages.html' %}
 
+  {# ----- Таблетки швидких фільтрів ----- #}
+  {% set pills = [
+    ('', 'Усі', 'apps'),
+    ('upcoming', 'Майбутні', 'event_upcoming'),
+    ('next3', 'Три найближчі', 'looks_3'),
+    ('past', 'Минулі', 'history'),
+    ('this_month', 'Цього місяця', 'calendar_month'),
+    ('with_regs', 'З реєстраціями', 'how_to_reg'),
+    ('no_regs', 'Без реєстрацій', 'person_off'),
+    ('free_seats', 'Є вільні місця', 'event_available'),
+    ('full', 'Заповнені', 'event_busy'),
+    ('attention', 'Потребують уваги', 'priority_high')
+  ] %}
+  <div class="admin-filter-pills">
+    {% for key, label, icon in pills %}
+    <a href="{{ url_for('admin.instances_list', quick=key or none, course_id=filter_course_id, status=filter_status) }}"
+       class="admin-pill{% if quick == key %} admin-pill--active{% endif %}">
+      <span class="material-symbols-rounded">{{ icon }}</span> {{ label }}
+    </a>
+    {% endfor %}
+  </div>
+
   <form method="GET" action="{{ url_for('admin.instances_list') }}" class="admin-filter-form">
+    <input type="hidden" name="quick" value="{{ quick }}">
     <select name="course_id" class="form-input form-input--sm" aria-label="Фільтр за курсом" onchange="this.form.submit()">
       <option value="">Всі курси</option>
       {% for c in courses %}
@@ -65,7 +88,7 @@
     </select>
     {{ status_filter(statuses, filter_status) }}
     {% if filter_course_id or filter_status %}
-    <a href="{{ url_for('admin.instances_list') }}" class="btn-admin btn-admin--secondary btn-admin--sm">Очистити</a>
+    <a href="{{ url_for('admin.instances_list', quick=quick or none) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Очистити</a>
     {% endif %}
   </form>
 
@@ -124,22 +147,22 @@
   </table>
   </div>
 
-  {% if pagination.pages > 1 %}
+  {% if pagination and pagination.pages > 1 %}
   <nav class="admin-pagination">
     {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.instances_list', page=pagination.prev_num, course_id=filter_course_id, status=filter_status) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_left</span></a>
+    <a href="{{ url_for('admin.instances_list', page=pagination.prev_num, quick=quick or none, course_id=filter_course_id, status=filter_status) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_left</span></a>
     {% endif %}
     <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }} ({{ pagination.total }})</span>
     {% if pagination.has_next %}
-    <a href="{{ url_for('admin.instances_list', page=pagination.next_num, course_id=filter_course_id, status=filter_status) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_right</span></a>
+    <a href="{{ url_for('admin.instances_list', page=pagination.next_num, quick=quick or none, course_id=filter_course_id, status=filter_status) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_right</span></a>
     {% endif %}
   </nav>
   {% endif %}
-  {% elif pagination.total %}
+  {% elif pagination and pagination.total %}
   <div class="admin-empty">
     <span class="material-symbols-rounded admin-empty__icon">event</span>
     <h3 class="admin-empty__title">На цій сторінці немає проведень</h3>
-    <p><a href="{{ url_for('admin.instances_list', course_id=filter_course_id, status=filter_status) }}">Повернутись до першої сторінки</a></p>
+    <p><a href="{{ url_for('admin.instances_list', quick=quick or none, course_id=filter_course_id, status=filter_status) }}">Повернутись до першої сторінки</a></p>
   </div>
   {% else %}
   <div class="admin-empty">

@@ -1,9 +1,10 @@
 """Admin CRUD для CourseInstance (проведення)."""
 import logging
+from datetime import datetime, timedelta, timezone
 
 from flask import render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import current_user
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import joinedload
 
 from app.admin import admin_bp
@@ -49,6 +50,7 @@ _INSTANCES_PER_PAGE = 25
 def instances_list():
     filter_course_id = request.args.get('course_id', type=int)
     filter_status = request.args.get('status')
+    quick = request.args.get('quick') or ''
     page = request.args.get('page', 1, type=int)
 
     query = CourseInstance.query.options(
@@ -60,10 +62,72 @@ def instances_list():
     if filter_status:
         query = query.filter(CourseInstance.status == filter_status)
 
-    pagination = query.order_by(CourseInstance.start_date.desc()).paginate(
-        page=page, per_page=_INSTANCES_PER_PAGE, error_out=False,
+    # ----- Таблетки швидких фільтрів (взаємовиключні пресети) -----
+    now = datetime.now(timezone.utc)
+    # Корельовані підзапити: к-сть активних реєстрацій та місткість заходу.
+    active_count = (
+        db.session.query(func.count(EventRegistration.id))
+        .filter(
+            EventRegistration.instance_id == CourseInstance.id,
+            EventRegistration.status.notin_(['cancelled']),
+        )
+        .correlate(CourseInstance)
+        .scalar_subquery()
     )
-    instances = pagination.items
+    course_max = (
+        db.session.query(Course.max_participants)
+        .filter(Course.id == CourseInstance.course_id)
+        .correlate(CourseInstance)
+        .scalar_subquery()
+    )
+    capacity = func.coalesce(CourseInstance.max_participants, course_max)
+
+    order = CourseInstance.start_date.desc()
+    next3 = False
+
+    if quick == 'upcoming':
+        query = query.filter(CourseInstance.start_date >= now)
+        order = CourseInstance.start_date.asc()
+    elif quick == 'next3':
+        query = query.filter(CourseInstance.start_date >= now)
+        order = CourseInstance.start_date.asc()
+        next3 = True
+    elif quick == 'past':
+        query = query.filter(CourseInstance.start_date < now)
+    elif quick == 'this_month':
+        month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+        next_year = now.year + (1 if now.month == 12 else 0)
+        next_month = 1 if now.month == 12 else now.month + 1
+        month_end = datetime(next_year, next_month, 1, tzinfo=timezone.utc)
+        query = query.filter(
+            CourseInstance.start_date >= month_start,
+            CourseInstance.start_date < month_end,
+        )
+        order = CourseInstance.start_date.asc()
+    elif quick == 'with_regs':
+        query = query.filter(active_count > 0)
+    elif quick == 'no_regs':
+        query = query.filter(active_count == 0)
+    elif quick == 'free_seats':
+        query = query.filter(or_(capacity.is_(None), active_count < capacity))
+    elif quick == 'full':
+        query = query.filter(capacity.isnot(None), active_count >= capacity)
+    elif quick == 'attention':
+        query = query.filter(
+            CourseInstance.start_date >= now,
+            CourseInstance.start_date <= now + timedelta(days=14),
+            active_count == 0,
+        )
+        order = CourseInstance.start_date.asc()
+
+    if next3:
+        instances = query.order_by(order).limit(3).all()
+        pagination = None
+    else:
+        pagination = query.order_by(order).paginate(
+            page=page, per_page=_INSTANCES_PER_PAGE, error_out=False,
+        )
+        instances = pagination.items
 
     # Batch COUNT активних реєстрацій лише для поточної сторінки -- інакше
     # шаблон запускає N+1 COUNT-ів через inst.registration_count (lazy='dynamic').
@@ -96,6 +160,7 @@ def instances_list():
         reg_counts=reg_counts,
         filter_course_id=filter_course_id,
         filter_status=filter_status,
+        quick=quick,
         statuses=CourseInstance.STATUSES,
     )
 
