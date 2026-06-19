@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% from 'partials/_location_badge.html' import location_badge %}
+
+{% block title %}Оплата участі | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page reg-layout">
+
+  <h1 class="reg-confirmation__title">Оплата участі</h1>
+
+  <ol class="reg-steps" aria-label="Процес реєстрації">
+    <li class="reg-steps__item reg-steps__item--done">
+      <span class="reg-steps__num">&#10003;</span>
+      <span class="reg-steps__label">Анкету заповнено</span>
+    </li>
+    <li class="reg-steps__item {% if not paid %}reg-steps__item--current{% else %}reg-steps__item--done{% endif %}">
+      <span class="reg-steps__num">2</span>
+      <span class="reg-steps__label">Оплатіть участь</span>
+    </li>
+    <li class="reg-steps__item {% if paid %}reg-steps__item--current{% endif %}">
+      <span class="reg-steps__num">3</span>
+      <span class="reg-steps__label">Підтвердження</span>
+    </li>
+  </ol>
+
+  {% if event %}
+  <div class="reg-event-card">
+    <h2 class="reg-event-card__title">{{ event.title }}</h2>
+    <div class="reg-event-card__meta">
+      {% if event.start_date %}<div>Дата: <strong>{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</strong></div>{% endif %}
+      {% if reg.payment_amount and reg.payment_amount > 0 %}
+        <div>До оплати: <strong>{{ reg.payment_amount | int }} &#8372;</strong></div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if paid %}
+  <div class="reg-success-banner reg-success-banner--confirmed">
+    <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>
+    <div class="reg-success-banner__body">
+      <p class="reg-success-banner__title">Оплату отримано</p>
+      <p class="reg-success-banner__subtitle">Дякуємо! Вашу участь підтверджено.</p>
+    </div>
+  </div>
+  {% elif not needs_payment %}
+  <div class="reg-success-banner reg-success-banner--confirmed">
+    <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>
+    <div class="reg-success-banner__body">
+      <p class="reg-success-banner__title">Реєстрацію збережено</p>
+      <p class="reg-success-banner__subtitle">Оплата не потрібна. Ми зв'яжемося з вами щодо деталей участі.</p>
+    </div>
+  </div>
+  {% else %}
+  <p class="reg-attention"><strong>Оберіть зручний спосіб оплати:</strong></p>
+
+  <div class="reg-pay-options">
+    {# ----- Варіант 1: LiqPay ----- #}
+    <div class="reg-pay-option">
+      <h3 class="reg-pay-option__title">Онлайн-оплата</h3>
+      <p class="reg-pay-option__desc">Картка, Google&nbsp;Pay, Apple&nbsp;Pay — миттєве підтвердження.</p>
+      {% if liqpay_data and liqpay_signature %}
+      <form method="POST" action="{{ liqpay_checkout_url }}" accept-charset="utf-8" data-single-submit>
+        <input type="hidden" name="data" value="{{ liqpay_data }}">
+        <input type="hidden" name="signature" value="{{ liqpay_signature }}">
+        <button type="submit" class="reg-pay-cta__btn">
+          <span class="reg-pay-cta__arrow" aria-hidden="true">&raquo;</span> Оплатити через LiqPay
+        </button>
+      </form>
+      <p class="reg-pay-cta__note">Безпечна оплата через LiqPay — Visa, Mastercard, Google Pay, Apple Pay</p>
+      {% else %}
+      <div class="reg-liqpay-placeholder">Онлайн-оплата тимчасово недоступна — скористайтесь рахунком.</div>
+      {% endif %}
+    </div>
+
+    {# ----- Варіант 2: Рахунок (PDF) ----- #}
+    <div class="reg-pay-option">
+      <h3 class="reg-pay-option__title">Оплата за рахунком</h3>
+      <p class="reg-pay-option__desc">Завантажте рахунок у форматі PDF і сплатіть через банк за реквізитами.</p>
+      <a href="{{ invoice_url }}" class="apple-btn apple-btn--outline reg-pay-option__btn">
+        Завантажити рахунок (PDF)
+      </a>
+      <p class="reg-pay-cta__note">Після оплати за рахунком повідомте менеджера для підтвердження участі.</p>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

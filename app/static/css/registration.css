@@ -732,3 +732,39 @@
 .reg-profile-ready__text {
   line-height: 1.5;
 }
+
+/* ===== Вибір способу оплати (альтернативний pipeline) ===== */
+.reg-pay-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.reg-pay-option {
+  background: var(--iprm-white, #fff);
+  border: 1px solid var(--iprm-border, #e5e5ea);
+  border-radius: var(--iprm-radius-md, 16px);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reg-pay-option__title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--apple-black, #1d1d1f);
+}
+
+.reg-pay-option__desc {
+  font-size: 0.875rem;
+  color: var(--apple-gray, #86868b);
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.reg-pay-option__btn {
+  align-self: flex-start;
+  margin-top: auto;
+}

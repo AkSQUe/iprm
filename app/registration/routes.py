@@ -1,15 +1,20 @@
 import logging
 
-from flask import abort, flash, redirect, render_template, request, url_for
+from flask import (
+    Response, abort, flash, redirect, render_template, request, url_for,
+)
 from flask_login import current_user, login_required, login_user
 from sqlalchemy.orm import joinedload
 
 from app.extensions import db, limiter
 from app.models.course_instance import CourseInstance
+from app.models.mixins import utcnow
 from app.models.registration import EventRegistration
+from app.models.user import User
 from app.registration import registration_bp
-from app.registration.forms import EventRegistrationForm
-from app.services import registration_service
+from app.registration.forms import EventRegistrationForm, ParticipantCompletionForm
+from app.services import participant_service, registration_service
+from app.services.participant_service import ParticipantError
 from app.services.recaptcha import verify_request as verify_recaptcha
 from app.services.partner_auth import (
     PrefillTokenError,
@@ -318,4 +323,166 @@ def confirmation(registration_id):
         liqpay_data=liqpay_data,
         liqpay_signature=liqpay_signature,
         liqpay_checkout_url=liqpay_checkout_url,
+    )
+
+
+# ======================================================================
+# Альтернативний pipeline: самостійне завершення реєстрації за токеном.
+# Менеджер створює учасника з мінімумом полів і надсилає посилання; учасник
+# заповнює повну анкету (усі поля обов'язкові) і обирає спосіб оплати.
+# Публічні роути -- авторизація через сам токен (без login).
+# ======================================================================
+
+def _load_reg_by_token(token):
+    return (
+        db.session.query(EventRegistration)
+        .options(
+            joinedload(EventRegistration.user).joinedload(User.medical_profile),
+            joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
+        )
+        .filter_by(completion_token=token)
+        .first()
+    )
+
+
+@registration_bp.route('/complete/<token>', methods=['GET', 'POST'])
+def complete_registration(token):
+    """Публічна форма: учасник заповнює повну анкету за токеном-посиланням."""
+    reg = _load_reg_by_token(token)
+    if reg is None or not reg.completion_token_active:
+        return render_template('registration/complete_invalid.html'), 410
+    if reg.status == 'cancelled':
+        return render_template('registration/complete_invalid.html', cancelled=True), 410
+
+    instance = reg.instance
+    user = reg.user
+    profile = user.medical_profile if user else None
+
+    if request.method == 'POST':
+        form = ParticipantCompletionForm()
+    else:
+        raw_email = user.email if user else ''
+        form = ParticipantCompletionForm(data={
+            'user_type': (profile.participant_type if profile else '') or '',
+            'last_name': (user.last_name if user else '') or '',
+            'first_name': (user.first_name if user else '') or '',
+            'middle_name': (profile.middle_name if profile else '') or '',
+            'email': '' if participant_service.is_placeholder_email(raw_email) else raw_email,
+            'phone': reg.phone or (profile.phone if profile else '') or '',
+            'birth_date': profile.birth_date if profile else None,
+            'education': (profile.education if profile else '') or '',
+            'workplace': (profile.workplace if profile else '') or reg.workplace or '',
+            'position': (profile.position if profile else '') or '',
+            'specializations': (profile.specializations if profile else []) or [],
+        })
+
+    if form.validate_on_submit():
+        data = {
+            'instance_id': reg.instance_id,
+            'last_name': form.last_name.data,
+            'first_name': form.first_name.data,
+            'middle_name': form.middle_name.data,
+            'email': form.email.data,
+            'phone': form.phone.data,
+            'participant_type': form.user_type.data,
+            'birth_date': form.birth_date.data,
+            'education': form.education.data,
+            'workplace': form.workplace.data,
+            'position': form.position.data,
+            'specializations': list(form.specializations.data or []),
+            # Адмін-керовані поля -- зберігаємо як є (не даємо публіці їх міняти).
+            'status': reg.status,
+            'payment_status': reg.payment_status,
+            'payment_amount': reg.payment_amount,
+            'attended': reg.attended,
+            'cpd_points_awarded': reg.cpd_points_awarded,
+            'experience_years': reg.experience_years,
+            'license_number': reg.license_number,
+            'admin_notes': reg.admin_notes,
+        }
+        try:
+            participant_service.upsert_participant(data, reg=reg)
+        except ParticipantError as exc:
+            db.session.rollback()
+            flash(str(exc), 'error')
+        else:
+            reg.completion_token_used_at = utcnow()
+            db.session.commit()
+            return redirect(url_for('registration.complete_payment', token=token))
+
+    return render_template(
+        'registration/complete.html',
+        form=form,
+        reg=reg,
+        event=EventAdapter(instance) if instance else None,
+    )
+
+
+@registration_bp.route('/complete/<token>/pay')
+def complete_payment(token):
+    """Сторінка оплати: LiqPay або завантаження рахунка (PDF)."""
+    reg = _load_reg_by_token(token)
+    if reg is None or not reg.completion_token_active:
+        return render_template('registration/complete_invalid.html'), 410
+
+    liqpay_data = liqpay_signature = liqpay_checkout_url = None
+    needs_payment = (
+        reg.payment_status in ('unpaid', 'pending')
+        and reg.payment_amount and reg.payment_amount > 0
+    )
+    if needs_payment:
+        from app.services.liqpay import get_liqpay_service
+        service = get_liqpay_service()
+        if service.is_configured:
+            order_id = f'REG-{reg.id}'
+            result_url = url_for('payments.success', order_id=order_id, _external=True)
+            server_url = url_for('payments.liqpay_callback', _external=True)
+            description = (
+                reg.instance.course.title if reg.instance and reg.instance.course
+                else reg.target_title or f'Реєстрація #{reg.id}'
+            )
+            liqpay_data, liqpay_signature, liqpay_checkout_url = (
+                service.create_payment_form(
+                    order_id=order_id,
+                    amount=float(reg.payment_amount),
+                    description=description,
+                    result_url=result_url,
+                    server_url=server_url,
+                )
+            )
+
+    return render_template(
+        'registration/complete_pay.html',
+        reg=reg,
+        event=EventAdapter(reg.instance) if reg.instance else None,
+        needs_payment=bool(needs_payment),
+        paid=(reg.payment_status == 'paid'),
+        liqpay_data=liqpay_data,
+        liqpay_signature=liqpay_signature,
+        liqpay_checkout_url=liqpay_checkout_url,
+        invoice_url=url_for('registration.complete_invoice', token=token),
+    )
+
+
+@registration_bp.route('/complete/<token>/invoice.pdf')
+def complete_invoice(token):
+    """Завантаження PDF-рахунка учасником (доступ за токеном)."""
+    reg = _load_reg_by_token(token)
+    if reg is None or not reg.completion_token_active:
+        return render_template('registration/complete_invalid.html'), 410
+
+    from app.services.invoice_service import (
+        InvoiceError, invoice_filename, render_invoice_pdf,
+    )
+    try:
+        pdf = render_invoice_pdf(reg)
+    except InvoiceError as exc:
+        flash(str(exc), 'error')
+        return redirect(url_for('registration.complete_payment', token=token))
+    return Response(
+        pdf,
+        mimetype='application/pdf',
+        headers={
+            'Content-Disposition': f'attachment; filename="{invoice_filename(reg, "pdf")}"',
+        },
     )

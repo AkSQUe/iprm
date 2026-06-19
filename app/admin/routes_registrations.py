@@ -1,11 +1,14 @@
 import logging
 import os
-from flask import render_template, redirect, url_for, flash, request, send_file
+from flask import (
+    Response, render_template, redirect, url_for, flash, request, send_file, jsonify,
+)
 from flask_login import current_user
 from sqlalchemy import case, func
 from sqlalchemy.orm import joinedload
 
 from app.admin import admin_bp
+from app.admin._helpers import try_commit
 from app.admin.decorators import admin_required
 from app.extensions import db
 from app.models.course_instance import CourseInstance
@@ -297,3 +300,69 @@ def registrations_all():
             'per_page': per_page,
         },
     )
+
+
+@admin_bp.route('/registrations/<int:reg_id>/completion-link', methods=['POST'])
+@admin_required
+def registration_completion_link(reg_id):
+    """Видати (або перевикористати) токен і повернути посилання на самостійне
+    завершення реєстрації учасником. JSON для copy-to-clipboard у JS."""
+    reg = db.session.get(EventRegistration, reg_id)
+    if not reg:
+        return jsonify({'ok': False, 'error': 'Реєстрацію не знайдено'}), 404
+    if not reg.completion_token_active:
+        reg.issue_completion_token()
+        if not try_commit(log_context=f'completion_link reg={reg_id}'):
+            return jsonify({'ok': False, 'error': 'Помилка збереження'}), 500
+        audit_logger.info(
+            'Admin %s issued completion link for reg %s', current_user.email, reg_id,
+        )
+    url = url_for(
+        'registration.complete_registration',
+        token=reg.completion_token, _external=True,
+    )
+    return jsonify({'ok': True, 'url': url})
+
+
+@admin_bp.route('/registrations/<int:reg_id>/invoice.<ext>')
+@admin_required
+def registration_invoice_download(reg_id, ext):
+    """Завантажити рахунок: ext=xlsx (Excel-оригінал) або pdf (конвертація)."""
+    reg = db.session.get(EventRegistration, reg_id)
+    if not reg:
+        flash('Реєстрацію не знайдено', 'error')
+        return redirect(url_for('admin.registrations_all'))
+
+    from app.services.invoice_service import (
+        InvoiceError, build_invoice_xlsx, invoice_filename, render_invoice_pdf,
+    )
+    back = (
+        url_for('admin.instance_registrations', instance_id=reg.instance_id)
+        if reg.instance_id else url_for('admin.registrations_all')
+    )
+    if ext == 'xlsx':
+        data = build_invoice_xlsx(reg)
+        audit_logger.info('Admin %s downloaded xlsx invoice reg %s', current_user.email, reg_id)
+        return send_file(
+            data,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=invoice_filename(reg, 'xlsx'),
+            max_age=0,
+        )
+    if ext == 'pdf':
+        try:
+            pdf = render_invoice_pdf(reg)
+        except InvoiceError as exc:
+            flash(str(exc), 'error')
+            return redirect(back)
+        audit_logger.info('Admin %s downloaded pdf invoice reg %s', current_user.email, reg_id)
+        return Response(
+            pdf,
+            mimetype='application/pdf',
+            headers={
+                'Content-Disposition': f'attachment; filename="{invoice_filename(reg, "pdf")}"',
+            },
+        )
+    flash('Невідомий формат рахунка', 'error')
+    return redirect(back)
