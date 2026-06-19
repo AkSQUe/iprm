@@ -1,0 +1,196 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{% if reg %}Редагування учасника{% else %}Новий учасник{% endif %} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-participants.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  {% set back_url = url_for('admin.instance_registrations', instance_id=instance.id) if instance else url_for('admin.registrations_all') %}
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.registrations_all') }}" class="admin-breadcrumb__link">Реєстрації</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">{% if reg %}Редагування{% else %}Новий учасник{% endif %}</span>
+      </div>
+      <h1 class="admin-hero__title">{% if reg %}Редагування учасника{% else %}Додати учасника вручну{% endif %}</h1>
+      <p class="admin-hero__subtitle">
+        {% if reg %}Дані учасника, медичний профіль і параметри реєстрації{% else %}Email необов'язковий -- його можна додати пізніше{% endif %}
+      </p>
+    </div>
+    <div class="admin-hero__actions">
+      <a href="{{ back_url }}" class="btn-admin btn-admin--secondary">Назад</a>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {% if reg and not form.email.data %}
+  <div class="participant-email-note">
+    <span class="material-symbols-rounded">mark_email_unread</span>
+    <span>Email цього учасника ще не вказано. Додайте його у полі нижче, коли отримаєте.</span>
+  </div>
+  {% endif %}
+
+  <form method="POST" class="admin-form">
+    {{ form.hidden_tag() }}
+    {% include 'admin/partials/_form_errors.html' %}
+
+    {# ----- Захід ----- #}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Захід</h3>
+      {% if fixed_instance %}
+      <input type="hidden" name="instance_id" value="{{ instance.id if instance else form.instance_id.data }}">
+      <div class="participant-event">
+        <span class="material-symbols-rounded participant-event__icon">event</span>
+        <span>
+          {% if instance and instance.course %}{{ instance.course.title }}{% else %}Захід{% endif %}
+          {% if instance and instance.start_date %} &middot; {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
+        </span>
+      </div>
+      {% else %}
+      <div class="form-group admin-form__full">
+        <label for="instance_id">Захід <span class="required">*</span></label>
+        {{ form.instance_id(class="form-input" + (" is-invalid" if form.instance_id.errors else ""), id="instance_id") }}
+        {% for error in form.instance_id.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    {# ----- Ідентифікація ----- #}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Учасник</h3>
+      <div class="admin-form__grid">
+        <div class="form-group">
+          <label for="last_name">Прізвище <span class="required">*</span></label>
+          {{ form.last_name(class="form-input" + (" is-invalid" if form.last_name.errors else ""), id="last_name") }}
+          {% for error in form.last_name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label for="first_name">Ім'я <span class="required">*</span></label>
+          {{ form.first_name(class="form-input" + (" is-invalid" if form.first_name.errors else ""), id="first_name") }}
+          {% for error in form.first_name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label for="middle_name">По батькові</label>
+          {{ form.middle_name(class="form-input", id="middle_name") }}
+        </div>
+        <div class="form-group">
+          <label for="participant_type">Тип учасника</label>
+          {{ form.participant_type(class="form-input", id="participant_type") }}
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email") }}
+          {% for error in form.email.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          <div class="participant-hint">Необов'язково. Менеджер може додати email пізніше.</div>
+        </div>
+        <div class="form-group">
+          <label for="phone">Телефон <span class="required">*</span></label>
+          {{ form.phone(class="form-input" + (" is-invalid" if form.phone.errors else ""), id="phone") }}
+          {% for error in form.phone.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# ----- Медичний профіль ----- #}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Медичний профіль</h3>
+      <p class="admin-form__section-hint">Опціонально -- потрібно для нарахування балів БПР, можна дозаповнити згодом.</p>
+      <div class="admin-form__grid">
+        <div class="form-group">
+          <label for="birth_date">Дата народження</label>
+          {{ form.birth_date(class="form-input", id="birth_date", type="date") }}
+        </div>
+        <div class="form-group">
+          <label for="position">Посада</label>
+          {{ form.position(class="form-input", id="position") }}
+        </div>
+        <div class="form-group admin-form__full">
+          <label for="education">Освіта</label>
+          {{ form.education(class="form-input", id="education") }}
+        </div>
+        <div class="form-group admin-form__full">
+          <label for="workplace">Місце роботи / місто</label>
+          {{ form.workplace(class="form-input", id="workplace") }}
+        </div>
+        <div class="form-group admin-form__full">
+          <label>Спеціалізації</label>
+          <div class="participant-spec-grid">
+            {% set selected_specs = form.specializations.data or [] %}
+            {% for code, label in form.specializations.choices %}
+            <label class="participant-spec-grid__item">
+              <input type="checkbox" name="specializations" value="{{ code }}" {% if code in selected_specs %}checked{% endif %}>
+              <span>{{ label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          {% for error in form.specializations.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# ----- Реєстрація ----- #}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Реєстрація</h3>
+      <div class="admin-form__grid">
+        <div class="form-group">
+          <label for="status">Статус реєстрації <span class="required">*</span></label>
+          {{ form.status(class="form-input", id="status") }}
+        </div>
+        <div class="form-group">
+          <label for="payment_status">Статус оплати <span class="required">*</span></label>
+          {{ form.payment_status(class="form-input", id="payment_status") }}
+        </div>
+        <div class="form-group">
+          <label for="payment_amount">Сума оплати (UAH)</label>
+          {{ form.payment_amount(class="form-input", id="payment_amount", step="0.01") }}
+          {% for error in form.payment_amount.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label for="cpd_points_awarded">Нараховані бали БПР</label>
+          {{ form.cpd_points_awarded(class="form-input", id="cpd_points_awarded") }}
+          {% for error in form.cpd_points_awarded.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label for="experience_years">Стаж (років)</label>
+          {{ form.experience_years(class="form-input", id="experience_years") }}
+          {% for error in form.experience_years.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label for="license_number">Номер ліцензії</label>
+          {{ form.license_number(class="form-input", id="license_number") }}
+        </div>
+        <div class="form-group admin-form__full form-checkbox">
+          {{ form.attended(id="attended") }}
+          <label for="attended">Був присутній на заході</label>
+        </div>
+        <div class="form-group admin-form__full">
+          <label for="admin_notes">Нотатки адміністратора</label>
+          {{ form.admin_notes(class="form-input", id="admin_notes", rows="3") }}
+          {% for error in form.admin_notes.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-form__actions">
+      <a href="{{ back_url }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      <button type="submit" class="btn-admin btn-admin--primary">
+        {% if reg %}Зберегти{% else %}Додати учасника{% endif %}
+      </button>
+    </div>
+  </form>
+
+  </div>
+</div>
+{% endblock %}
