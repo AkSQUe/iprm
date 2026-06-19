@@ -351,14 +351,17 @@ def participants_import_apply(token):
     if result.get('ok'):
         xlsx_io.cleanup_upload(token)
         audit_logger.info(
-            'Admin %s applied participants xlsx: created=%s updated=%s',
+            'Admin %s applied participants xlsx: created=%s updated=%s skipped=%s',
             current_user.email, result.get('created'), result.get('updated'),
+            result.get('skipped'),
         )
-        flash(
+        msg = (
             f'Імпорт виконано: створено {result["created"]}, '
-            f'оновлено {result["updated"]} учасник(ів).',
-            'success',
+            f'оновлено {result["updated"]} учасник(ів)'
         )
+        if result.get('skipped'):
+            msg += f', без змін {result["skipped"]}'
+        flash(msg + '.', 'success')
         return redirect(_participants_back_url())
 
     flash(f'Помилка при збереженні: {result.get("reason")}', 'error')
