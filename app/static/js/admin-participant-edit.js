@@ -9,6 +9,7 @@
 
   function setError(el, msg) {
     el.classList.add('is-invalid');
+    el.classList.remove('field-await'); // стан помилки має пріоритет над «очікує»
     var g = group(el);
     var hint = g.querySelector('.form-error--js');
     if (!hint) {
@@ -23,6 +24,21 @@
     el.classList.remove('is-invalid');
     var hint = group(el).querySelector('.form-error--js');
     if (hint) hint.remove();
+    refreshAwait(el); // знову показати пульсацію, якщо поле спорожніли
+  }
+
+  // ---------- підсвітка незаповнених обов'язкових полів ----------
+  var REQUIRED_IDS = ['instance_id', 'last_name', 'first_name', 'phone'];
+
+  function isEmpty(el) { return !(el.value && el.value.trim()); }
+
+  function refreshAwait(el) {
+    if (!el || REQUIRED_IDS.indexOf(el.id) === -1) return;
+    if (!el.classList.contains('is-invalid') && isEmpty(el)) {
+      el.classList.add('field-await');
+    } else {
+      el.classList.remove('field-await');
+    }
   }
 
   // ---------- normalizers (дзеркало app/utils.py) ----------
@@ -91,6 +107,15 @@
     f.el.addEventListener('input', function () {
       if (f.el.classList.contains('is-invalid') && !f.val(f.el)) clearError(f.el);
     });
+  });
+
+  REQUIRED_IDS.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    ['input', 'change', 'blur'].forEach(function (ev) {
+      el.addEventListener(ev, function () { refreshAwait(el); });
+    });
+    refreshAwait(el); // початковий стан при завантаженні форми
   });
 
   function validateAll() {

@@ -79,3 +79,28 @@
 .participant-spec-grid__item:hover {
   color: var(--apple-black);
 }
+
+/* Підсвітка обов'язкових полів, які ще не заповнені: м'яка пульсація
+   акцентним кольором, щоб менеджер одразу бачив, що лишилось ввести.
+   Знімається JS-ом (admin-participant-edit.js), щойно поле заповнене, і
+   НЕ показується, коли поле в стані помилки (.is-invalid має пріоритет). */
+@keyframes iprm-await-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--iprm-accent-light, rgba(112, 85, 164, 0.18)); }
+  50%      { box-shadow: 0 0 0 4px var(--iprm-accent-light, rgba(112, 85, 164, 0.18)); }
+}
+
+.admin-form .form-input.field-await,
+.admin-form select.form-input.field-await {
+  border-color: var(--iprm-accent, #7055a4);
+  animation: iprm-await-pulse 1.8s ease-in-out infinite;
+}
+
+/* Доступність: вимикаємо рух для користувачів із prefers-reduced-motion,
+   лишаючи статичну акцентну рамку як індикатор. */
+@media (prefers-reduced-motion: reduce) {
+  .admin-form .form-input.field-await,
+  .admin-form select.form-input.field-await {
+    animation: none;
+    box-shadow: 0 0 0 3px var(--iprm-accent-light, rgba(112, 85, 164, 0.18));
+  }
+}
