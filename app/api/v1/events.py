@@ -132,6 +132,15 @@ def list_events():
             'api_version': API_VERSION,
         }), 400
 
+    granularity = (request.args.get('granularity') or 'course').strip().lower()
+    if granularity not in ('course', 'instance'):
+        return jsonify({
+            'error': "invalid granularity; allowed: ['course', 'instance']",
+            'api_version': API_VERSION,
+        }), 400
+    if granularity == 'instance':
+        return _list_instances(statuses, page, per_page)
+
     query = (
         Course.query
         .options(
@@ -162,6 +171,42 @@ def list_events():
     body = {
         'api_version': API_VERSION,
         'items': [serialize_event_card(c, picked[c.id]) for c in courses_sorted],
+        'page': pagination.page,
+        'per_page': pagination.per_page,
+        'total': pagination.total,
+        'pages': pagination.pages,
+    }
+    return _cached(make_response(jsonify(body)), CACHE_TTL_LIST_SECONDS)
+
+
+def _list_instances(statuses, page, per_page):
+    """List events at INSTANCE granularity -- one card per CourseInstance.
+
+    На відміну від покурсового режиму (один представник на курс, орієнтований
+    на майбутнє), тут кожен CourseInstance -- окремий елемент. Потрібно
+    партнерам (mm-medic) для звітності по минулих/завершених заходах, які в
+    покурсовому режимі не видно. Картка та сама (serialize_event_card з явним
+    instance); унікальний ключ елемента -- поле `instance_id`.
+    """
+    query = (
+        CourseInstance.query
+        .join(Course, CourseInstance.course_id == Course.id)
+        .options(
+            joinedload(CourseInstance.course).joinedload(Course.trainer),
+            joinedload(CourseInstance.trainer),
+        )
+        .filter(Course.is_active.is_(True))
+        .filter(CourseInstance.status.in_(statuses))
+        .order_by(CourseInstance.start_date.desc())
+    )
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    instances = pagination.items
+    _hydrate_reg_counts(instances)
+
+    body = {
+        'api_version': API_VERSION,
+        'granularity': 'instance',
+        'items': [serialize_event_card(i.course, i) for i in instances],
         'page': pagination.page,
         'per_page': pagination.per_page,
         'total': pagination.total,
