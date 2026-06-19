@@ -1,6 +1,6 @@
 """registration completion token + bank requisites in site_settings
 
-Revision ID: c7d8e9f0a1b2
+Revision ID: ad0fa026fc6a
 Revises: e1d2c3b4a5f6
 Create Date: 2026-06-19
 
@@ -12,7 +12,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = 'c7d8e9f0a1b2'
+revision = 'ad0fa026fc6a'
 down_revision = 'e1d2c3b4a5f6'
 branch_labels = None
 depends_on = None
