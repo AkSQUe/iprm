@@ -13,9 +13,10 @@ placeholder-email <цифри-телефону>@noemail.invalid ('.invalid' -- R
 """
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from app.extensions import db
+from app.models.course_instance import CourseInstance
 from app.models.medical_profile import MedicalProfile
 from app.models.registration import EventRegistration
 from app.models.specializations import labels_for_codes
@@ -27,6 +28,41 @@ logger = logging.getLogger(__name__)
 PLACEHOLDER_EMAIL_DOMAIN = 'noemail.invalid'
 # 'xlsx.temp' -- спадок скрипта імпорту, теж вважаємо placeholder-ом.
 _PLACEHOLDER_DOMAINS = {PLACEHOLDER_EMAIL_DOMAIN, 'xlsx.temp'}
+
+# Події зберігаються в UTC; для ярликів показуємо київську дату (UTC+3).
+_KYIV = timezone(timedelta(hours=3))
+
+# Максимальна довжина snapshot-поля specialty (EventRegistration.specialty).
+_SPECIALTY_MAX = 200
+
+
+def event_label(instance, with_id=False, with_status=False):
+    """Єдиний людиночитний ярлик CourseInstance для UI (форма + xlsx).
+
+    with_id     -- префікс '#<id>' (потрібен xlsx для зворотного парсингу).
+    with_status -- суфікс '(Статус)' (зручно у випадних списках форми).
+    Дата -- київська (події в UTC), щоб уникнути зсуву на нічних подіях.
+    """
+    title = instance.course.title if instance.course else f'Захід #{instance.id}'
+    sd = instance.start_date
+    if sd is not None and sd.tzinfo is not None:
+        sd = sd.astimezone(_KYIV)
+    date_s = sd.strftime('%d.%m.%Y') if sd else 'без дати'
+    core = f'{title} -- {date_s}'
+    label = f'#{instance.id} -- {core}' if with_id else core
+    if with_status:
+        status = dict(CourseInstance.STATUSES).get(instance.status, instance.status)
+        label += f' ({status})'
+    return label
+
+
+def _specialty_snapshot(labels_joined):
+    """Обрізати specialty до ліміту БД, не ріжучи мітку посеред слова."""
+    if len(labels_joined) <= _SPECIALTY_MAX:
+        return labels_joined
+    trimmed = labels_joined[:_SPECIALTY_MAX]
+    cut = trimmed.rfind(', ')
+    return trimmed[:cut] if cut > 0 else trimmed
 
 
 class ParticipantError(Exception):
@@ -123,7 +159,7 @@ def apply_registration_fields(reg, data, profile):
     workplace = _strip_or_none(data.get('workplace')) or _strip_or_none(profile.workplace) or ''
 
     reg.phone = (_strip_or_none(data.get('phone')) or '')[:20]
-    reg.specialty = specialty[:200]
+    reg.specialty = _specialty_snapshot(specialty)
     reg.workplace = workplace[:300]
     reg.experience_years = data.get('experience_years')
     reg.license_number = _strip_or_none(data.get('license_number'))

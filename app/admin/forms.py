@@ -1,3 +1,5 @@
+from datetime import date
+
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField, TextAreaField, SelectField, SelectMultipleField, IntegerField,
@@ -560,3 +562,11 @@ class ParticipantForm(FlaskForm):
         'Нотатки адміністратора',
         validators=[Optional(), Length(max=2000)],
     )
+
+    def validate_birth_date(self, field):
+        if field.data is None:
+            return
+        if field.data > date.today():
+            raise ValidationError('Дата народження не може бути в майбутньому')
+        if field.data.year < 1900:
+            raise ValidationError('Некоректний рік народження')

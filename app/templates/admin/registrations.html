@@ -25,9 +25,15 @@
       </div>
       <div class="admin-hero__actions">
         <div class="admin-xlsx-toolbar">
-          <a href="{{ url_for('admin.participants_export') }}" class="btn-admin btn-admin--secondary" title="Завантажити всіх учасників у xlsx">
-            <span class="material-symbols-rounded">download</span> Експорт XLSX
-          </a>
+          <details class="admin-xlsx-menu">
+            <summary class="btn-admin btn-admin--secondary" title="Завантажити учасників у xlsx">
+              <span class="material-symbols-rounded">download</span> Експорт XLSX
+            </summary>
+            <div class="admin-xlsx-menu__items">
+              <a href="{{ url_for('admin.participants_export') }}">Усі учасники</a>
+              <a href="{{ url_for('admin.participants_export', blank=1) }}">Порожній шаблон</a>
+            </div>
+          </details>
           <form method="POST" action="{{ url_for('admin.participants_import_upload') }}" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="file" name="xlsx" id="participants-xlsx-input" accept=".xlsx" onchange="this.form.submit()">
@@ -85,14 +91,14 @@
           <option value="paid"{% if filters.payment == 'paid' %} selected{% endif %}>Оплачено</option>
           <option value="refunded"{% if filters.payment == 'refunded' %} selected{% endif %}>Повернено</option>
         </select>
-        <select name="event_id" class="form-input form-input--sm">
+        <select name="instance_id" class="form-input form-input--sm">
           <option value="">Всі заходи</option>
-          {% for event in events %}
-            <option value="{{ event.id }}"{% if filters.event_id == event.id %} selected{% endif %}>{{ event.title }}</option>
+          {% for inst in instances %}
+            <option value="{{ inst.id }}"{% if filters.instance_id == inst.id %} selected{% endif %}>{{ inst.course.title }}{% if inst.start_date %} — {{ inst.start_date.strftime('%d.%m.%Y') }}{% endif %}{% if inst.location %} ({{ inst.location }}){% endif %}</option>
           {% endfor %}
         </select>
         <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">filter_list</span> Фільтрувати</button>
-        {% if filters.status or filters.payment or filters.event_id %}
+        {% if filters.status or filters.payment or filters.instance_id %}
           <a href="{{ url_for('admin.registrations_all') }}" class="btn-admin btn-admin--sm"><span class="material-symbols-rounded">clear</span> Скинути</a>
         {% endif %}
       </form>
@@ -199,11 +205,24 @@
       </tbody>
     </table>
     </div>
+
+    <!-- Пагінація -->
+    {% if pagination and pagination.pages > 1 %}
+    <nav class="admin-pagination">
+      {% if pagination.has_prev %}
+      <a href="{{ url_for('admin.registrations_all', page=pagination.prev_num, status=filters.status, payment=filters.payment, instance_id=filters.instance_id, per_page=filters.per_page) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_left</span></a>
+      {% endif %}
+      <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }} ({{ pagination.total }})</span>
+      {% if pagination.has_next %}
+      <a href="{{ url_for('admin.registrations_all', page=pagination.next_num, status=filters.status, payment=filters.payment, instance_id=filters.instance_id, per_page=filters.per_page) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_right</span></a>
+      {% endif %}
+    </nav>
+    {% endif %}
     {% else %}
     <div class="admin-empty">
       <span class="material-symbols-rounded admin-empty__icon">how_to_reg</span>
       <h3 class="admin-empty__title">Реєстрацій не знайдено</h3>
-      {% if filters.status or filters.payment or filters.event_id %}
+      {% if filters.status or filters.payment or filters.instance_id %}
         <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.registrations_all') }}">скинути їх</a></p>
       {% else %}
         <p>Учасники зможуть реєструватися на опубліковані заходи</p>

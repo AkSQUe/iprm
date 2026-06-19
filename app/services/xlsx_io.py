@@ -1551,11 +1551,12 @@ def _date(v) -> date | None:
 
 def _participant_event_label(instance) -> str:
     """Людиночитний ярлик заходу для колонки/довідника. Починається з
-    '#<id>' -> id можна розпарсити навіть якщо назву трохи змінили."""
-    title = instance.course.title if instance.course else f'Захід #{instance.id}'
-    sd = _to_kyiv_naive(instance.start_date)
-    date_s = sd.strftime('%d.%m.%Y') if sd else 'без дати'
-    return f'#{instance.id} -- {title} -- {date_s}'
+    '#<id>' -> id можна розпарсити навіть якщо назву трохи змінили.
+
+    Єдина реалізація живе у participant_service.event_label (спільна з
+    випадними списками форми)."""
+    from app.services import participant_service
+    return participant_service.event_label(instance, with_id=True)
 
 
 def _resolve_event_to_id(label, label_to_id, instance_by_id):
@@ -1674,11 +1675,13 @@ class ParticipantsImportPlan:
         return c
 
 
-def export_participants_xlsx(instance_id=None) -> io.BytesIO:
+def export_participants_xlsx(instance_id=None, blank=False) -> io.BytesIO:
     """Експорт учасників у xlsx (також слугує формою-шаблоном для додавання).
 
-    instance_id: якщо задано -- лише учасники цього заходу. Reference-sheet
-    «Заходи» + drop-down дозволяють додавати рядки для будь-якого заходу.
+    instance_id: якщо задано -- лише учасники цього заходу.
+    blank: True -- порожній шаблон (лише заголовки + dropdown-и, без даних).
+    Reference-sheet «Заходи» + drop-down дозволяють додавати рядки для
+    будь-якого заходу.
     """
     wb = Workbook()
     ws = wb.active
@@ -1687,17 +1690,20 @@ def export_participants_xlsx(instance_id=None) -> io.BytesIO:
 
     from app.services import participant_service
 
-    q = (
-        EventRegistration.query
-        .options(
-            joinedload(EventRegistration.user).joinedload(User.medical_profile),
-            joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
+    if blank:
+        regs = []
+    else:
+        q = (
+            EventRegistration.query
+            .options(
+                joinedload(EventRegistration.user).joinedload(User.medical_profile),
+                joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
+            )
+            .order_by(EventRegistration.created_at.desc())
         )
-        .order_by(EventRegistration.created_at.desc())
-    )
-    if instance_id:
-        q = q.filter(EventRegistration.instance_id == instance_id)
-    regs = q.all()
+        if instance_id:
+            q = q.filter(EventRegistration.instance_id == instance_id)
+        regs = q.all()
 
     for row_idx, reg in enumerate(regs, start=2):
         user = reg.user
@@ -1788,6 +1794,83 @@ def export_participants_xlsx(instance_id=None) -> io.BytesIO:
     return out
 
 
+_PARTICIPANT_DIFF_LABELS = {
+    'last_name': 'прізвище', 'first_name': "ім'я", 'middle_name': 'по батькові',
+    'email': 'email', 'phone': 'телефон', 'participant_type': 'тип учасника',
+    'birth_date': 'дата народж.', 'education': 'освіта', 'workplace': 'місце роботи',
+    'position': 'посада', 'specializations': 'спеціалізації', 'status': 'статус',
+    'payment_status': 'оплата', 'payment_amount': 'сума', 'attended': 'присутність',
+    'cpd_points_awarded': 'бали БПР', 'experience_years': 'стаж',
+    'license_number': 'ліцензія', 'admin_notes': 'нотатки',
+}
+
+
+def _diff_participant(reg, data):
+    """Які поля зміняться при застосуванні data до наявної реєстрації.
+
+    Дзеркалить семантику participant_service.upsert_participant: identity та
+    профіль оновлюються лише непорожніми значеннями; реєстраційні поля --
+    завжди (replace). Повертає список людиночитних назв змінених полів
+    (порожній -> рядок 'без змін')."""
+    user = reg.user
+    profile = user.medical_profile if user else None
+    changed = []
+
+    def norm(v):
+        return v if v not in ('', None) else None
+
+    # Identity + профіль: оновлюються лише непорожнім вводом.
+    soft = [
+        ('last_name', user.last_name if user else None),
+        ('first_name', user.first_name if user else None),
+        ('middle_name', profile.middle_name if profile else None),
+        ('participant_type', profile.participant_type if profile else None),
+        ('birth_date', profile.birth_date if profile else None),
+        ('education', profile.education if profile else None),
+        ('workplace', profile.workplace if profile else None),
+        ('position', profile.position if profile else None),
+    ]
+    for key, cur in soft:
+        new = data.get(key)
+        if new in ('', None):
+            continue
+        if norm(new) != norm(cur):
+            changed.append(_PARTICIPANT_DIFF_LABELS[key])
+
+    new_email = (data.get('email') or '').strip().lower()
+    if new_email and user and new_email != (user.email or '').lower():
+        changed.append(_PARTICIPANT_DIFF_LABELS['email'])
+
+    new_specs = list(data.get('specializations') or [])
+    if new_specs and new_specs != list((profile.specializations if profile else []) or []):
+        changed.append(_PARTICIPANT_DIFF_LABELS['specializations'])
+
+    # Реєстраційні поля -- replace-семантика (порівнюємо завжди).
+    if norm(data.get('phone')) != norm(reg.phone):
+        changed.append(_PARTICIPANT_DIFF_LABELS['phone'])
+    if (data.get('status') or 'confirmed') != reg.status:
+        changed.append(_PARTICIPANT_DIFF_LABELS['status'])
+    if (data.get('payment_status') or 'unpaid') != reg.payment_status:
+        changed.append(_PARTICIPANT_DIFF_LABELS['payment_status'])
+    if bool(data.get('attended')) != bool(reg.attended):
+        changed.append(_PARTICIPANT_DIFF_LABELS['attended'])
+    if data.get('cpd_points_awarded') != reg.cpd_points_awarded:
+        changed.append(_PARTICIPANT_DIFF_LABELS['cpd_points_awarded'])
+    if data.get('experience_years') != reg.experience_years:
+        changed.append(_PARTICIPANT_DIFF_LABELS['experience_years'])
+    if norm(data.get('license_number')) != norm(reg.license_number):
+        changed.append(_PARTICIPANT_DIFF_LABELS['license_number'])
+    if norm(data.get('admin_notes')) != norm(reg.admin_notes):
+        changed.append(_PARTICIPANT_DIFF_LABELS['admin_notes'])
+    pa_new, pa_cur = data.get('payment_amount'), reg.payment_amount
+    if (pa_new is None) != (pa_cur is None) or (
+        pa_new is not None and pa_cur is not None and pa_new != pa_cur
+    ):
+        changed.append(_PARTICIPANT_DIFF_LABELS['payment_amount'])
+
+    return changed
+
+
 def parse_participants_xlsx(path: Path) -> ParticipantsImportPlan:
     plan = ParticipantsImportPlan()
     try:
@@ -1807,13 +1890,32 @@ def parse_participants_xlsx(path: Path) -> ParticipantsImportPlan:
         plan.errors.append(str(exc))
         return plan
 
-    from app.services import registration_service
-
     instances = (
         CourseInstance.query.options(joinedload(CourseInstance.course)).all()
     )
     instance_by_id = {i.id: i for i in instances}
     label_to_id = {_participant_event_label(i): i.id for i in instances}
+
+    # Preload проти N+1: мапи email->User та (user,instance)->активна реєстрація
+    # для визначення дії (create/update/unchanged) без запитів у циклі.
+    emails_in_file = {
+        (_str(r.get('email')) or '').strip().lower()
+        for r in rows if _str(r.get('email'))
+    }
+    users_by_email = {}
+    if emails_in_file:
+        for u in User.query.filter(User.email.in_(emails_in_file)).all():
+            users_by_email[u.email] = u
+    active_reg = {}
+    if users_by_email:
+        uids = [u.id for u in users_by_email.values()]
+        for r in (
+            EventRegistration.query
+            .filter(EventRegistration.user_id.in_(uids),
+                    EventRegistration.status != 'cancelled')
+            .all()
+        ):
+            active_reg[(r.user_id, r.instance_id)] = r
 
     for line_no, raw in enumerate(rows, start=2):
         try:
@@ -1859,6 +1961,21 @@ def parse_participants_xlsx(path: Path) -> ParticipantsImportPlan:
             if unknown:
                 raise ValueError(f'невідомі спеціалізації: {", ".join(unknown)}')
 
+            # Числові діапазони -- валідуємо тут, щоб дати чітку per-row
+            # помилку замість падіння на DB CHECK-constraint у apply.
+            payment_amount = _decimal(raw.get('payment_amount'))
+            if payment_amount is not None and payment_amount < 0:
+                raise ValueError('сума оплати не може бути від\'ємною')
+            cpd = _int(raw.get('cpd_points_awarded'))
+            if cpd is not None and cpd < 0:
+                raise ValueError('бали БПР не можуть бути від\'ємними')
+            experience = _int(raw.get('experience_years'))
+            if experience is not None and not (0 <= experience <= 70):
+                raise ValueError('стаж має бути в межах 0-70 років')
+            birth = _date(raw.get('birth_date'))
+            if birth is not None and (birth > date.today() or birth.year < 1900):
+                raise ValueError('некоректна дата народження')
+
             data = {
                 'instance_id': instance_id,
                 'last_name': last_name,
@@ -1867,42 +1984,49 @@ def parse_participants_xlsx(path: Path) -> ParticipantsImportPlan:
                 'email': _str(raw.get('email')),
                 'phone': phone,
                 'participant_type': ptype,
-                'birth_date': _date(raw.get('birth_date')),
+                'birth_date': birth,
                 'education': _str(raw.get('education')),
                 'workplace': _str(raw.get('workplace')),
                 'position': _str(raw.get('position')),
                 'specializations': specs,
                 'status': status,
                 'payment_status': payment_status,
-                'payment_amount': _decimal(raw.get('payment_amount')),
+                'payment_amount': payment_amount,
                 'attended': _bool(raw.get('attended')),
-                'cpd_points_awarded': _int(raw.get('cpd_points_awarded')),
-                'experience_years': _int(raw.get('experience_years')),
+                'cpd_points_awarded': cpd,
+                'experience_years': experience,
                 'license_number': _str(raw.get('license_number')),
                 'admin_notes': _str(raw.get('admin_notes')),
             }
 
-            # Дія для preview: reg_id -> update; інакше create, але якщо
-            # користувач за email уже активно зареєстрований -> теж update.
-            if reg is not None:
-                action = 'update'
-            else:
-                action = 'create'
+            # Дія для preview: reg_id або наявна активна реєстрація за email
+            # -> update (або unchanged, якщо нічого не змінюється); інакше create.
+            existing_reg = reg
+            if existing_reg is None:
                 email = (data['email'] or '').strip().lower()
                 if email:
-                    u = User.query.filter_by(email=email).first()
+                    u = users_by_email.get(email)
                     if u is not None:
-                        ex = registration_service.find_existing(u.id, instance_id)
-                        if ex is not None and ex.status != 'cancelled':
-                            action = 'update'
+                        existing_reg = active_reg.get((u.id, instance_id))
+
+            if existing_reg is not None:
+                diff = _diff_participant(existing_reg, data)
+                action = 'update' if diff else 'unchanged'
+            else:
+                diff = []
+                action = 'create'
 
             name = f'{last_name} {first_name}'.strip()
             event_lbl = (
                 _participant_event_label(instance_by_id[instance_id])
                 if instance_id in instance_by_id else ''
             )
-            plan.participants.append({'data': data, 'reg_id': reg.id if reg else None})
-            plan.changes.append(ParticipantChange(action=action, name=name, event=event_lbl))
+            plan.participants.append({
+                'data': data, 'reg_id': reg.id if reg else None, 'action': action,
+            })
+            plan.changes.append(ParticipantChange(
+                action=action, name=name, event=event_lbl, fields_changed=diff,
+            ))
         except Exception as exc:
             plan.errors.append(f'Рядок {line_no} (Учасники): {exc}')
             plan.changes.append(ParticipantChange(
@@ -1924,8 +2048,12 @@ def apply_participants_plan(plan: ParticipantsImportPlan) -> dict:
 
     created = 0
     updated = 0
+    skipped = 0
     try:
         for item in plan.participants:
+            if item.get('action') == 'unchanged':
+                skipped += 1
+                continue
             reg_id = item['reg_id']
             reg = db.session.get(EventRegistration, reg_id) if reg_id else None
             _reg, was_created = participant_service.upsert_participant(
@@ -1936,7 +2064,7 @@ def apply_participants_plan(plan: ParticipantsImportPlan) -> dict:
             else:
                 updated += 1
         db.session.commit()
-        return {'ok': True, 'created': created, 'updated': updated}
+        return {'ok': True, 'created': created, 'updated': updated, 'skipped': skipped}
     except participant_service.ParticipantError as exc:
         db.session.rollback()
         return {'ok': False, 'reason': str(exc)}

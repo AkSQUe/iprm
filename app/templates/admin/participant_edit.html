@@ -25,7 +25,7 @@
       </div>
       <h1 class="admin-hero__title">{% if reg %}Редагування учасника{% else %}Додати учасника вручну{% endif %}</h1>
       <p class="admin-hero__subtitle">
-        {% if reg %}Дані учасника, медичний профіль і параметри реєстрації{% else %}Email необов'язковий -- його можна додати пізніше{% endif %}
+        {% if reg %}Дані учасника, медичний профіль і параметри реєстрації{% else %}Email необов'язковий – його можна додати пізніше{% endif %}
       </p>
     </div>
     <div class="admin-hero__actions">
@@ -61,7 +61,13 @@
       {% else %}
       <div class="form-group admin-form__full">
         <label for="instance_id">Захід <span class="required">*</span></label>
-        {{ form.instance_id(class="form-input" + (" is-invalid" if form.instance_id.errors else ""), id="instance_id") }}
+        {# Рендеримо вручну, щоб додати data-price -- сума оплати за замовчуванням
+           підставляється з налаштувань розкладу обраного заходу (admin-participant-edit.js). #}
+        <select name="instance_id" id="instance_id" class="form-input{{ ' is-invalid' if form.instance_id.errors else '' }}">
+          {% for value, label in form.instance_id.choices %}
+          <option value="{{ value }}" data-price="{{ (instance_prices or {}).get(value, '') }}"{% if form.instance_id.data == value %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
         {% for error in form.instance_id.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
       </div>
       {% endif %}
@@ -93,7 +99,6 @@
           <label for="email">Email</label>
           {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email") }}
           {% for error in form.email.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
-          <div class="participant-hint">Необов'язково. Менеджер може додати email пізніше.</div>
         </div>
         <div class="form-group">
           <label for="phone">Телефон <span class="required">*</span></label>
@@ -106,7 +111,6 @@
     {# ----- Медичний профіль ----- #}
     <div class="form-section admin-form__section">
       <h3 class="admin-form__section-title">Медичний профіль</h3>
-      <p class="admin-form__section-hint">Опціонально -- потрібно для нарахування балів БПР, можна дозаповнити згодом.</p>
       <div class="admin-form__grid">
         <div class="form-group">
           <label for="birth_date">Дата народження</label>
@@ -193,4 +197,9 @@
 
   </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin-participant-edit.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

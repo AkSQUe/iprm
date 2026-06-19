@@ -250,6 +250,8 @@ def registrations_all():
     status_filter = request.args.get('status', '')
     payment_filter = request.args.get('payment', '')
     instance_id_filter = request.args.get('instance_id', type=int)
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
 
     stats = db.session.query(
         func.count().label('total'),
@@ -274,7 +276,9 @@ def registrations_all():
     if instance_id_filter:
         query = query.filter(EventRegistration.instance_id == instance_id_filter)
 
-    registrations = query.order_by(EventRegistration.created_at.desc()).all()
+    pagination = query.order_by(EventRegistration.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False,
+    )
 
     instances = db.session.query(CourseInstance).options(
         joinedload(CourseInstance.course),
@@ -282,12 +286,14 @@ def registrations_all():
 
     return render_template(
         'admin/registrations.html',
-        registrations=registrations,
+        registrations=pagination.items,
+        pagination=pagination,
         stats=stats,
         instances=instances,
         filters={
             'status': status_filter,
             'payment': payment_filter,
             'instance_id': instance_id_filter,
+            'per_page': per_page,
         },
     )

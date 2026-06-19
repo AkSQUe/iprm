@@ -32,10 +32,8 @@ audit_logger = logging.getLogger('audit')
 # ===================== helpers =====================
 
 def _instance_label(instance):
-    title = instance.course.title if instance.course else f'Захід #{instance.id}'
-    date = instance.start_date.strftime('%d.%m.%Y') if instance.start_date else 'без дати'
-    status = dict(CourseInstance.STATUSES).get(instance.status, instance.status)
-    return f'{title} -- {date} ({status})'
+    """Ярлик заходу для випадних списків форми (з назвою статусу)."""
+    return participant_service.event_label(instance, with_status=True)
 
 
 def _all_instances():
@@ -75,12 +73,24 @@ def _form_to_data(form, instance_id):
 
 # ===================== create (form) =====================
 
-def _render_create(form, instance=None):
+def _render_create(form, instance=None, instance_prices=None):
     return render_template(
         'admin/participant_edit.html',
         form=form, reg=None, instance=instance,
         fixed_instance=instance is not None,
+        instance_prices=instance_prices or {},
     )
+
+
+def _instance_prices(instances):
+    """Map instance_id -> рядок ціни з розкладу (effective_price) для data-price.
+
+    Порожній рядок, якщо ціни немає -- JS тоді нічого не підставляє.
+    """
+    return {
+        i.id: ('%.2f' % i.effective_price) if i.effective_price is not None else ''
+        for i in instances
+    }
 
 
 def _process_create(form, instance):
@@ -113,6 +123,7 @@ def participant_create():
     form = ParticipantForm()
     instances = _all_instances()
     form.instance_id.choices = [(i.id, _instance_label(i)) for i in instances]
+    instance_prices = _instance_prices(instances)
 
     preselected = request.args.get('instance_id', type=int)
     if request.method == 'GET' and preselected:
@@ -127,7 +138,7 @@ def participant_create():
             if response is not None:
                 return response
 
-    return _render_create(form)
+    return _render_create(form, instance_prices=instance_prices)
 
 
 @admin_bp.route('/instances/<int:instance_id>/participants/new', methods=['GET', 'POST'])
@@ -148,6 +159,10 @@ def participant_create_for_instance(instance_id):
     form.instance_id.choices = [(instance.id, _instance_label(instance))]
     if request.method == 'GET':
         form.instance_id.data = instance.id
+        # Сума за замовчуванням -- з налаштувань розкладу заходу (фіксований
+        # захід рендериться без <select>, тож підставляємо на сервері).
+        if form.payment_amount.data is None:
+            form.payment_amount.data = instance.effective_price
 
     if form.validate_on_submit():
         response = _process_create(form, instance)
@@ -247,20 +262,26 @@ def _participants_back_url():
 @admin_bp.route('/participants/export')
 @admin_required
 def participants_export():
-    """Експорт учасників у xlsx. ?instance_id= -- лише цей захід (і слугує
-    формою-шаблоном для додавання нових рядків)."""
+    """Експорт учасників у xlsx. URL params:
+      ?instance_id=  -- лише цей захід (форма-шаблон для його учасників)
+      ?blank=1       -- порожній шаблон (лише заголовки + dropdown-и, без даних)
+    """
     instance_id = request.args.get('instance_id', type=int)
-    data = xlsx_io.export_participants_xlsx(instance_id=instance_id)
+    blank = request.args.get('blank', '').lower() in ('1', 'true', 'yes')
+    data = xlsx_io.export_participants_xlsx(instance_id=instance_id, blank=blank)
     audit_logger.info(
-        'Admin %s exported participants xlsx (instance_id=%s)',
-        current_user.email, instance_id,
+        'Admin %s exported participants xlsx (instance_id=%s blank=%s)',
+        current_user.email, instance_id, blank,
     )
-    suffix = f'-instance{instance_id}' if instance_id else ''
+    if blank:
+        name = 'participants-template'
+    else:
+        name = f'participants{("-instance%d" % instance_id) if instance_id else ""}'
     return send_file(
         data,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         as_attachment=True,
-        download_name=f'participants{suffix}-{datetime.now().strftime("%Y%m%d-%H%M")}.xlsx',
+        download_name=f'{name}-{datetime.now().strftime("%Y%m%d-%H%M")}.xlsx',
         max_age=0,
     )
 

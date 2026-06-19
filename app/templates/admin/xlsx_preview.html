@@ -75,6 +75,7 @@
         {% elif entity == 'participants' %}
         <th>Учасник</th>
         <th>Захід</th>
+        <th>Змінені поля</th>
         {% else %}
         <th>Дата</th>
         <th>Курс</th>
@@ -105,9 +106,10 @@
         </td>
         {% elif entity == 'participants' %}
         <td><strong>{{ ch.name }}</strong></td>
+        <td>{% if ch.event %}<code>{{ ch.event }}</code>{% else %}—{% endif %}</td>
         <td>
           {% if ch.action == 'error' %}<span class="form-error">{{ ch.error }}</span>
-          {% elif ch.event %}<code>{{ ch.event }}</code>
+          {% elif ch.fields_changed %}{{ ch.fields_changed | join(', ') }}
           {% else %}—{% endif %}
         </td>
         {% else %}
