@@ -6,7 +6,7 @@ upsert-у живе в app.services.participant_service (спільна з xlsx-�
 тут -- HTTP-обгортки: форма та xlsx export/import (preview -> apply).
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import (
     flash, redirect, render_template, request, send_file, url_for,
@@ -37,12 +37,38 @@ def _instance_label(instance):
 
 
 def _all_instances():
-    return (
+    """Заходи для випадного списку, впорядковані для зручності менеджера:
+    спершу майбутні за зростанням (найближчий -- першим), потім минулі за
+    спаданням (свіжіші -- першими), наприкінці -- заходи без дати."""
+    instances = (
         db.session.query(CourseInstance)
         .options(joinedload(CourseInstance.course))
-        .order_by(CourseInstance.start_date.desc().nullslast())
         .all()
     )
+    now = datetime.now(timezone.utc)
+
+    def _order_key(inst):
+        sd = inst.start_date
+        if sd is None:
+            return (2, 0.0)            # без дати -- у кінець
+        if sd >= now:
+            return (0, sd.timestamp())   # майбутні: за зростанням
+        return (1, -sd.timestamp())      # минулі: за спаданням
+
+    instances.sort(key=_order_key)
+    return instances
+
+
+def _nearest_upcoming_id(instances):
+    """ID найближчого майбутнього заходу зі впорядкованого списку, або None.
+
+    Список від _all_instances() починається з майбутніх за зростанням, тож
+    перший захід із датою у майбутньому і є найближчим."""
+    now = datetime.now(timezone.utc)
+    for inst in instances:
+        if inst.start_date is not None and inst.start_date >= now:
+            return inst.id
+    return None
 
 
 def _form_to_data(form, instance_id):
@@ -125,9 +151,11 @@ def participant_create():
     form.instance_id.choices = [(i.id, _instance_label(i)) for i in instances]
     instance_prices = _instance_prices(instances)
 
+    # На GET за замовчуванням підставляємо найближчий майбутній захід
+    # (?instance_id= з URL має пріоритет).
     preselected = request.args.get('instance_id', type=int)
-    if request.method == 'GET' and preselected:
-        form.instance_id.data = preselected
+    if request.method == 'GET':
+        form.instance_id.data = preselected or _nearest_upcoming_id(instances)
 
     if form.validate_on_submit():
         instance = db.session.get(CourseInstance, form.instance_id.data)
