@@ -1,16 +1,16 @@
-"""Admin: ручне додавання та редагування учасника заходу.
+"""Admin: ручне додавання та редагування учасника заходу + xlsx import/export.
 
 Об'єднує User (identity) + MedicalProfile (медичні дані) + EventRegistration
-(реєстрація на CourseInstance) в одній формі. Email не обов'язковий -- якщо
-менеджер його не вказав, користувачу присвоюється placeholder-email
-(<цифри-телефону>@noemail.invalid), а реальний email додається пізніше через
-редагування. Логіка дзеркалить публічний реєстраційний флоу та скрипт імпорту.
+(реєстрація на CourseInstance). Email не обов'язковий. Канонічна логіка
+upsert-у живе в app.services.participant_service (спільна з xlsx-імпортом);
+тут -- HTTP-обгортки: форма та xlsx export/import (preview -> apply).
 """
 import logging
-import re
-from datetime import datetime, timezone
+from datetime import datetime
 
-from flask import render_template, redirect, url_for, flash, request
+from flask import (
+    flash, redirect, render_template, request, send_file, url_for,
+)
 from flask_login import current_user
 from sqlalchemy.orm import joinedload
 
@@ -20,56 +20,16 @@ from app.admin.decorators import admin_required
 from app.admin.forms import ParticipantForm
 from app.extensions import db
 from app.models.course_instance import CourseInstance
-from app.models.medical_profile import MedicalProfile
 from app.models.registration import EventRegistration
-from app.models.specializations import labels_for_codes
 from app.models.user import User
-from app.services import registration_service
+from app.services import participant_service, xlsx_io
+from app.services.participant_service import ParticipantError
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
 
-# Домени placeholder-email: користувач без реального email. '.invalid' --
-# RFC 2606 зарезервований TLD, гарантовано недоставлюваний. 'xlsx.temp' --
-# спадок скрипта імпорту, теж вважаємо placeholder-ом при редагуванні.
-PLACEHOLDER_EMAIL_DOMAIN = 'noemail.invalid'
-_PLACEHOLDER_DOMAINS = {PLACEHOLDER_EMAIL_DOMAIN, 'xlsx.temp'}
-
 
 # ===================== helpers =====================
-
-def _strip_or_none(value):
-    s = (value or '').strip()
-    return s or None
-
-
-def _set_if(obj, attr, value):
-    """Записати value у obj.attr лише якщо воно непорожнє.
-
-    Не затираємо наявні дані порожнім вводом -- важливо при прив'язці до
-    наявного користувача та при редагуванні (форма не призначена для
-    очищення полів)."""
-    if value not in (None, ''):
-        setattr(obj, attr, value)
-
-
-def _is_placeholder_email(email):
-    """True, якщо email -- згенерований placeholder, а не реальна адреса."""
-    if not email or '@' not in email:
-        return False
-    return email.rsplit('@', 1)[-1].lower() in _PLACEHOLDER_DOMAINS
-
-
-def _placeholder_email(phone):
-    """Унікальний placeholder-email з цифр телефону (або 'manual')."""
-    base = re.sub(r'\D', '', phone or '') or 'manual'
-    candidate = f'{base}@{PLACEHOLDER_EMAIL_DOMAIN}'
-    n = 1
-    while User.query.filter_by(email=candidate).first() is not None:
-        n += 1
-        candidate = f'{base}-{n}@{PLACEHOLDER_EMAIL_DOMAIN}'
-    return candidate
-
 
 def _instance_label(instance):
     title = instance.course.title if instance.course else f'Захід #{instance.id}'
@@ -87,95 +47,38 @@ def _all_instances():
     )
 
 
-def _resolve_user(form):
-    """Знайти користувача за email або створити нового.
-
-    Повертає (user, is_new). Якщо email вказано й знайдено наявного -- reuse;
-    якщо вказано й не знайдено -- новий з цим email; якщо не вказано --
-    новий з placeholder-email. Може зробити flush для призначення id."""
-    email = (form.email.data or '').strip().lower()
-    if email:
-        existing = User.query.filter_by(email=email).first()
-        if existing is not None:
-            return existing, False
-    else:
-        email = _placeholder_email(form.phone.data)
-
-    user = User(email=email, email_confirmed=False)
-    db.session.add(user)
-    db.session.flush()
-    return user, True
-
-
-def _sync_user_and_profile(form, user):
-    """Записати identity-поля у User і медичні -- у MedicalProfile.
-
-    Порожні значення не затирають наявні (див. _set_if). Email тут НЕ
-    чіпаємо -- ним керують окремо (_resolve_user на створенні, окрема
-    перевірка унікальності на редагуванні). Повертає profile."""
-    _set_if(user, 'last_name', _strip_or_none(form.last_name.data))
-    _set_if(user, 'first_name', _strip_or_none(form.first_name.data))
-
-    profile = user.medical_profile
-    if profile is None:
-        profile = MedicalProfile(user_id=user.id, source=MedicalProfile.SOURCE_IMPORTED)
-        db.session.add(profile)
-        user.medical_profile = profile
-
-    _set_if(profile, 'participant_type', form.participant_type.data or None)
-    _set_if(profile, 'middle_name', _strip_or_none(form.middle_name.data))
-    _set_if(profile, 'phone', _strip_or_none(form.phone.data))
-    if form.birth_date.data:
-        profile.birth_date = form.birth_date.data
-    _set_if(profile, 'education', _strip_or_none(form.education.data))
-    _set_if(profile, 'workplace', _strip_or_none(form.workplace.data))
-    _set_if(profile, 'position', _strip_or_none(form.position.data))
-    if form.specializations.data:
-        profile.specializations = list(form.specializations.data)
-
-    if profile.is_complete and profile.completed_at is None:
-        profile.completed_at = datetime.now(timezone.utc)
-
-    return profile
+def _form_to_data(form, instance_id):
+    """WTForms -> нормалізований dict для participant_service."""
+    return {
+        'instance_id': instance_id,
+        'last_name': form.last_name.data,
+        'first_name': form.first_name.data,
+        'middle_name': form.middle_name.data,
+        'email': form.email.data,
+        'phone': form.phone.data,
+        'participant_type': form.participant_type.data or None,
+        'birth_date': form.birth_date.data,
+        'education': form.education.data,
+        'workplace': form.workplace.data,
+        'position': form.position.data,
+        'specializations': list(form.specializations.data or []),
+        'status': form.status.data,
+        'payment_status': form.payment_status.data,
+        'payment_amount': form.payment_amount.data,
+        'attended': form.attended.data,
+        'cpd_points_awarded': form.cpd_points_awarded.data,
+        'experience_years': form.experience_years.data,
+        'license_number': form.license_number.data,
+        'admin_notes': form.admin_notes.data,
+    }
 
 
-def _apply_registration_fields(form, reg, profile):
-    """Заповнити EventRegistration з форми. Snapshot-поля (specialty,
-    workplace) деривуємо з профілю -- консистентно з публічним флоу."""
-    specs = profile.specializations or []
-    specialty = ', '.join(labels_for_codes(specs)) or _strip_or_none(form.position.data) or ''
-    workplace = _strip_or_none(form.workplace.data) or _strip_or_none(profile.workplace) or ''
-
-    reg.phone = (_strip_or_none(form.phone.data) or '')[:20]
-    reg.specialty = specialty[:200]
-    reg.workplace = workplace[:300]
-    reg.experience_years = form.experience_years.data
-    reg.license_number = _strip_or_none(form.license_number.data)
-    reg.status = form.status.data
-    reg.payment_status = form.payment_status.data
-    reg.payment_amount = form.payment_amount.data
-    reg.attended = bool(form.attended.data)
-    reg.cpd_points_awarded = form.cpd_points_awarded.data
-    reg.admin_notes = _strip_or_none(form.admin_notes.data)
-
-
-def _maybe_assign_place(reg):
-    """Призначити номер місця для оплачених (не скасованих) реєстрацій."""
-    if reg.payment_status == 'paid' and reg.status != 'cancelled' and reg.place_number is None:
-        try:
-            registration_service.assign_place_number(reg)
-        except Exception:
-            logger.exception('Failed to assign place_number for REG-%s', reg.id)
-
-
-# ===================== create =====================
+# ===================== create (form) =====================
 
 def _render_create(form, instance=None):
     return render_template(
         'admin/participant_edit.html',
-        form=form,
-        reg=None,
-        instance=instance,
+        form=form, reg=None, instance=instance,
         fixed_instance=instance is not None,
     )
 
@@ -183,29 +86,20 @@ def _render_create(form, instance=None):
 def _process_create(form, instance):
     """Спільна обробка POST для обох create-роутів. Повертає Response при
     успіху або None (треба відрендерити форму)."""
-    user, is_new = _resolve_user(form)
-
-    existing = registration_service.find_existing(user.id, instance.id)
-    if existing is not None and existing.status != 'cancelled':
+    data = _form_to_data(form, instance.id)
+    try:
+        reg, _created = participant_service.upsert_participant(
+            data, reg=None, on_duplicate='error',
+        )
+    except ParticipantError as exc:
         db.session.rollback()
-        flash('Цей учасник уже зареєстрований на цей захід', 'error')
+        flash(str(exc), 'error')
         return None
 
-    profile = _sync_user_and_profile(form, user)
-
-    reg = existing  # cancelled-реєстрацію реактивуємо
-    if reg is None:
-        reg = EventRegistration(user_id=user.id, instance_id=instance.id)
-        db.session.add(reg)
-    _apply_registration_fields(form, reg, profile)
-
-    db.session.flush()
-    _maybe_assign_place(reg)
-
-    if try_commit(log_context=f'participant_create user={user.id} instance={instance.id}'):
+    if try_commit(log_context=f'participant_create instance={instance.id}'):
         audit_logger.info(
-            'Admin %s added participant user=%s (new=%s) to instance=%s reg=%s',
-            current_user.email, user.id, is_new, instance.id, reg.id,
+            'Admin %s added participant reg=%s to instance=%s',
+            current_user.email, reg.id, instance.id,
         )
         flash('Учасника додано', 'success')
         return redirect(url_for('admin.instance_registrations', instance_id=instance.id))
@@ -220,7 +114,6 @@ def participant_create():
     instances = _all_instances()
     form.instance_id.choices = [(i.id, _instance_label(i)) for i in instances]
 
-    # Pre-select заходу через ?instance_id= (напр. перехід зі списку заходів).
     preselected = request.args.get('instance_id', type=int)
     if request.method == 'GET' and preselected:
         form.instance_id.data = preselected
@@ -264,12 +157,13 @@ def participant_create_for_instance(instance_id):
     return _render_create(form, instance=instance)
 
 
-# ===================== edit =====================
+# ===================== edit (form) =====================
 
 def _form_from_registration(reg):
     user = reg.user
     profile = user.medical_profile if user else None
-    email = '' if _is_placeholder_email(user.email if user else '') else (user.email if user else '')
+    raw_email = user.email if user else ''
+    email = '' if participant_service.is_placeholder_email(raw_email) else raw_email
     return ParticipantForm(data={
         'instance_id': reg.instance_id,
         'last_name': (user.last_name if user else '') or '',
@@ -312,39 +206,23 @@ def participant_edit(reg_id):
         return redirect(url_for('admin.registrations_all'))
 
     instance = reg.instance
-    user = reg.user
-
-    if request.method == 'POST':
-        form = ParticipantForm()
-    else:
-        form = _form_from_registration(reg)
-    # Захід фіксований -- лишаємо лише поточний у choices.
+    form = ParticipantForm() if request.method == 'POST' else _form_from_registration(reg)
     form.instance_id.choices = [(reg.instance_id, _instance_label(instance) if instance else '—')]
 
     if form.validate_on_submit():
-        # Email: дозволяємо додати/змінити, перевіряючи унікальність.
-        new_email = (form.email.data or '').strip().lower()
-        if new_email and new_email != user.email:
-            clash = User.query.filter(
-                User.email == new_email, User.id != user.id,
-            ).first()
-            if clash is not None:
-                flash('Інший користувач уже має цей email', 'error')
-                return render_template(
-                    'admin/participant_edit.html',
-                    form=form, reg=reg, instance=instance, fixed_instance=True,
-                )
-            user.email = new_email
-
-        profile = _sync_user_and_profile(form, user)
-        _apply_registration_fields(form, reg, profile)
-        db.session.flush()
-        _maybe_assign_place(reg)
-
+        data = _form_to_data(form, reg.instance_id)
+        try:
+            participant_service.upsert_participant(data, reg=reg)
+        except ParticipantError as exc:
+            db.session.rollback()
+            flash(str(exc), 'error')
+            return render_template(
+                'admin/participant_edit.html',
+                form=form, reg=reg, instance=instance, fixed_instance=True,
+            )
         if try_commit(log_context=f'participant_edit reg={reg.id}'):
             audit_logger.info(
-                'Admin %s edited participant reg=%s user=%s',
-                current_user.email, reg.id, user.id,
+                'Admin %s edited participant reg=%s', current_user.email, reg.id,
             )
             flash('Дані учасника оновлено', 'success')
             return redirect(url_for('admin.instance_registrations', instance_id=reg.instance_id))
@@ -353,3 +231,125 @@ def participant_edit(reg_id):
         'admin/participant_edit.html',
         form=form, reg=reg, instance=instance, fixed_instance=True,
     )
+
+
+# ===================== xlsx export / import =====================
+
+def _participants_back_url():
+    """Куди повертатись із preview/після apply. Якщо прийшли зі сторінки
+    конкретного заходу -- туди; інакше -- загальний список реєстрацій."""
+    instance_id = request.args.get('instance_id', type=int)
+    if instance_id:
+        return url_for('admin.instance_registrations', instance_id=instance_id)
+    return url_for('admin.registrations_all')
+
+
+@admin_bp.route('/participants/export')
+@admin_required
+def participants_export():
+    """Експорт учасників у xlsx. ?instance_id= -- лише цей захід (і слугує
+    формою-шаблоном для додавання нових рядків)."""
+    instance_id = request.args.get('instance_id', type=int)
+    data = xlsx_io.export_participants_xlsx(instance_id=instance_id)
+    audit_logger.info(
+        'Admin %s exported participants xlsx (instance_id=%s)',
+        current_user.email, instance_id,
+    )
+    suffix = f'-instance{instance_id}' if instance_id else ''
+    return send_file(
+        data,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=f'participants{suffix}-{datetime.now().strftime("%Y%m%d-%H%M")}.xlsx',
+        max_age=0,
+    )
+
+
+@admin_bp.route('/participants/import', methods=['POST'])
+@admin_required
+def participants_import_upload():
+    f = request.files.get('xlsx')
+    back = _participants_back_url()
+    if not f or not f.filename:
+        flash('Оберіть файл .xlsx для завантаження', 'error')
+        return redirect(back)
+    if not f.filename.lower().endswith('.xlsx'):
+        flash('Формат файлу має бути .xlsx', 'error')
+        return redirect(back)
+
+    token = xlsx_io.save_uploaded_xlsx(f)
+    audit_logger.info(
+        'Admin %s uploaded participants xlsx for preview (token=%s)',
+        current_user.email, token,
+    )
+    instance_id = request.args.get('instance_id', type=int)
+    return redirect(url_for(
+        'admin.participants_import_preview', token=token, instance_id=instance_id,
+    ))
+
+
+@admin_bp.route('/participants/import/preview/<token>')
+@admin_required
+def participants_import_preview(token):
+    path = xlsx_io.get_uploaded_path(token)
+    if path is None:
+        flash('Файл імпорту не знайдено або сесія застаріла', 'error')
+        return redirect(_participants_back_url())
+
+    plan = xlsx_io.parse_participants_xlsx(path)
+    instance_id = request.args.get('instance_id', type=int)
+    return render_template(
+        'admin/xlsx_preview.html',
+        entity='participants',
+        token=token,
+        plan=plan,
+        apply_url=url_for('admin.participants_import_apply', token=token, instance_id=instance_id),
+        cancel_url=url_for('admin.participants_import_cancel', token=token, instance_id=instance_id),
+        back_url=_participants_back_url(),
+        title='Імпорт учасників',
+    )
+
+
+@admin_bp.route('/participants/import/apply/<token>', methods=['POST'])
+@admin_required
+def participants_import_apply(token):
+    path = xlsx_io.get_uploaded_path(token)
+    if path is None:
+        flash('Файл імпорту не знайдено або сесія застаріла', 'error')
+        return redirect(_participants_back_url())
+
+    plan = xlsx_io.parse_participants_xlsx(path)
+    if not plan.is_valid:
+        flash('У файлі є помилки валідації -- імпорт відхилено.', 'error')
+        instance_id = request.args.get('instance_id', type=int)
+        return redirect(url_for(
+            'admin.participants_import_preview', token=token, instance_id=instance_id,
+        ))
+
+    result = xlsx_io.apply_participants_plan(plan)
+    if result.get('ok'):
+        xlsx_io.cleanup_upload(token)
+        audit_logger.info(
+            'Admin %s applied participants xlsx: created=%s updated=%s',
+            current_user.email, result.get('created'), result.get('updated'),
+        )
+        flash(
+            f'Імпорт виконано: створено {result["created"]}, '
+            f'оновлено {result["updated"]} учасник(ів).',
+            'success',
+        )
+        return redirect(_participants_back_url())
+
+    flash(f'Помилка при збереженні: {result.get("reason")}', 'error')
+    instance_id = request.args.get('instance_id', type=int)
+    return redirect(url_for(
+        'admin.participants_import_preview', token=token, instance_id=instance_id,
+    ))
+
+
+@admin_bp.route('/participants/import/cancel/<token>', methods=['POST'])
+@admin_required
+def participants_import_cancel(token):
+    xlsx_io.cleanup_upload(token)
+    flash('Імпорт скасовано', 'info')
+    return redirect(_participants_back_url())

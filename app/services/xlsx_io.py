@@ -26,9 +26,10 @@ from __future__ import annotations
 import io
 import logging
 import os
+import re
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
@@ -39,13 +40,18 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.table import Table, TableStyleInfo
+from sqlalchemy.orm import joinedload
 
 from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
+from app.models.medical_profile import MedicalProfile
 from app.models.media_file import MediaFile
 from app.models.program_block import ProgramBlock
+from app.models.registration import EventRegistration
+from app.models.specializations import SPECIALIZATIONS
 from app.models.trainer import Trainer
+from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +86,7 @@ WRAP = Alignment(wrap_text=True, vertical='top')
 FMT_INT = '0'
 FMT_CURRENCY_UAH = '#,##0 "₴"'
 FMT_DATETIME = 'YYYY-MM-DD HH:MM'
+FMT_DATE = 'DD.MM.YYYY'
 
 # Per-key number_format мапа. Якщо ключ відсутній — формат не виставляємо
 # (текстовий за замовчуванням).
@@ -95,6 +102,12 @@ NUMBER_FORMATS = {
     'end_date': FMT_DATETIME,
     # Program blocks
     'sort_order': FMT_INT,
+    # Participants
+    'reg_id': FMT_INT,
+    'birth_date': FMT_DATE,
+    'payment_amount': FMT_CURRENCY_UAH,
+    'cpd_points_awarded': FMT_INT,
+    'experience_years': FMT_INT,
 }
 
 # ----- Color fills для enum-полів ------------------------------------
@@ -457,6 +470,7 @@ SHEET_ALIASES = {
     'program_blocks': ['Блоки програми', 'Program blocks'],
     'faq': ['FAQ'],
     'instances': ['Розклад', 'Instances'],
+    'participants': ['Учасники', 'Participants'],
 }
 
 
@@ -1425,4 +1439,508 @@ def apply_instances_plan(plan: InstancesImportPlan) -> dict:
     except Exception as exc:
         db.session.rollback()
         logger.exception('apply_instances_plan failed')
+        return {'ok': False, 'reason': str(exc)}
+
+
+# ======================================================================
+# PARTICIPANTS (учасники заходів)
+# ======================================================================
+
+PARTICIPANT_COLS = [
+    'reg_id', 'event', 'last_name', 'first_name', 'middle_name', 'email',
+    'phone', 'participant_type', 'birth_date', 'education', 'workplace',
+    'position', 'specializations', 'status', 'payment_status',
+    'payment_amount', 'attended', 'cpd_points_awarded', 'experience_years',
+    'license_number', 'admin_notes',
+]
+
+PARTICIPANT_LABELS = {
+    'reg_id': 'ID реєстрації',
+    'event': 'Захід',
+    'last_name': 'Прізвище',
+    'first_name': "Ім'я",
+    'middle_name': 'По батькові',
+    'email': 'Email',
+    'phone': 'Телефон',
+    'participant_type': 'Тип учасника',
+    'birth_date': 'Дата народження',
+    'education': 'Освіта',
+    'workplace': 'Місце роботи / місто',
+    'position': 'Посада',
+    'specializations': 'Спеціалізації',
+    'status': 'Статус',
+    'payment_status': 'Оплата',
+    'payment_amount': 'Сума (грн)',
+    'attended': 'Присутній',
+    'cpd_points_awarded': 'Бали БПР',
+    'experience_years': 'Стаж (років)',
+    'license_number': 'Ліцензія',
+    'admin_notes': 'Нотатки',
+}
+
+PARTICIPANT_WIDTHS = {
+    'reg_id': 12,
+    'event': 46,
+    'last_name': 20,
+    'first_name': 18,
+    'middle_name': 20,
+    'email': 30,
+    'phone': 18,
+    'participant_type': 28,
+    'birth_date': 16,
+    'education': 40,
+    'workplace': 34,
+    'position': 26,
+    'specializations': 40,
+    'status': 16,
+    'payment_status': 16,
+    'payment_amount': 14,
+    'attended': 12,
+    'cpd_points_awarded': 12,
+    'experience_years': 12,
+    'license_number': 18,
+    'admin_notes': 40,
+}
+
+REG_STATUS_LABEL = dict(EventRegistration.STATUSES)
+REG_STATUS_KEY_BY_LABEL = {v: k for k, v in REG_STATUS_LABEL.items()}
+PAYMENT_STATUS_LABEL = dict(EventRegistration.PAYMENT_STATUSES)
+PAYMENT_STATUS_KEY_BY_LABEL = {v: k for k, v in PAYMENT_STATUS_LABEL.items()}
+PARTICIPANT_TYPE_LABEL = dict(MedicalProfile.PARTICIPANT_TYPES)
+PARTICIPANT_TYPE_KEY_BY_LABEL = {v: k for k, v in PARTICIPANT_TYPE_LABEL.items()}
+SPEC_LABEL_BY_CODE = dict(SPECIALIZATIONS)
+SPEC_CODE_BY_LABEL = {v: k for k, v in SPECIALIZATIONS}
+
+VALID_REG_STATUSES = set(REG_STATUS_LABEL.keys())
+VALID_PAYMENT_STATUSES = set(PAYMENT_STATUS_LABEL.keys())
+VALID_PARTICIPANT_TYPES = set(PARTICIPANT_TYPE_LABEL.keys())
+
+REG_STATUS_FILLS = {
+    'pending': _fill('FEF3C7'),     # yellow
+    'confirmed': _fill('DBEAFE'),   # blue
+    'completed': _fill('A7F3D0'),   # green
+    'cancelled': _fill('FECACA'),   # red
+}
+PAYMENT_STATUS_FILLS = {
+    'unpaid': _fill('F3F4F6'),      # gray
+    'pending': _fill('FEF3C7'),     # yellow
+    'paid': _fill('A7F3D0'),        # green
+    'refunded': _fill('FECACA'),    # red
+}
+
+_EVENTS_SHEET_NAME = 'Заходи'
+_SPEC_SHEET_NAME = 'Спеціалізації (довідник)'
+
+
+def _date(v) -> date | None:
+    """Прийняти date/datetime (openpyxl) або рядок (ISO / dd.mm.yyyy)."""
+    if v is None or v == '':
+        return None
+    if isinstance(v, datetime):
+        return v.date()
+    if isinstance(v, date):
+        return v
+    s = str(v).strip()
+    for fmt in ('%Y-%m-%d', '%d.%m.%Y', '%d/%m/%Y'):
+        try:
+            return datetime.strptime(s[:10], fmt).date()
+        except ValueError:
+            continue
+    raise ValueError(f'неможливо розпарсити дату: {v!r}')
+
+
+def _participant_event_label(instance) -> str:
+    """Людиночитний ярлик заходу для колонки/довідника. Починається з
+    '#<id>' -> id можна розпарсити навіть якщо назву трохи змінили."""
+    title = instance.course.title if instance.course else f'Захід #{instance.id}'
+    sd = _to_kyiv_naive(instance.start_date)
+    date_s = sd.strftime('%d.%m.%Y') if sd else 'без дати'
+    return f'#{instance.id} -- {title} -- {date_s}'
+
+
+def _resolve_event_to_id(label, label_to_id, instance_by_id):
+    """Ярлик заходу -> instance_id. Спершу точний збіг, потім '#<id>'."""
+    if not label:
+        return None
+    if label in label_to_id:
+        return label_to_id[label]
+    m = re.match(r'^\s*#(\d+)', str(label))
+    if m:
+        iid = int(m.group(1))
+        if iid in instance_by_id:
+            return iid
+    return None
+
+
+def _parse_spec_cell(raw):
+    """Текст спеціалізацій (по рядку / через кому) -> (codes, unknown).
+
+    Приймає і label ('Терапія'), і code ('therapy')."""
+    codes, unknown, seen = [], [], set()
+    for line in _from_lines(raw):
+        for part in re.split(r'[;,]', line):
+            p = part.strip()
+            if not p:
+                continue
+            if p in SPEC_LABEL_BY_CODE:
+                code = p
+            elif p in SPEC_CODE_BY_LABEL:
+                code = SPEC_CODE_BY_LABEL[p]
+            else:
+                unknown.append(p)
+                continue
+            if code not in seen:
+                seen.add(code)
+                codes.append(code)
+    return codes, unknown
+
+
+def _add_events_sheet(wb) -> int:
+    """Reference-sheet із заходами. Ярлик у колонці A (для drop-down),
+    id у B. Повертає номер останнього рядка з даними."""
+    ws = wb.create_sheet(_EVENTS_SHEET_NAME)
+    cols = ['event', 'id']
+    _style_header(ws, cols, {'event': 'Захід (значення)', 'id': 'ID'})
+    instances = (
+        CourseInstance.query
+        .options(joinedload(CourseInstance.course))
+        .order_by(CourseInstance.start_date.desc().nullslast())
+        .all()
+    )
+    for row_idx, inst in enumerate(instances, start=2):
+        ws.cell(row=row_idx, column=1, value=_participant_event_label(inst)).alignment = WRAP
+        ws.cell(row=row_idx, column=2, value=inst.id)
+    _set_column_widths(ws, cols, {'event': 70, 'id': 8})
+    _apply_zebra(ws, len(cols), first_data_row=2, last_data_row=1 + len(instances))
+    _apply_table_style(ws, cols, 'tblEvents', last_data_row=1 + len(instances))
+    return 1 + len(instances)
+
+
+def _add_specializations_sheet(wb) -> None:
+    """Reference-sheet (label + code) для ручного пошуку спеціалізацій."""
+    ws = wb.create_sheet(_SPEC_SHEET_NAME)
+    cols = ['label', 'code']
+    _style_header(ws, cols, {'label': 'Спеціалізація', 'code': 'Код'})
+    for row_idx, (code, label) in enumerate(SPECIALIZATIONS, start=2):
+        ws.cell(row=row_idx, column=1, value=label).alignment = WRAP
+        ws.cell(row=row_idx, column=2, value=code)
+    _set_column_widths(ws, cols, {'label': 50, 'code': 30})
+    _apply_zebra(ws, len(cols), first_data_row=2, last_data_row=1 + len(SPECIALIZATIONS))
+    _apply_table_style(ws, cols, 'tblSpecs', last_data_row=1 + len(SPECIALIZATIONS))
+
+
+def _add_ref_dropdown(ws, column_key, columns, last_data_row, sheet_name,
+                      ref_last_row, title='', prompt=''):
+    """Drop-down з reference-sheet (колонка A) на вказану колонку."""
+    if ref_last_row < 2:
+        return
+    col_letter = get_column_letter(columns.index(column_key) + 1)
+    formula = f"={sheet_name}!$A$2:$A${ref_last_row}"
+    dv = DataValidation(
+        type='list', formula1=formula, allow_blank=True,
+        showDropDown=False, errorStyle='warning',
+        error='Значення відсутнє у довіднику.', errorTitle='Невідоме значення',
+        prompt=prompt, promptTitle=title,
+    )
+    final_row = max(last_data_row, 1) + _DROPDOWN_BUFFER_ROWS
+    dv.add(f'{col_letter}2:{col_letter}{final_row}')
+    ws.add_data_validation(dv)
+
+
+@dataclass
+class ParticipantChange:
+    action: str  # 'create' | 'update' | 'unchanged' | 'error'
+    name: str = ''
+    event: str = ''
+    fields_changed: list[str] = field(default_factory=list)
+    error: str | None = None
+
+
+@dataclass
+class ParticipantsImportPlan:
+    participants: list[dict] = field(default_factory=list)
+    changes: list[ParticipantChange] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+
+    @property
+    def is_valid(self) -> bool:
+        return not self.errors
+
+    @property
+    def counts(self) -> dict[str, int]:
+        c = {'create': 0, 'update': 0, 'unchanged': 0, 'error': 0}
+        for ch in self.changes:
+            c[ch.action] = c.get(ch.action, 0) + 1
+        return c
+
+
+def export_participants_xlsx(instance_id=None) -> io.BytesIO:
+    """Експорт учасників у xlsx (також слугує формою-шаблоном для додавання).
+
+    instance_id: якщо задано -- лише учасники цього заходу. Reference-sheet
+    «Заходи» + drop-down дозволяють додавати рядки для будь-якого заходу.
+    """
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Учасники'
+    _style_header(ws, PARTICIPANT_COLS, PARTICIPANT_LABELS)
+
+    from app.services import participant_service
+
+    q = (
+        EventRegistration.query
+        .options(
+            joinedload(EventRegistration.user).joinedload(User.medical_profile),
+            joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
+        )
+        .order_by(EventRegistration.created_at.desc())
+    )
+    if instance_id:
+        q = q.filter(EventRegistration.instance_id == instance_id)
+    regs = q.all()
+
+    for row_idx, reg in enumerate(regs, start=2):
+        user = reg.user
+        profile = user.medical_profile if user else None
+        raw_email = user.email if user else ''
+        email = '' if participant_service.is_placeholder_email(raw_email) else (raw_email or '')
+        spec_codes = (profile.specializations if profile else []) or []
+        spec_text = '\n'.join(SPEC_LABEL_BY_CODE.get(c, c) for c in spec_codes)
+        ptype = profile.participant_type if profile else None
+        values = [
+            reg.id,
+            _participant_event_label(reg.instance) if reg.instance else '',
+            (user.last_name if user else '') or '',
+            (user.first_name if user else '') or '',
+            (profile.middle_name if profile else '') or '',
+            email,
+            reg.phone or (profile.phone if profile else '') or '',
+            PARTICIPANT_TYPE_LABEL.get(ptype, '') if ptype else '',
+            profile.birth_date if profile else None,
+            (profile.education if profile else '') or '',
+            (profile.workplace if profile else '') or reg.workplace or '',
+            (profile.position if profile else '') or '',
+            spec_text,
+            REG_STATUS_LABEL.get(reg.status, reg.status or ''),
+            PAYMENT_STATUS_LABEL.get(reg.payment_status, reg.payment_status or ''),
+            float(reg.payment_amount) if reg.payment_amount is not None else None,
+            'Так' if reg.attended else 'Ні',
+            reg.cpd_points_awarded,
+            reg.experience_years,
+            reg.license_number or '',
+            reg.admin_notes or '',
+        ]
+        for col_idx, v in enumerate(values, start=1):
+            cell = ws.cell(row=row_idx, column=col_idx, value=v)
+            cell.alignment = WRAP
+
+    last_row = ws.max_row
+    _apply_zebra(ws, len(PARTICIPANT_COLS), first_data_row=2, last_data_row=last_row)
+
+    # Кольори за статусом / оплатою.
+    st_col = PARTICIPANT_COLS.index('status') + 1
+    pay_col = PARTICIPANT_COLS.index('payment_status') + 1
+    for row_idx, reg in enumerate(regs, start=2):
+        if reg.status in REG_STATUS_FILLS:
+            ws.cell(row=row_idx, column=st_col).fill = REG_STATUS_FILLS[reg.status]
+        if reg.payment_status in PAYMENT_STATUS_FILLS:
+            ws.cell(row=row_idx, column=pay_col).fill = PAYMENT_STATUS_FILLS[reg.payment_status]
+
+    _set_column_widths(ws, PARTICIPANT_COLS, PARTICIPANT_WIDTHS)
+    _apply_number_formats(ws, PARTICIPANT_COLS, last_row)
+
+    # Reference-sheets + drop-downs.
+    events_last_row = _add_events_sheet(wb)
+    _add_specializations_sheet(wb)
+    _add_ref_dropdown(
+        ws, 'event', PARTICIPANT_COLS, last_row,
+        _EVENTS_SHEET_NAME, events_last_row,
+        title='Захід', prompt='Оберіть захід зі списку (натисніть стрілочку)',
+    )
+    _add_inline_dropdown(
+        ws, 'participant_type', PARTICIPANT_COLS,
+        options=[label for _k, label in MedicalProfile.PARTICIPANT_TYPES],
+        last_data_row=last_row, title='Тип учасника',
+        hint='Лікар / Молодший спеціаліст / Інтерн / Студент',
+    )
+    _add_inline_dropdown(
+        ws, 'status', PARTICIPANT_COLS,
+        options=[label for _k, label in EventRegistration.STATUSES],
+        last_data_row=last_row, title='Статус',
+        hint='Очікує / Підтверджено / Скасовано / Завершено',
+    )
+    _add_inline_dropdown(
+        ws, 'payment_status', PARTICIPANT_COLS,
+        options=[label for _k, label in EventRegistration.PAYMENT_STATUSES],
+        last_data_row=last_row, title='Оплата',
+        hint='Не оплачено / Очікує оплати / Оплачено / Повернено',
+    )
+    _add_inline_dropdown(
+        ws, 'attended', PARTICIPANT_COLS, options=['Так', 'Ні'],
+        last_data_row=last_row, title='Присутній', hint='Так / Ні',
+    )
+
+    _apply_table_style(ws, PARTICIPANT_COLS, 'tblParticipants', last_row)
+
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    return out
+
+
+def parse_participants_xlsx(path: Path) -> ParticipantsImportPlan:
+    plan = ParticipantsImportPlan()
+    try:
+        wb = load_workbook(filename=str(path), read_only=False, data_only=True)
+    except Exception as exc:
+        plan.errors.append(f'Не вдалося відкрити xlsx: {exc}')
+        return plan
+
+    ws = _find_sheet(wb, 'participants')
+    if ws is None:
+        plan.errors.append('Відсутній sheet "Учасники"')
+        return plan
+
+    try:
+        rows = _read_sheet(ws, PARTICIPANT_COLS, PARTICIPANT_LABELS)
+    except ValueError as exc:
+        plan.errors.append(str(exc))
+        return plan
+
+    from app.services import registration_service
+
+    instances = (
+        CourseInstance.query.options(joinedload(CourseInstance.course)).all()
+    )
+    instance_by_id = {i.id: i for i in instances}
+    label_to_id = {_participant_event_label(i): i.id for i in instances}
+
+    for line_no, raw in enumerate(rows, start=2):
+        try:
+            reg_id = _int(raw.get('reg_id'))
+            reg = db.session.get(EventRegistration, reg_id) if reg_id else None
+            if reg_id and reg is None:
+                raise ValueError(f'реєстрацію id={reg_id} не знайдено')
+
+            last_name = _str(raw.get('last_name'))
+            first_name = _str(raw.get('first_name'))
+            phone = _str(raw.get('phone'))
+            if not last_name:
+                raise ValueError('порожнє Прізвище')
+            if not first_name:
+                raise ValueError("порожнє Ім'я")
+            if not phone:
+                raise ValueError('порожній Телефон')
+
+            if reg is not None:
+                instance_id = reg.instance_id
+            else:
+                event_label = _str(raw.get('event'))
+                instance_id = _resolve_event_to_id(event_label, label_to_id, instance_by_id)
+                if instance_id is None:
+                    raise ValueError(f'захід {event_label!r} не знайдено')
+
+            ptype_raw = _str(raw.get('participant_type'))
+            ptype = PARTICIPANT_TYPE_KEY_BY_LABEL.get(ptype_raw, ptype_raw) if ptype_raw else None
+            if ptype and ptype not in VALID_PARTICIPANT_TYPES:
+                raise ValueError(f'тип учасника {ptype_raw!r} недопустимий')
+
+            status_raw = _str(raw.get('status')) or 'Підтверджено'
+            status = REG_STATUS_KEY_BY_LABEL.get(status_raw, status_raw)
+            if status not in VALID_REG_STATUSES:
+                raise ValueError(f'статус {status_raw!r} недопустимий')
+
+            pay_raw = _str(raw.get('payment_status')) or 'Не оплачено'
+            payment_status = PAYMENT_STATUS_KEY_BY_LABEL.get(pay_raw, pay_raw)
+            if payment_status not in VALID_PAYMENT_STATUSES:
+                raise ValueError(f'статус оплати {pay_raw!r} недопустимий')
+
+            specs, unknown = _parse_spec_cell(raw.get('specializations'))
+            if unknown:
+                raise ValueError(f'невідомі спеціалізації: {", ".join(unknown)}')
+
+            data = {
+                'instance_id': instance_id,
+                'last_name': last_name,
+                'first_name': first_name,
+                'middle_name': _str(raw.get('middle_name')),
+                'email': _str(raw.get('email')),
+                'phone': phone,
+                'participant_type': ptype,
+                'birth_date': _date(raw.get('birth_date')),
+                'education': _str(raw.get('education')),
+                'workplace': _str(raw.get('workplace')),
+                'position': _str(raw.get('position')),
+                'specializations': specs,
+                'status': status,
+                'payment_status': payment_status,
+                'payment_amount': _decimal(raw.get('payment_amount')),
+                'attended': _bool(raw.get('attended')),
+                'cpd_points_awarded': _int(raw.get('cpd_points_awarded')),
+                'experience_years': _int(raw.get('experience_years')),
+                'license_number': _str(raw.get('license_number')),
+                'admin_notes': _str(raw.get('admin_notes')),
+            }
+
+            # Дія для preview: reg_id -> update; інакше create, але якщо
+            # користувач за email уже активно зареєстрований -> теж update.
+            if reg is not None:
+                action = 'update'
+            else:
+                action = 'create'
+                email = (data['email'] or '').strip().lower()
+                if email:
+                    u = User.query.filter_by(email=email).first()
+                    if u is not None:
+                        ex = registration_service.find_existing(u.id, instance_id)
+                        if ex is not None and ex.status != 'cancelled':
+                            action = 'update'
+
+            name = f'{last_name} {first_name}'.strip()
+            event_lbl = (
+                _participant_event_label(instance_by_id[instance_id])
+                if instance_id in instance_by_id else ''
+            )
+            plan.participants.append({'data': data, 'reg_id': reg.id if reg else None})
+            plan.changes.append(ParticipantChange(action=action, name=name, event=event_lbl))
+        except Exception as exc:
+            plan.errors.append(f'Рядок {line_no} (Учасники): {exc}')
+            plan.changes.append(ParticipantChange(
+                action='error',
+                name=_str(raw.get('last_name')) or f'#{line_no}',
+                event=_str(raw.get('event')) or '',
+                error=str(exc),
+            ))
+
+    return plan
+
+
+def apply_participants_plan(plan: ParticipantsImportPlan) -> dict:
+    """Atomic upsert учасників. Очікує plan.is_valid==True."""
+    if not plan.is_valid:
+        return {'ok': False, 'reason': 'plan has errors'}
+
+    from app.services import participant_service
+
+    created = 0
+    updated = 0
+    try:
+        for item in plan.participants:
+            reg_id = item['reg_id']
+            reg = db.session.get(EventRegistration, reg_id) if reg_id else None
+            _reg, was_created = participant_service.upsert_participant(
+                item['data'], reg=reg, on_duplicate='update',
+            )
+            if was_created:
+                created += 1
+            else:
+                updated += 1
+        db.session.commit()
+        return {'ok': True, 'created': created, 'updated': updated}
+    except participant_service.ParticipantError as exc:
+        db.session.rollback()
+        return {'ok': False, 'reason': str(exc)}
+    except Exception as exc:
+        db.session.rollback()
+        logger.exception('apply_participants_plan failed')
         return {'ok': False, 'reason': str(exc)}

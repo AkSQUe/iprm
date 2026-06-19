@@ -30,6 +30,18 @@
         </p>
       </div>
       <div class="admin-hero__actions">
+        <div class="admin-xlsx-toolbar">
+          <a href="{{ url_for('admin.participants_export', instance_id=instance.id) }}" class="btn-admin btn-admin--secondary" title="Завантажити учасників цього заходу у xlsx (форма для додавання/редагування)">
+            <span class="material-symbols-rounded">download</span> Експорт XLSX
+          </a>
+          <form method="POST" action="{{ url_for('admin.participants_import_upload', instance_id=instance.id) }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="file" name="xlsx" id="participants-xlsx-input" accept=".xlsx" onchange="this.form.submit()">
+            <label for="participants-xlsx-input" class="btn-admin btn-admin--secondary admin-clickable" title="Завантажити заповнений xlsx для імпорту">
+              <span class="material-symbols-rounded">upload</span> Імпорт XLSX
+            </label>
+          </form>
+        </div>
         <a href="{{ url_for('admin.participant_create_for_instance', instance_id=instance.id) }}" class="btn-admin btn-admin--primary">
           <span class="material-symbols-rounded">person_add</span> Додати учасника
         </a>
