@@ -308,6 +308,16 @@ class EmailService:
         )
 
     @staticmethod
+    def send_password_reset(user, reset_url):
+        return EmailService.send_email(
+            to=user.email,
+            subject='Відновлення паролю | IPRM',
+            template_name='password_reset',
+            context={'user': user, 'reset_url': reset_url},
+            trigger='password_reset',
+        )
+
+    @staticmethod
     def send_payment_confirmation(registration):
         event = EmailService._event_from_registration(registration)
         if event is None:

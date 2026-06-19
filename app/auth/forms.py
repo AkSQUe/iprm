@@ -91,3 +91,43 @@ class RegistrationForm(FlaskForm):
     def validate_email(self, field):
         if User.query.filter_by(email=field.data.lower().strip()).first():
             raise ValidationError('Неможливо використати цей email')
+
+
+class ForgotPasswordForm(FlaskForm):
+    email = StringField(
+        'Email',
+        validators=[
+            DataRequired(message='Email обов\'язковий'),
+            Email(message='Невірний формат email'),
+            Length(max=255, message='Email занадто довгий'),
+        ],
+        render_kw={
+            'placeholder': 'ваш.email@example.com',
+            'autocomplete': 'email',
+        }
+    )
+
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField(
+        'Новий пароль',
+        validators=[
+            DataRequired(message='Пароль обов\'язковий'),
+            Length(min=8, max=128, message='Пароль повинен бути від 8 до 128 символів'),
+        ],
+        render_kw={
+            'placeholder': 'Мінімум 8 символів',
+            'autocomplete': 'new-password',
+        }
+    )
+    password_confirm = PasswordField(
+        'Підтвердження паролю',
+        validators=[
+            DataRequired(message='Підтвердження паролю обов\'язкове'),
+            EqualTo('password', message='Паролі не співпадають'),
+        ],
+        render_kw={
+            'placeholder': 'Повторіть пароль',
+            'autocomplete': 'new-password',
+        }
+    )

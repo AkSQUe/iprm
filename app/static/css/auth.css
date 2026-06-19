@@ -99,6 +99,26 @@
   gap: 16px;
 }
 
+/* Рядок "запам'ятати мене" + "забули пароль" -- в один ряд, по краях. */
+.auth-card__row--between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.auth-card__link {
+  color: var(--iprm-nav-active);
+  font-weight: 500;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.auth-card__link:hover {
+  color: var(--iprm-accent-hover);
+}
+
 /* Form fields */
 .form-group {
   margin-bottom: 20px;

@@ -6,7 +6,9 @@ from flask import render_template, redirect, url_for, flash, request, session, s
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy.orm import contains_eager
 from app.auth import auth_bp
-from app.auth.forms import LoginForm, RegistrationForm
+from app.auth.forms import (
+    LoginForm, RegistrationForm, ForgotPasswordForm, ResetPasswordForm,
+)
 from app.extensions import db, limiter
 from app.models.user import User
 from app.models.auth_identity import AuthIdentity
@@ -14,7 +16,10 @@ from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
 from app.models.certificate import Certificate
-from app.services.token_service import generate_confirmation_token, confirm_token
+from app.services.token_service import (
+    generate_confirmation_token, confirm_token,
+    generate_password_reset_token, confirm_password_reset_token,
+)
 from app.services.email_service import EmailService
 from app.services.recaptcha import verify_request as verify_recaptcha
 
@@ -118,6 +123,67 @@ def register():
             flash('Помилка при реєстрації', 'error')
 
     return render_template('auth/register.html', form=form)
+
+
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+@limiter.limit('5 per hour', methods=['POST'])
+def forgot_password():
+    if current_user.is_authenticated:
+        return redirect(url_for('auth.account'))
+
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        if not verify_recaptcha(action='forgot_password'):
+            flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+            return render_template('auth/forgot_password.html', form=form)
+
+        email = form.email.data.lower().strip()
+        user = User.query.filter_by(email=email).first()
+        if user and user.is_active:
+            try:
+                token = generate_password_reset_token(user.id)
+                reset_url = url_for('auth.reset_password', token=token, _external=True)
+                EmailService.send_password_reset(user, reset_url)
+            except Exception:
+                logger.exception('Failed to send password reset to %s', email)
+
+        # Anti-enumeration: відповідь однакова незалежно від існування акаунта.
+        flash('Якщо акаунт з такою адресою існує, ми надіслали лист з '
+              'інструкціями для відновлення паролю.', 'info')
+        return redirect(url_for('auth.login'))
+
+    return render_template('auth/forgot_password.html', form=form)
+
+
+@auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
+@limiter.limit('10 per hour', methods=['POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('auth.account'))
+
+    user_id = confirm_password_reset_token(token)
+    user = db.session.get(User, user_id) if user_id else None
+    if user is None or not user.is_active:
+        flash('Посилання недійсне або термін його дії минув. Спробуйте ще раз.', 'error')
+        return redirect(url_for('auth.forgot_password'))
+
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        # Клік за лінком, надісланим на email, підтверджує володіння адресою.
+        user.email_confirmed = True
+        user.set_password(form.password.data)
+        try:
+            db.session.commit()
+        except Exception:
+            logger.exception('Failed to reset password for user %s', user.id)
+            db.session.rollback()
+            flash('Помилка при збереженні паролю. Спробуйте ще раз.', 'error')
+            return render_template('auth/reset_password.html', form=form, token=token)
+
+        flash('Пароль успішно змінено. Тепер ви можете увійти.', 'success')
+        return redirect(url_for('auth.login'))
+
+    return render_template('auth/reset_password.html', form=form, token=token)
 
 
 @auth_bp.route('/logout', methods=['POST'])
