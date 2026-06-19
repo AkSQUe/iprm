@@ -4,6 +4,7 @@
    Показується тільки коли form.errors не порожній. Пропускає csrf_token
    (його повідомлення нічого не каже користувачу). Для кожного поля
    виводить його label (якщо є) і список помилок. #}
+{% if form is defined and form %}
 {% set _errors = {} %}
 {% for fname, msgs in form.errors.items() if fname != 'csrf_token' %}
   {% set _ = _errors.update({fname: msgs}) %}
@@ -21,4 +22,5 @@
     {% endfor %}
   </ul>
 </div>
+{% endif %}
 {% endif %}
