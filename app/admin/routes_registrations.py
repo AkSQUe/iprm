@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime, timezone
 from flask import (
     Response, render_template, redirect, url_for, flash, request, send_file, jsonify,
 )
@@ -50,36 +51,99 @@ def instance_registrations(instance_id):
     )
 
 
+def _wants_json():
+    """Inline-редагування в таблиці шле fetch з X-Requested-With."""
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+
 @admin_bp.route('/registrations/<int:reg_id>/status', methods=['POST'])
 @admin_required
 def registration_status(reg_id):
+    xhr = _wants_json()
     reg = db.session.get(EventRegistration, reg_id)
     if not reg:
+        if xhr:
+            return jsonify({'ok': False, 'error': 'Реєстрацію не знайдено'}), 404
         flash('Реєстрацію не знайдено', 'error')
         return redirect(url_for('admin.dashboard'))
 
     new_status = request.form.get('status')
-    if new_status in dict(EventRegistration.STATUSES):
-        old_status = reg.status
-        reg.status = new_status
+    if new_status not in dict(EventRegistration.STATUSES):
+        if xhr:
+            return jsonify({'ok': False, 'error': 'Невідомий статус'}), 400
+        return _redirect_after_action(reg)
+
+    old_status = reg.status
+    reg.status = new_status
+    try:
+        db.session.commit()
+        audit_logger.info(
+            'Admin %s changed reg %d status: %s -> %s',
+            current_user.email, reg_id, old_status, new_status,
+        )
         try:
-            db.session.commit()
-            audit_logger.info(
-                'Admin %s changed reg %d status: %s -> %s',
-                current_user.email, reg_id, old_status, new_status,
-            )
-            flash(f'Статус змінено на "{reg.status_label}"', 'success')
-
-            try:
-                from app.services.email_service import EmailService
-                EmailService.send_status_change(reg, old_status, new_status)
-            except Exception:
-                logger.exception('Failed to queue status change email for reg %d', reg_id)
-
+            from app.services.email_service import EmailService
+            EmailService.send_status_change(reg, old_status, new_status)
         except Exception:
-            logger.exception('Failed to update registration %d status', reg_id)
-            db.session.rollback()
-            flash('Помилка при оновленні', 'error')
+            logger.exception('Failed to queue status change email for reg %d', reg_id)
+        if xhr:
+            return jsonify({'ok': True, 'value': reg.status, 'label': reg.status_label})
+        flash(f'Статус змінено на "{reg.status_label}"', 'success')
+    except Exception:
+        logger.exception('Failed to update registration %d status', reg_id)
+        db.session.rollback()
+        if xhr:
+            return jsonify({'ok': False, 'error': 'Помилка при оновленні'}), 500
+        flash('Помилка при оновленні', 'error')
+
+    return _redirect_after_action(reg)
+
+
+@admin_bp.route('/registrations/<int:reg_id>/payment', methods=['POST'])
+@admin_required
+def registration_payment(reg_id):
+    """Змінити статус оплати (inline-select у таблиці). При переході в 'paid'
+    призначаємо номер місця (узгоджено з participant_service)."""
+    xhr = _wants_json()
+    reg = db.session.get(EventRegistration, reg_id)
+    if not reg:
+        if xhr:
+            return jsonify({'ok': False, 'error': 'Реєстрацію не знайдено'}), 404
+        flash('Реєстрацію не знайдено', 'error')
+        return redirect(url_for('admin.registrations_all'))
+
+    new_ps = request.form.get('payment')
+    if new_ps not in dict(EventRegistration.PAYMENT_STATUSES):
+        if xhr:
+            return jsonify({'ok': False, 'error': 'Невідомий статус оплати'}), 400
+        return _redirect_after_action(reg)
+
+    old_ps = reg.payment_status
+    reg.payment_status = new_ps
+    if new_ps == 'paid' and reg.status != 'cancelled' and reg.place_number is None:
+        try:
+            from app.services import registration_service
+            registration_service.assign_place_number(reg)
+        except Exception:
+            logger.exception('Failed to assign place_number for reg %d', reg_id)
+    try:
+        db.session.commit()
+        audit_logger.info(
+            'Admin %s changed reg %d payment: %s -> %s',
+            current_user.email, reg_id, old_ps, new_ps,
+        )
+        if xhr:
+            return jsonify({
+                'ok': True, 'value': reg.payment_status,
+                'label': reg.payment_status_label, 'place_number': reg.place_number,
+            })
+        flash(f'Оплату змінено на "{reg.payment_status_label}"', 'success')
+    except Exception:
+        logger.exception('Failed to update registration %d payment', reg_id)
+        db.session.rollback()
+        if xhr:
+            return jsonify({'ok': False, 'error': 'Помилка при оновленні'}), 500
+        flash('Помилка при оновленні', 'error')
 
     return _redirect_after_action(reg)
 
@@ -255,6 +319,11 @@ def registrations_all():
     instance_id_filter = request.args.get('instance_id', type=int)
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
+    # Швидкий фільтр за часом заходу. За замовчуванням -- лише майбутні заходи,
+    # щоб не показувати тисячі нерелевантних реєстрацій на минулі події.
+    scope = request.args.get('scope', 'upcoming')
+    if scope not in ('upcoming', 'past', 'all'):
+        scope = 'upcoming'
 
     stats = db.session.query(
         func.count().label('total'),
@@ -278,6 +347,19 @@ def registrations_all():
         query = query.filter(EventRegistration.payment_status == payment_filter)
     if instance_id_filter:
         query = query.filter(EventRegistration.instance_id == instance_id_filter)
+    if scope != 'all':
+        now = datetime.now(timezone.utc)
+        query = query.join(
+            CourseInstance, EventRegistration.instance_id == CourseInstance.id,
+        )
+        if scope == 'upcoming':
+            # Майбутні + заходи без дати (TBD) -- не вважаємо їх минулими.
+            query = query.filter(
+                (CourseInstance.start_date >= now)
+                | (CourseInstance.start_date.is_(None))
+            )
+        else:  # past
+            query = query.filter(CourseInstance.start_date < now)
 
     pagination = query.order_by(EventRegistration.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False,
@@ -297,6 +379,7 @@ def registrations_all():
             'status': status_filter,
             'payment': payment_filter,
             'instance_id': instance_id_filter,
+            'scope': scope,
             'per_page': per_page,
         },
     )
