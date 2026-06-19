@@ -1,0 +1,231 @@
+/* admin-webhooks.css -- Сторінка черги партнерських webhook-ів.
+   Завантажується після admin.css + admin-apple.css.
+   Покриває те, чого немає в спільних стилях: інфо-банер, stat-картки як
+   фільтри статусу, бейджі статусів sent/failed/retrying, чипи дій та
+   розгортуваний рядок помилки. */
+
+/* ===== Інфо-банер про механізм доставки ===== */
+
+.wh-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-left: 3px solid var(--iprm-nav-active);
+  border-radius: var(--iprm-radius);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--apple-gray-dark);
+}
+
+.wh-info__icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-size: 22px;
+  color: var(--iprm-nav-active);
+}
+
+.wh-info code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8125em;
+  padding: 1px 6px;
+  background: var(--apple-section-bg);
+  border-radius: 6px;
+  color: var(--apple-black);
+}
+
+/* ===== Stat-картки як фільтри за статусом ===== */
+
+.wh-stats {
+  margin-bottom: 24px;
+}
+
+a.wh-stat-card {
+  display: block;
+  text-decoration: none;
+  position: relative;
+  transition:
+    transform 0.15s var(--ease-interact, ease),
+    box-shadow 0.15s var(--ease-interact, ease),
+    border-color 0.15s var(--ease-interact, ease);
+}
+
+a.wh-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--iprm-nav-active);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+a.wh-stat-card:focus-visible {
+  outline: 2px solid var(--iprm-nav-active);
+  outline-offset: 3px;
+}
+
+.wh-stat-card.is-active {
+  border-color: var(--iprm-nav-active);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light);
+}
+
+/* ===== Бейджі статусів, яких немає в common.css ===== */
+
+.badge--sent {
+  background: var(--iprm-badge-active-bg);
+  color: var(--iprm-badge-active-text);
+}
+
+.badge--failed {
+  background: var(--iprm-error-bg);
+  color: var(--iprm-error-text);
+}
+
+.badge--retrying {
+  background: var(--iprm-warning-bg);
+  color: var(--iprm-warning-text);
+}
+
+/* ===== Чип дії (created / updated / deleted) ===== */
+
+.wh-action {
+  display: inline-block;
+  padding: 2px 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--apple-section-bg);
+  color: var(--apple-gray-dark);
+}
+
+.wh-action--created { background: var(--iprm-badge-active-bg); color: var(--iprm-badge-active-text); }
+.wh-action--updated { background: var(--iprm-accent-light); color: var(--iprm-nav-active); }
+.wh-action--deleted { background: var(--iprm-error-bg); color: var(--iprm-error-text); }
+
+/* ===== Дрібні елементи таблиці ===== */
+
+.wh-slug {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8125rem;
+  color: var(--apple-black);
+}
+
+.wh-uuid {
+  display: block;
+  margin-top: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6875rem;
+  color: var(--apple-gray-light);
+}
+
+.wh-attempts {
+  font-variant-numeric: tabular-nums;
+}
+
+.wh-attempts--max {
+  color: var(--iprm-error-text);
+  font-weight: 700;
+}
+
+.wh-http {
+  font-variant-numeric: tabular-nums;
+}
+
+.wh-muted {
+  color: var(--apple-gray);
+}
+
+.wh-nowrap {
+  white-space: nowrap;
+}
+
+/* Колонка "Курс / Дія": slug та чип у стовпчик */
+.wh-target {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+/* ===== Розгортуваний рядок помилки ===== */
+
+.wh-error-row td {
+  padding-top: 0;
+  border-top: none;
+}
+
+.wh-error {
+  font-size: 0.8125rem;
+}
+
+.wh-error summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--iprm-error-text);
+  font-weight: 500;
+  list-style: none;
+}
+
+.wh-error summary::-webkit-details-marker {
+  display: none;
+}
+
+.wh-error summary .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.wh-error pre {
+  margin: 10px 0 4px;
+  padding: 12px 14px;
+  background: var(--iprm-error-bg);
+  color: var(--iprm-error-text);
+  border-radius: var(--iprm-radius-sm);
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* ===== Рядок-меню результатів над таблицею ===== */
+
+.wh-results-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-size: 0.8125rem;
+  color: var(--apple-gray);
+}
+
+.wh-results-meta__clear {
+  color: var(--iprm-nav-active);
+  font-weight: 500;
+}
+
+.wh-results-meta__clear:hover {
+  color: var(--iprm-accent-hover);
+}
+
+/* ===== Адаптив ===== */
+
+@media (max-width: 768px) {
+  .wh-info {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a.wh-stat-card {
+    transition: none;
+  }
+
+  a.wh-stat-card:hover {
+    transform: none;
+  }
+}
