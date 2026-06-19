@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime, timezone
 from flask import (
-    Response, render_template, redirect, url_for, flash, request, send_file, jsonify,
+    render_template, redirect, url_for, flash, request, send_file, jsonify,
 )
 from flask_login import current_user
 from sqlalchemy import case, func
@@ -440,12 +440,14 @@ def registration_invoice_download(reg_id, ext):
             flash(str(exc), 'error')
             return redirect(back)
         audit_logger.info('Admin %s downloaded pdf invoice reg %s', current_user.email, reg_id)
-        return Response(
-            pdf,
+        # send_file коректно кодує кирилицю у назві (RFC 5987 filename*).
+        import io
+        return send_file(
+            io.BytesIO(pdf),
             mimetype='application/pdf',
-            headers={
-                'Content-Disposition': f'attachment; filename="{invoice_filename(reg, "pdf")}"',
-            },
+            as_attachment=True,
+            download_name=invoice_filename(reg, 'pdf'),
+            max_age=0,
         )
     flash('Невідомий формат рахунка', 'error')
     return redirect(back)

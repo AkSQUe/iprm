@@ -1,7 +1,8 @@
+import io
 import logging
 
 from flask import (
-    Response, abort, flash, redirect, render_template, request, url_for,
+    abort, flash, redirect, render_template, request, send_file, url_for,
 )
 from flask_login import current_user, login_required, login_user
 from sqlalchemy.orm import joinedload
@@ -479,10 +480,10 @@ def complete_invoice(token):
     except InvoiceError as exc:
         flash(str(exc), 'error')
         return redirect(url_for('registration.complete_payment', token=token))
-    return Response(
-        pdf,
+    return send_file(
+        io.BytesIO(pdf),
         mimetype='application/pdf',
-        headers={
-            'Content-Disposition': f'attachment; filename="{invoice_filename(reg, "pdf")}"',
-        },
+        as_attachment=True,
+        download_name=invoice_filename(reg, 'pdf'),
+        max_age=0,
     )
