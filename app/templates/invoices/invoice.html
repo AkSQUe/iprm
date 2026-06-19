@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Рахунок на оплату № {{ number }}</title>
+  <style>
+    @page { size: A4; margin: 15mm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DejaVu Sans', Arial, sans-serif;
+      font-size: 11pt;
+      line-height: 1.3;
+      color: #1d1d1f;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { padding: 3pt 5pt; vertical-align: top; }
+
+    .warning {
+      font-size: 9.5pt;
+      text-align: justify;
+      color: #424245;
+      margin-bottom: 8pt;
+    }
+
+    .pay-info { border: 1px solid #1d1d1f; margin-bottom: 10pt; }
+    .pay-info td, .pay-info th { border: 1px solid #1d1d1f; font-size: 10pt; }
+    .pay-info th { background: #f0f0f0; text-align: center; font-weight: 700; }
+    .pay-info td:first-child { width: 32%; font-weight: 700; }
+
+    .title { text-align: center; font-size: 16pt; font-weight: 800; padding: 6pt 0 2pt; letter-spacing: 0.5pt; }
+    .subtitle { text-align: center; font-size: 11pt; padding-bottom: 10pt; color: #424245; }
+
+    .block { margin-bottom: 8pt; }
+    .block h3 { font-size: 11pt; font-weight: 700; margin-bottom: 2pt; }
+    .party-name { font-weight: 700; font-size: 11.5pt; }
+    .party-line { font-size: 10.5pt; color: #424245; }
+    .party-line em { font-style: italic; }
+
+    .items { border: 1px solid #1d1d1f; margin: 8pt 0; }
+    .items td, .items th { border: 1px solid #1d1d1f; }
+    .items th { background: #f0f0f0; font-weight: 700; text-align: center; font-size: 10pt; }
+    .tc { text-align: center; }
+    .tr { text-align: right; }
+    .total td { font-weight: 700; background: #f8f8f8; }
+
+    .summary { margin-top: 8pt; font-size: 10.5pt; }
+    .summary .label { font-weight: 700; }
+    .summary .words { font-style: italic; }
+
+    .sign { margin-top: 22pt; font-size: 10.5pt; }
+    .sign-line { display: inline-block; border-bottom: 1px solid #1d1d1f; width: 220pt; }
+  </style>
+</head>
+<body>
+
+  <p class="warning">
+    <strong>Увага!</strong> Оплата цього рахунку означає погодження з умовами надання послуг.
+    Повідомлення про оплату є обов'язковим. Послуга надається за фактом надходження коштів
+    на рахунок Постачальника.
+  </p>
+
+  <table class="pay-info">
+    <thead>
+      <tr><th colspan="2">Зразок заповнення платіжного доручення</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Отримувач</td><td>{{ supplier.name }}</td></tr>
+      <tr><td>Код ЄДРПОУ</td><td>{{ supplier.edrpou }}</td></tr>
+      <tr><td>Банк отримувача</td><td>{{ supplier.bank }}</td></tr>
+      <tr><td>Рахунок №</td><td>{{ supplier.iban }}</td></tr>
+    </tbody>
+  </table>
+
+  <div class="title">РАХУНОК НА ОПЛАТУ</div>
+  <div class="subtitle">№ {{ number }} від {{ date_phrase }}</div>
+
+  <div class="block">
+    <h3>Постачальник:</h3>
+    <div class="party-name">{{ supplier.name }}</div>
+    <div class="party-line">п/р {{ supplier.iban }} у банку {{ supplier.bank }}</div>
+    <div class="party-line">код за ЄДРПОУ {{ supplier.edrpou }}</div>
+    {% if supplier.tax_status %}<div class="party-line"><em>{{ supplier.tax_status }}</em></div>{% endif %}
+  </div>
+
+  <div class="block">
+    <h3>Платник:</h3>
+    <div class="party-name">{{ payer }}</div>
+  </div>
+
+  <div class="block">
+    <h3>Замовлення:</h3>
+    <div class="party-line">№ {{ number }} від {{ date_phrase }}</div>
+  </div>
+
+  <table class="items">
+    <thead>
+      <tr>
+        <th style="width:5%">№</th>
+        <th style="width:55%">Найменування робіт, послуг</th>
+        <th style="width:10%">Кіл-ть</th>
+        <th style="width:8%">Од.</th>
+        <th style="width:11%">Ціна</th>
+        <th style="width:11%">Сума</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tc">1</td>
+        <td>{{ item_name }}</td>
+        <td class="tc">1</td>
+        <td class="tc">посл</td>
+        <td class="tr">{{ amount_str }}</td>
+        <td class="tr">{{ amount_str }}</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr class="total">
+        <td colspan="5" class="tr">Разом:</td>
+        <td class="tr">{{ amount_str }}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="summary">
+    <div><span class="label">Всього найменувань:</span> 1, на суму {{ amount_str }} грн.</div>
+    <div><span class="label">Сума прописом:</span> <span class="words">{{ amount_words }}</span></div>
+  </div>
+
+  <div class="sign">
+    <strong>Виписав(ла):</strong> <span class="sign-line">&nbsp;</span>
+  </div>
+
+</body>
+</html>
