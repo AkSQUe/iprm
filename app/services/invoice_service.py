@@ -24,12 +24,37 @@ logger = logging.getLogger(__name__)
 _MONTHS = ['', 'січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',
            'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня']
 
-# Стилі
-_THIN = Side(style='thin', color='000000')
-_BORDER = Border(left=_THIN, right=_THIN, top=_THIN, bottom=_THIN)
-_HDR_FILL = PatternFill('solid', fgColor='F0F0F0')
-_BOLD = Font(bold=True)
-_WRAP = Alignment(wrap_text=True, vertical='top')
+# Apple-inspired палітра: фіолетовий акцент + помаранчевий вторинний.
+_PURPLE = '7055A4'
+_PURPLE_LIGHT = 'EDE9F6'
+_ORANGE_LIGHT = 'FEF0E6'
+_ORANGE_DARK = 'D97A1F'
+_INK = '1D1D1F'
+_GRAY = '6E6E73'
+_GRAY_LINE = 'E5E5EA'
+_SECTION = 'F5F5F7'
+_WHITE = 'FFFFFF'
+
+_SIDE = Side(style='thin', color=_GRAY_LINE)
+_BORDER = Border(left=_SIDE, right=_SIDE, top=_SIDE, bottom=_SIDE)
+
+_FILL_PURPLE = PatternFill('solid', fgColor=_PURPLE)
+_FILL_PURPLE_LIGHT = PatternFill('solid', fgColor=_PURPLE_LIGHT)
+_FILL_ORANGE_LIGHT = PatternFill('solid', fgColor=_ORANGE_LIGHT)
+_FILL_SECTION = PatternFill('solid', fgColor=_SECTION)
+
+_F_COMPANY = Font(name='Calibri', size=14, bold=True, color=_PURPLE)
+_F_TITLE = Font(name='Calibri', size=20, bold=True, color=_PURPLE)
+_F_LABEL = Font(name='Calibri', size=8.5, bold=True, color=_PURPLE)
+_F_HEADER = Font(name='Calibri', size=10, bold=True, color=_WHITE)
+_F_BOLD = Font(name='Calibri', size=10.5, bold=True, color=_INK)
+_F_NORMAL = Font(name='Calibri', size=10, color=_INK)
+_F_MUTED = Font(name='Calibri', size=9.5, color=_GRAY)
+_F_MUTED_IT = Font(name='Calibri', size=9.5, italic=True, color=_GRAY)
+_F_TOTAL = Font(name='Calibri', size=13, bold=True, color=_ORANGE_DARK)
+
+_WRAP = Alignment(wrap_text=True, vertical='center')
+_WRAP_TOP = Alignment(wrap_text=True, vertical='top')
 _CENTER = Alignment(horizontal='center', vertical='center', wrap_text=True)
 _RIGHT = Alignment(horizontal='right', vertical='center')
 
@@ -75,101 +100,112 @@ def build_invoice_xlsx(reg) -> io.BytesIO:
     wb = Workbook()
     ws = wb.active
     ws.title = 'Рахунок'
+    ws.sheet_view.showGridLines = False
     for col, w in _WIDTHS.items():
         ws.column_dimensions[col].width = w
 
-    r = 1
-
-    def merge_cell(row, text, *, bold=False, align=None, fill=None, border=False,
-                   col_from='A', col_to='F', number_format=None):
-        ws.merge_cells(f'{col_from}{row}:{col_to}{row}')
-        cell = ws[f'{col_from}{row}']
+    def band(row, text, *, font, fill=None, align=None, height=None):
+        """Рядок-смуга на всю ширину A:F."""
+        ws.merge_cells(f'A{row}:F{row}')
+        cell = ws[f'A{row}']
         cell.value = text
-        if bold:
-            cell.font = _BOLD
+        cell.font = font
         cell.alignment = align or _WRAP
-        if fill:
-            cell.fill = _HDR_FILL
-        if number_format:
-            cell.number_format = number_format
-        if border:
-            for c in range(_COLS.index(col_from), _COLS.index(col_to) + 1):
-                ws.cell(row=row, column=c + 1).border = _BORDER
+        if fill is not None:
+            for c in range(1, 7):
+                ws.cell(row=row, column=c).fill = fill
+        if height:
+            ws.row_dimensions[row].height = height
         return cell
 
-    # Попередження
-    merge_cell(r, (
+    r = 1
+
+    # ----- Шапка: назва компанії + бейдж -----
+    ws.merge_cells(f'A{r}:D{r}')
+    ws[f'A{r}'].value = s.company_full_name or 'ІПРМ'
+    ws[f'A{r}'].font = _F_COMPANY
+    ws[f'A{r}'].alignment = _WRAP
+    ws.merge_cells(f'E{r}:F{r}')
+    ws[f'E{r}'].value = 'Документ для оплати'
+    ws[f'E{r}'].font = _F_MUTED
+    ws[f'E{r}'].alignment = _RIGHT
+    ws.row_dimensions[r].height = 22
+    r += 1
+    band(r, f'код за ЄДРПОУ {s.edrpou}', font=_F_MUTED)
+    r += 2
+
+    # ----- Заголовок -----
+    band(r, 'РАХУНОК НА ОПЛАТУ', font=_F_TITLE, height=26)
+    r += 1
+    band(r, f'№ {ctx["number"]} від {_date_phrase(ctx["date"])}', font=_F_MUTED)
+    r += 2
+
+    # ----- Попередження -----
+    band(r, (
         'Увага! Оплата цього рахунку означає погодження з умовами надання послуг. '
         'Повідомлення про оплату є обов\'язковим. Послуга надається за фактом '
         'надходження коштів на рахунок Постачальника.'
-    ))
-    ws.row_dimensions[r].height = 36
+    ), font=_F_MUTED, align=_WRAP_TOP, height=34)
     r += 2
 
-    # Зразок заповнення платіжного доручення
-    merge_cell(r, 'Зразок заповнення платіжного доручення', bold=True, align=_CENTER, fill=True, border=True)
+    # ----- Реквізити для оплати (помаранчева картка) -----
+    band(r, 'РЕКВІЗИТИ ДЛЯ ОПЛАТИ', font=_F_LABEL, fill=_FILL_ORANGE_LIGHT)
     r += 1
     for label, value in [
         ('Отримувач', s.company_full_name or 'ІПРМ'),
-        ('Код', s.edrpou or ''),
+        ('Код ЄДРПОУ', s.edrpou or ''),
         ('Банк отримувача', s.bank_name or ''),
-        ('Рахунок №', s.bank_iban or ''),
+        ('Рахунок (IBAN)', s.bank_iban or ''),
     ]:
         ws.merge_cells(f'A{r}:B{r}')
         ws.merge_cells(f'C{r}:F{r}')
-        lc = ws[f'A{r}']
-        lc.value = label
-        lc.font = _BOLD
-        lc.alignment = _WRAP
+        ws[f'A{r}'].value = label
+        ws[f'A{r}'].font = _F_MUTED
+        ws[f'A{r}'].alignment = _WRAP
         ws[f'C{r}'].value = value
+        ws[f'C{r}'].font = _F_BOLD
         ws[f'C{r}'].alignment = _WRAP
         for c in range(1, 7):
-            ws.cell(row=r, column=c).border = _BORDER
+            ws.cell(row=r, column=c).fill = _FILL_ORANGE_LIGHT
         r += 1
     r += 1
 
-    # Заголовок
-    merge_cell(r, 'РАХУНОК НА ОПЛАТУ', bold=True, align=_CENTER).font = Font(bold=True, size=16)
+    # ----- Постачальник (сіра картка) -----
+    band(r, 'ПОСТАЧАЛЬНИК', font=_F_LABEL, fill=_FILL_SECTION)
     r += 1
-    merge_cell(r, f'№ {ctx["number"]} від {_date_phrase(ctx["date"])}', align=_CENTER)
+    for text, font in [
+        (s.company_full_name or 'ІПРМ', _F_BOLD),
+        (f'п/р {s.bank_iban} у банку {s.bank_name}', _F_MUTED),
+        (f'код за ЄДРПОУ {s.edrpou}', _F_MUTED),
+        (s.tax_status or '', _F_MUTED_IT),
+    ]:
+        if not text:
+            continue
+        band(r, text, font=font, fill=_FILL_SECTION)
+        r += 1
+    r += 1
+
+    # ----- Платник (фіолетова картка) -----
+    band(r, 'ПЛАТНИК', font=_F_LABEL, fill=_FILL_PURPLE_LIGHT)
+    r += 1
+    band(r, ctx['payer'], font=_F_BOLD, fill=_FILL_PURPLE_LIGHT)
     r += 2
 
-    # Постачальник
-    merge_cell(r, 'Постачальник:', bold=True)
-    r += 1
-    merge_cell(r, s.company_full_name or 'ІПРМ', bold=True)
-    r += 1
-    merge_cell(r, f'п/р {s.bank_iban} у банку {s.bank_name}')
-    r += 1
-    merge_cell(r, f'код за ЄДРПОУ {s.edrpou}')
-    r += 1
-    merge_cell(r, s.tax_status or '')
-    r += 2
-
-    # Платник
-    merge_cell(r, 'Платник:', bold=True)
-    r += 1
-    merge_cell(r, ctx['payer'], bold=True)
-    r += 2
-
-    # Замовлення
-    merge_cell(r, f'Замовлення № {ctx["number"]} від {_date_phrase(ctx["date"])}')
-    r += 2
-
-    # Таблиця послуг -- заголовок
+    # ----- Таблиця послуг -----
     headers = ['№', 'Найменування робіт, послуг', 'Кіл-ть', 'Од.', 'Ціна', 'Сума']
     for idx, h in enumerate(headers):
         cell = ws.cell(row=r, column=idx + 1, value=h)
-        cell.font = _BOLD
-        cell.alignment = _CENTER
-        cell.fill = _HDR_FILL
+        cell.font = _F_HEADER
+        cell.fill = _FILL_PURPLE
+        cell.alignment = _CENTER if idx != 1 else _WRAP
         cell.border = _BORDER
+    ws.row_dimensions[r].height = 20
     r += 1
 
-    # Позиція
     row_vals = [1, ctx['item_name'], 1, 'посл', float(amount), float(amount)]
     for idx, v in enumerate(row_vals):
         cell = ws.cell(row=r, column=idx + 1, value=v)
+        cell.font = _F_NORMAL
         cell.border = _BORDER
         if idx in (0, 2, 3):
             cell.alignment = _CENTER
@@ -180,30 +216,32 @@ def build_invoice_xlsx(reg) -> io.BytesIO:
             cell.alignment = _WRAP
     r += 1
 
-    # Разом
+    # Разом (помаранчевий акцент)
     ws.merge_cells(f'A{r}:E{r}')
     tc = ws[f'A{r}']
-    tc.value = 'Разом:'
-    tc.font = _BOLD
+    tc.value = 'Разом до сплати:'
+    tc.font = _F_BOLD
     tc.alignment = _RIGHT
     sum_cell = ws.cell(row=r, column=6, value=float(amount))
-    sum_cell.font = _BOLD
+    sum_cell.font = _F_TOTAL
     sum_cell.alignment = _RIGHT
-    sum_cell.number_format = '#,##0.00'
+    sum_cell.number_format = '#,##0.00 ₴'
     for c in range(1, 7):
+        ws.cell(row=r, column=c).fill = _FILL_ORANGE_LIGHT
         ws.cell(row=r, column=c).border = _BORDER
+    ws.row_dimensions[r].height = 22
     r += 2
 
-    # Підсумок + сума прописом
-    merge_cell(r, f'Всього найменувань: 1, на суму {amount:.2f} грн.', bold=True)
+    # ----- Сума прописом (фіолетова картка) -----
+    band(r, 'СУМА ПРОПИСОМ', font=_F_LABEL, fill=_FILL_PURPLE_LIGHT)
     r += 1
     words = number_to_words_ua(amount, 'UAH')
     words = words[0].upper() + words[1:] if words else words
-    merge_cell(r, f'Сума прописом: {words}')
+    band(r, words, font=_F_MUTED_IT, fill=_FILL_PURPLE_LIGHT, align=_WRAP_TOP, height=30)
     r += 2
 
-    # Підпис
-    merge_cell(r, 'Виписав(ла): ______________________________')
+    # ----- Підпис -----
+    band(r, 'Виписав(ла): ______________________________', font=_F_NORMAL)
 
     out = io.BytesIO()
     wb.save(out)
