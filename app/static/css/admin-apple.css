@@ -1035,3 +1035,17 @@
   .admin-inline-select.is-saved,
   .admin-inline-select.is-error { animation: none; }
 }
+
+/* Сторінки зі стопкою карток-секцій (notifications, marketing): рівномірний
+   відступ між блоками через flex-gap (а не margin). Власні bottom-margin-и
+   hero/stat-cards обнуляємо, щоб gap був єдиним джерелом відступу. */
+.admin-layout--stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.admin-layout--stack > .admin-hero,
+.admin-layout--stack > .admin-stat-cards {
+  margin-bottom: 0;
+}
