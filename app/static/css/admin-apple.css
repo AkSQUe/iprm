@@ -925,3 +925,113 @@
     transition: none;
   }
 }
+
+/* ========== QUICK-FILTER PILLS (таблетки швидких фільтрів) ========== */
+.admin-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.admin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: var(--iprm-radius-pill);
+  border: 1px solid var(--iprm-border);
+  background: var(--iprm-white);
+  color: var(--apple-gray-dark);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
+    color 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
+    border-color 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+}
+
+.admin-pill .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.admin-pill:hover {
+  background: var(--apple-section-bg);
+  color: var(--apple-black);
+}
+
+.admin-pill--active {
+  background: var(--iprm-nav-active);
+  border-color: var(--iprm-nav-active);
+  color: var(--iprm-white);
+}
+
+.admin-pill--active:hover {
+  background: var(--iprm-accent-hover);
+  border-color: var(--iprm-accent-hover);
+  color: var(--iprm-white);
+}
+
+/* ========== INLINE SELECT (статус/оплата прямо в таблиці) ========== */
+
+.admin-inline-select {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 5px 26px 5px 12px;
+  max-width: 100%;
+  border-radius: var(--iprm-radius-pill);
+  border: 1px solid var(--iprm-border);
+  background-color: var(--apple-section-bg);
+  color: var(--apple-black);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8a8e' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  background-size: 11px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.admin-inline-select:hover { border-color: var(--apple-gray-light); }
+.admin-inline-select:focus-visible { outline: 2px solid var(--iprm-accent); outline-offset: 2px; }
+.admin-inline-select:disabled { opacity: 0.6; cursor: progress; }
+
+/* Кольорове кодування стану (спільне для статусу й оплати) */
+.admin-inline-select[data-state="confirmed"],
+.admin-inline-select[data-state="paid"] {
+  background-color: #e8f7ee; color: #177a3e; border-color: #bfe6cd;
+}
+.admin-inline-select[data-state="pending"] {
+  background-color: #fff4e0; color: #a86400; border-color: #ffe0b0;
+}
+.admin-inline-select[data-state="cancelled"],
+.admin-inline-select[data-state="refunded"] {
+  background-color: #fdeaea; color: #c0392b; border-color: #f5c6c6;
+}
+.admin-inline-select[data-state="completed"] {
+  background-color: var(--iprm-accent-light); color: var(--iprm-accent); border-color: #d9cef0;
+}
+.admin-inline-select[data-state="unpaid"] {
+  background-color: var(--apple-section-bg); color: var(--apple-gray-dark);
+}
+
+/* Підтвердження збереження / помилки */
+.admin-inline-select.is-saved { animation: iprm-inline-saved 1.4s ease; }
+.admin-inline-select.is-error { animation: iprm-inline-error 1.4s ease; }
+
+@keyframes iprm-inline-saved {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+  20% { box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.4); }
+}
+@keyframes iprm-inline-error {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  20%, 55% { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.45); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-inline-select.is-saved,
+  .admin-inline-select.is-error { animation: none; }
+}
