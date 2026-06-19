@@ -29,6 +29,11 @@
           {% if instance.effective_cpd_points %} &middot; {{ instance.effective_cpd_points }} балів БПР{% endif %}
         </p>
       </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.participant_create_for_instance', instance_id=instance.id) }}" class="btn-admin btn-admin--primary">
+          <span class="material-symbols-rounded">person_add</span> Додати учасника
+        </a>
+      </div>
     </div>
 
     {% include 'partials/flash_messages.html' %}
@@ -94,6 +99,7 @@
           <td>{{ reg.created_at.strftime('%d.%m.%Y') }}</td>
           <td>
             <div class="admin-table__actions">
+              <a href="{{ url_for('admin.participant_edit', reg_id=reg.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Редагувати учасника"><span class="material-symbols-rounded">edit</span></a>
               {% if reg.status == 'pending' %}
               <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
