@@ -76,15 +76,15 @@
 
     <!-- Quick-filter pills (за часом заходу) -->
     <div class="admin-filter-pills">
-      <a href="{{ url_for('admin.registrations_all', scope='upcoming', status=filters.status, payment=filters.payment, instance_id=filters.instance_id, per_page=filters.per_page) }}"
+      <a href="{{ url_for('admin.registrations_all', scope='upcoming', status=filters.status, payment=filters.payment, instance_id=filters.instance_id, course_id=filters.course_id, trainer_id=filters.trainer_id, per_page=filters.per_page) }}"
          class="admin-pill{% if filters.scope == 'upcoming' %} admin-pill--active{% endif %}">
         <span class="material-symbols-rounded">event_upcoming</span> Майбутні заходи
       </a>
-      <a href="{{ url_for('admin.registrations_all', scope='past', status=filters.status, payment=filters.payment, instance_id=filters.instance_id, per_page=filters.per_page) }}"
+      <a href="{{ url_for('admin.registrations_all', scope='past', status=filters.status, payment=filters.payment, instance_id=filters.instance_id, course_id=filters.course_id, trainer_id=filters.trainer_id, per_page=filters.per_page) }}"
          class="admin-pill{% if filters.scope == 'past' %} admin-pill--active{% endif %}">
         <span class="material-symbols-rounded">history</span> Минулі
       </a>
-      <a href="{{ url_for('admin.registrations_all', scope='all', status=filters.status, payment=filters.payment, instance_id=filters.instance_id, per_page=filters.per_page) }}"
+      <a href="{{ url_for('admin.registrations_all', scope='all', status=filters.status, payment=filters.payment, instance_id=filters.instance_id, course_id=filters.course_id, trainer_id=filters.trainer_id, per_page=filters.per_page) }}"
          class="admin-pill{% if filters.scope == 'all' %} admin-pill--active{% endif %}">
         <span class="material-symbols-rounded">format_list_bulleted</span> Усі
       </a>
@@ -108,6 +108,18 @@
           <option value="paid"{% if filters.payment == 'paid' %} selected{% endif %}>Оплачено</option>
           <option value="refunded"{% if filters.payment == 'refunded' %} selected{% endif %}>Повернено</option>
         </select>
+        <select name="course_id" class="form-input form-input--sm">
+          <option value="">Всі курси</option>
+          {% for course in courses %}
+            <option value="{{ course.id }}"{% if filters.course_id == course.id %} selected{% endif %}>{{ course.title }}</option>
+          {% endfor %}
+        </select>
+        <select name="trainer_id" class="form-input form-input--sm">
+          <option value="">Всі тренери</option>
+          {% for trainer in trainers %}
+            <option value="{{ trainer.id }}"{% if filters.trainer_id == trainer.id %} selected{% endif %}>{{ trainer.full_name }}</option>
+          {% endfor %}
+        </select>
         <select name="instance_id" class="form-input form-input--sm">
           <option value="">Всі заходи</option>
           {% for inst in instances %}
@@ -115,7 +127,7 @@
           {% endfor %}
         </select>
         <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">filter_list</span> Фільтрувати</button>
-        {% if filters.status or filters.payment or filters.instance_id %}
+        {% if filters.status or filters.payment or filters.instance_id or filters.course_id or filters.trainer_id %}
           <a href="{{ url_for('admin.registrations_all', scope=filters.scope) }}" class="btn-admin btn-admin--sm"><span class="material-symbols-rounded">clear</span> Скинути</a>
         {% endif %}
       </form>
@@ -263,11 +275,11 @@
     {% if pagination and pagination.pages > 1 %}
     <nav class="admin-pagination">
       {% if pagination.has_prev %}
-      <a href="{{ url_for('admin.registrations_all', page=pagination.prev_num, scope=filters.scope, status=filters.status, payment=filters.payment, instance_id=filters.instance_id, per_page=filters.per_page) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_left</span></a>
+      <a href="{{ url_for('admin.registrations_all', page=pagination.prev_num, scope=filters.scope, status=filters.status, payment=filters.payment, instance_id=filters.instance_id, course_id=filters.course_id, trainer_id=filters.trainer_id, per_page=filters.per_page) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_left</span></a>
       {% endif %}
       <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }} ({{ pagination.total }})</span>
       {% if pagination.has_next %}
-      <a href="{{ url_for('admin.registrations_all', page=pagination.next_num, scope=filters.scope, status=filters.status, payment=filters.payment, instance_id=filters.instance_id, per_page=filters.per_page) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_right</span></a>
+      <a href="{{ url_for('admin.registrations_all', page=pagination.next_num, scope=filters.scope, status=filters.status, payment=filters.payment, instance_id=filters.instance_id, course_id=filters.course_id, trainer_id=filters.trainer_id, per_page=filters.per_page) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_right</span></a>
       {% endif %}
     </nav>
     {% endif %}
@@ -275,7 +287,7 @@
     <div class="admin-empty">
       <span class="material-symbols-rounded admin-empty__icon">how_to_reg</span>
       <h3 class="admin-empty__title">Реєстрацій не знайдено</h3>
-      {% if filters.status or filters.payment or filters.instance_id %}
+      {% if filters.status or filters.payment or filters.instance_id or filters.course_id or filters.trainer_id %}
         <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.registrations_all', scope=filters.scope) }}">скинути їх</a></p>
       {% elif filters.scope == 'upcoming' %}
         <p>Немає реєстрацій на майбутні заходи. <a href="{{ url_for('admin.registrations_all', scope='all') }}">Показати всі</a> або <a href="{{ url_for('admin.registrations_all', scope='past') }}">минулі</a>.</p>

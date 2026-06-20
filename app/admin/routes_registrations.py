@@ -12,8 +12,10 @@ from app.admin import admin_bp
 from app.admin._helpers import try_commit
 from app.admin.decorators import admin_required
 from app.extensions import db
+from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
+from app.models.trainer import Trainer
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
@@ -317,6 +319,8 @@ def registrations_all():
     status_filter = request.args.get('status', '')
     payment_filter = request.args.get('payment', '')
     instance_id_filter = request.args.get('instance_id', type=int)
+    course_id_filter = request.args.get('course_id', type=int)
+    trainer_id_filter = request.args.get('trainer_id', type=int)
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
     # Швидкий фільтр за часом заходу. За замовчуванням -- лише майбутні заходи,
@@ -347,19 +351,33 @@ def registrations_all():
         query = query.filter(EventRegistration.payment_status == payment_filter)
     if instance_id_filter:
         query = query.filter(EventRegistration.instance_id == instance_id_filter)
-    if scope != 'all':
-        now = datetime.now(timezone.utc)
+
+    # CourseInstance потрібен для scope (час заходу) та фільтрів курс/тренер.
+    # Джойнимо один раз, щоб не дублювати join.
+    if scope != 'all' or course_id_filter or trainer_id_filter:
         query = query.join(
             CourseInstance, EventRegistration.instance_id == CourseInstance.id,
         )
-        if scope == 'upcoming':
-            # Майбутні + заходи без дати (TBD) -- не вважаємо їх минулими.
-            query = query.filter(
-                (CourseInstance.start_date >= now)
-                | (CourseInstance.start_date.is_(None))
+        if course_id_filter:
+            query = query.filter(CourseInstance.course_id == course_id_filter)
+        if trainer_id_filter:
+            # Ефективний тренер: trainer заходу, інакше -- тренер курсу (fallback).
+            query = query.join(
+                Course, CourseInstance.course_id == Course.id,
+            ).filter(
+                func.coalesce(CourseInstance.trainer_id, Course.trainer_id)
+                == trainer_id_filter
             )
-        else:  # past
-            query = query.filter(CourseInstance.start_date < now)
+        if scope != 'all':
+            now = datetime.now(timezone.utc)
+            if scope == 'upcoming':
+                # Майбутні + заходи без дати (TBD) -- не вважаємо їх минулими.
+                query = query.filter(
+                    (CourseInstance.start_date >= now)
+                    | (CourseInstance.start_date.is_(None))
+                )
+            else:  # past
+                query = query.filter(CourseInstance.start_date < now)
 
     pagination = query.order_by(EventRegistration.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False,
@@ -369,16 +387,23 @@ def registrations_all():
         joinedload(CourseInstance.course),
     ).order_by(CourseInstance.start_date.desc()).all()
 
+    courses = db.session.query(Course).order_by(Course.title).all()
+    trainers = db.session.query(Trainer).order_by(Trainer.full_name).all()
+
     return render_template(
         'admin/registrations.html',
         registrations=pagination.items,
         pagination=pagination,
         stats=stats,
         instances=instances,
+        courses=courses,
+        trainers=trainers,
         filters={
             'status': status_filter,
             'payment': payment_filter,
             'instance_id': instance_id_filter,
+            'course_id': course_id_filter,
+            'trainer_id': trainer_id_filter,
             'scope': scope,
             'per_page': per_page,
         },
