@@ -318,6 +318,7 @@ def certificate_revoke(cert_id):
 def registrations_all():
     status_filter = request.args.get('status', '')
     payment_filter = request.args.get('payment', '')
+    method_filter = request.args.get('payment_method', '')
     instance_id_filter = request.args.get('instance_id', type=int)
     course_id_filter = request.args.get('course_id', type=int)
     trainer_id_filter = request.args.get('trainer_id', type=int)
@@ -349,6 +350,8 @@ def registrations_all():
         query = query.filter(EventRegistration.status == status_filter)
     if payment_filter and payment_filter in dict(EventRegistration.PAYMENT_STATUSES):
         query = query.filter(EventRegistration.payment_status == payment_filter)
+    if method_filter and method_filter in dict(EventRegistration.PAYMENT_METHODS):
+        query = query.filter(EventRegistration.payment_method == method_filter)
     if instance_id_filter:
         query = query.filter(EventRegistration.instance_id == instance_id_filter)
 
@@ -401,6 +404,7 @@ def registrations_all():
         filters={
             'status': status_filter,
             'payment': payment_filter,
+            'payment_method': method_filter,
             'instance_id': instance_id_filter,
             'course_id': course_id_filter,
             'trainer_id': trainer_id_filter,

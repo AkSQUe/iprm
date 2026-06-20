@@ -246,6 +246,11 @@ def register_instance(instance_id):
                 current_user.id, instance, form_data, existing,
             )
             db.session.commit()
+            # Аналітика воронки оплати: фіксуємо обраний спосіб і чи платна подія.
+            logger.info(
+                'Registration REG-%d created: user=%d instance=%d method=%s free=%s',
+                reg.id, current_user.id, instance_id, reg.payment_method, is_free,
+            )
             # Best-effort email-підтвердження. Збій SMTP не ламає реєстрацію.
             try:
                 from app.services.email_service import EmailService
@@ -256,6 +261,11 @@ def register_instance(instance_id):
                 )
             if is_free:
                 flash('Реєстрацію підтверджено', 'success')
+            elif reg.payment_method == 'invoice':
+                flash(
+                    'Реєстрацію створено. Завантажте рахунок для оплати нижче.',
+                    'info',
+                )
             else:
                 flash('Реєстрацію створено. Очікує оплати.', 'info')
             return redirect(url_for('registration.confirmation', registration_id=reg.id))
@@ -359,6 +369,7 @@ def invoice_download(registration_id):
     except InvoiceError as exc:
         flash(str(exc), 'error')
         return redirect(url_for('registration.confirmation', registration_id=reg.id))
+    logger.info('Participant %s downloaded invoice for reg %d', current_user.id, reg.id)
     return send_file(
         io.BytesIO(pdf),
         mimetype='application/pdf',

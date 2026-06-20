@@ -1,0 +1,44 @@
+{#- Спільний блок способів оплати: LiqPay + рахунок (PDF).
+    Використовується на сторінці підтвердження (confirmation.html) і у
+    токен-флоу самостійного завершення (complete_pay.html).
+
+    Очікує у контексті (через {% with %}):
+      chosen             -- обраний спосіб ('liqpay'|'invoice') для підсвітки (опц.)
+      liqpay_data, liqpay_signature, liqpay_checkout_url -- дані LiqPay-форми
+      invoice_url        -- URL завантаження рахунка; falsy -> блок рахунка прихований
+-#}
+{% set _chosen = chosen | default('liqpay') %}
+<div class="reg-pay-options">
+  {# ----- Варіант 1: LiqPay ----- #}
+  <div class="reg-pay-option{% if _chosen == 'liqpay' %} reg-pay-option--primary{% endif %}">
+    <h3 class="reg-pay-option__title">Онлайн-оплата</h3>
+    <p class="reg-pay-option__desc">Картка, Google&nbsp;Pay, Apple&nbsp;Pay — миттєве підтвердження.</p>
+    {% if liqpay_data and liqpay_signature %}
+    <form method="POST" action="{{ liqpay_checkout_url }}" accept-charset="utf-8" data-single-submit>
+      <input type="hidden" name="data" value="{{ liqpay_data }}">
+      <input type="hidden" name="signature" value="{{ liqpay_signature }}">
+      <button type="submit" class="reg-pay-cta__btn">
+        <span class="reg-pay-cta__arrow" aria-hidden="true">&raquo;</span> Оплатити через LiqPay
+      </button>
+    </form>
+    <p class="reg-pay-cta__note">Безпечна оплата через LiqPay — Visa, Mastercard, Google Pay, Apple Pay</p>
+    {% else %}
+    <div class="reg-liqpay-placeholder">Онлайн-оплата тимчасово недоступна — скористайтесь рахунком.</div>
+    {% endif %}
+  </div>
+
+  {# ----- Варіант 2: Рахунок (PDF) ----- #}
+  {% if invoice_url %}
+  <div class="reg-pay-option{% if _chosen == 'invoice' %} reg-pay-option--primary{% endif %}">
+    <h3 class="reg-pay-option__title">
+      Оплата за рахунком
+      <span class="iprm-tooltip-trigger" data-tooltip="Рахунок-фактура (PDF) з реквізитами для оплати через банк. Доступний, доки участь не оплачено. Після оплати повідомте менеджера для підтвердження.">i</span>
+    </h3>
+    <p class="reg-pay-option__desc">Завантажте рахунок у форматі PDF і сплатіть через банк за реквізитами.</p>
+    <a href="{{ invoice_url }}" class="apple-btn apple-btn--outline reg-pay-option__btn" data-invoice-download>
+      Завантажити рахунок (PDF)
+    </a>
+    <p class="reg-pay-cta__note">Після оплати за рахунком повідомте менеджера для підтвердження участі.</p>
+  </div>
+  {% endif %}
+</div>

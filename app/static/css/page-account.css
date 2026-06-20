@@ -154,6 +154,10 @@
 .account-course__payment {
   margin-top: auto;
   padding-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 
 .account-course__pay-btn {
@@ -170,6 +174,25 @@
 
 .account-course__pay-btn:hover {
   opacity: 0.85;
+}
+
+/* Вторинна кнопка: завантаження рахунка (PDF) поряд з «Оплатити». */
+.account-course__invoice-btn {
+  display: inline-block;
+  padding: 8px 18px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--iprm-nav-active, #7055a4);
+  background: transparent;
+  border: 1px solid var(--iprm-border, #e5e5ea);
+  border-radius: var(--iprm-radius-sm);
+  text-decoration: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.account-course__invoice-btn:hover {
+  border-color: var(--iprm-nav-active, #7055a4);
+  background: var(--iprm-accent-light, #ede9f6);
 }
 
 /* ========== ПОРОЖНІЙ СТАН ========== */

@@ -278,21 +278,33 @@
 
     {# ----- Спосіб оплати (лише для платних подій) ----- #}
     {% if event.price and event.price > 0 %}
-    <div class="form-section reg-form-section">
-      <h3 class="form-section__title reg-form-section__title">
+    {% set _pm_desc = {
+      'liqpay': 'Картка, Google Pay, Apple Pay — миттєве підтвердження участі.',
+      'invoice': 'Рахунок (PDF) для оплати через банк за реквізитами.'
+    } %}
+    <fieldset class="form-section reg-form-section reg-pay-method">
+      <legend class="form-section__title reg-form-section__title">
         Спосіб оплати
-        <span class="iprm-tooltip-trigger" data-tooltip="Оберіть, як бажаєте оплатити участь. Онлайн — миттєве підтвердження. За рахунком — оплата через банк, рахунок можна завантажити після реєстрації.">i</span>
-      </h3>
-      <div class="reg-user-type">
+        <span class="iprm-tooltip-trigger" data-tooltip="Оберіть, як зручно оплатити участь. Онлайн — миттєве підтвердження. За рахунком — оплата через банк; рахунок можна завантажити одразу після реєстрації та в особистому кабінеті.">i</span>
+      </legend>
+      <div class="reg-pay-method__grid" role="radiogroup" aria-label="Спосіб оплати">
         {% for code, label in form.payment_method.choices %}
-          <label class="reg-user-type__option">
-            <input type="radio" name="payment_method" value="{{ code }}"
-                   {% if (form.payment_method.data or 'liqpay') == code %}checked{% endif %}>
-            <span>{{ label }}</span>
-          </label>
+        <label class="reg-pay-method__option">
+          <input type="radio" name="payment_method" value="{{ code }}"
+                 {% if (form.payment_method.data or 'liqpay') == code %}checked{% endif %}>
+          <span class="reg-pay-method__card">
+            <span class="reg-pay-method__label">{{ label }}</span>
+            <span class="reg-pay-method__desc">{{ _pm_desc.get(code, '') }}</span>
+          </span>
+        </label>
         {% endfor %}
       </div>
-    </div>
+      <p class="reg-pay-method__hint" data-pay-invoice-hint hidden>
+        <span class="reg-pay-method__hint-icon" aria-hidden="true">i</span>
+        Рахунок (PDF) можна буде завантажити одразу після реєстрації — на сторінці
+        підтвердження або в особистому кабінеті. Оплата онлайн залишиться доступною.
+      </p>
+    </fieldset>
     {% endif %}
 
     {# ----- Payment-логотипи + submit ----- #}
@@ -327,4 +339,5 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/form-single-submit.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/form-progress.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/registration-pay.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

@@ -54,6 +54,9 @@
             <div class="account-course__meta">
               <span class="badge badge--{{ reg.status }}">{{ reg.status_label }}</span>
               <span class="badge badge--{{ 'active' if reg.payment_status == 'paid' else ('danger' if reg.payment_status == 'unpaid' else ('warning' if reg.payment_status == 'pending' else 'draft')) }}">{{ reg.payment_status_label }}</span>
+              {% if reg.payment_status != 'paid' and reg.payment_amount and reg.payment_amount > 0 %}
+              <span class="badge badge--draft" title="Обраний спосіб оплати">{{ reg.payment_method_label }}</span>
+              {% endif %}
             </div>
             <h3 class="account-course__title">
               {% if course %}
@@ -76,10 +79,14 @@
             {% if reg.attended and reg.cpd_points_awarded %}
               <div class="account-course__awarded">Нараховано {{ reg.cpd_points_awarded }} балiв БПР</div>
             {% endif %}
-            {% if reg.status == 'pending' and reg.payment_status == 'unpaid' and reg.payment_amount and reg.payment_amount > 0 %}
+            {% if reg.payment_status != 'paid' and reg.payment_amount and reg.payment_amount > 0 %}
             <div class="account-course__payment">
               <a href="{{ url_for('registration.confirmation', registration_id=reg.id) }}" class="account-course__pay-btn">
                 Оплатити {{ reg.payment_amount | int }} &#8372;
+              </a>
+              <a href="{{ url_for('registration.invoice_download', registration_id=reg.id) }}"
+                 class="account-course__invoice-btn" data-invoice-download>
+                Завантажити рахунок
               </a>
             </div>
             {% endif %}
@@ -148,4 +155,5 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/registration-pay.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

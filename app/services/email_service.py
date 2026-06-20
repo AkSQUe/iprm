@@ -285,7 +285,10 @@ class EmailService:
             to=user.email,
             subject=f'Реєстрацію підтверджено: {event.title}',
             template_name='registration_confirmed',
-            context={'user': user, 'event': event, 'registration': registration},
+            context={
+                'user': user, 'event': event, 'registration': registration,
+                'pay_url': EmailService._pay_url_for_registration(registration),
+            },
             trigger='registration',
             registration_id=registration.id,
         )
@@ -505,6 +508,16 @@ class EmailService:
         who = (user.full_name if user is not None else None) or \
               (user.email if user is not None else 'unknown')
         return f'{prefix}: {title} -- {who}'
+
+    @staticmethod
+    def _pay_url_for_registration(registration):
+        """Публічний deep-link на сторінку підтвердження/оплати реєстрації
+        (де доступні LiqPay і завантаження рахунка). Будується з website_url,
+        бо лист може формуватись без request-контексту (планувальник)."""
+        from app.models.site_settings import SiteSettings
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        tail = f'/registration/{registration.id}'
+        return f'{base}{tail}' if base else tail
 
     @staticmethod
     def _admin_url_for_registration(registration):

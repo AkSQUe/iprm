@@ -1,5 +1,5 @@
 {% extends "emails/base.html" %}
-{% from "emails/_macros.html" import button_primary, detail_row, alert_warning, spacer %}
+{% from "emails/_macros.html" import button_primary, detail_row, alert_warning, alert_info, spacer %}
 
 {% block title %}Реєстрацію підтверджено{% endblock %}
 
@@ -38,9 +38,13 @@
 
     {% if event.price and event.price > 0 and registration.payment_status == 'unpaid' %}
     {{ alert_warning("До оплати", (event.price | int) ~ " UAH") }}
+    {% if registration.payment_method == 'invoice' %}
+    {{ alert_info("Оплата за рахунком", "Ви обрали оплату за рахунком. Завантажте рахунок (PDF) на сторінці реєстрації або в особистому кабінеті та сплатіть через банк за реквізитами. Після оплати повідомте менеджера для підтвердження участі.") }}
     {% endif %}
-
+    {{ button_primary("Перейти до оплати", pay_url | default(site_settings.website_url)) }}
+    {% else %}
     {{ button_primary("Перейти на сайт", site_settings.website_url) }}
+    {% endif %}
 
     {{ spacer(16) }}
 

@@ -137,3 +137,51 @@ class TestCreateOrReactivate:
         assert reg.id == cancelled.id
         assert reg.status == 'confirmed'
         assert reg.phone == '+380501234567'
+
+
+class TestPaymentMethod:
+    def test_paid_stores_chosen_invoice(self, app, user, paid_instance, form_data):
+        form_data['payment_method'] = 'invoice'
+        reg, _ = registration_service.create_or_reactivate(
+            user.id, paid_instance, form_data,
+        )
+        assert reg.payment_method == 'invoice'
+
+    def test_paid_defaults_to_liqpay(self, app, user, paid_instance, form_data):
+        # form_data без payment_method -> default 'liqpay'.
+        reg, _ = registration_service.create_or_reactivate(
+            user.id, paid_instance, form_data,
+        )
+        assert reg.payment_method == 'liqpay'
+
+    def test_invalid_method_coerced_to_liqpay(self, app, user, paid_instance, form_data):
+        form_data['payment_method'] = 'bitcoin'
+        reg, _ = registration_service.create_or_reactivate(
+            user.id, paid_instance, form_data,
+        )
+        assert reg.payment_method == 'liqpay'
+
+    def test_free_event_forces_liqpay(self, app, user, free_instance, form_data):
+        # Безкоштовна подія оплачується одразу -- спосіб ігнорується.
+        form_data['payment_method'] = 'invoice'
+        reg, is_free = registration_service.create_or_reactivate(
+            user.id, free_instance, form_data,
+        )
+        assert is_free is True
+        assert reg.payment_method == 'liqpay'
+
+    def test_reactivate_updates_method(self, app, user, paid_instance, form_data):
+        cancelled = EventRegistration(
+            user_id=user.id, instance_id=paid_instance.id,
+            phone='+380old', specialty='Old', workplace='Old',
+            status='cancelled', payment_status='unpaid', payment_method='liqpay',
+        )
+        db.session.add(cancelled)
+        db.session.flush()
+
+        form_data['payment_method'] = 'invoice'
+        reg, _ = registration_service.create_or_reactivate(
+            user.id, paid_instance, form_data, existing=cancelled,
+        )
+        assert reg.id == cancelled.id
+        assert reg.payment_method == 'invoice'

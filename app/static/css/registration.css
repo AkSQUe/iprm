@@ -757,6 +757,101 @@
   box-shadow: 0 0 0 1px var(--iprm-accent, #7055a4);
 }
 
+/* ===== Картковий вибір способу оплати у формі реєстрації ===== */
+.reg-pay-method {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.reg-pay-method__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.reg-pay-method__option {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+/* Радіо приховано візуально, але доступне для скрінрідерів і клавіатури. */
+.reg-pay-method__option input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.reg-pay-method__card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  padding: 16px 18px;
+  background: var(--iprm-white, #fff);
+  border: 1px solid var(--iprm-border, #e5e5ea);
+  border-radius: var(--iprm-radius-md, 16px);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.reg-pay-method__option:hover .reg-pay-method__card {
+  border-color: var(--iprm-accent, #7055a4);
+}
+
+.reg-pay-method__option input:checked + .reg-pay-method__card {
+  border-color: var(--iprm-accent, #7055a4);
+  box-shadow: 0 0 0 1px var(--iprm-accent, #7055a4);
+  background: var(--iprm-accent-light, #ede9f6);
+}
+
+/* Видима фокус-рамка для навігації з клавіатури. */
+.reg-pay-method__option input:focus-visible + .reg-pay-method__card {
+  outline: 2px solid var(--iprm-accent, #7055a4);
+  outline-offset: 2px;
+}
+
+.reg-pay-method__label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--apple-black, #1d1d1f);
+}
+
+.reg-pay-method__desc {
+  font-size: 0.8125rem;
+  color: var(--apple-gray, #86868b);
+  line-height: 1.45;
+}
+
+.reg-pay-method__hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--apple-gray-dark, #515154);
+  background: var(--iprm-accent-light, #ede9f6);
+  border-radius: var(--iprm-radius-sm, 10px);
+}
+
+.reg-pay-method__hint-icon {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--iprm-accent, #7055a4);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 18px;
+  text-align: center;
+}
+
 .reg-pay-option__title {
   font-size: 1.0625rem;
   font-weight: 700;
