@@ -38,15 +38,9 @@
     /* Поля документа: ліве 2см, праве 1см, нижнє 1.5см (верх -- одразу після шапки). */
     .page { padding: 5mm 1cm 15mm 2cm; }
 
-    /* ---- Картки ---- */
-    .card {
-      background: #f5f5f7;
-      border-radius: 10px;
-      padding: 3.2mm 4.5mm;
-      margin-bottom: 3mm;
-    }
-    .card--accent { background: #ede9f6; }
-    .card--bank { background: #fef0e6; }
+    /* ---- Секції тіла: без зайвих кольорових карток, лише тонкі лінії ---- */
+    .section { padding: 3mm 0; }
+    .section + .section { border-top: 1px solid #ececec; }
 
     .label {
       font-size: 7pt;
@@ -56,7 +50,15 @@
       color: #7055a4;
       margin-bottom: 1.5mm;
     }
-    .card--bank .label { color: #c2722a; }
+
+    /* Єдиний кольоровий акцент у тілі -- картка реквізитів для оплати. */
+    .pay-card {
+      background: #fef0e6;
+      border-radius: 8px;
+      padding: 3.5mm 5mm;
+      margin-bottom: 3mm;
+    }
+    .pay-card .label { color: #c2722a; }
 
     .party-name { font-weight: 700; font-size: 10pt; color: #1d1d1f; }
     .party-line { font-size: 8.5pt; color: #424245; margin-top: 0.5mm; }
@@ -68,17 +70,17 @@
     .bank-grid td:first-child { width: 38%; color: #6e6e73; }
     .bank-grid td:last-child { font-weight: 700; color: #1d1d1f; }
 
-    /* ---- Таблиця послуг ---- */
-    .items { width: 100%; border-collapse: collapse; margin: 2mm 0 3mm; border-radius: 10px; overflow: hidden; }
+    /* ---- Таблиця послуг: нейтральна, дружня до чорно-білого друку ---- */
+    .items { width: 100%; border-collapse: collapse; margin: 3mm 0; }
     .items thead th {
-      background: #7055a4;
-      color: #ffffff;
       font-size: 7.5pt;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.3pt;
+      color: #1d1d1f;
       padding: 2.2mm 3mm;
       text-align: left;
+      border-bottom: 1.5px solid #1d1d1f;
     }
     .items thead th.r { text-align: right; }
     .items thead th.c { text-align: center; }
@@ -91,40 +93,37 @@
     .items tbody td.r { text-align: right; }
     .items tfoot td {
       padding: 3mm;
-      background: #fef0e6;
       font-weight: 700;
       font-size: 9.5pt;
+      border-top: 1.5px solid #1d1d1f;
     }
     .items tfoot td.label-cell { text-align: right; color: #1d1d1f; }
-    .items tfoot td.total { text-align: right; color: #d97a1f; font-size: 11pt; }
+    /* Сума -- акцент кольором; валюта на одному рядку з сумою без переносу. */
+    .items tfoot td.total { text-align: right; color: #d97a1f; font-size: 11pt; white-space: nowrap; }
 
-    /* ---- Сума прописом ---- */
-    .words-card {
-      background: #ede9f6;
-      border-left: 3px solid #7055a4;
-      border-radius: 8px;
-      padding: 2.8mm 4mm;
-      margin-top: 3mm;
-    }
-    .words-card .label { margin-bottom: 1mm; }
-    .words-card .words { font-style: italic; font-size: 8.5pt; color: #1d1d1f; }
+    /* ---- Сума прописом: без кольорового блоку ---- */
+    .words { margin-top: 3mm; }
+    .words .label { margin-bottom: 1mm; }
+    .words__val { font-style: italic; font-size: 8.5pt; color: #1d1d1f; }
 
     .warning {
       font-size: 7.5pt;
       color: #6e6e73;
       text-align: justify;
-      margin-bottom: 3.5mm;
+      margin-bottom: 4mm;
     }
 
     .sign { margin-top: 8mm; font-size: 8.5pt; color: #424245; }
-    .sign-line { display: inline-block; border-bottom: 1px solid #d2d2d7; width: 200pt; }
+    .sign-line { display: inline-block; border-bottom: 1px solid #999999; width: 200pt; }
 
+    /* Підпис -- зафіксований до самого низу сторінки. */
     .footer {
-      margin-top: 7mm;
+      position: fixed;
+      left: 2cm; right: 1cm; bottom: 8mm;
       padding-top: 3mm;
-      border-top: 1px solid #ede9f6;
+      border-top: 1px solid #e5e5ea;
       font-size: 7pt;
-      color: #aeaeb2;
+      color: #8a8a8e;
       text-align: center;
     }
   </style>
@@ -151,7 +150,7 @@
       на рахунок Постачальника.
     </p>
 
-    <div class="card card--bank">
+    <div class="pay-card">
       <div class="label">Реквізити для оплати</div>
       <table class="bank-grid">
         <tr><td>Отримувач</td><td>{{ supplier.name }}</td></tr>
@@ -161,7 +160,7 @@
       </table>
     </div>
 
-    <div class="card">
+    <div class="section">
       <div class="label">Постачальник</div>
       <div class="party-name">{{ supplier.name }}</div>
       <div class="party-line">п/р {{ supplier.iban }} у банку {{ supplier.bank }}</div>
@@ -169,7 +168,7 @@
       {% if supplier.tax_status %}<div class="party-line"><em>{{ supplier.tax_status }}</em></div>{% endif %}
     </div>
 
-    <div class="card card--accent">
+    <div class="section">
       <div class="label">Платник</div>
       <div class="party-name">{{ payer }}</div>
     </div>
@@ -190,22 +189,22 @@
           <td class="c">1</td>
           <td>{{ item_name }}</td>
           <td class="c">1</td>
-          <td class="c">посл</td>
+          <td class="c">посл.</td>
           <td class="r">{{ amount_str }}</td>
           <td class="r">{{ amount_str }}</td>
         </tr>
       </tbody>
       <tfoot>
         <tr>
-          <td class="label-cell" colspan="5">Разом до сплати:</td>
-          <td class="total">{{ amount_str }} ₴</td>
+          <td class="label-cell" colspan="4">Разом до сплати:</td>
+          <td class="total" colspan="2">{{ amount_str }} грн.</td>
         </tr>
       </tfoot>
     </table>
 
-    <div class="words-card">
+    <div class="section words">
       <div class="label">Сума прописом</div>
-      <div class="words">{{ amount_words }}</div>
+      <div class="words__val">{{ amount_words }}</div>
     </div>
 
     <div class="sign">
