@@ -276,6 +276,25 @@
       </div>
     </div>
 
+    {# ----- Спосіб оплати (лише для платних подій) ----- #}
+    {% if event.price and event.price > 0 %}
+    <div class="form-section reg-form-section">
+      <h3 class="form-section__title reg-form-section__title">
+        Спосіб оплати
+        <span class="iprm-tooltip-trigger" data-tooltip="Оберіть, як бажаєте оплатити участь. Онлайн — миттєве підтвердження. За рахунком — оплата через банк, рахунок можна завантажити після реєстрації.">i</span>
+      </h3>
+      <div class="reg-user-type">
+        {% for code, label in form.payment_method.choices %}
+          <label class="reg-user-type__option">
+            <input type="radio" name="payment_method" value="{{ code }}"
+                   {% if (form.payment_method.data or 'liqpay') == code %}checked{% endif %}>
+            <span>{{ label }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
     {# ----- Payment-логотипи + submit ----- #}
     <div class="reg-payment-logos" aria-label="Безпечна оплата через LiqPay (Visa, Mastercard, Google Pay, Apple Pay)">
       <span class="reg-payment-logos__label">Безпечна оплата:</span>

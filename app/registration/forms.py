@@ -2,14 +2,15 @@ from datetime import date
 
 from flask_wtf import FlaskForm
 from wtforms import (
-    StringField, IntegerField, BooleanField, DateField, SelectField,
-    SelectMultipleField,
+    StringField, IntegerField, BooleanField, DateField, RadioField,
+    SelectField, SelectMultipleField,
 )
 from wtforms.validators import (
     DataRequired, Length, Optional, NumberRange, Email, ValidationError,
 )
 
 from app.models.medical_profile import MedicalProfile
+from app.models.registration import EventRegistration
 from app.models.specializations import SPECIALIZATIONS
 
 
@@ -104,6 +105,16 @@ class EventRegistrationForm(FlaskForm):
         'Номер ліцензії',
         validators=[Optional(), Length(max=50)],
         render_kw={'placeholder': 'Номер ліцензії лікаря'},
+    )
+
+    # ----- Спосіб оплати (лише для платних подій) -----
+    # Default liqpay. 'invoice' -> після реєстрації пропонуємо завантажити
+    # рахунок. Для безкоштовних подій поле ігнорується у роуті.
+    payment_method = RadioField(
+        'Спосіб оплати',
+        choices=EventRegistration.PAYMENT_METHODS,
+        default='liqpay',
+        validators=[Optional()],
     )
 
     # ----- Згоди (GDPR) -----

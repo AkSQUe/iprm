@@ -240,6 +240,7 @@ def register_instance(instance_id):
                 'workplace': form.workplace.data.strip(),
                 'experience_years': form.experience_years.data,
                 'license_number': form.license_number.data,
+                'payment_method': form.payment_method.data,
             }
             reg, is_free = registration_service.create_or_reactivate(
                 current_user.id, instance, form_data, existing,
@@ -317,6 +318,12 @@ def confirmation(registration_id):
 
     template_event = EventAdapter(reg.instance) if reg.instance else None
 
+    # Рахунок доступний поки реєстрацію не оплачено (і подія платна).
+    invoice_available = (
+        reg.payment_status != 'paid'
+        and reg.payment_amount and reg.payment_amount > 0
+    )
+
     return render_template(
         'registration/confirmation.html',
         reg=reg,
@@ -324,6 +331,40 @@ def confirmation(registration_id):
         liqpay_data=liqpay_data,
         liqpay_signature=liqpay_signature,
         liqpay_checkout_url=liqpay_checkout_url,
+        invoice_available=bool(invoice_available),
+        invoice_url=url_for('registration.invoice_download', registration_id=reg.id),
+    )
+
+
+@registration_bp.route('/<int:registration_id>/invoice.pdf')
+@login_required
+def invoice_download(registration_id):
+    """Завантаження PDF-рахунка учасником (власна реєстрація, поки не оплачено)."""
+    reg = db.session.query(EventRegistration).options(
+        joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
+    ).filter_by(id=registration_id).first()
+    if not reg or reg.user_id != current_user.id:
+        abort(404)
+    if not (reg.payment_amount and reg.payment_amount > 0):
+        abort(404)
+    if reg.payment_status == 'paid':
+        flash('Реєстрацію вже оплачено — рахунок не потрібен.', 'info')
+        return redirect(url_for('registration.confirmation', registration_id=reg.id))
+
+    from app.services.invoice_service import (
+        InvoiceError, invoice_filename, render_invoice_pdf,
+    )
+    try:
+        pdf = render_invoice_pdf(reg)
+    except InvoiceError as exc:
+        flash(str(exc), 'error')
+        return redirect(url_for('registration.confirmation', registration_id=reg.id))
+    return send_file(
+        io.BytesIO(pdf),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=invoice_filename(reg, 'pdf'),
+        max_age=0,
     )
 
 

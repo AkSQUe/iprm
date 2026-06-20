@@ -95,7 +95,9 @@ def create_or_reactivate(user_id, instance, form_data, existing=None):
     Args:
         user_id: Current user ID.
         instance: CourseInstance model instance.
-        form_data: Dict (phone, specialty, workplace, experience_years, license_number).
+        form_data: Dict (phone, specialty, workplace, experience_years,
+            license_number, payment_method). payment_method опціональний
+            ('liqpay' за замовчуванням); для безкоштовних подій ігнорується.
         existing: Існуюча cancelled-реєстрація для реактивації, або None.
             Якщо не-cancelled -- ValueError (caller порушив інваріант).
 
@@ -114,6 +116,12 @@ def create_or_reactivate(user_id, instance, form_data, existing=None):
     is_free = price == 0
     new_status = 'confirmed' if is_free else 'pending'
     new_payment = 'paid' if is_free else 'unpaid'
+    # Безкоштовні події оплачуються одразу -- спосіб оплати не релевантний.
+    payment_method = 'liqpay' if is_free else (
+        form_data.get('payment_method') or 'liqpay'
+    )
+    if payment_method not in dict(EventRegistration.PAYMENT_METHODS):
+        payment_method = 'liqpay'
 
     if existing is not None:
         existing.phone = form_data['phone']
@@ -122,6 +130,7 @@ def create_or_reactivate(user_id, instance, form_data, existing=None):
         existing.experience_years = form_data.get('experience_years')
         existing.license_number = form_data.get('license_number')
         existing.payment_amount = price
+        existing.payment_method = payment_method
         existing.status = new_status
         existing.payment_status = new_payment
         existing.payment_id = None
@@ -137,6 +146,7 @@ def create_or_reactivate(user_id, instance, form_data, existing=None):
             experience_years=form_data.get('experience_years'),
             license_number=form_data.get('license_number'),
             payment_amount=price,
+            payment_method=payment_method,
             status=new_status,
             payment_status=new_payment,
         )

@@ -751,6 +751,12 @@
   gap: 10px;
 }
 
+/* Виділення обраного користувачем способу оплати. */
+.reg-pay-option--primary {
+  border-color: var(--iprm-accent, #7055a4);
+  box-shadow: 0 0 0 1px var(--iprm-accent, #7055a4);
+}
+
 .reg-pay-option__title {
   font-size: 1.0625rem;
   font-weight: 700;

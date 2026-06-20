@@ -43,6 +43,13 @@ class EventRegistration(TimestampMixin, db.Model):
 
     status = db.Column(db.String(20), default='pending', nullable=False, index=True)
     payment_status = db.Column(db.String(20), default='unpaid', nullable=False, index=True)
+    # Обраний користувачем спосіб оплати: 'liqpay' (онлайн, за замовчуванням)
+    # або 'invoice' (оплата за рахунком через банк). Впливає лише на UX
+    # сторінки підтвердження -- фактичний payment_status керується окремо
+    # (LiqPay-callback або менеджер). Для безкоштовних подій не релевантний.
+    payment_method = db.Column(
+        db.String(20), default='liqpay', server_default='liqpay', nullable=False,
+    )
     payment_amount = db.Column(db.Numeric(10, 2))
     payment_id = db.Column(db.String(255))
     paid_at = db.Column(db.DateTime(timezone=True))
@@ -100,6 +107,10 @@ class EventRegistration(TimestampMixin, db.Model):
             name='ck_registrations_payment_status',
         ),
         db.CheckConstraint(
+            "payment_method IN ('liqpay', 'invoice')",
+            name='ck_registrations_payment_method',
+        ),
+        db.CheckConstraint(
             'experience_years >= 0',
             name='ck_registrations_experience_non_negative',
         ),
@@ -125,6 +136,11 @@ class EventRegistration(TimestampMixin, db.Model):
         ('pending', 'Очікує оплати'),
         ('paid', 'Оплачено'),
         ('refunded', 'Повернено'),
+    ]
+
+    PAYMENT_METHODS = [
+        ('liqpay', 'Онлайн-оплата (LiqPay)'),
+        ('invoice', 'Оплата за рахунком'),
     ]
 
     def issue_completion_token(self, ttl_days=COMPLETION_TOKEN_TTL_DAYS):
@@ -158,6 +174,10 @@ class EventRegistration(TimestampMixin, db.Model):
     @property
     def payment_status_label(self):
         return dict(self.PAYMENT_STATUSES).get(self.payment_status, self.payment_status)
+
+    @property
+    def payment_method_label(self):
+        return dict(self.PAYMENT_METHODS).get(self.payment_method, self.payment_method)
 
     @classmethod
     def payment_stats(cls):
