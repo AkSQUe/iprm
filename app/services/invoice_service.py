@@ -14,6 +14,8 @@ from decimal import Decimal
 from flask import current_app, render_template
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.worksheet.page import PageMargins
+from openpyxl.worksheet.properties import PageSetupProperties
 
 from app.models.mixins import utcnow
 from app.models.site_settings import SiteSettings
@@ -53,6 +55,13 @@ _F_NORMAL = Font(name='Calibri', size=10, color=_INK)
 _F_MUTED = Font(name='Calibri', size=9.5, color=_GRAY)
 _F_MUTED_IT = Font(name='Calibri', size=9.5, italic=True, color=_GRAY)
 _F_TOTAL = Font(name='Calibri', size=13, bold=True, color=_ORANGE_DARK)
+# Нейтральний заголовок таблиці (без заливки) -- дружній до ч/б друку.
+_F_HEAD = Font(name='Calibri', size=9, bold=True, color=_INK)
+
+# Горизонтальні лінії замість суцільної сітки/заливок (чистіше + ч/б).
+_BORDER_HEAD = Border(bottom=Side(style='medium', color=_INK))
+_BORDER_ROW = Border(bottom=Side(style='thin', color=_GRAY_LINE))
+_BORDER_TOTAL = Border(top=Side(style='medium', color=_INK))
 
 _WRAP = Alignment(wrap_text=True, vertical='center')
 _WRAP_TOP = Alignment(wrap_text=True, vertical='top')
@@ -104,6 +113,19 @@ def build_invoice_xlsx(reg) -> io.BytesIO:
     ws.sheet_view.showGridLines = False
     for col, w in _WIDTHS.items():
         ws.column_dimensions[col].width = w
+
+    # Друк: одна сторінка A4, поля як у PDF (ліво 2см, верх 1см, право 1см,
+    # низ 1.5см), нижній колонтитул із підписом постачальника -- "з самого низу".
+    ws.page_setup.orientation = 'portrait'
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 1
+    ws.sheet_properties.pageSetUpPr = PageSetupProperties(fitToPage=True)
+    ws.page_margins = PageMargins(
+        left=0.79, right=0.39, top=0.39, bottom=0.59, header=0.2, footer=0.3,
+    )
+    ws.oddFooter.center.text = f'{s.company_full_name or "ІПРМ"} · ЄДРПОУ {s.edrpou}'
+    ws.oddFooter.center.size = 8
+    ws.oddFooter.center.color = '8A8A8E'
 
     def band(row, text, *, font, fill=None, align=None, height=None):
         """Рядок-смуга на всю ширину A:F."""
@@ -163,8 +185,8 @@ def build_invoice_xlsx(reg) -> io.BytesIO:
         r += 1
     r += 1
 
-    # ----- Постачальник (сіра картка) -----
-    band(r, 'ПОСТАЧАЛЬНИК', font=_F_LABEL, fill=_FILL_SECTION)
+    # ----- Постачальник (звичайна секція, без заливки) -----
+    band(r, 'ПОСТАЧАЛЬНИК', font=_F_LABEL)
     r += 1
     for text, font in [
         (s.company_full_name or 'ІПРМ', _F_BOLD),
@@ -174,32 +196,31 @@ def build_invoice_xlsx(reg) -> io.BytesIO:
     ]:
         if not text:
             continue
-        band(r, text, font=font, fill=_FILL_SECTION)
+        band(r, text, font=font)
         r += 1
     r += 1
 
-    # ----- Платник (фіолетова картка) -----
-    band(r, 'ПЛАТНИК', font=_F_LABEL, fill=_FILL_PURPLE_LIGHT)
+    # ----- Платник (звичайна секція, без заливки) -----
+    band(r, 'ПЛАТНИК', font=_F_LABEL)
     r += 1
-    band(r, ctx['payer'], font=_F_BOLD, fill=_FILL_PURPLE_LIGHT)
+    band(r, ctx['payer'], font=_F_BOLD)
     r += 2
 
-    # ----- Таблиця послуг -----
+    # ----- Таблиця послуг (нейтральна, ч/б-дружня) -----
     headers = ['№', 'Найменування робіт, послуг', 'Кіл-ть', 'Од.', 'Ціна', 'Сума']
     for idx, h in enumerate(headers):
         cell = ws.cell(row=r, column=idx + 1, value=h)
-        cell.font = _F_HEADER
-        cell.fill = _FILL_PURPLE
+        cell.font = _F_HEAD
         cell.alignment = _CENTER if idx != 1 else _WRAP
-        cell.border = _BORDER
-    ws.row_dimensions[r].height = 20
+        cell.border = _BORDER_HEAD
+    ws.row_dimensions[r].height = 18
     r += 1
 
-    row_vals = [1, ctx['item_name'], 1, 'посл', float(amount), float(amount)]
+    row_vals = [1, ctx['item_name'], 1, 'посл.', float(amount), float(amount)]
     for idx, v in enumerate(row_vals):
         cell = ws.cell(row=r, column=idx + 1, value=v)
         cell.font = _F_NORMAL
-        cell.border = _BORDER
+        cell.border = _BORDER_ROW
         if idx in (0, 2, 3):
             cell.alignment = _CENTER
         elif idx in (4, 5):
@@ -209,7 +230,7 @@ def build_invoice_xlsx(reg) -> io.BytesIO:
             cell.alignment = _WRAP
     r += 1
 
-    # Разом (помаранчевий акцент)
+    # Разом -- акцент кольором тексту суми (без заливки), верхня лінія.
     ws.merge_cells(f'A{r}:E{r}')
     tc = ws[f'A{r}']
     tc.value = 'Разом до сплати:'
@@ -218,19 +239,18 @@ def build_invoice_xlsx(reg) -> io.BytesIO:
     sum_cell = ws.cell(row=r, column=6, value=float(amount))
     sum_cell.font = _F_TOTAL
     sum_cell.alignment = _RIGHT
-    sum_cell.number_format = '#,##0.00 ₴'
+    sum_cell.number_format = '#,##0.00" грн."'
     for c in range(1, 7):
-        ws.cell(row=r, column=c).fill = _FILL_ORANGE_LIGHT
-        ws.cell(row=r, column=c).border = _BORDER
+        ws.cell(row=r, column=c).border = _BORDER_TOTAL
     ws.row_dimensions[r].height = 22
     r += 2
 
-    # ----- Сума прописом (фіолетова картка) -----
-    band(r, 'СУМА ПРОПИСОМ', font=_F_LABEL, fill=_FILL_PURPLE_LIGHT)
+    # ----- Сума прописом (звичайна секція, без заливки) -----
+    band(r, 'СУМА ПРОПИСОМ', font=_F_LABEL)
     r += 1
     words = number_to_words_ua(amount, 'UAH')
     words = words[0].upper() + words[1:] if words else words
-    band(r, words, font=_F_MUTED_IT, fill=_FILL_PURPLE_LIGHT, align=_WRAP_TOP, height=30)
+    band(r, words, font=_F_MUTED_IT, align=_WRAP_TOP, height=30)
     r += 2
 
     # ----- Підпис -----
