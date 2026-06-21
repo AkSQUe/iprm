@@ -240,7 +240,6 @@ def register_instance(instance_id):
                 'workplace': form.workplace.data.strip(),
                 'experience_years': form.experience_years.data,
                 'license_number': form.license_number.data,
-                'payment_method': form.payment_method.data,
             }
             reg, is_free = registration_service.create_or_reactivate(
                 current_user.id, instance, form_data, existing,
@@ -261,13 +260,8 @@ def register_instance(instance_id):
                 )
             if is_free:
                 flash('Реєстрацію підтверджено', 'success')
-            elif reg.payment_method == 'invoice':
-                flash(
-                    'Реєстрацію створено. Завантажте рахунок для оплати нижче.',
-                    'info',
-                )
             else:
-                flash('Реєстрацію створено. Очікує оплати.', 'info')
+                flash('Реєстрацію створено. Оберіть спосіб оплати нижче.', 'info')
             return redirect(url_for('registration.confirmation', registration_id=reg.id))
         except Exception:
             logger.exception('Failed to register user %d for instance %d', current_user.id, instance_id)
@@ -360,6 +354,22 @@ def invoice_download(registration_id):
     if reg.payment_status == 'paid':
         flash('Реєстрацію вже оплачено — рахунок не потрібен.', 'info')
         return redirect(url_for('registration.confirmation', registration_id=reg.id))
+
+    # Завантаження рахунка == вибір оплати за рахунком: фіксуємо фактичний
+    # спосіб, щоб адмінка/аналітика відображали реальний вибір користувача.
+    # Пропускаємо мутацію для prefetch/preload запитів браузера -- GET не має
+    # мати side-effect для спекулятивних завантажень (PDF усе одно віддаємо).
+    is_prefetch = 'prefetch' in (
+        request.headers.get('Sec-Purpose', '')
+        or request.headers.get('Purpose', '')
+    ).lower()
+    if reg.payment_method != 'invoice' and not is_prefetch:
+        reg.payment_method = 'invoice'
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logger.exception('Failed to set payment_method=invoice for REG-%d', reg.id)
 
     from app.services.invoice_service import (
         InvoiceError, invoice_filename, render_invoice_pdf,
@@ -478,6 +488,24 @@ def complete_payment(token):
     if reg is None or not reg.completion_token_active:
         return render_template('registration/complete_invalid.html'), 410
 
+    # Повернення з LiqPay (?ret=1): онлайн-платіж міг ще не дійти вебхуком.
+    # Best-effort опитуємо статус, щоб одразу показати банер підтвердження.
+    # На відміну від payments.success цей роут публічний (авторизація --
+    # сам токен), тож працює для учасника без логіну/пароля.
+    if (request.args.get('ret') and reg.payment_amount and reg.payment_amount > 0
+            and reg.payment_status in ('unpaid', 'pending')):
+        from app.services.liqpay import get_liqpay_service
+        from app.services.payment_ops import PaymentOps
+        service = get_liqpay_service()
+        if service.is_configured:
+            try:
+                PaymentOps(service).check_and_update(reg)
+                db.session.refresh(reg)
+            except Exception:
+                logger.exception(
+                    'Failed to poll LiqPay for REG-%d on complete_pay', reg.id,
+                )
+
     liqpay_data = liqpay_signature = liqpay_checkout_url = None
     needs_payment = (
         reg.payment_status in ('unpaid', 'pending')
@@ -488,7 +516,11 @@ def complete_payment(token):
         service = get_liqpay_service()
         if service.is_configured:
             order_id = f'REG-{reg.id}'
-            result_url = url_for('payments.success', order_id=order_id, _external=True)
+            # Публічний token-aware result_url: payments.success вимагає логіну,
+            # а учасник у token-флоу не залогінений. ?ret=1 вмикає полінг статусу.
+            result_url = url_for(
+                'registration.complete_payment', token=token, ret=1, _external=True,
+            )
             server_url = url_for('payments.liqpay_callback', _external=True)
             description = (
                 reg.instance.course.title if reg.instance and reg.instance.course
@@ -523,6 +555,21 @@ def complete_invoice(token):
     reg = _load_reg_by_token(token)
     if reg is None or not reg.completion_token_active:
         return render_template('registration/complete_invalid.html'), 410
+
+    # Після оплати рахунок не потрібен (узгоджено з invoice_download).
+    if reg.payment_status == 'paid':
+        flash('Реєстрацію вже оплачено — рахунок не потрібен.', 'info')
+        return redirect(url_for('registration.complete_payment', token=token))
+
+    # Завантаження рахунка == вибір оплати за рахунком: фіксуємо реальний
+    # спосіб (за замовчуванням 'liqpay'), щоб UX/аналітика/адмінка були точні.
+    if reg.payment_method != 'invoice':
+        reg.payment_method = 'invoice'
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logger.exception('Failed to set payment_method=invoice for REG-%d', reg.id)
 
     from app.services.invoice_service import (
         InvoiceError, invoice_filename, render_invoice_pdf,

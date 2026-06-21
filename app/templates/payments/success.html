@@ -18,12 +18,12 @@
   <div class="reg-status-card">
     <div class="reg-status-card__row">
       <span class="reg-status-card__label">Курс</span>
-      <span class="reg-status-card__value">{{ event.title }}</span>
+      <span class="reg-status-card__value">{{ reg.target_title or '—' }}</span>
     </div>
-    {% if event.start_date %}
+    {% if reg.target_start_date %}
     <div class="reg-status-card__row">
       <span class="reg-status-card__label">Дата</span>
-      <span class="reg-status-card__value">{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</span>
+      <span class="reg-status-card__value">{{ reg.target_start_date.strftime('%d.%m.%Y %H:%M') }}</span>
     </div>
     {% endif %}
     <div class="reg-status-card__row">
@@ -39,7 +39,11 @@
   </div>
 
   <div class="reg-actions reg-actions--center">
-    <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="apple-btn apple-btn--secondary">Повернутися до курсу</a>
+    {% if reg.target_slug %}
+    <a href="{{ url_for('courses.course_by_slug', slug=reg.target_slug) }}" class="apple-btn apple-btn--secondary">Повернутися до курсу</a>
+    {% else %}
+    <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary">До каталогу курсів</a>
+    {% endif %}
   </div>
 
 </div>

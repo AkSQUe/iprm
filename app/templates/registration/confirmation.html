@@ -73,10 +73,16 @@
 
   {# ===== Способи оплати (LiqPay + рахунок) ===== #}
   {% if _needs_pay %}
+    {% if reg.payment_method == 'invoice' %}
     <p class="reg-attention">
-      Ви обрали спосіб оплати: <strong>{{ reg.payment_method_label }}</strong>.
+      Ви обрали спосіб оплати: <strong>Оплата за рахунком</strong>.
       Можна скористатись будь-яким із варіантів нижче.
     </p>
+    {% else %}
+    <p class="reg-attention">
+      Оберіть зручний спосіб оплати — онлайн через LiqPay або за рахунком:
+    </p>
+    {% endif %}
     {% with chosen=reg.payment_method, invoice_url=(invoice_url if invoice_available else None) %}
       {% include 'registration/partials/_pay_options.html' %}
     {% endwith %}

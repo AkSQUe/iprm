@@ -276,36 +276,9 @@
       </div>
     </div>
 
-    {# ----- Спосіб оплати (лише для платних подій) ----- #}
-    {% if event.price and event.price > 0 %}
-    {% set _pm_desc = {
-      'liqpay': 'Картка, Google Pay, Apple Pay — миттєве підтвердження участі.',
-      'invoice': 'Рахунок (PDF) для оплати через банк за реквізитами.'
-    } %}
-    <fieldset class="form-section reg-form-section reg-pay-method">
-      <legend class="form-section__title reg-form-section__title">
-        Спосіб оплати
-        <span class="iprm-tooltip-trigger" data-tooltip="Оберіть, як зручно оплатити участь. Онлайн — миттєве підтвердження. За рахунком — оплата через банк; рахунок можна завантажити одразу після реєстрації та в особистому кабінеті.">i</span>
-      </legend>
-      <div class="reg-pay-method__grid" role="radiogroup" aria-label="Спосіб оплати">
-        {% for code, label in form.payment_method.choices %}
-        <label class="reg-pay-method__option">
-          <input type="radio" name="payment_method" value="{{ code }}"
-                 {% if (form.payment_method.data or 'liqpay') == code %}checked{% endif %}>
-          <span class="reg-pay-method__card">
-            <span class="reg-pay-method__label">{{ label }}</span>
-            <span class="reg-pay-method__desc">{{ _pm_desc.get(code, '') }}</span>
-          </span>
-        </label>
-        {% endfor %}
-      </div>
-      <p class="reg-pay-method__hint" data-pay-invoice-hint hidden>
-        <span class="reg-pay-method__hint-icon" aria-hidden="true">i</span>
-        Рахунок (PDF) можна буде завантажити одразу після реєстрації — на сторінці
-        підтвердження або в особистому кабінеті. Оплата онлайн залишиться доступною.
-      </p>
-    </fieldset>
-    {% endif %}
+    {# Спосіб оплати НЕ обираємо тут: для платних подій є окремий крок
+       підтвердження/оплати (confirmation.html), де доступні і LiqPay, і
+       завантаження рахунка. Дублювати вибір на анкеті немає сенсу. #}
 
     {# ----- Payment-логотипи + submit ----- #}
     <div class="reg-payment-logos" aria-label="Безпечна оплата через LiqPay (Visa, Mastercard, Google Pay, Apple Pay)">
@@ -339,5 +312,4 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/form-single-submit.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/form-progress.js') }}?v={{ assets_version }}" defer></script>
-<script src="{{ url_for('static', filename='js/registration-pay.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
