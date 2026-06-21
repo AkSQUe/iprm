@@ -301,6 +301,36 @@ class EmailService:
         return result
 
     @staticmethod
+    def send_completion_link(registration, complete_url):
+        """Надіслати учаснику посилання на самостійне завершення анкети та
+        вибір способу оплати (token-флоу). Викликається лише для учасників із
+        реальним email (placeholder-адреси відсіює caller).
+
+        trigger='registration' (а не окремий 'completion_link') свідомо: це
+        частина воронки реєстрації, і так уникаємо зміни CHECK-констрейнта
+        email_logs.trigger.
+        """
+        event = EmailService._event_from_registration(registration)
+        if event is None:
+            logger.warning(
+                'Cannot send completion_link: reg=%s has no instance/course',
+                registration.id,
+            )
+            return None
+        user = registration.user
+        return EmailService.send_email(
+            to=user.email,
+            subject=f'Завершіть реєстрацію: {event.title}',
+            template_name='completion_link',
+            context={
+                'user': user, 'event': event, 'registration': registration,
+                'complete_url': complete_url,
+            },
+            trigger='registration',
+            registration_id=registration.id,
+        )
+
+    @staticmethod
     def send_email_confirmation(user, confirm_url):
         return EmailService.send_email(
             to=user.email,

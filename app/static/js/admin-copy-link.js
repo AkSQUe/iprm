@@ -65,4 +65,33 @@
       })
       .finally(function () { delete btn.dataset.busy; });
   });
+
+  // Надіслати посилання на завершення реєстрації листом учаснику.
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-completion-email]');
+    if (!btn) return;
+    e.preventDefault();
+    if (btn.dataset.busy) return;
+    btn.dataset.busy = '1';
+
+    fetch(btn.getAttribute('data-completion-email'), {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': btn.getAttribute('data-csrf') || '',
+        'Accept': 'application/json'
+      },
+      credentials: 'same-origin'
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+      .then(function (res) {
+        if (!res.data.ok) throw new Error(res.data.error || 'error');
+        feedback(btn, 'check');
+        if (res.data.message) window.alert(res.data.message);
+      })
+      .catch(function (err) {
+        feedback(btn, 'error');
+        window.alert((err && err.message) || 'Не вдалося надіслати лист');
+      })
+      .finally(function () { delete btn.dataset.busy; });
+  });
 })();

@@ -118,6 +118,19 @@
           <td>
             <div class="admin-table__actions">
               <a href="{{ url_for('admin.participant_edit', reg_id=reg.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Редагувати учасника"><span class="material-symbols-rounded">edit</span></a>
+              {% if reg.status != 'cancelled' %}
+              <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" title="Скопіювати посилання на завершення реєстрації"
+                      data-completion-link="{{ url_for('admin.registration_completion_link', reg_id=reg.id) }}"
+                      data-csrf="{{ csrf_token() }}"><span class="material-symbols-rounded">link</span></button>
+              {% if reg.user_has_real_email %}
+              <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" title="Надіслати посилання на email"
+                      data-completion-email="{{ url_for('admin.registration_completion_link_email', reg_id=reg.id) }}"
+                      data-csrf="{{ csrf_token() }}"><span class="material-symbols-rounded">outgoing_mail</span></button>
+              {% endif %}
+              {% endif %}
+              {% if reg.payment_amount and reg.payment_amount > 0 %}
+              <a href="{{ url_for('admin.registration_invoice_download', reg_id=reg.id, ext='pdf') }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Завантажити рахунок (PDF)"><span class="material-symbols-rounded">picture_as_pdf</span></a>
+              {% endif %}
               {% if reg.status == 'pending' %}
               <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -167,4 +180,9 @@
 
   </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin-copy-link.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

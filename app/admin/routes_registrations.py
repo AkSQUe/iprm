@@ -436,6 +436,46 @@ def registration_completion_link(reg_id):
     return jsonify({'ok': True, 'url': url})
 
 
+@admin_bp.route('/registrations/<int:reg_id>/completion-link/email', methods=['POST'])
+@admin_required
+def registration_completion_link_email(reg_id):
+    """Видати токен (за потреби) і НАДІСЛАТИ учаснику посилання на самостійне
+    завершення реєстрації листом. Лише для учасників із реальним email."""
+    reg = db.session.get(EventRegistration, reg_id)
+    if not reg:
+        return jsonify({'ok': False, 'error': 'Реєстрацію не знайдено'}), 404
+    if reg.status == 'cancelled':
+        return jsonify({'ok': False, 'error': 'Реєстрацію скасовано'}), 400
+    if not reg.user_has_real_email:
+        return jsonify({'ok': False, 'error': 'У учасника немає реального email'}), 400
+
+    if not reg.completion_token_active:
+        reg.issue_completion_token()
+        if not try_commit(log_context=f'completion_link_email reg={reg_id}'):
+            return jsonify({'ok': False, 'error': 'Помилка збереження'}), 500
+
+    url = url_for(
+        'registration.complete_registration',
+        token=reg.completion_token, _external=True,
+    )
+    try:
+        from app.services.email_service import EmailService
+        result = EmailService.send_completion_link(reg, url)
+    except Exception:
+        logger.exception('Failed to send completion link email for reg %s', reg_id)
+        return jsonify({'ok': False, 'error': 'Помилка надсилання листа'}), 500
+
+    if result is None:
+        return jsonify({'ok': True, 'message': 'Лист уже надсилали нещодавно'})
+    if getattr(result, 'status', None) == 'failed':
+        return jsonify({'ok': False, 'error': result.error_message or 'Лист не надіслано'}), 502
+    audit_logger.info(
+        'Admin %s emailed completion link for reg %s to %s',
+        current_user.email, reg_id, reg.user.email,
+    )
+    return jsonify({'ok': True, 'message': f'Лист надіслано на {reg.user.email}'})
+
+
 @admin_bp.route('/registrations/<int:reg_id>/invoice.<ext>')
 @admin_required
 def registration_invoice_download(reg_id, ext):

@@ -1,0 +1,51 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, alert_info, spacer %}
+
+{% block title %}Завершіть реєстрацію{% endblock %}
+
+{% block preview_text %}Завершіть анкету та оберіть спосіб оплати: {{ event.title }}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
+        Завершіть реєстрацію
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+        {{ user.first_name or 'Шановний учаснику' }}, вас додано до участі у заході.
+        Залишилось заповнити коротку анкету та обрати спосіб оплати.
+    </p>
+
+    <!-- Course details -->
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
+        Деталі заходу
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">{{ event.title }}</p>
+                {% if event.start_date %}
+                {{ detail_row("Дата", event.start_date.strftime('%d.%m.%Y %H:%M')) }}
+                {% endif %}
+                {% if event.location %}
+                {{ detail_row("Місце", event.location) }}
+                {% endif %}
+                {% if event.price and event.price > 0 %}
+                {{ detail_row("Вартість", (event.price | int) ~ " UAH") }}
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    {{ button_primary("Завершити реєстрацію", complete_url) }}
+
+    {{ spacer(16) }}
+
+    {{ alert_info("Зверніть увагу", "Посилання дійсне 30 днів. На сторінці завершення ви зможете заповнити анкету та обрати спосіб оплати — онлайн (LiqPay) або за рахунком (PDF).") }}
+
+    {{ spacer(16) }}
+
+    <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
+        Якщо у вас виникнуть запитання, зверніться до нас через сторінку контактів.
+    </p>
+{% endblock %}

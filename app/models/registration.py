@@ -168,6 +168,14 @@ class EventRegistration(TimestampMixin, db.Model):
         return utcnow() <= exp
 
     @property
+    def user_has_real_email(self):
+        """True, якщо в учасника справжній (не placeholder) email -- лише тоді
+        посилання на самостійне завершення можна надіслати листом."""
+        from app.services.participant_service import is_placeholder_email
+        email = self.user.email if self.user else None
+        return bool(email and not is_placeholder_email(email))
+
+    @property
     def status_label(self):
         return dict(self.STATUSES).get(self.status, self.status)
 

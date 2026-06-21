@@ -223,6 +223,13 @@
                         data-csrf="{{ csrf_token() }}">
                   <span class="material-symbols-rounded">link</span> Скопіювати посилання
                 </button>
+                {% if reg.user_has_real_email %}
+                <button type="button" class="admin-actions-menu__item"
+                        data-completion-email="{{ url_for('admin.registration_completion_link_email', reg_id=reg.id) }}"
+                        data-csrf="{{ csrf_token() }}">
+                  <span class="material-symbols-rounded">outgoing_mail</span> Надіслати посилання на email
+                </button>
+                {% endif %}
                 {% endif %}
                 {% if reg.payment_amount and reg.payment_amount > 0 %}
                 <a href="{{ url_for('admin.registration_invoice_download', reg_id=reg.id, ext='pdf') }}" class="admin-actions-menu__item">
