@@ -1065,14 +1065,80 @@
     font-size: 20px;
   }
 
-  .admin-table {
-    font-size: 13px;
-    min-width: 600px;
+  /* ===== Таблиці -> картки на мобільних =====
+     Кожен рядок стає карткою, а комірка -- стрічкою "Заголовок: значення".
+     Назву поля підставляє admin-table-cards.js у data-label кожної <td>
+     (бере текст із <thead>), CSS показує її через td::before. */
+  .admin-table-wrap {
+    overflow-x: visible;
   }
 
-  .admin-table th,
+  .admin-table {
+    font-size: 14px;
+    border: 0;
+    background: transparent;
+    border-radius: 0;
+    min-width: 0;
+  }
+
+  .admin-table thead {
+    display: none;
+  }
+
+  .admin-table tr {
+    display: block;
+    background: var(--iprm-white);
+    border: 1px solid var(--iprm-border);
+    border-radius: var(--iprm-radius);
+    padding: 6px 14px;
+    margin-bottom: 12px;
+  }
+
+  .admin-table tr:hover td {
+    background: transparent;
+  }
+
   .admin-table td {
-    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    text-align: right;
+    padding: 9px 0;
+    border-top: 0;
+    border-bottom: 1px solid var(--iprm-border);
+  }
+
+  /* перші колонки в десктоп-таблиці ліво-вирівняні -- у картці значення
+     теж праворуч, для однорідності */
+  .admin-table td:first-child,
+  .admin-table td:nth-child(2) {
+    text-align: right;
+  }
+
+  .admin-table td:last-child {
+    border-bottom: 0;
+  }
+
+  .admin-table td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    max-width: 45%;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--iprm-text-light);
+    text-align: left;
+  }
+
+  /* комірки без заголовка (напр. колонка дій) -- без префікса-мітки */
+  .admin-table td:not([data-label])::before {
+    content: '';
+  }
+
+  .admin-table__actions {
+    justify-content: flex-end;
   }
 
   .admin-empty {

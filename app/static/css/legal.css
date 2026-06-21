@@ -183,10 +183,37 @@
     width: auto;
   }
 
-  .legal-refund-table {
+  /* Таблиця -> картки на мобільних (мітки беруться з data-label у td). */
+  .legal-refund-table thead {
+    display: none;
+  }
+
+  .legal-refund-table tr {
     display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--iprm-border);
+    border-radius: var(--iprm-radius-sm);
+    padding: 4px 14px;
+    margin-bottom: 12px;
+  }
+
+  .legal-refund-table td {
+    display: block;
+    text-align: left;
+    border-bottom: 1px solid var(--iprm-border);
+    padding: 8px 0;
+  }
+
+  .legal-refund-table tr td:last-child {
+    border-bottom: 0;
+  }
+
+  .legal-refund-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--apple-gray);
   }
 
   .legal-section p,

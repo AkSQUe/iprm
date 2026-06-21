@@ -73,8 +73,8 @@
       <tbody>
         {% for backup in backups %}
         <tr class="backup-table__row backup-table__row--{{ backup.status }}">
-          <td class="backup-table__id">#{{ backup.id }}</td>
-          <td>
+          <td class="backup-table__id" data-label="ID">#{{ backup.id }}</td>
+          <td data-label="Тип">
             <span class="backup-type backup-type--{{ backup.backup_type }}">
               {% if backup.backup_type == 'full' %}Повна
               {% elif backup.backup_type == 'schema_only' %}Схема
@@ -83,7 +83,7 @@
               {% endif %}
             </span>
           </td>
-          <td>
+          <td data-label="Статус">
             <span class="backup-status backup-status--{{ backup.status }}">
               {% if backup.status == 'completed' %}Готово
               {% elif backup.status == 'in_progress' %}В процесі
@@ -92,11 +92,11 @@
               {% endif %}
             </span>
           </td>
-          <td>{{ backup.file_size_display }}</td>
-          <td>{% if backup.duration_seconds %}{{ '%.1f' | format(backup.duration_seconds) }}с{% else %}-{% endif %}</td>
-          <td class="backup-table__desc">{{ backup.description or '-' }}</td>
-          <td>{{ backup.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
-          <td class="backup-table__actions">
+          <td data-label="Розмір">{{ backup.file_size_display }}</td>
+          <td data-label="Тривалість">{% if backup.duration_seconds %}{{ '%.1f' | format(backup.duration_seconds) }}с{% else %}-{% endif %}</td>
+          <td class="backup-table__desc" data-label="Опис">{{ backup.description or '-' }}</td>
+          <td data-label="Дата">{{ backup.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+          <td class="backup-table__actions" data-label="Дії">
             {% if backup.is_restorable %}
             <form method="POST" action="{{ url_for('admin.backup_restore', backup_id=backup.id) }}" class="backup-action-form" data-confirm="Відновити базу даних з копії #{{ backup.id }}?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

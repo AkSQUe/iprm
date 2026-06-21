@@ -343,12 +343,67 @@
     width: 100%;
   }
 
+  /* Таблиця -> картки на мобільних (мітки з data-label у td). */
   .backup-table-wrap {
-    overflow-x: auto;
+    border: 0;
+    background: transparent;
+    border-radius: 0;
+    overflow: visible;
   }
 
   .backup-table {
-    min-width: 700px;
+    min-width: 0;
+  }
+
+  .backup-table thead {
+    display: none;
+  }
+
+  .backup-table tbody tr {
+    display: block;
+  }
+
+  .backup-table__row {
+    background: var(--iprm-white);
+    border: 1px solid var(--iprm-border);
+    border-radius: var(--iprm-radius-md);
+    padding: 4px 14px;
+    margin-bottom: 12px;
+  }
+
+  .backup-table__row td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    text-align: right;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--iprm-border);
+  }
+
+  .backup-table__row td:last-child {
+    border-bottom: 0;
+  }
+
+  .backup-table__row td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--apple-gray);
+    text-align: left;
+  }
+
+  .backup-table__desc {
+    max-width: none;
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .backup-table__error td,
+  .backup-table__empty {
+    display: block;
+    border-bottom: 0;
   }
 }
 
