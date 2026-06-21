@@ -886,17 +886,22 @@
   .admin-layout {
     padding: 32px 24px;
   }
-}
 
-@media (max-width: 768px) {
+  /* Планшети (вкл. портрет 768-1024px): сайдбар стає горизонтальною стрічкою
+     зверху, а не високою боковою колонкою -- інакше контент затиснутий і
+     широкі таблиці обрізаються. Горизонтальне розкладання nav -- в admin.css. */
   .admin-sidebar {
     width: 100%;
     position: static;
     height: auto;
     border-bottom: 1px solid var(--iprm-border);
     border-right: none;
+    overflow-x: auto;
+    overflow-y: visible;
   }
+}
 
+@media (max-width: 768px) {
   .admin-layout {
     padding: 24px 16px;
   }

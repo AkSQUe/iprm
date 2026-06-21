@@ -983,15 +983,11 @@
 
 /* ========== RESPONSIVE ========== */
 
-/* Планшет: інтеграції 2 колонки */
+/* Планшет: бічна навігація стає горизонтальною стрічкою, hero -- у колонку.
+   Інакше сайдбар (220px) з'їдає ширину і широкі таблиці/кнопки дій
+   обрізаються (портретні планшети 768-1024px). */
 @media (max-width: 1024px) {
   .admin-integrations__grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .admin-stat-cards {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -1034,6 +1030,25 @@
     font-size: 12px;
   }
 
+  .admin-hero {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .admin-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-stat-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Сайдбар і hero стають вертикальними вже з 1024px (див. вище). */
+
   .admin-layout {
     padding: 20px 16px;
   }
@@ -1044,11 +1059,6 @@
 
   .admin-form__section {
     padding: 20px;
-  }
-
-  .admin-hero {
-    flex-direction: column;
-    gap: 16px;
   }
 
   .admin-hero__title {
