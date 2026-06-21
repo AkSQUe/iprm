@@ -241,6 +241,15 @@
   margin-top: 24px;
 }
 
+/* Вертикальний відступ між послідовними картками-секціями, які є прямими
+   дітьми звичайного .admin-layout (сторінки інтеграцій: "Поточна
+   конфігурація" -> "Встановити ..."). Контейнери з власним flex-gap
+   (.admin-form, .admin-layout--stack) сюди НЕ входять -- інакше відступ
+   подвоївся б. */
+.admin-layout:not(.admin-layout--stack) > .form-section + .form-section {
+  margin-top: 24px;
+}
+
 .form-section__title,
 .admin-form__section-title {
   font-size: 1.125rem;
