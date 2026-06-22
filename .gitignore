@@ -46,3 +46,7 @@ Thumbs.db
 
 # Node (Tailwind build)
 node_modules/
+
+# Згенеровані UI-скріншоти (scripts/ui_screenshots.py)
+_shots/
+.preview/shots/
