@@ -248,10 +248,18 @@ def upsert_participant(data, reg=None, on_duplicate='error'):
     elif existing is not None:
         target = existing  # cancelled -> реактивуємо
     else:
+        target = None  # нову реєстрацію створюємо ПІСЛЯ sync (див. нижче)
+
+    # Профіль синхронізуємо ДО створення нової реєстрації: доступ до
+    # user.medical_profile (lazy-load) тригерить autoflush, який інакше
+    # вставив би ще не заповнений EventRegistration (null phone -> порушення
+    # NOT NULL). Для наявної реєстрації target уже валідний у БД.
+    profile = sync_user_and_profile(user, data)
+
+    if target is None:
         target = EventRegistration(user_id=user.id, instance_id=instance_id)
         db.session.add(target)
 
-    profile = sync_user_and_profile(user, data)
     apply_registration_fields(target, data, profile)
     db.session.flush()
     _maybe_assign_place(target)
