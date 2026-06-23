@@ -11,6 +11,7 @@ Protection system:
 - Test emails are always synchronous and never retried.
 - Thread-safe: SMTP config is passed as a dict, never mutated on app.config.
 """
+import html as _htmllib
 import logging
 import re
 import smtplib
@@ -25,8 +26,17 @@ from app.models.email_log import EmailLog, MAX_RETRIES, STALE_PENDING_MINUTES
 
 logger = logging.getLogger(__name__)
 
+_COMMENT_RE = re.compile(r'<!--.*?-->', re.DOTALL)
+_HEAD_RE = re.compile(r'<head\b[^>]*>.*?</head>', re.IGNORECASE | re.DOTALL)
+_STYLE_SCRIPT_RE = re.compile(r'<(style|script)\b[^>]*>.*?</\1>', re.IGNORECASE | re.DOTALL)
+_LINK_RE = re.compile(r'<a\b[^>]*?href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', re.IGNORECASE | re.DOTALL)
+_BR_RE = re.compile(r'<br\s*/?>', re.IGNORECASE)
+_BLOCK_RE = re.compile(r'</?(?:p|div|tr|h[1-6]|li|ul|ol|table|td)\b[^>]*>', re.IGNORECASE)
 _HTML_TAG_RE = re.compile(r'<[^>]+>')
-_WHITESPACE_RE = re.compile(r'\n\s*\n')
+# Невидимі символи: м'який перенос, CGJ, zero-width, figure/narrow space, BOM
+# (ними напхано прихований preview-блок у base.html -- у тексті це сміття).
+_INVISIBLE_RE = re.compile('[' + ''.join(map(chr, (0x00ad, 0x034f, 0x200b, 0x200c, 0x200d, 0x200e, 0x200f, 0x2007, 0x202f, 0xfeff))) + ']')
+_INLINE_WS_RE = re.compile('[ ' + chr(9) + chr(13) + chr(12) + chr(0xa0) + ']+')
 
 DEDUP_WINDOW_SECONDS = 60
 
@@ -38,10 +48,25 @@ SMTP_TIMEOUT_SECONDS = 15
 
 
 def _html_to_plaintext(html):
-    """Minimal HTML-to-text conversion for email plain text fallback."""
-    text = html.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
+    """HTML -> текстова версія листа (plain-text alternative).
+
+    Прибирає head/style/script/коментарі, зберігає URL посилань як "текст (url)",
+    декодує HTML-entity і вирізає невидимі preview-символи з base.html. Завдяки
+    цьому текстова частина близька до видимого HTML і не тригерить
+    SpamAssassin MPART_ALT_DIFF_COUNT (через що листи летіли у спам).
+    """
+    text = _COMMENT_RE.sub('', html)
+    text = _HEAD_RE.sub('', text)
+    text = _STYLE_SCRIPT_RE.sub('', text)
+    text = _LINK_RE.sub(lambda m: '{} ({})'.format(m.group(2), m.group(1)), text)
+    text = _BR_RE.sub('\n', text)
+    text = _BLOCK_RE.sub('\n', text)
     text = _HTML_TAG_RE.sub('', text)
-    text = _WHITESPACE_RE.sub('\n\n', text)
+    text = _htmllib.unescape(text)
+    text = _INVISIBLE_RE.sub('', text)
+    text = _INLINE_WS_RE.sub(' ', text)
+    text = re.sub(r' *\n *', '\n', text)
+    text = re.sub(r'\n{3,}', '\n\n', text)
     return text.strip()
 
 
@@ -712,7 +737,7 @@ class EmailService:
         if not smtp_cfg['is_enabled']:
             log_entry = EmailLog(
                 to_email=to,
-                subject='IPRM: Тестовий лист',
+                subject='Тестовий лист | ІПРМ',
                 template_name='test',
                 status='failed',
                 error_message='Email sending is disabled in settings',
@@ -731,7 +756,7 @@ class EmailService:
         html_body = render_template('emails/test.html', to_email=to)
         plain_body = _html_to_plaintext(html_body)
         msg = Message(
-            subject='IPRM: Тестовий лист',
+            subject='Тестовий лист | ІПРМ',
             recipients=[to],
             html=html_body,
             body=plain_body,
@@ -740,7 +765,7 @@ class EmailService:
 
         log_entry = EmailLog(
             to_email=to,
-            subject='IPRM: Тестовий лист',
+            subject='Тестовий лист | ІПРМ',
             template_name='test',
             status='pending',
             trigger='test',
