@@ -30,6 +30,7 @@
             <button type="submit" class="iprm-nav__mobile-link iprm-nav__mobile-link--logout">Вийти</button>
           </form>
         {% else %}
+          <a href="{{ url_for('auth.register') }}" class="iprm-nav__mobile-link">Зареєструватися</a>
           <a href="{{ url_for('auth.login') }}" class="iprm-nav__mobile-link iprm-nav__mobile-link--cta">Увійти</a>
         {% endif %}
       </div>
@@ -46,6 +47,7 @@
           <button type="submit" class="iprm-header__auth-link">Вийти</button>
         </form>
       {% else %}
+        <a href="{{ url_for('auth.register') }}" class="iprm-header__auth-link">Зареєструватися</a>
         <a href="{{ url_for('auth.login') }}" class="iprm-header__auth-link iprm-header__auth-link--cta">Увійти</a>
       {% endif %}
     </div>
