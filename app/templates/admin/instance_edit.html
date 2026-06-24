@@ -34,7 +34,7 @@
       <form method="POST" action="{{ url_for('admin.instance_lecturer_certificate', instance_id=instance.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn-admin btn-admin--secondary">
-          <span class="material-symbols-rounded">workspace_premium</span> Сертифікат лектора
+          {{ icon('workspace_premium') }} Сертифікат лектора
         </button>
       </form>
       {% endif %}

@@ -47,12 +47,12 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="job_id" value="{{ job_id }}">
         <button type="submit" class="btn-admin btn-admin--primary"{% if ok_count == 0 %} disabled{% endif %}>
-          <span class="material-symbols-rounded">workspace_premium</span>
+          {{ icon('workspace_premium') }}
           Згенерувати {{ ok_count }} сертифікат(ів)
         </button>
       </form>
       <a href="{{ url_for('admin.tool_certificate_generator') }}" class="btn-admin btn-admin--secondary btn-admin--sm">
-        <span class="material-symbols-rounded">upload_file</span> Інший файл
+        {{ icon('upload_file') }} Інший файл
       </a>
       {% if err_count %}
       <span class="admin-text-muted">Рядки з помилками буде пропущено.</span>

@@ -27,7 +27,7 @@
       <div class="admin-xlsx-toolbar">
         <details class="admin-xlsx-menu">
           <summary class="btn-admin btn-admin--secondary" title="Завантажити xlsx з курсами">
-            <span class="material-symbols-rounded">download</span> Експорт XLSX
+            {{ icon('download') }} Експорт XLSX
           </summary>
           <div class="admin-xlsx-menu__items">
             <a href="{{ url_for('admin.courses_export') }}">Усі курси</a>
@@ -39,11 +39,11 @@
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="file" name="xlsx" id="courses-xlsx-input" accept=".xlsx" onchange="this.form.submit()">
           <label for="courses-xlsx-input" class="btn-admin btn-admin--secondary admin-clickable" title="Завантажити змінений xlsx">
-            <span class="material-symbols-rounded">upload</span> Імпорт XLSX
+            {{ icon('upload') }} Імпорт XLSX
           </label>
         </form>
       </div>
-      <a href="{{ url_for('admin.course_create') }}" class="btn-admin btn-admin--primary"><span class="material-symbols-rounded">add</span> Додати курс</a>
+      <a href="{{ url_for('admin.course_create') }}" class="btn-admin btn-admin--primary">{{ icon('add') }} Додати курс</a>
     </div>
   </div>
 
@@ -89,15 +89,15 @@
         </td>
         <td>
           <div class="admin-table__actions">
-            <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm" target="_blank" rel="noopener noreferrer" aria-label="Переглянути публічну сторінку"><span class="material-symbols-rounded">visibility</span></a>
-            <a href="{{ url_for('admin.course_edit', course_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати"><span class="material-symbols-rounded">edit</span></a>
+            <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm" target="_blank" rel="noopener noreferrer" aria-label="Переглянути публічну сторінку">{{ icon('visibility') }}</a>
+            <a href="{{ url_for('admin.course_edit', course_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
             <form method="POST" action="{{ url_for('admin.course_clone', course_id=course.id) }}" data-confirm="Створити копію цього курсу як чернетку?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Клонувати"><span class="material-symbols-rounded">content_copy</span></button>
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Клонувати">{{ icon('content_copy') }}</button>
             </form>
             <form method="POST" action="{{ url_for('admin.course_delete', course_id=course.id) }}" data-confirm="Видалити курс? Всі його проведення також видаляться.">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити"><span class="material-symbols-rounded">delete</span></button>
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити">{{ icon('delete') }}</button>
             </form>
           </div>
         </td>
@@ -108,7 +108,7 @@
   </div>
   {% else %}
   <div class="admin-empty">
-    <span class="material-symbols-rounded admin-empty__icon">school</span>
+    {{ icon('school', cls='admin-empty__icon') }}
     <h3 class="admin-empty__title">Курсів ще немає</h3>
     <p>Створіть перший курс натиснувши кнопку вище</p>
   </div>

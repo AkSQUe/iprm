@@ -29,7 +29,7 @@
   {% include 'partials/flash_messages.html' %}
 
   <div class="wh-info">
-    <span class="material-symbols-rounded wh-info__icon">bolt</span>
+    {{ icon('bolt', cls='wh-info__icon') }}
     <div>
       POST на <code>partner_webhook_url</code> формується при створенні, оновленні
       чи видаленні курсу. Чергу обробляє планувальник щохвилини з експоненційним
@@ -100,7 +100,7 @@
           <span class="badge badge--{{ d.status }}">{{ d.status }}</span>
           {% if d.last_error %}
           <details class="wh-error">
-            <summary><span class="material-symbols-rounded">error</span>Деталі</summary>
+            <summary>{{ icon('error') }}Деталі</summary>
             <pre>{{ d.last_error }}</pre>
           </details>
           {% endif %}
@@ -126,14 +126,14 @@
             <form method="POST" action="{{ url_for('admin.webhook_retry', delivery_id=d.id) }}" class="admin-inline" data-confirm="Повторити відправку зараз?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Повторити відправку" title="Повторити">
-                <span class="material-symbols-rounded">refresh</span>
+                {{ icon('refresh') }}
               </button>
             </form>
             {% endif %}
             <form method="POST" action="{{ url_for('admin.webhook_delete', delivery_id=d.id) }}" class="admin-inline" data-confirm="Видалити запис?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити запис" title="Видалити">
-                <span class="material-symbols-rounded">delete</span>
+                {{ icon('delete') }}
               </button>
             </form>
           </div>
@@ -145,7 +145,7 @@
   </div>
   {% else %}
   <div class="admin-empty admin-text-center">
-    <span class="material-symbols-rounded admin-empty__icon">inbox</span>
+    {{ icon('inbox', cls='admin-empty__icon') }}
     <h3 class="admin-empty__title">
       {% if filter_status %}Немає записів зі статусом "{{ filter_status }}"{% else %}Записів немає{% endif %}
     </h3>

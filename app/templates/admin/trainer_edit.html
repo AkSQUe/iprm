@@ -141,7 +141,7 @@
             <div class="regalia-certs__grid" id="regalia-certs-grid"></div>
             <input type="file" class="regalia-hidden-file" id="regalia-cert-file" accept="image/png,image/jpeg,image/webp,.heic,.heif" multiple>
             <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" id="regalia-cert-add">
-              <span class="material-symbols-rounded">add_photo_alternate</span> Додати сертифікати
+              {{ icon('add_photo_alternate') }} Додати сертифікати
             </button>
           </div>
           <small class="admin-form__hint">PNG, JPG, WebP, HEIC. Перетягуйте мініатюри, щоб змінити порядок. Перегляд у lightbox на сайті.</small>
@@ -153,7 +153,7 @@
           <div class="regalia-links" data-target="regalia-pat-field" data-images="1">
             <div class="regalia-links__rows"></div>
             <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm regalia-links__add">
-              <span class="material-symbols-rounded">add</span> Додати патент
+              {{ icon('add') }} Додати патент
             </button>
           </div>
           <small class="admin-form__hint">Можна завантажити скан патенту (іконка зображення в рядку) і вказати назву та посилання. Скан необовʼязковий.</small>
@@ -165,7 +165,7 @@
           <div class="regalia-links" data-target="regalia-art-field">
             <div class="regalia-links__rows"></div>
             <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm regalia-links__add">
-              <span class="material-symbols-rounded">add_link</span> Додати посилання
+              {{ icon('add_link') }} Додати посилання
             </button>
           </div>
           {{ form.articles(id="regalia-art-field") }}

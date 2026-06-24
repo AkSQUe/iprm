@@ -44,7 +44,7 @@
         Скачайте xlsx-шаблон, заповніть по одному рядку на учасника й збережіть.
       </p>
       <a href="{{ url_for('admin.tool_certificate_generator_template') }}" class="btn-admin btn-admin--secondary">
-        <span class="material-symbols-rounded">download</span> Завантажити шаблон .xlsx
+        {{ icon('download') }} Завантажити шаблон .xlsx
       </a>
     </div>
 
@@ -61,7 +61,7 @@
         <input type="file" name="xlsx" accept=".xlsx" required
                class="form-input admin-input-narrow">
         <button type="submit" class="btn-admin btn-admin--primary"{% if not provider_number %} disabled{% endif %}>
-          <span class="material-symbols-rounded">visibility</span> Завантажити й переглянути
+          {{ icon('visibility') }} Завантажити й переглянути
         </button>
       </form>
     </div>

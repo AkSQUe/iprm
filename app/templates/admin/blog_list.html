@@ -26,11 +26,11 @@
       <div class="admin-hero__actions">
         {% if total_pending %}
         <a href="{{ url_for('admin.blog_comments') }}" class="btn-admin btn-admin--secondary">
-          <span class="material-symbols-rounded">forum</span> Коментарі на модерації: {{ total_pending }}
+          {{ icon('forum') }} Коментарі на модерації: {{ total_pending }}
         </a>
         {% endif %}
         <a href="{{ url_for('admin.blog_create') }}" class="btn-admin btn-admin--primary">
-          <span class="material-symbols-rounded">add</span> Новий допис
+          {{ icon('add') }} Новий допис
         </a>
       </div>
     </div>
@@ -84,7 +84,7 @@
       <h3 class="admin-empty__title">Ще немає дописів</h3>
       <p class="admin-text-muted">Створіть перший допис блогу.</p>
       <a href="{{ url_for('admin.blog_create') }}" class="btn-admin btn-admin--primary admin-mt-sm">
-        <span class="material-symbols-rounded">add</span> Новий допис
+        {{ icon('add') }} Новий допис
       </a>
     </div>
     {% endif %}

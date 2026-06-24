@@ -27,7 +27,7 @@
         <div class="admin-xlsx-toolbar">
           <details class="admin-xlsx-menu">
             <summary class="btn-admin btn-admin--secondary" title="Завантажити учасників у xlsx">
-              <span class="material-symbols-rounded">download</span> Експорт XLSX
+              {{ icon('download') }} Експорт XLSX
             </summary>
             <div class="admin-xlsx-menu__items">
               <a href="{{ url_for('admin.participants_export') }}">Усі учасники</a>
@@ -38,12 +38,12 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="file" name="xlsx" id="participants-xlsx-input" accept=".xlsx" onchange="this.form.submit()">
             <label for="participants-xlsx-input" class="btn-admin btn-admin--secondary admin-clickable" title="Завантажити заповнений xlsx для імпорту">
-              <span class="material-symbols-rounded">upload</span> Імпорт XLSX
+              {{ icon('upload') }} Імпорт XLSX
             </label>
           </form>
         </div>
         <a href="{{ url_for('admin.participant_create') }}" class="btn-admin btn-admin--primary">
-          <span class="material-symbols-rounded">person_add</span> Додати учасника
+          {{ icon('person_add') }} Додати учасника
         </a>
       </div>
     </div>
@@ -78,15 +78,15 @@
     <div class="admin-filter-pills">
       <a href="{{ url_for('admin.registrations_all', scope='upcoming', status=filters.status, payment=filters.payment, payment_method=filters.payment_method, instance_id=filters.instance_id, course_id=filters.course_id, trainer_id=filters.trainer_id, per_page=filters.per_page) }}"
          class="admin-pill{% if filters.scope == 'upcoming' %} admin-pill--active{% endif %}">
-        <span class="material-symbols-rounded">event_upcoming</span> Майбутні заходи
+        {{ icon('event_upcoming') }} Майбутні заходи
       </a>
       <a href="{{ url_for('admin.registrations_all', scope='past', status=filters.status, payment=filters.payment, payment_method=filters.payment_method, instance_id=filters.instance_id, course_id=filters.course_id, trainer_id=filters.trainer_id, per_page=filters.per_page) }}"
          class="admin-pill{% if filters.scope == 'past' %} admin-pill--active{% endif %}">
-        <span class="material-symbols-rounded">history</span> Минулі
+        {{ icon('history') }} Минулі
       </a>
       <a href="{{ url_for('admin.registrations_all', scope='all', status=filters.status, payment=filters.payment, payment_method=filters.payment_method, instance_id=filters.instance_id, course_id=filters.course_id, trainer_id=filters.trainer_id, per_page=filters.per_page) }}"
          class="admin-pill{% if filters.scope == 'all' %} admin-pill--active{% endif %}">
-        <span class="material-symbols-rounded">format_list_bulleted</span> Усі
+        {{ icon('format_list_bulleted') }} Усі
       </a>
     </div>
 
@@ -131,9 +131,9 @@
             <option value="{{ inst.id }}"{% if filters.instance_id == inst.id %} selected{% endif %}>{{ inst.course.title }}{% if inst.start_date %} — {{ inst.start_date.strftime('%d.%m.%Y') }}{% endif %}{% if inst.location %} ({{ inst.location }}){% endif %}</option>
           {% endfor %}
         </select>
-        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">filter_list</span> Фільтрувати</button>
+        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('filter_list') }} Фільтрувати</button>
         {% if filters.status or filters.payment or filters.payment_method or filters.instance_id or filters.course_id or filters.trainer_id %}
-          <a href="{{ url_for('admin.registrations_all', scope=filters.scope) }}" class="btn-admin btn-admin--sm"><span class="material-symbols-rounded">clear</span> Скинути</a>
+          <a href="{{ url_for('admin.registrations_all', scope=filters.scope) }}" class="btn-admin btn-admin--sm">{{ icon('clear') }} Скинути</a>
         {% endif %}
       </form>
     </div>
@@ -211,32 +211,32 @@
           <td>
             <details class="admin-actions-menu">
               <summary class="btn-admin btn-admin--secondary btn-admin--sm" title="Дії" aria-label="Дії">
-                <span class="material-symbols-rounded">more_vert</span>
+                {{ icon('more_vert') }}
               </summary>
               <div class="admin-actions-menu__items">
                 <a href="{{ url_for('admin.participant_edit', reg_id=reg.id) }}" class="admin-actions-menu__item">
-                  <span class="material-symbols-rounded">edit</span> Редагувати учасника
+                  {{ icon('edit') }} Редагувати учасника
                 </a>
                 {% if reg.status != 'cancelled' %}
                 <button type="button" class="admin-actions-menu__item"
                         data-completion-link="{{ url_for('admin.registration_completion_link', reg_id=reg.id) }}"
                         data-csrf="{{ csrf_token() }}">
-                  <span class="material-symbols-rounded">link</span> Скопіювати посилання
+                  {{ icon('link') }} Скопіювати посилання
                 </button>
                 {% if reg.user_has_real_email %}
                 <button type="button" class="admin-actions-menu__item"
                         data-completion-email="{{ url_for('admin.registration_completion_link_email', reg_id=reg.id) }}"
                         data-csrf="{{ csrf_token() }}">
-                  <span class="material-symbols-rounded">outgoing_mail</span> Надіслати посилання на email
+                  {{ icon('outgoing_mail') }} Надіслати посилання на email
                 </button>
                 {% endif %}
                 {% endif %}
                 {% if reg.payment_amount and reg.payment_amount > 0 %}
                 <a href="{{ url_for('admin.registration_invoice_download', reg_id=reg.id, ext='pdf') }}" class="admin-actions-menu__item">
-                  <span class="material-symbols-rounded">picture_as_pdf</span> Рахунок (PDF)
+                  {{ icon('picture_as_pdf') }} Рахунок (PDF)
                 </a>
                 <a href="{{ url_for('admin.registration_invoice_download', reg_id=reg.id, ext='xlsx') }}" class="admin-actions-menu__item">
-                  <span class="material-symbols-rounded">table_view</span> Рахунок (Excel)
+                  {{ icon('table_view') }} Рахунок (Excel)
                 </a>
                 {% endif %}
                 {% if reg.status == 'pending' %}
@@ -244,7 +244,7 @@
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="status" value="confirmed">
                   <input type="hidden" name="next" value="registrations_all">
-                  <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--accent"><span class="material-symbols-rounded">check</span> Підтвердити</button>
+                  <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--accent">{{ icon('check') }} Підтвердити</button>
                 </form>
                 {% endif %}
                 {% if reg.status in ('confirmed', 'pending') and not reg.attended %}
@@ -252,23 +252,23 @@
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="cpd_points" value="{{ (reg.instance.effective_cpd_points if reg.instance else 0) or 0 }}">
                   <input type="hidden" name="next" value="registrations_all">
-                  <button type="submit" class="admin-actions-menu__item"><span class="material-symbols-rounded">verified</span> Підтвердити присутність (БПР)</button>
+                  <button type="submit" class="admin-actions-menu__item">{{ icon('verified') }} Підтвердити присутність (БПР)</button>
                 </form>
                 {% endif %}
                 {% if reg.certificate and not reg.certificate.revoked %}
                 <a href="{{ url_for('admin.registration_certificate_download', reg_id=reg.id) }}" class="admin-actions-menu__item">
-                  <span class="material-symbols-rounded">workspace_premium</span> Завантажити сертифікат
+                  {{ icon('workspace_premium') }} Завантажити сертифікат
                 </a>
                 <form method="POST" action="{{ url_for('admin.registration_certificate_resend', reg_id=reg.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="next" value="registrations_all">
-                  <button type="submit" class="admin-actions-menu__item"><span class="material-symbols-rounded">forward_to_inbox</span> Переслати сертифікат</button>
+                  <button type="submit" class="admin-actions-menu__item">{{ icon('forward_to_inbox') }} Переслати сертифікат</button>
                 </form>
                 {% elif reg.status != 'cancelled' %}
                 <form method="POST" action="{{ url_for('admin.registration_certificate_issue', reg_id=reg.id) }}" data-confirm="Видати сертифікат і надіслати на email?" data-confirm-ok="Видати">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="next" value="registrations_all">
-                  <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--accent"><span class="material-symbols-rounded">workspace_premium</span> Видати сертифікат</button>
+                  <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--accent">{{ icon('workspace_premium') }} Видати сертифікат</button>
                 </form>
                 {% endif %}
                 {% if reg.status != 'cancelled' %}
@@ -276,7 +276,7 @@
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="status" value="cancelled">
                   <input type="hidden" name="next" value="registrations_all">
-                  <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--danger"><span class="material-symbols-rounded">close</span> Скасувати реєстрацію</button>
+                  <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--danger">{{ icon('close') }} Скасувати реєстрацію</button>
                 </form>
                 {% endif %}
               </div>
@@ -292,17 +292,17 @@
     {% if pagination and pagination.pages > 1 %}
     <nav class="admin-pagination">
       {% if pagination.has_prev %}
-      <a href="{{ url_for('admin.registrations_all', page=pagination.prev_num, scope=filters.scope, status=filters.status, payment=filters.payment, payment_method=filters.payment_method, instance_id=filters.instance_id, course_id=filters.course_id, trainer_id=filters.trainer_id, per_page=filters.per_page) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_left</span></a>
+      <a href="{{ url_for('admin.registrations_all', page=pagination.prev_num, scope=filters.scope, status=filters.status, payment=filters.payment, payment_method=filters.payment_method, instance_id=filters.instance_id, course_id=filters.course_id, trainer_id=filters.trainer_id, per_page=filters.per_page) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
       {% endif %}
       <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }} ({{ pagination.total }})</span>
       {% if pagination.has_next %}
-      <a href="{{ url_for('admin.registrations_all', page=pagination.next_num, scope=filters.scope, status=filters.status, payment=filters.payment, payment_method=filters.payment_method, instance_id=filters.instance_id, course_id=filters.course_id, trainer_id=filters.trainer_id, per_page=filters.per_page) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_right</span></a>
+      <a href="{{ url_for('admin.registrations_all', page=pagination.next_num, scope=filters.scope, status=filters.status, payment=filters.payment, payment_method=filters.payment_method, instance_id=filters.instance_id, course_id=filters.course_id, trainer_id=filters.trainer_id, per_page=filters.per_page) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
       {% endif %}
     </nav>
     {% endif %}
     {% else %}
     <div class="admin-empty">
-      <span class="material-symbols-rounded admin-empty__icon">how_to_reg</span>
+      {{ icon('how_to_reg', cls='admin-empty__icon') }}
       <h3 class="admin-empty__title">Реєстрацій не знайдено</h3>
       {% if filters.status or filters.payment or filters.payment_method or filters.instance_id or filters.course_id or filters.trainer_id %}
         <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.registrations_all', scope=filters.scope) }}">скинути їх</a></p>

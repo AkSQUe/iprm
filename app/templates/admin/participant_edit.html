@@ -37,7 +37,7 @@
 
   {% if reg and not form.email.data %}
   <div class="participant-email-note">
-    <span class="material-symbols-rounded">mark_email_unread</span>
+    {{ icon('mark_email_unread') }}
     <span>Email цього учасника ще не вказано. Додайте його у полі нижче, коли отримаєте.</span>
   </div>
   {% endif %}
@@ -52,7 +52,7 @@
       {% if fixed_instance %}
       <input type="hidden" name="instance_id" value="{{ instance.id if instance else form.instance_id.data }}">
       <div class="participant-event">
-        <span class="material-symbols-rounded participant-event__icon">event</span>
+        {{ icon('event', cls='participant-event__icon') }}
         <span>
           {% if instance and instance.course %}{{ instance.course.title }}{% else %}Захід{% endif %}
           {% if instance and instance.start_date %} &middot; {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}

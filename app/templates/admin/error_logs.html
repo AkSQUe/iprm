@@ -70,9 +70,9 @@
         <option value="90"{% if filters.days == 90 %} selected{% endif %}>90 днів</option>
         <option value="0"{% if filters.days == 0 %} selected{% endif %}>За весь час</option>
       </select>
-      <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">filter_list</span> Фільтрувати</button>
+      <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('filter_list') }} Фільтрувати</button>
       {% if filters.error_code or filters.resolved %}
-      <a href="{{ url_for('admin.error_logs') }}" class="btn-admin btn-admin--sm"><span class="material-symbols-rounded">clear</span> Скинути</a>
+      <a href="{{ url_for('admin.error_logs') }}" class="btn-admin btn-admin--sm">{{ icon('clear') }} Скинути</a>
       {% endif %}
     </form>
   </div>
@@ -133,7 +133,7 @@
           </td>
           <td>
             <div class="admin-table__actions">
-              <a href="{{ url_for('admin.error_log_detail', error_id=log.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">info</span></a>
+              <a href="{{ url_for('admin.error_log_detail', error_id=log.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('info', label='Деталі') }}</a>
             </div>
           </td>
         </tr>
@@ -146,18 +146,18 @@
   {% if pagination.pages > 1 %}
   <nav class="admin-pagination">
     {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.error_logs', page=pagination.prev_num, error_code=filters.error_code, resolved=filters.resolved, days=filters.days) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_left</span></a>
+    <a href="{{ url_for('admin.error_logs', page=pagination.prev_num, error_code=filters.error_code, resolved=filters.resolved, days=filters.days) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
     {% endif %}
     <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }}</span>
     {% if pagination.has_next %}
-    <a href="{{ url_for('admin.error_logs', page=pagination.next_num, error_code=filters.error_code, resolved=filters.resolved, days=filters.days) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">chevron_right</span></a>
+    <a href="{{ url_for('admin.error_logs', page=pagination.next_num, error_code=filters.error_code, resolved=filters.resolved, days=filters.days) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
     {% endif %}
   </nav>
   {% endif %}
 
   {% else %}
   <div class="admin-empty">
-    <span class="material-symbols-rounded admin-empty__icon">bug_report</span>
+    {{ icon('bug_report', cls='admin-empty__icon') }}
     <h3 class="admin-empty__title">Помилок не знайдено</h3>
     <p>Немає записів{% if filters.error_code or filters.resolved %} за обраними фільтрами. <a href="{{ url_for('admin.error_logs') }}">Скинути</a>{% endif %}</p>
   </div>

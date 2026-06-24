@@ -83,20 +83,20 @@
           </td>
           <td>
             <div class="admin-table__actions">
-              <a href="{{ url_for('admin.registration_certificate_download', reg_id=cert.registration_id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Завантажити PDF"><span class="material-symbols-rounded">download</span></a>
+              <a href="{{ url_for('admin.registration_certificate_download', reg_id=cert.registration_id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Завантажити PDF">{{ icon('download') }}</a>
               {% if not cert.revoked %}
               <form method="POST" action="{{ url_for('admin.registration_certificate_resend', reg_id=cert.registration_id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn-admin btn-admin--sm" title="Переслати на email"><span class="material-symbols-rounded">forward_to_inbox</span></button>
+                <button type="submit" class="btn-admin btn-admin--sm" title="Переслати на email">{{ icon('forward_to_inbox') }}</button>
               </form>
               <form method="POST" action="{{ url_for('admin.certificate_revoke', cert_id=cert.id) }}" data-confirm="Відкликати сертифікат? Доступ користувача буде закрито.">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" title="Відкликати"><span class="material-symbols-rounded">block</span></button>
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" title="Відкликати">{{ icon('block') }}</button>
               </form>
               {% else %}
               <form method="POST" action="{{ url_for('admin.certificate_revoke', cert_id=cert.id) }}" data-confirm="Відновити сертифікат?">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm" title="Відновити"><span class="material-symbols-rounded">restart_alt</span></button>
+                <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm" title="Відновити">{{ icon('restart_alt') }}</button>
               </form>
               {% endif %}
             </div>
@@ -108,7 +108,7 @@
     </div>
     {% else %}
     <div class="admin-empty">
-      <span class="material-symbols-rounded admin-empty__icon">workspace_premium</span>
+      {{ icon('workspace_premium', cls='admin-empty__icon') }}
       <h3 class="admin-empty__title">Сертифікатів ще немає</h3>
       <p>Видавайте сертифікати на сторінці <a href="{{ url_for('admin.registrations_all') }}">Реєстрації</a> кнопкою «Видати сертифікат»</p>
     </div>

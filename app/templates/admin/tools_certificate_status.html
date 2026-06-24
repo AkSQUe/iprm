@@ -47,10 +47,10 @@
       <div id="cert-progress-done" {% if status.status != 'done' %}hidden{% endif %}>
         <a href="{{ url_for('admin.tool_certificate_generator_job_download', job_id=job_id) }}"
            class="btn-admin btn-admin--primary">
-          <span class="material-symbols-rounded">download</span> Завантажити ZIP
+          {{ icon('download') }} Завантажити ZIP
         </a>
         <a href="{{ url_for('admin.tool_certificate_generator') }}" class="btn-admin btn-admin--secondary">
-          <span class="material-symbols-rounded">add</span> Згенерувати ще
+          {{ icon('add') }} Згенерувати ще
         </a>
       </div>
 

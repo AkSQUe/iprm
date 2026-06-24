@@ -33,7 +33,7 @@
         <div class="admin-xlsx-toolbar">
           <details class="admin-xlsx-menu">
             <summary class="btn-admin btn-admin--secondary" title="Завантажити учасників у xlsx">
-              <span class="material-symbols-rounded">download</span> Експорт XLSX
+              {{ icon('download') }} Експорт XLSX
             </summary>
             <div class="admin-xlsx-menu__items">
               <a href="{{ url_for('admin.participants_export', instance_id=instance.id) }}">Учасники цього заходу</a>
@@ -44,12 +44,12 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="file" name="xlsx" id="participants-xlsx-input" accept=".xlsx" onchange="this.form.submit()">
             <label for="participants-xlsx-input" class="btn-admin btn-admin--secondary admin-clickable" title="Завантажити заповнений xlsx для імпорту">
-              <span class="material-symbols-rounded">upload</span> Імпорт XLSX
+              {{ icon('upload') }} Імпорт XLSX
             </label>
           </form>
         </div>
         <a href="{{ url_for('admin.participant_create_for_instance', instance_id=instance.id) }}" class="btn-admin btn-admin--primary">
-          <span class="material-symbols-rounded">person_add</span> Додати учасника
+          {{ icon('person_add') }} Додати учасника
         </a>
       </div>
     </div>
@@ -117,51 +117,51 @@
           <td>{{ reg.created_at.strftime('%d.%m.%Y') }}</td>
           <td>
             <div class="admin-table__actions">
-              <a href="{{ url_for('admin.participant_edit', reg_id=reg.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Редагувати учасника"><span class="material-symbols-rounded">edit</span></a>
+              <a href="{{ url_for('admin.participant_edit', reg_id=reg.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Редагувати учасника">{{ icon('edit') }}</a>
               {% if reg.status != 'cancelled' %}
               <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" title="Скопіювати посилання на завершення реєстрації"
                       data-completion-link="{{ url_for('admin.registration_completion_link', reg_id=reg.id) }}"
-                      data-csrf="{{ csrf_token() }}"><span class="material-symbols-rounded">link</span></button>
+                      data-csrf="{{ csrf_token() }}">{{ icon('link') }}</button>
               {% if reg.user_has_real_email %}
               <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" title="Надіслати посилання на email"
                       data-completion-email="{{ url_for('admin.registration_completion_link_email', reg_id=reg.id) }}"
-                      data-csrf="{{ csrf_token() }}"><span class="material-symbols-rounded">outgoing_mail</span></button>
+                      data-csrf="{{ csrf_token() }}">{{ icon('outgoing_mail') }}</button>
               {% endif %}
               {% endif %}
               {% if reg.payment_amount and reg.payment_amount > 0 %}
-              <a href="{{ url_for('admin.registration_invoice_download', reg_id=reg.id, ext='pdf') }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Завантажити рахунок (PDF)"><span class="material-symbols-rounded">picture_as_pdf</span></a>
+              <a href="{{ url_for('admin.registration_invoice_download', reg_id=reg.id, ext='pdf') }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Завантажити рахунок (PDF)">{{ icon('picture_as_pdf') }}</a>
               {% endif %}
               {% if reg.status == 'pending' %}
               <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="status" value="confirmed">
-                <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm" title="Підтвердити"><span class="material-symbols-rounded">check</span></button>
+                <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm" title="Підтвердити">{{ icon('check') }}</button>
               </form>
               {% endif %}
               {% if reg.status in ('confirmed', 'pending') and not reg.attended %}
               <form method="POST" action="{{ url_for('admin.registration_attendance', reg_id=reg.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="cpd_points" value="{{ (reg.instance.effective_cpd_points if reg.instance else 0) or 0 }}">
-                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" title="Безперервний професійний розвиток"><span class="material-symbols-rounded">verified</span></button>
+                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" title="Безперервний професійний розвиток">{{ icon('verified') }}</button>
               </form>
               {% endif %}
               {% if reg.certificate and not reg.certificate.revoked %}
-              <a href="{{ url_for('admin.registration_certificate_download', reg_id=reg.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Завантажити сертифікат {{ reg.certificate.number }}"><span class="material-symbols-rounded">workspace_premium</span></a>
+              <a href="{{ url_for('admin.registration_certificate_download', reg_id=reg.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Завантажити сертифікат {{ reg.certificate.number }}">{{ icon('workspace_premium') }}</a>
               <form method="POST" action="{{ url_for('admin.registration_certificate_resend', reg_id=reg.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn-admin btn-admin--sm" title="Переслати сертифікат на email"><span class="material-symbols-rounded">forward_to_inbox</span></button>
+                <button type="submit" class="btn-admin btn-admin--sm" title="Переслати сертифікат на email">{{ icon('forward_to_inbox') }}</button>
               </form>
               {% elif reg.status != 'cancelled' %}
               <form method="POST" action="{{ url_for('admin.registration_certificate_issue', reg_id=reg.id) }}" data-confirm="Видати сертифікат і надіслати на email?" data-confirm-ok="Видати">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm" title="Видати сертифікат"><span class="material-symbols-rounded">workspace_premium</span></button>
+                <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm" title="Видати сертифікат">{{ icon('workspace_premium') }}</button>
               </form>
               {% endif %}
               {% if reg.status != 'cancelled' %}
               <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}" data-confirm="Скасувати реєстрацію?">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="status" value="cancelled">
-                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" title="Скасувати"><span class="material-symbols-rounded">close</span></button>
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" title="Скасувати">{{ icon('close') }}</button>
               </form>
               {% endif %}
             </div>
@@ -173,7 +173,7 @@
     </div>
     {% else %}
     <div class="admin-empty">
-      <span class="material-symbols-rounded admin-empty__icon">how_to_reg</span>
+      {{ icon('how_to_reg', cls='admin-empty__icon') }}
       <h3 class="admin-empty__title">На цей захід ще немає реєстрацій</h3>
     </div>
     {% endif %}

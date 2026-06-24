@@ -1,0 +1,35 @@
+/* Self-hosted Material Symbols Rounded (інстанс opsz24, wght300, FILL0, GRAD0).
+
+   Раніше іконковий шрифт вантажився з Google Fonts CDN (fonts.gstatic.com).
+   На мобільних блокувальники реклами/трекерів і приватні браузери часто
+   ріжуть домени Google -> шрифт не завантажувався, і замість іконок
+   показувався обрізаний текст лігатур ("m", "ev", "inl"...). Локальний
+   хостинг ('self', який CSP уже дозволяє) усуває залежність від третьої
+   сторони і робить іконки надійними скрізь.
+
+   font-display: block -- для іконок ніколи не показуємо текст-лігатуру:
+   до завантаження шрифту елемент невидимий (а він локальний, тож вантажиться
+   майже миттєво). */
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  font-style: normal;
+  font-weight: 300;
+  font-display: block;
+  src: url('../fonts/material-symbols-rounded.woff2') format('woff2');
+}
+
+.material-symbols-rounded {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  vertical-align: middle;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+}

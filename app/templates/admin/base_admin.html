@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
 {% block extra_head %}
-<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0,0" as="style">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0,0" />
+{# Self-hosted іконковий шрифт (раніше вантажився з Google Fonts CDN, який
+   на мобільних ріжуть блокувальники -> ламались іконки). Тепер 'self'. #}
+<link rel="preload" href="{{ url_for('static', filename='fonts/material-symbols-rounded.woff2') }}" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/material-symbols.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block molecular_css %}{% endblock %}

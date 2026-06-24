@@ -27,7 +27,7 @@
     </div>
     <div class="admin-hero__actions">
       {% if request_obj.course %}
-      <a href="{{ url_for('admin.instance_create', course_id=request_obj.course.id) }}" class="btn-admin btn-admin--primary"><span class="material-symbols-rounded">event_available</span> Запланувати проведення</a>
+      <a href="{{ url_for('admin.instance_create', course_id=request_obj.course.id) }}" class="btn-admin btn-admin--primary">{{ icon('event_available') }} Запланувати проведення</a>
       {% endif %}
       <a href="{{ url_for('admin.course_requests_list') }}" class="btn-admin btn-admin--secondary">Назад</a>
     </div>
@@ -86,7 +86,7 @@
           <td>{{ audit.changed_by.email if audit.changed_by else '---' }}</td>
           <td>
             {% if audit.from_status %}<span class="badge badge--{{ audit.from_status }}">{{ audit.from_status }}</span>{% else %}---{% endif %}
-            <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+            {{ icon('arrow_forward') }}
             <span class="badge badge--{{ audit.to_status }}">{{ audit.to_status }}</span>
           </td>
           <td>{{ audit.notes or '---' }}</td>

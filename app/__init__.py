@@ -154,6 +154,11 @@ def create_app(config_name=None):
     from app.utils import sanitize_rich_text
     app.jinja_env.filters['sanitize_rich_text'] = sanitize_rich_text
 
+    # Глобал icon('<name>') -- рендерить Material Symbols іконку через кодпойнт
+    # (self-hosted субсет-шрифт). Див. app/icons.py.
+    from app.icons import render_icon
+    app.jinja_env.globals['icon'] = render_icon
+
     import re as _re
     # Лише правдоподібні роки (19xx/20xx), щоб не плутати інші 4-значні числа.
     _YEAR_RE = _re.compile(
@@ -283,8 +288,8 @@ def create_app(config_name=None):
         csp = (
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline'" + gstatic + ga_script + gsi + "; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com" + gsi + "; "
-            "font-src 'self' https://fonts.gstatic.com data:; "
+            "style-src 'self' 'unsafe-inline'" + gsi + "; "
+            "font-src 'self' data:; "
             "img-src 'self' data:" + ga_img + gsi_img + "; "
             "frame-src 'self' blob: https://www.liqpay.ua https://checkout.liqpay.ua"
             " https://www.youtube-nocookie.com"

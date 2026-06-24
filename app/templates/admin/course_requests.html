@@ -90,10 +90,10 @@
         <td>{{ req.updated_at.strftime('%d.%m.%Y %H:%M') if req.updated_at else '---' }}</td>
         <td>
           <div class="admin-table__actions">
-            <a href="{{ url_for('admin.course_request_edit', request_id=req.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm"><span class="material-symbols-rounded">edit</span></a>
+            <a href="{{ url_for('admin.course_request_edit', request_id=req.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('edit', label='Редагувати') }}</a>
             <form method="POST" action="{{ url_for('admin.course_request_delete', request_id=req.id) }}" data-confirm="Видалити запит?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm"><span class="material-symbols-rounded">delete</span></button>
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">{{ icon('delete', label='Видалити') }}</button>
             </form>
           </div>
         </td>
@@ -104,7 +104,7 @@
   </div>
   {% else %}
   <div class="admin-empty">
-    <span class="material-symbols-rounded admin-empty__icon">inbox</span>
+    {{ icon('inbox', cls='admin-empty__icon') }}
     <h3 class="admin-empty__title">Запитів немає</h3>
     <p>Коли користувачі залишать заявку на проведення курсу — вона з'явиться тут.</p>
   </div>
