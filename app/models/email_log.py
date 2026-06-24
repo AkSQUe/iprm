@@ -16,6 +16,10 @@ PERMANENT_ERROR_MARKERS = (
     '550 ',
     '553 ',
     '554 ',
+    # Stale-pending: потік міг уже відправити по SMTP, але не записав 'sent'.
+    # Доставка НЕВІДОМА -- авто-ретрай створив би дублі (циклічна розсилка).
+    # Лишаємо 'failed'; за потреби адмін пересилає вручну (manual_resend).
+    'Timeout: stuck in pending',
 )
 
 
@@ -31,6 +35,10 @@ class EmailLog(TimestampMixin, db.Model):
     html_body = db.Column(db.Text)
     sent_at = db.Column(db.DateTime(timezone=True))
     trigger = db.Column(db.String(50), index=True)
+    # Опціональний ключ ідемпотентності: якщо заданий, повторний send_email з
+    # тим самим ключем (статус pending/sent) пропускається -- захист від
+    # подвійної відправки на ретраях/гонках (надійніше за 60-секундний дедуп).
+    idempotency_key = db.Column(db.String(64), index=True)
     retry_count = db.Column(db.Integer, default=0, nullable=False)
     registration_id = db.Column(
         db.BigInteger,
@@ -50,7 +58,8 @@ class EmailLog(TimestampMixin, db.Model):
         ),
         db.CheckConstraint(
             "trigger IN ('registration', 'payment', 'reminder', 'status_change', "
-            "'email_confirm', 'course_request', 'certificate', 'blog_comment', 'test')",
+            "'email_confirm', 'course_request', 'certificate', 'blog_comment', "
+            "'password_reset', 'backup_failure', 'test')",
             name='ck_email_logs_trigger',
         ),
         db.Index('ix_email_logs_created_at', 'created_at'),
@@ -72,8 +81,26 @@ class EmailLog(TimestampMixin, db.Model):
         ('course_request', 'Запит на курс'),
         ('certificate', 'Сертифікат'),
         ('blog_comment', 'Коментар блогу'),
+        ('password_reset', 'Відновлення паролю'),
+        ('backup_failure', 'Помилка бекапу'),
         ('test', 'Тест'),
     ]
+
+    # Єдине джерело правди для дозволених тригерів. Має збігатися з CHECK
+    # ck_email_logs_trigger; інваріант стереже tests/.../test_trigger_coverage.
+    ALLOWED_TRIGGERS = frozenset(code for code, _ in TRIGGERS)
+
+    # НЕОБОВ'ЯЗКОВІ тригери поважають user.email_opt_out і unsubscribe-
+    # suppression. Решта -- транзакційне (шлеться завжди).
+    OPTIONAL_TRIGGERS = frozenset({'reminder'})
+
+    @classmethod
+    def is_valid_trigger(cls, trigger):
+        return trigger in cls.ALLOWED_TRIGGERS
+
+    @classmethod
+    def is_optional_trigger(cls, trigger):
+        return trigger in cls.OPTIONAL_TRIGGERS
 
     @property
     def status_label(self):

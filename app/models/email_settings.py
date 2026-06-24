@@ -33,6 +33,9 @@ class EmailSettings(TimestampMixin, db.Model):
     sender_name = db.Column(db.String(255), default='IPRM')
     is_enabled = db.Column(db.Boolean, default=False)
     reminder_days = db.Column(db.String(50), default='7,3,1')
+    # Опитування скриньки (IMAP) на bounce/DSN -> suppression-список.
+    # Вимкнено за замовчуванням; вмикається в адмінці після перевірки IMAP-доступу.
+    bounce_polling_enabled = db.Column(db.Boolean, default=False, nullable=False)
 
     __table_args__ = (
         db.CheckConstraint('smtp_port > 0', name='ck_email_settings_port'),

@@ -21,6 +21,13 @@ class User(TimestampMixin, UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     last_login_at = db.Column(db.DateTime(timezone=True))
 
+    # Відписка від НЕОБОВ'ЯЗКОВИХ листів (нагадування тощо). Транзакційні
+    # (підтвердження email, відновлення пароля) шлються завжди. Керується
+    # посиланням List-Unsubscribe / one-click POST -- див. EmailService.
+    email_opt_out = db.Column(db.Boolean, default=False, nullable=False)
+    # Стабільний непідбірний токен для лінків відписки (генерується лениво).
+    unsubscribe_token = db.Column(db.String(64), unique=True, index=True)
+
     # Phase 7 cleanup: усі legacy-колонки (password_hash, user_type,
     # middle_name, birth_date, education, workplace, position, phone,
     # specializations) дропнуто. Canonical джерела:
@@ -163,6 +170,16 @@ class User(TimestampMixin, UserMixin, db.Model):
             source=MedicalProfile.SOURCE_SELF,
         ))
         return user
+
+    def get_unsubscribe_token(self):
+        """Повернути (за потреби -- згенерувати й зберегти) стабільний токен
+        для посилань відписки. Робить flush, але не commit."""
+        import secrets
+        if not self.unsubscribe_token:
+            self.unsubscribe_token = secrets.token_urlsafe(32)
+            db.session.add(self)
+            db.session.flush()
+        return self.unsubscribe_token
 
     @property
     def full_name(self):

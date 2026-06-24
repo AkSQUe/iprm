@@ -10,6 +10,7 @@ from app.models.lecturer_certificate import LecturerCertificate
 from app.models.clinic import Clinic
 from app.models.email_log import EmailLog
 from app.models.email_settings import EmailSettings
+from app.models.email_suppression import EmailSuppression
 from app.models.notification_rule import NotificationRule
 from app.models.payment_transaction import PaymentTransaction
 from app.models.site_settings import SiteSettings
@@ -27,7 +28,7 @@ __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'AuthIdentity',
     'MedicalProfile', 'Trainer', 'ProgramBlock', 'EventRegistration',
     'Certificate', 'LecturerCertificate',
-    'Clinic', 'EmailLog', 'EmailSettings', 'NotificationRule',
+    'Clinic', 'EmailLog', 'EmailSettings', 'EmailSuppression', 'NotificationRule',
     'PaymentTransaction', 'SiteSettings', 'ErrorLog',
     'Course', 'CourseInstance', 'CourseRequest', 'CourseRequestAudit',
     'WebhookDelivery', 'BlogPost', 'BlogComment', 'MediaFile',

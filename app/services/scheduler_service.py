@@ -228,10 +228,17 @@ def email_queue_maintenance():
             except Exception:
                 logger.exception('retry_failed_emails failed')
 
-            if stale_count or retry_count:
+            bounce_count = 0
+            try:
+                from app.services.bounce_service import poll_bounces
+                bounce_count = poll_bounces()  # no-op, якщо вимкнено в налаштуваннях
+            except Exception:
+                logger.exception('poll_bounces failed')
+
+            if stale_count or retry_count or bounce_count:
                 logger.info(
-                    'Email maintenance: %d stale cleaned, %d retried',
-                    stale_count, retry_count,
+                    'Email maintenance: %d stale cleaned, %d retried, %d bounces suppressed',
+                    stale_count, retry_count, bounce_count,
                 )
 
 

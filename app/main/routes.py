@@ -1,7 +1,7 @@
-from flask import flash, make_response, redirect, render_template, url_for
+from flask import flash, make_response, redirect, render_template, request, url_for
 from sqlalchemy.orm import joinedload
 
-from app.extensions import limiter
+from app.extensions import csrf, db, limiter
 from app.main import main_bp
 from app.main.forms import ContactForm
 from app.models.course import Course
@@ -68,6 +68,27 @@ def contact():
         )
         return redirect(url_for('main.contact'))
     return render_template('main/contact.html', form=form, active_nav='contact')
+
+
+@main_bp.route('/unsubscribe/<token>', methods=['GET', 'POST'])
+@csrf.exempt  # List-Unsubscribe-Post робить машинний POST без CSRF-токена
+def unsubscribe(token):
+    """Відписка від НЕОБОВ'ЯЗКОВИХ листів (нагадування). Транзакційні
+    (пароль, підтвердження email) шлються завжди -- це не зачіпається.
+
+    GET  -- сторінка з поточним станом і кнопкою.
+    POST -- one-click (RFC 8058): будь-який POST = відписка; action=resubscribe
+            повертає підписку. CSRF-exempt, бо поштовий клієнт шле без токена.
+    """
+    from app.models.user import User
+    user = User.query.filter_by(unsubscribe_token=token).first()
+    if user is None:
+        return render_template('main/unsubscribe.html', user=None, done=False), 404
+    if request.method == 'POST':
+        user.email_opt_out = request.form.get('action') != 'resubscribe'
+        db.session.commit()
+        return render_template('main/unsubscribe.html', user=user, done=True)
+    return render_template('main/unsubscribe.html', user=user, done=False)
 
 
 @main_bp.route('/design-system')

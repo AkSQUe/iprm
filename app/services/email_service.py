@@ -109,6 +109,43 @@ def _smtp_send(msg, smtp_cfg):
         host.sendmail(smtp_cfg['username'], msg.send_to, msg.as_bytes())
 
 
+def _sender_address(sender):
+    """Витягти чисту email-адресу з sender (рядок або (name, addr))."""
+    if isinstance(sender, (tuple, list)):
+        return sender[1] if len(sender) > 1 else sender[0]
+    return sender
+
+
+def _open_smtp(smtp_cfg):
+    """Відкрити автентифіковане SMTP-з'єднання за конфігом."""
+    host_cls = smtplib.SMTP_SSL if smtp_cfg['use_ssl'] else smtplib.SMTP
+    host = host_cls(smtp_cfg['server'], smtp_cfg['port'], timeout=SMTP_TIMEOUT_SECONDS)
+    host.ehlo()
+    if smtp_cfg['use_tls'] and not smtp_cfg['use_ssl']:
+        host.starttls()
+        host.ehlo()
+    if smtp_cfg['username'] and smtp_cfg['password']:
+        host.login(smtp_cfg['username'], smtp_cfg['password'])
+    return host
+
+
+def _smtp_send_many(messages, smtp_cfg):
+    """Надіслати кілька повідомлень ОДНИМ SMTP-з'єднанням (ретраї/розсилки).
+
+    Повертає list[(msg, error|None)] у тому ж порядку; помилка окремого листа
+    не валить решту. Якщо не вдалось навіть відкрити з'єднання -- raise (caller
+    лишає всі листи failed до наступного циклу)."""
+    results = []
+    with _open_smtp(smtp_cfg) as host:
+        for msg in messages:
+            try:
+                host.sendmail(smtp_cfg['username'], msg.send_to, msg.as_bytes())
+                results.append((msg, None))
+            except Exception as exc:  # noqa: BLE001 -- ізолюємо збій одного листа
+                results.append((msg, exc))
+    return results
+
+
 class EmailService:
 
     @staticmethod
@@ -139,8 +176,71 @@ class EmailService:
         return query.first() is not None
 
     @staticmethod
+    def _safe_trigger(trigger, template_name=None):
+        """Не дати невідомому trigger зронити INSERT email_logs (CHECK
+        ck_email_logs_trigger). Поза ALLOWED -> warning + None (NULL не
+        порушує CHECK), щоб лист усе одно пішов, а не загубився тихо."""
+        if trigger is None or EmailLog.is_valid_trigger(trigger):
+            return trigger
+        logger.warning(
+            'Unknown email trigger %r (template=%s): немає в EmailLog.TRIGGERS, '
+            'зберігаю NULL. Додайте у TRIGGERS + міграцію CHECK.',
+            trigger, template_name,
+        )
+        return None
+
+    @staticmethod
+    def _is_blocked(to, trigger):
+        """True, якщо слати не можна: hard-bounce/скарга (будь-що) або
+        відписка/opt-out для НЕОБОВ'ЯЗКОВИХ листів. 'test' не блокуємо."""
+        if trigger == 'test':
+            return False
+        from app.models.email_suppression import EmailSuppression
+        from app.models.user import User
+        sup = EmailSuppression.get(to)
+        if sup is not None:
+            if sup.reason in (EmailSuppression.REASON_BOUNCE,
+                              EmailSuppression.REASON_COMPLAINT):
+                return True
+            if EmailLog.is_optional_trigger(trigger):
+                return True  # unsubscribe -> блокує лише необов'язкові
+        if EmailLog.is_optional_trigger(trigger):
+            user = User.query.filter_by(email=(to or '').strip().lower()).first()
+            if user is not None and user.email_opt_out:
+                return True
+        return False
+
+    @staticmethod
+    def _idempotency_seen(key):
+        return EmailLog.query.filter(
+            EmailLog.idempotency_key == key,
+            EmailLog.status.in_(['pending', 'sent']),
+        ).first() is not None
+
+    @staticmethod
+    def _deliverability_headers(to, ctx, sender_addr):
+        """List-Unsubscribe (+ one-click) для кращої доставки. Якщо адресат --
+        зареєстрований User, додаємо https one-click із його токеном."""
+        from app.models.user import User
+        targets = []
+        if sender_addr:
+            targets.append(f'<mailto:{sender_addr}?subject=unsubscribe>')
+        headers = {}
+        site = ctx.get('site_settings')
+        base = (getattr(site, 'website_url', '') or '').rstrip('/')
+        user = User.query.filter_by(email=(to or '').strip().lower()).first()
+        if user is not None and base:
+            token = user.get_unsubscribe_token()
+            targets.append(f'<{base}/unsubscribe/{token}>')
+            headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click'
+        if targets:
+            headers['List-Unsubscribe'] = ', '.join(targets)
+        return headers
+
+    @staticmethod
     def send_email(to, subject, template_name, context=None,
-                   trigger=None, registration_id=None, attachments=None):
+                   trigger=None, registration_id=None, attachments=None,
+                   idempotency_key=None):
         """
         Render email template and send via SMTP in background thread.
 
@@ -159,6 +259,16 @@ class EmailService:
         if 'site_settings' not in ctx:
             from app.models.site_settings import SiteSettings
             ctx['site_settings'] = SiteSettings.get()
+
+        # Невідомий trigger не має валити INSERT (CHECK) і губити лист.
+        trigger = EmailService._safe_trigger(trigger, template_name)
+
+        # Suppression (bounce/скарга -> блок усього; unsubscribe/opt-out ->
+        # блок необов'язкових). Робимо рано -- до рендера й SMTP.
+        if EmailService._is_blocked(to, trigger):
+            logger.info('Suppressed/opted-out: skipping %s -> %s (trigger=%s)',
+                        template_name, to, trigger)
+            return None
 
         with app.app_context():
             smtp_cfg = _get_smtp_config(app)
@@ -181,6 +291,11 @@ class EmailService:
         if EmailService._check_duplicate(to, trigger, registration_id):
             logger.info('Dedup: skipping %s -> %s (trigger=%s reg=%s)',
                         template_name, to, trigger, registration_id)
+            return None
+
+        if idempotency_key and EmailService._idempotency_seen(idempotency_key):
+            logger.info('Idempotent skip: %s -> %s (key=%s)',
+                        template_name, to, idempotency_key)
             return None
 
         if EmailService._check_circuit_breaker():
@@ -215,6 +330,12 @@ class EmailService:
             logger.exception('Failed to render email template %s', template_name)
             return log_entry
 
+        # Заголовки доставлюваності рахуємо ДО commit -- _deliverability_headers
+        # лениво генерує user.unsubscribe_token (flush), і він має закомітитись
+        # разом із логом.
+        sender_addr = _sender_address(smtp_cfg['sender'])
+        extra_headers = EmailService._deliverability_headers(to, ctx, sender_addr)
+
         log_entry = EmailLog(
             to_email=to,
             subject=subject,
@@ -223,6 +344,7 @@ class EmailService:
             trigger=trigger,
             registration_id=registration_id,
             html_body=html_body,
+            idempotency_key=idempotency_key,
         )
         db.session.add(log_entry)
         db.session.commit()
@@ -234,6 +356,8 @@ class EmailService:
             html=html_body,
             body=plain_body,
             sender=smtp_cfg['sender'],
+            reply_to=sender_addr,
+            extra_headers=extra_headers,
         )
 
         for attachment in (attachments or []):
@@ -838,41 +962,55 @@ class EmailService:
             EmailLog.html_body.isnot(None),
         ).order_by(EmailLog.created_at.asc()).limit(10).all()
 
-        retried = 0
+        sender_addr = _sender_address(smtp_cfg['sender'])
+        prepared = []  # (entry, msg) -- готуємо до відправки одним з'єднанням
         for entry in failed:
             if not entry.is_retryable:
                 continue
-
             entry.retry_count += 1
             entry.status = 'pending'
-            db.session.flush()
+            msg = Message(
+                subject=entry.subject,
+                recipients=[entry.to_email],
+                html=entry.html_body,
+                body=_html_to_plaintext(entry.html_body),
+                sender=smtp_cfg['sender'],
+                reply_to=sender_addr,
+            )
+            prepared.append((entry, msg))
 
-            try:
-                plain_body = _html_to_plaintext(entry.html_body)
-                msg = Message(
-                    subject=entry.subject,
-                    recipients=[entry.to_email],
-                    html=entry.html_body,
-                    body=plain_body,
-                    sender=smtp_cfg['sender'],
-                )
-                _smtp_send(msg, smtp_cfg)
+        if not prepared:
+            return 0
+        db.session.flush()
+
+        try:
+            results = _smtp_send_many([m for _, m in prepared], smtp_cfg)
+        except Exception as exc:  # з'єднання не відкрилось -- лишаємо failed
+            for entry, _ in prepared:
+                entry.status = 'failed'
+                entry.error_message = f'Retry {entry.retry_count} connect failed: {str(exc)[:300]}'
+            db.session.commit()
+            logger.warning('Retry batch connect failed: %s', exc)
+            return 0
+
+        err_by_msg = {id(m): err for m, err in results}
+        retried = 0
+        for entry, msg in prepared:
+            err = err_by_msg.get(id(msg))
+            if err is None:
                 entry.status = 'sent'
                 entry.sent_at = datetime.now(timezone.utc)
                 entry.error_message = None
-                logger.info('Retry OK: id=%s to=%s (attempt %d)',
-                            entry.id, entry.to_email, entry.retry_count)
                 retried += 1
-            except Exception as exc:
+            else:
                 entry.status = 'failed'
-                entry.error_message = f'Retry {entry.retry_count} failed: {str(exc)[:400]}'
+                entry.error_message = f'Retry {entry.retry_count} failed: {str(err)[:400]}'
                 logger.warning('Retry FAILED: id=%s to=%s (attempt %d): %s',
-                               entry.id, entry.to_email, entry.retry_count, exc)
-            finally:
-                db.session.commit()
+                               entry.id, entry.to_email, entry.retry_count, err)
+        db.session.commit()
 
         if retried:
-            logger.info('Retried %d/%d failed emails', retried, len(failed))
+            logger.info('Retried %d/%d failed emails (1 conn)', retried, len(prepared))
 
         return retried
 
