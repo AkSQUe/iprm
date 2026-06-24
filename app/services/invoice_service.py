@@ -27,13 +27,11 @@ logger = logging.getLogger(__name__)
 _MONTHS = ['', 'січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',
            'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня']
 
-# Apple-inspired палітра: фіолетовий акцент + помаранчевий вторинний.
-_PURPLE = '7055A4'
-_PURPLE_LIGHT = 'EDE9F6'
-_ORANGE_LIGHT = 'FEF0E6'
-_ORANGE_DARK = 'D97A1F'
+# Apple-inspired монохром: чорнильний текст, відтінки сірого, тонкі лінії.
+# Жодних кольорових акцентів -- ідеально для чорно-білого друку.
 _INK = '1D1D1F'
 _GRAY = '6E6E73'
+_GRAY_DARK = '424245'
 _GRAY_LINE = 'E5E5EA'
 _SECTION = 'F5F5F7'
 _WHITE = 'FFFFFF'
@@ -41,20 +39,16 @@ _WHITE = 'FFFFFF'
 _SIDE = Side(style='thin', color=_GRAY_LINE)
 _BORDER = Border(left=_SIDE, right=_SIDE, top=_SIDE, bottom=_SIDE)
 
-_FILL_PURPLE = PatternFill('solid', fgColor=_PURPLE)
-_FILL_PURPLE_LIGHT = PatternFill('solid', fgColor=_PURPLE_LIGHT)
-_FILL_ORANGE_LIGHT = PatternFill('solid', fgColor=_ORANGE_LIGHT)
 _FILL_SECTION = PatternFill('solid', fgColor=_SECTION)
 
-_F_COMPANY = Font(name='Calibri', size=14, bold=True, color=_PURPLE)
-_F_TITLE = Font(name='Calibri', size=20, bold=True, color=_PURPLE)
-_F_LABEL = Font(name='Calibri', size=8.5, bold=True, color=_PURPLE)
-_F_HEADER = Font(name='Calibri', size=10, bold=True, color=_WHITE)
+_F_COMPANY = Font(name='Calibri', size=14, bold=True, color=_INK)
+_F_TITLE = Font(name='Calibri', size=20, bold=True, color=_INK)
+_F_LABEL = Font(name='Calibri', size=8.5, bold=True, color=_GRAY)
 _F_BOLD = Font(name='Calibri', size=10.5, bold=True, color=_INK)
 _F_NORMAL = Font(name='Calibri', size=10, color=_INK)
 _F_MUTED = Font(name='Calibri', size=9.5, color=_GRAY)
 _F_MUTED_IT = Font(name='Calibri', size=9.5, italic=True, color=_GRAY)
-_F_TOTAL = Font(name='Calibri', size=13, bold=True, color=_ORANGE_DARK)
+_F_TOTAL = Font(name='Calibri', size=13, bold=True, color=_INK)
 # Нейтральний заголовок таблиці (без заливки) -- дружній до ч/б друку.
 _F_HEAD = Font(name='Calibri', size=9, bold=True, color=_INK)
 
@@ -163,8 +157,8 @@ def build_invoice_xlsx(reg) -> io.BytesIO:
     ), font=_F_MUTED, align=_CENTER, height=34)
     r += 2
 
-    # ----- Реквізити для оплати (помаранчева картка) -----
-    band(r, 'РЕКВІЗИТИ ДЛЯ ОПЛАТИ', font=_F_LABEL, fill=_FILL_ORANGE_LIGHT)
+    # ----- Реквізити для оплати (нейтральна сіра картка) -----
+    band(r, 'РЕКВІЗИТИ ДЛЯ ОПЛАТИ', font=_F_LABEL, fill=_FILL_SECTION)
     r += 1
     for label, value in [
         ('Отримувач', s.company_full_name or 'ІПРМ'),
@@ -181,7 +175,7 @@ def build_invoice_xlsx(reg) -> io.BytesIO:
         ws[f'C{r}'].font = _F_BOLD
         ws[f'C{r}'].alignment = _WRAP
         for c in range(1, 7):
-            ws.cell(row=r, column=c).fill = _FILL_ORANGE_LIGHT
+            ws.cell(row=r, column=c).fill = _FILL_SECTION
         r += 1
     r += 1
 
