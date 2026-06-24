@@ -16,24 +16,24 @@
       color: #1d1d1f;
     }
 
-    /* ---- Шапка: суцільний чорнильний блок, білий текст (монохром) ---- */
+    /* ---- Шапка: без заливки (економія тонера), чорнильний текст ---- */
     .hero {
-      background: #1d1d1f;
-      color: #ffffff;
-      /* Full-bleed: @page без полів -> шапка на всю ширину аркуша. Внутрішній
-         padding вирівнює текст шапки з полями тіла (ліво 2см, право 1см). */
-      padding: 10mm 1cm 9mm 2cm;
+      color: #1d1d1f;
+      /* Внутрішній padding вирівнює текст шапки з полями тіла (ліво 2см,
+         право 1см). Нижня лінія відокремлює шапку від контенту. */
+      padding: 12mm 1cm 6mm 2cm;
+      border-bottom: 1.5px solid #1d1d1f;
     }
     .hero__row { display: flex; justify-content: space-between; align-items: flex-start; }
     .hero__company { font-size: 11pt; font-weight: 700; letter-spacing: 0.2pt; }
-    .hero__company-sub { font-size: 8pt; opacity: 0.75; margin-top: 1mm; }
+    .hero__company-sub { font-size: 8pt; color: #6e6e73; margin-top: 1mm; }
     .hero__badge {
       text-align: right;
       font-size: 8pt;
-      opacity: 0.85;
+      color: #6e6e73;
     }
     .hero__title { font-size: 16pt; font-weight: 800; letter-spacing: 0.3pt; margin-top: 4mm; }
-    .hero__meta { font-size: 8.5pt; opacity: 0.85; margin-top: 1.2mm; }
+    .hero__meta { font-size: 8.5pt; color: #6e6e73; margin-top: 1.2mm; }
 
     /* Поля документа: ліве 2см, праве 1см, нижнє 1.5см (верх -- одразу після шапки). */
     .page { padding: 5mm 1cm 15mm 2cm; }
