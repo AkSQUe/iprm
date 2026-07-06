@@ -2072,3 +2072,80 @@ def apply_participants_plan(plan: ParticipantsImportPlan) -> dict:
         db.session.rollback()
         logger.exception('apply_participants_plan failed')
         return {'ok': False, 'reason': str(exc)}
+
+
+# ==================== MM MEDIC MATERIALS TEMPLATE ====================
+
+_MATERIALS_COLS = ['sku', 'name', 'image', 'available', 'quantity']
+_MATERIALS_LABELS = {
+    'sku': 'Артикул',
+    'name': 'Назва',
+    'image': 'Зображення (URL)',
+    'available': 'Наявно',
+    'quantity': 'Кількість',
+}
+_MATERIALS_WIDTHS = {'sku': 20, 'name': 46, 'image': 40, 'available': 12, 'quantity': 14}
+
+
+def export_materials_template_xlsx(catalog: list[dict]) -> io.BytesIO:
+    """Шаблон для резервування витратних матеріалів MM Medic.
+
+    `catalog` -- список dict з ключами sku, name, available, image (як віддає
+    MM Medic /catalog). Остання колонка `Кількість` порожня: адмін вписує
+    потрібні кількості; незаповнені рядки на імпорті ігноруються.
+    """
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Матеріали'
+    _style_header(ws, _MATERIALS_COLS, _MATERIALS_LABELS)
+
+    for row_idx, item in enumerate(catalog or [], start=2):
+        values = [
+            item.get('sku') or '',
+            item.get('name') or '',
+            item.get('image') or '',
+            item.get('available'),
+            None,  # quantity -- заповнює адмін
+        ]
+        for col_idx, v in enumerate(values, start=1):
+            ws.cell(row=row_idx, column=col_idx, value=v)
+
+    last_row = ws.max_row
+    _set_column_widths(ws, _MATERIALS_COLS, _MATERIALS_WIDTHS)
+    _apply_zebra(ws, len(_MATERIALS_COLS), first_data_row=2, last_data_row=last_row)
+    if last_row >= 2:
+        _apply_table_style(ws, _MATERIALS_COLS, 'tblMaterials', last_row)
+
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    return out
+
+
+def parse_materials_xlsx(path: Path) -> dict[str, int]:
+    """Прочитати заповнений шаблон -> {sku: quantity} лише для quantity > 0.
+
+    Рядки з порожньою/нульовою/невалідною кількістю ігноруються (за вимогою).
+    """
+    wb = load_workbook(path, read_only=True, data_only=True)
+    try:
+        ws = _find_sheet(wb, 'Матеріали') or wb.active
+        rows = _read_sheet(ws, ['sku', 'quantity'], _MATERIALS_LABELS)
+    finally:
+        # read_only mode keeps the file handle open; must close or Windows
+        # blocks the subsequent cleanup_upload() unlink.
+        wb.close()
+
+    result: dict[str, int] = {}
+    for row in rows:
+        sku = (str(row.get('sku')).strip() if row.get('sku') is not None else '')
+        if not sku:
+            continue
+        try:
+            qty = _int(row.get('quantity'))
+        except ValueError:
+            continue  # невалідне число -> ігнор
+        if not qty or qty <= 0:
+            continue
+        result[sku] = qty
+    return result

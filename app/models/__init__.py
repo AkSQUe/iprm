@@ -23,6 +23,9 @@ from app.models.blog_post import BlogPost
 from app.models.blog_comment import BlogComment
 from app.models.media_file import MediaFile
 from app.models.database_backup import DatabaseBackup
+from app.models.material_reservation import (
+    MaterialReservation, MaterialReservationItem, MaterialReservationStatus,
+)
 
 __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'AuthIdentity',
@@ -33,4 +36,5 @@ __all__ = [
     'Course', 'CourseInstance', 'CourseRequest', 'CourseRequestAudit',
     'WebhookDelivery', 'BlogPost', 'BlogComment', 'MediaFile',
     'DatabaseBackup',
+    'MaterialReservation', 'MaterialReservationItem', 'MaterialReservationStatus',
 ]

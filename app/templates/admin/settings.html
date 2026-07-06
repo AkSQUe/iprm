@@ -234,6 +234,19 @@
           {% if form.partner_webhook_secret.description %}<small class="form-hint">{{ form.partner_webhook_secret.description }}</small>{% endif %}
         </div>
 
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            {{ form.mm_medic_integration_enabled(id="mm_medic_integration_enabled") }}
+            <label for="mm_medic_integration_enabled">{{ form.mm_medic_integration_enabled.label.text }}</label>
+          </div>
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="mm_medic_api_base_url">{{ form.mm_medic_api_base_url.label.text }}</label>
+          {{ form.mm_medic_api_base_url(class="form-input", id="mm_medic_api_base_url", placeholder="https://mm-medic.com") }}
+          {% if form.mm_medic_api_base_url.description %}<small class="form-hint">{{ form.mm_medic_api_base_url.description }}</small>{% endif %}
+        </div>
+
       </div>
     </div>
 

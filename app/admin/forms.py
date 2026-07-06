@@ -243,6 +243,18 @@ class SiteSettingsForm(FlaskForm):
             'Залиште порожнім, щоб не змінювати. Рекомендовано: 64+ hex символи.'
         ),
     )
+    mm_medic_integration_enabled = BooleanField(
+        'Увімкнути резервування витратних матеріалів MM Medic',
+        default=False,
+    )
+    mm_medic_api_base_url = StringField(
+        'Базовий URL API MM Medic',
+        validators=[Optional(), Length(max=500)],
+        description=(
+            'Корінь партнерського API MM Medic для резервування матеріалів. '
+            'Напр. https://mm-medic.com. Підпис — тим самим секретом, що й webhook.'
+        ),
+    )
 
 
 # ========== COURSES / INSTANCES / REQUESTS ==========

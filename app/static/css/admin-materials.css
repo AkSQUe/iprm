@@ -1,0 +1,73 @@
+/* Admin: MM Medic materials reservation page */
+
+.materials-info {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--admin-surface-2, #f5f5f7);
+  margin-bottom: 20px;
+}
+
+.materials-banner {
+  padding: 14px 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  background: #fff4e5;
+  color: #7a4a00;
+  border: 1px solid #ffd8a8;
+}
+
+.materials-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.materials-toolbar__spacer { flex: 1 1 auto; }
+
+.materials-import {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.materials-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--admin-surface-2, #f0f0f2);
+}
+
+.materials-thumb--empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--admin-text-muted, #98989d);
+}
+
+.materials-qty-input {
+  width: 96px;
+  text-align: right;
+}
+
+.materials-oos {
+  color: var(--admin-danger, #d70015);
+  font-size: 0.85em;
+}
+
+.materials-status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.materials-status-badge--reserved { background: #e3f0ff; color: #0057d8; }
+.materials-status-badge--consumed { background: #e6f7ea; color: #1a7f37; }
+.materials-status-badge--cancelled { background: #f0f0f2; color: #6e6e73; }
+.materials-status-badge--draft { background: #fff4e5; color: #7a4a00; }

@@ -158,6 +158,12 @@ class SiteSettings(TimestampMixin, db.Model):
         'partner_webhook_secret', db.String(500), default=''
     )
 
+    # MM Medic consumable-materials reservation API (outgoing, request/response).
+    # Signs requests with the SAME shared HMAC secret as the webhook
+    # (partner_webhook_secret) -- no separate secret needed.
+    mm_medic_integration_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    mm_medic_api_base_url = db.Column(db.String(500), default='')
+
     @property
     def partner_api_key(self):
         if not self._partner_api_key_encrypted:

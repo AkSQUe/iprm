@@ -1,0 +1,163 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Матеріали заходу | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-materials.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <a href="{{ url_for('admin.instances_list') }}" class="admin-breadcrumb__link">Розклад</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Витратні матеріали</span>
+      </div>
+      <h1 class="admin-hero__title">Витратні матеріали заходу</h1>
+      <p class="admin-hero__subtitle">
+        {{ instance.course.title if instance.course else 'Захід' }}
+        {% if instance.start_date %} — {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
+      </p>
+    </div>
+    <div>
+      {% if reservation %}
+      <span class="materials-status-badge materials-status-badge--{{ reservation.status }}">
+        {{ reservation.status_label }}
+      </span>
+      {% endif %}
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {% if catalog_error %}
+  <div class="materials-banner">
+    {{ icon('error') }} Каталог MM Medic недоступний: {{ catalog_error }}.
+    {% if not reservation %}Перевірте налаштування інтеграції в
+    <a href="{{ url_for('admin.settings') }}">Налаштуваннях</a>.{% endif %}
+  </div>
+  {% endif %}
+
+  <div class="materials-info">
+    {{ icon('info') }}
+    <div>
+      Каталог тягнеться напряму зі складу MM Medic. Вкажіть потрібні кількості й
+      збережіть — резерв створиться на MM Medic. Після заходу введіть фактично
+      використані кількості: залишки спишуться, невикористане повернеться на склад.
+    </div>
+  </div>
+
+  {# ---------- Toolbar: XLSX template + import ---------- #}
+  <div class="materials-toolbar">
+    <a href="{{ url_for('admin.instance_materials_template', instance_id=instance.id) }}"
+       class="btn-admin btn-admin--secondary">
+      {{ icon('download') }} Завантажити шаблон XLSX
+    </a>
+    <form method="POST" enctype="multipart/form-data" class="materials-import"
+          action="{{ url_for('admin.instance_materials_import', instance_id=instance.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="file" name="xlsx" accept=".xlsx" class="form-input">
+      <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('upload') }} Імпорт XLSX</button>
+    </form>
+    <span class="materials-toolbar__spacer"></span>
+    {% if is_reserved %}
+    <form method="POST" class="admin-inline" data-confirm="Скасувати резервування і повернути залишки на склад MM Medic?"
+          action="{{ url_for('admin.instance_materials_cancel', instance_id=instance.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn-admin btn-admin--danger">{{ icon('close') }} Скасувати резерв</button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if rows %}
+  {# reserve mode uses name="quantity"; actuals mode uses name="actual" #}
+  <form method="POST"
+        action="{{ url_for('admin.instance_materials_actuals' if is_reserved else 'admin.instance_materials_reserve', instance_id=instance.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Зображення</th>
+          <th>Артикул</th>
+          <th>Назва</th>
+          <th>Наявно</th>
+          {% if is_reserved %}
+          <th>Зарезервовано</th>
+          <th>Фактично використано</th>
+          {% else %}
+          <th>Кількість для резерву</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>
+            {% if row.image %}
+            <img src="{{ row.image }}" alt="" class="materials-thumb" loading="lazy">
+            {% else %}
+            <span class="materials-thumb materials-thumb--empty">{{ icon('image') }}</span>
+            {% endif %}
+          </td>
+          <td><code>{{ row.sku }}</code></td>
+          <td>
+            {{ row.name or '—' }}
+            {% if row.available is none %}<div class="materials-oos">немає в поточному каталозі</div>{% endif %}
+          </td>
+          <td>{{ row.available if row.available is not none else '—' }}</td>
+          {% if is_reserved %}
+          <td>{{ row.reserved if row.reserved is not none else '—' }}</td>
+          <td>
+            <input type="hidden" name="sku" value="{{ row.sku }}">
+            <input type="number" name="actual" min="0" step="1"
+                   class="form-input materials-qty-input"
+                   value="{{ row.actual if row.actual is not none else '' }}"
+                   placeholder="{{ row.reserved if row.reserved is not none else 0 }}">
+          </td>
+          {% else %}
+          <td>
+            <input type="hidden" name="sku" value="{{ row.sku }}">
+            <input type="number" name="quantity" min="0" step="1"
+                   class="form-input materials-qty-input"
+                   value="{{ row.input if row.input is not none else '' }}">
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+
+    <div class="admin-form__actions">
+      <a href="{{ url_for('admin.instances_list') }}" class="btn-admin btn-admin--secondary">Назад</a>
+      {% if is_reserved %}
+      <button type="submit" class="btn-admin btn-admin--primary" data-confirm="Провести списання за фактичними кількостями? Порожні поля = списати повністю зарезервоване.">
+        {{ icon('check') }} Провести списання
+      </button>
+      {% else %}
+      <button type="submit" class="btn-admin btn-admin--primary">{{ icon('send') }} Зберегти резервування</button>
+      {% endif %}
+    </div>
+  </form>
+  {% else %}
+  <div class="admin-empty admin-text-center">
+    {{ icon('inbox', cls='admin-empty__icon') }}
+    <h3 class="admin-empty__title">Каталог порожній</h3>
+    <p>Немає товарів із наявним залишком на складі MM Medic{% if catalog_error %} або каталог недоступний{% endif %}.</p>
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}

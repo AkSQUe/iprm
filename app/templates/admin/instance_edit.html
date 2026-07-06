@@ -31,6 +31,9 @@
     </div>
     <div class="admin-hero__actions">
       {% if instance %}
+      <a href="{{ url_for('admin.instance_materials', instance_id=instance.id) }}" class="btn-admin btn-admin--secondary">
+        {{ icon('widgets') }} Витратні матеріали
+      </a>
       <form method="POST" action="{{ url_for('admin.instance_lecturer_certificate', instance_id=instance.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn-admin btn-admin--secondary">
