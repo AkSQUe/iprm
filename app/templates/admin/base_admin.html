@@ -24,6 +24,36 @@ window.msGlyph = function (name) {
   var cp = (window.IPRM_ICONS || {})[name];
   return cp ? String.fromCodePoint(cp) : name;
 };
+// Глобальний бекстоп: субсет-шрифт без лігатур, тож будь-яка .material-symbols-
+// rounded з ТЕКСТОМ-назвою (замість кодпойнта) показалась би сирим словом.
+// Тут будь-яку таку іконку -- нинішню, динамічну чи майбутню -- авто-виправляємо
+// на гліф. Серверні іконки (вже &#xNNNN;) не збігаються з назвою -> не чіпаються.
+(function () {
+  function fixEl(el) {
+    var t = (el.textContent || '').trim();
+    if (t && window.IPRM_ICONS && Object.prototype.hasOwnProperty.call(window.IPRM_ICONS, t)) {
+      el.textContent = String.fromCodePoint(window.IPRM_ICONS[t]);
+    }
+  }
+  function fixTree(root) {
+    if (!root || !root.querySelectorAll) return;
+    if (root.classList && root.classList.contains('material-symbols-rounded')) fixEl(root);
+    var els = root.querySelectorAll('.material-symbols-rounded');
+    for (var i = 0; i < els.length; i++) fixEl(els[i]);
+  }
+  window.msFixIcons = fixTree;
+  document.addEventListener('DOMContentLoaded', function () { fixTree(document.body); });
+  if (window.MutationObserver) {
+    new MutationObserver(function (muts) {
+      for (var i = 0; i < muts.length; i++) {
+        var added = muts[i].addedNodes;
+        for (var j = 0; j < added.length; j++) {
+          if (added[j].nodeType === 1) fixTree(added[j]);
+        }
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
+})();
 </script>
 {% endblock %}
 
