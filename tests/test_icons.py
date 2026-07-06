@@ -53,6 +53,32 @@ def test_all_used_icons_in_map():
     assert not missing, 'icon names used in templates but absent from ICON_CODEPOINTS: %s' % missing
 
 
+JS_DIR = os.path.join(ROOT, 'app', 'static', 'js')
+JS_ICON_RE = re.compile(r"icon\(\s*'([a-z0-9_]+)'|icon:\s*'([a-z0-9_]+)'")
+
+
+def _used_icon_names_js():
+    names = set()
+    for f in glob.glob(os.path.join(JS_DIR, '*.js')):
+        for a, b in JS_ICON_RE.findall(open(f, encoding='utf-8').read()):
+            if a:
+                names.add(a)
+            if b:
+                names.add(b)
+    return names
+
+
+def test_all_js_icons_in_map():
+    """JS-редактори (blog-editor.js, admin-trainer-regalia.js) додають іконки
+    динамічно через window.msGlyph -- вони теж мають бути в ICON_CODEPOINTS.
+    Саме брак цієї перевірки дав "іконки як текст" на /admin/blog/*/edit."""
+    missing = sorted(n for n in _used_icon_names_js() if n not in ICON_CODEPOINTS)
+    assert not missing, (
+        'icon-назви з JS відсутні в ICON_CODEPOINTS -- додайте у EXTRA_ICONS '
+        '(scripts/subset-icons.py) і перезапустіть його: %s' % missing
+    )
+
+
 def test_map_in_sync_with_font():
     """Кожен кодпойнт із ICON_CODEPOINTS реально присутній у субсет-шрифті.
 

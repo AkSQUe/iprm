@@ -43,6 +43,13 @@ EXTRA_ICONS = {
     # admin/instances.html -> set pills = [(key, label, icon_name), ...]
     'apps', 'event_upcoming', 'looks_3', 'history', 'calendar_month',
     'how_to_reg', 'person_off', 'event_available', 'event_busy', 'priority_high',
+    # JS-блокові редактори (blog-editor.js, admin-trainer-regalia.js) додають
+    # іконки динамічно через window.msGlyph -- скан шаблонів їх не бачить.
+    # Гард: tests/test_icons.py::test_all_js_icons_in_map.
+    'title', 'notes', 'format_list_bulleted', 'format_quote', 'image',
+    'collections', 'smart_display', 'info', 'horizontal_rule', 'widgets',
+    'format_bold', 'format_italic', 'link', 'keyboard_arrow_up',
+    'keyboard_arrow_down', 'delete', 'close', 'upload', 'add_photo_alternate',
 }
 
 ICON_CALL_RE = re.compile(r"icon\('([a-z0-9_]+)'")

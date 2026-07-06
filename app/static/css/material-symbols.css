@@ -9,14 +9,11 @@
 
    font-display: block -- для іконок ніколи не показуємо текст-лігатуру:
    до завантаження шрифту елемент невидимий (а він локальний, тож вантажиться
-   майже миттєво). */
-@font-face {
-  font-family: 'Material Symbols Rounded';
-  font-style: normal;
-  font-weight: 300;
-  font-display: block;
-  src: url('../fonts/material-symbols-rounded.woff2') format('woff2');
-}
+   майже миттєво).
+
+   @font-face оголошено ІНЛАЙН у admin/base_admin.html із версією
+   (?v=assets_version) -- щоб оновлений субсет не залипав у 1-річному кеші
+   статики. Тут лишається лише клас. */
 
 .material-symbols-rounded {
   font-family: 'Material Symbols Rounded';

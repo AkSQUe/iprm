@@ -23,7 +23,9 @@
     return n;
   }
 
-  function icon(name) { return el('span', {'class': 'material-symbols-rounded', text: name}); }
+  // Субсет-шрифт без лігатур: рендеримо іконку через КОДПОЙНТ (window.msGlyph),
+  // інакше показувався б сирий текст назви (base_admin.html задає IPRM_ICONS).
+  function icon(name) { return el('span', {'class': 'material-symbols-rounded', text: (window.msGlyph ? window.msGlyph(name) : name)}); }
 
   function notify(msg) {
     if (typeof window.iprmToast === 'function') window.iprmToast(msg, 'error');

@@ -13,7 +13,9 @@
     (kids || []).forEach(function(c) { if (c) n.appendChild(c); });
     return n;
   }
-  function icon(name) { var s = el('span', {'class': 'material-symbols-rounded'}); s.textContent = name; return s; }
+  // Субсет-шрифт без лігатур -> рендеримо через КОДПОЙНТ (window.msGlyph),
+  // інакше видно сиру назву (IPRM_ICONS задає base_admin.html).
+  function icon(name) { var s = el('span', {'class': 'material-symbols-rounded'}); s.textContent = (window.msGlyph ? window.msGlyph(name) : name); return s; }
   function notify(m) { if (typeof window.iprmToast === 'function') window.iprmToast(m, 'error'); else alert(m); }
   function parse(v) { try { var x = JSON.parse(v || '[]'); return Array.isArray(x) ? x : []; } catch (e) { return []; } }
 

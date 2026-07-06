@@ -156,8 +156,12 @@ def create_app(config_name=None):
 
     # Глобал icon('<name>') -- рендерить Material Symbols іконку через кодпойнт
     # (self-hosted субсет-шрифт). Див. app/icons.py.
-    from app.icons import render_icon
+    from app.icons import render_icon, ICON_CODEPOINTS
     app.jinja_env.globals['icon'] = render_icon
+    # Мапа назва->кодпойнт для JS-редакторів (blog-editor.js,
+    # admin-trainer-regalia.js), які рендерять іконки динамічно через
+    # window.msGlyph. Субсет-шрифт без лігатур, тож JS теж має слати кодпойнт.
+    app.jinja_env.globals['icon_codepoints'] = ICON_CODEPOINTS
 
     import re as _re
     # Лише правдоподібні роки (19xx/20xx), щоб не плутати інші 4-значні числа.
