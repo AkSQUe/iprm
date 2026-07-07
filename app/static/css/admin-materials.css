@@ -1,15 +1,5 @@
 /* Admin: MM Medic materials reservation page */
 
-.materials-info {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: var(--admin-surface-2, #f5f5f7);
-  margin-bottom: 20px;
-}
-
 .materials-banner {
   padding: 14px 16px;
   border-radius: 12px;
