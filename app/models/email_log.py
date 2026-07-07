@@ -59,7 +59,7 @@ class EmailLog(TimestampMixin, db.Model):
         db.CheckConstraint(
             "trigger IN ('registration', 'payment', 'reminder', 'status_change', "
             "'email_confirm', 'course_request', 'certificate', 'blog_comment', "
-            "'password_reset', 'backup_failure', 'test')",
+            "'password_reset', 'backup_failure', 'materials', 'test')",
             name='ck_email_logs_trigger',
         ),
         db.Index('ix_email_logs_created_at', 'created_at'),
@@ -83,6 +83,7 @@ class EmailLog(TimestampMixin, db.Model):
         ('blog_comment', 'Коментар блогу'),
         ('password_reset', 'Відновлення паролю'),
         ('backup_failure', 'Помилка бекапу'),
+        ('materials', 'Матеріали заходу'),
         ('test', 'Тест'),
     ]
 

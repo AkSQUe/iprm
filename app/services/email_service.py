@@ -808,6 +808,64 @@ class EmailService:
             registration_id=registration.id if registration is not None else None,
         )
 
+    # ---- MM Medic materials notifications ----
+
+    @staticmethod
+    def _materials_admin_url(instance_id):
+        from app.models.site_settings import SiteSettings
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        tail = f'/admin/instances/{instance_id}/materials'
+        return f'{base}{tail}' if base else tail
+
+    @staticmethod
+    def _materials_context(reservation, instance):
+        return {
+            'event_title': (instance.course.title if instance and instance.course else 'Захід'),
+            'event_date': (instance.start_date.strftime('%d.%m.%Y')
+                           if instance and instance.start_date else None),
+            'event_location': getattr(instance, 'location', None) if instance else None,
+            'items': list(reservation.items),
+        }
+
+    @staticmethod
+    def send_materials_reserved(reservation, instance):
+        """Notify the event trainer about the reserved materials list. Best-effort;
+        returns None if the trainer has no email."""
+        trainer = getattr(instance, 'effective_trainer', None) if instance else None
+        email = getattr(trainer, 'email', None) if trainer else None
+        if not email:
+            return None
+        ctx = EmailService._materials_context(reservation, instance)
+        ctx['trainer_name'] = (getattr(trainer, 'full_name', None)
+                               or getattr(trainer, 'name', None))
+        return EmailService.send_email(
+            to=email,
+            subject=f'Матеріали для заходу: {ctx["event_title"]}',
+            template_name='materials_reserved',
+            context=ctx,
+            trigger='materials',
+        )
+
+    @staticmethod
+    def send_materials_actuals_reminder(reservation, instance):
+        """Remind admins/managers to submit actuals for an ended reservation."""
+        from app.services.notification_recipients import resolve
+        recipients = resolve('materials', instance=instance)
+        if not recipients:
+            return []
+        ctx = EmailService._materials_context(reservation, instance)
+        ctx['admin_url'] = EmailService._materials_admin_url(
+            instance.id if instance else reservation.instance_id
+        )
+        return EmailService._send_to_recipients(
+            recipients,
+            subject=f'Внесіть фактичні матеріали: {ctx["event_title"]}',
+            template_name='materials_actuals_reminder',
+            context=ctx,
+            trigger='materials',
+            registration_id=None,
+        )
+
     @staticmethod
     def send_course_request_received(course_request):
         """Підтвердити клієнту, що його запит на курс отримано.

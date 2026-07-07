@@ -1,0 +1,101 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Резервування матеріалів | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-materials.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Резервування матеріалів</span>
+      </div>
+      <h1 class="admin-hero__title">Резервування матеріалів MM Medic</h1>
+      <p class="admin-hero__subtitle">Історія резервувань по всіх заходах</p>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {% set total = counts.values() | sum %}
+  {% set cards = [
+    {'key': '', 'label': 'Усі', 'value': total},
+    {'key': 'reserved', 'label': 'Зарезервовано', 'value': counts.get('reserved', 0)},
+    {'key': 'consumed', 'label': 'Списано', 'value': counts.get('consumed', 0)},
+    {'key': 'cancelled', 'label': 'Скасовано', 'value': counts.get('cancelled', 0)},
+    {'key': 'expired', 'label': 'Протерміновано', 'value': counts.get('expired', 0)}
+  ] %}
+  <div class="admin-stat-cards">
+    {% for c in cards %}
+    {% set is_active = (filter_status == c.key) %}
+    <a href="{{ url_for('admin.materials_overview', status=c.key) if c.key else url_for('admin.materials_overview') }}"
+       class="admin-stat-card{{ ' is-active' if is_active }}"{% if is_active %} aria-current="true"{% endif %}>
+      <span class="admin-stat-card__value">{{ c.value }}</span>
+      <span class="admin-stat-card__label">{{ c.label }}</span>
+    </a>
+    {% endfor %}
+  </div>
+
+  {% if reservations %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Захід</th>
+        <th>Дата</th>
+        <th>Статус</th>
+        <th>Позицій</th>
+        <th>Оновлено</th>
+        <th>Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in reservations %}
+      <tr>
+        <td class="materials-name">{{ r.instance.course.title if r.instance and r.instance.course else '—' }}</td>
+        <td>{{ r.instance.start_date.strftime('%d.%m.%Y') if r.instance and r.instance.start_date else '—' }}</td>
+        <td><span class="materials-status-badge materials-status-badge--{{ r.status }}">{{ r.status_label }}</span></td>
+        <td>{{ r.items|length }}</td>
+        <td>{{ r.updated_at.strftime('%d.%m.%Y %H:%M') if r.updated_at else '—' }}</td>
+        <td>
+          <a href="{{ url_for('admin.instance_materials', instance_id=r.instance_id) }}"
+             class="btn-admin btn-admin--secondary btn-admin--sm">Відкрити</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  {% if pagination and pagination.pages > 1 %}
+  <nav class="admin-pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.materials_overview', page=pagination.prev_num, status=filter_status or none) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня') }}</a>
+    {% endif %}
+    <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }} ({{ pagination.total }})</span>
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.materials_overview', page=pagination.next_num, status=filter_status or none) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна') }}</a>
+    {% endif %}
+  </nav>
+  {% endif %}
+  {% else %}
+  <div class="admin-empty admin-text-center">
+    {{ icon('inbox', cls='admin-empty__icon') }}
+    <h3 class="admin-empty__title">Немає резервувань</h3>
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}

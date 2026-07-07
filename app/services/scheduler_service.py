@@ -123,6 +123,14 @@ def init_scheduler(app):
         name='Очищення старих резервних копій',
     )
 
+    scheduler.add_job(
+        reconcile_material_reservations,
+        trigger=CronTrigger(minute='*/30'),  # every 30 minutes
+        id='material_reservations_reconcile',
+        replace_existing=True,
+        name='Звірка резервувань матеріалів MM Medic',
+    )
+
     scheduler.start()
     _initialized = True
     logger.info('APScheduler started with SQLAlchemy jobstore')
@@ -272,6 +280,46 @@ def cleanup_xlsx_uploads():
                 cleanup_stale_xlsx_uploads(max_age_minutes=30)
             except Exception:
                 logger.exception('cleanup_xlsx_uploads failed')
+
+
+def reconcile_material_reservations():
+    """Periodic job: sync stale RESERVED material reservations with MM Medic and
+    prune old prefill temp files."""
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('material_reservations_reconcile') as got:
+            if not got:
+                logger.debug('material reconcile: another worker holds the lock, skipping')
+                return
+            try:
+                from app.services.material_reservation_service import (
+                    reconcile_stale, send_pending_actuals_reminders,
+                )
+                reminded = send_pending_actuals_reminders()
+                if reminded:
+                    logger.info('Material actuals reminders sent: %d', reminded)
+                updated = reconcile_stale()
+                if updated:
+                    logger.info('Material reservations reconciled: %d updated', updated)
+            except Exception:
+                logger.exception('reconcile_material_reservations failed')
+            _prune_material_prefill()
+
+
+def _prune_material_prefill(max_age_minutes=60):
+    """Remove abandoned material-prefill temp JSON files."""
+    from pathlib import Path
+    from flask import current_app
+    target = Path(current_app.instance_path) / 'material_prefill'
+    if not target.is_dir():
+        return
+    cutoff = datetime.now().timestamp() - max_age_minutes * 60
+    for p in target.glob('*.json'):
+        try:
+            if p.stat().st_mtime < cutoff:
+                p.unlink()
+        except OSError:
+            logger.exception('Failed to prune prefill file %s', p)
 
 
 def automatic_database_backup():

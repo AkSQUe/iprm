@@ -2076,39 +2076,76 @@ def apply_participants_plan(plan: ParticipantsImportPlan) -> dict:
 
 # ==================== MM MEDIC MATERIALS TEMPLATE ====================
 
-_MATERIALS_COLS = ['sku', 'name', 'image', 'available', 'quantity']
+_MATERIALS_COLS = ['image', 'sku', 'name', 'available', 'quantity']
 _MATERIALS_LABELS = {
+    'image': 'Зображення',
     'sku': 'Артикул',
     'name': 'Назва',
-    'image': 'Зображення (URL)',
     'available': 'Наявно',
     'quantity': 'Кількість',
 }
-_MATERIALS_WIDTHS = {'sku': 20, 'name': 46, 'image': 40, 'available': 12, 'quantity': 14}
+_MATERIALS_WIDTHS = {'image': 9, 'sku': 20, 'name': 46, 'available': 12, 'quantity': 14}
+_MATERIALS_THUMB_PX = 40
+
+
+def _download_thumb(url, max_px=_MATERIALS_THUMB_PX):
+    """Завантажити зображення товару й повернути BytesIO з PNG-мініатюрою
+    (max_px), або None (порожнє/не-http/збій/не зображення). Best-effort."""
+    url = (url or '').strip()
+    if not url.startswith('http'):
+        return None
+    try:
+        import requests
+        from PIL import Image as PILImage
+
+        resp = requests.get(url, timeout=(3.0, 5.0))
+        if not resp.ok or len(resp.content) > 5_000_000:
+            return None
+        img = PILImage.open(io.BytesIO(resp.content))
+        img.thumbnail((max_px, max_px))
+        out = io.BytesIO()
+        img.convert('RGB').save(out, format='PNG')
+        out.seek(0)
+        return out
+    except Exception:
+        logger.info('materials thumb fetch failed: %s', url)
+        return None
 
 
 def export_materials_template_xlsx(catalog: list[dict]) -> io.BytesIO:
     """Шаблон для резервування витратних матеріалів MM Medic.
 
     `catalog` -- список dict з ключами sku, name, available, image (як віддає
-    MM Medic /catalog). Остання колонка `Кількість` порожня: адмін вписує
-    потрібні кількості; незаповнені рядки на імпорті ігноруються.
+    MM Medic /catalog). Перша колонка `Зображення` містить вбудовану мініатюру
+    товару (не URL); зображення тягнуться з MM Medic best-effort. Колонка
+    `Кількість` порожня: адмін вписує потрібні кількості; незаповнені рядки на
+    імпорті ігноруються.
     """
+    from openpyxl.drawing.image import Image as XLImage
+
     wb = Workbook()
     ws = wb.active
     ws.title = 'Матеріали'
     _style_header(ws, _MATERIALS_COLS, _MATERIALS_LABELS)
 
+    img_col = get_column_letter(_MATERIALS_COLS.index('image') + 1)
+    sku_i = _MATERIALS_COLS.index('sku') + 1
+    name_i = _MATERIALS_COLS.index('name') + 1
+    avail_i = _MATERIALS_COLS.index('available') + 1
+
     for row_idx, item in enumerate(catalog or [], start=2):
-        values = [
-            item.get('sku') or '',
-            item.get('name') or '',
-            item.get('image') or '',
-            item.get('available'),
-            None,  # quantity -- заповнює адмін
-        ]
-        for col_idx, v in enumerate(values, start=1):
-            ws.cell(row=row_idx, column=col_idx, value=v)
+        ws.cell(row=row_idx, column=sku_i, value=item.get('sku') or '')
+        ws.cell(row=row_idx, column=name_i, value=item.get('name') or '')
+        ws.cell(row=row_idx, column=avail_i, value=item.get('available'))
+        # quantity column left empty for the admin
+
+        thumb = _download_thumb(item.get('image'))
+        if thumb is not None:
+            xi = XLImage(thumb)
+            xi.width = _MATERIALS_THUMB_PX
+            xi.height = _MATERIALS_THUMB_PX
+            ws.add_image(xi, f'{img_col}{row_idx}')
+            ws.row_dimensions[row_idx].height = 32
 
     last_row = ws.max_row
     _set_column_widths(ws, _MATERIALS_COLS, _MATERIALS_WIDTHS)

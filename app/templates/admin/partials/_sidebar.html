@@ -90,6 +90,10 @@
         {{ icon('webhook') }}
         Webhook черга
       </a>
+      <a href="{{ url_for('admin.materials_overview') }}" class="admin-sidebar__link{% if ep in ('admin.materials_overview', 'admin.instance_materials') %} admin-sidebar__link--active{% endif %}">
+        {{ icon('widgets') }}
+        Резервування матеріалів
+      </a>
       <a href="{{ url_for('admin.error_logs') }}" class="admin-sidebar__link{% if ep in ('admin.error_logs', 'admin.error_log_detail') %} admin-sidebar__link--active{% endif %}">
         {{ icon('bug_report') }}
         Журнал помилок

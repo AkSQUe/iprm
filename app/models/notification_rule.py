@@ -21,6 +21,7 @@ EVENT_TYPES = [
     ('payment', 'Оплата'),
     ('course_request', 'Запит на курс'),
     ('status_change', 'Скасування реєстрації'),
+    ('materials', 'Матеріали заходу (нагадування)'),
 ]
 
 # Дефолтні статуси-тригери для status_change. Інші переходи (pending ->

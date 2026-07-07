@@ -14,13 +14,15 @@ class MaterialReservationStatus:
     RESERVED = 'reserved'    # accepted by MM Medic (holds active)
     CONSUMED = 'consumed'    # actuals submitted, stock written off
     CANCELLED = 'cancelled'  # released before the event
+    EXPIRED = 'expired'      # holds lapsed on MM Medic (event passed, no actuals)
 
-    ALL = (DRAFT, RESERVED, CONSUMED, CANCELLED)
+    ALL = (DRAFT, RESERVED, CONSUMED, CANCELLED, EXPIRED)
     LABELS = {
         DRAFT: 'Чернетка',
         RESERVED: 'Зарезервовано',
         CONSUMED: 'Списано',
         CANCELLED: 'Скасовано',
+        EXPIRED: 'Протерміновано',
     }
 
 
@@ -45,6 +47,8 @@ class MaterialReservation(TimestampMixin, db.Model):
     )
     sent_at = db.Column(db.DateTime(timezone=True), nullable=True)
     consumed_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    # Set once an "submit actuals" reminder was emailed to admins (idempotency).
+    actuals_reminder_sent_at = db.Column(db.DateTime(timezone=True), nullable=True)
     # Raw snapshot of the last MM Medic response (for troubleshooting).
     last_response = db.Column(db.JSON, nullable=True)
     notes = db.Column(db.Text, nullable=True)

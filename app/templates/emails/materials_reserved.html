@@ -1,0 +1,52 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import detail_row, spacer %}
+
+{% block title %}Матеріали заходу зарезервовано{% endblock %}
+
+{% block preview_text %}Для заходу {{ event_title }} зарезервовано витратні матеріали{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
+        Матеріали для заходу зарезервовано
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+        {{ trainer_name or 'Шановний тренере' }}, для вашого заходу підготовлено витратні матеріали зі складу MM Medic.
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">{{ event_title }}</p>
+                {% if event_date %}{{ detail_row("Дата", event_date) }}{% endif %}
+                {% if event_location %}{{ detail_row("Місце", event_location) }}{% endif %}
+                {{ detail_row("Позицій", items|length) }}
+            </td>
+        </tr>
+    </table>
+
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
+        Перелік матеріалів
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; border: 1px solid #E5E7EB; border-radius: 8px; border-collapse: collapse;" cellpadding="0" cellspacing="0" border="0">
+        <tr style="background-color: #F3F4F6;">
+            <th align="left" style="padding: 10px 16px; font-size: 12px; color: #6B7280; text-transform: uppercase;">Матеріал</th>
+            <th align="left" style="padding: 10px 16px; font-size: 12px; color: #6B7280; text-transform: uppercase;">Артикул</th>
+            <th align="right" style="padding: 10px 16px; font-size: 12px; color: #6B7280; text-transform: uppercase;">К-сть</th>
+        </tr>
+        {% for it in items %}
+        <tr style="border-top: 1px solid #E5E7EB;">
+            <td style="padding: 10px 16px; font-size: 14px; color: #111827;">{{ it.name or '—' }}</td>
+            <td style="padding: 10px 16px; font-size: 13px; color: #6B7280;">{{ it.sku }}</td>
+            <td align="right" style="padding: 10px 16px; font-size: 14px; color: #111827; font-weight: 600;">{{ it.quantity_reserved }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {{ spacer(8) }}
+
+    <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
+        Після заходу поверніть невикористані матеріали — адміністратор внесе фактичні кількості.
+    </p>
+{% endblock %}

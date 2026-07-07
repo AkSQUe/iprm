@@ -17,6 +17,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Optional
+from urllib.parse import urlencode
 
 import requests
 
@@ -25,6 +26,8 @@ logger = logging.getLogger(__name__)
 TIMEOUT = (3.0, 10.0)  # (connect, read)
 _USER_AGENT = 'iprm-mm-medic/1.0'
 _API_PREFIX = '/api/partner/iprm'
+_MAX_ATTEMPTS = 3          # 1 initial + 2 retries on transient failures
+_RETRY_BACKOFF = 0.4       # seconds, multiplied by attempt index
 
 
 @dataclass
@@ -68,65 +71,106 @@ class MMMedicClient:
     # ---- transport ----
     def _request(self, method: str, path: str, payload: Optional[dict] = None,
                  request_id: Optional[str] = None) -> MMResult:
+        """Signed request with inline retry on transient failures.
+
+        A stable X-IPRM-Request-Id keeps the retry idempotent server-side, so a
+        write that timed out mid-flight is not applied twice. Retries: timeouts,
+        connection errors and 5xx. 4xx are permanent (returned immediately).
+        """
         url = f'{self.base_url}{_API_PREFIX}{path}'
         if payload is None:
             body_bytes = b''
         else:
             body_bytes = json.dumps(payload, separators=(',', ':'), ensure_ascii=False).encode('utf-8')
-        timestamp = str(int(time.time()))
-        headers = {
-            'X-IPRM-Signature': _sign(timestamp, body_bytes, self.secret),
-            'X-IPRM-Timestamp': timestamp,
-            'User-Agent': _USER_AGENT,
-        }
-        if payload is not None:
-            headers['Content-Type'] = 'application/json; charset=utf-8'
-        if request_id:
-            headers['X-IPRM-Request-Id'] = request_id
+        # Stable across retries so idempotency keys match.
+        request_id = request_id or uuid.uuid4().hex
 
-        try:
-            response = requests.request(
-                method, url, data=body_bytes if payload is not None else None,
-                headers=headers, timeout=TIMEOUT,
+        last = MMResult(ok=False, error='Не вдалося виконати запит')
+        for attempt in range(_MAX_ATTEMPTS):
+            timestamp = str(int(time.time()))
+            headers = {
+                'X-IPRM-Signature': _sign(timestamp, body_bytes, self.secret),
+                'X-IPRM-Timestamp': timestamp,
+                'User-Agent': _USER_AGENT,
+                'X-IPRM-Request-Id': request_id,
+            }
+            if payload is not None:
+                headers['Content-Type'] = 'application/json; charset=utf-8'
+
+            try:
+                response = requests.request(
+                    method, url, data=body_bytes if payload is not None else None,
+                    headers=headers, timeout=TIMEOUT,
+                )
+            except (requests.Timeout, requests.ConnectionError) as exc:
+                last = MMResult(ok=False, error=f'Немає зв’язку з MM Medic: {exc}')
+                self._backoff(attempt)
+                continue
+            except requests.RequestException as exc:
+                return MMResult(ok=False, error=f'Помилка запиту: {exc}')
+
+            try:
+                data = response.json()
+            except ValueError:
+                data = None
+
+            if response.ok:
+                return MMResult(ok=True, http_status=response.status_code, data=data)
+
+            if response.status_code >= 500:
+                last = MMResult(ok=False, http_status=response.status_code,
+                                error=f'MM Medic {response.status_code}')
+                self._backoff(attempt)
+                continue
+
+            # 4xx -- permanent, return structured error.
+            shortfalls = (data or {}).get('shortfalls') if isinstance(data, dict) else None
+            err = None
+            if isinstance(data, dict):
+                err = data.get('error') or data.get('status')
+            return MMResult(
+                ok=False,
+                http_status=response.status_code,
+                data=data,
+                error=err or (response.text or '')[:300],
+                shortfalls=shortfalls or [],
             )
-        except requests.Timeout as exc:
-            return MMResult(ok=False, error=f'Тайм-аут з’єднання з MM Medic: {exc}')
-        except requests.ConnectionError as exc:
-            return MMResult(ok=False, error=f'Немає з’єднання з MM Medic: {exc}')
-        except requests.RequestException as exc:
-            return MMResult(ok=False, error=f'Помилка запиту: {exc}')
 
-        try:
-            data = response.json()
-        except ValueError:
-            data = None
+        return last
 
-        if response.ok:
-            return MMResult(ok=True, http_status=response.status_code, data=data)
-
-        # Structured error paths
-        shortfalls = (data or {}).get('shortfalls') if isinstance(data, dict) else None
-        err = None
-        if isinstance(data, dict):
-            err = data.get('error') or data.get('status')
-        return MMResult(
-            ok=False,
-            http_status=response.status_code,
-            data=data,
-            error=err or (response.text or '')[:300],
-            shortfalls=shortfalls or [],
-        )
+    @staticmethod
+    def _backoff(attempt: int) -> None:
+        if attempt < _MAX_ATTEMPTS - 1:
+            time.sleep(_RETRY_BACKOFF * (attempt + 1))
 
     # ---- public API ----
-    def fetch_catalog(self) -> MMResult:
-        return self._request('GET', '/catalog')
+    def fetch_catalog(self, consumable: bool = False, search: str = None) -> MMResult:
+        params = {}
+        if consumable:
+            params['consumable'] = '1'
+        if search:
+            params['search'] = search
+        path = '/catalog'
+        if params:
+            path = f'{path}?{urlencode(params)}'
+        return self._request('GET', path)
+
+    def fetch_templates(self) -> MMResult:
+        return self._request('GET', '/templates')
+
+    def adjust_reservation(self, external_ref: str, items: list,
+                           request_id: Optional[str] = None) -> MMResult:
+        return self._request('POST', f'/reservations/{external_ref}/adjust',
+                             {'items': items}, request_id=request_id or uuid.uuid4().hex)
 
     def create_reservation(self, external_ref: str, event_meta: dict,
-                           items: list, partial: bool = False) -> MMResult:
+                           items: list, partial: bool = False,
+                           replace: bool = False) -> MMResult:
         payload = {
             'external_ref': external_ref,
             'items': items,
             'partial': partial,
+            'replace': replace,
             **{k: v for k, v in event_meta.items() if v is not None},
         }
         return self._request('POST', '/reservations', payload,

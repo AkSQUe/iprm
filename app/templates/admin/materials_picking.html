@@ -1,0 +1,69 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Пікінг-лист матеріалів | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-materials.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout admin-layout--wide materials-print">
+
+  <div class="admin-hero materials-print__hide">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.instance_materials', instance_id=instance.id) }}" class="admin-breadcrumb__link">Матеріали заходу</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Пікінг-лист</span>
+      </div>
+      <h1 class="admin-hero__title">Пікінг-лист матеріалів</h1>
+    </div>
+    <div class="admin-hero__actions">
+      <button type="button" class="btn-admin btn-admin--primary" data-print>Друк</button>
+    </div>
+  </div>
+
+  <div class="materials-print__head">
+    <h2>{{ instance.course.title if instance.course else 'Захід' }}</h2>
+    <p>
+      {% if instance.start_date %}Дата: {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
+      {% if instance.location %} · {{ instance.location }}{% endif %}
+      · Статус: {{ reservation.status_label }}
+    </p>
+  </div>
+
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Артикул</th>
+        <th class="materials-name">Назва</th>
+        <th>Зарезервовано</th>
+        <th>Фактично</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for it in reservation.items %}
+      <tr>
+        <td><code>{{ it.sku }}</code></td>
+        <td class="materials-name">{{ it.name or '—' }}</td>
+        <td>{{ it.quantity_reserved }}</td>
+        <td>{{ it.quantity_actual if it.quantity_actual is not none else '—' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">Немає позицій</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin-materials.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}

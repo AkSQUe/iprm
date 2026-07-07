@@ -9,6 +9,22 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-materials.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% set qty_mode = mode in ['reserve', 'edit'] %}
+{% set input_name = 'quantity' if qty_mode else 'actual' %}
+{% if mode == 'reserve' %}
+  {% set form_action = url_for('admin.instance_materials_reserve', instance_id=instance.id) %}
+  {% set submit_label = 'Зберегти резервування' %}
+{% elif mode == 'edit' %}
+  {% set form_action = url_for('admin.instance_materials_edit', instance_id=instance.id) %}
+  {% set submit_label = 'Зберегти зміни' %}
+{% elif is_consumed %}
+  {% set form_action = url_for('admin.instance_materials_adjust', instance_id=instance.id) %}
+  {% set submit_label = 'Зберегти коригування' %}
+{% else %}
+  {% set form_action = url_for('admin.instance_materials_actuals', instance_id=instance.id) %}
+  {% set submit_label = 'Провести списання' %}
+{% endif %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -27,73 +43,118 @@
       <p class="admin-hero__subtitle">
         {{ instance.course.title if instance.course else 'Захід' }}
         {% if instance.start_date %} — {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
+        {% if participants is not none %} · учасників: {{ participants }}{% endif %}
       </p>
     </div>
-    <div>
+    <div class="admin-hero__actions">
       {% if reservation %}
-      <span class="materials-status-badge materials-status-badge--{{ reservation.status }}">
-        {{ reservation.status_label }}
-      </span>
+      <a href="{{ url_for('admin.instance_materials_picking', instance_id=instance.id) }}"
+         class="btn-admin btn-admin--secondary" target="_blank">{{ icon('article') }} Пікінг-лист</a>
       {% endif %}
+      <a href="{{ url_for('admin.materials_overview') }}" class="btn-admin btn-admin--secondary">Усі резервування</a>
     </div>
   </div>
 
   {% include 'partials/flash_messages.html' %}
 
-  {% if catalog_error %}
-  <div class="materials-banner">
-    {{ icon('error') }} Каталог MM Medic недоступний: {{ catalog_error }}.
-    {% if not reservation %}Перевірте налаштування інтеграції в
-    <a href="{{ url_for('admin.settings') }}">Налаштуваннях</a>.{% endif %}
+  {% if reservation %}
+  <div class="materials-history">
+    <span class="materials-status-badge materials-status-badge--{{ reservation.status }}">{{ reservation.status_label }}</span>
+    {% if reservation.sent_at %}<span class="materials-history__item">надіслано {{ reservation.sent_at.strftime('%d.%m.%Y %H:%M') }}</span>{% endif %}
+    {% if reservation.consumed_at %}<span class="materials-history__item">списано {{ reservation.consumed_at.strftime('%d.%m.%Y %H:%M') }}</span>{% endif %}
+    <span class="materials-history__item">позицій: {{ reservation.items|length }}</span>
   </div>
   {% endif %}
 
-  {# ---------- Toolbar: XLSX template + import ---------- #}
+  {% if catalog_stale %}
+  <div class="materials-banner">
+    {{ icon('error') }} MM Medic зараз недоступний — показано останній відомий каталог. Резервування може не спрацювати, спробуйте пізніше.
+  </div>
+  {% elif catalog_error %}
+  <div class="materials-banner">
+    {{ icon('error') }} Каталог MM Medic недоступний: {{ catalog_error }}.
+    {% if not reservation %}Перевірте <a href="{{ url_for('admin.settings') }}">Налаштування</a>.{% endif %}
+  </div>
+  {% endif %}
+
+  {# ---------- Toolbar ---------- #}
   <div class="materials-toolbar">
+    <div class="materials-search">
+      {{ icon('filter_list') }}
+      <input type="search" id="materialsSearch" class="form-input" placeholder="Пошук за назвою або артикулом" autocomplete="off">
+    </div>
+
+    {% if qty_mode and templates %}
+    <form method="POST" class="materials-tpl" action="{{ url_for('admin.instance_materials_apply_template', instance_id=instance.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <select name="template" class="form-input" aria-label="Шаблон матеріалів">
+        <option value="">Шаблон матеріалів…</option>
+        {% for t in templates %}<option value="{{ t.name }}">{{ t.name }}{% if t.event_type %} ({{ t.event_type }}){% endif %}</option>{% endfor %}
+      </select>
+      <input type="number" name="multiplier" class="form-input materials-mult" min="1" step="1" value="1" title="Множник" aria-label="Множник">
+      <button type="submit" class="btn-admin btn-admin--secondary">Застосувати</button>
+    </form>
+    {% endif %}
+
+    {% if qty_mode %}
+    <div class="materials-xn">
+      <input type="number" id="materialsXn" class="form-input materials-mult" min="1" step="1"
+             value="{{ participants if participants else 1 }}" title="Помножити кількості" aria-label="Кількість учасників">
+      <button type="button" class="btn-admin btn-admin--secondary" id="materialsXnBtn" title="Помножити всі кількості">×</button>
+    </div>
+    {% endif %}
+
     <a href="{{ url_for('admin.instance_materials_template', instance_id=instance.id) }}"
-       class="btn-admin btn-admin--secondary">
-      {{ icon('download') }} Завантажити шаблон XLSX
-    </a>
+       class="btn-admin btn-admin--secondary">{{ icon('download') }} Шаблон XLSX</a>
     <form method="POST" enctype="multipart/form-data" class="materials-import"
           action="{{ url_for('admin.instance_materials_import', instance_id=instance.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% if mode == 'edit' %}<input type="hidden" name="edit" value="1">{% endif %}
       <input type="file" name="xlsx" accept=".xlsx" class="form-input">
-      <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('upload') }} Імпорт XLSX</button>
+      <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('upload') }} Імпорт</button>
     </form>
+
     <span class="materials-toolbar__spacer"></span>
-    {% if is_reserved %}
+
+    {% if is_reserved and mode != 'edit' %}
+    <a href="{{ url_for('admin.instance_materials', instance_id=instance.id, edit=1) }}"
+       class="btn-admin btn-admin--secondary">{{ icon('edit') }} Редагувати</a>
     <form method="POST" class="admin-inline" data-confirm="Скасувати резервування і повернути залишки на склад MM Medic?"
           action="{{ url_for('admin.instance_materials_cancel', instance_id=instance.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn-admin btn-admin--danger">{{ icon('close') }} Скасувати резерв</button>
     </form>
+    {% elif mode == 'edit' %}
+    <a href="{{ url_for('admin.instance_materials', instance_id=instance.id) }}" class="btn-admin btn-admin--secondary">Відмінити редагування</a>
     {% endif %}
   </div>
 
+  {# ---------- Summary ---------- #}
+  <div class="materials-summary">
+    <span>Обрано позицій: <strong id="materialsCount">0</strong></span>
+    <span>Орієнтовна вартість: <strong id="materialsCost">{{ '%.2f'|format(est_cost) }}</strong> грн</span>
+    {% if is_consumed and mode != 'edit' %}<span class="materials-summary__hint">Захід списано — можна коригувати фактичні кількості.</span>{% endif %}
+  </div>
+
   {% if rows %}
-  {# reserve mode uses name="quantity"; actuals mode uses name="actual" #}
-  <form method="POST"
-        action="{{ url_for('admin.instance_materials_actuals' if is_reserved else 'admin.instance_materials_reserve', instance_id=instance.id) }}">
+  <form method="POST" action="{{ form_action }}" id="materialsForm">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="admin-table-wrap">
-    <table class="admin-table">
+    <table class="admin-table" id="materialsTable">
       <thead>
         <tr>
           <th>Зображення</th>
           <th>Артикул</th>
           <th class="materials-name">Назва</th>
+          <th>Ціна</th>
           <th>Наявно</th>
-          {% if is_reserved %}
-          <th>Зарезервовано</th>
-          <th>Фактично використано</th>
-          {% else %}
-          <th>Кількість для резерву</th>
-          {% endif %}
+          {% if not qty_mode %}<th>Зарезервовано</th>{% endif %}
+          <th>{% if qty_mode %}Кількість{% else %}Фактично використано{% endif %}</th>
         </tr>
       </thead>
       <tbody>
         {% for row in rows %}
-        <tr>
+        <tr data-row data-sku="{{ row.sku }}" data-name="{{ (row.name or '')|lower }}">
           <td>
             {% if row.image %}
             <img src="{{ row.image }}" alt="" class="materials-thumb" loading="lazy">
@@ -106,24 +167,20 @@
             {{ row.name or '—' }}
             {% if row.available is none %}<div class="materials-oos">немає в поточному каталозі</div>{% endif %}
           </td>
+          <td>{{ '%.2f'|format(row.price) if row.price is not none else '—' }}</td>
           <td>{{ row.available if row.available is not none else '—' }}</td>
-          {% if is_reserved %}
-          <td>{{ row.reserved if row.reserved is not none else '—' }}</td>
+          {% if not qty_mode %}<td>{{ row.reserved if row.reserved is not none else '—' }}</td>{% endif %}
           <td>
             <input type="hidden" name="sku" value="{{ row.sku }}">
-            <input type="number" name="actual" min="0" step="1"
+            <input type="number" name="{{ input_name }}" min="0" step="1"
                    class="form-input materials-qty-input"
-                   value="{{ row.actual if row.actual is not none else '' }}"
-                   placeholder="{{ row.reserved if row.reserved is not none else 0 }}">
+                   data-qty
+                   data-available="{{ row.available if row.available is not none else '' }}"
+                   data-price="{{ row.price if row.price is not none else '' }}"
+                   {% if qty_mode and row.available is not none %}max="{{ row.available }}"{% endif %}
+                   value="{{ row.value if row.value is not none else '' }}"
+                   placeholder="{% if not qty_mode and row.reserved is not none %}{{ row.reserved }}{% else %}0{% endif %}">
           </td>
-          {% else %}
-          <td>
-            <input type="hidden" name="sku" value="{{ row.sku }}">
-            <input type="number" name="quantity" min="0" step="1"
-                   class="form-input materials-qty-input"
-                   value="{{ row.input if row.input is not none else '' }}">
-          </td>
-          {% endif %}
         </tr>
         {% endfor %}
       </tbody>
@@ -132,12 +189,13 @@
 
     <div class="admin-form__actions">
       <a href="{{ url_for('admin.instances_list') }}" class="btn-admin btn-admin--secondary">Назад</a>
-      {% if is_reserved %}
-      <button type="submit" class="btn-admin btn-admin--primary" data-confirm="Провести списання за фактичними кількостями? Порожні поля = списати повністю зарезервоване.">
-        {{ icon('check') }} Провести списання
-      </button>
+      {% if qty_mode %}
+      <button type="submit" class="btn-admin btn-admin--primary">{{ icon('send') }} {{ submit_label }}</button>
       {% else %}
-      <button type="submit" class="btn-admin btn-admin--primary">{{ icon('send') }} Зберегти резервування</button>
+      <button type="submit" class="btn-admin btn-admin--primary"
+              data-confirm="{% if is_consumed %}Провести коригування списання?{% else %}Провести списання за фактичними кількостями? Порожні поля = списати повністю зарезервоване.{% endif %}">
+        {{ icon('check') }} {{ submit_label }}
+      </button>
       {% endif %}
     </div>
   </form>
@@ -151,4 +209,9 @@
 
   </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin-materials.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
