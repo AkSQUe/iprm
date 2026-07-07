@@ -45,6 +45,10 @@
   text-align: right;
 }
 
+.materials-name {
+  text-align: left;
+}
+
 .materials-oos {
   color: var(--admin-danger, #d70015);
   font-size: 0.85em;
