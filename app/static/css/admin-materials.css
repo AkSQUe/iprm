@@ -89,9 +89,12 @@
   color: var(--admin-text-muted, #98989d);
 }
 
+/* Спільний Apple-стиль для всіх інпутів/селекта сторінки матеріалів
+   (базовий .form-input стилюється лише всередині .admin-form, а тут його немає). */
+.materials-search .form-input,
+.materials-tpl .form-input,
+.materials-mult,
 .materials-qty-input {
-  width: 96px;
-  text-align: right;
   padding: 8px 12px;
   font-size: 0.9375rem;
   color: var(--apple-black, #1d1d1f);
@@ -101,16 +104,24 @@
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
+.materials-search .form-input:hover,
+.materials-tpl .form-input:hover,
+.materials-mult:hover,
 .materials-qty-input:hover {
   border-color: var(--iprm-nav-active, #0071e3);
 }
 
+.materials-search .form-input:focus,
+.materials-tpl .form-input:focus,
+.materials-mult:focus,
 .materials-qty-input:focus {
   outline: none;
   background: #fff;
   border-color: var(--iprm-nav-active, #0071e3);
   box-shadow: 0 0 0 3px var(--iprm-accent-light, rgba(0, 113, 227, 0.15));
 }
+
+.materials-qty-input { width: 96px; text-align: right; }
 
 .admin-table th.materials-name,
 .admin-table td.materials-name {

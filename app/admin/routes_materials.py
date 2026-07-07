@@ -109,6 +109,7 @@ def _build_rows(catalog, reservation, prefill, mode):
             'available': c.get('available'),
             'is_consumable': c.get('is_consumable'),
             'price': c.get('price'),
+            'category': c.get('category'),
             'reserved': reserved.get(sku),
             'actual': actual.get(sku),
             'value': _value(sku),
@@ -120,6 +121,7 @@ def _build_rows(catalog, reservation, prefill, mode):
                 rows.append({
                     'sku': it.sku, 'name': it.name, 'image': it.image_url,
                     'available': None, 'is_consumable': None, 'price': None,
+                    'category': None,
                     'reserved': it.quantity_reserved, 'actual': it.quantity_actual,
                     'value': (prefill.get(it.sku) if prefill else
                               (it.quantity_actual if mode == 'actuals' else it.quantity_reserved)),

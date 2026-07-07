@@ -146,7 +146,7 @@
           <th>Зображення</th>
           <th>Артикул</th>
           <th class="materials-name">Назва</th>
-          <th>Ціна</th>
+          <th>Категорія</th>
           <th>Наявно</th>
           {% if not qty_mode %}<th>Зарезервовано</th>{% endif %}
           <th>{% if qty_mode %}Кількість{% else %}Фактично використано{% endif %}</th>
@@ -167,7 +167,7 @@
             {{ row.name or '—' }}
             {% if row.available is none %}<div class="materials-oos">немає в поточному каталозі</div>{% endif %}
           </td>
-          <td>{{ '%.2f'|format(row.price) if row.price is not none else '—' }}</td>
+          <td>{{ row.category or '—' }}</td>
           <td>{{ row.available if row.available is not none else '—' }}</td>
           {% if not qty_mode %}<td>{{ row.reserved if row.reserved is not none else '—' }}</td>{% endif %}
           <td>
