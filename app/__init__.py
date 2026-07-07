@@ -289,12 +289,27 @@ def create_app(config_name=None):
         gsi = ' https://accounts.google.com' if gsi_active else ''
         gsi_img = ' https://*.googleusercontent.com' if gsi_active else ''
 
+        # MM Medic: зображення товарів у резервуванні матеріалів вантажаться з
+        # хосту MM Medic -- додаємо його origin до img-src лише коли інтеграція
+        # активна (інакше зайва дірка в CSP).
+        mm_img = ''
+        try:
+            if settings is not None and getattr(settings, 'mm_medic_integration_enabled', False):
+                base = (settings.mm_medic_api_base_url or '').strip()
+                if base:
+                    from urllib.parse import urlparse
+                    parsed = urlparse(base)
+                    if parsed.scheme and parsed.netloc:
+                        mm_img = f' {parsed.scheme}://{parsed.netloc}'
+        except Exception:
+            pass
+
         csp = (
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline'" + gstatic + ga_script + gsi + "; "
             "style-src 'self' 'unsafe-inline'" + gsi + "; "
             "font-src 'self' data:; "
-            "img-src 'self' data:" + ga_img + gsi_img + "; "
+            "img-src 'self' data:" + ga_img + gsi_img + mm_img + "; "
             "frame-src 'self' blob: https://www.liqpay.ua https://checkout.liqpay.ua"
             " https://www.youtube-nocookie.com"
             + gframe + gsi + "; "

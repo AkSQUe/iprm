@@ -81,7 +81,7 @@
         <tr>
           <th>Зображення</th>
           <th>Артикул</th>
-          <th>Назва</th>
+          <th class="materials-name">Назва</th>
           <th>Наявно</th>
           {% if is_reserved %}
           <th>Зарезервовано</th>
@@ -102,7 +102,7 @@
             {% endif %}
           </td>
           <td><code>{{ row.sku }}</code></td>
-          <td>
+          <td class="materials-name">
             {{ row.name or '—' }}
             {% if row.available is none %}<div class="materials-oos">немає в поточному каталозі</div>{% endif %}
           </td>
