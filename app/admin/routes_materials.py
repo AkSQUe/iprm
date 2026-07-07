@@ -4,11 +4,14 @@
 MM Medic; після заходу адмін вводить фактичні кількості -> списання/повернення на
 MM Medic; локально лишається історія (MaterialReservation).
 """
+import json
 import logging
+import uuid
 from datetime import datetime
+from pathlib import Path
 
 from flask import (
-    flash, redirect, render_template, request, send_file, session, url_for,
+    current_app, flash, redirect, render_template, request, send_file, url_for,
 )
 from flask_login import current_user
 
@@ -24,7 +27,40 @@ from app.services.mm_medic_client import MMConfigError
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
 
-_PREFILL_KEY = 'materials_prefill_%s'
+
+def _prefill_dir() -> Path:
+    target = Path(current_app.instance_path) / 'material_prefill'
+    target.mkdir(parents=True, exist_ok=True)
+    return target
+
+
+def _save_prefill(prefill: dict) -> str:
+    """Persist an imported {sku: qty} prefill server-side (cookie sessions cannot
+    hold a large catalog). Returns a token for the redirect."""
+    token = uuid.uuid4().hex
+    (_prefill_dir() / f'{token}.json').write_text(
+        json.dumps(prefill), encoding='utf-8',
+    )
+    return token
+
+
+def _load_prefill(token: str) -> dict | None:
+    """Load + consume a saved prefill. None on missing/invalid token."""
+    if not token or not token.isalnum() or len(token) != 32:
+        return None
+    path = _prefill_dir() / f'{token}.json'
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding='utf-8'))
+    except (ValueError, OSError):
+        return None
+    finally:
+        try:
+            path.unlink()
+        except OSError:
+            pass
+    return data if isinstance(data, dict) else None
 
 
 def _get_instance(instance_id):
@@ -129,13 +165,39 @@ def _actuals_from_form():
     return actuals
 
 
+_REASON_LABELS = {
+    'unknown_sku': 'немає такого товару',
+    'invalid_quantity': 'некоректна кількість',
+    'missing_sku': 'порожній артикул',
+    'malformed_item': 'некоректний рядок',
+    'no_valid_items': 'жодної позиції',
+}
+
+
 def _flash_result_error(result):
-    if getattr(result, 'shortfalls', None):
+    data = result.data if isinstance(result.data, dict) else {}
+    status = data.get('status')
+    errors = data.get('errors')
+    shortfalls = getattr(result, 'shortfalls', None) or []
+
+    if status == 'invalid_items' and errors:
         lines = ', '.join(
-            f"{s.get('sku')} (потрібно {s.get('requested')}, наявно {s.get('available')})"
-            for s in result.shortfalls
+            f"{e.get('sku') or '—'} ({_REASON_LABELS.get(e.get('reason'), e.get('reason'))})"
+            for e in errors
         )
-        flash(f'Недостатньо матеріалів на складі: {lines}', 'error')
+        flash(f'Некоректні позиції: {lines}', 'error')
+    elif shortfalls:
+        parts = []
+        for s in shortfalls:
+            if s.get('reason') == 'unknown_sku':
+                parts.append(f"{s.get('sku')} (немає такого товару)")
+            else:
+                parts.append(
+                    f"{s.get('sku')} (потрібно {s.get('requested')}, наявно {s.get('available')})"
+                )
+        flash(f'Недостатньо матеріалів на складі: {", ".join(parts)}', 'error')
+    elif status == 'already_consumed' or result.error == 'already_consumed':
+        flash('Резервування вже списано — захід завершено. Змінити неможливо.', 'error')
     else:
         flash(f'MM Medic відхилив запит: {result.error or "невідома помилка"}', 'error')
 
@@ -149,7 +211,7 @@ def instance_materials(instance_id):
 
     reservation = mrs.get_reservation(instance_id)
     catalog, catalog_error = _load_catalog()
-    prefill = session.pop(_PREFILL_KEY % instance_id, None)
+    prefill = _load_prefill(request.args.get('prefill', ''))
     rows = _build_rows(catalog, reservation, prefill)
 
     is_reserved = bool(reservation) and reservation.status == MaterialReservationStatus.RESERVED
@@ -323,9 +385,9 @@ def instance_materials_import(instance_id):
     finally:
         xlsx_io.cleanup_upload(token)
 
-    session[_PREFILL_KEY % instance_id] = prefill
+    token = _save_prefill(prefill)
     flash(
         f'Завантажено {len(prefill)} позицій із файлу — перевірте кількості й збережіть.',
         'success',
     )
-    return redirect(url_for('admin.instance_materials', instance_id=instance_id))
+    return redirect(url_for('admin.instance_materials', instance_id=instance_id, prefill=token))

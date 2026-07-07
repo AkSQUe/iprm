@@ -48,15 +48,6 @@
   </div>
   {% endif %}
 
-  <div class="materials-info">
-    {{ icon('info') }}
-    <div>
-      Каталог тягнеться напряму зі складу MM Medic. Вкажіть потрібні кількості й
-      збережіть — резерв створиться на MM Medic. Після заходу введіть фактично
-      використані кількості: залишки спишуться, невикористане повернеться на склад.
-    </div>
-  </div>
-
   {# ---------- Toolbar: XLSX template + import ---------- #}
   <div class="materials-toolbar">
     <a href="{{ url_for('admin.instance_materials_template', instance_id=instance.id) }}"
