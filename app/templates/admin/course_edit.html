@@ -78,6 +78,21 @@
           </div>
         </div>
 
+        <div class="form-group">
+          <div class="form-checkbox">
+            {{ form.is_pinned(id="is_pinned") }}
+            <label for="is_pinned">Закріпити вгорі каталогу</label>
+          </div>
+          <div class="form-hint">{{ form.is_pinned.description }}</div>
+        </div>
+
+        <div class="form-group">
+          <label for="sort_order">Порядок у каталозі</label>
+          {{ form.sort_order(class="form-input", id="sort_order", type="number") }}
+          <div class="form-hint">{{ form.sort_order.description }}</div>
+          {% for error in form.sort_order.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
       </div>
     </div>
 

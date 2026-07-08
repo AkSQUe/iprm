@@ -153,6 +153,8 @@ def populate_course_from_form(course, form):
     course.trainer_id = form.trainer_id.data or None
     course.is_active = form.is_active.data
     course.is_featured = form.is_featured.data
+    course.is_pinned = form.is_pinned.data
+    course.sort_order = form.sort_order.data if form.sort_order.data is not None else 0
 
 
 def populate_instance_from_form(instance, form):

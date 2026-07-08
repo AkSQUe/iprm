@@ -54,6 +54,7 @@
   <table class="admin-table">
     <thead>
       <tr>
+        <th>Порядок</th>
         <th>Назва</th>
         <th>Тип</th>
         <th>Тренер</th>
@@ -67,6 +68,10 @@
       {% for course in courses %}
       {% set stats = stats_by_id[course.id] %}
       <tr>
+        <td>
+          {% if course.is_pinned %}<span class="badge badge--active" title="Закріплено вгорі каталогу">Закріплено</span>{% endif %}
+          {{ course.sort_order }}
+        </td>
         <td><strong>{{ course.title }}</strong></td>
         <td>{{ course.event_type_label }}</td>
         <td>{{ course.trainer.full_name if course.trainer else '---' }}</td>

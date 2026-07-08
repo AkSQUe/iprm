@@ -355,6 +355,16 @@ class CourseForm(FlaskForm):
     )
     is_active = BooleanField('Активний у каталозі', default=True)
     is_featured = BooleanField('Рекомендований')
+    is_pinned = BooleanField(
+        'Закріпити вгорі каталогу',
+        description='Закріплені курси показуються першими незалежно від порядку.',
+    )
+    sort_order = IntegerField(
+        'Порядок у каталозі',
+        default=0,
+        validators=[Optional(), NumberRange(min=-1000, max=1000)],
+        description='Менше число — вище в каталозі. Однаковий порядок сортується за назвою.',
+    )
 
 
 class CourseInstanceForm(FlaskForm):

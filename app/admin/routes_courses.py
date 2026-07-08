@@ -22,9 +22,11 @@ audit_logger = logging.getLogger('audit')
 @admin_bp.route('/courses')
 @admin_required
 def courses_list():
+    # Той самий порядок, що в публічному каталозі, -- адмін бачить реальну
+    # послідовність карток (закріплені -> sort_order -> назва).
     courses = (
         Course.query.options(joinedload(Course.trainer))
-        .order_by(Course.created_at.desc())
+        .order_by(Course.is_pinned.desc(), Course.sort_order, Course.title)
         .all()
     )
     # Aggregate upcoming / past / total / pending_requests -- 2 запити замість

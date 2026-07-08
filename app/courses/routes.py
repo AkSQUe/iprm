@@ -209,7 +209,9 @@ def course_list():
     courses = Course.query.options(
         joinedload(Course.trainer),
         selectinload(Course.instances).joinedload(CourseInstance.trainer),
-    ).filter(Course.is_active.is_(True)).order_by(Course.title).all()
+    ).filter(Course.is_active.is_(True)).order_by(
+        Course.is_pinned.desc(), Course.sort_order, Course.title,
+    ).all()
 
     now = datetime.now(timezone.utc)
     upcoming_by_course = {

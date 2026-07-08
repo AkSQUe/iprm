@@ -63,6 +63,11 @@ class Course(TimestampMixin, db.Model):
     is_active = db.Column(db.Boolean, default=True, index=True)
     is_featured = db.Column(db.Boolean, default=False)
 
+    # Кастомний порядок каталогу: закріплені курси першими, далі за
+    # sort_order (зростання), потім за назвою. Керується з адмінки.
+    is_pinned = db.Column(db.Boolean, default=False, nullable=False)
+    sort_order = db.Column(db.Integer, default=0, nullable=False)
+
     __table_args__ = (
         db.Index('ix_courses_active_featured', 'is_active', 'is_featured'),
         db.Index('ix_courses_created_at', 'created_at'),
