@@ -277,6 +277,21 @@
   margin-bottom: 16px;
 }
 
+/* Бейдж балів БПР на картці (виводиться лише коли балів > 0) */
+.apple-page .iprm-course-card__cpd {
+  align-self: flex-start;
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 12px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-success-bg);
+  color: var(--iprm-success);
+  margin: -8px 0 16px;
+}
+
 .apple-page .iprm-course-cards {
   max-width: 1200px;
   margin: 0 auto;

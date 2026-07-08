@@ -69,6 +69,18 @@
             </div>
             <div class="apple-card-body">
               <p class="iprm-course-card__title">{{ course.title }}</p>
+              {% set _cpds = upcoming_by_course.get(course.id, []) | map(attribute='effective_cpd_points') | select | list %}
+              {% set cpd_min = _cpds | min if _cpds else course.cpd_points %}
+              {% set cpd_max = _cpds | max if _cpds else course.cpd_points %}
+              {% if cpd_min %}
+              <span class="iprm-course-card__cpd">
+                {%- if cpd_max and cpd_max != cpd_min -%}
+                {{ cpd_min }}&ndash;{{ cpd_max }} {{ cpd_max | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}
+                {%- else -%}
+                {{ cpd_min }} {{ cpd_min | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}
+                {%- endif -%}
+              </span>
+              {% endif %}
             </div>
           </a>
           {% if course.tags %}
