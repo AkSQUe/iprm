@@ -130,14 +130,14 @@
         {% if nearest and nearest.start_date %}
           {% set duration_days = ((nearest.end_date - nearest.start_date).days + 1) if nearest.end_date else 1 %}
         {% endif %}
-        <article class="iprm-course-card{% if course.is_featured %} iprm-course-card--featured{% endif %} apple-reveal"
+        <article class="iprm-course-card iprm-course-card--linked{% if course.is_featured %} iprm-course-card--featured{% endif %} apple-reveal"
                  data-tags='{{ course.tags | tojson }}'
                  data-formats='{{ insts | map(attribute="event_format") | unique | list | tojson }}'
                  data-price="{{ price_min | int if price_min and price_min > 0 else '' }}"
                  data-date="{{ nearest.start_date.strftime('%Y-%m-%d') if nearest and nearest.start_date else '' }}"
                  data-days="{{ duration_days or '' }}"
                  data-created="{{ course.created_at.strftime('%Y-%m-%d') if course.created_at else '' }}">
-          <a class="iprm-course-card__link" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" aria-label="{{ course.title }}">
+          <a class="iprm-course-card__overlay" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" aria-label="{{ course.title }}"></a>
             <div class="iprm-course-card__image">
               {% if course.card_src %}
                 <img src="{{ course.card_src }}" alt="{{ course.title }}" loading="lazy" width="400" height="200">
@@ -180,7 +180,11 @@
                 {% if card_trainer.photo_src %}
                 <img src="{{ card_trainer.photo_src }}" alt="{{ card_trainer.full_name }}" loading="lazy" width="28" height="28">
                 {% endif %}
+                {% if card_trainer.is_active %}
+                <a class="iprm-course-card__trainer-link" href="{{ url_for('trainers.trainer_detail', slug=card_trainer.slug) }}">{{ card_trainer.full_name }}</a>
+                {% else %}
                 <span>{{ card_trainer.full_name }}</span>
+                {% endif %}
               </div>
               {% endif %}
 
@@ -197,7 +201,6 @@
                 {% endif %}
               </div>
             </div>
-          </a>
           {% if course.tags %}
           <div class="iprm-course-card__tags" role="group" aria-label="Фільтр за тегами">
             {% for tag in course.tags %}
@@ -257,7 +260,7 @@
               <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}</span>
               {% endif %}
               {% if inst.effective_price and inst.effective_price > 0 %}
-              <span class="iprm-schedule__price">{{ inst.effective_price | int }} &#8372;</span>
+              <span class="iprm-schedule__price">{% if inst.price_is_from %}від {% endif %}{{ inst.effective_price | int }} &#8372;</span>
               {% endif %}
               {% set remaining = seats_left_map.get(inst.id) if is_open else None %}
               {% if remaining is not none %}

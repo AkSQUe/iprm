@@ -212,6 +212,7 @@ def course_list():
     courses = Course.query.options(
         joinedload(Course.trainer),
         selectinload(Course.instances).joinedload(CourseInstance.trainer),
+        selectinload(Course.instances).selectinload(CourseInstance.tariffs),
     ).filter(Course.is_active.is_(True)).order_by(
         Course.is_pinned.desc(), Course.sort_order, Course.title,
     ).all()
@@ -359,6 +360,7 @@ def course_by_slug(slug):
     course = Course.query.options(
         joinedload(Course.trainer),
         selectinload(Course.instances).joinedload(CourseInstance.trainer),
+        selectinload(Course.instances).selectinload(CourseInstance.tariffs),
         selectinload(Course.program_blocks),
     ).filter_by(slug=slug, is_active=True).first()
 
