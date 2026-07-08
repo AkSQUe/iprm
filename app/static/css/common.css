@@ -1525,7 +1525,7 @@ select.badge-select:disabled {
 
   .iprm-header__logo-icon--mobile {
     display: block;
-    height: 64px;
+    height: 48px;
   }
 
   .iprm-header__logo {
@@ -1539,7 +1539,7 @@ select.badge-select:disabled {
   .iprm-header__nav {
     display: none;
     position: absolute;
-    top: 52px;
+    top: 56px;
     left: 0;
     right: 0;
     background: rgba(255, 255, 255, 0.95);
