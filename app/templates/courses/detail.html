@@ -391,8 +391,11 @@
         {# Flash-повідомлення показуються як toast (base.html + ui-feedback.js) #}
         <form method="POST" action="{{ url_for('courses.course_request', slug=course.slug) }}" class="iprm-request-form" data-validate data-single-submit data-recaptcha-action="course_request">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          {# Honeypot: name="website" лишається приманкою для ботів, але label
+             без слова "Website" -- щоб поле не сприймалось як справжнє, якщо
+             колись стане видимим (переклад сторінки, reader mode, автофіл). #}
           <div class="iprm-request-form__honeypot" aria-hidden="true">
-            <label for="req-website">Website</label>
+            <label for="req-website">Не заповнюйте це поле</label>
             <input type="text" name="website" id="req-website" tabindex="-1" autocomplete="off">
           </div>
           <div class="iprm-request-form__row">

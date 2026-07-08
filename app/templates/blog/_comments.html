@@ -46,9 +46,10 @@
       <button type="button" id="comment-reply-cancel" class="blog-comment-form__cancel">скасувати</button>
     </div>
 
-    {# Honeypot -- приховане поле для ботів #}
+    {# Honeypot -- приховане поле для ботів (label без "Website", щоб поле не
+       сприймалось як справжнє, якщо стане видимим: переклад, reader mode) #}
     <div class="blog-hp" aria-hidden="true">
-      <label for="bc-website">Website</label>
+      <label for="bc-website">Не заповнюйте це поле</label>
       <input type="text" name="website" id="bc-website" tabindex="-1" autocomplete="off">
     </div>
 
