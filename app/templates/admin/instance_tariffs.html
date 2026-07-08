@@ -88,7 +88,7 @@
   </div>
   {% endif %}
 
-  <form method="POST" class="admin-form" action="{% if edit_tariff %}{{ url_for('admin.instance_tariff_edit', tariff_id=edit_tariff.id) }}{% else %}{{ url_for('admin.instance_tariffs', instance_id=instance.id) }}{% endif %}">
+  <form method="POST" class="admin-form admin-tariffs-form" action="{% if edit_tariff %}{{ url_for('admin.instance_tariff_edit', tariff_id=edit_tariff.id) }}{% else %}{{ url_for('admin.instance_tariffs', instance_id=instance.id) }}{% endif %}">
     {{ form.hidden_tag() }}
     {% include 'admin/partials/_form_errors.html' %}
 
