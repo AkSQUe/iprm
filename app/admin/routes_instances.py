@@ -176,12 +176,21 @@ def instance_create():
         instance = CourseInstance()
         course_service.populate_instance_from_form(instance, form)
         db.session.add(instance)
+        # Copy-on-create: дефолтна тарифна вилка курсу переїжджає у
+        # проведення (лише шаблони, що пасують формату). flush -- щоб
+        # instance отримав id для FK тарифів.
+        db.session.flush()
+        copied = course_service.copy_course_tariffs_to_instance(instance)
         if try_commit(log_context=f'instance_create course={form.course_id.data}'):
             audit_logger.info(
-                'Admin %s created instance %s (course=%s start=%s)',
-                current_user.email, instance.id, instance.course_id, instance.start_date,
+                'Admin %s created instance %s (course=%s start=%s, tariffs=%s)',
+                current_user.email, instance.id, instance.course_id,
+                instance.start_date, copied,
             )
-            flash('Проведення створено', 'success')
+            if copied:
+                flash(f'Проведення створено, скопійовано тарифів з курсу: {copied}', 'success')
+            else:
+                flash('Проведення створено', 'success')
             return redirect(url_for('admin.instances_list'))
 
     return render_template('admin/instance_edit.html', form=form, instance=None)

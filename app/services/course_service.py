@@ -159,6 +159,60 @@ def populate_course_from_form(course, form):
     course.sort_order = form.sort_order.data if form.sort_order.data is not None else 0
 
 
+def copy_course_tariffs_to_instance(instance, replace=False):
+    """Скопіювати активні шаблонні тарифи курсу в проведення (copy-on-create).
+
+    Копіюються лише шаблони, що пасують формату проведення (гібрид отримує
+    всі, NULL-формат пасує будь-якому). instance_tariffs -- джерело істини
+    для продажу; подальші зміни шаблонів існуючі проведення не чіпають.
+
+    Args:
+        instance: CourseInstance (course_id має бути виставлений; commit --
+            на caller-ові, функція лише мутує сесію).
+        replace: True -- спершу прибрати поточні тарифи проведення
+            (кнопка "Взяти з курсу"): тарифи, на які вже посилаються
+            реєстрації, деактивуються (історія показів лишиться), решта
+            видаляється.
+
+    Returns:
+        Кількість скопійованих тарифів.
+    """
+    from app.models.course_tariff import CourseTariff
+    from app.models.instance_tariff import InstanceTariff
+    from app.models.registration import EventRegistration
+
+    templates = (
+        CourseTariff.query
+        .filter_by(course_id=instance.course_id, is_active=True)
+        .order_by(CourseTariff.sort_order)
+        .all()
+    )
+    matching = [t for t in templates if t.matches_format(instance.event_format)]
+
+    if replace:
+        for tariff in list(instance.tariffs):
+            referenced = (
+                db.session.query(EventRegistration.id)
+                .filter(EventRegistration.tariff_id == tariff.id)
+                .first()
+            ) is not None
+            if referenced:
+                tariff.is_active = False
+            else:
+                db.session.delete(tariff)
+
+    for template in matching:
+        db.session.add(InstanceTariff(
+            instance_id=instance.id,
+            name=template.name,
+            description=template.description,
+            price=template.price,
+            sort_order=template.sort_order,
+            is_active=True,
+        ))
+    return len(matching)
+
+
 def populate_instance_from_form(instance, form):
     """Map CourseInstanceForm data onto a CourseInstance model instance."""
     instance.course_id = form.course_id.data
@@ -281,6 +335,17 @@ def clone_course(source, created_by_id):
         is_featured=False,
         created_by=created_by_id,
     )
+
+    from app.models.course_tariff import CourseTariff
+    for tariff in source.default_tariffs:
+        clone.default_tariffs.append(CourseTariff(
+            name=tariff.name,
+            description=tariff.description,
+            price=tariff.price,
+            event_format=tariff.event_format,
+            sort_order=tariff.sort_order,
+            is_active=tariff.is_active,
+        ))
 
     for block in source.program_blocks:
         clone.program_blocks.append(ProgramBlock(

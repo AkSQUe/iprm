@@ -18,6 +18,7 @@ from app.models.error_log import ErrorLog
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.instance_tariff import InstanceTariff
+from app.models.course_tariff import CourseTariff
 from app.models.course_request import CourseRequest, CourseRequestAudit
 from app.models.b2b_request import B2BRequest
 from app.models.webhook_delivery import WebhookDelivery
@@ -35,7 +36,7 @@ __all__ = [
     'Certificate', 'LecturerCertificate',
     'Clinic', 'EmailLog', 'EmailSettings', 'EmailSuppression', 'NotificationRule',
     'PaymentTransaction', 'SiteSettings', 'ErrorLog',
-    'Course', 'CourseInstance', 'InstanceTariff',
+    'Course', 'CourseInstance', 'InstanceTariff', 'CourseTariff',
     'CourseRequest', 'CourseRequestAudit', 'B2BRequest',
     'WebhookDelivery', 'BlogPost', 'BlogComment', 'MediaFile',
     'DatabaseBackup',

@@ -109,6 +109,12 @@ class Course(TimestampMixin, db.Model):
         order_by='ProgramBlock.sort_order',
         cascade='all, delete-orphan',
     )
+    default_tariffs = db.relationship(
+        'CourseTariff',
+        back_populates='course',
+        order_by='CourseTariff.sort_order',
+        cascade='all, delete-orphan',
+    )
     requests = db.relationship(
         'CourseRequest',
         back_populates='course',
