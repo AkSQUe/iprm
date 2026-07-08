@@ -86,55 +86,36 @@ def _maybe_consume_prefill_token():
 
 
 def _initial_form_data_from_user(user):
-    """Pre-fill EventRegistrationForm з MedicalProfile (canonical) + User
-    identity-полів (last_name/first_name). Phase 7: жодних fallback'ів
-    на legacy-колонки User -- вони дропнуті.
+    """Pre-fill слім-форми реєстрації: ПІБ з User, телефон з MedicalProfile.
+
+    Медична анкета (МОЗ №725) на формі реєстрації більше не збирається --
+    вона заповнюється в особистому кабінеті (auth.certificate_data) як
+    умова отримання сертифіката. Рішення 08.07.2026.
     """
     profile = user.medical_profile
     return {
-        'user_type': (profile.participant_type if profile else '') or '',
         'last_name': user.last_name or '',
         'first_name': user.first_name or '',
-        'middle_name': (profile.middle_name if profile else '') or '',
         'phone': (profile.phone if profile else '') or '',
-        'birth_date': profile.birth_date if profile else None,
-        'education': (profile.education if profile else '') or '',
-        'workplace': (profile.workplace if profile else '') or '',
-        'position': (profile.position if profile else '') or '',
-        'specializations': (profile.specializations if profile else []) or [],
     }
 
 
 def _sync_medical_profile_from_form(user, form):
-    """Записати медичні поля у MedicalProfile + identity-поля
-    (last_name/first_name) у User. Створює MedicalProfile, якщо відсутній.
-    Виставляє completed_at, коли профіль стає повним.
+    """Слім-синхронізація: identity-поля (ПІБ) у User + телефон у
+    MedicalProfile (створюється за потреби). МОЗ-полями профілю володіє
+    форма "Дані для сертифіката" в кабінеті -- тут їх не чіпаємо.
     """
-    from datetime import datetime, timezone
     from app.models.medical_profile import MedicalProfile
 
-    # User-level identity поля (last/first name -- частина identity, а
-    # не медпрофілю).
     user.last_name = (form.last_name.data or '').strip() or None
     user.first_name = (form.first_name.data or '').strip() or None
 
-    # Canonical: MedicalProfile.
     profile = user.medical_profile
     if profile is None:
         profile = MedicalProfile(user_id=user.id, source=MedicalProfile.SOURCE_SELF)
         db.session.add(profile)
         user.medical_profile = profile
-    profile.participant_type = form.user_type.data
-    profile.middle_name = (form.middle_name.data or '').strip() or None
     profile.phone = (form.phone.data or '').strip() or None
-    profile.birth_date = form.birth_date.data
-    profile.education = (form.education.data or '').strip() or None
-    profile.workplace = (form.workplace.data or '').strip() or None
-    profile.position = (form.position.data or '').strip() or None
-    profile.specializations = list(form.specializations.data or [])
-
-    if profile.is_complete and profile.completed_at is None:
-        profile.completed_at = datetime.now(timezone.utc)
 
 
 def _spec_labels(codes):
@@ -248,24 +229,28 @@ def register_instance(instance_id):
             return redirect(url_for('courses.course_by_slug', slug=instance.course.slug))
 
         try:
-            # 1) Phase 4: dual-write медичних полів у MedicalProfile
-            #    (canonical) і User (shadow). Заповнює completed_at коли
-            #    профіль стає повним (для майбутніх 2-click реєстрацій).
+            # 1) Слім-синхронізація: ПІБ у User + телефон у MedicalProfile.
+            #    МОЗ-анкета живе в кабінеті (auth.certificate_data).
             _sync_medical_profile_from_form(current_user, form)
 
-            # 2) Створити CourseRegistration. EventRegistration зберігає
-            #    snapshot fields для історичної консистентності (snapshot
-            #    показує що було під час події, навіть якщо профіль зміниться).
-            specializations = form.specializations.data or []
-            specialty_snapshot = ', '.join(
-                _spec_labels(specializations)
-            ) or (form.position.data or '').strip()
+            # 2) Створити CourseRegistration. Снапшот МОЗ-полів -- з
+            #    MedicalProfile, якщо той уже заповнений; інакше порожній
+            #    (добере бекфіл, коли учасник заповнить "Дані для
+            #    сертифіката" в кабінеті).
+            profile = current_user.medical_profile
+            specialty_snapshot = ''
+            workplace_snapshot = ''
+            if profile:
+                specialty_snapshot = ', '.join(
+                    _spec_labels(profile.specializations or [])
+                ) or (profile.position or '').strip()
+                workplace_snapshot = (profile.workplace or '').strip()
             form_data = {
                 'phone': form.phone.data.strip(),
                 'specialty': specialty_snapshot,
-                'workplace': form.workplace.data.strip(),
-                'experience_years': form.experience_years.data,
-                'license_number': form.license_number.data,
+                'workplace': workplace_snapshot,
+                'experience_years': None,
+                'license_number': None,
             }
             reg, is_free = registration_service.create_or_reactivate(
                 current_user.id, instance, form_data, existing,
@@ -357,6 +342,7 @@ def confirmation(registration_id):
         and reg.payment_amount and reg.payment_amount > 0
     )
 
+    profile = current_user.medical_profile
     return render_template(
         'registration/confirmation.html',
         reg=reg,
@@ -366,6 +352,7 @@ def confirmation(registration_id):
         liqpay_checkout_url=liqpay_checkout_url,
         invoice_available=bool(invoice_available),
         invoice_url=url_for('registration.invoice_download', registration_id=reg.id),
+        certificate_data_complete=bool(profile and profile.is_complete),
     )
 
 

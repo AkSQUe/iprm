@@ -73,32 +73,23 @@
   </aside>
   {% endif %}
 
-  {# ===== МОЗ-нотис (вимоги номенклатури) ===== #}
-  <aside class="reg-moh-notice" role="note">
-    <div class="reg-moh-notice__icon" aria-hidden="true">i</div>
-    <p>
-      У зв'язку з новими вимогами МОЗ України —
-      «<strong>№725 «Про затвердження Положення про систему безперервного
-      професійного розвитку медичних та фармацевтичних працівників»</strong>
-      зі змінами» п. 13, просимо Вас заповнити вказані поля нижче.
-    </p>
-  </aside>
-
   <p class="reg-attention">
     <strong>Будьте уважні!</strong> Одна реєстрація — одне підключення.
     Будь ласка, вказуйте контактні дані саме учасника заходу.
   </p>
 
-  {# Phase 4: профіль уже заповнено -- юзер може лише підтвердити. Форма
-     зосталась видимою для inline-редагування, якщо щось змінилось. #}
-  {% if profile_complete %}
-  <div class="reg-profile-ready" role="status">
-    <div class="reg-profile-ready__icon" aria-hidden="true">&#10003;</div>
-    <div class="reg-profile-ready__text">
-      <strong>Ваш профіль уже заповнено.</strong>
-      Перевірте дані і підтвердіть реєстрацію — нові поля заповнювати не потрібно.
-    </div>
-  </div>
+  {# МОЗ-анкета (№725 п.13) винесена за рамки оплати: заповнюється в
+     особистому кабінеті і потрібна для отримання сертифіката. #}
+  {% if not profile_complete %}
+  <aside class="reg-moh-notice" role="note">
+    <div class="reg-moh-notice__icon" aria-hidden="true">i</div>
+    <p>
+      Реєстрація займе хвилину — лише базові дані. Анкету для
+      <strong>сертифіката з балами БПР</strong> (вимоги МОЗ №725, п. 13)
+      ви заповните пізніше в <strong>особистому кабінеті</strong> —
+      ми нагадаємо.
+    </p>
+  </aside>
   {% endif %}
 
   {# Прогрес заповнення форми #}
@@ -137,27 +128,9 @@
     </div>
     {% endif %}
 
-    {# ----- Тип учасника ----- #}
+    {# ----- Базові дані учасника ----- #}
     <div class="form-section reg-form-section">
-      <h3 class="form-section__title reg-form-section__title">
-        Тип учасника
-        <span class="iprm-tooltip-trigger" data-tooltip="Оберіть вашу категорію згідно з МОЗ №725. Від цього залежить, які бали БПР нараховуються після заходу.">i</span>
-      </h3>
-      <div class="reg-user-type" data-required-group="radio" data-hint="Оберіть тип учасника — це обов'язково">
-        {% for code, label in form.user_type.choices if code %}
-          <label class="reg-user-type__option">
-            <input type="radio" name="user_type" value="{{ code }}"
-                   {% if form.user_type.data == code %}checked{% endif %}>
-            <span>{{ label }}</span>
-          </label>
-        {% endfor %}
-      </div>
-      {% for error in form.user_type.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
-    </div>
-
-    {# ----- ПІБ + контакти ----- #}
-    <div class="form-section reg-form-section">
-      <h3 class="form-section__title reg-form-section__title">Особисті дані</h3>
+      <h3 class="form-section__title reg-form-section__title">Дані учасника</h3>
       <div class="form-section__grid">
         <div class="form-group">
           <label for="last_name">Прізвище <span class="required">*</span></label>
@@ -172,11 +145,6 @@
         </div>
 
         <div class="form-group">
-          <label for="middle_name">По батькові</label>
-          {{ form.middle_name(class="form-input", id="middle_name") }}
-        </div>
-
-        <div class="form-group">
           <label for="phone">
             Телефон <span class="required">*</span>
             <span class="iprm-tooltip-trigger" data-tooltip="Вкажіть номер саме учасника заходу — на нього ми надішлемо нагадування та деталі підключення.">i</span>
@@ -184,73 +152,7 @@
           {{ form.phone(class="form-input" + (" is-invalid" if form.phone.errors else ""), id="phone", required=true) }}
           {% for e in form.phone.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
-
-        <div class="form-group">
-          <label for="birth_date">
-            Дата народження <span class="required">*</span>
-            <span class="iprm-tooltip-trigger" data-tooltip="Потрібна для ідентифікації у системі БПР МОЗ при нарахуванні балів.">i</span>
-          </label>
-          {{ form.birth_date(class="form-input" + (" is-invalid" if form.birth_date.errors else ""), id="birth_date", type="date", required=true) }}
-          {% for e in form.birth_date.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
-        </div>
       </div>
-    </div>
-
-    {# ----- Освіта і місце роботи ----- #}
-    <div class="form-section reg-form-section">
-      <h3 class="form-section__title reg-form-section__title">Освіта та робота</h3>
-      <div class="form-section__grid">
-        <div class="form-group form-section__full">
-          <label for="education">
-            Освіта (рік закінчення та назва ВНЗ) <span class="required">*</span>
-            <span class="iprm-tooltip-trigger" data-tooltip="Наприклад: 2014, НМУ ім. О.О. Богомольця. Вкажіть рік випуску та повну назву закладу.">i</span>
-          </label>
-          {{ form.education(class="form-input" + (" is-invalid" if form.education.errors else ""), id="education", required=true) }}
-          {% for e in form.education.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
-        </div>
-
-        <div class="form-group form-section__full">
-          <label for="workplace">Місце роботи (назва ЗОЗу) <span class="required">*</span></label>
-          {{ form.workplace(class="form-input" + (" is-invalid" if form.workplace.errors else ""), id="workplace", required=true) }}
-          {% for e in form.workplace.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
-        </div>
-
-        <div class="form-group">
-          <label for="position">Займана посада <span class="required">*</span></label>
-          {{ form.position(class="form-input" + (" is-invalid" if form.position.errors else ""), id="position", required=true) }}
-          {% for e in form.position.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
-        </div>
-
-        <div class="form-group">
-          <label for="experience_years">Стаж роботи (років)</label>
-          {{ form.experience_years(class="form-input", id="experience_years") }}
-        </div>
-
-        <div class="form-group form-section__full">
-          <label for="license_number">Номер ліцензії <span class="form-hint-inline">(опціонально)</span></label>
-          {{ form.license_number(class="form-input", id="license_number") }}
-        </div>
-      </div>
-    </div>
-
-    {# ----- Спеціалізації (multi-select як checkbox-grid) ----- #}
-    <div class="form-section reg-form-section">
-      <h3 class="form-section__title reg-form-section__title">
-        Спеціалізації <span class="required">*</span>
-        <span class="iprm-tooltip-trigger" data-tooltip="Оберіть усі ваші спеціалізації — за ними система БПР перевіряє відповідність заходу вашому фаху. Можна позначити декілька.">i</span>
-      </h3>
-      <p class="reg-form-section__hint">Можна обрати декілька. Пошук — Ctrl+F у браузері.</p>
-      <div class="reg-specializations" data-spec-list data-required-group="checkbox" data-hint="Оберіть хоча б одну спеціалізацію">
-        {% set selected_specs = form.specializations.data or [] %}
-        {% for code, label in form.specializations.choices %}
-          <label class="reg-specializations__item">
-            <input type="checkbox" name="specializations" value="{{ code }}"
-                   {% if code in selected_specs %}checked{% endif %}>
-            <span>{{ label }}</span>
-          </label>
-        {% endfor %}
-      </div>
-      {% for e in form.specializations.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
     </div>
 
     {# ----- Подвійне підтвердження міста (офлайн/гібрид) ----- #}
