@@ -1,7 +1,7 @@
 /* apple-pages.css -- Apple-style shared styles for all public pages (concept v2) */
 /* Easing curves defined in common.css :root */
 
-/* ========== INTERNAL HERO (92vh, white, centered) ========== */
+/* ========== INTERNAL HERO (compact, white, centered) ========== */
 
 .apple-page .iprm-hero-wrap {
   background: var(--iprm-white);
@@ -10,7 +10,6 @@
 
 .apple-page .iprm-hero {
   height: auto;
-  min-height: 92vh;
   max-width: none;
   border-radius: 0;
   background: var(--iprm-white);
@@ -20,11 +19,6 @@
   justify-content: center;
   position: relative;
   overflow: hidden;
-}
-
-/* Compact hero for account/profile pages */
-.apple-page .iprm-hero--compact {
-  min-height: 40vh;
 }
 
 .apple-page .iprm-hero__bg {
@@ -870,10 +864,6 @@
 }
 
 @media (max-width: 768px) {
-  .apple-page .iprm-hero {
-    min-height: 70vh;
-  }
-
   .apple-page .iprm-hero__content {
     padding: 64px 16px 48px;
   }
