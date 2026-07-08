@@ -60,7 +60,7 @@
 
       <div class="iprm-course-cards" data-filterable="courses">
         {% for course in courses %}
-        <article class="iprm-course-card apple-reveal" data-tags='{{ course.tags | tojson }}'>
+        <article class="iprm-course-card{% if course.is_featured %} iprm-course-card--featured{% endif %} apple-reveal" data-tags='{{ course.tags | tojson }}'>
           <a class="iprm-course-card__link" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" aria-label="{{ course.title }}">
             <div class="iprm-course-card__image">
               {% if course.card_src %}
@@ -77,6 +77,9 @@
               {% set cpd_max = _cpds | max if _cpds else course.cpd_points %}
 
               <div class="iprm-course-card__badges">
+                {% if course.is_featured %}
+                <span class="iprm-card-badge iprm-card-badge--featured">Рекомендуємо</span>
+                {% endif %}
                 {% if course.event_type %}
                 <span class="iprm-card-badge iprm-card-badge--type">{{ course.event_type_label }}</span>
                 {% endif %}

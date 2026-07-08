@@ -352,6 +352,18 @@
   gap: 20px;
 }
 
+/* Рекомендований курс (is_featured): ширша картка + акцентна рамка */
+.apple-page .iprm-course-card--featured {
+  grid-column: span 2;
+  border: 1px solid rgba(var(--apple-accent-rgb), 0.35);
+  box-shadow: 0 8px 32px rgba(var(--apple-accent-rgb), 0.08);
+}
+
+.apple-page .iprm-card-badge--featured {
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 100%);
+  color: var(--iprm-white);
+}
+
 /* ========== FEATURE CARDS (reusable) ========== */
 
 .apple-page .apple-features-grid {
@@ -819,6 +831,10 @@
   .apple-page .apple-features-grid,
   .apple-page .iprm-trainer-cards {
     grid-template-columns: 1fr;
+  }
+
+  .apple-page .iprm-course-card--featured {
+    grid-column: auto;
   }
 
   .apple-page .apple-feature-card {
