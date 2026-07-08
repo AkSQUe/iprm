@@ -651,6 +651,38 @@ class EmailService:
         )
 
     @staticmethod
+    def send_certdata_reminder(registration):
+        """Нагадати учаснику заповнити МОЗ-анкету (дані для сертифіката).
+
+        Викликається scheduler-джобою send_certdata_reminders за N днів до
+        заходу (N -- SiteSettings.certdata_reminder_days), один раз на
+        реєстрацію (certdata_reminder_sent_at). trigger='reminder' --
+        наявний opt-out-able тригер, CHECK email_logs не чіпаємо.
+        """
+        event = EmailService._event_from_registration(registration)
+        if event is None:
+            logger.warning(
+                'Cannot send certdata_reminder: reg=%s has no instance/course',
+                registration.id,
+            )
+            return None
+        from app.models.site_settings import SiteSettings
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        return EmailService.send_email(
+            to=registration.user.email,
+            subject=f'Заповніть дані для сертифіката: {event.title}',
+            template_name='certdata_reminder',
+            context={
+                'user': registration.user,
+                'event': event,
+                'registration': registration,
+                'certdata_url': f'{base}/auth/account/certificate-data',
+            },
+            trigger='reminder',
+            registration_id=registration.id,
+        )
+
+    @staticmethod
     def send_b2b_request_notification(b2b_request):
         """Повідомити адмінів про нову B2B-заявку (корпоративне навчання).
 

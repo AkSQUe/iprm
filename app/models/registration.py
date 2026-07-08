@@ -54,6 +54,10 @@ class EventRegistration(TimestampMixin, db.Model):
     payment_id = db.Column(db.String(255))
     paid_at = db.Column(db.DateTime(timezone=True))
 
+    # Ідемпотентність авто-нагадування "заповніть дані для сертифіката":
+    # один лист на реєстрацію (scheduler-джоба send_certdata_reminders).
+    certdata_reminder_sent_at = db.Column(db.DateTime(timezone=True))
+
     # Обраний тариф участі (тарифна вилка). NULL -- проведення без тарифів
     # або історична реєстрація. Сума фіксується у payment_amount у момент
     # реєстрації, тож видалення/зміна тарифу заднім числом на неї не впливає.

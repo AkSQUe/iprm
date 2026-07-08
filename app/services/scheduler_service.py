@@ -84,6 +84,14 @@ def init_scheduler(app):
     )
 
     scheduler.add_job(
+        send_certdata_reminders,
+        trigger=CronTrigger(hour=9, minute=30),
+        id='daily_certdata_reminders',
+        replace_existing=True,
+        name='Нагадування про дані для сертифіката',
+    )
+
+    scheduler.add_job(
         email_queue_maintenance,
         trigger=CronTrigger(minute='*/5'),
         id='email_queue_maintenance',
@@ -211,6 +219,91 @@ def _send_course_reminders_locked():
                     logger.exception('Reminder failed: reg=%d', reg.id)
 
     logger.info('Course reminder job completed')
+
+
+def send_certdata_reminders():
+    """Нагадати учасникам близьких заходів заповнити МОЗ-анкету.
+
+    Multi-worker захист: pg_try_advisory_lock -- лише один воркер виконує.
+    """
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('daily_certdata_reminders') as got:
+            if not got:
+                logger.debug('certdata: another worker holds the lock, skipping')
+                return
+            _send_certdata_reminders_locked()
+
+
+def _send_certdata_reminders_locked():
+    """Тіло send_certdata_reminders під pg-advisory-lock.
+
+    Вибірка: активні (не cancelled) реєстрації на published/active
+    проведення, до старту яких лишилося <= N днів
+    (SiteSettings.certdata_reminder_days; 0 -- вимкнено), лист ще не
+    надсилався (certdata_reminder_sent_at IS NULL), а МОЗ-анкета
+    користувача неповна. Один лист на реєстрацію.
+    """
+    from sqlalchemy.orm import joinedload
+    from app.extensions import db
+    from app.models.course_instance import CourseInstance
+    from app.models.registration import EventRegistration
+    from app.models.site_settings import SiteSettings
+    from app.models.user import User
+    from app.services.email_service import EmailService
+
+    days = SiteSettings.get().certdata_reminder_days or 0
+    if days <= 0:
+        logger.debug('certdata reminders disabled (days=0)')
+        return
+
+    now = datetime.now(timezone.utc)
+    window_end = now + timedelta(days=days)
+
+    registrations = (
+        EventRegistration.query
+        .join(CourseInstance, EventRegistration.instance_id == CourseInstance.id)
+        .options(
+            joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
+            joinedload(EventRegistration.user).joinedload(User.medical_profile),
+        )
+        .filter(
+            CourseInstance.start_date.between(now, window_end),
+            CourseInstance.status.in_(['published', 'active']),
+            EventRegistration.status != 'cancelled',
+            EventRegistration.certdata_reminder_sent_at.is_(None),
+        )
+        .all()
+    )
+
+    sent = 0
+    for reg in registrations:
+        user = reg.user
+        if user is None or not user.email:
+            continue
+        profile = user.medical_profile
+        if profile is not None and profile.is_complete:
+            # Анкета вже заповнена -- позначаємо, щоб не сканувати повторно.
+            reg.certdata_reminder_sent_at = now
+            continue
+        try:
+            EmailService.send_certdata_reminder(reg)
+            reg.certdata_reminder_sent_at = now
+            sent += 1
+            logger.info(
+                'Certdata reminder: reg=%d instance=%d user=%d',
+                reg.id, reg.instance_id, reg.user_id,
+            )
+        except Exception:
+            logger.exception('Certdata reminder failed: reg=%d', reg.id)
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception('Certdata reminder job: failed to persist sent flags')
+    logger.info('Certdata reminder job completed: sent=%d of %d candidates',
+                sent, len(registrations))
 
 
 def email_queue_maintenance():
