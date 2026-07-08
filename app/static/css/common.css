@@ -1495,17 +1495,6 @@ select.badge-select:disabled {
   background: var(--iprm-accent-hover);
 }
 
-.cookie-banner__btn--reject {
-  background: transparent;
-  color: var(--iprm-white);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.cookie-banner__btn--reject:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--iprm-white);
-}
-
 @media (prefers-reduced-transparency: reduce) {
   .cookie-banner {
     background: rgba(var(--apple-black-rgb), 0.98);
