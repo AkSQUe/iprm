@@ -20,3 +20,6 @@
 | [Модель даних](docs/models.md) | Таблиці БД: User, Event, Trainer, ProgramBlock, зв'язки |
 | [Встановлення](docs/setup.md) | Локальний запуск, змінні оточення, міграції, залежності |
 | [Деплой](docs/deployment.md) | VPS, SSH, CI/CD, секрети GitHub |
+| [План робіт plasma-regen](docs/plan-robit-plasma-regen.md) | Погоджений план правок (переписка 08.07.2026) |
+| [Todo виконання плану](docs/todo-plasma-regen.md) | Статуси завдань, журнал комітів, фази складних робіт |
+| [Референс Multimed](docs/dopovnennya-multimed.md) | Прототип-референс UI/контенту для карток, фільтрів, B2B |
