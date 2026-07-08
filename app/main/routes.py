@@ -1,4 +1,4 @@
-from flask import flash, make_response, redirect, render_template, request, url_for
+from flask import abort, flash, make_response, redirect, render_template, request, url_for
 from sqlalchemy.orm import joinedload
 
 from app.extensions import csrf, db, limiter
@@ -11,6 +11,26 @@ from app.services.recaptcha import verify_request as verify_recaptcha
 @main_bp.route('/')
 def index():
     return redirect(url_for('courses.course_list'), code=301)
+
+
+@main_bp.route('/materials/<token>')
+@limiter.limit('60 per minute')
+def trainer_materials(token):
+    """Public read-only view of an event's reserved materials, opened by trainers
+    via a signed link (no login). 404 on a bad/unknown token or no reservation."""
+    from app.services import material_reservation_service as mrs
+    from app.models.course_instance import CourseInstance
+    from app.models.material_reservation import MaterialReservation
+
+    instance_id = mrs.load_trainer_token(token)
+    if instance_id is None:
+        abort(404)
+    instance = db.session.get(CourseInstance, instance_id)
+    reservation = MaterialReservation.query.filter_by(instance_id=instance_id).first()
+    if instance is None or reservation is None:
+        abort(404)
+    return render_template('materials_trainer.html',
+                           instance=instance, reservation=reservation)
 
 
 @main_bp.route('/labs')

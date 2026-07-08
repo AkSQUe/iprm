@@ -27,17 +27,41 @@
       printBtn.addEventListener('click', function () { window.print(); });
     }
 
+    // Copy-to-clipboard buttons (e.g. trainer link).
+    document.querySelectorAll('[data-copy]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var text = btn.getAttribute('data-copy');
+        var done = function () {
+          var original = btn.innerHTML;
+          btn.textContent = 'Скопійовано';
+          setTimeout(function () { btn.innerHTML = original; }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, done);
+        } else {
+          var ta = document.createElement('textarea');
+          ta.value = text; document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); } catch (e) {}
+          document.body.removeChild(ta); done();
+        }
+      });
+    });
+
     var table = document.getElementById('materialsTable');
     if (!table) return;
 
+    var form = document.getElementById('materialsForm');
+    var mode = form ? form.getAttribute('data-mode') : '';
     var rows = Array.prototype.slice.call(table.querySelectorAll('tr[data-row]'));
     var countEl = document.getElementById('materialsCount');
     var costEl = document.getElementById('materialsCost');
+    var changesEl = document.getElementById('materialsChanges');
 
-    // ---- summary (кількість обраних позицій + орієнтовна вартість) ----
+    // ---- summary (кількість + вартість + попередження + diff редагування) ----
     function recalc() {
       var count = 0;
       var cost = 0;
+      var changed = 0;
       rows.forEach(function (tr) {
         var input = tr.querySelector('input[data-qty]');
         if (!input) return;
@@ -46,13 +70,35 @@
         var price = parseFloat(input.getAttribute('data-price'));
         if (qty > 0 && !isNaN(price)) cost += price * qty;
 
-        // Підсвітка перевищення наявного залишку.
         var availAttr = input.getAttribute('data-available');
-        var over = availAttr !== '' && availAttr != null && qty > num(availAttr);
+        var hasAvail = availAttr !== '' && availAttr != null;
+        var avail = num(availAttr);
+        var minStock = num(input.getAttribute('data-min-stock'));
+        var hint = tr.querySelector('[data-hint]');
+
+        // Перевищення наявного залишку.
+        var over = hasAvail && qty > avail;
+        // Низький залишок: резерв опускає доступне нижче мінімуму (не over).
+        var low = !over && hasAvail && minStock > 0 && qty > 0 && (avail - qty) < minStock;
         input.classList.toggle('is-over', !!over);
+        input.classList.toggle('is-low', !!low);
+        if (hint) {
+          hint.textContent = over ? 'перевищує наявне'
+            : (low ? 'залишок нижче мінімуму' : '');
+        }
+
+        // Diff у режимі редагування: порівняння з поточним резервом.
+        if (mode === 'edit') {
+          var reservedAttr = input.getAttribute('data-reserved');
+          var original = reservedAttr === '' || reservedAttr == null ? 0 : num(reservedAttr);
+          if (qty !== original) changed++;
+        }
       });
       if (countEl) countEl.textContent = String(count);
       if (costEl) costEl.textContent = cost.toFixed(2);
+      if (changesEl) {
+        changesEl.textContent = changed ? ('Змінено позицій: ' + changed) : 'Змін немає';
+      }
     }
 
     table.addEventListener('input', function (e) {

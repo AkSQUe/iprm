@@ -2159,6 +2159,44 @@ def export_materials_template_xlsx(catalog: list[dict]) -> io.BytesIO:
     return out
 
 
+_RESV_COLS = ['event', 'date', 'status', 'positions', 'reserved', 'actual']
+_RESV_LABELS = {
+    'event': 'Захід', 'date': 'Дата', 'status': 'Статус',
+    'positions': 'Позицій', 'reserved': 'Зарезервовано', 'actual': 'Фактично',
+}
+_RESV_WIDTHS = {'event': 46, 'date': 14, 'status': 16, 'positions': 10,
+                'reserved': 14, 'actual': 12}
+
+
+def export_material_reservations_xlsx(reservations) -> io.BytesIO:
+    """Огляд резервувань матеріалів -> xlsx (для експорту зі сторінки огляду)."""
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Резервування'
+    _style_header(ws, _RESV_COLS, _RESV_LABELS)
+
+    for row_idx, r in enumerate(reservations, start=2):
+        course = r.instance.course.title if (r.instance and r.instance.course) else '—'
+        date = (r.instance.start_date.strftime('%d.%m.%Y')
+                if (r.instance and r.instance.start_date) else '')
+        reserved = sum((it.quantity_reserved or 0) for it in r.items)
+        actual = sum((it.quantity_actual or 0) for it in r.items)
+        values = [course, date, r.status_label, len(r.items), reserved, actual]
+        for col_idx, v in enumerate(values, start=1):
+            ws.cell(row=row_idx, column=col_idx, value=v)
+
+    last_row = ws.max_row
+    _set_column_widths(ws, _RESV_COLS, _RESV_WIDTHS)
+    _apply_zebra(ws, len(_RESV_COLS), first_data_row=2, last_data_row=last_row)
+    if last_row >= 2:
+        _apply_table_style(ws, _RESV_COLS, 'tblResv', last_row)
+
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    return out
+
+
 def parse_materials_xlsx(path: Path) -> dict[str, int]:
     """Прочитати заповнений шаблон -> {sku: quantity} лише для quantity > 0.
 

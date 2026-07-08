@@ -124,6 +124,10 @@ def create_app(config_name=None):
 
     from app.api.v1 import api_v1_bp
     app.register_blueprint(api_v1_bp)
+
+    from app.api.mm_status import mm_status_bp
+    app.register_blueprint(mm_status_bp)
+    csrf.exempt(mm_status_bp)
     _partner_origins = [
         o.strip() for o in os.environ.get(
             'PARTNER_CORS_ORIGINS',

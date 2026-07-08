@@ -35,6 +35,34 @@ def get_client() -> MMMedicClient:
     return MMMedicClient.from_settings(SiteSettings.get())
 
 
+def make_trainer_token(instance_id) -> str:
+    """Signed, non-expiring token for a public read-only trainer materials link."""
+    from itsdangerous import URLSafeSerializer
+    from flask import current_app
+    return URLSafeSerializer(current_app.secret_key, salt='materials-trainer').dumps(instance_id)
+
+
+def load_trainer_token(token):
+    """Return the instance_id from a trainer token, or None if invalid."""
+    from itsdangerous import URLSafeSerializer, BadData
+    from flask import current_app
+    try:
+        return URLSafeSerializer(current_app.secret_key, salt='materials-trainer').loads(token)
+    except BadData:
+        return None
+    except Exception:
+        logger.exception('trainer token load failed')
+        return None
+
+
+def invalidate_catalog_cache():
+    """Drop the cached catalog so the next page load reflects fresh availability
+    after a reservation mutation (reserve/actuals/adjust/cancel change derived or
+    physical stock)."""
+    _catalog_cache['items'] = None
+    _catalog_cache['ts'] = 0.0
+
+
 def get_catalog(consumable=False, search=None, force=False):
     """Fetch the MM Medic catalog. Returns (items, error, stale).
 
@@ -145,14 +173,9 @@ def create_reservation(instance, items, catalog_by_sku, replace=False):
             quantity_reserved=it['quantity'],
         ))
     db.session.commit()
-
-    # Notify the event trainer about the reserved materials (best-effort).
-    try:
-        from app.services.email_service import EmailService
-        EmailService.send_materials_reserved(reservation, instance)
-    except Exception:
-        logger.exception('send_materials_reserved failed for %s', ref)
-
+    invalidate_catalog_cache()  # derived availability changed
+    # Note: the "materials reserved" notification is sent by MM Medic to its
+    # storekeeper (warehouse managers); IPRM does not email the trainer.
     return True, result, reservation
 
 
@@ -188,6 +211,7 @@ def submit_actuals(instance, actuals, catalog_by_sku=None, request_id=None):
                 quantity_reserved=0, quantity_actual=qty,
             ))
         db.session.commit()
+    invalidate_catalog_cache()  # physical stock written off
     return True, result
 
 
@@ -203,6 +227,7 @@ def cancel_reservation(instance, request_id=None):
         reservation.status = MaterialReservationStatus.CANCELLED
         reservation.last_response = result.data
         db.session.commit()
+    invalidate_catalog_cache()  # holds released
     return True, result
 
 
@@ -246,6 +271,7 @@ def adjust_actuals(instance, actuals, catalog_by_sku=None, request_id=None):
                 quantity_reserved=0, quantity_actual=qty,
             ))
         db.session.commit()
+    invalidate_catalog_cache()  # stock adjusted
     return True, result
 
 

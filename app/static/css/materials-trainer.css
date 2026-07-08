@@ -1,0 +1,57 @@
+/* Public read-only trainer materials view */
+
+.mt-wrap {
+  max-width: 780px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+.mt-card {
+  background: #fff;
+  border: 1px solid #e5e5ea;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.mt-title {
+  margin: 0 0 6px;
+  font-size: 1.6rem;
+  color: #1d1d1f;
+}
+
+.mt-meta {
+  margin: 0 0 22px;
+  color: #6e6e73;
+  font-size: 0.95rem;
+}
+
+.mt-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mt-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #86868b;
+  border-bottom: 1px solid #d2d2d7;
+  padding: 8px 10px;
+}
+
+.mt-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #f0f0f2;
+  color: #1d1d1f;
+}
+
+.mt-num { text-align: right; }
+.mt-sku { color: #6e6e73; font-size: 0.9rem; }
+.mt-empty { color: #6e6e73; }
+
+@media (max-width: 560px) {
+  .mt-card { padding: 18px; }
+  .mt-table th, .mt-table td { padding: 8px 6px; font-size: 0.9rem; }
+}

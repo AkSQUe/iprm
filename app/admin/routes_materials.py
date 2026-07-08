@@ -110,6 +110,7 @@ def _build_rows(catalog, reservation, prefill, mode):
             'is_consumable': c.get('is_consumable'),
             'price': c.get('price'),
             'category': c.get('category'),
+            'min_stock': c.get('min_stock') or 0,
             'reserved': reserved.get(sku),
             'actual': actual.get(sku),
             'value': _value(sku),
@@ -260,6 +261,11 @@ def instance_materials(instance_id):
 
     participants = instance.registration_count if hasattr(instance, 'registration_count') else None
 
+    trainer_url = None
+    if reservation is not None:
+        trainer_url = url_for('main.trainer_materials',
+                              token=mrs.make_trainer_token(instance_id), _external=True)
+
     return render_template(
         'admin/materials.html',
         instance=instance,
@@ -273,6 +279,7 @@ def instance_materials(instance_id):
         is_consumed=is_consumed,
         est_cost=round(est_cost, 2),
         participants=participants,
+        trainer_url=trainer_url,
         statuses=MaterialReservationStatus,
     )
 
@@ -588,23 +595,115 @@ def instance_materials_picking(instance_id):
 _OVERVIEW_PER_PAGE = 50
 
 
+def _parse_date(value):
+    from datetime import datetime as _dt
+    value = (value or '').strip()
+    if not value:
+        return None
+    try:
+        return _dt.strptime(value, '%Y-%m-%d')
+    except ValueError:
+        return None
+
+
+def _overview_filters():
+    """Read + normalize overview filters from the query string."""
+    return {
+        'status': request.args.get('status') or '',
+        'date_from': _parse_date(request.args.get('date_from')),
+        'date_to': _parse_date(request.args.get('date_to')),
+        'date_from_raw': (request.args.get('date_from') or '').strip(),
+        'date_to_raw': (request.args.get('date_to') or '').strip(),
+    }
+
+
+def _apply_overview_filters(query, f):
+    from datetime import timedelta
+    if f['status']:
+        query = query.filter(MaterialReservation.status == f['status'])
+    if f['date_from']:
+        query = query.filter(CourseInstance.start_date >= f['date_from'])
+    if f['date_to']:
+        query = query.filter(CourseInstance.start_date < f['date_to'] + timedelta(days=1))
+    return query
+
+
+def _overview_query(f):
+    query = (MaterialReservation.query
+             .join(CourseInstance, CourseInstance.id == MaterialReservation.instance_id))
+    return _apply_overview_filters(query, f).order_by(MaterialReservation.created_at.desc())
+
+
 @admin_bp.route('/materials')
 @admin_required
 def materials_overview():
-    status = request.args.get('status') or ''
+    from app.models.material_reservation import MaterialReservationItem
+    f = _overview_filters()
     page = request.args.get('page', 1, type=int)
-    query = (MaterialReservation.query
-             .join(CourseInstance, CourseInstance.id == MaterialReservation.instance_id)
-             .order_by(MaterialReservation.created_at.desc()))
-    if status:
-        query = query.filter(MaterialReservation.status == status)
+    query = _overview_query(f)
     pagination = query.paginate(page=page, per_page=_OVERVIEW_PER_PAGE, error_out=False)
 
     counts = dict(
         db.session.query(MaterialReservation.status, db.func.count(MaterialReservation.id))
         .group_by(MaterialReservation.status).all()
     )
+
+    # Unit totals over the FILTERED set (not just the page).
+    totals_q = (db.session.query(
+                    db.func.coalesce(db.func.sum(MaterialReservationItem.quantity_reserved), 0),
+                    db.func.coalesce(db.func.sum(MaterialReservationItem.quantity_actual), 0),
+                )
+                .select_from(MaterialReservation)
+                .join(CourseInstance, CourseInstance.id == MaterialReservation.instance_id)
+                .join(MaterialReservationItem,
+                      MaterialReservationItem.reservation_id == MaterialReservation.id))
+    reserved_units, actual_units = _apply_overview_filters(totals_q, f).first()
+
     return render_template('admin/materials_overview.html',
                            reservations=pagination.items, pagination=pagination,
-                           counts=counts, filter_status=status,
+                           counts=counts, filter_status=f['status'],
+                           date_from=f['date_from_raw'], date_to=f['date_to_raw'],
+                           total_reservations=pagination.total,
+                           reserved_units=int(reserved_units or 0),
+                           actual_units=int(actual_units or 0),
+                           export_cap=_OVERVIEW_EXPORT_CAP,
+                           export_capped=pagination.total > _OVERVIEW_EXPORT_CAP,
                            statuses=MaterialReservationStatus)
+
+
+_OVERVIEW_EXPORT_CAP = 2000
+
+
+@admin_bp.route('/materials/export.xlsx')
+@admin_required
+def materials_overview_export():
+    f = _overview_filters()
+    reservations = _overview_query(f).limit(_OVERVIEW_EXPORT_CAP).all()
+    if len(reservations) >= _OVERVIEW_EXPORT_CAP:
+        logger.warning('materials export hit the %d-row cap; result truncated',
+                       _OVERVIEW_EXPORT_CAP)
+    data = xlsx_io.export_material_reservations_xlsx(reservations)
+    audit_logger.info('Admin %s exported material reservations overview', current_user.email)
+    return send_file(
+        data,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='material-reservations.xlsx',
+        max_age=0,
+    )
+
+
+@admin_bp.route('/materials/reconcile', methods=['POST'])
+@admin_required
+def materials_reconcile_now():
+    # Bound the manual trigger: each item is a live MM Medic HTTP call, so cap it
+    # to keep the request responsive; the scheduled job handles the full backlog.
+    try:
+        updated = mrs.reconcile_stale(max_items=50)
+        reminded = mrs.send_pending_actuals_reminders(max_items=50)
+    except Exception:
+        logger.exception('manual materials reconcile failed')
+        flash('Не вдалося виконати звірку', 'error')
+        return redirect(url_for('admin.materials_overview'))
+    flash(f'Звірку виконано: оновлено {updated}, нагадувань надіслано {reminded}.', 'success')
+    return redirect(url_for('admin.materials_overview'))

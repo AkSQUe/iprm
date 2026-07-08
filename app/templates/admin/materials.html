@@ -50,6 +50,10 @@
       {% if reservation %}
       <a href="{{ url_for('admin.instance_materials_picking', instance_id=instance.id) }}"
          class="btn-admin btn-admin--secondary" target="_blank">{{ icon('article') }} Пікінг-лист</a>
+      {% if trainer_url %}
+      <button type="button" class="btn-admin btn-admin--secondary" data-copy="{{ trainer_url }}"
+              title="Скопіювати посилання для тренера">{{ icon('link') }} Лінк для тренера</button>
+      {% endif %}
       {% endif %}
       <a href="{{ url_for('admin.materials_overview') }}" class="btn-admin btn-admin--secondary">Усі резервування</a>
     </div>
@@ -133,11 +137,12 @@
   <div class="materials-summary">
     <span>Обрано позицій: <strong id="materialsCount">0</strong></span>
     <span>Орієнтовна вартість: <strong id="materialsCost">{{ '%.2f'|format(est_cost) }}</strong> грн</span>
+    {% if mode == 'edit' %}<span id="materialsChanges" class="materials-summary__hint"></span>{% endif %}
     {% if is_consumed and mode != 'edit' %}<span class="materials-summary__hint">Захід списано — можна коригувати фактичні кількості.</span>{% endif %}
   </div>
 
   {% if rows %}
-  <form method="POST" action="{{ form_action }}" id="materialsForm">
+  <form method="POST" action="{{ form_action }}" id="materialsForm" data-mode="{{ mode }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="admin-table-wrap">
     <table class="admin-table" id="materialsTable">
@@ -177,9 +182,12 @@
                    data-qty
                    data-available="{{ row.available if row.available is not none else '' }}"
                    data-price="{{ row.price if row.price is not none else '' }}"
+                   data-min-stock="{{ row.min_stock }}"
+                   data-reserved="{{ row.reserved if row.reserved is not none else '' }}"
                    {% if qty_mode and row.available is not none %}max="{{ row.available }}"{% endif %}
                    value="{{ row.value if row.value is not none else '' }}"
                    placeholder="{% if not qty_mode and row.reserved is not none %}{{ row.reserved }}{% else %}0{% endif %}">
+            <span class="materials-hint" data-hint></span>
           </td>
         </tr>
         {% endfor %}

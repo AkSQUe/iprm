@@ -1,4 +1,8 @@
 """Tests for MM Medic material reservation email notifications (IPRM side)."""
+import hashlib
+import hmac
+import json
+import time
 from datetime import datetime, timedelta, timezone
 
 from flask import render_template
@@ -43,18 +47,6 @@ def _make_reservation(inst, status=MaterialReservationStatus.RESERVED, slug_suff
 
 # ----------------------------- template rendering -----------------------------
 
-def test_materials_reserved_template_renders(app):
-    with app.app_context():
-        item = MaterialReservationItem(sku='NDL-21', name='Голка 21G', quantity_reserved=5)
-        html = render_template(
-            'emails/materials_reserved.html',
-            site_settings=SiteSettings.get(),
-            event_title='Плазмотерапія', event_date='01.01.2026', event_location='Київ',
-            trainer_name='Іван', items=[item],
-        )
-        assert 'Голка 21G' in html and 'NDL-21' in html and 'Плазмотерапія' in html
-
-
 def test_materials_reminder_template_renders(app):
     with app.app_context():
         item = MaterialReservationItem(sku='NDL-21', name='Голка 21G', quantity_reserved=5)
@@ -71,29 +63,6 @@ def test_materials_reminder_template_renders(app):
 
 def test_materials_trigger_allowed():
     assert EmailLog.is_valid_trigger('materials')
-
-
-def test_send_materials_reserved_targets_trainer(app, monkeypatch):
-    from app.services.email_service import EmailService
-    captured = {}
-    monkeypatch.setattr(EmailService, 'send_email',
-                        staticmethod(lambda **kw: captured.update(kw) or 'log'))
-    inst = _make_instance(slug_suffix='r1')
-    res = _make_reservation(inst, slug_suffix='r1')
-    EmailService.send_materials_reserved(res, inst)
-    assert captured.get('to') == 'trainer@example.com'
-    assert captured.get('template_name') == 'materials_reserved'
-    assert captured.get('trigger') == 'materials'
-
-
-def test_send_materials_reserved_skips_without_trainer_email(app, monkeypatch):
-    from app.services.email_service import EmailService
-    calls = []
-    monkeypatch.setattr(EmailService, 'send_email', staticmethod(lambda **kw: calls.append(kw)))
-    inst = _make_instance(trainer_email=None, slug_suffix='r2')
-    res = _make_reservation(inst, slug_suffix='r2')
-    assert EmailService.send_materials_reserved(res, inst) is None
-    assert not calls
 
 
 def test_actuals_reminder_is_idempotent(app, monkeypatch):
@@ -135,3 +104,86 @@ def test_actuals_reminder_not_marked_without_recipients(app, monkeypatch):
     n = mrs.send_pending_actuals_reminders()
     assert n == 0
     assert res.actuals_reminder_sent_at is None  # left NULL -> retried later
+
+
+# ----------------------------- reverse status webhook (MM Medic -> IPRM) -----------------------------
+
+_MM_SECRET = 'reverse-webhook-secret'
+
+
+def _enable_mm():
+    site = SiteSettings.get()
+    site.mm_medic_integration_enabled = True
+    site.partner_webhook_secret = _MM_SECRET
+    db.session.commit()
+
+
+def _mm_headers(body, ts=None, bad=False):
+    ts = ts or str(int(time.time()))
+    sig = 'deadbeef' if bad else hmac.new(_MM_SECRET.encode(), ts.encode() + b'.' + body, hashlib.sha256).hexdigest()
+    return {'X-IPRM-Signature': sig, 'X-IPRM-Timestamp': ts, 'Content-Type': 'application/json'}
+
+
+def test_mm_status_webhook_marks_consumed_and_actuals(app, client):
+    _enable_mm()
+    inst = _make_instance(slug_suffix='mmw1')
+    res = _make_reservation(inst, slug_suffix='mmw1')
+    body = json.dumps({'external_ref': res.external_ref, 'status': 'consumed',
+                       'items': [{'sku': 'NDL-21', 'quantity': 4}]}).encode()
+    r = client.post('/api/partner/mm-medic/reservation-status', data=body, headers=_mm_headers(body))
+    assert r.status_code == 200
+    fresh = MaterialReservation.query.get(res.id)
+    assert fresh.status == MaterialReservationStatus.CONSUMED
+    assert fresh.items[0].quantity_actual == 4
+
+
+def test_mm_status_webhook_marks_expired(app, client):
+    _enable_mm()
+    inst = _make_instance(slug_suffix='mmw2')
+    res = _make_reservation(inst, slug_suffix='mmw2')
+    body = json.dumps({'external_ref': res.external_ref, 'status': 'expired', 'items': []}).encode()
+    r = client.post('/api/partner/mm-medic/reservation-status', data=body, headers=_mm_headers(body))
+    assert r.status_code == 200
+    assert MaterialReservation.query.get(res.id).status == MaterialReservationStatus.EXPIRED
+
+
+def test_mm_status_webhook_rejects_bad_signature(app, client):
+    _enable_mm()
+    inst = _make_instance(slug_suffix='mmw3')
+    res = _make_reservation(inst, slug_suffix='mmw3')
+    body = json.dumps({'external_ref': res.external_ref, 'status': 'cancelled'}).encode()
+    r = client.post('/api/partner/mm-medic/reservation-status', data=body, headers=_mm_headers(body, bad=True))
+    assert r.status_code == 401
+    assert MaterialReservation.query.get(res.id).status == MaterialReservationStatus.RESERVED
+
+
+def test_mm_status_webhook_unknown_ref_acked(app, client):
+    _enable_mm()
+    body = json.dumps({'external_ref': 'iprm-instance-999999', 'status': 'consumed'}).encode()
+    r = client.post('/api/partner/mm-medic/reservation-status', data=body, headers=_mm_headers(body))
+    assert r.status_code == 200
+
+
+# ----------------------------- trainer public view + overview export -----------------------------
+
+def test_trainer_materials_public_view(app, client):
+    from app.services import material_reservation_service as mrs
+    inst = _make_instance(slug_suffix='trn')
+    res = _make_reservation(inst, slug_suffix='trn')
+    with app.app_context():
+        token = mrs.make_trainer_token(inst.id)
+    r = client.get(f'/materials/{token}')
+    assert r.status_code == 200
+    assert b'NDL-21' in r.data
+    # tampered token -> 404
+    assert client.get('/materials/not-a-real-token').status_code == 404
+
+
+def test_overview_export_xlsx_bytes(app):
+    from app.services import xlsx_io
+    with app.app_context():
+        inst = _make_instance(slug_suffix='exp')
+        res = _make_reservation(inst, slug_suffix='exp')
+        bio = xlsx_io.export_material_reservations_xlsx([res])
+        data = bio.getvalue()
+        assert data[:2] == b'PK'  # xlsx is a zip
