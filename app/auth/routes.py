@@ -211,11 +211,91 @@ def account():
         .order_by(Certificate.issued_at.desc())
         .all()
     )
+    profile = current_user.medical_profile
     return render_template(
         'auth/account.html',
         registrations=registrations,
         certificates=certificates,
+        certificate_data_complete=bool(profile and profile.is_complete),
     )
+
+
+@auth_bp.route('/account/certificate-data', methods=['GET', 'POST'])
+@login_required
+def certificate_data():
+    """Анкета "Дані для сертифіката" (МОЗ №725 п.13).
+
+    Винесена за рамки flow реєстрації/оплати (рішення 08.07.2026):
+    учасник заповнює її тут, щоб отримати сертифікат з балами БПР.
+    Після збереження бекфілимо порожні снапшоти specialty/workplace
+    в активних реєстраціях (для звітів БПР/xlsx).
+    """
+    from app.auth.forms import CertificateDataForm
+    from app.models.medical_profile import MedicalProfile
+    from app.models.specializations import labels_for_codes
+
+    profile = current_user.medical_profile
+
+    if request.method == 'GET':
+        form = CertificateDataForm(data={
+            'user_type': (profile.participant_type if profile else '') or '',
+            'middle_name': (profile.middle_name if profile else '') or '',
+            'birth_date': profile.birth_date if profile else None,
+            'education': (profile.education if profile else '') or '',
+            'workplace': (profile.workplace if profile else '') or '',
+            'position': (profile.position if profile else '') or '',
+            'specializations': (profile.specializations if profile else []) or [],
+        })
+    else:
+        form = CertificateDataForm()
+
+    if form.validate_on_submit():
+        if profile is None:
+            profile = MedicalProfile(
+                user_id=current_user.id, source=MedicalProfile.SOURCE_SELF,
+            )
+            db.session.add(profile)
+            current_user.medical_profile = profile
+        profile.participant_type = form.user_type.data
+        profile.middle_name = (form.middle_name.data or '').strip() or None
+        profile.birth_date = form.birth_date.data
+        profile.education = (form.education.data or '').strip() or None
+        profile.workplace = (form.workplace.data or '').strip() or None
+        profile.position = (form.position.data or '').strip() or None
+        profile.specializations = list(form.specializations.data or [])
+        if profile.is_complete and profile.completed_at is None:
+            profile.completed_at = datetime.now(timezone.utc)
+
+        specialty_snapshot = ', '.join(
+            labels_for_codes(profile.specializations or [])
+        ) or (profile.position or '').strip()
+        workplace_snapshot = (profile.workplace or '').strip()
+        regs = (
+            EventRegistration.query
+            .filter(
+                EventRegistration.user_id == current_user.id,
+                EventRegistration.status != 'cancelled',
+            )
+            .all()
+        )
+        for reg in regs:
+            if not (reg.specialty or '').strip() and specialty_snapshot:
+                reg.specialty = specialty_snapshot
+            if not (reg.workplace or '').strip() and workplace_snapshot:
+                reg.workplace = workplace_snapshot
+
+        try:
+            db.session.commit()
+            flash('Дані для сертифіката збережено. Дякуємо!', 'success')
+            return redirect(url_for('auth.account'))
+        except Exception:
+            db.session.rollback()
+            logger.exception(
+                'Failed to save certificate data for user %d', current_user.id,
+            )
+            flash('Помилка при збереженні. Спробуйте ще раз.', 'error')
+
+    return render_template('auth/certificate_data.html', form=form)
 
 
 @auth_bp.route('/account/certificates/<int:cert_id>/download')
