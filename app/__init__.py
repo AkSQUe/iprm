@@ -250,6 +250,35 @@ def create_app(config_name=None):
         except Exception:
             return {'upcoming_events': []}
 
+    @app.context_processor
+    def inject_certdata_reminder():
+        """Плаваюче нагадування "заповніть дані для сертифіката" на ПУБЛІЧНИХ
+        сторінках: авторизований користувач з активною реєстрацією і
+        незаповненою МОЗ-анкетою (№725 п.13). Закриття -- sessionStorage
+        (нагадає у наступній сесії). У кабінеті не показуємо -- там власний
+        банер і сама анкета."""
+        from flask import request
+        from flask_login import current_user
+        try:
+            if not current_user.is_authenticated:
+                return {'show_certdata_reminder': False}
+            path = request.path or ''
+            if (path.startswith('/admin') or path.startswith('/static')
+                    or path.startswith('/account') or path.startswith('/auth')):
+                return {'show_certdata_reminder': False}
+            profile = current_user.medical_profile
+            if profile and profile.is_complete:
+                return {'show_certdata_reminder': False}
+            from app.extensions import db
+            from app.models.registration import EventRegistration
+            has_reg = db.session.query(EventRegistration.id).filter(
+                EventRegistration.user_id == current_user.id,
+                EventRegistration.status != 'cancelled',
+            ).first() is not None
+            return {'show_certdata_reminder': has_reg}
+        except Exception:
+            return {'show_certdata_reminder': False}
+
     @app.after_request
     def set_security_headers(response):
         response.headers['X-Content-Type-Options'] = 'nosniff'

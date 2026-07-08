@@ -959,3 +959,47 @@
   border-radius: 50%;
   background: var(--iprm-accent, #7055a4);
 }
+
+/* ===== Нагадування "дані для сертифіката" на сторінці підтвердження ===== */
+.reg-certdata-reminder {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  max-width: 720px;
+  margin: 0 auto 24px;
+  padding: 18px 20px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: var(--iprm-radius-md, 14px);
+}
+
+.reg-certdata-reminder__icon {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f0a02a;
+  color: #fff;
+  font-weight: 800;
+}
+
+.reg-certdata-reminder__title {
+  font-weight: 700;
+  color: var(--apple-black, #1d1d1f);
+  margin: 2px 0 4px;
+}
+
+.reg-certdata-reminder__text {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--apple-gray-dark, #515154);
+  margin: 0 0 12px;
+}
+
+.reg-certdata-reminder__btn {
+  font-size: 0.875rem;
+  padding: 10px 20px;
+}

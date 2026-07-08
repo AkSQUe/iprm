@@ -1,0 +1,120 @@
+/* Плаваюче нагадування "дані для сертифіката не заповнені" -- фіксований
+   блок знизу зліва (з'являється лише в авторизованих з активною
+   реєстрацією і незаповненою МОЗ-анкетою). Apple-style, у парі з
+   upcoming-events.css. */
+.certdata-reminder {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 910;
+  width: 320px;
+  max-width: calc(100vw - 40px);
+  padding: 16px 18px;
+  background: var(--iprm-white, #fff);
+  border: 1px solid var(--iprm-border, rgba(0, 0, 0, 0.06));
+  border-radius: var(--iprm-radius-md, 16px);
+  box-shadow: 0 12px 40px rgba(29, 29, 31, 0.16);
+  animation: certdata-in 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* Акцентна смужка-попередження зверху */
+.certdata-reminder::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: var(--iprm-radius-md, 16px) var(--iprm-radius-md, 16px) 0 0;
+  background: linear-gradient(90deg, #f0a02a 0%, #e05252 100%);
+}
+
+.certdata-reminder__close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--iprm-text-light, #86868b);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color var(--iprm-transition, 0.25s ease);
+}
+.certdata-reminder__close:hover { color: var(--iprm-text, #1d1d1f); }
+
+.certdata-reminder__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--iprm-font, sans-serif);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--iprm-text, #1d1d1f);
+  margin: 0 20px 6px 0;
+}
+
+/* Пульсуюча крапка-індикатор */
+.certdata-reminder__dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e05252;
+  animation: certdata-pulse 1.6s ease-in-out infinite;
+}
+
+.certdata-reminder__text {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--iprm-text-light, #86868b);
+  margin: 0 0 12px;
+}
+
+.certdata-reminder__btn {
+  display: inline-block;
+  padding: 8px 18px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--iprm-white, #fff);
+  background: var(--iprm-accent, #7055a4);
+  border-radius: var(--iprm-radius-pill, 980px);
+  text-decoration: none;
+  transition: background var(--iprm-transition, 0.25s ease);
+}
+.certdata-reminder__btn:hover {
+  background: var(--iprm-accent-hover, #5d4691);
+  color: var(--iprm-white, #fff);
+}
+
+@keyframes certdata-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes certdata-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224, 82, 82, 0.5); }
+  50% { box-shadow: 0 0 0 7px rgba(224, 82, 82, 0); }
+}
+
+/* Не перекриватися з pop-up "найближчі заходи" (обидва знизу зліва) */
+body:has(.upcoming-events:not(.upcoming-events--hidden)) .certdata-reminder {
+  bottom: auto;
+  top: 76px;
+}
+
+@media (max-width: 640px) {
+  .certdata-reminder {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .certdata-reminder { animation: none; }
+  .certdata-reminder__dot { animation: none; }
+}

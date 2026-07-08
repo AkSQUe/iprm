@@ -22,6 +22,19 @@
     </section>
   </div>
 
+  <!-- ===== CERTIFICATE DATA BANNER ===== -->
+  {% if registrations and not certificate_data_complete %}
+  <div class="account-confirm-banner account-confirm-banner--certdata">
+    <div class="account-confirm-banner__inner">
+      <p class="account-confirm-banner__text">
+        <strong>Заповніть дані для сертифіката (МОЗ №725)</strong> — без них ми не зможемо
+        нарахувати бали БПР і видати сертифікат за ваші курси.
+      </p>
+      <a href="{{ url_for('auth.certificate_data') }}" class="account-confirm-banner__btn">Заповнити зараз</a>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- ===== EMAIL CONFIRMATION BANNER ===== -->
   {% if not current_user.email_confirmed %}
   <div class="account-confirm-banner">
@@ -53,6 +66,9 @@
           <div class="account-course__body">
             <div class="account-course__meta">
               <span class="badge badge--{{ reg.status }}">{{ reg.status_label }}</span>
+              {% if not certificate_data_complete %}
+              <a href="{{ url_for('auth.certificate_data') }}" class="badge badge--danger account-course__certdata-badge" title="Заповніть анкету МОЗ №725, щоб отримати сертифікат з балами БПР">Дані для сертифіката не заповнені</a>
+              {% endif %}
               <span class="badge badge--{{ 'active' if reg.payment_status == 'paid' else ('danger' if reg.payment_status == 'unpaid' else ('warning' if reg.payment_status == 'pending' else 'draft')) }}">{{ reg.payment_status_label }}</span>
               {% if reg.payment_status != 'paid' and reg.payment_amount and reg.payment_amount > 0 %}
               <span class="badge badge--draft" title="Обраний спосіб оплати">{{ reg.payment_method_label }}</span>
@@ -128,6 +144,12 @@
     <div class="iprm-section__inner">
       <h2 id="account-settings-title" class="iprm-section__title visually-hidden">Обліковий запис</h2>
       <div class="account-grid">
+        <a href="{{ url_for('auth.certificate_data') }}" class="account-card account-card--link apple-reveal{% if not certificate_data_complete %} account-card--attention{% endif %}">
+          <h3 class="account-card__title">Дані для сертифіката</h3>
+          <p class="account-card__text">
+            {% if certificate_data_complete %}Заповнено. Можна оновити за потреби.{% else %}Не заповнено — потрібно для балів БПР і сертифіката (МОЗ №725).{% endif %}
+          </p>
+        </a>
         <a href="{{ url_for('auth.settings') }}" class="account-card account-card--link apple-reveal">
           <h3 class="account-card__title">Налаштування</h3>
           <p class="account-card__text">Персоналізація інтерфейсу</p>

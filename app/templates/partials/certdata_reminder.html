@@ -1,0 +1,18 @@
+{# Плаваюче нагадування "заповніть дані для сертифіката" (МОЗ №725 п.13).
+   Рендериться коли show_certdata_reminder (context processor): авторизований
+   користувач з активною реєстрацією і незаповненою анкетою. Закриття --
+   certdata-reminder.js (sessionStorage: покажеться знову наступного разу). #}
+{% if show_certdata_reminder %}
+<aside class="certdata-reminder" id="certdata-reminder" aria-label="Нагадування про дані для сертифіката">
+  <button type="button" class="certdata-reminder__close" id="certdata-reminder-close" aria-label="Закрити">&times;</button>
+  <p class="certdata-reminder__title">
+    <span class="certdata-reminder__dot" aria-hidden="true"></span>
+    Дані для сертифіката не заповнені
+  </p>
+  <p class="certdata-reminder__text">
+    Без анкети (МОЗ №725) ми не зможемо нарахувати бали БПР і видати
+    сертифікат за ваш курс.
+  </p>
+  <a href="{{ url_for('auth.certificate_data') }}" class="certdata-reminder__btn">Заповнити анкету</a>
+</aside>
+{% endif %}

@@ -71,6 +71,22 @@
     </div>
   {% endif %}
 
+  {# ===== Нагадування: дані для сертифіката (МОЗ №725) ===== #}
+  {% if not certificate_data_complete %}
+  <aside class="reg-certdata-reminder" role="note">
+    <div class="reg-certdata-reminder__icon" aria-hidden="true">!</div>
+    <div class="reg-certdata-reminder__body">
+      <p class="reg-certdata-reminder__title">Заповніть дані для сертифіката</p>
+      <p class="reg-certdata-reminder__text">
+        Щоб отримати сертифікат з балами БПР після курсу, заповніть коротку
+        анкету (вимоги МОЗ №725, п. 13). Це займе 2–3 хвилини і діє для всіх
+        ваших курсів.
+      </p>
+      <a href="{{ url_for('auth.certificate_data') }}" class="apple-btn apple-btn--primary reg-certdata-reminder__btn">Заповнити анкету</a>
+    </div>
+  </aside>
+  {% endif %}
+
   {# ===== Способи оплати (LiqPay + рахунок) ===== #}
   {% if _needs_pay %}
     {% if reg.payment_method == 'invoice' %}
