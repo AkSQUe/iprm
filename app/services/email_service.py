@@ -643,6 +643,28 @@ class EmailService:
         )
 
     @staticmethod
+    def send_b2b_request_notification(b2b_request):
+        """Повідомити адмінів про нову B2B-заявку (корпоративне навчання).
+
+        Перевикористовує event_type/тригер 'course_request' (той самий
+        список отримувачів і дозволене значення CHECK у email_logs) --
+        семантично це теж запит на навчання.
+        """
+        from app.models.site_settings import SiteSettings
+        settings = SiteSettings.get()
+        base = (settings.website_url or '').rstrip('/')
+        admin_url = f'{base}/admin/b2b-requests' if base else '/admin/b2b-requests'
+        return EmailService.notify_admins_with_template(
+            event_type='course_request',
+            subject=f'Нова B2B-заявка: {b2b_request.full_name} ({b2b_request.team_size_label} фахівців)',
+            template_name='b2b_request_notification',
+            context={
+                'request_obj': b2b_request,
+                'admin_url': admin_url,
+            },
+        )
+
+    @staticmethod
     def send_blog_comment_notification(comment):
         """Повідомити адміна про новий коментар у блозі (на модерації).
 
@@ -826,25 +848,6 @@ class EmailService:
             'event_location': getattr(instance, 'location', None) if instance else None,
             'items': list(reservation.items),
         }
-
-    @staticmethod
-    def send_materials_reserved(reservation, instance):
-        """Notify the event trainer about the reserved materials list. Best-effort;
-        returns None if the trainer has no email."""
-        trainer = getattr(instance, 'effective_trainer', None) if instance else None
-        email = getattr(trainer, 'email', None) if trainer else None
-        if not email:
-            return None
-        ctx = EmailService._materials_context(reservation, instance)
-        ctx['trainer_name'] = (getattr(trainer, 'full_name', None)
-                               or getattr(trainer, 'name', None))
-        return EmailService.send_email(
-            to=email,
-            subject=f'Матеріали для заходу: {ctx["event_title"]}',
-            template_name='materials_reserved',
-            context=ctx,
-            trigger='materials',
-        )
 
     @staticmethod
     def send_materials_actuals_reminder(reservation, instance):

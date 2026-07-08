@@ -18,6 +18,10 @@
         {{ icon('inbox') }}
         Запити на курси
       </a>
+      <a href="{{ url_for('admin.b2b_requests_list') }}" class="admin-sidebar__link{% if ep in ('admin.b2b_requests_list', 'admin.b2b_request_update') %} admin-sidebar__link--active{% endif %}">
+        {{ icon('group') }}
+        B2B-заявки
+      </a>
       <a href="{{ url_for('admin.trainers_list') }}" class="admin-sidebar__link{% if ep in ('admin.trainers_list', 'admin.trainer_create', 'admin.trainer_edit', 'admin.trainer_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('school') }}
         Тренери

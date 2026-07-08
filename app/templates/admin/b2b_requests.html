@@ -1,0 +1,87 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}B2B-заявки | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">B2B-заявки</span>
+      </div>
+      <h1 class="admin-hero__title">B2B-заявки</h1>
+      <p class="admin-hero__subtitle">Корпоративне навчання з блоку «Для команд і клінік». Нових: {{ new_count }}</p>
+    </div>
+    <div class="admin-hero__actions">
+      <div class="admin-filter-chips">
+        <a href="{{ url_for('admin.b2b_requests_list') }}" class="btn-admin btn-admin--sm {% if not active_status %}btn-admin--primary{% else %}btn-admin--secondary{% endif %}">Усі</a>
+        {% for code, label in [('new', 'Нові'), ('contacted', 'На зв\'язку'), ('closed', 'Закриті'), ('dismissed', 'Відхилені')] %}
+        <a href="{{ url_for('admin.b2b_requests_list', status=code) }}" class="btn-admin btn-admin--sm {% if active_status == code %}btn-admin--primary{% else %}btn-admin--secondary{% endif %}">{{ label }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {% if requests %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Отримано</th>
+        <th>Контактна особа</th>
+        <th>Телефон</th>
+        <th>Email</th>
+        <th>Фахівців</th>
+        <th>Статус / нотатки</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for req in requests %}
+      <tr>
+        <td>{{ req.created_at.strftime('%d.%m.%Y %H:%M') if req.created_at else '---' }}</td>
+        <td><strong>{{ req.full_name }}</strong></td>
+        <td><a href="tel:{{ req.phone }}">{{ req.phone }}</a></td>
+        <td><a href="mailto:{{ req.email }}">{{ req.email }}</a></td>
+        <td>{{ req.team_size_label }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin.b2b_request_update', request_id=req.id, status=active_status) }}" class="admin-inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="status" class="form-input form-input--sm">
+              {% for code, label in req.STATUSES %}
+              <option value="{{ code }}"{% if req.status == code %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <input type="text" name="admin_notes" class="form-input form-input--sm" placeholder="Нотатки"
+                   value="{{ req.admin_notes or '' }}" maxlength="1000">
+            <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Зберегти</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="admin-empty">
+    {{ icon('group', cls='admin-empty__icon') }}
+    <h3 class="admin-empty__title">Заявок поки немає</h3>
+    <p>Ліди з форми «Отримати корпоративні умови» з'являться тут</p>
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}

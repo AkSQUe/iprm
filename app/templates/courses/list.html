@@ -326,6 +326,62 @@
     </div>
   </section>
 
+  <!-- ===== B2B: ДЛЯ КОМАНД І КЛІНІК ===== -->
+  <section id="b2b" class="iprm-section" aria-labelledby="b2b-title">
+    <div class="iprm-section__inner">
+      <div class="iprm-b2b apple-reveal">
+        <div class="iprm-b2b__info">
+          <h2 id="b2b-title" class="iprm-section__title iprm-b2b__title">Навчи команду — підсиль <span class="apple-gradient-text">практику</span></h2>
+          <p class="iprm-b2b__lead">Корпоративне навчання від трьох фахівців допомагає розширити перелік послуг, вирівняти якість роботи та швидше впровадити нові протоколи.</p>
+          <ul class="iprm-b2b__benefits">
+            <li><strong>20% знижки</strong> для груп від трьох фахівців</li>
+            <li>онлайн, офлайн або гібридний формат</li>
+            <li>програма під напрям клініки, салону або кабінету</li>
+          </ul>
+        </div>
+        <form class="iprm-b2b__form" method="POST" action="{{ url_for('courses.b2b_request') }}"
+              data-validate data-single-submit data-recaptcha-action="b2b_request" data-ga-event="generate_lead">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <h3 class="iprm-b2b__form-title">Отримати корпоративні умови</h3>
+          <div class="iprm-b2b__honeypot" aria-hidden="true">
+            <label for="b2b-website">Не заповнюйте це поле</label>
+            <input type="text" name="website" id="b2b-website" tabindex="-1" autocomplete="off">
+          </div>
+          <div class="iprm-b2b__form-row">
+            <div class="form-group">
+              <label for="b2b-first-name">Ім'я <span class="required">*</span></label>
+              <input type="text" name="first_name" id="b2b-first-name" class="form-input" required maxlength="120" autocomplete="given-name">
+            </div>
+            <div class="form-group">
+              <label for="b2b-last-name">Прізвище <span class="required">*</span></label>
+              <input type="text" name="last_name" id="b2b-last-name" class="form-input" required maxlength="120" autocomplete="family-name">
+            </div>
+          </div>
+          <div class="iprm-b2b__form-row">
+            <div class="form-group">
+              <label for="b2b-phone">Телефон <span class="required">*</span></label>
+              <input type="tel" name="phone" id="b2b-phone" class="form-input" required placeholder="+380..." maxlength="20" autocomplete="tel">
+            </div>
+            <div class="form-group">
+              <label for="b2b-email">Email <span class="required">*</span></label>
+              <input type="email" name="email" id="b2b-email" class="form-input" required maxlength="254" autocomplete="email">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="b2b-team-size">Кількість фахівців <span class="required">*</span></label>
+            <select name="team_size" id="b2b-team-size" class="form-input" required>
+              <option value="" disabled selected>Оберіть...</option>
+              <option value="3-5">3&ndash;5</option>
+              <option value="6-10">6&ndash;10</option>
+              <option value="10+">Понад 10</option>
+            </select>
+          </div>
+          <button type="submit" class="apple-btn apple-btn--primary">Обговорити навчання</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== WHY US ===== -->
   <section class="iprm-section" aria-labelledby="why-us-title">
     <div class="iprm-section__inner">

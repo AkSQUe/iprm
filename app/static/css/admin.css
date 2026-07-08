@@ -981,6 +981,24 @@
   flex: 1;
 }
 
+/* Рядок фільтр-чипів у hero (статуси списків) */
+.admin-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Компактна inline-форма в комірці таблиці (статус + нотатки + зберегти) */
+.admin-inline-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-inline-form .form-input--sm {
+  min-width: 0;
+}
+
 /* ========== RESPONSIVE ========== */
 
 /* Планшет: бічна навігація стає горизонтальною стрічкою, hero -- у колонку.

@@ -11,6 +11,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from app.courses import courses_bp
 from app.extensions import db, limiter
+from app.models.b2b_request import B2BRequest
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest
@@ -468,6 +469,68 @@ def _validate_request_email(raw):
     except EmailNotValidError:
         return None
     return result.normalized
+
+
+@courses_bp.route('/b2b-request', methods=['POST'])
+@limiter.limit('5 per hour; 20 per day', methods=['POST'])
+def b2b_request():
+    """Лід-форма корпоративного навчання (блок "Для команд і клінік")."""
+    back = url_for('courses.course_list') + '#b2b'
+
+    # Honeypot: приховане поле "website"; якщо заповнено -- спам-бот.
+    if (request.form.get('website') or '').strip():
+        current_app.logger.info('b2b_request honeypot triggered')
+        return redirect(back + '-sent')
+
+    if not verify_recaptcha(action='b2b_request'):
+        flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+        return redirect(back)
+
+    first_name = (request.form.get('first_name') or '').strip()
+    last_name = (request.form.get('last_name') or '').strip()
+    phone = (request.form.get('phone') or '').strip()
+    team_size = (request.form.get('team_size') or '').strip()
+    email = _validate_request_email((request.form.get('email') or '').strip())
+
+    if not first_name or not last_name or len(first_name) > 120 or len(last_name) > 120:
+        flash('Вкажіть ім\'я та прізвище', 'error')
+        return redirect(back)
+    if not phone or len(phone) > _REQUEST_PHONE_MAX:
+        flash('Вкажіть коректний номер телефону', 'error')
+        return redirect(back)
+    if not email:
+        flash('Вкажіть валідний email', 'error')
+        return redirect(back)
+    if team_size not in {code for code, _ in B2BRequest.TEAM_SIZES}:
+        flash('Оберіть кількість фахівців', 'error')
+        return redirect(back)
+
+    req = B2BRequest(
+        first_name=first_name,
+        last_name=last_name,
+        phone=phone,
+        email=email,
+        team_size=team_size,
+    )
+    db.session.add(req)
+    try:
+        db.session.commit()
+        flash('Дякуємо! Ми зв\'яжемось з вами щодо корпоративних умов.', 'success')
+        # Best-effort admin-нотифікація: заявку вже збережено, збій SMTP
+        # не має впливати на UX.
+        from app.services.email_service import EmailService
+        try:
+            EmailService.send_b2b_request_notification(req)
+        except Exception:
+            current_app.logger.exception(
+                'Failed to send admin notification for B2BRequest #%s', req.id,
+            )
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception('Failed to save B2BRequest email=%s', email)
+        flash('Помилка при надсиланні заявки. Спробуйте ще раз.', 'error')
+
+    return redirect(back + '-sent')
 
 
 @courses_bp.route('/<slug>/request', methods=['POST'])
