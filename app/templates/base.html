@@ -112,6 +112,7 @@
   <script defer src="{{ url_for('static', filename='js/copy-to-clipboard.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/confirm-action.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/reading-progress.js') }}?v={{ assets_version }}"></script>
+  {% if site_settings.effective_google_analytics_id %}<script defer src="{{ url_for('static', filename='js/ga-events.js') }}?v={{ assets_version }}"></script>{% endif %}
   {% if upcoming_events %}<script defer src="{{ url_for('static', filename='js/upcoming-events.js') }}?v={{ assets_version }}"></script>{% endif %}
   {% include 'partials/_google_onetap.html' %}
   {% block extra_scripts %}{% endblock %}

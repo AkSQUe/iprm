@@ -23,7 +23,7 @@
 
     {# Flash → toast (base.html) #}
 
-    <form method="POST" action="{{ url_for('auth.register') }}" data-validate data-recaptcha-action="register">
+    <form method="POST" action="{{ url_for('auth.register') }}" data-validate data-recaptcha-action="register" data-ga-event="sign_up">
       {{ form.hidden_tag() }}
 
       <div class="auth-card__row">
