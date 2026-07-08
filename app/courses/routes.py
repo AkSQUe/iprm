@@ -31,6 +31,8 @@ LEGACY_REDIRECTS = {
     'detail': 'plazmoterapiya-v-ginekologii',
     'stomatology': 'plazmoterapiya-v-stomatologii',
     'orthopedics': 'plazmoterapiya-v-ortopedii',
+    # Злиття NRP онлайн+офлайн в один курс (nrp_merge_20260708).
+    'nrp-neuro-relax-protocol-offline': 'nrp-neuro-relax-protocol',
 }
 
 
