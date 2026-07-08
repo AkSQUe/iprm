@@ -70,6 +70,12 @@ class CourseInstance(TimestampMixin, db.Model):
 
     course = db.relationship('Course', back_populates='instances')
     trainer = db.relationship('Trainer', foreign_keys=[trainer_id])
+    tariffs = db.relationship(
+        'InstanceTariff',
+        back_populates='instance',
+        order_by='InstanceTariff.sort_order',
+        cascade='all, delete-orphan',
+    )
     registrations = db.relationship(
         'EventRegistration',
         foreign_keys='EventRegistration.instance_id',
@@ -124,13 +130,29 @@ class CourseInstance(TimestampMixin, db.Model):
         )
 
     @property
+    def active_tariffs(self):
+        """Активні тарифи проведення у порядку sort_order."""
+        return [t for t in self.tariffs if t.is_active]
+
+    @property
     def effective_price(self):
+        """Фактична ціна: мінімальний активний тариф ("від N"), інакше
+        перевизначення проведення, інакше базова ціна курсу."""
+        tariffs = self.active_tariffs
+        if tariffs:
+            return min(t.price for t in tariffs)
         if self.price is not None:
             return self.price
         if self.course is None:
             self._warn_orphan('price')
             return 0
         return self.course.base_price
+
+    @property
+    def price_is_from(self):
+        """True, коли effective_price -- це "від N" (кілька різних тарифів)."""
+        prices = {t.price for t in self.active_tariffs}
+        return len(prices) > 1
 
     @property
     def effective_cpd_points(self):

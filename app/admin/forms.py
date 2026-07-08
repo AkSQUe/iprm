@@ -386,6 +386,31 @@ class CourseForm(FlaskForm):
     )
 
 
+class InstanceTariffForm(FlaskForm):
+    """Тариф (опція участі) проведення: назва, склад, ручна ціна."""
+    name = StringField(
+        'Назва тарифу',
+        validators=[DataRequired(message='Назва обов\'язкова'), Length(max=100)],
+        description='Напр. Онлайн, Онлайн+, Практикум, Практикум з менторством.',
+    )
+    price = DecimalField(
+        'Ціна (UAH)',
+        validators=[InputRequired(message='Вкажіть ціну'), NumberRange(min=0)],
+    )
+    description = TextAreaField(
+        'Що входить',
+        validators=[Optional()],
+        description='Один пункт на рядок (лекція, запис, сертифікат, чат з тренером...).',
+    )
+    sort_order = IntegerField(
+        'Порядок',
+        default=0,
+        validators=[Optional(), NumberRange(min=-1000, max=1000)],
+        description='Менше число — лівіше/вище. Рекомендовано: від економ до преміум.',
+    )
+    is_active = BooleanField('Активний (показується і доступний для вибору)', default=True)
+
+
 class CourseInstanceForm(FlaskForm):
     """Проведення: коли, де, в якому форматі."""
     course_id = SelectField(

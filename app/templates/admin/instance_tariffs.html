@@ -1,0 +1,143 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Тарифи проведення | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.instances_list') }}" class="admin-breadcrumb__link">Розклад</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <a href="{{ url_for('admin.instance_edit', instance_id=instance.id) }}" class="admin-breadcrumb__link">Проведення</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Тарифи</span>
+      </div>
+      <h1 class="admin-hero__title">Тарифи проведення</h1>
+      <p class="admin-hero__subtitle">
+        {{ instance.course.title if instance.course else '' }}
+        {% if instance.start_date %} &middot; {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
+        &middot; {{ instance.format_label }}
+      </p>
+    </div>
+    <div class="admin-hero__actions">
+      <a href="{{ url_for('admin.instance_edit', instance_id=instance.id) }}" class="btn-admin btn-admin--secondary">Назад до проведення</a>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {% if instance.tariffs %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Порядок</th>
+        <th>Назва</th>
+        <th>Ціна</th>
+        <th>Що входить</th>
+        <th>Активний</th>
+        <th>Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tariff in instance.tariffs %}
+      <tr>
+        <td>{{ tariff.sort_order }}</td>
+        <td><strong>{{ tariff.name }}</strong></td>
+        <td>{{ tariff.price | int }} &#8372;</td>
+        <td>
+          {% if tariff.description_items %}
+          <ul class="admin-tariff-items">
+            {% for item in tariff.description_items %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+          {% else %}---{% endif %}
+        </td>
+        <td>
+          {% if tariff.is_active %}<span class="badge badge--active">Так</span>
+          {% else %}<span class="badge badge--draft">Ні</span>{% endif %}
+        </td>
+        <td>
+          <div class="admin-table__actions">
+            <a href="{{ url_for('admin.instance_tariff_edit', tariff_id=tariff.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
+            <form method="POST" action="{{ url_for('admin.instance_tariff_delete', tariff_id=tariff.id) }}" data-confirm="Видалити тариф «{{ tariff.name }}»?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити">{{ icon('delete') }}</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="admin-empty">
+    {{ icon('bolt', cls='admin-empty__icon') }}
+    <h3 class="admin-empty__title">Тарифів ще немає</h3>
+    <p>Без тарифів діє звичайна ціна проведення ({{ instance.effective_price | int }} &#8372;). Рекомендована вилка: Онлайн → Онлайн+ → Практикум → Практикум з менторством.</p>
+  </div>
+  {% endif %}
+
+  <form method="POST" class="admin-form" action="{% if edit_tariff %}{{ url_for('admin.instance_tariff_edit', tariff_id=edit_tariff.id) }}{% else %}{{ url_for('admin.instance_tariffs', instance_id=instance.id) }}{% endif %}">
+    {{ form.hidden_tag() }}
+    {% include 'admin/partials/_form_errors.html' %}
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">{% if edit_tariff %}Редагувати тариф «{{ edit_tariff.name }}»{% else %}Додати тариф{% endif %}</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group">
+          <label for="tariff-name">Назва тарифу <span class="required">*</span></label>
+          {{ form.name(class="form-input" + (" is-invalid" if form.name.errors else ""), id="tariff-name", placeholder="Онлайн / Онлайн+ / Практикум / Практикум з менторством") }}
+          <div class="form-hint">{{ form.name.description }}</div>
+          {% for error in form.name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="tariff-price">Ціна (UAH) <span class="required">*</span></label>
+          {{ form.price(class="form-input" + (" is-invalid" if form.price.errors else ""), id="tariff-price", type="number", step="1", min="0") }}
+          {% for error in form.price.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="tariff-description">Що входить</label>
+          {{ form.description(class="form-input", id="tariff-description", rows="4", placeholder="Лекція наживо\nЗапис курсу\nСертифікат з балами БПР\nЧек-лист/шпаргалка") }}
+          <div class="form-hint">{{ form.description.description }}</div>
+        </div>
+
+        <div class="form-group">
+          <label for="tariff-sort">Порядок</label>
+          {{ form.sort_order(class="form-input", id="tariff-sort", type="number") }}
+          <div class="form-hint">{{ form.sort_order.description }}</div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-checkbox">
+            {{ form.is_active(id="tariff-active") }}
+            <label for="tariff-active">Активний</label>
+          </div>
+        </div>
+
+      </div>
+      <div class="admin-form__actions">
+        <button type="submit" class="btn-admin btn-admin--primary">{% if edit_tariff %}Зберегти зміни{% else %}Додати тариф{% endif %}</button>
+        {% if edit_tariff %}
+        <a href="{{ url_for('admin.instance_tariffs', instance_id=instance.id) }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+        {% endif %}
+      </div>
+    </div>
+  </form>
+
+  </div>
+</div>
+{% endblock %}

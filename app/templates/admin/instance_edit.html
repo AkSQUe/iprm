@@ -31,6 +31,9 @@
     </div>
     <div class="admin-hero__actions">
       {% if instance %}
+      <a href="{{ url_for('admin.instance_tariffs', instance_id=instance.id) }}" class="btn-admin btn-admin--secondary">
+        {{ icon('bolt') }} Тарифи ({{ instance.tariffs | length }})
+      </a>
       <a href="{{ url_for('admin.instance_materials', instance_id=instance.id) }}" class="btn-admin btn-admin--secondary">
         {{ icon('widgets') }} Витратні матеріали
       </a>
