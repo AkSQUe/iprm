@@ -6,7 +6,7 @@ from wtforms import (
     DecimalField, BooleanField, DateField, DateTimeLocalField, HiddenField
 )
 from wtforms.validators import (
-    DataRequired, Length, Optional, NumberRange, Email, URL,
+    DataRequired, InputRequired, Length, Optional, NumberRange, Email, URL,
     ValidationError, Regexp,
 )
 from app.utils import (
@@ -145,6 +145,13 @@ class SiteSettingsForm(FlaskForm):
     show_upcoming_events = BooleanField(
         'Показувати блок «найближчі заходи»',
         description='Плаваючий блок із 2 найближчими майбутніми заходами на публічних сторінках.',
+    )
+    seats_low_threshold = IntegerField(
+        'Поріг «мало місць»',
+        default=5,
+        validators=[InputRequired(message='Вкажіть поріг (0 вимикає підсвітку)'),
+                    NumberRange(min=0, max=1000)],
+        description='Коли вільних місць стільки або менше — лічильник підсвічується попередженням. 0 — підсвітку вимкнено.',
     )
 
     # Contacts

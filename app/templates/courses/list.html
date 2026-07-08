@@ -132,6 +132,10 @@
               {% if inst.effective_price and inst.effective_price > 0 %}
               <span class="iprm-schedule__price">{{ inst.effective_price | int }} &#8372;</span>
               {% endif %}
+              {% set remaining = seats_left_map.get(inst.id) if is_open else None %}
+              {% if remaining is not none %}
+              <span class="iprm-schedule__tag iprm-schedule__tag--seats{% if site_settings.seats_low_threshold and remaining <= site_settings.seats_low_threshold %} iprm-schedule__tag--warning{% endif %}">Залишилось {{ remaining }} {{ remaining | uk_plural('місце', 'місця', 'місць') }}</span>
+              {% endif %}
             </div>
           </div>
           <div class="iprm-schedule__action">

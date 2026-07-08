@@ -258,6 +258,7 @@ def course_list():
         schedule_events=schedule_events,
         events_jsonld=events_jsonld,
         open_instance_ids=open_ids,
+        seats_left_map=capacity,
     )
 
 
@@ -346,7 +347,8 @@ def course_by_slug(slug):
         reverse=True,
     )
 
-    open_ids = _open_instance_ids([course.id])
+    capacity = _capacity_map([course.id])
+    open_ids = _open_from_capacity(capacity)
 
     return render_template(
         'courses/detail.html',
@@ -355,6 +357,7 @@ def course_by_slug(slug):
         upcoming_instances=upcoming_instances,
         past_instances=past_instances,
         open_instance_ids=open_ids,
+        seats_left_map=capacity,
     )
 
 

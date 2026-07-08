@@ -724,7 +724,13 @@ button.iprm-tag:focus-visible {
   text-decoration: none;
 }
 
-/* Попередження про малу кількість місць */
+/* Лічильник вільних місць */
+.iprm-schedule__tag--seats {
+  background: var(--iprm-bg-gray, #f5f5f7);
+  color: var(--apple-gray-dark);
+}
+
+/* Попередження про малу кількість місць (перекриває --seats) */
 .iprm-schedule__tag--warning {
   background: #fff4e5;
   color: #b25c00;

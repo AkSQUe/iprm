@@ -149,7 +149,18 @@
               <span class="iprm-stat-card__label">{{ course.program_blocks|length | uk_plural('тематичний блок', 'тематичні блоки', 'тематичних блоків') }}</span>
             </div>
             {% endif %}
-            {% if course.max_participants %}
+            {% set ns = namespace(seats_nearest=None) %}
+            {% for inst in upcoming_instances %}
+              {% if ns.seats_nearest is none and inst.id in open_instance_ids and seats_left_map.get(inst.id) is not none %}
+                {% set ns.seats_nearest = seats_left_map.get(inst.id) %}
+              {% endif %}
+            {% endfor %}
+            {% if ns.seats_nearest is not none %}
+            <div class="iprm-stat-card">
+              <span class="iprm-stat-card__value">{{ ns.seats_nearest }}</span>
+              <span class="iprm-stat-card__label">{{ ns.seats_nearest | uk_plural('вільне місце', 'вільні місця', 'вільних місць') }}</span>
+            </div>
+            {% elif course.max_participants %}
             <div class="iprm-stat-card">
               <span class="iprm-stat-card__value">до {{ course.max_participants }}</span>
               <span class="iprm-stat-card__label">учасників у групі</span>
@@ -213,10 +224,7 @@
       <div class="iprm-schedule">
         {% for inst in upcoming_instances %}
         {% set is_open = inst.id in open_instance_ids %}
-        {% set remaining = None %}
-        {% if is_open and inst.effective_max_participants %}
-          {% set remaining = inst.effective_max_participants - inst.registration_count %}
-        {% endif %}
+        {% set remaining = seats_left_map.get(inst.id) if is_open else None %}
         <div class="iprm-schedule__item apple-reveal">
           <div class="iprm-schedule__date">
             {% if inst.start_date %}
@@ -232,8 +240,8 @@
               {{ location_badge(inst.event_format, inst.location) }}
               {% if inst.effective_cpd_points %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}</span>{% endif %}
               {% if inst.effective_price and inst.effective_price > 0 %}<span class="iprm-schedule__price">{{ inst.effective_price | int }} &#8372;</span>{% endif %}
-              {% if remaining is not none and remaining > 0 and remaining <= 5 %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--warning">Залишилось {{ remaining }} {{ remaining | uk_plural('місце', 'місця', 'місць') }}</span>
+              {% if remaining is not none %}
+              <span class="iprm-schedule__tag iprm-schedule__tag--seats{% if site_settings.seats_low_threshold and remaining <= site_settings.seats_low_threshold %} iprm-schedule__tag--warning{% endif %}">Залишилось {{ remaining }} {{ remaining | uk_plural('місце', 'місця', 'місць') }}</span>
               {% endif %}
             </div>
           </div>

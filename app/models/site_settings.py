@@ -105,6 +105,10 @@ class SiteSettings(TimestampMixin, db.Model):
     # майбутні проведення). Користувач може закрити (стан -- у localStorage).
     show_upcoming_events = db.Column(db.Boolean, default=False, nullable=False)
 
+    # Поріг "мало місць": коли вільних місць на проведенні <= порога,
+    # лічильник "Залишилось N місць" підсвічується попереджувальним стилем.
+    seats_low_threshold = db.Column(db.Integer, default=5, nullable=False)
+
     # Google OAuth 2.0 (sign-in). Client ID -- публічний (видно у redirect-
     # URI), client_secret -- Fernet-зашифрований. Якщо обидва порожні --
     # OAuth вимкнено (кнопка "Continue with Google" не показується).
