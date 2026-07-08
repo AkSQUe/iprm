@@ -146,6 +146,13 @@ class SiteSettingsForm(FlaskForm):
         'Показувати блок «найближчі заходи»',
         description='Плаваючий блок із 2 найближчими майбутніми заходами на публічних сторінках.',
     )
+    upcoming_events_style = SelectField(
+        'Вигляд блоку «найближчі заходи»',
+        choices=[('popup', 'Плаваючий блок (знизу зліва)'),
+                 ('bar', 'Закріплена плашка (під шапкою)')],
+        validators=[Optional()],
+        description='Плашка показує події одним рядком на всю ширину і теж закривається відвідувачем.',
+    )
     seats_low_threshold = IntegerField(
         'Поріг «мало місць»',
         default=5,

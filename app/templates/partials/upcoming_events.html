@@ -1,7 +1,27 @@
-{# Плаваючий блок "найближчі заходи" (2 шт.). Рендериться лише коли
-   увімкнено в Налаштуваннях і є майбутні заходи (див. inject_upcoming_events).
+{# Блок "найближчі заходи" (2 шт.). Рендериться лише коли увімкнено в
+   Налаштуваннях і є майбутні заходи (див. inject_upcoming_events).
+   Вигляд керується site_settings.upcoming_events_style: 'popup' (плаваючий
+   блок знизу зліва) або 'bar' (закріплена плашка під шапкою).
    Закриття -- через upcoming-events.js (стан у localStorage за підписом id). #}
 {% if upcoming_events %}
+{% if site_settings.upcoming_events_style == 'bar' %}
+<aside class="upcoming-bar" id="upcoming-events"
+       data-signature="{{ upcoming_events | map(attribute='id') | join('-') }}"
+       aria-label="Найближчі заходи">
+  <div class="upcoming-bar__inner">
+    <span class="upcoming-bar__label">Найближчі події:</span>
+    {% for ev in upcoming_events %}
+    <a class="upcoming-bar__item" href="{{ ev.url }}">
+      <span class="upcoming-bar__when">{{ ev.when }}</span>
+      <span class="upcoming-bar__title">{{ ev.title }}</span>
+      {% if ev.place %}<span class="upcoming-bar__place">{{ ev.place }}</span>{% endif %}
+    </a>
+    {% endfor %}
+    <button type="button" class="upcoming-bar__close" id="upcoming-events-close"
+            aria-label="Закрити">&times;</button>
+  </div>
+</aside>
+{% else %}
 <aside class="upcoming-events" id="upcoming-events"
        data-signature="{{ upcoming_events | map(attribute='id') | join('-') }}"
        aria-label="Найближчі заходи">
@@ -22,4 +42,5 @@
     {% endfor %}
   </ul>
 </aside>
+{% endif %}
 {% endif %}

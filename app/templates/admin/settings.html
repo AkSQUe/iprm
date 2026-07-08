@@ -175,6 +175,12 @@
         </div>
 
         <div class="form-group">
+          <label for="upcoming_events_style">{{ form.upcoming_events_style.label.text }}</label>
+          {{ form.upcoming_events_style(class="form-input", id="upcoming_events_style") }}
+          <small class="form-hint">{{ form.upcoming_events_style.description }}</small>
+        </div>
+
+        <div class="form-group">
           <label for="seats_low_threshold">{{ form.seats_low_threshold.label.text }}</label>
           {{ form.seats_low_threshold(class="form-input", id="seats_low_threshold", type="number", min="0", max="1000") }}
           <small class="form-hint">{{ form.seats_low_threshold.description }}</small>

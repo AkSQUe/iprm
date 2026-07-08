@@ -105,6 +105,10 @@ class SiteSettings(TimestampMixin, db.Model):
     # майбутні проведення). Користувач може закрити (стан -- у localStorage).
     show_upcoming_events = db.Column(db.Boolean, default=False, nullable=False)
 
+    # Вигляд блоку "найближчі заходи": 'popup' (плаваючий знизу зліва) або
+    # 'bar' (закріплена плашка під шапкою на всю ширину).
+    upcoming_events_style = db.Column(db.String(10), default='popup', nullable=False)
+
     # Поріг "мало місць": коли вільних місць на проведенні <= порога,
     # лічильник "Залишилось N місць" підсвічується попереджувальним стилем.
     seats_low_threshold = db.Column(db.Integer, default=5, nullable=False)

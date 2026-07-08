@@ -91,6 +91,119 @@
 
 .upcoming-events--hidden { display: none; }
 
+/* ===== Варіант "bar": закріплена плашка під шапкою на всю ширину =====
+   Активується site_settings.upcoming_events_style == 'bar'. Місце під плашку
+   резервує body.has-upcoming-bar (клас знімається JS-ом після закриття). */
+body.has-upcoming-bar {
+  padding-top: 96px;
+}
+
+.upcoming-bar {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  min-height: 44px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--iprm-border, rgba(0, 0, 0, 0.06));
+}
+
+.upcoming-bar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f0a02a 0%, #b85a7e 55%, #7055a4 100%);
+}
+
+.upcoming-bar__inner {
+  max-width: var(--iprm-max-content, 1200px);
+  margin: 0 auto;
+  padding: 0 24px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px 20px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.upcoming-bar__label {
+  font-family: var(--iprm-font, sans-serif);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  color: var(--iprm-text, #1d1d1f);
+  flex-shrink: 0;
+}
+
+.upcoming-bar__item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--iprm-font, sans-serif);
+  font-size: 0.8125rem;
+  text-decoration: none;
+  color: var(--iprm-text, #1d1d1f);
+}
+
+.upcoming-bar__when {
+  font-weight: 600;
+  color: var(--iprm-accent, #7055a4);
+  flex-shrink: 0;
+}
+
+.upcoming-bar__title {
+  font-weight: 500;
+  transition: color var(--iprm-transition, 0.25s ease);
+}
+.upcoming-bar__item:hover .upcoming-bar__title {
+  color: var(--iprm-accent, #7055a4);
+}
+
+.upcoming-bar__place {
+  color: var(--iprm-text-light, #86868b);
+}
+.upcoming-bar__place::before {
+  content: "·";
+  margin-right: 8px;
+  color: var(--iprm-gray-light, #d2d2d7);
+}
+
+.upcoming-bar__close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--iprm-text-light, #86868b);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  margin-left: auto;
+  border-radius: 50%;
+  transition: color var(--iprm-transition, 0.25s ease);
+}
+.upcoming-bar__close:hover { color: var(--iprm-text, #1d1d1f); }
+
+@media (max-width: 640px) {
+  .upcoming-bar__inner {
+    padding: 6px 16px;
+  }
+
+  /* На мобільному показуємо лише першу подію, щоб плашка лишалась одним рядком */
+  .upcoming-bar__item + .upcoming-bar__item {
+    display: none;
+  }
+
+  .upcoming-bar__place {
+    display: none;
+  }
+}
+
 @keyframes upcoming-in {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }

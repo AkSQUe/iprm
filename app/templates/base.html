@@ -66,7 +66,7 @@
   {% block recaptcha %}{% endblock %}
   {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body{% if upcoming_events and site_settings.upcoming_events_style == 'bar' %} class="has-upcoming-bar"{% endif %}>
 
   {# Flash-повідомлення → toast (single source of truth). Споживаємо flashes
      ТУТ, до рендеру {% block content %}, щоб уникнути подвійного показу.

@@ -10,9 +10,15 @@
   }
   var signature = el.getAttribute('data-signature') || '';
 
+  function hide() {
+    el.classList.add('upcoming-events--hidden');
+    /* Варіант "bar" резервує місце падінгом body -- звільняємо його */
+    document.body.classList.remove('has-upcoming-bar');
+  }
+
   try {
     if (window.localStorage && localStorage.getItem(KEY) === signature) {
-      el.classList.add('upcoming-events--hidden');
+      hide();
       return;
     }
   } catch (e) {
@@ -22,7 +28,7 @@
   var closeBtn = document.getElementById('upcoming-events-close');
   if (closeBtn) {
     closeBtn.addEventListener('click', function () {
-      el.classList.add('upcoming-events--hidden');
+      hide();
       try {
         if (window.localStorage) {
           localStorage.setItem(KEY, signature);
