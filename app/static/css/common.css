@@ -1068,12 +1068,6 @@ select.badge-select:disabled {
   border: 1px solid #fed7aa;
 }
 
-.iprm-loc-badge--offline.iprm-loc-badge--tbd {
-  background: var(--iprm-warning-bg, #fef3c7);
-  color: #92400e;
-  border-color: #fde68a;
-}
-
 /* Онлайн -- спокійний блакитний */
 .iprm-loc-badge--online {
   background: var(--iprm-accent-light, #ede9f6);

@@ -385,7 +385,7 @@ def event_ics(instance_id):
     dtend_date = end.date() + timedelta(days=1)
 
     course_url = url_for('courses.course_by_slug', slug=inst.course.slug, _external=True)
-    location = 'Онлайн' if inst.event_format == 'online' else (inst.location or 'Уточнюється')
+    location = 'Онлайн' if inst.event_format == 'online' else (inst.location or '')
     description = inst.course.short_description or inst.course.subtitle or ''
     description = (description + '\n' + course_url).strip()
 
@@ -402,11 +402,12 @@ def event_ics(instance_id):
         'DTEND;VALUE=DATE:' + dtend_date.strftime('%Y%m%d'),
         'SUMMARY:' + _ics_escape(inst.course.title),
         'DESCRIPTION:' + _ics_escape(description),
-        'LOCATION:' + _ics_escape(location),
         'URL:' + course_url,
         'END:VEVENT',
         'END:VCALENDAR',
     ]
+    if location:
+        lines.insert(-2, 'LOCATION:' + _ics_escape(location))
     body = '\r\n'.join(lines) + '\r\n'
 
     return Response(

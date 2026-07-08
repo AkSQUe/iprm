@@ -96,11 +96,10 @@
       return '<span class="iprm-loc-badge iprm-loc-badge--online">' + MONITOR_SVG +
         '<span class="iprm-loc-badge__text">Онлайн</span></span>';
     }
-    var tbd = location ? '' : ' iprm-loc-badge--tbd';
-    var text = escapeHtml(location || 'Місто уточнюється');
+    if (!location) return '';
     var sub = format === 'hybrid' ? '<span class="iprm-loc-badge__sub">+ онлайн</span>' : '';
-    return '<span class="iprm-loc-badge iprm-loc-badge--offline' + tbd + '">' + PIN_SVG +
-      '<span class="iprm-loc-badge__text">' + text + '</span>' + sub + '</span>';
+    return '<span class="iprm-loc-badge iprm-loc-badge--offline">' + PIN_SVG +
+      '<span class="iprm-loc-badge__text">' + escapeHtml(location) + '</span>' + sub + '</span>';
   }
 
   var MONTHS_GEN = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',

@@ -7,7 +7,8 @@
 
    Параметри:
      event_format : 'online' | 'offline' | 'hybrid'
-     location     : назва міста/адреси (для offline/hybrid)
+     location     : назва міста/адреси (для offline/hybrid);
+                    без підтвердженого міста бейдж не виводиться
      size         : '' (звичайний) | 'lg' (великий, для hero/summary)
 -#}
 {%- macro location_badge(event_format, location, size='') -%}
@@ -16,10 +17,10 @@
   <svg class="iprm-loc-badge__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
   <span class="iprm-loc-badge__text">Онлайн</span>
 </span>
-{%- else -%}
-<span class="iprm-loc-badge iprm-loc-badge--offline{% if size %} iprm-loc-badge--{{ size }}{% endif %}{% if not location %} iprm-loc-badge--tbd{% endif %}">
+{%- elif location -%}
+<span class="iprm-loc-badge iprm-loc-badge--offline{% if size %} iprm-loc-badge--{{ size }}{% endif %}">
   <svg class="iprm-loc-badge__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-  <span class="iprm-loc-badge__text">{{ location or 'Місто уточнюється' }}</span>
+  <span class="iprm-loc-badge__text">{{ location }}</span>
   {%- if event_format == 'hybrid' %}<span class="iprm-loc-badge__sub">+ онлайн</span>{% endif -%}
 </span>
 {%- endif -%}
