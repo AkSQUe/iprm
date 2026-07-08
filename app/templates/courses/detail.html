@@ -321,27 +321,18 @@
   {% if past_instances %}
   <section class="iprm-section" aria-labelledby="history-title">
     <div class="iprm-section__inner">
-      <details class="iprm-history-details">
-        <summary><h2 id="history-title" class="iprm-section__title iprm-section__title--inline">Історія <span class="apple-gradient-text">проведень</span> ({{ past_instances | length }})</h2></summary>
-        <div class="iprm-schedule iprm-schedule--history">
+      <div class="iprm-history-line apple-reveal">
+        <h2 id="history-title" class="iprm-history-line__title">Уже проведено ({{ past_instances | length }}):</h2>
+        <ul class="iprm-history-line__list">
           {% for inst in past_instances %}
-          <div class="iprm-schedule__item iprm-schedule__item--past">
-            <div class="iprm-schedule__date">
-              {% if inst.start_date %}
-              <span class="iprm-schedule__day">{{ inst.start_date.strftime('%d') }}</span>
-              <span class="iprm-schedule__month">{{ inst.start_date.strftime('%m.%Y') }}</span>
-              {% endif %}
-            </div>
-            <div class="iprm-schedule__content">
-              <h3 class="iprm-schedule__title">{{ course.title }}</h3>
-              <div class="iprm-schedule__meta">
-                {{ location_badge(inst.event_format, inst.location) }}
-              </div>
-            </div>
-          </div>
+          <li class="iprm-history-line__item">
+            {%- if inst.start_date %}{{ inst.start_date.strftime('%d.%m.%Y') }}{% endif -%}
+            {%- if inst.event_format == 'online' %} · Онлайн
+            {%- elif inst.location %} · {{ inst.location }}{% endif -%}
+          </li>
           {% endfor %}
-        </div>
-      </details>
+        </ul>
+      </div>
     </div>
   </section>
   {% endif %}

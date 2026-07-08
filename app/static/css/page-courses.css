@@ -187,10 +187,6 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
 }
 
-.iprm-schedule__item--past {
-  opacity: 0.5;
-}
-
 .iprm-schedule__date {
   text-align: center;
 }
@@ -201,10 +197,6 @@
   font-weight: 800;
   color: var(--iprm-accent);
   line-height: 1;
-}
-
-.iprm-schedule__item--past .iprm-schedule__day {
-  color: var(--iprm-text-light);
 }
 
 .iprm-schedule__month {
@@ -720,12 +712,40 @@
   margin-top: 16px;
 }
 
-.iprm-schedule--history {
-  margin-top: 24px;
+/* Історія проведень -- компактний рядок дат/міст */
+.iprm-history-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
 }
 
-.iprm-section__title--inline {
-  display: inline;
+.iprm-history-line__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--iprm-text-light);
+  margin: 0;
+}
+
+.iprm-history-line__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.9375rem;
+  color: var(--iprm-text-light);
+}
+
+.iprm-history-line__item {
+  white-space: nowrap;
+}
+
+.iprm-history-line__item + .iprm-history-line__item::before {
+  content: '\2022';
+  margin: 0 10px;
+  opacity: 0.5;
 }
 
 /* Теги як кнопки у картках каталогу (поза <a>). */
