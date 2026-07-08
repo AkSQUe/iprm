@@ -160,6 +160,17 @@ class SiteSettingsForm(FlaskForm):
                     NumberRange(min=0, max=1000)],
         description='Коли вільних місць стільки або менше — лічильник підсвічується попередженням. 0 — підсвітку вимкнено.',
     )
+    show_roi_calculator = BooleanField(
+        'Показувати ROI-калькулятор окупності',
+        description='Інтерактивний блок «Коли курс окупиться?» на сторінках платних курсів.',
+    )
+    certdata_reminder_days = IntegerField(
+        'Нагадування про анкету, днів до заходу',
+        default=3,
+        validators=[InputRequired(message='Вкажіть кількість днів (0 вимикає)'),
+                    NumberRange(min=0, max=60)],
+        description='Авто-email «заповніть дані для сертифіката» учасникам з незаповненою МОЗ-анкетою, коли до заходу лишається стільки днів. 0 — вимкнено.',
+    )
 
     # Contacts
     phone_primary = StringField(

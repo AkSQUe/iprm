@@ -191,6 +191,23 @@
 
         <div class="form-group admin-form__full">
           <div class="form-checkbox">
+            {{ form.show_roi_calculator(id="show_roi_calculator") }}
+            <label for="show_roi_calculator">{{ form.show_roi_calculator.label.text }}</label>
+          </div>
+          <small class="form-hint">{{ form.show_roi_calculator.description }}</small>
+        </div>
+
+        <div class="form-group">
+          <label for="certdata_reminder_days">{{ form.certdata_reminder_days.label.text }}</label>
+          {{ form.certdata_reminder_days(class="form-input", id="certdata_reminder_days", type="number", min="0", max="60") }}
+          <small class="form-hint">{{ form.certdata_reminder_days.description }}</small>
+          {% if form.certdata_reminder_days.errors %}
+          <small class="form-error">{{ form.certdata_reminder_days.errors[0] }}</small>
+          {% endif %}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
             {{ form.show_labs(id="show_labs") }}
             <label for="show_labs">Показувати розділ "Лабораторії" у навігації</label>
           </div>

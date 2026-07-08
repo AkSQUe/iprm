@@ -1750,3 +1750,84 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
   outline-offset: 2px;
 }
 
+
+/* ========== ROI-КАЛЬКУЛЯТОР ОКУПНОСТІ ========== */
+
+.iprm-roi {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px;
+  background: var(--iprm-white);
+  border: 1px solid rgba(var(--apple-accent-rgb), 0.25);
+  border-radius: var(--iprm-radius);
+  box-shadow: 0 8px 32px rgba(var(--apple-accent-rgb), 0.08);
+}
+
+.iprm-roi__inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.iprm-roi__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.iprm-roi__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--iprm-text-light);
+}
+
+.iprm-roi__results {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.iprm-roi__result {
+  text-align: center;
+  padding: 20px 16px;
+  background: var(--iprm-accent-light);
+  border-radius: var(--iprm-radius-md);
+}
+
+.iprm-roi__value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--iprm-accent);
+  margin-bottom: 4px;
+}
+
+.iprm-roi__caption {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--apple-gray-dark);
+}
+
+.iprm-roi__note {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--iprm-text-light);
+  text-align: center;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .iprm-roi {
+    padding: 24px 20px;
+  }
+
+  .iprm-roi__inputs,
+  .iprm-roi__results {
+    grid-template-columns: 1fr;
+  }
+}

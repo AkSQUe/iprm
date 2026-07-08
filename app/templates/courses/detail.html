@@ -318,6 +318,41 @@
   </section>
   {% endif %}
 
+  <!-- ===== ROI CALCULATOR ===== -->
+  {% set _roi_prices = upcoming_instances | map(attribute='effective_price') | select | list %}
+  {% set roi_price = (_roi_prices | min) if _roi_prices else course.base_price %}
+  {% if site_settings.show_roi_calculator and roi_price and roi_price > 0 %}
+  <section id="roi" class="iprm-section" aria-labelledby="roi-title">
+    <div class="iprm-section__inner">
+      <h2 id="roi-title" class="iprm-section__title">Коли курс <span class="apple-gradient-text">окупиться?</span></h2>
+      <p class="iprm-section__subtitle">Порахуйте на власних цифрах — середній чек процедури та кількість записів на місяць</p>
+      <div class="iprm-roi apple-reveal" data-roi-calc data-roi-price="{{ roi_price | int }}">
+        <div class="iprm-roi__inputs">
+          <label class="iprm-roi__field">
+            <span class="iprm-roi__label">Середній чек процедури, &#8372;</span>
+            <input type="number" class="form-input" data-roi-check value="2000" min="0" max="100000" step="100" inputmode="numeric">
+          </label>
+          <label class="iprm-roi__field">
+            <span class="iprm-roi__label">Процедур на місяць</span>
+            <input type="number" class="form-input" data-roi-count value="12" min="0" max="500" step="1" inputmode="numeric">
+          </label>
+        </div>
+        <div class="iprm-roi__results">
+          <div class="iprm-roi__result">
+            <span class="iprm-roi__value" data-roi-income>&mdash;</span>
+            <span class="iprm-roi__caption">дохід на місяць</span>
+          </div>
+          <div class="iprm-roi__result">
+            <span class="iprm-roi__value" data-roi-payback>&mdash;</span>
+            <span class="iprm-roi__caption">окупність курсу{% if _roi_prices | length > 1 or (_roi_prices and _roi_prices | min != _roi_prices | max) %} (тариф «від»){% endif %}</span>
+          </div>
+        </div>
+        <p class="iprm-roi__note">Розрахунок орієнтовний: вартість курсу {{ 'від ' if _roi_prices and (_roi_prices | unique | list | length) > 1 else '' }}{{ roi_price | int }} &#8372; &divide; ваш чек. Податки та розхідники не враховано.</p>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- ===== TRAINER ===== -->
   {% if course.trainer %}
   <section class="iprm-section" aria-labelledby="trainer-title">
@@ -470,4 +505,7 @@
 <script src="{{ url_for('static', filename='js/form-single-submit.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/sticky-cta.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/faq-accordion.js') }}?v={{ assets_version }}" defer></script>
+{% if site_settings.show_roi_calculator %}
+<script src="{{ url_for('static', filename='js/roi-calc.js') }}?v={{ assets_version }}" defer></script>
+{% endif %}
 {% endblock %}

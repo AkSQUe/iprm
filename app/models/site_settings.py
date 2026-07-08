@@ -113,6 +113,13 @@ class SiteSettings(TimestampMixin, db.Model):
     # лічильник "Залишилось N місць" підсвічується попереджувальним стилем.
     seats_low_threshold = db.Column(db.Integer, default=5, nullable=False)
 
+    # ROI-калькулятор окупності на сторінці курсу (Блок 6, референс Multimed).
+    show_roi_calculator = db.Column(db.Boolean, default=True, nullable=False)
+
+    # Авто-email "заповніть дані для сертифіката": за скільки днів до заходу
+    # нагадувати учасникам з незаповненою МОЗ-анкетою. 0 -- вимкнено.
+    certdata_reminder_days = db.Column(db.Integer, default=3, nullable=False)
+
     # Google OAuth 2.0 (sign-in). Client ID -- публічний (видно у redirect-
     # URI), client_secret -- Fernet-зашифрований. Якщо обидва порожні --
     # OAuth вимкнено (кнопка "Continue with Google" не показується).
