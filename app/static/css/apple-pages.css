@@ -277,19 +277,77 @@
   margin-bottom: 16px;
 }
 
-/* Бейдж балів БПР на картці (виводиться лише коли балів > 0) */
-.apple-page .iprm-course-card__cpd {
-  align-self: flex-start;
+/* Розширена картка курсу: бейджі, тренер, факти (дата / місця / ціна) */
+.apple-page .iprm-course-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -8px 0 12px;
+}
+
+.apple-page .iprm-card-badge {
   display: inline-block;
   font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: var(--iprm-radius-pill);
+}
+
+.apple-page .iprm-card-badge--type {
+  background: var(--apple-orange-light);
+  color: var(--apple-orange);
+}
+
+.apple-page .iprm-card-badge--format {
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
+}
+
+.apple-page .iprm-card-badge--cpd {
   background: var(--iprm-success-bg);
   color: var(--iprm-success);
-  margin: -8px 0 16px;
+}
+
+.apple-page .iprm-course-card__trainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 0.875rem;
+  color: var(--apple-gray-dark);
+}
+
+.apple-page .iprm-course-card__trainer img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.apple-page .iprm-course-card__facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 0.875rem;
+  color: var(--apple-gray-dark);
+}
+
+.apple-page .iprm-course-card__seats--warning {
+  color: #b25c00;
+  font-weight: 600;
+}
+
+.apple-page .iprm-course-card__price {
+  margin-left: auto;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--apple-black);
 }
 
 .apple-page .iprm-course-cards {
