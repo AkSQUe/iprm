@@ -257,10 +257,19 @@
             {% if inst_tariffs %}
             <div class="iprm-schedule__tariffs" role="list" aria-label="Тарифи участі">
               {% for tariff in inst_tariffs %}
+              {% if is_open %}
+              <a class="iprm-tariff-pill iprm-tariff-pill--link" role="listitem"
+                 href="{{ url_for('registration.register_instance', instance_id=inst.id, tariff=tariff.id) }}"
+                 {% if tariff.description_items %} title="{{ tariff.description_items | join('; ') }}"{% endif %}>
+                <span class="iprm-tariff-pill__name">{{ tariff.name }}</span>
+                <span class="iprm-tariff-pill__price">{{ tariff.price | int }} &#8372;</span>
+              </a>
+              {% else %}
               <span class="iprm-tariff-pill" role="listitem"{% if tariff.description_items %} title="{{ tariff.description_items | join('; ') }}"{% endif %}>
                 <span class="iprm-tariff-pill__name">{{ tariff.name }}</span>
                 <span class="iprm-tariff-pill__price">{{ tariff.price | int }} &#8372;</span>
               </span>
+              {% endif %}
               {% endfor %}
             </div>
             {% endif %}

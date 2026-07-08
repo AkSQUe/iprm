@@ -36,7 +36,7 @@
       <div class="reg-success-banner__body">
         <p class="reg-success-banner__title">Заявка на участь успішно подана.</p>
         <p class="reg-success-banner__subtitle">Другим кроком реєстрації необхідно оплатити участь.</p>
-        <p class="reg-success-banner__amount">Сума до сплати: <strong>{{ reg.payment_amount | int }} грн.</strong></p>
+        <p class="reg-success-banner__amount">Сума до сплати: <strong>{{ reg.payment_amount | int }} грн.</strong>{% if reg.tariff %} <span class="reg-success-banner__tariff">(тариф «{{ reg.tariff.name }}»)</span>{% endif %}</p>
       </div>
     </div>
   {% elif reg.status == 'confirmed' %}

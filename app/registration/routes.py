@@ -5,7 +5,7 @@ from flask import (
     abort, flash, redirect, render_template, request, send_file, url_for,
 )
 from flask_login import current_user, login_required, login_user
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.extensions import db, limiter
 from app.models.course_instance import CourseInstance
@@ -182,9 +182,23 @@ def register_instance(instance_id):
     instance = db.session.query(CourseInstance).options(
         joinedload(CourseInstance.course),
         joinedload(CourseInstance.trainer),
+        selectinload(CourseInstance.tariffs),
     ).filter_by(id=instance_id).first()
     if not instance or not instance.course or not instance.course.is_active:
         abort(404)
+
+    # Тарифна вилка: коли у проведення є активні тарифи, вибір обов'язковий.
+    # GET ?tariff=<id> -- передвибір з пігулок на сторінці курсу.
+    tariffs = instance.active_tariffs
+    selected_tariff = None
+    if tariffs:
+        raw_id = (request.form.get('tariff_id') if request.method == 'POST'
+                  else request.args.get('tariff'))
+        try:
+            wanted_id = int(raw_id) if raw_id else None
+        except (TypeError, ValueError):
+            wanted_id = None
+        selected_tariff = next((t for t in tariffs if t.id == wanted_id), None)
 
     existing = registration_service.find_existing(current_user.id, instance.id)
 
@@ -205,11 +219,23 @@ def register_instance(instance_id):
     form = EventRegistrationForm(data=initial)
 
     if form.validate_on_submit():
+        if tariffs and selected_tariff is None:
+            flash('Оберіть тариф участі', 'error')
+            return render_template(
+                'registration/register.html',
+                form=form, event=EventAdapter(instance),
+                tariffs=tariffs, selected_tariff=None,
+                profile_complete=bool(
+                    current_user.medical_profile
+                    and current_user.medical_profile.is_complete
+                ),
+            )
         if not verify_recaptcha(action='event_register'):
             flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
             return render_template(
                 'registration/register.html',
                 form=form, event=EventAdapter(instance),
+                tariffs=tariffs, selected_tariff=selected_tariff,
                 profile_complete=bool(
                     current_user.medical_profile
                     and current_user.medical_profile.is_complete
@@ -243,6 +269,7 @@ def register_instance(instance_id):
             }
             reg, is_free = registration_service.create_or_reactivate(
                 current_user.id, instance, form_data, existing,
+                tariff=selected_tariff,
             )
             db.session.commit()
             # Аналітика воронки оплати: фіксуємо обраний спосіб і чи платна подія.
@@ -276,6 +303,8 @@ def register_instance(instance_id):
         'registration/register.html',
         form=form,
         event=EventAdapter(instance),
+        tariffs=tariffs,
+        selected_tariff=selected_tariff,
         profile_complete=profile_complete,
     )
 

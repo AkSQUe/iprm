@@ -54,6 +54,16 @@ class EventRegistration(TimestampMixin, db.Model):
     payment_id = db.Column(db.String(255))
     paid_at = db.Column(db.DateTime(timezone=True))
 
+    # Обраний тариф участі (тарифна вилка). NULL -- проведення без тарифів
+    # або історична реєстрація. Сума фіксується у payment_amount у момент
+    # реєстрації, тож видалення/зміна тарифу заднім числом на неї не впливає.
+    tariff_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('instance_tariffs.id', ondelete='SET NULL'),
+        nullable=True,
+        index=True,
+    )
+
     attended = db.Column(db.Boolean, default=False)
     cpd_points_awarded = db.Column(db.Integer)
     admin_notes = db.Column(db.Text)
@@ -78,6 +88,7 @@ class EventRegistration(TimestampMixin, db.Model):
         foreign_keys=[instance_id],
         back_populates='registrations',
     )
+    tariff = db.relationship('InstanceTariff', foreign_keys=[tariff_id])
     email_logs = db.relationship('EmailLog', back_populates='registration')
     certificate = db.relationship(
         'Certificate',

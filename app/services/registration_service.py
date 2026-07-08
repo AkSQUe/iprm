@@ -89,7 +89,7 @@ def check_capacity(instance_id):
     return active_count < cap, locked_instance
 
 
-def create_or_reactivate(user_id, instance, form_data, existing=None):
+def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=None):
     """Створити або переактивувати реєстрацію на CourseInstance.
 
     Args:
@@ -100,6 +100,9 @@ def create_or_reactivate(user_id, instance, form_data, existing=None):
             ('liqpay' за замовчуванням); для безкоштовних подій ігнорується.
         existing: Існуюча cancelled-реєстрація для реактивації, або None.
             Якщо не-cancelled -- ValueError (caller порушив інваріант).
+        tariff: Обраний InstanceTariff (тарифна вилка) -- визначає
+            payment_amount. Валідність (активний, доступний) перевіряє
+            caller; належність до instance перевіряється тут.
 
     Returns:
         (registration, is_free) tuple. Caller мусить сам викликати
@@ -111,8 +114,13 @@ def create_or_reactivate(user_id, instance, form_data, existing=None):
             f'create_or_reactivate: existing registration status={existing.status!r} '
             'is not cancelled -- caller must check before passing existing.'
         )
+    if tariff is not None and tariff.instance_id != instance.id:
+        raise ValueError(
+            f'create_or_reactivate: tariff #{tariff.id} belongs to instance '
+            f'{tariff.instance_id}, not {instance.id}.'
+        )
 
-    price = instance.effective_price or 0
+    price = tariff.price if tariff is not None else (instance.effective_price or 0)
     is_free = price == 0
     new_status = 'confirmed' if is_free else 'pending'
     new_payment = 'paid' if is_free else 'unpaid'
@@ -131,6 +139,7 @@ def create_or_reactivate(user_id, instance, form_data, existing=None):
         existing.license_number = form_data.get('license_number')
         existing.payment_amount = price
         existing.payment_method = payment_method
+        existing.tariff_id = tariff.id if tariff is not None else None
         existing.status = new_status
         existing.payment_status = new_payment
         existing.payment_id = None
@@ -147,6 +156,7 @@ def create_or_reactivate(user_id, instance, form_data, existing=None):
             license_number=form_data.get('license_number'),
             payment_amount=price,
             payment_method=payment_method,
+            tariff_id=tariff.id if tariff is not None else None,
             status=new_status,
             payment_status=new_payment,
         )

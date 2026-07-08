@@ -869,3 +869,93 @@
   align-self: flex-start;
   margin-top: auto;
 }
+
+/* ===== Тариф участі (тарифна вилка) -- радіо-картки ===== */
+.reg-tariffs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.reg-tariff {
+  display: block;
+  cursor: pointer;
+}
+
+.reg-tariff input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.reg-tariff__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  padding: 16px 18px;
+  background: var(--iprm-white, #fff);
+  border: 2px solid var(--iprm-border, rgba(0, 0, 0, 0.08));
+  border-radius: var(--iprm-radius-md, 14px);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.reg-tariff:hover .reg-tariff__body {
+  border-color: var(--iprm-accent-light, #d8cdf0);
+}
+
+.reg-tariff input[type="radio"]:checked + .reg-tariff__body {
+  border-color: var(--iprm-accent, #7055a4);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light, #ede9f6);
+}
+
+.reg-tariff input[type="radio"]:focus-visible + .reg-tariff__body {
+  outline: 2px solid var(--iprm-accent, #7055a4);
+  outline-offset: 2px;
+}
+
+.reg-tariff__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reg-tariff__name {
+  font-weight: 700;
+  color: var(--apple-black, #1d1d1f);
+}
+
+.reg-tariff__price {
+  font-weight: 700;
+  color: var(--iprm-accent, #7055a4);
+  white-space: nowrap;
+}
+
+.reg-tariff__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: var(--apple-gray-dark, #515154);
+}
+
+.reg-tariff__items li {
+  position: relative;
+  padding-left: 18px;
+  line-height: 1.45;
+}
+
+.reg-tariff__items li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--iprm-accent, #7055a4);
+}

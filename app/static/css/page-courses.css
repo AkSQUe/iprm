@@ -289,6 +289,17 @@
   white-space: nowrap;
 }
 
+/* Клікабельна пігулка: веде на реєстрацію з передвибраним тарифом */
+.iprm-tariff-pill--link {
+  text-decoration: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.iprm-tariff-pill--link:hover {
+  border-color: var(--iprm-accent);
+  box-shadow: 0 2px 12px rgba(var(--apple-accent-rgb), 0.12);
+}
+
 .iprm-schedule__action {
   flex-shrink: 0;
 }

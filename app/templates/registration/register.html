@@ -44,7 +44,9 @@
       {% if event.start_date %}
         <div>Дата: <strong>{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</strong></div>
       {% endif %}
-      {% if event.price and event.price > 0 %}
+      {% if tariffs %}
+        <div>Вартість: <strong data-tariff-price>{% if selected_tariff %}{{ selected_tariff.price | int }}{% else %}від {{ event.price | int }}{% endif %} &#8372;</strong></div>
+      {% elif event.price and event.price > 0 %}
         <div>Вартість: <strong>{{ event.price | int }} &#8372;</strong></div>
       {% else %}
         <div>Вартість: <strong>Безкоштовно</strong></div>
@@ -105,6 +107,35 @@
   {# ===== Registration form ===== #}
   <form method="POST" action="{{ url_for('registration.register_instance', instance_id=event.id) }}" data-validate data-single-submit data-recaptcha-action="event_register" data-ga-event="begin_checkout">
     {{ form.hidden_tag() }}
+
+    {# ----- Тариф участі (тарифна вилка) ----- #}
+    {% if tariffs %}
+    <div class="form-section reg-form-section">
+      <h3 class="form-section__title reg-form-section__title">
+        Тариф участі <span class="required">*</span>
+        <span class="iprm-tooltip-trigger" data-tooltip="Оберіть глибину участі — від базового формату до менторського супроводу. Сума до сплати залежить від тарифу.">i</span>
+      </h3>
+      <div class="reg-tariffs" data-required-group="radio" data-hint="Оберіть тариф участі">
+        {% for tariff in tariffs %}
+        <label class="reg-tariff">
+          <input type="radio" name="tariff_id" value="{{ tariff.id }}" data-tariff-radio data-price="{{ tariff.price | int }}"
+                 {% if selected_tariff and selected_tariff.id == tariff.id %}checked{% endif %}>
+          <span class="reg-tariff__body">
+            <span class="reg-tariff__head">
+              <span class="reg-tariff__name">{{ tariff.name }}</span>
+              <span class="reg-tariff__price">{{ tariff.price | int }} &#8372;</span>
+            </span>
+            {% if tariff.description_items %}
+            <ul class="reg-tariff__items">
+              {% for item in tariff.description_items %}<li>{{ item }}</li>{% endfor %}
+            </ul>
+            {% endif %}
+          </span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
 
     {# ----- Тип учасника ----- #}
     <div class="form-section reg-form-section">
@@ -292,7 +323,9 @@
     <div class="reg-actions">
       <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="apple-btn apple-btn--secondary">Назад</a>
       <button type="submit" class="apple-btn apple-btn--primary">
-        {% if event.price and event.price > 0 %}
+        {% if tariffs %}
+          Зареєструватися (<span data-tariff-price>{% if selected_tariff %}{{ selected_tariff.price | int }}{% else %}від {{ event.price | int }}{% endif %} &#8372;</span>)
+        {% elif event.price and event.price > 0 %}
           Зареєструватися ({{ event.price | int }} &#8372;)
         {% else %}
           Зареєструватися
@@ -312,4 +345,7 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/form-single-submit.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/form-progress.js') }}?v={{ assets_version }}" defer></script>
+{% if tariffs %}
+<script src="{{ url_for('static', filename='js/reg-tariffs.js') }}?v={{ assets_version }}" defer></script>
+{% endif %}
 {% endblock %}
