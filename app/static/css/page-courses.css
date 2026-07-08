@@ -1776,6 +1776,34 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
   gap: 6px;
 }
 
+/* Поля вводу: .form-input живе в auth.css (тут не підключений), тому
+   калькулятор має власні стилі в дизайні сайту */
+.iprm-roi__field input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  font-family: var(--iprm-font);
+  color: var(--apple-black);
+  background: var(--iprm-white);
+  border: 1px solid var(--apple-gray-light);
+  border-radius: var(--iprm-radius-sm);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.iprm-roi__field input:focus {
+  outline: none;
+  border-color: var(--iprm-accent);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light);
+}
+
+.iprm-roi__field input:focus-visible {
+  outline: 2px solid var(--iprm-accent);
+  outline-offset: 2px;
+}
+
 .iprm-roi__label {
   font-size: 0.8125rem;
   font-weight: 600;

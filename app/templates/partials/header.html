@@ -27,7 +27,7 @@
           <a href="{{ url_for('auth.account') }}" class="iprm-nav__mobile-link">Особистий кабінет</a>
           {% if certdata_incomplete %}
           <a href="{{ url_for('auth.certificate_data') }}" class="iprm-nav__mobile-link iprm-nav__mobile-link--certdata">
-            <span class="iprm-header__certdata-dot" aria-hidden="true"></span>
+            <span class="iprm-header__certdata-badge" aria-hidden="true">1</span>
             Заповнити дані для сертифіката
           </a>
           {% endif %}
@@ -49,8 +49,8 @@
         {% endif %}
         <a href="{{ url_for('auth.account') }}" class="iprm-header__user-link">{{ current_user.first_name }}</a>
         {% if certdata_incomplete %}
-        <a href="{{ url_for('auth.certificate_data') }}" class="iprm-header__certdata" aria-label="Заповніть дані для сертифіката">
-          <span class="iprm-header__certdata-dot" aria-hidden="true"></span>
+        <a href="{{ url_for('auth.certificate_data') }}" class="iprm-header__certdata" aria-label="1 незаповнена анкета: дані для сертифіката">
+          <span class="iprm-header__certdata-badge" aria-hidden="true">1</span>
           <span class="iprm-header__certdata-tip" role="tooltip">Заповніть дані для сертифіката — без них не нарахуємо бали БПР. Натисніть, щоб перейти до анкети.</span>
         </a>
         {% endif %}

@@ -327,13 +327,23 @@ a {
   margin-left: -6px;
 }
 
-.iprm-header__certdata-dot {
-  display: inline-block;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
+/* Лічильник у стилі "непрочитаних повідомлень": біла цифра в червоному
+   кружечку з білою обводкою */
+.iprm-header__certdata-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--iprm-radius-pill);
   background: #e05252;
-  animation: header-certdata-pulse 1.8s ease-in-out infinite;
+  border: 2px solid var(--iprm-white);
+  color: var(--iprm-white);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 1px 4px rgba(224, 82, 82, 0.4);
 }
 
 .iprm-header__certdata-tip {
@@ -382,15 +392,6 @@ a {
   gap: 8px;
   color: #b23b3b;
   font-weight: 600;
-}
-
-@keyframes header-certdata-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(224, 82, 82, 0.5); }
-  50% { box-shadow: 0 0 0 6px rgba(224, 82, 82, 0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .iprm-header__certdata-dot { animation: none; }
 }
 
 /* Мобільний блок акаунту в бургер-меню (прихований на desktop) */
