@@ -113,7 +113,7 @@
         <a href="{{ url_for('auth.certificate_download', cert_id=cert.id) }}" class="account-card account-card--link apple-reveal">
           <h3 class="account-card__title">{{ cert.event_title }}</h3>
           <p class="account-card__text">
-            № {{ cert.number }}{% if cert.cpd_points %} &middot; {{ cert.cpd_points }} балів БПР{% endif %}
+            № {{ cert.number }}{% if cert.cpd_points %} &middot; {{ cert.cpd_points }} {{ cert.cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}{% endif %}
           </p>
           <p class="account-card__text">Завантажити PDF &#8595;</p>
         </a>

@@ -190,7 +190,7 @@
         {% endif %}
         <p class="cert__event {{ event_size_class }}">«{{ certificate.event_title }}»</p>
         {% if certificate.cpd_points %}
-        <p class="cert__points-text">та отримав(-ла) <strong>{{ certificate.cpd_points }} балів БПР</strong></p>
+        <p class="cert__points-text">та отримав(-ла) <strong>{{ certificate.cpd_points }} {{ certificate.cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}</strong></p>
         {% endif %}
         <div class="cert__meta">
           <p>Реєстраційний № заходу: {{ event_number }}</p>

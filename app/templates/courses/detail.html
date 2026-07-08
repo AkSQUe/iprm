@@ -140,13 +140,13 @@
             {% if course.cpd_points %}
             <div class="iprm-stat-card">
               <span class="iprm-stat-card__value">{{ course.cpd_points }}</span>
-              <span class="iprm-stat-card__label">балів БПР</span>
+              <span class="iprm-stat-card__label">{{ course.cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}</span>
             </div>
             {% endif %}
             {% if course.program_blocks %}
             <div class="iprm-stat-card">
               <span class="iprm-stat-card__value">{{ course.program_blocks|length }}</span>
-              <span class="iprm-stat-card__label">тематичних блоків</span>
+              <span class="iprm-stat-card__label">{{ course.program_blocks|length | uk_plural('тематичний блок', 'тематичні блоки', 'тематичних блоків') }}</span>
             </div>
             {% endif %}
             {% if course.max_participants %}
@@ -193,8 +193,8 @@
         {% if has_benefits %}
         <div class="iprm-tabs__panel" data-tab-panel="benefits">
           <ul class="iprm-benefit-list">
-            {% if course.cpd_points %}<li>Сертифікат БПР на {{ course.cpd_points }} балів</li>{% endif %}
-            {% if course.program_blocks %}<li>{{ course.program_blocks|length }} тематичних блоків — від теорії до практики</li>{% endif %}
+            {% if course.cpd_points %}<li>Сертифікат БПР на {{ course.cpd_points }} {{ course.cpd_points | uk_plural('бал', 'бали', 'балів') }}</li>{% endif %}
+            {% if course.program_blocks %}<li>{{ course.program_blocks|length }} {{ course.program_blocks|length | uk_plural('тематичний блок', 'тематичні блоки', 'тематичних блоків') }} — від теорії до практики</li>{% endif %}
             <li>Розбір клінічних кейсів та відповіді лектора на запитання</li>
             <li>Доступ до додаткових навчальних матеріалів і презентацій</li>
           </ul>
@@ -230,10 +230,10 @@
             <h3 class="iprm-schedule__title">{{ course.title }}</h3>
             <div class="iprm-schedule__meta">
               {{ location_badge(inst.event_format, inst.location) }}
-              {% if inst.effective_cpd_points %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} балів БПР</span>{% endif %}
+              {% if inst.effective_cpd_points %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}</span>{% endif %}
               {% if inst.effective_price and inst.effective_price > 0 %}<span class="iprm-schedule__price">{{ inst.effective_price | int }} &#8372;</span>{% endif %}
               {% if remaining is not none and remaining > 0 and remaining <= 5 %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--warning">Залишилось {{ remaining }} місць</span>
+              <span class="iprm-schedule__tag iprm-schedule__tag--warning">Залишилось {{ remaining }} {{ remaining | uk_plural('місце', 'місця', 'місць') }}</span>
               {% endif %}
             </div>
           </div>

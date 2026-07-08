@@ -113,6 +113,24 @@ def sanitize_rich_text(raw):
     return Markup(cleaned)
 
 
+def uk_plural(n, one, few, many):
+    """Українська плюралізація: uk_plural(2, 'блок', 'блоки', 'блоків') -> 'блоки'.
+
+    1 -> one, 2-4 -> few, 5-20/0 -> many (з урахуванням 11-14 та складених
+    числівників: 21 -> one, 22 -> few, 25 -> many).
+    """
+    try:
+        n = abs(int(n))
+    except (TypeError, ValueError):
+        return many
+    mod10, mod100 = n % 10, n % 100
+    if mod10 == 1 and mod100 != 11:
+        return one
+    if 2 <= mod10 <= 4 and not 10 <= mod100 < 20:
+        return few
+    return many
+
+
 def slugify(text):
     text = text.lower().strip()
     text = re.sub(r'[^\w\s-]', '', text)

@@ -151,8 +151,9 @@ def create_app(config_name=None):
             version = get_assets_version(app.static_folder)
         return {'assets_version': version}
 
-    from app.utils import sanitize_rich_text
+    from app.utils import sanitize_rich_text, uk_plural
     app.jinja_env.filters['sanitize_rich_text'] = sanitize_rich_text
+    app.jinja_env.filters['uk_plural'] = uk_plural
 
     # Глобал icon('<name>') -- рендерить Material Symbols іконку через кодпойнт
     # (self-hosted субсет-шрифт). Див. app/icons.py.

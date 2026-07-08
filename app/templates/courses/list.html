@@ -127,7 +127,7 @@
               <span class="iprm-schedule__tag iprm-schedule__tag--type">{{ inst.course.event_type_label }}</span>
               {% endif %}
               {% if inst.effective_cpd_points %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} балів БПР</span>
+              <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}</span>
               {% endif %}
               {% if inst.effective_price and inst.effective_price > 0 %}
               <span class="iprm-schedule__price">{{ inst.effective_price | int }} &#8372;</span>

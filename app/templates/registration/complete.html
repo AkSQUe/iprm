@@ -45,7 +45,7 @@
       {% else %}
         <div>Вартість: <strong>Безкоштовно</strong></div>
       {% endif %}
-      {% if event.cpd_points %}<div>БПР: <strong>{{ event.cpd_points }} балів</strong></div>{% endif %}
+      {% if event.cpd_points %}<div>БПР: <strong>{{ event.cpd_points }} {{ event.cpd_points | uk_plural('бал', 'бали', 'балів') }}</strong></div>{% endif %}
     </div>
   </div>
   {% endif %}
