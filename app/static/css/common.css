@@ -865,57 +865,6 @@ select.badge-select:disabled {
   margin-bottom: 20px;
 }
 
-/* ========== TRAINER ========== */
-
-.iprm-trainer {
-  display: flex;
-  gap: 24px;
-  background: var(--iprm-card-bg);
-  border: 1px solid var(--iprm-card-bg);
-  border-radius: var(--iprm-radius);
-  padding: 24px;
-}
-
-.iprm-trainer__photo {
-  flex-shrink: 0;
-  width: 180px;
-  height: 220px;
-  background: var(--iprm-placeholder-grad);
-  border: 2px dashed var(--iprm-border);
-  border-radius: var(--iprm-radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--iprm-text-light);
-  font-size: 13px;
-}
-
-.iprm-trainer__name {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--iprm-dark);
-  margin-bottom: 8px;
-}
-
-.iprm-trainer__role {
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--iprm-text-light);
-  margin-bottom: 12px;
-}
-
-.iprm-trainer__info {
-  flex: 1;
-  min-width: 0;
-}
-
-.iprm-trainer__desc {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--iprm-text);
-  margin-bottom: 16px;
-}
-
 /* ========== FOOTER (Apple-style) ========== */
 
 .iprm-footer {
@@ -1652,15 +1601,6 @@ select.badge-select:disabled {
 
   .iprm-steps::before {
     display: none;
-  }
-
-  .iprm-trainer {
-    flex-direction: column;
-  }
-
-  .iprm-trainer__photo {
-    width: 100%;
-    height: 200px;
   }
 
   .iprm-content-page {

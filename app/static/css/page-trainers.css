@@ -13,6 +13,66 @@
   grid-column: 1 / -1;
 }
 
+/* ===== Hero тренера: фото поруч з ПІБ/посадою/досвідом ===== */
+.apple-page .iprm-hero__content--trainer {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  text-align: left;
+  max-width: 900px;
+}
+
+.iprm-hero-trainer__photo {
+  flex-shrink: 0;
+  width: 280px;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--iprm-radius);
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--iprm-accent-light), var(--apple-orange-light));
+}
+
+.iprm-hero-trainer__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.apple-page .iprm-hero__content--trainer .iprm-hero__subtitle {
+  margin: 0 0 16px;
+}
+
+.iprm-hero-trainer__exp {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--iprm-nav-active);
+}
+
+/* Біо тренера -- окремий текстовий блок під hero */
+.iprm-trainer-bio {
+  max-width: 800px;
+  margin: 0 auto;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--apple-gray-dark);
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .apple-page .iprm-hero__content--trainer {
+    flex-direction: column;
+    text-align: center;
+    gap: 24px;
+  }
+
+  .apple-page .iprm-hero__content--trainer .iprm-hero__subtitle {
+    margin: 0 auto 16px;
+  }
+
+  .iprm-hero-trainer__photo {
+    width: 220px;
+  }
+}
+
 /* Регалії: списки посилань (патенти, статті) */
 .iprm-regalia-links {
   list-style: none;

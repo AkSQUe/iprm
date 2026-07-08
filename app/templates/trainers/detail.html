@@ -62,43 +62,71 @@
 {% endmacro %}
 <div class="apple-page">
 
-  <!-- ===== HERO ===== -->
+  <!-- ===== HERO (фото + ПІБ + посада + досвід; акцент -- на прізвищі) ===== -->
   <div class="iprm-hero-wrap">
     <section class="iprm-hero" aria-label="Hero">
-      <div class="iprm-hero__content">
-        <h1 class="iprm-hero__title">{% set words = trainer.full_name.rsplit(' ', 1) %}{% if words | length > 1 %}{{ words[0] }} <span class="apple-gradient-text">{{ words[1] }}</span>{% else %}<span class="apple-gradient-text">{{ trainer.full_name }}</span>{% endif %}</h1>
-        {% if trainer.role %}
-          <p class="iprm-hero__subtitle">{{ trainer.role }}</p>
+      <div class="iprm-hero__content iprm-hero__content--trainer">
+        {% if trainer.photo_media %}
+        <div class="iprm-hero-trainer__photo">
+          <img src="{{ trainer.photo_media.variant_url('card') }}" alt="{{ trainer.full_name }}" width="280" height="373" fetchpriority="high"
+               srcset="{{ trainer.photo_media.variant_url('thumb') }} 400w, {{ trainer.photo_media.variant_url('card') }} 800w" sizes="280px">
+        </div>
         {% endif %}
+        <div class="iprm-hero-trainer__info">
+          <h1 class="iprm-hero__title">{% set words = trainer.full_name.split(' ', 1) %}{% if words | length > 1 %}<span class="apple-gradient-text">{{ words[0] }}</span> {{ words[1] }}{% else %}<span class="apple-gradient-text">{{ trainer.full_name }}</span>{% endif %}</h1>
+          {% if trainer.role %}
+            <p class="iprm-hero__subtitle">{{ trainer.role }}</p>
+          {% endif %}
+          {% if trainer.experience_years %}
+            <p class="iprm-hero-trainer__exp">Досвід: {{ trainer.experience_years }} {{ trainer.experience_years | uk_plural('рік', 'роки', 'років') }}</p>
+          {% endif %}
+        </div>
       </div>
     </section>
   </div>
 
-  <!-- ===== TRAINER PROFILE ===== -->
-  <section class="iprm-section apple-section-gray">
+  <!-- ===== BIO ===== -->
+  {% if trainer.bio %}
+  <section class="iprm-section" aria-label="Про тренера">
     <div class="iprm-section__inner">
-      <div class="iprm-trainer apple-reveal">
-        <div class="iprm-trainer__photo">
-          {% if trainer.photo_media %}
-            <img src="{{ trainer.photo_media.variant_url('card') }}" alt="{{ trainer.full_name }}" loading="lazy" width="320" height="427"
-                 srcset="{{ trainer.photo_media.variant_url('thumb') }} 400w, {{ trainer.photo_media.variant_url('card') }} 800w" sizes="320px">
-          {% endif %}
-        </div>
-        <div class="iprm-trainer__info">
-          <h3 class="iprm-trainer__name">{{ trainer.full_name }}</h3>
-          {% if trainer.role %}
-            <p class="iprm-trainer__role">{{ trainer.role }}</p>
-          {% endif %}
-          {% if trainer.experience_years %}
-            <p class="iprm-trainer__role">Досвід: {{ trainer.experience_years }} років</p>
-          {% endif %}
-          {% if trainer.bio %}
-            <p class="iprm-trainer__desc">{{ trainer.bio }}</p>
-          {% endif %}
-        </div>
+      <p class="iprm-trainer-bio apple-reveal">{{ trainer.bio }}</p>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== TRAINER COURSES ===== -->
+  {% if courses %}
+  <section class="iprm-section apple-section-gray" aria-labelledby="trainer-courses-title">
+    <div class="iprm-section__inner">
+      <h2 id="trainer-courses-title" class="iprm-section__title">Курси <span class="apple-gradient-text">тренера</span></h2>
+      <p class="iprm-section__subtitle">Доступні програми навчання</p>
+
+      <div class="iprm-course-cards">
+        {% for course in courses %}
+        <article class="iprm-course-card apple-reveal">
+          <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">
+            <div class="iprm-course-card__image">
+              {% if course.card_src %}
+                <img src="{{ course.card_src }}" alt="{{ course.title }}" loading="lazy" width="400" height="200">
+              {% endif %}
+            </div>
+            <div class="apple-card-body">
+              <p class="iprm-course-card__title">{{ course.title }}</p>
+              {% if course.tags %}
+              <div class="iprm-course-card__tags">
+                {% for tag in course.tags %}
+                  <span class="iprm-tag">{{ tag }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </a>
+        </article>
+        {% endfor %}
       </div>
     </div>
   </section>
+  {% endif %}
 
   <!-- ===== СЕРТИФІКАТИ ===== -->
   {% if trainer.certificates %}
@@ -202,40 +230,6 @@
   {{ timeline_section('trainer-edu', 'Освіта та', 'кваліфікація', trainer.education, gray=True) }}
   {{ timeline_section('trainer-addedu', 'Додаткова освіта та', 'міжнародне стажування', trainer.additional_education) }}
   {{ timeline_section('trainer-exp', 'Досвід', 'роботи', trainer.work_experience, gray=True) }}
-
-  <!-- ===== TRAINER COURSES ===== -->
-  {% if courses %}
-  <section class="iprm-section" aria-labelledby="trainer-courses-title">
-    <div class="iprm-section__inner">
-      <h2 id="trainer-courses-title" class="iprm-section__title">Курси <span class="apple-gradient-text">тренера</span></h2>
-      <p class="iprm-section__subtitle">Доступні програми навчання</p>
-
-      <div class="iprm-course-cards">
-        {% for course in courses %}
-        <article class="iprm-course-card apple-reveal">
-          <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">
-            <div class="iprm-course-card__image">
-              {% if course.card_src %}
-                <img src="{{ course.card_src }}" alt="{{ course.title }}" loading="lazy" width="400" height="200">
-              {% endif %}
-            </div>
-            <div class="apple-card-body">
-              <p class="iprm-course-card__title">{{ course.title }}</p>
-              {% if course.tags %}
-              <div class="iprm-course-card__tags">
-                {% for tag in course.tags %}
-                  <span class="iprm-tag">{{ tag }}</span>
-                {% endfor %}
-              </div>
-              {% endif %}
-            </div>
-          </a>
-        </article>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-  {% endif %}
 
   <!-- ===== BACK ===== -->
   <section class="iprm-section iprm-section--compact apple-section-gray">
