@@ -152,33 +152,46 @@ def _pause_remaining(remaining):
 def enqueue(course_id, course_slug, action):
     """Helper: створити новий WebhookDelivery-рядок у pending-статусі.
 
-    Викликається з course_webhook_listener._on_commit. Snapshot target_url
-    на момент вставки, щоб зміна налаштувань не впливала на pending-рядки.
+    Викликається з course_webhook_listener._on_commit -- тобто ПІСЛЯ коміту
+    основної транзакції, коли db.session ще у 'committed'-стані і SQLAlchemy
+    забороняє їй виконувати SQL (InvalidRequestError). Тому всі запити тут
+    йдуть через ОКРЕМУ короткоживучу сесію на тому ж engine.
+
+    Snapshot target_url на момент вставки, щоб зміна налаштувань не впливала
+    на pending-рядки. Повертає id створеного рядка або None.
     """
     import uuid
 
-    settings = SiteSettings.get()
-    if not settings.partner_integration_enabled or not settings.partner_webhook_enabled:
-        return None
-    target_url = (settings.partner_webhook_url or '').strip()
-    if not target_url:
-        return None
+    from sqlalchemy.orm import Session
 
-    delivery = WebhookDelivery(
-        course_id=course_id,
-        course_slug=course_slug,
-        action=action,
-        event_uuid=uuid.uuid4().hex,
-        target_url=target_url,
-        status='pending',
-    )
-    db.session.add(delivery)
-    try:
-        db.session.commit()
-        return delivery
-    except Exception:
-        db.session.rollback()
-        current_app.logger.exception(
-            'Failed to enqueue webhook course=%s action=%s', course_slug, action,
+    with Session(db.engine) as session:
+        # Не SiteSettings.get(): get-or-create прив'язаний до db.session,
+        # а нам потрібне читання саме у цій сесії. Рядка немає -- інтеграцію
+        # ще не конфігурували, сповіщати нікуди.
+        settings = session.get(SiteSettings, 1)
+        if settings is None:
+            return None
+        if not settings.partner_integration_enabled or not settings.partner_webhook_enabled:
+            return None
+        target_url = (settings.partner_webhook_url or '').strip()
+        if not target_url:
+            return None
+
+        delivery = WebhookDelivery(
+            course_id=course_id,
+            course_slug=course_slug,
+            action=action,
+            event_uuid=uuid.uuid4().hex,
+            target_url=target_url,
+            status='pending',
         )
-        return None
+        session.add(delivery)
+        try:
+            session.commit()
+            return delivery.id
+        except Exception:
+            session.rollback()
+            current_app.logger.exception(
+                'Failed to enqueue webhook course=%s action=%s', course_slug, action,
+            )
+            return None

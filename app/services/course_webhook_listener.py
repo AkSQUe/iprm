@@ -100,9 +100,9 @@ def register_course_listeners(db) -> None:
                 len(pending),
             )
             return
-        # Enqueue у ТІЙ САМІЙ сесії/транзакції не можна -- ми вже після commit.
-        # Відкриваємо нову міні-транзакцію для кожного enqueue у тій самій
-        # сесії (db.session).
+        # Enqueue у ТІЙ САМІЙ сесії не можна -- в after_commit вона у
+        # 'committed'-стані і SQL заборонений. enqueue() працює у власній
+        # короткоживучій сесії на тому ж engine.
         from app.services.webhook_queue import enqueue
         for course_id, course_slug, action in pending:
             try:
