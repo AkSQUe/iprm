@@ -92,6 +92,9 @@
         {% if course.subtitle %}
         <p class="iprm-hero__subtitle">{{ course.subtitle }}</p>
         {% endif %}
+        {% if course.roi_hint %}
+        <p class="iprm-hero__roi">{{ course.roi_hint }}</p>
+        {% endif %}
         {% if course.tags %}
         <div class="iprm-course-card__tags iprm-course-card__tags--center">
           {% for tag in course.tags %}<span class="iprm-tag">{{ tag }}</span>{% endfor %}

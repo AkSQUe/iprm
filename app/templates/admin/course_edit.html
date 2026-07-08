@@ -70,6 +70,12 @@
           <div class="form-hint">{{ form.difficulty_level.description }}</div>
         </div>
 
+        <div class="form-group admin-form__full">
+          <label for="roi_hint">Орієнтир окупності</label>
+          {{ form.roi_hint(class="form-input", id="roi_hint", placeholder="Окупність ≈ 3–4 записи за чека 6 000–9 000 грн") }}
+          <div class="form-hint">{{ form.roi_hint.description }}</div>
+        </div>
+
         <div class="form-group">
           <div class="form-checkbox">
             {{ form.is_active(id="is_active") }}

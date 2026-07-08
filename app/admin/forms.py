@@ -307,6 +307,11 @@ class CourseForm(FlaskForm):
         validators=[Optional()],
         description='Показується бейджем "Рівень N/3" на картці та сторінці курсу.',
     )
+    roi_hint = StringField(
+        'Орієнтир окупності',
+        validators=[Optional(), Length(max=200)],
+        description='Напр. "Окупність ≈ 3–4 записи за чека 6 000–9 000 грн". Показується на картці та в hero сторінки курсу.',
+    )
     # media_id зображень з реєстру (заповнюють dropzone). Рядок -> int у service.
     hero_media_id = HiddenField('Hero (media)', validators=[Optional()])
     card_media_id = HiddenField('Картка (media)', validators=[Optional()])

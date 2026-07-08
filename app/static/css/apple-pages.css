@@ -309,6 +309,22 @@
   color: var(--apple-gray-dark);
 }
 
+/* Орієнтир окупності: мікро-підказка на картці та в hero курсу */
+.apple-page .iprm-course-card__roi {
+  font-size: 0.8125rem;
+  color: var(--iprm-success);
+  font-weight: 500;
+  margin: -4px 0 12px;
+}
+
+.apple-page .iprm-hero__roi {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--iprm-success);
+  margin: -16px auto 32px;
+  max-width: 600px;
+}
+
 .apple-page .iprm-course-card__trainer {
   display: flex;
   align-items: center;

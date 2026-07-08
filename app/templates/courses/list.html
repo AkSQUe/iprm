@@ -100,6 +100,10 @@
                 {% endif %}
               </div>
 
+              {% if course.roi_hint %}
+              <p class="iprm-course-card__roi">{{ course.roi_hint }}</p>
+              {% endif %}
+
               {% set card_trainer = nearest.effective_trainer if nearest else course.trainer %}
               {% if card_trainer %}
               <div class="iprm-course-card__trainer">
