@@ -313,6 +313,28 @@ def calendar_json():
     return response
 
 
+def _related_courses(course, limit=3):
+    """Схожі курси для блоку "Наступний крок" на сторінці курсу.
+
+    Ранжування: кількість спільних тегів (спадання), у межах однакового
+    перетину -- порядок каталогу (закріплені -> sort_order -> назва).
+    Без спільних тегів блок все одно наповнюється топом каталогу.
+    """
+    candidates = (
+        Course.query.options(joinedload(Course.card_media))
+        .filter(Course.is_active.is_(True), Course.id != course.id)
+        .order_by(Course.is_pinned.desc(), Course.sort_order, Course.title)
+        .all()
+    )
+    base_tags = set(course.tags or [])
+    # sorted -- стабільне: порядок каталогу зберігається в межах одного рангу.
+    ranked = sorted(
+        candidates,
+        key=lambda c: -len(base_tags & set(c.tags or [])),
+    )
+    return ranked[:limit]
+
+
 @courses_bp.route('/<slug>')
 def course_by_slug(slug):
     """Детальна сторінка курсу: контент Course + список проведень."""
@@ -360,6 +382,7 @@ def course_by_slug(slug):
         past_instances=past_instances,
         open_instance_ids=open_ids,
         seats_left_map=capacity,
+        related_courses=_related_courses(course),
     )
 
 

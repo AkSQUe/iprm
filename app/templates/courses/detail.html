@@ -345,6 +345,40 @@
   </section>
   {% endif %}
 
+  <!-- ===== RELATED COURSES (next step) ===== -->
+  {% if related_courses %}
+  <section class="iprm-section" aria-labelledby="related-title">
+    <div class="iprm-section__inner">
+      <h2 id="related-title" class="iprm-section__title">Наступний <span class="apple-gradient-text">крок</span></h2>
+      <p class="iprm-section__subtitle">Схожі курси, які доповнять цю програму</p>
+      <div class="iprm-course-cards iprm-course-cards--related">
+        {% for rc in related_courses %}
+        <article class="iprm-course-card apple-reveal">
+          <a class="iprm-course-card__link" href="{{ url_for('courses.course_by_slug', slug=rc.slug) }}" aria-label="{{ rc.title }}">
+            <div class="iprm-course-card__image">
+              {% if rc.card_src %}
+              <img src="{{ rc.card_src }}" alt="{{ rc.title }}" loading="lazy" width="400" height="200">
+              {% endif %}
+            </div>
+            <div class="apple-card-body">
+              <p class="iprm-course-card__title">{{ rc.title }}</p>
+              <div class="iprm-course-card__badges">
+                {% if rc.event_type %}
+                <span class="iprm-card-badge iprm-card-badge--type">{{ rc.event_type_label }}</span>
+                {% endif %}
+                {% if rc.cpd_points %}
+                <span class="iprm-card-badge iprm-card-badge--cpd">{{ rc.cpd_points }} {{ rc.cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}</span>
+                {% endif %}
+              </div>
+            </div>
+          </a>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- ===== REQUEST FORM ===== -->
   <section id="request" class="iprm-section apple-section-gray" aria-labelledby="request-title">
     <div class="iprm-section__inner">
