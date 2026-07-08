@@ -304,6 +304,11 @@
   color: var(--iprm-success);
 }
 
+.apple-page .iprm-card-badge--level {
+  background: var(--iprm-bg-gray, #f5f5f7);
+  color: var(--apple-gray-dark);
+}
+
 .apple-page .iprm-course-card__trainer {
   display: flex;
   align-items: center;

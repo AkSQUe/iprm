@@ -300,6 +300,13 @@ class CourseForm(FlaskForm):
         choices=Course.EVENT_TYPES,
         validators=[DataRequired()],
     )
+    difficulty_level = SelectField(
+        'Рівень складності',
+        coerce=int,
+        choices=[(0, 'Не вказано')] + Course.DIFFICULTY_LEVELS,
+        validators=[Optional()],
+        description='Показується бейджем "Рівень N/3" на картці та сторінці курсу.',
+    )
     # media_id зображень з реєстру (заповнюють dropzone). Рядок -> int у service.
     hero_media_id = HiddenField('Hero (media)', validators=[Optional()])
     card_media_id = HiddenField('Картка (media)', validators=[Optional()])

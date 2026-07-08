@@ -39,6 +39,8 @@ class Course(TimestampMixin, db.Model):
     base_price = db.Column(db.Numeric(10, 2), default=0)
     cpd_points = db.Column(db.Integer)
     max_participants = db.Column(db.Integer)
+    # Рівень складності 1..3 (базовий/просунутий/експертний); NULL -- не вказано.
+    difficulty_level = db.Column(db.Integer)
     # Реєстраційний номер заходу БПР (7 цифр) -- сегмент номера сертифіката.
     bpr_event_number = db.Column(db.String(20))
     # Спеціальності заходу БПР для сертифіката (напр. "усі лікарські спеціальності").
@@ -130,9 +132,19 @@ class Course(TimestampMixin, db.Model):
         ('conference', 'Конференція'),
     ]
 
+    DIFFICULTY_LEVELS = [
+        (1, 'Рівень 1 — базовий'),
+        (2, 'Рівень 2 — просунутий'),
+        (3, 'Рівень 3 — експертний'),
+    ]
+
     @property
     def event_type_label(self):
         return dict(self.EVENT_TYPES).get(self.event_type, self.event_type)
+
+    @property
+    def difficulty_label(self):
+        return dict(self.DIFFICULTY_LEVELS).get(self.difficulty_level)
 
     @property
     def upcoming_instances(self):

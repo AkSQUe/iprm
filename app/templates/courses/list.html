@@ -83,6 +83,9 @@
                 {% if course.event_type %}
                 <span class="iprm-card-badge iprm-card-badge--type">{{ course.event_type_label }}</span>
                 {% endif %}
+                {% if course.difficulty_level %}
+                <span class="iprm-card-badge iprm-card-badge--level" title="{{ course.difficulty_label }}">Рівень {{ course.difficulty_level }}/3</span>
+                {% endif %}
                 {% for fmt in insts | map(attribute='format_label') | unique %}
                 <span class="iprm-card-badge iprm-card-badge--format">{{ fmt }}</span>
                 {% endfor %}

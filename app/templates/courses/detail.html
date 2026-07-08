@@ -137,6 +137,12 @@
               <span class="iprm-stat-card__label">формат заходу</span>
             </div>
             {% endif %}
+            {% if course.difficulty_level %}
+            <div class="iprm-stat-card" title="{{ course.difficulty_label }}">
+              <span class="iprm-stat-card__value">{{ course.difficulty_level }}/3</span>
+              <span class="iprm-stat-card__label">рівень складності</span>
+            </div>
+            {% endif %}
             {% if course.cpd_points %}
             <div class="iprm-stat-card">
               <span class="iprm-stat-card__value">{{ course.cpd_points }}</span>
