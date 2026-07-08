@@ -39,8 +39,11 @@ def instance_registrations(instance_id):
         flash('Проведення не знайдено', 'error')
         return redirect(url_for('admin.instances_list'))
 
+    # medical_profile вантажимо одразу -- для позначки "анкета не заповнена"
+    # (менеджер бачить, кому нагадати перед видачею сертифікатів) без N+1.
+    from app.models.user import User
     registrations = EventRegistration.query.options(
-        joinedload(EventRegistration.user),
+        joinedload(EventRegistration.user).joinedload(User.medical_profile),
         joinedload(EventRegistration.certificate),
     ).filter_by(instance_id=instance.id).order_by(
         EventRegistration.created_at.desc()

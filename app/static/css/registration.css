@@ -704,35 +704,6 @@
   .reg-specializations { max-height: 240px; }
 }
 
-/* ========== Phase 4: profile-ready banner ========== */
-.reg-profile-ready {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-  margin: 0 0 24px;
-  background: rgba(22, 163, 74, 0.08);
-  border: 1px solid rgba(22, 163, 74, 0.28);
-  border-radius: var(--iprm-radius);
-  color: var(--apple-black);
-  font-size: 0.9375rem;
-}
-.reg-profile-ready__icon {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #16a34a;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-}
-.reg-profile-ready__text {
-  line-height: 1.5;
-}
-
 /* ===== Вибір способу оплати (альтернативний pipeline) ===== */
 .reg-pay-options {
   display: grid;

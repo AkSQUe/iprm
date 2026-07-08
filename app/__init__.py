@@ -263,8 +263,10 @@ def create_app(config_name=None):
             if not current_user.is_authenticated:
                 return {'show_certdata_reminder': False}
             path = request.path or ''
+            # /auth покриває кабінет (там власний банер і сама анкета);
+            # /registration -- щоб не відволікати посеред флоу оплати.
             if (path.startswith('/admin') or path.startswith('/static')
-                    or path.startswith('/account') or path.startswith('/auth')):
+                    or path.startswith('/auth') or path.startswith('/registration')):
                 return {'show_certdata_reminder': False}
             profile = current_user.medical_profile
             if profile and profile.is_complete:

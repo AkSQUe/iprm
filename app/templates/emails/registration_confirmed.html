@@ -36,14 +36,36 @@
         </tr>
     </table>
 
-    {% if event.price and event.price > 0 and registration.payment_status == 'unpaid' %}
-    {{ alert_warning("До оплати", (event.price | int) ~ " UAH") }}
+    {% set due_amount = registration.payment_amount or event.price %}
+    {% if due_amount and due_amount > 0 and registration.payment_status == 'unpaid' %}
+    {{ alert_warning("До оплати", (due_amount | int) ~ " UAH" ~ (' (тариф «' ~ registration.tariff.name ~ '»)' if registration.tariff else '')) }}
     {% if registration.payment_method == 'invoice' %}
     {{ alert_info("Оплата за рахунком", "Ви обрали оплату за рахунком. Завантажте рахунок (PDF) на сторінці реєстрації або в особистому кабінеті та сплатіть через банк за реквізитами. Після оплати повідомте менеджера для підтвердження участі.") }}
     {% endif %}
     {{ button_primary("Перейти до оплати", pay_url | default(site_settings.website_url)) }}
     {% else %}
     {{ button_primary("Перейти на сайт", site_settings.website_url) }}
+    {% endif %}
+
+    {% if certdata_needed %}
+    {{ spacer(24) }}
+
+    <!-- Нагадування: дані для сертифіката (МОЗ №725) -->
+    <table role="presentation" style="width: 100%; margin-bottom: 8px; background-color: #FFF7ED; border: 1px solid #FED7AA; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 16px 20px;">
+                <p style="margin: 0 0 6px 0; font-size: 15px; font-weight: 600; color: #111827;">
+                    Заповніть дані для сертифіката
+                </p>
+                <p style="margin: 0 0 12px 0; font-size: 14px; color: #6B7280; line-height: 1.5;">
+                    Щоб після курсу отримати сертифікат з балами БПР, заповніть коротку
+                    анкету (вимоги МОЗ №725, п. 13) в особистому кабінеті. Це займе
+                    2–3 хвилини і діє для всіх ваших курсів.
+                </p>
+                <a href="{{ certdata_url }}" style="font-size: 14px; font-weight: 600; color: #7055a4; text-decoration: underline;">Заповнити анкету</a>
+            </td>
+        </tr>
+    </table>
     {% endif %}
 
     {{ spacer(16) }}

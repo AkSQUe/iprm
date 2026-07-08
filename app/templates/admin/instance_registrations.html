@@ -101,7 +101,12 @@
             {% if reg.place_number %}<strong>№{{ reg.place_number }}</strong>{% else %}<span class="admin-text-muted">—</span>{% endif %}
           </td>
           <td>
-            <strong>{{ reg.user.first_name }} {{ reg.user.last_name }}</strong><br>
+            <strong>{{ reg.user.first_name }} {{ reg.user.last_name }}</strong>
+            {% set _profile = reg.user.medical_profile %}
+            {% if not (_profile and _profile.is_complete) %}
+            <span class="badge badge--danger" title="Учасник не заповнив анкету МОЗ №725 — без неї не буде сертифіката з балами БПР. Нагадайте йому про анкету в особистому кабінеті.">Анкета не заповнена</span>
+            {% endif %}
+            <br>
             <small>{{ reg.user.email }}</small>
           </td>
           <td>{{ reg.phone }}</td>

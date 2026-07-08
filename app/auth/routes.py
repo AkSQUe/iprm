@@ -284,8 +284,16 @@ def certificate_data():
             if not (reg.workplace or '').strip() and workplace_snapshot:
                 reg.workplace = workplace_snapshot
 
+        backfilled = sum(
+            1 for reg in regs
+            if reg.specialty == specialty_snapshot or reg.workplace == workplace_snapshot
+        )
         try:
             db.session.commit()
+            logger.info(
+                'Certificate data saved: user=%d complete=%s backfilled_regs=%d',
+                current_user.id, profile.is_complete, backfilled,
+            )
             flash('Дані для сертифіката збережено. Дякуємо!', 'success')
             return redirect(url_for('auth.account'))
         except Exception:

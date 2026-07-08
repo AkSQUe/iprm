@@ -430,6 +430,12 @@ class EmailService:
             )
             return None
         user = registration.user
+        # Нагадування про МОЗ-анкету: показуємо блок у листі, поки профіль
+        # неповний (анкета -- умова сертифіката, збирається в кабінеті).
+        profile = user.medical_profile
+        from app.models.site_settings import SiteSettings
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        certdata_url = f'{base}/auth/account/certificate-data'
         result = EmailService.send_email(
             to=user.email,
             subject=f'Реєстрацію підтверджено: {event.title}',
@@ -437,6 +443,8 @@ class EmailService:
             context={
                 'user': user, 'event': event, 'registration': registration,
                 'pay_url': EmailService._pay_url_for_registration(registration),
+                'certdata_needed': not (profile and profile.is_complete),
+                'certdata_url': certdata_url,
             },
             trigger='registration',
             registration_id=registration.id,
