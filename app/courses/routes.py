@@ -236,6 +236,14 @@ def course_list():
     capacity = _capacity_map([c.id for c in courses])
     open_ids = _open_from_capacity(capacity)
 
+    # Унікальні теги каталогу для бігучого рядка чіпсів (за спаданням частоти,
+    # щоб найпоширеніші спеціальності були першими).
+    tag_counts = {}
+    for c in courses:
+        for tag in (c.tags or []):
+            tag_counts[tag] = tag_counts.get(tag, 0) + 1
+    all_tags = sorted(tag_counts, key=lambda t: (-tag_counts[t], t))
+
     # JSON-серіалізована стрічка майбутніх подій для inline-старту календаря.
     # `date` (YYYY-MM-DD) -- all-day start у FullCalendar: date-only рядок не
     # конвертується по часових поясах -> жодного зсуву дати. Архів минулих
@@ -261,6 +269,7 @@ def course_list():
         events_jsonld=events_jsonld,
         open_instance_ids=open_ids,
         seats_left_map=capacity,
+        all_tags=all_tags,
     )
 
 
