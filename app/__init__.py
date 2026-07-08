@@ -252,34 +252,41 @@ def create_app(config_name=None):
 
     @app.context_processor
     def inject_certdata_reminder():
-        """Плаваюче нагадування "заповніть дані для сертифіката" на ПУБЛІЧНИХ
-        сторінках: авторизований користувач з активною реєстрацією і
-        незаповненою МОЗ-анкетою (№725 п.13). Закриття -- sessionStorage
-        (нагадає у наступній сесії). У кабінеті не показуємо -- там власний
-        банер і сама анкета."""
+        """Сигналізатори "заповніть дані для сертифіката" (МОЗ №725 п.13)
+        для авторизованого користувача з активною реєстрацією і незаповненою
+        анкетою:
+
+        - certdata_incomplete -- індикатор-тултіп біля імені в header
+          (усі публічні сторінки);
+        - show_certdata_reminder -- плаваючий pop-up; додатково вимкнений
+          у кабінеті (там власний банер і сама анкета) та у флоу
+          реєстрації/оплати, щоб не відволікати. Закриття -- sessionStorage.
+        """
         from flask import request
         from flask_login import current_user
+        flags = {'certdata_incomplete': False, 'show_certdata_reminder': False}
         try:
             if not current_user.is_authenticated:
-                return {'show_certdata_reminder': False}
+                return flags
             path = request.path or ''
-            # /auth покриває кабінет (там власний банер і сама анкета);
-            # /registration -- щоб не відволікати посеред флоу оплати.
-            if (path.startswith('/admin') or path.startswith('/static')
-                    or path.startswith('/auth') or path.startswith('/registration')):
-                return {'show_certdata_reminder': False}
+            if path.startswith('/admin') or path.startswith('/static'):
+                return flags
             profile = current_user.medical_profile
             if profile and profile.is_complete:
-                return {'show_certdata_reminder': False}
+                return flags
             from app.extensions import db
             from app.models.registration import EventRegistration
             has_reg = db.session.query(EventRegistration.id).filter(
                 EventRegistration.user_id == current_user.id,
                 EventRegistration.status != 'cancelled',
             ).first() is not None
-            return {'show_certdata_reminder': has_reg}
+            flags['certdata_incomplete'] = has_reg
+            flags['show_certdata_reminder'] = has_reg and not (
+                path.startswith('/auth') or path.startswith('/registration')
+            )
+            return flags
         except Exception:
-            return {'show_certdata_reminder': False}
+            return flags
 
     @app.after_request
     def set_security_headers(response):

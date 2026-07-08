@@ -316,6 +316,83 @@ a {
   align-items: center;
 }
 
+/* Індикатор "дані для сертифіката не заповнені" біля імені користувача.
+   Клік веде на анкету; тултіп -- чистий CSS (hover/focus), без tooltips.js,
+   бо той перехоплює клік і зламав би навігацію. */
+.iprm-header__certdata {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 6px;
+  margin-left: -6px;
+}
+
+.iprm-header__certdata-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e05252;
+  animation: header-certdata-pulse 1.8s ease-in-out infinite;
+}
+
+.iprm-header__certdata-tip {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: -8px;
+  width: 260px;
+  padding: 10px 14px;
+  background: var(--apple-black);
+  color: var(--iprm-white);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.45;
+  border-radius: var(--iprm-radius-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+  pointer-events: none;
+  z-index: 1001;
+}
+
+.iprm-header__certdata-tip::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: 14px;
+  width: 10px;
+  height: 10px;
+  background: var(--apple-black);
+  transform: rotate(45deg);
+}
+
+.iprm-header__certdata:hover .iprm-header__certdata-tip,
+.iprm-header__certdata:focus-visible .iprm-header__certdata-tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Пункт мобільного меню з тим самим індикатором */
+.iprm-nav__mobile-link--certdata {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #b23b3b;
+  font-weight: 600;
+}
+
+@keyframes header-certdata-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224, 82, 82, 0.5); }
+  50% { box-shadow: 0 0 0 6px rgba(224, 82, 82, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iprm-header__certdata-dot { animation: none; }
+}
+
 /* Мобільний блок акаунту в бургер-меню (прихований на desktop) */
 .iprm-nav__mobile-account {
   display: none;
