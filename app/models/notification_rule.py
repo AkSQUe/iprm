@@ -49,9 +49,15 @@ class NotificationRule(TimestampMixin, db.Model):
     # ігнорується.
     trigger_statuses = db.Column(db.JSON, default=None, nullable=True)
 
+    # CHECK генерується з EVENT_TYPES: додавання нового типу події вимагає
+    # ЛИШЕ міграції drop/create констрейнта (пастка вже кусала двічі --
+    # email_logs.trigger і materials 08.07.2026). Розсинхрон коду зі списком
+    # тепер неможливий.
     __table_args__ = (
         db.CheckConstraint(
-            "event_type IN ('registration', 'payment', 'course_request', 'status_change')",
+            'event_type IN ({})'.format(
+                ', '.join(f"'{code}'" for code, _ in EVENT_TYPES)
+            ),
             name='ck_notification_rules_event_type',
         ),
     )

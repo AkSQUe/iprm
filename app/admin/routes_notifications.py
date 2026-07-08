@@ -201,6 +201,7 @@ def notifications_templates():
     class MockUser:
         first_name = 'Олена'
         last_name = 'Шевченко'
+        full_name = 'Олена Шевченко'
         email = 'olena@example.com'
 
     class MockEvent:
@@ -232,6 +233,52 @@ def notifications_templates():
         STATUSES = MockRegistration.STATUSES
 
     reg_paid = MockRegPaid()
+
+    class MockCertificate:
+        number = '2026-2738-0001234-000001'
+        cpd_points = 10
+        event_date = MockEvent.start_date
+        event_title = MockEvent.title
+
+    class MockComment:
+        author_name = 'Ігор Петренко'
+        email = 'igor@example.com'
+        body = 'Дуже корисна стаття, дякую за детальний розбір протоколу!'
+        created_at = datetime(2026, 4, 10, 14, 30, tzinfo=timezone.utc)
+
+    class MockPost:
+        title = 'PRP у трихології: покрокова методика'
+
+    class MockCourse:
+        title = 'PRP-терапія: сучасні протоколи'
+
+    class MockCourseRequest:
+        email = 'client@example.com'
+        phone = '+380671234567'
+        message = 'Цікавить корпоративне навчання для 5 лікарів нашої клініки.'
+        created_at = datetime(2026, 4, 12, 9, 15, tzinfo=timezone.utc)
+
+    class MockB2BRequest:
+        full_name = 'Марія Коваленко'
+        email = 'b2b@clinic.example.com'
+        phone = '+380509876543'
+        team_size_label = '6–10 осіб'
+        created_at = datetime(2026, 4, 11, 11, 0, tzinfo=timezone.utc)
+
+    reg.user = user  # admin_event_notification renders registration.user
+
+    certificate = MockCertificate()
+    comment = MockComment()
+    post = MockPost()
+    course = MockCourse()
+    course_request = MockCourseRequest()
+    b2b_request = MockB2BRequest()
+    mock_admin_url = 'https://plasma-regen.com/admin'
+    mock_materials_items = [
+        {'sku': 'NDL-21', 'name': 'Голка 21G', 'quantity_reserved': 5},
+        {'sku': 'ROLL-DENTAL', 'name': 'Валик ватний', 'quantity_reserved': 12},
+        {'sku': 'GLOVE-M', 'name': 'Рукавички M', 'quantity_reserved': 20},
+    ]
 
     templates = [
         {
@@ -310,6 +357,113 @@ def notifications_templates():
                                     user=user, event=event, registration=reg,
                                     old_status='confirmed', new_status='completed',
                                     new_status_label='Завершено'),
+        },
+        {
+            'key': 'email-confirm',
+            'label': 'Підтвердження email',
+            'template_name': 'email_confirm.html',
+            'trigger': 'email_confirm',
+            'subject': 'Підтвердіть ваш email | IPRM',
+            'html': render_template('emails/email_confirm.html',
+                                    user=user, confirm_url='https://plasma-regen.com/auth/confirm/example'),
+        },
+        {
+            'key': 'password-reset',
+            'label': 'Відновлення паролю',
+            'template_name': 'password_reset.html',
+            'trigger': 'password_reset',
+            'subject': 'Відновлення паролю | IPRM',
+            'html': render_template('emails/password_reset.html',
+                                    user=user, reset_url='https://plasma-regen.com/auth/reset/example'),
+        },
+        {
+            'key': 'completion-link',
+            'label': 'Завершення реєстрації',
+            'template_name': 'completion_link.html',
+            'trigger': 'registration',
+            'subject': f'Завершіть реєстрацію: {event.title}',
+            'html': render_template('emails/completion_link.html',
+                                    user=user, event=event,
+                                    complete_url='https://plasma-regen.com/registration/complete/example'),
+        },
+        {
+            'key': 'certificate',
+            'label': 'Сертифікат видано',
+            'template_name': 'certificate_issued.html',
+            'trigger': 'certificate',
+            'subject': f'Ваш сертифікат готовий: {certificate.event_title}',
+            'html': render_template('emails/certificate_issued.html',
+                                    user=user, certificate=certificate),
+        },
+        {
+            'key': 'course-request-received',
+            'label': 'Запит на курс: клієнту',
+            'template_name': 'course_request_received.html',
+            'trigger': 'course_request',
+            'subject': f'Ми отримали ваш запит: {course.title}',
+            'html': render_template('emails/course_request_received.html',
+                                    request_obj=course_request, course=course,
+                                    course_url='https://plasma-regen.com/courses/prp'),
+        },
+        {
+            'key': 'course-request-admin',
+            'label': 'Запит на курс: адміну',
+            'template_name': 'course_request_notification.html',
+            'trigger': 'course_request',
+            'subject': f'Новий запит на курс: {course.title}',
+            'html': render_template('emails/course_request_notification.html',
+                                    request_obj=course_request, course=course,
+                                    admin_url=mock_admin_url),
+        },
+        {
+            'key': 'b2b-request',
+            'label': 'B2B-заявка: адміну',
+            'template_name': 'b2b_request_notification.html',
+            'trigger': 'course_request',
+            'subject': 'Нова B2B-заявка',
+            'html': render_template('emails/b2b_request_notification.html',
+                                    request_obj=b2b_request, admin_url=mock_admin_url),
+        },
+        {
+            'key': 'blog-comment',
+            'label': 'Коментар у блозі: адміну',
+            'template_name': 'blog_comment_notification.html',
+            'trigger': 'blog_comment',
+            'subject': f'Новий коментар: {post.title}',
+            'html': render_template('emails/blog_comment_notification.html',
+                                    comment=comment, post=post, admin_url=mock_admin_url),
+        },
+        {
+            'key': 'admin-event',
+            'label': 'Admin-сповіщення про подію',
+            'template_name': 'admin_event_notification.html',
+            'trigger': 'status_change',
+            'subject': f'Нова реєстрація: {event.title}',
+            'html': render_template('emails/admin_event_notification.html',
+                                    event=event, registration=reg,
+                                    kind_label='Нова реєстрація',
+                                    admin_url=mock_admin_url),
+        },
+        {
+            'key': 'materials-reminder',
+            'label': 'Матеріали: нагадування',
+            'template_name': 'materials_actuals_reminder.html',
+            'trigger': 'materials',
+            'subject': f'Внесіть фактичні матеріали: {event.title}',
+            'html': render_template('emails/materials_actuals_reminder.html',
+                                    event_title=event.title, event_date='15.04.2026',
+                                    items=mock_materials_items,
+                                    admin_url='https://plasma-regen.com/admin/instances/1/materials'),
+        },
+        {
+            'key': 'backup-failure',
+            'label': 'Помилка бекапу',
+            'template_name': 'backup_failure.html',
+            'trigger': 'backup_failure',
+            'subject': 'IPRM: помилка автоматичного бекапу БД',
+            'html': render_template('emails/backup_failure.html',
+                                    error_message='Connection to backup storage timed out after 30s',
+                                    admin_url=mock_admin_url),
         },
     ]
 
