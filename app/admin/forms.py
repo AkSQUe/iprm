@@ -411,6 +411,40 @@ class InstanceTariffForm(FlaskForm):
     is_active = BooleanField('Активний (показується і доступний для вибору)', default=True)
 
 
+class CourseTariffForm(FlaskForm):
+    """Шаблонний тариф курсу (дефолтна вилка; копіюється у нові проведення)."""
+    name = StringField(
+        'Назва тарифу',
+        validators=[DataRequired(message='Назва обов\'язкова'), Length(max=100)],
+        description='Напр. Онлайн, Онлайн+, Практикум, Практикум з менторством.',
+    )
+    price = DecimalField(
+        'Ціна за замовчуванням (UAH)',
+        validators=[InputRequired(message='Вкажіть ціну'), NumberRange(min=0)],
+        description='На конкретному проведенні ціну можна змінити після копіювання.',
+    )
+    description = TextAreaField(
+        'Що входить',
+        validators=[Optional()],
+        description='Один пункт на рядок (лекція, запис, сертифікат, чат з тренером...).',
+    )
+    event_format = SelectField(
+        'Формат проведення',
+        choices=[('', 'Будь-який формат'),
+                 ('online', 'Лише онлайн-проведення'),
+                 ('offline', 'Лише офлайн-проведення')],
+        validators=[Optional()],
+        description='Онлайн-проведення отримає лише онлайн-шаблони; гібрид — усі.',
+    )
+    sort_order = IntegerField(
+        'Порядок',
+        default=0,
+        validators=[Optional(), NumberRange(min=-1000, max=1000)],
+        description='Менше число — вище. Рекомендовано: від економ до преміум.',
+    )
+    is_active = BooleanField('Активний (копіюється у нові проведення)', default=True)
+
+
 class CourseInstanceForm(FlaskForm):
     """Проведення: коли, де, в якому форматі."""
     course_id = SelectField(

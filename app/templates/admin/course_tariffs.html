@@ -1,0 +1,155 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Тарифи курсу (за замовчуванням) | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Курси</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <a href="{{ url_for('admin.course_edit', course_id=course.id) }}" class="admin-breadcrumb__link">{{ course.title }}</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Тарифи за замовчуванням</span>
+      </div>
+      <h1 class="admin-hero__title">Тарифи курсу (за замовчуванням)</h1>
+      <p class="admin-hero__subtitle">Шаблонна вилка: копіюється у НОВІ проведення відповідно до формату. Існуючі проведення керуються на власних сторінках тарифів.</p>
+    </div>
+    <div class="admin-hero__actions">
+      {% if course.default_tariffs %}
+      <form method="POST" action="{{ url_for('admin.course_tariffs_apply', course_id=course.id) }}"
+            data-confirm="Замінити тарифи ВСІХ майбутніх проведень цього курсу шаблонами? Тарифи з реєстраціями буде деактивовано, решту -- замінено.">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('refresh') }} Застосувати до майбутніх проведень</button>
+      </form>
+      {% endif %}
+      <a href="{{ url_for('admin.course_edit', course_id=course.id) }}" class="btn-admin btn-admin--secondary">Назад до курсу</a>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {% if course.default_tariffs %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Порядок</th>
+        <th>Назва</th>
+        <th>Ціна</th>
+        <th>Формат</th>
+        <th>Що входить</th>
+        <th>Активний</th>
+        <th>Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tariff in course.default_tariffs %}
+      <tr>
+        <td>{{ tariff.sort_order }}</td>
+        <td><strong>{{ tariff.name }}</strong></td>
+        <td>{{ tariff.price | int }} &#8372;</td>
+        <td>{{ tariff.format_label }}</td>
+        <td>
+          {% if tariff.description_items %}
+          <ul class="admin-tariff-items">
+            {% for item in tariff.description_items %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+          {% else %}---{% endif %}
+        </td>
+        <td>
+          {% if tariff.is_active %}<span class="badge badge--active">Так</span>
+          {% else %}<span class="badge badge--draft">Ні</span>{% endif %}
+        </td>
+        <td>
+          <div class="admin-table__actions">
+            <a href="{{ url_for('admin.course_tariff_edit', tariff_id=tariff.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
+            <form method="POST" action="{{ url_for('admin.course_tariff_delete', tariff_id=tariff.id) }}" data-confirm="Видалити шаблон «{{ tariff.name }}»? Скопійовані тарифи проведень не зачепить.">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити">{{ icon('delete') }}</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="admin-empty">
+    {{ icon('bolt', cls='admin-empty__icon') }}
+    <h3 class="admin-empty__title">Шаблонів ще немає</h3>
+    <p>Рекомендована вилка: Онлайн → Онлайн+ (онлайн-формат) та Практикум → Практикум з менторством (офлайн). Нові проведення отримають їх автоматично.</p>
+  </div>
+  {% endif %}
+
+  <form method="POST" class="admin-form admin-tariffs-form" action="{% if edit_tariff %}{{ url_for('admin.course_tariff_edit', tariff_id=edit_tariff.id) }}{% else %}{{ url_for('admin.course_tariffs', course_id=course.id) }}{% endif %}">
+    {{ form.hidden_tag() }}
+    {% include 'admin/partials/_form_errors.html' %}
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">{% if edit_tariff %}Редагувати шаблон «{{ edit_tariff.name }}»{% else %}Додати шаблонний тариф{% endif %}</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group">
+          <label for="ct-name">Назва тарифу <span class="required">*</span></label>
+          {{ form.name(class="form-input" + (" is-invalid" if form.name.errors else ""), id="ct-name", placeholder="Онлайн / Онлайн+ / Практикум / Практикум з менторством") }}
+          <div class="form-hint">{{ form.name.description }}</div>
+          {% for error in form.name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="ct-price">Ціна за замовчуванням (UAH) <span class="required">*</span></label>
+          {{ form.price(class="form-input" + (" is-invalid" if form.price.errors else ""), id="ct-price", type="number", step="1", min="0") }}
+          <div class="form-hint">{{ form.price.description }}</div>
+          {% for error in form.price.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="ct-format">Формат проведення</label>
+          {{ form.event_format(class="form-input", id="ct-format") }}
+          <div class="form-hint">{{ form.event_format.description }}</div>
+        </div>
+
+        <div class="form-group">
+          <label for="ct-sort">Порядок</label>
+          {{ form.sort_order(class="form-input", id="ct-sort", type="number") }}
+          <div class="form-hint">{{ form.sort_order.description }}</div>
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="ct-description">Що входить</label>
+          {{ form.description(class="form-input", id="ct-description", rows="4", placeholder="Лекція наживо\nЗапис курсу\nСертифікат з балами БПР\nЧек-лист/шпаргалка") }}
+          <div class="form-hint">{{ form.description.description }}</div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-checkbox">
+            {{ form.is_active(id="ct-active") }}
+            <label for="ct-active">Активний</label>
+          </div>
+        </div>
+
+      </div>
+      <div class="admin-form__actions">
+        <button type="submit" class="btn-admin btn-admin--primary">{% if edit_tariff %}Зберегти зміни{% else %}Додати шаблон{% endif %}</button>
+        {% if edit_tariff %}
+        <a href="{{ url_for('admin.course_tariffs', course_id=course.id) }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+        {% endif %}
+      </div>
+    </div>
+  </form>
+
+  </div>
+</div>
+{% endblock %}
