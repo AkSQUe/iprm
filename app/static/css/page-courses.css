@@ -300,6 +300,136 @@
   box-shadow: 0 2px 12px rgba(var(--apple-accent-rgb), 0.12);
 }
 
+/* ========== FORMAT / TARIFF CARDS (Оберіть формат участі) ========== */
+
+.iprm-format-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.iprm-format-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  padding: 32px;
+  transition:
+    transform 0.3s var(--ease-interact),
+    box-shadow 0.3s var(--ease-interact),
+    border-color 0.3s var(--ease-interact);
+}
+
+.iprm-format-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* Преміум-тариф: акцентна рамка як орієнтир вибору. */
+.iprm-format-card--featured {
+  border-color: var(--iprm-accent);
+  box-shadow: 0 8px 32px rgba(var(--apple-accent-rgb), 0.12);
+}
+
+.iprm-format-card__head {
+  margin-bottom: 16px;
+}
+
+.iprm-format-card__name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--apple-black);
+}
+
+.iprm-format-card__date {
+  font-size: 0.875rem;
+  color: var(--apple-gray-dark);
+  margin-top: 4px;
+}
+
+.iprm-format-card__price {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--apple-black);
+  margin-bottom: 24px;
+}
+
+.iprm-format-card__currency {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--apple-gray-dark);
+}
+
+.iprm-format-card__included {
+  flex: 1;
+  margin-bottom: 28px;
+}
+
+.iprm-format-card__included-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--apple-gray-dark);
+  margin-bottom: 12px;
+}
+
+.iprm-format-card__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.iprm-format-card__list li {
+  position: relative;
+  padding-left: 30px;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: var(--iprm-text);
+}
+
+/* Галочка-акцент (SVG у кольорі бренду) замість стандартного маркера. */
+.iprm-format-card__list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 18px;
+  height: 18px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%237055a4' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+}
+
+.iprm-format-card__cta {
+  width: 100%;
+  margin-top: auto;
+  text-align: center;
+}
+
+/* Закритий продаж: неактивна плашка замість кнопки. */
+.iprm-format-card__cta--closed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  padding: 12px 24px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-bg-gray, #f5f5f7);
+  color: var(--iprm-text-light);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: not-allowed;
+}
+
 .iprm-schedule__action {
   flex-shrink: 0;
 }

@@ -80,6 +80,13 @@
 {% block content %}
 <div class="apple-page">
 
+  {# Найближче проведення з активними тарифами -- джерело блоку "Формат участі". #}
+  {% set ns_fmt = namespace(inst=None) %}
+  {% for inst in upcoming_instances %}
+    {% if ns_fmt.inst is none and inst.active_tariffs %}{% set ns_fmt.inst = inst %}{% endif %}
+  {% endfor %}
+  {% set format_inst = ns_fmt.inst %}
+
   <!-- ===== HERO ===== -->
   <div class="iprm-hero-wrap">
     <section class="iprm-hero" aria-label="Hero">
@@ -101,7 +108,9 @@
         </div>
         {% endif %}
         <div class="iprm-hero__actions iprm-hero__actions--detail" data-sticky-cta-anchor>
-          {% if upcoming_instances %}
+          {% if format_inst %}
+          <a href="#formats" class="apple-btn apple-btn--primary">Формат участі</a>
+          {% elif upcoming_instances %}
           <a href="#schedule" class="apple-btn apple-btn--primary">Найближчі дати</a>
           {% else %}
           <a href="#request" class="apple-btn apple-btn--primary">Залишити запит</a>
@@ -224,6 +233,48 @@
       {% endif %}
     </div>
   </section>
+
+  <!-- ===== FORMAT / TARIFFS (Оберіть формат участі) ===== -->
+  {% if format_inst %}
+  {% set fmt_open = format_inst.id in open_instance_ids %}
+  {% set fmt_date = format_inst.start_date.strftime('%d.%m.%Y') if format_inst.start_date else '' %}
+  {% set fmt_tariffs = format_inst.active_tariffs %}
+  <section id="formats" class="iprm-section" aria-labelledby="formats-title">
+    <div class="iprm-section__inner">
+      <h2 id="formats-title" class="iprm-section__title">Оберіть <span class="apple-gradient-text">формат участі</span></h2>
+      <p class="iprm-section__subtitle">та отримайте сертифікат міжнародного зразка</p>
+      <div class="iprm-format-cards">
+        {% for tariff in fmt_tariffs %}
+        <article class="iprm-format-card apple-reveal{% if loop.last and fmt_tariffs|length > 1 %} iprm-format-card--featured{% endif %}">
+          <div class="iprm-format-card__head">
+            <h3 class="iprm-format-card__name">{{ tariff.name }}</h3>
+            {% if fmt_date %}<p class="iprm-format-card__date">Захід {{ fmt_date }}</p>{% endif %}
+          </div>
+          <div class="iprm-format-card__price">{{ tariff.price | int }} <span class="iprm-format-card__currency">грн</span></div>
+          {% if tariff.description_items %}
+          <div class="iprm-format-card__included">
+            <span class="iprm-format-card__included-label">Що включено:</span>
+            <ul class="iprm-format-card__list">
+              {% for item in tariff.description_items %}
+              <li>{{ item }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          {% if fmt_open %}
+          <a href="{{ url_for('registration.register_instance', instance_id=format_inst.id, tariff=tariff.id) }}"
+             class="apple-btn apple-btn--primary iprm-format-card__cta">
+            {% if fmt_date %}Зареєструватися на {{ fmt_date }}{% else %}Зареєструватися{% endif %}
+          </a>
+          {% else %}
+          <span class="iprm-format-card__cta iprm-format-card__cta--closed">Продаж завершено</span>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
 
   <!-- ===== SCHEDULE (upcoming instances) ===== -->
   <section id="schedule" class="iprm-section" aria-labelledby="schedule-title">
