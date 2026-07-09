@@ -177,10 +177,44 @@ class PaymentOps:
                 except Exception:
                     logger.exception('Failed to queue payment email for REG-%d', reg.id)
 
+                # Блок 4.1 фаза 2: підтвердження email -- ПІСЛЯ списання
+                # коштів. Реєстрація/оплата не гейтяться підтвердженням,
+                # тож перший лист з посиланням шлемо оплаченому учаснику.
+                try:
+                    self._send_email_confirmation_if_needed(reg)
+                except Exception:
+                    logger.exception(
+                        'Failed to queue email-confirmation for REG-%d', reg.id,
+                    )
+
             return True, 'ok'
         except Exception:
             logger.exception('Payment DB error for REG-%d', reg.id)
             return _fail('db error')
+
+    @staticmethod
+    def _send_email_confirmation_if_needed(reg):
+        """Надіслати лист підтвердження email оплаченому учаснику, якщо
+        email ще не підтверджено. url_for може бути недоступний поза
+        request-контекстом (status_check зі scheduler-а) -- тоді будуємо
+        посилання з SiteSettings.website_url."""
+        user = reg.user
+        if user is None or user.email_confirmed or not user.email:
+            return
+        from app.services.email_service import EmailService
+        from app.services.token_service import generate_confirmation_token
+
+        token = generate_confirmation_token(user.id)
+        try:
+            from flask import url_for
+            confirm_url = url_for('auth.confirm_email', token=token, _external=True)
+        except RuntimeError:
+            from app.models.site_settings import SiteSettings
+            base = (SiteSettings.get().website_url or '').rstrip('/')
+            confirm_url = f'{base}/auth/confirm/{token}'
+        EmailService.send_email_confirmation(user, confirm_url)
+        logger.info('Email-confirmation queued after payment: REG-%d user=%d',
+                    reg.id, user.id)
 
     def check_and_update(self, reg):
         order_id = f'REG-{reg.id}'

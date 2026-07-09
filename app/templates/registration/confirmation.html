@@ -71,6 +71,23 @@
     </div>
   {% endif %}
 
+  {# ===== Нагадування: email не підтверджено ===== #}
+  {% if not current_user.email_confirmed %}
+  <aside class="reg-certdata-reminder reg-certdata-reminder--email" role="note">
+    <div class="reg-certdata-reminder__icon" aria-hidden="true">@</div>
+    <div class="reg-certdata-reminder__body">
+      <p class="reg-certdata-reminder__title">Підтвердіть ваш email</p>
+      <p class="reg-certdata-reminder__text">
+        На {{ current_user.email }} надіслано лист з посиланням для
+        підтвердження{% if reg.payment_status == 'paid' %} — ми продублювали його після оплати{% endif %}.
+        Підтвердження потрібне для доступу до матеріалів і сповіщень про захід.
+        Не знайшли лист? Перевірте «Спам» або надішліть повторно з
+        <a href="{{ url_for('auth.account') }}">особистого кабінету</a>.
+      </p>
+    </div>
+  </aside>
+  {% endif %}
+
   {# ===== Нагадування: дані для сертифіката (МОЗ №725) ===== #}
   {% if not certificate_data_complete %}
   <aside class="reg-certdata-reminder" role="note">

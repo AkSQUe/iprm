@@ -156,9 +156,10 @@ def register_instance(instance_id):
     if not current_user.is_authenticated:
         return redirect(url_for('auth.login', next=_login_next_path()))
 
-    if not current_user.email_confirmed:
-        flash('Для реєстрації на курс необхідно підтвердити email', 'warning')
-        return redirect(url_for('auth.account'))
+    # Підтвердження email НЕ блокує реєстрацію/оплату (Блок 4.1 фаза 2,
+    # рішення Дмитра): лист підтвердження надсилається після списання
+    # коштів (payment_ops.update_payment_status), а непідтверджені
+    # оплачені реєстрації видно менеджеру для ручної звірки.
 
     instance = db.session.query(CourseInstance).options(
         joinedload(CourseInstance.course),
