@@ -177,17 +177,12 @@ def copy_course_tariffs_to_instance(instance, replace=False):
     Returns:
         Кількість скопійованих тарифів.
     """
-    from app.models.course_tariff import CourseTariff
     from app.models.instance_tariff import InstanceTariff
     from app.models.registration import EventRegistration
 
-    templates = (
-        CourseTariff.query
-        .filter_by(course_id=instance.course_id, is_active=True)
-        .order_by(CourseTariff.sort_order)
-        .all()
-    )
-    matching = [t for t in templates if t.matches_format(instance.event_format)]
+    # Джерело істини "скільки скопіюється" -- спільна з кнопкою "Взяти з курсу"
+    # властивість (активні шаблони курсу, що пасують формату проведення).
+    matching = instance.copyable_course_tariffs
 
     if replace:
         for tariff in list(instance.tariffs):

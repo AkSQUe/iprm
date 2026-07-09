@@ -31,10 +31,12 @@
     </div>
     <div class="admin-hero__actions">
       {% if instance.course %}
+      {% set copyable_count = instance.copyable_course_tariffs | length %}
       <form method="POST" action="{{ url_for('admin.instance_tariffs_sync', instance_id=instance.id) }}"
             data-confirm="Замінити тарифи цього проведення шаблонами курсу? Тарифи з реєстраціями буде деактивовано, решту -- замінено.">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('refresh') }} Взяти з курсу ({{ instance.course.default_tariffs | length }})</button>
+        <button type="submit" class="btn-admin btn-admin--secondary"
+                title="Переносяться лише активні шаблони курсу, що пасують формату ({{ instance.format_label }})">{{ icon('refresh') }} Взяти з курсу ({{ copyable_count }})</button>
       </form>
       <a href="{{ url_for('admin.course_tariffs', course_id=instance.course.id) }}" class="btn-admin btn-admin--secondary">Тарифи курсу</a>
       {% endif %}

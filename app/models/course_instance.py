@@ -135,6 +135,18 @@ class CourseInstance(TimestampMixin, db.Model):
         return [t for t in self.tariffs if t.is_active]
 
     @property
+    def copyable_course_tariffs(self):
+        """Активні шаблонні тарифи курсу, що пасують формату цього проведення.
+
+        Саме стільки скопіює кнопка "Взяти з курсу": онлайн-шаблони не
+        переносяться в офлайн-проведення (і навпаки), NULL-формат пасує всім.
+        default_tariffs вже впорядковані за sort_order."""
+        if self.course is None:
+            return []
+        return [t for t in self.course.default_tariffs
+                if t.is_active and t.matches_format(self.event_format)]
+
+    @property
     def effective_price(self):
         """Фактична ціна: мінімальний активний тариф ("від N"), інакше
         перевизначення проведення, інакше базова ціна курсу."""
