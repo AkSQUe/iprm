@@ -29,7 +29,8 @@ logger = logging.getLogger(__name__)
 
 # Колонки шаблону (порядок фіксований).
 COLUMNS = [
-    'ПІБ учасника',
+    'Тип особи (Учасник/Тренер)',
+    'ПІБ',
     'Тип заходу',
     'Назва заходу',
     'Дата проведення (ДД.ММ.РРРР)',
@@ -38,10 +39,24 @@ COLUMNS = [
     'ПІБ лектора',
     'Спеціальності',
     'Номер заходу БПР (7 цифр)',
-    'Номер учасника (6 цифр)',
+    'Номер (6 цифр)',
 ]
-COLUMN_WIDTHS = [28, 18, 38, 24, 20, 10, 24, 28, 22, 20]
+COLUMN_WIDTHS = [22, 28, 18, 38, 24, 20, 10, 24, 28, 22, 20]
 _NCOLS = len(COLUMNS)
+
+# Значення колонки "Тип особи" -> вид сертифіката (kind для рендеру).
+PERSON_TYPES = ['Учасник', 'Тренер']
+_LECTURER_ALIASES = {'тренер', 'лектор', 'trainer', 'lecturer'}
+
+
+def _resolve_kind(person_type_raw):
+    """Значення колонки типу особи -> ('participant'|'lecturer', ярлик).
+
+    Порожнє/невідоме -> учасник (безпечний дефолт)."""
+    value = str(person_type_raw).strip() if person_type_raw is not None else ''
+    if value.lower() in _LECTURER_ALIASES:
+        return 'lecturer', 'Тренер'
+    return 'participant', 'Учасник'
 
 MAX_ROWS = 2000  # запобіжник проти величезних файлів
 _JOB_ID_RE = re.compile(r'^[0-9a-f]{32}$')
@@ -168,15 +183,17 @@ def parse_workbook(job_id):
         if not raw or all(c is None or str(c).strip() == '' for c in raw):
             continue
         if len(rows) >= MAX_ROWS:
-            rows.append({'row': idx, 'name': '', 'event_type': None, 'title': '',
+            rows.append({'row': idx, 'name': '', 'kind': 'participant',
+                         'person_type': 'Учасник', 'event_type': None, 'title': '',
                          'date': None, 'date_str': '', 'place': None, 'cpd': None,
                          'lecturer': None, 'specialties': None, 'event': '',
                          'part': '', 'status': 'error',
                          'problems': [f'перевищено ліміт {MAX_ROWS} рядків']})
             break
         cells = list(raw) + [None] * (_NCOLS - len(raw))
-        (name, event_type_raw, title, date_raw, place_raw, cpd_raw,
-         lecturer, spec_raw, event_raw, part_raw) = cells[:_NCOLS]
+        (person_type_raw, name, event_type_raw, title, date_raw, place_raw,
+         cpd_raw, lecturer, spec_raw, event_raw, part_raw) = cells[:_NCOLS]
+        kind, person_label = _resolve_kind(person_type_raw)
         name = str(name).strip() if name is not None else ''
         title = str(title).strip() if title is not None else ''
         dt = _parse_date(date_raw)
@@ -208,6 +225,7 @@ def parse_workbook(job_id):
                 seen_part[key] = idx
         rows.append({
             'row': idx, 'name': name,
+            'kind': kind, 'person_type': person_label,
             'event_type': str(event_type_raw).strip() if event_type_raw else None,
             'title': title, 'date': dt,
             'date_str': dt.strftime('%d.%m.%Y') if dt else (str(date_raw).strip() if date_raw else ''),
@@ -243,7 +261,7 @@ def _run(app, job_id, provider):
                                    'created': utcnow().isoformat()})
             font_config = FontConfiguration()
             seen_names = {}
-            summary = [['Файл', 'Номер', 'ПІБ', 'Захід', 'Дата']]
+            summary = [['Файл', 'Тип', 'Номер', 'ПІБ', 'Захід', 'Дата']]
 
             with zipfile.ZipFile(zip_path(job_id), 'w', zipfile.ZIP_DEFLATED) as zf:
                 for i, r in enumerate(valid, start=1):
@@ -258,6 +276,7 @@ def _run(app, job_id, provider):
                         specialties=r['specialties'], event_type=r['event_type'],
                         event_place=r['place'],
                         issued_at=r['date'], font_config=font_config,
+                        kind=r.get('kind', 'participant'),
                     )
                     fname = f"{transliterate(r['name'])}_{number}.pdf"
                     if fname in seen_names:
@@ -266,7 +285,8 @@ def _run(app, job_id, provider):
                     else:
                         seen_names[fname] = 1
                     zf.writestr(fname, pdf)
-                    summary.append([fname, number, r['name'], r['title'], r['date_str']])
+                    summary.append([fname, r['person_type'], number, r['name'],
+                                    r['title'], r['date_str']])
                     _write_status(job_id, {'status': 'running', 'total': total,
                                            'done': i, 'created': utcnow().isoformat()})
 

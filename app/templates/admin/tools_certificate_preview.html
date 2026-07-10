@@ -63,14 +63,15 @@
     <table class="admin-table">
       <thead>
         <tr>
-          <th>№</th><th>ПІБ учасника</th><th>Тип</th><th>Захід</th><th>Дата</th><th>Місце</th>
-          <th>Бали</th><th>Лектор</th><th>Спеціальності</th><th>Захід БПР</th><th>Учасник</th><th>Статус</th>
+          <th>№</th><th>Тип особи</th><th>ПІБ</th><th>Тип заходу</th><th>Захід</th><th>Дата</th><th>Місце</th>
+          <th>Бали</th><th>Лектор</th><th>Спеціальності</th><th>Захід БПР</th><th>Номер</th><th>Статус</th>
         </tr>
       </thead>
       <tbody>
         {% for r in rows %}
         <tr>
           <td>{{ r.row }}</td>
+          <td>{% if r.kind == 'lecturer' %}<strong>{{ r.person_type }}</strong>{% else %}{{ r.person_type or 'Учасник' }}{% endif %}</td>
           <td><strong>{{ r.name or '—' }}</strong></td>
           <td>{{ r.event_type or '—' }}</td>
           <td>{{ r.title or '—' }}</td>
