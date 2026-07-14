@@ -33,6 +33,45 @@ def trainer_materials(token):
                            instance=instance, reservation=reservation)
 
 
+@main_bp.route('/r/<token>')
+@limiter.limit('60 per minute')
+def referrer_dashboard(token):
+    """Публічний кабінет реферера за підписаним токеном (тренери без логіну):
+    посилання, QR, баланс, історія нарахувань. 404 на битий токен."""
+    from app.services import referral_service
+    from app.models.site_settings import SiteSettings
+    from app.models.trainer import Trainer
+    from app.models.user import User
+
+    if not SiteSettings.get().referral_enabled:
+        abort(404)
+    kind, referrer_id = referral_service.load_referrer_token(token)
+    if kind is None:
+        abort(404)
+
+    if kind == 'trainer':
+        referrer = db.session.get(Trainer, referrer_id)
+        name = referrer.full_name if referrer else None
+        link = referral_service.trainer_referral_link(referrer) if referrer else None
+    else:
+        referrer = db.session.get(User, referrer_id)
+        name = (referrer.full_name or referrer.email) if referrer else None
+        link = referral_service.user_referral_link(referrer) if referrer else None
+    if referrer is None:
+        abort(404)
+    db.session.commit()  # можливо згенерувався код
+
+    return render_template(
+        'referrer_dashboard.html',
+        referrer_name=name,
+        link=link,
+        qr=referral_service.qr_svg(link),
+        balance=referral_service.get_balance(kind, referrer_id),
+        pending=referral_service.get_pending_balance(kind, referrer_id),
+        rewards=referral_service.list_referrer_rewards(kind, referrer_id, limit=100),
+    )
+
+
 @main_bp.route('/labs')
 def labs():
     courses = Course.query.options(

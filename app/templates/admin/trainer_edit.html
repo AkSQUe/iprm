@@ -232,6 +232,14 @@
     <p class="admin-referral-balance">
       Баланс: <strong>{{ referral_balance }}</strong> бонусних балів
     </p>
+    {% if referral_dashboard_url %}
+    <p class="admin-form__section-hint">Особистий кабінет тренера (без логіну) -- надішліть це посилання:</p>
+    <div class="admin-referral-row">
+      <input type="text" class="form-input" value="{{ referral_dashboard_url }}" readonly
+             data-select-on-focus aria-label="Посилання на кабінет реферера">
+      <button type="button" class="btn-admin btn-admin--secondary" data-copy="{{ referral_dashboard_url }}">Копіювати</button>
+    </div>
+    {% endif %}
     <div class="admin-referral-row">
       <input type="text" class="form-input" value="{{ referral_link }}" readonly
              data-select-on-focus aria-label="Реферальне посилання тренера">

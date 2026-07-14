@@ -1989,3 +1989,19 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Банер довіри "вас рекомендує" (реферальний лендинг) ===== */
+.referral-invite-banner {
+  max-width: 1200px;
+  margin: 1rem auto 0;
+  padding: 0.6rem 1.25rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--apple-black);
+  background: var(--iprm-accent-light);
+  border-radius: var(--iprm-radius-sm);
+}
+
+.referral-invite-banner__text strong {
+  color: var(--iprm-nav-active);
+}

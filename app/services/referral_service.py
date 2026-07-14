@@ -106,6 +106,53 @@ def build_referral_url(code, target_url=None, campaign=UTM_SOURCE, medium='refer
     return urlunparse(parts._replace(query=urlencode(query)))
 
 
+def qr_svg(url, border=4):
+    """Самодостатній inline-SVG QR-коду посилання (чорні модулі на білому).
+
+    На відміну від certificate_service.qr_svg (брендований градієнт під
+    WeasyPrint), тут простий self-contained SVG для вставки у веб-сторінку.
+    """
+    import segno
+    matrix = list(segno.make(url, error='m').matrix)
+    n = len(matrix)
+    size = n + 2 * border
+    rects = []
+    for r, row in enumerate(matrix):
+        for c, val in enumerate(row):
+            if val:
+                rects.append(f'<rect x="{c + border}" y="{r + border}" width="1" height="1"/>')
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}" '
+        f'shape-rendering="crispEdges" role="img" '
+        f'aria-label="QR-код реферального посилання">'
+        f'<rect width="{size}" height="{size}" fill="#ffffff"/>'
+        f'<g fill="#111111">{"".join(rects)}</g></svg>'
+    )
+
+
+def current_inviter_name(request, user=None):
+    """Ім'я реферера для банера довіри на публічних сторінках (або None).
+
+    Джерело коду: ?ref= -> серверний pending -> cookie. Не показуємо, якщо
+    реферер = сам користувач або програму вимкнено.
+    """
+    try:
+        if not SiteSettings.get().referral_enabled:
+            return None
+    except Exception:
+        return None
+    code = request.args.get(REF_PARAM)
+    if not is_valid_code(code):
+        code = (getattr(user, 'pending_referral_code', None)
+                if user is not None else None) or read_ref_cookie(request)
+    if not is_valid_code(code):
+        return None
+    if user is not None and code == getattr(user, 'referral_code', None):
+        return None
+    referrer = resolve_referrer(code)
+    return referrer['name'] if referrer else None
+
+
 def user_referral_link(user, target_url=None):
     """Реферальне посилання учасника (генерує код за потреби)."""
     code = user.get_referral_code()
@@ -116,6 +163,32 @@ def trainer_referral_link(trainer, target_url=None):
     """Реферальне посилання тренера (генерує код за потреби)."""
     code = trainer.get_referral_code()
     return build_referral_url(code, target_url=target_url, medium='trainer')
+
+
+# Підписаний токен self-service кабінету реферера (тренери без логіну).
+_DASH_SALT = 'referral-dashboard'
+
+
+def make_referrer_token(kind, referrer_id):
+    """Підписаний токен для публічного кабінету реферера (kind:id)."""
+    from itsdangerous import URLSafeSerializer
+    from flask import current_app
+    return URLSafeSerializer(current_app.secret_key, salt=_DASH_SALT).dumps(
+        {'k': kind, 'i': referrer_id})
+
+
+def load_referrer_token(token):
+    """Розшифрувати токен -> (kind, id) або (None, None)."""
+    from itsdangerous import URLSafeSerializer, BadData
+    from flask import current_app
+    try:
+        data = URLSafeSerializer(current_app.secret_key, salt=_DASH_SALT).loads(token)
+        kind, rid = data.get('k'), data.get('i')
+        if kind in ('user', 'trainer') and isinstance(rid, int):
+            return kind, rid
+    except (BadData, AttributeError, Exception):
+        pass
+    return None, None
 
 
 # ---- Захоплення атрибуції (Фаза 2) ----

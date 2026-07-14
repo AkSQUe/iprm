@@ -74,6 +74,60 @@
   flex: 0 0 auto;
 }
 
+/* ===== QR + кнопки поділитися ===== */
+.referral-tools {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+}
+
+.referral-tools__qr {
+  width: 120px;
+  height: 120px;
+  flex: 0 0 auto;
+  padding: 8px;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-accent-light);
+  border-radius: var(--iprm-radius-sm);
+}
+
+.referral-tools__qr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.referral-tools__share-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--apple-gray);
+}
+
+.referral-tools__buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.referral-tools__btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--apple-black);
+  text-decoration: none;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-accent-light);
+  border-radius: var(--iprm-radius-sm);
+  transition: border-color var(--ease-interact, 0.2s);
+}
+
+.referral-tools__btn:hover {
+  border-color: rgba(var(--apple-accent-rgb), 0.6);
+}
+
 /* ===== Історія нарахувань ===== */
 .referral-history {
   max-width: 640px;

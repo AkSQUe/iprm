@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Реферальний кабінет | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-account.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/referral-share.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero" aria-label="Referral dashboard hero">
+      <div class="iprm-hero__content">
+        <h1 class="iprm-hero__title">Реферальний <span class="apple-gradient-text">кабінет</span></h1>
+        <p class="iprm-hero__subtitle">{{ referrer_name }}</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="iprm-section apple-section-gray" aria-labelledby="ref-dash-title">
+    <div class="iprm-section__inner">
+      <h2 id="ref-dash-title" class="iprm-section__title">Ваша винагорода</h2>
+      <div class="referral-share__balance">
+        <span class="referral-share__balance-value">{{ balance }}</span>
+        <span class="referral-share__balance-label">{{ balance | uk_plural('бонусний бал', 'бонусні бали', 'бонусних балів') }}</span>
+        {% if pending %}
+        <span class="referral-share__balance-pending">+{{ pending }} очікують дозрівання</span>
+        {% endif %}
+      </div>
+
+      {% if link %}
+      <div class="referral-share">
+        <label class="referral-share__label" for="ref-dash-link">Ваше посилання</label>
+        <div class="referral-share__row">
+          <input type="text" id="ref-dash-link" class="referral-share__input" value="{{ link }}" readonly
+                 data-select-on-focus aria-label="Реферальне посилання">
+          <button type="button" class="apple-btn apple-btn--primary referral-share__copy" data-copy="{{ link }}">Копіювати</button>
+        </div>
+      </div>
+
+      {% include 'partials/_referral_share_tools.html' %}
+      {% endif %}
+
+      {% if rewards %}
+      <div class="referral-history">
+        <h3 class="referral-history__title">Історія нарахувань</h3>
+        <div class="referral-history__list">
+          {% for rw in rewards %}
+          {% set course = rw.registration.instance.course if (rw.registration and rw.registration.instance) else None %}
+          <div class="referral-history__item{% if rw.status == 'voided' %} referral-history__item--voided{% endif %}">
+            <div class="referral-history__info">
+              <span class="referral-history__course">{{ course.title if course else 'Захід' }}</span>
+              <span class="referral-history__date">{{ rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '' }}</span>
+            </div>
+            <span class="referral-history__points">
+              {% if rw.status == 'voided' %}анульовано{% elif rw.status == 'pending' %}очікує{% else %}+{{ rw.points }}{% endif %}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/toast.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/copy-to-clipboard.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/select-on-focus.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}

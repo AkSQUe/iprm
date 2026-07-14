@@ -1,0 +1,20 @@
+{# Спільні share-інструменти реферала: QR + кнопки соцмереж.
+   Параметри: link (реферальне посилання), qr (inline-SVG або None). #}
+{% set _enc = link | urlencode %}
+{% set _msg = ('Рекомендую курси ІПРМ: ' ~ link) | urlencode %}
+<div class="referral-tools">
+  {% if qr %}
+  <div class="referral-tools__qr" aria-hidden="false">
+    {{ qr | safe }}
+  </div>
+  {% endif %}
+  <div class="referral-tools__share">
+    <span class="referral-tools__share-label">Поділитися:</span>
+    <div class="referral-tools__buttons">
+      <a class="referral-tools__btn" href="https://t.me/share/url?url={{ _enc }}&text={{ 'Рекомендую курси ІПРМ' | urlencode }}" target="_blank" rel="noopener nofollow">Telegram</a>
+      <a class="referral-tools__btn" href="viber://forward?text={{ _msg }}" rel="noopener nofollow">Viber</a>
+      <a class="referral-tools__btn" href="https://wa.me/?text={{ _msg }}" target="_blank" rel="noopener nofollow">WhatsApp</a>
+      <a class="referral-tools__btn" href="https://www.facebook.com/sharer/sharer.php?u={{ _enc }}" target="_blank" rel="noopener nofollow">Facebook</a>
+    </div>
+  </div>
+</div>

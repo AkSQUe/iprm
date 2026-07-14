@@ -167,6 +167,9 @@
         </div>
       </div>
 
+      {% set link = referral_link %}{% set qr = referral_qr %}
+      {% include 'partials/_referral_share_tools.html' %}
+
       {% if referral_rewards %}
       <div class="referral-history apple-reveal">
         <h3 class="referral-history__title">Історія нарахувань</h3>

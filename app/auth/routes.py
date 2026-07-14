@@ -219,6 +219,7 @@ def account():
     from app.services import referral_service
     settings = SiteSettings.get()
     referral_link = None
+    referral_qr = None
     referral_balance = 0
     referral_pending = 0
     referral_rewards = []
@@ -227,6 +228,7 @@ def account():
         referral_link = referral_service.user_referral_link(current_user)
         if not had_code:  # код щойно згенеровано -> зберегти
             db.session.commit()
+        referral_qr = referral_service.qr_svg(referral_link)
         referral_balance = referral_service.get_balance('user', current_user.id)
         referral_pending = referral_service.get_pending_balance('user', current_user.id)
         referral_rewards = referral_service.list_referrer_rewards('user', current_user.id)
@@ -237,6 +239,7 @@ def account():
         certificates=certificates,
         certificate_data_complete=bool(profile and profile.is_complete),
         referral_link=referral_link,
+        referral_qr=referral_qr,
         referral_balance=referral_balance,
         referral_pending=referral_pending,
         referral_rewards=referral_rewards,

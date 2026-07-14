@@ -172,12 +172,15 @@ def trainer_edit(trainer_id):
     from app.services import referral_service
     referral_link = None
     referral_balance = 0
+    referral_dashboard_url = None
     if SiteSettings.get().referral_enabled:
         had_code = bool(trainer.referral_code)
         referral_link = referral_service.trainer_referral_link(trainer)
         if not had_code:  # код щойно згенеровано -> зберегти
             db.session.commit()
         referral_balance = referral_service.get_balance('trainer', trainer.id)
+        token = referral_service.make_referrer_token('trainer', trainer.id)
+        referral_dashboard_url = url_for('main.referrer_dashboard', token=token, _external=True)
 
     form = TrainerForm(obj=trainer)
     if request.method == 'GET':
@@ -188,7 +191,7 @@ def trainer_edit(trainer_id):
         existing = Trainer.query.filter(Trainer.slug == slug, Trainer.id != trainer_id).first()
         if existing:
             flash('Тренер з таким slug вже існує', 'error')
-            return render_template('admin/trainer_edit.html', form=form, trainer=trainer, referral_link=referral_link, referral_balance=referral_balance)
+            return render_template('admin/trainer_edit.html', form=form, trainer=trainer, referral_link=referral_link, referral_balance=referral_balance, referral_dashboard_url=referral_dashboard_url)
 
         trainer.full_name = form.full_name.data.strip()
         trainer.full_name_dative = (form.full_name_dative.data or '').strip() or None
@@ -213,7 +216,7 @@ def trainer_edit(trainer_id):
             db.session.rollback()
             flash('Помилка при збереженні', 'error')
 
-    return render_template('admin/trainer_edit.html', form=form, trainer=trainer, referral_link=referral_link, referral_balance=referral_balance)
+    return render_template('admin/trainer_edit.html', form=form, trainer=trainer, referral_link=referral_link, referral_balance=referral_balance, referral_dashboard_url=referral_dashboard_url)
 
 
 @admin_bp.route('/trainers/<int:trainer_id>/delete', methods=['POST'])

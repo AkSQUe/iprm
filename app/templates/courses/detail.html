@@ -88,6 +88,12 @@
   {% endfor %}
   {% set format_inst = ns_fmt.inst %}
 
+  {% if referral_inviter %}
+  <div class="referral-invite-banner" role="note">
+    <span class="referral-invite-banner__text">Вас рекомендує <strong>{{ referral_inviter }}</strong></span>
+  </div>
+  {% endif %}
+
   <!-- ===== HERO ===== -->
   <div class="iprm-hero-wrap">
     <section class="iprm-hero" aria-label="Hero">

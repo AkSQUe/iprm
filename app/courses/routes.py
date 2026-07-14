@@ -390,10 +390,10 @@ def course_by_slug(slug):
 
     # Реферальне посилання на цей курс (лише для залогінених, коли програму
     # увімкнено). Код генерується лениво при першому відкритті сторінки.
+    from app.services import referral_service
     referral_link = None
     if current_user.is_authenticated:
         from app.models.site_settings import SiteSettings
-        from app.services import referral_service
         if SiteSettings.get().referral_enabled:
             had_code = bool(current_user.referral_code)
             referral_link = referral_service.user_referral_link(
@@ -402,6 +402,10 @@ def course_by_slug(slug):
             )
             if not had_code:  # код щойно згенеровано -> зберегти
                 db.session.commit()
+    # Банер довіри: якщо прибули за реф-посиланням -- показати, хто рекомендує.
+    referral_inviter = referral_service.current_inviter_name(
+        request, current_user if current_user.is_authenticated else None,
+    )
 
     return render_template(
         'courses/detail.html',
@@ -413,6 +417,7 @@ def course_by_slug(slug):
         seats_left_map=capacity,
         related_courses=_related_courses(course),
         referral_link=referral_link,
+        referral_inviter=referral_inviter,
     )
 
 
