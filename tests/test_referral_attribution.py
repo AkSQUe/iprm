@@ -93,6 +93,39 @@ def test_capture_ref_cookie_ignores_invalid_code(app, db_session):
         assert not out.headers.getlist('Set-Cookie')
 
 
+def test_persist_and_read_pending_for_user(app, db_session):
+    settings = SiteSettings.get()
+    settings.referral_enabled = True
+    settings.referral_attribution = 'last'
+    db.session.flush()
+    u = _mk_user('pending@example.com')
+
+    with app.test_request_context('/courses/x?ref=u1234abcd'):
+        from flask import request
+        rs.persist_pending_for_user(request, u)
+    assert u.pending_referral_code == 'u1234abcd'
+
+    # read_pending_ref віддає перевагу серверному коду над cookie.
+    with app.test_request_context('/', headers={'Cookie': f'{rs.REF_COOKIE}=t99887766'}):
+        from flask import request
+        assert rs.read_pending_ref(request, u) == 'u1234abcd'
+
+
+def test_persist_pending_first_touch_not_overwritten(app, db_session):
+    settings = SiteSettings.get()
+    settings.referral_enabled = True
+    settings.referral_attribution = 'first'
+    db.session.flush()
+    u = _mk_user('firsttouch@example.com')
+    u.pending_referral_code = 'u1234abcd'
+    db.session.flush()
+
+    with app.test_request_context('/?ref=t99887766'):
+        from flask import request
+        rs.persist_pending_for_user(request, u)
+    assert u.pending_referral_code == 'u1234abcd'  # first-touch збережено
+
+
 def test_read_ref_cookie(app):
     with app.test_request_context('/', headers={'Cookie': f'{rs.REF_COOKIE}=t99887766'}):
         from flask import request

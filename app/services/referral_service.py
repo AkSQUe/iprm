@@ -162,6 +162,45 @@ def read_ref_cookie(request):
     return code if is_valid_code(code) else None
 
 
+def persist_pending_for_user(request, user):
+    """Серверна атрибуція: зафіксувати ?ref= на залогіненому користувачі.
+
+    Переживає втрату cookie/зміну пристрою. Поважає модель атрибуції
+    (first/last) і не приймає власний код користувача. Комітить лише при зміні.
+    """
+    code = request.args.get(REF_PARAM)
+    if not is_valid_code(code) or code == user.referral_code:
+        return
+    try:
+        settings = SiteSettings.get()
+        if not settings.referral_enabled:
+            return
+    except Exception:
+        logger.exception('referral: settings read failed (pending attribution)')
+        return
+    current = user.pending_referral_code
+    if current == code:
+        return
+    # first-touch: не перезаписуємо вже зафіксований валідний код.
+    if settings.referral_attribution == 'first' and is_valid_code(current):
+        return
+    user.pending_referral_code = code
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception('referral: failed to persist pending code for user=%s', user.id)
+
+
+def read_pending_ref(request, user):
+    """Код реферера для атрибуції: спершу серверний (pending_referral_code),
+    інакше cookie. Не очищує -- очищення робить caller після використання."""
+    code = getattr(user, 'pending_referral_code', None)
+    if is_valid_code(code):
+        return code
+    return read_ref_cookie(request)
+
+
 def resolve_referrer(code):
     """Резолв коду у реферера. Повертає dict {kind, id, name, code} або None.
 

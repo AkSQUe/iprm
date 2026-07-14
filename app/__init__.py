@@ -371,15 +371,18 @@ def create_app(config_name=None):
 
     @app.after_request
     def capture_referral(response):
-        # Захоплення реферальної атрибуції: якщо у запиті є ?ref=<code> і
-        # програму увімкнено -- зберігаємо код у cookie (last-touch).
+        # Захоплення реферальної атрибуції: cookie для всіх + серверний
+        # pending-код для залогінених (переживає втрату cookie).
         from flask import request
+        from flask_login import current_user
         from app.services import referral_service
         try:
-            return referral_service.capture_ref_cookie(request, response)
+            response = referral_service.capture_ref_cookie(request, response)
+            if request.args.get(referral_service.REF_PARAM) and current_user.is_authenticated:
+                referral_service.persist_pending_for_user(request, current_user)
         except Exception:
-            logging.getLogger(__name__).exception('referral cookie capture failed')
-            return response
+            logging.getLogger(__name__).exception('referral capture failed')
+        return response
 
     from app.services.scheduler_service import init_scheduler
     init_scheduler(app)

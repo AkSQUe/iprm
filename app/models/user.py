@@ -31,6 +31,10 @@ class User(TimestampMixin, UserMixin, db.Model):
     # Реферальний код учасника (лениво генерується). Префікс 'u' -- щоб коди
     # User і Trainer були глобально унікальні між собою.
     referral_code = db.Column(db.String(32), unique=True, index=True)
+    # Серверна атрибуція: код реферера, зафіксований при кліку залогіненим
+    # користувачем (переживає втрату cookie/зміну пристрою). Споживається
+    # й очищується при створенні реєстрації.
+    pending_referral_code = db.Column(db.String(32))
 
     # Phase 7 cleanup: усі legacy-колонки (password_hash, user_type,
     # middle_name, birth_date, education, workplace, position, phone,

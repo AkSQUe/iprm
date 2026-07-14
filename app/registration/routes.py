@@ -254,7 +254,8 @@ def register_instance(instance_id):
                 'license_number': None,
             }
             from app.services import referral_service
-            ref_code = referral_service.read_ref_cookie(request)
+            # Пріоритет серверної атрибуції (pending_referral_code), інакше cookie.
+            ref_code = referral_service.read_pending_ref(request, current_user)
             # Не зараховуємо самореферал (код належить самому учаснику).
             if ref_code and current_user.referral_code == ref_code:
                 ref_code = None
@@ -263,6 +264,9 @@ def register_instance(instance_id):
                 tariff=selected_tariff,
                 referral_code=ref_code,
             )
+            # Спожити серверну атрибуцію (одноразово).
+            if current_user.pending_referral_code:
+                current_user.pending_referral_code = None
             db.session.commit()
             # Аналітика воронки оплати: фіксуємо обраний спосіб і чи платна подія.
             logger.info(
