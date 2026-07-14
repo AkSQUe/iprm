@@ -96,6 +96,7 @@ def referrals_overview():
     page_name_map = referral_service.resolve_referrers_bulk(page_codes)
 
     fraud = referral_service.fraud_flags()
+    denorm_total, real_total = referral_service.balances_drift()
 
     return render_template(
         'admin/referrals.html',
@@ -105,11 +106,26 @@ def referrals_overview():
         total_clicks=total_clicks,
         pipeline_count=pipeline_count,
         fraud=fraud,
+        denorm_total=denorm_total,
+        real_total=real_total,
         rewards=pagination.items,
         pagination=pagination,
         referrer_map=page_name_map,
         status_filter=status_filter,
     )
+
+
+@admin_bp.route('/referrals/reconcile', methods=['POST'])
+@admin_required
+def referrals_reconcile():
+    """Ручна звірка денормалізованих балансів (самозцілення дрейфу)."""
+    from flask import flash, redirect, url_for
+    fixed = referral_service.reconcile_balances()
+    if fixed:
+        flash(f'Звірено баланси: виправлено {fixed}', 'success')
+    else:
+        flash('Баланси узгоджені -- виправляти нічого', 'success')
+    return redirect(url_for('admin.referrals_overview'))
 
 
 @admin_bp.route('/referrals/<kind>/<int:referrer_id>')

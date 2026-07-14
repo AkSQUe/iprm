@@ -434,6 +434,8 @@ def mature_referral_rewards_job():
             from app.services import referral_service
             try:
                 referral_service.mature_referral_rewards()
+                # Звірка денормалізованих балансів (самозцілення дрейфу).
+                referral_service.reconcile_balances()
             except Exception:
                 logger.exception('Referral maturity job failed')
 

@@ -35,6 +35,19 @@
 
     {% include 'partials/flash_messages.html' %}
 
+    {% if denorm_total != real_total %}
+    <div class="admin-empty admin-pad-24 admin-text-left">
+      <h3 class="admin-empty__title">Розбіжність балансів</h3>
+      <p>Денормалізована сума ({{ denorm_total }}) не збігається з перерахунком
+         ({{ real_total }}). Ймовірно, дрейф після видалення/ручної правки БД.
+         Натисніть «Звірити», щоб виправити.</p>
+      <form method="POST" action="{{ url_for('admin.referrals_reconcile') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">{{ icon('refresh') }} Звірити баланси</button>
+      </form>
+    </div>
+    {% endif %}
+
     {% if not settings.referral_enabled %}
     <div class="admin-empty admin-pad-24 admin-text-left">
       <h3 class="admin-empty__title">Програму вимкнено</h3>

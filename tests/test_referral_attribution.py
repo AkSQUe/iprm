@@ -177,6 +177,32 @@ def test_visit_dedups_repeat_click(app, db_session):
     assert rs.get_clicks_by_code(['ucccc0003']) == {}  # уже рахований -> дубль ігнор
 
 
+def test_visit_skips_db_on_error_response(app, db_session):
+    s = SiteSettings.get()
+    s.referral_enabled = True
+    db.session.flush()
+    from flask import Response
+    err = Response('<html>err</html>', status=500, content_type='text/html')
+    with app.test_request_context('/c?ref=udddd0004',
+                                  headers={'User-Agent': 'Mozilla/5.0'}):
+        from flask import request
+        rs.capture_referral_visit(request, err, None)
+    assert rs.get_clicks_by_code(['udddd0004']) == {}  # на 500 клік не рахуємо
+
+
+def test_inviter_hidden_for_inactive_trainer(app, db_session):
+    s = SiteSettings.get()
+    s.referral_enabled = True
+    db.session.flush()
+    t = Trainer(full_name='Неактивний Тренер', slug='inactive-inv', is_active=False)
+    db.session.add(t)
+    db.session.flush()
+    code = rs.ensure_referral_code(t, prefix='t')
+    with app.test_request_context(f'/c?ref={code}'):
+        from flask import request
+        assert rs.current_inviter_name(request, None) is None
+
+
 def test_read_ref_cookie(app):
     with app.test_request_context('/', headers={'Cookie': f'{rs.REF_COOKIE}=t99887766'}):
         from flask import request

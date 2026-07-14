@@ -171,7 +171,14 @@ def current_inviter_name(request, user=None):
     if user is not None and code == getattr(user, 'referral_code', None):
         return None
     referrer = resolve_referrer(code)
-    return referrer['name'] if referrer else None
+    if not referrer:
+        return None
+    # Банер показуємо лише для активного реферера (неактивний/прихований
+    # тренер чи заблокований користувач не рекомендує публічно).
+    obj = _referrer_obj(referrer['kind'], referrer['id'])
+    if obj is None or not getattr(obj, 'is_active', True):
+        return None
+    return referrer['name']
 
 
 def user_referral_link(user, target_url=None):
@@ -234,6 +241,11 @@ def capture_referral_visit(request, response, user=None):
 
     # 1. Cookie (лише response, без БД).
     _set_ref_cookie(request, response, code, settings)
+
+    # На error-відповідях (4xx/5xx) НЕ пишемо в БД: сесія могла лишитись із
+    # незакоміченими/зламаними змінами view -- commit тут їх би зафіксував.
+    if response.status_code >= 400:
+        return response
 
     # 2. Серверний pending для залогіненого (мутація без commit).
     pending_changed = False
@@ -772,6 +784,69 @@ def get_balance(kind, referrer_id):
     return int(getattr(obj, 'referral_balance', 0) or 0) if obj else 0
 
 
+def _distinct_referrers():
+    """Усі (kind, id), що фігурують у нарахуваннях або корекціях."""
+    from app.models.referral_reward import ReferralReward
+    from app.models.referral_adjustment import ReferralAdjustment
+    referrers = set()
+    for kind, rid in db.session.query(
+        ReferralReward.referrer_kind, ReferralReward.referrer_id).distinct():
+        referrers.add((kind, rid))
+    for kind, rid in db.session.query(
+        ReferralAdjustment.referrer_kind, ReferralAdjustment.referrer_id).distinct():
+        referrers.add((kind, rid))
+    return referrers
+
+
+def reconcile_balances():
+    """Перерахувати денормалізовані баланси всіх рефереров (самозцілення дрейфу
+    від CASCADE-видалень/ручних правок БД). Набір обмежений реферерами, що
+    мають rewards/adjustments. Повертає к-сть виправлених. Комітить.
+    """
+    fixed = 0
+    for kind, rid in _distinct_referrers():
+        try:
+            value = recompute_balance(kind, rid)
+            obj = _referrer_obj(kind, rid)
+            if obj is not None and (obj.referral_balance or 0) != value:
+                obj.referral_balance = value
+                fixed += 1
+        except Exception:
+            logger.exception('referral: reconcile failed for %s:%s', kind, rid)
+    if fixed:
+        try:
+            db.session.commit()
+            logger.info('Referral balances reconciled: %d fixed', fixed)
+        except Exception:
+            db.session.rollback()
+            logger.exception('referral: reconcile commit failed')
+            return 0
+    return fixed
+
+
+def balances_drift():
+    """(денормалізований_сумарний, авторитетний_сумарний) для індикатора дрейфу.
+
+    Авторитетний = SUM(granted rewards) + SUM(adjustments); денормалізований =
+    SUM(users/trainers.referral_balance активних рефереров). Розбіжність
+    сигналізує дрейф."""
+    from app.models.user import User
+    from app.models.trainer import Trainer
+    from app.models.referral_reward import ReferralReward
+    from app.models.referral_adjustment import ReferralAdjustment
+    from sqlalchemy import func as _func
+    denorm = (
+        int(db.session.query(_func.coalesce(_func.sum(User.referral_balance), 0)).scalar() or 0)
+        + int(db.session.query(_func.coalesce(_func.sum(Trainer.referral_balance), 0)).scalar() or 0)
+    )
+    granted = int(db.session.query(
+        _func.coalesce(_func.sum(ReferralReward.points), 0)
+    ).filter(ReferralReward.status == 'granted').scalar() or 0)
+    adj = int(db.session.query(
+        _func.coalesce(_func.sum(ReferralAdjustment.points), 0)).scalar() or 0)
+    return denorm, granted + adj
+
+
 def get_pending_balance(kind, referrer_id):
     """Сума недозрілих (pending) балів реферера."""
     from app.models.referral_reward import ReferralReward
@@ -809,46 +884,60 @@ def list_adjustments(kind, referrer_id):
     ).order_by(ReferralAdjustment.created_at.desc()).all()
 
 
-def fraud_flags(min_clicks=20):
+def fraud_flags(min_clicks=20, min_voided=2, spike_threshold=10):
     """Реферери з підозрілими патернами (для перевірки оператором).
 
-    Сигнали: (1) багато повернень (voided >= active); (2) трафік без
-    конверсій (кліків >= min_clicks, 0 активних нарахувань). Повертає список
-    dict {kind, id, name, clicks, active, voided, reasons}.
+    Сигнали: (1) багато повернень (voided >= min_voided і >= active);
+    (2) трафік без конверсій (кліків >= min_clicks, 0 активних); (3) сплеск --
+    spike_threshold+ нарахувань за 24 год. Повертає список dict
+    {kind, id, name, clicks, active, voided, recent, reasons}.
+
+    Вибірка обмежена реферерами з поверненнями АБО сплеском (SQL-having),
+    щоб не сканувати всіх на кожен показ огляду.
     """
     from app.models.referral_reward import ReferralReward
     from app.models.referral_click import ReferralClick
-    from sqlalchemy import func as _func, case
+    from app.models.mixins import utcnow
+    from datetime import timedelta
+    from sqlalchemy import func as _func, case, or_
+
+    cutoff = utcnow() - timedelta(hours=24)
+    active_expr = _func.sum(case((ReferralReward.status.in_(('granted', 'pending')), 1), else_=0))
+    voided_expr = _func.sum(case((ReferralReward.status == 'voided', 1), else_=0))
+    recent_expr = _func.sum(case((ReferralReward.created_at >= cutoff, 1), else_=0))
 
     reward_rows = db.session.query(
         ReferralReward.referrer_kind, ReferralReward.referrer_id,
         ReferralReward.referral_code,
-        _func.sum(case((ReferralReward.status.in_(('granted', 'pending')), 1), else_=0)).label('active'),
-        _func.sum(case((ReferralReward.status == 'voided', 1), else_=0)).label('voided'),
+        active_expr.label('active'),
+        voided_expr.label('voided'),
+        recent_expr.label('recent'),
     ).group_by(
         ReferralReward.referrer_kind, ReferralReward.referrer_id,
         ReferralReward.referral_code,
-    ).all()
+    ).having(or_(voided_expr > 0, recent_expr >= spike_threshold)).all()
 
     reward_codes = [r.referral_code for r in reward_rows]
     clicks_map = get_clicks_by_code(reward_codes)
     name_map = resolve_referrers_bulk(reward_codes)
     flags = []
     for r in reward_rows:
-        active, voided = int(r.active or 0), int(r.voided or 0)
+        active, voided, recent = int(r.active or 0), int(r.voided or 0), int(r.recent or 0)
         clicks = clicks_map.get(r.referral_code, 0)
         reasons = []
-        if voided and voided >= max(1, active):
+        if voided >= min_voided and voided >= active:
             reasons.append(f'Багато повернень: {voided} анульовано / {active} активних')
         if clicks >= min_clicks and active == 0:
             reasons.append(f'Трафік без конверсій: {clicks} кліків, 0 активних')
+        if recent >= spike_threshold:
+            reasons.append(f'Сплеск: {recent} нарахувань за 24 год')
         if reasons:
             info = name_map.get(r.referral_code)
             flags.append({
                 'kind': r.referrer_kind, 'id': r.referrer_id,
                 'name': info['name'] if info else r.referral_code,
                 'clicks': clicks, 'active': active, 'voided': voided,
-                'reasons': reasons,
+                'recent': recent, 'reasons': reasons,
             })
 
     # Коди з великим трафіком, але БЕЗ жодного нарахування.
@@ -867,6 +956,7 @@ def fraud_flags(min_clicks=20):
         flags.append({
             'kind': info['kind'], 'id': info['id'], 'name': info['name'],
             'clicks': click_by_code.get(code, 0), 'active': 0, 'voided': 0,
+            'recent': 0,
             'reasons': [f'Трафік без конверсій: {click_by_code.get(code, 0)} кліків, 0 нарахувань'],
         })
     flags.sort(key=lambda f: f['clicks'], reverse=True)

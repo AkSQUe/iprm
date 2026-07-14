@@ -315,6 +315,44 @@ def test_fraud_flags_high_void_and_no_conversion(db_session):
     assert ref2.id in ids   # трафік без конверсій
 
 
+def test_reconcile_fixes_drift(db_session):
+    _enable(points=5)
+    referrer = _mk_user('recon@example.com')
+    rcode = rs.ensure_referral_code(referrer, prefix='u')
+    buyer = _mk_user('recon-b@example.com')
+    reg = _mk_reg(buyer, _mk_course_instance(), code=rcode)
+    rs.award_for_paid_registration(reg)
+    assert rs.get_balance('user', referrer.id) == 5
+
+    # Симулюємо дрейф: псуємо денормалізовану колонку напряму.
+    referrer.referral_balance = 999
+    db.session.flush()
+    denorm, real = rs.balances_drift()
+    assert denorm != real
+
+    fixed = rs.reconcile_balances()
+    assert fixed >= 1
+    assert rs.get_balance('user', referrer.id) == 5
+    denorm2, real2 = rs.balances_drift()
+    assert denorm2 == real2
+
+
+def test_fraud_single_refund_not_flagged(db_session):
+    _enable(points=5)
+    # Один легітимний refund (voided=1, active=0) -- НЕ має позначатись.
+    referrer = _mk_user('one-refund@example.com')
+    rcode = rs.ensure_referral_code(referrer, prefix='u')
+    buyer = _mk_user('one-refund-b@example.com')
+    reg = _mk_reg(buyer, _mk_course_instance(), code=rcode)
+    rs.award_for_paid_registration(reg)
+    reg.payment_status = 'refunded'
+    db.session.flush()
+    rs.void_for_registration(reg)
+
+    flags = rs.fraud_flags()
+    assert referrer.id not in {f['id'] for f in flags}
+
+
 def test_trainer_referrer_balance(db_session):
     _enable(points=10)
     t = Trainer(full_name='Тренер Реф', slug='trener-ref-rw')
