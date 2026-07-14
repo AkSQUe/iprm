@@ -147,6 +147,7 @@
           <th>Захід</th>
           <th>№</th>
           <th>Учасник</th>
+          <th>Реферер</th>
           <th>Телефон</th>
           <th>Статус</th>
           <th>Оплата</th>
@@ -175,6 +176,21 @@
           <td>
             <strong>{{ reg.user.first_name }} {{ reg.user.last_name }}</strong><br>
             <small>{{ reg.user.email }}</small>
+          </td>
+          <td>
+            {% set ref = referrer_map.get(reg.referral_code) if reg.referral_code else None %}
+            {% if ref %}
+              {% if ref.kind == 'trainer' %}
+              <a href="{{ url_for('admin.trainer_edit', trainer_id=ref.id) }}">{{ ref.name }}</a>
+              {% else %}
+              {{ ref.name }}
+              {% endif %}
+              <br><small class="admin-text-muted">{{ 'тренер' if ref.kind == 'trainer' else 'учасник' }}</small>
+            {% elif reg.referral_code %}
+              <span class="admin-text-muted" title="Код реферера не знайдено серед активних">{{ reg.referral_code }}</span>
+            {% else %}
+              <span class="admin-text-muted">--</span>
+            {% endif %}
           </td>
           <td>{{ reg.phone }}</td>
           <td>

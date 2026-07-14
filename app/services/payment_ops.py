@@ -170,6 +170,14 @@ class PaymentOps:
             db.session.commit()
             logger.info('Payment REG-%d -> %s', reg.id, new_status)
 
+            # Реферальні бали: нарахувати при 'paid', анулювати при
+            # refunded/unpaid. Best-effort -- збій не ламає оплату.
+            try:
+                from app.services import referral_service
+                referral_service.sync_reward_for_registration(reg)
+            except Exception:
+                logger.exception('Referral reward sync failed for REG-%d', reg.id)
+
             if new_status == 'paid':
                 try:
                     from app.services.email_service import EmailService

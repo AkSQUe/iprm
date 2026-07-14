@@ -388,6 +388,19 @@ def course_by_slug(slug):
     capacity = _capacity_map([course.id])
     open_ids = _open_from_capacity(capacity)
 
+    # Реферальне посилання на цей курс (лише для залогінених, коли програму
+    # увімкнено). Код генерується лениво при першому відкритті сторінки.
+    referral_link = None
+    if current_user.is_authenticated:
+        from app.models.site_settings import SiteSettings
+        from app.services import referral_service
+        if SiteSettings.get().referral_enabled:
+            referral_link = referral_service.user_referral_link(
+                current_user,
+                target_url=url_for('courses.course_by_slug', slug=course.slug),
+            )
+            db.session.commit()
+
     return render_template(
         'courses/detail.html',
         active_nav='courses',
@@ -397,6 +410,7 @@ def course_by_slug(slug):
         open_instance_ids=open_ids,
         seats_left_map=capacity,
         related_courses=_related_courses(course),
+        referral_link=referral_link,
     )
 
 

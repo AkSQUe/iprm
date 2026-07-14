@@ -282,6 +282,27 @@
       </div>
     </div>
 
+    <!-- Referral program -->
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Реферальна програма</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            {{ form.referral_enabled(id="referral_enabled") }}
+            <label for="referral_enabled">{{ form.referral_enabled.label.text }}</label>
+          </div>
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="referral_points_per_paid">{{ form.referral_points_per_paid.label.text }}</label>
+          {{ form.referral_points_per_paid(class="form-input", id="referral_points_per_paid", type="number", min="0") }}
+          {% if form.referral_points_per_paid.description %}<small class="form-hint">{{ form.referral_points_per_paid.description }}</small>{% endif %}
+        </div>
+
+      </div>
+    </div>
+
     <!-- Actions -->
     <div class="admin-form__actions">
       <a href="{{ url_for('admin.courses_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>

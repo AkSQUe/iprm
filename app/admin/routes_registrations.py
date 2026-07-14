@@ -137,6 +137,12 @@ def registration_payment(reg_id):
             'Admin %s changed reg %d payment: %s -> %s',
             current_user.email, reg_id, old_ps, new_ps,
         )
+        # Реферальні бали: нарахувати/анулювати відповідно до нового статусу.
+        try:
+            from app.services import referral_service
+            referral_service.sync_reward_for_registration(reg)
+        except Exception:
+            logger.exception('Referral reward sync failed for reg %d', reg_id)
         if xhr:
             return jsonify({
                 'ok': True, 'value': reg.payment_status,
@@ -396,6 +402,12 @@ def registrations_all():
     courses = db.session.query(Course).order_by(Course.title).all()
     trainers = db.session.query(Trainer).order_by(Trainer.full_name).all()
 
+    # Реферальна атрибуція: резолв кодів у імена рефереров (bulk, без N+1).
+    from app.services import referral_service
+    referrer_map = referral_service.resolve_referrers_bulk(
+        [r.referral_code for r in pagination.items],
+    )
+
     return render_template(
         'admin/registrations.html',
         registrations=pagination.items,
@@ -404,6 +416,7 @@ def registrations_all():
         instances=instances,
         courses=courses,
         trainers=trainers,
+        referrer_map=referrer_map,
         filters={
             'status': status_filter,
             'payment': payment_filter,

@@ -28,6 +28,10 @@ class User(TimestampMixin, UserMixin, db.Model):
     # Стабільний непідбірний токен для лінків відписки (генерується лениво).
     unsubscribe_token = db.Column(db.String(64), unique=True, index=True)
 
+    # Реферальний код учасника (лениво генерується). Префікс 'u' -- щоб коди
+    # User і Trainer були глобально унікальні між собою.
+    referral_code = db.Column(db.String(32), unique=True, index=True)
+
     # Phase 7 cleanup: усі legacy-колонки (password_hash, user_type,
     # middle_name, birth_date, education, workplace, position, phone,
     # specializations) дропнуто. Canonical джерела:
@@ -180,6 +184,12 @@ class User(TimestampMixin, UserMixin, db.Model):
             db.session.add(self)
             db.session.flush()
         return self.unsubscribe_token
+
+    def get_referral_code(self):
+        """Повернути (за потреби -- згенерувати) реферальний код учасника.
+        Робить flush, але не commit."""
+        from app.services.referral_service import ensure_referral_code
+        return ensure_referral_code(self, prefix='u')
 
     @property
     def full_name(self):

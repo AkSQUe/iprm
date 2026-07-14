@@ -369,6 +369,18 @@ def create_app(config_name=None):
             response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         return response
 
+    @app.after_request
+    def capture_referral(response):
+        # Захоплення реферальної атрибуції: якщо у запиті є ?ref=<code> і
+        # програму увімкнено -- зберігаємо код у cookie (last-touch).
+        from flask import request
+        from app.services import referral_service
+        try:
+            return referral_service.capture_ref_cookie(request, response)
+        except Exception:
+            logging.getLogger(__name__).exception('referral cookie capture failed')
+            return response
+
     from app.services.scheduler_service import init_scheduler
     init_scheduler(app)
 

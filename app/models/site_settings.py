@@ -179,6 +179,13 @@ class SiteSettings(TimestampMixin, db.Model):
     mm_medic_integration_enabled = db.Column(db.Boolean, default=False, nullable=False)
     mm_medic_api_base_url = db.Column(db.String(500), default='')
 
+    # Реферальна програма. Кожен учасник/тренер має власний реферальний код;
+    # за оплачену реєстрацію по його посиланню нараховуються бонусні бали
+    # лояльності (окремі від балів БПР). Поки лише накопичення (без витрати).
+    referral_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    # Скільки бонусних балів нараховувати рефереру за одну оплачену реєстрацію.
+    referral_points_per_paid = db.Column(db.Integer, default=1, nullable=False)
+
     @property
     def partner_api_key(self):
         if not self._partner_api_key_encrypted:

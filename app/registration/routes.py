@@ -253,9 +253,15 @@ def register_instance(instance_id):
                 'experience_years': None,
                 'license_number': None,
             }
+            from app.services import referral_service
+            ref_code = referral_service.read_ref_cookie(request)
+            # Не зараховуємо самореферал (код належить самому учаснику).
+            if ref_code and current_user.referral_code == ref_code:
+                ref_code = None
             reg, is_free = registration_service.create_or_reactivate(
                 current_user.id, instance, form_data, existing,
                 tariff=selected_tariff,
+                referral_code=ref_code,
             )
             db.session.commit()
             # Аналітика воронки оплати: фіксуємо обраний спосіб і чи платна подія.

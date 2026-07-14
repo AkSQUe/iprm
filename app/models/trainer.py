@@ -29,6 +29,10 @@ class Trainer(TimestampMixin, db.Model):
     email = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True, index=True)
 
+    # Реферальний код тренера (лениво генерується). Префікс 't' -- щоб коди
+    # User і Trainer були глобально унікальні між собою.
+    referral_code = db.Column(db.String(32), unique=True, index=True)
+
     # Опційні регалії (показуються публічно лише якщо заповнені):
     #   certificates -- [{url, thumb, caption}] завантажені зображення (lightbox)
     #   patents      -- [{label, url}] активні гіперпосилання (винаходи/патенти)
@@ -72,6 +76,12 @@ class Trainer(TimestampMixin, db.Model):
     def photo_full(self):
         """URL повнорозмірного фото (для og/srcset 1600w)."""
         return self.photo_media.url if self.photo_media else None
+
+    def get_referral_code(self):
+        """Повернути (за потреби -- згенерувати) реферальний код тренера.
+        Робить flush, але не commit."""
+        from app.services.referral_service import ensure_referral_code
+        return ensure_referral_code(self, prefix='t')
 
     def __repr__(self):
         return f'<Trainer {self.full_name}>'

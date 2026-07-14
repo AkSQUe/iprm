@@ -1,0 +1,66 @@
+/* referral-share.css — спільний компонент реферального посилання.
+
+   Використовується на сторінці кабінету (/account) і сторінці курсу.
+   Розмітка -- .referral-share з полем-посиланням і кнопкою "Копіювати". */
+
+.referral-share {
+  max-width: 640px;
+}
+
+.referral-share__lead {
+  max-width: 640px;
+  margin: 0 0 1.25rem;
+  color: var(--apple-gray);
+  line-height: 1.5;
+}
+
+.referral-share__balance {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0 0 1.25rem;
+}
+
+.referral-share__balance-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--apple-black);
+}
+
+.referral-share__balance-label {
+  color: var(--apple-gray);
+}
+
+.referral-share__label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--apple-black);
+}
+
+.referral-share__row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.referral-share__input {
+  flex: 1 1 320px;
+  min-width: 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  color: var(--apple-black);
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-accent-light);
+  border-radius: var(--iprm-radius-sm);
+}
+
+.referral-share__input:focus {
+  outline: none;
+  border-color: rgba(var(--apple-accent-rgb), 0.6);
+}
+
+.referral-share__copy {
+  flex: 0 0 auto;
+}

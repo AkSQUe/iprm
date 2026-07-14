@@ -281,6 +281,21 @@ class SiteSettingsForm(FlaskForm):
         ),
     )
 
+    # Реферальна програма
+    referral_enabled = BooleanField(
+        'Увімкнути реферальну програму',
+        default=False,
+    )
+    referral_points_per_paid = IntegerField(
+        'Бонусних балів за оплачену реєстрацію',
+        validators=[Optional(), NumberRange(min=0, max=100000)],
+        default=1,
+        description=(
+            'Скільки бонусних балів лояльності нараховувати рефереру '
+            '(учаснику/тренеру) за одну оплачену реєстрацію за його посиланням.'
+        ),
+    )
+
 
 # ========== COURSES / INSTANCES / REQUESTS ==========
 

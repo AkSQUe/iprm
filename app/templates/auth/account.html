@@ -7,6 +7,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-account.css') }}?v={{ assets_version }}">
+{% if referral_link %}<link rel="stylesheet" href="{{ url_for('static', filename='css/referral-share.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -139,6 +140,33 @@
   </section>
   {% endif %}
 
+  <!-- ===== REFERRAL PROGRAM ===== -->
+  {% if referral_link %}
+  <section class="iprm-section apple-section-gray" aria-labelledby="referral-title">
+    <div class="iprm-section__inner">
+      <h2 id="referral-title" class="iprm-section__title">Реферальна програма</h2>
+      <p class="referral-share__lead">
+        Поділіться персональним посиланням. За кожну оплачену реєстрацію на
+        курс за вашим посиланням ви отримуєте бонусні бали лояльності.
+      </p>
+      <div class="referral-share__balance apple-reveal">
+        <span class="referral-share__balance-value">{{ referral_balance }}</span>
+        <span class="referral-share__balance-label">{{ referral_balance | uk_plural('бонусний бал', 'бонусні бали', 'бонусних балів') }}</span>
+      </div>
+      <div class="referral-share apple-reveal">
+        <label class="referral-share__label" for="referral-link">Ваше посилання</label>
+        <div class="referral-share__row">
+          <input type="text" id="referral-link" class="referral-share__input"
+                 value="{{ referral_link }}" readonly
+                 data-select-on-focus aria-label="Реферальне посилання">
+          <button type="button" class="apple-btn apple-btn--primary referral-share__copy"
+                  data-copy="{{ referral_link }}">Копіювати</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- ===== ACCOUNT CARDS ===== -->
   <section class="iprm-section" aria-labelledby="account-settings-title">
     <div class="iprm-section__inner">
@@ -178,4 +206,9 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/registration-pay.js') }}?v={{ assets_version }}" defer></script>
+{% if referral_link %}
+<script src="{{ url_for('static', filename='js/toast.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/copy-to-clipboard.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/select-on-focus.js') }}?v={{ assets_version }}" defer></script>
+{% endif %}
 {% endblock %}

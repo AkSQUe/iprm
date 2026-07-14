@@ -29,6 +29,7 @@ from app.models.database_backup import DatabaseBackup
 from app.models.material_reservation import (
     MaterialReservation, MaterialReservationItem, MaterialReservationStatus,
 )
+from app.models.referral_reward import ReferralReward
 
 __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'AuthIdentity',
@@ -41,4 +42,5 @@ __all__ = [
     'WebhookDelivery', 'BlogPost', 'BlogComment', 'MediaFile',
     'DatabaseBackup',
     'MaterialReservation', 'MaterialReservationItem', 'MaterialReservationStatus',
+    'ReferralReward',
 ]

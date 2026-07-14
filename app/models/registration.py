@@ -72,6 +72,11 @@ class EventRegistration(TimestampMixin, db.Model):
     cpd_points_awarded = db.Column(db.Integer)
     admin_notes = db.Column(db.Text)
 
+    # Реферальна атрибуція: код реферера (User.referral_code або
+    # Trainer.referral_code), захоплений з cookie в момент реєстрації.
+    # NULL -- реєстрація без реферала. Нарахування бонусів -- у Фазі 3.
+    referral_code = db.Column(db.String(32), index=True)
+
     # Альтернативний pipeline: менеджер створює учасника з мінімумом полів і
     # надсилає посилання з токеном, за яким учасник сам завершує анкету та
     # обирає спосіб оплати. Токен діє COMPLETION_TOKEN_TTL_DAYS; used_at --

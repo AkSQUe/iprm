@@ -166,6 +166,17 @@ def trainer_edit(trainer_id):
         flash('Тренера не знайдено', 'error')
         return redirect(url_for('admin.dashboard'))
 
+    # Реферальне посилання тренера (показуємо адміну, бо тренери не мають
+    # власного кабінету). Код генерується лениво при першому відкритті.
+    from app.models.site_settings import SiteSettings
+    from app.services import referral_service
+    referral_link = None
+    referral_balance = 0
+    if SiteSettings.get().referral_enabled:
+        referral_link = referral_service.trainer_referral_link(trainer)
+        db.session.commit()
+        referral_balance = referral_service.get_balance('trainer', trainer.id)
+
     form = TrainerForm(obj=trainer)
     if request.method == 'GET':
         _load_profile_into_form(trainer, form)
@@ -175,7 +186,7 @@ def trainer_edit(trainer_id):
         existing = Trainer.query.filter(Trainer.slug == slug, Trainer.id != trainer_id).first()
         if existing:
             flash('Тренер з таким slug вже існує', 'error')
-            return render_template('admin/trainer_edit.html', form=form, trainer=trainer)
+            return render_template('admin/trainer_edit.html', form=form, trainer=trainer, referral_link=referral_link, referral_balance=referral_balance)
 
         trainer.full_name = form.full_name.data.strip()
         trainer.full_name_dative = (form.full_name_dative.data or '').strip() or None
@@ -200,7 +211,7 @@ def trainer_edit(trainer_id):
             db.session.rollback()
             flash('Помилка при збереженні', 'error')
 
-    return render_template('admin/trainer_edit.html', form=form, trainer=trainer)
+    return render_template('admin/trainer_edit.html', form=form, trainer=trainer, referral_link=referral_link, referral_balance=referral_balance)
 
 
 @admin_bp.route('/trainers/<int:trainer_id>/delete', methods=['POST'])

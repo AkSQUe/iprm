@@ -89,7 +89,8 @@ def check_capacity(instance_id):
     return active_count < cap, locked_instance
 
 
-def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=None):
+def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=None,
+                         referral_code=None):
     """Створити або переактивувати реєстрацію на CourseInstance.
 
     Args:
@@ -159,8 +160,15 @@ def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=Non
             tariff_id=tariff.id if tariff is not None else None,
             status=new_status,
             payment_status=new_payment,
+            referral_code=referral_code or None,
         )
         db.session.add(reg)
+
+    # Реферальна атрибуція: не перезаписуємо вже наявну (first-touch у межах
+    # реєстрації), але заповнюємо реактивовану cancelled-реєстрацію, якщо код
+    # раніше не був зафіксований.
+    if referral_code and not reg.referral_code:
+        reg.referral_code = referral_code
 
     # Для безкоштовних подій -- одразу присвоюємо номер місця, бо немає
     # окремого 'paid'-транзишн (платіж не очікується). Робиться ДО commit

@@ -270,6 +270,25 @@
   border-top: 1px solid var(--iprm-border);
 }
 
+/* Реферальне посилання: поле + кнопка "Копіювати" в один ряд. */
+.admin-referral-row {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.admin-referral-row .form-input {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.admin-referral-balance {
+  margin-top: 12px;
+  font-size: 0.9375rem;
+  color: var(--apple-black);
+}
+
 /* ========== FORM CONTROLS ========== */
 
 .form-section .form-group label,

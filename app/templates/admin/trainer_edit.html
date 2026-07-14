@@ -221,6 +221,26 @@
       </button>
     </div>
   </form>
+
+  {% if referral_link %}
+  <div class="form-section admin-form__section">
+    <h3 class="admin-form__section-title">Реферальне посилання</h3>
+    <p class="admin-form__section-hint">
+      Тренер не має власного кабінету -- передайте йому це посилання. За кожну
+      оплачену реєстрацію на курс за ним нараховуються бонусні бали лояльності.
+    </p>
+    <p class="admin-referral-balance">
+      Баланс: <strong>{{ referral_balance }}</strong> бонусних балів
+    </p>
+    <div class="admin-referral-row">
+      <input type="text" class="form-input" value="{{ referral_link }}" readonly
+             data-select-on-focus aria-label="Реферальне посилання тренера">
+      <button type="button" class="btn-admin btn-admin--secondary" data-copy="{{ referral_link }}">
+        Копіювати
+      </button>
+    </div>
+  </div>
+  {% endif %}
   </div>
 </div>
 
@@ -229,4 +249,9 @@
 <script src="{{ url_for('static', filename='js/admin-dropzone.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-trainer-edit.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-trainer-regalia.js') }}?v={{ assets_version }}"></script>
+{% if referral_link %}
+<script src="{{ url_for('static', filename='js/toast.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/copy-to-clipboard.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/select-on-focus.js') }}?v={{ assets_version }}" defer></script>
+{% endif %}
 {% endblock %}

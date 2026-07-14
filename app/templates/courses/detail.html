@@ -8,6 +8,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}?v={{ assets_version }}">
+{% if referral_link %}<link rel="stylesheet" href="{{ url_for('static', filename='css/referral-share.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
 
 {% block extra_head %}
@@ -494,6 +495,29 @@
   </section>
   {% endif %}
 
+  <!-- ===== REFERRAL SHARE (logged-in) ===== -->
+  {% if referral_link %}
+  <section class="iprm-section" aria-labelledby="referral-title">
+    <div class="iprm-section__inner">
+      <h2 id="referral-title" class="iprm-section__title">Поділіться курсом</h2>
+      <p class="referral-share__lead">
+        Ваше персональне посилання на цей курс. За кожну оплачену реєстрацію
+        за вашим посиланням ви отримуєте бонусні бали лояльності.
+      </p>
+      <div class="referral-share apple-reveal">
+        <label class="referral-share__label" for="course-referral-link">Ваше посилання</label>
+        <div class="referral-share__row">
+          <input type="text" id="course-referral-link" class="referral-share__input"
+                 value="{{ referral_link }}" readonly
+                 data-select-on-focus aria-label="Реферальне посилання">
+          <button type="button" class="apple-btn apple-btn--primary referral-share__copy"
+                  data-copy="{{ referral_link }}">Копіювати</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- ===== REQUEST FORM ===== -->
   <section id="request" class="iprm-section apple-section-gray" aria-labelledby="request-title">
     <div class="iprm-section__inner">
@@ -558,5 +582,10 @@
 <script src="{{ url_for('static', filename='js/faq-accordion.js') }}?v={{ assets_version }}" defer></script>
 {% if site_settings.show_roi_calculator %}
 <script src="{{ url_for('static', filename='js/roi-calc.js') }}?v={{ assets_version }}" defer></script>
+{% endif %}
+{% if referral_link %}
+<script src="{{ url_for('static', filename='js/toast.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/copy-to-clipboard.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/select-on-focus.js') }}?v={{ assets_version }}" defer></script>
 {% endif %}
 {% endblock %}
