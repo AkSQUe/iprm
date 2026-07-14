@@ -77,3 +77,10 @@ def test_referrals_page_shows_reward(client, admin):
     assert rx.status_code == 200
     assert rx.data[:2] == b'PK'  # zip-заголовок xlsx
     assert 'spreadsheetml' in rx.headers.get('Content-Type', '')
+
+    # Сторінка деталізації реферера.
+    rd = client.get(f'/admin/referrals/user/{referrer.id}')
+    assert rd.status_code == 200
+    assert referrer.full_name.encode() in rd.data
+    # Невідомий kind -> 404.
+    assert client.get('/admin/referrals/bogus/1').status_code == 404

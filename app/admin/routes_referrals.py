@@ -94,6 +94,37 @@ def referrals_overview():
     )
 
 
+@admin_bp.route('/referrals/<kind>/<int:referrer_id>')
+@admin_required
+def referral_referrer_detail(kind, referrer_id):
+    """Деталізація одного реферера: профіль, баланс, повна історія нарахувань."""
+    from flask import abort
+    from app.models.user import User
+    from app.models.trainer import Trainer
+
+    if kind not in ('user', 'trainer'):
+        abort(404)
+    if kind == 'user':
+        referrer = db.session.get(User, referrer_id)
+        name = (referrer.full_name or referrer.email) if referrer else None
+        edit_url = None
+    else:
+        referrer = db.session.get(Trainer, referrer_id)
+        name = referrer.full_name if referrer else None
+        edit_url = 'admin.trainer_edit'
+
+    balance = referral_service.get_balance(kind, referrer_id)
+    rewards = referral_service.list_referrer_rewards(kind, referrer_id, limit=None)
+    granted = sum(1 for r in rewards if r.status == 'granted')
+
+    return render_template(
+        'admin/referral_detail.html',
+        kind=kind, referrer_id=referrer_id, referrer=referrer,
+        referrer_name=name, edit_url=edit_url,
+        balance=balance, rewards=rewards, granted=granted,
+    )
+
+
 @admin_bp.route('/referrals/export')
 @admin_required
 def referrals_export():

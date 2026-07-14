@@ -77,12 +77,10 @@
           {% for r in top_referrers %}
           <tr>
             <td>
-              {% if r.info and r.kind == 'trainer' %}
-              <a href="{{ url_for('admin.trainer_edit', trainer_id=r.id) }}">{{ r.info.name }}</a>
-              {% elif r.info %}
-              {{ r.info.name }}
+              {% if r.info %}
+              <a href="{{ url_for('admin.referral_referrer_detail', kind=r.kind, referrer_id=r.id) }}">{{ r.info.name }}</a>
               {% else %}
-              <span class="admin-text-muted">#{{ r.id }} (видалено?)</span>
+              <a href="{{ url_for('admin.referral_referrer_detail', kind=r.kind, referrer_id=r.id) }}" class="admin-text-muted">#{{ r.id }} (видалено?)</a>
               {% endif %}
             </td>
             <td>{{ 'Тренер' if r.kind == 'trainer' else 'Учасник' }}</td>
@@ -127,11 +125,9 @@
         <tr>
           <td>{{ rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '--' }}</td>
           <td>
-            {% if ref and ref.kind == 'trainer' %}
-            <a href="{{ url_for('admin.trainer_edit', trainer_id=ref.id) }}">{{ ref.name }}</a>
-            <br><small class="admin-text-muted">тренер</small>
-            {% elif ref %}
-            {{ ref.name }}<br><small class="admin-text-muted">учасник</small>
+            {% if ref %}
+            <a href="{{ url_for('admin.referral_referrer_detail', kind=ref.kind, referrer_id=ref.id) }}">{{ ref.name }}</a>
+            <br><small class="admin-text-muted">{{ 'тренер' if ref.kind == 'trainer' else 'учасник' }}</small>
             {% else %}
             <span class="admin-text-muted">{{ rw.referral_code }}</span>
             {% endif %}

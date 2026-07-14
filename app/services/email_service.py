@@ -651,6 +651,34 @@ class EmailService:
         )
 
     @staticmethod
+    def send_referral_award(to_email, referrer_name, points, balance,
+                            event_title=None, idempotency_key=None):
+        """Повідомити реферера про нарахування бонусних балів.
+
+        Необов'язковий лист (trigger='referral' поважає opt-out/unsubscribe).
+        Викликається best-effort з referral_service після успішного нарахування.
+        """
+        if not to_email:
+            return None
+        from app.models.site_settings import SiteSettings
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        account_url = f'{base}/auth/account' if base else '/auth/account'
+        return EmailService.send_email(
+            to=to_email,
+            subject=f'Вам нараховано +{points} бонусних балів',
+            template_name='referral_award',
+            context={
+                'referrer_name': referrer_name,
+                'points': points,
+                'balance': balance,
+                'event_title': event_title,
+                'account_url': account_url,
+            },
+            trigger='referral',
+            idempotency_key=idempotency_key,
+        )
+
+    @staticmethod
     def send_certdata_reminder(registration):
         """Нагадати учаснику заповнити МОЗ-анкету (дані для сертифіката).
 

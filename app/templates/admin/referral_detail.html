@@ -1,0 +1,101 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Реферер: {{ referrer_name or '—' }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.referrals_overview') }}" class="admin-breadcrumb__link">Реферальна програма</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Реферер</span>
+        </div>
+        <h1 class="admin-hero__title">{{ referrer_name or ('#' ~ referrer_id ~ ' (видалено?)') }}</h1>
+        <p class="admin-hero__subtitle">{{ 'Тренер' if kind == 'trainer' else 'Учасник' }}</p>
+      </div>
+      <div class="admin-hero__actions">
+        {% if edit_url and referrer %}
+        <a href="{{ url_for(edit_url, trainer_id=referrer_id) }}" class="btn-admin btn-admin--secondary">
+          {{ icon('edit') }} Картка тренера
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <div class="admin-stat-cards">
+      <div class="admin-stat-card admin-stat-card--accent">
+        <span class="admin-stat-card__value">{{ balance }}</span>
+        <span class="admin-stat-card__label">Активних балів</span>
+      </div>
+      <div class="admin-stat-card admin-stat-card--success">
+        <span class="admin-stat-card__value">{{ granted }}</span>
+        <span class="admin-stat-card__label">Нарахувань</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ rewards | length }}</span>
+        <span class="admin-stat-card__label">Усього записів</span>
+      </div>
+    </div>
+
+    {% if rewards %}
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr><th>Дата</th><th>Учасник</th><th>Захід</th><th>Бали</th><th>Статус</th></tr>
+      </thead>
+      <tbody>
+        {% for rw in rewards %}
+        {% set reg = rw.registration %}
+        <tr>
+          <td>{{ rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '--' }}</td>
+          <td>
+            {% if reg and reg.user %}
+            {{ reg.user.first_name }} {{ reg.user.last_name }}<br>
+            <small class="admin-text-muted">{{ reg.user.email }}</small>
+            {% else %}
+            <span class="admin-text-muted">--</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if reg and reg.instance and reg.instance.course %}
+            {{ reg.instance.course.title }}
+            {% if reg.instance.start_date %}<br><small class="admin-text-muted">{{ reg.instance.start_date.strftime('%d.%m.%Y') }}</small>{% endif %}
+            {% else %}
+            <span class="admin-text-muted">--</span>
+            {% endif %}
+          </td>
+          <td><strong>{{ rw.points }}</strong></td>
+          <td>
+            {% if rw.status == 'granted' %}
+            <span class="badge badge--active">{{ rw.status_label }}</span>
+            {% else %}
+            <span class="badge badge--cancelled">{{ rw.status_label }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div class="admin-empty">
+      {{ icon('add_link', cls='admin-empty__icon') }}
+      <h3 class="admin-empty__title">Нарахувань немає</h3>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

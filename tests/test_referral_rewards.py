@@ -153,6 +153,66 @@ def test_sync_awards_then_voids_on_refund(db_session):
     assert rs.get_balance('user', referrer.id) == 0
 
 
+def test_reaward_reactivates_voided(db_session):
+    _enable(points=4)
+    referrer = _mk_user('r8@example.com')
+    rcode = rs.ensure_referral_code(referrer, prefix='u')
+    buyer = _mk_user('b8@example.com')
+    reg = _mk_reg(buyer, _mk_course_instance(), code=rcode, ps='paid')
+
+    rs.sync_reward_for_registration(reg)          # paid -> award
+    assert rs.get_balance('user', referrer.id) == 4
+
+    reg.payment_status = 'refunded'
+    db.session.flush()
+    rs.sync_reward_for_registration(reg)          # refunded -> void
+    assert rs.get_balance('user', referrer.id) == 0
+
+    reg.payment_status = 'paid'
+    db.session.flush()
+    rs.sync_reward_for_registration(reg)          # paid again -> reactivate
+    assert rs.get_balance('user', referrer.id) == 4
+    reward = ReferralReward.query.filter_by(registration_id=reg.id).first()
+    assert reward.status == 'granted'
+    assert reward.voided_at is None
+    assert ReferralReward.query.filter_by(registration_id=reg.id).count() == 1
+
+
+def test_sync_pending_leaves_reward_intact(db_session):
+    _enable(points=6)
+    referrer = _mk_user('r9@example.com')
+    rcode = rs.ensure_referral_code(referrer, prefix='u')
+    buyer = _mk_user('b9@example.com')
+    reg = _mk_reg(buyer, _mk_course_instance(), code=rcode, ps='paid')
+
+    rs.sync_reward_for_registration(reg)          # paid -> award
+    assert rs.get_balance('user', referrer.id) == 6
+
+    reg.payment_status = 'pending'
+    db.session.flush()
+    rs.sync_reward_for_registration(reg)          # pending -> no-op
+    assert rs.get_balance('user', referrer.id) == 6
+
+
+def test_award_notifies_referrer_email(db_session, monkeypatch):
+    _enable(points=5)
+    referrer = _mk_user('notify-ref@example.com')
+    rcode = rs.ensure_referral_code(referrer, prefix='u')
+    buyer = _mk_user('notify-buy@example.com')
+    reg = _mk_reg(buyer, _mk_course_instance(), code=rcode)
+
+    calls = []
+    from app.services.email_service import EmailService
+    monkeypatch.setattr(EmailService, 'send_referral_award',
+                        staticmethod(lambda **kw: calls.append(kw)))
+
+    rs.award_for_paid_registration(reg)
+    assert len(calls) == 1
+    assert calls[0]['to_email'] == 'notify-ref@example.com'
+    assert calls[0]['points'] == 5
+    assert calls[0]['balance'] == 5
+
+
 def test_trainer_referrer_balance(db_session):
     _enable(points=10)
     t = Trainer(full_name='Тренер Реф', slug='trener-ref-rw')

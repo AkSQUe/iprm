@@ -173,8 +173,10 @@ def trainer_edit(trainer_id):
     referral_link = None
     referral_balance = 0
     if SiteSettings.get().referral_enabled:
+        had_code = bool(trainer.referral_code)
         referral_link = referral_service.trainer_referral_link(trainer)
-        db.session.commit()
+        if not had_code:  # код щойно згенеровано -> зберегти
+            db.session.commit()
         referral_balance = referral_service.get_balance('trainer', trainer.id)
 
     form = TrainerForm(obj=trainer)

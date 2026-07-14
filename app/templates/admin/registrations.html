@@ -180,11 +180,7 @@
           <td>
             {% set ref = referrer_map.get(reg.referral_code) if reg.referral_code else None %}
             {% if ref %}
-              {% if ref.kind == 'trainer' %}
-              <a href="{{ url_for('admin.trainer_edit', trainer_id=ref.id) }}">{{ ref.name }}</a>
-              {% else %}
-              {{ ref.name }}
-              {% endif %}
+              <a href="{{ url_for('admin.referral_referrer_detail', kind=ref.kind, referrer_id=ref.id) }}">{{ ref.name }}</a>
               <br><small class="admin-text-muted">{{ 'тренер' if ref.kind == 'trainer' else 'учасник' }}</small>
             {% elif reg.referral_code %}
               <span class="admin-text-muted" title="Код реферера не знайдено серед активних">{{ reg.referral_code }}</span>

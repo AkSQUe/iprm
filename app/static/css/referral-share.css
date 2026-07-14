@@ -64,3 +64,66 @@
 .referral-share__copy {
   flex: 0 0 auto;
 }
+
+/* ===== Історія нарахувань ===== */
+.referral-history {
+  max-width: 640px;
+  margin-top: 2rem;
+}
+
+.referral-history__title {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--apple-black);
+}
+
+.referral-history__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.referral-history__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-accent-light);
+  border-radius: var(--iprm-radius-sm);
+}
+
+.referral-history__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.referral-history__course {
+  font-weight: 500;
+  color: var(--apple-black);
+}
+
+.referral-history__date {
+  font-size: 0.85rem;
+  color: var(--apple-gray);
+}
+
+.referral-history__points {
+  flex: 0 0 auto;
+  font-weight: 700;
+  color: var(--apple-black);
+}
+
+.referral-history__item--voided {
+  opacity: 0.55;
+}
+
+.referral-history__item--voided .referral-history__points {
+  font-weight: 500;
+  color: var(--apple-gray);
+  text-decoration: line-through;
+}

@@ -1,12 +1,13 @@
-"""Реферальна програма: генерація кодів і побудова реферальних посилань.
+"""Реферальна програма: коди, посилання, атрибуція, нарахування балів.
 
 Кожен учасник (User) і тренер (Trainer) має власний стабільний реферальний
 код. Посилання з цим кодом розповсюджує реферер; параметр ``ref`` -- ключ
 атрибуції (захоплюється при реєстрації), а UTM-мітки -- для аналітики GA4.
 
-Фаза 1: генерація кодів і посилань. Фаза 2: захоплення атрибуції (cookie ->
-event_registrations.referral_code) і резолв реферера для адмінки. Нарахування
-бонусних балів -- у наступній фазі.
+Фаза 1: генерація кодів і побудова посилань. Фаза 2: захоплення атрибуції
+(cookie -> event_registrations.referral_code) і резолв реферера для адмінки.
+Фаза 3: нарахування/анулювання бонусних балів (ReferralReward) при зміні
+статусу оплати та баланс реферера.
 """
 import logging
 import re
@@ -86,8 +87,15 @@ def build_referral_url(code, target_url=None, campaign=UTM_SOURCE, medium='refer
         target = base or '/'
     elif target_url.startswith(('http://', 'https://')):
         target = target_url
+    elif base:
+        target = base + '/' + target_url.lstrip('/')
     else:
-        target = base + ('/' + target_url.lstrip('/')) if base else target_url
+        # Немає website_url -> посилання вийде без домену (непридатне для
+        # розсилки). Лишаємо відносний шлях, але сигналізуємо адміну логом.
+        logger.warning(
+            'referral: website_url порожній -- реферальне посилання без домену'
+        )
+        target = target_url
 
     parts = urlparse(target)
     query = dict(parse_qsl(parts.query, keep_blank_values=True))
@@ -149,24 +157,10 @@ def read_ref_cookie(request):
 def resolve_referrer(code):
     """Резолв коду у реферера. Повертає dict {kind, id, name, code} або None.
 
-    kind -- 'user' | 'trainer'. Використовується в адмінці для показу
-    "хто кого привів".
+    kind -- 'user' | 'trainer'. Використовується для показу "хто кого привів"
+    і для нарахування балів. Тонка обгортка над resolve_referrers_bulk.
     """
-    if not is_valid_code(code):
-        return None
-    from app.models.user import User
-    from app.models.trainer import Trainer
-    if code.startswith('u'):
-        u = User.query.filter_by(referral_code=code).first()
-        if u:
-            return {'kind': 'user', 'id': u.id, 'name': u.full_name or u.email,
-                    'code': code}
-    elif code.startswith('t'):
-        t = Trainer.query.filter_by(referral_code=code).first()
-        if t:
-            return {'kind': 'trainer', 'id': t.id, 'name': t.full_name,
-                    'code': code}
-    return None
+    return resolve_referrers_bulk([code]).get(code)
 
 
 def resolve_referrers_bulk(codes):
@@ -199,6 +193,36 @@ def resolve_referrers_bulk(codes):
 
 
 # ---- Нарахування балів (Фаза 3) ----
+
+def _referrer_contact(kind, referrer_id):
+    """Email + ім'я реферера для сповіщення (або (None, None))."""
+    if kind == 'user':
+        from app.models.user import User
+        u = db.session.get(User, referrer_id)
+        return (u.email, (u.full_name or u.email)) if u else (None, None)
+    from app.models.trainer import Trainer
+    t = db.session.get(Trainer, referrer_id)
+    return (t.email, t.full_name) if t else (None, None)
+
+
+def _notify_referrer_award(reg, kind, referrer_id, points):
+    """Best-effort лист рефереру про нарахування. Не кидає винятків."""
+    try:
+        email, name = _referrer_contact(kind, referrer_id)
+        if not email:
+            return
+        event_title = None
+        if reg.instance and reg.instance.course:
+            event_title = reg.instance.course.title
+        from app.services.email_service import EmailService
+        EmailService.send_referral_award(
+            to_email=email, referrer_name=name, points=points,
+            balance=get_balance(kind, referrer_id), event_title=event_title,
+            idempotency_key=f'referral-award-{reg.id}',
+        )
+    except Exception:
+        logger.exception('Failed to notify referrer for reg=%s', reg.id)
+
 
 def award_for_paid_registration(reg):
     """Нарахувати бонусні бали рефереру за оплачену реєстрацію.
@@ -238,9 +262,28 @@ def award_for_paid_registration(reg):
     if referrer['kind'] == 'user' and referrer['id'] == reg.user_id:
         return None
 
-    # Ідемпотентність: якщо нарахування вже існує -- не дублюємо.
+    # Ідемпотентність: одне нарахування на реєстрацію (UNIQUE registration_id).
     existing = ReferralReward.query.filter_by(registration_id=reg.id).first()
     if existing is not None:
+        # Повторна оплата після повернення -> реактивуємо анульований рядок
+        # (за поточною ставкою), а не лишаємо реферера без балів.
+        if existing.status == 'voided':
+            existing.status = 'granted'
+            existing.voided_at = None
+            existing.notes = None
+            existing.points = points
+            existing.referrer_kind = referrer['kind']
+            existing.referrer_id = referrer['id']
+            existing.referral_code = code
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                logger.exception('Failed to reactivate referral reward reg=%s', reg.id)
+                return None
+            logger.info('Referral reward reactivated: reg=%s %s:%s +%dp',
+                        reg.id, referrer['kind'], referrer['id'], points)
+            _notify_referrer_award(reg, referrer['kind'], referrer['id'], points)
         return existing
 
     reward = ReferralReward(
@@ -254,9 +297,6 @@ def award_for_paid_registration(reg):
     db.session.add(reward)
     try:
         db.session.commit()
-        logger.info('Referral reward granted: reg=%s %s:%s +%dp',
-                    reg.id, referrer['kind'], referrer['id'], points)
-        return reward
     except IntegrityError:
         # Гонка: інший потік уже створив нарахування -> повертаємо наявне.
         db.session.rollback()
@@ -265,6 +305,10 @@ def award_for_paid_registration(reg):
         db.session.rollback()
         logger.exception('Failed to grant referral reward for reg=%s', reg.id)
         return None
+    logger.info('Referral reward granted: reg=%s %s:%s +%dp',
+                reg.id, referrer['kind'], referrer['id'], points)
+    _notify_referrer_award(reg, referrer['kind'], referrer['id'], points)
+    return reward
 
 
 def void_for_registration(reg, reason='Повернення коштів'):
@@ -294,13 +338,16 @@ def sync_reward_for_registration(reg):
     """Привести нарахування у відповідність до поточного статусу оплати.
 
     Викликається post-commit з усіх точок зміни статусу оплати:
-      - payment_status == 'paid'  -> award (ідемпотентно);
-      - інакше                    -> void наявного (ідемпотентно).
-    Безпечно викликати багаторазово.
+      - 'paid'                -> award (з реактивацією анульованого);
+      - 'refunded' / 'unpaid' -> void наявного (продаж скасовано);
+      - 'pending'             -> не чіпаємо (транзитний статус).
+    Ідемпотентно, безпечно викликати багаторазово.
     """
     if reg.payment_status == 'paid':
         return award_for_paid_registration(reg)
-    return void_for_registration(reg, reason='Оплату скасовано/повернено')
+    if reg.payment_status in ('refunded', 'unpaid'):
+        return void_for_registration(reg, reason='Оплату повернено/скасовано')
+    return None
 
 
 def get_balance(kind, referrer_id):
@@ -315,3 +362,25 @@ def get_balance(kind, referrer_id):
         ReferralReward.status == 'granted',
     ).scalar()
     return int(total or 0)
+
+
+def list_referrer_rewards(kind, referrer_id, limit=50):
+    """Нарахування реферера (найновіші перші) з підвантаженими курсом/заходом.
+
+    Для кабінету учасника й адмін-деталізації реферера.
+    """
+    from app.models.referral_reward import ReferralReward
+    from app.models.registration import EventRegistration
+    from app.models.course_instance import CourseInstance
+    from sqlalchemy.orm import joinedload
+    query = ReferralReward.query.options(
+        joinedload(ReferralReward.registration)
+        .joinedload(EventRegistration.instance)
+        .joinedload(CourseInstance.course),
+    ).filter(
+        ReferralReward.referrer_kind == kind,
+        ReferralReward.referrer_id == referrer_id,
+    ).order_by(ReferralReward.created_at.desc())
+    if limit:
+        query = query.limit(limit)
+    return query.all()

@@ -59,7 +59,7 @@ class EmailLog(TimestampMixin, db.Model):
         db.CheckConstraint(
             "trigger IN ('registration', 'payment', 'reminder', 'status_change', "
             "'email_confirm', 'course_request', 'certificate', 'blog_comment', "
-            "'password_reset', 'backup_failure', 'materials', 'test')",
+            "'password_reset', 'backup_failure', 'materials', 'referral', 'test')",
             name='ck_email_logs_trigger',
         ),
         db.Index('ix_email_logs_created_at', 'created_at'),
@@ -84,6 +84,7 @@ class EmailLog(TimestampMixin, db.Model):
         ('password_reset', 'Відновлення паролю'),
         ('backup_failure', 'Помилка бекапу'),
         ('materials', 'Матеріали заходу'),
+        ('referral', 'Реферальний бонус'),
         ('test', 'Тест'),
     ]
 
@@ -93,7 +94,7 @@ class EmailLog(TimestampMixin, db.Model):
 
     # НЕОБОВ'ЯЗКОВІ тригери поважають user.email_opt_out і unsubscribe-
     # suppression. Решта -- транзакційне (шлеться завжди).
-    OPTIONAL_TRIGGERS = frozenset({'reminder'})
+    OPTIONAL_TRIGGERS = frozenset({'reminder', 'referral'})
 
     @classmethod
     def is_valid_trigger(cls, trigger):

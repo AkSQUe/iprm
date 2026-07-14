@@ -395,11 +395,13 @@ def course_by_slug(slug):
         from app.models.site_settings import SiteSettings
         from app.services import referral_service
         if SiteSettings.get().referral_enabled:
+            had_code = bool(current_user.referral_code)
             referral_link = referral_service.user_referral_link(
                 current_user,
                 target_url=url_for('courses.course_by_slug', slug=course.slug),
             )
-            db.session.commit()
+            if not had_code:  # код щойно згенеровано -> зберегти
+                db.session.commit()
 
     return render_template(
         'courses/detail.html',
