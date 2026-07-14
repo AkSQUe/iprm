@@ -289,6 +289,32 @@ def test_manual_adjustment_affects_balance(db_session):
     assert len(rs.list_adjustments('user', referrer.id)) == 2
 
 
+def test_fraud_flags_high_void_and_no_conversion(db_session):
+    _enable(points=5)
+    # Реферер із багатьма поверненнями (voided >= active).
+    ref1 = _mk_user('fraud1@example.com')
+    c1 = rs.ensure_referral_code(ref1, prefix='u')
+    for i in range(2):
+        b = _mk_user(f'fb{i}@example.com')
+        reg = _mk_reg(b, _mk_course_instance(), code=c1)
+        rs.award_for_paid_registration(reg)
+        reg.payment_status = 'refunded'
+        db.session.flush()
+        rs.void_for_registration(reg)
+
+    # Реферер із трафіком без конверсій (кліки, 0 нарахувань).
+    ref2 = _mk_user('fraud2@example.com')
+    c2 = rs.ensure_referral_code(ref2, prefix='u')
+    for _ in range(25):
+        rs._increment_click(c2)
+    db.session.commit()
+
+    flags = rs.fraud_flags(min_clicks=20)
+    ids = {f['id'] for f in flags}
+    assert ref1.id in ids   # багато повернень
+    assert ref2.id in ids   # трафік без конверсій
+
+
 def test_trainer_referrer_balance(db_session):
     _enable(points=10)
     t = Trainer(full_name='Тренер Реф', slug='trener-ref-rw')

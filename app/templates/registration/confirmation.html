@@ -9,6 +9,11 @@
 {% endblock %}
 
 {% block content %}
+{% if reg.referral_code %}
+{# GA4: реферальна конверсія (реєстрація за реф-посиланням). Подія шлеться
+   ga-events.js на завантаженні; без inline-скрипта. #}
+<span hidden data-ga-event-load="referral_signup" data-ga-param-method="referral"></span>
+{% endif %}
 <div class="apple-page reg-layout">
 
   {# ===== 3-step progress (другий крок активний, поки не оплачено) ===== #}
@@ -193,4 +198,5 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/form-single-submit.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/registration-pay.js') }}?v={{ assets_version }}" defer></script>
+{% if reg.referral_code %}<script src="{{ url_for('static', filename='js/ga-events.js') }}?v={{ assets_version }}" defer></script>{% endif %}
 {% endblock %}

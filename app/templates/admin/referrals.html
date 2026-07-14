@@ -76,6 +76,36 @@
       </div>
     </div>
 
+    <!-- Fraud flags -->
+    {% if fraud %}
+    <div class="form-section">
+      <h2 class="admin-form__section-title">На перевірку ({{ fraud | length }})</h2>
+      <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Реферер</th><th>Тип</th><th>Кліків</th><th>Активних</th><th>Анульовано</th><th>Сигнали</th></tr>
+        </thead>
+        <tbody>
+          {% for f in fraud %}
+          <tr>
+            <td><a href="{{ url_for('admin.referral_referrer_detail', kind=f.kind, referrer_id=f.id) }}">{{ f.name }}</a></td>
+            <td>{{ 'Тренер' if f.kind == 'trainer' else 'Учасник' }}</td>
+            <td>{{ f.clicks }}</td>
+            <td>{{ f.active }}</td>
+            <td>{{ f.voided }}</td>
+            <td>
+              {% for reason in f.reasons %}
+              <span class="badge badge--warning">{{ reason }}</span>
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Top referrers -->
     {% if top_referrers %}
     <div class="form-section">

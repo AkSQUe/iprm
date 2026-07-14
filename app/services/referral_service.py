@@ -809,6 +809,70 @@ def list_adjustments(kind, referrer_id):
     ).order_by(ReferralAdjustment.created_at.desc()).all()
 
 
+def fraud_flags(min_clicks=20):
+    """Реферери з підозрілими патернами (для перевірки оператором).
+
+    Сигнали: (1) багато повернень (voided >= active); (2) трафік без
+    конверсій (кліків >= min_clicks, 0 активних нарахувань). Повертає список
+    dict {kind, id, name, clicks, active, voided, reasons}.
+    """
+    from app.models.referral_reward import ReferralReward
+    from app.models.referral_click import ReferralClick
+    from sqlalchemy import func as _func, case
+
+    reward_rows = db.session.query(
+        ReferralReward.referrer_kind, ReferralReward.referrer_id,
+        ReferralReward.referral_code,
+        _func.sum(case((ReferralReward.status.in_(('granted', 'pending')), 1), else_=0)).label('active'),
+        _func.sum(case((ReferralReward.status == 'voided', 1), else_=0)).label('voided'),
+    ).group_by(
+        ReferralReward.referrer_kind, ReferralReward.referrer_id,
+        ReferralReward.referral_code,
+    ).all()
+
+    reward_codes = [r.referral_code for r in reward_rows]
+    clicks_map = get_clicks_by_code(reward_codes)
+    name_map = resolve_referrers_bulk(reward_codes)
+    flags = []
+    for r in reward_rows:
+        active, voided = int(r.active or 0), int(r.voided or 0)
+        clicks = clicks_map.get(r.referral_code, 0)
+        reasons = []
+        if voided and voided >= max(1, active):
+            reasons.append(f'Багато повернень: {voided} анульовано / {active} активних')
+        if clicks >= min_clicks and active == 0:
+            reasons.append(f'Трафік без конверсій: {clicks} кліків, 0 активних')
+        if reasons:
+            info = name_map.get(r.referral_code)
+            flags.append({
+                'kind': r.referrer_kind, 'id': r.referrer_id,
+                'name': info['name'] if info else r.referral_code,
+                'clicks': clicks, 'active': active, 'voided': voided,
+                'reasons': reasons,
+            })
+
+    # Коди з великим трафіком, але БЕЗ жодного нарахування.
+    reward_set = set(reward_codes)
+    click_rows = db.session.query(
+        ReferralClick.referral_code, _func.sum(ReferralClick.count).label('c'),
+    ).group_by(ReferralClick.referral_code).having(
+        _func.sum(ReferralClick.count) >= min_clicks).all()
+    lonely = [c for c, _ in click_rows if c not in reward_set]
+    lonely_names = resolve_referrers_bulk(lonely)
+    click_by_code = {c: int(total or 0) for c, total in click_rows}
+    for code in lonely:
+        info = lonely_names.get(code)
+        if not info:
+            continue
+        flags.append({
+            'kind': info['kind'], 'id': info['id'], 'name': info['name'],
+            'clicks': click_by_code.get(code, 0), 'active': 0, 'voided': 0,
+            'reasons': [f'Трафік без конверсій: {click_by_code.get(code, 0)} кліків, 0 нарахувань'],
+        })
+    flags.sort(key=lambda f: f['clicks'], reverse=True)
+    return flags
+
+
 def list_referrer_rewards(kind, referrer_id, limit=50):
     """Нарахування реферера (найновіші перші) з підвантаженими курсом/заходом.
 

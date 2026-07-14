@@ -89,8 +89,9 @@
   {% set format_inst = ns_fmt.inst %}
 
   {% if referral_inviter %}
-  <div class="referral-invite-banner" role="note">
+  <div class="referral-invite-banner" role="note" data-referral-banner hidden>
     <span class="referral-invite-banner__text">Вас рекомендує <strong>{{ referral_inviter }}</strong></span>
+    <button type="button" class="referral-invite-banner__close" data-referral-banner-close aria-label="Закрити">&times;</button>
   </div>
   {% endif %}
 
@@ -520,6 +521,8 @@
                   data-copy="{{ referral_link }}">Копіювати</button>
         </div>
       </div>
+      {% set link = referral_link %}{% set qr = none %}
+      {% include 'partials/_referral_share_tools.html' %}
     </div>
   </section>
   {% endif %}
@@ -593,5 +596,7 @@
 <script src="{{ url_for('static', filename='js/toast.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/copy-to-clipboard.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/select-on-focus.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/referral-share-tools.js') }}?v={{ assets_version }}" defer></script>
 {% endif %}
+{% if referral_inviter %}<script src="{{ url_for('static', filename='js/referral-banner.js') }}?v={{ assets_version }}" defer></script>{% endif %}
 {% endblock %}

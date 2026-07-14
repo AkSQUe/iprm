@@ -95,6 +95,8 @@ def referrals_overview():
     page_codes = [r.referral_code for r in pagination.items]
     page_name_map = referral_service.resolve_referrers_bulk(page_codes)
 
+    fraud = referral_service.fraud_flags()
+
     return render_template(
         'admin/referrals.html',
         settings=settings,
@@ -102,6 +104,7 @@ def referrals_overview():
         top_referrers=top_referrers,
         total_clicks=total_clicks,
         pipeline_count=pipeline_count,
+        fraud=fraud,
         rewards=pagination.items,
         pagination=pagination,
         referrer_map=page_name_map,

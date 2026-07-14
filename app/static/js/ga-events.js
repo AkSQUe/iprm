@@ -23,4 +23,18 @@
       });
     });
   });
+
+  // Події на завантаженні сторінки: елемент [data-ga-event-load="<name>"]
+  // (напр. реферальна конверсія на сторінці підтвердження). Доп. параметри --
+  // через data-ga-param-* (data-ga-param-value -> {value: ...}).
+  document.querySelectorAll('[data-ga-event-load]').forEach(function (el) {
+    var params = {};
+    Object.keys(el.dataset).forEach(function (k) {
+      if (k.indexOf('gaParam') === 0 && k.length > 7) {
+        var key = k.charAt(7).toLowerCase() + k.slice(8);
+        params[key] = el.dataset[k];
+      }
+    });
+    send(el.getAttribute('data-ga-event-load'), params);
+  });
 })();
