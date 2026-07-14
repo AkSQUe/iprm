@@ -71,3 +71,9 @@ def test_referrals_page_shows_reward(client, admin):
     assert r.status_code == 200
     # Ім'я реферера (у канонічному порядку "Прізвище Ім'я") присутнє.
     assert referrer.full_name.encode() in r.data
+
+    # Експорт XLSX віддає валідний файл.
+    rx = client.get('/admin/referrals/export')
+    assert rx.status_code == 200
+    assert rx.data[:2] == b'PK'  # zip-заголовок xlsx
+    assert 'spreadsheetml' in rx.headers.get('Content-Type', '')

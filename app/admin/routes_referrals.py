@@ -5,7 +5,7 @@
 """
 import logging
 
-from flask import render_template, request
+from flask import render_template, request, send_file
 from sqlalchemy import case, func
 from sqlalchemy.orm import joinedload
 
@@ -91,4 +91,34 @@ def referrals_overview():
         pagination=pagination,
         referrer_map=page_name_map,
         status_filter=status_filter,
+    )
+
+
+@admin_bp.route('/referrals/export')
+@admin_required
+def referrals_export():
+    """Експорт усього реєстру нарахувань у xlsx (з опційним фільтром статусу)."""
+    from app.services import xlsx_io
+    status_filter = request.args.get('status', '')
+
+    query = ReferralReward.query.options(
+        joinedload(ReferralReward.registration)
+        .joinedload(EventRegistration.instance)
+        .joinedload(CourseInstance.course),
+        joinedload(ReferralReward.registration)
+        .joinedload(EventRegistration.user),
+    )
+    if status_filter in ('granted', 'voided'):
+        query = query.filter(ReferralReward.status == status_filter)
+    rewards = query.order_by(ReferralReward.created_at.desc()).all()
+
+    name_map = referral_service.resolve_referrers_bulk(
+        [r.referral_code for r in rewards],
+    )
+    buf = xlsx_io.export_referral_rewards_xlsx(rewards, name_map)
+    return send_file(
+        buf,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='referral-rewards.xlsx',
     )

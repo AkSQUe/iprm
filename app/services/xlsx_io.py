@@ -2197,6 +2197,64 @@ def export_material_reservations_xlsx(reservations) -> io.BytesIO:
     return out
 
 
+_REFERRAL_COLS = ['date', 'referrer', 'referrer_type', 'code', 'buyer',
+                  'buyer_email', 'course', 'event_date', 'points', 'status']
+_REFERRAL_LABELS = {
+    'date': 'Дата нарахування', 'referrer': 'Реферер',
+    'referrer_type': 'Тип реферера', 'code': 'Код', 'buyer': 'Учасник',
+    'buyer_email': 'Email учасника', 'course': 'Захід',
+    'event_date': 'Дата заходу', 'points': 'Бали', 'status': 'Статус',
+}
+_REFERRAL_WIDTHS = {'date': 16, 'referrer': 28, 'referrer_type': 14, 'code': 12,
+                    'buyer': 28, 'buyer_email': 30, 'course': 40,
+                    'event_date': 14, 'points': 8, 'status': 14}
+
+
+def export_referral_rewards_xlsx(rewards, referrer_map) -> io.BytesIO:
+    """Реєстр реферальних нарахувань -> xlsx (для звірки/виплат балів).
+
+    rewards -- список ReferralReward (з підвантаженими registration/instance/
+    course/user); referrer_map -- {code: {kind, name}} для імен рефереров.
+    """
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Реферали'
+    _style_header(ws, _REFERRAL_COLS, _REFERRAL_LABELS)
+
+    for row_idx, rw in enumerate(rewards, start=2):
+        ref = referrer_map.get(rw.referral_code) or {}
+        reg = rw.registration
+        user = reg.user if reg else None
+        inst = reg.instance if reg else None
+        course = inst.course if inst else None
+        values = [
+            rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '',
+            ref.get('name') or rw.referral_code,
+            'Тренер' if ref.get('kind') == 'trainer' else (
+                'Учасник' if ref.get('kind') == 'user' else '—'),
+            rw.referral_code,
+            (f'{user.first_name} {user.last_name}'.strip() if user else '—'),
+            (user.email if user else ''),
+            (course.title if course else '—'),
+            (inst.start_date.strftime('%d.%m.%Y') if (inst and inst.start_date) else ''),
+            rw.points,
+            rw.status_label,
+        ]
+        for col_idx, v in enumerate(values, start=1):
+            ws.cell(row=row_idx, column=col_idx, value=v)
+
+    last_row = ws.max_row
+    _set_column_widths(ws, _REFERRAL_COLS, _REFERRAL_WIDTHS)
+    _apply_zebra(ws, len(_REFERRAL_COLS), first_data_row=2, last_data_row=last_row)
+    if last_row >= 2:
+        _apply_table_style(ws, _REFERRAL_COLS, 'tblReferral', last_row)
+
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    return out
+
+
 def parse_materials_xlsx(path: Path) -> dict[str, int]:
     """Прочитати заповнений шаблон -> {sku: quantity} лише для quantity > 0.
 

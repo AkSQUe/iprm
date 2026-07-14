@@ -24,6 +24,9 @@
         <p class="admin-hero__subtitle">Нарахування бонусних балів за оплачені реєстрації по реферальних посиланнях</p>
       </div>
       <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.referrals_export', status=status_filter) }}" class="btn-admin btn-admin--secondary">
+          {{ icon('download') }} Експорт XLSX
+        </a>
         <a href="{{ url_for('admin.settings') }}#referral" class="btn-admin btn-admin--secondary">
           {{ icon('settings') }} Налаштування
         </a>
