@@ -152,6 +152,9 @@
       <div class="referral-share__balance apple-reveal">
         <span class="referral-share__balance-value">{{ referral_balance }}</span>
         <span class="referral-share__balance-label">{{ referral_balance | uk_plural('бонусний бал', 'бонусні бали', 'бонусних балів') }}</span>
+        {% if referral_pending %}
+        <span class="referral-share__balance-pending">+{{ referral_pending }} очікують дозрівання</span>
+        {% endif %}
       </div>
       <div class="referral-share apple-reveal">
         <label class="referral-share__label" for="referral-link">Ваше посилання</label>
@@ -176,7 +179,7 @@
               <span class="referral-history__date">{{ rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '' }}</span>
             </div>
             <span class="referral-history__points">
-              {% if rw.status == 'voided' %}анульовано{% else %}+{{ rw.points }}{% endif %}
+              {% if rw.status == 'voided' %}анульовано{% elif rw.status == 'pending' %}очікує{% else %}+{{ rw.points }}{% endif %}
             </span>
           </div>
           {% endfor %}

@@ -139,6 +139,14 @@ def init_scheduler(app):
         name='Звірка резервувань матеріалів MM Medic',
     )
 
+    scheduler.add_job(
+        mature_referral_rewards_job,
+        trigger=CronTrigger(hour=8, minute=0),  # daily at 8:00 AM
+        id='referral_rewards_maturity',
+        replace_existing=True,
+        name='Дозрівання реферальних балів',
+    )
+
     scheduler.start()
     _initialized = True
     logger.info('APScheduler started with SQLAlchemy jobstore')
@@ -413,6 +421,21 @@ def _prune_material_prefill(max_age_minutes=60):
                 p.unlink()
         except OSError:
             logger.exception('Failed to prune prefill file %s', p)
+
+
+def mature_referral_rewards_job():
+    """Щоденно активувати дозрілі pending-нарахування реферальних балів."""
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('referral_rewards_maturity') as got:
+            if not got:
+                logger.debug('referral maturity: another worker holds the lock, skipping')
+                return
+            from app.services import referral_service
+            try:
+                referral_service.mature_referral_rewards()
+            except Exception:
+                logger.exception('Referral maturity job failed')
 
 
 def automatic_database_backup():

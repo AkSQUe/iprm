@@ -295,6 +295,37 @@ class SiteSettingsForm(FlaskForm):
             '(учаснику/тренеру) за одну оплачену реєстрацію за його посиланням.'
         ),
     )
+    referral_cookie_days = IntegerField(
+        'Термін атрибуції (днів)',
+        validators=[Optional(), NumberRange(min=1, max=3650)],
+        default=60,
+        description='Скільки днів тримається cookie "хто привів".',
+    )
+    referral_attribution = SelectField(
+        'Модель атрибуції',
+        choices=[('last', 'Останній клік (last-touch)'),
+                 ('first', 'Перший клік (first-touch)')],
+        default='last',
+    )
+    referral_maturity_days = IntegerField(
+        'Період дозрівання балів (днів)',
+        validators=[Optional(), NumberRange(min=0, max=365)],
+        default=0,
+        description=(
+            'Бали лежать неактивними цю кількість днів (антифрод проти '
+            'повернень). 0 -- активуються одразу.'
+        ),
+    )
+    referral_max_per_referrer = IntegerField(
+        'Стеля нарахувань на реферера',
+        validators=[Optional(), NumberRange(min=0, max=1000000)],
+        default=0,
+        description='Максимум активних нарахувань на одного реферера. 0 -- без ліміту.',
+    )
+    referral_notify_referrer = BooleanField(
+        'Слати рефереру лист про нарахування',
+        default=True,
+    )
 
 
 # ========== COURSES / INSTANCES / REQUESTS ==========

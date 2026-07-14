@@ -122,28 +122,36 @@ def trainer_referral_link(trainer, target_url=None):
 
 def capture_ref_cookie(request, response):
     """Якщо у запиті є валідний ?ref=<code> і програму увімкнено -- записати
-    його у cookie на response (last-touch). Викликається з after_request.
+    його у cookie на response. Викликається з after_request.
 
-    SiteSettings читаємо лише коли параметр присутній (щоб не робити зайвий
-    запит до БД на кожному response).
+    Модель атрибуції з налаштувань: 'last' -- кожен клік перезаписує;
+    'first' -- перший закріплюється (наявний валідний cookie не чіпаємо).
+    SiteSettings читаємо лише коли параметр присутній.
     """
     code = request.args.get(REF_PARAM)
     if not is_valid_code(code):
         return response
     try:
-        if not SiteSettings.get().referral_enabled:
+        settings = SiteSettings.get()
+        if not settings.referral_enabled:
             return response
     except Exception:
         logger.exception('referral: failed to read settings for cookie capture')
         return response
-    # Не перезаписуємо тим самим значенням (уникаємо зайвого Set-Cookie).
-    if request.cookies.get(REF_COOKIE) == code:
+
+    existing = request.cookies.get(REF_COOKIE)
+    # first-touch: якщо вже є валідний код -- не перезаписуємо.
+    if settings.referral_attribution == 'first' and is_valid_code(existing):
         return response
-    secure = bool(request.is_secure)
+    # Не перезаписуємо тим самим значенням (уникаємо зайвого Set-Cookie).
+    if existing == code:
+        return response
+
+    max_age = int(settings.referral_cookie_days or 60) * 86400
     response.set_cookie(
         REF_COOKIE, code,
-        max_age=REF_COOKIE_MAX_AGE,
-        httponly=True, samesite='Lax', secure=secure, path='/',
+        max_age=max_age,
+        httponly=True, samesite='Lax', secure=bool(request.is_secure), path='/',
     )
     return response
 
@@ -205,9 +213,42 @@ def _referrer_contact(kind, referrer_id):
     return (t.email, t.full_name) if t else (None, None)
 
 
+def _compute_maturity(settings):
+    """(status, matures_at) для нового нарахування за налаштуваннями."""
+    days = int(settings.referral_maturity_days or 0)
+    if days <= 0:
+        return 'granted', None
+    from datetime import timedelta
+    from app.models.mixins import utcnow
+    return 'pending', utcnow() + timedelta(days=days)
+
+
+def _active_reward_count(kind, referrer_id):
+    """Кількість активних (granted+pending) нарахувань реферера -- для стелі."""
+    from app.models.referral_reward import ReferralReward
+    return ReferralReward.query.filter(
+        ReferralReward.referrer_kind == kind,
+        ReferralReward.referrer_id == referrer_id,
+        ReferralReward.status.in_(('granted', 'pending')),
+    ).count()
+
+
+def _is_self_referral(referrer, reg):
+    """Антифрод: реферер = сам покупець (за id або за email)."""
+    buyer = reg.user
+    buyer_email = (buyer.email or '').strip().lower() if buyer else ''
+    if referrer['kind'] == 'user' and referrer['id'] == reg.user_id:
+        return True
+    ref_email, _ = _referrer_contact(referrer['kind'], referrer['id'])
+    ref_email = (ref_email or '').strip().lower()
+    return bool(buyer_email and ref_email and buyer_email == ref_email)
+
+
 def _notify_referrer_award(reg, kind, referrer_id, points):
     """Best-effort лист рефереру про нарахування. Не кидає винятків."""
     try:
+        if not SiteSettings.get().referral_notify_referrer:
+            return
         email, name = _referrer_contact(kind, referrer_id)
         if not email:
             return
@@ -258,9 +299,11 @@ def award_for_paid_registration(reg):
     referrer = resolve_referrer(code)
     if not referrer:
         return None
-    # Антифрод: не нараховуємо самому собі.
-    if referrer['kind'] == 'user' and referrer['id'] == reg.user_id:
+    # Антифрод: не нараховуємо самому собі (за id або email).
+    if _is_self_referral(referrer, reg):
         return None
+
+    status, matures_at = _compute_maturity(settings)
 
     # Ідемпотентність: одне нарахування на реєстрацію (UNIQUE registration_id).
     existing = ReferralReward.query.filter_by(registration_id=reg.id).first()
@@ -268,7 +311,8 @@ def award_for_paid_registration(reg):
         # Повторна оплата після повернення -> реактивуємо анульований рядок
         # (за поточною ставкою), а не лишаємо реферера без балів.
         if existing.status == 'voided':
-            existing.status = 'granted'
+            existing.status = status
+            existing.matures_at = matures_at
             existing.voided_at = None
             existing.notes = None
             existing.points = points
@@ -281,10 +325,18 @@ def award_for_paid_registration(reg):
                 db.session.rollback()
                 logger.exception('Failed to reactivate referral reward reg=%s', reg.id)
                 return None
-            logger.info('Referral reward reactivated: reg=%s %s:%s +%dp',
-                        reg.id, referrer['kind'], referrer['id'], points)
-            _notify_referrer_award(reg, referrer['kind'], referrer['id'], points)
+            logger.info('Referral reward reactivated: reg=%s %s:%s +%dp (%s)',
+                        reg.id, referrer['kind'], referrer['id'], points, status)
+            if status == 'granted':
+                _notify_referrer_award(reg, referrer['kind'], referrer['id'], points)
         return existing
+
+    # Стеля нарахувань на реферера (0 -- без ліміту).
+    cap = int(settings.referral_max_per_referrer or 0)
+    if cap > 0 and _active_reward_count(referrer['kind'], referrer['id']) >= cap:
+        logger.info('Referral cap reached for %s:%s (cap=%d) -- skip reg=%s',
+                    referrer['kind'], referrer['id'], cap, reg.id)
+        return None
 
     reward = ReferralReward(
         registration_id=reg.id,
@@ -292,7 +344,8 @@ def award_for_paid_registration(reg):
         referrer_id=referrer['id'],
         referral_code=code,
         points=points,
-        status='granted',
+        status=status,
+        matures_at=matures_at,
     )
     db.session.add(reward)
     try:
@@ -305,10 +358,44 @@ def award_for_paid_registration(reg):
         db.session.rollback()
         logger.exception('Failed to grant referral reward for reg=%s', reg.id)
         return None
-    logger.info('Referral reward granted: reg=%s %s:%s +%dp',
-                reg.id, referrer['kind'], referrer['id'], points)
-    _notify_referrer_award(reg, referrer['kind'], referrer['id'], points)
+    logger.info('Referral reward granted: reg=%s %s:%s +%dp (%s)',
+                reg.id, referrer['kind'], referrer['id'], points, status)
+    # Лист лише коли бали одразу активні; для pending -- при дозріванні.
+    if status == 'granted':
+        _notify_referrer_award(reg, referrer['kind'], referrer['id'], points)
     return reward
+
+
+def mature_referral_rewards():
+    """Активувати дозрілі pending-нарахування (matures_at <= now).
+
+    Викликається scheduler-джобою. Кожне активоване -> лист рефереру.
+    Повертає кількість активованих. Комітить порціями.
+    """
+    from app.models.referral_reward import ReferralReward
+    from app.models.mixins import utcnow
+    due = ReferralReward.query.filter(
+        ReferralReward.status == 'pending',
+        ReferralReward.matures_at.isnot(None),
+        ReferralReward.matures_at <= utcnow(),
+    ).all()
+    matured = 0
+    for reward in due:
+        reward.status = 'granted'
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logger.exception('Failed to mature referral reward id=%s', reward.id)
+            continue
+        matured += 1
+        reg = reward.registration
+        if reg is not None:
+            _notify_referrer_award(reg, reward.referrer_kind,
+                                   reward.referrer_id, reward.points)
+    if matured:
+        logger.info('Referral rewards matured: %d', matured)
+    return matured
 
 
 def void_for_registration(reg, reason='Повернення коштів'):
@@ -318,8 +405,9 @@ def void_for_registration(reg, reason='Повернення коштів'):
     referral_enabled -- анулювати треба навіть якщо програму вимкнули.
     """
     from app.models.referral_reward import ReferralReward
-    reward = ReferralReward.query.filter_by(
-        registration_id=reg.id, status='granted',
+    reward = ReferralReward.query.filter(
+        ReferralReward.registration_id == reg.id,
+        ReferralReward.status.in_(('granted', 'pending')),
     ).first()
     if reward is None:
         return None
@@ -351,7 +439,32 @@ def sync_reward_for_registration(reg):
 
 
 def get_balance(kind, referrer_id):
-    """Баланс реферера: SUM(points) активних (granted) нарахувань."""
+    """Баланс реферера: SUM(активних granted-нарахувань) + SUM(ручних корекцій).
+
+    Дозрілі (granted) бали + ручні adjustments. Pending (недозрілі) і voided
+    не враховуються.
+    """
+    from app.models.referral_reward import ReferralReward
+    from app.models.referral_adjustment import ReferralAdjustment
+    from sqlalchemy import func as _func
+    rewards = db.session.query(
+        _func.coalesce(_func.sum(ReferralReward.points), 0)
+    ).filter(
+        ReferralReward.referrer_kind == kind,
+        ReferralReward.referrer_id == referrer_id,
+        ReferralReward.status == 'granted',
+    ).scalar()
+    adj = db.session.query(
+        _func.coalesce(_func.sum(ReferralAdjustment.points), 0)
+    ).filter(
+        ReferralAdjustment.referrer_kind == kind,
+        ReferralAdjustment.referrer_id == referrer_id,
+    ).scalar()
+    return int(rewards or 0) + int(adj or 0)
+
+
+def get_pending_balance(kind, referrer_id):
+    """Сума недозрілих (pending) балів реферера."""
     from app.models.referral_reward import ReferralReward
     from sqlalchemy import func as _func
     total = db.session.query(
@@ -359,9 +472,31 @@ def get_balance(kind, referrer_id):
     ).filter(
         ReferralReward.referrer_kind == kind,
         ReferralReward.referrer_id == referrer_id,
-        ReferralReward.status == 'granted',
+        ReferralReward.status == 'pending',
     ).scalar()
     return int(total or 0)
+
+
+def add_adjustment(kind, referrer_id, points, reason, created_by_id=None):
+    """Ручна корекція балансу реферера (+/-). Комітить. Повертає запис."""
+    from app.models.referral_adjustment import ReferralAdjustment
+    adj = ReferralAdjustment(
+        referrer_kind=kind, referrer_id=referrer_id,
+        points=int(points), reason=reason, created_by_id=created_by_id,
+    )
+    db.session.add(adj)
+    db.session.commit()
+    logger.info('Referral adjustment: %s:%s %+dp by=%s', kind, referrer_id,
+                int(points), created_by_id)
+    return adj
+
+
+def list_adjustments(kind, referrer_id):
+    """Ручні корекції реферера (найновіші перші)."""
+    from app.models.referral_adjustment import ReferralAdjustment
+    return ReferralAdjustment.query.filter_by(
+        referrer_kind=kind, referrer_id=referrer_id,
+    ).order_by(ReferralAdjustment.created_at.desc()).all()
 
 
 def list_referrer_rewards(kind, referrer_id, limit=50):

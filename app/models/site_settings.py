@@ -182,9 +182,33 @@ class SiteSettings(TimestampMixin, db.Model):
     # Реферальна програма. Кожен учасник/тренер має власний реферальний код;
     # за оплачену реєстрацію по його посиланню нараховуються бонусні бали
     # лояльності (окремі від балів БПР). Поки лише накопичення (без витрати).
+    # TODO(redemption): витрата балів (знижка на курс) + двостороння знижка
+    #   приведеному покупцю -- окрема фаза, потребує рішень (курс бал->грн,
+    #   макс. % покриття, повернення балів при refund).
     referral_enabled = db.Column(db.Boolean, default=False, nullable=False)
     # Скільки бонусних балів нараховувати рефереру за одну оплачену реєстрацію.
     referral_points_per_paid = db.Column(db.Integer, default=1, nullable=False)
+    # Термін дії cookie атрибуції (днів). Скільки часу тримається "хто привів".
+    referral_cookie_days = db.Column(db.Integer, default=60, nullable=False)
+    # Модель атрибуції: 'last' -- останній клік перезаписує; 'first' -- перший
+    # клік закріплюється (наступні ?ref= не перезаписують cookie).
+    referral_attribution = db.Column(
+        db.String(10), default='last', nullable=False, server_default='last',
+    )
+    # Період "дозрівання" балів (днів): нараховані бали лежать у 'pending' і
+    # стають активними ('granted') лише через N днів (антифрод проти
+    # refund-фарму). 0 -- активуються одразу.
+    referral_maturity_days = db.Column(
+        db.Integer, default=0, nullable=False, server_default='0',
+    )
+    # Стеля активних нарахувань на одного реферера. 0 -- без ліміту.
+    referral_max_per_referrer = db.Column(
+        db.Integer, default=0, nullable=False, server_default='0',
+    )
+    # Чи слати рефереру лист про нарахування балів.
+    referral_notify_referrer = db.Column(
+        db.Boolean, default=True, nullable=False, server_default=db.true(),
+    )
 
     @property
     def partner_api_key(self):

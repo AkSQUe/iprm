@@ -294,10 +294,40 @@
           </div>
         </div>
 
-        <div class="form-group admin-form__full">
+        <div class="form-group">
           <label for="referral_points_per_paid">{{ form.referral_points_per_paid.label.text }}</label>
           {{ form.referral_points_per_paid(class="form-input", id="referral_points_per_paid", type="number", min="0") }}
           {% if form.referral_points_per_paid.description %}<small class="form-hint">{{ form.referral_points_per_paid.description }}</small>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="referral_cookie_days">{{ form.referral_cookie_days.label.text }}</label>
+          {{ form.referral_cookie_days(class="form-input", id="referral_cookie_days", type="number", min="1") }}
+          {% if form.referral_cookie_days.description %}<small class="form-hint">{{ form.referral_cookie_days.description }}</small>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="referral_attribution">{{ form.referral_attribution.label.text }}</label>
+          {{ form.referral_attribution(class="form-input", id="referral_attribution") }}
+        </div>
+
+        <div class="form-group">
+          <label for="referral_maturity_days">{{ form.referral_maturity_days.label.text }}</label>
+          {{ form.referral_maturity_days(class="form-input", id="referral_maturity_days", type="number", min="0") }}
+          {% if form.referral_maturity_days.description %}<small class="form-hint">{{ form.referral_maturity_days.description }}</small>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="referral_max_per_referrer">{{ form.referral_max_per_referrer.label.text }}</label>
+          {{ form.referral_max_per_referrer(class="form-input", id="referral_max_per_referrer", type="number", min="0") }}
+          {% if form.referral_max_per_referrer.description %}<small class="form-hint">{{ form.referral_max_per_referrer.description }}</small>{% endif %}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            {{ form.referral_notify_referrer(id="referral_notify_referrer") }}
+            <label for="referral_notify_referrer">{{ form.referral_notify_referrer.label.text }}</label>
+          </div>
         </div>
 
       </div>

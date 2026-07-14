@@ -31,6 +31,15 @@
   color: var(--apple-gray);
 }
 
+.referral-share__balance-pending {
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.8rem;
+  color: var(--iprm-warning-text, #8a6d1a);
+  background: var(--iprm-warning-bg, #fff7e6);
+  border-radius: var(--iprm-radius-sm);
+}
+
 .referral-share__label {
   display: block;
   margin-bottom: 0.5rem;

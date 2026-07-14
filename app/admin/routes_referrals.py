@@ -30,10 +30,11 @@ def referrals_overview():
     page = request.args.get('page', 1, type=int)
     per_page = 50
 
-    # Зведення: активні/анульовані нарахування, сума активних балів.
+    # Зведення: активні/очікують/анульовані нарахування, сума активних балів.
     stats = db.session.query(
         func.count().label('total'),
         func.count(case((ReferralReward.status == 'granted', 1))).label('granted'),
+        func.count(case((ReferralReward.status == 'pending', 1))).label('pending'),
         func.count(case((ReferralReward.status == 'voided', 1))).label('voided'),
         func.coalesce(
             func.sum(case((ReferralReward.status == 'granted', ReferralReward.points), else_=0)),
@@ -114,15 +115,43 @@ def referral_referrer_detail(kind, referrer_id):
         edit_url = 'admin.trainer_edit'
 
     balance = referral_service.get_balance(kind, referrer_id)
+    pending = referral_service.get_pending_balance(kind, referrer_id)
     rewards = referral_service.list_referrer_rewards(kind, referrer_id, limit=None)
+    adjustments = referral_service.list_adjustments(kind, referrer_id)
     granted = sum(1 for r in rewards if r.status == 'granted')
 
     return render_template(
         'admin/referral_detail.html',
         kind=kind, referrer_id=referrer_id, referrer=referrer,
         referrer_name=name, edit_url=edit_url,
-        balance=balance, rewards=rewards, granted=granted,
+        balance=balance, pending=pending, rewards=rewards,
+        adjustments=adjustments, granted=granted,
     )
+
+
+@admin_bp.route('/referrals/<kind>/<int:referrer_id>/adjust', methods=['POST'])
+@admin_required
+def referral_referrer_adjust(kind, referrer_id):
+    """Ручна корекція балансу реферера (+/- балів із причиною)."""
+    from flask import abort, flash, redirect, url_for
+    from flask_login import current_user
+    if kind not in ('user', 'trainer'):
+        abort(404)
+    try:
+        points = int(request.form.get('points', '').strip())
+    except (TypeError, ValueError):
+        points = 0
+    reason = (request.form.get('reason') or '').strip()
+    if points == 0 or not reason:
+        flash('Вкажіть ненульову кількість балів і причину', 'error')
+        return redirect(url_for('admin.referral_referrer_detail',
+                                kind=kind, referrer_id=referrer_id))
+    referral_service.add_adjustment(
+        kind, referrer_id, points, reason[:255], created_by_id=current_user.id,
+    )
+    flash(f'Баланс скориговано на {points:+d} балів', 'success')
+    return redirect(url_for('admin.referral_referrer_detail',
+                            kind=kind, referrer_id=referrer_id))
 
 
 @admin_bp.route('/referrals/export')

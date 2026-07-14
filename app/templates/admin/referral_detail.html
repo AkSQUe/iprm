@@ -39,6 +39,10 @@
         <span class="admin-stat-card__value">{{ balance }}</span>
         <span class="admin-stat-card__label">Активних балів</span>
       </div>
+      <div class="admin-stat-card admin-stat-card--warning">
+        <span class="admin-stat-card__value">{{ pending }}</span>
+        <span class="admin-stat-card__label">Очікують дозрівання</span>
+      </div>
       <div class="admin-stat-card admin-stat-card--success">
         <span class="admin-stat-card__value">{{ granted }}</span>
         <span class="admin-stat-card__label">Нарахувань</span>
@@ -48,6 +52,40 @@
         <span class="admin-stat-card__label">Усього записів</span>
       </div>
     </div>
+
+    <!-- Ручна корекція -->
+    <div class="form-section">
+      <h2 class="admin-form__section-title">Ручна корекція балансу</h2>
+      <form method="POST" action="{{ url_for('admin.referral_referrer_adjust', kind=kind, referrer_id=referrer_id) }}" class="admin-filter-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="number" name="points" class="form-input form-input--sm" placeholder="Бали (+/-)" required
+               aria-label="Кількість балів">
+        <input type="text" name="reason" class="form-input" placeholder="Причина корекції" maxlength="255" required
+               aria-label="Причина">
+        <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">{{ icon('check') }} Застосувати</button>
+      </form>
+    </div>
+
+    {% if adjustments %}
+    <div class="form-section">
+      <h2 class="admin-form__section-title">Ручні корекції</h2>
+      <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Дата</th><th>Бали</th><th>Причина</th><th>Автор</th></tr></thead>
+        <tbody>
+          {% for a in adjustments %}
+          <tr>
+            <td>{{ a.created_at.strftime('%d.%m.%Y %H:%M') if a.created_at else '--' }}</td>
+            <td><strong>{{ '%+d' | format(a.points) }}</strong></td>
+            <td>{{ a.reason }}</td>
+            <td>{{ a.created_by.email if a.created_by else 'система' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+    {% endif %}
 
     {% if rewards %}
     <div class="admin-table-wrap">
@@ -80,6 +118,8 @@
           <td>
             {% if rw.status == 'granted' %}
             <span class="badge badge--active">{{ rw.status_label }}</span>
+            {% elif rw.status == 'pending' %}
+            <span class="badge badge--warning">{{ rw.status_label }}{% if rw.matures_at %} ({{ rw.matures_at.strftime('%d.%m.%Y') }}){% endif %}</span>
             {% else %}
             <span class="badge badge--cancelled">{{ rw.status_label }}</span>
             {% endif %}

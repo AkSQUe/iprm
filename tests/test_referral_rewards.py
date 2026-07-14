@@ -21,9 +21,14 @@ from app.services import referral_service as rs
 
 
 def _enable(points=5):
+    # SiteSettings -- singleton, а award комітить -> скидаємо ВСІ реф-поля до
+    # дефолтів, щоб налаштування не текли між тестами.
     s = SiteSettings.get()
     s.referral_enabled = True
     s.referral_points_per_paid = points
+    s.referral_maturity_days = 0
+    s.referral_max_per_referrer = 0
+    s.referral_notify_referrer = True
     db.session.flush()
     return s
 
@@ -211,6 +216,77 @@ def test_award_notifies_referrer_email(db_session, monkeypatch):
     assert calls[0]['to_email'] == 'notify-ref@example.com'
     assert calls[0]['points'] == 5
     assert calls[0]['balance'] == 5
+
+
+def test_maturity_holds_then_matures(db_session):
+    s = _enable(points=5)
+    s.referral_maturity_days = 7
+    db.session.flush()
+    referrer = _mk_user('mat-ref@example.com')
+    rcode = rs.ensure_referral_code(referrer, prefix='u')
+    buyer = _mk_user('mat-buy@example.com')
+    reg = _mk_reg(buyer, _mk_course_instance(), code=rcode)
+
+    reward = rs.award_for_paid_registration(reg)
+    assert reward.status == 'pending'
+    assert reward.matures_at is not None
+    assert rs.get_balance('user', referrer.id) == 0       # ще не активні
+    assert rs.get_pending_balance('user', referrer.id) == 5
+
+    # Здвигаємо matures_at у минуле й запускаємо джобу дозрівання.
+    from datetime import timedelta
+    from app.models.mixins import utcnow
+    reward.matures_at = utcnow() - timedelta(days=1)
+    db.session.flush()
+    assert rs.mature_referral_rewards() == 1
+    assert rs.get_balance('user', referrer.id) == 5
+    assert rs.get_pending_balance('user', referrer.id) == 0
+
+
+def test_self_referral_by_email_blocked(db_session):
+    _enable(points=5)
+    # Тренер-реферер із тим самим email, що й покупець (різні таблиці, email
+    # не гарантовано унікальний між User і Trainer) -> антифрод блокує.
+    buyer = _mk_user('dup@example.com')
+    trainer = Trainer(full_name='Дублер Тренер', slug='dubler-ref',
+                      email='DUP@example.com')
+    db.session.add(trainer)
+    db.session.flush()
+    tcode = rs.ensure_referral_code(trainer, prefix='t')
+    reg = _mk_reg(buyer, _mk_course_instance(), code=tcode)
+
+    assert rs.award_for_paid_registration(reg) is None
+    assert rs.get_balance('trainer', trainer.id) == 0
+
+
+def test_cap_limits_awards(db_session):
+    s = _enable(points=5)
+    s.referral_max_per_referrer = 1
+    db.session.flush()
+    referrer = _mk_user('cap-ref@example.com')
+    rcode = rs.ensure_referral_code(referrer, prefix='u')
+    ci = _mk_course_instance()
+
+    b1 = _mk_user('cap-b1@example.com')
+    r1 = _mk_reg(b1, ci, code=rcode)
+    assert rs.award_for_paid_registration(r1) is not None
+
+    b2 = _mk_user('cap-b2@example.com')
+    r2 = _mk_reg(b2, _mk_course_instance(), code=rcode)
+    assert rs.award_for_paid_registration(r2) is None      # стеля досягнута
+    assert rs.get_balance('user', referrer.id) == 5
+
+
+def test_manual_adjustment_affects_balance(db_session):
+    _enable(points=5)
+    referrer = _mk_user('adj-ref@example.com')
+    rs.ensure_referral_code(referrer, prefix='u')
+
+    rs.add_adjustment('user', referrer.id, 10, 'бонус вручну')
+    assert rs.get_balance('user', referrer.id) == 10
+    rs.add_adjustment('user', referrer.id, -3, 'корекція')
+    assert rs.get_balance('user', referrer.id) == 7
+    assert len(rs.list_adjustments('user', referrer.id)) == 2
 
 
 def test_trainer_referrer_balance(db_session):

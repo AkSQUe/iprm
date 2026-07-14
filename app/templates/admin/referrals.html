@@ -54,6 +54,10 @@
         <span class="admin-stat-card__value">{{ stats.granted }}</span>
         <span class="admin-stat-card__label">Нарахувань</span>
       </div>
+      <div class="admin-stat-card admin-stat-card--warning">
+        <span class="admin-stat-card__value">{{ stats.pending }}</span>
+        <span class="admin-stat-card__label">Очікують дозрівання</span>
+      </div>
       <div class="admin-stat-card admin-stat-card--danger">
         <span class="admin-stat-card__value">{{ stats.voided }}</span>
         <span class="admin-stat-card__label">Анульовано</span>
@@ -152,6 +156,8 @@
           <td>
             {% if rw.status == 'granted' %}
             <span class="badge badge--active">{{ rw.status_label }}</span>
+            {% elif rw.status == 'pending' %}
+            <span class="badge badge--warning">{{ rw.status_label }}</span>
             {% else %}
             <span class="badge badge--cancelled">{{ rw.status_label }}</span>
             {% endif %}

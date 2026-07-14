@@ -31,8 +31,12 @@ class ReferralReward(TimestampMixin, db.Model):
     referral_code = db.Column(db.String(32), nullable=False)
 
     points = db.Column(db.Integer, nullable=False, default=0)
-    # 'granted' -- активне нарахування; 'voided' -- анульоване (повернення коштів).
+    # 'pending' -- нараховано, але ще не дозріло (антифрод-hold);
+    # 'granted' -- активне нарахування (враховується в балансі);
+    # 'voided' -- анульоване (повернення коштів).
     status = db.Column(db.String(16), nullable=False, default='granted', index=True)
+    # Коли 'pending'-нарахування має дозріти до 'granted' (NULL -- одразу).
+    matures_at = db.Column(db.DateTime(timezone=True))
     voided_at = db.Column(db.DateTime(timezone=True))
     notes = db.Column(db.String(255))
 
@@ -44,15 +48,18 @@ class ReferralReward(TimestampMixin, db.Model):
             name='ck_referral_rewards_kind',
         ),
         db.CheckConstraint(
-            "status IN ('granted', 'voided')",
+            "status IN ('pending', 'granted', 'voided')",
             name='ck_referral_rewards_status',
         ),
         db.CheckConstraint('points >= 0', name='ck_referral_rewards_points_non_negative'),
         # Баланс реферера рахуємо по цьому індексу.
         db.Index('ix_referral_rewards_referrer', 'referrer_kind', 'referrer_id', 'status'),
+        # Для джоби дозрівання: pending-рядки за matures_at.
+        db.Index('ix_referral_rewards_matures', 'status', 'matures_at'),
     )
 
     STATUSES = [
+        ('pending', 'Очікує дозрівання'),
         ('granted', 'Нараховано'),
         ('voided', 'Анульовано'),
     ]
