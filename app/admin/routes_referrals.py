@@ -57,13 +57,25 @@ def referrals_overview():
     ).order_by(func.sum(ReferralReward.points).desc()).limit(20).all()
 
     name_map = referral_service.resolve_referrers_bulk([r.code for r in top_rows])
+    clicks_map = referral_service.get_clicks_by_code([r.code for r in top_rows])
     top_referrers = [{
         'kind': r.referrer_kind,
         'id': r.referrer_id,
         'balance': int(r.balance or 0),
         'rewards': r.rewards,
+        'clicks': clicks_map.get(r.code, 0),
         'info': name_map.get(r.code),
     } for r in top_rows]
+
+    # Воронка: усього кліків + приведені-але-неоплачені реєстрації (pipeline).
+    from app.models.referral_click import ReferralClick
+    total_clicks = int(db.session.query(
+        func.coalesce(func.sum(ReferralClick.count), 0)).scalar() or 0)
+    pipeline_count = db.session.query(func.count(EventRegistration.id)).filter(
+        EventRegistration.referral_code.isnot(None),
+        EventRegistration.payment_status != 'paid',
+        EventRegistration.status != 'cancelled',
+    ).scalar()
 
     # Історія нарахувань (з реєстрацією/курсом для контексту).
     query = ReferralReward.query.options(
@@ -88,6 +100,8 @@ def referrals_overview():
         settings=settings,
         stats=stats,
         top_referrers=top_referrers,
+        total_clicks=total_clicks,
+        pipeline_count=pipeline_count,
         rewards=pagination.items,
         pagination=pagination,
         referrer_map=page_name_map,
@@ -120,12 +134,18 @@ def referral_referrer_detail(kind, referrer_id):
     adjustments = referral_service.list_adjustments(kind, referrer_id)
     granted = sum(1 for r in rewards if r.status == 'granted')
 
+    # Воронка реферера: кліки -> нарахування (конверсія).
+    clicks = referral_service.get_clicks_for_referrer(kind, referrer_id)
+    conversions = sum(1 for r in rewards if r.status in ('granted', 'pending'))
+    conversion_rate = round(conversions / clicks * 100, 1) if clicks else None
+
     return render_template(
         'admin/referral_detail.html',
         kind=kind, referrer_id=referrer_id, referrer=referrer,
         referrer_name=name, edit_url=edit_url,
         balance=balance, pending=pending, rewards=rewards,
         adjustments=adjustments, granted=granted,
+        clicks=clicks, conversions=conversions, conversion_rate=conversion_rate,
     )
 
 

@@ -31,6 +31,7 @@ from app.models.material_reservation import (
 )
 from app.models.referral_reward import ReferralReward
 from app.models.referral_adjustment import ReferralAdjustment
+from app.models.referral_click import ReferralClick
 
 __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'AuthIdentity',
@@ -43,5 +44,5 @@ __all__ = [
     'WebhookDelivery', 'BlogPost', 'BlogComment', 'MediaFile',
     'DatabaseBackup',
     'MaterialReservation', 'MaterialReservationItem', 'MaterialReservationStatus',
-    'ReferralReward', 'ReferralAdjustment',
+    'ReferralReward', 'ReferralAdjustment', 'ReferralClick',
 ]

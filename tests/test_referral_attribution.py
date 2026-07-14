@@ -126,6 +126,19 @@ def test_persist_pending_first_touch_not_overwritten(app, db_session):
     assert u.pending_referral_code == 'u1234abcd'  # first-touch збережено
 
 
+def test_record_click_aggregates(app, db_session):
+    with app.app_context():
+        rs.record_click('u1234abcd')
+        rs.record_click('u1234abcd')
+        rs.record_click('t99887766')
+        m = rs.get_clicks_by_code(['u1234abcd', 't99887766', 'bad'])
+        assert m['u1234abcd'] == 2
+        assert m['t99887766'] == 1
+    # Невалідний код ігнорується без запису.
+    rs.record_click('not-a-code')
+    assert rs.get_clicks_by_code(['not-a-code']) == {}
+
+
 def test_read_ref_cookie(app):
     with app.test_request_context('/', headers={'Cookie': f'{rs.REF_COOKIE}=t99887766'}):
         from flask import request

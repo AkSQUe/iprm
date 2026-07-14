@@ -377,9 +377,15 @@ def create_app(config_name=None):
         from flask_login import current_user
         from app.services import referral_service
         try:
+            ref = request.args.get(referral_service.REF_PARAM)
             response = referral_service.capture_ref_cookie(request, response)
-            if request.args.get(referral_service.REF_PARAM) and current_user.is_authenticated:
+            if ref and current_user.is_authenticated:
                 referral_service.persist_pending_for_user(request, current_user)
+            # Лічильник кліків: лише GET-сторінки (не редіректи/статика/POST).
+            if (ref and request.method == 'GET'
+                    and 'text/html' in (response.content_type or '')
+                    and response.status_code == 200):
+                referral_service.record_click(ref)
         except Exception:
             logging.getLogger(__name__).exception('referral capture failed')
         return response

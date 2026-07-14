@@ -48,8 +48,12 @@
         <span class="admin-stat-card__label">Нарахувань</span>
       </div>
       <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ rewards | length }}</span>
-        <span class="admin-stat-card__label">Усього записів</span>
+        <span class="admin-stat-card__value">{{ clicks }}</span>
+        <span class="admin-stat-card__label">Кліків</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{% if conversion_rate is not none %}{{ conversion_rate }}%{% else %}--{% endif %}</span>
+        <span class="admin-stat-card__label">Конверсія кліків</span>
       </div>
     </div>
 

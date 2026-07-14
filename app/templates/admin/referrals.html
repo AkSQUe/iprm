@@ -63,6 +63,14 @@
         <span class="admin-stat-card__label">Анульовано</span>
       </div>
       <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ total_clicks }}</span>
+        <span class="admin-stat-card__label">Кліків по посиланнях</span>
+      </div>
+      <div class="admin-stat-card admin-stat-card--warning">
+        <span class="admin-stat-card__value">{{ pipeline_count }}</span>
+        <span class="admin-stat-card__label">Приведені, не оплачені</span>
+      </div>
+      <div class="admin-stat-card">
         <span class="admin-stat-card__value">{{ top_referrers | length }}</span>
         <span class="admin-stat-card__label">Активних рефереров</span>
       </div>
@@ -75,7 +83,7 @@
       <div class="admin-table-wrap">
       <table class="admin-table">
         <thead>
-          <tr><th>Реферер</th><th>Тип</th><th>Нарахувань</th><th>Баланс</th></tr>
+          <tr><th>Реферер</th><th>Тип</th><th>Кліків</th><th>Нарахувань</th><th>Баланс</th></tr>
         </thead>
         <tbody>
           {% for r in top_referrers %}
@@ -88,6 +96,7 @@
               {% endif %}
             </td>
             <td>{{ 'Тренер' if r.kind == 'trainer' else 'Учасник' }}</td>
+            <td>{{ r.clicks }}</td>
             <td>{{ r.rewards }}</td>
             <td><strong>{{ r.balance }}</strong></td>
           </tr>

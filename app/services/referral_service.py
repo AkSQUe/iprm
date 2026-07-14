@@ -274,6 +274,69 @@ def read_pending_ref(request, user):
     return read_ref_cookie(request)
 
 
+def record_click(code):
+    """Інкрементувати денний лічильник кліків по реф-коду (best-effort).
+
+    Атомарний UPDATE; якщо рядка на сьогодні ще нема -- INSERT (гонка ->
+    повторний UPDATE). Не кидає винятків.
+    """
+    if not is_valid_code(code):
+        return
+    from app.models.referral_click import ReferralClick
+    from app.models.mixins import utcnow
+    today = utcnow().date()
+    try:
+        updated = db.session.query(ReferralClick).filter_by(
+            referral_code=code, day=today,
+        ).update({ReferralClick.count: ReferralClick.count + 1})
+        if not updated:
+            db.session.add(ReferralClick(referral_code=code, day=today, count=1))
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        try:
+            db.session.query(ReferralClick).filter_by(
+                referral_code=code, day=today,
+            ).update({ReferralClick.count: ReferralClick.count + 1})
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+    except Exception:
+        db.session.rollback()
+        logger.exception('referral: failed to record click for %s', code)
+
+
+def get_clicks_for_referrer(kind, referrer_id):
+    """Сумарна кількість кліків по посиланню реферера."""
+    from app.models.referral_click import ReferralClick
+    from app.models.user import User
+    from app.models.trainer import Trainer
+    from sqlalchemy import func as _func
+    obj = (db.session.get(User, referrer_id) if kind == 'user'
+           else db.session.get(Trainer, referrer_id))
+    code = getattr(obj, 'referral_code', None)
+    if not code:
+        return 0
+    total = db.session.query(
+        _func.coalesce(_func.sum(ReferralClick.count), 0)
+    ).filter(ReferralClick.referral_code == code).scalar()
+    return int(total or 0)
+
+
+def get_clicks_by_code(codes):
+    """Мапа {code: sum(clicks)} для набору кодів (bulk, для списків)."""
+    from app.models.referral_click import ReferralClick
+    from sqlalchemy import func as _func
+    valid = [c for c in codes if is_valid_code(c)]
+    if not valid:
+        return {}
+    rows = db.session.query(
+        ReferralClick.referral_code, _func.sum(ReferralClick.count),
+    ).filter(ReferralClick.referral_code.in_(valid)).group_by(
+        ReferralClick.referral_code).all()
+    return {code: int(total or 0) for code, total in rows}
+
+
 def resolve_referrer(code):
     """Резолв коду у реферера. Повертає dict {kind, id, name, code} або None.
 
