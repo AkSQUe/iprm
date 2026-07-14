@@ -139,6 +139,44 @@ def test_record_click_aggregates(app, db_session):
     assert rs.get_clicks_by_code(['not-a-code']) == {}
 
 
+def _html_response():
+    from flask import Response
+    return Response('<html></html>', content_type='text/html; charset=utf-8')
+
+
+def test_visit_records_click_for_human(app, db_session):
+    s = SiteSettings.get()
+    s.referral_enabled = True
+    db.session.flush()
+    with app.test_request_context('/c?ref=uaaaa0001',
+                                  headers={'User-Agent': 'Mozilla/5.0'}):
+        from flask import request
+        rs.capture_referral_visit(request, _html_response(), None)
+    assert rs.get_clicks_by_code(['uaaaa0001']) == {'uaaaa0001': 1}
+
+
+def test_visit_skips_click_for_bot(app, db_session):
+    s = SiteSettings.get()
+    s.referral_enabled = True
+    db.session.flush()
+    with app.test_request_context('/c?ref=tbbbb0002',
+                                  headers={'User-Agent': 'Googlebot/2.1'}):
+        from flask import request
+        rs.capture_referral_visit(request, _html_response(), None)
+    assert rs.get_clicks_by_code(['tbbbb0002']) == {}
+
+
+def test_visit_dedups_repeat_click(app, db_session):
+    s = SiteSettings.get()
+    s.referral_enabled = True
+    db.session.flush()
+    hdrs = {'User-Agent': 'Mozilla/5.0', 'Cookie': f'{rs.CLICK_COOKIE}=ucccc0003'}
+    with app.test_request_context('/c?ref=ucccc0003', headers=hdrs):
+        from flask import request
+        rs.capture_referral_visit(request, _html_response(), None)
+    assert rs.get_clicks_by_code(['ucccc0003']) == {}  # уже рахований -> дубль ігнор
+
+
 def test_read_ref_cookie(app):
     with app.test_request_context('/', headers={'Cookie': f'{rs.REF_COOKIE}=t99887766'}):
         from flask import request

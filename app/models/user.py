@@ -35,6 +35,9 @@ class User(TimestampMixin, UserMixin, db.Model):
     # користувачем (переживає втрату cookie/зміну пристрою). Споживається
     # й очищується при створенні реєстрації.
     pending_referral_code = db.Column(db.String(32))
+    # Денормалізований баланс реферальних балів (recompute-on-write у
+    # referral_service). Швидке читання без SUM; авторитет -- recompute_balance.
+    referral_balance = db.Column(db.Integer, default=0, nullable=False, server_default='0')
 
     # Phase 7 cleanup: усі legacy-колонки (password_hash, user_type,
     # middle_name, birth_date, education, workplace, position, phone,

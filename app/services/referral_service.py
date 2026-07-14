@@ -30,6 +30,15 @@ UTM_SOURCE = 'referral'
 # фактичною реєстрацією. Last-touch: кожен новий валідний ?ref= перезаписує.
 REF_COOKIE = 'iprm_ref'
 REF_COOKIE_MAX_AGE = 60 * 60 * 24 * 60  # 60 днів
+# Дедуп кліків: код, який уже порахували в цій сесії (щоб рефреш не надував).
+CLICK_COOKIE = 'iprm_refc'
+CLICK_DEDUP_MAX_AGE = 60 * 60 * 24  # 1 доба
+# Груба сигнатура ботів/краулерів у User-Agent (щоб не рахувати їхні кліки).
+_BOT_RE = re.compile(
+    r'bot|crawl|spider|slurp|bing|yandex|duckduck|baidu|'
+    r'facebookexternalhit|whatsapp|telegrambot|viber|preview|scan|monitor',
+    re.I,
+)
 # Форма коду: префікс u/t + 8 hex (див. _generate_code). Валідуємо перед тим,
 # як приймати з недовіреного джерела (query/cookie).
 _CODE_RE = re.compile(r'^[ut][0-9a-f]{8}$')
@@ -38,6 +47,18 @@ _CODE_RE = re.compile(r'^[ut][0-9a-f]{8}$')
 def is_valid_code(code):
     """Чи має рядок форму нашого реферального коду (u/t + 8 hex)."""
     return bool(code and _CODE_RE.match(code))
+
+
+def _settings():
+    """SiteSettings із кешу запиту (g.site_settings), інакше з БД.
+
+    Уникає повторних запитів у hot-path (after_request на кожній відповіді)."""
+    from flask import g, has_request_context
+    if has_request_context():
+        cached = getattr(g, 'site_settings', None)
+        if cached is not None:
+            return cached
+    return SiteSettings.get()
 
 
 def _generate_code(prefix):
@@ -72,7 +93,7 @@ def ensure_referral_code(obj, prefix):
 
 def _base_url():
     """Канонічна база сайту (як у email_service) без хвостового слеша."""
-    return (SiteSettings.get().website_url or '').rstrip('/')
+    return (_settings().website_url or '').rstrip('/')
 
 
 def build_referral_url(code, target_url=None, campaign=UTM_SOURCE, medium='referral'):
@@ -137,7 +158,7 @@ def current_inviter_name(request, user=None):
     реферер = сам користувач або програму вимкнено.
     """
     try:
-        if not SiteSettings.get().referral_enabled:
+        if not _settings().referral_enabled:
             return None
     except Exception:
         return None
@@ -193,39 +214,124 @@ def load_referrer_token(token):
 
 # ---- Захоплення атрибуції (Фаза 2) ----
 
-def capture_ref_cookie(request, response):
-    """Якщо у запиті є валідний ?ref=<code> і програму увімкнено -- записати
-    його у cookie на response. Викликається з after_request.
+def capture_referral_visit(request, response, user=None):
+    """Єдиний обробник ref-візиту для after_request: cookie + серверний
+    pending + лічильник кліків -- з одним читанням SiteSettings і одним commit.
 
-    Модель атрибуції з налаштувань: 'last' -- кожен клік перезаписує;
-    'first' -- перший закріплюється (наявний валідний cookie не чіпаємо).
-    SiteSettings читаємо лише коли параметр присутній.
+    Викликається на кожній відповіді; уся робота лише коли є валідний ?ref=
+    і програму увімкнено (інакше -- дешевий вихід).
     """
     code = request.args.get(REF_PARAM)
     if not is_valid_code(code):
         return response
     try:
-        settings = SiteSettings.get()
-        if not settings.referral_enabled:
-            return response
+        settings = _settings()
     except Exception:
-        logger.exception('referral: failed to read settings for cookie capture')
+        logger.exception('referral: settings read failed (visit)')
+        return response
+    if not settings.referral_enabled:
         return response
 
+    # 1. Cookie (лише response, без БД).
+    _set_ref_cookie(request, response, code, settings)
+
+    # 2. Серверний pending для залогіненого (мутація без commit).
+    pending_changed = False
+    if user is not None and getattr(user, 'is_authenticated', False):
+        pending_changed = _mutate_pending(user, code, settings)
+
+    # 3. Клік -- лише GET-сторінки (не редіректи/статика/POST/боти) і не
+    # повторний рефреш того самого коду в межах доби (dedup-cookie).
+    is_page = (
+        request.method == 'GET'
+        and 'text/html' in (response.content_type or '')
+        and response.status_code == 200
+        and not _looks_like_bot(request)
+        and request.cookies.get(CLICK_COOKIE) != code
+    )
+
+    try:
+        if is_page:
+            _increment_click(code)
+        if pending_changed or is_page:
+            db.session.commit()
+        if is_page:
+            response.set_cookie(
+                CLICK_COOKIE, code, max_age=CLICK_DEDUP_MAX_AGE,
+                httponly=True, samesite='Lax', secure=bool(request.is_secure), path='/',
+            )
+    except IntegrityError:
+        db.session.rollback()
+        if is_page:
+            try:
+                _increment_click(code, update_only=True)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+    except Exception:
+        db.session.rollback()
+        logger.exception('referral: visit persist failed')
+    return response
+
+
+def _looks_like_bot(request):
+    """Груба евристика: краулер/бот за User-Agent (або порожній UA)."""
+    ua = request.headers.get('User-Agent', '')
+    if not ua:
+        return True
+    return bool(_BOT_RE.search(ua))
+
+
+def _mutate_pending(user, code, settings):
+    """Виставити user.pending_referral_code без commit. True якщо змінено."""
+    if code == user.referral_code:
+        return False
+    current = user.pending_referral_code
+    if current == code:
+        return False
+    if settings.referral_attribution == 'first' and is_valid_code(current):
+        return False
+    user.pending_referral_code = code
+    return True
+
+
+def _increment_click(code, update_only=False):
+    """Інкремент денного лічильника кліків без commit (мутація сесії)."""
+    from app.models.referral_click import ReferralClick
+    from app.models.mixins import utcnow
+    today = utcnow().date()
+    updated = db.session.query(ReferralClick).filter_by(
+        referral_code=code, day=today,
+    ).update({ReferralClick.count: ReferralClick.count + 1})
+    if not updated and not update_only:
+        db.session.add(ReferralClick(referral_code=code, day=today, count=1))
+
+
+def _set_ref_cookie(request, response, code, settings):
+    """Виставити cookie атрибуції на response (з урахуванням first/last)."""
     existing = request.cookies.get(REF_COOKIE)
-    # first-touch: якщо вже є валідний код -- не перезаписуємо.
     if settings.referral_attribution == 'first' and is_valid_code(existing):
-        return response
-    # Не перезаписуємо тим самим значенням (уникаємо зайвого Set-Cookie).
+        return
     if existing == code:
-        return response
-
+        return
     max_age = int(settings.referral_cookie_days or 60) * 86400
     response.set_cookie(
-        REF_COOKIE, code,
-        max_age=max_age,
+        REF_COOKIE, code, max_age=max_age,
         httponly=True, samesite='Lax', secure=bool(request.is_secure), path='/',
     )
+
+
+def capture_ref_cookie(request, response):
+    """Сумісність: лише cookie-частина ref-візиту (для наявних викликів/тестів)."""
+    code = request.args.get(REF_PARAM)
+    if not is_valid_code(code):
+        return response
+    try:
+        settings = _settings()
+    except Exception:
+        return response
+    if settings.referral_enabled:
+        _set_ref_cookie(request, response, code, settings)
     return response
 
 
@@ -242,22 +348,17 @@ def persist_pending_for_user(request, user):
     (first/last) і не приймає власний код користувача. Комітить лише при зміні.
     """
     code = request.args.get(REF_PARAM)
-    if not is_valid_code(code) or code == user.referral_code:
+    if not is_valid_code(code):
         return
     try:
-        settings = SiteSettings.get()
+        settings = _settings()
         if not settings.referral_enabled:
             return
     except Exception:
         logger.exception('referral: settings read failed (pending attribution)')
         return
-    current = user.pending_referral_code
-    if current == code:
+    if not _mutate_pending(user, code, settings):
         return
-    # first-touch: не перезаписуємо вже зафіксований валідний код.
-    if settings.referral_attribution == 'first' and is_valid_code(current):
-        return
-    user.pending_referral_code = code
     try:
         db.session.commit()
     except Exception:
@@ -282,22 +383,13 @@ def record_click(code):
     """
     if not is_valid_code(code):
         return
-    from app.models.referral_click import ReferralClick
-    from app.models.mixins import utcnow
-    today = utcnow().date()
     try:
-        updated = db.session.query(ReferralClick).filter_by(
-            referral_code=code, day=today,
-        ).update({ReferralClick.count: ReferralClick.count + 1})
-        if not updated:
-            db.session.add(ReferralClick(referral_code=code, day=today, count=1))
+        _increment_click(code)
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
         try:
-            db.session.query(ReferralClick).filter_by(
-                referral_code=code, day=today,
-            ).update({ReferralClick.count: ReferralClick.count + 1})
+            _increment_click(code, update_only=True)
             db.session.commit()
         except Exception:
             db.session.rollback()
@@ -422,7 +514,7 @@ def _is_self_referral(referrer, reg):
 def _notify_referrer_award(reg, kind, referrer_id, points):
     """Best-effort лист рефереру про нарахування. Не кидає винятків."""
     try:
-        if not SiteSettings.get().referral_notify_referrer:
+        if not _settings().referral_notify_referrer:
             return
         email, name = _referrer_contact(kind, referrer_id)
         if not email:
@@ -464,7 +556,7 @@ def award_for_paid_registration(reg):
     if not reg.payment_amount or float(reg.payment_amount) <= 0:
         return None
 
-    settings = SiteSettings.get()
+    settings = _settings()
     if not settings.referral_enabled:
         return None
     points = int(settings.referral_points_per_paid or 0)
@@ -502,6 +594,7 @@ def award_for_paid_registration(reg):
                 return None
             logger.info('Referral reward reactivated: reg=%s %s:%s +%dp (%s)',
                         reg.id, referrer['kind'], referrer['id'], points, status)
+            _refresh_balance(referrer['kind'], referrer['id'])
             if status == 'granted':
                 _notify_referrer_award(reg, referrer['kind'], referrer['id'], points)
         return existing
@@ -535,6 +628,8 @@ def award_for_paid_registration(reg):
         return None
     logger.info('Referral reward granted: reg=%s %s:%s +%dp (%s)',
                 reg.id, referrer['kind'], referrer['id'], points, status)
+    if status == 'granted':
+        _refresh_balance(referrer['kind'], referrer['id'])
     # Лист лише коли бали одразу активні; для pending -- при дозріванні.
     if status == 'granted':
         _notify_referrer_award(reg, referrer['kind'], referrer['id'], points)
@@ -554,23 +649,31 @@ def mature_referral_rewards():
         ReferralReward.matures_at.isnot(None),
         ReferralReward.matures_at <= utcnow(),
     ).all()
-    matured = 0
+    if not due:
+        return 0
+
+    # Батч: один UPDATE статусу замість commit-на-рядок.
+    ids = [r.id for r in due]
+    try:
+        db.session.query(ReferralReward).filter(
+            ReferralReward.id.in_(ids)
+        ).update({ReferralReward.status: 'granted'}, synchronize_session=False)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception('Failed to mature referral rewards batch')
+        return 0
+
+    # Баланс -- по разу на реферера; листи -- по кожному нарахуванню.
+    for kind, rid in {(r.referrer_kind, r.referrer_id) for r in due}:
+        _refresh_balance(kind, rid)
     for reward in due:
-        reward.status = 'granted'
-        try:
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-            logger.exception('Failed to mature referral reward id=%s', reward.id)
-            continue
-        matured += 1
         reg = reward.registration
         if reg is not None:
             _notify_referrer_award(reg, reward.referrer_kind,
                                    reward.referrer_id, reward.points)
-    if matured:
-        logger.info('Referral rewards matured: %d', matured)
-    return matured
+    logger.info('Referral rewards matured: %d', len(due))
+    return len(due)
 
 
 def void_for_registration(reg, reason='Повернення коштів'):
@@ -586,15 +689,17 @@ def void_for_registration(reg, reason='Повернення коштів'):
     ).first()
     if reward is None:
         return None
+    kind, referrer_id = reward.referrer_kind, reward.referrer_id
     reward.void(reason=reason)
     try:
         db.session.commit()
         logger.info('Referral reward voided: reg=%s reason=%s', reg.id, reason)
-        return reward
     except Exception:
         db.session.rollback()
         logger.exception('Failed to void referral reward for reg=%s', reg.id)
         return None
+    _refresh_balance(kind, referrer_id)
+    return reward
 
 
 def sync_reward_for_registration(reg):
@@ -613,11 +718,17 @@ def sync_reward_for_registration(reg):
     return None
 
 
-def get_balance(kind, referrer_id):
-    """Баланс реферера: SUM(активних granted-нарахувань) + SUM(ручних корекцій).
+def _referrer_obj(kind, referrer_id):
+    from app.models.user import User
+    from app.models.trainer import Trainer
+    return db.session.get(User if kind == 'user' else Trainer, referrer_id)
 
-    Дозрілі (granted) бали + ручні adjustments. Pending (недозрілі) і voided
-    не враховуються.
+
+def recompute_balance(kind, referrer_id):
+    """Авторитетний перерахунок балансу: SUM(granted rewards) + SUM(adjustments).
+
+    Pending (недозрілі) і voided не враховуються. Використовується для
+    оновлення денормалізованої колонки й для звірки.
     """
     from app.models.referral_reward import ReferralReward
     from app.models.referral_adjustment import ReferralAdjustment
@@ -636,6 +747,29 @@ def get_balance(kind, referrer_id):
         ReferralAdjustment.referrer_id == referrer_id,
     ).scalar()
     return int(rewards or 0) + int(adj or 0)
+
+
+def _refresh_balance(kind, referrer_id):
+    """Перерахувати й зберегти денормалізований баланс реферера. Комітить.
+
+    Викликається після кожної мутації, що впливає на баланс (award/void/
+    mature/adjust). Best-effort -- не кидає винятків.
+    """
+    try:
+        value = recompute_balance(kind, referrer_id)
+        obj = _referrer_obj(kind, referrer_id)
+        if obj is not None and (obj.referral_balance or 0) != value:
+            obj.referral_balance = value
+            db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception('referral: failed to refresh balance %s:%s', kind, referrer_id)
+
+
+def get_balance(kind, referrer_id):
+    """Баланс реферера -- швидке читання денормалізованої колонки."""
+    obj = _referrer_obj(kind, referrer_id)
+    return int(getattr(obj, 'referral_balance', 0) or 0) if obj else 0
 
 
 def get_pending_balance(kind, referrer_id):
@@ -663,6 +797,7 @@ def add_adjustment(kind, referrer_id, points, reason, created_by_id=None):
     db.session.commit()
     logger.info('Referral adjustment: %s:%s %+dp by=%s', kind, referrer_id,
                 int(points), created_by_id)
+    _refresh_balance(kind, referrer_id)
     return adj
 
 

@@ -210,6 +210,13 @@ class SiteSettings(TimestampMixin, db.Model):
         db.Boolean, default=True, nullable=False, server_default=db.true(),
     )
 
+    __table_args__ = (
+        db.CheckConstraint(
+            "referral_attribution IN ('first', 'last')",
+            name='ck_site_settings_referral_attribution',
+        ),
+    )
+
     @property
     def partner_api_key(self):
         if not self._partner_api_key_encrypted:

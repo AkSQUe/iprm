@@ -32,6 +32,8 @@ class Trainer(TimestampMixin, db.Model):
     # Реферальний код тренера (лениво генерується). Префікс 't' -- щоб коди
     # User і Trainer були глобально унікальні між собою.
     referral_code = db.Column(db.String(32), unique=True, index=True)
+    # Денормалізований баланс реферальних балів (recompute-on-write).
+    referral_balance = db.Column(db.Integer, default=0, nullable=False, server_default='0')
 
     # Опційні регалії (показуються публічно лише якщо заповнені):
     #   certificates -- [{url, thumb, caption}] завантажені зображення (lightbox)
