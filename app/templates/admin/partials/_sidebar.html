@@ -50,6 +50,10 @@
         {{ icon('workspace_premium') }}
         Сертифікати
       </a>
+      <a href="{{ url_for('admin.referrals_overview') }}" class="admin-sidebar__link{% if ep == 'admin.referrals_overview' %} admin-sidebar__link--active{% endif %}">
+        {{ icon('add_link') }}
+        Реферали
+      </a>
     </div>
 
     <div class="admin-sidebar__group">

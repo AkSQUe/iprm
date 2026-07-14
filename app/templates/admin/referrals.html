@@ -1,0 +1,188 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Реферальна програма | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Реферальна програма</span>
+        </div>
+        <h1 class="admin-hero__title">Реферальна програма</h1>
+        <p class="admin-hero__subtitle">Нарахування бонусних балів за оплачені реєстрації по реферальних посиланнях</p>
+      </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.settings') }}#referral" class="btn-admin btn-admin--secondary">
+          {{ icon('settings') }} Налаштування
+        </a>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    {% if not settings.referral_enabled %}
+    <div class="admin-empty admin-pad-24 admin-text-left">
+      <h3 class="admin-empty__title">Програму вимкнено</h3>
+      <p>Реферальні посилання й нарахування балів не активні. Увімкніть програму
+         в <a href="{{ url_for('admin.settings') }}">Налаштуваннях сайту</a>
+         (ставка: {{ settings.referral_points_per_paid }} бал(ів) за оплачену реєстрацію).</p>
+    </div>
+    {% endif %}
+
+    <!-- Statistics -->
+    <div class="admin-stat-cards">
+      <div class="admin-stat-card admin-stat-card--accent">
+        <span class="admin-stat-card__value">{{ stats.granted_points }}</span>
+        <span class="admin-stat-card__label">Активних балів</span>
+      </div>
+      <div class="admin-stat-card admin-stat-card--success">
+        <span class="admin-stat-card__value">{{ stats.granted }}</span>
+        <span class="admin-stat-card__label">Нарахувань</span>
+      </div>
+      <div class="admin-stat-card admin-stat-card--danger">
+        <span class="admin-stat-card__value">{{ stats.voided }}</span>
+        <span class="admin-stat-card__label">Анульовано</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ top_referrers | length }}</span>
+        <span class="admin-stat-card__label">Активних рефереров</span>
+      </div>
+    </div>
+
+    <!-- Top referrers -->
+    {% if top_referrers %}
+    <div class="form-section">
+      <h2 class="admin-form__section-title">Топ рефереров (за балансом)</h2>
+      <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Реферер</th><th>Тип</th><th>Нарахувань</th><th>Баланс</th></tr>
+        </thead>
+        <tbody>
+          {% for r in top_referrers %}
+          <tr>
+            <td>
+              {% if r.info and r.kind == 'trainer' %}
+              <a href="{{ url_for('admin.trainer_edit', trainer_id=r.id) }}">{{ r.info.name }}</a>
+              {% elif r.info %}
+              {{ r.info.name }}
+              {% else %}
+              <span class="admin-text-muted">#{{ r.id }} (видалено?)</span>
+              {% endif %}
+            </td>
+            <td>{{ 'Тренер' if r.kind == 'trainer' else 'Учасник' }}</td>
+            <td>{{ r.rewards }}</td>
+            <td><strong>{{ r.balance }}</strong></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- History filter -->
+    <div class="admin-stats-bar">
+      <form method="GET" action="{{ url_for('admin.referrals_overview') }}" class="admin-filter-form">
+        <select name="status" class="form-input form-input--sm">
+          <option value="">Всі нарахування</option>
+          <option value="granted"{% if status_filter == 'granted' %} selected{% endif %}>Активні</option>
+          <option value="voided"{% if status_filter == 'voided' %} selected{% endif %}>Анульовані</option>
+        </select>
+        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('filter_list') }} Фільтрувати</button>
+        {% if status_filter %}
+        <a href="{{ url_for('admin.referrals_overview') }}" class="btn-admin btn-admin--sm">{{ icon('clear') }} Скинути</a>
+        {% endif %}
+      </form>
+    </div>
+
+    <!-- History -->
+    {% if rewards %}
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Дата</th><th>Реферер</th><th>Учасник</th><th>Захід</th><th>Бали</th><th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rw in rewards %}
+        {% set ref = referrer_map.get(rw.referral_code) %}
+        {% set reg = rw.registration %}
+        <tr>
+          <td>{{ rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '--' }}</td>
+          <td>
+            {% if ref and ref.kind == 'trainer' %}
+            <a href="{{ url_for('admin.trainer_edit', trainer_id=ref.id) }}">{{ ref.name }}</a>
+            <br><small class="admin-text-muted">тренер</small>
+            {% elif ref %}
+            {{ ref.name }}<br><small class="admin-text-muted">учасник</small>
+            {% else %}
+            <span class="admin-text-muted">{{ rw.referral_code }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if reg and reg.user %}
+            {{ reg.user.first_name }} {{ reg.user.last_name }}<br>
+            <small class="admin-text-muted">{{ reg.user.email }}</small>
+            {% else %}
+            <span class="admin-text-muted">--</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if reg and reg.instance and reg.instance.course %}
+            {{ reg.instance.course.title }}
+            {% if reg.instance.start_date %}<br><small class="admin-text-muted">{{ reg.instance.start_date.strftime('%d.%m.%Y') }}</small>{% endif %}
+            {% else %}
+            <span class="admin-text-muted">--</span>
+            {% endif %}
+          </td>
+          <td><strong>{{ rw.points }}</strong></td>
+          <td>
+            {% if rw.status == 'granted' %}
+            <span class="badge badge--active">{{ rw.status_label }}</span>
+            {% else %}
+            <span class="badge badge--cancelled">{{ rw.status_label }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+
+    <!-- Пагінація -->
+    {% if pagination and pagination.pages > 1 %}
+    <nav class="admin-pagination">
+      {% if pagination.has_prev %}
+      <a href="{{ url_for('admin.referrals_overview', page=pagination.prev_num, status=status_filter) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
+      {% endif %}
+      <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }} ({{ pagination.total }})</span>
+      {% if pagination.has_next %}
+      <a href="{{ url_for('admin.referrals_overview', page=pagination.next_num, status=status_filter) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
+      {% endif %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="admin-empty">
+      {{ icon('add_link', cls='admin-empty__icon') }}
+      <h3 class="admin-empty__title">Нарахувань ще немає</h3>
+      <p>Бали з'являться тут після першої оплаченої реєстрації по реферальному посиланню</p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
