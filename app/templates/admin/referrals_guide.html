@@ -1,0 +1,182 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Інструкція: реферальна програма | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.referrals_overview') }}" class="admin-breadcrumb__link">Реферальна програма</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Інструкція</span>
+        </div>
+        <h1 class="admin-hero__title">Інструкція</h1>
+        <p class="admin-hero__subtitle">Як працює реферальна програма і що робити адміністратору</p>
+      </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.referrals_overview') }}" class="btn-admin btn-admin--secondary">Назад до огляду</a>
+      </div>
+    </div>
+
+    <!-- 1. Суть -->
+    <div class="form-section">
+      <h2 class="admin-form__section-title">Навіщо це</h2>
+      <ul class="admin-guide__list">
+        <li>Учасники й тренери діляться <strong>персональним посиланням</strong> на курси.</li>
+        <li>За кожну <strong>оплачену</strong> реєстрацію за їхнім посиланням їм нараховуються <strong>бонусні бали лояльності</strong>.</li>
+        <li>Бали — <strong>окремі від балів БПР</strong> і на них не впливають.</li>
+        <li>Мета: платні продажі «з вуст в уста» + вимірювана віддача від кожного реферера.</li>
+      </ul>
+      <p class="admin-form__section-hint">
+        Витрата балів (знижка на курс) поки <strong>не реалізована</strong> — зараз лише накопичення.
+      </p>
+    </div>
+
+    <!-- 2. Запуск -->
+    <div class="form-section">
+      <h2 class="admin-form__section-title">Крок 1. Увімкнути й налаштувати</h2>
+      <p class="admin-form__section-hint">
+        <a href="{{ url_for('admin.settings') }}#referral">Налаштування сайту → Реферальна програма</a>.
+        У дужках — ваші поточні значення.
+      </p>
+      <ol class="admin-guide__list admin-guide__list--num">
+        <li><strong>Увімкнути програму</strong> — без цього посилання й нарахування не працюють
+          (зараз: <strong>{{ 'увімкнено' if settings.referral_enabled else 'вимкнено' }}</strong>).</li>
+        <li><strong>Балів за оплачену реєстрацію</strong> — ставка нарахування
+          (зараз: <strong>{{ settings.referral_points_per_paid }}</strong>).</li>
+        <li><strong>Період дозрівання</strong> — скільки днів бали «висять» неактивними перед зарахуванням.
+          <em>Навіщо:</em> захист від схеми «оплатив → отримав бали → повернув гроші»
+          (зараз: <strong>{{ settings.referral_maturity_days }} дн.</strong>{% if not settings.referral_maturity_days %} — зараховуються одразу{% endif %}).
+          <strong>Рекомендація: 14 днів.</strong></li>
+        <li><strong>Термін атрибуції</strong> — скільки днів пам'ятаємо, хто привів
+          (зараз: <strong>{{ settings.referral_cookie_days }} дн.</strong>).</li>
+        <li><strong>Модель атрибуції</strong> — кому зарахувати, якщо людина клікала кілька посилань
+          (зараз: <strong>{{ 'перший клік' if settings.referral_attribution == 'first' else 'останній клік' }}</strong>).</li>
+        <li><strong>Стеля нарахувань</strong> — максимум активних нарахувань на одного реферера
+          (зараз: <strong>{{ settings.referral_max_per_referrer or 'без ліміту' }}</strong>).</li>
+        <li><strong>Лист рефереру</strong> — чи повідомляти його про нарахування
+          (зараз: <strong>{{ 'так' if settings.referral_notify_referrer else 'ні' }}</strong>).</li>
+      </ol>
+    </div>
+
+    <!-- 3. Роздати посилання -->
+    <div class="form-section">
+      <h2 class="admin-form__section-title">Крок 2. Роздати посилання</h2>
+      <ul class="admin-guide__list">
+        <li><strong>Учасники</strong> — нічого робити не треба: посилання, QR і кнопки «поділитися»
+          з'являються самі в їхньому кабінеті та на сторінці кожного курсу.</li>
+        <li><strong>Тренери</strong> (не мають входу на сайт) — відкрийте
+          <a href="{{ url_for('admin.trainers_list') }}">картку тренера</a>, там:
+          <ul class="admin-guide__list">
+            <li><strong>реферальне посилання</strong> — скопіювати й надіслати;</li>
+            <li><strong>посилання на особистий кабінет</strong> — тренер сам бачить свій баланс,
+              історію та QR без логіну.</li>
+          </ul>
+        </li>
+        <li><strong>QR-код</strong> — можна завантажити й друкувати на роздатку для заходів.</li>
+      </ul>
+    </div>
+
+    <!-- 4. Як воно рахується -->
+    <div class="form-section">
+      <h2 class="admin-form__section-title">Крок 3. Як нараховуються бали (потік)</h2>
+      <ol class="admin-guide__list admin-guide__list--num">
+        <li>Людина переходить за посиланням → ми запам'ятовуємо, хто привів.</li>
+        <li>Вона реєструється → реферер прив'язується до реєстрації (видно в колонці «Реферер»).</li>
+        <li><strong>Оплата пройшла</strong> → бали нараховані.</li>
+        <li>Якщо задано дозрівання → бали спершу <strong>«Очікує»</strong>, потім автоматично стають активними.</li>
+        <li><strong>Повернення коштів</strong> → нарахування автоматично анулюється.</li>
+      </ol>
+      <p class="admin-form__section-hint">
+        <strong>Не нараховується:</strong> безкоштовні заходи; самореферал (людина за власним
+        посиланням, у т.ч. збіг email); коли досягнуто стелі; коли програму вимкнено.
+      </p>
+    </div>
+
+    <!-- 5. Метрики -->
+    <div class="form-section">
+      <h2 class="admin-form__section-title">Крок 4. Як читати огляд</h2>
+      <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Показник</th><th>Що означає</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Активних балів</strong></td><td>Сума балів, зарахованих реферерам (без «очікує» й анульованих)</td></tr>
+          <tr><td><strong>Нарахувань</strong></td><td>Скільки оплат принесли бали</td></tr>
+          <tr><td><strong>Очікують дозрівання</strong></td><td>Нараховано, але ще на витримці</td></tr>
+          <tr><td><strong>Анульовано</strong></td><td>Скасовано через повернення коштів</td></tr>
+          <tr><td><strong>Кліків</strong></td><td>Переходи за посиланнями (без ботів і повторних оновлень)</td></tr>
+          <tr><td><strong>Приведені, не оплачені</strong></td><td>Зареєструвались за посиланням, але ще не заплатили — потенційні бали</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <ul class="admin-guide__list">
+        <li><strong>Топ рефереров</strong> — хто приносить найбільше; клік на імені → повна історія людини.</li>
+        <li><strong>Експорт XLSX</strong> — весь реєстр нарахувань для звірки чи виплат.</li>
+      </ul>
+    </div>
+
+    <!-- 6. Антифрод -->
+    <div class="form-section">
+      <h2 class="admin-form__section-title">Крок 5. Блок «На перевірку»</h2>
+      <p class="admin-form__section-hint">З'являється, лише коли є підозрілі патерни. Що означають сигнали:</p>
+      <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Сигнал</th><th>Ймовірна причина</th><th>Що робити</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Багато повернень</strong></td>
+            <td>Схема «оплата заради балів → повернення»</td>
+            <td>Перевірити реєстрації людини; за потреби — увімкнути дозрівання й зняти бали корекцією</td>
+          </tr>
+          <tr>
+            <td><strong>Трафік без конверсій</strong></td>
+            <td>Накрутка кліків / спам-розсилка посилання</td>
+            <td>Зазвичай нешкідливо (балів не дає). Якщо систематично — поговорити з реферером</td>
+          </tr>
+          <tr>
+            <td><strong>Сплеск</strong></td>
+            <td>Багато нарахувань за добу — можливо, штучні реєстрації</td>
+            <td>Перевірити список реєстрацій; за потреби — задати стелю нарахувань</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 7. Ручні дії -->
+    <div class="form-section">
+      <h2 class="admin-form__section-title">Крок 6. Ручні дії</h2>
+      <ul class="admin-guide__list">
+        <li><strong>Корекція балансу</strong> — на сторінці реферера: додати або зняти бали
+          (додатне/від'ємне число) з обов'язковою причиною. <em>Навіщо:</em> виправити помилку,
+          зняти накручені бали, дати бонус вручну. Усі корекції зберігаються з автором.</li>
+        <li><strong>«Звірити баланси»</strong> — кнопка з'являється, лише якщо баланси розійшлися
+          (наприклад, після ручних правок у базі). Натиснути — і система перерахує все сама.
+          Ця ж звірка йде автоматично щодня.</li>
+      </ul>
+    </div>
+
+    <!-- 8. Порядок дій на старті -->
+    <div class="form-section">
+      <h2 class="admin-form__section-title">Коротко: з чого почати</h2>
+      <ol class="admin-guide__list admin-guide__list--num">
+        <li>Увімкнути програму, задати ставку балів і <strong>дозрівання 14 днів</strong>.</li>
+        <li>Роздати посилання тренерам (картка тренера → посилання + кабінет).</li>
+        <li>Через тиждень зайти в огляд: подивитись кліки, «приведені, не оплачені» й топ-рефереров.</li>
+        <li>Раз на тиждень переглядати блок «На перевірку».</li>
+      </ol>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

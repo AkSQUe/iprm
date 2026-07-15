@@ -115,6 +115,20 @@ def referrals_overview():
     )
 
 
+@admin_bp.route('/referrals/guide')
+@admin_required
+def referrals_guide():
+    """Інструкція до реферальної програми (дочірня сторінка огляду).
+
+    Тезово: як увімкнути, як роздати посилання, як читати метрики й що
+    робити з сигналами антифроду. Поточні налаштування показуємо поруч,
+    щоб адмін бачив фактичні значення, а не абстракції."""
+    return render_template(
+        'admin/referrals_guide.html',
+        settings=SiteSettings.get(),
+    )
+
+
 @admin_bp.route('/referrals/reconcile', methods=['POST'])
 @admin_required
 def referrals_reconcile():

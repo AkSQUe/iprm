@@ -289,6 +289,35 @@
   color: var(--apple-black);
 }
 
+/* Списки сторінки-інструкції (тезово/покроково). */
+.admin-guide__list {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  list-style: disc;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--apple-black);
+}
+
+.admin-guide__list--num {
+  list-style: decimal;
+}
+
+.admin-guide__list li {
+  margin-bottom: 8px;
+}
+
+.admin-guide__list .admin-guide__list {
+  margin-top: 8px;
+  margin-bottom: 0;
+  list-style: circle;
+}
+
+.admin-guide__list em {
+  color: var(--apple-gray);
+  font-style: normal;
+}
+
 /* ========== FORM CONTROLS ========== */
 
 .form-section .form-group label,

@@ -34,6 +34,21 @@ def test_referrals_page_renders_empty(client, admin):
     r = client.get('/admin/referrals')
     assert r.status_code == 200
     assert 'Реферальна програма'.encode() in r.data
+    # Лінк на дочірню сторінку-інструкцію.
+    assert b'/admin/referrals/guide' in r.data
+
+
+def test_referrals_guide_renders(client, admin):
+    s = SiteSettings.get()
+    s.referral_enabled = True
+    s.referral_points_per_paid = 5
+    db.session.flush()
+    _login(client, admin)
+    r = client.get('/admin/referrals/guide')
+    assert r.status_code == 200
+    assert 'Інструкція'.encode() in r.data
+    # Показує фактичні налаштування, а не абстракції.
+    assert 'увімкнено'.encode() in r.data
 
 
 def test_referrals_page_shows_reward(client, admin):
