@@ -26,7 +26,24 @@
     </section>
   </div>
 
-  {# TODO(Фаза 2): блок "Інститут у цифрах" -- лічильники з БД. #}
+  <!-- ===== ІНСТИТУТ У ЦИФРАХ ===== -->
+  {% if home_stats %}
+  <section class="iprm-section" aria-labelledby="stats-title">
+    <div class="iprm-section__inner">
+      <h2 id="stats-title" class="iprm-section__title visually-hidden">Інститут у цифрах</h2>
+      <div class="home-stats">
+        {% if home_stats.years %}
+        <div class="home-stat apple-reveal"><span class="home-stat__value" data-counter="{{ home_stats.years }}" data-suffix="+">0</span><span class="home-stat__label">років досвіду</span></div>
+        {% endif %}
+        <div class="home-stat apple-reveal"><span class="home-stat__value" data-counter="{{ home_stats.courses }}" data-suffix="+">0</span><span class="home-stat__label">курсів у каталозі</span></div>
+        <div class="home-stat apple-reveal"><span class="home-stat__value" data-counter="{{ home_stats.trainers }}">0</span><span class="home-stat__label">тренерів-практиків</span></div>
+        {% if home_stats.directions %}
+        <div class="home-stat apple-reveal"><span class="home-stat__value" data-counter="{{ home_stats.directions }}">0</span><span class="home-stat__label">напрямів практики</span></div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
 
   <!-- ===== ЧОМУ ЦЕ ІНВЕСТИЦІЯ ===== -->
   <section class="iprm-section" aria-labelledby="why-title">
@@ -297,6 +314,7 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
+{% if home_stats %}<script src="{{ url_for('static', filename='js/counters.js') }}?v={{ assets_version }}" defer></script>{% endif %}
 {% if site_settings.show_roi_calculator and roi_courses %}
 <script src="{{ url_for('static', filename='js/roi-calc.js') }}?v={{ assets_version }}" defer></script>
 {% endif %}

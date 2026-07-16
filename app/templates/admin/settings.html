@@ -158,6 +158,12 @@
           {{ form.website_url(class="form-input", id="website_url", placeholder="https://iprm.space") }}
         </div>
 
+        <div class="form-group">
+          <label for="founding_year">{{ form.founding_year.label.text }}</label>
+          {{ form.founding_year(class="form-input", id="founding_year", type="number", min="1900") }}
+          {% if form.founding_year.description %}<small class="form-hint">{{ form.founding_year.description }}</small>{% endif %}
+        </div>
+
       </div>
     </div>
 

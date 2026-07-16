@@ -217,6 +217,12 @@ class SiteSettingsForm(FlaskForm):
         'Вебсайт',
         validators=[Optional(), Length(max=500)],
     )
+    founding_year = IntegerField(
+        'Рік заснування',
+        validators=[Optional(), NumberRange(min=1900, max=2100)],
+        default=2015,
+        description='Використовується для лічильника «років досвіду» на Головній.',
+    )
 
     # Секції навігації
     show_labs = BooleanField('Показувати розділ "Лабораторії"', default=True)

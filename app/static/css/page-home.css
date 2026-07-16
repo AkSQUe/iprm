@@ -12,6 +12,36 @@
   text-align: center;
 }
 
+/* ===== Лічильники ===== */
+.home-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  text-align: center;
+}
+
+.home-stat__value {
+  display: block;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--iprm-nav-active);
+}
+
+.home-stat__label {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--apple-gray);
+}
+
+@media (max-width: 640px) {
+  .home-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+}
+
 .home-lead {
   max-width: 760px;
   margin: 0 auto 1.5rem;

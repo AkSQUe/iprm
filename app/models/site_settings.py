@@ -72,6 +72,8 @@ class SiteSettings(TimestampMixin, db.Model):
     # Business
     business_hours = db.Column(db.String(200), default='Пн-Пт: 09:00-18:00')
     website_url = db.Column(db.String(500), default='https://iprm.space')
+    # Рік заснування -- для лічильника "років досвіду" на Головній.
+    founding_year = db.Column(db.Integer, default=2015, nullable=False, server_default='2015')
 
     # Секції навігації
     show_labs = db.Column(db.Boolean, default=True)

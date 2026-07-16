@@ -69,6 +69,17 @@ def index():
         Clinic.sort_order,
     ).limit(4).all()
 
+    # Лічильники "Інститут у цифрах" -- рахуємо з БД.
+    from app.models.site_settings import SiteSettings
+    founding_year = SiteSettings.get().founding_year or 2015
+    home_stats = {
+        'years': max(0, now.year - founding_year),
+        'courses': len(active_courses),
+        'trainers': Trainer.query.filter_by(is_active=True).count(),
+        'directions': len({tag for c in active_courses for tag in (c.tags or [])}),
+        'upcoming': sum(len(v) for v in upcoming_by_course.values()),
+    }
+
     return render_template(
         'main/home.html',
         active_nav='home',
@@ -80,6 +91,7 @@ def index():
         roi_courses=roi_courses,
         trainers=trainers,
         clinics=clinics,
+        home_stats=home_stats,
     )
 
 
