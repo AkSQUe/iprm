@@ -1839,3 +1839,42 @@ select.badge-select:disabled {
 ::view-transition-new(root) {
   animation: vt-fade-in 0.25s ease-in;
 }
+
+/* ===== Відгуки (спільні: Головна + сторінка курсу) ===== */
+.reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.iprm-review {
+  margin: 0;
+  padding: 1.75rem;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+}
+
+.iprm-review__stars {
+  margin-bottom: 0.75rem;
+  color: #f5a623;
+  letter-spacing: 2px;
+}
+
+.iprm-review__text {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--apple-black);
+}
+
+.iprm-review__author {
+  font-size: 0.9rem;
+  color: var(--apple-gray);
+}
+
+@media (max-width: 720px) {
+  .reviews-grid {
+    grid-template-columns: 1fr;
+  }
+}

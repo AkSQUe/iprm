@@ -348,6 +348,12 @@ def course_by_slug(slug):
         request, current_user if current_user.is_authenticated else None,
     )
 
+    # Опубліковані відгуки, привʼязані до цього курсу.
+    from app.models.review import Review
+    course_reviews = Review.query.filter_by(
+        course_id=course.id, is_published=True,
+    ).order_by(Review.sort_order, Review.created_at.desc()).limit(6).all()
+
     return render_template(
         'courses/detail.html',
         active_nav='courses',
@@ -359,6 +365,7 @@ def course_by_slug(slug):
         related_courses=_related_courses(course),
         referral_link=referral_link,
         referral_inviter=referral_inviter,
+        course_reviews=course_reviews,
     )
 
 

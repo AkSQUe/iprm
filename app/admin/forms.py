@@ -663,6 +663,10 @@ class ReviewForm(FlaskForm):
     sort_order = IntegerField(
         'Порядок', validators=[Optional(), NumberRange(min=0)], default=0,
     )
+    course_id = SelectField(
+        'Курс (опційно)', choices=[], validators=[Optional()], coerce=str,
+        description='Привʼязати відгук до курсу -- показати на його сторінці.',
+    )
     is_published = BooleanField('Опубліковано', default=False)
 
 

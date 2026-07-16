@@ -8,6 +8,7 @@ from app.admin import admin_bp
 from app.admin.decorators import admin_required
 from app.admin.forms import ReviewForm
 from app.extensions import db
+from app.models.course import Course
 from app.models.review import Review
 
 logger = logging.getLogger(__name__)
@@ -17,10 +18,16 @@ audit_logger = logging.getLogger('audit')
 @admin_bp.route('/reviews')
 @admin_required
 def reviews_list():
-    reviews = Review.query.order_by(
-        Review.sort_order, Review.created_at.desc(),
-    ).all()
+    reviews = Review.query.options(
+        db.joinedload(Review.course),
+    ).order_by(Review.sort_order, Review.created_at.desc()).all()
     return render_template('admin/reviews.html', reviews=reviews)
+
+
+def _course_choices():
+    """[('', '—')] + активні курси -- для селектора привʼязки відгуку."""
+    courses = Course.query.filter_by(is_active=True).order_by(Course.title).all()
+    return [('', '— без курсу —')] + [(str(c.id), c.title) for c in courses]
 
 
 def _apply(form, review):
@@ -30,6 +37,7 @@ def _apply(form, review):
     review.text = form.text.data.strip()
     review.rating = int(form.rating.data)
     review.sort_order = form.sort_order.data or 0
+    review.course_id = int(form.course_id.data) if form.course_id.data else None
     review.is_published = form.is_published.data
 
 
@@ -37,6 +45,7 @@ def _apply(form, review):
 @admin_required
 def review_create():
     form = ReviewForm()
+    form.course_id.choices = _course_choices()
     if form.validate_on_submit():
         review = Review()
         _apply(form, review)
@@ -61,8 +70,10 @@ def review_edit(review_id):
         flash('Відгук не знайдено', 'error')
         return redirect(url_for('admin.reviews_list'))
     form = ReviewForm(obj=review)
+    form.course_id.choices = _course_choices()
     if request.method == 'GET':
         form.rating.data = str(review.rating)
+        form.course_id.data = str(review.course_id) if review.course_id else ''
     if form.validate_on_submit():
         _apply(form, review)
         try:

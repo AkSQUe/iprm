@@ -218,8 +218,9 @@
           <label class="iprm-roi__field">
             <span class="iprm-roi__label">Курс</span>
             <select class="form-input" data-roi-course>
+              {% set preselect = request.args.get('course') %}
               {% for rc in roi_courses %}
-              <option data-price="{{ rc.price }}">{{ rc.title }} — {{ rc.price }} &#8372;</option>
+              <option data-price="{{ rc.price }}"{% if preselect and preselect == rc.slug %} selected{% endif %}>{{ rc.title }} — {{ rc.price }} &#8372;</option>
               {% endfor %}
             </select>
           </label>
@@ -334,27 +335,23 @@
     <div class="iprm-section__inner">
       <h2 id="reviews-title" class="iprm-section__title">Після <span class="apple-gradient-text">навчання</span></h2>
       <p class="iprm-section__subtitle">Досвід фахівців після практики</p>
-      <div class="home-reviews">
+      <div class="reviews-grid">
         {% if reviews %}
-          {% for r in reviews %}
-          <figure class="home-review apple-reveal">
-            <div class="home-review__stars" aria-label="Оцінка {{ r.rating }} з 5">{{ '★' * r.rating }}</div>
-            <blockquote class="home-review__text">{{ r.text }}</blockquote>
-            <figcaption class="home-review__author">{{ r.byline }}</figcaption>
-          </figure>
+          {% for review in reviews %}
+            {% include 'partials/_review_card.html' %}
           {% endfor %}
         {% else %}
           {# TODO(заглушка): демо-цитати, поки нема реальних відгуків.
              Прибрати цей {% else %}-блок, коли в адмінці з'являться опубліковані відгуки. #}
-          <figure class="home-review apple-reveal">
-            <div class="home-review__stars" aria-label="Оцінка 5 з 5">★★★★★</div>
-            <blockquote class="home-review__text">Після практики стало зрозуміло, як запускати процедуру без хаосу: протокол, матеріали, собівартість і комунікація з пацієнтом.</blockquote>
-            <figcaption class="home-review__author">Олена · Київ · лікарка-косметологиня</figcaption>
+          <figure class="iprm-review apple-reveal">
+            <div class="iprm-review__stars" aria-label="Оцінка 5 з 5">★★★★★</div>
+            <blockquote class="iprm-review__text">Після практики стало зрозуміло, як запускати процедуру без хаосу: протокол, матеріали, собівартість і комунікація з пацієнтом.</blockquote>
+            <figcaption class="iprm-review__author">Олена · Київ · лікарка-косметологиня</figcaption>
           </figure>
-          <figure class="home-review apple-reveal">
-            <div class="home-review__stars" aria-label="Оцінка 5 з 5">★★★★★</div>
-            <blockquote class="home-review__text">Найцінніше — клінічна логіка й спокійний супровід тренера. Усе без зайвих обіцянок.</blockquote>
-            <figcaption class="home-review__author">Марина · Львів · власниця кабінету</figcaption>
+          <figure class="iprm-review apple-reveal">
+            <div class="iprm-review__stars" aria-label="Оцінка 5 з 5">★★★★★</div>
+            <blockquote class="iprm-review__text">Найцінніше — клінічна логіка й спокійний супровід тренера. Усе без зайвих обіцянок.</blockquote>
+            <figcaption class="iprm-review__author">Марина · Львів · власниця кабінету</figcaption>
           </figure>
         {% endif %}
       </div>

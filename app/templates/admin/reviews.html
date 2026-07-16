@@ -34,7 +34,7 @@
     <div class="admin-table-wrap">
     <table class="admin-table">
       <thead>
-        <tr><th>Автор</th><th>Оцінка</th><th>Текст</th><th>Статус</th><th>Порядок</th><th>Дії</th></tr>
+        <tr><th>Автор</th><th>Оцінка</th><th>Текст</th><th>Курс</th><th>Статус</th><th>Порядок</th><th>Дії</th></tr>
       </thead>
       <tbody>
         {% for r in reviews %}
@@ -42,6 +42,7 @@
           <td><strong>{{ r.author_name }}</strong>{% if r.byline != r.author_name %}<br><small class="admin-text-muted">{{ r.byline }}</small>{% endif %}</td>
           <td>{{ '★' * r.rating }}</td>
           <td>{{ r.text[:90] }}{% if r.text|length > 90 %}…{% endif %}</td>
+          <td>{% if r.course %}{{ r.course.title }}{% else %}<span class="admin-text-muted">—</span>{% endif %}</td>
           <td>
             {% if r.is_published %}<span class="badge badge--active">Опубліковано</span>{% else %}<span class="badge badge--draft">Чернетка</span>{% endif %}
           </td>

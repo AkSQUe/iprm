@@ -527,6 +527,20 @@
   </section>
   {% endif %}
 
+  <!-- ===== REVIEWS ===== -->
+  {% if course_reviews %}
+  <section class="iprm-section" aria-labelledby="reviews-title">
+    <div class="iprm-section__inner">
+      <h2 id="reviews-title" class="iprm-section__title">Відгуки <span class="apple-gradient-text">учасників</span></h2>
+      <div class="reviews-grid">
+        {% for review in course_reviews %}
+          {% include 'partials/_review_card.html' %}
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- ===== REQUEST FORM ===== -->
   <section id="request" class="iprm-section apple-section-gray" aria-labelledby="request-title">
     <div class="iprm-section__inner">

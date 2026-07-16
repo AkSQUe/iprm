@@ -64,3 +64,21 @@ def test_home_shows_published_review(client, db_session):
     r = client.get('/')
     assert 'Реальний'.encode() in r.data
     assert 'Олена · Київ'.encode() not in r.data   # заглушка прихована
+
+
+def test_review_linked_to_course_shows_on_course_page(client, db_session):
+    from uuid import uuid4
+    from app.models.course import Course
+    course = Course(title='Курс Відгуків', slug=f'kv-{uuid4().hex[:6]}', is_active=True)
+    db.session.add(course)
+    db.session.flush()
+    db.session.add(Review(author_name='Учасниця', text='Дуже сподобалось',
+                          rating=5, is_published=True, course_id=course.id))
+    # Неопублікований відгук того ж курсу -- не показуємо.
+    db.session.add(Review(author_name='Прихований', text='чернетка',
+                          rating=3, is_published=False, course_id=course.id))
+    db.session.flush()
+    r = client.get(f'/courses/{course.slug}')
+    assert r.status_code == 200
+    assert 'Учасниця'.encode() in r.data
+    assert 'Прихований'.encode() not in r.data
