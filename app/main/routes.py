@@ -69,6 +69,10 @@ def index():
         Clinic.sort_order,
     ).limit(4).all()
 
+    # Відгуки випускників (опубліковані). Якщо порожньо -- шаблон покаже заглушку.
+    from app.models.review import Review
+    reviews = Review.published()
+
     # Лічильники "Інститут у цифрах" -- рахуємо з БД.
     from app.models.site_settings import SiteSettings
     founding_year = SiteSettings.get().founding_year or 2015
@@ -91,6 +95,7 @@ def index():
         roi_courses=roi_courses,
         trainers=trainers,
         clinics=clinics,
+        reviews=reviews,
         home_stats=home_stats,
     )
 

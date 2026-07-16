@@ -639,6 +639,33 @@ class BlogPostForm(FlaskForm):
     )
 
 
+class ReviewForm(FlaskForm):
+    """Відгук випускника (публічний блок "Після навчання" на Головній)."""
+    author_name = StringField(
+        'Ім\'я автора',
+        validators=[DataRequired(message='Вкажіть ім\'я'), Length(max=120)],
+    )
+    author_role = StringField(
+        'Роль / спеціальність',
+        validators=[Optional(), Length(max=160)],
+        description='Напр. "лікарка-косметологиня" або "власниця кабінету".',
+    )
+    city = StringField('Місто', validators=[Optional(), Length(max=120)])
+    text = TextAreaField(
+        'Текст відгуку',
+        validators=[DataRequired(message='Текст обов\'язковий'), Length(max=2000)],
+    )
+    rating = SelectField(
+        'Оцінка',
+        choices=[(str(i), '%d ★' % i) for i in range(5, 0, -1)],
+        default='5',
+    )
+    sort_order = IntegerField(
+        'Порядок', validators=[Optional(), NumberRange(min=0)], default=0,
+    )
+    is_published = BooleanField('Опубліковано', default=False)
+
+
 class ParticipantForm(FlaskForm):
     """Ручне додавання/редагування учасника заходу (admin).
 

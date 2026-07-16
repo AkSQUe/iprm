@@ -74,16 +74,7 @@ def toggle_admin(user_id):
         flash('Помилка при оновленні', 'error')
     return redirect(url_for('admin.users'))
 
-
-@admin_bp.route('/reviews')
-@admin_required
-def reviews():
-    return render_template(
-        'admin/stub.html',
-        admin_section='reviews',
-        page_title='Відгуки',
-        page_subtitle='Відгуки учасників на заходи',
-    )
+# Відгуки: stub замінено повноцінним CRUD -- див. app/admin/routes_reviews.py.
 
 
 @admin_bp.route('/marketing')

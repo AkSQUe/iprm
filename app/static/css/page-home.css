@@ -192,6 +192,45 @@
   border-color: var(--iprm-nav-active);
 }
 
+/* ===== Відгуки ===== */
+.home-reviews {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.home-review {
+  margin: 0;
+  padding: 1.75rem;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+}
+
+.home-review__stars {
+  margin-bottom: 0.75rem;
+  color: #f5a623;
+  letter-spacing: 2px;
+}
+
+.home-review__text {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--apple-black);
+}
+
+.home-review__author {
+  font-size: 0.9rem;
+  color: var(--apple-gray);
+}
+
+@media (max-width: 720px) {
+  .home-reviews {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ===== Фінальний CTA ===== */
 .home-cta {
   max-width: 760px;

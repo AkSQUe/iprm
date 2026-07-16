@@ -62,7 +62,7 @@
         {{ icon('group') }}
         Користувачі
       </a>
-      <a href="{{ url_for('admin.reviews') }}" class="admin-sidebar__link{% if ep == 'admin.reviews' %} admin-sidebar__link--active{% endif %}">
+      <a href="{{ url_for('admin.reviews_list') }}" class="admin-sidebar__link{% if ep in ('admin.reviews_list', 'admin.review_create', 'admin.review_edit') %} admin-sidebar__link--active{% endif %}">
         {{ icon('reviews') }}
         Відгуки
       </a>

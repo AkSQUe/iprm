@@ -1,0 +1,77 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Відгуки | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Відгуки</span>
+        </div>
+        <h1 class="admin-hero__title">Відгуки</h1>
+        <p class="admin-hero__subtitle">Відгуки випускників для блоку «Після навчання» на Головній</p>
+      </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.review_create') }}" class="btn-admin btn-admin--primary">{{ icon('add') }} Додати відгук</a>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    {% if reviews %}
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr><th>Автор</th><th>Оцінка</th><th>Текст</th><th>Статус</th><th>Порядок</th><th>Дії</th></tr>
+      </thead>
+      <tbody>
+        {% for r in reviews %}
+        <tr>
+          <td><strong>{{ r.author_name }}</strong>{% if r.byline != r.author_name %}<br><small class="admin-text-muted">{{ r.byline }}</small>{% endif %}</td>
+          <td>{{ '★' * r.rating }}</td>
+          <td>{{ r.text[:90] }}{% if r.text|length > 90 %}…{% endif %}</td>
+          <td>
+            {% if r.is_published %}<span class="badge badge--active">Опубліковано</span>{% else %}<span class="badge badge--draft">Чернетка</span>{% endif %}
+          </td>
+          <td>{{ r.sort_order }}</td>
+          <td>
+            <div class="admin-actions-row">
+              <a href="{{ url_for('admin.review_edit', review_id=r.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('edit') }}</a>
+              <form method="POST" action="{{ url_for('admin.review_toggle', review_id=r.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">{{ 'Зняти' if r.is_published else 'Опублікувати' }}</button>
+              </form>
+              <form method="POST" action="{{ url_for('admin.review_delete', review_id=r.id) }}" data-confirm="Видалити відгук?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">{{ icon('delete') }}</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div class="admin-empty">
+      {{ icon('reviews', cls='admin-empty__icon') }}
+      <h3 class="admin-empty__title">Відгуків ще немає</h3>
+      <p>Поки їх нема, на Головній показується тимчасова заглушка. Додайте перший відгук.</p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

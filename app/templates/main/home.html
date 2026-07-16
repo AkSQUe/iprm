@@ -250,7 +250,38 @@
   </section>
 
   {# TODO(Фаза 4): "Карта прогресу" -- маршрути/пакети (статичний блок). #}
-  {# TODO(Фаза 3): "Після навчання" -- відгуки (модель Review + заглушка). #}
+
+  <!-- ===== ПІСЛЯ НАВЧАННЯ (відгуки) ===== -->
+  <section class="iprm-section" aria-labelledby="reviews-title">
+    <div class="iprm-section__inner">
+      <h2 id="reviews-title" class="iprm-section__title">Після <span class="apple-gradient-text">навчання</span></h2>
+      <p class="iprm-section__subtitle">Досвід фахівців після практики</p>
+      <div class="home-reviews">
+        {% if reviews %}
+          {% for r in reviews %}
+          <figure class="home-review apple-reveal">
+            <div class="home-review__stars" aria-label="Оцінка {{ r.rating }} з 5">{{ '★' * r.rating }}</div>
+            <blockquote class="home-review__text">{{ r.text }}</blockquote>
+            <figcaption class="home-review__author">{{ r.byline }}</figcaption>
+          </figure>
+          {% endfor %}
+        {% else %}
+          {# TODO(заглушка): демо-цитати, поки нема реальних відгуків.
+             Прибрати цей {% else %}-блок, коли в адмінці з'являться опубліковані відгуки. #}
+          <figure class="home-review apple-reveal">
+            <div class="home-review__stars" aria-label="Оцінка 5 з 5">★★★★★</div>
+            <blockquote class="home-review__text">Після практики стало зрозуміло, як запускати процедуру без хаосу: протокол, матеріали, собівартість і комунікація з пацієнтом.</blockquote>
+            <figcaption class="home-review__author">Олена · Київ · лікарка-косметологиня</figcaption>
+          </figure>
+          <figure class="home-review apple-reveal">
+            <div class="home-review__stars" aria-label="Оцінка 5 з 5">★★★★★</div>
+            <blockquote class="home-review__text">Найцінніше — клінічна логіка й спокійний супровід тренера. Усе без зайвих обіцянок.</blockquote>
+            <figcaption class="home-review__author">Марина · Львів · власниця кабінету</figcaption>
+          </figure>
+        {% endif %}
+      </div>
+    </div>
+  </section>
 
   <!-- ===== ЯК ЦЕ ПРАЦЮЄ ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="how-title">

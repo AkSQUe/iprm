@@ -1,0 +1,80 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{% if review %}Редагування відгуку{% else %}Новий відгук{% endif %} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.reviews_list') }}" class="admin-breadcrumb__link">Відгуки</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">{% if review %}Редагування{% else %}Новий{% endif %}</span>
+        </div>
+        <h1 class="admin-hero__title">{% if review %}Редагування відгуку{% else %}Новий відгук{% endif %}</h1>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <form method="POST" class="admin-form">
+      {{ form.csrf_token }}
+      {% include 'admin/partials/_form_errors.html' %}
+
+      <div class="form-section admin-form__section">
+        <div class="admin-form__grid">
+          <div class="form-group">
+            <label for="author_name">{{ form.author_name.label.text }}</label>
+            {{ form.author_name(class="form-input", id="author_name") }}
+          </div>
+          <div class="form-group">
+            <label for="rating">{{ form.rating.label.text }}</label>
+            {{ form.rating(class="form-input", id="rating") }}
+          </div>
+          <div class="form-group">
+            <label for="author_role">{{ form.author_role.label.text }}</label>
+            {{ form.author_role(class="form-input", id="author_role") }}
+            {% if form.author_role.description %}<small class="form-hint">{{ form.author_role.description }}</small>{% endif %}
+          </div>
+          <div class="form-group">
+            <label for="city">{{ form.city.label.text }}</label>
+            {{ form.city(class="form-input", id="city") }}
+          </div>
+          <div class="form-group admin-form__full">
+            <label for="text">{{ form.text.label.text }}</label>
+            {{ form.text(class="form-input", id="text", rows="4") }}
+          </div>
+          <div class="form-group">
+            <label for="sort_order">{{ form.sort_order.label.text }}</label>
+            {{ form.sort_order(class="form-input", id="sort_order", type="number", min="0") }}
+          </div>
+          <div class="form-group admin-form__full">
+            <div class="form-checkbox">
+              {{ form.is_published(id="is_published") }}
+              <label for="is_published">{{ form.is_published.label.text }}</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-form__actions">
+        <a href="{{ url_for('admin.reviews_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+        <button type="submit" class="btn-admin btn-admin--primary">
+          <span class="iprm-btn__arrow">&#x2197;</span>
+          {% if review %}Зберегти{% else %}Додати{% endif %}
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}
