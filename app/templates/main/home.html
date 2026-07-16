@@ -3,6 +3,38 @@
 {% block title %}Інститут Плазмотерапії та Регенеративної Медицини | ІПРМ{% endblock %}
 {% block meta_description %}Післядипломна освіта для лікарів: плазмотерапія (PRP/PRF/PPP), регенеративна медицина, ін'єкційні та апаратні методики. Практика, дати старту, бали БПР.{% endblock %}
 
+{% block jsonld %}
+{% set _home = url_for('main.index', _external=True) %}
+{% set socials = [site_settings.facebook_url, site_settings.instagram_url, site_settings.telegram_url] | select | list %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "EducationalOrganization",
+      "@id": "{{ _home }}#org",
+      "name": "{{ site_settings.company_name }}",
+      "alternateName": "{{ site_settings.company_full_name }}",
+      "url": "{{ _home }}",
+      "logo": "{{ url_for('static', filename='svg/IPRM-logo-complex.svg', _external=True) }}",
+      "telephone": "{{ site_settings.phone_primary }}",
+      "email": "{{ site_settings.email }}",
+      "address": {"@type": "PostalAddress", "addressCountry": "UA", "addressLocality": "{{ site_settings.city }}"}{% if socials %},
+      "sameAs": [{% for s in socials %}"{{ s }}"{% if not loop.last %}, {% endif %}{% endfor %}]{% endif %}
+    },
+    {
+      "@type": "WebSite",
+      "@id": "{{ _home }}#website",
+      "url": "{{ _home }}",
+      "name": "{{ site_settings.company_name }}",
+      "inLanguage": "uk",
+      "publisher": {"@id": "{{ _home }}#org"}
+    }
+  ]
+}
+</script>
+{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-home.css') }}?v={{ assets_version }}">
