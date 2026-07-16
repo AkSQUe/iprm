@@ -83,8 +83,13 @@ def review_toggle(review_id):
     review = db.session.get(Review, review_id)
     if review:
         review.is_published = not review.is_published
-        db.session.commit()
-        flash('Публікацію змінено', 'success')
+        try:
+            db.session.commit()
+            flash('Публікацію змінено', 'success')
+        except Exception:
+            logger.exception('Failed to toggle review %d', review_id)
+            db.session.rollback()
+            flash('Помилка при оновленні', 'error')
     return redirect(url_for('admin.reviews_list'))
 
 
@@ -94,7 +99,12 @@ def review_delete(review_id):
     review = db.session.get(Review, review_id)
     if review:
         db.session.delete(review)
-        db.session.commit()
-        audit_logger.info('Admin %s deleted review %s', current_user.email, review_id)
-        flash('Відгук видалено', 'success')
+        try:
+            db.session.commit()
+            audit_logger.info('Admin %s deleted review %s', current_user.email, review_id)
+            flash('Відгук видалено', 'success')
+        except Exception:
+            logger.exception('Failed to delete review %d', review_id)
+            db.session.rollback()
+            flash('Помилка при видаленні', 'error')
     return redirect(url_for('admin.reviews_list'))

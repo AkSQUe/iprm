@@ -15,10 +15,8 @@ from app.models.b2b_request import B2BRequest
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest
-from app.models.registration import EventRegistration
 from app.services.recaptcha import verify_request as verify_recaptcha
 from app.utils import ensure_utc
-from sqlalchemy import func
 
 # Обмеження довжини полів клієнтської форми "Запит на проведення".
 _REQUEST_EMAIL_MAX = 254
@@ -37,52 +35,12 @@ LEGACY_REDIRECTS = {
 }
 
 
-def _capacity_map(course_ids):
-    """Повертає {CourseInstance.id: seats_left} для published/active проведень.
-
-    seats_left == None -> місткість не задана (необмежено). Інакше -- скільки
-    вільних місць (>= 0). Агрегує `COUNT(*)` активних реєстрацій одним запитом
-    замість N+1.
-    """
-    if not course_ids:
-        return {}
-    rows = (
-        db.session.query(
-            CourseInstance.id,
-            CourseInstance.max_participants,
-            Course.max_participants.label('course_max'),
-            func.count(EventRegistration.id).label('active_count'),
-        )
-        .join(Course, Course.id == CourseInstance.course_id)
-        .outerjoin(
-            EventRegistration,
-            db.and_(
-                EventRegistration.instance_id == CourseInstance.id,
-                EventRegistration.status.notin_(['cancelled']),
-            ),
-        )
-        .filter(
-            CourseInstance.course_id.in_(course_ids),
-            CourseInstance.status.in_(('published', 'active')),
-        )
-        .group_by(CourseInstance.id, CourseInstance.max_participants, Course.max_participants)
-        .all()
-    )
-    capacity = {}
-    for inst_id, inst_max, course_max, active_count in rows:
-        cap = inst_max if inst_max is not None else course_max
-        capacity[inst_id] = None if cap is None else max(cap - active_count, 0)
-    return capacity
-
-
-def _open_from_capacity(capacity):
-    """Множина id проведень, відкритих для реєстрації (є вільні місця)."""
-    return {i for i, left in capacity.items() if left is None or left > 0}
-
-
-def _open_instance_ids(course_ids):
-    """Повертає set id проведень, відкритих для реєстрації."""
-    return _open_from_capacity(_capacity_map(course_ids))
+# Хелпери місткості винесено у спільний сервіс (course_listing) -- реюз із
+# Головною. Аліаси зберігають наявні внутрішні виклики без змін.
+from app.services.course_listing import (  # noqa: E402
+    capacity_map as _capacity_map,
+    open_from_capacity as _open_from_capacity,
+)
 
 
 _ATTENDANCE_MODE = {
@@ -209,24 +167,10 @@ def _ics_escape(text):
 @courses_bp.route('/')
 def course_list():
     """Каталог: всі активні курси (навіть без запланованих проведень)."""
-    courses = Course.query.options(
-        joinedload(Course.trainer),
-        selectinload(Course.instances).joinedload(CourseInstance.trainer),
-        selectinload(Course.instances).selectinload(CourseInstance.tariffs),
-    ).filter(Course.is_active.is_(True)).order_by(
-        Course.is_pinned.desc(), Course.sort_order, Course.title,
-    ).all()
-
-    now = datetime.now(timezone.utc)
-    upcoming_by_course = {
-        c.id: sorted(
-            [i for i in c.instances
-             if i.status in ('published', 'active')
-             and (i.start_date is None or ensure_utc(i.start_date) >= now)],
-            key=lambda i: ensure_utc(i.start_date) or datetime.max.replace(tzinfo=timezone.utc),
-        )
-        for c in courses
-    }
+    from app.services import course_listing
+    courses, upcoming_by_course, capacity, open_ids = (
+        course_listing.gather_active_courses()
+    )
 
     # Плоский список найближчих instances для секції "Графік".
     # `upcoming_instances` -- топ-5 для view-режиму "Список".
@@ -236,9 +180,6 @@ def course_list():
         key=lambda i: ensure_utc(i.start_date) or datetime.max.replace(tzinfo=timezone.utc),
     )
     upcoming_instances = upcoming_instances_all[:5]
-
-    capacity = _capacity_map([c.id for c in courses])
-    open_ids = _open_from_capacity(capacity)
 
     # Унікальні теги каталогу для бігучого рядка чіпсів (за спаданням частоти,
     # щоб найпоширеніші спеціальності були першими).
