@@ -12,6 +12,37 @@
   text-align: center;
 }
 
+/* ===== ROI: селектор курсу (на курсі його немає -- стилі лише тут) ===== */
+/* Поле курсу займає весь рядок; чек і к-сть -- нижче у дві колонки. */
+.page-home .iprm-roi__field--course {
+  grid-column: 1 / -1;
+}
+
+/* .iprm-roi__field стилізує лише input; <select> потребує власних правил,
+   інакше бере інтринсивну ширину від довгої опції й вибиває сітку. */
+.page-home .iprm-roi__field select {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 16px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  font-family: var(--iprm-font);
+  color: var(--apple-black);
+  background: var(--iprm-white);
+  border: 1px solid var(--apple-gray-light);
+  border-radius: var(--iprm-radius-sm);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+  text-overflow: ellipsis;
+}
+
+.page-home .iprm-roi__field select:focus {
+  outline: none;
+  border-color: var(--iprm-accent);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light);
+}
+
 /* ===== Лічильники ===== */
 .home-stats {
   display: grid;
