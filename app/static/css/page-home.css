@@ -192,6 +192,61 @@
   border-color: var(--iprm-nav-active);
 }
 
+/* ===== Карта прогресу ===== */
+.home-paths {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.home-path {
+  padding: 1.75rem;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+}
+
+.home-path__head {
+  margin-bottom: 1rem;
+}
+
+.home-path__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--apple-black);
+}
+
+.home-path__badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+  color: var(--iprm-nav-active);
+  background: var(--iprm-accent-light);
+  border-radius: var(--iprm-radius-sm);
+}
+
+.home-path__levels {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--apple-gray);
+  line-height: 1.6;
+}
+
+.home-path__levels li {
+  margin-bottom: 0.5rem;
+}
+
+.home-path__levels strong {
+  color: var(--apple-black);
+}
+
+@media (max-width: 860px) {
+  .home-paths {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ===== Відгуки ===== */
 .home-reviews {
   display: grid;

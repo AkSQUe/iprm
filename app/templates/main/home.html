@@ -249,7 +249,53 @@
     </div>
   </section>
 
-  {# TODO(Фаза 4): "Карта прогресу" -- маршрути/пакети (статичний блок). #}
+  <!-- ===== КАРТА ПРОГРЕСУ ===== -->
+  {# TODO(майбутня фіча): наразі статичний редакційний блок. Коли з'явиться
+     модель маршрутів/пакетів (рівні + бандл-знижки як дані) -- замінити цей
+     хардкод динамічним рендером. #}
+  <section class="iprm-section" aria-labelledby="paths-title">
+    <div class="iprm-section__inner">
+      <h2 id="paths-title" class="iprm-section__title">Карта <span class="apple-gradient-text">прогресу</span></h2>
+      <p class="iprm-section__subtitle">Не випадкові курси, а маршрут професійного росту</p>
+      <div class="home-paths">
+        <article class="home-path apple-reveal">
+          <div class="home-path__head">
+            <h3 class="home-path__title">Естетист</h3>
+            <span class="home-path__badge">3 рівні · пакет −15%</span>
+          </div>
+          <ol class="home-path__levels">
+            <li><strong>Естетичний догляд</strong> — фундамент професії</li>
+            <li><strong>Апаратна косметологія</strong> — технологічні послуги</li>
+            <li><strong>Власний кабінет</strong> — прайс, сервіс і запис</li>
+          </ol>
+        </article>
+        <article class="home-path apple-reveal">
+          <div class="home-path__head">
+            <h3 class="home-path__title">Ін'єкційний маршрут лікаря</h3>
+            <span class="home-path__badge">3 рівні · пакет −18%</span>
+          </div>
+          <ol class="home-path__levels">
+            <li><strong>Ботулінотерапія</strong> — ін'єкційна база</li>
+            <li><strong>Контурна пластика</strong> — просунуті кейси</li>
+            <li><strong>Контурна пластика PRO</strong> — експертний рівень</li>
+          </ol>
+        </article>
+        <article class="home-path apple-reveal">
+          <div class="home-path__head">
+            <h3 class="home-path__title">Плазмотерапія за спеціальностями</h3>
+            <span class="home-path__badge">2 рівні · пакет −20%</span>
+          </div>
+          <ol class="home-path__levels">
+            <li><strong>Базова плазмотерапія</strong> — для всіх спеціалізацій</li>
+            <li><strong>Трихологія та дерматологія</strong> — клінічні протоколи</li>
+          </ol>
+        </article>
+      </div>
+      <div class="home-section-cta">
+        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">Обрати курс маршруту</a>
+      </div>
+    </div>
+  </section>
 
   <!-- ===== ПІСЛЯ НАВЧАННЯ (відгуки) ===== -->
   <section class="iprm-section" aria-labelledby="reviews-title">
