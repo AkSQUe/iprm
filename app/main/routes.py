@@ -11,11 +11,76 @@ from app.services.recaptcha import verify_request as verify_recaptcha
 @main_bp.route('/')
 def index():
     """Головна сторінка. Каталог курсів живе окремо на /courses
-    (courses.course_list) -- редіректу більше немає.
+    (courses.course_list) -- редіректу більше немає."""
+    from datetime import datetime, timezone
+    from sqlalchemy.orm import joinedload, selectinload
+    from app.models.course_instance import CourseInstance
+    from app.models.trainer import Trainer
+    from app.models.clinic import Clinic
+    # Реюз хелперів місткості з каталогу (ліниво -- уникаємо циклічного імпорту).
+    from app.courses.routes import _capacity_map, _open_from_capacity
+    from app.utils import ensure_utc
 
-    Контент наповнюється по фазах; наразі -- каркас. Дані з БД додаються
-    в наступних фазах (рекомендовані курси, найближчі дати, тренери, цифри)."""
-    return render_template('main/home.html', active_nav='home')
+    now = datetime.now(timezone.utc)
+
+    active_courses = Course.query.options(
+        joinedload(Course.trainer),
+        selectinload(Course.instances).joinedload(CourseInstance.trainer),
+        selectinload(Course.instances).selectinload(CourseInstance.tariffs),
+    ).filter(Course.is_active.is_(True)).order_by(
+        Course.is_pinned.desc(), Course.is_featured.desc(),
+        Course.sort_order, Course.title,
+    ).all()
+
+    upcoming_by_course = {
+        c.id: sorted(
+            [i for i in c.instances
+             if i.status in ('published', 'active')
+             and (i.start_date is None or ensure_utc(i.start_date) >= now)],
+            key=lambda i: ensure_utc(i.start_date) or datetime.max.replace(tzinfo=timezone.utc),
+        )
+        for c in active_courses
+    }
+    capacity = _capacity_map([c.id for c in active_courses])
+    open_ids = _open_from_capacity(capacity)
+
+    # Рекомендовані курси (featured/pinned першими) -- сітка на Головній.
+    featured_courses = active_courses[:6]
+
+    # Найближчі проведення (плоский список) -- блок "Календар".
+    home_upcoming = sorted(
+        [i for c in active_courses for i in upcoming_by_course[c.id] if i.start_date],
+        key=lambda i: ensure_utc(i.start_date),
+    )[:6]
+
+    # Курси з ціною для селектора ROI-калькулятора.
+    roi_courses = []
+    for c in active_courses:
+        insts = upcoming_by_course.get(c.id, [])
+        prices = [i.effective_price for i in insts if i.effective_price]
+        price = min(prices) if prices else (c.base_price or 0)
+        if price and price > 0:
+            roi_courses.append({'title': c.title, 'price': int(price)})
+
+    trainers = Trainer.query.filter_by(is_active=True).order_by(
+        Trainer.full_name,
+    ).limit(6).all()
+    clinics = Clinic.query.filter_by(is_active=True).order_by(
+        Clinic.sort_order,
+    ).limit(4).all()
+
+    return render_template(
+        'main/home.html',
+        active_nav='home',
+        featured_courses=featured_courses,
+        upcoming_by_course=upcoming_by_course,
+        seats_left_map=capacity,
+        open_instance_ids=open_ids,
+        home_upcoming=home_upcoming,
+        roi_courses=roi_courses,
+        trainers=trainers,
+        clinics=clinics,
+    )
 
 
 @main_bp.route('/materials/<token>')

@@ -3,6 +3,11 @@
 {% block title %}Інститут Плазмотерапії та Регенеративної Медицини | ІПРМ{% endblock %}
 {% block meta_description %}Післядипломна освіта для лікарів: плазмотерапія (PRP/PRF/PPP), регенеративна медицина, ін'єкційні та апаратні методики. Практика, дати старту, бали БПР.{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-home.css') }}?v={{ assets_version }}">
+{% endblock %}
+
 {% block content %}
 <div class="page-home apple-page">
 
@@ -15,15 +20,284 @@
         <p class="iprm-hero__subtitle">Навчання, яке підсилює медичну практику: плазмотерапія, ін'єкційні та апаратні методики й бізнес-модулі — з практикою, датами старту та зрозумілою окупністю.</p>
         <div class="iprm-hero__actions">
           <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Обрати курс</a>
-          <a href="{{ url_for('courses.course_list') }}#schedule" class="apple-btn apple-btn--secondary apple-btn--arrow">Найближчі дати</a>
+          <a href="#schedule" class="apple-btn apple-btn--secondary apple-btn--arrow">Найближчі дати</a>
         </div>
       </div>
     </section>
   </div>
 
-  {# Наступні блоки (рекомендовані курси, чому інвестиція, тренери, флагман,
-     довіра, календар, ROI, команди, як це працює, відгуки, карта прогресу,
-     цифри, фінальний CTA) додаються у Фазах 1-4. #}
+  {# TODO(Фаза 2): блок "Інститут у цифрах" -- лічильники з БД. #}
+
+  <!-- ===== ЧОМУ ЦЕ ІНВЕСТИЦІЯ ===== -->
+  <section class="iprm-section" aria-labelledby="why-title">
+    <div class="iprm-section__inner">
+      <h2 id="why-title" class="iprm-section__title">Чому це <span class="apple-gradient-text">інвестиція</span></h2>
+      <p class="iprm-section__subtitle">Розширюй арсенал навичок — зростай у практиці</p>
+      <div class="apple-features-grid apple-features-grid--3">
+        <div class="apple-feature-card apple-reveal">
+          <h3>Методика входить у практику</h3>
+          <p>Не суха теорія, а готовий протокол, матеріали й алгоритм запуску нової послуги.</p>
+        </div>
+        <div class="apple-feature-card apple-reveal">
+          <h3>Вища професійна цінність</h3>
+          <p>Нові методики розширюють спектр послуг і підвищують ваш професійний рівень.</p>
+        </div>
+        <div class="apple-feature-card apple-reveal">
+          <h3>Окупність видно до старту</h3>
+          <p>Порахуйте, за скільки процедур курс повертає інвестицію — калькулятор нижче.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== РЕКОМЕНДОВАНІ КУРСИ ===== -->
+  {% if featured_courses %}
+  <section class="iprm-section apple-section-gray" aria-labelledby="featured-title">
+    <div class="iprm-section__inner">
+      <h2 id="featured-title" class="iprm-section__title">Обери наступний крок <span class="apple-gradient-text">у професії</span></h2>
+      <p class="iprm-section__subtitle">Рекомендовані курси інституту</p>
+      <div class="iprm-course-cards">
+        {% for course in featured_courses %}
+          {% set show_tag_filter = false %}
+          {% include 'partials/_course_card.html' %}
+        {% endfor %}
+      </div>
+      <div class="home-section-cta">
+        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">Увесь каталог</a>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== ФЛАГМАН: ПЛАЗМОТЕРАПІЯ ===== -->
+  <section class="iprm-section" aria-labelledby="flagship-title">
+    <div class="iprm-section__inner">
+      <h2 id="flagship-title" class="iprm-section__title">Флагманський <span class="apple-gradient-text">напрям</span></h2>
+      <p class="iprm-section__subtitle">Плазмотерапія та регенеративна медицина</p>
+      <p class="home-lead">PRP, PRF і PPP — не окрема «модна процедура», а система роботи з аутоплазмою: від підготовки матеріалу до протоколів для різних спеціальностей.</p>
+      <div class="home-chips" role="list" aria-label="Спеціальності">
+        {% for spec in ['Косметологія', 'Трихологія', 'Дерматологія', 'Гінекологія', 'Ортопедія', 'Стоматологія'] %}
+        <span class="iprm-tag home-chip" role="listitem">{{ spec }}</span>
+        {% endfor %}
+      </div>
+      <div class="iprm-steps">
+        <div class="iprm-steps__item apple-reveal">
+          <span class="iprm-steps__number">1</span>
+          <h3 class="iprm-steps__heading">Підготовка матеріалу</h3>
+          <p class="iprm-steps__text">Забір і робота з аутоплазмою за протоколом.</p>
+        </div>
+        <div class="iprm-steps__item apple-reveal">
+          <span class="iprm-steps__number">2</span>
+          <h3 class="iprm-steps__heading">Центрифугування</h3>
+          <p class="iprm-steps__text">Отримання PRP/PRF/PPP із контролем параметрів.</p>
+        </div>
+        <div class="iprm-steps__item apple-reveal">
+          <span class="iprm-steps__number">3</span>
+          <h3 class="iprm-steps__heading">Клінічний протокол</h3>
+          <p class="iprm-steps__text">Застосування під конкретну спеціальність і показання.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ЕКСПЕРТНІСТЬ / ТРЕНЕРИ ===== -->
+  {% if trainers %}
+  <section class="iprm-section apple-section-gray" aria-labelledby="experts-title">
+    <div class="iprm-section__inner">
+      <h2 id="experts-title" class="iprm-section__title"><span class="apple-gradient-text">Експертність</span></h2>
+      <p class="iprm-section__subtitle">Навчають ті, хто практикує щодня</p>
+      <div class="home-trainers">
+        {% for t in trainers %}
+        <article class="home-trainer apple-reveal">
+          <a class="home-trainer__link" href="{{ url_for('trainers.trainer_detail', slug=t.slug) }}">
+            <div class="home-trainer__photo">
+              {% if t.photo_src %}<img src="{{ t.photo_src }}" alt="{{ t.full_name }}" loading="lazy" width="120" height="120">{% endif %}
+            </div>
+            <h3 class="home-trainer__name">{{ t.full_name }}</h3>
+            {% if t.role %}<p class="home-trainer__role">{{ t.role }}</p>{% endif %}
+            <span class="home-trainer__more">Повний профіль →</span>
+          </a>
+        </article>
+        {% endfor %}
+      </div>
+      <div class="home-section-cta">
+        <a href="{{ url_for('trainers.trainer_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">Усі тренери</a>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== КАЛЕНДАР ===== -->
+  {% if home_upcoming %}
+  <section id="schedule" class="iprm-section" aria-labelledby="calendar-title">
+    <div class="iprm-section__inner">
+      <h2 id="calendar-title" class="iprm-section__title"><span class="apple-gradient-text">Календар</span></h2>
+      <p class="iprm-section__subtitle">Найближчі дати для реєстрації</p>
+      <div class="home-calendar">
+        {% for inst in home_upcoming %}
+        {% set course = inst.course %}
+        {% set seats = seats_left_map.get(inst.id) if inst.id in open_instance_ids else None %}
+        <div class="home-calendar__row apple-reveal">
+          <div class="home-calendar__date">{{ inst.start_date.strftime('%d.%m.%Y') }}</div>
+          <div class="home-calendar__info">
+            <a class="home-calendar__title" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">{{ course.title }}</a>
+            <div class="home-calendar__meta">
+              {% if inst.effective_trainer %}<span>{{ inst.effective_trainer.full_name }}</span>{% endif %}
+              <span>{{ inst.format_label }}</span>
+              {% if seats is not none %}<span class="{% if site_settings.seats_low_threshold and seats <= site_settings.seats_low_threshold %}home-calendar__seats--warning{% endif %}">{{ seats }} {{ seats | uk_plural('місце', 'місця', 'місць') }}</span>{% endif %}
+            </div>
+          </div>
+          <div class="home-calendar__price">
+            {% if inst.effective_price and inst.effective_price > 0 %}{% if inst.price_is_from %}від {% endif %}{{ inst.effective_price | int }} &#8372;{% else %}безкоштовно{% endif %}
+          </div>
+          <a class="apple-btn apple-btn--primary apple-btn--sm" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">Деталі</a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== ROI-КАЛЬКУЛЯТОР ===== -->
+  {% if site_settings.show_roi_calculator and roi_courses %}
+  <section class="iprm-section apple-section-gray" aria-labelledby="roi-title">
+    <div class="iprm-section__inner">
+      <h2 id="roi-title" class="iprm-section__title">Розрахунок <span class="apple-gradient-text">окупності</span></h2>
+      <p class="iprm-section__subtitle">Порахуй, як курс працюватиме на дохід</p>
+      <div class="iprm-roi apple-reveal" data-roi-calc>
+        <div class="iprm-roi__inputs">
+          <label class="iprm-roi__field">
+            <span class="iprm-roi__label">Курс</span>
+            <select class="form-input" data-roi-course>
+              {% for rc in roi_courses %}
+              <option data-price="{{ rc.price }}">{{ rc.title }} — {{ rc.price }} &#8372;</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="iprm-roi__field">
+            <span class="iprm-roi__label">Середній чек процедури, &#8372;</span>
+            <input type="number" class="form-input" data-roi-check value="2000" min="0" max="100000" step="100" inputmode="numeric">
+          </label>
+          <label class="iprm-roi__field">
+            <span class="iprm-roi__label">Процедур на місяць</span>
+            <input type="number" class="form-input" data-roi-count value="12" min="0" max="500" step="1" inputmode="numeric">
+          </label>
+        </div>
+        <div class="iprm-roi__results">
+          <div class="iprm-roi__result">
+            <span class="iprm-roi__value" data-roi-price-out>&mdash;</span>
+            <span class="iprm-roi__caption">вартість курсу</span>
+          </div>
+          <div class="iprm-roi__result">
+            <span class="iprm-roi__value" data-roi-income>&mdash;</span>
+            <span class="iprm-roi__caption">дохід на місяць</span>
+          </div>
+          <div class="iprm-roi__result">
+            <span class="iprm-roi__value" data-roi-payback>&mdash;</span>
+            <span class="iprm-roi__caption">окупність курсу</span>
+          </div>
+        </div>
+        <p class="iprm-roi__note">Розрахунок орієнтовний. Фактичний результат залежить від попиту, прайсу, витрат на матеріали й завантаженості практики.</p>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== ДОВІРА ===== -->
+  <section class="iprm-section" aria-labelledby="trust-title">
+    <div class="iprm-section__inner">
+      <h2 id="trust-title" class="iprm-section__title"><span class="apple-gradient-text">Довіра</span></h2>
+      <p class="iprm-section__subtitle">Медичний контекст без зайвих обіцянок</p>
+      <div class="apple-features-grid apple-features-grid--3">
+        <div class="apple-feature-card apple-reveal">
+          <h3>Бали БПР</h3>
+          <p>Офіційне нарахування балів безперервного професійного розвитку за сертифікованими курсами.</p>
+        </div>
+        <div class="apple-feature-card apple-reveal">
+          <h3>Практика під контролем</h3>
+          <p>Відпрацювання на моделях і демонстраціях із супроводом тренера та зворотним зв'язком.</p>
+        </div>
+        <div class="apple-feature-card apple-reveal">
+          <h3>Клініки та партнери</h3>
+          <p>Навчання спирається на клінічну базу та перевірені матеріали.</p>
+        </div>
+      </div>
+      {% if site_settings.show_clinics and clinics %}
+      <div class="home-clinics">
+        {% for cl in clinics %}
+        <a class="home-clinic apple-reveal" href="{{ url_for('clinics.clinic_detail', slug=cl.slug) }}">{{ cl.name }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  {# TODO(Фаза 4): "Карта прогресу" -- маршрути/пакети (статичний блок). #}
+  {# TODO(Фаза 3): "Після навчання" -- відгуки (модель Review + заглушка). #}
+
+  <!-- ===== ЯК ЦЕ ПРАЦЮЄ ===== -->
+  <section class="iprm-section apple-section-gray" aria-labelledby="how-title">
+    <div class="iprm-section__inner">
+      <h2 id="how-title" class="iprm-section__title">Як це <span class="apple-gradient-text">працює</span></h2>
+      <p class="iprm-section__subtitle">Від вибору курсу до нової послуги</p>
+      <div class="iprm-steps">
+        <div class="iprm-steps__item apple-reveal">
+          <span class="iprm-steps__number">1</span>
+          <h3 class="iprm-steps__heading">Оберіть напрям</h3>
+          <p class="iprm-steps__text">За освітою, досвідом, спеціальністю та бажаним рівнем чека.</p>
+        </div>
+        <div class="iprm-steps__item apple-reveal">
+          <span class="iprm-steps__number">2</span>
+          <h3 class="iprm-steps__heading">Пройдіть навчання</h3>
+          <p class="iprm-steps__text">Формат підлаштовується під графік практики — очно або онлайн.</p>
+        </div>
+        <div class="iprm-steps__item apple-reveal">
+          <span class="iprm-steps__number">3</span>
+          <h3 class="iprm-steps__heading">Практика</h3>
+          <p class="iprm-steps__text">На моделях і демонстраціях із супроводом тренера.</p>
+        </div>
+        <div class="iprm-steps__item apple-reveal">
+          <span class="iprm-steps__number">4</span>
+          <h3 class="iprm-steps__heading">Впровадження</h3>
+          <p class="iprm-steps__text">Перехід до послуги з алгоритмом, матеріалами й планом запуску.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ДЛЯ КОМАНД І КЛІНІК ===== -->
+  <section class="iprm-section" aria-labelledby="teams-title">
+    <div class="iprm-section__inner">
+      <div class="iprm-b2b apple-reveal">
+        <div class="iprm-b2b__text">
+          <h2 id="teams-title">Для команд і клінік</h2>
+          <p>Навчи команду — підсиль практику. Знижка для груп від трьох фахівців, формат під напрям клініки, салону чи кабінету.</p>
+        </div>
+        <a href="{{ url_for('courses.course_list') }}#b2b" class="apple-btn apple-btn--primary">Отримати корпоративні умови</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ФІНАЛЬНИЙ CTA ===== -->
+  <section class="iprm-section" aria-labelledby="cta-title">
+    <div class="iprm-section__inner">
+      <div class="home-cta apple-reveal">
+        <h2 id="cta-title" class="home-cta__title">Наступний <span class="apple-gradient-text">крок</span></h2>
+        <p class="home-cta__text">Розкажіть про освіту, спеціальність і бажаний напрям — підберемо маршрут без тиску та випадкових програм.</p>
+        <div class="home-cta__actions">
+          <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Обрати курс</a>
+          <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">Отримати консультацію</a>
+        </div>
+      </div>
+    </div>
+  </section>
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
+{% if site_settings.show_roi_calculator and roi_courses %}
+<script src="{{ url_for('static', filename='js/roi-calc.js') }}?v={{ assets_version }}" defer></script>
+{% endif %}
 {% endblock %}

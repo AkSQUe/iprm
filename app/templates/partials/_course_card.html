@@ -1,0 +1,95 @@
+{# Картка курсу для каталогу й Головної.
+   Очікує: course; upcoming_by_course, seats_left_map, open_instance_ids,
+   site_settings (глобальний). show_tag_filter=false ховає теги-фільтри
+   (потрібні лише в каталозі з JS-фільтрацією). #}
+{% set insts = upcoming_by_course.get(course.id, []) %}
+{% set nearest = insts[0] if insts else None %}
+{% set _cpds = insts | map(attribute='effective_cpd_points') | select | list %}
+{% set cpd_min = _cpds | min if _cpds else course.cpd_points %}
+{% set cpd_max = _cpds | max if _cpds else course.cpd_points %}
+{% set _prices = insts | map(attribute='effective_price') | select | list %}
+{% set price_min = _prices | min if _prices else course.base_price %}
+{% set price_varies = (_prices | unique | list | length) > 1 %}
+{% set duration_days = None %}
+{% if nearest and nearest.start_date %}
+  {% set duration_days = ((nearest.end_date - nearest.start_date).days + 1) if nearest.end_date else 1 %}
+{% endif %}
+<article class="iprm-course-card iprm-course-card--linked{% if course.is_featured %} iprm-course-card--featured{% endif %} apple-reveal"
+         data-tags='{{ course.tags | tojson }}'
+         data-formats='{{ insts | map(attribute="event_format") | unique | list | tojson }}'
+         data-price="{{ price_min | int if price_min and price_min > 0 else '' }}"
+         data-date="{{ nearest.start_date.strftime('%Y-%m-%d') if nearest and nearest.start_date else '' }}"
+         data-days="{{ duration_days or '' }}"
+         data-created="{{ course.created_at.strftime('%Y-%m-%d') if course.created_at else '' }}">
+  <a class="iprm-course-card__overlay" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" aria-label="{{ course.title }}"></a>
+    <div class="iprm-course-card__image">
+      {% if course.card_src %}
+        <img src="{{ course.card_src }}" alt="{{ course.title }}" loading="lazy" width="400" height="200">
+      {% endif %}
+    </div>
+    <div class="apple-card-body">
+      <p class="iprm-course-card__title">{{ course.title }}</p>
+
+      <div class="iprm-course-card__badges">
+        {% if course.is_featured %}
+        <span class="iprm-card-badge iprm-card-badge--featured">Рекомендуємо</span>
+        {% endif %}
+        {% if course.event_type %}
+        <span class="iprm-card-badge iprm-card-badge--type">{{ course.event_type_label }}</span>
+        {% endif %}
+        {% if course.difficulty_level %}
+        <span class="iprm-card-badge iprm-card-badge--level" title="{{ course.difficulty_label }}">Рівень {{ course.difficulty_level }}/3</span>
+        {% endif %}
+        {% for fmt in insts | map(attribute='format_label') | unique %}
+        <span class="iprm-card-badge iprm-card-badge--format">{{ fmt }}</span>
+        {% endfor %}
+        {% if cpd_min %}
+        <span class="iprm-card-badge iprm-card-badge--cpd">
+          {%- if cpd_max and cpd_max != cpd_min -%}
+          {{ cpd_min }}&ndash;{{ cpd_max }} {{ cpd_max | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}
+          {%- else -%}
+          {{ cpd_min }} {{ cpd_min | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}
+          {%- endif -%}
+        </span>
+        {% endif %}
+      </div>
+
+      {% if course.roi_hint %}
+      <p class="iprm-course-card__roi">{{ course.roi_hint }}</p>
+      {% endif %}
+
+      {% set card_trainer = nearest.effective_trainer if nearest else course.trainer %}
+      {% if card_trainer %}
+      <div class="iprm-course-card__trainer">
+        {% if card_trainer.photo_src %}
+        <img src="{{ card_trainer.photo_src }}" alt="{{ card_trainer.full_name }}" loading="lazy" width="28" height="28">
+        {% endif %}
+        {% if card_trainer.is_active %}
+        <a class="iprm-course-card__trainer-link" href="{{ url_for('trainers.trainer_detail', slug=card_trainer.slug) }}">{{ card_trainer.full_name }}</a>
+        {% else %}
+        <span>{{ card_trainer.full_name }}</span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <div class="iprm-course-card__facts">
+        {% if nearest and nearest.start_date %}
+        <span class="iprm-course-card__date">{{ nearest.start_date.strftime('%d.%m.%Y') }}</span>
+        {% endif %}
+        {% set seats = seats_left_map.get(nearest.id) if nearest and nearest.id in open_instance_ids else None %}
+        {% if seats is not none %}
+        <span class="iprm-course-card__seats{% if site_settings.seats_low_threshold and seats <= site_settings.seats_low_threshold %} iprm-course-card__seats--warning{% endif %}">{{ seats }} {{ seats | uk_plural('місце', 'місця', 'місць') }}</span>
+        {% endif %}
+        {% if price_min and price_min > 0 %}
+        <span class="iprm-course-card__price">{% if price_varies %}від {% endif %}{{ price_min | int }} &#8372;</span>
+        {% endif %}
+      </div>
+    </div>
+  {% if course.tags and show_tag_filter | default(true) %}
+  <div class="iprm-course-card__tags" role="group" aria-label="Фільтр за тегами">
+    {% for tag in course.tags %}
+      <button type="button" class="iprm-tag" data-tag-filter="{{ tag }}" aria-pressed="false">{{ tag }}</button>
+    {% endfor %}
+  </div>
+  {% endif %}
+</article>

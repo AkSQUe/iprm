@@ -1,0 +1,210 @@
+/* page-home.css -- стилі Головної сторінки (доповнюють apple-pages.css,
+   common.css, page-courses.css). Лише home-специфічні класи. */
+
+.page-home .apple-features-grid--3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.home-section-cta {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.home-lead {
+  max-width: 760px;
+  margin: 0 auto 1.5rem;
+  text-align: center;
+  color: var(--apple-gray);
+  line-height: 1.6;
+}
+
+.home-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+}
+
+.home-chip {
+  cursor: default;
+}
+
+/* ===== Тренери ===== */
+.home-trainers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.5rem;
+}
+
+.home-trainer__link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+.home-trainer__photo {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 0.75rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--iprm-accent-light);
+}
+
+.home-trainer__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-trainer__name {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--apple-black);
+}
+
+.home-trainer__role {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--apple-gray);
+  line-height: 1.4;
+}
+
+.home-trainer__more {
+  font-size: 0.85rem;
+  color: var(--iprm-nav-active);
+}
+
+/* ===== Календар ===== */
+.home-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.home-calendar__row {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+}
+
+.home-calendar__date {
+  flex: 0 0 auto;
+  min-width: 96px;
+  font-weight: 700;
+  color: var(--iprm-nav-active);
+}
+
+.home-calendar__info {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.home-calendar__title {
+  font-weight: 600;
+  color: var(--apple-black);
+  text-decoration: none;
+}
+
+.home-calendar__title:hover {
+  text-decoration: underline;
+}
+
+.home-calendar__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--apple-gray);
+}
+
+.home-calendar__seats--warning {
+  color: var(--iprm-warning-text, #8a6d1a);
+}
+
+.home-calendar__price {
+  flex: 0 0 auto;
+  font-weight: 700;
+  color: var(--apple-black);
+}
+
+/* ===== Клініки ===== */
+.home-clinics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.home-clinic {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  color: var(--apple-black);
+  text-decoration: none;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-accent-light);
+  border-radius: var(--iprm-radius-sm);
+}
+
+.home-clinic:hover {
+  border-color: var(--iprm-nav-active);
+}
+
+/* ===== Фінальний CTA ===== */
+.home-cta {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: var(--iprm-accent-light);
+  border-radius: var(--iprm-radius);
+}
+
+.home-cta__title {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 700;
+  color: var(--apple-black);
+}
+
+.home-cta__text {
+  max-width: 560px;
+  margin: 0 auto 1.5rem;
+  color: var(--apple-gray);
+  line-height: 1.6;
+}
+
+.home-cta__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ===== Адаптив ===== */
+@media (max-width: 860px) {
+  .page-home .apple-features-grid--3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-calendar__row {
+    gap: 0.5rem 1rem;
+  }
+  .home-calendar__price {
+    flex-basis: 100%;
+  }
+}

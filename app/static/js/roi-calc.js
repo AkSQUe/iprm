@@ -11,12 +11,23 @@
   var root = document.querySelector('[data-roi-calc]');
   if (!root) return;
 
-  var price = parseInt(root.getAttribute('data-roi-price'), 10) || 0;
+  // Опційний селектор курсу (Головна): ціна береться з обраного <option
+  // data-price>. На сторінці курсу селектора немає -> ціна з data-roi-price.
+  var courseSel = root.querySelector('[data-roi-course]');
+  var priceOut = root.querySelector('[data-roi-price-out]');
   var checkInput = root.querySelector('[data-roi-check]');
   var countInput = root.querySelector('[data-roi-count]');
   var incomeEl = root.querySelector('[data-roi-income]');
   var paybackEl = root.querySelector('[data-roi-payback]');
-  if (!checkInput || !countInput || !incomeEl || !paybackEl || price <= 0) return;
+  if (!checkInput || !countInput || !incomeEl || !paybackEl) return;
+
+  function currentPrice() {
+    if (courseSel && courseSel.options.length) {
+      var opt = courseSel.options[courseSel.selectedIndex];
+      return opt ? (parseInt(opt.getAttribute('data-price'), 10) || 0) : 0;
+    }
+    return parseInt(root.getAttribute('data-roi-price'), 10) || 0;
+  }
 
   var WEEKS_PER_MONTH = 4.345;
 
@@ -33,10 +44,13 @@
   }
 
   function recalc() {
+    var price = currentPrice();
+    if (priceOut) priceOut.textContent = price > 0 ? fmt(price) + ' ₴' : '—';
+
     var check = Math.max(0, parseFloat(checkInput.value) || 0);
     var count = Math.max(0, parseFloat(countInput.value) || 0);
 
-    if (check <= 0) {
+    if (check <= 0 || price <= 0) {
       incomeEl.textContent = '—';
       paybackEl.textContent = '—';
       return;
@@ -56,5 +70,6 @@
 
   checkInput.addEventListener('input', recalc);
   countInput.addEventListener('input', recalc);
+  if (courseSel) courseSel.addEventListener('change', recalc);
   recalc();
 })();
