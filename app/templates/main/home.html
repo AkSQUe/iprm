@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Інститут Плазмотерапії та Регенеративної Медицини | ІПРМ{% endblock %}
+{% block meta_description %}Післядипломна освіта для лікарів: плазмотерапія (PRP/PRF/PPP), регенеративна медицина, ін'єкційні та апаратні методики. Практика, дати старту, бали БПР.{% endblock %}
+
+{% block content %}
+<div class="page-home apple-page">
+
+  <!-- ===== HERO ===== -->
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero" aria-label="Головна">
+      <div class="iprm-hero__content">
+        <div class="iprm-hero__badge">Бали БПР — Сертифіковані курси</div>
+        <h1 class="iprm-hero__title">Естетична та регенеративна <span class="apple-gradient-text">медицина</span></h1>
+        <p class="iprm-hero__subtitle">Навчання, яке підсилює медичну практику: плазмотерапія, ін'єкційні та апаратні методики й бізнес-модулі — з практикою, датами старту та зрозумілою окупністю.</p>
+        <div class="iprm-hero__actions">
+          <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Обрати курс</a>
+          <a href="{{ url_for('courses.course_list') }}#schedule" class="apple-btn apple-btn--secondary apple-btn--arrow">Найближчі дати</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  {# Наступні блоки (рекомендовані курси, чому інвестиція, тренери, флагман,
+     довіра, календар, ROI, команди, як це працює, відгуки, карта прогресу,
+     цифри, фінальний CTA) додаються у Фазах 1-4. #}
+
+</div>
+{% endblock %}

@@ -10,7 +10,12 @@ from app.services.recaptcha import verify_request as verify_recaptcha
 
 @main_bp.route('/')
 def index():
-    return redirect(url_for('courses.course_list'), code=301)
+    """Головна сторінка. Каталог курсів живе окремо на /courses
+    (courses.course_list) -- редіректу більше немає.
+
+    Контент наповнюється по фазах; наразі -- каркас. Дані з БД додаються
+    в наступних фазах (рекомендовані курси, найближчі дати, тренери, цифри)."""
+    return render_template('main/home.html', active_nav='home')
 
 
 @main_bp.route('/materials/<token>')

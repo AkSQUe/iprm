@@ -10,7 +10,8 @@ from app.models.trainer import Trainer
 
 
 STATIC_URLS = [
-    ('courses.course_list', '1.0', 'weekly'),
+    ('main.index', '1.0', 'daily'),
+    ('courses.course_list', '0.9', 'weekly'),
     ('main.labs', '0.8', 'weekly'),
     ('trainers.trainer_list', '0.8', 'weekly'),
     ('blog.index', '0.7', 'weekly'),
