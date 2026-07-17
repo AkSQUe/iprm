@@ -103,7 +103,16 @@ def google_callback():
     try:
         token = client.authorize_access_token()
     except OAuthError as exc:
-        logger.warning('Google OAuth error: %s', exc.error)
+        # Діагностика: чи дійшов state у сесії (cookie не згубився). Якщо
+        # state_arg=True, а had_state=False -> сесія-cookie не долетіла до
+        # callback (SameSite/домен www vs apex/схема http vs https або
+        # canonical-редірект між /start і /callback), а не помилка коду.
+        had_state = any(k.startswith('_state_google_') for k in session.keys())
+        logger.warning(
+            'Google OAuth error: %s (%s); state_in_session=%s state_arg=%s',
+            exc.error, getattr(exc, 'description', '') or '',
+            had_state, bool(request.args.get('state')),
+        )
         flash('Помилка автентифікації через Google. Спробуйте ще раз.', 'error')
         return redirect(url_for('auth.login'))
 
