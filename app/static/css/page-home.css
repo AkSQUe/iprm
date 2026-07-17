@@ -93,52 +93,151 @@
   cursor: default;
 }
 
-/* ===== Тренери ===== */
-.home-trainers {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1.5rem;
+/* ===== Тренери: карусель (слайдер із стрілками + autoplay) ===== */
+.trainer-carousel {
+  margin-top: 2rem;
 }
 
-.home-trainer__link {
+.trainer-carousel__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.875rem;
+  margin-bottom: 0.875rem;
+}
+
+.trainer-carousel__status {
+  min-width: 54px;
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--apple-gray);
+  text-align: right;
+}
+
+.trainer-carousel__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.trainer-carousel__arrow {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 1.3rem;
+  color: var(--iprm-nav-active);
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.trainer-carousel__arrow:hover {
+  color: var(--iprm-white);
+  background: var(--iprm-accent);
+  border-color: var(--iprm-accent);
+  transform: translateY(-2px);
+}
+
+.trainer-carousel__arrow:focus-visible {
+  outline: 3px solid rgba(var(--apple-accent-rgb), 0.24);
+  outline-offset: 3px;
+}
+
+.trainer-carousel__viewport {
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+}
+
+.trainer-carousel__viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.trainer-carousel__viewport.is-jumping {
+  scroll-behavior: auto;
+}
+
+.trainer-carousel__track {
+  display: flex;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+/* 4 картки у в'юпорті (3 проміжки по 1.25rem). Фото -- квадратне на всю
+   ширину картки, тож помітно більше за колишні 120px-кружечки. */
+.trainer-slide {
+  flex: 0 0 calc((100% - 3.75rem) / 4);
+  min-width: 0;
+  overflow: hidden;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  scroll-snap-align: start;
+}
+
+.trainer-slide__link {
   display: block;
-  text-align: center;
   text-decoration: none;
   color: inherit;
 }
 
-.home-trainer__photo {
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 0.75rem;
-  border-radius: 50%;
+.trainer-slide__photo {
+  width: 100%;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   background: var(--iprm-accent-light);
 }
 
-.home-trainer__photo img {
+.trainer-slide__photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.4s ease;
 }
 
-.home-trainer__name {
-  margin: 0 0 0.25rem;
-  font-size: 1rem;
+.trainer-slide__link:hover .trainer-slide__photo img {
+  transform: scale(1.04);
+}
+
+.trainer-slide__body {
+  min-height: 120px;
+  padding: 1.1rem 1.25rem;
+}
+
+.trainer-slide__name {
+  margin: 0;
+  font-size: 1.05rem;
   font-weight: 600;
+  line-height: 1.3;
   color: var(--apple-black);
 }
 
-.home-trainer__role {
-  margin: 0 0 0.5rem;
+.trainer-slide__role {
+  margin: 0.5rem 0 0;
   font-size: 0.85rem;
+  line-height: 1.45;
   color: var(--apple-gray);
-  line-height: 1.4;
 }
 
-.home-trainer__more {
-  font-size: 0.85rem;
-  color: var(--iprm-nav-active);
+@media (max-width: 900px) {
+  .trainer-slide {
+    flex-basis: calc((100% - 1.25rem) / 2);
+  }
+}
+
+@media (max-width: 560px) {
+  .trainer-slide {
+    flex-basis: 100%;
+  }
+  .trainer-slide__body {
+    min-height: auto;
+  }
 }
 
 /* ===== Календар ===== */

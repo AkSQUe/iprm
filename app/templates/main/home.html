@@ -155,20 +155,39 @@
     <div class="iprm-section__inner">
       <h2 id="experts-title" class="iprm-section__title"><span class="apple-gradient-text">Експертність</span></h2>
       <p class="iprm-section__subtitle">Навчають ті, хто практикує щодня</p>
-      <div class="home-trainers">
-        {% for t in trainers %}
-        <article class="home-trainer apple-reveal">
-          <a class="home-trainer__link" href="{{ url_for('trainers.trainer_detail', slug=t.slug) }}">
-            <div class="home-trainer__photo">
-              {% if t.photo_src %}<img src="{{ t.photo_src }}" alt="{{ t.full_name }}" loading="lazy" width="120" height="120">{% endif %}
-            </div>
-            <h3 class="home-trainer__name">{{ t.full_name }}</h3>
-            {% if t.role %}<p class="home-trainer__role">{{ t.role }}</p>{% endif %}
-            <span class="home-trainer__more">Повний профіль →</span>
-          </a>
-        </article>
-        {% endfor %}
+
+      <div class="trainer-carousel apple-reveal" data-trainer-carousel
+           aria-roledescription="карусель" aria-label="Тренери ІПРМ">
+        <div class="trainer-carousel__toolbar">
+          <p class="trainer-carousel__status">
+            <span data-carousel-position>1</span> із <span data-carousel-total>{{ trainers | length }}</span>
+          </p>
+          <div class="trainer-carousel__actions">
+            <button type="button" class="trainer-carousel__arrow" data-carousel-prev
+                    aria-label="Попередній тренер" title="Попередній тренер"><span aria-hidden="true">&#8592;</span></button>
+            <button type="button" class="trainer-carousel__arrow" data-carousel-next
+                    aria-label="Наступний тренер" title="Наступний тренер"><span aria-hidden="true">&#8594;</span></button>
+          </div>
+        </div>
+        <div class="trainer-carousel__viewport" tabindex="0">
+          <div class="trainer-carousel__track">
+            {% for t in trainers %}
+            <article class="trainer-slide">
+              <a class="trainer-slide__link" href="{{ url_for('trainers.trainer_detail', slug=t.slug) }}">
+                <div class="trainer-slide__photo">
+                  {% if t.photo_src %}<img src="{{ t.photo_src }}" alt="{{ t.full_name }}" loading="lazy" width="320" height="320">{% endif %}
+                </div>
+                <div class="trainer-slide__body">
+                  <h3 class="trainer-slide__name">{{ t.full_name }}</h3>
+                  {% if t.role %}<p class="trainer-slide__role">{{ t.role }}</p>{% endif %}
+                </div>
+              </a>
+            </article>
+            {% endfor %}
+          </div>
+        </div>
       </div>
+
       <div class="home-section-cta">
         <a href="{{ url_for('trainers.trainer_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">Усі тренери</a>
       </div>
@@ -421,6 +440,7 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
 {% if home_stats %}<script src="{{ url_for('static', filename='js/counters.js') }}?v={{ assets_version }}" defer></script>{% endif %}
+{% if trainers %}<script src="{{ url_for('static', filename='js/trainer-carousel.js') }}?v={{ assets_version }}" defer></script>{% endif %}
 {% if site_settings.show_roi_calculator and roi_courses %}
 <script src="{{ url_for('static', filename='js/roi-calc.js') }}?v={{ assets_version }}" defer></script>
 {% endif %}

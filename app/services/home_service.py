@@ -69,7 +69,7 @@ def home_context():
         if price and price > 0:
             roi_courses.append({'title': c.title, 'price': int(price), 'slug': c.slug})
 
-    # Один запит тренерів: перші 6 -- показ, len -- для лічильника.
+    # Один запит тренерів: до 12 -- слайдер, len -- для лічильника.
     all_trainers = Trainer.query.filter_by(is_active=True).order_by(
         Trainer.full_name,
     ).all()
@@ -84,7 +84,7 @@ def home_context():
         'open_instance_ids': open_ids,
         'home_upcoming': home_upcoming,
         'roi_courses': roi_courses,
-        'trainers': all_trainers[:6],
+        'trainers': all_trainers[:12],
         'clinics': clinics,
         'reviews': Review.published(),
         'home_stats': _home_stats(courses, upcoming_by_course),
