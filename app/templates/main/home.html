@@ -47,12 +47,17 @@
   <div class="iprm-hero-wrap">
     <section class="iprm-hero" aria-label="Головна">
       <div class="iprm-hero__content">
-        <div class="iprm-hero__badge">Бали БПР — Сертифіковані курси</div>
-        <h1 class="iprm-hero__title">Естетична та регенеративна <span class="apple-gradient-text">медицина</span></h1>
-        <p class="iprm-hero__subtitle">Навчання, яке підсилює медичну практику: плазмотерапія, ін'єкційні та апаратні методики й бізнес-модулі — з практикою, датами старту та зрозумілою окупністю.</p>
+        <div class="iprm-hero__badge">Інститут плазмотерапії та регенеративної медицини</div>
+        <h1 class="iprm-hero__title">Навчання, яке підсилює <span class="apple-gradient-text">медичну практику</span></h1>
+        <p class="iprm-hero__subtitle">Післядипломна освіта для лікарів у сфері плазмотерапії та регенеративної медицини: від біології аутологічних методик і вибору протоколу до впевненого впровадження у клінічну практику.</p>
         <div class="iprm-hero__actions">
           <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Обрати курс</a>
           <a href="#schedule" class="apple-btn apple-btn--secondary apple-btn--arrow">Найближчі дати</a>
+        </div>
+        <div class="home-hero-proof" aria-label="Переваги навчання">
+          <div><strong>Практика</strong><span>під керівництвом тренера</span></div>
+          <div><strong>Бали БПР</strong><span>у сертифікованих програмах</span></div>
+          <div><strong>Протоколи</strong><span>для роботи після курсу</span></div>
         </div>
       </div>
     </section>
@@ -77,23 +82,32 @@
   </section>
   {% endif %}
 
-  <!-- ===== ЧОМУ ЦЕ ІНВЕСТИЦІЯ ===== -->
+  <!-- ===== НАВІЩО ЦЕ ЛІКАРЮ ===== -->
   <section class="iprm-section" aria-labelledby="why-title">
     <div class="iprm-section__inner">
-      <h2 id="why-title" class="iprm-section__title">Чому це <span class="apple-gradient-text">інвестиція</span></h2>
-      <p class="iprm-section__subtitle">Розширюй арсенал навичок — зростай у практиці</p>
-      <div class="apple-features-grid apple-features-grid--3">
+      <p class="home-eyebrow">Навіщо це лікарю</p>
+      <h2 id="why-title" class="iprm-section__title">Нова процедура — <span class="apple-gradient-text">без зміни спеціальності</span></h2>
+      <p class="iprm-section__subtitle">Плазмотерапія розширює перелік послуг, підвищує професійну цінність фахівця й додає прогнозований дохід. Навчання веде до конкретної дії, а не до сертифіката «на полицю».</p>
+      <div class="apple-features-grid apple-features-grid--4">
         <div class="apple-feature-card apple-reveal">
-          <h3>Методика входить у практику</h3>
-          <p>Не суха теорія, а готовий протокол, матеріали й алгоритм запуску нової послуги.</p>
+          <span class="home-num">01</span>
+          <h3>Нова послуга у прайсі</h3>
+          <p>Аутоплазма застосовується в багатьох напрямах — ви додаєте процедуру у власну практику без переходу в іншу спеціальність.</p>
         </div>
         <div class="apple-feature-card apple-reveal">
+          <span class="home-num">02</span>
+          <h3>Робота з матеріалом пацієнта</h3>
+          <p>Аутологічний метод: використовується плазма самого пацієнта. Зрозумілий і контрольований протокол роботи.</p>
+        </div>
+        <div class="apple-feature-card apple-reveal">
+          <span class="home-num">03</span>
           <h3>Вища професійна цінність</h3>
-          <p>Нові методики розширюють спектр послуг і підвищують ваш професійний рівень.</p>
+          <p>Складніші протоколи посилюють експертне позиціювання лікаря та відкривають нові клінічні задачі.</p>
         </div>
         <div class="apple-feature-card apple-reveal">
-          <h3>Окупність видно до старту</h3>
-          <p>Порахуйте, за скільки процедур курс повертає інвестицію — калькулятор нижче.</p>
+          <span class="home-num">04</span>
+          <h3>Бали БПР офіційно</h3>
+          <p>Навчання зараховується у ваш безперервний професійний розвиток — із сертифікатом установленого зразка.</p>
         </div>
       </div>
     </div>
@@ -118,33 +132,33 @@
   </section>
   {% endif %}
 
-  <!-- ===== ФЛАГМАН: ПЛАЗМОТЕРАПІЯ ===== -->
-  <section class="iprm-section" aria-labelledby="flagship-title">
+  <!-- ===== 8 НАПРЯМІВ (спеціальності) ===== -->
+  <section class="iprm-section" id="specialties" aria-labelledby="specialties-title">
     <div class="iprm-section__inner">
-      <h2 id="flagship-title" class="iprm-section__title">Флагманський <span class="apple-gradient-text">напрям</span></h2>
-      <p class="iprm-section__subtitle">Плазмотерапія та регенеративна медицина</p>
-      <p class="home-lead">PRP, PRF і PPP — не окрема «модна процедура», а система роботи з аутоплазмою: від підготовки матеріалу до протоколів для різних спеціальностей.</p>
-      <div class="home-chips" role="list" aria-label="Спеціальності">
-        {% for spec in ['Косметологія', 'Трихологія', 'Дерматологія', 'Гінекологія', 'Ортопедія', 'Стоматологія'] %}
-        <span class="iprm-tag home-chip" role="listitem">{{ spec }}</span>
+      <p class="home-eyebrow">Міждисциплінарний підхід</p>
+      <h2 id="specialties-title" class="iprm-section__title">Одна технологія — <span class="apple-gradient-text">різні клінічні задачі</span></h2>
+      <p class="iprm-section__subtitle">PRP, PRF і PPP — не «модна процедура», а система роботи з аутоплазмою. Оберіть спеціальність і подивіться, де регенеративні методики доповнюють маршрут пацієнта.</p>
+      <div class="home-specialties">
+        {% set _specs = [
+          ('Дерматологія', 'Якість шкіри, регенерація та супровід відновлення.'),
+          ('Косметологія', 'Природні протоколи для обличчя, шиї та делікатних зон.'),
+          ('Трихологія', 'Комплексна робота з волосистою частиною голови.'),
+          ('Стоматологія', 'Підтримка регенерації тканин у стоматологічних протоколах.'),
+          ('Гінекологія', 'Аутологічні підходи у практиці лікаря-гінеколога.'),
+          ('Травматологія', 'Локальні ін\'єкційні методики та УЗД-контроль.'),
+          ('Ортопедія', 'Регенеративні протоколи для суглобів і м\'яких тканин.'),
+          ('Реабілітація', 'Поєднання методик у відновному маршруті пацієнта.'),
+        ] %}
+        {% for name, desc in _specs %}
+        <article class="home-specialty apple-reveal">
+          <span class="home-num">{{ '%02d' | format(loop.index) }}</span>
+          <h3 class="home-specialty__name">{{ name }}</h3>
+          <p class="home-specialty__desc">{{ desc }}</p>
+        </article>
         {% endfor %}
       </div>
-      <div class="iprm-steps">
-        <div class="iprm-steps__item apple-reveal">
-          <span class="iprm-steps__number">1</span>
-          <h3 class="iprm-steps__heading">Підготовка матеріалу</h3>
-          <p class="iprm-steps__text">Забір і робота з аутоплазмою за протоколом.</p>
-        </div>
-        <div class="iprm-steps__item apple-reveal">
-          <span class="iprm-steps__number">2</span>
-          <h3 class="iprm-steps__heading">Центрифугування</h3>
-          <p class="iprm-steps__text">Отримання PRP/PRF/PPP із контролем параметрів.</p>
-        </div>
-        <div class="iprm-steps__item apple-reveal">
-          <span class="iprm-steps__number">3</span>
-          <h3 class="iprm-steps__heading">Клінічний протокол</h3>
-          <p class="iprm-steps__text">Застосування під конкретну спеціальність і показання.</p>
-        </div>
+      <div class="home-section-cta">
+        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">Програми за спеціальністю</a>
       </div>
     </div>
   </section>
@@ -272,23 +286,32 @@
   </section>
   {% endif %}
 
-  <!-- ===== ДОВІРА ===== -->
-  <section class="iprm-section" aria-labelledby="trust-title">
+  <!-- ===== ЩО ЗАЛИШАЄТЬСЯ З ЛІКАРЕМ ===== -->
+  <section class="iprm-section" aria-labelledby="assurance-title">
     <div class="iprm-section__inner">
-      <h2 id="trust-title" class="iprm-section__title"><span class="apple-gradient-text">Довіра</span></h2>
+      <p class="home-eyebrow">Після навчання</p>
+      <h2 id="assurance-title" class="iprm-section__title">Що залишається <span class="apple-gradient-text">з лікарем</span></h2>
       <p class="iprm-section__subtitle">Медичний контекст без зайвих обіцянок</p>
-      <div class="apple-features-grid apple-features-grid--3">
+      <div class="apple-features-grid apple-features-grid--4">
         <div class="apple-feature-card apple-reveal">
-          <h3>Бали БПР</h3>
-          <p>Офіційне нарахування балів безперервного професійного розвитку за сертифікованими курсами.</p>
+          <span class="home-num">01</span>
+          <h3>Протокол і практична навичка</h3>
+          <p>Зрозуміла логіка роботи та техніка, відпрацьована під наглядом тренера.</p>
         </div>
         <div class="apple-feature-card apple-reveal">
-          <h3>Практика під контролем</h3>
-          <p>Відпрацювання на моделях і демонстраціях із супроводом тренера та зворотним зв'язком.</p>
+          <span class="home-num">02</span>
+          <h3>Навчальні матеріали</h3>
+          <p>Опора для повторення та підготовки до перших процедур.</p>
         </div>
         <div class="apple-feature-card apple-reveal">
-          <h3>Клініки та партнери</h3>
-          <p>Навчання спирається на клінічну базу та перевірені матеріали.</p>
+          <span class="home-num">03</span>
+          <h3>Підтвердження освіти</h3>
+          <p>Сертифікат і бали БПР у програмах, де це передбачено.</p>
+        </div>
+        <div class="apple-feature-card apple-reveal">
+          <span class="home-num">04</span>
+          <h3>Підтримка ментора</h3>
+          <p>Післяосвітній супровід для впевненого старту та розбору практичних запитань.</p>
         </div>
       </div>
       {% if site_settings.show_clinics and clinics %}
@@ -301,50 +324,42 @@
     </div>
   </section>
 
-  <!-- ===== КАРТА ПРОГРЕСУ ===== -->
-  {# TODO(майбутня фіча): наразі статичний редакційний блок. Коли з'явиться
-     модель маршрутів/пакетів (рівні + бандл-знижки як дані) -- замінити цей
-     хардкод динамічним рендером. #}
-  <section class="iprm-section" aria-labelledby="paths-title">
+  <!-- ===== КАРТА ПРОГРЕСУ (4-рівневий маршрут) ===== -->
+  {# TODO(майбутня фіча): статичний редакційний блок. Коли з'явиться модель
+     маршрутів/рівнів як даних -- замінити хардкод динамічним рендером. #}
+  <section class="iprm-section apple-section-gray" aria-labelledby="route-title">
     <div class="iprm-section__inner">
-      <h2 id="paths-title" class="iprm-section__title">Карта <span class="apple-gradient-text">прогресу</span></h2>
-      <p class="iprm-section__subtitle">Не випадкові курси, а маршрут професійного росту</p>
-      <div class="home-paths">
-        <article class="home-path apple-reveal">
-          <div class="home-path__head">
-            <h3 class="home-path__title">Естетист</h3>
-            <span class="home-path__badge">3 рівні · пакет −15%</span>
-          </div>
-          <ol class="home-path__levels">
-            <li><strong>Естетичний догляд</strong> — фундамент професії</li>
-            <li><strong>Апаратна косметологія</strong> — технологічні послуги</li>
-            <li><strong>Власний кабінет</strong> — прайс, сервіс і запис</li>
-          </ol>
+      <p class="home-eyebrow">Карта професійного зростання</p>
+      <h2 id="route-title" class="iprm-section__title">Від базового курсу <span class="apple-gradient-text">до власної клініки</span></h2>
+      <p class="iprm-section__subtitle">Почніть із бази та рухайтеся до складніших протоколів, системного впровадження плазмотерапії й управління власним медичним напрямом.</p>
+      <div class="home-route">
+        <article class="home-route__step apple-reveal">
+          <div class="home-route__meta"><strong>01</strong><span>Рівень 1</span></div>
+          <h3 class="home-route__title">Базовий курс із плазмотерапії</h3>
+          <p class="home-route__text">Біологія аутоплазми, PRP, PRF, PPP, показання та безпечний алгоритм роботи.</p>
+          <small class="home-route__tag">Фундамент методики</small>
         </article>
-        <article class="home-path apple-reveal">
-          <div class="home-path__head">
-            <h3 class="home-path__title">Ін'єкційний маршрут лікаря</h3>
-            <span class="home-path__badge">3 рівні · пакет −18%</span>
-          </div>
-          <ol class="home-path__levels">
-            <li><strong>Ботулінотерапія</strong> — ін'єкційна база</li>
-            <li><strong>Контурна пластика</strong> — просунуті кейси</li>
-            <li><strong>Контурна пластика PRO</strong> — експертний рівень</li>
-          </ol>
+        <article class="home-route__step apple-reveal">
+          <div class="home-route__meta"><strong>02</strong><span>Рівень 2</span></div>
+          <h3 class="home-route__title">Спеціалізація за напрямом</h3>
+          <p class="home-route__text">Профільні протоколи для дерматології, гінекології, стоматології, ортопедії та інших спеціальностей.</p>
+          <small class="home-route__tag">Клінічна спеціалізація</small>
         </article>
-        <article class="home-path apple-reveal">
-          <div class="home-path__head">
-            <h3 class="home-path__title">Плазмотерапія за спеціальностями</h3>
-            <span class="home-path__badge">2 рівні · пакет −20%</span>
-          </div>
-          <ol class="home-path__levels">
-            <li><strong>Базова плазмотерапія</strong> — для всіх спеціалізацій</li>
-            <li><strong>Трихологія та дерматологія</strong> — клінічні протоколи</li>
-          </ol>
+        <article class="home-route__step apple-reveal">
+          <div class="home-route__meta"><strong>03</strong><span>Рівень 3</span></div>
+          <h3 class="home-route__title">Впровадження у практику</h3>
+          <p class="home-route__text">Складніші кейси, документи, сервіс, післяосвітня підтримка та стабільна робота з новою послугою.</p>
+          <small class="home-route__tag">Системна практика</small>
+        </article>
+        <article class="home-route__step home-route__step--goal apple-reveal">
+          <div class="home-route__meta"><strong>04</strong><span>Рівень 4</span></div>
+          <h3 class="home-route__title">Власник клініки</h3>
+          <p class="home-route__text">Команда, стандарти протоколів, розширення напрямів і масштабування регенеративної медицини.</p>
+          <small class="home-route__tag">Управління й розвиток</small>
         </article>
       </div>
       <div class="home-section-cta">
-        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">Обрати курс маршруту</a>
+        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">Переглянути курси маршруту</a>
       </div>
     </div>
   </section>
@@ -377,31 +392,31 @@
     </div>
   </section>
 
-  <!-- ===== ЯК ЦЕ ПРАЦЮЄ ===== -->
+  <!-- ===== СИСТЕМА НАВЧАННЯ ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="how-title">
     <div class="iprm-section__inner">
-      <h2 id="how-title" class="iprm-section__title">Як це <span class="apple-gradient-text">працює</span></h2>
-      <p class="iprm-section__subtitle">Від вибору курсу до нової послуги</p>
+      <p class="home-eyebrow">Система навчання</p>
+      <h2 id="how-title" class="iprm-section__title">Від біології плазми <span class="apple-gradient-text">до впевненого протоколу</span></h2>
       <div class="iprm-steps">
         <div class="iprm-steps__item apple-reveal">
           <span class="iprm-steps__number">1</span>
-          <h3 class="iprm-steps__heading">Оберіть напрям</h3>
-          <p class="iprm-steps__text">За освітою, досвідом, спеціальністю та бажаним рівнем чека.</p>
+          <h3 class="iprm-steps__heading">Розуміння</h3>
+          <p class="iprm-steps__text">Механізми дії, фракції плазми, показання та межі методики.</p>
         </div>
         <div class="iprm-steps__item apple-reveal">
           <span class="iprm-steps__number">2</span>
-          <h3 class="iprm-steps__heading">Пройдіть навчання</h3>
-          <p class="iprm-steps__text">Формат підлаштовується під графік практики — очно або онлайн.</p>
+          <h3 class="iprm-steps__heading">Рішення</h3>
+          <p class="iprm-steps__text">Вибір пацієнта, планування та логіка клінічного протоколу.</p>
         </div>
         <div class="iprm-steps__item apple-reveal">
           <span class="iprm-steps__number">3</span>
           <h3 class="iprm-steps__heading">Практика</h3>
-          <p class="iprm-steps__text">На моделях і демонстраціях із супроводом тренера.</p>
+          <p class="iprm-steps__text">Підготовка матеріалу, техніка й відпрацювання під контролем тренера.</p>
         </div>
         <div class="iprm-steps__item apple-reveal">
           <span class="iprm-steps__number">4</span>
-          <h3 class="iprm-steps__heading">Впровадження</h3>
-          <p class="iprm-steps__text">Перехід до послуги з алгоритмом, матеріалами й планом запуску.</p>
+          <h3 class="iprm-steps__heading">Впровадження й підтримка</h3>
+          <p class="iprm-steps__text">Документація, інтеграція послуги у практику та супровід ментора після навчання.</p>
         </div>
       </div>
     </div>
@@ -420,16 +435,46 @@
     </div>
   </section>
 
+  <!-- ===== FAQ ===== -->
+  <section class="iprm-section" id="faq" aria-labelledby="faq-title">
+    <div class="iprm-section__inner">
+      <p class="home-eyebrow">Перед вибором</p>
+      <h2 id="faq-title" class="iprm-section__title">Коротко про <span class="apple-gradient-text">важливе</span></h2>
+      <div class="home-faq">
+        <details class="home-faq__item">
+          <summary class="home-faq__q">Чи потрібен досвід роботи з плазмотерапією?</summary>
+          <div class="home-faq__a"><p>Ні для всіх програм. У каталозі є базові й тематичні курси; вимоги до освіти та досвіду зазначені на сторінці кожної програми.</p></div>
+        </details>
+        <details class="home-faq__item">
+          <summary class="home-faq__q">Чи є практична частина?</summary>
+          <div class="home-faq__a"><p>Формат залежить від програми. Практичні курси включають демонстрацію, роботу з матеріалом або відпрацювання під керівництвом тренера.</p></div>
+        </details>
+        <details class="home-faq__item">
+          <summary class="home-faq__q">Як нараховуються бали БПР?</summary>
+          <div class="home-faq__a"><p>Кількість балів і умови їх отримання вказані на сторінці конкретного сертифікованого заходу.</p></div>
+        </details>
+        <details class="home-faq__item">
+          <summary class="home-faq__q">Як обрати програму під свою спеціальність?</summary>
+          <div class="home-faq__a"><p>Відкрийте каталог і скористайтеся фільтром за спеціальністю або зверніться до команди ІПРМ за консультацією.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== ФІНАЛЬНИЙ CTA ===== -->
   <section class="iprm-section" aria-labelledby="cta-title">
     <div class="iprm-section__inner">
       <div class="home-cta apple-reveal">
-        <h2 id="cta-title" class="home-cta__title">Наступний <span class="apple-gradient-text">крок</span></h2>
+        <p class="home-eyebrow home-eyebrow--light">Наступний професійний крок</p>
+        <h2 id="cta-title" class="home-cta__title">Оберіть програму, яку зможете <span class="apple-gradient-text">застосувати у практиці</span></h2>
         <p class="home-cta__text">Розкажіть про освіту, спеціальність і бажаний напрям — підберемо маршрут без тиску та випадкових програм.</p>
         <div class="home-cta__actions">
           <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Обрати курс</a>
           <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">Отримати консультацію</a>
         </div>
+        {% if site_settings.phone_primary %}
+        <a class="home-cta__phone" href="tel:{{ site_settings.phone_primary | replace(' ', '') }}">{{ site_settings.phone_primary }}</a>
+        {% endif %}
       </div>
     </div>
   </section>

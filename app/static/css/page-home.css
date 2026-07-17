@@ -73,24 +73,77 @@
   }
 }
 
-.home-lead {
-  max-width: 760px;
-  margin: 0 auto 1.5rem;
-  text-align: center;
+/* ===== Спільні мотиви: eyebrow-підпис + нумерація ===== */
+.home-eyebrow {
+  margin: 0 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--iprm-nav-active);
+}
+
+.home-eyebrow--light {
+  color: var(--iprm-nav-active);
+  opacity: 0.85;
+}
+
+.home-num {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--iprm-nav-active);
+}
+
+/* Сітка 4 колонки (feature-cards) -- узгоджено з --3. */
+.page-home .apple-features-grid--4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+/* ===== 8 напрямів (спеціальності) ===== */
+.home-specialties {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-top: 2rem;
+}
+
+.home-specialty {
+  padding: 1.5rem;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+}
+
+.home-specialty__name {
+  margin: 0.5rem 0 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--apple-black);
+}
+
+.home-specialty__desc {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
   color: var(--apple-gray);
-  line-height: 1.6;
 }
 
-.home-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: center;
-  margin-bottom: 2.5rem;
+@media (max-width: 900px) {
+  .page-home .apple-features-grid--4,
+  .home-specialties {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.home-chip {
-  cursor: default;
+@media (max-width: 520px) {
+  .page-home .apple-features-grid--4,
+  .home-specialties {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ===== Тренери: карусель (слайдер із стрілками + autoplay) ===== */
@@ -322,59 +375,133 @@
   border-color: var(--iprm-nav-active);
 }
 
-/* ===== Карта прогресу ===== */
-.home-paths {
+/* ===== Карта прогресу (4-рівневий маршрут) ===== */
+.home-route {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
 }
 
-.home-path {
-  padding: 1.75rem;
+.home-route__step {
+  display: flex;
+  flex-direction: column;
+  padding: 1.6rem;
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
 }
 
-.home-path__head {
-  margin-bottom: 1rem;
-}
-
-.home-path__title {
-  margin: 0 0 0.5rem;
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: var(--apple-black);
-}
-
-.home-path__badge {
-  display: inline-block;
-  padding: 0.2rem 0.6rem;
-  font-size: 0.8rem;
-  color: var(--iprm-nav-active);
+.home-route__step--goal {
   background: var(--iprm-accent-light);
-  border-radius: var(--iprm-radius-sm);
+  border-color: rgba(var(--apple-accent-rgb), 0.35);
 }
 
-.home-path__levels {
-  margin: 0;
-  padding-left: 1.25rem;
+.home-route__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.home-route__meta strong {
+  font-size: 1.25rem;
+  color: var(--iprm-nav-active);
+}
+
+.home-route__meta span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--apple-gray);
-  line-height: 1.6;
 }
 
-.home-path__levels li {
-  margin-bottom: 0.5rem;
-}
-
-.home-path__levels strong {
+.home-route__title {
+  margin: 1.5rem 0 0.6rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.25;
   color: var(--apple-black);
 }
 
-@media (max-width: 860px) {
-  .home-paths {
+.home-route__text {
+  flex: 1;
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--apple-gray);
+}
+
+.home-route__tag {
+  margin-top: 1.25rem;
+  padding-top: 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--iprm-nav-active);
+  border-top: 1px solid var(--iprm-border);
+}
+
+@media (max-width: 900px) {
+  .home-route {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .home-route {
     grid-template-columns: 1fr;
   }
+}
+
+/* ===== FAQ ===== */
+.home-faq {
+  max-width: 820px;
+  margin: 2rem auto 0;
+  border-top: 1px solid var(--iprm-border);
+}
+
+.home-faq__item {
+  border-bottom: 1px solid var(--iprm-border);
+}
+
+.home-faq__q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  min-height: 64px;
+  padding: 1rem 0;
+  font-weight: 600;
+  color: var(--apple-black);
+  cursor: pointer;
+  list-style: none;
+}
+
+.home-faq__q::-webkit-details-marker {
+  display: none;
+}
+
+.home-faq__q::after {
+  content: "+";
+  flex: 0 0 auto;
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--iprm-nav-active);
+}
+
+.home-faq__item[open] .home-faq__q::after {
+  content: "\2212";
+}
+
+.home-faq__a {
+  padding: 0 0 1.25rem;
+}
+
+.home-faq__a p {
+  margin: 0;
+  color: var(--apple-gray);
+  line-height: 1.6;
 }
 
 /* Відгуки (.iprm-review*/.reviews-grid) -- спільні, у common.css. */
@@ -408,6 +535,68 @@
   gap: 0.75rem;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+.home-cta__phone {
+  display: inline-block;
+  margin-top: 1.25rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--iprm-nav-active);
+  text-decoration: none;
+}
+
+.home-cta__phone:hover {
+  text-decoration: underline;
+}
+
+/* ===== Hero: proof-стрічка ===== */
+.home-hero-proof {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 0;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 2.25rem;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--iprm-accent-light);
+  border-radius: var(--iprm-radius-sm);
+}
+
+.home-hero-proof div {
+  padding: 0.9rem 1.25rem;
+  border-right: 1px solid var(--iprm-accent-light);
+}
+
+.home-hero-proof div:last-child {
+  border-right: 0;
+}
+
+.home-hero-proof strong {
+  display: block;
+  font-size: 1rem;
+  color: var(--apple-black);
+}
+
+.home-hero-proof span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--apple-gray);
+}
+
+@media (max-width: 560px) {
+  .home-hero-proof {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+  .home-hero-proof div {
+    border-right: 0;
+    border-bottom: 1px solid var(--iprm-accent-light);
+  }
+  .home-hero-proof div:last-child {
+    border-bottom: 0;
+  }
 }
 
 /* ===== Адаптив ===== */
