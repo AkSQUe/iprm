@@ -235,7 +235,7 @@
   font-size: 1.0625rem;
   font-weight: 500;
   font-family: var(--iprm-font);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   background: var(--iprm-nav-active);
   border: none;
   border-radius: var(--iprm-radius-pill);
@@ -388,7 +388,7 @@
      не використовуємо flex, бо він колапсить whitespace між <em>«...»</em>
      і сусіднім текстом. */
   padding: 16px 16px 16px 56px;
-  background: #fff;
+  background: var(--iprm-white);
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: var(--iprm-radius-sm);
   font-size: 0.9375rem;
@@ -529,7 +529,7 @@
   padding: 11px 16px;
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
-  background: #fff;
+  background: var(--iprm-white);
   color: var(--apple-black);
   font-size: 0.9375rem;
   font-weight: 500;
@@ -538,7 +538,7 @@
 }
 
 .oauth-btn:hover {
-  background: #fafafa;
+  background: var(--apple-section-bg);
   border-color: var(--iprm-text-light);
 }
 
@@ -587,7 +587,7 @@
   padding: 16px 20px;
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
-  background: #fff;
+  background: var(--iprm-white);
 }
 
 .connection-item--planned {

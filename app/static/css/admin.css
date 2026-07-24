@@ -52,12 +52,12 @@
 
 .admin-sidebar__link--active {
   background: var(--iprm-accent);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .admin-sidebar__link--active:hover {
   background: var(--iprm-accent-hover);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 /* Sub-link: візуальний відступ для пунктів, вкладених під батьківським
@@ -125,7 +125,7 @@
 
 .btn-admin--primary {
   background: var(--iprm-btn-bg);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .btn-admin--primary:hover {
@@ -905,7 +905,7 @@
   border-radius: 50%;
   border: none;
   background: var(--dropzone-overlay);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;

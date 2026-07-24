@@ -142,7 +142,7 @@
 .trainer-certs__item {
   display: block;
   cursor: zoom-in;
-  background: #fff;
+  background: var(--iprm-white);
   padding: 10px;
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-sm, 10px);
@@ -188,7 +188,7 @@
 .trainer-patent__scan {
   display: block;
   cursor: zoom-in;
-  background: #fff;
+  background: var(--iprm-white);
   padding: 10px;
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-sm, 10px);

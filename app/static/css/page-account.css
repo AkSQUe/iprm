@@ -165,7 +165,7 @@
   padding: 8px 20px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   background: var(--iprm-nav-active);
   border-radius: var(--iprm-radius-sm);
   text-decoration: none;

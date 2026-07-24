@@ -17,7 +17,7 @@
   position: sticky;
   top: 56px;
   z-index: 90;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--iprm-surface-glass);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   border-bottom: 1px solid var(--iprm-border);
@@ -499,7 +499,7 @@
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.1;
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   margin-bottom: 12px;
 }
 
@@ -576,7 +576,7 @@
   border-radius: var(--iprm-radius-sm);
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   font-family: inherit;
   font-size: 0.9375rem;
   line-height: 1.4;
@@ -812,7 +812,7 @@
 
 @media (prefers-reduced-transparency: reduce) {
   .iprm-anchor-nav {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--iprm-surface-menu);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
@@ -945,6 +945,11 @@ button.iprm-tag:focus-visible {
 .iprm-schedule__tag--warning {
   background: #fff4e5;
   color: #b25c00;
+}
+
+[data-theme="dark"] .iprm-schedule__tag--warning {
+  background: rgba(217, 119, 6, 0.18);
+  color: var(--iprm-warning-text);
 }
 
 /* Honeypot: повністю приховано від користувачів, але доступно для ботів */
@@ -1081,7 +1086,7 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
 .iprm-cal-chip[aria-pressed="true"] {
   background: var(--iprm-accent);
   border-color: var(--iprm-accent);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .iprm-cal-chip:focus-visible {
@@ -1223,7 +1228,7 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
 
 .iprm-fc .fc-button-primary:not(:disabled).fc-button-active,
 .iprm-fc .fc-button-primary:not(:disabled):active {
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .iprm-fc .fc-button:focus,
@@ -1277,17 +1282,17 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
 
 .iprm-fc-ev--online {
   background: var(--iprm-accent);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .iprm-fc-ev--offline {
   background: #d67e2e;
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .iprm-fc-ev--hybrid {
   background: #2e9e8f;
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 /* Минулі (завершені) заходи з архіву -- приглушені */
@@ -1458,7 +1463,7 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
   justify-content: space-between;
   gap: 12px;
   padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.97);
+  background: var(--iprm-surface-menu);
   backdrop-filter: blur(12px) saturate(180%);
   -webkit-backdrop-filter: blur(12px) saturate(180%);
   border-top: 1px solid var(--iprm-border);
@@ -1514,7 +1519,7 @@ form[data-single-submit][data-submitting='true'] button[type='submit'] {
 
 @media (prefers-reduced-transparency: reduce) {
   .iprm-sticky-cta {
-    background: #fff;
+    background: var(--iprm-white);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }

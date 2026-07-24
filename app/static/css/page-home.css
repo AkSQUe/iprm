@@ -189,7 +189,7 @@
 }
 
 .trainer-carousel__arrow:hover {
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   background: var(--iprm-accent);
   border-color: var(--iprm-accent);
   transform: translateY(-2px);
@@ -558,7 +558,7 @@
   width: fit-content;
   max-width: 100%;
   margin-top: 2.25rem;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--iprm-surface-glass);
   border: 1px solid var(--iprm-accent-light);
   border-radius: var(--iprm-radius-sm);
 }

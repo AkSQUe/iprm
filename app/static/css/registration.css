@@ -290,7 +290,7 @@
 .reg-steps__item--current .reg-steps__num {
   background: var(--iprm-accent);
   border-color: var(--iprm-accent);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .reg-steps__item--current {
@@ -340,7 +340,7 @@
   height: 32px;
   border-radius: 50%;
   background: var(--iprm-accent);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -415,6 +415,25 @@
   font-size: 0.9375rem;
   font-weight: 700;
   color: #9a3412;
+}
+
+/* Тёмна тема: теплі попередження -> напівпрозорий помаранчевий на тёмному тлі */
+[data-theme="dark"] .reg-location-callout {
+  background: rgba(217, 119, 6, 0.16);
+  border-color: rgba(253, 186, 116, 0.4);
+}
+
+[data-theme="dark"] .reg-location-confirm {
+  background: rgba(217, 119, 6, 0.10);
+  border-color: rgba(253, 186, 116, 0.3);
+}
+
+[data-theme="dark"] .reg-location-callout__icon,
+[data-theme="dark"] .reg-location-callout__title,
+[data-theme="dark"] .reg-location-callout__title strong,
+[data-theme="dark"] .reg-location-callout__text,
+[data-theme="dark"] .reg-location-confirm__title {
+  color: var(--iprm-warning-text);
 }
 
 .reg-location-confirm .form-checkbox {
@@ -541,7 +560,7 @@
 
 .reg-payment-logos__brand--visa {
   color: #1A1F71;
-  background: #fff;
+  background: var(--iprm-white);
   border-color: #1A1F71;
 }
 
@@ -591,7 +610,7 @@
   height: 56px;
   border-radius: 50%;
   background: var(--iprm-warning);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -656,7 +675,7 @@
   align-items: center;
   gap: 12px;
   background: #16a34a;
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   border: none;
   border-radius: var(--iprm-radius-sm);
   padding: 20px 56px;

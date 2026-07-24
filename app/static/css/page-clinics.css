@@ -271,7 +271,7 @@
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.1;
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   margin-bottom: 12px;
 }
 

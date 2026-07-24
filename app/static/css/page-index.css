@@ -103,7 +103,7 @@
   --white-alpha-08: rgba(255, 255, 255, 0.08);
 
   background: linear-gradient(180deg, var(--apple-black) 0%, var(--section-dark-mid) 40%, var(--iprm-dark) 100%);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   position: relative;
 }
 
@@ -132,7 +132,7 @@
 }
 
 .page-index .apple-section-dark .apple-section-header h2 {
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .page-index .apple-section-header p {
@@ -162,7 +162,7 @@
 
   grid-column: span 2;
   background: linear-gradient(135deg, var(--apple-grad-dark-1) 0%, var(--apple-grad-dark-2) 50%, var(--apple-grad-dark-3) 100%);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 /* Featured-картка з зображенням */
@@ -220,7 +220,7 @@
 }
 
 .page-index .apple-feature-card--featured h3 {
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .page-index .apple-feature-card h3 {
@@ -304,7 +304,7 @@
   grid-column: span 3;
   min-height: 400px;
   background: linear-gradient(135deg, var(--apple-grad-dark-1) 0%, var(--apple-grad-dark-2) 40%, var(--apple-grad-dark-3) 100%);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   justify-content: center;
   text-align: center;
   align-items: center;

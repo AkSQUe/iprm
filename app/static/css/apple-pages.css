@@ -139,7 +139,7 @@
 
 .apple-page .apple-btn--primary {
   background: var(--iprm-nav-active);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .apple-page .apple-btn--primary:hover {
@@ -358,6 +358,10 @@
   font-weight: 600;
 }
 
+[data-theme="dark"] .apple-page .iprm-course-card__seats--warning {
+  color: var(--iprm-warning-text);
+}
+
 .apple-page .iprm-course-card__price {
   margin-left: auto;
   font-size: 1rem;
@@ -382,7 +386,7 @@
 
 .apple-page .iprm-card-badge--featured {
   background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 100%);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 /* ========== FEATURE CARDS (reusable) ========== */
@@ -986,7 +990,7 @@
   border-radius: 24px;
   overflow: hidden;
   aspect-ratio: 4 / 3;
-  background: #f5f5f7;
+  background: var(--apple-section-bg);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
 }
 
@@ -1019,7 +1023,7 @@
 }
 
 .apple-page .iprm-stat-card {
-  background: #fff;
+  background: var(--iprm-white);
   border-radius: 16px;
   padding: 18px 20px;
   display: flex;
@@ -1088,7 +1092,7 @@
 .apple-page .iprm-benefit-list li {
   position: relative;
   padding: 14px 16px 14px 48px;
-  background: #fff;
+  background: var(--iprm-white);
   border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.05);
   font-size: 0.9375rem;

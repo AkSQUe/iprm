@@ -82,15 +82,15 @@
 }
 .iprm-toast__close:hover {
   color: var(--apple-black, #1d1d1f);
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--iprm-divider);
 }
 
-.iprm-toast--success { border-left-color: #16a34a; }
-.iprm-toast--success .iprm-toast__icon { background: #16a34a; }
+.iprm-toast--success { border-left-color: var(--iprm-success); }
+.iprm-toast--success .iprm-toast__icon { background: var(--iprm-success); }
 .iprm-toast--error { border-left-color: var(--iprm-error, #ef4444); }
 .iprm-toast--error .iprm-toast__icon { background: var(--iprm-error, #ef4444); }
-.iprm-toast--warning { border-left-color: #d97706; }
-.iprm-toast--warning .iprm-toast__icon { background: #d97706; }
+.iprm-toast--warning { border-left-color: var(--iprm-warning); }
+.iprm-toast--warning .iprm-toast__icon { background: var(--iprm-warning); }
 .iprm-toast--info { border-left-color: var(--iprm-accent, #7055a4); }
 .iprm-toast--info .iprm-toast__icon { background: var(--iprm-accent, #7055a4); }
 

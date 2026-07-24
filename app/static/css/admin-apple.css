@@ -71,13 +71,13 @@
 
 .admin-sidebar__link--active {
   background: var(--iprm-nav-active);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   font-weight: 500;
 }
 
 .admin-sidebar__link--active:hover {
   background: var(--iprm-accent-hover);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 /* Базові властивості .material-symbols-rounded -- у material-symbols.css
@@ -138,7 +138,7 @@
 
 .btn-admin--primary {
   background: var(--iprm-nav-active);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .btn-admin--primary:hover {
@@ -1020,13 +1020,13 @@
 .admin-pill--active {
   background: var(--iprm-nav-active);
   border-color: var(--iprm-nav-active);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .admin-pill--active:hover {
   background: var(--iprm-accent-hover);
   border-color: var(--iprm-accent-hover);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 /* ========== INLINE SELECT (статус/оплата прямо в таблиці) ========== */

@@ -23,7 +23,7 @@ select.field-invalid,
 textarea.field-invalid {
   border-color: var(--iprm-error, #ef4444) !important;
   box-shadow: 0 0 0 3px var(--iprm-error-bg, #fef2f2) !important;
-  background-color: #fffafa;
+  background-color: var(--iprm-error-bg, #fef2f2);
 }
 
 /* Для груп (radio/checkbox) підсвічуємо контейнер */

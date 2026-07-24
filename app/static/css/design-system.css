@@ -224,7 +224,7 @@
   justify-content: center;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 /* ========== COMPONENT DEMOS ========== */

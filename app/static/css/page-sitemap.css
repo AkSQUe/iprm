@@ -37,7 +37,7 @@
 }
 
 .sitemap-section__header:hover {
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--iprm-divider);
 }
 
 .sitemap-section__title {
