@@ -73,9 +73,9 @@
         </div>
         {% endif %}
         <div class="iprm-hero-trainer__info">
-          <h1 class="iprm-hero__title">{% set words = trainer.full_name.split(' ', 1) %}{% if words | length > 1 %}<span class="apple-gradient-text">{{ words[0] }}</span> {{ words[1] }}{% else %}<span class="apple-gradient-text">{{ trainer.full_name }}</span>{% endif %}</h1>
-          {% if trainer.role %}
-            <p class="iprm-hero__subtitle">{{ trainer.role }}</p>
+          <h1 class="iprm-hero__title">{% set words = trainer.t('full_name').split(' ', 1) %}{% if words | length > 1 %}<span class="apple-gradient-text">{{ words[0] }}</span> {{ words[1] }}{% else %}<span class="apple-gradient-text">{{ trainer.t('full_name') }}</span>{% endif %}</h1>
+          {% if trainer.t('role') %}
+            <p class="iprm-hero__subtitle">{{ trainer.t('role') }}</p>
           {% endif %}
           {% if trainer.experience_years %}
             <p class="iprm-hero-trainer__exp">{{ _('Досвід:') }} {{ trainer.experience_years }} {{ trainer.experience_years | uk_plural('рік', 'роки', 'років') }}</p>
@@ -86,10 +86,10 @@
   </div>
 
   <!-- ===== BIO ===== -->
-  {% if trainer.bio %}
+  {% if trainer.t('bio') %}
   <section class="iprm-section" aria-label="{{ _('Про тренера') }}">
     <div class="iprm-section__inner">
-      <p class="iprm-trainer-bio apple-reveal">{{ trainer.bio }}</p>
+      <p class="iprm-trainer-bio apple-reveal">{{ trainer.t('bio') }}</p>
     </div>
   </section>
   {% endif %}
@@ -107,14 +107,14 @@
           <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">
             <div class="iprm-course-card__image">
               {% if course.card_src %}
-                <img src="{{ course.card_src }}" alt="{{ course.title }}" loading="lazy" width="400" height="200">
+                <img src="{{ course.card_src }}" alt="{{ course.t('title') }}" loading="lazy" width="400" height="200">
               {% endif %}
             </div>
             <div class="apple-card-body">
-              <p class="iprm-course-card__title">{{ course.title }}</p>
-              {% if course.tags %}
+              <p class="iprm-course-card__title">{{ course.t('title') }}</p>
+              {% if course.t('tags') %}
               <div class="iprm-course-card__tags">
-                {% for tag in course.tags %}
+                {% for tag in course.t('tags') %}
                   <span class="iprm-tag">{{ tag }}</span>
                 {% endfor %}
               </div>
@@ -134,7 +134,7 @@
     <div class="iprm-section__inner">
       <h2 id="trainer-certs-title" class="iprm-section__title"><span class="apple-gradient-text">{{ _('Сертифікати') }}</span></h2>
       <div class="trainer-certs" data-lightbox-group>
-        {% for cert in trainer.certificates %}
+        {% for cert in trainer.t('certificates') %}
         <a class="trainer-certs__item" href="{{ cert.url }}" data-lightbox data-caption="{{ cert.caption }}">
           <img src="{{ cert.card or cert.thumb or cert.url }}" alt="{{ cert.caption or _('Сертифікат') }}" loading="lazy"
                {% if cert.card %}srcset="{{ cert.thumb }} 400w, {{ cert.card }} 800w" sizes="(max-width: 600px) 45vw, 280px"{% endif %}>
