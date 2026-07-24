@@ -40,7 +40,7 @@
   <!-- ===== CLINIC INFO ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="clinic-info-title">
     <div class="iprm-section__inner">
-      <div class="iprm-clinic-detail">
+      <div class="iprm-clinic-detail apple-reveal">
         <div class="iprm-clinic-detail__photo">
           {% if clinic.photo %}
             <img src="{{ clinic.photo }}" alt="{{ clinic.t('name') }}" loading="lazy" width="320" height="320">
@@ -60,10 +60,14 @@
 
   <!-- ===== BACK ===== -->
   <section class="iprm-section iprm-section--compact">
-    <div class="apple-section-cta">
+    <div class="apple-section-cta apple-reveal">
       <a href="{{ url_for('clinics.clinic_list') }}" class="apple-btn apple-btn--secondary">{{ _('Всі відділення') }}</a>
     </div>
   </section>
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
 {% endblock %}

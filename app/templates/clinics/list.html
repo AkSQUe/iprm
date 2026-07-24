@@ -37,8 +37,8 @@
   <!-- ===== CLINICS LIST ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="clinics-title">
     <div class="iprm-section__inner">
-      <h2 id="clinics-title" class="iprm-section__title">{{ _('Відділення <span class="apple-gradient-text">клініки</span>') }}</h2>
-      <p class="iprm-section__subtitle">{{ _('Перелік напрямків клітинної та регенеративної терапії') }}</p>
+      <h2 id="clinics-title" class="iprm-section__title apple-reveal">{{ _('Відділення <span class="apple-gradient-text">клініки</span>') }}</h2>
+      <p class="iprm-section__subtitle apple-reveal">{{ _('Перелік напрямків клітинної та регенеративної терапії') }}</p>
 
       <div class="iprm-clinic-cards">
         {% if clinics %}
@@ -69,8 +69,8 @@
   <!-- ===== MISSION ===== -->
   <section class="iprm-section" aria-labelledby="clinic-mission-title">
     <div class="iprm-section__inner">
-      <h2 id="clinic-mission-title" class="iprm-section__title">{{ _('Місія <span class="apple-gradient-text">клініки</span>') }}</h2>
-      <p class="iprm-section__subtitle">{{ _('Безпечне, стандартизоване застосування регенеративних методик для відновлення функції тканин і профілактики вікових змін') }}</p>
+      <h2 id="clinic-mission-title" class="iprm-section__title apple-reveal">{{ _('Місія <span class="apple-gradient-text">клініки</span>') }}</h2>
+      <p class="iprm-section__subtitle apple-reveal">{{ _('Безпечне, стандартизоване застосування регенеративних методик для відновлення функції тканин і профілактики вікових змін') }}</p>
       <div class="iprm-directions">
         <div class="iprm-directions__card apple-reveal">
           <img class="iprm-directions__img" src="{{ url_for('static', filename='images/clinics/clinics-mission-orthobiology.webp') }}" alt="{{ _('Ортобіологія') }}" width="96" height="96" loading="lazy">
@@ -112,8 +112,8 @@
   <!-- ===== PATIENT PROCESS ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="clinic-process-title">
     <div class="iprm-section__inner">
-      <h2 id="clinic-process-title" class="iprm-section__title">{{ _('Процес <span class="apple-gradient-text">пацієнта</span>') }}</h2>
-      <p class="iprm-section__subtitle">{{ _("Від первинного скринінгу до контрольних точок з об'єктивними метриками") }}</p>
+      <h2 id="clinic-process-title" class="iprm-section__title apple-reveal">{{ _('Процес <span class="apple-gradient-text">пацієнта</span>') }}</h2>
+      <p class="iprm-section__subtitle apple-reveal">{{ _("Від первинного скринінгу до контрольних точок з об'єктивними метриками") }}</p>
       <div class="iprm-steps">
         <div class="iprm-steps__item apple-reveal">
           <span class="iprm-steps__number">1</span>
@@ -142,8 +142,8 @@
   <!-- ===== EXPECTED RESULTS ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="clinic-results-title">
     <div class="iprm-section__inner">
-      <h2 id="clinic-results-title" class="iprm-section__title">{{ _('Очікувані <span class="apple-gradient-text">результати</span>') }}</h2>
-      <p class="iprm-section__subtitle">{{ _('Що отримує пацієнт від регенеративної терапії') }}</p>
+      <h2 id="clinic-results-title" class="iprm-section__title apple-reveal">{{ _('Очікувані <span class="apple-gradient-text">результати</span>') }}</h2>
+      <p class="iprm-section__subtitle apple-reveal">{{ _('Що отримує пацієнт від регенеративної терапії') }}</p>
       <div class="iprm-results-grid">
         <div class="iprm-results-card apple-reveal">
           <h3>{{ _('Зменшення болю') }}</h3>
@@ -179,7 +179,7 @@
   <!-- ===== ADVANTAGES ===== -->
   <section class="iprm-section" aria-labelledby="clinic-advantages-title">
     <div class="iprm-section__inner">
-      <h2 id="clinic-advantages-title" class="iprm-section__title">{{ _('Переваги <span class="apple-gradient-text">клініки</span>') }}</h2>
+      <h2 id="clinic-advantages-title" class="iprm-section__title apple-reveal">{{ _('Переваги <span class="apple-gradient-text">клініки</span>') }}</h2>
       <div class="apple-features-grid">
         <div class="apple-feature-card apple-reveal">
           <img class="apple-feature-card__icon" src="{{ url_for('static', filename='images/clinics/clinics-personalized-dna.webp') }}" alt="" aria-hidden="true" width="80" height="80" loading="lazy">
@@ -197,7 +197,7 @@
           <p>{{ _('Фахівці з багаторічним досвідом у регенеративній та клітинній медицині.') }}</p>
         </div>
       </div>
-      <div class="apple-section-cta">
+      <div class="apple-section-cta apple-reveal">
         <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">{{ _('Курси інституту') }}</a>
       </div>
     </div>

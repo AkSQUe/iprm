@@ -37,8 +37,8 @@
   <!-- ===== TRAINERS LIST ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="trainers-title">
     <div class="iprm-section__inner">
-      <h2 id="trainers-title" class="iprm-section__title">{{ _('Наші <span class="apple-gradient-text">тренери</span>') }}</h2>
-      <p class="iprm-section__subtitle">{{ _('Фахівці, які проводять курси після дипломної освіти') }}</p>
+      <h2 id="trainers-title" class="iprm-section__title apple-reveal">{{ _('Наші <span class="apple-gradient-text">тренери</span>') }}</h2>
+      <p class="iprm-section__subtitle apple-reveal">{{ _('Фахівці, які проводять курси після дипломної освіти') }}</p>
 
       <div class="iprm-trainer-cards">
         {% if trainers %}
@@ -72,7 +72,7 @@
   <!-- ===== WHY US ===== -->
   <section class="iprm-section" aria-labelledby="trainers-why-us-title">
     <div class="iprm-section__inner">
-      <h2 id="trainers-why-us-title" class="iprm-section__title">{{ _('Чому варто навчатися саме <span class="apple-gradient-text">у нас</span>') }}</h2>
+      <h2 id="trainers-why-us-title" class="iprm-section__title apple-reveal">{{ _('Чому варто навчатися саме <span class="apple-gradient-text">у нас</span>') }}</h2>
       <div class="apple-features-grid">
         <div class="apple-feature-card apple-reveal">
           <img class="apple-feature-card__icon" src="{{ url_for('static', filename='images/trainer/practicing-doctors.webp') }}" alt="" width="80" height="80" loading="lazy">
@@ -90,7 +90,7 @@
           <p>{{ _('Супровід кожного слухача від початку до отримання сертифікату.') }}</p>
         </div>
       </div>
-      <div class="apple-section-cta">
+      <div class="apple-section-cta apple-reveal">
         <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">{{ _('Обрати курс') }}</a>
       </div>
     </div>
