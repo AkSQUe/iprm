@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}Матеріали заходу | ІПРМ{% endblock %}
-{% block meta_description %}Перелік витратних матеріалів, підготовлених для заходу.{% endblock %}
+{% block title %}{{ _('Матеріали заходу | ІПРМ') }}{% endblock %}
+{% block meta_description %}{{ _('Перелік витратних матеріалів, підготовлених для заходу.') }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/materials-trainer.css') }}?v={{ assets_version }}">
@@ -10,9 +10,9 @@
 {% block content %}
 <section class="mt-wrap">
   <div class="mt-card">
-    <h1 class="mt-title">Витратні матеріали заходу</h1>
+    <h1 class="mt-title">{{ _('Витратні матеріали заходу') }}</h1>
     <p class="mt-meta">
-      <strong>{{ instance.course.title if instance.course else 'Захід' }}</strong>
+      <strong>{{ instance.course.t('title') if instance.course else _('Захід') }}</strong>
       {% if instance.start_date %} · {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
       {% if instance.location %} · {{ instance.location }}{% endif %}
     </p>
@@ -21,10 +21,10 @@
     <table class="mt-table">
       <thead>
         <tr>
-          <th>Матеріал</th>
-          <th>Артикул</th>
-          <th class="mt-num">Зарезервовано</th>
-          <th class="mt-num">Фактично</th>
+          <th>{{ _('Матеріал') }}</th>
+          <th>{{ _('Артикул') }}</th>
+          <th class="mt-num">{{ _('Зарезервовано') }}</th>
+          <th class="mt-num">{{ _('Фактично') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -39,7 +39,7 @@
       </tbody>
     </table>
     {% else %}
-    <p class="mt-empty">Для цього заходу ще немає позицій.</p>
+    <p class="mt-empty">{{ _('Для цього заходу ще немає позицій.') }}</p>
     {% endif %}
   </div>
 </section>

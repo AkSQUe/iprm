@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-24 20:08+0300\n"
+"POT-Creation-Date: 2026-07-24 21:23+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -216,7 +216,7 @@ msgstr "Found {found}"
 msgid "Нічого не знайдено"
 msgstr "Nothing found"
 
-#, python-brace-format, python-format
+#, python-brace-format
 msgid "Показати ще ({count})"
 msgstr "Show more ({count})"
 
@@ -938,6 +938,67 @@ msgstr "IPRM - Institute of Plasma Therapy and Regenerative Medicine"
 msgid "Перейти до вмісту"
 msgstr "Skip to content"
 
+msgid "Матеріали заходу | ІПРМ"
+msgstr "Event materials | IPRM"
+
+msgid "Перелік витратних матеріалів, підготовлених для заходу."
+msgstr "List of consumables prepared for the event."
+
+msgid "Витратні матеріали заходу"
+msgstr "Event consumables"
+
+msgid "Захід"
+msgstr "Event"
+
+msgid "Матеріал"
+msgstr "Material"
+
+msgid "Артикул"
+msgstr "SKU"
+
+msgid "Зарезервовано"
+msgstr "Reserved"
+
+msgid "Фактично"
+msgstr "Actual"
+
+msgid "Для цього заходу ще немає позицій."
+msgstr "No items for this event yet."
+
+msgid "Реферальний кабінет | ІПРМ"
+msgstr "Referral dashboard | IPRM"
+
+msgid "Реферальний"
+msgstr "Referral"
+
+msgid "кабінет"
+msgstr "dashboard"
+
+msgid "Ваша винагорода"
+msgstr "Your reward"
+
+#, python-format
+msgid "+%(count)s очікують дозрівання"
+msgstr "+%(count)s pending maturation"
+
+msgid "Ваше посилання"
+msgstr "Your link"
+
+msgid "Реферальне посилання"
+msgstr "Referral link"
+
+msgid "Копіювати"
+msgstr "Copy"
+
+msgid "Історія нарахувань"
+msgstr "Points history"
+
+msgid "анульовано"
+msgstr "canceled"
+
+msgid "очікує"
+msgstr "pending"
+
 msgid "Обліковий запис | ІПРМ"
 msgstr "Account | IPRM"
 
@@ -1006,27 +1067,6 @@ msgstr ""
 
 msgid "очікують дозрівання"
 msgstr "pending maturation"
-
-msgid "Ваше посилання"
-msgstr "Your link"
-
-msgid "Реферальне посилання"
-msgstr "Referral link"
-
-msgid "Копіювати"
-msgstr "Copy"
-
-msgid "Історія нарахувань"
-msgstr "Points history"
-
-msgid "Захід"
-msgstr "Event"
-
-msgid "анульовано"
-msgstr "canceled"
-
-msgid "очікує"
-msgstr "pending"
 
 msgid "Обліковий запис"
 msgstr "Account"
@@ -1422,6 +1462,9 @@ msgstr "%(name)s | IPRM"
 msgid "Клініка Інституту Плазмотерапії та Регенеративної Медицини."
 msgstr "Clinic of the Institute of Plasma Therapy and Regenerative Medicine."
 
+msgid "Клініки"
+msgstr "Clinics"
+
 msgid "Всі відділення"
 msgstr "All departments"
 
@@ -1608,6 +1651,9 @@ msgstr "Institute courses"
 #, python-format
 msgid "%(title)s | ІПРМ"
 msgstr "%(title)s | IPRM"
+
+msgid "Курси"
+msgstr "Courses"
 
 #, python-format
 msgid "Вас рекомендує <strong>%(inviter)s</strong>"
@@ -2033,7 +2079,9 @@ msgstr "Fill in your certificate details"
 
 #, python-format
 msgid "Без анкети МОЗ №725 ми не зможемо видати сертифікат за курс %(title)s"
-msgstr "Without the MoH No. 725 form, we cannot issue a certificate for the course %(title)s"
+msgstr ""
+"Without the MoH No. 725 form, we cannot issue a certificate for the "
+"course %(title)s"
 
 msgid "Шановний учаснику"
 msgstr "Dear participant"
@@ -2042,7 +2090,10 @@ msgid ""
 "ваш курс уже скоро — а анкета для сертифіката ще не заповнена. Без неї ми"
 " не зможемо нарахувати бали БПР і видати сертифікат (вимоги МОЗ №725, п. "
 "13)."
-msgstr "your course is coming up soon, but the certificate form has not been filled in yet. Without it, we cannot award BPR points or issue a certificate (MoH No. 725 requirements, clause 13)."
+msgstr ""
+"your course is coming up soon, but the certificate form has not been "
+"filled in yet. Without it, we cannot award BPR points or issue a "
+"certificate (MoH No. 725 requirements, clause 13)."
 
 msgid "Дата"
 msgstr "Date"
@@ -2054,7 +2105,10 @@ msgid ""
 "Анкета займе 2–3 хвилини: тип учасника, дата народження, освіта, місце "
 "роботи та спеціалізації. Заповнюється один раз — і діє для всіх ваших "
 "курсів."
-msgstr "The form takes 2–3 minutes: participant type, date of birth, education, place of work, and specializations. It is filled in once and applies to all your courses."
+msgstr ""
+"The form takes 2–3 minutes: participant type, date of birth, education, "
+"place of work, and specializations. It is filled in once and applies to "
+"all your courses."
 
 msgid "Заповнити анкету"
 msgstr "Fill in the form"
@@ -2062,7 +2116,9 @@ msgstr "Fill in the form"
 msgid ""
 "Якщо ви вже заповнили анкету після надсилання цього листа — просто "
 "проігноруйте його."
-msgstr "If you have already filled in the form after this email was sent, simply ignore it."
+msgstr ""
+"If you have already filled in the form after this email was sent, simply "
+"ignore it."
 
 msgid "Ваш сертифікат готовий"
 msgstr "Your certificate is ready"
@@ -2074,7 +2130,9 @@ msgstr "Certificate of participation in the event %(title)s"
 msgid ""
 "дякуємо за участь! Сертифікат додано до цього листа у форматі PDF. Також "
 "він доступний у вашому особистому кабінеті."
-msgstr "thank you for participating! The certificate is attached to this email as a PDF. It is also available in your account."
+msgstr ""
+"thank you for participating! The certificate is attached to this email as"
+" a PDF. It is also available in your account."
 
 msgid "Деталі сертифіката"
 msgstr "Certificate details"
@@ -2097,7 +2155,9 @@ msgstr "Open your account"
 msgid ""
 "Якщо вкладення не відкривається, увійдіть до особистого кабінету та "
 "завантажте сертифікат звідти."
-msgstr "If the attachment does not open, log in to your account and download the certificate from there."
+msgstr ""
+"If the attachment does not open, log in to your account and download the "
+"certificate from there."
 
 msgid "Завершіть реєстрацію"
 msgstr "Complete your registration"
@@ -2109,7 +2169,9 @@ msgstr "Complete the form and choose a payment method: %(title)s"
 msgid ""
 "вас додано до участі у заході. Залишилось заповнити коротку анкету та "
 "обрати спосіб оплати."
-msgstr "you have been added to the event. All that is left is to fill in a short form and choose a payment method."
+msgstr ""
+"you have been added to the event. All that is left is to fill in a short "
+"form and choose a payment method."
 
 msgid "Деталі заходу"
 msgstr "Event details"
@@ -2126,7 +2188,10 @@ msgstr "Please note"
 msgid ""
 "Посилання дійсне 30 днів. На сторінці завершення ви зможете заповнити "
 "анкету та обрати спосіб оплати — онлайн (LiqPay) або за рахунком (PDF)."
-msgstr "The link is valid for 30 days. On the completion page, you can fill in the form and choose a payment method — online (LiqPay) or by invoice (PDF)."
+msgstr ""
+"The link is valid for 30 days. On the completion page, you can fill in "
+"the form and choose a payment method — online (LiqPay) or by invoice "
+"(PDF)."
 
 msgid ""
 "Якщо у вас виникнуть запитання, зверніться до нас через сторінку "
@@ -2177,7 +2242,10 @@ msgid ""
 "Ми отримали ваш запит на курс і вже опрацьовуємо його. Як тільки буде "
 "заплановано чергове проведення – ми обов'язково зв'яжемось з вами на цю "
 "адресу."
-msgstr "We have received your request for the course and are already processing it. As soon as the next session is scheduled, we will contact you at this address."
+msgstr ""
+"We have received your request for the course and are already processing "
+"it. As soon as the next session is scheduled, we will contact you at this"
+" address."
 
 msgid "Запит зареєстровано"
 msgstr "Request registered"
@@ -2200,7 +2268,9 @@ msgstr "Course page"
 msgid ""
 "Якщо ви не залишали цей запит – проігноруйте лист. Це автоматичне "
 "повідомлення, відповідати на нього не обов'язково."
-msgstr "If you did not submit this request, ignore this email. This is an automated message; you do not need to reply to it."
+msgstr ""
+"If you did not submit this request, ignore this email. This is an "
+"automated message; you do not need to reply to it."
 
 msgid "Підтвердіть ваш email"
 msgstr "Confirm your email"
@@ -2214,7 +2284,9 @@ msgstr "Hello"
 msgid ""
 "дякуємо за реєстрацію в ІПРМ. Натисніть кнопку нижче, щоб підтвердити "
 "вашу email-адресу."
-msgstr "thank you for registering with IPRM. Click the button below to confirm your email address."
+msgstr ""
+"thank you for registering with IPRM. Click the button below to confirm "
+"your email address."
 
 msgid "Підтвердити email"
 msgstr "Confirm email"
@@ -2222,7 +2294,9 @@ msgstr "Confirm email"
 msgid ""
 "Посилання дійсне протягом 24 годин. Якщо ви не реєструвалися на ІПРМ, "
 "просто проігноруйте цей лист."
-msgstr "The link is valid for 24 hours. If you did not register with IPRM, simply ignore this email."
+msgstr ""
+"The link is valid for 24 hours. If you did not register with IPRM, simply"
+" ignore this email."
 
 msgid "Якщо кнопка не працює, скопіюйте це посилання у браузер:"
 msgstr "If the button does not work, copy this link into your browser:"
@@ -2233,7 +2307,9 @@ msgstr "Set a new password for your IPRM account"
 msgid ""
 "ми отримали запит на відновлення паролю для вашого облікового запису "
 "ІПРМ. Натисніть кнопку нижче, щоб встановити новий пароль."
-msgstr "we received a request to reset the password for your IPRM account. Click the button below to set a new password."
+msgstr ""
+"we received a request to reset the password for your IPRM account. Click "
+"the button below to set a new password."
 
 msgid "Встановити новий пароль"
 msgstr "Set a new password"
@@ -2241,7 +2317,9 @@ msgstr "Set a new password"
 msgid ""
 "Посилання дійсне протягом 1 години. Якщо ви не запитували відновлення "
 "паролю, просто проігноруйте цей лист — ваш пароль залишиться незмінним."
-msgstr "The link is valid for 1 hour. If you did not request a password reset, simply ignore this email — your password will remain unchanged."
+msgstr ""
+"The link is valid for 1 hour. If you did not request a password reset, "
+"simply ignore this email — your password will remain unchanged."
 
 msgid "Оплату підтверджено"
 msgstr "Payment confirmed"
@@ -2263,7 +2341,9 @@ msgid "Місце підтверджено"
 msgstr "Seat confirmed"
 
 msgid "Ваше місце на курсі підтверджено. Очікуйте нагадування перед початком."
-msgstr "Your seat in the course has been confirmed. Expect a reminder before the start."
+msgstr ""
+"Your seat in the course has been confirmed. Expect a reminder before the "
+"start."
 
 msgid "Вам нараховано бонусні бали"
 msgstr "You have been awarded bonus points"
@@ -2279,12 +2359,16 @@ msgstr "Thank you for your referral"
 msgid ""
 "за оплачену реєстрацію на курс «%(title)s» за вашим реферальним "
 "посиланням вам нараховано бонусні бали лояльності."
-msgstr "you have been awarded bonus loyalty points for a paid registration for the course \"%(title)s\" made through your referral link."
+msgstr ""
+"you have been awarded bonus loyalty points for a paid registration for "
+"the course \"%(title)s\" made through your referral link."
 
 msgid ""
 "за оплачену реєстрацію за вашим реферальним посиланням вам нараховано "
 "бонусні бали лояльності."
-msgstr "you have been awarded bonus loyalty points for a paid registration made through your referral link."
+msgstr ""
+"you have been awarded bonus loyalty points for a paid registration made "
+"through your referral link."
 
 #, python-format
 msgid "Нараховано +%(points)s балів"
@@ -2300,7 +2384,9 @@ msgstr "My account"
 msgid ""
 "Продовжуйте ділитися посиланням -- кожна оплачена реєстрація за ним "
 "приносить вам нові бали."
-msgstr "Keep sharing your link — every paid registration made through it earns you new points."
+msgstr ""
+"Keep sharing your link — every paid registration made through it earns "
+"you new points."
 
 #, python-format
 msgid "Ви зареєстровані на курс %(title)s"
@@ -2322,7 +2408,11 @@ msgid ""
 "Ви обрали оплату за рахунком. Завантажте рахунок (PDF) на сторінці "
 "реєстрації або в особистому кабінеті та сплатіть через банк за "
 "реквізитами. Після оплати повідомте менеджера для підтвердження участі."
-msgstr "You have chosen payment by invoice. Download the invoice (PDF) on the registration page or in your account and pay via bank transfer using the provided details. After payment, notify the manager to confirm your participation."
+msgstr ""
+"You have chosen payment by invoice. Download the invoice (PDF) on the "
+"registration page or in your account and pay via bank transfer using the "
+"provided details. After payment, notify the manager to confirm your "
+"participation."
 
 msgid "Перейти до оплати"
 msgstr "Proceed to payment"
@@ -2334,7 +2424,10 @@ msgid ""
 "Щоб після курсу отримати сертифікат з балами БПР, заповніть коротку "
 "анкету (вимоги МОЗ №725, п. 13) в особистому кабінеті. Це займе 2–3 "
 "хвилини і діє для всіх ваших курсів."
-msgstr "To receive a certificate with BPR points after the course, fill in a short form (MoH No. 725 requirements, clause 13) in your account. It takes 2–3 minutes and applies to all your courses."
+msgstr ""
+"To receive a certificate with BPR points after the course, fill in a "
+"short form (MoH No. 725 requirements, clause 13) in your account. It "
+"takes 2–3 minutes and applies to all your courses."
 
 msgid "Статус реєстрації змінено"
 msgstr "Registration status changed"
@@ -2382,9 +2475,6 @@ msgstr ""
 
 msgid "Буде здоровою й красивою найближчим часом"
 msgstr "It will be healthy and beautiful again soon"
-
-msgid "Курси"
-msgstr "Courses"
 
 msgid "Помилка сервера | ІПРМ"
 msgstr "Server error | IPRM"
@@ -2506,6 +2596,9 @@ msgstr "%(name)s on Instagram"
 
 msgid "Тема"
 msgstr "Subject"
+
+msgid "Без згоди ми не можемо обробити звернення"
+msgstr "Without consent we cannot process your request"
 
 #, python-format
 msgid ""
@@ -3701,9 +3794,6 @@ msgstr "Main navigation"
 
 msgid "Лабораторії"
 msgstr "Laboratories"
-
-msgid "Клініки"
-msgstr "Clinics"
 
 msgid "Тренери"
 msgstr "Trainers"

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>{{ (site_settings.company_name or 'ІПРМ') }} — {{ _('Блог') }}</title>
+    <title>{{ (site_settings.t('company_name') or _('ІПРМ')) }} — {{ _('Блог') }}</title>
     <link>{{ feed_link }}</link>
     <description>{{ _('Дайджести заходів, новини та статті Інституту плазмотерапії та регенеративної медицини') }}</description>
     <language>uk</language>

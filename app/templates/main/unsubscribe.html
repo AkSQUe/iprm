@@ -14,7 +14,7 @@
 <div class="apple-page auth-page">
   <div class="auth-card">
     <a href="{{ url_for('main.index') }}" class="auth-card__logo">
-      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="ІПРМ" class="auth-card__logo-img">
+      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="{{ _('ІПРМ') }}" class="auth-card__logo-img">
     </a>
 
     {% if user is none %}

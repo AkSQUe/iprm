@@ -127,7 +127,7 @@
 
           <div class="form-consent">
             <div class="form-checkbox">
-              {{ form.consent_data(id="consent_data", required=true, **{'data-hint': 'Без згоди ми не можемо обробити звернення'}) }}
+              {{ form.consent_data(id="consent_data", required=true, **{'data-hint': _('Без згоди ми не можемо обробити звернення')}) }}
               <label for="consent_data">
                 {% trans privacy_url=url_for('main.privacy') %}Я надаю згоду на обробку моїх персональних даних з метою обробки мого звернення. Ознайомлений(а) з <a href="{{ privacy_url }}" target="_blank" rel="noopener noreferrer">Політикою конфіденційності</a>.{% endtrans %} <span class="required">*</span>
               </label>
