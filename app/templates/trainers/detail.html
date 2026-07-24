@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ trainer.full_name }} | ІПРМ{% endblock %}
-{% block meta_description %}{{ trainer.role or trainer.full_name }}. Тренер Інституту Плазмотерапії та Регенеративної Медицини.{% endblock %}
+{% block title %}{% trans name=trainer.full_name %}{{ name }} | ІПРМ{% endtrans %}{% endblock %}
+{% block meta_description %}{{ trainer.role or trainer.full_name }}. {{ _('Тренер Інституту Плазмотерапії та Регенеративної Медицини.') }}{% endblock %}
 {% block og_image %}{% if trainer.photo_full %}{{ request.url_root.rstrip('/') ~ trainer.photo_full }}{% else %}{{ super() }}{% endif %}{% endblock %}
 
 {% block extra_css %}
@@ -78,7 +78,7 @@
             <p class="iprm-hero__subtitle">{{ trainer.role }}</p>
           {% endif %}
           {% if trainer.experience_years %}
-            <p class="iprm-hero-trainer__exp">Досвід: {{ trainer.experience_years }} {{ trainer.experience_years | uk_plural('рік', 'роки', 'років') }}</p>
+            <p class="iprm-hero-trainer__exp">{{ _('Досвід:') }} {{ trainer.experience_years }} {{ trainer.experience_years | uk_plural('рік', 'роки', 'років') }}</p>
           {% endif %}
         </div>
       </div>
@@ -87,7 +87,7 @@
 
   <!-- ===== BIO ===== -->
   {% if trainer.bio %}
-  <section class="iprm-section" aria-label="Про тренера">
+  <section class="iprm-section" aria-label="{{ _('Про тренера') }}">
     <div class="iprm-section__inner">
       <p class="iprm-trainer-bio apple-reveal">{{ trainer.bio }}</p>
     </div>
@@ -98,8 +98,8 @@
   {% if courses %}
   <section class="iprm-section apple-section-gray" aria-labelledby="trainer-courses-title">
     <div class="iprm-section__inner">
-      <h2 id="trainer-courses-title" class="iprm-section__title">Курси <span class="apple-gradient-text">тренера</span></h2>
-      <p class="iprm-section__subtitle">Доступні програми навчання</p>
+      <h2 id="trainer-courses-title" class="iprm-section__title">{{ _('Курси <span class="apple-gradient-text">тренера</span>') }}</h2>
+      <p class="iprm-section__subtitle">{{ _('Доступні програми навчання') }}</p>
 
       <div class="iprm-course-cards">
         {% for course in courses %}
@@ -132,11 +132,11 @@
   {% if trainer.certificates %}
   <section class="iprm-section" aria-labelledby="trainer-certs-title">
     <div class="iprm-section__inner">
-      <h2 id="trainer-certs-title" class="iprm-section__title"><span class="apple-gradient-text">Сертифікати</span></h2>
+      <h2 id="trainer-certs-title" class="iprm-section__title"><span class="apple-gradient-text">{{ _('Сертифікати') }}</span></h2>
       <div class="trainer-certs" data-lightbox-group>
         {% for cert in trainer.certificates %}
         <a class="trainer-certs__item" href="{{ cert.url }}" data-lightbox data-caption="{{ cert.caption }}">
-          <img src="{{ cert.card or cert.thumb or cert.url }}" alt="{{ cert.caption or 'Сертифікат' }}" loading="lazy"
+          <img src="{{ cert.card or cert.thumb or cert.url }}" alt="{{ cert.caption or _('Сертифікат') }}" loading="lazy"
                {% if cert.card %}srcset="{{ cert.thumb }} 400w, {{ cert.card }} 800w" sizes="(max-width: 600px) 45vw, 280px"{% endif %}>
         </a>
         {% endfor %}
@@ -149,7 +149,7 @@
   {% if trainer.patents %}
   <section class="iprm-section apple-section-gray" aria-labelledby="trainer-patents-title">
     <div class="iprm-section__inner">
-      <h2 id="trainer-patents-title" class="iprm-section__title">Винаходи та <span class="apple-gradient-text">патенти</span></h2>
+      <h2 id="trainer-patents-title" class="iprm-section__title">{{ _('Винаходи та <span class="apple-gradient-text">патенти</span>') }}</h2>
       {% set patents_with_img = trainer.patents | selectattr('image') | list %}
       {% if patents_with_img %}
       <div class="trainer-patents" data-lightbox-group>
@@ -184,7 +184,7 @@
   {% if trainer.articles %}
   <section class="iprm-section" aria-labelledby="trainer-articles-title">
     <div class="iprm-section__inner">
-      <h2 id="trainer-articles-title" class="iprm-section__title">Наукові <span class="apple-gradient-text">статті</span></h2>
+      <h2 id="trainer-articles-title" class="iprm-section__title">{{ _('Наукові <span class="apple-gradient-text">статті</span>') }}</h2>
       <ul class="iprm-regalia-links">
         {% for link in trainer.articles %}
         <li><a href="{{ link.url }}" target="_blank" rel="noopener nofollow">{{ link.label }}</a></li>
@@ -198,7 +198,7 @@
   {% if trainer.research %}
   <section class="iprm-section apple-section-gray" aria-labelledby="trainer-research-title">
     <div class="iprm-section__inner">
-      <h2 id="trainer-research-title" class="iprm-section__title">Наукова та дослідницька <span class="apple-gradient-text">діяльність</span></h2>
+      <h2 id="trainer-research-title" class="iprm-section__title">{{ _('Наукова та дослідницька <span class="apple-gradient-text">діяльність</span>') }}</h2>
       <ul class="iprm-research-list">
         {% for item in trainer.research %}
         <li>{{ item }}</li>
@@ -212,7 +212,7 @@
   {% if trainer.skills %}
   <section class="iprm-section" aria-labelledby="trainer-skills-title">
     <div class="iprm-section__inner">
-      <h2 id="trainer-skills-title" class="iprm-section__title">Професійні <span class="apple-gradient-text">навички</span></h2>
+      <h2 id="trainer-skills-title" class="iprm-section__title">{{ _('Професійні <span class="apple-gradient-text">навички</span>') }}</h2>
       <ul class="iprm-skills-list">
         {% for item in trainer.skills %}
           {% if item.endswith(':') %}
@@ -227,14 +227,14 @@
   {% endif %}
 
   <!-- ===== ОСВІТА / СТАЖУВАННЯ / ДОСВІД (timeline) ===== -->
-  {{ timeline_section('trainer-edu', 'Освіта та', 'кваліфікація', trainer.education, gray=True) }}
-  {{ timeline_section('trainer-addedu', 'Додаткова освіта та', 'міжнародне стажування', trainer.additional_education) }}
-  {{ timeline_section('trainer-exp', 'Досвід', 'роботи', trainer.work_experience, gray=True) }}
+  {{ timeline_section('trainer-edu', _('Освіта та'), _('кваліфікація'), trainer.education, gray=True) }}
+  {{ timeline_section('trainer-addedu', _('Додаткова освіта та'), _('міжнародне стажування'), trainer.additional_education) }}
+  {{ timeline_section('trainer-exp', _('Досвід'), _('роботи'), trainer.work_experience, gray=True) }}
 
   <!-- ===== BACK ===== -->
   <section class="iprm-section iprm-section--compact apple-section-gray">
     <div class="apple-section-cta">
-      <a href="{{ url_for('trainers.trainer_list') }}" class="apple-btn apple-btn--secondary">Всі тренери</a>
+      <a href="{{ url_for('trainers.trainer_list') }}" class="apple-btn apple-btn--secondary">{{ _('Всі тренери') }}</a>
     </div>
   </section>
 

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>{{ (site_settings.company_name or 'ІПРМ') }} — Блог</title>
+    <title>{{ (site_settings.company_name or 'ІПРМ') }} — {{ _('Блог') }}</title>
     <link>{{ feed_link }}</link>
-    <description>Дайджести заходів, новини та статті Інституту плазмотерапії та регенеративної медицини</description>
+    <description>{{ _('Дайджести заходів, новини та статті Інституту плазмотерапії та регенеративної медицини') }}</description>
     <language>uk</language>
     {% if last_build %}<lastBuildDate>{{ last_build }}</lastBuildDate>{% endif %}
     {% for item in items %}

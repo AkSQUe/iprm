@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Підписка на листи | ІПРМ{% endblock %}
+{% block title %}{{ _('Підписка на листи | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
@@ -18,39 +18,39 @@
     </a>
 
     {% if user is none %}
-      <h1 class="auth-card__title">Посилання недійсне</h1>
-      <p class="auth-card__subtitle">Це посилання для керування підпискою застаріле або неправильне.</p>
+      <h1 class="auth-card__title">{{ _('Посилання недійсне') }}</h1>
+      <p class="auth-card__subtitle">{{ _('Це посилання для керування підпискою застаріле або неправильне.') }}</p>
     {% elif done %}
       {% if user.email_opt_out %}
-        <h1 class="auth-card__title">Ви відписалися</h1>
-        <p class="auth-card__subtitle">Більше не надсилатимемо вам нагадування та інформаційні листи. Важливі службові листи (підтвердження email, відновлення паролю) надходитимуть, як і раніше.</p>
+        <h1 class="auth-card__title">{{ _('Ви відписалися') }}</h1>
+        <p class="auth-card__subtitle">{{ _('Більше не надсилатимемо вам нагадування та інформаційні листи. Важливі службові листи (підтвердження email, відновлення паролю) надходитимуть, як і раніше.') }}</p>
         <form method="POST" action="{{ url_for('main.unsubscribe', token=user.unsubscribe_token) }}">
           <input type="hidden" name="action" value="resubscribe">
-          <button type="submit" class="btn-auth">Повернути підписку</button>
+          <button type="submit" class="btn-auth">{{ _('Повернути підписку') }}</button>
         </form>
       {% else %}
-        <h1 class="auth-card__title">Підписку відновлено</h1>
-        <p class="auth-card__subtitle">Ви знову отримуватимете нагадування та інформаційні листи ІПРМ.</p>
+        <h1 class="auth-card__title">{{ _('Підписку відновлено') }}</h1>
+        <p class="auth-card__subtitle">{{ _('Ви знову отримуватимете нагадування та інформаційні листи ІПРМ.') }}</p>
       {% endif %}
     {% else %}
       {% if user.email_opt_out %}
-        <h1 class="auth-card__title">Ви вже відписані</h1>
-        <p class="auth-card__subtitle">Нагадування та інформаційні листи вам не надходять. Хочете повернути підписку?</p>
+        <h1 class="auth-card__title">{{ _('Ви вже відписані') }}</h1>
+        <p class="auth-card__subtitle">{{ _('Нагадування та інформаційні листи вам не надходять. Хочете повернути підписку?') }}</p>
         <form method="POST" action="{{ url_for('main.unsubscribe', token=user.unsubscribe_token) }}">
           <input type="hidden" name="action" value="resubscribe">
-          <button type="submit" class="btn-auth">Повернути підписку</button>
+          <button type="submit" class="btn-auth">{{ _('Повернути підписку') }}</button>
         </form>
       {% else %}
-        <h1 class="auth-card__title">Відписатися від листів?</h1>
-        <p class="auth-card__subtitle">Ви перестанете отримувати нагадування та інформаційні листи на <strong>{{ user.email }}</strong>. Службові листи (підтвердження email, відновлення паролю) надходитимуть завжди.</p>
+        <h1 class="auth-card__title">{{ _('Відписатися від листів?') }}</h1>
+        <p class="auth-card__subtitle">{% trans email=user.email %}Ви перестанете отримувати нагадування та інформаційні листи на <strong>{{ email }}</strong>. Службові листи (підтвердження email, відновлення паролю) надходитимуть завжди.{% endtrans %}</p>
         <form method="POST" action="{{ url_for('main.unsubscribe', token=user.unsubscribe_token) }}">
           <input type="hidden" name="action" value="unsubscribe">
-          <button type="submit" class="btn-auth">Відписатися</button>
+          <button type="submit" class="btn-auth">{{ _('Відписатися') }}</button>
         </form>
       {% endif %}
     {% endif %}
 
-    <a href="{{ url_for('main.index') }}" class="auth-card__back">Повернутися на головну</a>
+    <a href="{{ url_for('main.index') }}" class="auth-card__back">{{ _('Повернутися на головну') }}</a>
   </div>
 </div>
 {% endblock %}

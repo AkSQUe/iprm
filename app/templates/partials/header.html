@@ -1,66 +1,68 @@
 <header class="iprm-header">
   <div class="iprm-header__inner">
     <a href="{{ url_for('main.index') }}" class="iprm-header__logo">
-      <img src="{{ url_for('static', filename='svg/IPRM-logo-simple.svg') }}" alt="ІПРМ" class="iprm-header__logo-icon iprm-header__logo-icon--desktop" width="40" height="40">
-      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="ІПРМ" class="iprm-header__logo-icon iprm-header__logo-icon--mobile" width="96" height="48">
-      <span>ІНСТИТУТ ПЛАЗМОТЕРАПІЇ<br>ТА РЕГЕНЕРАТИВНОЇ МЕДИЦИНИ</span>
+      <img src="{{ url_for('static', filename='svg/IPRM-logo-simple.svg') }}" alt="{{ _('ІПРМ') }}" class="iprm-header__logo-icon iprm-header__logo-icon--desktop" width="40" height="40">
+      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="{{ _('ІПРМ') }}" class="iprm-header__logo-icon iprm-header__logo-icon--mobile" width="96" height="48">
+      <span>{% trans %}ІНСТИТУТ ПЛАЗМОТЕРАПІЇ<br>ТА РЕГЕНЕРАТИВНОЇ МЕДИЦИНИ{% endtrans %}</span>
     </a>
 
-    <nav class="iprm-header__nav" id="main-nav" aria-label="Головна навігація">
+    <nav class="iprm-header__nav" id="main-nav" aria-label="{{ _('Головна навігація') }}">
       <ul class="iprm-nav">
-        <li><a href="{{ url_for('courses.course_list') }}"{% if active_nav == 'courses' %} class="iprm-nav--active"{% endif %}>Курси</a></li>
+        <li><a href="{{ url_for('courses.course_list') }}"{% if active_nav == 'courses' %} class="iprm-nav--active"{% endif %}>{{ _('Курси') }}</a></li>
         {% if site_settings.show_labs %}
-        <li><a href="{{ url_for('main.labs') }}"{% if active_nav == 'labs' %} class="iprm-nav--active"{% endif %}>Лабораторії</a></li>
+        <li><a href="{{ url_for('main.labs') }}"{% if active_nav == 'labs' %} class="iprm-nav--active"{% endif %}>{{ _('Лабораторії') }}</a></li>
         {% endif %}
         {% if site_settings.show_clinics %}
-        <li><a href="{{ url_for('clinics.clinic_list') }}"{% if active_nav == 'clinics' %} class="iprm-nav--active"{% endif %}>Клініки</a></li>
+        <li><a href="{{ url_for('clinics.clinic_list') }}"{% if active_nav == 'clinics' %} class="iprm-nav--active"{% endif %}>{{ _('Клініки') }}</a></li>
         {% endif %}
-        <li><a href="{{ url_for('trainers.trainer_list') }}"{% if active_nav == 'trainers' %} class="iprm-nav--active"{% endif %}>Тренери</a></li>
-        <li><a href="{{ url_for('blog.index') }}"{% if active_nav == 'blog' %} class="iprm-nav--active"{% endif %}>Блог</a></li>
-        <li><a href="{{ url_for('main.contact') }}"{% if active_nav == 'contact' %} class="iprm-nav--active"{% endif %}>Контакти</a></li>
+        <li><a href="{{ url_for('trainers.trainer_list') }}"{% if active_nav == 'trainers' %} class="iprm-nav--active"{% endif %}>{{ _('Тренери') }}</a></li>
+        <li><a href="{{ url_for('blog.index') }}"{% if active_nav == 'blog' %} class="iprm-nav--active"{% endif %}>{{ _('Блог') }}</a></li>
+        <li><a href="{{ url_for('main.contact') }}"{% if active_nav == 'contact' %} class="iprm-nav--active"{% endif %}>{{ _('Контакти') }}</a></li>
       </ul>
       <div class="iprm-nav__mobile-account">
+        {% include 'partials/lang_switcher.html' %}
         {% if current_user.is_authenticated %}
           {% if current_user.is_admin %}
-            <a href="{{ url_for('admin.dashboard') }}" class="iprm-nav__mobile-link iprm-nav__mobile-link--admin">Панель адміністратора</a>
+            <a href="{{ url_for('admin.dashboard') }}" class="iprm-nav__mobile-link iprm-nav__mobile-link--admin">{{ _('Панель адміністратора') }}</a>
           {% endif %}
-          <a href="{{ url_for('auth.account') }}" class="iprm-nav__mobile-link">Особистий кабінет</a>
+          <a href="{{ url_for('auth.account') }}" class="iprm-nav__mobile-link">{{ _('Особистий кабінет') }}</a>
           {% if certdata_incomplete %}
           <a href="{{ url_for('auth.certificate_data') }}" class="iprm-nav__mobile-link iprm-nav__mobile-link--certdata">
             <span class="iprm-header__certdata-badge" aria-hidden="true">1</span>
-            Заповнити дані для сертифіката
+            {{ _('Заповнити дані для сертифіката') }}
           </a>
           {% endif %}
           <form method="POST" action="{{ url_for('auth.logout') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="iprm-nav__mobile-link iprm-nav__mobile-link--logout">Вийти</button>
+            <button type="submit" class="iprm-nav__mobile-link iprm-nav__mobile-link--logout">{{ _('Вийти') }}</button>
           </form>
         {% else %}
-          <a href="{{ url_for('auth.register') }}" class="iprm-nav__mobile-link">Зареєструватися</a>
-          <a href="{{ url_for('auth.login') }}" class="iprm-nav__mobile-link iprm-nav__mobile-link--cta">Увійти</a>
+          <a href="{{ url_for('auth.register') }}" class="iprm-nav__mobile-link">{{ _('Зареєструватися') }}</a>
+          <a href="{{ url_for('auth.login') }}" class="iprm-nav__mobile-link iprm-nav__mobile-link--cta">{{ _('Увійти') }}</a>
         {% endif %}
       </div>
     </nav>
 
     <div class="iprm-header__actions">
+      {% include 'partials/lang_switcher.html' %}
       {% if current_user.is_authenticated %}
         {% if current_user.is_admin %}
           <a href="{{ url_for('admin.dashboard') }}" class="iprm-header__admin-link">Admin</a>
         {% endif %}
         <a href="{{ url_for('auth.account') }}" class="iprm-header__user-link">{{ current_user.first_name }}</a>
         {% if certdata_incomplete %}
-        <a href="{{ url_for('auth.certificate_data') }}" class="iprm-header__certdata" aria-label="1 незаповнена анкета: дані для сертифіката">
+        <a href="{{ url_for('auth.certificate_data') }}" class="iprm-header__certdata" aria-label="{{ _('1 незаповнена анкета: дані для сертифіката') }}">
           <span class="iprm-header__certdata-badge" aria-hidden="true">1</span>
-          <span class="iprm-header__certdata-tip" role="tooltip">Заповніть дані для сертифіката — без них не нарахуємо бали БПР. Натисніть, щоб перейти до анкети.</span>
+          <span class="iprm-header__certdata-tip" role="tooltip">{{ _('Заповніть дані для сертифіката — без них не нарахуємо бали БПР. Натисніть, щоб перейти до анкети.') }}</span>
         </a>
         {% endif %}
         <form method="POST" action="{{ url_for('auth.logout') }}" class="iprm-header__logout-form">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="iprm-header__auth-link">Вийти</button>
+          <button type="submit" class="iprm-header__auth-link">{{ _('Вийти') }}</button>
         </form>
       {% else %}
-        <a href="{{ url_for('auth.register') }}" class="iprm-header__auth-link">Зареєструватися</a>
-        <a href="{{ url_for('auth.login') }}" class="iprm-header__auth-link iprm-header__auth-link--cta">Увійти</a>
+        <a href="{{ url_for('auth.register') }}" class="iprm-header__auth-link">{{ _('Зареєструватися') }}</a>
+        <a href="{{ url_for('auth.login') }}" class="iprm-header__auth-link iprm-header__auth-link--cta">{{ _('Увійти') }}</a>
       {% endif %}
     </div>
 

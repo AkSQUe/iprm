@@ -9,7 +9,7 @@
 - **База даних:** SQLite (dev), PostgreSQL (prod, через pg8000), Alembic-міграції
 - **Деплой:** GitHub Actions, rsync на VPS, systemd + gunicorn
 - **Безпека:** CSRF, rate limiting, security headers, admin-декоратор
-- **Мова інтерфейсу:** Українська
+- **Мови інтерфейсу:** Українська (базова), російська та англійська через Flask-Babel (впроваджується, див. [docs/i18n.md](docs/i18n.md))
 
 ## Документація
 
@@ -19,6 +19,7 @@
 | [Маршрути](docs/routes.md) | Таблиця всіх URL-ендпоінтів |
 | [Модель даних](docs/models.md) | Таблиці БД: User, Event, Trainer, ProgramBlock, зв'язки |
 | [Встановлення](docs/setup.md) | Локальний запуск, змінні оточення, міграції, залежності |
+| [Мультимовність](docs/i18n.md) | Flask-Babel: мови uk/ru/en, каталоги перекладів, робочий цикл, фази |
 | [Деплой](docs/deployment.md) | VPS, SSH, CI/CD, секрети GitHub |
 | [План робіт plasma-regen](docs/plan-robit-plasma-regen.md) | Погоджений план правок (переписка 08.07.2026) |
 | [Todo виконання плану](docs/todo-plasma-regen.md) | Статуси завдань, журнал комітів, фази складних робіт |

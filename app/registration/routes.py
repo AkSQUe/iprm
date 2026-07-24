@@ -4,6 +4,7 @@ import logging
 from flask import (
     abort, flash, redirect, render_template, request, send_file, url_for,
 )
+from flask_babel import gettext as _
 from flask_login import current_user, login_required, login_user
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -185,11 +186,11 @@ def register_instance(instance_id):
     existing = registration_service.find_existing(current_user.id, instance.id)
 
     if existing and existing.status != 'cancelled':
-        flash('Ви вже зареєстровані на цей курс', 'info')
+        flash(_('Ви вже зареєстровані на цей курс'), 'info')
         return redirect(url_for('registration.confirmation', registration_id=existing.id))
 
     if not instance.is_registration_open:
-        flash('Реєстрацію на цей курс закрито', 'error')
+        flash(_('Реєстрацію на цей курс закрито'), 'error')
         return redirect(url_for('courses.course_by_slug', slug=instance.course.slug))
 
     # Pre-fill: спершу беремо з User-профілю, потім партнерський токен (вища
@@ -202,7 +203,7 @@ def register_instance(instance_id):
 
     if form.validate_on_submit():
         if tariffs and selected_tariff is None:
-            flash('Оберіть тариф участі', 'error')
+            flash(_('Оберіть тариф участі'), 'error')
             return render_template(
                 'registration/register.html',
                 form=form, event=EventAdapter(instance),
@@ -213,7 +214,7 @@ def register_instance(instance_id):
                 ),
             )
         if not verify_recaptcha(action='event_register'):
-            flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+            flash(_('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.'), 'error')
             return render_template(
                 'registration/register.html',
                 form=form, event=EventAdapter(instance),
@@ -223,10 +224,12 @@ def register_instance(instance_id):
                     and current_user.medical_profile.is_complete
                 ),
             )
-        has_capacity, _ = registration_service.check_capacity(instance_id)
+        # Другий елемент кортежу не потрібен; НЕ розпаковуємо в `_`, щоб не
+        # затінити gettext у скоупі функції.
+        has_capacity = registration_service.check_capacity(instance_id)[0]
         if not has_capacity:
             db.session.rollback()
-            flash('На жаль, місць більше немає', 'error')
+            flash(_('На жаль, місць більше немає'), 'error')
             return redirect(url_for('courses.course_by_slug', slug=instance.course.slug))
 
         try:
@@ -282,14 +285,14 @@ def register_instance(instance_id):
                     'Failed to queue confirmation email for reg %d', reg.id,
                 )
             if is_free:
-                flash('Реєстрацію підтверджено', 'success')
+                flash(_('Реєстрацію підтверджено'), 'success')
             else:
-                flash('Реєстрацію створено. Оберіть спосіб оплати нижче.', 'info')
+                flash(_('Реєстрацію створено. Оберіть спосіб оплати нижче.'), 'info')
             return redirect(url_for('registration.confirmation', registration_id=reg.id))
         except Exception:
             logger.exception('Failed to register user %d for instance %d', current_user.id, instance_id)
             db.session.rollback()
-            flash('Помилка при реєстрації. Спробуйте ще раз.', 'error')
+            flash(_('Помилка при реєстрації. Спробуйте ще раз.'), 'error')
 
     profile_complete = bool(
         current_user.medical_profile
@@ -379,7 +382,7 @@ def invoice_download(registration_id):
     if not (reg.payment_amount and reg.payment_amount > 0):
         abort(404)
     if reg.payment_status == 'paid':
-        flash('Реєстрацію вже оплачено — рахунок не потрібен.', 'info')
+        flash(_('Реєстрацію вже оплачено — рахунок не потрібен.'), 'info')
         return redirect(url_for('registration.confirmation', registration_id=reg.id))
 
     # Завантаження рахунка == вибір оплати за рахунком: фіксуємо фактичний
@@ -585,7 +588,7 @@ def complete_invoice(token):
 
     # Після оплати рахунок не потрібен (узгоджено з invoice_download).
     if reg.payment_status == 'paid':
-        flash('Реєстрацію вже оплачено — рахунок не потрібен.', 'info')
+        flash(_('Реєстрацію вже оплачено — рахунок не потрібен.'), 'info')
         return redirect(url_for('registration.complete_payment', token=token))
 
     # Завантаження рахунка == вибір оплати за рахунком: фіксуємо реальний

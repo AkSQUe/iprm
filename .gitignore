@@ -18,6 +18,11 @@ instance/
 *.sqlite3
 migrations/versions/*.pyc
 
+# i18n: генерований POT-шаблон і скомпільовані каталоги (компілюються
+# при деплої: pybabel compile у deploy.yml). У git -- лише .po.
+app/translations/messages.pot
+app/translations/**/*.mo
+
 # Generated certificate PDFs (private, persisted on server, not in repo).
 # Leading slash anchors to repo root so app/templates/certificates/ -- where
 # the Jinja template lives -- is NOT ignored.

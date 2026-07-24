@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="{{ current_lang }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='svg/IPRM-logo-simple.svg') }}">
-  <title>{% block title %}ІПРМ | Інститут Плазмотерапії та Регенеративної Медицини{% endblock %}</title>
-  <meta name="description" content="{% block meta_description %}Інститут Плазмотерапії та Регенеративної Медицини. Курси після дипломної освіти для лікарів з нарахуванням балів БПР.{% endblock %}">
+  <title>{% block title %}{{ _('ІПРМ | Інститут Плазмотерапії та Регенеративної Медицини') }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{{ _('Інститут Плазмотерапії та Регенеративної Медицини. Курси після дипломної освіти для лікарів з нарахуванням балів БПР.') }}{% endblock %}">
   <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
   <meta property="og:description" content="{% block og_description %}{{ self.meta_description() }}{% endblock %}">
   <meta property="og:type" content="{% block og_type %}website{% endblock %}">
@@ -13,10 +13,10 @@
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:url" content="{% block og_url %}{{ request.url }}{% endblock %}">
-  <meta property="og:locale" content="uk_UA">
-  <meta property="og:site_name" content="ІПРМ">
+  <meta property="og:locale" content="{{ og_locale }}">
+  <meta property="og:site_name" content="{{ _('ІПРМ') }}">
   <meta property="og:image:type" content="image/png">
-  <meta property="og:image:alt" content="ІПРМ - Інститут Плазмотерапії та Регенеративної Медицини">
+  <meta property="og:image:alt" content="{{ _('ІПРМ - Інститут Плазмотерапії та Регенеративної Медицини') }}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{ self.title() }}">
   <meta name="twitter:description" content="{{ self.meta_description() }}">
@@ -78,7 +78,7 @@
     {%- endwith -%}
   </script>
 
-  <a href="#main-content" class="skip-link">Перейти до вмісту</a>
+  <a href="#main-content" class="skip-link">{{ _('Перейти до вмісту') }}</a>
 
   {% block molecular_bg %}
   <div id="molecular-background" aria-hidden="true"></div>

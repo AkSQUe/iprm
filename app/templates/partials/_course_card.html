@@ -32,13 +32,13 @@
 
       <div class="iprm-course-card__badges">
         {% if course.is_featured %}
-        <span class="iprm-card-badge iprm-card-badge--featured">Рекомендуємо</span>
+        <span class="iprm-card-badge iprm-card-badge--featured">{{ _('Рекомендуємо') }}</span>
         {% endif %}
         {% if course.event_type %}
         <span class="iprm-card-badge iprm-card-badge--type">{{ course.event_type_label }}</span>
         {% endif %}
         {% if course.difficulty_level %}
-        <span class="iprm-card-badge iprm-card-badge--level" title="{{ course.difficulty_label }}">Рівень {{ course.difficulty_level }}/3</span>
+        <span class="iprm-card-badge iprm-card-badge--level" title="{{ course.difficulty_label }}">{% trans level=course.difficulty_level %}Рівень {{ level }}/3{% endtrans %}</span>
         {% endif %}
         {% for fmt in insts | map(attribute='format_label') | unique %}
         <span class="iprm-card-badge iprm-card-badge--format">{{ fmt }}</span>
@@ -81,12 +81,12 @@
         <span class="iprm-course-card__seats{% if site_settings.seats_low_threshold and seats <= site_settings.seats_low_threshold %} iprm-course-card__seats--warning{% endif %}">{{ seats }} {{ seats | uk_plural('місце', 'місця', 'місць') }}</span>
         {% endif %}
         {% if price_min and price_min > 0 %}
-        <span class="iprm-course-card__price">{% if price_varies %}від {% endif %}{{ price_min | int }} &#8372;</span>
+        <span class="iprm-course-card__price">{% if price_varies %}{{ _('від') }} {% endif %}{{ price_min | int }} &#8372;</span>
         {% endif %}
       </div>
     </div>
   {% if course.tags and show_tag_filter | default(true) %}
-  <div class="iprm-course-card__tags" role="group" aria-label="Фільтр за тегами">
+  <div class="iprm-course-card__tags" role="group" aria-label="{{ _('Фільтр за тегами') }}">
     {% for tag in course.tags %}
       <button type="button" class="iprm-tag" data-tag-filter="{{ tag }}" aria-pressed="false">{{ tag }}</button>
     {% endfor %}

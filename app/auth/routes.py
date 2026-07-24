@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 from flask import render_template, redirect, url_for, flash, request, session, send_file
+from flask_babel import gettext as _
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy.orm import contains_eager
 from app.auth import auth_bp
@@ -44,7 +45,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         if not verify_recaptcha(action='login'):
-            flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+            flash(_('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.'), 'error')
             return render_template('auth/login.html', form=form)
 
         # Identity-first lookup (Phase 2): шукаємо password-identity за
@@ -72,7 +73,7 @@ def login():
                 return redirect(next_page)
             return redirect(url_for('auth.account'))
 
-        flash('Невірний email або пароль', 'error')
+        flash(_('Невірний email або пароль'), 'error')
 
     return render_template('auth/login.html', form=form)
 
@@ -86,7 +87,7 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         if not verify_recaptcha(action='register'):
-            flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+            flash(_('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.'), 'error')
             return render_template('auth/register.html', form=form)
         # Phase 2: фабрика створює User + password-identity + порожній
         # MedicalProfile у одній транзакції. Identity-row буде використано
@@ -113,14 +114,14 @@ def register():
                 logger.exception('Failed to send confirmation email to %s', user.email)
 
             if email_sent:
-                flash('Реєстрацію завершено. Перевірте email для підтвердження.', 'info')
+                flash(_('Реєстрацію завершено. Перевірте email для підтвердження.'), 'info')
             else:
-                flash('Реєстрацію завершено. Натисніть "Надіслати лист повторно" у кабінеті для підтвердження email.', 'warning')
+                flash(_('Реєстрацію завершено. Натисніть "Надіслати лист повторно" у кабінеті для підтвердження email.'), 'warning')
             return redirect(url_for('auth.account'))
         except Exception:
             logger.exception('Failed to register user %s', form.email.data)
             db.session.rollback()
-            flash('Помилка при реєстрації', 'error')
+            flash(_('Помилка при реєстрації'), 'error')
 
     return render_template('auth/register.html', form=form)
 
@@ -134,7 +135,7 @@ def forgot_password():
     form = ForgotPasswordForm()
     if form.validate_on_submit():
         if not verify_recaptcha(action='forgot_password'):
-            flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+            flash(_('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.'), 'error')
             return render_template('auth/forgot_password.html', form=form)
 
         email = form.email.data.lower().strip()
@@ -148,8 +149,8 @@ def forgot_password():
                 logger.exception('Failed to send password reset to %s', email)
 
         # Anti-enumeration: відповідь однакова незалежно від існування акаунта.
-        flash('Якщо акаунт з такою адресою існує, ми надіслали лист з '
-              'інструкціями для відновлення паролю.', 'info')
+        flash(_('Якщо акаунт з такою адресою існує, ми надіслали лист з '
+                'інструкціями для відновлення паролю.'), 'info')
         return redirect(url_for('auth.login'))
 
     return render_template('auth/forgot_password.html', form=form)
@@ -164,7 +165,7 @@ def reset_password(token):
     user_id = confirm_password_reset_token(token)
     user = db.session.get(User, user_id) if user_id else None
     if user is None or not user.is_active:
-        flash('Посилання недійсне або термін його дії минув. Спробуйте ще раз.', 'error')
+        flash(_('Посилання недійсне або термін його дії минув. Спробуйте ще раз.'), 'error')
         return redirect(url_for('auth.forgot_password'))
 
     form = ResetPasswordForm()
@@ -177,10 +178,10 @@ def reset_password(token):
         except Exception:
             logger.exception('Failed to reset password for user %s', user.id)
             db.session.rollback()
-            flash('Помилка при збереженні паролю. Спробуйте ще раз.', 'error')
+            flash(_('Помилка при збереженні паролю. Спробуйте ще раз.'), 'error')
             return render_template('auth/reset_password.html', form=form, token=token)
 
-        flash('Пароль успішно змінено. Тепер ви можете увійти.', 'success')
+        flash(_('Пароль успішно змінено. Тепер ви можете увійти.'), 'success')
         return redirect(url_for('auth.login'))
 
     return render_template('auth/reset_password.html', form=form, token=token)
@@ -320,14 +321,14 @@ def certificate_data():
                 'Certificate data saved: user=%d complete=%s backfilled_regs=%d',
                 current_user.id, profile.is_complete, backfilled,
             )
-            flash('Дані для сертифіката збережено. Дякуємо!', 'success')
+            flash(_('Дані для сертифіката збережено. Дякуємо!'), 'success')
             return redirect(url_for('auth.account'))
         except Exception:
             db.session.rollback()
             logger.exception(
                 'Failed to save certificate data for user %d', current_user.id,
             )
-            flash('Помилка при збереженні. Спробуйте ще раз.', 'error')
+            flash(_('Помилка при збереженні. Спробуйте ще раз.'), 'error')
 
     return render_template('auth/certificate_data.html', form=form)
 
@@ -338,7 +339,7 @@ def certificate_download(cert_id):
     """Завантажити власний сертифікат (перевірка володіння)."""
     cert = db.session.get(Certificate, cert_id)
     if cert is None or cert.user_id != current_user.id or cert.revoked:
-        flash('Сертифікат не знайдено', 'error')
+        flash(_('Сертифікат не знайдено'), 'error')
         return redirect(url_for('auth.account'))
 
     from app.services.certificate_service import certificate_abs_path, regenerate_pdf
@@ -396,26 +397,26 @@ def _apple_signin_available():
 def confirm_email(token):
     user_id = confirm_token(token)
     if user_id is None:
-        flash('Посилання недійсне або прострочене. Запросіть нове.', 'error')
+        flash(_('Посилання недійсне або прострочене. Запросіть нове.'), 'error')
         return redirect(url_for('auth.login'))
 
     user = db.session.get(User, user_id)
     if not user:
-        flash('Користувача не знайдено', 'error')
+        flash(_('Користувача не знайдено'), 'error')
         return redirect(url_for('auth.login'))
 
     if user.email_confirmed:
-        flash('Email вже підтверджено', 'info')
+        flash(_('Email вже підтверджено'), 'info')
     else:
         user.email_confirmed = True
         try:
             db.session.commit()
-            flash('Email успішно підтверджено!', 'success')
+            flash(_('Email успішно підтверджено!'), 'success')
             logger.info('Email confirmed for user %d', user.id)
         except Exception:
             db.session.rollback()
             logger.exception('Failed to confirm email for user %d', user.id)
-            flash('Помилка при підтвердженні', 'error')
+            flash(_('Помилка при підтвердженні'), 'error')
 
     if current_user.is_authenticated:
         return redirect(url_for('auth.account'))
@@ -427,20 +428,20 @@ def confirm_email(token):
 @limiter.limit('3 per hour')
 def resend_confirmation():
     if current_user.email_confirmed:
-        flash('Email вже підтверджено', 'info')
+        flash(_('Email вже підтверджено'), 'info')
         return redirect(url_for('auth.account'))
 
     if not verify_recaptcha(action='resend_confirmation'):
-        flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+        flash(_('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.'), 'error')
         return redirect(url_for('auth.account'))
 
     try:
         token = generate_confirmation_token(current_user.id)
         confirm_url = url_for('auth.confirm_email', token=token, _external=True)
         EmailService.send_email_confirmation(current_user, confirm_url)
-        flash('Лист з підтвердженням надіслано повторно', 'success')
+        flash(_('Лист з підтвердженням надіслано повторно'), 'success')
     except Exception:
         logger.exception('Failed to resend confirmation to %s', current_user.email)
-        flash('Не вдалося надіслати лист', 'error')
+        flash(_('Не вдалося надіслати лист'), 'error')
 
     return redirect(url_for('auth.account'))

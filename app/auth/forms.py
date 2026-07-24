@@ -1,3 +1,5 @@
+from flask_babel import gettext as _
+from flask_babel import lazy_gettext as _l
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
@@ -18,7 +20,7 @@ class LoginForm(FlaskForm):
     email = StringField(
         'Email',
         validators=[
-            DataRequired(message='Email обов\'язковий'),
+            DataRequired(message=_l('Email обов\'язковий')),
         ],
         render_kw={
             'placeholder': 'ваш.email@example.com',
@@ -26,25 +28,25 @@ class LoginForm(FlaskForm):
         }
     )
     password = PasswordField(
-        'Пароль',
+        _l('Пароль'),
         validators=[
-            DataRequired(message='Пароль обов\'язковий'),
+            DataRequired(message=_l('Пароль обов\'язковий')),
         ],
         render_kw={
-            'placeholder': 'Введіть ваш пароль',
+            'placeholder': _l('Введіть ваш пароль'),
             'autocomplete': 'current-password',
         }
     )
-    remember = BooleanField('Запам\'ятати мене')
+    remember = BooleanField(_l('Запам\'ятати мене'))
 
 
 class RegistrationForm(FlaskForm):
     email = StringField(
         'Email',
         validators=[
-            DataRequired(message='Email обов\'язковий'),
-            Email(message='Невірний формат email'),
-            Length(max=255, message='Email занадто довгий'),
+            DataRequired(message=_l('Email обов\'язковий')),
+            Email(message=_l('Невірний формат email')),
+            Length(max=255, message=_l('Email занадто довгий')),
         ],
         render_kw={
             'placeholder': 'ваш.email@example.com',
@@ -52,64 +54,64 @@ class RegistrationForm(FlaskForm):
         }
     )
     first_name = StringField(
-        'Ім\'я',
+        _l('Ім\'я'),
         validators=[
-            DataRequired(message='Ім\'я обов\'язкове'),
-            Length(min=2, max=100, message='Ім\'я повинно бути від 2 до 100 символів'),
+            DataRequired(message=_l('Ім\'я обов\'язкове')),
+            Length(min=2, max=100, message=_l('Ім\'я повинно бути від 2 до 100 символів')),
         ],
         render_kw={
-            'placeholder': 'Ваше ім\'я',
+            'placeholder': _l('Ваше ім\'я'),
         }
     )
     last_name = StringField(
-        'Прізвище',
+        _l('Прізвище'),
         validators=[
-            DataRequired(message='Прізвище обов\'язкове'),
-            Length(min=2, max=100, message='Прізвище повинно бути від 2 до 100 символів'),
+            DataRequired(message=_l('Прізвище обов\'язкове')),
+            Length(min=2, max=100, message=_l('Прізвище повинно бути від 2 до 100 символів')),
         ],
         render_kw={
-            'placeholder': 'Ваше прізвище',
+            'placeholder': _l('Ваше прізвище'),
         }
     )
     password = PasswordField(
-        'Пароль',
+        _l('Пароль'),
         validators=[
-            DataRequired(message='Пароль обов\'язковий'),
-            Length(min=8, max=128, message='Пароль повинен бути від 8 до 128 символів'),
+            DataRequired(message=_l('Пароль обов\'язковий')),
+            Length(min=8, max=128, message=_l('Пароль повинен бути від 8 до 128 символів')),
         ],
         render_kw={
-            'placeholder': 'Мінімум 8 символів',
+            'placeholder': _l('Мінімум 8 символів'),
             'autocomplete': 'new-password',
         }
     )
     password_confirm = PasswordField(
-        'Підтвердження паролю',
+        _l('Підтвердження паролю'),
         validators=[
-            DataRequired(message='Підтвердження паролю обов\'язкове'),
-            EqualTo('password', message='Паролі не співпадають'),
+            DataRequired(message=_l('Підтвердження паролю обов\'язкове')),
+            EqualTo('password', message=_l('Паролі не співпадають')),
         ],
         render_kw={
-            'placeholder': 'Повторіть пароль',
+            'placeholder': _l('Повторіть пароль'),
             'autocomplete': 'new-password',
         }
     )
 
     consent_data = BooleanField(
-        validators=[DataRequired(message='Необхідно надати згоду на обробку персональних даних')],
+        validators=[DataRequired(message=_l('Необхідно надати згоду на обробку персональних даних'))],
     )
 
     def validate_email(self, field):
         if User.query.filter_by(email=field.data.lower().strip()).first():
-            raise ValidationError('Неможливо використати цей email')
+            raise ValidationError(_('Неможливо використати цей email'))
 
 
 class ForgotPasswordForm(FlaskForm):
     email = StringField(
         'Email',
         validators=[
-            DataRequired(message='Email обов\'язковий'),
-            Email(message='Невірний формат email'),
-            Length(max=255, message='Email занадто довгий'),
+            DataRequired(message=_l('Email обов\'язковий')),
+            Email(message=_l('Невірний формат email')),
+            Length(max=255, message=_l('Email занадто довгий')),
         ],
         render_kw={
             'placeholder': 'ваш.email@example.com',
@@ -120,24 +122,24 @@ class ForgotPasswordForm(FlaskForm):
 
 class ResetPasswordForm(FlaskForm):
     password = PasswordField(
-        'Новий пароль',
+        _l('Новий пароль'),
         validators=[
-            DataRequired(message='Пароль обов\'язковий'),
-            Length(min=8, max=128, message='Пароль повинен бути від 8 до 128 символів'),
+            DataRequired(message=_l('Пароль обов\'язковий')),
+            Length(min=8, max=128, message=_l('Пароль повинен бути від 8 до 128 символів')),
         ],
         render_kw={
-            'placeholder': 'Мінімум 8 символів',
+            'placeholder': _l('Мінімум 8 символів'),
             'autocomplete': 'new-password',
         }
     )
     password_confirm = PasswordField(
-        'Підтвердження паролю',
+        _l('Підтвердження паролю'),
         validators=[
-            DataRequired(message='Підтвердження паролю обов\'язкове'),
-            EqualTo('password', message='Паролі не співпадають'),
+            DataRequired(message=_l('Підтвердження паролю обов\'язкове')),
+            EqualTo('password', message=_l('Паролі не співпадають')),
         ],
         render_kw={
-            'placeholder': 'Повторіть пароль',
+            'placeholder': _l('Повторіть пароль'),
             'autocomplete': 'new-password',
         }
     )

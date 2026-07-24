@@ -10,11 +10,13 @@ blueprint-пакет registration і не створював приховани�
 """
 from datetime import date
 
+from flask_babel import gettext as _
+from flask_babel import lazy_gettext as _l
 from wtforms import DateField, SelectField, SelectMultipleField, StringField
 from wtforms.validators import DataRequired, Length, ValidationError
 
 from app.models.medical_profile import MedicalProfile
-from app.models.specializations import SPECIALIZATIONS
+from app.models.specializations import localized_specializations
 
 
 class MedicalProfileFieldsMixin:
@@ -22,48 +24,50 @@ class MedicalProfileFieldsMixin:
     class MyForm(MedicalProfileFieldsMixin, FlaskForm)."""
 
     user_type = SelectField(
-        'Тип учасника',
-        choices=[('', '— оберіть —')] + MedicalProfile.PARTICIPANT_TYPES,
-        validators=[DataRequired(message='Оберіть тип учасника')],
+        _l('Тип учасника'),
+        choices=[('', _l('— оберіть —'))] + MedicalProfile.PARTICIPANT_TYPES,
+        validators=[DataRequired(message=_l('Оберіть тип учасника'))],
     )
     middle_name = StringField(
-        'По батькові',
-        validators=[DataRequired(message='По батькові обов\'язкове'), Length(max=100)],
+        _l('По батькові'),
+        validators=[DataRequired(message=_l('По батькові обов\'язкове')), Length(max=100)],
         render_kw={'autocomplete': 'additional-name'},
     )
     birth_date = DateField(
-        'Дата народження',
-        validators=[DataRequired(message='Дата народження обов\'язкова')],
+        _l('Дата народження'),
+        validators=[DataRequired(message=_l('Дата народження обов\'язкова'))],
         render_kw={'autocomplete': 'bday'},
     )
     education = StringField(
-        'Освіта (рік закінчення та назва ВНЗ)',
-        validators=[DataRequired(message='Освіта обов\'язкова'), Length(max=500)],
-        render_kw={'placeholder': '2014, НМУ ім. О.О. Богомольця'},
+        _l('Освіта (рік закінчення та назва ВНЗ)'),
+        validators=[DataRequired(message=_l('Освіта обов\'язкова')), Length(max=500)],
+        render_kw={'placeholder': _l('2014, НМУ ім. О.О. Богомольця')},
     )
     workplace = StringField(
-        'Місце роботи (назва ЗОЗу)',
-        validators=[DataRequired(message='Місце роботи обов\'язкове'), Length(max=300)],
+        _l('Місце роботи (назва ЗОЗу)'),
+        validators=[DataRequired(message=_l('Місце роботи обов\'язкове')), Length(max=300)],
         render_kw={'autocomplete': 'organization'},
     )
     position = StringField(
-        'Займана посада',
-        validators=[DataRequired(message='Займана посада обов\'язкова'), Length(max=200)],
+        _l('Займана посада'),
+        validators=[DataRequired(message=_l('Займана посада обов\'язкова')), Length(max=200)],
         render_kw={
-            'placeholder': 'асистент, лікар-ординатор, головний лікар...',
+            'placeholder': _l('асистент, лікар-ординатор, головний лікар...'),
             'autocomplete': 'organization-title',
         },
     )
     specializations = SelectMultipleField(
-        'Спеціалізації',
-        choices=SPECIALIZATIONS,
-        validators=[DataRequired(message='Оберіть хоча б одну спеціалізацію')],
+        _l('Спеціалізації'),
+        # Callable -> labels перекладаються на льоту при інстанціюванні форми;
+        # канонічний список (для БД/XLSX) лишається незмінним.
+        choices=localized_specializations,
+        validators=[DataRequired(message=_l('Оберіть хоча б одну спеціалізацію'))],
     )
 
     def validate_birth_date(self, field):
         if field.data is None:
             return
         if field.data > date.today():
-            raise ValidationError('Дата народження не може бути в майбутньому')
+            raise ValidationError(_('Дата народження не може бути в майбутньому'))
         if field.data.year < 1900:
-            raise ValidationError('Некоректний рік народження')
+            raise ValidationError(_('Некоректний рік народження'))

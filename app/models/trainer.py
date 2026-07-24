@@ -1,9 +1,14 @@
 from app.extensions import db
-from app.models.mixins import TimestampMixin, BigIntPK
+from app.models.mixins import TimestampMixin, TranslatableMixin, BigIntPK
 
 
-class Trainer(TimestampMixin, db.Model):
+class Trainer(TranslatableMixin, TimestampMixin, db.Model):
     __tablename__ = 'trainers'
+    __translatable__ = (
+        'full_name', 'full_name_dative', 'role', 'bio',
+        'certificates', 'patents', 'articles', 'research',
+        'skills', 'education', 'additional_education', 'work_experience',
+    )
 
     id = db.Column(BigIntPK, primary_key=True)
     full_name = db.Column(db.String(200), nullable=False, index=True)

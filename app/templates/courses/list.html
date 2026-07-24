@@ -2,8 +2,8 @@
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 {% from 'partials/_location_badge.html' import location_badge %}
 
-{% block title %}Курси після дипломної освіти для лікарів | ІПРМ{% endblock %}
-{% block meta_description %}Сертифіковані курси підвищення кваліфікації з плазмотерапії та регенеративної медицини. Нарахування балів БПР.{% endblock %}
+{% block title %}{{ _('Курси після дипломної освіти для лікарів | ІПРМ') }}{% endblock %}
+{% block meta_description %}{{ _('Сертифіковані курси підвищення кваліфікації з плазмотерапії та регенеративної медицини. Нарахування балів БПР.') }}{% endblock %}
 {% block og_image %}{{ url_for('static', filename='img/og-logo-simple.png', _external=True) }}{% endblock %}
 
 {% block jsonld %}
@@ -34,9 +34,9 @@
   <div class="iprm-hero-wrap">
     <section class="iprm-hero" aria-label="Hero">
       <div class="iprm-hero__content">
-        <h1 class="iprm-hero__title">Курси після дипломної<br><span class="apple-gradient-text">освіти.</span></h1>
-        <p class="iprm-hero__subtitle">Сертифіковані програми підвищення кваліфікації для лікарів з офіційним нарахуванням балів БПР</p>
-        <a href="#courses" class="apple-btn apple-btn--primary">Переглянути курси</a>
+        <h1 class="iprm-hero__title">{{ _('Курси після дипломної<br><span class="apple-gradient-text">освіти.</span>') }}</h1>
+        <p class="iprm-hero__subtitle">{{ _('Сертифіковані програми підвищення кваліфікації для лікарів з офіційним нарахуванням балів БПР') }}</p>
+        <a href="#courses" class="apple-btn apple-btn--primary">{{ _('Переглянути курси') }}</a>
       </div>
     </section>
   </div>
@@ -44,13 +44,13 @@
   <!-- ===== COURSE CARDS ===== -->
   <section id="courses" class="iprm-section apple-section-gray" aria-labelledby="courses-title">
     <div class="iprm-section__inner">
-      <h2 id="courses-title" class="iprm-section__title">Доступні <span class="apple-gradient-text">курси</span></h2>
-      <p class="iprm-section__subtitle">Оберіть курс та підвищіть свою кваліфікацію</p>
+      <h2 id="courses-title" class="iprm-section__title">{{ _('Доступні <span class="apple-gradient-text">курси</span>') }}</h2>
+      <p class="iprm-section__subtitle">{{ _('Оберіть курс та підвищіть свою кваліфікацію') }}</p>
 
       {# Бігучий рядок чіпсів-спеціальностей: усі теги каталогу, клік = фільтр.
          Трек дубльовано для безшовного циклу (копія прихована від AT). #}
       {% if all_tags %}
-      <div class="iprm-spec-marquee" data-spec-marquee aria-label="Фільтр за спеціальністю">
+      <div class="iprm-spec-marquee" data-spec-marquee aria-label="{{ _('Фільтр за спеціальністю') }}">
         <div class="iprm-spec-marquee__track">
           <div class="iprm-spec-marquee__group" role="group">
             {% for tag in all_tags %}
@@ -66,55 +66,55 @@
       </div>
       {% endif %}
 
-      <form class="iprm-course-search" role="search" aria-label="Пошук курсів">
-        <label for="course-search" class="iprm-course-search__label">Пошук за назвою</label>
+      <form class="iprm-course-search" role="search" aria-label="{{ _('Пошук курсів') }}">
+        <label for="course-search" class="iprm-course-search__label">{{ _('Пошук за назвою') }}</label>
         <input type="search" id="course-search" class="iprm-course-search__input form-input"
-               placeholder="Введіть назву курсу..." autocomplete="off"
+               placeholder="{{ _('Введіть назву курсу...') }}" autocomplete="off"
                data-course-search>
       </form>
 
       <div class="iprm-filter-panel" data-filter-panel>
         <label class="iprm-filter-panel__field">
-          <span class="iprm-filter-panel__label">Формат</span>
+          <span class="iprm-filter-panel__label">{{ _('Формат') }}</span>
           <select class="form-input" data-filter-format>
-            <option value="">Усі</option>
-            <option value="online">Онлайн</option>
-            <option value="offline">Офлайн</option>
-            <option value="hybrid">Гібрид</option>
+            <option value="">{{ _('Усі') }}</option>
+            <option value="online">{{ _('Онлайн') }}</option>
+            <option value="offline">{{ _('Офлайн') }}</option>
+            <option value="hybrid">{{ _('Гібрид') }}</option>
           </select>
         </label>
         <label class="iprm-filter-panel__field">
-          <span class="iprm-filter-panel__label">Тривалість</span>
+          <span class="iprm-filter-panel__label">{{ _('Тривалість') }}</span>
           <select class="form-input" data-filter-duration>
-            <option value="">Будь-яка</option>
-            <option value="1">1 день</option>
-            <option value="2">2 дні та більше</option>
+            <option value="">{{ _('Будь-яка') }}</option>
+            <option value="1">{{ _('1 день') }}</option>
+            <option value="2">{{ _('2 дні та більше') }}</option>
           </select>
         </label>
         <label class="iprm-filter-panel__field">
-          <span class="iprm-filter-panel__label">Бюджет</span>
+          <span class="iprm-filter-panel__label">{{ _('Бюджет') }}</span>
           <select class="form-input" data-filter-budget>
-            <option value="">Будь-який</option>
-            <option value="lt5">До 5 000 &#8372;</option>
-            <option value="5to10">5 000 &ndash; 10 000 &#8372;</option>
-            <option value="gt10">Понад 10 000 &#8372;</option>
+            <option value="">{{ _('Будь-який') }}</option>
+            <option value="lt5">{{ _('До 5 000 &#8372;') }}</option>
+            <option value="5to10">{{ _('5 000 &ndash; 10 000 &#8372;') }}</option>
+            <option value="gt10">{{ _('Понад 10 000 &#8372;') }}</option>
           </select>
         </label>
         <label class="iprm-filter-panel__field">
-          <span class="iprm-filter-panel__label">Сортування</span>
+          <span class="iprm-filter-panel__label">{{ _('Сортування') }}</span>
           <select class="form-input" data-filter-sort>
-            <option value="">За замовчуванням</option>
-            <option value="date">Найближчі дати</option>
-            <option value="price-asc">Ціна: спочатку дешевші</option>
-            <option value="price-desc">Ціна: спочатку дорожчі</option>
-            <option value="new">Спочатку нові</option>
+            <option value="">{{ _('За замовчуванням') }}</option>
+            <option value="date">{{ _('Найближчі дати') }}</option>
+            <option value="price-asc">{{ _('Ціна: спочатку дешевші') }}</option>
+            <option value="price-desc">{{ _('Ціна: спочатку дорожчі') }}</option>
+            <option value="new">{{ _('Спочатку нові') }}</option>
           </select>
         </label>
       </div>
 
       <div class="iprm-course-resultbar" data-filter-resultbar hidden>
         <span class="iprm-course-resultbar__count" data-filter-count aria-live="polite"></span>
-        <button type="button" class="iprm-course-resultbar__reset" data-filter-reset>Скинути фільтри</button>
+        <button type="button" class="iprm-course-resultbar__reset" data-filter-reset>{{ _('Скинути фільтри') }}</button>
       </div>
 
       <div class="iprm-course-cards" data-filterable="courses">
@@ -122,11 +122,11 @@
         {% include 'partials/_course_card.html' %}
         {% else %}
         <div class="iprm-empty-state iprm-empty-state--full">
-          <p>Наразі немає доступних курсів</p>
+          <p>{{ _('Наразі немає доступних курсів') }}</p>
         </div>
         {% endfor %}
         <div class="iprm-empty-state iprm-empty-state--full" data-filter-empty hidden>
-          <p>Немає курсів з обраними фільтрами</p>
+          <p>{{ _('Немає курсів з обраними фільтрами') }}</p>
         </div>
       </div>
     </div>
@@ -135,15 +135,15 @@
   <!-- ===== SCHEDULE ===== -->
   <section class="iprm-section" aria-labelledby="schedule-title">
     <div class="iprm-section__inner">
-      <h2 id="schedule-title" class="iprm-section__title">Графік <span class="apple-gradient-text">курсів</span></h2>
-      <p class="iprm-section__subtitle">Розклад найближчих заходів інституту</p>
+      <h2 id="schedule-title" class="iprm-section__title">{{ _('Графік <span class="apple-gradient-text">курсів</span>') }}</h2>
+      <p class="iprm-section__subtitle">{{ _('Розклад найближчих заходів інституту') }}</p>
 
       {% if upcoming_instances %}
-      <div class="iprm-schedule-toggle" role="tablist" aria-label="Режим перегляду графіка">
+      <div class="iprm-schedule-toggle" role="tablist" aria-label="{{ _('Режим перегляду графіка') }}">
         <button type="button" class="iprm-schedule-toggle__btn iprm-schedule-toggle__btn--active"
-                data-schedule-view="list" role="tab" aria-selected="true">Список</button>
+                data-schedule-view="list" role="tab" aria-selected="true">{{ _('Список') }}</button>
         <button type="button" class="iprm-schedule-toggle__btn"
-                data-schedule-view="calendar" role="tab" aria-selected="false">Календар</button>
+                data-schedule-view="calendar" role="tab" aria-selected="false">{{ _('Календар') }}</button>
       </div>
 
       <!-- View: Список -->
@@ -171,19 +171,19 @@
               <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}</span>
               {% endif %}
               {% if inst.effective_price and inst.effective_price > 0 %}
-              <span class="iprm-schedule__price">{% if inst.price_is_from %}від {% endif %}{{ inst.effective_price | int }} &#8372;</span>
+              <span class="iprm-schedule__price">{% if inst.price_is_from %}{{ _('від') }} {% endif %}{{ inst.effective_price | int }} &#8372;</span>
               {% endif %}
               {% set remaining = seats_left_map.get(inst.id) if is_open else None %}
               {% if remaining is not none %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--seats{% if site_settings.seats_low_threshold and remaining <= site_settings.seats_low_threshold %} iprm-schedule__tag--warning{% endif %}">Залишилось {{ remaining }} {{ remaining | uk_plural('місце', 'місця', 'місць') }}</span>
+              <span class="iprm-schedule__tag iprm-schedule__tag--seats{% if site_settings.seats_low_threshold and remaining <= site_settings.seats_low_threshold %} iprm-schedule__tag--warning{% endif %}">{{ _('Залишилось') }} {{ remaining }} {{ remaining | uk_plural('місце', 'місця', 'місць') }}</span>
               {% endif %}
             </div>
           </div>
           <div class="iprm-schedule__action">
             {% if is_open %}
-            <span class="iprm-btn iprm-btn--primary iprm-btn--sm">Реєстрація</span>
+            <span class="iprm-btn iprm-btn--primary iprm-btn--sm">{{ _('Реєстрація') }}</span>
             {% else %}
-            <span class="badge badge--draft">Реєстрацію закрито</span>
+            <span class="badge badge--draft">{{ _('Реєстрацію закрито') }}</span>
             {% endif %}
           </div>
         </a>
@@ -204,7 +204,7 @@
       </script>
       {% else %}
       <div class="iprm-empty-state">
-        <p>Графік курсів формується. Слідкуйте за оновленнями.</p>
+        <p>{{ _('Графік курсів формується. Слідкуйте за оновленнями.') }}</p>
       </div>
       {% endif %}
     </div>
@@ -213,28 +213,28 @@
   <!-- ===== HOW IT WORKS ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="how-it-works-title">
     <div class="iprm-section__inner">
-      <h2 id="how-it-works-title" class="iprm-section__title">Як це <span class="apple-gradient-text">працює</span></h2>
-      <p class="iprm-section__subtitle">Чотири кроки від вибору курсу до впровадження методики</p>
+      <h2 id="how-it-works-title" class="iprm-section__title">{{ _('Як це <span class="apple-gradient-text">працює</span>') }}</h2>
+      <p class="iprm-section__subtitle">{{ _('Чотири кроки від вибору курсу до впровадження методики') }}</p>
       <div class="iprm-steps">
         <div class="iprm-steps__item apple-reveal">
           <span class="iprm-steps__number">1</span>
-          <h3 class="iprm-steps__heading">Оберіть курс</h3>
-          <p class="iprm-steps__text">Напрям, формат і дата проведення — у каталозі та графіку вище.</p>
+          <h3 class="iprm-steps__heading">{{ _('Оберіть курс') }}</h3>
+          <p class="iprm-steps__text">{{ _('Напрям, формат і дата проведення — у каталозі та графіку вище.') }}</p>
         </div>
         <div class="iprm-steps__item apple-reveal">
           <span class="iprm-steps__number">2</span>
-          <h3 class="iprm-steps__heading">Пройдіть навчання</h3>
-          <p class="iprm-steps__text">Теорія та практика під керівництвом тренера — очно або онлайн.</p>
+          <h3 class="iprm-steps__heading">{{ _('Пройдіть навчання') }}</h3>
+          <p class="iprm-steps__text">{{ _('Теорія та практика під керівництвом тренера — очно або онлайн.') }}</p>
         </div>
         <div class="iprm-steps__item apple-reveal">
           <span class="iprm-steps__number">3</span>
-          <h3 class="iprm-steps__heading">Отримайте сертифікат</h3>
-          <p class="iprm-steps__text">Офіційний сертифікат з балами БПР після завершення курсу.</p>
+          <h3 class="iprm-steps__heading">{{ _('Отримайте сертифікат') }}</h3>
+          <p class="iprm-steps__text">{{ _('Офіційний сертифікат з балами БПР після завершення курсу.') }}</p>
         </div>
         <div class="iprm-steps__item apple-reveal">
           <span class="iprm-steps__number">4</span>
-          <h3 class="iprm-steps__heading">Впровадьте у практику</h3>
-          <p class="iprm-steps__text">Застосовуйте методику в роботі; доступ до матеріалів залишається з вами.</p>
+          <h3 class="iprm-steps__heading">{{ _('Впровадьте у практику') }}</h3>
+          <p class="iprm-steps__text">{{ _('Застосовуйте методику в роботі; доступ до матеріалів залишається з вами.') }}</p>
         </div>
       </div>
     </div>
@@ -245,35 +245,35 @@
     <div class="iprm-section__inner">
       <div class="iprm-b2b apple-reveal">
         <div class="iprm-b2b__info">
-          <h2 id="b2b-title" class="iprm-section__title iprm-b2b__title">Навчи команду — підсиль <span class="apple-gradient-text">практику</span></h2>
-          <p class="iprm-b2b__lead">Корпоративне навчання від трьох фахівців допомагає розширити перелік послуг, вирівняти якість роботи та швидше впровадити нові протоколи.</p>
+          <h2 id="b2b-title" class="iprm-section__title iprm-b2b__title">{{ _('Навчи команду — підсиль <span class="apple-gradient-text">практику</span>') }}</h2>
+          <p class="iprm-b2b__lead">{{ _('Корпоративне навчання від трьох фахівців допомагає розширити перелік послуг, вирівняти якість роботи та швидше впровадити нові протоколи.') }}</p>
           <ul class="iprm-b2b__benefits">
-            <li><strong>20% знижки</strong> для груп від трьох фахівців</li>
-            <li>онлайн, офлайн або гібридний формат</li>
-            <li>програма під напрям клініки, салону або кабінету</li>
+            <li>{{ _('<strong>20%% знижки</strong> для груп від трьох фахівців') }}</li>
+            <li>{{ _('онлайн, офлайн або гібридний формат') }}</li>
+            <li>{{ _('програма під напрям клініки, салону або кабінету') }}</li>
           </ul>
         </div>
         <form class="iprm-b2b__form" method="POST" action="{{ url_for('courses.b2b_request') }}"
               data-validate data-single-submit data-recaptcha-action="b2b_request" data-ga-event="generate_lead">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <h3 class="iprm-b2b__form-title">Отримати корпоративні умови</h3>
+          <h3 class="iprm-b2b__form-title">{{ _('Отримати корпоративні умови') }}</h3>
           <div class="iprm-b2b__honeypot" aria-hidden="true">
-            <label for="b2b-website">Не заповнюйте це поле</label>
+            <label for="b2b-website">{{ _('Не заповнюйте це поле') }}</label>
             <input type="text" name="website" id="b2b-website" tabindex="-1" autocomplete="off">
           </div>
           <div class="iprm-b2b__form-row">
             <div class="form-group">
-              <label for="b2b-first-name">Ім'я <span class="required">*</span></label>
+              <label for="b2b-first-name">{{ _("Ім'я") }} <span class="required">*</span></label>
               <input type="text" name="first_name" id="b2b-first-name" class="form-input" required maxlength="120" autocomplete="given-name">
             </div>
             <div class="form-group">
-              <label for="b2b-last-name">Прізвище <span class="required">*</span></label>
+              <label for="b2b-last-name">{{ _('Прізвище') }} <span class="required">*</span></label>
               <input type="text" name="last_name" id="b2b-last-name" class="form-input" required maxlength="120" autocomplete="family-name">
             </div>
           </div>
           <div class="iprm-b2b__form-row">
             <div class="form-group">
-              <label for="b2b-phone">Телефон <span class="required">*</span></label>
+              <label for="b2b-phone">{{ _('Телефон') }} <span class="required">*</span></label>
               <input type="tel" name="phone" id="b2b-phone" class="form-input" required placeholder="+380..." maxlength="20" autocomplete="tel">
             </div>
             <div class="form-group">
@@ -282,15 +282,15 @@
             </div>
           </div>
           <div class="form-group">
-            <label for="b2b-team-size">Кількість фахівців <span class="required">*</span></label>
+            <label for="b2b-team-size">{{ _('Кількість фахівців') }} <span class="required">*</span></label>
             <select name="team_size" id="b2b-team-size" class="form-input" required>
-              <option value="" disabled selected>Оберіть...</option>
+              <option value="" disabled selected>{{ _('Оберіть...') }}</option>
               <option value="3-5">3&ndash;5</option>
               <option value="6-10">6&ndash;10</option>
-              <option value="10+">Понад 10</option>
+              <option value="10+">{{ _('Понад 10') }}</option>
             </select>
           </div>
-          <button type="submit" class="apple-btn apple-btn--primary">Обговорити навчання</button>
+          <button type="submit" class="apple-btn apple-btn--primary">{{ _('Обговорити навчання') }}</button>
         </form>
       </div>
     </div>
@@ -299,24 +299,24 @@
   <!-- ===== WHY US ===== -->
   <section class="iprm-section" aria-labelledby="why-us-title">
     <div class="iprm-section__inner">
-      <h2 id="why-us-title" class="iprm-section__title">Чому обирають <span class="apple-gradient-text">наші курси</span></h2>
-      <p class="iprm-section__subtitle">Професійне навчання з офіційним нарахуванням балів БПР</p>
+      <h2 id="why-us-title" class="iprm-section__title">{{ _('Чому обирають <span class="apple-gradient-text">наші курси</span>') }}</h2>
+      <p class="iprm-section__subtitle">{{ _('Професійне навчання з офіційним нарахуванням балів БПР') }}</p>
 
       <div class="apple-features-grid">
         <div class="apple-feature-card apple-reveal">
           <img class="apple-feature-card__icon" src="{{ url_for('static', filename='images/main/graduation-cap.webp') }}" alt="" width="80" height="80" loading="lazy">
-          <h3>Висококваліфіковані спеціалісти</h3>
-          <p>Навчальні курси проводяться спеціалістами з багатим досвідом у регенеративній медицині.</p>
+          <h3>{{ _('Висококваліфіковані спеціалісти') }}</h3>
+          <p>{{ _('Навчальні курси проводяться спеціалістами з багатим досвідом у регенеративній медицині.') }}</p>
         </div>
         <div class="apple-feature-card apple-reveal">
           <img class="apple-feature-card__icon" src="{{ url_for('static', filename='images/main/online.webp') }}" alt="" width="80" height="80" loading="lazy">
-          <h3>Очно та онлайн</h3>
-          <p>Курси проводяться очно та онлайн, в комфортних умовах та повністю забезпечені всім необхідним.</p>
+          <h3>{{ _('Очно та онлайн') }}</h3>
+          <p>{{ _('Курси проводяться очно та онлайн, в комфортних умовах та повністю забезпечені всім необхідним.') }}</p>
         </div>
         <div class="apple-feature-card apple-reveal">
           <img class="apple-feature-card__icon" src="{{ url_for('static', filename='images/main/BPR-points-white.webp') }}" alt="" width="80" height="80" loading="lazy">
-          <h3>Сертифікати з балами БПР</h3>
-          <p>Після проходження курсу слухачі отримують сертифікати з балами безперервного професійного розвитку.</p>
+          <h3>{{ _('Сертифікати з балами БПР') }}</h3>
+          <p>{{ _('Після проходження курсу слухачі отримують сертифікати з балами безперервного професійного розвитку.') }}</p>
         </div>
       </div>
     </div>

@@ -6,6 +6,14 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+    # i18n (Flask-Babel). Українська -- вихідна мова коду й шаблонів, тому
+    # каталог перекладів існує лише для ru/en (див. app/translations/ і
+    # docs/i18n.md). Порядок вибору локалі -- app/i18n.py:get_locale().
+    LANGUAGES = ['uk', 'ru', 'en']
+    BABEL_DEFAULT_LOCALE = 'uk'
+    BABEL_DEFAULT_TIMEZONE = 'Europe/Kyiv'
+    BABEL_TRANSLATION_DIRECTORIES = 'translations'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///iprm.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STATIC_URL_PATH = '/static'

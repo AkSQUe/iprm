@@ -12,7 +12,7 @@
   </div>
   <div class="blog-comment__body">{{ comment.body }}</div>
   {% if depth < max_comment_depth %}
-  <button type="button" class="blog-comment__reply" data-reply-to="{{ comment.id }}" data-reply-name="{{ comment.author_name }}">Відповісти</button>
+  <button type="button" class="blog-comment__reply" data-reply-to="{{ comment.id }}" data-reply-name="{{ comment.author_name }}">{{ _('Відповісти') }}</button>
   {% endif %}
   {% set kids = comment_children.get(comment.id) %}
   {% if kids %}
@@ -24,14 +24,14 @@
 {% endmacro %}
 
 <section id="comments" class="blog-comments">
-  <h2 class="blog-comments__title">Коментарі{% if comment_count %} ({{ comment_count }}){% endif %}</h2>
+  <h2 class="blog-comments__title">{{ _('Коментарі') }}{% if comment_count %} ({{ comment_count }}){% endif %}</h2>
 
   {% if comment_roots %}
   <ul class="blog-comments__list">
     {% for c in comment_roots %}{{ render_comment(c, 1) }}{% endfor %}
   </ul>
   {% else %}
-  <p class="blog-comments__empty">Поки що немає коментарів. Будьте першим!</p>
+  <p class="blog-comments__empty">{{ _('Поки що немає коментарів. Будьте першим!') }}</p>
   {% endif %}
 
   <form id="comment-form" class="blog-comment-form" method="POST"
@@ -40,25 +40,25 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="parent_id" id="comment-parent-id" value="">
 
-    <h3 class="blog-comment-form__title">Залишити коментар</h3>
+    <h3 class="blog-comment-form__title">{{ _('Залишити коментар') }}</h3>
     <div class="blog-comment-form__reply-to" id="comment-reply-to" hidden>
-      Відповідь для <strong id="comment-reply-name"></strong>
-      <button type="button" id="comment-reply-cancel" class="blog-comment-form__cancel">скасувати</button>
+      {{ _('Відповідь для') }} <strong id="comment-reply-name"></strong>
+      <button type="button" id="comment-reply-cancel" class="blog-comment-form__cancel">{{ _('скасувати') }}</button>
     </div>
 
     {# Honeypot -- приховане поле для ботів (label без "Website", щоб поле не
        сприймалось як справжнє, якщо стане видимим: переклад, reader mode) #}
     <div class="blog-hp" aria-hidden="true">
-      <label for="bc-website">Не заповнюйте це поле</label>
+      <label for="bc-website">{{ _('Не заповнюйте це поле') }}</label>
       <input type="text" name="website" id="bc-website" tabindex="-1" autocomplete="off">
     </div>
 
     <div class="blog-comment-form__row">
-      <input class="form-input" type="text" name="name" id="bc-name" placeholder="Імʼя *" maxlength="120" required>
-      <input class="form-input" type="email" name="email" id="bc-email" placeholder="Email (не публікується)" maxlength="254">
+      <input class="form-input" type="text" name="name" id="bc-name" placeholder="{{ _('Імʼя *') }}" maxlength="120" required>
+      <input class="form-input" type="email" name="email" id="bc-email" placeholder="{{ _('Email (не публікується)') }}" maxlength="254">
     </div>
-    <textarea class="form-input" name="body" id="bc-body" rows="4" placeholder="Ваш коментар *" maxlength="4000" required></textarea>
-    <p class="blog-comment-form__note">Коментар зʼявиться після перевірки модератором.</p>
-    <button type="submit" class="apple-btn apple-btn--primary">Надіслати</button>
+    <textarea class="form-input" name="body" id="bc-body" rows="4" placeholder="{{ _('Ваш коментар *') }}" maxlength="4000" required></textarea>
+    <p class="blog-comment-form__note">{{ _('Коментар зʼявиться після перевірки модератором.') }}</p>
+    <button type="submit" class="apple-btn apple-btn--primary">{{ _('Надіслати') }}</button>
   </form>
 </section>

@@ -7,7 +7,7 @@ from cryptography.fernet import Fernet, InvalidToken
 from flask import current_app
 
 from app.extensions import db
-from app.models.mixins import TimestampMixin, utcnow
+from app.models.mixins import TimestampMixin, TranslatableMixin, utcnow
 
 GA_ID_RE = re.compile(r'^G-[A-Z0-9]{4,20}$')
 
@@ -20,9 +20,13 @@ def _get_fernet():
     return Fernet(base64.urlsafe_b64encode(key))
 
 
-class SiteSettings(TimestampMixin, db.Model):
+class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
     """Singleton: site-wide settings stored in DB, managed via admin panel."""
     __tablename__ = 'site_settings'
+    # Публічні брендові тексти; юридичні/банківські реквізити -- лише укр.
+    __translatable__ = (
+        'company_name', 'company_full_name', 'address', 'city', 'business_hours',
+    )
 
     id = db.Column(db.Integer, primary_key=True, default=1)
 

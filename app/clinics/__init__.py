@@ -1,5 +1,5 @@
-from flask import Blueprint
+from app.i18n import LocalizedBlueprint
 
-clinics_bp = Blueprint('clinics', __name__, url_prefix='/clinics')
+clinics_bp = LocalizedBlueprint('clinics', __name__, url_prefix='/clinics')
 
 from app.clinics import routes

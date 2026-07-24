@@ -6,11 +6,12 @@
 прив'язки до конкретного заходу немає.
 """
 from app.extensions import db
-from app.models.mixins import TimestampMixin, BigIntPK, utcnow
+from app.models.mixins import TimestampMixin, TranslatableMixin, BigIntPK, utcnow
 
 
-class BlogPost(TimestampMixin, db.Model):
+class BlogPost(TranslatableMixin, TimestampMixin, db.Model):
     __tablename__ = 'blog_posts'
+    __translatable__ = ('title', 'excerpt', 'content', 'meta_title', 'meta_description')
 
     STATUS_DRAFT = 'draft'
     STATUS_PUBLISHED = 'published'

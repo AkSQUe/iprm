@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Способи входу | ІПРМ{% endblock %}
+{% block title %}{{ _('Способи входу | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
@@ -14,27 +14,27 @@
   <div class="iprm-hero-wrap">
     <section class="iprm-hero" aria-label="Connections hero">
       <div class="iprm-hero__content">
-        <h1 class="iprm-hero__title">Способи <span class="apple-gradient-text">входу</span></h1>
-        <p class="iprm-hero__subtitle">Керуйте, як ви входите в обліковий запис</p>
+        <h1 class="iprm-hero__title">{% trans %}Способи <span class="apple-gradient-text">входу</span>{% endtrans %}</h1>
+        <p class="iprm-hero__subtitle">{{ _('Керуйте, як ви входите в обліковий запис') }}</p>
       </div>
     </section>
   </div>
 
   <section class="iprm-section" aria-labelledby="connections-title">
     <div class="iprm-section__inner">
-      <h2 id="connections-title" class="iprm-section__title sr-only">Прив'язані провайдери</h2>
+      <h2 id="connections-title" class="iprm-section__title sr-only">{{ _("Прив'язані провайдери") }}</h2>
 
       <div class="connections-list">
 
         <!-- Password -->
         <div class="connection-item">
-          <div class="connection-item__title">Email і пароль</div>
+          <div class="connection-item__title">{{ _('Email і пароль') }}</div>
           <div class="connection-item__email">{{ current_user.email }}</div>
           <div class="connection-item__status">
             {% if has_password %}
-              <span class="badge badge--active">Активно</span>
+              <span class="badge badge--active">{{ _('Активно') }}</span>
             {% else %}
-              <span class="badge badge--draft">Не встановлено</span>
+              <span class="badge badge--draft">{{ _('Не встановлено') }}</span>
             {% endif %}
           </div>
         </div>
@@ -47,17 +47,17 @@
           </div>
           <div class="connection-item__status">
             {% if has_google %}
-              <span class="badge badge--active">Прив'язано</span>
+              <span class="badge badge--active">{{ _("Прив'язано") }}</span>
               <form method="POST" action="{{ url_for('auth.google_unlink') }}"
-                    data-confirm="Від'єднати Google від акаунта?">
+                    data-confirm="{{ _("Від'єднати Google від акаунта?") }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="apple-btn apple-btn--outline apple-btn--sm">Від'єднати</button>
+                <button type="submit" class="apple-btn apple-btn--outline apple-btn--sm">{{ _("Від'єднати") }}</button>
               </form>
             {% elif google_oauth_available %}
               <a href="{{ url_for('auth.google_start', action='link') }}"
-                 class="apple-btn apple-btn--primary apple-btn--sm">Прив'язати Google</a>
+                 class="apple-btn apple-btn--primary apple-btn--sm">{{ _("Прив'язати Google") }}</a>
             {% else %}
-              <span class="badge badge--pending">Не налаштовано</span>
+              <span class="badge badge--pending">{{ _('Не налаштовано') }}</span>
             {% endif %}
           </div>
         </div>
@@ -66,21 +66,21 @@
         <div class="connection-item">
           <div class="connection-item__title">Apple</div>
           <div class="connection-item__email">
-            {% if has_apple %}{{ by_provider['apple'].email or 'через Apple ID' }}{% else %}--{% endif %}
+            {% if has_apple %}{{ by_provider['apple'].email or _('через Apple ID') }}{% else %}--{% endif %}
           </div>
           <div class="connection-item__status">
             {% if has_apple %}
-              <span class="badge badge--active">Прив'язано</span>
+              <span class="badge badge--active">{{ _("Прив'язано") }}</span>
               <form method="POST" action="{{ url_for('auth.apple_unlink') }}"
-                    data-confirm="Від'єднати Apple від акаунта?">
+                    data-confirm="{{ _("Від'єднати Apple від акаунта?") }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="apple-btn apple-btn--outline apple-btn--sm">Від'єднати</button>
+                <button type="submit" class="apple-btn apple-btn--outline apple-btn--sm">{{ _("Від'єднати") }}</button>
               </form>
             {% elif apple_signin_available %}
               <a href="{{ url_for('auth.apple_start', action='link') }}"
-                 class="apple-btn apple-btn--primary apple-btn--sm">Прив'язати Apple</a>
+                 class="apple-btn apple-btn--primary apple-btn--sm">{{ _("Прив'язати Apple") }}</a>
             {% else %}
-              <span class="badge badge--pending">Не налаштовано</span>
+              <span class="badge badge--pending">{{ _('Не налаштовано') }}</span>
             {% endif %}
           </div>
         </div>

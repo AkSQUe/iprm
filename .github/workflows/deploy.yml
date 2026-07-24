@@ -43,6 +43,7 @@ jobs:
             cd /var/www/iprm
             source venv/bin/activate
             pip install -r requirements.lock --quiet
+            pybabel compile -d app/translations
             flask db upgrade
             chown -R www-data:www-data /var/www/iprm
             systemctl restart iprm

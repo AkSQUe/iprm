@@ -1,3 +1,5 @@
+from flask_babel import gettext as _
+from flask_babel import lazy_gettext as _l
 from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField
 from wtforms.validators import (
@@ -20,20 +22,20 @@ class EventRegistrationForm(FlaskForm):
     # last_name + first_name беруться з User (signup), але показуємо їх на
     # формі для редагування. Якщо змінились -- оновимо User у роуті.
     last_name = StringField(
-        'Прізвище',
-        validators=[DataRequired(message='Прізвище обов\'язкове'), Length(max=100)],
+        _l('Прізвище'),
+        validators=[DataRequired(message=_l('Прізвище обов\'язкове')), Length(max=100)],
         render_kw={'autocomplete': 'family-name'},
     )
     first_name = StringField(
-        'Ім\'я',
-        validators=[DataRequired(message='Ім\'я обов\'язкове'), Length(max=100)],
+        _l('Ім\'я'),
+        validators=[DataRequired(message=_l('Ім\'я обов\'язкове')), Length(max=100)],
         render_kw={'autocomplete': 'given-name'},
     )
 
     # ----- Контакт -----
     phone = StringField(
-        'Телефон',
-        validators=[DataRequired(message='Телефон обов\'язковий'), Length(max=20)],
+        _l('Телефон'),
+        validators=[DataRequired(message=_l('Телефон обов\'язковий')), Length(max=20)],
         render_kw={'placeholder': '+380XXXXXXXXX', 'autocomplete': 'tel'},
     )
 
@@ -43,7 +45,7 @@ class EventRegistrationForm(FlaskForm):
         normalized = normalize_phone(field.data)
         if not normalized or not UA_PHONE_RE.match(normalized):
             raise ValidationError(
-                'Вкажіть коректний український номер у форматі +380XXXXXXXXX'
+                _('Вкажіть коректний український номер у форматі +380XXXXXXXXX')
             )
         field.data = normalized
 
@@ -54,7 +56,7 @@ class EventRegistrationForm(FlaskForm):
 
     # ----- Згоди (GDPR) -----
     consent_data = BooleanField(
-        validators=[DataRequired(message='Необхідно надати згоду на обробку персональних даних')],
+        validators=[DataRequired(message=_l('Необхідно надати згоду на обробку персональних даних'))],
     )
     consent_marketing = BooleanField()
 
@@ -68,29 +70,29 @@ class ParticipantCompletionForm(MedicalProfileFieldsMixin, FlaskForm):
     Реєстраційні/адмін-поля (статус, оплата, бали) сюди не виносяться --
     ними керує менеджер."""
     last_name = StringField(
-        'Прізвище',
-        validators=[DataRequired(message='Прізвище обов\'язкове'), Length(max=100)],
+        _l('Прізвище'),
+        validators=[DataRequired(message=_l('Прізвище обов\'язкове')), Length(max=100)],
         render_kw={'autocomplete': 'family-name'},
     )
     first_name = StringField(
-        'Ім\'я',
-        validators=[DataRequired(message='Ім\'я обов\'язкове'), Length(max=100)],
+        _l('Ім\'я'),
+        validators=[DataRequired(message=_l('Ім\'я обов\'язкове')), Length(max=100)],
         render_kw={'autocomplete': 'given-name'},
     )
     email = StringField(
         'Email',
         validators=[
-            DataRequired(message='Email обов\'язковий'),
-            Email(message='Невалідний email'),
+            DataRequired(message=_l('Email обов\'язковий')),
+            Email(message=_l('Невалідний email')),
             Length(max=255),
         ],
         render_kw={'autocomplete': 'email'},
     )
     phone = StringField(
-        'Телефон',
-        validators=[DataRequired(message='Телефон обов\'язковий'), Length(max=20)],
+        _l('Телефон'),
+        validators=[DataRequired(message=_l('Телефон обов\'язковий')), Length(max=20)],
         render_kw={'placeholder': '+380XXXXXXXXX', 'autocomplete': 'tel'},
     )
     consent_data = BooleanField(
-        validators=[DataRequired(message='Необхідно надати згоду на обробку персональних даних')],
+        validators=[DataRequired(message=_l('Необхідно надати згоду на обробку персональних даних'))],
     )

@@ -21,6 +21,11 @@ class User(TimestampMixin, UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     last_login_at = db.Column(db.DateTime(timezone=True))
 
+    # Мова листів користувачу ('uk'/'ru'/'en'); NULL = українська.
+    # Заповнюється з активної локалі при реєстрації, змінюється в кабінеті.
+    # Рендер листів: flask_babel.force_locale(user.preferred_language or 'uk').
+    preferred_language = db.Column(db.String(5))
+
     # Відписка від НЕОБОВ'ЯЗКОВИХ листів (нагадування тощо). Транзакційні
     # (підтвердження email, відновлення пароля) шлються завжди. Керується
     # посиланням List-Unsubscribe / one-click POST -- див. EmailService.

@@ -1,6 +1,6 @@
-from flask import Blueprint
+from app.i18n import LocalizedBlueprint
 
-auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+auth_bp = LocalizedBlueprint('auth', __name__, url_prefix='/auth')
 
 
 @auth_bp.after_request

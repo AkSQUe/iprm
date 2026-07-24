@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 
-{% block title %}Вхід | ІПРМ{% endblock %}
+{% block title %}{{ _('Вхід | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
@@ -15,10 +15,10 @@
 <div class="apple-page auth-page">
   <div class="auth-card">
     <a href="{{ url_for('main.index') }}" class="auth-card__logo">
-      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="ІПРМ" class="auth-card__logo-img">
+      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="{{ _('ІПРМ') }}" class="auth-card__logo-img">
     </a>
-    <h1 class="auth-card__title">Вхід</h1>
-    <p class="auth-card__subtitle">Увійдіть до вашого облікового запису</p>
+    <h1 class="auth-card__title">{{ _('Вхід') }}</h1>
+    <p class="auth-card__subtitle">{{ _('Увійдіть до вашого облікового запису') }}</p>
 
     {# Flash → toast (base.html) #}
 
@@ -26,7 +26,7 @@
       {{ form.hidden_tag() }}
 
       <div class="form-group">
-        <label for="email">Email <span class="required">*</span></label>
+        <label for="email">{{ _('Email') }} <span class="required">*</span></label>
         {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email", autocomplete="email", required=true) }}
         {% for error in form.email.errors %}
           <div class="form-error">{{ error }}</div>
@@ -34,7 +34,7 @@
       </div>
 
       <div class="form-group">
-        <label for="password">Пароль <span class="required">*</span></label>
+        <label for="password">{{ _('Пароль') }} <span class="required">*</span></label>
         {{ form.password(class="form-input" + (" is-invalid" if form.password.errors else ""), id="password", autocomplete="current-password", required=true) }}
         {% for error in form.password.errors %}
           <div class="form-error">{{ error }}</div>
@@ -44,22 +44,22 @@
       <div class="auth-card__row auth-card__row--between">
         <div class="form-checkbox">
           {{ form.remember(id="remember") }}
-          <label for="remember">Запам'ятати мене</label>
+          <label for="remember">{{ _("Запам'ятати мене") }}</label>
         </div>
-        <a href="{{ url_for('auth.forgot_password') }}" class="auth-card__link">Забули пароль?</a>
+        <a href="{{ url_for('auth.forgot_password') }}" class="auth-card__link">{{ _('Забули пароль?') }}</a>
       </div>
 
-      <button type="submit" class="btn-auth">Увійти</button>
+      <button type="submit" class="btn-auth">{{ _('Увійти') }}</button>
     </form>
 
     {% include 'partials/_oauth_buttons.html' %}
 
     <div class="auth-card__footer">
-      <span>Ще не маєте акаунта? </span>
-      <a href="{{ url_for('auth.register') }}">Зареєструватися</a>
+      <span>{{ _('Ще не маєте акаунта?') }} </span>
+      <a href="{{ url_for('auth.register') }}">{{ _('Зареєструватися') }}</a>
     </div>
 
-    <a href="{{ url_for('main.index') }}" class="auth-card__back">Повернутися на головну</a>
+    <a href="{{ url_for('main.index') }}" class="auth-card__back">{{ _('Повернутися на головну') }}</a>
   </div>
 </div>
 {% endblock %}

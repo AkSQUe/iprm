@@ -1,5 +1,6 @@
 import logging
 from flask import request, redirect, url_for, flash, render_template, abort
+from flask_babel import gettext as _
 from flask_login import login_required, current_user
 from sqlalchemy.orm import joinedload
 
@@ -49,7 +50,7 @@ def success():
     try:
         reg_id = _parse_order_id(order_id)
     except (ValueError, IndexError):
-        flash('Невідоме замовлення', 'error')
+        flash(_('Невідоме замовлення'), 'error')
         return redirect(url_for('main.index'))
 
     reg = db.session.query(EventRegistration).options(
@@ -70,7 +71,7 @@ def success():
     if reg.payment_status == 'paid':
         return render_template('payments/success.html', reg=reg, event=reg.instance)
 
-    flash('Оплата ще обробляється. Оновіть сторінку через хвилину.', 'info')
+    flash(_('Оплата ще обробляється. Оновіть сторінку через хвилину.'), 'info')
     return redirect(url_for('registration.confirmation', registration_id=reg.id))
 
 

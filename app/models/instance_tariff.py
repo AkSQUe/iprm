@@ -10,11 +10,12 @@
 тариф ("від N грн" у картках/графіку).
 """
 from app.extensions import db
-from app.models.mixins import TimestampMixin, BigIntPK
+from app.models.mixins import TimestampMixin, TranslatableMixin, BigIntPK
 
 
-class InstanceTariff(TimestampMixin, db.Model):
+class InstanceTariff(TranslatableMixin, TimestampMixin, db.Model):
     __tablename__ = 'instance_tariffs'
+    __translatable__ = ('name', 'description')
 
     id = db.Column(BigIntPK, primary_key=True)
     instance_id = db.Column(

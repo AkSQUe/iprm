@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}Інститут Плазмотерапії та Регенеративної Медицини | ІПРМ{% endblock %}
-{% block meta_description %}Курси після дипломної освіти з плазмотерапії для лікарів. Лабораторії біологічного віку, клініка регенеративних технологій. Офіційне нарахування балів БПР.{% endblock %}
+{% block title %}{{ _('Інститут Плазмотерапії та Регенеративної Медицини | ІПРМ') }}{% endblock %}
+{% block meta_description %}{{ _('Курси після дипломної освіти з плазмотерапії для лікарів. Лабораторії біологічного віку, клініка регенеративних технологій. Офіційне нарахування балів БПР.') }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-index.css') }}?v={{ assets_version }}">
@@ -14,12 +14,12 @@
   <div class="iprm-hero-wrap">
     <section class="iprm-hero" aria-label="Hero">
       <div class="iprm-hero__content">
-        <div class="iprm-hero__badge">Бали БПР — Сертифіковані курси</div>
-        <h1 class="iprm-hero__title">Плазмотерапія.<br><span class="apple-gradient-text">Регенерація.</span></h1>
-        <p class="iprm-hero__subtitle">Курси після дипломної освіти для лікарів, дослідження біологічного віку та персоналізована регенеративна терапія</p>
+        <div class="iprm-hero__badge">{{ _('Бали БПР — Сертифіковані курси') }}</div>
+        <h1 class="iprm-hero__title">{{ _('Плазмотерапія.') }}<br><span class="apple-gradient-text">{{ _('Регенерація.') }}</span></h1>
+        <p class="iprm-hero__subtitle">{{ _('Курси після дипломної освіти для лікарів, дослідження біологічного віку та персоналізована регенеративна терапія') }}</p>
         <div class="iprm-hero__actions">
-          <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Обрати курс</a>
-          <a href="#labs" class="apple-btn apple-btn--secondary apple-btn--arrow">Про лабораторії</a>
+          <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">{{ _('Обрати курс') }}</a>
+          <a href="#labs" class="apple-btn apple-btn--secondary apple-btn--arrow">{{ _('Про лабораторії') }}</a>
         </div>
       </div>
     </section>
@@ -28,33 +28,33 @@
   <!-- ===== COURSES FEATURES ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="features-title">
     <div class="apple-section-header apple-reveal">
-      <h2 id="features-title"><span class="apple-gradient-text">Курси інституту</span> плазмотерапії та регенеративної медицини</h2>
-      <p>Професійне навчання з офіційним нарахуванням балів БПР</p>
+      <h2 id="features-title"><span class="apple-gradient-text">{{ _('Курси інституту') }}</span> {{ _('плазмотерапії та регенеративної медицини') }}</h2>
+      <p>{{ _('Професійне навчання з офіційним нарахуванням балів БПР') }}</p>
     </div>
     <div class="apple-features-grid">
       <div class="apple-feature-card apple-feature-card--featured apple-feature-card--has-image apple-reveal">
         <div class="apple-feature-card__text">
-          <h3>Висококваліфіковані спеціалісти</h3>
-          <p>Навчальні курси інституту плазмотерапії проводяться висококваліфікованими спеціалістами з багатим досвідом у сфері регенеративної медицини, плазмотерапії та біорегуляційної медицини.</p>
+          <h3>{{ _('Висококваліфіковані спеціалісти') }}</h3>
+          <p>{{ _('Навчальні курси інституту плазмотерапії проводяться висококваліфікованими спеціалістами з багатим досвідом у сфері регенеративної медицини, плазмотерапії та біорегуляційної медицини.') }}</p>
         </div>
-        <img class="apple-feature-card__image" src="{{ url_for('static', filename='images/main/graduation-cap.webp') }}" alt="Висококваліфіковані спеціалісти" width="280" height="280" loading="lazy">
+        <img class="apple-feature-card__image" src="{{ url_for('static', filename='images/main/graduation-cap.webp') }}" alt="{{ _('Висококваліфіковані спеціалісти') }}" width="280" height="280" loading="lazy">
       </div>
       <div class="apple-feature-card apple-feature-card--icon-right apple-feature-card--icon-topright apple-reveal">
         <img class="apple-feature-card__icon" src="{{ url_for('static', filename='images/main/online.webp') }}" alt="" width="120" height="120" loading="lazy">
-        <h3>Очно та онлайн</h3>
-        <p>Курси проводяться очно та онлайн, в комфортних умовах та повністю забезпечені всім необхідним.</p>
+        <h3>{{ _('Очно та онлайн') }}</h3>
+        <p>{{ _('Курси проводяться очно та онлайн, в комфортних умовах та повністю забезпечені всім необхідним.') }}</p>
       </div>
       <div class="apple-feature-card apple-feature-card--icon-right apple-feature-card--icon-bottomright apple-reveal">
         <img class="apple-feature-card__icon" src="{{ url_for('static', filename='images/main/heart-beat-2.webp') }}" alt="" width="120" height="120" loading="lazy">
-        <h3>Сучасна інформація</h3>
-        <p>Слухачі курсів отримують максимум сучасної інформації по вибраних темах регенеративної медицини.</p>
+        <h3>{{ _('Сучасна інформація') }}</h3>
+        <p>{{ _('Слухачі курсів отримують максимум сучасної інформації по вибраних темах регенеративної медицини.') }}</p>
       </div>
       <div class="apple-feature-card apple-feature-card--featured apple-feature-card--has-image apple-feature-card--image-left apple-reveal">
         <div class="apple-feature-card__text">
-          <h3>Сертифікати з балами БПР</h3>
-          <p>Після проходження вибраного курсу слухачі отримують сертифікати з балами БПР (безперервний професійний розвиток), що підтверджують підвищення кваліфікації.</p>
+          <h3>{{ _('Сертифікати з балами БПР') }}</h3>
+          <p>{{ _('Після проходження вибраного курсу слухачі отримують сертифікати з балами БПР (безперервний професійний розвиток), що підтверджують підвищення кваліфікації.') }}</p>
         </div>
-        <img class="apple-feature-card__image" src="{{ url_for('static', filename='images/main/BPR-points.webp') }}" alt="Сертифікат з балами БПР" width="280" height="280" loading="lazy">
+        <img class="apple-feature-card__image" src="{{ url_for('static', filename='images/main/BPR-points.webp') }}" alt="{{ _('Сертифікат з балами БПР') }}" width="280" height="280" loading="lazy">
       </div>
     </div>
   </section>
@@ -62,24 +62,24 @@
   <!-- ===== STATS ===== -->
   <section class="iprm-section apple-section-dark" aria-labelledby="stats-title">
     <div class="apple-section-header apple-reveal">
-      <h2 id="stats-title">Інститут у <span class="apple-gradient-text">цифрах</span></h2>
+      <h2 id="stats-title">{{ _('Інститут у') }} <span class="apple-gradient-text">{{ _('цифрах') }}</span></h2>
     </div>
     <div class="apple-stats-row apple-reveal" id="stats-row">
       <div class="apple-stat">
         <h3 data-static>2015</h3>
-        <p>Рік заснування</p>
+        <p>{{ _('Рік заснування') }}</p>
       </div>
       <div class="apple-stat">
         <h3 data-target="10" data-suffix="+">10+</h3>
-        <p>Років досліджень</p>
+        <p>{{ _('Років досліджень') }}</p>
       </div>
       <div class="apple-stat">
         <h3 data-target="3" data-suffix="">3</h3>
-        <p>Лабораторії та клініка</p>
+        <p>{{ _('Лабораторії та клініка') }}</p>
       </div>
       <div class="apple-stat">
         <h3 data-target="50" data-suffix="+">50+</h3>
-        <p>Курсів проведено</p>
+        <p>{{ _('Курсів проведено') }}</p>
       </div>
     </div>
   </section>
@@ -88,8 +88,8 @@
   <!-- ===== COURSE CARDS ===== -->
   <section class="iprm-section" aria-labelledby="courses-title">
     <div class="apple-section-header apple-reveal">
-      <h2 id="courses-title">Курси після дипломної освіти</h2>
-      <p>Оберіть курс та підвищіть свою кваліфікацію</p>
+      <h2 id="courses-title">{{ _('Курси після дипломної освіти') }}</h2>
+      <p>{{ _('Оберіть курс та підвищіть свою кваліфікацію') }}</p>
     </div>
     <div class="iprm-course-cards">
       {% for course in courses %}
@@ -120,54 +120,54 @@
   <!-- ===== LABS BENTO ===== -->
   <section id="labs" class="iprm-section apple-section-gray" aria-labelledby="labs-title">
     <div class="apple-section-header apple-reveal">
-      <h2 id="labs-title">Наші <span class="apple-gradient-text">лабораторії</span></h2>
-      <p>Наукові дослідження та інновації у сфері регенеративної медицини</p>
+      <h2 id="labs-title">{{ _('Наші') }} <span class="apple-gradient-text">{{ _('лабораторії') }}</span></h2>
+      <p>{{ _('Наукові дослідження та інновації у сфері регенеративної медицини') }}</p>
     </div>
     <div class="apple-bento-grid">
       <!-- Lab 1: hero -->
       <div class="apple-bento-card apple-bento-card--hero apple-reveal">
         <div class="apple-bento-visual">
-          <img src="{{ url_for('static', filename='images/labs/biological-age-and-disease-prediction.webp') }}" alt="Лабораторія біологічного віку" width="600" height="400" loading="lazy">
+          <img src="{{ url_for('static', filename='images/labs/biological-age-and-disease-prediction.webp') }}" alt="{{ _('Лабораторія біологічного віку') }}" width="600" height="400" loading="lazy">
         </div>
-        <h3>Лабораторія біологічного віку та прогнозування захворювань</h3>
-        <p>Вимірювання та модифікація біологічного віку, виявлення індивідуальних ризиків захворювань та персоналізовані стратегії профілактики</p>
+        <h3>{{ _('Лабораторія біологічного віку та прогнозування захворювань') }}</h3>
+        <p>{{ _('Вимірювання та модифікація біологічного віку, виявлення індивідуальних ризиків захворювань та персоналізовані стратегії профілактики') }}</p>
       </div>
       <!-- Lab 1: cards -->
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <img src="{{ url_for('static', filename='images/labs/personalized-therapy.webp') }}" alt="Персоналізована терапія" width="400" height="300" loading="lazy">
+          <img src="{{ url_for('static', filename='images/labs/personalized-therapy.webp') }}" alt="{{ _('Персоналізована терапія') }}" width="400" height="300" loading="lazy">
         </div>
-        <h3>Персоналізована терапія</h3>
-        <p>Визначення індивідуальних параметрів для вибору персоналізованої терапії</p>
+        <h3>{{ _('Персоналізована терапія') }}</h3>
+        <p>{{ _('Визначення індивідуальних параметрів для вибору персоналізованої терапії') }}</p>
       </div>
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <img src="{{ url_for('static', filename='images/labs/bioinformatics-ai.webp') }}" alt="Біоінформатика та ШІ" width="400" height="300" loading="lazy">
+          <img src="{{ url_for('static', filename='images/labs/bioinformatics-ai.webp') }}" alt="{{ _('Біоінформатика та ШІ') }}" width="400" height="300" loading="lazy">
         </div>
-        <h3>Біоінформатика та ШІ</h3>
-        <p>Інтегральний аналіз даних досліджень з використанням штучного інтелекту</p>
+        <h3>{{ _('Біоінформатика та ШІ') }}</h3>
+        <p>{{ _('Інтегральний аналіз даних досліджень з використанням штучного інтелекту') }}</p>
       </div>
       <!-- Lab 2: cards -->
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <img src="{{ url_for('static', filename='images/labs/aging-biomarcers.webp') }}" alt="Біомаркери старіння" width="400" height="300" loading="lazy">
+          <img src="{{ url_for('static', filename='images/labs/aging-biomarcers.webp') }}" alt="{{ _('Біомаркери старіння') }}" width="400" height="300" loading="lazy">
         </div>
-        <h3>Біомаркери старіння</h3>
-        <p>Пошук, апробація, валідація нових біомаркерів старіння та геропротекторів</p>
+        <h3>{{ _('Біомаркери старіння') }}</h3>
+        <p>{{ _('Пошук, апробація, валідація нових біомаркерів старіння та геропротекторів') }}</p>
       </div>
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <img src="{{ url_for('static', filename='images/labs/anti-age-protocols.webp') }}" alt="Anti-age протоколи" width="400" height="300" loading="lazy">
+          <img src="{{ url_for('static', filename='images/labs/anti-age-protocols.webp') }}" alt="{{ _('Anti-age протоколи') }}" width="400" height="300" loading="lazy">
         </div>
-        <h3>Anti-age протоколи</h3>
-        <p>Дослідження ефективності нових anti-age протоколів та процесів старіння на клітинному рівні</p>
+        <h3>{{ _('Anti-age протоколи') }}</h3>
+        <p>{{ _('Дослідження ефективності нових anti-age протоколів та процесів старіння на клітинному рівні') }}</p>
       </div>
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <img src="{{ url_for('static', filename='images/labs/cell-aging.webp') }}" alt="Клітинне старіння" width="400" height="300" loading="lazy">
+          <img src="{{ url_for('static', filename='images/labs/cell-aging.webp') }}" alt="{{ _('Клітинне старіння') }}" width="400" height="300" loading="lazy">
         </div>
-        <h3>Клітинне старіння</h3>
-        <p>Дослідження процесів старіння на клітинному рівні з використанням сучасних методів</p>
+        <h3>{{ _('Клітинне старіння') }}</h3>
+        <p>{{ _('Дослідження процесів старіння на клітинному рівні з використанням сучасних методів') }}</p>
       </div>
     </div>
   </section>
@@ -175,36 +175,36 @@
   <!-- ===== LAB 1 DETAIL ===== -->
   <section class="iprm-section" aria-labelledby="lab1-detail-title">
     <div class="iprm-section__inner">
-      <h2 id="lab1-detail-title" class="iprm-section__title">Лабораторія біологічного віку та <span class="apple-gradient-text">прогнозування захворювань</span></h2>
-      <p class="iprm-section__subtitle">Вимірювати та модифікувати біологічний вік, своєчасно виявляти індивідуальні ризики захворювань і пропонувати персоналізовані стратегії профілактики</p>
+      <h2 id="lab1-detail-title" class="iprm-section__title">{{ _('Лабораторія біологічного віку та') }} <span class="apple-gradient-text">{{ _('прогнозування захворювань') }}</span></h2>
+      <p class="iprm-section__subtitle">{{ _('Вимірювати та модифікувати біологічний вік, своєчасно виявляти індивідуальні ризики захворювань і пропонувати персоналізовані стратегії профілактики') }}</p>
 
       <div class="apple-features-grid">
         <div class="apple-feature-card apple-reveal">
-          <div class="iprm-lab-tag">Ключові задачі</div>
-          <h3>Розрахунок біологічного віку</h3>
+          <div class="iprm-lab-tag">{{ _('Ключові задачі') }}</div>
+          <h3>{{ _('Розрахунок біологічного віку') }}</h3>
           <ul class="iprm-lab-list">
-            <li>Епігенетичні "годинники" (DNAm)</li>
-            <li>Прогнозування ризиків на основі багатофакторних даних</li>
-            <li>Моніторинг інтервенцій та оцінка ефектів</li>
-            <li>Створення індивідуальних "паспортів довголіття"</li>
+            <li>{{ _('Епігенетичні "годинники" (DNAm)') }}</li>
+            <li>{{ _('Прогнозування ризиків на основі багатофакторних даних') }}</li>
+            <li>{{ _('Моніторинг інтервенцій та оцінка ефектів') }}</li>
+            <li>{{ _('Створення індивідуальних "паспортів довголіття"') }}</li>
           </ul>
         </div>
         <div class="apple-feature-card apple-reveal">
-          <div class="iprm-lab-tag">Методики та сервіс</div>
-          <h3>Комплексна діагностика</h3>
+          <div class="iprm-lab-tag">{{ _('Методики та сервіс') }}</div>
+          <h3>{{ _('Комплексна діагностика') }}</h3>
           <ul class="iprm-lab-list">
-            <li>Епігенетичні тести та інтерпретація результатів</li>
-            <li>Розширені панелі крові: ліпідний профіль, запальні та оксидативні маркери</li>
-            <li>HRV-моніторинг, аналіз сну та активності</li>
-            <li>Консиліум із фахівцями клініки регенеративних технологій</li>
+            <li>{{ _('Епігенетичні тести та інтерпретація результатів') }}</li>
+            <li>{{ _('Розширені панелі крові: ліпідний профіль, запальні та оксидативні маркери') }}</li>
+            <li>{{ _('HRV-моніторинг, аналіз сну та активності') }}</li>
+            <li>{{ _('Консиліум із фахівцями клініки регенеративних технологій') }}</li>
           </ul>
         </div>
       </div>
 
       <div class="iprm-lab-impact apple-reveal">
-        <h3>Як це змінює якість життя</h3>
-        <p>Раннє виявлення відхилень, зниження ймовірності метаболічних, серцево-судинних і нейродегенеративних подій, кращий контроль енергії, сну й відновлення, підвищення резистентності до стресу, збереження працездатності.</p>
-        <p class="iprm-lab-impact__note">Індивідуальні освітні консультації щодо зміни стилю життя, супровід "до результату" з повторними вимірюваннями кожні 3-6 місяців.</p>
+        <h3>{{ _('Як це змінює якість життя') }}</h3>
+        <p>{{ _('Раннє виявлення відхилень, зниження ймовірності метаболічних, серцево-судинних і нейродегенеративних подій, кращий контроль енергії, сну й відновлення, підвищення резистентності до стресу, збереження працездатності.') }}</p>
+        <p class="iprm-lab-impact__note">{{ _('Індивідуальні освітні консультації щодо зміни стилю життя, супровід "до результату" з повторними вимірюваннями кожні 3-6 місяців.') }}</p>
       </div>
     </div>
   </section>
@@ -212,35 +212,35 @@
   <!-- ===== LAB 2 DETAIL ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="lab2-detail-title">
     <div class="iprm-section__inner">
-      <h2 id="lab2-detail-title" class="iprm-section__title">Лабораторія інноваційних досліджень у сфері <span class="apple-gradient-text">anti-age та регенерації</span></h2>
-      <p class="iprm-section__subtitle">Переносити сучасні регенеративні технології з лабораторії до клінічної практики, забезпечуючи їх доказовість, безпеку та відтворюваність</p>
+      <h2 id="lab2-detail-title" class="iprm-section__title">{{ _('Лабораторія інноваційних досліджень у сфері') }} <span class="apple-gradient-text">{{ _('anti-age та регенерації') }}</span></h2>
+      <p class="iprm-section__subtitle">{{ _('Переносити сучасні регенеративні технології з лабораторії до клінічної практики, забезпечуючи їх доказовість, безпеку та відтворюваність') }}</p>
 
       <div class="apple-features-grid">
         <div class="apple-feature-card apple-reveal">
-          <div class="iprm-lab-tag">Ключові задачі</div>
-          <h3>Дослідження та валідація</h3>
+          <div class="iprm-lab-tag">{{ _('Ключові задачі') }}</div>
+          <h3>{{ _('Дослідження та валідація') }}</h3>
           <ul class="iprm-lab-list">
-            <li>Дослідження біоактивних фракцій крові (PRP/PPP), екзосом</li>
-            <li>Стандартизація центрифугування, температури, часу</li>
-            <li>Доклінічні випробування in vitro</li>
-            <li>Валідація біомаркерів: фактори росту, цитокіни, мікроРНК, екзосоми</li>
+            <li>{{ _('Дослідження біоактивних фракцій крові (PRP/PPP), екзосом') }}</li>
+            <li>{{ _('Стандартизація центрифугування, температури, часу') }}</li>
+            <li>{{ _('Доклінічні випробування in vitro') }}</li>
+            <li>{{ _('Валідація біомаркерів: фактори росту, цитокіни, мікроРНК, екзосоми') }}</li>
           </ul>
         </div>
         <div class="apple-feature-card apple-reveal">
-          <div class="iprm-lab-tag">Методики та сервіс</div>
-          <h3>Лабораторні технології</h3>
+          <div class="iprm-lab-tag">{{ _('Методики та сервіс') }}</div>
+          <h3>{{ _('Лабораторні технології') }}</h3>
           <ul class="iprm-lab-list">
-            <li>Отримання та вивчення екзосом: NTA, імуномітки, електронна мікроскопія</li>
-            <li>Культура клітин для тестування біоактивності</li>
-            <li>Вивчення аутоплазми та факторів росту (ELISA-панелі)</li>
-            <li>Розробка стандартних операційних процедур та підготовка публікацій</li>
+            <li>{{ _('Отримання та вивчення екзосом: NTA, імуномітки, електронна мікроскопія') }}</li>
+            <li>{{ _('Культура клітин для тестування біоактивності') }}</li>
+            <li>{{ _('Вивчення аутоплазми та факторів росту (ELISA-панелі)') }}</li>
+            <li>{{ _('Розробка стандартних операційних процедур та підготовка публікацій') }}</li>
           </ul>
         </div>
       </div>
 
       <div class="iprm-lab-impact apple-reveal">
-        <h3>Очікуваний вплив</h3>
-        <p>Швидший перехід до клінічних протоколів із прогнозованим ефектом, менша варіабельність результатів, підвищення безпеки процедур, індивідуалізація терапії.</p>
+        <h3>{{ _('Очікуваний вплив') }}</h3>
+        <p>{{ _('Швидший перехід до клінічних протоколів із прогнозованим ефектом, менша варіабельність результатів, підвищення безпеки процедур, індивідуалізація терапії.') }}</p>
       </div>
     </div>
   </section>
@@ -248,35 +248,35 @@
   <!-- ===== CLINIC ===== -->
   <section class="iprm-section" aria-labelledby="clinic-title">
     <div class="apple-section-header apple-reveal">
-      <h2 id="clinic-title"><span class="apple-gradient-text">Клініка</span> клітинних та регенеративних технологій</h2>
-      <p>Перелік відділень клініки</p>
+      <h2 id="clinic-title"><span class="apple-gradient-text">{{ _('Клініка') }}</span> {{ _('клітинних та регенеративних технологій') }}</h2>
+      <p>{{ _('Перелік відділень клініки') }}</p>
     </div>
     <div class="apple-clinic-grid">
       <div class="apple-clinic-card apple-reveal">
         <div class="apple-clinic-card__image">
-          <img src="{{ url_for('static', filename='images/clinics/prp-department.webp') }}" alt="Відділення PRP-терапії" width="400" height="300" loading="lazy">
+          <img src="{{ url_for('static', filename='images/clinics/prp-department.webp') }}" alt="{{ _('Відділення PRP-терапії') }}" width="400" height="300" loading="lazy">
         </div>
         <div class="apple-clinic-card__body">
-          <h3>Відділення PRP-, плазмотерапії та терапії екзосомами</h3>
-          <a href="{{ url_for('clinics.clinic_list') }}" class="apple-clinic-link">На сторінку клініки</a>
+          <h3>{{ _('Відділення PRP-, плазмотерапії та терапії екзосомами') }}</h3>
+          <a href="{{ url_for('clinics.clinic_list') }}" class="apple-clinic-link">{{ _('На сторінку клініки') }}</a>
         </div>
       </div>
       <div class="apple-clinic-card apple-reveal">
         <div class="apple-clinic-card__image">
-          <img src="{{ url_for('static', filename='images/clinics/stell-cell-therapy-department.webp') }}" alt="Відділення стовбурових клітин" width="400" height="300" loading="lazy">
+          <img src="{{ url_for('static', filename='images/clinics/stell-cell-therapy-department.webp') }}" alt="{{ _('Відділення стовбурових клітин') }}" width="400" height="300" loading="lazy">
         </div>
         <div class="apple-clinic-card__body">
-          <h3>Відділення терапії мезенхімальними стовбуровими клітинами</h3>
-          <a href="{{ url_for('clinics.clinic_list') }}" class="apple-clinic-link">На сторінку клініки</a>
+          <h3>{{ _('Відділення терапії мезенхімальними стовбуровими клітинами') }}</h3>
+          <a href="{{ url_for('clinics.clinic_list') }}" class="apple-clinic-link">{{ _('На сторінку клініки') }}</a>
         </div>
       </div>
       <div class="apple-clinic-card apple-reveal">
         <div class="apple-clinic-card__image">
-          <img src="{{ url_for('static', filename='images/clinics/infusion-therapy.webp') }}" alt="Відділення інфузійної терапії" width="400" height="300" loading="lazy">
+          <img src="{{ url_for('static', filename='images/clinics/infusion-therapy.webp') }}" alt="{{ _('Відділення інфузійної терапії') }}" width="400" height="300" loading="lazy">
         </div>
         <div class="apple-clinic-card__body">
-          <h3>Відділення персоніфікованої інфузійної терапії</h3>
-          <a href="{{ url_for('clinics.clinic_list') }}" class="apple-clinic-link">На сторінку клініки</a>
+          <h3>{{ _('Відділення персоніфікованої інфузійної терапії') }}</h3>
+          <a href="{{ url_for('clinics.clinic_list') }}" class="apple-clinic-link">{{ _('На сторінку клініки') }}</a>
         </div>
       </div>
     </div>
@@ -285,25 +285,25 @@
   <!-- ===== MISSION ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="mission-title">
     <div class="apple-about apple-reveal">
-      <h2 id="mission-title"><span class="apple-gradient-text">Місія</span> та цінності</h2>
-      <p>Ініціатори створення інституту вже давно об'єднали науковців, лікарів, інженерів, педагогів та фахівців інших спеціальностей в одну команду, яка працює над новітніми розробками в галузі аутологічної медицини.</p>
-      <p>Командою інституту розроблені та втілені у виробництво пристрої для отримання аутологічної плазми та прилади для отримання модифікованих форм плазми та фібрину.</p>
-      <p>Лікарі разом з науковцями постійно працюють над розробкою нових, більш ефективних протоколів використання аутологічних продуктів та популяризують існуючі, випробувані методи лікування.</p>
+      <h2 id="mission-title"><span class="apple-gradient-text">{{ _('Місія') }}</span> {{ _('та цінності') }}</h2>
+      <p>{{ _('Ініціатори створення інституту вже давно об\'єднали науковців, лікарів, інженерів, педагогів та фахівців інших спеціальностей в одну команду, яка працює над новітніми розробками в галузі аутологічної медицини.') }}</p>
+      <p>{{ _('Командою інституту розроблені та втілені у виробництво пристрої для отримання аутологічної плазми та прилади для отримання модифікованих форм плазми та фібрину.') }}</p>
+      <p>{{ _('Лікарі разом з науковцями постійно працюють над розробкою нових, більш ефективних протоколів використання аутологічних продуктів та популяризують існуючі, випробувані методи лікування.') }}</p>
     </div>
   </section>
 
   <!-- ===== HISTORY ===== -->
   <section class="iprm-section" aria-labelledby="history-title">
     <div class="apple-about apple-reveal">
-      <h2 id="history-title"><span class="apple-gradient-text">Історія</span> створення</h2>
-      <p>Інститут плазмотерапії та регенеративної медицини як самостійна юридична одиниця створений недавно, але ініціатори його створення вже давно працюють разом над новітніми розробками в галузі аутологічної медицини.</p>
-      <p>Курси інституту доступні в онлайн та офлайн форматах. В очному форматі курсу включена практична частина з навчанням процедурам на моделях, постановка руки, відпрацювання практичних навичок.</p>
-      <p>Сьогодні Інститут об'єднує фахівців з епігенетики, фізіології, біохімії, імунології та біоінформатики. Тут проводяться:</p>
+      <h2 id="history-title"><span class="apple-gradient-text">{{ _('Історія') }}</span> {{ _('створення') }}</h2>
+      <p>{{ _('Інститут плазмотерапії та регенеративної медицини як самостійна юридична одиниця створений недавно, але ініціатори його створення вже давно працюють разом над новітніми розробками в галузі аутологічної медицини.') }}</p>
+      <p>{{ _('Курси інституту доступні в онлайн та офлайн форматах. В очному форматі курсу включена практична частина з навчанням процедурам на моделях, постановка руки, відпрацювання практичних навичок.') }}</p>
+      <p>{{ _('Сьогодні Інститут об\'єднує фахівців з епігенетики, фізіології, біохімії, імунології та біоінформатики. Тут проводяться:') }}</p>
       <ul>
-        <li>Дослідження процесів старіння на клітинному рівні</li>
-        <li>Визначення індивідуальних параметрів для персоналізованої терапії</li>
-        <li>Пошук і валідація нових біомаркерів старіння</li>
-        <li>Тестування ефективності anti-age протоколів</li>
+        <li>{{ _('Дослідження процесів старіння на клітинному рівні') }}</li>
+        <li>{{ _('Визначення індивідуальних параметрів для персоналізованої терапії') }}</li>
+        <li>{{ _('Пошук і валідація нових біомаркерів старіння') }}</li>
+        <li>{{ _('Тестування ефективності anti-age протоколів') }}</li>
       </ul>
     </div>
   </section>
@@ -311,11 +311,11 @@
   <!-- ===== CTA ===== -->
   <section class="iprm-section" aria-label="Call to action">
     <div class="apple-cta apple-reveal">
-      <h2>Почни навчання<br><span class="apple-gradient-text">сьогодні.</span></h2>
-      <p>Обери курс після дипломної освіти та отримай сертифікат з балами БПР від Інституту плазмотерапії та регенеративної медицини.</p>
+      <h2>{{ _('Почни навчання') }}<br><span class="apple-gradient-text">{{ _('сьогодні.') }}</span></h2>
+      <p>{{ _('Обери курс після дипломної освіти та отримай сертифікат з балами БПР від Інституту плазмотерапії та регенеративної медицини.') }}</p>
       <div class="apple-cta__actions">
-        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Обрати курс</a>
-        <a href="#labs" class="apple-btn apple-btn--secondary apple-btn--arrow">Дізнатись більше</a>
+        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">{{ _('Обрати курс') }}</a>
+        <a href="#labs" class="apple-btn apple-btn--secondary apple-btn--arrow">{{ _('Дізнатись більше') }}</a>
       </div>
     </div>
   </section>

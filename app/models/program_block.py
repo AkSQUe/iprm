@@ -1,9 +1,10 @@
 from app.extensions import db
-from app.models.mixins import TimestampMixin, BigIntPK
+from app.models.mixins import TimestampMixin, TranslatableMixin, BigIntPK
 
 
-class ProgramBlock(TimestampMixin, db.Model):
+class ProgramBlock(TranslatableMixin, TimestampMixin, db.Model):
     __tablename__ = 'program_blocks'
+    __translatable__ = ('heading', 'items')
 
     id = db.Column(BigIntPK, primary_key=True)
     course_id = db.Column(

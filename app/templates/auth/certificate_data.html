@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Дані для сертифіката | ІПРМ{% endblock %}
+{% block title %}{{ _('Дані для сертифіката | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
@@ -11,17 +11,19 @@
 {% block content %}
 <div class="apple-page reg-layout">
 
-  <h1 class="reg-confirmation__title">Дані для <span class="apple-gradient-text">сертифіката</span></h1>
+  <h1 class="reg-confirmation__title">{% trans %}Дані для <span class="apple-gradient-text">сертифіката</span>{% endtrans %}</h1>
 
   {# ===== МОЗ-нотис (вимоги номенклатури) ===== #}
   <aside class="reg-moh-notice" role="note">
     <div class="reg-moh-notice__icon" aria-hidden="true">i</div>
     <p>
+      {% trans trimmed %}
       Згідно з вимогами МОЗ України —
       «<strong>№725 «Про затвердження Положення про систему безперервного
       професійного розвитку медичних та фармацевтичних працівників»</strong>
       зі змінами» п. 13 — ці дані необхідні для нарахування балів БПР та
       видачі сертифіката. Заповнюється один раз і діє для всіх ваших курсів.
+      {% endtrans %}
     </p>
   </aside>
 
@@ -31,10 +33,10 @@
     {# ----- Тип учасника ----- #}
     <div class="form-section reg-form-section">
       <h3 class="form-section__title reg-form-section__title">
-        Тип учасника
-        <span class="iprm-tooltip-trigger" data-tooltip="Оберіть вашу категорію згідно з МОЗ №725. Від цього залежить, які бали БПР нараховуються після заходу.">i</span>
+        {{ _('Тип учасника') }}
+        <span class="iprm-tooltip-trigger" data-tooltip="{{ _('Оберіть вашу категорію згідно з МОЗ №725. Від цього залежить, які бали БПР нараховуються після заходу.') }}">i</span>
       </h3>
-      <div class="reg-user-type" data-required-group="radio" data-hint="Оберіть тип учасника — це обов'язково">
+      <div class="reg-user-type" data-required-group="radio" data-hint="{{ _("Оберіть тип учасника — це обов'язково") }}">
         {% for code, label in form.user_type.choices if code %}
           <label class="reg-user-type__option">
             <input type="radio" name="user_type" value="{{ code }}"
@@ -48,18 +50,18 @@
 
     {# ----- Персональні дані ----- #}
     <div class="form-section reg-form-section">
-      <h3 class="form-section__title reg-form-section__title">Персональні дані</h3>
+      <h3 class="form-section__title reg-form-section__title">{{ _('Персональні дані') }}</h3>
       <div class="form-section__grid">
         <div class="form-group">
-          <label for="middle_name">По батькові <span class="required">*</span></label>
+          <label for="middle_name">{{ _('По батькові') }} <span class="required">*</span></label>
           {{ form.middle_name(class="form-input" + (" is-invalid" if form.middle_name.errors else ""), id="middle_name", required=true) }}
           {% for e in form.middle_name.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group">
           <label for="birth_date">
-            Дата народження <span class="required">*</span>
-            <span class="iprm-tooltip-trigger" data-tooltip="Потрібна для ідентифікації у системі БПР МОЗ при нарахуванні балів.">i</span>
+            {{ _('Дата народження') }} <span class="required">*</span>
+            <span class="iprm-tooltip-trigger" data-tooltip="{{ _('Потрібна для ідентифікації у системі БПР МОЗ при нарахуванні балів.') }}">i</span>
           </label>
           {{ form.birth_date(class="form-input" + (" is-invalid" if form.birth_date.errors else ""), id="birth_date", type="date", required=true) }}
           {% for e in form.birth_date.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
@@ -69,25 +71,25 @@
 
     {# ----- Освіта і місце роботи ----- #}
     <div class="form-section reg-form-section">
-      <h3 class="form-section__title reg-form-section__title">Освіта та робота</h3>
+      <h3 class="form-section__title reg-form-section__title">{{ _('Освіта та робота') }}</h3>
       <div class="form-section__grid">
         <div class="form-group form-section__full">
           <label for="education">
-            Освіта (рік закінчення та назва ВНЗ) <span class="required">*</span>
-            <span class="iprm-tooltip-trigger" data-tooltip="Наприклад: 2014, НМУ ім. О.О. Богомольця. Вкажіть рік випуску та повну назву закладу.">i</span>
+            {{ _('Освіта (рік закінчення та назва ВНЗ)') }} <span class="required">*</span>
+            <span class="iprm-tooltip-trigger" data-tooltip="{{ _('Наприклад: 2014, НМУ ім. О.О. Богомольця. Вкажіть рік випуску та повну назву закладу.') }}">i</span>
           </label>
           {{ form.education(class="form-input" + (" is-invalid" if form.education.errors else ""), id="education", required=true) }}
           {% for e in form.education.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group form-section__full">
-          <label for="workplace">Місце роботи (назва ЗОЗу) <span class="required">*</span></label>
+          <label for="workplace">{{ _('Місце роботи (назва ЗОЗу)') }} <span class="required">*</span></label>
           {{ form.workplace(class="form-input" + (" is-invalid" if form.workplace.errors else ""), id="workplace", required=true) }}
           {% for e in form.workplace.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group form-section__full">
-          <label for="position">Займана посада <span class="required">*</span></label>
+          <label for="position">{{ _('Займана посада') }} <span class="required">*</span></label>
           {{ form.position(class="form-input" + (" is-invalid" if form.position.errors else ""), id="position", required=true) }}
           {% for e in form.position.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
@@ -97,11 +99,11 @@
     {# ----- Спеціалізації (multi-select як checkbox-grid) ----- #}
     <div class="form-section reg-form-section">
       <h3 class="form-section__title reg-form-section__title">
-        Спеціалізації <span class="required">*</span>
-        <span class="iprm-tooltip-trigger" data-tooltip="Оберіть усі ваші спеціалізації — за ними система БПР перевіряє відповідність заходу вашому фаху. Можна позначити декілька.">i</span>
+        {{ _('Спеціалізації') }} <span class="required">*</span>
+        <span class="iprm-tooltip-trigger" data-tooltip="{{ _('Оберіть усі ваші спеціалізації — за ними система БПР перевіряє відповідність заходу вашому фаху. Можна позначити декілька.') }}">i</span>
       </h3>
-      <p class="reg-form-section__hint">Можна обрати декілька.</p>
-      <div class="reg-specializations" data-spec-list data-required-group="checkbox" data-hint="Оберіть хоча б одну спеціалізацію">
+      <p class="reg-form-section__hint">{{ _('Можна обрати декілька.') }}</p>
+      <div class="reg-specializations" data-spec-list data-required-group="checkbox" data-hint="{{ _('Оберіть хоча б одну спеціалізацію') }}">
         {% set selected_specs = form.specializations.data or [] %}
         {% for code, label in form.specializations.choices %}
           <label class="reg-specializations__item">
@@ -115,8 +117,8 @@
     </div>
 
     <div class="reg-actions">
-      <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--secondary">Назад до кабінету</a>
-      <button type="submit" class="apple-btn apple-btn--primary">Зберегти дані</button>
+      <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--secondary">{{ _('Назад до кабінету') }}</a>
+      <button type="submit" class="apple-btn apple-btn--primary">{{ _('Зберегти дані') }}</button>
     </div>
   </form>
 

@@ -1,5 +1,5 @@
-from flask import Blueprint
+from app.i18n import LocalizedBlueprint
 
-main_bp = Blueprint('main', __name__)
+main_bp = LocalizedBlueprint('main', __name__)
 
 from app.main import routes

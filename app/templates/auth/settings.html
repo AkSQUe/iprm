@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Налаштування | ІПРМ{% endblock %}
+{% block title %}{{ _('Налаштування | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
@@ -14,8 +14,8 @@
   <div class="iprm-hero-wrap">
     <section class="iprm-hero" aria-label="Settings hero">
       <div class="iprm-hero__content">
-        <h1 class="iprm-hero__title"><span class="apple-gradient-text">Налаштування</span></h1>
-        <p class="iprm-hero__subtitle">Персоналізація інтерфейсу</p>
+        <h1 class="iprm-hero__title"><span class="apple-gradient-text">{{ _('Налаштування') }}</span></h1>
+        <p class="iprm-hero__subtitle">{{ _('Персоналізація інтерфейсу') }}</p>
       </div>
     </section>
   </div>
@@ -25,8 +25,8 @@
       <div class="settings-grid">
 
         <div class="settings-card">
-          <h2 class="settings-card__title">Шрифт</h2>
-          <p class="settings-card__desc">Оберіть шрифт для всього сайту</p>
+          <h2 class="settings-card__title">{{ _('Шрифт') }}</h2>
+          <p class="settings-card__desc">{{ _('Оберіть шрифт для всього сайту') }}</p>
           <div class="settings-switcher">
             <button class="settings-option" data-font-select="inter" type="button">
               <span class="settings-option__preview settings-option__preview--inter">Aa</span>
@@ -41,7 +41,7 @@
 
       </div>
 
-      <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--secondary settings-back">Повернутися до кабінету</a>
+      <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--secondary settings-back">{{ _('Повернутися до кабінету') }}</a>
     </div>
   </section>
 

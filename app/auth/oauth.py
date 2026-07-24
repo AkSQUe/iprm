@@ -33,6 +33,7 @@ from flask import (
     Blueprint, current_app, flash, redirect, render_template,
     request, session, url_for,
 )
+from flask_babel import gettext as _
 from flask_login import current_user, login_required, login_user
 
 from app.auth import auth_bp
@@ -64,13 +65,13 @@ def _is_safe_redirect_url(target):
             and target.startswith('/') and not target.startswith('//'))
 
 
-@auth_bp.route('/google/start', methods=['GET'])
+@auth_bp.route('/google/start', methods=['GET'], localize=False)
 def google_start():
     """Початок OAuth-flow. action=login (default) або action=link
     (за наявності query-string ?action=link І залогіненого юзера)."""
     client = get_google_client()
     if client is None:
-        flash('Google вхід наразі не налаштовано', 'error')
+        flash(_('Google вхід наразі не налаштовано'), 'error')
         return redirect(url_for('auth.login'))
 
     action = request.args.get('action', ACTION_LOGIN)
@@ -90,14 +91,14 @@ def google_start():
     return client.authorize_redirect(redirect_uri)
 
 
-@auth_bp.route('/google/callback', methods=['GET'])
+@auth_bp.route('/google/callback', methods=['GET'], localize=False)
 def google_callback():
     """Обробка повернення з Google. Витягуємо OIDC-claims через Authlib
     (валідація state/nonce/підпису -- автоматично). Далі -- три гілки:
     existing identity / email-collision / new user."""
     client = get_google_client()
     if client is None:
-        flash('Google вхід наразі не налаштовано', 'error')
+        flash(_('Google вхід наразі не налаштовано'), 'error')
         return redirect(url_for('auth.login'))
 
     try:
@@ -113,7 +114,7 @@ def google_callback():
             exc.error, getattr(exc, 'description', '') or '',
             had_state, bool(request.args.get('state')),
         )
-        flash('Помилка автентифікації через Google. Спробуйте ще раз.', 'error')
+        flash(_('Помилка автентифікації через Google. Спробуйте ще раз.'), 'error')
         return redirect(url_for('auth.login'))
 
     # Authlib повертає id_token-claims у token['userinfo'] (декодовано
@@ -127,7 +128,7 @@ def google_callback():
 
     if not sub or not email:
         logger.warning('Google OAuth: missing sub or email in userinfo: %s', userinfo)
-        flash('Google не повернув необхідні дані. Спробуйте ще раз.', 'error')
+        flash(_('Google не повернув необхідні дані. Спробуйте ще раз.'), 'error')
         return redirect(url_for('auth.login'))
 
     # Зберігаємо лише мінімальні claims (GDPR-friendly):
@@ -170,7 +171,7 @@ def _handle_login(provider, sub, email, email_verified, given_name, family_name,
     if identity:
         user = identity.user
         if not user.is_active:
-            flash('Обліковий запис деактивовано', 'error')
+            flash(_('Обліковий запис деактивовано'), 'error')
             return redirect(url_for('auth.login'))
         if email:
             identity.email = email
@@ -217,12 +218,12 @@ def _handle_login(provider, sub, email, email_verified, given_name, family_name,
     except Exception:
         db.session.rollback()
         logger.exception('Failed to create %s OAuth user', label)
-        flash('Помилка при створенні облікового запису', 'error')
+        flash(_('Помилка при створенні облікового запису'), 'error')
         return redirect(url_for('auth.login'))
 
     session.clear()
     login_user(user, remember=True)
-    flash(f'Вітаємо! Обліковий запис створено через {label}.', 'success')
+    flash(_('Вітаємо! Обліковий запис створено через %(provider)s.', provider=label), 'success')
     if next_url and _is_safe_redirect_url(next_url):
         return redirect(next_url)
     return redirect(url_for('auth.account'))
@@ -239,11 +240,11 @@ def _handle_link(provider, sub, email, email_verified, safe_claims, next_url):
     existing = AuthIdentity.find_by_provider_sub(provider, sub)
     if existing:
         if existing.user_id == current_user.id:
-            flash(f'{label} вже прив\'язано до вашого облікового запису', 'info')
+            flash(_('%(provider)s вже прив\'язано до вашого облікового запису', provider=label), 'info')
         else:
             flash(
-                f'Цей {label}-акаунт вже прив\'язано до іншого облікового '
-                'запису. Зв\'яжіться з підтримкою для допомоги.',
+                _('Цей %(provider)s-акаунт вже прив\'язано до іншого облікового '
+                  'запису. Зв\'яжіться з підтримкою для допомоги.', provider=label),
                 'error',
             )
         return redirect(url_for('auth.connections'))
@@ -258,11 +259,11 @@ def _handle_link(provider, sub, email, email_verified, safe_claims, next_url):
     ))
     try:
         db.session.commit()
-        flash(f'{label} успішно прив\'язано до вашого облікового запису', 'success')
+        flash(_('%(provider)s успішно прив\'язано до вашого облікового запису', provider=label), 'success')
     except Exception:
         db.session.rollback()
         logger.exception('Failed to link Google identity')
-        flash('Помилка при прив\'язці Google', 'error')
+        flash(_('Помилка при прив\'язці Google'), 'error')
 
     return redirect(url_for('auth.connections'))
 
@@ -276,14 +277,14 @@ def _unlink_provider(provider):
         provider=provider,
     ).first()
     if not identity:
-        flash(f'{label} не прив\'язано', 'info')
+        flash(_('%(provider)s не прив\'язано', provider=label), 'info')
         return redirect(url_for('auth.connections'))
 
     total = AuthIdentity.query.filter_by(user_id=current_user.id).count()
     if total <= 1:
         flash(
-            'Не можна видалити останній спосіб входу. Спочатку встановіть '
-            'пароль або прив\'яжіть інший провайдер.',
+            _('Не можна видалити останній спосіб входу. Спочатку встановіть '
+              'пароль або прив\'яжіть інший провайдер.'),
             'error',
         )
         return redirect(url_for('auth.connections'))
@@ -291,16 +292,16 @@ def _unlink_provider(provider):
     db.session.delete(identity)
     try:
         db.session.commit()
-        flash(f'{label} від\'єднано від вашого облікового запису', 'success')
+        flash(_('%(provider)s від\'єднано від вашого облікового запису', provider=label), 'success')
     except Exception:
         db.session.rollback()
         logger.exception('Failed to unlink %s identity', label)
-        flash('Помилка при від\'єднанні', 'error')
+        flash(_('Помилка при від\'єднанні'), 'error')
 
     return redirect(url_for('auth.connections'))
 
 
-@auth_bp.route('/google/unlink', methods=['POST'])
+@auth_bp.route('/google/unlink', methods=['POST'], localize=False)
 @login_required
 def google_unlink():
     return _unlink_provider(AuthIdentity.PROVIDER_GOOGLE)
@@ -310,7 +311,7 @@ def google_unlink():
 # Google One Tap (Phase 6)
 # =============================================================
 
-@auth_bp.route('/google/onetap', methods=['POST'])
+@auth_bp.route('/google/onetap', methods=['POST'], localize=False)
 @csrf.exempt
 def google_onetap():
     """Прийом credential JWT від Google One Tap (GSI library).
@@ -406,12 +407,12 @@ def google_onetap():
 # Apple Sign In (Phase 5)
 # =============================================================
 
-@auth_bp.route('/apple/start', methods=['GET'])
+@auth_bp.route('/apple/start', methods=['GET'], localize=False)
 def apple_start():
     """Початок Apple Sign In. Підтримує action=login (default) | link."""
     client = get_apple_client()
     if client is None:
-        flash('Apple вхід наразі не налаштовано', 'error')
+        flash(_('Apple вхід наразі не налаштовано'), 'error')
         return redirect(url_for('auth.login'))
 
     action = request.args.get('action', ACTION_LOGIN)
@@ -429,7 +430,7 @@ def apple_start():
     return client.authorize_redirect(redirect_uri)
 
 
-@auth_bp.route('/apple/callback', methods=['GET', 'POST'])
+@auth_bp.route('/apple/callback', methods=['GET', 'POST'], localize=False)
 @csrf.exempt
 def apple_callback():
     """Apple використовує response_mode=form_post -- callback приходить
@@ -441,14 +442,14 @@ def apple_callback():
     """
     client = get_apple_client()
     if client is None:
-        flash('Apple вхід наразі не налаштовано', 'error')
+        flash(_('Apple вхід наразі не налаштовано'), 'error')
         return redirect(url_for('auth.login'))
 
     try:
         token = client.authorize_access_token()
     except OAuthError as exc:
         logger.warning('Apple Sign In error: %s', exc.error)
-        flash('Помилка автентифікації через Apple. Спробуйте ще раз.', 'error')
+        flash(_('Помилка автентифікації через Apple. Спробуйте ще раз.'), 'error')
         return redirect(url_for('auth.login'))
 
     # OIDC claims (sub, email, email_verified, is_private_email).
@@ -462,7 +463,7 @@ def apple_callback():
 
     if not sub:
         logger.warning('Apple Sign In: missing sub in id_token: %s', userinfo)
-        flash('Apple не повернув необхідні дані. Спробуйте ще раз.', 'error')
+        flash(_('Apple не повернув необхідні дані. Спробуйте ще раз.'), 'error')
         return redirect(url_for('auth.login'))
 
     # 'user' приходить ЛИШЕ при першому логіні у формі (JSON-encoded).
@@ -505,7 +506,7 @@ def apple_callback():
     )
 
 
-@auth_bp.route('/apple/unlink', methods=['POST'])
+@auth_bp.route('/apple/unlink', methods=['POST'], localize=False)
 @login_required
 def apple_unlink():
     return _unlink_provider(AuthIdentity.PROVIDER_APPLE)

@@ -1,9 +1,10 @@
 from app.extensions import db
-from app.models.mixins import TimestampMixin, BigIntPK
+from app.models.mixins import TimestampMixin, TranslatableMixin, BigIntPK
 
 
-class Clinic(TimestampMixin, db.Model):
+class Clinic(TranslatableMixin, TimestampMixin, db.Model):
     __tablename__ = 'clinics'
+    __translatable__ = ('name', 'short_description', 'description')
 
     id = db.Column(BigIntPK, primary_key=True)
     name = db.Column(db.String(300), nullable=False)

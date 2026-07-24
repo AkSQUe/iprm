@@ -7,11 +7,12 @@
 instance_tariffs; шаблони курсу на існуючі проведення не впливають.
 """
 from app.extensions import db
-from app.models.mixins import TimestampMixin, BigIntPK
+from app.models.mixins import TimestampMixin, TranslatableMixin, BigIntPK
 
 
-class CourseTariff(TimestampMixin, db.Model):
+class CourseTariff(TranslatableMixin, TimestampMixin, db.Model):
     __tablename__ = 'course_tariffs'
+    __translatable__ = ('name', 'description')
 
     id = db.Column(BigIntPK, primary_key=True)
     course_id = db.Column(

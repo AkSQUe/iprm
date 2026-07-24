@@ -7,9 +7,9 @@
 {% if site_settings.upcoming_events_style == 'bar' %}
 <aside class="upcoming-bar" id="upcoming-events"
        data-signature="{{ upcoming_events | map(attribute='id') | join('-') }}"
-       aria-label="Найближчі заходи">
+       aria-label="{{ _('Найближчі заходи') }}">
   <div class="upcoming-bar__inner">
-    <span class="upcoming-bar__label">Найближчі події:</span>
+    <span class="upcoming-bar__label">{{ _('Найближчі події:') }}</span>
     {% for ev in upcoming_events %}
     <a class="upcoming-bar__item" href="{{ ev.url }}">
       <span class="upcoming-bar__when">{{ ev.when }}</span>
@@ -18,17 +18,17 @@
     </a>
     {% endfor %}
     <button type="button" class="upcoming-bar__close" id="upcoming-events-close"
-            aria-label="Закрити">&times;</button>
+            aria-label="{{ _('Закрити') }}">&times;</button>
   </div>
 </aside>
 {% else %}
 <aside class="upcoming-events" id="upcoming-events"
        data-signature="{{ upcoming_events | map(attribute='id') | join('-') }}"
-       aria-label="Найближчі заходи">
+       aria-label="{{ _('Найближчі заходи') }}">
   <div class="upcoming-events__head">
-    <span class="upcoming-events__title">Найближчі заходи</span>
+    <span class="upcoming-events__title">{{ _('Найближчі заходи') }}</span>
     <button type="button" class="upcoming-events__close" id="upcoming-events-close"
-            aria-label="Закрити">&times;</button>
+            aria-label="{{ _('Закрити') }}">&times;</button>
   </div>
   <ul class="upcoming-events__list">
     {% for ev in upcoming_events %}

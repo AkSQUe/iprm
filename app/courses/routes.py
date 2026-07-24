@@ -6,6 +6,7 @@ from flask import (
     Response, abort, current_app, flash, jsonify, redirect, render_template,
     request, url_for,
 )
+from flask_babel import gettext as _
 from flask_login import current_user
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -454,7 +455,7 @@ def b2b_request():
         return redirect(back + '-sent')
 
     if not verify_recaptcha(action='b2b_request'):
-        flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+        flash(_('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.'), 'error')
         return redirect(back)
 
     first_name = (request.form.get('first_name') or '').strip()
@@ -464,16 +465,16 @@ def b2b_request():
     email = _validate_request_email((request.form.get('email') or '').strip())
 
     if not first_name or not last_name or len(first_name) > 120 or len(last_name) > 120:
-        flash('Вкажіть ім\'я та прізвище', 'error')
+        flash(_('Вкажіть ім\'я та прізвище'), 'error')
         return redirect(back)
     if not phone or len(phone) > _REQUEST_PHONE_MAX:
-        flash('Вкажіть коректний номер телефону', 'error')
+        flash(_('Вкажіть коректний номер телефону'), 'error')
         return redirect(back)
     if not email:
-        flash('Вкажіть валідний email', 'error')
+        flash(_('Вкажіть валідний email'), 'error')
         return redirect(back)
     if team_size not in {code for code, _ in B2BRequest.TEAM_SIZES}:
-        flash('Оберіть кількість фахівців', 'error')
+        flash(_('Оберіть кількість фахівців'), 'error')
         return redirect(back)
 
     req = B2BRequest(
@@ -486,7 +487,7 @@ def b2b_request():
     db.session.add(req)
     try:
         db.session.commit()
-        flash('Дякуємо! Ми зв\'яжемось з вами щодо корпоративних умов.', 'success')
+        flash(_('Дякуємо! Ми зв\'яжемось з вами щодо корпоративних умов.'), 'success')
         # Best-effort admin-нотифікація: заявку вже збережено, збій SMTP
         # не має впливати на UX.
         from app.services.email_service import EmailService
@@ -499,7 +500,7 @@ def b2b_request():
     except Exception:
         db.session.rollback()
         current_app.logger.exception('Failed to save B2BRequest email=%s', email)
-        flash('Помилка при надсиланні заявки. Спробуйте ще раз.', 'error')
+        flash(_('Помилка при надсиланні заявки. Спробуйте ще раз.'), 'error')
 
     return redirect(back + '-sent')
 
@@ -520,7 +521,7 @@ def course_request(slug):
         return redirect(url_for('courses.course_by_slug', slug=slug) + '#request-sent')
 
     if not verify_recaptcha(action='course_request'):
-        flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+        flash(_('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.'), 'error')
         return redirect(url_for('courses.course_by_slug', slug=slug) + '#request')
 
     email_raw = (request.form.get('email') or '').strip()
@@ -529,15 +530,15 @@ def course_request(slug):
 
     email = _validate_request_email(email_raw)
     if not email:
-        flash('Вкажіть валідний email', 'error')
+        flash(_('Вкажіть валідний email'), 'error')
         return redirect(url_for('courses.course_by_slug', slug=slug) + '#request')
 
     if len(phone_raw) > _REQUEST_PHONE_MAX:
-        flash('Номер телефону задовгий', 'error')
+        flash(_('Номер телефону задовгий'), 'error')
         return redirect(url_for('courses.course_by_slug', slug=slug) + '#request')
 
     if len(message_raw) > _REQUEST_MESSAGE_MAX:
-        flash('Повідомлення задовге (макс. 2000 символів)', 'error')
+        flash(_('Повідомлення задовге (макс. 2000 символів)'), 'error')
         return redirect(url_for('courses.course_by_slug', slug=slug) + '#request')
 
     user_id = current_user.id if current_user.is_authenticated else None
@@ -553,7 +554,7 @@ def course_request(slug):
     db.session.add(req)
     try:
         db.session.commit()
-        flash('Дякуємо! Ми повідомимо вас коли буде запланована дата.', 'success')
+        flash(_('Дякуємо! Ми повідомимо вас коли буде запланована дата.'), 'success')
         # Best-effort нотифікації (admin + клієнтське ack). Падіння SMTP не
         # впливає на UX користувача -- запит уже збережено. Кожна гілка
         # обгорнута власним try, щоб збій однієї не блокував іншу.
@@ -575,7 +576,7 @@ def course_request(slug):
         current_app.logger.exception(
             'Failed to save CourseRequest for course_id=%s email=%s', course.id, email,
         )
-        flash('Помилка при надсиланні запиту. Спробуйте ще раз.', 'error')
+        flash(_('Помилка при надсиланні запиту. Спробуйте ще раз.'), 'error')
 
     return redirect(url_for('courses.course_by_slug', slug=slug) + '#request-sent')
 

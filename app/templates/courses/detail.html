@@ -2,7 +2,7 @@
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 {% from 'partials/_location_badge.html' import location_badge %}
 
-{% block title %}{{ course.title }} | ІПРМ{% endblock %}
+{% block title %}{% trans title=course.title %}{{ title }} | ІПРМ{% endtrans %}{% endblock %}
 {% block meta_description %}{{ course.subtitle or course.short_description or course.title }}{% endblock %}
 {% block og_image %}{% if course.card_src %}{{ request.url_root.rstrip('/') ~ course.card_src }}{% else %}{{ super() }}{% endif %}{% endblock %}
 
@@ -90,8 +90,8 @@
 
   {% if referral_inviter %}
   <div class="referral-invite-banner" role="note" data-referral-banner hidden>
-    <span class="referral-invite-banner__text">Вас рекомендує <strong>{{ referral_inviter }}</strong></span>
-    <button type="button" class="referral-invite-banner__close" data-referral-banner-close aria-label="Закрити">&times;</button>
+    <span class="referral-invite-banner__text">{% trans inviter=referral_inviter %}Вас рекомендує <strong>{{ inviter }}</strong>{% endtrans %}</span>
+    <button type="button" class="referral-invite-banner__close" data-referral-banner-close aria-label="{{ _('Закрити') }}">&times;</button>
   </div>
   {% endif %}
 
@@ -117,13 +117,13 @@
         {% endif %}
         <div class="iprm-hero__actions iprm-hero__actions--detail" data-sticky-cta-anchor>
           {% if format_inst %}
-          <a href="#formats" class="apple-btn apple-btn--primary">Формат участі</a>
+          <a href="#formats" class="apple-btn apple-btn--primary">{{ _('Формат участі') }}</a>
           {% elif upcoming_instances %}
-          <a href="#schedule" class="apple-btn apple-btn--primary">Найближчі дати</a>
+          <a href="#schedule" class="apple-btn apple-btn--primary">{{ _('Найближчі дати') }}</a>
           {% else %}
-          <a href="#request" class="apple-btn apple-btn--primary">Залишити запит</a>
+          <a href="#request" class="apple-btn apple-btn--primary">{{ _('Залишити запит') }}</a>
           {% endif %}
-          <a href="#about" class="apple-btn apple-btn--secondary apple-btn--arrow">Про курс</a>
+          <a href="#about" class="apple-btn apple-btn--secondary apple-btn--arrow">{{ _('Про курс') }}</a>
         </div>
       </div>
     </section>
@@ -137,7 +137,7 @@
   {% set has_benefits = course.cpd_points or course.program_blocks %}
   <section id="about" class="iprm-section apple-section-gray" aria-labelledby="about-title">
     <div class="iprm-section__inner">
-      <h2 id="about-title" class="iprm-section__title">Про <span class="apple-gradient-text">курс</span></h2>
+      <h2 id="about-title" class="iprm-section__title">{{ _('Про <span class="apple-gradient-text">курс</span>') }}</h2>
 
       {# Hero summary: ліворуч ілюстрація (якщо є), праворуч лід + ключові факти #}
       <div class="iprm-about-hero apple-reveal{% if not about_image %} iprm-about-hero--no-media{% endif %}">
@@ -154,13 +154,13 @@
             {% if course.event_type %}
             <div class="iprm-stat-card">
               <span class="iprm-stat-card__value">{{ course.event_type_label }}</span>
-              <span class="iprm-stat-card__label">формат заходу</span>
+              <span class="iprm-stat-card__label">{{ _('формат заходу') }}</span>
             </div>
             {% endif %}
             {% if course.difficulty_level %}
             <div class="iprm-stat-card" title="{{ course.difficulty_label }}">
               <span class="iprm-stat-card__value">{{ course.difficulty_level }}/3</span>
-              <span class="iprm-stat-card__label">рівень складності</span>
+              <span class="iprm-stat-card__label">{{ _('рівень складності') }}</span>
             </div>
             {% endif %}
             {% if course.cpd_points %}
@@ -188,8 +188,8 @@
             </div>
             {% elif course.max_participants %}
             <div class="iprm-stat-card">
-              <span class="iprm-stat-card__value">до {{ course.max_participants }}</span>
-              <span class="iprm-stat-card__label">учасників у групі</span>
+              <span class="iprm-stat-card__value">{{ _('до') }} {{ course.max_participants }}</span>
+              <span class="iprm-stat-card__label">{{ _('учасників у групі') }}</span>
             </div>
             {% endif %}
           </div>
@@ -199,15 +199,15 @@
       {# Tabs: показуємо лише ті, для яких є дані #}
       {% if has_desc or has_audience or has_benefits %}
       <div class="iprm-about-tabs apple-reveal" data-iprm-tabs>
-        <div class="iprm-tabs__list" role="tablist" aria-label="Розділи опису курсу">
+        <div class="iprm-tabs__list" role="tablist" aria-label="{{ _('Розділи опису курсу') }}">
           {% if has_desc %}
-          <button type="button" class="iprm-tabs__trigger" data-tab-trigger="desc" data-tab-default>Детальний опис</button>
+          <button type="button" class="iprm-tabs__trigger" data-tab-trigger="desc" data-tab-default>{{ _('Детальний опис') }}</button>
           {% endif %}
           {% if has_audience %}
-          <button type="button" class="iprm-tabs__trigger" data-tab-trigger="audience"{% if not has_desc %} data-tab-default{% endif %}>Для кого курс</button>
+          <button type="button" class="iprm-tabs__trigger" data-tab-trigger="audience"{% if not has_desc %} data-tab-default{% endif %}>{{ _('Для кого курс') }}</button>
           {% endif %}
           {% if has_benefits %}
-          <button type="button" class="iprm-tabs__trigger" data-tab-trigger="benefits"{% if not has_desc and not has_audience %} data-tab-default{% endif %}>Що ви отримаєте</button>
+          <button type="button" class="iprm-tabs__trigger" data-tab-trigger="benefits"{% if not has_desc and not has_audience %} data-tab-default{% endif %}>{{ _('Що ви отримаєте') }}</button>
           {% endif %}
         </div>
 
@@ -230,10 +230,10 @@
         {% if has_benefits %}
         <div class="iprm-tabs__panel" data-tab-panel="benefits">
           <ul class="iprm-benefit-list">
-            {% if course.cpd_points %}<li>Сертифікат БПР на {{ course.cpd_points }} {{ course.cpd_points | uk_plural('бал', 'бали', 'балів') }}</li>{% endif %}
-            {% if course.program_blocks %}<li>{{ course.program_blocks|length }} {{ course.program_blocks|length | uk_plural('тематичний блок', 'тематичні блоки', 'тематичних блоків') }} — від теорії до практики</li>{% endif %}
-            <li>Розбір клінічних кейсів та відповіді лектора на запитання</li>
-            <li>Доступ до додаткових навчальних матеріалів і презентацій</li>
+            {% if course.cpd_points %}<li>{{ _('Сертифікат БПР на') }} {{ course.cpd_points }} {{ course.cpd_points | uk_plural('бал', 'бали', 'балів') }}</li>{% endif %}
+            {% if course.program_blocks %}<li>{{ course.program_blocks|length }} {{ course.program_blocks|length | uk_plural('тематичний блок', 'тематичні блоки', 'тематичних блоків') }} {{ _('— від теорії до практики') }}</li>{% endif %}
+            <li>{{ _('Розбір клінічних кейсів та відповіді лектора на запитання') }}</li>
+            <li>{{ _('Доступ до додаткових навчальних матеріалів і презентацій') }}</li>
           </ul>
         </div>
         {% endif %}
@@ -249,19 +249,19 @@
   {% set fmt_tariffs = format_inst.active_tariffs %}
   <section id="formats" class="iprm-section" aria-labelledby="formats-title">
     <div class="iprm-section__inner">
-      <h2 id="formats-title" class="iprm-section__title">Оберіть <span class="apple-gradient-text">формат участі</span></h2>
-      <p class="iprm-section__subtitle">та отримайте сертифікат міжнародного зразка</p>
+      <h2 id="formats-title" class="iprm-section__title">{{ _('Оберіть <span class="apple-gradient-text">формат участі</span>') }}</h2>
+      <p class="iprm-section__subtitle">{{ _('та отримайте сертифікат міжнародного зразка') }}</p>
       <div class="iprm-format-cards">
         {% for tariff in fmt_tariffs %}
         <article class="iprm-format-card apple-reveal{% if loop.last and fmt_tariffs|length > 1 %} iprm-format-card--featured{% endif %}">
           <div class="iprm-format-card__head">
             <h3 class="iprm-format-card__name">{{ tariff.name }}</h3>
-            {% if fmt_date %}<p class="iprm-format-card__date">Захід {{ fmt_date }}</p>{% endif %}
+            {% if fmt_date %}<p class="iprm-format-card__date">{{ _('Захід') }} {{ fmt_date }}</p>{% endif %}
           </div>
-          <div class="iprm-format-card__price">{{ tariff.price | int }} <span class="iprm-format-card__currency">грн</span></div>
+          <div class="iprm-format-card__price">{{ tariff.price | int }} <span class="iprm-format-card__currency">{{ _('грн') }}</span></div>
           {% if tariff.description_items %}
           <div class="iprm-format-card__included">
-            <span class="iprm-format-card__included-label">Що включено:</span>
+            <span class="iprm-format-card__included-label">{{ _('Що включено:') }}</span>
             <ul class="iprm-format-card__list">
               {% for item in tariff.description_items %}
               <li>{{ item }}</li>
@@ -272,10 +272,10 @@
           {% if fmt_open %}
           <a href="{{ url_for('registration.register_instance', instance_id=format_inst.id, tariff=tariff.id) }}"
              class="apple-btn apple-btn--primary iprm-format-card__cta">
-            {% if fmt_date %}Зареєструватися на {{ fmt_date }}{% else %}Зареєструватися{% endif %}
+            {% if fmt_date %}{% trans date=fmt_date %}Зареєструватися на {{ date }}{% endtrans %}{% else %}{{ _('Зареєструватися') }}{% endif %}
           </a>
           {% else %}
-          <span class="iprm-format-card__cta iprm-format-card__cta--closed">Продаж завершено</span>
+          <span class="iprm-format-card__cta iprm-format-card__cta--closed">{{ _('Продаж завершено') }}</span>
           {% endif %}
         </article>
         {% endfor %}
@@ -287,7 +287,7 @@
   <!-- ===== SCHEDULE (upcoming instances) ===== -->
   <section id="schedule" class="iprm-section" aria-labelledby="schedule-title">
     <div class="iprm-section__inner">
-      <h2 id="schedule-title" class="iprm-section__title">Найближчі <span class="apple-gradient-text">дати</span></h2>
+      <h2 id="schedule-title" class="iprm-section__title">{{ _('Найближчі <span class="apple-gradient-text">дати</span>') }}</h2>
       {% if upcoming_instances %}
       <div class="iprm-schedule">
         {% for inst in upcoming_instances %}
@@ -307,14 +307,14 @@
             <div class="iprm-schedule__meta">
               {{ location_badge(inst.event_format, inst.location) }}
               {% if inst.effective_cpd_points %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}</span>{% endif %}
-              {% if inst.effective_price and inst.effective_price > 0 %}<span class="iprm-schedule__price">{% if inst.price_is_from %}від {% endif %}{{ inst.effective_price | int }} &#8372;</span>{% endif %}
+              {% if inst.effective_price and inst.effective_price > 0 %}<span class="iprm-schedule__price">{% if inst.price_is_from %}{{ _('від') }} {% endif %}{{ inst.effective_price | int }} &#8372;</span>{% endif %}
               {% if remaining is not none %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--seats{% if site_settings.seats_low_threshold and remaining <= site_settings.seats_low_threshold %} iprm-schedule__tag--warning{% endif %}">Залишилось {{ remaining }} {{ remaining | uk_plural('місце', 'місця', 'місць') }}</span>
+              <span class="iprm-schedule__tag iprm-schedule__tag--seats{% if site_settings.seats_low_threshold and remaining <= site_settings.seats_low_threshold %} iprm-schedule__tag--warning{% endif %}">{{ _('Залишилось') }} {{ remaining }} {{ remaining | uk_plural('місце', 'місця', 'місць') }}</span>
               {% endif %}
             </div>
             {% set inst_tariffs = inst.active_tariffs %}
             {% if inst_tariffs %}
-            <div class="iprm-schedule__tariffs" role="list" aria-label="Тарифи участі">
+            <div class="iprm-schedule__tariffs" role="list" aria-label="{{ _('Тарифи участі') }}">
               {% for tariff in inst_tariffs %}
               {% if is_open %}
               <a class="iprm-tariff-pill iprm-tariff-pill--link" role="listitem"
@@ -335,9 +335,9 @@
           </div>
           <div class="iprm-schedule__action">
             {% if is_open %}
-            <a href="{{ url_for('registration.register_instance', instance_id=inst.id) }}" class="iprm-btn iprm-btn--primary iprm-btn--sm">Реєстрація</a>
+            <a href="{{ url_for('registration.register_instance', instance_id=inst.id) }}" class="iprm-btn iprm-btn--primary iprm-btn--sm">{{ _('Реєстрація') }}</a>
             {% else %}
-            <span class="badge badge--draft">Реєстрацію закрито</span>
+            <span class="badge badge--draft">{{ _('Реєстрацію закрито') }}</span>
             {% endif %}
           </div>
         </div>
@@ -345,8 +345,8 @@
       </div>
       {% else %}
       <div class="iprm-empty-state">
-        <p>Наразі немає запланованих проведень цього курсу.</p>
-        <p><a href="#request" class="apple-btn apple-btn--primary iprm-empty-state__cta">Залишити запит на проведення</a></p>
+        <p>{{ _('Наразі немає запланованих проведень цього курсу.') }}</p>
+        <p><a href="#request" class="apple-btn apple-btn--primary iprm-empty-state__cta">{{ _('Залишити запит на проведення') }}</a></p>
       </div>
       {% endif %}
     </div>
@@ -356,8 +356,8 @@
   {% if course.program_blocks %}
   <section class="iprm-section apple-section-gray" aria-labelledby="program-title">
     <div class="iprm-section__inner">
-      <h2 id="program-title" class="iprm-section__title">Програма <span class="apple-gradient-text">курсу</span></h2>
-      <p class="iprm-section__subtitle">Структура навчання — від теорії до практичних навичок</p>
+      <h2 id="program-title" class="iprm-section__title">{{ _('Програма <span class="apple-gradient-text">курсу</span>') }}</h2>
+      <p class="iprm-section__subtitle">{{ _('Структура навчання — від теорії до практичних навичок') }}</p>
       <div class="iprm-program">
         {% for block in course.program_blocks %}
         <article class="iprm-program__block apple-reveal">
@@ -383,30 +383,30 @@
   {% if site_settings.show_roi_calculator and roi_price and roi_price > 0 %}
   <section id="roi" class="iprm-section" aria-labelledby="roi-title">
     <div class="iprm-section__inner">
-      <h2 id="roi-title" class="iprm-section__title">Коли курс <span class="apple-gradient-text">окупиться?</span></h2>
-      <p class="iprm-section__subtitle">Порахуйте на власних цифрах — середній чек процедури та кількість записів на місяць</p>
+      <h2 id="roi-title" class="iprm-section__title">{{ _('Коли курс <span class="apple-gradient-text">окупиться?</span>') }}</h2>
+      <p class="iprm-section__subtitle">{{ _('Порахуйте на власних цифрах — середній чек процедури та кількість записів на місяць') }}</p>
       <div class="iprm-roi apple-reveal" data-roi-calc data-roi-price="{{ roi_price | int }}">
         <div class="iprm-roi__inputs">
           <label class="iprm-roi__field">
-            <span class="iprm-roi__label">Середній чек процедури, &#8372;</span>
+            <span class="iprm-roi__label">{{ _('Середній чек процедури, &#8372;') }}</span>
             <input type="number" class="form-input" data-roi-check value="2000" min="0" max="100000" step="100" inputmode="numeric">
           </label>
           <label class="iprm-roi__field">
-            <span class="iprm-roi__label">Процедур на місяць</span>
+            <span class="iprm-roi__label">{{ _('Процедур на місяць') }}</span>
             <input type="number" class="form-input" data-roi-count value="12" min="0" max="500" step="1" inputmode="numeric">
           </label>
         </div>
         <div class="iprm-roi__results">
           <div class="iprm-roi__result">
             <span class="iprm-roi__value" data-roi-income>&mdash;</span>
-            <span class="iprm-roi__caption">дохід на місяць</span>
+            <span class="iprm-roi__caption">{{ _('дохід на місяць') }}</span>
           </div>
           <div class="iprm-roi__result">
             <span class="iprm-roi__value" data-roi-payback>&mdash;</span>
-            <span class="iprm-roi__caption">окупність курсу{% if _roi_prices | length > 1 or (_roi_prices and _roi_prices | min != _roi_prices | max) %} (тариф «від»){% endif %}</span>
+            <span class="iprm-roi__caption">{{ _('окупність курсу') }}{% if _roi_prices | length > 1 or (_roi_prices and _roi_prices | min != _roi_prices | max) %} {{ _('(тариф «від»)') }}{% endif %}</span>
           </div>
         </div>
-        <p class="iprm-roi__note">Розрахунок орієнтовний: вартість курсу {{ 'від ' if _roi_prices and (_roi_prices | unique | list | length) > 1 else '' }}{{ roi_price | int }} &#8372; &divide; ваш чек. Податки та розхідники не враховано.</p>
+        <p class="iprm-roi__note">{{ _('Розрахунок орієнтовний: вартість курсу') }} {{ _('від') ~ ' ' if _roi_prices and (_roi_prices | unique | list | length) > 1 else '' }}{{ roi_price | int }} &#8372; &divide; {{ _('ваш чек. Податки та розхідники не враховано.') }}</p>
       </div>
     </div>
   </section>
@@ -416,7 +416,7 @@
   {% if course.trainer %}
   <section class="iprm-section" aria-labelledby="trainer-title">
     <div class="iprm-section__inner">
-      <h2 id="trainer-title" class="iprm-section__title">Ваш <span class="apple-gradient-text">тренер</span></h2>
+      <h2 id="trainer-title" class="iprm-section__title">{{ _('Ваш <span class="apple-gradient-text">тренер</span>') }}</h2>
       <div class="iprm-trainer-block apple-reveal">
         {% if course.trainer.photo_src %}
         <img src="{{ course.trainer.photo_src }}" alt="{{ course.trainer.full_name }}" class="iprm-trainer-block__photo" loading="lazy" width="280" height="280">
@@ -435,7 +435,7 @@
   {% if course.faq is not none and course.faq | length %}
   <section class="iprm-section apple-section-gray" aria-labelledby="faq-title">
     <div class="iprm-section__inner">
-      <h2 id="faq-title" class="iprm-section__title">Поширені <span class="apple-gradient-text">запитання</span></h2>
+      <h2 id="faq-title" class="iprm-section__title">{{ _('Поширені <span class="apple-gradient-text">запитання</span>') }}</h2>
       <div class="iprm-faq apple-reveal">
         {% for item in course.faq %}{% if item.question %}
         <details class="iprm-faq__item">
@@ -453,12 +453,12 @@
   <section class="iprm-section" aria-labelledby="history-title">
     <div class="iprm-section__inner">
       <div class="iprm-history-line apple-reveal">
-        <h2 id="history-title" class="iprm-history-line__title">Уже проведено ({{ past_instances | length }}):</h2>
+        <h2 id="history-title" class="iprm-history-line__title">{% trans count=past_instances | length %}Уже проведено ({{ count }}):{% endtrans %}</h2>
         <ul class="iprm-history-line__list">
           {% for inst in past_instances %}
           <li class="iprm-history-line__item">
             {%- if inst.start_date %}{{ inst.start_date.strftime('%d.%m.%Y') }}{% endif -%}
-            {%- if inst.event_format == 'online' %} · Онлайн
+            {%- if inst.event_format == 'online' %} · {{ _('Онлайн') }}
             {%- elif inst.location %} · {{ inst.location }}{% endif -%}
           </li>
           {% endfor %}
@@ -472,8 +472,8 @@
   {% if related_courses %}
   <section class="iprm-section" aria-labelledby="related-title">
     <div class="iprm-section__inner">
-      <h2 id="related-title" class="iprm-section__title">Наступний <span class="apple-gradient-text">крок</span></h2>
-      <p class="iprm-section__subtitle">Схожі курси, які доповнять цю програму</p>
+      <h2 id="related-title" class="iprm-section__title">{{ _('Наступний <span class="apple-gradient-text">крок</span>') }}</h2>
+      <p class="iprm-section__subtitle">{{ _('Схожі курси, які доповнять цю програму') }}</p>
       <div class="iprm-course-cards iprm-course-cards--related">
         {% for rc in related_courses %}
         <article class="iprm-course-card apple-reveal">
@@ -506,19 +506,18 @@
   {% if referral_link %}
   <section class="iprm-section" aria-labelledby="referral-title">
     <div class="iprm-section__inner">
-      <h2 id="referral-title" class="iprm-section__title">Поділіться курсом</h2>
+      <h2 id="referral-title" class="iprm-section__title">{{ _('Поділіться курсом') }}</h2>
       <p class="referral-share__lead">
-        Ваше персональне посилання на цей курс. За кожну оплачену реєстрацію
-        за вашим посиланням ви отримуєте бонусні бали лояльності.
+        {{ _('Ваше персональне посилання на цей курс. За кожну оплачену реєстрацію за вашим посиланням ви отримуєте бонусні бали лояльності.') }}
       </p>
       <div class="referral-share apple-reveal">
-        <label class="referral-share__label" for="course-referral-link">Ваше посилання</label>
+        <label class="referral-share__label" for="course-referral-link">{{ _('Ваше посилання') }}</label>
         <div class="referral-share__row">
           <input type="text" id="course-referral-link" class="referral-share__input"
                  value="{{ referral_link }}" readonly
-                 data-select-on-focus aria-label="Реферальне посилання">
+                 data-select-on-focus aria-label="{{ _('Реферальне посилання') }}">
           <button type="button" class="apple-btn apple-btn--primary referral-share__copy"
-                  data-copy="{{ referral_link }}">Копіювати</button>
+                  data-copy="{{ referral_link }}">{{ _('Копіювати') }}</button>
         </div>
       </div>
       {% set link = referral_link %}{% set qr = none %}
@@ -531,7 +530,7 @@
   {% if course_reviews %}
   <section class="iprm-section" aria-labelledby="reviews-title">
     <div class="iprm-section__inner">
-      <h2 id="reviews-title" class="iprm-section__title">Відгуки <span class="apple-gradient-text">учасників</span></h2>
+      <h2 id="reviews-title" class="iprm-section__title">{{ _('Відгуки <span class="apple-gradient-text">учасників</span>') }}</h2>
       <div class="reviews-grid">
         {% for review in course_reviews %}
           {% include 'partials/_review_card.html' %}
@@ -546,10 +545,10 @@
     <div class="iprm-section__inner">
       <div class="iprm-appointment apple-reveal">
         <h2 id="request-title">
-          {% if upcoming_instances %}Хочете, щоб курс був проведений <span class="apple-gradient-text">в інший час?</span>
-          {% else %}Залиште запит <span class="apple-gradient-text">на курс</span>{% endif %}
+          {% if upcoming_instances %}{{ _('Хочете, щоб курс був проведений <span class="apple-gradient-text">в інший час?</span>') }}
+          {% else %}{{ _('Залиште запит <span class="apple-gradient-text">на курс</span>') }}{% endif %}
         </h2>
-        <p>Заповніть форму нижче — ми повідомимо вас коли буде заплановано чергове проведення.</p>
+        <p>{{ _('Заповніть форму нижче — ми повідомимо вас коли буде заплановано чергове проведення.') }}</p>
         {# Flash-повідомлення показуються як toast (base.html + ui-feedback.js) #}
         <form method="POST" action="{{ url_for('courses.course_request', slug=course.slug) }}" class="iprm-request-form" data-validate data-single-submit data-recaptcha-action="course_request" data-ga-event="generate_lead">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -557,7 +556,7 @@
              без слова "Website" -- щоб поле не сприймалось як справжнє, якщо
              колись стане видимим (переклад сторінки, reader mode, автофіл). #}
           <div class="iprm-request-form__honeypot" aria-hidden="true">
-            <label for="req-website">Не заповнюйте це поле</label>
+            <label for="req-website">{{ _('Не заповнюйте це поле') }}</label>
             <input type="text" name="website" id="req-website" tabindex="-1" autocomplete="off">
           </div>
           <div class="iprm-request-form__row">
@@ -568,15 +567,15 @@
                      value="{% if current_user.is_authenticated %}{{ current_user.email }}{% endif %}">
             </div>
             <div class="form-group">
-              <label for="req-phone">Телефон</label>
+              <label for="req-phone">{{ _('Телефон') }}</label>
               <input type="tel" name="phone" id="req-phone" class="form-input" placeholder="+380..." maxlength="20" autocomplete="tel">
             </div>
           </div>
           <div class="form-group">
-            <label for="req-message">Повідомлення</label>
-            <textarea name="message" id="req-message" class="form-input" rows="4" maxlength="2000" placeholder="Опціонально: що саме вас цікавить"></textarea>
+            <label for="req-message">{{ _('Повідомлення') }}</label>
+            <textarea name="message" id="req-message" class="form-input" rows="4" maxlength="2000" placeholder="{{ _('Опціонально: що саме вас цікавить') }}"></textarea>
           </div>
-          <button type="submit" class="apple-btn apple-btn--primary">Надіслати запит</button>
+          <button type="submit" class="apple-btn apple-btn--primary">{{ _('Надіслати запит') }}</button>
         </form>
       </div>
     </div>
@@ -591,7 +590,7 @@
       {% endif %}
     </div>
     <a href="{% if upcoming_instances %}#schedule{% else %}#request{% endif %}" class="iprm-sticky-cta__btn">
-      {% if upcoming_instances %}Реєстрація{% else %}Залишити запит{% endif %}
+      {% if upcoming_instances %}{{ _('Реєстрація') }}{% else %}{{ _('Залишити запит') }}{% endif %}
     </a>
   </div>
 

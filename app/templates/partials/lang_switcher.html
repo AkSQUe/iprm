@@ -1,0 +1,14 @@
+{# Перемикач мов (uk/ru/en). Дані -- context processor inject_i18n
+   (app/i18n.py): активна мова, прямі alternate-URL для локалізованих
+   сторінок або фолбек через main.set_lang (nofollow). #}
+{% if lang_switcher %}
+<nav class="lang-switcher" aria-label="{{ _('Вибір мови сайту') }}">
+  {% for item in lang_switcher %}
+    {% if item.active %}
+    <span class="lang-switcher__item lang-switcher__item--active" aria-current="true">{{ item.label }}</span>
+    {% else %}
+    <a href="{{ item.url }}" class="lang-switcher__item" lang="{{ item.code }}" hreflang="{{ item.code }}"{% if item.nofollow %} rel="nofollow"{% endif %}>{{ item.label }}</a>
+    {% endif %}
+  {% endfor %}
+</nav>
+{% endif %}

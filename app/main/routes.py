@@ -1,4 +1,5 @@
 from flask import abort, flash, make_response, redirect, render_template, request, url_for
+from flask_babel import gettext as _
 from sqlalchemy.orm import joinedload
 
 from app.extensions import csrf, db, limiter
@@ -17,7 +18,7 @@ def index():
     return render_template('main/home.html', active_nav='home', **home_context())
 
 
-@main_bp.route('/materials/<token>')
+@main_bp.route('/materials/<token>', localize=False)
 @limiter.limit('60 per minute')
 def trainer_materials(token):
     """Public read-only view of an event's reserved materials, opened by trainers
@@ -37,7 +38,7 @@ def trainer_materials(token):
                            instance=instance, reservation=reservation)
 
 
-@main_bp.route('/r/<token>')
+@main_bp.route('/r/<token>', localize=False)
 @limiter.limit('60 per minute')
 def referrer_dashboard(token):
     """Публічний кабінет реферера за підписаним токеном (тренери без логіну):
@@ -123,17 +124,17 @@ def contact():
     form = ContactForm()
     if form.validate_on_submit():
         if not verify_recaptcha(action='contact'):
-            flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+            flash(_('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.'), 'error')
             return render_template('main/contact.html', form=form, active_nav='contact')
         flash(
-            'Дякуємо за ваше повідомлення! Ми зв\'яжемося з вами найближчим часом.',
+            _('Дякуємо за ваше повідомлення! Ми зв\'яжемося з вами найближчим часом.'),
             'success',
         )
         return redirect(url_for('main.contact'))
     return render_template('main/contact.html', form=form, active_nav='contact')
 
 
-@main_bp.route('/unsubscribe/<token>', methods=['GET', 'POST'])
+@main_bp.route('/unsubscribe/<token>', methods=['GET', 'POST'], localize=False)
 @csrf.exempt  # List-Unsubscribe-Post робить машинний POST без CSRF-токена
 def unsubscribe(token):
     """Відписка від НЕОБОВ'ЯЗКОВИХ листів (нагадування). Транзакційні
@@ -154,9 +155,24 @@ def unsubscribe(token):
     return render_template('main/unsubscribe.html', user=user, done=False)
 
 
-@main_bp.route('/design-system')
+@main_bp.route('/design-system', localize=False)
 def design_system():
     return render_template('design_system/index.html')
+
+
+@main_bp.route('/set-lang/<any(uk, ru, en):lang>', localize=False)
+def set_lang(lang):
+    """Перемикання мови для сторінок без мовного префікса (admin, payments,
+    сторінки помилок): зберігає вибір у session і повертає на next.
+    Для локалізованих сторінок перемикач лінкує напряму на /ru|/en-URL
+    (див. app/i18n.py:_switch_link). Параметр названо lang, а НЕ lang_code:
+    app-рівневий url_value_preprocessor вилучає lang_code з view_args."""
+    from flask import session
+    session['lang'] = lang
+    next_url = request.args.get('next', '')
+    if not next_url.startswith('/') or next_url.startswith('//') or '\\' in next_url:
+        next_url = url_for('main.index')
+    return redirect(next_url)
 
 
 @main_bp.route('/sitemap-page')
@@ -166,16 +182,20 @@ def sitemap_page():
     return render_template('main/sitemap.html', sections=sections, active_nav='sitemap')
 
 
-@main_bp.route('/robots.txt')
+@main_bp.route('/robots.txt', localize=False)
 def robots():
+    from app.i18n import PREFIXED_LANGUAGES
+    private_paths = ['/auth/', '/registration/', '/payments/']
+    # Приватні розділи мають дзеркала з мовним префіксом (/ru/auth/ ...).
+    disallow = private_paths + [
+        f'/{lang}{path}' for lang in PREFIXED_LANGUAGES for path in private_paths
+    ]
     lines = [
         'User-agent: *',
         'Allow: /',
         '',
-        'Disallow: /auth/',
         'Disallow: /admin/',
-        'Disallow: /registration/',
-        'Disallow: /payments/',
+        *[f'Disallow: {path}' for path in disallow],
         'Disallow: /design-system',
         '',
         f'Sitemap: {url_for("main.sitemap", _external=True)}',
@@ -185,7 +205,7 @@ def robots():
     return resp
 
 
-@main_bp.route('/sitemap.xml')
+@main_bp.route('/sitemap.xml', localize=False)
 def sitemap():
     from app.services.sitemap_service import generate_pages
     pages = generate_pages()

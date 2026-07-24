@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}Інститут Плазмотерапії та Регенеративної Медицини | ІПРМ{% endblock %}
-{% block meta_description %}Післядипломна освіта для лікарів: плазмотерапія (PRP/PRF/PPP), регенеративна медицина, ін'єкційні та апаратні методики. Практика, дати старту, бали БПР.{% endblock %}
+{% block title %}{{ _('Інститут Плазмотерапії та Регенеративної Медицини | ІПРМ') }}{% endblock %}
+{% block meta_description %}{{ _('Післядипломна освіта для лікарів: плазмотерапія (PRP/PRF/PPP), регенеративна медицина, ін\'єкційні та апаратні методики. Практика, дати старту, бали БПР.') }}{% endblock %}
 
 {% block jsonld %}
 {% set _home = url_for('main.index', _external=True) %}
@@ -45,19 +45,19 @@
 
   <!-- ===== HERO ===== -->
   <div class="iprm-hero-wrap">
-    <section class="iprm-hero" aria-label="Головна">
+    <section class="iprm-hero" aria-label="{{ _('Головна') }}">
       <div class="iprm-hero__content">
-        <div class="iprm-hero__badge">Інститут плазмотерапії та регенеративної медицини</div>
-        <h1 class="iprm-hero__title">Навчання, яке підсилює <span class="apple-gradient-text">медичну практику</span></h1>
-        <p class="iprm-hero__subtitle">Післядипломна освіта для лікарів у сфері плазмотерапії та регенеративної медицини: від біології аутологічних методик і вибору протоколу до впевненого впровадження у клінічну практику.</p>
+        <div class="iprm-hero__badge">{{ _('Інститут плазмотерапії та регенеративної медицини') }}</div>
+        <h1 class="iprm-hero__title">{{ _('Навчання, яке підсилює') }} <span class="apple-gradient-text">{{ _('медичну практику') }}</span></h1>
+        <p class="iprm-hero__subtitle">{{ _('Післядипломна освіта для лікарів у сфері плазмотерапії та регенеративної медицини: від біології аутологічних методик і вибору протоколу до впевненого впровадження у клінічну практику.') }}</p>
         <div class="iprm-hero__actions">
-          <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Обрати курс</a>
-          <a href="#schedule" class="apple-btn apple-btn--secondary apple-btn--arrow">Найближчі дати</a>
+          <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">{{ _('Обрати курс') }}</a>
+          <a href="#schedule" class="apple-btn apple-btn--secondary apple-btn--arrow">{{ _('Найближчі дати') }}</a>
         </div>
-        <div class="home-hero-proof" aria-label="Переваги навчання">
-          <div><strong>Практика</strong><span>під керівництвом тренера</span></div>
-          <div><strong>Бали БПР</strong><span>у сертифікованих програмах</span></div>
-          <div><strong>Протоколи</strong><span>для роботи після курсу</span></div>
+        <div class="home-hero-proof" aria-label="{{ _('Переваги навчання') }}">
+          <div><strong>{{ _('Практика') }}</strong><span>{{ _('під керівництвом тренера') }}</span></div>
+          <div><strong>{{ _('Бали БПР') }}</strong><span>{{ _('у сертифікованих програмах') }}</span></div>
+          <div><strong>{{ _('Протоколи') }}</strong><span>{{ _('для роботи після курсу') }}</span></div>
         </div>
       </div>
     </section>
@@ -67,15 +67,15 @@
   {% if home_stats %}
   <section class="iprm-section" aria-labelledby="stats-title">
     <div class="iprm-section__inner">
-      <h2 id="stats-title" class="iprm-section__title visually-hidden">Інститут у цифрах</h2>
+      <h2 id="stats-title" class="iprm-section__title visually-hidden">{{ _('Інститут у цифрах') }}</h2>
       <div class="home-stats">
         {% if home_stats.years %}
-        <div class="home-stat apple-reveal"><span class="home-stat__value" data-counter="{{ home_stats.years }}" data-suffix="+">0</span><span class="home-stat__label">років досвіду</span></div>
+        <div class="home-stat apple-reveal"><span class="home-stat__value" data-counter="{{ home_stats.years }}" data-suffix="+">0</span><span class="home-stat__label">{{ _('років досвіду') }}</span></div>
         {% endif %}
-        <div class="home-stat apple-reveal"><span class="home-stat__value" data-counter="{{ home_stats.courses }}" data-suffix="+">0</span><span class="home-stat__label">курсів у каталозі</span></div>
-        <div class="home-stat apple-reveal"><span class="home-stat__value" data-counter="{{ home_stats.trainers }}">0</span><span class="home-stat__label">тренерів-практиків</span></div>
+        <div class="home-stat apple-reveal"><span class="home-stat__value" data-counter="{{ home_stats.courses }}" data-suffix="+">0</span><span class="home-stat__label">{{ _('курсів у каталозі') }}</span></div>
+        <div class="home-stat apple-reveal"><span class="home-stat__value" data-counter="{{ home_stats.trainers }}">0</span><span class="home-stat__label">{{ _('тренерів-практиків') }}</span></div>
         {% if home_stats.directions %}
-        <div class="home-stat apple-reveal"><span class="home-stat__value" data-counter="{{ home_stats.directions }}">0</span><span class="home-stat__label">напрямів практики</span></div>
+        <div class="home-stat apple-reveal"><span class="home-stat__value" data-counter="{{ home_stats.directions }}">0</span><span class="home-stat__label">{{ _('напрямів практики') }}</span></div>
         {% endif %}
       </div>
     </div>
@@ -85,29 +85,29 @@
   <!-- ===== НАВІЩО ЦЕ ЛІКАРЮ ===== -->
   <section class="iprm-section" aria-labelledby="why-title">
     <div class="iprm-section__inner">
-      <p class="home-eyebrow">Навіщо це лікарю</p>
-      <h2 id="why-title" class="iprm-section__title">Нова процедура — <span class="apple-gradient-text">без зміни спеціальності</span></h2>
-      <p class="iprm-section__subtitle">Плазмотерапія розширює перелік послуг, підвищує професійну цінність фахівця й додає прогнозований дохід. Навчання веде до конкретної дії, а не до сертифіката «на полицю».</p>
+      <p class="home-eyebrow">{{ _('Навіщо це лікарю') }}</p>
+      <h2 id="why-title" class="iprm-section__title">{{ _('Нова процедура —') }} <span class="apple-gradient-text">{{ _('без зміни спеціальності') }}</span></h2>
+      <p class="iprm-section__subtitle">{{ _('Плазмотерапія розширює перелік послуг, підвищує професійну цінність фахівця й додає прогнозований дохід. Навчання веде до конкретної дії, а не до сертифіката «на полицю».') }}</p>
       <div class="apple-features-grid apple-features-grid--4">
         <div class="apple-feature-card apple-reveal">
           <span class="home-num">01</span>
-          <h3>Нова послуга у прайсі</h3>
-          <p>Аутоплазма застосовується в багатьох напрямах — ви додаєте процедуру у власну практику без переходу в іншу спеціальність.</p>
+          <h3>{{ _('Нова послуга у прайсі') }}</h3>
+          <p>{{ _('Аутоплазма застосовується в багатьох напрямах — ви додаєте процедуру у власну практику без переходу в іншу спеціальність.') }}</p>
         </div>
         <div class="apple-feature-card apple-reveal">
           <span class="home-num">02</span>
-          <h3>Робота з матеріалом пацієнта</h3>
-          <p>Аутологічний метод: використовується плазма самого пацієнта. Зрозумілий і контрольований протокол роботи.</p>
+          <h3>{{ _('Робота з матеріалом пацієнта') }}</h3>
+          <p>{{ _('Аутологічний метод: використовується плазма самого пацієнта. Зрозумілий і контрольований протокол роботи.') }}</p>
         </div>
         <div class="apple-feature-card apple-reveal">
           <span class="home-num">03</span>
-          <h3>Вища професійна цінність</h3>
-          <p>Складніші протоколи посилюють експертне позиціювання лікаря та відкривають нові клінічні задачі.</p>
+          <h3>{{ _('Вища професійна цінність') }}</h3>
+          <p>{{ _('Складніші протоколи посилюють експертне позиціювання лікаря та відкривають нові клінічні задачі.') }}</p>
         </div>
         <div class="apple-feature-card apple-reveal">
           <span class="home-num">04</span>
-          <h3>Бали БПР офіційно</h3>
-          <p>Навчання зараховується у ваш безперервний професійний розвиток — із сертифікатом установленого зразка.</p>
+          <h3>{{ _('Бали БПР офіційно') }}</h3>
+          <p>{{ _('Навчання зараховується у ваш безперервний професійний розвиток — із сертифікатом установленого зразка.') }}</p>
         </div>
       </div>
     </div>
@@ -117,8 +117,8 @@
   {% if featured_courses %}
   <section class="iprm-section apple-section-gray" aria-labelledby="featured-title">
     <div class="iprm-section__inner">
-      <h2 id="featured-title" class="iprm-section__title">Обери наступний крок <span class="apple-gradient-text">у професії</span></h2>
-      <p class="iprm-section__subtitle">Рекомендовані курси інституту</p>
+      <h2 id="featured-title" class="iprm-section__title">{{ _('Обери наступний крок') }} <span class="apple-gradient-text">{{ _('у професії') }}</span></h2>
+      <p class="iprm-section__subtitle">{{ _('Рекомендовані курси інституту') }}</p>
       <div class="iprm-course-cards">
         {% for course in featured_courses %}
           {% set show_tag_filter = false %}
@@ -126,7 +126,7 @@
         {% endfor %}
       </div>
       <div class="home-section-cta">
-        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">Увесь каталог</a>
+        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">{{ _('Увесь каталог') }}</a>
       </div>
     </div>
   </section>
@@ -135,19 +135,19 @@
   <!-- ===== 8 НАПРЯМІВ (спеціальності) ===== -->
   <section class="iprm-section" id="specialties" aria-labelledby="specialties-title">
     <div class="iprm-section__inner">
-      <p class="home-eyebrow">Міждисциплінарний підхід</p>
-      <h2 id="specialties-title" class="iprm-section__title">Одна технологія — <span class="apple-gradient-text">різні клінічні задачі</span></h2>
-      <p class="iprm-section__subtitle">PRP, PRF і PPP — не «модна процедура», а система роботи з аутоплазмою. Оберіть спеціальність і подивіться, де регенеративні методики доповнюють маршрут пацієнта.</p>
+      <p class="home-eyebrow">{{ _('Міждисциплінарний підхід') }}</p>
+      <h2 id="specialties-title" class="iprm-section__title">{{ _('Одна технологія —') }} <span class="apple-gradient-text">{{ _('різні клінічні задачі') }}</span></h2>
+      <p class="iprm-section__subtitle">{{ _('PRP, PRF і PPP — не «модна процедура», а система роботи з аутоплазмою. Оберіть спеціальність і подивіться, де регенеративні методики доповнюють маршрут пацієнта.') }}</p>
       <div class="home-specialties">
         {% set _specs = [
-          ('Дерматологія', 'Якість шкіри, регенерація та супровід відновлення.'),
-          ('Косметологія', 'Природні протоколи для обличчя, шиї та делікатних зон.'),
-          ('Трихологія', 'Комплексна робота з волосистою частиною голови.'),
-          ('Стоматологія', 'Підтримка регенерації тканин у стоматологічних протоколах.'),
-          ('Гінекологія', 'Аутологічні підходи у практиці лікаря-гінеколога.'),
-          ('Травматологія', 'Локальні ін\'єкційні методики та УЗД-контроль.'),
-          ('Ортопедія', 'Регенеративні протоколи для суглобів і м\'яких тканин.'),
-          ('Реабілітація', 'Поєднання методик у відновному маршруті пацієнта.'),
+          (_('Дерматологія'), _('Якість шкіри, регенерація та супровід відновлення.')),
+          (_('Косметологія'), _('Природні протоколи для обличчя, шиї та делікатних зон.')),
+          (_('Трихологія'), _('Комплексна робота з волосистою частиною голови.')),
+          (_('Стоматологія'), _('Підтримка регенерації тканин у стоматологічних протоколах.')),
+          (_('Гінекологія'), _('Аутологічні підходи у практиці лікаря-гінеколога.')),
+          (_('Травматологія'), _('Локальні ін\'єкційні методики та УЗД-контроль.')),
+          (_('Ортопедія'), _('Регенеративні протоколи для суглобів і м\'яких тканин.')),
+          (_('Реабілітація'), _('Поєднання методик у відновному маршруті пацієнта.')),
         ] %}
         {% for name, desc in _specs %}
         <article class="home-specialty apple-reveal">
@@ -158,7 +158,7 @@
         {% endfor %}
       </div>
       <div class="home-section-cta">
-        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">Програми за спеціальністю</a>
+        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">{{ _('Програми за спеціальністю') }}</a>
       </div>
     </div>
   </section>
@@ -167,20 +167,20 @@
   {% if trainers %}
   <section class="iprm-section apple-section-gray" aria-labelledby="experts-title">
     <div class="iprm-section__inner">
-      <h2 id="experts-title" class="iprm-section__title"><span class="apple-gradient-text">Експертність</span></h2>
-      <p class="iprm-section__subtitle">Навчають ті, хто практикує щодня</p>
+      <h2 id="experts-title" class="iprm-section__title"><span class="apple-gradient-text">{{ _('Експертність') }}</span></h2>
+      <p class="iprm-section__subtitle">{{ _('Навчають ті, хто практикує щодня') }}</p>
 
       <div class="trainer-carousel apple-reveal" data-trainer-carousel
-           aria-roledescription="карусель" aria-label="Тренери ІПРМ">
+           aria-roledescription="{{ _('карусель') }}" aria-label="{{ _('Тренери ІПРМ') }}">
         <div class="trainer-carousel__toolbar">
           <p class="trainer-carousel__status">
-            <span data-carousel-position>1</span> із <span data-carousel-total>{{ trainers | length }}</span>
+            <span data-carousel-position>1</span> {{ _('із') }} <span data-carousel-total>{{ trainers | length }}</span>
           </p>
           <div class="trainer-carousel__actions">
             <button type="button" class="trainer-carousel__arrow" data-carousel-prev
-                    aria-label="Попередній тренер" title="Попередній тренер"><span aria-hidden="true">&#8592;</span></button>
+                    aria-label="{{ _('Попередній тренер') }}" title="{{ _('Попередній тренер') }}"><span aria-hidden="true">&#8592;</span></button>
             <button type="button" class="trainer-carousel__arrow" data-carousel-next
-                    aria-label="Наступний тренер" title="Наступний тренер"><span aria-hidden="true">&#8594;</span></button>
+                    aria-label="{{ _('Наступний тренер') }}" title="{{ _('Наступний тренер') }}"><span aria-hidden="true">&#8594;</span></button>
           </div>
         </div>
         <div class="trainer-carousel__viewport" tabindex="0">
@@ -203,7 +203,7 @@
       </div>
 
       <div class="home-section-cta">
-        <a href="{{ url_for('trainers.trainer_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">Усі тренери</a>
+        <a href="{{ url_for('trainers.trainer_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">{{ _('Усі тренери') }}</a>
       </div>
     </div>
   </section>
@@ -213,8 +213,8 @@
   {% if home_upcoming %}
   <section id="schedule" class="iprm-section" aria-labelledby="calendar-title">
     <div class="iprm-section__inner">
-      <h2 id="calendar-title" class="iprm-section__title"><span class="apple-gradient-text">Календар</span></h2>
-      <p class="iprm-section__subtitle">Найближчі дати для реєстрації</p>
+      <h2 id="calendar-title" class="iprm-section__title"><span class="apple-gradient-text">{{ _('Календар') }}</span></h2>
+      <p class="iprm-section__subtitle">{{ _('Найближчі дати для реєстрації') }}</p>
       <div class="home-calendar">
         {% for inst in home_upcoming %}
         {% set course = inst.course %}
@@ -230,9 +230,9 @@
             </div>
           </div>
           <div class="home-calendar__price">
-            {% if inst.effective_price and inst.effective_price > 0 %}{% if inst.price_is_from %}від {% endif %}{{ inst.effective_price | int }} &#8372;{% else %}безкоштовно{% endif %}
+            {% if inst.effective_price and inst.effective_price > 0 %}{% if inst.price_is_from %}{{ _('від') }} {% endif %}{{ inst.effective_price | int }} &#8372;{% else %}{{ _('безкоштовно') }}{% endif %}
           </div>
-          <a class="apple-btn apple-btn--primary apple-btn--sm" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">Деталі</a>
+          <a class="apple-btn apple-btn--primary apple-btn--sm" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">{{ _('Деталі') }}</a>
         </div>
         {% endfor %}
       </div>
@@ -244,12 +244,12 @@
   {% if site_settings.show_roi_calculator and roi_courses %}
   <section class="iprm-section apple-section-gray" aria-labelledby="roi-title">
     <div class="iprm-section__inner">
-      <h2 id="roi-title" class="iprm-section__title">Розрахунок <span class="apple-gradient-text">окупності</span></h2>
-      <p class="iprm-section__subtitle">Порахуй, як курс працюватиме на дохід</p>
+      <h2 id="roi-title" class="iprm-section__title">{{ _('Розрахунок') }} <span class="apple-gradient-text">{{ _('окупності') }}</span></h2>
+      <p class="iprm-section__subtitle">{{ _('Порахуй, як курс працюватиме на дохід') }}</p>
       <div class="iprm-roi apple-reveal" data-roi-calc>
         <div class="iprm-roi__inputs">
           <label class="iprm-roi__field iprm-roi__field--course">
-            <span class="iprm-roi__label">Курс</span>
+            <span class="iprm-roi__label">{{ _('Курс') }}</span>
             <select class="form-input" data-roi-course>
               {% set preselect = request.args.get('course') %}
               {% for rc in roi_courses %}
@@ -258,29 +258,29 @@
             </select>
           </label>
           <label class="iprm-roi__field">
-            <span class="iprm-roi__label">Середній чек процедури, &#8372;</span>
+            <span class="iprm-roi__label">{{ _('Середній чек процедури, ₴') }}</span>
             <input type="number" class="form-input" data-roi-check value="2000" min="0" max="100000" step="100" inputmode="numeric">
           </label>
           <label class="iprm-roi__field">
-            <span class="iprm-roi__label">Процедур на місяць</span>
+            <span class="iprm-roi__label">{{ _('Процедур на місяць') }}</span>
             <input type="number" class="form-input" data-roi-count value="12" min="0" max="500" step="1" inputmode="numeric">
           </label>
         </div>
         <div class="iprm-roi__results">
           <div class="iprm-roi__result">
             <span class="iprm-roi__value" data-roi-price-out>&mdash;</span>
-            <span class="iprm-roi__caption">вартість курсу</span>
+            <span class="iprm-roi__caption">{{ _('вартість курсу') }}</span>
           </div>
           <div class="iprm-roi__result">
             <span class="iprm-roi__value" data-roi-income>&mdash;</span>
-            <span class="iprm-roi__caption">дохід на місяць</span>
+            <span class="iprm-roi__caption">{{ _('дохід на місяць') }}</span>
           </div>
           <div class="iprm-roi__result">
             <span class="iprm-roi__value" data-roi-payback>&mdash;</span>
-            <span class="iprm-roi__caption">окупність курсу</span>
+            <span class="iprm-roi__caption">{{ _('окупність курсу') }}</span>
           </div>
         </div>
-        <p class="iprm-roi__note">Розрахунок орієнтовний. Фактичний результат залежить від попиту, прайсу, витрат на матеріали й завантаженості практики.</p>
+        <p class="iprm-roi__note">{{ _('Розрахунок орієнтовний. Фактичний результат залежить від попиту, прайсу, витрат на матеріали й завантаженості практики.') }}</p>
       </div>
     </div>
   </section>
@@ -289,29 +289,29 @@
   <!-- ===== ЩО ЗАЛИШАЄТЬСЯ З ЛІКАРЕМ ===== -->
   <section class="iprm-section" aria-labelledby="assurance-title">
     <div class="iprm-section__inner">
-      <p class="home-eyebrow">Після навчання</p>
-      <h2 id="assurance-title" class="iprm-section__title">Що залишається <span class="apple-gradient-text">з лікарем</span></h2>
-      <p class="iprm-section__subtitle">Медичний контекст без зайвих обіцянок</p>
+      <p class="home-eyebrow">{{ _('Після навчання') }}</p>
+      <h2 id="assurance-title" class="iprm-section__title">{{ _('Що залишається') }} <span class="apple-gradient-text">{{ _('з лікарем') }}</span></h2>
+      <p class="iprm-section__subtitle">{{ _('Медичний контекст без зайвих обіцянок') }}</p>
       <div class="apple-features-grid apple-features-grid--4">
         <div class="apple-feature-card apple-reveal">
           <span class="home-num">01</span>
-          <h3>Протокол і практична навичка</h3>
-          <p>Зрозуміла логіка роботи та техніка, відпрацьована під наглядом тренера.</p>
+          <h3>{{ _('Протокол і практична навичка') }}</h3>
+          <p>{{ _('Зрозуміла логіка роботи та техніка, відпрацьована під наглядом тренера.') }}</p>
         </div>
         <div class="apple-feature-card apple-reveal">
           <span class="home-num">02</span>
-          <h3>Навчальні матеріали</h3>
-          <p>Опора для повторення та підготовки до перших процедур.</p>
+          <h3>{{ _('Навчальні матеріали') }}</h3>
+          <p>{{ _('Опора для повторення та підготовки до перших процедур.') }}</p>
         </div>
         <div class="apple-feature-card apple-reveal">
           <span class="home-num">03</span>
-          <h3>Підтвердження освіти</h3>
-          <p>Сертифікат і бали БПР у програмах, де це передбачено.</p>
+          <h3>{{ _('Підтвердження освіти') }}</h3>
+          <p>{{ _('Сертифікат і бали БПР у програмах, де це передбачено.') }}</p>
         </div>
         <div class="apple-feature-card apple-reveal">
           <span class="home-num">04</span>
-          <h3>Підтримка ментора</h3>
-          <p>Післяосвітній супровід для впевненого старту та розбору практичних запитань.</p>
+          <h3>{{ _('Підтримка ментора') }}</h3>
+          <p>{{ _('Післяосвітній супровід для впевненого старту та розбору практичних запитань.') }}</p>
         </div>
       </div>
       {% if site_settings.show_clinics and clinics %}
@@ -329,37 +329,37 @@
      маршрутів/рівнів як даних -- замінити хардкод динамічним рендером. #}
   <section class="iprm-section apple-section-gray" aria-labelledby="route-title">
     <div class="iprm-section__inner">
-      <p class="home-eyebrow">Карта професійного зростання</p>
-      <h2 id="route-title" class="iprm-section__title">Від базового курсу <span class="apple-gradient-text">до власної клініки</span></h2>
-      <p class="iprm-section__subtitle">Почніть із бази та рухайтеся до складніших протоколів, системного впровадження плазмотерапії й управління власним медичним напрямом.</p>
+      <p class="home-eyebrow">{{ _('Карта професійного зростання') }}</p>
+      <h2 id="route-title" class="iprm-section__title">{{ _('Від базового курсу') }} <span class="apple-gradient-text">{{ _('до власної клініки') }}</span></h2>
+      <p class="iprm-section__subtitle">{{ _('Почніть із бази та рухайтеся до складніших протоколів, системного впровадження плазмотерапії й управління власним медичним напрямом.') }}</p>
       <div class="home-route">
         <article class="home-route__step apple-reveal">
-          <div class="home-route__meta"><strong>01</strong><span>Рівень 1</span></div>
-          <h3 class="home-route__title">Базовий курс із плазмотерапії</h3>
-          <p class="home-route__text">Біологія аутоплазми, PRP, PRF, PPP, показання та безпечний алгоритм роботи.</p>
-          <small class="home-route__tag">Фундамент методики</small>
+          <div class="home-route__meta"><strong>01</strong><span>{{ _('Рівень 1') }}</span></div>
+          <h3 class="home-route__title">{{ _('Базовий курс із плазмотерапії') }}</h3>
+          <p class="home-route__text">{{ _('Біологія аутоплазми, PRP, PRF, PPP, показання та безпечний алгоритм роботи.') }}</p>
+          <small class="home-route__tag">{{ _('Фундамент методики') }}</small>
         </article>
         <article class="home-route__step apple-reveal">
-          <div class="home-route__meta"><strong>02</strong><span>Рівень 2</span></div>
-          <h3 class="home-route__title">Спеціалізація за напрямом</h3>
-          <p class="home-route__text">Профільні протоколи для дерматології, гінекології, стоматології, ортопедії та інших спеціальностей.</p>
-          <small class="home-route__tag">Клінічна спеціалізація</small>
+          <div class="home-route__meta"><strong>02</strong><span>{{ _('Рівень 2') }}</span></div>
+          <h3 class="home-route__title">{{ _('Спеціалізація за напрямом') }}</h3>
+          <p class="home-route__text">{{ _('Профільні протоколи для дерматології, гінекології, стоматології, ортопедії та інших спеціальностей.') }}</p>
+          <small class="home-route__tag">{{ _('Клінічна спеціалізація') }}</small>
         </article>
         <article class="home-route__step apple-reveal">
-          <div class="home-route__meta"><strong>03</strong><span>Рівень 3</span></div>
-          <h3 class="home-route__title">Впровадження у практику</h3>
-          <p class="home-route__text">Складніші кейси, документи, сервіс, післяосвітня підтримка та стабільна робота з новою послугою.</p>
-          <small class="home-route__tag">Системна практика</small>
+          <div class="home-route__meta"><strong>03</strong><span>{{ _('Рівень 3') }}</span></div>
+          <h3 class="home-route__title">{{ _('Впровадження у практику') }}</h3>
+          <p class="home-route__text">{{ _('Складніші кейси, документи, сервіс, післяосвітня підтримка та стабільна робота з новою послугою.') }}</p>
+          <small class="home-route__tag">{{ _('Системна практика') }}</small>
         </article>
         <article class="home-route__step home-route__step--goal apple-reveal">
-          <div class="home-route__meta"><strong>04</strong><span>Рівень 4</span></div>
-          <h3 class="home-route__title">Власник клініки</h3>
-          <p class="home-route__text">Команда, стандарти протоколів, розширення напрямів і масштабування регенеративної медицини.</p>
-          <small class="home-route__tag">Управління й розвиток</small>
+          <div class="home-route__meta"><strong>04</strong><span>{{ _('Рівень 4') }}</span></div>
+          <h3 class="home-route__title">{{ _('Власник клініки') }}</h3>
+          <p class="home-route__text">{{ _('Команда, стандарти протоколів, розширення напрямів і масштабування регенеративної медицини.') }}</p>
+          <small class="home-route__tag">{{ _('Управління й розвиток') }}</small>
         </article>
       </div>
       <div class="home-section-cta">
-        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">Переглянути курси маршруту</a>
+        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">{{ _('Переглянути курси маршруту') }}</a>
       </div>
     </div>
   </section>
@@ -367,8 +367,8 @@
   <!-- ===== ПІСЛЯ НАВЧАННЯ (відгуки) ===== -->
   <section class="iprm-section" aria-labelledby="reviews-title">
     <div class="iprm-section__inner">
-      <h2 id="reviews-title" class="iprm-section__title">Після <span class="apple-gradient-text">навчання</span></h2>
-      <p class="iprm-section__subtitle">Досвід фахівців після практики</p>
+      <h2 id="reviews-title" class="iprm-section__title">{{ _('Після') }} <span class="apple-gradient-text">{{ _('навчання') }}</span></h2>
+      <p class="iprm-section__subtitle">{{ _('Досвід фахівців після практики') }}</p>
       <div class="reviews-grid">
         {% if reviews %}
           {% for review in reviews %}
@@ -378,14 +378,14 @@
           {# TODO(заглушка): демо-цитати, поки нема реальних відгуків.
              Прибрати цей {% else %}-блок, коли в адмінці з'являться опубліковані відгуки. #}
           <figure class="iprm-review apple-reveal">
-            <div class="iprm-review__stars" aria-label="Оцінка 5 з 5">★★★★★</div>
-            <blockquote class="iprm-review__text">Після практики стало зрозуміло, як запускати процедуру без хаосу: протокол, матеріали, собівартість і комунікація з пацієнтом.</blockquote>
-            <figcaption class="iprm-review__author">Олена · Київ · лікарка-косметологиня</figcaption>
+            <div class="iprm-review__stars" aria-label="{{ _('Оцінка 5 з 5') }}">★★★★★</div>
+            <blockquote class="iprm-review__text">{{ _('Після практики стало зрозуміло, як запускати процедуру без хаосу: протокол, матеріали, собівартість і комунікація з пацієнтом.') }}</blockquote>
+            <figcaption class="iprm-review__author">{{ _('Олена · Київ · лікарка-косметологиня') }}</figcaption>
           </figure>
           <figure class="iprm-review apple-reveal">
-            <div class="iprm-review__stars" aria-label="Оцінка 5 з 5">★★★★★</div>
-            <blockquote class="iprm-review__text">Найцінніше — клінічна логіка й спокійний супровід тренера. Усе без зайвих обіцянок.</blockquote>
-            <figcaption class="iprm-review__author">Марина · Львів · власниця кабінету</figcaption>
+            <div class="iprm-review__stars" aria-label="{{ _('Оцінка 5 з 5') }}">★★★★★</div>
+            <blockquote class="iprm-review__text">{{ _('Найцінніше — клінічна логіка й спокійний супровід тренера. Усе без зайвих обіцянок.') }}</blockquote>
+            <figcaption class="iprm-review__author">{{ _('Марина · Львів · власниця кабінету') }}</figcaption>
           </figure>
         {% endif %}
       </div>
@@ -395,28 +395,28 @@
   <!-- ===== СИСТЕМА НАВЧАННЯ ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="how-title">
     <div class="iprm-section__inner">
-      <p class="home-eyebrow">Система навчання</p>
-      <h2 id="how-title" class="iprm-section__title">Від біології плазми <span class="apple-gradient-text">до впевненого протоколу</span></h2>
+      <p class="home-eyebrow">{{ _('Система навчання') }}</p>
+      <h2 id="how-title" class="iprm-section__title">{{ _('Від біології плазми') }} <span class="apple-gradient-text">{{ _('до впевненого протоколу') }}</span></h2>
       <div class="iprm-steps">
         <div class="iprm-steps__item apple-reveal">
           <span class="iprm-steps__number">1</span>
-          <h3 class="iprm-steps__heading">Розуміння</h3>
-          <p class="iprm-steps__text">Механізми дії, фракції плазми, показання та межі методики.</p>
+          <h3 class="iprm-steps__heading">{{ _('Розуміння') }}</h3>
+          <p class="iprm-steps__text">{{ _('Механізми дії, фракції плазми, показання та межі методики.') }}</p>
         </div>
         <div class="iprm-steps__item apple-reveal">
           <span class="iprm-steps__number">2</span>
-          <h3 class="iprm-steps__heading">Рішення</h3>
-          <p class="iprm-steps__text">Вибір пацієнта, планування та логіка клінічного протоколу.</p>
+          <h3 class="iprm-steps__heading">{{ _('Рішення') }}</h3>
+          <p class="iprm-steps__text">{{ _('Вибір пацієнта, планування та логіка клінічного протоколу.') }}</p>
         </div>
         <div class="iprm-steps__item apple-reveal">
           <span class="iprm-steps__number">3</span>
-          <h3 class="iprm-steps__heading">Практика</h3>
-          <p class="iprm-steps__text">Підготовка матеріалу, техніка й відпрацювання під контролем тренера.</p>
+          <h3 class="iprm-steps__heading">{{ _('Практика') }}</h3>
+          <p class="iprm-steps__text">{{ _('Підготовка матеріалу, техніка й відпрацювання під контролем тренера.') }}</p>
         </div>
         <div class="iprm-steps__item apple-reveal">
           <span class="iprm-steps__number">4</span>
-          <h3 class="iprm-steps__heading">Впровадження й підтримка</h3>
-          <p class="iprm-steps__text">Документація, інтеграція послуги у практику та супровід ментора після навчання.</p>
+          <h3 class="iprm-steps__heading">{{ _('Впровадження й підтримка') }}</h3>
+          <p class="iprm-steps__text">{{ _('Документація, інтеграція послуги у практику та супровід ментора після навчання.') }}</p>
         </div>
       </div>
     </div>
@@ -427,10 +427,10 @@
     <div class="iprm-section__inner">
       <div class="iprm-b2b apple-reveal">
         <div class="iprm-b2b__text">
-          <h2 id="teams-title">Для команд і клінік</h2>
-          <p>Навчи команду — підсиль практику. Знижка для груп від трьох фахівців, формат під напрям клініки, салону чи кабінету.</p>
+          <h2 id="teams-title">{{ _('Для команд і клінік') }}</h2>
+          <p>{{ _('Навчи команду — підсиль практику. Знижка для груп від трьох фахівців, формат під напрям клініки, салону чи кабінету.') }}</p>
         </div>
-        <a href="{{ url_for('courses.course_list') }}#b2b" class="apple-btn apple-btn--primary">Отримати корпоративні умови</a>
+        <a href="{{ url_for('courses.course_list') }}#b2b" class="apple-btn apple-btn--primary">{{ _('Отримати корпоративні умови') }}</a>
       </div>
     </div>
   </section>
@@ -438,24 +438,24 @@
   <!-- ===== FAQ ===== -->
   <section class="iprm-section" id="faq" aria-labelledby="faq-title">
     <div class="iprm-section__inner">
-      <p class="home-eyebrow">Перед вибором</p>
-      <h2 id="faq-title" class="iprm-section__title">Коротко про <span class="apple-gradient-text">важливе</span></h2>
+      <p class="home-eyebrow">{{ _('Перед вибором') }}</p>
+      <h2 id="faq-title" class="iprm-section__title">{{ _('Коротко про') }} <span class="apple-gradient-text">{{ _('важливе') }}</span></h2>
       <div class="home-faq">
         <details class="home-faq__item">
-          <summary class="home-faq__q">Чи потрібен досвід роботи з плазмотерапією?</summary>
-          <div class="home-faq__a"><p>Ні для всіх програм. У каталозі є базові й тематичні курси; вимоги до освіти та досвіду зазначені на сторінці кожної програми.</p></div>
+          <summary class="home-faq__q">{{ _('Чи потрібен досвід роботи з плазмотерапією?') }}</summary>
+          <div class="home-faq__a"><p>{{ _('Ні для всіх програм. У каталозі є базові й тематичні курси; вимоги до освіти та досвіду зазначені на сторінці кожної програми.') }}</p></div>
         </details>
         <details class="home-faq__item">
-          <summary class="home-faq__q">Чи є практична частина?</summary>
-          <div class="home-faq__a"><p>Формат залежить від програми. Практичні курси включають демонстрацію, роботу з матеріалом або відпрацювання під керівництвом тренера.</p></div>
+          <summary class="home-faq__q">{{ _('Чи є практична частина?') }}</summary>
+          <div class="home-faq__a"><p>{{ _('Формат залежить від програми. Практичні курси включають демонстрацію, роботу з матеріалом або відпрацювання під керівництвом тренера.') }}</p></div>
         </details>
         <details class="home-faq__item">
-          <summary class="home-faq__q">Як нараховуються бали БПР?</summary>
-          <div class="home-faq__a"><p>Кількість балів і умови їх отримання вказані на сторінці конкретного сертифікованого заходу.</p></div>
+          <summary class="home-faq__q">{{ _('Як нараховуються бали БПР?') }}</summary>
+          <div class="home-faq__a"><p>{{ _('Кількість балів і умови їх отримання вказані на сторінці конкретного сертифікованого заходу.') }}</p></div>
         </details>
         <details class="home-faq__item">
-          <summary class="home-faq__q">Як обрати програму під свою спеціальність?</summary>
-          <div class="home-faq__a"><p>Відкрийте каталог і скористайтеся фільтром за спеціальністю або зверніться до команди ІПРМ за консультацією.</p></div>
+          <summary class="home-faq__q">{{ _('Як обрати програму під свою спеціальність?') }}</summary>
+          <div class="home-faq__a"><p>{{ _('Відкрийте каталог і скористайтеся фільтром за спеціальністю або зверніться до команди ІПРМ за консультацією.') }}</p></div>
         </details>
       </div>
     </div>
@@ -465,12 +465,12 @@
   <section class="iprm-section" aria-labelledby="cta-title">
     <div class="iprm-section__inner">
       <div class="home-cta apple-reveal">
-        <p class="home-eyebrow home-eyebrow--light">Наступний професійний крок</p>
-        <h2 id="cta-title" class="home-cta__title">Оберіть програму, яку зможете <span class="apple-gradient-text">застосувати у практиці</span></h2>
-        <p class="home-cta__text">Розкажіть про освіту, спеціальність і бажаний напрям — підберемо маршрут без тиску та випадкових програм.</p>
+        <p class="home-eyebrow home-eyebrow--light">{{ _('Наступний професійний крок') }}</p>
+        <h2 id="cta-title" class="home-cta__title">{{ _('Оберіть програму, яку зможете') }} <span class="apple-gradient-text">{{ _('застосувати у практиці') }}</span></h2>
+        <p class="home-cta__text">{{ _('Розкажіть про освіту, спеціальність і бажаний напрям — підберемо маршрут без тиску та випадкових програм.') }}</p>
         <div class="home-cta__actions">
-          <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Обрати курс</a>
-          <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">Отримати консультацію</a>
+          <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">{{ _('Обрати курс') }}</a>
+          <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--secondary apple-btn--arrow">{{ _('Отримати консультацію') }}</a>
         </div>
         {% if site_settings.phone_primary %}
         <a class="home-cta__phone" href="tel:{{ site_settings.phone_primary | replace(' ', '') }}">{{ site_settings.phone_primary }}</a>

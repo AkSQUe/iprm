@@ -12,98 +12,108 @@
 
 # (code, label) — code зберігається в БД, label показується користувачу.
 # Список згруповано умовно за галузями для зручності перегляду в коді.
+#
+# i18n: label-и звідси серіалізуються (XLSX-експорт/імпорт у services/xlsx_io,
+# снапшоти reg.specialty у БД через labels_for_codes), тому значення в списку
+# ЛИШАЮТЬСЯ звичайними str. `_` нижче — no-op маркер для pybabel-екстракції;
+# переклад для відображення робиться на льоту (localized_specializations).
+def _(text):
+    """No-op маркер: pybabel витягує рядок у каталог, значення не змінюється."""
+    return text
+
+
 SPECIALIZATIONS = [
     # ----- Терапевтичні -----
-    ('therapy', 'Терапія'),
-    ('family_medicine', 'Загальна практика — сімейна медицина'),
-    ('pediatrics', 'Педіатрія'),
-    ('cardiology', 'Кардіологія'),
-    ('endocrinology', 'Ендокринологія'),
-    ('gastroenterology', 'Гастроентерологія'),
-    ('nephrology', 'Нефрологія'),
-    ('pulmonology', 'Пульмонологія'),
-    ('rheumatology', 'Ревматологія'),
-    ('hematology', 'Гематологія'),
-    ('infectious_diseases', 'Інфекційні хвороби'),
-    ('allergology', 'Алергологія'),
-    ('immunology', 'Імунологія'),
-    ('dermatology', 'Дерматовенерологія'),
-    ('dermato_oncology', 'Дерматоонкологія'),
-    ('trichology', 'Трихологія'),
+    ('therapy', _('Терапія')),
+    ('family_medicine', _('Загальна практика — сімейна медицина')),
+    ('pediatrics', _('Педіатрія')),
+    ('cardiology', _('Кардіологія')),
+    ('endocrinology', _('Ендокринологія')),
+    ('gastroenterology', _('Гастроентерологія')),
+    ('nephrology', _('Нефрологія')),
+    ('pulmonology', _('Пульмонологія')),
+    ('rheumatology', _('Ревматологія')),
+    ('hematology', _('Гематологія')),
+    ('infectious_diseases', _('Інфекційні хвороби')),
+    ('allergology', _('Алергологія')),
+    ('immunology', _('Імунологія')),
+    ('dermatology', _('Дерматовенерологія')),
+    ('dermato_oncology', _('Дерматоонкологія')),
+    ('trichology', _('Трихологія')),
 
     # ----- Хірургічні -----
-    ('surgery', 'Хірургія'),
-    ('orthopedics_traumatology', 'Травматологія та ортопедія'),
-    ('neurosurgery', 'Нейрохірургія'),
-    ('vascular_surgery', 'Судинна хірургія'),
-    ('cardiac_surgery', 'Кардіохірургія'),
-    ('plastic_surgery', 'Пластична хірургія'),
-    ('urology', 'Урологія'),
-    ('proctology', 'Проктологія'),
-    ('maxillofacial_surgery', 'Щелепно-лицева хірургія'),
-    ('oncosurgery', 'Онкохірургія'),
-    ('pediatric_surgery', 'Дитяча хірургія'),
+    ('surgery', _('Хірургія')),
+    ('orthopedics_traumatology', _('Травматологія та ортопедія')),
+    ('neurosurgery', _('Нейрохірургія')),
+    ('vascular_surgery', _('Судинна хірургія')),
+    ('cardiac_surgery', _('Кардіохірургія')),
+    ('plastic_surgery', _('Пластична хірургія')),
+    ('urology', _('Урологія')),
+    ('proctology', _('Проктологія')),
+    ('maxillofacial_surgery', _('Щелепно-лицева хірургія')),
+    ('oncosurgery', _('Онкохірургія')),
+    ('pediatric_surgery', _('Дитяча хірургія')),
 
     # ----- Жіноче здоров'я -----
-    ('obstetrics_gynecology', 'Акушерство та гінекологія'),
-    ('gynecology_endocrinology', 'Гінекологія-ендокринологія'),
-    ('reproductive_medicine', 'Репродуктивна медицина'),
+    ('obstetrics_gynecology', _('Акушерство та гінекологія')),
+    ('gynecology_endocrinology', _('Гінекологія-ендокринологія')),
+    ('reproductive_medicine', _('Репродуктивна медицина')),
 
     # ----- Стоматологія -----
-    ('dentistry', 'Стоматологія'),
-    ('therapeutic_dentistry', 'Терапевтична стоматологія'),
-    ('surgical_dentistry', 'Хірургічна стоматологія'),
-    ('pediatric_dentistry', 'Дитяча стоматологія'),
-    ('orthodontics', 'Ортодонтія'),
-    ('prosthodontics', 'Ортопедична стоматологія'),
-    ('periodontics', 'Пародонтологія'),
+    ('dentistry', _('Стоматологія')),
+    ('therapeutic_dentistry', _('Терапевтична стоматологія')),
+    ('surgical_dentistry', _('Хірургічна стоматологія')),
+    ('pediatric_dentistry', _('Дитяча стоматологія')),
+    ('orthodontics', _('Ортодонтія')),
+    ('prosthodontics', _('Ортопедична стоматологія')),
+    ('periodontics', _('Пародонтологія')),
 
     # ----- Естетична медицина / косметологія -----
-    ('cosmetology', 'Косметологія'),
-    ('aesthetic_medicine', 'Естетична медицина'),
-    ('regenerative_medicine', 'Регенеративна медицина'),
-    ('anti_aging', 'Антивіковa медицина'),
+    ('cosmetology', _('Косметологія')),
+    ('aesthetic_medicine', _('Естетична медицина')),
+    ('regenerative_medicine', _('Регенеративна медицина')),
+    ('anti_aging', _('Антивіковa медицина')),
 
     # ----- Нервова система / реабілітація -----
-    ('neurology', 'Неврологія'),
-    ('psychiatry', 'Психіатрія'),
-    ('narcology', 'Наркологія'),
-    ('rehabilitation', 'Фізична та реабілітаційна медицина'),
-    ('physical_therapy', 'Фізична терапія'),
-    ('ergotherapy', 'Ерготерапія'),
+    ('neurology', _('Неврологія')),
+    ('psychiatry', _('Психіатрія')),
+    ('narcology', _('Наркологія')),
+    ('rehabilitation', _('Фізична та реабілітаційна медицина')),
+    ('physical_therapy', _('Фізична терапія')),
+    ('ergotherapy', _('Ерготерапія')),
 
     # ----- Діагностика -----
-    ('ultrasound_diagnostics', 'Ультразвукова діагностика'),
-    ('radiology', 'Променева діагностика'),
-    ('endoscopy', 'Ендоскопія'),
-    ('endoscopist', 'Лікар-ендоскопіст'),
-    ('functional_diagnostics', 'Функціональна діагностика'),
-    ('clinical_lab_diagnostics', 'Клінічна лабораторна діагностика'),
-    ('clinical_biochemistry', 'Клінічна біохімія'),
-    ('lab_immunology', 'Лабораторна імунологія'),
-    ('lab_biochemistry_doctor', 'Лікар-лаборант з клінічної біохімії'),
-    ('lab_assistant', 'Лікар-лаборант'),
-    ('pathomorphology', 'Патоморфологія'),
-    ('genetics', 'Генетика медична'),
+    ('ultrasound_diagnostics', _('Ультразвукова діагностика')),
+    ('radiology', _('Променева діагностика')),
+    ('endoscopy', _('Ендоскопія')),
+    ('endoscopist', _('Лікар-ендоскопіст')),
+    ('functional_diagnostics', _('Функціональна діагностика')),
+    ('clinical_lab_diagnostics', _('Клінічна лабораторна діагностика')),
+    ('clinical_biochemistry', _('Клінічна біохімія')),
+    ('lab_immunology', _('Лабораторна імунологія')),
+    ('lab_biochemistry_doctor', _('Лікар-лаборант з клінічної біохімії')),
+    ('lab_assistant', _('Лікар-лаборант')),
+    ('pathomorphology', _('Патоморфологія')),
+    ('genetics', _('Генетика медична')),
 
     # ----- Інше -----
-    ('anesthesiology', 'Анестезіологія'),
-    ('intensive_care', 'Інтенсивна терапія'),
-    ('ophthalmology', 'Офтальмологія'),
-    ('otolaryngology', 'Оториноларингологія'),
-    ('oncology', 'Онкологія'),
-    ('hematology_oncology', 'Дитяча онкологія/гематологія'),
-    ('dietetics', 'Дієтологія'),
-    ('dietologist', 'Лікар-дієтолог'),
-    ('sports_medicine', 'Спортивна медицина'),
-    ('emergency_medicine', 'Медицина невідкладних станів'),
-    ('occupational_medicine', 'Медицина праці'),
-    ('public_health', 'Громадське здоров\'я'),
-    ('forensic_medicine', 'Судово-медична експертиза'),
-    ('pharmacology', 'Клінічна фармакологія'),
-    ('pharmacy', 'Фармація'),
-    ('nursing', 'Сестринська справа'),
-    ('other', 'Інша спеціалізація'),
+    ('anesthesiology', _('Анестезіологія')),
+    ('intensive_care', _('Інтенсивна терапія')),
+    ('ophthalmology', _('Офтальмологія')),
+    ('otolaryngology', _('Оториноларингологія')),
+    ('oncology', _('Онкологія')),
+    ('hematology_oncology', _('Дитяча онкологія/гематологія')),
+    ('dietetics', _('Дієтологія')),
+    ('dietologist', _('Лікар-дієтолог')),
+    ('sports_medicine', _('Спортивна медицина')),
+    ('emergency_medicine', _('Медицина невідкладних станів')),
+    ('occupational_medicine', _('Медицина праці')),
+    ('public_health', _('Громадське здоров\'я')),
+    ('forensic_medicine', _('Судово-медична експертиза')),
+    ('pharmacology', _('Клінічна фармакологія')),
+    ('pharmacy', _('Фармація')),
+    ('nursing', _('Сестринська справа')),
+    ('other', _('Інша спеціалізація')),
 ]
 
 
@@ -114,7 +124,11 @@ SPECIALIZATION_CODES = set(SPECIALIZATION_LABEL_BY_CODE.keys())
 
 def labels_for_codes(codes):
     """Список labels (українських назв) за переданими codes. Невалідні
-    codes ігноруються."""
+    codes ігноруються.
+
+    УВАГА: повертає КАНОНІЧНІ (неперекладені) label-и -- саме вони пишуться
+    у снапшоти БД (reg.specialty) та XLSX. Для відображення користувачу
+    використовуйте localized_label / localized_specializations."""
     if not codes:
         return []
     return [
@@ -122,3 +136,19 @@ def labels_for_codes(codes):
         for c in codes
         if c in SPECIALIZATION_LABEL_BY_CODE
     ]
+
+
+def localized_label(code):
+    """Перекладений label за code (на льоту, для відображення). Невідомий
+    code повертається як є."""
+    from flask_babel import gettext
+    label = SPECIALIZATION_LABEL_BY_CODE.get(code)
+    return gettext(label) if label else code
+
+
+def localized_specializations():
+    """(code, перекладений label) для WTForms choices. Викликається як
+    callable choices при інстанціюванні форми (у request-контексті), тож
+    жодних LazyString у модульних константах не з'являється."""
+    from flask_babel import gettext
+    return [(code, gettext(label)) for code, label in SPECIALIZATIONS]

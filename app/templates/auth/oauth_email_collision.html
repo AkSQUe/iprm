@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Цей email уже зареєстровано | ІПРМ{% endblock %}
+{% block title %}{{ _('Цей email уже зареєстровано | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
@@ -14,7 +14,7 @@
 <div class="apple-page auth-page">
   <div class="auth-card auth-card--collision">
     <a href="{{ url_for('main.index') }}" class="auth-card__logo">
-      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="ІПРМ" class="auth-card__logo-img">
+      <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="{{ _('ІПРМ') }}" class="auth-card__logo-img">
     </a>
 
     <div class="auth-collision__icon" aria-hidden="true">
@@ -25,24 +25,26 @@
       </svg>
     </div>
 
-    <h1 class="auth-card__title">Email уже зареєстровано</h1>
+    <h1 class="auth-card__title">{{ _('Email уже зареєстровано') }}</h1>
 
     <p class="auth-card__subtitle">
+      {% trans trimmed email=email %}
       <span class="auth-collision__email">{{ email }}</span>
       уже має обліковий запис, створений через <strong>пароль</strong>.
       З міркувань безпеки ми не зливаємо акаунти автоматично.
+      {% endtrans %}
     </p>
 
-    <h2 class="auth-collision__heading">Щоб додати вхід через {{ provider }}</h2>
+    <h2 class="auth-collision__heading">{% trans provider=provider %}Щоб додати вхід через {{ provider }}{% endtrans %}</h2>
     <ol class="auth-collision__steps">
-      <li>Увійдіть з паролем за допомогою кнопки нижче.</li>
-      <li>У кабінеті перейдіть у розділ <em>«Способи входу»</em>.</li>
-      <li>Натисніть <em>«Прив'язати {{ provider }}»</em> і підтвердьте доступ.</li>
+      <li>{{ _('Увійдіть з паролем за допомогою кнопки нижче.') }}</li>
+      <li>{% trans %}У кабінеті перейдіть у розділ <em>«Способи входу»</em>.{% endtrans %}</li>
+      <li>{% trans provider=provider %}Натисніть <em>«Прив'язати {{ provider }}»</em> і підтвердьте доступ.{% endtrans %}</li>
     </ol>
 
     <div class="auth-collision__actions">
-      <a href="{{ url_for('auth.login') }}" class="btn-auth">Увійти з паролем</a>
-      <a href="{{ url_for('main.index') }}" class="btn-auth btn-auth--outline">На головну</a>
+      <a href="{{ url_for('auth.login') }}" class="btn-auth">{{ _('Увійти з паролем') }}</a>
+      <a href="{{ url_for('main.index') }}" class="btn-auth btn-auth--outline">{{ _('На головну') }}</a>
     </div>
   </div>
 </div>

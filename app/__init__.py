@@ -6,7 +6,7 @@ import time
 from flask import Flask
 from flask_cors import CORS
 from config import config
-from app.extensions import db, login_manager, csrf, migrate, limiter, mail
+from app.extensions import db, login_manager, csrf, migrate, limiter, mail, babel
 
 
 _cached_assets_version = None
@@ -66,6 +66,10 @@ def create_app(config_name=None):
     limiter.init_app(app)
     mail.init_app(app)
 
+    from app.i18n import get_locale, init_locale_routing
+    babel.init_app(app, locale_selector=get_locale)
+    init_locale_routing(app)
+
     # Authlib OAuth (Phase 3+): провайдери реєструються ліниво у
     # get_google_client()/get_apple_client(), щоб client_id/secret
     # підтягувалися з SiteSettings (DB-first) без рестарту.
@@ -74,8 +78,9 @@ def create_app(config_name=None):
     from app.services.apple_signin import init_apple_oauth
     init_apple_oauth(app)
 
+    from flask_babel import lazy_gettext as _l
     login_manager.login_view = 'auth.login'
-    login_manager.login_message = 'Будь ласка, увійдіть для доступу до цієї сторінки.'
+    login_manager.login_message = _l('Будь ласка, увійдіть для доступу до цієї сторінки.')
     login_manager.login_message_category = 'info'
     login_manager.init_app(app)
 
@@ -238,10 +243,11 @@ def create_app(config_name=None):
                     continue
                 place = (inst.location or '').strip()
                 if not place and inst.event_format == 'online':
-                    place = 'Онлайн'
+                    from flask_babel import gettext
+                    place = gettext('Онлайн')
                 events.append({
                     'id': inst.id,
-                    'title': course.title,
+                    'title': course.t('title'),
                     'url': url_for('courses.course_by_slug', slug=course.slug),
                     'when': inst.start_date.strftime('%d.%m.%Y, %H:%M'),
                     'place': place,

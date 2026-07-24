@@ -1,0 +1,3649 @@
+# English translations for IPRM.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the IPRM project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: IPRM VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-07-24 16:37+0300\n"
+"PO-Revision-Date: 2026-07-24 15:52+0300\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Будь ласка, увійдіть для доступу до цієї сторінки."
+msgstr "Please sign in to access this page."
+
+msgid "Тип учасника"
+msgstr "Participant type"
+
+msgid "— оберіть —"
+msgstr "— select —"
+
+msgid "Оберіть тип учасника"
+msgstr "Select participant type"
+
+msgid "По батькові"
+msgstr "Patronymic"
+
+msgid "По батькові обов'язкове"
+msgstr "Patronymic is required"
+
+msgid "Дата народження"
+msgstr "Date of birth"
+
+msgid "Дата народження обов'язкова"
+msgstr "Date of birth is required"
+
+msgid "Освіта (рік закінчення та назва ВНЗ)"
+msgstr "Education (graduation year and name of institution)"
+
+msgid "Освіта обов'язкова"
+msgstr "Education is required"
+
+msgid "2014, НМУ ім. О.О. Богомольця"
+msgstr "2014, Bogomolets National Medical University"
+
+msgid "Місце роботи (назва ЗОЗу)"
+msgstr "Place of work (name of healthcare facility)"
+
+msgid "Місце роботи обов'язкове"
+msgstr "Place of work is required"
+
+msgid "Займана посада"
+msgstr "Position held"
+
+msgid "Займана посада обов'язкова"
+msgstr "Position held is required"
+
+msgid "асистент, лікар-ординатор, головний лікар..."
+msgstr "assistant, resident physician, chief physician..."
+
+msgid "Спеціалізації"
+msgstr "Specializations"
+
+msgid "Оберіть хоча б одну спеціалізацію"
+msgstr "Select at least one specialization"
+
+msgid "Дата народження не може бути в майбутньому"
+msgstr "Date of birth cannot be in the future"
+
+msgid "Некоректний рік народження"
+msgstr "Invalid year of birth"
+
+msgid "Email обов'язковий"
+msgstr "Email is required"
+
+msgid "Пароль"
+msgstr "Password"
+
+msgid "Пароль обов'язковий"
+msgstr "Password is required"
+
+msgid "Введіть ваш пароль"
+msgstr "Enter your password"
+
+msgid "Запам'ятати мене"
+msgstr "Remember me"
+
+msgid "Невірний формат email"
+msgstr "Invalid email format"
+
+msgid "Email занадто довгий"
+msgstr "Email is too long"
+
+msgid "Ім'я"
+msgstr "First name"
+
+msgid "Ім'я обов'язкове"
+msgstr "First name is required"
+
+msgid "Ім'я повинно бути від 2 до 100 символів"
+msgstr "First name must be between 2 and 100 characters"
+
+msgid "Ваше ім'я"
+msgstr "Your first name"
+
+msgid "Прізвище"
+msgstr "Last name"
+
+msgid "Прізвище обов'язкове"
+msgstr "Last name is required"
+
+msgid "Прізвище повинно бути від 2 до 100 символів"
+msgstr "Last name must be between 2 and 100 characters"
+
+msgid "Ваше прізвище"
+msgstr "Your last name"
+
+msgid "Пароль повинен бути від 8 до 128 символів"
+msgstr "Password must be between 8 and 128 characters"
+
+msgid "Мінімум 8 символів"
+msgstr "Minimum 8 characters"
+
+msgid "Підтвердження паролю"
+msgstr "Password confirmation"
+
+msgid "Підтвердження паролю обов'язкове"
+msgstr "Password confirmation is required"
+
+msgid "Паролі не співпадають"
+msgstr "Passwords do not match"
+
+msgid "Повторіть пароль"
+msgstr "Repeat password"
+
+msgid "Необхідно надати згоду на обробку персональних даних"
+msgstr "You must consent to the processing of personal data"
+
+msgid "Неможливо використати цей email"
+msgstr "This email cannot be used"
+
+msgid "Новий пароль"
+msgstr "New password"
+
+msgid "Google вхід наразі не налаштовано"
+msgstr "Google sign-in is not configured yet"
+
+msgid "Помилка автентифікації через Google. Спробуйте ще раз."
+msgstr "Google authentication error. Please try again."
+
+msgid "Google не повернув необхідні дані. Спробуйте ще раз."
+msgstr "Google did not return the required data. Please try again."
+
+msgid "Обліковий запис деактивовано"
+msgstr "Account is deactivated"
+
+msgid "Помилка при створенні облікового запису"
+msgstr "Error creating account"
+
+#, python-format
+msgid "Вітаємо! Обліковий запис створено через %(provider)s."
+msgstr "Welcome! Your account was created via %(provider)s."
+
+#, python-format
+msgid "%(provider)s вже прив'язано до вашого облікового запису"
+msgstr "%(provider)s is already linked to your account"
+
+#, python-format
+msgid ""
+"Цей %(provider)s-акаунт вже прив'язано до іншого облікового запису. "
+"Зв'яжіться з підтримкою для допомоги."
+msgstr ""
+"This %(provider)s account is already linked to another account. Contact "
+"support for assistance."
+
+#, python-format
+msgid "%(provider)s успішно прив'язано до вашого облікового запису"
+msgstr "%(provider)s has been successfully linked to your account"
+
+msgid "Помилка при прив'язці Google"
+msgstr "Error linking Google"
+
+#, python-format
+msgid "%(provider)s не прив'язано"
+msgstr "%(provider)s is not linked"
+
+msgid ""
+"Не можна видалити останній спосіб входу. Спочатку встановіть пароль або "
+"прив'яжіть інший провайдер."
+msgstr ""
+"You cannot remove your last sign-in method. Set a password first or link "
+"another provider."
+
+#, python-format
+msgid "%(provider)s від'єднано від вашого облікового запису"
+msgstr "%(provider)s has been unlinked from your account"
+
+msgid "Помилка при від'єднанні"
+msgstr "Error unlinking"
+
+msgid "Apple вхід наразі не налаштовано"
+msgstr "Apple sign-in is not configured yet"
+
+msgid "Помилка автентифікації через Apple. Спробуйте ще раз."
+msgstr "Apple authentication error. Please try again."
+
+msgid "Apple не повернув необхідні дані. Спробуйте ще раз."
+msgstr "Apple did not return the required data. Please try again."
+
+msgid "Перевірка reCAPTCHA не пройдена. Спробуйте ще раз."
+msgstr "reCAPTCHA verification failed. Please try again."
+
+msgid "Невірний email або пароль"
+msgstr "Invalid email or password"
+
+msgid "Реєстрацію завершено. Перевірте email для підтвердження."
+msgstr "Registration complete. Check your email for confirmation."
+
+msgid ""
+"Реєстрацію завершено. Натисніть \"Надіслати лист повторно\" у кабінеті "
+"для підтвердження email."
+msgstr ""
+"Registration complete. Click \"Resend email\" in your account to confirm "
+"your email."
+
+msgid "Помилка при реєстрації"
+msgstr "Registration error"
+
+msgid ""
+"Якщо акаунт з такою адресою існує, ми надіслали лист з інструкціями для "
+"відновлення паролю."
+msgstr ""
+"If an account with this address exists, we have sent an email with "
+"instructions to reset your password."
+
+msgid "Посилання недійсне або термін його дії минув. Спробуйте ще раз."
+msgstr "The link is invalid or has expired. Please try again."
+
+msgid "Помилка при збереженні паролю. Спробуйте ще раз."
+msgstr "Error saving password. Please try again."
+
+msgid "Пароль успішно змінено. Тепер ви можете увійти."
+msgstr "Password changed successfully. You can now sign in."
+
+msgid "Дані для сертифіката збережено. Дякуємо!"
+msgstr "Certificate details saved. Thank you!"
+
+msgid "Помилка при збереженні. Спробуйте ще раз."
+msgstr "Error saving. Please try again."
+
+msgid "Сертифікат не знайдено"
+msgstr "Certificate not found"
+
+msgid "Посилання недійсне або прострочене. Запросіть нове."
+msgstr "The link is invalid or expired. Request a new one."
+
+msgid "Користувача не знайдено"
+msgstr "User not found"
+
+msgid "Email вже підтверджено"
+msgstr "Email already confirmed"
+
+msgid "Email успішно підтверджено!"
+msgstr "Email confirmed successfully!"
+
+msgid "Помилка при підтвердженні"
+msgstr "Confirmation error"
+
+msgid "Лист з підтвердженням надіслано повторно"
+msgstr "Confirmation email resent"
+
+msgid "Не вдалося надіслати лист"
+msgstr "Failed to send email"
+
+msgid "Вкажіть імʼя"
+msgstr "Enter your name"
+
+msgid "Напишіть текст коментаря"
+msgstr "Write your comment text"
+
+msgid "Email задовгий"
+msgstr "Email is too long"
+
+msgid "Вкажіть валідний email"
+msgstr "Enter a valid email"
+
+msgid "Дякуємо! Коментар надіслано на модерацію."
+msgstr "Thank you! Your comment has been submitted for moderation."
+
+msgid "Помилка при надсиланні. Спробуйте ще раз."
+msgstr "Error submitting. Please try again."
+
+msgid "Вкажіть ім'я та прізвище"
+msgstr "Enter your first and last name"
+
+msgid "Вкажіть коректний номер телефону"
+msgstr "Enter a valid phone number"
+
+msgid "Оберіть кількість фахівців"
+msgstr "Select the number of specialists"
+
+msgid "Дякуємо! Ми зв'яжемось з вами щодо корпоративних умов."
+msgstr "Thank you! We will contact you about corporate terms."
+
+msgid "Помилка при надсиланні заявки. Спробуйте ще раз."
+msgstr "Error submitting your request. Please try again."
+
+msgid "Номер телефону задовгий"
+msgstr "Phone number is too long"
+
+msgid "Повідомлення задовге (макс. 2000 символів)"
+msgstr "Message is too long (max. 2000 characters)"
+
+msgid "Дякуємо! Ми повідомимо вас коли буде запланована дата."
+msgstr "Thank you! We will notify you once a date is scheduled."
+
+msgid "Помилка при надсиланні запиту. Спробуйте ще раз."
+msgstr "Error submitting your request. Please try again."
+
+msgid "Будь ласка, вкажіть ваше ім'я"
+msgstr "Please enter your name"
+
+msgid "Ім'я не може перевищувати 100 символів"
+msgstr "Name cannot exceed 100 characters"
+
+msgid "Будь ласка, вкажіть email"
+msgstr "Please enter your email"
+
+msgid "Email не може перевищувати 200 символів"
+msgstr "Email cannot exceed 200 characters"
+
+msgid "Телефон не може перевищувати 20 символів"
+msgstr "Phone cannot exceed 20 characters"
+
+msgid "Тема не може перевищувати 200 символів"
+msgstr "Subject cannot exceed 200 characters"
+
+msgid "Тема повідомлення"
+msgstr "Message subject"
+
+msgid "Будь ласка, введіть повідомлення"
+msgstr "Please enter a message"
+
+msgid "Повідомлення має бути від 10 до 5000 символів"
+msgstr "Message must be between 10 and 5000 characters"
+
+msgid "Ваше повідомлення..."
+msgstr "Your message..."
+
+msgid "Дякуємо за ваше повідомлення! Ми зв'яжемося з вами найближчим часом."
+msgstr "Thank you for your message! We will get in touch with you shortly."
+
+msgid "Терапія"
+msgstr "Internal medicine"
+
+msgid "Загальна практика — сімейна медицина"
+msgstr "General practice — family medicine"
+
+msgid "Педіатрія"
+msgstr "Pediatrics"
+
+msgid "Кардіологія"
+msgstr "Cardiology"
+
+msgid "Ендокринологія"
+msgstr "Endocrinology"
+
+msgid "Гастроентерологія"
+msgstr "Gastroenterology"
+
+msgid "Нефрологія"
+msgstr "Nephrology"
+
+msgid "Пульмонологія"
+msgstr "Pulmonology"
+
+msgid "Ревматологія"
+msgstr "Rheumatology"
+
+msgid "Гематологія"
+msgstr "Hematology"
+
+msgid "Інфекційні хвороби"
+msgstr "Infectious diseases"
+
+msgid "Алергологія"
+msgstr "Allergology"
+
+msgid "Імунологія"
+msgstr "Immunology"
+
+msgid "Дерматовенерологія"
+msgstr "Dermatovenereology"
+
+msgid "Дерматоонкологія"
+msgstr "Dermato-oncology"
+
+msgid "Трихологія"
+msgstr "Trichology"
+
+msgid "Хірургія"
+msgstr "Surgery"
+
+msgid "Травматологія та ортопедія"
+msgstr "Traumatology and orthopedics"
+
+msgid "Нейрохірургія"
+msgstr "Neurosurgery"
+
+msgid "Судинна хірургія"
+msgstr "Vascular surgery"
+
+msgid "Кардіохірургія"
+msgstr "Cardiac surgery"
+
+msgid "Пластична хірургія"
+msgstr "Plastic surgery"
+
+msgid "Урологія"
+msgstr "Urology"
+
+msgid "Проктологія"
+msgstr "Proctology"
+
+msgid "Щелепно-лицева хірургія"
+msgstr "Maxillofacial surgery"
+
+msgid "Онкохірургія"
+msgstr "Surgical oncology"
+
+msgid "Дитяча хірургія"
+msgstr "Pediatric surgery"
+
+msgid "Акушерство та гінекологія"
+msgstr "Obstetrics and gynecology"
+
+msgid "Гінекологія-ендокринологія"
+msgstr "Gynecological endocrinology"
+
+msgid "Репродуктивна медицина"
+msgstr "Reproductive medicine"
+
+msgid "Стоматологія"
+msgstr "Dentistry"
+
+msgid "Терапевтична стоматологія"
+msgstr "Restorative dentistry"
+
+msgid "Хірургічна стоматологія"
+msgstr "Oral surgery"
+
+msgid "Дитяча стоматологія"
+msgstr "Pediatric dentistry"
+
+msgid "Ортодонтія"
+msgstr "Orthodontics"
+
+msgid "Ортопедична стоматологія"
+msgstr "Prosthodontics"
+
+msgid "Пародонтологія"
+msgstr "Periodontology"
+
+msgid "Косметологія"
+msgstr "Cosmetology"
+
+msgid "Естетична медицина"
+msgstr "Aesthetic medicine"
+
+msgid "Регенеративна медицина"
+msgstr "Regenerative medicine"
+
+msgid "Антивіковa медицина"
+msgstr "Anti-aging medicine"
+
+msgid "Неврологія"
+msgstr "Neurology"
+
+msgid "Психіатрія"
+msgstr "Psychiatry"
+
+msgid "Наркологія"
+msgstr "Addiction medicine"
+
+msgid "Фізична та реабілітаційна медицина"
+msgstr "Physical and rehabilitation medicine"
+
+msgid "Фізична терапія"
+msgstr "Physical therapy"
+
+msgid "Ерготерапія"
+msgstr "Occupational therapy"
+
+msgid "Ультразвукова діагностика"
+msgstr "Ultrasound diagnostics"
+
+msgid "Променева діагностика"
+msgstr "Radiology"
+
+msgid "Ендоскопія"
+msgstr "Endoscopy"
+
+msgid "Лікар-ендоскопіст"
+msgstr "Endoscopist"
+
+msgid "Функціональна діагностика"
+msgstr "Functional diagnostics"
+
+msgid "Клінічна лабораторна діагностика"
+msgstr "Clinical laboratory diagnostics"
+
+msgid "Клінічна біохімія"
+msgstr "Clinical biochemistry"
+
+msgid "Лабораторна імунологія"
+msgstr "Laboratory immunology"
+
+msgid "Лікар-лаборант з клінічної біохімії"
+msgstr "Clinical biochemistry laboratory physician"
+
+msgid "Лікар-лаборант"
+msgstr "Laboratory physician"
+
+msgid "Патоморфологія"
+msgstr "Pathology"
+
+msgid "Генетика медична"
+msgstr "Medical genetics"
+
+msgid "Анестезіологія"
+msgstr "Anesthesiology"
+
+msgid "Інтенсивна терапія"
+msgstr "Intensive care"
+
+msgid "Офтальмологія"
+msgstr "Ophthalmology"
+
+msgid "Оториноларингологія"
+msgstr "Otorhinolaryngology"
+
+msgid "Онкологія"
+msgstr "Oncology"
+
+msgid "Дитяча онкологія/гематологія"
+msgstr "Pediatric oncology/hematology"
+
+msgid "Дієтологія"
+msgstr "Dietetics"
+
+msgid "Лікар-дієтолог"
+msgstr "Dietitian"
+
+msgid "Спортивна медицина"
+msgstr "Sports medicine"
+
+msgid "Медицина невідкладних станів"
+msgstr "Emergency medicine"
+
+msgid "Медицина праці"
+msgstr "Occupational medicine"
+
+msgid "Громадське здоров'я"
+msgstr "Public health"
+
+msgid "Судово-медична експертиза"
+msgstr "Forensic medicine"
+
+msgid "Клінічна фармакологія"
+msgstr "Clinical pharmacology"
+
+msgid "Фармація"
+msgstr "Pharmacy"
+
+msgid "Сестринська справа"
+msgstr "Nursing"
+
+msgid "Інша спеціалізація"
+msgstr "Other specialization"
+
+msgid "Невідоме замовлення"
+msgstr "Unknown order"
+
+msgid "Оплата ще обробляється. Оновіть сторінку через хвилину."
+msgstr "Payment is still processing. Refresh the page in a minute."
+
+msgid "Телефон"
+msgstr "Phone"
+
+msgid "Телефон обов'язковий"
+msgstr "Phone is required"
+
+msgid "Вкажіть коректний український номер у форматі +380XXXXXXXXX"
+msgstr "Enter a valid Ukrainian number in the format +380XXXXXXXXX"
+
+msgid "Невалідний email"
+msgstr "Invalid email"
+
+msgid "Ви вже зареєстровані на цей курс"
+msgstr "You are already registered for this course"
+
+msgid "Реєстрацію на цей курс закрито"
+msgstr "Registration for this course is closed"
+
+msgid "Оберіть тариф участі"
+msgstr "Select a participation tier"
+
+msgid "На жаль, місць більше немає"
+msgstr "Unfortunately, there are no more spots left"
+
+msgid "Реєстрацію підтверджено"
+msgstr "Registration confirmed"
+
+msgid "Реєстрацію створено. Оберіть спосіб оплати нижче."
+msgstr "Registration created. Choose a payment method below."
+
+msgid "Помилка при реєстрації. Спробуйте ще раз."
+msgstr "Registration error. Please try again."
+
+msgid "Реєстрацію вже оплачено — рахунок не потрібен."
+msgstr "Registration is already paid — no invoice needed."
+
+msgid "ІПРМ | Інститут Плазмотерапії та Регенеративної Медицини"
+msgstr "IPRM | Institute of Plasma Therapy and Regenerative Medicine"
+
+msgid ""
+"Інститут Плазмотерапії та Регенеративної Медицини. Курси після дипломної "
+"освіти для лікарів з нарахуванням балів БПР."
+msgstr ""
+"Institute of Plasma Therapy and Regenerative Medicine. Postgraduate "
+"courses for physicians with BPR points."
+
+msgid "ІПРМ"
+msgstr "IPRM"
+
+msgid "ІПРМ - Інститут Плазмотерапії та Регенеративної Медицини"
+msgstr "IPRM - Institute of Plasma Therapy and Regenerative Medicine"
+
+msgid "Перейти до вмісту"
+msgstr "Skip to content"
+
+msgid "Обліковий запис | ІПРМ"
+msgstr "Account | IPRM"
+
+msgid ""
+"<strong>Заповніть дані для сертифіката (МОЗ №725)</strong> — без них ми "
+"не зможемо нарахувати бали БПР і видати сертифікат за ваші курси."
+msgstr ""
+"<strong>Fill in your certificate details (MoH No. 725)</strong> — without"
+" them we cannot award BPR points or issue certificates for your courses."
+
+msgid "Заповнити зараз"
+msgstr "Fill in now"
+
+msgid "Підтвердіть ваш email для повного доступу до функцій сайту"
+msgstr "Confirm your email for full access to the site's features"
+
+msgid "Надіслати лист повторно"
+msgstr "Resend email"
+
+msgid "Мої курси"
+msgstr "My courses"
+
+msgid "Заповніть анкету МОЗ №725, щоб отримати сертифікат з балами БПР"
+msgstr "Fill in the MoH No. 725 form to receive a certificate with BPR points"
+
+msgid "Дані для сертифіката не заповнені"
+msgstr "Certificate details are not filled in"
+
+msgid "Обраний спосіб оплати"
+msgstr "Selected payment method"
+
+msgid "Курс"
+msgstr "Course"
+
+#, python-format
+msgid "Нараховано %(points)s балiв БПР"
+msgstr "%(points)s BPR points awarded"
+
+msgid "Оплатити"
+msgstr "Pay"
+
+msgid "Завантажити рахунок"
+msgstr "Download invoice"
+
+msgid "У вас поки немає зареєстрованих курсів"
+msgstr "You have no registered courses yet"
+
+msgid "Переглянути курси"
+msgstr "Browse courses"
+
+msgid "Мої сертифікати"
+msgstr "My certificates"
+
+msgid "Завантажити PDF"
+msgstr "Download PDF"
+
+msgid "Реферальна програма"
+msgstr "Referral program"
+
+msgid ""
+"Поділіться персональним посиланням. За кожну оплачену реєстрацію на курс "
+"за вашим посиланням ви отримуєте бонусні бали лояльності."
+msgstr ""
+"Share your personal link. For each paid course registration made through "
+"your link, you earn bonus loyalty points."
+
+msgid "очікують дозрівання"
+msgstr "pending maturation"
+
+msgid "Ваше посилання"
+msgstr "Your link"
+
+msgid "Реферальне посилання"
+msgstr "Referral link"
+
+msgid "Копіювати"
+msgstr "Copy"
+
+msgid "Історія нарахувань"
+msgstr "Points history"
+
+msgid "Захід"
+msgstr "Event"
+
+msgid "анульовано"
+msgstr "canceled"
+
+msgid "очікує"
+msgstr "pending"
+
+msgid "Обліковий запис"
+msgstr "Account"
+
+msgid "Дані для сертифіката"
+msgstr "Certificate details"
+
+msgid "Заповнено. Можна оновити за потреби."
+msgstr "Filled in. You can update it if needed."
+
+msgid "Не заповнено — потрібно для балів БПР і сертифіката (МОЗ №725)."
+msgstr "Not filled in — required for BPR points and the certificate (MoH No. 725)."
+
+msgid "Налаштування"
+msgstr "Settings"
+
+msgid "Персоналізація інтерфейсу"
+msgstr "Interface personalization"
+
+msgid "Сертифікати"
+msgstr "Certificates"
+
+#, python-format
+msgid "Видано: %(count)s. Завантажуйте у розділі «Мої сертифікати»."
+msgstr "Issued: %(count)s. Download them in the \"My certificates\" section."
+
+msgid "З'являться тут після видачі за участь у заході"
+msgstr "They will appear here after being issued for participating in an event"
+
+msgid "Вийти з облікового запису?"
+msgstr "Sign out of your account?"
+
+msgid "Вийти"
+msgstr "Sign out"
+
+msgid "Залишитись"
+msgstr "Stay"
+
+msgid "Вийти з облікового запису"
+msgstr "Sign out of account"
+
+msgid "Дані для сертифіката | ІПРМ"
+msgstr "Certificate details | IPRM"
+
+msgid "Дані для <span class=\"apple-gradient-text\">сертифіката</span>"
+msgstr "Certificate <span class=\"apple-gradient-text\">details</span>"
+
+msgid ""
+"Згідно з вимогами МОЗ України — «<strong>№725 «Про затвердження Положення"
+" про систему безперервного професійного розвитку медичних та "
+"фармацевтичних працівників»</strong> зі змінами» п. 13 — ці дані "
+"необхідні для нарахування балів БПР та видачі сертифіката. Заповнюється "
+"один раз і діє для всіх ваших курсів."
+msgstr ""
+"In accordance with the requirements of the Ministry of Health of Ukraine "
+"— «<strong>No. 725 \"On approval of the Regulation on the system of "
+"continuing professional development of medical and pharmaceutical "
+"workers\"</strong> as amended», clause 13 — these details are required to"
+" award BPR points and issue a certificate. Filled in once, it applies to "
+"all your courses."
+
+msgid ""
+"Оберіть вашу категорію згідно з МОЗ №725. Від цього залежить, які бали "
+"БПР нараховуються після заходу."
+msgstr ""
+"Select your category according to MoH No. 725. This determines which BPR "
+"points are awarded after the event."
+
+msgid "Оберіть тип учасника — це обов'язково"
+msgstr "Select participant type — this is required"
+
+msgid "Персональні дані"
+msgstr "Personal details"
+
+msgid "Потрібна для ідентифікації у системі БПР МОЗ при нарахуванні балів."
+msgstr ""
+"Required for identification in the MoH BPR system when awarding points."
+
+msgid "Освіта та робота"
+msgstr "Education and employment"
+
+msgid ""
+"Наприклад: 2014, НМУ ім. О.О. Богомольця. Вкажіть рік випуску та повну "
+"назву закладу."
+msgstr ""
+"For example: 2014, Bogomolets National Medical University. Enter your "
+"graduation year and the full name of the institution."
+
+msgid ""
+"Оберіть усі ваші спеціалізації — за ними система БПР перевіряє "
+"відповідність заходу вашому фаху. Можна позначити декілька."
+msgstr ""
+"Select all your specializations — the BPR system uses them to check "
+"whether the event matches your field. You can select several."
+
+msgid "Можна обрати декілька."
+msgstr "You can select several."
+
+msgid "Назад до кабінету"
+msgstr "Back to account"
+
+msgid "Зберегти дані"
+msgstr "Save details"
+
+msgid "Способи входу | ІПРМ"
+msgstr "Sign-in methods | IPRM"
+
+msgid "Способи <span class=\"apple-gradient-text\">входу</span>"
+msgstr "Sign-in <span class=\"apple-gradient-text\">methods</span>"
+
+msgid "Керуйте, як ви входите в обліковий запис"
+msgstr "Manage how you sign in to your account"
+
+msgid "Прив'язані провайдери"
+msgstr "Linked providers"
+
+msgid "Email і пароль"
+msgstr "Email and password"
+
+msgid "Активно"
+msgstr "Active"
+
+msgid "Не встановлено"
+msgstr "Not set"
+
+msgid "Прив'язано"
+msgstr "Linked"
+
+msgid "Від'єднати Google від акаунта?"
+msgstr "Unlink Google from your account?"
+
+msgid "Від'єднати"
+msgstr "Unlink"
+
+msgid "Прив'язати Google"
+msgstr "Link Google"
+
+msgid "Не налаштовано"
+msgstr "Not configured"
+
+msgid "через Apple ID"
+msgstr "via Apple ID"
+
+msgid "Від'єднати Apple від акаунта?"
+msgstr "Unlink Apple from your account?"
+
+msgid "Прив'язати Apple"
+msgstr "Link Apple"
+
+msgid "Відновлення паролю | ІПРМ"
+msgstr "Password recovery | IPRM"
+
+msgid "Відновлення паролю"
+msgstr "Password recovery"
+
+msgid "Вкажіть email — ми надішлемо посилання для встановлення нового паролю"
+msgstr "Enter your email — we will send a link to set a new password"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Надіслати посилання"
+msgstr "Send link"
+
+msgid "Згадали пароль?"
+msgstr "Remembered your password?"
+
+msgid "Увійти"
+msgstr "Sign in"
+
+msgid "Повернутися на головну"
+msgstr "Back to home"
+
+msgid "Вхід | ІПРМ"
+msgstr "Sign in | IPRM"
+
+msgid "Вхід"
+msgstr "Sign in"
+
+msgid "Увійдіть до вашого облікового запису"
+msgstr "Sign in to your account"
+
+msgid "Забули пароль?"
+msgstr "Forgot your password?"
+
+msgid "Ще не маєте акаунта?"
+msgstr "Don't have an account yet?"
+
+msgid "Зареєструватися"
+msgstr "Sign up"
+
+msgid "Цей email уже зареєстровано | ІПРМ"
+msgstr "This email is already registered | IPRM"
+
+msgid "Email уже зареєстровано"
+msgstr "Email already registered"
+
+#, python-format
+msgid ""
+"<span class=\"auth-collision__email\">%(email)s</span> уже має обліковий "
+"запис, створений через <strong>пароль</strong>. З міркувань безпеки ми не"
+" зливаємо акаунти автоматично."
+msgstr ""
+"<span class=\"auth-collision__email\">%(email)s</span> already has an "
+"account created with a <strong>password</strong>. For security reasons, "
+"we do not merge accounts automatically."
+
+#, python-format
+msgid "Щоб додати вхід через %(provider)s"
+msgstr "To add sign-in via %(provider)s"
+
+msgid "Увійдіть з паролем за допомогою кнопки нижче."
+msgstr "Sign in with your password using the button below."
+
+msgid "У кабінеті перейдіть у розділ <em>«Способи входу»</em>."
+msgstr "In your account, go to the <em>\"Sign-in methods\"</em> section."
+
+#, python-format
+msgid "Натисніть <em>«Прив'язати %(provider)s»</em> і підтвердьте доступ."
+msgstr "Click <em>\"Link %(provider)s\"</em> and confirm access."
+
+msgid "Увійти з паролем"
+msgstr "Sign in with password"
+
+msgid "На головну"
+msgstr "To home"
+
+msgid "Реєстрація | ІПРМ"
+msgstr "Sign up | IPRM"
+
+msgid "Реєстрація"
+msgstr "Sign up"
+
+msgid "Створіть обліковий запис"
+msgstr "Create an account"
+
+msgid ""
+"На цю адресу прийде лист підтвердження. Її ж використовуйте для входу в "
+"кабінет."
+msgstr ""
+"A confirmation email will be sent to this address. Use it to sign in to "
+"your account."
+
+msgid ""
+"Мінімум 8 символів. Для надійності додайте великі/малі літери, цифри та "
+"спецсимволи."
+msgstr ""
+"Minimum 8 characters. For strength, add uppercase/lowercase letters, "
+"digits, and special characters."
+
+msgid "Підтвердження"
+msgstr "Confirmation"
+
+msgid "Без згоди на обробку даних реєстрація неможлива"
+msgstr "Registration is not possible without consent to data processing"
+
+#, python-format
+msgid ""
+"Я надаю добровільну, інформовану та однозначну згоду %(company)s (ЄДРПОУ "
+"%(edrpou)s) на збір та обробку моїх персональних даних з метою "
+"ідентифікації та забезпечення роботи облікового запису відповідно до "
+"Закону України \"Про захист персональних даних\". Ознайомлений(а) з <a "
+"href=\"%(privacy_url)s\" target=\"_blank\" rel=\"noopener "
+"noreferrer\">Політикою конфіденційності</a>."
+msgstr ""
+"I give my voluntary, informed, and unambiguous consent to %(company)s "
+"(USREOU %(edrpou)s) to collect and process my personal data for the "
+"purpose of identification and operation of my account in accordance with "
+"the Law of Ukraine \"On Personal Data Protection\". I have read the <a "
+"href=\"%(privacy_url)s\" target=\"_blank\" rel=\"noopener "
+"noreferrer\">Privacy Policy</a>."
+
+msgid "Вже маєте акаунт?"
+msgstr "Already have an account?"
+
+msgid "Новий пароль | ІПРМ"
+msgstr "New password | IPRM"
+
+msgid "Встановіть новий пароль для вашого облікового запису"
+msgstr "Set a new password for your account"
+
+msgid "Зберегти пароль"
+msgstr "Save password"
+
+msgid "Налаштування | ІПРМ"
+msgstr "Settings | IPRM"
+
+msgid "Шрифт"
+msgstr "Font"
+
+msgid "Оберіть шрифт для всього сайту"
+msgstr "Choose a font for the entire site"
+
+msgid "Повернутися до кабінету"
+msgstr "Back to account"
+
+msgid "Відповісти"
+msgstr "Reply"
+
+msgid "Коментарі"
+msgstr "Comments"
+
+msgid "Поки що немає коментарів. Будьте першим!"
+msgstr "No comments yet. Be the first!"
+
+msgid "Залишити коментар"
+msgstr "Leave a comment"
+
+msgid "Відповідь для"
+msgstr "Reply to"
+
+msgid "скасувати"
+msgstr "cancel"
+
+msgid "Не заповнюйте це поле"
+msgstr "Do not fill in this field"
+
+msgid "Імʼя *"
+msgstr "Name *"
+
+msgid "Email (не публікується)"
+msgstr "Email (not published)"
+
+msgid "Ваш коментар *"
+msgstr "Your comment *"
+
+msgid "Коментар зʼявиться після перевірки модератором."
+msgstr "Your comment will appear after review by a moderator."
+
+msgid "Надіслати"
+msgstr "Submit"
+
+msgid "Блог | ІПРМ"
+msgstr "Blog | IPRM"
+
+msgid ""
+"Дайджести заходів, новини та статті Інституту плазмотерапії та "
+"регенеративної медицини."
+msgstr ""
+"Event digests, news, and articles from the Institute of Plasma Therapy "
+"and Regenerative Medicine."
+
+msgid "Блог ІПРМ"
+msgstr "IPRM Blog"
+
+msgid "Блог <span class=\"apple-gradient-text\">ІПРМ</span>"
+msgstr "<span class=\"apple-gradient-text\">IPRM</span> Blog"
+
+msgid "Дайджести проведених заходів, новини та корисні матеріали"
+msgstr "Digests of past events, news, and useful materials"
+
+msgid "Сторінки"
+msgstr "Pages"
+
+msgid "Новіші"
+msgstr "Newer"
+
+#, python-format
+msgid "Сторінка %(page)s з %(pages)s"
+msgstr "Page %(page)s of %(pages)s"
+
+msgid "Старіші"
+msgstr "Older"
+
+msgid "Поки що немає дописів. Зазирніть пізніше."
+msgstr "No posts yet. Check back later."
+
+#, python-format
+msgid "%(title)s | Блог ІПРМ"
+msgstr "%(title)s | IPRM Blog"
+
+msgid "Усі дописи"
+msgstr "All posts"
+
+#, python-format
+msgid "%(name)s | ІПРМ"
+msgstr "%(name)s | IPRM"
+
+msgid "Клініка Інституту Плазмотерапії та Регенеративної Медицини."
+msgstr "Clinic of the Institute of Plasma Therapy and Regenerative Medicine."
+
+msgid "Всі відділення"
+msgstr "All departments"
+
+msgid "Клініка регенеративних технологій | ІПРМ"
+msgstr "Clinic of Regenerative Technologies | IPRM"
+
+msgid ""
+"Клініка клітинних та регенеративних технологій. PRP-терапія, терапія "
+"екзосомами, мезенхімальні стовбурові клітини."
+msgstr ""
+"Clinic of cellular and regenerative technologies. PRP therapy, exosome "
+"therapy, mesenchymal stem cells."
+
+msgid ""
+"Клініка клітинних та<br><span class=\"apple-gradient-"
+"text\">регенеративних технологій.</span>"
+msgstr ""
+"Clinic of cellular and<br><span class=\"apple-gradient-"
+"text\">regenerative technologies.</span>"
+
+msgid ""
+"Сучасні методи відновлювальної медицини на основі PRP-терапії, екзосом та"
+" мезенхімальних стовбурових клітин"
+msgstr ""
+"Modern methods of restorative medicine based on PRP therapy, exosomes, "
+"and mesenchymal stem cells"
+
+msgid "Відділення <span class=\"apple-gradient-text\">клініки</span>"
+msgstr "Clinic <span class=\"apple-gradient-text\">departments</span>"
+
+msgid "Перелік напрямків клітинної та регенеративної терапії"
+msgstr "List of cellular and regenerative therapy areas"
+
+msgid "Інформація про відділення скоро з'явиться"
+msgstr "Information about the departments will appear soon"
+
+msgid "Місія <span class=\"apple-gradient-text\">клініки</span>"
+msgstr "Clinic <span class=\"apple-gradient-text\">mission</span>"
+
+msgid ""
+"Безпечне, стандартизоване застосування регенеративних методик для "
+"відновлення функції тканин і профілактики вікових змін"
+msgstr ""
+"Safe, standardized application of regenerative techniques to restore "
+"tissue function and prevent age-related changes"
+
+msgid "Ортобіологія"
+msgstr "Orthobiologics"
+
+msgid ""
+"Опорно-руховий апарат: тендінопатії, остеоартроз у межах чинних "
+"рекомендацій."
+msgstr ""
+"Musculoskeletal system: tendinopathies, osteoarthritis within current "
+"guidelines."
+
+msgid "Дерматологія та трихологія"
+msgstr "Dermatology and trichology"
+
+msgid "Стимуляція регенерації шкіри та волосяних фолікулів."
+msgstr "Stimulation of skin and hair follicle regeneration."
+
+msgid "Здорове старіння"
+msgstr "Healthy aging"
+
+msgid "Індивідуальні програми на основі даних біологічного віку."
+msgstr "Individual programs based on biological age data."
+
+msgid "Доказовість"
+msgstr "Evidence-based approach"
+
+msgid "Інформована згода"
+msgstr "Informed consent"
+
+msgid "Поетапні цілі"
+msgstr "Step-by-step goals"
+
+msgid "Об'єктивні метрики"
+msgstr "Objective metrics"
+
+msgid "Процес <span class=\"apple-gradient-text\">пацієнта</span>"
+msgstr "Patient <span class=\"apple-gradient-text\">journey</span>"
+
+msgid "Від первинного скринінгу до контрольних точок з об'єктивними метриками"
+msgstr "From initial screening to checkpoints with objective metrics"
+
+msgid "Первинний скринінг"
+msgstr "Initial screening"
+
+msgid "Збір анамнезу та первинне обстеження пацієнта."
+msgstr "History taking and initial examination of the patient."
+
+msgid "Лабораторний профіль"
+msgstr "Laboratory profile"
+
+msgid "Оцінка біологічного віку та лабораторні дослідження за потреби."
+msgstr "Biological age assessment and laboratory tests as needed."
+
+msgid "План лікування"
+msgstr "Treatment plan"
+
+msgid "PRP/PPP, біоактивні фракції, реабілітація, нутриціональні рекомендації."
+msgstr "PRP/PPP, bioactive fractions, rehabilitation, nutritional recommendations."
+
+msgid "Контрольні точки"
+msgstr "Checkpoints"
+
+msgid ""
+"Об'єктивні тести на 4-12 тижнях: шкали болю, дерматоскопія, функціональні"
+" тести."
+msgstr ""
+"Objective tests at 4-12 weeks: pain scales, dermatoscopy, functional "
+"tests."
+
+msgid "Очікувані <span class=\"apple-gradient-text\">результати</span>"
+msgstr "Expected <span class=\"apple-gradient-text\">outcomes</span>"
+
+msgid "Що отримує пацієнт від регенеративної терапії"
+msgstr "What the patient gains from regenerative therapy"
+
+msgid "Зменшення болю"
+msgstr "Pain reduction"
+
+msgid "Зниження больового синдрому та запалення завдяки регенеративним методикам"
+msgstr "Reduced pain and inflammation thanks to regenerative techniques"
+
+msgid "Відновлення функції"
+msgstr "Function restoration"
+
+msgid "Поліпшення рухливості суглобів та функціональних можливостей тканин"
+msgstr "Improved joint mobility and tissue functional capacity"
+
+msgid "Якість життя"
+msgstr "Quality of life"
+
+msgid "Краще самопочуття, зовнішній вигляд та скорочення періоду відновлення"
+msgstr "Better well-being, appearance, and a shorter recovery period"
+
+msgid "Безпека"
+msgstr "Safety"
+
+msgid "Фокус на доказовості та безпеці з використанням аутологічних продуктів"
+msgstr "A focus on evidence and safety using autologous products"
+
+msgid "Запис на <span class=\"apple-gradient-text\">прийом</span>"
+msgstr "Book an <span class=\"apple-gradient-text\">appointment</span>"
+
+msgid "Прийом пацієнтів фахівцями інституту здійснюється за попереднім записом"
+msgstr "Patients are seen by the institute's specialists by prior appointment"
+
+msgid "Записатися на прийом"
+msgstr "Book an appointment"
+
+msgid "Переваги <span class=\"apple-gradient-text\">клініки</span>"
+msgstr "Clinic <span class=\"apple-gradient-text\">advantages</span>"
+
+msgid "Персоналізований підхід"
+msgstr "Personalized approach"
+
+msgid ""
+"Індивідуальний підхід до кожного пацієнта з урахуванням індивідуальних "
+"біомаркерів."
+msgstr ""
+"An individual approach to each patient, taking into account their "
+"personal biomarkers."
+
+msgid "Сертифіковані протоколи"
+msgstr "Certified protocols"
+
+msgid "Протоколи лікування, підтверджені клінічними дослідженнями."
+msgstr "Treatment protocols validated by clinical studies."
+
+msgid "Досвідчена команда"
+msgstr "Experienced team"
+
+msgid "Фахівці з багаторічним досвідом у регенеративній та клітинній медицині."
+msgstr "Specialists with many years of experience in regenerative and cellular medicine."
+
+msgid "Курси інституту"
+msgstr "Institute courses"
+
+#, python-format
+msgid "%(title)s | ІПРМ"
+msgstr "%(title)s | IPRM"
+
+#, python-format
+msgid "Вас рекомендує <strong>%(inviter)s</strong>"
+msgstr "You were referred by <strong>%(inviter)s</strong>"
+
+msgid "Закрити"
+msgstr "Close"
+
+msgid "Формат участі"
+msgstr "Participation format"
+
+msgid "Найближчі дати"
+msgstr "Upcoming dates"
+
+msgid "Залишити запит"
+msgstr "Submit a request"
+
+msgid "Про курс"
+msgstr "About the course"
+
+msgid "Про <span class=\"apple-gradient-text\">курс</span>"
+msgstr "About the <span class=\"apple-gradient-text\">course</span>"
+
+msgid "формат заходу"
+msgstr "event format"
+
+msgid "рівень складності"
+msgstr "difficulty level"
+
+msgid "до"
+msgstr "up to"
+
+msgid "учасників у групі"
+msgstr "participants per group"
+
+msgid "Розділи опису курсу"
+msgstr "Course description sections"
+
+msgid "Детальний опис"
+msgstr "Detailed description"
+
+msgid "Для кого курс"
+msgstr "Who this course is for"
+
+msgid "Що ви отримаєте"
+msgstr "What you will gain"
+
+msgid "Сертифікат БПР на"
+msgstr "BPR certificate for"
+
+msgid "— від теорії до практики"
+msgstr "— from theory to practice"
+
+msgid "Розбір клінічних кейсів та відповіді лектора на запитання"
+msgstr "Clinical case reviews and answers to your questions from the lecturer"
+
+msgid "Доступ до додаткових навчальних матеріалів і презентацій"
+msgstr "Access to additional learning materials and presentations"
+
+msgid "Оберіть <span class=\"apple-gradient-text\">формат участі</span>"
+msgstr "Choose your <span class=\"apple-gradient-text\">participation format</span>"
+
+msgid "та отримайте сертифікат міжнародного зразка"
+msgstr "and receive an internationally recognized certificate"
+
+msgid "грн"
+msgstr "UAH"
+
+msgid "Що включено:"
+msgstr "What's included:"
+
+#, python-format
+msgid "Зареєструватися на %(date)s"
+msgstr "Register for %(date)s"
+
+msgid "Продаж завершено"
+msgstr "Sales closed"
+
+msgid "Найближчі <span class=\"apple-gradient-text\">дати</span>"
+msgstr "Upcoming <span class=\"apple-gradient-text\">dates</span>"
+
+msgid "від"
+msgstr "from"
+
+msgid "Залишилось"
+msgstr "Left"
+
+msgid "Тарифи участі"
+msgstr "Participation tiers"
+
+msgid "Реєстрацію закрито"
+msgstr "Registration closed"
+
+msgid "Наразі немає запланованих проведень цього курсу."
+msgstr "There are currently no scheduled sessions of this course."
+
+msgid "Залишити запит на проведення"
+msgstr "Request a session"
+
+msgid "Програма <span class=\"apple-gradient-text\">курсу</span>"
+msgstr "Course <span class=\"apple-gradient-text\">program</span>"
+
+msgid "Структура навчання — від теорії до практичних навичок"
+msgstr "Learning structure — from theory to practical skills"
+
+msgid "Коли курс <span class=\"apple-gradient-text\">окупиться?</span>"
+msgstr "When will the course <span class=\"apple-gradient-text\">pay off?</span>"
+
+msgid ""
+"Порахуйте на власних цифрах — середній чек процедури та кількість записів"
+" на місяць"
+msgstr ""
+"Calculate using your own numbers — the average procedure fee and the "
+"number of bookings per month"
+
+msgid "Середній чек процедури, &#8372;"
+msgstr "Average procedure fee, &#8372;"
+
+msgid "Процедур на місяць"
+msgstr "Procedures per month"
+
+msgid "дохід на місяць"
+msgstr "income per month"
+
+msgid "окупність курсу"
+msgstr "course payback"
+
+msgid "(тариф «від»)"
+msgstr "(\"from\" tier)"
+
+msgid "Розрахунок орієнтовний: вартість курсу"
+msgstr "Estimated calculation: course cost"
+
+msgid "ваш чек. Податки та розхідники не враховано."
+msgstr "your fee. Taxes and consumables are not included."
+
+msgid "Ваш <span class=\"apple-gradient-text\">тренер</span>"
+msgstr "Your <span class=\"apple-gradient-text\">trainer</span>"
+
+msgid "Поширені <span class=\"apple-gradient-text\">запитання</span>"
+msgstr "Frequently asked <span class=\"apple-gradient-text\">questions</span>"
+
+#, python-format
+msgid "Уже проведено (%(count)s):"
+msgstr "Already held (%(count)s):"
+
+msgid "Онлайн"
+msgstr "Online"
+
+msgid "Наступний <span class=\"apple-gradient-text\">крок</span>"
+msgstr "Next <span class=\"apple-gradient-text\">step</span>"
+
+msgid "Схожі курси, які доповнять цю програму"
+msgstr "Similar courses that complement this program"
+
+msgid "Поділіться курсом"
+msgstr "Share the course"
+
+msgid ""
+"Ваше персональне посилання на цей курс. За кожну оплачену реєстрацію за "
+"вашим посиланням ви отримуєте бонусні бали лояльності."
+msgstr ""
+"Your personal link to this course. For each paid registration made "
+"through your link, you earn bonus loyalty points."
+
+msgid "Відгуки <span class=\"apple-gradient-text\">учасників</span>"
+msgstr "Participant <span class=\"apple-gradient-text\">reviews</span>"
+
+msgid ""
+"Хочете, щоб курс був проведений <span class=\"apple-gradient-text\">в "
+"інший час?</span>"
+msgstr ""
+"Would you like the course to be held <span class=\"apple-gradient-text\">at "
+"a different time?</span>"
+
+msgid "Залиште запит <span class=\"apple-gradient-text\">на курс</span>"
+msgstr "Submit a <span class=\"apple-gradient-text\">course request</span>"
+
+msgid ""
+"Заповніть форму нижче — ми повідомимо вас коли буде заплановано чергове "
+"проведення."
+msgstr ""
+"Fill in the form below — we will notify you once the next session is "
+"scheduled."
+
+msgid "Повідомлення"
+msgstr "Message"
+
+msgid "Опціонально: що саме вас цікавить"
+msgstr "Optional: what exactly you are interested in"
+
+msgid "Надіслати запит"
+msgstr "Send request"
+
+msgid "Курси після дипломної освіти для лікарів | ІПРМ"
+msgstr "Postgraduate courses for physicians | IPRM"
+
+msgid ""
+"Сертифіковані курси підвищення кваліфікації з плазмотерапії та "
+"регенеративної медицини. Нарахування балів БПР."
+msgstr ""
+"Certified professional development courses in plasma therapy and "
+"regenerative medicine. BPR points awarded."
+
+msgid ""
+"Курси після дипломної<br><span class=\"apple-gradient-"
+"text\">освіти.</span>"
+msgstr ""
+"Postgraduate<br><span class=\"apple-gradient-"
+"text\">courses.</span>"
+
+msgid ""
+"Сертифіковані програми підвищення кваліфікації для лікарів з офіційним "
+"нарахуванням балів БПР"
+msgstr ""
+"Certified professional development programs for physicians with official "
+"BPR points"
+
+msgid "Доступні <span class=\"apple-gradient-text\">курси</span>"
+msgstr "Available <span class=\"apple-gradient-text\">courses</span>"
+
+msgid "Оберіть курс та підвищіть свою кваліфікацію"
+msgstr "Choose a course and advance your qualifications"
+
+msgid "Фільтр за спеціальністю"
+msgstr "Filter by specialty"
+
+msgid "Пошук курсів"
+msgstr "Search courses"
+
+msgid "Пошук за назвою"
+msgstr "Search by title"
+
+msgid "Введіть назву курсу..."
+msgstr "Enter a course title..."
+
+msgid "Формат"
+msgstr "Format"
+
+msgid "Усі"
+msgstr "All"
+
+msgid "Офлайн"
+msgstr "Offline"
+
+msgid "Гібрид"
+msgstr "Hybrid"
+
+msgid "Тривалість"
+msgstr "Duration"
+
+msgid "Будь-яка"
+msgstr "Any"
+
+msgid "1 день"
+msgstr "1 day"
+
+msgid "2 дні та більше"
+msgstr "2 days or more"
+
+msgid "Бюджет"
+msgstr "Budget"
+
+msgid "Будь-який"
+msgstr "Any"
+
+msgid "До 5 000 &#8372;"
+msgstr "Up to 5,000 &#8372;"
+
+msgid "5 000 &ndash; 10 000 &#8372;"
+msgstr "5,000 &ndash; 10,000 &#8372;"
+
+msgid "Понад 10 000 &#8372;"
+msgstr "Over 10,000 &#8372;"
+
+msgid "Сортування"
+msgstr "Sorting"
+
+msgid "За замовчуванням"
+msgstr "Default"
+
+msgid "Ціна: спочатку дешевші"
+msgstr "Price: lowest first"
+
+msgid "Ціна: спочатку дорожчі"
+msgstr "Price: highest first"
+
+msgid "Спочатку нові"
+msgstr "Newest first"
+
+msgid "Скинути фільтри"
+msgstr "Reset filters"
+
+msgid "Наразі немає доступних курсів"
+msgstr "There are currently no available courses"
+
+msgid "Немає курсів з обраними фільтрами"
+msgstr "No courses match the selected filters"
+
+msgid "Графік <span class=\"apple-gradient-text\">курсів</span>"
+msgstr "Course <span class=\"apple-gradient-text\">schedule</span>"
+
+msgid "Розклад найближчих заходів інституту"
+msgstr "Schedule of the institute's upcoming events"
+
+msgid "Режим перегляду графіка"
+msgstr "Schedule view mode"
+
+msgid "Список"
+msgstr "List"
+
+msgid "Календар"
+msgstr "Calendar"
+
+msgid "Графік курсів формується. Слідкуйте за оновленнями."
+msgstr "The course schedule is being finalized. Stay tuned for updates."
+
+msgid "Як це <span class=\"apple-gradient-text\">працює</span>"
+msgstr "How it <span class=\"apple-gradient-text\">works</span>"
+
+msgid "Чотири кроки від вибору курсу до впровадження методики"
+msgstr "Four steps from choosing a course to implementing the technique"
+
+msgid "Оберіть курс"
+msgstr "Choose a course"
+
+msgid "Напрям, формат і дата проведення — у каталозі та графіку вище."
+msgstr "Field, format, and session date — in the catalog and schedule above."
+
+msgid "Пройдіть навчання"
+msgstr "Complete the training"
+
+msgid "Теорія та практика під керівництвом тренера — очно або онлайн."
+msgstr "Theory and practice under the guidance of a trainer — in person or online."
+
+msgid "Отримайте сертифікат"
+msgstr "Receive a certificate"
+
+msgid "Офіційний сертифікат з балами БПР після завершення курсу."
+msgstr "An official certificate with BPR points upon completing the course."
+
+msgid "Впровадьте у практику"
+msgstr "Put it into practice"
+
+msgid "Застосовуйте методику в роботі; доступ до матеріалів залишається з вами."
+msgstr "Apply the technique in your work; access to materials stays with you."
+
+msgid ""
+"Навчи команду — підсиль <span class=\"apple-gradient-"
+"text\">практику</span>"
+msgstr ""
+"Train your team — strengthen your <span class=\"apple-gradient-"
+"text\">practice</span>"
+
+msgid ""
+"Корпоративне навчання від трьох фахівців допомагає розширити перелік "
+"послуг, вирівняти якість роботи та швидше впровадити нові протоколи."
+msgstr ""
+"Corporate training for groups of three or more specialists helps expand "
+"your range of services, align quality of work, and implement new "
+"protocols faster."
+
+#, python-format
+msgid "<strong>20%% знижки</strong> для груп від трьох фахівців"
+msgstr "<strong>20%% discount</strong> for groups of three or more specialists"
+
+msgid "онлайн, офлайн або гібридний формат"
+msgstr "online, offline, or hybrid format"
+
+msgid "програма під напрям клініки, салону або кабінету"
+msgstr "a program tailored to your clinic, salon, or office"
+
+msgid "Отримати корпоративні умови"
+msgstr "Get corporate terms"
+
+msgid "Кількість фахівців"
+msgstr "Number of specialists"
+
+msgid "Оберіть..."
+msgstr "Select..."
+
+msgid "Понад 10"
+msgstr "Over 10"
+
+msgid "Обговорити навчання"
+msgstr "Discuss training"
+
+msgid "Чому обирають <span class=\"apple-gradient-text\">наші курси</span>"
+msgstr "Why people choose <span class=\"apple-gradient-text\">our courses</span>"
+
+msgid "Професійне навчання з офіційним нарахуванням балів БПР"
+msgstr "Professional training with official BPR points"
+
+msgid "Висококваліфіковані спеціалісти"
+msgstr "Highly qualified specialists"
+
+msgid ""
+"Навчальні курси проводяться спеціалістами з багатим досвідом у "
+"регенеративній медицині."
+msgstr ""
+"Courses are taught by specialists with extensive experience in "
+"regenerative medicine."
+
+msgid "Очно та онлайн"
+msgstr "In person and online"
+
+msgid ""
+"Курси проводяться очно та онлайн, в комфортних умовах та повністю "
+"забезпечені всім необхідним."
+msgstr ""
+"Courses are held in person and online, in comfortable conditions and "
+"fully equipped with everything needed."
+
+msgid "Сертифікати з балами БПР"
+msgstr "Certificates with BPR points"
+
+msgid ""
+"Після проходження курсу слухачі отримують сертифікати з балами "
+"безперервного професійного розвитку."
+msgstr ""
+"Upon completing the course, participants receive certificates with "
+"continuing professional development points."
+
+msgid "Потрібна авторизація | ІПРМ"
+msgstr "Authorization required | IPRM"
+
+msgid "Доступ потребує <span class=\"apple-gradient-text\">ідентифікації</span>"
+msgstr "Access requires <span class=\"apple-gradient-text\">identification</span>"
+
+msgid "Увійдіть до облікового запису, щоб продовжити"
+msgstr "Sign in to your account to continue"
+
+msgid "Доступ заборонено | ІПРМ"
+msgstr "Access denied | IPRM"
+
+msgid "Ця зона має <span class=\"apple-gradient-text\">обмежений доступ</span>"
+msgstr "This area has <span class=\"apple-gradient-text\">restricted access</span>"
+
+msgid "У вас немає дозволу для перегляду цієї сторінки"
+msgstr "You do not have permission to view this page"
+
+msgid "Сторінку не знайдено | ІПРМ"
+msgstr "Page not found | IPRM"
+
+msgid ""
+"Сторінка перебуває на стадії <span class=\"apple-gradient-"
+"text\">репаративної регенерації</span>"
+msgstr ""
+"This page is undergoing <span class=\"apple-gradient-"
+"text\">reparative regeneration</span>"
+
+msgid "Буде здоровою й красивою найближчим часом"
+msgstr "It will be healthy and beautiful again soon"
+
+msgid "Курси"
+msgstr "Courses"
+
+msgid "Помилка сервера | ІПРМ"
+msgstr "Server error | IPRM"
+
+msgid ""
+"Проводимо технічне <span class=\"apple-gradient-"
+"text\">обслуговування</span>"
+msgstr ""
+"We are performing <span class=\"apple-gradient-"
+"text\">maintenance</span>"
+
+msgid "Наші спеціалісти вже працюють над відновленням"
+msgstr "Our specialists are already working on restoring service"
+
+msgid "Документи БПР | ІПРМ"
+msgstr "BPR documents | IPRM"
+
+msgid ""
+"Документи безперервного професійного розвитку (БПР) ІПРМ: положення про "
+"доброчесність, методологію оцінювання, конфлікт інтересів та інші "
+"регуляторні документи."
+msgstr ""
+"IPRM continuing professional development (BPR) documents: regulations on "
+"integrity, assessment methodology, conflict of interest, and other "
+"regulatory documents."
+
+msgid "Документи"
+msgstr "Documents"
+
+msgid "БПР"
+msgstr "BPR"
+
+msgid "Регуляторні документи провайдера безперервного професійного розвитку ІПРМ"
+msgstr ""
+"Regulatory documents of IPRM as a continuing professional development "
+"provider"
+
+msgid ""
+"На цій сторінці зібрано регуляторні документи, що регламентують "
+"діяльність ІПРМ як провайдера безперервного професійного розвитку "
+"медичних та фармацевтичних працівників відповідно до Положення МОЗ "
+"України №725. Кожен документ доступний для перегляду та завантаження у "
+"форматі PDF."
+msgstr ""
+"This page collects the regulatory documents governing IPRM's activity as "
+"a provider of continuing professional development for medical and "
+"pharmaceutical workers in accordance with Regulation No. 725 of the "
+"Ministry of Health of Ukraine. Each document is available to view and "
+"download in PDF format."
+
+msgid ""
+"Положення про оцінку заходів БПР на ознаки академічної доброчесності та "
+"дотримання принципів доказової медицини"
+msgstr ""
+"Regulation on the assessment of BPR events for signs of academic "
+"integrity and adherence to the principles of evidence-based medicine"
+
+msgid ""
+"Методологія оцінювання набутих знань, компетентностей та практичних "
+"навичок працівників сфери охорони здоров'я"
+msgstr ""
+"Methodology for assessing the acquired knowledge, competencies, and "
+"practical skills of healthcare workers"
+
+msgid ""
+"Заява засновників (учасників, власників), посадових осіб про відсутність "
+"конфлікту інтересів"
+msgstr ""
+"Declaration by founders (members, owners) and officials on the absence of "
+"a conflict of interest"
+
+msgid ""
+"Положення про запобігання конфлікту інтересів під час проведення заходів "
+"БПР та недопущення залучення і використання коштів фізичних (юридичних) "
+"осіб для реклами лікарських засобів, медичних виробів або медичних послуг"
+msgstr ""
+"Regulation on preventing conflicts of interest during BPR events and on "
+"avoiding the solicitation and use of funds from individuals (legal "
+"entities) for advertising medicines, medical devices, or medical services"
+
+msgid "Заява про намір провадити діяльність з безперервного професійного розвитку"
+msgstr ""
+"Declaration of intent to carry out continuing professional development "
+"activities"
+
+msgid "Витяг з реєстру юридичних осіб (OpenDataBot)"
+msgstr "Extract from the register of legal entities (OpenDataBot)"
+
+msgid "Контакти | ІПРМ"
+msgstr "Contacts | IPRM"
+
+msgid ""
+"Зв'яжіться з Інститутом Плазмотерапії та Регенеративної Медицини. "
+"Телефон, адреса, форма зворотного зв'язку."
+msgstr ""
+"Contact the Institute of Plasma Therapy and Regenerative Medicine. Phone, "
+"address, and feedback form."
+
+msgid "Контакти"
+msgstr "Contacts"
+
+msgid "Зв'яжіться з нами будь-яким зручним способом"
+msgstr "Get in touch with us in any way that's convenient for you"
+
+msgid "Скопіювати номер телефону"
+msgstr "Copy phone number"
+
+msgid "Скопіювати"
+msgstr "Copy"
+
+msgid "Адреса"
+msgstr "Address"
+
+msgid "Соціальні мережі"
+msgstr "Social media"
+
+#, python-format
+msgid "%(name)s у Facebook"
+msgstr "%(name)s on Facebook"
+
+#, python-format
+msgid "%(name)s в Instagram"
+msgstr "%(name)s on Instagram"
+
+msgid "Тема"
+msgstr "Subject"
+
+#, python-format
+msgid ""
+"Я надаю згоду на обробку моїх персональних даних з метою обробки мого "
+"звернення. Ознайомлений(а) з <a href=\"%(privacy_url)s\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">Політикою "
+"конфіденційності</a>."
+msgstr ""
+"I consent to the processing of my personal data for the purpose of "
+"handling my inquiry. I have read the <a href=\"%(privacy_url)s\" "
+"target=\"_blank\" rel=\"noopener noreferrer\">Privacy "
+"Policy</a>."
+
+msgid "Надіслати повідомлення"
+msgstr "Send message"
+
+msgid "Інститут Плазмотерапії та Регенеративної Медицини | ІПРМ"
+msgstr "Institute of Plasma Therapy and Regenerative Medicine | IPRM"
+
+msgid ""
+"Післядипломна освіта для лікарів: плазмотерапія (PRP/PRF/PPP), "
+"регенеративна медицина, ін'єкційні та апаратні методики. Практика, дати "
+"старту, бали БПР."
+msgstr ""
+"Postgraduate education for physicians: plasma therapy (PRP/PRF/PPP), "
+"regenerative medicine, injection and device-based techniques. Practice, "
+"start dates, BPR points."
+
+msgid "Головна"
+msgstr "Home"
+
+msgid "Інститут плазмотерапії та регенеративної медицини"
+msgstr "Institute of Plasma Therapy and Regenerative Medicine"
+
+msgid "Навчання, яке підсилює"
+msgstr "Training that strengthens"
+
+msgid "медичну практику"
+msgstr "medical practice"
+
+msgid ""
+"Післядипломна освіта для лікарів у сфері плазмотерапії та регенеративної "
+"медицини: від біології аутологічних методик і вибору протоколу до "
+"впевненого впровадження у клінічну практику."
+msgstr ""
+"Postgraduate education for physicians in plasma therapy and regenerative "
+"medicine: from the biology of autologous techniques and protocol "
+"selection to confident implementation in clinical practice."
+
+msgid "Обрати курс"
+msgstr "Choose a course"
+
+msgid "Переваги навчання"
+msgstr "Training benefits"
+
+msgid "Практика"
+msgstr "Hands-on practice"
+
+msgid "під керівництвом тренера"
+msgstr "under the guidance of a trainer"
+
+msgid "Бали БПР"
+msgstr "BPR points"
+
+msgid "у сертифікованих програмах"
+msgstr "in certified programs"
+
+msgid "Протоколи"
+msgstr "Protocols"
+
+msgid "для роботи після курсу"
+msgstr "to use in your work after the course"
+
+msgid "Інститут у цифрах"
+msgstr "The institute in numbers"
+
+msgid "років досвіду"
+msgstr "years of experience"
+
+msgid "курсів у каталозі"
+msgstr "courses in the catalog"
+
+msgid "тренерів-практиків"
+msgstr "practicing trainers"
+
+msgid "напрямів практики"
+msgstr "areas of practice"
+
+msgid "Навіщо це лікарю"
+msgstr "Why physicians need this"
+
+msgid "Нова процедура —"
+msgstr "A new procedure —"
+
+msgid "без зміни спеціальності"
+msgstr "without changing your specialty"
+
+msgid ""
+"Плазмотерапія розширює перелік послуг, підвищує професійну цінність "
+"фахівця й додає прогнозований дохід. Навчання веде до конкретної дії, а "
+"не до сертифіката «на полицю»."
+msgstr ""
+"Plasma therapy expands your range of services, increases your "
+"professional value, and adds predictable income. The training leads to "
+"concrete action, not just a certificate \"for the shelf\"."
+
+msgid "Нова послуга у прайсі"
+msgstr "A new service in your price list"
+
+msgid ""
+"Аутоплазма застосовується в багатьох напрямах — ви додаєте процедуру у "
+"власну практику без переходу в іншу спеціальність."
+msgstr ""
+"Autologous plasma is used across many fields — you add the procedure to "
+"your own practice without switching to another specialty."
+
+msgid "Робота з матеріалом пацієнта"
+msgstr "Working with the patient's own material"
+
+msgid ""
+"Аутологічний метод: використовується плазма самого пацієнта. Зрозумілий і"
+" контрольований протокол роботи."
+msgstr ""
+"An autologous method: the patient's own plasma is used. A clear and "
+"controlled working protocol."
+
+msgid "Вища професійна цінність"
+msgstr "Higher professional value"
+
+msgid ""
+"Складніші протоколи посилюють експертне позиціювання лікаря та "
+"відкривають нові клінічні задачі."
+msgstr ""
+"More advanced protocols strengthen the physician's expert positioning and "
+"open up new clinical tasks."
+
+msgid "Бали БПР офіційно"
+msgstr "Official BPR points"
+
+msgid ""
+"Навчання зараховується у ваш безперервний професійний розвиток — із "
+"сертифікатом установленого зразка."
+msgstr ""
+"The training counts toward your continuing professional development — "
+"with a certificate of the established format."
+
+msgid "Обери наступний крок"
+msgstr "Choose your next step"
+
+msgid "у професії"
+msgstr "in your profession"
+
+msgid "Рекомендовані курси інституту"
+msgstr "Recommended institute courses"
+
+msgid "Увесь каталог"
+msgstr "Full catalog"
+
+msgid "Міждисциплінарний підхід"
+msgstr "Interdisciplinary approach"
+
+msgid "Одна технологія —"
+msgstr "One technology —"
+
+msgid "різні клінічні задачі"
+msgstr "different clinical tasks"
+
+msgid ""
+"PRP, PRF і PPP — не «модна процедура», а система роботи з аутоплазмою. "
+"Оберіть спеціальність і подивіться, де регенеративні методики доповнюють "
+"маршрут пацієнта."
+msgstr ""
+"PRP, PRF, and PPP are not a \"trendy procedure\" but a system for working "
+"with autologous plasma. Choose a specialty and see where regenerative "
+"techniques complement the patient journey."
+
+msgid "Дерматологія"
+msgstr "Dermatology"
+
+msgid "Якість шкіри, регенерація та супровід відновлення."
+msgstr "Skin quality, regeneration, and recovery support."
+
+msgid "Природні протоколи для обличчя, шиї та делікатних зон."
+msgstr "Natural protocols for the face, neck, and delicate areas."
+
+msgid "Комплексна робота з волосистою частиною голови."
+msgstr "Comprehensive work with the scalp."
+
+msgid "Підтримка регенерації тканин у стоматологічних протоколах."
+msgstr "Support for tissue regeneration in dental protocols."
+
+msgid "Гінекологія"
+msgstr "Gynecology"
+
+msgid "Аутологічні підходи у практиці лікаря-гінеколога."
+msgstr "Autologous approaches in a gynecologist's practice."
+
+msgid "Травматологія"
+msgstr "Traumatology"
+
+msgid "Локальні ін'єкційні методики та УЗД-контроль."
+msgstr "Local injection techniques and ultrasound guidance."
+
+msgid "Ортопедія"
+msgstr "Orthopedics"
+
+msgid "Регенеративні протоколи для суглобів і м'яких тканин."
+msgstr "Regenerative protocols for joints and soft tissues."
+
+msgid "Реабілітація"
+msgstr "Rehabilitation"
+
+msgid "Поєднання методик у відновному маршруті пацієнта."
+msgstr "Combining techniques within the patient's recovery journey."
+
+msgid "Програми за спеціальністю"
+msgstr "Programs by specialty"
+
+msgid "Експертність"
+msgstr "Expertise"
+
+msgid "Навчають ті, хто практикує щодня"
+msgstr "Taught by those who practice every day"
+
+msgid "карусель"
+msgstr "carousel"
+
+msgid "Тренери ІПРМ"
+msgstr "IPRM trainers"
+
+msgid "із"
+msgstr "of"
+
+msgid "Попередній тренер"
+msgstr "Previous trainer"
+
+msgid "Наступний тренер"
+msgstr "Next trainer"
+
+msgid "Усі тренери"
+msgstr "All trainers"
+
+msgid "Найближчі дати для реєстрації"
+msgstr "Upcoming registration dates"
+
+msgid "безкоштовно"
+msgstr "free"
+
+msgid "Деталі"
+msgstr "Details"
+
+msgid "Розрахунок"
+msgstr "Calculation"
+
+msgid "окупності"
+msgstr "of payback"
+
+msgid "Порахуй, як курс працюватиме на дохід"
+msgstr "Calculate how the course will work toward your income"
+
+msgid "Середній чек процедури, ₴"
+msgstr "Average procedure fee, ₴"
+
+msgid "вартість курсу"
+msgstr "course cost"
+
+msgid ""
+"Розрахунок орієнтовний. Фактичний результат залежить від попиту, прайсу, "
+"витрат на матеріали й завантаженості практики."
+msgstr ""
+"The calculation is approximate. The actual result depends on demand, "
+"pricing, material costs, and how busy your practice is."
+
+msgid "Після навчання"
+msgstr "After the training"
+
+msgid "Що залишається"
+msgstr "What stays"
+
+msgid "з лікарем"
+msgstr "with the physician"
+
+msgid "Медичний контекст без зайвих обіцянок"
+msgstr "A medical context without empty promises"
+
+msgid "Протокол і практична навичка"
+msgstr "A protocol and a practical skill"
+
+msgid "Зрозуміла логіка роботи та техніка, відпрацьована під наглядом тренера."
+msgstr "A clear working logic and a technique practiced under a trainer's supervision."
+
+msgid "Навчальні матеріали"
+msgstr "Learning materials"
+
+msgid "Опора для повторення та підготовки до перших процедур."
+msgstr "A resource for review and preparation for your first procedures."
+
+msgid "Підтвердження освіти"
+msgstr "Proof of education"
+
+msgid "Сертифікат і бали БПР у програмах, де це передбачено."
+msgstr "A certificate and BPR points in programs where they are provided."
+
+msgid "Підтримка ментора"
+msgstr "Mentor support"
+
+msgid ""
+"Післяосвітній супровід для впевненого старту та розбору практичних "
+"запитань."
+msgstr ""
+"Post-training support for a confident start and to work through practical "
+"questions."
+
+msgid "Карта професійного зростання"
+msgstr "Professional growth map"
+
+msgid "Від базового курсу"
+msgstr "From a basic course"
+
+msgid "до власної клініки"
+msgstr "to your own clinic"
+
+msgid ""
+"Почніть із бази та рухайтеся до складніших протоколів, системного "
+"впровадження плазмотерапії й управління власним медичним напрямом."
+msgstr ""
+"Start with the basics and progress to more advanced protocols, the "
+"systematic implementation of plasma therapy, and managing your own "
+"medical practice area."
+
+msgid "Рівень 1"
+msgstr "Level 1"
+
+msgid "Базовий курс із плазмотерапії"
+msgstr "Basic plasma therapy course"
+
+msgid ""
+"Біологія аутоплазми, PRP, PRF, PPP, показання та безпечний алгоритм "
+"роботи."
+msgstr ""
+"The biology of autologous plasma, PRP, PRF, PPP, indications, and a safe "
+"working algorithm."
+
+msgid "Фундамент методики"
+msgstr "Foundation of the technique"
+
+msgid "Рівень 2"
+msgstr "Level 2"
+
+msgid "Спеціалізація за напрямом"
+msgstr "Specialization by field"
+
+msgid ""
+"Профільні протоколи для дерматології, гінекології, стоматології, "
+"ортопедії та інших спеціальностей."
+msgstr ""
+"Specialized protocols for dermatology, gynecology, dentistry, "
+"orthopedics, and other specialties."
+
+msgid "Клінічна спеціалізація"
+msgstr "Clinical specialization"
+
+msgid "Рівень 3"
+msgstr "Level 3"
+
+msgid "Впровадження у практику"
+msgstr "Implementation in practice"
+
+msgid ""
+"Складніші кейси, документи, сервіс, післяосвітня підтримка та стабільна "
+"робота з новою послугою."
+msgstr ""
+"More complex cases, documentation, service, post-training support, and "
+"stable delivery of your new service."
+
+msgid "Системна практика"
+msgstr "Systematic practice"
+
+msgid "Рівень 4"
+msgstr "Level 4"
+
+msgid "Власник клініки"
+msgstr "Clinic owner"
+
+msgid ""
+"Команда, стандарти протоколів, розширення напрямів і масштабування "
+"регенеративної медицини."
+msgstr ""
+"A team, protocol standards, expanding your service areas, and scaling "
+"regenerative medicine."
+
+msgid "Управління й розвиток"
+msgstr "Management and growth"
+
+msgid "Переглянути курси маршруту"
+msgstr "View courses in this path"
+
+msgid "Після"
+msgstr "After"
+
+msgid "навчання"
+msgstr "training"
+
+msgid "Досвід фахівців після практики"
+msgstr "Specialists' experiences after the practice"
+
+msgid "Оцінка 5 з 5"
+msgstr "Rating 5 out of 5"
+
+msgid ""
+"Після практики стало зрозуміло, як запускати процедуру без хаосу: "
+"протокол, матеріали, собівартість і комунікація з пацієнтом."
+msgstr ""
+"After the practice, it became clear how to launch the procedure without "
+"chaos: the protocol, materials, cost, and communication with the patient."
+
+msgid "Олена · Київ · лікарка-косметологиня"
+msgstr "Olena · Kyiv · cosmetology physician"
+
+msgid ""
+"Найцінніше — клінічна логіка й спокійний супровід тренера. Усе без зайвих"
+" обіцянок."
+msgstr ""
+"The most valuable part is the clinical logic and the trainer's calm "
+"guidance. Everything without empty promises."
+
+msgid "Марина · Львів · власниця кабінету"
+msgstr "Maryna · Lviv · office owner"
+
+msgid "Система навчання"
+msgstr "Learning system"
+
+msgid "Від біології плазми"
+msgstr "From the biology of plasma"
+
+msgid "до впевненого протоколу"
+msgstr "to a confident protocol"
+
+msgid "Розуміння"
+msgstr "Understanding"
+
+msgid "Механізми дії, фракції плазми, показання та межі методики."
+msgstr "Mechanisms of action, plasma fractions, indications, and the limits of the technique."
+
+msgid "Рішення"
+msgstr "Decision-making"
+
+msgid "Вибір пацієнта, планування та логіка клінічного протоколу."
+msgstr "Patient selection, planning, and the logic of the clinical protocol."
+
+msgid "Підготовка матеріалу, техніка й відпрацювання під контролем тренера."
+msgstr "Material preparation, technique, and practice under a trainer's supervision."
+
+msgid "Впровадження й підтримка"
+msgstr "Implementation and support"
+
+msgid ""
+"Документація, інтеграція послуги у практику та супровід ментора після "
+"навчання."
+msgstr ""
+"Documentation, integrating the service into your practice, and mentor "
+"support after the training."
+
+msgid "Для команд і клінік"
+msgstr "For teams and clinics"
+
+msgid ""
+"Навчи команду — підсиль практику. Знижка для груп від трьох фахівців, "
+"формат під напрям клініки, салону чи кабінету."
+msgstr ""
+"Train your team — strengthen your practice. A discount for groups of "
+"three or more specialists, with a format tailored to your clinic, salon, "
+"or office."
+
+msgid "Перед вибором"
+msgstr "Before you choose"
+
+msgid "Коротко про"
+msgstr "Briefly about"
+
+msgid "важливе"
+msgstr "what matters"
+
+msgid "Чи потрібен досвід роботи з плазмотерапією?"
+msgstr "Do I need prior experience with plasma therapy?"
+
+msgid ""
+"Ні для всіх програм. У каталозі є базові й тематичні курси; вимоги до "
+"освіти та досвіду зазначені на сторінці кожної програми."
+msgstr ""
+"Not for all programs. The catalog includes basic and themed courses; the "
+"education and experience requirements are listed on each program's page."
+
+msgid "Чи є практична частина?"
+msgstr "Is there a hands-on component?"
+
+msgid ""
+"Формат залежить від програми. Практичні курси включають демонстрацію, "
+"роботу з матеріалом або відпрацювання під керівництвом тренера."
+msgstr ""
+"The format depends on the program. Practical courses include a "
+"demonstration, work with material, or practice under a trainer's "
+"guidance."
+
+msgid "Як нараховуються бали БПР?"
+msgstr "How are BPR points awarded?"
+
+msgid ""
+"Кількість балів і умови їх отримання вказані на сторінці конкретного "
+"сертифікованого заходу."
+msgstr ""
+"The number of points and the conditions for earning them are listed on "
+"the page of each specific certified event."
+
+msgid "Як обрати програму під свою спеціальність?"
+msgstr "How do I choose a program for my specialty?"
+
+msgid ""
+"Відкрийте каталог і скористайтеся фільтром за спеціальністю або "
+"зверніться до команди ІПРМ за консультацією."
+msgstr ""
+"Open the catalog and use the specialty filter, or contact the IPRM team "
+"for a consultation."
+
+msgid "Наступний професійний крок"
+msgstr "Your next professional step"
+
+msgid "Оберіть програму, яку зможете"
+msgstr "Choose a program you can"
+
+msgid "застосувати у практиці"
+msgstr "apply in practice"
+
+msgid ""
+"Розкажіть про освіту, спеціальність і бажаний напрям — підберемо маршрут "
+"без тиску та випадкових програм."
+msgstr ""
+"Tell us about your education, specialty, and preferred field — we will "
+"select a path with no pressure and no random programs."
+
+msgid "Отримати консультацію"
+msgstr "Get a consultation"
+
+msgid ""
+"Курси після дипломної освіти з плазмотерапії для лікарів. Лабораторії "
+"біологічного віку, клініка регенеративних технологій. Офіційне "
+"нарахування балів БПР."
+msgstr ""
+"Postgraduate plasma therapy courses for physicians. Biological age "
+"laboratories, clinic of regenerative technologies. Official BPR points."
+
+msgid "Бали БПР — Сертифіковані курси"
+msgstr "BPR points — Certified courses"
+
+msgid "Плазмотерапія."
+msgstr "Plasma therapy."
+
+msgid "Регенерація."
+msgstr "Regeneration."
+
+msgid ""
+"Курси після дипломної освіти для лікарів, дослідження біологічного віку "
+"та персоналізована регенеративна терапія"
+msgstr ""
+"Postgraduate courses for physicians, biological age research, and "
+"personalized regenerative therapy"
+
+msgid "Про лабораторії"
+msgstr "About the laboratories"
+
+msgid "плазмотерапії та регенеративної медицини"
+msgstr "of plasma therapy and regenerative medicine"
+
+msgid ""
+"Навчальні курси інституту плазмотерапії проводяться висококваліфікованими"
+" спеціалістами з багатим досвідом у сфері регенеративної медицини, "
+"плазмотерапії та біорегуляційної медицини."
+msgstr ""
+"The plasma therapy institute's courses are taught by highly qualified "
+"specialists with extensive experience in regenerative medicine, plasma "
+"therapy, and bioregulatory medicine."
+
+msgid "Сучасна інформація"
+msgstr "Up-to-date information"
+
+msgid ""
+"Слухачі курсів отримують максимум сучасної інформації по вибраних темах "
+"регенеративної медицини."
+msgstr ""
+"Course participants receive the most up-to-date information on their "
+"chosen topics in regenerative medicine."
+
+msgid ""
+"Після проходження вибраного курсу слухачі отримують сертифікати з балами "
+"БПР (безперервний професійний розвиток), що підтверджують підвищення "
+"кваліфікації."
+msgstr ""
+"Upon completing their chosen course, participants receive certificates "
+"with BPR (continuing professional development) points confirming their "
+"advanced qualifications."
+
+msgid "Сертифікат з балами БПР"
+msgstr "Certificate with BPR points"
+
+msgid "Інститут у"
+msgstr "The institute in"
+
+msgid "цифрах"
+msgstr "numbers"
+
+msgid "Рік заснування"
+msgstr "Year founded"
+
+msgid "Років досліджень"
+msgstr "Years of research"
+
+msgid "Лабораторії та клініка"
+msgstr "Laboratories and clinic"
+
+msgid "Курсів проведено"
+msgstr "Courses held"
+
+msgid "Курси після дипломної освіти"
+msgstr "Postgraduate courses"
+
+msgid "Наші"
+msgstr "Our"
+
+msgid "лабораторії"
+msgstr "laboratories"
+
+msgid "Наукові дослідження та інновації у сфері регенеративної медицини"
+msgstr "Scientific research and innovation in regenerative medicine"
+
+msgid "Лабораторія біологічного віку"
+msgstr "Biological age laboratory"
+
+msgid "Лабораторія біологічного віку та прогнозування захворювань"
+msgstr "Laboratory of biological age and disease prediction"
+
+msgid ""
+"Вимірювання та модифікація біологічного віку, виявлення індивідуальних "
+"ризиків захворювань та персоналізовані стратегії профілактики"
+msgstr ""
+"Measuring and modifying biological age, identifying individual disease "
+"risks, and personalized prevention strategies"
+
+msgid "Персоналізована терапія"
+msgstr "Personalized therapy"
+
+msgid "Визначення індивідуальних параметрів для вибору персоналізованої терапії"
+msgstr "Determining individual parameters to select personalized therapy"
+
+msgid "Біоінформатика та ШІ"
+msgstr "Bioinformatics and AI"
+
+msgid "Інтегральний аналіз даних досліджень з використанням штучного інтелекту"
+msgstr "Integrated analysis of research data using artificial intelligence"
+
+msgid "Біомаркери старіння"
+msgstr "Aging biomarkers"
+
+msgid "Пошук, апробація, валідація нових біомаркерів старіння та геропротекторів"
+msgstr ""
+"Discovery, testing, and validation of new aging biomarkers and "
+"geroprotectors"
+
+msgid "Anti-age протоколи"
+msgstr "Anti-age protocols"
+
+msgid ""
+"Дослідження ефективності нових anti-age протоколів та процесів старіння "
+"на клітинному рівні"
+msgstr ""
+"Research into the effectiveness of new anti-age protocols and aging "
+"processes at the cellular level"
+
+msgid "Клітинне старіння"
+msgstr "Cellular aging"
+
+msgid ""
+"Дослідження процесів старіння на клітинному рівні з використанням "
+"сучасних методів"
+msgstr ""
+"Research into aging processes at the cellular level using modern methods"
+
+msgid "Лабораторія біологічного віку та"
+msgstr "Laboratory of biological age and"
+
+msgid "прогнозування захворювань"
+msgstr "disease prediction"
+
+msgid ""
+"Вимірювати та модифікувати біологічний вік, своєчасно виявляти "
+"індивідуальні ризики захворювань і пропонувати персоналізовані стратегії "
+"профілактики"
+msgstr ""
+"To measure and modify biological age, detect individual disease risks in "
+"time, and offer personalized prevention strategies"
+
+msgid "Ключові задачі"
+msgstr "Key objectives"
+
+msgid "Розрахунок біологічного віку"
+msgstr "Calculating biological age"
+
+msgid "Епігенетичні \"годинники\" (DNAm)"
+msgstr "Epigenetic \"clocks\" (DNAm)"
+
+msgid "Прогнозування ризиків на основі багатофакторних даних"
+msgstr "Predicting risks based on multifactorial data"
+
+msgid "Моніторинг інтервенцій та оцінка ефектів"
+msgstr "Monitoring interventions and evaluating their effects"
+
+msgid "Створення індивідуальних \"паспортів довголіття\""
+msgstr "Creating individual \"longevity passports\""
+
+msgid "Методики та сервіс"
+msgstr "Methods and services"
+
+msgid "Комплексна діагностика"
+msgstr "Comprehensive diagnostics"
+
+msgid "Епігенетичні тести та інтерпретація результатів"
+msgstr "Epigenetic tests and interpretation of results"
+
+msgid "Розширені панелі крові: ліпідний профіль, запальні та оксидативні маркери"
+msgstr "Extended blood panels: lipid profile, inflammatory and oxidative markers"
+
+msgid "HRV-моніторинг, аналіз сну та активності"
+msgstr "HRV monitoring, sleep and activity analysis"
+
+msgid "Консиліум із фахівцями клініки регенеративних технологій"
+msgstr "A consultation with specialists from the clinic of regenerative technologies"
+
+msgid "Як це змінює якість життя"
+msgstr "How this improves quality of life"
+
+msgid ""
+"Раннє виявлення відхилень, зниження ймовірності метаболічних, "
+"серцево-судинних і нейродегенеративних подій, кращий контроль енергії, "
+"сну й відновлення, підвищення резистентності до стресу, збереження "
+"працездатності."
+msgstr ""
+"Early detection of abnormalities, a lower likelihood of metabolic, "
+"cardiovascular, and neurodegenerative events, better control of energy, "
+"sleep, and recovery, increased stress resilience, and preserved capacity "
+"for work."
+
+msgid ""
+"Індивідуальні освітні консультації щодо зміни стилю життя, супровід \"до "
+"результату\" з повторними вимірюваннями кожні 3-6 місяців."
+msgstr ""
+"Individual educational consultations on lifestyle changes, with "
+"\"to-the-result\" support and repeat measurements every 3-6 months."
+
+msgid "Лабораторія інноваційних досліджень у сфері"
+msgstr "Laboratory of innovative research in"
+
+msgid "anti-age та регенерації"
+msgstr "anti-age and regeneration"
+
+msgid ""
+"Переносити сучасні регенеративні технології з лабораторії до клінічної "
+"практики, забезпечуючи їх доказовість, безпеку та відтворюваність"
+msgstr ""
+"To transfer modern regenerative technologies from the laboratory to "
+"clinical practice while ensuring their evidence base, safety, and "
+"reproducibility"
+
+msgid "Дослідження та валідація"
+msgstr "Research and validation"
+
+msgid "Дослідження біоактивних фракцій крові (PRP/PPP), екзосом"
+msgstr "Research into bioactive blood fractions (PRP/PPP) and exosomes"
+
+msgid "Стандартизація центрифугування, температури, часу"
+msgstr "Standardization of centrifugation, temperature, and time"
+
+msgid "Доклінічні випробування in vitro"
+msgstr "Preclinical in vitro testing"
+
+msgid "Валідація біомаркерів: фактори росту, цитокіни, мікроРНК, екзосоми"
+msgstr "Biomarker validation: growth factors, cytokines, microRNA, exosomes"
+
+msgid "Лабораторні технології"
+msgstr "Laboratory technologies"
+
+msgid "Отримання та вивчення екзосом: NTA, імуномітки, електронна мікроскопія"
+msgstr "Isolation and study of exosomes: NTA, immunolabeling, electron microscopy"
+
+msgid "Культура клітин для тестування біоактивності"
+msgstr "Cell culture for bioactivity testing"
+
+msgid "Вивчення аутоплазми та факторів росту (ELISA-панелі)"
+msgstr "Study of autologous plasma and growth factors (ELISA panels)"
+
+msgid "Розробка стандартних операційних процедур та підготовка публікацій"
+msgstr "Development of standard operating procedures and preparation of publications"
+
+msgid "Очікуваний вплив"
+msgstr "Expected impact"
+
+msgid ""
+"Швидший перехід до клінічних протоколів із прогнозованим ефектом, менша "
+"варіабельність результатів, підвищення безпеки процедур, індивідуалізація"
+" терапії."
+msgstr ""
+"A faster transition to clinical protocols with a predictable effect, less "
+"variability in results, improved procedure safety, and individualized "
+"therapy."
+
+msgid "Клініка"
+msgstr "Clinic"
+
+msgid "клітинних та регенеративних технологій"
+msgstr "of cellular and regenerative technologies"
+
+msgid "Перелік відділень клініки"
+msgstr "List of clinic departments"
+
+msgid "Відділення PRP-терапії"
+msgstr "PRP therapy department"
+
+msgid "Відділення PRP-, плазмотерапії та терапії екзосомами"
+msgstr "Department of PRP, plasma therapy, and exosome therapy"
+
+msgid "На сторінку клініки"
+msgstr "To the clinic page"
+
+msgid "Відділення стовбурових клітин"
+msgstr "Stem cell department"
+
+msgid "Відділення терапії мезенхімальними стовбуровими клітинами"
+msgstr "Department of mesenchymal stem cell therapy"
+
+msgid "Відділення інфузійної терапії"
+msgstr "Infusion therapy department"
+
+msgid "Відділення персоніфікованої інфузійної терапії"
+msgstr "Department of personalized infusion therapy"
+
+msgid "Місія"
+msgstr "Mission"
+
+msgid "та цінності"
+msgstr "and values"
+
+msgid ""
+"Ініціатори створення інституту вже давно об'єднали науковців, лікарів, "
+"інженерів, педагогів та фахівців інших спеціальностей в одну команду, яка"
+" працює над новітніми розробками в галузі аутологічної медицини."
+msgstr ""
+"The founders of the institute brought together scientists, physicians, "
+"engineers, educators, and specialists from other fields into one team "
+"that works on cutting-edge developments in autologous medicine."
+
+msgid ""
+"Командою інституту розроблені та втілені у виробництво пристрої для "
+"отримання аутологічної плазми та прилади для отримання модифікованих форм"
+" плазми та фібрину."
+msgstr ""
+"The institute's team has developed and put into production devices for "
+"obtaining autologous plasma and devices for obtaining modified forms of "
+"plasma and fibrin."
+
+msgid ""
+"Лікарі разом з науковцями постійно працюють над розробкою нових, більш "
+"ефективних протоколів використання аутологічних продуктів та "
+"популяризують існуючі, випробувані методи лікування."
+msgstr ""
+"Physicians and scientists work continuously on developing new, more "
+"effective protocols for using autologous products and on promoting "
+"existing, proven treatment methods."
+
+msgid "Історія"
+msgstr "History"
+
+msgid "створення"
+msgstr "of the institute"
+
+msgid ""
+"Інститут плазмотерапії та регенеративної медицини як самостійна юридична "
+"одиниця створений недавно, але ініціатори його створення вже давно "
+"працюють разом над новітніми розробками в галузі аутологічної медицини."
+msgstr ""
+"The Institute of Plasma Therapy and Regenerative Medicine was established "
+"as an independent legal entity only recently, but its founders have long "
+"worked together on cutting-edge developments in autologous medicine."
+
+msgid ""
+"Курси інституту доступні в онлайн та офлайн форматах. В очному форматі "
+"курсу включена практична частина з навчанням процедурам на моделях, "
+"постановка руки, відпрацювання практичних навичок."
+msgstr ""
+"The institute's courses are available in online and offline formats. The "
+"in-person format includes a hands-on component with training on models, "
+"hand-technique setup, and practicing practical skills."
+
+msgid ""
+"Сьогодні Інститут об'єднує фахівців з епігенетики, фізіології, біохімії, "
+"імунології та біоінформатики. Тут проводяться:"
+msgstr ""
+"Today the institute brings together specialists in epigenetics, "
+"physiology, biochemistry, immunology, and bioinformatics. The following "
+"is carried out here:"
+
+msgid "Дослідження процесів старіння на клітинному рівні"
+msgstr "Research into aging processes at the cellular level"
+
+msgid "Визначення індивідуальних параметрів для персоналізованої терапії"
+msgstr "Determining individual parameters for personalized therapy"
+
+msgid "Пошук і валідація нових біомаркерів старіння"
+msgstr "Discovery and validation of new aging biomarkers"
+
+msgid "Тестування ефективності anti-age протоколів"
+msgstr "Testing the effectiveness of anti-age protocols"
+
+msgid "Почни навчання"
+msgstr "Start training"
+
+msgid "сьогодні."
+msgstr "today."
+
+msgid ""
+"Обери курс після дипломної освіти та отримай сертифікат з балами БПР від "
+"Інституту плазмотерапії та регенеративної медицини."
+msgstr ""
+"Choose a postgraduate course and receive a certificate with BPR points "
+"from the Institute of Plasma Therapy and Regenerative Medicine."
+
+msgid "Дізнатись більше"
+msgstr "Learn more"
+
+msgid "Карта сайту | ІПРМ"
+msgstr "Sitemap | IPRM"
+
+msgid ""
+"Інтерактивна карта сайту Інституту Плазмотерапії та Регенеративної "
+"Медицини. Швидкий доступ до курсів, тренерів, блогу та інших розділів."
+msgstr ""
+"Interactive sitemap of the Institute of Plasma Therapy and Regenerative "
+"Medicine. Quick access to courses, trainers, the blog, and other "
+"sections."
+
+msgid "Карта сайту"
+msgstr "Sitemap"
+
+msgid "Швидкий доступ до всіх розділів сайту"
+msgstr "Quick access to all sections of the site"
+
+#, python-format
+msgid "Показати ще (%(count)s)"
+msgstr "Show more (%(count)s)"
+
+msgid "Підписка на листи | ІПРМ"
+msgstr "Email subscription | IPRM"
+
+msgid "Посилання недійсне"
+msgstr "Invalid link"
+
+msgid "Це посилання для керування підпискою застаріле або неправильне."
+msgstr "This subscription management link is expired or incorrect."
+
+msgid "Ви відписалися"
+msgstr "You have unsubscribed"
+
+msgid ""
+"Більше не надсилатимемо вам нагадування та інформаційні листи. Важливі "
+"службові листи (підтвердження email, відновлення паролю) надходитимуть, "
+"як і раніше."
+msgstr ""
+"We will no longer send you reminders and newsletters. Important service "
+"emails (email confirmation, password recovery) will continue to arrive as "
+"before."
+
+msgid "Повернути підписку"
+msgstr "Restore subscription"
+
+msgid "Підписку відновлено"
+msgstr "Subscription restored"
+
+msgid "Ви знову отримуватимете нагадування та інформаційні листи ІПРМ."
+msgstr "You will again receive reminders and newsletters from IPRM."
+
+msgid "Ви вже відписані"
+msgstr "You are already unsubscribed"
+
+msgid ""
+"Нагадування та інформаційні листи вам не надходять. Хочете повернути "
+"підписку?"
+msgstr ""
+"You are not receiving reminders and newsletters. Would you like to "
+"restore your subscription?"
+
+msgid "Відписатися від листів?"
+msgstr "Unsubscribe from emails?"
+
+#, python-format
+msgid ""
+"Ви перестанете отримувати нагадування та інформаційні листи на "
+"<strong>%(email)s</strong>. Службові листи (підтвердження email, "
+"відновлення паролю) надходитимуть завжди."
+msgstr ""
+"You will stop receiving reminders and newsletters at "
+"<strong>%(email)s</strong>. Service emails (email confirmation, password "
+"recovery) will always be delivered."
+
+msgid "Відписатися"
+msgstr "Unsubscribe"
+
+msgid "Рекомендуємо"
+msgstr "Recommended"
+
+#, python-format
+msgid "Рівень %(level)s/3"
+msgstr "Level %(level)s/3"
+
+msgid "Фільтр за тегами"
+msgstr "Filter by tags"
+
+msgid "Умови отримання <span class=\"apple-gradient-text\">сертифікату</span>"
+msgstr "Requirements for receiving a <span class=\"apple-gradient-text\">certificate</span>"
+
+msgid "Для отримання сертифікату необхідно виконати декілька кроків"
+msgstr "To receive a certificate, you need to complete a few steps"
+
+msgid "Реєстрація та оплата"
+msgstr "Registration and payment"
+
+msgid "Оберіть захід та оплатіть участь за обраним тарифом."
+msgstr "Choose an event and pay for participation at your selected tier."
+
+msgid "Проходження навчання"
+msgstr "Completing the training"
+
+msgid "Перегляньте захід у прямому ефірі або у записі та вивчіть матеріали."
+msgstr "Watch the event live or on demand and study the materials."
+
+msgid "Успішне тестування"
+msgstr "Passing the test"
+
+msgid "Пройдіть тестування з результатом не менше 70% правильних відповідей."
+msgstr "Pass the test with at least 70% correct answers."
+
+msgid "Отримання сертифікату"
+msgstr "Receiving the certificate"
+
+msgid "Отримайте сертифікат з балами БПР після успішного проходження."
+msgstr "Receive a certificate with BPR points after passing successfully."
+
+msgid "Ключові <span class=\"apple-gradient-text\">особливості</span>"
+msgstr "Key <span class=\"apple-gradient-text\">features</span>"
+
+msgid "Перевірені експерти"
+msgstr "Trusted experts"
+
+msgid ""
+"Досвідчені спеціалісти з багаторічною практикою у регенеративній та "
+"PRP-медицині."
+msgstr ""
+"Experienced specialists with many years of practice in regenerative and "
+"PRP medicine."
+
+msgid "Зручний формат"
+msgstr "Convenient format"
+
+msgid ""
+"Онлайн та офлайн навчання з доступом з будь-якого місця у зручний для вас"
+" час."
+msgstr ""
+"Online and offline learning with access from anywhere at a time that "
+"suits you."
+
+msgid "Офіційні сертифікати з балами безперервного професійного розвитку."
+msgstr "Official certificates with continuing professional development points."
+
+msgid "Практична цінність"
+msgstr "Practical value"
+
+msgid "Без води – тільки доказові знання, що одразу застосовуються у практиці."
+msgstr "No filler – only evidence-based knowledge you can apply in practice right away."
+
+msgid "Чому <span class=\"apple-gradient-text\">ІПРМ</span>"
+msgstr "Why <span class=\"apple-gradient-text\">IPRM</span>"
+
+msgid ""
+"Інститут регенеративної медицини – ваш надійний партнер у професійному "
+"розвитку"
+msgstr ""
+"The Institute of Regenerative Medicine – your reliable partner in "
+"professional development"
+
+msgid "учасників пройшли наші курси"
+msgstr "participants have completed our courses"
+
+msgid "проведених заходів"
+msgstr "events held"
+
+msgid "практикуючих тренерів"
+msgstr "practicing trainers"
+
+msgid "років досвіду навчання"
+msgstr "years of teaching experience"
+
+msgid "+ онлайн"
+msgstr "+ online"
+
+msgid "або"
+msgstr "or"
+
+msgid "Продовжити з Google"
+msgstr "Continue with Google"
+
+msgid "Продовжити з Apple"
+msgstr "Continue with Apple"
+
+msgid "Рекомендую курси ІПРМ"
+msgstr "I recommend IPRM courses"
+
+msgid "Завантажити QR"
+msgstr "Download QR"
+
+msgid "Поділитися:"
+msgstr "Share:"
+
+msgid "Поділитися…"
+msgstr "Share…"
+
+#, python-format
+msgid "Оцінка %(rating)s з 5"
+msgstr "Rating %(rating)s out of 5"
+
+msgid "Нагадування про дані для сертифіката"
+msgstr "Reminder about certificate details"
+
+msgid ""
+"Без анкети (МОЗ №725) ми не зможемо нарахувати бали БПР і видати "
+"сертифікат за ваш курс."
+msgstr ""
+"Without the form (MoH No. 725), we cannot award BPR points or issue a "
+"certificate for your course."
+
+msgid "Заповнити анкету"
+msgstr "Fill in the form"
+
+#, python-format
+msgid ""
+"Ми використовуємо файли Cookie для забезпечення роботи сайту та "
+"покращення вашого досвіду. <a href=\"%(url)s\">Детальніше</a>"
+msgstr ""
+"We use cookies to keep the site running and to improve your experience. "
+"<a href=\"%(url)s\">Learn more</a>"
+
+msgid "Прийняти"
+msgstr "Accept"
+
+msgid "Документи БПР"
+msgstr "BPR documents"
+
+msgid "Оферта"
+msgstr "Offer agreement"
+
+msgid "Конфіденційність"
+msgstr "Privacy"
+
+msgid "Повернення"
+msgstr "Refunds"
+
+msgid "Дисклеймер"
+msgstr "Disclaimer"
+
+msgid ""
+"Цей сайт захищено reCAPTCHA, застосовуються <a "
+"href=\"https://policies.google.com/privacy\" target=\"_blank\" "
+"rel=\"noopener\">Privacy Policy</a> і <a "
+"href=\"https://policies.google.com/terms\" target=\"_blank\" "
+"rel=\"noopener\">Terms of Service</a> Google."
+msgstr ""
+"This site is protected by reCAPTCHA, and the Google <a "
+"href=\"https://policies.google.com/privacy\" target=\"_blank\" "
+"rel=\"noopener\">Privacy Policy</a> and <a "
+"href=\"https://policies.google.com/terms\" target=\"_blank\" "
+"rel=\"noopener\">Terms of Service</a> apply."
+
+msgid "ІНСТИТУТ ПЛАЗМОТЕРАПІЇ<br>ТА РЕГЕНЕРАТИВНОЇ МЕДИЦИНИ"
+msgstr "INSTITUTE OF PLASMA THERAPY<br>AND REGENERATIVE MEDICINE"
+
+msgid "Головна навігація"
+msgstr "Main navigation"
+
+msgid "Лабораторії"
+msgstr "Laboratories"
+
+msgid "Клініки"
+msgstr "Clinics"
+
+msgid "Тренери"
+msgstr "Trainers"
+
+msgid "Блог"
+msgstr "Blog"
+
+msgid "Панель адміністратора"
+msgstr "Admin panel"
+
+msgid "Особистий кабінет"
+msgstr "Account"
+
+msgid "Заповнити дані для сертифіката"
+msgstr "Fill in certificate details"
+
+msgid "1 незаповнена анкета: дані для сертифіката"
+msgstr "1 unfilled form: certificate details"
+
+msgid ""
+"Заповніть дані для сертифіката — без них не нарахуємо бали БПР. "
+"Натисніть, щоб перейти до анкети."
+msgstr ""
+"Fill in your certificate details — without them we cannot award BPR "
+"points. Click to go to the form."
+
+msgid "Вибір мови сайту"
+msgstr "Site language selection"
+
+msgid "Найближчі заходи"
+msgstr "Upcoming events"
+
+msgid "Найближчі події:"
+msgstr "Upcoming events:"
+
+msgid "Помилка оплати | ІПРМ"
+msgstr "Payment error | IPRM"
+
+msgid "Оплату не завершено"
+msgstr "Payment not completed"
+
+msgid ""
+"На жаль, оплата не була успішною. Спробуйте ще раз або зверніться до "
+"підтримки."
+msgstr ""
+"Unfortunately, the payment was not successful. Please try again or "
+"contact support."
+
+msgid "Сума"
+msgstr "Amount"
+
+msgid "Повернутися до реєстрації"
+msgstr "Back to registration"
+
+msgid "Повернутися до курсів"
+msgstr "Back to courses"
+
+msgid "Оплата успішна | ІПРМ"
+msgstr "Payment successful | IPRM"
+
+msgid "Оплату підтверджено"
+msgstr "Payment confirmed"
+
+msgid "Дякуємо! Ваша оплата успішно оброблена."
+msgstr "Thank you! Your payment has been processed successfully."
+
+msgid "Дата"
+msgstr "Date"
+
+msgid "Статус"
+msgstr "Status"
+
+msgid "Повернутися до курсу"
+msgstr "Back to the course"
+
+msgid "До каталогу курсів"
+msgstr "To the course catalog"
+
+msgid "Завершення реєстрації | ІПРМ"
+msgstr "Complete registration | IPRM"
+
+msgid "Завершення реєстрації"
+msgstr "Complete registration"
+
+msgid "Процес реєстрації"
+msgstr "Registration process"
+
+msgid "Заповніть анкету"
+msgstr "Fill in the form"
+
+msgid "Оплатіть участь"
+msgstr "Pay for participation"
+
+msgid "Отримайте підтвердження"
+msgstr "Receive confirmation"
+
+msgid "Дата:"
+msgstr "Date:"
+
+msgid "Вартість:"
+msgstr "Price:"
+
+msgid "Безкоштовно"
+msgstr "Free"
+
+msgid "БПР:"
+msgstr "BPR:"
+
+msgid ""
+"Заповніть, будь ласка, усі поля анкети — вони потрібні для нарахування "
+"балів БПР згідно з вимогами МОЗ України (№725, п. 13). Усі поля "
+"обов'язкові."
+msgstr ""
+"Please fill in all fields of the form — they are required to award BPR "
+"points in accordance with the requirements of the Ministry of Health of "
+"Ukraine (No. 725, clause 13). All fields are required."
+
+msgid "Особисті дані"
+msgstr "Personal details"
+
+msgid "Можна обрати декілька. Пошук — Ctrl+F у браузері."
+msgstr "You can select several. Search with Ctrl+F in your browser."
+
+#, python-format
+msgid ""
+"Я надаю згоду на обробку моїх персональних даних відповідно до <a "
+"href=\"%(privacy_url)s\" target=\"_blank\" rel=\"noopener\">Політики "
+"конфіденційності</a>."
+msgstr ""
+"I consent to the processing of my personal data in accordance with the <a "
+"href=\"%(privacy_url)s\" target=\"_blank\" rel=\"noopener\">Privacy "
+"Policy</a>."
+
+msgid "Зберегти і перейти до оплати"
+msgstr "Save and proceed to payment"
+
+msgid "Посилання недійсне | ІПРМ"
+msgstr "Invalid link | IPRM"
+
+msgid "Реєстрацію скасовано"
+msgstr "Registration canceled"
+
+msgid "Це посилання більше не активне. Зверніться до менеджера для уточнення."
+msgstr "This link is no longer active. Contact your manager for details."
+
+msgid "Посилання недійсне або застаріле"
+msgstr "The link is invalid or expired"
+
+msgid ""
+"Термін дії посилання сплив (30 днів) або його було відкликано. Попросіть "
+"менеджера надіслати нове."
+msgstr ""
+"The link has expired (30 days) or has been revoked. Ask your manager to "
+"send a new one."
+
+msgid "Перейти до каталогу курсів"
+msgstr "Go to the course catalog"
+
+msgid "Оплата участі | ІПРМ"
+msgstr "Payment for participation | IPRM"
+
+msgid "Оплата участі"
+msgstr "Payment for participation"
+
+msgid "Анкету заповнено"
+msgstr "Form completed"
+
+msgid "До оплати:"
+msgstr "Amount due:"
+
+msgid "Оплату отримано"
+msgstr "Payment received"
+
+msgid "Дякуємо! Вашу участь підтверджено."
+msgstr "Thank you! Your participation is confirmed."
+
+msgid "Реєстрацію збережено"
+msgstr "Registration saved"
+
+msgid "Оплата не потрібна. Ми зв'яжемося з вами щодо деталей участі."
+msgstr "No payment is required. We will contact you about the participation details."
+
+msgid "Оберіть зручний спосіб оплати:"
+msgstr "Choose a convenient payment method:"
+
+#, python-format
+msgid "Реєстрація: %(event_title)s | ІПРМ"
+msgstr "Registration: %(event_title)s | IPRM"
+
+msgid "Заповніть форму"
+msgstr "Fill in the form"
+
+msgid "Заявка на участь успішно подана."
+msgstr "Your participation request has been submitted successfully."
+
+msgid "Другим кроком реєстрації необхідно оплатити участь."
+msgstr "The second step of registration is to pay for participation."
+
+#, python-format
+msgid "Сума до сплати: <strong>%(amount)s грн.</strong>"
+msgstr "Amount due: <strong>%(amount)s UAH</strong>"
+
+#, python-format
+msgid "(тариф «%(tariff_name)s»)"
+msgstr "(\"%(tariff_name)s\" tier)"
+
+msgid "Ви зареєстровані на курс. Деталі надіслано на email."
+msgstr "You are registered for the course. Details have been sent to your email."
+
+#, python-format
+msgid "Ваш номер місця: <strong>№%(place)s</strong>"
+msgstr "Your seat number: <strong>No. %(place)s</strong>"
+
+msgid "Захід завершено"
+msgstr "Event completed"
+
+msgid "Вам нараховано"
+msgstr "You have been awarded"
+
+msgid "Підтвердіть ваш email"
+msgstr "Confirm your email"
+
+#, python-format
+msgid "На %(email)s надіслано лист з посиланням для підтвердження"
+msgstr "An email with a confirmation link has been sent to %(email)s"
+
+msgid "— ми продублювали його після оплати"
+msgstr "— we resent it after payment"
+
+msgid "Підтвердження потрібне для доступу до матеріалів і сповіщень про захід."
+msgstr "Confirmation is required to access materials and event notifications."
+
+#, python-format
+msgid ""
+"Не знайшли лист? Перевірте «Спам» або надішліть повторно з <a "
+"href=\"%(account_url)s\">особистого кабінету</a>."
+msgstr ""
+"Didn't find the email? Check your \"Spam\" folder or resend it from your "
+"<a href=\"%(account_url)s\">account</a>."
+
+msgid "Заповніть дані для сертифіката"
+msgstr "Fill in your certificate details"
+
+msgid ""
+"Щоб отримати сертифікат з балами БПР після курсу, заповніть коротку "
+"анкету (вимоги МОЗ №725, п. 13). Це займе 2–3 хвилини і діє для всіх "
+"ваших курсів."
+msgstr ""
+"To receive a certificate with BPR points after the course, fill in a "
+"short form (MoH No. 725 requirements, clause 13). It takes 2–3 minutes "
+"and applies to all your courses."
+
+msgid ""
+"Ви обрали спосіб оплати: <strong>Оплата за рахунком</strong>. Можна "
+"скористатись будь-яким із варіантів нижче."
+msgstr ""
+"You selected the payment method: <strong>Payment by invoice</strong>. You "
+"can use any of the options below."
+
+msgid "Оберіть зручний спосіб оплати — онлайн через LiqPay або за рахунком:"
+msgstr "Choose a convenient payment method — online via LiqPay or by invoice:"
+
+msgid "Оплата обробляється. Оновіть сторінку через декілька хвилин."
+msgstr "Payment is processing. Refresh the page in a few minutes."
+
+msgid "Номер місця"
+msgstr "Seat number"
+
+msgid "Місце"
+msgstr "Seat"
+
+msgid "Статус реєстрації"
+msgstr "Registration status"
+
+msgid "Оплата"
+msgstr "Payment"
+
+msgid "Балів БПР"
+msgstr "BPR points"
+
+msgid "(нараховано)"
+msgstr "(awarded)"
+
+msgid "(після завершення)"
+msgstr "(after completion)"
+
+msgid "Дата реєстрації"
+msgstr "Registration date"
+
+msgid "Зворотній зв'язок"
+msgstr "Feedback"
+
+msgid "Реєстрація на курс | ІПРМ"
+msgstr "Course registration | IPRM"
+
+msgid "Реєстрація на курс"
+msgstr "Course registration"
+
+msgid "Захід проходить <strong>ОФЛАЙН</strong>"
+msgstr "The event is held <strong>OFFLINE</strong>"
+
+#, python-format
+msgid "у місті <strong>%(city)s</strong>"
+msgstr "in <strong>%(city)s</strong>"
+
+msgid "Це очний захід — потрібна особиста присутність"
+msgstr "This is an in-person event — physical attendance is required"
+
+#, python-format
+msgid "у м. %(city)s"
+msgstr "in %(city)s"
+
+msgid "Переконайтесь, що зможете прибути у вказану дату."
+msgstr "Make sure you can attend on the specified date."
+
+msgid ""
+"<strong>Будьте уважні!</strong> Одна реєстрація — одне підключення. Будь "
+"ласка, вказуйте контактні дані саме учасника заходу."
+msgstr ""
+"<strong>Please note!</strong> One registration — one connection. Please "
+"provide the contact details of the actual event participant."
+
+msgid ""
+"Реєстрація займе хвилину — лише базові дані. Анкету для "
+"<strong>сертифіката з балами БПР</strong> (вимоги МОЗ №725, п. 13) ви "
+"заповните пізніше в <strong>особистому кабінеті</strong> — ми нагадаємо."
+msgstr ""
+"Registration takes a minute — just basic details. You will fill in the "
+"form for your <strong>certificate with BPR points</strong> (MoH No. 725 "
+"requirements, clause 13) later in your <strong>account</strong> — we will "
+"remind you."
+
+msgid "Тариф участі"
+msgstr "Participation tier"
+
+msgid ""
+"Оберіть глибину участі — від базового формату до менторського супроводу. "
+"Сума до сплати залежить від тарифу."
+msgstr ""
+"Choose your level of participation — from the basic format to mentor "
+"support. The amount due depends on the tier."
+
+msgid "Дані учасника"
+msgstr "Participant details"
+
+msgid ""
+"Вкажіть номер саме учасника заходу — на нього ми надішлемо нагадування та"
+" деталі підключення."
+msgstr ""
+"Provide the phone number of the actual event participant — we will send "
+"reminders and connection details to it."
+
+msgid "Підтвердження участі в очному заході"
+msgstr "Confirmation of participation in an in-person event"
+
+#, python-format
+msgid "(м. %(city)s)"
+msgstr "(%(city)s)"
+
+msgid "Підтвердіть, що розумієте офлайн-формат"
+msgstr "Confirm that you understand the offline format"
+
+msgid ""
+"Я розумію, що це <strong>ОЧНИЙ (офлайн)</strong> захід і потребує "
+"особистої присутності."
+msgstr ""
+"I understand that this is an <strong>IN-PERSON (offline)</strong> event "
+"and requires physical attendance."
+
+msgid "Підтвердіть, що зможете прибути у вказане місто"
+msgstr "Confirm that you can travel to the specified city"
+
+msgid "Підтверджую, що зможу прибути"
+msgstr "I confirm that I can attend"
+
+#, python-format
+msgid "до <strong>м. %(city)s</strong>"
+msgstr "in <strong>%(city)s</strong>"
+
+msgid "до місця проведення"
+msgstr "at the venue"
+
+msgid "у дату заходу"
+msgstr "on the event date"
+
+#, python-format
+msgid ""
+"Я надаю згоду на обробку моїх персональних даних (ПІБ, дата народження, "
+"електронна пошта, номер телефону, освіта, спеціалізація, місце роботи) з "
+"метою оформлення та виконання реєстрації на захід, а також обробки "
+"платежу через платіжну систему LiqPay. Ознайомлений(а) з <a "
+"href=\"%(privacy_url)s\" target=\"_blank\" rel=\"noopener "
+"noreferrer\">Політикою конфіденційності</a>."
+msgstr ""
+"I consent to the processing of my personal data (full name, date of "
+"birth, email, phone number, education, specialization, place of work) for "
+"the purpose of arranging and completing my registration for the event, as "
+"well as processing payment through the LiqPay payment system. I have read "
+"the <a href=\"%(privacy_url)s\" target=\"_blank\" rel=\"noopener "
+"noreferrer\">Privacy Policy</a>."
+
+#, python-format
+msgid ""
+"Я надаю згоду на отримання інформації про акції, спеціальні пропозиції та"
+" новини від %(company)s на вказану електронну адресу та/або номер "
+"телефону. Цю згоду можна відкликати в будь-який момент."
+msgstr ""
+"I consent to receiving information about promotions, special offers, and "
+"news from %(company)s at the email address and/or phone number provided. "
+"This consent can be withdrawn at any time."
+
+msgid "Безпечна оплата через LiqPay (Visa, Mastercard, Google Pay, Apple Pay)"
+msgstr "Secure payment via LiqPay (Visa, Mastercard, Google Pay, Apple Pay)"
+
+msgid "Безпечна оплата:"
+msgstr "Secure payment:"
+
+msgid "Назад"
+msgstr "Back"
+
+msgid "Маєте питання?"
+msgstr "Have questions?"
+
+msgid "Онлайн-оплата"
+msgstr "Online payment"
+
+msgid "Картка, Google&nbsp;Pay, Apple&nbsp;Pay — миттєве підтвердження."
+msgstr "Card, Google&nbsp;Pay, Apple&nbsp;Pay — instant confirmation."
+
+msgid "Оплатити через LiqPay"
+msgstr "Pay via LiqPay"
+
+msgid "Безпечна оплата через LiqPay — Visa, Mastercard, Google Pay, Apple Pay"
+msgstr "Secure payment via LiqPay — Visa, Mastercard, Google Pay, Apple Pay"
+
+msgid "Онлайн-оплата тимчасово недоступна — скористайтесь рахунком."
+msgstr "Online payment is temporarily unavailable — please use an invoice."
+
+msgid "Оплата за рахунком"
+msgstr "Payment by invoice"
+
+msgid ""
+"Рахунок-фактура (PDF) з реквізитами для оплати через банк. Доступний, "
+"доки участь не оплачено. Після оплати повідомте менеджера для "
+"підтвердження."
+msgstr ""
+"An invoice (PDF) with details for payment through a bank. Available until "
+"participation is paid for. After payment, notify your manager for "
+"confirmation."
+
+msgid "Завантажте рахунок у форматі PDF і сплатіть через банк за реквізитами."
+msgstr "Download the invoice in PDF format and pay through your bank using the details."
+
+msgid "Завантажити рахунок (PDF)"
+msgstr "Download invoice (PDF)"
+
+msgid "Після оплати за рахунком повідомте менеджера для підтвердження участі."
+msgstr "After paying by invoice, notify your manager to confirm your participation."
+
+msgid "Тренер Інституту Плазмотерапії та Регенеративної Медицини."
+msgstr "Trainer at the Institute of Plasma Therapy and Regenerative Medicine."
+
+msgid "Досвід:"
+msgstr "Experience:"
+
+msgid "Про тренера"
+msgstr "About the trainer"
+
+msgid "Курси <span class=\"apple-gradient-text\">тренера</span>"
+msgstr "The <span class=\"apple-gradient-text\">trainer's</span> courses"
+
+msgid "Доступні програми навчання"
+msgstr "Available training programs"
+
+msgid "Сертифікат"
+msgstr "Certificate"
+
+msgid "Винаходи та <span class=\"apple-gradient-text\">патенти</span>"
+msgstr "Inventions and <span class=\"apple-gradient-text\">patents</span>"
+
+msgid "Наукові <span class=\"apple-gradient-text\">статті</span>"
+msgstr "Scientific <span class=\"apple-gradient-text\">articles</span>"
+
+msgid ""
+"Наукова та дослідницька <span class=\"apple-gradient-"
+"text\">діяльність</span>"
+msgstr ""
+"Scientific and research <span class=\"apple-gradient-"
+"text\">activity</span>"
+
+msgid "Професійні <span class=\"apple-gradient-text\">навички</span>"
+msgstr "Professional <span class=\"apple-gradient-text\">skills</span>"
+
+msgid "Освіта та"
+msgstr "Education and"
+
+msgid "кваліфікація"
+msgstr "qualifications"
+
+msgid "Додаткова освіта та"
+msgstr "Additional education and"
+
+msgid "міжнародне стажування"
+msgstr "international internships"
+
+msgid "Досвід"
+msgstr "Work"
+
+msgid "роботи"
+msgstr "experience"
+
+msgid "Всі тренери"
+msgstr "All trainers"
+
+msgid "Тренери інституту | ІПРМ"
+msgstr "Institute trainers | IPRM"
+
+msgid ""
+"Висококваліфіковані тренери Інституту Плазмотерапії та Регенеративної "
+"Медицини. Досвідчені практикуючі лікарі."
+msgstr ""
+"Highly qualified trainers of the Institute of Plasma Therapy and "
+"Regenerative Medicine. Experienced practicing physicians."
+
+msgid "Тренери<br><span class=\"apple-gradient-text\">інституту</span>"
+msgstr "The institute's<br><span class=\"apple-gradient-text\">trainers</span>"
+
+msgid ""
+"Висококваліфіковані спеціалісти з багаторічним досвідом у плазмотерапії "
+"та регенеративній медицині"
+msgstr ""
+"Highly qualified specialists with many years of experience in plasma "
+"therapy and regenerative medicine"
+
+msgid "Наші <span class=\"apple-gradient-text\">тренери</span>"
+msgstr "Our <span class=\"apple-gradient-text\">trainers</span>"
+
+msgid "Фахівці, які проводять курси після дипломної освіти"
+msgstr "Specialists who teach postgraduate courses"
+
+msgid "р. досвіду"
+msgstr "yrs of experience"
+
+msgid "Інформація про тренерів скоро з'явиться"
+msgstr "Information about the trainers will appear soon"
+
+msgid "Чому варто навчатися саме <span class=\"apple-gradient-text\">у нас</span>"
+msgstr "Why you should train <span class=\"apple-gradient-text\">with us</span>"
+
+msgid "Практикуючі лікарі"
+msgstr "Practicing physicians"
+
+msgid "Тренери з клінічним досвідом у плазмотерапії та регенеративній медицині."
+msgstr "Trainers with clinical experience in plasma therapy and regenerative medicine."
+
+msgid "Авторські методики"
+msgstr "Original techniques"
+
+msgid "Протоколи, підтверджені результатами клінічних досліджень."
+msgstr "Protocols validated by the results of clinical studies."
+
+msgid "Індивідуальний підхід"
+msgstr "Individual approach"
+
+msgid "Супровід кожного слухача від початку до отримання сертифікату."
+msgstr "Guidance for each participant from the start through receiving the certificate."

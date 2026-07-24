@@ -1,5 +1,5 @@
-from flask import Blueprint
+from app.i18n import LocalizedBlueprint
 
-trainers_bp = Blueprint('trainers', __name__, url_prefix='/trainers')
+trainers_bp = LocalizedBlueprint('trainers', __name__, url_prefix='/trainers')
 
 from app.trainers import routes

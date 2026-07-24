@@ -6,11 +6,16 @@ from datetime import datetime, timezone
 from sqlalchemy import func
 
 from app.extensions import db
-from app.models.mixins import TimestampMixin, BigIntPK
+from app.models.mixins import TimestampMixin, TranslatableMixin, BigIntPK
 
 
-class Course(TimestampMixin, db.Model):
+class Course(TranslatableMixin, TimestampMixin, db.Model):
     __tablename__ = 'courses'
+    __translatable__ = (
+        'title', 'subtitle', 'description', 'short_description',
+        'target_audience', 'tags', 'speaker_info', 'agenda', 'faq',
+        'roi_hint', 'bpr_specialties',
+    )
 
     id = db.Column(BigIntPK, primary_key=True)
     title = db.Column(db.String(255), nullable=False)

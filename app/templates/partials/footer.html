@@ -3,18 +3,18 @@
     <div class="iprm-footer__row">
       <div class="iprm-footer__left">
         <a href="{{ url_for('main.index') }}" class="iprm-footer__brand">
-          <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="ІПРМ" class="iprm-footer__logo" height="72">
+          <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="{{ _('ІПРМ') }}" class="iprm-footer__logo" height="72">
         </a>
       </div>
       <div class="iprm-footer__right">
         <div class="iprm-footer__socials">
           {% if site_settings.facebook_url %}
-          <a href="{{ site_settings.facebook_url }}" class="iprm-footer__social-icon" aria-label="{{ site_settings.company_name }} у Facebook" target="_blank" rel="noopener noreferrer">
+          <a href="{{ site_settings.facebook_url }}" class="iprm-footer__social-icon" aria-label="{% trans name=site_settings.company_name %}{{ name }} у Facebook{% endtrans %}" target="_blank" rel="noopener noreferrer">
             <img src="{{ url_for('static', filename='svg/social/facebook.svg') }}" alt="Facebook" width="24" height="24">
           </a>
           {% endif %}
           {% if site_settings.instagram_url %}
-          <a href="{{ site_settings.instagram_url }}" class="iprm-footer__social-icon" aria-label="{{ site_settings.company_name }} в Instagram" target="_blank" rel="noopener noreferrer">
+          <a href="{{ site_settings.instagram_url }}" class="iprm-footer__social-icon" aria-label="{% trans name=site_settings.company_name %}{{ name }} в Instagram{% endtrans %}" target="_blank" rel="noopener noreferrer">
             <img src="{{ url_for('static', filename='svg/social/instagram.svg') }}" alt="Instagram" width="24" height="24">
           </a>
           {% endif %}
@@ -23,21 +23,19 @@
       </div>
     </div>
     <div class="iprm-footer__legal">
-      <a href="{{ url_for('main.bpr_documents') }}" class="iprm-footer__link">Документи БПР</a>
-      <a href="{{ url_for('main.offer') }}" class="iprm-footer__link">Оферта</a>
-      <a href="{{ url_for('main.privacy') }}" class="iprm-footer__link">Конфіденційність</a>
-      <a href="{{ url_for('main.refund') }}" class="iprm-footer__link">Повернення</a>
-      <a href="{{ url_for('main.disclaimer') }}" class="iprm-footer__link">Дисклеймер</a>
+      <a href="{{ url_for('main.bpr_documents') }}" class="iprm-footer__link">{{ _('Документи БПР') }}</a>
+      <a href="{{ url_for('main.offer') }}" class="iprm-footer__link">{{ _('Оферта') }}</a>
+      <a href="{{ url_for('main.privacy') }}" class="iprm-footer__link">{{ _('Конфіденційність') }}</a>
+      <a href="{{ url_for('main.refund') }}" class="iprm-footer__link">{{ _('Повернення') }}</a>
+      <a href="{{ url_for('main.disclaimer') }}" class="iprm-footer__link">{{ _('Дисклеймер') }}</a>
       <a href="{{ url_for('main.cookies') }}" class="iprm-footer__link">Cookie</a>
-      <a href="{{ url_for('main.contact') }}" class="iprm-footer__link">Контакти</a>
-      <a href="{{ url_for('main.sitemap_page') }}" class="iprm-footer__link">Карта сайту</a>
+      <a href="{{ url_for('main.contact') }}" class="iprm-footer__link">{{ _('Контакти') }}</a>
+      <a href="{{ url_for('main.sitemap_page') }}" class="iprm-footer__link">{{ _('Карта сайту') }}</a>
     </div>
-    <span class="iprm-footer__copy">&copy; 2026 ІПРМ</span>
+    <span class="iprm-footer__copy">&copy; 2026 {{ _('ІПРМ') }}</span>
     {% if recaptcha and recaptcha.is_active %}
     <small class="iprm-footer__legal">
-      Цей сайт захищено reCAPTCHA, застосовуються
-      <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a> і
-      <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> Google.
+      {% trans %}Цей сайт захищено reCAPTCHA, застосовуються <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a> і <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms of Service</a> Google.{% endtrans %}
     </small>
     {% endif %}
   </div>

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Доступ заборонено | ІПРМ{% endblock %}
+{% block title %}{{ _('Доступ заборонено | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block content %}
@@ -8,10 +8,10 @@
     <div class="iprm-error-page__image">
       <img src="{{ url_for('static', filename='images/error-pages/403.webp') }}" alt="403" width="280" height="280">
     </div>
-    <h1 class="iprm-error-page__title">Ця зона має <span class="apple-gradient-text">обмежений доступ</span></h1>
-    <p class="iprm-error-page__subtitle">У вас немає дозволу для перегляду цієї сторінки</p>
+    <h1 class="iprm-error-page__title">{% trans %}Ця зона має <span class="apple-gradient-text">обмежений доступ</span>{% endtrans %}</h1>
+    <p class="iprm-error-page__subtitle">{{ _('У вас немає дозволу для перегляду цієї сторінки') }}</p>
     <nav class="iprm-error-page__actions">
-      <a href="{{ url_for('main.index') }}" class="apple-btn apple-btn--primary">На головну</a>
+      <a href="{{ url_for('main.index') }}" class="apple-btn apple-btn--primary">{{ _('На головну') }}</a>
     </nav>
   </div>
 {% endblock %}

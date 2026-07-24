@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}Тренери інституту | ІПРМ{% endblock %}
-{% block meta_description %}Висококваліфіковані тренери Інституту Плазмотерапії та Регенеративної Медицини. Досвідчені практикуючі лікарі.{% endblock %}
+{% block title %}{{ _('Тренери інституту | ІПРМ') }}{% endblock %}
+{% block meta_description %}{{ _('Висококваліфіковані тренери Інституту Плазмотерапії та Регенеративної Медицини. Досвідчені практикуючі лікарі.') }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}?v={{ assets_version }}">
@@ -28,8 +28,8 @@
   <div class="iprm-hero-wrap">
     <section class="iprm-hero" aria-label="Hero">
       <div class="iprm-hero__content">
-        <h1 class="iprm-hero__title">Тренери<br><span class="apple-gradient-text">інституту</span></h1>
-        <p class="iprm-hero__subtitle">Висококваліфіковані спеціалісти з багаторічним досвідом у плазмотерапії та регенеративній медицині</p>
+        <h1 class="iprm-hero__title">{{ _('Тренери<br><span class="apple-gradient-text">інституту</span>') }}</h1>
+        <p class="iprm-hero__subtitle">{{ _('Висококваліфіковані спеціалісти з багаторічним досвідом у плазмотерапії та регенеративній медицині') }}</p>
       </div>
     </section>
   </div>
@@ -37,8 +37,8 @@
   <!-- ===== TRAINERS LIST ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="trainers-title">
     <div class="iprm-section__inner">
-      <h2 id="trainers-title" class="iprm-section__title">Наші <span class="apple-gradient-text">тренери</span></h2>
-      <p class="iprm-section__subtitle">Фахівці, які проводять курси після дипломної освіти</p>
+      <h2 id="trainers-title" class="iprm-section__title">{{ _('Наші <span class="apple-gradient-text">тренери</span>') }}</h2>
+      <p class="iprm-section__subtitle">{{ _('Фахівці, які проводять курси після дипломної освіти') }}</p>
 
       <div class="iprm-trainer-cards">
         {% if trainers %}
@@ -55,14 +55,14 @@
               <p class="iprm-trainer-card__role">{{ trainer.role }}</p>
             {% endif %}
             {% if trainer.experience_years %}
-              <span class="iprm-tag iprm-tag--accent">{{ trainer.experience_years }} р. досвіду</span>
+              <span class="iprm-tag iprm-tag--accent">{{ trainer.experience_years }} {{ _('р. досвіду') }}</span>
             {% endif %}
           </div>
         </a>
           {% endfor %}
         {% else %}
         <div class="iprm-empty-state iprm-empty-state--full">
-          <p>Інформація про тренерів скоро з'явиться</p>
+          <p>{{ _("Інформація про тренерів скоро з'явиться") }}</p>
         </div>
         {% endif %}
       </div>
@@ -72,26 +72,26 @@
   <!-- ===== WHY US ===== -->
   <section class="iprm-section" aria-labelledby="trainers-why-us-title">
     <div class="iprm-section__inner">
-      <h2 id="trainers-why-us-title" class="iprm-section__title">Чому варто навчатися саме <span class="apple-gradient-text">у нас</span></h2>
+      <h2 id="trainers-why-us-title" class="iprm-section__title">{{ _('Чому варто навчатися саме <span class="apple-gradient-text">у нас</span>') }}</h2>
       <div class="apple-features-grid">
         <div class="apple-feature-card apple-reveal">
           <img class="apple-feature-card__icon" src="{{ url_for('static', filename='images/trainer/practicing-doctors.webp') }}" alt="" width="80" height="80" loading="lazy">
-          <h3>Практикуючі лікарі</h3>
-          <p>Тренери з клінічним досвідом у плазмотерапії та регенеративній медицині.</p>
+          <h3>{{ _('Практикуючі лікарі') }}</h3>
+          <p>{{ _('Тренери з клінічним досвідом у плазмотерапії та регенеративній медицині.') }}</p>
         </div>
         <div class="apple-feature-card apple-reveal">
           <img class="apple-feature-card__icon" src="{{ url_for('static', filename='images/trainer/author-methods.webp') }}" alt="" width="80" height="80" loading="lazy">
-          <h3>Авторські методики</h3>
-          <p>Протоколи, підтверджені результатами клінічних досліджень.</p>
+          <h3>{{ _('Авторські методики') }}</h3>
+          <p>{{ _('Протоколи, підтверджені результатами клінічних досліджень.') }}</p>
         </div>
         <div class="apple-feature-card apple-reveal">
           <img class="apple-feature-card__icon" src="{{ url_for('static', filename='images/trainer/individual.webp') }}" alt="" width="80" height="80" loading="lazy">
-          <h3>Індивідуальний підхід</h3>
-          <p>Супровід кожного слухача від початку до отримання сертифікату.</p>
+          <h3>{{ _('Індивідуальний підхід') }}</h3>
+          <p>{{ _('Супровід кожного слухача від початку до отримання сертифікату.') }}</p>
         </div>
       </div>
       <div class="apple-section-cta">
-        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Обрати курс</a>
+        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">{{ _('Обрати курс') }}</a>
       </div>
     </div>
   </section>

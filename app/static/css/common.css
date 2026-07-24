@@ -316,6 +316,34 @@ a {
   align-items: center;
 }
 
+/* Перемикач мов (partials/lang_switcher.html) */
+.lang-switcher {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.lang-switcher__item {
+  padding: 4px 8px;
+  border-radius: var(--iprm-radius-pill);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--apple-gray-dark);
+  text-decoration: none;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.lang-switcher__item:hover {
+  color: var(--iprm-nav-active);
+}
+
+.lang-switcher__item--active {
+  color: var(--apple-black);
+  background-color: rgba(0, 0, 0, 0.06);
+  cursor: default;
+}
+
 /* Індикатор "дані для сертифіката не заповнені" біля імені користувача.
    Клік веде на анкету; тултіп -- чистий CSS (hover/focus), без tooltips.js,
    бо той перехоплює клік і зламав би навігацію. */
@@ -1587,6 +1615,17 @@ select.badge-select:disabled {
     margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid var(--iprm-border);
+  }
+
+  /* Перемикач мов у мобільному меню -- горизонтальний ряд */
+  .iprm-nav__mobile-account .lang-switcher {
+    gap: 8px;
+    padding: 4px 0 8px;
+  }
+
+  .iprm-nav__mobile-account .lang-switcher__item {
+    font-size: 0.9375rem;
+    padding: 6px 12px;
   }
 
   .iprm-nav__mobile-link {

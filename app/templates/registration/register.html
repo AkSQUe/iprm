@@ -2,7 +2,7 @@
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 {% from 'partials/_location_badge.html' import location_badge %}
 
-{% block title %}Реєстрація на курс | ІПРМ{% endblock %}
+{% block title %}{{ _('Реєстрація на курс | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
@@ -14,21 +14,21 @@
 {% block content %}
 <div class="apple-page reg-layout">
 
-  <h1 class="reg-confirmation__title">Реєстрація на курс</h1>
+  <h1 class="reg-confirmation__title">{{ _('Реєстрація на курс') }}</h1>
 
   {# ===== 3-крокова смуга прогресу ===== #}
-  <ol class="reg-steps" aria-label="Процес реєстрації">
+  <ol class="reg-steps" aria-label="{{ _('Процес реєстрації') }}">
     <li class="reg-steps__item reg-steps__item--current">
       <span class="reg-steps__num">1</span>
-      <span class="reg-steps__label">Заповніть форму</span>
+      <span class="reg-steps__label">{{ _('Заповніть форму') }}</span>
     </li>
     <li class="reg-steps__item">
       <span class="reg-steps__num">2</span>
-      <span class="reg-steps__label">Оплатіть участь</span>
+      <span class="reg-steps__label">{{ _('Оплатіть участь') }}</span>
     </li>
     <li class="reg-steps__item">
       <span class="reg-steps__num">3</span>
-      <span class="reg-steps__label">Отримайте підтвердження</span>
+      <span class="reg-steps__label">{{ _('Отримайте підтвердження') }}</span>
     </li>
   </ol>
 
@@ -42,17 +42,17 @@
     </div>
     <div class="reg-event-card__meta">
       {% if event.start_date %}
-        <div>Дата: <strong>{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</strong></div>
+        <div>{{ _('Дата:') }} <strong>{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</strong></div>
       {% endif %}
       {% if tariffs %}
-        <div>Вартість: <strong data-tariff-price>{% if selected_tariff %}{{ selected_tariff.price | int }}{% else %}від {{ event.price | int }}{% endif %} &#8372;</strong></div>
+        <div>{{ _('Вартість:') }} <strong data-tariff-price>{% if selected_tariff %}{{ selected_tariff.price | int }}{% else %}{{ _('від') }} {{ event.price | int }}{% endif %} &#8372;</strong></div>
       {% elif event.price and event.price > 0 %}
-        <div>Вартість: <strong>{{ event.price | int }} &#8372;</strong></div>
+        <div>{{ _('Вартість:') }} <strong>{{ event.price | int }} &#8372;</strong></div>
       {% else %}
-        <div>Вартість: <strong>Безкоштовно</strong></div>
+        <div>{{ _('Вартість:') }} <strong>{{ _('Безкоштовно') }}</strong></div>
       {% endif %}
       {% if event.cpd_points %}
-        <div>БПР: <strong>{{ event.cpd_points }} {{ event.cpd_points | uk_plural('бал', 'бали', 'балів') }}</strong></div>
+        <div>{{ _('БПР:') }} <strong>{{ event.cpd_points }} {{ event.cpd_points | uk_plural('бал', 'бали', 'балів') }}</strong></div>
       {% endif %}
     </div>
   </div>
@@ -63,19 +63,21 @@
     <svg class="reg-location-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
     <div class="reg-location-callout__body">
       <p class="reg-location-callout__title">
-        Захід проходить <strong>ОФЛАЙН</strong>{% if event.location %} у місті <strong>{{ event.location }}</strong>{% endif %}
+        {% trans %}Захід проходить <strong>ОФЛАЙН</strong>{% endtrans %}{% if event.location %} {% trans city=event.location %}у місті <strong>{{ city }}</strong>{% endtrans %}{% endif %}
       </p>
       <p class="reg-location-callout__text">
-        Це очний захід — потрібна особиста присутність{% if event.location %} у м. {{ event.location }}{% endif %}.
-        Переконайтесь, що зможете прибути у вказану дату.
+        {{ _('Це очний захід — потрібна особиста присутність') }}{% if event.location %} {% trans city=event.location %}у м. {{ city }}{% endtrans %}{% endif %}.
+        {{ _('Переконайтесь, що зможете прибути у вказану дату.') }}
       </p>
     </div>
   </aside>
   {% endif %}
 
   <p class="reg-attention">
+    {% trans trimmed %}
     <strong>Будьте уважні!</strong> Одна реєстрація — одне підключення.
     Будь ласка, вказуйте контактні дані саме учасника заходу.
+    {% endtrans %}
   </p>
 
   {# МОЗ-анкета (№725 п.13) винесена за рамки оплати: заповнюється в
@@ -84,10 +86,12 @@
   <aside class="reg-moh-notice" role="note">
     <div class="reg-moh-notice__icon" aria-hidden="true">i</div>
     <p>
+      {% trans trimmed %}
       Реєстрація займе хвилину — лише базові дані. Анкету для
       <strong>сертифіката з балами БПР</strong> (вимоги МОЗ №725, п. 13)
       ви заповните пізніше в <strong>особистому кабінеті</strong> —
       ми нагадаємо.
+      {% endtrans %}
     </p>
   </aside>
   {% endif %}
@@ -103,10 +107,10 @@
     {% if tariffs %}
     <div class="form-section reg-form-section">
       <h3 class="form-section__title reg-form-section__title">
-        Тариф участі <span class="required">*</span>
-        <span class="iprm-tooltip-trigger" data-tooltip="Оберіть глибину участі — від базового формату до менторського супроводу. Сума до сплати залежить від тарифу.">i</span>
+        {{ _('Тариф участі') }} <span class="required">*</span>
+        <span class="iprm-tooltip-trigger" data-tooltip="{{ _('Оберіть глибину участі — від базового формату до менторського супроводу. Сума до сплати залежить від тарифу.') }}">i</span>
       </h3>
-      <div class="reg-tariffs" data-required-group="radio" data-hint="Оберіть тариф участі">
+      <div class="reg-tariffs" data-required-group="radio" data-hint="{{ _('Оберіть тариф участі') }}">
         {% for tariff in tariffs %}
         <label class="reg-tariff">
           <input type="radio" name="tariff_id" value="{{ tariff.id }}" data-tariff-radio data-price="{{ tariff.price | int }}"
@@ -130,24 +134,24 @@
 
     {# ----- Базові дані учасника ----- #}
     <div class="form-section reg-form-section">
-      <h3 class="form-section__title reg-form-section__title">Дані учасника</h3>
+      <h3 class="form-section__title reg-form-section__title">{{ _('Дані учасника') }}</h3>
       <div class="form-section__grid">
         <div class="form-group">
-          <label for="last_name">Прізвище <span class="required">*</span></label>
+          <label for="last_name">{{ _('Прізвище') }} <span class="required">*</span></label>
           {{ form.last_name(class="form-input" + (" is-invalid" if form.last_name.errors else ""), id="last_name", required=true) }}
           {% for e in form.last_name.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group">
-          <label for="first_name">Ім'я <span class="required">*</span></label>
+          <label for="first_name">{{ _("Ім'я") }} <span class="required">*</span></label>
           {{ form.first_name(class="form-input" + (" is-invalid" if form.first_name.errors else ""), id="first_name", required=true) }}
           {% for e in form.first_name.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group">
           <label for="phone">
-            Телефон <span class="required">*</span>
-            <span class="iprm-tooltip-trigger" data-tooltip="Вкажіть номер саме учасника заходу — на нього ми надішлемо нагадування та деталі підключення.">i</span>
+            {{ _('Телефон') }} <span class="required">*</span>
+            <span class="iprm-tooltip-trigger" data-tooltip="{{ _('Вкажіть номер саме учасника заходу — на нього ми надішлемо нагадування та деталі підключення.') }}">i</span>
           </label>
           {{ form.phone(class="form-input" + (" is-invalid" if form.phone.errors else ""), id="phone", required=true) }}
           {% for e in form.phone.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
@@ -159,22 +163,22 @@
     {% if event.event_format != 'online' %}
     <div class="form-consent reg-location-confirm">
       <p class="reg-location-confirm__title">
-        Підтвердження участі в очному заході{% if event.location %} (м. {{ event.location }}){% endif %}
+        {{ _('Підтвердження участі в очному заході') }}{% if event.location %} {% trans city=event.location %}(м. {{ city }}){% endtrans %}{% endif %}
       </p>
       <div class="form-checkbox">
         <input type="checkbox" id="confirm_offline" name="confirm_offline" required
-               data-hint="Підтвердіть, що розумієте офлайн-формат">
+               data-hint="{{ _('Підтвердіть, що розумієте офлайн-формат') }}">
         <label for="confirm_offline">
-          Я розумію, що це <strong>ОЧНИЙ (офлайн)</strong> захід і потребує особистої присутності.
+          {% trans %}Я розумію, що це <strong>ОЧНИЙ (офлайн)</strong> захід і потребує особистої присутності.{% endtrans %}
           <span class="required">*</span>
         </label>
       </div>
       <div class="form-checkbox">
         <input type="checkbox" id="confirm_city" name="confirm_city" required
-               data-hint="Підтвердіть, що зможете прибути у вказане місто">
+               data-hint="{{ _('Підтвердіть, що зможете прибути у вказане місто') }}">
         <label for="confirm_city">
-          Підтверджую, що зможу прибути{% if event.location %} до <strong>м. {{ event.location }}</strong>{% else %} до місця проведення{% endif %}
-          у дату заходу{% if event.start_date %} — <strong>{{ event.start_date.strftime('%d.%m.%Y') }}</strong>{% endif %}.
+          {{ _('Підтверджую, що зможу прибути') }}{% if event.location %} {% trans city=event.location %}до <strong>м. {{ city }}</strong>{% endtrans %}{% else %} {{ _('до місця проведення') }}{% endif %}
+          {{ _('у дату заходу') }}{% if event.start_date %} — <strong>{{ event.start_date.strftime('%d.%m.%Y') }}</strong>{% endif %}.
           <span class="required">*</span>
         </label>
       </div>
@@ -184,13 +188,15 @@
     {# ----- Згоди ----- #}
     <div class="form-consent">
       <div class="form-checkbox">
-        {{ form.consent_data(id="consent_data", required=true, **{'data-hint': 'Без згоди на обробку даних реєстрація неможлива'}) }}
+        {{ form.consent_data(id="consent_data", required=true, **{'data-hint': _('Без згоди на обробку даних реєстрація неможлива')}) }}
         <label for="consent_data">
+          {% trans trimmed privacy_url=url_for('main.privacy') %}
           Я надаю згоду на обробку моїх персональних даних (ПІБ, дата народження,
           електронна пошта, номер телефону, освіта, спеціалізація, місце роботи)
           з метою оформлення та виконання реєстрації на захід, а також обробки
           платежу через платіжну систему LiqPay. Ознайомлений(а) з
-          <a href="{{ url_for('main.privacy') }}" target="_blank" rel="noopener noreferrer">Політикою конфіденційності</a>.
+          <a href="{{ privacy_url }}" target="_blank" rel="noopener noreferrer">Політикою конфіденційності</a>.
+          {% endtrans %}
           <span class="required">*</span>
         </label>
       </div>
@@ -201,10 +207,12 @@
       <div class="form-checkbox">
         {{ form.consent_marketing(id="consent_marketing") }}
         <label for="consent_marketing">
+          {% trans trimmed company=site_settings.company_legal_name %}
           Я надаю згоду на отримання інформації про акції, спеціальні пропозиції
-          та новини від {{ site_settings.company_legal_name }} на вказану
+          та новини від {{ company }} на вказану
           електронну адресу та/або номер телефону. Цю згоду можна відкликати
           в будь-який момент.
+          {% endtrans %}
         </label>
       </div>
     </div>
@@ -214,8 +222,8 @@
        завантаження рахунка. Дублювати вибір на анкеті немає сенсу. #}
 
     {# ----- Payment-логотипи + submit ----- #}
-    <div class="reg-payment-logos" aria-label="Безпечна оплата через LiqPay (Visa, Mastercard, Google Pay, Apple Pay)">
-      <span class="reg-payment-logos__label">Безпечна оплата:</span>
+    <div class="reg-payment-logos" aria-label="{{ _('Безпечна оплата через LiqPay (Visa, Mastercard, Google Pay, Apple Pay)') }}">
+      <span class="reg-payment-logos__label">{{ _('Безпечна оплата:') }}</span>
       <span class="reg-payment-logos__brand reg-payment-logos__brand--visa">VISA</span>
       <span class="reg-payment-logos__brand reg-payment-logos__brand--mc">Mastercard</span>
       <span class="reg-payment-logos__brand">Google Pay</span>
@@ -223,22 +231,22 @@
     </div>
 
     <div class="reg-actions">
-      <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="apple-btn apple-btn--secondary">Назад</a>
+      <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="apple-btn apple-btn--secondary">{{ _('Назад') }}</a>
       <button type="submit" class="apple-btn apple-btn--primary">
         {% if tariffs %}
-          Зареєструватися (<span data-tariff-price>{% if selected_tariff %}{{ selected_tariff.price | int }}{% else %}від {{ event.price | int }}{% endif %} &#8372;</span>)
+          {{ _('Зареєструватися') }} (<span data-tariff-price>{% if selected_tariff %}{{ selected_tariff.price | int }}{% else %}{{ _('від') }} {{ event.price | int }}{% endif %} &#8372;</span>)
         {% elif event.price and event.price > 0 %}
-          Зареєструватися ({{ event.price | int }} &#8372;)
+          {{ _('Зареєструватися') }} ({{ event.price | int }} &#8372;)
         {% else %}
-          Зареєструватися
+          {{ _('Зареєструватися') }}
         {% endif %}
       </button>
     </div>
   </form>
 
   <p class="reg-contact-cta">
-    Маєте питання?
-    <a href="{{ url_for('main.contact') }}">Зворотній зв'язок</a>
+    {{ _('Маєте питання?') }}
+    <a href="{{ url_for('main.contact') }}">{{ _("Зворотній зв'язок") }}</a>
   </p>
 
 </div>

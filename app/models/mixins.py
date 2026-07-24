@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from app.extensions import db
+from app.i18n import DEFAULT_LANGUAGE, PREFIXED_LANGUAGES
 
 
 def utcnow():
@@ -14,3 +15,55 @@ BigIntPK = db.BigInteger().with_variant(db.Integer, 'sqlite')
 class TimestampMixin:
     created_at = db.Column(db.DateTime(timezone=True), default=utcnow)
     updated_at = db.Column(db.DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
+def _current_language():
+    try:
+        from flask_babel import get_locale
+        return str(get_locale() or DEFAULT_LANGUAGE)
+    except Exception:
+        # Поза app-контекстом (скрипти, частина фонових задач) -- дефолт.
+        return DEFAULT_LANGUAGE
+
+
+class TranslatableMixin:
+    """Переклади контентних полів моделі (ru/en; українська -- канонічні
+    колонки, тому окремого бакета "uk" немає).
+
+    translations -- JSON {"ru": {<поле>: <значення>, ...}, "en": {...}}.
+    Значення зберігають структуру оригінального поля (рядок або JSON --
+    faq, регалії, блоки блогу). Перелік перекладних полів модель оголошує
+    у __translatable__.
+
+    Читання: obj.t('title') -- значення активної локалі з фолбеком на
+    українську (відсутні/порожні переклади не показують діри в UI).
+    Запис: set_translation(...) -- присвоює НОВИЙ dict, щоб SQLAlchemy
+    зафіксував зміну JSON-колонки без MutableDict.
+    """
+    __translatable__ = ()
+
+    translations = db.Column(db.JSON)
+
+    def t(self, field, lang=None):
+        if lang is None:
+            lang = _current_language()
+        if lang != DEFAULT_LANGUAGE and field in self.__translatable__:
+            value = ((self.translations or {}).get(lang) or {}).get(field)
+            if value not in (None, '', [], {}):
+                return value
+        return getattr(self, field)
+
+    def set_translation(self, lang, field, value):
+        if lang not in PREFIXED_LANGUAGES:
+            raise ValueError(f'lang має бути одною з {PREFIXED_LANGUAGES}')
+        if field not in self.__translatable__:
+            raise ValueError(
+                f'{field} не входить у __translatable__ {type(self).__name__}'
+            )
+        data = {k: dict(v or {}) for k, v in (self.translations or {}).items()}
+        bucket = data.setdefault(lang, {})
+        if value in (None, '', [], {}):
+            bucket.pop(field, None)
+        else:
+            bucket[field] = value
+        self.translations = data

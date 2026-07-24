@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from 'partials/_location_badge.html' import location_badge %}
 
-{% block title %}Реєстрація: {{ event.title }} | ІПРМ{% endblock %}
+{% block title %}{% trans event_title=event.title %}Реєстрація: {{ event_title }} | ІПРМ{% endtrans %}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
@@ -19,18 +19,18 @@
   {# ===== 3-step progress (другий крок активний, поки не оплачено) ===== #}
   {% set _is_paid = reg.payment_status == 'paid' %}
   {% set _needs_pay = reg.status == 'pending' and reg.payment_status == 'unpaid' and reg.payment_amount and reg.payment_amount > 0 %}
-  <ol class="reg-steps" aria-label="Процес реєстрації">
+  <ol class="reg-steps" aria-label="{{ _('Процес реєстрації') }}">
     <li class="reg-steps__item reg-steps__item--done">
       <span class="reg-steps__num">1</span>
-      <span class="reg-steps__label">Заповніть форму</span>
+      <span class="reg-steps__label">{{ _('Заповніть форму') }}</span>
     </li>
     <li class="reg-steps__item {% if _needs_pay %}reg-steps__item--current{% elif _is_paid %}reg-steps__item--done{% endif %}">
       <span class="reg-steps__num">2</span>
-      <span class="reg-steps__label">Оплатіть участь</span>
+      <span class="reg-steps__label">{{ _('Оплатіть участь') }}</span>
     </li>
     <li class="reg-steps__item {% if _is_paid or reg.status == 'confirmed' %}reg-steps__item--current{% endif %}">
       <span class="reg-steps__num">3</span>
-      <span class="reg-steps__label">Отримайте підтвердження</span>
+      <span class="reg-steps__label">{{ _('Отримайте підтвердження') }}</span>
     </li>
   </ol>
 
@@ -39,20 +39,20 @@
     <div class="reg-success-banner">
       <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>
       <div class="reg-success-banner__body">
-        <p class="reg-success-banner__title">Заявка на участь успішно подана.</p>
-        <p class="reg-success-banner__subtitle">Другим кроком реєстрації необхідно оплатити участь.</p>
-        <p class="reg-success-banner__amount">Сума до сплати: <strong>{{ reg.payment_amount | int }} грн.</strong>{% if reg.tariff %} <span class="reg-success-banner__tariff">(тариф «{{ reg.tariff.name }}»)</span>{% endif %}</p>
+        <p class="reg-success-banner__title">{{ _('Заявка на участь успішно подана.') }}</p>
+        <p class="reg-success-banner__subtitle">{{ _('Другим кроком реєстрації необхідно оплатити участь.') }}</p>
+        <p class="reg-success-banner__amount">{% trans amount=reg.payment_amount | int %}Сума до сплати: <strong>{{ amount }} грн.</strong>{% endtrans %}{% if reg.tariff %} <span class="reg-success-banner__tariff">{% trans tariff_name=reg.tariff.name %}(тариф «{{ tariff_name }}»){% endtrans %}</span>{% endif %}</p>
       </div>
     </div>
   {% elif reg.status == 'confirmed' %}
     <div class="reg-success-banner reg-success-banner--confirmed">
       <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>
       <div class="reg-success-banner__body">
-        <p class="reg-success-banner__title">Реєстрацію підтверджено</p>
-        <p class="reg-success-banner__subtitle">Ви зареєстровані на курс. Деталі надіслано на email.</p>
+        <p class="reg-success-banner__title">{{ _('Реєстрацію підтверджено') }}</p>
+        <p class="reg-success-banner__subtitle">{{ _('Ви зареєстровані на курс. Деталі надіслано на email.') }}</p>
         {% if reg.place_number %}
         <p class="reg-success-banner__amount">
-          Ваш номер місця: <strong>№{{ reg.place_number }}</strong>
+          {% trans place=reg.place_number %}Ваш номер місця: <strong>№{{ place }}</strong>{% endtrans %}
         </p>
         {% endif %}
       </div>
@@ -61,16 +61,16 @@
     <div class="reg-success-banner reg-success-banner--cancelled">
       <div class="reg-success-banner__icon" aria-hidden="true">&#10005;</div>
       <div class="reg-success-banner__body">
-        <p class="reg-success-banner__title">Реєстрацію скасовано</p>
+        <p class="reg-success-banner__title">{{ _('Реєстрацію скасовано') }}</p>
       </div>
     </div>
   {% elif reg.status == 'completed' %}
     <div class="reg-success-banner reg-success-banner--confirmed">
       <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>
       <div class="reg-success-banner__body">
-        <p class="reg-success-banner__title">Захід завершено</p>
+        <p class="reg-success-banner__title">{{ _('Захід завершено') }}</p>
         {% if reg.attended and reg.cpd_points_awarded %}
-        <p class="reg-success-banner__subtitle">Вам нараховано {{ reg.cpd_points_awarded }} {{ reg.cpd_points_awarded | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}.</p>
+        <p class="reg-success-banner__subtitle">{{ _('Вам нараховано') }} {{ reg.cpd_points_awarded }} {{ reg.cpd_points_awarded | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}.</p>
         {% endif %}
       </div>
     </div>
@@ -81,13 +81,14 @@
   <aside class="reg-certdata-reminder reg-certdata-reminder--email" role="note">
     <div class="reg-certdata-reminder__icon" aria-hidden="true">@</div>
     <div class="reg-certdata-reminder__body">
-      <p class="reg-certdata-reminder__title">Підтвердіть ваш email</p>
+      <p class="reg-certdata-reminder__title">{{ _('Підтвердіть ваш email') }}</p>
       <p class="reg-certdata-reminder__text">
-        На {{ current_user.email }} надіслано лист з посиланням для
-        підтвердження{% if reg.payment_status == 'paid' %} — ми продублювали його після оплати{% endif %}.
-        Підтвердження потрібне для доступу до матеріалів і сповіщень про захід.
+        {% trans email=current_user.email %}На {{ email }} надіслано лист з посиланням для підтвердження{% endtrans %}{% if reg.payment_status == 'paid' %} {{ _('— ми продублювали його після оплати') }}{% endif %}.
+        {{ _('Підтвердження потрібне для доступу до матеріалів і сповіщень про захід.') }}
+        {% trans trimmed account_url=url_for('auth.account') %}
         Не знайшли лист? Перевірте «Спам» або надішліть повторно з
-        <a href="{{ url_for('auth.account') }}">особистого кабінету</a>.
+        <a href="{{ account_url }}">особистого кабінету</a>.
+        {% endtrans %}
       </p>
     </div>
   </aside>
@@ -98,13 +99,11 @@
   <aside class="reg-certdata-reminder" role="note">
     <div class="reg-certdata-reminder__icon" aria-hidden="true">!</div>
     <div class="reg-certdata-reminder__body">
-      <p class="reg-certdata-reminder__title">Заповніть дані для сертифіката</p>
+      <p class="reg-certdata-reminder__title">{{ _('Заповніть дані для сертифіката') }}</p>
       <p class="reg-certdata-reminder__text">
-        Щоб отримати сертифікат з балами БПР після курсу, заповніть коротку
-        анкету (вимоги МОЗ №725, п. 13). Це займе 2–3 хвилини і діє для всіх
-        ваших курсів.
+        {{ _('Щоб отримати сертифікат з балами БПР після курсу, заповніть коротку анкету (вимоги МОЗ №725, п. 13). Це займе 2–3 хвилини і діє для всіх ваших курсів.') }}
       </p>
-      <a href="{{ url_for('auth.certificate_data') }}" class="apple-btn apple-btn--primary reg-certdata-reminder__btn">Заповнити анкету</a>
+      <a href="{{ url_for('auth.certificate_data') }}" class="apple-btn apple-btn--primary reg-certdata-reminder__btn">{{ _('Заповнити анкету') }}</a>
     </div>
   </aside>
   {% endif %}
@@ -113,12 +112,14 @@
   {% if _needs_pay %}
     {% if reg.payment_method == 'invoice' %}
     <p class="reg-attention">
+      {% trans trimmed %}
       Ви обрали спосіб оплати: <strong>Оплата за рахунком</strong>.
       Можна скористатись будь-яким із варіантів нижче.
+      {% endtrans %}
     </p>
     {% else %}
     <p class="reg-attention">
-      Оберіть зручний спосіб оплати — онлайн через LiqPay або за рахунком:
+      {{ _('Оберіть зручний спосіб оплати — онлайн через LiqPay або за рахунком:') }}
     </p>
     {% endif %}
     {% with chosen=reg.payment_method, invoice_url=(invoice_url if invoice_available else None) %}
@@ -126,7 +127,7 @@
     {% endwith %}
   {% elif reg.payment_status == 'pending' %}
   <div class="reg-pay-cta reg-pay-cta--processing">
-    <p>Оплата обробляється. Оновіть сторінку через декілька хвилин.</p>
+    <p>{{ _('Оплата обробляється. Оновіть сторінку через декілька хвилин.') }}</p>
   </div>
   {% endif %}
 
@@ -134,35 +135,35 @@
   <div class="reg-status-card">
     {% if reg.place_number %}
     <div class="reg-status-card__row">
-      <span class="reg-status-card__label">Номер місця</span>
+      <span class="reg-status-card__label">{{ _('Номер місця') }}</span>
       <span class="reg-status-card__value"><strong>№{{ reg.place_number }}</strong></span>
     </div>
     {% endif %}
     <div class="reg-status-card__row">
-      <span class="reg-status-card__label">Курс</span>
+      <span class="reg-status-card__label">{{ _('Курс') }}</span>
       <span class="reg-status-card__value">{{ event.title }}</span>
     </div>
     {% if event.event_format %}
     <div class="reg-status-card__row">
-      <span class="reg-status-card__label">{% if event.event_format == 'online' %}Формат{% else %}Місце{% endif %}</span>
+      <span class="reg-status-card__label">{% if event.event_format == 'online' %}{{ _('Формат') }}{% else %}{{ _('Місце') }}{% endif %}</span>
       <span class="reg-status-card__value">{{ location_badge(event.event_format, event.location) }}</span>
     </div>
     {% endif %}
     {% if event.start_date %}
     <div class="reg-status-card__row">
-      <span class="reg-status-card__label">Дата</span>
+      <span class="reg-status-card__label">{{ _('Дата') }}</span>
       <span class="reg-status-card__value">{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</span>
     </div>
     {% endif %}
     <div class="reg-status-card__row">
-      <span class="reg-status-card__label">Статус реєстрації</span>
+      <span class="reg-status-card__label">{{ _('Статус реєстрації') }}</span>
       <span class="reg-status-card__value">
         <span class="badge badge--{{ reg.status }}">{{ reg.status_label }}</span>
       </span>
     </div>
     {% if reg.payment_amount and reg.payment_amount > 0 %}
     <div class="reg-status-card__row">
-      <span class="reg-status-card__label">Оплата</span>
+      <span class="reg-status-card__label">{{ _('Оплата') }}</span>
       <span class="reg-status-card__value">
         {{ reg.payment_amount | int }} &#8372; &mdash;
         <span class="badge badge--{{ 'active' if reg.payment_status == 'paid' else 'draft' }}">{{ reg.payment_status_label }}</span>
@@ -171,25 +172,25 @@
     {% endif %}
     {% if event.cpd_points %}
     <div class="reg-status-card__row">
-      <span class="reg-status-card__label">Балів БПР</span>
+      <span class="reg-status-card__label">{{ _('Балів БПР') }}</span>
       <span class="reg-status-card__value">
         {% if reg.cpd_points_awarded %}
-          {{ reg.cpd_points_awarded }} (нараховано)
+          {{ reg.cpd_points_awarded }} {{ _('(нараховано)') }}
         {% else %}
-          {{ event.cpd_points }} (після завершення)
+          {{ event.cpd_points }} {{ _('(після завершення)') }}
         {% endif %}
       </span>
     </div>
     {% endif %}
     <div class="reg-status-card__row">
-      <span class="reg-status-card__label">Дата реєстрації</span>
+      <span class="reg-status-card__label">{{ _('Дата реєстрації') }}</span>
       <span class="reg-status-card__value">{{ reg.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
     </div>
   </div>
 
   <div class="reg-actions reg-actions--center">
-    <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="apple-btn apple-btn--secondary">Повернутися до курсу</a>
-    <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--secondary">Зворотній зв'язок</a>
+    <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="apple-btn apple-btn--secondary">{{ _('Повернутися до курсу') }}</a>
+    <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--secondary">{{ _("Зворотній зв'язок") }}</a>
   </div>
 
 </div>

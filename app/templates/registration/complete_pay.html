@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from 'partials/_location_badge.html' import location_badge %}
 
-{% block title %}Оплата участі | ІПРМ{% endblock %}
+{% block title %}{{ _('Оплата участі | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
@@ -12,20 +12,20 @@
 {% block content %}
 <div class="apple-page reg-layout">
 
-  <h1 class="reg-confirmation__title">Оплата участі</h1>
+  <h1 class="reg-confirmation__title">{{ _('Оплата участі') }}</h1>
 
-  <ol class="reg-steps" aria-label="Процес реєстрації">
+  <ol class="reg-steps" aria-label="{{ _('Процес реєстрації') }}">
     <li class="reg-steps__item reg-steps__item--done">
       <span class="reg-steps__num">&#10003;</span>
-      <span class="reg-steps__label">Анкету заповнено</span>
+      <span class="reg-steps__label">{{ _('Анкету заповнено') }}</span>
     </li>
     <li class="reg-steps__item {% if not paid %}reg-steps__item--current{% else %}reg-steps__item--done{% endif %}">
       <span class="reg-steps__num">2</span>
-      <span class="reg-steps__label">Оплатіть участь</span>
+      <span class="reg-steps__label">{{ _('Оплатіть участь') }}</span>
     </li>
     <li class="reg-steps__item {% if paid %}reg-steps__item--current{% endif %}">
       <span class="reg-steps__num">3</span>
-      <span class="reg-steps__label">Підтвердження</span>
+      <span class="reg-steps__label">{{ _('Підтвердження') }}</span>
     </li>
   </ol>
 
@@ -33,9 +33,9 @@
   <div class="reg-event-card">
     <h2 class="reg-event-card__title">{{ event.title }}</h2>
     <div class="reg-event-card__meta">
-      {% if event.start_date %}<div>Дата: <strong>{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</strong></div>{% endif %}
+      {% if event.start_date %}<div>{{ _('Дата:') }} <strong>{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</strong></div>{% endif %}
       {% if reg.payment_amount and reg.payment_amount > 0 %}
-        <div>До оплати: <strong>{{ reg.payment_amount | int }} &#8372;</strong></div>
+        <div>{{ _('До оплати:') }} <strong>{{ reg.payment_amount | int }} &#8372;</strong></div>
       {% endif %}
     </div>
   </div>
@@ -45,20 +45,20 @@
   <div class="reg-success-banner reg-success-banner--confirmed">
     <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>
     <div class="reg-success-banner__body">
-      <p class="reg-success-banner__title">Оплату отримано</p>
-      <p class="reg-success-banner__subtitle">Дякуємо! Вашу участь підтверджено.</p>
+      <p class="reg-success-banner__title">{{ _('Оплату отримано') }}</p>
+      <p class="reg-success-banner__subtitle">{{ _('Дякуємо! Вашу участь підтверджено.') }}</p>
     </div>
   </div>
   {% elif not needs_payment %}
   <div class="reg-success-banner reg-success-banner--confirmed">
     <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>
     <div class="reg-success-banner__body">
-      <p class="reg-success-banner__title">Реєстрацію збережено</p>
-      <p class="reg-success-banner__subtitle">Оплата не потрібна. Ми зв'яжемося з вами щодо деталей участі.</p>
+      <p class="reg-success-banner__title">{{ _('Реєстрацію збережено') }}</p>
+      <p class="reg-success-banner__subtitle">{{ _("Оплата не потрібна. Ми зв'яжемося з вами щодо деталей участі.") }}</p>
     </div>
   </div>
   {% else %}
-  <p class="reg-attention"><strong>Оберіть зручний спосіб оплати:</strong></p>
+  <p class="reg-attention"><strong>{{ _('Оберіть зручний спосіб оплати:') }}</strong></p>
 
   {% with chosen=reg.payment_method, invoice_url=invoice_url %}
     {% include 'registration/partials/_pay_options.html' %}

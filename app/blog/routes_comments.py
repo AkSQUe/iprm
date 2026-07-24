@@ -7,6 +7,7 @@ import logging
 
 from email_validator import EmailNotValidError, validate_email
 from flask import abort, current_app, flash, redirect, request, url_for
+from flask_babel import gettext as _
 
 from app.blog import blog_bp
 from app.extensions import db, limiter
@@ -88,7 +89,7 @@ def submit_comment(slug):
         return redirect(redirect_url + '#comments')
 
     if not verify_recaptcha(action='blog_comment'):
-        flash('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.', 'error')
+        flash(_('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.'), 'error')
         return redirect(redirect_url + '#comment-form')
 
     name = blog_service.clean_comment_name(request.form.get('name'))
@@ -96,21 +97,21 @@ def submit_comment(slug):
     email_raw = (request.form.get('email') or '').strip()
 
     if not name:
-        flash('Вкажіть імʼя', 'error')
+        flash(_('Вкажіть імʼя'), 'error')
         return redirect(redirect_url + '#comment-form')
     if not body:
-        flash('Напишіть текст коментаря', 'error')
+        flash(_('Напишіть текст коментаря'), 'error')
         return redirect(redirect_url + '#comment-form')
 
     email = None
     if email_raw:
         if len(email_raw) > _EMAIL_MAX:
-            flash('Email задовгий', 'error')
+            flash(_('Email задовгий'), 'error')
             return redirect(redirect_url + '#comment-form')
         try:
             email = validate_email(email_raw, check_deliverability=False).normalized
         except EmailNotValidError:
-            flash('Вкажіть валідний email', 'error')
+            flash(_('Вкажіть валідний email'), 'error')
             return redirect(redirect_url + '#comment-form')
 
     parent_id = _resolve_parent(post.id, request.form.get('parent_id'))
@@ -127,7 +128,7 @@ def submit_comment(slug):
     db.session.add(comment)
     try:
         db.session.commit()
-        flash('Дякуємо! Коментар надіслано на модерацію.', 'success')
+        flash(_('Дякуємо! Коментар надіслано на модерацію.'), 'success')
         # Best-effort нотифікація адміна; збій пошти не впливає на UX.
         try:
             from app.services.email_service import EmailService
@@ -137,6 +138,6 @@ def submit_comment(slug):
     except Exception:
         db.session.rollback()
         logger.exception('Failed to save blog comment for post_id=%s', post.id)
-        flash('Помилка при надсиланні. Спробуйте ще раз.', 'error')
+        flash(_('Помилка при надсиланні. Спробуйте ще раз.'), 'error')
 
     return redirect(redirect_url + '#comments')

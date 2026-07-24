@@ -1,3 +1,4 @@
+from flask_babel import lazy_gettext as _l
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, StringField, TextAreaField
 from wtforms.validators import DataRequired, Email, Length, Optional
@@ -7,20 +8,20 @@ class ContactForm(FlaskForm):
     name = StringField(
         'name',
         validators=[
-            DataRequired(message='Будь ласка, вкажіть ваше ім\'я'),
-            Length(max=100, message='Ім\'я не може перевищувати 100 символів'),
+            DataRequired(message=_l('Будь ласка, вкажіть ваше ім\'я')),
+            Length(max=100, message=_l('Ім\'я не може перевищувати 100 символів')),
         ],
         render_kw={
-            'placeholder': 'Ваше ім\'я',
+            'placeholder': _l('Ваше ім\'я'),
             'autocomplete': 'name',
         },
     )
     email = StringField(
         'email',
         validators=[
-            DataRequired(message='Будь ласка, вкажіть email'),
-            Email(message='Невірний формат email'),
-            Length(max=200, message='Email не може перевищувати 200 символів'),
+            DataRequired(message=_l('Будь ласка, вкажіть email')),
+            Email(message=_l('Невірний формат email')),
+            Length(max=200, message=_l('Email не може перевищувати 200 символів')),
         ],
         render_kw={
             'placeholder': 'email@example.com',
@@ -31,7 +32,7 @@ class ContactForm(FlaskForm):
         'phone',
         validators=[
             Optional(),
-            Length(max=20, message='Телефон не може перевищувати 20 символів'),
+            Length(max=20, message=_l('Телефон не може перевищувати 20 символів')),
         ],
         render_kw={
             'placeholder': '+380XXXXXXXXX',
@@ -42,24 +43,24 @@ class ContactForm(FlaskForm):
         'subject',
         validators=[
             Optional(),
-            Length(max=200, message='Тема не може перевищувати 200 символів'),
+            Length(max=200, message=_l('Тема не може перевищувати 200 символів')),
         ],
         render_kw={
-            'placeholder': 'Тема повідомлення',
+            'placeholder': _l('Тема повідомлення'),
         },
     )
     message = TextAreaField(
         'message',
         validators=[
-            DataRequired(message='Будь ласка, введіть повідомлення'),
+            DataRequired(message=_l('Будь ласка, введіть повідомлення')),
             Length(
                 min=10,
                 max=5000,
-                message='Повідомлення має бути від 10 до 5000 символів',
+                message=_l('Повідомлення має бути від 10 до 5000 символів'),
             ),
         ],
         render_kw={
-            'placeholder': 'Ваше повідомлення...',
+            'placeholder': _l('Ваше повідомлення...'),
             'rows': 6,
         },
     )
@@ -67,7 +68,7 @@ class ContactForm(FlaskForm):
         'consent_data',
         validators=[
             DataRequired(
-                message='Необхідно надати згоду на обробку персональних даних'
+                message=_l('Необхідно надати згоду на обробку персональних даних')
             ),
         ],
     )

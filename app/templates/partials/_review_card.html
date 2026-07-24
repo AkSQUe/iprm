@@ -1,7 +1,7 @@
 {# Картка відгуку. Очікує `review` (Review з .rating/.text/.byline).
    Спільна для Головної та сторінки курсу. #}
 <figure class="iprm-review apple-reveal">
-  <div class="iprm-review__stars" aria-label="Оцінка {{ review.rating }} з 5">{{ '★' * review.rating }}</div>
+  <div class="iprm-review__stars" aria-label="{% trans rating=review.rating %}Оцінка {{ rating }} з 5{% endtrans %}">{{ '★' * review.rating }}</div>
   <blockquote class="iprm-review__text">{{ review.text }}</blockquote>
   <figcaption class="iprm-review__author">{{ review.byline }}</figcaption>
 </figure>

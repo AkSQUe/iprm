@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Оплата успішна | ІПРМ{% endblock %}
+{% block title %}{{ _('Оплата успішна | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
@@ -11,27 +11,27 @@
 <div class="apple-page reg-layout">
 
   <div class="reg-confirmation">
-    <h1 class="reg-confirmation__title">Оплату підтверджено</h1>
-    <p class="reg-confirmation__subtitle">Дякуємо! Ваша оплата успішно оброблена.</p>
+    <h1 class="reg-confirmation__title">{{ _('Оплату підтверджено') }}</h1>
+    <p class="reg-confirmation__subtitle">{{ _('Дякуємо! Ваша оплата успішно оброблена.') }}</p>
   </div>
 
   <div class="reg-status-card">
     <div class="reg-status-card__row">
-      <span class="reg-status-card__label">Курс</span>
+      <span class="reg-status-card__label">{{ _('Курс') }}</span>
       <span class="reg-status-card__value">{{ reg.target_title or '—' }}</span>
     </div>
     {% if reg.target_start_date %}
     <div class="reg-status-card__row">
-      <span class="reg-status-card__label">Дата</span>
+      <span class="reg-status-card__label">{{ _('Дата') }}</span>
       <span class="reg-status-card__value">{{ reg.target_start_date.strftime('%d.%m.%Y %H:%M') }}</span>
     </div>
     {% endif %}
     <div class="reg-status-card__row">
-      <span class="reg-status-card__label">Сума</span>
+      <span class="reg-status-card__label">{{ _('Сума') }}</span>
       <span class="reg-status-card__value">{{ reg.payment_amount | int }} &#8372;</span>
     </div>
     <div class="reg-status-card__row">
-      <span class="reg-status-card__label">Статус</span>
+      <span class="reg-status-card__label">{{ _('Статус') }}</span>
       <span class="reg-status-card__value">
         <span class="badge badge--active">{{ reg.payment_status_label }}</span>
       </span>
@@ -40,9 +40,9 @@
 
   <div class="reg-actions reg-actions--center">
     {% if reg.target_slug %}
-    <a href="{{ url_for('courses.course_by_slug', slug=reg.target_slug) }}" class="apple-btn apple-btn--secondary">Повернутися до курсу</a>
+    <a href="{{ url_for('courses.course_by_slug', slug=reg.target_slug) }}" class="apple-btn apple-btn--secondary">{{ _('Повернутися до курсу') }}</a>
     {% else %}
-    <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary">До каталогу курсів</a>
+    <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--secondary">{{ _('До каталогу курсів') }}</a>
     {% endif %}
   </div>
 

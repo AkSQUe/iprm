@@ -1,6 +1,6 @@
-from flask import Blueprint
+from app.i18n import LocalizedBlueprint
 
-registration_bp = Blueprint('registration', __name__, url_prefix='/registration')
+registration_bp = LocalizedBlueprint('registration', __name__, url_prefix='/registration')
 
 
 @registration_bp.after_request

@@ -204,6 +204,9 @@ def copy_course_tariffs_to_instance(instance, replace=False):
             price=template.price,
             sort_order=template.sort_order,
             is_active=True,
+            # Переклади (ru/en) успадковуються від шаблону курсу, як і решта
+            # полів; подальші правки шаблону проведення не зачіпають.
+            translations=template.translations,
         ))
     return len(matching)
 

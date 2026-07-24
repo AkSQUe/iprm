@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 
-{% block title %}Обліковий запис | ІПРМ{% endblock %}
+{% block title %}{{ _('Обліковий запис | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
@@ -28,10 +28,12 @@
   <div class="account-confirm-banner account-confirm-banner--certdata">
     <div class="account-confirm-banner__inner">
       <p class="account-confirm-banner__text">
+        {% trans trimmed %}
         <strong>Заповніть дані для сертифіката (МОЗ №725)</strong> — без них ми не зможемо
         нарахувати бали БПР і видати сертифікат за ваші курси.
+        {% endtrans %}
       </p>
-      <a href="{{ url_for('auth.certificate_data') }}" class="account-confirm-banner__btn">Заповнити зараз</a>
+      <a href="{{ url_for('auth.certificate_data') }}" class="account-confirm-banner__btn">{{ _('Заповнити зараз') }}</a>
     </div>
   </div>
   {% endif %}
@@ -40,10 +42,10 @@
   {% if not current_user.email_confirmed %}
   <div class="account-confirm-banner">
     <div class="account-confirm-banner__inner">
-      <p class="account-confirm-banner__text">Підтвердіть ваш email для повного доступу до функцій сайту</p>
+      <p class="account-confirm-banner__text">{{ _('Підтвердіть ваш email для повного доступу до функцій сайту') }}</p>
       <form method="POST" action="{{ url_for('auth.resend_confirmation') }}" class="account-confirm-banner__form" data-recaptcha-action="resend_confirmation">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="account-confirm-banner__btn">Надіслати лист повторно</button>
+        <button type="submit" class="account-confirm-banner__btn">{{ _('Надіслати лист повторно') }}</button>
       </form>
     </div>
   </div>
@@ -52,7 +54,7 @@
   <!-- ===== MY COURSES ===== -->
   <section class="iprm-section apple-section-gray" aria-labelledby="my-courses-title">
     <div class="iprm-section__inner">
-      <h2 id="my-courses-title" class="iprm-section__title">Мої курси</h2>
+      <h2 id="my-courses-title" class="iprm-section__title">{{ _('Мої курси') }}</h2>
 
       {% if registrations %}
       <div class="account-courses">
@@ -68,18 +70,18 @@
             <div class="account-course__meta">
               <span class="badge badge--{{ reg.status }}">{{ reg.status_label }}</span>
               {% if not certificate_data_complete %}
-              <a href="{{ url_for('auth.certificate_data') }}" class="badge badge--danger account-course__certdata-badge" title="Заповніть анкету МОЗ №725, щоб отримати сертифікат з балами БПР">Дані для сертифіката не заповнені</a>
+              <a href="{{ url_for('auth.certificate_data') }}" class="badge badge--danger account-course__certdata-badge" title="{{ _('Заповніть анкету МОЗ №725, щоб отримати сертифікат з балами БПР') }}">{{ _('Дані для сертифіката не заповнені') }}</a>
               {% endif %}
               <span class="badge badge--{{ 'active' if reg.payment_status == 'paid' else ('danger' if reg.payment_status == 'unpaid' else ('warning' if reg.payment_status == 'pending' else 'draft')) }}">{{ reg.payment_status_label }}</span>
               {% if reg.payment_status != 'paid' and reg.payment_amount and reg.payment_amount > 0 %}
-              <span class="badge badge--draft" title="Обраний спосіб оплати">{{ reg.payment_method_label }}</span>
+              <span class="badge badge--draft" title="{{ _('Обраний спосіб оплати') }}">{{ reg.payment_method_label }}</span>
               {% endif %}
             </div>
             <h3 class="account-course__title">
               {% if course %}
               <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" class="account-course__link">{{ course.title }}</a>
               {% else %}
-              <span class="account-course__link">{{ reg.target_title or 'Курс' }}</span>
+              <span class="account-course__link">{{ reg.target_title or _('Курс') }}</span>
               {% endif %}
             </h3>
             <div class="account-course__details">
@@ -94,16 +96,16 @@
               {% endif %}
             </div>
             {% if reg.attended and reg.cpd_points_awarded %}
-              <div class="account-course__awarded">Нараховано {{ reg.cpd_points_awarded }} балiв БПР</div>
+              <div class="account-course__awarded">{% trans points=reg.cpd_points_awarded %}Нараховано {{ points }} балiв БПР{% endtrans %}</div>
             {% endif %}
             {% if reg.payment_status != 'paid' and reg.payment_amount and reg.payment_amount > 0 %}
             <div class="account-course__payment">
               <a href="{{ url_for('registration.confirmation', registration_id=reg.id) }}" class="account-course__pay-btn">
-                Оплатити {{ reg.payment_amount | int }} &#8372;
+                {{ _('Оплатити') }} {{ reg.payment_amount | int }} &#8372;
               </a>
               <a href="{{ url_for('registration.invoice_download', registration_id=reg.id) }}"
                  class="account-course__invoice-btn" data-invoice-download>
-                Завантажити рахунок
+                {{ _('Завантажити рахунок') }}
               </a>
             </div>
             {% endif %}
@@ -113,8 +115,8 @@
       </div>
       {% else %}
       <div class="account-empty">
-        <p class="account-empty__text">У вас поки немає зареєстрованих курсів</p>
-        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">Переглянути курси</a>
+        <p class="account-empty__text">{{ _('У вас поки немає зареєстрованих курсів') }}</p>
+        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">{{ _('Переглянути курси') }}</a>
       </div>
       {% endif %}
     </div>
@@ -124,7 +126,7 @@
   {% if certificates %}
   <section class="iprm-section" aria-labelledby="my-certs-title">
     <div class="iprm-section__inner">
-      <h2 id="my-certs-title" class="iprm-section__title">Мої сертифікати</h2>
+      <h2 id="my-certs-title" class="iprm-section__title">{{ _('Мої сертифікати') }}</h2>
       <div class="account-grid">
         {% for cert in certificates %}
         <a href="{{ url_for('auth.certificate_download', cert_id=cert.id) }}" class="account-card account-card--link apple-reveal">
@@ -132,7 +134,7 @@
           <p class="account-card__text">
             № {{ cert.number }}{% if cert.cpd_points %} &middot; {{ cert.cpd_points }} {{ cert.cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}{% endif %}
           </p>
-          <p class="account-card__text">Завантажити PDF &#8595;</p>
+          <p class="account-card__text">{{ _('Завантажити PDF') }} &#8595;</p>
         </a>
         {% endfor %}
       </div>
@@ -144,26 +146,25 @@
   {% if referral_link %}
   <section class="iprm-section apple-section-gray" aria-labelledby="referral-title">
     <div class="iprm-section__inner">
-      <h2 id="referral-title" class="iprm-section__title">Реферальна програма</h2>
+      <h2 id="referral-title" class="iprm-section__title">{{ _('Реферальна програма') }}</h2>
       <p class="referral-share__lead">
-        Поділіться персональним посиланням. За кожну оплачену реєстрацію на
-        курс за вашим посиланням ви отримуєте бонусні бали лояльності.
+        {{ _('Поділіться персональним посиланням. За кожну оплачену реєстрацію на курс за вашим посиланням ви отримуєте бонусні бали лояльності.') }}
       </p>
       <div class="referral-share__balance apple-reveal">
         <span class="referral-share__balance-value">{{ referral_balance }}</span>
         <span class="referral-share__balance-label">{{ referral_balance | uk_plural('бонусний бал', 'бонусні бали', 'бонусних балів') }}</span>
         {% if referral_pending %}
-        <span class="referral-share__balance-pending">+{{ referral_pending }} очікують дозрівання</span>
+        <span class="referral-share__balance-pending">+{{ referral_pending }} {{ _('очікують дозрівання') }}</span>
         {% endif %}
       </div>
       <div class="referral-share apple-reveal">
-        <label class="referral-share__label" for="referral-link">Ваше посилання</label>
+        <label class="referral-share__label" for="referral-link">{{ _('Ваше посилання') }}</label>
         <div class="referral-share__row">
           <input type="text" id="referral-link" class="referral-share__input"
                  value="{{ referral_link }}" readonly
-                 data-select-on-focus aria-label="Реферальне посилання">
+                 data-select-on-focus aria-label="{{ _('Реферальне посилання') }}">
           <button type="button" class="apple-btn apple-btn--primary referral-share__copy"
-                  data-copy="{{ referral_link }}">Копіювати</button>
+                  data-copy="{{ referral_link }}">{{ _('Копіювати') }}</button>
         </div>
       </div>
 
@@ -172,17 +173,17 @@
 
       {% if referral_rewards %}
       <div class="referral-history apple-reveal">
-        <h3 class="referral-history__title">Історія нарахувань</h3>
+        <h3 class="referral-history__title">{{ _('Історія нарахувань') }}</h3>
         <div class="referral-history__list">
           {% for rw in referral_rewards %}
           {% set course = rw.registration.instance.course if (rw.registration and rw.registration.instance) else None %}
           <div class="referral-history__item{% if rw.status == 'voided' %} referral-history__item--voided{% endif %}">
             <div class="referral-history__info">
-              <span class="referral-history__course">{{ course.title if course else 'Захід' }}</span>
+              <span class="referral-history__course">{{ course.title if course else _('Захід') }}</span>
               <span class="referral-history__date">{{ rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '' }}</span>
             </div>
             <span class="referral-history__points">
-              {% if rw.status == 'voided' %}анульовано{% elif rw.status == 'pending' %}очікує{% else %}+{{ rw.points }}{% endif %}
+              {% if rw.status == 'voided' %}{{ _('анульовано') }}{% elif rw.status == 'pending' %}{{ _('очікує') }}{% else %}+{{ rw.points }}{% endif %}
             </span>
           </div>
           {% endfor %}
@@ -196,31 +197,31 @@
   <!-- ===== ACCOUNT CARDS ===== -->
   <section class="iprm-section" aria-labelledby="account-settings-title">
     <div class="iprm-section__inner">
-      <h2 id="account-settings-title" class="iprm-section__title visually-hidden">Обліковий запис</h2>
+      <h2 id="account-settings-title" class="iprm-section__title visually-hidden">{{ _('Обліковий запис') }}</h2>
       <div class="account-grid">
         <a href="{{ url_for('auth.certificate_data') }}" class="account-card account-card--link apple-reveal{% if not certificate_data_complete %} account-card--attention{% endif %}">
-          <h3 class="account-card__title">Дані для сертифіката</h3>
+          <h3 class="account-card__title">{{ _('Дані для сертифіката') }}</h3>
           <p class="account-card__text">
-            {% if certificate_data_complete %}Заповнено. Можна оновити за потреби.{% else %}Не заповнено — потрібно для балів БПР і сертифіката (МОЗ №725).{% endif %}
+            {% if certificate_data_complete %}{{ _('Заповнено. Можна оновити за потреби.') }}{% else %}{{ _('Не заповнено — потрібно для балів БПР і сертифіката (МОЗ №725).') }}{% endif %}
           </p>
         </a>
         <a href="{{ url_for('auth.settings') }}" class="account-card account-card--link apple-reveal">
-          <h3 class="account-card__title">Налаштування</h3>
-          <p class="account-card__text">Персоналізація інтерфейсу</p>
+          <h3 class="account-card__title">{{ _('Налаштування') }}</h3>
+          <p class="account-card__text">{{ _('Персоналізація інтерфейсу') }}</p>
         </a>
         <div class="account-card apple-reveal">
-          <h3 class="account-card__title">Сертифікати</h3>
+          <h3 class="account-card__title">{{ _('Сертифікати') }}</h3>
           <p class="account-card__text">
-            {% if certificates %}Видано: {{ certificates|length }}. Завантажуйте у розділі «Мої сертифікати».{% else %}З'являться тут після видачі за участь у заході{% endif %}
+            {% if certificates %}{% trans count=certificates|length %}Видано: {{ count }}. Завантажуйте у розділі «Мої сертифікати».{% endtrans %}{% else %}{{ _("З'являться тут після видачі за участь у заході") }}{% endif %}
           </p>
         </div>
       </div>
 
       <div class="account-actions">
         <form method="POST" action="{{ url_for('auth.logout') }}" class="form-logout"
-              data-confirm="Вийти з облікового запису?" data-confirm-ok="Вийти" data-confirm-cancel="Залишитись">
+              data-confirm="{{ _('Вийти з облікового запису?') }}" data-confirm-ok="{{ _('Вийти') }}" data-confirm-cancel="{{ _('Залишитись') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn-auth btn-auth--outline">Вийти з облікового запису</button>
+          <button type="submit" class="btn-auth btn-auth--outline">{{ _('Вийти з облікового запису') }}</button>
         </form>
       </div>
     </div>

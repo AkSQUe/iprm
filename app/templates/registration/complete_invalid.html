@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Посилання недійсне | ІПРМ{% endblock %}
+{% block title %}{{ _('Посилання недійсне | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
@@ -13,14 +13,14 @@
     <div class="reg-success-banner__icon" aria-hidden="true">!</div>
     <div class="reg-success-banner__body">
       {% if cancelled %}
-      <p class="reg-success-banner__title">Реєстрацію скасовано</p>
-      <p class="reg-success-banner__subtitle">Це посилання більше не активне. Зверніться до менеджера для уточнення.</p>
+      <p class="reg-success-banner__title">{{ _('Реєстрацію скасовано') }}</p>
+      <p class="reg-success-banner__subtitle">{{ _('Це посилання більше не активне. Зверніться до менеджера для уточнення.') }}</p>
       {% else %}
-      <p class="reg-success-banner__title">Посилання недійсне або застаріле</p>
-      <p class="reg-success-banner__subtitle">Термін дії посилання сплив (30 днів) або його було відкликано. Попросіть менеджера надіслати нове.</p>
+      <p class="reg-success-banner__title">{{ _('Посилання недійсне або застаріле') }}</p>
+      <p class="reg-success-banner__subtitle">{{ _('Термін дії посилання сплив (30 днів) або його було відкликано. Попросіть менеджера надіслати нове.') }}</p>
       {% endif %}
     </div>
   </div>
-  <p class="reg-attention"><a href="{{ url_for('courses.course_list') }}">Перейти до каталогу курсів</a></p>
+  <p class="reg-attention"><a href="{{ url_for('courses.course_list') }}">{{ _('Перейти до каталогу курсів') }}</a></p>
 </div>
 {% endblock %}

@@ -2,7 +2,7 @@
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 {% from 'blog/_blocks.html' import render_blocks %}
 
-{% block title %}{{ post.meta_title or post.title }} | Блог ІПРМ{% endblock %}
+{% block title %}{% trans title=post.meta_title or post.title %}{{ title }} | Блог ІПРМ{% endtrans %}{% endblock %}
 {% block meta_description %}{{ post.meta_description or post.excerpt or post.title }}{% endblock %}
 {% block og_type %}article{% endblock %}
 {% block og_image %}{% if post.cover_full %}{{ request.url_root.rstrip('/') ~ post.cover_full }}{% else %}{{ super() }}{% endif %}{% endblock %}
@@ -35,7 +35,7 @@
 
     <header class="blog-post__header">
       <div class="blog-post__header-inner">
-        <a class="blog-post__back" href="{{ url_for('blog.index') }}">← Усі дописи</a>
+        <a class="blog-post__back" href="{{ url_for('blog.index') }}">← {{ _('Усі дописи') }}</a>
         <h1 class="blog-post__title">{{ post.title }}</h1>
         {% if post.published_at %}
         <time class="blog-post__date" datetime="{{ post.published_at.isoformat() }}">{{ post.published_at.strftime('%d.%m.%Y') }}</time>

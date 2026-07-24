@@ -4,11 +4,12 @@
 відгуків нема -- на Головній показуємо хардкод-заглушку (див. шаблон home.html).
 """
 from app.extensions import db
-from app.models.mixins import TimestampMixin, BigIntPK
+from app.models.mixins import TimestampMixin, TranslatableMixin, BigIntPK
 
 
-class Review(TimestampMixin, db.Model):
+class Review(TranslatableMixin, TimestampMixin, db.Model):
     __tablename__ = 'reviews'
+    __translatable__ = ('author_name', 'author_role', 'city', 'text')
 
     id = db.Column(BigIntPK, primary_key=True)
 
