@@ -46,9 +46,9 @@
         {% if cpd_min %}
         <span class="iprm-card-badge iprm-card-badge--cpd">
           {%- if cpd_max and cpd_max != cpd_min -%}
-          {{ cpd_min }}&ndash;{{ cpd_max }} {{ cpd_max | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}
+          {{ cpd_min }}&ndash;{{ cpd_max }} {{ cpd_max | plural('bpr_points') }}
           {%- else -%}
-          {{ cpd_min }} {{ cpd_min | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}
+          {{ cpd_min }} {{ cpd_min | plural('bpr_points') }}
           {%- endif -%}
         </span>
         {% endif %}
@@ -78,7 +78,7 @@
         {% endif %}
         {% set seats = seats_left_map.get(nearest.id) if nearest and nearest.id in open_instance_ids else None %}
         {% if seats is not none %}
-        <span class="iprm-course-card__seats{% if site_settings.seats_low_threshold and seats <= site_settings.seats_low_threshold %} iprm-course-card__seats--warning{% endif %}">{{ seats }} {{ seats | uk_plural('місце', 'місця', 'місць') }}</span>
+        <span class="iprm-course-card__seats{% if site_settings.seats_low_threshold and seats <= site_settings.seats_low_threshold %} iprm-course-card__seats--warning{% endif %}">{{ seats }} {{ seats | plural('seats') }}</span>
         {% endif %}
         {% if price_min and price_min > 0 %}
         <span class="iprm-course-card__price">{% if price_varies %}{{ _('від') }} {% endif %}{{ price_min | int }} &#8372;</span>

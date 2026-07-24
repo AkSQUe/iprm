@@ -132,7 +132,7 @@
         <a href="{{ url_for('auth.certificate_download', cert_id=cert.id) }}" class="account-card account-card--link apple-reveal">
           <h3 class="account-card__title">{{ cert.event_title }}</h3>
           <p class="account-card__text">
-            № {{ cert.number }}{% if cert.cpd_points %} &middot; {{ cert.cpd_points }} {{ cert.cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}{% endif %}
+            № {{ cert.number }}{% if cert.cpd_points %} &middot; {{ cert.cpd_points }} {{ cert.cpd_points | plural('bpr_points') }}{% endif %}
           </p>
           <p class="account-card__text">{{ _('Завантажити PDF') }} &#8595;</p>
         </a>
@@ -152,7 +152,7 @@
       </p>
       <div class="referral-share__balance apple-reveal">
         <span class="referral-share__balance-value">{{ referral_balance }}</span>
-        <span class="referral-share__balance-label">{{ referral_balance | uk_plural('бонусний бал', 'бонусні бали', 'бонусних балів') }}</span>
+        <span class="referral-share__balance-label">{{ referral_balance | plural('bonus_points') }}</span>
         {% if referral_pending %}
         <span class="referral-share__balance-pending">+{{ referral_pending }} {{ _('очікують дозрівання') }}</span>
         {% endif %}

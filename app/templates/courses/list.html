@@ -168,14 +168,14 @@
               <span class="iprm-schedule__tag iprm-schedule__tag--type">{{ inst.course.event_type_label }}</span>
               {% endif %}
               {% if inst.effective_cpd_points %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}</span>
+              <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | plural('bpr_points') }}</span>
               {% endif %}
               {% if inst.effective_price and inst.effective_price > 0 %}
               <span class="iprm-schedule__price">{% if inst.price_is_from %}{{ _('від') }} {% endif %}{{ inst.effective_price | int }} &#8372;</span>
               {% endif %}
               {% set remaining = seats_left_map.get(inst.id) if is_open else None %}
               {% if remaining is not none %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--seats{% if site_settings.seats_low_threshold and remaining <= site_settings.seats_low_threshold %} iprm-schedule__tag--warning{% endif %}">{{ _('Залишилось') }} {{ remaining }} {{ remaining | uk_plural('місце', 'місця', 'місць') }}</span>
+              <span class="iprm-schedule__tag iprm-schedule__tag--seats{% if site_settings.seats_low_threshold and remaining <= site_settings.seats_low_threshold %} iprm-schedule__tag--warning{% endif %}">{{ _('Залишилось') }} {{ remaining }} {{ remaining | plural('seats') }}</span>
               {% endif %}
             </div>
           </div>

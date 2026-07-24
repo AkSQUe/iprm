@@ -24,7 +24,7 @@
       <h2 id="ref-dash-title" class="iprm-section__title">{{ _('Ваша винагорода') }}</h2>
       <div class="referral-share__balance">
         <span class="referral-share__balance-value">{{ balance }}</span>
-        <span class="referral-share__balance-label">{{ balance | uk_plural('бонусний бал', 'бонусні бали', 'бонусних балів') }}</span>
+        <span class="referral-share__balance-label">{{ balance | plural('bonus_points') }}</span>
         {% if pending %}
         <span class="referral-share__balance-pending">{% trans count=pending %}+{{ count }} очікують дозрівання{% endtrans %}</span>
         {% endif %}

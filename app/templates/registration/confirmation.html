@@ -70,7 +70,7 @@
       <div class="reg-success-banner__body">
         <p class="reg-success-banner__title">{{ _('Захід завершено') }}</p>
         {% if reg.attended and reg.cpd_points_awarded %}
-        <p class="reg-success-banner__subtitle">{{ _('Вам нараховано') }} {{ reg.cpd_points_awarded }} {{ reg.cpd_points_awarded | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}.</p>
+        <p class="reg-success-banner__subtitle">{{ _('Вам нараховано') }} {{ reg.cpd_points_awarded }} {{ reg.cpd_points_awarded | plural('bpr_points') }}.</p>
         {% endif %}
       </div>
     </div>

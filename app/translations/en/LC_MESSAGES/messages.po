@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-24 21:23+0300\n"
+"POT-Creation-Date: 2026-07-24 22:41+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1349,6 +1349,21 @@ msgstr "Save password"
 
 msgid "Налаштування | ІПРМ"
 msgstr "Settings | IPRM"
+
+msgid "Оформлення"
+msgstr "Appearance"
+
+msgid "Оберіть оформлення інтерфейсу"
+msgstr "Choose the interface appearance"
+
+msgid "Системна"
+msgstr "System"
+
+msgid "Світла"
+msgstr "Light"
+
+msgid "Темна"
+msgstr "Dark"
 
 msgid "Шрифт"
 msgstr "Font"
@@ -3758,6 +3773,9 @@ msgstr ""
 msgid "Прийняти"
 msgstr "Accept"
 
+msgid "ІНСТИТУТ ПЛАЗМОТЕРАПІЇ<br>ТА РЕГЕНЕРАТИВНОЇ МЕДИЦИНИ"
+msgstr "INSTITUTE OF PLASMA THERAPY<br>AND REGENERATIVE MEDICINE"
+
 msgid "Документи БПР"
 msgstr "BPR documents"
 
@@ -3785,9 +3803,6 @@ msgstr ""
 "rel=\"noopener\">Privacy Policy</a> and <a "
 "href=\"https://policies.google.com/terms\" target=\"_blank\" "
 "rel=\"noopener\">Terms of Service</a> apply."
-
-msgid "ІНСТИТУТ ПЛАЗМОТЕРАПІЇ<br>ТА РЕГЕНЕРАТИВНОЇ МЕДИЦИНИ"
-msgstr "INSTITUTE OF PLASMA THERAPY<br>AND REGENERATIVE MEDICINE"
 
 msgid "Головна навігація"
 msgstr "Main navigation"
@@ -4341,18 +4356,3 @@ msgstr ""
 "Guidance for each participant from the start through receiving the "
 "certificate."
 
-
-msgid "Оформлення"
-msgstr "Appearance"
-
-msgid "Оберіть оформлення інтерфейсу"
-msgstr "Choose the interface appearance"
-
-msgid "Системна"
-msgstr "System"
-
-msgid "Світла"
-msgstr "Light"
-
-msgid "Темна"
-msgstr "Dark"

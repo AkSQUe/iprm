@@ -226,7 +226,7 @@
             <div class="home-calendar__meta">
               {% if inst.effective_trainer %}<span>{{ inst.effective_trainer.t('full_name') }}</span>{% endif %}
               <span>{{ inst.format_label }}</span>
-              {% if seats is not none %}<span class="{% if site_settings.seats_low_threshold and seats <= site_settings.seats_low_threshold %}home-calendar__seats--warning{% endif %}">{{ seats }} {{ seats | uk_plural('місце', 'місця', 'місць') }}</span>{% endif %}
+              {% if seats is not none %}<span class="{% if site_settings.seats_low_threshold and seats <= site_settings.seats_low_threshold %}home-calendar__seats--warning{% endif %}">{{ seats }} {{ seats | plural('seats') }}</span>{% endif %}
             </div>
           </div>
           <div class="home-calendar__price">

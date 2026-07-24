@@ -166,13 +166,13 @@
             {% if course.cpd_points %}
             <div class="iprm-stat-card">
               <span class="iprm-stat-card__value">{{ course.cpd_points }}</span>
-              <span class="iprm-stat-card__label">{{ course.cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}</span>
+              <span class="iprm-stat-card__label">{{ course.cpd_points | plural('bpr_points') }}</span>
             </div>
             {% endif %}
             {% if course.program_blocks %}
             <div class="iprm-stat-card">
               <span class="iprm-stat-card__value">{{ course.program_blocks|length }}</span>
-              <span class="iprm-stat-card__label">{{ course.program_blocks|length | uk_plural('тематичний блок', 'тематичні блоки', 'тематичних блоків') }}</span>
+              <span class="iprm-stat-card__label">{{ course.program_blocks|length | plural('topic_blocks') }}</span>
             </div>
             {% endif %}
             {% set ns = namespace(seats_nearest=None) %}
@@ -184,7 +184,7 @@
             {% if ns.seats_nearest is not none %}
             <div class="iprm-stat-card">
               <span class="iprm-stat-card__value">{{ ns.seats_nearest }}</span>
-              <span class="iprm-stat-card__label">{{ ns.seats_nearest | uk_plural('вільне місце', 'вільні місця', 'вільних місць') }}</span>
+              <span class="iprm-stat-card__label">{{ ns.seats_nearest | plural('free_seats') }}</span>
             </div>
             {% elif course.max_participants %}
             <div class="iprm-stat-card">
@@ -230,8 +230,8 @@
         {% if has_benefits %}
         <div class="iprm-tabs__panel" data-tab-panel="benefits">
           <ul class="iprm-benefit-list">
-            {% if course.cpd_points %}<li>{{ _('Сертифікат БПР на') }} {{ course.cpd_points }} {{ course.cpd_points | uk_plural('бал', 'бали', 'балів') }}</li>{% endif %}
-            {% if course.program_blocks %}<li>{{ course.program_blocks|length }} {{ course.program_blocks|length | uk_plural('тематичний блок', 'тематичні блоки', 'тематичних блоків') }} {{ _('— від теорії до практики') }}</li>{% endif %}
+            {% if course.cpd_points %}<li>{{ _('Сертифікат БПР на') }} {{ course.cpd_points }} {{ course.cpd_points | plural('points') }}</li>{% endif %}
+            {% if course.program_blocks %}<li>{{ course.program_blocks|length }} {{ course.program_blocks|length | plural('topic_blocks') }} {{ _('— від теорії до практики') }}</li>{% endif %}
             <li>{{ _('Розбір клінічних кейсів та відповіді лектора на запитання') }}</li>
             <li>{{ _('Доступ до додаткових навчальних матеріалів і презентацій') }}</li>
           </ul>
@@ -307,10 +307,10 @@
             <h3 class="iprm-schedule__title">{{ course.t('title') }}</h3>
             <div class="iprm-schedule__meta">
               {{ location_badge(inst.event_format, inst.location) }}
-              {% if inst.effective_cpd_points %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}</span>{% endif %}
+              {% if inst.effective_cpd_points %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | plural('bpr_points') }}</span>{% endif %}
               {% if inst.effective_price and inst.effective_price > 0 %}<span class="iprm-schedule__price">{% if inst.price_is_from %}{{ _('від') }} {% endif %}{{ inst.effective_price | int }} &#8372;</span>{% endif %}
               {% if remaining is not none %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--seats{% if site_settings.seats_low_threshold and remaining <= site_settings.seats_low_threshold %} iprm-schedule__tag--warning{% endif %}">{{ _('Залишилось') }} {{ remaining }} {{ remaining | uk_plural('місце', 'місця', 'місць') }}</span>
+              <span class="iprm-schedule__tag iprm-schedule__tag--seats{% if site_settings.seats_low_threshold and remaining <= site_settings.seats_low_threshold %} iprm-schedule__tag--warning{% endif %}">{{ _('Залишилось') }} {{ remaining }} {{ remaining | plural('seats') }}</span>
               {% endif %}
             </div>
             {% set inst_tariffs = inst.active_tariffs %}
@@ -492,7 +492,7 @@
                 <span class="iprm-card-badge iprm-card-badge--type">{{ rc.event_type_label }}</span>
                 {% endif %}
                 {% if rc.cpd_points %}
-                <span class="iprm-card-badge iprm-card-badge--cpd">{{ rc.cpd_points }} {{ rc.cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}</span>
+                <span class="iprm-card-badge iprm-card-badge--cpd">{{ rc.cpd_points }} {{ rc.cpd_points | plural('bpr_points') }}</span>
                 {% endif %}
               </div>
             </div>

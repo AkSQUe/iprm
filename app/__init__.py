@@ -163,6 +163,10 @@ def create_app(config_name=None):
     from app.utils import sanitize_rich_text, uk_plural
     app.jinja_env.filters['sanitize_rich_text'] = sanitize_rich_text
     app.jinja_env.filters['uk_plural'] = uk_plural
+    # Локалізована плюралізація (uk/ru/en) для публічних сторінок; uk_plural
+    # лишається для uk-only PDF-сертифікатів.
+    from app.i18n_plurals import plural
+    app.jinja_env.filters['plural'] = plural
 
     # Глобал icon('<name>') -- рендерить Material Symbols іконку через кодпойнт
     # (self-hosted субсет-шрифт). Див. app/icons.py.

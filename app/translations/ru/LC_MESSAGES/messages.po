@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-24 21:23+0300\n"
+"POT-Creation-Date: 2026-07-24 22:41+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ru\n"
@@ -1351,6 +1351,21 @@ msgstr "Сохранить пароль"
 
 msgid "Налаштування | ІПРМ"
 msgstr "Настройки | ИПРМ"
+
+msgid "Оформлення"
+msgstr "Оформление"
+
+msgid "Оберіть оформлення інтерфейсу"
+msgstr "Выберите оформление интерфейса"
+
+msgid "Системна"
+msgstr "Системная"
+
+msgid "Світла"
+msgstr "Светлая"
+
+msgid "Темна"
+msgstr "Тёмная"
 
 msgid "Шрифт"
 msgstr "Шрифт"
@@ -3759,6 +3774,9 @@ msgstr ""
 msgid "Прийняти"
 msgstr "Принять"
 
+msgid "ІНСТИТУТ ПЛАЗМОТЕРАПІЇ<br>ТА РЕГЕНЕРАТИВНОЇ МЕДИЦИНИ"
+msgstr "ИНСТИТУТ ПЛАЗМОТЕРАПИИ<br>И РЕГЕНЕРАТИВНОЙ МЕДИЦИНЫ"
+
 msgid "Документи БПР"
 msgstr "Документы БПР"
 
@@ -3786,9 +3804,6 @@ msgstr ""
 "rel=\"noopener\">Privacy Policy</a> и <a "
 "href=\"https://policies.google.com/terms\" target=\"_blank\" "
 "rel=\"noopener\">Terms of Service</a> Google."
-
-msgid "ІНСТИТУТ ПЛАЗМОТЕРАПІЇ<br>ТА РЕГЕНЕРАТИВНОЇ МЕДИЦИНИ"
-msgstr "ИНСТИТУТ ПЛАЗМОТЕРАПИИ<br>И РЕГЕНЕРАТИВНОЙ МЕДИЦИНЫ"
 
 msgid "Головна навігація"
 msgstr "Главная навигация"
@@ -4331,18 +4346,3 @@ msgstr "Индивидуальный подход"
 msgid "Супровід кожного слухача від початку до отримання сертифікату."
 msgstr "Сопровождение каждого слушателя от начала до получения сертификата."
 
-
-msgid "Оформлення"
-msgstr "Оформление"
-
-msgid "Оберіть оформлення інтерфейсу"
-msgstr "Выберите оформление интерфейса"
-
-msgid "Системна"
-msgstr "Системная"
-
-msgid "Світла"
-msgstr "Светлая"
-
-msgid "Темна"
-msgstr "Тёмная"

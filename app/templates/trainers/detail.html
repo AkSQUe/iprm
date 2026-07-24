@@ -78,7 +78,7 @@
             <p class="iprm-hero__subtitle">{{ trainer.t('role') }}</p>
           {% endif %}
           {% if trainer.experience_years %}
-            <p class="iprm-hero-trainer__exp">{{ _('Досвід:') }} {{ trainer.experience_years }} {{ trainer.experience_years | uk_plural('рік', 'роки', 'років') }}</p>
+            <p class="iprm-hero-trainer__exp">{{ _('Досвід:') }} {{ trainer.experience_years }} {{ trainer.experience_years | plural('years') }}</p>
           {% endif %}
         </div>
       </div>
