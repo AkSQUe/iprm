@@ -65,7 +65,7 @@
 }
 
 .admin-sidebar__link:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--iprm-divider);
   color: var(--apple-black);
 }
 
@@ -440,7 +440,7 @@
 }
 
 .admin-form .form-checkbox:hover {
-  border-color: rgba(0, 0, 0, 0.15);
+  border-color: var(--iprm-border);
 }
 
 .admin-form .form-checkbox label {
@@ -487,7 +487,7 @@
 .admin-table td {
   padding: 14px 16px;
   font-size: 0.875rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  border-top: 1px solid var(--iprm-divider);
   color: var(--apple-gray-dark);
 }
 
@@ -877,7 +877,7 @@
 }
 
 .admin-todo li::before {
-  border: 2px solid rgba(0, 0, 0, 0.12);
+  border: 2px solid var(--iprm-border);
   border-radius: 4px;
 }
 
@@ -1104,4 +1104,28 @@
 .admin-layout--stack > .admin-hero,
 .admin-layout--stack > .admin-stat-cards {
   margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Тёмна тема: кольорові статуси інлайн-селектів і кнопок
+   ========================================================================== */
+[data-theme="dark"] .btn-admin--success:hover {
+  background: rgba(52, 199, 89, 0.16);
+}
+[data-theme="dark"] .admin-inline-select[data-state="confirmed"],
+[data-theme="dark"] .admin-inline-select[data-state="paid"] {
+  background-color: rgba(52, 199, 89, 0.16);
+  color: #4ade80;
+  border-color: rgba(52, 199, 89, 0.4);
+}
+[data-theme="dark"] .admin-inline-select[data-state="pending"] {
+  background-color: rgba(217, 119, 6, 0.18);
+  color: #fbbf24;
+  border-color: rgba(217, 119, 6, 0.4);
+}
+[data-theme="dark"] .admin-inline-select[data-state="cancelled"],
+[data-theme="dark"] .admin-inline-select[data-state="refunded"] {
+  background-color: rgba(239, 68, 68, 0.16);
+  color: #ff6b6b;
+  border-color: rgba(239, 68, 68, 0.4);
 }

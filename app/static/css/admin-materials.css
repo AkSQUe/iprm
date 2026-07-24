@@ -163,7 +163,7 @@
 .materials-mult:focus,
 .materials-qty-input:focus {
   outline: none;
-  background: #fff;
+  background: var(--iprm-white);
   border-color: var(--iprm-nav-active, #0071e3);
   box-shadow: 0 0 0 3px var(--iprm-accent-light, rgba(0, 113, 227, 0.15));
 }
@@ -191,3 +191,17 @@
 .materials-status-badge--consumed { background: #e6f7ea; color: #1a7f37; }
 .materials-status-badge--cancelled { background: #f0f0f2; color: #6e6e73; }
 .materials-status-badge--draft { background: #fff4e5; color: #7a4a00; }
+
+/* ==========================================================================
+   Тёмна тема: банер, підказки, статус-бейджи
+   ========================================================================== */
+[data-theme="dark"] .materials-banner {
+  background: rgba(217, 119, 6, 0.16);
+  color: var(--iprm-warning-text);
+  border-color: rgba(255, 216, 168, 0.3);
+}
+[data-theme="dark"] .materials-hint { color: #fbbf24; }
+[data-theme="dark"] .materials-status-badge--reserved { background: rgba(0, 87, 216, 0.22); color: #7cc4f0; }
+[data-theme="dark"] .materials-status-badge--consumed { background: rgba(26, 127, 55, 0.28); color: #4ade80; }
+[data-theme="dark"] .materials-status-badge--cancelled { background: rgba(255, 255, 255, 0.08); color: #a1a1a6; }
+[data-theme="dark"] .materials-status-badge--draft { background: rgba(217, 119, 6, 0.18); color: #fbbf24; }

@@ -23,7 +23,7 @@
 }
 
 .i18n-tabs__btn--active {
-  background: #fff;
+  background: var(--iprm-white);
   color: var(--apple-black, #1d1d1f);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
