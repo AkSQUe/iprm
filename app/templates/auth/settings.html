@@ -25,6 +25,25 @@
       <div class="settings-grid">
 
         <div class="settings-card">
+          <h2 class="settings-card__title">{{ _('Оформлення') }}</h2>
+          <p class="settings-card__desc">{{ _('Оберіть оформлення інтерфейсу') }}</p>
+          <div class="settings-switcher">
+            <button class="settings-option" data-theme-select="system" type="button">
+              <span class="settings-option__preview settings-option__preview--system" aria-hidden="true"></span>
+              <span class="settings-option__label">{{ _('Системна') }}</span>
+            </button>
+            <button class="settings-option" data-theme-select="light" type="button">
+              <span class="settings-option__preview settings-option__preview--light" aria-hidden="true"></span>
+              <span class="settings-option__label">{{ _('Світла') }}</span>
+            </button>
+            <button class="settings-option" data-theme-select="dark" type="button">
+              <span class="settings-option__preview settings-option__preview--dark" aria-hidden="true"></span>
+              <span class="settings-option__label">{{ _('Темна') }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-card">
           <h2 class="settings-card__title">{{ _('Шрифт') }}</h2>
           <p class="settings-card__desc">{{ _('Оберіть шрифт для всього сайту') }}</p>
           <div class="settings-switcher">

@@ -4341,3 +4341,18 @@ msgstr ""
 "Guidance for each participant from the start through receiving the "
 "certificate."
 
+
+msgid "Оформлення"
+msgstr "Appearance"
+
+msgid "Оберіть оформлення інтерфейсу"
+msgstr "Choose the interface appearance"
+
+msgid "Системна"
+msgstr "System"
+
+msgid "Світла"
+msgstr "Light"
+
+msgid "Темна"
+msgstr "Dark"

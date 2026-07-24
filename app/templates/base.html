@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" id="meta-theme-color" content="#f5f5f7">
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='svg/IPRM-logo-simple.svg') }}">
   <title>{% block title %}{{ _('ІПРМ | Інститут Плазмотерапії та Регенеративної Медицини') }}{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}{{ _('Інститут Плазмотерапії та Регенеративної Медицини. Курси після дипломної освіти для лікарів з нарахуванням балів БПР.') }}{% endblock %}">
@@ -61,7 +62,20 @@
   {% if show_certdata_reminder %}<link rel="stylesheet" href="{{ url_for('static', filename='css/certdata-reminder.css') }}?v={{ assets_version }}">{% endif %}
   {% block extra_css %}{% endblock %}
   <script>
-    (function(){try{var f=localStorage.getItem('iprm-font');if(f==='fixel')document.documentElement.setAttribute('data-font','fixel');}catch(e){}})();
+    /* Антифликер: до першого рендеру виставляємо шрифт і тему.
+       Тема "system" резолвиться у light/dark через prefers-color-scheme. */
+    (function(){try{
+      var d=document.documentElement;
+      var f=localStorage.getItem('iprm-font');
+      if(f==='fixel')d.setAttribute('data-font','fixel');
+      var t=localStorage.getItem('iprm-theme');
+      if(t!=='light'&&t!=='dark'){
+        t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+      }
+      d.setAttribute('data-theme',t);
+      var m=document.getElementById('meta-theme-color');
+      if(m)m.setAttribute('content',t==='dark'?'#131318':'#f5f5f7');
+    }catch(e){}})();
   </script>
   {% include 'partials/_analytics.html' %}
   {# reCAPTCHA вантажиться лише на сторінках із захищеною формою (вони

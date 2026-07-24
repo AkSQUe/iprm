@@ -84,6 +84,23 @@
   font-family: 'Fixel', sans-serif;
 }
 
+/* Превью теми -- літеральні кольори навмисно: превью має завжди показувати
+   реальний вигляд світлої/тёмної теми незалежно від активної. */
+.settings-option__preview--light {
+  background: #f5f5f7;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.settings-option__preview--dark {
+  background: #1c1c22;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.settings-option__preview--system {
+  background: linear-gradient(120deg, #f5f5f7 0 50%, #1c1c22 50% 100%);
+  border: 1px solid rgba(128, 128, 128, 0.3);
+}
+
 .settings-option__label {
   font-size: 0.875rem;
   font-weight: 600;
