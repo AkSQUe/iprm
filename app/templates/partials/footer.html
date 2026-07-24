@@ -3,7 +3,8 @@
     <div class="iprm-footer__row">
       <div class="iprm-footer__left">
         <a href="{{ url_for('main.index') }}" class="iprm-footer__brand">
-          <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="{{ _('ІПРМ') }}" class="iprm-footer__logo" height="72">
+          <img src="{{ url_for('static', filename='svg/IPRM-logo-simple.svg') }}" alt="{{ _('ІПРМ') }}" class="iprm-footer__logo" width="64" height="64">
+          <span class="iprm-footer__brand-text">{% trans %}ІНСТИТУТ ПЛАЗМОТЕРАПІЇ<br>ТА РЕГЕНЕРАТИВНОЇ МЕДИЦИНИ{% endtrans %}</span>
         </a>
       </div>
       <div class="iprm-footer__right">

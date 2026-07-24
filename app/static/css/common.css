@@ -1,12 +1,16 @@
 /* IPRM Preview - Common/Shared Styles */
 
 :root {
+  color-scheme: light;
   --iprm-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   --iprm-dark: #1a1a2e;
   --iprm-text: #1d1d1f;
   --iprm-text-light: #86868b;
   --iprm-bg: #f5f5f7;
   --iprm-white: #fff;
+  /* Текст поверх акцентного/тёмного тла. Лишається світлим в обох темах
+     (на відміну від --iprm-white, що у dark стає темною поверхнею). */
+  --iprm-on-accent: #fff;
   --iprm-border: rgba(0, 0, 0, 0.06);
   --iprm-radius: 24px;
   --iprm-radius-md: 16px;
@@ -15,6 +19,16 @@
   --iprm-transition: 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --iprm-max-content: 1200px;
   --iprm-card-bg: #f5f5f7;
+
+  /* Surfaces, dividers, shadows (theme-aware) */
+  --iprm-surface-glass: rgba(255, 255, 255, 0.72);
+  --iprm-surface-menu: rgba(255, 255, 255, 0.95);
+  --iprm-divider: rgba(0, 0, 0, 0.06);
+  --iprm-shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --iprm-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.12);
+  --iprm-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.18);
+  --iprm-shadow-card: 0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --iprm-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.2);
 
   /* Brand colors */
   --iprm-accent: #7055a4;
@@ -83,6 +97,90 @@
   --ease-spring: cubic-bezier(0.32, 0.08, 0.24, 1);
 }
 
+/* ==========================================================================
+   Тёмна тема (варіант C).
+   Активується атрибутом data-theme="dark" на <html>. Значення "system"
+   резолвиться у JS (фаза 2) у конкретний data-theme="dark"/"light", тому
+   тут — єдиний авторитетний набір тёмних токенів (DRY, без дублювання в
+   @media prefers-color-scheme). Токени перевизначаються тими самими іменами,
+   що й у :root, тож усі 1900+ звернень var(--...) працюють без правок.
+   ========================================================================== */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --iprm-dark: #0a0a0f;
+  --iprm-text: #f5f5f7;
+  --iprm-text-light: #a1a1a6;
+  --iprm-bg: #131318;
+  /* "white" тут — семантичний токен поверхні; у тёмній темі це підняте тло */
+  --iprm-white: #1c1c22;
+  --iprm-border: rgba(255, 255, 255, 0.10);
+  --iprm-card-bg: #1c1c22;
+
+  /* Surfaces, dividers, shadows */
+  --iprm-surface-glass: rgba(20, 20, 24, 0.72);
+  --iprm-surface-menu: rgba(28, 28, 34, 0.95);
+  --iprm-divider: rgba(255, 255, 255, 0.08);
+  --iprm-shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --iprm-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.55);
+  --iprm-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --iprm-shadow-card: 0 10px 30px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --iprm-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.65);
+
+  /* Brand colors: акцент піднято для контрасту на тёмному тлі.
+     Кнопки лишаються насиченими (білий текст на великому елементі). */
+  --iprm-accent: #b39ae0;
+  --iprm-accent-hover: #c4b0ea;
+  --iprm-accent-light: rgba(179, 154, 224, 0.14);
+  --iprm-btn-bg: #7d5fb8;
+  --iprm-btn-bg-hover: #8d6fc8;
+  --iprm-nav-active: #b39ae0;
+  /* Hero-градієнти вже тёмні -- лишаємо; тло-glow трохи підсилюємо */
+  --iprm-hero-glow: rgba(112, 85, 164, 0.28);
+  --iprm-hero-glow-dim: rgba(232, 121, 58, 0.14);
+  --iprm-placeholder-grad: linear-gradient(135deg, #241d33 0%, #2a2140 50%, #33262e 100%);
+  --iprm-molecular-rgb: 160, 130, 210;
+
+  /* Status / feedback: світлий текст на приглушеному напівпрозорому тлі */
+  --iprm-error: #ff6b6b;
+  --iprm-error-light: rgba(239, 68, 68, 0.35);
+  --iprm-error-bg: rgba(239, 68, 68, 0.14);
+  --iprm-error-text: #ff6b6b;
+  --iprm-success: #4ade80;
+  --iprm-success-bg: rgba(22, 163, 74, 0.16);
+  --iprm-success-light: rgba(74, 222, 128, 0.35);
+  --iprm-info: #7cc4f0;
+  --iprm-info-bg: rgba(3, 105, 161, 0.22);
+  --iprm-info-light: rgba(124, 196, 240, 0.35);
+  --iprm-placeholder-text: #6b6b70;
+  --iprm-warning-bg: rgba(217, 119, 6, 0.18);
+  --iprm-warning-text: #fbbf24;
+  --iprm-warning-border: rgba(252, 211, 77, 0.4);
+  --iprm-warning: #fbbf24;
+  --iprm-neutral-bg: rgba(255, 255, 255, 0.08);
+  --iprm-neutral-text: #c7c7cc;
+
+  /* Apple-style neutral palette (інверсія світлот) */
+  --apple-black: #f5f5f7;
+  --apple-gray-dark: #c7c7cc;
+  --apple-gray: #98989d;
+  --apple-gray-light: #48484a;
+  --apple-section-bg: #1c1c22;
+  --apple-orange-light: rgba(232, 145, 58, 0.16);
+  /* RGB-хелпер: був тёмний текст -> тепер світлий, щоб rgba()-накладення читались */
+  --apple-black-rgb: 245, 245, 247;
+
+  /* Badge colors */
+  --iprm-badge-draft-bg: rgba(255, 255, 255, 0.08);
+  --iprm-badge-draft-text: #a1a1a6;
+  --iprm-badge-published-bg: rgba(37, 99, 235, 0.22);
+  --iprm-badge-published-text: #7cc4f0;
+  --iprm-badge-active-bg: rgba(5, 150, 105, 0.22);
+  --iprm-badge-active-text: #4ade80;
+  --iprm-badge-completed-bg: rgba(67, 56, 202, 0.28);
+  --iprm-badge-completed-text: #a5b4fc;
+}
+
 /* Перемикач шрифту */
 [data-font="fixel"] {
   --iprm-font: 'Fixel', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
@@ -117,7 +215,7 @@
   z-index: 10000;
   padding: 12px 24px;
   background: var(--iprm-nav-active);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   border-radius: 0 0 var(--iprm-radius-sm) var(--iprm-radius-sm);
   font-weight: 600;
   text-decoration: none;
@@ -190,7 +288,7 @@ a {
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--iprm-surface-glass);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--iprm-border);
@@ -199,12 +297,12 @@ a {
 }
 
 .iprm-header.scrolled {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--iprm-surface-menu);
 }
 
 @media (prefers-reduced-transparency: reduce) {
   .iprm-header {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--iprm-surface-menu);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
@@ -261,7 +359,7 @@ a {
 .iprm-header__admin-link {
   font-size: 0.6875rem;
   font-weight: 600;
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   padding: 3px 10px;
   background: var(--apple-black);
   border-radius: 6px;
@@ -300,7 +398,7 @@ a {
 }
 
 .iprm-header__auth-link--cta {
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   background: var(--iprm-nav-active);
   padding: 8px 20px;
   border-radius: var(--iprm-radius-pill);
@@ -308,7 +406,7 @@ a {
 
 .iprm-header__auth-link--cta:hover {
   background: var(--iprm-accent-hover);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .iprm-header__logout-form {
@@ -340,7 +438,7 @@ a {
 
 .lang-switcher__item--active {
   color: var(--apple-black);
-  background-color: rgba(0, 0, 0, 0.06);
+  background-color: var(--iprm-divider);
   cursor: default;
 }
 
@@ -367,7 +465,7 @@ a {
   border-radius: var(--iprm-radius-pill);
   background: #e05252;
   border: 2px solid var(--iprm-white);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   font-size: 0.6875rem;
   font-weight: 700;
   line-height: 1;
@@ -381,12 +479,12 @@ a {
   width: 260px;
   padding: 10px 14px;
   background: var(--apple-black);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   font-size: 0.8125rem;
   font-weight: 400;
   line-height: 1.45;
   border-radius: var(--iprm-radius-sm);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--iprm-shadow-md);
   opacity: 0;
   visibility: hidden;
   transform: translateY(-4px);
@@ -522,7 +620,7 @@ a {
   max-width: var(--iprm-max-content);
   margin: 0 auto;
   padding: 40px;
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -577,7 +675,7 @@ a {
 
 .iprm-btn--primary {
   background: var(--iprm-btn-bg);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   box-shadow: none;
 }
 
@@ -637,7 +735,7 @@ a {
 
 .apple-btn:active {
   transform: scale(0.98) translateY(0);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--iprm-shadow-sm);
 }
 
 .apple-btn:focus-visible {
@@ -647,13 +745,13 @@ a {
 
 .apple-btn--primary {
   background: var(--iprm-nav-active);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .apple-btn--primary:hover {
   background: color-mix(in oklch, var(--iprm-nav-active), black 15%);
   transform: scale(1.02) translateY(-1px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--iprm-shadow-md);
 }
 
 .apple-btn--secondary {
@@ -915,7 +1013,7 @@ select.badge-select:disabled {
   font-weight: 500;
   color: var(--iprm-text);
   background: var(--iprm-white);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--iprm-shadow-card);
   opacity: 0;
   transform: translateY(-8px);
   transition: opacity 0.25s ease, transform 0.25s ease;
@@ -1000,13 +1098,23 @@ select.badge-select:disabled {
 }
 
 .iprm-footer__brand {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
   text-decoration: none;
 }
 
 .iprm-footer__logo {
-  height: 84px;
+  height: 64px;
   width: auto;
+}
+
+.iprm-footer__brand-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--iprm-nav-active);
 }
 
 .iprm-footer__copy {
@@ -1180,7 +1288,7 @@ select.badge-select:disabled {
   background: var(--iprm-white);
   border-radius: 28px;
   padding: 64px 56px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--iprm-shadow-xs);
 }
 
 .iprm-content-page__title {
@@ -1236,7 +1344,7 @@ select.badge-select:disabled {
   height: 64px;
   border-radius: 50%;
   background: var(--iprm-accent);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   font-size: 1.5rem;
   font-weight: 800;
   margin-bottom: 24px;
@@ -1357,7 +1465,7 @@ select.badge-select:disabled {
 /* Активний тег-фільтр (градієнтна заливка) */
 .iprm-tag.iprm-tag--active {
   background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 50%, var(--apple-orange) 100%);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   border: none;
 }
 
@@ -1461,10 +1569,10 @@ select.badge-select:disabled {
   background: rgba(var(--apple-black-rgb), 0.88);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
   padding: 16px 24px;
   border-radius: var(--iprm-radius);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--iprm-shadow-modal);
 }
 
 .cookie-banner__inner {
@@ -1487,7 +1595,7 @@ select.badge-select:disabled {
 }
 
 .cookie-banner__text a:hover {
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .cookie-banner__actions {
@@ -1517,7 +1625,7 @@ select.badge-select:disabled {
 
 .cookie-banner__btn--accept {
   background: var(--iprm-nav-active);
-  color: var(--iprm-white);
+  color: var(--iprm-on-accent);
 }
 
 .cookie-banner__btn--accept:hover {
@@ -1586,7 +1694,7 @@ select.badge-select:disabled {
     top: 56px;
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--iprm-surface-menu);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--iprm-border);
@@ -1654,7 +1762,7 @@ select.badge-select:disabled {
   }
 
   .iprm-nav__mobile-link--cta {
-    color: var(--iprm-white);
+    color: var(--iprm-on-accent);
     background: var(--iprm-nav-active);
     border-radius: var(--iprm-radius-pill);
     padding: 12px 24px;
@@ -1664,7 +1772,7 @@ select.badge-select:disabled {
 
   .iprm-nav__mobile-link--cta:hover {
     background: var(--iprm-accent-hover);
-    color: var(--iprm-white);
+    color: var(--iprm-on-accent);
   }
 
   .iprm-nav__mobile-link--logout {
