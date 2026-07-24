@@ -5,9 +5,10 @@
 вводу для ru/en. Збереження -- через TranslatableMixin.set_translation
 (порожнє значення видаляє переклад -> фолбек на укр).
 
-JSON-поля (faq, регалії, блоки блогу, items) редагуються як JSON-текст
-зі збереженням структури оригіналу -- це свідомий KISS-компроміс
-(структурні редактори перекладів -- окрема задача поза Фазою 4).
+JSON-поля (faq, регалії, блоки блогу, items) редагуються "поле-проти-поля":
+структура розбирається на текстові фрагменти (_walk_leaves), технічні ключі
+(TECHNICAL_KEYS) і розмітка недоторкані; при збереженні повна структура
+збирається з канонічної укр-версії з підстановкою перекладених фрагментів.
 """
 import json
 
@@ -62,6 +63,60 @@ def _registry():
     }
 
 
+# Ключі JSON-структур, які НЕ перекладаються (технічні/медіа/навігаційні).
+TECHNICAL_KEYS = {
+    'type', 'id', 'url', 'src', 'href', 'slug', 'youtube_id', 'video_id',
+    'media_id', 'image', 'icon', 'anchor', 'level', 'align', 'alignment',
+    'style', 'format', 'code', 'variant', 'target', 'rel', 'lang',
+}
+
+
+def _has_letters(value):
+    return any(ch.isalpha() for ch in value)
+
+
+def _walk_leaves(value, path=''):
+    """Текстові фрагменти JSON-структури: [(шлях 'a.0.b', укр-значення)].
+    Перекладаються лише str-значення з літерами поза TECHNICAL_KEYS;
+    структура (dict/list) і технічні значення недоторкані."""
+    leaves = []
+    if isinstance(value, dict):
+        for key, item in value.items():
+            child = f'{path}{key}'
+            if isinstance(item, (dict, list)):
+                leaves += _walk_leaves(item, child + '.')
+            elif isinstance(item, str) and key not in TECHNICAL_KEYS and _has_letters(item):
+                leaves.append((child, item))
+    elif isinstance(value, list):
+        for i, item in enumerate(value):
+            child = f'{path}{i}'
+            if isinstance(item, (dict, list)):
+                leaves += _walk_leaves(item, child + '.')
+            elif isinstance(item, str) and _has_letters(item):
+                leaves.append((child, item))
+    return leaves
+
+
+def _get_at(value, path):
+    try:
+        for token in path.split('.'):
+            value = value[int(token)] if isinstance(value, list) else value[token]
+        return value
+    except (KeyError, IndexError, TypeError, ValueError):
+        return None
+
+
+def _set_at(value, path, new):
+    tokens = path.split('.')
+    for token in tokens[:-1]:
+        value = value[int(token)] if isinstance(value, list) else value[token]
+    last = tokens[-1]
+    if isinstance(value, list):
+        value[int(last)] = new
+    else:
+        value[last] = new
+
+
 def _widget_for(model, field):
     """text | textarea | json -- за типом колонки моделі."""
     column = model.__table__.columns.get(field)
@@ -84,24 +139,42 @@ def _build_fields(obj):
         widget = _widget_for(model, field)
         uk_value = getattr(obj, field)
         if widget == 'json':
-            uk_display = json.dumps(uk_value or [], ensure_ascii=False, indent=2)
-        else:
-            uk_display = uk_value or ''
-        values = {}
-        for lang in PREFIXED_LANGUAGES:
-            value = (translations.get(lang) or {}).get(field)
-            if widget == 'json':
-                values[lang] = (
-                    json.dumps(value, ensure_ascii=False, indent=2) if value else ''
-                )
-            else:
-                values[lang] = value or ''
+            # Поле-проти-поля: кожен текстовий фрагмент структури -- окремий
+            # рядок перекладу; JSON руками не редагується.
+            leaves = []
+            for path, uk_leaf in _walk_leaves(uk_value or []):
+                leaf_values = {}
+                for lang in PREFIXED_LANGUAGES:
+                    stored = (translations.get(lang) or {}).get(field)
+                    value = _get_at(stored, path) if stored else None
+                    # Збережена структура містить укр-текст для неперекладених
+                    # фрагментів -- у формі показуємо лише реальні переклади.
+                    leaf_values[lang] = value if (
+                        isinstance(value, str) and value != uk_leaf
+                    ) else ''
+                leaves.append({
+                    'path': path,
+                    'uk': uk_leaf,
+                    'trans': leaf_values,
+                    'rows': min(8, max(2, len(uk_leaf) // 70 + 1)),
+                })
+            fields.append({
+                'name': field,
+                'label': FIELD_LABELS.get(field, field),
+                'widget': 'json',
+                'leaves': leaves,
+            })
+            continue
+        values = {
+            lang: (translations.get(lang) or {}).get(field) or ''
+            for lang in PREFIXED_LANGUAGES
+        }
         fields.append({
             'name': field,
             'label': FIELD_LABELS.get(field, field),
             'widget': widget,
-            'uk': uk_display,
-            'values': values,
+            'uk': uk_value or '',
+            'trans': values,
         })
     return fields
 
@@ -189,36 +262,39 @@ def translations_edit(entity, obj_id):
         abort(404)
 
     if request.method == 'POST':
-        errors = []
+        import copy as _copy
         for field in obj.__translatable__:
             widget = _widget_for(meta['model'], field)
+            if widget == 'json':
+                # Зібрати повну структуру з канонічної укр-версії, підставивши
+                # перекладені фрагменти. Жодного перекладу -> None (фолбек).
+                uk_value = getattr(obj, field)
+                leaves = _walk_leaves(uk_value or [])
+                for lang in PREFIXED_LANGUAGES:
+                    if not any(
+                        f'{lang}__{field}__{path}' in request.form
+                        for path, _uk in leaves
+                    ):
+                        continue
+                    translated = _copy.deepcopy(uk_value)
+                    any_translated = False
+                    for path, _uk in leaves:
+                        raw = request.form.get(f'{lang}__{field}__{path}', '').strip()
+                        if raw:
+                            _set_at(translated, path, raw)
+                            any_translated = True
+                    obj.set_translation(
+                        lang, field, translated if any_translated else None
+                    )
+                continue
             for lang in PREFIXED_LANGUAGES:
                 key = f'{lang}__{field}'
                 if key not in request.form:
                     continue
-                raw = request.form.get(key, '').strip()
-                if widget == 'json':
-                    if raw:
-                        try:
-                            value = json.loads(raw)
-                        except ValueError:
-                            errors.append(
-                                f'{FIELD_LABELS.get(field, field)} ({lang}): некоректний JSON'
-                            )
-                            continue
-                    else:
-                        value = None
-                else:
-                    value = raw or None
-                obj.set_translation(lang, field, value)
-        if errors:
-            db.session.rollback()
-            for err in errors:
-                flash(err, 'error')
-        else:
-            db.session.commit()
-            flash('Переклади збережено.', 'success')
-            return redirect(url_for('admin.translations_edit', entity=entity, obj_id=obj_id))
+                obj.set_translation(lang, field, request.form.get(key, '').strip() or None)
+        db.session.commit()
+        flash('Переклади збережено.', 'success')
+        return redirect(url_for('admin.translations_edit', entity=entity, obj_id=obj_id))
 
     return render_template(
         'admin/translations_edit.html',

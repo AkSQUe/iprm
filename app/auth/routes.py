@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 from flask import render_template, redirect, url_for, flash, request, session, send_file
-from flask_babel import gettext as _
+from flask_babel import get_locale, gettext as _
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy.orm import contains_eager
 from app.auth import auth_bp
@@ -98,6 +98,10 @@ def register():
             first_name=form.first_name.data.strip(),
             last_name=form.last_name.data.strip(),
         )
+        # Мова листів = мова інтерфейсу при самореєстрації (uk = NULL).
+        ui_lang = str(get_locale() or '')
+        if ui_lang and ui_lang != 'uk':
+            user.preferred_language = ui_lang
 
         try:
             db.session.commit()
@@ -354,9 +358,24 @@ def certificate_download(cert_id):
     )
 
 
-@auth_bp.route('/settings')
+@auth_bp.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
+    if request.method == 'POST':
+        from app.i18n import LANGUAGES
+        lang = request.form.get('email_language', 'uk')
+        if lang not in LANGUAGES:
+            lang = 'uk'
+        # uk -- вихідна мова, зберігаємо як NULL (див. User.preferred_language).
+        current_user.preferred_language = None if lang == 'uk' else lang
+        try:
+            db.session.commit()
+            flash(_('Налаштування збережено'), 'success')
+        except Exception:
+            logger.exception('Failed to save email language for user %s', current_user.id)
+            db.session.rollback()
+            flash(_('Помилка при збереженні налаштувань'), 'error')
+        return redirect(url_for('auth.settings'))
     return render_template('auth/settings.html')
 
 

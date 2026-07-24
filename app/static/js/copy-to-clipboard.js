@@ -8,12 +8,15 @@
 (function () {
   'use strict';
 
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
   function notify(text, ok) {
     if (typeof window.iprmToast !== 'function') return;
     if (ok) {
-      window.iprmToast('Скопійовано: ' + text, 'success', { duration: 2500 });
+      window.iprmToast(t('Скопійовано: {text}', { text: text }), 'success', { duration: 2500 });
     } else {
-      window.iprmToast('Не вдалося скопіювати', 'error', { duration: 2500 });
+      window.iprmToast(t('Не вдалося скопіювати'), 'error', { duration: 2500 });
     }
   }
 

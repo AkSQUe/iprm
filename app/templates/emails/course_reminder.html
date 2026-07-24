@@ -1,24 +1,24 @@
 {% extends "emails/base.html" %}
 {% from "emails/_macros.html" import button_primary, button_small, detail_row, alert_warning, spacer, days_label %}
 
-{% block title %}Нагадування про курс{% endblock %}
+{% block title %}{{ _('Нагадування про курс') }}{% endblock %}
 
 {% block preview_text %}
-    {% if days_until == 1 %}Курс {{ event.title }} завтра{% else %}{{ event.title }} через {{ days_label(days_until) }}{% endif %}
+    {% if days_until == 1 %}{% trans title=event.title %}Курс {{ title }} завтра{% endtrans %}{% else %}{% trans title=event.title, days=days_label(days_until) %}{{ title }} через {{ days }}{% endtrans %}{% endif %}
 {% endblock %}
 
 {% block content %}
     <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
-        {% if days_until == 1 %}Курс завтра{% else %}Курс через {{ days_label(days_until) }}{% endif %}
+        {% if days_until == 1 %}{{ _('Курс завтра') }}{% else %}{% trans days=days_label(days_until) %}Курс через {{ days }}{% endtrans %}{% endif %}
     </h1>
 
     <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
-        {{ user.first_name or 'Шановний учаснику' }}, нагадуємо про ваш курс.
+        {{ user.first_name or _('Шановний учаснику') }}, {{ _('нагадуємо про ваш курс.') }}
     </p>
 
     <!-- Course details -->
     <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
-        Деталі курсу
+        {{ _('Деталі курсу') }}
     </p>
 
     <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
@@ -26,26 +26,26 @@
             <td style="padding: 20px 24px;">
                 <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">{{ event.title }}</p>
                 {% if event.start_date %}
-                {{ detail_row("Дата", event.start_date.strftime('%d.%m.%Y %H:%M')) }}
+                {{ detail_row(_('Дата'), event.start_date.strftime('%d.%m.%Y %H:%M')) }}
                 {% endif %}
                 {% if event.location %}
-                {{ detail_row("Місце", event.location) }}
+                {{ detail_row(_('Місце'), event.location) }}
                 {% endif %}
             </td>
         </tr>
     </table>
 
     {% if event.online_link %}
-    {{ button_small("Приєднатися онлайн", event.online_link) }}
+    {{ button_small(_('Приєднатися онлайн'), event.online_link) }}
     {% endif %}
 
     {% if days_until == 1 %}
-    {{ alert_warning(None, "Підготуйтесь до заходу та перевірте розклад") }}
+    {{ alert_warning(None, _('Підготуйтесь до заходу та перевірте розклад')) }}
     {% endif %}
 
     {{ spacer(16) }}
 
     <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
-        Якщо у вас виникнуть запитання, зверніться до нас через сторінку контактів.
+        {{ _('Якщо у вас виникнуть запитання, зверніться до нас через сторінку контактів.') }}
     </p>
 {% endblock %}

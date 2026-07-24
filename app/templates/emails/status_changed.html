@@ -1,22 +1,22 @@
 {% extends "emails/base.html" %}
 {% from "emails/_macros.html" import button_primary, badge, spacer %}
 
-{% block title %}Статус реєстрації змінено{% endblock %}
+{% block title %}{{ _('Статус реєстрації змінено') }}{% endblock %}
 
-{% block preview_text %}Статус реєстрації на {{ event.title }}: {{ new_status_label }}{% endblock %}
+{% block preview_text %}{% trans title=event.title, status=new_status_label %}Статус реєстрації на {{ title }}: {{ status }}{% endtrans %}{% endblock %}
 
 {% block content %}
     <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
-        Статус реєстрації змінено
+        {{ _('Статус реєстрації змінено') }}
     </h1>
 
     <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
-        {{ user.first_name or 'Шановний учаснику' }}, статус вашої реєстрації оновлено.
+        {{ user.first_name or _('Шановний учаснику') }}, {{ _('статус вашої реєстрації оновлено.') }}
     </p>
 
     <!-- Course details -->
     <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
-        Деталі
+        {{ _('Деталі') }}
     </p>
 
     <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
@@ -24,7 +24,7 @@
             <td style="padding: 20px 24px;">
                 <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">{{ event.title }}</p>
 
-                <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">Новий статус</p>
+                <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">{{ _('Новий статус') }}</p>
                 {% if new_status == 'confirmed' %}
                 {{ badge(new_status_label, 'success') }}
                 {% elif new_status == 'cancelled' %}
@@ -38,11 +38,11 @@
         </tr>
     </table>
 
-    {{ button_primary("Перейти на сайт", site_settings.website_url) }}
+    {{ button_primary(_('Перейти на сайт'), site_settings.website_url) }}
 
     {{ spacer(16) }}
 
     <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
-        Якщо у вас виникнуть запитання, зверніться до нас через сторінку контактів.
+        {{ _('Якщо у вас виникнуть запитання, зверніться до нас через сторінку контактів.') }}
     </p>
 {% endblock %}

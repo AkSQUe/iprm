@@ -10,14 +10,17 @@
 (function () {
   'use strict';
 
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
   var invoiceLinks = document.querySelectorAll('[data-invoice-download]');
   invoiceLinks.forEach(function (a) {
     a.addEventListener('click', function () {
       if (typeof window.iprmToast === 'function') {
         window.iprmToast(
-          'Формуємо рахунок (PDF) — завантаження почнеться за мить.',
+          t('Формуємо рахунок (PDF) — завантаження почнеться за мить.'),
           'info',
-          { title: 'Рахунок' }
+          { title: t('Рахунок') }
         );
       }
     });

@@ -90,6 +90,34 @@
   color: var(--apple-gray-dark);
 }
 
+/* Мова листів */
+.settings-lang-form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.settings-select {
+  flex: 1;
+  min-width: 180px;
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  color: var(--apple-black);
+  background: var(--apple-section-bg);
+  border: 2px solid transparent;
+  border-radius: var(--iprm-radius-sm);
+  cursor: pointer;
+  transition: border-color 0.2s var(--iprm-transition);
+}
+
+.settings-select:hover,
+.settings-select:focus {
+  border-color: var(--iprm-border);
+  outline: none;
+}
+
 .settings-back {
   display: block;
   text-align: center;

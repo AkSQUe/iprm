@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-24 16:37+0300\n"
+"POT-Creation-Date: 2026-07-24 20:08+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -20,6 +20,9 @@ msgstr ""
 
 msgid "Будь ласка, увійдіть для доступу до цієї сторінки."
 msgstr "Please sign in to access this page."
+
+msgid "Онлайн"
+msgstr "Online"
 
 msgid "Тип учасника"
 msgstr "Participant type"
@@ -77,6 +80,291 @@ msgstr "Date of birth cannot be in the future"
 
 msgid "Некоректний рік народження"
 msgstr "Invalid year of birth"
+
+msgid "Будь ласка, заповніть це поле"
+msgstr "Please fill in this field"
+
+msgid "Вкажіть коректну адресу електронної пошти"
+msgstr "Enter a valid email address"
+
+msgid "Вкажіть номер телефону"
+msgstr "Enter a phone number"
+
+msgid "Оберіть дату"
+msgstr "Select a date"
+
+msgid "Необхідно поставити цю позначку"
+msgstr "This box must be checked"
+
+msgid "Оберіть хоча б один варіант"
+msgstr "Select at least one option"
+
+#, python-brace-format
+msgid "Перевірте форму: {count} поле потребує уваги"
+msgstr "Please check the form: {count} field needs attention"
+
+#, python-brace-format
+msgid "Перевірте форму: {count} поля(ів) потребують уваги"
+msgstr "Please check the form: {count} fields need attention"
+
+msgid "Готово"
+msgstr "Done"
+
+msgid "Помилка"
+msgstr "Error"
+
+msgid "Увага"
+msgstr "Warning"
+
+msgid "Інформація"
+msgstr "Information"
+
+msgid "Закрити"
+msgstr "Close"
+
+msgid "Підтвердити"
+msgstr "Confirm"
+
+msgid "Скасувати"
+msgstr "Cancel"
+
+#, python-brace-format
+msgid "Скопійовано: {text}"
+msgstr "Copied: {text}"
+
+msgid "Не вдалося скопіювати"
+msgstr "Failed to copy"
+
+#, python-brace-format
+msgid "Підказка: {text}"
+msgstr "Hint: {text}"
+
+msgid "Нагору"
+msgstr "Back to top"
+
+msgid "Надсилаємо…"
+msgstr "Sending…"
+
+msgid "Слабкий"
+msgstr "Weak"
+
+msgid "Середній"
+msgstr "Fair"
+
+msgid "Хороший"
+msgstr "Good"
+
+msgid "Надійний"
+msgstr "Strong"
+
+#, python-brace-format
+msgid "Заповнено {pct}%"
+msgstr "{pct}% complete"
+
+msgid "Формуємо рахунок (PDF) — завантаження почнеться за мить."
+msgstr "Generating the invoice (PDF) — the download will start in a moment."
+
+msgid "Рахунок"
+msgstr "Invoice"
+
+msgid "Перегляд зображення"
+msgstr "Image preview"
+
+msgid "Попереднє"
+msgstr "Previous"
+
+msgid "Наступне"
+msgstr "Next"
+
+msgid "ІПРМ"
+msgstr "IPRM"
+
+msgid "процедура"
+msgstr "procedure"
+
+msgid "процедури"
+msgstr "procedures"
+
+msgid "процедур"
+msgstr "procedures"
+
+msgid "тиждень"
+msgstr "week"
+
+msgid "тижні"
+msgstr "weeks"
+
+msgid "тижнів"
+msgstr "weeks"
+
+#, python-brace-format
+msgid "{n} курс"
+msgstr "{n} course"
+
+#, python-brace-format
+msgid "{n} курси"
+msgstr "{n} courses"
+
+#, python-brace-format
+msgid "{n} курсів"
+msgstr "{n} courses"
+
+#, python-brace-format
+msgid "Знайдено {found}"
+msgstr "Found {found}"
+
+msgid "Нічого не знайдено"
+msgstr "Nothing found"
+
+#, python-brace-format, python-format
+msgid "Показати ще ({count})"
+msgstr "Show more ({count})"
+
+msgid "Згорнути"
+msgstr "Show less"
+
+msgid "Назад"
+msgstr "Back"
+
+msgid "Вперед"
+msgstr "Next"
+
+msgid "Сьогодні"
+msgstr "Today"
+
+msgid "Місяць"
+msgstr "Month"
+
+msgid "Список"
+msgstr "List"
+
+msgid "Тиж"
+msgstr "Wk"
+
+msgid "Весь день"
+msgstr "All day"
+
+#, python-brace-format
+msgid "+ще {n}"
+msgstr "+{n} more"
+
+msgid "Немає запланованих заходів"
+msgstr "No scheduled events"
+
+msgid "Формат"
+msgstr "Format"
+
+msgid "Тип заходу"
+msgstr "Event type"
+
+msgid "Лектор"
+msgstr "Lecturer"
+
+msgid "Офлайн"
+msgstr "Offline"
+
+msgid "Гібрид"
+msgstr "Hybrid"
+
+msgid "+ онлайн"
+msgstr "+ online"
+
+msgid "січня"
+msgstr "January"
+
+msgid "лютого"
+msgstr "February"
+
+msgid "березня"
+msgstr "March"
+
+msgid "квітня"
+msgstr "April"
+
+msgid "травня"
+msgstr "May"
+
+msgid "червня"
+msgstr "June"
+
+msgid "липня"
+msgstr "July"
+
+msgid "серпня"
+msgstr "August"
+
+msgid "вересня"
+msgstr "September"
+
+msgid "жовтня"
+msgstr "October"
+
+msgid "листопада"
+msgstr "November"
+
+msgid "грудня"
+msgstr "December"
+
+msgid "Оберіть захід у календарі, щоб побачити деталі та зареєструватися."
+msgstr "Select an event in the calendar to see the details and register."
+
+#, python-brace-format
+msgid "{n} балів БПР"
+msgstr "{n} BPR points"
+
+#, python-brace-format
+msgid "залишилось {n} місце"
+msgstr "{n} seat left"
+
+#, python-brace-format
+msgid "залишилось {n} місця"
+msgstr "{n} seats left"
+
+#, python-brace-format
+msgid "залишилось {n} місць"
+msgstr "{n} seats left"
+
+msgid "Захід завершено"
+msgstr "Event completed"
+
+msgid "Реєстрація"
+msgstr "Sign up"
+
+msgid "Реєстрацію закрито"
+msgstr "Registration closed"
+
+msgid "Додати в календар:"
+msgstr "Add to calendar:"
+
+msgid "Google Календар"
+msgstr "Google Calendar"
+
+msgid "Не вдалося завантажити календар. Перегляньте розклад у режимі «Список»."
+msgstr "Failed to load the calendar. Please view the schedule in List mode."
+
+msgid "Пошук"
+msgstr "Search"
+
+msgid "Назва заходу..."
+msgstr "Event name..."
+
+msgid "Пошук у календарі"
+msgstr "Search the calendar"
+
+msgid "Скинути фільтри"
+msgstr "Reset filters"
+
+#, python-brace-format
+msgid "{n} захід"
+msgstr "{n} event"
+
+#, python-brace-format
+msgid "{n} заходи"
+msgstr "{n} events"
+
+#, python-brace-format
+msgid "{n} заходів"
+msgstr "{n} events"
 
 msgid "Email обов'язковий"
 msgstr "Email is required"
@@ -258,6 +546,12 @@ msgstr "Error saving. Please try again."
 
 msgid "Сертифікат не знайдено"
 msgstr "Certificate not found"
+
+msgid "Налаштування збережено"
+msgstr "Settings saved"
+
+msgid "Помилка при збереженні налаштувань"
+msgstr "Error saving settings"
 
 msgid "Посилання недійсне або прострочене. Запросіть нове."
 msgstr "The link is invalid or expired. Request a new one."
@@ -638,9 +932,6 @@ msgstr ""
 "Institute of Plasma Therapy and Regenerative Medicine. Postgraduate "
 "courses for physicians with BPR points."
 
-msgid "ІПРМ"
-msgstr "IPRM"
-
 msgid "ІПРМ - Інститут Плазмотерапії та Регенеративної Медицини"
 msgstr "IPRM - Institute of Plasma Therapy and Regenerative Medicine"
 
@@ -811,8 +1102,7 @@ msgid "Персональні дані"
 msgstr "Personal details"
 
 msgid "Потрібна для ідентифікації у системі БПР МОЗ при нарахуванні балів."
-msgstr ""
-"Required for identification in the MoH BPR system when awarding points."
+msgstr "Required for identification in the MoH BPR system when awarding points."
 
 msgid "Освіта та робота"
 msgstr "Education and employment"
@@ -966,9 +1256,6 @@ msgstr "To home"
 msgid "Реєстрація | ІПРМ"
 msgstr "Sign up | IPRM"
 
-msgid "Реєстрація"
-msgstr "Sign up"
-
 msgid "Створіть обліковий запис"
 msgstr "Create an account"
 
@@ -1028,6 +1315,24 @@ msgstr "Font"
 
 msgid "Оберіть шрифт для всього сайту"
 msgstr "Choose a font for the entire site"
+
+msgid "Мова листів"
+msgstr "Email language"
+
+msgid "Оберіть мову, якою ви отримуватимете email-повідомлення"
+msgstr "Choose the language in which you will receive email notifications"
+
+msgid "Українська"
+msgstr "Ukrainian"
+
+msgid "Російська"
+msgstr "Russian"
+
+msgid "Англійська"
+msgstr "English"
+
+msgid "Зберегти"
+msgstr "Save"
 
 msgid "Повернутися до кабінету"
 msgstr "Back to account"
@@ -1293,7 +1598,9 @@ msgid "Досвідчена команда"
 msgstr "Experienced team"
 
 msgid "Фахівці з багаторічним досвідом у регенеративній та клітинній медицині."
-msgstr "Specialists with many years of experience in regenerative and cellular medicine."
+msgstr ""
+"Specialists with many years of experience in regenerative and cellular "
+"medicine."
 
 msgid "Курси інституту"
 msgstr "Institute courses"
@@ -1305,9 +1612,6 @@ msgstr "%(title)s | IPRM"
 #, python-format
 msgid "Вас рекомендує <strong>%(inviter)s</strong>"
 msgstr "You were referred by <strong>%(inviter)s</strong>"
-
-msgid "Закрити"
-msgstr "Close"
 
 msgid "Формат участі"
 msgstr "Participation format"
@@ -1361,7 +1665,9 @@ msgid "Доступ до додаткових навчальних матері�
 msgstr "Access to additional learning materials and presentations"
 
 msgid "Оберіть <span class=\"apple-gradient-text\">формат участі</span>"
-msgstr "Choose your <span class=\"apple-gradient-text\">participation format</span>"
+msgstr ""
+"Choose your <span class=\"apple-gradient-text\">participation "
+"format</span>"
 
 msgid "та отримайте сертифікат міжнародного зразка"
 msgstr "and receive an internationally recognized certificate"
@@ -1390,9 +1696,6 @@ msgstr "Left"
 
 msgid "Тарифи участі"
 msgstr "Participation tiers"
-
-msgid "Реєстрацію закрито"
-msgstr "Registration closed"
 
 msgid "Наразі немає запланованих проведень цього курсу."
 msgstr "There are currently no scheduled sessions of this course."
@@ -1447,9 +1750,6 @@ msgstr "Frequently asked <span class=\"apple-gradient-text\">questions</span>"
 msgid "Уже проведено (%(count)s):"
 msgstr "Already held (%(count)s):"
 
-msgid "Онлайн"
-msgstr "Online"
-
 msgid "Наступний <span class=\"apple-gradient-text\">крок</span>"
 msgstr "Next <span class=\"apple-gradient-text\">step</span>"
 
@@ -1473,8 +1773,8 @@ msgid ""
 "Хочете, щоб курс був проведений <span class=\"apple-gradient-text\">в "
 "інший час?</span>"
 msgstr ""
-"Would you like the course to be held <span class=\"apple-gradient-text\">at "
-"a different time?</span>"
+"Would you like the course to be held <span class=\"apple-gradient-"
+"text\">at a different time?</span>"
 
 msgid "Залиште запит <span class=\"apple-gradient-text\">на курс</span>"
 msgstr "Submit a <span class=\"apple-gradient-text\">course request</span>"
@@ -1508,9 +1808,7 @@ msgstr ""
 msgid ""
 "Курси після дипломної<br><span class=\"apple-gradient-"
 "text\">освіти.</span>"
-msgstr ""
-"Postgraduate<br><span class=\"apple-gradient-"
-"text\">courses.</span>"
+msgstr "Postgraduate<br><span class=\"apple-gradient-text\">courses.</span>"
 
 msgid ""
 "Сертифіковані програми підвищення кваліфікації для лікарів з офіційним "
@@ -1537,17 +1835,8 @@ msgstr "Search by title"
 msgid "Введіть назву курсу..."
 msgstr "Enter a course title..."
 
-msgid "Формат"
-msgstr "Format"
-
 msgid "Усі"
 msgstr "All"
-
-msgid "Офлайн"
-msgstr "Offline"
-
-msgid "Гібрид"
-msgstr "Hybrid"
 
 msgid "Тривалість"
 msgstr "Duration"
@@ -1591,9 +1880,6 @@ msgstr "Price: highest first"
 msgid "Спочатку нові"
 msgstr "Newest first"
 
-msgid "Скинути фільтри"
-msgstr "Reset filters"
-
 msgid "Наразі немає доступних курсів"
 msgstr "There are currently no available courses"
 
@@ -1608,9 +1894,6 @@ msgstr "Schedule of the institute's upcoming events"
 
 msgid "Режим перегляду графіка"
 msgstr "Schedule view mode"
-
-msgid "Список"
-msgstr "List"
 
 msgid "Календар"
 msgstr "Calendar"
@@ -1724,6 +2007,351 @@ msgstr ""
 "Upon completing the course, participants receive certificates with "
 "continuing professional development points."
 
+#, python-format
+msgid "%(n)s днів"
+msgstr "%(n)s days"
+
+#, python-format
+msgid "%(n)s день"
+msgstr "%(n)s day"
+
+#, python-format
+msgid "%(n)s дні"
+msgstr "%(n)s days"
+
+msgid "Сайт"
+msgstr "Website"
+
+msgid "Контакти"
+msgstr "Contacts"
+
+msgid "Ви отримали цей лист, бо зареєстровані на платформі ІПРМ."
+msgstr "You received this email because you are registered on the IPRM platform."
+
+msgid "Заповніть дані для сертифіката"
+msgstr "Fill in your certificate details"
+
+#, python-format
+msgid "Без анкети МОЗ №725 ми не зможемо видати сертифікат за курс %(title)s"
+msgstr "Without the MoH No. 725 form, we cannot issue a certificate for the course %(title)s"
+
+msgid "Шановний учаснику"
+msgstr "Dear participant"
+
+msgid ""
+"ваш курс уже скоро — а анкета для сертифіката ще не заповнена. Без неї ми"
+" не зможемо нарахувати бали БПР і видати сертифікат (вимоги МОЗ №725, п. "
+"13)."
+msgstr "your course is coming up soon, but the certificate form has not been filled in yet. Without it, we cannot award BPR points or issue a certificate (MoH No. 725 requirements, clause 13)."
+
+msgid "Дата"
+msgstr "Date"
+
+msgid "Місце"
+msgstr "Seat"
+
+msgid ""
+"Анкета займе 2–3 хвилини: тип учасника, дата народження, освіта, місце "
+"роботи та спеціалізації. Заповнюється один раз — і діє для всіх ваших "
+"курсів."
+msgstr "The form takes 2–3 minutes: participant type, date of birth, education, place of work, and specializations. It is filled in once and applies to all your courses."
+
+msgid "Заповнити анкету"
+msgstr "Fill in the form"
+
+msgid ""
+"Якщо ви вже заповнили анкету після надсилання цього листа — просто "
+"проігноруйте його."
+msgstr "If you have already filled in the form after this email was sent, simply ignore it."
+
+msgid "Ваш сертифікат готовий"
+msgstr "Your certificate is ready"
+
+#, python-format
+msgid "Сертифікат за участь у заході %(title)s"
+msgstr "Certificate of participation in the event %(title)s"
+
+msgid ""
+"дякуємо за участь! Сертифікат додано до цього листа у форматі PDF. Також "
+"він доступний у вашому особистому кабінеті."
+msgstr "thank you for participating! The certificate is attached to this email as a PDF. It is also available in your account."
+
+msgid "Деталі сертифіката"
+msgstr "Certificate details"
+
+msgid "Номер"
+msgstr "Number"
+
+msgid "Дата заходу"
+msgstr "Event date"
+
+msgid "Бали БПР"
+msgstr "BPR points"
+
+msgid "балів"
+msgstr "points"
+
+msgid "Відкрити особистий кабінет"
+msgstr "Open your account"
+
+msgid ""
+"Якщо вкладення не відкривається, увійдіть до особистого кабінету та "
+"завантажте сертифікат звідти."
+msgstr "If the attachment does not open, log in to your account and download the certificate from there."
+
+msgid "Завершіть реєстрацію"
+msgstr "Complete your registration"
+
+#, python-format
+msgid "Завершіть анкету та оберіть спосіб оплати: %(title)s"
+msgstr "Complete the form and choose a payment method: %(title)s"
+
+msgid ""
+"вас додано до участі у заході. Залишилось заповнити коротку анкету та "
+"обрати спосіб оплати."
+msgstr "you have been added to the event. All that is left is to fill in a short form and choose a payment method."
+
+msgid "Деталі заходу"
+msgstr "Event details"
+
+msgid "Вартість"
+msgstr "Price"
+
+msgid "Завершити реєстрацію"
+msgstr "Complete registration"
+
+msgid "Зверніть увагу"
+msgstr "Please note"
+
+msgid ""
+"Посилання дійсне 30 днів. На сторінці завершення ви зможете заповнити "
+"анкету та обрати спосіб оплати — онлайн (LiqPay) або за рахунком (PDF)."
+msgstr "The link is valid for 30 days. On the completion page, you can fill in the form and choose a payment method — online (LiqPay) or by invoice (PDF)."
+
+msgid ""
+"Якщо у вас виникнуть запитання, зверніться до нас через сторінку "
+"контактів."
+msgstr "If you have any questions, contact us via the contact page."
+
+msgid "Нагадування про курс"
+msgstr "Course reminder"
+
+#, python-format
+msgid "Курс %(title)s завтра"
+msgstr "The course %(title)s is tomorrow"
+
+#, python-format
+msgid "%(title)s через %(days)s"
+msgstr "%(title)s in %(days)s"
+
+msgid "Курс завтра"
+msgstr "The course is tomorrow"
+
+#, python-format
+msgid "Курс через %(days)s"
+msgstr "The course is in %(days)s"
+
+msgid "нагадуємо про ваш курс."
+msgstr "this is a reminder about your course."
+
+msgid "Деталі курсу"
+msgstr "Course details"
+
+msgid "Приєднатися онлайн"
+msgstr "Join online"
+
+msgid "Підготуйтесь до заходу та перевірте розклад"
+msgstr "Prepare for the event and check the schedule"
+
+msgid "Запит отримано"
+msgstr "Request received"
+
+#, python-format
+msgid "Дякуємо! Ми отримали ваш запит на курс \"%(title)s\"."
+msgstr "Thank you! We have received your request for the course \"%(title)s\"."
+
+msgid "Дякуємо за ваш запит!"
+msgstr "Thank you for your request!"
+
+msgid ""
+"Ми отримали ваш запит на курс і вже опрацьовуємо його. Як тільки буде "
+"заплановано чергове проведення – ми обов'язково зв'яжемось з вами на цю "
+"адресу."
+msgstr "We have received your request for the course and are already processing it. As soon as the next session is scheduled, we will contact you at this address."
+
+msgid "Запит зареєстровано"
+msgstr "Request registered"
+
+msgid "Ваше повідомлення успішно надіслано команді ІПРМ."
+msgstr "Your message has been successfully sent to the IPRM team."
+
+msgid "Деталі запиту"
+msgstr "Request details"
+
+msgid "Отримано"
+msgstr "Received"
+
+msgid "Ваше повідомлення"
+msgstr "Your message"
+
+msgid "Сторінка курсу"
+msgstr "Course page"
+
+msgid ""
+"Якщо ви не залишали цей запит – проігноруйте лист. Це автоматичне "
+"повідомлення, відповідати на нього не обов'язково."
+msgstr "If you did not submit this request, ignore this email. This is an automated message; you do not need to reply to it."
+
+msgid "Підтвердіть ваш email"
+msgstr "Confirm your email"
+
+msgid "Підтвердіть email для доступу до всіх функцій ІПРМ"
+msgstr "Confirm your email to access all IPRM features"
+
+msgid "Вітаємо"
+msgstr "Hello"
+
+msgid ""
+"дякуємо за реєстрацію в ІПРМ. Натисніть кнопку нижче, щоб підтвердити "
+"вашу email-адресу."
+msgstr "thank you for registering with IPRM. Click the button below to confirm your email address."
+
+msgid "Підтвердити email"
+msgstr "Confirm email"
+
+msgid ""
+"Посилання дійсне протягом 24 годин. Якщо ви не реєструвалися на ІПРМ, "
+"просто проігноруйте цей лист."
+msgstr "The link is valid for 24 hours. If you did not register with IPRM, simply ignore this email."
+
+msgid "Якщо кнопка не працює, скопіюйте це посилання у браузер:"
+msgstr "If the button does not work, copy this link into your browser:"
+
+msgid "Встановіть новий пароль для вашого облікового запису ІПРМ"
+msgstr "Set a new password for your IPRM account"
+
+msgid ""
+"ми отримали запит на відновлення паролю для вашого облікового запису "
+"ІПРМ. Натисніть кнопку нижче, щоб встановити новий пароль."
+msgstr "we received a request to reset the password for your IPRM account. Click the button below to set a new password."
+
+msgid "Встановити новий пароль"
+msgstr "Set a new password"
+
+msgid ""
+"Посилання дійсне протягом 1 години. Якщо ви не запитували відновлення "
+"паролю, просто проігноруйте цей лист — ваш пароль залишиться незмінним."
+msgstr "The link is valid for 1 hour. If you did not request a password reset, simply ignore this email — your password will remain unchanged."
+
+msgid "Оплату підтверджено"
+msgstr "Payment confirmed"
+
+#, python-format
+msgid "Оплата за курс %(title)s отримана"
+msgstr "Payment for the course %(title)s received"
+
+msgid "ваша оплата успішно отримана."
+msgstr "your payment has been received successfully."
+
+msgid "Номер місця"
+msgstr "Seat number"
+
+msgid "Сума"
+msgstr "Amount"
+
+msgid "Місце підтверджено"
+msgstr "Seat confirmed"
+
+msgid "Ваше місце на курсі підтверджено. Очікуйте нагадування перед початком."
+msgstr "Your seat in the course has been confirmed. Expect a reminder before the start."
+
+msgid "Вам нараховано бонусні бали"
+msgstr "You have been awarded bonus points"
+
+#, python-format
+msgid "+%(points)s бонусних балів за вашу рекомендацію"
+msgstr "+%(points)s bonus points for your referral"
+
+msgid "Дякуємо за рекомендацію"
+msgstr "Thank you for your referral"
+
+#, python-format
+msgid ""
+"за оплачену реєстрацію на курс «%(title)s» за вашим реферальним "
+"посиланням вам нараховано бонусні бали лояльності."
+msgstr "you have been awarded bonus loyalty points for a paid registration for the course \"%(title)s\" made through your referral link."
+
+msgid ""
+"за оплачену реєстрацію за вашим реферальним посиланням вам нараховано "
+"бонусні бали лояльності."
+msgstr "you have been awarded bonus loyalty points for a paid registration made through your referral link."
+
+#, python-format
+msgid "Нараховано +%(points)s балів"
+msgstr "+%(points)s points awarded"
+
+#, python-format
+msgid "Ваш поточний баланс: %(balance)s бонусних балів."
+msgstr "Your current balance: %(balance)s bonus points."
+
+msgid "Мій кабінет"
+msgstr "My account"
+
+msgid ""
+"Продовжуйте ділитися посиланням -- кожна оплачена реєстрація за ним "
+"приносить вам нові бали."
+msgstr "Keep sharing your link — every paid registration made through it earns you new points."
+
+#, python-format
+msgid "Ви зареєстровані на курс %(title)s"
+msgstr "You are registered for the course %(title)s"
+
+msgid "ви успішно зареєстровані на курс."
+msgstr "you have successfully registered for the course."
+
+msgid "тариф"
+msgstr "plan"
+
+msgid "До оплати"
+msgstr "Amount due"
+
+msgid "Оплата за рахунком"
+msgstr "Payment by invoice"
+
+msgid ""
+"Ви обрали оплату за рахунком. Завантажте рахунок (PDF) на сторінці "
+"реєстрації або в особистому кабінеті та сплатіть через банк за "
+"реквізитами. Після оплати повідомте менеджера для підтвердження участі."
+msgstr "You have chosen payment by invoice. Download the invoice (PDF) on the registration page or in your account and pay via bank transfer using the provided details. After payment, notify the manager to confirm your participation."
+
+msgid "Перейти до оплати"
+msgstr "Proceed to payment"
+
+msgid "Перейти на сайт"
+msgstr "Go to the website"
+
+msgid ""
+"Щоб після курсу отримати сертифікат з балами БПР, заповніть коротку "
+"анкету (вимоги МОЗ №725, п. 13) в особистому кабінеті. Це займе 2–3 "
+"хвилини і діє для всіх ваших курсів."
+msgstr "To receive a certificate with BPR points after the course, fill in a short form (MoH No. 725 requirements, clause 13) in your account. It takes 2–3 minutes and applies to all your courses."
+
+msgid "Статус реєстрації змінено"
+msgstr "Registration status changed"
+
+#, python-format
+msgid "Статус реєстрації на %(title)s: %(status)s"
+msgstr "Registration status for %(title)s: %(status)s"
+
+msgid "статус вашої реєстрації оновлено."
+msgstr "the status of your registration has been updated."
+
+msgid "Деталі"
+msgstr "Details"
+
+msgid "Новий статус"
+msgstr "New status"
+
 msgid "Потрібна авторизація | ІПРМ"
 msgstr "Authorization required | IPRM"
 
@@ -1749,8 +2377,8 @@ msgid ""
 "Сторінка перебуває на стадії <span class=\"apple-gradient-"
 "text\">репаративної регенерації</span>"
 msgstr ""
-"This page is undergoing <span class=\"apple-gradient-"
-"text\">reparative regeneration</span>"
+"This page is undergoing <span class=\"apple-gradient-text\">reparative "
+"regeneration</span>"
 
 msgid "Буде здоровою й красивою найближчим часом"
 msgstr "It will be healthy and beautiful again soon"
@@ -1764,9 +2392,7 @@ msgstr "Server error | IPRM"
 msgid ""
 "Проводимо технічне <span class=\"apple-gradient-"
 "text\">обслуговування</span>"
-msgstr ""
-"We are performing <span class=\"apple-gradient-"
-"text\">maintenance</span>"
+msgstr "We are performing <span class=\"apple-gradient-text\">maintenance</span>"
 
 msgid "Наші спеціалісти вже працюють над відновленням"
 msgstr "Our specialists are already working on restoring service"
@@ -1825,8 +2451,8 @@ msgid ""
 "Заява засновників (учасників, власників), посадових осіб про відсутність "
 "конфлікту інтересів"
 msgstr ""
-"Declaration by founders (members, owners) and officials on the absence of "
-"a conflict of interest"
+"Declaration by founders (members, owners) and officials on the absence of"
+" a conflict of interest"
 
 msgid ""
 "Положення про запобігання конфлікту інтересів під час проведення заходів "
@@ -1852,11 +2478,8 @@ msgid ""
 "Зв'яжіться з Інститутом Плазмотерапії та Регенеративної Медицини. "
 "Телефон, адреса, форма зворотного зв'язку."
 msgstr ""
-"Contact the Institute of Plasma Therapy and Regenerative Medicine. Phone, "
-"address, and feedback form."
-
-msgid "Контакти"
-msgstr "Contacts"
+"Contact the Institute of Plasma Therapy and Regenerative Medicine. Phone,"
+" address, and feedback form."
 
 msgid "Зв'яжіться з нами будь-яким зручним способом"
 msgstr "Get in touch with us in any way that's convenient for you"
@@ -1893,8 +2516,7 @@ msgid ""
 msgstr ""
 "I consent to the processing of my personal data for the purpose of "
 "handling my inquiry. I have read the <a href=\"%(privacy_url)s\" "
-"target=\"_blank\" rel=\"noopener noreferrer\">Privacy "
-"Policy</a>."
+"target=\"_blank\" rel=\"noopener noreferrer\">Privacy Policy</a>."
 
 msgid "Надіслати повідомлення"
 msgstr "Send message"
@@ -1943,9 +2565,6 @@ msgstr "Hands-on practice"
 
 msgid "під керівництвом тренера"
 msgstr "under the guidance of a trainer"
-
-msgid "Бали БПР"
-msgstr "BPR points"
 
 msgid "у сертифікованих програмах"
 msgstr "in certified programs"
@@ -2016,8 +2635,8 @@ msgid ""
 "Складніші протоколи посилюють експертне позиціювання лікаря та "
 "відкривають нові клінічні задачі."
 msgstr ""
-"More advanced protocols strengthen the physician's expert positioning and "
-"open up new clinical tasks."
+"More advanced protocols strengthen the physician's expert positioning and"
+" open up new clinical tasks."
 
 msgid "Бали БПР офіційно"
 msgstr "Official BPR points"
@@ -2055,8 +2674,8 @@ msgid ""
 "Оберіть спеціальність і подивіться, де регенеративні методики доповнюють "
 "маршрут пацієнта."
 msgstr ""
-"PRP, PRF, and PPP are not a \"trendy procedure\" but a system for working "
-"with autologous plasma. Choose a specialty and see where regenerative "
+"PRP, PRF, and PPP are not a \"trendy procedure\" but a system for working"
+" with autologous plasma. Choose a specialty and see where regenerative "
 "techniques complement the patient journey."
 
 msgid "Дерматологія"
@@ -2131,9 +2750,6 @@ msgstr "Upcoming registration dates"
 msgid "безкоштовно"
 msgstr "free"
 
-msgid "Деталі"
-msgstr "Details"
-
 msgid "Розрахунок"
 msgstr "Calculation"
 
@@ -2172,7 +2788,9 @@ msgid "Протокол і практична навичка"
 msgstr "A protocol and a practical skill"
 
 msgid "Зрозуміла логіка роботи та техніка, відпрацьована під наглядом тренера."
-msgstr "A clear working logic and a technique practiced under a trainer's supervision."
+msgstr ""
+"A clear working logic and a technique practiced under a trainer's "
+"supervision."
 
 msgid "Навчальні матеріали"
 msgstr "Learning materials"
@@ -2193,8 +2811,8 @@ msgid ""
 "Післяосвітній супровід для впевненого старту та розбору практичних "
 "запитань."
 msgstr ""
-"Post-training support for a confident start and to work through practical "
-"questions."
+"Post-training support for a confident start and to work through practical"
+" questions."
 
 msgid "Карта професійного зростання"
 msgstr "Professional growth map"
@@ -2325,7 +2943,9 @@ msgid "Розуміння"
 msgstr "Understanding"
 
 msgid "Механізми дії, фракції плазми, показання та межі методики."
-msgstr "Mechanisms of action, plasma fractions, indications, and the limits of the technique."
+msgstr ""
+"Mechanisms of action, plasma fractions, indications, and the limits of "
+"the technique."
 
 msgid "Рішення"
 msgstr "Decision-making"
@@ -2334,7 +2954,9 @@ msgid "Вибір пацієнта, планування та логіка кл�
 msgstr "Patient selection, planning, and the logic of the clinical protocol."
 
 msgid "Підготовка матеріалу, техніка й відпрацювання під контролем тренера."
-msgstr "Material preparation, technique, and practice under a trainer's supervision."
+msgstr ""
+"Material preparation, technique, and practice under a trainer's "
+"supervision."
 
 msgid "Впровадження й підтримка"
 msgstr "Implementation and support"
@@ -2566,8 +3188,7 @@ msgstr "Cellular aging"
 msgid ""
 "Дослідження процесів старіння на клітинному рівні з використанням "
 "сучасних методів"
-msgstr ""
-"Research into aging processes at the cellular level using modern methods"
+msgstr "Research into aging processes at the cellular level using modern methods"
 
 msgid "Лабораторія біологічного віку та"
 msgstr "Laboratory of biological age and"
@@ -2617,7 +3238,9 @@ msgid "HRV-моніторинг, аналіз сну та активності"
 msgstr "HRV monitoring, sleep and activity analysis"
 
 msgid "Консиліум із фахівцями клініки регенеративних технологій"
-msgstr "A consultation with specialists from the clinic of regenerative technologies"
+msgstr ""
+"A consultation with specialists from the clinic of regenerative "
+"technologies"
 
 msgid "Як це змінює якість життя"
 msgstr "How this improves quality of life"
@@ -2637,8 +3260,8 @@ msgid ""
 "Індивідуальні освітні консультації щодо зміни стилю життя, супровід \"до "
 "результату\" з повторними вимірюваннями кожні 3-6 місяців."
 msgstr ""
-"Individual educational consultations on lifestyle changes, with "
-"\"to-the-result\" support and repeat measurements every 3-6 months."
+"Individual educational consultations on lifestyle changes, with \"to-the-"
+"result\" support and repeat measurements every 3-6 months."
 
 msgid "Лабораторія інноваційних досліджень у сфері"
 msgstr "Laboratory of innovative research in"
@@ -2682,7 +3305,9 @@ msgid "Вивчення аутоплазми та факторів росту (E
 msgstr "Study of autologous plasma and growth factors (ELISA panels)"
 
 msgid "Розробка стандартних операційних процедур та підготовка публікацій"
-msgstr "Development of standard operating procedures and preparation of publications"
+msgstr ""
+"Development of standard operating procedures and preparation of "
+"publications"
 
 msgid "Очікуваний вплив"
 msgstr "Expected impact"
@@ -2692,8 +3317,8 @@ msgid ""
 "варіабельність результатів, підвищення безпеки процедур, індивідуалізація"
 " терапії."
 msgstr ""
-"A faster transition to clinical protocols with a predictable effect, less "
-"variability in results, improved procedure safety, and individualized "
+"A faster transition to clinical protocols with a predictable effect, less"
+" variability in results, improved procedure safety, and individualized "
 "therapy."
 
 msgid "Клініка"
@@ -2770,9 +3395,9 @@ msgid ""
 "одиниця створений недавно, але ініціатори його створення вже давно "
 "працюють разом над новітніми розробками в галузі аутологічної медицини."
 msgstr ""
-"The Institute of Plasma Therapy and Regenerative Medicine was established "
-"as an independent legal entity only recently, but its founders have long "
-"worked together on cutting-edge developments in autologous medicine."
+"The Institute of Plasma Therapy and Regenerative Medicine was established"
+" as an independent legal entity only recently, but its founders have long"
+" worked together on cutting-edge developments in autologous medicine."
 
 msgid ""
 "Курси інституту доступні в онлайн та офлайн форматах. В очному форматі "
@@ -2858,8 +3483,8 @@ msgid ""
 "як і раніше."
 msgstr ""
 "We will no longer send you reminders and newsletters. Important service "
-"emails (email confirmation, password recovery) will continue to arrive as "
-"before."
+"emails (email confirmation, password recovery) will continue to arrive as"
+" before."
 
 msgid "Повернути підписку"
 msgstr "Restore subscription"
@@ -2907,7 +3532,9 @@ msgid "Фільтр за тегами"
 msgstr "Filter by tags"
 
 msgid "Умови отримання <span class=\"apple-gradient-text\">сертифікату</span>"
-msgstr "Requirements for receiving a <span class=\"apple-gradient-text\">certificate</span>"
+msgstr ""
+"Requirements for receiving a <span class=\"apple-gradient-"
+"text\">certificate</span>"
 
 msgid "Для отримання сертифікату необхідно виконати декілька кроків"
 msgstr "To receive a certificate, you need to complete a few steps"
@@ -2966,7 +3593,9 @@ msgid "Практична цінність"
 msgstr "Practical value"
 
 msgid "Без води – тільки доказові знання, що одразу застосовуються у практиці."
-msgstr "No filler – only evidence-based knowledge you can apply in practice right away."
+msgstr ""
+"No filler – only evidence-based knowledge you can apply in practice right"
+" away."
 
 msgid "Чому <span class=\"apple-gradient-text\">ІПРМ</span>"
 msgstr "Why <span class=\"apple-gradient-text\">IPRM</span>"
@@ -2989,9 +3618,6 @@ msgstr "practicing trainers"
 
 msgid "років досвіду навчання"
 msgstr "years of teaching experience"
-
-msgid "+ онлайн"
-msgstr "+ online"
 
 msgid "або"
 msgstr "or"
@@ -3027,9 +3653,6 @@ msgid ""
 msgstr ""
 "Without the form (MoH No. 725), we cannot award BPR points or issue a "
 "certificate for your course."
-
-msgid "Заповнити анкету"
-msgstr "Fill in the form"
 
 #, python-format
 msgid ""
@@ -3129,9 +3752,6 @@ msgstr ""
 "Unfortunately, the payment was not successful. Please try again or "
 "contact support."
 
-msgid "Сума"
-msgstr "Amount"
-
 msgid "Повернутися до реєстрації"
 msgstr "Back to registration"
 
@@ -3141,14 +3761,8 @@ msgstr "Back to courses"
 msgid "Оплата успішна | ІПРМ"
 msgstr "Payment successful | IPRM"
 
-msgid "Оплату підтверджено"
-msgstr "Payment confirmed"
-
 msgid "Дякуємо! Ваша оплата успішно оброблена."
 msgstr "Thank you! Your payment has been processed successfully."
-
-msgid "Дата"
-msgstr "Date"
 
 msgid "Статус"
 msgstr "Status"
@@ -3210,8 +3824,8 @@ msgid ""
 "href=\"%(privacy_url)s\" target=\"_blank\" rel=\"noopener\">Політики "
 "конфіденційності</a>."
 msgstr ""
-"I consent to the processing of my personal data in accordance with the <a "
-"href=\"%(privacy_url)s\" target=\"_blank\" rel=\"noopener\">Privacy "
+"I consent to the processing of my personal data in accordance with the <a"
+" href=\"%(privacy_url)s\" target=\"_blank\" rel=\"noopener\">Privacy "
 "Policy</a>."
 
 msgid "Зберегти і перейти до оплати"
@@ -3261,7 +3875,9 @@ msgid "Реєстрацію збережено"
 msgstr "Registration saved"
 
 msgid "Оплата не потрібна. Ми зв'яжемося з вами щодо деталей участі."
-msgstr "No payment is required. We will contact you about the participation details."
+msgstr ""
+"No payment is required. We will contact you about the participation "
+"details."
 
 msgid "Оберіть зручний спосіб оплати:"
 msgstr "Choose a convenient payment method:"
@@ -3294,14 +3910,8 @@ msgstr "You are registered for the course. Details have been sent to your email.
 msgid "Ваш номер місця: <strong>№%(place)s</strong>"
 msgstr "Your seat number: <strong>No. %(place)s</strong>"
 
-msgid "Захід завершено"
-msgstr "Event completed"
-
 msgid "Вам нараховано"
 msgstr "You have been awarded"
-
-msgid "Підтвердіть ваш email"
-msgstr "Confirm your email"
 
 #, python-format
 msgid "На %(email)s надіслано лист з посиланням для підтвердження"
@@ -3321,9 +3931,6 @@ msgstr ""
 "Didn't find the email? Check your \"Spam\" folder or resend it from your "
 "<a href=\"%(account_url)s\">account</a>."
 
-msgid "Заповніть дані для сертифіката"
-msgstr "Fill in your certificate details"
-
 msgid ""
 "Щоб отримати сертифікат з балами БПР після курсу, заповніть коротку "
 "анкету (вимоги МОЗ №725, п. 13). Це займе 2–3 хвилини і діє для всіх "
@@ -3337,20 +3944,14 @@ msgid ""
 "Ви обрали спосіб оплати: <strong>Оплата за рахунком</strong>. Можна "
 "скористатись будь-яким із варіантів нижче."
 msgstr ""
-"You selected the payment method: <strong>Payment by invoice</strong>. You "
-"can use any of the options below."
+"You selected the payment method: <strong>Payment by invoice</strong>. You"
+" can use any of the options below."
 
 msgid "Оберіть зручний спосіб оплати — онлайн через LiqPay або за рахунком:"
 msgstr "Choose a convenient payment method — online via LiqPay or by invoice:"
 
 msgid "Оплата обробляється. Оновіть сторінку через декілька хвилин."
 msgstr "Payment is processing. Refresh the page in a few minutes."
-
-msgid "Номер місця"
-msgstr "Seat number"
-
-msgid "Місце"
-msgstr "Seat"
 
 msgid "Статус реєстрації"
 msgstr "Registration status"
@@ -3410,8 +4011,8 @@ msgid ""
 msgstr ""
 "Registration takes a minute — just basic details. You will fill in the "
 "form for your <strong>certificate with BPR points</strong> (MoH No. 725 "
-"requirements, clause 13) later in your <strong>account</strong> — we will "
-"remind you."
+"requirements, clause 13) later in your <strong>account</strong> — we will"
+" remind you."
 
 msgid "Тариф участі"
 msgstr "Participation tier"
@@ -3476,10 +4077,10 @@ msgid ""
 "noreferrer\">Політикою конфіденційності</a>."
 msgstr ""
 "I consent to the processing of my personal data (full name, date of "
-"birth, email, phone number, education, specialization, place of work) for "
-"the purpose of arranging and completing my registration for the event, as "
-"well as processing payment through the LiqPay payment system. I have read "
-"the <a href=\"%(privacy_url)s\" target=\"_blank\" rel=\"noopener "
+"birth, email, phone number, education, specialization, place of work) for"
+" the purpose of arranging and completing my registration for the event, "
+"as well as processing payment through the LiqPay payment system. I have "
+"read the <a href=\"%(privacy_url)s\" target=\"_blank\" rel=\"noopener "
 "noreferrer\">Privacy Policy</a>."
 
 #, python-format
@@ -3497,9 +4098,6 @@ msgstr "Secure payment via LiqPay (Visa, Mastercard, Google Pay, Apple Pay)"
 
 msgid "Безпечна оплата:"
 msgstr "Secure payment:"
-
-msgid "Назад"
-msgstr "Back"
 
 msgid "Маєте питання?"
 msgstr "Have questions?"
@@ -3519,26 +4117,27 @@ msgstr "Secure payment via LiqPay — Visa, Mastercard, Google Pay, Apple Pay"
 msgid "Онлайн-оплата тимчасово недоступна — скористайтесь рахунком."
 msgstr "Online payment is temporarily unavailable — please use an invoice."
 
-msgid "Оплата за рахунком"
-msgstr "Payment by invoice"
-
 msgid ""
 "Рахунок-фактура (PDF) з реквізитами для оплати через банк. Доступний, "
 "доки участь не оплачено. Після оплати повідомте менеджера для "
 "підтвердження."
 msgstr ""
-"An invoice (PDF) with details for payment through a bank. Available until "
-"participation is paid for. After payment, notify your manager for "
+"An invoice (PDF) with details for payment through a bank. Available until"
+" participation is paid for. After payment, notify your manager for "
 "confirmation."
 
 msgid "Завантажте рахунок у форматі PDF і сплатіть через банк за реквізитами."
-msgstr "Download the invoice in PDF format and pay through your bank using the details."
+msgstr ""
+"Download the invoice in PDF format and pay through your bank using the "
+"details."
 
 msgid "Завантажити рахунок (PDF)"
 msgstr "Download invoice (PDF)"
 
 msgid "Після оплати за рахунком повідомте менеджера для підтвердження участі."
-msgstr "After paying by invoice, notify your manager to confirm your participation."
+msgstr ""
+"After paying by invoice, notify your manager to confirm your "
+"participation."
 
 msgid "Тренер Інституту Плазмотерапії та Регенеративної Медицини."
 msgstr "Trainer at the Institute of Plasma Therapy and Regenerative Medicine."
@@ -3634,7 +4233,9 @@ msgid "Практикуючі лікарі"
 msgstr "Practicing physicians"
 
 msgid "Тренери з клінічним досвідом у плазмотерапії та регенеративній медицині."
-msgstr "Trainers with clinical experience in plasma therapy and regenerative medicine."
+msgstr ""
+"Trainers with clinical experience in plasma therapy and regenerative "
+"medicine."
 
 msgid "Авторські методики"
 msgstr "Original techniques"
@@ -3646,4 +4247,7 @@ msgid "Індивідуальний підхід"
 msgstr "Individual approach"
 
 msgid "Супровід кожного слухача від початку до отримання сертифікату."
-msgstr "Guidance for each participant from the start through receiving the certificate."
+msgstr ""
+"Guidance for each participant from the start through receiving the "
+"certificate."
+

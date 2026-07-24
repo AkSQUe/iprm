@@ -18,6 +18,23 @@
   color: var(--apple-gray-dark, #6e6e73);
 }
 
+.tr-field__leaf {
+  padding: 10px 0;
+  border-top: 1px solid var(--iprm-border, #e5e5ea);
+}
+
+.tr-field__leaf:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.tr-field__path {
+  float: right;
+  font-size: 0.75rem;
+  color: var(--apple-gray-dark, #6e6e73);
+  font-weight: 400;
+}
+
 .tr-children {
   list-style: none;
   margin: 0;

@@ -9,6 +9,9 @@
 (function () {
   'use strict';
 
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
   function init() {
     document.querySelectorAll('[data-form-progress]').forEach(function (bar) {
       var sel = bar.getAttribute('data-form-progress');
@@ -53,7 +56,7 @@
         list.forEach(function (el) { if (isFilled(el)) filled++; });
         var pct = Math.round(filled / list.length * 100);
         fill.style.width = pct + '%';
-        label.textContent = 'Заповнено ' + pct + '%';
+        label.textContent = t('Заповнено {pct}%', { pct: pct });
         bar.classList.toggle('form-progress--complete', pct === 100);
       }
 

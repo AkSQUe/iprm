@@ -534,11 +534,18 @@ def _notify_referrer_award(reg, kind, referrer_id, points):
         event_title = None
         if reg.instance and reg.instance.course:
             event_title = reg.instance.course.title
+        # Лист мовою реферера-користувача (тренери -- дефолтна 'uk').
+        lang = None
+        if kind == 'user':
+            from app.models.user import User
+            referrer_user = db.session.get(User, referrer_id)
+            lang = referrer_user.preferred_language if referrer_user else None
         from app.services.email_service import EmailService
         EmailService.send_referral_award(
             to_email=email, referrer_name=name, points=points,
             balance=get_balance(kind, referrer_id), event_title=event_title,
             idempotency_key=f'referral-award-{reg.id}',
+            lang=lang,
         )
     except Exception:
         logger.exception('Failed to notify referrer for reg=%s', reg.id)

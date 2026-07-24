@@ -7,6 +7,9 @@
 (function () {
   'use strict';
 
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
   function init() {
     if (!document.querySelector('.legal-page')) return;
 
@@ -20,7 +23,7 @@
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'iprm-to-top';
-    btn.setAttribute('aria-label', 'Нагору');
+    btn.setAttribute('aria-label', t('Нагору'));
     btn.innerHTML = '<span aria-hidden="true">↑</span>';
     document.body.appendChild(btn);
 

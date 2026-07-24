@@ -15,12 +15,15 @@
 (function () {
   'use strict';
 
-  var HINT_DEFAULT = 'Будь ласка, заповніть це поле';
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
+  var HINT_DEFAULT = t('Будь ласка, заповніть це поле');
   var HINT_BY_TYPE = {
-    email: 'Вкажіть коректну адресу електронної пошти',
-    tel: 'Вкажіть номер телефону',
-    date: 'Оберіть дату',
-    checkbox: 'Необхідно поставити цю позначку',
+    email: t('Вкажіть коректну адресу електронної пошти'),
+    tel: t('Вкажіть номер телефону'),
+    date: t('Оберіть дату'),
+    checkbox: t('Необхідно поставити цю позначку'),
   };
 
   function notify(message, type) {
@@ -96,7 +99,7 @@
       if (!checked && inputs.length) {
         invalids.push({
           el: group,
-          msg: group.getAttribute('data-hint') || 'Оберіть хоча б один варіант',
+          msg: group.getAttribute('data-hint') || t('Оберіть хоча б один варіант'),
           isGroup: true,
         });
       }
@@ -133,8 +136,9 @@
           e.stopImmediatePropagation();
           focusInvalid(invalids[0]);
           notify(
-            'Перевірте форму: ' + invalids.length +
-            (invalids.length === 1 ? ' поле потребує уваги' : ' поля(ів) потребують уваги'),
+            invalids.length === 1
+              ? t('Перевірте форму: {count} поле потребує уваги', { count: invalids.length })
+              : t('Перевірте форму: {count} поля(ів) потребують уваги', { count: invalids.length }),
             'warning'
           );
         }

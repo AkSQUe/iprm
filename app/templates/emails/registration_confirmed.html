@@ -1,22 +1,22 @@
 {% extends "emails/base.html" %}
 {% from "emails/_macros.html" import button_primary, detail_row, alert_warning, alert_info, spacer %}
 
-{% block title %}Реєстрацію підтверджено{% endblock %}
+{% block title %}{{ _('Реєстрацію підтверджено') }}{% endblock %}
 
-{% block preview_text %}Ви зареєстровані на курс {{ event.title }}{% endblock %}
+{% block preview_text %}{% trans title=event.title %}Ви зареєстровані на курс {{ title }}{% endtrans %}{% endblock %}
 
 {% block content %}
     <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
-        Реєстрацію підтверджено
+        {{ _('Реєстрацію підтверджено') }}
     </h1>
 
     <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
-        {{ user.first_name or 'Шановний учаснику' }}, ви успішно зареєстровані на курс.
+        {{ user.first_name or _('Шановний учаснику') }}, {{ _('ви успішно зареєстровані на курс.') }}
     </p>
 
     <!-- Course details -->
     <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
-        Деталі курсу
+        {{ _('Деталі курсу') }}
     </p>
 
     <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
@@ -24,13 +24,13 @@
             <td style="padding: 20px 24px;">
                 <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">{{ event.title }}</p>
                 {% if registration.place_number %}
-                {{ detail_row("Номер місця", "№" ~ registration.place_number) }}
+                {{ detail_row(_('Номер місця'), "№" ~ registration.place_number) }}
                 {% endif %}
                 {% if event.start_date %}
-                {{ detail_row("Дата", event.start_date.strftime('%d.%m.%Y %H:%M')) }}
+                {{ detail_row(_('Дата'), event.start_date.strftime('%d.%m.%Y %H:%M')) }}
                 {% endif %}
                 {% if event.location %}
-                {{ detail_row("Місце", event.location) }}
+                {{ detail_row(_('Місце'), event.location) }}
                 {% endif %}
             </td>
         </tr>
@@ -38,13 +38,17 @@
 
     {% set due_amount = registration.payment_amount or event.price %}
     {% if due_amount and due_amount > 0 and registration.payment_status == 'unpaid' %}
-    {{ alert_warning("До оплати", (due_amount | int) ~ " UAH" ~ (' (тариф «' ~ registration.tariff.name ~ '»)' if registration.tariff else '')) }}
-    {% if registration.payment_method == 'invoice' %}
-    {{ alert_info("Оплата за рахунком", "Ви обрали оплату за рахунком. Завантажте рахунок (PDF) на сторінці реєстрації або в особистому кабінеті та сплатіть через банк за реквізитами. Після оплати повідомте менеджера для підтвердження участі.") }}
+    {% set due_text = (due_amount | int) ~ " UAH" %}
+    {% if registration.tariff %}
+    {% set due_text = due_text ~ ' (' ~ _('тариф') ~ ' «' ~ registration.tariff.name ~ '»)' %}
     {% endif %}
-    {{ button_primary("Перейти до оплати", pay_url | default(site_settings.website_url)) }}
+    {{ alert_warning(_('До оплати'), due_text) }}
+    {% if registration.payment_method == 'invoice' %}
+    {{ alert_info(_('Оплата за рахунком'), _('Ви обрали оплату за рахунком. Завантажте рахунок (PDF) на сторінці реєстрації або в особистому кабінеті та сплатіть через банк за реквізитами. Після оплати повідомте менеджера для підтвердження участі.')) }}
+    {% endif %}
+    {{ button_primary(_('Перейти до оплати'), pay_url | default(site_settings.website_url)) }}
     {% else %}
-    {{ button_primary("Перейти на сайт", site_settings.website_url) }}
+    {{ button_primary(_('Перейти на сайт'), site_settings.website_url) }}
     {% endif %}
 
     {% if certdata_needed %}
@@ -55,14 +59,12 @@
         <tr>
             <td style="padding: 16px 20px;">
                 <p style="margin: 0 0 6px 0; font-size: 15px; font-weight: 600; color: #111827;">
-                    Заповніть дані для сертифіката
+                    {{ _('Заповніть дані для сертифіката') }}
                 </p>
                 <p style="margin: 0 0 12px 0; font-size: 14px; color: #6B7280; line-height: 1.5;">
-                    Щоб після курсу отримати сертифікат з балами БПР, заповніть коротку
-                    анкету (вимоги МОЗ №725, п. 13) в особистому кабінеті. Це займе
-                    2–3 хвилини і діє для всіх ваших курсів.
+                    {{ _('Щоб після курсу отримати сертифікат з балами БПР, заповніть коротку анкету (вимоги МОЗ №725, п. 13) в особистому кабінеті. Це займе 2–3 хвилини і діє для всіх ваших курсів.') }}
                 </p>
-                <a href="{{ certdata_url }}" style="font-size: 14px; font-weight: 600; color: #7055a4; text-decoration: underline;">Заповнити анкету</a>
+                <a href="{{ certdata_url }}" style="font-size: 14px; font-weight: 600; color: #7055a4; text-decoration: underline;">{{ _('Заповнити анкету') }}</a>
             </td>
         </tr>
     </table>
@@ -71,6 +73,6 @@
     {{ spacer(16) }}
 
     <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
-        Якщо у вас виникнуть запитання, зверніться до нас через сторінку контактів.
+        {{ _('Якщо у вас виникнуть запитання, зверніться до нас через сторінку контактів.') }}
     </p>
 {% endblock %}

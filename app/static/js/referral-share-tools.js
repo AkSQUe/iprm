@@ -6,13 +6,16 @@
 (function () {
   'use strict';
 
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
   // 1. Нативний share (progressive enhancement).
   if (navigator.share) {
     document.querySelectorAll('[data-native-share]').forEach(function (btn) {
       btn.hidden = false;
       btn.addEventListener('click', function () {
         navigator.share({
-          title: 'ІПРМ',
+          title: t('ІПРМ'),
           text: btn.getAttribute('data-share-text') || '',
           url: btn.getAttribute('data-share-url') || window.location.href
         }).catch(function () { /* користувач скасував -- ігноруємо */ });

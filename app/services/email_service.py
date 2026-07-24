@@ -19,6 +19,7 @@ from datetime import datetime, timedelta, timezone
 from threading import Thread
 
 from flask import current_app, render_template
+from flask_babel import force_locale
 from flask_mail import Message
 
 from app.extensions import db
@@ -45,6 +46,10 @@ CIRCUIT_BREAKER_WINDOW_MINUTES = 10
 
 # Timeout (seconds) for synchronous SMTP operations (test email).
 SMTP_TIMEOUT_SECONDS = 15
+
+# Мова листів за замовчуванням (вихідна мова проєкту). Адмінські
+# нотифікації та листи без користувача-отримувача завжди йдуть нею.
+DEFAULT_EMAIL_LOCALE = 'uk'
 
 
 def _html_to_plaintext(html):
@@ -238,15 +243,30 @@ class EmailService:
         return headers
 
     @staticmethod
+    def _recipient_locale(context, lang=None):
+        """Мова рендеру листа: явний lang -> preferred_language
+        користувача-отримувача (context['user']) -> DEFAULT_EMAIL_LOCALE.
+
+        Централізує вибір локалі для force_locale: convenience-сендери
+        кладуть отримувача у context['user'], тож окремо передавати мову
+        не потрібно; адмінські нотифікації без 'user' лишаються 'uk'."""
+        if lang:
+            return lang
+        user = (context or {}).get('user')
+        return getattr(user, 'preferred_language', None) or DEFAULT_EMAIL_LOCALE
+
+    @staticmethod
     def send_email(to, subject, template_name, context=None,
                    trigger=None, registration_id=None, attachments=None,
-                   idempotency_key=None):
+                   idempotency_key=None, lang=None):
         """
         Render email template and send via SMTP in background thread.
 
         Guards: disabled check, deduplication, circuit breaker.
         attachments -- optional list of (filename, mimetype, data_bytes) tuples,
         attached to the message before sending (e.g. certificate PDF).
+        lang -- явна мова листа ('uk'/'ru'/'en'); якщо не задано, береться
+        preferred_language отримувача з context['user'] (див. _recipient_locale).
         Returns EmailLog instance (status may still be 'pending' if async).
         Returns None if dedup skipped.
         """
@@ -314,7 +334,10 @@ class EmailService:
             return log_entry
 
         try:
-            html_body = render_template(f'emails/{template_name}.html', **ctx)
+            # Рендер мовою отримувача: поза HTTP-запитом (scheduler, фонові
+            # джоби) get_locale() повертає дефолт, тому локаль форсуємо явно.
+            with force_locale(EmailService._recipient_locale(ctx, lang)):
+                html_body = render_template(f'emails/{template_name}.html', **ctx)
         except Exception as exc:
             log_entry = EmailLog(
                 to_email=to,
@@ -652,11 +675,13 @@ class EmailService:
 
     @staticmethod
     def send_referral_award(to_email, referrer_name, points, balance,
-                            event_title=None, idempotency_key=None):
+                            event_title=None, idempotency_key=None, lang=None):
         """Повідомити реферера про нарахування бонусних балів.
 
         Необов'язковий лист (trigger='referral' поважає opt-out/unsubscribe).
         Викликається best-effort з referral_service після успішного нарахування.
+        lang -- мова листа (referral_service передає preferred_language
+        реферера-користувача; для тренерів лишається 'uk').
         """
         if not to_email:
             return None
@@ -676,6 +701,7 @@ class EmailService:
             },
             trigger='referral',
             idempotency_key=idempotency_key,
+            lang=lang,
         )
 
     @staticmethod

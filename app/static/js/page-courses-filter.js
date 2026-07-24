@@ -6,6 +6,9 @@
      DOM-вузлів; "за замовчуванням" відновлює порядок каталогу).
    - Усі фільтри комбінуються (логічне І). Стан віддзеркалюється в URL. */
 (function () {
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
   var grid = document.querySelector('[data-filterable="courses"]');
   if (!grid) return;
 
@@ -56,10 +59,10 @@
 
   function pluralCourses(n) {
     var m10 = n % 10, m100 = n % 100;
-    if (m100 >= 11 && m100 <= 14) return n + ' курсів';
-    if (m10 === 1) return n + ' курс';
-    if (m10 >= 2 && m10 <= 4) return n + ' курси';
-    return n + ' курсів';
+    if (m100 >= 11 && m100 <= 14) return t('{n} курсів', { n: n });
+    if (m10 === 1) return t('{n} курс', { n: n });
+    if (m10 >= 2 && m10 <= 4) return t('{n} курси', { n: n });
+    return t('{n} курсів', { n: n });
   }
 
   function parseJsonAttr(card, name) {
@@ -171,8 +174,8 @@
     if (resultBar) resultBar.hidden = !active;
     if (countEl && active) {
       countEl.textContent = visible > 0
-        ? 'Знайдено ' + pluralCourses(visible)
-        : 'Нічого не знайдено';
+        ? t('Знайдено {found}', { found: pluralCourses(visible) })
+        : t('Нічого не знайдено');
     }
   }
 

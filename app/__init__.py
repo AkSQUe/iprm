@@ -173,6 +173,11 @@ def create_app(config_name=None):
     # window.msGlyph. Субсет-шрифт без лігатур, тож JS теж має слати кодпойнт.
     app.jinja_env.globals['icon_codepoints'] = ICON_CODEPOINTS
 
+    # Словник i18n-рядків для публічних JS: рендериться у base.html як JSON
+    # (#iprm-i18n-data) і читається js/i18n.js (window.iprmI18n.t).
+    from app.js_strings import js_translations
+    app.jinja_env.globals['js_translations'] = js_translations
+
     import re as _re
     # Лише правдоподібні роки (19xx/20xx), щоб не плутати інші 4-значні числа.
     _YEAR_RE = _re.compile(

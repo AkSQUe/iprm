@@ -39,6 +39,21 @@
           </div>
         </div>
 
+        <div class="settings-card">
+          <h2 class="settings-card__title">{{ _('Мова листів') }}</h2>
+          <p class="settings-card__desc">{{ _('Оберіть мову, якою ви отримуватимете email-повідомлення') }}</p>
+          <form method="post" action="{{ url_for('auth.settings') }}" class="settings-lang-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% set email_lang = current_user.preferred_language or 'uk' %}
+            <select name="email_language" class="settings-select" aria-label="{{ _('Мова листів') }}">
+              <option value="uk" {% if email_lang == 'uk' %}selected{% endif %}>{{ _('Українська') }}</option>
+              <option value="ru" {% if email_lang == 'ru' %}selected{% endif %}>{{ _('Російська') }}</option>
+              <option value="en" {% if email_lang == 'en' %}selected{% endif %}>{{ _('Англійська') }}</option>
+            </select>
+            <button type="submit" class="apple-btn apple-btn--secondary">{{ _('Зберегти') }}</button>
+          </form>
+        </div>
+
       </div>
 
       <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--secondary settings-back">{{ _('Повернутися до кабінету') }}</a>

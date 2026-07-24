@@ -54,6 +54,14 @@ ACTION_LOGIN = 'login'
 ACTION_LINK = 'link'
 
 
+def _capture_ui_language(user):
+    """Мова листів = мова інтерфейсу при OAuth-самореєстрації (uk = NULL)."""
+    from flask_babel import get_locale
+    ui_lang = str(get_locale() or '')
+    if ui_lang and ui_lang != 'uk':
+        user.preferred_language = ui_lang
+
+
 def _is_safe_redirect_url(target):
     """Same logic as auth.routes -- DRY by reimporting? Тримаємо тут
     локально щоб уникнути циклічного імпорту."""
@@ -213,6 +221,7 @@ def _handle_login(provider, sub, email, email_verified, given_name, family_name,
             last_name=family_name,
             raw_claims=safe_claims,
         )
+        _capture_ui_language(user)
         db.session.commit()
         logger.info('Created %s OAuth user id=%d email=%s', label, user.id, user.email)
     except Exception:
@@ -385,6 +394,7 @@ def google_onetap():
                 first_name=given_name, last_name=family_name,
                 raw_claims=safe_claims,
             )
+            _capture_ui_language(user)
             logger.info('One Tap created user id=%d email=%s', user.id, user.email)
         except Exception:
             db.session.rollback()

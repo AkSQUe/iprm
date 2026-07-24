@@ -1,47 +1,44 @@
 {% extends "emails/base.html" %}
 {% from "emails/_macros.html" import button_primary, detail_row, spacer %}
 
-{% block title %}Ваш сертифікат готовий{% endblock %}
+{% block title %}{{ _('Ваш сертифікат готовий') }}{% endblock %}
 
-{% block preview_text %}Сертифікат за участь у заході {{ certificate.event_title }}{% endblock %}
+{% block preview_text %}{% trans title=certificate.event_title %}Сертифікат за участь у заході {{ title }}{% endtrans %}{% endblock %}
 
 {% block content %}
     <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
-        Ваш сертифікат готовий
+        {{ _('Ваш сертифікат готовий') }}
     </h1>
 
     <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
-        {{ user.first_name or 'Шановний учаснику' }}, дякуємо за участь! Сертифікат
-        додано до цього листа у форматі PDF. Також він доступний у вашому
-        особистому кабінеті.
+        {{ user.first_name or _('Шановний учаснику') }}, {{ _('дякуємо за участь! Сертифікат додано до цього листа у форматі PDF. Також він доступний у вашому особистому кабінеті.') }}
     </p>
 
     <!-- Certificate details -->
     <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
-        Деталі сертифіката
+        {{ _('Деталі сертифіката') }}
     </p>
 
     <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
         <tr>
             <td style="padding: 20px 24px;">
                 <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">{{ certificate.event_title }}</p>
-                {{ detail_row("Номер", certificate.number) }}
+                {{ detail_row(_('Номер'), certificate.number) }}
                 {% if certificate.event_date %}
-                {{ detail_row("Дата заходу", certificate.event_date.strftime('%d.%m.%Y')) }}
+                {{ detail_row(_('Дата заходу'), certificate.event_date.strftime('%d.%m.%Y')) }}
                 {% endif %}
                 {% if certificate.cpd_points %}
-                {{ detail_row("Бали БПР", certificate.cpd_points ~ " балів") }}
+                {{ detail_row(_('Бали БПР'), certificate.cpd_points ~ " " ~ _('балів')) }}
                 {% endif %}
             </td>
         </tr>
     </table>
 
-    {{ button_primary("Відкрити особистий кабінет", site_settings.website_url ~ "/account") }}
+    {{ button_primary(_('Відкрити особистий кабінет'), site_settings.website_url ~ "/account") }}
 
     {{ spacer(16) }}
 
     <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
-        Якщо вкладення не відкривається, увійдіть до особистого кабінету та
-        завантажте сертифікат звідти.
+        {{ _('Якщо вкладення не відкривається, увійдіть до особистого кабінету та завантажте сертифікат звідти.') }}
     </p>
 {% endblock %}

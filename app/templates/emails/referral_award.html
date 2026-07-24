@@ -1,33 +1,31 @@
 {% extends "emails/base.html" %}
 {% from "emails/_macros.html" import alert_success, button_primary, spacer %}
 
-{% block title %}Вам нараховано бонусні бали{% endblock %}
+{% block title %}{{ _('Вам нараховано бонусні бали') }}{% endblock %}
 
-{% block preview_text %}+{{ points }} бонусних балів за вашу рекомендацію{% endblock %}
+{% block preview_text %}{% trans points=points %}+{{ points }} бонусних балів за вашу рекомендацію{% endtrans %}{% endblock %}
 
 {% block content %}
     <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
-        Дякуємо за рекомендацію
+        {{ _('Дякуємо за рекомендацію') }}
     </h1>
 
     <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
-        {{ referrer_name or 'Вітаємо' }}, за оплачену реєстрацію на курс
-        {% if event_title %}«{{ event_title }}»{% endif %} за вашим реферальним
-        посиланням вам нараховано бонусні бали лояльності.
+        {{ referrer_name or _('Вітаємо') }},
+        {% if event_title %}{% trans title=event_title %}за оплачену реєстрацію на курс «{{ title }}» за вашим реферальним посиланням вам нараховано бонусні бали лояльності.{% endtrans %}{% else %}{{ _('за оплачену реєстрацію за вашим реферальним посиланням вам нараховано бонусні бали лояльності.') }}{% endif %}
     </p>
 
-    {{ alert_success("Нараховано +" ~ points ~ " балів", "Ваш поточний баланс: " ~ balance ~ " бонусних балів.") }}
+    {{ alert_success(_('Нараховано +%(points)s балів', points=points), _('Ваш поточний баланс: %(balance)s бонусних балів.', balance=balance)) }}
 
     {{ spacer(24) }}
 
     {% if account_url %}
-    {{ button_primary("Мій кабінет", account_url) }}
+    {{ button_primary(_('Мій кабінет'), account_url) }}
     {% endif %}
 
     {{ spacer(16) }}
 
     <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
-        Продовжуйте ділитися посиланням -- кожна оплачена реєстрація за ним
-        приносить вам нові бали.
+        {{ _('Продовжуйте ділитися посиланням -- кожна оплачена реєстрація за ним приносить вам нові бали.') }}
     </p>
 {% endblock %}

@@ -14,6 +14,9 @@
 (function () {
   'use strict';
 
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
   var STORAGE_KEY = 'iprm:schedule-view';
   var MOBILE_MQ = '(max-width: 640px)';
 
@@ -21,25 +24,25 @@
     code: 'uk',
     week: { dow: 1, doy: 7 },
     buttonText: {
-      prev: 'Назад', next: 'Вперед', today: 'Сьогодні',
-      month: 'Місяць', list: 'Список',
+      prev: t('Назад'), next: t('Вперед'), today: t('Сьогодні'),
+      month: t('Місяць'), list: t('Список'),
     },
-    weekText: 'Тиж',
-    allDayText: 'Весь день',
-    moreLinkText: function (n) { return '+ще ' + n; },
-    noEventsText: 'Немає запланованих заходів',
+    weekText: t('Тиж'),
+    allDayText: t('Весь день'),
+    moreLinkText: function (n) { return t('+ще {n}', { n: n }); },
+    noEventsText: t('Немає запланованих заходів'),
   };
 
   var FILTER_GROUPS = [
-    { dim: 'format', label: 'Формат' },
-    { dim: 'event_type', label: 'Тип заходу' },
-    { dim: 'trainer', label: 'Лектор' },
+    { dim: 'format', label: t('Формат') },
+    { dim: 'event_type', label: t('Тип заходу') },
+    { dim: 'trainer', label: t('Лектор') },
   ];
 
   var FORMAT_LEGEND = [
-    { fmt: 'online', label: 'Онлайн' },
-    { fmt: 'offline', label: 'Офлайн' },
-    { fmt: 'hybrid', label: 'Гібрид' },
+    { fmt: 'online', label: t('Онлайн') },
+    { fmt: 'offline', label: t('Офлайн') },
+    { fmt: 'hybrid', label: t('Гібрид') },
   ];
 
   var dataEl = document.querySelector('script[data-schedule-events]');
@@ -94,16 +97,16 @@
   function locationBadge(format, location) {
     if (format === 'online') {
       return '<span class="iprm-loc-badge iprm-loc-badge--online">' + MONITOR_SVG +
-        '<span class="iprm-loc-badge__text">Онлайн</span></span>';
+        '<span class="iprm-loc-badge__text">' + escapeHtml(t('Онлайн')) + '</span></span>';
     }
     if (!location) return '';
-    var sub = format === 'hybrid' ? '<span class="iprm-loc-badge__sub">+ онлайн</span>' : '';
+    var sub = format === 'hybrid' ? '<span class="iprm-loc-badge__sub">' + escapeHtml(t('+ онлайн')) + '</span>' : '';
     return '<span class="iprm-loc-badge iprm-loc-badge--offline">' + PIN_SVG +
       '<span class="iprm-loc-badge__text">' + escapeHtml(location) + '</span>' + sub + '</span>';
   }
 
-  var MONTHS_GEN = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',
-    'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];
+  var MONTHS_GEN = [t('січня'), t('лютого'), t('березня'), t('квітня'), t('травня'), t('червня'),
+    t('липня'), t('серпня'), t('вересня'), t('жовтня'), t('листопада'), t('грудня')];
 
   function dayLabel(dstr) {
     var p = dstr.split('-');
@@ -234,13 +237,13 @@
   // ----- details panel ---------------------------------------------------
   function renderDetailsPlaceholder() {
     detailsEl.innerHTML = '<p class="iprm-calendar__details-empty">' +
-      'Оберіть захід у календарі, щоб побачити деталі та зареєструватися.</p>';
+      escapeHtml(t('Оберіть захід у календарі, щоб побачити деталі та зареєструватися.')) + '</p>';
   }
 
   function googleCalUrl(ev) {
     var start = ev.date.replace(/-/g, '');
     var end = nextDay(ev.end && ev.end !== ev.date ? ev.end : ev.date).replace(/-/g, '');
-    var loc = ev.format === 'online' ? 'Онлайн' : (ev.location || '');
+    var loc = ev.format === 'online' ? t('Онлайн') : (ev.location || '');
     var details = window.location.origin + ev.course_url;
     return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
       '&text=' + encodeURIComponent(ev.title) +
@@ -252,27 +255,29 @@
   function renderEventDetails(ev) {
     var meta = [];
     if (ev.event_type_label) meta.push(escapeHtml(ev.event_type_label));
-    if (ev.cpd) meta.push(escapeHtml(ev.cpd) + ' балів БПР');
+    if (ev.cpd) meta.push(t('{n} балів БПР', { n: escapeHtml(ev.cpd) }));
     if (ev.price) meta.push(ev.price + ' ₴');
     if (ev.seats_left != null && ev.seats_left > 0) {
-      meta.push('залишилось ' + ev.seats_left + ' ' +
-        plural(ev.seats_left, 'місце', 'місця', 'місць'));
+      meta.push(t(
+        plural(ev.seats_left, 'залишилось {n} місце', 'залишилось {n} місця', 'залишилось {n} місць'),
+        { n: ev.seats_left }
+      ));
     }
 
     var actionHtml, addToCal;
     if (ev.past) {
-      actionHtml = '<span class="badge badge--draft">Захід завершено</span>';
+      actionHtml = '<span class="badge badge--draft">' + escapeHtml(t('Захід завершено')) + '</span>';
       addToCal = '';
     } else {
       actionHtml = ev.is_open
-        ? '<span class="iprm-btn iprm-btn--primary iprm-btn--sm">Реєстрація</span>'
-        : '<span class="badge badge--draft">Реєстрацію закрито</span>';
+        ? '<span class="iprm-btn iprm-btn--primary iprm-btn--sm">' + escapeHtml(t('Реєстрація')) + '</span>'
+        : '<span class="badge badge--draft">' + escapeHtml(t('Реєстрацію закрито')) + '</span>';
       addToCal =
         '<div class="iprm-cal-addto">' +
-          '<span class="iprm-cal-addto__label">Додати в календар:</span>' +
+          '<span class="iprm-cal-addto__label">' + escapeHtml(t('Додати в календар:')) + '</span>' +
           '<a class="iprm-cal-addto__link" href="' + escapeHtml(ev.ics_url) + '">Apple / Outlook (.ics)</a>' +
           '<a class="iprm-cal-addto__link" href="' + escapeHtml(googleCalUrl(ev)) +
-            '" target="_blank" rel="noopener">Google Календар</a>' +
+            '" target="_blank" rel="noopener">' + escapeHtml(t('Google Календар')) + '</a>' +
         '</div>';
     }
     var href = (!ev.past && ev.is_open) ? ev.register_url : ev.course_url;
@@ -330,7 +335,7 @@
     if (filtersEl) filtersEl.hidden = true;
     if (calEl) {
       calEl.innerHTML = '<p class="iprm-calendar__details-empty">' +
-        'Не вдалося завантажити календар. Перегляньте розклад у режимі &laquo;Список&raquo;.</p>';
+        escapeHtml(t('Не вдалося завантажити календар. Перегляньте розклад у режимі «Список».')) + '</p>';
     }
     if (detailsEl) detailsEl.innerHTML = '';
   }
@@ -360,7 +365,7 @@
         center: 'title',
         right: 'dayGridMonth,listMonth',
       },
-      views: { listMonth: { buttonText: 'Список' } },
+      views: { listMonth: { buttonText: t('Список') } },
       displayEventTime: false,
       dayMaxEvents: 3,
       events: eventSource,
@@ -421,9 +426,10 @@
 
     var searchHtml =
       '<div class="iprm-cal-filters__group iprm-cal-filters__group--search">' +
-        '<span class="iprm-cal-filters__label">Пошук</span>' +
+        '<span class="iprm-cal-filters__label">' + escapeHtml(t('Пошук')) + '</span>' +
         '<input type="search" class="iprm-cal-search" data-cal-search ' +
-          'placeholder="Назва заходу..." autocomplete="off" aria-label="Пошук у календарі" ' +
+          'placeholder="' + escapeHtml(t('Назва заходу...')) + '" autocomplete="off" ' +
+          'aria-label="' + escapeHtml(t('Пошук у календарі')) + '" ' +
           'value="' + escapeHtml(searchQuery) + '">' +
       '</div>';
 
@@ -433,7 +439,7 @@
       legendHtml() +
       '<div class="iprm-cal-filters__footer">' +
         '<span class="iprm-cal-filters__count" data-cal-count></span>' +
-        '<button type="button" class="iprm-cal-filters__reset" data-cal-reset hidden>Скинути фільтри</button>' +
+        '<button type="button" class="iprm-cal-filters__reset" data-cal-reset hidden>' + escapeHtml(t('Скинути фільтри')) + '</button>' +
       '</div>';
 
     filtersEl.addEventListener('click', onFilterClick);
@@ -490,7 +496,7 @@
     var countEl = filtersEl.querySelector('[data-cal-count]');
     if (countEl) {
       var n = events.filter(eventPasses).length;
-      countEl.textContent = n + ' ' + plural(n, 'захід', 'заходи', 'заходів');
+      countEl.textContent = t(plural(n, '{n} захід', '{n} заходи', '{n} заходів'), { n: n });
     }
     var resetBtn = filtersEl.querySelector('[data-cal-reset]');
     if (resetBtn) resetBtn.hidden = !anyFilterActive();

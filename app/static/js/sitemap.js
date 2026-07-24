@@ -2,6 +2,9 @@
 (function () {
   'use strict';
 
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
   document.addEventListener('click', function (e) {
     var toggle = e.target.closest('[data-sitemap-toggle]');
     if (toggle) {
@@ -22,8 +25,8 @@
       if (label) {
         var count = children ? children.children.length : 0;
         label.textContent = expanded
-          ? 'Показати ще (' + count + ')'
-          : 'Згорнути';
+          ? t('Показати ще ({count})', { count: count })
+          : t('Згорнути');
       }
     }
   });

@@ -8,6 +8,9 @@
 (function () {
   'use strict';
 
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
   var root = document.querySelector('[data-roi-calc]');
   if (!root) return;
 
@@ -60,10 +63,10 @@
     incomeEl.textContent = count > 0 ? fmt(income) + ' ₴' : '—';
 
     var procedures = Math.ceil(price / check);
-    var text = procedures + ' ' + pluralUk(procedures, 'процедура', 'процедури', 'процедур');
+    var text = procedures + ' ' + pluralUk(procedures, t('процедура'), t('процедури'), t('процедур'));
     if (count > 0) {
       var weeks = Math.ceil((procedures / count) * WEEKS_PER_MONTH);
-      text += ' (≈ ' + weeks + ' ' + pluralUk(weeks, 'тиждень', 'тижні', 'тижнів') + ')';
+      text += ' (≈ ' + weeks + ' ' + pluralUk(weeks, t('тиждень'), t('тижні'), t('тижнів')) + ')';
     }
     paybackEl.textContent = text;
   }

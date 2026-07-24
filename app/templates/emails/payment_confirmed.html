@@ -1,22 +1,22 @@
 {% extends "emails/base.html" %}
 {% from "emails/_macros.html" import detail_row, alert_success, spacer %}
 
-{% block title %}Оплату підтверджено{% endblock %}
+{% block title %}{{ _('Оплату підтверджено') }}{% endblock %}
 
-{% block preview_text %}Оплата за курс {{ event.title }} отримана{% endblock %}
+{% block preview_text %}{% trans title=event.title %}Оплата за курс {{ title }} отримана{% endtrans %}{% endblock %}
 
 {% block content %}
     <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
-        Оплату підтверджено
+        {{ _('Оплату підтверджено') }}
     </h1>
 
     <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
-        {{ user.first_name or 'Шановний учаснику' }}, ваша оплата успішно отримана.
+        {{ user.first_name or _('Шановний учаснику') }}, {{ _('ваша оплата успішно отримана.') }}
     </p>
 
     <!-- Course details -->
     <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
-        Деталі курсу
+        {{ _('Деталі курсу') }}
     </p>
 
     <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
@@ -24,23 +24,23 @@
             <td style="padding: 20px 24px;">
                 <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">{{ event.title }}</p>
                 {% if registration.place_number %}
-                {{ detail_row("Номер місця", "№" ~ registration.place_number) }}
+                {{ detail_row(_('Номер місця'), "№" ~ registration.place_number) }}
                 {% endif %}
                 {% if event.start_date %}
-                {{ detail_row("Дата", event.start_date.strftime('%d.%m.%Y %H:%M')) }}
+                {{ detail_row(_('Дата'), event.start_date.strftime('%d.%m.%Y %H:%M')) }}
                 {% endif %}
                 {% if registration.payment_amount %}
-                {{ detail_row("Сума", (registration.payment_amount | int) ~ " UAH") }}
+                {{ detail_row(_('Сума'), (registration.payment_amount | int) ~ " UAH") }}
                 {% endif %}
             </td>
         </tr>
     </table>
 
-    {{ alert_success("Місце підтверджено", "Ваше місце на курсі підтверджено. Очікуйте нагадування перед початком.") }}
+    {{ alert_success(_('Місце підтверджено'), _('Ваше місце на курсі підтверджено. Очікуйте нагадування перед початком.')) }}
 
     {{ spacer(16) }}
 
     <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
-        Якщо у вас виникнуть запитання, зверніться до нас через сторінку контактів.
+        {{ _('Якщо у вас виникнуть запитання, зверніться до нас через сторінку контактів.') }}
     </p>
 {% endblock %}

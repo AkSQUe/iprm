@@ -7,12 +7,15 @@
 (function () {
   'use strict';
 
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
   var LEVELS = [
     { label: '', cls: '' },
-    { label: 'Слабкий', cls: 'pw-strength--weak' },
-    { label: 'Середній', cls: 'pw-strength--medium' },
-    { label: 'Хороший', cls: 'pw-strength--good' },
-    { label: 'Надійний', cls: 'pw-strength--strong' },
+    { label: t('Слабкий'), cls: 'pw-strength--weak' },
+    { label: t('Середній'), cls: 'pw-strength--medium' },
+    { label: t('Хороший'), cls: 'pw-strength--good' },
+    { label: t('Надійний'), cls: 'pw-strength--strong' },
   ];
 
   function score(pw) {

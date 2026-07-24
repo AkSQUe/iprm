@@ -14,6 +14,9 @@
 (function () {
   'use strict';
 
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
   var overlay = null;
 
   function buildOverlay() {
@@ -46,8 +49,8 @@
     ov.querySelector('.iprm-confirm__msg').textContent = opts.message;
     var okBtn = ov.querySelector('.iprm-confirm__btn--ok');
     var cancelBtn = ov.querySelector('.iprm-confirm__btn--cancel');
-    okBtn.textContent = opts.okText || 'Підтвердити';
-    cancelBtn.textContent = opts.cancelText || 'Скасувати';
+    okBtn.textContent = opts.okText || t('Підтвердити');
+    cancelBtn.textContent = opts.cancelText || t('Скасувати');
     okBtn.classList.toggle('iprm-confirm__btn--danger', !!opts.danger);
 
     ov.hidden = false;

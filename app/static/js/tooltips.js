@@ -8,6 +8,9 @@
 (function () {
   'use strict';
 
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
   function initTooltips() {
     var triggers = document.querySelectorAll('[data-tooltip]');
     triggers.forEach(function (trigger) {
@@ -16,7 +19,7 @@
 
       trigger.setAttribute('tabindex', trigger.getAttribute('tabindex') || '0');
       trigger.setAttribute('role', 'button');
-      trigger.setAttribute('aria-label', 'Підказка: ' + trigger.getAttribute('data-tooltip'));
+      trigger.setAttribute('aria-label', t('Підказка: {text}', { text: trigger.getAttribute('data-tooltip') }));
 
       var bubble = null;
 

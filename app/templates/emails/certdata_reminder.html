@@ -1,19 +1,17 @@
 {% extends "emails/base.html" %}
 {% from "emails/_macros.html" import button_primary, detail_row, spacer %}
 
-{% block title %}Заповніть дані для сертифіката{% endblock %}
+{% block title %}{{ _('Заповніть дані для сертифіката') }}{% endblock %}
 
-{% block preview_text %}Без анкети МОЗ №725 ми не зможемо видати сертифікат за курс {{ event.title }}{% endblock %}
+{% block preview_text %}{% trans title=event.title %}Без анкети МОЗ №725 ми не зможемо видати сертифікат за курс {{ title }}{% endtrans %}{% endblock %}
 
 {% block content %}
     <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
-        Заповніть дані для сертифіката
+        {{ _('Заповніть дані для сертифіката') }}
     </h1>
 
     <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
-        {{ user.first_name or 'Шановний учаснику' }}, ваш курс уже скоро —
-        а анкета для сертифіката ще не заповнена. Без неї ми не зможемо
-        нарахувати бали БПР і видати сертифікат (вимоги МОЗ №725, п. 13).
+        {{ user.first_name or _('Шановний учаснику') }}, {{ _('ваш курс уже скоро — а анкета для сертифіката ще не заповнена. Без неї ми не зможемо нарахувати бали БПР і видати сертифікат (вимоги МОЗ №725, п. 13).') }}
     </p>
 
     <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
@@ -21,27 +19,24 @@
             <td style="padding: 20px 24px;">
                 <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">{{ event.title }}</p>
                 {% if event.start_date %}
-                {{ detail_row("Дата", event.start_date.strftime('%d.%m.%Y %H:%M')) }}
+                {{ detail_row(_('Дата'), event.start_date.strftime('%d.%m.%Y %H:%M')) }}
                 {% endif %}
                 {% if event.location %}
-                {{ detail_row("Місце", event.location) }}
+                {{ detail_row(_('Місце'), event.location) }}
                 {% endif %}
             </td>
         </tr>
     </table>
 
     <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
-        Анкета займе 2–3 хвилини: тип учасника, дата народження, освіта,
-        місце роботи та спеціалізації. Заповнюється один раз — і діє для
-        всіх ваших курсів.
+        {{ _('Анкета займе 2–3 хвилини: тип учасника, дата народження, освіта, місце роботи та спеціалізації. Заповнюється один раз — і діє для всіх ваших курсів.') }}
     </p>
 
-    {{ button_primary("Заповнити анкету", certdata_url) }}
+    {{ button_primary(_('Заповнити анкету'), certdata_url) }}
 
     {{ spacer(16) }}
 
     <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
-        Якщо ви вже заповнили анкету після надсилання цього листа — просто
-        проігноруйте його.
+        {{ _('Якщо ви вже заповнили анкету після надсилання цього листа — просто проігноруйте його.') }}
     </p>
 {% endblock %}

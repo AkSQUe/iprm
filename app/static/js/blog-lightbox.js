@@ -2,6 +2,10 @@
    Без залежностей. Навігація стрілками в межах групи, Esc/клік -- закрити. */
 (function() {
   'use strict';
+
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
   var links = Array.prototype.slice.call(document.querySelectorAll('[data-lightbox]'));
   if (!links.length) return;
 
@@ -9,12 +13,12 @@
   overlay.className = 'blog-lightbox';
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
-  overlay.setAttribute('aria-label', 'Перегляд зображення');
+  overlay.setAttribute('aria-label', t('Перегляд зображення'));
   overlay.innerHTML =
-    '<button class="blog-lightbox__btn blog-lightbox__close" aria-label="Закрити">&times;</button>' +
-    '<button class="blog-lightbox__btn blog-lightbox__prev" aria-label="Попереднє">&#8249;</button>' +
+    '<button class="blog-lightbox__btn blog-lightbox__close" aria-label="' + t('Закрити') + '">&times;</button>' +
+    '<button class="blog-lightbox__btn blog-lightbox__prev" aria-label="' + t('Попереднє') + '">&#8249;</button>' +
     '<img class="blog-lightbox__img" alt="">' +
-    '<button class="blog-lightbox__btn blog-lightbox__next" aria-label="Наступне">&#8250;</button>' +
+    '<button class="blog-lightbox__btn blog-lightbox__next" aria-label="' + t('Наступне') + '">&#8250;</button>' +
     '<div class="blog-lightbox__caption"></div>';
   document.body.appendChild(overlay);
 

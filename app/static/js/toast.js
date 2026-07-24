@@ -17,11 +17,14 @@
     warning: '⚠',
     info: 'ℹ',
   };
+  // i18n: словник window.iprmI18n рендерить base.html; фолбек -- укр. ключ.
+  var t = (window.iprmI18n && window.iprmI18n.t) || function (k) { return k; };
+
   var TOAST_TITLES = {
-    success: 'Готово',
-    error: 'Помилка',
-    warning: 'Увага',
-    info: 'Інформація',
+    success: t('Готово'),
+    error: t('Помилка'),
+    warning: t('Увага'),
+    info: t('Інформація'),
   };
 
   var _container = null;
@@ -57,7 +60,7 @@
         (title ? '<p class="iprm-toast__title"></p>' : '') +
         '<p class="iprm-toast__msg"></p>' +
       '</div>' +
-      '<button type="button" class="iprm-toast__close" aria-label="Закрити">✕</button>';
+      '<button type="button" class="iprm-toast__close" aria-label="' + t('Закрити') + '">✕</button>';
 
     if (title) el.querySelector('.iprm-toast__title').textContent = title;
     el.querySelector('.iprm-toast__msg').textContent = message;

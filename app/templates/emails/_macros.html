@@ -128,12 +128,12 @@
 {%- set mod10 = n % 10 -%}
 {%- set mod100 = n % 100 -%}
 {%- if mod100 >= 11 and mod100 <= 19 -%}
-{{ n }} днів
+{% trans n=n %}{{ n }} днів{% endtrans %}
 {%- elif mod10 == 1 -%}
-{{ n }} день
+{% trans n=n %}{{ n }} день{% endtrans %}
 {%- elif mod10 >= 2 and mod10 <= 4 -%}
-{{ n }} дні
+{% trans n=n %}{{ n }} дні{% endtrans %}
 {%- else -%}
-{{ n }} днів
+{% trans n=n %}{{ n }} днів{% endtrans %}
 {%- endif -%}
 {%- endmacro -%}

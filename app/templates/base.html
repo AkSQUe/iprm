@@ -100,6 +100,10 @@
   {% include 'partials/upcoming_events.html' %}
   {% include 'partials/certdata_reminder.html' %}
 
+  {# i18n: словник перекладів для публічних JS (app/js_strings.py). i18n.js
+     ПЕРШИЙ серед defer-скриптів, щоб window.iprmI18n був готовий до інших. #}
+  <script type="application/json" id="iprm-i18n-data">{{ js_translations()|tojson }}</script>
+  <script defer src="{{ url_for('static', filename='js/i18n.js') }}?v={{ assets_version }}"></script>
   {% block molecular_js %}
   <script defer src="{{ url_for('static', filename='js/molecular-background.js') }}?v={{ assets_version }}"></script>
   {% endblock %}

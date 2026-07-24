@@ -34,27 +34,48 @@
       {% for field in fields %}
       <div class="form-section admin-form__section tr-field">
         <h3 class="tr-field__title">{{ field.label }}</h3>
+        {% if field.widget == 'json' %}
+          {# Поле-проти-поля: кожен текстовий фрагмент структури -- окремий
+             рядок; технічні ключі та розмітка структури недоторкані. #}
+          {% if not field.leaves %}
+          <p class="form-hint">Немає текстів для перекладу (порожній вміст).</p>
+          {% endif %}
+          {% for leaf in field.leaves %}
+          <div class="tr-field__grid tr-field__leaf">
+            <div class="form-group">
+              <label>Оригінал<span class="tr-field__path">{{ loop.index }}/{{ field.leaves|length }}</span></label>
+              <textarea class="form-input tr-field__source" rows="{{ leaf.rows }}" readonly disabled>{{ leaf.uk }}</textarea>
+            </div>
+            {% for lang in languages %}
+            <div class="form-group">
+              <label for="{{ lang }}__{{ field.name }}__{{ leaf.path }}">{{ 'Російська' if lang == 'ru' else 'Англійська' }}</label>
+              <textarea class="form-input" id="{{ lang }}__{{ field.name }}__{{ leaf.path }}" name="{{ lang }}__{{ field.name }}__{{ leaf.path }}" rows="{{ leaf.rows }}" placeholder="Порожньо = українська">{{ leaf.trans[lang] }}</textarea>
+            </div>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        {% else %}
         <div class="tr-field__grid">
           <div class="form-group">
             <label>Українська (оригінал)</label>
             {% if field.widget == 'text' %}
             <input type="text" class="form-input" value="{{ field.uk }}" readonly disabled>
             {% else %}
-            <textarea class="form-input tr-field__source" rows="{{ 8 if field.widget == 'json' else 4 }}" readonly disabled>{{ field.uk }}</textarea>
+            <textarea class="form-input tr-field__source" rows="4" readonly disabled>{{ field.uk }}</textarea>
             {% endif %}
           </div>
           {% for lang in languages %}
           <div class="form-group">
             <label for="{{ lang }}__{{ field.name }}">{{ 'Російська' if lang == 'ru' else 'Англійська' }}</label>
             {% if field.widget == 'text' %}
-            <input type="text" class="form-input" id="{{ lang }}__{{ field.name }}" name="{{ lang }}__{{ field.name }}" value="{{ field.values[lang] }}">
+            <input type="text" class="form-input" id="{{ lang }}__{{ field.name }}" name="{{ lang }}__{{ field.name }}" value="{{ field.trans[lang] }}">
             {% else %}
-            <textarea class="form-input" id="{{ lang }}__{{ field.name }}" name="{{ lang }}__{{ field.name }}" rows="{{ 8 if field.widget == 'json' else 4 }}"{% if field.widget == 'json' %} spellcheck="false"{% endif %}>{{ field.values[lang] }}</textarea>
+            <textarea class="form-input" id="{{ lang }}__{{ field.name }}" name="{{ lang }}__{{ field.name }}" rows="4">{{ field.trans[lang] }}</textarea>
             {% endif %}
-            {% if field.widget == 'json' %}<small class="form-hint">JSON — структура має відповідати оригіналу.</small>{% endif %}
           </div>
           {% endfor %}
         </div>
+        {% endif %}
       </div>
       {% endfor %}
 
