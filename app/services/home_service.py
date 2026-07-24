@@ -77,6 +77,19 @@ def home_context():
         Clinic.sort_order,
     ).limit(4).all()
 
+    # Опційні блоки -- best-effort: збій жодного з них не має валити Головну
+    # (найвідвідуванішу сторінку). При помилці робимо rollback і деградуємо.
+    try:
+        reviews = Review.published()
+    except Exception:
+        _safe_rollback('reviews')
+        reviews = []
+    try:
+        home_stats = _home_stats(courses, upcoming_by_course)
+    except Exception:
+        _safe_rollback('home_stats')
+        home_stats = None
+
     return {
         'featured_courses': courses[:6],
         'upcoming_by_course': upcoming_by_course,
@@ -86,6 +99,18 @@ def home_context():
         'roi_courses': roi_courses,
         'trainers': all_trainers[:12],
         'clinics': clinics,
-        'reviews': Review.published(),
-        'home_stats': _home_stats(courses, upcoming_by_course),
+        'reviews': reviews,
+        'home_stats': home_stats,
     }
+
+
+def _safe_rollback(where):
+    """Відкотити перервану транзакцію (Postgres: aborted transaction), щоб
+    подальший рендер міг перевибрати вже завантажені обʼєкти."""
+    import logging
+    from app.extensions import db
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
+    logging.getLogger(__name__).exception('home_context: degraded block "%s"', where)
