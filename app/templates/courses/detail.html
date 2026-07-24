@@ -479,14 +479,14 @@
       <div class="iprm-course-cards iprm-course-cards--related">
         {% for rc in related_courses %}
         <article class="iprm-course-card apple-reveal">
-          <a class="iprm-course-card__link" href="{{ url_for('courses.course_by_slug', slug=rc.slug) }}" aria-label="{{ rc.title }}">
+          <a class="iprm-course-card__link" href="{{ url_for('courses.course_by_slug', slug=rc.slug) }}" aria-label="{{ rc.t('title') }}">
             <div class="iprm-course-card__image">
               {% if rc.card_src %}
-              <img src="{{ rc.card_src }}" alt="{{ rc.title }}" loading="lazy" width="400" height="200">
+              <img src="{{ rc.card_src }}" alt="{{ rc.t('title') }}" loading="lazy" width="400" height="200">
               {% endif %}
             </div>
             <div class="apple-card-body">
-              <p class="iprm-course-card__title">{{ rc.title }}</p>
+              <p class="iprm-course-card__title">{{ rc.t('title') }}</p>
               <div class="iprm-course-card__badges">
                 {% if rc.event_type %}
                 <span class="iprm-card-badge iprm-card-badge--type">{{ rc.event_type_label }}</span>
@@ -586,7 +586,7 @@
   {# ===== STICKY MOBILE CTA ===== #}
   <div class="iprm-sticky-cta" data-sticky-cta hidden>
     <div class="iprm-sticky-cta__info">
-      <span class="iprm-sticky-cta__title">{{ course.title }}</span>
+      <span class="iprm-sticky-cta__title">{{ course.t('title') }}</span>
       {% if course.base_price and course.base_price > 0 %}
       <span class="iprm-sticky-cta__price">{{ course.base_price | int }} &#8372;</span>
       {% endif %}
