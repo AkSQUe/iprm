@@ -11,6 +11,7 @@ JSON-поля (faq, регалії, блоки блогу, items) редагую
 збирається з канонічної укр-версії з підстановкою перекладених фрагментів.
 """
 import json
+import re
 
 from flask import abort, flash, redirect, render_template, request, url_for
 
@@ -68,31 +69,56 @@ TECHNICAL_KEYS = {
     'type', 'id', 'url', 'src', 'href', 'slug', 'youtube_id', 'video_id',
     'media_id', 'image', 'icon', 'anchor', 'level', 'align', 'alignment',
     'style', 'format', 'code', 'variant', 'target', 'rel', 'lang',
+    'thumb', 'card', 'full', 'preview', 'poster', 'file', 'path', 'srcset',
 }
+
+# Значення-ассети (шляхи/URL/імена файлів) -- не текст, не перекладаються,
+# незалежно від ключа. Перекладний текст -- проза (має пробіли/речення).
+_ASSET_EXT_RE = re.compile(
+    r'\.(?:webp|jpe?g|png|gif|svg|avif|ico|bmp|mp4|webm|mov|pdf|heic|heif|zip)$',
+    re.IGNORECASE,
+)
 
 
 def _has_letters(value):
     return any(ch.isalpha() for ch in value)
 
 
+def _is_asset_value(value):
+    """True для шляхів/URL/імен файлів (не перекладний текст)."""
+    v = value.strip()
+    if not v:
+        return False
+    if v.startswith(('/', 'http://', 'https://', 'data:', 'blob:', '#', 'mailto:', 'tel:')):
+        return True
+    # Ім'я файлу без пробілів із розширенням-ассетом (напр. "photo_thumb.webp").
+    if ' ' not in v and _ASSET_EXT_RE.search(v):
+        return True
+    return False
+
+
+def _is_translatable_leaf(value):
+    return _has_letters(value) and not _is_asset_value(value)
+
+
 def _walk_leaves(value, path=''):
     """Текстові фрагменти JSON-структури: [(шлях 'a.0.b', укр-значення)].
-    Перекладаються лише str-значення з літерами поза TECHNICAL_KEYS;
-    структура (dict/list) і технічні значення недоторкані."""
+    Перекладаються лише str-значення з прозою поза TECHNICAL_KEYS;
+    структура (dict/list), технічні значення і шляхи-ассети недоторкані."""
     leaves = []
     if isinstance(value, dict):
         for key, item in value.items():
             child = f'{path}{key}'
             if isinstance(item, (dict, list)):
                 leaves += _walk_leaves(item, child + '.')
-            elif isinstance(item, str) and key not in TECHNICAL_KEYS and _has_letters(item):
+            elif isinstance(item, str) and key not in TECHNICAL_KEYS and _is_translatable_leaf(item):
                 leaves.append((child, item))
     elif isinstance(value, list):
         for i, item in enumerate(value):
             child = f'{path}{i}'
             if isinstance(item, (dict, list)):
                 leaves += _walk_leaves(item, child + '.')
-            elif isinstance(item, str) and _has_letters(item):
+            elif isinstance(item, str) and _is_translatable_leaf(item):
                 leaves.append((child, item))
     return leaves
 
