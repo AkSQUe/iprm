@@ -10,9 +10,9 @@
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   "itemListElement": [
-    {"@type": "ListItem", "position": 1, "name": "ІПРМ", "item": "{{ url_for('main.index', _external=True) }}"},
-    {"@type": "ListItem", "position": 2, "name": "Клініки", "item": "{{ url_for('clinics.clinic_list', _external=True) }}"},
-    {"@type": "ListItem", "position": 3, "name": "{{ clinic.name }}"}
+    {"@type": "ListItem", "position": 1, "name": {{ _('ІПРМ')|tojson }}, "item": "{{ url_for('main.index', _external=True) }}"},
+    {"@type": "ListItem", "position": 2, "name": {{ _('Клініки')|tojson }}, "item": "{{ url_for('clinics.clinic_list', _external=True) }}"},
+    {"@type": "ListItem", "position": 3, "name": {{ clinic.t('name')|tojson }}}
   ]
 }
 </script>

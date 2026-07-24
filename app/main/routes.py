@@ -85,27 +85,27 @@ def labs():
     return render_template('main/index.html', active_nav='labs', courses=courses)
 
 
-@main_bp.route('/offer')
+@main_bp.route('/offer', localize=False)
 def offer():
     return render_template('main/offer.html')
 
 
-@main_bp.route('/privacy')
+@main_bp.route('/privacy', localize=False)
 def privacy():
     return render_template('main/privacy.html')
 
 
-@main_bp.route('/refund')
+@main_bp.route('/refund', localize=False)
 def refund():
     return render_template('main/refund.html')
 
 
-@main_bp.route('/disclaimer')
+@main_bp.route('/disclaimer', localize=False)
 def disclaimer():
     return render_template('main/disclaimer.html')
 
 
-@main_bp.route('/cookies')
+@main_bp.route('/cookies', localize=False)
 def cookies():
     return render_template('main/cookies.html')
 

@@ -24,9 +24,9 @@
 {% set course_schema = {
   '@context': 'https://schema.org',
   '@type': 'Course',
-  'name': course.title,
-  'description': course.subtitle or course.short_description or course.title,
-  'inLanguage': 'uk',
+  'name': course.t('title'),
+  'description': course.t('subtitle') or course.t('short_description') or course.t('title'),
+  'inLanguage': current_lang,
   'url': course_url,
   'provider': {
     '@type': 'EducationalOrganization',
@@ -70,9 +70,9 @@
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   "itemListElement": [
-    {"@type": "ListItem", "position": 1, "name": "ІПРМ", "item": "{{ url_for('main.index', _external=True) }}"},
-    {"@type": "ListItem", "position": 2, "name": "Курси", "item": "{{ url_for('courses.course_list', _external=True) }}"},
-    {"@type": "ListItem", "position": 3, "name": {{ course.title | tojson }}}
+    {"@type": "ListItem", "position": 1, "name": {{ _('ІПРМ')|tojson }}, "item": "{{ url_for('main.index', _external=True) }}"},
+    {"@type": "ListItem", "position": 2, "name": {{ _('Курси')|tojson }}, "item": "{{ url_for('courses.course_list', _external=True) }}"},
+    {"@type": "ListItem", "position": 3, "name": {{ course.t('title') | tojson }}}
   ]
 }
 </script>

@@ -147,6 +147,7 @@ def init_locale_routing(app):
         return {
             'current_lang': current,
             'og_locale': OG_LOCALES.get(current, OG_LOCALES[DEFAULT_LANGUAGE]),
+            'hreflang_alternates': _hreflang_alternates(),
             'lang_switcher': [
                 {
                     'code': lang,
@@ -157,6 +158,30 @@ def init_locale_routing(app):
                 for lang in LANGUAGES
             ],
         }
+
+
+def _hreflang_alternates():
+    """<link rel="alternate" hreflang> для поточної сторінки (base.html):
+    усі мовні версії + x-default (укр). Порожньо для нелокалізованих
+    ендпоінтів (admin, сервісні, юридичні). Без query string -- альтернативи
+    відповідають canonical (request.base_url)."""
+    endpoint = request.endpoint
+    if not endpoint or not current_app.url_map.is_endpoint_expecting(endpoint, 'lang_code'):
+        return []
+    values = dict(request.view_args or {})
+    values.pop('lang_code', None)
+    try:
+        alternates = [
+            {'lang': lang, 'url': url_for(endpoint, _external=True, lang_code=lang, **values)}
+            for lang in LANGUAGES
+        ]
+        alternates.append({
+            'lang': 'x-default',
+            'url': url_for(endpoint, _external=True, lang_code=DEFAULT_LANGUAGE, **values),
+        })
+        return alternates
+    except Exception:
+        return []
 
 
 def _switch_link(lang):

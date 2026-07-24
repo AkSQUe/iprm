@@ -16,13 +16,13 @@
 {
   "@context": "https://schema.org",
   "@type": "Person",
-  "name": "{{ trainer.full_name }}",
-  "jobTitle": "{{ trainer.role or '' }}",
+  "name": "{{ trainer.t('full_name') }}",
+  "jobTitle": "{{ trainer.t('role') or '' }}",
   {% if trainer.photo_full %}"image": "{{ request.url_root.rstrip('/') ~ trainer.photo_full }}",{% endif %}
-  {% if trainer.bio %}"description": "{{ trainer.bio[:200] }}",{% endif %}
+  {% if trainer.bio %}"description": "{{ trainer.t('bio')[:200] }}",{% endif %}
   "worksFor": {
     "@type": "EducationalOrganization",
-    "name": "ІПРМ"
+    "name": {{ _('ІПРМ')|tojson }}
   },
   "url": "{{ url_for('trainers.trainer_detail', slug=trainer.slug, _external=True) }}"
 }
@@ -32,9 +32,9 @@
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   "itemListElement": [
-    {"@type": "ListItem", "position": 1, "name": "ІПРМ", "item": "{{ url_for('main.index', _external=True) }}"},
-    {"@type": "ListItem", "position": 2, "name": "Тренери", "item": "{{ url_for('trainers.trainer_list', _external=True) }}"},
-    {"@type": "ListItem", "position": 3, "name": "{{ trainer.full_name }}"}
+    {"@type": "ListItem", "position": 1, "name": {{ _('ІПРМ')|tojson }}, "item": "{{ url_for('main.index', _external=True) }}"},
+    {"@type": "ListItem", "position": 2, "name": {{ _('Тренери')|tojson }}, "item": "{{ url_for('trainers.trainer_list', _external=True) }}"},
+    {"@type": "ListItem", "position": 3, "name": {{ trainer.t('full_name')|tojson }}}
   ]
 }
 </script>

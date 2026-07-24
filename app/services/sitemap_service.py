@@ -1,12 +1,35 @@
 """Sitemap generation service."""
-from flask import url_for
+from flask import current_app, url_for
 
 from datetime import datetime, timezone
 
+from app.i18n import DEFAULT_LANGUAGE, LANGUAGES
 from app.models.blog_post import BlogPost
 from app.models.clinic import Clinic
 from app.models.course import Course
 from app.models.trainer import Trainer
+
+
+def _expand_localized(endpoint, priority, freq, lastmod=None, **kwargs):
+    """Записи sitemap для ендпоінта: локалізовані -- по одному URL на мову
+    з xhtml:link-альтернативами (hreflang, включно з x-default=uk);
+    нелокалізовані (юридичні тощо) -- один запис без альтернатив."""
+    if not current_app.url_map.is_endpoint_expecting(endpoint, 'lang_code'):
+        return [{
+            'loc': url_for(endpoint, _external=True, **kwargs),
+            'priority': priority, 'changefreq': freq, 'lastmod': lastmod,
+        }]
+    urls = {
+        lang: url_for(endpoint, _external=True, lang_code=lang, **kwargs)
+        for lang in LANGUAGES
+    }
+    alternates = [{'lang': lang, 'url': urls[lang]} for lang in LANGUAGES]
+    alternates.append({'lang': 'x-default', 'url': urls[DEFAULT_LANGUAGE]})
+    return [{
+        'loc': urls[lang],
+        'priority': priority, 'changefreq': freq, 'lastmod': lastmod,
+        'alternates': alternates,
+    } for lang in LANGUAGES]
 
 
 STATIC_URLS = [
@@ -32,38 +55,31 @@ def generate_pages():
     pages = []
 
     for endpoint, priority, freq in STATIC_URLS:
-        pages.append({
-            'loc': url_for(endpoint, _external=True),
-            'priority': priority,
-            'changefreq': freq,
-        })
+        pages.extend(_expand_localized(endpoint, priority, freq))
 
     courses = Course.query.filter_by(is_active=True).all()
     for course in courses:
-        pages.append({
-            'loc': url_for('courses.course_by_slug', slug=course.slug, _external=True),
-            'priority': '0.8',
-            'changefreq': 'weekly',
-            'lastmod': course.updated_at.strftime('%Y-%m-%d') if course.updated_at else None,
-        })
+        pages.extend(_expand_localized(
+            'courses.course_by_slug', '0.8', 'weekly',
+            lastmod=course.updated_at.strftime('%Y-%m-%d') if course.updated_at else None,
+            slug=course.slug,
+        ))
 
     trainers = Trainer.query.filter_by(is_active=True).all()
     for trainer in trainers:
-        pages.append({
-            'loc': url_for('trainers.trainer_detail', slug=trainer.slug, _external=True),
-            'priority': '0.6',
-            'changefreq': 'monthly',
-            'lastmod': trainer.updated_at.strftime('%Y-%m-%d') if trainer.updated_at else None,
-        })
+        pages.extend(_expand_localized(
+            'trainers.trainer_detail', '0.6', 'monthly',
+            lastmod=trainer.updated_at.strftime('%Y-%m-%d') if trainer.updated_at else None,
+            slug=trainer.slug,
+        ))
 
     clinics = Clinic.query.filter_by(is_active=True).all()
     for clinic in clinics:
-        pages.append({
-            'loc': url_for('clinics.clinic_detail', slug=clinic.slug, _external=True),
-            'priority': '0.6',
-            'changefreq': 'monthly',
-            'lastmod': clinic.updated_at.strftime('%Y-%m-%d') if clinic.updated_at else None,
-        })
+        pages.extend(_expand_localized(
+            'clinics.clinic_detail', '0.6', 'monthly',
+            lastmod=clinic.updated_at.strftime('%Y-%m-%d') if clinic.updated_at else None,
+            slug=clinic.slug,
+        ))
 
     now = datetime.now(timezone.utc)
     posts = (
@@ -73,12 +89,11 @@ def generate_pages():
         .all()
     )
     for post in posts:
-        pages.append({
-            'loc': url_for('blog.post_detail', slug=post.slug, _external=True),
-            'priority': '0.7',
-            'changefreq': 'monthly',
-            'lastmod': post.updated_at.strftime('%Y-%m-%d') if post.updated_at else None,
-        })
+        pages.extend(_expand_localized(
+            'blog.post_detail', '0.7', 'monthly',
+            lastmod=post.updated_at.strftime('%Y-%m-%d') if post.updated_at else None,
+            slug=post.slug,
+        ))
 
     return pages
 

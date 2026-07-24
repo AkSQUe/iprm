@@ -13,8 +13,8 @@
     {
       "@type": "EducationalOrganization",
       "@id": "{{ _home }}#org",
-      "name": "{{ site_settings.company_name }}",
-      "alternateName": "{{ site_settings.company_full_name }}",
+      "name": "{{ site_settings.t('company_name') }}",
+      "alternateName": "{{ site_settings.t('company_full_name') }}",
       "url": "{{ _home }}",
       "logo": "{{ url_for('static', filename='svg/IPRM-logo-complex.svg', _external=True) }}",
       "telephone": "{{ site_settings.phone_primary }}",
@@ -26,7 +26,7 @@
       "@type": "WebSite",
       "@id": "{{ _home }}#website",
       "url": "{{ _home }}",
-      "name": "{{ site_settings.company_name }}",
+      "name": "{{ site_settings.t('company_name') }}",
       "inLanguage": "uk",
       "publisher": {"@id": "{{ _home }}#org"}
     }
