@@ -20,7 +20,7 @@
 .admin-readonly-config__label {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--iprm-dark);
+  color: var(--iprm-text);
   min-width: 120px;
   flex-shrink: 0;
 }

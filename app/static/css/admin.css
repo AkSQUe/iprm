@@ -47,7 +47,7 @@
 
 .admin-sidebar__link:hover {
   background: var(--iprm-border);
-  color: var(--iprm-dark);
+  color: var(--iprm-text);
 }
 
 .admin-sidebar__link--active {
@@ -95,7 +95,7 @@
 .admin-hero__title {
   font-size: 24px;
   font-weight: 700;
-  color: var(--iprm-dark);
+  color: var(--iprm-text);
   line-height: 1.25;
 }
 
@@ -456,7 +456,7 @@
 }
 
 .admin-form .form-checkbox:hover {
-  border-color: var(--iprm-dark);
+  border-color: var(--iprm-text);
 }
 
 .admin-form .form-checkbox input[type="checkbox"] {
@@ -696,7 +696,7 @@
 .admin-integration-card__title {
   font-size: 14px;
   font-weight: 600;
-  color: var(--iprm-dark);
+  color: var(--iprm-text);
 }
 
 .admin-integration-card p {
@@ -944,7 +944,7 @@
   display: block;
   font-size: 24px;
   font-weight: 700;
-  color: var(--iprm-dark);
+  color: var(--iprm-text);
   line-height: 1.2;
   margin-bottom: 4px;
 }

@@ -74,7 +74,7 @@
   padding: 16px 20px;
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--iprm-dark);
+  color: var(--iprm-text);
   cursor: pointer;
   list-style: none;
   display: flex;
@@ -140,7 +140,7 @@
   display: block;
   font-size: 1.0625rem;
   font-weight: 700;
-  color: var(--iprm-dark);
+  color: var(--iprm-text);
 }
 
 .iprm-event-meta__value--accent {
@@ -217,7 +217,7 @@
   font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--iprm-dark);
+  color: var(--iprm-text);
   margin-bottom: 8px;
 }
 
@@ -280,7 +280,7 @@
 
 .iprm-tariff-pill__name {
   font-weight: 600;
-  color: var(--iprm-dark);
+  color: var(--iprm-text);
 }
 
 .iprm-tariff-pill__price {
