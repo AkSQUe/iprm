@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from app.extensions import db
-from app.i18n import DEFAULT_LANGUAGE, PREFIXED_LANGUAGES
+from app.i18n import DEFAULT_LANGUAGE, PREFIXED_LANGUAGES, apply_json_overrides
 
 
 def utcnow():
@@ -31,12 +31,15 @@ class TranslatableMixin:
     колонки, тому окремого бакета "uk" немає).
 
     translations -- JSON {"ru": {<поле>: <значення>, ...}, "en": {...}}.
-    Значення зберігають структуру оригінального поля (рядок або JSON --
-    faq, регалії, блоки блогу). Перелік перекладних полів модель оголошує
-    у __translatable__.
+    Рядкові поля зберігають переклад рядком; JSON-поля (faq, регалії, блоки
+    блогу) -- як ПЛОСКУ мапу overrides {шлях: текст}, що накладається на
+    поточну українську структуру при читанні (app.i18n.apply_json_overrides).
+    Перелік перекладних полів модель оголошує у __translatable__.
 
     Читання: obj.t('title') -- значення активної локалі з фолбеком на
-    українську (відсутні/порожні переклади не показують діри в UI).
+    українську (відсутні/порожні переклади не показують діри в UI; для
+    JSON-полів зміни оригіналу підхоплюються автоматично, застарілі
+    переклади-шляхи ігноруються).
     Запис: set_translation(...) -- присвоює НОВИЙ dict, щоб SQLAlchemy
     зафіксував зміну JSON-колонки без MutableDict.
     """
@@ -47,11 +50,16 @@ class TranslatableMixin:
     def t(self, field, lang=None):
         if lang is None:
             lang = _current_language()
-        if lang != DEFAULT_LANGUAGE and field in self.__translatable__:
-            value = ((self.translations or {}).get(lang) or {}).get(field)
-            if value not in (None, '', [], {}):
-                return value
-        return getattr(self, field)
+        uk_value = getattr(self, field)
+        if lang == DEFAULT_LANGUAGE or field not in self.__translatable__:
+            return uk_value
+        stored = ((self.translations or {}).get(lang) or {}).get(field)
+        if stored in (None, '', [], {}):
+            return uk_value
+        # JSON-структура -> overrides {шлях: текст}; рядок -> прямий переклад.
+        if isinstance(uk_value, (list, dict)):
+            return apply_json_overrides(uk_value, stored)
+        return stored
 
     def set_translation(self, lang, field, value):
         if lang not in PREFIXED_LANGUAGES:

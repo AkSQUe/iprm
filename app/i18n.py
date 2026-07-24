@@ -16,6 +16,8 @@ uk (непрефіксоване) і префіксоване для ru/en, то
 Admin (/admin), партнерські API і сервісні роути (robots, sitemap,
 токен-лінки) навмисно НЕ локалізуються: у роуті передайте localize=False.
 """
+import copy
+
 from flask import (
     Blueprint, current_app, g, has_request_context, redirect, request, session,
     url_for,
@@ -35,6 +37,44 @@ OG_LOCALES = {'uk': 'uk_UA', 'ru': 'ru_RU', 'en': 'en_US'}
 LANGUAGE_LABELS = {'uk': 'UA', 'ru': 'RU', 'en': 'EN'}
 
 _LANG_PREFIX = '/<any(' + ', '.join(PREFIXED_LANGUAGES) + '):lang_code>'
+
+
+# --- Переклади JSON-структур: overrides за шляхом --------------------------
+# Переклад JSON-поля (faq, блоки блогу, регалії, items) зберігається як
+# ПЛОСКА мапа {шлях: текст}, а не повна копія структури. Читання (t())
+# накладає overrides на ПОТОЧНУ українську структуру, тож зміни оригіналу
+# (додані/переставлені блоки) підхоплюються автоматично, а застарілі шляхи
+# просто ігноруються (фолбек на укр). Шлях -- крапко-роздільна адреса
+# (напр. '0.data.html'); ключі структури НЕ можуть містити крапку.
+
+def apply_json_overrides(base, overrides):
+    """Повернути копію base з накладеними текстовими overrides {шлях: текст}.
+    Перезаписує лише наявні РЯДКОВІ листки -- зміни структури оригіналу
+    безпечні (невідповідні шляхи пропускаються)."""
+    if not isinstance(overrides, dict):
+        return base
+    result = copy.deepcopy(base)
+    for path, text in overrides.items():
+        if isinstance(text, str):
+            _set_leaf_if_str(result, path, text)
+    return result
+
+
+def _set_leaf_if_str(root, path, text):
+    tokens = path.split('.')
+    node = root
+    try:
+        for tok in tokens[:-1]:
+            node = node[int(tok)] if isinstance(node, list) else node[tok]
+        last = tokens[-1]
+        if isinstance(node, list):
+            idx = int(last)
+            if 0 <= idx < len(node) and isinstance(node[idx], str):
+                node[idx] = text
+        elif isinstance(node, dict) and isinstance(node.get(last), str):
+            node[last] = text
+    except (KeyError, IndexError, TypeError, ValueError):
+        return
 
 
 def get_locale():
@@ -160,6 +200,25 @@ def init_locale_routing(app):
         }
 
 
+def localized_urls(endpoint, view_args=None, external=False, x_default=False):
+    """Список {lang, url} для ендпоінта на кожну мову (+ опційно x-default).
+    Спільна логіка для hreflang (base.html), sitemap і будь-яких мовних
+    альтернатив. Кидає, якщо ендпоінт не приймає lang_code -- виклик має
+    перевірити is_endpoint_expecting заздалегідь."""
+    values = dict(view_args or {})
+    values.pop('lang_code', None)
+    urls = [
+        {'lang': lang, 'url': url_for(endpoint, _external=external, lang_code=lang, **values)}
+        for lang in LANGUAGES
+    ]
+    if x_default:
+        urls.append({
+            'lang': 'x-default',
+            'url': url_for(endpoint, _external=external, lang_code=DEFAULT_LANGUAGE, **values),
+        })
+    return urls
+
+
 def _hreflang_alternates():
     """<link rel="alternate" hreflang> для поточної сторінки (base.html):
     усі мовні версії + x-default (укр). Порожньо для нелокалізованих
@@ -168,18 +227,8 @@ def _hreflang_alternates():
     endpoint = request.endpoint
     if not endpoint or not current_app.url_map.is_endpoint_expecting(endpoint, 'lang_code'):
         return []
-    values = dict(request.view_args or {})
-    values.pop('lang_code', None)
     try:
-        alternates = [
-            {'lang': lang, 'url': url_for(endpoint, _external=True, lang_code=lang, **values)}
-            for lang in LANGUAGES
-        ]
-        alternates.append({
-            'lang': 'x-default',
-            'url': url_for(endpoint, _external=True, lang_code=DEFAULT_LANGUAGE, **values),
-        })
-        return alternates
+        return localized_urls(endpoint, request.view_args, external=True, x_default=True)
     except Exception:
         return []
 

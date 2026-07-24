@@ -160,7 +160,7 @@ def design_system():
     return render_template('design_system/index.html')
 
 
-@main_bp.route('/set-lang/<any(uk, ru, en):lang>', localize=False)
+@main_bp.route('/set-lang/<lang>', localize=False)
 def set_lang(lang):
     """Перемикання мови для сторінок без мовного префікса (admin, payments,
     сторінки помилок): зберігає вибір у session і повертає на next.
@@ -168,6 +168,9 @@ def set_lang(lang):
     (див. app/i18n.py:_switch_link). Параметр названо lang, а НЕ lang_code:
     app-рівневий url_value_preprocessor вилучає lang_code з view_args."""
     from flask import session
+    from app.i18n import LANGUAGES
+    if lang not in LANGUAGES:
+        abort(404)
     session['lang'] = lang
     next_url = request.args.get('next', '')
     if not next_url.startswith('/') or next_url.startswith('//') or '\\' in next_url:

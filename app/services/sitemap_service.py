@@ -3,7 +3,7 @@ from flask import current_app, url_for
 
 from datetime import datetime, timezone
 
-from app.i18n import DEFAULT_LANGUAGE, LANGUAGES
+from app.i18n import localized_urls
 from app.models.blog_post import BlogPost
 from app.models.clinic import Clinic
 from app.models.course import Course
@@ -19,17 +19,13 @@ def _expand_localized(endpoint, priority, freq, lastmod=None, **kwargs):
             'loc': url_for(endpoint, _external=True, **kwargs),
             'priority': priority, 'changefreq': freq, 'lastmod': lastmod,
         }]
-    urls = {
-        lang: url_for(endpoint, _external=True, lang_code=lang, **kwargs)
-        for lang in LANGUAGES
-    }
-    alternates = [{'lang': lang, 'url': urls[lang]} for lang in LANGUAGES]
-    alternates.append({'lang': 'x-default', 'url': urls[DEFAULT_LANGUAGE]})
+    alternates = localized_urls(endpoint, kwargs, external=True, x_default=True)
+    # Перші len(LANGUAGES) записів -- по одному URL на мову (без x-default).
     return [{
-        'loc': urls[lang],
+        'loc': alt['url'],
         'priority': priority, 'changefreq': freq, 'lastmod': lastmod,
         'alternates': alternates,
-    } for lang in LANGUAGES]
+    } for alt in alternates if alt['lang'] != 'x-default']
 
 
 STATIC_URLS = [
