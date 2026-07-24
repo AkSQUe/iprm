@@ -8,9 +8,12 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-regalia.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-media.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-i18n-tabs.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
+{% import 'admin/partials/_i18n_tabs.html' as i18n %}
+{% set tr = (trainer.translations if trainer else none) or {} %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
   <div class="admin-layout">
@@ -43,6 +46,7 @@
 
     <!-- Basic info -->
     <div class="form-section admin-form__section">
+      {{ i18n.tabs() }}
       <h3 class="admin-form__section-title">Основна інформація</h3>
       <div class="admin-form__grid">
 
@@ -50,6 +54,7 @@
           <label for="full_name">ПІБ <span class="required">*</span></label>
           {{ form.full_name(class="form-input" + (" is-invalid" if form.full_name.errors else ""), id="full_name", placeholder="Степаненко Альона Ігорівна") }}
           {% for error in form.full_name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          {{ i18n.panes(tr, 'full_name') }}
         </div>
 
         <div class="form-group admin-form__full">
@@ -57,6 +62,7 @@
           {{ form.full_name_dative(class="form-input", id="full_name_dative", placeholder="Степаненко Альоні Ігорівні") }}
           <div class="form-hint">Для сертифіката лектора («виданий ...»). Якщо порожньо — береться звичайне ПІБ.</div>
           {% for error in form.full_name_dative.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          {{ i18n.panes(tr, 'full_name_dative') }}
         </div>
 
         <div class="form-group">
@@ -80,6 +86,7 @@
         <div class="form-group admin-form__full">
           <label for="role">Посада / спеціалізація</label>
           {{ form.role(class="form-input", id="role", placeholder="Лікар гінеколог-ендокринолог, хірург") }}
+          {{ i18n.panes(tr, 'role') }}
         </div>
 
       </div>
@@ -93,6 +100,7 @@
         <div class="form-group admin-form__full">
           <label for="bio">Біографія</label>
           {{ form.bio(class="form-input", id="bio", rows="5", placeholder="Досвід, досягнення, спеціалізація") }}
+          {{ i18n.panes(tr, 'bio', widget='textarea', rows=5) }}
         </div>
 
         {% set photo_prev = trainer.photo_src if trainer else None %}
@@ -260,6 +268,7 @@
 <script src="{{ url_for('static', filename='js/admin-dropzone.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-trainer-edit.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-trainer-regalia.js') }}?v={{ assets_version }}"></script>
+<script src="{{ url_for('static', filename='js/admin-i18n-tabs.js') }}?v={{ assets_version }}"></script>
 {% if referral_link %}
 <script src="{{ url_for('static', filename='js/toast.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/copy-to-clipboard.js') }}?v={{ assets_version }}" defer></script>

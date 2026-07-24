@@ -8,9 +8,12 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/blog-editor.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-media.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-i18n-tabs.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
+{% import 'admin/partials/_i18n_tabs.html' as i18n %}
+{% set tr = (post.translations if post else none) or {} %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
   <div class="admin-layout">
@@ -50,12 +53,14 @@
       {% include 'admin/partials/_form_errors.html' %}
 
       <div class="form-section admin-form__section">
+        {{ i18n.tabs() }}
         <h3 class="admin-form__section-title">Основне</h3>
         <div class="admin-form__grid">
           <div class="form-group admin-form__full">
             <label for="title">Заголовок <span class="required">*</span></label>
             {{ form.title(class="form-input" + (" is-invalid" if form.title.errors else ""), id="title", placeholder="Підсумки заходу...") }}
             {% for e in form.title.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+            {{ i18n.panes(tr, 'title') }}
           </div>
           <div class="form-group">
             <label for="slug">Slug (URL)</label>
@@ -70,6 +75,7 @@
             <label for="excerpt">Короткий опис</label>
             {{ form.excerpt(class="form-input", id="excerpt", rows="2", placeholder="Якщо порожньо — візьметься з тексту") }}
             {% for e in form.excerpt.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+            {{ i18n.panes(tr, 'excerpt', widget='textarea', rows=2) }}
           </div>
         </div>
       </div>
@@ -108,10 +114,12 @@
           <div class="form-group admin-form__full">
             <label for="meta_title">SEO заголовок</label>
             {{ form.meta_title(class="form-input", id="meta_title", placeholder="Якщо порожньо — використовується заголовок") }}
+            {{ i18n.panes(tr, 'meta_title') }}
           </div>
           <div class="form-group admin-form__full">
             <label for="meta_description">SEO опис</label>
             {{ form.meta_description(class="form-input", id="meta_description", rows="2") }}
+            {{ i18n.panes(tr, 'meta_description', widget='textarea', rows=2) }}
           </div>
         </div>
       </div>
@@ -143,4 +151,5 @@
 <script src="{{ url_for('static', filename='js/admin-dropzone.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/blog-editor.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-blog-edit.js') }}?v={{ assets_version }}"></script>
+<script src="{{ url_for('static', filename='js/admin-i18n-tabs.js') }}?v={{ assets_version }}"></script>
 {% endblock %}

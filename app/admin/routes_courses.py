@@ -12,6 +12,7 @@ from app.admin._helpers import (
 )
 from app.admin.decorators import admin_required
 from app.admin.forms import CourseForm
+from app.admin.routes_translations import apply_inline_translations
 from app.extensions import db
 from app.models.course import Course
 from app.services import course_service
@@ -57,6 +58,7 @@ def course_create():
         course = Course(slug=slug, created_by=current_user.id)
         course_service.populate_course_from_form(course, form)
         db.session.add(course)
+        apply_inline_translations(course)
         db.session.flush()
         blocks_data = course_service.extract_program_blocks_from_form(request.form)
         course_service.save_program_blocks_for_course(course, blocks_data)
@@ -98,6 +100,7 @@ def course_edit(course_id):
 
         course.slug = slug
         course_service.populate_course_from_form(course, form)
+        apply_inline_translations(course)
         blocks_data = course_service.extract_program_blocks_from_form(request.form)
         course_service.save_program_blocks_for_course(course, blocks_data)
 

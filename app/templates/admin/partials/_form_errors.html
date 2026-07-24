@@ -7,7 +7,7 @@
 {% if form is defined and form %}
 {% set _errors = {} %}
 {% for fname, msgs in form.errors.items() if fname != 'csrf_token' %}
-  {% set _ = _errors.update({fname: msgs}) %}
+  {% set _discard = _errors.update({fname: msgs}) %}
 {% endfor %}
 {% if _errors %}
 <div class="admin-form__errors" role="alert" aria-live="polite">

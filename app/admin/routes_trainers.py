@@ -5,6 +5,7 @@ from flask_login import current_user
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
 from app.admin.forms import TrainerForm
+from app.admin.routes_translations import apply_inline_translations
 from app.extensions import db
 from app.models.trainer import Trainer
 from app.models.media_file import MediaFile
@@ -143,6 +144,7 @@ def trainer_create():
         _set_photo_media(trainer, form)
         _apply_profile_fields(trainer, form)
         db.session.add(trainer)
+        apply_inline_translations(trainer)
 
         try:
             db.session.commit()
@@ -204,6 +206,7 @@ def trainer_edit(trainer_id):
         trainer.is_active = form.is_active.data
         _set_photo_media(trainer, form)
         _apply_profile_fields(trainer, form)
+        apply_inline_translations(trainer)
 
         try:
             db.session.commit()

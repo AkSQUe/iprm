@@ -1,0 +1,33 @@
+{# Макроси мовних вкладок для інлайн-перекладів в адмін-формах
+   (course_edit, trainer_edit, blog_edit). Працює в парі з
+   admin-i18n-tabs.js/.css та apply_inline_translations().
+
+   Використання:
+     {% import 'admin/partials/_i18n_tabs.html' as i18n %}
+     {{ i18n.tabs() }}
+     {{ i18n.panes(tr, 'title') }}
+     {{ i18n.panes(tr, 'description', widget='textarea', rows=6) }}
+
+   tr -- dict перекладів obj.translations (може бути порожнім {}).
+   Порожнє значення інпута при збереженні видаляє переклад (фолбек на укр). #}
+
+{% macro tabs() %}
+<div class="i18n-tabs" data-i18n-tabs role="group" aria-label="Мова полів">
+  <button type="button" class="i18n-tabs__btn" data-i18n-lang="uk">УКР</button>
+  <button type="button" class="i18n-tabs__btn" data-i18n-lang="ru">РУС</button>
+  <button type="button" class="i18n-tabs__btn" data-i18n-lang="en">ENG</button>
+</div>
+{% endmacro %}
+
+{% macro panes(tr, field, widget='text', rows=3) %}
+{% for lang, label in (('ru', 'РУС'), ('en', 'ENG')) %}
+<div class="i18n-pane" data-i18n-pane="{{ lang }}">
+  <span class="i18n-pane__label">{{ label }}</span>
+  {% if widget == 'textarea' %}
+  <textarea class="form-input" name="tr__{{ lang }}__{{ field }}" rows="{{ rows }}">{{ (tr.get(lang) or {}).get(field) or '' }}</textarea>
+  {% else %}
+  <input type="text" class="form-input" name="tr__{{ lang }}__{{ field }}" value="{{ (tr.get(lang) or {}).get(field) or '' }}">
+  {% endif %}
+</div>
+{% endfor %}
+{% endmacro %}

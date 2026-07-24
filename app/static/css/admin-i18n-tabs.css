@@ -1,0 +1,50 @@
+/* Мовні вкладки в адмін-формах (admin-i18n-tabs.js) */
+
+.i18n-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--iprm-radius-pill, 999px);
+  background: var(--apple-gray-light, #f5f5f7);
+  margin-bottom: 16px;
+}
+
+.i18n-tabs__btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: var(--iprm-radius-pill, 999px);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--apple-gray-dark, #6e6e73);
+  font-family: inherit;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.i18n-tabs__btn--active {
+  background: #fff;
+  color: var(--apple-black, #1d1d1f);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.i18n-pane {
+  display: none;
+  margin-top: 6px;
+  padding-left: 10px;
+  border-left: 3px solid var(--iprm-nav-active, #0071e3);
+}
+
+.i18n-pane--visible {
+  display: block;
+}
+
+.i18n-pane__label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--iprm-nav-active, #0071e3);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

@@ -7,9 +7,12 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-media.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-i18n-tabs.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
+{% import 'admin/partials/_i18n_tabs.html' as i18n %}
+{% set tr = (course.translations if course else none) or {} %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
   <div class="admin-layout">
@@ -40,6 +43,7 @@
     {% include 'admin/partials/_form_errors.html' %}
 
     <div class="form-section admin-form__section">
+      {{ i18n.tabs() }}
       <h3 class="admin-form__section-title">Основна інформація</h3>
       <div class="admin-form__grid">
 
@@ -47,11 +51,13 @@
           <label for="title">Назва курсу <span class="required">*</span></label>
           {{ form.title(class="form-input" + (" is-invalid" if form.title.errors else ""), id="title", placeholder="Плазмотерапія в ортопедії") }}
           {% for error in form.title.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          {{ i18n.panes(tr, 'title') }}
         </div>
 
         <div class="form-group admin-form__full">
           <label for="subtitle">Підзаголовок</label>
           {{ form.subtitle(class="form-input", id="subtitle") }}
+          {{ i18n.panes(tr, 'subtitle') }}
         </div>
 
         <div class="form-group">
@@ -76,6 +82,7 @@
           <label for="roi_hint">Орієнтир окупності</label>
           {{ form.roi_hint(class="form-input", id="roi_hint", placeholder="Окупність ≈ 3–4 записи за чека 6 000–9 000 грн") }}
           <div class="form-hint">{{ form.roi_hint.description }}</div>
+          {{ i18n.panes(tr, 'roi_hint') }}
         </div>
 
         <div class="form-group">
@@ -140,6 +147,7 @@
           <label for="bpr_specialties">Спеціальності (для сертифіката)</label>
           {{ form.bpr_specialties(class="form-input", id="bpr_specialties", placeholder="усі лікарські спеціальності") }}
           <small class="form-hint">Друкується рядком «Спеціальності: …» на сертифікаті.</small>
+          {{ i18n.panes(tr, 'bpr_specialties') }}
         </div>
 
         <div class="form-group">
@@ -202,10 +210,12 @@
         <div class="form-group admin-form__full">
           <label for="short_description">Короткий опис</label>
           {{ form.short_description(class="form-input", id="short_description", rows="3") }}
+          {{ i18n.panes(tr, 'short_description', widget='textarea', rows=3) }}
         </div>
         <div class="form-group admin-form__full">
           <label for="description">Повний опис</label>
           {{ form.description(class="form-input", id="description", rows="6") }}
+          {{ i18n.panes(tr, 'description', widget='textarea', rows=6) }}
         </div>
         <div class="form-group admin-form__full">
           <label for="target_audience_text">Цільова аудиторія</label>
@@ -220,10 +230,12 @@
         <div class="form-group admin-form__full">
           <label for="speaker_info">Інформація про спікера</label>
           {{ form.speaker_info(class="form-input", id="speaker_info", rows="4") }}
+          {{ i18n.panes(tr, 'speaker_info', widget='textarea', rows=4) }}
         </div>
         <div class="form-group admin-form__full">
           <label for="agenda">Програма (загальний опис)</label>
           {{ form.agenda(class="form-input", id="agenda", rows="4") }}
+          {{ i18n.panes(tr, 'agenda', widget='textarea', rows=4) }}
         </div>
         <div class="form-group admin-form__full">
           <label for="faq_text">FAQ</label>
@@ -315,4 +327,5 @@
 <script src="{{ url_for('static', filename='js/admin-media-picker.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-dropzone.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-event-edit.js') }}?v={{ assets_version }}"></script>
+<script src="{{ url_for('static', filename='js/admin-i18n-tabs.js') }}?v={{ assets_version }}"></script>
 {% endblock %}

@@ -144,6 +144,39 @@ def _coverage(obj):
     return ', '.join(parts)
 
 
+def apply_inline_translations(obj, form=None):
+    """Зберегти переклади з інлайн-вкладок адмін-форм (course_edit,
+    trainer_edit, blog_edit): інпути tr__<lang>__<поле>. Викликається в
+    POST-обробниках ПІСЛЯ створення/наповнення obj, до commit (commit --
+    на caller-ові). Відсутні у формі ключі не чіпаються, тож форми з
+    частковим набором полів безпечні. Повертає список помилок JSON-полів.
+    """
+    form = form if form is not None else request.form
+    errors = []
+    for field in obj.__translatable__:
+        widget = _widget_for(type(obj), field)
+        for lang in PREFIXED_LANGUAGES:
+            key = f'tr__{lang}__{field}'
+            if key not in form:
+                continue
+            raw = (form.get(key) or '').strip()
+            if widget == 'json':
+                if raw:
+                    try:
+                        value = json.loads(raw)
+                    except ValueError:
+                        errors.append(
+                            f'{FIELD_LABELS.get(field, field)} ({lang}): некоректний JSON'
+                        )
+                        continue
+                else:
+                    value = None
+            else:
+                value = raw or None
+            obj.set_translation(lang, field, value)
+    return errors
+
+
 @admin_bp.route('/translations/<entity>/<int:obj_id>', methods=['GET', 'POST'])
 @admin_required
 def translations_edit(entity, obj_id):

@@ -15,6 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
 from app.admin.forms import BlogPostForm
+from app.admin.routes_translations import apply_inline_translations
 from app.extensions import db
 from app.models.blog_post import BlogPost
 from app.models.blog_comment import BlogComment
@@ -200,6 +201,7 @@ def blog_create():
             flash(error, 'error')
             return render_template('admin/blog_edit.html', form=form, post=None)
         db.session.add(post)
+        apply_inline_translations(post)
         try:
             if _commit_post(post):
                 _attach_media(post)
@@ -233,6 +235,7 @@ def blog_edit(post_id):
         if error:
             flash(error, 'error')
             return render_template('admin/blog_edit.html', form=form, post=post)
+        apply_inline_translations(post)
         try:
             if _commit_post(post):
                 _attach_media(post)
