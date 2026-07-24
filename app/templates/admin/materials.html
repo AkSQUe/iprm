@@ -138,11 +138,18 @@
     <span>Обрано позицій: <strong id="materialsCount">0</strong></span>
     <span>Орієнтовна вартість: <strong id="materialsCost">{{ '%.2f'|format(est_cost) }}</strong> грн</span>
     {% if mode == 'edit' %}<span id="materialsChanges" class="materials-summary__hint"></span>{% endif %}
+    {% if not qty_mode %}
+      {% if is_consumed %}
+      <span>Повертається на склад: <strong id="materialsReturns">0</strong> · Довидається зі складу: <strong id="materialsWithdraw">0</strong></span>
+      {% else %}
+      <span>Списується: <strong id="materialsUsed">0</strong> · Повертається на склад: <strong id="materialsReturns">0</strong></span>
+      {% endif %}
+    {% endif %}
     {% if is_consumed and mode != 'edit' %}<span class="materials-summary__hint">Захід списано — можна коригувати фактичні кількості.</span>{% endif %}
   </div>
 
   {% if rows %}
-  <form method="POST" action="{{ form_action }}" id="materialsForm" data-mode="{{ mode }}">
+  <form method="POST" action="{{ form_action }}" id="materialsForm" data-mode="{{ mode }}" data-consumed="{{ '1' if is_consumed else '' }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="admin-table-wrap">
     <table class="admin-table" id="materialsTable">
@@ -155,6 +162,7 @@
           <th>Наявно</th>
           {% if not qty_mode %}<th>Зарезервовано</th>{% endif %}
           <th>{% if qty_mode %}Кількість{% else %}Фактично використано{% endif %}</th>
+          {% if not qty_mode %}<th>Повертається</th>{% endif %}
         </tr>
       </thead>
       <tbody>
@@ -184,11 +192,15 @@
                    data-price="{{ row.price if row.price is not none else '' }}"
                    data-min-stock="{{ row.min_stock }}"
                    data-reserved="{{ row.reserved if row.reserved is not none else '' }}"
+                   data-actual="{{ row.actual if row.actual is not none else '' }}"
                    {% if qty_mode and row.available is not none %}max="{{ row.available }}"{% endif %}
                    value="{{ row.value if row.value is not none else '' }}"
                    placeholder="{% if not qty_mode and row.reserved is not none %}{{ row.reserved }}{% else %}0{% endif %}">
             <span class="materials-hint" data-hint></span>
           </td>
+          {% if not qty_mode %}
+          <td class="materials-returns"><span data-returns>—</span></td>
+          {% endif %}
         </tr>
         {% endfor %}
       </tbody>

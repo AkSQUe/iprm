@@ -56,12 +56,22 @@
     var countEl = document.getElementById('materialsCount');
     var costEl = document.getElementById('materialsCost');
     var changesEl = document.getElementById('materialsChanges');
+    var usedEl = document.getElementById('materialsUsed');
+    var returnsEl = document.getElementById('materialsReturns');
+    var withdrawEl = document.getElementById('materialsWithdraw');
+    var actualsMode = mode !== 'reserve' && mode !== 'edit';
+    // Коригування вже списаного заходу: сервер рахує delta від ПОТОЧНОГО списаного
+    // (quantity_actual), а не від зарезервованого. Порожнє поле = "без змін".
+    var consumedMode = form ? form.getAttribute('data-consumed') === '1' : false;
 
     // ---- summary (кількість + вартість + попередження + diff редагування) ----
     function recalc() {
       var count = 0;
       var cost = 0;
       var changed = 0;
+      var totalUsed = 0;
+      var totalReturns = 0;
+      var totalWithdraw = 0;
       rows.forEach(function (tr) {
         var input = tr.querySelector('input[data-qty]');
         if (!input) return;
@@ -69,6 +79,26 @@
         if (qty > 0) count++;
         var price = parseFloat(input.getAttribute('data-price'));
         if (qty > 0 && !isNaN(price)) cost += price * qty;
+
+        // Повертається/довидається рахуємо від бази: у режимі коригування база --
+        // поточне списане (data-actual), у першому списанні -- зарезервоване
+        // (data-reserved). Порожнє поле = used == база (нічого не змінюється).
+        if (actualsMode) {
+          var baseAttr = input.getAttribute(consumedMode ? 'data-actual' : 'data-reserved');
+          var hasBase = baseAttr !== '' && baseAttr != null;
+          var base = num(baseAttr);
+          var used = input.value.trim() === '' ? base : qty;
+          var returns = hasBase ? Math.max(0, base - used) : 0;
+          var withdraw = hasBase ? Math.max(0, used - base) : 0;
+          totalUsed += used;
+          totalReturns += returns;
+          totalWithdraw += withdraw;
+          var retEl = tr.querySelector('[data-returns]');
+          if (retEl) {
+            retEl.textContent = hasBase ? String(returns) : '—';
+            retEl.classList.toggle('is-returning', hasBase && returns > 0);
+          }
+        }
 
         var availAttr = input.getAttribute('data-available');
         var hasAvail = availAttr !== '' && availAttr != null;
@@ -96,6 +126,9 @@
       });
       if (countEl) countEl.textContent = String(count);
       if (costEl) costEl.textContent = cost.toFixed(2);
+      if (usedEl) usedEl.textContent = String(totalUsed);
+      if (returnsEl) returnsEl.textContent = String(totalReturns);
+      if (withdrawEl) withdrawEl.textContent = String(totalWithdraw);
       if (changesEl) {
         changesEl.textContent = changed ? ('Змінено позицій: ' + changed) : 'Змін немає';
       }

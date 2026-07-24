@@ -106,6 +106,13 @@
 }
 .materials-qty-input.is-over ~ .materials-hint { color: var(--admin-danger, #d70015); }
 
+/* Колонка "Повертається" у режимі списання/коригування: зелений акцент, коли
+   частина зарезервованого повертається на склад MM Medic. */
+.materials-returns { text-align: right; font-variant-numeric: tabular-nums; }
+.materials-returns [data-returns] { color: var(--admin-text-muted, #6e6e73); }
+.materials-returns [data-returns].is-returning { color: var(--admin-success, #1a7f37); font-weight: 600; }
+#materialsReturns { color: var(--admin-success, #1a7f37); }
+
 .materials-print__head { margin: 8px 0 16px; }
 .materials-print__head h2 { margin: 0 0 4px; }
 
