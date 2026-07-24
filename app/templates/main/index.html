@@ -97,14 +97,14 @@
         <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">
           <div class="iprm-course-card__image">
             {% if course.card_src %}
-              <img src="{{ course.card_src }}" alt="{{ course.title }}" loading="lazy" width="400" height="200">
+              <img src="{{ course.card_src }}" alt="{{ course.t('title') }}" loading="lazy" width="400" height="200">
             {% endif %}
           </div>
           <div class="apple-course-body">
-            <h3 class="iprm-course-card__title">{{ course.title }}</h3>
-            {% if course.tags %}
+            <h3 class="iprm-course-card__title">{{ course.t('title') }}</h3>
+            {% if course.t('tags') %}
             <div class="iprm-course-card__tags">
-              {% for tag in course.tags %}
+              {% for tag in course.t('tags') %}
                 <span class="iprm-tag">{{ tag }}</span>
               {% endfor %}
             </div>

@@ -2,8 +2,8 @@
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 {% from 'partials/_location_badge.html' import location_badge %}
 
-{% block title %}{% trans title=course.title %}{{ title }} | ІПРМ{% endtrans %}{% endblock %}
-{% block meta_description %}{{ course.subtitle or course.short_description or course.title }}{% endblock %}
+{% block title %}{% trans title=course.t('title') %}{{ title }} | ІПРМ{% endtrans %}{% endblock %}
+{% block meta_description %}{{ course.t('subtitle') or course.t('short_description') or course.t('title') }}{% endblock %}
 {% block og_image %}{% if course.card_src %}{{ request.url_root.rstrip('/') ~ course.card_src }}{% else %}{{ super() }}{% endif %}{% endblock %}
 
 {% block extra_css %}
@@ -99,20 +99,20 @@
   <div class="iprm-hero-wrap">
     <section class="iprm-hero" aria-label="Hero">
       <div class="iprm-hero__content">
-        {% set title_words = course.title.rsplit(' ', 1) %}
+        {% set title_words = course.t('title').rsplit(' ', 1) %}
         <h1 class="iprm-hero__title">
           {% if title_words|length > 1 %}{{ title_words[0] }}<br><span class="apple-gradient-text">{{ title_words[1] }}.</span>
-          {% else %}<span class="apple-gradient-text">{{ course.title }}</span>{% endif %}
+          {% else %}<span class="apple-gradient-text">{{ course.t('title') }}</span>{% endif %}
         </h1>
-        {% if course.subtitle %}
-        <p class="iprm-hero__subtitle">{{ course.subtitle }}</p>
+        {% if course.t('subtitle') %}
+        <p class="iprm-hero__subtitle">{{ course.t('subtitle') }}</p>
         {% endif %}
-        {% if course.roi_hint %}
-        <p class="iprm-hero__roi">{{ course.roi_hint }}</p>
+        {% if course.t('roi_hint') %}
+        <p class="iprm-hero__roi">{{ course.t('roi_hint') }}</p>
         {% endif %}
-        {% if course.tags %}
+        {% if course.t('tags') %}
         <div class="iprm-course-card__tags iprm-course-card__tags--center">
-          {% for tag in course.tags %}<span class="iprm-tag">{{ tag }}</span>{% endfor %}
+          {% for tag in course.t('tags') %}<span class="iprm-tag">{{ tag }}</span>{% endfor %}
         </div>
         {% endif %}
         <div class="iprm-hero__actions iprm-hero__actions--detail" data-sticky-cta-anchor>
@@ -130,7 +130,7 @@
   </div>
 
   <!-- ===== ABOUT ===== -->
-  {% set about_lead = course.short_description if course.short_description and course.short_description != course.subtitle else '' %}
+  {% set about_lead = course.t('short_description') if course.t('short_description') and course.t('short_description') != course.t('subtitle') else '' %}
   {% set about_image = course.hero_src or course.card_src %}
   {% set has_desc = course.description %}
   {% set has_audience = course.target_audience %}
@@ -143,7 +143,7 @@
       <div class="iprm-about-hero apple-reveal{% if not about_image %} iprm-about-hero--no-media{% endif %}">
         {% if about_image %}
         <div class="iprm-about-hero__media">
-          <img src="{{ about_image }}" alt="{{ course.title }}" loading="lazy">
+          <img src="{{ about_image }}" alt="{{ course.t('title') }}" loading="lazy">
         </div>
         {% endif %}
         <div class="iprm-about-hero__info">
@@ -213,14 +213,14 @@
 
         {% if has_desc %}
         <div class="iprm-tabs__panel" data-tab-panel="desc">
-          <div class="iprm-prose">{{ course.description | sanitize_rich_text }}</div>
+          <div class="iprm-prose">{{ course.t('description') | sanitize_rich_text }}</div>
         </div>
         {% endif %}
 
         {% if has_audience %}
         <div class="iprm-tabs__panel" data-tab-panel="audience">
           <div class="iprm-pill-row">
-            {% for item in course.target_audience %}
+            {% for item in course.t('target_audience') %}
             <span class="iprm-pill-chip">{{ item }}</span>
             {% endfor %}
           </div>
@@ -253,17 +253,18 @@
       <p class="iprm-section__subtitle">{{ _('та отримайте сертифікат міжнародного зразка') }}</p>
       <div class="iprm-format-cards">
         {% for tariff in fmt_tariffs %}
+        {% set tariff_items = (tariff.t('description') or '').splitlines() | map('trim') | select | list %}
         <article class="iprm-format-card apple-reveal{% if loop.last and fmt_tariffs|length > 1 %} iprm-format-card--featured{% endif %}">
           <div class="iprm-format-card__head">
-            <h3 class="iprm-format-card__name">{{ tariff.name }}</h3>
+            <h3 class="iprm-format-card__name">{{ tariff.t('name') }}</h3>
             {% if fmt_date %}<p class="iprm-format-card__date">{{ _('Захід') }} {{ fmt_date }}</p>{% endif %}
           </div>
           <div class="iprm-format-card__price">{{ tariff.price | int }} <span class="iprm-format-card__currency">{{ _('грн') }}</span></div>
-          {% if tariff.description_items %}
+          {% if tariff_items %}
           <div class="iprm-format-card__included">
             <span class="iprm-format-card__included-label">{{ _('Що включено:') }}</span>
             <ul class="iprm-format-card__list">
-              {% for item in tariff.description_items %}
+              {% for item in tariff_items %}
               <li>{{ item }}</li>
               {% endfor %}
             </ul>
@@ -303,7 +304,7 @@
             {% endif %}
           </div>
           <div class="iprm-schedule__content">
-            <h3 class="iprm-schedule__title">{{ course.title }}</h3>
+            <h3 class="iprm-schedule__title">{{ course.t('title') }}</h3>
             <div class="iprm-schedule__meta">
               {{ location_badge(inst.event_format, inst.location) }}
               {% if inst.effective_cpd_points %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | uk_plural('бал БПР', 'бали БПР', 'балів БПР') }}</span>{% endif %}
@@ -316,16 +317,17 @@
             {% if inst_tariffs %}
             <div class="iprm-schedule__tariffs" role="list" aria-label="{{ _('Тарифи участі') }}">
               {% for tariff in inst_tariffs %}
+              {% set tariff_items = (tariff.t('description') or '').splitlines() | map('trim') | select | list %}
               {% if is_open %}
               <a class="iprm-tariff-pill iprm-tariff-pill--link" role="listitem"
                  href="{{ url_for('registration.register_instance', instance_id=inst.id, tariff=tariff.id) }}"
-                 {% if tariff.description_items %} title="{{ tariff.description_items | join('; ') }}"{% endif %}>
-                <span class="iprm-tariff-pill__name">{{ tariff.name }}</span>
+                 {% if tariff_items %} title="{{ tariff_items | join('; ') }}"{% endif %}>
+                <span class="iprm-tariff-pill__name">{{ tariff.t('name') }}</span>
                 <span class="iprm-tariff-pill__price">{{ tariff.price | int }} &#8372;</span>
               </a>
               {% else %}
-              <span class="iprm-tariff-pill" role="listitem"{% if tariff.description_items %} title="{{ tariff.description_items | join('; ') }}"{% endif %}>
-                <span class="iprm-tariff-pill__name">{{ tariff.name }}</span>
+              <span class="iprm-tariff-pill" role="listitem"{% if tariff_items %} title="{{ tariff_items | join('; ') }}"{% endif %}>
+                <span class="iprm-tariff-pill__name">{{ tariff.t('name') }}</span>
                 <span class="iprm-tariff-pill__price">{{ tariff.price | int }} &#8372;</span>
               </span>
               {% endif %}
@@ -363,10 +365,10 @@
         <article class="iprm-program__block apple-reveal">
           <header class="iprm-program__head">
             <span class="iprm-program__badge" aria-hidden="true">{{ loop.index }}</span>
-            <h3 class="iprm-program__heading">{{ block.heading }}</h3>
+            <h3 class="iprm-program__heading">{{ block.t('heading') }}</h3>
           </header>
           <ul class="iprm-program__list">
-            {% for item in block.items %}
+            {% for item in block.t('items') %}
             <li class="iprm-program__item">{{ item }}</li>
             {% endfor %}
           </ul>
@@ -419,12 +421,12 @@
       <h2 id="trainer-title" class="iprm-section__title">{{ _('Ваш <span class="apple-gradient-text">тренер</span>') }}</h2>
       <div class="iprm-trainer-block apple-reveal">
         {% if course.trainer.photo_src %}
-        <img src="{{ course.trainer.photo_src }}" alt="{{ course.trainer.full_name }}" class="iprm-trainer-block__photo" loading="lazy" width="280" height="280">
+        <img src="{{ course.trainer.photo_src }}" alt="{{ course.trainer.t('full_name') }}" class="iprm-trainer-block__photo" loading="lazy" width="280" height="280">
         {% endif %}
         <div class="iprm-trainer-block__body">
-          <h3>{{ course.trainer.full_name }}</h3>
-          {% if course.trainer.role %}<p class="iprm-trainer-block__role">{{ course.trainer.role }}</p>{% endif %}
-          {% if course.trainer.bio %}<p>{{ course.trainer.bio }}</p>{% endif %}
+          <h3>{{ course.trainer.t('full_name') }}</h3>
+          {% if course.trainer.t('role') %}<p class="iprm-trainer-block__role">{{ course.trainer.t('role') }}</p>{% endif %}
+          {% if course.trainer.t('bio') %}<p>{{ course.trainer.t('bio') }}</p>{% endif %}
         </div>
       </div>
     </div>
@@ -437,7 +439,7 @@
     <div class="iprm-section__inner">
       <h2 id="faq-title" class="iprm-section__title">{{ _('Поширені <span class="apple-gradient-text">запитання</span>') }}</h2>
       <div class="iprm-faq apple-reveal">
-        {% for item in course.faq %}{% if item.question %}
+        {% for item in course.t('faq') %}{% if item.question %}
         <details class="iprm-faq__item">
           <summary class="iprm-faq__question">{{ item.question }}</summary>
           <div class="iprm-faq__answer">{{ (item.answer or '') | replace('\n', '<br>') | sanitize_rich_text }}</div>

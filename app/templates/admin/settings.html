@@ -341,6 +341,7 @@
 
     <!-- Actions -->
     <div class="admin-form__actions">
+      <a href="{{ url_for('admin.translations_edit', entity='site_settings', obj_id=1) }}" class="btn-admin btn-admin--secondary">Переклади</a>
       <a href="{{ url_for('admin.courses_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
       <button type="submit" class="btn-admin btn-admin--primary">
         <span class="iprm-btn__arrow">&#x2197;</span>

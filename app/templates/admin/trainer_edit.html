@@ -25,6 +25,9 @@
       <p class="admin-hero__subtitle">{% if trainer %}{{ trainer.full_name }}{% else %}Додавання нового тренера{% endif %}</p>
     </div>
     <div class="admin-hero__actions">
+      {% if trainer %}
+      <a href="{{ url_for('admin.translations_edit', entity='trainer', obj_id=trainer.id) }}" class="btn-admin btn-admin--secondary">Переклади</a>
+      {% endif %}
       <a href="{{ url_for('admin.trainers_list') }}" class="btn-admin btn-admin--secondary">Назад до списку</a>
     </div>
   </div>

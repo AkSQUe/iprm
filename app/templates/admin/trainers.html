@@ -58,6 +58,7 @@
         <td>
           <div class="admin-table__actions">
             <a href="{{ url_for('admin.trainer_edit', trainer_id=trainer.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('edit', label='Редагувати') }}</a>
+            <a href="{{ url_for('admin.translations_edit', entity='trainer', obj_id=trainer.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Переклади">Переклади</a>
             <form method="POST" action="{{ url_for('admin.trainer_delete', trainer_id=trainer.id) }}" data-confirm="Видалити тренера?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">{{ icon('delete', label='Видалити') }}</button>

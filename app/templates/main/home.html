@@ -189,11 +189,11 @@
             <article class="trainer-slide">
               <a class="trainer-slide__link" href="{{ url_for('trainers.trainer_detail', slug=t.slug) }}">
                 <div class="trainer-slide__photo">
-                  {% if t.photo_src %}<img src="{{ t.photo_src }}" alt="{{ t.full_name }}" loading="lazy" width="320" height="320">{% endif %}
+                  {% if t.photo_src %}<img src="{{ t.photo_src }}" alt="{{ t.t('full_name') }}" loading="lazy" width="320" height="320">{% endif %}
                 </div>
                 <div class="trainer-slide__body">
-                  <h3 class="trainer-slide__name">{{ t.full_name }}</h3>
-                  {% if t.role %}<p class="trainer-slide__role">{{ t.role }}</p>{% endif %}
+                  <h3 class="trainer-slide__name">{{ t.t('full_name') }}</h3>
+                  {% if t.t('role') %}<p class="trainer-slide__role">{{ t.t('role') }}</p>{% endif %}
                 </div>
               </a>
             </article>
@@ -222,9 +222,9 @@
         <div class="home-calendar__row apple-reveal">
           <div class="home-calendar__date">{{ inst.start_date.strftime('%d.%m.%Y') }}</div>
           <div class="home-calendar__info">
-            <a class="home-calendar__title" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">{{ course.title }}</a>
+            <a class="home-calendar__title" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">{{ course.t('title') }}</a>
             <div class="home-calendar__meta">
-              {% if inst.effective_trainer %}<span>{{ inst.effective_trainer.full_name }}</span>{% endif %}
+              {% if inst.effective_trainer %}<span>{{ inst.effective_trainer.t('full_name') }}</span>{% endif %}
               <span>{{ inst.format_label }}</span>
               {% if seats is not none %}<span class="{% if site_settings.seats_low_threshold and seats <= site_settings.seats_low_threshold %}home-calendar__seats--warning{% endif %}">{{ seats }} {{ seats | uk_plural('місце', 'місця', 'місць') }}</span>{% endif %}
             </div>
@@ -317,7 +317,7 @@
       {% if site_settings.show_clinics and clinics %}
       <div class="home-clinics">
         {% for cl in clinics %}
-        <a class="home-clinic apple-reveal" href="{{ url_for('clinics.clinic_detail', slug=cl.slug) }}">{{ cl.name }}</a>
+        <a class="home-clinic apple-reveal" href="{{ url_for('clinics.clinic_detail', slug=cl.slug) }}">{{ cl.t('name') }}</a>
         {% endfor %}
       </div>
       {% endif %}

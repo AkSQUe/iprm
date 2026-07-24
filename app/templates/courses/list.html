@@ -151,7 +151,7 @@
         {% for inst in upcoming_instances %}
         {% set is_open = inst.id in open_instance_ids %}
         {% set item_href = url_for('registration.register_instance', instance_id=inst.id) if is_open else url_for('courses.course_by_slug', slug=inst.course.slug) %}
-        <a href="{{ item_href }}" class="iprm-schedule__item apple-reveal" aria-label="{{ inst.course.title }}">
+        <a href="{{ item_href }}" class="iprm-schedule__item apple-reveal" aria-label="{{ inst.course.t('title') }}">
           <div class="iprm-schedule__date">
             {% if inst.start_date %}
             <span class="iprm-schedule__day">{{ inst.start_date.strftime('%d') }}</span>
@@ -161,7 +161,7 @@
             {% endif %}
           </div>
           <div class="iprm-schedule__content">
-            <h3 class="iprm-schedule__title">{{ inst.course.title }}</h3>
+            <h3 class="iprm-schedule__title">{{ inst.course.t('title') }}</h3>
             <div class="iprm-schedule__meta">
               {{ location_badge(inst.event_format, inst.location) }}
               {% if inst.course.event_type %}

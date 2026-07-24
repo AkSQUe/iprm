@@ -96,6 +96,7 @@
           <div class="admin-table__actions">
             <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm" target="_blank" rel="noopener noreferrer" aria-label="Переглянути публічну сторінку">{{ icon('visibility') }}</a>
             <a href="{{ url_for('admin.course_edit', course_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
+            <a href="{{ url_for('admin.translations_edit', entity='course', obj_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Переклади">Переклади</a>
             <form method="POST" action="{{ url_for('admin.course_clone', course_id=course.id) }}" data-confirm="Створити копію цього курсу як чернетку?">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Клонувати">{{ icon('content_copy') }}</button>

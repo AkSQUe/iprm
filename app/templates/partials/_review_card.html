@@ -2,6 +2,6 @@
    Спільна для Головної та сторінки курсу. #}
 <figure class="iprm-review apple-reveal">
   <div class="iprm-review__stars" aria-label="{% trans rating=review.rating %}Оцінка {{ rating }} з 5{% endtrans %}">{{ '★' * review.rating }}</div>
-  <blockquote class="iprm-review__text">{{ review.text }}</blockquote>
-  <figcaption class="iprm-review__author">{{ review.byline }}</figcaption>
+  <blockquote class="iprm-review__text">{{ review.t('text') }}</blockquote>
+  <figcaption class="iprm-review__author">{{ [review.t('author_name'), review.t('city'), review.t('author_role')] | select | join(' · ') }}</figcaption>
 </figure>

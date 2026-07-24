@@ -68,6 +68,7 @@
             </td>
             <td class="admin-table__actions">
               <a href="{{ url_for('admin.blog_edit', post_id=post.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Редагувати</a>
+              <a href="{{ url_for('admin.translations_edit', entity='blog_post', obj_id=post.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Переклади</a>
               <form method="POST" action="{{ url_for('admin.blog_delete', post_id=post.id) }}" class="admin-inline-form" data-confirm="Видалити допис «{{ post.title }}»?">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>

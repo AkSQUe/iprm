@@ -21,14 +21,14 @@
          data-date="{{ nearest.start_date.strftime('%Y-%m-%d') if nearest and nearest.start_date else '' }}"
          data-days="{{ duration_days or '' }}"
          data-created="{{ course.created_at.strftime('%Y-%m-%d') if course.created_at else '' }}">
-  <a class="iprm-course-card__overlay" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" aria-label="{{ course.title }}"></a>
+  <a class="iprm-course-card__overlay" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" aria-label="{{ course.t('title') }}"></a>
     <div class="iprm-course-card__image">
       {% if course.card_src %}
-        <img src="{{ course.card_src }}" alt="{{ course.title }}" loading="lazy" width="400" height="200">
+        <img src="{{ course.card_src }}" alt="{{ course.t('title') }}" loading="lazy" width="400" height="200">
       {% endif %}
     </div>
     <div class="apple-card-body">
-      <p class="iprm-course-card__title">{{ course.title }}</p>
+      <p class="iprm-course-card__title">{{ course.t('title') }}</p>
 
       <div class="iprm-course-card__badges">
         {% if course.is_featured %}
@@ -54,20 +54,20 @@
         {% endif %}
       </div>
 
-      {% if course.roi_hint %}
-      <p class="iprm-course-card__roi">{{ course.roi_hint }}</p>
+      {% if course.t('roi_hint') %}
+      <p class="iprm-course-card__roi">{{ course.t('roi_hint') }}</p>
       {% endif %}
 
       {% set card_trainer = nearest.effective_trainer if nearest else course.trainer %}
       {% if card_trainer %}
       <div class="iprm-course-card__trainer">
         {% if card_trainer.photo_src %}
-        <img src="{{ card_trainer.photo_src }}" alt="{{ card_trainer.full_name }}" loading="lazy" width="28" height="28">
+        <img src="{{ card_trainer.photo_src }}" alt="{{ card_trainer.t('full_name') }}" loading="lazy" width="28" height="28">
         {% endif %}
         {% if card_trainer.is_active %}
-        <a class="iprm-course-card__trainer-link" href="{{ url_for('trainers.trainer_detail', slug=card_trainer.slug) }}">{{ card_trainer.full_name }}</a>
+        <a class="iprm-course-card__trainer-link" href="{{ url_for('trainers.trainer_detail', slug=card_trainer.slug) }}">{{ card_trainer.t('full_name') }}</a>
         {% else %}
-        <span>{{ card_trainer.full_name }}</span>
+        <span>{{ card_trainer.t('full_name') }}</span>
         {% endif %}
       </div>
       {% endif %}

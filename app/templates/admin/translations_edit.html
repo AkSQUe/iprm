@@ -1,0 +1,86 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Переклади: {{ obj_name }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-translations.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <span class="admin-breadcrumb__current">{{ entity_label }}</span>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Переклади</span>
+        </div>
+        <h1 class="admin-hero__title">Переклади: {{ obj_name }}</h1>
+        <p class="admin-hero__subtitle">Українська — канонічний текст (редагується у звичайній формі). Порожній переклад = показуємо українську. Заповнено: {{ coverage }}</p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <form method="POST" class="admin-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      {% for field in fields %}
+      <div class="form-section admin-form__section tr-field">
+        <h3 class="tr-field__title">{{ field.label }}</h3>
+        <div class="tr-field__grid">
+          <div class="form-group">
+            <label>Українська (оригінал)</label>
+            {% if field.widget == 'text' %}
+            <input type="text" class="form-input" value="{{ field.uk }}" readonly disabled>
+            {% else %}
+            <textarea class="form-input tr-field__source" rows="{{ 8 if field.widget == 'json' else 4 }}" readonly disabled>{{ field.uk }}</textarea>
+            {% endif %}
+          </div>
+          {% for lang in languages %}
+          <div class="form-group">
+            <label for="{{ lang }}__{{ field.name }}">{{ 'Російська' if lang == 'ru' else 'Англійська' }}</label>
+            {% if field.widget == 'text' %}
+            <input type="text" class="form-input" id="{{ lang }}__{{ field.name }}" name="{{ lang }}__{{ field.name }}" value="{{ field.values[lang] }}">
+            {% else %}
+            <textarea class="form-input" id="{{ lang }}__{{ field.name }}" name="{{ lang }}__{{ field.name }}" rows="{{ 8 if field.widget == 'json' else 4 }}"{% if field.widget == 'json' %} spellcheck="false"{% endif %}>{{ field.values[lang] }}</textarea>
+            {% endif %}
+            {% if field.widget == 'json' %}<small class="form-hint">JSON — структура має відповідати оригіналу.</small>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+
+      <div class="admin-form__actions">
+        <button type="submit" class="btn-admin btn-admin--primary">Зберегти переклади</button>
+      </div>
+    </form>
+
+    {% for section in children %}
+    <div class="form-section admin-form__section">
+      <h3 class="tr-field__title">{{ section.title }}</h3>
+      {% if section['items'] %}
+      <ul class="tr-children">
+        {% for item in section['items'] %}
+        <li class="tr-children__row">
+          <a href="{{ url_for('admin.translations_edit', entity=item.entity, obj_id=item.id) }}">{{ item.name }}</a>
+          <span class="tr-children__coverage">{{ item.done }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="form-hint">Немає елементів.</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+  </div>
+</div>
+{% endblock %}
