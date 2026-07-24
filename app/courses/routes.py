@@ -129,14 +129,14 @@ def _serialize_event(inst, capacity):
         'id': inst.id,
         'date': inst.start_date.strftime('%Y-%m-%d'),
         'end': inst.end_date.strftime('%Y-%m-%d') if inst.end_date else None,
-        'title': inst.course.title,
+        'title': inst.course.t('title'),
         'slug': inst.course.slug,
         'format': inst.event_format,
         'format_label': inst.format_label,
         'event_type': inst.course.event_type,
         'event_type_label': inst.course.event_type_label,
-        'tags': inst.course.tags or [],
-        'trainer': inst.effective_trainer.full_name if inst.effective_trainer else None,
+        'tags': inst.course.t('tags') or [],
+        'trainer': inst.effective_trainer.t('full_name') if inst.effective_trainer else None,
         'cpd': inst.effective_cpd_points,
         'price': (
             int(inst.effective_price)

@@ -74,9 +74,9 @@ def feed():
     )
     items = [
         {
-            'title': p.title,
+            'title': p.t('title'),
             'link': url_for('blog.post_detail', slug=p.slug, _external=True),
-            'description': p.excerpt or p.title,
+            'description': p.t('excerpt') or p.t('title'),
             'pub_date': format_datetime(p.published_at) if p.published_at else '',
         }
         for p in posts

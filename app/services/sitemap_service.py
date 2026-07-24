@@ -98,7 +98,7 @@ def generate_visual_sitemap():
     courses = Course.query.filter_by(is_active=True).order_by(Course.title).all()
     if courses:
         sections[-1]['children'] = [
-            {'label': c.title, 'url': url_for('courses.course_by_slug', slug=c.slug)}
+            {'label': c.t('title'), 'url': url_for('courses.course_by_slug', slug=c.slug)}
             for c in courses
         ]
 
@@ -112,7 +112,7 @@ def generate_visual_sitemap():
     trainers = Trainer.query.filter_by(is_active=True).order_by(Trainer.full_name).all()
     if trainers:
         sections[-1]['children'] = [
-            {'label': t.full_name, 'url': url_for('trainers.trainer_detail', slug=t.slug)}
+            {'label': t.t('full_name'), 'url': url_for('trainers.trainer_detail', slug=t.slug)}
             for t in trainers
         ]
 
@@ -134,7 +134,7 @@ def generate_visual_sitemap():
     )
     if posts:
         sections[-1]['children'] = [
-            {'label': p.title, 'url': url_for('blog.post_detail', slug=p.slug)}
+            {'label': p.t('title'), 'url': url_for('blog.post_detail', slug=p.slug)}
             for p in posts
         ]
 
@@ -148,7 +148,7 @@ def generate_visual_sitemap():
     clinics = Clinic.query.filter_by(is_active=True).order_by(Clinic.name).all()
     if clinics:
         sections[-1]['children'] = [
-            {'label': cl.name, 'url': url_for('clinics.clinic_detail', slug=cl.slug)}
+            {'label': cl.t('name'), 'url': url_for('clinics.clinic_detail', slug=cl.slug)}
             for cl in clinics
         ]
 

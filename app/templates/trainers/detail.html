@@ -150,10 +150,10 @@
   <section class="iprm-section apple-section-gray" aria-labelledby="trainer-patents-title">
     <div class="iprm-section__inner">
       <h2 id="trainer-patents-title" class="iprm-section__title">{{ _('Винаходи та <span class="apple-gradient-text">патенти</span>') }}</h2>
-      {% set patents_with_img = trainer.patents | selectattr('image') | list %}
+      {% set patents_with_img = trainer.t('patents') | selectattr('image') | list %}
       {% if patents_with_img %}
       <div class="trainer-patents" data-lightbox-group>
-        {% for p in trainer.patents %}
+        {% for p in trainer.t('patents') %}
         <div class="trainer-patent">
           {% if p.image %}
           <a class="trainer-patent__scan" href="{{ p.image }}" data-lightbox data-caption="{{ p.label }}">
@@ -171,7 +171,7 @@
       </div>
       {% else %}
       <ul class="iprm-regalia-links">
-        {% for link in trainer.patents %}
+        {% for link in trainer.t('patents') %}
         <li><a href="{{ link.url }}" target="_blank" rel="noopener nofollow">{{ link.label }}</a></li>
         {% endfor %}
       </ul>
@@ -186,7 +186,7 @@
     <div class="iprm-section__inner">
       <h2 id="trainer-articles-title" class="iprm-section__title">{{ _('Наукові <span class="apple-gradient-text">статті</span>') }}</h2>
       <ul class="iprm-regalia-links">
-        {% for link in trainer.articles %}
+        {% for link in trainer.t('articles') %}
         <li><a href="{{ link.url }}" target="_blank" rel="noopener nofollow">{{ link.label }}</a></li>
         {% endfor %}
       </ul>
@@ -200,7 +200,7 @@
     <div class="iprm-section__inner">
       <h2 id="trainer-research-title" class="iprm-section__title">{{ _('Наукова та дослідницька <span class="apple-gradient-text">діяльність</span>') }}</h2>
       <ul class="iprm-research-list">
-        {% for item in trainer.research %}
+        {% for item in trainer.t('research') %}
         <li>{{ item }}</li>
         {% endfor %}
       </ul>
@@ -214,7 +214,7 @@
     <div class="iprm-section__inner">
       <h2 id="trainer-skills-title" class="iprm-section__title">{{ _('Професійні <span class="apple-gradient-text">навички</span>') }}</h2>
       <ul class="iprm-skills-list">
-        {% for item in trainer.skills %}
+        {% for item in trainer.t('skills') %}
           {% if item.endswith(':') %}
           <li class="iprm-skills-list__group">{{ item }}</li>
           {% else %}
@@ -227,9 +227,9 @@
   {% endif %}
 
   <!-- ===== ОСВІТА / СТАЖУВАННЯ / ДОСВІД (timeline) ===== -->
-  {{ timeline_section('trainer-edu', _('Освіта та'), _('кваліфікація'), trainer.education, gray=True) }}
-  {{ timeline_section('trainer-addedu', _('Додаткова освіта та'), _('міжнародне стажування'), trainer.additional_education) }}
-  {{ timeline_section('trainer-exp', _('Досвід'), _('роботи'), trainer.work_experience, gray=True) }}
+  {{ timeline_section('trainer-edu', _('Освіта та'), _('кваліфікація'), trainer.t('education'), gray=True) }}
+  {{ timeline_section('trainer-addedu', _('Додаткова освіта та'), _('міжнародне стажування'), trainer.t('additional_education')) }}
+  {{ timeline_section('trainer-exp', _('Досвід'), _('роботи'), trainer.t('work_experience'), gray=True) }}
 
   <!-- ===== BACK ===== -->
   <section class="iprm-section iprm-section--compact apple-section-gray">

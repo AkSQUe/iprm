@@ -67,7 +67,7 @@ def home_context():
         prices = [i.effective_price for i in insts if i.effective_price]
         price = min(prices) if prices else (c.base_price or 0)
         if price and price > 0:
-            roi_courses.append({'title': c.title, 'price': int(price), 'slug': c.slug})
+            roi_courses.append({'title': c.t('title'), 'price': int(price), 'slug': c.slug})
 
     # Один запит тренерів: до 12 -- слайдер, len -- для лічильника.
     all_trainers = Trainer.query.filter_by(is_active=True).order_by(

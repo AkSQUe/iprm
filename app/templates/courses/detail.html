@@ -34,16 +34,16 @@
     'url': url_for('main.index', _external=True)
   }
 } %}
-{% if course.card_src %}{% set _ = course_schema.update({'image': course.card_src}) %}{% endif %}
-{% if course.base_price and course.base_price > 0 %}{% set _ = course_schema.update({'offers': {
+{% if course.card_src %}{% set _discard = course_schema.update({'image': course.card_src}) %}{% endif %}
+{% if course.base_price and course.base_price > 0 %}{% set _discard = course_schema.update({'offers': {
   '@type': 'Offer',
   'price': course.base_price|string,
   'priceCurrency': 'UAH',
   'availability': 'https://schema.org/InStock',
   'url': course_url
 }}) %}{% endif %}
-{% if course.cpd_points %}{% set _ = course_schema.update({'numberOfCredits': course.cpd_points}) %}{% endif %}
-{% if course.trainer %}{% set _ = course_schema.update({'instructor': {
+{% if course.cpd_points %}{% set _discard = course_schema.update({'numberOfCredits': course.cpd_points}) %}{% endif %}
+{% if course.trainer %}{% set _discard = course_schema.update({'instructor': {
   '@type': 'Person',
   'name': course.trainer.full_name,
   'jobTitle': course.trainer.role or ''
@@ -55,12 +55,12 @@
       '@type': 'CourseInstance',
       'courseMode': _format_map.get(inst.event_format, _format_map['offline'])
     } %}
-    {% if inst.start_date %}{% set _ = _inst.update({'startDate': inst.start_date.strftime('%Y-%m-%d')}) %}{% endif %}
-    {% if inst.end_date %}{% set _ = _inst.update({'endDate': inst.end_date.strftime('%Y-%m-%d')}) %}{% endif %}
-    {% if inst.location %}{% set _ = _inst.update({'location': {'@type': 'Place', 'name': inst.location}}) %}{% endif %}
-    {% set _ = _instances_schema.append(_inst) %}
+    {% if inst.start_date %}{% set _discard = _inst.update({'startDate': inst.start_date.strftime('%Y-%m-%d')}) %}{% endif %}
+    {% if inst.end_date %}{% set _discard = _inst.update({'endDate': inst.end_date.strftime('%Y-%m-%d')}) %}{% endif %}
+    {% if inst.location %}{% set _discard = _inst.update({'location': {'@type': 'Place', 'name': inst.location}}) %}{% endif %}
+    {% set _discard = _instances_schema.append(_inst) %}
   {% endfor %}
-  {% set _ = course_schema.update({'hasCourseInstance': _instances_schema}) %}
+  {% set _discard = course_schema.update({'hasCourseInstance': _instances_schema}) %}
 {% endif %}
 
 {% block jsonld %}

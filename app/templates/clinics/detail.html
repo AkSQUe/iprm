@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}{% trans name=clinic.name %}{{ name }} | ІПРМ{% endtrans %}{% endblock %}
-{% block meta_description %}{{ clinic.short_description or clinic.name }}. {{ _('Клініка Інституту Плазмотерапії та Регенеративної Медицини.') }}{% endblock %}
+{% block title %}{% trans name=clinic.t('name') %}{{ name }} | ІПРМ{% endtrans %}{% endblock %}
+{% block meta_description %}{{ clinic.t('short_description') or clinic.t('name') }}. {{ _('Клініка Інституту Плазмотерапії та Регенеративної Медицини.') }}{% endblock %}
 {% block og_image %}{% if clinic.photo %}{{ clinic.photo if '://' in clinic.photo else request.url_root.rstrip('/') ~ '/' ~ clinic.photo.lstrip('/') }}{% else %}{{ super() }}{% endif %}{% endblock %}
 
 {% block jsonld %}
@@ -29,9 +29,9 @@
   <div class="iprm-hero-wrap">
     <section class="iprm-hero" aria-label="Hero">
       <div class="iprm-hero__content">
-        <h1 class="iprm-hero__title">{% set words = clinic.name.rsplit(' ', 1) %}{% if words | length > 1 %}{{ words[0] }} <span class="apple-gradient-text">{{ words[1] }}</span>{% else %}<span class="apple-gradient-text">{{ clinic.name }}</span>{% endif %}</h1>
-        {% if clinic.short_description %}
-          <p class="iprm-hero__subtitle">{{ clinic.short_description }}</p>
+        <h1 class="iprm-hero__title">{% set words = clinic.t('name').rsplit(' ', 1) %}{% if words | length > 1 %}{{ words[0] }} <span class="apple-gradient-text">{{ words[1] }}</span>{% else %}<span class="apple-gradient-text">{{ clinic.t('name') }}</span>{% endif %}</h1>
+        {% if clinic.t('short_description') %}
+          <p class="iprm-hero__subtitle">{{ clinic.t('short_description') }}</p>
         {% endif %}
       </div>
     </section>
@@ -43,14 +43,14 @@
       <div class="iprm-clinic-detail">
         <div class="iprm-clinic-detail__photo">
           {% if clinic.photo %}
-            <img src="{{ clinic.photo }}" alt="{{ clinic.name }}" loading="lazy" width="320" height="320">
+            <img src="{{ clinic.photo }}" alt="{{ clinic.t('name') }}" loading="lazy" width="320" height="320">
           {% endif %}
         </div>
         <div class="iprm-clinic-detail__content">
-          <h2 id="clinic-info-title" class="iprm-clinic-detail__title">{{ clinic.name }}</h2>
-          {% if clinic.description %}
+          <h2 id="clinic-info-title" class="iprm-clinic-detail__title">{{ clinic.t('name') }}</h2>
+          {% if clinic.t('description') %}
             <div class="iprm-clinic-detail__text">
-              {{ clinic.description | safe }}
+              {{ clinic.t('description') | safe }}
             </div>
           {% endif %}
         </div>
