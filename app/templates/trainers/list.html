@@ -46,13 +46,13 @@
         <a href="{{ url_for('trainers.trainer_detail', slug=trainer.slug) }}" class="iprm-trainer-card apple-reveal">
           <div class="iprm-trainer-card__photo">
             {% if trainer.photo_src %}
-              <img src="{{ trainer.photo_src }}" alt="{{ trainer.full_name }}" loading="lazy" width="400" height="280">
+              <img src="{{ trainer.photo_src }}" alt="{{ trainer.t('full_name') }}" loading="lazy" width="400" height="280">
             {% endif %}
           </div>
           <div class="iprm-trainer-card__body">
-            <h3 class="iprm-trainer-card__name">{{ trainer.full_name }}</h3>
-            {% if trainer.role %}
-              <p class="iprm-trainer-card__role">{{ trainer.role }}</p>
+            <h3 class="iprm-trainer-card__name">{{ trainer.t('full_name') }}</h3>
+            {% if trainer.t('role') %}
+              <p class="iprm-trainer-card__role">{{ trainer.t('role') }}</p>
             {% endif %}
             {% if trainer.experience_years %}
               <span class="iprm-tag iprm-tag--accent">{{ trainer.experience_years }} {{ _('р. досвіду') }}</span>

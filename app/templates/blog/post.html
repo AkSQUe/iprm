@@ -2,8 +2,8 @@
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 {% from 'blog/_blocks.html' import render_blocks %}
 
-{% block title %}{% trans title=post.meta_title or post.title %}{{ title }} | Блог ІПРМ{% endtrans %}{% endblock %}
-{% block meta_description %}{{ post.meta_description or post.excerpt or post.title }}{% endblock %}
+{% block title %}{% trans title=post.t('meta_title') or post.t('title') %}{{ title }} | Блог ІПРМ{% endtrans %}{% endblock %}
+{% block meta_description %}{{ post.t('meta_description') or post.t('excerpt') or post.t('title') }}{% endblock %}
 {% block og_type %}article{% endblock %}
 {% block og_image %}{% if post.cover_full %}{{ request.url_root.rstrip('/') ~ post.cover_full }}{% else %}{{ super() }}{% endif %}{% endblock %}
 
@@ -36,7 +36,7 @@
     <header class="blog-post__header">
       <div class="blog-post__header-inner">
         <a class="blog-post__back" href="{{ url_for('blog.index') }}">← {{ _('Усі дописи') }}</a>
-        <h1 class="blog-post__title">{{ post.title }}</h1>
+        <h1 class="blog-post__title">{{ post.t('title') }}</h1>
         {% if post.published_at %}
         <time class="blog-post__date" datetime="{{ post.published_at.isoformat() }}">{{ post.published_at.strftime('%d.%m.%Y') }}</time>
         {% endif %}
@@ -45,14 +45,14 @@
 
     {% if post.cover_media %}
     <div class="blog-post__cover">
-      <img src="{{ post.cover_media.variant_url('card') }}" alt="{{ post.title }}"
+      <img src="{{ post.cover_media.variant_url('card') }}" alt="{{ post.t('title') }}"
            srcset="{{ post.cover_media.variant_url('card') }} 800w, {{ post.cover_media.url }} 1600w"
            sizes="(max-width: 980px) 100vw, 980px">
     </div>
     {% endif %}
 
     <div class="blog-post__body">
-      {{ render_blocks(post.content or []) }}
+      {{ render_blocks(post.t('content') or []) }}
     </div>
 
     <div class="blog-post__comments-wrap">

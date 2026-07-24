@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}{% trans name=trainer.full_name %}{{ name }} | ІПРМ{% endtrans %}{% endblock %}
-{% block meta_description %}{{ trainer.role or trainer.full_name }}. {{ _('Тренер Інституту Плазмотерапії та Регенеративної Медицини.') }}{% endblock %}
+{% block title %}{% trans name=trainer.t('full_name') %}{{ name }} | ІПРМ{% endtrans %}{% endblock %}
+{% block meta_description %}{{ trainer.t('role') or trainer.t('full_name') }}. {{ _('Тренер Інституту Плазмотерапії та Регенеративної Медицини.') }}{% endblock %}
 {% block og_image %}{% if trainer.photo_full %}{{ request.url_root.rstrip('/') ~ trainer.photo_full }}{% else %}{{ super() }}{% endif %}{% endblock %}
 
 {% block extra_css %}
@@ -68,7 +68,7 @@
       <div class="iprm-hero__content iprm-hero__content--trainer">
         {% if trainer.photo_media %}
         <div class="iprm-hero-trainer__photo">
-          <img src="{{ trainer.photo_media.variant_url('card') }}" alt="{{ trainer.full_name }}" width="280" height="373" fetchpriority="high"
+          <img src="{{ trainer.photo_media.variant_url('card') }}" alt="{{ trainer.t('full_name') }}" width="280" height="373" fetchpriority="high"
                srcset="{{ trainer.photo_media.variant_url('thumb') }} 400w, {{ trainer.photo_media.variant_url('card') }} 800w" sizes="280px">
         </div>
         {% endif %}
