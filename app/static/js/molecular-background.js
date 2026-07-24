@@ -248,6 +248,15 @@
 
         window.addEventListener('resize', resize);
 
+        /* Перечитати кольори з CSS при зміні теми (data-theme) */
+        window.addEventListener('iprm:themechange', function () {
+            loadColorsFromCss();
+            for (var n = 0; n < nodes.length; n++) {
+                nodes[n].color = pickNodeColor();
+            }
+            updateToggleLabels();
+        });
+
         document.addEventListener('visibilitychange', function () {
             if (document.hidden && animId) {
                 cancelAnimationFrame(animId);

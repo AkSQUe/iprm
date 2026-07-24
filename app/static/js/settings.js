@@ -48,6 +48,8 @@
     document.documentElement.setAttribute('data-theme', resolved);
     var meta = document.getElementById('meta-theme-color');
     if (meta) meta.setAttribute('content', resolved === 'dark' ? '#131318' : '#f5f5f7');
+    /* Повідомляємо canvas-фон (та інших слухачів) перечитати кольори з CSS */
+    try { window.dispatchEvent(new CustomEvent('iprm:themechange', { detail: { theme: resolved } })); } catch (e) { /* старий браузер */ }
   }
 
   function applyTheme(choice) {
