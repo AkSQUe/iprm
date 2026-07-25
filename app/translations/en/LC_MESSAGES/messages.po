@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-25 10:23+0300\n"
+"POT-Creation-Date: 2026-07-25 11:17+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -432,8 +432,12 @@ msgstr "Repeat password"
 msgid "Необхідно надати згоду на обробку персональних даних"
 msgstr "You must consent to the processing of personal data"
 
-msgid "Неможливо використати цей email"
-msgstr "This email cannot be used"
+msgid ""
+"Неможливо використати цей email. Якщо обліковий запис уже існує -- "
+"увійдіть, відновіть пароль або скористайтесь входом через Google."
+msgstr ""
+"This email cannot be used. If an account already exists -- sign in, reset "
+"your password, or use Google sign-in."
 
 msgid "Новий пароль"
 msgstr "New password"
@@ -477,8 +481,9 @@ msgstr ""
 msgid "%(provider)s успішно прив'язано до вашого облікового запису"
 msgstr "%(provider)s has been successfully linked to your account"
 
-msgid "Помилка при прив'язці Google"
-msgstr "Error linking Google"
+#, python-format
+msgid "Помилка при прив'язці %(provider)s"
+msgstr "Failed to link %(provider)s"
 
 #, python-format
 msgid "%(provider)s не прив'язано"
@@ -551,11 +556,23 @@ msgstr "Error saving. Please try again."
 msgid "Сертифікат не знайдено"
 msgstr "Certificate not found"
 
+msgid "Не вдалося підготувати PDF. Спробуйте пізніше або зверніться до підтримки."
+msgstr "Could not prepare the PDF. Please try again later or contact support."
+
 msgid "Налаштування збережено"
 msgstr "Settings saved"
 
 msgid "Помилка при збереженні налаштувань"
 msgstr "Error saving settings"
+
+msgid ""
+"Пароль уже встановлено. Щоб змінити його, скористайтесь відновленням "
+"паролю."
+msgstr ""
+"A password is already set. To change it, use password recovery."
+
+msgid "Пароль встановлено. Тепер ви можете входити з email і паролем."
+msgstr "Password set. You can now sign in with your email and password."
 
 msgid "Посилання недійсне або прострочене. Запросіть нове."
 msgstr "The link is invalid or expired. Request a new one."
@@ -1084,6 +1101,12 @@ msgstr "Filled in. You can update it if needed."
 msgid "Не заповнено — потрібно для балів БПР і сертифіката (МОЗ №725)."
 msgstr "Not filled in — required for BPR points and the certificate (MoH No. 725)."
 
+msgid "Способи входу"
+msgstr "Sign-in methods"
+
+msgid "Пароль, Google, Apple -- керуйте прив'язками"
+msgstr "Password, Google, Apple -- manage your connections"
+
 msgid "Налаштування"
 msgstr "Settings"
 
@@ -1177,6 +1200,10 @@ msgstr "Save details"
 msgid "Способи входу | ІПРМ"
 msgstr "Sign-in methods | IPRM"
 
+#, python-format
+msgid "востаннє %(date)s"
+msgstr "last used %(date)s"
+
 msgid "Способи <span class=\"apple-gradient-text\">входу</span>"
 msgstr "Sign-in <span class=\"apple-gradient-text\">methods</span>"
 
@@ -1194,6 +1221,9 @@ msgstr "Active"
 
 msgid "Не встановлено"
 msgstr "Not set"
+
+msgid "Встановити пароль"
+msgstr "Set a password"
 
 msgid "Прив'язано"
 msgstr "Linked"
@@ -1284,15 +1314,18 @@ msgstr "To add sign-in via %(provider)s"
 msgid "Увійдіть з паролем за допомогою кнопки нижче."
 msgstr "Sign in with your password using the button below."
 
-msgid "У кабінеті перейдіть у розділ <em>«Способи входу»</em>."
-msgstr "In your account, go to the <em>\"Sign-in methods\"</em> section."
+msgid "У кабінеті відкрийте розділ <em>«Способи входу»</em>."
+msgstr "In your account, open the <em>\"Sign-in methods\"</em> section."
 
 #, python-format
 msgid "Натисніть <em>«Прив'язати %(provider)s»</em> і підтвердьте доступ."
 msgstr "Click <em>\"Link %(provider)s\"</em> and confirm access."
 
-msgid "Увійти з паролем"
-msgstr "Sign in with password"
+msgid "Увійти і прив'язати"
+msgstr "Sign in and link"
+
+msgid "Просто увійти"
+msgstr "Just sign in"
 
 msgid "На головну"
 msgstr "To home"
@@ -1350,6 +1383,24 @@ msgstr "Set a new password for your account"
 
 msgid "Зберегти пароль"
 msgstr "Save password"
+
+msgid "Встановити пароль | ІПРМ"
+msgstr "Set a password | IPRM"
+
+#, python-format
+msgid ""
+"\n"
+"      Додайте вхід з паролем для <strong>%(email)s</strong> -- на додачу\n"
+"      до вже наявних способів входу.\n"
+"      "
+msgstr ""
+"\n"
+"      Add password sign-in for <strong>%(email)s</strong> -- alongside\n"
+"      your existing sign-in methods.\n"
+"      "
+
+msgid "Повернутися до способів входу"
+msgstr "Back to sign-in methods"
 
 msgid "Налаштування | ІПРМ"
 msgstr "Settings | IPRM"
@@ -4359,4 +4410,10 @@ msgid "Супровід кожного слухача від початку до
 msgstr ""
 "Guidance for each participant from the start through receiving the "
 "certificate."
+
+#~ msgid "Неможливо використати цей email"
+#~ msgstr "This email cannot be used"
+
+#~ msgid "Увійти з паролем"
+#~ msgstr "Sign in with password"
 

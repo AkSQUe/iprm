@@ -25,6 +25,7 @@
 | GET | `/auth/account/certificates/<id>/download` | Завантажити власний сертифікат (PDF) |
 | GET | `/auth/settings` | Налаштування профілю |
 | GET | `/auth/confirm-email/<token>` | Підтвердження email |
+| GET/POST | `/auth/account/set-password` | Встановити пароль (лише якщо його ще немає) |
 
 ### OAuth / OIDC
 
@@ -36,7 +37,7 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 |-------|-----|------|
 | GET | `/auth/google/start` | Старт Google-флоу (`?action=link` -- прив'язка) |
 | GET | `/auth/google/callback` | Повернення з Google: вхід / прив'язка / створення |
-| POST | `/auth/google/onetap` | Credential JWT від Google One Tap (JSON, CSRF-exempt) |
+| POST | `/auth/google/onetap` | Credential JWT від Google One Tap (JSON, CSRF-exempt, nonce з сесії, 20/год) |
 | POST | `/auth/google/unlink` | Від'єднати Google |
 | GET | `/auth/apple/start` | Старт Apple Sign In |
 | GET/POST | `/auth/apple/callback` | Повернення з Apple (`form_post`, CSRF-exempt) |

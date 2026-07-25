@@ -37,6 +37,12 @@ _JWKS_TTL_SECONDS = 3600
 _oauth = OAuth()
 
 
+class GoogleKeysUnavailable(RuntimeError):
+    """Не вдалося дістати публічні ключі Google і немає навіть застарілого
+    кешу. Це НАШ збій (мережа/Google), а не поганий токен -- caller має
+    відповісти 503, а не 401."""
+
+
 def init_oauth(app):
     """Прив'язати Authlib OAuth instance до Flask-додатку. Реєстрації
     провайдерів робимо ліниво (per-request), щоб підтягувати свіжий
@@ -82,43 +88,61 @@ def get_google_client():
 def _get_google_key_set():
     """Повертає JsonWebKey set з JWKS Google. Кешуємо у пам'яті процесу
     на годину, бо ключі ротуються рідко і HTTP-запит на кожен One Tap
-    був би марнотратним."""
+    був би марнотратним.
+
+    Якщо рефреш не вдався, віддаємо ПРОСТРОЧЕНИЙ кеш: ключі Google живуть
+    значно довше за наш TTL, тож стара копія майже напевно ще валідна, і
+    одна мережева помилка не кладе вхід через One Tap на годину.
+    Кидає GoogleKeysUnavailable, лише коли кешу нема взагалі.
+    """
     now = time.time()
-    if (_JWKS_CACHE['key_set'] is not None
-            and now - _JWKS_CACHE['fetched_at'] < _JWKS_TTL_SECONDS):
-        return _JWKS_CACHE['key_set']
-    resp = requests.get(GOOGLE_JWKS_URL, timeout=5)
-    resp.raise_for_status()
-    key_set = JsonWebKey.import_key_set(resp.json())
+    cached = _JWKS_CACHE['key_set']
+    if cached is not None and now - _JWKS_CACHE['fetched_at'] < _JWKS_TTL_SECONDS:
+        return cached
+
+    try:
+        resp = requests.get(GOOGLE_JWKS_URL, timeout=5)
+        resp.raise_for_status()
+        key_set = JsonWebKey.import_key_set(resp.json())
+    except Exception as exc:
+        if cached is not None:
+            logger.warning(
+                'Google JWKS refresh failed (%s); using stale cache from %.0fs ago',
+                exc, now - _JWKS_CACHE['fetched_at'],
+            )
+            return cached
+        raise GoogleKeysUnavailable('Google JWKS fetch failed') from exc
+
     _JWKS_CACHE['key_set'] = key_set
     _JWKS_CACHE['fetched_at'] = now
     return key_set
 
 
-def verify_google_id_token(token, expected_audience):
+def verify_google_id_token(token, expected_audience, expected_nonce=None):
     """Phase 6: верифікація id_token JWT від Google One Tap.
 
     Перевіряємо:
     - підпис проти поточного JWKS Google;
     - iss == accounts.google.com (або https://accounts.google.com);
     - aud == наш OAuth client_id;
+    - nonce == той, що ми поклали у віджет (прив'язка до сесії; захист
+      від login CSRF) -- якщо expected_nonce передано;
     - exp/nbf (виконує claims.validate()).
 
     Повертає dict з claims (sub, email, email_verified, given_name, etc.).
-    Кидає виключення при помилці валідації -- caller відповідальний за
-    логування і HTTP-відповідь.
+    Кидає GoogleKeysUnavailable при недоступності ключів і виключення
+    Authlib при невалідному токені -- caller розрізняє ці випадки.
     """
     key_set = _get_google_key_set()
-    claims = jose_jwt.decode(
-        token,
-        key_set,
-        claims_options={
-            'iss': {
-                'essential': True,
-                'values': ['https://accounts.google.com', 'accounts.google.com'],
-            },
-            'aud': {'essential': True, 'value': expected_audience},
+    claims_options = {
+        'iss': {
+            'essential': True,
+            'values': ['https://accounts.google.com', 'accounts.google.com'],
         },
-    )
+        'aud': {'essential': True, 'value': expected_audience},
+    }
+    if expected_nonce:
+        claims_options['nonce'] = {'essential': True, 'value': expected_nonce}
+    claims = jose_jwt.decode(token, key_set, claims_options=claims_options)
     claims.validate()  # перевіряє exp, nbf
     return dict(claims)

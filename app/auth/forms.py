@@ -101,8 +101,15 @@ class RegistrationForm(FlaskForm):
     )
 
     def validate_email(self, field):
+        # Підказуємо дію, не підтверджуючи існування акаунта прямо:
+        # частина адрес -- імпортовані учасники без пароля, для яких
+        # правильний шлях саме "Забули пароль" або вхід через Google.
         if User.query.filter_by(email=field.data.lower().strip()).first():
-            raise ValidationError(_('Неможливо використати цей email'))
+            raise ValidationError(_(
+                'Неможливо використати цей email. Якщо обліковий запис уже '
+                'існує -- увійдіть, відновіть пароль або скористайтесь '
+                'входом через Google.'
+            ))
 
 
 class ForgotPasswordForm(FlaskForm):

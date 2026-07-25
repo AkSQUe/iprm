@@ -20,9 +20,12 @@
 <script defer
         src="{{ url_for('static', filename='js/google-onetap.js') }}?v={{ assets_version }}"
         data-onetap-url="{{ url_for('auth.google_onetap') }}"></script>
+{# data-nonce прив'язує credential до цієї сесії: Google кладе його в
+   підписаний id_token, бекенд звіряє з session (див. google_onetap_nonce). #}
 <div id="g_id_onload"
      data-client_id="{{ site_settings.google_oauth_client_id }}"
      data-callback="iprmGoogleOneTap"
+     data-nonce="{{ google_onetap_nonce() }}"
      data-auto_select="true"
      data-itp_support="true"
      data-cancel_on_tap_outside="false"></div>

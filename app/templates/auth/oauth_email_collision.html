@@ -38,14 +38,17 @@
     <h2 class="auth-collision__heading">{% trans provider=provider %}Щоб додати вхід через {{ provider }}{% endtrans %}</h2>
     <ol class="auth-collision__steps">
       <li>{{ _('Увійдіть з паролем за допомогою кнопки нижче.') }}</li>
-      <li>{% trans %}У кабінеті перейдіть у розділ <em>«Способи входу»</em>.{% endtrans %}</li>
+      <li>{% trans %}У кабінеті відкрийте розділ <em>«Способи входу»</em>.{% endtrans %}</li>
       <li>{% trans provider=provider %}Натисніть <em>«Прив'язати {{ provider }}»</em> і підтвердьте доступ.{% endtrans %}</li>
     </ol>
 
+    {# Кнопка веде одразу у «Способи входу»: @login_required сам попросить
+       увійти і поверне сюди ж (next), тож обидва кроки в одну дію. #}
     <div class="auth-collision__actions">
-      <a href="{{ url_for('auth.login') }}" class="btn-auth">{{ _('Увійти з паролем') }}</a>
-      <a href="{{ url_for('main.index') }}" class="btn-auth btn-auth--outline">{{ _('На головну') }}</a>
+      <a href="{{ url_for('auth.connections') }}" class="btn-auth">{{ _('Увійти і прив\'язати') }}</a>
+      <a href="{{ url_for('auth.login') }}" class="btn-auth btn-auth--outline">{{ _('Просто увійти') }}</a>
     </div>
+    <a href="{{ url_for('main.index') }}" class="auth-card__back">{{ _('На головну') }}</a>
   </div>
 </div>
 {% endblock %}

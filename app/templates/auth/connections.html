@@ -8,6 +8,16 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-account.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{# Останнє використання способу входу -- identity.last_used_at уже
+   оновлюється при кожному вході (touch()), лишалось його показати. #}
+{% macro last_used(identity) %}
+  {% if identity and identity.last_used_at %}
+    <span class="connection-item__last-used">
+      {% trans date=identity.last_used_at.strftime('%d.%m.%Y') %}востаннє {{ date }}{% endtrans %}
+    </span>
+  {% endif %}
+{% endmacro %}
+
 {% block content %}
 <div class="apple-page">
 
@@ -29,12 +39,17 @@
         <!-- Password -->
         <div class="connection-item">
           <div class="connection-item__title">{{ _('Email і пароль') }}</div>
-          <div class="connection-item__email">{{ current_user.email }}</div>
+          <div class="connection-item__email">
+            {{ current_user.email }}
+            {{ last_used(by_provider.get('password')) }}
+          </div>
           <div class="connection-item__status">
             {% if has_password %}
               <span class="badge badge--active">{{ _('Активно') }}</span>
             {% else %}
               <span class="badge badge--draft">{{ _('Не встановлено') }}</span>
+              <a href="{{ url_for('auth.set_password') }}"
+                 class="apple-btn apple-btn--primary apple-btn--sm">{{ _('Встановити пароль') }}</a>
             {% endif %}
           </div>
         </div>
@@ -43,7 +58,7 @@
         <div class="connection-item">
           <div class="connection-item__title">Google</div>
           <div class="connection-item__email">
-            {% if has_google %}{{ by_provider['google'].email }}{% else %}--{% endif %}
+            {% if has_google %}{{ by_provider['google'].email }}{{ last_used(by_provider['google']) }}{% else %}--{% endif %}
           </div>
           <div class="connection-item__status">
             {% if has_google %}
@@ -66,7 +81,7 @@
         <div class="connection-item">
           <div class="connection-item__title">Apple</div>
           <div class="connection-item__email">
-            {% if has_apple %}{{ by_provider['apple'].email or _('через Apple ID') }}{% else %}--{% endif %}
+            {% if has_apple %}{{ by_provider['apple'].email or _('через Apple ID') }}{{ last_used(by_provider['apple']) }}{% else %}--{% endif %}
           </div>
           <div class="connection-item__status">
             {% if has_apple %}

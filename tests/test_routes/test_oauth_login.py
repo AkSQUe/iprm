@@ -18,6 +18,9 @@ def _email():
     return f'oauth-{uuid4().hex[:10]}@gmail.com'
 
 
+TEST_NONCE = 'test-onetap-nonce'
+
+
 def _claims(email, sub=None, verified=True):
     return {
         'sub': sub or uuid4().hex,
@@ -39,8 +42,21 @@ def google_configured(app):
         yield
 
 
-def _onetap(client, claims):
-    """POST /auth/google/onetap із замоканою верифікацією JWT."""
+def _prime_nonce(client, nonce=TEST_NONCE):
+    """Покласти nonce у сесію так, як це робить рендер віджета."""
+    from app.auth.oauth import SESSION_ONETAP_NONCE
+    with client.session_transaction() as sess:
+        sess[SESSION_ONETAP_NONCE] = nonce
+
+
+def _onetap(client, claims, prime_nonce=True):
+    """POST /auth/google/onetap із замоканою верифікацією JWT.
+
+    Верифікацію мокаємо цілком (підпис Google не відтворити в тестах),
+    тож nonce перевіряємо окремо -- через аргумент, з яким її викликали.
+    """
+    if prime_nonce:
+        _prime_nonce(client)
     with patch('app.auth.oauth.verify_google_id_token', return_value=claims):
         return client.post('/auth/google/onetap', json={'credential': 'fake.jwt.token'})
 
@@ -153,14 +169,93 @@ class TestOneTapCollision:
         assert resp.status_code == 409
 
 
+class TestOneTapNonce:
+    """Nonce прив'язує credential до сесії -- інакше будь-який валідний
+    Google-токен логінив би жертву в чужий акаунт (login CSRF)."""
+
+    def test_without_nonce_in_session_is_401(self, client, google_configured):
+        resp = _onetap(client, _claims(_email()), prime_nonce=False)
+        assert resp.status_code == 401
+        assert resp.get_json()['error'] == 'invalid_credential'
+
+    def test_session_nonce_passed_to_verification(self, client, google_configured):
+        _prime_nonce(client)
+        with patch('app.auth.oauth.verify_google_id_token',
+                   return_value=_claims(_email())) as verify:
+            client.post('/auth/google/onetap', json={'credential': 'fake.jwt'})
+        assert verify.call_args.kwargs['expected_nonce'] == TEST_NONCE
+
+    def test_widget_renders_nonce(self, client, google_configured):
+        body = client.get('/').data.decode()
+        assert 'data-nonce="' in body
+
+
+class TestOneTapRace:
+    """One Tap уміє дублювати виклики (у проді бачили 4 POST за 12 секунд).
+    Паралельне створення того самого акаунта не має давати 500."""
+
+    def test_duplicate_user_creation_falls_back_to_linking(self, client, google_configured):
+        """Резолвер не знайшов User, але на вставці отримав UNIQUE-конфлікт:
+        має перечитати акаунт і прив'язати identity до нього, а не 500.
+
+        db.session.rollback() підміняємо no-op: у тестах сесія загорнута в
+        зовнішню транзакцію (conftest), і справжній rollback знищив би
+        "переможця гонки" разом із рештою даних тесту. Перевіряємо саме
+        гілку except -> перечитування -> прив'язка.
+        """
+        from sqlalchemy.exc import IntegrityError
+        email = _email()
+
+        winner = User(email=email, email_confirmed=True)
+        db.session.add(winner)
+        db.session.flush()
+
+        def losing_create(*args, **kwargs):
+            raise IntegrityError('duplicate key value', None, Exception())
+
+        with patch.object(User, 'create_with_oauth', losing_create), \
+             patch('app.auth.oauth.User.query') as user_query, \
+             patch.object(db.session, 'rollback'):
+            # Перший lookup (до створення) -- порожньо, після конфлікту --
+            # акаунт уже є. Саме так виглядає гонка з боку програвшого.
+            user_query.filter_by.return_value.first.side_effect = [None, winner]
+            resp = _onetap(client, _claims(email))
+
+        assert resp.status_code == 200
+        assert resp.get_json()['ok'] is True
+        assert AuthIdentity.query.filter_by(
+            user_id=winner.id, provider=AuthIdentity.PROVIDER_GOOGLE,
+        ).first() is not None
+
+    def test_two_sequential_calls_same_sub_create_one_identity(self, client, google_configured):
+        email = _email()
+        claims = _claims(email)
+        assert _onetap(client, claims).status_code == 200
+        assert _onetap(client, claims).status_code == 200
+        assert AuthIdentity.query.filter_by(
+            provider=AuthIdentity.PROVIDER_GOOGLE, provider_sub=claims['sub'],
+        ).count() == 1
+
+
 class TestOneTapGuards:
     def test_missing_credential_is_400(self, client, google_configured):
         assert client.post('/auth/google/onetap', json={}).status_code == 400
 
     def test_invalid_credential_is_401(self, client, google_configured):
+        _prime_nonce(client)
         with patch('app.auth.oauth.verify_google_id_token', side_effect=ValueError('bad')):
             resp = client.post('/auth/google/onetap', json={'credential': 'x'})
         assert resp.status_code == 401
+
+    def test_keys_unavailable_is_503_not_401(self, client, google_configured):
+        """Наш збій (не дістали JWKS) не має маскуватись під поганий токен."""
+        from app.services.google_oauth import GoogleKeysUnavailable
+        _prime_nonce(client)
+        with patch('app.auth.oauth.verify_google_id_token',
+                   side_effect=GoogleKeysUnavailable('down')):
+            resp = client.post('/auth/google/onetap', json={'credential': 'x'})
+        assert resp.status_code == 503
+        assert resp.get_json()['error'] == 'keys_unavailable'
 
     def test_not_configured_is_503(self, client):
         """Без ключів у SiteSettings (дефолт у тестовій БД) -- 503."""

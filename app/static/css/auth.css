@@ -604,10 +604,19 @@
   overflow-wrap: anywhere;
 }
 
+/* Дата останнього входу цим способом -- другорядна, окремим рядком. */
+.connection-item__last-used {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.8125rem;
+  color: var(--iprm-text-muted, var(--iprm-text-light));
+}
+
 .connection-item__status {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 640px) {

@@ -80,6 +80,15 @@ class AuthIdentity(TimestampMixin, db.Model):
             email=email.lower().strip(),
         ).first()
 
+    def check_password(self, password):
+        """Перевірити пароль цієї identity. Для OAuth-identity (без хеша)
+        -- завжди False. Викликається, коли identity вже знайдено, щоб не
+        робити повторний запит через User.check_password()."""
+        from werkzeug.security import check_password_hash
+        if not self.password_hash:
+            return False
+        return check_password_hash(self.password_hash, password)
+
     def touch(self):
         """Оновити last_used_at до зараз. Викликається після успішного логіну."""
         self.last_used_at = datetime.now(timezone.utc)

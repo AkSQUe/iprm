@@ -1,4 +1,6 @@
 """Tests for auth routes -- email confirmation flow."""
+import re
+
 import pytest
 from uuid import uuid4
 
@@ -18,6 +20,22 @@ def user(app):
     )
     db.session.flush()
     return u
+
+
+def _flashes(resp):
+    r"""Тексти flash-повідомлень зі сторінки.
+
+    base.html віддає їх JSON-ом у <script id="iprm-flash-data"> (ui-feedback.js
+    робить із них toasts), а |tojson екранує кирилицю у \uXXXX -- тож шукати
+    підрядок у сирому HTML не можна."""
+    import json
+    match = re.search(
+        r'<script type="application/json" id="iprm-flash-data">(.*?)</script>',
+        resp.data.decode(), re.S,
+    )
+    if not match:
+        return []
+    return [item['message'] for item in json.loads(match.group(1))]
 
 
 def _login(client, user):
@@ -83,3 +101,112 @@ class TestResendConfirmation:
         resp = client.post('/auth/resend-confirmation')
         assert resp.status_code == 302
         assert '/account' in resp.headers.get('Location', '')
+
+
+class TestPasswordLogin:
+    """Вхід з паролем: identity-first, стан акаунта, повідомлення."""
+
+    def test_valid_credentials_log_in(self, client, user):
+        resp = client.post('/auth/login', data={
+            'email': user.email, 'password': 'password123',
+        })
+        assert resp.status_code == 302
+        assert '/account' in resp.headers.get('Location', '')
+        with client.session_transaction() as sess:
+            assert sess.get('_user_id') == str(user.id)
+
+    def test_wrong_password_rejected(self, client, user):
+        resp = client.post('/auth/login', data={
+            'email': user.email, 'password': 'wrong-password',
+        })
+        assert resp.status_code == 200
+        with client.session_transaction() as sess:
+            assert sess.get('_user_id') is None
+
+    def test_inactive_account_gets_explicit_message(self, client, user):
+        """Раніше login_user() мовчки відмовляв (повертав False), і юзера
+        кидало на /auth/account -> @login_required -> назад на логін."""
+        user.is_active = False
+        db.session.flush()
+        resp = client.post('/auth/login', data={
+            'email': user.email, 'password': 'password123',
+        })
+        assert resp.status_code == 200
+        assert any('деактивовано' in m for m in _flashes(resp))
+        with client.session_transaction() as sess:
+            assert sess.get('_user_id') is None
+
+    def test_unknown_email_does_not_leak_existence(self, client):
+        resp = client.post('/auth/login', data={
+            'email': f'nobody-{_uid()}@test.com', 'password': 'password123',
+        })
+        assert resp.status_code == 200
+        assert any('Невірний email або пароль' in m for m in _flashes(resp))
+
+    def test_last_used_at_updated_on_login(self, client, user):
+        from app.models.auth_identity import AuthIdentity
+        ident = AuthIdentity.find_password_identity_by_email(user.email)
+        assert ident.last_used_at is None
+        client.post('/auth/login', data={
+            'email': user.email, 'password': 'password123',
+        })
+        db.session.refresh(ident)
+        assert ident.last_used_at is not None
+
+
+class TestSetPassword:
+    """Встановлення пароля для акаунта, що входив лише через OAuth."""
+
+    def _oauth_only_user(self):
+        from app.models.auth_identity import AuthIdentity
+        u = User.create_with_oauth(
+            provider=AuthIdentity.PROVIDER_GOOGLE, sub=_uid(),
+            email=f'oauth-only-{_uid()}@test.com', email_verified=True,
+        )
+        db.session.flush()
+        return u
+
+    def test_requires_login(self, client):
+        resp = client.get('/auth/account/set-password')
+        assert resp.status_code == 302
+        assert '/auth/login' in resp.headers.get('Location', '')
+
+    def test_oauth_only_user_can_set_password(self, client):
+        user = self._oauth_only_user()
+        _login(client, user)
+        resp = client.post('/auth/account/set-password', data={
+            'password': 'brand-new-pass', 'password_confirm': 'brand-new-pass',
+        })
+        assert resp.status_code == 302
+        assert '/connections' in resp.headers.get('Location', '')
+        assert user.check_password('brand-new-pass')
+
+    def test_user_with_password_is_redirected(self, client, user):
+        _login(client, user)
+        resp = client.get('/auth/account/set-password')
+        assert resp.status_code == 302
+        assert '/connections' in resp.headers.get('Location', '')
+
+    def test_mismatched_confirmation_rejected(self, client):
+        user = self._oauth_only_user()
+        _login(client, user)
+        resp = client.post('/auth/account/set-password', data={
+            'password': 'brand-new-pass', 'password_confirm': 'other-pass',
+        })
+        assert resp.status_code == 200
+        assert not user.check_password('brand-new-pass')
+
+
+class TestConnectionsDiscoverable:
+    """Сторінка «Способи входу» має бути досяжною з кабінету -- інакше
+    інструкція на collision-сторінці нездійсненна."""
+
+    def test_account_page_links_to_connections(self, client, user):
+        _login(client, user)
+        assert '/auth/account/connections' in client.get('/auth/account').data.decode()
+
+    def test_connections_page_renders(self, client, user):
+        _login(client, user)
+        resp = client.get('/auth/account/connections')
+        assert resp.status_code == 200
+        assert user.email.encode() in resp.data

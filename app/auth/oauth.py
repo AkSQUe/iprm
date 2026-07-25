@@ -1,15 +1,19 @@
-"""OAuth routes (Phase 3 of auth unification).
+"""OAuth/OIDC routes: Google (redirect + One Tap) і Apple Sign In.
 
-Зараз реалізовано Google; Apple буде в Phase 5 з тим самим патерном.
 Routes:
-  GET /auth/google/start            -- редірект на Google authorize endpoint
-  GET /auth/google/callback         -- exchange code, lookup/create/link user
-  POST /auth/google/link/start      -- (логін потрібен) почати link-flow
-  POST /auth/google/unlink          -- (логін потрібен) видалити Google identity
+  GET  /auth/google/start      -- редірект на Google authorize endpoint
+                                  (?action=link -- прив'язка до current_user)
+  GET  /auth/google/callback   -- exchange code, lookup/link/create user
+  POST /auth/google/onetap     -- credential JWT від Google One Tap (JSON)
+  POST /auth/google/unlink     -- (логін потрібен) видалити Google identity
+  GET  /auth/oauth/collision   -- пояснення "email уже зареєстровано"
+  GET  /auth/apple/start, GET|POST /auth/apple/callback, POST /auth/apple/unlink
 
-Callback розв'язує 3 сценарії (спільний резолвер _resolve_oauth_login,
-його ж використовує One Tap):
-  1. Знайдено identity (provider='google', sub=token.sub) -> логін.
+Мовного префікса роути не мають (localize=False): їхні URL зафіксовані в
+консолях Google/Apple.
+
+Вхід розв'язує спільний резолвер _resolve_oauth_login() -- три сценарії:
+  1. Знайдено identity (provider, sub) -> логін.
   2. Не знайдено, але email уже належить наявному User -> прив'язуємо
      identity до нього, якщо володіння скринькою доведене з обох боків
      (див. _can_attach_to_existing); інакше -- сторінка-пояснення
@@ -19,38 +23,40 @@ Callback розв'язує 3 сценарії (спільний резолвер
      claim явно (для Workspace доменів інколи буває false).
 
 Link-flow:
-  - Юзер залогінений password-ом, заходить на /auth/account/connections,
-    клікає "Link Google" -> POST /auth/google/link/start -> сесія
-    позначається link-action=true -> /auth/google/start виконує redirect.
-  - У callback при link-action=true: lookup identity (provider, sub).
-    Якщо вже належить ІНШОМУ юзеру -> error. Інакше -- створюємо
-    identity з user_id=current_user.id.
+  - Залогінений юзер на /auth/account/connections клікає "Прив'язати
+    Google" -> GET /auth/google/start?action=link -> action осідає в сесії.
+  - У callback при action=link: lookup identity (provider, sub). Якщо вже
+    належить ІНШОМУ юзеру -> помилка. Інакше -- identity з
+    user_id=current_user.id.
 """
 import logging
 import secrets
 
 from authlib.integrations.base_client.errors import OAuthError
 from flask import (
-    Blueprint, current_app, flash, redirect, render_template,
-    request, session, url_for,
+    flash, redirect, render_template, request, session, url_for,
 )
 from flask_babel import gettext as _
 from flask_login import current_user, login_required, login_user
+from sqlalchemy.exc import IntegrityError
 
 from app.auth import auth_bp
-from app.extensions import db, csrf
+from app.auth._helpers import is_safe_redirect_url
+from app.extensions import db, csrf, limiter
 from app.models.auth_identity import AuthIdentity
 from app.models.user import User
-from app.services.google_oauth import get_google_client, verify_google_id_token
+from app.services.google_oauth import (
+    GoogleKeysUnavailable, get_google_client, verify_google_id_token,
+)
 from app.services.apple_signin import get_apple_client
 
 logger = logging.getLogger(__name__)
 
 # Session keys
-SESSION_OAUTH_STATE = '_oauth_state'
 SESSION_OAUTH_NEXT = '_oauth_next'
 SESSION_OAUTH_ACTION = '_oauth_action'   # 'login' (default) | 'link'
 SESSION_OAUTH_COLLISION = '_oauth_collision'
+SESSION_ONETAP_NONCE = '_onetap_nonce'
 
 ACTION_LOGIN = 'login'
 ACTION_LINK = 'link'
@@ -75,15 +81,24 @@ def _capture_ui_language(user):
         user.preferred_language = ui_lang
 
 
-def _is_safe_redirect_url(target):
-    """Same logic as auth.routes -- DRY by reimporting? Тримаємо тут
-    локально щоб уникнути циклічного імпорту."""
-    if not target:
-        return False
-    from urllib.parse import urlparse
-    parsed = urlparse(target)
-    return (not parsed.netloc and not parsed.scheme
-            and target.startswith('/') and not target.startswith('//'))
+@auth_bp.app_template_global('google_onetap_nonce')
+def google_onetap_nonce():
+    """Nonce для Google One Tap -- прив'язка credential до цієї сесії.
+
+    Без нього endpoint приймав би будь-який валідний Google-credential,
+    зокрема підсунутий зловмисником (login CSRF: жертву тихо логінять у
+    чужий акаунт). Google кладе nonce у підписаний id_token, а ми
+    звіряємо його з сесією.
+
+    Один nonce на сесію (не на рендер), щоб кілька відкритих вкладок не
+    інвалідували одна одну. Викликається лише з _google_onetap.html,
+    тобто тільки коли віджет реально показуємо.
+    """
+    nonce = session.get(SESSION_ONETAP_NONCE)
+    if not nonce:
+        nonce = secrets.token_urlsafe(24)
+        session[SESSION_ONETAP_NONCE] = nonce
+    return nonce
 
 
 @auth_bp.route('/google/start', methods=['GET'], localize=False)
@@ -103,7 +118,7 @@ def google_start():
     # Збережемо action і next URL у сесії -- callback їх прочитає.
     session[SESSION_OAUTH_ACTION] = action
     next_url = request.args.get('next', '')
-    if _is_safe_redirect_url(next_url):
+    if is_safe_redirect_url(next_url):
         session[SESSION_OAUTH_NEXT] = next_url
     else:
         session.pop(SESSION_OAUTH_NEXT, None)
@@ -251,12 +266,25 @@ def _resolve_oauth_login(provider, sub, email, email_verified,
                 raw_claims=safe_claims,
             )
             _capture_ui_language(user)
+            logger.info('Created %s OAuth user email=%s', label, email)
+            return user, RESOLVE_CREATED
+        except IntegrityError:
+            # Гонка: паралельний запит уже створив цей акаунт (One Tap уміє
+            # дублювати виклики -- у логах бачили 4 POST за 12 секунд).
+            # Відкочуємось і йдемо гілкою прив'язки до вже створеного User.
+            db.session.rollback()
+            user = User.query.filter_by(email=email).first()
+            if user is None:
+                logger.exception('Failed to create %s OAuth user', label)
+                return None, RESOLVE_FAILED
+            logger.info(
+                'Race creating %s OAuth user %s -- attaching to existing id=%d',
+                label, email, user.id,
+            )
         except Exception:
             db.session.rollback()
             logger.exception('Failed to create %s OAuth user', label)
             return None, RESOLVE_FAILED
-        logger.info('Created %s OAuth user email=%s', label, email)
-        return user, RESOLVE_CREATED
 
     if not user.is_active:
         return None, RESOLVE_INACTIVE
@@ -276,6 +304,18 @@ def _resolve_oauth_login(provider, sub, email, email_verified,
     # щоб не смикати юзера листом підтвердження після входу через OAuth.
     if email_verified and not user.email_confirmed:
         user.email_confirmed = True
+    try:
+        # Flush тут, а не на commit-і: так гонку по UNIQUE(provider, sub)
+        # видно всередині резолвера, де її ще можна розв'язати.
+        db.session.flush()
+    except IntegrityError:
+        db.session.rollback()
+        existing = AuthIdentity.find_by_provider_sub(provider, sub)
+        if existing is None:
+            logger.exception('Failed to link %s identity for %s', label, email)
+            return None, RESOLVE_FAILED
+        logger.info('Race linking %s identity -- reusing id=%d', label, existing.id)
+        return existing.user, RESOLVE_OK
     logger.info('Linked %s identity to existing user id=%d', label, user.id)
     return user, RESOLVE_LINKED
 
@@ -330,7 +370,7 @@ def _handle_login(provider, sub, email, email_verified, given_name, family_name,
     if status in (RESOLVE_CREATED, RESOLVE_LINKED):
         # flash() пише в сесію -- лише ПІСЛЯ session.clear().
         flash(_('Вітаємо! Тепер ви можете входити через %(provider)s.', provider=label), 'success')
-    if next_url and _is_safe_redirect_url(next_url):
+    if next_url and is_safe_redirect_url(next_url):
         return redirect(next_url)
     return redirect(url_for('auth.account'))
 
@@ -368,8 +408,8 @@ def _handle_link(provider, sub, email, email_verified, safe_claims, next_url):
         flash(_('%(provider)s успішно прив\'язано до вашого облікового запису', provider=label), 'success')
     except Exception:
         db.session.rollback()
-        logger.exception('Failed to link Google identity')
-        flash(_('Помилка при прив\'язці Google'), 'error')
+        logger.exception('Failed to link %s identity', label)
+        flash(_('Помилка при прив\'язці %(provider)s', provider=label), 'error')
 
     return redirect(url_for('auth.connections'))
 
@@ -419,11 +459,15 @@ def google_unlink():
 
 @auth_bp.route('/google/onetap', methods=['POST'], localize=False)
 @csrf.exempt
+@limiter.limit('20 per hour')
 def google_onetap():
     """Прийом credential JWT від Google One Tap (GSI library).
 
-    JWT уже містить підпис Google + state-binding (nonce), тож CSRF-захист
-    не потрібен -- сам credential і є аутентифікація запиту.
+    Стандартний CSRF-токен тут не працює (запит іде з GSI, а не з нашої
+    форми), тому запит прив'язуємо до сесії через nonce: він генерується
+    при рендері віджета, Google кладе його в підписаний id_token, а ми
+    звіряємо. Без цього будь-який валідний Google-credential логінив би
+    жертву в чужий акаунт (login CSRF).
 
     Логіка lookup-or-link-or-create -- той самий _resolve_oauth_login(),
     що й у redirect-flow, але без HTTP-redirect (повертаємо JSON, фронт
@@ -441,10 +485,23 @@ def google_onetap():
     if not credential:
         return jsonify({'ok': False, 'error': 'missing_credential'}), 400
 
+    expected_nonce = session.get(SESSION_ONETAP_NONCE)
+    if not expected_nonce:
+        # Віджет рендериться разом із nonce, тож його відсутність означає
+        # або втрачену сесію (заблоковані cookie), або сторонній запит.
+        logger.warning('One Tap: no nonce in session')
+        return jsonify({'ok': False, 'error': 'invalid_credential'}), 401
+
     try:
         claims = verify_google_id_token(
             credential, settings.google_oauth_client_id,
+            expected_nonce=expected_nonce,
         )
+    except GoogleKeysUnavailable:
+        # Наш збій (не дістали ключі Google), а не поганий токен -- 503,
+        # щоб не плутати діагностику і не показувати юзеру "невалідний вхід".
+        logger.exception('One Tap: Google JWKS unavailable')
+        return jsonify({'ok': False, 'error': 'keys_unavailable'}), 503
     except Exception as exc:
         logger.warning('One Tap JWT verification failed: %s', exc)
         return jsonify({'ok': False, 'error': 'invalid_credential'}), 401
@@ -510,7 +567,7 @@ def apple_start():
 
     session[SESSION_OAUTH_ACTION] = action
     next_url = request.args.get('next', '')
-    if _is_safe_redirect_url(next_url):
+    if is_safe_redirect_url(next_url):
         session[SESSION_OAUTH_NEXT] = next_url
     else:
         session.pop(SESSION_OAUTH_NEXT, None)

@@ -1,19 +1,19 @@
 import logging
 import os
 from datetime import datetime, timezone
-from urllib.parse import urlparse
 from flask import render_template, redirect, url_for, flash, request, session, send_file
 from flask_babel import get_locale, gettext as _
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy.orm import contains_eager
+from werkzeug.security import check_password_hash, generate_password_hash
 from app.auth import auth_bp
+from app.auth._helpers import is_safe_redirect_url
 from app.auth.forms import (
     LoginForm, RegistrationForm, ForgotPasswordForm, ResetPasswordForm,
 )
 from app.extensions import db, limiter
 from app.models.user import User
 from app.models.auth_identity import AuthIdentity
-from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
 from app.models.certificate import Certificate
@@ -26,13 +26,11 @@ from app.services.recaptcha import verify_request as verify_recaptcha
 
 logger = logging.getLogger(__name__)
 
-
-def _is_safe_redirect_url(target):
-    if not target:
-        return False
-    parsed = urlparse(target)
-    return (not parsed.netloc and not parsed.scheme
-            and target.startswith('/') and not target.startswith('//'))
+# Фіктивний хеш для вирівнювання часу відповіді, коли акаунта з такою
+# адресою немає: без нього відповідь на неіснуючий email поверталась би
+# помітно швидше (пропускалась перевірка хеша) -- це піддається вимірюванню
+# і дає user enumeration. Обчислюється один раз при імпорті.
+_DUMMY_PASSWORD_HASH = generate_password_hash('timing-equalizer')
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -48,19 +46,31 @@ def login():
             flash(_('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.'), 'error')
             return render_template('auth/login.html', form=form)
 
-        # Identity-first lookup (Phase 2): шукаємо password-identity за
-        # email. Fallback на User.query для дефенсивних випадків (юзер з
-        # backfill ще не отримав identity з якоїсь причини).
+        # Identity-first lookup (Phase 2): пароль живе ЛИШЕ у
+        # AuthIdentity(provider='password'), тож відсутність identity
+        # означає відсутність пароля -- окремий fallback на User не
+        # потрібен (він однаково не зміг би автентифікувати).
         email = form.email.data.lower().strip()
         identity = AuthIdentity.find_password_identity_by_email(email)
-        user = identity.user if identity else User.query.filter_by(email=email).first()
+        if identity is not None:
+            password_ok = identity.check_password(form.password.data)
+        else:
+            check_password_hash(_DUMMY_PASSWORD_HASH, form.password.data)
+            password_ok = False
 
-        if user and user.check_password(form.password.data):
+        if password_ok and not identity.user.is_active:
+            # login_user() сам відмовив би деактивованому юзеру, але мовчки
+            # (повертає False), і далі був би редірект на /auth/account ->
+            # @login_required -> назад на логін. Кажемо прямо.
+            flash(_('Обліковий запис деактивовано'), 'error')
+            return render_template('auth/login.html', form=form)
+
+        if password_ok:
+            user = identity.user
             session.clear()
             login_user(user, remember=form.remember.data)
             user.last_login_at = datetime.now(timezone.utc)
-            if identity:
-                identity.touch()
+            identity.touch()
 
             try:
                 db.session.commit()
@@ -69,7 +79,7 @@ def login():
                 db.session.rollback()
 
             next_page = request.args.get('next')
-            if _is_safe_redirect_url(next_page):
+            if is_safe_redirect_url(next_page):
                 return redirect(next_page)
             return redirect(url_for('auth.account'))
 
@@ -195,6 +205,13 @@ def reset_password(token):
 @login_required
 def logout():
     logout_user()
+    # logout_user() прибирає лише ключі Flask-Login. Чистимо решту сесії
+    # (незавершені OAuth-флоу, контекст колізії), зберігши вибір мови --
+    # він не пов'язаний з обліковим записом.
+    lang = session.get('lang')
+    session.clear()
+    if lang:
+        session['lang'] = lang
     return redirect(url_for('main.index'))
 
 
@@ -349,7 +366,15 @@ def certificate_download(cert_id):
     from app.services.certificate_service import certificate_abs_path, regenerate_pdf
     path = certificate_abs_path(cert)
     if not os.path.exists(path):
-        regenerate_pdf(cert)
+        try:
+            regenerate_pdf(cert)
+        except Exception:
+            logger.exception('Failed to regenerate certificate PDF %s', cert.number)
+        if not os.path.exists(path):
+            # Краще зрозуміле повідомлення в кабінеті, ніж 500 від send_file.
+            flash(_('Не вдалося підготувати PDF. Спробуйте пізніше або '
+                    'зверніться до підтримки.'), 'error')
+            return redirect(url_for('auth.account'))
     return send_file(
         path,
         mimetype='application/pdf',
@@ -386,7 +411,10 @@ def connections():
     Власник цієї сторінки -- сам юзер. Адмін не керує чужими identity."""
     idents = AuthIdentity.query.filter_by(user_id=current_user.id).all()
     by_provider = {i.provider: i for i in idents}
-    has_password = AuthIdentity.PROVIDER_PASSWORD in by_provider
+    pw_identity = by_provider.get(AuthIdentity.PROVIDER_PASSWORD)
+    # Саме наявність хеша, а не рядка identity: порожня password-identity
+    # входу не дає, і кнопка "Встановити пароль" має лишатись доступною.
+    has_password = bool(pw_identity and pw_identity.password_hash)
     has_google = AuthIdentity.PROVIDER_GOOGLE in by_provider
     has_apple = AuthIdentity.PROVIDER_APPLE in by_provider
     return render_template(
@@ -399,6 +427,45 @@ def connections():
         google_oauth_available=_google_oauth_available(),
         apple_signin_available=_apple_signin_available(),
     )
+
+
+@auth_bp.route('/account/set-password', methods=['GET', 'POST'])
+@login_required
+@limiter.limit('5 per hour', methods=['POST'])
+def set_password():
+    """Встановити пароль акаунту, у якого його ще немає (вхід лише через
+    OAuth або імпортований учасник).
+
+    Поточний пароль не питаємо -- його немає. Доступ до сесії вже є
+    доказом володіння акаунтом. Якщо пароль ВЖЕ встановлено, змінювати
+    його тут не можна: це вимагало б підтвердження старого пароля, для
+    чого є окремий флоу "Забули пароль".
+    """
+    has_password = AuthIdentity.query.filter(
+        AuthIdentity.user_id == current_user.id,
+        AuthIdentity.provider == AuthIdentity.PROVIDER_PASSWORD,
+        AuthIdentity.password_hash.isnot(None),
+    ).first() is not None
+    if has_password:
+        flash(_('Пароль уже встановлено. Щоб змінити його, скористайтесь '
+                'відновленням паролю.'), 'info')
+        return redirect(url_for('auth.connections'))
+
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        current_user.set_password(form.password.data)
+        try:
+            db.session.commit()
+            logger.info('Password set for user %d', current_user.id)
+            flash(_('Пароль встановлено. Тепер ви можете входити з email і паролем.'),
+                  'success')
+            return redirect(url_for('auth.connections'))
+        except Exception:
+            db.session.rollback()
+            logger.exception('Failed to set password for user %d', current_user.id)
+            flash(_('Помилка при збереженні паролю. Спробуйте ще раз.'), 'error')
+
+    return render_template('auth/set_password.html', form=form)
 
 
 def _google_oauth_available():
