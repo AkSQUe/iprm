@@ -203,6 +203,14 @@
           <small class="form-hint">{{ form.show_roi_calculator.description }}</small>
         </div>
 
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            {{ form.show_home_hero_video(id="show_home_hero_video") }}
+            <label for="show_home_hero_video">{{ form.show_home_hero_video.label.text }}</label>
+          </div>
+          <small class="form-hint">{{ form.show_home_hero_video.description }}</small>
+        </div>
+
         <div class="form-group">
           <label for="certdata_reminder_days">{{ form.certdata_reminder_days.label.text }}</label>
           {{ form.certdata_reminder_days(class="form-input", id="certdata_reminder_days", type="number", min="0", max="60") }}

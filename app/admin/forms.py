@@ -164,6 +164,10 @@ class SiteSettingsForm(FlaskForm):
         'Показувати ROI-калькулятор окупності',
         description='Інтерактивний блок «Коли курс окупиться?» на сторінках платних курсів.',
     )
+    show_home_hero_video = BooleanField(
+        'Фонове відео у hero Головної',
+        description='Приглушене відео за заголовком Головної. Вимкнено — hero повертається до світлого тла без відео й постера. Відео і так не вантажиться на мобільних, при економії трафіку та prefers-reduced-motion.',
+    )
     certdata_reminder_days = IntegerField(
         'Нагадування про анкету, днів до заходу',
         default=3,

@@ -46,12 +46,14 @@
   <!-- ===== HERO ===== -->
   <div class="iprm-hero-wrap">
     <section class="iprm-hero" aria-label="{{ _('Головна') }}">
+      {% if site_settings.show_home_hero_video %}
       <div class="home-hero-media" aria-hidden="true"
            data-hero-video
            data-video-webm="{{ url_for('static', filename='video/home-hero.webm') }}?v={{ assets_version }}"
            data-video-mp4="{{ url_for('static', filename='video/home-hero.mp4') }}?v={{ assets_version }}">
         <div class="home-hero-media__poster"></div>
       </div>
+      {% endif %}
       <div class="iprm-hero__content">
         <div class="iprm-hero__badge">{{ _('Інститут плазмотерапії та регенеративної медицини') }}</div>
         <h1 class="iprm-hero__title">{{ _('Навчання, яке підсилює') }} <span class="apple-gradient-text">{{ _('медичну практику') }}</span></h1>
@@ -490,7 +492,7 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/home-hero-video.js') }}?v={{ assets_version }}" defer></script>
+{% if site_settings.show_home_hero_video %}<script src="{{ url_for('static', filename='js/home-hero-video.js') }}?v={{ assets_version }}" defer></script>{% endif %}
 {% if home_stats %}<script src="{{ url_for('static', filename='js/counters.js') }}?v={{ assets_version }}" defer></script>{% endif %}
 {% if trainers %}<script src="{{ url_for('static', filename='js/trainer-carousel.js') }}?v={{ assets_version }}" defer></script>{% endif %}
 {% if site_settings.show_roi_calculator and roi_courses %}
