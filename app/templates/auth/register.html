@@ -62,7 +62,9 @@
             <span class="iprm-tooltip-trigger" data-tooltip="{{ _('Мінімум 8 символів. Для надійності додайте великі/малі літери, цифри та спецсимволи.') }}">i</span>
           </label>
           {{ form.password(class="form-input" + (" is-invalid" if form.password.errors else ""), id="password", autocomplete="new-password", required=true, minlength=8) }}
-          <div class="pw-strength" data-pw-strength-for="password" aria-live="polite"></div>
+          {# aria-live -- на підписі сили всередині (password-strength.js):
+             на всьому блоці чекліст спамив би скрінрідер щонатискання. #}
+          <div class="pw-strength" data-pw-strength-for="password"></div>
           {% for error in form.password.errors %}
             <div class="form-error">{{ error }}</div>
           {% endfor %}

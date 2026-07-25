@@ -203,15 +203,23 @@
     return !!(field.value || '').trim();
   }
 
-  /* Перерахунок поля в live-режимі (під час набору). Помилку не показуємо --
-     лише прибираємо застарілий позитивний стан або підтверджуємо виправлення. */
+  /* Перерахунок поля в live-режимі (під час набору). Нову помилку не
+     піднімаємо -- лише прибираємо застарілий позитивний стан, підтверджуємо
+     виправлення і освіжаємо текст уже показаної підказки (інакше під полем
+     висіло б «заповніть це поле» над недонабраним значенням). */
   function refreshLive(field) {
-    if (!fieldError(field)) {
+    var msg = fieldError(field);
+    if (!msg) {
       if (canConfirm(field)) showFieldOk(field);
       else clearFieldState(field);
-    } else if (field.classList.contains('field-valid')) {
-      clearFieldState(field);
+      return;
     }
+    if (field.classList.contains('field-valid')) {
+      clearFieldState(field);
+      return;
+    }
+    var shown = hintHost(field).querySelector('.field-hint--js');
+    if (shown && shown.textContent !== msg) shown.textContent = msg;
   }
 
   function firstFocusable(el) {
@@ -364,9 +372,11 @@
         // «виглядає добре» над невалідним значенням -- гірше за мовчання.
         refreshLive(field);
 
-        // Пара «пароль / підтвердження»: перевіряємо і залежне поле.
+        // Пара «пароль / підтвердження»: правка пароля міняє вердикт і для
+        // залежного поля -- інакше над ним висіла б галочка «збігаються».
         form.querySelectorAll('[data-match]').forEach(function (dep) {
-          if (dep !== field && live.has(dep)) refreshLive(dep);
+          if (dep === field) return;
+          if (live.has(dep) || dep.classList.contains('field-valid')) refreshLive(dep);
         });
       });
 

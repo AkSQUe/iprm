@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-25 17:41+0300\n"
+"POT-Creation-Date: 2026-07-25 17:53+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -169,6 +169,28 @@ msgstr "Good"
 
 msgid "Надійний"
 msgstr "Strong"
+
+#, python-brace-format
+msgid "{n}+ символів"
+msgstr "{n}+ characters"
+
+msgid "Велика і мала літери"
+msgstr "Upper and lower case"
+
+msgid "Цифра"
+msgstr "A number"
+
+msgid "Спецсимвол"
+msgstr "A symbol"
+
+msgid "обов'язково"
+msgstr "required"
+
+msgid "виконано"
+msgstr "done"
+
+msgid "ще ні"
+msgstr "not yet"
 
 #, python-brace-format
 msgid "Заповнено {pct}%"
