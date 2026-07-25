@@ -153,7 +153,7 @@
             {{ _('Телефон') }} <span class="required">*</span>
             <span class="iprm-tooltip-trigger" data-tooltip="{{ _('Вкажіть номер саме учасника заходу — на нього ми надішлемо нагадування та деталі підключення.') }}">i</span>
           </label>
-          {{ form.phone(class="form-input" + (" is-invalid" if form.phone.errors else ""), id="phone", required=true) }}
+          {{ form.phone(class="form-input" + (" is-invalid" if form.phone.errors else ""), id="phone", required=true, **{'data-valid-hint': _('Номер коректний')}) }}
           {% for e in form.phone.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
       </div>

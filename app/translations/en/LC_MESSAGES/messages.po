@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-25 11:17+0300\n"
+"POT-Creation-Date: 2026-07-25 17:41+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -90,6 +90,9 @@ msgstr "Enter a valid email address"
 msgid "Вкажіть номер телефону"
 msgstr "Enter a phone number"
 
+msgid "Вкажіть номер у форматі +380XXXXXXXXX"
+msgstr "Enter the number in the format +380XXXXXXXXX"
+
 msgid "Оберіть дату"
 msgstr "Select a date"
 
@@ -98,6 +101,16 @@ msgstr "This box must be checked"
 
 msgid "Оберіть хоча б один варіант"
 msgstr "Select at least one option"
+
+msgid "Виглядає добре"
+msgstr "Looks good"
+
+#, python-brace-format
+msgid "Мінімум {n} символів"
+msgstr "Minimum {n} characters"
+
+msgid "Значення не збігаються"
+msgstr "Values do not match"
 
 #, python-brace-format
 msgid "Перевірте форму: {count} поле потребує уваги"
@@ -436,8 +449,8 @@ msgid ""
 "Неможливо використати цей email. Якщо обліковий запис уже існує -- "
 "увійдіть, відновіть пароль або скористайтесь входом через Google."
 msgstr ""
-"This email cannot be used. If an account already exists -- sign in, reset "
-"your password, or use Google sign-in."
+"This email cannot be used. If an account already exists -- sign in, reset"
+" your password, or use Google sign-in."
 
 msgid "Новий пароль"
 msgstr "New password"
@@ -568,8 +581,7 @@ msgstr "Error saving settings"
 msgid ""
 "Пароль уже встановлено. Щоб змінити його, скористайтесь відновленням "
 "паролю."
-msgstr ""
-"A password is already set. To change it, use password recovery."
+msgstr "A password is already set. To change it, use password recovery."
 
 msgid "Пароль встановлено. Тепер ви можете входити з email і паролем."
 msgstr "Password set. You can now sign in with your email and password."
@@ -669,6 +681,10 @@ msgstr "Message must be between 10 and 5000 characters"
 
 msgid "Ваше повідомлення..."
 msgstr "Your message..."
+
+#, fuzzy
+msgid "Не вдалося сформувати PDF. Спробуйте пізніше."
+msgstr "Could not prepare the PDF. Please try again later or contact support."
 
 msgid "Дякуємо за ваше повідомлення! Ми зв'яжемося з вами найближчим часом."
 msgstr "Thank you for your message! We will get in touch with you shortly."
@@ -1343,6 +1359,9 @@ msgstr ""
 "A confirmation email will be sent to this address. Use it to sign in to "
 "your account."
 
+msgid "Формат адреси коректний"
+msgstr "Address format is valid"
+
 msgid ""
 "Мінімум 8 символів. Для надійності додайте великі/малі літери, цифри та "
 "спецсимволи."
@@ -1352,6 +1371,9 @@ msgstr ""
 
 msgid "Підтвердження"
 msgstr "Confirmation"
+
+msgid "Паролі збігаються"
+msgstr "Passwords match"
 
 msgid "Без згоди на обробку даних реєстрація неможлива"
 msgstr "Registration is not possible without consent to data processing"
@@ -4193,6 +4215,9 @@ msgid ""
 msgstr ""
 "Provide the phone number of the actual event participant — we will send "
 "reminders and connection details to it."
+
+msgid "Номер коректний"
+msgstr "Number is valid"
 
 msgid "Підтвердження участі в очному заході"
 msgstr "Confirmation of participation in an in-person event"

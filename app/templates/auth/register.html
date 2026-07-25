@@ -49,7 +49,7 @@
           {{ _('Email') }} <span class="required">*</span>
           <span class="iprm-tooltip-trigger" data-tooltip="{{ _('На цю адресу прийде лист підтвердження. Її ж використовуйте для входу в кабінет.') }}">i</span>
         </label>
-        {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email", autocomplete="email", required=true) }}
+        {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email", autocomplete="email", required=true, **{'data-valid-hint': _('Формат адреси коректний')}) }}
         {% for error in form.email.errors %}
           <div class="form-error">{{ error }}</div>
         {% endfor %}
@@ -61,7 +61,7 @@
             {{ _('Пароль') }} <span class="required">*</span>
             <span class="iprm-tooltip-trigger" data-tooltip="{{ _('Мінімум 8 символів. Для надійності додайте великі/малі літери, цифри та спецсимволи.') }}">i</span>
           </label>
-          {{ form.password(class="form-input" + (" is-invalid" if form.password.errors else ""), id="password", autocomplete="new-password", required=true) }}
+          {{ form.password(class="form-input" + (" is-invalid" if form.password.errors else ""), id="password", autocomplete="new-password", required=true, minlength=8) }}
           <div class="pw-strength" data-pw-strength-for="password" aria-live="polite"></div>
           {% for error in form.password.errors %}
             <div class="form-error">{{ error }}</div>
@@ -70,7 +70,11 @@
 
         <div class="form-group">
           <label for="password_confirm">{{ _('Підтвердження') }} <span class="required">*</span></label>
-          {{ form.password_confirm(class="form-input" + (" is-invalid" if form.password_confirm.errors else ""), id="password_confirm", autocomplete="new-password", required=true) }}
+          {{ form.password_confirm(class="form-input" + (" is-invalid" if form.password_confirm.errors else ""), id="password_confirm", autocomplete="new-password", required=true, **{
+              'data-match': '#password',
+              'data-match-hint': _('Паролі не співпадають'),
+              'data-valid-hint': _('Паролі збігаються'),
+          }) }}
           {% for error in form.password_confirm.errors %}
             <div class="form-error">{{ error }}</div>
           {% endfor %}
