@@ -218,22 +218,27 @@ def create_app(config_name=None):
     def inject_undo_offer():
         """Пропозиція відкату останньої дії -- тост із кнопкою "Повернути".
 
-        Забираємо з сесії один раз за запит (g), бо шаблон може рендеритись
-        не сам по собі, а разом із вкладеними -- інакше пропозиція зникла б
-        ще до рендеру base.html. Токен додаємо тут: кнопка відкату шле POST.
+        Забираємо з сесії один раз за запит: якщо той самий запит рендерить
+        ще й лист, перший рендер з'їв би пропозицію, і сторінка лишилась би
+        без тоста. Токен додаємо тут: кнопка відкату шле POST.
+
+        Кеш живе на request, а НЕ на g: під зовнішнім app-контекстом (тести,
+        скрипти) g спільний для кількох запитів, і закешоване "пропозиції
+        немає" перекрило б наступні.
         """
-        from flask import g, has_request_context
+        from flask import has_request_context, request
         from app.undo import pop_undo
         # Листи рендеряться у фоновому потоці, де немає ні сесії, ні CSRF.
         if not has_request_context():
             return {'undo_offer': None}
-        if not hasattr(g, '_undo_offer'):
+        offer = getattr(request, '_undo_offer', Ellipsis)
+        if offer is Ellipsis:
             offer = pop_undo()
             if offer:
                 from flask_wtf.csrf import generate_csrf
                 offer = {**offer, 'csrf': generate_csrf()}
-            g._undo_offer = offer
-        return {'undo_offer': g._undo_offer}
+            request._undo_offer = offer
+        return {'undo_offer': offer}
 
     @app.context_processor
     def inject_recaptcha():

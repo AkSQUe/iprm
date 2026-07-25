@@ -53,6 +53,23 @@ def test_review_delete_offers_undo_and_restores(client, admin):
     assert not db.session.get(Review, rev.id).is_deleted
 
 
+def test_offer_survives_page_render_before_delete(client, admin):
+    """Сторінка, відкрита ДО видалення, не має гасити майбутню пропозицію.
+
+    Пропозиція кешується на час запиту. Якщо кеш живе на g, під зовнішнім
+    app-контекстом (тести, скрипти) він спільний для всіх запитів, і
+    закешоване "пропозиції немає" з першого рендеру перекрило б тост.
+    """
+    rev = Review(author_name='Порядок', text='текст', rating=5)
+    db.session.add(rev)
+    db.session.flush()
+    _login(client, admin)
+
+    assert client.get('/admin/reviews').status_code == 200   # рендер до дії
+    client.post(f'/admin/reviews/{rev.id}/delete')
+    assert b'iprm-undo-data' in client.get('/admin/reviews').data
+
+
 def test_deleted_review_hidden_from_public(client, admin):
     rev = Review(author_name='Схований', text='текст', rating=5, is_published=True)
     db.session.add(rev)
