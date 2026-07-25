@@ -209,9 +209,17 @@ def logout():
     # (незавершені OAuth-флоу, контекст колізії), зберігши вибір мови --
     # він не пов'язаний з обліковим записом.
     lang = session.get('lang')
+    # ПАСТКА: logout_user() сам cookie "remember me" НЕ стирає -- лише
+    # лишає в сесії позначку _remember='clear', а стирає його
+    # after_request Flask-Login. session.clear() нижче з'їдав позначку,
+    # cookie переживав вихід і наступний же запит логінив назад: тост
+    # "Ви вийшли" показувався, а в хедері лишалась кнопка "Вийти".
+    remember = session.get('_remember')
     session.clear()
     if lang:
         session['lang'] = lang
+    if remember:
+        session['_remember'] = remember
     # Глушник Google One Tap. Без нього вихід зациклювався: після редіректу
     # на "/" юзер уже анонімний -> рендериться One Tap з auto_select=true ->
     # GSI мовчки віддає credential -> /auth/google/onetap логінить назад.

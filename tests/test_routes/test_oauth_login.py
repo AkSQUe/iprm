@@ -42,6 +42,16 @@ def google_configured(app):
         yield
 
 
+@pytest.fixture(autouse=True)
+def _fresh_rate_limit(app):
+    """One Tap лімітований 20 запитами на годину, а лічильник у пам'яті
+    спільний на весь прогін: з ростом файлу останні тести починали
+    отримувати 429 і падати з неочевидним "юзер не залогінився"."""
+    from app.extensions import limiter
+    limiter.reset()
+    yield
+
+
 def _prime_nonce(client, nonce=TEST_NONCE):
     """Покласти nonce у сесію так, як це робить рендер віджета."""
     from app.auth.oauth import SESSION_ONETAP_NONCE
@@ -272,6 +282,37 @@ class TestOneTapWidgetPlacement:
 
     def test_present_on_public_page(self, client, google_configured):
         assert b'g_id_onload' in client.get('/').data
+
+
+class TestLogoutClearsRememberCookie:
+    """logout_user() cookie "remember me" сам НЕ стирає -- лише лишає в
+    сесії позначку _remember='clear' для after_request Flask-Login.
+    session.clear() у роуті з'їдав позначку, cookie переживав вихід і
+    наступний запит логінив назад: тост "Ви вийшли" був, а юзер лишався."""
+
+    def _remember_cookie(self, client):
+        from flask_login.config import COOKIE_NAME
+        return client.get_cookie(COOKIE_NAME)
+
+    def test_logout_deletes_remember_cookie(self, client, google_configured):
+        # One Tap логінить із remember=True -- саме так і виникає cookie
+        assert _onetap(client, _claims(_email())).status_code == 200
+        assert self._remember_cookie(client) is not None
+
+        client.post('/auth/logout')
+        assert self._remember_cookie(client) is None
+
+    def test_user_stays_out_after_logout(self, client, google_configured):
+        email = _email()
+        _onetap(client, _claims(email))
+        client.post('/auth/logout')
+
+        # Наступний запит не має відновити вхід із cookie
+        resp = client.get('/auth/account')
+        assert resp.status_code == 302
+        assert '/auth/login' in resp.headers['Location']
+        user = User.query.filter_by(email=email).first()
+        assert not _is_logged_in(client, user)
 
 
 class TestOneTapAfterLogout:
