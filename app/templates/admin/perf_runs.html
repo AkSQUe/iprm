@@ -61,12 +61,13 @@
      VPS конкурував би за CPU з gunicorn і псував би і сайт, і цифри. #}
   <div class="perf-ingest">
     <h2 class="perf-ingest__title">Як надсилати заміри</h2>
-    <p class="perf-ingest__hint">
-      Заміри виконує <code>tools/perf/perf_check.py</code> на вашій машині і надсилає сюди.
-      На сервері браузер не запускається свідомо: одне ядро довелося б ділити з gunicorn,
-      через що сайт гальмував би для відвідувачів, а метрики міряли б перевантажений
-      сервер замість сторінки.
-    </p>
+
+    {% if reveal_key %}
+    <div class="perf-key">
+      <p class="perf-key__label">Новий ключ приймання - скопіюйте зараз, повторно він не показується:</p>
+      <code class="perf-key__value">{{ reveal_key }}</code>
+    </div>
+    {% endif %}
 
     <div class="admin-readonly-config">
       <div class="admin-readonly-config__row">
@@ -92,7 +93,7 @@
 
     <code class="perf-code">python tools/perf/perf_check.py --push {{ key_state.ingest_url }} --token &lt;ключ&gt; --note "опис змін"</code>
 
-    <div class="perf-ingest__actions">
+    <div class="perf-actions">
       <form method="POST" action="{{ url_for('admin.perf_key_rotate') }}"
             data-confirm="Згенерувати новий ключ? Старий перестане працювати - інструмент доведеться переналаштувати.">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

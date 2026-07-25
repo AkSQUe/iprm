@@ -4,6 +4,7 @@
 контракт приймання: автентифікацію, валідацію payload-а, зведення вердикту
 і порівняння прогонів між собою.
 """
+import json
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -148,6 +149,59 @@ def test_ingest_rejects_page_without_path(client, perf_key):
     assert resp.status_code == 400
 
 
+def test_ingest_rejects_non_finite_numbers(client, perf_key):
+    """json.loads приймає нестандартні NaN/Infinity -- вони не мають давати 500."""
+    for value in (float('inf'), float('-inf'), float('nan')):
+        resp = client.post(INGEST_URL, data=json.dumps(_payload([_page(lcp=value)])),
+                           headers={'X-API-Key': perf_key, 'Content-Type': 'application/json'})
+        assert resp.status_code == 400, f'{value} мало дати 400'
+
+
+def test_ingest_rejects_negative_metrics(client, perf_key):
+    resp = client.post(INGEST_URL, json=_payload([_page(lcp=-5000)]),
+                       headers={'X-API-Key': perf_key})
+    assert resp.status_code == 400
+
+    resp = client.post(INGEST_URL, json=_payload([_page(total_transfer=-100)]),
+                       headers={'X-API-Key': perf_key})
+    assert resp.status_code == 400
+
+
+def test_ingest_rejects_future_measured_at(client, perf_key):
+    future = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+    resp = client.post(INGEST_URL, json=_payload(measured_at=future),
+                       headers={'X-API-Key': perf_key})
+    assert resp.status_code == 400
+
+
+def test_details_are_normalised_and_capped(client, perf_key):
+    """Зіпсовані/роздуті деталі не мають ні валити рендер, ні роздувати рядок."""
+    page = _page()
+    page['details'] = {
+        'by_type': {f'type{i}': {'count': 1, 'transfer': i} for i in range(200)},
+        # Ресурс без 'name' раніше валив сторінку деталей на рендері.
+        'heaviest': [{'transfer': 1, 'dur': 1}] + [
+            {'name': 'x' * 5000, 'transfer': 'сміття', 'dur': None}
+        ],
+        'uncompressed': ['не словник'],
+        'headers': {'content-encoding': 'gzip', 'set-cookie': 'секрет'},
+    }
+    resp = client.post(INGEST_URL, json=_payload([page]),
+                       headers={'X-API-Key': perf_key})
+    assert resp.status_code == 201
+
+    stored = db.session.get(PerfRun, resp.get_json()['id']).pages[0]
+    assert len(stored.details['by_type']) == 30
+    # Лишаються найважчі типи, а не випадкові.
+    assert max(b['transfer'] for b in stored.details['by_type'].values()) == 199
+    assert all('name' in r for r in stored.heaviest)
+    assert len(stored.heaviest[1]['name']) == 300
+    assert stored.heaviest[1]['transfer'] == 0
+    assert stored.uncompressed == []
+    # Зайві заголовки не зберігаються.
+    assert set(stored.headers) == {'content-encoding'}
+
+
 def test_unmeasured_page_stored_without_metrics(client, perf_key):
     """Сторінка з помилкою зберігається як факт, але не впливає на вердикт."""
     pages = [_page(), {'profile': 'mobile', 'path': '/down', 'error': 'timeout'}]
@@ -232,6 +286,41 @@ def test_admin_detail_renders_with_comparison(client, admin):
 def test_admin_pages_require_admin(client):
     resp = client.get('/admin/perf')
     assert resp.status_code in (302, 401, 403)
+
+
+def test_admin_list_renders_when_key_is_set(client, admin, perf_key):
+    """Регресія: зі встановленим ключем сторінка йде в rotation_status, і без
+    порогів ротації той кидає ValueError -> 500."""
+    _login(client, admin)
+    resp = client.get('/admin/perf')
+    assert resp.status_code == 200
+
+
+def test_rotate_shows_key_once_and_keeps_it_out_of_cookie(client, admin, app):
+    _login(client, admin)
+    resp = client.post('/admin/perf/key/rotate')
+
+    assert resp.status_code == 302
+    assert 'reveal=1' in resp.headers['Location']
+    # Секрет не має осідати у session-cookie: вона лише підписана, не шифрована.
+    session_cookie = client.get_cookie('session')
+    data = app.session_interface.get_signing_serializer(app).loads(session_cookie.value)
+    flashes = ' '.join(message for _, message in data.get('_flashes', []))
+    key = SiteSettings.get().perf_api_key
+    assert key and key not in flashes
+
+    # Ключ показується рівно на сторінці з ?reveal=1 і тільки там.
+    revealed = client.get('/admin/perf?reveal=1')
+    assert key.encode() in revealed.data
+    assert key.encode() not in client.get('/admin/perf').data
+
+
+def test_clear_key_disables_ingest(client, admin, perf_key):
+    _login(client, admin)
+    client.post('/admin/perf/key/clear')
+
+    resp = client.post(INGEST_URL, json=_payload(), headers={'X-API-Key': perf_key})
+    assert resp.status_code == 404
 
 
 def test_previous_run_matches_same_base_url(app):

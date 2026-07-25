@@ -19,18 +19,42 @@
   margin: 0 0 4px;
 }
 
-.perf-ingest__hint {
-  font-size: 0.8125rem;
-  color: var(--iprm-text-light);
-  margin: 0 0 16px;
-  max-width: 70ch;
-}
-
-.perf-ingest__actions {
+/* Ряд кнопок: використовується і в блоці приймання, і внизу сторінки
+   деталей, тому клас самостійний, а не елемент .perf-ingest. */
+.perf-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 16px;
+}
+
+/* Щойно згенерований ключ. Показується рівно один раз (?reveal=1). */
+.perf-key {
+  background: var(--iprm-success-bg);
+  border: 1px solid var(--iprm-success-light);
+  border-radius: var(--iprm-radius-sm);
+  padding: 14px 16px;
+  margin: 0 0 16px;
+}
+
+.perf-key__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--iprm-text);
+  margin: 0 0 8px;
+}
+
+.perf-key__value {
+  display: block;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  color: var(--iprm-text);
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  padding: 10px 12px;
+  word-break: break-all;
+  user-select: all;
 }
 
 .perf-code {

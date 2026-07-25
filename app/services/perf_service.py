@@ -5,7 +5,8 @@
 Тут -- валідація payload-а, збереження і порівняння прогонів між собою.
 """
 import logging
-from datetime import datetime, timezone
+import math
+from datetime import datetime, timedelta, timezone
 
 from app.extensions import db
 from app.models.perf_run import (
@@ -23,6 +24,16 @@ MAX_RUNS = 100
 # Стелі проти роздування payload-а недобросовісним/зламаним клієнтом.
 MAX_PAGES = 200
 MAX_DETAIL_ITEMS = 10
+MAX_TYPE_BUCKETS = 30
+MAX_RESOURCE_NAME = 300
+# Заголовки документа, які показує UI. Решту не зберігаємо: це і зайва вага
+# рядка, і непотрібний слід (Set-Cookie тощо).
+KEPT_HEADERS = ('content-encoding', 'cache-control', 'server')
+
+# Годинники вимірювальної машини можуть трохи розходитись із серверними, але
+# замір "з майбутнього" назавжди осів би у верхівці списку і зламав би вибір
+# попереднього прогону.
+MAX_CLOCK_SKEW = timedelta(hours=1)
 
 # Дзеркалить REGRESSION_PCT / REGRESSION_ABS у tools/perf/perf_check.py:
 # регресія -- це погіршення одночасно у відсотках і в абсолюті, інакше
@@ -36,22 +47,49 @@ class PerfIngestError(ValueError):
     """Payload не пройшов валідацію -- відповідаємо 400."""
 
 
-def _as_int(value, field):
-    if value is None or value == '':
-        return None
+def _as_number(value, field):
+    """float із payload-а. Відсікає не-числа і не-скінченні значення.
+
+    json.loads за замовчуванням приймає нестандартні NaN/Infinity, а
+    int(round(inf)) кидає OverflowError повз звичайний перехоплювач -- звідси
+    окрема перевірка isfinite, інакше такий payload давав би 500 замість 400.
+    """
     try:
-        return int(round(float(value)))
+        number = float(value)
     except (TypeError, ValueError):
         raise PerfIngestError(f'Поле {field} має бути числом')
+    if not math.isfinite(number):
+        raise PerfIngestError(f'Поле {field} має бути скінченним числом')
+    return number
 
 
-def _as_float(value, field):
+def _as_int(value, field, minimum=None):
     if value is None or value == '':
         return None
+    result = int(round(_as_number(value, field)))
+    if minimum is not None and result < minimum:
+        raise PerfIngestError(f'Поле {field} не може бути менше {minimum}')
+    return result
+
+
+def _as_float(value, field, minimum=None):
+    if value is None or value == '':
+        return None
+    result = _as_number(value, field)
+    if minimum is not None and result < minimum:
+        raise PerfIngestError(f'Поле {field} не може бути менше {minimum}')
+    return result
+
+
+def _int_or_zero(value):
+    """М'яка версія для косметичних полів деталізації: непридатне значення
+    стає нулем, а не помилкою -- через зіпсований запис у списку ресурсів
+    не варто відкидати весь прогін."""
     try:
-        return float(value)
+        number = float(value)
     except (TypeError, ValueError):
-        raise PerfIngestError(f'Поле {field} має бути числом')
+        return 0
+    return int(round(number)) if math.isfinite(number) else 0
 
 
 def _as_text(value, limit):
@@ -61,14 +99,17 @@ def _as_text(value, limit):
 
 
 def _parse_measured_at(raw):
+    now = datetime.now(timezone.utc)
     if not raw:
-        return datetime.now(timezone.utc)
+        return now
     try:
         parsed = datetime.fromisoformat(str(raw).replace('Z', '+00:00'))
     except ValueError:
         raise PerfIngestError('measured_at має бути датою у форматі ISO 8601')
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
+    if parsed > now + MAX_CLOCK_SKEW:
+        raise PerfIngestError('measured_at не може бути в майбутньому')
     return parsed
 
 
@@ -79,16 +120,53 @@ def _clean_verdict(raw):
     return verdict
 
 
-def _clean_details(raw):
-    """Лишаємо тільки те, що показує UI, і обрізаємо списки до стелі."""
+def _clean_resources(raw):
+    """Нормалізувати список ресурсів до форми, яку очікує шаблон.
+
+    Кожен елемент отримує name/transfer/dur незалежно від того, що прислали:
+    без цього запис без 'name' валив сторінку деталей на рендері.
+    """
+    items = []
+    for entry in list(raw or [])[:MAX_DETAIL_ITEMS]:
+        if not isinstance(entry, dict):
+            continue
+        items.append({
+            'name': _as_text(entry.get('name'), MAX_RESOURCE_NAME),
+            'transfer': _int_or_zero(entry.get('transfer')),
+            'dur': _int_or_zero(entry.get('dur')),
+        })
+    return items
+
+
+def _clean_by_type(raw):
+    """Лишити найважчі MAX_TYPE_BUCKETS типів у нормалізованій формі."""
     if not isinstance(raw, dict):
         return {}
-    by_type = raw.get('by_type')
+    buckets = {}
+    for name, bucket in raw.items():
+        if not isinstance(bucket, dict):
+            continue
+        buckets[_as_text(name, 40)] = {
+            'count': _int_or_zero(bucket.get('count')),
+            'transfer': _int_or_zero(bucket.get('transfer')),
+        }
+    heaviest = sorted(buckets.items(), key=lambda kv: -kv[1]['transfer'])
+    return dict(heaviest[:MAX_TYPE_BUCKETS])
+
+
+def _clean_details(raw):
+    """Лишаємо тільки те, що показує UI, у передбачуваній формі й з обмеженнями."""
+    if not isinstance(raw, dict):
+        return {}
+    headers = raw.get('headers') if isinstance(raw.get('headers'), dict) else {}
     return {
-        'by_type': by_type if isinstance(by_type, dict) else {},
-        'heaviest': list(raw.get('heaviest') or [])[:MAX_DETAIL_ITEMS],
-        'uncompressed': list(raw.get('uncompressed') or [])[:MAX_DETAIL_ITEMS],
-        'headers': raw.get('headers') if isinstance(raw.get('headers'), dict) else {},
+        'by_type': _clean_by_type(raw.get('by_type')),
+        'heaviest': _clean_resources(raw.get('heaviest')),
+        'uncompressed': _clean_resources(raw.get('uncompressed')),
+        'headers': {
+            name: _as_text(headers.get(name), 200)
+            for name in KEPT_HEADERS if headers.get(name)
+        },
     }
 
 
@@ -115,16 +193,19 @@ def _build_page(raw):
         page.details = {}
         return page
 
-    page.ttfb = _as_int(raw.get('ttfb'), 'ttfb')
-    page.fcp = _as_int(raw.get('fcp'), 'fcp')
-    page.lcp = _as_int(raw.get('lcp'), 'lcp')
-    page.tbt = _as_int(raw.get('tbt'), 'tbt')
-    page.load_ms = _as_int(raw.get('load'), 'load')
-    page.cls = _as_float(raw.get('cls'), 'cls')
-    page.total_transfer = _as_int(raw.get('total_transfer'), 'total_transfer') or 0
-    page.req_count = _as_int(raw.get('req_count'), 'req_count') or 0
-    page.doc_transfer = _as_int(raw.get('doc_transfer'), 'doc_transfer') or 0
-    page.doc_decoded = _as_int(raw.get('doc_decoded'), 'doc_decoded') or 0
+    # Усі метрики невід'ємні за визначенням: від'ємне значення означає
+    # зіпсований payload, а не повільну сторінку -- краще 400, ніж сміття в
+    # історії та безглузді дельти в порівнянні.
+    page.ttfb = _as_int(raw.get('ttfb'), 'ttfb', minimum=0)
+    page.fcp = _as_int(raw.get('fcp'), 'fcp', minimum=0)
+    page.lcp = _as_int(raw.get('lcp'), 'lcp', minimum=0)
+    page.tbt = _as_int(raw.get('tbt'), 'tbt', minimum=0)
+    page.load_ms = _as_int(raw.get('load'), 'load', minimum=0)
+    page.cls = _as_float(raw.get('cls'), 'cls', minimum=0)
+    page.total_transfer = _as_int(raw.get('total_transfer'), 'total_transfer', minimum=0) or 0
+    page.req_count = _as_int(raw.get('req_count'), 'req_count', minimum=0) or 0
+    page.doc_transfer = _as_int(raw.get('doc_transfer'), 'doc_transfer', minimum=0) or 0
+    page.doc_decoded = _as_int(raw.get('doc_decoded'), 'doc_decoded', minimum=0) or 0
     page.verdict = _clean_verdict(raw.get('verdict'))
     page.budget = raw.get('budget') if isinstance(raw.get('budget'), dict) else {}
     page.details = _clean_details(raw.get('details'))
@@ -155,7 +236,7 @@ def ingest_run(payload):
         base_url=base_url,
         source=_as_text(payload.get('source'), 100),
         note=_as_text(payload.get('note'), 255),
-        runs_per_page=_as_int(payload.get('runs_per_page'), 'runs_per_page') or 0,
+        runs_per_page=_as_int(payload.get('runs_per_page'), 'runs_per_page', minimum=0) or 0,
         tool_version=_as_text(payload.get('tool_version'), 20),
         budgets=budgets if isinstance(budgets, dict) else {},
     )
@@ -170,7 +251,14 @@ def ingest_run(payload):
     db.session.add(run)
     db.session.commit()
 
-    _prune_old_runs()
+    # Прогін уже збережено, тож збій прибирання не має перетворюватись на 500:
+    # інакше клієнт вважав би надсилання невдалим і повторив --push, створивши дубль.
+    try:
+        _prune_old_runs()
+    except Exception:
+        db.session.rollback()
+        logger.exception('perf: не вдалося прибрати застарілі прогони')
+
     logger.info(
         'perf: run #%d accepted (%s, %d сторінок, %s)',
         run.id, run.base_url, run.pages_total, run.verdict,
