@@ -440,6 +440,30 @@ def build_payload(report, base_url, runs_count, note, source):
     }
 
 
+def load_report(path):
+    """Прочитати збережений --json прогін для повторного надсилання."""
+    try:
+        with open(path, encoding='utf-8') as f:
+            report = json.load(f)
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f'Не вдалося прочитати {path}: {exc}')
+    if not isinstance(report, dict) or not report:
+        raise SystemExit(f'{path} не схожий на збережений прогін')
+    return report
+
+
+def base_url_from_report(report, fallback):
+    """Дістати корінь сайту з URL-ів прогону -- надійніше за --base-url,
+    який під час повторного надсилання може відрізнятись від зміряного."""
+    for row in report.values():
+        url = row.get('url')
+        if url:
+            parsed = urlparse(url)
+            if parsed.scheme and parsed.netloc:
+                return f'{parsed.scheme}://{parsed.netloc}'
+    return fallback
+
+
 def push_report(url, token, payload):
     """Надіслати прогін в адмінку. True -- прийнято."""
     data = json.dumps(payload, ensure_ascii=False).encode('utf-8')
@@ -481,6 +505,8 @@ def main():
                     help='URL приймання в адмінці (або змінна PERF_PUSH_URL)')
     ap.add_argument('--token', default=os.environ.get('PERF_PUSH_TOKEN', ''),
                     help='ключ приймання з /admin/perf (або змінна PERF_PUSH_TOKEN)')
+    ap.add_argument('--push-json', default='',
+                    help='надіслати вже збережений --json прогін без повторного заміру')
     ap.add_argument('--note', default='', help='мітка прогону для адмінки')
     ap.add_argument('--source', default='',
                     help='мітка машини (типово -- ім\'я хоста)')
@@ -488,11 +514,32 @@ def main():
 
     if args.push and not args.token:
         ap.error('--push потребує --token (або змінної PERF_PUSH_TOKEN)')
+    if args.push_json and not args.push:
+        ap.error('--push-json потребує --push з адресою приймання')
 
     base = args.base_url.rstrip('/')
     paths = args.path or DEFAULT_PATHS
     profiles = args.profile or list(PROFILES)
     report = {}
+
+    # Доставка відокремлена від заміру: прогін міг бути зроблений раніше (або
+    # на іншій машині), і повторювати кількахвилинний замір лише заради
+    # надсилання немає сенсу.
+    if args.push_json:
+        report = load_report(args.push_json)
+        measured = [v for v in report.values() if 'error' not in v]
+        # Скільки прогонів було насправді -- беремо з самого файлу, а не з
+        # --runs: прапорець при повторному надсиланні може не збігатися.
+        runs_done = max((v.get('runs_ok') or 0 for v in measured), default=0) or args.runs
+        payload = build_payload(
+            report, base_url_from_report(report, base),
+            runs_done, args.note, args.source,
+        )
+        print(f'Надсилаю збережений прогін: {args.push_json} '
+              f'({len(measured)} виміряних сторінок)')
+        if not push_report(args.push, args.token, payload):
+            return 3
+        return 1 if any(v['verdict'] == 'FAIL' for v in measured) else 0
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
