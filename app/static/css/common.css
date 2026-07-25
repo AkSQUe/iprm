@@ -1476,6 +1476,16 @@ select.badge-select:disabled {
   border: none;
 }
 
+/* ========== FORM SUBMITTING (стан довгої операції) ==========
+   Пара до form-single-submit.js. Живе в common.css, а не в page-*.css:
+   довгі операції є і в адмінці (бекап, імпорт, звірка залишків). */
+
+form[data-single-submit][data-submitting='true'] button[type='submit'],
+form[data-single-submit][data-submitting='true'] input[type='submit'] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
 /* ========== FORM SECTIONS (структуровані форми) ========== */
 
 .form-section {

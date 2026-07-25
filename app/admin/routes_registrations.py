@@ -11,6 +11,7 @@ from sqlalchemy.orm import joinedload
 from app.admin import admin_bp
 from app.admin._helpers import try_commit
 from app.admin.decorators import admin_required
+from app.auth._helpers import is_safe_redirect_url
 from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
@@ -22,7 +23,18 @@ audit_logger = logging.getLogger('audit')
 
 
 def _redirect_after_action(reg):
-    if request.form.get('next') == 'registrations_all':
+    """Куди повернутись після дії в рядку списку.
+
+    Форми списку шлють у next поточний URL сторінки разом із фільтрами і
+    номером сторінки -- інакше менеджер після кожної дії опинявся б на
+    початку невідфільтрованого списку. Значення приходить з форми, тож
+    пропускаємо лише внутрішні відносні шляхи.
+    """
+    target = request.form.get('next', '')
+    if is_safe_redirect_url(target):
+        return redirect(target)
+    # Форми зі старим маркером (сторінка з кешу браузера).
+    if target == 'registrations_all':
         return redirect(url_for('admin.registrations_all'))
     if reg.instance_id:
         return redirect(url_for('admin.instance_registrations', instance_id=reg.instance_id))

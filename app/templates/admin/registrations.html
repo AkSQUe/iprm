@@ -9,6 +9,11 @@
 {% endblock %}
 
 {% block content %}
+{# Куди повернутись після дії в рядку: поточний URL разом із фільтрами і
+   номером сторінки. Інакше менеджер після кожної дії опинявся б на початку
+   невідфільтрованого списку. rstrip('?') прибирає хвіст, який full_path
+   лишає, коли параметрів немає. #}
+{% set back_url = request.full_path.rstrip('?') %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
   <div class="admin-layout admin-layout--wide">
@@ -255,7 +260,7 @@
                 <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="status" value="confirmed">
-                  <input type="hidden" name="next" value="registrations_all">
+                  <input type="hidden" name="next" value="{{ back_url }}">
                   <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--accent">{{ icon('check') }} Підтвердити</button>
                 </form>
                 {% endif %}
@@ -263,7 +268,7 @@
                 <form method="POST" action="{{ url_for('admin.registration_attendance', reg_id=reg.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="cpd_points" value="{{ (reg.instance.effective_cpd_points if reg.instance else 0) or 0 }}">
-                  <input type="hidden" name="next" value="registrations_all">
+                  <input type="hidden" name="next" value="{{ back_url }}">
                   <button type="submit" class="admin-actions-menu__item">{{ icon('verified') }} Підтвердити присутність (БПР)</button>
                 </form>
                 {% endif %}
@@ -273,13 +278,13 @@
                 </a>
                 <form method="POST" action="{{ url_for('admin.registration_certificate_resend', reg_id=reg.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <input type="hidden" name="next" value="registrations_all">
+                  <input type="hidden" name="next" value="{{ back_url }}">
                   <button type="submit" class="admin-actions-menu__item">{{ icon('forward_to_inbox') }} Переслати сертифікат</button>
                 </form>
                 {% elif reg.status != 'cancelled' %}
                 <form method="POST" action="{{ url_for('admin.registration_certificate_issue', reg_id=reg.id) }}" data-confirm="Видати сертифікат і надіслати на email?" data-confirm-ok="Видати">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <input type="hidden" name="next" value="registrations_all">
+                  <input type="hidden" name="next" value="{{ back_url }}">
                   <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--accent">{{ icon('workspace_premium') }} Видати сертифікат</button>
                 </form>
                 {% endif %}
@@ -287,7 +292,7 @@
                 <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}" data-confirm="Скасувати реєстрацію?" data-confirm-ok="Скасувати реєстрацію" data-confirm-cancel="Не скасовувати" data-confirm-danger>
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="status" value="cancelled">
-                  <input type="hidden" name="next" value="registrations_all">
+                  <input type="hidden" name="next" value="{{ back_url }}">
                   <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--danger">{{ icon('close') }} Скасувати реєстрацію</button>
                 </form>
                 {% endif %}

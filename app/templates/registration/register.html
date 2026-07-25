@@ -253,7 +253,6 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/form-single-submit.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/form-progress.js') }}?v={{ assets_version }}" defer></script>
 {% if tariffs %}
 <script src="{{ url_for('static', filename='js/reg-tariffs.js') }}?v={{ assets_version }}" defer></script>

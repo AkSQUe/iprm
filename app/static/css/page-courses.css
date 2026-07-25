@@ -966,12 +966,6 @@ button.iprm-tag:focus-visible {
   margin-bottom: 16px;
 }
 
-/* Loading state для кнопки в момент submit */
-form[data-single-submit][data-submitting='true'] button[type='submit'] {
-  opacity: 0.6;
-  cursor: progress;
-}
-
 /* ========== SCHEDULE TOGGLE (Список / Календар) ========== */
 
 .iprm-schedule-toggle {

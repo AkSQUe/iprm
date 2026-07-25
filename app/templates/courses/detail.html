@@ -601,14 +601,12 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/form-single-submit.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/sticky-cta.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/faq-accordion.js') }}?v={{ assets_version }}" defer></script>
 {% if site_settings.show_roi_calculator %}
 <script src="{{ url_for('static', filename='js/roi-calc.js') }}?v={{ assets_version }}" defer></script>
 {% endif %}
 {% if referral_link %}
-<script src="{{ url_for('static', filename='js/toast.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/copy-to-clipboard.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/select-on-focus.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/referral-share-tools.js') }}?v={{ assets_version }}" defer></script>

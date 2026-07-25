@@ -35,7 +35,8 @@
 
   {# Actions #}
   <div class="backup-actions">
-    <form method="POST" action="{{ url_for('admin.backup_create') }}" class="backup-actions__form">
+    <form method="POST" action="{{ url_for('admin.backup_create') }}" class="backup-actions__form"
+          data-single-submit data-submitting-label="Створюємо копію…">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="backup-actions__row">
         <select name="backup_type" class="form-input backup-actions__select">
@@ -98,7 +99,8 @@
           <td data-label="Дата">{{ backup.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
           <td class="backup-table__actions" data-label="Дії">
             {% if backup.is_restorable %}
-            <form method="POST" action="{{ url_for('admin.backup_restore', backup_id=backup.id) }}" class="backup-action-form" data-confirm="Відновити базу даних з копії #{{ backup.id }}? Поточні дані буде перезаписано." data-confirm-ok="Відновити базу" data-confirm-cancel="Не відновлювати" data-confirm-danger>
+            <form method="POST" action="{{ url_for('admin.backup_restore', backup_id=backup.id) }}" class="backup-action-form" data-confirm="Відновити базу даних з копії #{{ backup.id }}? Поточні дані буде перезаписано." data-confirm-ok="Відновити базу" data-confirm-cancel="Не відновлювати" data-confirm-danger
+                  data-single-submit data-submitting-label="Відновлюємо…">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="backup-action-btn backup-action-btn--restore" title="Відновити">&#x21bb;</button>
             </form>

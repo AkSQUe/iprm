@@ -125,6 +125,7 @@
        class="btn-admin btn-admin--secondary">{{ icon('edit') }} Редагувати</a>
     <form method="POST" class="admin-inline" data-confirm="Скасувати резервування і повернути залишки на склад MM Medic?"
           data-confirm-ok="Скасувати резерв" data-confirm-cancel="Залишити резерв" data-confirm-danger
+          data-single-submit data-submitting-label="Скасовуємо…"
           action="{{ url_for('admin.instance_materials_cancel', instance_id=instance.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn-admin btn-admin--danger">{{ icon('close') }} Скасувати резерв</button>
@@ -150,7 +151,8 @@
   </div>
 
   {% if rows %}
-  <form method="POST" action="{{ form_action }}" id="materialsForm" data-mode="{{ mode }}" data-consumed="{{ '1' if is_consumed else '' }}">
+  <form method="POST" action="{{ form_action }}" id="materialsForm" data-mode="{{ mode }}" data-consumed="{{ '1' if is_consumed else '' }}"
+        data-single-submit data-submitting-label="Обробляємо…">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="admin-table-wrap">
     <table class="admin-table" id="materialsTable">

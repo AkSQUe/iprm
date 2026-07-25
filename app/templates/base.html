@@ -129,6 +129,9 @@
   {# toast.js перший — form-validate.js використовує window.iprmToast #}
   <script defer src="{{ url_for('static', filename='js/toast.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/form-validate.js') }}?v={{ assets_version }}"></script>
+  {# form-single-submit слухає submit на document і сам пропускає скасовані
+     сабміти, тож підключається глобально -- довгі операції є і в адмінці. #}
+  <script defer src="{{ url_for('static', filename='js/form-single-submit.js') }}?v={{ assets_version }}"></script>
   {# recaptcha-v3 ПІСЛЯ form-validate -- щоб submit-listener form-validate
      зареєструвався першим (capture-phase fires in registration order). #}
   <script defer src="{{ url_for('static', filename='js/recaptcha-v3.js') }}?v={{ assets_version }}"></script>

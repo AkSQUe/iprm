@@ -34,10 +34,11 @@
     overlay.className = 'iprm-confirm';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'iprm-confirm-msg');
     overlay.hidden = true;
     overlay.innerHTML =
       '<div class="iprm-confirm__box" role="document">' +
-        '<p class="iprm-confirm__msg"></p>' +
+        '<p class="iprm-confirm__msg" id="iprm-confirm-msg"></p>' +
         '<div class="iprm-confirm__actions">' +
           '<button type="button" class="iprm-confirm__btn iprm-confirm__btn--cancel"></button>' +
           '<button type="button" class="iprm-confirm__btn iprm-confirm__btn--ok"></button>' +
@@ -53,6 +54,7 @@
   }
 
   var _onResolve = null;
+  var _lastFocus = null;
 
   function open(opts) {
     var ov = ensureOverlay();
@@ -62,6 +64,11 @@
     okBtn.textContent = opts.okText || t('Підтвердити');
     cancelBtn.textContent = opts.cancelText || t('Скасувати');
     okBtn.classList.toggle('iprm-confirm__btn--danger', !!opts.danger);
+
+    /* Елемент, з якого відкрили діалог: у адмінці це кнопка в рядку таблиці,
+       тож після закриття фокус треба повернути саме туди, інакше клавіатурний
+       користувач втрачає місце у списку. */
+    _lastFocus = document.activeElement;
 
     ov.hidden = false;
     requestAnimationFrame(function () { ov.classList.add('is-visible'); });
@@ -75,6 +82,11 @@
     if (!overlay) return;
     overlay.classList.remove('is-visible');
     setTimeout(function () { if (overlay) overlay.hidden = true; }, 200);
+    var back = _lastFocus;
+    _lastFocus = null;
+    if (back && document.body.contains(back) && typeof back.focus === 'function') {
+      back.focus();
+    }
     var cb = _onResolve;
     _onResolve = null;
     if (cb) cb(result);
@@ -88,7 +100,22 @@
     else if (e.target === overlay) { close(false); }
   });
   document.addEventListener('keydown', function (e) {
-    if (overlay && !overlay.hidden && e.key === 'Escape') close(false);
+    if (!overlay || overlay.hidden) return;
+    if (e.key === 'Escape') { close(false); return; }
+    if (e.key !== 'Tab') return;
+    /* Поки діалог відкритий, Tab ходить лише між його кнопками: інакше фокус
+       іде на елементи під оверлеєм, і клавіатурний користувач "клацає" по
+       сторінці, якої не бачить. */
+    var btns = [
+      overlay.querySelector('.iprm-confirm__btn--cancel'),
+      overlay.querySelector('.iprm-confirm__btn--ok'),
+    ];
+    var i = btns.indexOf(document.activeElement);
+    var next = e.shiftKey
+      ? (i <= 0 ? btns.length - 1 : i - 1)
+      : (i === btns.length - 1 ? 0 : i + 1);
+    e.preventDefault();
+    btns[next].focus();
   });
 
   // Перехоплення submit-форм з data-confirm
