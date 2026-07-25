@@ -19,6 +19,8 @@ APScheduler==3.10.4
 cryptography==45.0.7
 PyJWT==2.10.1
 openpyxl==3.1.5
+python-docx==1.1.2
+beautifulsoup4==4.13.4
 requests==2.32.3
 bleach==6.2.0
 Authlib==1.7.2
@@ -47,6 +49,8 @@ greenlet==3.3.0
 typing_extensions==4.15.0
 packaging==25.0
 et_xmlfile==2.0.0
+lxml==6.0.2
+soupsieve==2.7
 certifi==2024.8.30
 charset-normalizer==3.4.0
 idna==3.10
