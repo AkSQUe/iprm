@@ -37,7 +37,10 @@ DEFAULT_LETTERHEAD = 'docs/legal/Шаблон листа ІПРМ.docx'
 DEFAULT_OUTPUT_DIR = 'docs/legal'
 DEFAULT_SIGNER_TITLE = 'Ректор'
 DEFAULT_SIGNER_NAME = 'Заболотня Д. О.'
-SEAL_MEDIA = 'word/media/image1.png'  # печатка з підписом у бланку листа
+# Печатка з підписом: спільний зі сторінкою оферти статичний файл (стиснений),
+# а якщо його немає -- запасний варіант із самого бланка листа.
+SEAL_STATIC = 'images/legal/seal-signature.png'
+SEAL_MEDIA = 'word/media/image1.png'
 
 FONT = 'Times New Roman'
 BODY_PT = 12
@@ -393,6 +396,25 @@ def _build_body(doc, content):
             run.bold = True
 
 
+def _seal_image():
+    """Печатку беремо зі статики (та сама, що в PDF), інакше -- з бланка.
+
+    Копія в статиці стиснена, тому документ важить у рази менше за варіант
+    із вбудованим у бланк оригіналом."""
+    static_seal = Path(current_app.static_folder) / SEAL_STATIC
+    if static_seal.exists():
+        return io.BytesIO(static_seal.read_bytes())
+
+    with zipfile.ZipFile(_letterhead_path()) as archive:
+        try:
+            return io.BytesIO(archive.read(SEAL_MEDIA))
+        except KeyError:
+            raise LegalDocxError(
+                'Немає зображення печатки: ані %s у статиці, ані %s у бланку %s.'
+                % (SEAL_STATIC, SEAL_MEDIA, _letterhead_path().name)
+            )
+
+
 def _add_signature(doc):
     """Підписний блок: посада, печатка з підписом, прізвище."""
     from app.models.site_settings import SiteSettings
@@ -402,14 +424,7 @@ def _add_signature(doc):
                                           DEFAULT_SIGNER_TITLE)
     signer_name = current_app.config.get('LEGAL_DOCX_SIGNER_NAME',
                                          DEFAULT_SIGNER_NAME)
-    with zipfile.ZipFile(_letterhead_path()) as archive:
-        try:
-            seal = io.BytesIO(archive.read(SEAL_MEDIA))
-        except KeyError:
-            raise LegalDocxError(
-                'У бланку %s немає зображення печатки (%s).'
-                % (_letterhead_path().name, SEAL_MEDIA)
-            )
+    seal = _seal_image()
 
     doc.add_paragraph().paragraph_format.space_after = Pt(0)
 
