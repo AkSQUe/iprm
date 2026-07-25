@@ -20,7 +20,7 @@ from docx.enum.table import WD_ALIGN_VERTICAL, WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Cm, Pt, RGBColor
+from docx.shared import Cm, Mm, Pt, RGBColor
 from flask import current_app, render_template
 
 # Реєстр сторінок, доступних для експорту: ключ -> (шаблон, ім'я файла)
@@ -61,9 +61,9 @@ HEADING_FORMAT = {
 # На скільки підняти рядок посади й прізвища відносно нижнього краю печатки
 # (два рядки основного тексту).
 SIGNATURE_LIFT_PT = 28
-# Ширина печатки: підібрана так, щоб підписний блок ставав на сторінку з
-# останнім розділом, а не перескакував на майже порожню наступну.
-SEAL_WIDTH_CM = 3.6
+# Печатка: висота 39 мм, ширина -- пропорційно (оригінал 357x322 px).
+SEAL_HEIGHT_MM = 39
+SEAL_WIDTH_MM = 43.24
 
 
 class LegalDocxError(RuntimeError):
@@ -459,6 +459,25 @@ def _add_signature(doc):
     cells[0].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.LEFT
     cells[0].paragraphs[0].add_run(signer_title)
     cells[1].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
-    cells[1].paragraphs[0].add_run().add_picture(seal, width=Cm(SEAL_WIDTH_CM))
+    cells[1].paragraphs[0].add_run().add_picture(
+        seal, width=Mm(SEAL_WIDTH_MM), height=Mm(SEAL_HEIGHT_MM))
     cells[2].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.RIGHT
     cells[2].paragraphs[0].add_run(signer_name)
+
+    # Word завжди тримає абзац після останньої таблиці. У повний кегль він не
+    # вміщається під печаткою і тягне за собою порожню сторінку -- лишаємо його
+    # мінімальним. Висоту порожнього абзацу задає форматування знака абзацу
+    # (pPr/rPr), а не ран, тому кегль ставимо саме там.
+    tail = doc.add_paragraph()
+    tail.paragraph_format.space_before = Pt(0)
+    tail.paragraph_format.space_after = Pt(0)
+    tail.paragraph_format.line_spacing = 1
+    tail_ppr = tail._p.get_or_add_pPr()
+    tail_rpr = tail_ppr.find(qn('w:rPr'))
+    if tail_rpr is None:
+        tail_rpr = OxmlElement('w:rPr')
+        tail_ppr.insert(0, tail_rpr)
+    for tag in ('w:sz', 'w:szCs'):
+        element = OxmlElement(tag)
+        element.set(qn('w:val'), '2')  # half-points -> 1 pt
+        tail_rpr.append(element)

@@ -70,7 +70,7 @@
   .legal-section { margin-bottom: 6pt; }
   .legal-section h2 {
     font-size: 12pt;
-    margin: 14pt 0 6pt;
+    margin: 12pt 0 6pt;
     text-align: left;
     break-after: avoid;
   }
@@ -97,7 +97,7 @@
   table.legal-details {
     width: 100%;
     border-collapse: collapse;
-    margin: 6pt 0 12pt;
+    margin: 4pt 0;
   }
   table.legal-details td {
     border: 0.5pt solid #000000;
@@ -107,15 +107,15 @@
   }
   table.legal-details td:first-child { width: 35%; font-weight: bold; }
 
-  .legal-page__closing { font-weight: bold; margin-top: 10pt; }
+  .legal-page__closing { font-weight: bold; margin: 6pt 0 0; }
 
   /* ===== Підписний блок ===== */
-  .signature { margin-top: 4pt; break-inside: avoid; }
+  .signature { margin-top: 2pt; break-inside: avoid; }
   .signature__company { font-weight: bold; margin-bottom: 0; }
   .signature__row {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 4pt;
+    margin-top: 2pt;
   }
   .signature__row td {
     border: 0;
@@ -129,8 +129,12 @@
      вище виграє за специфічністю і прізвище лишається внизу. */
   .signature__row td:first-child,
   .signature__row td:last-child { padding-bottom: 28pt; }
-  .signature__seal { text-align: center; }
-  .signature__seal img { width: 3.6cm; height: auto; }
+  /* line-height: 0 прибирає фантомний простір під інлайновим зображенням
+     (місце під виносний елемент шрифту) -- інакше рядок печатки на пару
+     міліметрів вищий за саму печатку. */
+  .signature__seal { text-align: center; line-height: 0; }
+  /* Печатка: висота 39 мм, ширина -- пропорційно (оригінал 357x322). */
+  .signature__seal img { height: 39mm; width: 43.24mm; display: block; margin: 0 auto; }
   .signature__name { text-align: right; }
 </style>
 </head>
