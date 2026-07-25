@@ -178,7 +178,13 @@
   <div class="admin-empty">
     {{ icon('bolt', cls='admin-empty__icon') }}
     <h3 class="admin-empty__title">Замірів ще немає</h3>
-    <p>Згенеруйте ключ вище і запустіть інструмент з прапорцем <code>--push</code>.</p>
+    <p>
+      {% if key_state.present %}
+      Запустіть інструмент командою вище - перший прогін зʼявиться тут.
+      {% else %}
+      Згенеруйте ключ вище і запустіть інструмент з прапорцем <code>--push</code>.
+      {% endif %}
+    </p>
   </div>
   {% endif %}
 
