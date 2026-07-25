@@ -212,6 +212,12 @@ def logout():
     session.clear()
     if lang:
         session['lang'] = lang
+    # Глушник Google One Tap. Без нього вихід зациклювався: після редіректу
+    # на "/" юзер уже анонімний -> рендериться One Tap з auto_select=true ->
+    # GSI мовчки віддає credential -> /auth/google/onetap логінить назад.
+    # Знімається сам: усі три шляхи входу роблять session.clear().
+    session['onetap_off'] = True
+    flash(_('Ви вийшли з облікового запису'), 'success')
     return redirect(url_for('main.index'))
 
 

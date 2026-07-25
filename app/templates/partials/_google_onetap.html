@@ -8,14 +8,20 @@
      явні кнопки входу, а фоновий One Tap там шкодив: його відповідь
      приходила посеред redirect-флоу і своїм location.href обривала
      навігацію на /auth/google/callback (nginx фіксував 499), плюс давав
-     цикл "логін -> редірект на логін".
+     цикл "логін -> редірект на логін";
+   - юзер щойно НЕ вийшов сам (session.onetap_off, ставить auth.logout).
+     Інакше вихід зациклювався: після редіректу на "/" юзер анонімний,
+     auto_select=true мовчки віддає credential і логінить його назад --
+     ззовні виглядало як "натиснув Вийти, сторінка перезавантажилась,
+     я досі в акаунті". Прапорець знімає перший же свідомий вхід
+     (усі три шляхи входу роблять session.clear()).
 
    GSI library від Google сама керує: коли показати prompt, коли його
    приховати, як часто. Ми лише вставляємо її і реєструємо callback.
    Дані credential обробляє /static/js/google-onetap.js, бекенд --
    /auth/google/onetap. #}
 {% if site_settings.is_google_oauth_configured and current_user.is_anonymous
-      and request.blueprint != 'auth' %}
+      and request.blueprint != 'auth' and not session.get('onetap_off') %}
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script defer
         src="{{ url_for('static', filename='js/google-onetap.js') }}?v={{ assets_version }}"

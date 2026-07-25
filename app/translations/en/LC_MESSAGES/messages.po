@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-25 17:53+0300\n"
+"POT-Creation-Date: 2026-07-25 18:07+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -581,6 +581,9 @@ msgstr "Error saving password. Please try again."
 
 msgid "Пароль успішно змінено. Тепер ви можете увійти."
 msgstr "Password changed successfully. You can now sign in."
+
+msgid "Ви вийшли з облікового запису"
+msgstr "You have signed out"
 
 msgid "Дані для сертифіката збережено. Дякуємо!"
 msgstr "Certificate details saved. Thank you!"

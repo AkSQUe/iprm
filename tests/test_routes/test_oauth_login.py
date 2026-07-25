@@ -274,6 +274,35 @@ class TestOneTapWidgetPlacement:
         assert b'g_id_onload' in client.get('/').data
 
 
+class TestOneTapAfterLogout:
+    """Вихід зациклювався: після редіректу на "/" юзер уже анонімний, One
+    Tap із auto_select=true мовчки віддавав credential і логінив назад --
+    ззовні "натиснув Вийти, сторінка перезавантажилась, я досі в акаунті"."""
+
+    def test_widget_suppressed_right_after_logout(self, client, google_configured):
+        email = _email()
+        assert _onetap(client, _claims(email)).status_code == 200
+        user = User.query.filter_by(email=email).first()
+        assert _is_logged_in(client, user)
+
+        assert client.post('/auth/logout').status_code == 302
+        assert not _is_logged_in(client, user)
+        assert b'g_id_onload' not in client.get('/').data
+
+    def test_deliberate_login_clears_the_flag(self, client, google_configured):
+        email = _email()
+        _onetap(client, _claims(email))
+        client.post('/auth/logout')
+        with client.session_transaction() as sess:
+            assert sess.get('onetap_off') is True
+
+        # Свідомий вхід знімає глушник: усі три шляхи входу (пароль, redirect
+        # -флоу Google, One Tap) роблять session.clear() перед login_user.
+        assert _onetap(client, _claims(email)).status_code == 200
+        with client.session_transaction() as sess:
+            assert 'onetap_off' not in sess
+
+
 class TestRedirectFlowCollisionPage:
     def test_direct_hit_without_context_redirects_to_login(self, client):
         resp = client.get('/auth/oauth/collision')
