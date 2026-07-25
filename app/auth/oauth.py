@@ -7,12 +7,13 @@ Routes:
   POST /auth/google/link/start      -- (логін потрібен) почати link-flow
   POST /auth/google/unlink          -- (логін потрібен) видалити Google identity
 
-Callback розв'язує 3 сценарії:
+Callback розв'язує 3 сценарії (спільний резолвер _resolve_oauth_login,
+його ж використовує One Tap):
   1. Знайдено identity (provider='google', sub=token.sub) -> логін.
-  2. Не знайдено, але email вже зайнятий password-identity у нашій БД
-     -> show "цей email вже зареєстровано; увійдіть паролем і прив'яжіть
-     Google в кабінеті". НЕ зливаємо автоматично (захист від OAuth-
-     based account takeover; рекомендація OWASP).
+  2. Не знайдено, але email уже належить наявному User -> прив'язуємо
+     identity до нього, якщо володіння скринькою доведене з обох боків
+     (див. _can_attach_to_existing); інакше -- сторінка-пояснення
+     "цей email уже зареєстровано" (захист від pre-hijacking, OWASP).
   3. Інакше -- створюємо новий User через User.create_with_oauth().
      email_verified Google завжди true для @gmail.com, але перевіряємо
      claim явно (для Workspace доменів інколи буває false).
@@ -49,9 +50,21 @@ logger = logging.getLogger(__name__)
 SESSION_OAUTH_STATE = '_oauth_state'
 SESSION_OAUTH_NEXT = '_oauth_next'
 SESSION_OAUTH_ACTION = '_oauth_action'   # 'login' (default) | 'link'
+SESSION_OAUTH_COLLISION = '_oauth_collision'
 
 ACTION_LOGIN = 'login'
 ACTION_LINK = 'link'
+
+# Результати _resolve_oauth_login() -- спільні для redirect-flow і One Tap.
+RESOLVE_OK = 'ok'              # вхід за наявною identity
+RESOLVE_CREATED = 'created'    # створено новий акаунт
+RESOLVE_LINKED = 'linked'      # identity прив'язано до наявного акаунта
+RESOLVE_INACTIVE = 'inactive'
+RESOLVE_COLLISION = 'collision'
+RESOLVE_FAILED = 'failed'
+
+# Статуси, за яких юзера можна логінити.
+RESOLVE_SUCCESS = (RESOLVE_OK, RESOLVE_CREATED, RESOLVE_LINKED)
 
 
 def _capture_ui_language(user):
@@ -168,71 +181,155 @@ PROVIDER_LABELS = {
 }
 
 
-def _handle_login(provider, sub, email, email_verified, given_name, family_name,
-                  safe_claims, next_url):
-    """Гілка login: знайти identity або створити нового User. Працює
-    для будь-якого OAuth/OIDC-провайдера (Google, Apple, ...) -- різниця
-    лише у назві провайдера та у текстах повідомлень."""
+def _can_attach_to_existing(user, provider_email_verified):
+    """Чи безпечно прив'язати OAuth-identity до НАЯВНОГО акаунта з тим
+    самим email -- без пароля і без окремого підтвердження від юзера.
+
+    Так, якщо провайдер підтвердив володіння адресою І при цьому:
+      - наш акаунт теж має підтверджений email (обидві сторони довели
+        володіння тією самою скринькою -- це та сама людина), АБО
+      - в акаунта взагалі немає пароля (захоплювати нічого; доказ
+        володіння скринькою рівносильний нашому ж reset-password --
+        саме так входять імпортовані учасники, у яких пароля не було).
+
+    Ні, якщо пароль є, а email у нас НЕ підтверджений: такий акаунт міг
+    завести зловмисник на чужу адресу, і пароль лишився б у нього
+    (pre-hijacking; OWASP). Тут показуємо сторінку-пояснення.
+    """
+    if not provider_email_verified:
+        return False
+    if user.email_confirmed:
+        return True
+    has_password = AuthIdentity.query.filter(
+        AuthIdentity.user_id == user.id,
+        AuthIdentity.provider == AuthIdentity.PROVIDER_PASSWORD,
+        AuthIdentity.password_hash.isnot(None),
+    ).first() is not None
+    return not has_password
+
+
+def _resolve_oauth_login(provider, sub, email, email_verified,
+                         given_name, family_name, safe_claims):
+    """Знайти / прив'язати / створити User за OIDC-claims. НЕ комітить --
+    caller вирішує, коли фіксувати транзакцію.
+
+    Спільний резолвер для redirect-flow і One Tap: логіка входу однакова,
+    різниться лише формат відповіді (HTTP-редірект vs JSON).
+
+    Повертає (user, status), де status -- одна з RESOLVE_* констант;
+    user is None для всіх статусів, окрім RESOLVE_SUCCESS.
+    """
     label = PROVIDER_LABELS.get(provider, provider)
     identity = AuthIdentity.find_by_provider_sub(provider, sub)
 
     if identity:
         user = identity.user
         if not user.is_active:
-            flash(_('Обліковий запис деактивовано'), 'error')
-            return redirect(url_for('auth.login'))
+            return None, RESOLVE_INACTIVE
         if email:
             identity.email = email
         identity.email_verified = email_verified
         identity.raw_claims = safe_claims
         identity.touch()
+        return user, RESOLVE_OK
+
+    # Identity немає. Дивимось, чи є вже User із цим email: у нас 1200+
+    # імпортованих учасників без жодної identity, тож шукати саме
+    # password-identity недостатньо -- інакше create_with_oauth() впав би
+    # на UNIQUE(users.email).
+    user = User.query.filter_by(email=email).first() if email else None
+
+    if user is None:
         try:
-            db.session.commit()
+            user = User.create_with_oauth(
+                provider=provider,
+                sub=sub,
+                email=email,
+                email_verified=email_verified,
+                first_name=given_name,
+                last_name=family_name,
+                raw_claims=safe_claims,
+            )
+            _capture_ui_language(user)
         except Exception:
             db.session.rollback()
-            logger.exception('Failed to update identity on %s login', label)
+            logger.exception('Failed to create %s OAuth user', label)
+            return None, RESOLVE_FAILED
+        logger.info('Created %s OAuth user email=%s', label, email)
+        return user, RESOLVE_CREATED
 
-        session.clear()
-        login_user(user, remember=True)
-        if next_url and _is_safe_redirect_url(next_url):
-            return redirect(next_url)
-        return redirect(url_for('auth.account'))
+    if not user.is_active:
+        return None, RESOLVE_INACTIVE
 
-    # Identity не знайдено -- перевіряємо email-collision.
-    existing_pw_identity = (
-        AuthIdentity.find_password_identity_by_email(email) if email else None
+    if not _can_attach_to_existing(user, email_verified):
+        return None, RESOLVE_COLLISION
+
+    db.session.add(AuthIdentity(
+        user_id=user.id,
+        provider=provider,
+        provider_sub=str(sub),
+        email=email,
+        email_verified=email_verified,
+        raw_claims=safe_claims,
+    ))
+    # Провайдер щойно підтвердив володіння скринькою -- фіксуємо це і в нас,
+    # щоб не смикати юзера листом підтвердження після входу через OAuth.
+    if email_verified and not user.email_confirmed:
+        user.email_confirmed = True
+    logger.info('Linked %s identity to existing user id=%d', label, user.id)
+    return user, RESOLVE_LINKED
+
+
+def _collision_url(email, label):
+    """Зберегти контекст email-колізії в сесії і повернути URL сторінки-
+    пояснення. Саме через сесію, а не query-string -- щоб email не світився
+    в URL, логах nginx і Referer."""
+    session[SESSION_OAUTH_COLLISION] = {'email': email, 'provider': label}
+    return url_for('auth.oauth_collision')
+
+
+@auth_bp.route('/oauth/collision', methods=['GET'], localize=False)
+def oauth_collision():
+    """Сторінка "email уже зареєстровано" -- спільна для redirect-flow і
+    One Tap. Контекст одноразовий (pop): прямий захід без нього -> логін."""
+    ctx = session.pop(SESSION_OAUTH_COLLISION, None)
+    if not ctx:
+        return redirect(url_for('auth.login'))
+    return render_template('auth/oauth_email_collision.html', **ctx)
+
+
+def _handle_login(provider, sub, email, email_verified, given_name, family_name,
+                  safe_claims, next_url):
+    """Гілка login redirect-flow. Працює для будь-якого OAuth/OIDC-
+    провайдера (Google, Apple, ...) -- різниця лише у назві провайдера
+    та у текстах повідомлень."""
+    label = PROVIDER_LABELS.get(provider, provider)
+    user, status = _resolve_oauth_login(
+        provider, sub, email, email_verified, given_name, family_name, safe_claims,
     )
-    if existing_pw_identity:
-        # OWASP: НЕ зливаємо автоматично. Показуємо інструкцію.
-        return render_template(
-            'auth/oauth_email_collision.html',
-            email=email,
-            provider=label,
-        )
 
-    # Жодних збігів -- створюємо нового User через OAuth-фабрику.
+    if status == RESOLVE_INACTIVE:
+        flash(_('Обліковий запис деактивовано'), 'error')
+        return redirect(url_for('auth.login'))
+    if status == RESOLVE_COLLISION:
+        return redirect(_collision_url(email, label))
+    if status not in RESOLVE_SUCCESS:
+        flash(_('Помилка при створенні облікового запису'), 'error')
+        return redirect(url_for('auth.login'))
+
     try:
-        user = User.create_with_oauth(
-            provider=provider,
-            sub=sub,
-            email=email,
-            email_verified=email_verified,
-            first_name=given_name,
-            last_name=family_name,
-            raw_claims=safe_claims,
-        )
-        _capture_ui_language(user)
         db.session.commit()
-        logger.info('Created %s OAuth user id=%d email=%s', label, user.id, user.email)
     except Exception:
         db.session.rollback()
-        logger.exception('Failed to create %s OAuth user', label)
-        flash(_('Помилка при створенні облікового запису'), 'error')
+        logger.exception('Failed to persist %s login', label)
+        flash(_('Помилка входу через %(provider)s. Спробуйте ще раз.', provider=label), 'error')
         return redirect(url_for('auth.login'))
 
     session.clear()
     login_user(user, remember=True)
-    flash(_('Вітаємо! Обліковий запис створено через %(provider)s.', provider=label), 'success')
+    if status in (RESOLVE_CREATED, RESOLVE_LINKED):
+        # flash() пише в сесію -- лише ПІСЛЯ session.clear().
+        flash(_('Вітаємо! Тепер ви можете входити через %(provider)s.', provider=label), 'success')
     if next_url and _is_safe_redirect_url(next_url):
         return redirect(next_url)
     return redirect(url_for('auth.account'))
@@ -328,10 +425,9 @@ def google_onetap():
     JWT уже містить підпис Google + state-binding (nonce), тож CSRF-захист
     не потрібен -- сам credential і є аутентифікація запиту.
 
-    Логіка lookup-or-create -- паралельна _handle_login() з redirect-flow,
-    але без HTTP-redirect (повертаємо JSON, фронт сам редіректить).
-    email-collision -- НЕ зливаємо автоматично; повертаємо 409 + URL
-    логіну для ручної прив'язки.
+    Логіка lookup-or-link-or-create -- той самий _resolve_oauth_login(),
+    що й у redirect-flow, але без HTTP-redirect (повертаємо JSON, фронт
+    сам редіректить). email-collision -> 409 + URL сторінки-пояснення.
     """
     from flask import jsonify
     from app.models.site_settings import SiteSettings
@@ -368,38 +464,21 @@ def google_onetap():
         if claims.get(k) is not None
     }
 
-    identity = AuthIdentity.find_by_provider_sub(
-        AuthIdentity.PROVIDER_GOOGLE, sub,
+    user, status = _resolve_oauth_login(
+        AuthIdentity.PROVIDER_GOOGLE, sub, email, email_verified,
+        given_name, family_name, safe_claims,
     )
 
-    if identity:
-        user = identity.user
-        if not user.is_active:
-            return jsonify({'ok': False, 'error': 'inactive'}), 403
-        identity.email = email
-        identity.email_verified = email_verified
-        identity.raw_claims = safe_claims
-        identity.touch()
-    else:
-        if AuthIdentity.find_password_identity_by_email(email):
-            return jsonify({
-                'ok': False,
-                'error': 'email_collision',
-                'login_url': url_for('auth.login'),
-            }), 409
-        try:
-            user = User.create_with_oauth(
-                provider=AuthIdentity.PROVIDER_GOOGLE,
-                sub=sub, email=email, email_verified=email_verified,
-                first_name=given_name, last_name=family_name,
-                raw_claims=safe_claims,
-            )
-            _capture_ui_language(user)
-            logger.info('One Tap created user id=%d email=%s', user.id, user.email)
-        except Exception:
-            db.session.rollback()
-            logger.exception('One Tap: failed to create user')
-            return jsonify({'ok': False, 'error': 'create_failed'}), 500
+    if status == RESOLVE_INACTIVE:
+        return jsonify({'ok': False, 'error': 'inactive'}), 403
+    if status == RESOLVE_COLLISION:
+        return jsonify({
+            'ok': False,
+            'error': 'email_collision',
+            'next': _collision_url(email, PROVIDER_LABELS[AuthIdentity.PROVIDER_GOOGLE]),
+        }), 409
+    if status not in RESOLVE_SUCCESS:
+        return jsonify({'ok': False, 'error': 'create_failed'}), 500
 
     try:
         db.session.commit()

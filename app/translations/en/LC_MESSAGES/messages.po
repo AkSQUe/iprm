@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-24 22:41+0300\n"
+"POT-Creation-Date: 2026-07-25 10:23+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -454,8 +454,12 @@ msgid "Помилка при створенні облікового запис�
 msgstr "Error creating account"
 
 #, python-format
-msgid "Вітаємо! Обліковий запис створено через %(provider)s."
-msgstr "Welcome! Your account was created via %(provider)s."
+msgid "Помилка входу через %(provider)s. Спробуйте ще раз."
+msgstr "Sign-in via %(provider)s failed. Please try again."
+
+#, python-format
+msgid "Вітаємо! Тепер ви можете входити через %(provider)s."
+msgstr "Welcome! You can now sign in with %(provider)s."
 
 #, python-format
 msgid "%(provider)s вже прив'язано до вашого облікового запису"

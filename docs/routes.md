@@ -26,6 +26,24 @@
 | GET | `/auth/settings` | Налаштування профілю |
 | GET | `/auth/confirm-email/<token>` | Підтвердження email |
 
+### OAuth / OIDC
+
+Мовного префікса не мають (`localize=False`): URL-и фіксовані в консолях
+Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()` в
+[app/auth/oauth.py](../app/auth/oauth.py).
+
+| Метод | URL | Опис |
+|-------|-----|------|
+| GET | `/auth/google/start` | Старт Google-флоу (`?action=link` -- прив'язка) |
+| GET | `/auth/google/callback` | Повернення з Google: вхід / прив'язка / створення |
+| POST | `/auth/google/onetap` | Credential JWT від Google One Tap (JSON, CSRF-exempt) |
+| POST | `/auth/google/unlink` | Від'єднати Google |
+| GET | `/auth/apple/start` | Старт Apple Sign In |
+| GET/POST | `/auth/apple/callback` | Повернення з Apple (`form_post`, CSRF-exempt) |
+| POST | `/auth/apple/unlink` | Від'єднати Apple |
+| GET | `/auth/oauth/collision` | Пояснення "email уже зареєстровано" (контекст із сесії) |
+| GET | `/auth/account/connections` | Способи входу: прив'язка/від'єднання провайдерів |
+
 ## Courses
 
 | Метод | URL | Опис |

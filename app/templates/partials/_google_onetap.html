@@ -3,13 +3,19 @@
    Умовно показуємо тільки коли:
    - Google OAuth налаштовано і увімкнено (`is_google_oauth_configured`);
    - юзер не залогінений (`current_user.is_anonymous`) -- бо для логіненого
-     One Tap не має сенсу.
+     One Tap не має сенсу;
+   - сторінка НЕ з блупринта auth. На /auth/login і /auth/register уже є
+     явні кнопки входу, а фоновий One Tap там шкодив: його відповідь
+     приходила посеред redirect-флоу і своїм location.href обривала
+     навігацію на /auth/google/callback (nginx фіксував 499), плюс давав
+     цикл "логін -> редірект на логін".
 
    GSI library від Google сама керує: коли показати prompt, коли його
    приховати, як часто. Ми лише вставляємо її і реєструємо callback.
    Дані credential обробляє /static/js/google-onetap.js, бекенд --
    /auth/google/onetap. #}
-{% if site_settings.is_google_oauth_configured and current_user.is_anonymous %}
+{% if site_settings.is_google_oauth_configured and current_user.is_anonymous
+      and request.blueprint != 'auth' %}
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script defer
         src="{{ url_for('static', filename='js/google-onetap.js') }}?v={{ assets_version }}"

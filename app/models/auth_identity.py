@@ -12,8 +12,8 @@
 
 UNIQUE(provider, provider_sub) гарантує, що одна Google-учётка не може
 бути прив'язана до двох наших User. INDEX(provider, email) -- для
-email-collision lookup ("чи має email john@gmail.com уже password-
-identity, перш ніж створити Google-identity для того ж email").
+identity-first логіну за паролем ("чи є password-identity з email
+john@gmail.com").
 """
 from datetime import datetime, timezone
 
@@ -71,7 +71,8 @@ class AuthIdentity(TimestampMixin, db.Model):
 
     @classmethod
     def find_password_identity_by_email(cls, email):
-        """Найти password-identity для дедуплікації при OAuth-флоу."""
+        """Знайти password-identity за email -- identity-first lookup для
+        входу з паролем (app/auth/routes.py)."""
         if not email:
             return None
         return cls.query.filter_by(
