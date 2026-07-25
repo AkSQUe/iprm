@@ -11,8 +11,14 @@
 {# First-party проксі (nginx): лоадер і collect-маяки йдуть через власний
    домен (/ngx-i/...), щоб оминути блокувальники, що ріжуть google-домени.
    Конфіг nginx -- у docs/deployment.md. Базу транспорту передаємо в
-   analytics.js через data-ga-transport (там виставляється transport_url). #}
-<script async src="/ngx-i/loader.js?id={{ _ga_id }}"></script>
+   analytics.js через data-ga-transport (там виставляється transport_url).
+
+   Сам лоадер (gtag.js, ~161 KB) розміткою НЕ підключаємо: на /blog/ він був
+   39% ваги сторінки і забирав канал у LCP-зображення. Його адресу віддаємо
+   через data-ga-loader, а вставляє його analytics.js після рендеру. Команди
+   gtag() до того моменту чекають у черзі dataLayer і програються, щойно
+   лоадер приїде -- тож page_view і події з ga-events.js не губляться. #}
 <script async src="{{ url_for('static', filename='js/analytics.js') }}?v={{ assets_version }}"
-        data-ga-id="{{ _ga_id }}" data-ga-transport="/ngx-i"></script>
+        data-ga-id="{{ _ga_id }}" data-ga-transport="/ngx-i"
+        data-ga-loader="/ngx-i/loader.js?id={{ _ga_id }}"></script>
 {% endif %}
