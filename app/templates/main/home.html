@@ -51,7 +51,8 @@
            data-hero-video
            data-video-webm="{{ url_for('static', filename='video/home-hero.webm') }}?v={{ assets_version }}"
            data-video-mp4="{{ url_for('static', filename='video/home-hero.mp4') }}?v={{ assets_version }}">
-        <div class="home-hero-media__poster"></div>
+        <img class="home-hero-media__poster" alt="" aria-hidden="true" decoding="async"
+             src="{{ url_for('static', filename='images/main/home-hero-poster.webp') }}?v={{ assets_version }}">
       </div>
       {% endif %}
       <div class="iprm-hero__content">

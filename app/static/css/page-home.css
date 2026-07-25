@@ -24,13 +24,24 @@
 }
 
 /* Постер -- це і фолбек (мобільні, reduced-motion, заблокований автоплей),
-   і перший кадр, поки відео не готове. */
+   і перший кадр, поки відео не готове. Саме <img>, а не фон у CSS: URL із
+   шаблону несе ?v=assets_version, інакше заміна постера не пробила б річний
+   кеш статики. */
 .home-hero-media__poster {
   position: absolute;
   inset: 0;
-  background: url('../images/main/home-hero-poster.webp') center / cover no-repeat;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   opacity: var(--home-hero-media-opacity);
   filter: saturate(0.92);
+  transition: opacity 0.6s ease;
+}
+
+/* Відео пішло -- постер більше не потрібен (мінус композитний шар). Клас
+   вішає home-hero-video.js, тож при відмові відео постер лишається. */
+.home-hero-media.is-video-ready .home-hero-media__poster {
+  opacity: 0;
 }
 
 .home-hero-media__video {
