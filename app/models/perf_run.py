@@ -53,11 +53,15 @@ class PerfRun(TimestampMixin, db.Model):
     # {"mobile": {"lcp": [2500, 4000], ...}, "desktop": {...}} -- межі WARN/FAIL.
     budgets = db.Column(db.JSON, nullable=False, default=dict)
 
+    # lazy='select', а не 'selectin': список прогонів показує лише лічильники
+    # (pages_total/warn/fail), тож selectin тягнув би сотні рядків метрик з
+    # JSON-деталями на кожен перегляд списку. Там, де метрики потрібні
+    # (сторінка деталей), вони довантажуються явним selectinload.
     pages = db.relationship(
         'PerfPageMetric',
         back_populates='run',
         cascade='all, delete-orphan',
-        lazy='selectin',
+        lazy='select',
         order_by='PerfPageMetric.id',
     )
 
@@ -134,8 +138,6 @@ class PerfPageMetric(TimestampMixin, db.Model):
         db.CheckConstraint(
             "verdict IN ('OK', 'WARN', 'FAIL')", name='ck_perf_page_metrics_verdict',
         ),
-        # Тренд однієї сторінки в часі -- найчастіший запит після списку прогонів.
-        db.Index('ix_perf_page_metrics_profile_path', 'profile', 'path'),
     )
 
     def __repr__(self):
@@ -148,10 +150,6 @@ class PerfPageMetric(TimestampMixin, db.Model):
     @property
     def is_measured(self):
         return not self.error
-
-    @property
-    def transfer_display(self):
-        return _kb(self.total_transfer)
 
     @property
     def headers(self):
@@ -170,7 +168,3 @@ class PerfPageMetric(TimestampMixin, db.Model):
         """[(тип, {count, transfer}), ...] за спаданням ваги."""
         by_type = (self.details or {}).get('by_type', {}) or {}
         return sorted(by_type.items(), key=lambda kv: -(kv[1] or {}).get('transfer', 0))
-
-
-def _kb(value):
-    return f'{value / 1024:.0f} KB' if value else '-'
