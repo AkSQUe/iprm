@@ -83,6 +83,14 @@ class Config:
     BACKUP_OPERATION_TIMEOUT = int(os.environ.get('BACKUP_OPERATION_TIMEOUT', '3600'))
     BACKUP_MAX_CONCURRENT = int(os.environ.get('BACKUP_MAX_CONCURRENT', '1'))
 
+    # Експорт юридичних сторінок у .docx (flask legal-docx)
+    LEGAL_DOCX_LETTERHEAD = os.environ.get(
+        'LEGAL_DOCX_LETTERHEAD', 'docs/legal/Шаблон листа ІПРМ.docx')
+    LEGAL_DOCX_OUTPUT_DIR = os.environ.get('LEGAL_DOCX_OUTPUT_DIR', 'docs/legal')
+    LEGAL_DOCX_SIGNER_TITLE = os.environ.get('LEGAL_DOCX_SIGNER_TITLE', 'Ректор')
+    LEGAL_DOCX_SIGNER_NAME = os.environ.get(
+        'LEGAL_DOCX_SIGNER_NAME', 'Заболотня Д. О.')
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

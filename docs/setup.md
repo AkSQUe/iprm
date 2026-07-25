@@ -55,6 +55,38 @@ flask db upgrade
 flask db downgrade
 ```
 
+## Експорт юридичних сторінок у .docx
+
+Публічна оферта, політики та дисклеймер вивантажуються у Word на фірмовому
+бланку. Текст береться з тих самих Jinja-шаблонів, що й публічні сторінки, тому
+документ не розходиться із сайтом.
+
+```bash
+# Одна сторінка (файл лягає в docs/legal/)
+flask legal-docx offer
+
+# Кілька сторінок або всі одразу
+flask legal-docx offer privacy --output-dir build
+flask legal-docx --all
+
+# Без підписного блоку з печаткою
+flask legal-docx offer --no-seal
+```
+
+Доступні ключі: `offer`, `privacy`, `cookies`, `disclaimer`, `refund`
+(див. `LEGAL_PAGES` у [app/services/legal_docx_service.py](../app/services/legal_docx_service.py)).
+
+Верхній колонтитул (логотип, реквізити) і зображення печатки з підписом
+беруться з бланка `docs/legal/Шаблон листа ІПРМ.docx`. Оформлення документа:
+Times New Roman 12 pt, поля 2/1/3/2 см (ліве/праве/верхнє/нижнє).
+
+| Параметр конфігурації | Призначення | Типове значення |
+|-----------------------|-------------|-----------------|
+| `LEGAL_DOCX_LETTERHEAD` | Шлях до бланка листа | `docs/legal/Шаблон листа ІПРМ.docx` |
+| `LEGAL_DOCX_OUTPUT_DIR` | Тека для згенерованих файлів | `docs/legal` |
+| `LEGAL_DOCX_SIGNER_TITLE` | Посада у підписному блоці | `Ректор` |
+| `LEGAL_DOCX_SIGNER_NAME` | Прізвище у підписному блоці | `Заболотня Д. О.` |
+
 ## Залежності
 
 | Пакет | Версія | Призначення |
@@ -69,3 +101,5 @@ flask db downgrade
 | pg8000 | >=1.31 | PostgreSQL-драйвер |
 | python-dotenv | >=1.0 | Завантаження .env |
 | gunicorn | >=22.0 | WSGI-сервер (prod) |
+| python-docx | >=1.1 | Експорт юридичних сторінок у .docx |
+| beautifulsoup4 | >=4.12 | Розбір HTML при експорті у .docx |

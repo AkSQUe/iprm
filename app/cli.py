@@ -68,6 +68,50 @@ def seed_courses():
     )
 
 
+@click.command('legal-docx')
+@click.argument('pages', nargs=-1)
+@click.option('--all', 'export_all', is_flag=True,
+              help='Експортувати всі доступні сторінки.')
+@click.option('--output-dir', default=None,
+              help='Куди зберегти файли (типово docs/legal).')
+@click.option('--no-seal', is_flag=True,
+              help='Без підписного блоку з печаткою.')
+@with_appcontext
+def legal_docx(pages, export_all, output_dir, no_seal):
+    """Експортувати юридичні сторінки сайту у .docx на фірмовому бланку.
+
+    Текст береться з тих самих Jinja-шаблонів, що й публічні сторінки,
+    тому документ не розходиться із сайтом.
+
+    \b
+    Приклади:
+      flask legal-docx offer
+      flask legal-docx offer privacy --output-dir build
+      flask legal-docx --all
+    """
+    from app.services.legal_docx_service import (
+        LEGAL_PAGES, LegalDocxError, export_page,
+    )
+
+    if export_all:
+        targets = sorted(LEGAL_PAGES)
+    elif pages:
+        targets = list(pages)
+    else:
+        click.echo('Вкажіть сторінку або --all. Доступні: %s'
+                   % ', '.join(sorted(LEGAL_PAGES)))
+        return
+
+    for page in targets:
+        try:
+            path = export_page(page, output_dir=output_dir,
+                               with_seal=not no_seal)
+        except LegalDocxError as exc:
+            click.echo('Помилка (%s): %s' % (page, exc), err=True)
+            raise SystemExit(1)
+        click.echo('%s -> %s' % (page, path))
+
+
 @click.group('backup')
 def backup_group():
     """Управління резервними копіями бази даних."""

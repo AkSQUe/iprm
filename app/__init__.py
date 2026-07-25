@@ -147,10 +147,11 @@ def create_app(config_name=None):
         max_age=3600,
     )
 
-    from app.cli import seed_courses, media_prune_orphans, backup_group
+    from app.cli import seed_courses, media_prune_orphans, backup_group, legal_docx
     app.cli.add_command(seed_courses)
     app.cli.add_command(media_prune_orphans)
     app.cli.add_command(backup_group)
+    app.cli.add_command(legal_docx)
 
     @app.context_processor
     def inject_assets_version():
