@@ -2,7 +2,11 @@
 
    Public API:  window.iprmToast(message, type, opts)
      type: 'success' | 'error' | 'warning' | 'info'  (default 'info')
-     opts: { duration?: number (ms, 0 = не закривати), title?: string }
+     opts: { duration?: number (ms, 0 = не закривати), title?: string,
+             action?: { label: string, onClick: function } }
+
+   action додає кнопку в тост -- нею користується відкат дії
+   (undo-toast.js). Клік викликає onClick і закриває тост.
 
    Також піднімає server-side flash-повідомлення з #iprm-flash-data
    (рендериться у base.html) і показує їх як toasts.
@@ -79,6 +83,18 @@
         if (el.parentNode) el.parentNode.removeChild(el);
       }, { once: true });
       setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 600);
+    }
+
+    if (opts.action && opts.action.label) {
+      var actionBtn = document.createElement('button');
+      actionBtn.type = 'button';
+      actionBtn.className = 'iprm-toast__action';
+      actionBtn.textContent = opts.action.label;
+      actionBtn.addEventListener('click', function () {
+        if (typeof opts.action.onClick === 'function') opts.action.onClick();
+        dismiss();
+      });
+      el.querySelector('.iprm-toast__body').appendChild(actionBtn);
     }
 
     el.querySelector('.iprm-toast__close').addEventListener('click', dismiss);

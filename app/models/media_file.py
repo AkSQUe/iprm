@@ -14,10 +14,10 @@ import os
 from flask import current_app
 
 from app.extensions import db
-from app.models.mixins import TimestampMixin, BigIntPK
+from app.models.mixins import BigIntPK, SoftDeleteMixin, TimestampMixin
 
 
-class MediaFile(TimestampMixin, db.Model):
+class MediaFile(TimestampMixin, SoftDeleteMixin, db.Model):
     __tablename__ = 'media_files'
 
     USAGE_TYPES = (
@@ -85,7 +85,7 @@ class MediaFile(TimestampMixin, db.Model):
     # ---- Запити ----
     @classmethod
     def for_entity(cls, entity_type, entity_id, usage_type=None):
-        q = cls.query.filter_by(
+        q = cls.alive().filter_by(
             entity_type=entity_type, entity_id=entity_id, is_active=True,
         )
         if usage_type:

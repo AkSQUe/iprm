@@ -215,6 +215,27 @@ def create_app(config_name=None):
         return {'site_settings': settings}
 
     @app.context_processor
+    def inject_undo_offer():
+        """Пропозиція відкату останньої дії -- тост із кнопкою "Повернути".
+
+        Забираємо з сесії один раз за запит (g), бо шаблон може рендеритись
+        не сам по собі, а разом із вкладеними -- інакше пропозиція зникла б
+        ще до рендеру base.html. Токен додаємо тут: кнопка відкату шле POST.
+        """
+        from flask import g, has_request_context
+        from app.undo import pop_undo
+        # Листи рендеряться у фоновому потоці, де немає ні сесії, ні CSRF.
+        if not has_request_context():
+            return {'undo_offer': None}
+        if not hasattr(g, '_undo_offer'):
+            offer = pop_undo()
+            if offer:
+                from flask_wtf.csrf import generate_csrf
+                offer = {**offer, 'csrf': generate_csrf()}
+            g._undo_offer = offer
+        return {'undo_offer': g._undo_offer}
+
+    @app.context_processor
     def inject_recaptcha():
         """Експозиція reCAPTCHA-сервісу в шаблони (для _recaptcha.html partial
         у <head> та можливих умовних рендерів). Сервіс легкий -- ні мережі,

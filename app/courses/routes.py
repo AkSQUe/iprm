@@ -351,7 +351,7 @@ def course_by_slug(slug):
 
     # Опубліковані відгуки, привʼязані до цього курсу.
     from app.models.review import Review
-    course_reviews = Review.query.filter_by(
+    course_reviews = Review.alive().filter_by(
         course_id=course.id, is_published=True,
     ).order_by(Review.sort_order, Review.created_at.desc()).limit(6).all()
 

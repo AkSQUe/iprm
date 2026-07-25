@@ -5,10 +5,10 @@
 після 'approved'. Підтримка гілок: self-FK parent_id (відповіді на коментарі).
 """
 from app.extensions import db
-from app.models.mixins import TimestampMixin, BigIntPK
+from app.models.mixins import BigIntPK, SoftDeleteMixin, TimestampMixin
 
 
-class BlogComment(TimestampMixin, db.Model):
+class BlogComment(TimestampMixin, SoftDeleteMixin, db.Model):
     __tablename__ = 'blog_comments'
 
     STATUS_PENDING = 'pending'

@@ -55,7 +55,7 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">{{ 'Зняти' if r.is_published else 'Опублікувати' }}</button>
               </form>
-              <form method="POST" action="{{ url_for('admin.review_delete', review_id=r.id) }}" data-confirm="Видалити відгук?" data-confirm-ok="Видалити відгук" data-confirm-danger>
+              <form method="POST" action="{{ url_for('admin.review_delete', review_id=r.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">{{ icon('delete') }}</button>
               </form>

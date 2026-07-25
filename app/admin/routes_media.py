@@ -2,8 +2,12 @@
 
 Завантаження -- через спільний /admin/upload/media (routes_uploads). Тут --
 керування реєстром MediaFile: список з фільтрами/пагінацією, редагування
-alt-тексту, видалення (з файлами). Прив'язка до сутностей робиться в
-редакторах блогу/тренерів/курсів (фази 3-5)."""
+alt-тексту, видалення. Прив'язка до сутностей робиться в редакторах
+блогу/тренерів/курсів (фази 3-5).
+
+Видалення м'яке: рядок лишається з позначкою deleted_at, файли на диску --
+теж, тож дію можна відкотити. Остаточно видаляє і рядок, і файли фонова
+задача purge_soft_deleted (app.services.scheduler_service)."""
 import logging
 
 from flask import render_template, redirect, url_for, flash, request, jsonify
@@ -14,7 +18,7 @@ from app.admin import admin_bp
 from app.admin.decorators import admin_required
 from app.extensions import db
 from app.models.media_file import MediaFile
-from app.services import media_service
+from app.undo import offer_undo
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
@@ -83,7 +87,7 @@ def media_library():
     usage_type = (request.args.get('usage_type') or '').strip()
     page = request.args.get('page', 1, type=int)
 
-    q = MediaFile.query
+    q = MediaFile.alive()
     if entity_type == 'none':
         q = q.filter(MediaFile.entity_type.is_(None))
     elif entity_type:
@@ -95,8 +99,8 @@ def media_library():
         page=page, per_page=_PER_PAGE, error_out=False,
     )
     stats = {
-        'total': MediaFile.query.count(),
-        'unattached': MediaFile.query.filter(MediaFile.entity_type.is_(None)).count(),
+        'total': MediaFile.alive().count(),
+        'unattached': MediaFile.alive().filter(MediaFile.entity_type.is_(None)).count(),
     }
     return render_template(
         'admin/media_library.html',
@@ -114,7 +118,7 @@ def media_list_json():
     usage_type = (request.args.get('usage_type') or '').strip()
     page = request.args.get('page', 1, type=int)
 
-    q = MediaFile.query
+    q = MediaFile.alive()
     if entity_type == 'none':
         q = q.filter(MediaFile.entity_type.is_(None))
     elif entity_type:
@@ -154,15 +158,28 @@ def media_update_alt(media_id):
 @admin_bp.route('/media/<int:media_id>/delete', methods=['POST'])
 @admin_required
 def media_delete(media_id):
+    """М'яке видалення: файл лишається на диску до purge, тож відкат можливий.
+
+    Undo пропонуємо ЛИШЕ для непривʼязаних файлів. Для привʼязаного видалення
+    додатково вичищає посилання на нього з контенту (блоки блогу, регалії
+    тренера), а їх restore не поверне -- обіцяти повний відкат там не можна.
+    """
     media = db.session.get(MediaFile, media_id)
-    if media:
+    if media and not media.is_deleted:
         was_attached = media.entity_type is not None
-        _detach_media_refs(media)
-        media_service.delete_media(media)
+        if was_attached:
+            _detach_media_refs(media)
+        media.soft_delete()
         try:
             db.session.commit()
             audit_logger.info('Admin %s deleted media %s', current_user.email, media_id)
-            flash('Медіафайл видалено' + (' (відв\'язано від контенту)' if was_attached else ''), 'success')
+            if was_attached:
+                flash("Медіафайл видалено (відв'язано від контенту)", 'success')
+            else:
+                offer_undo(
+                    'Медіафайл видалено',
+                    url_for('admin.media_restore', ids=str(media_id)),
+                )
         except Exception:
             db.session.rollback()
             logger.exception('Failed to delete media %s', media_id)
@@ -185,16 +202,29 @@ def media_bulk_delete():
     for raw in request.form.getlist('ids'):
         if raw.isdigit():
             ids.append(int(raw))
-    deleted = 0
+    deleted, detached = [], 0
     if ids:
-        for media in MediaFile.query.filter(MediaFile.id.in_(ids)).all():
-            _detach_media_refs(media)
-            media_service.delete_media(media)
-            deleted += 1
+        for media in MediaFile.alive().filter(MediaFile.id.in_(ids)).all():
+            if media.entity_type is not None:
+                _detach_media_refs(media)
+                detached += 1
+            media.soft_delete()
+            deleted.append(media.id)
         try:
             db.session.commit()
-            audit_logger.info('Admin %s bulk-deleted %d media', current_user.email, deleted)
-            flash('Видалено медіафайлів: %d' % deleted, 'success')
+            audit_logger.info(
+                'Admin %s bulk-deleted %d media', current_user.email, len(deleted),
+            )
+            # Відкат пропонуємо, лише якщо жодного посилання в контенті не
+            # чіпали -- інакше повернувся б файл, але не місце, де він стояв.
+            if deleted and not detached:
+                offer_undo(
+                    'Видалено медіафайлів: %d' % len(deleted),
+                    url_for('admin.media_restore',
+                            ids=','.join(str(i) for i in deleted)),
+                )
+            else:
+                flash('Видалено медіафайлів: %d' % len(deleted), 'success')
         except Exception:
             db.session.rollback()
             logger.exception('Bulk media delete failed')
@@ -204,3 +234,34 @@ def media_bulk_delete():
         entity_type=(request.form.get('entity_type') or None),
         usage_type=(request.form.get('usage_type') or None),
     ))
+
+
+@admin_bp.route('/media/restore', methods=['POST'])
+@admin_required
+def media_restore():
+    """Відкат м'якого видалення. ids -- список через кому (одиничне видалення
+    і масове користуються тим самим роутом)."""
+    ids = [int(p) for p in (request.args.get('ids') or '').split(',') if p.isdigit()]
+    restored = 0
+    if ids:
+        rows = MediaFile.query.filter(
+            MediaFile.id.in_(ids), MediaFile.deleted_at.isnot(None),
+        ).all()
+        for media in rows:
+            media.restore()
+            restored += 1
+        try:
+            db.session.commit()
+            audit_logger.info(
+                'Admin %s restored %d media', current_user.email, restored,
+            )
+        except Exception:
+            db.session.rollback()
+            logger.exception('Media restore failed')
+            flash('Помилка при відновленні', 'error')
+            return redirect(url_for('admin.media_library'))
+    if restored:
+        flash('Повернено медіафайлів: %d' % restored, 'success')
+    else:
+        flash('Файли вже не можна повернути', 'error')
+    return redirect(url_for('admin.media_library'))

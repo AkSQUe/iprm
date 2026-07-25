@@ -45,7 +45,9 @@ def test_review_toggle_and_delete(client, admin):
     client.post(f'/admin/reviews/{rev.id}/toggle')
     assert Review.query.get(rev.id).is_published is False
     client.post(f'/admin/reviews/{rev.id}/delete')
-    assert Review.query.get(rev.id) is None
+    # М'яке видалення: зі списків зник, але рядок ще можна повернути.
+    assert db.session.get(Review, rev.id).is_deleted
+    assert Review.alive().filter_by(id=rev.id).first() is None
 
 
 def test_home_shows_stub_without_reviews(client, db_session):

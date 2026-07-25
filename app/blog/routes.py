@@ -19,7 +19,7 @@ def _approved_comment_tree(post_id):
     Один запит, дерево будуємо в памʼяті (без N+1).
     """
     rows = (
-        BlogComment.query
+        BlogComment.alive()
         .filter_by(post_id=post_id, status=BlogComment.STATUS_APPROVED)
         .order_by(BlogComment.created_at.asc())
         .all()

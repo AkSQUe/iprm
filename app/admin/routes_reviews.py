@@ -10,6 +10,7 @@ from app.admin.forms import ReviewForm
 from app.extensions import db
 from app.models.course import Course
 from app.models.review import Review
+from app.undo import offer_undo
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
@@ -18,7 +19,7 @@ audit_logger = logging.getLogger('audit')
 @admin_bp.route('/reviews')
 @admin_required
 def reviews_list():
-    reviews = Review.query.options(
+    reviews = Review.alive().options(
         db.joinedload(Review.course),
     ).order_by(Review.sort_order, Review.created_at.desc()).all()
     return render_template('admin/reviews.html', reviews=reviews)
@@ -66,7 +67,7 @@ def review_create():
 @admin_required
 def review_edit(review_id):
     review = db.session.get(Review, review_id)
-    if not review:
+    if not review or review.is_deleted:
         flash('Відгук не знайдено', 'error')
         return redirect(url_for('admin.reviews_list'))
     form = ReviewForm(obj=review)
@@ -92,7 +93,7 @@ def review_edit(review_id):
 @admin_required
 def review_toggle(review_id):
     review = db.session.get(Review, review_id)
-    if review:
+    if review and not review.is_deleted:
         review.is_published = not review.is_published
         try:
             db.session.commit()
@@ -107,15 +108,40 @@ def review_toggle(review_id):
 @admin_bp.route('/reviews/<int:review_id>/delete', methods=['POST'])
 @admin_required
 def review_delete(review_id):
+    """М'яке видалення: діалогу підтвердження немає, натомість тост із
+    кнопкою "Повернути" (відкат тут повний -- відновлюється весь рядок)."""
     review = db.session.get(Review, review_id)
-    if review:
-        db.session.delete(review)
+    if review and not review.is_deleted:
+        review.soft_delete()
         try:
             db.session.commit()
             audit_logger.info('Admin %s deleted review %s', current_user.email, review_id)
-            flash('Відгук видалено', 'success')
+            offer_undo(
+                'Відгук «%s» видалено' % review.author_name,
+                url_for('admin.review_restore', review_id=review_id),
+            )
         except Exception:
             logger.exception('Failed to delete review %d', review_id)
             db.session.rollback()
             flash('Помилка при видаленні', 'error')
+    return redirect(url_for('admin.reviews_list'))
+
+
+@admin_bp.route('/reviews/<int:review_id>/restore', methods=['POST'])
+@admin_required
+def review_restore(review_id):
+    review = db.session.get(Review, review_id)
+    if not review or not review.is_deleted:
+        # Рядок уже почистила фонова задача або відкат натиснули двічі.
+        flash('Відгук уже не можна повернути', 'error')
+        return redirect(url_for('admin.reviews_list'))
+    review.restore()
+    try:
+        db.session.commit()
+        audit_logger.info('Admin %s restored review %s', current_user.email, review_id)
+        flash('Відгук повернено', 'success')
+    except Exception:
+        logger.exception('Failed to restore review %d', review_id)
+        db.session.rollback()
+        flash('Помилка при відновленні', 'error')
     return redirect(url_for('admin.reviews_list'))

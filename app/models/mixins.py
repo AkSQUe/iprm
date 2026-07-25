@@ -17,6 +17,35 @@ class TimestampMixin:
     updated_at = db.Column(db.DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
 
+class SoftDeleteMixin:
+    """М'яке видалення: рядок лишається в БД з відміткою deleted_at.
+
+    Потрібне для undo: адмін видаляє одним кліком, без діалогу, і має вікно,
+    щоб натиснути "Повернути" у тості. Рядки остаточно чистить фонова задача
+    purge_soft_deleted (app.services.scheduler_service).
+
+    Запити мусять явно відсікати видалене -- alive() або
+    filter(Model.deleted_at.is_(None)). Автоматичного фільтра свідомо немає:
+    неявна поведінка запитів ховала б від читача, які саме рядки він бачить.
+    """
+    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True, index=True)
+
+    @property
+    def is_deleted(self):
+        return self.deleted_at is not None
+
+    def soft_delete(self):
+        self.deleted_at = utcnow()
+
+    def restore(self):
+        self.deleted_at = None
+
+    @classmethod
+    def alive(cls):
+        """Запит лише за невидаленими рядками."""
+        return cls.query.filter(cls.deleted_at.is_(None))
+
+
 def _current_language():
     try:
         from flask_babel import get_locale

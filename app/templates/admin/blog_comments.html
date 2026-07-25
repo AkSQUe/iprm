@@ -75,7 +75,7 @@
                 <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Спам</button>
               </form>
               {% endif %}
-              <form method="POST" action="{{ url_for('admin.blog_comment_delete', comment_id=c.id) }}" class="admin-inline-form" data-confirm="Видалити коментар?" data-confirm-ok="Видалити коментар" data-confirm-danger>
+              <form method="POST" action="{{ url_for('admin.blog_comment_delete', comment_id=c.id) }}" class="admin-inline-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="status" value="{{ status }}">
                 <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>

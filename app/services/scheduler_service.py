@@ -132,6 +132,14 @@ def init_scheduler(app):
     )
 
     scheduler.add_job(
+        purge_soft_deleted,
+        trigger=CronTrigger(hour=4, minute=30),  # daily at 4:30 AM
+        id='soft_deleted_purge',
+        replace_existing=True,
+        name='Остаточне видалення м\'яко видалених записів',
+    )
+
+    scheduler.add_job(
         reconcile_material_reservations,
         trigger=CronTrigger(minute='*/30'),  # every 30 minutes
         id='material_reservations_reconcile',
@@ -381,6 +389,27 @@ def cleanup_xlsx_uploads():
                 cleanup_stale_xlsx_uploads(max_age_minutes=30)
             except Exception:
                 logger.exception('cleanup_xlsx_uploads failed')
+
+
+def purge_soft_deleted():
+    """Periodic job: остаточно прибрати м'яко видалені рядки після витримки.
+
+    М'яке видалення існує заради відкату (тост "Повернути"), а не заради
+    архіву: через SOFT_DELETE_RETENTION_DAYS рядок і файли зникають назавжди.
+    """
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('soft_deleted_purge') as got:
+            if not got:
+                logger.debug('purge: another worker holds the lock, skipping')
+                return
+            try:
+                from app.services.soft_delete_purge import purge_expired
+                stats = purge_expired()
+                if any(stats.values()):
+                    logger.info('purge_soft_deleted: %s', stats)
+            except Exception:
+                logger.exception('purge_soft_deleted failed')
 
 
 def reconcile_material_reservations():

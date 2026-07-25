@@ -63,7 +63,7 @@ def _resolve_parent(post_id, raw_parent_id):
     except (ValueError, TypeError):
         return None
     parent = db.session.get(BlogComment, pid)
-    if (parent is None or parent.post_id != post_id
+    if (parent is None or parent.is_deleted or parent.post_id != post_id
             or parent.status != BlogComment.STATUS_APPROVED):
         return None
     # дитина матиме глибину parent_depth + 1; тримаємо <= MAX_DEPTH

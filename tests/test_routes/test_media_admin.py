@@ -64,7 +64,10 @@ class TestMediaAdmin:
         client.post(f'/admin/media/{mid}/alt', data={'alt': 'Опис'})
         assert db.session.get(MediaFile, mid).alt_text == 'Опис'
         client.post(f'/admin/media/{mid}/delete', data={})
-        assert db.session.get(MediaFile, mid) is None
+        # М'яке видалення: рядок лишається (щоб був відкат), але зникає зі
+        # списків і з віддачі контенту.
+        assert db.session.get(MediaFile, mid).is_deleted
+        assert MediaFile.alive().filter_by(id=mid).first() is None
 
     def test_requires_admin(self, client, media_root):
         # без логіну -> редірект на логін (не 200)
@@ -87,8 +90,12 @@ class TestMediaAdmin:
         id2 = client.post('/admin/upload/media', data={'file': (_png(), 'b.png')},
                           content_type='multipart/form-data').get_json()['id']
         client.post('/admin/media/bulk-delete', data={'ids': [str(id1), str(id2)]})
-        assert db.session.get(MediaFile, id1) is None
-        assert db.session.get(MediaFile, id2) is None
+        assert db.session.get(MediaFile, id1).is_deleted
+        assert db.session.get(MediaFile, id2).is_deleted
+        # Відкат повертає обидва (файли непривʼязані -- відкат повний).
+        client.post(f'/admin/media/restore?ids={id1},{id2}')
+        assert not db.session.get(MediaFile, id1).is_deleted
+        assert not db.session.get(MediaFile, id2).is_deleted
 
     def test_delete_attached_detaches_blog_content(self, client, admin, media_root):
         # Видалення медіа, що використовується в inline-блоці допису, прибирає
@@ -109,7 +116,26 @@ class TestMediaAdmin:
         db.session.commit()
 
         client.post(f'/admin/media/{mid}/delete', data={})
-        assert db.session.get(MediaFile, mid) is None
+        assert db.session.get(MediaFile, mid).is_deleted
         refreshed = db.session.get(BlogPost, post.id)
         types = [b['type'] for b in refreshed.content]
         assert 'image' not in types and 'paragraph' in types
+
+    def test_attached_delete_offers_no_undo(self, client, admin, media_root):
+        """Відкат не повернув би блок у контенті -- отже його не пропонуємо."""
+        from app.models.blog_post import BlogPost
+        _login(client, admin)
+        mid = client.post('/admin/upload/media',
+                          data={'file': (_png(), 'a.png')},
+                          content_type='multipart/form-data').get_json()['id']
+        media = db.session.get(MediaFile, mid)
+        post = BlogPost(slug=f'p-{uuid4().hex[:6]}', title='T', status='draft',
+                        content=[{'type': 'image', 'data': {'url': media.url, 'media_id': mid}}])
+        db.session.add(post)
+        db.session.flush()
+        media.entity_type, media.entity_id = 'blog_post', post.id
+        db.session.commit()
+
+        client.post(f'/admin/media/{mid}/delete', data={})
+        with client.session_transaction() as s:
+            assert 'undo_offer' not in s

@@ -95,6 +95,11 @@
       [{% for category, message in messages %}{"category": {{ category|tojson }}, "message": {{ message|tojson }}}{% if not loop.last %},{% endif %}{% endfor %}]
     {%- endwith -%}
   </script>
+  {# Пропозиція відкату останньої дії (app/undo.py). Окремо від flash: тост
+     із кнопкою "Повернути" замінює собою повідомлення, а не доповнює його. #}
+  {% if undo_offer %}
+  <script type="application/json" id="iprm-undo-data">{{ undo_offer|tojson }}</script>
+  {% endif %}
 
   <a href="#main-content" class="skip-link">{{ _('Перейти до вмісту') }}</a>
 
@@ -128,6 +133,7 @@
   {% endblock %}
   {# toast.js перший — form-validate.js використовує window.iprmToast #}
   <script defer src="{{ url_for('static', filename='js/toast.js') }}?v={{ assets_version }}"></script>
+  {% if undo_offer %}<script defer src="{{ url_for('static', filename='js/undo-toast.js') }}?v={{ assets_version }}"></script>{% endif %}
   <script defer src="{{ url_for('static', filename='js/form-validate.js') }}?v={{ assets_version }}"></script>
   {# form-single-submit слухає submit на document і сам пропускає скасовані
      сабміти, тож підключається глобально -- довгі операції є і в адмінці. #}

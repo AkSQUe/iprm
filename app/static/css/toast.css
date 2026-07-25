@@ -68,6 +68,32 @@
   word-wrap: break-word;
 }
 
+/* Кнопка дії в тості (відкат видалення). Помітніша за текст повідомлення --
+   вікно на відкат коротке, її треба побачити одразу. */
+.iprm-toast__action {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  margin-top: 8px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--iprm-accent, #7055a4);
+  background: var(--iprm-divider);
+  border-radius: var(--iprm-radius-pill, 980px);
+  transition: background 0.15s, color 0.15s;
+}
+.iprm-toast__action:hover {
+  background: var(--iprm-accent, #7055a4);
+  color: #fff;
+}
+.iprm-toast__action:focus-visible {
+  outline: 2px solid var(--iprm-accent, #7055a4);
+  outline-offset: 2px;
+}
+
 .iprm-toast__close {
   appearance: none;
   border: none;

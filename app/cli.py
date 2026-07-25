@@ -32,7 +32,9 @@ def media_prune_orphans(days, dry_run):
 
     cutoff = utcnow() - timedelta(days=days)
     orphans = (
-        MediaFile.query
+        # М'яко видалені не чіпаємо: у них власний власник -- purge_soft_deleted
+        # із витримкою на відкат.
+        MediaFile.alive()
         .filter(MediaFile.entity_type.is_(None), MediaFile.created_at < cutoff)
         .order_by(MediaFile.created_at.asc())
         .all()

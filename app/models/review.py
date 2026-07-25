@@ -4,10 +4,12 @@
 відгуків нема -- на Головній показуємо хардкод-заглушку (див. шаблон home.html).
 """
 from app.extensions import db
-from app.models.mixins import TimestampMixin, TranslatableMixin, BigIntPK
+from app.models.mixins import (
+    BigIntPK, SoftDeleteMixin, TimestampMixin, TranslatableMixin,
+)
 
 
-class Review(TranslatableMixin, TimestampMixin, db.Model):
+class Review(TranslatableMixin, TimestampMixin, SoftDeleteMixin, db.Model):
     __tablename__ = 'reviews'
     __translatable__ = ('author_name', 'author_role', 'city', 'text')
 
@@ -39,7 +41,7 @@ class Review(TranslatableMixin, TimestampMixin, db.Model):
     @classmethod
     def published(cls, limit=6):
         """Опубліковані відгуки для публічного блоку (найновіші/за порядком)."""
-        return cls.query.filter_by(is_published=True).order_by(
+        return cls.alive().filter_by(is_published=True).order_by(
             cls.sort_order, cls.created_at.desc(),
         ).limit(limit).all()
 

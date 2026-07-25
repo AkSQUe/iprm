@@ -34,13 +34,15 @@ def blog_list():
     # Лічильники коментарів на модерації -- одним запитом (без N+1).
     pending = dict(
         db.session.query(BlogComment.post_id, func.count(BlogComment.id))
-        .filter(BlogComment.status == BlogComment.STATUS_PENDING)
+        .filter(BlogComment.status == BlogComment.STATUS_PENDING,
+                BlogComment.deleted_at.is_(None))
         .group_by(BlogComment.post_id)
         .all()
     )
     total_pending = (
         db.session.query(func.count(BlogComment.id))
-        .filter(BlogComment.status == BlogComment.STATUS_PENDING)
+        .filter(BlogComment.status == BlogComment.STATUS_PENDING,
+                BlogComment.deleted_at.is_(None))
         .scalar()
     )
     return render_template(
