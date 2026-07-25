@@ -34,7 +34,10 @@
           <a class="blog-card__link" href="{{ url_for('blog.post_detail', slug=post.slug) }}">
             <div class="blog-card__cover">
               {% if post.cover_src %}
-              <img src="{{ post.cover_src }}" alt="{{ post.t('title') }}" loading="lazy">
+              {# Перша обкладинка -- LCP-елемент сторінки: без lazy (інакше
+                 браузер знаходить її аж після layout) і з високим пріоритетом. #}
+              <img src="{{ post.cover_src }}" alt="{{ post.t('title') }}"
+                   {% if loop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
               {% else %}
               <div class="blog-card__cover-placeholder" aria-hidden="true"></div>
               {% endif %}

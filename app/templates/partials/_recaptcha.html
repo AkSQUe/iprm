@@ -1,10 +1,15 @@
 {# Conditional include: рендериться у <head> base.html.
-   Вшиваємо grecaptcha JS + meta з site_key, ТІЛЬКИ якщо інтеграція active.
+   Вшиваємо ТІЛЬКИ meta з site_key, ТІЛЬКИ якщо інтеграція active.
 
-   Плаваючий v3-badge Google показуємо (правий нижній кут) -- як видимий
-   доказ що reCAPTCHA активна. Поряд лишається нотиця у футері з
-   посиланнями на Privacy/Terms (footer.html), що теж відповідає ToS. #}
+   Сам api.js (~374 KB) НЕ підключаємо розміткою: він вантажиться ліниво з
+   recaptcha-v3.js -- за першою взаємодією з захищеною формою. Форми майже
+   завжди нижче згину, тож жадібне завантаження давало ~500 мс TBT на
+   мобільному, нічого не даючи до моменту сабміту.
+
+   Наслідок: плаваючий v3-badge Google зʼявляється не одразу, а після першої
+   взаємодії з формою. Вимогу ToS про видиме розкриття закриває постійна
+   нотиця у футері з посиланнями на Privacy/Terms (footer.html), яка
+   рендериться незалежно від моменту завантаження скрипта. #}
 {% if recaptcha and recaptcha.is_active %}
 <meta name="recaptcha-site-key" content="{{ recaptcha.site_key }}">
-<script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha.site_key }}" async defer></script>
 {% endif %}

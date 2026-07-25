@@ -46,7 +46,9 @@
         <a href="{{ url_for('trainers.trainer_detail', slug=trainer.slug) }}" class="iprm-trainer-card apple-reveal">
           <div class="iprm-trainer-card__photo">
             {% if trainer.photo_src %}
-              <img src="{{ trainer.photo_src }}" alt="{{ trainer.t('full_name') }}" loading="lazy" width="400" height="280">
+              {# Перше фото -- LCP-кандидат: без lazy і з високим пріоритетом. #}
+              <img src="{{ trainer.photo_src }}" alt="{{ trainer.t('full_name') }}" width="400" height="280"
+                   {% if loop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
             {% endif %}
           </div>
           <div class="iprm-trainer-card__body">

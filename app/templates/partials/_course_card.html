@@ -24,7 +24,10 @@
   <a class="iprm-course-card__overlay" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" aria-label="{{ course.t('title') }}"></a>
     <div class="iprm-course-card__image">
       {% if course.card_src %}
-        <img src="{{ course.card_src }}" alt="{{ course.t('title') }}" loading="lazy" width="400" height="200">
+        {# card_eager виставляє шаблон-господар для першої картки списку
+           (LCP-кандидат); решта -- ліниво. #}
+        <img src="{{ course.card_src }}" alt="{{ course.t('title') }}" width="400" height="200"
+             {% if card_eager | default(false) %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
       {% endif %}
     </div>
     <div class="apple-card-body">
@@ -61,8 +64,8 @@
       {% set card_trainer = nearest.effective_trainer if nearest else course.trainer %}
       {% if card_trainer %}
       <div class="iprm-course-card__trainer">
-        {% if card_trainer.photo_src %}
-        <img src="{{ card_trainer.photo_src }}" alt="{{ card_trainer.t('full_name') }}" loading="lazy" width="28" height="28">
+        {% if card_trainer.photo_thumb %}
+        <img src="{{ card_trainer.photo_thumb }}" alt="{{ card_trainer.t('full_name') }}" loading="lazy" width="28" height="28">
         {% endif %}
         {% if card_trainer.is_active %}
         <a class="iprm-course-card__trainer-link" href="{{ url_for('trainers.trainer_detail', slug=card_trainer.slug) }}">{{ card_trainer.t('full_name') }}</a>

@@ -379,10 +379,36 @@ def create_app(config_name=None):
             response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
         return response
 
+    # Блупринти, чий HTML може містити приватні дані або одноразовий стан
+    # (кабінет, адмінка, форми реєстрації на захід, оплати). Для них лишається
+    # no-store.
+    PRIVATE_HTML_BLUEPRINTS = frozenset({'auth', 'admin', 'registration', 'payments'})
+
     @app.after_request
-    def no_cache_html(response):
-        if 'text/html' in (response.content_type or ''):
-            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    def cache_control_html(response):
+        """Кеш-політика HTML.
+
+        `no-store` -- єдина директива, що вимикає bfcache у Chrome, тож
+        навігація "назад" щоразу перезавантажувала сторінку (на мобільному це
+        секунди). Лишаємо її тільки там, де у HTML можуть бути приватні дані:
+        автентифіковані відповіді та приватні блупринти. Публічні сторінки для
+        анонімів отримують `private, no-cache` -- браузер зобовʼязаний
+        ревалідувати перед показом (свіжість не втрачаємо), але сторінка
+        лишається придатною для bfcache.
+        """
+        if 'text/html' not in (response.content_type or ''):
+            return response
+        from flask import request
+        from flask_login import current_user
+        private = request.blueprint in PRIVATE_HTML_BLUEPRINTS
+        if not private:
+            try:
+                private = current_user.is_authenticated
+            except Exception:
+                private = True
+        response.headers['Cache-Control'] = (
+            'no-store, no-cache, must-revalidate' if private else 'private, no-cache'
+        )
         return response
 
     @app.after_request

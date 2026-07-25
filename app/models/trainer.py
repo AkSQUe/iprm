@@ -80,6 +80,20 @@ class Trainer(TranslatableMixin, TimestampMixin, db.Model):
         return self.photo_media.variant_url('card') if self.photo_media else None
 
     @property
+    def photo_thumb(self):
+        """URL мініатюри фото -- для аватарів у списках (рендеряться 28-40 px).
+
+        Там, де стояв photo_src, віддавався card-варіант (800 px): на каталозі
+        курсів це десятки кілобайт на кожну картку без жодного виграшу в
+        якості. thumb -- 400 px; якщо варіанта немає (старі медіа), відкочуємось
+        на card.
+        """
+        if not self.photo_media:
+            return None
+        variants = self.photo_media.responsive_variants or {}
+        return self.photo_media.variant_url('thumb' if 'thumb' in variants else 'card')
+
+    @property
     def photo_full(self):
         """URL повнорозмірного фото (для og/srcset 1600w)."""
         return self.photo_media.url if self.photo_media else None

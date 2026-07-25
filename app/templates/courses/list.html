@@ -119,6 +119,8 @@
 
       <div class="iprm-course-cards" data-filterable="courses">
         {% for course in courses %}
+        {# Перша картка -- LCP-кандидат каталогу: її зображення вантажимо жадібно. #}
+        {% set card_eager = loop.first %}
         {% include 'partials/_course_card.html' %}
         {% else %}
         <div class="iprm-empty-state iprm-empty-state--full">
