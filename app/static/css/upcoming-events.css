@@ -95,16 +95,22 @@
    Активується site_settings.upcoming_events_style == 'bar'. Місце під плашку
    резервує body.has-upcoming-bar (клас знімається JS-ом після закриття). */
 body.has-upcoming-bar {
-  padding-top: 96px;
+  padding-top: calc(var(--iprm-header-h) + var(--upcoming-bar-h));
+}
+
+/* Повна висота плашки разом із бордером -- рівно на стільки body добирає
+   відступ понад висоту шапки. */
+:root {
+  --upcoming-bar-h: 45px;
 }
 
 .upcoming-bar {
   position: fixed;
-  top: 56px;
+  top: var(--iprm-header-h);
   left: 0;
   right: 0;
   z-index: 900;
-  min-height: 44px;
+  min-height: calc(var(--upcoming-bar-h) - 1px);
   background: var(--iprm-surface-menu);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);

@@ -15,7 +15,7 @@
 
 .iprm-anchor-nav {
   position: sticky;
-  top: 56px;
+  top: var(--iprm-header-h);
   z-index: 90;
   background: var(--iprm-surface-glass);
   backdrop-filter: blur(16px) saturate(180%);
