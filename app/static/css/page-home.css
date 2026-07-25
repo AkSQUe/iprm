@@ -1,6 +1,78 @@
 /* page-home.css -- стилі Головної сторінки (доповнюють apple-pages.css,
    common.css, page-courses.css). Лише home-специфічні класи. */
 
+/* ===== HERO: фонове відео ===== */
+/* Вуаль тримає hero світлим, а текст -- темним (у тёмній темі навпаки).
+   Токени локальні для hero Головної, щоб не роздувати глобальний набір. */
+.page-home .iprm-hero {
+  --home-hero-veil-rgb: 255, 255, 255;
+  --home-hero-media-opacity: 0.5;
+  isolation: isolate;
+}
+
+[data-theme="dark"] .page-home .iprm-hero {
+  --home-hero-veil-rgb: 28, 28, 34;
+  --home-hero-media-opacity: 0.34;
+}
+
+.home-hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Постер -- це і фолбек (мобільні, reduced-motion, заблокований автоплей),
+   і перший кадр, поки відео не готове. */
+.home-hero-media__poster {
+  position: absolute;
+  inset: 0;
+  background: url('../images/main/home-hero-poster.webp') center / cover no-repeat;
+  opacity: var(--home-hero-media-opacity);
+  filter: saturate(0.92);
+}
+
+.home-hero-media__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  filter: saturate(0.92);
+  transition: opacity 0.6s ease;
+}
+
+.home-hero-media__video.is-ready {
+  opacity: var(--home-hero-media-opacity);
+}
+
+.home-hero-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(100% 78% at 50% 44%,
+      rgba(var(--home-hero-veil-rgb), 0.82) 0%,
+      rgba(var(--home-hero-veil-rgb), 0.55) 52%,
+      rgba(var(--home-hero-veil-rgb), 0.2) 100%),
+    linear-gradient(180deg,
+      rgba(var(--home-hero-veil-rgb), 0.75) 0%,
+      rgba(var(--home-hero-veil-rgb), 0) 28%,
+      rgba(var(--home-hero-veil-rgb), 0) 68%,
+      var(--iprm-white) 100%);
+}
+
+.page-home .iprm-hero__content {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero-media__video { display: none; }
+}
+
 .page-home .apple-features-grid--3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
