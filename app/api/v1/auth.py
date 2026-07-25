@@ -51,3 +51,30 @@ def require_api_key(fn):
         return fn(*args, **kwargs)
 
     return wrapper
+
+
+def require_perf_key(fn):
+    """Require X-API-Key header matching SiteSettings.perf_api_key.
+
+    Окремий ключ від партнерського: приймання замірів швидкості -- інша зона
+    довіри, і ротація одного не має ламати інше. Порожній ключ означає, що
+    приймання вимкнено -> 404 (не 401), щоб не підтверджувати існування
+    ендпоінта тому, хто його намацує.
+    """
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        expected = SiteSettings.get().perf_api_key
+        if not expected:
+            return jsonify({'error': 'Not Found'}), 404
+
+        provided = request.headers.get('X-API-Key', '')
+        if not provided or not hmac.compare_digest(provided, expected):
+            current_app.logger.warning(
+                'perf_auth: invalid key ip=%s path=%s has_header=%s',
+                _client_ip(), request.path, bool(provided),
+            )
+            return jsonify({'error': 'Invalid API key'}), 401
+
+        return fn(*args, **kwargs)
+
+    return wrapper

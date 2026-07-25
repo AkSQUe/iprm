@@ -57,3 +57,7 @@ _shots/
 .preview/shots/
 scripts/.cache/
 .preview/
+
+# Замiри швидкості (tools/perf/perf_check.py): результати прогонів локальні,
+# бо залежать від каналу вимірювальної машини. У git -- лише сам інструмент.
+tools/perf/runs/

@@ -1,0 +1,186 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Швидкість сторінок | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-integration.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-perf.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Панель</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Швидкість сторінок</span>
+      </div>
+      <h1 class="admin-hero__title">Швидкість сторінок</h1>
+      <p class="admin-hero__subtitle">
+        {% if latest %}
+        Останній замір {{ latest.measured_at.strftime('%d.%m.%Y %H:%M') }} -
+        {{ latest.pages_total }} сторінок, вердикт {{ latest.verdict }}
+        {% else %}
+        Замірів ще немає - надішліть перший з інструменту
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {% if latest %}
+  <div class="admin-stat-cards admin-stat-cards--4">
+    <div class="admin-stat-card{% if latest.verdict == 'FAIL' %} admin-stat-card--danger{% elif latest.verdict == 'WARN' %} admin-stat-card--warning{% else %} admin-stat-card--success{% endif %}">
+      <div class="admin-stat-card__value">{{ latest.verdict }}</div>
+      <div class="admin-stat-card__label">Останній замір</div>
+    </div>
+    <div class="admin-stat-card admin-stat-card--warning">
+      <div class="admin-stat-card__value">{{ latest.pages_warn }}</div>
+      <div class="admin-stat-card__label">Сторінок з WARN</div>
+    </div>
+    <div class="admin-stat-card admin-stat-card--danger">
+      <div class="admin-stat-card__value">{{ latest.pages_fail }}</div>
+      <div class="admin-stat-card__label">Сторінок з FAIL</div>
+    </div>
+    <div class="admin-stat-card{% if latest_regressions %} admin-stat-card--danger{% endif %}">
+      <div class="admin-stat-card__value">{{ latest_regressions }}</div>
+      <div class="admin-stat-card__label">Просіло проти попереднього</div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Приймання замірів: адмінка сама не вимірює -- браузер на 1-ядерному
+     VPS конкурував би за CPU з gunicorn і псував би і сайт, і цифри. #}
+  <div class="perf-ingest">
+    <h2 class="perf-ingest__title">Як надсилати заміри</h2>
+    <p class="perf-ingest__hint">
+      Заміри виконує <code>tools/perf/perf_check.py</code> на вашій машині і надсилає сюди.
+      На сервері браузер не запускається свідомо: одне ядро довелося б ділити з gunicorn,
+      через що сайт гальмував би для відвідувачів, а метрики міряли б перевантажений
+      сервер замість сторінки.
+    </p>
+
+    <div class="admin-readonly-config">
+      <div class="admin-readonly-config__row">
+        <span class="admin-readonly-config__label">Ендпоінт</span>
+        <span class="admin-readonly-config__value admin-readonly-config__value--mono">{{ key_state.ingest_url }}</span>
+      </div>
+      <div class="admin-readonly-config__row">
+        <span class="admin-readonly-config__label">Ключ</span>
+        <span class="admin-readonly-config__value">
+          {% if key_state.present %}
+          <span class="badge badge--success">Встановлено</span>
+          {% if key_state.set_at %}
+          <span class="admin-text-muted">&nbsp;{{ key_state.set_at.strftime('%d.%m.%Y') }}</span>
+          {% endif %}
+          {% else %}
+          <span class="badge badge--draft">Не встановлено - приймання вимкнено</span>
+          {% endif %}
+        </span>
+      </div>
+      {% set rotation = key_state.rotation %}
+      {% include 'admin/_rotation_row.html' with context %}
+    </div>
+
+    <code class="perf-code">python tools/perf/perf_check.py --push {{ key_state.ingest_url }} --token &lt;ключ&gt; --note "опис змін"</code>
+
+    <div class="perf-ingest__actions">
+      <form method="POST" action="{{ url_for('admin.perf_key_rotate') }}"
+            data-confirm="Згенерувати новий ключ? Старий перестане працювати - інструмент доведеться переналаштувати.">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">
+          {{ icon('refresh') }} {% if key_state.present %}Згенерувати новий ключ{% else %}Згенерувати ключ{% endif %}
+        </button>
+      </form>
+      {% if key_state.present %}
+      <form method="POST" action="{{ url_for('admin.perf_key_clear') }}"
+            data-confirm="Вимкнути приймання замірів? Ендпоінт більше не прийматиме дані.">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--sm">{{ icon('block') }} Вимкнути приймання</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if runs %}
+  <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Замір</th>
+          <th>Сайт</th>
+          <th>Джерело</th>
+          <th>Нотатка</th>
+          <th>Сторінок</th>
+          <th>WARN</th>
+          <th>FAIL</th>
+          <th>Вердикт</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in runs %}
+        <tr>
+          <td><strong>{{ run.measured_at.strftime('%d.%m.%Y %H:%M') }}</strong></td>
+          <td>{{ run.base_url }}</td>
+          <td>{{ run.source or '-' }}</td>
+          <td title="{{ run.note }}">{{ run.note[:40] }}{% if run.note|length > 40 %}...{% endif %}</td>
+          <td>{{ run.pages_total }}</td>
+          <td>{{ run.pages_warn }}</td>
+          <td>{{ run.pages_fail }}</td>
+          <td>
+            {% if run.verdict == 'FAIL' %}
+            <span class="badge badge--danger">FAIL</span>
+            {% elif run.verdict == 'WARN' %}
+            <span class="badge badge--warning">WARN</span>
+            {% else %}
+            <span class="badge badge--success">OK</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="admin-table__actions">
+              <a href="{{ url_for('admin.perf_run_detail', run_id=run.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('info', label='Деталі') }}</a>
+              <form method="POST" action="{{ url_for('admin.perf_run_delete', run_id=run.id) }}" class="admin-inline-form"
+                    data-confirm="Видалити цей прогін?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--sm">{{ icon('delete', label='Видалити') }}</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if pagination.pages > 1 %}
+  <nav class="admin-pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.perf_runs', page=pagination.prev_num) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
+    {% endif %}
+    <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }}</span>
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.perf_runs', page=pagination.next_num) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
+    {% endif %}
+  </nav>
+  {% endif %}
+
+  {% else %}
+  <div class="admin-empty">
+    {{ icon('bolt', cls='admin-empty__icon') }}
+    <h3 class="admin-empty__title">Замірів ще немає</h3>
+    <p>Згенеруйте ключ вище і запустіть інструмент з прапорцем <code>--push</code>.</p>
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}

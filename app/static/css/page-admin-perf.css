@@ -1,0 +1,183 @@
+/* Admin: заміри швидкості (/admin/perf, /admin/perf/<id>).
+   Колірне кодування вердиктів у таблицях метрик + блок налаштування
+   приймання. Усі кольори -- токени, тож тёмна тема працює без оверрайдів. */
+
+/* ===== Блок приймання (URL + ключ) ===== */
+
+.perf-ingest {
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.perf-ingest__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--iprm-text);
+  margin: 0 0 4px;
+}
+
+.perf-ingest__hint {
+  font-size: 0.8125rem;
+  color: var(--iprm-text-light);
+  margin: 0 0 16px;
+  max-width: 70ch;
+}
+
+.perf-ingest__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.perf-code {
+  display: block;
+  font-family: 'Courier New', monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--iprm-text);
+  background: var(--iprm-bg);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  padding: 12px 14px;
+  margin: 12px 0 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* ===== Таблиця метрик ===== */
+
+.perf-profile {
+  margin-bottom: 32px;
+}
+
+.perf-profile__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--iprm-text);
+  margin: 0 0 4px;
+}
+
+.perf-profile__hint {
+  font-size: 0.8125rem;
+  color: var(--iprm-text-light);
+  margin: 0 0 12px;
+}
+
+.perf-metric {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Вердикт метрики: тло замість тексту -- у таблиці з 8 колонок кольоровий
+   текст губиться, а заливка одразу показує, де саме промах. */
+.perf-metric--warn {
+  background: var(--iprm-warning-bg);
+  color: var(--iprm-warning-text);
+  font-weight: 600;
+}
+
+.perf-metric--fail {
+  background: var(--iprm-error-bg);
+  color: var(--iprm-error-text);
+  font-weight: 600;
+}
+
+.perf-metric__budget {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+/* ===== Дельти відносно базового прогону ===== */
+
+.perf-delta {
+  display: block;
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--iprm-text-light);
+}
+
+.perf-delta--better {
+  color: var(--iprm-success);
+}
+
+.perf-delta--regressed {
+  color: var(--iprm-error-text);
+  font-weight: 600;
+}
+
+/* ===== Розбір найповільнішої сторінки ===== */
+
+.perf-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.perf-details__card {
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
+  padding: 18px;
+}
+
+.perf-details__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--iprm-text);
+  margin: 0 0 12px;
+}
+
+.perf-details__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.perf-details__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.8125rem;
+  color: var(--iprm-text);
+  border-bottom: 1px solid var(--iprm-divider);
+  padding-bottom: 8px;
+}
+
+.perf-details__row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.perf-details__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.perf-details__value {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--iprm-text-light);
+}
+
+/* ===== Адаптив ===== */
+
+@media (max-width: 768px) {
+  .perf-ingest {
+    padding: 16px;
+  }
+
+  .perf-metric__budget {
+    display: none;
+  }
+}

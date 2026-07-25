@@ -33,6 +33,7 @@ from app.models.referral_reward import ReferralReward
 from app.models.referral_adjustment import ReferralAdjustment
 from app.models.referral_click import ReferralClick
 from app.models.review import Review
+from app.models.perf_run import PerfRun, PerfPageMetric
 
 __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'AuthIdentity',
@@ -46,4 +47,5 @@ __all__ = [
     'DatabaseBackup',
     'MaterialReservation', 'MaterialReservationItem', 'MaterialReservationStatus',
     'ReferralReward', 'ReferralAdjustment', 'ReferralClick', 'Review',
+    'PerfRun', 'PerfPageMetric',
 ]

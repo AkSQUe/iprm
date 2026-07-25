@@ -189,6 +189,13 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
     mm_medic_integration_enabled = db.Column(db.Boolean, default=False, nullable=False)
     mm_medic_api_base_url = db.Column(db.String(500), default='')
 
+    # Приймання замірів швидкості (tools/perf/perf_check.py --push). Окремий
+    # ключ, а не partner_api_key: у партнерської інтеграції інша зона довіри,
+    # і ротація одного не повинна ламати інше. Порожній ключ = приймання
+    # вимкнено (ендпоінт віддає 404).
+    _perf_api_key_encrypted = db.Column('perf_api_key', db.String(500), default='')
+    perf_api_key_set_at = db.Column(db.DateTime(timezone=True))
+
     # Реферальна програма. Кожен учасник/тренер має власний реферальний код;
     # за оплачену реєстрацію по його посиланню нараховуються бонусні бали
     # лояльності (окремі від балів БПР). Поки лише накопичення (без витрати).
@@ -243,6 +250,23 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
             self._partner_api_key_encrypted = ''
             return
         self._partner_api_key_encrypted = _get_fernet().encrypt(value.encode()).decode()
+
+    @property
+    def perf_api_key(self):
+        if not self._perf_api_key_encrypted:
+            return ''
+        try:
+            return _get_fernet().decrypt(self._perf_api_key_encrypted.encode()).decode()
+        except (InvalidToken, Exception):
+            logger.warning('Failed to decrypt perf_api_key')
+            return ''
+
+    @perf_api_key.setter
+    def perf_api_key(self, value):
+        if not value:
+            self._perf_api_key_encrypted = ''
+            return
+        self._perf_api_key_encrypted = _get_fernet().encrypt(value.encode()).decode()
 
     @property
     def partner_prefill_secret(self):

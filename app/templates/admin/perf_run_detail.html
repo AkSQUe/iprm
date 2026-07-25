@@ -1,0 +1,232 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Замір {{ run.measured_at.strftime('%d.%m.%Y %H:%M') }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-integration.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-perf.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{# ===== Форматування ===== #}
+{% macro kb(value) %}{% if value %}{{ (value / 1024) | round | int }} KB{% else %}-{% endif %}{% endmacro %}
+
+{% macro ms(value) %}{% if value is not none %}{{ value }}мс{% else %}-{% endif %}{% endmacro %}
+
+{# Дельта відносно базового прогону: показуємо лише там, де є з чим порівняти. #}
+{% macro delta(page, metric, unit) %}
+  {% set data = comparison.get(page.key, {}).get(metric) %}
+  {% if data and data.delta %}
+  <span class="perf-delta{% if data.regressed %} perf-delta--regressed{% elif data.delta < 0 %} perf-delta--better{% endif %}">
+    {{ '+' if data.delta > 0 else '' }}{% if unit == 'kb' %}{{ (data.delta / 1024) | round | int }} KB{% else %}{{ data.delta }}мс{% endif %}
+  </span>
+  {% endif %}
+{% endmacro %}
+
+{# Клітинка метрики: заливка за вердиктом + межа бюджету, коли є промах. #}
+{% macro cell(page, metric, value, unit) %}
+  {% set verdict = page.budget.get(metric, 'OK') %}
+  {% set limits = run.budget_for(page.profile, metric) %}
+  <td class="perf-metric{% if verdict == 'FAIL' %} perf-metric--fail{% elif verdict == 'WARN' %} perf-metric--warn{% endif %}">
+    {{ value }}
+    {% if verdict != 'OK' and limits %}
+    <span class="perf-metric__budget">бюджет {% if unit == 'kb' %}{{ (limits[0] / 1024) | round | int }} KB{% elif unit == 'ms' %}{{ limits[0] }}мс{% else %}{{ limits[0] }}{% endif %}</span>
+    {% endif %}
+    {% if unit in ('ms', 'kb') %}{{ delta(page, metric, unit) }}{% endif %}
+  </td>
+{% endmacro %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.perf_runs') }}" class="admin-breadcrumb__link">Швидкість сторінок</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">{{ run.measured_at.strftime('%d.%m.%Y %H:%M') }}</span>
+      </div>
+      <h1 class="admin-hero__title">{{ run.base_url }}</h1>
+      <p class="admin-hero__subtitle">
+        {{ run.pages_total }} сторінок, {{ run.runs_per_page }} прогони на сторінку (медіана)
+        {%- if run.source %}, джерело: {{ run.source }}{% endif %}
+        {%- if run.note %} - {{ run.note }}{% endif %}
+      </p>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <div class="admin-stat-cards admin-stat-cards--4">
+    <div class="admin-stat-card{% if run.verdict == 'FAIL' %} admin-stat-card--danger{% elif run.verdict == 'WARN' %} admin-stat-card--warning{% else %} admin-stat-card--success{% endif %}">
+      <div class="admin-stat-card__value">{{ run.verdict }}</div>
+      <div class="admin-stat-card__label">Вердикт прогону</div>
+    </div>
+    <div class="admin-stat-card admin-stat-card--warning">
+      <div class="admin-stat-card__value">{{ run.pages_warn }}</div>
+      <div class="admin-stat-card__label">Сторінок з WARN</div>
+    </div>
+    <div class="admin-stat-card admin-stat-card--danger">
+      <div class="admin-stat-card__value">{{ run.pages_fail }}</div>
+      <div class="admin-stat-card__label">Сторінок з FAIL</div>
+    </div>
+    <div class="admin-stat-card{% if regressions %} admin-stat-card--danger{% endif %}">
+      <div class="admin-stat-card__value">{{ regressions }}</div>
+      <div class="admin-stat-card__label">Метрик просіло</div>
+    </div>
+  </div>
+
+  {% if base %}
+  <p class="admin-text-muted">
+    Порівняння з прогоном
+    <a href="{{ url_for('admin.perf_run_detail', run_id=base.id) }}">{{ base.measured_at.strftime('%d.%m.%Y %H:%M') }}</a>{% if base.source and base.source != run.source %}
+    (джерело {{ base.source }} - абсолютні числа з різних машин непорівнянні){% endif %}.
+    Просіданням вважається погіршення одночасно більш ніж на 20% і на помітний абсолют.
+  </p>
+  {% else %}
+  <p class="admin-text-muted">Попереднього заміру цього сайту немає - порівнювати нема з чим.</p>
+  {% endif %}
+
+  {% for profile in run.profiles %}
+  <div class="perf-profile">
+    <h2 class="perf-profile__title">{{ profile }}</h2>
+    <p class="perf-profile__hint">
+      {% if profile == 'mobile' %}
+      390x844, CPU x4, Slow 4G - наближено до реального смартфона
+      {% elif profile == 'desktop' %}
+      1440x900 без тротлінгу - верхня межа можливого
+      {% endif %}
+    </p>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Сторінка</th>
+            <th>TTFB</th>
+            <th>FCP</th>
+            <th>LCP</th>
+            <th>TBT</th>
+            <th>CLS</th>
+            <th>load</th>
+            <th>Вага</th>
+            <th>Запитів</th>
+            <th>Вердикт</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for page in run.pages_for(profile) %}
+          <tr>
+            <td><strong>{{ page.path }}</strong></td>
+            {% if page.is_measured %}
+            {{ cell(page, 'ttfb', ms(page.ttfb), 'ms') }}
+            <td class="perf-metric">{{ ms(page.fcp) }}</td>
+            {{ cell(page, 'lcp', ms(page.lcp), 'ms') }}
+            {{ cell(page, 'tbt', ms(page.tbt), 'ms') }}
+            {{ cell(page, 'cls', page.cls if page.cls is not none else '-', 'num') }}
+            <td class="perf-metric">{{ ms(page.load_ms) }}</td>
+            {{ cell(page, 'total_transfer', kb(page.total_transfer), 'kb') }}
+            <td class="perf-metric">{{ page.req_count }}</td>
+            <td>
+              {% if page.verdict == 'FAIL' %}
+              <span class="badge badge--danger">FAIL</span>
+              {% elif page.verdict == 'WARN' %}
+              <span class="badge badge--warning">WARN</span>
+              {% else %}
+              <span class="badge badge--success">OK</span>
+              {% endif %}
+            </td>
+            {% else %}
+            <td colspan="9" class="admin-text-muted">Не виміряно: {{ page.error }}</td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+
+  {% set worst = run.worst_page %}
+  {% if worst %}
+  <h2 class="perf-profile__title">Найповільніша сторінка: {{ worst.path }} ({{ worst.profile }}, LCP {{ ms(worst.lcp) }})</h2>
+  <p class="perf-profile__hint">З неї починають розбір: саме тут найбільший запас для покращення.</p>
+
+  <div class="perf-details">
+    <div class="perf-details__card">
+      <h3 class="perf-details__title">Документ і заголовки</h3>
+      <ul class="perf-details__list">
+        <li class="perf-details__row">
+          <span class="perf-details__name">По мережі / розпаковано</span>
+          <span class="perf-details__value">{{ kb(worst.doc_transfer) }} / {{ kb(worst.doc_decoded) }}</span>
+        </li>
+        <li class="perf-details__row">
+          <span class="perf-details__name">Стиснення</span>
+          <span class="perf-details__value">{{ worst.headers.get('content-encoding', '-') }}</span>
+        </li>
+        <li class="perf-details__row">
+          <span class="perf-details__name">Cache-Control</span>
+          <span class="perf-details__value">{{ worst.headers.get('cache-control', '-') }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="perf-details__card">
+      <h3 class="perf-details__title">Вага за типами</h3>
+      <ul class="perf-details__list">
+        {% for type_name, bucket in worst.by_type_sorted %}
+        <li class="perf-details__row">
+          <span class="perf-details__name">{{ type_name }} x{{ bucket.count }}</span>
+          <span class="perf-details__value">{{ kb(bucket.transfer) }}</span>
+        </li>
+        {% else %}
+        <li class="perf-details__row"><span class="perf-details__name">Даних немає</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="perf-details__card">
+      <h3 class="perf-details__title">Найважчі ресурси</h3>
+      <ul class="perf-details__list">
+        {% for res in worst.heaviest %}
+        <li class="perf-details__row">
+          <span class="perf-details__name" title="{{ res.name }}">{{ res.name.split('/')[-1][:48] }}</span>
+          <span class="perf-details__value">{{ kb(res.transfer) }} / {{ res.dur }}мс</span>
+        </li>
+        {% else %}
+        <li class="perf-details__row"><span class="perf-details__name">Даних немає</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    {% if worst.uncompressed %}
+    <div class="perf-details__card">
+      <h3 class="perf-details__title">Без стиснення (текстові >20 KB)</h3>
+      <ul class="perf-details__list">
+        {% for res in worst.uncompressed %}
+        <li class="perf-details__row">
+          <span class="perf-details__name" title="{{ res.name }}">{{ res.name.split('/')[-1][:48] }}</span>
+          <span class="perf-details__value">{{ kb(res.transfer) }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="perf-ingest__actions">
+    <a href="{{ url_for('admin.perf_runs') }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left') }} До списку</a>
+    <form method="POST" action="{{ url_for('admin.perf_run_delete', run_id=run.id) }}" data-confirm="Видалити цей прогін?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn-admin btn-admin--sm">{{ icon('delete') }} Видалити прогін</button>
+    </form>
+  </div>
+
+  </div>
+</div>
+{% endblock %}

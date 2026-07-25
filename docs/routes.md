@@ -124,6 +124,23 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 | GET | `/admin/notifications/templates` | Шаблони листів |
 | POST | `/admin/events/<id>/export` | Експорт заходу в XLSX |
 | POST | `/admin/events/import` | Імпорт заходів з XLSX |
+| GET | `/admin/perf` | Заміри швидкості: список прогонів + ключ приймання |
+| GET | `/admin/perf/<id>` | Розбір прогону з порівнянням із попереднім |
+| POST | `/admin/perf/<id>/delete` | Видалити прогін |
+| POST | `/admin/perf/key/rotate` | Згенерувати новий ключ приймання замірів |
+| POST | `/admin/perf/key/clear` | Вимкнути приймання замірів |
+
+## API v1 (партнери та інструменти)
+
+Автентифікація -- заголовок `X-API-Key`. Ключі окремі за призначенням: у
+партнерських ендпоінтів `SiteSettings.partner_api_key`, у приймання замірів --
+`SiteSettings.perf_api_key` (ротація на `/admin/perf`).
+
+| Метод | URL | Опис |
+|-------|-----|------|
+| GET | `/api/v1/events` | Список заходів для партнерів |
+| GET | `/api/v1/events/<slug>` | Деталі заходу для партнерів |
+| POST | `/api/v1/perf/runs` | Приймання прогону від `tools/perf/perf_check.py --push` |
 
 ## Errors
 

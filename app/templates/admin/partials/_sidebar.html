@@ -106,6 +106,10 @@
         {{ icon('bug_report') }}
         Журнал помилок
       </a>
+      <a href="{{ url_for('admin.perf_runs') }}" class="admin-sidebar__link{% if ep in ('admin.perf_runs', 'admin.perf_run_detail', 'admin.perf_run_delete', 'admin.perf_key_rotate', 'admin.perf_key_clear') %} admin-sidebar__link--active{% endif %}">
+        {{ icon('bolt') }}
+        Швидкість сторінок
+      </a>
       <a href="{{ url_for('admin.settings') }}" class="admin-sidebar__link{% if ep == 'admin.settings' %} admin-sidebar__link--active{% endif %}">
         {{ icon('settings') }}
         Налаштування
