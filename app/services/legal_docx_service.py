@@ -46,16 +46,24 @@ FONT = 'Times New Roman'
 BODY_PT = 12
 BLACK = RGBColor(0, 0, 0)
 
-MARGINS_CM = {'left': 2.0, 'right': 1.0, 'top': 3.0, 'bottom': 2.0}
+MARGINS_CM = {'left': 3.0, 'right': 1.5, 'top': 3.0, 'bottom': 2.0}
 
 HEADING_STYLES = {'h2': 'Heading 2', 'h3': 'Heading 3', 'h4': 'Heading 4'}
 HEADING_FORMAT = {
-    # стиль: (кегль, інтервал перед, інтервал після)
-    'Heading 1': (16, 0, 12),
-    'Heading 2': (13, 14, 6),
+    # стиль: (кегль, інтервал перед, інтервал після). Заголовки тримаємо в
+    # межах основного кегля -- від тексту їх відрізняє накреслення, а не розмір.
+    'Heading 1': (14, 0, 12),
+    'Heading 2': (12, 14, 6),
     'Heading 3': (12, 10, 4),
     'Heading 4': (12, 8, 4),
 }
+
+# На скільки підняти рядок посади й прізвища відносно нижнього краю печатки
+# (два рядки основного тексту).
+SIGNATURE_LIFT_PT = 28
+# Ширина печатки: підібрана так, щоб підписний блок ставав на сторінку з
+# останнім розділом, а не перескакував на майже порожню наступну.
+SEAL_WIDTH_CM = 3.6
 
 
 class LegalDocxError(RuntimeError):
@@ -426,10 +434,9 @@ def _add_signature(doc):
                                          DEFAULT_SIGNER_NAME)
     seal = _seal_image()
 
-    doc.add_paragraph().paragraph_format.space_after = Pt(0)
-
     company = doc.add_paragraph()
     company.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    company.paragraph_format.space_before = Pt(6)
     company.paragraph_format.space_after = Pt(0)
     company.paragraph_format.keep_with_next = True
     company.add_run(settings.company_legal_name or '').bold = True
@@ -443,9 +450,15 @@ def _add_signature(doc):
         cell.vertical_alignment = WD_ALIGN_VERTICAL.BOTTOM
         cell.paragraphs[0].paragraph_format.space_after = Pt(0)
 
+    # Посада й прізвище притиснуті до низу комірки, тому відступ знизу піднімає
+    # їх відносно печатки -- рядок лягає на неї, як у підписаному примірнику.
+    for index in (0, 2):
+        cells[index].paragraphs[0].paragraph_format.space_after = Pt(
+            SIGNATURE_LIFT_PT)
+
     cells[0].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.LEFT
     cells[0].paragraphs[0].add_run(signer_title)
     cells[1].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
-    cells[1].paragraphs[0].add_run().add_picture(seal, width=Cm(4.5))
+    cells[1].paragraphs[0].add_run().add_picture(seal, width=Cm(SEAL_WIDTH_CM))
     cells[2].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.RIGHT
     cells[2].paragraphs[0].add_run(signer_name)

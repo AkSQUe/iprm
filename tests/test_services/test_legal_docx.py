@@ -27,8 +27,8 @@ class TestExportPage:
 
         doc = Document(path)
         section = doc.sections[0]
-        assert round(section.left_margin.cm, 1) == 2.0
-        assert round(section.right_margin.cm, 1) == 1.0
+        assert round(section.left_margin.cm, 1) == 3.0
+        assert round(section.right_margin.cm, 1) == 1.5
         assert round(section.top_margin.cm, 1) == 3.0
         assert round(section.bottom_margin.cm, 1) == 2.0
 
