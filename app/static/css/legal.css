@@ -1,6 +1,35 @@
 /* ========== LEGAL PAGES (Apple-style v2) ========== */
 /* Layout wrapper: .iprm-content-page defined in common.css */
 
+/* ========== TOOLBAR (завантаження підписаної версії) ========== */
+
+.legal-page__toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 32px;
+}
+
+.legal-page__toolbar-note {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--apple-gray);
+}
+
+.legal-page__download::before {
+  content: '\2193';
+  font-weight: 700;
+  margin-right: 8px;
+}
+
+@media (max-width: 480px) {
+  .legal-page__toolbar .legal-page__download {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .legal-page__preamble {
   font-size: 17px;
   line-height: 1.65;

@@ -90,6 +90,35 @@ def offer():
     return render_template('main/offer.html')
 
 
+@main_bp.route('/offer/pdf', localize=False)
+@limiter.limit('20 per minute')
+def offer_pdf():
+    """Підписана PDF-версія оферти (бланк, печатка, підпис).
+
+    Рендериться на льоту з того самого партіала, що й сторінка, тому файл не
+    може розійтися з чинною редакцією на сайті."""
+    import io
+
+    from flask import send_file
+
+    from app.services.legal_pdf_service import (
+        DOWNLOAD_NAME, LegalPdfError, render_offer_pdf,
+    )
+
+    try:
+        pdf = render_offer_pdf()
+    except LegalPdfError:
+        flash(_('Не вдалося сформувати PDF. Спробуйте пізніше.'), 'error')
+        return redirect(url_for('main.offer'))
+
+    return send_file(
+        io.BytesIO(pdf),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=DOWNLOAD_NAME,
+    )
+
+
 @main_bp.route('/privacy', localize=False)
 def privacy():
     return render_template('main/privacy.html')

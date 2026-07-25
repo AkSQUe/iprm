@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<title>Публічна оферта про надання послуг</title>
+<style>
+  /* Друкована версія оферти: верстка повторює .docx-експорт
+     (Times New Roman 12pt, поля 2/1/3/2 см, бланк у колонтитулі).
+     На сервері Times New Roman зазвичай немає -- Liberation Serif
+     метрично сумісний, DejaVu Serif -- останній запобіжник. */
+  @page {
+    size: A4 portrait;
+    margin: 3cm 1cm 2cm 2cm;
+    @top-left { content: element(letterhead); }
+    @bottom-center {
+      content: counter(page);
+      font-family: 'Times New Roman', 'Liberation Serif', 'DejaVu Serif', serif;
+      font-size: 10pt;
+      color: #6e6e73;
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Times New Roman', 'Liberation Serif', 'DejaVu Serif', serif;
+    font-size: 12pt;
+    line-height: 1.35;
+    color: #000000;
+    text-align: justify;
+  }
+
+  /* ===== Бланк: повторюється на кожній сторінці (running element) ===== */
+  .letterhead {
+    position: running(letterhead);
+    width: 17cm;
+    border-collapse: collapse;
+  }
+  .letterhead td { vertical-align: top; border: 0; padding: 0; }
+  .letterhead__logo { width: 5cm; }
+  .letterhead__logo img { width: 4.6cm; height: auto; }
+  .letterhead__details {
+    text-align: right;
+    font-family: Arial, 'Liberation Sans', 'DejaVu Sans', sans-serif;
+    font-size: 8.5pt;
+    line-height: 1.3;
+    color: #1d1d1f;
+  }
+
+  /* ===== Заголовки ===== */
+  h1 {
+    font-size: 16pt;
+    text-align: center;
+    margin-bottom: 6pt;
+  }
+  .iprm-content-page__subtitle {
+    text-align: center;
+    font-size: 12pt;
+    margin-bottom: 14pt;
+  }
+  /* градієнтний текст сайту -- у документі звичайний чорний */
+  .apple-gradient-text {
+    background: none;
+    color: inherit;
+    -webkit-text-fill-color: currentColor;
+  }
+
+  .legal-section { margin-bottom: 6pt; }
+  .legal-section h2 {
+    font-size: 13pt;
+    margin: 14pt 0 6pt;
+    text-align: left;
+    break-after: avoid;
+  }
+  .legal-section h3 {
+    font-size: 12pt;
+    margin: 10pt 0 4pt;
+    text-align: left;
+    break-after: avoid;
+  }
+
+  /* ===== Текст ===== */
+  p { margin-bottom: 6pt; orphans: 2; widows: 2; }
+  .legal-page__preamble p { text-indent: 1cm; margin-bottom: 12pt; }
+
+  ul, ol { margin: 0 0 6pt 1cm; padding-left: 0.5cm; }
+  li { margin-bottom: 2pt; }
+
+  dt { font-weight: bold; text-align: left; }
+  dd { margin: 0 0 6pt 1cm; }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ===== Реквізити ===== */
+  table.legal-details {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6pt 0 12pt;
+  }
+  table.legal-details td {
+    border: 0.5pt solid #000000;
+    padding: 3pt 5pt;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.legal-details td:first-child { width: 35%; font-weight: bold; }
+
+  .legal-page__closing { font-weight: bold; margin-top: 10pt; }
+
+  /* ===== Підписний блок ===== */
+  .signature { margin-top: 18pt; break-inside: avoid; }
+  .signature__company { font-weight: bold; margin-bottom: 0; }
+  .signature__row {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4pt;
+  }
+  .signature__row td {
+    border: 0;
+    padding: 0;
+    vertical-align: bottom;
+    text-align: left;
+  }
+  .signature__seal { text-align: center; }
+  .signature__seal img { width: 4.5cm; height: auto; }
+  .signature__name { text-align: right; }
+</style>
+</head>
+<body>
+
+<table class="letterhead">
+  <tr>
+    <td class="letterhead__logo">
+      <img src="{{ logo_path }}" alt="{{ site_settings.company_legal_name }}">
+    </td>
+    <td class="letterhead__details">
+      ЄДРПОУ: {{ site_settings.edrpou }}<br>
+      {{ site_settings.address }}<br>
+      {% if site_settings.email %}{{ site_settings.email }}{% endif %}
+      {% if site_settings.phone_secondary %} тел.: {{ site_settings.phone_secondary }}{% endif %}<br>
+      {{ site_settings.website_url | replace('https://', '') }}
+    </td>
+  </tr>
+</table>
+
+{% with pdf_mode = true %}
+  {% include 'main/_offer_content.html' %}
+{% endwith %}
+
+<div class="signature">
+  <p class="signature__company">{{ site_settings.company_legal_name }}</p>
+  <table class="signature__row">
+    <tr>
+      <td style="width: 30%;">{{ signer_title }}</td>
+      <td class="signature__seal" style="width: 40%;">
+        <img src="{{ seal_path }}" alt="Печатка та підпис">
+      </td>
+      <td class="signature__name" style="width: 30%;">{{ signer_name }}</td>
+    </tr>
+  </table>
+</div>
+
+</body>
+</html>

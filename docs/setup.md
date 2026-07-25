@@ -80,6 +80,20 @@ flask legal-docx offer --no-seal
 беруться з бланка `docs/legal/Шаблон листа ІПРМ.docx`. Оформлення документа:
 Times New Roman 12 pt, поля 2/1/3/2 см (ліве/праве/верхнє/нижнє).
 
+### Підписаний PDF оферти
+
+Окремо від CLI сторінка оферти віддає підписаний PDF на льоту:
+`GET /offer/pdf` -> [legal_pdf_service](../app/services/legal_pdf_service.py)
+(WeasyPrint, шаблон [main/offer_pdf.html](../app/templates/main/offer_pdf.html)).
+Кнопка завантаження -- на самій сторінці оферти.
+
+Текст оферти живе в партіалі
+[main/_offer_content.html](../app/templates/main/_offer_content.html), який
+використовують усі три представлення: веб-сторінка, PDF і .docx. Правити текст
+треба лише там. Печатка з підписом для PDF -- статичний файл
+`app/static/images/legal/seal-signature.png` (бланк .docx на сервері не
+потрібен, на відміну від CLI-експорту).
+
 | Параметр конфігурації | Призначення | Типове значення |
 |-----------------------|-------------|-----------------|
 | `LEGAL_DOCX_LETTERHEAD` | Шлях до бланка листа | `docs/legal/Шаблон листа ІПРМ.docx` |
