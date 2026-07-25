@@ -11,12 +11,6 @@
   margin-bottom: 32px;
 }
 
-.legal-page__toolbar-note {
-  font-size: 14px;
-  line-height: 1.4;
-  color: var(--apple-gray);
-}
-
 .legal-page__download::before {
   content: '\2193';
   font-weight: 700;
