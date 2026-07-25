@@ -124,6 +124,7 @@
     <a href="{{ url_for('admin.instance_materials', instance_id=instance.id, edit=1) }}"
        class="btn-admin btn-admin--secondary">{{ icon('edit') }} Редагувати</a>
     <form method="POST" class="admin-inline" data-confirm="Скасувати резервування і повернути залишки на склад MM Medic?"
+          data-confirm-ok="Скасувати резерв" data-confirm-cancel="Залишити резерв" data-confirm-danger
           action="{{ url_for('admin.instance_materials_cancel', instance_id=instance.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn-admin btn-admin--danger">{{ icon('close') }} Скасувати резерв</button>
@@ -213,7 +214,8 @@
       <button type="submit" class="btn-admin btn-admin--primary">{{ icon('send') }} {{ submit_label }}</button>
       {% else %}
       <button type="submit" class="btn-admin btn-admin--primary"
-              data-confirm="{% if is_consumed %}Провести коригування списання?{% else %}Провести списання за фактичними кількостями? Порожні поля = списати повністю зарезервоване.{% endif %}">
+              data-confirm="{% if is_consumed %}Провести коригування списання?{% else %}Провести списання за фактичними кількостями? Порожні поля = списати повністю зарезервоване.{% endif %}"
+              data-confirm-ok="{% if is_consumed %}Провести коригування{% else %}Провести списання{% endif %}">
         {{ icon('check') }} {{ submit_label }}
       </button>
       {% endif %}

@@ -136,7 +136,7 @@
           <div class="admin-table__actions">
             <a href="{{ url_for('admin.instance_edit', instance_id=inst.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('edit', label='Редагувати') }}</a>
             <a href="{{ url_for('admin.instance_materials', instance_id=inst.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Витратні матеріали">{{ icon('widgets', label='Матеріали') }}</a>
-            <form method="POST" action="{{ url_for('admin.instance_delete', instance_id=inst.id) }}" data-confirm="Видалити проведення?">
+            <form method="POST" action="{{ url_for('admin.instance_delete', instance_id=inst.id) }}" data-confirm="Видалити проведення?" data-confirm-ok="Видалити проведення" data-confirm-danger>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">{{ icon('delete', label='Видалити') }}</button>
             </form>

@@ -97,11 +97,11 @@
             <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm" target="_blank" rel="noopener noreferrer" aria-label="Переглянути публічну сторінку">{{ icon('visibility') }}</a>
             <a href="{{ url_for('admin.course_edit', course_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
             <a href="{{ url_for('admin.translations_edit', entity='course', obj_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Переклади">Переклади</a>
-            <form method="POST" action="{{ url_for('admin.course_clone', course_id=course.id) }}" data-confirm="Створити копію цього курсу як чернетку?">
+            <form method="POST" action="{{ url_for('admin.course_clone', course_id=course.id) }}" data-confirm="Створити копію цього курсу як чернетку?" data-confirm-ok="Створити копію">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Клонувати">{{ icon('content_copy') }}</button>
             </form>
-            <form method="POST" action="{{ url_for('admin.course_delete', course_id=course.id) }}" data-confirm="Видалити курс? Всі його проведення також видаляться.">
+            <form method="POST" action="{{ url_for('admin.course_delete', course_id=course.id) }}" data-confirm="Видалити курс? Всі його проведення також видаляться." data-confirm-ok="Видалити курс" data-confirm-danger>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити">{{ icon('delete') }}</button>
             </form>

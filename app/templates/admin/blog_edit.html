@@ -138,7 +138,7 @@
     </form>
 
     {% if post %}
-    <form id="blog-delete-form" method="POST" action="{{ url_for('admin.blog_delete', post_id=post.id) }}" data-confirm="Видалити допис?">
+    <form id="blog-delete-form" method="POST" action="{{ url_for('admin.blog_delete', post_id=post.id) }}" data-confirm="Видалити допис?" data-confirm-ok="Видалити допис" data-confirm-danger>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     </form>
     {% endif %}

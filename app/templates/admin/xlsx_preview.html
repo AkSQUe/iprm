@@ -150,7 +150,7 @@
       <button type="submit" class="btn-admin btn-admin--secondary">Скасувати</button>
     </form>
     {% if plan.is_valid and (c.create or c.update) %}
-    <form method="POST" action="{{ apply_url }}" class="admin-inline" data-confirm="Застосувати імпорт? Зміни в БД не можна буде відкотити автоматично.">
+    <form method="POST" action="{{ apply_url }}" class="admin-inline" data-confirm="Застосувати імпорт? Зміни в БД не можна буде відкотити автоматично." data-confirm-ok="Застосувати імпорт" data-confirm-danger>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn-admin btn-admin--primary">Підтвердити імпорт</button>
     </form>

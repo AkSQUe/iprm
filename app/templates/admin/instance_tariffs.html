@@ -33,7 +33,8 @@
       {% if instance.course %}
       {% set copyable_count = instance.copyable_course_tariffs | length %}
       <form method="POST" action="{{ url_for('admin.instance_tariffs_sync', instance_id=instance.id) }}"
-            data-confirm="Замінити тарифи цього проведення шаблонами курсу? Тарифи з реєстраціями буде деактивовано, решту -- замінено.">
+            data-confirm="Замінити тарифи цього проведення шаблонами курсу? Тарифи з реєстраціями буде деактивовано, решту -- замінено."
+            data-confirm-ok="Замінити тарифи" data-confirm-danger>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn-admin btn-admin--secondary"
                 title="Переносяться лише активні шаблони курсу, що пасують формату ({{ instance.format_label }})">{{ icon('refresh') }} Взяти з курсу ({{ copyable_count }})</button>
@@ -80,7 +81,7 @@
           <div class="admin-table__actions">
             <a href="{{ url_for('admin.instance_tariff_edit', tariff_id=tariff.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
             <a href="{{ url_for('admin.translations_edit', entity='instance_tariff', obj_id=tariff.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Переклади">Переклади</a>
-            <form method="POST" action="{{ url_for('admin.instance_tariff_delete', tariff_id=tariff.id) }}" data-confirm="Видалити тариф «{{ tariff.name }}»?">
+            <form method="POST" action="{{ url_for('admin.instance_tariff_delete', tariff_id=tariff.id) }}" data-confirm="Видалити тариф «{{ tariff.name }}»?" data-confirm-ok="Видалити тариф" data-confirm-danger>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити">{{ icon('delete') }}</button>
             </form>

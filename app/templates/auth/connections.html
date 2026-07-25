@@ -64,7 +64,8 @@
             {% if has_google %}
               <span class="badge badge--active">{{ _("Прив'язано") }}</span>
               <form method="POST" action="{{ url_for('auth.google_unlink') }}"
-                    data-confirm="{{ _("Від'єднати Google від акаунта?") }}">
+                    data-confirm="{{ _("Від'єднати Google від акаунта?") }}"
+                    data-confirm-ok="{{ _("Від'єднати") }}" data-confirm-danger>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="apple-btn apple-btn--outline apple-btn--sm">{{ _("Від'єднати") }}</button>
               </form>
@@ -87,7 +88,8 @@
             {% if has_apple %}
               <span class="badge badge--active">{{ _("Прив'язано") }}</span>
               <form method="POST" action="{{ url_for('auth.apple_unlink') }}"
-                    data-confirm="{{ _("Від'єднати Apple від акаунта?") }}">
+                    data-confirm="{{ _("Від'єднати Apple від акаунта?") }}"
+                    data-confirm-ok="{{ _("Від'єднати") }}" data-confirm-danger>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="apple-btn apple-btn--outline apple-btn--sm">{{ _("Від'єднати") }}</button>
               </form>

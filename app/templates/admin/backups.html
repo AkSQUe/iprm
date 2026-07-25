@@ -98,7 +98,7 @@
           <td data-label="Дата">{{ backup.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
           <td class="backup-table__actions" data-label="Дії">
             {% if backup.is_restorable %}
-            <form method="POST" action="{{ url_for('admin.backup_restore', backup_id=backup.id) }}" class="backup-action-form" data-confirm="Відновити базу даних з копії #{{ backup.id }}?">
+            <form method="POST" action="{{ url_for('admin.backup_restore', backup_id=backup.id) }}" class="backup-action-form" data-confirm="Відновити базу даних з копії #{{ backup.id }}? Поточні дані буде перезаписано." data-confirm-ok="Відновити базу" data-confirm-cancel="Не відновлювати" data-confirm-danger>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="backup-action-btn backup-action-btn--restore" title="Відновити">&#x21bb;</button>
             </form>
@@ -107,7 +107,7 @@
             <a href="{{ url_for('admin.backup_download', backup_id=backup.id) }}" class="backup-action-btn backup-action-btn--download" title="Завантажити">&#x2193;</a>
             <a href="{{ url_for('admin.backup_validate', backup_id=backup.id) }}" class="backup-action-btn backup-action-btn--validate" title="Перевірити">&#x2713;</a>
             {% endif %}
-            <form method="POST" action="{{ url_for('admin.backup_delete', backup_id=backup.id) }}" class="backup-action-form" data-confirm="Видалити резервну копію #{{ backup.id }}?">
+            <form method="POST" action="{{ url_for('admin.backup_delete', backup_id=backup.id) }}" class="backup-action-form" data-confirm="Видалити резервну копію #{{ backup.id }}?" data-confirm-ok="Видалити копію" data-confirm-danger>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="backup-action-btn backup-action-btn--delete" title="Видалити">&#x2715;</button>
             </form>

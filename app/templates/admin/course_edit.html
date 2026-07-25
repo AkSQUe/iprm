@@ -315,7 +315,7 @@
   </form>
 
   {% if course %}
-  <form method="POST" action="{{ url_for('admin.course_delete', course_id=course.id) }}" class="admin-form__danger-zone" data-confirm="Видалити курс з усіма його проведеннями?">
+  <form method="POST" action="{{ url_for('admin.course_delete', course_id=course.id) }}" class="admin-form__danger-zone" data-confirm="Видалити курс з усіма його проведеннями?" data-confirm-ok="Видалити курс" data-confirm-danger>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити курс</button>
   </form>

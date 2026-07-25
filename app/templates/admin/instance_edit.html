@@ -135,7 +135,7 @@
   </form>
 
   {% if instance %}
-  <form method="POST" action="{{ url_for('admin.instance_delete', instance_id=instance.id) }}" class="admin-form__danger-zone" data-confirm="Видалити проведення?">
+  <form method="POST" action="{{ url_for('admin.instance_delete', instance_id=instance.id) }}" class="admin-form__danger-zone" data-confirm="Видалити проведення?" data-confirm-ok="Видалити проведення" data-confirm-danger>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити проведення</button>
   </form>

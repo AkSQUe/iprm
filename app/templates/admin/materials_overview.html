@@ -62,7 +62,7 @@
        class="btn-admin btn-admin--secondary"
        {% if export_capped %}title="Експортуються перші {{ export_cap }} — уточніть фільтр для повного експорту"{% endif %}>{{ icon('download') }} Експорт XLSX{% if export_capped %} <span class="materials-cap">до {{ export_cap }}</span>{% endif %}</a>
     <form method="POST" action="{{ url_for('admin.materials_reconcile_now') }}" class="admin-inline"
-          data-confirm="Звірити стан резервувань з MM Medic зараз?">
+          data-confirm="Звірити стан резервувань з MM Medic зараз?" data-confirm-ok="Звірити">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('refresh') }} Звірити зараз</button>
     </form>

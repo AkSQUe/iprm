@@ -123,14 +123,14 @@
         <td>
           <div class="admin-table__actions admin-flex-center">
             {% if d.status in ('failed', 'retrying') %}
-            <form method="POST" action="{{ url_for('admin.webhook_retry', delivery_id=d.id) }}" class="admin-inline" data-confirm="Повторити відправку зараз?">
+            <form method="POST" action="{{ url_for('admin.webhook_retry', delivery_id=d.id) }}" class="admin-inline" data-confirm="Повторити відправку зараз?" data-confirm-ok="Повторити">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Повторити відправку" title="Повторити">
                 {{ icon('refresh') }}
               </button>
             </form>
             {% endif %}
-            <form method="POST" action="{{ url_for('admin.webhook_delete', delivery_id=d.id) }}" class="admin-inline" data-confirm="Видалити запис?">
+            <form method="POST" action="{{ url_for('admin.webhook_delete', delivery_id=d.id) }}" class="admin-inline" data-confirm="Видалити запис?" data-confirm-ok="Видалити запис" data-confirm-danger>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити запис" title="Видалити">
                 {{ icon('delete') }}

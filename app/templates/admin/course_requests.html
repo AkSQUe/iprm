@@ -91,7 +91,7 @@
         <td>
           <div class="admin-table__actions">
             <a href="{{ url_for('admin.course_request_edit', request_id=req.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('edit', label='Редагувати') }}</a>
-            <form method="POST" action="{{ url_for('admin.course_request_delete', request_id=req.id) }}" data-confirm="Видалити запит?">
+            <form method="POST" action="{{ url_for('admin.course_request_delete', request_id=req.id) }}" data-confirm="Видалити запит?" data-confirm-ok="Видалити запит" data-confirm-danger>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">{{ icon('delete', label='Видалити') }}</button>
             </form>

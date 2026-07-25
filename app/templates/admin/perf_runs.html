@@ -95,7 +95,8 @@
 
     <div class="perf-actions">
       <form method="POST" action="{{ url_for('admin.perf_key_rotate') }}"
-            data-confirm="Згенерувати новий ключ? Старий перестане працювати - інструмент доведеться переналаштувати.">
+            data-confirm="Згенерувати новий ключ? Старий перестане працювати - інструмент доведеться переналаштувати."
+            data-confirm-ok="Згенерувати новий" data-confirm-danger>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">
           {{ icon('refresh') }} {% if key_state.present %}Згенерувати новий ключ{% else %}Згенерувати ключ{% endif %}
@@ -103,7 +104,8 @@
       </form>
       {% if key_state.present %}
       <form method="POST" action="{{ url_for('admin.perf_key_clear') }}"
-            data-confirm="Вимкнути приймання замірів? Ендпоінт більше не прийматиме дані.">
+            data-confirm="Вимкнути приймання замірів? Ендпоінт більше не прийматиме дані."
+            data-confirm-ok="Вимкнути приймання">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn-admin btn-admin--sm">{{ icon('block') }} Вимкнути приймання</button>
       </form>
@@ -150,7 +152,7 @@
             <div class="admin-table__actions">
               <a href="{{ url_for('admin.perf_run_detail', run_id=run.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('info', label='Деталі') }}</a>
               <form method="POST" action="{{ url_for('admin.perf_run_delete', run_id=run.id) }}" class="admin-inline-form"
-                    data-confirm="Видалити цей прогін?">
+                    data-confirm="Видалити цей прогін?" data-confirm-ok="Видалити прогін" data-confirm-danger>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-admin btn-admin--sm">{{ icon('delete', label='Видалити') }}</button>
               </form>

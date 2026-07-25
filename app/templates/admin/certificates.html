@@ -89,12 +89,12 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-admin btn-admin--sm" title="Переслати на email">{{ icon('forward_to_inbox') }}</button>
               </form>
-              <form method="POST" action="{{ url_for('admin.certificate_revoke', cert_id=cert.id) }}" data-confirm="Відкликати сертифікат? Доступ користувача буде закрито.">
+              <form method="POST" action="{{ url_for('admin.certificate_revoke', cert_id=cert.id) }}" data-confirm="Відкликати сертифікат? Доступ користувача буде закрито." data-confirm-ok="Відкликати сертифікат" data-confirm-danger>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" title="Відкликати">{{ icon('block') }}</button>
               </form>
               {% else %}
-              <form method="POST" action="{{ url_for('admin.certificate_revoke', cert_id=cert.id) }}" data-confirm="Відновити сертифікат?">
+              <form method="POST" action="{{ url_for('admin.certificate_revoke', cert_id=cert.id) }}" data-confirm="Відновити сертифікат?" data-confirm-ok="Відновити">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm" title="Відновити">{{ icon('restart_alt') }}</button>
               </form>

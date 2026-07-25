@@ -103,7 +103,8 @@
         <div class="admin-form__actions">
           <a href="{{ url_for('admin.integrations_io') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
           <button type="submit" class="btn-admin btn-admin--primary"
-                  data-confirm="Записати {{ changes_count }} змін у БД?">
+                  data-confirm="Записати {{ changes_count }} змін у БД? Нинішні значення буде перезаписано."
+                  data-confirm-ok="Записати зміни" data-confirm-danger>
             Підтвердити та імпортувати
           </button>
         </div>
