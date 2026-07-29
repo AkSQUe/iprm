@@ -1,0 +1,5 @@
+# Copy to /etc/iprm-watchdog.conf (chmod 600). Host-specific, NOT versioned.
+#
+# Without this file alerts go to every active users.is_admin address -- which on
+# this site includes non-technical staff. Set an explicit list instead.
+ALERT_TO=ops@example.com,dev@example.com

@@ -1,0 +1,3 @@
+# Server-side files must keep LF endings: CRLF breaks shebangs and systemd units.
+*.sh text eol=lf
+deploy/** text eol=lf

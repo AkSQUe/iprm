@@ -1,0 +1,13 @@
+# Installed as /etc/systemd/system/iprm-watchdog.service
+[Unit]
+Description=IPRM site health check and self-heal
+After=network-online.target nginx.service
+Documentation=file:/var/www/iprm/deploy/README.md
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/iprm-healthcheck.sh
+# The probe itself is a curl; the alert path may open an SMTP session. Neither
+# should ever be able to pin the single vCPU on this box.
+TimeoutStartSec=120
+Nice=10

@@ -1,0 +1,12 @@
+# Installed as /etc/systemd/system/iprm-watchdog.timer
+[Unit]
+Description=Run the IPRM health check every 5 minutes
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=iprm-watchdog.service
+
+[Install]
+WantedBy=timers.target

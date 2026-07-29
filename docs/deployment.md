@@ -90,27 +90,53 @@ apt-get install -y libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libffi
 `/ngx-i/loader.js`, а `transport_url` вказує на `/ngx-i`. Залишилось додати
 проксі-локації в nginx (у `server {}` сайту, **вище** за `location /`):
 
+Хости зовнішніх апстрімів **обов'язково** зберігаються у змінних (`set $...`), а не
+пишуться буквально в `proxy_pass` -- див. попередження нижче.
+
 ```nginx
 # --- Google Analytics first-party proxy ---
+resolver 127.0.0.53 1.1.1.1 8.8.8.8 valid=300s;
+resolver_timeout 5s;
+set $gtm_upstream www.googletagmanager.com;
+set $ga_upstream www.google-analytics.com;
+
 # Лоадер gtag.js: /ngx-i/loader.js?id=... -> googletagmanager
 location = /ngx-i/loader.js {
-    proxy_pass https://www.googletagmanager.com/gtag/js;
+    rewrite ^ /gtag/js break;
+    proxy_pass https://$gtm_upstream;
     proxy_set_header Host www.googletagmanager.com;
     proxy_ssl_server_name on;
+    proxy_ssl_name www.googletagmanager.com;
     proxy_set_header Accept-Encoding "";
     expires 15m;
 }
 # Маяки збору: /ngx-i/g/collect -> google-analytics
 location /ngx-i/g/ {
-    proxy_pass https://www.google-analytics.com/g/;
+    rewrite ^/ngx-i/g/(.*)$ /g/$1 break;
+    proxy_pass https://$ga_upstream;
     proxy_set_header Host www.google-analytics.com;
     proxy_ssl_server_name on;
+    proxy_ssl_name www.google-analytics.com;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     add_header Cache-Control "no-store" always;
 }
 ```
 
 Застосувати: вставити блоки в конфіг сайту, далі `nginx -t && systemctl reload nginx`.
+
+> **НЕ пишіть хост буквально в `proxy_pass`.** З буквальним хостом nginx резолвить
+> DNS **на старті** і відмовляється стартувати з `[emerg] host not found in
+> upstream`, якщо DNS у ту мить недоступний. Саме так сайт ліг 29.07.2026: нічний
+> `apt-daily-upgrade` перезапустив systemd-resolved і nginx одночасно, nginx впав і
+> не піднявся сам. Зі змінною резолв відбувається на кожен запит, тож збій DNS дає
+> 502 лише на `/ngx-i/`, а не кладе весь сайт.
+>
+> Через змінну nginx **не** підставляє URI автоматично і не додає query-рядок --
+> тому префікси переписуються через `rewrite ... break` (він зберігає args сам).
+>
+> Додатково стоїть drop-in `/etc/systemd/system/nginx.service.d/restart.conf`
+> (`Restart=on-failure`, `RestartSec=10s`, `StartLimitBurst=10`) -- штатний юніт
+> nginx не має політики рестарту взагалі.
 
 **Порядок:** додайте nginx-локації **перед** деплоєм коду (без коду вони просто
 не використовуються), інакше буде вікно, коли `/ngx-i/loader.js` віддаватиме 404.
