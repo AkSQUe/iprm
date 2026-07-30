@@ -155,6 +155,7 @@ def populate_course_from_form(course, form):
     course.speaker_info = _clean_text(form.speaker_info.data)
     course.agenda = _clean_text(form.agenda.data)
     course.faq = faq_text_to_list(form.faq_text.data)
+    course.final_cta_text = _clean_text(form.final_cta_text.data)
     course.base_price = form.base_price.data or 0
     course.difficulty_level = form.difficulty_level.data or None
     course.roi_hint = _clean_text(form.roi_hint.data)
@@ -334,6 +335,7 @@ def clone_course(source, created_by_id):
         speaker_info=source.speaker_info,
         agenda=source.agenda,
         faq=[dict(item) for item in (source.faq or [])],
+        final_cta_text=source.final_cta_text,
         base_price=source.base_price,
         difficulty_level=source.difficulty_level,
         roi_hint=source.roi_hint,

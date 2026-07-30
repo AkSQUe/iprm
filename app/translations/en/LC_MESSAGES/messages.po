@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-25 18:07+0300\n"
+"POT-Creation-Date: 2026-07-30 22:27+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1827,6 +1827,15 @@ msgstr "Clinical case reviews and answers to your questions from the lecturer"
 msgid "Доступ до додаткових навчальних матеріалів і презентацій"
 msgstr "Access to additional learning materials and presentations"
 
+msgid "Програма <span class=\"apple-gradient-text\">курсу</span>"
+msgstr "Course <span class=\"apple-gradient-text\">program</span>"
+
+msgid "Структура навчання — від теорії до практичних навичок"
+msgstr "Learning structure — from theory to practical skills"
+
+msgid "Ваш <span class=\"apple-gradient-text\">тренер</span>"
+msgstr "Your <span class=\"apple-gradient-text\">trainer</span>"
+
 msgid "Оберіть <span class=\"apple-gradient-text\">формат участі</span>"
 msgstr ""
 "Choose your <span class=\"apple-gradient-text\">participation "
@@ -1847,30 +1856,6 @@ msgstr "Register for %(date)s"
 
 msgid "Продаж завершено"
 msgstr "Sales closed"
-
-msgid "Найближчі <span class=\"apple-gradient-text\">дати</span>"
-msgstr "Upcoming <span class=\"apple-gradient-text\">dates</span>"
-
-msgid "від"
-msgstr "from"
-
-msgid "Залишилось"
-msgstr "Left"
-
-msgid "Тарифи участі"
-msgstr "Participation tiers"
-
-msgid "Наразі немає запланованих проведень цього курсу."
-msgstr "There are currently no scheduled sessions of this course."
-
-msgid "Залишити запит на проведення"
-msgstr "Request a session"
-
-msgid "Програма <span class=\"apple-gradient-text\">курсу</span>"
-msgstr "Course <span class=\"apple-gradient-text\">program</span>"
-
-msgid "Структура навчання — від теорії до практичних навичок"
-msgstr "Learning structure — from theory to practical skills"
 
 msgid "Коли курс <span class=\"apple-gradient-text\">окупиться?</span>"
 msgstr "When will the course <span class=\"apple-gradient-text\">pay off?</span>"
@@ -1900,18 +1885,36 @@ msgstr "(\"from\" tier)"
 msgid "Розрахунок орієнтовний: вартість курсу"
 msgstr "Estimated calculation: course cost"
 
+msgid "від"
+msgstr "from"
+
 msgid "ваш чек. Податки та розхідники не враховано."
 msgstr "your fee. Taxes and consumables are not included."
 
-msgid "Ваш <span class=\"apple-gradient-text\">тренер</span>"
-msgstr "Your <span class=\"apple-gradient-text\">trainer</span>"
+msgid "Найближчі <span class=\"apple-gradient-text\">дати</span>"
+msgstr "Upcoming <span class=\"apple-gradient-text\">dates</span>"
 
-msgid "Поширені <span class=\"apple-gradient-text\">запитання</span>"
-msgstr "Frequently asked <span class=\"apple-gradient-text\">questions</span>"
+msgid "Залишилось"
+msgstr "Left"
+
+msgid "Тарифи участі"
+msgstr "Participation tiers"
+
+msgid "Наразі немає запланованих проведень цього курсу."
+msgstr "There are currently no scheduled sessions of this course."
+
+msgid "Залишити запит на проведення"
+msgstr "Request a session"
 
 #, python-format
 msgid "Уже проведено (%(count)s):"
 msgstr "Already held (%(count)s):"
+
+msgid "Поширені <span class=\"apple-gradient-text\">запитання</span>"
+msgstr "Frequently asked <span class=\"apple-gradient-text\">questions</span>"
+
+msgid "Відгуки <span class=\"apple-gradient-text\">учасників</span>"
+msgstr "Participant <span class=\"apple-gradient-text\">reviews</span>"
 
 msgid "Наступний <span class=\"apple-gradient-text\">крок</span>"
 msgstr "Next <span class=\"apple-gradient-text\">step</span>"
@@ -1928,9 +1931,6 @@ msgid ""
 msgstr ""
 "Your personal link to this course. For each paid registration made "
 "through your link, you earn bonus loyalty points."
-
-msgid "Відгуки <span class=\"apple-gradient-text\">учасників</span>"
-msgstr "Participant <span class=\"apple-gradient-text\">reviews</span>"
 
 msgid ""
 "Хочете, щоб курс був проведений <span class=\"apple-gradient-text\">в "
@@ -1957,6 +1957,16 @@ msgstr "Optional: what exactly you are interested in"
 
 msgid "Надіслати запит"
 msgstr "Send request"
+
+msgid "Реєстрація на курс"
+msgstr "Course registration"
+
+msgid ""
+"Готові опанувати метод? Оберіть зручну дату та закріпіть за собою місце в"
+" групі."
+msgstr ""
+"Ready to master the method? Pick a convenient date and secure your seat "
+"in the group."
 
 msgid "Курси після дипломної освіти для лікарів | ІПРМ"
 msgstr "Postgraduate courses for physicians | IPRM"
@@ -4183,9 +4193,6 @@ msgstr "Feedback"
 
 msgid "Реєстрація на курс | ІПРМ"
 msgstr "Course registration | IPRM"
-
-msgid "Реєстрація на курс"
-msgstr "Course registration"
 
 msgid "Захід проходить <strong>ОФЛАЙН</strong>"
 msgstr "The event is held <strong>OFFLINE</strong>"

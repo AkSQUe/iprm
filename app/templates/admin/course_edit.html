@@ -242,6 +242,12 @@
           {{ form.faq_text(class="form-input", id="faq_text", rows="8") }}
           <div class="form-hint">Блоки розділяються порожнім рядком. Перший рядок – питання, решта – відповідь.</div>
         </div>
+        <div class="form-group admin-form__full">
+          <label for="final_cta_text">Фінальний заклик</label>
+          {{ form.final_cta_text(class="form-input", id="final_cta_text", placeholder="Готові опанувати метод? Оберіть зручну дату та закріпіть місце в групі.") }}
+          <div class="form-hint">{{ form.final_cta_text.description }}</div>
+          {{ i18n.panes(tr, 'final_cta_text') }}
+        </div>
       </div>
     </div>
 

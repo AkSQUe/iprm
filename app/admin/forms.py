@@ -405,6 +405,12 @@ class CourseForm(FlaskForm):
         validators=[Optional()],
         description='Формат: Питання?\\nВідповідь\\n\\nПитання?\\nВідповідь',
     )
+    final_cta_text = StringField(
+        'Фінальний заклик',
+        validators=[Optional(), Length(max=300)],
+        description='Одне речення у блоці з кнопкою реєстрації внизу сторінки. '
+                    'Порожньо -- показуємо стандартний текст.',
+    )
     base_price = DecimalField(
         'Базова ціна (UAH)',
         default=0,

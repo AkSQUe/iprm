@@ -14,7 +14,7 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     __translatable__ = (
         'title', 'subtitle', 'description', 'short_description',
         'target_audience', 'tags', 'speaker_info', 'agenda', 'faq',
-        'roi_hint', 'bpr_specialties',
+        'roi_hint', 'bpr_specialties', 'final_cta_text',
     )
 
     id = db.Column(BigIntPK, primary_key=True)
@@ -49,6 +49,9 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     # Орієнтир окупності -- маркетинговий рядок на кшталт
     # "Окупність ~ 3-4 записи за чека 6 000-9 000 грн". Порожньо -- не показуємо.
     roi_hint = db.Column(db.String(200))
+    # Одне речення у фінальному CTA-блоці внизу сторінки курсу.
+    # Порожньо -- показуємо дефолтний текст із шаблону.
+    final_cta_text = db.Column(db.String(300))
     # Реєстраційний номер заходу БПР (7 цифр) -- сегмент номера сертифіката.
     bpr_event_number = db.Column(db.String(20))
     # Спеціальності заходу БПР для сертифіката (напр. "усі лікарські спеціальності").

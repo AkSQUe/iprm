@@ -129,6 +129,15 @@
     </section>
   </div>
 
+  {# ===================================================================
+     Порядок блоків сторінки курсу (узгоджено 30.07.2026):
+       про курс -> програма -> тренер -> формат участі -> окупність ->
+       найближчі дати -> історія проведень -> FAQ -> відгуки ->
+       наступний крок -> реферальне посилання -> форма запиту ->
+       фінальний CTA.
+     Фон секцій чергується (apple-section-gray) саме під цю послідовність.
+     =================================================================== #}
+
   <!-- ===== ABOUT ===== -->
   {% set about_lead = course.t('short_description') if course.t('short_description') and course.t('short_description') != course.t('subtitle') else '' %}
   {% set about_image = course.hero_src or course.card_src %}
@@ -242,6 +251,50 @@
     </div>
   </section>
 
+  <!-- ===== PROGRAM BLOCKS ===== -->
+  {% if course.program_blocks %}
+  <section id="program" class="iprm-section" aria-labelledby="program-title">
+    <div class="iprm-section__inner">
+      <h2 id="program-title" class="iprm-section__title apple-reveal">{{ _('Програма <span class="apple-gradient-text">курсу</span>') }}</h2>
+      <p class="iprm-section__subtitle apple-reveal">{{ _('Структура навчання — від теорії до практичних навичок') }}</p>
+      <div class="iprm-program">
+        {% for block in course.program_blocks %}
+        <article class="iprm-program__block apple-reveal">
+          <header class="iprm-program__head">
+            <span class="iprm-program__badge" aria-hidden="true">{{ loop.index }}</span>
+            <h3 class="iprm-program__heading">{{ block.t('heading') }}</h3>
+          </header>
+          <ul class="iprm-program__list">
+            {% for item in block.t('items') %}
+            <li class="iprm-program__item">{{ item }}</li>
+            {% endfor %}
+          </ul>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== TRAINER ===== -->
+  {% if course.trainer %}
+  <section id="trainer" class="iprm-section apple-section-gray" aria-labelledby="trainer-title">
+    <div class="iprm-section__inner">
+      <h2 id="trainer-title" class="iprm-section__title apple-reveal">{{ _('Ваш <span class="apple-gradient-text">тренер</span>') }}</h2>
+      <div class="iprm-trainer-block apple-reveal">
+        {% if course.trainer.photo_src %}
+        <img src="{{ course.trainer.photo_src }}" alt="{{ course.trainer.t('full_name') }}" class="iprm-trainer-block__photo" loading="lazy" width="280" height="280">
+        {% endif %}
+        <div class="iprm-trainer-block__body">
+          <h3>{{ course.trainer.t('full_name') }}</h3>
+          {% if course.trainer.t('role') %}<p class="iprm-trainer-block__role">{{ course.trainer.t('role') }}</p>{% endif %}
+          {% if course.trainer.t('bio') %}<p>{{ course.trainer.t('bio') }}</p>{% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- ===== FORMAT / TARIFFS (Оберіть формат участі) ===== -->
   {% if format_inst %}
   {% set fmt_open = format_inst.id in open_instance_ids %}
@@ -280,6 +333,41 @@
           {% endif %}
         </article>
         {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== ROI CALCULATOR ===== -->
+  {% set _roi_prices = upcoming_instances | map(attribute='effective_price') | select | list %}
+  {% set roi_price = (_roi_prices | min) if _roi_prices else course.base_price %}
+  {% if site_settings.show_roi_calculator and roi_price and roi_price > 0 %}
+  <section id="roi" class="iprm-section apple-section-gray" aria-labelledby="roi-title">
+    <div class="iprm-section__inner">
+      <h2 id="roi-title" class="iprm-section__title apple-reveal">{{ _('Коли курс <span class="apple-gradient-text">окупиться?</span>') }}</h2>
+      <p class="iprm-section__subtitle apple-reveal">{{ _('Порахуйте на власних цифрах — середній чек процедури та кількість записів на місяць') }}</p>
+      <div class="iprm-roi apple-reveal" data-roi-calc data-roi-price="{{ roi_price | int }}">
+        <div class="iprm-roi__inputs">
+          <label class="iprm-roi__field">
+            <span class="iprm-roi__label">{{ _('Середній чек процедури, &#8372;') }}</span>
+            <input type="number" class="form-input" data-roi-check value="2000" min="0" max="100000" step="100" inputmode="numeric">
+          </label>
+          <label class="iprm-roi__field">
+            <span class="iprm-roi__label">{{ _('Процедур на місяць') }}</span>
+            <input type="number" class="form-input" data-roi-count value="12" min="0" max="500" step="1" inputmode="numeric">
+          </label>
+        </div>
+        <div class="iprm-roi__results">
+          <div class="iprm-roi__result">
+            <span class="iprm-roi__value" data-roi-income>&mdash;</span>
+            <span class="iprm-roi__caption">{{ _('дохід на місяць') }}</span>
+          </div>
+          <div class="iprm-roi__result">
+            <span class="iprm-roi__value" data-roi-payback>&mdash;</span>
+            <span class="iprm-roi__caption">{{ _('окупність курсу') }}{% if _roi_prices | length > 1 or (_roi_prices and _roi_prices | min != _roi_prices | max) %} {{ _('(тариф «від»)') }}{% endif %}</span>
+          </div>
+        </div>
+        <p class="iprm-roi__note">{{ _('Розрахунок орієнтовний: вартість курсу') }} {{ _('від') ~ ' ' if _roi_prices and (_roi_prices | unique | list | length) > 1 else '' }}{{ roi_price | int }} &#8372; &divide; {{ _('ваш чек. Податки та розхідники не враховано.') }}</p>
       </div>
     </div>
   </section>
@@ -354,102 +442,6 @@
     </div>
   </section>
 
-  <!-- ===== PROGRAM BLOCKS ===== -->
-  {% if course.program_blocks %}
-  <section class="iprm-section apple-section-gray" aria-labelledby="program-title">
-    <div class="iprm-section__inner">
-      <h2 id="program-title" class="iprm-section__title apple-reveal">{{ _('Програма <span class="apple-gradient-text">курсу</span>') }}</h2>
-      <p class="iprm-section__subtitle apple-reveal">{{ _('Структура навчання — від теорії до практичних навичок') }}</p>
-      <div class="iprm-program">
-        {% for block in course.program_blocks %}
-        <article class="iprm-program__block apple-reveal">
-          <header class="iprm-program__head">
-            <span class="iprm-program__badge" aria-hidden="true">{{ loop.index }}</span>
-            <h3 class="iprm-program__heading">{{ block.t('heading') }}</h3>
-          </header>
-          <ul class="iprm-program__list">
-            {% for item in block.t('items') %}
-            <li class="iprm-program__item">{{ item }}</li>
-            {% endfor %}
-          </ul>
-        </article>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-  {% endif %}
-
-  <!-- ===== ROI CALCULATOR ===== -->
-  {% set _roi_prices = upcoming_instances | map(attribute='effective_price') | select | list %}
-  {% set roi_price = (_roi_prices | min) if _roi_prices else course.base_price %}
-  {% if site_settings.show_roi_calculator and roi_price and roi_price > 0 %}
-  <section id="roi" class="iprm-section" aria-labelledby="roi-title">
-    <div class="iprm-section__inner">
-      <h2 id="roi-title" class="iprm-section__title apple-reveal">{{ _('Коли курс <span class="apple-gradient-text">окупиться?</span>') }}</h2>
-      <p class="iprm-section__subtitle apple-reveal">{{ _('Порахуйте на власних цифрах — середній чек процедури та кількість записів на місяць') }}</p>
-      <div class="iprm-roi apple-reveal" data-roi-calc data-roi-price="{{ roi_price | int }}">
-        <div class="iprm-roi__inputs">
-          <label class="iprm-roi__field">
-            <span class="iprm-roi__label">{{ _('Середній чек процедури, &#8372;') }}</span>
-            <input type="number" class="form-input" data-roi-check value="2000" min="0" max="100000" step="100" inputmode="numeric">
-          </label>
-          <label class="iprm-roi__field">
-            <span class="iprm-roi__label">{{ _('Процедур на місяць') }}</span>
-            <input type="number" class="form-input" data-roi-count value="12" min="0" max="500" step="1" inputmode="numeric">
-          </label>
-        </div>
-        <div class="iprm-roi__results">
-          <div class="iprm-roi__result">
-            <span class="iprm-roi__value" data-roi-income>&mdash;</span>
-            <span class="iprm-roi__caption">{{ _('дохід на місяць') }}</span>
-          </div>
-          <div class="iprm-roi__result">
-            <span class="iprm-roi__value" data-roi-payback>&mdash;</span>
-            <span class="iprm-roi__caption">{{ _('окупність курсу') }}{% if _roi_prices | length > 1 or (_roi_prices and _roi_prices | min != _roi_prices | max) %} {{ _('(тариф «від»)') }}{% endif %}</span>
-          </div>
-        </div>
-        <p class="iprm-roi__note">{{ _('Розрахунок орієнтовний: вартість курсу') }} {{ _('від') ~ ' ' if _roi_prices and (_roi_prices | unique | list | length) > 1 else '' }}{{ roi_price | int }} &#8372; &divide; {{ _('ваш чек. Податки та розхідники не враховано.') }}</p>
-      </div>
-    </div>
-  </section>
-  {% endif %}
-
-  <!-- ===== TRAINER ===== -->
-  {% if course.trainer %}
-  <section class="iprm-section" aria-labelledby="trainer-title">
-    <div class="iprm-section__inner">
-      <h2 id="trainer-title" class="iprm-section__title apple-reveal">{{ _('Ваш <span class="apple-gradient-text">тренер</span>') }}</h2>
-      <div class="iprm-trainer-block apple-reveal">
-        {% if course.trainer.photo_src %}
-        <img src="{{ course.trainer.photo_src }}" alt="{{ course.trainer.t('full_name') }}" class="iprm-trainer-block__photo" loading="lazy" width="280" height="280">
-        {% endif %}
-        <div class="iprm-trainer-block__body">
-          <h3>{{ course.trainer.t('full_name') }}</h3>
-          {% if course.trainer.t('role') %}<p class="iprm-trainer-block__role">{{ course.trainer.t('role') }}</p>{% endif %}
-          {% if course.trainer.t('bio') %}<p>{{ course.trainer.t('bio') }}</p>{% endif %}
-        </div>
-      </div>
-    </div>
-  </section>
-  {% endif %}
-
-  <!-- ===== FAQ ===== -->
-  {% if course.faq is not none and course.faq | length %}
-  <section class="iprm-section apple-section-gray" aria-labelledby="faq-title">
-    <div class="iprm-section__inner">
-      <h2 id="faq-title" class="iprm-section__title apple-reveal">{{ _('Поширені <span class="apple-gradient-text">запитання</span>') }}</h2>
-      <div class="iprm-faq apple-reveal">
-        {% for item in course.t('faq') %}{% if item.question %}
-        <details class="iprm-faq__item">
-          <summary class="iprm-faq__question">{{ item.question }}</summary>
-          <div class="iprm-faq__answer">{{ (item.answer or '') | replace('\n', '<br>') | sanitize_rich_text }}</div>
-        </details>
-        {% endif %}{% endfor %}
-      </div>
-    </div>
-  </section>
-  {% endif %}
-
   <!-- ===== PAST INSTANCES (history) ===== -->
   {% if past_instances %}
   <section class="iprm-section" aria-labelledby="history-title">
@@ -470,9 +462,40 @@
   </section>
   {% endif %}
 
+  <!-- ===== FAQ ===== -->
+  {% if course.faq is not none and course.faq | length %}
+  <section id="faq" class="iprm-section apple-section-gray" aria-labelledby="faq-title">
+    <div class="iprm-section__inner">
+      <h2 id="faq-title" class="iprm-section__title apple-reveal">{{ _('Поширені <span class="apple-gradient-text">запитання</span>') }}</h2>
+      <div class="iprm-faq apple-reveal">
+        {% for item in course.t('faq') %}{% if item.question %}
+        <details class="iprm-faq__item">
+          <summary class="iprm-faq__question">{{ item.question }}</summary>
+          <div class="iprm-faq__answer">{{ (item.answer or '') | replace('\n', '<br>') | sanitize_rich_text }}</div>
+        </details>
+        {% endif %}{% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== REVIEWS ===== -->
+  {% if course_reviews %}
+  <section class="iprm-section" aria-labelledby="reviews-title">
+    <div class="iprm-section__inner">
+      <h2 id="reviews-title" class="iprm-section__title apple-reveal">{{ _('Відгуки <span class="apple-gradient-text">учасників</span>') }}</h2>
+      <div class="reviews-grid">
+        {% for review in course_reviews %}
+          {% include 'partials/_review_card.html' %}
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- ===== RELATED COURSES (next step) ===== -->
   {% if related_courses %}
-  <section class="iprm-section" aria-labelledby="related-title">
+  <section class="iprm-section apple-section-gray" aria-labelledby="related-title">
     <div class="iprm-section__inner">
       <h2 id="related-title" class="iprm-section__title apple-reveal">{{ _('Наступний <span class="apple-gradient-text">крок</span>') }}</h2>
       <p class="iprm-section__subtitle apple-reveal">{{ _('Схожі курси, які доповнять цю програму') }}</p>
@@ -528,20 +551,6 @@
   </section>
   {% endif %}
 
-  <!-- ===== REVIEWS ===== -->
-  {% if course_reviews %}
-  <section class="iprm-section" aria-labelledby="reviews-title">
-    <div class="iprm-section__inner">
-      <h2 id="reviews-title" class="iprm-section__title apple-reveal">{{ _('Відгуки <span class="apple-gradient-text">учасників</span>') }}</h2>
-      <div class="reviews-grid">
-        {% for review in course_reviews %}
-          {% include 'partials/_review_card.html' %}
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-  {% endif %}
-
   <!-- ===== REQUEST FORM ===== -->
   <section id="request" class="iprm-section apple-section-gray" aria-labelledby="request-title">
     <div class="iprm-section__inner">
@@ -579,6 +588,26 @@
           </div>
           <button type="submit" class="apple-btn apple-btn--primary">{{ _('Надіслати запит') }}</button>
         </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FINAL CTA ===== -->
+  {# Текст редагується в адмінці (Курс -> Контент -> Фінальний заклик);
+     порожньо -> дефолтне речення нижче. #}
+  <section class="iprm-section iprm-section--compact" aria-label="{{ _('Реєстрація на курс') }}">
+    <div class="iprm-section__inner">
+      <div class="iprm-final-cta apple-reveal">
+        <p class="iprm-final-cta__text">
+          {{ course.t('final_cta_text') or _('Готові опанувати метод? Оберіть зручну дату та закріпіть за собою місце в групі.') }}
+        </p>
+        {% if format_inst %}
+        <a href="#formats" class="apple-btn apple-btn--primary">{{ _('Зареєструватися') }}</a>
+        {% elif upcoming_instances %}
+        <a href="#schedule" class="apple-btn apple-btn--primary">{{ _('Зареєструватися') }}</a>
+        {% else %}
+        <a href="#request" class="apple-btn apple-btn--primary">{{ _('Залишити запит') }}</a>
+        {% endif %}
       </div>
     </div>
   </section>
