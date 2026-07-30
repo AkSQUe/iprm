@@ -1,5 +1,6 @@
 """Course + CourseInstance CRUD business logic."""
 import logging
+import re
 from datetime import datetime, timezone
 
 from sqlalchemy import case, func
@@ -61,6 +62,11 @@ def attach_course_media(course):
 
 # ========== Shared helpers (text <-> list/faq conversions) ==========
 
+# Порожній рядок між блоками FAQ (переноси вже нормалізовані до \n);
+# "порожній" рядок може містити пробіли чи таби.
+_FAQ_BLOCK_SEPARATOR = re.compile(r'\n[ \t]*\n+')
+
+
 def lines_to_list(text):
     """Convert newline-separated text to a list of stripped strings."""
     if not text:
@@ -79,14 +85,19 @@ def faq_text_to_list(text):
     """Parse FAQ text into list of {question, answer} dicts.
 
     Format: blocks separated by empty lines, first line = question, rest = answer.
+
+    Перед розбиттям нормалізуємо переноси: браузер надсилає textarea з CRLF,
+    тож літерал '\\n\\n' не збігався б ніколи і весь FAQ ставав одним блоком.
+    Порожній рядок-роздільник може містити пробіли чи таби.
     """
     if not text:
         return []
-    blocks = text.strip().split('\n\n')
+    normalized = text.replace('\r\n', '\n').replace('\r', '\n')
+    blocks = _FAQ_BLOCK_SEPARATOR.split(normalized.strip())
     faq = []
     for block in blocks:
         lines = [l.strip() for l in block.strip().splitlines() if l.strip()]
-        if len(lines) >= 2:
+        if lines:
             faq.append({'question': lines[0], 'answer': '\n'.join(lines[1:])})
     return faq
 
