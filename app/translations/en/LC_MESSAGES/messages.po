@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-31 10:21+0300\n"
+"POT-Creation-Date: 2026-07-31 23:13+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -4242,13 +4242,6 @@ msgid "Переконайтесь, що зможете прибути у вка�
 msgstr "Make sure you can attend on the specified date."
 
 msgid ""
-"<strong>Будьте уважні!</strong> Одна реєстрація — одне підключення. Будь "
-"ласка, вказуйте контактні дані саме учасника заходу."
-msgstr ""
-"<strong>Please note!</strong> One registration — one connection. Please "
-"provide the contact details of the actual event participant."
-
-msgid ""
 "Реєстрація займе хвилину — лише базові дані. Анкету для "
 "<strong>сертифіката з балами БПР</strong> (вимоги МОЗ №725, п. 13) ви "
 "заповните пізніше в <strong>особистому кабінеті</strong> — ми нагадаємо."
@@ -4270,6 +4263,13 @@ msgstr ""
 
 msgid "Дані учасника"
 msgstr "Participant details"
+
+msgid ""
+"<strong>Будьте уважні!</strong> Одна реєстрація — одне підключення. Будь "
+"ласка, вказуйте контактні дані саме учасника заходу."
+msgstr ""
+"<strong>Please note!</strong> One registration — one connection. Please "
+"provide the contact details of the actual event participant."
 
 msgid ""
 "Вкажіть номер саме учасника заходу — на нього ми надішлемо нагадування та"
@@ -4345,6 +4345,9 @@ msgstr "Secure payment via LiqPay (Visa, Mastercard, Google Pay, Apple Pay)"
 
 msgid "Безпечна оплата:"
 msgstr "Secure payment:"
+
+msgid "До сплати"
+msgstr "Amount due"
 
 msgid "Маєте питання?"
 msgstr "Have questions?"

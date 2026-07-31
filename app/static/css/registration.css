@@ -993,3 +993,80 @@
   font-size: 0.875rem;
   padding: 10px 20px;
 }
+
+/* ========== ЛИПКА ПАНЕЛЬ ОПЛАТИ ==========
+   Кнопка видима з першого екрана, скільки б полів не було вище. Ховається
+   (атрибутом hidden зі sticky-cta.js), коли справжня кнопка форми доїхала
+   до екрана -- інакше внизу було б дві кнопки поспіль. */
+
+.reg-sticky-cta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  background: var(--iprm-surface-menu, rgba(255, 255, 255, 0.92));
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  border-top: 1px solid var(--iprm-border, rgba(0, 0, 0, 0.08));
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.reg-sticky-cta[hidden] {
+  display: none;
+}
+
+.reg-sticky-cta__info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.reg-sticky-cta__label {
+  font-size: 0.75rem;
+  color: var(--iprm-text-light);
+}
+
+.reg-sticky-cta__price {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--iprm-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.reg-sticky-cta__btn {
+  flex: 0 0 auto;
+}
+
+/* Щоб панель не перекривала останні елементи сторінки. */
+.reg-layout {
+  padding-bottom: 88px;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .reg-sticky-cta {
+    background: var(--iprm-white);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .reg-sticky-cta {
+    padding: 10px 14px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .reg-sticky-cta__btn {
+    padding: 12px 20px;
+    font-size: 0.9375rem;
+  }
+}

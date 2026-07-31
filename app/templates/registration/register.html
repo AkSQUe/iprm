@@ -77,13 +77,6 @@
   </aside>
   {% endif %}
 
-  <p class="reg-attention">
-    {% trans trimmed %}
-    <strong>Будьте уважні!</strong> Одна реєстрація — одне підключення.
-    Будь ласка, вказуйте контактні дані саме учасника заходу.
-    {% endtrans %}
-  </p>
-
   {# МОЗ-анкета (№725 п.13) винесена за рамки оплати: заповнюється в
      особистому кабінеті і потрібна для отримання сертифіката. #}
   {% if not profile_complete %}
@@ -104,7 +97,7 @@
   <div class="form-progress" data-form-progress="form[data-validate]" aria-hidden="true"></div>
 
   {# ===== Registration form ===== #}
-  <form method="POST" action="{{ url_for('registration.register_instance', instance_id=event.id) }}" data-validate data-single-submit data-recaptcha-action="event_register" data-ga-event="begin_checkout">
+  <form id="reg-form" method="POST" action="{{ url_for('registration.register_instance', instance_id=event.id) }}" data-validate data-single-submit data-recaptcha-action="event_register" data-ga-event="begin_checkout">
     {{ form.hidden_tag() }}
 
     {# ----- Тариф участі (тарифна вилка) ----- #}
@@ -140,6 +133,12 @@
     {# ----- Базові дані учасника ----- #}
     <div class="form-section reg-form-section">
       <h3 class="form-section__title reg-form-section__title">{{ _('Дані учасника') }}</h3>
+      <p class="reg-attention">
+        {% trans trimmed %}
+        <strong>Будьте уважні!</strong> Одна реєстрація — одне підключення.
+        Будь ласка, вказуйте контактні дані саме учасника заходу.
+        {% endtrans %}
+      </p>
       <div class="form-section__grid">
         <div class="form-group">
           <label for="last_name">{{ _('Прізвище') }} <span class="required">*</span></label>
@@ -245,7 +244,7 @@
       <span class="reg-payment-logos__brand">Apple Pay</span>
     </div>
 
-    <div class="reg-actions">
+    <div class="reg-actions" data-sticky-cta-anchor>
       <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="apple-btn apple-btn--secondary">{{ _('Назад') }}</a>
       <button type="submit" class="apple-btn apple-btn--primary">
         {% if tariffs %}
@@ -259,6 +258,22 @@
     </div>
   </form>
 
+  {# ===== Липка панель оплати =====
+     Кнопка видима з першого екрана, скільки б полів не було вище. Ховається,
+     коли справжня кнопка форми доїхала до екрана, -- інакше внизу було б дві.
+     Ціну оновлює reg-tariffs.js разом з рештою [data-tariff-price]. #}
+  <div class="reg-sticky-cta" data-sticky-cta hidden>
+    <div class="reg-sticky-cta__info">
+      <span class="reg-sticky-cta__label">{{ _('До сплати') }}</span>
+      <span class="reg-sticky-cta__price" data-tariff-price>
+        {%- if selected_tariff %}{{ selected_tariff.price | int }}{% elif tariffs %}{{ _('від') }} {{ event.price | int }}{% else %}{{ event.price | int if event.price else 0 }}{% endif %} &#8372;
+      </span>
+    </div>
+    <button type="submit" form="reg-form" class="apple-btn apple-btn--primary reg-sticky-cta__btn">
+      {{ _('Зареєструватися') }}
+    </button>
+  </div>
+
   <p class="reg-contact-cta">
     {{ _('Маєте питання?') }}
     <a href="{{ url_for('main.contact') }}">{{ _("Зворотній зв'язок") }}</a>
@@ -271,5 +286,6 @@
 <script src="{{ url_for('static', filename='js/form-progress.js') }}?v={{ assets_version }}" defer></script>
 {% if tariffs %}
 <script src="{{ url_for('static', filename='js/reg-tariffs.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/sticky-cta.js') }}?v={{ assets_version }}" defer></script>
 {% endif %}
 {% endblock %}

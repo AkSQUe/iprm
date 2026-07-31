@@ -157,6 +157,39 @@ def test_hybrid_city_banner_follows_tariff(client, logged_in):
     assert html.count('data-presence-confirm') == 2   # банер + галочки
     banner = html.split('reg-location-callout')[1][:200]
     assert 'hidden' in banner
+
+
+def test_offline_event_banner_stays_static(client, logged_in):
+    inst = _instance('offline')
+    _tariff(inst, 'Практикум', 'offline', 6000)
+    html = _page(client, inst)
+    assert 'reg-location-callout' in html
+    assert 'data-presence-confirm' not in html
+
+
+def test_attention_note_moved_out_of_first_screen(client, logged_in):
+    """Дубль тултипа телефону з'їдав перший екран; тепер він у секції
+    даних учасника, де й доречний."""
+    inst = _instance('hybrid')
+    _tariff(inst, 'Онлайн', 'online', 1000)
+    html = _page(client, inst)
+
+    assert 'reg-attention' in html                       # текст не втрачено
+    assert html.index('Дані учасника') < html.index('reg-attention')
+
+
+def test_sticky_pay_panel_is_present(client, logged_in):
+    inst = _instance('hybrid')
+    _tariff(inst, 'Онлайн', 'online', 1000)
+    html = _page(client, inst)
+
+    assert 'reg-sticky-cta' in html
+    assert 'id="reg-form"' in html
+    # Кнопка живе поза формою і чіпляється атрибутом form.
+    assert 'form="reg-form"' in html
+    assert 'data-sticky-cta-anchor' in html
+
+
 def test_admin_can_set_tariff_format(client):
     """Формат редагується в адмінці -- інакше наявні тарифи не полагодити."""
     from app.models.user import User
