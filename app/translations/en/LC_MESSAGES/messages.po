@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-30 22:27+0300\n"
+"POT-Creation-Date: 2026-07-31 10:21+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -707,9 +707,8 @@ msgstr "Message must be between 10 and 5000 characters"
 msgid "Ваше повідомлення..."
 msgstr "Your message..."
 
-#, fuzzy
 msgid "Не вдалося сформувати PDF. Спробуйте пізніше."
-msgstr "Could not prepare the PDF. Please try again later or contact support."
+msgstr "Could not generate the PDF. Please try again later."
 
 msgid "Дякуємо за ваше повідомлення! Ми зв'яжемося з вами найближчим часом."
 msgstr "Thank you for your message! We will get in touch with you shortly."
@@ -984,6 +983,40 @@ msgstr "Registration error. Please try again."
 msgid "Реєстрацію вже оплачено — рахунок не потрібен."
 msgstr "Registration is already paid — no invoice needed."
 
+#, python-format
+msgid "Реєстрацію підтверджено: %(title)s"
+msgstr "Registration confirmed: %(title)s"
+
+#, python-format
+msgid "Завершіть реєстрацію: %(title)s"
+msgstr "Complete your registration: %(title)s"
+
+msgid "Підтвердіть ваш email | ІПРМ"
+msgstr "Confirm your email | IPRM"
+
+msgid "Відновлення паролю | ІПРМ"
+msgstr "Password reset | IPRM"
+
+#, python-format
+msgid "Оплату підтверджено: %(title)s"
+msgstr "Payment confirmed: %(title)s"
+
+#, python-format
+msgid "Нагадування: %(title)s через %(days)s дн."
+msgstr "Reminder: %(title)s in %(days)s days"
+
+#, python-format
+msgid "Статус реєстрації змінено: %(title)s"
+msgstr "Registration status changed: %(title)s"
+
+#, python-format
+msgid "Ваш сертифікат: %(title)s"
+msgstr "Your certificate: %(title)s"
+
+#, python-format
+msgid "Заповніть дані для сертифіката: %(title)s"
+msgstr "Fill in your certificate details: %(title)s"
+
 msgid "ІПРМ | Інститут Плазмотерапії та Регенеративної Медицини"
 msgstr "IPRM | Institute of Plasma Therapy and Regenerative Medicine"
 
@@ -1096,7 +1129,7 @@ msgid "Курс"
 msgstr "Course"
 
 #, python-format
-msgid "Нараховано %(points)s балiв БПР"
+msgid "Нараховано %(points)s балів БПР"
 msgstr "%(points)s BPR points awarded"
 
 msgid "Оплатити"
@@ -1289,9 +1322,6 @@ msgstr "Unlink Apple from your account?"
 
 msgid "Прив'язати Apple"
 msgstr "Link Apple"
-
-msgid "Відновлення паролю | ІПРМ"
-msgstr "Password recovery | IPRM"
 
 msgid "Відновлення паролю"
 msgstr "Password recovery"

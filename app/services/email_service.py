@@ -19,7 +19,7 @@ from datetime import datetime, timedelta, timezone
 from threading import Thread
 
 from flask import current_app, render_template
-from flask_babel import force_locale
+from flask_babel import force_locale, gettext as _
 from flask_mail import Message
 
 from app.extensions import db
@@ -267,11 +267,21 @@ class EmailService:
         attached to the message before sending (e.g. certificate PDF).
         lang -- явна мова листа ('uk'/'ru'/'en'); якщо не задано, береться
         preferred_language отримувача з context['user'] (див. _recipient_locale).
+        subject -- рядок АБО callable без аргументів. Callable викликається в
+        локалі отримувача, тож тема перекладається так само, як тіло; рядок
+        береться як є (адмінські й тестові листи лишаються українськими).
         Returns EmailLog instance (status may still be 'pending' if async).
         Returns None if dedup skipped.
         """
         app = current_app._get_current_object()
         ctx = dict(context or {})
+        locale = EmailService._recipient_locale(ctx, lang)
+        # Тему рахуємо в тій самій локалі, що й тіло. Раніше вона була готовим
+        # f-рядком українською: російськомовний учасник бачив у списку пошти
+        # українську тему і російський лист.
+        if callable(subject):
+            with force_locale(locale):
+                subject = subject()
         # Email-шаблони використовують site_settings (website_url, socials,
         # copy). У request-flow це заповнює @app.before_request через g;
         # у background/scheduler контексті g.site_settings немає, тому
@@ -336,7 +346,7 @@ class EmailService:
         try:
             # Рендер мовою отримувача: поза HTTP-запитом (scheduler, фонові
             # джоби) get_locale() повертає дефолт, тому локаль форсуємо явно.
-            with force_locale(EmailService._recipient_locale(ctx, lang)):
+            with force_locale(locale):
                 html_body = render_template(f'emails/{template_name}.html', **ctx)
         except Exception as exc:
             log_entry = EmailLog(
@@ -430,8 +440,6 @@ class EmailService:
         course = instance.course
 
         class _EventShape:
-            title = course.title
-            subtitle = course.subtitle
             slug = course.slug
             start_date = instance.start_date
             end_date = instance.end_date
@@ -440,6 +448,18 @@ class EmailService:
             event_format = instance.event_format
             price = instance.effective_price
             cpd_points = instance.effective_cpd_points
+
+            # Властивості, а не готові значення: читаються під час рендеру,
+            # тобто вже всередині force_locale. Раніше тут лежала канонічна
+            # українська назва, і російськомовний отримувач бачив її і в темі,
+            # і в тілі листа, хоч решта листа була його мовою.
+            @property
+            def title(self):
+                return course.t('title')
+
+            @property
+            def subtitle(self):
+                return course.t('subtitle')
 
         return _EventShape()
 
@@ -461,7 +481,7 @@ class EmailService:
         certdata_url = f'{base}/auth/account/certificate-data'
         result = EmailService.send_email(
             to=user.email,
-            subject=f'Реєстрацію підтверджено: {event.title}',
+            subject=lambda: _('Реєстрацію підтверджено: %(title)s', title=event.title),
             template_name='registration_confirmed',
             context={
                 'user': user, 'event': event, 'registration': registration,
@@ -500,7 +520,7 @@ class EmailService:
         user = registration.user
         return EmailService.send_email(
             to=user.email,
-            subject=f'Завершіть реєстрацію: {event.title}',
+            subject=lambda: _('Завершіть реєстрацію: %(title)s', title=event.title),
             template_name='completion_link',
             context={
                 'user': user, 'event': event, 'registration': registration,
@@ -514,7 +534,7 @@ class EmailService:
     def send_email_confirmation(user, confirm_url):
         return EmailService.send_email(
             to=user.email,
-            subject='Підтвердіть ваш email | IPRM',
+            subject=lambda: _('Підтвердіть ваш email | ІПРМ'),
             template_name='email_confirm',
             context={'user': user, 'confirm_url': confirm_url},
             trigger='email_confirm',
@@ -524,7 +544,7 @@ class EmailService:
     def send_password_reset(user, reset_url):
         return EmailService.send_email(
             to=user.email,
-            subject='Відновлення паролю | IPRM',
+            subject=lambda: _('Відновлення паролю | ІПРМ'),
             template_name='password_reset',
             context={'user': user, 'reset_url': reset_url},
             trigger='password_reset',
@@ -542,7 +562,7 @@ class EmailService:
         user = registration.user
         result = EmailService.send_email(
             to=user.email,
-            subject=f'Оплату підтверджено: {event.title}',
+            subject=lambda: _('Оплату підтверджено: %(title)s', title=event.title),
             template_name='payment_confirmed',
             context={'user': user, 'event': event, 'registration': registration},
             trigger='payment',
@@ -568,7 +588,8 @@ class EmailService:
         user = registration.user
         return EmailService.send_email(
             to=user.email,
-            subject=f'Нагадування: {event.title} через {days_until} дн.',
+            subject=lambda: _('Нагадування: %(title)s через %(days)s дн.',
+                             title=event.title, days=days_until),
             template_name='course_reminder',
             context={
                 'user': user, 'event': event,
@@ -591,7 +612,7 @@ class EmailService:
         label = dict(registration.STATUSES).get(new_status, new_status)
         result = EmailService.send_email(
             to=user.email,
-            subject=f'Статус реєстрації змінено: {event.title}',
+            subject=lambda: _('Статус реєстрації змінено: %(title)s', title=event.title),
             template_name='status_changed',
             context={
                 'user': user, 'event': event, 'registration': registration,
@@ -634,7 +655,7 @@ class EmailService:
         filename = f'{certificate.number}.pdf'
         return EmailService.send_email(
             to=user.email,
-            subject=f'Ваш сертифікат: {certificate.event_title}',
+            subject=lambda: _('Ваш сертифікат: %(title)s', title=certificate.event_title),
             template_name='certificate_issued',
             context={'user': user, 'certificate': certificate},
             trigger='certificate',
@@ -724,7 +745,7 @@ class EmailService:
         base = (SiteSettings.get().website_url or '').rstrip('/')
         return EmailService.send_email(
             to=registration.user.email,
-            subject=f'Заповніть дані для сертифіката: {event.title}',
+            subject=lambda: _('Заповніть дані для сертифіката: %(title)s', title=event.title),
             template_name='certdata_reminder',
             context={
                 'user': registration.user,

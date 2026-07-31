@@ -96,7 +96,7 @@
               {% endif %}
             </div>
             {% if reg.attended and reg.cpd_points_awarded %}
-              <div class="account-course__awarded">{% trans points=reg.cpd_points_awarded %}Нараховано {{ points }} балiв БПР{% endtrans %}</div>
+              <div class="account-course__awarded">{% trans points=reg.cpd_points_awarded %}Нараховано {{ points }} балів БПР{% endtrans %}</div>
             {% endif %}
             {% if reg.payment_status != 'paid' and reg.payment_amount and reg.payment_amount > 0 %}
             <div class="account-course__payment">
