@@ -162,6 +162,7 @@ COURSE_WIDTHS = {
     'card_image': 50,
     'speaker_info': 40,
     'agenda': 40,
+    'final_cta_text': 50,
     'target_audience': 50,
     'tags': 28,
     'is_active': 12,
@@ -420,7 +421,7 @@ COURSE_COLS = [
     'id', 'slug', 'title', 'subtitle', 'short_description', 'description',
     'event_type', 'base_price', 'cpd_points', 'max_participants',
     'trainer_slug', 'hero_image', 'card_image', 'speaker_info', 'agenda',
-    'target_audience', 'tags', 'is_active', 'is_featured',
+    'final_cta_text', 'target_audience', 'tags', 'is_active', 'is_featured',
 ]
 
 # Українські назви колонок для заголовків xlsx. Імпорт приймає обидва
@@ -443,11 +444,17 @@ COURSE_LABELS = {
     'card_image': 'Зображення картки',
     'speaker_info': 'Інфо про спікера',
     'agenda': 'Програма (опис)',
+    'final_cta_text': 'Фінальний заклик',
     'target_audience': 'Цільова аудиторія',
     'tags': 'Теги',
     'is_active': 'Активний',
     'is_featured': 'Рекомендований',
 }
+
+# Колонки, додані після того, як менеджери вже мали на руках експорти.
+# Їх відсутність не ламає імпорт старого файлу, а поле лишається як у БД --
+# інакше кожне нове поле знецінювало б усі раніше збережені файли.
+OPTIONAL_COURSE_COLS = ('final_cta_text',)
 
 PROGRAM_COLS = ['course_slug', 'sort_order', 'heading', 'items']
 PROGRAM_LABELS = {
@@ -645,6 +652,7 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             c.card_media.url if c.card_media else '',
             c.speaker_info or '',
             c.agenda or '',
+            c.final_cta_text or '',
             _to_lines(c.target_audience),
             _to_lines(c.tags),
             bool(c.is_active),
@@ -735,12 +743,19 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
     return out
 
 
-def _read_sheet(ws, columns: list[str], labels: dict[str, str] | None = None) -> list[dict]:
+def _read_sheet(ws, columns: list[str], labels: dict[str, str] | None = None,
+                optional: tuple[str, ...] = ()) -> list[dict]:
     """Прочитати sheet у list[dict].
 
     Заголовки приймаються або як internal key (англ., 'slug'), або як
     українські labels (з `labels`), для зворотньої сумісності зі старими
     xlsx-файлами.
+
+    `optional` -- колонки, відсутність яких НЕ є помилкою: так у формат можна
+    додати нове поле, не ламаючи імпорт файлів, експортованих раніше. Ключів
+    відсутніх опційних колонок у рядку не буде взагалі (а не None), щоб
+    виклик міг відрізнити "у файлі порожньо" від "колонки не було" і не
+    занулив наявне значення.
     """
     if ws.max_row < 2:
         return []
@@ -764,18 +779,19 @@ def _read_sheet(ws, columns: list[str], labels: dict[str, str] | None = None) ->
         if key:
             col_idx[key] = i + 1
 
-    missing = [c for c in columns if c not in col_idx]
+    missing = [c for c in columns if c not in col_idx and c not in optional]
     if missing:
         pretty = [(labels.get(k, k) if labels else k) for k in missing]
         raise ValueError(
             f'Sheet "{ws.title}": бракує колонок: {", ".join(pretty)}'
         )
 
+    present = [c for c in columns if c in col_idx]
     rows = []
     for row in ws.iter_rows(min_row=2, values_only=True):
         if not any(v is not None and str(v).strip() for v in row):
             continue  # повністю порожній рядок
-        d = {name: row[col_idx[name] - 1] for name in columns}
+        d = {name: row[col_idx[name] - 1] for name in present}
         rows.append(d)
     return rows
 
@@ -795,7 +811,8 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
         return plan
 
     try:
-        rows = _read_sheet(ws_c, COURSE_COLS, COURSE_LABELS)
+        rows = _read_sheet(ws_c, COURSE_COLS, COURSE_LABELS,
+                           optional=OPTIONAL_COURSE_COLS)
     except ValueError as exc:
         plan.errors.append(str(exc))
         return plan
@@ -863,6 +880,11 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
                 'is_active': _bool(raw.get('is_active')),
                 'is_featured': _bool(raw.get('is_featured')),
             }
+            # Опційні колонки кладемо в parsed ЛИШЕ якщо вони були у файлі:
+            # відсутність колонки має лишити поле як є, а не занулити його.
+            for opt in OPTIONAL_COURSE_COLS:
+                if opt in raw:
+                    parsed[opt] = _str(raw.get(opt))
 
             if not parsed['title']:
                 raise ValueError('порожній title')
@@ -979,10 +1001,15 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
 def _diff_course(existing: Course, parsed: dict, trainer_id_by_slug: dict) -> list[str]:
     """Повернути список імен змінених полів. Порівняння помилкостійке."""
     changed = []
+    # hero_image/card_image тут НЕМАЄ свідомо: після переходу на медіа-реєстр
+    # (фаза 6) у Course лишились тільки *_media_id, і getattr по старій назві
+    # кидав AttributeError -- через це будь-який рядок з ІСНУЮЧИМ курсом
+    # ставав помилкою і файл цілком відхилявся. Зображення порівнюємо нижче,
+    # резолвленими id.
     fields = [
         'title', 'subtitle', 'short_description', 'description', 'event_type',
-        'cpd_points', 'max_participants', 'trainer_id', 'hero_image',
-        'card_image', 'speaker_info', 'agenda', 'is_active', 'is_featured',
+        'cpd_points', 'max_participants', 'trainer_id',
+        'speaker_info', 'agenda', 'is_active', 'is_featured',
     ]
     for f in fields:
         if (getattr(existing, f) or None) != (parsed[f] or None) and not (
@@ -995,6 +1022,14 @@ def _diff_course(existing: Course, parsed: dict, trainer_id_by_slug: dict) -> li
         changed.append('target_audience')
     if (existing.tags or []) != parsed['tags']:
         changed.append('tags')
+    # У файлі -- людиночитний URL; порівнюємо так само, як apply записує.
+    for media_col, url_key in (('hero_media_id', 'hero_image'),
+                               ('card_media_id', 'card_image')):
+        if getattr(existing, media_col) != _resolve_media_id(parsed[url_key]):
+            changed.append(url_key)
+    for opt in OPTIONAL_COURSE_COLS:
+        if opt in parsed and (getattr(existing, opt) or None) != (parsed[opt] or None):
+            changed.append(opt)
     return changed
 
 
@@ -1039,6 +1074,9 @@ def apply_courses_plan(plan: CoursesImportPlan) -> dict:
             course.tags = p['tags']
             course.is_active = p['is_active']
             course.is_featured = p['is_featured']
+            for opt in OPTIONAL_COURSE_COLS:
+                if opt in p:
+                    setattr(course, opt, p[opt])
 
         db.session.flush()
 
