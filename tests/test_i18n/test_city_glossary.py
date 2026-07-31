@@ -121,6 +121,26 @@ def test_broken_glossary_does_not_break_pages(app, monkeypatch, caplog):
     assert 'City glossary unavailable' in caplog.text
 
 
+def test_location_usage_counts_instances_per_location(app):
+    location = _uniq('Житомир')
+    _instance(location)
+    _instance(location)
+    _clear_cache()
+    entry = city_glossary.location_usage()[normalize_city_name(location)]
+    assert entry == {'name': location, 'count': 2}
+
+
+def test_location_usage_merges_different_spellings(app):
+    """Звірка йде за нормалізованою формою, тож "  МІСТО " і "Місто" -- одна
+    локація, а не дві з лічильником 1."""
+    location = _uniq('Ужгород')
+    _instance(f'  {location.upper()}  ')
+    _instance(location)
+    _clear_cache()
+    usage = city_glossary.location_usage()
+    assert usage[normalize_city_name(location)]['count'] == 2
+
+
 def test_unknown_locations_lists_only_missing(app):
     known, unknown = _uniq('Харків'), _uniq('Полтава')
     _instance(known)

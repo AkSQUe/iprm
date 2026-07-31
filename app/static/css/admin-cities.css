@@ -1,0 +1,287 @@
+/* Адмінка довідника локацій (admin/cities.html).
+
+   Сторінка складається з трьох різних за жанром блоків -- «чого бракує»
+   (швидке додавання одним кліком), «додати вручну» (одне поле) і власне
+   таблиця-глосарій із полями перекладу. Раніше вони позичали класи чужих
+   сторінок (.tr-children з редактора перекладів, .referral-share__row із
+   реферальної), чиї стилі сюди навіть не підключались -- звідси й голий
+   вигляд. Тут -- власні класи на токенах дизайн-системи.
+
+   Кольори -- лише через змінні, тож тёмна тема (data-theme="dark")
+   підхоплюється без окремих правил. */
+
+/* ========== СТАТИСТИКА ========== */
+
+/* Знаменник у картці покриття ("3/12"): тонший і тьмяніший за чисельник --
+   читається передусім кількість перекладених рядків. */
+.cities-stat__total {
+  font-size: 0.6em;
+  font-weight: 600;
+  color: var(--iprm-text-light);
+}
+
+/* «Немає в довіднику» -- бурштиновим, а не готовим модифікатором
+   .admin-stat-card--warning: той у дизайн-системі синій (той самий токен, що
+   й бейдж «Опубліковано»), і на увагу тут не спрацював би. */
+.cities-stat--alert {
+  border-color: var(--iprm-warning-border);
+}
+
+.cities-stat--alert .admin-stat-card__value {
+  color: var(--iprm-warning);
+}
+
+/* ========== ПАНЕЛІ (картки-секції) ========== */
+
+.cities-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+/* Типографіка як у .admin-form__section-title, але без нижньої лінії:
+   у панелі з кнопкою праворуч розділювач під заголовком різав би блок
+   навпіл посеред рядка. */
+.cities-panel__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--apple-black);
+}
+
+.cities-panel__hint {
+  margin-top: 6px;
+  max-width: 68ch;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--apple-gray);
+}
+
+.cities-panel > .cities-panel__hint {
+  margin-bottom: 20px;
+}
+
+.cities-panel__icon {
+  font-size: 20px;
+  color: var(--iprm-warning);
+}
+
+/* Блок «у розкладі є, у довіднику немає» -- єдиний на сторінці, що вимагає
+   дії, тож обводка попереджувального тону. Тло лишаємо як у решти карток:
+   суцільна заливка на всю ширину била б по очах на кожному заході. */
+.cities-panel--missing {
+  border-color: var(--iprm-warning-border);
+}
+
+/* ========== ЧІПИ ЛОКАЦІЙ, ЯКИХ БРАКУЄ ========== */
+
+.cities-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cities-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 12px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-card-bg);
+  color: var(--iprm-text);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  transition:
+    border-color 0.15s var(--ease-interact),
+    background-color 0.15s var(--ease-interact),
+    transform 0.15s var(--ease-interact);
+}
+
+.cities-chip:hover {
+  border-color: var(--iprm-accent);
+  background: var(--iprm-accent-light);
+  transform: translateY(-1px);
+}
+
+.cities-chip:active {
+  transform: translateY(0);
+}
+
+.cities-chip:focus-visible {
+  outline: 2px solid var(--iprm-nav-active);
+  outline-offset: 2px;
+}
+
+.cities-chip__icon {
+  font-size: 18px;
+  color: var(--iprm-accent);
+}
+
+/* Скільки проведень стоїть за локацією -- підказка, що додавати першим. */
+.cities-chip__count {
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-neutral-bg);
+  color: var(--iprm-neutral-text);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ========== РУЧНЕ ДОДАВАННЯ ========== */
+
+.cities-add {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cities-add .form-input {
+  flex: 1 1 240px;
+  max-width: 360px;
+}
+
+/* ========== ТАБЛИЦЯ-ГЛОСАРІЙ ========== */
+
+.cities-form {
+  margin-top: 24px;
+}
+
+.cities-table td {
+  vertical-align: middle;
+}
+
+/* Вузькі службові колонки притискаємо до мінімуму, щоб уся вільна ширина
+   лишалась полям перекладу. */
+.cities-table .cities-col-uses {
+  width: 108px;
+  text-align: center;
+}
+
+.cities-table .cities-col-status {
+  width: 132px;
+}
+
+.cities-table .cities-col-actions {
+  width: 88px;
+  text-align: right;
+}
+
+.cities-table .cities-input {
+  width: 100%;
+}
+
+/* Порожнє поле = перекладу немає (показуємо українську). Пунктирна рамка
+   робить дірку в покритті помітною просто при погляді на таблицю --
+   без JS і без окремої колонки-індикатора. Колір беремо помітніший за
+   типовий --iprm-border (він майже прозорий, пунктир на ньому не читався б). */
+.cities-table .cities-input:placeholder-shown {
+  border-style: dashed;
+  border-color: var(--apple-gray-light);
+}
+
+.cities-table .cities-input:focus {
+  border-style: solid;
+  border-color: var(--iprm-nav-active);
+}
+
+/* ========== ЛИПКА ПАНЕЛЬ ЗБЕРЕЖЕННЯ ========== */
+
+/* Таблиця редагується згори вниз, і без липкої панелі після правки
+   двадцятого рядка довелось би скролити в кінець по «Зберегти». */
+.cities-savebar {
+  position: sticky;
+  bottom: 16px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 20px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
+  background: var(--iprm-surface-menu);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: var(--iprm-shadow-sm);
+}
+
+.cities-savebar__hint {
+  font-size: 0.8125rem;
+  color: var(--apple-gray);
+}
+
+/* ========== АДАПТИВ ========== */
+
+@media (max-width: 768px) {
+  /* Таблиця тут стає картками (admin.css), де комірка -- рядок
+     "Заголовок: значення". Полю перекладу віддаємо решту ширини. */
+  .cities-table .cities-col-uses,
+  .cities-table .cities-col-status,
+  .cities-table .cities-col-actions {
+    width: auto;
+    text-align: right;
+  }
+
+  .cities-table .cities-input {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+
+  .cities-panel__head {
+    gap: 12px;
+  }
+
+  .cities-panel__head .btn-admin {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cities-add .form-input {
+    max-width: none;
+  }
+
+  .cities-add .btn-admin {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cities-savebar {
+    bottom: 0;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    border-radius: var(--iprm-radius-md) var(--iprm-radius-md) 0 0;
+  }
+
+  .cities-savebar .btn-admin {
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cities-chip {
+    transition: none;
+  }
+
+  .cities-chip:hover {
+    transform: none;
+  }
+}

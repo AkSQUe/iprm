@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-cities.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
@@ -30,22 +31,57 @@
 
     {% include 'partials/flash_messages.html' %}
 
-    {% if unknown %}
-    <div class="form-section admin-form__section">
-      <h3 class="admin-form__section-title">У розкладі є, у довіднику немає ({{ unknown | length }})</h3>
-      <p class="form-hint">Ці локації показуються українською всіма мовами. Додайте потрібні.</p>
-      <form method="POST" action="{{ url_for('admin.cities_add_missing') }}" class="admin-inline">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Додати всі ({{ unknown | length }})</button>
-      </form>
-      <ul class="tr-children">
-        {% for name in unknown %}
-        <li class="tr-children__row">
-          <span>{{ name }}</span>
+    <div class="admin-stat-cards admin-stat-cards--4">
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ rows | length }}</span>
+        <span class="admin-stat-card__label">Локацій у довіднику</span>
+      </div>
+      {% for lang in languages %}
+      <div class="admin-stat-card{{ ' admin-stat-card--success' if rows and translated[lang] == rows | length }}">
+        <span class="admin-stat-card__value">{{ translated[lang] }}<span class="cities-stat__total">/{{ rows | length }}</span></span>
+        <span class="admin-stat-card__label">{{ 'Російська' if lang == 'ru' else 'Англійська' }}</span>
+      </div>
+      {% endfor %}
+      <div class="admin-stat-card{{ ' cities-stat--alert' if missing }}">
+        <span class="admin-stat-card__value">{{ missing | length }}</span>
+        <span class="admin-stat-card__label">Немає в довіднику</span>
+      </div>
+    </div>
+
+    {% if missing %}
+    <div class="form-section cities-panel cities-panel--missing">
+      <div class="cities-panel__head">
+        <div>
+          <h2 class="cities-panel__title">
+            {{ icon('priority_high', cls='cities-panel__icon') }}
+            У розкладі є, у довіднику немає ({{ missing | length }})
+          </h2>
+          <p class="cities-panel__hint">
+            Ці локації показуються українською всіма мовами. Додайте потрібні --
+            або всі одразу, якщо наповнюєте довідник уперше.
+          </p>
+        </div>
+        <form method="POST" action="{{ url_for('admin.cities_add_missing') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-admin btn-admin--primary">
+            {{ icon('add') }} Додати всі ({{ missing | length }})
+          </button>
+        </form>
+      </div>
+
+      {# Кожен чіп -- окрема міні-форма: додавання без JS, одним кліком.
+         Число праворуч -- скільки проведень стоїть за цією локацією. #}
+      <ul class="cities-chips">
+        {% for entry in missing %}
+        <li>
           <form method="POST" action="{{ url_for('admin.cities_add') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="name" value="{{ name }}">
-            <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Додати</button>
+            <input type="hidden" name="name" value="{{ entry.name }}">
+            <button type="submit" class="cities-chip" title="Додати «{{ entry.name }}» у довідник">
+              {{ icon('add', cls='cities-chip__icon') }}
+              <span class="cities-chip__name">{{ entry.name }}</span>
+              <span class="cities-chip__count" title="Проведень із цією локацією">{{ entry.count }}</span>
+            </button>
           </form>
         </li>
         {% endfor %}
@@ -53,67 +89,103 @@
     </div>
     {% endif %}
 
-    <div class="form-section admin-form__section">
-      <h3 class="admin-form__section-title">Додати локацію вручну</h3>
-      <form method="POST" action="{{ url_for('admin.cities_add') }}" class="referral-share__row">
+    <div class="form-section cities-panel">
+      <h2 class="cities-panel__title">Додати локацію вручну</h2>
+      <p class="cities-panel__hint">
+        Пишіть рівно так, як у полі «Локація» проведення -- звірка йде за повним рядком.
+      </p>
+      <form method="POST" action="{{ url_for('admin.cities_add') }}" class="cities-add">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="text" name="name" class="form-input" maxlength="255"
                placeholder="Харків" aria-label="Назва локації українською">
-        <button type="submit" class="btn-admin btn-admin--secondary">Додати</button>
+        <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('add') }} Додати</button>
       </form>
-      <div class="form-hint">Пишіть рівно так, як у полі «Локація» проведення — звірка йде за повним рядком.</div>
     </div>
 
-    {% if cities %}
-    <form method="POST" action="{{ url_for('admin.cities_save') }}" class="admin-form">
+    {% if rows %}
+    <form method="POST" action="{{ url_for('admin.cities_save') }}" class="admin-form cities-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="admin-table-wrap">
-        <table class="admin-table">
+        <table class="admin-table cities-table">
           <thead>
             <tr>
               <th>Українська (оригінал)</th>
+              <th class="cities-col-uses" title="Скільки проведень розкладу вживають цю локацію">Проведень</th>
               {% for lang in languages %}<th>{{ 'Російська' if lang == 'ru' else 'Англійська' }}</th>{% endfor %}
-              <th>Дії</th>
+              <th class="cities-col-status">Статус</th>
+              <th class="cities-col-actions">Дії</th>
             </tr>
           </thead>
           <tbody>
-            {% for city in cities %}
+            {% for row in rows %}
             <tr>
-              <td><strong>{{ city.name }}</strong></td>
+              <td><strong>{{ row.city.name }}</strong></td>
+              <td class="cities-col-uses">
+                {% if row.uses %}
+                  {{ row.uses }}
+                {% else %}
+                  <span class="admin-text-muted" title="Локація не вживається в розкладі">--</span>
+                {% endif %}
+              </td>
               {% for lang in languages %}
               <td>
-                <input type="text" class="form-input" maxlength="255"
-                       name="tr__{{ lang }}__{{ city.id }}"
-                       value="{{ ((city.translations or {}).get(lang) or {}).get('name') or '' }}"
-                       placeholder="Порожньо = українська"
-                       aria-label="{{ city.name }} — {{ lang }}">
+                {# Порожнє поле = фолбек на українську (сказано в підзаголовку
+                   сторінки), тож у самій комірці досить короткого плейсхолдера
+                   -- довгий текст у кожній клітинці робив би таблицю рябою. #}
+                <input type="text" class="form-input cities-input" maxlength="255"
+                       name="tr__{{ lang }}__{{ row.city.id }}"
+                       value="{{ row.tr[lang] }}"
+                       placeholder="--"
+                       aria-label="{{ row.city.name }} -- {{ 'російська' if lang == 'ru' else 'англійська' }}">
               </td>
               {% endfor %}
-              <td>
+              <td class="cities-col-status">
+                {% if row.done == languages | length %}
+                  <span class="badge badge--active">Готово</span>
+                {% elif row.done %}
+                  <span class="badge badge--warning">{{ row.done }} з {{ languages | length }}</span>
+                {% else %}
+                  <span class="badge badge--draft">Немає</span>
+                {% endif %}
+              </td>
+              <td class="cities-col-actions">
                 {# Форма видалення живе поза формою збереження (вкладені form
                    невалідні); кнопка прив'язана до неї атрибутом form. #}
-                <button type="submit" form="city-delete-{{ city.id }}"
-                        class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
+                <button type="submit" form="city-delete-{{ row.city.id }}"
+                        class="btn-admin btn-admin--danger btn-admin--sm">
+                  {{ icon('delete', label='Видалити') }}
+                </button>
               </td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-      <div class="admin-form__actions">
-        <button type="submit" class="btn-admin btn-admin--primary">Зберегти переклади</button>
+
+      {# Липка панель: у довіднику на десятки рядків кнопка «Зберегти» інакше
+         лишалась би за межами екрана під час правки середини таблиці. #}
+      <div class="cities-savebar">
+        <span class="cities-savebar__hint">Зміни в полях не зберігаються самі -- натисніть «Зберегти».</span>
+        <button type="submit" class="btn-admin btn-admin--primary">
+          {{ icon('check') }} Зберегти переклади
+        </button>
       </div>
     </form>
 
-    {% for city in cities %}
-    <form method="POST" action="{{ url_for('admin.cities_delete', city_id=city.id) }}"
-          id="city-delete-{{ city.id }}" hidden
-          data-confirm="Видалити «{{ city.name }}» з довідника?" data-confirm-danger>
+    {% for row in rows %}
+    <form method="POST" action="{{ url_for('admin.cities_delete', city_id=row.city.id) }}"
+          id="city-delete-{{ row.city.id }}" hidden
+          data-confirm="Видалити «{{ row.city.name }}» з довідника?" data-confirm-danger>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     </form>
     {% endfor %}
     {% else %}
-    <p class="form-hint">Довідник порожній — усі локації показуються українською.</p>
+    <div class="admin-empty">
+      {{ icon('table_view', cls='admin-empty__icon') }}
+      <h3 class="admin-empty__title">Довідник порожній</h3>
+      <p>Усі локації розкладу показуються українською. Додайте перший рядок -- і переклад
+         підхопиться скрізь, де ця назва зустрічається.</p>
+    </div>
     {% endif %}
 
   </div>

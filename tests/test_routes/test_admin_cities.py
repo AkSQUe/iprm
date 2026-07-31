@@ -98,3 +98,16 @@ def test_list_renders_rows_and_unknown_section(client, admin):
     html = client.get('/admin/cities').get_data(as_text=True)
     assert name in html
     assert 'tr__ru__' in html and 'tr__en__' in html
+
+
+def test_list_prefills_existing_translations(client, admin):
+    """Наявний переклад має стояти у value поля, а не губитись дорогою в шаблон
+    (ключ рядка називається 'tr': row.values дало б метод dict.values)."""
+    _login(client, admin)
+    name, ru = _uniq('Рівне'), _uniq('Ровно')
+    client.post('/admin/cities/add', data={'name': name})
+    city = City.query.filter_by(name_normalized=name.lower()).one()
+    client.post('/admin/cities/save', data={f'tr__ru__{city.id}': ru})
+
+    html = client.get('/admin/cities').get_data(as_text=True)
+    assert f'value="{ru}"' in html

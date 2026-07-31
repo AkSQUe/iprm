@@ -25,11 +25,42 @@ audit_logger = logging.getLogger('audit')
 @admin_required
 def cities_list():
     cities = City.query.order_by(City.name).all()
+
+    # Скільки проведень стоїть за кожною локацією: показуємо вагу рядка в
+    # таблиці й сортуємо ним те, чого бракує (спершу найуживаніше).
+    usage = city_glossary.location_usage()
+    known = {city.name_normalized for city in cities}
+    missing = sorted(
+        (entry for key, entry in usage.items() if key not in known),
+        key=lambda entry: (-entry['count'], entry['name']),
+    )
+    # Рядок таблиці збираємо тут, а не в шаблоні: розкопувати JSON перекладів
+    # і рахувати заповненість у Jinja -- логіка не на своєму поверсі.
+    rows = []
+    for city in cities:
+        stored = city.translations or {}
+        # Ключ саме 'tr', а не 'values': у Jinja row.values дало б метод
+        # dict.values, а не переклади -- поля мовчки рендерились би порожніми.
+        translations = {lang: ((stored.get(lang) or {}).get('name') or '')
+                        for lang in PREFIXED_LANGUAGES}
+        rows.append({
+            'city': city,
+            'tr': translations,
+            'uses': usage.get(city.name_normalized, {}).get('count', 0),
+            'done': sum(1 for value in translations.values() if value),
+        })
+
+    translated = {
+        lang: sum(1 for row in rows if row['tr'][lang])
+        for lang in PREFIXED_LANGUAGES
+    }
+
     return render_template(
         'admin/cities.html',
-        cities=cities,
+        rows=rows,
         languages=PREFIXED_LANGUAGES,
-        unknown=city_glossary.unknown_locations(),
+        missing=missing,
+        translated=translated,
     )
 
 

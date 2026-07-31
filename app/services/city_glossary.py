@@ -56,28 +56,40 @@ def localize_location(text):
     return city.t('name') if city is not None else text
 
 
+def location_usage():
+    """{нормалізована локація: {'name': оригінал, 'count': скільки проведень}}.
+
+    Адмінці довідника треба і те, чого бракує, і вага кожного рядка: локація
+    з двадцятьма проведеннями важливіша за разову, а рядок довідника з нулем
+    проведень -- кандидат на видалення. Рахуємо одним групуючим запитом.
+
+    Різні написання ("київ", " Київ ") зводяться до одного ключа, а лічильники
+    складаються -- звірка ж іде за нормалізованою формою.
+    """
+    from app.extensions import db
+    from app.models.course_instance import CourseInstance
+
+    rows = (
+        db.session.query(CourseInstance.location, db.func.count(CourseInstance.id))
+        .filter(CourseInstance.location.isnot(None),
+                CourseInstance.location != '')
+        .group_by(CourseInstance.location)
+        .all()
+    )
+    usage = {}
+    for location, count in rows:
+        entry = usage.setdefault(normalize(location),
+                                 {'name': location.strip(), 'count': 0})
+        entry['count'] += count
+    return usage
+
+
 def unknown_locations():
     """Локації, що вживаються в розкладі, але відсутні в довіднику.
 
     Потрібно адмінці: інакше нове місто мовчки лишалось би неперекладеним і
     ніхто б про це не дізнався.
     """
-    from app.extensions import db
-    from app.models.course_instance import CourseInstance
-
-    rows = (
-        db.session.query(CourseInstance.location)
-        .filter(CourseInstance.location.isnot(None),
-                CourseInstance.location != '')
-        .distinct()
-        .all()
-    )
     known = _glossary()
-    seen, missing = set(), []
-    for (location,) in rows:
-        key = normalize(location)
-        if key in known or key in seen:
-            continue
-        seen.add(key)
-        missing.append(location.strip())
-    return sorted(missing)
+    return sorted(entry['name'] for key, entry in location_usage().items()
+                  if key not in known)
