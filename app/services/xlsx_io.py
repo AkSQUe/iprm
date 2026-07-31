@@ -27,6 +27,7 @@ import io
 import logging
 import os
 import re
+import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone, timedelta
@@ -52,6 +53,7 @@ from app.models.registration import EventRegistration
 from app.models.specializations import SPECIALIZATIONS
 from app.models.trainer import Trainer
 from app.models.user import User
+from app.utils import ensure_utc
 
 logger = logging.getLogger(__name__)
 
@@ -375,7 +377,7 @@ def _bool(v) -> bool:
     if v is None:
         return False
     s = str(v).strip().lower()
-    return s in {'true', 'yes', 'y', '1', 'так', 'true ', 'TRUE'.lower()}
+    return s in {'true', 'yes', 'y', '1', 'так', 'да'}
 
 
 def _decimal(v) -> Decimal | None:
@@ -478,6 +480,7 @@ SHEET_ALIASES = {
     'faq': ['FAQ'],
     'instances': ['Розклад', 'Instances'],
     'participants': ['Учасники', 'Participants'],
+    'materials': ['Матеріали', 'Materials'],
 }
 
 
@@ -539,6 +542,15 @@ def _add_inline_dropdown(ws, column_key: str, columns: list[str],
     col_letter = get_column_letter(columns.index(column_key) + 1)
     # Inline-list у formula1 має бути обгорнутий лапками й розділений комами.
     formula = '"' + ','.join(options) + '"'
+    if len(formula) > 255:
+        # Мовчки віддати файл, який Excel вважає пошкодженим, гірше, ніж
+        # віддати його без цієї випадайки.
+        logger.warning(
+            'Drop-down для %r пропущено: список %s символів (ліміт Excel 255). '
+            'Для довших списків потрібен reference-sheet.',
+            column_key, len(formula),
+        )
+        return
     dv = DataValidation(
         type='list',
         formula1=formula,
@@ -563,7 +575,7 @@ def _add_trainer_dropdown(ws, column_key: str, columns: list[str],
     if trainers_last_row < 2:  # порожній список тренерів
         return
     col_letter = get_column_letter(columns.index(column_key) + 1)
-    formula = f"={_TRAINERS_SHEET_NAME}!$A$2:$A${trainers_last_row}"
+    formula = f"='{_TRAINERS_SHEET_NAME}'!$A$2:$A${trainers_last_row}"
     dv = DataValidation(
         type='list',
         formula1=formula,
@@ -756,10 +768,19 @@ def _read_sheet(ws, columns: list[str], labels: dict[str, str] | None = None,
     відсутніх опційних колонок у рядку не буде взагалі (а не None), щоб
     виклик міг відрізнити "у файлі порожньо" від "колонки не було" і не
     занулив наявне значення.
+
+    Заголовок і рядки читаємо одним проходом ітератора, БЕЗ ws.max_row: у
+    read-only режимі він дорівнює None, якщо у файлі немає запису
+    <dimension> (так зберігають Google Sheets і частина конвертерів), і
+    порівняння з числом падало TypeError на цілком нормальному файлі.
+    Побічно це виправляє й інше: перевірка колонок більше не пропускається
+    для листа без рядків даних -- раніше лист із чужими заголовками тихо
+    читався як "порожньо" замість помилки.
     """
-    if ws.max_row < 2:
+    rows_iter = ws.iter_rows(values_only=True)
+    header = next(rows_iter, None)
+    if header is None:
         return []
-    header = [c.value for c in ws[1]]
 
     # accepted: будь-яка валідна назва заголовка -> internal key
     accepted: dict[str, str] = {}
@@ -788,10 +809,15 @@ def _read_sheet(ws, columns: list[str], labels: dict[str, str] | None = None,
 
     present = [c for c in columns if c in col_idx]
     rows = []
-    for row in ws.iter_rows(min_row=2, values_only=True):
+    for row in rows_iter:
         if not any(v is not None and str(v).strip() for v in row):
             continue  # повністю порожній рядок
-        d = {name: row[col_idx[name] - 1] for name in present}
+        # Рядок може бути коротшим за заголовок (обрізані хвостові порожні
+        # клітинки) -- беремо None замість IndexError.
+        d = {
+            name: (row[col_idx[name] - 1] if col_idx[name] <= len(row) else None)
+            for name in present
+        }
         rows.append(d)
     return rows
 
@@ -1426,8 +1452,15 @@ def _diff_instance(existing: CourseInstance, parsed: dict) -> list[str]:
     changed = []
     if existing.course_id != parsed['course_id']:
         changed.append('course_slug')
-    for f in ('start_date', 'end_date', 'event_format', 'cpd_points',
-              'max_participants', 'trainer_id', 'online_link', 'status'):
+    # Дати -- через ensure_utc: SQLite віддає їх naive, а з файлу вони
+    # приходять з київською tz. Порівняння naive з aware не падає, а просто
+    # ЗАВЖДИ нерівне, тож на dev кожне наявне проведення показувалось як
+    # "оновити". На PostgreSQL (prod) колонки timezone-aware і збігу немає.
+    for f in ('start_date', 'end_date'):
+        if ensure_utc(getattr(existing, f)) != ensure_utc(parsed[f]):
+            changed.append(f)
+    for f in ('event_format', 'cpd_points', 'max_participants', 'trainer_id',
+              'online_link', 'status'):
         ev = getattr(existing, f)
         pv = parsed[f]
         if (ev or None) != (pv or None):
@@ -1674,7 +1707,7 @@ def _add_ref_dropdown(ws, column_key, columns, last_data_row, sheet_name,
     if ref_last_row < 2:
         return
     col_letter = get_column_letter(columns.index(column_key) + 1)
-    formula = f"={sheet_name}!$A$2:$A${ref_last_row}"
+    formula = f"='{sheet_name}'!$A$2:$A${ref_last_row}"
     dv = DataValidation(
         type='list', formula1=formula, allow_blank=True,
         showDropDown=False, errorStyle='warning',
@@ -1934,8 +1967,28 @@ def parse_participants_xlsx(path: Path) -> ParticipantsImportPlan:
     instance_by_id = {i.id: i for i in instances}
     label_to_id = {_participant_event_label(i): i.id for i in instances}
 
-    # Preload проти N+1: мапи email->User та (user,instance)->активна реєстрація
-    # для визначення дії (create/update/unchanged) без запитів у циклі.
+    # Preload проти N+1: реєстрації за reg_id, мапи email->User та
+    # (user,instance)->активна реєстрація -- усе для визначення дії
+    # (create/update/unchanged) без запитів у циклі.
+    #
+    # reg_id тягнемо теж: при звичайному циклі "вивантажив -> поправив ->
+    # завантажив" кожен рядок має reg_id, і db.session.get у циклі давав
+    # запит на кожного учасника.
+    reg_ids_in_file = set()
+    for r in rows:
+        try:
+            rid = _int(r.get('reg_id'))
+        except ValueError:
+            continue  # нечислове значення -- помилка рядка, не префетчу
+        if rid:
+            reg_ids_in_file.add(rid)
+    regs_by_id = {}
+    if reg_ids_in_file:
+        regs_by_id = {
+            r.id: r for r in EventRegistration.query
+            .filter(EventRegistration.id.in_(reg_ids_in_file)).all()
+        }
+
     emails_in_file = {
         (_str(r.get('email')) or '').strip().lower()
         for r in rows if _str(r.get('email'))
@@ -1958,7 +2011,7 @@ def parse_participants_xlsx(path: Path) -> ParticipantsImportPlan:
     for line_no, raw in enumerate(rows, start=2):
         try:
             reg_id = _int(raw.get('reg_id'))
-            reg = db.session.get(EventRegistration, reg_id) if reg_id else None
+            reg = regs_by_id.get(reg_id) if reg_id else None
             if reg_id and reg is None:
                 raise ValueError(f'реєстрацію id={reg_id} не знайдено')
 
@@ -2126,20 +2179,35 @@ _MATERIALS_WIDTHS = {'image': 9, 'sku': 20, 'name': 46, 'available': 12, 'quanti
 _MATERIALS_THUMB_PX = 40
 
 
+# Сумарний бюджет на ВСІ мініатюри одного експорту. Без нього каталог на
+# сотню позицій міг тягнутись сотні секунд (до 8 с на позицію) і впертись у
+# таймаут шлюзу -- заради декоративних картинок.
+_MATERIALS_THUMB_BUDGET_SECONDS = 20.0
+_MATERIALS_THUMB_MAX_BYTES = 2_000_000
+
+
 def _download_thumb(url, max_px=_MATERIALS_THUMB_PX):
     """Завантажити зображення товару й повернути BytesIO з PNG-мініатюрою
     (max_px), або None (порожнє/не-http/збій/не зображення). Best-effort."""
     url = (url or '').strip()
-    if not url.startswith('http'):
+    if not url.startswith(('http://', 'https://')):
         return None
     try:
         import requests
         from PIL import Image as PILImage
 
-        resp = requests.get(url, timeout=(3.0, 5.0))
-        if not resp.ok or len(resp.content) > 5_000_000:
-            return None
-        img = PILImage.open(io.BytesIO(resp.content))
+        # stream + порізний ліміт: раніше resp.content матеріалізував тіло
+        # ЦІЛКОМ, і перевірка розміру після цього вже нічого не рятувала.
+        with requests.get(url, timeout=(3.0, 5.0), stream=True) as resp:
+            if not resp.ok:
+                return None
+            chunks, total = [], 0
+            for chunk in resp.iter_content(64 * 1024):
+                total += len(chunk)
+                if total > _MATERIALS_THUMB_MAX_BYTES:
+                    return None
+                chunks.append(chunk)
+        img = PILImage.open(io.BytesIO(b''.join(chunks)))
         img.thumbnail((max_px, max_px))
         out = io.BytesIO()
         img.convert('RGB').save(out, format='PNG')
@@ -2171,12 +2239,20 @@ def export_materials_template_xlsx(catalog: list[dict]) -> io.BytesIO:
     name_i = _MATERIALS_COLS.index('name') + 1
     avail_i = _MATERIALS_COLS.index('available') + 1
 
+    deadline = time.monotonic() + _MATERIALS_THUMB_BUDGET_SECONDS
+    skipped_thumbs = 0
+
     for row_idx, item in enumerate(catalog or [], start=2):
         ws.cell(row=row_idx, column=sku_i, value=item.get('sku') or '')
         ws.cell(row=row_idx, column=name_i, value=item.get('name') or '')
         ws.cell(row=row_idx, column=avail_i, value=item.get('available'))
         # quantity column left empty for the admin
 
+        # Вичерпали бюджет -- решта рядків без картинок. Файл лишається
+        # придатним до роботи, а адмін не чекає таймауту.
+        if time.monotonic() >= deadline:
+            skipped_thumbs += 1
+            continue
         thumb = _download_thumb(item.get('image'))
         if thumb is not None:
             xi = XLImage(thumb)
@@ -2184,6 +2260,10 @@ def export_materials_template_xlsx(catalog: list[dict]) -> io.BytesIO:
             xi.height = _MATERIALS_THUMB_PX
             ws.add_image(xi, f'{img_col}{row_idx}')
             ws.row_dimensions[row_idx].height = 32
+
+    if skipped_thumbs:
+        logger.info('materials export: %s thumbnails skipped (time budget)',
+                    skipped_thumbs)
 
     last_row = ws.max_row
     _set_column_widths(ws, _MATERIALS_COLS, _MATERIALS_WIDTHS)
@@ -2300,7 +2380,20 @@ def parse_materials_xlsx(path: Path) -> dict[str, int]:
     """
     wb = load_workbook(path, read_only=True, data_only=True)
     try:
-        ws = _find_sheet(wb, 'Матеріали') or wb.active
+        # Раніше тут стояло _find_sheet(wb, 'Матеріали') -- ключа 'Матеріали'
+        # у SHEET_ALIASES немає, тож функція ЗАВЖДИ повертала None і код
+        # мовчки читав активний лист. Варто було адміну лишити активним
+        # інший лист (напр. власні нотатки), як імпорт повертав порожньо, а
+        # повідомлення казало "Завантажено 0 позицій".
+        ws = _find_sheet(wb, 'materials')
+        if ws is None:
+            if len(wb.sheetnames) == 1:
+                ws = wb[wb.sheetnames[0]]  # файл зібрали вручну -- беремо єдиний
+            else:
+                raise ValueError(
+                    'у файлі немає листа "Матеріали"; наявні листи: '
+                    + ', '.join(wb.sheetnames)
+                )
         rows = _read_sheet(ws, ['sku', 'quantity'], _MATERIALS_LABELS)
     finally:
         # read_only mode keeps the file handle open; must close or Windows
