@@ -11,6 +11,7 @@ from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
 from app.admin import admin_bp
+from app.admin._helpers import try_commit
 from app.admin.decorators import admin_required
 from app.extensions import db
 from app.i18n import PREFIXED_LANGUAGES
@@ -43,10 +44,10 @@ def cities_save():
             if key not in request.form:
                 continue
             city.set_translation(lang, 'name', (request.form.get(key) or '').strip() or None)
-    db.session.commit()
-    audit_logger.info('Admin %s updated city glossary (%s rows)',
-                      current_user.email, len(cities))
-    flash('Довідник збережено.', 'success')
+    if try_commit(log_context='cities_save'):
+        audit_logger.info('Admin %s updated city glossary (%s rows)',
+                          current_user.email, len(cities))
+        flash('Довідник збережено.', 'success')
     return redirect(url_for('admin.cities_list'))
 
 
@@ -66,9 +67,11 @@ def cities_add():
         return redirect(url_for('admin.cities_list'))
 
     db.session.add(City(name=name))
-    db.session.commit()
-    audit_logger.info('Admin %s added city %r to glossary', current_user.email, name)
-    flash(f'Додано "{name}". Впишіть переклади і збережіть.', 'success')
+    if try_commit(log_context=f'cities_add name={name!r}',
+                  error_msg='Не вдалося додати локацію (можливо, її щойно '
+                            'додав інший адміністратор)'):
+        audit_logger.info('Admin %s added city %r to glossary', current_user.email, name)
+        flash(f'Додано "{name}". Впишіть переклади і збережіть.', 'success')
     return redirect(url_for('admin.cities_list'))
 
 
@@ -81,7 +84,8 @@ def cities_delete(city_id):
         return redirect(url_for('admin.cities_list'))
     name = city.name
     db.session.delete(city)
-    db.session.commit()
-    audit_logger.info('Admin %s deleted city %r from glossary', current_user.email, name)
-    flash(f'"{name}" видалено з довідника. Локація показуватиметься українською.', 'success')
+    if try_commit(log_context=f'cities_delete id={city_id}'):
+        audit_logger.info('Admin %s deleted city %r from glossary', current_user.email, name)
+        flash(f'"{name}" видалено з довідника. Локація показуватиметься українською.',
+              'success')
     return redirect(url_for('admin.cities_list'))

@@ -35,6 +35,9 @@
 {% macro status(obj, field) %}
 {%- if obj -%}
 {% set st = tr_field_status(obj, field) %}
+{# Порожнє поле -- перекладати нічого, індикатор лише збивав би з пантелику. #}
+{% set total = (st.values() | list | first)[1] if st else 0 %}
+{%- if total -%}
 <span class="i18n-status">
   {%- for lang in ('ru', 'en') -%}
   {%- set done, total = st[lang] -%}
@@ -44,6 +47,7 @@
   </span>
   {%- endfor -%}
 </span>
+{%- endif -%}
 {%- endif -%}
 {% endmacro %}
 

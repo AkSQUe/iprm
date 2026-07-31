@@ -17,6 +17,7 @@ FAQ; канал перекладів не має доступу до жодно�
 """
 import io
 import logging
+from contextlib import closing
 from dataclasses import dataclass, field as dc_field
 from pathlib import Path
 
@@ -299,8 +300,16 @@ def _read_translation_sheet(ws):
 
     Ключові колонки обов'язкові; мовні -- ні: якщо перекладач лишив у файлі
     тільки російську, англійську просто не імпортуємо.
+
+    Заголовок і рядки читаємо одним проходом і НЕ спираємось на ws.max_row:
+    у read-only режимі він дорівнює None, якщо у файлі немає запису
+    <dimension> (так зберігають Google Sheets і частина конвертерів), і
+    порівняння з числом падало TypeError -- тобто прев'ю віддавало 500 на
+    цілком нормальному файлі перекладача.
     """
-    if ws.max_row < 2:
+    rows_iter = ws.iter_rows(values_only=True)
+    header = next(rows_iter, None)
+    if header is None:
         return [], []
 
     labels = translation_labels()
@@ -310,8 +319,7 @@ def _read_translation_sheet(ws):
         accepted[labels[key].strip().lower()] = key
 
     col_idx = {}
-    for i, cell in enumerate(ws[1], start=1):
-        raw = cell.value
+    for i, raw in enumerate(header, start=1):
         if raw is None:
             continue
         key = accepted.get(str(raw).strip().lower())
@@ -324,11 +332,12 @@ def _read_translation_sheet(ws):
         return [], [f'Лист "{ws.title}": бракує колонок: {pretty}']
 
     rows = []
-    for line_no, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+    for line_no, row in enumerate(rows_iter, start=2):
         if not any(v is not None and str(v).strip() for v in row):
             continue
         rows.append((line_no, {
-            key: row[idx - 1] for key, idx in col_idx.items()
+            key: (row[idx - 1] if idx <= len(row) else None)
+            for key, idx in col_idx.items()
         }))
     return rows, []
 
@@ -365,85 +374,94 @@ def parse_translations_xlsx(path):
             units_cache[cache_key] = {u.uid: u for u in registry.units(obj)}
         return units_cache[cache_key]
 
-    sheets = [name for name in wb.sheetnames if name != HELP_SHEET]
-    if not sheets:
-        plan.errors.append('У файлі немає жодного листа з перекладами.')
-        return plan
+    # closing: незакритий хендл книги на Windows блокує подальше
+    # видалення завантаженого файлу в cleanup_upload.
+    with closing(wb):
+        sheets = [name for name in wb.sheetnames if name != HELP_SHEET]
+        if not sheets:
+            plan.errors.append('У файлі немає жодного листа з перекладами.')
+            return plan
 
-    for sheet_name in sheets:
-        rows, sheet_errors = _read_translation_sheet(wb[sheet_name])
-        plan.errors.extend(sheet_errors)
+        for sheet_name in sheets:
+            rows, sheet_errors = _read_translation_sheet(wb[sheet_name])
+            plan.errors.extend(sheet_errors)
 
-        for line_no, raw in rows:
-            entity = _text(raw.get('entity'))
-            key = _text(raw.get('key'))
-            object_label = _text(raw.get('object'))
-            field_label = _text(raw.get('field'))
-            uk_in_file = _text(raw.get('uk'))
+            for line_no, raw in rows:
+                entity = _text(raw.get('entity')).lower()
+                key = _text(raw.get('key'))
+                object_label = _text(raw.get('object'))
+                field_label = _text(raw.get('field'))
+                uk_in_file = _text(raw.get('uk'))
 
-            def problem(message, obj_id=None):
-                plan.changes.append(TranslationChange(
-                    sheet=sheet_name, line_no=line_no, entity=entity,
-                    obj_id=obj_id, object_label=object_label,
-                    field_label=field_label, key=key, lang='',
-                    old='', new='', action='error', error=message,
-                ))
+                def problem(message, obj_id=None):
+                    plan.changes.append(TranslationChange(
+                        sheet=sheet_name, line_no=line_no, entity=entity,
+                        obj_id=obj_id, object_label=object_label,
+                        field_label=field_label, key=key, lang='',
+                        old='', new='', action='error', error=message,
+                    ))
 
-            try:
-                obj_id = int(raw.get('id'))
-            except (TypeError, ValueError):
-                problem('порожній або нечисловий ID')
-                continue
-
-            if entity not in entities:
-                problem(f'невідомий тип "{entity}"', obj_id)
-                continue
-            if not key:
-                problem('порожній ключ', obj_id)
-                continue
-
-            obj = load_obj(entity, obj_id)
-            if obj is None:
-                problem(f'{entity} #{obj_id} не знайдено', obj_id)
-                continue
-
-            unit = load_units(entity, obj).get(key)
-            if unit is None:
-                problem('фрагмент більше не існує (текст переписали або видалили)',
-                        obj_id)
-                continue
-
-            # Головна перевірка каналу: у файлі має бути ТОЙ САМИЙ оригінал,
-            # інакше переклад ліг би поверх іншого тексту.
-            if uk_in_file and uk_in_file != (unit.source or '').strip():
-                plan.changes.append(TranslationChange(
-                    sheet=sheet_name, line_no=line_no, entity=entity,
-                    obj_id=obj_id, object_label=object_label,
-                    field_label=field_label, key=key, lang='',
-                    old=(unit.source or ''), new=uk_in_file, action='conflict',
-                    error='оригінал змінився після експорту',
-                ))
-                continue
-
-            for lang in PREFIXED_LANGUAGES:
-                if lang not in raw:
+                try:
+                    obj_id = int(raw.get('id'))
+                except (TypeError, ValueError):
+                    problem('порожній або нечисловий ID')
                     continue
-                new = _text(raw.get(lang))
-                if not new:
-                    continue  # порожньо = не чіпати
-                old = registry.stored_value(obj, lang, unit)
-                if new == old:
-                    action = 'unchanged'
-                else:
-                    action = 'update' if old else 'add'
-                plan.changes.append(TranslationChange(
-                    sheet=sheet_name, line_no=line_no, entity=entity,
-                    obj_id=obj_id, object_label=object_label,
-                    field_label=field_label, key=key, lang=lang,
-                    old=old, new=new, action=action,
-                ))
 
-    wb.close()
+                if entity not in entities:
+                    problem(f'невідомий тип "{entity}"', obj_id)
+                    continue
+                if not key:
+                    problem('порожній ключ', obj_id)
+                    continue
+
+                obj = load_obj(entity, obj_id)
+                if obj is None:
+                    problem(f'{entity} #{obj_id} не знайдено', obj_id)
+                    continue
+
+                unit = load_units(entity, obj).get(key)
+                if unit is None:
+                    problem('фрагмент більше не існує (текст переписали або видалили)',
+                            obj_id)
+                    continue
+
+                # Головна перевірка каналу: у файлі має бути ТОЙ САМИЙ оригінал,
+                # інакше переклад ліг би поверх іншого тексту. Порожня комірка
+                # джерела -- теж відмова: без неї весь захист вимикався одним
+                # очищенням колонки (експорт порожніх джерел не пише взагалі).
+                if not uk_in_file:
+                    problem('порожня колонка «Українська» -- неможливо звірити '
+                            'джерело; вивантажте файл заново', obj_id)
+                    continue
+
+                if uk_in_file != (unit.source or '').strip():
+                    plan.changes.append(TranslationChange(
+                        sheet=sheet_name, line_no=line_no, entity=entity,
+                        obj_id=obj_id, object_label=object_label,
+                        field_label=field_label, key=key, lang='',
+                        old=(unit.source or ''), new=uk_in_file, action='conflict',
+                        error='оригінал змінився після експорту',
+                    ))
+                    continue
+
+                for lang in PREFIXED_LANGUAGES:
+                    if lang not in raw:
+                        continue
+                    new = _text(raw.get(lang))
+                    if not new:
+                        continue  # порожньо = не чіпати
+                    old = registry.stored_value(obj, lang, unit)
+                    if new == old:
+                        action = 'unchanged'
+                    else:
+                        action = 'update' if old else 'add'
+                    plan.changes.append(TranslationChange(
+                        sheet=sheet_name, line_no=line_no, entity=entity,
+                        obj_id=obj_id, object_label=object_label,
+                        field_label=field_label, key=key, lang=lang,
+                        old=old, new=new, action=action,
+                    ))
+
     return plan
 
 

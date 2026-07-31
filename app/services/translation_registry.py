@@ -103,33 +103,38 @@ class TranslationUnit:
         return self.src_key is not None
 
 
-def units(obj):
-    """Перекладні одиниці сутності, у порядку оголошення __translatable__.
+def _units_for_field(obj, field):
+    """Одиниці ОДНОГО поля.
 
     JSON-листки з однаковим українським джерелом схлопуються в одну одиницю:
     вони й зберігаються під одним ключем, тож перекладаються разом.
     """
-    model = type(obj)
+    widget = widget_for(type(obj), field)
+    value = getattr(obj, field)
+    if widget != 'json':
+        return [TranslationUnit(
+            field=field, label=field_label(field), widget=widget,
+            source=value or '', src_key=None, path=None,
+        )]
+
+    result, seen = [], set()
+    for path, uk_leaf in walk_leaves(value or []):
+        key = source_key(uk_leaf)
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(TranslationUnit(
+            field=field, label=field_label(field), widget='json',
+            source=uk_leaf, src_key=key, path=path,
+        ))
+    return result
+
+
+def units(obj):
+    """Перекладні одиниці сутності, у порядку оголошення __translatable__."""
     result = []
     for field in obj.__translatable__:
-        widget = widget_for(model, field)
-        value = getattr(obj, field)
-        if widget != 'json':
-            result.append(TranslationUnit(
-                field=field, label=field_label(field), widget=widget,
-                source=value or '', src_key=None, path=None,
-            ))
-            continue
-        seen = set()
-        for path, uk_leaf in walk_leaves(value or []):
-            key = source_key(uk_leaf)
-            if key in seen:
-                continue
-            seen.add(key)
-            result.append(TranslationUnit(
-                field=field, label=field_label(field), widget='json',
-                source=uk_leaf, src_key=key, path=path,
-            ))
+        result.extend(_units_for_field(obj, field))
     return result
 
 
@@ -141,7 +146,15 @@ def stored_value(obj, lang, unit):
     overrides = bucket.get(unit.field)
     if not isinstance(overrides, dict):
         return ''
-    return overrides.get(unit.src_key) or ''
+    value = overrides.get(unit.src_key)
+    if value is None and unit.path:
+        # LEGACY: до міграції i18n_srckey ключем був шлях. Без цього фолбеку
+        # редактор показував порожнє поле там, де публічна сторінка показувала
+        # переклад, і перше ж збереження форми стирало його назовсім.
+        # Показавши legacy-значення, ми заодно переводимо його на хеш-ключ:
+        # збереження запише вже новий формат.
+        value = overrides.get(unit.path)
+    return value or ''
 
 
 def apply_units(obj, lang, values):
@@ -174,8 +187,25 @@ def apply_units(obj, lang, values):
 
 
 def field_units(obj, field):
-    """Одиниці одного поля (для JSON -- усі його текстові фрагменти)."""
-    return [u for u in units(obj) if u.field == field]
+    """Одиниці одного поля (для JSON -- усі його текстові фрагменти).
+
+    Обходить САМЕ це поле, а не фільтрує повний обхід сутності: шаблон
+    форми курсу кличе цю функцію на кожне поле, і фільтрація давала
+    десятки зайвих обходів із хешуванням кожного листка на один рендер.
+    """
+    if field not in obj.__translatable__:
+        return []
+    return _units_for_field(obj, field)
+
+
+def _countable(unit_list):
+    """Одиниці, де реально є що перекладати.
+
+    Порожнє поле не має роздувати знаменник покриття і не має світити
+    індикатором "не перекладено" -- перекладати там нічого. Той самий
+    критерій, що й в xlsx-експорті, тож числа в UI і у файлі збігаються.
+    """
+    return [u for u in unit_list if (u.source or '').strip()]
 
 
 def field_status(obj, field):
@@ -184,7 +214,7 @@ def field_status(obj, field):
     Живить індикатор біля поля в адмін-формах: без нього не видно, чи
     переклад узагалі є, поки не перемкнеш вкладку.
     """
-    field_us = field_units(obj, field)
+    field_us = _countable(field_units(obj, field))
     total = len(field_us)
     return {
         lang: (sum(1 for u in field_us if stored_value(obj, lang, u)), total)
@@ -218,7 +248,7 @@ def coverage(obj):
     Саме по одиницях, а не по полях: інакше FAQ з одним перекладеним
     питанням із шістнадцяти рахувався б виконаним полем.
     """
-    all_units = units(obj)
+    all_units = _countable(units(obj))
     total = len(all_units)
     return {
         lang: (

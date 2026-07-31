@@ -74,14 +74,33 @@ def test_apply_units_skips_translation_equal_to_source():
 def test_coverage_counts_units_not_fields():
     c = _course(faq=[{'question': 'Q1?', 'answer': 'A1'},
                      {'question': 'Q2?', 'answer': 'A2'}])
-    total_units = len(registry.units(c))
     registry.apply_units(c, 'ru', {f'faq:{source_key("Q1?")}': 'В1?'})
 
     done, total = registry.coverage(c)['ru']
-    assert total == total_units
+    # 4 листки FAQ + непорожня назва курсу.
+    assert total == 5
     # Раніше поле faq цілком рахувалось виконаним після одного перекладу.
     assert done == 1
-    assert registry.coverage(c)['en'] == (0, total_units)
+    assert registry.coverage(c)['en'] == (0, 5)
+
+
+def test_coverage_ignores_fields_with_empty_source():
+    """Порожнє поле не має роздувати знаменник: перекладати там нічого,
+    і числа в UI мають збігатися з xlsx-експортом, який такі рядки пропускає."""
+    bare = _course()
+    filled = _course(subtitle='Підзаголовок')
+
+    assert registry.coverage(bare)['ru'][1] == 1          # лише назва
+    assert registry.coverage(filled)['ru'][1] == 2        # назва + підзаголовок
+    assert registry.field_status(bare, 'subtitle')['ru'] == (0, 0)
+
+
+def test_field_units_walks_only_requested_field():
+    c = _course(faq=[{'question': 'Q?', 'answer': 'A'}], tags=['PRP'])
+    faq_units = registry.field_units(c, 'faq')
+    assert {u.field for u in faq_units} == {'faq'}
+    assert registry.field_units(c, 'tags')[0].source == 'PRP'
+    assert registry.field_units(c, 'slug') == []          # не перекладне поле
 
 
 def test_coverage_label_format():
