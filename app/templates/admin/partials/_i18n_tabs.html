@@ -1,33 +1,94 @@
 {# Макроси мовних вкладок для інлайн-перекладів в адмін-формах
-   (course_edit, trainer_edit, blog_edit). Працює в парі з
+   (course_edit, trainer_edit, blog_edit, course_tariffs). Працює в парі з
    admin-i18n-tabs.js/.css та apply_inline_translations().
 
    Використання:
      {% import 'admin/partials/_i18n_tabs.html' as i18n %}
-     {{ i18n.tabs() }}
-     {{ i18n.panes(tr, 'title') }}
-     {{ i18n.panes(tr, 'description', widget='textarea', rows=6) }}
+     {{ i18n.tabs(course) }}          -- obj потрібен для лічильників
+     {{ i18n.panes(tr, 'title', obj=course) }}
+     {{ i18n.panes(tr, 'description', widget='textarea', rows=6, obj=course) }}
+     {{ i18n.json_panes(course, 'faq') }}
 
-   tr -- dict перекладів obj.translations (може бути порожнім {}).
-   Порожнє значення інпута при збереженні видаляє переклад (фолбек на укр). #}
+   tr  -- dict перекладів obj.translations (може бути порожнім {}).
+   obj -- сутність; потрібна лише для індикаторів і JSON-панелей, тож на
+          формах створення (obj ще немає) її просто не передають.
 
-{% macro tabs() %}
+   Порожнє значення інпута при збереженні видаляє переклад (фолбек на укр).
+   Українські поля лишаються видимими завжди -- вкладка УКР ховає лише
+   шари перекладу. #}
+
+{% macro tabs(obj=None) %}
+{% set cov = tr_coverage(obj) if obj else none %}
 <div class="i18n-tabs" data-i18n-tabs role="group" aria-label="Мова полів">
   <button type="button" class="i18n-tabs__btn" data-i18n-lang="uk">УКР</button>
-  <button type="button" class="i18n-tabs__btn" data-i18n-lang="ru">РУС</button>
-  <button type="button" class="i18n-tabs__btn" data-i18n-lang="en">ENG</button>
+  {% for lang, label in (('ru', 'РУС'), ('en', 'ENG')) %}
+  <button type="button" class="i18n-tabs__btn" data-i18n-lang="{{ lang }}">
+    {{ label }}
+    {%- if cov %}<span class="i18n-tabs__count{% if cov[lang][0] == cov[lang][1] and cov[lang][1] %} i18n-tabs__count--done{% endif %}">{{ cov[lang][0] }}/{{ cov[lang][1] }}</span>{% endif -%}
+  </button>
+  {% endfor %}
 </div>
 {% endmacro %}
 
-{% macro panes(tr, field, widget='text', rows=3) %}
+
+{# Індикатор стану перекладу поля: видно без перемикання вкладок. #}
+{% macro status(obj, field) %}
+{%- if obj -%}
+{% set st = tr_field_status(obj, field) %}
+<span class="i18n-status">
+  {%- for lang in ('ru', 'en') -%}
+  {%- set done, total = st[lang] -%}
+  <span class="i18n-status__chip{% if total and done == total %} i18n-status__chip--done{% elif done %} i18n-status__chip--partial{% endif %}"
+        title="{{ 'Російська' if lang == 'ru' else 'Англійська' }}: {{ done }} з {{ total }}">
+    {{ lang | upper }}{% if total > 1 %} {{ done }}/{{ total }}{% endif %}
+  </span>
+  {%- endfor -%}
+</span>
+{%- endif -%}
+{% endmacro %}
+
+
+{% macro panes(tr, field, widget='text', rows=3, obj=None, prefix='tr') %}
+{% if obj %}{{ status(obj, field) }}{% endif %}
 {% for lang, label in (('ru', 'РУС'), ('en', 'ENG')) %}
 <div class="i18n-pane" data-i18n-pane="{{ lang }}">
   <span class="i18n-pane__label">{{ label }}</span>
   {% if widget == 'textarea' %}
-  <textarea class="form-input" name="tr__{{ lang }}__{{ field }}" rows="{{ rows }}">{{ (tr.get(lang) or {}).get(field) or '' }}</textarea>
+  <textarea class="form-input" name="{{ prefix }}__{{ lang }}__{{ field }}" rows="{{ rows }}">{{ (tr.get(lang) or {}).get(field) or '' }}</textarea>
   {% else %}
-  <input type="text" class="form-input" name="tr__{{ lang }}__{{ field }}" value="{{ (tr.get(lang) or {}).get(field) or '' }}">
+  <input type="text" class="form-input" name="{{ prefix }}__{{ lang }}__{{ field }}" value="{{ (tr.get(lang) or {}).get(field) or '' }}">
   {% endif %}
 </div>
 {% endfor %}
+{% endmacro %}
+
+
+{# Панелі для JSON-поля: рядок на кожен текстовий фрагмент структури.
+   Раніше такі поля (FAQ, теги, аудиторія, регалії) редагувались лише на
+   окремій сторінці /admin/translations -- це був найбільший контент курсу
+   в найдальшому місці. #}
+{% macro json_panes(obj, field, prefix='tr') %}
+{%- if obj -%}
+{% set leaves = tr_inline_leaves(obj, field) %}
+{{ status(obj, field) }}
+{% for lang, label in (('ru', 'РУС'), ('en', 'ENG')) %}
+<div class="i18n-pane" data-i18n-pane="{{ lang }}">
+  <span class="i18n-pane__label">{{ label }}</span>
+  {% if leaves %}
+  <div class="i18n-leaves">
+    {% for leaf in leaves %}
+    <div class="i18n-leaf">
+      <p class="i18n-leaf__source">{{ leaf.source }}</p>
+      <textarea class="form-input" rows="{{ leaf.rows }}"
+                name="{{ prefix }}__{{ lang }}__{{ leaf.suffix }}"
+                placeholder="Порожньо = українська">{{ leaf.values[lang] }}</textarea>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="form-hint">Немає текстів для перекладу.</p>
+  {% endif %}
+</div>
+{% endfor %}
+{%- endif -%}
 {% endmacro %}

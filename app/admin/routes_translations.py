@@ -97,23 +97,36 @@ def _children_sections(entity, obj):
     ]
 
 
-def apply_inline_translations(obj, form=None):
-    """Зберегти переклади з інлайн-вкладок адмін-форм (course_edit,
-    trainer_edit, blog_edit): інпути tr__<lang>__<поле>. Викликається в
-    POST-обробниках ПІСЛЯ створення/наповнення obj, до commit (commit --
-    на caller-ові). Відсутні у формі ключі не чіпаються, тож форми з
-    частковим набором полів безпечні. Повертає список помилок JSON-полів.
+def inline_name(lang, unit, prefix='tr'):
+    """Ім'я інпута інлайн-вкладки:
+        tr__ru__title                  -- скалярне поле
+        tr__ru__faq__9c1f2a3b4d5e      -- фрагмент JSON-поля
+    Префікс дозволяє покласти в одну форму кілька сутностей (напр. блоки
+    програми в формі курсу: trblk__<id>__ru__heading).
+    """
+    if unit.is_json_leaf:
+        return f'{prefix}__{lang}__{unit.field}__{unit.src_key}'
+    return f'{prefix}__{lang}__{unit.field}'
+
+
+def apply_inline_translations(obj, form=None, prefix='tr'):
+    """Зберегти переклади з інлайн-вкладок адмін-форм.
+
+    Викликається в POST-обробниках ПІСЛЯ створення/наповнення obj, до
+    commit (commit -- на caller-ові). Порядок важливий: спершу зберігається
+    український контент, і лише потім переклади, бо одиниці рахуються з
+    АКТУАЛЬНОЇ структури. Тому текст і його переклад можна правити одним
+    сабмітом: переклад застосується, якщо його джерело вціліло.
+
+    Поля, чиїх інпутів у формі немає, не чіпаються -- форми з частковим
+    набором полів безпечні.
     """
     form = form if form is not None else request.form
     all_units = registry.units(obj)
     for lang in PREFIXED_LANGUAGES:
         values = {}
         for unit in all_units:
-            # JSON-поля редагуються лише на сторінці /translations
-            # (leaf-редактор); інлайн-вкладки експонують лише текст.
-            if unit.is_json_leaf:
-                continue
-            key = f'tr__{lang}__{unit.field}'
+            key = inline_name(lang, unit, prefix)
             if key in form:
                 values[unit.uid] = form.get(key) or ''
         if values:

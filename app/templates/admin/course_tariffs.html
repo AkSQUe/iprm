@@ -6,9 +6,12 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-i18n-tabs.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
+{% import 'admin/partials/_i18n_tabs.html' as i18n %}
+{% set tr = (edit_tariff.translations if edit_tariff else none) or {} %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
   <div class="admin-layout">
@@ -100,6 +103,7 @@
     {% include 'admin/partials/_form_errors.html' %}
 
     <div class="form-section admin-form__section">
+      {% if edit_tariff %}{{ i18n.tabs(edit_tariff) }}{% endif %}
       <h3 class="admin-form__section-title">{% if edit_tariff %}Редагувати шаблон «{{ edit_tariff.name }}»{% else %}Додати шаблонний тариф{% endif %}</h3>
       <div class="admin-form__grid">
 
@@ -108,6 +112,7 @@
           {{ form.name(class="form-input" + (" is-invalid" if form.name.errors else ""), id="ct-name", placeholder="Онлайн / Онлайн+ / Практикум / Практикум з менторством") }}
           <div class="form-hint">{{ form.name.description }}</div>
           {% for error in form.name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+          {{ i18n.panes(tr, 'name', obj=edit_tariff) }}
         </div>
 
         <div class="form-group">
@@ -133,6 +138,7 @@
           <label for="ct-description">Що входить</label>
           {{ form.description(class="form-input", id="ct-description", rows="4", placeholder="Лекція наживо\nЗапис курсу\nСертифікат з балами БПР\nЧек-лист/шпаргалка") }}
           <div class="form-hint">{{ form.description.description }}</div>
+          {{ i18n.panes(tr, 'description', widget='textarea', rows=4, obj=edit_tariff) }}
         </div>
 
         <div class="form-group">
@@ -154,4 +160,5 @@
 
   </div>
 </div>
+<script src="{{ url_for('static', filename='js/admin-i18n-tabs.js') }}?v={{ assets_version }}"></script>
 {% endblock %}

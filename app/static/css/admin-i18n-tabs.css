@@ -48,3 +48,66 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+/* Лічильник покриття на вкладці: "РУС 12/20" */
+.i18n-tabs__count {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: var(--iprm-radius-pill, 999px);
+  background: var(--iprm-surface-2, #e8e8ed);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--apple-gray-dark, #6e6e73);
+}
+
+.i18n-tabs__count--done {
+  background: var(--iprm-success-bg, #e3f6e8);
+  color: var(--iprm-success-text, #1d7a3a);
+}
+
+/* Індикатор стану біля поля -- видно без перемикання вкладки */
+.i18n-status {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.i18n-status__chip {
+  padding: 1px 6px;
+  border-radius: var(--iprm-radius-pill, 999px);
+  background: var(--iprm-surface-2, #e8e8ed);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--apple-gray-dark, #6e6e73);
+  opacity: 0.75;
+}
+
+.i18n-status__chip--partial {
+  background: var(--iprm-warning-bg, #fff4e0);
+  color: var(--iprm-warning-text, #8a5a00);
+  opacity: 1;
+}
+
+.i18n-status__chip--done {
+  background: var(--iprm-success-bg, #e3f6e8);
+  color: var(--iprm-success-text, #1d7a3a);
+  opacity: 1;
+}
+
+/* Фрагменти JSON-поля (FAQ, теги, аудиторія, пункти блоку) */
+.i18n-leaves {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.i18n-leaf__source {
+  margin: 0 0 4px;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--apple-gray-dark, #6e6e73);
+}

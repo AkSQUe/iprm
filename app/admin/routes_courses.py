@@ -20,6 +20,20 @@ from app.services import course_service
 audit_logger = logging.getLogger('audit')
 
 
+def _apply_block_translations(course):
+    """Переклади блоків програми з форми курсу (префікс trblk__<id>).
+
+    Викликати ПІСЛЯ save_program_blocks_for_course: одиниці рахуються з
+    актуального тексту блоку, тож заголовок і його переклад можна правити
+    одним сабмітом. Блоки, створені в цьому ж сабміті, ще не мають id --
+    інпутів для них у формі не було, і вони просто не потрапляють сюди.
+    """
+    db.session.flush()
+    for block in course.program_blocks:
+        if block.id:
+            apply_inline_translations(block, prefix=f'trblk__{block.id}')
+
+
 @admin_bp.route('/courses')
 @admin_required
 def courses_list():
@@ -62,6 +76,7 @@ def course_create():
         db.session.flush()
         blocks_data = course_service.extract_program_blocks_from_form(request.form)
         course_service.save_program_blocks_for_course(course, blocks_data)
+        _apply_block_translations(course)
 
         if try_commit(log_context=f'course_create title={course.title}'):
             course_service.attach_course_media(course)
@@ -103,6 +118,7 @@ def course_edit(course_id):
         apply_inline_translations(course)
         blocks_data = course_service.extract_program_blocks_from_form(request.form)
         course_service.save_program_blocks_for_course(course, blocks_data)
+        _apply_block_translations(course)
 
         if try_commit(log_context=f'course_edit id={course.id}'):
             course_service.attach_course_media(course)

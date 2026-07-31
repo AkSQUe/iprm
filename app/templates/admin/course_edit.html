@@ -43,7 +43,7 @@
     {% include 'admin/partials/_form_errors.html' %}
 
     <div class="form-section admin-form__section">
-      {{ i18n.tabs() }}
+      {{ i18n.tabs(course) }}
       <h3 class="admin-form__section-title">Основна інформація</h3>
       <div class="admin-form__grid">
 
@@ -51,13 +51,13 @@
           <label for="title">Назва курсу <span class="required">*</span></label>
           {{ form.title(class="form-input" + (" is-invalid" if form.title.errors else ""), id="title", placeholder="Плазмотерапія в ортопедії") }}
           {% for error in form.title.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
-          {{ i18n.panes(tr, 'title') }}
+          {{ i18n.panes(tr, 'title', obj=course) }}
         </div>
 
         <div class="form-group admin-form__full">
           <label for="subtitle">Підзаголовок</label>
           {{ form.subtitle(class="form-input", id="subtitle") }}
-          {{ i18n.panes(tr, 'subtitle') }}
+          {{ i18n.panes(tr, 'subtitle', obj=course) }}
         </div>
 
         <div class="form-group">
@@ -82,7 +82,7 @@
           <label for="roi_hint">Орієнтир окупності</label>
           {{ form.roi_hint(class="form-input", id="roi_hint", placeholder="Окупність ≈ 3–4 записи за чека 6 000–9 000 грн") }}
           <div class="form-hint">{{ form.roi_hint.description }}</div>
-          {{ i18n.panes(tr, 'roi_hint') }}
+          {{ i18n.panes(tr, 'roi_hint', obj=course) }}
         </div>
 
         <div class="form-group">
@@ -147,7 +147,7 @@
           <label for="bpr_specialties">Спеціальності (для сертифіката)</label>
           {{ form.bpr_specialties(class="form-input", id="bpr_specialties", placeholder="усі лікарські спеціальності") }}
           <small class="form-hint">Друкується рядком «Спеціальності: …» на сертифікаті.</small>
-          {{ i18n.panes(tr, 'bpr_specialties') }}
+          {{ i18n.panes(tr, 'bpr_specialties', obj=course) }}
         </div>
 
         <div class="form-group">
@@ -210,43 +210,46 @@
         <div class="form-group admin-form__full">
           <label for="short_description">Короткий опис</label>
           {{ form.short_description(class="form-input", id="short_description", rows="3") }}
-          {{ i18n.panes(tr, 'short_description', widget='textarea', rows=3) }}
+          {{ i18n.panes(tr, 'short_description', widget='textarea', rows=3, obj=course) }}
         </div>
         <div class="form-group admin-form__full">
           <label for="description">Повний опис</label>
           {{ form.description(class="form-input", id="description", rows="6") }}
-          {{ i18n.panes(tr, 'description', widget='textarea', rows=6) }}
+          {{ i18n.panes(tr, 'description', widget='textarea', rows=6, obj=course) }}
         </div>
         <div class="form-group admin-form__full">
           <label for="target_audience_text">Цільова аудиторія</label>
           {{ form.target_audience_text(class="form-input", id="target_audience_text", rows="5") }}
           <div class="form-hint">Кожен рядок стане окремою карткою</div>
+          {{ i18n.json_panes(course, 'target_audience') }}
         </div>
         <div class="form-group admin-form__full">
           <label for="tags_text">Теги</label>
           {{ form.tags_text(class="form-input", id="tags_text", rows="3") }}
           <div class="form-hint">Кожен рядок стане тегом</div>
+          {{ i18n.json_panes(course, 'tags') }}
         </div>
         <div class="form-group admin-form__full">
           <label for="speaker_info">Інформація про спікера</label>
           {{ form.speaker_info(class="form-input", id="speaker_info", rows="4") }}
-          {{ i18n.panes(tr, 'speaker_info', widget='textarea', rows=4) }}
+          {{ i18n.panes(tr, 'speaker_info', widget='textarea', rows=4, obj=course) }}
         </div>
         <div class="form-group admin-form__full">
           <label for="agenda">Програма (загальний опис)</label>
           {{ form.agenda(class="form-input", id="agenda", rows="4") }}
-          {{ i18n.panes(tr, 'agenda', widget='textarea', rows=4) }}
+          {{ i18n.panes(tr, 'agenda', widget='textarea', rows=4, obj=course) }}
         </div>
         <div class="form-group admin-form__full">
           <label for="faq_text">FAQ</label>
           {{ form.faq_text(class="form-input", id="faq_text", rows="8") }}
           <div class="form-hint">Блоки розділяються порожнім рядком. Перший рядок – питання, решта – відповідь.</div>
+          {{ i18n.json_panes(course, 'faq') }}
         </div>
         <div class="form-group admin-form__full">
           <label for="final_cta_text">Фінальний заклик</label>
           {{ form.final_cta_text(class="form-input", id="final_cta_text", placeholder="Готові опанувати метод? Оберіть зручну дату та закріпіть місце в групі.") }}
           <div class="form-hint">{{ form.final_cta_text.description }}</div>
-          {{ i18n.panes(tr, 'final_cta_text') }}
+          {{ i18n.panes(tr, 'final_cta_text', obj=course) }}
         </div>
       </div>
     </div>
@@ -270,12 +273,20 @@
               <label>Пункти програми</label>
               <textarea name="block_{{ loop.index0 }}_items" class="form-input" rows="5">{{ block.items | join('\n') }}</textarea>
             </div>
+            {# Переклади блоку -- окремий префікс, бо в одній формі кілька
+               сутностей. Блок, доданий у цьому ж сабміті, ще не має id,
+               тож отримає ці поля після першого збереження. #}
+            <div class="form-group admin-form__full">
+              {{ i18n.panes(block.translations or {}, 'heading', obj=block, prefix='trblk__' ~ block.id) }}
+              {{ i18n.json_panes(block, 'items', prefix='trblk__' ~ block.id) }}
+            </div>
           </div>
         </div>
           {% endfor %}
         {% endif %}
       </div>
       <button type="button" id="add-program-block" class="btn-admin btn-admin--secondary">+ Додати блок програми</button>
+      <p class="form-hint">Мовні вкладки вгорі форми перемикають і переклади блоків.</p>
     </div>
 
     {% if course %}

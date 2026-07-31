@@ -173,6 +173,45 @@ def apply_units(obj, lang, values):
         obj.set_translation(lang, field, overrides or None)
 
 
+def field_units(obj, field):
+    """Одиниці одного поля (для JSON -- усі його текстові фрагменти)."""
+    return [u for u in units(obj) if u.field == field]
+
+
+def field_status(obj, field):
+    """{'ru': (перекладено, всього), 'en': (...)} по одному полю.
+
+    Живить індикатор біля поля в адмін-формах: без нього не видно, чи
+    переклад узагалі є, поки не перемкнеш вкладку.
+    """
+    field_us = field_units(obj, field)
+    total = len(field_us)
+    return {
+        lang: (sum(1 for u in field_us if stored_value(obj, lang, u)), total)
+        for lang in PREFIXED_LANGUAGES
+    }
+
+
+def inline_leaves(obj, field):
+    """Дані для інлайн-панелей перекладу JSON-поля в адмін-формі.
+
+    Повертає [{suffix, source, rows, values}]; suffix іде в ім'я інпута
+    (`tr__<lang>__<suffix>`) і містить хеш джерела, тож редагування
+    українського тексту в тій самій формі не збиває прив'язку.
+    """
+    return [
+        {
+            'suffix': f'{u.field}__{u.src_key}',
+            'source': u.source,
+            'rows': min(6, max(2, len(u.source) // 80 + 1)),
+            'values': {
+                lang: stored_value(obj, lang, u) for lang in PREFIXED_LANGUAGES
+            },
+        }
+        for u in field_units(obj, field) if u.is_json_leaf
+    ]
+
+
 def coverage(obj):
     """{'ru': (перекладено, всього), 'en': (...)} -- рахунок по ОДИНИЦЯХ.
 

@@ -7,6 +7,7 @@ from flask_login import current_user
 
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
+from app.admin.routes_translations import apply_inline_translations
 from app.admin.forms import CourseTariffForm
 from app.extensions import db
 from app.models.course import Course
@@ -76,6 +77,7 @@ def course_tariff_edit(tariff_id):
         tariff.event_format = form.event_format.data or None
         tariff.sort_order = form.sort_order.data if form.sort_order.data is not None else 0
         tariff.is_active = form.is_active.data
+        apply_inline_translations(tariff)
         try:
             db.session.commit()
             audit_logger.info(

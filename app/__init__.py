@@ -174,6 +174,16 @@ def create_app(config_name=None):
     from app.services.city_glossary import localize_location
     app.jinja_env.filters['localize_location'] = localize_location
 
+    # Дані перекладів для інлайн мовних вкладок в адмін-формах
+    # (partials/_i18n_tabs.html). Єдине джерело -- translation_registry.
+    from app.services.translation_registry import (
+        coverage as tr_coverage, field_status as tr_field_status,
+        inline_leaves as tr_inline_leaves,
+    )
+    app.jinja_env.globals['tr_coverage'] = tr_coverage
+    app.jinja_env.globals['tr_field_status'] = tr_field_status
+    app.jinja_env.globals['tr_inline_leaves'] = tr_inline_leaves
+
     # Глобал icon('<name>') -- рендерить Material Symbols іконку через кодпойнт
     # (self-hosted субсет-шрифт). Див. app/icons.py.
     from app.icons import render_icon, ICON_CODEPOINTS
