@@ -48,8 +48,8 @@
             </div>
             {% for lang in languages %}
             <div class="form-group">
-              <label for="{{ lang }}__{{ field.name }}__{{ leaf.path }}">{{ 'Російська' if lang == 'ru' else 'Англійська' }}</label>
-              <textarea class="form-input" id="{{ lang }}__{{ field.name }}__{{ leaf.path }}" name="{{ lang }}__{{ field.name }}__{{ leaf.path }}" rows="{{ leaf.rows }}" placeholder="Порожньо = українська">{{ leaf.trans[lang] }}</textarea>
+              <label for="{{ leaf.names[lang] }}">{{ 'Російська' if lang == 'ru' else 'Англійська' }}</label>
+              <textarea class="form-input" id="{{ leaf.names[lang] }}" name="{{ leaf.names[lang] }}" rows="{{ leaf.rows }}" placeholder="Порожньо = українська">{{ leaf.trans[lang] }}</textarea>
             </div>
             {% endfor %}
           </div>
@@ -66,11 +66,11 @@
           </div>
           {% for lang in languages %}
           <div class="form-group">
-            <label for="{{ lang }}__{{ field.name }}">{{ 'Російська' if lang == 'ru' else 'Англійська' }}</label>
+            <label for="{{ field.names[lang] }}">{{ 'Російська' if lang == 'ru' else 'Англійська' }}</label>
             {% if field.widget == 'text' %}
-            <input type="text" class="form-input" id="{{ lang }}__{{ field.name }}" name="{{ lang }}__{{ field.name }}" value="{{ field.trans[lang] }}">
+            <input type="text" class="form-input" id="{{ field.names[lang] }}" name="{{ field.names[lang] }}" value="{{ field.trans[lang] }}">
             {% else %}
-            <textarea class="form-input" id="{{ lang }}__{{ field.name }}" name="{{ lang }}__{{ field.name }}" rows="4">{{ field.trans[lang] }}</textarea>
+            <textarea class="form-input" id="{{ field.names[lang] }}" name="{{ field.names[lang] }}" rows="4">{{ field.trans[lang] }}</textarea>
             {% endif %}
           </div>
           {% endfor %}

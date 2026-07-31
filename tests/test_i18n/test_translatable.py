@@ -4,7 +4,7 @@ import pytest
 from flask_babel import force_locale
 
 from app.extensions import db
-from app.i18n import apply_json_overrides
+from app.i18n import apply_json_overrides, source_key
 from app.models.course import Course
 
 
@@ -78,15 +78,47 @@ def test_json_partial_override_falls_back_per_leaf():
     assert en[0]['a'] == 'Відповідь.'  # неперекладений листок -> укр
 
 
-def test_json_structure_change_is_resilient():
+def test_legacy_path_overrides_still_apply():
+    """Дані, що не пройшли міграцію на хеш-ключі, читаються як раніше."""
     c = _course(faq=[{'q': 'A?', 'a': 'A.'}, {'q': 'B?', 'a': 'B.'}])
     c.set_translation('en', 'faq', {'0.q': 'A-en?', '1.q': 'B-en?'})
-    # оригінал змінюється: видаляємо перший блок, додаємо новий
-    c.faq = [{'q': 'B?', 'a': 'B.'}, {'q': 'C?', 'a': 'C.'}]
     en = c.t('faq', lang='en')
-    assert len(en) == 2  # структура за поточним uk
-    # шлях '1.q' усе ще існує -> override застосовано; нові листки -> укр
+    assert en[0]['q'] == 'A-en?'
     assert en[1]['q'] == 'B-en?'
+
+
+def test_hash_override_follows_moved_text():
+    """Ключ-хеш прив'язує переклад до ТЕКСТУ, а не до позиції.
+
+    Регресія: з path-ключами вставка нового питання на початок FAQ мовчки
+    перемикала готовий переклад на сусіднє питання.
+    """
+    c = _course(faq=[{'q': 'A?', 'a': 'A.'}, {'q': 'B?', 'a': 'B.'}])
+    c.set_translation('en', 'faq', {
+        source_key('A?'): 'A-en?',
+        source_key('B?'): 'B-en?',
+    })
+    # Вставляємо новий блок на початок -- усі індекси зсуваються.
+    c.faq = [{'q': 'C?', 'a': 'C.'}, {'q': 'A?', 'a': 'A.'}, {'q': 'B?', 'a': 'B.'}]
+    en = c.t('faq', lang='en')
+    assert [item['q'] for item in en] == ['C?', 'A-en?', 'B-en?']
+
+
+def test_hash_override_ignored_when_source_gone():
+    c = _course(faq=[{'q': 'A?', 'a': 'A.'}])
+    c.set_translation('en', 'faq', {source_key('A?'): 'A-en?'})
+    c.faq = [{'q': 'Переписане питання?', 'a': 'A.'}]
+    en = c.t('faq', lang='en')
+    assert en[0]['q'] == 'Переписане питання?'  # джерело зникло -> фолбек
+
+
+def test_hash_override_wins_over_stale_legacy_path():
+    c = _course(faq=[{'q': 'A?', 'a': 'A.'}])
+    c.set_translation('en', 'faq', {
+        '0.q': 'legacy',
+        source_key('A?'): 'A-en?',
+    })
+    assert c.t('faq', lang='en')[0]['q'] == 'A-en?'
 
 
 def test_apply_json_overrides_skips_missing_and_nonstring_paths():

@@ -17,6 +17,8 @@ Admin (/admin), партнерські API і сервісні роути (robot
 токен-лінки) навмисно НЕ локалізуються: у роуті передайте localize=False.
 """
 import copy
+import hashlib
+import re
 
 from flask import (
     Blueprint, current_app, g, has_request_context, redirect, request, session,
@@ -39,25 +41,121 @@ LANGUAGE_LABELS = {'uk': 'UA', 'ru': 'RU', 'en': 'EN'}
 _LANG_PREFIX = '/<any(' + ', '.join(PREFIXED_LANGUAGES) + '):lang_code>'
 
 
-# --- Переклади JSON-структур: overrides за шляхом --------------------------
+# --- Переклади JSON-структур: overrides за хешем джерела -------------------
 # Переклад JSON-поля (faq, блоки блогу, регалії, items) зберігається як
-# ПЛОСКА мапа {шлях: текст}, а не повна копія структури. Читання (t())
+# ПЛОСКА мапа {ключ: текст}, а не повна копія структури. Читання (t())
 # накладає overrides на ПОТОЧНУ українську структуру, тож зміни оригіналу
-# (додані/переставлені блоки) підхоплюються автоматично, а застарілі шляхи
-# просто ігноруються (фолбек на укр). Шлях -- крапко-роздільна адреса
-# (напр. '0.data.html'); ключі структури НЕ можуть містити крапку.
+# підхоплюються автоматично, а застарілі ключі ігноруються (фолбек на укр).
+#
+# Ключ -- хеш українського джерела (source_key). Переклад прив'язаний до
+# ТЕКСТУ, тож перестановка, вставка чи видалення елемента не перемикають
+# готовий переклад на сусідній фрагмент.
+#
+# LEGACY: до міграції course_i18n_srckey_20260731 ключем був крапко-роздільний
+# ШЛЯХ ('0.data.html'). Такий ключ саме й ламався при перестановці: шлях
+# лишався валідним і переклад мовчки з'їжджав на інший елемент. Читання
+# legacy-ключів збережено як запобіжник для даних, що не пройшли міграцію.
+
+# Ключ нового формату: 12 hex-символів. Жоден шлях у наших структурах так не
+# виглядає (шляхи -- індекси й імена ключів на кшталт 'question', 'items').
+_SOURCE_KEY_RE = re.compile(r'[0-9a-f]{12}')
+
+
+def source_key(text):
+    """Стабільний ключ перекладу -- хеш українського джерела."""
+    return hashlib.sha1(text.strip().encode('utf-8')).hexdigest()[:12]
+
 
 def apply_json_overrides(base, overrides):
-    """Повернути копію base з накладеними текстовими overrides {шлях: текст}.
-    Перезаписує лише наявні РЯДКОВІ листки -- зміни структури оригіналу
-    безпечні (невідповідні шляхи пропускаються)."""
-    if not isinstance(overrides, dict):
+    """Повернути копію base з накладеними текстовими overrides.
+
+    Перезаписує лише наявні РЯДКОВІ листки; ключі, яким у поточній структурі
+    нічого не відповідає, пропускаються.
+    """
+    if not isinstance(overrides, dict) or not overrides:
         return base
     result = copy.deepcopy(base)
+    # Листки рахуємо з ОРИГІНАЛУ: інакше на другому проході хешувався б уже
+    # перекладений текст.
+    leaves = walk_leaves(base)
+
+    # 1) Legacy-ключі за шляхом.
     for path, text in overrides.items():
-        if isinstance(text, str):
+        if isinstance(text, str) and text and not _SOURCE_KEY_RE.fullmatch(path):
             _set_leaf_if_str(result, path, text)
+
+    # 2) Ключі за хешем джерела -- мають пріоритет над legacy.
+    for path, uk_leaf in leaves:
+        text = overrides.get(source_key(uk_leaf))
+        if isinstance(text, str) and text:
+            _set_leaf_if_str(result, path, text)
+
     return result
+
+
+# Ключі JSON-структур, які НЕ перекладаються (технічні/медіа/навігаційні).
+TECHNICAL_KEYS = frozenset({
+    'type', 'id', 'url', 'src', 'href', 'slug', 'youtube_id', 'video_id',
+    'media_id', 'image', 'icon', 'anchor', 'level', 'align', 'alignment',
+    'style', 'format', 'code', 'variant', 'target', 'rel', 'lang',
+    'thumb', 'card', 'full', 'preview', 'poster', 'file', 'path', 'srcset',
+})
+
+# Значення-ассети (шляхи/URL/імена файлів) -- не текст, не перекладаються,
+# незалежно від ключа. Перекладний текст -- проза (має літери).
+_ASSET_EXT_RE = re.compile(
+    r'\.(?:webp|jpe?g|png|gif|svg|avif|ico|bmp|mp4|webm|mov|pdf|heic|heif|zip)$',
+    re.IGNORECASE,
+)
+
+
+def _has_letters(value):
+    return any(ch.isalpha() for ch in value)
+
+
+def _is_asset_value(value):
+    """True для шляхів/URL/імен файлів (не перекладний текст)."""
+    v = value.strip()
+    if not v:
+        return False
+    if v.startswith(('/', 'http://', 'https://', 'data:', 'blob:', '#', 'mailto:', 'tel:')):
+        return True
+    # Ім'я файлу без пробілів із розширенням-ассетом (напр. "photo_thumb.webp").
+    if ' ' not in v and _ASSET_EXT_RE.search(v):
+        return True
+    return False
+
+
+def is_translatable_leaf(value):
+    return _has_letters(value) and not _is_asset_value(value)
+
+
+def walk_leaves(value, path=''):
+    """Текстові фрагменти JSON-структури: [(шлях 'a.0.b', укр-значення)].
+
+    Перекладаються лише str-значення з прозою поза TECHNICAL_KEYS;
+    структура (dict/list), технічні значення і шляхи-ассети недоторкані.
+    Ключі з крапкою пропускаються -- крапка є розділювачем шляху
+    (у поточній схемі таких ключів немає).
+    """
+    leaves = []
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if '.' in key:
+                continue
+            child = f'{path}{key}'
+            if isinstance(item, (dict, list)):
+                leaves += walk_leaves(item, child + '.')
+            elif isinstance(item, str) and key not in TECHNICAL_KEYS and is_translatable_leaf(item):
+                leaves.append((child, item))
+    elif isinstance(value, list):
+        for i, item in enumerate(value):
+            child = f'{path}{i}'
+            if isinstance(item, (dict, list)):
+                leaves += walk_leaves(item, child + '.')
+            elif isinstance(item, str) and is_translatable_leaf(item):
+                leaves.append((child, item))
+    return leaves
 
 
 def _set_leaf_if_str(root, path, text):

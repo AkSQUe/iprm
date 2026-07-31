@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 
 from app.extensions import db
-from app.admin.routes_translations import _walk_leaves
+from app.i18n import source_key, walk_leaves
 from app.models.blog_post import BlogPost
 from app.models.course import Course
 from app.models.user import User
@@ -68,7 +68,7 @@ def test_walk_leaves_excludes_asset_paths():
         {'type': 'image', 'data': {'thumb': '/media/x_thumb.webp', 'caption': 'Підпис'}},
         'photo_gallery.webp',
     ]
-    values = [v for _, v in _walk_leaves(content)]
+    values = [v for _, v in walk_leaves(content)]
     assert 'Абзац тексту.' in values
     assert 'Підпис' in values
     assert not any('webp' in v or v.startswith('/media') for v in values)
@@ -80,14 +80,39 @@ def test_editor_saves_json_as_override_map(client, admin):
                  content=[{'type': 'paragraph', 'data': {'html': 'Оригінал.'}}])
     db.session.add(p)
     db.session.flush()
+    key = source_key('Оригінал.')
     r = client.post(f'/admin/translations/blog_post/{p.id}',
-                    data={'ru__content__0.data.html': 'Оригинал.'})
+                    data={f'ru__content__{key}': 'Оригинал.'})
     assert r.status_code == 302
     fetched = db.session.get(BlogPost, p.id)
     stored = fetched.translations['ru']['content']
     assert isinstance(stored, dict)  # override-мапа, не повна структура
-    assert stored == {'0.data.html': 'Оригинал.'}
+    # Ключ -- хеш українського джерела, а не позиція в структурі.
+    assert stored == {key: 'Оригинал.'}
     assert fetched.t('content', lang='ru')[0]['data']['html'] == 'Оригинал.'
+
+
+def test_editor_json_translation_survives_reorder(client, admin):
+    """Переклад іде за текстом: перестановка блоків його не збиває."""
+    _login(client, admin)
+    p = BlogPost(slug=f'p-{uuid4().hex[:6]}', title='T', status='published',
+                 content=[{'type': 'paragraph', 'data': {'html': 'Перший.'}},
+                          {'type': 'paragraph', 'data': {'html': 'Другий.'}}])
+    db.session.add(p)
+    db.session.flush()
+    client.post(f'/admin/translations/blog_post/{p.id}', data={
+        f'ru__content__{source_key("Перший.")}': 'Первый.',
+        f'ru__content__{source_key("Другий.")}': 'Второй.',
+    })
+
+    # Адмін міняє блоки місцями і вставляє новий на початок.
+    p.content = [{'type': 'paragraph', 'data': {'html': 'Новий.'}},
+                 {'type': 'paragraph', 'data': {'html': 'Другий.'}},
+                 {'type': 'paragraph', 'data': {'html': 'Перший.'}}]
+    db.session.commit()
+
+    ru = db.session.get(BlogPost, p.id).t('content', lang='ru')
+    assert [b['data']['html'] for b in ru] == ['Новий.', 'Второй.', 'Первый.']
 
 
 def test_editor_prefills_saved_translation(client, admin):
