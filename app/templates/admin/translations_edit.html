@@ -28,6 +28,23 @@
 
     {% include 'partials/flash_messages.html' %}
 
+    {% set orphans = tr_orphaned(obj) %}
+    {% if orphans %}
+    <div class="admin-xlsx-note">
+      <strong>Переклади без джерела ({{ orphans | length }}).</strong>
+      Український текст цих фрагментів переписали, тож переклади більше не
+      показуються на сайті. Перенесіть потрібне у поле з новим формулюванням
+      -- після наступного збереження вони зникнуть остаточно.
+      <ul class="tr-children">
+        {% for item in orphans %}
+        <li class="tr-children__row">
+          <span><strong>{{ item.label }}</strong> · {{ item.lang | upper }}: {{ item.text }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
     <form method="POST" class="admin-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 

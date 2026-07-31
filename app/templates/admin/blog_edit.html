@@ -30,6 +30,7 @@
       <div class="admin-hero__actions">
         {% if post %}
         <a href="{{ url_for('admin.translations_edit', entity='blog_post', obj_id=post.id) }}" class="btn-admin btn-admin--secondary">Переклади</a>
+      <a href="{{ url_for('admin.translations_export_object', entity='blog_post', obj_id=post.id) }}" class="btn-admin btn-admin--secondary" title="Файл перекладів лише цього об'єкта">{{ icon('download') }} Переклади XLSX</a>
         <a href="{{ url_for('admin.blog_preview', post_id=post.id) }}" target="_blank" rel="noopener" class="btn-admin btn-admin--secondary">
           {{ icon('visibility') }} Прев'ю
         </a>

@@ -177,12 +177,15 @@ def create_app(config_name=None):
     # Дані перекладів для інлайн мовних вкладок в адмін-формах
     # (partials/_i18n_tabs.html). Єдине джерело -- translation_registry.
     from app.services.translation_registry import (
-        coverage as tr_coverage, field_status as tr_field_status,
-        inline_leaves as tr_inline_leaves,
+        coverage as tr_coverage, coverage_label as tr_coverage_label,
+        field_status as tr_field_status, inline_leaves as tr_inline_leaves,
+        orphaned as tr_orphaned,
     )
     app.jinja_env.globals['tr_coverage'] = tr_coverage
+    app.jinja_env.globals['tr_coverage_label'] = tr_coverage_label
     app.jinja_env.globals['tr_field_status'] = tr_field_status
     app.jinja_env.globals['tr_inline_leaves'] = tr_inline_leaves
+    app.jinja_env.globals['tr_orphaned'] = tr_orphaned
 
     # Глобал icon('<name>') -- рендерить Material Symbols іконку через кодпойнт
     # (self-hosted субсет-шрифт). Див. app/icons.py.

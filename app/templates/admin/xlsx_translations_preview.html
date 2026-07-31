@@ -50,6 +50,12 @@
       <span class="admin-xlsx-summary__label">Конфлікт джерела</span>
     </div>
     {% endif %}
+    {% if plan.warnings %}
+    <div class="admin-xlsx-summary__item">
+      <span class="admin-xlsx-summary__num">{{ plan.warnings | length }}</span>
+      <span class="admin-xlsx-summary__label">Попереджень</span>
+    </div>
+    {% endif %}
     {% if c['error'] %}
     <div class="admin-xlsx-summary__item admin-xlsx-summary__item--error">
       <span class="admin-xlsx-summary__num">{{ c['error'] }}</span>
@@ -76,6 +82,14 @@
   </div>
   {% endif %}
 
+  {% if plan.warnings %}
+  <div class="admin-xlsx-note">
+    <strong>Попередження.</strong> Ці рядки застосуються, але варто глянути:
+    типові механічні помилки -- кирилиця в англійському перекладі, переклад
+    дослівно як оригінал, різка різниця довжин.
+  </div>
+  {% endif %}
+
   {% if plan.changes %}
   <div class="admin-table-wrap">
   <table class="admin-table">
@@ -88,6 +102,7 @@
         <th>Мова</th>
         <th>Було</th>
         <th>Стане</th>
+        <th>Увага</th>
       </tr>
     </thead>
     <tbody>
@@ -116,6 +131,7 @@
           {% elif ch.new %}{{ ch.new[:120] }}{% if ch.new | length > 120 %}…{% endif %}
           {% else %}—{% endif %}
         </td>
+        <td>{% if ch.warning %}<span class="badge badge--draft" title="{{ ch.warning }}">{{ ch.warning }}</span>{% else %}—{% endif %}</td>
       </tr>
       {% endfor %}
     </tbody>

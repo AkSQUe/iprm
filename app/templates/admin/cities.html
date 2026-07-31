@@ -34,6 +34,10 @@
     <div class="form-section admin-form__section">
       <h3 class="admin-form__section-title">У розкладі є, у довіднику немає ({{ unknown | length }})</h3>
       <p class="form-hint">Ці локації показуються українською всіма мовами. Додайте потрібні.</p>
+      <form method="POST" action="{{ url_for('admin.cities_add_missing') }}" class="admin-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Додати всі ({{ unknown | length }})</button>
+      </form>
       <ul class="tr-children">
         {% for name in unknown %}
         <li class="tr-children__row">

@@ -35,6 +35,7 @@
             <a href="{{ url_for('admin.courses_export', active='false') }}">Лише неактивні</a>
             <a href="{{ url_for('admin.translations_export', scope='courses') }}">Переклади (всі рядки)</a>
             <a href="{{ url_for('admin.translations_export', scope='courses', mode='todo') }}">Переклади (лише неперекладені)</a>
+            <a href="{{ url_for('admin.translations_export', scope='all') }}">Переклади: усі розділи</a>
           </div>
         </details>
         <form method="POST" action="{{ url_for('admin.courses_import_upload') }}" enctype="multipart/form-data">
@@ -70,6 +71,7 @@
         <th>Проведень</th>
         <th>Запити</th>
         <th>Активний</th>
+        <th title="Скільки перекладних фрагментів заповнено">Переклад</th>
         <th>Дії</th>
       </tr>
     </thead>
@@ -101,6 +103,7 @@
             <span class="badge badge--draft">Ні</span>
           {% endif %}
         </td>
+        <td><small class="admin-text-muted">{{ tr_coverage_label(course) }}</small></td>
         <td>
           <div class="admin-table__actions">
             <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm" target="_blank" rel="noopener noreferrer" aria-label="Переглянути публічну сторінку">{{ icon('visibility') }}</a>

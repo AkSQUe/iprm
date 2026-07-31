@@ -57,6 +57,7 @@
         <th>Посада</th>
         <th>Стаж</th>
         <th>Статус</th>
+        <th title="Скільки перекладних фрагментів заповнено">Переклад</th>
         <th>Дії</th>
       </tr>
     </thead>
@@ -73,6 +74,7 @@
             <span class="badge badge--draft">Неактивний</span>
           {% endif %}
         </td>
+        <td><small class="admin-text-muted">{{ tr_coverage_label(trainer) }}</small></td>
         <td>
           <div class="admin-table__actions">
             <a href="{{ url_for('admin.trainer_edit', trainer_id=trainer.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('edit', label='Редагувати') }}</a>

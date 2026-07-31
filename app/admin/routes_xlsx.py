@@ -9,6 +9,7 @@ from flask_login import current_user
 
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
+from app.extensions import db
 from app.services import xlsx_io, xlsx_translations
 
 logger = logging.getLogger(__name__)
@@ -23,8 +24,38 @@ audit_logger = logging.getLogger('audit')
 _TRANSLATION_BACK = {
     'courses': 'admin.courses_list',
     'trainers': 'admin.trainers_list',
+    'blog': 'admin.blog_list',
     'instances': 'admin.instances_list',
+    'all': 'admin.courses_list',
 }
+
+
+@admin_bp.route('/translations/export/object/<entity>/<int:obj_id>')
+@admin_required
+def translations_export_object(entity, obj_id):
+    """Файл перекладів одного курсу/тренера/допису.
+
+    Щоб виправити один об'єкт, не треба тягнути файл по всьому розділу.
+    """
+    from app.services import translation_registry as registry
+    meta = registry.entity_registry().get(entity)
+    if meta is None or entity not in xlsx_translations._OBJECT_SHEETS:
+        abort(404)
+    obj = db.session.get(meta['model'], obj_id)
+    if obj is None:
+        abort(404)
+
+    data = xlsx_translations.export_object_translations_xlsx(entity, obj)
+    audit_logger.info('Admin %s exported translations xlsx for %s #%s',
+                      current_user.email, entity, obj_id)
+    return send_file(
+        data,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=(f'translations-{entity}-{obj_id}-'
+                       f'{datetime.now().strftime("%Y%m%d-%H%M")}.xlsx'),
+        max_age=0,
+    )
 
 
 @admin_bp.route('/translations/export/<scope>')

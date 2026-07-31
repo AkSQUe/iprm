@@ -75,6 +75,28 @@ def cities_add():
     return redirect(url_for('admin.cities_list'))
 
 
+@admin_bp.route('/cities/add-missing', methods=['POST'])
+@admin_required
+def cities_add_missing():
+    """Додати всі локації розкладу, яких немає в довіднику.
+
+    При першому наповненні їх десяток, і тиснути кнопку біля кожної нема сенсу.
+    """
+    missing = city_glossary.unknown_locations()
+    if not missing:
+        flash('Усі локації розкладу вже є в довіднику', 'info')
+        return redirect(url_for('admin.cities_list'))
+
+    for name in missing:
+        db.session.add(City(name=name))
+    if try_commit(log_context=f'cities_add_missing count={len(missing)}'):
+        audit_logger.info('Admin %s added %s cities to glossary',
+                          current_user.email, len(missing))
+        flash(f'Додано локацій: {len(missing)}. Впишіть переклади і збережіть.',
+              'success')
+    return redirect(url_for('admin.cities_list'))
+
+
 @admin_bp.route('/cities/<int:city_id>/delete', methods=['POST'])
 @admin_required
 def cities_delete(city_id):

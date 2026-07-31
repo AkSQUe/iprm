@@ -17,6 +17,7 @@ FAQ; канал перекладів не має доступу до жодно�
 """
 import io
 import logging
+import re
 from contextlib import closing
 from dataclasses import dataclass, field as dc_field
 from pathlib import Path
@@ -73,9 +74,11 @@ def translation_labels():
 # Що саме потрапляє в кожен файл
 # ----------------------------------------------------------------------
 
-def _course_sheets():
-    from app.models.course import Course
-    courses = Course.query.order_by(Course.title).all()
+def _course_sheets(courses=None):
+    """Курс і все, що видно на його сторінці. courses=None -- усі курси."""
+    if courses is None:
+        from app.models.course import Course
+        courses = Course.query.order_by(Course.title).all()
     yield 'Курси', 'course', [(c, c.title) for c in courses]
     yield 'Блоки програми', 'program_block', [
         (b, f'{c.title} -> {b.heading}')
@@ -88,10 +91,20 @@ def _course_sheets():
     ]
 
 
-def _trainer_sheets():
-    from app.models.trainer import Trainer
-    trainers = Trainer.query.order_by(Trainer.full_name).all()
+def _trainer_sheets(trainers=None):
+    if trainers is None:
+        from app.models.trainer import Trainer
+        trainers = Trainer.query.order_by(Trainer.full_name).all()
     yield 'Тренери', 'trainer', [(t, t.full_name) for t in trainers]
+
+
+def _blog_sheets(posts=None):
+    """Блог -- найбагатший на текст контент; `content` це JSON-блоки, тож
+    рядків з одного допису виходить більше, ніж з курсу."""
+    if posts is None:
+        from app.models.blog_post import BlogPost
+        posts = BlogPost.query.order_by(BlogPost.title).all()
+    yield 'Дописи блогу', 'blog_post', [(p, p.title) for p in posts]
 
 
 def _instance_sheets():
@@ -119,10 +132,31 @@ def _instance_sheets():
     ]
 
 
+def _all_sheets():
+    """Усі розділи одним файлом -- коли роботу віддають перекладачу разом.
+
+    Імпорт розділів не розрізняє взагалі (тип читається з рядка), тож
+    зведений файл нічого додатково не потребує.
+    """
+    for provider in (_course_sheets, _trainer_sheets, _blog_sheets, _instance_sheets):
+        yield from provider()
+
+
 SCOPES = {
     'courses': ('Переклади курсів', _course_sheets),
     'trainers': ('Переклади тренерів', _trainer_sheets),
+    'blog': ('Переклади блогу', _blog_sheets),
     'instances': ('Переклади розкладу', _instance_sheets),
+    'all': ('Переклади: усі розділи', _all_sheets),
+}
+
+# entity -> провайдер листів для ОДНОГО об'єкта (кнопка на його сторінці).
+# Курс тягне за собою блоки й тарифи: перекладати сторінку курсу частинами
+# сенсу немає.
+_OBJECT_SHEETS = {
+    'course': _course_sheets,
+    'trainer': _trainer_sheets,
+    'blog_post': _blog_sheets,
 }
 
 
@@ -219,28 +253,48 @@ def _write_help_sheet(wb, scope_title):
     return ws
 
 
-def export_translations_xlsx(scope, only_untranslated=False):
-    """Файл перекладів для розділу адмінки ('courses'|'trainers'|'instances')."""
-    if scope not in SCOPES:
-        raise ValueError(f'невідомий розділ перекладів: {scope!r}')
-    title, sheets_provider = SCOPES[scope]
-
+def _build_workbook(title, sheets, only_untranslated=False):
     wb = Workbook()
     wb.remove(wb.active)
-
     total = 0
-    for sheet_title, entity, pairs in sheets_provider():
+    for sheet_title, entity, pairs in sheets:
         rows = collect_rows(entity, pairs, only_untranslated=only_untranslated)
         _write_sheet(wb, sheet_title, rows)
         total += len(rows)
-
     _write_help_sheet(wb, title)
-    logger.info('Exported %s translation rows for scope=%s (todo=%s)',
-                total, scope, only_untranslated)
 
     out = io.BytesIO()
     wb.save(out)
     out.seek(0)
+    return out, total
+
+
+def export_translations_xlsx(scope, only_untranslated=False):
+    """Файл перекладів для розділу адмінки (див. SCOPES)."""
+    if scope not in SCOPES:
+        raise ValueError(f'невідомий розділ перекладів: {scope!r}')
+    title, sheets_provider = SCOPES[scope]
+    out, total = _build_workbook(title, sheets_provider(), only_untranslated)
+    logger.info('Exported %s translation rows for scope=%s (todo=%s)',
+                total, scope, only_untranslated)
+    return out
+
+
+def export_object_translations_xlsx(entity, obj, only_untranslated=False):
+    """Файл перекладів ОДНОГО об'єкта.
+
+    Щоб виправити один курс, не треба тягнути файл по всьому розділу. Курс
+    приходить разом із блоками програми й тарифами -- перекладати його
+    сторінку частинами сенсу немає.
+    """
+    provider = _OBJECT_SHEETS.get(entity)
+    if provider is None:
+        raise ValueError(f'для {entity!r} немає пооб\'єктного експорту')
+    meta = registry.entity_registry()[entity]
+    name = getattr(obj, meta['name_attr'], None) or f'#{obj.id}'
+    out, total = _build_workbook(
+        f'Переклади: {name}', provider([obj]), only_untranslated)
+    logger.info('Exported %s translation rows for %s #%s', total, entity, obj.id)
     return out
 
 
@@ -254,6 +308,28 @@ HELP_SHEET = 'Довідка'
 # у прев'ю. Проблема в окремому рядку НЕ відхиляє весь файл: у перекладача
 # цілком нормально мати застарілі рядки зі старого експорту.
 ACTIONS = ('add', 'update', 'unchanged', 'conflict', 'error')
+
+
+# Лінтер файлу: не блокує імпорт, але ловить типові механічні помилки
+# перекладача, які інакше просто поїхали б на сайт.
+_CYRILLIC_RE = re.compile(r'[Ѐ-ӿ]')
+# Довжина може легально гуляти між мовами; сигналимо лише про різку
+# невідповідність і лише на достатньо довгих рядках, щоб не шуміти.
+_LENGTH_RATIO = 3
+_LENGTH_MIN_CHARS = 25
+
+
+def _lint(lang, source, translated):
+    """Попередження до рядка або None."""
+    if lang == 'en' and _CYRILLIC_RE.search(translated):
+        return 'англійський переклад містить кирилицю'
+    if translated.strip() == (source or '').strip():
+        return 'переклад дослівно дорівнює оригіналу'
+    src_len, dst_len = len(source or ''), len(translated)
+    if src_len >= _LENGTH_MIN_CHARS and dst_len:
+        if dst_len > src_len * _LENGTH_RATIO or src_len > dst_len * _LENGTH_RATIO:
+            return 'довжина різко відрізняється від оригіналу'
+    return None
 
 
 @dataclass
@@ -270,6 +346,7 @@ class TranslationChange:
     new: str
     action: str
     error: str | None = None
+    warning: str | None = None
 
 
 @dataclass
@@ -289,6 +366,10 @@ class TranslationsImportPlan:
         for ch in self.changes:
             c[ch.action] = c.get(ch.action, 0) + 1
         return c
+
+    @property
+    def warnings(self):
+        return [ch for ch in self.changes if ch.warning]
 
     @property
     def applicable(self):
@@ -460,6 +541,7 @@ def parse_translations_xlsx(path):
                         obj_id=obj_id, object_label=object_label,
                         field_label=field_label, key=key, lang=lang,
                         old=old, new=new, action=action,
+                        warning=_lint(lang, unit.source, new),
                     ))
 
     return plan

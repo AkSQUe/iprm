@@ -242,6 +242,43 @@ def inline_leaves(obj, field):
     ]
 
 
+def orphaned(obj):
+    """Переклади, чиє джерело зникло: [{field, label, lang, text}].
+
+    Коли адмін переписує український текст, хеш більше не збігається --
+    переклад просто перестає показуватись на сайті, і ніхто про це не
+    дізнається. Сам оверрайд ще лежить у translations, поки поле не
+    збережуть наступного разу, тож його можна показати і дати перенести
+    на нове формулювання.
+    """
+    translations = obj.translations or {}
+    if not translations:
+        return []
+
+    known = {}
+    for field in obj.__translatable__:
+        if widget_for(type(obj), field) != 'json':
+            continue
+        known[field] = {u.src_key for u in _units_for_field(obj, field)}
+
+    result = []
+    for lang in PREFIXED_LANGUAGES:
+        bucket = translations.get(lang) or {}
+        for field, live_keys in known.items():
+            overrides = bucket.get(field)
+            if not isinstance(overrides, dict):
+                continue
+            for key, text in overrides.items():
+                if key not in live_keys and isinstance(text, str) and text:
+                    result.append({
+                        'field': field,
+                        'label': field_label(field),
+                        'lang': lang,
+                        'text': text,
+                    })
+    return result
+
+
 def coverage(obj):
     """{'ru': (перекладено, всього), 'en': (...)} -- рахунок по ОДИНИЦЯХ.
 
