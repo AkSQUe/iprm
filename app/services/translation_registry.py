@@ -44,6 +44,7 @@ FIELD_LABELS = {
 def entity_registry():
     """entity-ключ -> модель + метадані для breadcrumb/заголовка."""
     from app.models.blog_post import BlogPost
+    from app.models.city import City
     from app.models.clinic import Clinic
     from app.models.course import Course
     from app.models.course_tariff import CourseTariff
@@ -61,6 +62,7 @@ def entity_registry():
         'instance_tariff': {'model': InstanceTariff, 'label': 'Тариф проведення', 'name_attr': 'name'},
         'program_block': {'model': ProgramBlock, 'label': 'Блок програми', 'name_attr': 'heading'},
         'review': {'model': Review, 'label': 'Відгук', 'name_attr': 'author_name'},
+        'city': {'model': City, 'label': 'Локація', 'name_attr': 'name'},
         'site_settings': {'model': SiteSettings, 'label': 'Налаштування сайту', 'name_attr': 'company_name'},
     }
 

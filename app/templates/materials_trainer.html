@@ -14,7 +14,7 @@
     <p class="mt-meta">
       <strong>{{ instance.course.t('title') if instance.course else _('Захід') }}</strong>
       {% if instance.start_date %} · {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
-      {% if instance.location %} · {{ instance.location }}{% endif %}
+      {% if instance.location %} · {{ instance.location | localize_location }}{% endif %}
     </p>
 
     {% if reservation.items %}

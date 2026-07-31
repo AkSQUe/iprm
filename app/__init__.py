@@ -168,6 +168,11 @@ def create_app(config_name=None):
     # лишається для uk-only PDF-сертифікатів.
     from app.i18n_plurals import plural
     app.jinja_env.filters['plural'] = plural
+    # Назва локації розкладу активною мовою через довідник City. Канонічна
+    # укр-назва лишається в CourseInstance.location -- фільтр застосовуємо
+    # лише там, де текст читає людина (не в JSON-LD, ICS і партнерському API).
+    from app.services.city_glossary import localize_location
+    app.jinja_env.filters['localize_location'] = localize_location
 
     # Глобал icon('<name>') -- рендерить Material Symbols іконку через кодпойнт
     # (self-hosted субсет-шрифт). Див. app/icons.py.

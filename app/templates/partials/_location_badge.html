@@ -10,6 +10,9 @@
      location     : назва міста/адреси (для offline/hybrid);
                     без підтвердженого міста бейдж не виводиться
      size         : '' (звичайний) | 'lg' (великий, для hero/summary)
+
+   Назва проганяється через довідник City (фільтр localize_location), тож
+   усі виклики отримують переклад безкоштовно; без збігу -- оригінал.
 -#}
 {%- macro location_badge(event_format, location, size='') -%}
 {%- if event_format == 'online' -%}
@@ -20,7 +23,7 @@
 {%- elif location -%}
 <span class="iprm-loc-badge iprm-loc-badge--offline{% if size %} iprm-loc-badge--{{ size }}{% endif %}">
   <svg class="iprm-loc-badge__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-  <span class="iprm-loc-badge__text">{{ location }}</span>
+  <span class="iprm-loc-badge__text">{{ location | localize_location }}</span>
   {%- if event_format == 'hybrid' %}<span class="iprm-loc-badge__sub">{{ _('+ онлайн') }}</span>{% endif -%}
 </span>
 {%- endif -%}

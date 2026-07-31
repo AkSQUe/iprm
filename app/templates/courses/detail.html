@@ -453,7 +453,7 @@
           <li class="iprm-history-line__item">
             {%- if inst.start_date %}{{ inst.start_date.strftime('%d.%m.%Y') }}{% endif -%}
             {%- if inst.event_format == 'online' %} · {{ _('Онлайн') }}
-            {%- elif inst.location %} · {{ inst.location }}{% endif -%}
+            {%- elif inst.location %} · {{ inst.location | localize_location }}{% endif -%}
           </li>
           {% endfor %}
         </ul>

@@ -1,0 +1,117 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Довідник локацій | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.instances_list') }}" class="admin-breadcrumb__link">Розклад</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Довідник локацій</span>
+        </div>
+        <h1 class="admin-hero__title">Довідник локацій</h1>
+        <p class="admin-hero__subtitle">
+          Назва перекладається один раз і застосовується до всіх проведень із такою локацією.
+          Порожній переклад = показуємо українську.
+        </p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    {% if unknown %}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">У розкладі є, у довіднику немає ({{ unknown | length }})</h3>
+      <p class="form-hint">Ці локації показуються українською всіма мовами. Додайте потрібні.</p>
+      <ul class="tr-children">
+        {% for name in unknown %}
+        <li class="tr-children__row">
+          <span>{{ name }}</span>
+          <form method="POST" action="{{ url_for('admin.cities_add') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="name" value="{{ name }}">
+            <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Додати</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Додати локацію вручну</h3>
+      <form method="POST" action="{{ url_for('admin.cities_add') }}" class="referral-share__row">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="text" name="name" class="form-input" maxlength="255"
+               placeholder="Харків" aria-label="Назва локації українською">
+        <button type="submit" class="btn-admin btn-admin--secondary">Додати</button>
+      </form>
+      <div class="form-hint">Пишіть рівно так, як у полі «Локація» проведення — звірка йде за повним рядком.</div>
+    </div>
+
+    {% if cities %}
+    <form method="POST" action="{{ url_for('admin.cities_save') }}" class="admin-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Українська (оригінал)</th>
+              {% for lang in languages %}<th>{{ 'Російська' if lang == 'ru' else 'Англійська' }}</th>{% endfor %}
+              <th>Дії</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for city in cities %}
+            <tr>
+              <td><strong>{{ city.name }}</strong></td>
+              {% for lang in languages %}
+              <td>
+                <input type="text" class="form-input" maxlength="255"
+                       name="tr__{{ lang }}__{{ city.id }}"
+                       value="{{ ((city.translations or {}).get(lang) or {}).get('name') or '' }}"
+                       placeholder="Порожньо = українська"
+                       aria-label="{{ city.name }} — {{ lang }}">
+              </td>
+              {% endfor %}
+              <td>
+                {# Форма видалення живе поза формою збереження (вкладені form
+                   невалідні); кнопка прив'язана до неї атрибутом form. #}
+                <button type="submit" form="city-delete-{{ city.id }}"
+                        class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="admin-form__actions">
+        <button type="submit" class="btn-admin btn-admin--primary">Зберегти переклади</button>
+      </div>
+    </form>
+
+    {% for city in cities %}
+    <form method="POST" action="{{ url_for('admin.cities_delete', city_id=city.id) }}"
+          id="city-delete-{{ city.id }}" hidden
+          data-confirm="Видалити «{{ city.name }}» з довідника?" data-confirm-danger>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+    {% endfor %}
+    {% else %}
+    <p class="form-hint">Довідник порожній — усі локації показуються українською.</p>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

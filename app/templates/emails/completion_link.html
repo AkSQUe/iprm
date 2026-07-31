@@ -27,7 +27,7 @@
                 {{ detail_row(_('Дата'), event.start_date.strftime('%d.%m.%Y %H:%M')) }}
                 {% endif %}
                 {% if event.location %}
-                {{ detail_row(_('Місце'), event.location) }}
+                {{ detail_row(_('Місце'), event.location | localize_location) }}
                 {% endif %}
                 {% if event.price and event.price > 0 %}
                 {{ detail_row(_('Вартість'), (event.price | int) ~ " UAH") }}
