@@ -1018,10 +1018,6 @@
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
 }
 
-.reg-sticky-cta[hidden] {
-  display: none;
-}
-
 .reg-sticky-cta__info {
   display: flex;
   flex-direction: column;
