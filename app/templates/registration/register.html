@@ -57,9 +57,13 @@
     </div>
   </div>
 
-  {# ===== Наголос на місто проведення (для офлайн/гібрид) ===== #}
+  {# ===== Наголос на місто проведення =====
+     На гібриді банер керується обраним тарифом так само, як галочки нижче:
+     інакше він заявляв би "захід проходить ОФЛАЙН" тому, хто щойно обрав
+     онлайн-тариф, -- прямо під бейджем "+ онлайн". #}
   {% if event.event_format != 'online' %}
-  <aside class="reg-location-callout" role="note">
+  <aside class="reg-location-callout" role="note"
+         {% if event.event_format == 'hybrid' %}data-presence-confirm hidden{% endif %}>
     <svg class="reg-location-callout__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
     <div class="reg-location-callout__body">
       <p class="reg-location-callout__title">
@@ -114,6 +118,7 @@
         {% for tariff in tariffs %}
         <label class="reg-tariff">
           <input type="radio" name="tariff_id" value="{{ tariff.id }}" data-tariff-radio data-price="{{ tariff.price | int }}"
+                 data-presence="{{ 1 if tariff.requires_presence else 0 }}"
                  {% if selected_tariff and selected_tariff.id == tariff.id %}checked{% endif %}>
           <span class="reg-tariff__body">
             <span class="reg-tariff__head">
@@ -159,14 +164,23 @@
       </div>
     </div>
 
-    {# ----- Подвійне підтвердження міста (офлайн/гібрид) ----- #}
+    {# ----- Подвійне підтвердження міста -----
+       Офлайн-захід -- завжди. Гібрид -- лише коли обраний тариф передбачає
+       очну участь: інакше людина, яка купує онлайн-доступ, підтверджувала б
+       приїзд до іншого міста. Видимість і required перемикає reg-tariffs.js
+       разом: прихована, але обов'язкова галочка блокує сабміт з
+       неінформативною помилкою браузера ("not focusable"). Без JS блок
+       лишається прихованим і необов'язковим -- сервер ці галочки й так не
+       перевіряє, тож нікого не заблокує. #}
     {% if event.event_format != 'online' %}
-    <div class="form-consent reg-location-confirm">
+    <div class="form-consent reg-location-confirm"
+         {% if event.event_format == 'hybrid' %}data-presence-confirm hidden{% endif %}>
       <p class="reg-location-confirm__title">
         {{ _('Підтвердження участі в очному заході') }}{% if event.location %} {% trans city=event.location %}(м. {{ city }}){% endtrans %}{% endif %}
       </p>
       <div class="form-checkbox">
-        <input type="checkbox" id="confirm_offline" name="confirm_offline" required
+        <input type="checkbox" id="confirm_offline" name="confirm_offline"
+               {% if event.event_format != 'hybrid' %}required{% endif %}
                data-hint="{{ _('Підтвердіть, що розумієте офлайн-формат') }}">
         <label for="confirm_offline">
           {% trans %}Я розумію, що це <strong>ОЧНИЙ (офлайн)</strong> захід і потребує особистої присутності.{% endtrans %}
@@ -174,7 +188,8 @@
         </label>
       </div>
       <div class="form-checkbox">
-        <input type="checkbox" id="confirm_city" name="confirm_city" required
+        <input type="checkbox" id="confirm_city" name="confirm_city"
+               {% if event.event_format != 'hybrid' %}required{% endif %}
                data-hint="{{ _('Підтвердіть, що зможете прибути у вказане місто') }}">
         <label for="confirm_city">
           {{ _('Підтверджую, що зможу прибути') }}{% if event.location %} {% trans city=event.location %}до <strong>м. {{ city }}</strong>{% endtrans %}{% else %} {{ _('до місця проведення') }}{% endif %}

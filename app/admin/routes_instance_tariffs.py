@@ -31,12 +31,14 @@ def instance_tariffs(instance_id):
         return redirect(url_for('admin.instances_list'))
 
     form = InstanceTariffForm()
+    form.event_format.choices = InstanceTariff.FORMAT_CHOICES
     if form.validate_on_submit():
         tariff = InstanceTariff(
             instance_id=instance.id,
             name=form.name.data.strip(),
             price=form.price.data,
             description=(form.description.data or '').strip() or None,
+            event_format=form.event_format.data or None,
             sort_order=form.sort_order.data if form.sort_order.data is not None else 0,
             is_active=form.is_active.data,
         )
@@ -72,10 +74,12 @@ def instance_tariff_edit(tariff_id):
     instance = tariff.instance
 
     form = InstanceTariffForm(obj=tariff)
+    form.event_format.choices = InstanceTariff.FORMAT_CHOICES
     if form.validate_on_submit():
         tariff.name = form.name.data.strip()
         tariff.price = form.price.data
         tariff.description = (form.description.data or '').strip() or None
+        tariff.event_format = form.event_format.data or None
         tariff.sort_order = form.sort_order.data if form.sort_order.data is not None else 0
         tariff.is_active = form.is_active.data
         try:

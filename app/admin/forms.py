@@ -475,6 +475,13 @@ class InstanceTariffForm(FlaskForm):
         validators=[Optional()],
         description='Один пункт на рядок (лекція, запис, сертифікат, чат з тренером...).',
     )
+    event_format = SelectField(
+        'Формат участі',
+        choices=[],  # заповнюється у роуті з InstanceTariff.FORMAT_CHOICES
+        validators=[Optional()],
+        description='Онлайн-тариф не просить підтверджувати приїзд на місце. '
+                    'Не вказано -- вважається очною участю.',
+    )
     sort_order = IntegerField(
         'Порядок',
         default=0,

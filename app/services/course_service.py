@@ -214,6 +214,9 @@ def copy_course_tariffs_to_instance(instance, replace=False):
             name=template.name,
             description=template.description,
             price=template.price,
+            # Формат тягнемо з шаблону: на гібридному проведенні саме він
+            # вирішує, чи показувати учаснику підтвердження очної участі.
+            event_format=template.event_format,
             sort_order=template.sort_order,
             is_active=True,
             # Переклади (ru/en) успадковуються від шаблону курсу, як і решта

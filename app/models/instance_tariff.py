@@ -30,12 +30,25 @@ class InstanceTariff(TranslatableMixin, TimestampMixin, db.Model):
     description = db.Column(db.Text)
     price = db.Column(db.Numeric(10, 2), nullable=False)
 
+    # Як саме учасник бере участь за цим тарифом: 'online', 'offline' або
+    # NULL (не вказано). Успадковується від шаблону курсу при копіюванні.
+    #
+    # Головне застосування -- гібридне проведення: там частина тарифів
+    # онлайнові, частина очні, і підтвердження "я точно приїду" має сенс
+    # лише для других. NULL трактуємо консервативно -- як очну участь, бо
+    # зайве попередження нешкідливе, а пропущене -- ні.
+    event_format = db.Column(db.String(20))
+
     sort_order = db.Column(db.Integer, default=0, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
 
     __table_args__ = (
         db.Index('ix_instance_tariffs_instance_sort', 'instance_id', 'sort_order'),
         db.CheckConstraint('price >= 0', name='ck_instance_tariffs_price_non_negative'),
+        db.CheckConstraint(
+            "event_format IN ('online', 'offline') OR event_format IS NULL",
+            name='ck_instance_tariffs_event_format',
+        ),
     )
 
     instance = db.relationship('CourseInstance', back_populates='tariffs')
@@ -47,6 +60,24 @@ class InstanceTariff(TranslatableMixin, TimestampMixin, db.Model):
         'Практикум',
         'Практикум з менторством',
     ]
+
+    FORMAT_CHOICES = [
+        ('', 'Не вказано (вважається очною)'),
+        ('online', 'Онлайн-участь'),
+        ('offline', 'Очна участь'),
+    ]
+
+    @property
+    def format_label(self):
+        return dict(self.FORMAT_CHOICES).get(self.event_format or '', 'Не вказано')
+
+    @property
+    def requires_presence(self):
+        """Чи потребує цей тариф фізичної присутності.
+
+        NULL -- так: пропущене попередження про поїздку дорожче за зайве.
+        """
+        return self.event_format != 'online'
 
     @property
     def description_items(self):
