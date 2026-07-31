@@ -31,20 +31,20 @@
   {% set c = plan.counts %}
   <div class="admin-xlsx-summary">
     <div class="admin-xlsx-summary__item admin-xlsx-summary__item--create">
-      <span class="admin-xlsx-summary__num">{{ c.create }}</span>
+      <span class="admin-xlsx-summary__num">{{ c['create'] }}</span>
       <span class="admin-xlsx-summary__label">Створити</span>
     </div>
     <div class="admin-xlsx-summary__item admin-xlsx-summary__item--update">
-      <span class="admin-xlsx-summary__num">{{ c.update }}</span>
+      <span class="admin-xlsx-summary__num">{{ c['update'] }}</span>
       <span class="admin-xlsx-summary__label">Оновити</span>
     </div>
     <div class="admin-xlsx-summary__item">
-      <span class="admin-xlsx-summary__num">{{ c.unchanged }}</span>
+      <span class="admin-xlsx-summary__num">{{ c['unchanged'] }}</span>
       <span class="admin-xlsx-summary__label">Без змін</span>
     </div>
-    {% if c.error %}
+    {% if c['error'] %}
     <div class="admin-xlsx-summary__item admin-xlsx-summary__item--error">
-      <span class="admin-xlsx-summary__num">{{ c.error }}</span>
+      <span class="admin-xlsx-summary__num">{{ c['error'] }}</span>
       <span class="admin-xlsx-summary__label">Помилки</span>
     </div>
     {% endif %}
@@ -149,7 +149,7 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn-admin btn-admin--secondary">Скасувати</button>
     </form>
-    {% if plan.is_valid and (c.create or c.update) %}
+    {% if plan.is_valid and (c['create'] or c['update']) %}
     <form method="POST" action="{{ apply_url }}" class="admin-inline" data-confirm="Застосувати імпорт? Зміни в БД не можна буде відкотити автоматично." data-confirm-ok="Застосувати імпорт" data-confirm-danger
           data-single-submit data-submitting-label="Імпортуємо…">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
