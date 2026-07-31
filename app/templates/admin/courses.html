@@ -33,6 +33,8 @@
             <a href="{{ url_for('admin.courses_export') }}">Усі курси</a>
             <a href="{{ url_for('admin.courses_export', active='true') }}">Лише активні</a>
             <a href="{{ url_for('admin.courses_export', active='false') }}">Лише неактивні</a>
+            <a href="{{ url_for('admin.translations_export', scope='courses') }}">Переклади (всі рядки)</a>
+            <a href="{{ url_for('admin.translations_export', scope='courses', mode='todo') }}">Переклади (лише неперекладені)</a>
           </div>
         </details>
         <form method="POST" action="{{ url_for('admin.courses_import_upload') }}" enctype="multipart/form-data">
@@ -40,6 +42,13 @@
           <input type="file" name="xlsx" id="courses-xlsx-input" accept=".xlsx" onchange="this.form.submit()">
           <label for="courses-xlsx-input" class="btn-admin btn-admin--secondary admin-clickable" title="Завантажити змінений xlsx">
             {{ icon('upload') }} Імпорт XLSX
+          </label>
+        </form>
+        <form method="POST" action="{{ url_for('admin.translations_import_upload', scope='courses') }}" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="file" name="xlsx" id="courses-tr-input" accept=".xlsx" onchange="this.form.submit()">
+          <label for="courses-tr-input" class="btn-admin btn-admin--secondary admin-clickable" title="Завантажити заповнений файл перекладів">
+            {{ icon('upload') }} Імпорт перекладів
           </label>
         </form>
       </div>

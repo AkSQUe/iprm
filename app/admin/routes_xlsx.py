@@ -9,10 +9,138 @@ from flask_login import current_user
 
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
-from app.services import xlsx_io
+from app.services import xlsx_io, xlsx_translations
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
+
+
+# ----------------------------------------------------------------------
+# TRANSLATIONS (окремий канал: пише виключно в translations)
+# ----------------------------------------------------------------------
+
+# scope -> куди повертатись після дії
+_TRANSLATION_BACK = {
+    'courses': 'admin.courses_list',
+    'trainers': 'admin.trainers_list',
+    'instances': 'admin.instances_list',
+}
+
+
+@admin_bp.route('/translations/export/<scope>')
+@admin_required
+def translations_export(scope):
+    """Файл перекладів розділу. ?mode=todo -- лише неперекладені рядки."""
+    if scope not in xlsx_translations.SCOPES:
+        abort(404)
+    only_todo = request.args.get('mode') == 'todo'
+
+    data = xlsx_translations.export_translations_xlsx(
+        scope, only_untranslated=only_todo)
+    audit_logger.info('Admin %s exported translations xlsx (scope=%s todo=%s)',
+                      current_user.email, scope, only_todo)
+    suffix = '-todo' if only_todo else ''
+    return send_file(
+        data,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=(f'translations-{scope}{suffix}-'
+                       f'{datetime.now().strftime("%Y%m%d-%H%M")}.xlsx'),
+        max_age=0,
+    )
+
+
+@admin_bp.route('/translations/import/<scope>', methods=['POST'])
+@admin_required
+def translations_import_upload(scope):
+    if scope not in xlsx_translations.SCOPES:
+        abort(404)
+    back = _TRANSLATION_BACK[scope]
+
+    f = request.files.get('xlsx')
+    if not f or not f.filename:
+        flash('Оберіть файл .xlsx для завантаження', 'error')
+        return redirect(url_for(back))
+    if not f.filename.lower().endswith('.xlsx'):
+        flash('Формат файлу має бути .xlsx', 'error')
+        return redirect(url_for(back))
+
+    token = xlsx_io.save_uploaded_xlsx(f)
+    audit_logger.info('Admin %s uploaded translations xlsx (scope=%s token=%s)',
+                      current_user.email, scope, token)
+    return redirect(url_for('admin.translations_import_preview',
+                            scope=scope, token=token))
+
+
+@admin_bp.route('/translations/import/<scope>/preview/<token>')
+@admin_required
+def translations_import_preview(scope, token):
+    if scope not in xlsx_translations.SCOPES:
+        abort(404)
+    path = xlsx_io.get_uploaded_path(token)
+    if path is None:
+        flash('Файл імпорту не знайдено або сесія застаріла', 'error')
+        return redirect(url_for(_TRANSLATION_BACK[scope]))
+
+    plan = xlsx_translations.parse_translations_xlsx(path)
+    return render_template(
+        'admin/xlsx_translations_preview.html',
+        scope=scope,
+        token=token,
+        plan=plan,
+        apply_url=url_for('admin.translations_import_apply', scope=scope, token=token),
+        cancel_url=url_for('admin.translations_import_cancel', scope=scope, token=token),
+        back_url=url_for(_TRANSLATION_BACK[scope]),
+        title=xlsx_translations.SCOPES[scope][0],
+    )
+
+
+@admin_bp.route('/translations/import/<scope>/apply/<token>', methods=['POST'])
+@admin_required
+def translations_import_apply(scope, token):
+    if scope not in xlsx_translations.SCOPES:
+        abort(404)
+    back = _TRANSLATION_BACK[scope]
+
+    path = xlsx_io.get_uploaded_path(token)
+    if path is None:
+        flash('Файл імпорту не знайдено або сесія застаріла', 'error')
+        return redirect(url_for(back))
+
+    plan = xlsx_translations.parse_translations_xlsx(path)
+    if not plan.is_valid:
+        flash('Файл не читається — імпорт відхилено.', 'error')
+        return redirect(url_for('admin.translations_import_preview',
+                                scope=scope, token=token))
+
+    result = xlsx_translations.apply_translations_plan(plan)
+    if result.get('ok'):
+        xlsx_io.cleanup_upload(token)
+        counts = plan.counts
+        audit_logger.info(
+            'Admin %s applied translations xlsx (scope=%s): applied=%s objects=%s',
+            current_user.email, scope, result.get('applied'), result.get('objects'),
+        )
+        message = f'Імпорт виконано: застосовано {result["applied"]} перекладів.'
+        if counts['conflict'] or counts['error']:
+            message += (f' Пропущено: конфліктів {counts["conflict"]}, '
+                        f'проблемних рядків {counts["error"]}.')
+        flash(message, 'success')
+        return redirect(url_for(back))
+
+    flash(f'Помилка при збереженні: {result.get("reason")}', 'error')
+    return redirect(url_for('admin.translations_import_preview',
+                            scope=scope, token=token))
+
+
+@admin_bp.route('/translations/import/<scope>/cancel/<token>', methods=['POST'])
+@admin_required
+def translations_import_cancel(scope, token):
+    if scope not in xlsx_translations.SCOPES:
+        abort(404)
+    xlsx_io.cleanup_upload(token)
+    flash('Імпорт скасовано', 'info')
+    return redirect(url_for(_TRANSLATION_BACK[scope]))
 
 
 # ----------------------------------------------------------------------

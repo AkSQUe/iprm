@@ -24,6 +24,24 @@
       <p class="admin-hero__subtitle">Управління тренерами інституту</p>
     </div>
     <div class="admin-hero__actions">
+      <div class="admin-xlsx-toolbar">
+        <details class="admin-xlsx-menu">
+          <summary class="btn-admin btn-admin--secondary" title="Завантажити файл перекладів тренерів">
+            {{ icon('download') }} Експорт перекладів
+          </summary>
+          <div class="admin-xlsx-menu__items">
+            <a href="{{ url_for('admin.translations_export', scope='trainers') }}">Усі рядки</a>
+            <a href="{{ url_for('admin.translations_export', scope='trainers', mode='todo') }}">Лише неперекладені</a>
+          </div>
+        </details>
+        <form method="POST" action="{{ url_for('admin.translations_import_upload', scope='trainers') }}" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="file" name="xlsx" id="trainers-tr-input" accept=".xlsx" onchange="this.form.submit()">
+          <label for="trainers-tr-input" class="btn-admin btn-admin--secondary admin-clickable" title="Завантажити заповнений файл перекладів">
+            {{ icon('upload') }} Імпорт перекладів
+          </label>
+        </form>
+      </div>
       <a href="{{ url_for('admin.trainer_create') }}" class="btn-admin btn-admin--primary">{{ icon('add') }} Додати тренера</a>
     </div>
   </div>
