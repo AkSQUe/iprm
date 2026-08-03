@@ -25,10 +25,29 @@
        до перезавантаження сторінки. */
     if (e.defaultPrevented) return;
 
-    if (form.dataset.submitting === 'true') return;
+    /* Повторний сабміт блокуємо, а не просто ігноруємо: кнопку могли й не
+       вимкнути (див. нижче про зовнішні кнопки), і другий POST створив би
+       ще одну реєстрацію з окремим рахунком. */
+    if (form.dataset.submitting === 'true') {
+      e.preventDefault();
+      return;
+    }
     form.dataset.submitting = 'true';
     var label = form.dataset.submittingLabel || t('Надсилаємо…');
-    var buttons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+
+    /* Кнопки бувають і ПОЗА формою -- прив'язані атрибутом form="<id>"
+       (липка панель оплати на реєстрації). form.querySelectorAll шукає лише
+       нащадків, тож така кнопка лишалась активною і дозволяла тиснути
+       повторно, поки перший запит ще в дорозі. */
+    var buttons = Array.prototype.slice.call(
+      form.querySelectorAll('button[type="submit"], input[type="submit"]')
+    );
+    if (form.id) {
+      var external = document.querySelectorAll(
+        'button[form="' + form.id + '"], input[form="' + form.id + '"]'
+      );
+      Array.prototype.push.apply(buttons, Array.prototype.slice.call(external));
+    }
     buttons.forEach(function (btn) {
       btn.disabled = true;
       if (btn.dataset.defaultLabel === undefined && btn.textContent) {

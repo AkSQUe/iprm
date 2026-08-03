@@ -6,6 +6,7 @@ from flask import (
 )
 from flask_babel import gettext as _
 from flask_login import current_user, login_required, login_user
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.extensions import db, limiter
@@ -101,22 +102,32 @@ def _initial_form_data_from_user(user):
     }
 
 
-def _sync_medical_profile_from_form(user, form):
+def _sync_medical_profile_from_form(user, form, overwrite=True):
     """Слім-синхронізація: identity-поля (ПІБ) у User + телефон у
     MedicalProfile (створюється за потреби). МОЗ-полями профілю володіє
     форма "Дані для сертифіката" в кабінеті -- тут їх не чіпаємо.
+
+    overwrite=False -- заповнювати лише порожні поля. Потрібно, коли гість
+    указав на чекауті email, що належить ЧУЖОМУ акаунту: реєстрацію ми до
+    нього прив'язуємо, але ПІБ і телефон власника чужими даними не
+    підміняємо. Дані покупця й так зберігаються в самій реєстрації
+    (reg.phone і снапшот полів), тож нічого не губиться.
     """
     from app.models.medical_profile import MedicalProfile
 
-    user.last_name = (form.last_name.data or '').strip() or None
-    user.first_name = (form.first_name.data or '').strip() or None
+    def _apply(obj, attr, value):
+        if overwrite or not getattr(obj, attr, None):
+            setattr(obj, attr, value)
+
+    _apply(user, 'last_name', (form.last_name.data or '').strip() or None)
+    _apply(user, 'first_name', (form.first_name.data or '').strip() or None)
 
     profile = user.medical_profile
     if profile is None:
         profile = MedicalProfile(user_id=user.id, source=MedicalProfile.SOURCE_SELF)
         db.session.add(profile)
         user.medical_profile = profile
-    profile.phone = (form.phone.data or '').strip() or None
+    _apply(profile, 'phone', (form.phone.data or '').strip() or None)
 
 
 def _spec_labels(codes):
@@ -252,9 +263,10 @@ def register_instance(instance_id):
             #    email. Якщо адреса вже належить акаунту -- реєстрація
             #    прив'язується до нього (рішення 31.07.2026): оплату не
             #    блокуємо, а доступ до кабінету людина отримає входом.
+            is_new_user = False
             if buyer is None:
                 from app.services import participant_service
-                buyer, _is_new_user = participant_service.resolve_user(
+                buyer, is_new_user = participant_service.resolve_user(
                     form.email.data, form.phone.data,
                 )
                 existing = registration_service.find_existing(buyer.id, instance.id)
@@ -266,7 +278,11 @@ def register_instance(instance_id):
 
             # 1) Слім-синхронізація: ПІБ у User + телефон у MedicalProfile.
             #    МОЗ-анкета живе в кабінеті (auth.certificate_data).
-            _sync_medical_profile_from_form(buyer, form)
+            #    Наявний акаунт (залогінений або знайдений за email гостя)
+            #    своїх даних не втрачає -- заповнюємо лише порожнє.
+            _sync_medical_profile_from_form(
+                buyer, form, overwrite=(is_guest and is_new_user) or not is_guest,
+            )
 
             # 2) Створити CourseRegistration. Снапшот МОЗ-полів -- з
             #    MedicalProfile, якщо той уже заповнений; інакше порожній
@@ -340,6 +356,50 @@ def register_instance(instance_id):
                 return redirect(url_for('registration.complete_payment',
                                         token=token))
             return redirect(url_for('registration.confirmation', registration_id=reg.id))
+        except IntegrityError:
+            # Гонка двох паралельних чекаутів (два таби, подвійний сабміт,
+            # ретрай мережі): один устиг закомітити між нашим SELECT-ом і
+            # нашим INSERT-ом. Конфлікт можливий на двох унікальних
+            # індексах -- users.email і uq_user_instance_registration -- і в
+            # обох випадках потрібне вже ІСНУЄ, тож "Помилка при реєстрації"
+            # тут брехня, яка ще й відлякує від оплати.
+            #
+            # Ловимо саме тут, а не в participant_service: єдиний портативний
+            # спосіб зробити це в сервісі -- SAVEPOINT, а pysqlite його не
+            # тримає; rollback же в сервісі знищив би пакет xlsx-імпорту.
+            # Роут володіє власною транзакцією, тож відкат безпечний.
+            db.session.rollback()
+            winner = None
+            if is_guest:
+                winner = User.query.filter_by(
+                    email=(form.email.data or '').strip().lower(),
+                ).first()
+            elif buyer is not None:
+                winner = db.session.get(User, buyer.id)
+            duplicate = (registration_service.find_existing(winner.id, instance.id)
+                         if winner is not None else None)
+            if duplicate is not None:
+                logger.info(
+                    'Registration race for user=%d instance=%d resolved to REG-%d',
+                    winner.id, instance_id, duplicate.id,
+                )
+                if is_guest:
+                    dup_token = duplicate.issue_completion_token()
+                    db.session.commit()
+                    return redirect(url_for('registration.complete_payment',
+                                            token=dup_token))
+                return redirect(url_for('registration.confirmation',
+                                        registration_id=duplicate.id))
+            if winner is not None:
+                # Переможець створив користувача, але ще не реєстрацію.
+                # Просимо повторити -- другий підхід піде вже по гілці
+                # "email належить наявному акаунту".
+                logger.info('User race on guest checkout for instance %d', instance_id)
+                flash(_('Реєстрація вже опрацьовується. Спробуйте ще раз.'), 'info')
+            else:
+                logger.exception('Integrity error registering for instance %d',
+                                 instance_id)
+                flash(_('Помилка при реєстрації. Спробуйте ще раз.'), 'error')
         except Exception:
             logger.exception('Failed to register buyer for instance %d', instance_id)
             db.session.rollback()

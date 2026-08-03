@@ -130,6 +130,12 @@ def resolve_user(email, phone):
     else:
         email = placeholder_email(phone)
 
+    # Гонку на унікальному email (два паралельні гостьові чекаути з тією
+    # самою адресою) тут НЕ ловимо: єдиний портативний спосіб -- SAVEPOINT,
+    # а pysqlite його не тримає (dev/тести стають на голову), тоді як
+    # rollback заборонений контрактом модуля -- він знищив би цілий пакет
+    # xlsx-імпорту. Конфлікт обробляє caller, якому відкат дозволений:
+    # registration.routes.register_instance.
     user = User(email=email, email_confirmed=False)
     db.session.add(user)
     db.session.flush()
