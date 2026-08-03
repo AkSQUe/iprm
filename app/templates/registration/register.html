@@ -133,6 +133,13 @@
     {# ----- Базові дані учасника ----- #}
     <div class="form-section reg-form-section">
       <h3 class="form-section__title reg-form-section__title">{{ _('Дані учасника') }}</h3>
+      {% if current_user.is_anonymous %}
+      <p class="reg-have-account">
+        {% trans trimmed login_url=url_for('auth.login', next=request.full_path) %}
+        Уже маєте кабінет? <a href="{{ login_url }}">Увійдіть</a> — дані підставляться самі.
+        {% endtrans %}
+      </p>
+      {% endif %}
       <p class="reg-attention">
         {% trans trimmed %}
         <strong>Будьте уважні!</strong> Одна реєстрація — одне підключення.
@@ -151,6 +158,20 @@
           {{ form.first_name(class="form-input" + (" is-invalid" if form.first_name.errors else ""), id="first_name", required=true) }}
           {% for e in form.first_name.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
+
+        {# Email питаємо лише в гостя: залогіненому він відомий з акаунта,
+           а зайве поле у воронці коштує конверсії. Саме на цю адресу піде
+           чек, доступ до матеріалів і посилання на створення кабінету. #}
+        {% if current_user.is_anonymous %}
+        <div class="form-group">
+          <label for="email">
+            Email <span class="required">*</span>
+            <span class="iprm-tooltip-trigger" data-tooltip="{{ _('На цю адресу надішлемо підтвердження оплати, доступ до матеріалів і посилання для створення кабінету.') }}">i</span>
+          </label>
+          {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email", required=true, type="email") }}
+          {% for e in form.email.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+        </div>
+        {% endif %}
 
         <div class="form-group">
           <label for="phone">

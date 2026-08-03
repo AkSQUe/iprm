@@ -111,6 +111,21 @@ class User(TimestampMixin, UserMixin, db.Model):
                 password_hash=new_hash,
             ))
 
+    @property
+    def has_password(self):
+        """Чи заведено пароль (є password-identity).
+
+        Гість після покупки -- користувач БЕЗ неї: акаунт існує, входу ще
+        немає. Саме цей стан відрізняє "запропонувати створити кабінет" від
+        "запропонувати увійти".
+        """
+        from app.models.auth_identity import AuthIdentity
+        if not self.id:
+            return False
+        return AuthIdentity.query.filter_by(
+            user_id=self.id, provider=AuthIdentity.PROVIDER_PASSWORD,
+        ).first() is not None
+
     def check_password(self, password):
         """Перевірка пароля. Дивимось у password-identity. Юзер без
         password-identity (OAuth-only, ще не встановив) -- завжди False."""

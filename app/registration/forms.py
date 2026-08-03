@@ -3,7 +3,7 @@ from flask_babel import lazy_gettext as _l
 from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField
 from wtforms.validators import (
-    DataRequired, Length, Email, ValidationError,
+    DataRequired, Length, Email, Optional, ValidationError,
 )
 
 from app.forms_medical import MedicalProfileFieldsMixin
@@ -33,6 +33,15 @@ class EventRegistrationForm(FlaskForm):
     )
 
     # ----- Контакт -----
+    # Email обов'язковий ЛИШЕ для гостьової покупки: залогіненому він уже
+    # відомий з акаунта, і питати його вдруге -- зайве поле у воронці.
+    # Валідатори перемикає __init__ (див. require_email).
+    email = StringField(
+        'Email',
+        validators=[Optional(), Email(message=_l('Невалідний email')), Length(max=255)],
+        render_kw={'autocomplete': 'email', 'inputmode': 'email'},
+    )
+
     phone = StringField(
         _l('Телефон'),
         validators=[DataRequired(message=_l('Телефон обов\'язковий')), Length(max=20)],
@@ -53,6 +62,17 @@ class EventRegistrationForm(FlaskForm):
     # (confirmation.html / _pay_options), де користувач обирає LiqPay або
     # рахунок безпосередньо дією. reg.payment_method дефолтиться у 'liqpay' і
     # уточнюється фактом завантаження рахунка.
+
+    def __init__(self, *args, require_email=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Гість не має акаунта, тож email -- єдиний канал доставки чека,
+        # доступу до матеріалів і посилання на створення кабінету.
+        if require_email:
+            self.email.validators = [
+                DataRequired(message=_l('Email обовʼязковий')),
+                Email(message=_l('Невалідний email')),
+                Length(max=255),
+            ]
 
     # ----- Згоди (GDPR) -----
     consent_data = BooleanField(

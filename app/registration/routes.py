@@ -126,6 +126,13 @@ def _spec_labels(codes):
     return labels_for_codes(codes)
 
 
+def _profile_complete(user):
+    """Чи заповнена МОЗ-анкета. Для гостя (user is None) -- ні: профілю
+    ще не існує, він з'явиться разом із користувачем на сабміті."""
+    return bool(user is not None and user.medical_profile
+                and user.medical_profile.is_complete)
+
+
 def _login_next_path():
     """Будує `next`-URL для редіректу на /login, прибираючи `prefill`-токен.
 
@@ -149,13 +156,24 @@ def register_legacy(event_id):
 
 
 @registration_bp.route('/instance/<int:instance_id>/register', methods=['GET', 'POST'])
-@limiter.limit("10 per hour", methods=['POST'])
+# Ліміт рахується ПО IP, а українські мобільні оператори тримають абонентів
+# за CGNAT -- сотні людей ділять одну адресу. Поки роут був за логіном, він
+# майже не бачив трафіку; після гостьового чекауту це вхідні двері платної
+# реклами, де більшість -- мобільні. Колишні 10/год різали б живих покупців
+# (одинадцятий з підмережі отримував 429), тому поріг піднято: реальний
+# захист від ботів тут -- reCAPTCHA нижче, а ліміт лишається стелею проти
+# зловживань. Ставте менше, якщо побачите спам у логах.
+@limiter.limit("60 per hour", methods=['POST'])
 def register_instance(instance_id):
     """Нова модель: реєстрація на конкретне проведення курсу (CourseInstance)."""
     prefill = _maybe_consume_prefill_token() if request.method == 'GET' else None
 
-    if not current_user.is_authenticated:
-        return redirect(url_for('auth.login', next=_login_next_path()))
+    # Гостьова покупка: вхід більше не потрібен. Користувача створює
+    # participant_service.resolve_user на POST -- безпарольного, як це вже
+    # роблять адмінські імпорти учасників. Пароль людина ставить після
+    # оплати, коли решта даних уже зібрана.
+    is_guest = not current_user.is_authenticated
+    buyer = None if is_guest else current_user
 
     # Підтвердження email НЕ блокує реєстрацію/оплату (Блок 4.1 фаза 2,
     # рішення Дмитра): лист підтвердження надсилається після списання
@@ -183,11 +201,14 @@ def register_instance(instance_id):
             wanted_id = None
         selected_tariff = next((t for t in tariffs if t.id == wanted_id), None)
 
-    existing = registration_service.find_existing(current_user.id, instance.id)
-
-    if existing and existing.status != 'cancelled':
-        flash(_('Ви вже зареєстровані на цей курс'), 'info')
-        return redirect(url_for('registration.confirmation', registration_id=existing.id))
+    # Для гостя перевіряємо після резолву користувача за email (нижче):
+    # до сабміту ми просто не знаємо, хто це.
+    existing = None
+    if buyer is not None:
+        existing = registration_service.find_existing(buyer.id, instance.id)
+        if existing and existing.status != 'cancelled':
+            flash(_('Ви вже зареєстровані на цей курс'), 'info')
+            return redirect(url_for('registration.confirmation', registration_id=existing.id))
 
     if not instance.is_registration_open:
         flash(_('Реєстрацію на цей курс закрито'), 'error')
@@ -196,10 +217,10 @@ def register_instance(instance_id):
     # Pre-fill: спершу беремо з User-профілю, потім партнерський токен (вища
     # пріоритетність -- зовнішня система знає актуальні дані краще, ніж
     # старий снапшот в User).
-    initial = _initial_form_data_from_user(current_user)
+    initial = _initial_form_data_from_user(buyer) if buyer is not None else {}
     if prefill:
         initial.update({k: v for k, v in prefill.items() if v})
-    form = EventRegistrationForm(data=initial)
+    form = EventRegistrationForm(data=initial, require_email=is_guest)
 
     if form.validate_on_submit():
         if tariffs and selected_tariff is None:
@@ -208,10 +229,7 @@ def register_instance(instance_id):
                 'registration/register.html',
                 form=form, event=EventAdapter(instance),
                 tariffs=tariffs, selected_tariff=None,
-                profile_complete=bool(
-                    current_user.medical_profile
-                    and current_user.medical_profile.is_complete
-                ),
+                profile_complete=_profile_complete(buyer),
             )
         if not verify_recaptcha(action='event_register'):
             flash(_('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.'), 'error')
@@ -219,10 +237,7 @@ def register_instance(instance_id):
                 'registration/register.html',
                 form=form, event=EventAdapter(instance),
                 tariffs=tariffs, selected_tariff=selected_tariff,
-                profile_complete=bool(
-                    current_user.medical_profile
-                    and current_user.medical_profile.is_complete
-                ),
+                profile_complete=_profile_complete(buyer),
             )
         # Другий елемент кортежу не потрібен; НЕ розпаковуємо в `_`, щоб не
         # затінити gettext у скоупі функції.
@@ -233,15 +248,31 @@ def register_instance(instance_id):
             return redirect(url_for('courses.course_by_slug', slug=instance.course.slug))
 
         try:
+            # 0) Гість: знаходимо або створюємо безпарольного користувача за
+            #    email. Якщо адреса вже належить акаунту -- реєстрація
+            #    прив'язується до нього (рішення 31.07.2026): оплату не
+            #    блокуємо, а доступ до кабінету людина отримає входом.
+            if buyer is None:
+                from app.services import participant_service
+                buyer, _is_new_user = participant_service.resolve_user(
+                    form.email.data, form.phone.data,
+                )
+                existing = registration_service.find_existing(buyer.id, instance.id)
+                if existing and existing.status != 'cancelled':
+                    db.session.rollback()
+                    flash(_('На цю адресу вже є реєстрація на цей курс. '
+                            'Увійдіть, щоб її побачити.'), 'info')
+                    return redirect(url_for('auth.login', next=_login_next_path()))
+
             # 1) Слім-синхронізація: ПІБ у User + телефон у MedicalProfile.
             #    МОЗ-анкета живе в кабінеті (auth.certificate_data).
-            _sync_medical_profile_from_form(current_user, form)
+            _sync_medical_profile_from_form(buyer, form)
 
             # 2) Створити CourseRegistration. Снапшот МОЗ-полів -- з
             #    MedicalProfile, якщо той уже заповнений; інакше порожній
             #    (добере бекфіл, коли учасник заповнить "Дані для
             #    сертифіката" в кабінеті).
-            profile = current_user.medical_profile
+            profile = buyer.medical_profile
             specialty_snapshot = ''
             workplace_snapshot = ''
             if profile:
@@ -258,24 +289,37 @@ def register_instance(instance_id):
             }
             from app.services import referral_service
             # Пріоритет серверної атрибуції (pending_referral_code), інакше cookie.
-            ref_code = referral_service.read_pending_ref(request, current_user)
+            ref_code = referral_service.read_pending_ref(request, buyer)
             # Не зараховуємо самореферал (код належить самому учаснику).
-            if ref_code and current_user.referral_code == ref_code:
+            if ref_code and buyer.referral_code == ref_code:
                 ref_code = None
             reg, is_free = registration_service.create_or_reactivate(
-                current_user.id, instance, form_data, existing,
+                buyer.id, instance, form_data, existing,
                 tariff=selected_tariff,
                 referral_code=ref_code,
             )
             # Спожити серверну атрибуцію (одноразово).
-            if current_user.pending_referral_code:
-                current_user.pending_referral_code = None
+            if buyer.pending_referral_code:
+                buyer.pending_referral_code = None
             db.session.commit()
             # Аналітика воронки оплати: фіксуємо обраний спосіб і чи платна подія.
             logger.info(
                 'Registration REG-%d created: user=%d instance=%d method=%s free=%s',
-                reg.id, current_user.id, instance_id, reg.payment_method, is_free,
+                reg.id, buyer.id, instance_id, reg.payment_method, is_free,
             )
+            # Гість не має входу, тож далі веде токен -- той самий публічний
+            # флоу, яким уже користуються учасники, доданi менеджером.
+            # Сторінка підтвердження вимагає логіну, а повернення з LiqPay
+            # має публічний token-aware result_url.
+            #
+            # Токен видаємо ДО листа: _pay_url_for_registration дивиться саме
+            # на нього, і лист, відправлений раніше, повів би гостя на роут
+            # із логіном -- тобто в той самий бар'єр, тільки в пошті.
+            token = None
+            if is_guest:
+                token = reg.issue_completion_token()
+                db.session.commit()
+
             # Best-effort email-підтвердження. Збій SMTP не ламає реєстрацію.
             try:
                 from app.services.email_service import EmailService
@@ -288,16 +332,20 @@ def register_instance(instance_id):
                 flash(_('Реєстрацію підтверджено'), 'success')
             else:
                 flash(_('Реєстрацію створено. Оберіть спосіб оплати нижче.'), 'info')
+
+            if token:
+                # Саме /pay, а не /complete: другий показує повну МОЗ-анкету
+                # (флоу для запрошених менеджером), а гостю після покупки
+                # потрібна оплата -- анкету він заповнить у кабінеті.
+                return redirect(url_for('registration.complete_payment',
+                                        token=token))
             return redirect(url_for('registration.confirmation', registration_id=reg.id))
         except Exception:
-            logger.exception('Failed to register user %d for instance %d', current_user.id, instance_id)
+            logger.exception('Failed to register buyer for instance %d', instance_id)
             db.session.rollback()
             flash(_('Помилка при реєстрації. Спробуйте ще раз.'), 'error')
 
-    profile_complete = bool(
-        current_user.medical_profile
-        and current_user.medical_profile.is_complete
-    )
+    profile_complete = _profile_complete(buyer)
     return render_template(
         'registration/register.html',
         form=form,
@@ -569,6 +617,11 @@ def complete_payment(token):
     return render_template(
         'registration/complete_pay.html',
         reg=reg,
+        # Кабінет заводиться тут-таки: решта даних уже зібрана покупкою.
+        # Якщо пароль уже є (email виявився наявним акаунтом) -- пропонуємо
+        # вхід, а не створення.
+        can_set_password=not bool(reg.user and reg.user.has_password),
+        set_password_url=url_for('registration.complete_set_password', token=token),
         event=EventAdapter(reg.instance) if reg.instance else None,
         needs_payment=bool(needs_payment),
         paid=(reg.payment_status == 'paid'),
@@ -577,6 +630,49 @@ def complete_payment(token):
         liqpay_checkout_url=liqpay_checkout_url,
         invoice_url=url_for('registration.complete_invoice', token=token),
     )
+
+
+@registration_bp.route('/complete/<token>/set-password', methods=['POST'])
+@limiter.limit('10 per hour')
+def complete_set_password(token):
+    """Створення кабінету одразу після покупки.
+
+    Авторизація -- сам токен реєстрації: людина щойно оплатила і ще не має
+    входу. Решта даних (ПІБ, телефон, email) уже є з замовлення, тож
+    лишається тільки пароль.
+    """
+    reg = _load_reg_by_token(token)
+    if reg is None or not reg.completion_token_active:
+        return render_template('registration/complete_invalid.html'), 410
+
+    user = reg.user
+    if user is None:
+        abort(404)
+
+    back = url_for('registration.complete_payment', token=token)
+
+    # Наявний акаунт паролем не перезаписуємо: інакше будь-хто, вказавши
+    # чужий email на чекауті, отримав би змогу змінити пароль власника.
+    if user.has_password:
+        flash(_('У вас уже є кабінет — увійдіть, щоб побачити реєстрацію.'), 'info')
+        return redirect(url_for('auth.login'))
+
+    password = request.form.get('password') or ''
+    confirm = request.form.get('password_confirm') or ''
+    if len(password) < 8:
+        flash(_('Пароль має містити щонайменше 8 символів'), 'error')
+        return redirect(back)
+    if password != confirm:
+        flash(_('Паролі не збігаються'), 'error')
+        return redirect(back)
+
+    user.set_password(password)
+    db.session.commit()
+    login_user(user)
+    logger.info('Guest REG-%d created account for user %d', reg.id, user.id)
+    flash(_('Кабінет створено. Тепер вам доступні матеріали та сертифікат.'),
+          'success')
+    return redirect(url_for('auth.account'))
 
 
 @registration_bp.route('/complete/<token>/invoice.pdf')

@@ -51,6 +51,25 @@
     {{ button_primary(_('Перейти на сайт'), site_settings.website_url) }}
     {% endif %}
 
+    {% if needs_account %}
+    {{ spacer(24) }}
+
+    <!-- Гостьова покупка: кабінет ще не заведено -->
+    <table role="presentation" style="width: 100%; margin-bottom: 8px; background-color: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 16px 20px;">
+                <p style="margin: 0 0 6px 0; font-size: 15px; font-weight: 600; color: #111827;">
+                    {{ _('Створіть кабінет') }}
+                </p>
+                <p style="margin: 0 0 12px 0; font-size: 14px; color: #6B7280; line-height: 1.5;">
+                    {{ _('У кабінеті будуть матеріали й запис курсу, дані для сертифіката БПР та історія реєстрацій. Ваші дані ми вже маємо — лишилось придумати пароль.') }}
+                </p>
+                <a href="{{ pay_url | default(site_settings.website_url) }}" style="font-size: 14px; font-weight: 600; color: #7055a4; text-decoration: underline;">{{ _('Створити кабінет') }}</a>
+            </td>
+        </tr>
+    </table>
+    {% endif %}
+
     {% if certdata_needed %}
     {{ spacer(24) }}
 

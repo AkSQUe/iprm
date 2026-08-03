@@ -41,6 +41,18 @@
   </div>
   {% endif %}
 
+  {# Адреса великим і на видноті: у гостьовій покупці помилка в email
+     означає оплату без доступу, і людина дізнається про це найпізніше.
+     Дешевий спосіб зловити одруківку -- показати її одразу. #}
+  {% if reg.user and reg.user.email %}
+  <p class="reg-email-notice">
+    {% trans trimmed email=reg.user.email %}
+    Листи надсилаємо на <strong>{{ email }}</strong>.
+    {% endtrans %}
+    <a href="{{ url_for('main.contact') }}">{{ _('Адреса з помилкою?') }}</a>
+  </p>
+  {% endif %}
+
   {% if paid %}
   <div class="reg-success-banner reg-success-banner--confirmed">
     <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>
@@ -63,6 +75,46 @@
   {% with chosen=reg.payment_method, invoice_url=invoice_url %}
     {% include 'registration/partials/_pay_options.html' %}
   {% endwith %}
+  {% endif %}
+
+  {# ===== Кабінет =====
+     Решта даних уже зібрана покупкою, тож лишається пароль. Показуємо
+     після оплати -- поки людина ще на сайті; хто закрив вкладку, отримає
+     те саме посилання в листі. #}
+  {% if can_set_password %}
+  <div class="reg-account-cta">
+    <h3 class="reg-account-cta__title">{{ _('Створіть кабінет') }}</h3>
+    <p class="reg-account-cta__text">
+      {% trans trimmed %}
+      У кабінеті будуть матеріали й запис курсу, дані для сертифіката БПР
+      та історія реєстрацій. Решту даних ми вже маємо — придумайте лише пароль.
+      {% endtrans %}
+    </p>
+    <form method="POST" action="{{ set_password_url }}" class="reg-account-cta__form" data-validate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="email" name="email" value="{{ reg.user.email if reg.user else '' }}"
+             autocomplete="username" hidden readonly>
+      <div class="form-group">
+        <label for="new-password">{{ _('Пароль') }} <span class="required">*</span></label>
+        <input type="password" id="new-password" name="password" class="form-input"
+               required minlength="8" autocomplete="new-password">
+        <div class="form-hint">{{ _('Щонайменше 8 символів') }}</div>
+      </div>
+      <div class="form-group">
+        <label for="new-password-confirm">{{ _('Повторіть пароль') }} <span class="required">*</span></label>
+        <input type="password" id="new-password-confirm" name="password_confirm"
+               class="form-input" required minlength="8" autocomplete="new-password">
+      </div>
+      <button type="submit" class="apple-btn apple-btn--primary">{{ _('Створити кабінет') }}</button>
+    </form>
+  </div>
+  {% elif reg.user %}
+  <p class="reg-account-cta__existing">
+    {% trans trimmed login_url=url_for('auth.login') %}
+    Цю реєстрацію додано до вашого наявного кабінету —
+    <a href="{{ login_url }}">увійдіть</a>, щоб побачити її.
+    {% endtrans %}
+  </p>
   {% endif %}
 
 </div>

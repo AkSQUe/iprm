@@ -486,7 +486,12 @@ class EmailService:
             context={
                 'user': user, 'event': event, 'registration': registration,
                 'pay_url': EmailService._pay_url_for_registration(registration),
-                'certdata_needed': not (profile and profile.is_complete),
+                # Гість ще не має входу: анкета для сертифіката йому
+                # недоступна, тож замість неї пропонуємо завести кабінет
+                # (посилання те саме, що й на оплату -- там форма пароля).
+                'needs_account': not user.has_password,
+                'certdata_needed': (user.has_password
+                                    and not (profile and profile.is_complete)),
                 'certdata_url': certdata_url,
             },
             trigger='registration',
@@ -829,10 +834,18 @@ class EmailService:
     def _pay_url_for_registration(registration):
         """Публічний deep-link на сторінку підтвердження/оплати реєстрації
         (де доступні LiqPay і завантаження рахунка). Будується з website_url,
-        бо лист може формуватись без request-контексту (планувальник)."""
+        бо лист може формуватись без request-контексту (планувальник).
+
+        Для гостьової покупки веде на token-сторінку: /registration/<id>
+        вимагає входу, і лист гостю впирався б у логін -- рівно той бар'єр,
+        який гостьовий чекаут прибирає.
+        """
         from app.models.site_settings import SiteSettings
         base = (SiteSettings.get().website_url or '').rstrip('/')
-        tail = f'/registration/{registration.id}'
+        if registration.completion_token_active:
+            tail = f'/registration/complete/{registration.completion_token}/pay'
+        else:
+            tail = f'/registration/{registration.id}'
         return f'{base}{tail}' if base else tail
 
     @staticmethod

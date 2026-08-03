@@ -1066,3 +1066,62 @@
     font-size: 0.9375rem;
   }
 }
+
+/* Підказка гостю про наявний кабінет -- ненав'язлива, щоб не читалась
+   як вимога увійти (від чого ми якраз відмовились). */
+.reg-have-account {
+  margin: 0 0 16px;
+  font-size: 0.875rem;
+  color: var(--iprm-text-light);
+}
+
+/* ========== СТВОРЕННЯ КАБІНЕТУ ПІСЛЯ ПОКУПКИ ==========
+   Гість щойно заплатив і ще не має входу; решта даних уже зібрана
+   замовленням, тож просимо лише пароль. */
+
+.reg-account-cta {
+  margin: 32px 0 0;
+  padding: 24px;
+  border-radius: var(--iprm-radius-md, 16px);
+  background: var(--apple-section-bg, #f5f5f7);
+}
+
+.reg-account-cta__title {
+  margin: 0 0 8px;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.reg-account-cta__text {
+  margin: 0 0 20px;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--iprm-text-light);
+}
+
+.reg-account-cta__form {
+  display: grid;
+  gap: 16px;
+  max-width: 420px;
+}
+
+.reg-account-cta__existing {
+  margin: 32px 0 0;
+  font-size: 0.9375rem;
+  color: var(--iprm-text-light);
+}
+
+/* Адреса доставки листів -- на видноті: у гостьовій покупці одруківка в
+   email означає оплату без доступу. */
+.reg-email-notice {
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  border-radius: var(--iprm-radius-sm, 12px);
+  background: var(--apple-section-bg, #f5f5f7);
+  font-size: 0.9375rem;
+  color: var(--iprm-text-light);
+}
+
+.reg-email-notice strong {
+  color: var(--iprm-text);
+}

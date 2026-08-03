@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-31 23:13+0300\n"
+"POT-Creation-Date: 2026-08-03 22:55+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -947,6 +947,9 @@ msgstr "Unknown order"
 msgid "Оплата ще обробляється. Оновіть сторінку через хвилину."
 msgstr "Payment is still processing. Refresh the page in a minute."
 
+msgid "Невалідний email"
+msgstr "Invalid email"
+
 msgid "Телефон"
 msgstr "Phone"
 
@@ -956,8 +959,8 @@ msgstr "Phone is required"
 msgid "Вкажіть коректний український номер у форматі +380XXXXXXXXX"
 msgstr "Enter a valid Ukrainian number in the format +380XXXXXXXXX"
 
-msgid "Невалідний email"
-msgstr "Invalid email"
+msgid "Email обовʼязковий"
+msgstr "Email is required"
 
 msgid "Ви вже зареєстровані на цей курс"
 msgstr "You are already registered for this course"
@@ -971,6 +974,9 @@ msgstr "Select a participation tier"
 msgid "На жаль, місць більше немає"
 msgstr "Unfortunately, there are no more spots left"
 
+msgid "На цю адресу вже є реєстрація на цей курс. Увійдіть, щоб її побачити."
+msgstr "This email already has a registration for this course. Sign in to view it."
+
 msgid "Реєстрацію підтверджено"
 msgstr "Registration confirmed"
 
@@ -982,6 +988,18 @@ msgstr "Registration error. Please try again."
 
 msgid "Реєстрацію вже оплачено — рахунок не потрібен."
 msgstr "Registration is already paid — no invoice needed."
+
+msgid "У вас уже є кабінет — увійдіть, щоб побачити реєстрацію."
+msgstr "You already have an account — sign in to view your registration."
+
+msgid "Пароль має містити щонайменше 8 символів"
+msgstr "Password must be at least 8 characters"
+
+msgid "Паролі не збігаються"
+msgstr "Passwords do not match"
+
+msgid "Кабінет створено. Тепер вам доступні матеріали та сертифікат."
+msgstr "Account created. Materials and your certificate are now available."
 
 #, python-format
 msgid "Реєстрацію підтверджено: %(title)s"
@@ -2577,6 +2595,20 @@ msgstr "Proceed to payment"
 msgid "Перейти на сайт"
 msgstr "Go to the website"
 
+msgid "Створіть кабінет"
+msgstr "Create your account"
+
+msgid ""
+"У кабінеті будуть матеріали й запис курсу, дані для сертифіката БПР та "
+"історія реєстрацій. Ваші дані ми вже маємо — лишилось придумати пароль."
+msgstr ""
+"Your account holds the course materials and recording, the data for your "
+"BPR certificate and your registration history. We already have your "
+"details — just pick a password."
+
+msgid "Створити кабінет"
+msgstr "Create account"
+
 msgid ""
 "Щоб після курсу отримати сертифікат з балами БПР, заповніть коротку "
 "анкету (вимоги МОЗ №725, п. 13) в особистому кабінеті. Це займе 2–3 "
@@ -4112,6 +4144,13 @@ msgstr "Form completed"
 msgid "До оплати:"
 msgstr "Amount due:"
 
+#, python-format
+msgid "Листи надсилаємо на <strong>%(email)s</strong>."
+msgstr "We send emails to <strong>%(email)s</strong>."
+
+msgid "Адреса з помилкою?"
+msgstr "Wrong address?"
+
 msgid "Оплату отримано"
 msgstr "Payment received"
 
@@ -4128,6 +4167,25 @@ msgstr ""
 
 msgid "Оберіть зручний спосіб оплати:"
 msgstr "Choose a convenient payment method:"
+
+msgid ""
+"У кабінеті будуть матеріали й запис курсу, дані для сертифіката БПР та "
+"історія реєстрацій. Решту даних ми вже маємо — придумайте лише пароль."
+msgstr ""
+"Your account holds the course materials and recording, the data for your "
+"BPR certificate and your registration history. We already have the rest —"
+" just pick a password."
+
+msgid "Щонайменше 8 символів"
+msgstr "At least 8 characters"
+
+#, python-format
+msgid ""
+"Цю реєстрацію додано до вашого наявного кабінету — <a "
+"href=\"%(login_url)s\">увійдіть</a>, щоб побачити її."
+msgstr ""
+"This registration was added to your existing account — <a "
+"href=\"%(login_url)s\">sign in</a> to view it."
 
 #, python-format
 msgid "Реєстрація: %(event_title)s | ІПРМ"
@@ -4264,12 +4322,27 @@ msgstr ""
 msgid "Дані учасника"
 msgstr "Participant details"
 
+#, python-format
+msgid ""
+"Уже маєте кабінет? <a href=\"%(login_url)s\">Увійдіть</a> — дані "
+"підставляться самі."
+msgstr ""
+"Already have an account? <a href=\"%(login_url)s\">Sign in</a> and we "
+"will fill the form for you."
+
 msgid ""
 "<strong>Будьте уважні!</strong> Одна реєстрація — одне підключення. Будь "
 "ласка, вказуйте контактні дані саме учасника заходу."
 msgstr ""
 "<strong>Please note!</strong> One registration — one connection. Please "
 "provide the contact details of the actual event participant."
+
+msgid ""
+"На цю адресу надішлемо підтвердження оплати, доступ до матеріалів і "
+"посилання для створення кабінету."
+msgstr ""
+"We will send the payment confirmation, access to materials and the "
+"account link to this address."
 
 msgid ""
 "Вкажіть номер саме учасника заходу — на нього ми надішлемо нагадування та"
