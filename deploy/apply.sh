@@ -23,6 +23,7 @@ install_file() {
     echo "installed:  $dst"
 }
 
+install_file "$REPO_DIR/nginx/snippets/iprm-app.conf"        /etc/nginx/snippets/iprm-app.conf                   644
 install_file "$REPO_DIR/nginx/iprm.conf"                     /etc/nginx/conf.d/iprm.conf                        644
 install_file "$REPO_DIR/systemd/nginx.service.d-restart.conf" /etc/systemd/system/nginx.service.d/restart.conf   644
 install_file "$REPO_DIR/systemd/iprm-watchdog.service"       /etc/systemd/system/iprm-watchdog.service           644
