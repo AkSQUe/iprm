@@ -57,6 +57,13 @@ class Config:
     # переозначає реальний ID.
     GOOGLE_ANALYTICS_ID = os.environ.get('GOOGLE_ANALYTICS_ID', '')
 
+    # Meta (Facebook) Pixel -- fallback на env, якщо в БД (SiteSettings) пусто.
+    # На відміну від GA тут потрібні обидві змінні: ID сам собою трекінг не
+    # вмикає. Дефолт вимкнено -- щоб dev/test не слали конверсії у прод-кабінет
+    # Meta (там вони псують навчання алгоритму, а видалити події не можна).
+    META_PIXEL_ENABLED = os.environ.get('META_PIXEL_ENABLED', 'false').lower() == 'true'
+    META_PIXEL_ID = os.environ.get('META_PIXEL_ID', '')
+
     # Блог: розмір сторінки лістингу та ліміт RSS-стрічки (тюнінг без коду).
     BLOG_POSTS_PER_PAGE = int(os.environ.get('BLOG_POSTS_PER_PAGE', '9'))
     BLOG_FEED_LIMIT = int(os.environ.get('BLOG_FEED_LIMIT', '20'))

@@ -10,6 +10,27 @@
 {% block content %}
 <div class="apple-page reg-layout">
 
+  {# Конверсія Purchase для Meta Pixel -- порожній носій data-атрибутів, який
+     зчитує meta-events.js на завантаженні (без inline-скрипта). Роут віддає
+     цей шаблон лише при payment_status == 'paid', тож подія не спрацює на
+     платежі в обробці. Атрибут meta-, а не ga-: GA-подію purchase зараз не
+     шлемо, і додавати її тут означало б тихо змінити наявну аналітику.
+
+     data-meta-event-id -- дедуплікація: сторінку успіху відкривають
+     повторно (F5, кнопка "назад" після редиректу LiqPay), і без стабільного
+     ID кожен перегляд рахувався б окремою покупкою.
+
+     Умова на payment_amount: колонка nullable, а фільтр int перетворив би
+     None на 0 -- Purchase з нульовою вартістю псує статистику сильніше, ніж
+     його відсутність. #}
+  {% if reg.payment_amount %}
+  <span hidden data-meta-event-load="Purchase"
+        data-meta-event-id="REG-{{ reg.id }}"
+        data-meta-param-value="{{ reg.payment_amount | int }}"
+        data-meta-param-currency="UAH"
+        data-meta-param-content-name="{{ reg.target_title or '' }}"></span>
+  {% endif %}
+
   <div class="reg-confirmation">
     <h1 class="reg-confirmation__title">{{ _('Оплату підтверджено') }}</h1>
     <p class="reg-confirmation__subtitle">{{ _('Дякуємо! Ваша оплата успішно оброблена.') }}</p>

@@ -171,6 +171,43 @@ def _check_google_analytics(settings):
     }
 
 
+def _check_meta_pixel(settings):
+    """Pixel -- client-side; server-side ping без access token неможливий
+    (Graph API вимагає CAPI-токен, якого в цій інтеграції немає). Тому
+    перевіряємо доступність CDN зі скриптом і формат активного ID."""
+    from app.models.site_settings import SiteSettings
+    eff = settings.effective_meta_pixel_id
+    if not eff:
+        if settings.meta_pixel_id:
+            return {
+                'status': HealthStatus.NOT_CONFIGURED,
+                'detail': 'ID збережено, але трекінг вимкнено',
+            }
+        return {'status': HealthStatus.NOT_CONFIGURED}
+    if not SiteSettings.is_valid_meta_pixel_id(eff):
+        return {
+            'status': HealthStatus.DEGRADED,
+            'error': f'Формат ID невалідний: {eff!r}',
+        }
+    try:
+        r = requests.head(
+            'https://connect.facebook.net/en_US/fbevents.js',
+            timeout=_HTTP_TIMEOUT_SECONDS, allow_redirects=True,
+        )
+        r.raise_for_status()
+    except requests.RequestException as e:
+        # CDN недоступний з сервера -- у браузерів відвідувачів може бути
+        # інакше, тож це degraded, а не down.
+        return {
+            'status': HealthStatus.DEGRADED,
+            'error': f'fbevents.js недоступний з сервера: {e}',
+        }
+    return {
+        'status': HealthStatus.OK,
+        'detail': f'Pixel ID {eff}, fbevents.js доступний',
+    }
+
+
 # ----------------------------------------------------------------
 # Реєстр + parallel runner
 # ----------------------------------------------------------------
@@ -181,6 +218,7 @@ CHECKERS = {
     'apple_signin': ('Apple Sign In', _check_apple_signin),
     'recaptcha': ('reCAPTCHA v3', _check_recaptcha),
     'google_analytics': ('Google Analytics 4', _check_google_analytics),
+    'meta_pixel': ('Meta Pixel', _check_meta_pixel),
 }
 
 

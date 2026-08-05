@@ -113,6 +113,9 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 | GET | `/admin/reviews` | Відгуки (stub) |
 | GET | `/admin/marketing` | Маркетинг |
 | GET | `/admin/integrations` | Інтеграції |
+| GET | `/admin/meta-pixel` | Meta Pixel -- конфігурація |
+| POST | `/admin/meta-pixel/save` | Зберегти Pixel ID і прапорець |
+| GET | `/admin/meta-pixel/test` | Надіслати тестову подію IPRMTestEvent |
 | GET/POST | `/admin/settings` | Налаштування сайту |
 | GET | `/admin/error-logs` | Журнал помилок |
 | GET | `/admin/error-logs/<id>` | Деталі помилки |

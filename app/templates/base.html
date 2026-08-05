@@ -80,6 +80,7 @@
     }catch(e){}})();
   </script>
   {% include 'partials/_analytics.html' %}
+  {% include 'partials/_meta_pixel.html' %}
   {# reCAPTCHA вантажиться лише на сторінках із захищеною формою (вони
      перевизначають цей блок). Так badge/iframe не зʼявляється глобально. #}
   {% block recaptcha %}{% endblock %}
@@ -147,6 +148,7 @@
   <script defer src="{{ url_for('static', filename='js/confirm-action.js') }}?v={{ assets_version }}"></script>
   <script defer src="{{ url_for('static', filename='js/reading-progress.js') }}?v={{ assets_version }}"></script>
   {% if site_settings.effective_google_analytics_id %}<script defer src="{{ url_for('static', filename='js/ga-events.js') }}?v={{ assets_version }}"></script>{% endif %}
+  {% if meta_pixel_id %}<script defer src="{{ url_for('static', filename='js/meta-events.js') }}?v={{ assets_version }}"></script>{% endif %}
   {% if upcoming_events %}<script defer src="{{ url_for('static', filename='js/upcoming-events.js') }}?v={{ assets_version }}"></script>{% endif %}
   {% if show_certdata_reminder %}<script defer src="{{ url_for('static', filename='js/certdata-reminder.js') }}?v={{ assets_version }}"></script>{% endif %}
   {% include 'partials/_google_onetap.html' %}

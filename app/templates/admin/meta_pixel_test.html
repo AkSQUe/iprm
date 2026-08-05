@@ -1,0 +1,56 @@
+{% extends "admin/_integration_page.html" %}
+
+{% block title %}Перевірка Meta Pixel | ІПРМ{% endblock %}
+{% block integration_title %}Перевірка Meta Pixel{% endblock %}
+{% block integration_subtitle_lead %}Тестова подія{% endblock %}
+
+{% block integration_status_badges %}
+  <span class="badge badge--active">Pixel {{ pixel_id }}</span>
+{% endblock %}
+
+{% block integration_readonly_title %}Що робить ця сторінка{% endblock %}
+{% block integration_readonly_rows %}
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Подія</span>
+    <code class="admin-readonly-config__value">IPRMTestEvent</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Тип</span>
+    <span class="admin-readonly-config__value">Нестандартна (trackCustom)</span>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Де перевіряти</span>
+    <span class="admin-readonly-config__value">Events Manager &rarr; Test Events</span>
+  </div>
+{% endblock %}
+
+{% block integration_readonly_hint %}
+<p class="form-hint">
+  Це єдина сторінка адмінки, де Pixel навмисно увімкнено: решта адмінки
+  виключена з трекінгу, щоб URL з даними клієнтів не потрапляли до Meta,
+  а перегляди адміністраторів не псували статистику конверсій.
+</p>
+<p class="form-hint">
+  Подія нестандартна: стандартні назви (Lead, Purchase) засмічували б звіти
+  конверсій вигаданими заявками та покупками.
+</p>
+{% endblock %}
+
+{% block integration_edit_title %}Надіслати подію{% endblock %}
+{% block integration_edit_form %}
+<div class="admin-form">
+  <div class="admin-form__actions">
+    <button type="button" class="btn-admin btn-admin--primary" id="pixel-test-send">
+      Надіслати тестову подію
+    </button>
+    <a href="{{ url_for('admin.meta_pixel') }}" class="btn-admin btn-admin--secondary">
+      До налаштувань
+    </a>
+  </div>
+  <p class="form-hint" id="pixel-test-result" hidden></p>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script defer src="{{ url_for('static', filename='js/meta-pixel-test.js') }}?v={{ assets_version }}"></script>
+{% endblock %}

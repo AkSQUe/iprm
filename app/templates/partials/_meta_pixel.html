@@ -1,0 +1,21 @@
+{# Meta (Facebook) Pixel -- умовно вмикається, якщо ID заданий у БД
+   (SiteSettings.meta_pixel_id) з увімкненим прапорцем, або через env-fallback
+   (config.META_PIXEL_ID + META_PIXEL_ENABLED), і сторінка не належить до
+   блупринтів без трекінгу (адмінка). Рішення інкапсулює
+   services/meta_pixel.py::active_pixel_id -- ту саму функцію питає CSP, щоб
+   дозволені домени і наявність скрипта не розходились.
+
+   Канонічний snippet Meta -- inline-скрипт; тут він винесений у
+   /static/js/meta-pixel.js, який читає ID з data-pixel-id
+   (CLAUDE.md: No Inline Policy). fbevents.js (~90 KB) вантажиться ліниво --
+   так само, як gtag.js у _analytics.html: черга fbq() накопичується до
+   приходу лоадера і програється, щойно він приїде, тож PageView і події
+   конверсій не губляться.
+
+   <noscript>-піксель навмисно НЕ додаємо: він робить синхронний запит на
+   facebook.com з кожної сторінки, а частка відвідувачів без JS тут
+   мізерна -- ціна не виправдана. #}
+{% if meta_pixel_id %}
+<script async src="{{ url_for('static', filename='js/meta-pixel.js') }}?v={{ assets_version }}"
+        data-pixel-id="{{ meta_pixel_id }}"></script>
+{% endif %}

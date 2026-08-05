@@ -1,0 +1,98 @@
+{% extends "admin/_integration_page.html" %}
+
+{% block title %}Meta Pixel | ІПРМ{% endblock %}
+{% block integration_title %}Meta Pixel{% endblock %}
+{% block integration_subtitle_lead %}Трекінг конверсій Facebook / Instagram{% endblock %}
+
+{% block integration_status_badges %}
+  {% if cfg.is_configured %}
+    <span class="badge badge--active">Активно</span>
+    {% if cfg.source == 'db' %}
+      <span class="badge badge--published">З БД</span>
+    {% elif cfg.source == 'env' %}
+      <span class="badge badge--pending">З env (fallback)</span>
+    {% endif %}
+  {% elif cfg.db_id and not cfg.db_enabled %}
+    <span class="badge badge--pending">ID збережено, вимкнено</span>
+  {% else %}
+    <span class="badge badge--draft">Не налаштовано</span>
+  {% endif %}
+{% endblock %}
+
+{% block integration_readonly_rows %}
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Pixel ID (БД)</span>
+    <code class="admin-readonly-config__value">{{ cfg.db_id or 'Не задано' }}</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Увімкнено в БД</span>
+    <span class="admin-readonly-config__value">{{ 'Так' if cfg.db_enabled else 'Ні' }}</span>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Fallback з env (META_PIXEL_ID)</span>
+    <code class="admin-readonly-config__value">{{ cfg.env_id or 'Не задано' }}{% if cfg.env_id and not cfg.env_enabled %} (META_PIXEL_ENABLED=false){% endif %}</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Активний ID</span>
+    <code class="admin-readonly-config__value">{{ cfg.effective_id or 'Pixel вимкнено' }}</code>
+  </div>
+{% endblock %}
+
+{% block integration_readonly_hint %}
+{% if cfg.is_configured %}
+<a href="{{ url_for('admin.meta_pixel_test') }}" class="btn-admin btn-admin--secondary">
+  Надіслати тестову подію
+</a>
+{% endif %}
+<p class="form-hint">
+  Якщо ID заданий у БД – рішення приймає прапорець нижче, env не підмінює
+  вимкнення. Якщо поле БД порожнє – береться <code>META_PIXEL_ID</code> з env,
+  і лише за <code>META_PIXEL_ENABLED=true</code>.
+</p>
+<p class="form-hint">
+  Активний Pixel шле <code>PageView</code> на всіх сторінках і події конверсій:
+  <code>Lead</code> (заявка на курс, B2B-запит, форма контактів),
+  <code>CompleteRegistration</code> (реєстрація акаунта),
+  <code>InitiateCheckout</code> (реєстрація на захід),
+  <code>Purchase</code> (успішна оплата, зі значенням у грн).
+</p>
+{% endblock %}
+
+{% block integration_edit_title %}Налаштування{% endblock %}
+{% block integration_edit_form %}
+<form method="POST" action="{{ url_for('admin.meta_pixel_save') }}" class="admin-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="form-group admin-form__full">
+    <label for="meta_pixel_id">Pixel ID</label>
+    <input type="text" name="meta_pixel_id" id="meta_pixel_id"
+           class="form-input" pattern="^[0-9]{15,16}$"
+           value="{{ cfg.db_id }}"
+           placeholder="123456789012345" autocomplete="off" inputmode="numeric">
+    <p class="form-hint">
+      15-16 цифр. Events Manager → Data Sources → ваш піксель, ID під назвою.
+      Вставляйте саме ID, а не весь код піксела. Залиште порожнім, щоб
+      використати fallback з env.
+    </p>
+  </div>
+
+  <div class="form-group admin-form__full">
+    <div class="form-checkbox">
+      <input type="checkbox" name="meta_pixel_enabled" id="meta_pixel_enabled"
+             {% if cfg.db_enabled %}checked{% endif %}>
+      <label for="meta_pixel_enabled">Увімкнути трекінг</label>
+    </div>
+    <p class="form-hint">
+      Знято – скрипт не вантажиться і події не шлються, але ID лишається
+      збереженим. Так само вимикається на час робіт чи інциденту.
+    </p>
+  </div>
+
+  <div class="admin-form__actions">
+    <button type="submit" class="btn-admin btn-admin--primary"
+            data-confirm="Зберегти налаштування Meta Pixel?" data-confirm-ok="Зберегти">
+      Зберегти
+    </button>
+  </div>
+</form>
+{% endblock %}

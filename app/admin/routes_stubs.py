@@ -241,6 +241,7 @@ def integrations():
         # Усе недоступне -- але hub все одно показуємо з error-стейтом.
         liqpay_status = {'is_configured': False, 'sandbox': True, 'error': True}
         ga_status = {'is_configured': False, 'error': True}
+        meta_pixel_status = {'is_configured': False, 'has_id': False, 'error': True}
         recaptcha_status = {'is_configured': False, 'is_active': False, 'error': True}
         google_oauth_status = {'is_configured': False, 'enabled': False, 'error': True}
         apple_status = {'is_configured': False, 'enabled': False, 'error': True}
@@ -272,6 +273,18 @@ def integrations():
         ga_id, ga_err = _safe(lambda: settings.effective_google_analytics_id, '')
         ga_status = {'is_configured': bool(ga_id), 'error': ga_err}
 
+        pixel_id, pixel_err = _safe(lambda: settings.effective_meta_pixel_id, '')
+        # has_id окремо від is_configured: ID збережений, але прапорець знято --
+        # це не "не налаштовано", а свідомо вимкнено, і бейдж має відрізнятись.
+        # Обидва читання через _safe: контракт хабу -- збійна інтеграція дає
+        # бейдж "статус недоступний", а не 500 на всю сторінку.
+        pixel_db_id, pixel_db_err = _safe(lambda: settings.meta_pixel_id, '')
+        meta_pixel_status = {
+            'is_configured': bool(pixel_id),
+            'has_id': bool(pixel_db_id),
+            'error': pixel_err or pixel_db_err,
+        }
+
         google_oauth_status = {
             'is_configured': settings.is_google_oauth_configured,
             'enabled': settings.google_oauth_enabled,
@@ -297,6 +310,7 @@ def integrations():
         'admin/integrations.html',
         liqpay_status=liqpay_status,
         ga_status=ga_status,
+        meta_pixel_status=meta_pixel_status,
         recaptcha_status=recaptcha_status,
         google_oauth_status=google_oauth_status,
         apple_status=apple_status,

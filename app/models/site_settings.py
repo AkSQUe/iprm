@@ -10,6 +10,9 @@ from app.extensions import db
 from app.models.mixins import TimestampMixin, TranslatableMixin, utcnow
 
 GA_ID_RE = re.compile(r'^G-[A-Z0-9]{4,20}$')
+# Meta Pixel ID -- числовий, наразі 15-16 цифр. Строгий формат ловить
+# найчастішу помилку: у поле вставляють увесь snippet замість самого ID.
+META_PIXEL_ID_RE = re.compile(r'^[0-9]{15,16}$')
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +101,12 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
     # Google Analytics 4 Measurement ID (формат "G-XXXXXXXXXX"). Публічний
     # ідентифікатор, що віддається у HTML на кожній сторінці.
     google_analytics_id = db.Column(db.String(50), default='', nullable=False)
+
+    # Meta (Facebook) Pixel. ID публічний -- віддається у HTML на кожній
+    # сторінці. Прапорець окремо від ID навмисно: вимкнути трекінг треба вміти
+    # миттєво (домен/consent/інцидент), не стираючи сам ID.
+    meta_pixel_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    meta_pixel_id = db.Column(db.String(50), default='', nullable=False)
 
     # Реєстраційний номер провайдера БПР (4 цифри) -- сегмент номера
     # сертифіката (формат РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ).
@@ -448,6 +457,30 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
         if not value:
             return True
         return bool(GA_ID_RE.match(value))
+
+    @property
+    def effective_meta_pixel_id(self):
+        """Meta Pixel ID -- БД, інакше env-fallback. Порожній рядок => Pixel
+        не вмикається.
+
+        Дзеркалить логіку reCAPTCHA, а не GA: прапорець enabled живе поруч з
+        ID, тож джерело обираємо цілою парою. Якщо ID заданий у БД -- саме
+        його прапорець і вирішує; env у цьому разі не підмінює вимкнення
+        (інакше "вимкнув у адмінці, а воно й далі шле" -- пастка).
+        """
+        if self.meta_pixel_id:
+            return self.meta_pixel_id if self.meta_pixel_enabled else ''
+        env_id = current_app.config.get('META_PIXEL_ID', '') or ''
+        if env_id and current_app.config.get('META_PIXEL_ENABLED', False):
+            return env_id
+        return ''
+
+    @staticmethod
+    def is_valid_meta_pixel_id(value):
+        """Meta Pixel ID -- 15-16 цифр. Порожній рядок валідний (вимкнення)."""
+        if not value:
+            return True
+        return bool(META_PIXEL_ID_RE.match(value))
 
     @classmethod
     def get(cls):

@@ -267,6 +267,15 @@ def create_app(config_name=None):
         return {'recaptcha': get_recaptcha_service()}
 
     @app.context_processor
+    def inject_meta_pixel():
+        """ID активного Meta Pixel для _meta_pixel.html і підключення
+        meta-events.js. Через сервіс, а не властивість налаштувань напряму:
+        рішення залежить ще й від блупринту (в адмінці трекінгу немає), і
+        воно мусить збігатися з тим, що дозволяє CSP."""
+        from app.services.meta_pixel import active_pixel_id
+        return {'meta_pixel_id': active_pixel_id()}
+
+    @app.context_processor
     def inject_upcoming_events():
         """Два найближчі майбутні заходи для плаваючого блоку на ПУБЛІЧНИХ
         сторінках (вмикається в Налаштуваннях сайту). Порожньо, якщо вимкнено,
@@ -371,6 +380,7 @@ def create_app(config_name=None):
         from flask import g
         ga_active = False
         gsi_active = False
+        pixel_active = False
         try:
             settings = getattr(g, 'site_settings', None)
             if settings is None:
@@ -379,6 +389,11 @@ def create_app(config_name=None):
             ga_active = bool(settings.effective_google_analytics_id)
             # Google One Tap (GSI) вставляє gsi/client лише коли OAuth налаштовано.
             gsi_active = settings.is_google_oauth_configured
+            # Через сервіс, а не властивість: та сама умова, що вирішує
+            # вставку скрипта. Інакше CSP дозволяв би домени Meta в адмінці,
+            # де скрипта немає.
+            from app.services.meta_pixel import active_pixel_id
+            pixel_active = bool(active_pixel_id(settings))
         except Exception:
             pass
         ga_script = ' https://www.googletagmanager.com' if ga_active else ''
@@ -386,6 +401,14 @@ def create_app(config_name=None):
                   ' https://*.google-analytics.com') if ga_active else ''
         ga_conn = (' https://www.googletagmanager.com https://www.google-analytics.com'
                    ' https://*.google-analytics.com https://*.analytics.google.com') if ga_active else ''
+
+        # Meta Pixel: fbevents.js вантажиться з connect.facebook.net, а самі
+        # події йдуть маяками на facebook.com. Домени -- лише коли Pixel
+        # активний (той самий мотив, що з GA: без них -- нуль даних, з ними
+        # завжди -- зайва дірка).
+        px_script = ' https://connect.facebook.net' if pixel_active else ''
+        px_img = ' https://www.facebook.com' if pixel_active else ''
+        px_conn = ' https://www.facebook.com https://connect.facebook.net' if pixel_active else ''
 
         # Google One Tap / Sign-In (GSI): script + style + frame + connect з
         # accounts.google.com, аватарки -- з googleusercontent.
@@ -409,14 +432,14 @@ def create_app(config_name=None):
 
         csp = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'" + gstatic + ga_script + gsi + "; "
+            "script-src 'self' 'unsafe-inline'" + gstatic + ga_script + gsi + px_script + "; "
             "style-src 'self' 'unsafe-inline'" + gsi + "; "
             "font-src 'self' data:; "
-            "img-src 'self' data:" + ga_img + gsi_img + mm_img + "; "
+            "img-src 'self' data:" + ga_img + gsi_img + mm_img + px_img + "; "
             "frame-src 'self' blob: https://www.liqpay.ua https://checkout.liqpay.ua"
             " https://www.youtube-nocookie.com"
             + gframe + gsi + "; "
-            "connect-src 'self'" + gconn + ga_conn + gsi
+            "connect-src 'self'" + gconn + ga_conn + gsi + px_conn
         )
         response.headers['Content-Security-Policy'] = csp
         if not app.debug:

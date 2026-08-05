@@ -7,6 +7,7 @@ from app.admin import routes_participants  # noqa: F401
 from app.admin import routes_payments  # noqa: F401
 from app.admin import routes_recaptcha  # noqa: F401
 from app.admin import routes_analytics  # noqa: F401
+from app.admin import routes_meta_pixel  # noqa: F401
 from app.admin import routes_google_oauth  # noqa: F401
 from app.admin import routes_apple_signin  # noqa: F401
 from app.admin import routes_stubs  # noqa: F401

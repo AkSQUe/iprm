@@ -81,6 +81,24 @@
 {% block content %}
 <div class="apple-page">
 
+  {# ViewContent для Meta Pixel -- база ремаркетингу: дозволяє показувати
+     рекламу саме тим, хто дивився конкретний курс, і рахувати шлях
+     "перегляд -> заявка -> оплата". Носій data-атрибутів, який зчитує
+     meta-events.js (без inline-скрипта).
+
+     Без eventID: перегляд сторінки -- не унікальна конверсія, повторні
+     заходи тут якраз і є сигналом інтересу, який дедуплікація зіпсувала б.
+     Ціну шлемо лише коли вона є: base_price nullable, а Meta трактує
+     value=0 як безкоштовний товар. #}
+  <span hidden data-meta-event-load="ViewContent"
+        data-meta-param-content-type="product"
+        data-meta-param-content-ids="{{ course.slug }}"
+        data-meta-param-content-name="{{ course.title }}"
+        {% if course.base_price and course.base_price > 0 %}
+        data-meta-param-value="{{ course.base_price | int }}"
+        data-meta-param-currency="UAH"
+        {% endif %}></span>
+
   {# Найближче проведення з активними тарифами -- джерело блоку "Формат участі". #}
   {% set ns_fmt = namespace(inst=None) %}
   {% for inst in upcoming_instances %}

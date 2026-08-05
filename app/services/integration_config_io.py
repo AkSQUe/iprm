@@ -37,6 +37,9 @@ EXPORTABLE = [
     ('RECAPTCHA_SCORE_THRESHOLD',  'recaptcha_score_threshold',  False, 0.5),
 
     ('GOOGLE_ANALYTICS_ID',        'google_analytics_id',        False, ''),
+
+    ('META_PIXEL_ENABLED',         'meta_pixel_enabled',         False, False),
+    ('META_PIXEL_ID',              'meta_pixel_id',              False, ''),
 ]
 
 
