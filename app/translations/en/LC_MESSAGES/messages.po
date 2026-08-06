@@ -1873,6 +1873,9 @@ msgstr "You were referred by <strong>%(inviter)s</strong>"
 msgid "Формат участі"
 msgstr "Participation format"
 
+msgid "Зареєструватись"
+msgstr "Sign up"
+
 msgid "Найближчі дати"
 msgstr "Upcoming dates"
 
