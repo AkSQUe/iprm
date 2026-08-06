@@ -15,17 +15,31 @@
 {% set nearest = insts[0] if insts else None %}
 {% set has_seats = nearest is not none and nearest.id in rec_open_ids %}
 {% set seats = rec_seats.get(nearest.id) if has_seats else None %}
-{% set _prices = insts | map(attribute='effective_price') | select | list %}
+{# reject('none'), а не select: `select` відкидає ще й нуль, і безкоштовне
+   проведення підмінялося б базовою ціною курсу. #}
+{% set _prices = insts | map(attribute='effective_price') | reject('none') | list %}
 {% set price_min = _prices | min if _prices else course.base_price %}
+{# price_is_from ловить вилку тарифів усередині одного проведення: effective_price
+   віддає лише мінімум, тож без нього "0 + 9000" виглядало б як рівно 0. #}
 {% set price_from = (_prices | unique | list | length) > 1
-                    or (nearest is not none and nearest.price_is_from) %}
-{% set _cpds = insts | map(attribute='effective_cpd_points') | select | list %}
+                    or (insts | selectattr('price_is_from') | list | length) > 0 %}
+{# "Безкоштовно" -- лише коли безкоштовні ВСІ варіанти: у курсу з безкоштовним
+   онлайном і платним практикумом це була б неправда.
+   Ціну курсу (base_price) показуємо тільки за відсутності проведень: нуль у
+   ній означає "не заповнено", а не безкоштовну участь. #}
+{% set is_free = _prices and (_prices | max) == 0 and not price_from %}
+{% set show_price = _prices or (price_min and price_min > 0) %}
+{% set _cpds = insts | map(attribute='effective_cpd_points') | reject('none') | list %}
 {% set cpd_min = _cpds | min if _cpds else course.cpd_points %}
 {% set cpd_max = _cpds | max if _cpds else course.cpd_points %}
 {% set summary = course.t('short_description') or course.t('subtitle') %}
-{# Є дати -> ведемо одразу до блоку форматів участі, а не в початок сторінки. #}
+{% set card_tags = course.t('tags') or [] %}
+{# Є дати -> ведемо одразу до блоку форматів участі. Сама секція #formats
+   існує лише коли є проведення з активними тарифами, тож без них якір вів
+   би в нікуди. #}
+{% set has_formats = insts | selectattr('active_tariffs') | list | length > 0 %}
 {% set card_url = url_for('courses.course_by_slug', slug=course.slug)
-                  ~ ('#formats' if has_seats else '') %}
+                  ~ ('#formats' if has_seats and has_formats else '') %}
 <article class="iprm-course-card iprm-rec-card apple-reveal">
   <a class="iprm-rec-card__overlay" href="{{ card_url }}" aria-label="{{ course.t('title') }}"></a>
 
@@ -88,14 +102,16 @@
       {% endif %}
     </div>
 
-    {% if course.tags %}
+    {% if card_tags %}
     <div class="iprm-rec-card__tags">
-      {% for tag in course.tags[:3] %}<span class="iprm-tag">{{ tag }}</span>{% endfor %}
+      {% for tag in card_tags[:3] %}<span class="iprm-tag">{{ tag }}</span>{% endfor %}
     </div>
     {% endif %}
 
     <div class="iprm-rec-card__footer">
-      {% if price_min and price_min > 0 %}
+      {% if is_free %}
+      <span class="iprm-course-card__price">{{ _('Безкоштовно') }}</span>
+      {% elif show_price %}
       <span class="iprm-course-card__price">{% if price_from %}{{ _('від') }} {% endif %}{{ price_min | int }} &#8372;</span>
       {% endif %}
       <span class="iprm-rec-card__cta">{% if has_seats %}{{ _('Обрати дату') }}{% else %}{{ _('Дізнатись більше') }}{% endif %}</span>

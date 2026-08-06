@@ -254,6 +254,17 @@ class EventRegistration(TimestampMixin, db.Model):
         ).one()
 
     @property
+    def awaiting_payment(self):
+        """True, поки платіжний шлях не завершено (не сплачено або в обробці).
+
+        Екрани реєстрації ховають усе, що відволікає від оплати, поки це
+        True -- зокрема блок рекомендованих курсів.
+        """
+        if not (self.payment_amount and self.payment_amount > 0):
+            return False
+        return self.payment_status in ('unpaid', 'pending')
+
+    @property
     def has_discount(self):
         return bool(self.discount_amount and self.discount_amount > 0)
 

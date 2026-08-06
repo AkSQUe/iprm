@@ -13,11 +13,13 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
-from flask import render_template
+from flask import g, render_template
 
 from app.extensions import db
+from app.i18n import source_key
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
+from app.models.instance_tariff import InstanceTariff
 from app.models.registration import EventRegistration
 from app.models.user import User
 from app.services.course_recommend import recommend_courses
@@ -60,6 +62,30 @@ def _instance(course, days_ahead=30, seats=10, location='Київ'):
     db.session.add(inst)
     db.session.flush()
     return inst
+
+
+def _tariff(instance, price, name='Базовий'):
+    tariff = InstanceTariff(
+        instance_id=instance.id, name=name, price=price, is_active=True,
+    )
+    db.session.add(tariff)
+    db.session.flush()
+    return tariff
+
+
+def _render_card(app, course, instance=None, seats=None, lang=None):
+    """Партіал картки з мінімальним контекстом (без роутів)."""
+    upcoming = {course.id: [instance]} if instance is not None else {}
+    seats_map = {} if instance is None or seats is None else {instance.id: seats}
+    open_ids = {i for i, left in seats_map.items() if left is None or left > 0}
+    with app.test_request_context('/'):
+        if lang:
+            g.lang_code = lang
+        return render_template(
+            'partials/_course_recommend_card.html',
+            course=course, rec_upcoming=upcoming,
+            rec_seats=seats_map, rec_open_ids=open_ids,
+        )
 
 
 def _paid_registration(user, instance):
@@ -206,11 +232,7 @@ class TestRecommendCard:
     def test_dateless_course_shows_placeholder(self, app):
         course = _course('Без дат')
         db.session.commit()
-        with app.test_request_context('/'):
-            html = render_template(
-                'partials/_course_recommend_card.html',
-                course=course, rec_upcoming={}, rec_seats={}, rec_open_ids=set(),
-            )
+        html = _render_card(app, course)
         assert 'Уточнюються' in html
         assert 'Дізнатись більше' in html
         assert '#formats' not in html
@@ -218,18 +240,57 @@ class TestRecommendCard:
     def test_available_course_links_to_formats_section(self, app):
         course = _course('З датами')
         inst = _instance(course)
+        _tariff(inst, 6000)
         db.session.commit()
-        with app.test_request_context('/'):
-            html = render_template(
-                'partials/_course_recommend_card.html',
-                course=course,
-                rec_upcoming={course.id: [inst]},
-                rec_seats={inst.id: 4},
-                rec_open_ids={inst.id},
-            )
+        html = _render_card(app, course, inst, seats=4)
         assert '#formats' in html
         assert 'Обрати дату' in html
         assert '4 місця' in html
+
+    def test_no_formats_anchor_without_active_tariffs(self, app):
+        # Секція #formats на сторінці курсу існує лише за наявності активних
+        # тарифів -- інакше якір веде в нікуди.
+        course = _course('Без тарифів')
+        inst = _instance(course)
+        db.session.commit()
+        html = _render_card(app, course, inst, seats=4)
+        assert '#formats' not in html
+        assert 'Обрати дату' in html
+
+    def test_free_instance_is_not_shown_with_course_base_price(self, app):
+        course = _course('Безкоштовний вебінар', price=4000)
+        inst = _instance(course)
+        _tariff(inst, 0)
+        db.session.commit()
+        html = _render_card(app, course, inst, seats=4)
+        assert 'Безкоштовно' in html
+        assert '4000' not in html
+
+    def test_mixed_free_and_paid_tariffs_are_not_called_free(self, app):
+        course = _course('Онлайн безкоштовно, практикум платно', price=4000)
+        inst = _instance(course)
+        _tariff(inst, 0, name='Онлайн')
+        _tariff(inst, 9000, name='Практикум')
+        db.session.commit()
+        html = _render_card(app, course, inst, seats=4)
+        assert 'Безкоштовно' not in html
+        assert 'від' in html
+
+    def test_price_is_hidden_when_course_has_no_price_data(self, app):
+        course = _course('Без цін', price=0)
+        db.session.commit()
+        html = _render_card(app, course)
+        assert 'iprm-course-card__price' not in html
+
+    def test_tags_use_translated_values(self, app):
+        course = _course('З тегами', tags=['плазмотерапія'])
+        course.set_translation(
+            'ru', 'tags', {source_key('плазмотерапія'): 'плазмотерапия'},
+        )
+        db.session.commit()
+        html = _render_card(app, course, lang='ru')
+        assert 'плазмотерапия' in html
+        assert 'плазмотерапія' not in html
 
 
 class TestPaymentSuccessBlock:

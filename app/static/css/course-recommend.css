@@ -47,10 +47,6 @@
   outline-offset: 2px;
 }
 
-.apple-page .iprm-rec-card .apple-card-body {
-  gap: 0;
-}
-
 /* Короткий опис: рівно три рядки, щоб картки в рядку лишались однакові. */
 .apple-page .iprm-rec-card__summary {
   font-size: 0.875rem;
@@ -157,11 +153,10 @@
   }
 }
 
-/* ===== Сітка ===== */
-
-.apple-page .iprm-course-cards--recommend {
-  align-items: stretch;
-}
+/* ===== Сітка =====
+   Базові 3 колонки приходять з apple-pages.css; там же 1 колонка на <=768px.
+   Проміжний брейкпоінт задаємо тут: правило .iprm-course-cards у common.css
+   має нижчу специфічність і не перебиває .apple-page .iprm-course-cards. */
 
 @media (max-width: 1024px) {
   .apple-page .iprm-course-cards--recommend {

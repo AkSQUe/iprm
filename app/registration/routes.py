@@ -563,11 +563,12 @@ def confirmation(registration_id):
         and reg.payment_amount and reg.payment_amount > 0
     )
 
-    # Крос-сел показуємо лише коли оплата вже позаду: поки на сторінці головна
-    # дія -- "оплатіть участь", інші курси її розмивають. Заразом не платимо
-    # за підбір запитами там, де блок все одно не рендериться.
+    # Крос-сел показуємо лише коли платіжний шлях завершено: поки на сторінці
+    # головна дія -- "оплатіть участь" (або платіж ще в обробці), інші курси її
+    # розмивають. Заразом не платимо за підбір запитами там, де блок все одно
+    # не рендериться.
     recommend = {}
-    if not needs_payment:
+    if not reg.awaiting_payment:
         from app.services.course_recommend import recommend_context
         recommend = recommend_context(
             base_course=reg.instance.course if reg.instance else None,
@@ -788,7 +789,7 @@ def complete_payment(token):
     # Крос-сел -- лише після оплати (див. коментар у confirmation). Гість не
     # залогінений, тож виключення вже куплених рахуємо по reg.user.
     recommend = {}
-    if not needs_payment:
+    if not reg.awaiting_payment:
         from app.services.course_recommend import recommend_context
         recommend = recommend_context(
             base_course=reg.instance.course if reg.instance else None,

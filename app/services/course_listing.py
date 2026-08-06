@@ -58,6 +58,58 @@ def open_from_capacity(capacity):
     return {i for i, left in capacity.items() if left is None or left > 0}
 
 
+def upcoming_capacity(course_ids=None, now=None):
+    """Місткість МАЙБУТНІХ проведень: ({inst_id: seats_left}, {course_id}).
+
+    Відрізняється від capacity_map тим, що відкидає минулі дати й заразом
+    віддає множину курсів, куди ще можна записатись. Це дозволяє ранжувати
+    каталог за доступністю ОДНИМ запитом, не завантажуючи самі проведення
+    (див. services.course_recommend).
+    """
+    now = now or datetime.now(timezone.utc)
+    query = (
+        db.session.query(
+            CourseInstance.course_id,
+            CourseInstance.id,
+            CourseInstance.max_participants,
+            Course.max_participants.label('course_max'),
+            func.count(EventRegistration.id).label('active_count'),
+        )
+        .join(Course, Course.id == CourseInstance.course_id)
+        .outerjoin(
+            EventRegistration,
+            db.and_(
+                EventRegistration.instance_id == CourseInstance.id,
+                EventRegistration.status.notin_(['cancelled']),
+            ),
+        )
+        .filter(
+            CourseInstance.status.in_(('published', 'active')),
+            db.or_(
+                CourseInstance.start_date.is_(None),
+                CourseInstance.start_date >= now,
+            ),
+        )
+        .group_by(
+            CourseInstance.course_id, CourseInstance.id,
+            CourseInstance.max_participants, Course.max_participants,
+        )
+    )
+    if course_ids is not None:
+        if not course_ids:
+            return {}, set()
+        query = query.filter(CourseInstance.course_id.in_(course_ids))
+
+    capacity, open_courses = {}, set()
+    for course_id, inst_id, inst_max, course_max, active_count in query.all():
+        cap = inst_max if inst_max is not None else course_max
+        left = None if cap is None else max(cap - active_count, 0)
+        capacity[inst_id] = left
+        if left is None or left > 0:
+            open_courses.add(course_id)
+    return capacity, open_courses
+
+
 def active_courses(featured_first=False):
     """Активні курси з підвантаженими тренером/проведеннями/тарифами.
 
