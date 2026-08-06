@@ -65,7 +65,7 @@
                     що платіж не пройшов. -#}
                 {% if registration.payment_amount is not none %}
                     {% if (registration.payment_amount | float) > 0 %}
-                        {{ detail_row('Сума', (registration.payment_amount | int) ~ ' UAH', LW) }}
+                        {{ detail_row('Сума', registration.payment_amount | money, LW) }}
                     {% elif registration.has_discount %}
                         {{ detail_row('Сума', 'Оплачено промокодом (0 UAH)', LW) }}
                     {% else %}
@@ -73,8 +73,8 @@
                     {% endif %}
                 {% endif %}
                 {% if registration.has_discount %}
-                {{ detail_row('Знижка', '-' ~ (registration.discount_amount | int) ~ ' UAH'
-                              ~ (' (було ' ~ (registration.amount_before_discount | int) ~ ' UAH)'), LW) }}
+                {{ detail_row('Знижка', '-' ~ (registration.discount_amount | money)
+                              ~ ' (було ' ~ (registration.amount_before_discount | money) ~ ')', LW) }}
                 {% endif %}
                 {% if registration.promo_code %}
                 {{ detail_row('Промокод', registration.promo_code.code ~ ' — ' ~ registration.promo_code.discount_label, LW) }}

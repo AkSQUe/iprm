@@ -362,6 +362,17 @@ class SiteSettingsForm(FlaskForm):
         filters=[lambda v: 30 if v in (None, '') else v],
         description='Дедлайн -- те, що змушує повернутись, а не відкласти.',
     )
+    registration_email_delay_minutes = IntegerField(
+        'Затримка листа про реєстрацію (хвилин)',
+        validators=[Optional(), NumberRange(min=0, max=120)],
+        default=5,
+        filters=[lambda v: 5 if v in (None, '') else v],
+        description=(
+            'Пауза перед листом "Реєстрацію підтверджено" для неоплачених '
+            'реєстрацій -- щоб платіж встиг дійти. Якщо за цей час оплата '
+            'надійшла, лист не надсилається взагалі. 0 -- слати негайно.'
+        ),
+    )
 
 
 # ========== COURSES / INSTANCES / REQUESTS ==========

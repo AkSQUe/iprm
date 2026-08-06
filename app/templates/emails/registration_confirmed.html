@@ -38,7 +38,10 @@
 
     {% set due_amount = registration.payment_amount or event.price %}
     {% if due_amount and due_amount > 0 and registration.payment_status == 'unpaid' %}
-    {% set due_text = (due_amount | int) ~ " UAH" %}
+    {#- money, а не `| int`: залишок після промокоду буває дробовим (0.60),
+        і округлення вниз перетворювало його на "0 UAH" -- людині
+        пропонували сплатити нуль. -#}
+    {% set due_text = due_amount | money %}
     {% if registration.tariff %}
     {% set due_text = due_text ~ ' (' ~ _('тариф') ~ ' «' ~ registration.tariff.name ~ '»)' %}
     {% endif %}

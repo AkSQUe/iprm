@@ -104,6 +104,16 @@ class EventRegistration(TimestampMixin, db.Model):
     # (instance_id, place_number) WHERE place_number IS NOT NULL.
     place_number = db.Column(db.Integer)
 
+    # Коли планувальник має надіслати лист "Реєстрацію підтверджено".
+    # Заповнюється ЛИШЕ публічним чекаутом для реєстрацій, за які ще треба
+    # платити; знімається після надсилання або коли оплата прийшла раніше.
+    # Окрема колонка, а не пошук по email_logs: інакше під розсилку
+    # потрапили б реєстрації, заведені адміном чи xlsx-імпортом, яким цей
+    # лист не призначався.
+    confirmation_email_due_at = db.Column(
+        db.DateTime(timezone=True), index=True,
+    )
+
     user = db.relationship('User', back_populates='registrations')
     instance = db.relationship(
         'CourseInstance',

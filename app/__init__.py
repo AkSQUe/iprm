@@ -173,6 +173,11 @@ def create_app(config_name=None):
     # лише там, де текст читає людина (не в JSON-LD, ICS і партнерському API).
     from app.services.city_glossary import localize_location
     app.jinja_env.filters['localize_location'] = localize_location
+    # Суми: `| int` округлював 0.60 до 0, і лист про залишок після промокоду
+    # показував "0 UAH". Копійки друкуємо лише коли вони є.
+    from app.services.money import format_amount, money
+    app.jinja_env.filters['money'] = money
+    app.jinja_env.filters['amount'] = format_amount
 
     # Дані перекладів для інлайн мовних вкладок в адмін-формах
     # (partials/_i18n_tabs.html). Єдине джерело -- translation_registry.

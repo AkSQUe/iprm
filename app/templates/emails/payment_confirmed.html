@@ -37,14 +37,16 @@
                 {% if event.location %}
                 {{ detail_row(_('Місце'), event.location) }}
                 {% endif %}
-                {#- Сума 0 -- не помилка, а оплата промокодом чи безкоштовний
-                    захід. Раніше в листі стояло голе "0 UAH", і виглядало це
-                    як зламаний платіж. -#}
+                {#- Сума друкується через `money`, а не `| int`: після великої
+                    знижки до сплати лишається дріб (0.60), і округлення вниз
+                    показувало "0 UAH" -- людина вважала платіж зламаним.
+                    Справжній нуль -- це оплата промокодом або безкоштовна
+                    участь, і про це кажемо словами. -#}
                 {% if registration.payment_amount is not none %}
                     {% if (registration.payment_amount | float) > 0 %}
-                        {{ detail_row(_('Сума'), (registration.payment_amount | int) ~ " UAH") }}
+                        {{ detail_row(_('Сума'), registration.payment_amount | money) }}
                         {% if registration.has_discount %}
-                        {{ detail_row(_('Знижка'), "-" ~ (registration.discount_amount | int) ~ " UAH") }}
+                        {{ detail_row(_('Знижка'), "-" ~ (registration.discount_amount | money)) }}
                         {% endif %}
                     {% elif registration.has_discount %}
                         {{ detail_row(_('Сума'), _('Оплачено промокодом')) }}

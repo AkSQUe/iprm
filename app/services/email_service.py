@@ -606,6 +606,106 @@ class EmailService:
             return False
 
     @staticmethod
+    def schedule_registration_confirmation(registration):
+        """Поставити лист "Реєстрацію підтверджено" в чергу з паузою.
+
+        Навіщо пауза: людина, яка платить одразу (підтверджує платіж у
+        застосунку банку), встигала отримати лист "до оплати" ще ДО того,
+        як платіж дійшов. Через N хвилин планувальник перевіряє статус
+        повторно: якщо оплата вже є -- лист не піде взагалі, бо
+        payment_confirmed каже все те саме й більше.
+
+        Пауза стосується лише неоплачених реєстрацій: безкоштовній участі
+        чекати нічого, тому такий лист іде негайно.
+
+        МУТУЄ сесію без commit -- caller відповідає за commit.
+        Повертає True, якщо лист відкладено (тобто слати зараз НЕ треба).
+        """
+        from datetime import timedelta
+        from app.models.mixins import utcnow
+        from app.models.site_settings import SiteSettings
+
+        if registration.payment_status == 'paid':
+            return False
+        try:
+            delay = int(SiteSettings.get().registration_email_delay_minutes or 0)
+        except Exception:
+            logger.exception('Cannot read registration email delay')
+            return False
+        if delay <= 0:
+            return False
+
+        registration.confirmation_email_due_at = utcnow() + timedelta(minutes=delay)
+        logger.info('REG-%d: лист про реєстрацію відкладено на %d хв',
+                    registration.id, delay)
+        return True
+
+    @staticmethod
+    def cancel_pending_registration_confirmation(registration):
+        """Скасувати відкладений лист (оплата прийшла раніше за таймер).
+
+        МУТУЄ сесію без commit. Повертає True, якщо було що скасовувати.
+        """
+        if registration.confirmation_email_due_at is None:
+            return False
+        registration.confirmation_email_due_at = None
+        logger.info('REG-%d: відкладений лист про реєстрацію скасовано '
+                    '(оплата надійшла раніше)', registration.id)
+        return True
+
+    @staticmethod
+    def send_due_registration_confirmations(limit=100):
+        """Надіслати листи, чий час настав. Викликається планувальником.
+
+        Мітку знімаємо ОДНИМ комітом ДО надсилання, а не після. Дві
+        причини. По-перше, send_email відкриває власний app-context (а з
+        ним і власну сесію), тож зміна, залишена "на потім", до бази не
+        доїжджає. По-друге, якщо процес упаде посеред розсилки, мітка вже
+        знята -- інакше наступний запуск надіслав би ті самі листи ще раз.
+
+        Ціна -- лист може загубитись при падінні саме в цю мить. Для
+        разового підтвердження це дешевше за дубль.
+        """
+        from app.models.mixins import utcnow
+        from app.models.registration import EventRegistration
+
+        due = (EventRegistration.query
+               .filter(EventRegistration.confirmation_email_due_at.isnot(None),
+                       EventRegistration.confirmation_email_due_at <= utcnow())
+               .order_by(EventRegistration.confirmation_email_due_at.asc())
+               .limit(limit).all())
+        if not due:
+            return 0, 0
+
+        # Кого слати -- вирішуємо ДО зняття міток: після коміту об'єкти
+        # можуть перечитатись, а рішення має спиратись на стан "на момент
+        # настання часу".
+        to_send = []
+        skipped = 0
+        for reg in due:
+            if reg.payment_status == 'paid' or reg.status == 'cancelled':
+                skipped += 1
+                logger.info(
+                    'REG-%d: лист про реєстрацію не потрібен (status=%s '
+                    'payment=%s)', reg.id, reg.status, reg.payment_status,
+                )
+            else:
+                to_send.append(reg)
+            reg.confirmation_email_due_at = None
+        db.session.commit()
+
+        sent = 0
+        for reg in to_send:
+            try:
+                EmailService.send_registration_confirmation(reg)
+                sent += 1
+            except Exception:
+                logger.exception(
+                    'Failed to send delayed confirmation for REG-%d', reg.id,
+                )
+        return sent, skipped
+
+    @staticmethod
     def _thankyou_promo(registration):
         """Персональний код на наступний курс (або None). Комітить сам.
 

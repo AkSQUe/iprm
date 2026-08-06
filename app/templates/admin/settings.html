@@ -374,6 +374,20 @@
       </div>
     </div>
 
+    <!-- Registration email delay -->
+    <div class="form-section admin-form__section" id="registration-email">
+      <h3 class="admin-form__section-title">Лист про реєстрацію</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group">
+          <label for="registration_email_delay_minutes">{{ form.registration_email_delay_minutes.label.text }}</label>
+          {{ form.registration_email_delay_minutes(class="form-input", id="registration_email_delay_minutes", type="number", min="0", max="120") }}
+          {% if form.registration_email_delay_minutes.description %}<small class="form-hint">{{ form.registration_email_delay_minutes.description }}</small>{% endif %}
+        </div>
+
+      </div>
+    </div>
+
     <!-- Actions -->
     <div class="admin-form__actions">
       <a href="{{ url_for('admin.translations_edit', entity='site_settings', obj_id=1) }}" class="btn-admin btn-admin--secondary">Переклади</a>

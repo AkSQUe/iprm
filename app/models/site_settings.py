@@ -253,6 +253,15 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
         db.Integer, default=30, nullable=False, server_default='30',
     )
 
+    # Затримка листа "Реєстрацію підтверджено" для НЕОПЛАЧЕНИХ реєстрацій.
+    # Хто платить одразу (підтверджує в застосунку банку), встигав отримати
+    # лист "до оплати" ще під час платежу. Пауза дає платежу дійти: якщо за
+    # цей час прийшла оплата, лист не надсилається взагалі -- людина
+    # отримує тільки "Ви в списку учасників". 0 -- слати негайно.
+    registration_email_delay_minutes = db.Column(
+        db.Integer, default=5, nullable=False, server_default='5',
+    )
+
     __table_args__ = (
         db.CheckConstraint(
             "referral_attribution IN ('first', 'last')",

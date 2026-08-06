@@ -388,10 +388,18 @@ def register_instance(instance_id):
                 db.session.commit()
 
             # Best-effort email-підтвердження. Збій SMTP не ламає реєстрацію.
+            #
+            # Для неоплаченої реєстрації лист відкладаємо: хто платить
+            # одразу, встигав отримати "до оплати" ще під час платежу.
+            # Надішле планувальник -- і лише якщо оплата так і не прийшла.
             try:
                 from app.services.email_service import EmailService
-                EmailService.send_registration_confirmation(reg)
+                if EmailService.schedule_registration_confirmation(reg):
+                    db.session.commit()
+                else:
+                    EmailService.send_registration_confirmation(reg)
             except Exception:
+                db.session.rollback()
                 logger.exception(
                     'Failed to queue confirmation email for reg %d', reg.id,
                 )

@@ -59,6 +59,13 @@ def init_scheduler(app):
     if _initialized:
         return
 
+    # У тестах планувальник не потрібен: для in-memory SQLite усі з'єднання
+    # ділять одну базу (StaticPool), тож фонові джоби ходили б у ту саму БД
+    # з іншого потоку і комітили посеред чужої тест-транзакції. Саме звідси
+    # бралися плавучі падіння на нібито не пов'язаних тестах.
+    if app.config.get('TESTING'):
+        return
+
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true' and app.debug:
         return
 
@@ -105,6 +112,14 @@ def init_scheduler(app):
         id='webhook_queue_worker',
         replace_existing=True,
         name='Відправка webhook-ів партнерам',
+    )
+
+    scheduler.add_job(
+        send_due_registration_confirmations,
+        trigger=CronTrigger(minute='*'),  # every minute
+        id='registration_confirmations',
+        replace_existing=True,
+        name='Відкладені листи про реєстрацію',
     )
 
     scheduler.add_job(
@@ -356,6 +371,34 @@ def email_queue_maintenance():
                 logger.info(
                     'Email maintenance: %d stale cleaned, %d retried, %d bounces suppressed',
                     stale_count, retry_count, bounce_count,
+                )
+
+
+def send_due_registration_confirmations():
+    """Periodic job: надіслати відкладені листи "Реєстрацію підтверджено".
+
+    Лист чекає паузу (SiteSettings.registration_email_delay_minutes), щоб
+    платіж встиг дійти. Якщо за цей час оплата надійшла -- лист не йде.
+    """
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('registration_confirmations') as got:
+            if not got:
+                logger.debug(
+                    'registration_confirmations: another worker holds the lock')
+                return
+            from app.extensions import db
+            from app.services.email_service import EmailService
+            try:
+                sent, skipped = EmailService.send_due_registration_confirmations()
+            except Exception:
+                db.session.rollback()
+                logger.exception('send_due_registration_confirmations failed')
+                return
+            if sent or skipped:
+                logger.info(
+                    'Відкладені листи про реєстрацію: надіслано %d, '
+                    'пропущено %d (оплачено/скасовано)', sent, skipped,
                 )
 
 

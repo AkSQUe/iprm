@@ -399,6 +399,16 @@ def test_sent_email_body_links_to_public_page(client, monkeypatch):
     client.post(_url(inst), data=_payload())
     reg = EventRegistration.query.filter_by(instance_id=inst.id).one()
 
+    # Лист неоплаченої реєстрації тепер відкладений (щоб той, хто платить
+    # одразу, не отримав "до оплати" під час платежу). Проганяємо чергу
+    # вручну -- саме тим викликом, який робить планувальник.
+    from app.models.mixins import utcnow
+    from app.services.email_service import EmailService
+    assert reg.confirmation_email_due_at is not None, 'лист не поставлено в чергу'
+    reg.confirmation_email_due_at = utcnow() - timedelta(seconds=1)
+    db.session.commit()
+    EmailService.send_due_registration_confirmations()
+
     # Саме шаблон учасника: send_registration_confirmation слідом шле ще
     # й нотифікацію адміну, і вона була б "останнім" логом реєстрації.
     log = (EmailLog.query
