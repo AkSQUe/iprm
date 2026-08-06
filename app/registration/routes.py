@@ -167,6 +167,37 @@ def _profile_complete(user):
                 and user.medical_profile.is_complete)
 
 
+def _deliver_registration_confirmation(reg):
+    """Надіслати лист "Реєстрацію підтверджено" -- одразу або з паузою.
+
+    Пауза потрібна лише неоплаченій онлайн-реєстрації: хто платить
+    відразу, встигав отримати "до оплати" ще під час платежу. Надішле
+    планувальник -- і лише якщо оплата так і не прийшла.
+
+    Якщо мітку не вдалося зберегти, шлемо негайно: реєстрація без жодного
+    листа гірша за лист, що прийшов зарано. Збій самого SMTP реєстрацію
+    не ламає -- він тут best-effort, як і був.
+    """
+    from app.services.email_service import EmailService
+    try:
+        deferred = EmailService.schedule_registration_confirmation(reg)
+        if deferred:
+            db.session.commit()
+            return
+    except Exception:
+        db.session.rollback()
+        logger.exception(
+            'REG-%d: не вдалося відкласти лист -- шлемо негайно', reg.id,
+        )
+
+    try:
+        EmailService.send_registration_confirmation(reg)
+    except Exception:
+        logger.exception(
+            'Failed to queue confirmation email for reg %d', reg.id,
+        )
+
+
 def _login_next_path():
     """Будує `next`-URL для редіректу на /login, прибираючи `prefill`-токен.
 
@@ -388,21 +419,7 @@ def register_instance(instance_id):
                 db.session.commit()
 
             # Best-effort email-підтвердження. Збій SMTP не ламає реєстрацію.
-            #
-            # Для неоплаченої реєстрації лист відкладаємо: хто платить
-            # одразу, встигав отримати "до оплати" ще під час платежу.
-            # Надішле планувальник -- і лише якщо оплата так і не прийшла.
-            try:
-                from app.services.email_service import EmailService
-                if EmailService.schedule_registration_confirmation(reg):
-                    db.session.commit()
-                else:
-                    EmailService.send_registration_confirmation(reg)
-            except Exception:
-                db.session.rollback()
-                logger.exception(
-                    'Failed to queue confirmation email for reg %d', reg.id,
-                )
+            _deliver_registration_confirmation(reg)
             if is_free:
                 flash(_('Реєстрацію підтверджено'), 'success')
             else:

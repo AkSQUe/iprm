@@ -129,6 +129,16 @@ def test_paid_registration_is_not_deferred(site, registration):
     assert registration.confirmation_email_due_at is None
 
 
+def test_invoice_payment_is_not_deferred(site, registration):
+    """Оплата за рахунком іде через банк -- гонки з онлайн-платежем немає,
+    а лист це інструкція, як завантажити рахунок."""
+    registration.payment_method = 'invoice'
+    db.session.commit()
+
+    assert EmailService.schedule_registration_confirmation(registration) is False
+    assert registration.confirmation_email_due_at is None
+
+
 def test_zero_delay_keeps_old_behaviour(site, registration):
     site.registration_email_delay_minutes = 0
     db.session.commit()
@@ -192,6 +202,23 @@ def test_payment_ops_cancels_pending_letter(site, registration):
     assert registration.confirmation_email_due_at is None
     # Повторний виклик нічого не робить -- ознака вже знята.
     assert EmailService.cancel_pending_registration_confirmation(registration) is False
+
+
+def test_failed_deferral_falls_back_to_sending_now(site, registration,
+                                                    monkeypatch):
+    """Реєстрація без жодного листа гірша за лист, що прийшов зарано."""
+    _no_smtp(monkeypatch)
+    from app.registration.routes import _deliver_registration_confirmation
+
+    def boom(_reg):
+        raise RuntimeError('БД недоступна')
+
+    monkeypatch.setattr(EmailService, 'schedule_registration_confirmation',
+                        staticmethod(boom))
+
+    _deliver_registration_confirmation(registration)
+
+    assert _confirmation_logs(registration) == 1
 
 
 def test_letter_shows_kopiykas_left_after_promo(site, registration, monkeypatch):

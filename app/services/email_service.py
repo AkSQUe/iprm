@@ -615,8 +615,10 @@ class EmailService:
         повторно: якщо оплата вже є -- лист не піде взагалі, бо
         payment_confirmed каже все те саме й більше.
 
-        Пауза стосується лише неоплачених реєстрацій: безкоштовній участі
-        чекати нічого, тому такий лист іде негайно.
+        Пауза має сенс лише там, де є гонка з онлайн-платежем:
+          * безкоштовній участі чекати нічого (payment_status уже 'paid');
+          * оплата за рахунком іде через банк, а цей лист -- інструкція,
+            як завантажити рахунок; тримати її п'ять хвилин це чисте тертя.
 
         МУТУЄ сесію без commit -- caller відповідає за commit.
         Повертає True, якщо лист відкладено (тобто слати зараз НЕ треба).
@@ -626,6 +628,8 @@ class EmailService:
         from app.models.site_settings import SiteSettings
 
         if registration.payment_status == 'paid':
+            return False
+        if registration.payment_method == 'invoice':
             return False
         try:
             delay = int(SiteSettings.get().registration_email_delay_minutes or 0)

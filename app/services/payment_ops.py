@@ -190,10 +190,13 @@ class PaymentOps:
                 logger.exception('Promo sync failed for REG-%d', reg.id)
 
             if new_status == 'paid':
+                from app.services.email_service import EmailService
+
                 # Оплата випередила таймер -- відкладений лист "до оплати"
                 # більше не потрібен: payment_confirmed каже все те саме.
+                # (Планувальник перевіряє статус і сам, тож збій тут лише
+                # лишає зайвий рядок у черзі, а не шле хибний лист.)
                 try:
-                    from app.services.email_service import EmailService
                     if EmailService.cancel_pending_registration_confirmation(reg):
                         db.session.commit()
                 except Exception:
@@ -203,7 +206,6 @@ class PaymentOps:
                     )
 
                 try:
-                    from app.services.email_service import EmailService
                     EmailService.send_payment_confirmation(reg)
                 except Exception:
                     logger.exception('Failed to queue payment email for REG-%d', reg.id)
