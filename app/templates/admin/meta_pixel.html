@@ -39,23 +39,18 @@
 {% endblock %}
 
 {% block integration_readonly_hint %}
-{% if cfg.is_configured %}
-<a href="{{ url_for('admin.meta_pixel_test') }}" class="btn-admin btn-admin--secondary">
-  Надіслати тестову подію
-</a>
-{% endif %}
 <p class="form-hint">
   Якщо ID заданий у БД – рішення приймає прапорець нижче, env не підмінює
   вимкнення. Якщо поле БД порожнє – береться <code>META_PIXEL_ID</code> з env,
   і лише за <code>META_PIXEL_ENABLED=true</code>.
 </p>
-<p class="form-hint">
-  Активний Pixel шле <code>PageView</code> на всіх сторінках і події конверсій:
-  <code>Lead</code> (заявка на курс, B2B-запит, форма контактів),
-  <code>CompleteRegistration</code> (реєстрація акаунта),
-  <code>InitiateCheckout</code> (реєстрація на захід),
-  <code>Purchase</code> (успішна оплата, зі значенням у грн).
-</p>
+{% if cfg.is_configured %}
+<div class="admin-integration-test">
+  <a href="{{ url_for('admin.meta_pixel_test') }}" class="btn-admin btn-admin--secondary">
+    Надіслати тестову подію
+  </a>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block integration_edit_title %}Налаштування{% endblock %}
@@ -95,4 +90,21 @@
     </button>
   </div>
 </form>
+{% endblock %}
+
+{% block integration_extra %}
+<div class="form-section admin-form__section">
+  <h3 class="admin-form__section-title">Події, які надсилаються</h3>
+  <p>Активний Pixel шле <code>PageView</code> на всіх сторінках і події конверсій:</p>
+  <ul>
+    <li><code>Lead</code> – заявка на курс, B2B-запит, форма контактів</li>
+    <li><code>CompleteRegistration</code> – реєстрація акаунта</li>
+    <li><code>InitiateCheckout</code> – реєстрація на захід</li>
+    <li><code>Purchase</code> – успішна оплата, зі значенням у грн</li>
+  </ul>
+  <p class="form-hint">
+    Адмінка з трекінгу виключена: URL з даними клієнтів не потрапляють до Meta,
+    а перегляди адміністраторів не псують статистику конверсій.
+  </p>
+</div>
 {% endblock %}

@@ -66,7 +66,7 @@
   </div>
 
   {% if cfg.is_configured %}
-  <form method="POST" action="{{ url_for('admin.liqpay_test') }}" class="liqpay-test-form">
+  <form method="POST" action="{{ url_for('admin.liqpay_test') }}" class="admin-integration-test">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="btn-admin btn-admin--secondary">Тестувати з'єднання</button>
   </form>

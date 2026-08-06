@@ -52,5 +52,6 @@
 {% endblock %}
 
 {% block extra_scripts %}
+{{ super() }}
 <script defer src="{{ url_for('static', filename='js/meta-pixel-test.js') }}?v={{ assets_version }}"></script>
 {% endblock %}

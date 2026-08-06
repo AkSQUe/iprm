@@ -48,7 +48,7 @@
 
 {% block integration_readonly_hint %}
 {% if cfg.secret_key_masked %}
-<form method="POST" action="{{ url_for('admin.recaptcha_test') }}" class="liqpay-test-form">
+<form method="POST" action="{{ url_for('admin.recaptcha_test') }}" class="admin-integration-test">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <button type="submit" class="btn-admin btn-admin--secondary">Тестувати з'єднання</button>
 </form>

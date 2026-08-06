@@ -40,6 +40,13 @@
   word-break: break-all;
 }
 
+/* Дія "перевірити" під readonly-конфігом (liqpay, reCAPTCHA, Meta Pixel).
+   Раніше кожна сторінка мала свій клас без правил -- кнопка липла до
+   останнього рядка конфігу. */
+.admin-integration-test {
+  margin-top: 16px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .admin-readonly-config__row {
