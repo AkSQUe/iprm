@@ -41,6 +41,9 @@ _INLINE_WS_RE = re.compile('[ ' + chr(9) + chr(13) + chr(12) + chr(0xa0) + ']+')
 
 DEDUP_WINDOW_SECONDS = 60
 
+# utm_source для посилань, які ведуть з листів назад на сайт.
+EMAIL_UTM_SOURCE = 'email'
+
 CIRCUIT_BREAKER_THRESHOLD = 5
 CIRCUIT_BREAKER_WINDOW_MINUTES = 10
 
@@ -429,6 +432,32 @@ class EmailService:
     # ---- Convenience senders ----
 
     @staticmethod
+    def _site_base_url():
+        """Канонічна база сайту без хвостового слеша."""
+        from app.models.site_settings import SiteSettings
+        return (SiteSettings.get().website_url or '').rstrip('/')
+
+    @staticmethod
+    def _with_utm(url, campaign, content=None):
+        """Розмітити внутрішнє посилання з листа utm-мітками.
+
+        Без цього клік із листа зливається в GA4 з прямими заходами, і
+        зрозуміти, чи листи взагалі повертають людей на сайт, неможливо.
+        Наявні параметри зберігаються, utm_* перезаписуються.
+        """
+        if not url:
+            return url
+        from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+        parts = urlparse(url)
+        query = dict(parse_qsl(parts.query, keep_blank_values=True))
+        query['utm_source'] = EMAIL_UTM_SOURCE
+        query['utm_medium'] = 'email'
+        query['utm_campaign'] = campaign
+        if content:
+            query['utm_content'] = content
+        return urlunparse(parts._replace(query=urlencode(query)))
+
+    @staticmethod
     def _event_from_registration(registration):
         """Шаблони очікують об'єкт `event` з полями title/start_date/location/...
 
@@ -556,6 +585,66 @@ class EmailService:
         )
 
     @staticmethod
+    def _will_be_delivered(to, trigger):
+        """Чи має сенс готувати вміст листа для цього адресата.
+
+        Побічні ефекти (видача промокоду, генерація реферального коду)
+        пишуть у БД ДО send_email, а той може мовчки нічого не надіслати.
+        Без цієї перевірки кожна оплата при вимкненій розсилці або
+        заблокованій адресі плодила б промокод, якого ніхто не отримає.
+
+        Перевіряємо лише сталі умови; дедуп і circuit breaker -- тимчасові
+        (і видача коду до них ідемпотентна), тож їх лишаємо send_email.
+        """
+        try:
+            from app.models.email_settings import EmailSettings
+            if not EmailSettings.get().is_enabled:
+                return False
+            return not EmailService._is_blocked(to, trigger)
+        except Exception:
+            logger.exception('Delivery pre-check failed for %s', to)
+            return False
+
+    @staticmethod
+    def _thankyou_promo(registration):
+        """Персональний код на наступний курс (або None). Комітить сам.
+
+        Best-effort: збій видачі не має гасити лист про оплату, тому
+        помилка ловиться тут, а не спливає в платіжний флоу.
+        """
+        if not getattr(registration, 'user_has_real_email', False):
+            return None
+        try:
+            from app.services import promo_service
+            promo = promo_service.issue_thankyou_code(registration)
+            if promo is not None:
+                db.session.commit()
+            return promo
+        except Exception:
+            db.session.rollback()
+            logger.exception(
+                'Thank-you promo issue failed for reg=%s', registration.id,
+            )
+            return None
+
+    @staticmethod
+    def _referral_link_for(user):
+        """Реферальне посилання учасника (або None, якщо програму вимкнено)."""
+        try:
+            from app.models.site_settings import SiteSettings
+            if not SiteSettings.get().referral_enabled:
+                return None
+            from app.services import referral_service
+            link = referral_service.user_referral_link(user)
+            db.session.commit()  # ensure_referral_code робить лише flush
+            return link
+        except Exception:
+            db.session.rollback()
+            logger.exception('Referral link build failed for user=%s',
+                             getattr(user, 'id', None))
+            return None
+
+    @staticmethod
     def send_payment_confirmation(registration):
         event = EmailService._event_from_registration(registration)
         if event is None:
@@ -565,13 +654,59 @@ class EmailService:
             )
             return None
         user = registration.user
+        base = EmailService._site_base_url()
+        will_send = EmailService._will_be_delivered(user.email, 'payment')
+
+        # Лист про оплату -- пік довіри і водночас глухий кут: далі людині
+        # нічого робити. Тому даємо три виходи назад на сайт: кабінет
+        # (кнопка), календар (щоб не забула про курс) і причину повернутись
+        # -- реферальне посилання та персональний код на наступний курс.
+        #
+        # Вкладення переживає лише перше надсилання: retry_failed_emails
+        # пересилає збережений html_body без attachments, і .ics до
+        # адресата не доїде. Деградація м'яка -- кнопка Google Calendar у
+        # тілі листа лишається робочою.
+        from app.services import calendar_service
+        attachment = calendar_service.ics_attachment(
+            event, registration=registration, base_url=base,
+        )
+        promo = EmailService._thankyou_promo(registration) if will_send else None
+
+        # Гість після гостьового чекауту має акаунт, але не має пароля:
+        # /auth/account зустріне його логіном, крізь який він не пройде.
+        # Ведемо на ту саму token-сторінку, що й лист про реєстрацію.
+        needs_account = not user.has_password
+        entry_url = (EmailService._pay_url_for_registration(registration)
+                     if needs_account
+                     else (f'{base}/auth/account' if base else None))
+
         result = EmailService.send_email(
             to=user.email,
-            subject=lambda: _('Оплату підтверджено: %(title)s', title=event.title),
+            subject=lambda: _('Ви в списку учасників: %(title)s', title=event.title),
             template_name='payment_confirmed',
-            context={'user': user, 'event': event, 'registration': registration},
+            context={
+                'user': user, 'event': event, 'registration': registration,
+                'needs_account': needs_account,
+                'account_url': EmailService._with_utm(
+                    entry_url, 'payment_confirmed', 'account',
+                ) if entry_url else None,
+                'course_url': EmailService._with_utm(
+                    f'{base}/courses/{event.slug}', 'payment_confirmed', 'course',
+                ) if base and event.slug else None,
+                'courses_url': EmailService._with_utm(
+                    f'{base}/courses', 'payment_confirmed', 'catalog',
+                ) if base else None,
+                'gcal_url': calendar_service.google_calendar_url(
+                    event, base_url=base,
+                ),
+                'has_ics': attachment is not None,
+                'referral_link': (EmailService._referral_link_for(user)
+                                  if will_send else None),
+                'promo': promo,
+            },
             trigger='payment',
             registration_id=registration.id,
+            attachments=[attachment] if attachment else None,
         )
         EmailService.notify_admins_event(
             event_type='payment',

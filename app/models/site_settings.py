@@ -236,6 +236,23 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
         db.Boolean, default=True, nullable=False, server_default=db.true(),
     )
 
+    # Промокод-подяка: персональна знижка на НАСТУПНИЙ курс, яка видається
+    # автоматично разом з листом "оплату підтверджено". Сенс -- дати причину
+    # повернутись на сайт: лист про оплату інакше є глухим кутом.
+    # Код одноразовий і має термін дії (дедлайн -- те, що змушує діяти).
+    thankyou_promo_enabled = db.Column(
+        db.Boolean, default=False, nullable=False, server_default=db.false(),
+    )
+    # Знижка у відсотках. Лише percent: фіксована сума на курсах з різною
+    # ціною поводиться непередбачувано (на дешевому курсі це 100%).
+    thankyou_promo_percent = db.Column(
+        db.Integer, default=10, nullable=False, server_default='10',
+    )
+    # Скільки днів діє виданий код.
+    thankyou_promo_days = db.Column(
+        db.Integer, default=30, nullable=False, server_default='30',
+    )
+
     __table_args__ = (
         db.CheckConstraint(
             "referral_attribution IN ('first', 'last')",

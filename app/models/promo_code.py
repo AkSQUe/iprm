@@ -88,9 +88,29 @@ class PromoCode(TimestampMixin, db.Model):
         db.BigInteger, db.ForeignKey('users.id', ondelete='SET NULL'),
     )
 
+    # Реєстрація, ЗА ЯКУ код видано автоматично (промокод-подяка в листі про
+    # оплату). Не область дії, а походження: по ньому робимо видачу
+    # ідемпотентною (повторний лист не плодить кодів) і видно в адмінці,
+    # звідки код узявся. NULL -- код заведений руками.
+    #
+    # use_alter: event_registrations уже посилається на promo_codes, тож пряме
+    # оголошення дало б цикл, який SQLAlchemy не вміє відсортувати при
+    # create_all. Обмеження навішується окремим ALTER після обох таблиць.
+    issued_for_registration_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey(
+            'event_registrations.id', ondelete='SET NULL',
+            use_alter=True, name='fk_promo_codes_issued_for_registration',
+        ),
+        index=True,
+    )
+
     course = db.relationship('Course')
     instance = db.relationship('CourseInstance')
     created_by = db.relationship('User', foreign_keys=[created_by_id])
+    issued_for_registration = db.relationship(
+        'EventRegistration', foreign_keys=[issued_for_registration_id],
+    )
     redemptions = db.relationship(
         'PromoRedemption',
         back_populates='promo_code',

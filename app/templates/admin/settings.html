@@ -347,6 +347,33 @@
       </div>
     </div>
 
+    <!-- Thank-you promo code -->
+    <div class="form-section admin-form__section" id="thankyou-promo">
+      <h3 class="admin-form__section-title">Промокод-подяка</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            {{ form.thankyou_promo_enabled(id="thankyou_promo_enabled") }}
+            <label for="thankyou_promo_enabled">{{ form.thankyou_promo_enabled.label.text }}</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="thankyou_promo_percent">{{ form.thankyou_promo_percent.label.text }}</label>
+          {{ form.thankyou_promo_percent(class="form-input", id="thankyou_promo_percent", type="number", min="1", max="100") }}
+          {% if form.thankyou_promo_percent.description %}<small class="form-hint">{{ form.thankyou_promo_percent.description }}</small>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="thankyou_promo_days">{{ form.thankyou_promo_days.label.text }}</label>
+          {{ form.thankyou_promo_days(class="form-input", id="thankyou_promo_days", type="number", min="1", max="365") }}
+          {% if form.thankyou_promo_days.description %}<small class="form-hint">{{ form.thankyou_promo_days.description }}</small>{% endif %}
+        </div>
+
+      </div>
+    </div>
+
     <!-- Actions -->
     <div class="admin-form__actions">
       <a href="{{ url_for('admin.translations_edit', entity='site_settings', obj_id=1) }}" class="btn-admin btn-admin--secondary">Переклади</a>

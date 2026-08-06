@@ -25,6 +25,12 @@
           {{ promo.discount_label }} &middot; {{ promo.scope_label }}
           {% if promo.description %} &middot; {{ promo.description }}{% endif %}
         </p>
+        {% if promo.issued_for_registration_id %}
+        <p class="admin-hero__subtitle">
+          Видано автоматично як подяка за реєстрацію
+          <a href="{{ url_for('admin.instance_registrations', instance_id=promo.issued_for_registration.instance_id) }}">REG-{{ promo.issued_for_registration_id }}</a>
+        </p>
+        {% endif %}
       </div>
       <div class="admin-hero__actions">
         <button type="button" class="btn-admin btn-admin--secondary" data-copy-text="{{ promo.code }}" title="Скопіювати код">{{ icon('content_copy') }} Копіювати код</button>

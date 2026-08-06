@@ -36,6 +36,69 @@
 </table>
 {%- endmacro -%}
 
+{%- macro button_outline(text, url) -%}
+{#- Вторинна дія поруч із головною кнопкою (напр. "додати в календар").
+    Без заливки: у листі має бути рівно один кольоровий блок-заклик,
+    інакше жоден із них не читається як головний. -#}
+<table role="presentation" style="margin: 12px 0; width: 100%;" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+        <td align="center" style="border-radius: 6px;" bgcolor="#FFFFFF">
+            <!--[if mso]>
+            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ url }}" style="height:44px;v-text-anchor:middle;width:260px;" arcsize="14%" strokecolor="#7055a4" fillcolor="#ffffff">
+                <w:anchorlock/>
+                <center style="color:#7055a4;font-family:sans-serif;font-size:15px;font-weight:bold;">{{ text }}</center>
+            </v:roundrect>
+            <![endif]-->
+            <!--[if !mso]><!-->
+            <a href="{{ url }}" style="background-color: #FFFFFF; border: 1px solid #C9BEE0; border-radius: 6px; color: #5d4691; display: inline-block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; line-height: 44px; text-align: center; text-decoration: none; width: 260px; -webkit-text-size-adjust: none; mso-hide: all;">{{ text }}</a>
+            <!--<![endif]-->
+        </td>
+    </tr>
+</table>
+{%- endmacro -%}
+
+{%- macro code_box(code, caption, note) -%}
+{#- Промокод великим моноширинним шрифтом: його переписують руками або
+    диктують, тож розбірливість тут важливіша за витонченість. -#}
+<table role="presentation" style="width: 100%; margin: 16px 0; background-color: #FFFFFF; border: 2px dashed #C9BEE0; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+        <td style="padding: 20px 24px; text-align: center;">
+            {% if caption %}
+            <p style="margin: 0 0 8px 0; font-size: 13px; color: #6B7280; line-height: 1.5;">{{ caption }}</p>
+            {% endif %}
+            <p style="margin: 0; font-size: 26px; font-weight: 700; color: #5d4691; letter-spacing: 0.08em; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; line-height: 1.2;">{{ code }}</p>
+            {% if note %}
+            <p style="margin: 8px 0 0 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">{{ note }}</p>
+            {% endif %}
+        </td>
+    </tr>
+</table>
+{%- endmacro -%}
+
+{%- macro section_title(text) -%}
+<p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">{{ text }}</p>
+{%- endmacro -%}
+
+{%- macro step(number, title, text) -%}
+{#- Крок списку "що далі". Таблиця, а не <ol>: нумерація списків
+    у поштових клієнтах роз'їжджається по відступах. -#}
+<table role="presentation" style="width: 100%; margin-bottom: 14px;" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+        <td style="width: 30px; vertical-align: top; padding-top: 1px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                <td width="22" height="22" align="center" valign="middle" bgcolor="#EDE9F6" style="width: 22px; height: 22px; border-radius: 11px; font-size: 12px; font-weight: 700; color: #5d4691; line-height: 22px;">{{ number }}</td>
+            </tr></table>
+        </td>
+        <td style="vertical-align: top;">
+            <p style="margin: 0; font-size: 15px; font-weight: 600; color: #111827; line-height: 1.4;">{{ title }}</p>
+            {% if text %}
+            <p style="margin: 2px 0 0 0; font-size: 14px; color: #6B7280; line-height: 1.5;">{{ text }}</p>
+            {% endif %}
+        </td>
+    </tr>
+</table>
+{%- endmacro -%}
+
 {%- macro alert_success(title, message) -%}
 <table role="presentation" style="width: 100%; margin: 24px 0; background-color: #D1FAE5; border-radius: 6px;" cellpadding="0" cellspacing="0" border="0">
     <tr>

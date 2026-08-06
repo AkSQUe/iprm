@@ -1,42 +1,134 @@
 {% extends "emails/base.html" %}
-{% from "emails/_macros.html" import detail_row, alert_success, spacer %}
+{% from "emails/_macros.html" import detail_row, button_primary, button_outline,
+    code_box, section_title, step, divider, spacer %}
 
-{% block title %}{{ _('Оплату підтверджено') }}{% endblock %}
+{% block title %}{{ _('Ви в списку учасників') }}{% endblock %}
 
-{% block preview_text %}{% trans title=event.title %}Оплата за курс {{ title }} отримана{% endtrans %}{% endblock %}
+{% block preview_text %}{{ _('Місце закріплено за вами. Ось що варто зробити зараз.') }}{% endblock %}
 
 {% block content %}
     <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
-        {{ _('Оплату підтверджено') }}
+        {{ _('Ви в списку учасників') }}
     </h1>
 
     <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
-        {{ user.first_name or _('Шановний учаснику') }}, {{ _('ваша оплата успішно отримана.') }}
+        {{ user.first_name or _('Шановний учаснику') }}, {{ _('оплату отримано, місце закріплено за вами.') }}
     </p>
 
     <!-- Course details -->
-    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
-        {{ _('Деталі курсу') }}
-    </p>
+    {{ section_title(_('Деталі курсу')) }}
 
     <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
         <tr>
             <td style="padding: 20px 24px;">
-                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">{{ event.title }}</p>
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">
+                    {%- if course_url -%}
+                    <a href="{{ course_url }}" style="color: #111827; text-decoration: none;">{{ event.title }}</a>
+                    {%- else -%}
+                    {{ event.title }}
+                    {%- endif -%}
+                </p>
                 {% if registration.place_number %}
                 {{ detail_row(_('Номер місця'), "№" ~ registration.place_number) }}
                 {% endif %}
                 {% if event.start_date %}
                 {{ detail_row(_('Дата'), event.start_date.strftime('%d.%m.%Y %H:%M')) }}
                 {% endif %}
-                {% if registration.payment_amount %}
-                {{ detail_row(_('Сума'), (registration.payment_amount | int) ~ " UAH") }}
+                {% if event.location %}
+                {{ detail_row(_('Місце'), event.location) }}
+                {% endif %}
+                {#- Сума 0 -- не помилка, а оплата промокодом чи безкоштовний
+                    захід. Раніше в листі стояло голе "0 UAH", і виглядало це
+                    як зламаний платіж. -#}
+                {% if registration.payment_amount is not none %}
+                    {% if (registration.payment_amount | float) > 0 %}
+                        {{ detail_row(_('Сума'), (registration.payment_amount | int) ~ " UAH") }}
+                        {% if registration.has_discount %}
+                        {{ detail_row(_('Знижка'), "-" ~ (registration.discount_amount | int) ~ " UAH") }}
+                        {% endif %}
+                    {% elif registration.has_discount %}
+                        {{ detail_row(_('Сума'), _('Оплачено промокодом')) }}
+                    {% else %}
+                        {{ detail_row(_('Сума'), _('Безкоштовно')) }}
+                    {% endif %}
                 {% endif %}
             </td>
         </tr>
     </table>
 
-    {{ alert_success(_('Місце підтверджено'), _('Ваше місце на курсі підтверджено. Очікуйте нагадування перед початком.')) }}
+    {#- Гість купив без реєстрації: кабінет у нього формально є, а пароля
+        немає, тож кнопка в кабінет привела б його на логін. -#}
+    {% if account_url %}
+    {{ button_primary(_('Створити кабінет') if needs_account else _('Відкрити мій кабінет'), account_url) }}
+    {% endif %}
+
+    {% if gcal_url %}
+    {{ button_outline(_('Додати в календар'), gcal_url) }}
+    {% endif %}
+
+    {% if has_ics %}
+    <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5; text-align: center;">
+        {{ _('До листа додано файл iprm-course.ics — відкрийте його для Apple Calendar чи Outlook.') }}
+    </p>
+    {% endif %}
+
+    {{ divider() }}
+
+    <!-- Next steps -->
+    {{ section_title(_('Що далі')) }}
+
+    {{ step(1, _('Збережіть дату'),
+            _('Подія в календарі нагадає про курс за добу до початку.')) }}
+    {% if needs_account %}
+    {{ step(2, _('Заведіть кабінет'),
+            _('Задайте пароль — там будуть ваші курси, дані для сертифіката та самі сертифікати.')) }}
+    {% else %}
+    {{ step(2, _('Перевірте дані для сертифіката'),
+            _('Сертифікат формується з даних профілю — заповніть їх у кабінеті заздалегідь.')) }}
+    {% endif %}
+    {{ step(3, _('Заберіть сертифікат після участі'),
+            _('Він з’явиться в кабінеті одразу після підтвердження присутності.')) }}
+
+    {% if promo %}
+    {{ divider() }}
+
+    <!-- Thank-you promo code -->
+    {{ section_title(_('Знижка на наступний курс')) }}
+
+    <p class="mobile-text" style="margin: 0 0 4px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+        {% trans discount=promo.discount_label %}Дякуємо, що обрали ІПРМ. Ось персональний код на {{ discount }} для будь-якого наступного курсу.{% endtrans %}
+    </p>
+
+    {{ code_box(
+        promo.code,
+        _('Ваш код'),
+        _('Діє до %(date)s. Одне використання.',
+          date=promo.valid_until.strftime('%d.%m.%Y')) if promo.valid_until else _('Одне використання.')
+    ) }}
+
+    {% if courses_url %}
+    {{ button_outline(_('Обрати наступний курс'), courses_url) }}
+    {% endif %}
+    {% endif %}
+
+    {% if referral_link %}
+    {{ divider() }}
+
+    <!-- Referral -->
+    {{ section_title(_('Запросіть колегу')) }}
+
+    <p class="mobile-text" style="margin: 0 0 12px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+        {{ _('Поділіться цим посиланням з колегою. За кожну оплачену реєстрацію за вашою рекомендацією вам нараховуються бонусні бали.') }}
+    </p>
+
+    <table role="presentation" style="width: 100%; margin: 0 0 8px 0; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 14px 18px; word-break: break-all;">
+                <a href="{{ referral_link }}" style="font-size: 14px; color: #7055a4; text-decoration: none; line-height: 1.5;">{{ referral_link }}</a>
+            </td>
+        </tr>
+    </table>
+    {% endif %}
 
     {{ spacer(16) }}
 

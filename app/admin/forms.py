@@ -338,6 +338,31 @@ class SiteSettingsForm(FlaskForm):
         default=True,
     )
 
+    # Промокод-подяка (лист про оплату)
+    thankyou_promo_enabled = BooleanField(
+        'Видавати промокод на наступний курс після оплати',
+        default=False,
+    )
+    # filters: колонки NOT NULL, а порожнє поле дає None -- без підстановки
+    # дефолту збереження налаштувань падало б на порожньому вводі.
+    thankyou_promo_percent = IntegerField(
+        'Знижка промокоду (%)',
+        validators=[Optional(), NumberRange(min=1, max=100)],
+        default=10,
+        filters=[lambda v: 10 if v in (None, '') else v],
+        description=(
+            'Персональний одноразовий код, який учасник отримує в листі '
+            'про оплату. Діє на будь-який наступний курс.'
+        ),
+    )
+    thankyou_promo_days = IntegerField(
+        'Термін дії промокоду (днів)',
+        validators=[Optional(), NumberRange(min=1, max=365)],
+        default=30,
+        filters=[lambda v: 30 if v in (None, '') else v],
+        description='Дедлайн -- те, що змушує повернутись, а не відкласти.',
+    )
+
 
 # ========== COURSES / INSTANCES / REQUESTS ==========
 

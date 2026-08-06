@@ -20,7 +20,7 @@ from flask_babel import gettext as _
 from sqlalchemy import func
 
 from app.extensions import db
-from app.models.promo_code import PromoCode, PromoRedemption
+from app.models.promo_code import DISCOUNT_PERCENT, PromoCode, PromoRedemption
 from app.models.registration import EventRegistration
 
 logger = logging.getLogger(__name__)
@@ -34,6 +34,10 @@ CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 GENERATED_SUFFIX_LENGTH = 6
 # Скільки кодів дозволяємо згенерувати за раз (одна фарм-кампанія).
 MAX_BATCH = 200
+
+# Префікс кодів-подяк (видаються автоматично в листі про оплату). За ним
+# їх видно в адмінському списку серед кодів, заведених руками.
+THANKYOU_PREFIX = 'NEXT'
 
 
 class PromoError(Exception):
@@ -395,6 +399,81 @@ def stats(promo):
         'paid_count': paid,
         'voided': voided,
     }
+
+
+# ===================== промокод-подяка =====================
+
+def issue_thankyou_code(registration):
+    """Персональний код на НАСТУПНИЙ курс для щойно оплаченої реєстрації.
+
+    Навіщо: лист про оплату сам по собі -- глухий кут. Код зі строком дії
+    дає причину повернутись на сайт, поки враження від покупки свіже.
+
+    Код одноразовий (max_uses=1, per_user_limit=1) і діє на будь-який курс:
+    сенс саме в тому, щоб людина пішла обирати наступний.
+
+    Ідемпотентно: повторний виклик для тієї ж реєстрації (ретрай листа,
+    ручна переcилка) повертає вже виданий код. МУТУЄ сесію без commit --
+    як і решта функцій модуля.
+
+    Повертає PromoCode або None, якщо механіку вимкнено чи налаштовано
+    беззмістовно (0%, 0 днів).
+    """
+    from datetime import timedelta
+    from app.models.mixins import utcnow
+    from app.models.site_settings import SiteSettings
+
+    if registration is None or not registration.id:
+        return None
+
+    existing = (
+        PromoCode.query
+        .filter_by(issued_for_registration_id=registration.id)
+        .order_by(PromoCode.id.desc())
+        .first()
+    )
+    if existing is not None:
+        # Вичерпаний/протермінований код не перевидаємо: людина вже
+        # скористалась пропозицією або пропустила її.
+        return existing
+
+    settings = SiteSettings.get()
+    if not settings.thankyou_promo_enabled:
+        return None
+
+    percent = int(settings.thankyou_promo_percent or 0)
+    days = int(settings.thankyou_promo_days or 0)
+    if percent < 1 or percent > 100 or days < 1:
+        logger.warning(
+            'thankyou promo misconfigured: percent=%s days=%s -- код не видано',
+            percent, days,
+        )
+        return None
+
+    try:
+        code = generate_code(THANKYOU_PREFIX)
+    except PromoError:
+        logger.exception('thankyou promo: не вдалося згенерувати код')
+        return None
+
+    promo = PromoCode(
+        code=code,
+        code_norm=normalize_code(code),
+        description=f'Подяка за оплату REG-{registration.id}',
+        discount_type=DISCOUNT_PERCENT,
+        discount_value=Decimal(percent),
+        max_uses=1,
+        per_user_limit=1,
+        valid_until=utcnow() + timedelta(days=days),
+        issued_for_registration_id=registration.id,
+        is_active=True,
+    )
+    db.session.add(promo)
+    audit_logger.info(
+        'promo_thankyou_issued code=%s percent=%s days=%s reg=%s',
+        code, percent, days, registration.id,
+    )
+    return promo
 
 
 def list_redemptions(promo, limit=200):

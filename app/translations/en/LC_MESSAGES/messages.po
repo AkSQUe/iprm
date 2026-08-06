@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-06 21:05+0300\n"
+"POT-Creation-Date: 2026-08-06 21:42+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -2560,6 +2560,9 @@ msgstr "Paid with a promo code"
 msgid "Безкоштовно"
 msgstr "Free"
 
+msgid "Створити кабінет"
+msgstr "Create account"
+
 msgid "Відкрити мій кабінет"
 msgstr "Open my account"
 
@@ -2581,6 +2584,16 @@ msgstr "Save the date"
 
 msgid "Подія в календарі нагадає про курс за добу до початку."
 msgstr "The calendar event reminds you one day before the course starts."
+
+msgid "Заведіть кабінет"
+msgstr "Create your account"
+
+msgid ""
+"Задайте пароль — там будуть ваші курси, дані для сертифіката та самі "
+"сертифікати."
+msgstr ""
+"Set a password — your courses, certificate details and certificates all "
+"live there."
 
 msgid "Перевірте дані для сертифіката"
 msgstr "Check your certificate details"
@@ -2715,9 +2728,6 @@ msgstr ""
 "Your account holds the course materials and recording, the data for your "
 "BPR certificate and your registration history. We already have your "
 "details — just pick a password."
-
-msgid "Створити кабінет"
-msgstr "Create account"
 
 msgid ""
 "Щоб після курсу отримати сертифікат з балами БПР, заповніть коротку "

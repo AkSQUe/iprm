@@ -230,9 +230,30 @@ def notifications_templates():
         id = 2
         payment_status = 'paid'
         payment_amount = 12500
+        place_number = 7
+        has_discount = False
         STATUSES = MockRegistration.STATUSES
 
     reg_paid = MockRegPaid()
+
+    class MockPromo:
+        code = 'NEXT-A7K3XY'
+        discount_label = '10%'
+        valid_until = datetime(2026, 5, 15, 10, 0, tzinfo=timezone.utc)
+
+    # Прев'ю листа про оплату показує всі блоки одразу (кабінет, календар,
+    # промокод, реферальне посилання) -- інакше редактор бачив би порожній
+    # каркас і не міг оцінити довжину листа.
+    mock_payment_ctx = {
+        'needs_account': False,
+        'account_url': 'https://plasma-regen.com/auth/account',
+        'course_url': 'https://plasma-regen.com/courses/prp',
+        'courses_url': 'https://plasma-regen.com/courses',
+        'gcal_url': 'https://calendar.google.com/calendar/render?action=TEMPLATE',
+        'has_ics': True,
+        'promo': MockPromo(),
+        'referral_link': 'https://plasma-regen.com/?ref=u1a2b3c4d&utm_source=referral',
+    }
 
     class MockCertificate:
         number = '2026-2738-0001234-000001'
@@ -303,9 +324,10 @@ def notifications_templates():
             'label': 'Оплата',
             'template_name': 'payment_confirmed.html',
             'trigger': 'payment',
-            'subject': f'Оплату підтверджено: {event.title}',
+            'subject': f'Ви в списку учасників: {event.title}',
             'html': render_template('emails/payment_confirmed.html',
-                                    user=user, event=event, registration=reg_paid),
+                                    user=user, event=event, registration=reg_paid,
+                                    **mock_payment_ctx),
         },
         {
             'key': 'reminder-7',
