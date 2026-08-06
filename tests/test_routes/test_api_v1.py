@@ -165,17 +165,21 @@ class TestEventDetail:
 
 
 class TestSeatsLeft:
+    # Читаємо detail-ендпоінт, а не перший аркуш списку: список
+    # посторінковий (50 на сторінку), а спільна тестова БД накопичує
+    # закомічені курси інших тестів -- подія просто випадала зі сторінки.
+    def _card(self, client, slug):
+        resp = client.get(f'/api/v1/events/{slug}', headers={'X-API-Key': API_KEY})
+        assert resp.status_code == 200
+        return resp.get_json()
+
     def test_null_when_unlimited_capacity(
         self, client, partner_settings, published_event,
     ):
         inst = published_event._test_instance
         inst.max_participants = None
         db.session.commit()
-        resp = client.get('/api/v1/events', headers={'X-API-Key': API_KEY})
-        card = next(
-            e for e in resp.get_json()['items'] if e['slug'] == published_event.slug
-        )
-        assert card['seats_left'] is None
+        assert self._card(client, published_event.slug)['seats_left'] is None
 
     def test_reflects_active_registrations(
         self, client, partner_settings, published_event, user,
@@ -190,8 +194,4 @@ class TestSeatsLeft:
             ),
         ])
         db.session.commit()
-        resp = client.get('/api/v1/events', headers={'X-API-Key': API_KEY})
-        card = next(
-            e for e in resp.get_json()['items'] if e['slug'] == published_event.slug
-        )
-        assert card['seats_left'] == 9
+        assert self._card(client, published_event.slug)['seats_left'] == 9
