@@ -1,0 +1,30 @@
+{# Секція крос-селу "Наступний крок" -- спільна для сторінки курсу та екранів
+   після реєстрації/оплати.
+
+   Очікує (services.course_recommend.recommend_context):
+     rec_courses, rec_upcoming, rec_seats, rec_open_ids
+
+   Необов'язкові параметри виклику (через {% with %}):
+     rec_title    -- заголовок; типово "Наступний крок" з градієнтом
+     rec_subtitle -- підзаголовок; порожній рядок ховає його
+     rec_gray     -- сіра підкладка секції (сторінка курсу)
+     rec_compact  -- зменшені відступи (вузькі reg-екрани)
+     rec_id       -- id заголовка, якщо на сторінці два блоки #}
+{% if rec_courses %}
+{% set _id = rec_id | default('recommend-title') %}
+{% set _subtitle = rec_subtitle if rec_subtitle is defined else _('Схожі курси, які доповнять цю програму') %}
+<section class="iprm-section iprm-recommend{% if rec_gray | default(false) %} apple-section-gray{% endif %}{% if rec_compact | default(false) %} iprm-recommend--compact{% endif %}"
+         aria-labelledby="{{ _id }}">
+  <div class="iprm-section__inner">
+    <h2 id="{{ _id }}" class="iprm-section__title apple-reveal">{{ rec_title if rec_title is defined else _('Наступний <span class="apple-gradient-text">крок</span>') }}</h2>
+    {% if _subtitle %}
+    <p class="iprm-section__subtitle apple-reveal">{{ _subtitle }}</p>
+    {% endif %}
+    <div class="iprm-course-cards iprm-course-cards--recommend">
+      {% for course in rec_courses %}
+        {% include 'partials/_course_recommend_card.html' %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}

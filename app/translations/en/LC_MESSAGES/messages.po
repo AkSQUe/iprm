@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-06 18:40+0300\n"
+"POT-Creation-Date: 2026-08-06 21:05+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1032,8 +1032,8 @@ msgid "Відновлення паролю | ІПРМ"
 msgstr "Password reset | IPRM"
 
 #, python-format
-msgid "Оплату підтверджено: %(title)s"
-msgstr "Payment confirmed: %(title)s"
+msgid "Ви в списку учасників: %(title)s"
+msgstr "You're on the list: %(title)s"
 
 #, python-format
 msgid "Нагадування: %(title)s через %(days)s дн."
@@ -1870,9 +1870,6 @@ msgstr "Courses"
 msgid "Вас рекомендує <strong>%(inviter)s</strong>"
 msgstr "You were referred by <strong>%(inviter)s</strong>"
 
-msgid "Формат участі"
-msgstr "Participation format"
-
 msgid "Зареєструватись"
 msgstr "Sign up"
 
@@ -2012,12 +2009,6 @@ msgstr "Frequently asked <span class=\"apple-gradient-text\">questions</span>"
 
 msgid "Відгуки <span class=\"apple-gradient-text\">учасників</span>"
 msgstr "Participant <span class=\"apple-gradient-text\">reviews</span>"
-
-msgid "Наступний <span class=\"apple-gradient-text\">крок</span>"
-msgstr "Next <span class=\"apple-gradient-text\">step</span>"
-
-msgid "Схожі курси, які доповнять цю програму"
-msgstr "Similar courses that complement this program"
 
 msgid "Поділіться курсом"
 msgstr "Share the course"
@@ -2323,7 +2314,7 @@ msgid "Дата"
 msgstr "Date"
 
 msgid "Місце"
-msgstr "Seat"
+msgstr "Location"
 
 msgid ""
 "Анкета займе 2–3 хвилини: тип учасника, дата народження, освіта, місце "
@@ -2545,15 +2536,14 @@ msgstr ""
 "The link is valid for 1 hour. If you did not request a password reset, "
 "simply ignore this email — your password will remain unchanged."
 
-msgid "Оплату підтверджено"
-msgstr "Payment confirmed"
+msgid "Ви в списку учасників"
+msgstr "You're on the list"
 
-#, python-format
-msgid "Оплата за курс %(title)s отримана"
-msgstr "Payment for the course %(title)s received"
+msgid "Місце закріплено за вами. Ось що варто зробити зараз."
+msgstr "Your seat is reserved. Here's what to do next."
 
-msgid "ваша оплата успішно отримана."
-msgstr "your payment has been received successfully."
+msgid "оплату отримано, місце закріплено за вами."
+msgstr "your payment has been received and your seat is reserved."
 
 msgid "Номер місця"
 msgstr "Seat number"
@@ -2561,13 +2551,84 @@ msgstr "Seat number"
 msgid "Сума"
 msgstr "Amount"
 
-msgid "Місце підтверджено"
-msgstr "Seat confirmed"
+msgid "Знижка"
+msgstr "Discount"
 
-msgid "Ваше місце на курсі підтверджено. Очікуйте нагадування перед початком."
+msgid "Оплачено промокодом"
+msgstr "Paid with a promo code"
+
+msgid "Безкоштовно"
+msgstr "Free"
+
+msgid "Відкрити мій кабінет"
+msgstr "Open my account"
+
+msgid "Додати в календар"
+msgstr "Add to calendar"
+
+msgid ""
+"До листа додано файл iprm-course.ics — відкрийте його для Apple Calendar "
+"чи Outlook."
 msgstr ""
-"Your seat in the course has been confirmed. Expect a reminder before the "
-"start."
+"An iprm-course.ics file is attached — open it for Apple Calendar or "
+"Outlook."
+
+msgid "Що далі"
+msgstr "What's next"
+
+msgid "Збережіть дату"
+msgstr "Save the date"
+
+msgid "Подія в календарі нагадає про курс за добу до початку."
+msgstr "The calendar event reminds you one day before the course starts."
+
+msgid "Перевірте дані для сертифіката"
+msgstr "Check your certificate details"
+
+msgid ""
+"Сертифікат формується з даних профілю — заповніть їх у кабінеті "
+"заздалегідь."
+msgstr "The certificate is generated from your profile — fill it in beforehand."
+
+msgid "Заберіть сертифікат після участі"
+msgstr "Collect your certificate after the course"
+
+msgid "Він з’явиться в кабінеті одразу після підтвердження присутності."
+msgstr "It appears in your account as soon as attendance is confirmed."
+
+msgid "Знижка на наступний курс"
+msgstr "Discount on your next course"
+
+#, python-format
+msgid ""
+"Дякуємо, що обрали ІПРМ. Ось персональний код на %(discount)s для "
+"будь-якого наступного курсу."
+msgstr ""
+"Thank you for choosing IPRM. Here is a personal %(discount)s code for any"
+" next course."
+
+msgid "Ваш код"
+msgstr "Your code"
+
+#, python-format
+msgid "Діє до %(date)s. Одне використання."
+msgstr "Valid until %(date)s. Single use."
+
+msgid "Одне використання."
+msgstr "Single use."
+
+msgid "Обрати наступний курс"
+msgstr "Choose your next course"
+
+msgid "Запросіть колегу"
+msgstr "Invite a colleague"
+
+msgid ""
+"Поділіться цим посиланням з колегою. За кожну оплачену реєстрацію за "
+"вашою рекомендацією вам нараховуються бонусні бали."
+msgstr ""
+"Share this link with a colleague. You earn bonus points for every paid "
+"registration made on your recommendation."
 
 msgid "Вам нараховано бонусні бали"
 msgstr "You have been awarded bonus points"
@@ -3862,6 +3923,27 @@ msgstr "Level %(level)s/3"
 msgid "Фільтр за тегами"
 msgstr "Filter by tags"
 
+msgid "Схожі курси, які доповнять цю програму"
+msgstr "Similar courses that complement this program"
+
+msgid "Наступний <span class=\"apple-gradient-text\">крок</span>"
+msgstr "Next <span class=\"apple-gradient-text\">step</span>"
+
+msgid "Найближча дата"
+msgstr "Next date"
+
+msgid "Дати"
+msgstr "Dates"
+
+msgid "Уточнюються"
+msgstr "To be announced"
+
+msgid "Вільні місця"
+msgstr "Seats left"
+
+msgid "Обрати дату"
+msgstr "Choose a date"
+
 msgid "Умови отримання <span class=\"apple-gradient-text\">сертифікату</span>"
 msgstr ""
 "Requirements for receiving a <span class=\"apple-gradient-"
@@ -4089,6 +4171,9 @@ msgstr "Back to courses"
 msgid "Оплата успішна | ІПРМ"
 msgstr "Payment successful | IPRM"
 
+msgid "Оплату підтверджено"
+msgstr "Payment confirmed"
+
 msgid "Дякуємо! Ваша оплата успішно оброблена."
 msgstr "Thank you! Your payment has been processed successfully."
 
@@ -4100,6 +4185,15 @@ msgstr "Back to the course"
 
 msgid "До каталогу курсів"
 msgstr "To the course catalog"
+
+msgid "До особистого кабінету"
+msgstr "Go to account"
+
+msgid "Що <span class=\"apple-gradient-text\">далі</span>"
+msgstr "What comes <span class=\"apple-gradient-text\">next</span>"
+
+msgid "Курси, які добре продовжують цю програму"
+msgstr "Courses that pair well with this one"
 
 msgid "Завершення реєстрації | ІПРМ"
 msgstr "Complete registration | IPRM"
@@ -4124,9 +4218,6 @@ msgstr "Date:"
 
 msgid "Вартість:"
 msgstr "Price:"
-
-msgid "Безкоштовно"
-msgstr "Free"
 
 msgid "БПР:"
 msgstr "BPR:"
@@ -4665,4 +4756,25 @@ msgstr ""
 
 #~ msgid "Увійти з паролем"
 #~ msgstr "Sign in with password"
+
+#~ msgid "Оплату підтверджено: %(title)s"
+#~ msgstr "Payment confirmed: %(title)s"
+
+#~ msgid "Формат участі"
+#~ msgstr "Participation format"
+
+#~ msgid "Оплата за курс %(title)s отримана"
+#~ msgstr "Payment for the course %(title)s received"
+
+#~ msgid "ваша оплата успішно отримана."
+#~ msgstr "your payment has been received successfully."
+
+#~ msgid "Місце підтверджено"
+#~ msgstr "Seat confirmed"
+
+#~ msgid "Ваше місце на курсі підтверджено. Очікуйте нагадування перед початком."
+#~ msgstr ""
+#~ "Your seat in the course has been"
+#~ " confirmed. Expect a reminder before "
+#~ "the start."
 

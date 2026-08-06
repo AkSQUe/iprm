@@ -563,6 +563,17 @@ def confirmation(registration_id):
         and reg.payment_amount and reg.payment_amount > 0
     )
 
+    # Крос-сел показуємо лише коли оплата вже позаду: поки на сторінці головна
+    # дія -- "оплатіть участь", інші курси її розмивають. Заразом не платимо
+    # за підбір запитами там, де блок все одно не рендериться.
+    recommend = {}
+    if not needs_payment:
+        from app.services.course_recommend import recommend_context
+        recommend = recommend_context(
+            base_course=reg.instance.course if reg.instance else None,
+            user=current_user,
+        )
+
     profile = current_user.medical_profile
     return render_template(
         'registration/confirmation.html',
@@ -574,6 +585,7 @@ def confirmation(registration_id):
         invoice_available=bool(invoice_available),
         invoice_url=url_for('registration.invoice_download', registration_id=reg.id),
         certificate_data_complete=bool(profile and profile.is_complete),
+        **recommend,
     )
 
 
@@ -773,6 +785,16 @@ def complete_payment(token):
                 )
             )
 
+    # Крос-сел -- лише після оплати (див. коментар у confirmation). Гість не
+    # залогінений, тож виключення вже куплених рахуємо по reg.user.
+    recommend = {}
+    if not needs_payment:
+        from app.services.course_recommend import recommend_context
+        recommend = recommend_context(
+            base_course=reg.instance.course if reg.instance else None,
+            user=reg.user,
+        )
+
     return render_template(
         'registration/complete_pay.html',
         reg=reg,
@@ -788,6 +810,7 @@ def complete_payment(token):
         liqpay_signature=liqpay_signature,
         liqpay_checkout_url=liqpay_checkout_url,
         invoice_url=url_for('registration.complete_invoice', token=token),
+        **recommend,
     )
 
 

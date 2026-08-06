@@ -70,6 +70,9 @@ def active_courses(featured_first=False):
     order += [Course.sort_order, Course.title]
     return Course.query.options(
         joinedload(Course.trainer),
+        # card_media -- джерело course.card_src у кожній картці лістингу;
+        # без цього joinedload картки дають N+1 на медіа-реєстр.
+        joinedload(Course.card_media),
         selectinload(Course.instances).joinedload(CourseInstance.trainer),
         selectinload(Course.instances).selectinload(CourseInstance.tariffs),
     ).filter(Course.is_active.is_(True)).order_by(*order).all()

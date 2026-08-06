@@ -1,0 +1,180 @@
+/* ==========================================================================
+   Крос-сел "Наступний крок" -- інформативні картки рекомендованих курсів.
+
+   Використовується сторінкою курсу і екранами після реєстрації/оплати, тож
+   файл самодостатній: не спирається на page-courses.css (він підключений
+   лише на сторінках курсів). Базові .iprm-course-card / .iprm-card-badge /
+   .iprm-tag приходять з глобальних apple-pages.css і common.css.
+   ========================================================================== */
+
+/* Компактний варіант -- усередині вузьких reg-екранів, де секція вкладена
+   в .reg-layout з власними горизонтальними відступами. */
+.apple-page .iprm-recommend--compact {
+  padding: 56px 0 8px;
+}
+
+.apple-page .iprm-recommend--compact .iprm-section__title {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.apple-page .iprm-recommend--compact .iprm-section__subtitle {
+  margin-bottom: 32px;
+}
+
+.apple-page .iprm-recommend--compact .iprm-course-card__image {
+  height: 160px;
+}
+
+/* ===== Картка ===== */
+
+.apple-page .iprm-rec-card {
+  position: relative;
+}
+
+/* Уся картка -- одне посилання. Оверлей поверх контенту, тому текстові
+   елементи всередині свідомо НЕ піднімаємо z-index-ом: другого клікабельного
+   таргета в картці немає. */
+.apple-page .iprm-rec-card__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  text-decoration: none;
+}
+
+.apple-page .iprm-rec-card__overlay:focus-visible {
+  outline: 2px solid var(--iprm-accent);
+  outline-offset: 2px;
+}
+
+.apple-page .iprm-rec-card .apple-card-body {
+  gap: 0;
+}
+
+/* Короткий опис: рівно три рядки, щоб картки в рядку лишались однакові. */
+.apple-page .iprm-rec-card__summary {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--apple-gray-dark);
+  margin: 0 0 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ===== Факти: дата / місце / вільні місця ===== */
+
+.apple-page .iprm-rec-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 0;
+  border-top: 1px solid var(--iprm-border);
+  border-bottom: 1px solid var(--iprm-border);
+  margin-bottom: 14px;
+}
+
+.apple-page .iprm-rec-card__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+
+.apple-page .iprm-rec-card__meta-label {
+  color: var(--apple-gray);
+  flex-shrink: 0;
+}
+
+.apple-page .iprm-rec-card__meta-value {
+  font-weight: 600;
+  color: var(--apple-black);
+  text-align: right;
+}
+
+.apple-page .iprm-rec-card__meta-value--muted {
+  font-weight: 500;
+  color: var(--apple-gray-dark);
+}
+
+/* ===== Теги ===== */
+
+.apple-page .iprm-rec-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+/* ===== Підвал картки: ціна + CTA ===== */
+
+.apple-page .iprm-rec-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+/* Базове правило картки каталогу штовхає ціну вправо -- тут вона зліва,
+   а вправо йде CTA. */
+.apple-page .iprm-rec-card__footer .iprm-course-card__price {
+  margin-left: 0;
+}
+
+/* Афорданс кнопки без другого посилання: клік ловить __overlay. */
+.apple-page .iprm-rec-card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 8px 18px;
+  border-radius: var(--iprm-radius-pill);
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--iprm-accent);
+  background: var(--iprm-accent-light);
+  transition:
+    background 0.2s var(--ease-interact),
+    color 0.2s var(--ease-interact);
+}
+
+.apple-page .iprm-rec-card:hover .iprm-rec-card__cta,
+.apple-page .iprm-rec-card:focus-within .iprm-rec-card__cta {
+  background: var(--iprm-accent);
+  color: var(--iprm-on-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apple-page .iprm-rec-card__cta {
+    transition: none;
+  }
+}
+
+/* ===== Сітка ===== */
+
+.apple-page .iprm-course-cards--recommend {
+  align-items: stretch;
+}
+
+@media (max-width: 1024px) {
+  .apple-page .iprm-course-cards--recommend {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .apple-page .iprm-recommend--compact {
+    padding: 40px 0 8px;
+  }
+
+  .apple-page .iprm-course-cards--recommend {
+    grid-template-columns: 1fr;
+  }
+}

@@ -6,6 +6,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}?v={{ assets_version }}">
+{% if rec_courses %}<link rel="stylesheet" href="{{ url_for('static', filename='css/course-recommend.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -201,6 +202,14 @@
     <a href="{{ url_for('courses.course_by_slug', slug=event.slug) }}" class="apple-btn apple-btn--secondary">{{ _('Повернутися до курсу') }}</a>
     <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--secondary">{{ _("Зворотній зв'язок") }}</a>
   </div>
+
+  {# Крос-сел. Роут передає rec_* лише коли оплата вже позаду -- поки головна
+     дія сторінки "оплатіть участь", інші курси її розмивають. #}
+  {% with rec_compact=true,
+          rec_title=_('Що <span class="apple-gradient-text">далі</span>'),
+          rec_subtitle=_('Курси, які добре продовжують цю програму') %}
+    {% include 'partials/_course_recommend_block.html' %}
+  {% endwith %}
 
 </div>
 {% endblock %}

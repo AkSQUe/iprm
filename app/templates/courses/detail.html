@@ -8,6 +8,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}?v={{ assets_version }}">
+{% if rec_courses %}<link rel="stylesheet" href="{{ url_for('static', filename='css/course-recommend.css') }}?v={{ assets_version }}">{% endif %}
 {% if referral_link %}<link rel="stylesheet" href="{{ url_for('static', filename='css/referral-share.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
 
@@ -512,38 +513,9 @@
   {% endif %}
 
   <!-- ===== RELATED COURSES (next step) ===== -->
-  {% if related_courses %}
-  <section class="iprm-section apple-section-gray" aria-labelledby="related-title">
-    <div class="iprm-section__inner">
-      <h2 id="related-title" class="iprm-section__title apple-reveal">{{ _('Наступний <span class="apple-gradient-text">крок</span>') }}</h2>
-      <p class="iprm-section__subtitle apple-reveal">{{ _('Схожі курси, які доповнять цю програму') }}</p>
-      <div class="iprm-course-cards iprm-course-cards--related">
-        {% for rc in related_courses %}
-        <article class="iprm-course-card apple-reveal">
-          <a class="iprm-course-card__link" href="{{ url_for('courses.course_by_slug', slug=rc.slug) }}" aria-label="{{ rc.t('title') }}">
-            <div class="iprm-course-card__image">
-              {% if rc.card_src %}
-              <img src="{{ rc.card_src }}" alt="{{ rc.t('title') }}" loading="lazy" width="400" height="200">
-              {% endif %}
-            </div>
-            <div class="apple-card-body">
-              <p class="iprm-course-card__title">{{ rc.t('title') }}</p>
-              <div class="iprm-course-card__badges">
-                {% if rc.event_type %}
-                <span class="iprm-card-badge iprm-card-badge--type">{{ rc.event_type_label }}</span>
-                {% endif %}
-                {% if rc.cpd_points %}
-                <span class="iprm-card-badge iprm-card-badge--cpd">{{ rc.cpd_points }} {{ rc.cpd_points | plural('bpr_points') }}</span>
-                {% endif %}
-              </div>
-            </div>
-          </a>
-        </article>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-  {% endif %}
+  {% with rec_gray=true, rec_id='related-title' %}
+    {% include 'partials/_course_recommend_block.html' %}
+  {% endwith %}
 
   <!-- ===== REFERRAL SHARE (logged-in) ===== -->
   {% if referral_link %}

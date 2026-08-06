@@ -6,6 +6,7 @@ from sqlalchemy.orm import joinedload
 
 from app.payments import payments_bp
 from app.extensions import db, limiter, csrf
+from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
 from app.services.liqpay import get_liqpay_service
 from app.services.payment_ops import PaymentOps, PERMANENT_ERRORS
@@ -54,7 +55,8 @@ def success():
         return redirect(url_for('main.index'))
 
     reg = db.session.query(EventRegistration).options(
-        joinedload(EventRegistration.instance),
+        # course -- база для підбору рекомендацій нижче на сторінці.
+        joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
     ).filter_by(id=reg_id).first()
 
     if not reg or reg.user_id != current_user.id:
@@ -69,7 +71,14 @@ def success():
             logger.exception('Failed to poll LiqPay for REG-%d on success page', reg_id)
 
     if reg.payment_status == 'paid':
-        return render_template('payments/success.html', reg=reg, event=reg.instance)
+        # Крос-сел: щойно оплачений курс (і решта вже куплених) виключається
+        # всередині сервісу за реєстраціями користувача.
+        from app.services.course_recommend import recommend_context
+        base = reg.instance.course if reg.instance else None
+        return render_template(
+            'payments/success.html', reg=reg, event=reg.instance,
+            **recommend_context(base_course=base, user=current_user),
+        )
 
     flash(_('Оплата ще обробляється. Оновіть сторінку через хвилину.'), 'info')
     return redirect(url_for('registration.confirmation', registration_id=reg.id))

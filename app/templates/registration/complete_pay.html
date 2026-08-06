@@ -7,6 +7,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}?v={{ assets_version }}">
+{% if rec_courses %}<link rel="stylesheet" href="{{ url_for('static', filename='css/course-recommend.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -123,6 +124,13 @@
     {% endtrans %}
   </p>
   {% endif %}
+
+  {# Крос-сел. Роут передає rec_* лише коли оплата вже позаду. #}
+  {% with rec_compact=true,
+          rec_title=_('Що <span class="apple-gradient-text">далі</span>'),
+          rec_subtitle=_('Курси, які добре продовжують цю програму') %}
+    {% include 'partials/_course_recommend_block.html' %}
+  {% endwith %}
 
 </div>
 {% endblock %}
