@@ -91,20 +91,3 @@
   </div>
 </form>
 {% endblock %}
-
-{% block integration_extra %}
-<div class="form-section admin-form__section">
-  <h3 class="admin-form__section-title">Події, які надсилаються</h3>
-  <p>Активний Pixel шле <code>PageView</code> на всіх сторінках і події конверсій:</p>
-  <ul>
-    <li><code>Lead</code> – заявка на курс, B2B-запит, форма контактів</li>
-    <li><code>CompleteRegistration</code> – реєстрація акаунта</li>
-    <li><code>InitiateCheckout</code> – реєстрація на захід</li>
-    <li><code>Purchase</code> – успішна оплата, зі значенням у грн</li>
-  </ul>
-  <p class="form-hint">
-    Адмінка з трекінгу виключена: URL з даними клієнтів не потрапляють до Meta,
-    а перегляди адміністраторів не псують статистику конверсій.
-  </p>
-</div>
-{% endblock %}
