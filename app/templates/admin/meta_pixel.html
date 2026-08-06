@@ -39,11 +39,6 @@
 {% endblock %}
 
 {% block integration_readonly_hint %}
-<p class="form-hint">
-  Якщо ID заданий у БД – рішення приймає прапорець нижче, env не підмінює
-  вимкнення. Якщо поле БД порожнє – береться <code>META_PIXEL_ID</code> з env,
-  і лише за <code>META_PIXEL_ENABLED=true</code>.
-</p>
 {% if cfg.is_configured %}
 <div class="admin-integration-test">
   <a href="{{ url_for('admin.meta_pixel_test') }}" class="btn-admin btn-admin--secondary">
@@ -66,8 +61,7 @@
            placeholder="123456789012345" autocomplete="off" inputmode="numeric">
     <p class="form-hint">
       15-16 цифр. Events Manager → Data Sources → ваш піксель, ID під назвою.
-      Вставляйте саме ID, а не весь код піксела. Залиште порожнім, щоб
-      використати fallback з env.
+      Вставляйте саме ID, а не весь код піксела.
     </p>
   </div>
 
@@ -77,10 +71,6 @@
              {% if cfg.db_enabled %}checked{% endif %}>
       <label for="meta_pixel_enabled">Увімкнути трекінг</label>
     </div>
-    <p class="form-hint">
-      Знято – скрипт не вантажиться і події не шлються, але ID лишається
-      збереженим. Так само вимикається на час робіт чи інциденту.
-    </p>
   </div>
 
   <div class="admin-form__actions">
