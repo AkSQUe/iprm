@@ -178,6 +178,17 @@ class PaymentOps:
             except Exception:
                 logger.exception('Referral reward sync failed for REG-%d', reg.id)
 
+            # Промокод: повернення коштів звільняє використання у ліміті --
+            # код можна видати комусь іншому. Знімок знижки на реєстрації
+            # лишається (історія платежу не переписується).
+            try:
+                from app.services import promo_service
+                if promo_service.sync_for_registration(reg) is not None:
+                    db.session.commit()
+            except Exception:
+                db.session.rollback()
+                logger.exception('Promo sync failed for REG-%d', reg.id)
+
             if new_status == 'paid':
                 try:
                     from app.services.email_service import EmailService

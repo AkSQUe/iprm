@@ -57,6 +57,9 @@ def instance_registrations(instance_id):
     registrations = EventRegistration.query.options(
         joinedload(EventRegistration.user).joinedload(User.medical_profile),
         joinedload(EventRegistration.certificate),
+        # Колонка "Сума" показує код знижки -- без цього рядок на кожну
+        # реєстрацію тягнув би окремий SELECT.
+        joinedload(EventRegistration.promo_code),
     ).filter_by(instance_id=instance.id).order_by(
         EventRegistration.created_at.desc()
     ).all()
@@ -366,6 +369,7 @@ def registrations_all():
         joinedload(EventRegistration.user),
         joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
         joinedload(EventRegistration.certificate),
+        joinedload(EventRegistration.promo_code),
     )
     if status_filter and status_filter in dict(EventRegistration.STATUSES):
         query = query.filter(EventRegistration.status == status_filter)

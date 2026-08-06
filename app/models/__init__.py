@@ -32,6 +32,7 @@ from app.models.material_reservation import (
 from app.models.referral_reward import ReferralReward
 from app.models.referral_adjustment import ReferralAdjustment
 from app.models.referral_click import ReferralClick
+from app.models.promo_code import PromoCode, PromoRedemption
 from app.models.review import Review
 from app.models.city import City
 from app.models.perf_run import PerfRun, PerfPageMetric
@@ -47,7 +48,8 @@ __all__ = [
     'WebhookDelivery', 'BlogPost', 'BlogComment', 'MediaFile',
     'DatabaseBackup',
     'MaterialReservation', 'MaterialReservationItem', 'MaterialReservationStatus',
-    'ReferralReward', 'ReferralAdjustment', 'ReferralClick', 'Review',
+    'ReferralReward', 'ReferralAdjustment', 'ReferralClick',
+    'PromoCode', 'PromoRedemption', 'Review',
     'City',
     'PerfRun', 'PerfPageMetric',
 ]

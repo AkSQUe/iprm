@@ -16,6 +16,7 @@ from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest
 from app.models.medical_profile import MedicalProfile
+from app.models.promo_code import PromoCode
 from app.models.registration import EventRegistration
 from app.models.specializations import SPECIALIZATIONS
 
@@ -687,6 +688,88 @@ class ReviewForm(FlaskForm):
     is_published = BooleanField('Опубліковано', default=False)
 
 
+class PromoCodeForm(FlaskForm):
+    """Промокод: знижка, ліміти, вікно дії та область застосування.
+
+    Валідність самого коду (унікальність) перевіряє роут -- форма не має
+    доступу до того, який саме код зараз редагується.
+    """
+    code = StringField(
+        'Промокод',
+        validators=[DataRequired(message='Код обов\'язковий'), Length(max=64)],
+        description='Те, що людина введе на формі реєстрації. Регістр і '
+                    'пробіли не мають значення: «Дмитро» = «дмитро».',
+        render_kw={'autocomplete': 'off', 'placeholder': 'Наприклад: Дмитро'},
+    )
+    description = StringField(
+        'Для кого / навіщо',
+        validators=[Optional(), Length(max=255)],
+        description='Підказка собі: партнер, клініка, тест механіки.',
+    )
+    discount_type = SelectField(
+        'Тип знижки',
+        choices=PromoCode.DISCOUNT_TYPES,
+        default='percent',
+    )
+    discount_value = DecimalField(
+        'Розмір знижки',
+        validators=[InputRequired(message='Вкажіть розмір знижки'),
+                    NumberRange(min=0.01)],
+        description='Для відсотка -- від 1 до 100 (100 = безкоштовно). '
+                    'Для суми -- гривні; більша за ціну знижка просто '
+                    'обнуляє рахунок.',
+    )
+    max_uses = IntegerField(
+        'Ліміт застосувань',
+        validators=[Optional(), NumberRange(min=1)],
+        description='Скільки разів кодом можна скористатись загалом. '
+                    'Порожнє -- без обмежень.',
+    )
+    per_user_limit = IntegerField(
+        'Ліміт на одну людину',
+        default=1,
+        validators=[Optional(), NumberRange(min=1)],
+        description='Порожнє -- без обмежень (людина зможе застосувати код '
+                    'на кількох заходах).',
+    )
+    valid_from = DateTimeLocalField(
+        'Діє з', format='%Y-%m-%dT%H:%M', validators=[Optional()],
+        description='Порожнє -- діє одразу.',
+    )
+    valid_until = DateTimeLocalField(
+        'Діє до', format='%Y-%m-%dT%H:%M', validators=[Optional()],
+        description='Порожнє -- безстроково.',
+    )
+    course_id = SelectField(
+        'Лише для курсу', choices=[], validators=[Optional()], coerce=str,
+        description='Код працюватиме на всіх проведеннях цього курсу.',
+    )
+    instance_id = SelectField(
+        'Лише для проведення', choices=[], validators=[Optional()], coerce=str,
+        description='Найвужча прив\'язка -- одна конкретна дата. Має '
+                    'пріоритет над курсом.',
+    )
+    is_active = BooleanField('Активний', default=True)
+    batch_count = IntegerField(
+        'Скільки кодів створити',
+        default=1,
+        validators=[Optional(), NumberRange(min=1, max=200)],
+        description='Більше одного -- поле «Промокод» стає префіксом, і кожен '
+                    'код отримає власний суфікс (напр. PHARMA-A7K3XY). '
+                    'Зручно, коли партнер роздає коди різним людям.',
+    )
+
+    def validate_discount_value(self, field):
+        if (self.discount_type.data == 'percent'
+                and field.data is not None and field.data > 100):
+            raise ValidationError('Відсоткова знижка не може перевищувати 100%')
+
+    def validate_valid_until(self, field):
+        if (field.data and self.valid_from.data
+                and field.data <= self.valid_from.data):
+            raise ValidationError('«Діє до» має бути пізніше за «Діє з»')
+
+
 class ParticipantForm(FlaskForm):
     """Ручне додавання/редагування учасника заходу (admin).
 
@@ -801,6 +884,15 @@ class ParticipantForm(FlaskForm):
         'Сума оплати (UAH)',
         validators=[Optional(), NumberRange(min=0)],
         places=2,
+        description='Сума ДО знижки. Якщо нижче вказано промокод, підсумок '
+                    'перерахується автоматично.',
+    )
+    promo_code = StringField(
+        'Промокод',
+        validators=[Optional(), Length(max=64)],
+        description='Застосувати знижку до цієї реєстрації. Порожнє поле '
+                    'знімає раніше застосований код і повертає його ліміт.',
+        render_kw={'autocomplete': 'off'},
     )
     attended = BooleanField('Був присутній')
     cpd_points_awarded = IntegerField(

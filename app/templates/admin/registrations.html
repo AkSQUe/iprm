@@ -223,6 +223,15 @@
             {% else %}
               <span class="admin-text-muted">--</span>
             {% endif %}
+            {% if reg.has_discount %}
+              {# Без цього рядка менеджер бачить занижену суму і не знає, чому. #}
+              <div class="admin-text-muted">
+                {% if reg.promo_code %}
+                  <a href="{{ url_for('admin.promo_code_detail', promo_id=reg.promo_code_id) }}">{{ reg.promo_code.code }}</a>
+                {% else %}промокод{% endif %}
+                &minus;{{ reg.discount_amount | int }} &#8372;
+              </div>
+            {% endif %}
           </td>
           <td>{{ reg.created_at.strftime('%d.%m.%Y') }}</td>
           <td>

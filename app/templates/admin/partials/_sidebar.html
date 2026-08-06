@@ -58,6 +58,10 @@
         {{ icon('add_link') }}
         Реферали
       </a>
+      <a href="{{ url_for('admin.promo_codes_list') }}" class="admin-sidebar__link{% if ep in ('admin.promo_codes_list', 'admin.promo_code_create', 'admin.promo_code_edit', 'admin.promo_code_detail') %} admin-sidebar__link--active{% endif %}">
+        {{ icon('campaign') }}
+        Промокоди
+      </a>
     </div>
 
     <div class="admin-sidebar__group">

@@ -1,0 +1,157 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{% if promo %}Промокод «{{ promo.code }}»{% else %}Новий промокод{% endif %} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.promo_codes_list') }}" class="admin-breadcrumb__link">Промокоди</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">{% if promo %}{{ promo.code }}{% else %}Новий{% endif %}</span>
+        </div>
+        <h1 class="admin-hero__title">{% if promo %}Редагувати промокод{% else %}Новий промокод{% endif %}</h1>
+        <p class="admin-hero__subtitle">
+          Людина вводить код на формі реєстрації — сума перераховується одразу.
+          Код на 100% робить участь безкоштовною (реєстрація підтверджується без оплати).
+        </p>
+      </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.promo_codes_list') }}" class="btn-admin btn-admin--secondary">Назад до списку</a>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <form method="POST" class="admin-form"
+          action="{% if promo %}{{ url_for('admin.promo_code_edit', promo_id=promo.id) }}{% else %}{{ url_for('admin.promo_code_create') }}{% endif %}">
+      {{ form.hidden_tag() }}
+      {% include 'admin/partials/_form_errors.html' %}
+
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">Код і знижка</h3>
+        <div class="admin-form__grid">
+
+          <div class="form-group">
+            <label for="promo-code">Промокод <span class="required">*</span></label>
+            <div class="admin-input-row">
+              {{ form.code(class="form-input" + (" is-invalid" if form.code.errors else ""), id="promo-code") }}
+              <button type="button" class="btn-admin btn-admin--secondary" data-promo-generate data-target="promo-code">{{ icon('refresh') }} Згенерувати</button>
+            </div>
+            <div class="form-hint">{{ form.code.description }}</div>
+            {% for e in form.code.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="form-group">
+            <label for="promo-description">Для кого / навіщо</label>
+            {{ form.description(class="form-input", id="promo-description", placeholder="Напр. Фарма X — 5 місць за рекламний внесок") }}
+            <div class="form-hint">{{ form.description.description }}</div>
+          </div>
+
+          <div class="form-group">
+            <label for="promo-type">Тип знижки</label>
+            {{ form.discount_type(class="form-input", id="promo-type") }}
+          </div>
+
+          <div class="form-group">
+            <label for="promo-value">Розмір знижки <span class="required">*</span></label>
+            {{ form.discount_value(class="form-input" + (" is-invalid" if form.discount_value.errors else ""), id="promo-value", type="number", step="0.01", min="0.01") }}
+            <div class="form-hint">{{ form.discount_value.description }}</div>
+            {% for e in form.discount_value.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+          </div>
+
+        </div>
+      </div>
+
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">Ліміти та термін</h3>
+        <div class="admin-form__grid">
+
+          <div class="form-group">
+            <label for="promo-max-uses">Ліміт застосувань</label>
+            {{ form.max_uses(class="form-input", id="promo-max-uses", type="number", min="1", placeholder="без обмежень") }}
+            <div class="form-hint">{{ form.max_uses.description }}</div>
+            {% if promo %}<div class="form-hint">Уже використано: <strong>{{ promo.used_count }}</strong></div>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label for="promo-per-user">Ліміт на одну людину</label>
+            {{ form.per_user_limit(class="form-input", id="promo-per-user", type="number", min="1", placeholder="без обмежень") }}
+            <div class="form-hint">{{ form.per_user_limit.description }}</div>
+          </div>
+
+          <div class="form-group">
+            <label for="promo-from">Діє з</label>
+            {{ form.valid_from(class="form-input", id="promo-from") }}
+            <div class="form-hint">{{ form.valid_from.description }}</div>
+          </div>
+
+          <div class="form-group">
+            <label for="promo-until">Діє до</label>
+            {{ form.valid_until(class="form-input" + (" is-invalid" if form.valid_until.errors else ""), id="promo-until") }}
+            <div class="form-hint">{{ form.valid_until.description }}</div>
+            {% for e in form.valid_until.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+          </div>
+
+        </div>
+      </div>
+
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">Область дії</h3>
+        <div class="admin-form__grid">
+
+          <div class="form-group">
+            <label for="promo-course">Лише для курсу</label>
+            {{ form.course_id(class="form-input", id="promo-course") }}
+            <div class="form-hint">{{ form.course_id.description }}</div>
+          </div>
+
+          <div class="form-group">
+            <label for="promo-instance">Лише для проведення</label>
+            {{ form.instance_id(class="form-input", id="promo-instance") }}
+            <div class="form-hint">{{ form.instance_id.description }}</div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-checkbox">
+              {{ form.is_active(id="promo-active") }}
+              <label for="promo-active">Активний</label>
+            </div>
+            <div class="form-hint">Вимкнений код не спрацює, але історія застосувань збережеться.</div>
+          </div>
+
+          {% if not promo %}
+          <div class="form-group">
+            <label for="promo-batch">Скільки кодів створити</label>
+            {{ form.batch_count(class="form-input", id="promo-batch", type="number", min="1", max="200") }}
+            <div class="form-hint">{{ form.batch_count.description }}</div>
+          </div>
+          {% endif %}
+
+        </div>
+        <div class="admin-form__actions">
+          <button type="submit" class="btn-admin btn-admin--primary">{% if promo %}Зберегти зміни{% else %}Створити промокод{% endif %}</button>
+          {% if promo %}
+          <a href="{{ url_for('admin.promo_code_detail', promo_id=promo.id) }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+          {% endif %}
+        </div>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/admin-promo-code.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}

@@ -68,6 +68,19 @@ class EventRegistration(TimestampMixin, db.Model):
         index=True,
     )
 
+    # Промокод, застосований до цієї реєстрації (NULL -- без знижки).
+    # payment_amount уже містить суму ПІСЛЯ знижки; discount_amount --
+    # знімок того, скільки ми віддали, щоб звіти лишались правдивими
+    # навіть після зміни тарифу чи видалення коду. Історія застосувань
+    # (і лічильник) живуть у PromoRedemption.
+    promo_code_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('promo_codes.id', ondelete='SET NULL'),
+        nullable=True,
+        index=True,
+    )
+    discount_amount = db.Column(db.Numeric(10, 2))
+
     attended = db.Column(db.Boolean, default=False)
     cpd_points_awarded = db.Column(db.Integer)
     admin_notes = db.Column(db.Text)
@@ -98,6 +111,15 @@ class EventRegistration(TimestampMixin, db.Model):
         back_populates='registrations',
     )
     tariff = db.relationship('InstanceTariff', foreign_keys=[tariff_id])
+    promo_code = db.relationship('PromoCode', foreign_keys=[promo_code_id])
+    # Список, а не один об'єкт: заміна коду чи повернення коштів лишають
+    # анульовані рядки в історії поруч із активним (partial-unique index
+    # на promo_redemptions стежить, щоб активний був лише один).
+    promo_redemptions = db.relationship(
+        'PromoRedemption',
+        back_populates='registration',
+        cascade='all, delete-orphan',
+    )
     email_logs = db.relationship('EmailLog', back_populates='registration')
     certificate = db.relationship(
         'Certificate',
@@ -141,6 +163,10 @@ class EventRegistration(TimestampMixin, db.Model):
         db.CheckConstraint(
             'payment_amount >= 0 OR payment_amount IS NULL',
             name='ck_registrations_payment_amount_non_negative',
+        ),
+        db.CheckConstraint(
+            'discount_amount >= 0 OR discount_amount IS NULL',
+            name='ck_registrations_discount_non_negative',
         ),
     )
 
@@ -226,6 +252,17 @@ class EventRegistration(TimestampMixin, db.Model):
         ).filter(
             cls.payment_amount > 0,
         ).one()
+
+    @property
+    def has_discount(self):
+        return bool(self.discount_amount and self.discount_amount > 0)
+
+    @property
+    def amount_before_discount(self):
+        """Сума до знижки (payment_amount уже містить суму після неї)."""
+        if not self.has_discount:
+            return self.payment_amount
+        return (self.payment_amount or 0) + self.discount_amount
 
     @property
     def target_title(self):

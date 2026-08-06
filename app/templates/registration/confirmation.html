@@ -170,6 +170,15 @@
       </span>
     </div>
     {% endif %}
+    {% if reg.has_discount %}
+    <div class="reg-status-card__row">
+      <span class="reg-status-card__label">{{ _('Знижка за промокодом') }}</span>
+      <span class="reg-status-card__value">
+        &minus;{{ reg.discount_amount | int }} &#8372;
+        <small>({{ _('було') }} {{ reg.amount_before_discount | int }} &#8372;)</small>
+      </span>
+    </div>
+    {% endif %}
     {% if event.cpd_points %}
     <div class="reg-status-card__row">
       <span class="reg-status-card__label">{{ _('Балів БПР') }}</span>

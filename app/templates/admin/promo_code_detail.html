@@ -1,0 +1,135 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Промокод «{{ promo.code }}» | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.promo_codes_list') }}" class="admin-breadcrumb__link">Промокоди</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">{{ promo.code }}</span>
+        </div>
+        <h1 class="admin-hero__title">{{ promo.code }}</h1>
+        <p class="admin-hero__subtitle">
+          {{ promo.discount_label }} &middot; {{ promo.scope_label }}
+          {% if promo.description %} &middot; {{ promo.description }}{% endif %}
+        </p>
+      </div>
+      <div class="admin-hero__actions">
+        <button type="button" class="btn-admin btn-admin--secondary" data-copy-text="{{ promo.code }}" title="Скопіювати код">{{ icon('content_copy') }} Копіювати код</button>
+        <a href="{{ url_for('admin.promo_code_edit', promo_id=promo.id) }}" class="btn-admin btn-admin--primary">{{ icon('edit') }} Редагувати</a>
+        <form method="POST" action="{{ url_for('admin.promo_code_toggle', promo_id=promo.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-admin btn-admin--secondary">{{ 'Вимкнути' if promo.is_active else 'Увімкнути' }}</button>
+        </form>
+        <form method="POST" action="{{ url_for('admin.promo_code_recount', promo_id=promo.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-admin btn-admin--secondary" title="Перерахувати лічильник з історії застосувань">{{ icon('refresh') }} Перерахувати</button>
+        </form>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <div class="admin-stat-cards">
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ promo.usage_label }}</span>
+        <span class="admin-stat-card__label">Використано</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ stats.paid_count }}</span>
+        <span class="admin-stat-card__label">Дійшли до оплати</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ stats.discount_total | int }} &#8372;</span>
+        <span class="admin-stat-card__label">Віддано знижками</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ stats.voided }}</span>
+        <span class="admin-stat-card__label">Анульовано</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value"><span class="badge {{ promo.status_badge }}">{{ promo.status_label }}</span></span>
+        <span class="admin-stat-card__label">Статус</span>
+      </div>
+    </div>
+
+    <h2 class="admin-form__section-title">Історія застосувань</h2>
+
+    {% if redemptions %}
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Учасник</th>
+          <th>Захід</th>
+          <th>Було</th>
+          <th>Знижка</th>
+          <th>Стало</th>
+          <th>Оплата</th>
+          <th>Стан</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in redemptions %}
+        <tr>
+          <td>{{ r.created_at.strftime('%d.%m.%Y %H:%M') if r.created_at else '—' }}</td>
+          <td>
+            {% if r.user %}{{ r.user.full_name or r.user.email }}<br><small class="admin-text-muted">{{ r.user.email }}</small>
+            {% else %}<span class="admin-text-muted">—</span>{% endif %}
+          </td>
+          <td>
+            {% if r.registration %}
+              <a href="{{ url_for('admin.participant_edit', reg_id=r.registration_id) }}">
+                {{ r.registration.target_title or ('Реєстрація #' ~ r.registration_id) }}
+              </a>
+              {% if r.registration.target_start_date %}
+              <br><small class="admin-text-muted">{{ r.registration.target_start_date.strftime('%d.%m.%Y') }}</small>
+              {% endif %}
+            {% else %}<span class="admin-text-muted">—</span>{% endif %}
+          </td>
+          <td>{{ r.original_amount | int }} &#8372;</td>
+          <td><strong>&minus;{{ r.discount_amount | int }} &#8372;</strong></td>
+          <td>{{ r.final_amount | int }} &#8372;</td>
+          <td>
+            {% if r.registration %}{{ r.registration.payment_status_label }}
+            {% else %}<span class="admin-text-muted">—</span>{% endif %}
+          </td>
+          <td>
+            {% if r.status == 'applied' %}<span class="badge badge--active">{{ r.status_label }}</span>
+            {% else %}<span class="badge badge--draft">{{ r.status_label }}</span>
+              {% if r.notes %}<br><small class="admin-text-muted">{{ r.notes }}</small>{% endif %}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div class="admin-empty">
+      {{ icon('history', cls='admin-empty__icon') }}
+      <h3 class="admin-empty__title">Кодом ще не користувались</h3>
+      <p>Передайте код людині — вона введе його у полі «Промокод» на формі реєстрації.</p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/admin-promo-code.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}

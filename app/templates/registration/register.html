@@ -47,13 +47,18 @@
       {% if tariffs %}
         <div>{{ _('Вартість:') }} <strong data-tariff-price>{% if selected_tariff %}{{ selected_tariff.price | int }}{% else %}{{ _('від') }} {{ event.price | int }}{% endif %} &#8372;</strong></div>
       {% elif event.price and event.price > 0 %}
-        <div>{{ _('Вартість:') }} <strong>{{ event.price | int }} &#8372;</strong></div>
+        <div>{{ _('Вартість:') }} <strong data-tariff-price>{{ event.price | int }} &#8372;</strong></div>
       {% else %}
         <div>{{ _('Вартість:') }} <strong>{{ _('Безкоштовно') }}</strong></div>
       {% endif %}
       {% if event.cpd_points %}
         <div>{{ _('БПР:') }} <strong>{{ event.cpd_points }} {{ event.cpd_points | plural('points') }}</strong></div>
       {% endif %}
+      {# Рядок знижки з'являється, коли промокод прийнято (сервером після
+         помилки деінде або promo-code.js без перезавантаження). #}
+      <div class="reg-event-card__discount" data-promo-summary {% if not promo %}hidden{% endif %}>
+        {{ _('Знижка за промокодом:') }} <strong data-promo-summary-value>&minus;0 &#8372;</strong>
+      </div>
     </div>
   </div>
 
@@ -127,6 +132,33 @@
         </label>
         {% endfor %}
       </div>
+    </div>
+    {% endif %}
+
+    {# ----- Промокод -----
+       Поле необов'язкове. Кнопка перевіряє код запитом і показує знижку
+       одразу; без JS код просто поїде разом із формою -- сервер перевірить
+       його на сабміті і покаже ту саму доменну помилку. #}
+    {# На безкоштовній події поле не показуємо -- знижувати нічого. #}
+    {% if tariffs or (event.price and event.price > 0) %}
+    <div class="form-section reg-form-section reg-promo">
+      <h3 class="form-section__title reg-form-section__title">
+        {{ _('Промокод') }}
+        <span class="iprm-tooltip-trigger" data-tooltip="{{ _('Є код на знижку від партнера, тренера або клініки? Введіть його — сума перерахується.') }}">i</span>
+      </h3>
+      {# data-base-price -- ціна без тарифів: JS повертає її, коли код
+         прибрали. Для тарифної вилки базу дає обране радіо. #}
+      <div class="reg-promo__row" data-base-price="{{ event.price | int if event.price else 0 }}">
+        {{ form.promo_code(class="form-input reg-promo__input", id="promo_code",
+                           placeholder=_('Наприклад: SPRING2026')) }}
+        <button type="button" class="apple-btn apple-btn--secondary reg-promo__btn"
+                data-promo-apply data-url="{{ promo_check_url }}">{{ _('Застосувати') }}</button>
+      </div>
+      {% for e in form.promo_code.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+      <p class="reg-promo__status{% if promo %} reg-promo__status--ok{% endif %}"
+         data-promo-status role="status" {% if not promo %}hidden{% endif %}>
+        {% if promo %}{{ _('Промокод застосовано') }}: {{ promo.code }}{% endif %}
+      </p>
     </div>
     {% endif %}
 
@@ -271,7 +303,7 @@
         {% if tariffs %}
           {{ _('Зареєструватися') }} (<span data-tariff-price>{% if selected_tariff %}{{ selected_tariff.price | int }}{% else %}{{ _('від') }} {{ event.price | int }}{% endif %} &#8372;</span>)
         {% elif event.price and event.price > 0 %}
-          {{ _('Зареєструватися') }} ({{ event.price | int }} &#8372;)
+          {{ _('Зареєструватися') }} (<span data-tariff-price>{{ event.price | int }} &#8372;</span>)
         {% else %}
           {{ _('Зареєструватися') }}
         {% endif %}
@@ -309,4 +341,7 @@
 <script src="{{ url_for('static', filename='js/reg-tariffs.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/sticky-cta.js') }}?v={{ assets_version }}" defer></script>
 {% endif %}
+{# Після reg-tariffs.js: обидва слухають зміну тарифу, і остаточну ціну
+   (зі знижкою) має виставляти саме промокод. #}
+<script src="{{ url_for('static', filename='js/promo-code.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

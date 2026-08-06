@@ -76,6 +76,7 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 |-------|-----|------|
 | GET/POST | `/registration/<event_id>/register` | Реєстрація на захід |
 | GET | `/registration/<registration_id>` | Підтвердження реєстрації |
+| POST | `/registration/instance/<id>/promo-check` | Перевірка промокоду (JSON, без списання) |
 
 ## Payments
 
@@ -95,6 +96,13 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 | GET/POST | `/admin/events/<id>/edit` | Редагування заходу |
 | POST | `/admin/events/<id>/delete` | Видалення заходу |
 | GET | `/admin/events/<id>/registrations` | Реєстрації на захід |
+| GET | `/admin/promo-codes` | Список промокодів (пошук, фільтр) |
+| GET/POST | `/admin/promo-codes/new` | Створення промокоду |
+| GET/POST | `/admin/promo-codes/<id>/edit` | Редагування промокоду |
+| GET | `/admin/promo-codes/<id>` | Картка коду: статистика та історія застосувань |
+| POST | `/admin/promo-codes/<id>/toggle` | Увімкнути/вимкнути код |
+| POST | `/admin/promo-codes/<id>/recount` | Перерахувати лічильник з реєстру |
+| POST | `/admin/promo-codes/<id>/delete` | Видалення промокоду |
 | GET | `/admin/trainers` | Список тренерів |
 | GET/POST | `/admin/trainers/new` | Додавання тренера |
 | GET/POST | `/admin/trainers/<id>/edit` | Редагування тренера |

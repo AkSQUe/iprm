@@ -58,6 +58,18 @@ class EventRegistrationForm(FlaskForm):
             )
         field.data = normalized
 
+    # ----- Промокод -----
+    # Необов'язкове поле: порожнє значення просто означає "без знижки".
+    # Валідність самого коду перевіряє promo_service у роуті -- тут лише
+    # довжина, бо повідомлення про помилку має бути доменним
+    # ("вичерпано", "діє на інший курс"), а не "невалідне значення".
+    promo_code = StringField(
+        _l('Промокод'),
+        validators=[Optional(), Length(max=64)],
+        render_kw={'autocomplete': 'off', 'autocapitalize': 'off',
+                   'spellcheck': 'false'},
+    )
+
     # Спосіб оплати тут НЕ збираємо: для платних подій є окремий крок оплати
     # (confirmation.html / _pay_options), де користувач обирає LiqPay або
     # рахунок безпосередньо дією. reg.payment_method дефолтиться у 'liqpay' і

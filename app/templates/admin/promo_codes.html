@@ -1,0 +1,131 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Промокоди | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Промокоди</span>
+        </div>
+        <h1 class="admin-hero__title">Промокоди</h1>
+        <p class="admin-hero__subtitle">
+          Знижка або безкоштовна участь за кодом: персонально, партнеру, клініці
+          чи для перевірки механіки реєстрації
+        </p>
+      </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.promo_code_create') }}" class="btn-admin btn-admin--primary">{{ icon('add') }} Створити промокод</a>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <form method="GET" action="{{ url_for('admin.promo_codes_list') }}" class="admin-filter-form">
+      <input type="search" name="q" value="{{ search }}" class="form-input" placeholder="Код або опис">
+      <select name="status" class="form-input">
+        <option value="">Усі</option>
+        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Увімкнені</option>
+        <option value="disabled" {% if status_filter == 'disabled' %}selected{% endif %}>Вимкнені</option>
+      </select>
+      <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('filter_list') }} Фільтрувати</button>
+      <a href="{{ url_for('admin.promo_codes_list') }}" class="btn-admin btn-admin--sm">{{ icon('clear') }} Скинути</a>
+    </form>
+
+    {% if promos %}
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Код</th>
+          <th>Знижка</th>
+          <th>Використано</th>
+          <th>На людину</th>
+          <th>Діє</th>
+          <th>Область</th>
+          <th>Статус</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in promos %}
+        <tr>
+          <td>
+            <a href="{{ url_for('admin.promo_code_detail', promo_id=p.id) }}"><strong>{{ p.code }}</strong></a>
+            <button type="button" class="btn-admin btn-admin--sm" data-copy-text="{{ p.code }}" title="Скопіювати код" aria-label="Скопіювати код">{{ icon('content_copy') }}</button>
+            {% if p.description %}<br><small class="admin-text-muted">{{ p.description }}</small>{% endif %}
+          </td>
+          <td><strong>{{ p.discount_label }}</strong></td>
+          <td>{{ p.usage_label }}</td>
+          <td>{% if p.per_user_limit %}{{ p.per_user_limit }}{% else %}<span class="admin-text-muted">без ліміту</span>{% endif %}</td>
+          <td>
+            {% if p.valid_from or p.valid_until %}
+              {{ p.valid_from.strftime('%d.%m.%Y') if p.valid_from else '…' }} —
+              {{ p.valid_until.strftime('%d.%m.%Y') if p.valid_until else '…' }}
+            {% else %}<span class="admin-text-muted">безстроково</span>{% endif %}
+          </td>
+          <td>{{ p.scope_label }}</td>
+          <td><span class="badge {{ p.status_badge }}">{{ p.status_label }}</span></td>
+          <td>
+            <div class="admin-actions-row">
+              <a href="{{ url_for('admin.promo_code_edit', promo_id=p.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
+              <form method="POST" action="{{ url_for('admin.promo_code_toggle', promo_id=p.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">{{ 'Вимкнути' if p.is_active else 'Увімкнути' }}</button>
+              </form>
+              <form method="POST" action="{{ url_for('admin.promo_code_delete', promo_id=p.id) }}"
+                    data-confirm="Видалити промокод «{{ p.code }}»? Історія його застосувань зникне, знижки на реєстраціях залишаться."
+                    data-confirm-ok="Видалити" data-confirm-danger>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити">{{ icon('delete') }}</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <nav class="admin-pagination">
+      {% if pagination.has_prev %}
+      <a href="{{ url_for('admin.promo_codes_list', page=pagination.prev_num, status=status_filter, q=search) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
+      {% endif %}
+      <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }}</span>
+      {% if pagination.has_next %}
+      <a href="{{ url_for('admin.promo_codes_list', page=pagination.next_num, status=status_filter, q=search) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
+      {% endif %}
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="admin-empty">
+      {{ icon('campaign', cls='admin-empty__icon') }}
+      <h3 class="admin-empty__title">Промокодів ще немає</h3>
+      <p>
+        Створіть код на 100% — і зможете зареєструвати людину безкоштовно
+        або перевірити механіку реєстрації та автолистів, не платячи.
+      </p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/admin-promo-code.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}

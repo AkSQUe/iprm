@@ -1125,3 +1125,43 @@
 .reg-email-notice strong {
   color: var(--iprm-text);
 }
+
+/* ===== Промокод на формі реєстрації ===== */
+.reg-promo__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.reg-promo__input {
+  flex: 1 1 220px;
+  min-width: 0;
+  text-transform: none;
+}
+
+.reg-promo__btn {
+  flex: 0 0 auto;
+}
+
+.reg-promo__status {
+  margin: 10px 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--iprm-text-light);
+}
+
+.reg-promo__status--ok {
+  color: var(--iprm-success);
+  font-weight: 600;
+}
+
+.reg-promo__status--error {
+  color: var(--iprm-error);
+}
+
+/* Рядок знижки у зведенні заходу -- поруч із вартістю. */
+.reg-event-card__discount {
+  color: var(--iprm-success);
+  font-weight: 600;
+}

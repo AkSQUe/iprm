@@ -1,6 +1,7 @@
 from app.admin import routes_trainers  # noqa: F401
 from app.admin import routes_registrations  # noqa: F401
 from app.admin import routes_referrals  # noqa: F401
+from app.admin import routes_promo_codes  # noqa: F401
 from app.admin import routes_reviews  # noqa: F401
 from app.admin import routes_cities  # noqa: F401
 from app.admin import routes_participants  # noqa: F401

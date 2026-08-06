@@ -396,6 +396,28 @@
   grid-column: 1 / -1;
 }
 
+/* Поле з кнопкою-дією в одному рядку (напр. промокод + "Згенерувати"). */
+.admin-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-input-row .form-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.admin-input-row .btn-admin {
+  flex: 0 0 auto;
+}
+
+/* Кнопка копіювання коду: підтвердження без окремого тосту. */
+.btn-admin.is-copied {
+  color: var(--iprm-success);
+  border-color: var(--iprm-success);
+}
+
 /* Admin-specific form overrides */
 .admin-form select.form-input {
   appearance: none;

@@ -143,6 +143,8 @@
 | `payment_amount` | Numeric(10,2) | Сума оплати |
 | `payment_id` | String(255) | ID платежу (LiqPay) |
 | `paid_at` | DateTime (UTC) | Дата оплати |
+| `promo_code_id` | FK -> promo_codes.id (SET NULL) | Застосований промокод |
+| `discount_amount` | Numeric(10,2) | Знімок знижки (payment_amount уже без неї) |
 | `attended` | Boolean | Чи відвідав захід |
 | `cpd_points_awarded` | Integer | Нараховані бали БПР |
 | `admin_notes` | Text | Нотатки адміністратора |
@@ -150,6 +152,45 @@
 | `updated_at` | DateTime (UTC) | TimestampMixin |
 
 Зв'язок: `certificate` -> Certificate (one-to-one, cascade delete-orphan).
+
+## PromoCode / PromoRedemption
+
+Промокоди зі знижкою на реєстрацію -- повний опис у
+[docs/promo-codes.md](promo-codes.md).
+
+**`promo_codes`**
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ |
+| `code` | String(64) | Код як його ввів адмін (для показу) |
+| `code_norm` | String(64), UNIQUE | casefold без пробілів -- ключ пошуку |
+| `description` | String(255) | Для кого/навіщо виданий |
+| `discount_type` | String(10) | `percent` або `amount` |
+| `discount_value` | Numeric(10,2) | Відсоток (<=100) або сума в грн |
+| `max_uses` | Integer | Загальний ліміт; NULL -- без обмежень |
+| `per_user_limit` | Integer | Ліміт на одну людину; NULL -- без обмежень |
+| `used_count` | Integer | Денормалізований лічильник активних списань |
+| `valid_from` / `valid_until` | DateTime (UTC) | Вікно дії; NULL -- безстроково |
+| `course_id` | FK -> courses.id (CASCADE) | Звузити до курсу |
+| `instance_id` | FK -> course_instances.id (CASCADE) | Звузити до проведення |
+| `is_active` | Boolean | Вимкнений код не спрацює |
+| `created_by_id` | FK -> users.id (SET NULL) | Хто створив |
+
+**`promo_redemptions`** -- реєстр застосувань (джерело правди для лічильника)
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `promo_code_id` | FK -> promo_codes.id (CASCADE) | Код |
+| `registration_id` | FK -> event_registrations.id (CASCADE) | Реєстрація |
+| `user_id` | FK -> users.id (CASCADE) | Учасник (для ліміту на людину) |
+| `original_amount` / `discount_amount` / `final_amount` | Numeric(10,2) | Сума до, знижка, сума після |
+| `status` | String(10) | `applied` або `voided` |
+| `voided_at` / `notes` | DateTime / String(255) | Коли і чому анульовано |
+
+Partial-unique index `uq_promo_redemptions_active_reg` (`registration_id`
+WHERE `status = 'applied'`) гарантує рівно одне активне списання на
+реєстрацію; анульовані рядки лишаються в історії.
 
 ## Certificate
 

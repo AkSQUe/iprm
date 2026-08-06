@@ -22,8 +22,9 @@ from app.extensions import db
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
 from app.models.user import User
-from app.services import participant_service, xlsx_io
+from app.services import participant_service, promo_service, xlsx_io
 from app.services.participant_service import ParticipantError
+from app.services.promo_service import PromoError
 from app.utils import ensure_utc
 
 logger = logging.getLogger(__name__)
@@ -121,6 +122,82 @@ def _instance_prices(instances):
     }
 
 
+def _money_snapshot(reg):
+    """Знімок платіжних полів реєстрації, за яку гроші вже пройшли онлайн.
+
+    Повертає dict або None, якщо реєстрація не оплачена через LiqPay.
+    payment_id -- саме той маркер, що відрізняє реальне списання від
+    статусу 'paid', проставленого менеджером вручну (безкоштовна участь,
+    оплата на рахунок): другий міняти можна, перший -- ні.
+    """
+    if not (reg.payment_id and reg.payment_status == 'paid'):
+        return None
+    return {
+        'payment_amount': reg.payment_amount,
+        'discount_amount': reg.discount_amount,
+        'promo_code_id': reg.promo_code_id,
+        'code': reg.promo_code.code if reg.promo_code else '',
+    }
+
+
+def _apply_promo_from_form(form, reg, instance, paid_snapshot=None):
+    """Застосувати/зняти промокод на реєстрації за полем форми.
+
+    payment_amount у формі трактується як сума ДО знижки, тож підсумок
+    рахується від щойно збереженого значення. Порожнє поле знімає код і
+    повертає використання у ліміт.
+
+    paid_snapshot -- результат _money_snapshot(), знятий ДО upsert-у: для
+    онлайн-оплаченої реєстрації суми відновлюються з нього, бо саме за
+    ними LiqPay робитиме повернення коштів.
+
+    Кидає PromoError -- caller показує його текст менеджеру.
+    """
+    raw = (form.promo_code.data or '').strip()
+
+    if paid_snapshot is not None:
+        if (promo_service.normalize_code(raw)
+                != promo_service.normalize_code(paid_snapshot['code'])):
+            raise PromoError(
+                'Реєстрацію вже оплачено онлайн — промокод змінювати не можна. '
+                'Спершу оформіть повернення коштів.'
+            )
+        # Форма показує суму ДО знижки, тож без відновлення звичайне
+        # збереження підняло б payment_amount оплаченої реєстрації, і
+        # повернення пішло б не на ту суму.
+        reg.payment_amount = paid_snapshot['payment_amount']
+        reg.discount_amount = paid_snapshot['discount_amount']
+        reg.promo_code_id = paid_snapshot['promo_code_id']
+        return None
+
+    if not raw:
+        # Безумовно, а не лише за наявності promo_code_id: після видалення
+        # коду FK занулюється (SET NULL), а знімок знижки лишається сиротою
+        # і роздував би суму при кожному збереженні форми.
+        promo_service.detach(reg, reason='Промокод знято менеджером')
+        return None
+
+    if not reg.payment_amount or reg.payment_amount <= 0:
+        raise PromoError(
+            'Спершу вкажіть суму оплати — знижка рахується від неї'
+        )
+
+    promo, _discount, _final = promo_service.validate(
+        raw, instance=instance, amount=reg.payment_amount,
+    )
+    # Ліміт "на людину" рахуємо без урахування цієї ж реєстрації: інакше
+    # повторне збереження тієї самої форми впиралось би в саме себе.
+    promo_service.assert_user_limit(
+        promo, reg.user_id, ignore_registration_id=reg.id,
+    )
+    promo_service.apply_to_registration(promo, reg, reg.payment_amount)
+    # Скасована/повернена реєстрація одразу звільняє використання коду --
+    # той самий крок, що робить payment_ops після LiqPay-повернення (тут
+    # він потрібен, бо статуси менеджер міняє руками).
+    promo_service.sync_for_registration(reg)
+    return promo
+
+
 def _process_create(form, instance):
     """Спільна обробка POST для обох create-роутів. Повертає Response при
     успіху або None (треба відрендерити форму)."""
@@ -129,7 +206,8 @@ def _process_create(form, instance):
         reg, _created = participant_service.upsert_participant(
             data, reg=None, on_duplicate='error',
         )
-    except ParticipantError as exc:
+        _apply_promo_from_form(form, reg, instance)
+    except (ParticipantError, PromoError) as exc:
         db.session.rollback()
         flash(str(exc), 'error')
         return None
@@ -224,7 +302,10 @@ def _form_from_registration(reg):
         'specializations': (profile.specializations if profile else []) or [],
         'status': reg.status,
         'payment_status': reg.payment_status,
-        'payment_amount': reg.payment_amount,
+        # Показуємо суму ДО знижки: інакше повторне збереження форми
+        # застосувало б відсоток удруге, вже до зменшеної суми.
+        'payment_amount': reg.amount_before_discount,
+        'promo_code': reg.promo_code.code if reg.promo_code else '',
         'attended': reg.attended,
         'cpd_points_awarded': reg.cpd_points_awarded,
         'experience_years': reg.experience_years,
@@ -256,9 +337,14 @@ def participant_edit(reg_id):
 
     if form.validate_on_submit():
         data = _form_to_data(form, reg.instance_id)
+        # Знімок знімаємо ДО upsert-у: він уже перезапише payment_amount
+        # значенням із форми.
+        paid_snapshot = _money_snapshot(reg)
         try:
             participant_service.upsert_participant(data, reg=reg)
-        except ParticipantError as exc:
+            _apply_promo_from_form(form, reg, instance,
+                                   paid_snapshot=paid_snapshot)
+        except (ParticipantError, PromoError) as exc:
             db.session.rollback()
             flash(str(exc), 'error')
             return render_template(

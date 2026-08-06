@@ -5,12 +5,14 @@ event_registrations зберігається як nullable artifact для legac
 але не використовується новим кодом.
 """
 import logging
+from decimal import Decimal
 
 from sqlalchemy import func
 
 from app.extensions import db
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
+from app.services import promo_service
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +92,7 @@ def check_capacity(instance_id):
 
 
 def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=None,
-                         referral_code=None):
+                         referral_code=None, promo=None):
     """Створити або переактивувати реєстрацію на CourseInstance.
 
     Args:
@@ -104,6 +106,10 @@ def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=Non
         tariff: Обраний InstanceTariff (тарифна вилка) -- визначає
             payment_amount. Валідність (активний, доступний) перевіряє
             caller; належність до instance перевіряється тут.
+        promo: Перевірений PromoCode (promo_service.validate) або None.
+            Знижка застосовується до ціни тарифу/проведення; код на 100%
+            робить реєстрацію безкоштовною з усіма наслідками (одразу
+            confirmed/paid і номер місця).
 
     Returns:
         (registration, is_free) tuple. Caller мусить сам викликати
@@ -121,7 +127,13 @@ def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=Non
             f'{tariff.instance_id}, not {instance.id}.'
         )
 
-    price = tariff.price if tariff is not None else (instance.effective_price or 0)
+    base_price = Decimal(
+        tariff.price if tariff is not None else (instance.effective_price or 0)
+    )
+    # Знижку рахує сам код (відсоток або сума), обрізаючи її сумою
+    # замовлення -- 100% і "мінус 5000 грн" з ціни 3000 дають рівно нуль.
+    discount = promo.discount_for(base_price) if promo is not None else Decimal(0)
+    price = base_price - discount
     is_free = price == 0
     new_status = 'confirmed' if is_free else 'pending'
     new_payment = 'paid' if is_free else 'unpaid'
@@ -169,6 +181,19 @@ def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=Non
     # раніше не був зафіксований.
     if referral_code and not reg.referral_code:
         reg.referral_code = referral_code
+
+    # Промокод: списання у реєстр і лічильник -- лише коли реєстрація вже
+    # має id. apply_to_registration сам виставляє payment_amount/знімок
+    # знижки (те саме `price`, порахували вище для is_free).
+    if promo is not None:
+        db.session.flush()
+        promo_service.apply_to_registration(promo, reg, base_price)
+    elif reg.promo_code_id is not None or reg.discount_amount is not None:
+        # Реактивація скасованої реєстрації без коду: старе списання має
+        # звільнити місце у ліміті, інакше код лишається "витраченим".
+        # discount_amount перевіряємо окремо -- знімок переживає видалення
+        # коду (FK SET NULL) і без чистки спотворював би суму до знижки.
+        promo_service.detach(reg, reason='Реєстрацію оформлено без промокоду')
 
     # Для безкоштовних подій -- одразу присвоюємо номер місця, бо немає
     # окремого 'paid'-транзишн (платіж не очікується). Робиться ДО commit

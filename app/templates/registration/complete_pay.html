@@ -37,6 +37,13 @@
       {% if reg.payment_amount and reg.payment_amount > 0 %}
         <div>{{ _('До оплати:') }} <strong>{{ reg.payment_amount | int }} &#8372;</strong></div>
       {% endif %}
+      {% if reg.has_discount %}
+        <div class="reg-event-card__discount">
+          {% trans amount=reg.amount_before_discount | int, discount=reg.discount_amount | int %}
+          Знижка за промокодом: {{ amount }} &rarr; &minus;{{ discount }} &#8372;
+          {% endtrans %}
+        </div>
+      {% endif %}
     </div>
   </div>
   {% endif %}

@@ -83,6 +83,50 @@ class _Counter:
 
 # --- експорт ----------------------------------------------------------------
 
+def test_data_export_adds_promo_columns_and_reimports(client, tmp_path):
+    """Промокод і знижка -- довідкові колонки лише у вивантаженні даних.
+
+    Головне тут не самі колонки, а те, що файл після них досі читається
+    імпортером: невідомі заголовки він має ігнорувати, інакше цикл
+    "вивантажив -> поправив -> завантажив" зламався б.
+    """
+    from decimal import Decimal
+    from app.models.promo_code import PromoCode
+    from app.services import promo_service
+
+    inst = _instance()
+    user = User.create_with_password(f'x-{uuid4().hex[:6]}@test.com', 'password123',
+                                     first_name='Ол', last_name='Ів')
+    db.session.flush()
+    promo = PromoCode(code='XLSX-CODE', code_norm=promo_service.normalize_code('XLSX-CODE'),
+                      discount_type='percent', discount_value=Decimal('50'))
+    db.session.add(promo)
+    db.session.flush()
+    reg = EventRegistration(
+        user_id=user.id, instance_id=inst.id, phone='+380501112233',
+        specialty='Дерматолог', workplace='Клініка',
+        payment_amount=Decimal('500.00'), discount_amount=Decimal('500.00'),
+        promo_code_id=promo.id,
+    )
+    db.session.add(reg)
+    db.session.commit()
+
+    ws = load_workbook(xlsx_io.export_participants_xlsx())['Учасники']
+    header = [c.value for c in ws[1]]
+    assert header[-2:] == ['Промокод', 'Знижка (грн)']
+    row = [c.value for c in ws[2]]
+    assert row[-2:] == ['XLSX-CODE', 500.0]
+
+    # Шаблон для заповнення лишається без довідкових колонок.
+    blank = load_workbook(xlsx_io.export_participants_xlsx(blank=True))['Учасники']
+    assert 'Промокод' not in [c.value for c in blank[1]]
+
+    path = tmp_path / 'export.xlsx'
+    path.write_bytes(xlsx_io.export_participants_xlsx().getvalue())
+    plan = xlsx_io.parse_participants_xlsx(path)
+    assert plan.is_valid, plan.errors
+
+
 def test_export_header_matches_column_list(client):
     ws = load_workbook(xlsx_io.export_participants_xlsx(blank=True))['Учасники']
     header = [c.value for c in ws[1]]

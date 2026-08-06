@@ -1,8 +1,9 @@
 import io
 import logging
+from decimal import Decimal
 
 from flask import (
-    abort, flash, redirect, render_template, request, send_file, url_for,
+    abort, flash, jsonify, redirect, render_template, request, send_file, url_for,
 )
 from flask_babel import gettext as _
 from flask_login import current_user, login_required, login_user
@@ -16,8 +17,9 @@ from app.models.registration import EventRegistration
 from app.models.user import User
 from app.registration import registration_bp
 from app.registration.forms import EventRegistrationForm, ParticipantCompletionForm
-from app.services import participant_service, registration_service
+from app.services import participant_service, promo_service, registration_service
 from app.services.participant_service import ParticipantError
+from app.services.promo_service import PromoError
 from app.services.recaptcha import verify_request as verify_recaptcha
 from app.services.partner_auth import (
     PrefillTokenError,
@@ -130,6 +132,27 @@ def _sync_medical_profile_from_form(user, form, overwrite=True):
     _apply(profile, 'phone', (form.phone.data or '').strip() or None)
 
 
+def _pick_tariff(tariffs, raw_id):
+    """Знайти тариф зі списку за (можливо сміттєвим) id з запиту.
+
+    None -- id не передали, він не число або такого тарифу тут немає.
+    """
+    if not raw_id:
+        return None
+    try:
+        wanted = int(raw_id)
+    except (TypeError, ValueError):
+        return None
+    return next((t for t in tariffs if t.id == wanted), None)
+
+
+def _base_price(instance, tariff):
+    """Ціна до знижки: обраний тариф або ціна проведення."""
+    return Decimal(
+        tariff.price if tariff is not None else (instance.effective_price or 0)
+    )
+
+
 def _spec_labels(codes):
     """Локально імпортуємо щоб не тягнути specializations при cold-import
     routes.py під test-collection."""
@@ -204,13 +227,11 @@ def register_instance(instance_id):
     tariffs = instance.active_tariffs
     selected_tariff = None
     if tariffs:
-        raw_id = (request.form.get('tariff_id') if request.method == 'POST'
-                  else request.args.get('tariff'))
-        try:
-            wanted_id = int(raw_id) if raw_id else None
-        except (TypeError, ValueError):
-            wanted_id = None
-        selected_tariff = next((t for t in tariffs if t.id == wanted_id), None)
+        selected_tariff = _pick_tariff(
+            tariffs,
+            request.form.get('tariff_id') if request.method == 'POST'
+            else request.args.get('tariff'),
+        )
 
     # Для гостя перевіряємо після резолву користувача за email (нижче):
     # до сабміту ми просто не знаємо, хто це.
@@ -233,23 +254,46 @@ def register_instance(instance_id):
         initial.update({k: v for k, v in prefill.items() if v})
     form = EventRegistrationForm(data=initial, require_email=is_guest)
 
+    # Знижка, яку показуємо у зведенні при повторному рендері форми.
+    promo = None
+
+    def _render_form():
+        return render_template(
+            'registration/register.html',
+            form=form, event=EventAdapter(instance),
+            tariffs=tariffs, selected_tariff=selected_tariff,
+            profile_complete=_profile_complete(buyer),
+            promo=promo,
+            promo_check_url=url_for('registration.promo_check',
+                                    instance_id=instance.id),
+        )
+
     if form.validate_on_submit():
         if tariffs and selected_tariff is None:
             flash(_('Оберіть тариф участі'), 'error')
-            return render_template(
-                'registration/register.html',
-                form=form, event=EventAdapter(instance),
-                tariffs=tariffs, selected_tariff=None,
-                profile_complete=_profile_complete(buyer),
-            )
+            return _render_form()
         if not verify_recaptcha(action='event_register'):
             flash(_('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.'), 'error')
-            return render_template(
-                'registration/register.html',
-                form=form, event=EventAdapter(instance),
-                tariffs=tariffs, selected_tariff=selected_tariff,
-                profile_complete=_profile_complete(buyer),
-            )
+            return _render_form()
+
+        # Промокод. Перевіряємо ДО перевірки місць і створення користувача:
+        # неправильний код має повернути людину на форму, нічого не
+        # зачепивши. Списання (лічильник + реєстр) відбудеться пізніше, у
+        # registration_service, коли реєстрація вже існує.
+        promo_raw = (form.promo_code.data or '').strip()
+        if promo_raw:
+            try:
+                promo, _discount, _final = promo_service.validate(
+                    promo_raw,
+                    instance=instance,
+                    amount=_base_price(instance, selected_tariff),
+                    user_id=buyer.id if buyer is not None else None,
+                )
+            except PromoError as exc:
+                promo = None
+                flash(str(exc), 'error')
+                return _render_form()
+
         # Другий елемент кортежу не потрібен; НЕ розпаковуємо в `_`, щоб не
         # затінити gettext у скоупі функції.
         has_capacity = registration_service.check_capacity(instance_id)[0]
@@ -275,6 +319,10 @@ def register_instance(instance_id):
                     flash(_('На цю адресу вже є реєстрація на цей курс. '
                             'Увійдіть, щоб її побачити.'), 'info')
                     return redirect(url_for('auth.login', next=_login_next_path()))
+                # Ліміт "на одну людину" перевіряємо лише тут: до резолву
+                # за email ми не знали, хто саме купує.
+                if promo is not None:
+                    promo_service.assert_user_limit(promo, buyer.id)
 
             # 1) Слім-синхронізація: ПІБ у User + телефон у MedicalProfile.
             #    МОЗ-анкета живе в кабінеті (auth.certificate_data).
@@ -313,6 +361,7 @@ def register_instance(instance_id):
                 buyer.id, instance, form_data, existing,
                 tariff=selected_tariff,
                 referral_code=ref_code,
+                promo=promo,
             )
             # Спожити серверну атрибуцію (одноразово).
             if buyer.pending_referral_code:
@@ -320,8 +369,10 @@ def register_instance(instance_id):
             db.session.commit()
             # Аналітика воронки оплати: фіксуємо обраний спосіб і чи платна подія.
             logger.info(
-                'Registration REG-%d created: user=%d instance=%d method=%s free=%s',
+                'Registration REG-%d created: user=%d instance=%d method=%s '
+                'free=%s promo=%s',
                 reg.id, buyer.id, instance_id, reg.payment_method, is_free,
+                promo.code if promo is not None else '-',
             )
             # Гість не має входу, тож далі веде токен -- той самий публічний
             # флоу, яким уже користуються учасники, доданi менеджером.
@@ -400,20 +451,68 @@ def register_instance(instance_id):
                 logger.exception('Integrity error registering for instance %d',
                                  instance_id)
                 flash(_('Помилка при реєстрації. Спробуйте ще раз.'), 'error')
+        except PromoError as exc:
+            # Ліміт коду вичерпався між перевіркою і списанням (паралельний
+            # чекаут) або людина вже використала його раніше. Відкат, щоб
+            # створений щойно гість не лишився без реєстрації.
+            db.session.rollback()
+            promo = None
+            flash(str(exc), 'error')
         except Exception:
             logger.exception('Failed to register buyer for instance %d', instance_id)
             db.session.rollback()
             flash(_('Помилка при реєстрації. Спробуйте ще раз.'), 'error')
 
-    profile_complete = _profile_complete(buyer)
-    return render_template(
-        'registration/register.html',
-        form=form,
-        event=EventAdapter(instance),
-        tariffs=tariffs,
-        selected_tariff=selected_tariff,
-        profile_complete=profile_complete,
-    )
+    return _render_form()
+
+
+@registration_bp.route('/instance/<int:instance_id>/promo-check', methods=['POST'])
+# Той самий поріг, що й на самій реєстрації, і з тієї ж причини: українські
+# мобільні оператори тримають абонентів за CGNAT, тож ліміт по IP ділять
+# сотні людей. Перебір кодів тут малоцінний (знижку без реєстрації не
+# отримаєш), а от заблокований покупець коштує продажу.
+@limiter.limit('60 per hour')
+def promo_check(instance_id):
+    """Перевірка промокоду без сабміту форми (JSON для promo-code.js).
+
+    Нічого не мутує -- лише рахує знижку для показу. Списання відбувається
+    у момент реєстрації, тому дві вкладки з тим самим кодом не "з'їдять"
+    ліміт, просто подивившись на нього.
+    """
+    instance = db.session.query(CourseInstance).options(
+        joinedload(CourseInstance.course),
+        selectinload(CourseInstance.tariffs),
+    ).filter_by(id=instance_id).first()
+    # Ті самі умови, що й у register_instance: неактивний курс не має
+    # відповідати навіть на перевірку коду.
+    if not instance or not instance.course or not instance.course.is_active:
+        abort(404)
+
+    tariff = _pick_tariff(instance.active_tariffs, request.form.get('tariff_id'))
+    base = _base_price(instance, tariff)
+    code = (request.form.get('code') or '').strip()
+    if not code:
+        return jsonify({'ok': False, 'message': _('Введіть промокод')}), 400
+
+    try:
+        promo, discount, final = promo_service.validate(
+            code, instance=instance, amount=base,
+            user_id=current_user.id if current_user.is_authenticated else None,
+        )
+    except PromoError as exc:
+        return jsonify({'ok': False, 'message': str(exc)}), 200
+
+    return jsonify({
+        'ok': True,
+        'code': promo.code,
+        'discount': int(discount),
+        'final': int(final),
+        'is_free': final == 0,
+        'message': (
+            _('Промокод застосовано: участь безкоштовна') if final == 0
+            else _('Промокод застосовано: знижка %(sum)s грн', sum=int(discount))
+        ),
+    })
 
 
 @registration_bp.route('/<int:registration_id>')

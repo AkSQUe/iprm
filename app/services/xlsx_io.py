@@ -108,6 +108,7 @@ NUMBER_FORMATS = {
     'reg_id': FMT_INT,
     'birth_date': FMT_DATE,
     'payment_amount': FMT_CURRENCY_UAH,
+    'discount_amount': FMT_CURRENCY_UAH,
     'cpd_points_awarded': FMT_INT,
     'experience_years': FMT_INT,
 }
@@ -1547,7 +1548,15 @@ PARTICIPANT_LABELS = {
     'experience_years': 'Стаж (років)',
     'license_number': 'Ліцензія',
     'admin_notes': 'Нотатки',
+    'promo_code': 'Промокод',
+    'discount_amount': 'Знижка (грн)',
 }
+
+# Колонки ЛИШЕ на вивантаження: промокод і знижка -- довідкові, ними
+# володіє promo_service, тож імпорт їх не читає (невідомі заголовки
+# _read_sheet просто ігнорує, тож round-trip "вивантажив -> завантажив"
+# лишається робочим).
+PARTICIPANT_EXPORT_COLS = PARTICIPANT_COLS + ['promo_code', 'discount_amount']
 
 PARTICIPANT_WIDTHS = {
     'reg_id': 12,
@@ -1571,6 +1580,8 @@ PARTICIPANT_WIDTHS = {
     'experience_years': 12,
     'license_number': 18,
     'admin_notes': 40,
+    'promo_code': 18,
+    'discount_amount': 14,
 }
 
 REG_STATUS_LABEL = dict(EventRegistration.STATUSES)
@@ -1753,11 +1764,17 @@ def export_participants_xlsx(instance_id=None, blank=False) -> io.BytesIO:
     blank: True -- порожній шаблон (лише заголовки + dropdown-и, без даних).
     Reference-sheet «Заходи» + drop-down дозволяють додавати рядки для
     будь-якого заходу.
+
+    Шаблон для заповнення (blank) містить лише редаговані колонки, а
+    вивантаження даних -- ще й довідкові промокод/знижку: у шаблоні вони
+    були б пасткою (заповнив -- нічого не сталось), бо знижками володіє
+    promo_service, і імпорт їх не читає.
     """
+    cols = PARTICIPANT_COLS if blank else PARTICIPANT_EXPORT_COLS
     wb = Workbook()
     ws = wb.active
     ws.title = 'Учасники'
-    _style_header(ws, PARTICIPANT_COLS, PARTICIPANT_LABELS)
+    _style_header(ws, cols, PARTICIPANT_LABELS)
 
     from app.services import participant_service
 
@@ -1806,13 +1823,15 @@ def export_participants_xlsx(instance_id=None, blank=False) -> io.BytesIO:
             reg.experience_years,
             reg.license_number or '',
             reg.admin_notes or '',
+            reg.promo_code.code if reg.promo_code else '',
+            float(reg.discount_amount) if reg.discount_amount is not None else None,
         ]
         for col_idx, v in enumerate(values, start=1):
             cell = ws.cell(row=row_idx, column=col_idx, value=v)
             cell.alignment = WRAP
 
     last_row = ws.max_row
-    _apply_zebra(ws, len(PARTICIPANT_COLS), first_data_row=2, last_data_row=last_row)
+    _apply_zebra(ws, len(cols), first_data_row=2, last_data_row=last_row)
 
     # Кольори за статусом / оплатою.
     st_col = PARTICIPANT_COLS.index('status') + 1
@@ -1823,8 +1842,8 @@ def export_participants_xlsx(instance_id=None, blank=False) -> io.BytesIO:
         if reg.payment_status in PAYMENT_STATUS_FILLS:
             ws.cell(row=row_idx, column=pay_col).fill = PAYMENT_STATUS_FILLS[reg.payment_status]
 
-    _set_column_widths(ws, PARTICIPANT_COLS, PARTICIPANT_WIDTHS)
-    _apply_number_formats(ws, PARTICIPANT_COLS, last_row)
+    _set_column_widths(ws, cols, PARTICIPANT_WIDTHS)
+    _apply_number_formats(ws, cols, last_row)
 
     # Reference-sheets + drop-downs.
     events_last_row = _add_events_sheet(wb)
@@ -1857,7 +1876,7 @@ def export_participants_xlsx(instance_id=None, blank=False) -> io.BytesIO:
         last_data_row=last_row, title='Присутній', hint='Так / Ні',
     )
 
-    _apply_table_style(ws, PARTICIPANT_COLS, 'tblParticipants', last_row)
+    _apply_table_style(ws, cols, 'tblParticipants', last_row)
 
     out = io.BytesIO()
     wb.save(out)

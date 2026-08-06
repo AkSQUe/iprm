@@ -170,7 +170,20 @@
         <div class="form-group">
           <label for="payment_amount">Сума оплати (UAH)</label>
           {{ form.payment_amount(class="form-input", id="payment_amount", step="0.01") }}
+          <div class="form-hint">{{ form.payment_amount.description }}</div>
           {% for error in form.payment_amount.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label for="promo_code">Промокод</label>
+          {{ form.promo_code(class="form-input", id="promo_code", placeholder="напр. Дмитро") }}
+          <div class="form-hint">{{ form.promo_code.description }}</div>
+          {% if reg and reg.has_discount %}
+          <div class="form-hint">
+            Застосовано знижку <strong>{{ reg.discount_amount | int }} &#8372;</strong>
+            &rarr; до сплати <strong>{{ reg.payment_amount | int }} &#8372;</strong>
+          </div>
+          {% endif %}
+          {% for error in form.promo_code.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
         </div>
         <div class="form-group">
           <label for="cpd_points_awarded">Нараховані бали БПР</label>
