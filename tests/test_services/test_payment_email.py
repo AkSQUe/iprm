@@ -18,6 +18,7 @@ from app.models.course_instance import CourseInstance
 from app.models.email_log import EmailLog
 from app.models.email_settings import EmailSettings
 from app.models.mixins import utcnow
+from app.models.notification_rule import NotificationRule
 from app.models.promo_code import PromoCode
 from app.models.registration import EventRegistration
 from app.models.site_settings import SiteSettings
@@ -226,6 +227,67 @@ def test_guest_without_password_gets_token_link_not_login(site, registration,
     assert f'/registration/complete/{registration.completion_token}/pay' in body
     assert '/auth/account' not in body
     assert 'Створити кабінет' in body
+
+
+# ---------- admin-нотифікація ----------
+
+def _admin_log(registration):
+    return (EmailLog.query
+            .filter_by(template_name='admin_event_notification',
+                       registration_id=registration.id)
+            .order_by(EmailLog.id.desc())
+            .first())
+
+
+@pytest.fixture
+def admin(app):
+    """Активний адмін -- інакше resolve() поверне порожній список."""
+    u = User.create_with_password(
+        f'adm-{uuid4().hex[:6]}@test.com', 'password123',
+        first_name='Адмін', last_name='Тестовий', email_confirmed=True,
+    )
+    u.is_admin = True
+    u.is_active = True
+    db.session.flush()
+    NotificationRule.query.delete()
+    db.session.add(NotificationRule(event_type='payment'))
+    db.session.commit()
+    return u
+
+
+def test_admin_email_carries_money_and_contacts(site, registration, admin,
+                                                monkeypatch):
+    """Раніше адмін бачив лише ім'я і № реєстрації -- суму треба було
+    шукати в адмінці."""
+    _send(monkeypatch, registration)
+    log = _admin_log(registration)
+    assert log is not None, 'admin-нотифікація не сформувалась'
+    body = log.html_body or ''
+
+    assert '12500 UAH' in body
+    assert '+380501112233' in body
+    assert 'tel:+380501112233' in body
+    assert f'mailto:{registration.user.email}' in body
+    assert 'Дерматолог' in body and 'Клініка' in body
+
+
+def test_admin_subject_leads_with_the_amount(site, registration, admin,
+                                             monkeypatch):
+    """У списку листів адмін відрізняє платежі саме за сумою."""
+    _send(monkeypatch, registration)
+    assert _admin_log(registration).subject.startswith('Оплата 12500 UAH:')
+
+
+def test_admin_email_explains_zero_amount(site, registration, admin,
+                                          monkeypatch):
+    registration.payment_amount = Decimal('0')
+    registration.discount_amount = Decimal('12500')
+    db.session.commit()
+
+    _send(monkeypatch, registration)
+    body = _admin_log(registration).html_body or ''
+    assert 'Оплачено промокодом' in body
+    assert '-12500 UAH' in body and 'було 12500 UAH' in body
 
 
 def test_no_promo_is_issued_when_sending_is_disabled(site, registration,

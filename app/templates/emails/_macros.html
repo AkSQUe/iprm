@@ -148,11 +148,26 @@
 </table>
 {%- endmacro -%}
 
-{%- macro detail_row(label, value) -%}
+{#- label_width -- ширина колонки підпису. Дефолт 80px розрахований на
+    короткі підписи user-листів ("Дата", "Сума"); admin-нотифікація має
+    довгі ("Спеціальність", "Місце роботи") і передає більше. -#}
+{%- macro detail_row(label, value, label_width='80px') -%}
 <table role="presentation" style="width: 100%; margin-bottom: 8px;" cellpadding="0" cellspacing="0" border="0">
     <tr>
-        <td style="padding: 4px 0; font-size: 14px; color: #6B7280; line-height: 1.5; width: 80px; vertical-align: top;">{{ label }}</td>
+        <td style="padding: 4px 0; font-size: 14px; color: #6B7280; line-height: 1.5; width: {{ label_width }}; vertical-align: top;">{{ label }}</td>
         <td style="padding: 4px 0; font-size: 14px; font-weight: 500; color: #111827; line-height: 1.5;">{{ value }}</td>
+    </tr>
+</table>
+{%- endmacro -%}
+
+{#- Те саме, але значення -- клікабельне (mailto:/tel:). Адмін читає
+    сповіщення з телефона: набрати учасника має бути одним тапом, а не
+    копіюванням номера з тексту. -#}
+{%- macro detail_row_link(label, value, href, label_width='80px') -%}
+<table role="presentation" style="width: 100%; margin-bottom: 8px;" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+        <td style="padding: 4px 0; font-size: 14px; color: #6B7280; line-height: 1.5; width: {{ label_width }}; vertical-align: top;">{{ label }}</td>
+        <td style="padding: 4px 0; font-size: 14px; font-weight: 500; line-height: 1.5;"><a href="{{ href }}" style="color: #7055a4; text-decoration: none;">{{ value }}</a></td>
     </tr>
 </table>
 {%- endmacro -%}

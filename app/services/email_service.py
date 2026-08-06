@@ -947,12 +947,16 @@ class EmailService:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _build_admin_subject(event_type, event, user):
+    def _build_admin_subject(event_type, event, user, registration=None):
         """Спільне правило формування subject для admin-нотифікації.
 
         Замість того, щоб кожен send_* конструював свій рядок (DRY),
         формат уніфіковано: '<префікс>: <event-title> -- <user>'.
         Префікс залежить від event_type, fallback -- 'Подія'.
+
+        Для оплати префікс несе суму, а для безкоштовної реєстрації --
+        помітку: адмін бачить у списку листів десятки однакових тем, і
+        саме сума відрізняє платіж на 500 грн від платежу на 25 000.
         """
         prefixes = {
             'registration': 'Нова реєстрація',
@@ -960,6 +964,12 @@ class EmailService:
             'status_change': 'Зміна статусу реєстрації',
         }
         prefix = prefixes.get(event_type, 'Подія')
+        if registration is not None:
+            amount = registration.payment_amount
+            if event_type == 'payment' and amount and amount > 0:
+                prefix = f'Оплата {int(amount)} UAH'
+            elif event_type == 'registration' and registration.payment_status == 'paid':
+                prefix = 'Нова реєстрація (безкоштовно)'
         title = event.title if event is not None else event_type
         who = (user.full_name if user is not None else None) or \
               (user.email if user is not None else 'unknown')
@@ -1047,7 +1057,9 @@ class EmailService:
             return []
 
         user = registration.user if registration is not None else None
-        subject = EmailService._build_admin_subject(event_type, event, user)
+        subject = EmailService._build_admin_subject(
+            event_type, event, user, registration=registration,
+        )
         ctx = {
             'kind_label': kind_label or event_type,
             'registration': registration,

@@ -214,7 +214,16 @@ def notifications_templates():
     class MockRegistration:
         id = 1
         payment_status = 'unpaid'
+        payment_status_label = 'Не оплачено'
         payment_amount = 12500
+        payment_method = 'liqpay'
+        payment_method_label = 'Онлайн-оплата (LiqPay)'
+        place_number = None
+        phone = '+380671234567'
+        specialty = 'Дерматолог'
+        workplace = 'Клініка "Медіка", Київ'
+        has_discount = False
+        promo_code = None
         STATUSES = [
             ('pending', 'Очікує'),
             ('confirmed', 'Підтверджено'),
@@ -226,13 +235,12 @@ def notifications_templates():
     event = MockEvent()
     reg = MockRegistration()
 
-    class MockRegPaid:
+    class MockRegPaid(MockRegistration):
         id = 2
         payment_status = 'paid'
+        payment_status_label = 'Оплачено'
         payment_amount = 12500
         place_number = 7
-        has_discount = False
-        STATUSES = MockRegistration.STATUSES
 
     reg_paid = MockRegPaid()
 
@@ -286,7 +294,26 @@ def notifications_templates():
         team_size_label = '6–10 осіб'
         created_at = datetime(2026, 4, 11, 11, 0, tzinfo=timezone.utc)
 
+    class MockAppliedPromo:
+        code = 'ФАРМА-2026'
+        discount_label = '20%'
+
+    class MockRegPaidPromo(MockRegistration):
+        """Оплата зі знижкою -- показує в прев'ю рядки промокоду."""
+        id = 3
+        payment_status = 'paid'
+        payment_status_label = 'Оплачено'
+        payment_amount = 10000
+        place_number = 7
+        has_discount = True
+        discount_amount = 2500
+        amount_before_discount = 12500
+        promo_code = MockAppliedPromo()
+
+    reg_paid_promo = MockRegPaidPromo()
+
     reg.user = user  # admin_event_notification renders registration.user
+    reg_paid_promo.user = user
 
     certificate = MockCertificate()
     comment = MockComment()
@@ -460,10 +487,21 @@ def notifications_templates():
             'label': 'Admin-сповіщення про подію',
             'template_name': 'admin_event_notification.html',
             'trigger': 'status_change',
-            'subject': f'Нова реєстрація: {event.title}',
+            'subject': f'Нова реєстрація: {event.title} -- {user.full_name}',
             'html': render_template('emails/admin_event_notification.html',
                                     event=event, registration=reg,
                                     kind_label='Нова реєстрація',
+                                    admin_url=mock_admin_url),
+        },
+        {
+            'key': 'admin-payment',
+            'label': 'Admin-сповіщення про оплату',
+            'template_name': 'admin_event_notification.html',
+            'trigger': 'payment',
+            'subject': f'Оплата 10000 UAH: {event.title} -- {user.full_name}',
+            'html': render_template('emails/admin_event_notification.html',
+                                    event=event, registration=reg_paid_promo,
+                                    kind_label='Підтверджена оплата',
                                     admin_url=mock_admin_url),
         },
         {
