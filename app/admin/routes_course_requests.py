@@ -79,7 +79,7 @@ def course_requests_list():
 @admin_required
 def course_requests_export():
     """Експорт запитів на курси у xlsx з урахуванням активних фільтрів."""
-    from app.services import xlsx_io
+    from app.services import xlsx_reports
 
     filters = _course_request_filters()
     rows = _course_requests_query(filters).all()
@@ -100,9 +100,10 @@ def course_requests_export():
         'Admin %s exported course requests xlsx (%d rows, filters=%s)',
         current_user.email, len(rows), filters,
     )
-    return _listing.xlsx_download(
-        xlsx_io.export_course_requests_xlsx(rows, applied_filters=summary),
-        'course-requests',
+    return _listing.xlsx_export(
+        rows, 'course-requests',
+        lambda: xlsx_reports.export_course_requests_xlsx(rows, applied_filters=summary),
+        'admin.course_requests_list', **_listing.filter_args(filters),
     )
 
 

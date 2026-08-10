@@ -373,6 +373,50 @@ def certificate_revoke(cert_id):
     return redirect(url_for('admin.certificates'))
 
 
+# Пресети -- поширені щоденні зрізи в один клік. Кожен лише виставляє ті
+# самі параметри фільтра, тож пресет, панель, експорт і пагінація говорять
+# однією мовою; жодної окремої гілки в запиті.
+REGISTRATION_PRESETS = {
+    'unpaid': {
+        'label': 'Неоплачені',
+        'icon': 'error',
+        'args': {'payment': 'unpaid', 'status': 'confirmed'},
+    },
+    'no_certificate': {
+        'label': 'Без сертифіката',
+        'icon': 'workspace_premium',
+        'args': {'status': 'completed'},
+    },
+    'today': {
+        'label': 'Сьогоднішні',
+        'icon': 'event',
+        'args': {},  # діапазон дат підставляємо на льоту -- «сьогодні» рухоме
+    },
+}
+
+
+def _preset_args(key):
+    """Параметри пресету у вигляді, придатному для url_for."""
+    preset = REGISTRATION_PRESETS.get(key)
+    if preset is None:
+        return {}
+    args = dict(preset['args'])
+    if key == 'today':
+        today = _listing.now_kyiv().strftime('%Y-%m-%d')
+        args.update({'date_from': today, 'date_to': today})
+    if key == 'no_certificate':
+        args['no_certificate'] = '1'
+    return args
+
+
+def _preset_matches(key, filters):
+    """Чи поточний зріз -- це рівно цей пресет (щоб підсвітити пілюлю)."""
+    return all(
+        str(filters.get(name) or '') == str(value)
+        for name, value in _preset_args(key).items()
+    )
+
+
 def _registration_filters():
     """Фільтри списку реєстрацій з query-string.
 
@@ -393,6 +437,7 @@ def _registration_filters():
         'trainer_id': _listing.int_arg('trainer_id'),
         'date_from': _listing.date_arg('date_from'),
         'date_to': _listing.date_arg('date_to'),
+        'no_certificate': _listing.choice_arg('no_certificate', ('1',)),
         'scope': scope,
         'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
     }
@@ -424,6 +469,9 @@ def _apply_registration_filters(query, filters):
         query, EventRegistration.created_at,
         filters['date_from'], filters['date_to'],
     )
+    if filters['no_certificate']:
+        # Кому ще не видали документ: підстава для пресету «Без сертифіката».
+        query = query.filter(~EventRegistration.certificate.has())
 
     # CourseInstance потрібен для scope (час заходу) та фільтрів курс/тренер.
     # Джойнимо один раз, щоб не дублювати join.
@@ -501,7 +549,15 @@ def registrations_all():
         filters=filters,
         # Непорожні параметри -- один набір для пілюль, пагінації й експорту:
         # усі три мають вести на той самий зріз.
-        filter_args={k: v for k, v in filters.items() if v},
+        filter_args=_listing.filter_args(filters),
+        presets=[
+            (key, preset['label'], preset['icon'], _preset_args(key))
+            for key, preset in REGISTRATION_PRESETS.items()
+        ],
+        active_preset=next(
+            (key for key in REGISTRATION_PRESETS
+             if _preset_matches(key, filters)), None,
+        ),
         status_options=EventRegistration.STATUSES,
         payment_options=EventRegistration.PAYMENT_STATUSES,
         method_options=EventRegistration.PAYMENT_METHODS,
@@ -511,28 +567,34 @@ def registrations_all():
 
 
 def _registration_select_options():
-    """Довідники для селектів фільтра: курси / тренери / заходи."""
+    """Довідники для селектів фільтра: курси / тренери / заходи.
+
+    Тягнемо лише колонки, які потрібні селекту (id + підпис), а не цілі
+    сутності з joinedload: список заходів росте з кожним проведенням, і
+    гідратувати сотні ORM-обʼєктів заради двох рядків тексту -- марно.
+    """
     from app.services import participant_service
 
-    instances = db.session.query(CourseInstance).options(
-        joinedload(CourseInstance.course),
-    ).order_by(CourseInstance.start_date.desc()).all()
+    instance_rows = db.session.query(
+        CourseInstance.id, CourseInstance.start_date,
+        CourseInstance.location, Course.title,
+    ).join(Course, CourseInstance.course_id == Course.id).order_by(
+        CourseInstance.start_date.desc(),
+    ).all()
     return {
-        'course_options': [
-            (c.id, c.title)
-            for c in db.session.query(Course).order_by(Course.title).all()
-        ],
-        'trainer_options': [
-            (t.id, t.full_name)
-            for t in db.session.query(Trainer).order_by(Trainer.full_name).all()
-        ],
+        'course_options': db.session.query(
+            Course.id, Course.title,
+        ).order_by(Course.title).all(),
+        'trainer_options': db.session.query(
+            Trainer.id, Trainer.full_name,
+        ).order_by(Trainer.full_name).all(),
         'instance_options': [
             (
-                i.id,
-                participant_service.event_label(i)
-                + (f' ({i.location})' if i.location else ''),
+                inst_id,
+                participant_service.format_event_label(title, start_date)
+                + (f' ({location})' if location else ''),
             )
-            for i in instances
+            for inst_id, start_date, location, title in instance_rows
         ],
     }
 
@@ -585,7 +647,7 @@ def registrations_export():
     Вивантажує ВЕСЬ відфільтрований зріз, а не поточну сторінку: пагінація --
     властивість екрана, а не звіту.
     """
-    from app.services import referral_service, xlsx_io
+    from app.services import referral_service, xlsx_reports
 
     filters = _registration_filters()
     query = _apply_registration_filters(
@@ -606,15 +668,21 @@ def registrations_export():
     referrer_map = referral_service.resolve_referrers_bulk(
         [r.referral_code for r in regs],
     )
-    data = xlsx_io.export_registrations_xlsx(
-        regs, referrer_map,
-        applied_filters=_registration_filters_summary(filters, len(regs)),
-    )
+
+    def build():
+        return xlsx_reports.export_registrations_xlsx(
+            regs, referrer_map,
+            applied_filters=_registration_filters_summary(filters, len(regs)),
+        )
+
     audit_logger.info(
         'Admin %s exported registrations xlsx (%d rows, filters=%s)',
         current_user.email, len(regs), filters,
     )
-    return _listing.xlsx_download(data, 'registrations')
+    return _listing.xlsx_export(
+        regs, 'registrations', build,
+        'admin.registrations_all', **_listing.filter_args(filters),
+    )
 
 
 @admin_bp.route('/registrations/<int:reg_id>/completion-link', methods=['POST'])

@@ -12,6 +12,8 @@ from app.admin import routes_meta_pixel  # noqa: F401
 from app.admin import routes_google_oauth  # noqa: F401
 from app.admin import routes_apple_signin  # noqa: F401
 from app.admin import routes_stubs  # noqa: F401
+from app.admin import routes_users  # noqa: F401
+from app.admin import routes_certificates  # noqa: F401
 from app.admin import routes_uploads  # noqa: F401
 from app.admin import routes_notifications  # noqa: F401
 from app.admin import routes_notifications_recipients  # noqa: F401

@@ -117,7 +117,7 @@ def promo_codes_list():
         pagination=pagination,
         promos=pagination.items,
         filters=filters,
-        filter_args={k: v for k, v in filters.items() if v},
+        filter_args=_listing.filter_args(filters),
         status_options=list(_PROMO_STATES.items()),
     )
 
@@ -126,7 +126,7 @@ def promo_codes_list():
 @admin_required
 def promo_codes_export():
     """Експорт промокодів у xlsx з урахуванням активних фільтрів."""
-    from app.services import xlsx_io
+    from app.services import xlsx_reports
 
     filters = _promo_filters()
     promos = _promo_query(filters).all()
@@ -141,9 +141,10 @@ def promo_codes_export():
         'Admin %s exported promo codes xlsx (%d rows, filters=%s)',
         current_user.email, len(promos), filters,
     )
-    return _listing.xlsx_download(
-        xlsx_io.export_promo_codes_xlsx(promos, applied_filters=summary),
-        'promo-codes',
+    return _listing.xlsx_export(
+        promos, 'promo-codes',
+        lambda: xlsx_reports.export_promo_codes_xlsx(promos, applied_filters=summary),
+        'admin.promo_codes_list', **_listing.filter_args(filters),
     )
 
 

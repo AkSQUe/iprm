@@ -1145,14 +1145,16 @@
   padding: 14px 16px;
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
+  /* Лівий кант тримаємо завжди -- активний фільтр лише перефарбовує його.
+     Зміна ширини зсувала б вміст панелі на 2px при кожному фільтрі. */
+  border-left: 3px solid var(--iprm-border);
   border-radius: var(--iprm-radius-md, 14px);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-/* Активний зріз позначаємо лівим кантом -- видно з першого погляду, що
-   список звужено, навіть коли панель згорнута. */
+/* Активний зріз видно з першого погляду -- навіть коли панель згорнута. */
 .admin-filters--on {
-  border-left: 3px solid var(--iprm-nav-active);
+  border-left-color: var(--iprm-nav-active);
 }
 
 .admin-filters__bar {
@@ -1349,4 +1351,10 @@
 
 [data-theme="dark"] .admin-chip:hover {
   background: rgba(255, 255, 255, 0.12);
+}
+
+/* Пресети списку реєстрацій -- той самий вигляд, що й пілюлі періоду, лише
+   з меншим відступом: два ряди пілюль поспіль інакше "розповзаються". */
+.admin-filter-pills--presets {
+  margin-top: -8px;
 }

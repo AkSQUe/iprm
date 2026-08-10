@@ -4,7 +4,7 @@ import logging
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
 from app.admin.forms import ReviewForm
 from app.extensions import db
@@ -21,8 +21,6 @@ _REVIEW_STATES = {'published': 'Опубліковані', 'draft': 'Черне�
 @admin_bp.route('/reviews')
 @admin_required
 def reviews_list():
-    from app.admin import _listing
-
     filters = {
         'q': _listing.text_arg('q'),
         'state': _listing.choice_arg('state', _REVIEW_STATES),

@@ -96,6 +96,17 @@
       {% endfor %}
     </div>
 
+    {# Пресети: щоденні зрізи в один клік. Кожен -- звичайний набір фільтрів,
+       тож панель і чіпси одразу показують, що саме увімкнено. #}
+    <div class="admin-filter-pills admin-filter-pills--presets">
+      {% for key, label, ico, args in presets %}
+      <a href="{{ url_for('admin.registrations_all', scope=filters.scope, **args) }}"
+         class="admin-pill{% if active_preset == key %} admin-pill--active{% endif %}">
+        {{ icon(ico) }} {{ label }}
+      </a>
+      {% endfor %}
+    </div>
+
     <!-- Filters -->
     {{ filter_bar(
          endpoint='admin.registrations_all',
@@ -110,6 +121,8 @@
            {'name': 'instance_id', 'label': 'Захід', 'placeholder': 'Всі заходи', 'options': instance_options},
            {'name': 'date_from', 'label': 'Реєстрації з', 'type': 'date'},
            {'name': 'date_to', 'label': 'Реєстрації по', 'type': 'date'},
+           {'name': 'no_certificate', 'label': 'Сертифікат',
+            'placeholder': 'Будь-який', 'options': [('1', 'Ще не виданий')]},
            {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
          ],
          base_args={'scope': filters.scope},

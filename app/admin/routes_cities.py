@@ -10,7 +10,7 @@ import logging
 from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit
 from app.admin.decorators import admin_required
 from app.extensions import db
@@ -24,8 +24,6 @@ audit_logger = logging.getLogger('audit')
 @admin_bp.route('/cities', methods=['GET'])
 @admin_required
 def cities_list():
-    from app.admin import _listing
-
     filters = {'q': _listing.text_arg('q')}
     # Пошук звужує лише показані рядки: cities_save читає ті ключі форми, що
     # прийшли, тож збереження відфільтрованої таблиці не чіпає решту.

@@ -36,19 +36,27 @@ _KYIV = timezone(timedelta(hours=3))
 _SPECIALTY_MAX = 200
 
 
+def format_event_label(title, start_date):
+    """Ярлик заходу з голих значень -- без завантаження ORM-обʼєкта.
+
+    Потрібен там, де підписи будуються з колонкового запиту (селекти
+    фільтрів на сотні проведень): гідратувати сутність заради двох полів
+    дорого. Дата -- київська (події в UTC), щоб уникнути зсуву на нічних.
+    """
+    if start_date is not None and start_date.tzinfo is not None:
+        start_date = start_date.astimezone(_KYIV)
+    date_s = start_date.strftime('%d.%m.%Y') if start_date else 'без дати'
+    return f'{title} -- {date_s}'
+
+
 def event_label(instance, with_id=False, with_status=False):
     """Єдиний людиночитний ярлик CourseInstance для UI (форма + xlsx).
 
     with_id     -- префікс '#<id>' (потрібен xlsx для зворотного парсингу).
     with_status -- суфікс '(Статус)' (зручно у випадних списках форми).
-    Дата -- київська (події в UTC), щоб уникнути зсуву на нічних подіях.
     """
     title = instance.course.title if instance.course else f'Захід #{instance.id}'
-    sd = instance.start_date
-    if sd is not None and sd.tzinfo is not None:
-        sd = sd.astimezone(_KYIV)
-    date_s = sd.strftime('%d.%m.%Y') if sd else 'без дати'
-    core = f'{title} -- {date_s}'
+    core = format_event_label(title, instance.start_date)
     label = f'#{instance.id} -- {core}' if with_id else core
     if with_status:
         status = dict(CourseInstance.STATUSES).get(instance.status, instance.status)

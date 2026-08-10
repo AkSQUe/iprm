@@ -12,7 +12,7 @@
 """
 from datetime import datetime, timedelta, timezone
 
-from flask import request, send_file
+from flask import current_app, flash, redirect, request, send_file, url_for
 from sqlalchemy import or_
 
 XLSX_MIMETYPE = (
@@ -33,9 +33,17 @@ def text_arg(name, default=''):
     return (request.args.get(name) or default).strip()
 
 
-def int_arg(name):
-    """Цілочисельний параметр або None (нечислове значення -> None)."""
-    return request.args.get(name, type=int)
+def int_arg(name, positive=True):
+    """Цілочисельний параметр або None (нечислове значення -> None).
+
+    positive=True (типово) відкидає 0 і від'ємні: усі id у проєкті додатні,
+    а ?course_id=0 інакше давав розсинхрон -- панель рахувала фільтр активним
+    (чіпс + лічильник), тоді як запит його ігнорував через falsy-перевірку.
+    """
+    value = request.args.get(name, type=int)
+    if value is None or (positive and value <= 0):
+        return None
+    return value
 
 
 def choice_arg(name, allowed, default=''):
@@ -48,19 +56,33 @@ def choice_arg(name, allowed, default=''):
     return value if value in allowed else default
 
 
-# Скільки рядків показувати на сторінці. Порожнє значення = дефолт роуту,
-# тож самого дефолту в списку немає -- інакше він дублювався б у плейсхолдері.
+# Типовий розмір сторінки довгих реєстрів.
+LIST_PER_PAGE = 50
+
+# Що можна обрати вручну. Дефолту в списку немає навмисно: порожнє значення
+# і Є дефолт, інакше він дублювався б у плейсхолдері селекта.
 PER_PAGE_CHOICES = ('25', '100', '200')
 PER_PAGE_OPTIONS = [(n, f'{n} рядків') for n in PER_PAGE_CHOICES]
 
 
-def per_page_arg(default=50):
+def per_page_arg(default=LIST_PER_PAGE):
     """Кількість рядків на сторінці зі списку дозволених (інакше -- дефолт).
 
     Свавільне ?per_page=100000 інакше клало б сторінку на прод-обсязі.
     """
     raw = choice_arg('per_page', PER_PAGE_CHOICES)
     return int(raw) if raw else default
+
+
+# Пошуковий рядок довший за це -- завідомо не запит людини, а сміття з
+# автопідстановки чи чужого скрипта; ILIKE по кількох колонках від нього лише
+# страждає.
+MAX_SEARCH_LENGTH = 100
+
+# Стеля синхронного експорту. Понад неї файл будувався б хвилини й тримав би
+# у пам'яті весь зріз, поки nginx ріже запит на 60с; тож відмовляємо явно
+# (fail closed), а не віддаємо мовчки обрізаний файл.
+MAX_EXPORT_ROWS = 20_000
 
 
 def date_arg(name):
@@ -83,7 +105,12 @@ def apply_date_range(query, column, date_from='', date_to=''):
     Колонки зберігаються в UTC, тож «по 10.08» без переводу відрізало б
     записи з 21:00 до 24:00 київського вечора -- вони лежать уже наступною
     добою UTC.
+
+    Перевернутий діапазон міняємо місцями: намір очевидний, а порожній
+    список без пояснення виглядав би як «даних немає».
     """
+    if date_from and date_to and date_from > date_to:
+        date_from, date_to = date_to, date_from
     if date_from:
         start = datetime.strptime(date_from, '%Y-%m-%d').replace(tzinfo=KYIV)
         query = query.filter(column >= start)
@@ -113,7 +140,7 @@ def _escape_like(term):
 
 def search_clause(term, columns):
     """OR-ILIKE по кількох колонках; None, якщо шукати нічого."""
-    term = (term or '').strip()
+    term = (term or '').strip()[:MAX_SEARCH_LENGTH]
     if not term or not columns:
         return None
     pattern = f'%{_escape_like(term)}%'
@@ -138,6 +165,12 @@ def export_summary(pairs, rows_count):
     ]
 
 
+def filter_args(filters):
+    """Непорожні фільтри для URL: пілюлі, пагінація й експорт мають вести на
+    той самий зріз, тож набір параметрів у них один."""
+    return {key: value for key, value in filters.items() if value}
+
+
 def xlsx_download(buf, basename):
     """Віддати BytesIO як xlsx-attachment із таймстемпом у назві."""
     return send_file(
@@ -147,3 +180,33 @@ def xlsx_download(buf, basename):
         download_name=f'{basename}-{now_kyiv().strftime("%Y%m%d-%H%M")}.xlsx',
         max_age=0,
     )
+
+
+def xlsx_export(rows, basename, builder, back_endpoint, **back_args):
+    """Побудувати й віддати xlsx зі стелею рядків і обробкою помилок.
+
+    rows          -- уже вибраний зріз (список), його довжина і є стелею;
+    builder       -- callable() -> io.BytesIO, будує файл;
+    back_endpoint -- куди повернути, якщо віддати файл не вдалось.
+
+    Понад MAX_EXPORT_ROWS відмовляємо явно: мовчки обрізаний файл гірший за
+    відмову -- менеджер вважав би його повним і звіряв би по ньому гроші.
+    Виняток під час побудови теж не має віддавати 500: користувач має
+    прочитати, що сталось, і лишитись на своєму зрізі.
+    """
+    if len(rows) > MAX_EXPORT_ROWS:
+        flash(
+            f'У зрізі {len(rows)} рядків -- це більше за ліміт '
+            f'{MAX_EXPORT_ROWS}. Звузьте фільтр (наприклад, діапазоном дат) '
+            'і повторіть експорт.',
+            'error',
+        )
+        return redirect(url_for(back_endpoint, **back_args))
+    try:
+        buf = builder()
+    except Exception:
+        current_app.logger.exception('xlsx export failed: %s', basename)
+        flash('Не вдалося сформувати файл. Спробуйте ще раз або звузьте фільтр.',
+              'error')
+        return redirect(url_for(back_endpoint, **back_args))
+    return xlsx_download(buf, basename)

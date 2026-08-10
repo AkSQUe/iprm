@@ -58,7 +58,7 @@ def b2b_requests_list():
 @admin_required
 def b2b_requests_export():
     """Експорт B2B-заявок у xlsx з урахуванням активних фільтрів."""
-    from app.services import xlsx_io
+    from app.services import xlsx_reports
 
     filters = _b2b_filters()
     rows = _b2b_query(filters).all()
@@ -76,9 +76,10 @@ def b2b_requests_export():
         'Admin %s exported b2b requests xlsx (%d rows, filters=%s)',
         current_user.email, len(rows), filters,
     )
-    return _listing.xlsx_download(
-        xlsx_io.export_b2b_requests_xlsx(rows, applied_filters=summary),
-        'b2b-requests',
+    return _listing.xlsx_export(
+        rows, 'b2b-requests',
+        lambda: xlsx_reports.export_b2b_requests_xlsx(rows, applied_filters=summary),
+        'admin.b2b_requests_list', **_listing.filter_args(filters),
     )
 
 

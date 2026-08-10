@@ -3,7 +3,7 @@ from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
 from sqlalchemy import func as sa_func
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
 from app.extensions import db
 from app.models.email_log import EmailLog, MAX_RETRIES
@@ -124,7 +124,6 @@ def notifications_settings():
 
 def _email_log_filters():
     """Фільтри лог-журналу листів -- спільні для сторінки й експорту."""
-    from app.admin import _listing
     return {
         'q': _listing.text_arg('q'),
         'status': _listing.choice_arg('status', dict(EmailLog.STATUSES)),
@@ -136,8 +135,6 @@ def _email_log_filters():
 
 def _email_log_query(filters):
     """Записи журналу під фільтри, найновіші першими."""
-    from app.admin import _listing
-
     query = _listing.apply_search(EmailLog.query, filters['q'], [
         EmailLog.to_email, EmailLog.subject,
         EmailLog.template_name, EmailLog.error_message,
@@ -165,7 +162,7 @@ def notifications_log():
         pagination=pagination,
         logs=pagination.items,
         filters=filters,
-        filter_args={k: v for k, v in filters.items() if v},
+        filter_args=_listing.filter_args(filters),
         status_options=EmailLog.STATUSES,
         trigger_options=EmailLog.TRIGGERS,
     )
@@ -179,8 +176,7 @@ def notifications_log_export():
     Головний кейс -- розбір «чому людині не дійшов лист»: у файлі видно
     статус, тригер, кількість ретраїв і текст помилки SMTP.
     """
-    from app.admin import _listing
-    from app.services import xlsx_io
+    from app.services import xlsx_reports
 
     filters = _email_log_filters()
     logs = _email_log_query(filters).all()
@@ -197,9 +193,10 @@ def notifications_log_export():
         'Admin %s exported email log xlsx (%d rows, filters=%s)',
         current_user.email, len(logs), filters,
     )
-    return _listing.xlsx_download(
-        xlsx_io.export_email_logs_xlsx(logs, applied_filters=summary),
-        'email-log',
+    return _listing.xlsx_export(
+        logs, 'email-log',
+        lambda: xlsx_reports.export_email_logs_xlsx(logs, applied_filters=summary),
+        'admin.notifications_log', **_listing.filter_args(filters),
     )
 
 

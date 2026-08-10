@@ -214,7 +214,7 @@ def instances_report_export():
     редагування живе окремий /admin/instances/export із `export_instances_xlsx`
     та парою parse_instances_xlsx -- звідси й різні URL.
     """
-    from app.services import xlsx_io
+    from app.services import xlsx_reports
 
     filters = _instance_filters()
     query, order, next3 = _instances_query(filters)
@@ -240,7 +240,7 @@ def instances_report_export():
     )
     return _listing.xlsx_export(
         instances, 'instances',
-        lambda: xlsx_io.export_instances_report_xlsx(
+        lambda: xlsx_reports.export_instances_report_xlsx(
             instances, _instance_reg_counts(instances), applied_filters=summary),
         'admin.instances_list', **_listing.filter_args(filters),
     )

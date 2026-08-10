@@ -12,7 +12,7 @@ from flask_login import current_user
 from sqlalchemy import func, desc
 from sqlalchemy.exc import IntegrityError
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
 from app.admin.forms import BlogPostForm
 from app.admin.routes_translations import apply_inline_translations
@@ -33,8 +33,6 @@ _POST_STATES = {'published': 'Опубліковані', 'draft': 'Чернет�
 @admin_bp.route('/blog')
 @admin_required
 def blog_list():
-    from app.admin import _listing
-
     filters = {
         'q': _listing.text_arg('q'),
         'state': _listing.choice_arg('state', _POST_STATES),

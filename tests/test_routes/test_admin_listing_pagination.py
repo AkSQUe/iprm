@@ -37,14 +37,14 @@ def admin(app):
 @pytest.fixture
 def many_certificates(app, admin):
     """PER_PAGE + 3 сертифікати одного власника -- рівно щоб було 2 сторінки."""
-    from app.admin.routes_stubs import _LIST_PER_PAGE
+    from app.admin._listing import LIST_PER_PAGE
 
     course = Course(title='Пагінація', slug=f'pag-{_uid()}', is_active=True)
     db.session.add(course)
     db.session.flush()
 
     marker = f'ПАГ{_uid()}'
-    total = _LIST_PER_PAGE + 3
+    total = LIST_PER_PAGE + 3
     instance_ids = []
     for i in range(total):
         # Одне проведення на сертифікат: (user_id, instance_id) у реєстраціях
@@ -67,7 +67,7 @@ def many_certificates(app, admin):
             event_title='Пагінація', pdf_path='x.pdf',
         ))
     db.session.commit()
-    yield {'marker': marker, 'total': total, 'per_page': _LIST_PER_PAGE}
+    yield {'marker': marker, 'total': total, 'per_page': LIST_PER_PAGE}
     # Прибираємо за собою: conftest коміти не відкочує.
     Certificate.query.filter(Certificate.recipient_name == marker).delete(
         synchronize_session=False)

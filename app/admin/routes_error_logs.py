@@ -7,7 +7,7 @@ from flask_login import current_user
 from sqlalchemy import desc
 from sqlalchemy.orm import joinedload
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
 from app.extensions import db
 from app.models.error_log import ErrorLog
@@ -25,7 +25,6 @@ _DEFAULT_ERROR_DAYS = 7
 
 def _error_log_filters():
     """Фільтри журналу помилок -- спільні для сторінки й експорту."""
-    from app.admin import _listing
     return {
         'q': _listing.text_arg('q'),
         'error_code': _listing.choice_arg('error_code', _ERROR_CODES),
@@ -41,8 +40,6 @@ def _error_log_days(filters):
 
 def _error_log_query(filters):
     """Записи журналу під фільтри, найновіші першими."""
-    from app.admin import _listing
-
     query = ErrorLog.query.options(joinedload(ErrorLog.user))
     query = _listing.apply_search(query, filters['q'], [
         ErrorLog.url, ErrorLog.error_message,
@@ -81,7 +78,7 @@ def error_logs():
         pagination=pagination,
         stats=ErrorLog.get_statistics(days=_error_log_days(filters)),
         filters=filters,
-        filter_args={k: v for k, v in filters.items() if v},
+        filter_args=_listing.filter_args(filters),
         per_page=per_page,
         code_options=[(c, c) for c in _ERROR_CODES],
         resolved_options=list(_ERROR_RESOLVED.items()),
@@ -93,8 +90,7 @@ def error_logs():
 @admin_required
 def error_logs_export():
     """Експорт журналу помилок у xlsx з урахуванням активних фільтрів."""
-    from app.admin import _listing
-    from app.services import xlsx_io
+    from app.services import xlsx_reports
 
     filters = _error_log_filters()
     logs = _error_log_query(filters).all()
@@ -112,9 +108,10 @@ def error_logs_export():
         'Admin %s exported error logs xlsx (%d rows, filters=%s)',
         current_user.email, len(logs), filters,
     )
-    return _listing.xlsx_download(
-        xlsx_io.export_error_logs_xlsx(logs, applied_filters=summary),
-        'error-logs',
+    return _listing.xlsx_export(
+        logs, 'error-logs',
+        lambda: xlsx_reports.export_error_logs_xlsx(logs, applied_filters=summary),
+        'admin.error_logs', **_listing.filter_args(filters),
     )
 
 

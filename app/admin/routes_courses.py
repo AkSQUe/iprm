@@ -5,7 +5,7 @@ from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
 from sqlalchemy.orm import joinedload
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin._helpers import (
     populate_trainer_choices,
     try_commit,
@@ -40,7 +40,6 @@ _COURSE_STATES = {'active': 'Активні', 'inactive': 'Приховані'}
 @admin_bp.route('/courses')
 @admin_required
 def courses_list():
-    from app.admin import _listing
     from app.models.trainer import Trainer
 
     filters = {

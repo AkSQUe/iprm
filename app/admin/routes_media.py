@@ -14,7 +14,7 @@ from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import current_user
 from sqlalchemy import desc
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
 from app.extensions import db
 from app.models.media_file import MediaFile
@@ -83,8 +83,6 @@ def _detach_media_refs(media):
 @admin_bp.route('/media')
 @admin_required
 def media_library():
-    from app.admin import _listing
-
     entity_type = (request.args.get('entity_type') or '').strip()
     usage_type = (request.args.get('usage_type') or '').strip()
     search = _listing.text_arg('q')

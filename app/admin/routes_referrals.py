@@ -6,6 +6,7 @@
 import logging
 
 from flask import render_template, request
+from flask_login import current_user
 from sqlalchemy import case, func
 from sqlalchemy.orm import joinedload
 
@@ -19,6 +20,7 @@ from app.models.site_settings import SiteSettings
 from app.services import referral_service
 
 logger = logging.getLogger(__name__)
+audit_logger = logging.getLogger('audit')
 
 
 def _reward_filters():
@@ -144,7 +146,7 @@ def referrals_overview():
         pagination=pagination,
         referrer_map=page_name_map,
         filters=filters,
-        filter_args={k: v for k, v in filters.items() if v},
+        filter_args=_listing.filter_args(filters),
         status_options=ReferralReward.STATUSES,
     )
 
@@ -221,7 +223,6 @@ def referral_referrer_detail(kind, referrer_id):
 def referral_referrer_adjust(kind, referrer_id):
     """Ручна корекція балансу реферера (+/- балів із причиною)."""
     from flask import abort, flash, redirect, url_for
-    from flask_login import current_user
     if kind not in ('user', 'trainer'):
         abort(404)
     try:
@@ -245,7 +246,7 @@ def referral_referrer_adjust(kind, referrer_id):
 @admin_required
 def referrals_export():
     """Експорт реєстру нарахувань у xlsx з урахуванням активних фільтрів."""
-    from app.services import xlsx_io
+    from app.services import xlsx_reports
 
     filters = _reward_filters()
     rewards = _rewards_query(filters).all()
@@ -260,8 +261,13 @@ def referrals_export():
         ],
         len(rewards),
     )
-    return _listing.xlsx_download(
-        xlsx_io.export_referral_rewards_xlsx(
+    audit_logger.info(
+        'Admin %s exported referral rewards xlsx (%d rows, filters=%s)',
+        current_user.email, len(rewards), filters,
+    )
+    return _listing.xlsx_export(
+        rewards, 'referral-rewards',
+        lambda: xlsx_reports.export_referral_rewards_xlsx(
             rewards, name_map, applied_filters=summary),
-        'referral-rewards',
+        'admin.referrals_overview', **_listing.filter_args(filters),
     )

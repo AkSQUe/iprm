@@ -2,7 +2,7 @@ import json
 import logging
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
 from app.admin.forms import TrainerForm
 from app.admin.routes_translations import apply_inline_translations
@@ -118,8 +118,6 @@ _TRAINER_STATES = {'active': 'Активні', 'inactive': 'Приховані'}
 @admin_bp.route('/trainers')
 @admin_required
 def trainers_list():
-    from app.admin import _listing
-
     filters = {
         'q': _listing.text_arg('q'),
         'state': _listing.choice_arg('state', _TRAINER_STATES),
