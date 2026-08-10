@@ -1,0 +1,83 @@
+{# Меню дій над реєстрацією -- спільне для списку реєстрацій і списку
+   учасників заходу. Обидві сторінки пропонують ті самі десять дій; поки
+   розмітка була скопійована, вони встигли розійтись (на сторінці заходу
+   бракувало рахунка в Excel, а кнопки стояли в ряд і робили рядок у пʼять
+   поверхів).
+
+   back_url -- куди повернутись після дії; форми шлють його в next, інакше
+   менеджер після кожної дії опинявся б на початку невідфільтрованого списку.
+#}
+{% macro registration_actions(reg, back_url='') %}
+<details class="admin-actions-menu">
+  <summary class="btn-admin btn-admin--secondary btn-admin--sm" title="Дії" aria-label="Дії">
+    {{ icon('more_vert') }}
+  </summary>
+  <div class="admin-actions-menu__items">
+    <a href="{{ url_for('admin.participant_edit', reg_id=reg.id) }}" class="admin-actions-menu__item">
+      {{ icon('edit') }} Редагувати учасника
+    </a>
+    {% if reg.status != 'cancelled' %}
+    <button type="button" class="admin-actions-menu__item"
+            data-completion-link="{{ url_for('admin.registration_completion_link', reg_id=reg.id) }}"
+            data-csrf="{{ csrf_token() }}">
+      {{ icon('link') }} Скопіювати посилання
+    </button>
+    {% if reg.user_has_real_email %}
+    <button type="button" class="admin-actions-menu__item"
+            data-completion-email="{{ url_for('admin.registration_completion_link_email', reg_id=reg.id) }}"
+            data-csrf="{{ csrf_token() }}">
+      {{ icon('outgoing_mail') }} Надіслати посилання на email
+    </button>
+    {% endif %}
+    {% endif %}
+    {% if reg.payment_amount and reg.payment_amount > 0 %}
+    <a href="{{ url_for('admin.registration_invoice_download', reg_id=reg.id, ext='pdf') }}" class="admin-actions-menu__item">
+      {{ icon('picture_as_pdf') }} Рахунок (PDF)
+    </a>
+    <a href="{{ url_for('admin.registration_invoice_download', reg_id=reg.id, ext='xlsx') }}" class="admin-actions-menu__item">
+      {{ icon('table_view') }} Рахунок (Excel)
+    </a>
+    {% endif %}
+    {% if reg.status == 'pending' %}
+    <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="status" value="confirmed">
+      <input type="hidden" name="next" value="{{ back_url }}">
+      <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--accent">{{ icon('check') }} Підтвердити</button>
+    </form>
+    {% endif %}
+    {% if reg.status in ('confirmed', 'pending') and not reg.attended %}
+    <form method="POST" action="{{ url_for('admin.registration_attendance', reg_id=reg.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="cpd_points" value="{{ (reg.instance.effective_cpd_points if reg.instance else 0) or 0 }}">
+      <input type="hidden" name="next" value="{{ back_url }}">
+      <button type="submit" class="admin-actions-menu__item">{{ icon('verified') }} Підтвердити присутність (БПР)</button>
+    </form>
+    {% endif %}
+    {% if reg.certificate and not reg.certificate.revoked %}
+    <a href="{{ url_for('admin.registration_certificate_download', reg_id=reg.id) }}" class="admin-actions-menu__item">
+      {{ icon('workspace_premium') }} Завантажити сертифікат
+    </a>
+    <form method="POST" action="{{ url_for('admin.registration_certificate_resend', reg_id=reg.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="next" value="{{ back_url }}">
+      <button type="submit" class="admin-actions-menu__item">{{ icon('forward_to_inbox') }} Переслати сертифікат</button>
+    </form>
+    {% elif reg.status != 'cancelled' %}
+    <form method="POST" action="{{ url_for('admin.registration_certificate_issue', reg_id=reg.id) }}" data-confirm="Видати сертифікат і надіслати на email?" data-confirm-ok="Видати">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="next" value="{{ back_url }}">
+      <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--accent">{{ icon('workspace_premium') }} Видати сертифікат</button>
+    </form>
+    {% endif %}
+    {% if reg.status != 'cancelled' %}
+    <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}" data-confirm="Скасувати реєстрацію?" data-confirm-ok="Скасувати реєстрацію" data-confirm-cancel="Не скасовувати" data-confirm-danger>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="status" value="cancelled">
+      <input type="hidden" name="next" value="{{ back_url }}">
+      <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--danger">{{ icon('close') }} Скасувати реєстрацію</button>
+    </form>
+    {% endif %}
+  </div>
+</details>
+{% endmacro %}

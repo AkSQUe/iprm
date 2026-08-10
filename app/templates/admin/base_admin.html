@@ -65,7 +65,9 @@ window.msGlyph = function (name) {
 <script src="{{ url_for('static', filename='js/admin-confirm.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-table-sort.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/admin-table-cards.js') }}?v={{ assets_version }}" defer></script>
-{# Панель фільтрів є на десятку реєстрів -- підключаємо глобально: без неї
-   скрипт нічого не робить, а дублювати тег у кожному шаблоні марно. #}
+{# Панель фільтрів і меню дій у рядку є на десятку реєстрів -- підключаємо
+   глобально: без розмітки скрипти нічого не роблять, а дублювати теги в
+   кожному шаблоні марно. #}
 <script src="{{ url_for('static', filename='js/admin-filter-bar.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin-row-menu.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

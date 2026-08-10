@@ -73,7 +73,7 @@
 
   {% if courses %}
   <div class="admin-table-wrap">
-  <table class="admin-table">
+  <table class="admin-table admin-table--wide">
     <thead>
       <tr>
         <th>Порядок</th>
@@ -92,13 +92,15 @@
       {% set stats = stats_by_id[course.id] %}
       <tr>
         <td>
-          {% if course.is_pinned %}<span class="badge badge--active" title="Закріплено вгорі каталогу">Закріплено</span>{% endif %}
-          {{ course.sort_order }}
+          <span class="admin-order-cell">
+            {% if course.is_pinned %}<span class="badge badge--active" title="Закріплено вгорі каталогу">Закріплено</span>{% endif %}
+            {{ course.sort_order }}
+          </span>
         </td>
         <td><strong>{{ course.title }}</strong></td>
-        <td>{{ course.event_type_label }}</td>
+        <td class="admin-nowrap">{{ course.event_type_label }}</td>
         <td>{{ course.trainer.full_name if course.trainer else '---' }}</td>
-        <td>
+        <td class="admin-nowrap">
           <a href="{{ url_for('admin.instances_list', course_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="upcoming / total">
             {{ stats.upcoming }} / {{ stats.total }}
           </a>
@@ -115,20 +117,34 @@
             <span class="badge badge--draft">Ні</span>
           {% endif %}
         </td>
-        <td><small class="admin-text-muted">{{ tr_coverage_label(course) }}</small></td>
+        <td class="admin-nowrap"><small class="admin-text-muted">{{ tr_coverage_label(course) }}</small></td>
         <td>
+          {# Часті дії -- одразу, решта під «...»: пʼять кнопок поспіль
+             розсипались у стовпчик і робили рядок у пʼять поверхів. #}
           <div class="admin-table__actions">
-            <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm" target="_blank" rel="noopener noreferrer" aria-label="Переглянути публічну сторінку">{{ icon('visibility') }}</a>
-            <a href="{{ url_for('admin.course_edit', course_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
-            <a href="{{ url_for('admin.translations_edit', entity='course', obj_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Переклади">Переклади</a>
-            <form method="POST" action="{{ url_for('admin.course_clone', course_id=course.id) }}" data-confirm="Створити копію цього курсу як чернетку?" data-confirm-ok="Створити копію">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Клонувати">{{ icon('content_copy') }}</button>
-            </form>
-            <form method="POST" action="{{ url_for('admin.course_delete', course_id=course.id) }}" data-confirm="Видалити курс? Всі його проведення також видаляться." data-confirm-ok="Видалити курс" data-confirm-danger>
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити">{{ icon('delete') }}</button>
-            </form>
+            <a href="{{ url_for('admin.course_edit', course_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати" title="Редагувати">{{ icon('edit') }}</a>
+            <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm" target="_blank" rel="noopener noreferrer" aria-label="Переглянути публічну сторінку" title="Переглянути на сайті">{{ icon('visibility') }}</a>
+            <details class="admin-actions-menu">
+              <summary class="btn-admin btn-admin--secondary btn-admin--sm" title="Ще дії" aria-label="Ще дії">
+                {{ icon('more_vert') }}
+              </summary>
+              <div class="admin-actions-menu__items">
+                <a href="{{ url_for('admin.translations_edit', entity='course', obj_id=course.id) }}" class="admin-actions-menu__item">
+                  {{ icon('title') }} Переклади
+                </a>
+                <a href="{{ url_for('admin.instances_list', course_id=course.id) }}" class="admin-actions-menu__item">
+                  {{ icon('event') }} Проведення курсу
+                </a>
+                <form method="POST" action="{{ url_for('admin.course_clone', course_id=course.id) }}" data-confirm="Створити копію цього курсу як чернетку?" data-confirm-ok="Створити копію">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="admin-actions-menu__item">{{ icon('content_copy') }} Клонувати</button>
+                </form>
+                <form method="POST" action="{{ url_for('admin.course_delete', course_id=course.id) }}" data-confirm="Видалити курс? Всі його проведення також видаляться." data-confirm-ok="Видалити курс" data-confirm-danger>
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--danger">{{ icon('delete') }} Видалити</button>
+                </form>
+              </div>
+            </details>
           </div>
         </td>
       </tr>
