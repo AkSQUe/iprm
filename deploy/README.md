@@ -29,6 +29,72 @@ sudo /var/www/iprm/deploy/apply.sh
 
 ---
 
+## Домени
+
+| Домен | Роль |
+| --- | --- |
+| `iprm.space` | основний і єдиний домен сайту |
+| `www.iprm.space` | 301 на `https://iprm.space` |
+| `multimed.education`, `www.` | старий домен прототипу, 301 на `https://iprm.space/` |
+
+**`plasma-regen.com` більше не наш** (10.08.2026). Реєстрацію не продовжили
+(закінчилась 04.08.2026 10:40 UTC), домен пішов на паркувальні NS
+(`*.lander.d.parity.domains`) і відновлювати його не будуть. Що з цього випливає:
+
+- server-блоки прибрано з `nginx/iprm.conf`;
+- сертифікат треба видалити, інакше certbot щодня падатиме на продовженні
+  (DNS уже вказує не на нас, http-01 не пройде):
+  `certbot delete --cert-name plasma-regen.com`;
+- вартовий пробивав сайт саме через цей хост -- `iprm-healthcheck.sh`
+  переведено на `iprm.space`. Якби цього не зробити, після видалення блоків
+  проба ловила б чужий server-блок, вважала сайт мертвим і перезапускала nginx
+  кожні 5 хвилин;
+- з блоку `iprm.space` знято `X-Robots-Tag: noindex` -- він стояв, поки домен
+  був резервним дублем, і тепер тримав би основний сайт поза індексом;
+- **`site_settings.website_url` у БД** треба перевірити через адмінку: з нього
+  будуються посилання в листах, реферальні лінки, QR на сертифікатах і тексти
+  оферти. Дефолт у моделі вже `https://iprm.space`, але рядок у БД міг лишитись
+  старим. Правити тільки через адмінку -- локальна БД спільна з продом.
+
+### Як заводити редиректний домен (на прикладі multimed.education)
+
+DNS уже вказує на цей сервер (`A @` і `A www` -> 173.242.48.194), NS домену --
+`*.srv53.*` (imena.com.ua). **Панель dnshosting.org для цього домену неактивна**:
+у реєстрі стоять зовнішні NS, тож правки там ні на що не впливають.
+
+Курка-і-яйце: блок 443 у `nginx/iprm.conf` посилається на сертифікат, якого ще
+немає, а `apply.sh` робить `nginx -t` і на цьому впаде. Тому сертифікат
+випускаємо **до** деплою, через тимчасовий конфіг:
+
+```bash
+mkdir -p /var/www/certbot
+cat > /etc/nginx/conf.d/00-acme-multimed.conf <<'EOF'
+server {
+    listen 80;
+    server_name multimed.education www.multimed.education;
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / { return 301 https://iprm.space/; }
+}
+EOF
+nginx -t && systemctl reload nginx
+
+certbot certonly --webroot -w /var/www/certbot \
+    -d multimed.education -d www.multimed.education
+
+rm /etc/nginx/conf.d/00-acme-multimed.conf   # без reload -- його зробить apply.sh
+```
+
+Далі звичайний деплой репо і `sudo /var/www/iprm/deploy/apply.sh`. Постійний
+блок порту 80 містить ту саму ACME-локацію, тож автопродовження certbot працює
+без ручних дій.
+
+> **Чому `--webroot`, а не просто дати certbot розібратись.** Без окремого блоку
+> `multimed.education` потрапляє в catch-all порту 80, який віддає 301 на
+> `https://` -- а там для нього немає сертифіката, і перевірка http-01 гине.
+> `--standalone` вимагав би зупинки nginx (і вартовий підняв би його назад).
+
+---
+
 ## Аварія 29.07.2026 і що з неї зроблено
 
 **Що сталося.** Security-оновлення glibc (`libc6 2.39-0ubuntu8.7 -> 8.8`) о 06:51

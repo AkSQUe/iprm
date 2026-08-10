@@ -10,8 +10,8 @@
 # Restarting things on 5xx would only add flapping on top of a real bug.
 set -uo pipefail
 
-URL='https://plasma-regen.com/'
-RESOLVE='plasma-regen.com:443:127.0.0.1'
+URL='https://iprm.space/'
+RESOLVE='iprm.space:443:127.0.0.1'
 STATE_DIR='/var/lib/iprm-watchdog'
 FAIL_FLAG="$STATE_DIR/failing"
 ALERT_FLAG="$STATE_DIR/last-alert"
