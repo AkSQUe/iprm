@@ -270,7 +270,7 @@
       addToCal = '';
     } else {
       actionHtml = ev.is_open
-        ? '<span class="iprm-btn iprm-btn--primary iprm-btn--sm">' + escapeHtml(t('Реєстрація')) + '</span>'
+        ? '<span class="apple-btn apple-btn--primary apple-btn--sm">' + escapeHtml(t('Реєстрація')) + '</span>'
         : '<span class="badge badge--draft">' + escapeHtml(t('Реєстрацію закрито')) + '</span>';
       addToCal =
         '<div class="iprm-cal-addto">' +

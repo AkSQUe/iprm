@@ -273,7 +273,7 @@
   gap: 8px;
   padding: 5px 14px;
   font-size: 0.8125rem;
-  background: var(--iprm-bg-gray, #f5f5f7);
+  background: var(--iprm-card-bg);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-pill);
 }
@@ -423,7 +423,7 @@
   margin-top: auto;
   padding: 12px 24px;
   border-radius: var(--iprm-radius-pill);
-  background: var(--iprm-bg-gray, #f5f5f7);
+  background: var(--iprm-card-bg);
   color: var(--iprm-text-light);
   font-size: 0.9375rem;
   font-weight: 600;
@@ -434,9 +434,10 @@
   flex-shrink: 0;
 }
 
-.iprm-schedule__action .iprm-btn {
-  padding: 8px 24px;
+.iprm-schedule__action .apple-btn {
+  padding: 10px 24px;
   font-size: 0.875rem;
+  white-space: nowrap;
 }
 
 /* ========== TRUST STATS ========== */
@@ -963,8 +964,8 @@ button.iprm-tag:focus-visible {
 
 /* Лічильник вільних місць */
 .iprm-schedule__tag--seats {
-  background: var(--iprm-bg-gray, #f5f5f7);
-  color: var(--apple-gray-dark);
+  background: var(--iprm-neutral-bg);
+  color: var(--iprm-neutral-text);
 }
 
 /* Попередження про малу кількість місць (перекриває --seats) */
@@ -1464,7 +1465,7 @@ button.iprm-tag:focus-visible {
     text-align: left;
   }
 
-  .iprm-calendar__event .iprm-btn,
+  .iprm-calendar__event .apple-btn,
   .iprm-calendar__event .badge {
     justify-self: start;
   }

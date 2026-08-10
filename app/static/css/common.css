@@ -1217,16 +1217,19 @@ select.badge-select:disabled {
 
 /* ========== LOCATION BADGE (місто заходу) ========== */
 
+/* Довгі адреси (вулиця + повна назва установи) переносяться на кілька рядків
+   замість того, щоб вилазити за межі картки. Іконка тримається першого рядка
+   завдяки align-items: flex-start (висота іконки ~= line-box першого рядка). */
 .iprm-loc-badge {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
+  max-width: 100%;
   padding: 5px 12px 5px 10px;
   border-radius: var(--iprm-radius-pill);
   font-size: 0.8125rem;
   font-weight: 700;
   line-height: 1.2;
-  white-space: nowrap;
   vertical-align: middle;
 }
 
@@ -1234,6 +1237,11 @@ select.badge-select:disabled {
   width: 15px;
   height: 15px;
   flex-shrink: 0;
+}
+
+.iprm-loc-badge__text {
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .iprm-loc-badge__sub {

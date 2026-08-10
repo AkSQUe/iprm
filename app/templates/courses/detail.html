@@ -444,7 +444,7 @@
           </div>
           <div class="iprm-schedule__action">
             {% if is_open %}
-            <a href="{{ url_for('registration.register_instance', instance_id=inst.id) }}" class="iprm-btn iprm-btn--primary iprm-btn--sm">{{ _('Реєстрація') }}</a>
+            <a href="{{ url_for('registration.register_instance', instance_id=inst.id) }}" class="apple-btn apple-btn--primary apple-btn--sm">{{ _('Реєстрація') }}</a>
             {% else %}
             <span class="badge badge--draft">{{ _('Реєстрацію закрито') }}</span>
             {% endif %}

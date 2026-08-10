@@ -305,8 +305,8 @@
 }
 
 .apple-page .iprm-card-badge--level {
-  background: var(--iprm-bg-gray, #f5f5f7);
-  color: var(--apple-gray-dark);
+  background: var(--iprm-neutral-bg);
+  color: var(--iprm-neutral-text);
 }
 
 /* Орієнтир окупності: мікро-підказка на картці та в hero курсу */
