@@ -8,7 +8,7 @@ from flask_login import current_user
 from sqlalchemy import case, func
 from sqlalchemy.orm import joinedload
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit
 from app.admin.decorators import admin_required
 from app.auth._helpers import is_safe_redirect_url
@@ -17,6 +17,7 @@ from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
 from app.models.trainer import Trainer
+from app.models.user import User
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
@@ -337,48 +338,51 @@ def certificate_revoke(cert_id):
     return redirect(url_for('admin.certificates'))
 
 
-@admin_bp.route('/registrations')
-@admin_required
-def registrations_all():
-    status_filter = request.args.get('status', '')
-    payment_filter = request.args.get('payment', '')
-    method_filter = request.args.get('payment_method', '')
-    instance_id_filter = request.args.get('instance_id', type=int)
-    course_id_filter = request.args.get('course_id', type=int)
-    trainer_id_filter = request.args.get('trainer_id', type=int)
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 50, type=int)
+def _registration_filters():
+    """Фільтри списку реєстрацій з query-string.
+
+    Спільні для сторінки і для xlsx-експорту: файл має містити рівно той
+    зріз, який менеджер бачить на екрані.
+    """
     # Швидкий фільтр за часом заходу. За замовчуванням -- лише майбутні заходи,
     # щоб не показувати тисячі нерелевантних реєстрацій на минулі події.
-    scope = request.args.get('scope', 'upcoming')
-    if scope not in ('upcoming', 'past', 'all'):
-        scope = 'upcoming'
+    scope = _listing.choice_arg('scope', ('upcoming', 'past', 'all'), 'upcoming')
+    return {
+        'q': _listing.text_arg('q'),
+        'status': _listing.choice_arg('status', dict(EventRegistration.STATUSES)),
+        'payment': _listing.choice_arg('payment', dict(EventRegistration.PAYMENT_STATUSES)),
+        'payment_method': _listing.choice_arg(
+            'payment_method', dict(EventRegistration.PAYMENT_METHODS)),
+        'instance_id': _listing.int_arg('instance_id'),
+        'course_id': _listing.int_arg('course_id'),
+        'trainer_id': _listing.int_arg('trainer_id'),
+        'scope': scope,
+        'per_page': request.args.get('per_page', 50, type=int),
+    }
 
-    stats = db.session.query(
-        func.count().label('total'),
-        func.count(case((EventRegistration.status == 'confirmed', 1))).label('confirmed'),
-        func.count(case((EventRegistration.status == 'pending', 1))).label('pending'),
-        func.count(case((EventRegistration.status == 'cancelled', 1))).label('cancelled'),
-        func.coalesce(
-            func.sum(case((EventRegistration.payment_status == 'paid', EventRegistration.payment_amount))),
-            0,
-        ).label('total_paid'),
-    ).one()
 
-    query = EventRegistration.query.options(
-        joinedload(EventRegistration.user),
-        joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
-        joinedload(EventRegistration.certificate),
-        joinedload(EventRegistration.promo_code),
-    )
-    if status_filter and status_filter in dict(EventRegistration.STATUSES):
-        query = query.filter(EventRegistration.status == status_filter)
-    if payment_filter and payment_filter in dict(EventRegistration.PAYMENT_STATUSES):
-        query = query.filter(EventRegistration.payment_status == payment_filter)
-    if method_filter and method_filter in dict(EventRegistration.PAYMENT_METHODS):
-        query = query.filter(EventRegistration.payment_method == method_filter)
-    if instance_id_filter:
-        query = query.filter(EventRegistration.instance_id == instance_id_filter)
+def _apply_registration_filters(query, filters):
+    """Накласти фільтри `_registration_filters` на запит EventRegistration."""
+    course_id_filter = filters['course_id']
+    trainer_id_filter = filters['trainer_id']
+    scope = filters['scope']
+
+    if filters['q']:
+        # Пошук по учаснику: ПІБ/email живуть у User, телефон -- у самій
+        # реєстрації (він міг відрізнятись від профілю).
+        query = query.join(User, EventRegistration.user_id == User.id)
+        query = _listing.apply_search(query, filters['q'], [
+            User.email, User.first_name, User.last_name, EventRegistration.phone,
+        ])
+    if filters['status']:
+        query = query.filter(EventRegistration.status == filters['status'])
+    if filters['payment']:
+        query = query.filter(EventRegistration.payment_status == filters['payment'])
+    if filters['payment_method']:
+        query = query.filter(
+            EventRegistration.payment_method == filters['payment_method'])
+    if filters['instance_id']:
+        query = query.filter(EventRegistration.instance_id == filters['instance_id'])
 
     # CourseInstance потрібен для scope (час заходу) та фільтрів курс/тренер.
     # Джойнимо один раз, щоб не дублювати join.
@@ -406,17 +410,40 @@ def registrations_all():
                 )
             else:  # past
                 query = query.filter(CourseInstance.start_date < now)
+    return query
+
+
+@admin_bp.route('/registrations')
+@admin_required
+def registrations_all():
+    filters = _registration_filters()
+    page = request.args.get('page', 1, type=int)
+    per_page = filters['per_page']
+
+    stats = db.session.query(
+        func.count().label('total'),
+        func.count(case((EventRegistration.status == 'confirmed', 1))).label('confirmed'),
+        func.count(case((EventRegistration.status == 'pending', 1))).label('pending'),
+        func.count(case((EventRegistration.status == 'cancelled', 1))).label('cancelled'),
+        func.coalesce(
+            func.sum(case((EventRegistration.payment_status == 'paid', EventRegistration.payment_amount))),
+            0,
+        ).label('total_paid'),
+    ).one()
+
+    query = _apply_registration_filters(
+        EventRegistration.query.options(
+            joinedload(EventRegistration.user),
+            joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
+            joinedload(EventRegistration.certificate),
+            joinedload(EventRegistration.promo_code),
+        ),
+        filters,
+    )
 
     pagination = query.order_by(EventRegistration.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False,
     )
-
-    instances = db.session.query(CourseInstance).options(
-        joinedload(CourseInstance.course),
-    ).order_by(CourseInstance.start_date.desc()).all()
-
-    courses = db.session.query(Course).order_by(Course.title).all()
-    trainers = db.session.query(Trainer).order_by(Trainer.full_name).all()
 
     # Реферальна атрибуція: резолв кодів у імена рефереров (bulk, без N+1).
     from app.services import referral_service
@@ -429,21 +456,122 @@ def registrations_all():
         registrations=pagination.items,
         pagination=pagination,
         stats=stats,
-        instances=instances,
-        courses=courses,
-        trainers=trainers,
         referrer_map=referrer_map,
-        filters={
-            'status': status_filter,
-            'payment': payment_filter,
-            'payment_method': method_filter,
-            'instance_id': instance_id_filter,
-            'course_id': course_id_filter,
-            'trainer_id': trainer_id_filter,
-            'scope': scope,
-            'per_page': per_page,
-        },
+        filters=filters,
+        # Непорожні параметри -- один набір для пілюль, пагінації й експорту:
+        # усі три мають вести на той самий зріз.
+        filter_args={k: v for k, v in filters.items() if v},
+        status_options=EventRegistration.STATUSES,
+        payment_options=EventRegistration.PAYMENT_STATUSES,
+        method_options=EventRegistration.PAYMENT_METHODS,
+        **_registration_select_options(),
     )
+
+
+def _registration_select_options():
+    """Довідники для селектів фільтра: курси / тренери / заходи."""
+    from app.services import participant_service
+
+    instances = db.session.query(CourseInstance).options(
+        joinedload(CourseInstance.course),
+    ).order_by(CourseInstance.start_date.desc()).all()
+    return {
+        'course_options': [
+            (c.id, c.title)
+            for c in db.session.query(Course).order_by(Course.title).all()
+        ],
+        'trainer_options': [
+            (t.id, t.full_name)
+            for t in db.session.query(Trainer).order_by(Trainer.full_name).all()
+        ],
+        'instance_options': [
+            (
+                i.id,
+                participant_service.event_label(i)
+                + (f' ({i.location})' if i.location else ''),
+            )
+            for i in instances
+        ],
+    }
+
+
+_SCOPE_LABELS = {
+    'upcoming': 'Майбутні заходи (та заходи без дати)',
+    'past': 'Минулі заходи',
+    'all': 'Усі заходи',
+}
+
+
+def _registration_filters_summary(filters, rows_count):
+    """Людиночитний опис активних фільтрів для аркуша «Фільтри» у файлі."""
+    summary = [
+        ('Період заходів', _SCOPE_LABELS.get(filters['scope'], filters['scope'])),
+        ('Пошук', filters['q'] or '--'),
+    ]
+
+    status = dict(EventRegistration.STATUSES).get(filters['status'])
+    summary.append(('Статус', status or 'Усі'))
+    payment = dict(EventRegistration.PAYMENT_STATUSES).get(filters['payment'])
+    summary.append(('Оплата', payment or 'Усі'))
+    method = dict(EventRegistration.PAYMENT_METHODS).get(filters['payment_method'])
+    summary.append(('Спосіб оплати', method or 'Усі'))
+
+    course = db.session.get(Course, filters['course_id']) if filters['course_id'] else None
+    summary.append(('Курс', course.title if course else 'Усі'))
+    trainer = db.session.get(Trainer, filters['trainer_id']) if filters['trainer_id'] else None
+    summary.append(('Тренер', trainer.full_name if trainer else 'Усі'))
+
+    instance = (
+        db.session.get(CourseInstance, filters['instance_id'])
+        if filters['instance_id'] else None
+    )
+    if instance:
+        from app.services import participant_service
+        summary.append(('Захід', participant_service.event_label(instance)))
+    else:
+        summary.append(('Захід', 'Усі'))
+
+    return _listing.export_summary(summary, rows_count)
+
+
+@admin_bp.route('/registrations/export')
+@admin_required
+def registrations_export():
+    """Експорт списку реєстрацій у xlsx з урахуванням активних фільтрів.
+
+    Вивантажує ВЕСЬ відфільтрований зріз, а не поточну сторінку: пагінація --
+    властивість екрана, а не звіту.
+    """
+    from app.services import referral_service, xlsx_io
+
+    filters = _registration_filters()
+    query = _apply_registration_filters(
+        EventRegistration.query.options(
+            joinedload(EventRegistration.user),
+            # Колонка «Тренер» -- ефективний тренер (заходу або курсу), тож
+            # тягнемо обидві звʼязки одразу, інакше N+1 на кожен рядок.
+            joinedload(EventRegistration.instance).joinedload(CourseInstance.trainer),
+            joinedload(EventRegistration.instance)
+            .joinedload(CourseInstance.course).joinedload(Course.trainer),
+            joinedload(EventRegistration.certificate),
+            joinedload(EventRegistration.promo_code),
+        ),
+        filters,
+    )
+    regs = query.order_by(EventRegistration.created_at.desc()).all()
+
+    referrer_map = referral_service.resolve_referrers_bulk(
+        [r.referral_code for r in regs],
+    )
+    data = xlsx_io.export_registrations_xlsx(
+        regs, referrer_map,
+        applied_filters=_registration_filters_summary(filters, len(regs)),
+    )
+    audit_logger.info(
+        'Admin %s exported registrations xlsx (%d rows, filters=%s)',
+        current_user.email, len(regs), filters,
+    )
+    return _listing.xlsx_download(data, 'registrations')
 
 
 @admin_bp.route('/registrations/<int:reg_id>/completion-link', methods=['POST'])

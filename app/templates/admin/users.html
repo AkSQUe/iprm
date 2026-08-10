@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -20,11 +22,33 @@
           <span class="admin-breadcrumb__current">Користувачі</span>
         </div>
         <h1 class="admin-hero__title">Користувачі</h1>
-        <p class="admin-hero__subtitle">Всього: {{ users | length }}</p>
+        {# Лічильник рахує показаний зріз -- підпис має це визнавати, інакше
+           "Всього" під активним фільтром вводить в оману. #}
+        <p class="admin-hero__subtitle">
+          {% if filters.q or filters.role or filters.state or filters.confirmed or filters.regs %}
+            Знайдено: {{ users | length }}
+          {% else %}
+            Всього: {{ users | length }}
+          {% endif %}
+        </p>
       </div>
     </div>
 
     {% include 'partials/flash_messages.html' %}
+
+    {{ filter_bar(
+         action=url_for('admin.users'),
+         values=filters,
+         search={'name': 'q', 'placeholder': "Пошук за іменем, email або телефоном"},
+         fields=[
+           {'name': 'role', 'label': 'Усі ролі', 'options': role_options},
+           {'name': 'state', 'label': 'Усі стани', 'options': state_options},
+           {'name': 'confirmed', 'label': 'Будь-який email', 'options': confirmed_options},
+           {'name': 'regs', 'label': 'Усі за реєстраціями', 'options': regs_options},
+         ],
+         export_url=url_for('admin.users_export', **filters),
+         reset_url=url_for('admin.users'),
+       ) }}
 
     {% if users %}
     <div class="admin-table-wrap">
@@ -91,7 +115,12 @@
     {% else %}
     <div class="admin-empty">
       {{ icon('group', cls='admin-empty__icon') }}
-      <h3 class="admin-empty__title">Користувачів ще немає</h3>
+      {% if filters.q or filters.role or filters.state or filters.confirmed or filters.regs %}
+        <h3 class="admin-empty__title">Нічого не знайдено</h3>
+        <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.users') }}">скинути їх</a></p>
+      {% else %}
+        <h3 class="admin-empty__title">Користувачів ще немає</h3>
+      {% endif %}
     </div>
     {% endif %}
   </div>

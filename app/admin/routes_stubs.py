@@ -35,19 +35,116 @@ def certificates():
     return render_template('admin/certificates.html', certificates=certs, stats=stats)
 
 
+_USER_ROLES = {'admin': 'Адміністратори', 'user': 'Без адмін-прав'}
+_USER_STATES = {'active': 'Активні', 'inactive': 'Неактивні'}
+_USER_CONFIRMED = {'yes': 'Email підтверджено', 'no': 'Email не підтверджено'}
+_USER_REGS = {'with': 'З реєстраціями', 'without': 'Без реєстрацій'}
+
+
+def _user_filters():
+    """Фільтри списку користувачів -- спільні для сторінки й xlsx-експорту."""
+    from app.admin import _listing
+    return {
+        'q': _listing.text_arg('q'),
+        'role': _listing.choice_arg('role', _USER_ROLES),
+        'state': _listing.choice_arg('state', _USER_STATES),
+        'confirmed': _listing.choice_arg('confirmed', _USER_CONFIRMED),
+        'regs': _listing.choice_arg('regs', _USER_REGS),
+    }
+
+
+def _users_query(filters):
+    """Запит користувачів під фільтри: (rows, reg_count-колонка).
+
+    Кількість реєстрацій -- корельований підзапит (`with_registration_count`),
+    тож фільтр «з реєстраціями / без» не тягне окремих SELECT-ів на рядок.
+    """
+    from sqlalchemy.orm import joinedload
+    from app.admin import _listing
+    from app.models.medical_profile import MedicalProfile
+    from app.models.user import User
+
+    reg_count = User.with_registration_count()
+    query = (
+        db.session.query(User, reg_count)
+        .options(joinedload(User.medical_profile))
+        # Пошук ходить і по телефону з анкети, тож профіль джойнимо явно
+        # (outer -- користувач без анкети не має зникати зі списку).
+        .outerjoin(MedicalProfile, MedicalProfile.user_id == User.id)
+    )
+    query = _listing.apply_search(query, filters['q'], [
+        User.email, User.first_name, User.last_name, MedicalProfile.phone,
+    ])
+    if filters['role']:
+        query = query.filter(User.is_admin.is_(filters['role'] == 'admin'))
+    if filters['state']:
+        # is_active має NULL у старих рядках -- 'Неактивні' мусить їх ловити.
+        if filters['state'] == 'active':
+            query = query.filter(User.is_active.is_(True))
+        else:
+            query = query.filter(db.or_(
+                User.is_active.is_(False), User.is_active.is_(None),
+            ))
+    if filters['confirmed']:
+        query = query.filter(User.email_confirmed.is_(filters['confirmed'] == 'yes'))
+    if filters['regs']:
+        query = query.filter(
+            reg_count > 0 if filters['regs'] == 'with' else reg_count == 0
+        )
+    return query.order_by(User.created_at.desc())
+
+
+def _users_with_counts(filters):
+    """Список User із проставленим `_cached_reg_count` (без N+1 у шаблоні)."""
+    users = []
+    for user, count in _users_query(filters).all():
+        user._cached_reg_count = count
+        users.append(user)
+    return users
+
+
 @admin_bp.route('/users')
 @admin_required
 def users():
-    from app.models.user import User
-    reg_count = User.with_registration_count()
-    rows = db.session.query(User, reg_count).order_by(User.created_at.desc()).all()
+    filters = _user_filters()
+    return render_template(
+        'admin/users.html',
+        users=_users_with_counts(filters),
+        filters=filters,
+        role_options=list(_USER_ROLES.items()),
+        state_options=list(_USER_STATES.items()),
+        confirmed_options=list(_USER_CONFIRMED.items()),
+        regs_options=list(_USER_REGS.items()),
+    )
 
-    all_users = []
-    for user, count in rows:
-        user._cached_reg_count = count
-        all_users.append(user)
 
-    return render_template('admin/users.html', users=all_users)
+@admin_bp.route('/users/export')
+@admin_required
+def users_export():
+    """Експорт користувачів у xlsx з урахуванням активних фільтрів."""
+    from app.admin import _listing
+    from app.services import xlsx_io
+
+    filters = _user_filters()
+    users_list = _users_with_counts(filters)
+    summary = _listing.export_summary(
+        [
+            ('Пошук', filters['q'] or '--'),
+            ('Роль', _USER_ROLES.get(filters['role'], 'Усі')),
+            ('Стан', _USER_STATES.get(filters['state'], 'Усі')),
+            ('Email', _USER_CONFIRMED.get(filters['confirmed'], 'Усі')),
+            ('Реєстрації', _USER_REGS.get(filters['regs'], 'Усі')),
+        ],
+        len(users_list),
+    )
+    audit_logger.info(
+        'Admin %s exported users xlsx (%d rows, filters=%s)',
+        current_user.email, len(users_list), filters,
+    )
+    return _listing.xlsx_download(
+        xlsx_io.export_users_xlsx(users_list, applied_filters=summary),
+        'users',
+    )
 
 
 @admin_bp.route('/users/<int:user_id>/toggle-admin', methods=['POST'])

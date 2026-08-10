@@ -1,0 +1,63 @@
+{# Панель фільтрів списку адмінки: пошук + селекти + експорт.
+
+   Спільна з `app/admin/_listing.py`: там розбір тих самих параметрів із
+   query-string, тут -- їхній вигляд. Використання:
+
+     {% from 'admin/partials/_filter_bar.html' import filter_bar %}
+     {{ filter_bar(
+          action=url_for('admin.users'),
+          values=filters,
+          search={'name': 'q', 'placeholder': 'Пошук за іменем або email'},
+          fields=[{'name': 'role', 'label': 'Усі ролі',
+                   'options': [('admin', 'Адміністратори')]}],
+          export_url=url_for('admin.users_export', **filters),
+          reset_url=url_for('admin.users'),
+     ) }}
+
+   values  -- dict поточних значень (той самий, що віддає роут у `filters`);
+   fields  -- селекти: name / label (він же placeholder-опція) / options;
+   hidden  -- параметри, які форма має пронести далі (напр. `scope` з пілюль);
+   export_url / reset_url -- необовʼязкові; «Скинути» показуємо лише коли є
+   що скидати, інакше кнопка була б декорацією.
+#}
+{% macro filter_bar(action, values={}, fields=[], search=None,
+                    export_url=None, reset_url=None, hidden={},
+                    submit_label='Фільтрувати') %}
+{% set ns = namespace(active=false) %}
+{% if search and values.get(search.name) %}{% set ns.active = true %}{% endif %}
+{% for f in fields %}
+  {% if values.get(f.name) %}{% set ns.active = true %}{% endif %}
+{% endfor %}
+<div class="admin-stats-bar">
+  <form method="GET" action="{{ action }}" class="admin-filter-form">
+    {% for name, value in hidden.items() %}
+      {% if value %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endif %}
+    {% endfor %}
+    {% if search %}
+      <input type="search" name="{{ search.name }}"
+             value="{{ values.get(search.name) or '' }}"
+             class="form-input form-input--sm"
+             placeholder="{{ search.placeholder }}"
+             aria-label="{{ search.placeholder }}" autocomplete="off">
+    {% endif %}
+    {% for f in fields %}
+      <select name="{{ f.name }}" class="form-input form-input--sm" aria-label="{{ f.label }}">
+        <option value="">{{ f.label }}</option>
+        {% for val, label in f.options %}
+          <option value="{{ val }}"{% if values.get(f.name) is not none and values.get(f.name) | string == val | string %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    {% endfor %}
+    <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">
+      {{ icon('filter_list') }} {{ submit_label }}
+    </button>
+    {% if ns.active and reset_url %}
+      <a href="{{ reset_url }}" class="btn-admin btn-admin--sm">{{ icon('clear') }} Скинути</a>
+    {% endif %}
+    {% if export_url %}
+      <a href="{{ export_url }}" class="btn-admin btn-admin--secondary btn-admin--sm"
+         title="Вивантажити поточний зріз у xlsx">{{ icon('download') }} Експорт XLSX</a>
+    {% endif %}
+  </form>
+</div>
+{% endmacro %}

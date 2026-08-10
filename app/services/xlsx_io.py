@@ -107,6 +107,13 @@ NUMBER_FORMATS = {
     # Participants
     'reg_id': FMT_INT,
     'birth_date': FMT_DATE,
+    # Списки адмінки (реєстрації, користувачі)
+    'event_date': FMT_DATE,
+    'created_at': FMT_DATETIME,
+    'last_login_at': FMT_DATETIME,
+    'place_number': FMT_INT,
+    'user_id': FMT_INT,
+    'registrations': FMT_INT,
     'payment_amount': FMT_CURRENCY_UAH,
     'discount_amount': FMT_CURRENCY_UAH,
     'cpd_points_awarded': FMT_INT,
@@ -2390,6 +2397,236 @@ def export_referral_rewards_xlsx(rewards, referrer_map) -> io.BytesIO:
     wb.save(out)
     out.seek(0)
     return out
+
+
+_REGISTRATION_COLS = [
+    'reg_id', 'event', 'event_date', 'location', 'trainer', 'place_number',
+    'last_name', 'first_name', 'email', 'phone', 'workplace',
+    'referrer', 'referrer_type', 'status', 'payment_status', 'payment_method',
+    'payment_amount', 'promo_code', 'discount_amount', 'attended',
+    'cpd_points_awarded', 'certificate', 'created_at',
+]
+_REGISTRATION_LABELS = {
+    'reg_id': 'ID реєстрації', 'event': 'Захід', 'event_date': 'Дата заходу',
+    'location': 'Місце', 'trainer': 'Тренер', 'place_number': 'Місце №',
+    'last_name': 'Прізвище', 'first_name': "Ім'я", 'email': 'Email',
+    'phone': 'Телефон', 'workplace': 'Місце роботи / місто',
+    'referrer': 'Реферер', 'referrer_type': 'Тип реферера',
+    'status': 'Статус', 'payment_status': 'Оплата',
+    'payment_method': 'Спосіб оплати', 'payment_amount': 'Сума (грн)',
+    'promo_code': 'Промокод', 'discount_amount': 'Знижка (грн)',
+    'attended': 'Присутній', 'cpd_points_awarded': 'Бали БПР',
+    'certificate': 'Сертифікат', 'created_at': 'Дата реєстрації',
+}
+_REGISTRATION_WIDTHS = {
+    'reg_id': 12, 'event': 46, 'event_date': 14, 'location': 18, 'trainer': 26,
+    'place_number': 10, 'last_name': 20, 'first_name': 18, 'email': 30,
+    'phone': 18, 'workplace': 34, 'referrer': 26, 'referrer_type': 14,
+    'status': 16, 'payment_status': 16, 'payment_method': 22,
+    'payment_amount': 14, 'promo_code': 16, 'discount_amount': 14,
+    'attended': 12, 'cpd_points_awarded': 12, 'certificate': 22,
+    'created_at': 18,
+}
+_FILTERS_SHEET = 'Фільтри'
+
+
+def _add_filters_sheet(wb, applied_filters, table_name) -> None:
+    """Аркуш «Фільтри»: зріз даних, який лежить у файлі.
+
+    Без нього вивантаження за фільтром неможливо відрізнити від повного:
+    два файли з однаковими колонками, різним вмістом і без жодної підказки,
+    чим саме вони відрізняються.
+    """
+    ws = wb.create_sheet(_FILTERS_SHEET)
+    cols = ['filter', 'value']
+    _style_header(ws, cols, {'filter': 'Фільтр', 'value': 'Значення'})
+    for row_idx, (name, value) in enumerate(applied_filters, start=2):
+        ws.cell(row=row_idx, column=1, value=name)
+        ws.cell(row=row_idx, column=2, value=value).alignment = WRAP
+    last_row = ws.max_row
+    _set_column_widths(ws, cols, {'filter': 30, 'value': 60})
+    _apply_zebra(ws, len(cols), first_data_row=2, last_data_row=last_row)
+    _apply_table_style(ws, cols, table_name, last_row)
+
+
+def build_list_xlsx(sheet_title, cols, labels, widths, rows, table_name,
+                    applied_filters=None, row_fills=None) -> io.BytesIO:
+    """Список адмінки -> xlsx: аркуш-таблиця + (за потреби) аркуш «Фільтри».
+
+    Спільний білдер для read-only вивантажень зі сторінок-списків (реєстрації,
+    користувачі): вони відрізняються лише набором колонок, тож стилі, зебра,
+    ширини, формати чисел і таблиця-автофільтр живуть тут, а не копіюються
+    в кожен експорт.
+
+    rows       -- список списків значень у порядку `cols`;
+    row_fills  -- паралельний `rows` список {col_key: PatternFill} (кольори
+                  статусів); None -- без заливок;
+    applied_filters -- пари (назва, значення) для аркуша «Фільтри».
+
+    Це саме ЗВІТИ: імпорт назад їх не читає, тож drop-down-ів і reference-
+    аркушів тут немає -- для редагування є xlsx-шаблони (`export_*_xlsx`
+    з парою `parse_*_xlsx`).
+    """
+    wb = Workbook()
+    ws = wb.active
+    ws.title = sheet_title
+    _style_header(ws, cols, labels)
+
+    for row_idx, values in enumerate(rows, start=2):
+        for col_idx, value in enumerate(values, start=1):
+            ws.cell(row=row_idx, column=col_idx, value=value).alignment = WRAP
+
+    last_row = ws.max_row
+    _apply_zebra(ws, len(cols), first_data_row=2, last_data_row=last_row)
+
+    # Заливки статусів -- ПІСЛЯ зебри, щоб колір статусу її перекривав.
+    for row_idx, fills in enumerate(row_fills or [], start=2):
+        for key, fill in (fills or {}).items():
+            ws.cell(row=row_idx, column=cols.index(key) + 1).fill = fill
+
+    _set_column_widths(ws, cols, widths)
+    _apply_number_formats(ws, cols, last_row)
+    _apply_table_style(ws, cols, table_name, last_row)
+
+    if applied_filters:
+        _add_filters_sheet(wb, applied_filters, f'{table_name}Filters')
+
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    return out
+
+
+def export_registrations_xlsx(regs, referrer_map=None,
+                              applied_filters=None) -> io.BytesIO:
+    """Реєстр реєстрацій (сторінка /admin/registrations) -> xlsx.
+
+    regs -- уже відфільтрований і відсортований список EventRegistration із
+    підвантаженими user / instance+course+trainer / promo_code / certificate.
+    referrer_map -- {code: {kind, name}} для колонки «Реферер».
+    applied_filters -- пари (назва, значення) для аркуша «Фільтри».
+
+    Це вивантаження ЛИШЕ на читання (звіт), тож колонки дзеркалять таблицю
+    адмінки, а не форму імпорту: редагувати учасників далі належить через
+    xlsx-шаблон `export_participants_xlsx`, який імпорт уміє читати назад.
+    """
+    referrer_map = referrer_map or {}
+    rows, row_fills = [], []
+    for reg in regs:
+        user = reg.user
+        inst = reg.instance
+        course = inst.course if inst else None
+        # Ефективний тренер: тренер заходу, інакше -- тренер курсу (той самий
+        # fallback, що й у фільтрі за тренером на сторінці).
+        trainer = (inst.trainer if inst and inst.trainer else
+                   (course.trainer if course else None))
+        ref = referrer_map.get(reg.referral_code) or {}
+        ref_kind = ref.get('kind')
+        cert = reg.certificate
+        rows.append([
+            reg.id,
+            (course.title if course else ''),
+            _to_kyiv_naive(inst.start_date).date() if (inst and inst.start_date) else None,
+            (inst.location if inst else '') or '',
+            (trainer.full_name if trainer else ''),
+            reg.place_number,
+            (user.last_name if user else '') or '',
+            (user.first_name if user else '') or '',
+            (user.email if user else '') or '',
+            reg.phone or '',
+            reg.workplace or '',
+            ref.get('name') or (reg.referral_code or ''),
+            'Тренер' if ref_kind == 'trainer' else ('Учасник' if ref_kind == 'user' else ''),
+            REG_STATUS_LABEL.get(reg.status, reg.status or ''),
+            PAYMENT_STATUS_LABEL.get(reg.payment_status, reg.payment_status or ''),
+            reg.payment_method_label or '',
+            float(reg.payment_amount) if reg.payment_amount is not None else None,
+            reg.promo_code.code if reg.promo_code else '',
+            float(reg.discount_amount) if reg.discount_amount is not None else None,
+            'Так' if reg.attended else 'Ні',
+            reg.cpd_points_awarded,
+            # Відкликаний сертифікат лишається в реєстрі, але з поміткою --
+            # інакше звіт стверджував би, що документ чинний.
+            (f'{cert.number} (відкликано)' if cert.revoked else cert.number) if cert else '',
+            _to_kyiv_naive(reg.created_at),
+        ])
+        # Кольори за статусом / оплатою -- як в експорті учасників.
+        fills = {}
+        if reg.status in REG_STATUS_FILLS:
+            fills['status'] = REG_STATUS_FILLS[reg.status]
+        if reg.payment_status in PAYMENT_STATUS_FILLS:
+            fills['payment_status'] = PAYMENT_STATUS_FILLS[reg.payment_status]
+        row_fills.append(fills)
+
+    return build_list_xlsx(
+        'Реєстрації', _REGISTRATION_COLS, _REGISTRATION_LABELS,
+        _REGISTRATION_WIDTHS, rows, 'tblRegistrations',
+        applied_filters=applied_filters, row_fills=row_fills,
+    )
+
+
+_USER_COLS = [
+    'user_id', 'last_name', 'first_name', 'middle_name', 'email', 'phone',
+    'participant_type', 'workplace', 'position', 'specializations',
+    'registrations', 'is_admin', 'is_active', 'email_confirmed',
+    'email_opt_out', 'referral_code', 'last_login_at', 'created_at',
+]
+_USER_LABELS = {
+    'user_id': 'ID', 'last_name': 'Прізвище', 'first_name': "Ім'я",
+    'middle_name': 'По батькові', 'email': 'Email', 'phone': 'Телефон',
+    'participant_type': 'Тип учасника', 'workplace': 'Місце роботи / місто',
+    'position': 'Посада', 'specializations': 'Спеціалізації',
+    'registrations': 'Реєстрацій', 'is_admin': 'Адмін',
+    'is_active': 'Активний', 'email_confirmed': 'Email підтверджено',
+    'email_opt_out': 'Відписка від розсилок', 'referral_code': 'Реф. код',
+    'last_login_at': 'Останній вхід', 'created_at': 'Дата реєстрації',
+}
+_USER_WIDTHS = {
+    'user_id': 8, 'last_name': 20, 'first_name': 18, 'middle_name': 20,
+    'email': 32, 'phone': 18, 'participant_type': 26, 'workplace': 34,
+    'position': 26, 'specializations': 40, 'registrations': 12,
+    'is_admin': 10, 'is_active': 12, 'email_confirmed': 18,
+    'email_opt_out': 20, 'referral_code': 14, 'last_login_at': 18,
+    'created_at': 18,
+}
+
+
+def export_users_xlsx(users, applied_filters=None) -> io.BytesIO:
+    """Реєстр користувачів (сторінка /admin/users) -> xlsx.
+
+    users -- уже відфільтрований список User із підвантаженим medical_profile;
+    кількість реєстрацій береться з `registration_count` (роут кладе туди
+    агрегат одним запитом, тож тут немає N+1).
+    """
+    rows = []
+    for user in users:
+        profile = user.medical_profile
+        ptype = profile.participant_type if profile else None
+        rows.append([
+            user.id,
+            user.last_name or '',
+            user.first_name or '',
+            (profile.middle_name if profile else '') or '',
+            user.email or '',
+            (profile.phone if profile else '') or '',
+            PARTICIPANT_TYPE_LABEL.get(ptype, '') if ptype else '',
+            (profile.workplace if profile else '') or '',
+            (profile.position if profile else '') or '',
+            '\n'.join(user.specialization_labels or []),
+            user.registration_count,
+            'Так' if user.is_admin else 'Ні',
+            'Так' if user.is_active else 'Ні',
+            'Так' if user.email_confirmed else 'Ні',
+            'Так' if user.email_opt_out else 'Ні',
+            user.referral_code or '',
+            _to_kyiv_naive(user.last_login_at),
+            _to_kyiv_naive(user.created_at),
+        ])
+
+    return build_list_xlsx(
+        'Користувачі', _USER_COLS, _USER_LABELS, _USER_WIDTHS, rows,
+        'tblUsers', applied_filters=applied_filters,
+    )
 
 
 def parse_materials_xlsx(path: Path) -> dict[str, int]:
