@@ -68,7 +68,8 @@ def _has_upcoming(instance) -> bool:
     return ensure_utc(instance.start_date) >= datetime.now(timezone.utc)
 
 
-def pick_representative_instance(course, allowed_statuses=None):
+def pick_representative_instance(course, allowed_statuses=None,
+                                 date_from=None, date_to=None):
     """Вибрати найрелевантніший instance курсу для API-відповіді.
 
     Пріоритет: найближчий майбутній (published/active). Fallback --
@@ -80,6 +81,10 @@ def pick_representative_instance(course, allowed_statuses=None):
         allowed_statuses: iterable статусів, які дозволено віддавати клієнту.
             Якщо None -- по замовчуванню ('published', 'active', 'completed').
             Фільтр застосовується і до upcoming (гарантія), і до past (fallback).
+        date_from, date_to: те саме вікно дат, за яким курс потрапив у вибірку.
+            Без нього курс, знайдений за вереснем, показував би картку свого
+            жовтневого проведення -- дата в списку розкладу не відповідала б
+            запитаному місяцю. Проведення без дати у вікно не входить.
     """
     if not course.instances:
         return None
@@ -89,10 +94,25 @@ def pick_representative_instance(course, allowed_statuses=None):
     }
     now = datetime.now(timezone.utc)
 
+    def in_window(instance):
+        if date_from is None and date_to is None:
+            return True
+        started = ensure_utc(instance.start_date)
+        if started is None:
+            return False
+        if date_from is not None and started < date_from:
+            return False
+        if date_to is not None and started > date_to:
+            return False
+        return True
+
+    candidates = [i for i in course.instances if i.status in allowed and in_window(i)]
+    if not candidates:
+        return None
+
     upcoming = [
-        i for i in course.instances
+        i for i in candidates
         if i.status in _DEFAULT_UPCOMING_STATUSES
-        and i.status in allowed
         and (i.start_date is None or ensure_utc(i.start_date) >= now)
     ]
     if upcoming:
@@ -102,7 +122,7 @@ def pick_representative_instance(course, allowed_statuses=None):
         )
 
     past = sorted(
-        (i for i in course.instances if i.status in allowed),
+        candidates,
         key=lambda i: ensure_utc(i.start_date) or _FAR_PAST,
         reverse=True,
     )
@@ -123,6 +143,8 @@ def serialize_instance(instance) -> dict:
             float(instance.effective_price)
             if instance.effective_price is not None else 0.0
         ),
+        'price_is_from': bool(instance.price_is_from),
+        'is_registration_open': bool(instance.is_registration_open),
         'registration_url': _registration_url(instance),
     }
 
@@ -155,6 +177,11 @@ def serialize_event_card(course, instance=None) -> dict:
         'start_date': instance.start_date.isoformat() if instance and instance.start_date else None,
         'end_date': instance.end_date.isoformat() if instance and instance.end_date else None,
         'price': float(effective_price) if effective_price is not None else 0.0,
+        # Ціна може бути «від N ₴», коли активних тарифів кілька з різними
+        # цінами. Без цього прапорця партнер друкує тверде число, якого
+        # частина учасників не заплатить -- сам ІПРМ на своїй сторінці пише
+        # «від» саме за цією ознакою.
+        'price_is_from': bool(instance.price_is_from) if instance else False,
         'currency': 'UAH',
         'location': instance.location if instance else None,
         'card_image_url': _image_url(course.card_src),
@@ -170,6 +197,11 @@ def serialize_event_card(course, instance=None) -> dict:
             else course.max_participants
         ),
         'seats_left': _seats_left(instance) if instance else None,
+        # `seats_left: null` двозначне -- це і «місць безліч», і «місткість не
+        # задана». Прапорець знімає здогадки: партнеру не треба відтворювати
+        # правило «status у (published, active) І (місць немає обмеження АБО
+        # лишились)», яке при кожному відтворенні розходиться з оригіналом.
+        'is_registration_open': bool(instance.is_registration_open) if instance else False,
         'registration_url': _registration_url(instance),
         'detail_url': _detail_url(course),
         'trainer': serialize_trainer(

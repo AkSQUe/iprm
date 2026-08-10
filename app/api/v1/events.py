@@ -7,7 +7,7 @@ Course + CourseInstance (нова модель).
 from datetime import datetime, timezone
 
 from flask import abort, jsonify, make_response, request
-from sqlalchemy import func
+from sqlalchemy import and_, func, nulls_last, select
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.api.v1 import api_v1_bp
@@ -22,15 +22,25 @@ from app.extensions import csrf, db, limiter
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
-from app.utils import ensure_utc
 
 
-ALLOWED_STATUSES = {'published', 'active', 'completed'}
+# 'cancelled' можна ЗАПИТАТИ явно, але його немає в DEFAULT_STATUSES: партнер,
+# який будує розклад, мусить показати «Захід скасовано», а не мовчки прибрати
+# рядок -- інакше скасування й видалення для нього виглядають однаково. Той,
+# хто про це не просив, поведінки не змінює.
+ALLOWED_STATUSES = {'published', 'active', 'completed', 'cancelled'}
 DEFAULT_STATUSES = ('published', 'active')
 
 MAX_PAGE = 10_000
 MAX_PER_PAGE = 100
 DEFAULT_PER_PAGE = 50
+
+# Порядок видачі. `start_desc` лишається типовим, бо на нього вже спираються
+# наявні споживачі (історія семінарів у виконавчому звіті MM Medic); розклад
+# просить `start_asc` явно.
+SORT_START_DESC = 'start_desc'
+SORT_START_ASC = 'start_asc'
+ALLOWED_SORTS = (SORT_START_DESC, SORT_START_ASC)
 
 # Cache-Control: партнер може cache-ити list до 5 хв, detail -- до 2 хв
 CACHE_TTL_LIST_SECONDS = 300
@@ -67,6 +77,88 @@ def _parse_pagination():
     return page, per_page, None
 
 
+def _parse_window():
+    """(date_from, date_to, error|None) -- вікно дат для розкладу.
+
+    Приймає ISO-дату (`2026-09-01`) або повний ISO-час. Гола дата в `date_to`
+    трактується як КІНЕЦЬ доби: інакше `date_to=2026-09-01` мовчки викидало б
+    усі заходи того самого дня, і партнер бачив би порожній вересень.
+
+    `upcoming=1` -- скорочення для `date_from=зараз`; разом із явним
+    `date_from` перемагає пізніша з двох меж.
+    """
+    def parse(raw, end_of_day=False):
+        raw = (raw or '').strip()
+        if not raw:
+            return None, None
+        try:
+            value = datetime.fromisoformat(raw)
+        except ValueError:
+            return None, f'invalid date: {raw!r}; expected ISO-8601'
+        if len(raw) == 10 and end_of_day:
+            value = value.replace(hour=23, minute=59, second=59, microsecond=999999)
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value, None
+
+    date_from, err = parse(request.args.get('date_from'))
+    if err:
+        return None, None, err
+    date_to, err = parse(request.args.get('date_to'), end_of_day=True)
+    if err:
+        return None, None, err
+
+    if _truthy(request.args.get('upcoming')):
+        now = datetime.now(timezone.utc)
+        date_from = max(date_from, now) if date_from else now
+
+    if date_from and date_to and date_from > date_to:
+        return None, None, 'date_from must not be later than date_to'
+    return date_from, date_to, None
+
+
+def _truthy(raw):
+    return (raw or '').strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def _ordering(expression, sort):
+    """ORDER BY з передбачуваним місцем для проведень без дати.
+
+    Проведення бувають без `start_date` (дата ще не оголошена). Куди їх
+    поставить голий ORDER BY -- залежить від СУБД: SQLite кладе NULL першими
+    при ASC, PostgreSQL -- останніми. Тобто розклад упорядковувався б
+    по-різному на dev і в проді, і партнер отримував би заходи «без дати» на
+    чолі списку рівно там, де це найпомітніше.
+
+    `NULLS LAST` в обидві сторони: невизначена дата -- завжди в кінці, бо
+    вона не конкурує за увагу з оголошеними.
+    """
+    ordered = expression.asc() if sort == SORT_START_ASC else expression.desc()
+    return nulls_last(ordered)
+
+
+def _parse_sort():
+    """(sort, error|None)."""
+    raw = (request.args.get('sort') or SORT_START_DESC).strip().lower()
+    if raw not in ALLOWED_SORTS:
+        return None, f'invalid sort; allowed: {list(ALLOWED_SORTS)}'
+    return raw, None
+
+
+def _apply_window(query, date_from, date_to):
+    """Вікно дат по `CourseInstance.start_date`.
+
+    Проведення без дати (TBD) у вікно НЕ потрапляє: у розкладі йому немає де
+    стати, а мовчки чіпляти його до краю діапазону означало б показати захід
+    у місяці, до якого він не має стосунку.
+    """
+    if date_from is not None:
+        query = query.filter(CourseInstance.start_date >= date_from)
+    if date_to is not None:
+        query = query.filter(CourseInstance.start_date <= date_to)
+    return query
+
+
 def _hydrate_reg_counts(instances):
     """Batch COUNT активних реєстрацій; встановлює `_cached_reg_count`."""
     if not instances:
@@ -87,17 +179,44 @@ def _hydrate_reg_counts(instances):
         inst._cached_reg_count = counts.get(inst.id, 0)
 
 
-def _sorted_by_start(courses, picked):
-    """Сортує курси за датою їх представницького instance (найближчі спершу)."""
-    far_future = datetime.max.replace(tzinfo=timezone.utc)
+def _course_order_key(statuses, date_from, date_to):
+    """Скалярний вираз, за яким курс стає в чергу списку.
 
-    def key(course):
-        inst = picked.get(course.id)
-        if inst and inst.start_date:
-            return ensure_utc(inst.start_date) or far_future
-        return far_future
+    Курс представляє один instance -- найближчий майбутній, а якщо таких немає,
+    найсвіжіший минулий. Саме за його датою курс і має стояти в списку.
 
-    return sorted(courses, key=key)
+    Раніше ORDER BY у SQL не було зовсім: `paginate()` брав довільний зріз, а
+    сортування вже вибраної сторінки в Python створювало ілюзію хронології --
+    усередині сторінки порядок був, але сторінка 2 не продовжувала сторінку 1.
+    Для розкладу це означає пропущені й повторені заходи при гортанні.
+    """
+    def scoped(condition_extra=None):
+        conditions = [
+            CourseInstance.course_id == Course.id,
+            CourseInstance.status.in_(statuses),
+        ]
+        if date_from is not None:
+            conditions.append(CourseInstance.start_date >= date_from)
+        if date_to is not None:
+            conditions.append(CourseInstance.start_date <= date_to)
+        if condition_extra is not None:
+            conditions.append(condition_extra)
+        return conditions
+
+    now = datetime.now(timezone.utc)
+    upcoming = (
+        select(func.min(CourseInstance.start_date))
+        .where(*scoped(CourseInstance.start_date >= now))
+        .correlate(Course)
+        .scalar_subquery()
+    )
+    latest_past = (
+        select(func.max(CourseInstance.start_date))
+        .where(*scoped())
+        .correlate(Course)
+        .scalar_subquery()
+    )
+    return func.coalesce(upcoming, latest_past)
 
 
 def _cached(response, ttl_seconds):
@@ -117,13 +236,25 @@ def list_events():
     Query params:
       page (int, default 1, max 10000)
       per_page (int, default 50, max 100)
-      status (comma-separated: published,active,completed -- статус instance)
+      status (comma-separated: published,active,completed,cancelled)
+      granularity (course|instance, default course)
+      date_from / date_to (ISO-8601; гола дата в date_to -- кінець доби)
+      upcoming (1|true -- скорочення для date_from=зараз)
+      sort (start_desc за замовчуванням | start_asc)
 
     Невалідний параметр -> 400 Bad Request з полем `error`.
     """
     page, per_page, page_err = _parse_pagination()
     if page_err:
         return jsonify({'error': page_err, 'api_version': API_VERSION}), 400
+
+    date_from, date_to, window_err = _parse_window()
+    if window_err:
+        return jsonify({'error': window_err, 'api_version': API_VERSION}), 400
+
+    sort, sort_err = _parse_sort()
+    if sort_err:
+        return jsonify({'error': sort_err, 'api_version': API_VERSION}), 400
 
     statuses = _parse_statuses(request.args.get('status'))
     if statuses is None:
@@ -139,7 +270,16 @@ def list_events():
             'api_version': API_VERSION,
         }), 400
     if granularity == 'instance':
-        return _list_instances(statuses, page, per_page)
+        return _list_instances(statuses, page, per_page, date_from, date_to, sort)
+
+    matching_instance = [CourseInstance.status.in_(statuses)]
+    if date_from is not None:
+        matching_instance.append(CourseInstance.start_date >= date_from)
+    if date_to is not None:
+        matching_instance.append(CourseInstance.start_date <= date_to)
+
+    order_key = _course_order_key(statuses, date_from, date_to)
+    order_by = _ordering(order_key, sort)
 
     query = (
         Course.query
@@ -148,7 +288,11 @@ def list_events():
             selectinload(Course.instances).joinedload(CourseInstance.trainer),
         )
         .filter(Course.is_active.is_(True))
-        .filter(Course.instances.any(CourseInstance.status.in_(statuses)))
+        .filter(Course.instances.any(and_(*matching_instance)))
+        # Course.id -- не косметика: без стабільного тайбрейкера курси з
+        # однаковою датою можуть мінятись місцями між сторінками, і гортання
+        # знову губить рядки.
+        .order_by(order_by, Course.id.asc())
     )
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     courses = pagination.items
@@ -157,7 +301,9 @@ def list_events():
     # із клієнтського фільтра -- щоб response НЕ містив instance зі статусом,
     # який клієнт не запитував (було -- через fallback на completed).
     picked = {
-        c.id: pick_representative_instance(c, allowed_statuses=statuses)
+        c.id: pick_representative_instance(
+            c, allowed_statuses=statuses, date_from=date_from, date_to=date_to,
+        )
         for c in courses
     }
     # Виключаємо курси без matching representative (edge-case: усі instances у
@@ -166,11 +312,13 @@ def list_events():
     courses = [c for c in courses if picked[c.id] is not None]
 
     _hydrate_reg_counts([picked[c.id] for c in courses])
-    courses_sorted = _sorted_by_start(courses, picked)
+    # Порядок уже заданий у SQL (`_course_order_key`), тож пересортовувати
+    # сторінку в Python не можна: це знову дало б хронологію лише всередині
+    # сторінки і зламало б `sort=start_desc`.
 
     body = {
         'api_version': API_VERSION,
-        'items': [serialize_event_card(c, picked[c.id]) for c in courses_sorted],
+        'items': [serialize_event_card(c, picked[c.id]) for c in courses],
         'page': pagination.page,
         'per_page': pagination.per_page,
         'total': pagination.total,
@@ -179,7 +327,7 @@ def list_events():
     return _cached(make_response(jsonify(body)), CACHE_TTL_LIST_SECONDS)
 
 
-def _list_instances(statuses, page, per_page):
+def _list_instances(statuses, page, per_page, date_from, date_to, sort):
     """List events at INSTANCE granularity -- one card per CourseInstance.
 
     На відміну від покурсового режиму (один представник на курс, орієнтований
@@ -188,7 +336,9 @@ def _list_instances(statuses, page, per_page):
     покурсовому режимі не видно. Картка та сама (serialize_event_card з явним
     instance); унікальний ключ елемента -- поле `instance_id`.
     """
-    query = (
+    order_by = _ordering(CourseInstance.start_date, sort)
+
+    query = _apply_window(
         CourseInstance.query
         .join(Course, CourseInstance.course_id == Course.id)
         .options(
@@ -196,9 +346,9 @@ def _list_instances(statuses, page, per_page):
             joinedload(CourseInstance.trainer),
         )
         .filter(Course.is_active.is_(True))
-        .filter(CourseInstance.status.in_(statuses))
-        .order_by(CourseInstance.start_date.desc())
-    )
+        .filter(CourseInstance.status.in_(statuses)),
+        date_from, date_to,
+    ).order_by(order_by, CourseInstance.id.asc())
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     instances = pagination.items
     _hydrate_reg_counts(instances)
