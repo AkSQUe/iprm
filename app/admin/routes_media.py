@@ -83,8 +83,11 @@ def _detach_media_refs(media):
 @admin_bp.route('/media')
 @admin_required
 def media_library():
+    from app.admin import _listing
+
     entity_type = (request.args.get('entity_type') or '').strip()
     usage_type = (request.args.get('usage_type') or '').strip()
+    search = _listing.text_arg('q')
     page = request.args.get('page', 1, type=int)
 
     q = MediaFile.alive()
@@ -94,6 +97,11 @@ def media_library():
         q = q.filter(MediaFile.entity_type == entity_type)
     if usage_type:
         q = q.filter(MediaFile.usage_type == usage_type)
+    # Пошук за іменем файлу й alt-текстом: у бібліотеці на сотні мініатюр
+    # прокрутка -- єдиний спосіб знайти потрібне зображення.
+    q = _listing.apply_search(q, search, [
+        MediaFile.file_path, MediaFile.original_name, MediaFile.alt_text,
+    ])
 
     pagination = q.order_by(desc(MediaFile.created_at)).paginate(
         page=page, per_page=_PER_PAGE, error_out=False,
@@ -105,8 +113,13 @@ def media_library():
     return render_template(
         'admin/media_library.html',
         items=pagination.items, pagination=pagination,
-        entity_type=entity_type, usage_type=usage_type,
-        usage_types=MediaFile.USAGE_TYPES, stats=stats,
+        entity_type=entity_type, usage_type=usage_type, search=search,
+        usage_types=MediaFile.USAGE_TYPES,
+        usage_type_options=[(u, u) for u in MediaFile.USAGE_TYPES],
+        filter_args={k: v for k, v in (
+            ('q', search), ('entity_type', entity_type), ('usage_type', usage_type),
+        ) if v},
+        stats=stats,
     )
 
 

@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -55,6 +57,14 @@
 
     {% include 'partials/flash_messages.html' %}
 
+    {{ filter_bar(
+         action=url_for('admin.blog_list'),
+         values=filters,
+         search={'name': 'q', 'placeholder': 'Пошук за назвою, slug або анонсом'},
+         fields=[{'name': 'state', 'label': 'Усі стани', 'options': state_options}],
+         reset_url=url_for('admin.blog_list'),
+       ) }}
+
     {% if posts %}
     <div class="form-section">
       <div class="admin-table-wrap">
@@ -100,8 +110,13 @@
     </div>
     {% else %}
     <div class="admin-empty admin-pad-32 admin-text-center">
+      {% if filters.q or filters.state %}
+      <h3 class="admin-empty__title">Нічого не знайдено</h3>
+      <p class="admin-text-muted">Спробуйте змінити фільтри або <a href="{{ url_for('admin.blog_list') }}">скинути їх</a>.</p>
+      {% else %}
       <h3 class="admin-empty__title">Ще немає дописів</h3>
       <p class="admin-text-muted">Створіть перший допис блогу.</p>
+      {% endif %}
       <a href="{{ url_for('admin.blog_create') }}" class="btn-admin btn-admin--primary admin-mt-sm">
         {{ icon('add') }} Новий допис
       </a>

@@ -9,6 +9,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-media.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -42,21 +44,19 @@
     </div>
 
     <!-- Фільтри -->
-    <form method="GET" class="admin-filter-form admin-mb-md">
-      <select name="entity_type" class="form-input" onchange="this.form.submit()">
-        <option value="">Усі прив'язки</option>
-        <option value="none"{% if entity_type == 'none' %} selected{% endif %}>Без прив'язки</option>
-        <option value="blog_post"{% if entity_type == 'blog_post' %} selected{% endif %}>Блог</option>
-        <option value="trainer"{% if entity_type == 'trainer' %} selected{% endif %}>Тренери</option>
-        <option value="course"{% if entity_type == 'course' %} selected{% endif %}>Курси</option>
-      </select>
-      <select name="usage_type" class="form-input" onchange="this.form.submit()">
-        <option value="">Будь-яке використання</option>
-        {% for u in usage_types %}
-        <option value="{{ u }}"{% if usage_type == u %} selected{% endif %}>{{ u }}</option>
-        {% endfor %}
-      </select>
-    </form>
+    {{ filter_bar(
+         action=url_for('admin.media_library'),
+         values={'q': search, 'entity_type': entity_type, 'usage_type': usage_type},
+         search={'name': 'q', 'placeholder': 'Пошук за назвою файлу або alt-текстом'},
+         fields=[
+           {'name': 'entity_type', 'label': "Усі прив'язки", 'options': [
+              ('none', "Без прив'язки"), ('blog_post', 'Блог'),
+              ('trainer', 'Тренери'), ('course', 'Курси')]},
+           {'name': 'usage_type', 'label': 'Будь-яке використання',
+            'options': usage_type_options},
+         ],
+         reset_url=url_for('admin.media_library'),
+       ) }}
 
     {% set ent_labels = {'blog_post': 'Допис', 'trainer': 'Тренер', 'course': 'Курс'} %}
     {% if items %}
@@ -104,11 +104,11 @@
     {% if pagination.pages > 1 %}
     <nav class="blog-pagination admin-mt-md" aria-label="Сторінки">
       {% if pagination.has_prev %}
-      <a class="btn-admin btn-admin--secondary btn-admin--sm" href="{{ url_for('admin.media_library', page=pagination.prev_num, entity_type=entity_type, usage_type=usage_type) }}">Новіші</a>
+      <a class="btn-admin btn-admin--secondary btn-admin--sm" href="{{ url_for('admin.media_library', page=pagination.prev_num, **filter_args) }}">Новіші</a>
       {% endif %}
       <span class="admin-text-muted">Сторінка {{ pagination.page }} з {{ pagination.pages }}</span>
       {% if pagination.has_next %}
-      <a class="btn-admin btn-admin--secondary btn-admin--sm" href="{{ url_for('admin.media_library', page=pagination.next_num, entity_type=entity_type, usage_type=usage_type) }}">Старіші</a>
+      <a class="btn-admin btn-admin--secondary btn-admin--sm" href="{{ url_for('admin.media_library', page=pagination.next_num, **filter_args) }}">Старіші</a>
       {% endif %}
     </nav>
     {% endif %}

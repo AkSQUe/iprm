@@ -112,11 +112,29 @@ def _load_profile_into_form(trainer, form):
     form.work_experience.data = '\n'.join(trainer.work_experience or [])
 
 
+_TRAINER_STATES = {'active': 'Активні', 'inactive': 'Приховані'}
+
+
 @admin_bp.route('/trainers')
 @admin_required
 def trainers_list():
-    trainers = Trainer.query.order_by(Trainer.full_name).all()
-    return render_template('admin/trainers.html', trainers=trainers)
+    from app.admin import _listing
+
+    filters = {
+        'q': _listing.text_arg('q'),
+        'state': _listing.choice_arg('state', _TRAINER_STATES),
+    }
+    query = _listing.apply_search(Trainer.query, filters['q'], [
+        Trainer.full_name, Trainer.slug, Trainer.email, Trainer.role,
+    ])
+    if filters['state']:
+        query = query.filter(Trainer.is_active.is_(filters['state'] == 'active'))
+    return render_template(
+        'admin/trainers.html',
+        trainers=query.order_by(Trainer.full_name).all(),
+        filters=filters,
+        state_options=list(_TRAINER_STATES.items()),
+    )
 
 
 @admin_bp.route('/trainers/new', methods=['GET', 'POST'])

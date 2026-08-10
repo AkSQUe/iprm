@@ -15,6 +15,9 @@ def dashboard():
     return redirect(url_for('admin.courses_list'))
 
 
+# Довгі реєстри (сертифікати, користувачі) віддаємо сторінками.
+_LIST_PER_PAGE = 50
+
 _CERT_STATES = {'valid': 'Дійсні', 'revoked': 'Відкликані'}
 
 
@@ -93,11 +96,19 @@ def certificates():
             extract('year', Certificate.issued_at),
         ).distinct().all() if y is not None
     }, reverse=True)
+    # Реєстр росте після кожного заходу, тож сторінками; експорт лишається
+    # по всьому зрізу -- пагінація це властивість екрана, а не звіту.
+    pagination = _certificates_query(filters).paginate(
+        page=request.args.get('page', 1, type=int),
+        per_page=_LIST_PER_PAGE, error_out=False,
+    )
     return render_template(
         'admin/certificates.html',
-        certificates=_certificates_query(filters).all(),
+        certificates=pagination.items,
+        pagination=pagination,
         stats=_certificate_stats(),
         filters=filters,
+        filter_args={k: v for k, v in filters.items() if v},
         state_options=list(_CERT_STATES.items()),
         course_options=[
             (c.id, c.title)
@@ -199,10 +210,14 @@ def _users_query(filters):
     return query.order_by(User.created_at.desc())
 
 
-def _users_with_counts(filters):
-    """Список User із проставленим `_cached_reg_count` (без N+1 у шаблоні)."""
+def _users_with_counts(rows):
+    """(User, count) -> список User із проставленим `_cached_reg_count`.
+
+    Кеш потрібен, щоб шаблон не смикав `registration_count` по одному запиту
+    на рядок.
+    """
     users = []
-    for user, count in _users_query(filters).all():
+    for user, count in rows:
         user._cached_reg_count = count
         users.append(user)
     return users
@@ -212,10 +227,19 @@ def _users_with_counts(filters):
 @admin_required
 def users():
     filters = _user_filters()
+    # Базу вже переросли тисячу акаунтів -- сторінками. Експорт лишається по
+    # всьому зрізу.
+    pagination = _users_query(filters).paginate(
+        page=request.args.get('page', 1, type=int),
+        per_page=_LIST_PER_PAGE, error_out=False,
+    )
     return render_template(
         'admin/users.html',
-        users=_users_with_counts(filters),
+        users=_users_with_counts(pagination.items),
+        pagination=pagination,
+        total_found=pagination.total,
         filters=filters,
+        filter_args={k: v for k, v in filters.items() if v},
         role_options=list(_USER_ROLES.items()),
         state_options=list(_USER_STATES.items()),
         confirmed_options=list(_USER_CONFIRMED.items()),
@@ -231,7 +255,7 @@ def users_export():
     from app.services import xlsx_io
 
     filters = _user_filters()
-    users_list = _users_with_counts(filters)
+    users_list = _users_with_counts(_users_query(filters).all())
     summary = _listing.export_summary(
         [
             ('Пошук', filters['q'] or '--'),

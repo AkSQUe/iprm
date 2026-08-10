@@ -9,6 +9,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-cities.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -101,6 +103,13 @@
         <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('add') }} Додати</button>
       </form>
     </div>
+
+    {{ filter_bar(
+         action=url_for('admin.cities_list'),
+         values=filters,
+         search={'name': 'q', 'placeholder': 'Пошук за назвою локації'},
+         reset_url=url_for('admin.cities_list'),
+       ) }}
 
     {% if rows %}
     <form method="POST" action="{{ url_for('admin.cities_save') }}" class="admin-form cities-form">

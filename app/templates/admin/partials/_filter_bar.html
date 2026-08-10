@@ -61,3 +61,24 @@
   </form>
 </div>
 {% endmacro %}
+
+{# Пагінація списку. `args` -- ті самі непорожні фільтри, що й у панелі:
+   гортання сторінок не має губити зріз.
+
+     {{ pager('admin.users', pagination, filter_args) }}
+#}
+{% macro pager(endpoint, pagination, args={}) %}
+{% if pagination and pagination.pages > 1 %}
+<nav class="admin-pagination">
+  {% if pagination.has_prev %}
+    <a href="{{ url_for(endpoint, page=pagination.prev_num, **args) }}"
+       class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
+  {% endif %}
+  <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }} ({{ pagination.total }})</span>
+  {% if pagination.has_next %}
+    <a href="{{ url_for(endpoint, page=pagination.next_num, **args) }}"
+       class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
+  {% endif %}
+</nav>
+{% endif %}
+{% endmacro %}

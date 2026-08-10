@@ -34,16 +34,34 @@ def _apply_block_translations(course):
             apply_inline_translations(block, prefix=f'trblk__{block.id}')
 
 
+_COURSE_STATES = {'active': 'Активні', 'inactive': 'Приховані'}
+
+
 @admin_bp.route('/courses')
 @admin_required
 def courses_list():
+    from app.admin import _listing
+    from app.models.trainer import Trainer
+
+    filters = {
+        'q': _listing.text_arg('q'),
+        'state': _listing.choice_arg('state', _COURSE_STATES),
+        'trainer_id': _listing.int_arg('trainer_id'),
+    }
+
     # Той самий порядок, що в публічному каталозі, -- адмін бачить реальну
     # послідовність карток (закріплені -> sort_order -> назва).
-    courses = (
-        Course.query.options(joinedload(Course.trainer))
-        .order_by(Course.is_pinned.desc(), Course.sort_order, Course.title)
-        .all()
-    )
+    query = Course.query.options(joinedload(Course.trainer))
+    query = _listing.apply_search(query, filters['q'], [
+        Course.title, Course.slug, Course.subtitle,
+    ])
+    if filters['state']:
+        query = query.filter(Course.is_active.is_(filters['state'] == 'active'))
+    if filters['trainer_id']:
+        query = query.filter(Course.trainer_id == filters['trainer_id'])
+    courses = query.order_by(
+        Course.is_pinned.desc(), Course.sort_order, Course.title,
+    ).all()
     # Aggregate upcoming / past / total / pending_requests -- 2 запити замість
     # N+1 через property + немає потреби в selectinload(Course.instances).
     stats = course_service.course_stats([c.id for c in courses])
@@ -54,6 +72,12 @@ def courses_list():
         'admin/courses.html',
         courses=courses,
         stats_by_id=stats_by_id,
+        filters=filters,
+        state_options=list(_COURSE_STATES.items()),
+        trainer_options=[
+            (t.id, t.full_name)
+            for t in Trainer.query.order_by(Trainer.full_name).all()
+        ],
     )
 
 

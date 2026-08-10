@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -47,6 +49,14 @@
   </div>
 
   {% include 'partials/flash_messages.html' %}
+
+  {{ filter_bar(
+       action=url_for('admin.trainers_list'),
+       values=filters,
+       search={'name': 'q', 'placeholder': 'Пошук за ПІБ, slug, email або посадою'},
+       fields=[{'name': 'state', 'label': 'Усі стани', 'options': state_options}],
+       reset_url=url_for('admin.trainers_list'),
+     ) }}
 
   {% if trainers %}
   <div class="admin-table-wrap">
@@ -93,8 +103,13 @@
   {% else %}
   <div class="admin-empty">
     {{ icon('school', cls='admin-empty__icon') }}
+    {% if filters.q or filters.state %}
+    <h3 class="admin-empty__title">Нічого не знайдено</h3>
+    <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.trainers_list') }}">скинути їх</a></p>
+    {% else %}
     <h3 class="admin-empty__title">Тренерів ще немає</h3>
     <p>Додайте першого тренера натиснувши кнопку вище</p>
+    {% endif %}
   </div>
   {% endif %}
 

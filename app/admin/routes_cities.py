@@ -24,14 +24,23 @@ audit_logger = logging.getLogger('audit')
 @admin_bp.route('/cities', methods=['GET'])
 @admin_required
 def cities_list():
-    cities = City.query.order_by(City.name).all()
+    from app.admin import _listing
+
+    filters = {'q': _listing.text_arg('q')}
+    # Пошук звужує лише показані рядки: cities_save читає ті ключі форми, що
+    # прийшли, тож збереження відфільтрованої таблиці не чіпає решту.
+    cities = _listing.apply_search(
+        City.query, filters['q'], [City.name, City.name_normalized],
+    ).order_by(City.name).all()
 
     # Скільки проведень стоїть за кожною локацією: показуємо вагу рядка в
     # таблиці й сортуємо ним те, чого бракує (спершу найуживаніше).
     usage = city_glossary.location_usage()
-    known = {city.name_normalized for city in cities}
+    known = {city.name_normalized for city in City.query.all()}
+    needle = filters['q'].lower()
     missing = sorted(
-        (entry for key, entry in usage.items() if key not in known),
+        (entry for key, entry in usage.items()
+         if key not in known and (not needle or needle in entry['name'].lower())),
         key=lambda entry: (-entry['count'], entry['name']),
     )
     # Рядок таблиці збираємо тут, а не в шаблоні: розкопувати JSON перекладів
@@ -61,6 +70,7 @@ def cities_list():
         languages=PREFIXED_LANGUAGES,
         missing=missing,
         translated=translated,
+        filters=filters,
     )
 
 

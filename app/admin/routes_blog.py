@@ -27,10 +27,26 @@ logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
 
 
+_POST_STATES = {'published': 'Опубліковані', 'draft': 'Чернетки'}
+
+
 @admin_bp.route('/blog')
 @admin_required
 def blog_list():
-    posts = BlogPost.query.order_by(desc(BlogPost.created_at)).all()
+    from app.admin import _listing
+
+    filters = {
+        'q': _listing.text_arg('q'),
+        'state': _listing.choice_arg('state', _POST_STATES),
+    }
+    query = _listing.apply_search(BlogPost.query, filters['q'], [
+        BlogPost.title, BlogPost.slug, BlogPost.excerpt,
+    ])
+    if filters['state']:
+        # Фільтруємо по колонці `status`, а не по property `is_published`:
+        # у SQL її не існує.
+        query = query.filter(BlogPost.status == filters['state'])
+    posts = query.order_by(desc(BlogPost.created_at)).all()
     # Лічильники коментарів на модерації -- одним запитом (без N+1).
     pending = dict(
         db.session.query(BlogComment.post_id, func.count(BlogComment.id))
@@ -48,6 +64,8 @@ def blog_list():
     return render_template(
         'admin/blog_list.html',
         posts=posts, pending_counts=pending, total_pending=total_pending,
+        filters=filters,
+        state_options=list(_POST_STATES.items()),
     )
 
 
