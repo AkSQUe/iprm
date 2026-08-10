@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from flask import render_template, request, jsonify, flash, redirect, url_for
 from flask_login import current_user
-from sqlalchemy import desc, func, or_
+from sqlalchemy import desc
 from sqlalchemy.orm import joinedload
 
 from app.admin import admin_bp
@@ -13,6 +13,50 @@ from app.extensions import db
 from app.models.error_log import ErrorLog
 
 audit_logger = logging.getLogger('audit')
+
+
+_ERROR_CODES = ('400', '401', '403', '404', '405', '429', '500', '503')
+_ERROR_RESOLVED = {'false': 'Невирішені', 'true': 'Вирішені'}
+# Порожнє значення = типові 7 днів, тож самої «7» у списку немає.
+_ERROR_PERIODS = {'1': '1 день', '30': '30 днів', '90': '90 днів',
+                  '0': 'За весь час'}
+_DEFAULT_ERROR_DAYS = 7
+
+
+def _error_log_filters():
+    """Фільтри журналу помилок -- спільні для сторінки й експорту."""
+    from app.admin import _listing
+    return {
+        'q': _listing.text_arg('q'),
+        'error_code': _listing.choice_arg('error_code', _ERROR_CODES),
+        'resolved': _listing.choice_arg('resolved', _ERROR_RESOLVED),
+        'days': _listing.choice_arg('days', _ERROR_PERIODS),
+    }
+
+
+def _error_log_days(filters):
+    """Глибина вибірки в днях (0 -- за весь час)."""
+    return int(filters['days']) if filters['days'] else _DEFAULT_ERROR_DAYS
+
+
+def _error_log_query(filters):
+    """Записи журналу під фільтри, найновіші першими."""
+    from app.admin import _listing
+
+    query = ErrorLog.query.options(joinedload(ErrorLog.user))
+    query = _listing.apply_search(query, filters['q'], [
+        ErrorLog.url, ErrorLog.error_message,
+        ErrorLog.error_type, ErrorLog.ip_address,
+    ])
+    if filters['error_code']:
+        query = query.filter(ErrorLog.error_code == int(filters['error_code']))
+    if filters['resolved']:
+        query = query.filter(ErrorLog.resolved.is_(filters['resolved'] == 'true'))
+    days = _error_log_days(filters)
+    if days > 0:
+        since = datetime.now(timezone.utc) - timedelta(days=days)
+        query = query.filter(ErrorLog.created_at >= since)
+    return query.order_by(desc(ErrorLog.created_at))
 
 
 @admin_bp.route('/error-logs')
@@ -24,42 +68,53 @@ def error_logs():
     except Exception:
         pass
 
-    page = request.args.get('page', 1, type=int)
+    filters = _error_log_filters()
     per_page = request.args.get('per_page', 50, type=int)
-    error_code = request.args.get('error_code', type=int)
-    resolved = request.args.get('resolved')
-    days = request.args.get('days', 7, type=int)
-
-    query = ErrorLog.query.options(joinedload(ErrorLog.user))
-
-    if error_code:
-        query = query.filter(ErrorLog.error_code == error_code)
-
-    if resolved == 'true':
-        query = query.filter(ErrorLog.resolved.is_(True))
-    elif resolved == 'false':
-        query = query.filter(ErrorLog.resolved.is_(False))
-
-    if days > 0:
-        since = datetime.now(timezone.utc) - timedelta(days=days)
-        query = query.filter(ErrorLog.created_at >= since)
-
-    query = query.order_by(desc(ErrorLog.created_at))
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-
-    stats = ErrorLog.get_statistics(days=days)
+    pagination = _error_log_query(filters).paginate(
+        page=request.args.get('page', 1, type=int),
+        per_page=per_page, error_out=False,
+    )
 
     return render_template(
         'admin/error_logs.html',
         logs=pagination.items,
         pagination=pagination,
-        stats=stats,
-        filters={
-            'error_code': error_code,
-            'resolved': resolved,
-            'days': days,
-            'per_page': per_page,
-        },
+        stats=ErrorLog.get_statistics(days=_error_log_days(filters)),
+        filters=filters,
+        filter_args={k: v for k, v in filters.items() if v},
+        per_page=per_page,
+        code_options=[(c, c) for c in _ERROR_CODES],
+        resolved_options=list(_ERROR_RESOLVED.items()),
+        period_options=list(_ERROR_PERIODS.items()),
+    )
+
+
+@admin_bp.route('/error-logs/export')
+@admin_required
+def error_logs_export():
+    """Експорт журналу помилок у xlsx з урахуванням активних фільтрів."""
+    from app.admin import _listing
+    from app.services import xlsx_io
+
+    filters = _error_log_filters()
+    logs = _error_log_query(filters).all()
+    days = _error_log_days(filters)
+    summary = _listing.export_summary(
+        [
+            ('Пошук', filters['q'] or '--'),
+            ('Код', filters['error_code'] or 'Усі'),
+            ('Стан', _ERROR_RESOLVED.get(filters['resolved'], 'Усі')),
+            ('Період', 'За весь час' if days == 0 else f'останні {days} дн.'),
+        ],
+        len(logs),
+    )
+    audit_logger.info(
+        'Admin %s exported error logs xlsx (%d rows, filters=%s)',
+        current_user.email, len(logs), filters,
+    )
+    return _listing.xlsx_download(
+        xlsx_io.export_error_logs_xlsx(logs, applied_filters=summary),
+        'error-logs',
     )
 
 

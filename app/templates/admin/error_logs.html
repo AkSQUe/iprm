@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -22,7 +24,7 @@
       </div>
       <h1 class="admin-hero__title">Журнал помилок</h1>
       <p class="admin-hero__subtitle">
-        За {{ filters.days }} днів: {{ stats.total_errors }} помилок, {{ stats.unresolved_errors }} невирішених
+        {{ 'За весь час' if filters.days == '0' else 'За ' ~ (filters.days or 7) ~ ' днів' }}: {{ stats.total_errors }} помилок, {{ stats.unresolved_errors }} невирішених
       </p>
     </div>
   </div>
@@ -50,32 +52,18 @@
   </div>
 
   <!-- Фільтри -->
-  <div class="admin-stats-bar">
-    <form method="GET" action="{{ url_for('admin.error_logs') }}" class="admin-filter-form">
-      <select name="error_code" class="form-input form-input--sm">
-        <option value="">Всі коди</option>
-        {% for code in ['400', '401', '403', '404', '405', '429', '500', '503'] %}
-        <option value="{{ code }}"{% if filters.error_code == code|int %} selected{% endif %}>{{ code }}</option>
-        {% endfor %}
-      </select>
-      <select name="resolved" class="form-input form-input--sm">
-        <option value="">Всі статуси</option>
-        <option value="false"{% if filters.resolved == 'false' %} selected{% endif %}>Невирішені</option>
-        <option value="true"{% if filters.resolved == 'true' %} selected{% endif %}>Вирішені</option>
-      </select>
-      <select name="days" class="form-input form-input--sm">
-        <option value="1"{% if filters.days == 1 %} selected{% endif %}>1 день</option>
-        <option value="7"{% if filters.days == 7 %} selected{% endif %}>7 днів</option>
-        <option value="30"{% if filters.days == 30 %} selected{% endif %}>30 днів</option>
-        <option value="90"{% if filters.days == 90 %} selected{% endif %}>90 днів</option>
-        <option value="0"{% if filters.days == 0 %} selected{% endif %}>За весь час</option>
-      </select>
-      <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('filter_list') }} Фільтрувати</button>
-      {% if filters.error_code or filters.resolved %}
-      <a href="{{ url_for('admin.error_logs') }}" class="btn-admin btn-admin--sm">{{ icon('clear') }} Скинути</a>
-      {% endif %}
-    </form>
-  </div>
+  {{ filter_bar(
+       action=url_for('admin.error_logs'),
+       values=filters,
+       search={'name': 'q', 'placeholder': 'Пошук за URL, типом, текстом або IP'},
+       fields=[
+         {'name': 'error_code', 'label': 'Всі коди', 'options': code_options},
+         {'name': 'resolved', 'label': 'Всі статуси', 'options': resolved_options},
+         {'name': 'days', 'label': '7 днів (типово)', 'options': period_options},
+       ],
+       export_url=url_for('admin.error_logs_export', **filter_args),
+       reset_url=url_for('admin.error_logs'),
+     ) }}
 
   <!-- Таблиця -->
   {% if logs %}
@@ -146,11 +134,11 @@
   {% if pagination.pages > 1 %}
   <nav class="admin-pagination">
     {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.error_logs', page=pagination.prev_num, error_code=filters.error_code, resolved=filters.resolved, days=filters.days) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
+    <a href="{{ url_for('admin.error_logs', page=pagination.prev_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
     {% endif %}
     <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }}</span>
     {% if pagination.has_next %}
-    <a href="{{ url_for('admin.error_logs', page=pagination.next_num, error_code=filters.error_code, resolved=filters.resolved, days=filters.days) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
+    <a href="{{ url_for('admin.error_logs', page=pagination.next_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
     {% endif %}
   </nav>
   {% endif %}
@@ -159,7 +147,7 @@
   <div class="admin-empty">
     {{ icon('bug_report', cls='admin-empty__icon') }}
     <h3 class="admin-empty__title">Помилок не знайдено</h3>
-    <p>Немає записів{% if filters.error_code or filters.resolved %} за обраними фільтрами. <a href="{{ url_for('admin.error_logs') }}">Скинути</a>{% endif %}</p>
+    <p>Немає записів{% if filters.q or filters.error_code or filters.resolved or filters.days %} за обраними фільтрами. <a href="{{ url_for('admin.error_logs') }}">Скинути</a>{% endif %}</p>
   </div>
   {% endif %}
 

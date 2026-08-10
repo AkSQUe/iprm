@@ -114,6 +114,18 @@ NUMBER_FORMATS = {
     'place_number': FMT_INT,
     'user_id': FMT_INT,
     'registrations': FMT_INT,
+    'issued_at': FMT_DATETIME,
+    'updated_at': FMT_DATETIME,
+    'sent_at': FMT_DATETIME,
+    'retry_count': FMT_INT,
+    'resolved_at': FMT_DATETIME,
+    'error_code': FMT_INT,
+    'seats_left': FMT_INT,
+    'used_count': FMT_INT,
+    'max_uses': FMT_INT,
+    'per_user_limit': FMT_INT,
+    'valid_from': FMT_DATE,
+    'valid_until': FMT_DATE,
     'payment_amount': FMT_CURRENCY_UAH,
     'discount_amount': FMT_CURRENCY_UAH,
     'cpd_points_awarded': FMT_INT,
@@ -2354,24 +2366,22 @@ _REFERRAL_WIDTHS = {'date': 16, 'referrer': 28, 'referrer_type': 14, 'code': 12,
                     'event_date': 14, 'points': 8, 'status': 14}
 
 
-def export_referral_rewards_xlsx(rewards, referrer_map) -> io.BytesIO:
+def export_referral_rewards_xlsx(rewards, referrer_map,
+                                 applied_filters=None) -> io.BytesIO:
     """Реєстр реферальних нарахувань -> xlsx (для звірки/виплат балів).
 
     rewards -- список ReferralReward (з підвантаженими registration/instance/
-    course/user); referrer_map -- {code: {kind, name}} для імен рефереров.
+    course/user); referrer_map -- {code: {kind, name}} для імен рефереров;
+    applied_filters -- пари (назва, значення) для аркуша «Фільтри».
     """
-    wb = Workbook()
-    ws = wb.active
-    ws.title = 'Реферали'
-    _style_header(ws, _REFERRAL_COLS, _REFERRAL_LABELS)
-
-    for row_idx, rw in enumerate(rewards, start=2):
+    rows = []
+    for rw in rewards:
         ref = referrer_map.get(rw.referral_code) or {}
         reg = rw.registration
         user = reg.user if reg else None
         inst = reg.instance if reg else None
         course = inst.course if inst else None
-        values = [
+        rows.append([
             rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '',
             ref.get('name') or rw.referral_code,
             'Тренер' if ref.get('kind') == 'trainer' else (
@@ -2383,20 +2393,12 @@ def export_referral_rewards_xlsx(rewards, referrer_map) -> io.BytesIO:
             (inst.start_date.strftime('%d.%m.%Y') if (inst and inst.start_date) else ''),
             rw.points,
             rw.status_label,
-        ]
-        for col_idx, v in enumerate(values, start=1):
-            ws.cell(row=row_idx, column=col_idx, value=v)
+        ])
 
-    last_row = ws.max_row
-    _set_column_widths(ws, _REFERRAL_COLS, _REFERRAL_WIDTHS)
-    _apply_zebra(ws, len(_REFERRAL_COLS), first_data_row=2, last_data_row=last_row)
-    if last_row >= 2:
-        _apply_table_style(ws, _REFERRAL_COLS, 'tblReferral', last_row)
-
-    out = io.BytesIO()
-    wb.save(out)
-    out.seek(0)
-    return out
+    return build_list_xlsx(
+        'Реферали', _REFERRAL_COLS, _REFERRAL_LABELS, _REFERRAL_WIDTHS, rows,
+        'tblReferral', applied_filters=applied_filters,
+    )
 
 
 _REGISTRATION_COLS = [
@@ -2626,6 +2628,297 @@ def export_users_xlsx(users, applied_filters=None) -> io.BytesIO:
     return build_list_xlsx(
         'Користувачі', _USER_COLS, _USER_LABELS, _USER_WIDTHS, rows,
         'tblUsers', applied_filters=applied_filters,
+    )
+
+
+_CERT_COLS = [
+    'number', 'recipient', 'email', 'event', 'event_date', 'cpd_points',
+    'lecturer', 'event_place', 'issued_at', 'issued_by', 'state',
+]
+_CERT_LABELS = {
+    'number': 'Номер', 'recipient': 'Учасник', 'email': 'Email',
+    'event': 'Захід', 'event_date': 'Дата заходу', 'cpd_points': 'Бали БПР',
+    'lecturer': 'Лектор', 'event_place': 'Місце', 'issued_at': 'Видано',
+    'issued_by': 'Ким видано', 'state': 'Стан',
+}
+_CERT_WIDTHS = {
+    'number': 28, 'recipient': 28, 'email': 30, 'event': 46, 'event_date': 14,
+    'cpd_points': 10, 'lecturer': 26, 'event_place': 20, 'issued_at': 18,
+    'issued_by': 28, 'state': 14,
+}
+
+
+def export_certificates_xlsx(certs, applied_filters=None) -> io.BytesIO:
+    """Реєстр сертифікатів (сторінка /admin/certificates) -> xlsx.
+
+    Колонки -- знімки з самого сертифіката (ПІБ, назва заходу, бали), бо саме
+    вони надруковані в PDF; поточні дані курсу могли відтоді змінитись.
+    """
+    rows, row_fills = [], []
+    for cert in certs:
+        rows.append([
+            cert.number or '',
+            cert.recipient_name or '',
+            (cert.user.email if cert.user else '') or '',
+            cert.event_title or '',
+            _to_kyiv_naive(cert.event_date).date() if cert.event_date else None,
+            cert.cpd_points,
+            cert.lecturer_name or '',
+            cert.event_place or '',
+            _to_kyiv_naive(cert.issued_at),
+            (cert.issued_by.email if cert.issued_by else '') or '',
+            'Відкликано' if cert.revoked else 'Дійсний',
+        ])
+        row_fills.append({
+            'state': REG_STATUS_FILLS['cancelled'] if cert.revoked
+            else REG_STATUS_FILLS['completed'],
+        })
+
+    return build_list_xlsx(
+        'Сертифікати', _CERT_COLS, _CERT_LABELS, _CERT_WIDTHS, rows,
+        'tblCertificates', applied_filters=applied_filters, row_fills=row_fills,
+    )
+
+
+_B2B_COLS = ['created_at', 'last_name', 'first_name', 'phone', 'email',
+             'team_size', 'status', 'admin_notes']
+_B2B_LABELS = {
+    'created_at': 'Отримано', 'last_name': 'Прізвище', 'first_name': "Ім'я",
+    'phone': 'Телефон', 'email': 'Email', 'team_size': 'Фахівців',
+    'status': 'Статус', 'admin_notes': 'Нотатки',
+}
+_B2B_WIDTHS = {
+    'created_at': 18, 'last_name': 20, 'first_name': 18, 'phone': 18,
+    'email': 30, 'team_size': 14, 'status': 18, 'admin_notes': 46,
+}
+
+
+def export_b2b_requests_xlsx(requests, applied_filters=None) -> io.BytesIO:
+    """Заявки на корпоративне навчання (/admin/b2b-requests) -> xlsx."""
+    rows = [
+        [
+            _to_kyiv_naive(req.created_at),
+            req.last_name or '',
+            req.first_name or '',
+            req.phone or '',
+            req.email or '',
+            req.team_size_label or '',
+            req.status_label or '',
+            req.admin_notes or '',
+        ]
+        for req in requests
+    ]
+    return build_list_xlsx(
+        'B2B-заявки', _B2B_COLS, _B2B_LABELS, _B2B_WIDTHS, rows,
+        'tblB2BRequests', applied_filters=applied_filters,
+    )
+
+
+_CREQ_COLS = ['created_at', 'course', 'email', 'phone', 'status', 'message',
+              'admin_notes', 'updated_at']
+_CREQ_LABELS = {
+    'created_at': 'Отримано', 'course': 'Курс', 'email': 'Email',
+    'phone': 'Телефон', 'status': 'Статус', 'message': 'Повідомлення',
+    'admin_notes': 'Нотатки', 'updated_at': 'Оновлено',
+}
+_CREQ_WIDTHS = {
+    'created_at': 18, 'course': 46, 'email': 30, 'phone': 18, 'status': 18,
+    'message': 50, 'admin_notes': 40, 'updated_at': 18,
+}
+
+
+def export_course_requests_xlsx(requests, applied_filters=None) -> io.BytesIO:
+    """Запити на проведення курсів (/admin/course-requests) -> xlsx."""
+    rows = [
+        [
+            _to_kyiv_naive(req.created_at),
+            (req.course.title if req.course else ''),
+            req.email or '',
+            req.phone or '',
+            req.status_label or '',
+            req.message or '',
+            req.admin_notes or '',
+            _to_kyiv_naive(req.updated_at),
+        ]
+        for req in requests
+    ]
+    return build_list_xlsx(
+        'Запити на курси', _CREQ_COLS, _CREQ_LABELS, _CREQ_WIDTHS, rows,
+        'tblCourseRequests', applied_filters=applied_filters,
+    )
+
+
+_PROMO_COLS = ['code', 'description', 'discount', 'scope', 'used_count',
+               'max_uses', 'per_user_limit', 'valid_from', 'valid_until',
+               'state', 'created_at']
+_PROMO_LABELS = {
+    'code': 'Код', 'description': 'Опис', 'discount': 'Знижка',
+    'scope': 'Дія', 'used_count': 'Використань', 'max_uses': 'Ліміт',
+    'per_user_limit': 'На людину', 'valid_from': 'Діє з',
+    'valid_until': 'Діє до', 'state': 'Стан', 'created_at': 'Створено',
+}
+_PROMO_WIDTHS = {
+    'code': 22, 'description': 40, 'discount': 14, 'scope': 46,
+    'used_count': 12, 'max_uses': 10, 'per_user_limit': 12,
+    'valid_from': 14, 'valid_until': 14, 'state': 16, 'created_at': 18,
+}
+
+
+def export_promo_codes_xlsx(promos, applied_filters=None) -> io.BytesIO:
+    """Промокоди (/admin/promo-codes) -> xlsx для звірки знижок."""
+    rows = [
+        [
+            promo.code or '',
+            promo.description or '',
+            promo.discount_label or '',
+            promo.scope_label or '',
+            promo.used_count or 0,
+            promo.max_uses,
+            promo.per_user_limit,
+            _to_kyiv_naive(promo.valid_from).date() if promo.valid_from else None,
+            _to_kyiv_naive(promo.valid_until).date() if promo.valid_until else None,
+            promo.status_label or '',
+            _to_kyiv_naive(promo.created_at),
+        ]
+        for promo in promos
+    ]
+    return build_list_xlsx(
+        'Промокоди', _PROMO_COLS, _PROMO_LABELS, _PROMO_WIDTHS, rows,
+        'tblPromoCodes', applied_filters=applied_filters,
+    )
+
+
+_EMAIL_LOG_COLS = ['created_at', 'to_email', 'subject', 'template', 'trigger',
+                   'status', 'retry_count', 'sent_at', 'error_message']
+_EMAIL_LOG_LABELS = {
+    'created_at': 'Створено', 'to_email': 'Кому', 'subject': 'Тема',
+    'template': 'Шаблон', 'trigger': 'Тригер', 'status': 'Статус',
+    'retry_count': 'Спроб', 'sent_at': 'Відправлено',
+    'error_message': 'Помилка',
+}
+_EMAIL_LOG_WIDTHS = {
+    'created_at': 18, 'to_email': 30, 'subject': 50, 'template': 26,
+    'trigger': 20, 'status': 16, 'retry_count': 10, 'sent_at': 18,
+    'error_message': 50,
+}
+
+
+def export_email_logs_xlsx(logs, applied_filters=None) -> io.BytesIO:
+    """Журнал листів (/admin/notifications/log) -> xlsx для розбору доставки."""
+    rows = [
+        [
+            _to_kyiv_naive(log.created_at),
+            log.to_email or '',
+            log.subject or '',
+            log.template_name or '',
+            log.trigger_label or '',
+            log.status_label or '',
+            log.retry_count or 0,
+            _to_kyiv_naive(log.sent_at),
+            log.error_message or '',
+        ]
+        for log in logs
+    ]
+    return build_list_xlsx(
+        'Журнал листів', _EMAIL_LOG_COLS, _EMAIL_LOG_LABELS, _EMAIL_LOG_WIDTHS,
+        rows, 'tblEmailLog', applied_filters=applied_filters,
+    )
+
+
+_ERRLOG_COLS = ['created_at', 'error_code', 'error_type', 'error_message',
+                'url', 'method', 'user', 'ip_address', 'state', 'resolved_at']
+_ERRLOG_LABELS = {
+    'created_at': 'Коли', 'error_code': 'Код', 'error_type': 'Тип',
+    'error_message': 'Повідомлення', 'url': 'URL', 'method': 'Метод',
+    'user': 'Користувач', 'ip_address': 'IP', 'state': 'Стан',
+    'resolved_at': 'Вирішено',
+}
+_ERRLOG_WIDTHS = {
+    'created_at': 18, 'error_code': 8, 'error_type': 26, 'error_message': 60,
+    'url': 50, 'method': 10, 'user': 30, 'ip_address': 18, 'state': 14,
+    'resolved_at': 18,
+}
+
+
+def export_error_logs_xlsx(logs, applied_filters=None) -> io.BytesIO:
+    """Журнал помилок (/admin/error-logs) -> xlsx для розбору інцидентів."""
+    rows = [
+        [
+            _to_kyiv_naive(log.created_at),
+            log.error_code,
+            log.error_type or '',
+            log.error_message or '',
+            log.url or '',
+            log.method or '',
+            (log.user.email if log.user else ''),
+            log.ip_address or '',
+            'Вирішено' if log.resolved else 'Відкрито',
+            _to_kyiv_naive(log.resolved_at),
+        ]
+        for log in logs
+    ]
+    return build_list_xlsx(
+        'Помилки', _ERRLOG_COLS, _ERRLOG_LABELS, _ERRLOG_WIDTHS, rows,
+        'tblErrorLog', applied_filters=applied_filters,
+    )
+
+
+_INST_REPORT_COLS = ['id', 'course', 'start_date', 'end_date', 'event_format',
+                     'location', 'trainer', 'price', 'cpd_points',
+                     'max_participants', 'registrations', 'seats_left', 'status']
+_INST_REPORT_LABELS = {
+    'id': 'ID', 'course': 'Курс', 'start_date': 'Початок', 'end_date': 'Кінець',
+    'event_format': 'Формат', 'location': 'Місце', 'trainer': 'Тренер',
+    'price': 'Ціна', 'cpd_points': 'Бали БПР', 'max_participants': 'Місць',
+    'registrations': 'Реєстрацій', 'seats_left': 'Вільно', 'status': 'Статус',
+}
+_INST_REPORT_WIDTHS = {
+    'id': 8, 'course': 46, 'start_date': 18, 'end_date': 18,
+    'event_format': 14, 'location': 20, 'trainer': 26, 'price': 14,
+    'cpd_points': 10, 'max_participants': 10, 'registrations': 12,
+    'seats_left': 10, 'status': 16,
+}
+
+
+def export_instances_report_xlsx(instances, reg_counts,
+                                 applied_filters=None) -> io.BytesIO:
+    """Проведення (/admin/instances) -> xlsx-звіт із завантаженістю.
+
+    reg_counts -- {instance_id: активних реєстрацій}; «Вільно» рахуємо від
+    ефективної місткості (проведення, інакше курсу), NULL -- без обмежень.
+    """
+    rows, row_fills = [], []
+    for inst in instances:
+        course = inst.course
+        trainer = inst.trainer or (course.trainer if course else None)
+        taken = reg_counts.get(inst.id, 0)
+        capacity = inst.max_participants
+        if capacity is None and course is not None:
+            capacity = course.max_participants
+        rows.append([
+            inst.id,
+            (course.title if course else ''),
+            _to_kyiv_naive(inst.start_date),
+            _to_kyiv_naive(inst.end_date),
+            FORMAT_LABEL.get(inst.event_format, inst.event_format or ''),
+            inst.location or '',
+            (trainer.full_name if trainer else ''),
+            float(inst.effective_price) if inst.effective_price else None,
+            inst.effective_cpd_points,
+            capacity,
+            taken,
+            (capacity - taken) if capacity is not None else None,
+            STATUS_LABEL.get(inst.status, inst.status or ''),
+        ])
+        row_fills.append(
+            {'status': STATUS_FILLS[inst.status]}
+            if inst.status in STATUS_FILLS else {}
+        )
+
+    return build_list_xlsx(
+        'Проведення', _INST_REPORT_COLS, _INST_REPORT_LABELS,
+        _INST_REPORT_WIDTHS, rows, 'tblInstancesReport',
+        applied_filters=applied_filters, row_fills=row_fills,
     )
 
 

@@ -2,11 +2,11 @@
 import logging
 from datetime import datetime, timezone
 
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash
 from flask_login import current_user
 from sqlalchemy.orm import joinedload
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin._helpers import course_request_counts, try_commit
 from app.admin.decorators import admin_required
 from app.admin.forms import CourseRequestAdminForm
@@ -17,19 +17,34 @@ from app.models.course_request import CourseRequest, CourseRequestAudit
 audit_logger = logging.getLogger('audit')
 
 
+def _course_request_filters():
+    """Фільтри списку запитів на курси -- спільні для сторінки й експорту."""
+    return {
+        'q': _listing.text_arg('q'),
+        'status': _listing.choice_arg('status', dict(CourseRequest.STATUSES)),
+        'course_id': _listing.int_arg('course_id'),
+    }
+
+
+def _course_requests_query(filters):
+    """Запити під фільтри, найновіші першими."""
+    query = CourseRequest.query.options(joinedload(CourseRequest.course))
+    query = _listing.apply_search(query, filters['q'], [
+        CourseRequest.email, CourseRequest.phone,
+        CourseRequest.message, CourseRequest.admin_notes,
+    ])
+    if filters['status']:
+        query = query.filter(CourseRequest.status == filters['status'])
+    if filters['course_id']:
+        query = query.filter(CourseRequest.course_id == filters['course_id'])
+    return query.order_by(CourseRequest.created_at.desc())
+
+
 @admin_bp.route('/course-requests')
 @admin_required
 def course_requests_list():
-    filter_status = request.args.get('status')
-    filter_course_id = request.args.get('course_id', type=int)
-
-    query = CourseRequest.query.options(joinedload(CourseRequest.course))
-    if filter_status:
-        query = query.filter(CourseRequest.status == filter_status)
-    if filter_course_id:
-        query = query.filter(CourseRequest.course_id == filter_course_id)
-
-    requests_all = query.order_by(CourseRequest.created_at.desc()).all()
+    filters = _course_request_filters()
+    requests_all = _course_requests_query(filters).all()
 
     counts = course_request_counts(status='pending')
     if counts:
@@ -43,16 +58,45 @@ def course_requests_list():
     else:
         counts_by_course = []
 
-    courses = Course.query.order_by(Course.title).all()
-
     return render_template(
         'admin/course_requests.html',
         requests=requests_all,
         counts_by_course=counts_by_course,
-        courses=courses,
-        filter_status=filter_status,
-        filter_course_id=filter_course_id,
-        statuses=CourseRequest.STATUSES,
+        filters=filters,
+        status_options=CourseRequest.STATUSES,
+        course_options=[
+            (c.id, c.title) for c in Course.query.order_by(Course.title).all()
+        ],
+    )
+
+
+@admin_bp.route('/course-requests/export')
+@admin_required
+def course_requests_export():
+    """Експорт запитів на курси у xlsx з урахуванням активних фільтрів."""
+    from app.services import xlsx_io
+
+    filters = _course_request_filters()
+    rows = _course_requests_query(filters).all()
+    course = (
+        db.session.get(Course, filters['course_id'])
+        if filters['course_id'] else None
+    )
+    summary = _listing.export_summary(
+        [
+            ('Пошук', filters['q'] or '--'),
+            ('Статус', dict(CourseRequest.STATUSES).get(filters['status'], 'Усі')),
+            ('Курс', course.title if course else 'Усі'),
+        ],
+        len(rows),
+    )
+    audit_logger.info(
+        'Admin %s exported course requests xlsx (%d rows, filters=%s)',
+        current_user.email, len(rows), filters,
+    )
+    return _listing.xlsx_download(
+        xlsx_io.export_course_requests_xlsx(rows, applied_filters=summary),
+        'course-requests',
     )
 
 

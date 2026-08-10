@@ -5,14 +5,13 @@
 """
 import logging
 
-from flask import render_template, request, send_file
+from flask import render_template, request
 from sqlalchemy import case, func
 from sqlalchemy.orm import joinedload
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
 from app.extensions import db
-from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.referral_reward import ReferralReward
 from app.models.registration import EventRegistration
@@ -22,11 +21,48 @@ from app.services import referral_service
 logger = logging.getLogger(__name__)
 
 
+def _reward_filters():
+    """Фільтри історії нарахувань -- спільні для сторінки й експорту."""
+    return {
+        'q': _listing.text_arg('q'),
+        'status': _listing.choice_arg('status', dict(ReferralReward.STATUSES)),
+    }
+
+
+def _rewards_query(filters):
+    """Нарахування під фільтри, з контекстом реєстрації/курсу/учасника."""
+    from app.models.user import User
+
+    query = ReferralReward.query.options(
+        joinedload(ReferralReward.registration)
+        .joinedload(EventRegistration.instance)
+        .joinedload(CourseInstance.course),
+        joinedload(ReferralReward.registration)
+        .joinedload(EventRegistration.user),
+    )
+    if filters['q']:
+        # Шукаємо і за кодом реферера, і за приведеним учасником -- саме так
+        # менеджер перевіряє спірне нарахування.
+        query = (
+            query.join(
+                EventRegistration,
+                ReferralReward.registration_id == EventRegistration.id,
+            ).join(User, EventRegistration.user_id == User.id)
+        )
+        query = _listing.apply_search(query, filters['q'], [
+            ReferralReward.referral_code, User.email,
+            User.first_name, User.last_name,
+        ])
+    if filters['status']:
+        query = query.filter(ReferralReward.status == filters['status'])
+    return query.order_by(ReferralReward.created_at.desc())
+
+
 @admin_bp.route('/referrals')
 @admin_required
 def referrals_overview():
     settings = SiteSettings.get()
-    status_filter = request.args.get('status', '')
+    filters = _reward_filters()
     page = request.args.get('page', 1, type=int)
     per_page = 50
 
@@ -78,16 +114,7 @@ def referrals_overview():
     ).scalar()
 
     # Історія нарахувань (з реєстрацією/курсом для контексту).
-    query = ReferralReward.query.options(
-        joinedload(ReferralReward.registration)
-        .joinedload(EventRegistration.instance)
-        .joinedload(CourseInstance.course),
-        joinedload(ReferralReward.registration)
-        .joinedload(EventRegistration.user),
-    )
-    if status_filter in ('granted', 'voided'):
-        query = query.filter(ReferralReward.status == status_filter)
-    pagination = query.order_by(ReferralReward.created_at.desc()).paginate(
+    pagination = _rewards_query(filters).paginate(
         page=page, per_page=per_page, error_out=False,
     )
 
@@ -111,7 +138,9 @@ def referrals_overview():
         rewards=pagination.items,
         pagination=pagination,
         referrer_map=page_name_map,
-        status_filter=status_filter,
+        filters=filters,
+        filter_args={k: v for k, v in filters.items() if v},
+        status_options=ReferralReward.STATUSES,
     )
 
 
@@ -210,28 +239,23 @@ def referral_referrer_adjust(kind, referrer_id):
 @admin_bp.route('/referrals/export')
 @admin_required
 def referrals_export():
-    """Експорт усього реєстру нарахувань у xlsx (з опційним фільтром статусу)."""
+    """Експорт реєстру нарахувань у xlsx з урахуванням активних фільтрів."""
     from app.services import xlsx_io
-    status_filter = request.args.get('status', '')
 
-    query = ReferralReward.query.options(
-        joinedload(ReferralReward.registration)
-        .joinedload(EventRegistration.instance)
-        .joinedload(CourseInstance.course),
-        joinedload(ReferralReward.registration)
-        .joinedload(EventRegistration.user),
-    )
-    if status_filter in ('granted', 'voided'):
-        query = query.filter(ReferralReward.status == status_filter)
-    rewards = query.order_by(ReferralReward.created_at.desc()).all()
-
+    filters = _reward_filters()
+    rewards = _rewards_query(filters).all()
     name_map = referral_service.resolve_referrers_bulk(
         [r.referral_code for r in rewards],
     )
-    buf = xlsx_io.export_referral_rewards_xlsx(rewards, name_map)
-    return send_file(
-        buf,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        as_attachment=True,
-        download_name='referral-rewards.xlsx',
+    summary = _listing.export_summary(
+        [
+            ('Пошук', filters['q'] or '--'),
+            ('Статус', dict(ReferralReward.STATUSES).get(filters['status'], 'Усі')),
+        ],
+        len(rewards),
+    )
+    return _listing.xlsx_download(
+        xlsx_io.export_referral_rewards_xlsx(
+            rewards, name_map, applied_filters=summary),
+        'referral-rewards',
     )

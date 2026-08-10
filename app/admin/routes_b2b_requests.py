@@ -4,7 +4,7 @@ import logging
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
 from app.extensions import db
 from app.models.b2b_request import B2BRequest
@@ -12,20 +12,67 @@ from app.models.b2b_request import B2BRequest
 audit_logger = logging.getLogger('audit')
 
 
+def _b2b_filters():
+    """Фільтри списку B2B-заявок -- спільні для сторінки й експорту."""
+    return {
+        'q': _listing.text_arg('q'),
+        'status': _listing.choice_arg('status', dict(B2BRequest.STATUSES)),
+        'team_size': _listing.choice_arg('team_size', dict(B2BRequest.TEAM_SIZES)),
+    }
+
+
+def _b2b_query(filters):
+    """Заявки під фільтри, найновіші першими."""
+    query = _listing.apply_search(B2BRequest.query, filters['q'], [
+        B2BRequest.first_name, B2BRequest.last_name,
+        B2BRequest.email, B2BRequest.phone, B2BRequest.admin_notes,
+    ])
+    if filters['status']:
+        query = query.filter(B2BRequest.status == filters['status'])
+    if filters['team_size']:
+        query = query.filter(B2BRequest.team_size == filters['team_size'])
+    return query.order_by(B2BRequest.created_at.desc())
+
+
 @admin_bp.route('/b2b-requests')
 @admin_required
 def b2b_requests_list():
-    status = request.args.get('status', '')
-    query = B2BRequest.query
-    if status:
-        query = query.filter_by(status=status)
-    requests_list = query.order_by(B2BRequest.created_at.desc()).all()
-    new_count = B2BRequest.query.filter_by(status='new').count()
+    filters = _b2b_filters()
     return render_template(
         'admin/b2b_requests.html',
-        requests=requests_list,
-        active_status=status,
-        new_count=new_count,
+        requests=_b2b_query(filters).all(),
+        filters=filters,
+        active_status=filters['status'],
+        status_options=B2BRequest.STATUSES,
+        team_size_options=B2BRequest.TEAM_SIZES,
+        new_count=B2BRequest.query.filter_by(status='new').count(),
+    )
+
+
+@admin_bp.route('/b2b-requests/export')
+@admin_required
+def b2b_requests_export():
+    """Експорт B2B-заявок у xlsx з урахуванням активних фільтрів."""
+    from app.services import xlsx_io
+
+    filters = _b2b_filters()
+    rows = _b2b_query(filters).all()
+    summary = _listing.export_summary(
+        [
+            ('Пошук', filters['q'] or '--'),
+            ('Статус', dict(B2BRequest.STATUSES).get(filters['status'], 'Усі')),
+            ('Розмір команди',
+             dict(B2BRequest.TEAM_SIZES).get(filters['team_size'], 'Усі')),
+        ],
+        len(rows),
+    )
+    audit_logger.info(
+        'Admin %s exported b2b requests xlsx (%d rows, filters=%s)',
+        current_user.email, len(rows), filters,
+    )
+    return _listing.xlsx_download(
+        xlsx_io.export_b2b_requests_xlsx(rows, applied_filters=summary),
+        'b2b-requests',
     )
 
 
@@ -56,4 +103,8 @@ def b2b_request_update(request_id):
         db.session.rollback()
         audit_logger.exception('Failed to update B2BRequest #%s', request_id)
         flash('Помилка при збереженні', 'error')
-    return redirect(url_for('admin.b2b_requests_list', status=request.args.get('status', '')))
+    # Повертаємось на той самий зріз: фільтри прийшли у query-string дії.
+    return redirect(url_for(
+        'admin.b2b_requests_list',
+        **{k: v for k, v in _b2b_filters().items() if v},
+    ))

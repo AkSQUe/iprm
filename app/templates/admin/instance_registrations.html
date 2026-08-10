@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -56,25 +58,35 @@
 
     {% include 'partials/flash_messages.html' %}
 
-    <!-- Statistics -->
-    {% set confirmed = registrations | selectattr('status', 'equalto', 'confirmed') | list | length %}
-    {% set pending = registrations | selectattr('status', 'equalto', 'pending') | list | length %}
-    {% set completed = registrations | selectattr('status', 'equalto', 'completed') | list | length %}
+    {{ filter_bar(
+         action=url_for('admin.instance_registrations', instance_id=instance.id),
+         values=filters,
+         search={'name': 'q', 'placeholder': 'Пошук за іменем, email або телефоном'},
+         fields=[
+           {'name': 'status', 'label': 'Всі статуси', 'options': status_options},
+           {'name': 'payment', 'label': 'Всі оплати', 'options': payment_options},
+         ],
+         export_url=url_for('admin.registrations_export', scope='all', instance_id=instance.id,
+                            q=filters.q, status=filters.status, payment=filters.payment),
+         reset_url=url_for('admin.instance_registrations', instance_id=instance.id),
+       ) }}
+
+    <!-- Statistics: по всьому заходу, не по знайденому зрізу -->
     <div class="admin-stat-cards">
       <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ registrations | length }}</span>
+        <span class="admin-stat-card__value">{{ stats.total }}</span>
         <span class="admin-stat-card__label">Всього</span>
       </div>
       <div class="admin-stat-card admin-stat-card--success">
-        <span class="admin-stat-card__value">{{ confirmed }}</span>
+        <span class="admin-stat-card__value">{{ stats.confirmed }}</span>
         <span class="admin-stat-card__label">Підтверджено</span>
       </div>
       <div class="admin-stat-card admin-stat-card--warning">
-        <span class="admin-stat-card__value">{{ pending }}</span>
+        <span class="admin-stat-card__value">{{ stats.pending }}</span>
         <span class="admin-stat-card__label">Очікує</span>
       </div>
       <div class="admin-stat-card admin-stat-card--accent">
-        <span class="admin-stat-card__value">{{ completed }}</span>
+        <span class="admin-stat-card__value">{{ stats.completed }}</span>
         <span class="admin-stat-card__label">Завершено</span>
       </div>
     </div>
@@ -188,7 +200,12 @@
     {% else %}
     <div class="admin-empty">
       {{ icon('how_to_reg', cls='admin-empty__icon') }}
-      <h3 class="admin-empty__title">На цей захід ще немає реєстрацій</h3>
+      {% if filters.q or filters.status or filters.payment %}
+        <h3 class="admin-empty__title">Нічого не знайдено</h3>
+        <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.instance_registrations', instance_id=instance.id) }}">скинути їх</a></p>
+      {% else %}
+        <h3 class="admin-empty__title">На цей захід ще немає реєстрацій</h3>
+      {% endif %}
     </div>
     {% endif %}
 

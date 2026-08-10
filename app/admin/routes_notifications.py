@@ -122,29 +122,78 @@ def notifications_settings():
     return redirect(url_for('admin.notifications'))
 
 
+def _email_log_filters():
+    """Фільтри лог-журналу листів -- спільні для сторінки й експорту."""
+    from app.admin import _listing
+    return {
+        'q': _listing.text_arg('q'),
+        'status': _listing.choice_arg('status', dict(EmailLog.STATUSES)),
+        'trigger': _listing.choice_arg('trigger', dict(EmailLog.TRIGGERS)),
+    }
+
+
+def _email_log_query(filters):
+    """Записи журналу під фільтри, найновіші першими."""
+    from app.admin import _listing
+
+    query = _listing.apply_search(EmailLog.query, filters['q'], [
+        EmailLog.to_email, EmailLog.subject,
+        EmailLog.template_name, EmailLog.error_message,
+    ])
+    if filters['status']:
+        query = query.filter(EmailLog.status == filters['status'])
+    if filters['trigger']:
+        query = query.filter(EmailLog.trigger == filters['trigger'])
+    return query.order_by(EmailLog.created_at.desc())
+
+
 @admin_bp.route('/notifications/log')
 @admin_required
 def notifications_log():
     """Full email log with filtering."""
-    status_filter = request.args.get('status', '')
-    trigger_filter = request.args.get('trigger', '')
-    page = request.args.get('page', 1, type=int)
-
-    query = EmailLog.query
-    if status_filter:
-        query = query.filter(EmailLog.status == status_filter)
-    if trigger_filter:
-        query = query.filter(EmailLog.trigger == trigger_filter)
-
-    pagination = query.order_by(
-        EmailLog.created_at.desc()
-    ).paginate(page=page, per_page=50, error_out=False)
-
+    filters = _email_log_filters()
+    pagination = _email_log_query(filters).paginate(
+        page=request.args.get('page', 1, type=int), per_page=50, error_out=False,
+    )
     return render_template(
         'admin/notifications_log.html',
         pagination=pagination,
         logs=pagination.items,
-        filters={'status': status_filter, 'trigger': trigger_filter},
+        filters=filters,
+        filter_args={k: v for k, v in filters.items() if v},
+        status_options=EmailLog.STATUSES,
+        trigger_options=EmailLog.TRIGGERS,
+    )
+
+
+@admin_bp.route('/notifications/log/export')
+@admin_required
+def notifications_log_export():
+    """Експорт журналу листів у xlsx з урахуванням активних фільтрів.
+
+    Головний кейс -- розбір «чому людині не дійшов лист»: у файлі видно
+    статус, тригер, кількість ретраїв і текст помилки SMTP.
+    """
+    from app.admin import _listing
+    from app.services import xlsx_io
+
+    filters = _email_log_filters()
+    logs = _email_log_query(filters).all()
+    summary = _listing.export_summary(
+        [
+            ('Пошук', filters['q'] or '--'),
+            ('Статус', dict(EmailLog.STATUSES).get(filters['status'], 'Усі')),
+            ('Тригер', dict(EmailLog.TRIGGERS).get(filters['trigger'], 'Усі')),
+        ],
+        len(logs),
+    )
+    audit_logger.info(
+        'Admin %s exported email log xlsx (%d rows, filters=%s)',
+        current_user.email, len(logs), filters,
+    )
+    return _listing.xlsx_download(
+        xlsx_io.export_email_logs_xlsx(logs, applied_filters=summary),
+        'email-log',
     )
 
 

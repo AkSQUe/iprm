@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -29,28 +31,17 @@
   </div>
 
   <!-- Filters -->
-  <div class="admin-stats-bar">
-    <form method="GET" action="{{ url_for('admin.notifications_log') }}" class="admin-filter-form">
-      <select name="status" class="form-input form-input--sm">
-        <option value="">Всі статуси</option>
-        <option value="sent"{% if filters.status == 'sent' %} selected{% endif %}>Відправлено</option>
-        <option value="failed"{% if filters.status == 'failed' %} selected{% endif %}>Помилка</option>
-        <option value="pending"{% if filters.status == 'pending' %} selected{% endif %}>Очікує</option>
-      </select>
-      <select name="trigger" class="form-input form-input--sm">
-        <option value="">Всі тригери</option>
-        <option value="registration"{% if filters.trigger == 'registration' %} selected{% endif %}>Реєстрація</option>
-        <option value="payment"{% if filters.trigger == 'payment' %} selected{% endif %}>Оплата</option>
-        <option value="reminder"{% if filters.trigger == 'reminder' %} selected{% endif %}>Нагадування</option>
-        <option value="status_change"{% if filters.trigger == 'status_change' %} selected{% endif %}>Зміна статусу</option>
-        <option value="test"{% if filters.trigger == 'test' %} selected{% endif %}>Тест</option>
-      </select>
-      <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Фільтрувати</button>
-      {% if filters.status or filters.trigger %}
-        <a href="{{ url_for('admin.notifications_log') }}" class="btn-admin btn-admin--sm">Скинути</a>
-      {% endif %}
-    </form>
-  </div>
+  {{ filter_bar(
+       action=url_for('admin.notifications_log'),
+       values=filters,
+       search={'name': 'q', 'placeholder': 'Пошук за email, темою, шаблоном або помилкою'},
+       fields=[
+         {'name': 'status', 'label': 'Всі статуси', 'options': status_options},
+         {'name': 'trigger', 'label': 'Всі тригери', 'options': trigger_options},
+       ],
+       export_url=url_for('admin.notifications_log_export', **filter_args),
+       reset_url=url_for('admin.notifications_log'),
+     ) }}
 
   <!-- Log table -->
   {% if logs %}
@@ -105,13 +96,13 @@
   {% if pagination.pages > 1 %}
   <nav class="admin-pagination">
     {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.notifications_log', page=pagination.prev_num, status=filters.status, trigger=filters.trigger) }}" class="btn-admin btn-admin--secondary btn-admin--sm">&larr;</a>
+    <a href="{{ url_for('admin.notifications_log', page=pagination.prev_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">&larr;</a>
     {% endif %}
     <span class="admin-pagination__info">
       {{ pagination.page }} / {{ pagination.pages }}
     </span>
     {% if pagination.has_next %}
-    <a href="{{ url_for('admin.notifications_log', page=pagination.next_num, status=filters.status, trigger=filters.trigger) }}" class="btn-admin btn-admin--secondary btn-admin--sm">&rarr;</a>
+    <a href="{{ url_for('admin.notifications_log', page=pagination.next_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">&rarr;</a>
     {% endif %}
   </nav>
   {% endif %}
@@ -119,7 +110,7 @@
   {% else %}
   <div class="admin-empty">
     <h3 class="admin-empty__title">Записів не знайдено</h3>
-    <p>Немає записів{% if filters.status or filters.trigger %} за обраними фільтрами. <a href="{{ url_for('admin.notifications_log') }}">Скинути фільтри</a>{% endif %}</p>
+    <p>Немає записів{% if filters.q or filters.status or filters.trigger %} за обраними фільтрами. <a href="{{ url_for('admin.notifications_log') }}">Скинути фільтри</a>{% endif %}</p>
   </div>
   {% endif %}
 

@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -26,9 +28,6 @@
       <div class="admin-hero__actions">
         <a href="{{ url_for('admin.referrals_guide') }}" class="btn-admin btn-admin--secondary">
           {{ icon('info') }} Інструкція
-        </a>
-        <a href="{{ url_for('admin.referrals_export', status=status_filter) }}" class="btn-admin btn-admin--secondary">
-          {{ icon('download') }} Експорт XLSX
         </a>
         <a href="{{ url_for('admin.settings') }}#referral" class="btn-admin btn-admin--secondary">
           {{ icon('settings') }} Налаштування
@@ -154,19 +153,14 @@
     {% endif %}
 
     <!-- History filter -->
-    <div class="admin-stats-bar">
-      <form method="GET" action="{{ url_for('admin.referrals_overview') }}" class="admin-filter-form">
-        <select name="status" class="form-input form-input--sm">
-          <option value="">Всі нарахування</option>
-          <option value="granted"{% if status_filter == 'granted' %} selected{% endif %}>Активні</option>
-          <option value="voided"{% if status_filter == 'voided' %} selected{% endif %}>Анульовані</option>
-        </select>
-        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('filter_list') }} Фільтрувати</button>
-        {% if status_filter %}
-        <a href="{{ url_for('admin.referrals_overview') }}" class="btn-admin btn-admin--sm">{{ icon('clear') }} Скинути</a>
-        {% endif %}
-      </form>
-    </div>
+    {{ filter_bar(
+         action=url_for('admin.referrals_overview'),
+         values=filters,
+         search={'name': 'q', 'placeholder': 'Пошук за кодом, учасником або email'},
+         fields=[{'name': 'status', 'label': 'Всі нарахування', 'options': status_options}],
+         export_url=url_for('admin.referrals_export', **filter_args),
+         reset_url=url_for('admin.referrals_overview'),
+       ) }}
 
     <!-- History -->
     {% if rewards %}
@@ -227,11 +221,11 @@
     {% if pagination and pagination.pages > 1 %}
     <nav class="admin-pagination">
       {% if pagination.has_prev %}
-      <a href="{{ url_for('admin.referrals_overview', page=pagination.prev_num, status=status_filter) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
+      <a href="{{ url_for('admin.referrals_overview', page=pagination.prev_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
       {% endif %}
       <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }} ({{ pagination.total }})</span>
       {% if pagination.has_next %}
-      <a href="{{ url_for('admin.referrals_overview', page=pagination.next_num, status=status_filter) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
+      <a href="{{ url_for('admin.referrals_overview', page=pagination.next_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
       {% endif %}
     </nav>
     {% endif %}

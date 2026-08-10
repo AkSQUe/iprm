@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -23,17 +25,21 @@
       <h1 class="admin-hero__title">B2B-заявки</h1>
       <p class="admin-hero__subtitle">Корпоративне навчання з блоку «Для команд і клінік». Нових: {{ new_count }}</p>
     </div>
-    <div class="admin-hero__actions">
-      <div class="admin-filter-chips">
-        <a href="{{ url_for('admin.b2b_requests_list') }}" class="btn-admin btn-admin--sm {% if not active_status %}btn-admin--primary{% else %}btn-admin--secondary{% endif %}">Усі</a>
-        {% for code, label in [('new', 'Нові'), ('contacted', 'На зв\'язку'), ('closed', 'Закриті'), ('dismissed', 'Відхилені')] %}
-        <a href="{{ url_for('admin.b2b_requests_list', status=code) }}" class="btn-admin btn-admin--sm {% if active_status == code %}btn-admin--primary{% else %}btn-admin--secondary{% endif %}">{{ label }}</a>
-        {% endfor %}
-      </div>
-    </div>
   </div>
 
   {% include 'partials/flash_messages.html' %}
+
+  {{ filter_bar(
+       action=url_for('admin.b2b_requests_list'),
+       values=filters,
+       search={'name': 'q', 'placeholder': 'Пошук за ПІБ, email, телефоном або нотаткою'},
+       fields=[
+         {'name': 'status', 'label': 'Усі статуси', 'options': status_options},
+         {'name': 'team_size', 'label': 'Будь-який розмір', 'options': team_size_options},
+       ],
+       export_url=url_for('admin.b2b_requests_export', **filters),
+       reset_url=url_for('admin.b2b_requests_list'),
+     ) }}
 
   {% if requests %}
   <div class="admin-table-wrap">
@@ -57,7 +63,9 @@
         <td><a href="mailto:{{ req.email }}">{{ req.email }}</a></td>
         <td>{{ req.team_size_label }}</td>
         <td>
-          <form method="POST" action="{{ url_for('admin.b2b_request_update', request_id=req.id, status=active_status) }}" class="admin-inline-form">
+          {# Фільтри їдуть у query-string дії: після збереження менеджер має
+             лишитись на тому самому зрізі, а не на повному списку. #}
+          <form method="POST" action="{{ url_for('admin.b2b_request_update', request_id=req.id, **filters) }}" class="admin-inline-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <select name="status" class="form-input form-input--sm">
               {% for code, label in req.STATUSES %}
@@ -77,8 +85,13 @@
   {% else %}
   <div class="admin-empty">
     {{ icon('group', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">Заявок поки немає</h3>
-    <p>Ліди з форми «Отримати корпоративні умови» з'являться тут</p>
+    {% if filters.q or filters.status or filters.team_size %}
+      <h3 class="admin-empty__title">Нічого не знайдено</h3>
+      <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.b2b_requests_list') }}">скинути їх</a></p>
+    {% else %}
+      <h3 class="admin-empty__title">Заявок поки немає</h3>
+      <p>Ліди з форми «Отримати корпоративні умови» з'являться тут</p>
+    {% endif %}
   </div>
   {% endif %}
 

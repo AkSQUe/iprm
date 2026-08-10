@@ -9,10 +9,9 @@ import logging
 
 from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
-from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit
 from app.admin.decorators import admin_required
 from app.admin.forms import PromoCodeForm
@@ -77,37 +76,74 @@ def _code_taken(code_norm, exclude_id=None):
     return q.first() is not None
 
 
-@admin_bp.route('/promo-codes')
-@admin_required
-def promo_codes_list():
-    page = request.args.get('page', 1, type=int)
-    status_filter = request.args.get('status', '')
-    search = (request.args.get('q') or '').strip()
+_PROMO_STATES = {'active': 'Активні', 'disabled': 'Вимкнені'}
 
-    q = PromoCode.query.options(
+
+def _promo_filters():
+    """Фільтри списку промокодів -- спільні для сторінки й експорту."""
+    return {
+        'q': _listing.text_arg('q'),
+        'status': _listing.choice_arg('status', _PROMO_STATES),
+    }
+
+
+def _promo_query(filters):
+    """Промокоди під фільтри, найновіші першими."""
+    query = PromoCode.query.options(
         joinedload(PromoCode.course),
         joinedload(PromoCode.instance).joinedload(CourseInstance.course),
     )
-    if search:
-        like = f'%{search}%'
-        q = q.filter(or_(
-            PromoCode.code.ilike(like),
-            PromoCode.description.ilike(like),
-        ))
-    if status_filter == 'active':
-        q = q.filter(PromoCode.is_active.is_(True))
-    elif status_filter == 'disabled':
-        q = q.filter(PromoCode.is_active.is_(False))
+    # Пошук через спільний хелпер: він екранує % і _, інакше код зі знаком
+    # відсотка в описі перетворював фільтр на "показати все".
+    query = _listing.apply_search(query, filters['q'], [
+        PromoCode.code, PromoCode.description,
+    ])
+    if filters['status']:
+        query = query.filter(
+            PromoCode.is_active.is_(filters['status'] == 'active'))
+    return query.order_by(PromoCode.created_at.desc())
 
-    pagination = q.order_by(PromoCode.created_at.desc()).paginate(
-        page=page, per_page=PER_PAGE, error_out=False,
+
+@admin_bp.route('/promo-codes')
+@admin_required
+def promo_codes_list():
+    filters = _promo_filters()
+    pagination = _promo_query(filters).paginate(
+        page=request.args.get('page', 1, type=int),
+        per_page=PER_PAGE, error_out=False,
     )
     return render_template(
         'admin/promo_codes.html',
         pagination=pagination,
         promos=pagination.items,
-        status_filter=status_filter,
-        search=search,
+        filters=filters,
+        filter_args={k: v for k, v in filters.items() if v},
+        status_options=list(_PROMO_STATES.items()),
+    )
+
+
+@admin_bp.route('/promo-codes/export')
+@admin_required
+def promo_codes_export():
+    """Експорт промокодів у xlsx з урахуванням активних фільтрів."""
+    from app.services import xlsx_io
+
+    filters = _promo_filters()
+    promos = _promo_query(filters).all()
+    summary = _listing.export_summary(
+        [
+            ('Пошук', filters['q'] or '--'),
+            ('Стан', _PROMO_STATES.get(filters['status'], 'Усі')),
+        ],
+        len(promos),
+    )
+    audit_logger.info(
+        'Admin %s exported promo codes xlsx (%d rows, filters=%s)',
+        current_user.email, len(promos), filters,
+    )
+    return _listing.xlsx_download(
+        xlsx_io.export_promo_codes_xlsx(promos, applied_filters=summary),
+        'promo-codes',
     )
 
 

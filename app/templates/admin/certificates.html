@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -42,6 +44,19 @@
         <span class="admin-stat-card__label">Відкликані</span>
       </div>
     </div>
+
+    {{ filter_bar(
+         action=url_for('admin.certificates'),
+         values=filters,
+         search={'name': 'q', 'placeholder': 'Пошук за номером, ПІБ, заходом або email'},
+         fields=[
+           {'name': 'state', 'label': 'Усі стани', 'options': state_options},
+           {'name': 'course_id', 'label': 'Усі курси', 'options': course_options},
+           {'name': 'year', 'label': 'Усі роки', 'options': year_options},
+         ],
+         export_url=url_for('admin.certificates_export', **filters),
+         reset_url=url_for('admin.certificates'),
+       ) }}
 
     {% if certificates %}
     <div class="admin-table-wrap">
@@ -109,8 +124,13 @@
     {% else %}
     <div class="admin-empty">
       {{ icon('workspace_premium', cls='admin-empty__icon') }}
-      <h3 class="admin-empty__title">Сертифікатів ще немає</h3>
-      <p>Видавайте сертифікати на сторінці <a href="{{ url_for('admin.registrations_all') }}">Реєстрації</a> кнопкою «Видати сертифікат»</p>
+      {% if filters.q or filters.state or filters.course_id or filters.year %}
+        <h3 class="admin-empty__title">Нічого не знайдено</h3>
+        <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.certificates') }}">скинути їх</a></p>
+      {% else %}
+        <h3 class="admin-empty__title">Сертифікатів ще немає</h3>
+        <p>Видавайте сертифікати на сторінці <a href="{{ url_for('admin.registrations_all') }}">Реєстрації</a> кнопкою «Видати сертифікат»</p>
+      {% endif %}
     </div>
     {% endif %}
 

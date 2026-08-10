@@ -15,14 +15,42 @@ from app.undo import offer_undo
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
 
+_REVIEW_STATES = {'published': 'Опубліковані', 'draft': 'Чернетки'}
+
 
 @admin_bp.route('/reviews')
 @admin_required
 def reviews_list():
-    reviews = Review.alive().options(
-        db.joinedload(Review.course),
-    ).order_by(Review.sort_order, Review.created_at.desc()).all()
-    return render_template('admin/reviews.html', reviews=reviews)
+    from app.admin import _listing
+
+    filters = {
+        'q': _listing.text_arg('q'),
+        'state': _listing.choice_arg('state', _REVIEW_STATES),
+        'course_id': _listing.int_arg('course_id'),
+        'rating': _listing.int_arg('rating'),
+    }
+    query = Review.alive().options(db.joinedload(Review.course))
+    query = _listing.apply_search(query, filters['q'], [
+        Review.author_name, Review.author_role, Review.city, Review.text,
+    ])
+    if filters['state']:
+        query = query.filter(Review.is_published.is_(filters['state'] == 'published'))
+    if filters['course_id']:
+        query = query.filter(Review.course_id == filters['course_id'])
+    if filters['rating']:
+        query = query.filter(Review.rating == filters['rating'])
+
+    return render_template(
+        'admin/reviews.html',
+        reviews=query.order_by(Review.sort_order, Review.created_at.desc()).all(),
+        filters=filters,
+        state_options=list(_REVIEW_STATES.items()),
+        course_options=[
+            (c.id, c.title)
+            for c in Course.query.order_by(Course.title).all()
+        ],
+        rating_options=[(n, '★' * n) for n in range(5, 0, -1)],
+    )
 
 
 def _course_choices():

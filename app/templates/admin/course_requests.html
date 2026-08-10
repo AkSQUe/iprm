@@ -8,8 +8,9 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
 {% block content %}
-{% from 'admin/partials/_status_filter.html' import status_filter %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
   <div class="admin-layout admin-layout--wide">
@@ -52,18 +53,17 @@
   </div>
   {% endif %}
 
-  <form method="GET" action="{{ url_for('admin.course_requests_list') }}" class="admin-filter-form">
-    <select name="course_id" class="form-input form-input--sm" aria-label="Фільтр за курсом" onchange="this.form.submit()">
-      <option value="">Всі курси</option>
-      {% for c in courses %}
-      <option value="{{ c.id }}"{% if filter_course_id == c.id %} selected{% endif %}>{{ c.title }}</option>
-      {% endfor %}
-    </select>
-    {{ status_filter(statuses, filter_status) }}
-    {% if filter_status or filter_course_id %}
-    <a href="{{ url_for('admin.course_requests_list') }}" class="btn-admin btn-admin--secondary btn-admin--sm">Очистити</a>
-    {% endif %}
-  </form>
+  {{ filter_bar(
+       action=url_for('admin.course_requests_list'),
+       values=filters,
+       search={'name': 'q', 'placeholder': 'Пошук за email, телефоном або текстом'},
+       fields=[
+         {'name': 'status', 'label': 'Усі статуси', 'options': status_options},
+         {'name': 'course_id', 'label': 'Всі курси', 'options': course_options},
+       ],
+       export_url=url_for('admin.course_requests_export', **filters),
+       reset_url=url_for('admin.course_requests_list'),
+     ) }}
 
   {% if requests %}
   <div class="admin-table-wrap">
@@ -105,8 +105,13 @@
   {% else %}
   <div class="admin-empty">
     {{ icon('inbox', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">Запитів немає</h3>
-    <p>Коли користувачі залишать заявку на проведення курсу — вона з'явиться тут.</p>
+    {% if filters.q or filters.status or filters.course_id %}
+      <h3 class="admin-empty__title">Нічого не знайдено</h3>
+      <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.course_requests_list') }}">скинути їх</a></p>
+    {% else %}
+      <h3 class="admin-empty__title">Запитів немає</h3>
+      <p>Коли користувачі залишать заявку на проведення курсу — вона з'явиться тут.</p>
+    {% endif %}
   </div>
   {% endif %}
 

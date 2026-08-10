@@ -52,23 +52,58 @@ def instance_registrations(instance_id):
         flash('Проведення не знайдено', 'error')
         return redirect(url_for('admin.instances_list'))
 
+    filters = {
+        'q': _listing.text_arg('q'),
+        'status': _listing.choice_arg('status', dict(EventRegistration.STATUSES)),
+        'payment': _listing.choice_arg(
+            'payment', dict(EventRegistration.PAYMENT_STATUSES)),
+    }
+
     # medical_profile вантажимо одразу -- для позначки "анкета не заповнена"
     # (менеджер бачить, кому нагадати перед видачею сертифікатів) без N+1.
-    from app.models.user import User
-    registrations = EventRegistration.query.options(
+    query = EventRegistration.query.options(
         joinedload(EventRegistration.user).joinedload(User.medical_profile),
         joinedload(EventRegistration.certificate),
         # Колонка "Сума" показує код знижки -- без цього рядок на кожну
         # реєстрацію тягнув би окремий SELECT.
         joinedload(EventRegistration.promo_code),
-    ).filter_by(instance_id=instance.id).order_by(
-        EventRegistration.created_at.desc()
-    ).all()
+    ).filter(EventRegistration.instance_id == instance.id)
+
+    if filters['q']:
+        query = query.join(User, EventRegistration.user_id == User.id)
+        query = _listing.apply_search(query, filters['q'], [
+            User.email, User.first_name, User.last_name, EventRegistration.phone,
+        ])
+    if filters['status']:
+        query = query.filter(EventRegistration.status == filters['status'])
+    if filters['payment']:
+        query = query.filter(EventRegistration.payment_status == filters['payment'])
+
+    registrations = query.order_by(EventRegistration.created_at.desc()).all()
+
+    # Лічильники -- по ВСЬОМУ заходу: скільки людей записано, не залежить від
+    # того, що зараз шукає менеджер.
+    stat_rows = db.session.query(
+        EventRegistration.status, func.count(EventRegistration.id),
+    ).filter(
+        EventRegistration.instance_id == instance.id,
+    ).group_by(EventRegistration.status).all()
+    counts = dict(stat_rows)
+    stats = {
+        'total': sum(counts.values()),
+        'confirmed': counts.get('confirmed', 0),
+        'pending': counts.get('pending', 0),
+        'completed': counts.get('completed', 0),
+    }
 
     return render_template(
         'admin/instance_registrations.html',
         instance=instance,
         registrations=registrations,
+        stats=stats,
+        filters=filters,
+        status_options=EventRegistration.STATUSES,
+        payment_options=EventRegistration.PAYMENT_STATUSES,
     )
 
 

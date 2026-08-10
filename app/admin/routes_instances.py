@@ -45,24 +45,49 @@ def _populate_choices(form, preselected_course_id=None):
 _INSTANCES_PER_PAGE = 25
 
 
-@admin_bp.route('/instances')
-@admin_required
-def instances_list():
-    filter_course_id = request.args.get('course_id', type=int)
-    filter_status = request.args.get('status')
-    quick = request.args.get('quick') or ''
-    page = request.args.get('page', 1, type=int)
+_QUICK_PRESETS = (
+    'upcoming', 'next3', 'past', 'this_month', 'with_regs',
+    'no_regs', 'free_seats', 'full', 'attention',
+)
+
+
+def _instance_filters():
+    """Фільтри списку проведень -- спільні для сторінки й експорту."""
+    from app.admin import _listing
+    return {
+        'q': _listing.text_arg('q'),
+        'course_id': _listing.int_arg('course_id'),
+        'status': _listing.choice_arg('status', dict(CourseInstance.STATUSES)),
+        'quick': _listing.choice_arg('quick', _QUICK_PRESETS),
+    }
+
+
+def _instances_query(filters):
+    """(query, order, next3) під фільтри списку проведень.
+
+    Пресети `quick` взаємовиключні й самі задають сортування: «найближчі»
+    мають рахуватись від сьогодні вгору, архів -- навпаки.
+    """
+    from app.admin import _listing
 
     query = CourseInstance.query.options(
         joinedload(CourseInstance.course),
         joinedload(CourseInstance.trainer),
     )
-    if filter_course_id:
-        query = query.filter(CourseInstance.course_id == filter_course_id)
-    if filter_status:
-        query = query.filter(CourseInstance.status == filter_status)
+    if filters['q']:
+        # Пошук за назвою курсу й місцем: саме так менеджер шукає захід,
+        # коли пам'ятає "щось про плазмоліфтинг у Львові".
+        query = query.join(Course, CourseInstance.course_id == Course.id)
+        query = _listing.apply_search(query, filters['q'], [
+            Course.title, CourseInstance.location,
+        ])
+    if filters['course_id']:
+        query = query.filter(CourseInstance.course_id == filters['course_id'])
+    if filters['status']:
+        query = query.filter(CourseInstance.status == filters['status'])
 
     # ----- Таблетки швидких фільтрів (взаємовиключні пресети) -----
+    quick = filters['quick']
     now = datetime.now(timezone.utc)
     # Корельовані підзапити: к-сть активних реєстрацій та місткість заходу.
     active_count = (
@@ -120,48 +145,100 @@ def instances_list():
         )
         order = CourseInstance.start_date.asc()
 
+    return query, order, next3
+
+
+def _instance_reg_counts(instances):
+    """{instance_id: активних реєстрацій} одним запитом.
+
+    Без цього шаблон запускає N+1 COUNT-ів через inst.registration_count
+    (lazy='dynamic').
+    """
+    if not instances:
+        return {}
+    return dict(
+        db.session.query(
+            EventRegistration.instance_id,
+            func.count(EventRegistration.id),
+        )
+        .filter(
+            EventRegistration.instance_id.in_([i.id for i in instances]),
+            EventRegistration.status.notin_(['cancelled']),
+        )
+        .group_by(EventRegistration.instance_id)
+        .all()
+    )
+
+
+@admin_bp.route('/instances')
+@admin_required
+def instances_list():
+    filters = _instance_filters()
+    query, order, next3 = _instances_query(filters)
+
     if next3:
         instances = query.order_by(order).limit(3).all()
         pagination = None
     else:
         pagination = query.order_by(order).paginate(
-            page=page, per_page=_INSTANCES_PER_PAGE, error_out=False,
+            page=request.args.get('page', 1, type=int),
+            per_page=_INSTANCES_PER_PAGE, error_out=False,
         )
         instances = pagination.items
 
-    # Batch COUNT активних реєстрацій лише для поточної сторінки -- інакше
-    # шаблон запускає N+1 COUNT-ів через inst.registration_count (lazy='dynamic').
-    if instances:
-        reg_counts = dict(
-            db.session.query(
-                EventRegistration.instance_id,
-                func.count(EventRegistration.id),
-            )
-            .filter(
-                EventRegistration.instance_id.in_([i.id for i in instances]),
-                EventRegistration.status.notin_(['cancelled']),
-            )
-            .group_by(EventRegistration.instance_id)
-            .all()
-        )
-    else:
-        reg_counts = {}
-
-    courses = (
-        Course.query.filter_by(is_active=True)
-        .order_by(Course.title)
-        .all()
-    )
     return render_template(
         'admin/instances.html',
         instances=instances,
         pagination=pagination,
-        courses=courses,
-        reg_counts=reg_counts,
-        filter_course_id=filter_course_id,
-        filter_status=filter_status,
-        quick=quick,
-        statuses=CourseInstance.STATUSES,
+        reg_counts=_instance_reg_counts(instances),
+        filters=filters,
+        filter_args={k: v for k, v in filters.items() if v},
+        course_options=[
+            (c.id, c.title)
+            for c in Course.query.filter_by(is_active=True).order_by(Course.title).all()
+        ],
+        status_options=CourseInstance.STATUSES,
+    )
+
+
+@admin_bp.route('/instances/report.xlsx')
+@admin_required
+def instances_report_export():
+    """Експорт проведень у xlsx з урахуванням активних фільтрів.
+
+    Це ЗВІТ (з реєстраціями й вільними місцями), а не шаблон імпорту: для
+    редагування живе окремий /admin/instances/export із `export_instances_xlsx`
+    та парою parse_instances_xlsx -- звідси й різні URL.
+    """
+    from app.admin import _listing
+    from app.services import xlsx_io
+
+    filters = _instance_filters()
+    query, order, next3 = _instances_query(filters)
+    query = query.order_by(order)
+    instances = query.limit(3).all() if next3 else query.all()
+
+    course = (
+        db.session.get(Course, filters['course_id'])
+        if filters['course_id'] else None
+    )
+    summary = _listing.export_summary(
+        [
+            ('Пошук', filters['q'] or '--'),
+            ('Курс', course.title if course else 'Усі'),
+            ('Статус', dict(CourseInstance.STATUSES).get(filters['status'], 'Усі')),
+            ('Швидкий фільтр', filters['quick'] or '--'),
+        ],
+        len(instances),
+    )
+    audit_logger.info(
+        'Admin %s exported instances xlsx (%d rows, filters=%s)',
+        current_user.email, len(instances), filters,
+    )
+    return _listing.xlsx_download(
+        xlsx_io.export_instances_report_xlsx(
+            instances, _instance_reg_counts(instances), applied_filters=summary),
+        'instances',
     )
 
 

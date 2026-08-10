@@ -13,8 +13,9 @@
 <script src="{{ url_for('static', filename='js/admin-status-select.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
 {% block content %}
-{% from 'admin/partials/_status_filter.html' import status_filter %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
   <div class="admin-layout admin-layout--wide">
@@ -80,26 +81,25 @@
   ] %}
   <div class="admin-filter-pills">
     {% for key, label, icon_name in pills %}
-    <a href="{{ url_for('admin.instances_list', quick=key or none, course_id=filter_course_id, status=filter_status) }}"
-       class="admin-pill{% if quick == key %} admin-pill--active{% endif %}">
+    <a href="{{ url_for('admin.instances_list', **dict(filter_args, quick=key or none)) }}"
+       class="admin-pill{% if filters.quick == key %} admin-pill--active{% endif %}">
       {{ icon(icon_name) }} {{ label }}
     </a>
     {% endfor %}
   </div>
 
-  <form method="GET" action="{{ url_for('admin.instances_list') }}" class="admin-filter-form">
-    <input type="hidden" name="quick" value="{{ quick }}">
-    <select name="course_id" class="form-input form-input--sm" aria-label="Фільтр за курсом" onchange="this.form.submit()">
-      <option value="">Всі курси</option>
-      {% for c in courses %}
-      <option value="{{ c.id }}"{% if filter_course_id == c.id %} selected{% endif %}>{{ c.title }}</option>
-      {% endfor %}
-    </select>
-    {{ status_filter(statuses, filter_status) }}
-    {% if filter_course_id or filter_status %}
-    <a href="{{ url_for('admin.instances_list', quick=quick or none) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Очистити</a>
-    {% endif %}
-  </form>
+  {{ filter_bar(
+       action=url_for('admin.instances_list'),
+       values=filters,
+       search={'name': 'q', 'placeholder': 'Пошук за назвою курсу або місцем'},
+       fields=[
+         {'name': 'course_id', 'label': 'Всі курси', 'options': course_options},
+         {'name': 'status', 'label': 'Усі статуси', 'options': status_options},
+       ],
+       hidden={'quick': filters.quick},
+       export_url=url_for('admin.instances_report_export', **filter_args),
+       reset_url=url_for('admin.instances_list', quick=filters.quick or none),
+     ) }}
 
   {% if instances %}
   <div class="admin-table-wrap">
@@ -160,11 +160,11 @@
   {% if pagination and pagination.pages > 1 %}
   <nav class="admin-pagination">
     {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.instances_list', page=pagination.prev_num, quick=quick or none, course_id=filter_course_id, status=filter_status) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
+    <a href="{{ url_for('admin.instances_list', page=pagination.prev_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
     {% endif %}
     <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }} ({{ pagination.total }})</span>
     {% if pagination.has_next %}
-    <a href="{{ url_for('admin.instances_list', page=pagination.next_num, quick=quick or none, course_id=filter_course_id, status=filter_status) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
+    <a href="{{ url_for('admin.instances_list', page=pagination.next_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
     {% endif %}
   </nav>
   {% endif %}
@@ -172,7 +172,7 @@
   <div class="admin-empty">
     {{ icon('event', cls='admin-empty__icon') }}
     <h3 class="admin-empty__title">На цій сторінці немає проведень</h3>
-    <p><a href="{{ url_for('admin.instances_list', quick=quick or none, course_id=filter_course_id, status=filter_status) }}">Повернутись до першої сторінки</a></p>
+    <p><a href="{{ url_for('admin.instances_list', **filter_args) }}">Повернутись до першої сторінки</a></p>
   </div>
   {% else %}
   <div class="admin-empty">
