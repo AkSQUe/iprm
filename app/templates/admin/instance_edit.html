@@ -88,6 +88,13 @@
         <div class="form-group">
           <label for="location">Локація</label>
           {{ form.location(class="form-input", id="location", placeholder="Київ, вул. ...") }}
+          <small class="form-hint">{{ form.location.description }}</small>
+        </div>
+
+        <div class="form-group">
+          <label for="city_id">Місто</label>
+          {{ form.city_id(class="form-input", id="city_id") }}
+          <small class="form-hint">{{ form.city_id.description }}</small>
         </div>
 
         <div class="form-group">

@@ -46,6 +46,21 @@ def _image_url(path: str) -> str | None:
     return url_for('static', filename=normalized, _external=True)
 
 
+def serialize_city(city) -> dict | None:
+    """Структуроване місто проведення.
+
+    `location` -- адреса для людини і фільтрувати за нею неможливо: одне й те
+    саме місто в базі записане трьома способами ("Київ", "м. Київ", "Київ,
+    вул. Андрія Верхогляда, 2а"). Партнер будує фасет саме за цим полем.
+
+    None -- місце ще не визначене; партнер показує «Місце уточнюється», а не
+    ховає захід.
+    """
+    if not city:
+        return None
+    return {'id': city.id, 'name': city.name}
+
+
 def serialize_trainer(trainer) -> dict | None:
     if not trainer:
         return None
@@ -138,6 +153,7 @@ def serialize_instance(instance) -> dict:
         'event_format': instance.event_format,
         'status': instance.status,
         'location': instance.location,
+        'city': serialize_city(instance.city),
         'online_link': instance.online_link,
         'price': (
             float(instance.effective_price)
@@ -184,6 +200,7 @@ def serialize_event_card(course, instance=None) -> dict:
         'price_is_from': bool(instance.price_is_from) if instance else False,
         'currency': 'UAH',
         'location': instance.location if instance else None,
+        'city': serialize_city(instance.city) if instance else None,
         'card_image_url': _image_url(course.card_src),
         'hero_image_url': _image_url(course.hero_src),
         'cpd_points': (

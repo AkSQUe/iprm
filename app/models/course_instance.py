@@ -31,7 +31,19 @@ class CourseInstance(TimestampMixin, db.Model):
     cpd_points = db.Column(db.Integer)
     max_participants = db.Column(db.Integer)
 
+    # `location` -- адреса для людини ("м. Харків, вул. Сковороди, 80, ДУ ..."),
+    # `city_id` -- структуроване місто для фільтрів і партнерських вітрин.
+    # Одне не заміняє інше: розбирати адресу на місто означало б вгадувати
+    # (див. app/services/city_glossary.py), а звести місто до адреси -- втратити
+    # фасет. Обидва необов'язкові: місце проведення часто відоме пізніше за
+    # дату, і розклад показує «Місце уточнюється» замість того, щоб ховати захід.
     location = db.Column(db.String(255))
+    city_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('cities.id', ondelete='SET NULL'),
+        nullable=True,
+        index=True,
+    )
     online_link = db.Column(db.String(500))
 
     trainer_id = db.Column(
@@ -70,6 +82,7 @@ class CourseInstance(TimestampMixin, db.Model):
 
     course = db.relationship('Course', back_populates='instances')
     trainer = db.relationship('Trainer', foreign_keys=[trainer_id])
+    city = db.relationship('City', foreign_keys=[city_id])
     tariffs = db.relationship(
         'InstanceTariff',
         back_populates='instance',

@@ -607,6 +607,14 @@ class CourseInstanceForm(FlaskForm):
     location = StringField(
         'Локація',
         validators=[Optional(), Length(max=255)],
+        description='Адреса для людини: місто, вулиця, назва закладу',
+    )
+    city_id = SelectField(
+        'Місто',
+        coerce=int,
+        validators=[Optional()],
+        description='Окремо від адреси -- саме за ним працює фільтр розкладу, '
+                    'зокрема на партнерських сайтах',
     )
     online_link = StringField(
         'Посилання на онлайн',

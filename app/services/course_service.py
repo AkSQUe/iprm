@@ -236,6 +236,9 @@ def populate_instance_from_form(instance, form):
     instance.cpd_points = form.cpd_points.data
     instance.max_participants = form.max_participants.data
     instance.location = _clean_text(form.location.data)
+    # 0 -- це «Місце уточнюється» з пікера; у БД воно має лягти як NULL, а не
+    # як неіснуючий id міста.
+    instance.city_id = form.city_id.data or None
     instance.online_link = _clean_text(form.online_link.data)
     instance.trainer_id = form.trainer_id.data or None
     instance.status = form.status.data

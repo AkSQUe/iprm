@@ -7,7 +7,7 @@ from flask_login import current_user
 from sqlalchemy import func, or_
 from sqlalchemy.orm import joinedload
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit, populate_trainer_choices
 from app.admin.decorators import admin_required
 from app.admin.forms import CourseInstanceForm
@@ -41,6 +41,13 @@ def _populate_choices(form, preselected_course_id=None):
 
     populate_trainer_choices(form, empty_label='--- Тренер курсу (default) ---')
 
+    # Місто необов'язкове: адресу часто знають пізніше за дату, і розклад
+    # показує «Місце уточнюється» замість того, щоб ховати захід.
+    from app.models.city import City
+    form.city_id.choices = [(0, '--- Місце уточнюється ---')] + [
+        (city.id, city.name) for city in City.query.order_by(City.name).all()
+    ]
+
 
 _INSTANCES_PER_PAGE = 25
 
@@ -53,7 +60,6 @@ _QUICK_PRESETS = (
 
 def _instance_filters():
     """Фільтри списку проведень -- спільні для сторінки й експорту."""
-    from app.admin import _listing
     return {
         'q': _listing.text_arg('q'),
         'course_id': _listing.int_arg('course_id'),
@@ -68,8 +74,6 @@ def _instances_query(filters):
     Пресети `quick` взаємовиключні й самі задають сортування: «найближчі»
     мають рахуватись від сьогодні вгору, архів -- навпаки.
     """
-    from app.admin import _listing
-
     query = CourseInstance.query.options(
         joinedload(CourseInstance.course),
         joinedload(CourseInstance.trainer),
@@ -192,7 +196,7 @@ def instances_list():
         pagination=pagination,
         reg_counts=_instance_reg_counts(instances),
         filters=filters,
-        filter_args={k: v for k, v in filters.items() if v},
+        filter_args=_listing.filter_args(filters),
         course_options=[
             (c.id, c.title)
             for c in Course.query.filter_by(is_active=True).order_by(Course.title).all()
@@ -210,7 +214,6 @@ def instances_report_export():
     редагування живе окремий /admin/instances/export із `export_instances_xlsx`
     та парою parse_instances_xlsx -- звідси й різні URL.
     """
-    from app.admin import _listing
     from app.services import xlsx_io
 
     filters = _instance_filters()
@@ -235,10 +238,11 @@ def instances_report_export():
         'Admin %s exported instances xlsx (%d rows, filters=%s)',
         current_user.email, len(instances), filters,
     )
-    return _listing.xlsx_download(
-        xlsx_io.export_instances_report_xlsx(
+    return _listing.xlsx_export(
+        instances, 'instances',
+        lambda: xlsx_io.export_instances_report_xlsx(
             instances, _instance_reg_counts(instances), applied_filters=summary),
-        'instances',
+        'admin.instances_list', **_listing.filter_args(filters),
     )
 
 
