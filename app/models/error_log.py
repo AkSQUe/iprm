@@ -10,7 +10,11 @@ from app.extensions import db
 class ErrorLog(db.Model):
     __tablename__ = 'error_logs'
 
-    id = db.Column(db.BigInteger, primary_key=True)
+    # SQLite автоінкрементує лише INTEGER PRIMARY KEY, тож у тестах BigInteger
+    # деградує до Integer -- на PostgreSQL тип лишається bigint.
+    id = db.Column(
+        db.BigInteger().with_variant(db.Integer, 'sqlite'), primary_key=True,
+    )
 
     error_code = db.Column(db.Integer, nullable=False, index=True)
     error_type = db.Column(db.String(100), nullable=False, index=True)
