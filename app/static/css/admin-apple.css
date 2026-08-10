@@ -330,6 +330,7 @@
 .form-section .form-input,
 .admin-form .form-input,
 .admin-filter-form .form-input,
+.admin-filters__form .form-input,
 .backup-actions__form .form-input {
   padding: 10px 14px;
   font-size: 0.9375rem;
@@ -343,6 +344,7 @@
 .form-section .form-input:focus,
 .admin-form .form-input:focus,
 .admin-filter-form .form-input:focus,
+.admin-filters__form .form-input:focus,
 .backup-actions__form .form-input:focus {
   border-color: var(--iprm-nav-active);
   box-shadow: 0 0 0 3px var(--iprm-accent-light);
@@ -413,6 +415,7 @@
 
 .admin-form select.form-input,
 .admin-filter-form select.form-input,
+.admin-filters__form select.form-input,
 .backup-actions__form select.form-input {
   appearance: none;
   -webkit-appearance: none;
@@ -427,6 +430,7 @@
 /* Firefox: прибрати пунктирну рамку в фокусі на select */
 .admin-form select.form-input:-moz-focusring,
 .admin-filter-form select.form-input:-moz-focusring,
+.admin-filters__form select.form-input:-moz-focusring,
 .backup-actions__form select.form-input:-moz-focusring {
   color: transparent;
   text-shadow: 0 0 0 var(--apple-black);
@@ -1128,4 +1132,221 @@
   background-color: rgba(239, 68, 68, 0.16);
   color: #ff6b6b;
   border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* ==========================================================================
+   ПАНЕЛЬ ФІЛЬТРІВ СПИСКІВ (макрос admin/partials/_filter_bar.html)
+   Один рядок-тулбар (пошук / «Фільтри» / експорт) + згортувана сітка полів
+   + чіпси активних фільтрів. Спільна для всіх реєстрів адмінки.
+   ========================================================================== */
+
+.admin-filters {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md, 14px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* Активний зріз позначаємо лівим кантом -- видно з першого погляду, що
+   список звужено, навіть коли панель згорнута. */
+.admin-filters--on {
+  border-left: 3px solid var(--iprm-nav-active);
+}
+
+.admin-filters__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-filters__spacer {
+  flex: 1 1 auto;
+}
+
+/* --- Пошук ---------------------------------------------------------- */
+
+.admin-filters__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 280px;
+  max-width: 420px;
+}
+
+.admin-filters__search-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 20px;
+  color: var(--apple-gray-light, #86868b);
+  pointer-events: none;
+}
+
+.admin-filters__search-input.form-input {
+  width: 100%;
+  padding-left: 40px;
+  border-radius: 999px;
+}
+
+/* --- Кнопка згортання ------------------------------------------------ */
+
+.admin-filters__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-filters__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: var(--iprm-nav-active);
+  border-radius: 999px;
+}
+
+/* --- Сітка полів ----------------------------------------------------- */
+
+.admin-filters__panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px 14px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--iprm-border);
+}
+
+.admin-filters__panel[hidden] {
+  display: none;
+}
+
+.admin-filters__field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.admin-filters__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--apple-gray, #6e6e73);
+}
+
+/* Поля панелі тягнуться на всю ширину комірки: інакше flex-правило
+   .admin-filter-form .form-input (flex: 1 1 200px) ламало б сітку. */
+.admin-filters__field .form-input {
+  width: 100%;
+  min-width: 0;
+}
+
+/* --- Чіпси активних фільтрів ----------------------------------------- */
+
+.admin-filters__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.admin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 320px;
+  padding: 5px 10px;
+  font-size: 0.8125rem;
+  color: var(--apple-black, #1d1d1f);
+  text-decoration: none;
+  background: var(--apple-section-bg, #f5f5f7);
+  border: 1px solid var(--iprm-border);
+  border-radius: 999px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.admin-chip:hover {
+  background: var(--iprm-accent-light, rgba(88, 86, 214, 0.1));
+  border-color: var(--iprm-nav-active);
+}
+
+.admin-chip__key {
+  font-weight: 600;
+  color: var(--apple-gray, #6e6e73);
+}
+
+.admin-chip__x {
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--apple-gray-light, #86868b);
+}
+
+.admin-chip:hover .admin-chip__x {
+  color: var(--iprm-nav-active);
+}
+
+.admin-filters__reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  color: var(--apple-gray, #6e6e73);
+  text-decoration: none;
+}
+
+.admin-filters__reset:hover {
+  color: var(--iprm-nav-active);
+  text-decoration: underline;
+}
+
+/* Доступний, але візуально прихований текст (підпис дії у чіпсі). */
+.admin-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .admin-filters {
+    padding: 12px;
+  }
+  .admin-filters__search {
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .admin-filters__spacer {
+    display: none;
+  }
+  .admin-filters__panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Тёмна тема ------------------------------------------------------ */
+
+[data-theme="dark"] .admin-filters {
+  box-shadow: none;
+}
+
+[data-theme="dark"] .admin-chip {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .admin-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
 }

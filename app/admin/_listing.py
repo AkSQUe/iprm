@@ -48,6 +48,60 @@ def choice_arg(name, allowed, default=''):
     return value if value in allowed else default
 
 
+# Скільки рядків показувати на сторінці. Порожнє значення = дефолт роуту,
+# тож самого дефолту в списку немає -- інакше він дублювався б у плейсхолдері.
+PER_PAGE_CHOICES = ('25', '100', '200')
+PER_PAGE_OPTIONS = [(n, f'{n} рядків') for n in PER_PAGE_CHOICES]
+
+
+def per_page_arg(default=50):
+    """Кількість рядків на сторінці зі списку дозволених (інакше -- дефолт).
+
+    Свавільне ?per_page=100000 інакше клало б сторінку на прод-обсязі.
+    """
+    raw = choice_arg('per_page', PER_PAGE_CHOICES)
+    return int(raw) if raw else default
+
+
+def date_arg(name):
+    """Дата з <input type="date"> як рядок YYYY-MM-DD ('' -- не задано).
+
+    Тримаємо саме рядком: це і значення поля у формі, і параметр URL, і
+    підпис чіпса. У запит вона йде через `apply_date_range`.
+    """
+    value = text_arg(name)
+    try:
+        datetime.strptime(value, '%Y-%m-%d')
+    except ValueError:
+        return ''
+    return value
+
+
+def apply_date_range(query, column, date_from='', date_to=''):
+    """Звузити запит по датах включно, рахуючи КИЇВСЬКУ добу.
+
+    Колонки зберігаються в UTC, тож «по 10.08» без переводу відрізало б
+    записи з 21:00 до 24:00 київського вечора -- вони лежать уже наступною
+    добою UTC.
+    """
+    if date_from:
+        start = datetime.strptime(date_from, '%Y-%m-%d').replace(tzinfo=KYIV)
+        query = query.filter(column >= start)
+    if date_to:
+        end = (datetime.strptime(date_to, '%Y-%m-%d').replace(tzinfo=KYIV)
+               + timedelta(days=1))
+        query = query.filter(column < end)
+    return query
+
+
+def date_range_label(filters, empty='Уся'):
+    """Людиночитний підпис діапазону для аркуша «Фільтри» у файлі."""
+    start, end = filters.get('date_from'), filters.get('date_to')
+    if not start and not end:
+        return empty
+    return f"{start or '...'} -- {end or '...'}"
+
+
 def _escape_like(term):
     """Екранувати LIKE-метасимволи: пошук '50%' має шукати '50%', а не все."""
     return (

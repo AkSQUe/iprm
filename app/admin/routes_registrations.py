@@ -391,8 +391,10 @@ def _registration_filters():
         'instance_id': _listing.int_arg('instance_id'),
         'course_id': _listing.int_arg('course_id'),
         'trainer_id': _listing.int_arg('trainer_id'),
+        'date_from': _listing.date_arg('date_from'),
+        'date_to': _listing.date_arg('date_to'),
         'scope': scope,
-        'per_page': request.args.get('per_page', 50, type=int),
+        'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
     }
 
 
@@ -418,6 +420,10 @@ def _apply_registration_filters(query, filters):
             EventRegistration.payment_method == filters['payment_method'])
     if filters['instance_id']:
         query = query.filter(EventRegistration.instance_id == filters['instance_id'])
+    query = _listing.apply_date_range(
+        query, EventRegistration.created_at,
+        filters['date_from'], filters['date_to'],
+    )
 
     # CourseInstance потрібен для scope (час заходу) та фільтрів курс/тренер.
     # Джойнимо один раз, щоб не дублювати join.
@@ -453,7 +459,7 @@ def _apply_registration_filters(query, filters):
 def registrations_all():
     filters = _registration_filters()
     page = request.args.get('page', 1, type=int)
-    per_page = filters['per_page']
+    per_page = _listing.per_page_arg()
 
     stats = db.session.query(
         func.count().label('total'),
@@ -499,6 +505,7 @@ def registrations_all():
         status_options=EventRegistration.STATUSES,
         payment_options=EventRegistration.PAYMENT_STATUSES,
         method_options=EventRegistration.PAYMENT_METHODS,
+        per_page_options=_listing.PER_PAGE_OPTIONS,
         **_registration_select_options(),
     )
 
@@ -542,6 +549,7 @@ def _registration_filters_summary(filters, rows_count):
     summary = [
         ('Період заходів', _SCOPE_LABELS.get(filters['scope'], filters['scope'])),
         ('Пошук', filters['q'] or '--'),
+        ('Дата реєстрації', _listing.date_range_label(filters)),
     ]
 
     status = dict(EventRegistration.STATUSES).get(filters['status'])

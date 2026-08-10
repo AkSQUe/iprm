@@ -62,14 +62,13 @@
   {% include 'partials/flash_messages.html' %}
 
   {{ filter_bar(
-       action=url_for('admin.courses_list'),
+       endpoint='admin.courses_list',
        values=filters,
        search={'name': 'q', 'placeholder': 'Пошук за назвою або slug'},
        fields=[
-         {'name': 'state', 'label': 'Усі стани', 'options': state_options},
-         {'name': 'trainer_id', 'label': 'Усі тренери', 'options': trainer_options},
+         {'name': 'state', 'label': 'Стан', 'placeholder': 'Усі стани', 'options': state_options},
+         {'name': 'trainer_id', 'label': 'Тренер', 'placeholder': 'Усі тренери', 'options': trainer_options},
        ],
-       reset_url=url_for('admin.courses_list'),
      ) }}
 
   {% if courses %}

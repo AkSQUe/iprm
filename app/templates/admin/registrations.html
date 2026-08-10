@@ -98,20 +98,22 @@
 
     <!-- Filters -->
     {{ filter_bar(
-         action=url_for('admin.registrations_all'),
+         endpoint='admin.registrations_all',
          values=filters,
-         search={'name': 'q', 'placeholder': "Пошук за іменем, email або телефоном"},
+         search={'name': 'q', 'placeholder': 'Пошук за іменем, email або телефоном'},
          fields=[
-           {'name': 'status', 'label': 'Всі статуси', 'options': status_options},
-           {'name': 'payment', 'label': 'Всі оплати', 'options': payment_options},
-           {'name': 'payment_method', 'label': 'Всі способи оплати', 'options': method_options},
-           {'name': 'course_id', 'label': 'Всі курси', 'options': course_options},
-           {'name': 'trainer_id', 'label': 'Всі тренери', 'options': trainer_options},
-           {'name': 'instance_id', 'label': 'Всі заходи', 'options': instance_options},
+           {'name': 'status', 'label': 'Статус', 'placeholder': 'Всі статуси', 'options': status_options},
+           {'name': 'payment', 'label': 'Оплата', 'placeholder': 'Всі оплати', 'options': payment_options},
+           {'name': 'payment_method', 'label': 'Спосіб оплати', 'placeholder': 'Всі способи', 'options': method_options},
+           {'name': 'course_id', 'label': 'Курс', 'placeholder': 'Всі курси', 'options': course_options},
+           {'name': 'trainer_id', 'label': 'Тренер', 'placeholder': 'Всі тренери', 'options': trainer_options},
+           {'name': 'instance_id', 'label': 'Захід', 'placeholder': 'Всі заходи', 'options': instance_options},
+           {'name': 'date_from', 'label': 'Реєстрації з', 'type': 'date'},
+           {'name': 'date_to', 'label': 'Реєстрації по', 'type': 'date'},
+           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
          ],
-         hidden={'scope': filters.scope},
-         export_url=url_for('admin.registrations_export', **filter_args),
-         reset_url=url_for('admin.registrations_all', scope=filters.scope),
+         base_args={'scope': filters.scope},
+         export_endpoint='admin.registrations_export',
        ) }}
 
     <!-- Table -->

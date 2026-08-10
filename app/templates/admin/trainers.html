@@ -51,11 +51,10 @@
   {% include 'partials/flash_messages.html' %}
 
   {{ filter_bar(
-       action=url_for('admin.trainers_list'),
+       endpoint='admin.trainers_list',
        values=filters,
        search={'name': 'q', 'placeholder': 'Пошук за ПІБ, slug, email або посадою'},
-       fields=[{'name': 'state', 'label': 'Усі стани', 'options': state_options}],
-       reset_url=url_for('admin.trainers_list'),
+       fields=[{'name': 'state', 'label': 'Стан', 'placeholder': 'Усі стани', 'options': state_options}],
      ) }}
 
   {% if trainers %}

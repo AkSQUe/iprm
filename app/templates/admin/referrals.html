@@ -154,12 +154,15 @@
 
     <!-- History filter -->
     {{ filter_bar(
-         action=url_for('admin.referrals_overview'),
+         endpoint='admin.referrals_overview',
          values=filters,
          search={'name': 'q', 'placeholder': 'Пошук за кодом, учасником або email'},
-         fields=[{'name': 'status', 'label': 'Всі нарахування', 'options': status_options}],
-         export_url=url_for('admin.referrals_export', **filter_args),
-         reset_url=url_for('admin.referrals_overview'),
+         fields=[
+           {'name': 'status', 'label': 'Статус', 'placeholder': 'Всі нарахування', 'options': status_options},
+           {'name': 'date_from', 'label': 'Нараховані з', 'type': 'date'},
+           {'name': 'date_to', 'label': 'Нараховані по', 'type': 'date'},
+         ],
+         export_endpoint='admin.referrals_export',
        ) }}
 
     <!-- History -->

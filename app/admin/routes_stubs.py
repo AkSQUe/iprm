@@ -29,6 +29,9 @@ def _certificate_filters():
         'state': _listing.choice_arg('state', _CERT_STATES),
         'course_id': _listing.int_arg('course_id'),
         'year': _listing.int_arg('year'),
+        'date_from': _listing.date_arg('date_from'),
+        'date_to': _listing.date_arg('date_to'),
+        'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
     }
 
 
@@ -66,6 +69,9 @@ def _certificates_query(filters):
         ).filter(CourseInstance.course_id == filters['course_id'])
     if filters['year']:
         query = query.filter(extract('year', Certificate.issued_at) == filters['year'])
+    query = _listing.apply_date_range(
+        query, Certificate.issued_at, filters['date_from'], filters['date_to'],
+    )
     return query.order_by(Certificate.issued_at.desc())
 
 
@@ -98,12 +104,14 @@ def certificates():
     }, reverse=True)
     # Реєстр росте після кожного заходу, тож сторінками; експорт лишається
     # по всьому зрізу -- пагінація це властивість екрана, а не звіту.
+    from app.admin import _listing
     pagination = _certificates_query(filters).paginate(
         page=request.args.get('page', 1, type=int),
-        per_page=_LIST_PER_PAGE, error_out=False,
+        per_page=_listing.per_page_arg(_LIST_PER_PAGE), error_out=False,
     )
     return render_template(
         'admin/certificates.html',
+        per_page_options=_listing.PER_PAGE_OPTIONS,
         certificates=pagination.items,
         pagination=pagination,
         stats=_certificate_stats(),
@@ -138,6 +146,7 @@ def certificates_export():
             ('Стан', _CERT_STATES.get(filters['state'], 'Усі')),
             ('Курс', course.title if course else 'Усі'),
             ('Рік видачі', filters['year'] or 'Усі'),
+            ('Дата видачі', _listing.date_range_label(filters)),
         ],
         len(certs),
     )
@@ -166,6 +175,9 @@ def _user_filters():
         'state': _listing.choice_arg('state', _USER_STATES),
         'confirmed': _listing.choice_arg('confirmed', _USER_CONFIRMED),
         'regs': _listing.choice_arg('regs', _USER_REGS),
+        'date_from': _listing.date_arg('date_from'),
+        'date_to': _listing.date_arg('date_to'),
+        'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
     }
 
 
@@ -207,6 +219,9 @@ def _users_query(filters):
         query = query.filter(
             reg_count > 0 if filters['regs'] == 'with' else reg_count == 0
         )
+    query = _listing.apply_date_range(
+        query, User.created_at, filters['date_from'], filters['date_to'],
+    )
     return query.order_by(User.created_at.desc())
 
 
@@ -229,12 +244,14 @@ def users():
     filters = _user_filters()
     # Базу вже переросли тисячу акаунтів -- сторінками. Експорт лишається по
     # всьому зрізу.
+    from app.admin import _listing
     pagination = _users_query(filters).paginate(
         page=request.args.get('page', 1, type=int),
-        per_page=_LIST_PER_PAGE, error_out=False,
+        per_page=_listing.per_page_arg(_LIST_PER_PAGE), error_out=False,
     )
     return render_template(
         'admin/users.html',
+        per_page_options=_listing.PER_PAGE_OPTIONS,
         users=_users_with_counts(pagination.items),
         pagination=pagination,
         total_found=pagination.total,
@@ -263,6 +280,7 @@ def users_export():
             ('Стан', _USER_STATES.get(filters['state'], 'Усі')),
             ('Email', _USER_CONFIRMED.get(filters['confirmed'], 'Усі')),
             ('Реєстрації', _USER_REGS.get(filters['regs'], 'Усі')),
+            ('Дата реєстрації', _listing.date_range_label(filters)),
         ],
         len(users_list),
     )

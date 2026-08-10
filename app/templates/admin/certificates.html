@@ -46,16 +46,18 @@
     </div>
 
     {{ filter_bar(
-         action=url_for('admin.certificates'),
+         endpoint='admin.certificates',
          values=filters,
          search={'name': 'q', 'placeholder': 'Пошук за номером, ПІБ, заходом або email'},
          fields=[
-           {'name': 'state', 'label': 'Усі стани', 'options': state_options},
-           {'name': 'course_id', 'label': 'Усі курси', 'options': course_options},
-           {'name': 'year', 'label': 'Усі роки', 'options': year_options},
+           {'name': 'state', 'label': 'Стан', 'placeholder': 'Усі стани', 'options': state_options},
+           {'name': 'course_id', 'label': 'Курс', 'placeholder': 'Усі курси', 'options': course_options},
+           {'name': 'year', 'label': 'Рік видачі', 'placeholder': 'Усі роки', 'options': year_options},
+           {'name': 'date_from', 'label': 'Видані з', 'type': 'date'},
+           {'name': 'date_to', 'label': 'Видані по', 'type': 'date'},
+           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
          ],
-         export_url=url_for('admin.certificates_export', **filters),
-         reset_url=url_for('admin.certificates'),
+         export_endpoint='admin.certificates_export',
        ) }}
 
     {% if certificates %}

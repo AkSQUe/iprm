@@ -105,10 +105,9 @@
     </div>
 
     {{ filter_bar(
-         action=url_for('admin.cities_list'),
+         endpoint='admin.cities_list',
          values=filters,
          search={'name': 'q', 'placeholder': 'Пошук за назвою локації'},
-         reset_url=url_for('admin.cities_list'),
        ) }}
 
     {% if rows %}

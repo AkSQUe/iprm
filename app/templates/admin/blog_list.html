@@ -58,11 +58,10 @@
     {% include 'partials/flash_messages.html' %}
 
     {{ filter_bar(
-         action=url_for('admin.blog_list'),
+         endpoint='admin.blog_list',
          values=filters,
          search={'name': 'q', 'placeholder': 'Пошук за назвою, slug або анонсом'},
-         fields=[{'name': 'state', 'label': 'Усі стани', 'options': state_options}],
-         reset_url=url_for('admin.blog_list'),
+         fields=[{'name': 'state', 'label': 'Стан', 'placeholder': 'Усі стани', 'options': state_options}],
        ) }}
 
     {% if posts %}

@@ -129,6 +129,8 @@ def _email_log_filters():
         'q': _listing.text_arg('q'),
         'status': _listing.choice_arg('status', dict(EmailLog.STATUSES)),
         'trigger': _listing.choice_arg('trigger', dict(EmailLog.TRIGGERS)),
+        'date_from': _listing.date_arg('date_from'),
+        'date_to': _listing.date_arg('date_to'),
     }
 
 
@@ -144,6 +146,9 @@ def _email_log_query(filters):
         query = query.filter(EmailLog.status == filters['status'])
     if filters['trigger']:
         query = query.filter(EmailLog.trigger == filters['trigger'])
+    query = _listing.apply_date_range(
+        query, EmailLog.created_at, filters['date_from'], filters['date_to'],
+    )
     return query.order_by(EmailLog.created_at.desc())
 
 
@@ -184,6 +189,7 @@ def notifications_log_export():
             ('Пошук', filters['q'] or '--'),
             ('Статус', dict(EmailLog.STATUSES).get(filters['status'], 'Усі')),
             ('Тригер', dict(EmailLog.TRIGGERS).get(filters['trigger'], 'Усі')),
+            ('Дата листа', _listing.date_range_label(filters)),
         ],
         len(logs),
     )

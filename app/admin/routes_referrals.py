@@ -26,6 +26,8 @@ def _reward_filters():
     return {
         'q': _listing.text_arg('q'),
         'status': _listing.choice_arg('status', dict(ReferralReward.STATUSES)),
+        'date_from': _listing.date_arg('date_from'),
+        'date_to': _listing.date_arg('date_to'),
     }
 
 
@@ -55,6 +57,9 @@ def _rewards_query(filters):
         ])
     if filters['status']:
         query = query.filter(ReferralReward.status == filters['status'])
+    query = _listing.apply_date_range(
+        query, ReferralReward.created_at, filters['date_from'], filters['date_to'],
+    )
     return query.order_by(ReferralReward.created_at.desc())
 
 
@@ -251,6 +256,7 @@ def referrals_export():
         [
             ('Пошук', filters['q'] or '--'),
             ('Статус', dict(ReferralReward.STATUSES).get(filters['status'], 'Усі')),
+            ('Дата нарахування', _listing.date_range_label(filters)),
         ],
         len(rewards),
     )

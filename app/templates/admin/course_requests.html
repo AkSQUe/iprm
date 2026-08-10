@@ -54,15 +54,16 @@
   {% endif %}
 
   {{ filter_bar(
-       action=url_for('admin.course_requests_list'),
+       endpoint='admin.course_requests_list',
        values=filters,
        search={'name': 'q', 'placeholder': 'Пошук за email, телефоном або текстом'},
        fields=[
-         {'name': 'status', 'label': 'Усі статуси', 'options': status_options},
-         {'name': 'course_id', 'label': 'Всі курси', 'options': course_options},
+         {'name': 'status', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': status_options},
+         {'name': 'course_id', 'label': 'Курс', 'placeholder': 'Всі курси', 'options': course_options},
+         {'name': 'date_from', 'label': 'Отримані з', 'type': 'date'},
+         {'name': 'date_to', 'label': 'Отримані по', 'type': 'date'},
        ],
-       export_url=url_for('admin.course_requests_export', **filters),
-       reset_url=url_for('admin.course_requests_list'),
+       export_endpoint='admin.course_requests_export',
      ) }}
 
   {% if requests %}

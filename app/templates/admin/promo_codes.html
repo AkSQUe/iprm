@@ -36,12 +36,11 @@
     {% include 'partials/flash_messages.html' %}
 
     {{ filter_bar(
-         action=url_for('admin.promo_codes_list'),
+         endpoint='admin.promo_codes_list',
          values=filters,
          search={'name': 'q', 'placeholder': 'Код або опис'},
-         fields=[{'name': 'status', 'label': 'Усі стани', 'options': status_options}],
-         export_url=url_for('admin.promo_codes_export', **filter_args),
-         reset_url=url_for('admin.promo_codes_list'),
+         fields=[{'name': 'status', 'label': 'Стан', 'placeholder': 'Усі стани', 'options': status_options}],
+         export_endpoint='admin.promo_codes_export',
        ) }}
 
     {% if promos %}

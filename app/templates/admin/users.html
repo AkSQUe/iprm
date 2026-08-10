@@ -37,17 +37,19 @@
     {% include 'partials/flash_messages.html' %}
 
     {{ filter_bar(
-         action=url_for('admin.users'),
+         endpoint='admin.users',
          values=filters,
-         search={'name': 'q', 'placeholder': "Пошук за іменем, email або телефоном"},
+         search={'name': 'q', 'placeholder': 'Пошук за іменем, email або телефоном'},
          fields=[
-           {'name': 'role', 'label': 'Усі ролі', 'options': role_options},
-           {'name': 'state', 'label': 'Усі стани', 'options': state_options},
-           {'name': 'confirmed', 'label': 'Будь-який email', 'options': confirmed_options},
-           {'name': 'regs', 'label': 'Усі за реєстраціями', 'options': regs_options},
+           {'name': 'role', 'label': 'Роль', 'placeholder': 'Усі ролі', 'options': role_options},
+           {'name': 'state', 'label': 'Стан', 'placeholder': 'Усі стани', 'options': state_options},
+           {'name': 'confirmed', 'label': 'Email', 'placeholder': 'Будь-який', 'options': confirmed_options},
+           {'name': 'regs', 'label': 'Реєстрації', 'placeholder': 'Усі', 'options': regs_options},
+           {'name': 'date_from', 'label': 'Зареєстровані з', 'type': 'date'},
+           {'name': 'date_to', 'label': 'Зареєстровані по', 'type': 'date'},
+           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
          ],
-         export_url=url_for('admin.users_export', **filters),
-         reset_url=url_for('admin.users'),
+         export_endpoint='admin.users_export',
        ) }}
 
     {% if users %}

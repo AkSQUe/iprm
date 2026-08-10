@@ -23,6 +23,8 @@ def _course_request_filters():
         'q': _listing.text_arg('q'),
         'status': _listing.choice_arg('status', dict(CourseRequest.STATUSES)),
         'course_id': _listing.int_arg('course_id'),
+        'date_from': _listing.date_arg('date_from'),
+        'date_to': _listing.date_arg('date_to'),
     }
 
 
@@ -37,6 +39,9 @@ def _course_requests_query(filters):
         query = query.filter(CourseRequest.status == filters['status'])
     if filters['course_id']:
         query = query.filter(CourseRequest.course_id == filters['course_id'])
+    query = _listing.apply_date_range(
+        query, CourseRequest.created_at, filters['date_from'], filters['date_to'],
+    )
     return query.order_by(CourseRequest.created_at.desc())
 
 
@@ -87,6 +92,7 @@ def course_requests_export():
             ('Пошук', filters['q'] or '--'),
             ('Статус', dict(CourseRequest.STATUSES).get(filters['status'], 'Усі')),
             ('Курс', course.title if course else 'Усі'),
+            ('Дата заявки', _listing.date_range_label(filters)),
         ],
         len(rows),
     )

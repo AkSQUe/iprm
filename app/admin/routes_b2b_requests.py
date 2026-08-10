@@ -18,6 +18,8 @@ def _b2b_filters():
         'q': _listing.text_arg('q'),
         'status': _listing.choice_arg('status', dict(B2BRequest.STATUSES)),
         'team_size': _listing.choice_arg('team_size', dict(B2BRequest.TEAM_SIZES)),
+        'date_from': _listing.date_arg('date_from'),
+        'date_to': _listing.date_arg('date_to'),
     }
 
 
@@ -31,6 +33,9 @@ def _b2b_query(filters):
         query = query.filter(B2BRequest.status == filters['status'])
     if filters['team_size']:
         query = query.filter(B2BRequest.team_size == filters['team_size'])
+    query = _listing.apply_date_range(
+        query, B2BRequest.created_at, filters['date_from'], filters['date_to'],
+    )
     return query.order_by(B2BRequest.created_at.desc())
 
 
@@ -63,6 +68,7 @@ def b2b_requests_export():
             ('Статус', dict(B2BRequest.STATUSES).get(filters['status'], 'Усі')),
             ('Розмір команди',
              dict(B2BRequest.TEAM_SIZES).get(filters['team_size'], 'Усі')),
+            ('Дата заявки', _listing.date_range_label(filters)),
         ],
         len(rows),
     )

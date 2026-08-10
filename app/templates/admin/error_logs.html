@@ -53,16 +53,15 @@
 
   <!-- Фільтри -->
   {{ filter_bar(
-       action=url_for('admin.error_logs'),
+       endpoint='admin.error_logs',
        values=filters,
        search={'name': 'q', 'placeholder': 'Пошук за URL, типом, текстом або IP'},
        fields=[
-         {'name': 'error_code', 'label': 'Всі коди', 'options': code_options},
-         {'name': 'resolved', 'label': 'Всі статуси', 'options': resolved_options},
-         {'name': 'days', 'label': '7 днів (типово)', 'options': period_options},
+         {'name': 'error_code', 'label': 'Код', 'placeholder': 'Всі коди', 'options': code_options},
+         {'name': 'resolved', 'label': 'Стан', 'placeholder': 'Всі статуси', 'options': resolved_options},
+         {'name': 'days', 'label': 'Період', 'placeholder': '7 днів (типово)', 'options': period_options},
        ],
-       export_url=url_for('admin.error_logs_export', **filter_args),
-       reset_url=url_for('admin.error_logs'),
+       export_endpoint='admin.error_logs_export',
      ) }}
 
   <!-- Таблиця -->

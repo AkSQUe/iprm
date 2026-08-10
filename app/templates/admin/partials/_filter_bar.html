@@ -1,65 +1,142 @@
-{# Панель фільтрів списку адмінки: пошук + селекти + експорт.
+{# Панель фільтрів списку адмінки: пошук + згортувані фільтри + експорт.
 
    Спільна з `app/admin/_listing.py`: там розбір тих самих параметрів із
    query-string, тут -- їхній вигляд. Використання:
 
      {% from 'admin/partials/_filter_bar.html' import filter_bar %}
      {{ filter_bar(
-          action=url_for('admin.users'),
+          endpoint='admin.users',
           values=filters,
           search={'name': 'q', 'placeholder': 'Пошук за іменем або email'},
-          fields=[{'name': 'role', 'label': 'Усі ролі',
+          fields=[{'name': 'role', 'label': 'Роль', 'placeholder': 'Усі ролі',
                    'options': [('admin', 'Адміністратори')]}],
-          export_url=url_for('admin.users_export', **filters),
-          reset_url=url_for('admin.users'),
+          export_endpoint='admin.users_export',
      ) }}
 
-   values  -- dict поточних значень (той самий, що віддає роут у `filters`);
-   fields  -- селекти: name / label (він же placeholder-опція) / options;
-   hidden  -- параметри, які форма має пронести далі (напр. `scope` з пілюль);
-   export_url / reset_url -- необовʼязкові; «Скинути» показуємо лише коли є
-   що скидати, інакше кнопка була б декорацією.
+   endpoint / export_endpoint -- імена роутів (не URL): макрос сам збирає
+   посилання, тож чіпси «зняти фільтр» і «Скинути» не треба писати руками.
+   base_args -- параметри, що переживають скидання (scope, instance_id).
+   values    -- поточні значення (той самий dict, що віддає роут у `filters`).
+   fields    -- селекти: name / label (підпис і префікс чіпса) / placeholder
+                (опція «усі») / options; type='date' дає поле дати.
+
+   Панель згорнута, поки фільтри не задані: у 90% випадків менеджер приходить
+   сюди читати список, а не фільтрувати. Якщо фільтр активний -- вона
+   розгорнута (`open`), інакше зрізом керували б наосліп.
 #}
-{% macro filter_bar(action, values={}, fields=[], search=None,
-                    export_url=None, reset_url=None, hidden={},
-                    submit_label='Фільтрувати') %}
-{% set ns = namespace(active=false) %}
-{% if search and values.get(search.name) %}{% set ns.active = true %}{% endif %}
+{% macro filter_bar(endpoint, values={}, fields=[], search=None,
+                    export_endpoint=None, base_args={}, export_args={},
+                    submit_label='Застосувати') %}
+{# Активні (непорожні) значення: з них будуємо і лічильник, і всі посилання.
+   URL збираємо лише з base_args + пошуку + оголошених полів: службові ключі
+   на кшталт page у посиланнях фільтрів не потрібні. #}
+{% set ns = namespace(active=[], count=0, args=dict(base_args)) %}
 {% for f in fields %}
-  {% if values.get(f.name) %}{% set ns.active = true %}{% endif %}
+  {% if values.get(f.name) not in (none, '') %}
+    {% set ns.count = ns.count + 1 %}
+    {% set ns.active = ns.active + [f] %}
+    {% set _ = ns.args.update({f.name: values.get(f.name)}) %}
+  {% endif %}
 {% endfor %}
-<div class="admin-stats-bar">
-  <form method="GET" action="{{ action }}" class="admin-filter-form">
-    {% for name, value in hidden.items() %}
+{% set has_search = search and values.get(search.name) %}
+{% if has_search %}{% set _ = ns.args.update({search.name: values.get(search.name)}) %}{% endif %}
+{% set url_args = ns.args %}
+<section class="admin-filters{% if ns.count or has_search %} admin-filters--on{% endif %}"
+         data-filter-bar>
+  {# base_args ідуть і в action (там можуть бути параметри ШЛЯХУ, як
+     instance_id), і прихованими полями: GET-сабміт перезаписує query-string
+     екшена, тож без них зріз губився б на кожному «Застосувати». #}
+  <form method="GET" action="{{ url_for(endpoint, **base_args) }}" class="admin-filters__form">
+    {% for name, value in base_args.items() %}
       {% if value %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endif %}
     {% endfor %}
-    {% if search %}
-      <input type="search" name="{{ search.name }}"
-             value="{{ values.get(search.name) or '' }}"
-             class="form-input form-input--sm"
-             placeholder="{{ search.placeholder }}"
-             aria-label="{{ search.placeholder }}" autocomplete="off">
-    {% endif %}
-    {% for f in fields %}
-      <select name="{{ f.name }}" class="form-input form-input--sm" aria-label="{{ f.label }}">
-        <option value="">{{ f.label }}</option>
-        {% for val, label in f.options %}
-          <option value="{{ val }}"{% if values.get(f.name) is not none and values.get(f.name) | string == val | string %} selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    {% endfor %}
-    <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">
-      {{ icon('filter_list') }} {{ submit_label }}
-    </button>
-    {% if ns.active and reset_url %}
-      <a href="{{ reset_url }}" class="btn-admin btn-admin--sm">{{ icon('clear') }} Скинути</a>
-    {% endif %}
-    {% if export_url %}
-      <a href="{{ export_url }}" class="btn-admin btn-admin--secondary btn-admin--sm"
-         title="Вивантажити поточний зріз у xlsx">{{ icon('download') }} Експорт XLSX</a>
-    {% endif %}
+
+    <div class="admin-filters__bar">
+      {% if search %}
+        <label class="admin-filters__search">
+          {{ icon('search', cls='admin-filters__search-icon') }}
+          <input type="search" name="{{ search.name }}"
+                 value="{{ values.get(search.name) or '' }}"
+                 class="form-input admin-filters__search-input"
+                 placeholder="{{ search.placeholder }}"
+                 aria-label="{{ search.placeholder }}" autocomplete="off">
+        </label>
+      {% endif %}
+
+      {% if fields %}
+        <button type="button" class="btn-admin btn-admin--secondary admin-filters__toggle"
+                data-filter-toggle aria-expanded="{{ 'true' if ns.count else 'false' }}"
+                aria-controls="{{ endpoint | replace('.', '-') }}-filters">
+          {{ icon('tune') }} Фільтри
+          {% if ns.count %}<span class="admin-filters__count">{{ ns.count }}</span>{% endif %}
+        </button>
+      {% endif %}
+
+      <button type="submit" class="btn-admin btn-admin--primary admin-filters__submit">
+        {{ submit_label }}
+      </button>
+
+      <span class="admin-filters__spacer"></span>
+
+      {% if export_endpoint %}
+        <a href="{{ url_for(export_endpoint, **dict(url_args, **export_args)) }}"
+           class="btn-admin btn-admin--secondary"
+           title="Вивантажити поточний зріз у xlsx">{{ icon('download') }} Експорт XLSX</a>
+      {% endif %}
+    </div>
+
+    <div class="admin-filters__panel" id="{{ endpoint | replace('.', '-') }}-filters"
+         data-filter-panel{% if not ns.count %} hidden{% endif %}>
+      {% for f in fields %}
+        <label class="admin-filters__field">
+          <span class="admin-filters__label">{{ f.label }}</span>
+          {% if f.type == 'date' %}
+            <input type="date" name="{{ f.name }}" value="{{ values.get(f.name) or '' }}"
+                   class="form-input form-input--sm">
+          {% else %}
+            <select name="{{ f.name }}" class="form-input form-input--sm">
+              <option value="">{{ f.placeholder or ('Усі -- ' ~ f.label) }}</option>
+              {% for val, label in f.options %}
+                <option value="{{ val }}"{% if values.get(f.name) is not none and values.get(f.name) | string == val | string %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          {% endif %}
+        </label>
+      {% endfor %}
+    </div>
   </form>
-</div>
+
+  {# Чіпси активних фільтрів: видно, чим саме звужено список, і кожен
+     знімається окремо. url_for пропускає параметри зі значенням none, тож
+     «зняти» -- це те саме посилання без одного ключа. #}
+  {% if ns.count or has_search %}
+  <div class="admin-filters__chips">
+    {% if has_search %}
+      <a class="admin-chip" href="{{ url_for(endpoint, **dict(url_args, **{search.name: none})) }}">
+        <span class="admin-chip__key">Пошук:</span> {{ values.get(search.name) }}
+        <span class="admin-chip__x" aria-hidden="true">&times;</span>
+        <span class="admin-visually-hidden">Зняти фільтр</span>
+      </a>
+    {% endif %}
+    {% for f in ns.active %}
+      <a class="admin-chip" href="{{ url_for(endpoint, **dict(url_args, **{f.name: none})) }}">
+        <span class="admin-chip__key">{{ f.label }}:</span>
+        {% if f.type == 'date' %}{{ values.get(f.name) }}
+        {%- else -%}
+          {%- for val, label in f.options if val | string == values.get(f.name) | string -%}
+            {{ label }}
+          {%- endfor -%}
+        {%- endif %}
+        <span class="admin-chip__x" aria-hidden="true">&times;</span>
+        <span class="admin-visually-hidden">Зняти фільтр</span>
+      </a>
+    {% endfor %}
+    <a class="admin-filters__reset" href="{{ url_for(endpoint, **base_args) }}">
+      {{ icon('clear') }} Скинути все
+    </a>
+  </div>
+  {% endif %}
+</section>
 {% endmacro %}
 
 {# Пагінація списку. `args` -- ті самі непорожні фільтри, що й у панелі:

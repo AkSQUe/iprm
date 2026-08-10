@@ -89,16 +89,15 @@
   </div>
 
   {{ filter_bar(
-       action=url_for('admin.instances_list'),
+       endpoint='admin.instances_list',
        values=filters,
        search={'name': 'q', 'placeholder': 'Пошук за назвою курсу або місцем'},
        fields=[
-         {'name': 'course_id', 'label': 'Всі курси', 'options': course_options},
-         {'name': 'status', 'label': 'Усі статуси', 'options': status_options},
+         {'name': 'course_id', 'label': 'Курс', 'placeholder': 'Всі курси', 'options': course_options},
+         {'name': 'status', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': status_options},
        ],
-       hidden={'quick': filters.quick},
-       export_url=url_for('admin.instances_report_export', **filter_args),
-       reset_url=url_for('admin.instances_list', quick=filters.quick or none),
+       base_args={'quick': filters.quick},
+       export_endpoint='admin.instances_report_export',
      ) }}
 
   {% if instances %}

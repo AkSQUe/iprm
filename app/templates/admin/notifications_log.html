@@ -32,15 +32,16 @@
 
   <!-- Filters -->
   {{ filter_bar(
-       action=url_for('admin.notifications_log'),
+       endpoint='admin.notifications_log',
        values=filters,
        search={'name': 'q', 'placeholder': 'Пошук за email, темою, шаблоном або помилкою'},
        fields=[
-         {'name': 'status', 'label': 'Всі статуси', 'options': status_options},
-         {'name': 'trigger', 'label': 'Всі тригери', 'options': trigger_options},
+         {'name': 'status', 'label': 'Статус', 'placeholder': 'Всі статуси', 'options': status_options},
+         {'name': 'trigger', 'label': 'Тригер', 'placeholder': 'Всі тригери', 'options': trigger_options},
+         {'name': 'date_from', 'label': 'Листи з', 'type': 'date'},
+         {'name': 'date_to', 'label': 'Листи по', 'type': 'date'},
        ],
-       export_url=url_for('admin.notifications_log_export', **filter_args),
-       reset_url=url_for('admin.notifications_log'),
+       export_endpoint='admin.notifications_log_export',
      ) }}
 
   <!-- Log table -->

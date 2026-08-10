@@ -30,15 +30,16 @@
   {% include 'partials/flash_messages.html' %}
 
   {{ filter_bar(
-       action=url_for('admin.b2b_requests_list'),
+       endpoint='admin.b2b_requests_list',
        values=filters,
        search={'name': 'q', 'placeholder': 'Пошук за ПІБ, email, телефоном або нотаткою'},
        fields=[
-         {'name': 'status', 'label': 'Усі статуси', 'options': status_options},
-         {'name': 'team_size', 'label': 'Будь-який розмір', 'options': team_size_options},
+         {'name': 'status', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': status_options},
+         {'name': 'team_size', 'label': 'Розмір команди', 'placeholder': 'Будь-який', 'options': team_size_options},
+         {'name': 'date_from', 'label': 'Отримані з', 'type': 'date'},
+         {'name': 'date_to', 'label': 'Отримані по', 'type': 'date'},
        ],
-       export_url=url_for('admin.b2b_requests_export', **filters),
-       reset_url=url_for('admin.b2b_requests_list'),
+       export_endpoint='admin.b2b_requests_export',
      ) }}
 
   {% if requests %}

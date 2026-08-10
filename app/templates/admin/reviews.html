@@ -33,15 +33,14 @@
     {% include 'partials/flash_messages.html' %}
 
     {{ filter_bar(
-         action=url_for('admin.reviews_list'),
+         endpoint='admin.reviews_list',
          values=filters,
          search={'name': 'q', 'placeholder': 'Пошук за автором, містом або текстом'},
          fields=[
-           {'name': 'state', 'label': 'Усі статуси', 'options': state_options},
-           {'name': 'course_id', 'label': 'Усі курси', 'options': course_options},
-           {'name': 'rating', 'label': 'Будь-яка оцінка', 'options': rating_options},
+           {'name': 'state', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': state_options},
+           {'name': 'course_id', 'label': 'Курс', 'placeholder': 'Усі курси', 'options': course_options},
+           {'name': 'rating', 'label': 'Оцінка', 'placeholder': 'Будь-яка', 'options': rating_options},
          ],
-         reset_url=url_for('admin.reviews_list'),
        ) }}
 
     {% if reviews %}

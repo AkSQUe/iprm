@@ -59,16 +59,16 @@
     {% include 'partials/flash_messages.html' %}
 
     {{ filter_bar(
-         action=url_for('admin.instance_registrations', instance_id=instance.id),
+         endpoint='admin.instance_registrations',
          values=filters,
          search={'name': 'q', 'placeholder': 'Пошук за іменем, email або телефоном'},
          fields=[
-           {'name': 'status', 'label': 'Всі статуси', 'options': status_options},
-           {'name': 'payment', 'label': 'Всі оплати', 'options': payment_options},
+           {'name': 'status', 'label': 'Статус', 'placeholder': 'Всі статуси', 'options': status_options},
+           {'name': 'payment', 'label': 'Оплата', 'placeholder': 'Всі оплати', 'options': payment_options},
          ],
-         export_url=url_for('admin.registrations_export', scope='all', instance_id=instance.id,
-                            q=filters.q, status=filters.status, payment=filters.payment),
-         reset_url=url_for('admin.instance_registrations', instance_id=instance.id),
+         base_args={'instance_id': instance.id},
+         export_endpoint='admin.registrations_export',
+         export_args={'scope': 'all'},
        ) }}
 
     <!-- Statistics: по всьому заходу, не по знайденому зрізу -->

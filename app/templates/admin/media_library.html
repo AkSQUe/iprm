@@ -45,17 +45,16 @@
 
     <!-- Фільтри -->
     {{ filter_bar(
-         action=url_for('admin.media_library'),
+         endpoint='admin.media_library',
          values={'q': search, 'entity_type': entity_type, 'usage_type': usage_type},
          search={'name': 'q', 'placeholder': 'Пошук за назвою файлу або alt-текстом'},
          fields=[
-           {'name': 'entity_type', 'label': "Усі прив'язки", 'options': [
-              ('none', "Без прив'язки"), ('blog_post', 'Блог'),
-              ('trainer', 'Тренери'), ('course', 'Курси')]},
-           {'name': 'usage_type', 'label': 'Будь-яке використання',
+           {'name': 'entity_type', 'label': 'Прив\'язка', 'placeholder': 'Усі прив\'язки',
+            'options': [('none', 'Без прив\'язки'), ('blog_post', 'Блог'),
+                        ('trainer', 'Тренери'), ('course', 'Курси')]},
+           {'name': 'usage_type', 'label': 'Використання', 'placeholder': 'Будь-яке',
             'options': usage_type_options},
          ],
-         reset_url=url_for('admin.media_library'),
        ) }}
 
     {% set ent_labels = {'blog_post': 'Допис', 'trainer': 'Тренер', 'course': 'Курс'} %}
