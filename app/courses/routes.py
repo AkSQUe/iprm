@@ -172,6 +172,10 @@ def course_list():
     courses, upcoming_by_course, capacity, open_ids = (
         course_listing.gather_active_courses()
     )
+    # Дефолтне сортування каталогу -- за датою найближчого проведення
+    # (закріплені лишаються зверху). JS-режим "За замовчуванням" відновлює
+    # саме цей порядок, бо спирається на початковий індекс картки в DOM.
+    courses = course_listing.order_by_nearest(courses, upcoming_by_course)
 
     # Плоский список найближчих instances для секції "Графік".
     # `upcoming_instances` -- топ-5 для view-режиму "Список".

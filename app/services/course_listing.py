@@ -145,6 +145,26 @@ def upcoming_by_course(courses, now=None):
     }
 
 
+def order_by_nearest(courses, upcoming):
+    """Порядок каталогу за датою: найближчі проведення вище.
+
+    Закріплені (is_pinned) лишаються зверху у порядку каталогу -- дата на них
+    не впливає. Курси без майбутніх проведень ідуть у кінець, зберігаючи
+    вихідний порядок (sort_order -> title).
+    """
+    _far = datetime.max.replace(tzinfo=timezone.utc)
+
+    def sort_key(item):
+        idx, course = item
+        insts = upcoming.get(course.id) or []
+        start = ensure_utc(insts[0].start_date) if insts and insts[0].start_date else None
+        if course.is_pinned:
+            return (0, _far, idx)
+        return (1 if start else 2, start or _far, idx)
+
+    return [course for _, course in sorted(enumerate(courses), key=sort_key)]
+
+
 def gather_active_courses(featured_first=False):
     """Зібрати все для лістингу: (courses, upcoming_by_course, capacity, open_ids)."""
     courses = active_courses(featured_first=featured_first)
