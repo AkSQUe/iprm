@@ -602,12 +602,22 @@
     </div>
   </section>
 
-  {# ===== STICKY MOBILE CTA ===== #}
+  {# ===== STICKY MOBILE CTA =====
+     Ціна -- мінімальний effective_price найближчих проведень (як у картках
+     курсу й графіку), інакше базова ціна курсу. Пряме course.base_price
+     розходилось із блоком "Формат участі", коли тарифи проведення
+     відрізняються від базової ціни. #}
+  {% set _sticky_prices = upcoming_instances | map(attribute='effective_price') | select | list %}
+  {% set sticky_price = (_sticky_prices | min) if _sticky_prices else course.base_price %}
+  {# "від" -- і коли проведення відрізняються цінами, і коли всередині одного
+     проведення вилка тарифів (price_is_from). #}
+  {% set sticky_price_from = (_sticky_prices | unique | list | length) > 1
+                             or (upcoming_instances | selectattr('price_is_from') | list | length) > 0 %}
   <div class="iprm-sticky-cta" data-sticky-cta hidden>
     <div class="iprm-sticky-cta__info">
       <span class="iprm-sticky-cta__title">{{ course.t('title') }}</span>
-      {% if course.base_price and course.base_price > 0 %}
-      <span class="iprm-sticky-cta__price">{{ course.base_price | int }} &#8372;</span>
+      {% if sticky_price and sticky_price > 0 %}
+      <span class="iprm-sticky-cta__price">{% if sticky_price_from %}{{ _('від') }} {% endif %}{{ sticky_price | int }} &#8372;</span>
       {% endif %}
     </div>
     <a href="{% if upcoming_instances %}#schedule{% else %}#request{% endif %}" class="iprm-sticky-cta__btn">
