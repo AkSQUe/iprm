@@ -18,6 +18,8 @@ True ще до того як `completed_at` встановлено (наприк
 backfill з User в момент розділення таблиць, 'partner' -- prefill від
 mm-medic, 'imported' -- ручний імпорт з xlsx).
 """
+from sqlalchemy.orm import validates
+
 from app.extensions import db
 from app.models.mixins import TimestampMixin, BigIntPK
 
@@ -48,11 +50,42 @@ class MedicalProfile(TimestampMixin, db.Model):
     education = db.Column(db.String(500))
     workplace = db.Column(db.String(300))
     position = db.Column(db.String(200))
+    # Телефон як його ввела людина -- показується в адмінці й їде в xlsx.
     phone = db.Column(db.String(20))
+    # Канонічна форма (+380XXXXXXXXX) для зіставлення з зовнішніми системами:
+    # партнер (MM Medic) зшиває клієнта саме за телефоном, і робити це за
+    # вільним рядком неможливо. NULL означає «номера немає або він не
+    # розпізнаний» -- 11 записів у проді мають явно покручені номери, і
+    # вигадувати за них канонічну форму означало б зшити не тих людей.
+    #
+    # Індекс, а НЕ unique: у проді один номер справді ділять два акаунти
+    # (клініка з єдиним контактним телефоном -- звичайна річ). Унікальність
+    # зламала б їм реєстрацію заради одного випадку на 1264; неоднозначність
+    # розбирає партнер, у якого для цього є черга ручного зіставлення.
+    phone_e164 = db.Column(db.String(16), index=True)
     # Список codes з SPECIALIZATIONS (multi-select).
     specializations = db.Column(db.JSON, default=list)
     completed_at = db.Column(db.DateTime(timezone=True))
     source = db.Column(db.String(20), default=SOURCE_SELF, nullable=False)
+
+    @validates('phone')
+    def _sync_phone_e164(self, _key, value):
+        """Тримати канонічну форму узгодженою з `phone` на рівні моделі.
+
+        Той самий підхід, що в `City.name_normalized`: інакше поле розійдеться
+        в котромусь із шляхів запису (форма реєстрації, адмінка, xlsx-імпорт,
+        seed), і розбіжність помітять нескоро.
+        """
+        from app.utils import UA_PHONE_RE, normalize_phone
+
+        # `normalize_phone` -- нормалізатор, а НЕ валідатор: на нерозпізнаному
+        # вводі він за власним докстрінгом повертає '+<цифри>' і покладається
+        # на валідатор форми. Записати таке в канонічне поле означало б
+        # віддати партнеру `+3806784014070730886` як ключ зіставлення -- і
+        # зшити картку з ким завгодно. Тому пропускаємо лише канонічну форму.
+        normalized = normalize_phone(value) if value else None
+        self.phone_e164 = normalized if normalized and UA_PHONE_RE.match(normalized) else None
+        return value
 
     user = db.relationship('User', back_populates='medical_profile')
 
