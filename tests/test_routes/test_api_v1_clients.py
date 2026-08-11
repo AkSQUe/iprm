@@ -181,6 +181,38 @@ class TestRegistrations:
         # Знімок анкети на момент реєстрації, а не поточний профіль.
         assert row['specialty'] == 'Гінекологія'
 
+    def test_participant_identity_is_included(self, client, partner_settings):
+        """Ім'я й пошта живуть на картці, а не в реєстрації.
+
+        Без них партнер отримує рядок без жодної ознаки, КОГО він показує --
+        саме так у його адмінці й вийшов список із порожньою колонкою
+        учасника при 1069 рядках.
+        """
+        user = _user()
+        course = Course(title='Курс', slug=f'c-{_uid()}', event_type='course',
+                        base_price=1000, is_active=True, created_by=user.id)
+        db.session.add(course)
+        db.session.flush()
+        inst = CourseInstance(course_id=course.id, status='published',
+                              event_format='offline', price=1000,
+                              start_date=datetime.now(timezone.utc) + timedelta(days=5))
+        db.session.add(inst)
+        db.session.flush()
+        db.session.add(EventRegistration(
+            user_id=user.id, instance_id=inst.id, phone='+380671112233',
+            specialty='Гінекологія', workplace='Клініка',
+        ))
+        db.session.commit()
+
+        data = client.get('/api/v1/registrations?per_page=200',
+                          headers=HEADERS).get_json()
+        row = next(i for i in data['items'] if i['user_id'] == user.id)
+
+        assert row['first_name'] == 'Іван'
+        assert row['last_name'] == 'Петренко'
+        assert row['email'] == user.email
+        assert row['phone_e164'] == '+380671112233'
+
 
 class TestLeads:
     def test_two_sources_in_one_stream(self, client, partner_settings):

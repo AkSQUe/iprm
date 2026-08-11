@@ -179,19 +179,31 @@ def list_registrations():
     """
     from app.models.course_instance import CourseInstance
 
+    # User приєднується обов'язково: ім'я й пошта живуть на картці, а не в
+    # реєстрації -- без них партнер отримував рядок без жодної ознаки, КОГО
+    # він показує, і список у його адмінці був із порожньою колонкою учасника.
     query = (
-        db.session.query(EventRegistration, CourseInstance)
+        db.session.query(EventRegistration, CourseInstance, User, MedicalProfile)
         .join(CourseInstance, CourseInstance.id == EventRegistration.instance_id)
+        .outerjoin(User, User.id == EventRegistration.user_id)
+        .outerjoin(MedicalProfile, MedicalProfile.user_id == EventRegistration.user_id)
     )
     pagination, error = _listing(query, EventRegistration.updated_at)
     if error:
         return error
 
     items = []
-    for reg, instance in pagination.items:
+    for reg, instance, user, profile in pagination.items:
         items.append({
             'id': reg.id,
             'user_id': reg.user_id,
+            'first_name': user.first_name if user else None,
+            'last_name': user.last_name if user else None,
+            'middle_name': profile.middle_name if profile else None,
+            'email': user.email if user else None,
+            # Канонічний телефон із профілю -- ключ зіставлення; `phone` нижче
+            # це те, що людина вписала в анкету саме на цю реєстрацію.
+            'phone_e164': profile.phone_e164 if profile else None,
             'instance_id': reg.instance_id,
             'course_slug': instance.course.slug if instance.course else None,
             'course_title': instance.course.title if instance.course else None,
