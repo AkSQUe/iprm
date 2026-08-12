@@ -543,33 +543,40 @@ def export_error_logs_xlsx(logs, applied_filters=None) -> io.BytesIO:
 
 _INST_REPORT_COLS = ['id', 'course', 'start_date', 'end_date', 'event_format',
                      'location', 'trainer', 'price', 'cpd_points',
-                     'max_participants', 'registrations', 'seats_left', 'status']
+                     'max_participants', 'registrations', 'occupied',
+                     'seats_left', 'status']
 _INST_REPORT_LABELS = {
     'id': 'ID', 'course': 'Курс', 'start_date': 'Початок', 'end_date': 'Кінець',
     'event_format': 'Формат', 'location': 'Місце', 'trainer': 'Тренер',
     'price': 'Ціна', 'cpd_points': 'Бали БПР', 'max_participants': 'Місць',
-    'registrations': 'Реєстрацій', 'seats_left': 'Вільно', 'status': 'Статус',
+    'registrations': 'Реєстрацій', 'occupied': 'Оплачено місць',
+    'seats_left': 'Вільно', 'status': 'Статус',
 }
 _INST_REPORT_WIDTHS = {
     'id': 8, 'course': 46, 'start_date': 18, 'end_date': 18,
     'event_format': 14, 'location': 20, 'trainer': 26, 'price': 14,
     'cpd_points': 10, 'max_participants': 10, 'registrations': 12,
-    'seats_left': 10, 'status': 16,
+    'occupied': 14, 'seats_left': 10, 'status': 16,
 }
 
 
-def export_instances_report_xlsx(instances, reg_counts,
+def export_instances_report_xlsx(instances, reg_counts, occupied_map=None,
                                  applied_filters=None) -> io.BytesIO:
     """Проведення (/admin/instances) -> xlsx-звіт із завантаженістю.
 
-    reg_counts -- {instance_id: активних реєстрацій}; «Вільно» рахуємо від
-    ефективної місткості (проведення, інакше курсу), NULL -- без обмежень.
+    reg_counts -- {instance_id: активних реєстрацій}; occupied_map --
+    {instance_id: ОПЛАЧЕНИХ місць} (лише вони тримають місце, див.
+    services.seating). «Вільно» рахуємо від ефективної місткості
+    (проведення, інакше курсу), NULL -- без обмежень; перевищення видно
+    як «Оплачено місць» > «Місць».
     """
+    occupied_map = occupied_map or {}
     rows, row_fills = [], []
     for inst in instances:
         course = inst.course
         trainer = inst.trainer or (course.trainer if course else None)
         taken = reg_counts.get(inst.id, 0)
+        occupied = occupied_map.get(inst.id, 0)
         capacity = inst.max_participants
         if capacity is None and course is not None:
             capacity = course.max_participants
@@ -585,7 +592,8 @@ def export_instances_report_xlsx(instances, reg_counts,
             inst.effective_cpd_points,
             capacity,
             taken,
-            (capacity - taken) if capacity is not None else None,
+            occupied,
+            max(capacity - occupied, 0) if capacity is not None else None,
             STATUS_LABEL.get(inst.status, inst.status or ''),
         ])
         row_fills.append(

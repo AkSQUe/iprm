@@ -18,10 +18,9 @@ from app.api.v1.serializers import (
     serialize_event_card,
     serialize_event_detail,
 )
-from app.extensions import csrf, db, limiter
+from app.extensions import csrf, limiter
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
-from app.models.registration import EventRegistration
 
 
 # 'cancelled' можна ЗАПИТАТИ явно, але його немає в DEFAULT_STATUSES: партнер,
@@ -160,23 +159,17 @@ def _apply_window(query, date_from, date_to):
 
 
 def _hydrate_reg_counts(instances):
-    """Batch COUNT активних реєстрацій; встановлює `_cached_reg_count`."""
+    """Batch COUNT зайнятих (оплачених) місць; ставить `_cached_occupied`.
+
+    Партнерський seats_left рахується з тієї самої бази, що й місткість на
+    сайті -- див. services.seating.
+    """
     if not instances:
         return
-    counts = dict(
-        db.session.query(
-            EventRegistration.instance_id,
-            func.count(EventRegistration.id),
-        )
-        .filter(
-            EventRegistration.instance_id.in_([i.id for i in instances]),
-            EventRegistration.status.notin_(['cancelled']),
-        )
-        .group_by(EventRegistration.instance_id)
-        .all()
-    )
+    from app.services.seating import occupied_counts
+    counts = occupied_counts([i.id for i in instances])
     for inst in instances:
-        inst._cached_reg_count = counts.get(inst.id, 0)
+        inst._cached_occupied = counts.get(inst.id, 0)
 
 
 def _course_order_key(statuses, date_from, date_to):

@@ -92,6 +92,12 @@
         <span class="admin-stat-card__value">{{ stats.completed }}</span>
         <span class="admin-stat-card__label">Завершено</span>
       </div>
+      {# Місце тримає лише оплачена реєстрація; перевищення пулу -- червоним. #}
+      <div class="admin-stat-card{% if stats.overbooked %} admin-stat-card--danger{% endif %}"
+           title="{% if stats.overbooked %}Перевищення пулу: оплачених більше, ніж місць{% else %}Оплачених місць із загальної місткості{% endif %}">
+        <span class="admin-stat-card__value">{{ stats.occupied }}{% if stats.capacity %}/{{ stats.capacity }}{% else %}/&infin;{% endif %}</span>
+        <span class="admin-stat-card__label">{% if stats.overbooked %}Перевищення{% else %}Місця{% endif %}</span>
+      </div>
     </div>
 
     {% if registrations %}

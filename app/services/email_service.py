@@ -1024,6 +1024,42 @@ class EmailService:
         )
 
     @staticmethod
+    def notify_overbooking(registration, occupied, capacity):
+        """Попередити адмінів, що оплачених місць стало більше за місткість.
+
+        Перевикористовує event_type/тригер 'payment': подія народжується
+        саме в момент оплати, адресати ті самі, і значення вже дозволене
+        CHECK-ом email_logs.trigger (окремий тип події коштував би двох
+        міграцій CHECK -- див. коментар у NotificationRule).
+        """
+        instance = registration.instance if registration is not None else None
+        course = instance.course if instance is not None else None
+        user = registration.user if registration is not None else None
+        title = course.title if course is not None else 'Захід'
+        return EmailService.notify_admins_with_template(
+            event_type='payment',
+            subject=f'Перевищення місць: {title} ({occupied}/{capacity})',
+            template_name='overbooking_alert',
+            context={
+                'event_title': title,
+                'event_date': (
+                    instance.start_date.strftime('%d.%m.%Y')
+                    if instance is not None and instance.start_date else None
+                ),
+                'occupied': occupied,
+                'capacity': capacity,
+                'overflow': occupied - capacity,
+                'participant_name': (
+                    user.full_name if user is not None and hasattr(user, 'full_name')
+                    else (user.email if user is not None else '---')
+                ),
+                'registration_id': registration.id if registration is not None else None,
+                'admin_url': EmailService._admin_url_for_registration(registration),
+            },
+            registration=registration,
+        )
+
+    @staticmethod
     def send_blog_comment_notification(comment):
         """Повідомити адміна про новий коментар у блозі (на модерації).
 

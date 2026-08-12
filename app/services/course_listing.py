@@ -13,6 +13,7 @@ from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
+from app.services.seating import occupied_clause, seats_left
 from app.utils import ensure_utc
 
 
@@ -20,7 +21,8 @@ def capacity_map(course_ids):
     """{CourseInstance.id: seats_left} для published/active проведень.
 
     seats_left == None -> місткість не задана (необмежено). Інакше -- вільні
-    місця (>= 0). Один агрегатний запит замість N+1.
+    місця (>= 0). Зайнятим вважається лише оплачене місце (services.seating).
+    Один агрегатний запит замість N+1.
     """
     if not course_ids:
         return {}
@@ -29,14 +31,14 @@ def capacity_map(course_ids):
             CourseInstance.id,
             CourseInstance.max_participants,
             Course.max_participants.label('course_max'),
-            func.count(EventRegistration.id).label('active_count'),
+            func.count(EventRegistration.id).label('occupied'),
         )
         .join(Course, Course.id == CourseInstance.course_id)
         .outerjoin(
             EventRegistration,
             db.and_(
                 EventRegistration.instance_id == CourseInstance.id,
-                EventRegistration.status.notin_(['cancelled']),
+                occupied_clause(),
             ),
         )
         .filter(
@@ -47,9 +49,9 @@ def capacity_map(course_ids):
         .all()
     )
     capacity = {}
-    for inst_id, inst_max, course_max, active_count in rows:
+    for inst_id, inst_max, course_max, occupied in rows:
         cap = inst_max if inst_max is not None else course_max
-        capacity[inst_id] = None if cap is None else max(cap - active_count, 0)
+        capacity[inst_id] = seats_left(cap, occupied)
     return capacity
 
 
@@ -73,14 +75,14 @@ def upcoming_capacity(course_ids=None, now=None):
             CourseInstance.id,
             CourseInstance.max_participants,
             Course.max_participants.label('course_max'),
-            func.count(EventRegistration.id).label('active_count'),
+            func.count(EventRegistration.id).label('occupied'),
         )
         .join(Course, Course.id == CourseInstance.course_id)
         .outerjoin(
             EventRegistration,
             db.and_(
                 EventRegistration.instance_id == CourseInstance.id,
-                EventRegistration.status.notin_(['cancelled']),
+                occupied_clause(),
             ),
         )
         .filter(
@@ -101,9 +103,9 @@ def upcoming_capacity(course_ids=None, now=None):
         query = query.filter(CourseInstance.course_id.in_(course_ids))
 
     capacity, open_courses = {}, set()
-    for course_id, inst_id, inst_max, course_max, active_count in query.all():
+    for course_id, inst_id, inst_max, course_max, occupied in query.all():
         cap = inst_max if inst_max is not None else course_max
-        left = None if cap is None else max(cap - active_count, 0)
+        left = seats_left(cap, occupied)
         capacity[inst_id] = left
         if left is None or left > 0:
             open_courses.add(course_id)

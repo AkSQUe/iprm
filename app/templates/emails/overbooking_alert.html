@@ -1,0 +1,37 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, alert_warning, spacer %}
+
+{% block title %}Перевищення місць на заході{% endblock %}
+
+{% block preview_text %}{{ event_title }}: оплачено {{ occupied }} місць із {{ capacity }}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
+        Перевищення місць: {{ occupied }}/{{ capacity }}
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+        Оплата надійшла вже після того, як місця на захід розібрали. Гроші прийнято, реєстрацію підтверджено — але оплачених учасників тепер більше, ніж місць у залі.
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">{{ event_title }}</p>
+                {% if event_date %}{{ detail_row("Дата", event_date, label_width='150px') }}{% endif %}
+                {{ detail_row("Місткість", capacity, label_width='150px') }}
+                {{ detail_row("Оплачених місць", occupied, label_width='150px') }}
+                {{ detail_row("Перевищення", overflow, label_width='150px') }}
+                {{ detail_row("Учасник", participant_name, label_width='150px') }}
+                {{ detail_row("Реєстрація", 'REG-' ~ registration_id, label_width='150px') }}
+            </td>
+        </tr>
+    </table>
+
+    {% if admin_url %}
+    {{ button_primary("Відкрити реєстрації заходу", admin_url) }}
+    {{ spacer(8) }}
+    {% endif %}
+
+    {{ alert_warning(None, "Потрібне рішення: додати місце в залі, перевести учасника на інше проведення або повернути кошти.") }}
+{% endblock %}

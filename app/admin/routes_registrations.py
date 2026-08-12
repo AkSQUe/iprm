@@ -89,11 +89,20 @@ def instance_registrations(instance_id):
         EventRegistration.instance_id == instance.id,
     ).group_by(EventRegistration.status).all()
     counts = dict(stat_rows)
+    # Місця тримають лише оплачені (services.seating), тому "зайнято" не
+    # дорівнює ані total, ані confirmed. Перевищення пулу шаблон показує
+    # червоним -- воно легальне (гроші прийняті), але потребує реакції.
+    from app.services.seating import occupied_count
+    occupied = occupied_count(instance.id)
+    capacity = instance.effective_max_participants
     stats = {
         'total': sum(counts.values()),
         'confirmed': counts.get('confirmed', 0),
         'pending': counts.get('pending', 0),
         'completed': counts.get('completed', 0),
+        'occupied': occupied,
+        'capacity': capacity,
+        'overbooked': capacity is not None and occupied > capacity,
     }
 
     return render_template(
@@ -194,6 +203,11 @@ def registration_payment(reg_id):
             referral_service.sync_reward_for_registration(reg)
         except Exception:
             logger.exception('Referral reward sync failed for reg %d', reg_id)
+        # Ручна відмітка оплати так само може перевищити пул -- сигналимо
+        # тим самим шляхом, що й LiqPay-callback (services.seating).
+        if new_ps == 'paid':
+            from app.services.seating import notify_overbooking_if_needed
+            notify_overbooking_if_needed(reg)
         if xhr:
             return jsonify({
                 'ok': True, 'value': reg.payment_status,

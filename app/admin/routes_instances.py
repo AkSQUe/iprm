@@ -17,6 +17,7 @@ from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
 from app.services import course_service
 from app.services.course_service import InvalidStatusTransition
+from app.services.seating import occupied_clause, occupied_counts
 
 audit_logger = logging.getLogger('audit')
 
@@ -103,6 +104,17 @@ def _instances_query(filters):
         .correlate(CourseInstance)
         .scalar_subquery()
     )
+    # Місця тримають лише оплачені (services.seating), тож "заповнені" й
+    # "є вільні місця" рахуються не так, як "з реєстраціями".
+    occupied = (
+        db.session.query(func.count(EventRegistration.id))
+        .filter(
+            EventRegistration.instance_id == CourseInstance.id,
+            occupied_clause(),
+        )
+        .correlate(CourseInstance)
+        .scalar_subquery()
+    )
     course_max = (
         db.session.query(Course.max_participants)
         .filter(Course.id == CourseInstance.course_id)
@@ -147,9 +159,9 @@ def _instances_query(filters):
     elif quick == 'no_regs':
         query = query.filter(active_count == 0)
     elif quick == 'free_seats':
-        query = query.filter(or_(capacity.is_(None), active_count < capacity))
+        query = query.filter(or_(capacity.is_(None), occupied < capacity))
     elif quick == 'full':
-        query = query.filter(capacity.isnot(None), active_count >= capacity)
+        query = query.filter(capacity.isnot(None), occupied >= capacity)
     elif quick == 'attention':
         query = query.filter(
             CourseInstance.start_date >= now,
@@ -204,6 +216,9 @@ def instances_list():
         instances=instances,
         pagination=pagination,
         reg_counts=_instance_reg_counts(instances),
+        # Зайняті місця показуємо окремо від реєстрацій: тримають місце лише
+        # оплачені, і саме тут видно перевищення пулу (7/6 червоним).
+        occupied_map=occupied_counts([i.id for i in instances]),
         filters=filters,
         filter_args=_listing.filter_args(filters),
         course_options=[
@@ -250,7 +265,8 @@ def instances_report_export():
     return _listing.xlsx_export(
         instances, 'instances',
         lambda: xlsx_reports.export_instances_report_xlsx(
-            instances, _instance_reg_counts(instances), applied_filters=summary),
+            instances, _instance_reg_counts(instances),
+            occupied_counts([i.id for i in instances]), applied_filters=summary),
         'admin.instances_list', **_listing.filter_args(filters),
     )
 

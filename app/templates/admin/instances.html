@@ -110,6 +110,7 @@
         <th>Формат</th>
         <th>Статус</th>
         <th>Реєстрацій</th>
+        <th>Місця</th>
         <th>Локація</th>
         <th>Дії</th>
       </tr>
@@ -146,6 +147,21 @@
           </form>
         </td>
         <td title="Активні реєстрації, без скасованих">{{ reg_counts.get(inst.id, 0) }}</td>
+        {# Місце тримає лише оплачена реєстрація. Перевищення (оплата прийшла
+           після заповнення пулу) підсвічуємо червоним -- це вимагає рішення
+           менеджера, а не мовчазного округлення. #}
+        {% set cap = inst.effective_max_participants %}
+        {% set occupied = occupied_map.get(inst.id, 0) %}
+        <td>
+          {% if cap %}
+          <span class="admin-seats{% if occupied > cap %} admin-seats--over{% endif %}"
+                title="{% if occupied > cap %}Перевищення пулу: оплачених більше, ніж місць{% else %}Оплачених місць із загальної місткості{% endif %}">
+            {{ occupied }}/{{ cap }}
+          </span>
+          {% else %}
+          <span class="admin-seats" title="Місткість не задана">{{ occupied }}/&infin;</span>
+          {% endif %}
+        </td>
         <td>{{ inst.location or '---' }}</td>
         <td>
           <div class="admin-table__actions">

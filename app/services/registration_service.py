@@ -80,15 +80,10 @@ def check_capacity(instance_id):
     if not cap:
         return True, locked_instance
 
-    active_count = (
-        db.session.query(func.count(EventRegistration.id))
-        .filter(
-            EventRegistration.instance_id == instance_id,
-            EventRegistration.status.notin_(['cancelled']),
-        )
-        .scalar()
-    )
-    return active_count < cap, locked_instance
+    # Місце тримає лише оплачена реєстрація (services.seating): неоплачені
+    # pending більше не блокують продаж.
+    from app.services.seating import occupied_count
+    return occupied_count(instance_id) < cap, locked_instance
 
 
 def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=None,

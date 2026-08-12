@@ -242,11 +242,30 @@ class CourseInstance(TimestampMixin, db.Model):
         )
 
     @property
+    def occupied_seats(self):
+        """Скільки місць реально зайнято -- рахуються лише оплачені.
+
+        Кеш `_cached_occupied` виставляє caller (batch-COUNT у лістингах),
+        інакше -- окремий запит. Правило й причина -- у services.seating.
+        """
+        cached = getattr(self, '_cached_occupied', None)
+        if cached is not None:
+            return cached
+        from app.services.seating import occupied_count
+        return occupied_count(self.id)
+
+    @property
     def has_capacity(self):
         cap = self.effective_max_participants
         if cap is None:
             return True
-        return self.registration_count < cap
+        return self.occupied_seats < cap
+
+    @property
+    def is_overbooked(self):
+        """Оплачених більше за місткість (оплата прийшла після заповнення)."""
+        from app.services.seating import is_overbooked
+        return is_overbooked(self.effective_max_participants, self.occupied_seats)
 
     @property
     def is_registration_open(self):

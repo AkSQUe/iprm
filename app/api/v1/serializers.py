@@ -263,13 +263,9 @@ def serialize_event_detail(course, instance=None) -> dict:
 
 
 def _seats_left(instance) -> int | None:
-    cap = instance.effective_max_participants
-    if cap is None:
-        return None
-    count = getattr(instance, '_cached_reg_count', None)
-    if count is None:
-        count = instance.registration_count
-    return max(0, cap - count)
+    """Вільні місця: місткість мінус ОПЛАЧЕНІ місця (services.seating)."""
+    from app.services.seating import seats_left
+    return seats_left(instance.effective_max_participants, instance.occupied_seats)
 
 
 def _registration_url(instance) -> str | None:

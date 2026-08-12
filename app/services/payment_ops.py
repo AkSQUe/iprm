@@ -210,6 +210,12 @@ class PaymentOps:
                 except Exception:
                     logger.exception('Failed to queue payment email for REG-%d', reg.id)
 
+                # Оплата могла прийти, коли місця вже розібрали: місце тримає
+                # лише оплачений (services.seating), тож гроші ми не
+                # відхиляємо -- сигналимо адміну про перевищення пулу.
+                from app.services.seating import notify_overbooking_if_needed
+                notify_overbooking_if_needed(reg)
+
                 # Блок 4.1 фаза 2: підтвердження email -- ПІСЛЯ списання
                 # коштів. Реєстрація/оплата не гейтяться підтвердженням,
                 # тож перший лист з посиланням шлемо оплаченому учаснику.
