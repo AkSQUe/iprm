@@ -409,9 +409,12 @@
   background-repeat: no-repeat;
 }
 
+/* apple-btn -- inline-flex без justify-content, тому на всю ширину картки
+   текст притискався до лівого краю (text-align не керує flex-елементами). */
 .iprm-format-card__cta {
   width: 100%;
   margin-top: auto;
+  justify-content: center;
   text-align: center;
 }
 
