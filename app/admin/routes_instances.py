@@ -111,15 +111,24 @@ def _instances_query(filters):
     )
     capacity = func.coalesce(CourseInstance.max_participants, course_max)
 
-    order = CourseInstance.start_date.desc()
+    # Вторинний ключ id -- щоб проведення з однаковою датою (а їх багато:
+    # кілька курсів в один день) не тасувались між перезавантаженнями. Без
+    # нього LIMIT 3 у next3 щоразу міг віддати інші три рядки.
+    order = (CourseInstance.start_date.desc(), CourseInstance.id.desc())
     next3 = False
 
     if quick == 'upcoming':
         query = query.filter(CourseInstance.start_date >= now)
-        order = CourseInstance.start_date.asc()
+        order = (CourseInstance.start_date.asc(), CourseInstance.id.asc())
     elif quick == 'next3':
-        query = query.filter(CourseInstance.start_date >= now)
-        order = CourseInstance.start_date.asc()
+        # Лише реальні заходи: чернетки й скасовані займали всі три слоти і
+        # витісняли опубліковане проведення того самого дня -- на екран
+        # потрапляли чужі лічильники реєстрацій.
+        query = query.filter(
+            CourseInstance.start_date >= now,
+            CourseInstance.status.in_(('published', 'active')),
+        )
+        order = (CourseInstance.start_date.asc(), CourseInstance.id.asc())
         next3 = True
     elif quick == 'past':
         query = query.filter(CourseInstance.start_date < now)
@@ -132,7 +141,7 @@ def _instances_query(filters):
             CourseInstance.start_date >= month_start,
             CourseInstance.start_date < month_end,
         )
-        order = CourseInstance.start_date.asc()
+        order = (CourseInstance.start_date.asc(), CourseInstance.id.asc())
     elif quick == 'with_regs':
         query = query.filter(active_count > 0)
     elif quick == 'no_regs':
@@ -147,7 +156,7 @@ def _instances_query(filters):
             CourseInstance.start_date <= now + timedelta(days=14),
             active_count == 0,
         )
-        order = CourseInstance.start_date.asc()
+        order = (CourseInstance.start_date.asc(), CourseInstance.id.asc())
 
     return query, order, next3
 
@@ -181,10 +190,10 @@ def instances_list():
     query, order, next3 = _instances_query(filters)
 
     if next3:
-        instances = query.order_by(order).limit(3).all()
+        instances = query.order_by(*order).limit(3).all()
         pagination = None
     else:
-        pagination = query.order_by(order).paginate(
+        pagination = query.order_by(*order).paginate(
             page=request.args.get('page', 1, type=int),
             per_page=_INSTANCES_PER_PAGE, error_out=False,
         )
@@ -218,7 +227,7 @@ def instances_report_export():
 
     filters = _instance_filters()
     query, order, next3 = _instances_query(filters)
-    query = query.order_by(order)
+    query = query.order_by(*order)
     instances = query.limit(3).all() if next3 else query.all()
 
     course = (

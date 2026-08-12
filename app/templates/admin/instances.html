@@ -118,7 +118,14 @@
       {% for inst in instances %}
       <tr>
         <td>{{ inst.start_date.strftime('%d.%m.%Y %H:%M') if inst.start_date else '---' }}</td>
-        <td><strong>{{ inst.course.title if inst.course else '---' }}</strong></td>
+        <td>
+          {% if inst.course %}
+          <a href="{{ url_for('admin.instance_registrations', instance_id=inst.id) }}"
+             title="Зареєстровані на це проведення"><strong>{{ inst.course.title }}</strong></a>
+          {% else %}
+          <strong>---</strong>
+          {% endif %}
+        </td>
         <td>{{ inst.format_label or '---' }}</td>
         <td>
           <form method="POST"
@@ -138,7 +145,7 @@
             </noscript>
           </form>
         </td>
-        <td>{{ reg_counts.get(inst.id, 0) }}</td>
+        <td title="Активні реєстрації, без скасованих">{{ reg_counts.get(inst.id, 0) }}</td>
         <td>{{ inst.location or '---' }}</td>
         <td>
           <div class="admin-table__actions">
