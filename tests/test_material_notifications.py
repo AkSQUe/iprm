@@ -301,6 +301,62 @@ def test_mm_status_webhook_legacy_payload_still_works(app, client):
     assert fresh.items[0].quantity_actual == 4
 
 
+def test_consumed_push_does_not_overwrite_reserved(app, client):
+    """У термінальному штовху `quantity` означає СПОЖИТЕ, а не погоджене.
+
+    MM Medic перезаписує кількість рядка фактично використаною
+    (`submit_actuals`), тож прийняти її як погоджену -- це стерти в дзеркалі
+    цифру, на якій тримаються пікінг-лист (`materials_picking.html`) і звіт
+    «зарезервовано проти спожитого» (`xlsx_io`). Аналітика «скільки не
+    використали» при цьому схлопується в нуль, і помітити це нічим.
+    """
+    _enable_mm()
+    inst = _make_instance(slug_suffix='keepres')
+    res = _make_reservation(inst, slug_suffix='keepres')  # quantity_reserved=5
+
+    _post_status(client, {'external_ref': res.external_ref, 'status': 'consumed',
+                          'items': [{'sku': 'NDL-21', 'quantity': 4}]})
+
+    item = MaterialReservation.query.get(res.id).items[0]
+    assert item.quantity_actual == 4
+    assert item.quantity_reserved == 5, 'погоджену кількість затерто спожитою'
+
+
+def test_line_absent_from_consumed_push_is_zeroed(app, client):
+    """Рядок зникає з термінального payload рівно тоді, коли повернули все.
+
+    MM Medic звільняє утримання з нульовим фактом, і лінія випадає з `items`
+    (`_serialize` лишає тільки active/consumed). Лишити її «зарезервованою»
+    назавжди -- показувати комірнику матеріал, який давно на складі.
+    """
+    _enable_mm()
+    inst = _make_instance(slug_suffix='zeroed')
+    res = _make_reservation(inst, slug_suffix='zeroed')  # NDL-21, reserved=5
+
+    _post_status(client, {'external_ref': res.external_ref, 'status': 'consumed',
+                          'items': []})
+
+    item = MaterialReservation.query.get(res.id).items[0]
+    assert item.quantity_actual == 0
+    assert item.quantity_returned == 5
+    assert item.quantity_reserved == 5  # погоджене лишається як факт історії
+
+
+def test_non_terminal_push_still_sets_reserved(app, client):
+    """Поки резерв живий, legacy `quantity` -- це саме погоджене."""
+    _enable_mm()
+    inst = _make_instance(slug_suffix='alive')
+    res = _make_reservation(inst, status=MaterialReservationStatus.SUBMITTED,
+                            slug_suffix='alive')
+
+    _post_status(client, {'external_ref': res.external_ref, 'status': 'active',
+                          'items': [{'sku': 'NDL-21', 'quantity': 9}]})
+
+    item = MaterialReservation.query.get(res.id).items[0]
+    assert item.quantity_reserved == 9
+    assert item.quantity_actual is None
+
+
 # ----------------------------- trainer public view + overview export -----------------------------
 
 def test_trainer_materials_public_view(app, client):

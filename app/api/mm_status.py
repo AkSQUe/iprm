@@ -96,26 +96,49 @@ def _as_int(value):
         return None
 
 
+#: Статуси, після яких резерв закритий: у payload лежать ФАКТИЧНІ кількості.
+_TERMINAL_STATUSES = ('consumed', 'completed')
+
+
 def _apply_items(reservation, items, remote_status):
     """Write the five per-line quantities from the payload onto the mirror.
 
     Handles both payload shapes: the legacy one carries a single ``quantity``,
-    the new one carries the four lifecycle quantities. Lines absent from the
-    payload are left alone rather than zeroed -- a partial push must not look
-    like "everything went back to nought".
+    the new one carries the four lifecycle quantities.
+
+    ЗМІСТ ``quantity`` ЗАЛЕЖИТЬ ВІД СТАТУСУ, і це не наша примха. MM Medic на
+    ``consumed`` перезаписує кількість рядка фактично спожитою
+    (``partner_event_reservation_service.submit_actuals``), тож у термінальному
+    штовху те саме поле означає «використано», а не «погоджено». Приймати його
+    як погоджене означало б стерти в дзеркалі цифру, на якій тримаються
+    пікінг-лист і звіт «зарезервовано проти спожитого».
+
+    Рядки, ВІДСУТНІ в payload, звичайно не чіпаються: частковий штовх не має
+    виглядати як «усе обнулилось». Виняток — термінальний штовх: там рядок
+    зникає з payload рівно тоді, коли повернули все (MM Medic звільняє утримання
+    з нульовим фактом), і лишити його «зарезервованим» назавжди -- гірше.
     """
     if not isinstance(items, list):
         return False
+
+    terminal = remote_status in _TERMINAL_STATUSES
 
     by_sku = {}
     for raw in items:
         if isinstance(raw, dict) and raw.get('sku'):
             by_sku[raw['sku']] = raw
-    if not by_sku:
+    if not by_sku and not terminal:
         return False
 
     changed = False
     existing = {item.sku: item for item in reservation.items}
+
+    if terminal:
+        for sku, item in existing.items():
+            if sku not in by_sku and item.quantity_actual != 0:
+                item.quantity_actual = 0
+                item.quantity_returned = item.quantity_reserved
+                changed = True
 
     for sku, raw in by_sku.items():
         item = existing.get(sku)
@@ -131,9 +154,11 @@ def _apply_items(reservation, items, remote_status):
         issued = _as_int(raw.get('quantity_issued'))
         returned = _as_int(raw.get('quantity_returned'))
 
-        # Legacy payload: the single `quantity` is the approved/held figure,
-        # and on a consumed push it doubles as the actually-used figure.
-        if approved is None:
+        # Legacy payload: `quantity` -- це погоджене, але ЛИШЕ поки резерв
+        # живий. У термінальному штовху воно вже означає спожите (див.
+        # докстрінг), тож погодженого в такому payload немає взагалі, і
+        # чіпати `quantity_reserved` не можна.
+        if approved is None and not terminal:
             approved = legacy_qty
 
         fields = {
@@ -152,7 +177,7 @@ def _apply_items(reservation, items, remote_status):
         effective_issued = fields['quantity_issued']
         if effective_issued is not None:
             fields['quantity_actual'] = effective_issued - (fields['quantity_returned'] or 0)
-        elif remote_status in ('consumed', 'completed') and legacy_qty is not None:
+        elif terminal and legacy_qty is not None:
             fields['quantity_actual'] = legacy_qty
 
         for attr, value in fields.items():
