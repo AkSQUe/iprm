@@ -120,6 +120,29 @@ class TestEventsList:
         assert card['registration_url'].endswith(f'/registration/instance/{inst_id}/register')
         assert card['detail_url'].endswith(f'/courses/{published_event.slug}')
 
+    def test_card_carries_trainer_identity(self, client, partner_settings,
+                                           published_event):
+        """MM Medic звʼязує свого користувача з тренером за id (email -- для
+        автопідбору при першому налаштуванні). Без цих двох полів роль
+        «Тренер» там не має за чим відрізнити свої заходи від чужих, а
+        звʼязування за іменем ламають тезки й зміна прізвища."""
+        from app.models.trainer import Trainer
+
+        trainer = Trainer(full_name='Іван Тренер', slug=f'tr-{_uid()}',
+                          email='trainer@example.com', role='Лікар')
+        db.session.add(trainer)
+        db.session.flush()
+        published_event._test_instance.trainer_id = trainer.id
+        db.session.commit()
+
+        resp = client.get('/api/v1/events', headers={'X-API-Key': API_KEY})
+        card = next(e for e in resp.get_json()['items']
+                    if e['slug'] == published_event.slug)
+
+        assert card['trainer']['id'] == trainer.id
+        assert card['trainer']['email'] == 'trainer@example.com'
+        assert card['trainer']['full_name'] == 'Іван Тренер'
+
     def test_pagination_bounds(self, client, partner_settings, published_event):
         """per_page > MAX_PER_PAGE -> 400 Bad Request з error-повідомленням."""
         resp = client.get(

@@ -62,12 +62,23 @@ def serialize_city(city) -> dict | None:
 
 
 def serialize_trainer(trainer) -> dict | None:
+    """Тренер для партнерського API.
+
+    ``id`` та ``email`` потрібні MM Medic, щоб звʼязати свого користувача з
+    цим тренером: там зʼявляється роль «Тренер», яка бачить лише заходи
+    СВОЇХ курсів. За іменем таке звʼязування робити не можна -- тезки й
+    зміна прізвища тихо перемкнули б людині видимість. ``id`` -- стабільний
+    ключ звʼязку, ``email`` -- те, за чим зіставлення підбирається
+    автоматично при першому налаштуванні.
+    """
     if not trainer:
         return None
     return {
+        'id': trainer.id,
         'slug': trainer.slug,
         'full_name': trainer.full_name,
         'role': trainer.role,
+        'email': trainer.email,
         'photo_url': _image_url(trainer.photo_src),
     }
 
