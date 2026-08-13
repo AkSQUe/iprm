@@ -1,9 +1,14 @@
 """Inbound receiver for MM Medic -> IPRM reservation status webhooks.
 
-MM Medic pushes a reservation's current state when it changes outside the partner
-API flow (hold expiry, manual release/consume by warehouse staff). IPRM updates
-the local MaterialReservation so its status is real-time without waiting for the
-30-minute reconcile job.
+MM Medic pushes a reservation's current state whenever it changes. Two kinds of
+change arrive here:
+
+  * changes to a request IPRM itself started (approval, issue, expiry, manual
+    release by warehouse staff) -- we update the local mirror;
+  * a request that was BORN on MM Medic, submitted by a trainer in its admin.
+    IPRM has never seen that external_ref, so the row is created here. Without
+    this the trainer's materials page and /admin/materials would simply never
+    show it -- the reconcile job only ever revisits refs it already knows.
 
 Auth mirrors the partner API: HMAC-SHA256(secret, "<timestamp>.<raw_body>") with
 the shared partner_webhook_secret + X-IPRM-Timestamp (replay window 300s).
@@ -12,11 +17,18 @@ import hashlib
 import hmac
 import logging
 import time
+from datetime import datetime, timezone
 
 from flask import Blueprint, jsonify, request
 
 from app.extensions import db, csrf, limiter
-from app.models.material_reservation import MaterialReservation, MaterialReservationStatus
+from app.models.course_instance import CourseInstance
+from app.models.material_reservation import (
+    MaterialReservation,
+    MaterialReservationItem,
+    MaterialReservationOrigin,
+    MaterialReservationStatus,
+)
 from app.models.site_settings import SiteSettings
 from app.services import material_reservation_service as mrs
 
@@ -27,13 +39,128 @@ mm_status_bp = Blueprint('mm_status', __name__, url_prefix='/api/partner/mm-medi
 _SKEW_SECONDS = 300
 
 # MM Medic reservation/header status -> local MaterialReservationStatus.
+#
+# 'active' (legacy) and 'approved' (new) both land on RESERVED: both mean the
+# hold exists. Keeping them on one local value is what lets the six
+# `status == RESERVED` gates in admin/routes_materials.py stay correct.
+# 'consumed' (legacy) and 'completed' (new) likewise share CONSUMED.
 _STATUS_MAP = {
+    'submitted': MaterialReservationStatus.SUBMITTED,
     'active': MaterialReservationStatus.RESERVED,
+    'approved': MaterialReservationStatus.RESERVED,
+    'issued': MaterialReservationStatus.ISSUED,
     'consumed': MaterialReservationStatus.CONSUMED,
+    'completed': MaterialReservationStatus.CONSUMED,
+    'rejected': MaterialReservationStatus.REJECTED,
     'cancelled': MaterialReservationStatus.CANCELLED,
-    'expired': MaterialReservationStatus.EXPIRED,
     'released': MaterialReservationStatus.CANCELLED,
+    'expired': MaterialReservationStatus.EXPIRED,
 }
+
+# Statuses that carry nothing worth filing if we have never heard of the ref:
+# there is no history to preserve and no action left to take.
+_NO_CREATE_STATUSES = (
+    MaterialReservationStatus.CANCELLED,
+    MaterialReservationStatus.EXPIRED,
+)
+
+
+def _as_utc(value):
+    """Force a datetime to aware UTC. SQLite hands DateTime(timezone=True) back
+    NAIVE, so a stored value and a freshly parsed one are not comparable without
+    this -- the mismatch raises TypeError and turns the webhook into a 500."""
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
+def _parse_dt(raw):
+    """Parse an ISO-8601 timestamp into an aware UTC datetime, or None."""
+    if not raw:
+        return None
+    try:
+        return _as_utc(datetime.fromisoformat(str(raw).replace('Z', '+00:00')))
+    except (TypeError, ValueError):
+        return None
+
+
+def _as_int(value):
+    """Coerce a payload number to int; None stays None (means 'not reported')."""
+    if value is None or value == '':
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _apply_items(reservation, items, remote_status):
+    """Write the five per-line quantities from the payload onto the mirror.
+
+    Handles both payload shapes: the legacy one carries a single ``quantity``,
+    the new one carries the four lifecycle quantities. Lines absent from the
+    payload are left alone rather than zeroed -- a partial push must not look
+    like "everything went back to nought".
+    """
+    if not isinstance(items, list):
+        return False
+
+    by_sku = {}
+    for raw in items:
+        if isinstance(raw, dict) and raw.get('sku'):
+            by_sku[raw['sku']] = raw
+    if not by_sku:
+        return False
+
+    changed = False
+    existing = {item.sku: item for item in reservation.items}
+
+    for sku, raw in by_sku.items():
+        item = existing.get(sku)
+        if item is None:
+            item = MaterialReservationItem(sku=sku, quantity_reserved=0)
+            reservation.items.append(item)
+            existing[sku] = item
+            changed = True
+
+        legacy_qty = _as_int(raw.get('quantity'))
+        requested = _as_int(raw.get('quantity_requested'))
+        approved = _as_int(raw.get('quantity_approved'))
+        issued = _as_int(raw.get('quantity_issued'))
+        returned = _as_int(raw.get('quantity_returned'))
+
+        # Legacy payload: the single `quantity` is the approved/held figure,
+        # and on a consumed push it doubles as the actually-used figure.
+        if approved is None:
+            approved = legacy_qty
+
+        fields = {
+            'name': raw.get('name') or item.name,
+            'image_url': raw.get('image') or raw.get('image_url') or item.image_url,
+            'quantity_requested': requested if requested is not None else item.quantity_requested,
+            'quantity_issued': issued if issued is not None else item.quantity_issued,
+            'quantity_returned': returned if returned is not None else item.quantity_returned,
+        }
+        if approved is not None:
+            fields['quantity_reserved'] = approved
+
+        # Consumed = issued minus returned. Fall back to the legacy behaviour
+        # (a `consumed` push whose `quantity` IS the used amount) so an older
+        # MM Medic build keeps working until it ships the new payload.
+        effective_issued = fields['quantity_issued']
+        if effective_issued is not None:
+            fields['quantity_actual'] = effective_issued - (fields['quantity_returned'] or 0)
+        elif remote_status in ('consumed', 'completed') and legacy_qty is not None:
+            fields['quantity_actual'] = legacy_qty
+
+        for attr, value in fields.items():
+            if getattr(item, attr) != value:
+                setattr(item, attr, value)
+                changed = True
+
+    return changed
 
 
 @mm_status_bp.route('/reservation-status', methods=['POST'])
@@ -73,31 +200,70 @@ def reservation_status():
     if not external_ref:
         return jsonify({'status': 'missing_ref'}), 400
 
-    reservation = MaterialReservation.query.filter_by(external_ref=external_ref).first()
-    if reservation is None:
-        return jsonify({'status': 'unknown_ref'}), 200  # ack; nothing local to update
-
     local_status = _STATUS_MAP.get(remote_status)
-    changed = False
+    reservation = MaterialReservation.query.filter_by(external_ref=external_ref).first()
+    created = False
+
+    if reservation is None:
+        # A request born on MM Medic. Recover the захід from the ref and file it.
+        if local_status is None or local_status in _NO_CREATE_STATUSES:
+            return jsonify({'status': 'unknown_ref'}), 200
+        instance_id = mrs.instance_id_from_ref(external_ref)
+        if instance_id is None:
+            return jsonify({'status': 'unknown_ref'}), 200
+        if not db.session.get(CourseInstance, instance_id):
+            # The захід does not exist here (deleted, or a ref from another
+            # environment). Ack so MM Medic stops retrying a hopeless push.
+            logger.warning('MM Medic status webhook for unknown instance %s (ref=%s)',
+                           instance_id, external_ref)
+            return jsonify({'status': 'unknown_instance'}), 200
+        reservation = MaterialReservation(
+            instance_id=instance_id,
+            external_ref=external_ref,
+            status=local_status,
+            origin=payload.get('origin') or MaterialReservationOrigin.TRAINER,
+            sent_at=datetime.now(timezone.utc),
+        )
+        db.session.add(reservation)
+        created = True
+
+    remote_updated_at = _parse_dt(payload.get('updated_at'))
+    stored_updated_at = _as_utc(reservation.remote_updated_at)
+    if (not created and remote_updated_at and stored_updated_at
+            and remote_updated_at < stored_updated_at):
+        # Pushes are posted off-thread on MM Medic and can overtake each other.
+        # An older snapshot must never undo a newer one.
+        return jsonify({'status': 'stale_push',
+                        'reservation_status': reservation.status}), 200
+
+    changed = created
     if local_status and reservation.status != local_status:
         reservation.status = local_status
         changed = True
 
-    # Sync per-line actuals when the event was consumed on MM Medic.
-    items = payload.get('items') or []
-    if remote_status == 'consumed' and isinstance(items, list):
-        actual_map = {it.get('sku'): it.get('quantity')
-                      for it in items if isinstance(it, dict) and it.get('sku')}
-        for item in reservation.items:
-            if item.sku in actual_map:
-                item.quantity_actual = actual_map[item.sku]
-                changed = True
+    document_number = payload.get('document_number')
+    if document_number and reservation.document_number != document_number:
+        reservation.document_number = document_number
+        changed = True
+
+    if _apply_items(reservation, payload.get('items') or [], remote_status):
+        changed = True
+
+    if local_status == MaterialReservationStatus.CONSUMED and not reservation.consumed_at:
+        reservation.consumed_at = datetime.now(timezone.utc)
+        changed = True
 
     if changed:
+        if remote_updated_at:
+            reservation.remote_updated_at = remote_updated_at
         reservation.last_response = payload
         db.session.commit()
         mrs.invalidate_catalog_cache()
-        logger.info('MM Medic status webhook applied ref=%s -> %s',
+        logger.info('MM Medic status webhook %s ref=%s -> %s',
+                    'created' if created else 'applied',
                     external_ref, reservation.status)
 
-    return jsonify({'status': 'ok', 'reservation_status': reservation.status}), 200
+    return jsonify({
+        'status': 'created' if created else 'ok',
+        'reservation_status': reservation.status,
+    }), 200

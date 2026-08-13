@@ -26,8 +26,28 @@ _TEMPLATES_TTL = 120  # seconds -- templates change rarely
 _templates_cache = {'data': None, 'ts': 0.0}
 
 
+_EXTERNAL_REF_PREFIX = 'iprm-instance-'
+
+
 def external_ref_for(instance_id) -> str:
-    return f'iprm-instance-{instance_id}'
+    return f'{_EXTERNAL_REF_PREFIX}{instance_id}'
+
+
+def instance_id_from_ref(external_ref):
+    """Inverse of external_ref_for; None when the ref is not one of ours.
+
+    MM Medic now originates requests too (a trainer submits one there), so the
+    status webhook can carry a ref we have never seen. Recovering the instance
+    from the ref is the only way to file it against the right захід -- which is
+    why the format lives in exactly one place, next to its generator.
+    """
+    ref = (external_ref or '').strip()
+    if not ref.startswith(_EXTERNAL_REF_PREFIX):
+        return None
+    try:
+        return int(ref[len(_EXTERNAL_REF_PREFIX):])
+    except (TypeError, ValueError):
+        return None
 
 
 def get_client() -> MMMedicClient:

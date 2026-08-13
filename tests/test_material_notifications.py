@@ -164,6 +164,143 @@ def test_mm_status_webhook_unknown_ref_acked(app, client):
     assert r.status_code == 200
 
 
+# --------------- requests born on MM Medic (trainer submits there) ---------------
+
+def _post_status(client, payload):
+    body = json.dumps(payload).encode()
+    return client.post('/api/partner/mm-medic/reservation-status',
+                       data=body, headers=_mm_headers(body))
+
+
+def test_instance_id_from_ref_roundtrip(app):
+    from app.services import material_reservation_service as mrs
+    assert mrs.instance_id_from_ref(mrs.external_ref_for(42)) == 42
+    assert mrs.instance_id_from_ref('iprm-instance-abc') is None
+    assert mrs.instance_id_from_ref('some-other-ref-7') is None
+    assert mrs.instance_id_from_ref('') is None
+
+
+def test_mm_status_webhook_creates_row_for_trainer_request(app, client):
+    """A trainer submitted the request in MM Medic -- IPRM has never seen the ref.
+
+    Without creation here the захід would show no materials at all, because the
+    reconcile job only revisits refs it already knows.
+    """
+    _enable_mm()
+    inst = _make_instance(slug_suffix='born')
+    ref = f'iprm-instance-{inst.id}'
+    assert MaterialReservation.query.filter_by(external_ref=ref).first() is None
+
+    r = _post_status(client, {
+        'external_ref': ref,
+        'status': 'submitted',
+        'origin': 'trainer',
+        'document_number': 'ЗМ-000123',
+        'items': [{'sku': 'NDL-21', 'name': 'Голка 21G', 'quantity_requested': 7}],
+    })
+
+    assert r.status_code == 200
+    assert r.get_json()['status'] == 'created'
+    res = MaterialReservation.query.filter_by(external_ref=ref).first()
+    assert res is not None
+    assert res.instance_id == inst.id
+    assert res.status == MaterialReservationStatus.SUBMITTED
+    assert res.origin == 'trainer'
+    assert res.document_number == 'ЗМ-000123'
+    assert res.items[0].sku == 'NDL-21'
+    assert res.items[0].quantity_requested == 7
+
+
+def test_mm_status_webhook_approved_maps_to_reserved(app, client):
+    """`approved` must land on RESERVED: six `== RESERVED` gates in
+    admin/routes_materials.py depend on that value meaning "hold is active"."""
+    _enable_mm()
+    inst = _make_instance(slug_suffix='appr')
+    res = _make_reservation(inst, status=MaterialReservationStatus.SUBMITTED,
+                            slug_suffix='appr')
+
+    r = _post_status(client, {
+        'external_ref': res.external_ref,
+        'status': 'approved',
+        'items': [{'sku': 'NDL-21', 'quantity_requested': 5, 'quantity_approved': 4}],
+    })
+
+    assert r.status_code == 200
+    fresh = MaterialReservation.query.get(res.id)
+    assert fresh.status == MaterialReservationStatus.RESERVED
+    assert fresh.items[0].quantity_reserved == 4
+    assert fresh.items[0].quantity_requested == 5
+
+
+def test_mm_status_webhook_derives_consumed_from_issued_minus_returned(app, client):
+    _enable_mm()
+    inst = _make_instance(slug_suffix='ret')
+    res = _make_reservation(inst, slug_suffix='ret')
+
+    r = _post_status(client, {
+        'external_ref': res.external_ref,
+        'status': 'completed',
+        'items': [{'sku': 'NDL-21', 'quantity_approved': 10,
+                   'quantity_issued': 10, 'quantity_returned': 3}],
+    })
+
+    assert r.status_code == 200
+    item = MaterialReservation.query.get(res.id).items[0]
+    assert item.quantity_issued == 10
+    assert item.quantity_returned == 3
+    assert item.quantity_actual == 7  # спожито = видано - повернуто
+
+
+def test_mm_status_webhook_ignores_out_of_order_push(app, client):
+    """MM Medic posts status off-thread, so pushes can overtake each other.
+    An older snapshot must not undo a newer one."""
+    _enable_mm()
+    inst = _make_instance(slug_suffix='ooo')
+    ref = f'iprm-instance-{inst.id}'
+
+    _post_status(client, {'external_ref': ref, 'status': 'submitted',
+                          'updated_at': '2026-08-13T10:00:00+00:00', 'items': []})
+    _post_status(client, {'external_ref': ref, 'status': 'issued',
+                          'updated_at': '2026-08-13T12:00:00+00:00', 'items': []})
+
+    late = _post_status(client, {'external_ref': ref, 'status': 'submitted',
+                                 'updated_at': '2026-08-13T11:00:00+00:00', 'items': []})
+
+    assert late.status_code == 200
+    assert late.get_json()['status'] == 'stale_push'
+    assert (MaterialReservation.query.filter_by(external_ref=ref).first().status
+            == MaterialReservationStatus.ISSUED)
+
+
+def test_mm_status_webhook_does_not_create_row_for_cancelled(app, client):
+    """Nothing to file: no history to keep and no action left."""
+    _enable_mm()
+    inst = _make_instance(slug_suffix='canc')
+    ref = f'iprm-instance-{inst.id}'
+
+    r = _post_status(client, {'external_ref': ref, 'status': 'cancelled', 'items': []})
+
+    assert r.status_code == 200
+    assert r.get_json()['status'] == 'unknown_ref'
+    assert MaterialReservation.query.filter_by(external_ref=ref).first() is None
+
+
+def test_mm_status_webhook_legacy_payload_still_works(app, client):
+    """An older MM Medic build sends only `quantity` -- keep honouring it until
+    the new payload ships, otherwise the live integration breaks on deploy."""
+    _enable_mm()
+    inst = _make_instance(slug_suffix='lgcy')
+    res = _make_reservation(inst, slug_suffix='lgcy')
+
+    r = _post_status(client, {'external_ref': res.external_ref, 'status': 'consumed',
+                              'items': [{'sku': 'NDL-21', 'quantity': 4}]})
+
+    assert r.status_code == 200
+    fresh = MaterialReservation.query.get(res.id)
+    assert fresh.status == MaterialReservationStatus.CONSUMED
+    assert fresh.items[0].quantity_actual == 4
+
+
 # ----------------------------- trainer public view + overview export -----------------------------
 
 def test_trainer_materials_public_view(app, client):
