@@ -20,6 +20,7 @@ import time
 from datetime import datetime, timezone
 
 from flask import Blueprint, jsonify, request
+from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db, csrf, limiter
 from app.models.course_instance import CourseInstance
@@ -96,6 +97,46 @@ def _as_int(value):
         return None
 
 
+def _trim(value, length):
+    """Обрізати ОПИСОВЕ поле під довжину колонки.
+
+    SQLite мовчки пише будь-яку довжину, PostgreSQL кидає
+    StringDataRightTruncation — тобто без цього тести зелені, а прод віддає
+    500 і губить штовх (ретраїв у відправника немає).
+
+    Обрізаємо мовчки саме описові поля: зіпсована назва товару гірша за
+    відсутню, але не ламає звʼязків. Ідентифікатори натомість відхиляються
+    (`_payload_error`): обрізаний ідентифікатор -- це ІНШИЙ рядок.
+    """
+    if value is None:
+        return None
+    text = str(value)
+    return text[:length] if len(text) > length else text
+
+
+def _payload_error(payload, external_ref):
+    """Перевірити ідентифікуючі поля. Повертає код помилки або None."""
+    if len(external_ref) > 64:
+        return 'ref_too_long'
+    items = payload.get('items')
+    if isinstance(items, list):
+        for raw in items:
+            if isinstance(raw, dict) and len(str(raw.get('sku') or '')) > 100:
+                return 'sku_too_long'
+    return None
+
+
+def _origin(value):
+    """Походження з payload, звірене з білим списком.
+
+    Поле впливає лише на формулювання в інтерфейсі, тож невідоме значення --
+    привід відкотитись до дефолта, а не відмовити у прийомі документа.
+    """
+    if value in MaterialReservationOrigin.ALL:
+        return value
+    return MaterialReservationOrigin.TRAINER
+
+
 #: Статуси, після яких резерв закритий: у payload лежать ФАКТИЧНІ кількості.
 _TERMINAL_STATUSES = ('consumed', 'completed')
 
@@ -162,8 +203,9 @@ def _apply_items(reservation, items, remote_status):
             approved = legacy_qty
 
         fields = {
-            'name': raw.get('name') or item.name,
-            'image_url': raw.get('image') or raw.get('image_url') or item.image_url,
+            'name': _trim(raw.get('name'), 255) or item.name,
+            'image_url': _trim(raw.get('image') or raw.get('image_url'),
+                               500) or item.image_url,
             'quantity_requested': requested if requested is not None else item.quantity_requested,
             'quantity_issued': issued if issued is not None else item.quantity_issued,
             'quantity_returned': returned if returned is not None else item.quantity_returned,
@@ -225,6 +267,10 @@ def reservation_status():
     if not external_ref:
         return jsonify({'status': 'missing_ref'}), 400
 
+    invalid = _payload_error(payload, external_ref)
+    if invalid:
+        return jsonify({'status': invalid}), 400
+
     local_status = _STATUS_MAP.get(remote_status)
     reservation = MaterialReservation.query.filter_by(external_ref=external_ref).first()
     created = False
@@ -246,11 +292,31 @@ def reservation_status():
             instance_id=instance_id,
             external_ref=external_ref,
             status=local_status,
-            origin=payload.get('origin') or MaterialReservationOrigin.TRAINER,
+            origin=_origin(payload.get('origin')),
             sent_at=datetime.now(timezone.utc),
         )
+        # Вставку робимо ОКРЕМИМ flush, до того як у сесію потраплять рядки.
+        # `external_ref` унікальний, тож два одночасні штовхи на той самий
+        # новий ref дали б IntegrityError на спільному commit -- 500 і
+        # назавжди втрачений штовх, бо ретраїв у відправника немає. Тут же
+        # програвший просто перечитує переможця й працює далі.
+        #
+        # `rollback()` безпечний саме через порядок: у цій точці запиту сесія
+        # містить лише цю вставку, тож відкочувати більше нічого. SAVEPOINT
+        # був би акуратніший, але pysqlite ламає вкладені транзакції, і тести
+        # почали б брехати в обидва боки.
         db.session.add(reservation)
-        created = True
+        try:
+            db.session.flush()
+            created = True
+        except IntegrityError:
+            db.session.rollback()
+            reservation = MaterialReservation.query.filter_by(
+                external_ref=external_ref).first()
+            if reservation is None:
+                raise
+            logger.info('MM Medic status webhook lost the create race ref=%s',
+                        external_ref)
 
     remote_updated_at = _parse_dt(payload.get('updated_at'))
     stored_updated_at = _as_utc(reservation.remote_updated_at)
@@ -266,7 +332,7 @@ def reservation_status():
         reservation.status = local_status
         changed = True
 
-    document_number = payload.get('document_number')
+    document_number = _trim(payload.get('document_number'), 50)
     if document_number and reservation.document_number != document_number:
         reservation.document_number = document_number
         changed = True
@@ -278,9 +344,14 @@ def reservation_status():
         reservation.consumed_at = datetime.now(timezone.utc)
         changed = True
 
+    # Мітку просуваємо НЕЗАЛЕЖНО від `changed`: штовх, який нічого не змінив,
+    # усе одно є свіжішим знімком стану. Доки це стояло всередині `if changed`,
+    # наступний, справді старіший штовх проходив як «свіжий».
+    if remote_updated_at and remote_updated_at != stored_updated_at:
+        reservation.remote_updated_at = remote_updated_at
+        changed = True
+
     if changed:
-        if remote_updated_at:
-            reservation.remote_updated_at = remote_updated_at
         reservation.last_response = payload
         db.session.commit()
         mrs.invalidate_catalog_cache()

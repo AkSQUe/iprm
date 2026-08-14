@@ -342,6 +342,144 @@ def test_line_absent_from_consumed_push_is_zeroed(app, client):
     assert item.quantity_reserved == 5  # погоджене лишається як факт історії
 
 
+def test_mm_status_webhook_rejects_overlong_identifiers(app, client):
+    """Ідентифікатор обрізати не можна -- обрізаний вказує на ІНШИЙ рядок.
+
+    SQLite мовчки пише будь-яку довжину, PostgreSQL кидає
+    StringDataRightTruncation -- тобто без перевірки тест зелений, а прод
+    віддає 500 і губить штовх (ретраїв у відправника немає).
+    """
+    _enable_mm()
+    inst = _make_instance(slug_suffix='long')
+    res = _make_reservation(inst, slug_suffix='long')
+
+    r = _post_status(client, {'external_ref': 'iprm-instance-' + '9' * 80,
+                              'status': 'active', 'items': []})
+    assert r.status_code == 400
+    assert r.get_json()['status'] == 'ref_too_long'
+
+    r = _post_status(client, {'external_ref': res.external_ref, 'status': 'active',
+                              'items': [{'sku': 'X' * 120, 'quantity': 1}]})
+    assert r.status_code == 400
+    assert r.get_json()['status'] == 'sku_too_long'
+
+
+def test_mm_status_webhook_trims_descriptive_fields(app, client):
+    """Описові поля навпаки обрізаються мовчки: зіпсована назва гірша за
+    відсутню, але звʼязків не ламає."""
+    _enable_mm()
+    inst = _make_instance(slug_suffix='trim')
+    res = _make_reservation(inst, slug_suffix='trim')
+
+    r = _post_status(client, {
+        'external_ref': res.external_ref, 'status': 'active',
+        'document_number': 'D' * 90,
+        'items': [{'sku': 'NDL-21', 'quantity': 3, 'name': 'Н' * 400}],
+    })
+
+    assert r.status_code == 200
+    fresh = MaterialReservation.query.get(res.id)
+    assert len(fresh.document_number) == 50
+    assert len(fresh.items[0].name) == 255
+
+
+def test_mm_status_webhook_falls_back_on_unknown_origin(app, client):
+    _enable_mm()
+    inst = _make_instance(slug_suffix='orig')
+    ref = f'iprm-instance-{inst.id}'
+
+    _post_status(client, {'external_ref': ref, 'status': 'submitted',
+                          'origin': 'whatever-' + 'x' * 60, 'items': []})
+
+    res = MaterialReservation.query.filter_by(external_ref=ref).first()
+    assert res.origin == 'trainer'
+
+
+def test_repeated_push_is_idempotent(app, client):
+    """Повтор того самого штовха не плодить документів.
+
+    Це перевірка ЗВИЧАЙНОГО повтору (той самий ref приходить двічі
+    послідовно) -- саме він трапляється в житті. Справжня одночасна гонка
+    двох потоків однопотоковим тестом не відтворюється: другий запит бачить
+    уже закомічений рядок першого й до гілки створення не доходить. Захист
+    від неї (`except IntegrityError` з перечитуванням) лишається як
+    оборонний код і покритий лише читанням.
+    """
+    _enable_mm()
+    inst = _make_instance(slug_suffix='race')
+    ref = f'iprm-instance-{inst.id}'
+
+    first = _post_status(client, {'external_ref': ref, 'status': 'submitted',
+                                  'items': [{'sku': 'NDL-21', 'quantity': 2}]})
+    second = _post_status(client, {'external_ref': ref, 'status': 'submitted',
+                                   'items': [{'sku': 'NDL-21', 'quantity': 2}]})
+
+    assert first.status_code == 200 and second.status_code == 200
+    assert MaterialReservation.query.filter_by(external_ref=ref).count() == 1
+
+
+def test_stale_push_ignored_after_a_no_op_push(app, client):
+    """Мітка часу просувається навіть коли штовх нічого не змінив.
+
+    Доки це стояло всередині `if changed`, наступний, справді старіший штовх
+    проходив як «свіжий».
+    """
+    _enable_mm()
+    inst = _make_instance(slug_suffix='noop')
+    ref = f'iprm-instance-{inst.id}'
+
+    _post_status(client, {'external_ref': ref, 'status': 'issued',
+                          'updated_at': '2026-08-13T10:00:00+00:00', 'items': []})
+    # Той самий стан -- нічого не змінює, але знімок свіжіший.
+    _post_status(client, {'external_ref': ref, 'status': 'issued',
+                          'updated_at': '2026-08-13T12:00:00+00:00', 'items': []})
+
+    late = _post_status(client, {'external_ref': ref, 'status': 'submitted',
+                                 'updated_at': '2026-08-13T11:00:00+00:00',
+                                 'items': []})
+
+    assert late.get_json()['status'] == 'stale_push'
+    assert (MaterialReservation.query.filter_by(external_ref=ref).first().status
+            == MaterialReservationStatus.ISSUED)
+
+
+def test_ref_parser_rejects_lookalikes(app):
+    """`int()` приймає більше форм, ніж генератор виробляє: 'iprm-instance-1_0'
+    вказував би на захід 10, але зберігся б під іншим external_ref -- два
+    документи на один захід."""
+    from app.services import material_reservation_service as mrs
+
+    assert mrs.instance_id_from_ref('iprm-instance-1_0') is None
+    assert mrs.instance_id_from_ref('iprm-instance- 10') is None
+    assert mrs.instance_id_from_ref('iprm-instance-+10') is None
+    assert mrs.instance_id_from_ref('iprm-instance--5') is None
+    assert mrs.instance_id_from_ref('iprm-instance-' + '9' * 30) is None
+    assert mrs.instance_id_from_ref('iprm-instance-10') == 10
+
+
+def test_reconcile_covers_stuck_submitted_rows(app, monkeypatch):
+    """Штовх статусу без ретраїв можна проґавити на будь-якому кроці, тож
+    звірка мусить бачити не лише RESERVED."""
+    from app.services import material_reservation_service as mrs
+
+    inst = _make_instance(slug_suffix='stuck')
+    res = _make_reservation(inst, status=MaterialReservationStatus.SUBMITTED,
+                            slug_suffix='stuck')
+
+    class _Result:
+        ok = True
+        data = {'reservation': {'status': 'consumed', 'items': []}}
+
+    class _Client:
+        def get_reservation(self, ref):
+            return _Result()
+
+    monkeypatch.setattr(mrs, 'get_client', lambda: _Client())
+
+    assert mrs.reconcile_reservation(res) is True
+    assert res.status == MaterialReservationStatus.CONSUMED
+
+
 def test_non_terminal_push_still_sets_reserved(app, client):
     """Поки резерв живий, legacy `quantity` -- це саме погоджене."""
     _enable_mm()

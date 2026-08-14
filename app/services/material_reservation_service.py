@@ -44,10 +44,22 @@ def instance_id_from_ref(external_ref):
     ref = (external_ref or '').strip()
     if not ref.startswith(_EXTERNAL_REF_PREFIX):
         return None
-    try:
-        return int(ref[len(_EXTERNAL_REF_PREFIX):])
-    except (TypeError, ValueError):
+    raw = ref[len(_EXTERNAL_REF_PREFIX):]
+
+    # `isdigit()`, а не `int()`: останній приймає більше форм, ніж генератор
+    # виробляє. `int('1_0') == 10`, `int(' 10') == 10`, `int('+10') == 10` --
+    # тобто `iprm-instance-1_0` вказував би на той самий захід, але зберігся
+    # б під ІНШИМ external_ref (унікальність стоїть саме на ньому). Наслідок --
+    # два документи на один захід і недетермінований вибір між ними.
+    if not raw.isdigit():
         return None
+    value = int(raw)
+
+    # Межа BIGINT: більше значення дає psycopg2 NumericValueOutOfRange уже на
+    # SELECT, тобто 500 замість охайного «не знаємо такого».
+    if value <= 0 or value > 9223372036854775807:
+        return None
+    return value
 
 
 def get_client() -> MMMedicClient:
@@ -295,14 +307,43 @@ def adjust_actuals(instance, actuals, catalog_by_sku=None, request_id=None):
     return True, result
 
 
+#: Статуси, які звірка має право переглядати.
+#:
+#: Не лише RESERVED. Штовх статусу -- best effort: він летить окремим потоком
+#: без ретраїв, тож будь-який один перехід можна проґавити. Доки звірка
+#: дивилась лише на RESERVED, документ, що застряг у SUBMITTED або ISSUED,
+#: не лікувався НІКОЛИ -- саме той сценарій, заради якого звірка й існує.
+_RECONCILABLE = (
+    MaterialReservationStatus.SUBMITTED,
+    MaterialReservationStatus.RESERVED,
+    MaterialReservationStatus.ISSUED,
+)
+
+#: Статус на боці MM Medic -> локальний. Дзеркалить `_STATUS_MAP` приймача
+#: вебхука: два різні словники на одну відповідність розійшлися б на першому ж
+#: новому значенні.
+_REMOTE_TO_LOCAL = {
+    'submitted': MaterialReservationStatus.SUBMITTED,
+    'approved': MaterialReservationStatus.RESERVED,
+    'active': MaterialReservationStatus.RESERVED,
+    'issued': MaterialReservationStatus.ISSUED,
+    'consumed': MaterialReservationStatus.CONSUMED,
+    'completed': MaterialReservationStatus.CONSUMED,
+    'rejected': MaterialReservationStatus.REJECTED,
+    'cancelled': MaterialReservationStatus.CANCELLED,
+    'released': MaterialReservationStatus.CANCELLED,
+    'expired': MaterialReservationStatus.EXPIRED,
+}
+
+
 def reconcile_reservation(reservation):
-    """Sync one local RESERVED record with MM Medic (detect consumed / lapsed).
+    """Sync one local record with MM Medic (detect consumed / lapsed).
 
     MM Medic keeps the header 'active' even after its per-line holds expire, so an
     'active' header with no current lines means the reservation lapsed (event
     passed without actuals). Returns True if the local status changed.
     """
-    if reservation is None or reservation.status != MaterialReservationStatus.RESERVED:
+    if reservation is None or reservation.status not in _RECONCILABLE:
         return False
     try:
         client = get_client()
@@ -313,12 +354,10 @@ def reconcile_reservation(reservation):
         return False
     remote = (result.data or {}).get('reservation') or {}
     remote_status = remote.get('status')
-    new_status = None
-    if remote_status == 'consumed':
-        new_status = MaterialReservationStatus.CONSUMED
-    elif remote_status == 'cancelled':
-        new_status = MaterialReservationStatus.CANCELLED
-    elif remote_status == 'active' and not (remote.get('items') or []):
+    new_status = _REMOTE_TO_LOCAL.get(remote_status)
+    if (remote_status in ('active', 'approved')
+            and not (remote.get('items') or [])):
+        # Порожній «живий» заголовок означає, що утримання протухли.
         new_status = MaterialReservationStatus.EXPIRED
     if not new_status or new_status == reservation.status:
         return False
@@ -373,9 +412,13 @@ def send_pending_actuals_reminders(within_days=14, max_items=200):
 
 
 def reconcile_stale(max_items=200):
-    """Batch reconcile RESERVED reservations for instances whose end date passed.
+    """Batch reconcile open reservations for instances whose end date passed.
 
     Intended for a scheduled job. Returns the number of records updated.
+
+    Бере всі незакриті статуси (`_RECONCILABLE`), а не лише RESERVED: штовх
+    статусу не має ретраїв, тож документ може застрягти на будь-якому кроці, і
+    саме звірка -- єдине, що це виправляє.
     """
     try:
         get_client()
@@ -384,7 +427,7 @@ def reconcile_stale(max_items=200):
     now = datetime.now(timezone.utc)
     q = (MaterialReservation.query
          .join(CourseInstance, CourseInstance.id == MaterialReservation.instance_id)
-         .filter(MaterialReservation.status == MaterialReservationStatus.RESERVED,
+         .filter(MaterialReservation.status.in_(_RECONCILABLE),
                  CourseInstance.end_date.isnot(None),
                  CourseInstance.end_date < now)
          .limit(max_items))
