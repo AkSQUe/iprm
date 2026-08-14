@@ -277,10 +277,20 @@ def reservation_status():
 
     if reservation is None:
         # A request born on MM Medic. Recover the захід from the ref and file it.
+        #
+        # Кожна відмова тут ЛОГУЄТЬСЯ. Ці гілки віддають 200 (щоб відправник не
+        # довбав безнадійний штовх), тобто зовні вони не відрізняються від
+        # успіху -- а означають втрачений документ. Доти успіх писався в лог,
+        # а втрата мовчала.
         if local_status is None or local_status in _NO_CREATE_STATUSES:
+            logger.warning(
+                'MM Medic status webhook dropped: ref=%s status=%r not creatable',
+                external_ref, remote_status)
             return jsonify({'status': 'unknown_ref'}), 200
         instance_id = mrs.instance_id_from_ref(external_ref)
         if instance_id is None:
+            logger.warning('MM Medic status webhook dropped: ref=%s is not ours',
+                           external_ref)
             return jsonify({'status': 'unknown_ref'}), 200
         if not db.session.get(CourseInstance, instance_id):
             # The захід does not exist here (deleted, or a ref from another
@@ -324,11 +334,18 @@ def reservation_status():
             and remote_updated_at < stored_updated_at):
         # Pushes are posted off-thread on MM Medic and can overtake each other.
         # An older snapshot must never undo a newer one.
+        logger.info('MM Medic status webhook out of order ref=%s (%s < %s)',
+                    external_ref, remote_updated_at, stored_updated_at)
         return jsonify({'status': 'stale_push',
                         'reservation_status': reservation.status}), 200
 
     changed = created
-    if local_status and reservation.status != local_status:
+    if local_status is None:
+        # Невідомий статус: рядок лишається як був. Без логу це виглядало б як
+        # успішно застосований штовх.
+        logger.warning('MM Medic status webhook: unknown status %r for ref=%s',
+                       remote_status, external_ref)
+    elif reservation.status != local_status:
         reservation.status = local_status
         changed = True
 
