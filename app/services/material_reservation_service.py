@@ -5,6 +5,7 @@ admin routes stay thin. The source of truth for stock is MM Medic; these records
 are IPRM's own audit keyed to a CourseInstance.
 """
 import logging
+import re
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -46,18 +47,24 @@ def instance_id_from_ref(external_ref):
         return None
     raw = ref[len(_EXTERNAL_REF_PREFIX):]
 
-    # `isdigit()`, а не `int()`: останній приймає більше форм, ніж генератор
-    # виробляє. `int('1_0') == 10`, `int(' 10') == 10`, `int('+10') == 10` --
-    # тобто `iprm-instance-1_0` вказував би на той самий захід, але зберігся
-    # б під ІНШИМ external_ref (унікальність стоїть саме на ньому). Наслідок --
-    # два документи на один захід і недетермінований вибір між ними.
-    if not raw.isdigit():
+    # Рівно те, що виробляє `external_ref_for`: десяткове число без провідних
+    # нулів. Ні `int()`, ні `isdigit()` для цього не годяться, і обидва тут уже
+    # були:
+    #
+    # * `int()` приймає `'1_0'`, `' 10'`, `'+10'` -- усі вказують на той самий
+    #   захід, але зберігаються під ІНШИМ `external_ref` (унікальність стоїть
+    #   саме на ньому), даючи два документи на один захід;
+    # * `isdigit()` пропускає провідні нулі (`'05'` -> захід 5) і не-ASCII
+    #   цифри (`'٥'` -> 5) -- та сама дірка. Гірше: `'²'.isdigit()` істинне, а
+    #   `int('²')` кидає ValueError, тож перевірка через `isdigit` без
+    #   `try/except` давала неспійманий 500.
+    if not re.fullmatch(r'[1-9][0-9]*', raw):
         return None
-    value = int(raw)
+    value = int(raw)  # після fullmatch не кидає
 
     # Межа BIGINT: більше значення дає psycopg2 NumericValueOutOfRange уже на
     # SELECT, тобто 500 замість охайного «не знаємо такого».
-    if value <= 0 or value > 9223372036854775807:
+    if value > 9223372036854775807:
         return None
     return value
 
@@ -319,10 +326,48 @@ _RECONCILABLE = (
     MaterialReservationStatus.ISSUED,
 )
 
-#: Статус на боці MM Medic -> локальний. Дзеркалить `_STATUS_MAP` приймача
-#: вебхука: два різні словники на одну відповідність розійшлися б на першому ж
-#: новому значенні.
-_REMOTE_TO_LOCAL = {
+#: Порядок основної лінії життєвого циклу. Звірка має право ПРОСУВАТИ документ,
+#: але не відкочувати.
+#:
+#: Без цього розширення `_RECONCILABLE` дало неочікуваний ефект: для
+#: відвантаженого (ISSUED) документа партнер і далі віддає legacy-заголовок
+#: `active`, мапа перетворює його на RESERVED, і звірка «повертала» документ у
+#: зарезервований стан -- тобто знову робила його редагованим і придатним до
+#: повторної видачі. Штовх такого зробити не міг: він приходить на кожен
+#: перехід уперед, а звірка бачить лише поточний знімок і не знає, наскільки
+#: далеко ми вже пройшли.
+_STAGE_ORDER = {
+    MaterialReservationStatus.DRAFT: 0,
+    MaterialReservationStatus.SUBMITTED: 1,
+    MaterialReservationStatus.RESERVED: 2,
+    MaterialReservationStatus.ISSUED: 3,
+    MaterialReservationStatus.CONSUMED: 4,
+}
+
+#: Завершення поза основною лінією: можуть прилетіти на будь-якому кроці.
+_TERMINAL_BRANCHES = (
+    MaterialReservationStatus.REJECTED,
+    MaterialReservationStatus.CANCELLED,
+    MaterialReservationStatus.EXPIRED,
+)
+
+
+def _may_advance(current, new_status) -> bool:
+    """Чи має звірка право застосувати цей статус."""
+    if new_status in _TERMINAL_BRANCHES:
+        return True
+    return (_STAGE_ORDER.get(new_status, -1)
+            > _STAGE_ORDER.get(current, -1))
+
+#: Статус на боці MM Medic -> локальний. ЄДИНЕ джерело цієї відповідності:
+#: приймач вебхука (`app/api/mm_status.py`) імпортує саме її. Дві літеральні
+#: копії тут уже були, і саме вони розійшлися -- не ключами, а правилом.
+#:
+#: 'active' (legacy) і 'approved' (новий) обидва дають RESERVED: обидва
+#: означають «утримання існує». Одне локальне значення на два віддалених -- те,
+#: що дозволяє шести гейтам `status == RESERVED` в admin/routes_materials.py
+#: лишатись коректними. 'consumed' і 'completed' так само діляться CONSUMED.
+REMOTE_TO_LOCAL = {
     'submitted': MaterialReservationStatus.SUBMITTED,
     'approved': MaterialReservationStatus.RESERVED,
     'active': MaterialReservationStatus.RESERVED,
@@ -354,11 +399,24 @@ def reconcile_reservation(reservation):
         return False
     remote = (result.data or {}).get('reservation') or {}
     remote_status = remote.get('status')
-    new_status = _REMOTE_TO_LOCAL.get(remote_status)
-    if (remote_status in ('active', 'approved')
+    new_status = REMOTE_TO_LOCAL.get(remote_status)
+    if (reservation.status == MaterialReservationStatus.RESERVED
+            and remote_status in ('active', 'approved')
             and not (remote.get('items') or [])):
         # Порожній «живий» заголовок означає, що утримання протухли.
+        #
+        # Евристика справедлива ЛИШЕ для RESERVED. Для ISSUED порожній `items`
+        # -- це норма: матеріали видали, утримання зняли, а legacy-заголовок на
+        # боці MM Medic лишається `active`. Доки перевірки на локальний статус
+        # тут не було, розширення `_RECONCILABLE` перемарковувало коректно
+        # відвантажений документ у EXPIRED, і НЕОБОРОТНО: EXPIRED у
+        # `_RECONCILABLE` не входить, тож звірка більше ніколи на нього не
+        # подивиться, а партнер завершений стан не перештовхує.
         new_status = MaterialReservationStatus.EXPIRED
+    if new_status and not _may_advance(reservation.status, new_status):
+        # Знімок партнера відстає від того, що ми вже знаємо. Мовчати тут
+        # правильно: це не помилка, а нормальний стан legacy-заголовка.
+        return False
     if not new_status or new_status == reservation.status:
         return False
     reservation.status = new_status

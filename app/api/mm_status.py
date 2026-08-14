@@ -41,22 +41,13 @@ _SKEW_SECONDS = 300
 
 # MM Medic reservation/header status -> local MaterialReservationStatus.
 #
-# 'active' (legacy) and 'approved' (new) both land on RESERVED: both mean the
-# hold exists. Keeping them on one local value is what lets the six
-# `status == RESERVED` gates in admin/routes_materials.py stay correct.
-# 'consumed' (legacy) and 'completed' (new) likewise share CONSUMED.
-_STATUS_MAP = {
-    'submitted': MaterialReservationStatus.SUBMITTED,
-    'active': MaterialReservationStatus.RESERVED,
-    'approved': MaterialReservationStatus.RESERVED,
-    'issued': MaterialReservationStatus.ISSUED,
-    'consumed': MaterialReservationStatus.CONSUMED,
-    'completed': MaterialReservationStatus.CONSUMED,
-    'rejected': MaterialReservationStatus.REJECTED,
-    'cancelled': MaterialReservationStatus.CANCELLED,
-    'released': MaterialReservationStatus.CANCELLED,
-    'expired': MaterialReservationStatus.EXPIRED,
-}
+# ОДИН словник на весь проєкт, узятий із сервісу. Спершу тут лежала власна
+# копія з тим самим вмістом -- і це рівно те, від чого застерігав її ж
+# коментар: два літеральні словники на одну відповідність розходяться на
+# першому новому значенні. Приймач і звірка мусять читати той самий стан
+# партнера однаково, інакше локальний статус залежить від того, хто його
+# побачив першим.
+_STATUS_MAP = mrs.REMOTE_TO_LOCAL
 
 # Statuses that carry nothing worth filing if we have never heard of the ref:
 # there is no history to preserve and no action left to take.
@@ -121,7 +112,19 @@ def _payload_error(payload, external_ref):
     items = payload.get('items')
     if isinstance(items, list):
         for raw in items:
-            if isinstance(raw, dict) and len(str(raw.get('sku') or '')) > 100:
+            if not isinstance(raw, dict):
+                continue
+            sku = raw.get('sku')
+            if sku is None:
+                continue
+            # ТИП, а не лише довжина. Спершу тут стояло `len(str(sku))`, тобто
+            # міряло стрінгіфіковану форму, а нижче в ключ словника й у колонку
+            # йшов СИРИЙ об'єкт: `{"sku": ["A"]}` давало
+            # `TypeError: unhashable type` -- неспійманий 500 і втрачений штовх,
+            # а `{"sku": 12345}` доходило до PostgreSQL і падало на commit.
+            if not isinstance(sku, str):
+                return 'sku_not_a_string'
+            if len(sku) > 100:
                 return 'sku_too_long'
     return None
 
@@ -137,11 +140,7 @@ def _origin(value):
     return MaterialReservationOrigin.TRAINER
 
 
-#: Статуси, після яких резерв закритий: у payload лежать ФАКТИЧНІ кількості.
-_TERMINAL_STATUSES = ('consumed', 'completed')
-
-
-def _apply_items(reservation, items, remote_status):
+def _apply_items(reservation, items, local_status, has_items_key):
     """Write the five per-line quantities from the payload onto the mirror.
 
     Handles both payload shapes: the legacy one carries a single ``quantity``,
@@ -154,27 +153,35 @@ def _apply_items(reservation, items, remote_status):
     як погоджене означало б стерти в дзеркалі цифру, на якій тримаються
     пікінг-лист і звіт «зарезервовано проти спожитого».
 
-    Рядки, ВІДСУТНІ в payload, звичайно не чіпаються: частковий штовх не має
-    виглядати як «усе обнулилось». Виняток — термінальний штовх: там рядок
-    зникає з payload рівно тоді, коли повернули все (MM Medic звільняє утримання
-    з нульовим фактом), і лишити його «зарезервованим» назавжди -- гірше.
+    ``local_status``, а не сирий рядок: спершу тут стояв власний список
+    (``'consumed', 'completed'``), і це відтворювало ту саму регресію на один
+    статус далі -- перший новий термінальний статус партнера в список не
+    потрапив би, ``quantity`` знову ліг би в ``quantity_reserved``. Джерело
+    істини одне -- мапа статусів.
+
+    ``has_items_key`` розрізняє «рядків НЕ НАДІСЛАНО» і «надіслано порожній
+    список». Це різні твердження, і плутати їх дорого: рядок зникає з
+    термінального payload рівно тоді, коли повернули все, але status-only штовх
+    (``{"external_ref": …, "status": "completed"}``) не говорить про рядки
+    НІЧОГО. Доки обидва випадки зводились до ``[]``, легкий штовх стирав
+    фактику по всьому документу.
     """
     if not isinstance(items, list):
         return False
 
-    terminal = remote_status in _TERMINAL_STATUSES
+    terminal = local_status == MaterialReservationStatus.CONSUMED
 
     by_sku = {}
     for raw in items:
         if isinstance(raw, dict) and raw.get('sku'):
             by_sku[raw['sku']] = raw
-    if not by_sku and not terminal:
+    if not by_sku and not (terminal and has_items_key):
         return False
 
     changed = False
     existing = {item.sku: item for item in reservation.items}
 
-    if terminal:
+    if terminal and has_items_key:
         for sku, item in existing.items():
             if sku not in by_sku and item.quantity_actual != 0:
                 item.quantity_actual = 0
@@ -339,13 +346,24 @@ def reservation_status():
         return jsonify({'status': 'stale_push',
                         'reservation_status': reservation.status}), 200
 
-    changed = created
     if local_status is None:
-        # Невідомий статус: рядок лишається як був. Без логу це виглядало б як
-        # успішно застосований штовх.
-        logger.warning('MM Medic status webhook: unknown status %r for ref=%s',
-                       remote_status, external_ref)
-    elif reservation.status != local_status:
+        # Невідомий статус -- НІЧОГО не застосовуємо: ні статус, ні кількості,
+        # ні номер документа, ні мітку часу.
+        #
+        # Раніше тут лишався лише лог, а виконання йшло далі: `_apply_items` з
+        # `terminal=False` брав legacy `quantity` як ПОГОДЖЕНЕ й писав його в
+        # `quantity_reserved`, мітка просувалась, і дзеркало опинялось у
+        # змішаному стані -- усе, крім статусу, від штовха, який ми відмовились
+        # зрозуміти. Плюс просунута мітка відсікала наступний, справді
+        # легітимний штовх як застарілий.
+        logger.warning('MM Medic status webhook: unknown status %r for ref=%s, '
+                       'nothing applied', remote_status, external_ref)
+        return jsonify({'status': 'unknown_status',
+                        'reservation_status': reservation.status}), 200
+
+    changed = created
+    status_changed = reservation.status != local_status
+    if status_changed:
         reservation.status = local_status
         changed = True
 
@@ -354,12 +372,18 @@ def reservation_status():
         reservation.document_number = document_number
         changed = True
 
-    if _apply_items(reservation, payload.get('items') or [], remote_status):
+    raw_items = payload.get('items')
+    if _apply_items(reservation, raw_items or [], local_status,
+                    isinstance(raw_items, list)):
         changed = True
+        stock_changed = True
+    else:
+        stock_changed = False
 
     if local_status == MaterialReservationStatus.CONSUMED and not reservation.consumed_at:
         reservation.consumed_at = datetime.now(timezone.utc)
         changed = True
+        stock_changed = True
 
     # Мітку просуваємо НЕЗАЛЕЖНО від `changed`: штовх, який нічого не змінив,
     # усе одно є свіжішим знімком стану. Доки це стояло всередині `if changed`,
@@ -371,7 +395,12 @@ def reservation_status():
     if changed:
         reservation.last_response = payload
         db.session.commit()
-        mrs.invalidate_catalog_cache()
+        # Кеш каталогу чистимо лише коли змінились СТАТУС або РЯДКИ: саме вони
+        # впливають на доступність товару. Рух самої лише мітки часу цього не
+        # робить, а при 120 штовхах/хв безумовна інвалідація не давала
+        # 45-секундному кешу прожити жодного разу.
+        if stock_changed or status_changed or created:
+            mrs.invalidate_catalog_cache()
         logger.info('MM Medic status webhook %s ref=%s -> %s',
                     'created' if created else 'applied',
                     external_ref, reservation.status)

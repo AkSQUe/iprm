@@ -5,6 +5,7 @@ import json
 import time
 from datetime import datetime, timedelta, timezone
 
+import pytest
 from flask import render_template
 
 from app.extensions import db
@@ -328,6 +329,10 @@ def test_line_absent_from_consumed_push_is_zeroed(app, client):
     MM Medic звільняє утримання з нульовим фактом, і лінія випадає з `items`
     (`_serialize` лишає тільки active/consumed). Лишити її «зарезервованою»
     назавжди -- показувати комірнику матеріал, який давно на складі.
+
+    Ключове: `items` тут ПРИСУТНІЙ і порожній -- це твердження «рядків немає».
+    Відсутність ключа означала б «про рядки нічого не сказано», див. наступний
+    тест.
     """
     _enable_mm()
     inst = _make_instance(slug_suffix='zeroed')
@@ -340,6 +345,56 @@ def test_line_absent_from_consumed_push_is_zeroed(app, client):
     assert item.quantity_actual == 0
     assert item.quantity_returned == 5
     assert item.quantity_reserved == 5  # погоджене лишається як факт історії
+
+
+def test_status_only_terminal_push_does_not_wipe_actuals(app, client):
+    """Штовх БЕЗ ключа `items` не має права стирати фактику документа.
+
+    Доти `payload.get('items') or []` зводило «ключа немає», `null` і `[]` в
+    одне значення, і легкий status-only штовх обнуляв ВСІ рядки. Приймач
+    фізично не може відрізнити «партнер звільнив усі утримання» від «партнер не
+    поклав рядки в цей штовх» -- тому відсутність ключа означає «нічого не
+    сказано», а не «все повернули».
+    """
+    _enable_mm()
+    inst = _make_instance(slug_suffix='statusonly')
+    res = _make_reservation(inst, slug_suffix='statusonly')
+    res.items[0].quantity_actual = 4
+    db.session.flush()
+
+    r = _post_status(client, {'external_ref': res.external_ref,
+                              'status': 'completed'})
+
+    assert r.status_code == 200
+    item = MaterialReservation.query.get(res.id).items[0]
+    assert item.quantity_actual == 4, 'фактику стерто status-only штовхом'
+    assert item.quantity_reserved == 5
+
+
+def test_unknown_status_applies_nothing_at_all(app, client):
+    """Невідомий статус не має змінювати НІЧОГО.
+
+    Раніше застосовувалось усе, крім самого статусу: legacy `quantity` лягало в
+    `quantity_reserved`, писався номер документа, просувалась мітка часу -- і та
+    просунута мітка потім відсікала наступний легітимний штовх як застарілий.
+    """
+    _enable_mm()
+    inst = _make_instance(slug_suffix='unknown')
+    res = _make_reservation(inst, slug_suffix='unknown')  # reserved=5
+
+    r = _post_status(client, {
+        'external_ref': res.external_ref, 'status': 'teleported',
+        'document_number': 'ЗМ-999', 'updated_at': '2026-08-14T10:00:00+00:00',
+        'items': [{'sku': 'NDL-21', 'quantity': 77}],
+    })
+
+    assert r.status_code == 200
+    assert r.get_json()['status'] == 'unknown_status'
+    fresh = MaterialReservation.query.get(res.id)
+    assert fresh.items[0].quantity_reserved == 5
+    assert fresh.document_number is None
+    assert fresh.remote_updated_at is None
+    assert fresh.status == MaterialReservationStatus.RESERVED
 
 
 def test_mm_status_webhook_rejects_overlong_identifiers(app, client):
@@ -443,18 +498,160 @@ def test_stale_push_ignored_after_a_no_op_push(app, client):
             == MaterialReservationStatus.ISSUED)
 
 
-def test_ref_parser_rejects_lookalikes(app):
-    """`int()` приймає більше форм, ніж генератор виробляє: 'iprm-instance-1_0'
-    вказував би на захід 10, але зберігся б під іншим external_ref -- два
-    документи на один захід."""
+@pytest.mark.parametrize('raw', [
+    '1_0',        # int() приймає підкреслення
+    ' 10',        # int() приймає пробіли
+    '+10',        # int() приймає знак
+    '-5',
+    '05',         # isdigit() пропускає провідні нулі -> той самий захід,
+                  # інший external_ref -> ДВА документи на один захід
+    '٥',     # isdigit() пропускає арабсько-індійські цифри
+    '²',     # isdigit() істинне, а int() кидає ValueError -> 500
+    '9' * 30,     # понад BIGINT -> NumericValueOutOfRange на SELECT
+    '',
+    'abc',
+])
+def test_ref_parser_rejects_lookalikes(app, raw):
+    """Приймається РІВНО те, що виробляє `external_ref_for`.
+
+    Тут по черзі побували `int()` і `isdigit()`, і кожен пропускав свій набір
+    форм, які вказують на той самий захід під іншим `external_ref` --
+    унікальність стоїть саме на ref, тож наслідок один: два документи на один
+    захід і недетермінований вибір між ними.
+    """
     from app.services import material_reservation_service as mrs
 
-    assert mrs.instance_id_from_ref('iprm-instance-1_0') is None
-    assert mrs.instance_id_from_ref('iprm-instance- 10') is None
-    assert mrs.instance_id_from_ref('iprm-instance-+10') is None
-    assert mrs.instance_id_from_ref('iprm-instance--5') is None
-    assert mrs.instance_id_from_ref('iprm-instance-' + '9' * 30) is None
-    assert mrs.instance_id_from_ref('iprm-instance-10') == 10
+    assert mrs.instance_id_from_ref(f'iprm-instance-{raw}') is None
+
+
+def test_ref_parser_accepts_what_the_generator_makes(app):
+    from app.services import material_reservation_service as mrs
+
+    for instance_id in (1, 7, 42, 1234567):
+        ref = mrs.external_ref_for(instance_id)
+        assert mrs.instance_id_from_ref(ref) == instance_id
+
+
+@pytest.mark.parametrize('sku, expected', [
+    (['A'], 'sku_not_a_string'),   # unhashable -> був неспійманий 500
+    (12345, 'sku_not_a_string'),   # проходило до PostgreSQL і падало на commit
+    ({'a': 1}, 'sku_not_a_string'),
+    ('X' * 120, 'sku_too_long'),
+])
+def test_mm_status_webhook_rejects_bad_sku_type(app, client, sku, expected):
+    _enable_mm()
+    inst = _make_instance(slug_suffix=f'sku{abs(hash(str(sku))) % 997}')
+    res = _make_reservation(inst, slug_suffix=f'sku{abs(hash(str(sku))) % 997}')
+
+    r = _post_status(client, {'external_ref': res.external_ref,
+                              'status': 'active',
+                              'items': [{'sku': sku, 'quantity': 1}]})
+
+    assert r.status_code == 400
+    assert r.get_json()['status'] == expected
+
+
+def test_issued_document_is_not_expired_by_reconcile(app, monkeypatch):
+    """Порожній «живий» заголовок -- НОРМА для відвантаженого документа.
+
+    Матеріали видали, утримання зняли, а legacy-заголовок MM Medic лишається
+    `active`. Евристика «живий і порожній = протухло» справедлива лише для
+    RESERVED; застосована до ISSUED, вона перемарковувала коректно
+    відвантажений документ у EXPIRED -- необоротно, бо EXPIRED звірка більше не
+    переглядає.
+    """
+    from app.services import material_reservation_service as mrs
+
+    inst = _make_instance(slug_suffix='issuedkeep')
+    res = _make_reservation(inst, status=MaterialReservationStatus.ISSUED,
+                            slug_suffix='issuedkeep')
+
+    class _Result:
+        ok = True
+        data = {'reservation': {'status': 'active', 'items': []}}
+
+    monkeypatch.setattr(mrs, 'get_client',
+                        lambda: type('C', (), {
+                            'get_reservation': lambda self, ref: _Result()})())
+
+    assert mrs.reconcile_reservation(res) is False
+    assert res.status == MaterialReservationStatus.ISSUED
+
+
+def test_reserved_document_still_expires(app, monkeypatch):
+    """Зворотний бік: для RESERVED евристика мусить лишитись робочою."""
+    from app.services import material_reservation_service as mrs
+
+    inst = _make_instance(slug_suffix='expok')
+    res = _make_reservation(inst, slug_suffix='expok')
+
+    class _Result:
+        ok = True
+        data = {'reservation': {'status': 'active', 'items': []}}
+
+    monkeypatch.setattr(mrs, 'get_client',
+                        lambda: type('C', (), {
+                            'get_reservation': lambda self, ref: _Result()})())
+
+    assert mrs.reconcile_reservation(res) is True
+    assert res.status == MaterialReservationStatus.EXPIRED
+
+
+def test_reconcile_never_moves_status_backwards(app, monkeypatch):
+    """Звірка бачить лише поточний знімок і не знає, як далеко ми пройшли.
+
+    Партнер для відвантаженого документа й далі віддає legacy-заголовок
+    `active`, який мапиться в RESERVED. Застосувати його означало б «повернути»
+    документ у зарезервований стан -- знову редагований і придатний до
+    повторної видачі. Штовх такого зробити не міг: він приходить на кожен крок
+    уперед.
+    """
+    from app.services import material_reservation_service as mrs
+
+    inst = _make_instance(slug_suffix='noback')
+    res = _make_reservation(inst, status=MaterialReservationStatus.CONSUMED,
+                            slug_suffix='noback')
+    res.status = MaterialReservationStatus.ISSUED  # у _RECONCILABLE
+
+    class _Result:
+        ok = True
+        data = {'reservation': {'status': 'active',
+                                'items': [{'sku': 'NDL-21', 'quantity': 5}]}}
+
+    monkeypatch.setattr(mrs, 'get_client',
+                        lambda: type('C', (), {
+                            'get_reservation': lambda self, ref: _Result()})())
+
+    assert mrs.reconcile_reservation(res) is False
+    assert res.status == MaterialReservationStatus.ISSUED
+
+
+def test_reconcile_still_accepts_terminal_branches(app, monkeypatch):
+    """Скасування й відмова -- легітимні завершення на будь-якому кроці."""
+    from app.services import material_reservation_service as mrs
+
+    inst = _make_instance(slug_suffix='cancelok')
+    res = _make_reservation(inst, status=MaterialReservationStatus.ISSUED,
+                            slug_suffix='cancelok')
+
+    class _Result:
+        ok = True
+        data = {'reservation': {'status': 'cancelled', 'items': []}}
+
+    monkeypatch.setattr(mrs, 'get_client',
+                        lambda: type('C', (), {
+                            'get_reservation': lambda self, ref: _Result()})())
+
+    assert mrs.reconcile_reservation(res) is True
+    assert res.status == MaterialReservationStatus.CANCELLED
+
+
+def test_status_map_has_one_source(app):
+    """Приймач і звірка мусять читати ОДИН обʼєкт, а не дві копії."""
+    from app.api import mm_status
+    from app.services import material_reservation_service as mrs
+
+    assert mm_status._STATUS_MAP is mrs.REMOTE_TO_LOCAL
 
 
 def test_reconcile_covers_stuck_submitted_rows(app, monkeypatch):
