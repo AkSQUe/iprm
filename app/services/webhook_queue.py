@@ -21,7 +21,7 @@ from app.models.webhook_delivery import (
     MAX_ATTEMPTS,
     WebhookDelivery,
 )
-from app.services.webhook_dispatcher import dispatch_one
+from app.services.webhook_dispatcher import dispatch_one, dispatch_partner_event
 
 logger = logging.getLogger(__name__)
 
@@ -82,14 +82,26 @@ def process_queue():
         stats['processed'] += 1
         delivery.attempts += 1
 
-        result = dispatch_one(
-            course_id=delivery.course_id,
-            course_slug=delivery.course_slug,
-            action=delivery.action,
-            target_url=delivery.target_url,
-            secret=secret,
-            event_uuid=delivery.event_uuid,
-        )
+        # Дві форми доставки в одній черзі: каталожне «перечитай курс» і
+        # партнерська подія з власним часом. Ретраї, backoff і circuit
+        # breaker у них спільні — саме тому черга одна.
+        if delivery.is_partner_event:
+            result = dispatch_partner_event(
+                event_type=delivery.event_type,
+                payload=delivery.payload,
+                target_url=delivery.target_url,
+                secret=secret,
+                event_uuid=delivery.event_uuid,
+            )
+        else:
+            result = dispatch_one(
+                course_id=delivery.course_id,
+                course_slug=delivery.course_slug,
+                action=delivery.action,
+                target_url=delivery.target_url,
+                secret=secret,
+                event_uuid=delivery.event_uuid,
+            )
 
         if result.ok:
             delivery.status = 'sent'
@@ -193,5 +205,55 @@ def enqueue(course_id, course_slug, action):
             session.rollback()
             current_app.logger.exception(
                 'Failed to enqueue webhook course=%s action=%s', course_slug, action,
+            )
+            return None
+
+
+def enqueue_partner_event(event_type, payload):
+    """Поставити партнерську подію в чергу доставки.
+
+    Окрема коротка сесія з тієї ж причини, що й у ``enqueue``: викликається
+    після коміту основної транзакції, а іноді — із фонового потоку відправки
+    листів, де сесія застосунку вже закрита.
+
+    Адреса береться з ``mm_medic_api_base_url`` (той самий базовий URL, що й
+    у клієнта резервувань) і фіксується в рядку: зміна налаштувань не має
+    переписувати вже поставлені в чергу події.
+
+    Повертає id рядка або ``None``, якщо слати нікуди. ``None`` — не помилка:
+    інтеграція може бути просто вимкнена.
+    """
+    import uuid
+
+    from sqlalchemy.orm import Session
+
+    with Session(db.engine) as session:
+        settings = session.get(SiteSettings, 1)
+        if settings is None:
+            return None
+        if not settings.partner_integration_enabled:
+            return None
+        if not getattr(settings, 'mm_medic_integration_enabled', False):
+            return None
+
+        base_url = (settings.mm_medic_api_base_url or '').strip().rstrip('/')
+        if not base_url:
+            return None
+
+        delivery = WebhookDelivery(
+            event_type=event_type,
+            payload=payload or {},
+            event_uuid=uuid.uuid4().hex,
+            target_url=f'{base_url}/api/partner/iprm/events',
+            status='pending',
+        )
+        session.add(delivery)
+        try:
+            session.commit()
+            return delivery.id
+        except Exception:
+            session.rollback()
+            current_app.logger.exception(
+                'Failed to enqueue partner event %s', event_type,
             )
             return None

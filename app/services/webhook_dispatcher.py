@@ -134,3 +134,79 @@ def dispatch_one(course_id, course_slug, action, target_url, secret, event_uuid)
         http_status=response.status_code,
         error=(response.text or '')[:500],
     )
+
+
+def dispatch_partner_event(event_type, payload, target_url, secret, event_uuid):
+    """Одна спроба відправки ПАРТНЕРСЬКОЇ події (не каталожної).
+
+    Відрізняється від ``dispatch_one`` двома речами, і обидві принципові.
+
+    **Підпис із часовою міткою.** Каталожний вебхук підписує лише тіло, тобто
+    захищений від підробки, але не від ПОВТОРУ: перехоплений запит можна
+    надіслати ще раз через тиждень. Для «перечитай курс» це нешкідливо; для
+    факту з власним часом (реєстрація, надісланий лист) — ні. Партнерський
+    ендпоінт вимагає ``X-IPRM-Timestamp`` і має вікно свіжості.
+
+    **Інша адреса.** Каталожний вебхук іде на ``partner_webhook_url``, який
+    за побудовою робить одну дію. Події йдуть на ``/api/partner/iprm/events``
+    — той самий базовий URL, що й у клієнта резервувань.
+    """
+    import time
+
+    timestamp = str(int(time.time()))
+    try:
+        body = json.dumps(
+            {
+                'event_id': event_uuid,
+                'event_type': event_type,
+                'data': payload or {},
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+            },
+            separators=(',', ':'), ensure_ascii=False,
+        ).encode('utf-8')
+        signature = hmac.new(
+            secret.encode('utf-8'),
+            timestamp.encode('utf-8') + b'.' + body,
+            hashlib.sha256,
+        ).hexdigest()
+    except Exception as exc:  # noqa: BLE001
+        logger.exception('Partner event build error type=%s: %s', event_type, exc)
+        return DispatchResult(ok=False, retryable=False, http_status=None,
+                              error=str(exc)[:500])
+
+    headers = {
+        'Content-Type': 'application/json; charset=utf-8',
+        'X-IPRM-Signature': signature,
+        'X-IPRM-Timestamp': timestamp,
+        'X-IPRM-Event-Id': event_uuid,
+        'User-Agent': 'iprm-webhook/1.0',
+    }
+    try:
+        response = requests.post(target_url, data=body, headers=headers,
+                                 timeout=TIMEOUT)
+    except requests.Timeout as exc:
+        return DispatchResult(ok=False, retryable=True, http_status=None,
+                              error=f'timeout: {exc}')
+    except requests.ConnectionError as exc:
+        return DispatchResult(ok=False, retryable=True, http_status=None,
+                              error=f'connection error: {exc}')
+    except requests.RequestException as exc:
+        return DispatchResult(ok=False, retryable=False, http_status=None,
+                              error=f'request error: {exc}')
+
+    # 207 означає «частину прийнято, частину ні». Ретраїти весь пакет не
+    # можна: прийняте застосується вдруге. Наш пакет — одна подія, тож 207
+    # тут означає рівно «цю подію не прийняли», і повтор доречний.
+    if response.status_code == 207:
+        return DispatchResult(ok=False, retryable=True,
+                              http_status=response.status_code,
+                              error=(response.text or '')[:500])
+
+    if response.ok:
+        return DispatchResult(ok=True, retryable=False,
+                              http_status=response.status_code, error=None)
+
+    retryable = response.status_code >= 500
+    return DispatchResult(ok=False, retryable=retryable,
+                          http_status=response.status_code,
+                          error=(response.text or '')[:500])

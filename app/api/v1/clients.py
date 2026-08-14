@@ -100,12 +100,19 @@ def _iso(value):
     return value.isoformat() if value else None
 
 
-def _listing(query, order_column):
+def _listing(query, order_column, tiebreak_column=None):
     """Спільна обгортка: курсор, пагінація, стабільний порядок.
 
     Сортування завжди за `updated_at`, а не за id: партнер іде саме за
     курсором змін, і будь-який інший порядок робив би `updated_since`
     марним -- сторінка 2 могла б містити старіші зміни за сторінку 1.
+
+    `tiebreak_column` -- друга колонка сортування. До 2026-08-14 цей коментар
+    стверджував, що тайбрейкер є, а в `order_by` стояла ОДНА колонка. Різниця
+    не теоретична: масовий імпорт ставить сотням рядків однаковий
+    `updated_at`, PostgreSQL для рівних ключів порядок не гарантує, і рядки
+    "плавають" між сторінками -- партнер бачить одні двічі, а інших не бачить
+    зовсім, причому мовчки.
     """
     updated_since, err = _parse_updated_since()
     if err:
@@ -116,11 +123,53 @@ def _listing(query, order_column):
 
     if updated_since is not None:
         query = query.filter(order_column >= updated_since)
-    # id як тайбрейкер: без нього рядки з однаковим updated_at (масовий
-    # імпорт ставить його всім однаковий) можуть мінятись місцями між
-    # сторінками, і партнер загубить частину.
-    query = query.order_by(order_column.asc())
+
+    ordering = [order_column.asc()]
+    if tiebreak_column is not None:
+        ordering.append(tiebreak_column.asc())
+    query = query.order_by(*ordering)
     return query.paginate(page=page, per_page=per_page, error_out=False), None
+
+
+def _unsubscribe_url(user):
+    """Посилання відписки цього учасника, якщо токен уже видано.
+
+    Токен НЕ генерується тут: видача -- це запис у БД, а GET-ендпоінт бази
+    не змінює. Порожнє значення означає «людина ще не отримувала листів із
+    посиланням», і партнеру нічого показувати.
+    """
+    if not user.unsubscribe_token:
+        return None
+    from app.models.site_settings import SiteSettings
+
+    # Той самий `website_url`, з якого будує посилання email_service: два
+    # джерела базового URL розійшлися б, і половина листів вела б у нікуди.
+    base = (SiteSettings.get().website_url or '').rstrip('/')
+    return f'{base}/unsubscribe/{user.unsubscribe_token}' if base else None
+
+
+def _suppressed_emails(emails):
+    """Адреси зі списку, на які ми більше не пишемо."""
+    from app.models.email_suppression import EmailSuppression
+
+    normalized = [EmailSuppression.normalize(e) for e in emails if e]
+    if not normalized:
+        return set()
+
+    rows = (
+        db.session.query(EmailSuppression.email)
+        .filter(EmailSuppression.email.in_(normalized))
+        .all()
+    )
+    return {row[0] for row in rows}
+
+
+def _deliverable(email, suppressed):
+    if not email:
+        return None
+    from app.models.email_suppression import EmailSuppression
+
+    return EmailSuppression.normalize(email) not in suppressed
 
 
 @api_v1_bp.route('/participants', methods=['GET'])
@@ -136,9 +185,14 @@ def list_participants():
         db.session.query(User, MedicalProfile)
         .outerjoin(MedicalProfile, MedicalProfile.user_id == User.id)
     )
-    pagination, error = _listing(query, User.updated_at)
+    pagination, error = _listing(query, User.updated_at, User.id)
     if error:
         return error
+
+    # Один запит на сторінку замість запиту на кожного учасника: сторінка --
+    # це до 200 людей, і перевірка адреси поштучно перетворила б відповідь на
+    # 200 SELECT-ів.
+    suppressed = _suppressed_emails([user.email for user, _ in pagination.items])
 
     items = []
     for user, profile in pagination.items:
@@ -161,6 +215,17 @@ def list_participants():
             # «новим» лідом удруге.
             'source': profile.source if profile else None,
             'is_active': bool(user.is_active),
+            # Згода на листи. Без цього поля партнер не знає, кому в нас
+            # заборонено писати, і його розсилка обходить нашу відписку --
+            # для людини це один відправник, і претензія буде до обох.
+            'email_opt_out': bool(user.email_opt_out),
+            # Посилання, яким людина відписалась у НАС. Партнер показує його
+            # у своїх листах про навчання, тож відписка лишається одна.
+            'unsubscribe_url': _unsubscribe_url(user),
+            # Чи дійде лист узагалі: адреса могла потрапити в suppression
+            # після відбиття. `None` -- ми не перевіряли.
+            'email_deliverable': _deliverable(user.email, suppressed),
+            'last_login_at': _iso(user.last_login_at),
             'created_at': _iso(user.created_at),
             'updated_at': _iso(user.updated_at),
         })
@@ -188,7 +253,8 @@ def list_registrations():
         .outerjoin(User, User.id == EventRegistration.user_id)
         .outerjoin(MedicalProfile, MedicalProfile.user_id == EventRegistration.user_id)
     )
-    pagination, error = _listing(query, EventRegistration.updated_at)
+    pagination, error = _listing(query, EventRegistration.updated_at,
+                                 EventRegistration.id)
     if error:
         return error
 
@@ -306,3 +372,45 @@ def list_leads():
         'pages': (total + per_page - 1) // per_page if per_page else 0,
     }
     return _private(make_response(jsonify(body)))
+
+
+@api_v1_bp.route('/participants/<int:user_id>/opt-out', methods=['POST'])
+@csrf.exempt
+@require_api_key
+@limiter.limit('120 per minute')
+def participant_opt_out(user_id):
+    """Партнер повідомляє, що людина відписалась У НЬОГО.
+
+    Згоди двох систем мають сходитись. Людина натискає «відписатись» у листі
+    MM Medic про наші ж курси -- для неї це ОДИН відправник, і те, що частину
+    листів шле партнер, а частину ми, її не цікавить. Без цього ендпоінта ми
+    продовжували б писати, і винними виглядали б обидва.
+
+    Ефект той самий, що й у нашої сторінки `/unsubscribe/<token>`: прапорець
+    `email_opt_out`. Другого поняття «відписка» не заводимо -- воно розійшлося
+    б із першим на першому ж листі.
+
+    Ідемпотентний: повторний виклик повертає 200 і нічого не змінює. Партнер
+    ретраїть при мережевих збоях, і 409 на другій спробі означав би, що він
+    ретраїтиме вічно.
+    """
+    user = db.session.get(User, user_id)
+    if user is None:
+        return _error('participant not found', 404)
+
+    payload = request.get_json(silent=True) or {}
+    reason = str(payload.get('reason') or '')[:200]
+    resubscribe = payload.get('action') == 'resubscribe'
+
+    changed = user.email_opt_out == resubscribe
+    user.email_opt_out = not resubscribe
+    if changed:
+        db.session.commit()
+
+    return _private(make_response(jsonify({
+        'api_version': API_VERSION,
+        'id': user.id,
+        'email_opt_out': bool(user.email_opt_out),
+        'changed': bool(changed),
+        'reason': reason or None,
+    })))

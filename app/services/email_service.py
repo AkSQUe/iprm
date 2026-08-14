@@ -429,6 +429,19 @@ class EmailService:
             finally:
                 db.session.commit()
 
+            # Партнер веде картку тієї самої людини. Без цього рядка менеджер
+            # MM Medic дзвонить із пропозицією рівно тоді, коли ми написали їй
+            # утретє за тиждень, — і бачить у картці порожнечу.
+            #
+            # ПІСЛЯ коміту й поза try: збій постановки в чергу не має
+            # перетворювати надісланий лист на «не надісланий».
+            try:
+                from app.services.partner_events import emit_communication_sent
+                emit_communication_sent(log_entry)
+            except Exception:
+                logger.exception('Partner communication event failed for log %s',
+                                 log_id)
+
     # ---- Convenience senders ----
 
     @staticmethod

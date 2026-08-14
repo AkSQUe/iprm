@@ -505,4 +505,10 @@ def create_app(config_name=None):
     from app.services.course_webhook_listener import register_course_listeners
     register_course_listeners(db)
 
+    # Реєстрації учасників — партнеру, у ту саму чергу доставок. Слухачі на
+    # моделі, а не виклики в роутах: реєстрація створюється трьома шляхами, а
+    # оплата змінюється ще й LiqPay-колбеком.
+    from app.services.partner_events import register_registration_listeners
+    register_registration_listeners(db)
+
     return app
