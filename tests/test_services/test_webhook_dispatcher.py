@@ -164,3 +164,65 @@ class TestNeverRaises:
         with patch('app.services.webhook_dispatcher.requests.post') as mock_post:
             mock_post.return_value = MagicMock(ok=False, status_code=503, text='x')
             _call()
+
+
+class TestPartnerEventRetryPolicy:
+    """404 від партнера означає «вимкнено», а не «немає такої адреси».
+
+    Партнер віддає 404 на власному вимикачі інтеграції. Доки ми вважали це
+    остаточною відмовою, ЇХНІЙ вимикач мовчки знищував події в НАШІЙ черзі:
+    вони ставали `failed` назавжди й після повторного включення не приїжджали.
+    """
+
+    @staticmethod
+    def _dispatch(status_code):
+        from app.services.webhook_dispatcher import dispatch_partner_event
+
+        with patch('app.services.webhook_dispatcher.requests.post') as mock_post:
+            mock_post.return_value = MagicMock(
+                ok=status_code < 400, status_code=status_code, text='')
+            return dispatch_partner_event(
+                event_type='registration.paid',
+                payload={'registration_id': 1},
+                target_url='https://partner.test/api/partner/iprm/events',
+                secret=SECRET,
+                event_uuid='uuid-evt-1',
+            )
+
+    def test_404_is_retryable(self):
+        result = self._dispatch(404)
+
+        assert result.ok is False
+        assert result.retryable is True
+
+    def test_503_stays_retryable(self):
+        assert self._dispatch(503).retryable is True
+
+    def test_400_is_permanent(self):
+        """Зіпсовані дані повторювати марно — і партнер це вже сказав."""
+        assert self._dispatch(400).retryable is False
+
+    def test_401_is_permanent(self):
+        """Невірний підпис від повтору не виправиться."""
+        assert self._dispatch(401).retryable is False
+
+    def test_207_is_retryable(self):
+        """Пачка з однієї події: 207 означає «цю не прийняли»."""
+        assert self._dispatch(207).retryable is True
+
+    def test_200_is_success(self):
+        result = self._dispatch(200)
+
+        assert result.ok is True
+        assert result.retryable is False
+
+    def test_catalog_dispatch_keeps_404_permanent(self):
+        """Там вимикача немає, тож 404 — справді неправильна адреса."""
+        with patch('app.services.webhook_dispatcher.requests.post') as mock_post:
+            mock_post.return_value = MagicMock(ok=False, status_code=404, text='')
+            result = dispatch_one(
+                course_id=1, course_slug='c', action='updated',
+                target_url=TARGET_URL, secret=SECRET, event_uuid='u-1',
+            )
+
+        assert result.retryable is False

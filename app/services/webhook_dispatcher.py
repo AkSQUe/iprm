@@ -206,7 +206,16 @@ def dispatch_partner_event(event_type, payload, target_url, secret, event_uuid):
         return DispatchResult(ok=True, retryable=False,
                               http_status=response.status_code, error=None)
 
-    retryable = response.status_code >= 500
+    # 404 тут означає НЕ «такого ендпоінта немає», а «інтеграцію вимкнено»:
+    # партнер віддає його на власному вимикачі. Без цього рядка вимикач на
+    # ЇХНЬОМУ боці мовчки знищував події в НАШІЙ черзі — вони ставали
+    # `failed` назавжди і після повторного включення не приїжджали.
+    #
+    # Вічного циклу це не створює: стеля спроб (MAX_ATTEMPTS) лишається, тож
+    # помилково налаштований URL так само дійде до `failed`, лише повільніше.
+    # Каталожний `dispatch_one` лишається на `>= 500` навмисно: там 404 — це
+    # справді неправильна адреса, бо вимикача на тому шляху немає.
+    retryable = response.status_code >= 500 or response.status_code == 404
     return DispatchResult(ok=False, retryable=retryable,
                           http_status=response.status_code,
                           error=(response.text or '')[:500])
