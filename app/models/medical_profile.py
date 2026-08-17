@@ -99,15 +99,50 @@ class MedicalProfile(TimestampMixin, db.Model):
 
     @property
     def is_complete(self):
-        """Профіль повний для реєстрації на БПР-захід: тип учасника,
-        дата народження, освіта і ≥1 спеціалізація."""
+        """Профіль повний = заповнено все, що вимагає форма анкети.
+
+        Перелік свідомо збігається з обов'язковими полями
+        `MedicalProfileFieldsMixin` (app/forms_medical.py). Раніше тут не було
+        `middle_name`, `workplace` і `position`, тож профіль, створений адмінкою
+        або xlsx-імпортом, вважався повним без місця роботи -- а `middle_name`
+        ще й друкується у ПІБ на сертифікаті, тобто без нього документ виходив
+        дефектним.
+
+        Одне визначення на всі гейти (тестування, банери, лист-нагадування)
+        навмисно: друге, «суворіше для сертифіката», неминуче розійшлося б із
+        цим на першій же правці.
+        """
         return bool(
             self.participant_type
             and self.birth_date
             and self.education
             and self.specializations
             and len(self.specializations) > 0
+            and self.middle_name
+            and self.workplace
+            and self.position
         )
+
+    @property
+    def missing_fields(self):
+        """Незаповнені обов'язкові поля -- підписами, як у формі.
+
+        Потрібно, щоб гейт тестування казав «чого саме бракує», а не просто
+        «заповніть анкету»: після посилення критерію людині з давнім профілем
+        інакше незрозуміло, що робити.
+        """
+        checks = (
+            ('participant_type', 'Тип учасника'),
+            ('middle_name', 'По батькові'),
+            ('birth_date', 'Дата народження'),
+            ('education', 'Освіта'),
+            ('workplace', 'Місце роботи'),
+            ('position', 'Займана посада'),
+        )
+        missing = [label for field, label in checks if not getattr(self, field)]
+        if not self.specializations:
+            missing.append('Спеціалізації')
+        return missing
 
     @property
     def participant_type_label(self):
