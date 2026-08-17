@@ -23,9 +23,21 @@ def partner_enabled(app):
     settings = SiteSettings.get()
     settings.partner_integration_enabled = True
     settings.partner_api_key = API_KEY
-    OnlineCourse.query.delete()
-    db.session.commit()
+    _wipe()
     yield settings
+    _wipe()
+
+
+def _wipe():
+    """Замовлення -- ПЕРЕД курсами.
+
+    Онлайн-курс під замовленням не видаляється (FK RESTRICT), і залишені
+    тут рядки валили teardown сусіднього набору, який чистить курси: помилка
+    спливала лише за певного порядку файлів.
+    """
+    from app.models.online_enrollment import OnlineEnrollment
+
+    OnlineEnrollment.query.delete()
     OnlineCourse.query.delete()
     db.session.commit()
 

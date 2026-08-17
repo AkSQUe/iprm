@@ -434,3 +434,79 @@
     padding: 12px 22px;
   }
 }
+
+/* ===== Форма покупця (гостьова покупка) =====
+   Поля беруть вигляд із auth.css (form-group / form-input / form-error) --
+   сторінка підключає його так само, як форма реєстрації на захід. Тут лише
+   те, чого там немає: розкладка в картці замовлення. */
+.iprm-buyer-form {
+  margin-top: 24px;
+}
+
+.iprm-buyer-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Email і телефон -- на всю ширину: адреса довга, і в половині картки вона
+   обрізалася б посеред домену. */
+.iprm-buyer-form__grid .form-group:nth-child(n + 3) {
+  grid-column: 1 / -1;
+}
+
+.iprm-buyer-form__hint {
+  margin: 6px 0 0;
+  color: var(--iprm-text-light);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.iprm-buyer-form .form-consent {
+  margin: 20px 0;
+}
+
+/* ===== Створення кабінету після оплати ===== */
+.iprm-checkout-account {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--iprm-border);
+}
+
+.iprm-checkout-account__title {
+  margin: 0 0 4px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--iprm-text);
+}
+
+.iprm-checkout-account__lead {
+  margin: 0 0 16px;
+  color: var(--iprm-text-light);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.iprm-checkout-account__row {
+  margin-bottom: 12px;
+}
+
+.iprm-checkout-account__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+  color: var(--iprm-text-light);
+}
+
+@media (max-width: 560px) {
+  .iprm-buyer-form__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Поля пароля: `.form-input` у common.css ширини не задає (її ставить
+   auth.css, якого ця сторінка не підключає), тож без цього обидва поля
+   лишались вузькими коробочками посеред картки. */
+.iprm-checkout-account__row .form-input {
+  width: 100%;
+}

@@ -15,12 +15,16 @@ import logging
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 from flask_login import current_user, login_required
-from sqlalchemy.orm import selectinload
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.extensions import db, limiter
 from app.models.online_course import OnlineCourse
 from app.models.online_enrollment import OnlineEnrollment
+from app.models.site_settings import SiteSettings
 from app.online import online_bp
+from app.online.forms import OnlineBuyerForm
+from app.services.recaptcha import verify_request as verify_recaptcha
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +92,12 @@ def course_detail(slug):
     anchors = []
     if course.t('benefits'):
         anchors.append(('benefits', _('Результат')))
+    # Калькулятор окупності. Умова дзеркалить шаблон: він малюється лише за
+    # увімкненого налаштування, з ціною і тільки в гривні (суми підписані ₴).
+    settings = SiteSettings.get()
+    if (settings.show_roi_calculator and course.currency == 'UAH'
+            and course.effective_price and course.effective_price > 0):
+        anchors.append(('roi', _('Окупність')))
     anchors.append(('about', _('Про курс')))
     anchors.append(('buy', _('Вартість')))
     if gallery:
@@ -136,7 +146,6 @@ def _live_enrollment(user_id, course_id):
 
 
 @online_bp.route('/<slug>/checkout', methods=['GET', 'POST'])
-@login_required
 # 60, а не 20: після переходу на PRG кожна дія з промокодом коштує два
 # запити (POST + GET), і людина, яка спробувала кілька кодів і перечитала
 # сторінку, впиралась у ліміт на власній покупці. Для перебору кодів 60
@@ -145,8 +154,11 @@ def _live_enrollment(user_id, course_id):
 def checkout(slug):
     """Оформлення покупки: створює замовлення і віддає форму LiqPay.
 
-    Логін обов'язковий (рішення Q5): доступ персональний, і його треба
-    десь показувати повторно -- у кабінеті.
+    Логін НЕ обов'язковий (рішення 17.08.2026, скасовує Q5). Вимога завести
+    акаунт стояла рівно між готовністю платити й оплатою -- у заходів той
+    самий бар'єр прибрали 31.07.2026, і онлайн-курси просто лишились на
+    старому рішенні. Гість вводить контакти тут-таки, а кабінет заводить
+    після оплати, коли гроші вже пройшли.
     """
     course = _published_query().filter_by(slug=slug).first()
     if not course:
@@ -155,6 +167,9 @@ def checkout(slug):
     if not course.is_purchasable:
         flash(_('Цей курс поки не можна купити'), 'error')
         return redirect(url_for('online.course_detail', slug=course.slug))
+
+    if not current_user.is_authenticated:
+        return _guest_checkout(course)
 
     enrollment = _live_enrollment(current_user.id, course.id)
 
@@ -198,7 +213,117 @@ def checkout(slug):
         return _complete_free_order(enrollment, course)
 
     return render_template(
-        'online/checkout.html',
+        'online/checkout.html', **_order_context(enrollment, course))
+
+
+def _guest_checkout(course):
+    """Покупка без акаунта: збираємо контакти й заводимо замовлення.
+
+    Користувача створює `participant_service.resolve_user` -- безпарольного,
+    як це вже роблять гостьова реєстрація на захід і адмінські імпорти.
+    Пароль людина ставить після оплати, коли решта даних уже зібрана.
+    """
+    from app.services import participant_service
+
+    form = OnlineBuyerForm()
+
+    def _render():
+        return render_template(
+            'online/buyer.html', active_nav='online', course=course, form=form)
+
+    if not form.validate_on_submit():
+        return _render()
+
+    if not verify_recaptcha(action='online_checkout'):
+        flash(_('Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.'), 'error')
+        return _render()
+
+    try:
+        buyer, is_new_user = participant_service.resolve_user(
+            form.email.data, form.phone.data,
+        )
+
+        # Адреса вже належить акаунту, який цей курс купує або купив.
+        # Другого замовлення не заводимо: часткова унікальність усе одно не
+        # дала б, та й платити двічі за той самий курс нема за що.
+        if _live_enrollment(buyer.id, course.id) is not None:
+            db.session.rollback()
+            flash(_('На цю адресу вже є замовлення цього курсу. '
+                    'Увійдіть, щоб його побачити.'), 'info')
+            return redirect(url_for(
+                'auth.login', next=url_for('online.checkout', slug=course.slug)))
+
+        _apply_buyer_data(buyer, form, is_new_user)
+
+        enrollment = OnlineEnrollment(
+            user_id=buyer.id,
+            online_course_id=course.id,
+            payment_amount=course.effective_price,
+            payment_status='unpaid',
+            status='pending',
+        )
+        db.session.add(enrollment)
+        # Токен видаємо одразу: без нього гість не має жодного способу
+        # повернутись до власного замовлення.
+        enrollment.issue_order_token()
+        db.session.commit()
+    except IntegrityError:
+        # Гонка двох вкладок або подвійний сабміт: конфлікт можливий на
+        # users.email і на частковій унікальності замовлення, і в обох
+        # випадках потрібне вже існує. На токен переможця НЕ пускаємо --
+        # інакше вгадана чужа адреса відкривала б чуже замовлення.
+        db.session.rollback()
+        logger.info('Guest checkout race for course %s', course.id)
+        flash(_('Замовлення вже оформлюється. Увійдіть, щоб його побачити.'),
+              'info')
+        return redirect(url_for(
+            'auth.login', next=url_for('online.checkout', slug=course.slug)))
+    except Exception:
+        db.session.rollback()
+        logger.exception('Guest checkout failed for course %s', course.id)
+        flash(_('Не вдалося оформити замовлення. Спробуйте ще раз.'), 'error')
+        return _render()
+
+    logger.info('Guest checkout created %s for user %d (new=%s)',
+                enrollment.order_id, buyer.id, is_new_user)
+    return redirect(url_for('online.order', token=enrollment.order_token))
+
+
+def _apply_buyer_data(user, form, is_new_user):
+    """ПІБ і телефон покупця.
+
+    Наявному акаунту заповнюємо лише порожні поля: людина, яка колись
+    зареєструвалась під своїм ПІБ, не має його втратити через те, що хтось
+    (чи вона сама поспіхом) інакше набрав прізвище на чекауті.
+    """
+    from app.models.medical_profile import MedicalProfile
+
+    if is_new_user or not (user.last_name or '').strip():
+        user.last_name = form.last_name.data.strip()
+    if is_new_user or not (user.first_name or '').strip():
+        user.first_name = form.first_name.data.strip()
+
+    phone = (form.phone.data or '').strip()
+    if not phone:
+        return
+
+    profile = user.medical_profile
+    if profile is None:
+        profile = MedicalProfile(
+            user_id=user.id, source=MedicalProfile.SOURCE_IMPORTED)
+        db.session.add(profile)
+        user.medical_profile = profile
+    if is_new_user or not (profile.phone or '').strip():
+        profile.phone = phone
+
+
+def _order_context(enrollment, course, token=None):
+    """Контекст сторінки замовлення -- спільний для гостя й залогіненого.
+
+    Різниця між ними лише в адресах: гість усюди ходить із токеном, бо
+    входу ще не має. Тому маршрути тут -- параметр, а не хардкод у шаблоні.
+    """
+    return dict(
         active_nav='online',
         course=course,
         enrollment=enrollment,
@@ -206,11 +331,40 @@ def checkout(slug):
         # відняли промокод. Рахуємо тут, а не в шаблоні: правило «база =
         # payment_amount + discount_amount» одне на весь модуль.
         base_amount=_order_base_amount(enrollment, course),
-        **_liqpay_context(enrollment, course),
+        form_action=(url_for('online.order', token=token) if token
+                     else url_for('online.checkout', slug=course.slug)),
+        invoice_url=(url_for('online.order_invoice_token', token=token) if token
+                     else url_for('online.order_invoice',
+                                  enrollment_id=enrollment.id)),
+        access_href=_access_href(enrollment, token),
+        # Кабінет заводиться тут-таки, після оплати: решта даних уже зібрана
+        # покупкою, лишається пароль. Якщо пароль уже є (email виявився
+        # наявним акаунтом) -- пропонуємо вхід, а не створення.
+        can_set_password=bool(
+            token and enrollment.user and not enrollment.user.has_password),
+        set_password_url=(url_for('online.order_set_password', token=token)
+                          if token else None),
+        **_liqpay_context(enrollment, course, token=token),
     )
 
 
-def _complete_free_order(enrollment, course):
+def _access_href(enrollment, token):
+    """Куди веде кнопка «Перейти до навчання» після оплати.
+
+    Гостя -- одразу за токеном доступу: кабінет вимагав би пароля, якого в
+    нього ще немає. Поки доступ не видано (провізія падає в чергу джоби),
+    кнопки немає взагалі -- вести в нікуди гірше, ніж не вести.
+    """
+    if not enrollment.is_paid:
+        return None
+    if token:
+        if not enrollment.access_token:
+            return None
+        return url_for('online.access', token=enrollment.access_token)
+    return url_for('auth.account')
+
+
+def _complete_free_order(enrollment, course, token=None):
     """Закрити замовлення на нуль гривень і відкрити доступ.
 
     Через PaymentOps, а не присвоєнням статусу: там правила переходів,
@@ -231,6 +385,9 @@ def _complete_free_order(enrollment, course):
               'error')
         return redirect(url_for('online.course_detail', slug=course.slug))
 
+    # Гість на payments.success не потрапить -- той роут вимагає логіну.
+    if token:
+        return redirect(url_for('online.order', token=token))
     return redirect(url_for('payments.success', order_id=enrollment.order_id))
 
 
@@ -288,8 +445,10 @@ def _handle_promo(enrollment, course):
         promo, _discount, _final = promo_service.validate_for_online(
             raw, amount=base,
         )
+        # Саме enrollment.user_id, а не current_user: у гостьовому флоу
+        # покупець не залогінений, але користувач у замовлення вже є.
         promo_service.assert_user_limit(
-            promo, current_user.id, ignore_enrollment_id=enrollment.id,
+            promo, enrollment.user_id, ignore_enrollment_id=enrollment.id,
         )
         promo_service.apply_to_enrollment(promo, enrollment, base)
         db.session.commit()
@@ -306,7 +465,7 @@ def _handle_promo(enrollment, course):
     flash(_('Промокод застосовано'), 'success')
 
 
-def _liqpay_context(enrollment, course):
+def _liqpay_context(enrollment, course, token=None):
     """Дані форми LiqPay. Порожньо, якщо платіжку не налаштовано."""
     from app.services.liqpay import get_liqpay_service
 
@@ -316,15 +475,172 @@ def _liqpay_context(enrollment, course):
                 'liqpay_checkout_url': None}
 
     order_id = enrollment.order_id
+    # Гостя повертаємо на його ж сторінку замовлення: payments.success
+    # вимагає логіну, тобто після оплати впер би людину в той самий бар'єр,
+    # який ми щойно прибрали. ?ret=1 вмикає там опитування статусу.
+    result_url = (
+        url_for('online.order', token=token, ret=1, _external=True) if token
+        else url_for('payments.success', order_id=order_id, _external=True)
+    )
     data, signature, checkout_url = service.create_payment_form(
         order_id=order_id,
         amount=float(enrollment.payment_amount),
         description=course.effective_title,
-        result_url=url_for('payments.success', order_id=order_id, _external=True),
+        result_url=result_url,
         server_url=url_for('payments.liqpay_callback', _external=True),
     )
     return {'liqpay_data': data, 'liqpay_signature': signature,
             'liqpay_checkout_url': checkout_url}
+
+
+# --------------------------- гостьове замовлення ---------------------------
+
+def _load_order(token):
+    return OnlineEnrollment.query.options(
+        joinedload(OnlineEnrollment.course),
+        joinedload(OnlineEnrollment.user),
+    ).filter_by(order_token=token).first()
+
+
+@online_bp.route('/order/<token>', methods=['GET', 'POST'])
+@limiter.limit('60 per hour')
+def order(token):
+    """Сторінка замовлення для покупця без акаунта.
+
+    Авторизація -- сам токен: людина щойно оформила покупку і входу ще не
+    має. Робить усе те саме, що чекаут залогіненого: промокод, оплата,
+    рахунок, а після оплати -- посилання на навчання і створення кабінету.
+    """
+    enrollment = _load_order(token)
+    if enrollment is None or not enrollment.order_token_active:
+        return render_template('online/order_invalid.html'), 410
+    if enrollment.status == 'cancelled':
+        return render_template('online/order_invalid.html', cancelled=True), 410
+
+    course = enrollment.course
+
+    # Повернення з LiqPay (?ret=1): платіж міг ще не дійти вебхуком, і без
+    # опитування людина побачила б «до сплати» одразу після оплати.
+    if (request.args.get('ret')
+            and enrollment.payment_status in ('unpaid', 'pending')
+            and enrollment.payment_amount and enrollment.payment_amount > 0):
+        _poll_payment(enrollment)
+
+    if request.method == 'POST':
+        _handle_promo(enrollment, course)
+        return redirect(url_for('online.order', token=token))
+
+    if (not enrollment.is_paid and enrollment.payment_amount is not None
+            and enrollment.payment_amount <= 0):
+        return _complete_free_order(enrollment, course, token=token)
+
+    return render_template(
+        'online/checkout.html', **_order_context(enrollment, course, token=token))
+
+
+def _poll_payment(enrollment):
+    """Best-effort синхронне опитування LiqPay. Збій нічого не ламає."""
+    from app.services.liqpay import get_liqpay_service
+    from app.services.payment_ops import PaymentOps
+
+    service = get_liqpay_service()
+    if not service.is_configured:
+        return
+    try:
+        PaymentOps(service).check_enrollment_and_update(enrollment)
+        db.session.refresh(enrollment)
+    except Exception:
+        logger.exception('Failed to poll LiqPay for %s on order page',
+                         enrollment.order_id)
+
+
+@online_bp.route('/order/<token>/set-password', methods=['POST'])
+@limiter.limit('10 per hour')
+def order_set_password(token):
+    """Створення кабінету одразу після покупки.
+
+    Решта даних (ПІБ, email, телефон) уже є із замовлення, лишається пароль.
+    """
+    from flask_login import login_user
+
+    enrollment = _load_order(token)
+    if enrollment is None or not enrollment.order_token_active:
+        return render_template('online/order_invalid.html'), 410
+
+    user = enrollment.user
+    if user is None:
+        abort(404)
+
+    back = url_for('online.order', token=token)
+
+    # Наявний акаунт паролем НЕ перезаписуємо: інакше будь-хто, вказавши
+    # чужий email на чекауті, отримав би змогу змінити пароль власника.
+    if user.has_password:
+        flash(_('У вас уже є кабінет — увійдіть, щоб побачити покупку.'), 'info')
+        return redirect(url_for('auth.login'))
+
+    password = request.form.get('password') or ''
+    confirm = request.form.get('password_confirm') or ''
+    if len(password) < 8:
+        flash(_('Пароль має містити щонайменше 8 символів'), 'error')
+        return redirect(back)
+    if password != confirm:
+        flash(_('Паролі не збігаються'), 'error')
+        return redirect(back)
+
+    user.set_password(password)
+    db.session.commit()
+    login_user(user)
+    logger.info('Guest %s created account for user %d',
+                enrollment.order_id, user.id)
+    flash(_('Кабінет створено. Тут ви завжди знайдете свої курси.'), 'success')
+    return redirect(url_for('auth.account'))
+
+
+@online_bp.route('/order/<token>/invoice.pdf')
+@limiter.limit('20 per hour')
+def order_invoice_token(token):
+    """Рахунок на оплату для покупця без акаунта."""
+    enrollment = _load_order(token)
+    if enrollment is None or not enrollment.order_token_active:
+        return render_template('online/order_invalid.html'), 410
+
+    return _send_invoice(enrollment, url_for('online.order', token=token))
+
+
+def _send_invoice(enrollment, back_url):
+    """Віддати PDF рахунка або пояснити, чому його немає.
+
+    Спільне для обох входів -- за токеном і з кабінету: правила «після
+    оплати рахунок не потрібен» і «для нуля рахунка не буває» одні.
+    """
+    from flask import send_file
+
+    from app.services.invoice_service import (
+        InvoiceError, invoice_filename, render_invoice_pdf,
+    )
+
+    if enrollment.is_paid:
+        flash(_('Замовлення вже оплачено'), 'info')
+        return redirect(back_url)
+
+    if not enrollment.payment_amount or enrollment.payment_amount <= 0:
+        flash(_('Для безкоштовного замовлення рахунок не потрібен'), 'info')
+        return redirect(back_url)
+
+    try:
+        pdf = render_invoice_pdf(enrollment)
+    except InvoiceError as exc:
+        logger.warning('Invoice for %s failed: %s', enrollment.order_id, exc)
+        flash(_('Не вдалося сформувати рахунок. Напишіть нам.'), 'error')
+        return redirect(back_url)
+
+    return send_file(
+        io.BytesIO(pdf),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=invoice_filename(enrollment, 'pdf'),
+    )
 
 
 @online_bp.route('/access/<token>', localize=False)
@@ -420,34 +736,9 @@ def order_invoice(enrollment_id):
     Доступний, поки замовлення не оплачене: після оплати рахунок ролі не
     грає, а от «сплатіть ще раз» у пошті плутає.
     """
-    from app.services.invoice_service import (
-        InvoiceError, invoice_filename, render_invoice_pdf,
-    )
-
     enrollment = db.session.get(OnlineEnrollment, enrollment_id)
     if enrollment is None or enrollment.user_id != current_user.id:
         abort(404)
 
-    if enrollment.is_paid:
-        flash(_('Замовлення вже оплачено'), 'info')
-        return redirect(url_for('auth.account'))
-
-    if not enrollment.payment_amount or enrollment.payment_amount <= 0:
-        flash(_('Для безкоштовного замовлення рахунок не потрібен'), 'info')
-        return redirect(url_for('auth.account'))
-
-    try:
-        pdf = render_invoice_pdf(enrollment)
-    except InvoiceError as exc:
-        logger.warning('Invoice for %s failed: %s', enrollment.order_id, exc)
-        flash(_('Не вдалося сформувати рахунок. Напишіть нам.'), 'error')
-        return redirect(url_for('online.checkout', slug=enrollment.course.slug))
-
-    from flask import send_file
-
-    return send_file(
-        io.BytesIO(pdf),
-        mimetype='application/pdf',
-        as_attachment=True,
-        download_name=invoice_filename(enrollment, 'pdf'),
-    )
+    return _send_invoice(
+        enrollment, url_for('online.checkout', slug=enrollment.course.slug))

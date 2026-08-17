@@ -485,6 +485,14 @@ def create_app(config_name=None):
         'auth', 'admin', 'registration', 'payments', 'quiz',
     })
 
+    # Окремі приватні сторінки в публічному блупринті. Каталог онлайн-курсів
+    # анонімний і має лишатись придатним для bfcache, а от чекаут і сторінка
+    # гостьового замовлення показують чужу покупку тому, хто ще не залогінений
+    # -- саме той випадок, заради якого `registration` цілком у списку вище.
+    PRIVATE_HTML_ENDPOINTS = frozenset({
+        'online.checkout', 'online.order', 'online.order_set_password',
+    })
+
     @app.after_request
     def cache_control_html(response):
         """Кеш-політика HTML.
@@ -501,7 +509,8 @@ def create_app(config_name=None):
             return response
         from flask import request
         from flask_login import current_user
-        private = request.blueprint in PRIVATE_HTML_BLUEPRINTS
+        private = (request.blueprint in PRIVATE_HTML_BLUEPRINTS
+                   or request.endpoint in PRIVATE_HTML_ENDPOINTS)
         if not private:
             try:
                 private = current_user.is_authenticated

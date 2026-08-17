@@ -77,9 +77,26 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 |-------|-----|------|
 | GET | `/online-courses/` | Каталог опублікованих онлайн-курсів |
 | GET | `/online-courses/<slug>` | Сторінка курсу (неопублікований -> 404) |
-| GET, POST | `/online-courses/<slug>/checkout` | Оформлення покупки, промокод (потрібен логін) |
+| GET, POST | `/online-courses/<slug>/checkout` | Оформлення покупки, промокод; аноніму -- форма покупця |
+| GET, POST | `/online-courses/order/<token>` | Сторінка замовлення гостя: оплата, промокод, кабінет |
+| POST | `/online-courses/order/<token>/set-password` | Створення кабінету після оплати |
+| GET | `/online-courses/order/<token>/invoice.pdf` | Рахунок для покупця без акаунта |
+| GET | `/online-courses/orders/<id>/invoice.pdf` | Рахунок із кабінету |
 | GET | `/online-courses/access/<token>` | Тимчасове посилання -> 302 на Sintegrum |
 | POST | `/online-courses/access/<id>/reissue` | Перевипуск протермінованого посилання |
+
+Логіну чекаут НЕ вимагає (рішення 17.08.2026, скасовує Q5 плану). Анонім
+отримує форму покупця (ПІБ, email, телефон необов'язковий), після сабміту
+`participant_service.resolve_user` заводить безпарольного користувача -- той
+самий механізм, що в гостьовій реєстрації на захід. Далі покупець ходить за
+`order_token` (30 днів), бо входу ще не має; пароль пропонується після
+оплати. Токен замовлення -- це НЕ токен доступу: перший живе до оплати й
+веде на наш сайт, другий видається після неї й веде в Sintegrum.
+
+`online.checkout`, `online.order` і `online.order_set_password` додано до
+`PRIVATE_HTML_ENDPOINTS` -- решта публічного блупринта лишається придатною
+для bfcache, а ці сторінки показують чужу покупку неавтентифікованому
+відвідувачу й мусять мати `no-store`.
 
 `/online-courses/access/<token>` свідомо БЕЗ мовних префіксів
 (`localize=False`): посилання живе в листі, і префікс лише множив би варіанти

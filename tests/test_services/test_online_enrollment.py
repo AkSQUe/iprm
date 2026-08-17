@@ -21,6 +21,21 @@ from app.services.payment_ops import PaymentOps, parse_order_id
 ACCESS_URL = 'https://multimededu.sintegrum.com/register/abc'
 
 
+@pytest.fixture(autouse=True)
+def clean(app):
+    """Більшість тестів тут працює на flush і відкочується сама.
+
+    Але `test_retry_job_recovers_stuck_order` комітить -- інакше джоба не
+    побачила б замовлення, -- і закомічені рядки переживають тестову
+    транзакцію. Далі вони валили сусідні набори, які чистять каталог:
+    курс під замовленням не видаляється (FK RESTRICT).
+    """
+    yield
+    OnlineEnrollment.query.delete()
+    OnlineCourse.query.delete()
+    db.session.commit()
+
+
 @pytest.fixture
 def user(app):
     item = User.create_with_password(

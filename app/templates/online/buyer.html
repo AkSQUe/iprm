@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
+{% from 'partials/_money.html' import money %}
+
+{% block title %}{{ _('Оформлення покупки') }} | {{ course.effective_title }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-course.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <section class="iprm-section" aria-labelledby="buyer-title">
+    <div class="iprm-section__inner iprm-online-checkout">
+
+      <h1 id="buyer-title" class="iprm-section__title">{{ _('Оформлення <span class="apple-gradient-text">покупки</span>') }}</h1>
+      <p class="iprm-online-checkout__lead">{{ _('Акаунт заводити не потрібно: вкажіть, кому відкрити доступ, і переходьте до оплати.') }}</p>
+
+      <div class="iprm-checkout-card">
+
+        <div class="iprm-checkout-card__head">
+          {% if course.card_src %}
+          <img class="iprm-checkout-card__thumb" src="{{ course.card_src }}" alt=""
+               width="88" height="64" loading="lazy">
+          {% endif %}
+          <div>
+            <p class="iprm-checkout-card__eyebrow">{{ _('Онлайн-курс') }}</p>
+            <h2 class="iprm-checkout-card__title">{{ course.effective_title }}</h2>
+          </div>
+        </div>
+
+        <dl class="iprm-checkout-summary">
+          <div class="iprm-checkout-summary__row iprm-checkout-summary__row--total">
+            <dt>{{ _('До сплати') }}</dt>
+            <dd class="iprm-checkout-total">
+              {{ money(course.effective_price, course.currency, unit_class='iprm-checkout-total__currency') }}
+            </dd>
+          </div>
+        </dl>
+
+        <form method="POST" action="{{ url_for('online.checkout', slug=course.slug) }}"
+              class="iprm-buyer-form" data-validate data-single-submit
+              data-recaptcha-action="online_checkout" data-ga-event="begin_checkout">
+          {{ form.hidden_tag() }}
+
+          <div class="iprm-buyer-form__grid">
+            <div class="form-group">
+              <label for="last_name">{{ _('Прізвище') }} <span class="required">*</span></label>
+              {{ form.last_name(class="form-input" + (" is-invalid" if form.last_name.errors else ""), id="last_name", required=true) }}
+              {% for e in form.last_name.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="form-group">
+              <label for="first_name">{{ _("Ім'я") }} <span class="required">*</span></label>
+              {{ form.first_name(class="form-input" + (" is-invalid" if form.first_name.errors else ""), id="first_name", required=true) }}
+              {% for e in form.first_name.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email <span class="required">*</span></label>
+              {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email", required=true, type="email") }}
+              {% for e in form.email.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+              <p class="iprm-buyer-form__hint">{{ _('На цю адресу надійде доступ до навчання. Саме її ми передаємо навчальній платформі.') }}</p>
+            </div>
+
+            {# Телефон необов'язковий: курс не має дати, тож нагадувати про
+               підключення нема про що -- на відміну від очного заходу. #}
+            <div class="form-group">
+              <label for="phone">{{ _('Телефон') }}</label>
+              {{ form.phone(class="form-input" + (" is-invalid" if form.phone.errors else ""), id="phone") }}
+              {% for e in form.phone.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="form-consent">
+            <div class="form-checkbox">
+              {{ form.consent_data(id="consent_data", required=true, **{'data-hint': _('Без згоди на обробку даних покупка неможлива')}) }}
+              <label for="consent_data">
+                {% trans trimmed privacy_url=url_for('main.privacy') %}
+                Я надаю згоду на обробку моїх персональних даних (ПІБ, електронна пошта,
+                номер телефону) з метою оформлення покупки, надання доступу до навчання
+                та обробки платежу через платіжну систему LiqPay. Ознайомлений(а) з
+                <a href="{{ privacy_url }}" target="_blank" rel="noopener noreferrer">Політикою конфіденційності</a>.
+                {% endtrans %}
+                <span class="required">*</span>
+              </label>
+            </div>
+            {% for e in form.consent_data.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+          </div>
+
+          <button type="submit" class="apple-btn apple-btn--primary apple-btn--full">
+            {{ _('Перейти до оплати') }}
+          </button>
+        </form>
+
+        {# SVG вбудований, як і в сусідньому checkout.html: блок підказки
+           стилізує саме дочірній svg, а icon() віддає span із лігатурою. #}
+        <p class="iprm-online-checkout__hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4" y="10" width="16" height="11" rx="2"/>
+            <path d="M8 10V7a4 4 0 0 1 7.9-.8"/>
+          </svg>
+          <span>{{ _('Пароль зараз не потрібен. Кабінет можна буде створити одним полем після оплати.') }}</span>
+        </p>
+
+      </div>
+
+      <p class="iprm-online-checkout__back">
+        {% if current_user.is_anonymous %}
+        <a href="{{ url_for('auth.login', next=url_for('online.checkout', slug=course.slug)) }}">{{ _('Уже маєте кабінет? Увійти') }}</a>
+        &middot;
+        {% endif %}
+        <a href="{{ url_for('online.course_detail', slug=course.slug) }}">{{ _('Повернутися до опису курсу') }}</a>
+      </p>
+
+    </div>
+  </section>
+</div>
+{% endblock %}

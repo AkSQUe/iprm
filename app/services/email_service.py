@@ -853,6 +853,18 @@ class EmailService:
             return None
 
         base = EmailService._site_base_url()
+        # Покупця без пароля кабінет не впустить, тож ведемо його на власну
+        # сторінку замовлення: там і нове посилання, і створення кабінету.
+        # Адреса будується з website_url, а не url_for(_external=True):
+        # лист рендериться й поза request-контекстом.
+        guest_order = bool(
+            not user.has_password and enrollment.order_token_active)
+        if guest_order:
+            account_url = (f'{base}/online-courses/order/{enrollment.order_token}'
+                           if base else None)
+        else:
+            account_url = f'{base}/auth/account' if base else None
+
         return EmailService.send_email(
             to=user.email,
             subject=lambda: _('Доступ до курсу: %(title)s',
@@ -863,7 +875,8 @@ class EmailService:
                 'course': course,
                 'enrollment': enrollment,
                 'access_url': access_url,
-                'account_url': f'{base}/auth/account' if base else None,
+                'account_url': account_url,
+                'guest_order': guest_order,
                 'promo': promo,
             },
             trigger='payment',

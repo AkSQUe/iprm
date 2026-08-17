@@ -14,7 +14,15 @@
     <div class="iprm-section__inner iprm-online-checkout">
 
       <h1 id="checkout-title" class="iprm-section__title">{{ _('Оформлення <span class="apple-gradient-text">покупки</span>') }}</h1>
-      <p class="iprm-online-checkout__lead">{{ _('Залишився один крок: після оплати доступ до курсу відкриється одразу.') }}</p>
+      {# Сторінка живе й після оплати (гість повертається сюди з LiqPay), тож
+         «залишився один крок» тоді був би неправдою. #}
+      <p class="iprm-online-checkout__lead">
+        {% if enrollment.payment_status == 'paid' %}
+        {{ _('Дякуємо за покупку. Нижче — доступ до навчання.') }}
+        {% else %}
+        {{ _('Залишився один крок: після оплати доступ до курсу відкриється одразу.') }}
+        {% endif %}
+      </p>
 
       <div class="iprm-checkout-card">
 
@@ -46,7 +54,7 @@
           </div>
           {% endif %}
           <div class="iprm-checkout-summary__row iprm-checkout-summary__row--total">
-            <dt>{{ _('До сплати') }}</dt>
+            <dt>{% if enrollment.payment_status == 'paid' %}{{ _('Сплачено') }}{% else %}{{ _('До сплати') }}{% endif %}</dt>
             <dd class="iprm-checkout-total">
               {{ money(enrollment.payment_amount, course.currency, unit_class='iprm-checkout-total__currency') }}
             </dd>
@@ -62,14 +70,14 @@
             <span class="iprm-online-promo__code">{{ enrollment.promo_code.code }}</span>
             {{ _('промокод застосовано') }}
           </span>
-          <form method="POST" action="{{ url_for('online.checkout', slug=course.slug) }}">
+          <form method="POST" action="{{ form_action }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="remove_promo" value="1">
             <button type="submit" class="iprm-online-promo__remove">{{ _('Прибрати') }}</button>
           </form>
         </div>
         {% else %}
-        <form method="POST" action="{{ url_for('online.checkout', slug=course.slug) }}"
+        <form method="POST" action="{{ form_action }}"
               class="iprm-online-promo">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <label class="iprm-online-promo__label" for="promo_code">{{ _('Промокод') }}</label>
@@ -84,8 +92,15 @@
 
         <div class="iprm-checkout-pay">
           {% if enrollment.payment_status == 'paid' %}
-          <p class="iprm-online-buy__note">{{ _('Замовлення вже оплачено.') }}</p>
-          <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Перейти до навчання') }}</a>
+          {# Гостя ведемо просто за токеном доступу: кабінет вимагав би
+             пароля, якого в нього ще немає. Поки доступ готується, кнопки
+             немає взагалі -- вести в нікуди гірше, ніж не вести. Двох
+             повідомлень поспіль теж не буває: або кнопка, або пояснення. #}
+          {% if access_href %}
+          <a href="{{ access_href }}" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Перейти до навчання') }}</a>
+          {% else %}
+          <p class="iprm-online-buy__note">{{ _('Доступ уже готуємо — посилання надійде на вашу пошту за кілька хвилин.') }}</p>
+          {% endif %}
           {% elif liqpay_data and liqpay_signature %}
           <form method="POST" action="{{ liqpay_checkout_url }}" accept-charset="utf-8" data-single-submit>
             <input type="hidden" name="data" value="{{ liqpay_data }}">
@@ -108,11 +123,37 @@
           {% if enrollment.payment_status != 'paid' and enrollment.payment_amount and enrollment.payment_amount > 0 %}
           <p class="iprm-online-checkout__invoice">
             {{ _('Платите від організації?') }}
-            <a href="{{ url_for('online.order_invoice', enrollment_id=enrollment.id) }}">{{ _('Завантажити рахунок') }}</a>
+            <a href="{{ invoice_url }}">{{ _('Завантажити рахунок') }}</a>
           </p>
           {% endif %}
         </div>
 
+        {# Кабінет пропонуємо ПІСЛЯ оплати й лише покупцю без пароля: до
+           оплати це був би той самий бар'єр, який ми прибрали, а власнику
+           наявного акаунта тут пропонується вхід, а не новий пароль. #}
+        {% if can_set_password and enrollment.payment_status == 'paid' %}
+        <form method="POST" action="{{ set_password_url }}" class="iprm-checkout-account">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <h3 class="iprm-checkout-account__title">{{ _('Створити кабінет') }}</h3>
+          <p class="iprm-checkout-account__lead">
+            {{ _('Щоб повертатися до курсу з будь-якого пристрою, придумайте пароль. Решта даних у нас уже є.') }}
+          </p>
+          <div class="iprm-checkout-account__row">
+            <label class="iprm-checkout-account__label" for="password">{{ _('Пароль') }}</label>
+            <input type="password" name="password" id="password" class="form-input"
+                   minlength="8" required autocomplete="new-password">
+          </div>
+          <div class="iprm-checkout-account__row">
+            <label class="iprm-checkout-account__label" for="password_confirm">{{ _('Пароль ще раз') }}</label>
+            <input type="password" name="password_confirm" id="password_confirm" class="form-input"
+                   minlength="8" required autocomplete="new-password">
+          </div>
+          <button type="submit" class="apple-btn apple-btn--outline apple-btn--full">{{ _('Створити кабінет') }}</button>
+        </form>
+        {% endif %}
+
+        {# Обіцянка «одразу після оплати» доречна лише до неї. #}
+        {% if enrollment.payment_status != 'paid' %}
         <p class="iprm-online-checkout__hint">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -121,6 +162,7 @@
           </svg>
           <span>{{ _('Одразу після оплати ми відкриємо вам доступ до курсу на навчальній платформі й надішлемо лист із входом.') }}</span>
         </p>
+        {% endif %}
 
       </div>
 

@@ -14,10 +14,18 @@ from app.extensions import db
 from app.models.online_course import OnlineCourse
 
 
-@pytest.fixture
-def course(app):
+def _wipe_catalog():
+    """Замовлення -- ПЕРЕД курсами: курс під замовленням не видаляється."""
+    from app.models.online_enrollment import OnlineEnrollment
+
+    OnlineEnrollment.query.delete()
     OnlineCourse.query.delete()
     db.session.commit()
+
+
+@pytest.fixture
+def course(app):
+    _wipe_catalog()
     item = OnlineCourse(
         sintegrum_id=int(uuid4().int % 10_000_000),
         remote_name='Плазмотерапія в косметології',
@@ -30,8 +38,7 @@ def course(app):
     db.session.add(item)
     db.session.commit()
     yield item
-    OnlineCourse.query.delete()
-    db.session.commit()
+    _wipe_catalog()
 
 
 def test_urls_have_language_prefixes(client, course):
@@ -69,8 +76,7 @@ def test_detail_facts_are_translated(get_localized, course):
 
 
 def test_empty_state_is_translated(get_localized, app):
-    OnlineCourse.query.delete()
-    db.session.commit()
+    _wipe_catalog()
 
     ru = get_localized('/ru/online-courses/').get_data(as_text=True)
     en = get_localized('/en/online-courses/').get_data(as_text=True)

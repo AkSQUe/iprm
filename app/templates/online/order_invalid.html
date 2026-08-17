@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Посилання на замовлення недійсне') }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-course.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <section class="iprm-section" aria-labelledby="order-invalid-title">
+    <div class="iprm-section__inner iprm-online-checkout">
+
+      <h1 id="order-invalid-title" class="iprm-section__title">
+        {% if cancelled %}{{ _('Замовлення скасовано') }}
+        {% else %}{{ _('Посилання недійсне або застаріле') }}{% endif %}
+      </h1>
+
+      <div class="iprm-checkout-card">
+        {% if cancelled %}
+        <p>{{ _('Це замовлення скасовано, тож посилання більше не діє. Курс можна купити знову.') }}</p>
+        {% else %}
+        {# Тридцять днів -- той самий строк, що й у посиланні на завершення
+           реєстрації на захід. #}
+        <p>{{ _('Посилання на замовлення діє 30 днів. Якщо покупку не завершено, оформіть її ще раз — це швидко.') }}</p>
+        {% endif %}
+        <a href="{{ url_for('online.course_list') }}" class="apple-btn apple-btn--primary apple-btn--full">{{ _('До каталогу онлайн-курсів') }}</a>
+        <p class="iprm-online-buy__note">{{ _('Якщо ви вже оплатили — увійдіть у кабінет або напишіть нам, і ми знайдемо замовлення.') }}</p>
+        <a href="{{ url_for('auth.login') }}" class="apple-btn apple-btn--secondary apple-btn--full">{{ _('Увійти') }}</a>
+      </div>
+
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -70,11 +70,18 @@ def _login(client, user):
         session['_user_id'] = str(user.id)
 
 
-# ----------------------------- гейт логіну -----------------------------
+# ----------------------------- вхід у чекаут -----------------------------
 
-def test_checkout_requires_login(client, course):
+def test_checkout_does_not_require_login(client, course):
+    """Логін тут більше не бар'єр (рішення 17.08.2026, скасовує Q5).
+
+    Анонім бачить форму покупця -- сам флоу перевіряє
+    test_online_guest_checkout.
+    """
     response = client.get(f'/online-courses/{course.slug}/checkout')
-    assert response.status_code in (302, 401)
+
+    assert response.status_code == 200
+    assert 'name="email"' in response.get_data(as_text=True)
 
 
 def test_checkout_creates_order(client, buyer, course):

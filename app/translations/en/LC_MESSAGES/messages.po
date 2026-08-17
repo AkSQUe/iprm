@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-17 22:01+0300\n"
+"POT-Creation-Date: 2026-08-17 23:08+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -977,6 +977,21 @@ msgstr "Nursing"
 msgid "Інша спеціалізація"
 msgstr "Other specialization"
 
+msgid "Email обовʼязковий"
+msgstr "Email is required"
+
+msgid "Невалідний email"
+msgstr "Invalid email"
+
+msgid "Телефон"
+msgstr "Phone"
+
+msgid "Вкажіть коректний український номер у форматі +380XXXXXXXXX"
+msgstr "Enter a valid Ukrainian number in the format +380XXXXXXXXX"
+
+msgid "Окупність"
+msgstr "Payback"
+
 msgid "Вартість"
 msgstr "Price"
 
@@ -998,6 +1013,12 @@ msgstr "You already own this course"
 msgid "Не вдалося оформити замовлення. Спробуйте ще раз."
 msgstr "Could not create the order. Please try again."
 
+msgid "На цю адресу вже є замовлення цього курсу. Увійдіть, щоб його побачити."
+msgstr "This email already has an order for this course. Sign in to view it."
+
+msgid "Замовлення вже оформлюється. Увійдіть, щоб його побачити."
+msgstr "This order is already being placed. Sign in to view it."
+
 msgid "Не вдалося оформити безкоштовний доступ. Напишіть нам."
 msgstr "Could not open free access. Please write to us."
 
@@ -1013,6 +1034,27 @@ msgstr "Could not apply the promo code. Please try again."
 msgid "Промокод застосовано"
 msgstr "Promo code applied"
 
+msgid "У вас уже є кабінет — увійдіть, щоб побачити покупку."
+msgstr "You already have an account — sign in to view your purchase."
+
+msgid "Пароль має містити щонайменше 8 символів"
+msgstr "Password must be at least 8 characters"
+
+msgid "Паролі не збігаються"
+msgstr "Passwords do not match"
+
+msgid "Кабінет створено. Тут ви завжди знайдете свої курси."
+msgstr "Your account is ready. You will always find your courses here."
+
+msgid "Замовлення вже оплачено"
+msgstr "The order is already paid"
+
+msgid "Для безкоштовного замовлення рахунок не потрібен"
+msgstr "No invoice is needed for a free order"
+
+msgid "Не вдалося сформувати рахунок. Напишіть нам."
+msgstr "Could not generate the invoice. Please contact us."
+
 msgid "Замовлення не оплачене"
 msgstr "The order is not paid"
 
@@ -1025,15 +1067,6 @@ msgstr ""
 
 msgid "Нове посилання на навчання видано"
 msgstr "A new learning link has been issued"
-
-msgid "Замовлення вже оплачено"
-msgstr "The order is already paid"
-
-msgid "Для безкоштовного замовлення рахунок не потрібен"
-msgstr "No invoice is needed for a free order"
-
-msgid "Не вдалося сформувати рахунок. Напишіть нам."
-msgstr "Could not generate the invoice. Please contact us."
 
 msgid "Невідоме замовлення"
 msgstr "Unknown order"
@@ -1054,23 +1087,11 @@ msgstr "Please answer every question first. Remaining: %(numbers)s"
 msgid "Не вдалося зберегти результат. Спробуйте ще раз."
 msgstr "Could not save the result. Please try again."
 
-msgid "Невалідний email"
-msgstr "Invalid email"
-
-msgid "Телефон"
-msgstr "Phone"
-
 msgid "Телефон обов'язковий"
 msgstr "Phone is required"
 
-msgid "Вкажіть коректний український номер у форматі +380XXXXXXXXX"
-msgstr "Enter a valid Ukrainian number in the format +380XXXXXXXXX"
-
 msgid "Промокод"
 msgstr "Promo code"
-
-msgid "Email обовʼязковий"
-msgstr "Email is required"
 
 msgid "Ви вже зареєстровані на цей курс"
 msgstr "You are already registered for this course"
@@ -1114,12 +1135,6 @@ msgstr "Registration is already paid — no invoice needed."
 
 msgid "У вас уже є кабінет — увійдіть, щоб побачити реєстрацію."
 msgstr "You already have an account — sign in to view your registration."
-
-msgid "Пароль має містити щонайменше 8 символів"
-msgstr "Password must be at least 8 characters"
-
-msgid "Паролі не збігаються"
-msgstr "Passwords do not match"
 
 msgid "Кабінет створено. Тепер вам доступні матеріали та сертифікат."
 msgstr "Account created. Materials and your certificate are now available."
@@ -2569,6 +2584,14 @@ msgstr "Order"
 
 msgid ""
 "Посилання діє обмежений час і призначене особисто вам. Якщо воно "
+"перестане працювати, відкрийте сторінку свого замовлення — курс "
+"залишається за вами."
+msgstr ""
+"The link is valid for a limited time and is meant for you personally. If "
+"it stops working, open your order page — the course stays yours."
+
+msgid ""
+"Посилання діє обмежений час і призначене особисто вам. Якщо воно "
 "перестане працювати, отримайте нове в особистому кабінеті — курс "
 "залишається за вами."
 msgstr ""
@@ -2581,6 +2604,9 @@ msgstr "Your promo code for the next course"
 #, python-format
 msgid "Діє до %(until)s"
 msgstr "Valid until %(until)s"
+
+msgid "Моє замовлення"
+msgstr "My order"
 
 msgid "Встановіть новий пароль для вашого облікового запису ІПРМ"
 msgstr "Set a new password for your IPRM account"
@@ -4045,17 +4071,68 @@ msgstr ""
 msgid "Особистий кабінет"
 msgstr "Account"
 
-msgid "Оплата курсу"
-msgstr "Course payment"
+msgid "Оформлення покупки"
+msgstr "Checkout"
 
 msgid "Оформлення <span class=\"apple-gradient-text\">покупки</span>"
 msgstr "Complete your <span class=\"apple-gradient-text\">purchase</span>"
 
-msgid "Залишився один крок: після оплати доступ до курсу відкриється одразу."
-msgstr "One step left: access to the course opens right after payment."
+msgid ""
+"Акаунт заводити не потрібно: вкажіть, кому відкрити доступ, і переходьте "
+"до оплати."
+msgstr "No account needed: tell us who gets access and go straight to payment."
 
 msgid "Онлайн-курс"
 msgstr "Online course"
+
+msgid "До сплати"
+msgstr "Amount due"
+
+msgid ""
+"На цю адресу надійде доступ до навчання. Саме її ми передаємо навчальній "
+"платформі."
+msgstr ""
+"We will send course access to this address. It is also the address we "
+"pass to the learning platform."
+
+msgid "Без згоди на обробку даних покупка неможлива"
+msgstr "Purchase is not possible without consent to data processing"
+
+#, python-format
+msgid ""
+"Я надаю згоду на обробку моїх персональних даних (ПІБ, електронна пошта, "
+"номер телефону) з метою оформлення покупки, надання доступу до навчання "
+"та обробки платежу через платіжну систему LiqPay. Ознайомлений(а) з <a "
+"href=\"%(privacy_url)s\" target=\"_blank\" rel=\"noopener "
+"noreferrer\">Політикою конфіденційності</a>."
+msgstr ""
+"I consent to the processing of my personal data (full name, email, phone "
+"number) for the purpose of completing this purchase, granting access to "
+"the course and processing payment through the LiqPay payment system. I "
+"have read the <a href=\"%(privacy_url)s\" target=\"_blank\" "
+"rel=\"noopener noreferrer\">Privacy Policy</a>."
+
+msgid ""
+"Пароль зараз не потрібен. Кабінет можна буде створити одним полем після "
+"оплати."
+msgstr ""
+"No password required now. You can create an account with a single field "
+"after payment."
+
+msgid "Уже маєте кабінет? Увійти"
+msgstr "Already have an account? Sign in"
+
+msgid "Повернутися до опису курсу"
+msgstr "Back to the course description"
+
+msgid "Оплата курсу"
+msgstr "Course payment"
+
+msgid "Дякуємо за покупку. Нижче — доступ до навчання."
+msgstr "Thank you for your purchase. Your course access is below."
+
+msgid "Залишився один крок: після оплати доступ до курсу відкриється одразу."
+msgstr "One step left: access to the course opens right after payment."
 
 msgid "Вартість курсу"
 msgstr "Course price"
@@ -4063,8 +4140,8 @@ msgstr "Course price"
 msgid "Знижка за промокодом"
 msgstr "Promo code discount"
 
-msgid "До сплати"
-msgstr "Amount due"
+msgid "Сплачено"
+msgstr "Paid"
 
 msgid "промокод застосовано"
 msgstr "promo code applied"
@@ -4078,8 +4155,10 @@ msgstr "Enter code"
 msgid "Застосувати"
 msgstr "Apply"
 
-msgid "Замовлення вже оплачено."
-msgstr "Order"
+msgid "Доступ уже готуємо — посилання надійде на вашу пошту за кілька хвилин."
+msgstr ""
+"We are preparing your access — the link will arrive by email within a few"
+" minutes."
 
 msgid "Оплатити через LiqPay"
 msgstr "Pay via LiqPay"
@@ -4094,14 +4173,21 @@ msgid "Платите від організації?"
 msgstr "Paying as a company?"
 
 msgid ""
+"Щоб повертатися до курсу з будь-якого пристрою, придумайте пароль. Решта "
+"даних у нас уже є."
+msgstr ""
+"To return to the course from any device, choose a password. We already "
+"have the rest of your details."
+
+msgid "Пароль ще раз"
+msgstr "Repeat password"
+
+msgid ""
 "Одразу після оплати ми відкриємо вам доступ до курсу на навчальній "
 "платформі й надішлемо лист із входом."
 msgstr ""
 "Right after payment we open your course on the learning platform and "
 "email you the sign-in details."
-
-msgid "Повернутися до опису курсу"
-msgstr "Back to the course description"
 
 msgid "Онлайн-курси"
 msgstr "Online courses"
@@ -4200,6 +4286,36 @@ msgstr ""
 
 msgid "Каталог заходів"
 msgstr "Events catalogue"
+
+msgid "Посилання на замовлення недійсне"
+msgstr "Order link is invalid"
+
+msgid "Замовлення скасовано"
+msgstr "Order cancelled"
+
+msgid "Посилання недійсне або застаріле"
+msgstr "The link is invalid or expired"
+
+msgid ""
+"Це замовлення скасовано, тож посилання більше не діє. Курс можна купити "
+"знову."
+msgstr ""
+"This order was cancelled, so the link no longer works. You can buy the "
+"course again."
+
+msgid ""
+"Посилання на замовлення діє 30 днів. Якщо покупку не завершено, оформіть "
+"її ще раз — це швидко."
+msgstr ""
+"An order link is valid for 30 days. If the purchase was not completed, "
+"just place it again — it only takes a moment."
+
+msgid ""
+"Якщо ви вже оплатили — увійдіть у кабінет або напишіть нам, і ми знайдемо"
+" замовлення."
+msgstr ""
+"If you have already paid, sign in to your account or contact us and we "
+"will find your order."
 
 msgid "Оплату отримано"
 msgstr "Payment received"
@@ -5011,9 +5127,6 @@ msgstr "Registration canceled"
 msgid "Це посилання більше не активне. Зверніться до менеджера для уточнення."
 msgstr "This link is no longer active. Contact your manager for details."
 
-msgid "Посилання недійсне або застаріле"
-msgstr "The link is invalid or expired"
-
 msgid ""
 "Термін дії посилання сплив (30 днів) або його було відкликано. Попросіть "
 "менеджера надіслати нове."
@@ -5627,4 +5740,7 @@ msgstr ""
 
 #~ msgid "ваш чек. Податки та розхідники не враховано."
 #~ msgstr "your fee. Taxes and consumables are not included."
+
+#~ msgid "Замовлення оплачено."
+#~ msgstr "Order paid."
 

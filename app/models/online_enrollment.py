@@ -19,6 +19,10 @@ from app.utils import ensure_utc
 # Довжина токена в байтах до base64: 32 байти -- 43 символи URL-safe.
 ACCESS_TOKEN_BYTES = 32
 
+# Скільки живе посилання на сторінку замовлення. Як у заходів: покупець
+# може повернутись до неоплаченого рахунка й через тиждень.
+ORDER_TOKEN_TTL_DAYS = 30
+
 STATUS_PENDING = 'pending'
 STATUS_ACTIVE = 'active'
 STATUS_CANCELLED = 'cancelled'
@@ -76,6 +80,16 @@ class OnlineEnrollment(TimestampMixin, db.Model):
     # payment_status='paid' -- аварійний стан, його підбирає джоба.
     provisioned_at = db.Column(db.DateTime(timezone=True))
     provision_error = db.Column(db.Text)
+
+    # Токен замовлення -- вхід до сторінки оплати для покупця без акаунта.
+    # Той самий механізм, що в заходів (EventRegistration.completion_token):
+    # гість щойно оформив покупку, входу ще не має, а повернутись до оплати,
+    # рахунка й створення кабінету мусить.
+    #
+    # Окремо від access_token: той видається ПІСЛЯ оплати, живе годинами і
+    # веде в Sintegrum. Цей існує до оплати, живе тижнями і веде на наш сайт.
+    order_token = db.Column(db.String(64), unique=True, index=True)
+    order_token_expires_at = db.Column(db.DateTime(timezone=True))
 
     access_token = db.Column(db.String(64), unique=True, index=True)
     access_expires_at = db.Column(db.DateTime(timezone=True))
@@ -150,6 +164,22 @@ class OnlineEnrollment(TimestampMixin, db.Model):
             and self.access_expires_at is not None
             and ensure_utc(self.access_expires_at) <= utcnow()
         )
+
+    # ---- гостьове замовлення ----
+
+    def issue_order_token(self, ttl_days=ORDER_TOKEN_TTL_DAYS):
+        """Видати токен сторінки замовлення. Не комітить."""
+        from datetime import timedelta
+
+        self.order_token = secrets.token_urlsafe(ACCESS_TOKEN_BYTES)
+        self.order_token_expires_at = utcnow() + timedelta(days=ttl_days)
+        return self.order_token
+
+    @property
+    def order_token_active(self):
+        if not self.order_token or self.order_token_expires_at is None:
+            return False
+        return ensure_utc(self.order_token_expires_at) >= utcnow()
 
     def issue_access_token(self, ttl_hours):
         """Видати новий токен. Попередній тієї ж миті стає недійсним."""
