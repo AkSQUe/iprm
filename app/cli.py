@@ -600,6 +600,105 @@ def seed_plazmogel(slug, force, dry_run):
                    '/admin/reviews, коли редакція підтвердить формулювання.')
 
 
+@click.command('seed-course-gallery')
+@click.argument('slug')
+@click.argument('directory', type=click.Path(exists=True, file_okay=False))
+@click.option('--online', is_flag=True,
+              help='Slug належить онлайн-курсу, а не очному.')
+@click.option('--captions', default=None,
+              help='Підписи через "|" у порядку файлів. Менше за файли -- '
+                   'решта лишається без підпису.')
+@click.option('--dry-run', is_flag=True,
+              help='Показати, що буде залито, і відкотити транзакцію.')
+@with_appcontext
+def seed_course_gallery(slug, directory, online, captions, dry_run):
+    """Залити фото галереї курсу з теки у медіа-реєстр.
+
+    ЗАПУСКАТИ НА СЕРВЕРІ. MEDIA_FOLDER -- локальна тека, виключена з rsync:
+    якщо виконати команду на робочій машині, у спільній із продом БД
+    з'являться рядки, що вказують на файли, яких на сервері немає, і
+    галерея покаже биті картинки.
+
+    Ідемпотентна за іменем файлу: те, що вже залито в цю галерею, не
+    дублюється. Порядок -- за іменами файлів у теці.
+
+    
+    Приклади:
+      flask seed-course-gallery plazmogel-v-estetichnii-meditsini ./photos --dry-run
+      flask seed-course-gallery plazmogel-v-estetichnii-meditsini ./photos         --captions "Навчання в кабінеті|Приготування|Практика на моделі"
+    """
+    import os
+
+    from werkzeug.datastructures import FileStorage
+
+    from app.extensions import db
+    from app.models.course import Course
+    from app.models.media_file import MediaFile
+    from app.models.online_course import OnlineCourse
+    from app.services import course_service, media_service
+
+    model = OnlineCourse if online else Course
+    entity_type = 'online_course' if online else 'course'
+    course = model.query.filter_by(slug=slug).first()
+    if course is None:
+        click.echo('Курс зі slug «%s» не знайдено.' % slug, err=True)
+        raise SystemExit(1)
+
+    names = sorted(
+        name for name in os.listdir(directory)
+        if os.path.splitext(name)[1].lower().lstrip('.')
+        in media_service.ALLOWED_EXTENSIONS
+    )
+    if not names:
+        click.echo('У теці немає зображень придатних форматів.', err=True)
+        raise SystemExit(1)
+
+    labels = [part.strip() for part in (captions or '').split('|')] if captions else []
+
+    # Уже залите впізнаємо за оригінальним іменем: повторний запуск після
+    # обриву не має плодити других копій тих самих фото.
+    existing = {
+        media.original_name: media
+        for media in MediaFile.for_entity(entity_type, course.id, 'gallery')
+    }
+
+    click.echo('Курс: %s (%s)' % (course.slug, entity_type))
+    entries = []
+    added = 0
+    for index, name in enumerate(names):
+        caption = labels[index] if index < len(labels) else None
+        media = existing.get(name)
+        if media is not None:
+            click.echo('  = %s -- уже в галереї' % name)
+        else:
+            with open(os.path.join(directory, name), 'rb') as handle:
+                media, error = media_service.create_from_upload(
+                    FileStorage(stream=handle, filename=name),
+                    entity_type=entity_type, entity_id=course.id,
+                    usage_type='gallery',
+                )
+            if error:
+                click.echo('  ! %s -- %s' % (name, error), err=True)
+                continue
+            added += 1
+            click.echo('  + %s' % name)
+        entries.append({'media_id': media.id, 'caption': caption})
+
+    # Порядок і підписи розставляє той самий сервіс, що й форма адмінки --
+    # інакше CLI і форма розійшлися б у тому, що означає "галерея".
+    course_service.save_gallery(course, entries, entity_type=entity_type)
+
+    click.echo('Залито нових: %s, усього в галереї: %s' % (added, len(entries)))
+    if dry_run:
+        db.session.rollback()
+        click.echo('DRY-RUN: транзакцію відкочено.')
+        click.echo('УВАГА: файли на диску вже створені -- приберіть їх '
+                   'вручну або запустіть media-prune-orphans.')
+    else:
+        db.session.commit()
+        click.echo('Готово.')
+
+
 @click.command('legal-docx')
 @click.argument('pages', nargs=-1)
 @click.option('--all', 'export_all', is_flag=True,

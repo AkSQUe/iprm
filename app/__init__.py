@@ -161,10 +161,12 @@ def create_app(config_name=None):
     )
 
     from app.cli import (
-        seed_courses, seed_plazmogel, media_prune_orphans, backup_group, legal_docx,
+        seed_courses, seed_plazmogel, seed_course_gallery, media_prune_orphans,
+        backup_group, legal_docx,
     )
     app.cli.add_command(seed_courses)
     app.cli.add_command(seed_plazmogel)
+    app.cli.add_command(seed_course_gallery)
     app.cli.add_command(media_prune_orphans)
     app.cli.add_command(backup_group)
     app.cli.add_command(legal_docx)
