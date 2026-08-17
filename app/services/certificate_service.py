@@ -530,6 +530,74 @@ def read_pdf_bytes(certificate):
         return fh.read()
 
 
+# ---- Нумерація ----
+#
+# Сегмент "номер учасника" видається монотонним лічильником у site_settings, а
+# не COUNT(*) по таблиці сертифікатів. COUNT мав два режими відмови, і обидва
+# стають досяжними, щойно видача перестає бути ручною:
+#   1) дві одночасні видачі отримували ОДНЕ значення, а retry-петля не
+#      сходилась -- вона перераховувала ту саму кількість, палила всі спроби
+#      і кидала RuntimeError;
+#   2) після видалення будь-якого сертифіката лічильник ішов НАЗАД, і колізія
+#      з уже виданим номером ставала постійною -- видача ламалась назовсім.
+_COUNTER_FIELDS = {
+    'participant': 'bpr_participant_counter',
+    'lecturer': 'bpr_lecturer_counter',
+}
+
+
+def _allocate_number_segment(kind):
+    """Наступне значення лічильника номерів під блокуванням singleton-рядка.
+
+    `SELECT ... FOR UPDATE` по site_settings серіалізує лише конкурентні
+    видачі: звичайні читання налаштувань у Postgres на нього не натикаються
+    (MVCC). На SQLite SQLAlchemy FOR UPDATE не емітить -- це нормально, тести
+    однопотокові, а поведінка формули від цього не залежить.
+    """
+    from app.models.site_settings import SiteSettings
+
+    field = _COUNTER_FIELDS[kind]
+    SiteSettings.get()  # гарантує наявність рядка id=1
+    row = (
+        db.session.query(SiteSettings)
+        .filter(SiteSettings.id == 1)
+        .with_for_update()
+        .one()
+    )
+    value = (getattr(row, field) or 0) + 1
+    setattr(row, field, value)
+    db.session.flush()
+    return value
+
+
+def _next_free_number(year, provider, event, kind='participant', offset=0):
+    """Номер, якого ще немає в БД: тягнемо лічильник, доки не трапиться вільний.
+
+    Перевіряємо ПЕРЕД записом, а не ловимо IntegrityError з відкотом: rollback
+    відкотив би й сам інкремент лічильника, і наступна ітерація взяла б те саме
+    значення -- тобто відтворила б рівно ту незбіжну петлю, від якої ми пішли.
+
+    Справжні гонки тут уже неможливі: конкурентні видачі серіалізує блокування
+    рядка налаштувань, тож кожна отримує власне значення лічильника. Ця петля
+    закриває інший випадок -- номер, що потрапив у таблицю в обхід лічильника
+    (ручна правка БД, перенесення даних). Пропуски в нумерації при цьому
+    допустимі: монотонність важливіша за щільність.
+    """
+    from app.models.lecturer_certificate import LecturerCertificate
+
+    for _attempt in range(5):
+        segment = offset + _allocate_number_segment(kind)
+        number = Certificate.format_number(year, provider, event, segment)
+        taken = (
+            db.session.query(Certificate.id).filter_by(number=number).first()
+            or db.session.query(LecturerCertificate.id).filter_by(number=number).first()
+        )
+        if not taken:
+            return number
+        logger.warning('Certificate number %s already taken, allocating next', number)
+    raise RuntimeError('Не вдалося згенерувати унікальний номер сертифіката')
+
+
 def issue_certificate(registration, issued_by=None):
     """Видати сертифікат для реєстрації (ідемпотентно).
 
@@ -562,6 +630,23 @@ def issue_certificate(registration, issued_by=None):
     cert = existing if existing is not None else Certificate(
         registration_id=registration.id,
     )
+
+    # Номер виділяємо ДО session.add: _allocate_number_segment робить flush, а
+    # новий рядок з порожніми number/pdf_path не пройшов би NOT NULL.
+    #
+    # Повторна видача відкликаного сертифіката ЗБЕРІГАЄ свій номер і шлях.
+    # Інакше номер, який уже пішов у реєстр БПР і на руки людині, тихо
+    # змінювався, а PDF під старим номером лишався на диску сиротою. Окрема
+    # пастка тут же: pdf_path збирався з issued_at.year, тож сертифікат,
+    # відкликаний у грудні й виданий знову у січні, отримував новий шлях при
+    # тому самому номері -- тому наявний шлях теж не перезаписуємо.
+    if not cert.number:
+        cert.number = _next_free_number(year, provider, event_num)
+        # posix-формат (прямі слеші) -- незалежно від ОС генерації. Рік беремо
+        # з номера, а не з issued_at: тека тоді завжди відповідає номеру у назві
+        # файлу, навіть коли захід і видача припали на різні роки.
+        cert.pdf_path = f'{year}/{cert.number}.pdf'
+
     cert.user_id = registration.user_id
     cert.recipient_name = registration.user.full_name
     cert.event_title = title
@@ -577,24 +662,9 @@ def issue_certificate(registration, issued_by=None):
     cert.revoked = False
     cert.revoked_at = None
 
-    # Номер + шлях. Retry на випадок гонки за унікальним номером.
-    for attempt in range(5):
-        number = Certificate.generate_number(year, provider, event_num)
-        cert.number = number
-        # posix-формат (прямі слеші) -- незалежно від ОС генерації.
-        cert.pdf_path = f'{issued_at.year}/{number}.pdf'
-        if existing is None and attempt == 0:
-            db.session.add(cert)
-        try:
-            db.session.flush()
-            break
-        except IntegrityError:
-            db.session.rollback()
-            # Після rollback об'єкт від'єднано -- перечіплюємо у наступній ітерації.
-            db.session.add(cert)
-            logger.warning('Certificate number collision (%s), retrying', number)
-    else:
-        raise RuntimeError('Не вдалося згенерувати унікальний номер сертифіката')
+    if existing is None:
+        db.session.add(cert)
+    db.session.flush()
 
     _write_pdf(cert)
     db.session.commit()
@@ -614,7 +684,9 @@ def issue_lecturer_certificate(instance, issued_by=None):
     1xxxxx (окремий лічильник). Тип заходу зберігаємо у родовому відмінку.
     """
     from app.models.site_settings import SiteSettings
-    from app.models.lecturer_certificate import LecturerCertificate
+    from app.models.lecturer_certificate import (
+        LECTURER_NUMBER_OFFSET, LecturerCertificate,
+    )
 
     existing = LecturerCertificate.query.filter_by(instance_id=instance.id).first()
     if existing is not None:
@@ -656,23 +728,22 @@ def issue_lecturer_certificate(instance, issued_by=None):
         issued_by_id=issued_by.id if issued_by else None,
     )
 
-    for attempt in range(5):
-        lc.number = LecturerCertificate.generate_number(year, provider, event_num)
-        if attempt == 0:
-            db.session.add(lc)
-        try:
-            db.session.flush()
-            break
-        except IntegrityError:
-            db.session.rollback()
-            # instance_id-unique міг спрацювати, якщо паралельно вже створили.
-            dup = LecturerCertificate.query.filter_by(instance_id=instance.id).first()
-            if dup is not None:
-                return dup
-            db.session.add(lc)
-            logger.warning('Lecturer cert number collision (%s), retrying', lc.number)
-    else:
-        raise RuntimeError('Не вдалося згенерувати унікальний номер серта лектора')
+    lc.number = _next_free_number(
+        year, provider, event_num,
+        kind='lecturer', offset=LECTURER_NUMBER_OFFSET,
+    )
+    db.session.add(lc)
+    try:
+        db.session.flush()
+    except IntegrityError:
+        # instance_id-unique міг спрацювати, якщо паралельно вже створили --
+        # це не помилка, повертаємо той запис. Перебору номерів тут більше
+        # немає: вільний номер уже підібрано до запису (див. _next_free_number).
+        db.session.rollback()
+        dup = LecturerCertificate.query.filter_by(instance_id=instance.id).first()
+        if dup is not None:
+            return dup
+        raise
 
     db.session.commit()
     logger.info('Lecturer certificate %s issued for instance=%s by=%s',

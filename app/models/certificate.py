@@ -9,8 +9,6 @@
 cpd_points) на момент видачі, щоб подальші правки курсу/користувача не
 змінювали вже виданий сертифікат.
 """
-from sqlalchemy import func as sa_func
-
 from app.extensions import db
 from app.models.mixins import TimestampMixin, BigIntPK, utcnow
 
@@ -90,14 +88,6 @@ class Certificate(TimestampMixin, db.Model):
             f'{year}-{str(provider).strip().zfill(4)}'
             f'-{str(event).strip().zfill(7)}-{int(participant):06d}'
         )
-
-    @classmethod
-    def generate_number(cls, year, provider, event):
-        """Номер для видачі з реєстрації: учасник = ГЛОБАЛЬНИЙ лічильник усіх
-        виданих сертифікатів. Гонки знімаються unique-constraint + retry.
-        """
-        total = db.session.query(sa_func.count(cls.id)).scalar() or 0
-        return cls.format_number(year, provider, event, total + 1)
 
     @property
     def is_valid(self):

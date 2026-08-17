@@ -9,11 +9,8 @@
 Номер учасника (остання група) -- у діапазоні 1xxxxx (окремий лічильник, щоб
 не перетинатися з учасницькими 0xxxxx).
 """
-from sqlalchemy import func as sa_func
-
 from app.extensions import db
 from app.models.mixins import TimestampMixin, BigIntPK, utcnow
-from app.models.certificate import Certificate
 
 # Зсув діапазону лекторських номерів: 100001, 100002, ... (1xxxxx).
 LECTURER_NUMBER_OFFSET = 100000
@@ -61,15 +58,6 @@ class LecturerCertificate(TimestampMixin, db.Model):
     instance = db.relationship('CourseInstance', foreign_keys=[instance_id])
     trainer = db.relationship('Trainer', foreign_keys=[trainer_id])
     issued_by = db.relationship('User', foreign_keys=[issued_by_id])
-
-    @classmethod
-    def generate_number(cls, year, provider, event):
-        """Номер лекторського серта: учасник = LECTURER_NUMBER_OFFSET + лічильник
-        усіх лекторських сертів (1xxxxx). Гонки знімаються unique + retry.
-        """
-        total = db.session.query(sa_func.count(cls.id)).scalar() or 0
-        seq = LECTURER_NUMBER_OFFSET + total + 1
-        return Certificate.format_number(year, provider, event, seq)
 
     def __repr__(self):
         return f'<LecturerCertificate {self.number} instance={self.instance_id}>'

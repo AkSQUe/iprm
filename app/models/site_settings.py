@@ -112,6 +112,27 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
     # сертифіката (формат РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ).
     bpr_provider_number = db.Column(db.String(20), default='', nullable=False)
 
+    # Лічильники останнього виданого сегмента "номер учасника" -- окремо для
+    # участницьких і лекторських сертифікатів (у лекторських свій діапазон
+    # 1xxxxx через LECTURER_NUMBER_OFFSET).
+    #
+    # Раніше цей сегмент брався як COUNT(*) + 1 по таблиці сертифікатів. Це
+    # мало два режими відмови: (1) двоє одночасних видач отримували той самий
+    # номер, і retry-петля не сходилась, бо перераховувала ТУ САМУ кількість;
+    # (2) після видалення будь-якого сертифіката лічильник ішов назад і
+    # колізія ставала постійною. Монотонний лічильник знімає обидва: номер
+    # ніколи не повторюється, навіть після видалення рядків.
+    #
+    # Значення видаються під блокуванням рядка (див. app/services/
+    # certificate_service.py -> _allocate_number). НЕ правити вручну: зменшення
+    # призведе до колізій з уже виданими номерами.
+    bpr_participant_counter = db.Column(
+        db.Integer, default=0, server_default='0', nullable=False,
+    )
+    bpr_lecturer_counter = db.Column(
+        db.Integer, default=0, server_default='0', nullable=False,
+    )
+
     # Формат (розмір) сертифіката: 'a4' (210x297) або 'compact' (180x240).
     # Макет ідентичний -- готовий канвас масштабується під обрану сторінку.
     certificate_format = db.Column(db.String(20), default='a4', nullable=False)
