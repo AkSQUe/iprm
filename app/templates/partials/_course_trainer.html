@@ -1,0 +1,60 @@
+{# Блок тренера на сторінці курсу.
+
+   Спільний партіал. Збагачений варіант (--rich) вмикається лише коли є що
+   показати додатково: теги (trainer.skills) або цифри (trainer.highlights).
+   Без них лишається базова розкладка -- інакше широка колонка під фото
+   виглядала б порожньою.
+
+   Теги беремо з наявного skills: заводити окреме поле "теги" означало б
+   просити редактора вести той самий перелік двічі. Рядки з двокрапкою там
+   за домовленістю є підзаголовками груп (див. Trainer.skills), тож у теги
+   вони не годяться -- відсіюємо. #}
+{% if course.trainer %}
+{% set trainer = course.trainer %}
+{% set tags = [] %}
+{% for skill in trainer.t('skills') or [] %}
+  {% if ':' not in skill and tags | length < 4 %}{% set _discard = tags.append(skill) %}{% endif %}
+{% endfor %}
+{% set highlights = trainer.t('highlights') or [] %}
+{% set is_rich = tags or highlights %}
+<section id="trainer" class="iprm-section" aria-labelledby="trainer-title">
+  <div class="iprm-section__inner">
+    <h2 id="trainer-title" class="iprm-section__title apple-reveal">
+      {{ _('Ваш <span class="apple-gradient-text">тренер</span>') }}
+    </h2>
+    <div class="iprm-trainer-block{% if is_rich %} iprm-trainer-block--rich{% endif %} apple-reveal">
+      {% if trainer.photo_src %}
+      <img src="{{ trainer.photo_src }}" alt="{{ trainer.t('full_name') }}"
+           class="iprm-trainer-block__photo" loading="lazy" decoding="async"
+           width="360" height="480">
+      {% endif %}
+      <div class="iprm-trainer-block__body">
+        <h3>{{ trainer.t('full_name') }}</h3>
+        {% if trainer.t('role') %}
+        <p class="iprm-trainer-block__role">{{ trainer.t('role') }}</p>
+        {% endif %}
+        {% if trainer.t('bio') %}<p>{{ trainer.t('bio') }}</p>{% endif %}
+
+        {% if tags %}
+        <div class="iprm-trainer-block__tags">
+          {% for tag in tags %}
+          <span class="iprm-trainer-block__tag">{{ tag }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if highlights %}
+        <div class="iprm-trainer-block__stats">
+          {% for item in highlights %}{% if item.value %}
+          <div class="iprm-trainer-block__stat">
+            <span class="iprm-trainer-block__stat-value">{{ item.value }}</span>
+            <span class="iprm-trainer-block__stat-label">{{ item.label }}</span>
+          </div>
+          {% endif %}{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}

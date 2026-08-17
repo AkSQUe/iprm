@@ -1,0 +1,39 @@
+{# "Для кого курс" + картка зі зворотним звʼязком.
+
+   Спільний партіал. Дані -- course.target_audience (список рядків).
+   Друга картка показується завжди, коли є перша: людині, яка сумнівається,
+   чи їй підходить курс, потрібен вихід, а не глухий кут.
+
+   Очікує ask_href -- якір або URL цілі "залишити контакт". #}
+{% set audience = course.t('target_audience') %}
+{% if audience %}
+<section id="audience" class="iprm-section apple-section-gray" aria-labelledby="audience-title">
+  <div class="iprm-section__inner">
+    <h2 id="audience-title" class="iprm-section__title apple-reveal">
+      {{ _('Чи це <span class="apple-gradient-text">ваш курс</span>') }}
+    </h2>
+    <div class="iprm-audience-grid">
+
+      <article class="iprm-audience-card apple-reveal">
+        <span class="iprm-audience-card__tag">{{ _('Підходить') }}</span>
+        <h3 class="iprm-audience-card__title">{{ _('Вам варто приєднатися, якщо ви') }}</h3>
+        <ul class="iprm-check-list">
+          {% for item in audience %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </article>
+
+      <article class="iprm-audience-card iprm-audience-card--ask apple-reveal">
+        <span class="iprm-audience-card__tag">{{ _('Є питання?') }}</span>
+        <h3 class="iprm-audience-card__title">{{ _('Залиште контакт — допоможемо розібратися') }}</h3>
+        <p>{{ _('Не потрібно самостійно оцінювати свій рівень підготовки. Ми зв’яжемося у зручний час і спокійно відповімо на запитання.') }}</p>
+        <a class="apple-btn apple-btn--primary" href="{{ ask_href or '#request' }}">
+          {{ _('Поставити запитання') }}
+        </a>
+      </article>
+
+    </div>
+  </div>
+</section>
+{% endif %}

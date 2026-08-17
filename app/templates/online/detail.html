@@ -10,7 +10,11 @@
 {% block extra_css %}
 {# Картки блоку «інші онлайн-курси» стилюються тим самим файлом, що й каталог. #}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-courses.css') }}?v={{ assets_version }}">
+{# Компоненти, спільні зі сторінкою очного курсу. ПЕРЕД page-online-course.css:
+   там лишились специфічні для онлайну переозначення (картка купівлі, факти). #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/course-landing.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-course.css') }}?v={{ assets_version }}">
+{% if gallery %}<link rel="stylesheet" href="{{ url_for('static', filename='css/lightbox.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
 
 {% block jsonld %}
@@ -57,19 +61,79 @@
 {% block content %}
 <div class="apple-page">
 
-  <div class="iprm-hero-wrap">
-    <section class="iprm-hero iprm-hero--online" aria-label="Hero">
-      <div class="iprm-hero__content">
-        <p class="iprm-online-detail__eyebrow">{{ _('Онлайн-курс') }}</p>
-        <h1 class="iprm-hero__title">{{ course.effective_title }}</h1>
-        {% if course.effective_short_description %}
-        <p class="iprm-hero__subtitle">{{ course.effective_short_description }}</p>
-        {% endif %}
-      </div>
-    </section>
-  </div>
+  {# ===================================================================
+     Порядок блоків -- той самий, що на сторінці очного курсу
+     (docs/plan-course-landing-redesign.md), мінус усе, що прив'язане до
+     проведень: дат, місць, тарифів і графіку тут немає за визначенням.
+     Секції зібрані з тих самих партіалів: нові поля названі однаково в
+     Course і OnlineCourse, тож партіали читають course.* без обгорток.
+     =================================================================== #}
 
-  <section class="iprm-section" aria-labelledby="online-course-about">
+  <!-- ===== PAGE NAV ===== -->
+  {% set nav_items = [] %}
+  {% if course.t('benefits') %}{% set _discard = nav_items.append({'href': 'benefits', 'label': _('Результат')}) %}{% endif %}
+  {% set _discard = nav_items.append({'href': 'about', 'label': _('Про курс')}) %}
+  {% if gallery %}{% set _discard = nav_items.append({'href': 'gallery', 'label': _('Як проходить')}) %}{% endif %}
+  {% if course.program_blocks or course.t('practice_note_title') %}{% set _discard = nav_items.append({'href': 'program', 'label': _('Програма')}) %}{% endif %}
+  {% if course.trainer %}{% set _discard = nav_items.append({'href': 'trainer', 'label': _('Тренер')}) %}{% endif %}
+  {% set _discard = nav_items.append({'href': 'buy', 'label': _('Вартість')}) %}
+  {% if course_reviews %}{% set _discard = nav_items.append({'href': 'reviews', 'label': _('Відгуки')}) %}{% endif %}
+  {% if course.faq is not none and course.faq | length %}{% set _discard = nav_items.append({'href': 'faq', 'label': _('Питання')}) %}{% endif %}
+  {# Місць в онлайн-курсі не буває -- індикатор не показуємо. #}
+  {% set nav_seats = none %}
+  {% include 'partials/_course_page_nav.html' %}
+
+  <!-- ===== HERO ===== -->
+  {% set hero_image = course.hero_src or course.card_src %}
+
+  {% set hero_chips = [{'text': _('Онлайн-курс'), 'accent': true}, _('У власному темпі')] %}
+  {% if course.trainer %}{% set _discard = hero_chips.append(course.trainer.t('full_name')) %}{% endif %}
+
+  {% set hero_meta = [] %}
+  {% if course.duration_hours %}
+    {% set _discard = hero_meta.append({'value': '%s %s' % (course.duration_hours, _('год')), 'label': _('тривалість')}) %}
+  {% endif %}
+  {% if course.cpd_points %}
+    {% set _discard = hero_meta.append({'value': course.cpd_points, 'label': course.cpd_points | plural('bpr_points')}) %}
+  {% endif %}
+  {% set _discard = hero_meta.append({'value': _('Одразу'), 'label': _('старт після оплати')}) %}
+  {% if course.effective_price %}
+    {% set _discard = hero_meta.append({'value': '%s %s' % (course.effective_price | int, course.currency), 'label': _('вартість')}) %}
+  {% endif %}
+
+  {# Місць у навчанні без дат немає, тож картки вільних місць теж. #}
+  {% set hero_seats = none %}
+
+  {% set hero_title %}
+    {% set title_words = course.effective_title.rsplit(' ', 1) %}
+    {% if title_words | length > 1 %}{{ title_words[0] }} <span class="apple-gradient-text">{{ title_words[1] }}</span>{% else %}{{ course.effective_title }}{% endif %}
+  {% endset %}
+
+  {% set hero_subtitle = course.effective_short_description %}
+
+  {% set hero_actions %}
+    <div class="iprm-hero__actions iprm-hero__actions--detail" data-sticky-cta-anchor>
+      {% if existing_enrollment and existing_enrollment.is_paid %}
+      <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--primary">{{ _('Перейти до навчання') }}</a>
+      {% elif checkout_available %}
+      <a href="{{ url_for('online.checkout', slug=course.slug) }}" class="apple-btn apple-btn--primary">{{ _('Купити курс') }}</a>
+      {% else %}
+      <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--primary">{{ _('Запитати про курс') }}</a>
+      {% endif %}
+      <a href="#about" class="apple-btn apple-btn--secondary apple-btn--arrow">{{ _('Про курс') }}</a>
+    </div>
+  {% endset %}
+
+  {% include 'partials/_course_hero.html' %}
+
+  <!-- ===== PROOF ===== -->
+  {% include 'partials/_course_proof.html' %}
+
+  <!-- ===== BENEFITS ===== -->
+  {% include 'partials/_course_benefits.html' %}
+
+  <!-- ===== ABOUT + BUY ===== -->
+  <section id="about" class="iprm-section apple-section-gray" aria-labelledby="online-course-about">
     <div class="iprm-section__inner iprm-online-detail">
 
       <div class="iprm-online-detail__main">
@@ -78,9 +142,9 @@
         {# Опис може прийти з Sintegrum готовою розміткою. Модель віддає його
            вже очищеним (bleach): вставляти чужий HTML як є не можна, а
            показувати теги текстом -- безглуздо. #}
-        <div class="iprm-online-detail__text apple-reveal">{{ course.description_html }}</div>
+        <div class="iprm-prose apple-reveal">{{ course.description_html }}</div>
         {% else %}
-        <p class="iprm-online-detail__text apple-reveal">{{ _('Детальний опис курсу готується.') }}</p>
+        <p class="iprm-prose apple-reveal">{{ _('Детальний опис курсу готується.') }}</p>
         {% endif %}
 
         <div class="iprm-online-detail__facts apple-reveal">
@@ -101,7 +165,9 @@
         </div>
       </div>
 
-      <aside class="iprm-online-detail__aside apple-reveal">
+      {# Картка купівлі -- аналог блоку тарифів очного курсу. Липка: на довгій
+         сторінці ціна має лишатись перед очима, поки читають опис. #}
+      <aside id="buy" class="iprm-online-detail__aside apple-reveal">
         <div class="iprm-online-buy">
           {% if course.effective_price %}
           <p class="iprm-online-buy__price">{{ money(course.effective_price, course.currency, unit_class='iprm-online-buy__currency') }}</p>
@@ -126,22 +192,102 @@
     </div>
   </section>
 
+  <!-- ===== AUDIENCE ===== -->
+  {% set ask_href = url_for('main.contact') %}
+  {% include 'partials/_course_audience.html' %}
+
+  <!-- ===== GALLERY ===== -->
+  {% include 'partials/_course_gallery.html' %}
+
+  <!-- ===== PROGRAM ===== -->
+  {% include 'partials/_course_program.html' %}
+
+  <!-- ===== TRAINER ===== -->
+  {% include 'partials/_course_trainer.html' %}
+
+  <!-- ===== REVIEWS ===== -->
+  {% include 'partials/_course_reviews.html' %}
+
+  <!-- ===== FAQ ===== -->
+  {% if course.faq is not none and course.faq | length %}
+  <section id="faq" class="iprm-section apple-section-gray" aria-labelledby="faq-title">
+    <div class="iprm-section__inner">
+      <h2 id="faq-title" class="iprm-section__title apple-reveal">{{ _('Поширені <span class="apple-gradient-text">запитання</span>') }}</h2>
+      <div class="iprm-faq apple-reveal">
+        {% for item in course.t('faq') %}{% if item.question %}
+        <details class="iprm-faq__item">
+          <summary class="iprm-faq__question">{{ item.question }}</summary>
+          <div class="iprm-faq__answer">{{ (item.answer or '') | replace('\n', '<br>') | sanitize_rich_text }}</div>
+        </details>
+        {% endif %}{% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== RELATED ===== -->
   {% if related %}
-  <section class="iprm-section apple-section-gray" aria-labelledby="online-related">
+  <section class="iprm-section" aria-labelledby="online-related">
     <div class="iprm-section__inner">
       <h2 id="online-related" class="iprm-section__title apple-reveal">{{ _('Інші <span class="apple-gradient-text">онлайн-курси</span>') }}</h2>
       <div class="iprm-online-cards">
-        {% for course in related %}
-        {% include 'partials/_online_course_card.html' %}
+        {# Змінна циклу навмисно НЕ `course`: партіал картки читає його з
+           контексту, а перезапис зіпсував би секції нижче. #}
+        {% for related_course in related %}
+        {% with course = related_course %}{% include 'partials/_online_course_card.html' %}{% endwith %}
         {% endfor %}
       </div>
     </div>
   </section>
   {% endif %}
 
+  <!-- ===== FINAL CTA ===== -->
+  <section class="iprm-section iprm-section--compact" aria-label="{{ _('Купівля курсу') }}">
+    <div class="iprm-section__inner">
+      <div class="iprm-final-cta apple-reveal">
+        <p class="iprm-final-cta__text">
+          {{ course.t('final_cta_text') or _('Готові почати? Доступ відкривається одразу після оплати.') }}
+        </p>
+        {% if existing_enrollment and existing_enrollment.is_paid %}
+        <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--primary">{{ _('Перейти до навчання') }}</a>
+        {% elif checkout_available %}
+        <a href="{{ url_for('online.checkout', slug=course.slug) }}" class="apple-btn apple-btn--primary">{{ _('Купити курс') }}</a>
+        {% else %}
+        <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--primary">{{ _('Запитати про курс') }}</a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  {# ===== STICKY MOBILE CTA ===== #}
+  <div class="iprm-sticky-cta" data-sticky-cta hidden>
+    <div class="iprm-sticky-cta__info">
+      <span class="iprm-sticky-cta__title">{{ course.effective_title }}</span>
+      {% if course.effective_price %}
+      <span class="iprm-sticky-cta__price">{{ course.effective_price | int }} {{ course.currency }}</span>
+      {% endif %}
+    </div>
+    <div class="iprm-sticky-cta__actions">
+      <a href="#about" class="iprm-sticky-cta__btn iprm-sticky-cta__btn--ghost">{{ _('Про курс') }}</a>
+      {% if existing_enrollment and existing_enrollment.is_paid %}
+      <a href="{{ url_for('auth.account') }}" class="iprm-sticky-cta__btn">{{ _('Навчання') }}</a>
+      {% elif checkout_available %}
+      <a href="{{ url_for('online.checkout', slug=course.slug) }}" class="iprm-sticky-cta__btn">{{ _('Купити') }}</a>
+      {% else %}
+      <a href="{{ url_for('main.contact') }}" class="iprm-sticky-cta__btn">{{ _('Запитати') }}</a>
+      {% endif %}
+    </div>
+  </div>
+
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/sticky-cta.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/page-nav.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/faq-accordion.js') }}?v={{ assets_version }}" defer></script>
+{% if gallery %}
+<script src="{{ url_for('static', filename='js/lightbox.js') }}?v={{ assets_version }}" defer></script>
+{% endif %}
 {% endblock %}

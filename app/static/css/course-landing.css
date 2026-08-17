@@ -13,9 +13,12 @@
    тёмній темі стає тёмною поверхнею.
 */
 
-/* Зсув якорів: шапка + власна навігація сторінки. */
+/* Висота власної навігації сторінки. Оголошена тут, а не в common.css:
+   файл підключають лише дві сторінки курсу, тож решта сайту чесно бачить
+   fallback 0 -- і липкі елементи там не зсуваються дарма. */
 .apple-page {
-  scroll-padding-top: calc(var(--iprm-header-h) + 46px);
+  --iprm-page-nav-h: 46px;
+  scroll-padding-top: calc(var(--iprm-header-h) + var(--iprm-page-nav-h));
 }
 
 /* ========== PAGE NAV (навігація сторінкою) ==========
@@ -391,6 +394,77 @@
   color: var(--iprm-text-light);
 }
 
+/* ========== PROSE (детальний опис курсу) ==========
+   Опис приходить розміткою (sanitize_rich_text) або з Sintegrum, тож
+   стилюємо теги, а не класи. Класу .iprm-prose досі не було в жодному
+   CSS-файлі -- опис у табі рендерився браузерними дефолтами. */
+
+.iprm-prose {
+  max-width: 800px;
+  margin: 0 auto;
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--apple-gray-dark);
+}
+
+.iprm-prose > :first-child {
+  margin-top: 0;
+}
+
+.iprm-prose > :last-child {
+  margin-bottom: 0;
+}
+
+.iprm-prose p {
+  margin: 0 0 16px;
+}
+
+.iprm-prose h2,
+.iprm-prose h3,
+.iprm-prose h4 {
+  margin: 32px 0 12px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--apple-black);
+}
+
+.iprm-prose h2 { font-size: 1.5rem; }
+.iprm-prose h3 { font-size: 1.25rem; }
+.iprm-prose h4 { font-size: 1.0625rem; }
+
+.iprm-prose ul,
+.iprm-prose ol {
+  margin: 0 0 16px;
+  padding-left: 22px;
+}
+
+.iprm-prose li {
+  margin-bottom: 8px;
+}
+
+.iprm-prose a {
+  color: var(--iprm-accent);
+  text-decoration: underline;
+}
+
+.iprm-prose strong {
+  color: var(--apple-black);
+}
+
+.iprm-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--iprm-radius-md);
+}
+
+/* Широкі таблиці з чужої розмітки не повинні розсувати сторінку. */
+.iprm-prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
 /* ========== AUDIENCE (для кого + зворотний дзвінок) ========== */
 
 .iprm-audience-grid {
@@ -758,11 +832,24 @@
   font-weight: 700;
 }
 
-.iprm-review-tile p {
+.iprm-review-tile blockquote {
   margin: 0;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 14px;
   line-height: 1.6;
+}
+
+.iprm-review-tile figcaption {
+  margin-top: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Зірки -- акцент, а не текст: у білому вони губились би серед цитати. */
+.iprm-review-tile__title {
+  color: var(--apple-orange);
+  letter-spacing: 0.08em;
 }
 
 .iprm-dark-shell__cta {
@@ -874,6 +961,77 @@
   height: 16px;
   flex: none;
   margin-top: 1px;
+}
+
+/* Поля лід-форми. .form-input глобально стилізований лише під .form-section
+   (common.css) та в auth/admin -- на сторінці курсу жоден із них не діє,
+   тому форма має власні правила, як і сусідня .iprm-request-form.
+   Тут, на відміну від неї, картка СВІТЛА, тож поля -- звичайні світлі. */
+
+.iprm-lead-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.iprm-lead-form .form-group label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--apple-gray-dark);
+}
+
+.iprm-lead-form .form-group label .required {
+  margin-left: 2px;
+  color: var(--apple-orange);
+}
+
+.iprm-lead-form .form-input {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: var(--iprm-radius-sm);
+  border: 1.5px solid var(--iprm-border);
+  background: var(--iprm-white);
+  color: var(--iprm-text);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  transition: border-color 0.2s var(--ease-interact), box-shadow 0.2s var(--ease-interact);
+}
+
+.iprm-lead-form .form-input::placeholder {
+  color: var(--iprm-placeholder-text);
+}
+
+.iprm-lead-form .form-input:focus,
+.iprm-lead-form .form-input:focus-visible {
+  outline: none;
+  border-color: var(--iprm-accent);
+  box-shadow: 0 0 0 4px var(--iprm-accent-light);
+}
+
+.iprm-lead-form textarea.form-input {
+  min-height: 84px;
+  resize: vertical;
+}
+
+/* select не успадковує appearance від .form-input -- вирівнюємо висоту. */
+.iprm-lead-form select.form-input {
+  height: 48px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Honeypot ховаємо з екрана, але не display:none -- боти мають його бачити.
+   Правило дублює .iprm-request-form__honeypot із page-courses.css, бо на
+   сторінці онлайн-курсу того файлу немає. */
+.iprm-lead-form .iprm-request-form__honeypot {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
 }
 
 /* ========== FAQ ==========

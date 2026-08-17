@@ -65,6 +65,13 @@ def course_detail(slug):
     if current_user.is_authenticated:
         existing = _live_enrollment(current_user.id, course.id)
 
+    # Опубліковані відгуки саме про цей онлайн-курс. Прив'язка з'явилась
+    # разом із поліморфним online_course_id (див. плани редизайну).
+    from app.models.review import Review
+    course_reviews = Review.alive().filter_by(
+        online_course_id=course.id, is_published=True,
+    ).order_by(Review.sort_order, Review.created_at.desc()).limit(6).all()
+
     return render_template(
         'online/detail.html',
         active_nav='online',
@@ -72,6 +79,9 @@ def course_detail(slug):
         related=related,
         checkout_available=course.is_purchasable,
         existing_enrollment=existing,
+        # Галерея -- окремий запит до медіа-реєстру (прив'язка поліморфна).
+        gallery=course.gallery,
+        course_reviews=course_reviews,
     )
 
 

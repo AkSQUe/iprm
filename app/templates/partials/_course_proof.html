@@ -1,0 +1,22 @@
+{# Смуга цифр довіри під hero.
+
+   Спільна для очного й онлайн-курсу. Дані -- course.proof_stats:
+   [{value, label}], редагується в адмінці. Порожньо -> секції немає.
+
+   Замінила партіал _event_trust.html: той містив захардкоджені цифри
+   (500+ учасників, 30+ заходів) і не був підключений жодною сторінкою. #}
+{% set proof_stats = course.t('proof_stats') %}
+{% if proof_stats %}
+<section class="iprm-section iprm-section--band" aria-label="{{ _('Чому саме цей курс') }}">
+  <div class="iprm-section__inner">
+    <div class="iprm-trust-stats iprm-trust-stats--band">
+      {% for stat in proof_stats %}{% if stat.value %}
+      <div class="iprm-trust-stats__item apple-reveal">
+        <span class="iprm-trust-stats__value">{{ stat.value }}</span>
+        <span class="iprm-trust-stats__label">{{ stat.label }}</span>
+      </div>
+      {% endif %}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}

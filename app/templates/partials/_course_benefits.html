@@ -1,0 +1,27 @@
+{# "Що зміниться у вашій практиці" -- картки результату навчання.
+
+   Спільний партіал. Дані -- course.benefits: [{title, text}]. Порожньо ->
+   секції немає. Нумерація рахується під час рендеру: адмін веде порядок
+   списком, а не вписує номери руками. #}
+{% set benefits = course.t('benefits') %}
+{% if benefits %}
+<section id="benefits" class="iprm-section" aria-labelledby="benefits-title">
+  <div class="iprm-section__inner">
+    <h2 id="benefits-title" class="iprm-section__title apple-reveal">
+      {{ _('Що зміниться у вашій <span class="apple-gradient-text">практиці</span>') }}
+    </h2>
+    {% if benefits_lead %}
+    <p class="iprm-section__subtitle apple-reveal">{{ benefits_lead }}</p>
+    {% endif %}
+    <div class="iprm-benefit-grid">
+      {% for item in benefits %}{% if item.title %}
+      <article class="iprm-benefit-card apple-reveal">
+        <div class="iprm-benefit-card__num" aria-hidden="true">{{ '%02d' % loop.index }}</div>
+        <h3 class="iprm-benefit-card__title">{{ item.title }}</h3>
+        {% if item.text %}<p class="iprm-benefit-card__text">{{ item.text }}</p>{% endif %}
+      </article>
+      {% endif %}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}

@@ -24,6 +24,9 @@ from app.utils import ensure_utc
 _REQUEST_EMAIL_MAX = 254
 _REQUEST_PHONE_MAX = 20
 _REQUEST_MESSAGE_MAX = 2000
+# Мусить збігатися з CHECK ck_course_requests_messenger. Беремо з моделі,
+# щоб перелік не розійшовся з обмеженням БД у трьох місцях одразу.
+_REQUEST_MESSENGERS = {value for value, _label in CourseRequest.MESSENGERS}
 
 # Legacy URL redirects -> slug-based routes.
 # Ключі -- історичні URL (стомали в email-розсилках і SERP), значення --
@@ -349,6 +352,10 @@ def course_by_slug(slug):
         'courses/detail.html',
         active_nav='courses',
         course=course,
+        # Галерея -- окремий запит до медіа-реєстру (прив'язка поліморфна,
+        # тому не joinedload). Беремо в роуті, а не в шаблоні: так видно
+        # ціну сторінки в одному місці.
+        gallery=course.gallery,
         upcoming_instances=upcoming_instances,
         past_instances=past_instances,
         open_instance_ids=open_ids,
@@ -518,6 +525,8 @@ def course_request(slug):
     email_raw = (request.form.get('email') or '').strip()
     phone_raw = (request.form.get('phone') or '').strip()
     message_raw = (request.form.get('message') or '').strip()
+    name_raw = (request.form.get('name') or '').strip()
+    messenger_raw = (request.form.get('messenger') or '').strip()
 
     email = _validate_request_email(email_raw)
     if not email:
@@ -532,6 +541,16 @@ def course_request(slug):
         flash(_('Повідомлення задовге (макс. 2000 символів)'), 'error')
         return redirect(url_for('courses.course_by_slug', slug=slug) + '#request')
 
+    # Канал звʼязку: чужого значення в БД бути не має -- там CHECK, і
+    # невідоме значення завалило б збереження заявки цілком. Тихо відкидаємо:
+    # для людини це другорядне поле, губити через нього заявку не можна.
+    messenger = messenger_raw if messenger_raw in _REQUEST_MESSENGERS else None
+
+    # Згода фіксується моментом, а не галочкою: важливо КОЛИ вона дана.
+    # Коротка форма запиту згоди не питає -- там лишається NULL.
+    consent_at = (datetime.now(timezone.utc)
+                  if (request.form.get('consent') or '').strip() else None)
+
     user_id = current_user.id if current_user.is_authenticated else None
 
     req = CourseRequest(
@@ -540,6 +559,9 @@ def course_request(slug):
         email=email,
         phone=phone_raw or None,
         message=message_raw or None,
+        name=name_raw[:120] or None,
+        messenger=messenger,
+        consent_at=consent_at,
         status='pending',
     )
     db.session.add(req)

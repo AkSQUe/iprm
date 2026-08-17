@@ -1,0 +1,39 @@
+{# Галерея з практики.
+
+   Спільний партіал. Дані -- gallery: список MediaFile (роут бере через
+   MediaFile.for_entity, порядок -- sort_order). Порожньо -> секції немає.
+
+   Кожне фото -- посилання на повний файл: так галерея працює і без JS
+   (відкриється зображення), а з JS її перехоплює lightbox.js.
+
+   alt і caption -- різні речі: alt описує зображення для скрінрідера,
+   caption -- видимий підпис для всіх. Якщо alt не заповнили, дублювати в
+   нього підпис не варто -- краще порожній alt, ніж підпис двічі поспіль. #}
+{% if gallery %}
+<section id="gallery" class="iprm-section apple-section-gray" aria-labelledby="gallery-title">
+  <div class="iprm-section__inner">
+    <h2 id="gallery-title" class="iprm-section__title apple-reveal">
+      {{ _('Як проходить <span class="apple-gradient-text">навчання</span>') }}
+    </h2>
+    {% if course.t('gallery_intro') %}
+    <p class="iprm-section__subtitle apple-reveal">{{ course.t('gallery_intro') }}</p>
+    {% endif %}
+    <div class="iprm-gallery" data-lightbox-group>
+      {% for media in gallery %}
+      <figure class="iprm-gallery__item apple-reveal">
+        <a href="{{ media.url }}" data-lightbox
+           {% if media.caption %}data-caption="{{ media.caption }}"{% endif %}>
+          <img class="iprm-gallery__img" src="{{ media.variant_url('card') }}"
+               alt="{{ media.alt_text or '' }}" loading="lazy" decoding="async"
+               {% if media.width %}width="{{ media.width }}"{% endif %}
+               {% if media.height %}height="{{ media.height }}"{% endif %}>
+        </a>
+        {% if media.caption %}
+        <figcaption class="iprm-gallery__caption">{{ media.caption }}</figcaption>
+        {% endif %}
+      </figure>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}

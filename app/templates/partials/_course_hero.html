@@ -1,0 +1,79 @@
+{# Продажний hero сторінки курсу.
+
+   Спільний для очного й онлайн-курсу. Очікує:
+     hero_title      -- заголовок (рядок або Markup);
+     hero_subtitle   -- лід (може бути порожнім);
+     hero_image      -- URL ілюстрації або нічого -> одноколонковий варіант;
+     hero_chips      -- [рядок] або [{text, accent}];
+     hero_meta       -- [{value, label}] -- рядок ключових параметрів;
+     hero_actions    -- Markup із кнопками (рендерить сторінка: у очного й
+                        онлайн курсу різні цілі CTA);
+     hero_seats      -- {value, note, taken_percent} або нічого.
+
+   Фото декоративне поруч із заголовком, тому alt порожній: назву курсу
+   скрінрідер уже прочитав у h1, а дубль лише заважає. #}
+<div class="iprm-hero-wrap">
+  <section class="iprm-hero iprm-hero--landing" aria-label="{{ _('Про курс коротко') }}">
+    <div class="iprm-hero__content">
+
+      <div class="iprm-hero__copy">
+        {% if hero_chips %}
+        <div class="iprm-hero__chips">
+          {% for chip in hero_chips %}
+          {% if chip is mapping %}
+          <span class="iprm-hero__chip{% if chip.accent %} iprm-hero__chip--accent{% endif %}">{{ chip.text }}</span>
+          {% else %}
+          <span class="iprm-hero__chip">{{ chip }}</span>
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <h1 class="iprm-hero__title">{{ hero_title }}</h1>
+
+        {% if hero_subtitle %}
+        <p class="iprm-hero__subtitle">{{ hero_subtitle }}</p>
+        {% endif %}
+
+        {{ hero_actions }}
+
+        {% if hero_meta %}
+        <div class="iprm-hero__meta" aria-label="{{ _('Ключові параметри курсу') }}">
+          {% for item in hero_meta %}
+          <div class="iprm-hero__meta-item">
+            <span class="iprm-hero__meta-value">{{ item.value }}</span>
+            <span class="iprm-hero__meta-label">{{ item.label }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      {% if hero_image %}
+      <div class="iprm-hero__visual">
+        <img class="iprm-hero__photo" src="{{ hero_image }}" alt=""
+             fetchpriority="high" decoding="async" width="640" height="500">
+
+        {% if hero_seats %}
+        <div class="iprm-hero__seats">
+          <span class="iprm-hero__seats-kicker">{{ _('Набір відкрито') }}</span>
+          <span class="iprm-hero__seats-value">{{ hero_seats.value }}</span>
+          {% if hero_seats.taken_percent is not none %}
+          {# Смужка з [hidden]: заповнення ставить progress-fill.js. Без JS
+             порожній індикатор читався б як "зайнято 0%" -- тобто брехав. #}
+          <div class="iprm-progress" role="img" hidden
+               aria-label="{{ hero_seats.progress_label }}">
+            <span class="iprm-progress__fill" data-progress="{{ hero_seats.taken_percent }}"></span>
+          </div>
+          {% endif %}
+          {% if hero_seats.note %}
+          <p class="iprm-hero__seats-note">{{ hero_seats.note }}</p>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>
+  </section>
+</div>

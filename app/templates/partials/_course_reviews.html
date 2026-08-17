@@ -1,0 +1,39 @@
+{# Відгуки учасників у тёмній оболонці.
+
+   Спільний партіал. Очікує course_reviews -- опубліковані Review.
+   Секція зумисне тёмна в ОБОХ темах (див. .iprm-dark-shell), тому текст
+   поверх неї -- лише --iprm-on-accent.
+
+   Instagram-посилання -- із SiteSettings, а не захардкоджене: адреса
+   профілю вже є в налаштуваннях і показується у футері. #}
+{% if course_reviews %}
+<section id="reviews" class="iprm-section" aria-labelledby="reviews-title">
+  <div class="iprm-section__inner">
+    <div class="iprm-dark-shell apple-reveal">
+      <span class="iprm-eyebrow">{{ _('Відгуки та довіра') }}</span>
+      <h2 id="reviews-title" class="iprm-dark-shell__title">
+        {{ _('Що учасники кажуть про навчання') }}
+      </h2>
+      <div class="iprm-review-grid">
+        {% for review in course_reviews %}
+        {# Байлайн і переклади -- як у _review_card.html: та сама сутність
+           не повинна показуватись по-різному на різних сторінках. #}
+        <figure class="iprm-review-tile">
+          <span class="iprm-review-tile__title"
+                aria-label="{% trans rating=review.rating %}Оцінка {{ rating }} з 5{% endtrans %}">{{ '★' * review.rating }}</span>
+          <blockquote>{{ review.t('text') }}</blockquote>
+          <figcaption>{{ [review.t('author_name'), review.t('city'), review.t('author_role')] | select | join(' · ') }}</figcaption>
+        </figure>
+        {% endfor %}
+      </div>
+      {% if site_settings.instagram_url %}
+      <div class="iprm-dark-shell__cta">
+        <p>{{ _('Фото, відео та відгуки учасників попередніх навчань ми публікуємо у відкритому профілі Інституту.') }}</p>
+        <a class="apple-btn apple-btn--secondary" href="{{ site_settings.instagram_url }}"
+           target="_blank" rel="noopener noreferrer">{{ _('Дивитися в Instagram') }}</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}

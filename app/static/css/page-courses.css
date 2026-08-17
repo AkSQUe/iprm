@@ -312,6 +312,53 @@
   background-repeat: no-repeat;
 }
 
+/* Пункт-перевага цього тарифу над базовим: у тексті опису рядок починається
+   з "+" (див. InstanceTariff.description_entries). Показуємо плюсом і
+   насиченішим текстом -- інакше "усе, що входить до практикуму" і реальні
+   додатки читалися б однаково. */
+.iprm-format-card__item--plus {
+  font-weight: 650;
+  color: var(--apple-black);
+}
+
+.iprm-format-card__item--plus::before {
+  background-image: none;
+  content: '+';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--apple-orange);
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Прапорець над карткою ("З підтримкою після курсу"). Картка має
+   padding 32px, тож прапорець сідає на верхню межу. */
+.iprm-format-card {
+  position: relative;
+}
+
+.iprm-format-card__flag {
+  position: absolute;
+  top: -14px;
+  left: 30px;
+  padding: 6px 14px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--apple-orange);
+  color: var(--iprm-on-accent);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* Виділена картка з прапорцем -- акцент теплий, щоб прапорець і рамка не
+   сперечались між собою. */
+.iprm-format-card--featured:has(.iprm-format-card__flag) {
+  border-color: var(--apple-orange);
+  box-shadow: 0 16px 45px rgba(var(--apple-orange-rgb), 0.18);
+}
+
 /* apple-btn -- inline-flex без justify-content, тому на всю ширину картки
    текст притискався до лівого краю (text-align не керує flex-елементами). */
 .iprm-format-card__cta {

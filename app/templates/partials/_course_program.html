@@ -1,0 +1,49 @@
+{# Програма курсу + акцентна плашка про практику.
+
+   Спільний партіал. Дані -- course.program_blocks (поліморфні: належать
+   офлайновому АБО онлайновому курсу) і course.practice_note_*.
+
+   Плашка показується і без блоків програми: буває, що структура ще не
+   заведена, а сказати про практику вже є що. #}
+{% set practice_title = course.t('practice_note_title') %}
+{% if course.program_blocks or practice_title %}
+<section id="program" class="iprm-section" aria-labelledby="program-title">
+  <div class="iprm-section__inner">
+    <h2 id="program-title" class="iprm-section__title apple-reveal">
+      {{ _('Програма <span class="apple-gradient-text">курсу</span>') }}
+    </h2>
+    {% if course.program_blocks %}
+    <p class="iprm-section__subtitle apple-reveal">
+      {{ _('Структура навчання — від теорії до практичних навичок') }}
+    </p>
+    <div class="iprm-program">
+      {% for block in course.program_blocks %}
+      <article class="iprm-program__block apple-reveal">
+        <header class="iprm-program__head">
+          <span class="iprm-program__badge" aria-hidden="true">{{ loop.index }}</span>
+          <h3 class="iprm-program__heading">{{ block.t('heading') }}</h3>
+        </header>
+        <ul class="iprm-program__list">
+          {% for item in block.t('items') %}
+          <li class="iprm-program__item">{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </article>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if practice_title %}
+    <div class="iprm-practice-note apple-reveal">
+      <div class="iprm-practice-note__icon" aria-hidden="true">&check;</div>
+      <div>
+        <h3 class="iprm-practice-note__title">{{ practice_title }}</h3>
+        {% if course.t('practice_note_text') %}
+        <p class="iprm-practice-note__text">{{ course.t('practice_note_text') }}</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}

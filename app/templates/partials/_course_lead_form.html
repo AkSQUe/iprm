@@ -1,0 +1,106 @@
+{# Лід-форма курсу в тёмній секції.
+
+   Спільна для очного й онлайн-курсу. Очікує:
+     lead_action  -- URL обробника;
+     lead_title   -- заголовок (Markup);
+     lead_lead    -- абзац під заголовком;
+     lead_points  -- [рядок] -- що людина отримає у відповідь.
+   Перелік каналів звʼязку -- локальний (див. нижче).
+
+   Відмінність від референсу: email лишається обовʼязковим, а телефон -- ні.
+   У референсі навпаки, але CourseRequest.email -- NOT NULL з валідатором,
+   і сама заявка йде поштою; міняти це місцями означало б міграцію і зміну
+   каналу звʼязку, а не правку форми.
+
+   Форма референсу відкриває mailto:. Ми цього НЕ переносимо: заявка
+   зберігається в БД і йде у сповіщення -- це строго краще. #}
+<section id="request" class="iprm-section iprm-lead-section" aria-labelledby="request-title">
+  <div class="iprm-section__inner">
+    <div class="iprm-lead-grid">
+
+      <div class="apple-reveal">
+        <span class="iprm-eyebrow">{{ _('Залишити заявку') }}</span>
+        <h2 id="request-title" class="iprm-section__title">{{ lead_title }}</h2>
+        {% if lead_lead %}<p class="iprm-lead-grid__lead">{{ lead_lead }}</p>{% endif %}
+        {% if lead_points %}
+        <ul class="iprm-lead-list">
+          {% for point in lead_points %}<li>{{ point }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <form class="iprm-lead-form apple-reveal" method="POST" action="{{ lead_action }}"
+            data-validate data-single-submit
+            data-recaptcha-action="course_request" data-ga-event="generate_lead">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        {# Honeypot: name="website" лишається приманкою для ботів, але label
+           без слова "Website" -- щоб поле не сприймалось як справжнє, якщо
+           колись стане видимим (переклад сторінки, reader mode, автофіл). #}
+        <div class="iprm-request-form__honeypot" aria-hidden="true">
+          <label for="lead-website">{{ _('Не заповнюйте це поле') }}</label>
+          <input type="text" name="website" id="lead-website" tabindex="-1" autocomplete="off">
+        </div>
+
+        <h3 class="iprm-lead-form__title">{{ _('Отримати програму курсу') }}</h3>
+        <p class="iprm-lead-form__note">{{ _('Заповнення займе менше хвилини.') }}</p>
+
+        <div class="form-group">
+          <label for="lead-name">{{ _('Ваше ім’я') }}</label>
+          <input type="text" name="name" id="lead-name" class="form-input"
+                 maxlength="120" autocomplete="name"
+                 value="{% if current_user.is_authenticated %}{{ current_user.first_name or '' }}{% endif %}">
+        </div>
+
+        <div class="iprm-lead-form__row">
+          <div class="form-group">
+            <label for="lead-email">Email <span class="required">*</span></label>
+            <input type="email" name="email" id="lead-email" class="form-input" required
+                   maxlength="254" autocomplete="email"
+                   value="{% if current_user.is_authenticated %}{{ current_user.email }}{% endif %}">
+          </div>
+          <div class="form-group">
+            <label for="lead-phone">{{ _('Телефон') }}</label>
+            <input type="tel" name="phone" id="lead-phone" class="form-input"
+                   placeholder="+380..." maxlength="20" autocomplete="tel">
+          </div>
+        </div>
+
+        {# Значення мусять збігатися з CHECK ck_course_requests_messenger.
+           Перелік тут, а не з моделі: назви каналів показуються людині й
+           мають перекладатися, а константа моделі -- ні. #}
+        {% set messenger_choices = [
+          ('telegram', 'Telegram'), ('viber', 'Viber'), ('whatsapp', 'WhatsApp'),
+          ('phone', _('Телефонний дзвінок')), ('email', 'Email')
+        ] %}
+        <div class="form-group">
+          <label for="lead-messenger">{{ _('Зручний канал зв’язку') }}</label>
+          <select name="messenger" id="lead-messenger" class="form-input">
+            <option value="">{{ _('Не має значення') }}</option>
+            {% for value, label in messenger_choices %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="lead-message">{{ _('Повідомлення') }}</label>
+          <textarea name="message" id="lead-message" class="form-input" rows="3" maxlength="2000"
+                    placeholder="{{ _('Опціонально: що саме вас цікавить') }}"></textarea>
+        </div>
+
+        {# Згода фіксується часом (consent_at), а не галочкою: для згоди на
+           обробку даних важливо КОЛИ вона дана. #}
+        <label class="iprm-lead-form__consent" for="lead-consent">
+          <input type="checkbox" name="consent" id="lead-consent" value="1" required>
+          <span>{{ _('Погоджуюся на обробку контактних даних для отримання інформації про курс.') }}</span>
+        </label>
+
+        <button type="submit" class="apple-btn apple-btn--primary apple-btn--full">
+          {{ _('Надіслати заявку') }}
+        </button>
+      </form>
+
+    </div>
+  </div>
+</section>
