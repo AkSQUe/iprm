@@ -501,7 +501,12 @@ a {
   background: var(--iprm-surface-menu);
   border-bottom: 1px solid var(--iprm-border);
   box-shadow: var(--iprm-shadow-md);
-  transform: translateY(-120%);
+  /* Ховаємо панель ВИЩЕ за верх екрана. -120% рахується від висоти самої
+     панелі й не враховує, що вона ще зміщена вниз на висоту шапки (top),
+     тому нижні ~36px меню визирали над шапкою на кожній сторінці курсу --
+     зверху було видно обрізане «Контакти». Треба рівно -100% плюс висота
+     шапки; 8px -- запас на тінь. */
+  transform: translateY(calc(-100% - var(--iprm-header-h) - 8px));
   transition: transform 0.3s var(--ease-interact);
   z-index: 999;
 }

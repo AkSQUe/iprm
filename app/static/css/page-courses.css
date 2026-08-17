@@ -1819,14 +1819,23 @@ button.iprm-tag:focus-visible {
   white-space: nowrap;
 }
 
-.iprm-roi__results {
+/* Плитки результату СТАРОГО калькулятора -- він лишився на Головній
+   (main/home.html), де ROI показує три плитки поспіль.
+
+   Скоуп `.page-home` тут обов'язковий, і ось чому. Сторінка курсу після
+   переверстки під еталон малює `.iprm-roi__result` як тёмну праву половину
+   картки (правило вище, з градієнтом). Клас той самий, а це правило стоїть
+   НИЖЧЕ -- і його `background` перебивав градієнт: панель ставала світлою,
+   а білий текст на ній давав контраст 1.11. Саме так і виглядало приймання
+   WS-7, поки колізію не розвели. */
+.page-home .iprm-roi__results {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   margin-bottom: 16px;
 }
 
-.iprm-roi__result {
+.page-home .iprm-roi__result {
   text-align: center;
   padding: 20px 16px;
   background: var(--iprm-accent-light);

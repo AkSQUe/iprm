@@ -8,8 +8,13 @@
    Поріг і кількість питань беруться з налаштувань тесту (`quiz`), а не з
    зашитого числа: адмін міняє їх в адмінці, і текст мусить іти за ними.
 
+   Фон і щільність задає ГОСПОДАР, а не цей партіал: у хвості сторінки курсу
+   він стоїть серед compact-секцій без сірого, і власне сіре тло робило з
+   нього смугу посеред білого блоку. Тому тут лише `iprm-section--compact`,
+   а чергування -- справа сторінки.
+
    Очікує в контексті: quiz (CourseQuiz). #}
-<section class="iprm-section apple-section-gray" id="certificate" aria-labelledby="certificate-title">
+<section class="iprm-section iprm-section--compact" id="certificate" aria-labelledby="certificate-title">
   <div class="iprm-section__inner">
     <h2 id="certificate-title" class="iprm-section__title">{% trans %}Умови отримання <span class="apple-gradient-text">сертифікату</span>{% endtrans %}</h2>
     <p class="iprm-section__subtitle">{{ _('Для отримання сертифікату необхідно виконати декілька кроків') }}</p>
