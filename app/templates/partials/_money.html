@@ -1,0 +1,17 @@
+{#- Сума з символом валюти.
+
+   Гривню показуємо символом (&#8372;), як усюди на сайті: код "UAH" у
+   картці курсу виглядає як виписка з банку, а не як ціна. Інші валюти
+   лишаються кодом -- символів для них ми не тримаємо.
+
+   Використання:
+     {% from 'partials/_money.html' import money %}
+     {{ money(course.effective_price, course.currency) }}
+     {{ money(price, currency, unit_class='iprm-online-buy__currency') }}
+
+   unit_class -- клас для символу, коли він має бути дрібнішим за число.
+-#}
+{%- macro money(value, currency='UAH', unit_class=None) -%}
+{%- set unit %}{% if currency == 'UAH' %}&#8372;{% else %}{{ currency }}{% endif %}{% endset -%}
+{{- value | int }} {% if unit_class %}<span class="{{ unit_class }}">{{ unit }}</span>{% else %}{{ unit }}{% endif -%}
+{%- endmacro -%}

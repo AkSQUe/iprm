@@ -1,0 +1,47 @@
+{# Картка онлайн-курсу для каталогу й блоку «інші курси».
+   Очікує: course; card_eager=true для першої картки списку (LCP-кандидат).
+
+   Побудована за тим самим ритмом, що й картка заходу (_course_card.html):
+   медіа -- назва -- бейджі -- опис -- підвал із ціною. Курсу з Sintegrum
+   зображення може не бути взагалі, тому медіа-блок виводиться завжди: без
+   нього картка перетворюється на голий аркуш тексту і випадає зі стилю
+   каталогу. #}
+{% from 'partials/_location_badge.html' import location_badge %}
+{% from 'partials/_money.html' import money %}
+<a href="{{ url_for('online.course_detail', slug=course.slug) }}" class="iprm-online-card apple-reveal">
+  <div class="iprm-online-card__media{% if not course.card_src %} iprm-online-card__media--empty{% endif %}">
+    {% if course.card_src %}
+    <img src="{{ course.card_src }}" alt="{{ course.effective_title }}" width="400" height="200"
+         {% if card_eager | default(false) %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
+    {% else %}
+    <svg class="iprm-online-card__glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="2" y="3" width="20" height="14" rx="2"/>
+      <line x1="8" y1="21" x2="16" y2="21"/>
+      <line x1="12" y1="17" x2="12" y2="21"/>
+      <path d="M10.5 7.5l4 2.5-4 2.5z"/>
+    </svg>
+    {% endif %}
+  </div>
+  <div class="iprm-online-card__body">
+    <h3 class="iprm-online-card__title">{{ course.effective_title }}</h3>
+
+    <div class="iprm-online-card__badges">
+      {{ location_badge('online', none) }}
+      {% if course.duration_hours %}
+      <span class="iprm-card-badge iprm-card-badge--duration">{{ course.duration_hours }} {{ _('год') }}</span>
+      {% endif %}
+    </div>
+
+    {% if course.effective_short_description %}
+    <p class="iprm-online-card__text">{{ course.effective_short_description }}</p>
+    {% endif %}
+
+    <div class="iprm-online-card__footer">
+      {% if course.effective_price %}
+      <span class="iprm-online-card__price">{{ money(course.effective_price, course.currency, unit_class='iprm-online-card__currency') }}</span>
+      {% endif %}
+      <span class="iprm-online-card__cta">{{ _('Детальніше') }}</span>
+    </div>
+  </div>
+</a>
