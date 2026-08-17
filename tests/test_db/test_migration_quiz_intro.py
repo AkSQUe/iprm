@@ -52,7 +52,9 @@ def test_chain_has_a_single_head():
         if down:
             parents.add(down.group(1))
     heads = [r for r in revisions if r not in parents]
-    assert heads == ['quiz_intro_20260817'], f'голови: {heads}'
+    # Перевіряємо кількість, а не імʼя голови: інакше кожна наступна міграція
+    # «ламала» б цей тест, і його правили б машинально, не читаючи.
+    assert len(heads) == 1, f'голови: {heads}'
 
 
 def test_upgrade_and_downgrade_are_symmetric(migration):
