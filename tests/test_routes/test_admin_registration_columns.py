@@ -580,3 +580,49 @@ def test_all_list_does_not_grow_with_rows(client, admin):
     assert many - few <= 4, (
         f'12 додаткових рядків дали +{many - few} SELECT ({few} -> {many})'
     )
+
+
+# ---- плаваюча панель дій на сторінці розбору --------------------------------
+
+def test_detail_actions_are_a_page_level_sticky_bar(client, admin):
+    """Дії мусять бути ПОЗА секціями, інакше sticky липне в межах секції.
+
+    `.admin-form__actions` -- це `position: sticky; bottom: 0`. Поки блок стояв
+    усередині короткої секції «Анкета та сертифікат», він доїжджав лише до її
+    низу, а розбір спроб буває довгим (десять питань на кожну), тож кнопки
+    зникали з екрана.
+    """
+    inst = _instance()
+    reg = _registration(inst)
+    _login(client, admin)
+    html = _detail(client, reg)
+
+    assert 'admin-form__actions' in html
+    # Панель іде ПІСЛЯ останньої секції, а не всередині неї.
+    assert html.rindex('form-section') < html.index('admin-form__actions')
+
+
+def test_detail_actions_present_without_attempts(client, admin):
+    """Кнопка «Додати спроби» потрібна й тому, хто ще не починав."""
+    inst = _instance()
+    reg = _registration(inst)
+    _login(client, admin)
+    html = _detail(client, reg)
+    assert 'Додати спроби' in html
+    # Обнуляти нічого -- кнопки немає.
+    assert 'Обнулити тестування' not in html
+
+
+def test_detail_reset_appears_after_an_attempt(client, admin, no_pdf):
+    inst = _instance()
+    reg = _registration(inst)
+    quiz_service.submit_attempt(quiz_service.start_attempt(reg))
+    _login(client, admin)
+    assert 'Обнулити тестування' in _detail(client, reg)
+
+
+def test_detail_loads_quiz_css_for_sticky_bar(client, admin):
+    inst = _instance()
+    reg = _registration(inst)
+    _login(client, admin)
+    assert 'css/admin-quiz.css' in _detail(client, reg)

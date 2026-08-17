@@ -138,25 +138,6 @@
         </div>
       </div>
 
-      <div class="admin-form__actions">
-        <form method="POST" class="quiz-unlock"
-              action="{{ url_for('admin.registration_quiz_unlock', reg_id=reg.id) }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="number" name="extra" value="1" min="1" max="10"
-                 class="form-input quiz-unlock__input" aria-label="Скільки спроб додати">
-          <button type="submit" class="btn-admin btn-admin--secondary">Додати спроби</button>
-        </form>
-        {% if reports or reg.quiz_passed_at %}
-        <form method="POST"
-              action="{{ url_for('admin.registration_quiz_reset', reg_id=reg.id) }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn-admin btn-admin--danger"
-                  data-confirm="Обнулити тестування цього учасника? Спроби буде видалено. Сертифікат лишиться виданим.">
-            Обнулити тестування
-          </button>
-        </form>
-        {% endif %}
-      </div>
     </div>
 
     {# ===== Спроби ===== #}
@@ -241,6 +222,35 @@
       <p>Тут з'явиться розбір кожної відповіді, щойно учасник почне тест</p>
     </div>
     {% endfor %}
+
+    {# Дії -- у кінці сторінки, ПОЗА секціями: `.admin-form__actions` це
+       sticky bottom, і всередині короткої секції він липнув лише в її межах,
+       тобто до низу сторінки не доїжджав. Розбір спроб буває довгим (десять
+       питань на кожну), тож кнопки мусять бути під рукою на будь-якій
+       прокрутці -- як на решті адмін-форм. #}
+    <div class="admin-form__actions">
+      {% if reports or reg.quiz_passed_at %}
+      <form method="POST"
+            action="{{ url_for('admin.registration_quiz_reset', reg_id=reg.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--danger"
+                data-confirm="Обнулити тестування цього учасника? Спроби буде видалено. Сертифікат лишиться виданим.">
+          Обнулити тестування
+        </button>
+      </form>
+      {% endif %}
+      <form method="POST" class="quiz-unlock"
+            action="{{ url_for('admin.registration_quiz_unlock', reg_id=reg.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="number" name="extra" value="1" min="1" max="10"
+               class="form-input quiz-unlock__input" aria-label="Скільки спроб додати">
+        <button type="submit" class="btn-admin btn-admin--secondary">Додати спроби</button>
+      </form>
+      {% if instance %}
+      <a href="{{ url_for('admin.instance_registrations', instance_id=instance.id) }}"
+         class="btn-admin btn-admin--secondary">До реєстрацій</a>
+      {% endif %}
+    </div>
 
   </div>
 </div>
