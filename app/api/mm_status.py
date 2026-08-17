@@ -229,6 +229,16 @@ def _apply_items(reservation, items, local_status, has_items_key):
         elif terminal and legacy_qty is not None:
             fields['quantity_actual'] = legacy_qty
 
+        if local_status == MaterialReservationStatus.RESERVED:
+            # Документ повернувся в резерв -- MM Medic скасував помилкове
+            # списання (`revert_consumption` з target=active). Фактичних
+            # кількостей у зарезервованого документа за визначенням немає, а
+            # лишені старі показували б у пікінг-листі й у звіті
+            # «зарезервовано проти спожитого» витрату по документу, який нічого
+            # не спожив. Жоден інший штовх сюди не потрапляє з непорожнім
+            # `quantity_actual`: у резерв документ інакше не повертається.
+            fields['quantity_actual'] = None
+
         for attr, value in fields.items():
             if getattr(item, attr) != value:
                 setattr(item, attr, value)
@@ -382,6 +392,14 @@ def reservation_status():
 
     if local_status == MaterialReservationStatus.CONSUMED and not reservation.consumed_at:
         reservation.consumed_at = datetime.now(timezone.utc)
+        changed = True
+        stock_changed = True
+    elif (local_status == MaterialReservationStatus.RESERVED
+            and reservation.consumed_at):
+        # Списання скасували на боці MM Medic -- дата списання більше ні до
+        # чого не належить. Лишена, вона робить документ «списаним» для всього,
+        # що дивиться на `consumed_at`, а не на статус.
+        reservation.consumed_at = None
         changed = True
         stock_changed = True
 

@@ -158,6 +158,57 @@ def test_mm_status_webhook_rejects_bad_signature(app, client):
     assert MaterialReservation.query.get(res.id).status == MaterialReservationStatus.RESERVED
 
 
+def test_mm_status_webhook_revert_to_reserved_clears_actuals(app, client):
+    """MM Medic скасував помилкове списання -- дзеркало не має лишати фактику.
+
+    Документ у резерві за визначенням нічого не спожив. Доки старі
+    `quantity_actual` і `consumed_at` лишались, пікінг-лист і звіт
+    «зарезервовано проти спожитого» показували витрату по документу, який її
+    не робив, а все, що дивиться на `consumed_at` замість статусу, і далі
+    вважало захід списаним.
+    """
+    _enable_mm()
+    inst = _make_instance(slug_suffix='rvrt')
+    res = _make_reservation(inst, status=MaterialReservationStatus.CONSUMED,
+                            slug_suffix='rvrt')
+    res.items[0].quantity_actual = 4
+    res.consumed_at = datetime.now(timezone.utc)
+    db.session.commit()
+
+    body = json.dumps({'external_ref': res.external_ref, 'status': 'active',
+                       'items': [{'sku': 'NDL-21', 'quantity': 5}]}).encode()
+    r = client.post('/api/partner/mm-medic/reservation-status', data=body,
+                    headers=_mm_headers(body))
+
+    assert r.status_code == 200
+    fresh = MaterialReservation.query.get(res.id)
+    assert fresh.status == MaterialReservationStatus.RESERVED
+    assert fresh.consumed_at is None
+    assert fresh.items[0].quantity_actual is None
+    assert fresh.items[0].quantity_reserved == 5
+
+
+def test_mm_status_webhook_revert_to_cancelled_keeps_history(app, client):
+    """Скасований документ -- інша гілка: статус міняється, а цифри лишаються
+    як історія того, що колись провели."""
+    _enable_mm()
+    inst = _make_instance(slug_suffix='rvcn')
+    res = _make_reservation(inst, status=MaterialReservationStatus.CONSUMED,
+                            slug_suffix='rvcn')
+    res.items[0].quantity_actual = 4
+    db.session.commit()
+
+    body = json.dumps({'external_ref': res.external_ref, 'status': 'cancelled',
+                       'items': []}).encode()
+    r = client.post('/api/partner/mm-medic/reservation-status', data=body,
+                    headers=_mm_headers(body))
+
+    assert r.status_code == 200
+    fresh = MaterialReservation.query.get(res.id)
+    assert fresh.status == MaterialReservationStatus.CANCELLED
+    assert fresh.items[0].quantity_actual == 4
+
+
 def test_mm_status_webhook_unknown_ref_acked(app, client):
     _enable_mm()
     body = json.dumps({'external_ref': 'iprm-instance-999999', 'status': 'consumed'}).encode()
