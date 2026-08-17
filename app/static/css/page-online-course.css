@@ -248,6 +248,48 @@
   color: var(--iprm-text-light);
 }
 
+/* ---- Поля вводу в картці замовлення ----
+
+   Одне правило на всю колонку чекауту: промокод, дані покупця, пароль
+   кабінету. Глобальний `.form-input` описаний лише всередині `.form-section`
+   (common.css) або на сторінках входу (auth.css), тож поля, додані сюди
+   пізніше, щоразу виявлялись системними коробочками -- саме так виглядали
+   поля пароля у формі «Створити кабінет».
+
+   Радіус -- `--iprm-radius-sm`, як у кнопок після переходу на метрики
+   еталона: капсульне поле поруч із прямокутною кнопкою розсинхронізувалось. */
+
+.iprm-online-checkout .form-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-family: var(--iprm-font);
+  font-size: 0.9375rem;
+  color: var(--iprm-text);
+  background: color-mix(in oklch, var(--iprm-text) 4%, transparent);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  transition:
+    border-color 0.15s var(--ease-interact),
+    box-shadow 0.15s var(--ease-interact);
+}
+
+.iprm-online-checkout .form-input::placeholder {
+  color: var(--iprm-placeholder-text);
+}
+
+.iprm-online-checkout .form-input:focus {
+  outline: none;
+  border-color: var(--iprm-accent);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light);
+}
+
+/* Помилку валідації показує рамка: на сторінці покупки червоний текст під
+   полем легко пропустити повз очі, коли дивишся на суму. */
+.iprm-online-checkout .form-input.is-invalid {
+  border-color: var(--iprm-error);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+}
+
 /* ---- Промокод ---- */
 
 .iprm-online-promo {
@@ -269,31 +311,11 @@
   gap: 8px;
 }
 
-/* Поле стилюємо тут: глобальний .form-input описаний лише всередині
-   .form-section, тож на цій сторінці інпут лишався б системним. */
+/* Вигляд поля -- спільний (див. вище); тут лише розкладка в рядку. */
 .iprm-online-promo__row .form-input {
   flex: 1;
   min-width: 0;
-  padding: 12px 18px;
-  font-family: var(--iprm-font);
-  font-size: 0.9375rem;
-  color: var(--iprm-text);
-  background: color-mix(in oklch, var(--iprm-text) 4%, transparent);
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-pill);
-  transition:
-    border-color 0.15s var(--ease-interact),
-    box-shadow 0.15s var(--ease-interact);
-}
-
-.iprm-online-promo__row .form-input::placeholder {
-  color: var(--iprm-placeholder-text);
-}
-
-.iprm-online-promo__row .form-input:focus {
-  outline: none;
-  border-color: var(--iprm-accent);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
+  width: auto;
 }
 
 /* Кнопка тягнеться на висоту поля: власні вертикальні відступи прибираємо. */
@@ -502,11 +524,4 @@
   .iprm-buyer-form__grid {
     grid-template-columns: 1fr;
   }
-}
-
-/* Поля пароля: `.form-input` у common.css ширини не задає (її ставить
-   auth.css, якого ця сторінка не підключає), тож без цього обидва поля
-   лишались вузькими коробочками посеред картки. */
-.iprm-checkout-account__row .form-input {
-  width: 100%;
 }
