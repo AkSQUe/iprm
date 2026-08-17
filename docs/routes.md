@@ -173,6 +173,7 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 | GET/POST | `/admin/instances/<id>/quiz` | Перевизначення тесту для проведення |
 | POST | `/admin/quizzes/<id>/delete` | Видалити тест (результати лишаються) |
 | GET | `/admin/instances/<id>/quiz-results` | Результати тестування групи |
+| GET | `/admin/registrations/<id>/quiz` | Розбір по учаснику: кожна спроба, кожна відповідь, правильна поруч з обраною |
 | POST | `/admin/registrations/<id>/quiz/unlock` | Додати спроби учаснику |
 | POST | `/admin/registrations/<id>/quiz/reset` | Обнулити тестування учасника |
 | GET | `/admin/certificates` | Сертифікати (stub) |

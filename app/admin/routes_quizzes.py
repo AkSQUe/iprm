@@ -267,6 +267,49 @@ def instance_quiz_results(instance_id):
     )
 
 
+# ---- Детальний розбір по учаснику ------------------------------------------
+
+@admin_bp.route('/registrations/<int:reg_id>/quiz')
+@admin_required
+def registration_quiz_detail(reg_id):
+    """Чому тест складено або ні: кожна спроба, кожне питання, кожна відповідь.
+
+    Відповідає на питання «у людини багато помилок -- у чому саме»: поруч
+    стоять обрана й правильна відповідь. Тут це припустимо, бо сторінка
+    адмінська; учаснику правильні відповіді не показуються ніде.
+    """
+    reg = db.session.query(EventRegistration).options(
+        joinedload(EventRegistration.user).joinedload(User.medical_profile),
+        joinedload(EventRegistration.quiz_attempts),
+        joinedload(EventRegistration.certificate),
+        joinedload(EventRegistration.instance),
+    ).filter_by(id=reg_id).first()
+    if reg is None:
+        flash('Реєстрацію не знайдено', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+    # Найсвіжіша спроба -- перша: саме її зазвичай і прийшли дивитися.
+    attempts = sorted(reg.quiz_attempts, key=lambda a: a.attempt_number,
+                      reverse=True)
+    reports = [
+        {'attempt': attempt, 'rows': quiz_service.attempt_report(attempt)}
+        for attempt in attempts
+    ]
+
+    state = quiz_service.eligibility(reg)
+    return render_template(
+        'admin/registration_quiz.html',
+        reg=reg,
+        instance=reg.instance,
+        quiz=state.quiz,
+        state=state,
+        statuses=quiz_service,
+        reports=reports,
+        attempts_left=quiz_service.attempts_left(reg, state.quiz),
+        profile=reg.user.medical_profile if reg.user else None,
+    )
+
+
 # ---- Спроби окремого учасника ----------------------------------------------
 
 @admin_bp.route('/registrations/<int:reg_id>/quiz/unlock', methods=['POST'])

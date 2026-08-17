@@ -461,6 +461,76 @@ def wrong_numbers(attempt):
             if not correct]
 
 
+def attempt_report(attempt):
+    """Детальний розбір спроби ДЛЯ АДМІНА -- разом із правильними відповідями.
+
+    НЕ віддавати учаснику: містить `correct`. Для учасника є
+    `attempt_view_model` (лише тексти й позиції) і `wrong_numbers` (лише номери).
+    Тримаємо це окремою функцією саме тому: щоб «показати правильну відповідь»
+    неможливо було випадково зробити на публічній сторінці.
+
+    Рішення «зараховано чи ні» беремо з `question_results`, а не рахуємо вдруге --
+    інакше розбір і оцінка могли б розійтися.
+
+    Тексти -- канонічні українські: адмінка uk-only.
+    """
+    ids = attempt.question_ids or []
+    if not ids:
+        return []
+
+    questions = {
+        q.id: q for q in QuizQuestion.query.filter(QuizQuestion.id.in_(ids))
+    }
+    correctness = {qid: ok for _number, qid, ok in question_results(attempt)}
+
+    rows = []
+    for position, question_id in enumerate(ids):
+        question = questions.get(question_id)
+        chosen_position = attempt.chosen_position(question_id)
+        order = attempt.ordered_answer_indexes(question_id)
+
+        if question is None:
+            # Питання видалили після спроби. Показуємо це прямо, бо інакше
+            # порожній рядок виглядав би як помилка розбору.
+            rows.append({
+                'number': position + 1,
+                'question_id': question_id,
+                'text': None,
+                'missing': True,
+                'chosen': None,
+                'correct': None,
+                'answered': chosen_position is not None,
+                'is_correct': correctness.get(question_id, False),
+            })
+            continue
+
+        texts = [(a.get('text') or '') for a in (question.answers or [])]
+
+        chosen_text = None
+        if chosen_position is not None and 0 <= chosen_position < len(order):
+            original = order[chosen_position]
+            if 0 <= original < len(texts):
+                chosen_text = texts[original]
+
+        correct_index = question.correct_index
+        correct_text = (
+            texts[correct_index]
+            if correct_index is not None and correct_index < len(texts) else None
+        )
+
+        rows.append({
+            'number': position + 1,
+            'question_id': question_id,
+            'text': question.text,
+            'missing': False,
+            'chosen': chosen_text,
+            'correct': correct_text,
+            'answered': chosen_position is not None,
+            'is_correct': correctness.get(question_id, False),
+        })
+    return rows
+
+
 def submit_attempt(attempt):
     """Завершити й оцінити спробу; при успіху -- видати сертифікат.
 

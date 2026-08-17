@@ -193,3 +193,34 @@
   width: 60px;
   text-align: center;
 }
+
+/* ========== РОЗБІР СПРОБИ ==========
+
+   Рядок з незарахованою відповіддю підсвічуємо: у таблиці на десять питань
+   око має одразу знаходити помилки, а не читати колонку «Зараховано». */
+
+.admin-quiz-report__row--wrong {
+  background: var(--iprm-error-bg);
+}
+
+/* Питання -- найдовший стовпець; даємо йому місце, а решті стиснутись. */
+.admin-quiz-report td:nth-child(2) {
+  min-width: 22ch;
+}
+
+.admin-quiz-report td:nth-child(3),
+.admin-quiz-report td:nth-child(4) {
+  min-width: 18ch;
+}
+
+/* Клітинка «Тестування» у реєстраціях -- клікабельна цілком, але без вигляду
+   посилання: колір і підкреслення на бейджі лише збивали б. */
+.admin-quiz-cell {
+  display: inline-block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.admin-quiz-cell:hover {
+  opacity: 0.8;
+}

@@ -59,11 +59,14 @@ def instance_registrations(instance_id):
             'payment', dict(EventRegistration.PAYMENT_STATUSES)),
     }
 
-    # medical_profile вантажимо одразу -- для позначки "анкета не заповнена"
-    # (менеджер бачить, кому нагадати перед видачею сертифікатів) без N+1.
+    # medical_profile вантажимо одразу -- для колонки "Анкета" (менеджер бачить,
+    # кому нагадати перед видачею сертифікатів) без N+1.
     query = EventRegistration.query.options(
         joinedload(EventRegistration.user).joinedload(User.medical_profile),
         joinedload(EventRegistration.certificate),
+        # Колонка "Тестування" показує найкращий результат -- без цього рядок
+        # тягнув би спроби окремим запитом.
+        joinedload(EventRegistration.quiz_attempts),
         # Колонка "Сума" показує код знижки -- без цього рядок на кожну
         # реєстрацію тягнув би окремий SELECT.
         joinedload(EventRegistration.promo_code),
@@ -105,6 +108,12 @@ def instance_registrations(instance_id):
         'overbooked': capacity is not None and occupied > capacity,
     }
 
+    # Стан тестування на кожен рядок. Саме `eligibility_map`, а не виклик на
+    # кожну реєстрацію: поштучно це давало +5 SELECT на рядок, а тут рядків
+    # стільки ж, скільки учасників у групі.
+    from app.services import quiz_service
+    quiz_states = quiz_service.eligibility_map(registrations)
+
     return render_template(
         'admin/instance_registrations.html',
         instance=instance,
@@ -113,6 +122,9 @@ def instance_registrations(instance_id):
         filters=filters,
         status_options=EventRegistration.STATUSES,
         payment_options=EventRegistration.PAYMENT_STATUSES,
+        quiz_states=quiz_states,
+        quiz_statuses=quiz_service,
+        quiz=quiz_service.resolve_quiz(instance),
     )
 
 

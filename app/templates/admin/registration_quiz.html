@@ -1,0 +1,247 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Тестування: {{ reg.user.full_name }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-quiz.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.instances_list') }}" class="admin-breadcrumb__link">Розклад</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          {% if instance %}
+          <a href="{{ url_for('admin.instance_registrations', instance_id=instance.id) }}"
+             class="admin-breadcrumb__link">Реєстрації</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          {% endif %}
+          <span class="admin-breadcrumb__current">Тестування</span>
+        </div>
+        <h1 class="admin-hero__title">{{ reg.user.full_name }}</h1>
+        <p class="admin-hero__subtitle">
+          {{ reg.user.email }}
+          {% if instance and instance.course %}
+          &middot; {{ instance.course.title }}
+          {% endif %}
+          {% if instance and instance.start_date %}
+          &middot; {{ instance.start_date.strftime('%d.%m.%Y') }}
+          {% endif %}
+        </p>
+      </div>
+      <div class="admin-hero__actions">
+        {% if instance %}
+        <a href="{{ url_for('admin.instance_quiz_results', instance_id=instance.id) }}"
+           class="btn-admin btn-admin--secondary">Результати групи</a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    {# ===== Чому склав / не склав ===== #}
+    <div class="admin-stat-cards admin-stat-cards--4">
+      <div class="admin-stat-card{{ ' admin-stat-card--success' if reg.quiz_passed_at }}">
+        <span class="admin-stat-card__value">
+          {% if reg.quiz_passed_at %}Склав{% else %}Не склав{% endif %}
+        </span>
+        <span class="admin-stat-card__label">
+          {% if reg.quiz_passed_at %}
+          {{ reg.quiz_passed_at.strftime('%d.%m.%Y %H:%M') }}
+          {% else %}
+          Стан: {{ state.status }}
+          {% endif %}
+        </span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ reports | length }}</span>
+        <span class="admin-stat-card__label">
+          Завершених і почато спроб{% if reg.quiz_extra_attempts %} (+{{ reg.quiz_extra_attempts }} від адміна){% endif %}
+        </span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">
+          {% if quiz %}{{ quiz.passing_score }}/{{ quiz.questions_per_attempt }}{% else %}---{% endif %}
+        </span>
+        <span class="admin-stat-card__label">Поріг складання</span>
+      </div>
+      <div class="admin-stat-card{{ ' quiz-stat--alert' if attempts_left == 0 and not reg.quiz_passed_at }}">
+        <span class="admin-stat-card__value">{{ attempts_left }}</span>
+        <span class="admin-stat-card__label">Спроб залишилось</span>
+      </div>
+    </div>
+
+    {# Стани, що блокують тест, -- окремою плашкою: інакше «не склав» виглядає
+       як провал, хоч людина взагалі не могла почати. #}
+    {% if not reg.quiz_passed_at and state.status not in (statuses.AVAILABLE, statuses.IN_PROGRESS, statuses.ATTEMPTS_EXHAUSTED) %}
+    <div class="form-section quiz-callout quiz-callout--warning">
+      {% if state.status == statuses.PROFILE_INCOMPLETE %}
+      <strong>Тест не відкривається: анкета МОЗ №725 не заповнена.</strong>
+      {% if state.missing_fields %}
+      <div>Не заповнено: {{ state.missing_fields | join(', ') }}</div>
+      {% endif %}
+      {% elif state.status == statuses.NOT_PAID %}
+      <strong>Тест не відкривається: участь не оплачена.</strong>
+      {% elif state.status == statuses.NOT_STARTED %}
+      <strong>Тест відкриється після початку заходу.</strong>
+      {% elif state.status == statuses.BPR_NOT_CONFIGURED %}
+      <strong>Тест не відкривається: у курсу немає номера заходу БПР або балів.</strong>
+      {% elif state.status == statuses.QUIZ_NOT_READY %}
+      <strong>Тест не відкривається: банк питань недостатній або зіпсований.</strong>
+      {% elif state.status == statuses.NO_QUIZ %}
+      <strong>Для цього заходу тест не налаштований.</strong>
+      {% elif state.status == statuses.CANCELLED %}
+      <strong>Реєстрацію скасовано.</strong>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {# ===== Анкета й сертифікат ===== #}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Анкета та сертифікат</h3>
+      <div class="admin-form__grid">
+        <div class="form-group">
+          <label>Анкета МОЗ №725</label>
+          {% if profile and profile.is_complete %}
+          <span class="badge badge--active">Заповнена</span>
+          {% else %}
+          <span class="badge badge--danger">Не заповнена</span>
+          {% if profile and profile.missing_fields %}
+          <div class="form-hint">Не заповнено: {{ profile.missing_fields | join(', ') }}</div>
+          {% endif %}
+          {% endif %}
+        </div>
+        <div class="form-group">
+          <label>Сертифікат</label>
+          {% if reg.certificate and not reg.certificate.revoked %}
+          <a href="{{ url_for('admin.registration_certificate_download', reg_id=reg.id) }}">
+            {{ reg.certificate.number }}
+          </a>
+          <div class="form-hint">
+            Видано {{ reg.certificate.issued_at.strftime('%d.%m.%Y %H:%M') }},
+            {{ reg.certificate.cpd_points }} балів БПР
+          </div>
+          {% elif reg.certificate %}
+          <span class="badge badge--danger">Відкликано</span>
+          <div class="form-hint">Номер {{ reg.certificate.number }}</div>
+          {% else %}
+          <span class="badge badge--draft">Не видано</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="admin-form__actions">
+        <form method="POST" class="quiz-unlock"
+              action="{{ url_for('admin.registration_quiz_unlock', reg_id=reg.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="number" name="extra" value="1" min="1" max="10"
+                 class="form-input quiz-unlock__input" aria-label="Скільки спроб додати">
+          <button type="submit" class="btn-admin btn-admin--secondary">Додати спроби</button>
+        </form>
+        {% if reports or reg.quiz_passed_at %}
+        <form method="POST"
+              action="{{ url_for('admin.registration_quiz_reset', reg_id=reg.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-admin btn-admin--danger"
+                  data-confirm="Обнулити тестування цього учасника? Спроби буде видалено. Сертифікат лишиться виданим.">
+            Обнулити тестування
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ===== Спроби ===== #}
+    {% for report in reports %}
+    {% set attempt = report.attempt %}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">
+        Спроба {{ attempt.attempt_number }}
+        {% if attempt.is_finished %}
+        <span class="quiz-score {{ 'quiz-score--pass' if attempt.passed else 'quiz-score--fail' }}">
+          {{ attempt.score }}/{{ attempt.total }}
+        </span>
+        {% else %}
+        <span class="badge badge--published">не завершена</span>
+        {% endif %}
+      </h3>
+
+      <p class="form-hint">
+        Почато {{ attempt.started_at.strftime('%d.%m.%Y %H:%M') }}
+        {%- if attempt.submitted_at %},
+        завершено {{ attempt.submitted_at.strftime('%d.%m.%Y %H:%M') }}
+        ({{ ((attempt.submitted_at - attempt.started_at).total_seconds() // 60) | int }} хв)
+        {%- else %} &middot; відповідей: {{ attempt.answered_count }} з {{ attempt.total }}
+        {%- endif %}
+        &middot; поріг на момент спроби: {{ attempt.passing_score }}
+      </p>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-quiz-report">
+          <thead>
+            <tr>
+              <th>№</th>
+              <th>Питання</th>
+              <th>Відповідь учасника</th>
+              <th>Правильна відповідь</th>
+              <th>Зараховано</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in report.rows %}
+            <tr class="{{ 'admin-quiz-report__row--wrong' if not row.is_correct else '' }}">
+              <td>{{ row.number }}</td>
+              <td>
+                {% if row.missing %}
+                <span class="admin-text-muted">питання видалено з банку</span>
+                {% else %}
+                {{ row.text }}
+                {% endif %}
+              </td>
+              <td>
+                {% if row.chosen %}
+                {{ row.chosen }}
+                {% elif row.missing and row.answered %}
+                <span class="admin-text-muted">відповідь була, питання видалено</span>
+                {% else %}
+                <span class="badge badge--draft">без відповіді</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if row.correct %}{{ row.correct }}{% else %}<span class="admin-text-muted">—</span>{% endif %}
+              </td>
+              <td>
+                {% if row.is_correct %}
+                <span class="quiz-score quiz-score--pass">так</span>
+                {% if row.missing %}
+                <div class="form-hint">питання видалено -- не карається</div>
+                {% endif %}
+                {% else %}
+                <span class="quiz-score quiz-score--fail">ні</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <div class="admin-empty">
+      {{ icon('quiz', cls='admin-empty__icon') }}
+      <h3 class="admin-empty__title">Спроб ще не було</h3>
+      <p>Тут з'явиться розбір кожної відповіді, щойно учасник почне тест</p>
+    </div>
+    {% endfor %}
+
+  </div>
+</div>
+{% endblock %}
