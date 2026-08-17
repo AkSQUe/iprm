@@ -120,8 +120,15 @@ def _apply_remote_fields(course, payload, now):
     return changed
 
 
-def sync_courses():
-    """Один прогін синхронізації. Ніколи не кидає -- повертає SyncReport."""
+def sync_courses(with_covers=True):
+    """Один прогін синхронізації. Ніколи не кидає -- повертає SyncReport.
+
+    `with_covers=False` пропускає другий прохід -- завантаження обкладинок.
+    Саме він довгий: це HTTP-запит і запис файлу на КОЖЕН курс. У фоновій
+    джобі це нормально, а от кнопка в адмінці на ньому підвисає й може
+    впертись у таймаут проксі. Каталог після такого прогону повний, бракує
+    лише картинок -- їх підбере найближчий плановий прохід.
+    """
     settings = SiteSettings.get()
     report = SyncReport()
 
@@ -158,7 +165,8 @@ def sync_courses():
         _record_run(settings, report)
         return report
 
-    _sync_covers(report)
+    if with_covers:
+        _sync_covers(report)
 
     logger.info('Sintegrum sync: %s', report.summary)
     return report

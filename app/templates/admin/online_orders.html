@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -57,6 +57,7 @@
            {'name': 'payment', 'label': 'Оплата', 'placeholder': 'Будь-яка', 'options': payment_options},
            {'name': 'status', 'label': 'Стан', 'placeholder': 'Будь-який', 'options': status_options},
          ],
+         export_endpoint='admin.online_orders_export',
        ) }}
 
     {% if orders %}
@@ -146,13 +147,16 @@
     </table>
     </div>
 
+    {{ pager('admin.online_orders_list', pagination, filter_args) }}
+
     {% else %}
     <div class="admin-empty">
       {{ icon('notes', cls='admin-empty__icon') }}
       <h3 class="admin-empty__title">Замовлень немає</h3>
       <p>
         {% if filters.q or filters.payment or filters.status %}
-          За цим зрізом нічого не знайшлося. Спробуйте скинути фільтри.
+          За цим зрізом нічого не знайшлося &mdash;
+          <a href="{{ url_for('admin.online_orders_list') }}">скинути фільтри</a>.
         {% else %}
           Щойно хтось купить онлайн-курс, замовлення з'явиться тут.
         {% endif %}

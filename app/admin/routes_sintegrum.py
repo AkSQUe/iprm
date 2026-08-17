@@ -190,14 +190,18 @@ def sintegrum_test():
 def sintegrum_sync():
     from app.services.online_course_sync import sync_courses
 
-    report = sync_courses()
+    # Без обкладинок: вони тягнуться по HTTP на кожен курс, і адмін чекав би
+    # на це в браузері. Каталог оновиться повністю, картинки підбере
+    # найближчий плановий прогін.
+    report = sync_courses(with_covers=False)
     audit_logger.info(
         'Admin %s ran Sintegrum sync manually: %s',
         current_user.email, report.summary,
     )
 
     if report.ok:
-        flash(f'Синхронізацію виконано. {report.summary}', 'success')
+        flash(f'Синхронізацію виконано. {report.summary}. '
+              'Обкладинки підтягне фонове оновлення.', 'success')
     else:
         flash(f'Синхронізація не вдалася. {report.summary}', 'error')
 

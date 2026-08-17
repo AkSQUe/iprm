@@ -195,3 +195,33 @@ def test_pages_have_no_inline_styles(client):
     for url in ('/online-courses/', f'/online-courses/{course.slug}'):
         body = client.get(url).get_data(as_text=True)
         assert 'style="' not in body, url
+
+
+def test_jsonld_survives_quotes_in_the_title(client):
+    """Розмітка збирається dict-ом і йде через tojson.
+
+    Раніше назви хлібних крихт вставлялись у лапках вручну, тож лапка в
+    назві курсу зробила б блок невалідним JSON -- і Google мовчки викинув би
+    сторінку з розширеної видачі.
+    """
+    import json
+    import re
+
+    course = _course(remote_name='Курс "Плазма" й апостроф')
+    body = client.get(f'/online-courses/{course.slug}').get_data(as_text=True)
+
+    blocks = re.findall(
+        r'<script type="application/ld\+json">(.*?)</script>', body, re.S)
+    parsed = [json.loads(block) for block in blocks]
+
+    types = {item.get('@type') for item in parsed}
+    assert 'Course' in types and 'BreadcrumbList' in types
+    course_schema = next(i for i in parsed if i.get('@type') == 'Course')
+    assert course_schema['name'] == 'Курс "Плазма" й апостроф'
+    assert course_schema['inLanguage']
+
+
+def test_catalog_has_own_og_image(client):
+    _course()
+    body = client.get('/online-courses/').get_data(as_text=True)
+    assert 'og-logo-simple.png' in body

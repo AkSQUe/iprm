@@ -2,6 +2,9 @@
 
 {% block title %}{{ _('Онлайн-курси | ІПРМ') }}{% endblock %}
 {% block meta_description %}{{ _('Онлайн-курси Інституту Плазмотерапії та Регенеративної Медицини: навчайтеся у зручний час у власному темпі.') }}{% endblock %}
+{# Без цього каталог віддавав у соцмережі загальну картинку сайту, тоді як
+   каталог заходів ставить логотип. #}
+{% block og_image %}{{ url_for('static', filename='img/og-logo-simple.png', _external=True) }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-courses.css') }}?v={{ assets_version }}">
@@ -58,5 +61,5 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/apple-reveal.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

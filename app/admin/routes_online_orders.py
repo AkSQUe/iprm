@@ -14,7 +14,7 @@ import logging
 
 from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import contains_eager, joinedload
 
 from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
@@ -24,6 +24,10 @@ from app.models.online_enrollment import OnlineEnrollment
 from app.models.user import User
 
 audit_logger = logging.getLogger('audit')
+
+# Замовлення накопичуються без стелі, тож сторінка мусить різати вибірку.
+# Той самий розмір, що в промокодах (`routes_promo_codes.PER_PAGE`).
+PER_PAGE = 30
 
 PAYMENT_OPTIONS = [
     ('unpaid', 'Не оплачено'),
@@ -39,10 +43,8 @@ STATUS_OPTIONS = [
 ]
 
 
-@admin_bp.route('/online-orders')
-@admin_required
-def online_orders_list():
-    filters = {
+def _order_filters():
+    return {
         'q': _listing.text_arg('q'),
         'payment': _listing.choice_arg('payment',
                                        [key for key, _ in PAYMENT_OPTIONS]),
@@ -50,12 +52,23 @@ def online_orders_list():
                                       [key for key, _ in STATUS_OPTIONS]),
     }
 
+
+def _orders_query(filters):
+    """Запит списку. Спільний зі сторінкою й експортом -- інакше файл
+    відповідав би на інший зріз, ніж той, що людина бачить на екрані."""
+    # contains_eager, а не joinedload: join нижче потрібен для пошуку, і
+    # joinedload поверх нього додав би ДРУГУ пару аліасованих LEFT JOIN до
+    # тих самих таблиць. promo_code тягнемо окремо -- шаблон читає його код
+    # у комірці суми, і без цього кожен рядок зі знижкою коштував би запит.
     query = (
         OnlineEnrollment.query
-        .options(joinedload(OnlineEnrollment.course),
-                 joinedload(OnlineEnrollment.user))
         .join(User, User.id == OnlineEnrollment.user_id)
         .join(OnlineCourse, OnlineCourse.id == OnlineEnrollment.online_course_id)
+        .options(
+            contains_eager(OnlineEnrollment.user),
+            contains_eager(OnlineEnrollment.course),
+            joinedload(OnlineEnrollment.promo_code),
+        )
     )
     query = _listing.apply_search(
         query, filters['q'],
@@ -67,7 +80,18 @@ def online_orders_list():
     if filters['status']:
         query = query.filter(OnlineEnrollment.status == filters['status'])
 
-    orders = query.order_by(OnlineEnrollment.created_at.desc()).all()
+    return query.order_by(OnlineEnrollment.created_at.desc())
+
+
+@admin_bp.route('/online-orders')
+@admin_required
+def online_orders_list():
+    filters = _order_filters()
+    pagination = _orders_query(filters).paginate(
+        page=request.args.get('page', 1, type=int),
+        per_page=PER_PAGE, error_out=False,
+    )
+    orders = pagination.items
 
     # Лічильники рахуємо по ВСІХ замовленнях, а не по зрізу: картка, що
     # змінюється разом із фільтром, відповідає на інше питання, ніж та,
@@ -87,6 +111,8 @@ def online_orders_list():
     return render_template(
         'admin/online_orders.html',
         orders=orders,
+        pagination=pagination,
+        filter_args=_listing.filter_args(filters),
         filters=filters,
         payment_options=PAYMENT_OPTIONS,
         status_options=STATUS_OPTIONS,
@@ -165,6 +191,7 @@ def online_order_reissue(enrollment_id):
         return redirect(url_for('admin.online_orders_list'))
 
     try:
+        sintegrum_access.close_transaction_before_network()
         sintegrum_access.provision_and_notify(enrollment)
     except Exception as exc:
         db.session.rollback()
@@ -198,3 +225,35 @@ def online_order_refund(enrollment_id):
     ok, message = ops.initiate_enrollment_refund(enrollment, current_user)
     flash(message, 'success' if ok else 'error')
     return redirect(url_for('admin.online_orders_list'))
+
+
+@admin_bp.route('/online-orders/export')
+@admin_required
+def online_orders_export():
+    """Вивантажити поточний зріз замовлень у xlsx.
+
+    Тут гроші: суми, знижки, статуси оплат. Досі звірити їх можна було лише
+    очима по екрану, тоді як для промокодів і проведень експорт є давно.
+    """
+    from app.services import xlsx_reports
+
+    filters = _order_filters()
+    orders = _orders_query(filters).all()
+    summary = _listing.export_summary(
+        [
+            ('Пошук', filters['q'] or '–'),
+            ('Оплата', dict(PAYMENT_OPTIONS).get(filters['payment'], 'Будь-яка')),
+            ('Стан', dict(STATUS_OPTIONS).get(filters['status'], 'Будь-який')),
+        ],
+        len(orders),
+    )
+    audit_logger.info(
+        'Admin %s exported online orders xlsx (%d rows, filters=%s)',
+        current_user.email, len(orders), filters,
+    )
+    return _listing.xlsx_export(
+        orders, 'online-orders',
+        lambda: xlsx_reports.export_online_orders_xlsx(
+            orders, applied_filters=summary),
+        'admin.online_orders_list', **_listing.filter_args(filters),
+    )

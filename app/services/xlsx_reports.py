@@ -442,6 +442,68 @@ _PROMO_WIDTHS = {
 }
 
 
+_ONLINE_ORDER_COLS = ['order_id', 'created_at', 'participant', 'email',
+                      'phone', 'course', 'amount', 'discount', 'promo',
+                      'payment_status', 'paid_at', 'access', 'opened_at']
+_ONLINE_ORDER_LABELS = {
+    'order_id': 'Замовлення', 'created_at': 'Оформлено',
+    'participant': 'Покупець', 'email': 'Email', 'phone': 'Телефон',
+    'course': 'Курс', 'amount': 'Сума', 'discount': 'Знижка',
+    'promo': 'Промокод', 'payment_status': 'Оплата', 'paid_at': 'Оплачено',
+    'access': 'Доступ', 'opened_at': 'Відкрито',
+}
+_ONLINE_ORDER_WIDTHS = {
+    'order_id': 12, 'created_at': 18, 'participant': 24, 'email': 26,
+    'phone': 16, 'course': 34, 'amount': 12, 'discount': 12, 'promo': 14,
+    'payment_status': 14, 'paid_at': 18, 'access': 14, 'opened_at': 18,
+}
+
+_ONLINE_PAYMENT_LABELS = {
+    'unpaid': 'Не оплачено', 'pending': 'В обробці',
+    'paid': 'Оплачено', 'refunded': 'Повернено',
+}
+
+
+def export_online_orders_xlsx(orders, applied_filters=None) -> io.BytesIO:
+    """Замовлення онлайн-курсів (/admin/online-orders) -> xlsx.
+
+    Стан доступу виводимо словами, а не датою: у звірці важливо саме
+    «відкрито / не видано», а точний час видачі є в самій адмінці.
+    """
+    rows = []
+    for order in orders:
+        course = order.course
+        user = order.user
+        if order.provisioned_at:
+            access = 'Відкрито'
+        elif order.payment_status == 'paid':
+            access = 'Не видано'
+        else:
+            access = ''
+        rows.append([
+            order.order_id,
+            _to_kyiv_naive(order.created_at),
+            (user.full_name or '').strip() if user else '',
+            user.email if user else '',
+            (user.medical_profile.phone_e164
+             if user is not None and user.medical_profile else '') or '',
+            course.effective_title if course else '',
+            float(order.payment_amount) if order.payment_amount is not None else None,
+            float(order.discount_amount) if order.discount_amount is not None else None,
+            order.promo_code.code if order.promo_code else '',
+            _ONLINE_PAYMENT_LABELS.get(order.payment_status, order.payment_status),
+            _to_kyiv_naive(order.paid_at) if order.paid_at else None,
+            access,
+            _to_kyiv_naive(order.access_last_opened_at)
+            if order.access_last_opened_at else None,
+        ])
+    return build_list_xlsx(
+        'Замовлення онлайн-курсів', _ONLINE_ORDER_COLS, _ONLINE_ORDER_LABELS,
+        _ONLINE_ORDER_WIDTHS, rows, 'tblOnlineOrders',
+        applied_filters=applied_filters,
+    )
+
+
 def export_promo_codes_xlsx(promos, applied_filters=None) -> io.BytesIO:
     """Промокоди (/admin/promo-codes) -> xlsx для звірки знижок."""
     rows = [

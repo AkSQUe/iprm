@@ -15,6 +15,7 @@ import logging
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 from flask_login import current_user, login_required
+from sqlalchemy.orm import selectinload
 
 from app.extensions import db, limiter
 from app.models.online_course import OnlineCourse
@@ -25,7 +26,15 @@ logger = logging.getLogger(__name__)
 
 
 def _published_query():
-    return OnlineCourse.query.filter(
+    """Опубліковані курси з підвантаженою обкладинкою.
+
+    `card_media` читає кожна картка каталогу, тож без selectinload список
+    коштував би запит на курс. Офлайн-каталог робить так само
+    (`course_listing.gather_active_courses`).
+    """
+    return OnlineCourse.query.options(
+        selectinload(OnlineCourse.card_media),
+    ).filter(
         OnlineCourse.is_published.is_(True),
         OnlineCourse.is_vanished.is_(False),
     )
@@ -223,9 +232,16 @@ def _handle_promo(enrollment, course):
     base = _order_base_amount(enrollment, course)
 
     if request.form.get('remove_promo'):
-        promo_service.detach_from_enrollment(enrollment)
-        enrollment.payment_amount = base
-        db.session.commit()
+        try:
+            promo_service.detach_from_enrollment(enrollment)
+            enrollment.payment_amount = base
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logger.exception('Failed to detach promo from %s',
+                             enrollment.order_id)
+            flash(_('Не вдалося зняти промокод. Спробуйте ще раз.'), 'error')
+            return
         flash(_('Промокод знято'), 'info')
         return
 
@@ -345,6 +361,7 @@ def reissue_access(enrollment_id):
 
     from app.services import sintegrum_access
     try:
+        sintegrum_access.close_transaction_before_network()
         sintegrum_access.reissue(enrollment)
     except sintegrum_access.AccessProvisionError:
         flash(

@@ -365,3 +365,23 @@ def test_integrations_hub_survives_broken_rotation(client, admin, settings, monk
     monkeypatch.setattr(stubs, 'rotation_status', _boom, raising=False)
     _login(client, admin)
     assert client.get('/admin/integrations').status_code == 200
+
+
+def test_translations_survive_the_edit_form(client, admin, course):
+    """Мовні вкладки зберігають переклади тим самим хелпером, що й решта
+    адмін-форм: ручний цикл по мовах прибрано, тож регрес тут був би тихий."""
+    _login(client, admin)
+    # Ім'я інпута мовної вкладки: tr__<мова>__<поле> (routes_translations.inline_name).
+    field_name = 'tr__ru__title'
+
+    client.post(f'/admin/online-courses/{course.id}', data={
+        'slug': course.slug,
+        'title': 'Українська назва',
+        'price': '4500',
+        'sort_order': '0',
+        field_name: 'Русское название',
+    }, follow_redirects=True)
+
+    db.session.refresh(course)
+    assert course.title == 'Українська назва'
+    assert (course.translations or {}).get('ru', {}).get('title') == 'Русское название'

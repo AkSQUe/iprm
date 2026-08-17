@@ -146,7 +146,9 @@ def test_effective_values_prefer_our_texts(configured, monkeypatch):
     assert course.effective_title == 'Remote'
     course.title = 'Наша'
     assert course.effective_title == 'Наша'
-    assert course.effective_description == 'Remote опис'
+    # Опис для показу йде через description_html: він очищає розмітку
+    # чужого редактора, тож саме його читає сторінка.
+    assert 'Remote опис' in str(course.description_html)
 
 
 # ----------------------------- зниклі курси -----------------------------
@@ -600,3 +602,41 @@ class TestCovers:
 
         assert report.ok and report.covers == 0
         assert calls == []
+
+
+class TestDescriptionMemo:
+    """Очищення розмітки рахується один раз, але не переживає зміну тексту."""
+
+    def test_repeated_reads_do_not_reclean(self, configured, monkeypatch):
+        _feed(monkeypatch, [_course(1, description='<p>Опис</p>')])
+        sync_courses()
+        course = OnlineCourse.query.filter_by(sintegrum_id=1).one()
+
+        calls = {'n': 0}
+        import app.services.remote_html as rh
+        original = rh.clean_html
+
+        def _counted(value):
+            calls['n'] += 1
+            return original(value)
+
+        monkeypatch.setattr(rh, 'clean_html', _counted)
+
+        first = course.remote_description_html
+        second = course.remote_description_html
+
+        assert first == second
+        assert calls['n'] == 1
+
+    def test_changed_source_is_recleaned(self, configured, monkeypatch):
+        """Кеш, прив'язаний до екземпляра, віддавав би опис попереднього
+        прогону синхронізації."""
+        _feed(monkeypatch, [_course(1, description='<p>Старий</p>')])
+        sync_courses()
+        course = OnlineCourse.query.filter_by(sintegrum_id=1).one()
+        assert 'Старий' in course.remote_description_html
+
+        course.remote_description = '<p>Новий</p>'
+
+        assert 'Новий' in course.remote_description_html
+        assert 'Старий' not in course.remote_description_html

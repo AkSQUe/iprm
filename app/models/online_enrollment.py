@@ -14,6 +14,7 @@ import secrets
 
 from app.extensions import db
 from app.models.mixins import TimestampMixin, BigIntPK, utcnow
+from app.utils import ensure_utc
 
 # Довжина токена в байтах до base64: 32 байти -- 43 символи URL-safe.
 ACCESS_TOKEN_BYTES = 32
@@ -140,14 +141,14 @@ class OnlineEnrollment(TimestampMixin, db.Model):
             return False
         if self.access_expires_at is None:
             return False
-        return _as_utc(self.access_expires_at) > utcnow()
+        return ensure_utc(self.access_expires_at) > utcnow()
 
     @property
     def access_is_expired(self):
         return bool(
             self.access_token
             and self.access_expires_at is not None
-            and _as_utc(self.access_expires_at) <= utcnow()
+            and ensure_utc(self.access_expires_at) <= utcnow()
         )
 
     def issue_access_token(self, ttl_hours):
@@ -165,11 +166,3 @@ class OnlineEnrollment(TimestampMixin, db.Model):
 
     def __repr__(self):
         return f'<OnlineEnrollment {self.order_id} {self.payment_status}>'
-
-
-def _as_utc(value):
-    """SQLite віддає DateTime(timezone=True) без tzinfo -- позначаємо UTC."""
-    from datetime import timezone
-    if value is not None and value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
-    return value

@@ -158,10 +158,6 @@ class OnlineCourse(TranslatableMixin, TimestampMixin, db.Model):
         return self.t('title') or self.remote_name
 
     @property
-    def effective_description(self):
-        return self.t('description') or self.remote_description or ''
-
-    @property
     def effective_short_description(self):
         """Короткий опис: наш, інакше -- початок опису Sintegrum.
 
@@ -178,17 +174,37 @@ class OnlineCourse(TranslatableMixin, TimestampMixin, db.Model):
     # власний адмін пише звичайним текстом. Обидва йдуть в одне місце на
     # сторінці, тож різницю треба зняти тут, а не в шаблоні.
 
+    # Очищення чужої розмітки -- це bleach плюс регулярки по кількох
+    # кілобайтах, а сторінка курсу читає той самий текст п'ять разів за
+    # рендер: мета-опис, JSON-LD, підзаголовок hero, перевірка `{% if %}`
+    # і сам блок. Тому результат запам'ятовується.
+    #
+    # Ключем служить сам вихідний рядок, а не факт першого виклику
+    # (`cached_property`): SQLAlchemy знецінює атрибути після коміту, і
+    # прив'язаний до екземпляра кеш пережив би зміну `remote_description`,
+    # віддаючи старий опис уже оновленого курсу.
+    def _memo(self, slot, source, build):
+        cache = self.__dict__.get('_html_memo')
+        if cache is None:
+            cache = self.__dict__['_html_memo'] = {}
+        hit = cache.get(slot)
+        if hit is not None and hit[0] == source:
+            return hit[1]
+        value = build(source)
+        cache[slot] = (source, value)
+        return value
+
     @property
     def remote_description_html(self):
         """Опис Sintegrum, очищений до безпечного HTML."""
         from app.services.remote_html import clean_html
-        return clean_html(self.remote_description)
+        return self._memo('remote_html', self.remote_description, clean_html)
 
     @property
     def remote_description_text(self):
         """Опис Sintegrum звичайним текстом -- для прев'ю й мета-описів."""
         from app.services.remote_html import to_text
-        return to_text(self.remote_description)
+        return self._memo('remote_text', self.remote_description, to_text)
 
     @property
     def description_html(self):

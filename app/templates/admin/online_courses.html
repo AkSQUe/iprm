@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -146,13 +146,16 @@
     </table>
     </div>
 
+    {{ pager('admin.online_courses_list', pagination, filter_args) }}
+
     {% else %}
     <div class="admin-empty">
       {{ icon('school', cls='admin-empty__icon') }}
       <h3 class="admin-empty__title">Курсів немає</h3>
       <p>
         {% if filters.q or filters.status %}
-          За цим зрізом нічого не знайшлося. Спробуйте скинути фільтри.
+          За цим зрізом нічого не знайшлося &mdash;
+          <a href="{{ url_for('admin.online_courses_list') }}">скинути фільтри</a>.
         {% else %}
           Каталог порожній. Перевірте налаштування інтеграції і запустіть синхронізацію.
         {% endif %}

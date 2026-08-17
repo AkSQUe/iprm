@@ -13,6 +13,7 @@ import re
 from datetime import datetime, timezone
 
 from flask import jsonify, make_response, request
+from sqlalchemy.orm import selectinload
 
 from app.api.v1 import api_v1_bp
 from app.api.v1.auth import require_api_key
@@ -101,7 +102,13 @@ def list_online_courses():
             'api_version': API_VERSION,
         }), 400
 
-    query = OnlineCourse.query.filter(
+    # Серіалізатор читає обкладинку й hero кожного курсу, тож без
+    # selectinload сторінка на 50 курсів коштувала б понад сотню запитів --
+    # і платив би за це кожен прохід синхронізації партнера.
+    query = OnlineCourse.query.options(
+        selectinload(OnlineCourse.card_media),
+        selectinload(OnlineCourse.hero_media),
+    ).filter(
         OnlineCourse.is_published.is_(True),
         OnlineCourse.is_vanished.is_(False),
     )
