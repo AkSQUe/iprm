@@ -22,6 +22,25 @@ def _instance_or_redirect(instance_id):
     return instance
 
 
+def _keep_single_featured(instance_id, featured_id):
+    """Виділений тариф на проведення може бути лише один.
+
+    На сторінці курсу виділення -- це орієнтир вибору: дві золоті рамки
+    поруч не підказують нічого. Інваріант тримаємо тут, а не CHECK-ом у БД:
+    часткові унікальні індекси по boolean капризні в міграціях, а точка
+    входу для прапорця одна -- ця форма.
+
+    Коміт -- на caller-ові.
+    """
+    if not featured_id:
+        return
+    InstanceTariff.query.filter(
+        InstanceTariff.instance_id == instance_id,
+        InstanceTariff.id != featured_id,
+        InstanceTariff.is_featured.is_(True),
+    ).update({'is_featured': False}, synchronize_session=False)
+
+
 @admin_bp.route('/instances/<int:instance_id>/tariffs', methods=['GET', 'POST'])
 @admin_required
 def instance_tariffs(instance_id):
@@ -46,6 +65,8 @@ def instance_tariffs(instance_id):
         )
         db.session.add(tariff)
         try:
+            db.session.flush()
+            _keep_single_featured(instance.id, tariff.id if tariff.is_featured else None)
             db.session.commit()
             audit_logger.info(
                 'Admin %s added tariff "%s" (%s) to instance %s',
@@ -87,6 +108,7 @@ def instance_tariff_edit(tariff_id):
         tariff.sort_order = form.sort_order.data if form.sort_order.data is not None else 0
         tariff.is_active = form.is_active.data
         try:
+            _keep_single_featured(instance.id, tariff.id if tariff.is_featured else None)
             db.session.commit()
             audit_logger.info(
                 'Admin %s updated tariff #%s ("%s") of instance %s',

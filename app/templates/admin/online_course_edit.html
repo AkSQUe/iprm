@@ -251,6 +251,13 @@
                 <label>Пункти програми</label>
                 <textarea name="block_{{ loop.index0 }}_items" class="form-input" rows="5">{{ block.items | join('\n') }}</textarea>
               </div>
+              {# Переклади блоку -- окремий префікс, бо в одній формі кілька
+                 сутностей. Блок, доданий у цьому ж сабміті, ще не має id,
+                 тож отримає ці поля після першого збереження. #}
+              <div class="form-group admin-form__full">
+                {{ i18n.panes(block.translations or {}, 'heading', obj=block, prefix='trblk__' ~ block.id) }}
+                {{ i18n.json_panes(block, 'items', prefix='trblk__' ~ block.id) }}
+              </div>
             </div>
           </div>
           {% endfor %}

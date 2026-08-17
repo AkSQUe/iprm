@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-17 19:38+0300\n"
+"POT-Creation-Date: 2026-08-17 22:01+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -650,6 +650,42 @@ msgstr "Thank you! Your comment has been submitted for moderation."
 msgid "Помилка при надсиланні. Спробуйте ще раз."
 msgstr "Error submitting. Please try again."
 
+msgid "Результат"
+msgstr "Outcome"
+
+msgid "Про курс"
+msgstr "About the course"
+
+msgid "Як проходить"
+msgstr "How it works"
+
+msgid "Програма"
+msgstr "Programme"
+
+msgid "Тренер"
+msgstr "Trainer"
+
+msgid "Відгуки"
+msgstr "Reviews"
+
+msgid "Формати"
+msgstr "Formats"
+
+msgid "Питання"
+msgstr "Questions"
+
+msgid "Дати"
+msgstr "Dates"
+
+msgid "Забронювати місце"
+msgstr "Reserve a seat"
+
+msgid "Найближчі дати"
+msgstr "Upcoming dates"
+
+msgid "Залишити запит"
+msgstr "Submit a request"
+
 msgid "Вкажіть ім'я та прізвище"
 msgstr "Enter your first and last name"
 
@@ -940,6 +976,18 @@ msgstr "Nursing"
 
 msgid "Інша спеціалізація"
 msgstr "Other specialization"
+
+msgid "Вартість"
+msgstr "Price"
+
+msgid "Перейти до навчання"
+msgstr "Go to the course"
+
+msgid "Купити курс"
+msgstr "Buy the course"
+
+msgid "Запитати про курс"
+msgstr "Ask about the course"
 
 msgid "Цей курс поки не можна купити"
 msgstr "This course is not available for purchase yet"
@@ -1978,36 +2026,6 @@ msgstr "Courses"
 msgid "Вас рекомендує <strong>%(inviter)s</strong>"
 msgstr "You were referred by <strong>%(inviter)s</strong>"
 
-msgid "Результат"
-msgstr "Outcome"
-
-msgid "Про курс"
-msgstr "About the course"
-
-msgid "Як проходить"
-msgstr "How it works"
-
-msgid "Програма"
-msgstr "Programme"
-
-msgid "Тренер"
-msgstr "Trainer"
-
-msgid "Формати"
-msgstr "Formats"
-
-msgid "Дати"
-msgstr "Dates"
-
-msgid "Відгуки"
-msgstr "Reviews"
-
-msgid "Питання"
-msgstr "Questions"
-
-msgid "Залишилось"
-msgstr "Left"
-
 msgid "тривалість"
 msgstr "duration"
 
@@ -2027,101 +2045,14 @@ msgstr "price"
 msgid "%(taken)s з %(total)s місць уже зайнято"
 msgstr "%(taken)s of %(total)s seats already taken"
 
-msgid "Забронювати місце"
-msgstr "Reserve a seat"
-
-msgid "Найближчі дати"
-msgstr "Upcoming dates"
-
-msgid "Залишити запит"
-msgstr "Submit a request"
-
 msgid "Отримати програму"
 msgstr "Get the programme"
 
 msgid "Про <span class=\"apple-gradient-text\">курс</span>"
 msgstr "About the <span class=\"apple-gradient-text\">course</span>"
 
-msgid "Оберіть <span class=\"apple-gradient-text\">формат участі</span>"
-msgstr ""
-"Choose your <span class=\"apple-gradient-text\">participation "
-"format</span>"
-
-msgid "та отримайте сертифікат міжнародного зразка"
-msgstr "and receive an internationally recognized certificate"
-
-msgid "грн"
-msgstr "UAH"
-
-msgid "Що включено:"
-msgstr "What's included:"
-
-#, python-format
-msgid "Зареєструватися на %(date)s"
-msgstr "Register for %(date)s"
-
-msgid "Продаж завершено"
-msgstr "Sales closed"
-
-msgid "Коли курс <span class=\"apple-gradient-text\">окупиться?</span>"
-msgstr "When will the course <span class=\"apple-gradient-text\">pay off?</span>"
-
-msgid ""
-"Порахуйте на власних цифрах — середній чек процедури та кількість записів"
-" на місяць"
-msgstr ""
-"Calculate using your own numbers — the average procedure fee and the "
-"number of bookings per month"
-
-msgid "Середній чек процедури"
-msgstr "Average procedure fee"
-
-msgid "Процедур на місяць"
-msgstr "Procedures per month"
-
-msgid "дохід на місяць"
-msgstr "income per month"
-
-msgid "окупність курсу"
-msgstr "course payback"
-
-msgid "(тариф «від»)"
-msgstr "(\"from\" tier)"
-
-msgid "Розрахунок орієнтовний: вартість курсу"
-msgstr "Estimated calculation: course cost"
-
-msgid "ваш чек. Податки та розхідники не враховано."
-msgstr "your fee. Taxes and consumables are not included."
-
-msgid "Найближчі <span class=\"apple-gradient-text\">дати</span>"
-msgstr "Upcoming <span class=\"apple-gradient-text\">dates</span>"
-
-msgid "Тарифи участі"
-msgstr "Participation tiers"
-
-msgid "Наразі немає запланованих проведень цього курсу."
-msgstr "There are currently no scheduled sessions of this course."
-
-msgid "Залишити запит на проведення"
-msgstr "Request a session"
-
-#, python-format
-msgid "Уже проведено (%(count)s):"
-msgstr "Already held (%(count)s):"
-
 msgid "Поширені <span class=\"apple-gradient-text\">запитання</span>"
 msgstr "Frequently asked <span class=\"apple-gradient-text\">questions</span>"
-
-msgid "Поділіться курсом"
-msgstr "Share the course"
-
-msgid ""
-"Ваше персональне посилання на цей курс. За кожну оплачену реєстрацію за "
-"вашим посиланням ви отримуєте бонусні бали лояльності."
-msgstr ""
-"Your personal link to this course. For each paid registration made "
-"through your link, you earn bonus loyalty points."
 
 msgid ""
 "Залиште контакт — надішлемо <span class=\"apple-gradient-text\">повну "
@@ -2151,16 +2082,6 @@ msgstr "a list of what to bring"
 
 msgid "відповідь щодо БПР і сертифіката"
 msgstr "answers about CPD points and the certificate"
-
-msgid "Реєстрація на курс"
-msgstr "Course registration"
-
-msgid ""
-"Готові опанувати метод? Оберіть зручну дату та закріпіть за собою місце в"
-" групі."
-msgstr ""
-"Ready to master the method? Pick a convenient date and secure your seat "
-"in the group."
 
 msgid "Курси після дипломної освіти для лікарів | ІПРМ"
 msgstr "Postgraduate courses for physicians | IPRM"
@@ -2264,6 +2185,9 @@ msgstr "Schedule view mode"
 
 msgid "Календар"
 msgstr "Calendar"
+
+msgid "Залишилось"
+msgstr "Left"
 
 msgid "Графік курсів формується. Слідкуйте за оновленнями."
 msgstr "The course schedule is being finalized. Stay tuned for updates."
@@ -2496,9 +2420,6 @@ msgstr ""
 
 msgid "Деталі заходу"
 msgstr "Event details"
-
-msgid "Вартість"
-msgstr "Price"
 
 msgid "Завершити реєстрацію"
 msgstr "Complete registration"
@@ -3312,8 +3233,17 @@ msgstr "Calculate how the course will work toward your income"
 msgid "Середній чек процедури, ₴"
 msgstr "Average procedure fee, ₴"
 
+msgid "Процедур на місяць"
+msgstr "Procedures per month"
+
 msgid "вартість курсу"
 msgstr "course cost"
+
+msgid "дохід на місяць"
+msgstr "income per month"
+
+msgid "окупність курсу"
+msgstr "course payback"
 
 msgid ""
 "Розрахунок орієнтовний. Фактичний результат залежить від попиту, прайсу, "
@@ -4151,9 +4081,6 @@ msgstr "Apply"
 msgid "Замовлення вже оплачено."
 msgstr "Order"
 
-msgid "Перейти до навчання"
-msgstr "Go to the course"
-
 msgid "Оплатити через LiqPay"
 msgstr "Pay via LiqPay"
 
@@ -4187,12 +4114,6 @@ msgstr "Immediately"
 
 msgid "старт після оплати"
 msgstr "start after payment"
-
-msgid "Купити курс"
-msgstr "Buy the course"
-
-msgid "Запитати про курс"
-msgstr "Ask about the course"
 
 msgid "Детальний опис курсу готується."
 msgstr "A detailed course description is coming soon."
@@ -4307,6 +4228,9 @@ msgstr ""
 "Payment received; access opens in a few minutes. We will email you the "
 "link."
 
+msgid "Для кого"
+msgstr "Who it is for"
+
 msgid "Чи це <span class=\"apple-gradient-text\">ваш курс</span>"
 msgstr "Is this <span class=\"apple-gradient-text\">your course</span>"
 
@@ -4332,6 +4256,9 @@ msgstr ""
 msgid "Поставити запитання"
 msgstr "Ask a question"
 
+msgid "Не просто лекція"
+msgstr "More than a lecture"
+
 msgid "Що зміниться у вашій <span class=\"apple-gradient-text\">практиці</span>"
 msgstr ""
 "What will change in your <span class=\"apple-gradient-"
@@ -4346,6 +4273,30 @@ msgstr "Level %(level)s/3"
 
 msgid "Фільтр за тегами"
 msgstr "Filter by tags"
+
+#, python-format
+msgid "Уже проведено (%(count)s):"
+msgstr "Already held (%(count)s):"
+
+msgid "Поділіться курсом"
+msgstr "Share the course"
+
+msgid ""
+"Ваше персональне посилання на цей курс. За кожну оплачену реєстрацію за "
+"вашим посиланням ви отримуєте бонусні бали лояльності."
+msgstr ""
+"Your personal link to this course. For each paid registration made "
+"through your link, you earn bonus loyalty points."
+
+msgid "Реєстрація на курс"
+msgstr "Course registration"
+
+msgid ""
+"Готові опанувати метод? Оберіть зручну дату та закріпіть за собою місце в"
+" групі."
+msgstr ""
+"Ready to master the method? Pick a convenient date and secure your seat "
+"in the group."
 
 msgid "Як проходить <span class=\"apple-gradient-text\">навчання</span>"
 msgstr "How the <span class=\"apple-gradient-text\">training</span> works"
@@ -4391,8 +4342,8 @@ msgstr ""
 msgid "Надіслати заявку"
 msgstr "Send request"
 
-msgid "Навігація сторінкою курсу"
-msgstr "Course page navigation"
+msgid "Крок за кроком"
+msgstr "Step by step"
 
 msgid "Програма <span class=\"apple-gradient-text\">курсу</span>"
 msgstr "Course <span class=\"apple-gradient-text\">program</span>"
@@ -4440,6 +4391,70 @@ msgstr ""
 
 msgid "Дивитися в Instagram"
 msgstr "View on Instagram"
+
+msgid "Економіка методу"
+msgstr "The economics of the method"
+
+msgid "Коли курс <span class=\"apple-gradient-text\">окупиться?</span>"
+msgstr "When will the course <span class=\"apple-gradient-text\">pay off?</span>"
+
+msgid ""
+"Змініть параметри під свій прайс. Розрахунок орієнтовний і не враховує "
+"податки та витратні матеріали."
+msgstr ""
+"Adjust the figures to your own pricing. The estimate is approximate and "
+"excludes taxes and consumables."
+
+msgid "Порахуйте на власних цифрах"
+msgstr "Run the numbers on your own figures"
+
+msgid "Середній чек процедури"
+msgstr "Average procedure fee"
+
+msgid "Орієнтовна окупність курсу"
+msgstr "Estimated payback of the course"
+
+msgid "(тариф «від»)"
+msgstr "(\"from\" tier)"
+
+msgid "За обраного темпу це близько"
+msgstr "At this pace that is about"
+
+msgid "Потенційний місячний оборот:"
+msgstr "Potential monthly revenue:"
+
+msgid "Найближчі <span class=\"apple-gradient-text\">дати</span>"
+msgstr "Upcoming <span class=\"apple-gradient-text\">dates</span>"
+
+msgid "Тарифи участі"
+msgstr "Participation tiers"
+
+msgid "Наразі немає запланованих проведень цього курсу."
+msgstr "There are currently no scheduled sessions of this course."
+
+msgid "Залишити запит на проведення"
+msgstr "Request a session"
+
+msgid "Оберіть <span class=\"apple-gradient-text\">формат участі</span>"
+msgstr ""
+"Choose your <span class=\"apple-gradient-text\">participation "
+"format</span>"
+
+msgid "та отримайте сертифікат міжнародного зразка"
+msgstr "and receive an internationally recognized certificate"
+
+msgid "грн"
+msgstr "UAH"
+
+msgid "Що включено:"
+msgstr "What's included:"
+
+#, python-format
+msgid "Зареєструватися на %(date)s"
+msgstr "Register for %(date)s"
+
+msgid "Продаж завершено"
+msgstr "Sales closed"
 
 msgid "Ваш <span class=\"apple-gradient-text\">тренер</span>"
 msgstr "Your <span class=\"apple-gradient-text\">trainer</span>"
@@ -4597,6 +4612,9 @@ msgstr ""
 "rel=\"noopener\">Privacy Policy</a> and <a "
 "href=\"https://policies.google.com/terms\" target=\"_blank\" "
 "rel=\"noopener\">Terms of Service</a> apply."
+
+msgid "Навігація сторінкою курсу"
+msgstr "Course page navigation"
 
 msgid "Головна навігація"
 msgstr "Main navigation"
@@ -5594,4 +5612,19 @@ msgstr ""
 
 #~ msgid "років досвіду навчання"
 #~ msgstr "years of teaching experience"
+
+#~ msgid ""
+#~ "Порахуйте на власних цифрах — середній"
+#~ " чек процедури та кількість записів "
+#~ "на місяць"
+#~ msgstr ""
+#~ "Calculate using your own numbers — "
+#~ "the average procedure fee and the "
+#~ "number of bookings per month"
+
+#~ msgid "Розрахунок орієнтовний: вартість курсу"
+#~ msgstr "Estimated calculation: course cost"
+
+#~ msgid "ваш чек. Податки та розхідники не враховано."
+#~ msgstr "your fee. Taxes and consumables are not included."
 

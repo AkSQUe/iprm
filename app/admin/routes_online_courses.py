@@ -268,6 +268,14 @@ def _save_course(course):
     # потребують валідного course.slug (той міг щойно змінитись).
     blocks = course_service.extract_program_blocks_from_form(request.form)
     course_service.save_program_blocks_for_online_course(course, blocks)
+    # Переклади блоків -- ПІСЛЯ збереження самих блоків: інпути мають префікс
+    # trblk__<id>, а id новий блок отримує лише на flush. Форма офлайнового
+    # курсу робить те саме; без цього виклику мовні вкладки блоків програми
+    # онлайн-курсу мовчки нічого не зберігали.
+    db.session.flush()
+    for block in course.program_blocks:
+        if block.id:
+            apply_inline_translations(block, prefix=f'trblk__{block.id}')
     course_service.save_gallery(
         course,
         course_service.parse_gallery_entries(request.form.get('gallery_json')),
