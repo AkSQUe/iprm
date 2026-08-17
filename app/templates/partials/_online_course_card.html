@@ -2,10 +2,15 @@
    Очікує: course; card_eager=true для першої картки списку (LCP-кандидат).
 
    Побудована за тим самим ритмом, що й картка заходу (_course_card.html):
-   медіа -- назва -- бейджі -- опис -- підвал із ціною. Курсу з Sintegrum
-   зображення може не бути взагалі, тому медіа-блок виводиться завжди: без
-   нього картка перетворюється на голий аркуш тексту і випадає зі стилю
-   каталогу. #}
+   медіа -- назва -- бейджі -- підвал із ціною. Курсу з Sintegrum зображення
+   може не бути взагалі, тому медіа-блок виводиться завжди: без нього картка
+   перетворюється на голий аркуш тексту і випадає зі стилю каталогу.
+
+   Опису в картці немає навмисно (рішення від 17.08.2026). Опис приходить із
+   Sintegrum суцільним абзацом на кілька сотень знаків, і навіть обрізаний
+   трьома рядками він у сітці не читається -- усі картки виглядають однаково,
+   бо перші рядки в них майже збігаються. Рішення "той чи не той курс" несуть
+   назва й ціна; повний опис -- на сторінці курсу. #}
 {% from 'partials/_location_badge.html' import location_badge %}
 {% from 'partials/_money.html' import money %}
 <a href="{{ url_for('online.course_detail', slug=course.slug) }}" class="iprm-online-card apple-reveal">
@@ -32,10 +37,6 @@
       <span class="iprm-card-badge iprm-card-badge--duration">{{ course.duration_hours }} {{ _('год') }}</span>
       {% endif %}
     </div>
-
-    {% if course.effective_short_description %}
-    <p class="iprm-online-card__text">{{ course.effective_short_description }}</p>
-    {% endif %}
 
     <div class="iprm-online-card__footer">
       {% if course.effective_price %}
