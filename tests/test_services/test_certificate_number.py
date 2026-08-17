@@ -236,3 +236,61 @@ def test_failed_issue_does_not_burn_counter(app, no_pdf):
     with pytest.raises(ValueError):
         certificate_service.issue_certificate(_registration(event_num=None))
     assert SiteSettings.get().bpr_participant_counter == 0
+
+
+# --- блокування рядка налаштувань -------------------------------------------
+#
+# `with_for_update()` брав лок справно, але значення, прочитане під ним,
+# відкидалося: рядок site_settings уже лежить в identity map (його кладе і сам
+# `SiteSettings.get()` перед запитом, і контекст-процесор на кожному запиті), а
+# для вже завантаженої сутності SQLAlchemy без `populate_existing()` не
+# перезаписує атрибути. Лічильник рахувався від значення, прочитаного ДО
+# блокування, тож дві одночасні видачі отримували один номер і одна падала на
+# `unique` по `number`.
+#
+# Конкурентність тут не імітуємо -- достатньо зафіксувати механіку: якщо рядок
+# у БД змінився в обхід ORM, читання під блокуванням мусить це побачити.
+
+def test_locked_read_sees_value_from_db_not_from_session(app):
+    from sqlalchemy import text
+    from app.services.certificate_service import _allocate_number_segment
+
+    settings = SiteSettings.get()
+    settings.bpr_participant_counter = 100
+    db.session.commit()
+
+    SiteSettings.get()  # кладемо рядок у сесію, як це робить будь-який запит
+    db.session.execute(text(
+        'UPDATE site_settings SET bpr_participant_counter = 500 WHERE id = 1'))
+
+    assert _allocate_number_segment('participant') == 501, (
+        'лічильник порахований від значення в сесії, а не з-під блокування'
+    )
+
+
+def test_locked_read_is_fresh_for_lecturer_counter_too(app):
+    from sqlalchemy import text
+    from app.services.certificate_service import _allocate_number_segment
+
+    SiteSettings.get().bpr_lecturer_counter = 7
+    db.session.commit()
+
+    SiteSettings.get()
+    db.session.execute(text(
+        'UPDATE site_settings SET bpr_lecturer_counter = 42 WHERE id = 1'))
+
+    assert _allocate_number_segment('lecturer') == 43
+
+
+def test_allocation_persists_incremented_value(app):
+    """Значення мусить лягти в рядок, інакше наступна видача візьме те саме."""
+    from app.services.certificate_service import _allocate_number_segment
+
+    SiteSettings.get().bpr_participant_counter = 0
+    db.session.commit()
+
+    first = _allocate_number_segment('participant')
+    second = _allocate_number_segment('participant')
+
+    assert (first, second) == (1, 2)
+    assert SiteSettings.get().bpr_participant_counter == 2

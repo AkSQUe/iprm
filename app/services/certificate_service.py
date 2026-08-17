@@ -553,6 +553,16 @@ def _allocate_number_segment(kind):
     видачі: звичайні читання налаштувань у Postgres на нього не натикаються
     (MVCC). На SQLite SQLAlchemy FOR UPDATE не емітить -- це нормально, тести
     однопотокові, а поведінка формули від цього не залежить.
+
+    `populate_existing()` тут ОБОВ'ЯЗКОВИЙ, а не гігієнічний. Рядок налаштувань
+    майже завжди вже лежить в identity map (його кладе і виклик нижче, і
+    контекст-процесор `site_settings` на кожному запиті), а для вже
+    завантаженої сутності SQLAlchemy за замовчуванням НЕ перезаписує атрибути
+    значеннями з нового рядка. Тобто без нього блокування бралося справно,
+    свіже значення приходило з БД -- і відкидалося, а лічильник рахувався від
+    того, що прочитали ДО блокування. Дві одночасні видачі отримували один
+    номер, і на `unique` по `number` одна з них падала -- рівно та гонка, від
+    якої нас мав захистити цей лок.
     """
     from app.models.site_settings import SiteSettings
 
@@ -562,6 +572,7 @@ def _allocate_number_segment(kind):
         db.session.query(SiteSettings)
         .filter(SiteSettings.id == 1)
         .with_for_update()
+        .populate_existing()
         .one()
     )
     value = (getattr(row, field) or 0) + 1
