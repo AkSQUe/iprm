@@ -205,3 +205,44 @@ def test_duplicate_city_is_flashed_not_500(client, admin, monkeypatch):
 
     monkeypatch.undo()
     assert City.query.filter_by(name_normalized=name.lower()).count() == 1
+
+
+# --- каталоги: fuzzy-записи ловимо на рівні репозиторію ----------------------
+
+def test_catalogs_have_no_fuzzy_entries():
+    """`pybabel update` не має лишати після себе fuzzy-записів.
+
+    Для кожного НОВОГО msgid babel шукає найсхожіший наявний (difflib) і копіює
+    його переклад, позначаючи `#, fuzzy`. Схожість буває оманливою: при
+    впровадженні тестування «Пройти тестування» отримало `Sorting`, «Продовжити
+    тестування» -- `Continue with Apple`, «Завантажити сертифікат (PDF)» --
+    `Download invoice (PDF)`.
+
+    Небезпека саме в тихості: `pybabel compile` fuzzy пропускає, тож у проді
+    з'явилась би не абракадабра, а фолбек на українську. Сторінка виглядає
+    робочою, просто неперекладеною -- і так живе довго.
+
+    Якщо цей тест упав: перегляньте позначені записи, впишіть правильний
+    переклад і ЗНІМІТЬ прапорець `#, fuzzy` (без цього рядок не потрапить у
+    .mo), далі `pybabel compile -d app/translations`.
+    """
+    from pathlib import Path
+
+    from babel.messages.pofile import read_po
+
+    root = Path(__file__).resolve().parents[2] / 'app' / 'translations'
+    offenders = []
+    for lang in ('ru', 'en'):
+        path = root / lang / 'LC_MESSAGES' / 'messages.po'
+        with open(path, encoding='utf-8') as fh:
+            catalog = read_po(fh)
+        for message in catalog:
+            if message.id and message.fuzzy:
+                source = ' '.join(str(message.id).split())[:60]
+                target = ' '.join(str(message.string).split())[:40]
+                offenders.append(f'{lang}: {source!r} -> {target!r}')
+
+    assert not offenders, (
+        'fuzzy-записи в каталогах (переклад не потрапить у .mo):\n  '
+        + '\n  '.join(offenders)
+    )

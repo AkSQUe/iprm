@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-06 21:42+0300\n"
+"POT-Creation-Date: 2026-08-17 12:38+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -947,6 +947,13 @@ msgstr "Unknown order"
 msgid "Оплата ще обробляється. Оновіть сторінку через хвилину."
 msgstr "Payment is still processing. Refresh the page in a minute."
 
+msgid "Тестування зараз недоступне."
+msgstr "Testing is currently unavailable."
+
+#, python-format
+msgid "Спершу відповідьте на всі питання. Залишились: %(numbers)s"
+msgstr "Please answer every question first. Remaining: %(numbers)s"
+
 msgid "Невалідний email"
 msgstr "Invalid email"
 
@@ -1195,6 +1202,21 @@ msgstr "Course"
 #, python-format
 msgid "Нараховано %(points)s балів БПР"
 msgstr "%(points)s BPR points awarded"
+
+msgid "Пройти тестування"
+msgstr "Take the test"
+
+msgid "Продовжити тестування"
+msgstr "Continue the test"
+
+msgid "Тестування складено"
+msgstr "Test passed"
+
+msgid "Заповніть анкету, щоб пройти тестування"
+msgstr "Fill in the form to take the test"
+
+msgid "Спроби тестування вичерпано"
+msgstr "No test attempts left"
 
 msgid "Оплатити"
 msgstr "Pay"
@@ -2302,13 +2324,13 @@ msgid "Шановний учаснику"
 msgstr "Dear participant"
 
 msgid ""
-"ваш курс уже скоро — а анкета для сертифіката ще не заповнена. Без неї ми"
-" не зможемо нарахувати бали БПР і видати сертифікат (вимоги МОЗ №725, п. "
-"13)."
+"ваш курс уже скоро — а анкета для сертифіката ще не заповнена. Без неї не"
+" відкриється тестування після заходу, а отже ми не зможемо нарахувати "
+"бали БПР і видати сертифікат (вимоги МОЗ №725, п. 13)."
 msgstr ""
-"your course is coming up soon, but the certificate form has not been "
-"filled in yet. Without it, we cannot award BPR points or issue a "
-"certificate (MoH No. 725 requirements, clause 13)."
+"your course is coming up soon, but your certificate details are still "
+"missing. Without them the post-event test will not open, so we cannot "
+"award BPR points or issue a certificate (MoH No. 725, para. 13)."
 
 msgid "Дата"
 msgstr "Date"
@@ -2317,13 +2339,13 @@ msgid "Місце"
 msgstr "Location"
 
 msgid ""
-"Анкета займе 2–3 хвилини: тип учасника, дата народження, освіта, місце "
-"роботи та спеціалізації. Заповнюється один раз — і діє для всіх ваших "
-"курсів."
+"Анкета займе 2–3 хвилини: тип учасника, по батькові, дата народження, "
+"освіта, місце роботи, посада та спеціалізації. Заповнюється один раз — і "
+"діє для всіх ваших курсів."
 msgstr ""
-"The form takes 2–3 minutes: participant type, date of birth, education, "
-"place of work, and specializations. It is filled in once and applies to "
-"all your courses."
+"The form takes 2–3 minutes: participant type, patronymic, date of birth, "
+"education, workplace, position and specialisations. Fill it in once — it "
+"applies to all your courses."
 
 msgid "Заповнити анкету"
 msgstr "Fill in the form"
@@ -3974,17 +3996,29 @@ msgstr "Completing the training"
 msgid "Перегляньте захід у прямому ефірі або у записі та вивчіть матеріали."
 msgstr "Watch the event live or on demand and study the materials."
 
-msgid "Успішне тестування"
-msgstr "Passing the test"
+msgid "Анкета та тестування"
+msgstr "Form and test"
 
-msgid "Пройдіть тестування з результатом не менше 70% правильних відповідей."
-msgstr "Pass the test with at least 70% correct answers."
+#, python-format
+msgid ""
+"\n"
+"          Заповніть анкету для сертифіката та дайте щонайменше %(need)s "
+"правильних\n"
+"          відповідей з %(total)s.\n"
+"          "
+msgstr ""
+"Fill in your certificate details and give at least %(need)s correct "
+"answers out of %(total)s."
 
 msgid "Отримання сертифікату"
 msgstr "Receiving the certificate"
 
-msgid "Отримайте сертифікат з балами БПР після успішного проходження."
-msgstr "Receive a certificate with BPR points after passing successfully."
+msgid ""
+"Сертифікат з балами БПР з'явиться у кабінеті одразу після успішного "
+"тестування."
+msgstr ""
+"A certificate with BPR points appears in your account right after you "
+"pass the test."
 
 msgid "Ключові <span class=\"apple-gradient-text\">особливості</span>"
 msgstr "Key <span class=\"apple-gradient-text\">features</span>"
@@ -4204,6 +4238,213 @@ msgstr "What comes <span class=\"apple-gradient-text\">next</span>"
 
 msgid "Курси, які добре продовжують цю програму"
 msgstr "Courses that pair well with this one"
+
+msgid "Вітаємо!"
+msgstr "Congratulations!"
+
+#, python-format
+msgid ""
+"\n"
+"      Ви успішно завершили навчання за програмою «%(title)s» і склали "
+"тестування.\n"
+"      "
+msgstr "You have completed the “%(title)s” programme and passed the test."
+
+msgid "заходу"
+msgstr "the event"
+
+msgid "Номер сертифіката"
+msgstr "Certificate number"
+
+msgid "Завантажити сертифікат (PDF)"
+msgstr "Download certificate (PDF)"
+
+msgid "Копію надіслано на вашу пошту. Сертифікат завжди доступний у кабінеті."
+msgstr ""
+"A copy has been sent to your email. The certificate is always available "
+"in your account."
+
+msgid "Сертифікат готується — ми надішлемо його на вашу пошту найближчим часом."
+msgstr "Your certificate is being prepared — we will email it to you shortly."
+
+msgid "Результат тестування збережено, повторно складати не потрібно."
+msgstr "Your test result is saved; there is no need to take it again."
+
+msgid "До моїх курсів"
+msgstr "My courses"
+
+#, python-format
+msgid "Питання %(number)s з %(total)s"
+msgstr "Question %(number)s of %(total)s"
+
+#, python-format
+msgid "Відповіли: %(answered)s з %(total)s"
+msgstr "Answered: %(answered)s of %(total)s"
+
+msgid "До перевірки"
+msgstr "Review answers"
+
+msgid "Далі"
+msgstr "Next"
+
+msgid ""
+"Відповідь зберігається при переході. Можна повернутися й змінити її до "
+"завершення."
+msgstr ""
+"Your answer is saved when you move on. You can go back and change it "
+"until you finish."
+
+msgid "Результат тестування"
+msgstr "Test result"
+
+msgid "Тест складено"
+msgstr "Test passed"
+
+#, python-format
+msgid ""
+"\n"
+"      Потрібно було %(need)s правильних відповідей.\n"
+"      "
+msgstr "%(need)s correct answers were required."
+
+msgid "До сертифіката"
+msgstr "View certificate"
+
+msgid "Тест не складено"
+msgstr "Test not passed"
+
+#, python-format
+msgid ""
+"\n"
+"      Для успішного проходження потрібно %(need)s правильних відповідей.\n"
+"      "
+msgstr "You need %(need)s correct answers to pass."
+
+#, python-format
+msgid ""
+"\n"
+"      Не зараховані питання: %(numbers)s.\n"
+"      "
+msgstr "Questions not credited: %(numbers)s."
+
+msgid "Правильні відповіді не показуємо — повторіть матеріал заходу."
+msgstr "We do not reveal the correct answers — please review the event materials."
+
+#, python-format
+msgid ""
+"\n"
+"      Спроб залишилось: %(left)s.\n"
+"      "
+msgstr "Attempts left: %(left)s."
+
+msgid "Спробувати ще раз"
+msgstr "Try again"
+
+msgid ""
+"Спроби вичерпано. Зверніться до організаторів — вони можуть відкрити "
+"додаткову спробу."
+msgstr ""
+"You have used all attempts. Contact the organisers — they can grant an "
+"extra one."
+
+msgid "Написати нам"
+msgstr "Contact us"
+
+msgid "Перевірка відповідей"
+msgstr "Check your answers"
+
+msgid "Після завершення змінити відповіді буде неможливо."
+msgstr "Once you finish, answers can no longer be changed."
+
+#, python-format
+msgid ""
+"\n"
+"      Немає відповіді на питання: %(numbers)s. Завершити можна лише коли\n"
+"      відповіді є на всі — непозначене питання зарахувалось би як "
+"помилка.\n"
+"      "
+msgstr ""
+"No answer for question(s): %(numbers)s. You can only finish once every "
+"question is answered — an unanswered one would count as a mistake."
+
+msgid "Відповіді немає"
+msgstr "No answer"
+
+msgid "Змінити"
+msgstr "Change"
+
+msgid "Завершити тест? Змінити відповіді після цього не можна."
+msgstr "Finish the test? Answers cannot be changed afterwards."
+
+msgid "Завершити тест"
+msgstr "Finish the test"
+
+msgid "Перейти до питання"
+msgstr "Go to question"
+
+msgid "Тестування"
+msgstr "Testing"
+
+msgid "Умови"
+msgstr "Rules"
+
+#, python-format
+msgid ""
+"\n"
+"        %(count)s питань, потрібно правильних — %(need)s.\n"
+"        "
+msgstr "%(count)s questions; %(need)s correct answers required."
+
+msgid "Одне питання на екран, по чотири варіанти. Правильний — один."
+msgstr "One question per screen, four options each. Only one is correct."
+
+msgid ""
+"Відповіді зберігаються одразу: якщо закриєте сторінку, продовжите з того "
+"ж місця."
+msgstr ""
+"Answers are saved immediately: if you close the page, you will continue "
+"from the same place."
+
+#, python-format
+msgid ""
+"\n"
+"        Спроб залишилось: %(left)s.\n"
+"        "
+msgstr "Attempts left: %(left)s."
+
+msgid "Продовжити тест"
+msgstr "Continue the test"
+
+msgid "Почати тест"
+msgstr "Start the test"
+
+msgid "Тестування поки недоступне"
+msgstr "Testing is not available yet"
+
+msgid ""
+"Спершу заповніть анкету для сертифіката — без неї бали БПР нарахувати "
+"неможливо."
+msgstr ""
+"Please fill in your certificate details first — BPR points cannot be "
+"awarded without them."
+
+msgid "Не заповнено:"
+msgstr "Not filled in:"
+
+msgid "Тестування відкривається після оплати участі."
+msgstr "Testing opens once your participation is paid."
+
+msgid "Тест відкриється після початку заходу."
+msgstr "The test opens after the event starts."
+
+msgid "Тест ще готується. Ми повідомимо, коли його можна буде пройти."
+msgstr "The test is still being prepared. We will let you know when it is ready."
+
+msgid "Реєстрацію скасовано."
+msgstr "Registration cancelled."
+
+msgid "Для цього заходу тестування не передбачене."
+msgstr "No test is required for this event."
 
 msgid "Завершення реєстрації | ІПРМ"
 msgstr "Complete registration | IPRM"
@@ -4787,4 +5028,10 @@ msgstr ""
 #~ "Your seat in the course has been"
 #~ " confirmed. Expect a reminder before "
 #~ "the start."
+
+#~ msgid "Успішне тестування"
+#~ msgstr "Passing the test"
+
+#~ msgid "Пройдіть тестування з результатом не менше 70% правильних відповідей."
+#~ msgstr "Pass the test with at least 70% correct answers."
 
