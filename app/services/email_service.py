@@ -949,11 +949,33 @@ class EmailService:
             to=user.email,
             subject=lambda: _('Ваш сертифікат: %(title)s', title=certificate.event_title),
             template_name='certificate_issued',
-            context={'user': user, 'certificate': certificate},
+            context={
+                'user': user,
+                'certificate': certificate,
+                # Шлях будуємо ТУТ, як у решті листів. Шаблон раніше склеював
+                # website_url ~ "/account" -- а такого маршруту не існує
+                # (кабінет живе на /auth/account), тож кнопка в листі вела у
+                # 404. Заодно rstrip знімає подвійний слеш, якщо в
+                # налаштуваннях домен записали з кінцевим "/".
+                'account_url': EmailService._account_url(),
+            },
             trigger='certificate',
             registration_id=certificate.registration_id,
             attachments=[(filename, 'application/pdf', pdf_bytes)],
         )
+
+    @staticmethod
+    def _account_url():
+        """Абсолютне посилання на особистий кабінет.
+
+        Береться з SiteSettings.website_url, а не через url_for(_external=True):
+        листи рендеряться і поза request-контекстом (фонові розсилки), де
+        зовнішні URL збиралися б із SERVER_NAME, якого в конфізі немає.
+        """
+        from app.models.site_settings import SiteSettings
+
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        return f'{base}/auth/account' if base else '/auth/account'
 
     @staticmethod
     def send_course_request_notification(course_request):

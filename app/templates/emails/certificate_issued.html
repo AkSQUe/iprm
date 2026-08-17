@@ -34,7 +34,10 @@
         </tr>
     </table>
 
-    {{ button_primary(_('Відкрити особистий кабінет'), site_settings.website_url ~ "/account") }}
+    {# Посилання приходить з контексту (EmailService._account_url), а не
+       склеюється тут: раніше тут стояло website_url ~ "/account", а такого
+       маршруту немає -- кабінет живе на /auth/account, і кнопка вела у 404. #}
+    {{ button_primary(_('Відкрити особистий кабінет'), account_url) }}
 
     {{ spacer(16) }}
 

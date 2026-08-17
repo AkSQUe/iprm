@@ -304,15 +304,20 @@ def notifications_templates():
     # Прев'ю листа про оплату показує всі блоки одразу (кабінет, календар,
     # промокод, реферальне посилання) -- інакше редактор бачив би порожній
     # каркас і не міг оцінити довжину листа.
+    # Домен для прев'ю беремо з налаштувань, а не зашиваємо: зашитий устарів
+    # при переїзді на iprm.space, і редактор бачив у прев'ю чужий бренд.
+    from app.models.site_settings import SiteSettings
+    preview_base = (SiteSettings.get().website_url or 'https://iprm.space').rstrip('/')
+
     mock_payment_ctx = {
         'needs_account': False,
-        'account_url': 'https://plasma-regen.com/auth/account',
-        'course_url': 'https://plasma-regen.com/courses/prp',
-        'courses_url': 'https://plasma-regen.com/courses',
+        'account_url': f'{preview_base}/auth/account',
+        'course_url': f'{preview_base}/courses/prp',
+        'courses_url': f'{preview_base}/courses',
         'gcal_url': 'https://calendar.google.com/calendar/render?action=TEMPLATE',
         'has_ics': True,
         'promo': MockPromo(),
-        'referral_link': 'https://plasma-regen.com/?ref=u1a2b3c4d&utm_source=referral',
+        'referral_link': f'{preview_base}/?ref=u1a2b3c4d&utm_source=referral',
     }
 
     class MockCertificate:
@@ -373,7 +378,7 @@ def notifications_templates():
     course = MockCourse()
     course_request = MockCourseRequest()
     b2b_request = MockB2BRequest()
-    mock_admin_url = 'https://plasma-regen.com/admin'
+    mock_admin_url = f'{preview_base}/admin'
     mock_materials_items = [
         {'sku': 'NDL-21', 'name': 'Голка 21G', 'quantity_reserved': 5},
         {'sku': 'ROLL-DENTAL', 'name': 'Валик ватний', 'quantity_reserved': 12},
@@ -466,7 +471,7 @@ def notifications_templates():
             'trigger': 'email_confirm',
             'subject': 'Підтвердіть ваш email | IPRM',
             'html': render_template('emails/email_confirm.html',
-                                    user=user, confirm_url='https://plasma-regen.com/auth/confirm/example'),
+                                    user=user, confirm_url=f'{preview_base}/auth/confirm/example'),
         },
         {
             'key': 'password-reset',
@@ -475,7 +480,7 @@ def notifications_templates():
             'trigger': 'password_reset',
             'subject': 'Відновлення паролю | IPRM',
             'html': render_template('emails/password_reset.html',
-                                    user=user, reset_url='https://plasma-regen.com/auth/reset/example'),
+                                    user=user, reset_url=f'{preview_base}/auth/reset/example'),
         },
         {
             'key': 'completion-link',
@@ -485,7 +490,7 @@ def notifications_templates():
             'subject': f'Завершіть реєстрацію: {event.title}',
             'html': render_template('emails/completion_link.html',
                                     user=user, event=event,
-                                    complete_url='https://plasma-regen.com/registration/complete/example'),
+                                    complete_url=f'{preview_base}/registration/complete/example'),
         },
         {
             'key': 'certificate',
@@ -494,7 +499,8 @@ def notifications_templates():
             'trigger': 'certificate',
             'subject': f'Ваш сертифікат готовий: {certificate.event_title}',
             'html': render_template('emails/certificate_issued.html',
-                                    user=user, certificate=certificate),
+                                    user=user, certificate=certificate,
+                                    account_url=f'{preview_base}/auth/account'),
         },
         {
             'key': 'course-request-received',
@@ -504,7 +510,7 @@ def notifications_templates():
             'subject': f'Ми отримали ваш запит: {course.title}',
             'html': render_template('emails/course_request_received.html',
                                     request_obj=course_request, course=course,
-                                    course_url='https://plasma-regen.com/courses/prp'),
+                                    course_url=f'{preview_base}/courses/prp'),
         },
         {
             'key': 'course-request-admin',
@@ -565,7 +571,7 @@ def notifications_templates():
             'html': render_template('emails/materials_actuals_reminder.html',
                                     event_title=event.title, event_date='15.04.2026',
                                     items=mock_materials_items,
-                                    admin_url='https://plasma-regen.com/admin/instances/1/materials'),
+                                    admin_url=f'{preview_base}/admin/instances/1/materials'),
         },
         {
             'key': 'backup-failure',
