@@ -116,9 +116,22 @@ def online_course_edit(course_id):
     if request.method == 'POST':
         return _save_course(course)
 
+    from app.models.trainer import Trainer
+    from app.services import course_service
+
     return render_template(
         'admin/online_course_edit.html',
         course=course,
+        trainer_options=Trainer.query.order_by(Trainer.full_name).all(),
+        # Текстові представлення JSON-полів. Рахуємо тут, а не в шаблоні:
+        # формати введення спільні з формою офлайнового курсу, і правило
+        # їх розбору має жити в одному місці.
+        proof_stats_text=course_service.pairs_list_to_text(course.proof_stats),
+        benefits_text=course_service.blocks_list_to_text(
+            course.benefits, 'title', 'text'),
+        target_audience_text=course_service.list_to_lines(course.target_audience),
+        faq_text=course_service.faq_list_to_text(course.faq),
+        gallery_json=course_service.gallery_to_json(course.gallery),
     )
 
 
@@ -201,6 +214,32 @@ def _save_course(course):
     course.access_ttl_hours = ttl
     course.is_featured = request.form.get('is_featured') == 'on'
 
+    # --- Контент продажної сторінки. Ті самі формати введення, що й у курсу
+    #     офлайн: онлайн- і офлайн-сторінка зібрані з тих самих партіалів,
+    #     тож і редактор має поводитись однаково. ---
+    from app.services import course_service
+
+    course.final_cta_text = (
+        request.form.get('final_cta_text') or '').strip() or None
+    course.practice_note_title = (
+        request.form.get('practice_note_title') or '').strip() or None
+    course.practice_note_text = (
+        request.form.get('practice_note_text') or '').strip() or None
+    course.gallery_intro = (
+        request.form.get('gallery_intro') or '').strip() or None
+    course.target_audience = course_service.lines_to_list(
+        request.form.get('target_audience_text'))
+    course.faq = course_service.faq_text_to_list(request.form.get('faq_text'))
+    course.proof_stats = course_service.pairs_text_to_list(
+        request.form.get('proof_stats_text'))
+    course.benefits = course_service.blocks_text_to_list(
+        request.form.get('benefits_text'), 'title', 'text')
+
+    try:
+        course.trainer_id = int(request.form.get('trainer_id') or 0) or None
+    except (TypeError, ValueError):
+        course.trainer_id = None
+
     try:
         course.sort_order = int(request.form.get('sort_order') or 0)
     except (TypeError, ValueError):
@@ -224,6 +263,16 @@ def _save_course(course):
         )
     else:
         course.is_published = wants_published
+
+    # Блоки програми й галерея -- після решти полів: обидва пишуть у сесію і
+    # потребують валідного course.slug (той міг щойно змінитись).
+    blocks = course_service.extract_program_blocks_from_form(request.form)
+    course_service.save_program_blocks_for_online_course(course, blocks)
+    course_service.save_gallery(
+        course,
+        course_service.parse_gallery_entries(request.form.get('gallery_json')),
+        entity_type='online_course',
+    )
 
     if try_commit(log_context=f'online course {course.id}'):
         audit_logger.info(

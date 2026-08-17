@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-i18n-tabs.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-gallery.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% import 'admin/partials/_i18n_tabs.html' as i18n %}
@@ -168,6 +169,118 @@
         </div>
       </div>
 
+      {# Контент продажної сторінки. Ті самі формати введення, що у формі
+         офлайнового курсу: сторінки зібрані з тих самих партіалів, тож і
+         редактор має поводитись однаково. #}
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">Продажна сторінка</h3>
+        <div class="form-group">
+          <label for="trainer_id">Автор курсу</label>
+          <select name="trainer_id" id="trainer_id" class="form-input">
+            <option value="">— не вказано —</option>
+            {% for trainer in trainer_options %}
+            <option value="{{ trainer.id }}"{% if course.trainer_id == trainer.id %} selected{% endif %}>{{ trainer.full_name }}</option>
+            {% endfor %}
+          </select>
+          <p class="form-hint">У Sintegrum тренера немає — це наші дані.</p>
+        </div>
+        <div class="form-group">
+          <label for="proof_stats_text">Цифри довіри</label>
+          <textarea name="proof_stats_text" id="proof_stats_text" class="form-input" rows="4"
+                    placeholder="500+ | випускників курсу">{{ proof_stats_text }}</textarea>
+          <p class="form-hint">Смуга під hero. Один рядок = одна цифра, у форматі «значення | підпис». Порожньо — смуги немає.</p>
+        </div>
+        <div class="form-group">
+          <label for="benefits_text">Що зміниться у практиці</label>
+          <textarea name="benefits_text" id="benefits_text" class="form-input" rows="10"
+                    placeholder="Заголовок картки&#10;Текст картки.&#10;&#10;Друга картка&#10;Її текст.">{{ benefits_text }}</textarea>
+          <p class="form-hint">Блоки розділяються порожнім рядком: перший рядок — заголовок, решта — текст. Нумерація проставляється сама.</p>
+        </div>
+        <div class="form-group">
+          <label for="target_audience_text">Для кого курс</label>
+          <textarea name="target_audience_text" id="target_audience_text" class="form-input" rows="5"
+                    placeholder="Один пункт на рядок">{{ target_audience_text }}</textarea>
+        </div>
+        <div class="form-group">
+          <label for="faq_text">FAQ</label>
+          <textarea name="faq_text" id="faq_text" class="form-input" rows="8"
+                    placeholder="Питання?&#10;Відповідь.&#10;&#10;Інше питання?&#10;Інша відповідь.">{{ faq_text }}</textarea>
+          <p class="form-hint">Блоки розділяються порожнім рядком: перший рядок — питання, решта — відповідь.</p>
+        </div>
+        <div class="form-group">
+          <label for="practice_note_title">Акцент практики – заголовок</label>
+          <input type="text" name="practice_note_title" id="practice_note_title" class="form-input"
+                 maxlength="200" value="{{ course.practice_note_title or '' }}">
+          <p class="form-hint">Плашка всередині блоку програми. Порожньо — плашки немає.</p>
+        </div>
+        <div class="form-group">
+          <label for="practice_note_text">Акцент практики – текст</label>
+          <textarea name="practice_note_text" id="practice_note_text" class="form-input" rows="3">{{ course.practice_note_text or '' }}</textarea>
+        </div>
+        <div class="form-group">
+          <label for="gallery_intro">Галерея – лід</label>
+          <input type="text" name="gallery_intro" id="gallery_intro" class="form-input"
+                 maxlength="500" value="{{ course.gallery_intro or '' }}">
+        </div>
+        <div class="form-group">
+          <label for="final_cta_text">Фінальний заклик</label>
+          <input type="text" name="final_cta_text" id="final_cta_text" class="form-input"
+                 maxlength="300" value="{{ course.final_cta_text or '' }}"
+                 placeholder="Готові почати? Доступ відкривається одразу після оплати.">
+        </div>
+      </div>
+
+      {# Блоки програми. Розмітка навмисно та сама, що у формі офлайнового
+         курсу (block_N_heading / block_N_items): після переходу блоків на
+         поліморфну прив'язку обидві форми читає той самий парсер. #}
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">Блоки програми</h3>
+        <div id="program-blocks">
+          {% for block in course.program_blocks %}
+          <div class="admin-program-block" data-index="{{ loop.index0 }}">
+            <input type="hidden" name="block_{{ loop.index0 }}_id" value="{{ block.id }}">
+            <div class="admin-form__grid">
+              <div class="form-group admin-form__full">
+                <label>Заголовок блоку</label>
+                <div class="admin-program-block__header">
+                  <input type="text" name="block_{{ loop.index0 }}_heading" value="{{ block.heading }}" class="form-input">
+                  <button type="button" class="btn-admin btn-admin--danger btn-admin--sm admin-program-block__remove">X</button>
+                </div>
+              </div>
+              <div class="form-group admin-form__full">
+                <label>Пункти програми</label>
+                <textarea name="block_{{ loop.index0 }}_items" class="form-input" rows="5">{{ block.items | join('\n') }}</textarea>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <button type="button" id="add-program-block" class="btn-admin btn-admin--secondary">+ Додати блок програми</button>
+      </div>
+
+      {# Галерея. Фото живуть у медіа-реєстрі, а не в JSON курсу: приховане
+         поле несе лише порядок і підписи. #}
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">Галерея з практики</h3>
+        <div class="admin-gallery" data-gallery-editor
+             data-entity-type="online_course"
+             data-entity-id="{{ course.id }}"
+             data-upload-url="{{ url_for('admin.upload_media') }}">
+          <div class="admin-gallery__grid" data-gallery-grid></div>
+          <input type="file" class="admin-gallery__file" data-gallery-file
+                 accept="image/png,image/jpeg,image/webp" multiple>
+          <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" data-gallery-add>
+            + Додати фото
+          </button>
+          <p class="form-hint">
+            Перетягуванням змінюється порядок. Підпис показується поверх фото на
+            сайті; він не перекладається (одна мова в усіх локалях).
+          </p>
+        </div>
+        <input type="hidden" name="gallery_json" id="gallery_json" data-gallery-field="1" value="{{ gallery_json }}">
+      </div>
+
+
       <div class="form-section admin-form__section">
         <h3 class="admin-form__section-title">Публікація</h3>
         <div class="admin-form__grid">
@@ -206,6 +319,9 @@
         <button type="submit" class="btn-admin btn-admin--primary">Зберегти</button>
       </div>
     </form>
+
+    <script src="{{ url_for('static', filename='js/admin-event-edit.js') }}?v={{ assets_version }}"></script>
+    <script src="{{ url_for('static', filename='js/admin-course-gallery.js') }}?v={{ assets_version }}"></script>
 
   </div>
 </div>
