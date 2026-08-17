@@ -381,14 +381,86 @@ Singleton-модель для зберігання SMTP-налаштувань �
 - `apply_to_app(app)` -- застосовує налаштування до конфігурації Flask-Mail
 - `reminder_days_list` -- property, парсить рядок у список чисел
 
-## PaymentTransaction
+## OnlineCourse (онлайн-курс, дзеркало Sintegrum)
 
-Журнал платіжних транзакцій LiqPay. Зберігає деталі кожної спроби оплати.
+Каталог онлайн-навчання, що фізично відбувається в Sintegrum. Це ДЗЕРКАЛО
+чужого каталогу плюс наші дані про продаж, тому поля розділені на два набори.
+
+Не плутати з `Course`: той описує офлайн-захід із проведеннями, датами,
+містами, тарифами й сертифікатами БПР. Тут нічого цього немає.
 
 | Поле | Тип | Опис |
 |------|-----|------|
 | `id` | BigInteger | Первинний ключ |
-| `registration_id` | FK -> event_registrations.id (CASCADE) | Реєстрація |
+| `sintegrum_id` | Integer UNIQUE | Ідентифікатор треку в Sintegrum |
+| `remote_name` | String(255) | Назва з Sintegrum |
+| `remote_description` | Text | Опис з Sintegrum |
+| `remote_price` | Numeric(10,2) | Ціна з Sintegrum -- ДОВІДКОВА, у продаж не йде |
+| `remote_status` | Integer | 0 неактивний, 1 активний, 2 архів |
+| `remote_payload` | JSON | Сирий об'єкт останнього прогону синхронізації |
+| `first_seen_at` / `last_seen_at` | DateTime (UTC) | Коли вперше й востаннє бачили у видачі |
+| `is_vanished` | Boolean | Зник із видачі Sintegrum (НЕ видаляємо) |
+| `slug` | String(200) UNIQUE | Наша адреса сторінки |
+| `title` / `description` / `short_description` | | Наші тексти; порожньо -> беремо з Sintegrum |
+| `price` | Numeric(10,2) | НАША ціна продажу. Обов'язкова для публікації |
+| `currency` | String(3) | Валюта, типово UAH |
+| `duration_hours`, `cpd_points` | Integer | Тривалість; бали БПР (довідково) |
+| `is_published`, `is_featured`, `sort_order` | | Керування каталогом |
+| `hero_media_id`, `card_media_id` | FK -> media_files | Зображення через медіа-реєстр |
+| `access_url` | String(1000) | Посилання реєстрації Sintegrum. НІКОЛИ не віддається назовні |
+| `access_ttl_hours` | Integer | Термін життя виданого токена; порожньо -> з налаштувань |
+
+Синхронізація (`app/services/online_course_sync.py`) пише ЛИШЕ `remote_*`.
+Локальні поля переживають будь-яку кількість прогонів -- інакше кожен прогін
+затирав би редакторську роботу.
+
+`missing_for_publication` повертає СПИСОК причин, чому курс не можна
+опублікувати (немає ціни, немає `access_url`, курс зник), а не просто `False`:
+адмін має бачити, що саме доробити.
+
+## OnlineEnrollment (купівля онлайн-курсу)
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ; `order_id` = `ONL-<id>` |
+| `user_id` | FK -> users.id (CASCADE) | Покупець |
+| `online_course_id` | FK -> online_courses.id (RESTRICT) | Курс |
+| `status` | String(20) | pending / active / cancelled |
+| `payment_status` | String(20) | unpaid / pending / paid / refunded |
+| `payment_amount` | Numeric(10,2) | Сума, зафіксована при оформленні |
+| `payment_id`, `payment_method`, `paid_at` | | Реквізити платежу |
+| `sintegrum_student_id` | Integer | Під майбутню звірку прогресу (зараз порожній) |
+| `provisioned_at` | DateTime (UTC) | Коли видано доступ |
+| `provision_error` | Text | Остання причина невдалої видачі |
+| `access_token` | String(64) UNIQUE | НАШ токен, не адреса Sintegrum |
+| `access_expires_at` | DateTime (UTC) | Термін дії токена |
+| `access_issued_count` | Integer | Скільки разів видавали (перевипуски) |
+| `access_last_opened_at` | DateTime (UTC) | Коли востаннє переходили |
+
+Часткова унікальність `(user_id, online_course_id) WHERE status <> 'cancelled'`
+-- одна людина не купує той самий курс двічі, але скасоване замовлення не
+блокує повторну спробу.
+
+`payment_status='paid'` при порожньому `provisioned_at` -- аварійний стан
+(«заплатив, доступу немає»). Його щодесять хвилин підбирає джоба
+`retry_online_access_provisioning`.
+
+## PaymentTransaction
+
+Журнал платіжних транзакцій LiqPay. Зберігає деталі кожної спроби оплати.
+
+Журнал СПІЛЬНИЙ для обох типів замовлень: заповнене рівно одне з полів
+`registration_id` / `enrollment_id`, це закріплено CHECK-ом
+`ck_payment_transactions_single_owner`. Розділяти журнали не можна --
+звірка з виписками LiqPay має читатися одним запитом, інакше половина
+операцій завжди лишалася б поза звітом.
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ |
+| `registration_id` | FK -> event_registrations.id (CASCADE), NULLABLE | Реєстрація на захід |
+| `enrollment_id` | FK -> online_enrollments.id (CASCADE), NULLABLE | Купівля онлайн-курсу |
+| `order_id` | String(100) | `REG-<id>` або `ONL-<id>` |
 | `payment_id` | String(255) | ID транзакції LiqPay |
 | `status` | String(50) | Статус: pending, success, failure, reversed |
 | `amount` | Numeric(10,2) | Сума транзакції |

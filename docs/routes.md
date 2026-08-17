@@ -56,6 +56,30 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 | GET | `/courses/stomatology` | Legacy redirect -> plazmoterapiya-v-stomatologii (301) |
 | GET | `/courses/orthopedics` | Legacy redirect -> plazmoterapiya-v-ortopedii (301) |
 
+## Online courses (онлайн-курси Sintegrum)
+
+Окремий розділ від `/courses`: там офлайн-заходи з датами й місцями, тут --
+навчання, що фізично йде в Sintegrum. Каталог читається з локального дзеркала
+`online_courses`, до чужого API на рендері звернень немає.
+
+| Метод | URL | Опис |
+|-------|-----|------|
+| GET | `/online-courses/` | Каталог опублікованих онлайн-курсів |
+| GET | `/online-courses/<slug>` | Сторінка курсу (неопублікований -> 404) |
+| GET, POST | `/online-courses/<slug>/checkout` | Оформлення покупки (потрібен логін) |
+| GET | `/online-courses/access/<token>` | Тимчасове посилання -> 302 на Sintegrum |
+| POST | `/online-courses/access/<id>/reissue` | Перевипуск протермінованого посилання |
+
+`/online-courses/access/<token>` свідомо БЕЗ мовних префіксів
+(`localize=False`): посилання живе в листі, і префікс лише множив би варіанти
+того самого токена. Перевіряє чотири умови -- токен існує, замовлення
+оплачене, термін не минув, у курсу заданий `access_url` -- і лише тоді робить
+редірект. Цільова адреса не потрапляє ні в HTML сторінок помилок, ні в логи.
+
+Пункт меню «Онлайн-курси» показується лише при
+`SiteSettings.show_online_courses` -- каталог можна наповнювати, поки розділ
+ще прихований.
+
 ## Trainers
 
 | Метод | URL | Опис |
@@ -103,11 +127,22 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 | GET | `/payments/success` | Успішна оплата (redirect від LiqPay) |
 | GET | `/payments/failure` | Невдала оплата (redirect від LiqPay) |
 
+`/payments/success` і `/payments/failure` обслуговують ОБИДВА типи
+замовлень і розрізняють їх за префіксом `order_id`: `REG-` -- реєстрація
+на захід, `ONL-` -- купівля онлайн-курсу.
+
 ## Admin
 
 | Метод | URL | Опис |
 |-------|-----|------|
 | GET | `/admin/` | Dashboard (redirect на events) |
+| GET | `/admin/sintegrum` | Налаштування інтеграції Sintegrum |
+| POST | `/admin/sintegrum/save` | Зберегти налаштування (порожній ключ не затирає) |
+| POST | `/admin/sintegrum/test` | Перевірка зв'язку з API Sintegrum |
+| POST | `/admin/sintegrum/sync` | Ручна синхронізація каталогу |
+| GET | `/admin/online-courses` | Каталог онлайн-курсів (УВЕСЬ перелік із дзеркала) |
+| GET, POST | `/admin/online-courses/<id>` | Редагування наших полів курсу |
+| POST | `/admin/online-courses/<id>/publish` | Перемикач публікації |
 | GET | `/admin/events` | Список заходів |
 | GET/POST | `/admin/events/new` | Створення заходу |
 | GET/POST | `/admin/events/<id>/edit` | Редагування заходу |
@@ -175,6 +210,7 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 |-------|-----|------|
 | GET | `/api/v1/events` | Список заходів для партнерів |
 | GET | `/api/v1/events/<slug>` | Деталі заходу для партнерів |
+| GET | `/api/v1/online-courses` | Каталог онлайн-курсів для партнерів |
 | POST | `/api/v1/perf/runs` | Приймання прогону від `tools/perf/perf_check.py --push` |
 
 ## Errors
