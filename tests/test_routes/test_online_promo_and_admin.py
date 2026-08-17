@@ -38,15 +38,23 @@ def _no_rate_limit():
 
 @pytest.fixture(autouse=True)
 def clean(app):
-    PromoRedemption.query.delete()
-    OnlineEnrollment.query.delete()
-    OnlineCourse.query.delete()
-    db.session.commit()
+    """Чисті таблиці промокодів і замовлень перед кожним тестом.
+
+    PromoCode прибираємо теж, і саме через SQLite: після видалення рядків
+    він перевикористовує ідентифікатори, тож нове замовлення отримує id
+    попереднього -- а виданий за те замовлення код-подяка лишався б
+    прив'язаним і повертався замість None.
+    """
+    def _wipe():
+        PromoRedemption.query.delete()
+        PromoCode.query.delete()
+        OnlineEnrollment.query.delete()
+        OnlineCourse.query.delete()
+        db.session.commit()
+
+    _wipe()
     yield
-    PromoRedemption.query.delete()
-    OnlineEnrollment.query.delete()
-    OnlineCourse.query.delete()
-    db.session.commit()
+    _wipe()
 
 
 @pytest.fixture
@@ -559,3 +567,218 @@ class TestRefundStaysOutOfTheTransaction:
         assert seen['status_at_call'] == 'refunded'
         db.session.refresh(enrollment)
         assert enrollment.access_token is None
+
+# ----------------------------- повернення коштів через LiqPay -----------------------------
+
+class TestRefundThroughLiqpay:
+    """Кнопка «Повернути кошти» справді рухає гроші, а не лише статус."""
+
+    @staticmethod
+    def _ops(refund_result):
+        from unittest.mock import MagicMock
+        from app.services.payment_ops import PaymentOps
+
+        service = MagicMock()
+        service.create_refund_request.return_value = refund_result
+        return PaymentOps(service), service
+
+    def _paid(self, buyer, course, monkeypatch):
+        from app.services.liqpay import get_liqpay_service
+        from app.services.payment_ops import PaymentOps
+
+        monkeypatch.setattr(
+            'app.services.email_service.EmailService.send_online_access',
+            staticmethod(lambda *a, **k: None))
+        course.access_url = 'https://multimededu.sintegrum.com/register/abc'
+        db.session.commit()
+        enrollment = _enrollment(buyer, course)
+        PaymentOps(get_liqpay_service()).update_enrollment_status(
+            enrollment, 'paid', amount=enrollment.payment_amount,
+            source='manual')
+        return enrollment
+
+    def test_successful_refund_closes_access(self, app, buyer, course, admin,
+                                             monkeypatch):
+        enrollment = self._paid(buyer, course, monkeypatch)
+        ops, service = self._ops({'status': 'reversed'})
+
+        ok, message = ops.initiate_enrollment_refund(enrollment, admin)
+
+        assert ok is True
+        assert '4000' in message
+        service.create_refund_request.assert_called_once()
+        db.session.refresh(enrollment)
+        assert enrollment.payment_status == 'refunded'
+        assert enrollment.access_token is None
+
+    def test_rejected_refund_leaves_the_order_paid(self, app, buyer, course,
+                                                  admin, monkeypatch):
+        """LiqPay відмовив -- статус чіпати не можна: гроші не повернуто."""
+        enrollment = self._paid(buyer, course, monkeypatch)
+        ops, _service = self._ops({'status': 'error',
+                                   'err_description': 'no funds'})
+
+        ok, message = ops.initiate_enrollment_refund(enrollment, admin)
+
+        assert ok is False
+        assert 'no funds' in message
+        db.session.refresh(enrollment)
+        assert enrollment.payment_status == 'paid'
+        assert enrollment.access_token
+
+    def test_unpaid_order_cannot_be_refunded(self, app, buyer, course, admin):
+        enrollment = _enrollment(buyer, course)
+        ops, service = self._ops({'status': 'reversed'})
+
+        ok, _message = ops.initiate_enrollment_refund(enrollment, admin)
+
+        assert ok is False
+        service.create_refund_request.assert_not_called()
+
+    def test_free_order_needs_no_liqpay(self, app, buyer, course, monkeypatch,
+                                        admin):
+        """Замовлення на нуль LiqPay не знає -- закриваємо лише доступ."""
+        monkeypatch.setattr(
+            'app.services.email_service.EmailService.send_online_access',
+            staticmethod(lambda *a, **k: None))
+        course.access_url = 'https://multimededu.sintegrum.com/register/abc'
+        db.session.commit()
+
+        enrollment = _enrollment(buyer, course, payment_amount=Decimal('0'))
+        ops, service = self._ops(None)
+        ops.update_enrollment_status(enrollment, 'paid', amount=Decimal('0'),
+                                     source='manual')
+
+        ok, _message = ops.initiate_enrollment_refund(enrollment, admin)
+
+        assert ok is True
+        service.create_refund_request.assert_not_called()
+        db.session.refresh(enrollment)
+        assert enrollment.payment_status == 'refunded'
+
+
+# ----------------------------- рахунок на оплату -----------------------------
+
+class TestInvoice:
+    def test_invoice_is_generated_for_the_buyer(self, client, buyer, course):
+        _login(client, buyer)
+        client.get(f'/online-courses/{course.slug}/checkout')
+        enrollment = OnlineEnrollment.query.filter_by(user_id=buyer.id).one()
+
+        response = client.get(f'/online-courses/orders/{enrollment.id}/invoice.pdf')
+
+        assert response.status_code == 200
+        assert response.mimetype == 'application/pdf'
+        assert response.data[:4] == b'%PDF'
+
+    def test_invoice_names_the_course(self, app, buyer, course):
+        from app.services.invoice_service import _invoice_context
+
+        enrollment = _enrollment(buyer, course)
+        ctx = _invoice_context(enrollment)
+
+        assert 'Онлайн-курс' in ctx['item_name']
+        assert course.effective_title in ctx['item_name']
+        assert ctx['amount'] == Decimal('4000')
+
+    def test_someone_elses_order_is_404(self, client, buyer, course, admin):
+        enrollment = _enrollment(buyer, course)
+        _login(client, admin)
+
+        assert client.get(
+            f'/online-courses/orders/{enrollment.id}/invoice.pdf'
+        ).status_code == 404
+
+    def test_paid_order_has_no_invoice(self, client, buyer, course):
+        enrollment = _enrollment(buyer, course, payment_status='paid',
+                                 status='active')
+        _login(client, buyer)
+
+        response = client.get(
+            f'/online-courses/orders/{enrollment.id}/invoice.pdf')
+        assert response.status_code == 302
+
+
+# ----------------------------- промокод-подяка -----------------------------
+
+class TestThankyouPromo:
+    def _enable(self):
+        from app.models.site_settings import SiteSettings
+
+        settings = SiteSettings.get()
+        settings.thankyou_promo_enabled = True
+        settings.thankyou_promo_percent = 10
+        settings.thankyou_promo_days = 30
+        db.session.commit()
+        return settings
+
+    def test_code_is_issued_and_sent_with_access(self, app, buyer, course,
+                                                 monkeypatch):
+        from app.services import sintegrum_access
+
+        self._enable()
+        course.access_url = 'https://multimededu.sintegrum.com/register/abc'
+        db.session.commit()
+        sent = {}
+        monkeypatch.setattr(
+            'app.services.email_service.EmailService.send_online_access',
+            staticmethod(lambda item, url, promo=None: sent.update(promo=promo)))
+
+        enrollment = _enrollment(buyer, course, payment_status='paid',
+                                 status='active')
+        sintegrum_access.provision_and_notify(enrollment)
+
+        assert sent['promo'] is not None
+        assert sent['promo'].discount_value == Decimal('10')
+        assert sent['promo'].issued_for_enrollment_id == enrollment.id
+
+    def test_issuing_is_idempotent(self, app, buyer, course):
+        self._enable()
+        enrollment = _enrollment(buyer, course)
+
+        first = promo_service.issue_thankyou_code_for_enrollment(enrollment)
+        db.session.commit()
+        second = promo_service.issue_thankyou_code_for_enrollment(enrollment)
+
+        assert first is not None
+        assert second.id == first.id
+
+    def test_disabled_mechanic_issues_nothing(self, app, buyer, course):
+        from app.models.site_settings import SiteSettings
+
+        settings = SiteSettings.get()
+        settings.thankyou_promo_enabled = False
+        db.session.commit()
+
+        enrollment = _enrollment(buyer, course)
+        assert promo_service.issue_thankyou_code_for_enrollment(enrollment) is None
+
+    def test_registration_codes_still_work(self, app, buyer):
+        """Узагальнення не мало зачепити наявну механіку для заходів."""
+        from uuid import uuid4 as _uuid
+
+        from app.models.course import Course as OfflineCourse
+        from app.models.course_instance import CourseInstance
+        from app.models.registration import EventRegistration
+
+        self._enable()
+        offline = OfflineCourse(title='Захід', slug=f'ty-{_uuid().hex[:6]}',
+                                is_active=False)
+        db.session.add(offline)
+        db.session.flush()
+        instance = CourseInstance(course_id=offline.id, status='published',
+                                  price=1000)
+        db.session.add(instance)
+        db.session.flush()
+        reg = EventRegistration(
+            user_id=buyer.id, instance_id=instance.id, phone='+380000000000',
+            specialty='X', workplace='Y', payment_amount=Decimal('1000'),
+        )
+        db.session.add(reg)
+        db.session.commit()
+
+        promo = promo_service.issue_thankyou_code(reg)
+
+        assert promo is not None
+        assert promo.issued_for_registration_id == reg.id
+        assert promo.issued_for_enrollment_id is None

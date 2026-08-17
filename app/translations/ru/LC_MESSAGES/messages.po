@@ -5232,3 +5232,18 @@ msgstr "Сопровождение каждого слушателя от нач
 #~ msgid "Посилання надійде на пошту після оплати"
 #~ msgstr "Ссылка придёт на почту после оплаты"
 
+
+msgid "Оформлення <span class=\"apple-gradient-text\">покупки</span>"
+msgstr "Оформление <span class=\"apple-gradient-text\">покупки</span>"
+
+msgid "Залишився один крок: після оплати доступ до курсу відкриється одразу."
+msgstr "Остался один шаг: после оплаты доступ к курсу откроется сразу."
+
+msgid "Вартість курсу"
+msgstr "Стоимость курса"
+
+msgid "промокод застосовано"
+msgstr "промокод применён"
+
+msgid "Оплату <span class=\"apple-gradient-text\">отримано</span>"
+msgstr "Оплата <span class=\"apple-gradient-text\">получена</span>"

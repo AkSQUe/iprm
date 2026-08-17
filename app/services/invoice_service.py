@@ -361,7 +361,11 @@ def invoice_filename(reg, ext):
 
     amount = int(Decimal(reg.payment_amount or 0))
     parts = ['Рахунок', last_name, f'{amount}грн']
-    if reg.instance and reg.instance.start_date:
-        parts.append(ensure_utc(reg.instance.start_date).strftime('%d.%m.%Y'))
+    # getattr, а не пряме звертання: у замовлення онлайн-курсу проведення
+    # немає й бути не може -- курс проходять у власному темпі, тож дати в
+    # назві файлу просто не буде.
+    instance = getattr(reg, 'instance', None)
+    if instance and instance.start_date:
+        parts.append(ensure_utc(instance.start_date).strftime('%d.%m.%Y'))
 
     return f'{_safe_filename_part("-".join(parts))}.{ext}'

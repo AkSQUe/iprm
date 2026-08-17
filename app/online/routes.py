@@ -151,6 +151,10 @@ def checkout(slug):
         active_nav='online',
         course=course,
         enrollment=enrollment,
+        # Сума до знижки -- щоб підсумок у картці показував, від чого саме
+        # відняли промокод. Рахуємо тут, а не в шаблоні: правило «база =
+        # payment_amount + discount_amount» одне на весь модуль.
+        base_amount=_order_base_amount(enrollment, course),
         **_liqpay_context(enrollment, course),
     )
 

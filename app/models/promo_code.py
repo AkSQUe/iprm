@@ -108,9 +108,15 @@ class PromoCode(TimestampMixin, db.Model):
     # з двох»: код може бути й загальним, не виданим ні за що конкретне --
     # саме такі створює адмін руками. Ці колонки означають «за що видано»,
     # а не власника коду.
+    # use_alter -- з тієї ж причини, що й вище: online_enrollments уже
+    # посилається на promo_codes (застосований код), тож пряме оголошення
+    # замикає цикл, і create_all/drop_all не можуть відсортувати таблиці.
     issued_for_enrollment_id = db.Column(
         db.BigInteger,
-        db.ForeignKey('online_enrollments.id', ondelete='SET NULL'),
+        db.ForeignKey(
+            'online_enrollments.id', ondelete='SET NULL',
+            use_alter=True, name='fk_promo_codes_issued_for_enrollment',
+        ),
         nullable=True, index=True,
     )
 

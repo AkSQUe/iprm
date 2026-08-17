@@ -5256,3 +5256,18 @@ msgstr ""
 #~ msgid "Посилання надійде на пошту після оплати"
 #~ msgstr "The link is emailed to you after payment"
 
+
+msgid "Оформлення <span class=\"apple-gradient-text\">покупки</span>"
+msgstr "Complete your <span class=\"apple-gradient-text\">purchase</span>"
+
+msgid "Залишився один крок: після оплати доступ до курсу відкриється одразу."
+msgstr "One step left: access to the course opens right after payment."
+
+msgid "Вартість курсу"
+msgstr "Course price"
+
+msgid "промокод застосовано"
+msgstr "promo code applied"
+
+msgid "Оплату <span class=\"apple-gradient-text\">отримано</span>"
+msgstr "Payment <span class=\"apple-gradient-text\">received</span>"
