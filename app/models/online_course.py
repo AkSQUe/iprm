@@ -85,6 +85,11 @@ class OnlineCourse(TranslatableMixin, TimestampMixin, db.Model):
     card_media_id = db.Column(
         db.BigInteger, db.ForeignKey('media_files.id', ondelete='SET NULL'), nullable=True,
     )
+    # Посилання на файл Sintegrum (avatar_link), з якого зроблено card_media.
+    # Порожньо при заданому card_media_id означає "картинку поставила людина" --
+    # таку синхронізація не перезаписує ніколи. Порівнюємо саме посилання, а не
+    # avatar_id: коли на тому боці підмінюють файл, змінюється токен у URL.
+    card_avatar_src = db.Column(db.String(1000))
 
     # Ціль редіректу: посилання реєстрації на трек, згенероване в кабінеті
     # Sintegrum. Спільне для всіх і безстрокове, тому назовні не показується

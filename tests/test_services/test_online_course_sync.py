@@ -435,3 +435,168 @@ class TestDescriptionForDisplay:
         course = OnlineCourse.query.filter_by(sintegrum_id=1).one()
 
         assert course.effective_short_description == 'Довгий опис курсу'
+
+
+# --------------------------- обкладинки з фіду ---------------------------
+
+class TestCovers:
+    """`avatar_link` із фіду -> MediaFile у нашому реєстрі.
+
+    Мережа підміняється цілком: перевіряємо рішення (тягнути / не тягнути /
+    не перезаписати руками поставлене), а не HTTP.
+    """
+
+    LINK = 'https://fs1.sintegrum.com/api/v1/files/TOKEN1'
+    LINK2 = 'https://fs1.sintegrum.com/api/v1/files/TOKEN2'
+
+    @pytest.fixture
+    def media_root(self, app):
+        import tempfile
+        prev = app.config.get('MEDIA_FOLDER')
+        app.config['MEDIA_FOLDER'] = tempfile.mkdtemp()
+        yield app.config['MEDIA_FOLDER']
+        app.config['MEDIA_FOLDER'] = prev
+
+    @staticmethod
+    def _jpeg(color=(120, 80, 160)):
+        import io
+        from PIL import Image
+        buf = io.BytesIO()
+        Image.new('RGB', (1280, 762), color).save(buf, 'JPEG')
+        return buf.getvalue()
+
+    def _network(self, monkeypatch, body=None, status=200, ctype='image/jpeg'):
+        """Підмінити requests.get у сервісі обкладинок. Повертає лічильник."""
+        from app.services import online_course_media as media_mod
+
+        calls = []
+        payload = body if body is not None else self._jpeg()
+
+        class _Response:
+            status_code = status
+            headers = {'Content-Type': ctype}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            def iter_content(self, chunk_size):
+                yield payload
+
+        def _get(url, **kwargs):
+            calls.append(url)
+            return _Response()
+
+        monkeypatch.setattr(media_mod.requests, 'get', _get)
+        return calls
+
+    def test_cover_is_ingested_into_media_registry(self, configured, monkeypatch, media_root):
+        calls = self._network(monkeypatch)
+        _feed(monkeypatch, [_course(1, avatar_link=self.LINK)])
+
+        report = sync_courses()
+        course = OnlineCourse.query.filter_by(sintegrum_id=1).one()
+
+        assert report.covers == 1
+        assert calls == [self.LINK]
+        assert course.card_media_id is not None
+        assert course.card_avatar_src == self.LINK
+        # Показуємо своїм WebP-варіантом, а не чужим посиланням.
+        assert course.card_src.startswith('/media/')
+        assert course.card_src.endswith('.webp')
+        assert course.card_media.entity_type == 'online_course'
+        assert course.card_media.usage_type == 'card'
+
+    def test_second_run_does_not_refetch(self, configured, monkeypatch, media_root):
+        self._network(monkeypatch)
+        _feed(monkeypatch, [_course(1, avatar_link=self.LINK)])
+        sync_courses()
+
+        calls = self._network(monkeypatch)
+        report = sync_courses()
+
+        assert calls == []
+        assert report.covers == 0
+
+    def test_changed_link_replaces_the_cover(self, configured, monkeypatch, media_root):
+        from app.models.media_file import MediaFile
+
+        self._network(monkeypatch)
+        _feed(monkeypatch, [_course(1, avatar_link=self.LINK)])
+        sync_courses()
+        first_id = OnlineCourse.query.filter_by(sintegrum_id=1).one().card_media_id
+
+        self._network(monkeypatch)
+        _feed(monkeypatch, [_course(1, avatar_link=self.LINK2)])
+        report = sync_courses()
+        course = OnlineCourse.query.filter_by(sintegrum_id=1).one()
+
+        assert report.covers == 1
+        assert course.card_media_id != first_id
+        assert course.card_avatar_src == self.LINK2
+        # Стару НАШУ копію прибираємо, інакше реєстр заростає сиротами.
+        assert db.session.get(MediaFile, first_id) is None
+
+    def test_manual_image_is_never_overwritten(self, configured, monkeypatch, media_root):
+        """Картинка, поставлена людиною (без мітки), лишається на місці."""
+        self._network(monkeypatch)
+        _feed(monkeypatch, [_course(1)])
+        sync_courses()
+        course = OnlineCourse.query.filter_by(sintegrum_id=1).one()
+
+        import io
+        from PIL import Image
+        from werkzeug.datastructures import FileStorage
+
+        from app.services import media_service
+        buf = io.BytesIO()
+        Image.new('RGB', (800, 480), (10, 200, 90)).save(buf, 'PNG')
+        buf.seek(0)
+        media, err = media_service.create_from_upload(
+            FileStorage(stream=buf, filename='manual.png', content_type='image/png'),
+            entity_type='online_course', entity_id=course.id, usage_type='card',
+        )
+        assert err is None
+        course.card_media_id = media.id
+        course.card_avatar_src = None
+        db.session.commit()
+
+        calls = self._network(monkeypatch)
+        _feed(monkeypatch, [_course(1, avatar_link=self.LINK)])
+        report = sync_courses()
+        course = OnlineCourse.query.filter_by(sintegrum_id=1).one()
+
+        assert calls == []
+        assert report.covers == 0
+        assert course.card_media_id == media.id
+
+    def test_broken_download_does_not_break_the_sync(self, configured, monkeypatch, media_root):
+        self._network(monkeypatch, status=500)
+        _feed(monkeypatch, [_course(1, avatar_link=self.LINK), _course(2)])
+
+        report = sync_courses()
+
+        assert report.ok
+        assert report.created == 2
+        assert report.covers == 0
+        assert OnlineCourse.query.filter_by(sintegrum_id=1).one().card_media_id is None
+
+    def test_non_image_response_is_rejected(self, configured, monkeypatch, media_root):
+        self._network(monkeypatch, body=b'<html>login</html>', ctype='text/html')
+        _feed(monkeypatch, [_course(1, avatar_link=self.LINK)])
+
+        report = sync_courses()
+
+        assert report.covers == 0
+        assert OnlineCourse.query.filter_by(sintegrum_id=1).one().card_media_id is None
+
+    def test_feed_without_avatar_link_is_fine(self, configured, monkeypatch, media_root):
+        calls = self._network(monkeypatch)
+        _feed(monkeypatch, [_course(1)])
+
+        report = sync_courses()
+
+        assert report.ok and report.covers == 0
+        assert calls == []

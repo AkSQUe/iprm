@@ -4,6 +4,23 @@ Server: `https://api.sintegrum.com`
 ## Authorization
 - `bearerAuth`: http / bearer, format `secret` -> header `Authorization: Bearer <secret>`
 
+## Недокументовані поля, на які ми спираємось
+
+Це вичитана копія їхнього swagger, і реальна відповідь ширша за схему. Перевірено
+на живому фіді 17.08.2026 (`GET /external/{company}/course`):
+
+| Поле | Що це |
+|------|-------|
+| `avatar_link` | ПУБЛІЧНЕ посилання на файл обкладинки (`https://fs1.sintegrum.com/api/v1/files/<token>`), JPEG ~1280x762, `Cache-Control: public, max-age=86400`, без авторизації. У схемі є лише `avatar_id`, а ендпоінта файлів немає взагалі -- без цього поля дістати картинку нічим |
+| `background_link` | Те саме для фону; у всіх наших курсів `null` |
+| `type_track`, `alias_src`, `sale_price`, `sale_status`, `currency`, `branch_id`, `requirement`, `responsibility`, `final_text`, `created_at` | Приходять, але ми їх не використовуємо; лежать у `remote_payload` |
+
+Оскільку поля недокументовані, код читає їх захищено: обкладинка тягнеться
+через `app/services/online_course_media.py`, і будь-який збій там лише пише
+в лог, не зриваючи синхронізацію каталогу. Токен у посиланні змінюється при
+заміні файлу -- саме тому ми запам'ятовуємо посилання (`card_avatar_src`), а не
+`avatar_id`.
+
 ## Endpoints
 
 ### Branch

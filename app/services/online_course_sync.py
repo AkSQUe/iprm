@@ -38,6 +38,7 @@ class SyncReport:
     updated: int = 0
     vanished: int = 0
     restored: int = 0
+    covers: int = 0
     error: str = ''
     skipped: list = field(default_factory=list)
 
@@ -53,7 +54,8 @@ class SyncReport:
             return f'Помилка: {self.error}'
         return (
             f'Створено {self.created}, оновлено {self.updated}, '
-            f'зникло {self.vanished}, повернулось {self.restored}'
+            f'зникло {self.vanished}, повернулось {self.restored}, '
+            f'обкладинок {self.covers}'
         )
 
 
@@ -156,8 +158,31 @@ def sync_courses():
         _record_run(settings, report)
         return report
 
+    _sync_covers(report)
+
     logger.info('Sintegrum sync: %s', report.summary)
     return report
+
+
+def _sync_covers(report):
+    """Другий прохід: обкладинки з фіду в наш медіа-реєстр.
+
+    Свідомо ПІСЛЯ коміту дзеркала і окремою транзакцією на курс. Дві причини:
+    відкат запису дзеркала не має лишати на диску сиротливі файли, а збита
+    картинка одного курсу не має ні валити прогін, ні відкочувати сусідів.
+    """
+    from app.services.online_course_media import sync_cover
+
+    courses = OnlineCourse.query.filter(OnlineCourse.is_vanished.is_(False)).all()
+    for course in courses:
+        try:
+            if sync_cover(course):
+                db.session.commit()
+                report.covers += 1
+        except Exception:
+            db.session.rollback()
+            logger.exception('Обкладинка курсу %s: не вдалося зберегти',
+                             course.sintegrum_id)
 
 
 def _upsert(payloads, now, report):

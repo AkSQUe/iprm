@@ -3,8 +3,10 @@
    назва 700/-0.01em, підвал із ціною), але без дат, міст і тренера: у
    онлайн-курсу їх немає, зате завжди є ціна.
 
-   Поверхні беруться з --iprm-card-bg, а не --iprm-white: другий у темній
-   темі лишається білим і дає світлу пляму на темному тлі. */
+   Поверхня картки -- --iprm-white (у темній темі токен сам стає #1c1c22),
+   як у картки заходу. --iprm-card-bg тут не підходить: у світлій темі це
+   #f5f5f7, тобто рівно тло секції apple-section-gray, і картка зливалася
+   з фоном. */
 
 .apple-page .iprm-online-cards {
   max-width: 1200px;
@@ -32,7 +34,7 @@
 }
 
 .apple-page .iprm-online-card {
-  background: var(--iprm-card-bg);
+  background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
   overflow: hidden;
