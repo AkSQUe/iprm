@@ -80,6 +80,13 @@ def _fixture_course(slug, with_gallery=True, with_instance=True):
 
 
 def _run(app, slug, *args):
+    # --with-tariffs типово вимкнено (ціни еталона -- з іншого проведення),
+    # але тести про тарифи саме його й перевіряють, тож вмикаємо всюди:
+    # інакше половина набору перевіряла б пропуск, а не заливку.
+    if '--no-tariffs' in args:
+        args = tuple(a for a in args if a != '--no-tariffs')
+    else:
+        args = (*args, '--with-tariffs')
     result = app.test_cli_runner().invoke(
         cli.seed_plazmogel, ['--slug', slug, *args],
     )
@@ -137,11 +144,14 @@ def test_seed_creates_two_tariffs_with_one_flag(app):
     assert sum(1 for e in tariffs[1].description_entries if e['is_plus']) == 4
 
 
-def test_seed_fills_trainer_highlights_and_draft_reviews(app):
+def test_seed_leaves_trainer_alone_and_drafts_reviews(app):
     course = _fixture_course('seed-pg-extras')
     _run(app, course.slug)
 
-    assert len(course.trainer.highlights) == 3
+    # Цифри тренера команда НЕ чіпає: в еталоні це біографія Анастасії
+    # Серкутан, а курс може вести інша людина. Чужі регалії під чужим
+    # іменем -- не те, що має право робити автоматика.
+    assert not course.trainer.highlights
     reviews = _reviews(course)
     assert len(reviews) == 3
     # Чернетки: в еталоні плитки без автора й без оцінки, публікує людина.

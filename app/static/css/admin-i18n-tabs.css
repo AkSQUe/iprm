@@ -1,11 +1,17 @@
 /* Мовні вкладки в адмін-формах (admin-i18n-tabs.js) */
 
+/* Трек сегментованого контролю. Раніше стояв --apple-gray-light із фолбеком
+   #f5f5f7: автор мав на увазі світлу поверхню, але токен насправді означає
+   рівень ліній (#d2d2d7), тож трек виходив помітно темнішим за задумане.
+   --apple-section-bg сюди не годиться -- у тёмній темі він збігається з тлом
+   картки (#1c1c22) і смуга зникла б; --iprm-border -- єдиний нейтрал нової
+   осі, який видно і на білій картці, і на тёмній. */
 .i18n-tabs {
   display: inline-flex;
   gap: 4px;
   padding: 4px;
   border-radius: var(--iprm-radius-pill, 999px);
-  background: var(--apple-gray-light, #f5f5f7);
+  background: var(--iprm-border);
   margin-bottom: 16px;
 }
 
@@ -17,14 +23,14 @@
   border-radius: var(--iprm-radius-pill, 999px);
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--apple-gray-dark, #6e6e73);
+  color: var(--apple-gray-dark);
   font-family: inherit;
   transition: background-color 0.2s, color 0.2s;
 }
 
 .i18n-tabs__btn--active {
   background: var(--iprm-white);
-  color: var(--apple-black, #1d1d1f);
+  color: var(--apple-black);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
@@ -32,7 +38,7 @@
   display: none;
   margin-top: 6px;
   padding-left: 10px;
-  border-left: 3px solid var(--iprm-nav-active, #0071e3);
+  border-left: 3px solid var(--iprm-nav-active);
 }
 
 .i18n-pane--visible {
@@ -43,28 +49,33 @@
   display: block;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--iprm-nav-active, #0071e3);
+  color: var(--iprm-nav-active);
   margin-bottom: 4px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
-/* Лічильник покриття на вкладці: "РУС 12/20" */
+/* Лічильник покриття на вкладці: "РУС 12/20".
+   Токена --iprm-surface-2 у проекті немає ЖОДНОГО, тож тут завжди малювався
+   фолбек #e8e8ed -- нейтральний сірий, який тёмної теми не знав (1.38).
+   Лічильник має бути видно і на треку, і на активній білій вкладці, тому
+   беремо --iprm-accent-light: він світліший за трек і темніший за білу
+   вкладку, тобто помітний в обох станах і обох темах. */
 .i18n-tabs__count {
   display: inline-block;
   margin-left: 6px;
   padding: 1px 6px;
   border-radius: var(--iprm-radius-pill, 999px);
-  background: var(--iprm-surface-2, #e8e8ed);
+  background: var(--iprm-accent-light);
   font-size: 0.6875rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--apple-gray-dark, #6e6e73);
+  color: var(--apple-gray-dark);
 }
 
 .i18n-tabs__count--done {
-  background: var(--iprm-success-bg, #e3f6e8);
-  color: var(--iprm-success-text, #1d7a3a);
+  background: var(--iprm-success-bg);
+  color: var(--iprm-success);
 }
 
 /* Індикатор стану біля поля -- видно без перемикання вкладки */
@@ -75,26 +86,29 @@
   vertical-align: middle;
 }
 
+/* Чіп стану стоїть просто на картці форми, а не на треку, тож йому вистачає
+   нейтралу нової осі (--iprm-border). Той самий неіснуючий --iprm-surface-2,
+   що й вище: у тёмній темі чіп був світло-сірим з ледь видимим текстом. */
 .i18n-status__chip {
   padding: 1px 6px;
   border-radius: var(--iprm-radius-pill, 999px);
-  background: var(--iprm-surface-2, #e8e8ed);
+  background: var(--iprm-border);
   font-size: 0.6875rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--apple-gray-dark, #6e6e73);
+  color: var(--apple-gray-dark);
   opacity: 0.75;
 }
 
 .i18n-status__chip--partial {
-  background: var(--iprm-warning-bg, #fff4e0);
-  color: var(--iprm-warning-text, #8a5a00);
+  background: var(--iprm-warning-bg);
+  color: var(--iprm-warning-text);
   opacity: 1;
 }
 
 .i18n-status__chip--done {
-  background: var(--iprm-success-bg, #e3f6e8);
-  color: var(--iprm-success-text, #1d7a3a);
+  background: var(--iprm-success-bg);
+  color: var(--iprm-success);
   opacity: 1;
 }
 
@@ -109,5 +123,5 @@
   margin: 0 0 4px;
   font-size: 0.8125rem;
   line-height: 1.4;
-  color: var(--apple-gray-dark, #6e6e73);
+  color: var(--apple-gray-dark);
 }

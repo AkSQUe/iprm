@@ -29,7 +29,7 @@
   display: inline-flex; align-items: center; justify-content: center;
 }
 .regalia-link__move:hover { background: var(--apple-section-bg); }
-.regalia-link__remove:hover { color: var(--iprm-error, #ef4444); border-color: rgba(239, 68, 68, 0.3); }
+.regalia-link__remove:hover { color: var(--iprm-error); border-color: rgba(239, 68, 68, 0.3); }
 .regalia-link__move .material-symbols-rounded,
 .regalia-link__remove .material-symbols-rounded { font-size: 18px; }
 
@@ -39,13 +39,13 @@
   flex: 0 0 auto; position: relative;
   width: 56px; height: 56px;
   border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm, 8px);
-  background: var(--apple-section-bg, #f5f5f7); overflow: hidden;
+  background: var(--apple-section-bg); overflow: hidden;
 }
 .regalia-link__thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .regalia-link__upload {
   position: absolute; inset: 0;
   width: 100%; height: 100%; border: none; cursor: pointer;
-  background: rgba(0, 0, 0, 0.04); color: var(--iprm-accent, #7437c9);
+  background: rgba(0, 0, 0, 0.04); color: var(--iprm-accent);
   display: inline-flex; align-items: center; justify-content: center;
 }
 .regalia-link__thumb-img[src] + .regalia-link__upload {
@@ -60,5 +60,5 @@
   background: rgba(0, 0, 0, 0.6); color: #fff; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.regalia-link__thumb-clear:hover { background: var(--iprm-error, #ef4444); }
+.regalia-link__thumb-clear:hover { background: var(--iprm-error); }
 .regalia-link__thumb-clear .material-symbols-rounded { font-size: 14px; }

@@ -117,7 +117,9 @@ a.wh-stat-card:focus-visible {
   margin-top: 3px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.6875rem;
-  color: var(--apple-gray-light);
+  /* UUID -- текст, який реально читають і копіюють, а --apple-gray-light
+     означає рівень ліній: на білому це 1.51, у тёмній темі 1.86. */
+  color: var(--apple-gray);
 }
 
 .wh-attempts {

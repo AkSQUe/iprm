@@ -259,10 +259,13 @@
   overflow: hidden;
   margin-bottom: 12px;
 }
+/* Кінці градієнта -- золото й бренд палітри, тому беремо токени: інакше в
+   тёмній темі смуга лишалась би темно-фіолетовою на темному тлі. Середня
+   точка #b85a7e -- це перехід між ними, окремого токена для неї немає. */
 .cert-progress__fill {
   height: 100%;
   width: 5%;
-  background: linear-gradient(90deg, #f0a02a, #b85a7e, #7437c9);
+  background: linear-gradient(90deg, var(--apple-orange), #b85a7e, var(--iprm-accent));
   transition: width 0.4s ease;
 }
 .cert-progress__text {
@@ -419,9 +422,14 @@
 }
 
 /* Admin-specific form overrides */
+/* Стрілка селекта на осі --apple-gray (#857c93). Літерал, а не токен: CSS-змінні
+   всередині url() не розгортаються. Було #666 -- 5.27 у світлій темі, але 2.95 у
+   тёмній, тобто стрілка зникала. На більшості сторінок це правило перекриває
+   admin-apple.css (той самий селектор, файл підключено пізніше), тож колір
+   тримаємо однаковим у двох файлах -- щоб порядок підключення нічого не міняв. */
 .admin-form select.form-input {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23857c93' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   padding-right: 36px;
@@ -636,19 +644,25 @@
   margin-top: 4px;
 }
 
+/* Три плитки підсумку імпорту -- це стани, а не бренд, тож ролі лишаються ті
+   самі: створено = успіх, оновлено = інформація, помилки = помилка. Змінилось
+   лише те, що зелений і синій нарешті беруться з токенів замість літералів --
+   а отже самі знають тёмну тему й більше не потребують ручних перекриттів
+   унизу файлу. Синій тут навмисно лишається синім: це нейтральний факт звіту
+   («стільки рядків оновлено»), а не дія, яку користувач може натиснути. */
 .admin-xlsx-summary__item--create {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
+  background: var(--iprm-success-bg);
+  border-color: var(--iprm-success-light);
 }
 
-.admin-xlsx-summary__item--create .admin-xlsx-summary__num { color: #16a34a; }
+.admin-xlsx-summary__item--create .admin-xlsx-summary__num { color: var(--iprm-success); }
 
 .admin-xlsx-summary__item--update {
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  background: var(--iprm-info-bg);
+  border-color: var(--iprm-info-light);
 }
 
-.admin-xlsx-summary__item--update .admin-xlsx-summary__num { color: #2563eb; }
+.admin-xlsx-summary__item--update .admin-xlsx-summary__num { color: var(--iprm-info); }
 
 .admin-xlsx-summary__item--error {
   background: var(--iprm-error-bg);
@@ -658,13 +672,13 @@
 .admin-xlsx-summary__item--error .admin-xlsx-summary__num { color: var(--iprm-error-text); }
 
 .admin-xlsx-note {
-  background: #fffbeb;
-  border-left: 3px solid #f59e0b;
+  background: var(--iprm-warning-bg);
+  border-left: 3px solid var(--iprm-warning);
   padding: 12px 16px;
   margin: 16px 0;
   font-size: 13px;
   line-height: 1.55;
-  color: #92400e;
+  color: var(--iprm-warning-text);
   border-radius: var(--iprm-radius-sm);
 }
 
@@ -1255,21 +1269,11 @@
 
 /* ==========================================================================
    Тёмна тема: кольорові статуси (світлі тла -> напівпрозорі на тёмному)
+
+   Плиток підсумку імпорту й жовтої нотатки тут більше немає: після переходу
+   на токени --iprm-success-* / --iprm-info-* / --iprm-warning-* вони знають
+   тёмну тему самі, а ручні перекриття лишались би другим джерелом правди.
    ========================================================================== */
 [data-theme="dark"] .btn-admin--success:hover {
   background: rgba(52, 199, 89, 0.16);
-}
-[data-theme="dark"] .admin-xlsx-summary__item--create {
-  background: rgba(22, 163, 74, 0.16);
-  border-color: rgba(22, 163, 74, 0.4);
-}
-[data-theme="dark"] .admin-xlsx-summary__item--create .admin-xlsx-summary__num { color: #4ade80; }
-[data-theme="dark"] .admin-xlsx-summary__item--update {
-  background: rgba(37, 99, 235, 0.2);
-  border-color: rgba(37, 99, 235, 0.4);
-}
-[data-theme="dark"] .admin-xlsx-summary__item--update .admin-xlsx-summary__num { color: #7cc4f0; }
-[data-theme="dark"] .admin-xlsx-note {
-  background: rgba(217, 119, 6, 0.16);
-  color: var(--iprm-warning-text);
 }

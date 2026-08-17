@@ -34,7 +34,7 @@
   margin-bottom: 24px;
   padding: 14px 18px;
   background: var(--iprm-warning-bg);
-  border: 1px solid var(--iprm-warning-border, #f5d98a);
+  border: 1px solid var(--iprm-warning-border);
   border-radius: var(--iprm-radius-sm);
   font-size: 0.875rem;
   color: var(--iprm-warning-text);
@@ -85,13 +85,13 @@
    Знімається JS-ом (admin-participant-edit.js), щойно поле заповнене, і
    НЕ показується, коли поле в стані помилки (.is-invalid має пріоритет). */
 @keyframes iprm-await-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 var(--iprm-accent-light, rgba(116, 55, 201, 0.18)); }
-  50%      { box-shadow: 0 0 0 4px var(--iprm-accent-light, rgba(116, 55, 201, 0.18)); }
+  0%, 100% { box-shadow: 0 0 0 0 var(--iprm-accent-light); }
+  50%      { box-shadow: 0 0 0 4px var(--iprm-accent-light); }
 }
 
 .admin-form .form-input.field-await,
 .admin-form select.form-input.field-await {
-  border-color: var(--iprm-accent, #7437c9);
+  border-color: var(--iprm-accent);
   animation: iprm-await-pulse 1.8s ease-in-out infinite;
 }
 
@@ -101,6 +101,6 @@
   .admin-form .form-input.field-await,
   .admin-form select.form-input.field-await {
     animation: none;
-    box-shadow: 0 0 0 3px var(--iprm-accent-light, rgba(116, 55, 201, 0.18));
+    box-shadow: 0 0 0 3px var(--iprm-accent-light);
   }
 }

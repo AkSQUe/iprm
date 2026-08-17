@@ -13,14 +13,18 @@
   align-items: start;
 }
 
+/* Поле-джерело (оригінал, лише для читання). Той самий випадок, що й трек
+   вкладок у admin-i18n-tabs.css: --apple-gray-light -- це рівень ЛІНІЙ, а не
+   поверхня, і фолбек #f5f5f7 видавав справжній намір автора. --iprm-border --
+   єдиний нейтрал осі, що лишається видимим і на білій картці, і на тёмній. */
 .tr-field__source {
-  background: var(--apple-gray-light, #f5f5f7);
-  color: var(--apple-gray-dark, #6e6e73);
+  background: var(--iprm-border);
+  color: var(--apple-gray-dark);
 }
 
 .tr-field__leaf {
   padding: 10px 0;
-  border-top: 1px solid var(--iprm-border, #e5e5ea);
+  border-top: 1px solid var(--iprm-border);
 }
 
 .tr-field__leaf:first-of-type {
@@ -31,7 +35,7 @@
 .tr-field__path {
   float: right;
   font-size: 0.75rem;
-  color: var(--apple-gray-dark, #6e6e73);
+  color: var(--apple-gray-dark);
   font-weight: 400;
 }
 
@@ -47,7 +51,7 @@
   align-items: center;
   gap: 12px;
   padding: 8px 0;
-  border-bottom: 1px solid var(--iprm-border, #e5e5ea);
+  border-bottom: 1px solid var(--iprm-border);
 }
 
 .tr-children__row:last-child {
@@ -56,7 +60,7 @@
 
 .tr-children__coverage {
   font-size: 0.8125rem;
-  color: var(--apple-gray-dark, #6e6e73);
+  color: var(--apple-gray-dark);
   white-space: nowrap;
 }
 

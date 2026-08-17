@@ -236,7 +236,7 @@
   font-weight: 500;
   font-family: var(--iprm-font);
   color: var(--iprm-on-accent);
-  background: var(--iprm-nav-active);
+  background: var(--iprm-btn-bg);
   border: none;
   border-radius: var(--iprm-radius-pill);
   cursor: pointer;
@@ -247,7 +247,7 @@
 }
 
 .btn-auth:hover {
-  background: var(--iprm-accent-hover);
+  background: var(--iprm-btn-bg-hover);
   transform: scale(1.02) translateY(-1px);
   box-shadow: 0 8px 24px rgba(var(--apple-accent-rgb), 0.25);
 }

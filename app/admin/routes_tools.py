@@ -49,7 +49,7 @@ def tool_certificate_generator_template():
     ws.title = 'Сертифікати'
     ws.append(batch.COLUMNS)
     head_font = Font(bold=True, color='FFFFFF')
-    head_fill = PatternFill('solid', fgColor='7055A4')
+    head_fill = PatternFill('solid', fgColor='7437C9')
     for cell in ws[1]:
         cell.font = head_font
         cell.fill = head_fill

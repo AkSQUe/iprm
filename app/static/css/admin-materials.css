@@ -48,13 +48,13 @@
   gap: 6px;
   align-items: center;
   font-size: 0.9rem;
-  color: var(--admin-text-muted, #6e6e73);
+  color: var(--apple-gray);
 }
 .materials-daterange .form-input {
   padding: 6px 10px;
-  border: 1px solid var(--iprm-border, #d2d2d7);
+  border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-sm, 8px);
-  background: var(--apple-section-bg, #f5f5f7);
+  background: var(--apple-section-bg);
 }
 
 .materials-summary {
@@ -65,14 +65,19 @@
   padding: 10px 14px;
   margin-bottom: 16px;
   border-radius: 12px;
-  background: var(--admin-surface-2, #f5f5f7);
+  /* Токена --admin-surface-2 у проекті немає, тож завжди малювався фолбек
+     #f5f5f7 -- у тёмній темі світла смуга зі світлим текстом (контраст 1.00,
+     тобто рядок був нечитабельний). Смуга лежить на тлі сторінки, а воно в
+     тёмній темі збігається з тлом картки, тому потрібен саме --iprm-border:
+     він відрізняється від тла в обох темах. */
+  background: var(--iprm-border);
   font-size: 0.9375rem;
 }
-.materials-summary__hint { color: var(--admin-text-muted, #6e6e73); font-size: 0.85rem; }
+.materials-summary__hint { color: var(--apple-gray); font-size: 0.85rem; }
 
 .materials-cap {
   font-size: 0.72rem;
-  color: var(--admin-text-muted, #6e6e73);
+  color: var(--apple-gray);
   opacity: 0.85;
 }
 
@@ -82,13 +87,13 @@
   gap: 14px;
   align-items: center;
   margin-bottom: 16px;
-  color: var(--admin-text-muted, #6e6e73);
+  color: var(--apple-gray);
   font-size: 0.9rem;
 }
 .materials-history__item::before { content: '·'; margin-right: 12px; }
 
 .materials-qty-input.is-over {
-  border-color: var(--admin-danger, #d70015);
+  border-color: var(--iprm-error);
   box-shadow: 0 0 0 3px rgba(215, 0, 21, 0.12);
 }
 
@@ -104,14 +109,14 @@
   line-height: 1.2;
   color: #b45309;
 }
-.materials-qty-input.is-over ~ .materials-hint { color: var(--admin-danger, #d70015); }
+.materials-qty-input.is-over ~ .materials-hint { color: var(--iprm-error-text); }
 
 /* Колонка "Повертається" у режимі списання/коригування: зелений акцент, коли
    частина зарезервованого повертається на склад MM Medic. */
 .materials-returns { text-align: right; font-variant-numeric: tabular-nums; }
-.materials-returns [data-returns] { color: var(--admin-text-muted, #6e6e73); }
-.materials-returns [data-returns].is-returning { color: var(--admin-success, #1a7f37); font-weight: 600; }
-#materialsReturns { color: var(--admin-success, #1a7f37); }
+.materials-returns [data-returns] { color: var(--apple-gray); }
+.materials-returns [data-returns].is-returning { color: var(--iprm-success); font-weight: 600; }
+#materialsReturns { color: var(--iprm-success); }
 
 .materials-print__head { margin: 8px 0 16px; }
 .materials-print__head h2 { margin: 0 0 4px; }
@@ -126,14 +131,17 @@
   height: 44px;
   object-fit: cover;
   border-radius: 8px;
-  background: var(--admin-surface-2, #f0f0f2);
+  /* Підкладка мініатюри: видно лише поки картинка не завантажилась або її
+     немає, тож потрібен нейтрал, помітний в обох темах (--admin-surface-2 не
+     існує -- фолбек #f0f0f2 світився в тёмній темі). */
+  background: var(--iprm-border);
 }
 
 .materials-thumb--empty {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--admin-text-muted, #98989d);
+  color: var(--apple-gray);
 }
 
 /* Спільний Apple-стиль для всіх інпутів/селекта сторінки матеріалів
@@ -144,9 +152,9 @@
 .materials-qty-input {
   padding: 8px 12px;
   font-size: 0.9375rem;
-  color: var(--apple-black, #1d1d1f);
-  background: var(--apple-section-bg, #f5f5f7);
-  border: 1px solid var(--iprm-border, #d2d2d7);
+  color: var(--apple-black);
+  background: var(--apple-section-bg);
+  border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-sm, 8px);
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
@@ -155,7 +163,7 @@
 .materials-tpl .form-input:hover,
 .materials-mult:hover,
 .materials-qty-input:hover {
-  border-color: var(--iprm-nav-active, #0071e3);
+  border-color: var(--iprm-nav-active);
 }
 
 .materials-search .form-input:focus,
@@ -164,8 +172,8 @@
 .materials-qty-input:focus {
   outline: none;
   background: var(--iprm-white);
-  border-color: var(--iprm-nav-active, #0071e3);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light, rgba(0, 113, 227, 0.15));
+  border-color: var(--iprm-nav-active);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light);
 }
 
 .materials-qty-input { width: 96px; text-align: right; }
@@ -176,7 +184,7 @@
 }
 
 .materials-oos {
-  color: var(--admin-danger, #d70015);
+  color: var(--iprm-error-text);
   font-size: 0.85em;
 }
 
@@ -187,9 +195,14 @@
   font-size: 0.85rem;
   font-weight: 600;
 }
-.materials-status-badge--reserved { background: #e3f0ff; color: #0057d8; }
+/* "Зарезервовано" -- це стан партії, а не дія, тому бейдж лишається синім, але
+   тепер бере --iprm-info замість власного #0057d8: роль та сама, зате колір
+   знає обидві теми. "Скасовано" -- нейтральний стан, тож іде на нову вісь
+   (--iprm-border + --apple-gray-dark). "Списано" й "чернетка" не чіпаємо: це
+   успіх і попередження, вони означають стан, а не бренд. */
+.materials-status-badge--reserved { background: var(--iprm-info-bg); color: var(--iprm-info); }
 .materials-status-badge--consumed { background: #e6f7ea; color: #1a7f37; }
-.materials-status-badge--cancelled { background: #f0f0f2; color: #6e6e73; }
+.materials-status-badge--cancelled { background: var(--iprm-border); color: var(--apple-gray-dark); }
 .materials-status-badge--draft { background: #fff4e5; color: #7a4a00; }
 
 /* ==========================================================================
@@ -201,7 +214,8 @@
   border-color: rgba(255, 216, 168, 0.3);
 }
 [data-theme="dark"] .materials-hint { color: #fbbf24; }
-[data-theme="dark"] .materials-status-badge--reserved { background: rgba(0, 87, 216, 0.22); color: #7cc4f0; }
+/* Бейджі "зарезервовано" і "скасовано" тут більше не перекриваються: після
+   переходу на --iprm-info-* і --iprm-border/--apple-gray-dark вони знають
+   тёмну тему самі, а ручне перекриття лишалось би другим джерелом правди. */
 [data-theme="dark"] .materials-status-badge--consumed { background: rgba(26, 127, 55, 0.28); color: #4ade80; }
-[data-theme="dark"] .materials-status-badge--cancelled { background: rgba(255, 255, 255, 0.08); color: #a1a1a6; }
 [data-theme="dark"] .materials-status-badge--draft { background: rgba(217, 119, 6, 0.18); color: #fbbf24; }
