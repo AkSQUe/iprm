@@ -206,3 +206,67 @@ def test_updated_since_accepts_z_suffix(client):
     )
     assert response.status_code == 200
     assert response.get_json()['total'] == 1
+
+
+# ----------------------------- покупки для партнера -----------------------------
+
+class TestOnlineEnrollmentsEndpoint:
+    """Список покупок: партнеру потрібні люди, а не лише каталог."""
+
+    @staticmethod
+    def _enrollment(course, **kwargs):
+        from app.models.online_enrollment import OnlineEnrollment
+        from app.models.user import User
+
+        user = User.create_with_password(
+            f'pe-{uuid4().hex[:8]}@test.com', 'password123',
+            first_name='Ольга', last_name='Коваль',
+        )
+        db.session.flush()
+        kwargs.setdefault('payment_amount', Decimal('4500'))
+        kwargs.setdefault('payment_status', 'paid')
+        kwargs.setdefault('status', 'active')
+        item = OnlineEnrollment(
+            user_id=user.id, online_course_id=course.id, **kwargs,
+        )
+        db.session.add(item)
+        db.session.commit()
+        return item
+
+    def test_requires_api_key(self, client):
+        assert client.get('/api/v1/online-enrollments').status_code == 401
+
+    def test_returns_enrollment_with_participant(self, client):
+        course = _course()
+        item = self._enrollment(course)
+
+        payload = _get(client, '/api/v1/online-enrollments').get_json()
+        row = next(r for r in payload['items'] if r['id'] == item.id)
+
+        assert row['order_id'] == item.order_id
+        assert row['course_slug'] == course.slug
+        assert row['payment_status'] == 'paid'
+        assert row['payment_amount'] == 4500.0
+        assert row['first_name'] == 'Ольга'
+
+    def test_access_token_and_url_are_never_exposed(self, client):
+        course = _course()
+        item = self._enrollment(course)
+        item.issue_access_token(72)
+        db.session.commit()
+
+        response = _get(client, '/api/v1/online-enrollments')
+        body = response.get_data(as_text=True)
+
+        assert item.access_token not in body
+        assert 'secret-xyz' not in body
+        row = next(r for r in response.get_json()['items'] if r['id'] == item.id)
+        assert 'access_token' not in row
+        assert 'access_url' not in row
+
+    def test_is_not_cached(self, client):
+        """Персональні дані не кешуються ні браузером, ні проксі."""
+        course = _course()
+        self._enrollment(course)
+        response = _get(client, '/api/v1/online-enrollments')
+        assert 'no-store' in response.headers.get('Cache-Control', '')

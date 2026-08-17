@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}{{ course.effective_title }} | {{ _('Онлайн-курси') }} | ІПРМ{% endblock %}
-{% block meta_description %}{{ course.effective_short_description or course.effective_description|striptags|truncate(160) }}{% endblock %}
+{% block meta_description %}{{ course.effective_short_description|truncate(160) }}{% endblock %}
 {% block og_type %}article{% endblock %}
 {% block og_image %}{% if course.hero_src %}{{ course.hero_src }}{% else %}{{ super() }}{% endif %}{% endblock %}
 {% block canonical %}{{ url_for('online.course_detail', slug=course.slug, _external=True) }}{% endblock %}
@@ -20,7 +20,7 @@
   "@context": "https://schema.org",
   "@type": "Course",
   "name": {{ course.effective_title|tojson }},
-  "description": {{ (course.effective_short_description or course.effective_description|striptags|truncate(300))|tojson }},
+  "description": {{ course.effective_short_description|truncate(300)|tojson }},
   "url": "{{ url_for('online.course_detail', slug=course.slug, _external=True) }}",
   "provider": {
     "@type": "Organization",
@@ -30,10 +30,10 @@
   "hasCourseInstance": {
     "@type": "CourseInstance",
     "courseMode": "online"
-  }{% if course.price %},
+  }{% if course.effective_price %},
   "offers": {
     "@type": "Offer",
-    "price": "{{ course.price }}",
+    "price": "{{ course.effective_price }}",
     "priceCurrency": "{{ course.currency }}",
     "category": "Paid",
     "url": "{{ url_for('online.course_detail', slug=course.slug, _external=True) }}"
@@ -73,8 +73,11 @@
 
       <div class="iprm-online-detail__main">
         <h2 id="online-course-about" class="iprm-section__title apple-reveal">{{ _('Про <span class="apple-gradient-text">курс</span>') }}</h2>
-        {% if course.effective_description %}
-        <div class="iprm-online-detail__text apple-reveal">{{ course.effective_description|replace('\n', '<br>')|safe }}</div>
+        {% if course.description_html %}
+        {# Опис може прийти з Sintegrum готовою розміткою. Модель віддає його
+           вже очищеним (bleach): вставляти чужий HTML як є не можна, а
+           показувати теги текстом -- безглуздо. #}
+        <div class="iprm-online-detail__text apple-reveal">{{ course.description_html }}</div>
         {% else %}
         <p class="iprm-online-detail__text apple-reveal">{{ _('Детальний опис курсу готується.') }}</p>
         {% endif %}
@@ -99,13 +102,13 @@
 
       <aside class="iprm-online-detail__aside apple-reveal">
         <div class="iprm-online-buy">
-          {% if course.price %}
-          <p class="iprm-online-buy__price">{{ course.price|int }} <span class="iprm-online-buy__currency">{{ course.currency }}</span></p>
+          {% if course.effective_price %}
+          <p class="iprm-online-buy__price">{{ course.effective_price|int }} <span class="iprm-online-buy__currency">{{ course.currency }}</span></p>
           {% endif %}
           <ul class="iprm-online-buy__list">
             <li>{{ _('Доступ до навчальної платформи') }}</li>
             <li>{{ _('Навчання у зручний час') }}</li>
-            <li>{{ _('Посилання надійде на пошту після оплати') }}</li>
+            <li>{{ _('Доступ відкривається одразу після оплати') }}</li>
           </ul>
           {% if existing_enrollment and existing_enrollment.is_paid %}
           <p class="iprm-online-buy__note">{{ _('Ви вже придбали цей курс.') }}</p>
@@ -134,8 +137,8 @@
             {% if item.effective_short_description %}
             <p class="iprm-online-card__text">{{ item.effective_short_description }}</p>
             {% endif %}
-            {% if item.price %}
-            <p class="iprm-online-card__price">{{ item.price|int }} {{ item.currency }}</p>
+            {% if item.effective_price %}
+            <p class="iprm-online-card__price">{{ item.effective_price|int }} {{ item.currency }}</p>
             {% endif %}
           </div>
         </a>

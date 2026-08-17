@@ -17,10 +17,10 @@
 
       <div class="iprm-online-buy">
         {% if enrollment.access_is_valid %}
-        <p>{{ _('Доступ відкрито. Посилання на навчання надіслано на вашу пошту.') }}</p>
+        <p>{{ _('Доступ до курсу відкрито на навчальній платформі. Лист із входом надіслано на вашу пошту.') }}</p>
         <a href="{{ url_for('online.access', token=enrollment.access_token) }}" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Почати навчання') }}</a>
         <p class="iprm-online-checkout__hint">
-          {{ _('Посилання діє обмежений час. Якщо воно перестане працювати, отримайте нове в особистому кабінеті.') }}
+          {{ _('Заходьте під своїм email. Якщо кнопка перестане працювати, відкрийте курс з особистого кабінету.') }}
         </p>
         {% else %}
         <p class="iprm-online-buy__note">

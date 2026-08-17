@@ -112,7 +112,7 @@ def checkout(slug):
         enrollment = OnlineEnrollment(
             user_id=current_user.id,
             online_course_id=course.id,
-            payment_amount=course.price,
+            payment_amount=course.effective_price,
             payment_status='unpaid',
             status='pending',
         )
@@ -188,7 +188,12 @@ def access(token):
             'online/access_error.html', reason='expired', enrollment=enrollment,
         ), 410
 
-    target = (enrollment.course.access_url or '').strip()
+    from app.services import sintegrum_access
+
+    # Ціль -- готове посилання курсу або навчальний портал компанії: при
+    # автоматичній видачі персонального посилання не існує, учасник заходить
+    # під собою й бачить відкритий курс у своєму списку.
+    target = sintegrum_access.target_url_for(enrollment)
     if not target:
         logger.error('Access target missing for %s', enrollment.order_id)
         return render_template(

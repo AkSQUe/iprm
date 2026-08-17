@@ -216,8 +216,14 @@ class PaymentOps:
         elif new_status == 'refunded':
             enrollment.status = 'cancelled'
             # Повернення коштів забирає доступ: інакше людина лишалася б із
-            # робочим посиланням на курс, за який гроші вже повернуто.
-            enrollment.revoke_access()
+            # відкритим курсом, за який гроші вже повернуто. Знімаємо і свій
+            # токен, і призначення курсу на боці Sintegrum.
+            try:
+                from app.services import sintegrum_access
+                sintegrum_access.revoke(enrollment, commit=False)
+            except Exception:
+                logger.exception('Failed to revoke access for %s', order_id)
+                enrollment.revoke_access()
 
         _log_transaction(
             reg_id=None, enrollment_id=enrollment.id, order_id=order_id,

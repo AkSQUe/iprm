@@ -414,3 +414,68 @@ def participant_opt_out(user_id):
         'changed': bool(changed),
         'reason': reason or None,
     })))
+
+
+@api_v1_bp.route('/online-enrollments', methods=['GET'])
+@csrf.exempt
+@require_api_key
+@limiter.limit('60 per minute')
+def list_online_enrollments():
+    """Покупки онлайн-курсів: хто, що, за скільки і чи оплачено.
+
+    Потрібні партнеру, щоб показувати такі покупки в одному списку
+    реєстрацій зі своїми: без них у нього видно каталог курсів, але не
+    видно жодної людини, яка їх купила.
+
+    Токен доступу і посилання на навчання НЕ віддаються ніколи -- вони не
+    потрібні для обліку, а віддати їх означало б винести ключ від курсу за
+    межі системи, яка ним керує.
+
+    Query: page, per_page (<=200), updated_since (ISO-8601).
+    """
+    from app.models.online_course import OnlineCourse
+    from app.models.online_enrollment import OnlineEnrollment
+
+    query = (
+        db.session.query(OnlineEnrollment, OnlineCourse, User, MedicalProfile)
+        .join(OnlineCourse, OnlineCourse.id == OnlineEnrollment.online_course_id)
+        .outerjoin(User, User.id == OnlineEnrollment.user_id)
+        .outerjoin(MedicalProfile, MedicalProfile.user_id == OnlineEnrollment.user_id)
+    )
+    pagination, error = _listing(query, OnlineEnrollment.updated_at,
+                                 OnlineEnrollment.id)
+    if error:
+        return error
+
+    items = []
+    for enrollment, course, user, profile in pagination.items:
+        items.append({
+            'id': enrollment.id,
+            'order_id': enrollment.order_id,
+            'user_id': enrollment.user_id,
+            'first_name': user.first_name if user else None,
+            'last_name': user.last_name if user else None,
+            'middle_name': profile.middle_name if profile else None,
+            'email': user.email if user else None,
+            # Той самий ключ зіставлення, що й у реєстраціях на заходи.
+            'phone_e164': profile.phone_e164 if profile else None,
+            'course_id': course.id,
+            'course_slug': course.slug,
+            'course_title': course.effective_title,
+            'status': enrollment.status,
+            'payment_status': enrollment.payment_status,
+            'payment_method': enrollment.payment_method,
+            'payment_amount': (
+                float(enrollment.payment_amount)
+                if enrollment.payment_amount is not None else None
+            ),
+            'currency': course.currency,
+            'paid_at': _iso(enrollment.paid_at),
+            # Чи людина вже реально почала навчання -- єдина ознака
+            # «присутності», яка тут взагалі можлива.
+            'access_opened_at': _iso(enrollment.access_last_opened_at),
+            'created_at': _iso(enrollment.created_at),
+            'updated_at': _iso(enrollment.updated_at),
+        })
+
+    return _private(make_response(jsonify(_envelope(pagination, items))))

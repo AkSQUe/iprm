@@ -177,9 +177,28 @@ def test_refunded_order_token_stops_working(client, buyer, course):
     assert ACCESS_URL not in response.get_data(as_text=True)
 
 
-def test_missing_target_does_not_500(client, buyer, course):
+def test_without_link_it_leads_to_the_learning_portal(client, buyer, course):
+    """Персонального посилання Sintegrum не видає: ведемо на портал компанії,
+    де курс уже відкритий саме цьому учаснику."""
+    from app.models.site_settings import SiteSettings
+
     enrollment = _paid_enrollment(buyer, course)
     course.access_url = None
+    SiteSettings.get().sintegrum_company_alias = 'multimededu'
+    db.session.commit()
+
+    response = client.get(f'/online-courses/access/{enrollment.access_token}')
+    assert response.status_code == 302
+    assert response.headers['Location'] == 'https://multimededu.sintegrum.com'
+
+
+def test_missing_target_does_not_500(client, buyer, course):
+    """Вести нікуди -- лише якщо немає ані посилання, ані аліаса компанії."""
+    from app.models.site_settings import SiteSettings
+
+    enrollment = _paid_enrollment(buyer, course)
+    course.access_url = None
+    SiteSettings.get().sintegrum_company_alias = ''
     db.session.commit()
 
     response = client.get(f'/online-courses/access/{enrollment.access_token}')

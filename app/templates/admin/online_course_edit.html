@@ -67,12 +67,8 @@
           <span class="admin-readonly-config__label">Ціна в Sintegrum</span>
           <span class="admin-readonly-config__value">
             {% if course.remote_price is not none %}{{ course.remote_price }}{% else %}не вказана{% endif %}
-            <span class="form-hint">довідково; продаємо за нашою ціною</span>
+            <span class="form-hint">за нею й продаємо, якщо не задано свою</span>
           </span>
-        </div>
-        <div class="admin-readonly-config__row">
-          <span class="admin-readonly-config__label">Опис</span>
-          <span class="admin-readonly-config__value">{{ course.remote_description or 'немає' }}</span>
         </div>
         <div class="admin-readonly-config__row">
           <span class="admin-readonly-config__label">Останній раз бачили</span>
@@ -81,6 +77,17 @@
           </span>
         </div>
       </div>
+
+      {# Опис виведений з таблиці полів окремо і навмисно: він на кілька
+         тисяч символів, і в рядку «підпис -- значення» ламав усю сітку.
+         Розмітка чужого редактора очищена (bleach): показувати теги як
+         текст безглуздо, а вставляти чужий HTML як є -- небезпечно. #}
+      <div class="admin-form__section-hint">Опис у Sintegrum</div>
+      {% if course.remote_description_html %}
+      <div class="admin-remote-html">{{ course.remote_description_html|safe }}</div>
+      {% else %}
+      <p class="admin-form__section-hint">Опис не заданий.</p>
+      {% endif %}
     </div>
 
     <form method="POST" action="{{ url_for('admin.online_course_edit', course_id=course.id) }}" class="admin-form">
@@ -90,20 +97,27 @@
         <h3 class="admin-form__section-title">Продаж</h3>
         <div class="admin-form__grid">
           <div class="form-group">
-            <label for="price">Наша ціна <span class="required">*</span></label>
+            <label for="price">Ціна на сайті</label>
             <input type="text" name="price" id="price" class="form-input"
                    value="{{ course.price if course.price is not none else '' }}"
-                   placeholder="4500" inputmode="decimal">
-            <p class="form-hint">Ціна продажу на цьому сайті. Без неї курс не публікується.</p>
+                   placeholder="{{ course.remote_price if course.remote_price is not none else '4500' }}"
+                   inputmode="decimal">
+            <p class="form-hint">
+              Порожньо — продаємо за ціною Sintegrum
+              ({% if course.remote_price is not none %}{{ course.remote_price }}{% else %}не вказана{% endif %}).
+              Заповніть лише якщо ціна на сайті має відрізнятися.
+            </p>
           </div>
           <div class="form-group">
-            <label for="access_url">Посилання на навчання <span class="required">*</span></label>
+            <label for="access_url">Посилання на навчання (не обов'язково)</label>
             <input type="url" name="access_url" id="access_url" class="form-input"
                    value="{{ course.access_url or '' }}"
                    placeholder="https://multimededu.sintegrum.com/..." autocomplete="off">
             <p class="form-hint">
-              Посилання реєстрації на трек із кабінету Sintegrum. Учасник його не бачить:
-              після оплати він отримує наше тимчасове посилання, яке веде сюди.
+              Типово доступ відкривається автоматично через API: після оплати учасник
+              заводиться студентом у Sintegrum, і йому призначається цей курс.
+              Заповніть поле, лише якщо для цього курсу треба вести на готове
+              посилання замість автоматичної видачі.
             </p>
           </div>
         </div>

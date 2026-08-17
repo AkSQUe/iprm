@@ -227,6 +227,50 @@ class SintegrumClient:
         return self._request('GET', '/student/list', params=params)
 
     # ---- службове ----
+    def find_student_by_email(self, email: str) -> SintegrumResult:
+        """Знайти студента за email. `data` -- словник або None, якщо немає.
+
+        Потрібно перед створенням: та сама людина може купити другий курс, і
+        завести її вдруге означало б два кабінети на один email, у кожному
+        по половині навчання.
+
+        Синтаксис фільтра -- як у документації партнера
+        (`filter[<поле>][<оператор>]=<значення>`). Якщо він не спрацює,
+        падати не можна: краще не знайти й піти шляхом створення, ніж
+        зронити видачу доступу цілком.
+        """
+        result = self.list_students(
+            per_page=5, filter_expr=f'filter[email][eq]={email}',
+        )
+        if not result.ok:
+            return result
+
+        rows = result.data if isinstance(result.data, list) else []
+        needle = (email or '').strip().lower()
+        for row in rows:
+            if isinstance(row, dict) and (row.get('email') or '').lower() == needle:
+                return SintegrumResult(ok=True, http_status=result.http_status,
+                                       data=row)
+        return SintegrumResult(ok=True, http_status=result.http_status, data=None)
+
+    # ---- доступ до курсу ----
+    #
+    # У Sintegrum курс -- це "position": у схемі Course усі поля описані як
+    # "The position id/name". Тому відкриття доступу до курсу виглядає як
+    # призначення позиції користувачу.
+
+    def assign_course(self, student_id: int, course_id: int) -> SintegrumResult:
+        """Відкрити студенту доступ до курсу."""
+        return self._request(
+            'POST', f'/user/{student_id}/positions/{course_id}',
+        )
+
+    def revoke_course(self, student_id: int, course_id: int) -> SintegrumResult:
+        """Забрати доступ (повернення коштів)."""
+        return self._request(
+            'DELETE', f'/user/{student_id}/positions/{course_id}',
+        )
+
     def get_config(self) -> SintegrumResult:
         return self._request('GET', '/config')
 

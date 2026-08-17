@@ -262,17 +262,17 @@ def test_slug_is_transliterated(configured, monkeypatch):
 
 # ----------------------------- готовність до продажу -----------------------------
 
-def test_publication_requires_price_and_access_url(configured, monkeypatch):
-    _feed(monkeypatch, [_course(1)])
+def test_publication_requires_a_price(configured, monkeypatch):
+    """Посилання не потрібне: доступ відкривається через API."""
+    _feed(monkeypatch, [_course(1, price=None)])
     sync_courses()
     course = OnlineCourse.query.filter_by(sintegrum_id=1).one()
 
     assert course.can_be_published is False
     assert 'ціна' in course.missing_for_publication
-    assert 'посилання на навчання' in course.missing_for_publication
 
-    course.price = Decimal('4500')
-    course.access_url = 'https://multimededu.sintegrum.com/register/abc'
+    # Ціна з Sintegrum достатня -- своя не обов'язкова.
+    course.remote_price = Decimal('3500')
     assert course.can_be_published is True
 
     course.is_vanished = True
@@ -284,7 +284,6 @@ def test_purchasable_requires_publication(configured, monkeypatch):
     sync_courses()
     course = OnlineCourse.query.filter_by(sintegrum_id=1).one()
     course.price = Decimal('4500')
-    course.access_url = 'https://x/register'
 
     assert course.is_purchasable is False
     course.is_published = True
@@ -321,3 +320,118 @@ def test_sync_is_never_due_when_disabled(app):
     settings.sintegrum_last_sync_at = None
     db.session.flush()
     assert sintegrum_sync_is_due() is False
+
+
+# ----------------------------- опис із чужої системи -----------------------------
+
+class TestRemoteHtml:
+    """Sintegrum віддає опис розміткою свого редактора.
+
+    Три речі, які тут стережуться: чужий скрипт не потрапляє на сторінку,
+    чужі кольори не ламають темну тему, а теги не показуються як текст.
+    """
+
+    SAMPLE = (
+        '<p id="isPasted">Курс для лікарів.&nbsp;<br>&nbsp;</p>'
+        '<p><span style="color: rgb(0, 0, 0);">Знання основ.</span></p>'
+        '<ul><li><strong>Практика</strong></li></ul>'
+        '<p></p>'
+    )
+
+    def test_script_is_removed(self):
+        from app.services.remote_html import clean_html
+
+        dirty = '<p>Опис</p><script>alert(1)</script>'
+        cleaned = clean_html(dirty)
+
+        assert '<script' not in cleaned
+        assert 'alert(1)' not in cleaned
+        assert 'Опис' in cleaned
+
+    def test_inline_styles_are_stripped(self):
+        """`color: rgb(0, 0, 0)` у темній темі -- чорний текст на темному."""
+        from app.services.remote_html import clean_html
+
+        cleaned = clean_html(self.SAMPLE)
+
+        assert 'style=' not in cleaned
+        assert 'rgb(0, 0, 0)' not in cleaned
+
+    def test_formatting_survives(self):
+        from app.services.remote_html import clean_html
+
+        cleaned = clean_html(self.SAMPLE)
+
+        assert '<ul>' in cleaned and '<li>' in cleaned
+        assert '<strong>' in cleaned
+        assert 'Курс для лікарів' in cleaned
+
+    def test_empty_paragraphs_are_dropped(self):
+        from app.services.remote_html import clean_html
+
+        cleaned = clean_html(self.SAMPLE)
+        assert '<p></p>' not in cleaned
+
+    def test_to_text_strips_everything(self):
+        from app.services.remote_html import to_text
+
+        text = to_text(self.SAMPLE)
+
+        assert '<' not in text
+        assert 'Курс для лікарів' in text
+        # Нерозривні пробіли чужого редактора не лишають рваних дір.
+        assert '\xa0' not in text
+        assert '  ' not in text
+
+    def test_empty_input_gives_empty_string(self):
+        from app.services.remote_html import clean_html, to_text
+
+        assert clean_html(None) == ''
+        assert to_text(None) == ''
+
+
+class TestDescriptionForDisplay:
+    def test_remote_html_is_cleaned(self, configured, monkeypatch):
+        _feed(monkeypatch, [_course(
+            1, description='<p>Опис</p><script>alert(1)</script>')])
+        sync_courses()
+        course = OnlineCourse.query.filter_by(sintegrum_id=1).one()
+
+        assert '<script' not in course.remote_description_html
+        assert '<p>Опис</p>' in course.remote_description_html
+
+    def test_our_plain_text_becomes_paragraph_breaks(self, configured, monkeypatch):
+        _feed(monkeypatch, [_course(1)])
+        sync_courses()
+        course = OnlineCourse.query.filter_by(sintegrum_id=1).one()
+        course.description = 'Рядок один\nРядок два'
+
+        assert str(course.description_html) == 'Рядок один<br>Рядок два'
+
+    def test_script_in_our_field_never_goes_live(self, configured, monkeypatch):
+        """Наш опис теж чиститься: адмінка не є приводом довіряти розмітці."""
+        _feed(monkeypatch, [_course(1)])
+        sync_courses()
+        course = OnlineCourse.query.filter_by(sintegrum_id=1).one()
+        course.description = '<p>Опис</p><script>alert(1)</script>'
+
+        rendered = str(course.description_html)
+        assert '<script' not in rendered
+        assert 'alert(1)' not in rendered
+        assert '<p>Опис</p>' in rendered
+
+    def test_plain_text_with_angle_brackets_is_escaped(self, configured, monkeypatch):
+        """Текст без розмітки лишається текстом, а не стає тегами."""
+        _feed(monkeypatch, [_course(1)])
+        sync_courses()
+        course = OnlineCourse.query.filter_by(sintegrum_id=1).one()
+        course.description = 'Ціна < 5000 грн'
+
+        assert '&lt; 5000' in str(course.description_html)
+
+    def test_short_description_falls_back_to_remote_text(self, configured, monkeypatch):
+        _feed(monkeypatch, [_course(1, description='<p>Довгий опис курсу</p>')])
+        sync_courses()
+        course = OnlineCourse.query.filter_by(sintegrum_id=1).one()
+
+        assert course.effective_short_description == 'Довгий опис курсу'

@@ -100,7 +100,9 @@
             {% endif %}
           </td>
           <td>
-            {% if c.price %}<strong>{{ c.price }} {{ c.currency }}</strong>
+            {% if c.effective_price %}
+              <strong>{{ c.effective_price }} {{ c.currency }}</strong>
+              {% if c.price_is_overridden %}<br><small class="admin-text-muted">своя ціна</small>{% endif %}
             {% else %}<span class="admin-text-muted">не задана</span>{% endif %}
           </td>
           <td>
@@ -121,13 +123,21 @@
           <td>
             <div class="admin-actions-row">
               <a href="{{ url_for('admin.online_course_edit', course_id=c.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
+              {% if c.is_published or c.can_be_published %}
               <form method="POST" action="{{ url_for('admin.online_course_toggle_publish', course_id=c.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm"
-                        {% if not c.is_published and not c.can_be_published %}disabled title="Спочатку задайте ціну й посилання на навчання"{% endif %}>
+                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">
                   {{ 'Приховати' if c.is_published else 'Опублікувати' }}
                 </button>
               </form>
+              {% else %}
+              {# Мертва кнопка «Опублікувати» -- погана підказка: вона виглядає
+                 натискною і мовчить про причину. Ведемо туди, де курс можна
+                 доукомплектувати, і прямо кажемо, чого бракує. #}
+              <a href="{{ url_for('admin.online_course_edit', course_id=c.id) }}"
+                 class="btn-admin btn-admin--primary btn-admin--sm"
+                 title="Бракує: {{ c.missing_for_publication|join(', ') }}">Заповнити дані</a>
+              {% endif %}
             </div>
           </td>
         </tr>

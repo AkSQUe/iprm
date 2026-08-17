@@ -374,3 +374,157 @@ def test_retry_job_recovers_stuck_order(app, enrollment, monkeypatch):
     assert enrollment.provisioned_at is not None
     assert enrollment.access_token
     assert hasattr(scheduler_service, 'retry_online_access_provisioning')
+
+
+# ----------------------------- автоматична видача через API -----------------------------
+
+class TestStudentApiProvider:
+    """Доступ відкривається так само, як робили руками: студент + курс.
+
+    Живих запитів у Sintegrum тут немає й бути не може -- клієнт підмінено.
+    Ці тести і є перевіркою послідовності викликів замість неї.
+    """
+
+    @staticmethod
+    def _client(**overrides):
+        from app.services.sintegrum_client import SintegrumResult
+
+        calls = []
+
+        class _Client:
+            def find_student_by_email(self, email):
+                calls.append(('find', email))
+                return overrides.get(
+                    'find', SintegrumResult(ok=True, data=None))
+
+            def create_student(self, **kwargs):
+                calls.append(('create', kwargs.get('email')))
+                return overrides.get(
+                    'create', SintegrumResult(ok=True, data={'id': 777}))
+
+            def assign_course(self, student_id, course_id):
+                calls.append(('assign', student_id, course_id))
+                return overrides.get('assign', SintegrumResult(ok=True, data={}))
+
+            def revoke_course(self, student_id, course_id):
+                calls.append(('revoke', student_id, course_id))
+                return SintegrumResult(ok=True, data={})
+
+        return _Client(), calls
+
+    def _provider(self, app, **overrides):
+        from app.models.site_settings import SiteSettings
+
+        settings = SiteSettings.get()
+        settings.sintegrum_company_alias = 'multimededu'
+        db.session.flush()
+
+        client, calls = self._client(**overrides)
+        return sintegrum_access.StudentApiProvider(
+            client=client, settings=settings), calls
+
+    def test_new_student_is_created_then_course_assigned(self, app, enrollment):
+        enrollment.course.access_url = None
+        db.session.flush()
+        provider, calls = self._provider(app)
+
+        result = provider.provision(enrollment)
+
+        assert [c[0] for c in calls] == ['find', 'create', 'assign']
+        assert calls[-1] == ('assign', 777, enrollment.course.sintegrum_id)
+        assert result.student_id == 777
+        assert result.target_url == 'https://multimededu.sintegrum.com'
+
+    def test_existing_student_is_reused(self, app, enrollment):
+        """Друга покупка не має заводити другий кабінет на той самий email."""
+        from app.services.sintegrum_client import SintegrumResult
+
+        provider, calls = self._provider(
+            app, find=SintegrumResult(ok=True, data={'id': 42}))
+
+        result = provider.provision(enrollment)
+
+        assert 'create' not in [c[0] for c in calls]
+        assert result.student_id == 42
+
+    def test_known_student_id_skips_the_lookup(self, app, enrollment):
+        enrollment.sintegrum_student_id = 99
+        db.session.flush()
+        provider, calls = self._provider(app)
+
+        provider.provision(enrollment)
+
+        assert [c[0] for c in calls] == ['assign']
+
+    def test_failed_assignment_raises(self, app, enrollment):
+        from app.services.sintegrum_client import SintegrumResult
+
+        provider, _calls = self._provider(
+            app, assign=SintegrumResult(ok=False, error='Sintegrum 403'))
+
+        with pytest.raises(sintegrum_access.AccessProvisionError):
+            provider.provision(enrollment)
+
+    def test_failed_creation_raises(self, app, enrollment):
+        from app.services.sintegrum_client import SintegrumResult
+
+        provider, _calls = self._provider(
+            app, create=SintegrumResult(ok=False, error='Sintegrum 422'))
+
+        with pytest.raises(sintegrum_access.AccessProvisionError):
+            provider.provision(enrollment)
+
+    def test_provider_choice_prefers_explicit_link(self, app, course):
+        """Вписане адміном посилання перемагає: він зробив це свідомо."""
+        course.access_url = 'https://multimededu.sintegrum.com/register/abc'
+        db.session.flush()
+        assert isinstance(sintegrum_access.get_provider(course),
+                          sintegrum_access.RegistrationLinkProvider)
+
+        course.access_url = None
+        db.session.flush()
+        assert isinstance(sintegrum_access.get_provider(course),
+                          sintegrum_access.StudentApiProvider)
+
+    def test_student_id_is_remembered_after_provisioning(self, app, enrollment,
+                                                         monkeypatch):
+        enrollment.course.access_url = None
+        enrollment.payment_status = 'paid'
+        db.session.flush()
+        provider, _calls = self._provider(app)
+        monkeypatch.setattr(sintegrum_access, 'get_provider',
+                            lambda *a, **k: provider)
+
+        sintegrum_access.provision(enrollment)
+
+        assert enrollment.sintegrum_student_id == 777
+
+
+class TestEffectivePrice:
+    """Ціна береться з Sintegrum; наша -- лише перевизначення."""
+
+    def test_remote_price_is_used_by_default(self, course):
+        course.price = None
+        course.remote_price = Decimal('3500')
+        assert course.effective_price == Decimal('3500')
+        assert course.price_is_overridden is False
+
+    def test_our_price_wins_when_set(self, course):
+        course.price = Decimal('6000')
+        course.remote_price = Decimal('3500')
+        assert course.effective_price == Decimal('6000')
+        assert course.price_is_overridden is True
+
+    def test_publication_needs_only_a_price(self, course):
+        """Посилання більше не потрібне: доступ відкривається через API."""
+        course.price = None
+        course.access_url = None
+        course.remote_price = Decimal('3500')
+
+        assert course.missing_for_publication == []
+        assert course.can_be_published is True
+
+    def test_course_without_any_price_is_not_publishable(self, course):
+        course.price = None
+        course.remote_price = None
+        assert 'ціна' in course.missing_for_publication

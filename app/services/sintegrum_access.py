@@ -33,12 +33,11 @@ class AccessProvisionError(Exception):
 
 
 class RegistrationLinkProvider:
-    """Чинна реалізація (рішення Q1): спільне посилання реєстрації.
+    """Запасний шлях: готове посилання, збережене адміном у картці курсу.
 
-    До API Sintegrum не звертається взагалі -- отже видача доступу не
-    залежить від його доступності, і сценарій «оплата пройшла, а доступ
-    не видався через мережу» неможливий за побудовою. Учень реєструється
-    в Sintegrum самостійно, пройшовши за посиланням.
+    До API Sintegrum не звертається взагалі. Лишається для курсів, де
+    посилання справді існує (наприклад, відкрита реєстрація на трек), і як
+    аварійний обхід, якщо API партнера недоступне надовго.
     """
 
     def provision(self, enrollment) -> AccessResult:
@@ -51,9 +50,128 @@ class RegistrationLinkProvider:
         return AccessResult(target_url=target)
 
 
-def get_provider():
-    """Фабрика провайдера. Точка заміни на персональні посилання."""
-    return RegistrationLinkProvider()
+class StudentApiProvider:
+    """Основна реалізація: заводимо студента й відкриваємо йому курс.
+
+    Повторює руками перевірений порядок дій із кабінету Sintegrum: людина
+    заводиться як студент, після чого їй відкривається доступ до
+    конкретного курсу. Обидва кроки є в API:
+
+        POST /external/{company}/student                       -- завести
+        POST /external/{company}/user/{id}/positions/{course}  -- відкрити
+
+    (Курс у Sintegrum -- це "position"; у схемі Course поля так і описані.)
+
+    Пошук ПЕРЕД створенням обов'язковий: та сама людина купує другий курс,
+    і завести її вдруге означало б два кабінети на один email, у кожному по
+    половині навчання.
+
+    Ціль редіректу -- навчальний портал компанії. Персонального посилання
+    Sintegrum не видає: учасник заходить під собою й бачить курс у своєму
+    списку.
+    """
+
+    def __init__(self, client=None, settings=None):
+        self._client = client
+        self._settings = settings
+
+    @property
+    def settings(self):
+        if self._settings is None:
+            self._settings = SiteSettings.get()
+        return self._settings
+
+    @property
+    def client(self):
+        if self._client is None:
+            from app.services.sintegrum_client import (
+                SintegrumClient, SintegrumConfigError,
+            )
+            try:
+                self._client = SintegrumClient.from_settings(self.settings)
+            except SintegrumConfigError as exc:
+                raise AccessProvisionError(str(exc)) from exc
+        return self._client
+
+    def provision(self, enrollment) -> AccessResult:
+        course = enrollment.course
+        remote_course_id = getattr(course, 'sintegrum_id', None)
+        if not remote_course_id:
+            raise AccessProvisionError('У курсу немає ідентифікатора Sintegrum')
+
+        student_id = enrollment.sintegrum_student_id or self._resolve_student(
+            enrollment)
+
+        assigned = self.client.assign_course(student_id, remote_course_id)
+        if not assigned.ok:
+            raise AccessProvisionError(
+                f'Не вдалося відкрити доступ до курсу: {assigned.error}')
+
+        return AccessResult(target_url=portal_url(self.settings),
+                            student_id=student_id)
+
+    def _resolve_student(self, enrollment):
+        """Знайти студента за email або завести нового. Повертає id."""
+        user = enrollment.user
+        email = (getattr(user, 'email', '') or '').strip()
+        if not email:
+            raise AccessProvisionError('У покупця немає email')
+
+        found = self.client.find_student_by_email(email)
+        if found.ok and isinstance(found.data, dict) and found.data.get('id'):
+            return found.data['id']
+
+        created = self.client.create_student(
+            email=email,
+            first_name=getattr(user, 'first_name', '') or '',
+            last_name=getattr(user, 'last_name', '') or '',
+            language=getattr(user, 'preferred_language', None) or 'uk',
+        )
+        if not created.ok:
+            raise AccessProvisionError(
+                f'Не вдалося завести студента: {created.error}')
+
+        student_id = (created.data or {}).get('id') if isinstance(
+            created.data, dict) else None
+        if not student_id:
+            raise AccessProvisionError(
+                'Sintegrum не повернув ідентифікатор створеного студента')
+        return student_id
+
+
+def portal_url(settings=None):
+    """Адреса навчального порталу компанії у Sintegrum.
+
+    Виводиться з аліаса (`<аліас>.sintegrum.com`), а не тримається окремим
+    полем: аліас і так обов'язковий для роботи API, тож друге поле лише
+    давало б їм змогу розійтися.
+    """
+    settings = settings or SiteSettings.get()
+    alias = (settings.sintegrum_company_alias or '').strip()
+    return f'https://{alias}.sintegrum.com' if alias else ''
+
+
+def target_url_for(enrollment):
+    """Куди веде видане посилання.
+
+    Готове посилання курсу, якщо адмін його вписав; інакше -- навчальний
+    портал компанії, де учасник уже має відкритий курс. Порожній рядок
+    означає, що вести нікуди: аліас не налаштований.
+    """
+    course_url = (getattr(enrollment.course, 'access_url', '') or '').strip()
+    return course_url or portal_url()
+
+
+def get_provider(course=None, settings=None):
+    """Яким шляхом відкривати доступ.
+
+    Готове посилання в картці курсу перемагає: якщо адмін його вписав, він
+    зробив це свідомо і саме воно має спрацювати. У решті випадків --
+    автоматична видача через API.
+    """
+    if course is not None and (getattr(course, 'access_url', '') or '').strip():
+        return RegistrationLinkProvider()
+    return StudentApiProvider(settings=settings)
 
 
 def ttl_hours_for(course, settings=None):
@@ -75,7 +193,7 @@ def provision(enrollment, commit=True):
         raise AccessProvisionError('Замовлення не оплачене')
 
     try:
-        result = get_provider().provision(enrollment)
+        result = get_provider(enrollment.course).provision(enrollment)
     except AccessProvisionError as exc:
         enrollment.provision_error = str(exc)[:500]
         if commit:
@@ -139,6 +257,36 @@ def provision_and_notify(enrollment, commit=True):
     token = provision(enrollment, commit=commit)
     notify(enrollment)
     return token
+
+
+def revoke(enrollment, commit=True):
+    """Забрати доступ до курсу (повернення коштів).
+
+    Best-effort щодо Sintegrum: якщо API недоступне, ми все одно знімаємо
+    свій токен. Лишити людині робоче посилання після повернення коштів --
+    гірше, ніж розійтися з партнером на один курс у списку, і це видно в
+    логах.
+    """
+    enrollment.revoke_access()
+
+    student_id = enrollment.sintegrum_student_id
+    remote_course_id = getattr(enrollment.course, 'sintegrum_id', None)
+    if student_id and remote_course_id:
+        try:
+            from app.services.sintegrum_client import (
+                SintegrumClient, SintegrumConfigError,
+            )
+            client = SintegrumClient.from_settings(SiteSettings.get())
+            result = client.revoke_course(student_id, remote_course_id)
+            if not result.ok:
+                logger.warning('Failed to revoke course in Sintegrum for %s: %s',
+                               enrollment.order_id, result.error)
+        except (SintegrumConfigError, Exception):
+            logger.exception('Could not revoke Sintegrum access for %s',
+                             enrollment.order_id)
+
+    if commit:
+        db.session.commit()
 
 
 def reissue(enrollment, commit=True):

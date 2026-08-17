@@ -119,7 +119,43 @@ class OnlineCourse(TranslatableMixin, TimestampMixin, db.Model):
 
     @property
     def effective_short_description(self):
-        return self.t('short_description') or ''
+        return self.t('short_description') or self.remote_description_text[:300]
+
+    # ---- опис для показу ----
+    #
+    # Опис приходить із Sintegrum готовою розміткою його редактора, а наш
+    # власний адмін пише звичайним текстом. Обидва йдуть в одне місце на
+    # сторінці, тож різницю треба зняти тут, а не в шаблоні.
+
+    @property
+    def remote_description_html(self):
+        """Опис Sintegrum, очищений до безпечного HTML."""
+        from app.services.remote_html import clean_html
+        return clean_html(self.remote_description)
+
+    @property
+    def remote_description_text(self):
+        """Опис Sintegrum звичайним текстом -- для прев'ю й мета-описів."""
+        from app.services.remote_html import to_text
+        return to_text(self.remote_description)
+
+    @property
+    def description_html(self):
+        """Готовий до вставки опис: наш текст або очищений опис Sintegrum.
+
+        Наш опис -- звичайний текст, тож переноси рядків перетворюємо на
+        <br>; чужий -- уже розмітка, і другий раз її ламати не можна.
+        """
+        from markupsafe import Markup, escape
+
+        from app.services.remote_html import clean_html, looks_like_html
+
+        own = self.t('description')
+        if own:
+            if looks_like_html(own):
+                return Markup(clean_html(own))
+            return Markup('<br>'.join(escape(own).splitlines()))
+        return Markup(self.remote_description_html)
 
     @property
     def hero_src(self):
@@ -140,16 +176,33 @@ class OnlineCourse(TranslatableMixin, TimestampMixin, db.Model):
     # ---- готовність до продажу ----
 
     @property
+    def effective_price(self):
+        """Ціна продажу: наша, якщо задана, інакше -- ціна Sintegrum.
+
+        Типово продаємо за ціною партнера; поле `price` лишається саме
+        перевизначенням для випадків, коли ціна на сайті має відрізнятися.
+        """
+        if self.price is not None and self.price > 0:
+            return self.price
+        return self.remote_price
+
+    @property
+    def price_is_overridden(self):
+        return self.price is not None and self.price > 0
+
+    @property
     def missing_for_publication(self):
         """Чого бракує, щоб курс можна було опублікувати.
 
         Повертає список причин, а не просто False: адмін має бачити, що саме
         доробити, а не гадати, чому перемикач не спрацював.
+
+        Посилання на навчання тут НЕ потрібне: доступ відкривається через
+        API (студент + курс), а `access_url` лишився запасним шляхом.
         """
         missing = []
-        if not (self.access_url or '').strip():
-            missing.append('посилання на навчання')
-        if self.price is None or self.price <= 0:
+        price = self.effective_price
+        if price is None or price <= 0:
             missing.append('ціна')
         if self.is_vanished:
             missing.append('курс зник із Sintegrum')

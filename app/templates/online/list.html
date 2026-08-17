@@ -58,8 +58,8 @@
               {% endif %}
               <span class="iprm-tag iprm-tag--accent">{{ _('Онлайн') }}</span>
             </div>
-            {% if course.price %}
-            <p class="iprm-online-card__price">{{ course.price|int }} {{ course.currency }}</p>
+            {% if course.effective_price %}
+            <p class="iprm-online-card__price">{{ course.effective_price|int }} {{ course.currency }}</p>
             {% endif %}
           </div>
         </a>

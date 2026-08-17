@@ -325,7 +325,8 @@ def serialize_online_course(course, lang=None) -> dict:
         'title': course.t('title', lang) or course.remote_name,
         'short_description': course.t('short_description', lang) or None,
         'description': course.t('description', lang) or course.remote_description,
-        'price': float(course.price) if course.price is not None else None,
+        'price': (float(course.effective_price)
+                  if course.effective_price is not None else None),
         'currency': course.currency,
         'duration_hours': course.duration_hours,
         'cpd_points': course.cpd_points,
