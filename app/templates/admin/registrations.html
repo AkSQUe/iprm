@@ -6,10 +6,12 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-quiz.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import filter_bar %}
 {% from 'admin/partials/_registration_actions.html' import registration_actions %}
+{% import 'admin/partials/_registration_progress.html' as progress %}
 
 {% block content %}
 {# Куди повернутись після дії в рядку: поточний URL разом із фільтрами і
@@ -144,6 +146,7 @@
           <th>Статус</th>
           <th>Оплата</th>
           <th>Сума</th>
+          {{ progress.headers() }}
           <th>Дата</th>
           <th>Дії</th>
         </tr>
@@ -220,6 +223,7 @@
               </div>
             {% endif %}
           </td>
+          {{ progress.cells(reg, quiz_states, quiz_statuses) }}
           <td>{{ reg.created_at.strftime('%d.%m.%Y') }}</td>
           <td>
             {{ registration_actions(reg, back_url) }}

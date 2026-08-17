@@ -6,10 +6,13 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{# Колонки прогресу (_registration_progress.html) стилізує admin-quiz.css. #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-quiz.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import filter_bar %}
 {% from 'admin/partials/_registration_actions.html' import registration_actions %}
+{% import 'admin/partials/_registration_progress.html' as progress %}
 
 {% block content %}
 {# Куди повернутись після дії в рядку: поточний URL із фільтрами. #}
@@ -111,9 +114,7 @@
           <th>Статус</th>
           <th>Оплата</th>
           <th>Сума</th>
-          <th title="Анкета МОЗ №725: без неї не відкривається тестування і не видається сертифікат">Анкета</th>
-          <th title="Стан підсумкового тестування учасника">Тестування</th>
-          <th>Сертифікат</th>
+          {{ progress.headers() }}
           <th>Дата</th>
           <th>Дії</th>
         </tr>
@@ -148,79 +149,7 @@
               </div>
             {% endif %}
           </td>
-          {# ===== Анкета МОЗ №725 ===== #}
-          <td>
-            {% set _profile = reg.user.medical_profile %}
-            {% if _profile and _profile.is_complete %}
-            <span class="badge badge--active">Заповнена</span>
-            {% else %}
-            <span class="badge badge--danger"
-                  title="{% if _profile and _profile.missing_fields %}Не заповнено: {{ _profile.missing_fields | join(', ') }}. {% endif %}Без анкети не відкривається тестування і не буде сертифіката з балами БПР. Нагадайте учаснику про анкету в кабінеті.">
-              Не заповнена
-            </span>
-            {% endif %}
-          </td>
-
-          {# ===== Тестування =====
-             Статус -- посилання на детальний розбір: «багато помилок» саме по
-             собі нічого не пояснює, треба бачити, у чому саме. #}
-          <td>
-            {% set _state = quiz_states.get(reg.id) %}
-            {% set _finished = reg.quiz_attempts | selectattr('is_finished') | list %}
-            <a class="admin-quiz-cell"
-               href="{{ url_for('admin.registration_quiz_detail', reg_id=reg.id) }}"
-               title="Детальний розбір: кожна спроба, кожна відповідь">
-            {% if _state is none or _state.status == quiz_statuses.NO_QUIZ %}
-            <span class="admin-text-muted" title="Для цього заходу тест не налаштований">—</span>
-            {% elif _state.status == quiz_statuses.CANCELLED %}
-            <span class="admin-text-muted" title="Реєстрацію скасовано">—</span>
-            {% elif reg.quiz_passed_at %}
-            <span class="badge badge--active">Склав</span>
-            {% elif _state.status == quiz_statuses.ATTEMPTS_EXHAUSTED %}
-            <span class="badge badge--danger" title="Додаткову спробу можна видати на сторінці результатів тестування">
-              Спроби вичерпано
-            </span>
-            {% elif _state.status == quiz_statuses.IN_PROGRESS %}
-            <span class="badge badge--published">Проходить</span>
-            {% elif _state.status == quiz_statuses.PROFILE_INCOMPLETE %}
-            <span class="badge badge--draft" title="Тест відкриється, коли учасник заповнить анкету">Чекає анкету</span>
-            {% elif _state.status == quiz_statuses.NOT_PAID %}
-            <span class="badge badge--draft" title="Тестування відкривається після оплати участі">Чекає оплату</span>
-            {% elif _state.status == quiz_statuses.NOT_STARTED %}
-            <span class="badge badge--draft" title="Тест відкриється після початку заходу">Захід не почався</span>
-            {% elif _state.status == quiz_statuses.BPR_NOT_CONFIGURED %}
-            <span class="badge badge--danger" title="У курсу не заповнено номер заходу БПР або бали -- тест не відкриється нікому">
-              Немає даних БПР
-            </span>
-            {% elif _state.status == quiz_statuses.QUIZ_NOT_READY %}
-            <span class="badge badge--danger" title="Банк питань недостатній або є зіпсовані питання">Тест не готовий</span>
-            {% else %}
-            <span class="badge badge--draft">Не починав</span>
-            {% endif %}
-            </a>
-            {% if _finished %}
-            {% set _best = _finished | map(attribute='score') | reject('none') | list %}
-            <div class="admin-text-muted" title="Найкращий результат і кількість завершених спроб">
-              {% if _best %}{{ _best | max }}/{{ _finished[0].total }}{% endif %}
-              &middot; спроб: {{ _finished | length }}{% if reg.quiz_extra_attempts %}+{{ reg.quiz_extra_attempts }}{% endif %}
-            </div>
-            {% endif %}
-          </td>
-
-          {# ===== Сертифікат ===== #}
-          <td>
-            {% if reg.certificate and not reg.certificate.revoked %}
-            <a href="{{ url_for('admin.registration_certificate_download', reg_id=reg.id) }}"
-               title="Завантажити PDF">{{ reg.certificate.number }}</a>
-            <div class="admin-text-muted">
-              {{ reg.certificate.issued_at.strftime('%d.%m.%Y') }}{% if reg.certificate.cpd_points %}, {{ reg.certificate.cpd_points }} балів{% endif %}
-            </div>
-            {% elif reg.certificate and reg.certificate.revoked %}
-            <span class="badge badge--danger" title="Номер {{ reg.certificate.number }}">Відкликано</span>
-            {% else %}
-            <span class="badge badge--draft">Не видано</span>
-            {% endif %}
-          </td>
+          {{ progress.cells(reg, quiz_states, quiz_statuses) }}
 
           <td>{{ reg.created_at.strftime('%d.%m.%Y') }}</td>
           <td>

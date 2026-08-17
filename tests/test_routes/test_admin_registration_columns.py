@@ -476,3 +476,107 @@ def test_deleted_question_is_explained_not_blank(client, admin, no_pdf):
     html = _detail(client, reg)
     assert 'питання видалено з банку' in html
     assert 'не карається' in html
+
+
+# ---- спільний партіал: обидві таблиці --------------------------------------
+#
+# Колонки живуть у макросі `_registration_progress.html`, бо потрібні і на
+# сторінці одного заходу, і в загальному списку. Дві копії badge-ів (а станів
+# дев'ять) розійшлися б на першій правці, тож перевіряємо обидві сторінки.
+
+def _all_html(client):
+    """Загальний список.
+
+    `scope=all` обов'язково: за замовчуванням сторінка показує лише МАЙБУТНІ
+    заходи (щоб не вивалювати тисячі реєстрацій на минулі), а тестування
+    стосується саме проведених -- інакше таблиця порожня і колонок не видно.
+    """
+    resp = client.get('/admin/registrations?scope=all&per_page=100')
+    assert resp.status_code == 200
+    return resp.get_data(as_text=True)
+
+
+def test_columns_present_in_all_registrations_list(client, admin):
+    inst = _instance()
+    _registration(inst)
+    _login(client, admin)
+    html = _all_html(client)
+    for header in ('>Анкета<', '>Тестування<', '>Сертифікат<'):
+        assert header in html, header
+
+
+def test_all_list_shows_profile_state(client, admin):
+    inst = _instance()
+    _registration(inst, profile=False)
+    _login(client, admin)
+    assert 'Не заповнена' in _all_html(client)
+
+
+def test_all_list_shows_quiz_state(client, admin):
+    inst = _instance()
+    _registration(inst)
+    _login(client, admin)
+    assert 'Не починав' in _all_html(client)
+
+
+def test_all_list_links_to_detail(client, admin):
+    inst = _instance()
+    reg = _registration(inst)
+    _login(client, admin)
+    assert f'/admin/registrations/{reg.id}/quiz' in _all_html(client)
+
+
+def test_all_list_shows_certificate(client, admin, no_pdf):
+    inst = _instance()
+    reg = _registration(inst)
+    cert = certificate_service.issue_certificate(reg)
+    _login(client, admin)
+    assert cert.number in _all_html(client)
+
+
+def test_both_pages_render_same_state_wording(client, admin):
+    """Один і той самий стан мусить називатися однаково на обох сторінках."""
+    inst = _instance()
+    _registration(inst, profile=False)
+    _login(client, admin)
+
+    per_event = _html(client, inst)
+    everything = _all_html(client)
+    for wording in ('Чекає анкету', 'Не заповнена', 'Не видано'):
+        assert wording in per_event, f'сторінка заходу: {wording}'
+        assert wording in everything, f'загальний список: {wording}'
+
+
+def test_all_list_does_not_grow_with_rows(client, admin):
+    """Загальний список пагінований, але стан тестування все одно батчем."""
+    from sqlalchemy import event
+
+    _login(client, admin)
+
+    def _count():
+        seen = []
+
+        def _tap(_c, _cur, statement, _p, _ctx, _m):
+            if statement.lstrip().upper().startswith('SELECT'):
+                seen.append(statement)
+
+        event.listen(db.engine, 'before_cursor_execute', _tap)
+        try:
+            _all_html(client)
+        finally:
+            event.remove(db.engine, 'before_cursor_execute', _tap)
+        return len(seen)
+
+    inst = _instance()
+    _registration(inst)
+    db.session.flush()
+    few = _count()
+
+    for _ in range(12):
+        _registration(inst)
+    db.session.flush()
+    many = _count()
+
+    assert many - few <= 4, (
+        f'12 додаткових рядків дали +{many - few} SELECT ({few} -> {many})'
+    )

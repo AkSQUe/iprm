@@ -548,7 +548,11 @@ def registrations_all():
 
     query = _apply_registration_filters(
         EventRegistration.query.options(
-            joinedload(EventRegistration.user),
+            # medical_profile і quiz_attempts -- для колонок прогресу
+            # (_registration_progress.html). Учасники тут різні, тож без
+            # eager-load кожен рядок тягнув би анкету й спроби окремо.
+            joinedload(EventRegistration.user).joinedload(User.medical_profile),
+            joinedload(EventRegistration.quiz_attempts),
             joinedload(EventRegistration.instance).joinedload(CourseInstance.course),
             joinedload(EventRegistration.certificate),
             joinedload(EventRegistration.promo_code),
@@ -566,12 +570,18 @@ def registrations_all():
         [r.referral_code for r in pagination.items],
     )
 
+    # Стан тестування -- лише для рядків цієї сторінки, одним набором запитів.
+    from app.services import quiz_service
+    quiz_states = quiz_service.eligibility_map(pagination.items)
+
     return render_template(
         'admin/registrations.html',
         registrations=pagination.items,
         pagination=pagination,
         stats=stats,
         referrer_map=referrer_map,
+        quiz_states=quiz_states,
+        quiz_statuses=quiz_service,
         filters=filters,
         # Непорожні параметри -- один набір для пілюль, пагінації й експорту:
         # усі три мають вести на той самий зріз.
