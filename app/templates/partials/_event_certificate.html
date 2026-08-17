@@ -1,4 +1,14 @@
-<!-- Умови отримання сертифікату -->
+{# Умови отримання сертифікату -- публічний блок на сторінці курсу.
+
+   Показується ЛИШЕ коли для курсу є готовий тест: інакше крок «успішне
+   тестування» був би обіцянкою, якої система не виконує. Саме так цей партіал
+   і прожив без діла -- він обіцяв «не менше 70%», хоч тестування в проєкті не
+   існувало взагалі.
+
+   Поріг і кількість питань беруться з налаштувань тесту (`quiz`), а не з
+   зашитого числа: адмін міняє їх в адмінці, і текст мусить іти за ними.
+
+   Очікує в контексті: quiz (CourseQuiz). #}
 <section class="iprm-section apple-section-gray" id="certificate" aria-labelledby="certificate-title">
   <div class="iprm-section__inner">
     <h2 id="certificate-title" class="iprm-section__title">{% trans %}Умови отримання <span class="apple-gradient-text">сертифікату</span>{% endtrans %}</h2>
@@ -16,13 +26,18 @@
       </div>
       <div class="iprm-steps__item apple-reveal">
         <span class="iprm-steps__number">3</span>
-        <h3 class="iprm-steps__heading">{{ _('Успішне тестування') }}</h3>
-        <p class="iprm-steps__text">{{ _('Пройдіть тестування з результатом не менше 70% правильних відповідей.') }}</p>
+        <h3 class="iprm-steps__heading">{{ _('Анкета та тестування') }}</h3>
+        <p class="iprm-steps__text">
+          {% trans need=quiz.passing_score, total=quiz.questions_per_attempt %}
+          Заповніть анкету для сертифіката та дайте щонайменше {{ need }} правильних
+          відповідей з {{ total }}.
+          {% endtrans %}
+        </p>
       </div>
       <div class="iprm-steps__item apple-reveal">
         <span class="iprm-steps__number">4</span>
         <h3 class="iprm-steps__heading">{{ _('Отримання сертифікату') }}</h3>
-        <p class="iprm-steps__text">{{ _('Отримайте сертифікат з балами БПР після успішного проходження.') }}</p>
+        <p class="iprm-steps__text">{{ _('Сертифікат з балами БПР з\'явиться у кабінеті одразу після успішного тестування.') }}</p>
       </div>
     </div>
   </div>

@@ -498,6 +498,13 @@
   </section>
   {% endif %}
 
+  <!-- ===== CERTIFICATE CONDITIONS (лише коли тест реально готовий) ===== -->
+  {% if certificate_quiz %}
+    {% with quiz = certificate_quiz %}
+      {% include 'partials/_event_certificate.html' %}
+    {% endwith %}
+  {% endif %}
+
   <!-- ===== REVIEWS ===== -->
   {% if course_reviews %}
   <section class="iprm-section" aria-labelledby="reviews-title">

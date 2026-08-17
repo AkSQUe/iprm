@@ -16,6 +16,7 @@ from app.models.b2b_request import B2BRequest
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest
+from app.services import quiz_service
 from app.services.recaptcha import verify_request as verify_recaptcha
 from app.utils import ensure_utc
 
@@ -355,6 +356,7 @@ def course_by_slug(slug):
         referral_link=referral_link,
         referral_inviter=referral_inviter,
         course_reviews=course_reviews,
+        certificate_quiz=quiz_service.public_quiz_for_course(course),
         **recommend,
     )
 
