@@ -20,42 +20,52 @@
 {% block jsonld %}
 {{ super() }}
 {# schema.org/Course, а не Event: дат проведення в онлайн-курсу немає. #}
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Course",
-  "name": {{ course.effective_title|tojson }},
-  "description": {{ course.effective_short_description|truncate(300)|tojson }},
-  "url": "{{ url_for('online.course_detail', slug=course.slug, _external=True) }}",
-  "provider": {
-    "@type": "Organization",
-    "name": "ІПРМ",
-    "url": "{{ url_for('main.index', _external=True) }}"
+{# Схема збирається dict-ом і йде через `| tojson`, як на сторінці очного
+   курсу: лапки, апострофи й кирилиця в назвах екрануються самі, а не
+   покладаються на те, що в тексті не трапиться символу розмітки. #}
+{% set course_url = url_for('online.course_detail', slug=course.slug, _external=True) %}
+{% set course_schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  'name': course.effective_title,
+  'description': course.effective_short_description,
+  'inLanguage': current_lang,
+  'url': course_url,
+  'provider': {
+    '@type': 'EducationalOrganization',
+    'name': site_settings.t('company_name'),
+    'url': url_for('main.index', _external=True)
   },
-  "hasCourseInstance": {
-    "@type": "CourseInstance",
-    "courseMode": "online"
-  }{% if course.effective_price %},
-  "offers": {
-    "@type": "Offer",
-    "price": "{{ course.effective_price }}",
-    "priceCurrency": "{{ course.currency }}",
-    "category": "Paid",
-    "url": "{{ url_for('online.course_detail', slug=course.slug, _external=True) }}"
-  }{% endif %}
-}
-</script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    {"@type": "ListItem", "position": 1, "name": "ІПРМ", "item": "{{ url_for('main.index', _external=True) }}"},
-    {"@type": "ListItem", "position": 2, "name": "{{ _('Онлайн-курси') }}", "item": "{{ url_for('online.course_list', _external=True) }}"},
-    {"@type": "ListItem", "position": 3, "name": {{ course.effective_title|tojson }}}
+  'hasCourseInstance': {
+    '@type': 'CourseInstance',
+    'courseMode': 'online'
+  }
+} %}
+{% if course.effective_price %}
+{% set _discard = course_schema.update({'offers': {
+  '@type': 'Offer',
+  'price': course.effective_price | string,
+  'priceCurrency': course.currency,
+  'category': 'Paid',
+  'url': course_url
+}}) %}
+{% endif %}
+{% if course.card_src or course.hero_src %}
+{% set _discard = course_schema.update({'image': course.card_src or course.hero_src}) %}
+{% endif %}
+<script type="application/ld+json">{{ course_schema | tojson }}</script>
+{% set breadcrumbs = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  'itemListElement': [
+    {'@type': 'ListItem', 'position': 1, 'name': site_settings.t('company_name'),
+     'item': url_for('main.index', _external=True)},
+    {'@type': 'ListItem', 'position': 2, 'name': _('Онлайн-курси'),
+     'item': url_for('online.course_list', _external=True)},
+    {'@type': 'ListItem', 'position': 3, 'name': course.effective_title}
   ]
-}
-</script>
+} %}
+<script type="application/ld+json">{{ breadcrumbs | tojson }}</script>
 {% endblock %}
 
 {% block content %}
@@ -283,7 +293,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/apple-reveal.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/sticky-cta.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/page-nav.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/faq-accordion.js') }}?v={{ assets_version }}" defer></script>

@@ -39,7 +39,12 @@
     'url': url_for('main.index', _external=True)
   }
 } %}
-{% if course.card_src %}{% set _discard = course_schema.update({'image': course.card_src}) %}{% endif %}
+{# image: обкладинка плюс фото галереї. Google приймає масив і бере з нього
+   найкраще під формат видачі, тож віддавати лише картку -- недобирати. #}
+{% set _images = [] %}
+{% if course.card_src %}{% set _discard = _images.append(course.card_src) %}{% endif %}
+{% for media in gallery or [] %}{% set _discard = _images.append(media.url) %}{% endfor %}
+{% if _images %}{% set _discard = course_schema.update({'image': _images}) %}{% endif %}
 {% if course.base_price and course.base_price > 0 %}{% set _discard = course_schema.update({'offers': {
   '@type': 'Offer',
   'price': course.base_price|string,
@@ -81,6 +86,7 @@
   ]
 }
 </script>
+{% include 'partials/_course_faq_jsonld.html' %}
 {% endblock %}
 
 {% block content %}
@@ -166,6 +172,11 @@
 
   <!-- ===== HERO ===== -->
   {% set hero_image = course.hero_src or course.card_src %}
+  {# Справжні пропорції файлу: рамка hero повторює форму зображення, тож
+     width/height у розмітці мають бути його власними, інакше широкий банер
+     смикне верстку, коли доїде. #}
+  {% set _hero_media = course.hero_media or course.card_media %}
+  {% set hero_image_size = (_hero_media.width, _hero_media.height) if _hero_media else none %}
 
   {% set hero_chips = [] %}
   {% if open_inst and open_inst.start_date %}

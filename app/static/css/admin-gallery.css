@@ -1,0 +1,56 @@
+/* admin-gallery.css -- редактор галереї курсу в адмінці.
+   Розмітку карток будує admin-course-gallery.js; тут лише розкладка. */
+
+.admin-gallery__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.admin-gallery__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  background: var(--iprm-card-bg);
+  cursor: grab;
+}
+
+.admin-gallery__item:active {
+  cursor: grabbing;
+}
+
+.admin-gallery__thumb {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: var(--iprm-radius-sm);
+  background: var(--iprm-neutral-bg);
+  /* Тягнемо картку, а не зображення: інакше браузер підхоплює власний
+     drag-and-drop картинки й порядок не міняється. */
+  pointer-events: none;
+}
+
+.admin-gallery__caption {
+  font-size: 0.8125rem;
+}
+
+.admin-gallery__remove {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  line-height: 1;
+  border-radius: 50%;
+}
+
+/* Поле вибору файлів ховаємо: його відкриває кнопка "Додати фото". */
+.admin-gallery__file {
+  display: none;
+}

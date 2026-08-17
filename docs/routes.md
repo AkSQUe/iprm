@@ -52,10 +52,20 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 | Метод | URL | Опис |
 |-------|-----|------|
 | GET | `/courses` | Список курсів |
-| GET | `/courses/<slug>` | Сторінка заходу за slug |
+| GET | `/courses/<slug>` | Сторінка заходу за slug (продажний макет, див. нижче) |
+| POST | `/courses/<slug>/request` | Заявка з форми курсу (email, ім'я, телефон, канал зв'язку, згода) |
 | GET | `/courses/detail` | Legacy redirect -> plazmoterapiya-v-ginekologii (301) |
 | GET | `/courses/stomatology` | Legacy redirect -> plazmoterapiya-v-stomatologii (301) |
 | GET | `/courses/orthopedics` | Legacy redirect -> plazmoterapiya-v-ortopedii (301) |
+
+Сторінки очного й онлайн-курсу зібрані з **тих самих партіалів**
+(`partials/_course_hero.html`, `_course_proof`, `_course_benefits`,
+`_course_audience`, `_course_gallery`, `_course_program`, `_course_trainer`,
+`_course_reviews`, `_course_lead_form`, `_course_page_nav`) і одного файлу
+стилів `css/course-landing.css`. Партіали читають `course.*` напряму: нові
+контентні поля названі однаково в `Course` і `OnlineCourse`. Кожна секція
+умовна -- курс без заповненого контенту не показує порожню рамку. Деталі --
+[план редизайну](plan-course-landing-redesign.md).
 
 ## Online courses (онлайн-курси Sintegrum)
 

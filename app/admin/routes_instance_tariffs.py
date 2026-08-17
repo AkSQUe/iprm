@@ -38,6 +38,8 @@ def instance_tariffs(instance_id):
             name=form.name.data.strip(),
             price=form.price.data,
             description=(form.description.data or '').strip() or None,
+            badge=(form.badge.data or '').strip() or None,
+            is_featured=form.is_featured.data,
             event_format=form.event_format.data or None,
             sort_order=form.sort_order.data if form.sort_order.data is not None else 0,
             is_active=form.is_active.data,
@@ -79,6 +81,8 @@ def instance_tariff_edit(tariff_id):
         tariff.name = form.name.data.strip()
         tariff.price = form.price.data
         tariff.description = (form.description.data or '').strip() or None
+        tariff.badge = (form.badge.data or '').strip() or None
+        tariff.is_featured = form.is_featured.data
         tariff.event_format = form.event_format.data or None
         tariff.sort_order = form.sort_order.data if form.sort_order.data is not None else 0
         tariff.is_active = form.is_active.data

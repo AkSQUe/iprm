@@ -90,6 +90,13 @@ class TrainerForm(FlaskForm):
         'Наукова та дослідницька діяльність',
         validators=[Optional()],
     )
+    # Короткі цифри для блоку тренера на сторінці курсу.
+    highlights_text = TextAreaField(
+        'Цифри для сторінки курсу',
+        validators=[Optional()],
+        description='Один рядок = одна цифра, у форматі "значення | підпис". '
+                    'Напр. "13 років | у косметології". Рекомендовано 2–3.',
+    )
     # Додаткові секції профілю -- один пункт на рядок (textarea).
     skills = TextAreaField('Професійні навички', validators=[Optional()])
     education = TextAreaField('Освіта та кваліфікація', validators=[Optional()])
@@ -448,6 +455,37 @@ class CourseForm(FlaskForm):
         description='Одне речення у блоці з кнопкою реєстрації внизу сторінки. '
                     'Порожньо – показуємо стандартний текст.',
     )
+    # --- Контент продажної сторінки ---
+    proof_stats_text = TextAreaField(
+        'Цифри довіри',
+        validators=[Optional()],
+        description='Смуга під hero. Один рядок = одна цифра, у форматі '
+                    '"значення | підпис". Напр. "6+ | проведених груп". '
+                    'Порожньо – смуги немає.',
+    )
+    benefits_text = TextAreaField(
+        'Що зміниться у практиці',
+        validators=[Optional()],
+        description='Картки після смуги цифр. Блоки розділяються порожнім '
+                    'рядком: перший рядок – заголовок, решта – текст. '
+                    'Нумерація проставляється сама.',
+    )
+    practice_note_title = StringField(
+        'Акцент практики – заголовок',
+        validators=[Optional(), Length(max=200)],
+        description='Плашка всередині блоку програми. Порожньо – плашки немає.',
+    )
+    practice_note_text = TextAreaField(
+        'Акцент практики – текст',
+        validators=[Optional()],
+    )
+    gallery_intro = StringField(
+        'Галерея – лід',
+        validators=[Optional(), Length(max=500)],
+        description='Речення над фото з практики.',
+    )
+    # JSON редактора галереї: [{"media_id": 1, "caption": "..."}].
+    gallery_json = HiddenField('Галерея', validators=[Optional()])
     base_price = DecimalField(
         'Базова ціна (UAH)',
         default=0,
@@ -510,7 +548,15 @@ class InstanceTariffForm(FlaskForm):
     description = TextAreaField(
         'Що входить',
         validators=[Optional()],
-        description='Один пункт на рядок (лекція, запис, сертифікат, чат з тренером...).',
+        description='Один пункт на рядок (лекція, запис, сертифікат, чат з тренером...). '
+                    'Рядок, що починається з "+", показується як перевага цього '
+                    'тарифу над базовим.',
+    )
+    badge = StringField(
+        'Прапорець',
+        validators=[Optional(), Length(max=60)],
+        description='Плашка над карткою на сторінці курсу, напр. '
+                    '"З підтримкою після курсу". Порожньо – прапорця немає.',
     )
     event_format = SelectField(
         'Формат участі',
@@ -526,6 +572,11 @@ class InstanceTariffForm(FlaskForm):
         description='Менше число — лівіше/вище. Рекомендовано: від економ до преміум.',
     )
     is_active = BooleanField('Активний (показується і доступний для вибору)', default=True)
+    is_featured = BooleanField(
+        'Виділити на сторінці курсу',
+        description='Акцентна рамка. Раніше «головним» ставав просто останній '
+                    'тариф у списку – тепер це явний вибір.',
+    )
 
 
 class CourseTariffForm(FlaskForm):

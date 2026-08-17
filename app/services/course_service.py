@@ -60,6 +60,100 @@ def attach_course_media(course):
         db.session.rollback()
 
 
+def parse_gallery_entries(raw):
+    """Розібрати JSON редактора галереї у [{media_id, caption}].
+
+    Приходить із прихованого поля форми, тому все, що не схоже на запис,
+    тихо відкидаємо: зіпсований JSON не має валити збереження курсу.
+    """
+    import json
+
+    if not raw:
+        return []
+    try:
+        data = json.loads(raw)
+    except (ValueError, TypeError):
+        logger.warning('Invalid gallery JSON in form, ignored')
+        return []
+    if not isinstance(data, list):
+        return []
+    entries = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        try:
+            media_id = int(item.get('media_id'))
+        except (TypeError, ValueError):
+            continue
+        caption = (item.get('caption') or '').strip()[:255] or None
+        entries.append({'media_id': media_id, 'caption': caption})
+    return entries
+
+
+def gallery_to_json(media_files):
+    """Серіалізувати галерею для редактора в адмінці.
+
+    Крім media_id і підпису віддаємо мініатюру: інакше редактор мусив би
+    ходити по URL кожного файла окремим запитом.
+    """
+    import json
+
+    return json.dumps([
+        {
+            'media_id': m.id,
+            'caption': m.caption or '',
+            'thumb': m.variant_url('thumb'),
+        }
+        for m in media_files
+    ], ensure_ascii=False)
+
+
+def save_gallery(owner, entries, entity_type):
+    """Синхронізувати галерею сутності з тим, що прийшло з форми.
+
+    Галерея живе не окремою таблицею, а в медіа-реєстрі: MediaFile із
+    usage_type='gallery' і порядком у sort_order. Тому "зберегти" означає
+    переставити прапорці на рядках реєстру.
+
+    Прибрані з галереї файли НЕ видаляємо і не деактивуємо -- лише знімаємо
+    прив'язку. Файл міг використовуватись деінде, а видалення з реєстру --
+    окрема свідома дія в медіа-бібліотеці.
+
+    Коміт -- на caller-ові.
+    """
+    from app.models.media_file import MediaFile
+    from app.services import media_service
+
+    wanted = {e['media_id']: e for e in entries}
+
+    current = MediaFile.query.filter_by(
+        entity_type=entity_type, entity_id=owner.id, usage_type='gallery',
+    ).all()
+    for media in current:
+        if media.id not in wanted:
+            media.entity_type = None
+            media.entity_id = None
+            media.usage_type = 'main'
+            media.sort_order = 0
+
+    if not wanted:
+        return
+
+    rows = {m.id: m for m in MediaFile.query.filter(
+        MediaFile.id.in_(list(wanted))).all()}
+    for index, entry in enumerate(entries, start=1):
+        media = rows.get(entry['media_id'])
+        if not media:
+            continue
+        media.entity_type = entity_type
+        media.entity_id = owner.id
+        media.usage_type = 'gallery'
+        media.sort_order = index
+        media.caption = entry['caption']
+        # Читабельне ім'я файлу: {slug}-gallery-N -- як у дописах блогу.
+        media_service.rename_for_entity(media, owner.slug, index)
+
+
 # ========== Shared helpers (text <-> list/faq conversions) ==========
 
 # Порожній рядок між блоками FAQ (переноси вже нормалізовані до \n);
@@ -81,37 +175,87 @@ def list_to_lines(items):
     return '\n'.join(items)
 
 
-def faq_text_to_list(text):
-    """Parse FAQ text into list of {question, answer} dicts.
+def blocks_text_to_list(text, head_key, body_key):
+    """Розібрати текст у список {head_key, body_key}.
 
-    Format: blocks separated by empty lines, first line = question, rest = answer.
+    Формат: блоки, розділені порожнім рядком; перший рядок -- заголовок,
+    решта -- тіло. Одна механіка для FAQ і для карток переваг: редактор
+    вводить їх однаково, тож і парсер має бути один.
 
     Перед розбиттям нормалізуємо переноси: браузер надсилає textarea з CRLF,
-    тож літерал '\\n\\n' не збігався б ніколи і весь FAQ ставав одним блоком.
-    Порожній рядок-роздільник може містити пробіли чи таби.
+    тож літерал '\\n\\n' не збігався б ніколи і весь текст ставав одним
+    блоком. Порожній рядок-роздільник може містити пробіли чи таби.
     """
     if not text:
         return []
     normalized = text.replace('\r\n', '\n').replace('\r', '\n')
     blocks = _FAQ_BLOCK_SEPARATOR.split(normalized.strip())
-    faq = []
+    out = []
     for block in blocks:
         lines = [l.strip() for l in block.strip().splitlines() if l.strip()]
         if lines:
-            faq.append({'question': lines[0], 'answer': '\n'.join(lines[1:])})
-    return faq
+            out.append({head_key: lines[0], body_key: '\n'.join(lines[1:])})
+    return out
 
 
-def faq_list_to_text(items):
-    """Convert list of {question, answer} dicts to editable text."""
+def blocks_list_to_text(items, head_key, body_key):
+    """Зворотне до blocks_text_to_list."""
     if not items:
         return ''
     blocks = []
     for item in items:
-        q = item.get('question', '')
-        a = item.get('answer', '')
-        blocks.append(f'{q}\n{a}' if a else q)
+        head = item.get(head_key, '')
+        body = item.get(body_key, '')
+        blocks.append(f'{head}\n{body}' if body else head)
     return '\n\n'.join(blocks)
+
+
+def faq_text_to_list(text):
+    """FAQ як список {question, answer}."""
+    return blocks_text_to_list(text, 'question', 'answer')
+
+
+def faq_list_to_text(items):
+    """FAQ у редагований текст."""
+    return blocks_list_to_text(items, 'question', 'answer')
+
+
+# Пари "значення | підпис" -- смуга цифр довіри й короткі цифри тренера.
+# Роздільник саме "|": тире й дефіси зустрічаються всередині самих значень
+# ("13-15 років"), а вертикальна риска в такому тексті не трапляється.
+_PAIR_SEPARATOR = '|'
+
+
+def pairs_text_to_list(text):
+    """Розібрати рядки "значення | підпис" у список {value, label}.
+
+    Рядок без роздільника стає значенням без підпису: краще показати саму
+    цифру, ніж мовчки викинути введене.
+    """
+    if not text:
+        return []
+    out = []
+    for line in text.replace('\r\n', '\n').replace('\r', '\n').splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        value, _, label = line.partition(_PAIR_SEPARATOR)
+        value = value.strip()
+        if value:
+            out.append({'value': value, 'label': label.strip()})
+    return out
+
+
+def pairs_list_to_text(items):
+    """Зворотне до pairs_text_to_list."""
+    if not items:
+        return ''
+    lines = []
+    for item in items:
+        value = (item or {}).get('value', '')
+        label = (item or {}).get('label', '')
+        lines.append(f'{value} {_PAIR_SEPARATOR} {label}' if label else str(value))
+    return '\n'.join(lines)
 
 
 class InvalidStatusTransition(ValueError):
@@ -156,6 +300,11 @@ def populate_course_from_form(course, form):
     course.agenda = _clean_text(form.agenda.data)
     course.faq = faq_text_to_list(form.faq_text.data)
     course.final_cta_text = _clean_text(form.final_cta_text.data)
+    course.proof_stats = pairs_text_to_list(form.proof_stats_text.data)
+    course.benefits = blocks_text_to_list(form.benefits_text.data, 'title', 'text')
+    course.practice_note_title = _clean_text(form.practice_note_title.data)
+    course.practice_note_text = _clean_text(form.practice_note_text.data)
+    course.gallery_intro = _clean_text(form.gallery_intro.data)
     course.base_price = form.base_price.data or 0
     course.difficulty_level = form.difficulty_level.data or None
     course.roi_hint = _clean_text(form.roi_hint.data)
@@ -280,13 +429,17 @@ def extract_program_blocks_from_form(form_data):
     return blocks
 
 
-def save_program_blocks_for_course(course, blocks_data):
-    """Синхронізувати program_blocks курсу зі структурованим списком blocks_data.
+def _save_program_blocks(owner, blocks_data, relation):
+    """Синхронізувати program_blocks сутності зі списком blocks_data.
 
     blocks_data: результат extract_program_blocks_from_form().
     Існуючі блоки (за id) оновлюються, нові створюються, відсутні — видаляються.
+
+    relation -- ім'я зв'язку, яким новий блок кріпиться до власника
+    ('course' або 'online_course'). Блоки поліморфні, і CHECK у БД вимагає
+    рівно одного власника, тож ім'я передається явно, а не вгадується.
     """
-    existing_ids = {b.id for b in course.program_blocks}
+    existing_ids = {b.id for b in owner.program_blocks}
     seen_ids = set()
 
     for idx, block_data in enumerate(blocks_data):
@@ -302,16 +455,26 @@ def save_program_blocks_for_course(course, blocks_data):
             seen_ids.add(block_id)
         else:
             db.session.add(ProgramBlock(
-                course=course,
                 heading=heading,
                 items=items,
                 sort_order=idx,
+                **{relation: owner},
             ))
 
     for old_id in existing_ids - seen_ids:
         old_block = db.session.get(ProgramBlock, old_id)
         if old_block:
             db.session.delete(old_block)
+
+
+def save_program_blocks_for_course(course, blocks_data):
+    """Блоки програми офлайнового курсу."""
+    _save_program_blocks(course, blocks_data, 'course')
+
+
+def save_program_blocks_for_online_course(course, blocks_data):
+    """Блоки програми онлайн-курсу."""
+    _save_program_blocks(course, blocks_data, 'online_course')
 
 
 def clone_course(source, created_by_id):

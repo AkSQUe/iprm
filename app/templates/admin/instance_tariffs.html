@@ -130,6 +130,12 @@
         </div>
 
         <div class="form-group">
+          <label for="tariff-badge">Прапорець</label>
+          {{ form.badge(class="form-input", id="tariff-badge", placeholder="З підтримкою після курсу") }}
+          <div class="form-hint">{{ form.badge.description }}</div>
+        </div>
+
+        <div class="form-group">
           <label for="tariff-format">Формат участі</label>
           {{ form.event_format(class="form-input", id="tariff-format") }}
           <div class="form-hint">{{ form.event_format.description }}</div>
@@ -146,6 +152,14 @@
             {{ form.is_active(id="tariff-active") }}
             <label for="tariff-active">Активний</label>
           </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-checkbox">
+            {{ form.is_featured(id="tariff-featured") }}
+            <label for="tariff-featured">Виділити на сторінці курсу</label>
+          </div>
+          <div class="form-hint">{{ form.is_featured.description }}</div>
         </div>
 
       </div>

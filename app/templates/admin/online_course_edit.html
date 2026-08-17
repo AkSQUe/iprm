@@ -6,7 +6,11 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-i18n-tabs.css') }}?v={{ assets_version }}">
 {% endblock %}
+
+{% import 'admin/partials/_i18n_tabs.html' as i18n %}
+{% set tr = course.translations or {} %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -138,6 +142,7 @@
 
       <div class="form-section admin-form__section">
         <h3 class="admin-form__section-title">Сторінка курсу</h3>
+        {{ i18n.tabs(course) }}
         <div class="form-group">
           <label for="slug">Адреса сторінки</label>
           <input type="text" name="slug" id="slug" class="form-input" value="{{ course.slug }}">
@@ -147,37 +152,21 @@
           <label for="title">Назва на сайті</label>
           <input type="text" name="title" id="title" class="form-input"
                  value="{{ course.title or '' }}" placeholder="{{ course.remote_name }}">
+          {{ i18n.panes(tr, 'title', obj=course) }}
           <p class="form-hint">Порожньо — показуємо назву з Sintegrum.</p>
         </div>
         <div class="form-group">
           <label for="short_description">Короткий опис (картка каталогу)</label>
           <textarea name="short_description" id="short_description" class="form-input" rows="2">{{ course.short_description or '' }}</textarea>
+          {{ i18n.panes(tr, 'short_description', widget='textarea', rows=2, obj=course) }}
         </div>
         <div class="form-group">
           <label for="description">Повний опис</label>
           <textarea name="description" id="description" class="form-input" rows="8">{{ course.description or '' }}</textarea>
+          {{ i18n.panes(tr, 'description', widget='textarea', rows=8, obj=course) }}
           <p class="form-hint">Порожньо — показуємо опис із Sintegrum.</p>
         </div>
       </div>
-
-      {% for lang in languages %}
-      <div class="form-section admin-form__section">
-        <h3 class="admin-form__section-title">Переклад: {{ lang|upper }}</h3>
-          <div class="form-group">
-            <label for="title_{{ lang }}">Назва</label>
-            <input type="text" name="title_{{ lang }}" id="title_{{ lang }}" class="form-input"
-                   value="{{ (course.translations or {}).get(lang, {}).get('title', '') }}">
-          </div>
-          <div class="form-group">
-            <label for="short_description_{{ lang }}">Короткий опис</label>
-            <textarea name="short_description_{{ lang }}" id="short_description_{{ lang }}" class="form-input" rows="2">{{ (course.translations or {}).get(lang, {}).get('short_description', '') }}</textarea>
-          </div>
-          <div class="form-group">
-            <label for="description_{{ lang }}">Повний опис</label>
-            <textarea name="description_{{ lang }}" id="description_{{ lang }}" class="form-input" rows="6">{{ (course.translations or {}).get(lang, {}).get('description', '') }}</textarea>
-          </div>
-      </div>
-      {% endfor %}
 
       <div class="form-section admin-form__section">
         <h3 class="admin-form__section-title">Публікація</h3>
@@ -220,4 +209,8 @@
 
   </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/admin-i18n-tabs.js') }}?v={{ assets_version }}"></script>
 {% endblock %}

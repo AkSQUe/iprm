@@ -23,12 +23,13 @@ from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit
 from app.admin.decorators import admin_required
 from app.extensions import db
-from app.i18n import PREFIXED_LANGUAGES
 from app.models.online_course import OnlineCourse
 from app.models.site_settings import SiteSettings
 from app.services.online_course_sync import generate_unique_slug
 
 audit_logger = logging.getLogger('audit')
+
+PER_PAGE = 30
 
 STATUS_OPTIONS = [
     ('published', 'Опубліковані'),
@@ -76,16 +77,22 @@ def online_courses_list():
             OnlineCourse.price <= 0,
         ))
 
-    courses = query.order_by(
+    pagination = query.order_by(
         OnlineCourse.is_vanished,
         OnlineCourse.sort_order,
         OnlineCourse.remote_name,
-    ).all()
+    ).paginate(
+        page=request.args.get('page', 1, type=int),
+        per_page=PER_PAGE, error_out=False,
+    )
+    courses = pagination.items
 
     settings = SiteSettings.get()
     return render_template(
         'admin/online_courses.html',
         courses=courses,
+        pagination=pagination,
+        filter_args=_listing.filter_args(filters),
         filters=filters,
         status_options=STATUS_OPTIONS,
         integration_enabled=settings.sintegrum_enabled,
@@ -112,7 +119,6 @@ def online_course_edit(course_id):
     return render_template(
         'admin/online_course_edit.html',
         course=course,
-        languages=PREFIXED_LANGUAGES,
     )
 
 
@@ -200,10 +206,10 @@ def _save_course(course):
     except (TypeError, ValueError):
         course.sort_order = 0
 
-    for lang in PREFIXED_LANGUAGES:
-        for field in ('title', 'description', 'short_description'):
-            value = (request.form.get(f'{field}_{lang}') or '').strip()
-            course.set_translation(lang, field, value)
+    # Той самий хелпер, що й у решті адмін-форм: він читає поля вигляду
+    # `<field>_<lang>`, які кладуть мовні вкладки, і сам знає про JSON-поля.
+    from app.admin.routes_translations import apply_inline_translations
+    apply_inline_translations(course)
 
     # Публікація живе тут же, але лише якщо курс до неї готовий. Перевірка
     # саме на сервері: інакше опублікувати непридатний курс можна було б

@@ -98,6 +98,9 @@ def _apply_profile_fields(trainer, form):
     trainer.education = trainer_service.sanitize_text_list(form.education.data)
     trainer.additional_education = trainer_service.sanitize_text_list(form.additional_education.data)
     trainer.work_experience = trainer_service.sanitize_text_list(form.work_experience.data)
+    # Пари "значення | підпис" -- той самий формат, що й цифри довіри курсу.
+    from app.services import course_service
+    trainer.highlights = course_service.pairs_text_to_list(form.highlights_text.data)
 
 
 def _load_profile_into_form(trainer, form):
@@ -110,6 +113,8 @@ def _load_profile_into_form(trainer, form):
     form.education.data = '\n'.join(trainer.education or [])
     form.additional_education.data = '\n'.join(trainer.additional_education or [])
     form.work_experience.data = '\n'.join(trainer.work_experience or [])
+    from app.services import course_service
+    form.highlights_text.data = course_service.pairs_list_to_text(trainer.highlights)
 
 
 _TRAINER_STATES = {'active': 'Активні', 'inactive': 'Приховані'}

@@ -100,6 +100,11 @@ def course_create():
         blocks_data = course_service.extract_program_blocks_from_form(request.form)
         course_service.save_program_blocks_for_course(course, blocks_data)
         _apply_block_translations(course)
+        course_service.save_gallery(
+            course,
+            course_service.parse_gallery_entries(form.gallery_json.data),
+            entity_type='course',
+        )
 
         if try_commit(log_context=f'course_create title={course.title}'):
             course_service.attach_course_media(course)
@@ -128,6 +133,10 @@ def course_edit(course_id):
         form.target_audience_text.data = course_service.list_to_lines(course.target_audience)
         form.tags_text.data = course_service.list_to_lines(course.tags)
         form.faq_text.data = course_service.faq_list_to_text(course.faq)
+        form.proof_stats_text.data = course_service.pairs_list_to_text(course.proof_stats)
+        form.benefits_text.data = course_service.blocks_list_to_text(
+            course.benefits, 'title', 'text')
+        form.gallery_json.data = course_service.gallery_to_json(course.gallery)
 
     if form.validate_on_submit():
         slug = form.slug.data.strip()
@@ -142,6 +151,11 @@ def course_edit(course_id):
         blocks_data = course_service.extract_program_blocks_from_form(request.form)
         course_service.save_program_blocks_for_course(course, blocks_data)
         _apply_block_translations(course)
+        course_service.save_gallery(
+            course,
+            course_service.parse_gallery_entries(form.gallery_json.data),
+            entity_type='course',
+        )
 
         if try_commit(log_context=f'course_edit id={course.id}'):
             course_service.attach_course_media(course)

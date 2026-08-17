@@ -219,6 +219,16 @@
         <div class="form-group admin-form__full">
           <label for="skills">Професійні навички</label>
           {{ form.skills(class="form-input", id="skills", rows="8", placeholder="Робота з різними видами тромбоконцентратів:&#10;Чиста збагачена тромбоцитами плазма (P-PRP)") }}
+          <div class="form-hint">
+            Перші чотири пункти без двокрапки показуються тегами у блоці
+            тренера на сторінці курсу.
+          </div>
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="highlights_text">Цифри для сторінки курсу</label>
+          {{ form.highlights_text(class="form-input", id="highlights_text", rows="4", placeholder="13 років | у косметології&#10;11 років | у дерматології") }}
+          <div class="form-hint">{{ form.highlights_text.description }}</div>
         </div>
 
         <div class="form-group admin-form__full">

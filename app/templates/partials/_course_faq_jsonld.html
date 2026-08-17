@@ -1,0 +1,25 @@
+{# FAQPage для блоку поширених запитань.
+
+   Окремим блоком, а не всередині Course: schema.org не дозволяє вкладати
+   FAQPage у Course, а Google читає кілька незалежних JSON-LD на сторінці.
+
+   Питання беремо через .t(): у видачі має бути мова сторінки, а не
+   канонічна українська. Порожні питання відкидаємо -- редактор міг
+   лишити недописаний блок. #}
+{% set faq_items = [] %}
+{% for item in course.t('faq') or [] %}
+  {% if item.question %}
+    {% set _discard = faq_items.append({
+      '@type': 'Question',
+      'name': item.question,
+      'acceptedAnswer': {'@type': 'Answer', 'text': item.answer or ''}
+    }) %}
+  {% endif %}
+{% endfor %}
+{% if faq_items %}
+<script type="application/ld+json">{{ {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  'mainEntity': faq_items
+} | tojson }}</script>
+{% endif %}

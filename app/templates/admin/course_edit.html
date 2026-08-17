@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-media.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-i18n-tabs.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-gallery.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
@@ -256,6 +257,65 @@
       </div>
     </div>
 
+    {# Контент продажної сторінки. Кожне поле необов'язкове: незаповнена
+       секція просто не показується на сайті. #}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Продажна сторінка</h3>
+      <div class="admin-form__grid">
+        <div class="form-group admin-form__full">
+          <label for="proof_stats_text">Цифри довіри</label>
+          {{ form.proof_stats_text(class="form-input", id="proof_stats_text", rows="4", placeholder="6+ | проведених груп за програмою") }}
+          <div class="form-hint">{{ form.proof_stats_text.description }}</div>
+          {{ i18n.json_panes(course, 'proof_stats') }}
+        </div>
+        <div class="form-group admin-form__full">
+          <label for="benefits_text">Що зміниться у практиці</label>
+          {{ form.benefits_text(class="form-input", id="benefits_text", rows="10", placeholder="Готуєте препарат прогнозовано&#10;Розумієте режими підготовки та вибір форми під задачу.&#10;&#10;Працюєте впевнено руками&#10;Відпрацьовуєте техніку на практиці.") }}
+          <div class="form-hint">{{ form.benefits_text.description }}</div>
+          {{ i18n.json_panes(course, 'benefits') }}
+        </div>
+        <div class="form-group">
+          <label for="practice_note_title">Акцент практики – заголовок</label>
+          {{ form.practice_note_title(class="form-input", id="practice_note_title") }}
+          <div class="form-hint">{{ form.practice_note_title.description }}</div>
+          {{ i18n.panes(tr, 'practice_note_title', obj=course) }}
+        </div>
+        <div class="form-group">
+          <label for="gallery_intro">Галерея – лід</label>
+          {{ form.gallery_intro(class="form-input", id="gallery_intro") }}
+          <div class="form-hint">{{ form.gallery_intro.description }}</div>
+          {{ i18n.panes(tr, 'gallery_intro', obj=course) }}
+        </div>
+        <div class="form-group admin-form__full">
+          <label for="practice_note_text">Акцент практики – текст</label>
+          {{ form.practice_note_text(class="form-input", id="practice_note_text", rows="3") }}
+          {{ i18n.panes(tr, 'practice_note_text', widget='textarea', rows=3, obj=course) }}
+        </div>
+      </div>
+    </div>
+
+    {# Галерея. Фото живуть у медіа-реєстрі, а не в JSON курсу: приховане
+       поле несе лише порядок і підписи. #}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Галерея з практики</h3>
+      <div class="admin-gallery" data-gallery-editor
+           data-entity-type="course"
+           data-entity-id="{{ course.id if course else '' }}"
+           data-upload-url="{{ url_for('admin.upload_media') }}">
+        <div class="admin-gallery__grid" data-gallery-grid></div>
+        <input type="file" class="admin-gallery__file" data-gallery-file
+               accept="image/png,image/jpeg,image/webp" multiple>
+        <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" data-gallery-add>
+          + Додати фото
+        </button>
+        <p class="form-hint">
+          Перетягуванням змінюється порядок. Підпис показується поверх фото на
+          сайті; він не перекладається (одна мова в усіх локалях).
+        </p>
+      </div>
+      {{ form.gallery_json(id="gallery_json", **{'data-gallery-field': '1'}) }}
+    </div>
+
     <div class="form-section admin-form__section">
       <h3 class="admin-form__section-title">Блоки програми</h3>
       <div id="program-blocks">
@@ -347,4 +407,5 @@
 <script src="{{ url_for('static', filename='js/admin-dropzone.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-event-edit.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-i18n-tabs.js') }}?v={{ assets_version }}"></script>
+<script src="{{ url_for('static', filename='js/admin-course-gallery.js') }}?v={{ assets_version }}"></script>
 {% endblock %}
