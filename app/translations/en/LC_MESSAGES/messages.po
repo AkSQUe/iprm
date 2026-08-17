@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-17 17:16+0300\n"
+"POT-Creation-Date: 2026-08-17 17:38+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -947,6 +947,9 @@ msgstr "You already own this course"
 
 msgid "Не вдалося оформити замовлення. Спробуйте ще раз."
 msgstr "Could not create the order. Please try again."
+
+msgid "Не вдалося оформити безкоштовний доступ. Напишіть нам."
+msgstr "Could not open free access. Please write to us."
 
 msgid "Промокод знято"
 msgstr "Promo code removed"

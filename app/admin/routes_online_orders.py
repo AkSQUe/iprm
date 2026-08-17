@@ -116,10 +116,20 @@ def online_order_set_payment(enrollment_id):
         flash('Невідомий статус оплати', 'error')
         return redirect(url_for('admin.online_orders_list'))
 
+    # Блокування рядка -- як у callback: менеджер може натиснути статус тієї
+    # ж миті, коли прийде відповідь LiqPay, і без нього обидва переходи
+    # прочитали б однаковий стан.
+    enrollment = (
+        db.session.query(OnlineEnrollment)
+        .filter_by(id=enrollment_id)
+        .with_for_update()
+        .first()
+    )
     old_status = enrollment.payment_status
     ops = PaymentOps(get_liqpay_service())
     ok, message = ops.update_enrollment_status(
-        enrollment, new_status, source='manual',
+        enrollment, new_status, amount=enrollment.payment_amount,
+        source='manual',
     )
 
     audit_logger.info(

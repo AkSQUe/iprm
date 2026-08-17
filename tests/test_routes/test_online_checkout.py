@@ -15,6 +15,21 @@ ACCESS_URL = 'https://multimededu.sintegrum.com/register/secret-abc'
 
 
 @pytest.fixture(autouse=True)
+def _no_rate_limit():
+    """Лімітер рахує запити на весь набір, а не на тест.
+
+    Без цього десяток перевірок чекауту вичерпує «20 на годину», і решта
+    падає з 429 -- на порожньому місці, бо ліміт тут не предмет перевірки.
+    Той самий підхід, що в test_checkout_hardening.
+    """
+    from app.extensions import limiter
+
+    limiter.enabled = False
+    yield
+    limiter.enabled = True
+
+
+@pytest.fixture(autouse=True)
 def clean(app):
     OnlineEnrollment.query.delete()
     OnlineCourse.query.delete()

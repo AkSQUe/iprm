@@ -259,34 +259,69 @@ def provision_and_notify(enrollment, commit=True):
     return token
 
 
-def revoke(enrollment, commit=True):
-    """Забрати доступ до курсу (повернення коштів).
+def revoke_local(enrollment):
+    """Зняти НАШ токен доступу. Лише БД, жодної мережі.
 
-    Best-effort щодо Sintegrum: якщо API недоступне, ми все одно знімаємо
-    свій токен. Лишити людині робоче посилання після повернення коштів --
-    гірше, ніж розійтися з партнером на один курс у списку, і це видно в
-    логах.
+    Викликається всередині транзакції зміни платіжного статусу: чуже API
+    туди пускати не можна (див. `revoke_remote`).
     """
     enrollment.revoke_access()
 
+
+def revoke_remote(enrollment):
+    """Забрати призначення курсу на боці Sintegrum.
+
+    ОКРЕМО від `revoke_local` і ЗАВЖДИ поза транзакцією: клієнт має таймаути
+    3/10 секунд і три спроби, тобто до ~30 секунд. Усередині транзакції це
+    тримало б заблокований рядок замовлення під час callback LiqPay, а той
+    на затримку відповідає повторним запитом.
+
+    Best-effort: якщо API недоступне, наш токен усе одно вже знято. Лишити
+    людині робочий доступ після повернення коштів гірше, ніж розійтися з
+    партнером на один курс у списку, і це видно в логах.
+    """
     student_id = enrollment.sintegrum_student_id
     remote_course_id = getattr(enrollment.course, 'sintegrum_id', None)
-    if student_id and remote_course_id:
-        try:
-            from app.services.sintegrum_client import (
-                SintegrumClient, SintegrumConfigError,
-            )
-            client = SintegrumClient.from_settings(SiteSettings.get())
-            result = client.revoke_course(student_id, remote_course_id)
-            if not result.ok:
-                logger.warning('Failed to revoke course in Sintegrum for %s: %s',
-                               enrollment.order_id, result.error)
-        except (SintegrumConfigError, Exception):
-            logger.exception('Could not revoke Sintegrum access for %s',
-                             enrollment.order_id)
+    if not (student_id and remote_course_id):
+        return False
 
+    try:
+        from app.services.sintegrum_client import (
+            SintegrumClient, SintegrumConfigError,
+        )
+        client = SintegrumClient.from_settings(SiteSettings.get())
+    except SintegrumConfigError as exc:
+        logger.warning('Cannot revoke Sintegrum access for %s: %s',
+                       enrollment.order_id, exc)
+        return False
+    except Exception:
+        logger.exception('Could not build Sintegrum client for %s',
+                         enrollment.order_id)
+        return False
+
+    try:
+        result = client.revoke_course(student_id, remote_course_id)
+    except Exception:
+        logger.exception('Could not revoke Sintegrum access for %s',
+                         enrollment.order_id)
+        return False
+
+    if not result.ok:
+        logger.warning('Failed to revoke course in Sintegrum for %s: %s',
+                       enrollment.order_id, result.error)
+    return result.ok
+
+
+def revoke(enrollment, commit=True):
+    """Зняти доступ повністю: наш токен і призначення в Sintegrum.
+
+    Зручний шов для викликів ПОЗА транзакцією платежу (адмінка, скрипти).
+    Платіжний шлях користується `revoke_local` / `revoke_remote` окремо.
+    """
+    revoke_local(enrollment)
     if commit:
         db.session.commit()
+    revoke_remote(enrollment)
 
 
 def reissue(enrollment, commit=True):

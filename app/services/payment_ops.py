@@ -78,8 +78,12 @@ def check_amount(expected, actual, order_id):
     Повертає None, якщо все гаразд, інакше -- рядок-причину відмови.
     Виносимо саме сюди: розбіжність у правилах звірки між типами
     замовлень означала б, що одне з них можна оплатити не тією сумою.
+
+    `expected is None` -- сума не зафіксована (історичні рядки), звіряти
+    нема з чим. А ось нуль звіряємо нарівні з рештою: замовлення на нуль
+    гривень (знижка 100%) не має мовчки приймати будь-який платіж.
     """
-    if not expected or actual is None:
+    if expected is None or actual is None:
         return None
     try:
         if abs(float(actual) - float(expected)) > 0.01:
@@ -216,14 +220,11 @@ class PaymentOps:
         elif new_status == 'refunded':
             enrollment.status = 'cancelled'
             # Повернення коштів забирає доступ: інакше людина лишалася б із
-            # відкритим курсом, за який гроші вже повернуто. Знімаємо і свій
-            # токен, і призначення курсу на боці Sintegrum.
-            try:
-                from app.services import sintegrum_access
-                sintegrum_access.revoke(enrollment, commit=False)
-            except Exception:
-                logger.exception('Failed to revoke access for %s', order_id)
-                enrollment.revoke_access()
+            # відкритим курсом, за який гроші вже повернуто. Тут -- ЛИШЕ наш
+            # токен: звернення до Sintegrum іде після коміту, бо його
+            # таймаути тримали б заблокований рядок під час callback LiqPay.
+            from app.services import sintegrum_access
+            sintegrum_access.revoke_local(enrollment)
 
         _log_transaction(
             reg_id=None, enrollment_id=enrollment.id, order_id=order_id,
@@ -250,6 +251,14 @@ class PaymentOps:
         except Exception:
             db.session.rollback()
             logger.exception('Promo sync failed for %s', order_id)
+
+        # Зняття доступу в Sintegrum -- поза транзакцією, best-effort.
+        if new_status == 'refunded':
+            try:
+                from app.services import sintegrum_access
+                sintegrum_access.revoke_remote(enrollment)
+            except Exception:
+                logger.exception('Failed to revoke remote access for %s', order_id)
 
         # Видача доступу -- ПІСЛЯ коміту оплати й окремою транзакцією.
         # Якщо вона впаде, замовлення лишиться оплаченим і без доступу:

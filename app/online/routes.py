@@ -85,7 +85,11 @@ def _live_enrollment(user_id, course_id):
 
 @online_bp.route('/<slug>/checkout', methods=['GET', 'POST'])
 @login_required
-@limiter.limit('20 per hour')
+# 60, а не 20: після переходу на PRG кожна дія з промокодом коштує два
+# запити (POST + GET), і людина, яка спробувала кілька кодів і перечитала
+# сторінку, впиралась у ліміт на власній покупці. Для перебору кодів 60
+# спроб на годину однаково не дають нічого.
+@limiter.limit('60 per hour')
 def checkout(slug):
     """Оформлення покупки: створює замовлення і віддає форму LiqPay.
 
@@ -129,65 +133,114 @@ def checkout(slug):
                 flash(_('Не вдалося оформити замовлення. Спробуйте ще раз.'), 'error')
                 return redirect(url_for('online.course_detail', slug=course.slug))
 
-    promo_error = None
     if request.method == 'POST':
-        promo_error = _handle_promo(enrollment, course)
+        _handle_promo(enrollment, course)
+        # Post/Redirect/Get: без нього F5 на сторінці повторно надсилає
+        # промокод, а браузер ще й питає про це діалогом.
+        return redirect(url_for('online.checkout', slug=course.slug))
+
+    # Знижка 100% робить суму нульовою -- платити нічого, але й форми LiqPay
+    # не буде. Без цієї гілки замовлення лишалось би `unpaid` назавжди, а
+    # людина -- без доступу до курсу, за який усе вже сплачено кодом.
+    if enrollment.payment_amount is not None and enrollment.payment_amount <= 0:
+        return _complete_free_order(enrollment, course)
 
     return render_template(
         'online/checkout.html',
         active_nav='online',
         course=course,
         enrollment=enrollment,
-        promo_error=promo_error,
         **_liqpay_context(enrollment, course),
     )
 
 
-def _handle_promo(enrollment, course):
-    """Застосувати або зняти промокод. Повертає текст помилки або None.
+def _complete_free_order(enrollment, course):
+    """Закрити замовлення на нуль гривень і відкрити доступ.
 
-    Сума перераховується від ЦІНИ КУРСУ, а не від поточної
-    `payment_amount`: інакше друге застосування коду рахувало б знижку від
-    уже здешевленої суми, і кожне натискання робило б курс дешевшим.
+    Через PaymentOps, а не присвоєнням статусу: там правила переходів,
+    журнал транзакцій і видача доступу. Присвоєння в обхід дало б
+    «оплачене» замовлення без курсу.
+    """
+    from app.services.liqpay import get_liqpay_service
+    from app.services.payment_ops import PaymentOps
+
+    ops = PaymentOps(get_liqpay_service())
+    ok, message = ops.update_enrollment_status(
+        enrollment, 'paid', amount=enrollment.payment_amount, source='manual',
+    )
+    if not ok:
+        logger.error('Failed to close free order %s: %s',
+                     enrollment.order_id, message)
+        flash(_('Не вдалося оформити безкоштовний доступ. Напишіть нам.'),
+              'error')
+        return redirect(url_for('online.course_detail', slug=course.slug))
+
+    return redirect(url_for('payments.success', order_id=enrollment.order_id))
+
+
+def _order_base_amount(enrollment, course):
+    """Сума замовлення ДО знижки.
+
+    Береться з самого замовлення (`payment_amount` + застосована знижка), а
+    не з поточної ціни курсу. Інакше застосування чи зняття промокоду
+    перераховувало б замовлення за новою ціною -- а вона могла змінитись і
+    в адмінці, і черговою синхронізацією з Sintegrum. Обіцянка «сума
+    фіксується в момент оформлення» має триматись і тут.
+    """
+    if enrollment.payment_amount is None:
+        return course.effective_price
+    return enrollment.payment_amount + (enrollment.discount_amount or 0)
+
+
+def _handle_promo(enrollment, course):
+    """Застосувати або зняти промокод. Повідомлення -- через flash.
+
+    Знижка рахується від суми ЗАМОВЛЕННЯ до знижки, а не від поточної ціни
+    курсу: інакше кожне натискання перераховувало б замовлення за ціною, що
+    могла змінитись після його оформлення.
     """
     from app.services import promo_service
     from app.services.promo_service import PromoError
 
     if enrollment.is_paid:
-        return None
+        return
+
+    base = _order_base_amount(enrollment, course)
 
     if request.form.get('remove_promo'):
         promo_service.detach_from_enrollment(enrollment)
-        enrollment.payment_amount = course.effective_price
+        enrollment.payment_amount = base
         db.session.commit()
         flash(_('Промокод знято'), 'info')
-        return None
+        return
 
     raw = (request.form.get('promo_code') or '').strip()
     if not raw:
-        return None
+        return
 
     try:
+        # user_id тут НЕ передаємо: validate перевірив би ліміт «на одну
+        # людину» без винятку для цього ж замовлення, і повторне
+        # застосування того самого коду падало б з «ви вже використали».
         promo, _discount, _final = promo_service.validate_for_online(
-            raw, amount=course.effective_price, user_id=current_user.id,
+            raw, amount=base,
         )
         promo_service.assert_user_limit(
             promo, current_user.id, ignore_enrollment_id=enrollment.id,
         )
-        promo_service.apply_to_enrollment(
-            promo, enrollment, course.effective_price,
-        )
+        promo_service.apply_to_enrollment(promo, enrollment, base)
         db.session.commit()
     except PromoError as exc:
         db.session.rollback()
-        return str(exc)
+        flash(str(exc), 'error')
+        return
     except Exception:
         db.session.rollback()
         logger.exception('Failed to apply promo to %s', enrollment.order_id)
-        return str(_('Не вдалося застосувати промокод. Спробуйте ще раз.'))
+        flash(_('Не вдалося застосувати промокод. Спробуйте ще раз.'), 'error')
+        return
 
     flash(_('Промокод застосовано'), 'success')
-    return None
 
 
 def _liqpay_context(enrollment, course):

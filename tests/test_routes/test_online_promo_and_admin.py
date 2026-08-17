@@ -22,6 +22,21 @@ from app.services import promo_service
 
 
 @pytest.fixture(autouse=True)
+def _no_rate_limit():
+    """Лімітер рахує запити на весь набір, а не на тест.
+
+    Без цього десяток перевірок чекауту вичерпує «20 на годину», і решта
+    падає з 429 -- на порожньому місці, бо ліміт тут не предмет перевірки.
+    Той самий підхід, що в test_checkout_hardening.
+    """
+    from app.extensions import limiter
+
+    limiter.enabled = False
+    yield
+    limiter.enabled = True
+
+
+@pytest.fixture(autouse=True)
 def clean(app):
     PromoRedemption.query.delete()
     OnlineEnrollment.query.delete()
@@ -77,6 +92,23 @@ def _promo(**kwargs):
     db.session.add(promo)
     db.session.commit()
     return promo
+
+
+def _flash_messages(response):
+    """Тексти flash-повідомлень зі сторінки.
+
+    Вони віддаються JSON-ом у <script id="iprm-flash-data">, тобто
+    кирилиця в HTML лежить екранованою (\\uXXXX) -- шукати підрядок у
+    сирому тілі марно.
+    """
+    import json
+    import re
+
+    match = re.search(r'id="iprm-flash-data"[^>]*>(.*?)</script>',
+                      response.get_data(as_text=True), re.S)
+    if not match:
+        return []
+    return [item['message'] for item in json.loads(match.group(1))]
 
 
 def _login(client, user):
@@ -266,10 +298,12 @@ class TestCheckout:
         _login(client, buyer)
         client.get(f'/online-courses/{course.slug}/checkout')
 
+        # PRG: помилка приходить flash-повідомленням уже на GET.
         response = client.post(f'/online-courses/{course.slug}/checkout',
-                               data={'promo_code': 'NOPE'})
+                               data={'promo_code': 'NOPE'},
+                               follow_redirects=True)
 
-        assert 'не знайдено' in response.get_data(as_text=True)
+        assert any('не знайдено' in m for m in _flash_messages(response))
         enrollment = OnlineEnrollment.query.filter_by(user_id=buyer.id).one()
         assert enrollment.payment_amount == Decimal('4000')
 
@@ -386,3 +420,142 @@ class TestAdminOrders:
 
         db.session.refresh(enrollment)
         assert enrollment.payment_status == 'unpaid'
+
+# ----------------------------- зафіксована сума -----------------------------
+
+class TestFrozenAmount:
+    """Сума замовлення не має «плавати» слідом за ціною курсу.
+
+    Ціна змінюється і з адмінки, і черговою синхронізацією з Sintegrum, а
+    замовлення вже оформлене -- людина бачила іншу цифру.
+    """
+
+    def test_price_change_does_not_leak_through_promo(self, client, buyer,
+                                                      course):
+        promo = _promo()
+        _login(client, buyer)
+        client.get(f'/online-courses/{course.slug}/checkout')
+
+        # Курс подорожчав уже після оформлення замовлення.
+        course.price = Decimal('9000')
+        db.session.commit()
+
+        client.post(f'/online-courses/{course.slug}/checkout',
+                    data={'promo_code': promo.code}, follow_redirects=True)
+
+        enrollment = OnlineEnrollment.query.filter_by(user_id=buyer.id).one()
+        # 25% від зафіксованих 4000, а не від нових 9000.
+        assert enrollment.payment_amount == Decimal('3000')
+
+    def test_price_change_does_not_leak_through_removal(self, client, buyer,
+                                                        course):
+        promo = _promo()
+        _login(client, buyer)
+        client.get(f'/online-courses/{course.slug}/checkout')
+        client.post(f'/online-courses/{course.slug}/checkout',
+                    data={'promo_code': promo.code}, follow_redirects=True)
+
+        course.price = Decimal('9000')
+        db.session.commit()
+
+        client.post(f'/online-courses/{course.slug}/checkout',
+                    data={'remove_promo': '1'}, follow_redirects=True)
+
+        enrollment = OnlineEnrollment.query.filter_by(user_id=buyer.id).one()
+        assert enrollment.payment_amount == Decimal('4000')
+
+
+class TestPerUserLimitOnTheSameOrder:
+    def test_reapplying_the_same_code_is_allowed(self, client, buyer, course):
+        """Ліміт «одне застосування на людину» не має блокувати те саме
+        замовлення: людина просто ще раз натиснула «Застосувати»."""
+        promo = _promo(per_user_limit=1)
+        _login(client, buyer)
+        client.get(f'/online-courses/{course.slug}/checkout')
+
+        client.post(f'/online-courses/{course.slug}/checkout',
+                    data={'promo_code': promo.code}, follow_redirects=True)
+        response = client.post(f'/online-courses/{course.slug}/checkout',
+                               data={'promo_code': promo.code},
+                               follow_redirects=True)
+
+        messages = _flash_messages(response)
+        assert not any('вже використали' in m for m in messages), messages
+        enrollment = OnlineEnrollment.query.filter_by(user_id=buyer.id).one()
+        assert enrollment.payment_amount == Decimal('3000')
+
+
+class TestFreeOrder:
+    """Знижка 100% -- платити нічого, але доступ має відкритись."""
+
+    def test_full_discount_completes_the_purchase(self, client, buyer, course,
+                                                  monkeypatch):
+        monkeypatch.setattr(
+            'app.services.email_service.EmailService.send_online_access',
+            staticmethod(lambda *a, **k: None))
+        course.access_url = 'https://multimededu.sintegrum.com/register/abc'
+        db.session.commit()
+
+        promo = _promo(discount_value=Decimal('100'))
+        _login(client, buyer)
+        client.get(f'/online-courses/{course.slug}/checkout')
+        client.post(f'/online-courses/{course.slug}/checkout',
+                    data={'promo_code': promo.code}, follow_redirects=True)
+
+        # PRG після застосування коду веде назад на чекаут, а той бачить
+        # нульову суму й одразу закриває замовлення -- без форми LiqPay.
+        enrollment = OnlineEnrollment.query.filter_by(user_id=buyer.id).one()
+        assert enrollment.payment_amount == Decimal('0')
+        assert enrollment.payment_status == 'paid'
+        assert enrollment.access_token
+        assert enrollment.provisioned_at is not None
+
+
+class TestAmountCheck:
+    def test_zero_expected_amount_is_still_verified(self):
+        """Замовлення на нуль не має мовчки приймати будь-який платіж."""
+        from app.services.payment_ops import check_amount
+
+        assert check_amount(Decimal('0'), 500, 'ONL-1') == 'amount mismatch'
+        assert check_amount(Decimal('0'), 0, 'ONL-1') is None
+        # Сума не зафіксована -- звіряти нема з чим.
+        assert check_amount(None, 500, 'ONL-1') is None
+
+
+class TestRefundStaysOutOfTheTransaction:
+    def test_remote_revoke_runs_after_commit(self, app, buyer, course,
+                                             monkeypatch):
+        """Мережевий виклик до Sintegrum не має жити всередині транзакції.
+
+        Перевіряємо за наслідком: на момент звернення до партнера статус уже
+        збережений, тобто коміт відбувся раніше.
+        """
+        from app.services import sintegrum_access
+        from app.services.liqpay import get_liqpay_service
+        from app.services.payment_ops import PaymentOps
+
+        monkeypatch.setattr(
+            'app.services.email_service.EmailService.send_online_access',
+            staticmethod(lambda *a, **k: None))
+        course.access_url = 'https://multimededu.sintegrum.com/register/abc'
+        db.session.commit()
+
+        enrollment = _enrollment(buyer, course)
+        ops = PaymentOps(get_liqpay_service())
+        ops.update_enrollment_status(enrollment, 'paid',
+                                     amount=enrollment.payment_amount,
+                                     source='manual')
+
+        seen = {}
+
+        def _remote(item):
+            seen['status_at_call'] = db.session.get(
+                OnlineEnrollment, item.id).payment_status
+            return True
+
+        monkeypatch.setattr(sintegrum_access, 'revoke_remote', _remote)
+        ops.update_enrollment_status(enrollment, 'refunded', source='manual')
+
+        assert seen['status_at_call'] == 'refunded'
+        db.session.refresh(enrollment)
+        assert enrollment.access_token is None
