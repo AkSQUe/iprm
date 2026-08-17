@@ -1679,7 +1679,14 @@ button.iprm-tag:focus-visible {
 
 /* Повзунковий варіант (сторінка курсу). Правила вище задають вигляд
    текстового поля -- для range їх треба зняти, інакше доріжка отримає
-   рамку й падінг поля вводу. */
+   рамку й падінг поля вводу.
+
+   ПАСТКА: `appearance: none` у базовому правилі знімає з range не лише
+   рамку, а й доріжку -- Chrome лишає на місці тільки бігунок, і повзунок
+   виглядає як самотня точка в порожнечі. Тому доріжку й бігунок малюємо
+   самі. Спільного селектора для них немає: у WebKit і Gecko власні
+   псевдоелементи, і рушій, який не знає чужого, відкидає ВЕСЬ блок правил,
+   тож об'єднати їх комою не можна -- звідси дублювання. */
 .iprm-roi__field input[type='range'] {
   padding: 0;
   border: none;
@@ -1687,11 +1694,48 @@ button.iprm-tag:focus-visible {
   box-shadow: none;
   accent-color: var(--iprm-accent);
   cursor: pointer;
+  /* Висота під бігунок: без неї він обрізається доріжкою. */
+  height: 20px;
 }
 
 .iprm-roi__field input[type='range']:focus {
   border: none;
   box-shadow: none;
+}
+
+.iprm-roi__field input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-accent-light);
+}
+
+.iprm-roi__field input[type='range']::-moz-range-track {
+  height: 6px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-accent-light);
+}
+
+/* margin-top центрує бігунок на доріжці: у WebKit він позиціюється від
+   верху доріжки, а не від її середини. */
+.iprm-roi__field input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border: none;
+  border-radius: 50%;
+  background: var(--iprm-accent);
+  box-shadow: 0 1px 4px rgba(var(--apple-accent-rgb), 0.35);
+}
+
+.iprm-roi__field input[type='range']::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: var(--iprm-accent);
+  box-shadow: 0 1px 4px rgba(var(--apple-accent-rgb), 0.35);
 }
 
 /* Підпис із живим значенням: "Середній чек процедури — 2 500 ₴". */
