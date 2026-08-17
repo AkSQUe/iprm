@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Онлайн-курси | ІПРМ') }}{% endblock %}
+{% block meta_description %}{{ _('Онлайн-курси Інституту Плазмотерапії та Регенеративної Медицини: навчайтеся у зручний час у власному темпі.') }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-courses.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block jsonld %}
+{{ super() }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "ІПРМ", "item": "{{ url_for('main.index', _external=True) }}"},
+    {"@type": "ListItem", "position": 2, "name": "{{ _('Онлайн-курси') }}"}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+
+  <div class="iprm-hero-wrap">
+    <section class="iprm-hero" aria-label="Hero">
+      <div class="iprm-hero__content">
+        <h1 class="iprm-hero__title">{{ _('Онлайн-<span class="apple-gradient-text">курси</span>') }}</h1>
+        <p class="iprm-hero__subtitle">{{ _('Навчання у власному темпі: доступ відкривається одразу після оплати') }}</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="iprm-section apple-section-gray" aria-labelledby="online-courses-title">
+    <div class="iprm-section__inner">
+      <h2 id="online-courses-title" class="iprm-section__title apple-reveal">{{ _('Оберіть <span class="apple-gradient-text">курс</span>') }}</h2>
+
+      {% if courses %}
+      <div class="iprm-online-cards">
+        {% for course in courses %}
+        <a href="{{ url_for('online.course_detail', slug=course.slug) }}" class="iprm-online-card apple-reveal">
+          {% if course.card_src %}
+          <div class="iprm-online-card__media">
+            <img src="{{ course.card_src }}" alt="{{ course.effective_title }}" width="400" height="240"
+                 {% if loop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
+          </div>
+          {% endif %}
+          <div class="iprm-online-card__body">
+            <h3 class="iprm-online-card__title">{{ course.effective_title }}</h3>
+            {% if course.effective_short_description %}
+            <p class="iprm-online-card__text">{{ course.effective_short_description }}</p>
+            {% endif %}
+            <div class="iprm-online-card__meta">
+              {% if course.duration_hours %}
+              <span class="iprm-tag">{{ course.duration_hours }} {{ _('год') }}</span>
+              {% endif %}
+              <span class="iprm-tag iprm-tag--accent">{{ _('Онлайн') }}</span>
+            </div>
+            {% if course.price %}
+            <p class="iprm-online-card__price">{{ course.price|int }} {{ course.currency }}</p>
+            {% endif %}
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="iprm-empty-state iprm-empty-state--full">
+        <p>{{ _('Онлайн-курси скоро з\'являться. Загляньте до каталогу заходів — там уже є розклад найближчих.') }}</p>
+        <a href="{{ url_for('courses.course_list') }}" class="apple-btn apple-btn--primary">{{ _('Каталог заходів') }}</a>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
+{% endblock %}

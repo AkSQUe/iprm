@@ -38,6 +38,8 @@ from app.models.city import City
 from app.models.course_quiz import CourseQuiz, QuizQuestion
 from app.models.quiz_attempt import QuizAttempt
 from app.models.perf_run import PerfRun, PerfPageMetric
+from app.models.online_course import OnlineCourse
+from app.models.online_enrollment import OnlineEnrollment
 
 __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'AuthIdentity',
@@ -55,4 +57,5 @@ __all__ = [
     'City',
     'CourseQuiz', 'QuizQuestion', 'QuizAttempt',
     'PerfRun', 'PerfPageMetric',
+    'OnlineCourse', 'OnlineEnrollment',
 ]

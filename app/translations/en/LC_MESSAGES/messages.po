@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-17 12:38+0300\n"
+"POT-Creation-Date: 2026-08-17 15:25+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -468,11 +468,11 @@ msgid "Необхідно надати згоду на обробку персо
 msgstr "You must consent to the processing of personal data"
 
 msgid ""
-"Неможливо використати цей email. Якщо обліковий запис уже існує -- "
+"Неможливо використати цей email. Якщо обліковий запис уже існує – "
 "увійдіть, відновіть пароль або скористайтесь входом через Google."
 msgstr ""
-"This email cannot be used. If an account already exists -- sign in, reset"
-" your password, or use Google sign-in."
+"This email cannot be used. If an account already exists – sign in, reset "
+"your password, or use Google sign-in."
 
 msgid "Новий пароль"
 msgstr "New password"
@@ -941,6 +941,28 @@ msgstr "Nursing"
 msgid "Інша спеціалізація"
 msgstr "Other specialization"
 
+msgid "Цей курс поки не можна купити"
+msgstr "This course is not available for purchase yet"
+
+msgid "Ви вже придбали цей курс"
+msgstr "You already own this course"
+
+msgid "Не вдалося оформити замовлення. Спробуйте ще раз."
+msgstr "Could not create the order. Please try again."
+
+msgid "Замовлення не оплачене"
+msgstr "The order is not paid"
+
+msgid ""
+"Не вдалося видати посилання. Ми вже розбираємось, напишіть нам, якщо це "
+"терміново."
+msgstr ""
+"We could not issue the link. We are looking into it — write to us if it "
+"is urgent."
+
+msgid "Нове посилання на навчання видано"
+msgstr "A new learning link has been issued"
+
 msgid "Невідоме замовлення"
 msgstr "Unknown order"
 
@@ -1041,6 +1063,10 @@ msgstr "Password reset | IPRM"
 #, python-format
 msgid "Ви в списку учасників: %(title)s"
 msgstr "You're on the list: %(title)s"
+
+#, python-format
+msgid "Доступ до курсу: %(title)s"
+msgstr "Course access: %(title)s"
 
 #, python-format
 msgid "Нагадування: %(title)s через %(days)s дн."
@@ -1229,6 +1255,21 @@ msgstr "You have no registered courses yet"
 
 msgid "Переглянути курси"
 msgstr "Browse courses"
+
+msgid "Мої онлайн-курси"
+msgstr "My online courses"
+
+msgid "Очікує оплати"
+msgstr "Awaiting payment"
+
+msgid "Почати навчання"
+msgstr "Start learning"
+
+msgid "Отримати нове посилання"
+msgstr "Get a new link"
+
+msgid "Доступ готується"
+msgstr "Access is being prepared"
 
 msgid "Мої сертифікати"
 msgstr "My certificates"
@@ -2538,6 +2579,38 @@ msgstr ""
 msgid "Якщо кнопка не працює, скопіюйте це посилання у браузер:"
 msgstr "If the button does not work, copy this link into your browser:"
 
+msgid "Доступ до курсу"
+msgstr "Course access"
+
+#, python-format
+msgid "Доступ відкрито: %(title)s"
+msgstr "Access granted: %(title)s"
+
+msgid "Доступ до курсу відкрито"
+msgstr "Course access is open"
+
+msgid "оплату отримано. Нижче — посилання, за яким ви потрапите на навчання."
+msgstr ""
+"we have received your payment. Below is the link that takes you to the "
+"course."
+
+msgid "год"
+msgstr "h"
+
+msgid "Оплачено"
+msgstr "Paid"
+
+msgid "Замовлення"
+msgstr "Order"
+
+msgid ""
+"Посилання діє обмежений час і призначене особисто вам. Якщо воно "
+"перестане працювати, отримайте нове в особистому кабінеті — курс "
+"залишається за вами."
+msgstr ""
+"The link is valid for a limited time and is meant for you personally. If "
+"it stops working, get a new one in your account — the course stays yours."
+
 msgid "Встановіть новий пароль для вашого облікового запису ІПРМ"
 msgstr "Set a new password for your IPRM account"
 
@@ -2702,7 +2775,7 @@ msgid "Мій кабінет"
 msgstr "My account"
 
 msgid ""
-"Продовжуйте ділитися посиланням -- кожна оплачена реєстрація за ним "
+"Продовжуйте ділитися посиланням – кожна оплачена реєстрація за ним "
 "приносить вам нові бали."
 msgstr ""
 "Keep sharing your link — every paid registration made through it earns "
@@ -3945,6 +4018,184 @@ msgstr ""
 msgid "Відписатися"
 msgstr "Unsubscribe"
 
+msgid "Посилання недоступне"
+msgstr "Link unavailable"
+
+msgid "Термін дії посилання минув"
+msgstr "The link has expired"
+
+msgid ""
+"Посилання на навчання діє обмежений час. Отримайте нове — це займе "
+"секунду."
+msgstr ""
+"The learning link is valid for a limited time. Get a new one — it takes a"
+" second."
+
+msgid "Увійдіть у свій акаунт, щоб отримати нове посилання."
+msgstr "Sign in to your account to get a new link."
+
+msgid "Це посилання більше не діє: оплату за курс скасовано або повернуто."
+msgstr ""
+"This link no longer works: the payment for the course was cancelled or "
+"refunded."
+
+msgid "До каталогу онлайн-курсів"
+msgstr "To the online course catalogue"
+
+msgid ""
+"Доступ до курсу тимчасово не налаштований. Ми вже знаємо про це — "
+"напишіть нам, якщо навчання потрібне терміново."
+msgstr ""
+"Course access is temporarily not configured. We already know — write to "
+"us if you need the course urgently."
+
+msgid "Написати нам"
+msgstr "Contact us"
+
+msgid ""
+"Такого посилання не існує. Перевірте, чи повністю скопійовано адресу з "
+"листа."
+msgstr ""
+"No such link exists. Check that you copied the whole address from the "
+"email."
+
+msgid "Особистий кабінет"
+msgstr "Account"
+
+msgid "Оплата курсу"
+msgstr "Course payment"
+
+msgid "Оформлення покупки"
+msgstr "Checkout"
+
+msgid "Замовлення вже оплачено."
+msgstr "Order"
+
+msgid "Перейти до навчання"
+msgstr "Go to the course"
+
+msgid "Оплатити через LiqPay"
+msgstr "Pay via LiqPay"
+
+msgid "Безпечна оплата через LiqPay — Visa, Mastercard, Google Pay, Apple Pay"
+msgstr "Secure payment via LiqPay — Visa, Mastercard, Google Pay, Apple Pay"
+
+msgid "Онлайн-оплата тимчасово недоступна. Напишіть нам, і ми допоможемо."
+msgstr "Online payment is temporarily unavailable. Write to us and we will help."
+
+msgid ""
+"Посилання на навчання надійде на пошту одразу після оплати. Воно також "
+"буде в особистому кабінеті."
+msgstr ""
+"The learning link is emailed to you right after payment. It is also in "
+"your account."
+
+msgid "Повернутися до опису курсу"
+msgstr "Back to the course description"
+
+msgid "Онлайн-курси"
+msgstr "Online courses"
+
+msgid "Онлайн-курс"
+msgstr "Online course"
+
+msgid "Детальний опис курсу готується."
+msgstr "A detailed course description is coming soon."
+
+msgid "Онлайн, у власному темпі"
+msgstr "Online, at your own pace"
+
+msgid "Початок"
+msgstr "Start"
+
+msgid "Одразу після оплати"
+msgstr "Right after payment"
+
+msgid "Доступ до навчальної платформи"
+msgstr "Access to the learning platform"
+
+msgid "Навчання у зручний час"
+msgstr "Study whenever it suits you"
+
+msgid "Посилання надійде на пошту після оплати"
+msgstr "The link is emailed to you after payment"
+
+msgid "Ви вже придбали цей курс."
+msgstr "You already own this course."
+
+msgid "Купити курс"
+msgstr "Buy the course"
+
+msgid "Купівля цього курсу буде доступна найближчим часом."
+msgstr "Purchasing this course will be available soon."
+
+msgid "Запитати про курс"
+msgstr "Ask about the course"
+
+msgid "Інші <span class=\"apple-gradient-text\">онлайн-курси</span>"
+msgstr "Other <span class=\"apple-gradient-text\">online courses</span>"
+
+msgid "Оплату не завершено"
+msgstr "Payment not completed"
+
+msgid "Кошти не списано. Замовлення збережено — можна спробувати оплатити ще раз."
+msgstr "No money was charged. The order is saved — you can try paying again."
+
+msgid "Спробувати ще раз"
+msgstr "Try again"
+
+msgid "Якщо помилка повторюється, напишіть нам — розберемось."
+msgstr "If the error repeats, write to us and we will sort it out."
+
+msgid "Онлайн-курси | ІПРМ"
+msgstr "Online courses | IPRM"
+
+msgid ""
+"Онлайн-курси Інституту Плазмотерапії та Регенеративної Медицини: "
+"навчайтеся у зручний час у власному темпі."
+msgstr ""
+"Online courses from the Institute of Plasma Therapy and Regenerative "
+"Medicine: study whenever it suits you, at your own pace."
+
+msgid "Онлайн-<span class=\"apple-gradient-text\">курси</span>"
+msgstr "Online <span class=\"apple-gradient-text\">courses</span>"
+
+msgid "Навчання у власному темпі: доступ відкривається одразу після оплати"
+msgstr "Learn at your own pace: access opens right after payment"
+
+msgid "Оберіть <span class=\"apple-gradient-text\">курс</span>"
+msgstr "Choose a <span class=\"apple-gradient-text\">course</span>"
+
+msgid ""
+"Онлайн-курси скоро з'являться. Загляньте до каталогу заходів — там уже є "
+"розклад найближчих."
+msgstr ""
+"Online courses are coming soon. In the meantime, see the events catalogue"
+" for the upcoming schedule."
+
+msgid "Каталог заходів"
+msgstr "Events catalogue"
+
+msgid "Оплату отримано"
+msgstr "Payment received"
+
+msgid "Доступ відкрито. Посилання на навчання надіслано на вашу пошту."
+msgstr "Access is open. The learning link has been sent to your email."
+
+msgid ""
+"Посилання діє обмежений час. Якщо воно перестане працювати, отримайте "
+"нове в особистому кабінеті."
+msgstr ""
+"The link is valid for a limited time. If it stops working, get a new one "
+"in your account."
+
+msgid ""
+"Оплату зараховано, доступ відкриється за кілька хвилин. Ми надішлемо "
+"посилання на пошту."
+msgstr ""
+"Payment received; access opens in a few minutes. We will email you the "
+"link."
+
 msgid "Рекомендуємо"
 msgstr "Recommended"
 
@@ -4168,9 +4419,6 @@ msgstr "Blog"
 msgid "Панель адміністратора"
 msgstr "Admin panel"
 
-msgid "Особистий кабінет"
-msgstr "Account"
-
 msgid "Заповнити дані для сертифіката"
 msgstr "Fill in certificate details"
 
@@ -4195,9 +4443,6 @@ msgstr "Upcoming events:"
 
 msgid "Помилка оплати | ІПРМ"
 msgstr "Payment error | IPRM"
-
-msgid "Оплату не завершено"
-msgstr "Payment not completed"
 
 msgid ""
 "На жаль, оплата не була успішною. Спробуйте ще раз або зверніться до "
@@ -4264,6 +4509,13 @@ msgstr ""
 "A copy has been sent to your email. The certificate is always available "
 "in your account."
 
+msgid ""
+"Сертифікат завжди доступний у кабінеті. Якщо потрібна копія на пошту — "
+"напишіть нам."
+msgstr ""
+"The certificate is always available in your account. Need a copy by "
+"email? Just let us know."
+
 msgid "Сертифікат готується — ми надішлемо його на вашу пошту найближчим часом."
 msgstr "Your certificate is being prepared — we will email it to you shortly."
 
@@ -4276,6 +4528,9 @@ msgstr "My courses"
 #, python-format
 msgid "Питання %(number)s з %(total)s"
 msgstr "Question %(number)s of %(total)s"
+
+msgid "Прогрес тестування"
+msgstr "Test progress"
 
 #, python-format
 msgid "Відповіли: %(answered)s з %(total)s"
@@ -4337,9 +4592,6 @@ msgid ""
 "      "
 msgstr "Attempts left: %(left)s."
 
-msgid "Спробувати ще раз"
-msgstr "Try again"
-
 msgid ""
 "Спроби вичерпано. Зверніться до організаторів — вони можуть відкрити "
 "додаткову спробу."
@@ -4347,8 +4599,8 @@ msgstr ""
 "You have used all attempts. Contact the organisers — they can grant an "
 "extra one."
 
-msgid "Написати нам"
-msgstr "Contact us"
+msgid "Щоб спробувати ще раз, спершу заповніть анкету для сертифіката."
+msgstr "To try again, first fill in your certificate details."
 
 msgid "Перевірка відповідей"
 msgstr "Check your answers"
@@ -4553,9 +4805,6 @@ msgstr "We send emails to <strong>%(email)s</strong>."
 
 msgid "Адреса з помилкою?"
 msgstr "Wrong address?"
-
-msgid "Оплату отримано"
-msgstr "Payment received"
 
 msgid "Дякуємо! Вашу участь підтверджено."
 msgstr "Thank you! Your participation is confirmed."
@@ -4858,12 +5107,6 @@ msgstr "Online payment"
 
 msgid "Картка, Google&nbsp;Pay, Apple&nbsp;Pay — миттєве підтвердження."
 msgstr "Card, Google&nbsp;Pay, Apple&nbsp;Pay — instant confirmation."
-
-msgid "Оплатити через LiqPay"
-msgstr "Pay via LiqPay"
-
-msgid "Безпечна оплата через LiqPay — Visa, Mastercard, Google Pay, Apple Pay"
-msgstr "Secure payment via LiqPay — Visa, Mastercard, Google Pay, Apple Pay"
 
 msgid "Онлайн-оплата тимчасово недоступна — скористайтесь рахунком."
 msgstr "Online payment is temporarily unavailable — please use an invoice."

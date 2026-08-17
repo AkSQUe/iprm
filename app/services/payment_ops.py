@@ -49,11 +49,16 @@ def _noop(msg):
 
 def _log_transaction(reg_id, order_id, mapped_status, source,
                      liqpay_status=None, payment_id=None,
-                     amount=None, raw_payload=None):
-    """Зберегти запис в журнал платіжних транзакцій."""
+                     amount=None, raw_payload=None, enrollment_id=None):
+    """Зберегти запис в журнал платіжних транзакцій.
+
+    Журнал спільний для обох типів замовлень: заповнюється рівно одне з
+    полів reg_id / enrollment_id (це закріплено CHECK-ом у БД).
+    """
     try:
         txn = PaymentTransaction(
             registration_id=reg_id,
+            enrollment_id=enrollment_id,
             order_id=order_id,
             liqpay_status=liqpay_status,
             mapped_status=mapped_status,
@@ -64,7 +69,42 @@ def _log_transaction(reg_id, order_id, mapped_status, source,
         )
         db.session.add(txn)
     except Exception:
-        logger.exception('Failed to log payment transaction for REG-%d', reg_id)
+        logger.exception('Failed to log payment transaction for %s', order_id)
+
+
+def check_amount(expected, actual, order_id):
+    """Звірка суми, спільна для обох типів замовлень.
+
+    Повертає None, якщо все гаразд, інакше -- рядок-причину відмови.
+    Виносимо саме сюди: розбіжність у правилах звірки між типами
+    замовлень означала б, що одне з них можна оплатити не тією сумою.
+    """
+    if not expected or actual is None:
+        return None
+    try:
+        if abs(float(actual) - float(expected)) > 0.01:
+            logger.warning('Payment amount mismatch %s: expected %s, got %s',
+                           order_id, expected, actual)
+            return 'amount mismatch'
+    except (TypeError, ValueError):
+        logger.warning('Payment invalid amount for %s', order_id)
+        return 'invalid amount'
+    return None
+
+
+def parse_order_id(order_id):
+    """Розібрати order_id у пару (тип, числовий id).
+
+    Типи: 'registration' (REG-<id>) і 'enrollment' (ONL-<id>).
+    Повертає (None, None) для невідомого чи побитого формату.
+    """
+    for prefix, kind in (('REG-', 'registration'), ('ONL-', 'enrollment')):
+        if order_id.startswith(prefix):
+            try:
+                return kind, int(order_id.split('-', 1)[1])
+            except (ValueError, IndexError):
+                return kind, None
+    return None, None
 
 
 class PaymentOps:
@@ -82,16 +122,20 @@ class PaymentOps:
         liqpay_status = payload.get('status', '')
         payment_id = str(payload.get('payment_id', ''))
 
-        if not order_id.startswith('REG-'):
+        kind, object_id = parse_order_id(order_id)
+        if kind is None:
             logger.warning('LiqPay callback: unknown order_id: %s', order_id)
             return False, 'unknown order_id'
-
-        try:
-            reg_id = int(order_id.split('-', 1)[1])
-        except (ValueError, IndexError):
+        if object_id is None:
             logger.warning('LiqPay callback: malformed order_id: %s', order_id)
             return False, 'invalid order_id'
 
+        if kind == 'enrollment':
+            return self._process_enrollment_callback(
+                object_id, payload, liqpay_status, payment_id,
+            )
+
+        reg_id = object_id
         reg = db.session.query(EventRegistration).with_for_update().filter_by(
             id=reg_id
         ).first()
@@ -114,19 +158,103 @@ class PaymentOps:
             raw_payload=payload,
         )
 
+    # ---- онлайн-курси (order_id ONL-<id>) ----
+
+    def _process_enrollment_callback(self, enrollment_id, payload,
+                                     liqpay_status, payment_id):
+        from app.models.online_enrollment import OnlineEnrollment
+
+        enrollment = db.session.query(OnlineEnrollment).with_for_update().filter_by(
+            id=enrollment_id
+        ).first()
+        if not enrollment:
+            logger.warning('LiqPay callback: enrollment %d not found', enrollment_id)
+            return False, 'enrollment not found'
+
+        new_status = STATUS_MAP.get(liqpay_status)
+        if not new_status:
+            logger.warning('LiqPay callback: unknown status %s', liqpay_status)
+            return _fail(f'unknown status: {liqpay_status}')
+
+        if enrollment.payment_status == new_status and enrollment.payment_id == payment_id:
+            return _noop('already processed')
+
+        return self.update_enrollment_status(
+            enrollment, new_status, payment_id, amount=payload.get('amount'),
+            source='callback', liqpay_status=liqpay_status, raw_payload=payload,
+        )
+
+    def update_enrollment_status(self, enrollment, new_status, payment_id=None,
+                                 amount=None, source='manual', liqpay_status=None,
+                                 raw_payload=None):
+        """Перехід статусу оплати для замовлення онлайн-курсу.
+
+        Правила переходів і звірка суми -- спільні з реєстраціями
+        (ALLOWED_TRANSITIONS, check_amount). Відрізняються лише наслідки:
+        тут немає ані місць, ані тарифів, ані сертифікатів -- лише видача
+        доступу, і та окремою транзакцією ПІСЛЯ фіксації оплати.
+        """
+        order_id = enrollment.order_id
+
+        if new_status == 'paid':
+            problem = check_amount(enrollment.payment_amount, amount, order_id)
+            if problem:
+                return _fail(problem)
+
+        if new_status not in ALLOWED_TRANSITIONS.get(enrollment.payment_status, set()):
+            logger.warning('Payment invalid transition %s -> %s for %s',
+                           enrollment.payment_status, new_status, order_id)
+            return _noop('no-op transition')
+
+        enrollment.payment_status = new_status
+        if payment_id:
+            enrollment.payment_id = payment_id
+
+        if new_status == 'paid':
+            enrollment.paid_at = datetime.now(timezone.utc)
+            enrollment.status = 'active'
+        elif new_status == 'refunded':
+            enrollment.status = 'cancelled'
+            # Повернення коштів забирає доступ: інакше людина лишалася б із
+            # робочим посиланням на курс, за який гроші вже повернуто.
+            enrollment.revoke_access()
+
+        _log_transaction(
+            reg_id=None, enrollment_id=enrollment.id, order_id=order_id,
+            mapped_status=new_status, source=source,
+            liqpay_status=liqpay_status, payment_id=payment_id,
+            amount=amount, raw_payload=raw_payload,
+        )
+
+        try:
+            db.session.commit()
+            logger.info('Payment %s -> %s', order_id, new_status)
+        except Exception:
+            logger.exception('Payment DB error for %s', order_id)
+            return _fail('db error')
+
+        # Видача доступу -- ПІСЛЯ коміту оплати й окремою транзакцією.
+        # Якщо вона впаде, замовлення лишиться оплаченим і без доступу:
+        # це видимий стан, який підбирає джоба. Зворотний порядок відкотив
+        # би оплату -- гроші прийшли б, а система вважала б, що ні.
+        if new_status == 'paid':
+            try:
+                from app.services import sintegrum_access
+                sintegrum_access.provision_and_notify(enrollment)
+            except Exception:
+                db.session.rollback()
+                logger.exception('Failed to provision access for %s', order_id)
+
+        return True, 'ok'
+
+    # ---- реєстрації на заходи (order_id REG-<id>) ----
+
     def update_payment_status(self, reg, new_status, payment_id=None, amount=None,
                               source='manual', liqpay_status=None, raw_payload=None):
-        if new_status == 'paid' and reg.payment_amount:
-            try:
-                if amount is not None and abs(float(amount) - float(reg.payment_amount)) > 0.01:
-                    logger.warning(
-                        'Payment amount mismatch REG-%d: expected %s, got %s',
-                        reg.id, reg.payment_amount, amount,
-                    )
-                    return _fail('amount mismatch')
-            except (TypeError, ValueError):
-                logger.warning('Payment invalid amount for REG-%d', reg.id)
-                return _fail('invalid amount')
+        if new_status == 'paid':
+            problem = check_amount(reg.payment_amount, amount, f'REG-{reg.id}')
+            if problem:
+                return _fail(problem)
 
         if new_status not in ALLOWED_TRANSITIONS.get(reg.payment_status, set()):
             logger.warning(
@@ -254,6 +382,35 @@ class PaymentOps:
         EmailService.send_email_confirmation(user, confirm_url)
         logger.info('Email-confirmation queued after payment: REG-%d user=%d',
                     reg.id, user.id)
+
+    def check_enrollment_and_update(self, enrollment):
+        """Синхронно перепитати LiqPay про замовлення онлайн-курсу.
+
+        Потрібно для сторінки «оплату отримано»: користувач нерідко
+        повертається з LiqPay швидше, ніж приходить серверний callback.
+        """
+        from app.models.online_enrollment import OnlineEnrollment
+
+        status_data = self.liqpay.check_status(enrollment.order_id)
+        if not status_data:
+            return False, 'api unavailable'
+
+        lp_status = status_data.get('status', '')
+        new_status = STATUS_MAP.get(lp_status)
+        if not new_status or new_status == enrollment.payment_status:
+            return True, 'no change'
+
+        locked = db.session.query(OnlineEnrollment).with_for_update().filter_by(
+            id=enrollment.id
+        ).first()
+        if not locked:
+            return False, 'enrollment not found'
+
+        return self.update_enrollment_status(
+            locked, new_status, str(status_data.get('payment_id', '')),
+            amount=status_data.get('amount'), source='status_check',
+            liqpay_status=lp_status, raw_payload=status_data,
+        )
 
     def check_and_update(self, reg):
         order_id = f'REG-{reg.id}'

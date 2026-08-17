@@ -834,6 +834,41 @@ class EmailService:
         return result
 
     @staticmethod
+    def send_online_access(enrollment, access_url):
+        """Посилання на навчання після оплати онлайн-курсу.
+
+        trigger='payment', а не окремий 'online_access': це продовження
+        платіжної воронки, і так не доводиться правити CHECK
+        ck_email_logs_trigger заради одного шаблону (той самий підхід, що
+        в send_completion_link).
+
+        registration_id не передаємо -- у замовлення онлайн-курсу немає
+        реєстрації на захід; зв'язок з покупкою тримає сам enrollment.
+        """
+        user = enrollment.user
+        course = enrollment.course
+        if user is None or not user.email:
+            logger.warning('Cannot send online_access: %s has no user email',
+                           enrollment.order_id)
+            return None
+
+        base = EmailService._site_base_url()
+        return EmailService.send_email(
+            to=user.email,
+            subject=lambda: _('Доступ до курсу: %(title)s',
+                              title=course.effective_title),
+            template_name='online_access',
+            context={
+                'user': user,
+                'course': course,
+                'enrollment': enrollment,
+                'access_url': access_url,
+                'account_url': f'{base}/auth/account' if base else None,
+            },
+            trigger='payment',
+        )
+
+    @staticmethod
     def send_course_reminder(registration, days_until):
         event = EmailService._event_from_registration(registration)
         if event is None:

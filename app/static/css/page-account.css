@@ -367,3 +367,56 @@
   font-size: 0.8125rem;
   color: var(--iprm-text-light);
 }
+
+/* ===== Мої онлайн-курси ===== */
+
+.account-online {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.account-online__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 24px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
+  background: var(--iprm-card-bg);
+  text-align: left;
+}
+
+.account-online__title {
+  margin: 0 0 4px;
+  font-size: 1.0625rem;
+  color: var(--iprm-text);
+}
+
+.account-online__meta {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--iprm-text-light);
+}
+
+.account-online__action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .account-online__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .account-online__action {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

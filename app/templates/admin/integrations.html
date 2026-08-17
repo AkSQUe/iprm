@@ -126,6 +126,24 @@
           <p>Авторизація через Apple ID. Service ID, Team ID, relay email.</p>
         </a>
 
+        <!-- Sintegrum -->
+        <a href="{{ url_for('admin.sintegrum') }}" class="admin-integration-card admin-integration-card--link">
+          <div class="admin-integration-card__header">
+            <h4 class="admin-integration-card__title">Sintegrum</h4>
+            {% if sintegrum_status.error %}
+              <span class="badge badge--draft">Статус недоступний</span>
+            {% elif sintegrum_status.enabled and sintegrum_status.is_configured %}
+              <span class="badge badge--active">Активно</span>
+            {% elif sintegrum_status.is_configured %}
+              <span class="badge badge--published">Налаштовано, вимкнено</span>
+            {% else %}
+              <span class="badge badge--draft">Не налаштовано</span>
+            {% endif %}
+            {% with rotation=sintegrum_status.rotation %}{% include 'admin/_rotation_hint.html' %}{% endwith %}
+          </div>
+          <p>Каталог онлайн-курсів: синхронізація треків, ключ API, посилання на навчання.</p>
+        </a>
+
         <!-- Microsoft Clarity -->
         <div class="admin-integration-card admin-integration-card--planned">
           <div class="admin-integration-card__header">

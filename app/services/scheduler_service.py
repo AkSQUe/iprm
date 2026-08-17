@@ -170,6 +170,26 @@ def init_scheduler(app):
         name='Дозрівання реферальних балів',
     )
 
+    # Щогодини о :20 -- рознесено з іншими джобами, щоб не з'їхатись на
+    # рівній годині. Сама джоба звіряє інтервал із налаштувань і виходить,
+    # якщо час іще не настав: тримати період у cron-виразі не вийде, бо
+    # адмін міняє його в адмінці без перезапуску процесу.
+    scheduler.add_job(
+        sync_sintegrum_courses,
+        trigger=CronTrigger(minute=20),
+        id='sintegrum_courses_sync',
+        replace_existing=True,
+        name='Синхронізація каталогу онлайн-курсів (Sintegrum)',
+    )
+
+    scheduler.add_job(
+        retry_online_access_provisioning,
+        trigger=CronTrigger(minute='*/10'),
+        id='online_access_retry',
+        replace_existing=True,
+        name='Видача доступу до оплачених онлайн-курсів',
+    )
+
     scheduler.start()
     _initialized = True
     logger.info('APScheduler started with SQLAlchemy jobstore')
@@ -477,6 +497,81 @@ def reconcile_material_reservations():
             except Exception:
                 logger.exception('reconcile_material_reservations failed')
             _prune_material_prefill()
+
+
+def sync_sintegrum_courses():
+    """Періодична синхронізація дзеркала онлайн-курсів із Sintegrum."""
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('sintegrum_courses_sync') as got:
+            if not got:
+                logger.debug('sintegrum sync: another worker holds the lock, skipping')
+                return
+            try:
+                if not sintegrum_sync_is_due():
+                    return
+                from app.services.online_course_sync import sync_courses
+                report = sync_courses()
+                if not report.ok:
+                    logger.warning('Sintegrum sync finished with %s: %s',
+                                   report.status, report.error)
+            except Exception:
+                logger.exception('sync_sintegrum_courses failed')
+
+
+def retry_online_access_provisioning():
+    """Догнати оплачені замовлення, яким доступ так і не видали.
+
+    Людина заплатила -- мовчазно лишати її без доступу не можна. Один
+    невдалий запис не має зупиняти решту, тому кожне замовлення
+    обробляється окремо.
+    """
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('online_access_retry') as got:
+            if not got:
+                logger.debug('online access retry: another worker holds the lock')
+                return
+            try:
+                from app.services import sintegrum_access
+                stuck = sintegrum_access.pending_provisioning()
+                if not stuck:
+                    return
+                logger.warning('Online access: %d paid orders without access',
+                               len(stuck))
+                for enrollment in stuck:
+                    try:
+                        sintegrum_access.provision_and_notify(enrollment)
+                        logger.info('Online access recovered for %s',
+                                    enrollment.order_id)
+                    except Exception:
+                        logger.exception('Still cannot provision %s',
+                                         enrollment.order_id)
+            except Exception:
+                logger.exception('retry_online_access_provisioning failed')
+
+
+def sintegrum_sync_is_due(now=None):
+    """Чи настав час чергового прогону.
+
+    Період задається в адмінці й може змінитись без перезапуску процесу,
+    тому він перевіряється тут, а не в cron-виразі джоби.
+    """
+    from app.models.site_settings import SiteSettings
+
+    settings = SiteSettings.get()
+    if not getattr(settings, 'sintegrum_enabled', False):
+        return False
+
+    interval = settings.sintegrum_sync_interval_minutes or 60
+    last = settings.sintegrum_last_sync_at
+    if last is None:
+        return True
+
+    now = now or datetime.now(timezone.utc)
+    if last.tzinfo is None:
+        last = last.replace(tzinfo=timezone.utc)
+    return (now - last) >= timedelta(minutes=interval)
 
 
 def _prune_material_prefill(max_age_minutes=60):

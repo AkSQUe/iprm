@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Оплату отримано') }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-course.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <section class="iprm-section" aria-labelledby="online-success-title">
+    <div class="iprm-section__inner iprm-online-checkout">
+
+      <h1 id="online-success-title" class="iprm-section__title">{{ _('Оплату отримано') }}</h1>
+      <p class="iprm-online-checkout__course">{{ course.effective_title }}</p>
+
+      <div class="iprm-online-buy">
+        {% if enrollment.access_is_valid %}
+        <p>{{ _('Доступ відкрито. Посилання на навчання надіслано на вашу пошту.') }}</p>
+        <a href="{{ url_for('online.access', token=enrollment.access_token) }}" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Почати навчання') }}</a>
+        <p class="iprm-online-checkout__hint">
+          {{ _('Посилання діє обмежений час. Якщо воно перестане працювати, отримайте нове в особистому кабінеті.') }}
+        </p>
+        {% else %}
+        <p class="iprm-online-buy__note">
+          {{ _('Оплату зараховано, доступ відкриється за кілька хвилин. Ми надішлемо посилання на пошту.') }}
+        </p>
+        <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--secondary apple-btn--full">{{ _('Особистий кабінет') }}</a>
+        {% endif %}
+      </div>
+
+    </div>
+  </section>
+</div>
+{% endblock %}

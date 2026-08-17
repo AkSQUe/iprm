@@ -15,9 +15,24 @@ logger = logging.getLogger(__name__)
 
 
 def _parse_order_id(order_id):
+    """Числовий id реєстрації з REG-<id>. Онлайн-курси мають свій розбір."""
     if not order_id.startswith('REG-'):
         raise ValueError('Invalid order format')
     return int(order_id.split('-', 1)[1])
+
+
+def _enrollment_from_order(order_id):
+    """Замовлення онлайн-курсу поточного користувача або None."""
+    from app.models.online_enrollment import OnlineEnrollment
+    from app.services.payment_ops import parse_order_id
+
+    kind, enrollment_id = parse_order_id(order_id)
+    if kind != 'enrollment' or enrollment_id is None:
+        return None
+    enrollment = db.session.get(OnlineEnrollment, enrollment_id)
+    if not enrollment or enrollment.user_id != current_user.id:
+        return None
+    return enrollment
 
 
 @payments_bp.route('/liqpay/callback', methods=['POST'])
@@ -47,6 +62,9 @@ def liqpay_callback():
 @limiter.limit('5 per minute')
 def success():
     order_id = request.args.get('order_id', '')
+
+    if order_id.startswith('ONL-'):
+        return _online_success(order_id)
 
     try:
         reg_id = _parse_order_id(order_id)
@@ -84,11 +102,44 @@ def success():
     return redirect(url_for('registration.confirmation', registration_id=reg.id))
 
 
+def _online_success(order_id):
+    """Сторінка «оплату отримано» для онлайн-курсу.
+
+    Як і для заходів, тут можлива гонка з callback-ом: користувач
+    повертається з LiqPay швидше, ніж приходить серверне сповіщення.
+    Тому статус за потреби перепитуємо синхронно.
+    """
+    enrollment = _enrollment_from_order(order_id)
+    if enrollment is None:
+        flash(_('Невідоме замовлення'), 'error')
+        return redirect(url_for('main.index'))
+
+    if enrollment.payment_status != 'paid':
+        try:
+            ops = PaymentOps(get_liqpay_service())
+            ops.check_enrollment_and_update(enrollment)
+            db.session.refresh(enrollment)
+        except Exception:
+            logger.exception('Failed to poll LiqPay for %s on success page', order_id)
+
+    if enrollment.payment_status == 'paid':
+        return render_template('online/success.html', enrollment=enrollment,
+                               course=enrollment.course)
+
+    flash(_('Оплата ще обробляється. Оновіть сторінку через хвилину.'), 'info')
+    return redirect(url_for('online.course_detail', slug=enrollment.course.slug))
+
+
 @payments_bp.route('/failure')
 @login_required
 def failure():
     order_id = request.args.get('order_id', '')
     reg = None
+
+    if order_id.startswith('ONL-'):
+        enrollment = _enrollment_from_order(order_id)
+        return render_template('online/failure.html', enrollment=enrollment,
+                               course=enrollment.course if enrollment else None)
 
     try:
         reg_id = _parse_order_id(order_id)

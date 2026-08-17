@@ -279,9 +279,23 @@ def account():
         referral_pending = referral_service.get_pending_balance('user', current_user.id)
         referral_rewards = referral_service.list_referrer_rewards('user', current_user.id)
 
+    # Куплені онлайн-курси. joinedload -- інакше кожен рядок тягнув би курс
+    # окремим запитом, а кабінет уже й так найважча сторінка кабінету.
+    from sqlalchemy.orm import joinedload
+    from app.models.online_enrollment import OnlineEnrollment
+    online_enrollments = (
+        OnlineEnrollment.query
+        .filter_by(user_id=current_user.id)
+        .filter(OnlineEnrollment.status != 'cancelled')
+        .options(joinedload(OnlineEnrollment.course))
+        .order_by(OnlineEnrollment.created_at.desc())
+        .all()
+    )
+
     return render_template(
         'auth/account.html',
         registrations=registrations,
+        online_enrollments=online_enrollments,
         certificates=certificates,
         certificate_data_complete=bool(profile and profile.is_complete),
         quiz_states=quiz_states,

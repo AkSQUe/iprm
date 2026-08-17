@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Оплата курсу') }} | {{ course.effective_title }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-course.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <section class="iprm-section" aria-labelledby="checkout-title">
+    <div class="iprm-section__inner iprm-online-checkout">
+
+      <h1 id="checkout-title" class="iprm-section__title">{{ _('Оформлення покупки') }}</h1>
+
+      <div class="iprm-online-buy">
+        <p class="iprm-online-checkout__course">{{ course.effective_title }}</p>
+        <p class="iprm-online-buy__price">
+          {{ enrollment.payment_amount|int }} <span class="iprm-online-buy__currency">{{ course.currency }}</span>
+        </p>
+        <p class="iprm-online-checkout__order">{{ _('Замовлення') }} {{ enrollment.order_id }}</p>
+
+        {% if enrollment.payment_status == 'paid' %}
+        <p class="iprm-online-buy__note">{{ _('Замовлення вже оплачено.') }}</p>
+        <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Перейти до навчання') }}</a>
+        {% elif liqpay_data and liqpay_signature %}
+        <form method="POST" action="{{ liqpay_checkout_url }}" accept-charset="utf-8" data-single-submit>
+          <input type="hidden" name="data" value="{{ liqpay_data }}">
+          <input type="hidden" name="signature" value="{{ liqpay_signature }}">
+          <button type="submit" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Оплатити через LiqPay') }}</button>
+        </form>
+        <p class="iprm-online-checkout__note">{{ _('Безпечна оплата через LiqPay — Visa, Mastercard, Google Pay, Apple Pay') }}</p>
+        {% else %}
+        <p class="iprm-online-buy__note">{{ _('Онлайн-оплата тимчасово недоступна. Напишіть нам, і ми допоможемо.') }}</p>
+        <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--secondary apple-btn--full">{{ _('Написати нам') }}</a>
+        {% endif %}
+
+        <p class="iprm-online-checkout__hint">
+          {{ _('Посилання на навчання надійде на пошту одразу після оплати. Воно також буде в особистому кабінеті.') }}
+        </p>
+      </div>
+
+      <p class="iprm-online-checkout__back">
+        <a href="{{ url_for('online.course_detail', slug=course.slug) }}">{{ _('Повернутися до опису курсу') }}</a>
+      </p>
+
+    </div>
+  </section>
+</div>
+{% endblock %}

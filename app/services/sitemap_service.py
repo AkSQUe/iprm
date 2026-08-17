@@ -31,6 +31,7 @@ def _expand_localized(endpoint, priority, freq, lastmod=None, **kwargs):
 STATIC_URLS = [
     ('main.index', '1.0', 'daily'),
     ('courses.course_list', '0.9', 'weekly'),
+    ('online.course_list', '0.8', 'weekly'),
     ('main.labs', '0.8', 'weekly'),
     ('trainers.trainer_list', '0.8', 'weekly'),
     ('blog.index', '0.7', 'weekly'),
@@ -59,6 +60,18 @@ def generate_pages():
             'courses.course_by_slug', '0.8', 'weekly',
             lastmod=course.updated_at.strftime('%Y-%m-%d') if course.updated_at else None,
             slug=course.slug,
+        ))
+
+    from app.models.online_course import OnlineCourse
+    online_courses = OnlineCourse.query.filter_by(
+        is_published=True, is_vanished=False,
+    ).all()
+    for online_course in online_courses:
+        pages.extend(_expand_localized(
+            'online.course_detail', '0.7', 'weekly',
+            lastmod=online_course.updated_at.strftime('%Y-%m-%d')
+            if online_course.updated_at else None,
+            slug=online_course.slug,
         ))
 
     trainers = Trainer.query.filter_by(is_active=True).all()

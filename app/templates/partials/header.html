@@ -9,6 +9,9 @@
     <nav class="iprm-header__nav" id="main-nav" aria-label="{{ _('Головна навігація') }}">
       <ul class="iprm-nav">
         <li><a href="{{ url_for('courses.course_list') }}"{% if active_nav == 'courses' %} class="iprm-nav--active"{% endif %}>{{ _('Курси') }}</a></li>
+        {% if site_settings.show_online_courses %}
+        <li><a href="{{ url_for('online.course_list') }}"{% if active_nav == 'online' %} class="iprm-nav--active"{% endif %}>{{ _('Онлайн-курси') }}</a></li>
+        {% endif %}
         {% if site_settings.show_labs %}
         <li><a href="{{ url_for('main.labs') }}"{% if active_nav == 'labs' %} class="iprm-nav--active"{% endif %}>{{ _('Лабораторії') }}</a></li>
         {% endif %}

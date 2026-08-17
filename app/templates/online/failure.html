@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Оплату не завершено') }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-course.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <section class="iprm-section" aria-labelledby="online-failure-title">
+    <div class="iprm-section__inner iprm-online-checkout">
+
+      <h1 id="online-failure-title" class="iprm-section__title">{{ _('Оплату не завершено') }}</h1>
+
+      <div class="iprm-online-buy">
+        <p>{{ _('Кошти не списано. Замовлення збережено — можна спробувати оплатити ще раз.') }}</p>
+        {% if course %}
+        <a href="{{ url_for('online.checkout', slug=course.slug) }}" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Спробувати ще раз') }}</a>
+        {% else %}
+        <a href="{{ url_for('online.course_list') }}" class="apple-btn apple-btn--primary apple-btn--full">{{ _('До каталогу онлайн-курсів') }}</a>
+        {% endif %}
+        <p class="iprm-online-checkout__hint">
+          {{ _('Якщо помилка повторюється, напишіть нам — розберемось.') }}
+        </p>
+      </div>
+
+    </div>
+  </section>
+</div>
+{% endblock %}

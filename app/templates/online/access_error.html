@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Посилання недоступне') }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-course.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page">
+  <section class="iprm-section" aria-labelledby="access-error-title">
+    <div class="iprm-section__inner iprm-online-checkout">
+
+      <h1 id="access-error-title" class="iprm-section__title">
+        {% if reason == 'expired' %}{{ _('Термін дії посилання минув') }}
+        {% else %}{{ _('Посилання недоступне') }}{% endif %}
+      </h1>
+
+      <div class="iprm-online-buy">
+        {% if reason == 'expired' %}
+        <p>{{ _('Посилання на навчання діє обмежений час. Отримайте нове — це займе секунду.') }}</p>
+        {% if current_user.is_authenticated and enrollment and current_user.id == enrollment.user_id %}
+        <form method="POST" action="{{ url_for('online.reissue_access', enrollment_id=enrollment.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Отримати нове посилання') }}</button>
+        </form>
+        {% else %}
+        <p class="iprm-online-buy__note">{{ _('Увійдіть у свій акаунт, щоб отримати нове посилання.') }}</p>
+        <a href="{{ url_for('auth.login') }}" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Увійти') }}</a>
+        {% endif %}
+
+        {% elif reason == 'unpaid' %}
+        <p>{{ _('Це посилання більше не діє: оплату за курс скасовано або повернуто.') }}</p>
+        <a href="{{ url_for('online.course_list') }}" class="apple-btn apple-btn--secondary apple-btn--full">{{ _('До каталогу онлайн-курсів') }}</a>
+
+        {% elif reason == 'no_target' %}
+        <p>{{ _('Доступ до курсу тимчасово не налаштований. Ми вже знаємо про це — напишіть нам, якщо навчання потрібне терміново.') }}</p>
+        <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--secondary apple-btn--full">{{ _('Написати нам') }}</a>
+
+        {% else %}
+        <p>{{ _('Такого посилання не існує. Перевірте, чи повністю скопійовано адресу з листа.') }}</p>
+        <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--secondary apple-btn--full">{{ _('Особистий кабінет') }}</a>
+        {% endif %}
+      </div>
+
+    </div>
+  </section>
+</div>
+{% endblock %}

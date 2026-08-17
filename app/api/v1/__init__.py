@@ -6,3 +6,4 @@ from app.api.v1 import events  # noqa: E402,F401 — register routes
 from app.api.v1 import perf  # noqa: E402,F401 — register routes
 from app.api.v1 import clients  # noqa: E402,F401  (side-effect route registration)
 from app.api.v1 import specializations  # noqa: E402,F401  (side-effect route registration)
+from app.api.v1 import online_courses  # noqa: E402,F401  (side-effect route registration)

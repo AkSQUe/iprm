@@ -147,6 +147,44 @@
     </div>
   </section>
 
+  <!-- ===== MY ONLINE COURSES ===== -->
+  {% if online_enrollments %}
+  <section class="iprm-section" aria-labelledby="my-online-title">
+    <div class="iprm-section__inner">
+      <h2 id="my-online-title" class="iprm-section__title">{{ _('Мої онлайн-курси') }}</h2>
+
+      <div class="account-online">
+        {% for item in online_enrollments %}
+        <div class="account-online__row apple-reveal">
+          <div class="account-online__body">
+            <h3 class="account-online__title">{{ item.course.effective_title }}</h3>
+            <p class="account-online__meta">
+              {{ item.order_id }}
+              {% if item.payment_amount %} &middot; {{ item.payment_amount|int }} {{ item.course.currency }}{% endif %}
+            </p>
+          </div>
+          <div class="account-online__action">
+            {% if not item.is_paid %}
+              <span class="badge badge--draft">{{ _('Очікує оплати') }}</span>
+              <a href="{{ url_for('online.checkout', slug=item.course.slug) }}" class="apple-btn apple-btn--secondary">{{ _('Оплатити') }}</a>
+            {% elif item.access_is_valid %}
+              <a href="{{ url_for('online.access', token=item.access_token) }}" class="apple-btn apple-btn--primary">{{ _('Почати навчання') }}</a>
+            {% elif item.provisioned_at %}
+              <form method="POST" action="{{ url_for('online.reissue_access', enrollment_id=item.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="apple-btn apple-btn--primary">{{ _('Отримати нове посилання') }}</button>
+              </form>
+            {% else %}
+              <span class="badge badge--pending">{{ _('Доступ готується') }}</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <!-- ===== MY CERTIFICATES ===== -->
   {% if certificates %}
   <section class="iprm-section" aria-labelledby="my-certs-title">

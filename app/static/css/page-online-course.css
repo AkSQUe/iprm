@@ -1,0 +1,165 @@
+/* IPRM -- сторінка онлайн-курсу.
+   Дві колонки: опис і липкий блок купівлі. На вузьких екранах блок
+   купівлі йде першим, бо ціна -- головне, за чим сюди приходять.
+
+   Класи карток (.iprm-online-card*) живуть у page-online-courses.css --
+   блок «інші курси» використовує їх і тут. Шаблон підключає обидва файли
+   окремими <link>: @import змусив би браузер тягнути другий файл лише
+   після розбору першого. */
+
+.iprm-online-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 48px;
+  align-items: start;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.iprm-online-detail__eyebrow {
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--iprm-accent);
+}
+
+.iprm-online-detail__text {
+  color: var(--iprm-text);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+.iprm-online-detail__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.iprm-online-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
+  background: var(--iprm-card-bg);
+}
+
+.iprm-online-fact__label {
+  font-size: 0.8125rem;
+  color: var(--iprm-text-light);
+}
+
+.iprm-online-fact__value {
+  font-weight: 600;
+  color: var(--iprm-text);
+}
+
+.iprm-online-buy {
+  position: sticky;
+  top: calc(var(--iprm-header-h, 64px) + 24px);
+  padding: 28px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  background: var(--iprm-card-bg);
+}
+
+.iprm-online-buy__price {
+  margin: 0 0 16px;
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--iprm-text);
+}
+
+.iprm-online-buy__currency {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--iprm-text-light);
+}
+
+.iprm-online-buy__list {
+  margin: 0 0 24px;
+  padding-left: 20px;
+  color: var(--iprm-text-light);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+
+.iprm-online-buy__note {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: var(--iprm-radius-sm);
+  background: var(--iprm-warning-bg);
+  color: var(--iprm-warning-text);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.apple-btn--full {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+@media (max-width: 960px) {
+  .iprm-online-detail {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  /* Ціна -- головне, за чим приходять: на вузькому екрані вона над описом. */
+  .iprm-online-detail__aside {
+    order: -1;
+  }
+
+  .iprm-online-buy {
+    position: static;
+  }
+}
+
+/* ===== Чекаут: вузька колонка з одним блоком оплати ===== */
+
+.iprm-online-checkout {
+  max-width: 560px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.iprm-online-checkout__course {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--iprm-text);
+}
+
+.iprm-online-checkout__order,
+.iprm-online-checkout__note,
+.iprm-online-checkout__hint {
+  color: var(--iprm-text-light);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.iprm-online-checkout__order {
+  margin: 0 0 20px;
+}
+
+.iprm-online-checkout__note {
+  margin: 12px 0 0;
+}
+
+.iprm-online-checkout__hint {
+  margin: 20px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--iprm-border);
+}
+
+.iprm-online-checkout__back {
+  margin-top: 24px;
+  text-align: center;
+}

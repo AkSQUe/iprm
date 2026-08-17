@@ -181,6 +181,13 @@ def rotation_status(set_at, threshold_key=None,
     if soft_days is None or hard_days is None:
         raise ValueError('rotation_status: pass threshold_key OR soft/hard_days')
 
+    # SQLite віддає DateTime(timezone=True) без tzinfo, і віднімання від
+    # aware-now кидало б TypeError -- тобто сторінка інтеграцій падала б у
+    # 500 через одну лише дату встановлення секрета. Наївне значення в цих
+    # колонках завжди UTC, тож достатньо його так і позначити.
+    if set_at.tzinfo is None:
+        set_at = set_at.replace(tzinfo=timezone.utc)
+
     now = datetime.now(timezone.utc)
     delta = now - set_at
     age_days = int(delta.total_seconds() // 86400)

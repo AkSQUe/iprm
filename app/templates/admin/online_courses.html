@@ -1,0 +1,155 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Онлайн-курси | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Онлайн-курси</span>
+        </div>
+        <h1 class="admin-hero__title">Онлайн-курси</h1>
+        <p class="admin-hero__subtitle">
+          Повний перелік треків із Sintegrum. На сайті показуються лише опубліковані.
+        </p>
+      </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.sintegrum') }}" class="btn-admin btn-admin--secondary">Налаштування інтеграції</a>
+        <form method="POST" action="{{ url_for('admin.sintegrum_sync') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-admin btn-admin--primary">Синхронізувати</button>
+        </form>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    {% if not integration_enabled %}
+    <div class="form-section admin-form__section">
+      <p class="admin-form__section-hint">
+        Інтеграцію вимкнено, тож каталог не оновлюється.
+        <a href="{{ url_for('admin.sintegrum') }}">Увімкнути</a>
+      </p>
+    </div>
+    {% endif %}
+
+    <p class="admin-text-muted">
+      Усього {{ totals.all }}, опубліковано {{ totals.published }}{% if totals.vanished %}, зникло з Sintegrum {{ totals.vanished }}{% endif %}.
+      {% if last_sync_at %}Останнє оновлення {{ last_sync_at.strftime('%d.%m.%Y %H:%M') }}.{% endif %}
+    </p>
+
+    {{ filter_bar(
+         endpoint='admin.online_courses_list',
+         values=filters,
+         search={'name': 'q', 'placeholder': 'Назва або адреса'},
+         fields=[{'name': 'status', 'label': 'Стан', 'placeholder': 'Усі стани', 'options': status_options}],
+       ) }}
+
+    {% if courses %}
+    <div class="admin-table-wrap">
+    <table class="admin-table admin-table--wide">
+      <thead>
+        <tr>
+          <th>Курс</th>
+          <th>ID у Sintegrum</th>
+          <th>Стан у Sintegrum</th>
+          <th>Ціна Sintegrum</th>
+          <th>Наша ціна</th>
+          <th>Готовність</th>
+          <th>На сайті</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in courses %}
+        <tr>
+          <td>
+            <a href="{{ url_for('admin.online_course_edit', course_id=c.id) }}"><strong>{{ c.effective_title }}</strong></a>
+            {% if c.title %}<br><small class="admin-text-muted">Sintegrum: {{ c.remote_name }}</small>{% endif %}
+            <br><small class="admin-text-muted">/{{ c.slug }}</small>
+          </td>
+          <td>{{ c.sintegrum_id }}</td>
+          <td>
+            {% if c.is_vanished %}
+              <span class="badge badge--rejected">Зник</span>
+            {% elif c.is_remote_active %}
+              <span class="badge badge--active">{{ c.remote_status_label }}</span>
+            {% else %}
+              <span class="badge badge--draft">{{ c.remote_status_label }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if c.remote_price is not none %}
+              <span class="admin-text-muted">{{ c.remote_price }}</span>
+            {% else %}
+              <span class="admin-text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if c.price %}<strong>{{ c.price }} {{ c.currency }}</strong>
+            {% else %}<span class="admin-text-muted">не задана</span>{% endif %}
+          </td>
+          <td>
+            {% if c.can_be_published %}
+              <span class="badge badge--active">Готовий</span>
+            {% else %}
+              <span class="badge badge--draft" title="Бракує: {{ c.missing_for_publication|join(', ') }}">Бракує даних</span>
+              <br><small class="admin-text-muted">{{ c.missing_for_publication|join(', ') }}</small>
+            {% endif %}
+          </td>
+          <td>
+            {% if c.is_published %}
+              <span class="badge badge--published">Опубліковано</span>
+            {% else %}
+              <span class="badge badge--draft">Приховано</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="admin-actions-row">
+              <a href="{{ url_for('admin.online_course_edit', course_id=c.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
+              <form method="POST" action="{{ url_for('admin.online_course_toggle_publish', course_id=c.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm"
+                        {% if not c.is_published and not c.can_be_published %}disabled title="Спочатку задайте ціну й посилання на навчання"{% endif %}>
+                  {{ 'Приховати' if c.is_published else 'Опублікувати' }}
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+
+    {% else %}
+    <div class="admin-empty">
+      {{ icon('school', cls='admin-empty__icon') }}
+      <h3 class="admin-empty__title">Курсів немає</h3>
+      <p>
+        {% if filters.q or filters.status %}
+          За цим зрізом нічого не знайшлося. Спробуйте скинути фільтри.
+        {% else %}
+          Каталог порожній. Перевірте налаштування інтеграції і запустіть синхронізацію.
+        {% endif %}
+      </p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

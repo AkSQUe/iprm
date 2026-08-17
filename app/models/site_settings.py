@@ -274,6 +274,46 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
         db.Integer, default=30, nullable=False, server_default='30',
     )
 
+    # Sintegrum -- зовнішня LMS, де фізично відбувається навчання на
+    # онлайн-курсах. ІПРМ дзеркалить її каталог треків, продає доступ і
+    # віддає учаснику посилання на навчання. Ключ -- Bearer-секрет, тому
+    # шифруємо Fernet, як і решту секретів із доступом до чужих систем.
+    # Аліас компанії -- те, що підставляється в шлях /external/{company}/...
+    sintegrum_enabled = db.Column(
+        db.Boolean, default=False, nullable=False, server_default=db.false(),
+    )
+    # Чи показувати розділ онлайн-курсів у публічній навігації. Окремо від
+    # sintegrum_enabled: каталог можна наповнювати й готувати, поки розділ
+    # ще не видно відвідувачам. Той самий підхід, що show_labs/show_clinics.
+    show_online_courses = db.Column(
+        db.Boolean, default=False, nullable=False, server_default=db.false(),
+    )
+    sintegrum_api_base_url = db.Column(
+        db.String(500), default='https://api.sintegrum.com',
+        server_default='https://api.sintegrum.com', nullable=False,
+    )
+    sintegrum_company_alias = db.Column(
+        db.String(100), default='', server_default='', nullable=False,
+    )
+    _sintegrum_api_key_encrypted = db.Column(
+        'sintegrum_api_key', db.String(500), default='', server_default='',
+    )
+    sintegrum_api_key_set_at = db.Column(db.DateTime(timezone=True))
+    # Періодичність фонової синхронізації каталогу.
+    sintegrum_sync_interval_minutes = db.Column(
+        db.Integer, default=60, nullable=False, server_default='60',
+    )
+    # Скільки живе видане учаснику посилання на навчання. Саме воно і є
+    # "тимчасовим": ціль редіректу (посилання реєстрації в Sintegrum)
+    # безстрокова й спільна, тому назовні вона не показується.
+    sintegrum_access_ttl_hours = db.Column(
+        db.Integer, default=72, nullable=False, server_default='72',
+    )
+    # Результат останнього прогону синхронізації -- для сторінки інтеграції.
+    sintegrum_last_sync_at = db.Column(db.DateTime(timezone=True))
+    sintegrum_last_sync_status = db.Column(db.String(20), default='', server_default='')
+    sintegrum_last_sync_error = db.Column(db.Text, default='', server_default='')
+
     # Затримка листа "Реєстрацію підтверджено" для НЕОПЛАЧЕНИХ реєстрацій.
     # Хто платить одразу (підтверджує в застосунку банку), встигав отримати
     # лист "до оплати" ще під час платежу. Пауза дає платежу дійти: якщо за
@@ -306,6 +346,30 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
             self._partner_api_key_encrypted = ''
             return
         self._partner_api_key_encrypted = _get_fernet().encrypt(value.encode()).decode()
+
+    @property
+    def sintegrum_api_key(self):
+        if not self._sintegrum_api_key_encrypted:
+            return ''
+        try:
+            return _get_fernet().decrypt(
+                self._sintegrum_api_key_encrypted.encode()
+            ).decode()
+        except (InvalidToken, Exception):
+            logger.warning('Failed to decrypt sintegrum_api_key')
+            return ''
+
+    @sintegrum_api_key.setter
+    def sintegrum_api_key(self, value):
+        if not value:
+            self._sintegrum_api_key_encrypted = ''
+            return
+        self._sintegrum_api_key_encrypted = _get_fernet().encrypt(value.encode()).decode()
+
+    @property
+    def sintegrum_api_key_is_set(self):
+        """Чи заданий ключ. Для шаблонів -- щоб не тягнути в них сам секрет."""
+        return bool(self._sintegrum_api_key_encrypted)
 
     @property
     def perf_api_key(self):

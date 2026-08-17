@@ -208,6 +208,28 @@ def _check_meta_pixel(settings):
     }
 
 
+def _check_sintegrum(settings):
+    from app.services.sintegrum_client import SintegrumClient, SintegrumConfigError
+    try:
+        client = SintegrumClient.from_settings(settings)
+    except SintegrumConfigError:
+        return {'status': HealthStatus.NOT_CONFIGURED}
+
+    result = client.ping()
+    if result.ok:
+        return {
+            'status': HealthStatus.OK,
+            'detail': f'Каталог читається (аліас {client.company})',
+        }
+    # 401/403 -- ключ або права, а не доступність сервісу. Розрізняємо, бо
+    # лікується це по-різному: перевипустити ключ vs дочекатись Sintegrum.
+    if result.http_status in (401, 403):
+        return {'status': HealthStatus.DOWN, 'error': result.error}
+    if result.http_status == 404:
+        return {'status': HealthStatus.DEGRADED, 'error': result.error}
+    return {'status': HealthStatus.DOWN, 'error': result.error or 'Немає відповіді'}
+
+
 # ----------------------------------------------------------------
 # Реєстр + parallel runner
 # ----------------------------------------------------------------
@@ -219,6 +241,7 @@ CHECKERS = {
     'recaptcha': ('reCAPTCHA v3', _check_recaptcha),
     'google_analytics': ('Google Analytics 4', _check_google_analytics),
     'meta_pixel': ('Meta Pixel', _check_meta_pixel),
+    'sintegrum': ('Sintegrum', _check_sintegrum),
 }
 
 

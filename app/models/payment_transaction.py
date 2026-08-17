@@ -12,10 +12,20 @@ class PaymentTransaction(TimestampMixin, db.Model):
     __tablename__ = 'payment_transactions'
 
     id = db.Column(BigIntPK, primary_key=True)
+    # Рівно одне з двох посилань заповнене: журнал спільний для обох типів
+    # замовлень (REG- -- реєстрація на захід, ONL- -- купівля онлайн-курсу).
+    # Розділяти журнали не можна: звірка платежів має читатися одним
+    # запитом, інакше половина операцій завжди лишатиметься поза звітом.
     registration_id = db.Column(
         db.BigInteger,
         db.ForeignKey('event_registrations.id', ondelete='CASCADE'),
-        nullable=False,
+        nullable=True,
+        index=True,
+    )
+    enrollment_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('online_enrollments.id', ondelete='CASCADE'),
+        nullable=True,
         index=True,
     )
     payment_id = db.Column(db.String(255))
@@ -39,10 +49,19 @@ class PaymentTransaction(TimestampMixin, db.Model):
             "mapped_status IN ('unpaid', 'pending', 'paid', 'refunded')",
             name='ck_payment_transactions_mapped_status',
         ),
+        # Рядок без жодного власника -- сирота, якої не знайде жодна звірка;
+        # рядок з обома -- операція, яку порахують двічі. Заборонено і те, і те.
+        db.CheckConstraint(
+            '(registration_id IS NULL) <> (enrollment_id IS NULL)',
+            name='ck_payment_transactions_single_owner',
+        ),
     )
 
     registration = db.relationship(
         'EventRegistration', backref=db.backref('payment_transactions', lazy='dynamic'),
+    )
+    enrollment = db.relationship(
+        'OnlineEnrollment', backref=db.backref('payment_transactions', lazy='dynamic'),
     )
 
     SOURCES = [

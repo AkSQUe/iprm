@@ -1,0 +1,186 @@
+{% extends "admin/_integration_page.html" %}
+
+{% block title %}Sintegrum | ІПРМ{% endblock %}
+{% block integration_title %}Sintegrum{% endblock %}
+{% block integration_subtitle_lead %}Зовнішня платформа навчання: джерело каталогу онлайн-курсів{% endblock %}
+
+{% block integration_status_badges %}
+  {% if cfg.enabled and cfg.is_configured %}
+    <span class="badge badge--active">Увімкнено</span>
+  {% elif cfg.is_configured %}
+    <span class="badge badge--published">Налаштовано, вимкнено</span>
+  {% else %}
+    <span class="badge badge--draft">Не налаштовано</span>
+  {% endif %}
+{% endblock %}
+
+{% block integration_readonly_rows %}
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Статус</span>
+    <span class="admin-readonly-config__value">
+      {% if cfg.enabled %}Увімкнено{% else %}Вимкнено{% endif %}
+    </span>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Базовий URL</span>
+    <code class="admin-readonly-config__value">{{ cfg.base_url or 'Не вказано' }}</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Аліас компанії</span>
+    <code class="admin-readonly-config__value">{{ cfg.company_alias or 'Не вказано' }}</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Ключ API</span>
+    <span class="admin-readonly-config__value">
+      {% if cfg.api_key_is_set %}
+        <code>{{ cfg.api_key_masked }}</code>
+        {% if cfg.api_key_set_at %}
+          <span class="form-hint">встановлено {{ cfg.api_key_set_at.strftime('%d.%m.%Y') }}</span>
+        {% endif %}
+      {% else %}
+        Не встановлено
+      {% endif %}
+    </span>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Синхронізація</span>
+    <span class="admin-readonly-config__value">кожні {{ cfg.sync_interval }} хв</span>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Термін дії посилання</span>
+    <span class="admin-readonly-config__value">{{ cfg.access_ttl }} год</span>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Останній прогін</span>
+    <span class="admin-readonly-config__value">
+      {% if cfg.last_sync_at %}
+        {{ cfg.last_sync_at.strftime('%d.%m.%Y %H:%M') }}
+        {% if cfg.last_sync_status == 'ok' %}
+          <span class="badge badge--active">успішно</span>
+        {% elif cfg.last_sync_status == 'disabled' %}
+          <span class="badge badge--draft">вимкнено</span>
+        {% else %}
+          <span class="badge badge--rejected">помилка</span>
+        {% endif %}
+      {% else %}
+        Ще не запускалась
+      {% endif %}
+    </span>
+  </div>
+  {% if cfg.last_sync_error %}
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Текст помилки</span>
+    <span class="admin-readonly-config__value">{{ cfg.last_sync_error }}</span>
+  </div>
+  {% endif %}
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Курсів у дзеркалі</span>
+    <span class="admin-readonly-config__value">
+      {{ cfg.courses_total }} усього, {{ cfg.courses_published }} опубліковано
+      {%- if cfg.courses_vanished %}, {{ cfg.courses_vanished }} зникло{% endif %}
+      <a href="{{ url_for('admin.online_courses_list') }}">Керувати курсами</a>
+    </span>
+  </div>
+{% endblock %}
+
+{% block integration_readonly_hint %}
+<div class="admin-integration-test">
+  <form method="POST" action="{{ url_for('admin.sintegrum_test') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn-admin btn-admin--secondary">Перевірити зв'язок</button>
+  </form>
+  <form method="POST" action="{{ url_for('admin.sintegrum_sync') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn-admin btn-admin--secondary"
+            data-confirm="Запустити синхронізацію каталогу зараз?"
+            data-confirm-ok="Запустити">Синхронізувати зараз</button>
+  </form>
+</div>
+<p class="form-hint">
+  Перевірка зв'язку працює навіть при вимкненій інтеграції, тож ключ можна
+  перевірити до її увімкнення.
+</p>
+{% endblock %}
+
+{% block integration_edit_title %}Налаштування{% endblock %}
+{% block integration_edit_form %}
+<form method="POST" action="{{ url_for('admin.sintegrum_save') }}" class="admin-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="admin-form__grid">
+    <div class="form-group">
+      <label for="base_url">Базовий URL API <span class="required">*</span></label>
+      <input type="url" name="base_url" id="base_url" class="form-input"
+             value="{{ cfg.base_url }}" placeholder="https://api.sintegrum.com"
+             autocomplete="off">
+      <p class="form-hint">Лише https: ключ їде в заголовку кожного запиту.</p>
+    </div>
+    <div class="form-group">
+      <label for="company_alias">Аліас компанії <span class="required">*</span></label>
+      <input type="text" name="company_alias" id="company_alias" class="form-input"
+             value="{{ cfg.company_alias }}" placeholder="multimededu"
+             autocomplete="off">
+      <p class="form-hint">Піддомен вашого кабінету: <code>&lt;аліас&gt;.sintegrum.com</code>.</p>
+    </div>
+  </div>
+
+  <div class="admin-form__grid">
+    <div class="form-group">
+      <label for="api_key">Ключ API <span class="required">*</span></label>
+      <input type="password" name="api_key" id="api_key" class="form-input"
+             placeholder="{% if cfg.api_key_is_set %}залиште пустим, щоб не змінювати{% else %}вставте ключ{% endif %}"
+             autocomplete="off">
+      <p class="form-hint">Зберігається зашифрованим у БД (Fernet/SECRET_KEY) і назад не показується.</p>
+    </div>
+    <div class="form-group">
+      <div class="form-checkbox form-checkbox--row-align">
+        <input type="checkbox" name="enabled" id="enabled" {% if cfg.enabled %}checked{% endif %}>
+        <label for="enabled">Увімкнути інтеграцію</label>
+      </div>
+      <p class="form-hint">Вимкнена інтеграція зупиняє синхронізацію. Уже опубліковані курси лишаються на сайті.</p>
+    </div>
+  </div>
+
+  <div class="admin-form__grid">
+    <div class="form-group">
+      <div class="form-checkbox form-checkbox--row-align">
+        <input type="checkbox" name="show_section" id="show_section" {% if cfg.show_section %}checked{% endif %}>
+        <label for="show_section">Показувати розділ «Онлайн-курси» на сайті</label>
+      </div>
+      <p class="form-hint">Пункт меню й каталог. Можна тримати вимкненим, поки готуєте картки курсів.</p>
+    </div>
+    <div class="form-group">
+      <label for="sync_interval">Інтервал синхронізації, хв</label>
+      <input type="number" name="sync_interval" id="sync_interval" class="form-input"
+             min="5" max="1440" step="5" value="{{ cfg.sync_interval }}">
+      <p class="form-hint">Каталог змінюється рідко: 60 хвилин вистачає.</p>
+    </div>
+    <div class="form-group">
+      <label for="access_ttl">Термін дії посилання на навчання, год</label>
+      <input type="number" name="access_ttl" id="access_ttl" class="form-input"
+             min="1" max="720" step="1" value="{{ cfg.access_ttl }}">
+      <p class="form-hint">Скільки живе видане учаснику посилання. Протерміноване він перевипускає сам у кабінеті.</p>
+    </div>
+  </div>
+
+  <div class="admin-form__actions">
+    <button type="submit" class="btn-admin btn-admin--primary"
+            data-confirm="Зберегти налаштування Sintegrum?" data-confirm-ok="Зберегти">Зберегти налаштування</button>
+  </div>
+</form>
+{% endblock %}
+
+{% block integration_extra %}
+<div class="form-section admin-form__section">
+  <h3 class="admin-form__section-title">Як це працює</h3>
+  <ol>
+    <li>Синхронізація тягне перелік треків із Sintegrum у дзеркало на сайті. Нові треки з'являються прихованими.</li>
+    <li>У кабінеті Sintegrum ви генеруєте посилання реєстрації на трек і вставляєте його в картку курсу.</li>
+    <li>Задаєте ціну продажу і публікуєте курс. Без посилання й ціни публікація недоступна.</li>
+    <li>Після оплати учасник отримує тимчасове посилання, яке веде на реєстрацію в Sintegrum.</li>
+  </ol>
+  <p class="form-hint">
+    Ціна з Sintegrum показується довідково: продаж іде за ціною, вказаною в картці курсу на цьому сайті.
+  </p>
+</div>
+{% endblock %}

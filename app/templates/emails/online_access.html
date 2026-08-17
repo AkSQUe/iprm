@@ -1,0 +1,43 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row %}
+
+{% block title %}{{ _('Доступ до курсу') }}{% endblock %}
+
+{% block preview_text %}{% trans title=course.effective_title %}Доступ відкрито: {{ title }}{% endtrans %}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
+        {{ _('Доступ до курсу відкрито') }}
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+        {{ user.first_name or _('Шановний учаснику') }}, {{ _('оплату отримано. Нижче — посилання, за яким ви потрапите на навчання.') }}
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">{{ course.effective_title }}</p>
+                {% if course.duration_hours %}
+                {{ detail_row(_('Тривалість'), course.duration_hours ~ ' ' ~ _('год')) }}
+                {% endif %}
+                {% if enrollment.payment_amount %}
+                {{ detail_row(_('Оплачено'), enrollment.payment_amount | money) }}
+                {% endif %}
+                {{ detail_row(_('Замовлення'), enrollment.order_id) }}
+            </td>
+        </tr>
+    </table>
+
+    {{ button_primary(_('Почати навчання'), access_url) }}
+
+    <p class="mobile-text" style="margin: 24px 0 0 0; font-size: 14px; color: #6B7280; line-height: 1.6;">
+        {{ _('Посилання діє обмежений час і призначене особисто вам. Якщо воно перестане працювати, отримайте нове в особистому кабінеті — курс залишається за вами.') }}
+    </p>
+
+    {% if account_url %}
+    <p class="mobile-text" style="margin: 16px 0 0 0; font-size: 14px; color: #6B7280; line-height: 1.6;">
+        <a href="{{ account_url }}" style="color: #2563EB;">{{ _('Мої онлайн-курси') }}</a>
+    </p>
+    {% endif %}
+{% endblock %}

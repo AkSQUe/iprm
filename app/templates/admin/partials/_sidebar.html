@@ -14,6 +14,10 @@
         {{ icon('event') }}
         Розклад
       </a>
+      <a href="{{ url_for('admin.online_courses_list') }}" class="admin-sidebar__link{% if ep in ('admin.online_courses_list', 'admin.online_course_edit', 'admin.online_course_toggle_publish') %} admin-sidebar__link--active{% endif %}">
+        {{ icon('school') }}
+        Онлайн-курси
+      </a>
       <a href="{{ url_for('admin.cities_list') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.cities_list', 'admin.cities_save', 'admin.cities_add', 'admin.cities_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('table_view') }}
         Довідник локацій

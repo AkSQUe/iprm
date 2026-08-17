@@ -100,6 +100,9 @@ def create_app(config_name=None):
     from app.courses import courses_bp
     app.register_blueprint(courses_bp)
 
+    from app.online import online_bp
+    app.register_blueprint(online_bp)
+
     from app.blog import blog_bp
     app.register_blueprint(blog_bp)
 

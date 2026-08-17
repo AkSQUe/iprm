@@ -291,3 +291,53 @@ def _registration_url(instance) -> str | None:
 
 def _detail_url(course) -> str:
     return url_for('courses.course_by_slug', slug=course.slug, _external=True)
+
+
+# ---------------------------------------------------------------------------
+# Онлайн-курси (каталог Sintegrum, дзеркало в online_courses)
+# ---------------------------------------------------------------------------
+
+# БІЛИЙ список полів -- саме білий, а не «to_dict мінус виключення».
+# Чорний список протікає при кожному новому полі моделі: додав колонку --
+# і вона поїхала партнеру, поки хтось не помітить. Тут навпаки: нове поле
+# треба явно внести сюди, інакше назовні воно не потрапить.
+#
+# Категорично не віддаємо:
+#   access_url    -- фактично ключ від навчання;
+#   sintegrum_id  -- внутрішній ідентифікатор чужої системи;
+#   remote_*      -- сира видача Sintegrum, партнеру вона ні до чого.
+ONLINE_COURSE_PUBLIC_FIELDS = (
+    'id', 'slug', 'title', 'short_description', 'description',
+    'price', 'currency', 'duration_hours', 'cpd_points',
+    'image', 'public_url', 'updated_at',
+)
+
+
+def serialize_online_course(course, lang=None) -> dict:
+    """Картка онлайн-курсу для партнера.
+
+    Тексти беруться в мові партнерського запиту через TranslatableMixin.t,
+    щоб MM Medic не перекладав їх у себе вдруге.
+    """
+    data = {
+        'id': course.id,
+        'slug': course.slug,
+        'title': course.t('title', lang) or course.remote_name,
+        'short_description': course.t('short_description', lang) or None,
+        'description': course.t('description', lang) or course.remote_description,
+        'price': float(course.price) if course.price is not None else None,
+        'currency': course.currency,
+        'duration_hours': course.duration_hours,
+        'cpd_points': course.cpd_points,
+        'image': course.card_src or course.hero_src,
+        'public_url': url_for('online.course_detail', slug=course.slug,
+                              _external=True),
+        'updated_at': (ensure_utc(course.updated_at).isoformat()
+                       if course.updated_at else None),
+    }
+    # Захист від випадкового розширення: якщо хтось додасть ключ вище й
+    # забуде внести його у білий список -- впаде тут, а не в проді.
+    assert set(data) == set(ONLINE_COURSE_PUBLIC_FIELDS), (
+        'serialize_online_course: поля розійшлися з ONLINE_COURSE_PUBLIC_FIELDS'
+    )
+    return data

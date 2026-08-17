@@ -183,6 +183,7 @@ def integrations():
         recaptcha_status = {'is_configured': False, 'is_active': False, 'error': True}
         google_oauth_status = {'is_configured': False, 'enabled': False, 'error': True}
         apple_status = {'is_configured': False, 'enabled': False, 'error': True}
+        sintegrum_status = {'is_configured': False, 'enabled': False, 'error': True}
     else:
         liqpay_res, liqpay_err = _safe(lambda: get_liqpay_service(settings=settings), None)
         liqpay_status = {
@@ -243,6 +244,25 @@ def integrations():
                 is_secret_present=bool(settings.apple_private_key),
             ),
         }
+        # Через _safe, як і решта: контракт хабу -- збійна інтеграція дає
+        # бейдж "статус недоступний", а не 500 на всю сторінку.
+        sintegrum_rotation, sintegrum_err = _safe(
+            lambda: rotation_status(
+                settings.sintegrum_api_key_set_at,
+                soft_days=365, hard_days=730,
+                is_secret_present=settings.sintegrum_api_key_is_set,
+            ),
+            None,
+        )
+        sintegrum_status = {
+            'is_configured': bool(
+                settings.sintegrum_api_key_is_set
+                and (settings.sintegrum_company_alias or '').strip()
+            ),
+            'enabled': settings.sintegrum_enabled,
+            'error': sintegrum_err,
+            'rotation': sintegrum_rotation,
+        }
 
     return render_template(
         'admin/integrations.html',
@@ -252,4 +272,5 @@ def integrations():
         recaptcha_status=recaptcha_status,
         google_oauth_status=google_oauth_status,
         apple_status=apple_status,
+        sintegrum_status=sintegrum_status,
     )
