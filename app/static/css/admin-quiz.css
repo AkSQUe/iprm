@@ -1,0 +1,195 @@
+/* Адмінка тестування: реєстр тестів (admin/quizzes.html), білдер банку питань
+   (admin/quiz_edit.html) і результати групи (admin/quiz_results.html).
+
+   Кольори -- лише через змінні дизайн-системи, тож тёмна тема
+   (data-theme="dark") підхоплюється без окремих правил. */
+
+/* ========== РЕЄСТР ========== */
+
+/* «Курсів без даних БПР» -- бурштиновим, а не .admin-stat-card--warning: той у
+   дизайн-системі синій (той самий токен, що й бейдж «Опубліковано»), і на
+   увагу не спрацював би. Те саме рішення, що в admin-cities.css. */
+.quiz-stat--alert {
+  border-color: var(--iprm-warning-border);
+}
+
+.quiz-stat--alert .admin-stat-card__value {
+  color: var(--iprm-warning);
+}
+
+.quiz-muted {
+  color: var(--iprm-text-light);
+}
+
+/* Перевизначення на проведеннях -- вкладеним списком під назвою курсу:
+   вони належать курсу, а не стоять поруч із ним. */
+.quiz-overrides {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0 0 0 14px;
+  border-left: 2px solid var(--iprm-divider);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.quiz-errors {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+/* ========== ПОПЕРЕДЖЕННЯ ========== */
+
+/* Власний клас, а не готовий компонент: універсального callout-а в адмінці
+   немає, попередження тут ліплять з .form-section (див. cities-panel). Ліва
+   смуга кольором статусу -- єдина відмінність від звичайної секції. */
+.quiz-callout {
+  border-left: 3px solid var(--iprm-border);
+}
+
+.quiz-callout--warning {
+  border-left-color: var(--iprm-warning);
+  background: var(--iprm-warning-bg);
+}
+
+.quiz-callout--danger {
+  border-left-color: var(--iprm-error);
+  background: var(--iprm-error-bg);
+}
+
+/* ========== БІЛДЕР ПИТАНЬ ========== */
+
+/* Лічильник у заголовку секції: банк мусить бути більшим за спробу, тож
+   кількість -- перше, що адмін хоче бачити. */
+.quiz-bank-count {
+  display: inline-block;
+  min-width: 26px;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.admin-quiz-question {
+  position: relative;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
+  background: var(--iprm-card-bg);
+}
+
+.admin-quiz-question__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Номер питання -- порядковий, перемальовується JS при видаленні. */
+.admin-quiz-question__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--iprm-accent);
+  color: var(--iprm-on-accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* ========== ВАРІАНТИ ВІДПОВІДЕЙ ========== */
+
+/* Сітка 2x2 на широких екранах: чотири варіанти читаються як блок, а не як
+   довгий стовпчик. На вузьких -- один стовпчик. */
+.admin-quiz-answers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.admin-quiz-answer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Радіо «правильна» помітно збільшене: це головний клік у питанні, і
+   промахнутись по ньому означає зберегти тест з неправильною відповіддю. */
+.admin-quiz-answer__radio {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.admin-quiz-answer__radio input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--iprm-success);
+  cursor: pointer;
+}
+
+/* Обране поле підсвічуємо: інакше з чотирьох однакових рядків неочевидно,
+   який саме позначений правильним. :has() підтримують усі цільові браузери;
+   де ні -- лишається сама радіокнопка. */
+.admin-quiz-answer:has(input:checked) .form-input {
+  border-color: var(--iprm-success);
+}
+
+.admin-quiz-answer .form-input {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 700px) {
+  .admin-quiz-answers {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========== РЕЗУЛЬТАТИ ГРУПИ ========== */
+
+.quiz-score {
+  font-weight: 700;
+}
+
+.quiz-score--pass {
+  color: var(--iprm-success);
+}
+
+.quiz-score--fail {
+  color: var(--iprm-error);
+}
+
+/* Історія спроб у клітинці -- дрібним, бо головне тут «склав / не склав». */
+.quiz-attempt-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--iprm-text-light);
+}
+
+/* Форма «додати спроби» тримається в одному рядку з кнопкою. */
+.quiz-unlock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quiz-unlock__input {
+  width: 60px;
+  text-align: center;
+}

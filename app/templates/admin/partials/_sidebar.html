@@ -18,6 +18,10 @@
         {{ icon('table_view') }}
         Довідник локацій
       </a>
+      <a href="{{ url_for('admin.quizzes_list') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.quizzes_list', 'admin.course_quiz_edit', 'admin.instance_quiz_edit', 'admin.quiz_delete', 'admin.instance_quiz_results') %} admin-sidebar__link--active{% endif %}">
+        {{ icon('quiz') }}
+        Тестування
+      </a>
       <a href="{{ url_for('admin.course_requests_list') }}" class="admin-sidebar__link{% if ep in ('admin.course_requests_list', 'admin.course_request_edit', 'admin.course_request_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('inbox') }}
         Запити на курси

@@ -1,0 +1,144 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Тестування | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-quiz.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Курси</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Тестування</span>
+        </div>
+        <h1 class="admin-hero__title">Тестування</h1>
+        <p class="admin-hero__subtitle">
+          Учасник отримує сертифікат з балами БПР після заповненої анкети МОЗ №725
+          і складеного тесту. Питання живуть на курсі; окреме проведення може мати
+          власний набір.
+        </p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <div class="admin-stat-cards admin-stat-cards--3">
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ rows | selectattr('quiz') | list | length }}</span>
+        <span class="admin-stat-card__label">Курсів з тестом</span>
+      </div>
+      <div class="admin-stat-card{{ ' admin-stat-card--success' if total_active }}">
+        <span class="admin-stat-card__value">{{ total_active }}</span>
+        <span class="admin-stat-card__label">Увімкнених тестів</span>
+      </div>
+      {% set blocked = rows | selectattr('bpr_missing') | list | length %}
+      <div class="admin-stat-card{{ ' quiz-stat--alert' if blocked }}">
+        <span class="admin-stat-card__value">{{ blocked }}</span>
+        <span class="admin-stat-card__label">Курсів без даних БПР</span>
+      </div>
+    </div>
+
+    {{ filter_bar(
+         endpoint='admin.quizzes_list',
+         values=filters,
+         search={'name': 'q', 'placeholder': 'Пошук за назвою або slug'},
+    ) }}
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Курс</th>
+            <th>Питань у банку</th>
+            <th>Налаштування</th>
+            <th>Стан</th>
+            <th>Дії</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>
+              <a href="{{ url_for('admin.course_edit', course_id=row.course.id) }}">{{ row.course.title }}</a>
+              {% if row.bpr_missing %}
+              <span class="badge badge--danger" title="Без номера заходу БПР і балів тест не відкриється учасникам">
+                немає даних БПР
+              </span>
+              {% endif %}
+              {% if row.overrides %}
+              <ul class="quiz-overrides">
+                {% for item in row.overrides %}
+                <li>
+                  <a href="{{ url_for('admin.instance_quiz_edit', instance_id=item.instance.id) }}">
+                    проведення {{ item.instance.start_date.strftime('%d.%m.%Y') if item.instance.start_date else '---' }}
+                  </a>
+                  <span class="badge {{ 'badge--active' if item.quiz.is_active else 'badge--draft' }}">
+                    {{ 'увімкнено' if item.quiz.is_active else 'чернетка' }}
+                  </span>
+                </li>
+                {% endfor %}
+              </ul>
+              {% endif %}
+            </td>
+            <td>
+              {% if row.quiz %}{{ row.quiz.bank_size }}{% else %}<span class="quiz-muted">---</span>{% endif %}
+            </td>
+            <td>
+              {% if row.quiz %}
+              {{ row.quiz.passing_score }} з {{ row.quiz.questions_per_attempt }},
+              спроб: {{ row.quiz.max_attempts }}
+              {% else %}
+              <span class="quiz-muted">тесту немає</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if not row.quiz %}
+              <span class="badge badge--draft">не створено</span>
+              {% elif not row.quiz.is_active %}
+              <span class="badge badge--draft">вимкнено</span>
+              {% elif not row.quiz.is_ready %}
+              <span class="badge badge--danger" title="Банк недостатній або є зіпсовані питання">не готовий</span>
+              {% else %}
+              <span class="badge badge--active">працює</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('admin.course_quiz_edit', course_id=row.course.id) }}"
+                 class="btn-admin btn-admin--sm btn-admin--secondary">
+                {{ 'Редагувати' if row.quiz else 'Створити' }}
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if not rows %}
+    <div class="admin-empty">
+      {{ icon('quiz', cls='admin-empty__icon') }}
+      {% if filters.q %}
+      <h3 class="admin-empty__title">Нічого не знайдено</h3>
+      <p>Спробуйте змінити пошук або <a href="{{ url_for('admin.quizzes_list') }}">скинути його</a></p>
+      {% else %}
+      <h3 class="admin-empty__title">Курсів ще немає</h3>
+      <p>Тест створюється в картці курсу</p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

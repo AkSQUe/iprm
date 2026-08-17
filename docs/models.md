@@ -251,6 +251,77 @@ WHERE `status = 'applied'`) гарантує рівно одне активне 
 уже пішов у реєстр БПР і на руки людині, а раніше він мовчки змінювався, і PDF
 під старим номером лишався на диску сиротою.
 
+## CourseQuiz / QuizQuestion / QuizAttempt
+
+Тестування учасників після заходу. Повний опис потоку --
+[docs/plan-testing.md](plan-testing.md).
+
+**`course_quizzes`** -- налаштування тесту. Прив'язка XOR: або курс (базовий
+набір, спільний для всіх проведень), або конкретне проведення
+(перевизначення).
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ |
+| `course_id` | FK -> courses.id (CASCADE), nullable | Тест курсу |
+| `instance_id` | FK -> course_instances.id (CASCADE), nullable | Перевизначення для проведення |
+| `questions_per_attempt` | Integer, default 10 | Скільки питань тягнемо з банку |
+| `passing_score` | Integer, default 8 | Скільки правильних потрібно (кількість, не відсоток) |
+| `max_attempts` | Integer, default 3 | Ліміт спроб |
+| `shuffle_answers` | Boolean, default True | Перемішувати варіанти |
+| `is_active` | Boolean, default **False** | Чернетка, поки банк не готовий |
+
+Обмеження: `ck_course_quizzes_owner` (рівно одне з course_id/instance_id),
+`ck_course_quizzes_passing_within` (`passing_score <= questions_per_attempt`),
+плюс позитивність налаштувань. Partial-unique
+`uq_course_quizzes_course`/`_instance` -- один тест на курс і один на
+проведення.
+
+Властивості: `bank_size`, `active_questions`, `is_ready` (банк достатній І всі
+питання коректні -- окремо від `is_active`, бо адмін міг увімкнути тест і потім
+зіпсувати питання).
+
+**`quiz_questions`** -- банк питань.
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `quiz_id` | FK -> course_quizzes.id (CASCADE) | Тест |
+| `text` | Text | Питання |
+| `answers` | JSON | `[{"text": str, "is_correct": bool}, ...]` -- рівно 4, рівно один правильний |
+| `sort_order` | Integer | Порядок у банку |
+| `is_active` | Boolean, default True | Вивести з банку, не втрачаючи історії |
+| `translations` | JSON | `TranslatableMixin`: `('text', 'answers')` |
+
+Варіанти -- JSON, а не окрема таблиця: прецедент `program_blocks.items` і
+`courses.faq`, а механізм перекладів це вже вміє (`walk_leaves` обходить лише
+str-листя, тож булеве `is_correct` ігнорується сам собою). Ключ тексту мусить
+називатися саме `text` -- ключі з `TECHNICAL_KEYS` (`code`, `type`, `id`) з
+перекладу виключені. `answer_texts()` віддає ЛИШЕ тексти: правильність назовні
+не йде ніколи.
+
+**`quiz_attempts`** -- спроби.
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `registration_id` | FK -> event_registrations.id (CASCADE) | Реєстрація |
+| `user_id` | FK -> users.id (CASCADE) | Денормалізовано (як у Certificate) |
+| `quiz_id` | FK -> course_quizzes.id (**SET NULL**) | Видалений тест не стирає історію |
+| `attempt_number` | Integer | 1, 2, 3...; unique разом з registration_id |
+| `question_ids` | JSON | Питання спроби у зафіксованому порядку |
+| `answer_order` | JSON | `{"<question_id>": [перемішані індекси]}` |
+| `submitted_answers` | JSON | `{"<question_id>": позиція}` -- пишеться інкрементально |
+| `score` / `total` / `passing_score` | Integer | Результат і знімки параметрів спроби |
+| `passed` | Boolean | Склав |
+| `started_at` / `submitted_at` | DateTime (UTC) | `submitted_at IS NULL` -- спроба в процесі |
+
+Набір питань і порядок варіантів фіксуються на старті: інакше кожне
+перезавантаження перемішувало б тест, а спроб лише три. Відповіді пишуться
+інкрементально, тож закрита вкладка не з'їдає спробу.
+
+Поля в `EventRegistration`: `quiz_passed_at` (денормалізація для лістингів і
+гейта) і `quiz_extra_attempts` (додаткові спроби від адміна -- числом, а не
+прапорцем, щоб можна було видати рівно одну).
+
 ## Clinic
 
 | Поле | Тип | Опис |

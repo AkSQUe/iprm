@@ -954,6 +954,10 @@
   grid-template-columns: repeat(4, 1fr);
 }
 
+.admin-stat-cards--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .admin-stat-card {
   background: var(--iprm-card-bg);
   border-radius: var(--iprm-radius-sm);

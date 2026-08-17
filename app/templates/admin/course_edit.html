@@ -30,6 +30,7 @@
       {% if course %}
       <a href="{{ url_for('admin.course_tariffs', course_id=course.id) }}" class="btn-admin btn-admin--secondary">{{ icon('bolt') }} Тарифи ({{ course.default_tariffs | length }})</a>
       <a href="{{ url_for('admin.instance_create', course_id=course.id) }}" class="btn-admin btn-admin--secondary">{{ icon('event_available') }} + Проведення</a>
+      <a href="{{ url_for('admin.course_quiz_edit', course_id=course.id) }}" class="btn-admin btn-admin--secondary">{{ icon('quiz') }} Тест</a>
       <a href="{{ url_for('admin.translations_edit', entity='course', obj_id=course.id) }}" class="btn-admin btn-admin--secondary">Переклади</a>
       <a href="{{ url_for('admin.translations_export_object', entity='course', obj_id=course.id) }}" class="btn-admin btn-admin--secondary" title="Файл перекладів лише цього об'єкта">{{ icon('download') }} Переклади XLSX</a>
       {% endif %}

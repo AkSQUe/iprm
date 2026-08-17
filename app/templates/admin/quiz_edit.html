@@ -1,0 +1,197 @@
+{% extends "admin/base_admin.html" %}
+{% import 'admin/partials/_i18n_tabs.html' as i18n %}
+
+{% block title %}Тест: {{ course.title if course else 'захід' }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-i18n-tabs.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-quiz.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.quizzes_list') }}" class="admin-breadcrumb__link">Тестування</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">{{ course.title if course else 'Захід' }}</span>
+        </div>
+        <h1 class="admin-hero__title">
+          {% if instance %}
+            Тест проведення {{ instance.start_date.strftime('%d.%m.%Y') if instance.start_date else '' }}
+          {% else %}
+            Тест курсу
+          {% endif %}
+        </h1>
+        <p class="admin-hero__subtitle">
+          {% if instance %}
+            Перевизначення для одного проведення. Поки він вимкнений, група складає
+            тест курсу.
+          {% else %}
+            Один набір на курс -- усі проведення тестують ним.
+          {% endif %}
+        </p>
+      </div>
+      <div class="admin-hero__actions">
+        {% if instance %}
+        <a href="{{ url_for('admin.instance_quiz_results', instance_id=instance.id) }}"
+           class="btn-admin btn-admin--secondary">Результати групи</a>
+        <a href="{{ url_for('admin.instance_edit', instance_id=instance.id) }}"
+           class="btn-admin btn-admin--ghost">До проведення</a>
+        {% else %}
+        <a href="{{ url_for('admin.course_edit', course_id=course.id) }}"
+           class="btn-admin btn-admin--ghost">До курсу</a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    {% if bpr_ready is false %}
+    <div class="form-section quiz-callout quiz-callout--danger">
+      <strong>Тест не відкриється учасникам.</strong>
+      Для цього курсу не заповнено «Реєстраційний номер заходу БПР» або бали БПР.
+      Без них сертифікат неможливо видати, тож учасник склав би тест і отримав
+      помилку. Заповніть у
+      <a href="{{ url_for('admin.course_edit', course_id=course.id) }}">картці курсу</a>.
+    </div>
+    {% endif %}
+
+    {% if validation_errors %}
+    <div class="form-section quiz-callout quiz-callout--warning">
+      <strong>Тест ще не готовий:</strong>
+      <ul class="quiz-errors">
+        {% for error in validation_errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="admin-form" id="quiz-form">
+      {{ form.hidden_tag() }}
+      {% include 'admin/partials/_form_errors.html' %}
+
+      {{ i18n.tabs() }}
+
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">Налаштування</h3>
+        <div class="admin-form__grid">
+          <div class="form-group">
+            <label for="questions_per_attempt">{{ form.questions_per_attempt.label.text }}</label>
+            {{ form.questions_per_attempt(class="form-input", id="questions_per_attempt") }}
+            <div class="form-hint">{{ form.questions_per_attempt.description }}</div>
+          </div>
+          <div class="form-group">
+            <label for="passing_score">{{ form.passing_score.label.text }}</label>
+            {{ form.passing_score(class="form-input", id="passing_score") }}
+            <div class="form-hint">{{ form.passing_score.description }}</div>
+          </div>
+          <div class="form-group">
+            <label for="max_attempts">{{ form.max_attempts.label.text }}</label>
+            {{ form.max_attempts(class="form-input", id="max_attempts") }}
+            <div class="form-hint">{{ form.max_attempts.description }}</div>
+          </div>
+          <div class="form-group admin-form__full">
+            <label class="form-checkbox">
+              {{ form.shuffle_answers(id="shuffle_answers") }}
+              <span>{{ form.shuffle_answers.label.text }}</span>
+            </label>
+            <div class="form-hint">{{ form.shuffle_answers.description }}</div>
+          </div>
+          <div class="form-group admin-form__full">
+            <label class="form-checkbox">
+              {{ form.is_active(id="is_active") }}
+              <span>{{ form.is_active.label.text }}</span>
+            </label>
+            <div class="form-hint">{{ form.is_active.description }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">
+          Банк питань
+          <span class="quiz-bank-count" data-quiz-bank-count>{{ quiz.questions | length }}</span>
+        </h3>
+        <p class="form-hint">
+          Одне питання -- чотири варіанти, рівно один правильний. У банку мусить
+          бути щонайменше стільки питань, скільки йде на спробу; більший банк
+          робить заучування марним, бо кожна спроба тягне випадкові.
+        </p>
+
+        <div id="quiz-questions">
+          {% for question in quiz.questions %}
+          <div class="admin-quiz-question" data-index="{{ loop.index0 }}">
+            <input type="hidden" data-role="id"
+                   name="question_{{ loop.index0 }}_id" value="{{ question.id }}">
+            <div class="admin-quiz-question__head">
+              <span class="admin-quiz-question__number">{{ loop.index }}</span>
+              <button type="button"
+                      class="btn-admin btn-admin--danger btn-admin--sm admin-quiz-question__remove">X</button>
+            </div>
+            <div class="form-group">
+              <label>Питання <span class="required">*</span></label>
+              <textarea data-role="text" name="question_{{ loop.index0 }}_text"
+                        class="form-input" rows="2">{{ question.text }}</textarea>
+              {{ i18n.panes(question.translations or {}, 'text', widget='textarea',
+                            rows=2, obj=question, prefix='trq__' ~ question.id) }}
+            </div>
+            <div class="admin-quiz-answers">
+              {% set outer = loop.index0 %}
+              {% for answer in question.answers %}
+              <div class="admin-quiz-answer">
+                <label class="admin-quiz-answer__radio"
+                       title="Позначити правильною">
+                  <input type="radio" data-role="correct"
+                         name="question_{{ outer }}_correct" value="{{ loop.index0 }}"
+                         {% if answer.is_correct %}checked{% endif %}>
+                </label>
+                <input type="text" data-role="answer"
+                       name="question_{{ outer }}_answer_{{ loop.index0 }}_text"
+                       class="form-input" value="{{ answer.text }}"
+                       placeholder="Варіант {{ loop.index }}">
+              </div>
+              {% endfor %}
+            </div>
+            <div class="form-group">
+              {{ i18n.json_panes(question, 'answers', prefix='trq__' ~ question.id) }}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <button type="button" id="add-quiz-question"
+                class="btn-admin btn-admin--secondary">+ Додати питання</button>
+        <p class="form-hint">
+          Мовні вкладки вгорі перемикають і переклади питань. Щойно додане питання
+          отримає поля перекладу після першого збереження -- до того в нього ще
+          немає id.
+        </p>
+      </div>
+
+      <div class="admin-form__actions">
+        <button type="submit" class="btn-admin btn-admin--primary">Зберегти тест</button>
+        {% if quiz.id %}
+        <button type="submit" formaction="{{ url_for('admin.quiz_delete', quiz_id=quiz.id) }}"
+                class="btn-admin btn-admin--danger"
+                data-confirm="Видалити тест разом із банком питань? Результати учасників збережуться.">
+          Видалити тест
+        </button>
+        {% endif %}
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/admin-i18n-tabs.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin-quiz-edit.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}

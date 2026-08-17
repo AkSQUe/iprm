@@ -114,6 +114,17 @@ class EventRegistration(TimestampMixin, db.Model):
         db.DateTime(timezone=True), index=True,
     )
 
+    # Тестування після заходу. Денормалізація заради лістингів і гейта: інакше
+    # кожен рядок реєстрації в адмінці й кабінеті тягнув би за собою вибірку
+    # спроб. Джерело правди лишається у quiz_attempts.
+    quiz_passed_at = db.Column(db.DateTime(timezone=True))
+    # Додаткові спроби, видані адміном понад CourseQuiz.max_attempts (технічний
+    # збій, спірний випадок). Саме число, а не прапорець «розблоковано»: інакше
+    # неможливо було б дати рівно одну спробу.
+    quiz_extra_attempts = db.Column(
+        db.Integer, nullable=False, default=0, server_default='0',
+    )
+
     user = db.relationship('User', back_populates='registrations')
     instance = db.relationship(
         'CourseInstance',
@@ -136,6 +147,12 @@ class EventRegistration(TimestampMixin, db.Model):
         back_populates='registration',
         uselist=False,
         cascade='all, delete-orphan',
+    )
+    quiz_attempts = db.relationship(
+        'QuizAttempt',
+        back_populates='registration',
+        cascade='all, delete-orphan',
+        order_by='QuizAttempt.attempt_number',
     )
 
     __table_args__ = (

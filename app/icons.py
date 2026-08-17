@@ -76,6 +76,7 @@ ICON_CODEPOINTS = {
     'person_off': 0xe510,
     'picture_as_pdf': 0xe415,
     'priority_high': 0xe645,
+    'quiz': 0xf04c,
     'refresh': 0xe5d5,
     'remove_moderator': 0xe9d4,
     'restart_alt': 0xf053,

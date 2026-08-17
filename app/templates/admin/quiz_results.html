@@ -1,0 +1,176 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Результати тестування | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-quiz.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.instances_list') }}" class="admin-breadcrumb__link">Розклад</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <a href="{{ url_for('admin.instance_registrations', instance_id=instance.id) }}"
+             class="admin-breadcrumb__link">Реєстрації</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Тестування</span>
+        </div>
+        <h1 class="admin-hero__title">Результати тестування</h1>
+        <p class="admin-hero__subtitle">
+          {{ instance.course.title if instance.course else 'Захід' }}
+          {% if instance.start_date %}, {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
+        </p>
+      </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.instance_quiz_edit', instance_id=instance.id) }}"
+           class="btn-admin btn-admin--secondary">Тест проведення</a>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    {% if quiz is none %}
+    <div class="form-section quiz-callout quiz-callout--warning">
+      Для цього заходу немає увімкненого тесту, тож учасники його не бачать.
+    </div>
+    {% endif %}
+
+    <div class="admin-stat-cards admin-stat-cards--3">
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ rows | length }}</span>
+        <span class="admin-stat-card__label">Учасників</span>
+      </div>
+      <div class="admin-stat-card{{ ' admin-stat-card--success' if passed_count }}">
+        <span class="admin-stat-card__value">{{ passed_count }}</span>
+        <span class="admin-stat-card__label">Склали тест</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">
+          {{ rows | selectattr('reg.certificate') | list | length }}
+        </span>
+        <span class="admin-stat-card__label">Сертифікатів видано</span>
+      </div>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Учасник</th>
+            <th>Стан</th>
+            <th>Найкращий результат</th>
+            <th>Спроби</th>
+            <th>Сертифікат</th>
+            <th>Дії</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>
+              {{ row.reg.user.full_name }}
+              <div class="quiz-muted">{{ row.reg.user.email }}</div>
+            </td>
+            <td>
+              {% if row.reg.quiz_passed_at %}
+              <span class="badge badge--active">склав</span>
+              {% elif row.state.status == 'attempts_exhausted' %}
+              <span class="badge badge--danger">спроби вичерпано</span>
+              {% elif row.state.status == 'in_progress' %}
+              <span class="badge badge--pending">проходить</span>
+              {% elif row.state.status == 'profile_incomplete' %}
+              <span class="badge badge--draft" title="{{ row.state.missing_fields | join(', ') }}">
+                анкета не заповнена
+              </span>
+              {% elif row.state.status == 'not_paid' %}
+              <span class="badge badge--draft">не оплачено</span>
+              {% else %}
+              <span class="badge badge--draft">не починав</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if row.best is not none %}
+              <span class="quiz-score {{ 'quiz-score--pass' if row.reg.quiz_passed_at else 'quiz-score--fail' }}">
+                {{ row.best }}{% if row.attempts %} / {{ row.attempts[0].total }}{% endif %}
+              </span>
+              {% else %}
+              <span class="quiz-muted">---</span>
+              {% endif %}
+            </td>
+            <td>
+              {{ row.attempts | length }}
+              {% if row.reg.quiz_extra_attempts %}
+              <span class="badge badge--published" title="Додаткові спроби від адміністратора">
+                +{{ row.reg.quiz_extra_attempts }}
+              </span>
+              {% endif %}
+              {% if row.attempts %}
+              <ul class="quiz-attempt-list">
+                {% for attempt in row.attempts %}
+                <li>
+                  #{{ attempt.attempt_number }}: {{ attempt.score }}/{{ attempt.total }}
+                  {{ '(склав)' if attempt.passed else '' }}
+                </li>
+                {% endfor %}
+              </ul>
+              {% endif %}
+            </td>
+            <td>
+              {% if row.reg.certificate %}
+              <a href="{{ url_for('admin.registration_certificate_download', reg_id=row.reg.id) }}">
+                {{ row.reg.certificate.number }}
+              </a>
+              {% if row.reg.certificate.revoked %}
+              <span class="badge badge--danger">відкликано</span>
+              {% endif %}
+              {% else %}
+              <span class="quiz-muted">---</span>
+              {% endif %}
+            </td>
+            <td>
+              <form method="POST" class="quiz-unlock"
+                    action="{{ url_for('admin.registration_quiz_unlock', reg_id=row.reg.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="number" name="extra" value="1" min="1" max="10"
+                       class="form-input quiz-unlock__input" aria-label="Скільки спроб додати">
+                <button type="submit" class="btn-admin btn-admin--sm btn-admin--secondary">
+                  Спроби
+                </button>
+              </form>
+              {% if row.attempts or row.reg.quiz_passed_at %}
+              <form method="POST"
+                    action="{{ url_for('admin.registration_quiz_reset', reg_id=row.reg.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--sm btn-admin--danger"
+                        data-confirm="Обнулити тестування цього учасника? Спроби буде видалено. Сертифікат лишиться виданим.">
+                  Обнулити
+                </button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if not rows %}
+    <div class="admin-empty">
+      {{ icon('how_to_reg', cls='admin-empty__icon') }}
+      <h3 class="admin-empty__title">Реєстрацій немає</h3>
+      <p>Результати з'являться після того, як учасники складуть тест</p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

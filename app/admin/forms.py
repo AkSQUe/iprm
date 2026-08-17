@@ -963,3 +963,56 @@ class ParticipantForm(FlaskForm):
             raise ValidationError('Дата народження не може бути в майбутньому')
         if field.data.year < 1900:
             raise ValidationError('Некоректний рік народження')
+
+
+class CourseQuizForm(FlaskForm):
+    """Налаштування тесту (сам банк питань зберігається окремо).
+
+    Банк не входить у форму навмисно: 10+ питань по 4 варіанти -- це репітер із
+    динамічною кількістю полів, який у цьому проєкті робиться плоскими іменами
+    `question_N_*` і парситься сервісом (як «блоки програми» курсу). WTForms
+    тут володіє лише скалярними налаштуваннями.
+    """
+    questions_per_attempt = IntegerField(
+        'Питань на спробу',
+        default=10,
+        validators=[InputRequired(message='Вкажіть кількість питань'),
+                    NumberRange(min=1, max=100)],
+        description='Стільки питань випадково беруться з банку на кожну спробу. '
+                    'У банку мусить бути не менше.',
+    )
+    passing_score = IntegerField(
+        'Потрібно правильних',
+        default=8,
+        validators=[InputRequired(message='Вкажіть поріг'),
+                    NumberRange(min=1, max=100)],
+        description='Кількість, а не відсоток: правило формулюється як '
+                    '"хоча б 8 з 10".',
+    )
+    max_attempts = IntegerField(
+        'Спроб на учасника',
+        default=3,
+        validators=[InputRequired(message='Вкажіть кількість спроб'),
+                    NumberRange(min=1, max=20)],
+        description='Коли вичерпані, додаткову спробу видає адміністратор '
+                    'у картці реєстрації.',
+    )
+    shuffle_answers = BooleanField(
+        'Перемішувати варіанти відповідей',
+        default=True,
+        description='Ускладнює передавання відповідей між учасниками.',
+    )
+    is_active = BooleanField(
+        'Тест увімкнено',
+        default=False,
+        description='Вимкнений тест учасники не бачать. Увімкнення нічого не '
+                    'зламає: якщо банк недостатній, тест усе одно не відкриється.',
+    )
+
+    def validate_passing_score(self, field):
+        if field.data is None or self.questions_per_attempt.data is None:
+            return
+        if field.data > self.questions_per_attempt.data:
+            raise ValidationError(
+                'Потрібно правильних не може бути більше, ніж питань на спробу'
+            )
