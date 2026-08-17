@@ -221,10 +221,16 @@
   position: relative;
 }
 
+/* Своїх пропорцій рамці НЕ задаємо: зображення курсів різні -- від майже
+   квадратних 1.25 до банерів 1.72 і 4.00. Фіксоване aspect-ratio робило
+   рамку майже квадратною, і широкий банер лежав у ній із порожніми смугами
+   згори й знизу (object-fit: contain). Тепер висота йде за самим файлом, і
+   рамка повторює його форму. Пропорції до завантаження резервують атрибути
+   width/height у розмітці -- партіал бере їх із медіа-реєстру. */
 .iprm-hero__photo {
+  display: block;
   width: 100%;
-  aspect-ratio: 640 / 500;
-  object-fit: contain;
+  height: auto;
   border-radius: var(--iprm-radius);
   background: var(--iprm-accent-light);
   border: 1px solid rgba(255, 255, 255, 0.2);

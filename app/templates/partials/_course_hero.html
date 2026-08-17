@@ -4,6 +4,10 @@
      hero_title      -- заголовок (рядок або Markup);
      hero_subtitle   -- лід (може бути порожнім);
      hero_image      -- URL ілюстрації або нічого -> одноколонковий варіант;
+     hero_image_size -- (w, h) справжнього файлу; рамка малюється за формою
+                        зображення, тож ці числа резервують під нього місце
+                        до завантаження. Без них беремо 640x500, і широкий
+                        банер смикне верстку, коли доїде;
      hero_chips      -- [рядок] або [{text, accent}];
      hero_meta       -- [{value, label}] -- рядок ключових параметрів;
      hero_actions    -- Markup із кнопками (рендерить сторінка: у очного й
@@ -51,8 +55,10 @@
 
       {% if hero_image %}
       <div class="iprm-hero__visual">
+        {% set _hero_size = hero_image_size | default((640, 500), true) %}
         <img class="iprm-hero__photo" src="{{ hero_image }}" alt=""
-             fetchpriority="high" decoding="async" width="640" height="500">
+             fetchpriority="high" decoding="async"
+             width="{{ _hero_size[0] }}" height="{{ _hero_size[1] }}">
 
         {% if hero_seats %}
         <div class="iprm-hero__seats">

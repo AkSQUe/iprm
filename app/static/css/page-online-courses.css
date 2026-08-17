@@ -182,3 +182,25 @@
 .apple-page .iprm-online-card:hover .iprm-online-card__cta::after {
   transform: translateX(3px);
 }
+
+/* Мобільний: зображення картки показуємо цілком, як у hero сторінки курсу.
+   На десктопі коробка фіксована (200px + object-fit: cover), бо в сітці
+   різна висота карток виглядала б рвано. На мобільному колонка одна, тож
+   обрізати нічого не треба -- а обрізало воно якраз найгірше: банери курсів
+   широкі (до 4:1), і cover вирізав із них середину разом із половиною назви.
+   Пропорції до завантаження резервують width/height у розмітці. */
+@media (max-width: 768px) {
+  .iprm-online-card__media {
+    height: auto;
+  }
+
+  .iprm-online-card__media img {
+    height: auto;
+    object-fit: contain;
+  }
+
+  /* Плейсхолдер без зображення власної висоти не має -- лишаємо йому свою. */
+  .iprm-online-card__media--empty {
+    height: 200px;
+  }
+}

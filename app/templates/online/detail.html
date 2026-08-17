@@ -66,6 +66,9 @@
   ]
 } %}
 <script type="application/ld+json">{{ breadcrumbs | tojson }}</script>
+{# FAQPage -- окремим блоком: schema.org не дозволяє вкладати його в Course,
+   а Google читає кілька незалежних JSON-LD на сторінці. #}
+{% include 'partials/_course_faq_jsonld.html' %}
 {% endblock %}
 
 {% block content %}
@@ -95,6 +98,10 @@
 
   <!-- ===== HERO ===== -->
   {% set hero_image = course.hero_src or course.card_src %}
+  {# Як і на очному курсі: рамка hero повторює форму зображення, тож
+     width/height мають бути власними розмірами файлу. #}
+  {% set _hero_media = course.hero_media or course.card_media %}
+  {% set hero_image_size = (_hero_media.width, _hero_media.height) if _hero_media else none %}
 
   {% set hero_chips = [{'text': _('Онлайн-курс'), 'accent': true}, _('У власному темпі')] %}
   {% if course.trainer %}{% set _discard = hero_chips.append(course.trainer.t('full_name')) %}{% endif %}

@@ -888,6 +888,22 @@
     grid-column: auto;
   }
 
+  /* Зображення картки показуємо цілком, як у hero сторінки курсу.
+     На десктопі коробка фіксована (200px + object-fit: cover), бо в сітці
+     різна висота карток виглядала б рвано. На мобільному колонка одна, тож
+     обрізати нічого не треба -- а обрізало воно якраз найгірше: банери
+     курсів широкі (до 4:1), і cover вирізав із них середину разом із
+     половиною назви. Пропорції до завантаження резервують width/height у
+     розмітці -- партіал бере їх із медіа-реєстру. */
+  .apple-page .iprm-course-card__image {
+    height: auto;
+  }
+
+  .apple-page .iprm-course-card__image img {
+    height: auto;
+    object-fit: contain;
+  }
+
   .apple-page .apple-feature-card {
     display: flex;
     flex-direction: column;

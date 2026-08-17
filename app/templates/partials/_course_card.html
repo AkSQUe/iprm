@@ -34,8 +34,16 @@
     <div class="iprm-course-card__image">
       {% if course.card_src %}
         {# card_eager виставляє шаблон-господар для першої картки списку
-           (LCP-кандидат); решта -- ліниво. #}
-        <img src="{{ course.card_src }}" alt="{{ course.t('title') }}" width="400" height="200"
+           (LCP-кандидат); решта -- ліниво.
+
+           width/height -- справжні розміри файлу (card_media еager-завантажене
+           в course_listing, тож зайвого запиту немає). На мобільному коробка
+           картки більше не фіксована по висоті, тому саме ці числа резервують
+           місце під зображення: із хардкодом 400x200 широкий банер смикав би
+           верстку, коли доїде. Фолбек лишається для медіа без розмірів. #}
+        <img src="{{ course.card_src }}" alt="{{ course.t('title') }}"
+             width="{{ course.card_media.width or 400 if course.card_media else 400 }}"
+             height="{{ course.card_media.height or 200 if course.card_media else 200 }}"
              {% if card_eager | default(false) %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
       {% endif %}
     </div>
