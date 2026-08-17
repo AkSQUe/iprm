@@ -129,6 +129,9 @@ def active_courses(featured_first=False):
         joinedload(Course.card_media),
         selectinload(Course.instances).joinedload(CourseInstance.trainer),
         selectinload(Course.instances).selectinload(CourseInstance.tariffs),
+        # city -- джерело таблетки місця в картці каталогу; без joinedload
+        # кожна картка тягнула б довідник окремим запитом.
+        selectinload(Course.instances).joinedload(CourseInstance.city),
     ).filter(Course.is_active.is_(True)).order_by(*order).all()
 
 

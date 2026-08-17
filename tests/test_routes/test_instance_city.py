@@ -185,6 +185,96 @@ class TestAdminPicker:
         assert instance.city_id == kyiv.id
 
 
+def _catalog_card(client, slug):
+    """Розмітка картки курсу з каталогу (решта сторінки не мішає перевірці)."""
+    html = client.get('/courses/').get_data(as_text=True)
+    for chunk in html.split('<article')[1:]:
+        # Обрізаємо хвіст сторінки: інакше остання картка «злипається» з
+        # розкладом нижче, де теж є таблетки місця.
+        card = chunk.split('</article>')[0]
+        if f'/courses/{slug}' in card:
+            return card
+    raise AssertionError(f'картки {slug} немає в каталозі')
+
+
+class TestCatalogCityBadge:
+    """Таблетка місця в картці каталогу.
+
+    Місто -- головний фільтр рішення «поїду / не поїду», і до цього його було
+    видно лише на сторінці курсу: каталог показував самий формат («Офлайн»),
+    тож обидва Київ і Одеса виглядали однаково.
+    """
+
+    def test_city_badge_shows_nearest_city_not_the_address(
+            self, client, author, kyiv):
+        """Структурований city виграє: у location лежить повна адреса."""
+        course = _course_with_instance(
+            author, city=kyiv,
+            location='Київ, вул. Андрія Верхогляда, 2а, клініка Мультимед')
+        db.session.commit()
+
+        card = _catalog_card(client, course.slug)
+        assert 'iprm-loc-badge--offline' in card
+        assert kyiv.name in card
+        assert 'Верхогляда' not in card
+
+    def test_free_text_location_is_used_when_city_is_not_picked(
+            self, client, author):
+        """Без міста з довідника лишається те, що написали руками."""
+        course = _course_with_instance(author, city=None, location='Полтава')
+        db.session.commit()
+
+        card = _catalog_card(client, course.slug)
+        assert 'iprm-loc-badge--offline' in card
+        assert 'Полтава' in card
+
+    def test_undecided_venue_falls_back_to_format_badge(self, client, author):
+        """Місце уточнюється -- картка не мовчить про формат заходу."""
+        course = _course_with_instance(author, city=None, location=None)
+        db.session.commit()
+
+        card = _catalog_card(client, course.slug)
+        assert 'iprm-loc-badge' not in card
+        assert 'iprm-card-badge--format' in card
+
+    def test_online_event_gets_online_badge_without_a_city(
+            self, client, author, kyiv):
+        """У онлайну міста немає -- навіть якщо в проведенні лишилось місто."""
+        course = _course_with_instance(author, city=kyiv, location='Київ')
+        course._test_instance.event_format = 'online'
+        db.session.commit()
+
+        card = _catalog_card(client, course.slug)
+        assert 'iprm-loc-badge--online' in card
+        assert 'iprm-loc-badge--offline' not in card
+        assert kyiv.name not in card
+
+    def test_online_option_of_another_date_is_shown_next_to_the_city(
+            self, client, author, kyiv):
+        """«Є ще й онлайн» -- причина не пропускати курс через незручне місто."""
+        course = _course_with_instance(author, city=kyiv, location='Київ')
+        db.session.add(CourseInstance(
+            course_id=course.id, status='published', event_format='online',
+            price=100, start_date=datetime.now(timezone.utc) + timedelta(days=900),
+        ))
+        db.session.commit()
+
+        card = _catalog_card(client, course.slug)
+        assert 'iprm-loc-badge--offline' in card
+        assert 'iprm-loc-badge--online' in card
+
+    def test_hybrid_shows_city_and_online_once_each(self, client, author, kyiv):
+        """Гібрид -- і місто, і онлайн, але без подвоєного «онлайн»."""
+        course = _course_with_instance(author, city=kyiv, location='Київ')
+        course._test_instance.event_format = 'hybrid'
+        db.session.commit()
+
+        card = _catalog_card(client, course.slug)
+        assert card.count('iprm-loc-badge--offline') == 1
+        assert card.count('iprm-loc-badge--online') == 1
+        assert 'iprm-loc-badge__sub' not in card
+
+
 class TestCityDeletion:
     def test_deleting_a_city_does_not_delete_the_event(self, app, author, kyiv):
         """ondelete=SET NULL: місто -- довідник, а не власник проведення.

@@ -299,6 +299,22 @@
   color: var(--iprm-accent);
 }
 
+/* Таблетка місця в рядку бейджів картки: той самий .iprm-loc-badge, що в
+   розкладі й на реєстрації, але компактніший -- поруч із бейджами типу та
+   рівня (0.6875rem) повний розмір ламав ритм рядка. Місто лишається помітнішим
+   за сусідів: у каталозі це головний фільтр рішення "поїду / не поїду". */
+.apple-page .iprm-course-card__badges .iprm-loc-badge {
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px 3px 8px;
+  font-size: 0.75rem;
+}
+
+.apple-page .iprm-course-card__badges .iprm-loc-badge__icon {
+  width: 13px;
+  height: 13px;
+}
+
 .apple-page .iprm-card-badge--cpd {
   background: var(--iprm-success-bg);
   color: var(--iprm-success);

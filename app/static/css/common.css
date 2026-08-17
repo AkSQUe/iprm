@@ -1265,6 +1265,20 @@ select.badge-select:disabled {
   border: 1px solid #d8cdf0;
 }
 
+/* Тёмна тема: світлі помаранчеві/бузкові плашки вище задані константами (для
+   світлої теми вони точніші за токени), тож тут перекриваємо їх токенами.
+   Раніше бейдж жив лише в розкладі й на реєстрації, тепер він у кожній картці
+   каталогу -- світла плашка на тёмній картці била б в очі. */
+[data-theme="dark"] .iprm-loc-badge--offline {
+  background: var(--iprm-warning-bg);
+  color: var(--iprm-warning-text);
+  border-color: var(--iprm-warning-border);
+}
+
+[data-theme="dark"] .iprm-loc-badge--online {
+  border-color: color-mix(in oklch, var(--iprm-accent), transparent 65%);
+}
+
 /* Великий варіант -- для hero / summary-карток */
 .iprm-loc-badge--lg {
   font-size: 1rem;

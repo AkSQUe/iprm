@@ -2,6 +2,7 @@
    Очікує: course; upcoming_by_course, seats_left_map, open_instance_ids,
    site_settings (глобальний). show_tag_filter=false ховає теги-фільтри
    (потрібні лише в каталозі з JS-фільтрацією). #}
+{% from 'partials/_location_badge.html' import location_badge %}
 {% set insts = upcoming_by_course.get(course.id, []) %}
 {% set nearest = insts[0] if insts else None %}
 {% set _cpds = insts | map(attribute='effective_cpd_points') | select | list %}
@@ -14,6 +15,14 @@
 {% if nearest and nearest.start_date %}
   {% set duration_days = ((nearest.end_date - nearest.start_date).days + 1) if nearest.end_date else 1 %}
 {% endif %}
+{# Місце найближчого заходу. Структурований city має пріоритет над вільним
+   location: у location часто пишуть повну адресу ("м. Харків, вул. ..., ДУ
+   ..."), яка в таблетку картки не влазить. Передаємо канонічну українську
+   назву -- локалізує її сам location_badge через довідник City.
+   Онлайн-проведення міста не має, тож для нього таблетка місця не рахується. #}
+{% set near_place = ((nearest.city.name if nearest.city else nearest.location)
+                     if nearest and nearest.event_format != 'online' else None) %}
+{% set has_online = insts | selectattr('event_format', 'in', ['online', 'hybrid']) | first %}
 <article class="iprm-course-card iprm-course-card--linked{% if course.is_featured %} iprm-course-card--featured{% endif %} apple-reveal"
          data-tags='{{ course.tags | tojson }}'
          data-formats='{{ insts | map(attribute="event_format") | unique | list | tojson }}'
@@ -43,9 +52,17 @@
         {% if course.difficulty_level %}
         <span class="iprm-card-badge iprm-card-badge--level" title="{{ course.difficulty_label }}">{% trans level=course.difficulty_level %}Рівень {{ level }}/3{% endtrans %}</span>
         {% endif %}
-        {% for fmt in insts | map(attribute='format_label') | unique %}
-        <span class="iprm-card-badge iprm-card-badge--format">{{ fmt }}</span>
-        {% endfor %}
+        {# Місто найближчого заходу + окрема таблетка, якщо серед майбутніх
+           проведень є онлайн (у т.ч. гібрид). Текстовий бейдж формату лишаємо
+           тільки там, де місто невідоме: інакше він дублював би таблетку. #}
+        {% if near_place %}
+        {{ location_badge('offline', near_place) }}
+        {% elif nearest and nearest.event_format != 'online' %}
+        <span class="iprm-card-badge iprm-card-badge--format">{{ nearest.format_label }}</span>
+        {% endif %}
+        {% if has_online %}
+        {{ location_badge('online', none) }}
+        {% endif %}
         {% if cpd_min %}
         <span class="iprm-card-badge iprm-card-badge--cpd">
           {%- if cpd_max and cpd_max != cpd_min -%}
