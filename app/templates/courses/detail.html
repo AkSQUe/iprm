@@ -124,19 +124,6 @@
   </div>
   {% endif %}
 
-  {# ===================================================================
-     Порядок блоків сторінки курсу (переверстано 17.08.2026 за продажним
-     лендингом, docs/plan-course-landing-redesign.md):
-       hero -> цифри довіри -> що зміниться у практиці -> про курс ->
-       для кого -> галерея -> програма -> тренер -> формат участі ->
-       окупність -> найближчі дати -> історія проведень -> сертифікат ->
-       відгуки -> FAQ -> наступний крок -> реферальне посилання ->
-       заявка -> фінальний CTA.
-     Фон секцій чергується (apple-section-gray) саме під цю послідовність.
-     Кожна секція умовна: курс без заповненого контенту не має показувати
-     порожню рамку.
-     =================================================================== #}
-
   {# --- Найближче ВІДКРИТЕ проведення: джерело чипів, місць і локації.
          Відрізняється від format_inst: там потрібні активні тарифи, тут --
          відкритий продаж. Часто це те саме проведення, але не завжди. --- #}
@@ -156,17 +143,19 @@
   {% set price_is_from = (_prices | unique | list | length) > 1
                          or (upcoming_instances | selectattr('price_is_from') | list | length) > 0 %}
 
-  <!-- ===== PAGE NAV ===== -->
+  {# ===== PAGE NAV =====
+     Якорі йдуть у тому самому порядку, що й секції: інакше навігація вела б
+     назад по сторінці. Посилання рендеримо лише на секції, які реально є. #}
   {% set nav_items = [] %}
   {% if course.t('benefits') %}{% set _discard = nav_items.append({'href': 'benefits', 'label': _('Результат')}) %}{% endif %}
   {% if course.description %}{% set _discard = nav_items.append({'href': 'about', 'label': _('Про курс')}) %}{% endif %}
   {% if gallery %}{% set _discard = nav_items.append({'href': 'gallery', 'label': _('Як проходить')}) %}{% endif %}
   {% if course.program_blocks or course.t('practice_note_title') %}{% set _discard = nav_items.append({'href': 'program', 'label': _('Програма')}) %}{% endif %}
   {% if course.trainer %}{% set _discard = nav_items.append({'href': 'trainer', 'label': _('Тренер')}) %}{% endif %}
-  {% if format_inst %}{% set _discard = nav_items.append({'href': 'formats', 'label': _('Формати')}) %}{% endif %}
-  {% set _discard = nav_items.append({'href': 'schedule', 'label': _('Дати')}) %}
   {% if course_reviews %}{% set _discard = nav_items.append({'href': 'reviews', 'label': _('Відгуки')}) %}{% endif %}
+  {% if format_inst %}{% set _discard = nav_items.append({'href': 'formats', 'label': _('Формати')}) %}{% endif %}
   {% if course.faq is not none and course.faq | length %}{% set _discard = nav_items.append({'href': 'faq', 'label': _('Питання')}) %}{% endif %}
+  {% set _discard = nav_items.append({'href': 'schedule', 'label': _('Дати')}) %}
   {% set nav_seats = ('%s %s' % (_('Залишилось'), '%s %s' % (seats_left, seats_left | plural('seats')))) if seats_left is not none else none %}
   {% include 'partials/_course_page_nav.html' %}
 
@@ -242,6 +231,23 @@
 
   {% include 'partials/_course_hero.html' %}
 
+  {# ===================================================================
+     Порядок секцій -- еталонний (WS-A плану міграції,
+     docs/plan-landing-etalon-migration.md):
+       hero -> цифри довіри -> результат -> ROI -> для кого -> галерея ->
+       програма -> тренер -> відгуки -> формат участі -> FAQ -> заявка.
+     Далі одним шматком «наше додаткове», якого в еталоні немає:
+       графік дат -> історія -> сертифікат -> наступний крок -> рефералка
+       -> фінальний CTA (partials/_course_extras.html).
+
+     Виняток: секція «Про курс». В еталоні її немає (там лід у hero), але
+     course.description -- реальний контент, і ховати його після FAQ було б
+     втратою. Лишили одразу після блоку результату.
+
+     Фони: apple-section-gray стоїть на ROI, галереї, тренері й тарифах --
+     як section-soft в еталоні. Решта секцій білі.
+     =================================================================== #}
+
   <!-- ===== PROOF ===== -->
   {% include 'partials/_course_proof.html' %}
 
@@ -251,7 +257,7 @@
 
   <!-- ===== ABOUT ===== -->
   {% if course.description %}
-  <section id="about" class="iprm-section apple-section-gray" aria-labelledby="about-title">
+  <section id="about" class="iprm-section" aria-labelledby="about-title">
     <div class="iprm-section__inner">
       <h2 id="about-title" class="iprm-section__title apple-reveal">
         {{ _('Про <span class="apple-gradient-text">курс</span>') }}
@@ -260,6 +266,9 @@
     </div>
   </section>
   {% endif %}
+
+  <!-- ===== ROI CALCULATOR ===== -->
+  {% include 'partials/_course_roi.html' %}
 
   <!-- ===== AUDIENCE ===== -->
   {% set ask_href = '#request' %}
@@ -274,199 +283,15 @@
   <!-- ===== TRAINER ===== -->
   {% include 'partials/_course_trainer.html' %}
 
-  <!-- ===== FORMAT / TARIFFS (Оберіть формат участі) ===== -->
-  {% if format_inst %}
-  {% set fmt_open = format_inst.id in open_instance_ids %}
-  {% set fmt_date = format_inst.start_date.strftime('%d.%m.%Y') if format_inst.start_date else '' %}
-  {% set fmt_tariffs = format_inst.active_tariffs %}
-  <section id="formats" class="iprm-section apple-section-gray" aria-labelledby="formats-title">
-    <div class="iprm-section__inner">
-      <h2 id="formats-title" class="iprm-section__title apple-reveal">{{ _('Оберіть <span class="apple-gradient-text">формат участі</span>') }}</h2>
-      <p class="iprm-section__subtitle apple-reveal">{{ _('та отримайте сертифікат міжнародного зразка') }}</p>
-      <div class="iprm-format-cards">
-        {% for tariff in fmt_tariffs %}
-        {# Виділення -- явний прапорець адміна (tariff.is_featured), а не
-           "останній у списку", як було раніше: порядок сортування не має
-           вирішувати за маркетинг. #}
-        <article class="iprm-format-card apple-reveal{% if tariff.is_featured %} iprm-format-card--featured{% endif %}">
-          {% if tariff.t('badge') %}
-          <span class="iprm-format-card__flag">{{ tariff.t('badge') }}</span>
-          {% endif %}
-          <div class="iprm-format-card__head">
-            <h3 class="iprm-format-card__name">{{ tariff.t('name') }}</h3>
-            {% if fmt_date %}<p class="iprm-format-card__date">{{ _('Захід') }} {{ fmt_date }}</p>{% endif %}
-          </div>
-          <div class="iprm-format-card__price">{{ tariff.price | int }} <span class="iprm-format-card__currency">{{ _('грн') }}</span></div>
-          {% set tariff_entries = tariff.description_entries %}
-          {% if tariff_entries %}
-          <div class="iprm-format-card__included">
-            <span class="iprm-format-card__included-label">{{ _('Що включено:') }}</span>
-            <ul class="iprm-format-card__list">
-              {% for entry in tariff_entries %}
-              <li{% if entry.is_plus %} class="iprm-format-card__item--plus"{% endif %}>{{ entry.text }}</li>
-              {% endfor %}
-            </ul>
-          </div>
-          {% endif %}
-          {% if fmt_open %}
-          <a href="{{ url_for('registration.register_instance', instance_id=format_inst.id, tariff=tariff.id) }}"
-             class="apple-btn apple-btn--primary iprm-format-card__cta">
-            {% if fmt_date %}{% trans date=fmt_date %}Зареєструватися на {{ date }}{% endtrans %}{% else %}{{ _('Зареєструватися') }}{% endif %}
-          </a>
-          {% else %}
-          <span class="iprm-format-card__cta iprm-format-card__cta--closed">{{ _('Продаж завершено') }}</span>
-          {% endif %}
-        </article>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-  {% endif %}
-
-  <!-- ===== ROI CALCULATOR ===== -->
-  {% set roi_price = min_price %}
-  {% if site_settings.show_roi_calculator and roi_price and roi_price > 0 %}
-  <section id="roi" class="iprm-section" aria-labelledby="roi-title">
-    <div class="iprm-section__inner">
-      <h2 id="roi-title" class="iprm-section__title apple-reveal">{{ _('Коли курс <span class="apple-gradient-text">окупиться?</span>') }}</h2>
-      <p class="iprm-section__subtitle apple-reveal">{{ _('Порахуйте на власних цифрах — середній чек процедури та кількість записів на місяць') }}</p>
-      {# Повзунки замість числових полів: на телефоні не треба викликати
-         клавіатуру, а значення видно в підписі (data-roi-*-out). #}
-      <div class="iprm-roi apple-reveal" data-roi-calc data-roi-price="{{ roi_price | int }}">
-        <div class="iprm-roi__inputs">
-          <label class="iprm-roi__field">
-            <span class="iprm-roi__label-row">
-              <span class="iprm-roi__label">{{ _('Середній чек процедури') }}</span>
-              <output class="iprm-roi__out" data-roi-check-out>&mdash;</output>
-            </span>
-            <input type="range" data-roi-check value="2500" min="500" max="20000" step="250">
-          </label>
-          <label class="iprm-roi__field">
-            <span class="iprm-roi__label-row">
-              <span class="iprm-roi__label">{{ _('Процедур на місяць') }}</span>
-              <output class="iprm-roi__out" data-roi-count-out>&mdash;</output>
-            </span>
-            <input type="range" data-roi-count value="8" min="1" max="40" step="1">
-          </label>
-        </div>
-        <div class="iprm-roi__results">
-          <div class="iprm-roi__result">
-            <span class="iprm-roi__value" data-roi-income>&mdash;</span>
-            <span class="iprm-roi__caption">{{ _('дохід на місяць') }}</span>
-          </div>
-          <div class="iprm-roi__result">
-            <span class="iprm-roi__value" data-roi-payback>&mdash;</span>
-            <span class="iprm-roi__caption">{{ _('окупність курсу') }}{% if price_is_from %} {{ _('(тариф «від»)') }}{% endif %}</span>
-          </div>
-        </div>
-        <p class="iprm-roi__note">{{ _('Розрахунок орієнтовний: вартість курсу') }} {{ _('від') ~ ' ' if price_is_from else '' }}{{ roi_price | int }} &#8372; &divide; {{ _('ваш чек. Податки та розхідники не враховано.') }}</p>
-      </div>
-    </div>
-  </section>
-  {% endif %}
-
-  <!-- ===== SCHEDULE (upcoming instances) ===== -->
-  <section id="schedule" class="iprm-section apple-section-gray" aria-labelledby="schedule-title">
-    <div class="iprm-section__inner">
-      <h2 id="schedule-title" class="iprm-section__title apple-reveal">{{ _('Найближчі <span class="apple-gradient-text">дати</span>') }}</h2>
-      {% if upcoming_instances %}
-      <div class="iprm-schedule">
-        {% for inst in upcoming_instances %}
-        {% set is_open = inst.id in open_instance_ids %}
-        {% set remaining = seats_left_map.get(inst.id) if is_open else None %}
-        <div class="iprm-schedule__item apple-reveal">
-          <div class="iprm-schedule__date">
-            {% if inst.start_date %}
-            <span class="iprm-schedule__day">{{ inst.start_date.strftime('%d') }}</span>
-            <span class="iprm-schedule__month">{{ inst.start_date.strftime('%m.%Y') }}</span>
-            {% else %}
-            <span class="iprm-schedule__day">TBD</span>
-            {% endif %}
-          </div>
-          <div class="iprm-schedule__content">
-            <h3 class="iprm-schedule__title">{{ course.t('title') }}</h3>
-            <div class="iprm-schedule__meta">
-              {{ location_badge(inst.event_format, inst.location) }}
-              {% if inst.effective_cpd_points %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | plural('bpr_points') }}</span>{% endif %}
-              {% if inst.effective_price and inst.effective_price > 0 %}<span class="iprm-schedule__price">{% if inst.price_is_from %}{{ _('від') }} {% endif %}{{ inst.effective_price | int }} &#8372;</span>{% endif %}
-              {% if remaining is not none %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--seats{% if site_settings.seats_low_threshold and remaining <= site_settings.seats_low_threshold %} iprm-schedule__tag--warning{% endif %}">{{ _('Залишилось') }} {{ remaining }} {{ remaining | plural('seats') }}</span>
-              {% endif %}
-            </div>
-            {% set inst_tariffs = inst.active_tariffs %}
-            {% if inst_tariffs %}
-            <div class="iprm-schedule__tariffs" role="list" aria-label="{{ _('Тарифи участі') }}">
-              {% for tariff in inst_tariffs %}
-              {% set tariff_items = (tariff.t('description') or '').splitlines() | map('trim') | select | list %}
-              {% if is_open %}
-              <a class="iprm-tariff-pill iprm-tariff-pill--link" role="listitem"
-                 href="{{ url_for('registration.register_instance', instance_id=inst.id, tariff=tariff.id) }}"
-                 {% if tariff_items %} title="{{ tariff_items | join('; ') }}"{% endif %}>
-                <span class="iprm-tariff-pill__name">{{ tariff.t('name') }}</span>
-                <span class="iprm-tariff-pill__price">{{ tariff.price | int }} &#8372;</span>
-              </a>
-              {% else %}
-              <span class="iprm-tariff-pill" role="listitem"{% if tariff_items %} title="{{ tariff_items | join('; ') }}"{% endif %}>
-                <span class="iprm-tariff-pill__name">{{ tariff.t('name') }}</span>
-                <span class="iprm-tariff-pill__price">{{ tariff.price | int }} &#8372;</span>
-              </span>
-              {% endif %}
-              {% endfor %}
-            </div>
-            {% endif %}
-          </div>
-          <div class="iprm-schedule__action">
-            {% if is_open %}
-            <a href="{{ url_for('registration.register_instance', instance_id=inst.id) }}" class="apple-btn apple-btn--primary apple-btn--sm">{{ _('Реєстрація') }}</a>
-            {% else %}
-            <span class="badge badge--draft">{{ _('Реєстрацію закрито') }}</span>
-            {% endif %}
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-      {% else %}
-      <div class="iprm-empty-state">
-        <p>{{ _('Наразі немає запланованих проведень цього курсу.') }}</p>
-        <p><a href="#request" class="apple-btn apple-btn--primary iprm-empty-state__cta">{{ _('Залишити запит на проведення') }}</a></p>
-      </div>
-      {% endif %}
-    </div>
-  </section>
-
-  <!-- ===== PAST INSTANCES (history) ===== -->
-  {% if past_instances %}
-  <section class="iprm-section iprm-section--compact" aria-labelledby="history-title">
-    <div class="iprm-section__inner">
-      <div class="iprm-history-line apple-reveal">
-        <h2 id="history-title" class="iprm-history-line__title">{% trans count=past_instances | length %}Уже проведено ({{ count }}):{% endtrans %}</h2>
-        <ul class="iprm-history-line__list">
-          {% for inst in past_instances %}
-          <li class="iprm-history-line__item">
-            {%- if inst.start_date %}{{ inst.start_date.strftime('%d.%m.%Y') }}{% endif -%}
-            {%- if inst.event_format == 'online' %} · {{ _('Онлайн') }}
-            {%- elif inst.location %} · {{ inst.location | localize_location }}{% endif -%}
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-  </section>
-  {% endif %}
-
-  <!-- ===== CERTIFICATE CONDITIONS (лише коли тест реально готовий) ===== -->
-  {% if certificate_quiz %}
-    {% with quiz = certificate_quiz %}
-      {% include 'partials/_event_certificate.html' %}
-    {% endwith %}
-  {% endif %}
-
   <!-- ===== REVIEWS ===== -->
   {% include 'partials/_course_reviews.html' %}
 
+  <!-- ===== FORMAT / TARIFFS (Оберіть формат участі) ===== -->
+  {% include 'partials/_course_tariffs.html' %}
+
   <!-- ===== FAQ ===== -->
   {% if course.faq is not none and course.faq | length %}
-  <section id="faq" class="iprm-section apple-section-gray" aria-labelledby="faq-title">
+  <section id="faq" class="iprm-section" aria-labelledby="faq-title">
     <div class="iprm-section__inner">
       <h2 id="faq-title" class="iprm-section__title apple-reveal">{{ _('Поширені <span class="apple-gradient-text">запитання</span>') }}</h2>
       <div class="iprm-faq apple-reveal">
@@ -477,35 +302,6 @@
         </details>
         {% endif %}{% endfor %}
       </div>
-    </div>
-  </section>
-  {% endif %}
-
-  <!-- ===== RELATED COURSES (next step) ===== -->
-  {% with rec_gray=false, rec_id='related-title' %}
-    {% include 'partials/_course_recommend_block.html' %}
-  {% endwith %}
-
-  <!-- ===== REFERRAL SHARE (logged-in) ===== -->
-  {% if referral_link %}
-  <section class="iprm-section apple-section-gray" aria-labelledby="referral-title">
-    <div class="iprm-section__inner">
-      <h2 id="referral-title" class="iprm-section__title apple-reveal">{{ _('Поділіться курсом') }}</h2>
-      <p class="referral-share__lead apple-reveal">
-        {{ _('Ваше персональне посилання на цей курс. За кожну оплачену реєстрацію за вашим посиланням ви отримуєте бонусні бали лояльності.') }}
-      </p>
-      <div class="referral-share apple-reveal">
-        <label class="referral-share__label" for="course-referral-link">{{ _('Ваше посилання') }}</label>
-        <div class="referral-share__row">
-          <input type="text" id="course-referral-link" class="referral-share__input"
-                 value="{{ referral_link }}" readonly
-                 data-select-on-focus aria-label="{{ _('Реферальне посилання') }}">
-          <button type="button" class="apple-btn apple-btn--primary referral-share__copy"
-                  data-copy="{{ referral_link }}">{{ _('Копіювати') }}</button>
-        </div>
-      </div>
-      {% set link = referral_link %}{% set qr = none %}
-      {% include 'partials/_referral_share_tools.html' %}
     </div>
   </section>
   {% endif %}
@@ -525,27 +321,10 @@
   ] %}
   {% include 'partials/_course_lead_form.html' %}
 
-  <!-- ===== FINAL CTA ===== -->
-  {# Текст редагується в адмінці (Курс -> Контент -> Фінальний заклик);
-     порожньо -> дефолтне речення нижче. #}
-  <section class="iprm-section iprm-section--compact" aria-label="{{ _('Реєстрація на курс') }}">
-    <div class="iprm-section__inner">
-      <div class="iprm-final-cta apple-reveal">
-        <p class="iprm-final-cta__text">
-          {{ course.t('final_cta_text') or _('Готові опанувати метод? Оберіть зручну дату та закріпіть за собою місце в групі.') }}
-        </p>
-        {% if format_inst %}
-        <a href="#formats" class="apple-btn apple-btn--primary">{{ _('Зареєструватися') }}</a>
-        {% elif upcoming_instances %}
-        <a href="#schedule" class="apple-btn apple-btn--primary">{{ _('Зареєструватися') }}</a>
-        {% else %}
-        <a href="#request" class="apple-btn apple-btn--primary">{{ _('Залишити запит') }}</a>
-        {% endif %}
-      </div>
-    </div>
-  </section>
+  <!-- ===== НАШЕ ДОДАТКОВЕ ===== -->
+  {% include 'partials/_course_extras.html' %}
 
-  {# ===== STICKY MOBILE CTA =====
+{# ===== STICKY MOBILE CTA =====
      Ціна -- min_price, той самий мінімальний effective_price найближчих
      проведень, що й у hero та ROI. Пряме course.base_price розходилось із
      блоком "Формат участі", коли тарифи проведення відрізняються від

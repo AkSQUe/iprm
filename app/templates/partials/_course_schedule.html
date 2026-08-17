@@ -1,0 +1,71 @@
+{# Найближчі дати проведень.
+
+   Лише офлайн-курс. Очікує upcoming_instances, open_instance_ids,
+   seats_left_map і макрос location_badge (імпортує сторінка-господар). #}
+  <section id="schedule" class="iprm-section" aria-labelledby="schedule-title">
+    <div class="iprm-section__inner">
+      <h2 id="schedule-title" class="iprm-section__title apple-reveal">{{ _('Найближчі <span class="apple-gradient-text">дати</span>') }}</h2>
+      {% if upcoming_instances %}
+      <div class="iprm-schedule">
+        {% for inst in upcoming_instances %}
+        {% set is_open = inst.id in open_instance_ids %}
+        {% set remaining = seats_left_map.get(inst.id) if is_open else None %}
+        <div class="iprm-schedule__item apple-reveal">
+          <div class="iprm-schedule__date">
+            {% if inst.start_date %}
+            <span class="iprm-schedule__day">{{ inst.start_date.strftime('%d') }}</span>
+            <span class="iprm-schedule__month">{{ inst.start_date.strftime('%m.%Y') }}</span>
+            {% else %}
+            <span class="iprm-schedule__day">TBD</span>
+            {% endif %}
+          </div>
+          <div class="iprm-schedule__content">
+            <h3 class="iprm-schedule__title">{{ course.t('title') }}</h3>
+            <div class="iprm-schedule__meta">
+              {{ location_badge(inst.event_format, inst.location) }}
+              {% if inst.effective_cpd_points %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | plural('bpr_points') }}</span>{% endif %}
+              {% if inst.effective_price and inst.effective_price > 0 %}<span class="iprm-schedule__price">{% if inst.price_is_from %}{{ _('від') }} {% endif %}{{ inst.effective_price | int }} &#8372;</span>{% endif %}
+              {% if remaining is not none %}
+              <span class="iprm-schedule__tag iprm-schedule__tag--seats{% if site_settings.seats_low_threshold and remaining <= site_settings.seats_low_threshold %} iprm-schedule__tag--warning{% endif %}">{{ _('Залишилось') }} {{ remaining }} {{ remaining | plural('seats') }}</span>
+              {% endif %}
+            </div>
+            {% set inst_tariffs = inst.active_tariffs %}
+            {% if inst_tariffs %}
+            <div class="iprm-schedule__tariffs" role="list" aria-label="{{ _('Тарифи участі') }}">
+              {% for tariff in inst_tariffs %}
+              {% set tariff_items = (tariff.t('description') or '').splitlines() | map('trim') | select | list %}
+              {% if is_open %}
+              <a class="iprm-tariff-pill iprm-tariff-pill--link" role="listitem"
+                 href="{{ url_for('registration.register_instance', instance_id=inst.id, tariff=tariff.id) }}"
+                 {% if tariff_items %} title="{{ tariff_items | join('; ') }}"{% endif %}>
+                <span class="iprm-tariff-pill__name">{{ tariff.t('name') }}</span>
+                <span class="iprm-tariff-pill__price">{{ tariff.price | int }} &#8372;</span>
+              </a>
+              {% else %}
+              <span class="iprm-tariff-pill" role="listitem"{% if tariff_items %} title="{{ tariff_items | join('; ') }}"{% endif %}>
+                <span class="iprm-tariff-pill__name">{{ tariff.t('name') }}</span>
+                <span class="iprm-tariff-pill__price">{{ tariff.price | int }} &#8372;</span>
+              </span>
+              {% endif %}
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="iprm-schedule__action">
+            {% if is_open %}
+            <a href="{{ url_for('registration.register_instance', instance_id=inst.id) }}" class="apple-btn apple-btn--primary apple-btn--sm">{{ _('Реєстрація') }}</a>
+            {% else %}
+            <span class="badge badge--draft">{{ _('Реєстрацію закрито') }}</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="iprm-empty-state">
+        <p>{{ _('Наразі немає запланованих проведень цього курсу.') }}</p>
+        <p><a href="#request" class="apple-btn apple-btn--primary iprm-empty-state__cta">{{ _('Залишити запит на проведення') }}</a></p>
+      </div>
+      {% endif %}
+    </div>
+  </section>

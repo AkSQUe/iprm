@@ -86,10 +86,11 @@
   {% set nav_items = [] %}
   {% if course.t('benefits') %}{% set _discard = nav_items.append({'href': 'benefits', 'label': _('Результат')}) %}{% endif %}
   {% set _discard = nav_items.append({'href': 'about', 'label': _('Про курс')}) %}
+  {# #buy -- картка купівлі всередині секції #about, тож якір іде поруч. #}
+  {% set _discard = nav_items.append({'href': 'buy', 'label': _('Вартість')}) %}
   {% if gallery %}{% set _discard = nav_items.append({'href': 'gallery', 'label': _('Як проходить')}) %}{% endif %}
   {% if course.program_blocks or course.t('practice_note_title') %}{% set _discard = nav_items.append({'href': 'program', 'label': _('Програма')}) %}{% endif %}
   {% if course.trainer %}{% set _discard = nav_items.append({'href': 'trainer', 'label': _('Тренер')}) %}{% endif %}
-  {% set _discard = nav_items.append({'href': 'buy', 'label': _('Вартість')}) %}
   {% if course_reviews %}{% set _discard = nav_items.append({'href': 'reviews', 'label': _('Відгуки')}) %}{% endif %}
   {% if course.faq is not none and course.faq | length %}{% set _discard = nav_items.append({'href': 'faq', 'label': _('Питання')}) %}{% endif %}
   {# Місць в онлайн-курсі не буває -- індикатор не показуємо. #}
@@ -150,7 +151,7 @@
   {% include 'partials/_course_benefits.html' %}
 
   <!-- ===== ABOUT + BUY ===== -->
-  <section id="about" class="iprm-section apple-section-gray" aria-labelledby="online-course-about">
+  <section id="about" class="iprm-section" aria-labelledby="online-course-about">
     <div class="iprm-section__inner iprm-online-detail">
 
       <div class="iprm-online-detail__main">
@@ -227,7 +228,7 @@
 
   <!-- ===== FAQ ===== -->
   {% if course.faq is not none and course.faq | length %}
-  <section id="faq" class="iprm-section apple-section-gray" aria-labelledby="faq-title">
+  <section id="faq" class="iprm-section" aria-labelledby="faq-title">
     <div class="iprm-section__inner">
       <h2 id="faq-title" class="iprm-section__title apple-reveal">{{ _('Поширені <span class="apple-gradient-text">запитання</span>') }}</h2>
       <div class="iprm-faq apple-reveal">

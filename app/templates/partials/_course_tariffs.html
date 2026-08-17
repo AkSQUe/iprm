@@ -1,0 +1,51 @@
+{# Формат участі -- тарифи найближчого проведення.
+
+   Лише офлайн-курс: в онлайн-курсу тарифів немає, там блок купівлі.
+   Очікує format_inst і open_instance_ids (див. courses/routes.py). #}
+  {% if format_inst %}
+  {% set fmt_open = format_inst.id in open_instance_ids %}
+  {% set fmt_date = format_inst.start_date.strftime('%d.%m.%Y') if format_inst.start_date else '' %}
+  {% set fmt_tariffs = format_inst.active_tariffs %}
+  <section id="formats" class="iprm-section apple-section-gray" aria-labelledby="formats-title">
+    <div class="iprm-section__inner">
+      <h2 id="formats-title" class="iprm-section__title apple-reveal">{{ _('Оберіть <span class="apple-gradient-text">формат участі</span>') }}</h2>
+      <p class="iprm-section__subtitle apple-reveal">{{ _('та отримайте сертифікат міжнародного зразка') }}</p>
+      <div class="iprm-format-cards">
+        {% for tariff in fmt_tariffs %}
+        {# Виділення -- явний прапорець адміна (tariff.is_featured), а не
+           "останній у списку", як було раніше: порядок сортування не має
+           вирішувати за маркетинг. #}
+        <article class="iprm-format-card apple-reveal{% if tariff.is_featured %} iprm-format-card--featured{% endif %}">
+          {% if tariff.t('badge') %}
+          <span class="iprm-format-card__flag">{{ tariff.t('badge') }}</span>
+          {% endif %}
+          <div class="iprm-format-card__head">
+            <h3 class="iprm-format-card__name">{{ tariff.t('name') }}</h3>
+            {% if fmt_date %}<p class="iprm-format-card__date">{{ _('Захід') }} {{ fmt_date }}</p>{% endif %}
+          </div>
+          <div class="iprm-format-card__price">{{ tariff.price | int }} <span class="iprm-format-card__currency">{{ _('грн') }}</span></div>
+          {% set tariff_entries = tariff.description_entries %}
+          {% if tariff_entries %}
+          <div class="iprm-format-card__included">
+            <span class="iprm-format-card__included-label">{{ _('Що включено:') }}</span>
+            <ul class="iprm-format-card__list">
+              {% for entry in tariff_entries %}
+              <li{% if entry.is_plus %} class="iprm-format-card__item--plus"{% endif %}>{{ entry.text }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          {% if fmt_open %}
+          <a href="{{ url_for('registration.register_instance', instance_id=format_inst.id, tariff=tariff.id) }}"
+             class="apple-btn apple-btn--primary iprm-format-card__cta">
+            {% if fmt_date %}{% trans date=fmt_date %}Зареєструватися на {{ date }}{% endtrans %}{% else %}{{ _('Зареєструватися') }}{% endif %}
+          </a>
+          {% else %}
+          <span class="iprm-format-card__cta iprm-format-card__cta--closed">{{ _('Продаж завершено') }}</span>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}

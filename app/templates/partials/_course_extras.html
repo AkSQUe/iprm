@@ -1,0 +1,88 @@
+{# «Наше додаткове» -- секції, яких в еталоні немає.
+
+   Ідуть одним послідовним шматком після основних дванадцяти (WS-A плану
+   міграції): графік дат -> історія проведень -> сертифікат -> наступний
+   крок -> реферальне посилання -> фінальний заклик.
+
+   Онлайн-курс підключає цей партіал НЕ повністю: дат, історії й сертифіката
+   там немає за визначенням, тож він інклюдить потрібні шматки сам. #}
+
+  {% include 'partials/_course_schedule.html' %}
+
+  <!-- ===== PAST INSTANCES (history) ===== -->
+  {% if past_instances %}
+  <section class="iprm-section iprm-section--compact" aria-labelledby="history-title">
+    <div class="iprm-section__inner">
+      <div class="iprm-history-line apple-reveal">
+        <h2 id="history-title" class="iprm-history-line__title">{% trans count=past_instances | length %}Уже проведено ({{ count }}):{% endtrans %}</h2>
+        <ul class="iprm-history-line__list">
+          {% for inst in past_instances %}
+          <li class="iprm-history-line__item">
+            {%- if inst.start_date %}{{ inst.start_date.strftime('%d.%m.%Y') }}{% endif -%}
+            {%- if inst.event_format == 'online' %} · {{ _('Онлайн') }}
+            {%- elif inst.location %} · {{ inst.location | localize_location }}{% endif -%}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== CERTIFICATE CONDITIONS (лише коли тест реально готовий) ===== -->
+  {% if certificate_quiz %}
+    {% with quiz = certificate_quiz %}
+      {% include 'partials/_event_certificate.html' %}
+    {% endwith %}
+  {% endif %}
+
+  <!-- ===== RELATED COURSES (next step) ===== -->
+  {% with rec_gray=false, rec_id='related-title' %}
+    {% include 'partials/_course_recommend_block.html' %}
+  {% endwith %}
+
+  <!-- ===== REFERRAL SHARE (logged-in) ===== -->
+  {% if referral_link %}
+  <section class="iprm-section apple-section-gray" aria-labelledby="referral-title">
+    <div class="iprm-section__inner">
+      <h2 id="referral-title" class="iprm-section__title apple-reveal">{{ _('Поділіться курсом') }}</h2>
+      <p class="referral-share__lead apple-reveal">
+        {{ _('Ваше персональне посилання на цей курс. За кожну оплачену реєстрацію за вашим посиланням ви отримуєте бонусні бали лояльності.') }}
+      </p>
+      <div class="referral-share apple-reveal">
+        <label class="referral-share__label" for="course-referral-link">{{ _('Ваше посилання') }}</label>
+        <div class="referral-share__row">
+          <input type="text" id="course-referral-link" class="referral-share__input"
+                 value="{{ referral_link }}" readonly
+                 data-select-on-focus aria-label="{{ _('Реферальне посилання') }}">
+          <button type="button" class="apple-btn apple-btn--primary referral-share__copy"
+                  data-copy="{{ referral_link }}">{{ _('Копіювати') }}</button>
+        </div>
+      </div>
+      {% set link = referral_link %}{% set qr = none %}
+      {% include 'partials/_referral_share_tools.html' %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== FINAL CTA ===== -->
+  {# Текст редагується в адмінці (Курс -> Контент -> Фінальний заклик);
+     порожньо -> дефолтне речення нижче. #}
+  <section class="iprm-section iprm-section--compact" aria-label="{{ _('Реєстрація на курс') }}">
+    <div class="iprm-section__inner">
+      <div class="iprm-final-cta apple-reveal">
+        <p class="iprm-final-cta__text">
+          {{ course.t('final_cta_text') or _('Готові опанувати метод? Оберіть зручну дату та закріпіть за собою місце в групі.') }}
+        </p>
+        {% if format_inst %}
+        <a href="#formats" class="apple-btn apple-btn--primary">{{ _('Зареєструватися') }}</a>
+        {% elif upcoming_instances %}
+        <a href="#schedule" class="apple-btn apple-btn--primary">{{ _('Зареєструватися') }}</a>
+        {% else %}
+        <a href="#request" class="apple-btn apple-btn--primary">{{ _('Залишити запит') }}</a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  
