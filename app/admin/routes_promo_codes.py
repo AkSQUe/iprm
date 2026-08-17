@@ -132,7 +132,7 @@ def promo_codes_export():
     promos = _promo_query(filters).all()
     summary = _listing.export_summary(
         [
-            ('Пошук', filters['q'] or '--'),
+            ('Пошук', filters['q'] or '–'),
             ('Стан', _PROMO_STATES.get(filters['status'], 'Усі')),
         ],
         len(promos),

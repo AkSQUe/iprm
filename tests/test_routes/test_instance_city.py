@@ -150,7 +150,7 @@ class TestAdminPicker:
             _populate_choices(form)
 
         labels = dict(form.city_id.choices)
-        assert labels[0] == '--- Місце уточнюється ---'
+        assert labels[0] == '– Місце уточнюється –'
         assert labels[kyiv.id] == kyiv.name
 
     def test_undecided_is_saved_as_null_not_zero(self, app, author, kyiv):

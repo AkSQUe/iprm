@@ -97,7 +97,7 @@ def error_logs_export():
     days = _error_log_days(filters)
     summary = _listing.export_summary(
         [
-            ('Пошук', filters['q'] or '--'),
+            ('Пошук', filters['q'] or '–'),
             ('Код', filters['error_code'] or 'Усі'),
             ('Стан', _ERROR_RESOLVED.get(filters['resolved'], 'Усі')),
             ('Період', 'За весь час' if days == 0 else f'останні {days} дн.'),

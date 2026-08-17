@@ -89,7 +89,7 @@ def course_requests_export():
     )
     summary = _listing.export_summary(
         [
-            ('Пошук', filters['q'] or '--'),
+            ('Пошук', filters['q'] or '–'),
             ('Статус', dict(CourseRequest.STATUSES).get(filters['status'], 'Усі')),
             ('Курс', course.title if course else 'Усі'),
             ('Дата заявки', _listing.date_range_label(filters)),

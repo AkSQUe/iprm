@@ -118,16 +118,16 @@
     <tbody>
       {% for inst in instances %}
       <tr>
-        <td>{{ inst.start_date.strftime('%d.%m.%Y %H:%M') if inst.start_date else '---' }}</td>
+        <td>{{ inst.start_date.strftime('%d.%m.%Y %H:%M') if inst.start_date else '–' }}</td>
         <td>
           {% if inst.course %}
           <a href="{{ url_for('admin.instance_registrations', instance_id=inst.id) }}"
              title="Зареєстровані на це проведення"><strong>{{ inst.course.title }}</strong></a>
           {% else %}
-          <strong>---</strong>
+          <strong>–</strong>
           {% endif %}
         </td>
-        <td>{{ inst.format_label or '---' }}</td>
+        <td>{{ inst.format_label or '–' }}</td>
         <td>
           <form method="POST"
                 action="{{ url_for('admin.instance_status_update', instance_id=inst.id) }}"
@@ -162,7 +162,7 @@
           <span class="admin-seats" title="Місткість не задана">{{ occupied }}/&infin;</span>
           {% endif %}
         </td>
-        <td>{{ inst.location or '---' }}</td>
+        <td>{{ inst.location or '–' }}</td>
         <td>
           <div class="admin-table__actions">
             <a href="{{ url_for('admin.instance_edit', instance_id=inst.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('edit', label='Редагувати') }}</a>

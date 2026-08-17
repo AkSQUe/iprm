@@ -296,7 +296,7 @@ def registration_certificate_issue(reg_id):
             flash(f'Сертифікат {cert_number} видано та надіслано на email', 'success')
         else:
             flash(
-                f'Сертифікат {cert_number} видано. Email не відправлено -- '
+                f'Сертифікат {cert_number} видано. Email не відправлено – '
                 'надішліть повторно з картки реєстрації.',
                 'warning',
             )
@@ -624,7 +624,7 @@ def _registration_filters_summary(filters, rows_count):
     """Людиночитний опис активних фільтрів для аркуша «Фільтри» у файлі."""
     summary = [
         ('Період заходів', _SCOPE_LABELS.get(filters['scope'], filters['scope'])),
-        ('Пошук', filters['q'] or '--'),
+        ('Пошук', filters['q'] or '–'),
         ('Дата реєстрації', _listing.date_range_label(filters)),
     ]
 

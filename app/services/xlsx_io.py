@@ -920,7 +920,7 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
             if event_type not in VALID_EVENT_TYPES:
                 allowed = sorted(VALID_EVENT_TYPES) + sorted(EVENT_TYPE_KEY_BY_LABEL.keys())
                 raise ValueError(
-                    f'event_type={event_type_raw!r} -- допустимі: {allowed}'
+                    f'event_type={event_type_raw!r} – допустимі: {allowed}'
                 )
 
             # Колонка "Тренер" може містити або slug (старі файли), або ПІБ
@@ -1410,7 +1410,7 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
             if event_format and event_format not in VALID_FORMATS:
                 allowed = sorted(VALID_FORMATS) + sorted(FORMAT_KEY_BY_LABEL.keys())
                 raise ValueError(
-                    f'event_format={event_format_raw!r} -- допустимі: {allowed}'
+                    f'event_format={event_format_raw!r} – допустимі: {allowed}'
                 )
 
             online_link = _str(raw.get('online_link'))
@@ -1426,7 +1426,7 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
             if status not in VALID_STATUSES:
                 allowed = sorted(VALID_STATUSES) + sorted(STATUS_KEY_BY_LABEL.keys())
                 raise ValueError(
-                    f'status={status_raw!r} -- допустимі: {allowed}'
+                    f'status={status_raw!r} – допустимі: {allowed}'
                 )
 
             # Колонка "Тренер" -- ПІБ (новий формат) або slug (старий).

@@ -46,7 +46,7 @@ def format_event_label(title, start_date):
     if start_date is not None and start_date.tzinfo is not None:
         start_date = start_date.astimezone(_KYIV)
     date_s = start_date.strftime('%d.%m.%Y') if start_date else 'без дати'
-    return f'{title} -- {date_s}'
+    return f'{title} – {date_s}'
 
 
 def event_label(instance, with_id=False, with_status=False):
@@ -57,7 +57,7 @@ def event_label(instance, with_id=False, with_status=False):
     """
     title = instance.course.title if instance.course else f'Захід #{instance.id}'
     core = format_event_label(title, instance.start_date)
-    label = f'#{instance.id} -- {core}' if with_id else core
+    label = f'#{instance.id} – {core}' if with_id else core
     if with_status:
         status = dict(CourseInstance.STATUSES).get(instance.status, instance.status)
         label += f' ({status})'

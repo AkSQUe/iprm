@@ -32,7 +32,7 @@ def meta_pixel_save():
     enabled = request.form.get('meta_pixel_enabled') == 'on'
 
     if not SiteSettings.is_valid_meta_pixel_id(pixel_id):
-        flash('Meta Pixel ID -- 15-16 цифр без пробілів. Скопіюйте саме ID, '
+        flash('Meta Pixel ID – 15-16 цифр без пробілів. Скопіюйте саме ID, '
               'а не весь код піксела.', 'error')
         return redirect(url_for('admin.meta_pixel'))
 

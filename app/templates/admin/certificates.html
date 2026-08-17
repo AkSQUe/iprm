@@ -85,11 +85,11 @@
           </td>
           <td>{{ cert.event_title }}</td>
           <td>
-            {% if cert.cpd_points %}{{ cert.cpd_points }}{% else %}<span class="admin-text-muted">--</span>{% endif %}
+            {% if cert.cpd_points %}{{ cert.cpd_points }}{% else %}<span class="admin-text-muted">–</span>{% endif %}
           </td>
           <td>{{ cert.issued_at.strftime('%d.%m.%Y') }}</td>
           <td>
-            {% if cert.issued_by %}<small>{{ cert.issued_by.email }}</small>{% else %}<span class="admin-text-muted">--</span>{% endif %}
+            {% if cert.issued_by %}<small>{{ cert.issued_by.email }}</small>{% else %}<span class="admin-text-muted">–</span>{% endif %}
           </td>
           <td>
             {% if cert.revoked %}

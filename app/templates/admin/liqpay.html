@@ -128,7 +128,7 @@
       {% for reg in recent %}
       <tr>
         <td>REG-{{ reg.id }}</td>
-        <td>{{ reg.target_title or '---' }}</td>
+        <td>{{ reg.target_title or '–' }}</td>
         <td>{{ reg.user.first_name }} {{ reg.user.last_name }}</td>
         <td>{{ reg.payment_amount | int }} &#8372;</td>
         <td>
@@ -146,7 +146,7 @@
           {% elif reg.payment_status == 'refunded' %}
           <span class="admin-text-muted">Повернено</span>
           {% else %}
-          <span class="admin-text-muted">--</span>
+          <span class="admin-text-muted">–</span>
           {% endif %}
         </td>
       </tr>

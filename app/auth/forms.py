@@ -107,7 +107,7 @@ class RegistrationForm(FlaskForm):
         if User.query.filter_by(email=field.data.lower().strip()).first():
             raise ValidationError(_(
                 'Неможливо використати цей email. Якщо обліковий запис уже '
-                'існує -- увійдіть, відновіть пароль або скористайтесь '
+                'існує – увійдіть, відновіть пароль або скористайтесь '
                 'входом через Google.'
             ))
 

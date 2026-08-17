@@ -182,7 +182,7 @@ def notifications_log_export():
     logs = _email_log_query(filters).all()
     summary = _listing.export_summary(
         [
-            ('Пошук', filters['q'] or '--'),
+            ('Пошук', filters['q'] or '–'),
             ('Статус', dict(EmailLog.STATUSES).get(filters['status'], 'Усі')),
             ('Тригер', dict(EmailLog.TRIGGERS).get(filters['trigger'], 'Усі')),
             ('Дата листа', _listing.date_range_label(filters)),
@@ -539,7 +539,7 @@ def notifications_templates():
             'label': 'Admin-сповіщення про подію',
             'template_name': 'admin_event_notification.html',
             'trigger': 'status_change',
-            'subject': f'Нова реєстрація: {event.title} -- {user.full_name}',
+            'subject': f'Нова реєстрація: {event.title} – {user.full_name}',
             'html': render_template('emails/admin_event_notification.html',
                                     event=event, registration=reg,
                                     kind_label='Нова реєстрація',
@@ -550,7 +550,7 @@ def notifications_templates():
             'label': 'Admin-сповіщення про оплату',
             'template_name': 'admin_event_notification.html',
             'trigger': 'payment',
-            'subject': f'Оплата 10000 UAH: {event.title} -- {user.full_name}',
+            'subject': f'Оплата 10000 UAH: {event.title} – {user.full_name}',
             'html': render_template('emails/admin_event_notification.html',
                                     event=event, registration=reg_paid_promo,
                                     kind_label='Підтверджена оплата',

@@ -52,7 +52,7 @@
         <span class="admin-stat-card__label">Кліків</span>
       </div>
       <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{% if conversion_rate is not none %}{{ conversion_rate }}%{% else %}--{% endif %}</span>
+        <span class="admin-stat-card__value">{% if conversion_rate is not none %}{{ conversion_rate }}%{% else %}–{% endif %}</span>
         <span class="admin-stat-card__label">Конверсія кліків</span>
       </div>
     </div>
@@ -79,7 +79,7 @@
         <tbody>
           {% for a in adjustments %}
           <tr>
-            <td>{{ a.created_at.strftime('%d.%m.%Y %H:%M') if a.created_at else '--' }}</td>
+            <td>{{ a.created_at.strftime('%d.%m.%Y %H:%M') if a.created_at else '–' }}</td>
             <td><strong>{{ '%+d' | format(a.points) }}</strong></td>
             <td>{{ a.reason }}</td>
             <td>{{ a.created_by.email if a.created_by else 'система' }}</td>
@@ -101,13 +101,13 @@
         {% for rw in rewards %}
         {% set reg = rw.registration %}
         <tr>
-          <td>{{ rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '--' }}</td>
+          <td>{{ rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '–' }}</td>
           <td>
             {% if reg and reg.user %}
             {{ reg.user.first_name }} {{ reg.user.last_name }}<br>
             <small class="admin-text-muted">{{ reg.user.email }}</small>
             {% else %}
-            <span class="admin-text-muted">--</span>
+            <span class="admin-text-muted">–</span>
             {% endif %}
           </td>
           <td>
@@ -115,7 +115,7 @@
             {{ reg.instance.course.title }}
             {% if reg.instance.start_date %}<br><small class="admin-text-muted">{{ reg.instance.start_date.strftime('%d.%m.%Y') }}</small>{% endif %}
             {% else %}
-            <span class="admin-text-muted">--</span>
+            <span class="admin-text-muted">–</span>
             {% endif %}
           </td>
           <td><strong>{{ rw.points }}</strong></td>

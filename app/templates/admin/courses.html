@@ -99,7 +99,7 @@
         </td>
         <td><strong>{{ course.title }}</strong></td>
         <td class="admin-nowrap">{{ course.event_type_label }}</td>
-        <td>{{ course.trainer.full_name if course.trainer else '---' }}</td>
+        <td>{{ course.trainer.full_name if course.trainer else '–' }}</td>
         <td class="admin-nowrap">
           <a href="{{ url_for('admin.instances_list', course_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="upcoming / total">
             {{ stats.upcoming }} / {{ stats.total }}

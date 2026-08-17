@@ -82,7 +82,7 @@
                 {% for item in row.overrides %}
                 <li>
                   <a href="{{ url_for('admin.instance_quiz_edit', instance_id=item.instance.id) }}">
-                    проведення {{ item.instance.start_date.strftime('%d.%m.%Y') if item.instance.start_date else '---' }}
+                    проведення {{ item.instance.start_date.strftime('%d.%m.%Y') if item.instance.start_date else '–' }}
                   </a>
                   <span class="badge {{ 'badge--active' if item.quiz.is_active else 'badge--draft' }}">
                     {{ 'увімкнено' if item.quiz.is_active else 'чернетка' }}
@@ -93,7 +93,7 @@
               {% endif %}
             </td>
             <td>
-              {% if row.quiz %}{{ row.quiz.bank_size }}{% else %}<span class="quiz-muted">---</span>{% endif %}
+              {% if row.quiz %}{{ row.quiz.bank_size }}{% else %}<span class="quiz-muted">–</span>{% endif %}
             </td>
             <td>
               {% if row.quiz %}

@@ -1264,8 +1264,8 @@ msgstr "Not filled in — required for BPR points and the certificate (MoH No. 7
 msgid "Способи входу"
 msgstr "Sign-in methods"
 
-msgid "Пароль, Google, Apple -- керуйте прив'язками"
-msgstr "Password, Google, Apple -- manage your connections"
+msgid "Пароль, Google, Apple – керуйте прив'язками"
+msgstr "Password, Google, Apple – manage your connections"
 
 msgid "Налаштування"
 msgstr "Settings"
@@ -1553,12 +1553,12 @@ msgstr "Set a password | IPRM"
 #, python-format
 msgid ""
 "\n"
-"      Додайте вхід з паролем для <strong>%(email)s</strong> -- на додачу\n"
+"      Додайте вхід з паролем для <strong>%(email)s</strong> – на додачу\n"
 "      до вже наявних способів входу.\n"
 "      "
 msgstr ""
 "\n"
-"      Add password sign-in for <strong>%(email)s</strong> -- alongside\n"
+"      Add password sign-in for <strong>%(email)s</strong> – alongside\n"
 "      your existing sign-in methods.\n"
 "      "
 

@@ -256,14 +256,14 @@
   <div class="form-section admin-form__section">
     <h3 class="admin-form__section-title">Реферальне посилання</h3>
     <p class="admin-form__section-hint">
-      Тренер не має власного кабінету -- передайте йому це посилання. За кожну
+      Тренер не має власного кабінету – передайте йому це посилання. За кожну
       оплачену реєстрацію на курс за ним нараховуються бонусні бали лояльності.
     </p>
     <p class="admin-referral-balance">
       Баланс: <strong>{{ referral_balance }}</strong> бонусних балів
     </p>
     {% if referral_dashboard_url %}
-    <p class="admin-form__section-hint">Особистий кабінет тренера (без логіну) -- надішліть це посилання:</p>
+    <p class="admin-form__section-hint">Особистий кабінет тренера (без логіну) – надішліть це посилання:</p>
     <div class="admin-referral-row">
       <input type="text" class="form-input" value="{{ referral_dashboard_url }}" readonly
              data-select-on-focus aria-label="Посилання на кабінет реферера">

@@ -52,7 +52,7 @@
     });
     if (!dedup.length) {
       previewEl.innerHTML = '<span class="recipients-preview--empty">' +
-        'Нікого не охоплено -- правило вимкнено або всі джерела порожні.' +
+        'Нікого не охоплено – правило вимкнено або всі джерела порожні.' +
         '</span>';
       return;
     }

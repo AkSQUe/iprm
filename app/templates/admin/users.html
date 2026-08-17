@@ -83,7 +83,7 @@
             {% if user.last_login_at %}
               {{ user.last_login_at.strftime('%d.%m.%Y %H:%M') }}
             {% else %}
-              <span class="admin-text-muted">--</span>
+              <span class="admin-text-muted">–</span>
             {% endif %}
           </td>
           <td>{{ user.created_at.strftime('%d.%m.%Y') }}</td>
@@ -106,7 +106,7 @@
               {% endif %}
             </form>
             {% else %}
-              <span class="admin-text-muted">--</span>
+              <span class="admin-text-muted">–</span>
             {% endif %}
           </td>
         </tr>

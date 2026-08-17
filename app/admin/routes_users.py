@@ -122,7 +122,7 @@ def users_export():
     users_list = _users_with_counts(_users_query(filters).all())
     summary = _listing.export_summary(
         [
-            ('Пошук', filters['q'] or '--'),
+            ('Пошук', filters['q'] or '–'),
             ('Роль', _USER_ROLES.get(filters['role'], 'Усі')),
             ('Стан', _USER_STATES.get(filters['state'], 'Усі')),
             ('Email', _USER_CONFIRMED.get(filters['confirmed'], 'Усі')),

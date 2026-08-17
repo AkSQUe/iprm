@@ -58,7 +58,7 @@
         <div class="connection-item">
           <div class="connection-item__title">Google</div>
           <div class="connection-item__email">
-            {% if has_google %}{{ by_provider['google'].email }}{{ last_used(by_provider['google']) }}{% else %}--{% endif %}
+            {% if has_google %}{{ by_provider['google'].email }}{{ last_used(by_provider['google']) }}{% else %}–{% endif %}
           </div>
           <div class="connection-item__status">
             {% if has_google %}
@@ -82,7 +82,7 @@
         <div class="connection-item">
           <div class="connection-item__title">Apple</div>
           <div class="connection-item__email">
-            {% if has_apple %}{{ by_provider['apple'].email or _('через Apple ID') }}{{ last_used(by_provider['apple']) }}{% else %}--{% endif %}
+            {% if has_apple %}{{ by_provider['apple'].email or _('через Apple ID') }}{{ last_used(by_provider['apple']) }}{% else %}–{% endif %}
           </div>
           <div class="connection-item__status">
             {% if has_apple %}

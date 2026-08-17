@@ -58,7 +58,7 @@
     <tbody>
       {% for req in requests %}
       <tr>
-        <td>{{ req.created_at.strftime('%d.%m.%Y %H:%M') if req.created_at else '---' }}</td>
+        <td>{{ req.created_at.strftime('%d.%m.%Y %H:%M') if req.created_at else '–' }}</td>
         <td><strong>{{ req.full_name }}</strong></td>
         <td><a href="tel:{{ req.phone }}">{{ req.phone }}</a></td>
         <td><a href="mailto:{{ req.email }}">{{ req.email }}</a></td>

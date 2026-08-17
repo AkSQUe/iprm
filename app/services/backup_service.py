@@ -219,7 +219,7 @@ class BackupService:
         if checksum != backup.checksum_sha256:
             backup.status = DatabaseBackup.STATUS_CORRUPTED
             db.session.commit()
-            raise BackupValidationError('Checksum mismatch -- backup file is corrupted')
+            raise BackupValidationError('Checksum mismatch – backup file is corrupted')
 
         pre_restore_backup = None
         if not force:

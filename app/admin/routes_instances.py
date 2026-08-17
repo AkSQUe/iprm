@@ -40,12 +40,12 @@ def _populate_choices(form, preselected_course_id=None):
     if preselected_course_id and not form.course_id.data:
         form.course_id.data = preselected_course_id
 
-    populate_trainer_choices(form, empty_label='--- Тренер курсу (default) ---')
+    populate_trainer_choices(form, empty_label='– Тренер курсу (default) –')
 
     # Місто необов'язкове: адресу часто знають пізніше за дату, і розклад
     # показує «Місце уточнюється» замість того, щоб ховати захід.
     from app.models.city import City
-    form.city_id.choices = [(0, '--- Місце уточнюється ---')] + [
+    form.city_id.choices = [(0, '– Місце уточнюється –')] + [
         (city.id, city.name) for city in City.query.order_by(City.name).all()
     ]
 
@@ -251,10 +251,10 @@ def instances_report_export():
     )
     summary = _listing.export_summary(
         [
-            ('Пошук', filters['q'] or '--'),
+            ('Пошук', filters['q'] or '–'),
             ('Курс', course.title if course else 'Усі'),
             ('Статус', dict(CourseInstance.STATUSES).get(filters['status'], 'Усі')),
-            ('Швидкий фільтр', filters['quick'] or '--'),
+            ('Швидкий фільтр', filters['quick'] or '–'),
         ],
         len(instances),
     )

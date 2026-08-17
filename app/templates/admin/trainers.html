@@ -74,8 +74,8 @@
       {% for trainer in trainers %}
       <tr>
         <td><strong>{{ trainer.full_name }}</strong></td>
-        <td>{{ trainer.role or '---' }}</td>
-        <td>{{ (trainer.experience_years | string) + ' р.' if trainer.experience_years else '---' }}</td>
+        <td>{{ trainer.role or '–' }}</td>
+        <td>{{ (trainer.experience_years | string) + ' р.' if trainer.experience_years else '–' }}</td>
         <td>
           {% if trainer.is_active %}
             <span class="badge badge--active">Активний</span>

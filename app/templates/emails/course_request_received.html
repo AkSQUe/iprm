@@ -23,7 +23,7 @@
         <tr>
             <td style="padding: 20px 24px;">
                 <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">
-                    {{ course.title if course else '---' }}
+                    {{ course.title if course else '–' }}
                 </p>
                 {{ detail_row("Email", request_obj.email) }}
                 {% if request_obj.phone %}

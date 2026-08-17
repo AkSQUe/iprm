@@ -39,7 +39,7 @@
       <tbody>
         {% for course, count in counts_by_course %}
         <tr>
-          <td><strong>{{ course.title if course else '---' }}</strong></td>
+          <td><strong>{{ course.title if course else '–' }}</strong></td>
           <td><span class="badge badge--warning">{{ count }}</span></td>
           <td>
             {% if course %}
@@ -83,12 +83,12 @@
     <tbody>
       {% for req in requests %}
       <tr>
-        <td>{{ req.created_at.strftime('%d.%m.%Y %H:%M') if req.created_at else '---' }}</td>
-        <td>{{ req.course.title if req.course else '---' }}</td>
+        <td>{{ req.created_at.strftime('%d.%m.%Y %H:%M') if req.created_at else '–' }}</td>
+        <td>{{ req.course.title if req.course else '–' }}</td>
         <td>{{ req.email }}</td>
-        <td>{{ req.phone or '---' }}</td>
+        <td>{{ req.phone or '–' }}</td>
         <td><span class="badge badge--{{ req.status }}">{{ req.status_label }}</span></td>
-        <td>{{ req.updated_at.strftime('%d.%m.%Y %H:%M') if req.updated_at else '---' }}</td>
+        <td>{{ req.updated_at.strftime('%d.%m.%Y %H:%M') if req.updated_at else '–' }}</td>
         <td>
           <div class="admin-table__actions">
             <a href="{{ url_for('admin.course_request_edit', request_id=req.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('edit', label='Редагувати') }}</a>

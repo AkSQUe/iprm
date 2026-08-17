@@ -138,7 +138,7 @@
             </span>
           </td>
           <td>
-            {% if reg.payment_amount %}{{ reg.payment_amount | int }} &#8372;{% else %}<span class="admin-text-muted">--</span>{% endif %}
+            {% if reg.payment_amount %}{{ reg.payment_amount | int }} &#8372;{% else %}<span class="admin-text-muted">–</span>{% endif %}
             {% if reg.tariff %}<div class="admin-text-muted">{{ reg.tariff.name }}</div>{% endif %}
             {% if reg.has_discount %}
               <div class="admin-text-muted">

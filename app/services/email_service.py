@@ -1064,7 +1064,7 @@ class EmailService:
                 'overflow': occupied - capacity,
                 'participant_name': (
                     user.full_name if user is not None and hasattr(user, 'full_name')
-                    else (user.email if user is not None else '---')
+                    else (user.email if user is not None else '–')
                 ),
                 'registration_id': registration.id if registration is not None else None,
                 'admin_url': EmailService._admin_url_for_registration(registration),
@@ -1126,7 +1126,7 @@ class EmailService:
         title = event.title if event is not None else event_type
         who = (user.full_name if user is not None else None) or \
               (user.email if user is not None else 'unknown')
-        return f'{prefix}: {title} -- {who}'
+        return f'{prefix}: {title} – {who}'
 
     @staticmethod
     def _pay_url_for_registration(registration):

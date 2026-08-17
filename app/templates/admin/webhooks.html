@@ -87,7 +87,7 @@
       {% for d in deliveries %}
       <tr>
         <td class="wh-nowrap">
-          {{ d.created_at.strftime('%d.%m.%Y %H:%M:%S') if d.created_at else '---' }}
+          {{ d.created_at.strftime('%d.%m.%Y %H:%M:%S') if d.created_at else '–' }}
           {% if d.event_uuid %}<span class="wh-uuid" title="event_uuid">{{ d.event_uuid[:12] }}</span>{% endif %}
         </td>
         <td>
@@ -110,14 +110,14 @@
             {{ d.attempts }} / {{ max_attempts }}
           </span>
         </td>
-        <td class="wh-http">{{ d.last_http_status or '---' }}</td>
+        <td class="wh-http">{{ d.last_http_status or '–' }}</td>
         <td class="wh-nowrap">
           {% if d.status == 'sent' and d.sent_at %}
             <span class="wh-muted">відправлено</span><br>{{ d.sent_at.strftime('%d.%m %H:%M') }}
           {% elif d.next_retry_at %}
             <span class="wh-muted">ретрай</span><br>{{ d.next_retry_at.strftime('%d.%m %H:%M') }}
           {% else %}
-            <span class="wh-muted">---</span>
+            <span class="wh-muted">–</span>
           {% endif %}
         </td>
         <td>

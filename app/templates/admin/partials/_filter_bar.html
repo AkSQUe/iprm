@@ -95,7 +95,7 @@
                    class="form-input form-input--sm">
           {% else %}
             <select name="{{ f.name }}" class="form-input form-input--sm">
-              <option value="">{{ f.placeholder or ('Усі -- ' ~ f.label) }}</option>
+              <option value="">{{ f.placeholder or ('Усі – ' ~ f.label) }}</option>
               {% for val, label in f.options %}
                 <option value="{{ val }}"{% if values.get(f.name) is not none and values.get(f.name) | string == val | string %} selected{% endif %}>{{ label }}</option>
               {% endfor %}

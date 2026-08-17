@@ -33,7 +33,7 @@
       {% if instance.course %}
       {% set copyable_count = instance.copyable_course_tariffs | length %}
       <form method="POST" action="{{ url_for('admin.instance_tariffs_sync', instance_id=instance.id) }}"
-            data-confirm="Замінити тарифи цього проведення шаблонами курсу? Тарифи з реєстраціями буде деактивовано, решту -- замінено."
+            data-confirm="Замінити тарифи цього проведення шаблонами курсу? Тарифи з реєстраціями буде деактивовано, решту – замінено."
             data-confirm-ok="Замінити тарифи" data-confirm-danger>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn-admin btn-admin--secondary"
@@ -73,7 +73,7 @@
           <ul class="admin-tariff-items">
             {% for item in tariff.description_items %}<li>{{ item }}</li>{% endfor %}
           </ul>
-          {% else %}---{% endif %}
+          {% else %}–{% endif %}
         </td>
         <td>
           {% if tariff.is_active %}<span class="badge badge--active">Так</span>

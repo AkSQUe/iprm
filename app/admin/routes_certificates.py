@@ -130,7 +130,7 @@ def certificates_export():
     )
     summary = _listing.export_summary(
         [
-            ('Пошук', filters['q'] or '--'),
+            ('Пошук', filters['q'] or '–'),
             ('Стан', _CERT_STATES.get(filters['state'], 'Усі')),
             ('Курс', course.title if course else 'Усі'),
             ('Рік видачі', filters['year'] or 'Усі'),

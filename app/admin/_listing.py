@@ -126,7 +126,7 @@ def date_range_label(filters, empty='Уся'):
     start, end = filters.get('date_from'), filters.get('date_to')
     if not start and not end:
         return empty
-    return f"{start or '...'} -- {end or '...'}"
+    return f"{start or '...'} – {end or '...'}"
 
 
 def _escape_like(term):
@@ -196,7 +196,7 @@ def xlsx_export(rows, basename, builder, back_endpoint, **back_args):
     """
     if len(rows) > MAX_EXPORT_ROWS:
         flash(
-            f'У зрізі {len(rows)} рядків -- це більше за ліміт '
+            f'У зрізі {len(rows)} рядків – це більше за ліміт '
             f'{MAX_EXPORT_ROWS}. Звузьте фільтр (наприклад, діапазоном дат) '
             'і повторіть експорт.',
             'error',

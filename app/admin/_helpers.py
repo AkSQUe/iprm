@@ -320,7 +320,7 @@ def validate_liqpay_credentials(public_key, private_key, sandbox, timeout=5):
     if err == 'payment_not_found':
         return True, 'Ключі валідні (API responsive)'
     if err in ('signature', 'invalid_signature'):
-        return False, 'LiqPay відхилив підпис -- private_key невірний'
+        return False, 'LiqPay відхилив підпис – private_key невірний'
     desc = result.get('err_description', '')
     return False, f'Несподівана відповідь LiqPay: err_code={err!r} {desc}'
 
@@ -341,7 +341,7 @@ def try_commit(log_context='', error_msg='Помилка при збережен
         return False
 
 
-def populate_trainer_choices(form, empty_label='--- Default-тренер не обрано ---'):
+def populate_trainer_choices(form, empty_label='– Default-тренер не обрано –'):
     """Заповнити form.trainer_id.choices активними тренерами."""
     from app.models.trainer import Trainer
     trainers = (

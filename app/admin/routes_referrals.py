@@ -174,7 +174,7 @@ def referrals_reconcile():
     if fixed:
         flash(f'Звірено баланси: виправлено {fixed}', 'success')
     else:
-        flash('Баланси узгоджені -- виправляти нічого', 'success')
+        flash('Баланси узгоджені – виправляти нічого', 'success')
     return redirect(url_for('admin.referrals_overview'))
 
 
@@ -255,7 +255,7 @@ def referrals_export():
     )
     summary = _listing.export_summary(
         [
-            ('Пошук', filters['q'] or '--'),
+            ('Пошук', filters['q'] or '–'),
             ('Статус', dict(ReferralReward.STATUSES).get(filters['status'], 'Усі')),
             ('Дата нарахування', _listing.date_range_label(filters)),
         ],

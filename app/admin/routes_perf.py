@@ -141,5 +141,5 @@ def perf_key_clear():
     settings.perf_api_key_set_at = None
     db.session.commit()
     audit_logger.warning('Admin %s cleared perf ingest key', current_user.email)
-    flash('Приймання замірів вимкнено -- ендпоінт більше не приймає дані.', 'warning')
+    flash('Приймання замірів вимкнено – ендпоінт більше не приймає дані.', 'warning')
     return redirect(url_for('admin.perf_runs'))

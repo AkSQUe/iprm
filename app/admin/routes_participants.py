@@ -457,7 +457,7 @@ def participants_import_apply(token):
 
     plan = xlsx_io.parse_participants_xlsx(path)
     if not plan.is_valid:
-        flash('У файлі є помилки валідації -- імпорт відхилено.', 'error')
+        flash('У файлі є помилки валідації – імпорт відхилено.', 'error')
         instance_id = request.args.get('instance_id', type=int)
         return redirect(url_for(
             'admin.participants_import_preview', token=token, instance_id=instance_id,

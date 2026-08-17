@@ -59,7 +59,7 @@
             У розкладі є, у довіднику немає ({{ missing | length }})
           </h2>
           <p class="cities-panel__hint">
-            Ці локації показуються українською всіма мовами. Додайте потрібні --
+            Ці локації показуються українською всіма мовами. Додайте потрібні –
             або всі одразу, якщо наповнюєте довідник уперше.
           </p>
         </div>
@@ -94,7 +94,7 @@
     <div class="form-section cities-panel">
       <h2 class="cities-panel__title">Додати локацію вручну</h2>
       <p class="cities-panel__hint">
-        Пишіть рівно так, як у полі «Локація» проведення -- звірка йде за повним рядком.
+        Пишіть рівно так, як у полі «Локація» проведення – звірка йде за повним рядком.
       </p>
       <form method="POST" action="{{ url_for('admin.cities_add') }}" class="cities-add">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -132,7 +132,7 @@
                 {% if row.uses %}
                   {{ row.uses }}
                 {% else %}
-                  <span class="admin-text-muted" title="Локація не вживається в розкладі">--</span>
+                  <span class="admin-text-muted" title="Локація не вживається в розкладі">–</span>
                 {% endif %}
               </td>
               {% for lang in languages %}
@@ -143,8 +143,8 @@
                 <input type="text" class="form-input cities-input" maxlength="255"
                        name="tr__{{ lang }}__{{ row.city.id }}"
                        value="{{ row.tr[lang] }}"
-                       placeholder="--"
-                       aria-label="{{ row.city.name }} -- {{ 'російська' if lang == 'ru' else 'англійська' }}">
+                       placeholder="–"
+                       aria-label="{{ row.city.name }} – {{ 'російська' if lang == 'ru' else 'англійська' }}">
               </td>
               {% endfor %}
               <td class="cities-col-status">
@@ -173,7 +173,7 @@
       {# Липка панель: у довіднику на десятки рядків кнопка «Зберегти» інакше
          лишалась би за межами екрана під час правки середини таблиці. #}
       <div class="cities-savebar">
-        <span class="cities-savebar__hint">Зміни в полях не зберігаються самі -- натисніть «Зберегти».</span>
+        <span class="cities-savebar__hint">Зміни в полях не зберігаються самі – натисніть «Зберегти».</span>
         <button type="submit" class="btn-admin btn-admin--primary">
           {{ icon('check') }} Зберегти переклади
         </button>
@@ -191,7 +191,7 @@
     <div class="admin-empty">
       {{ icon('table_view', cls='admin-empty__icon') }}
       <h3 class="admin-empty__title">Довідник порожній</h3>
-      <p>Усі локації розкладу показуються українською. Додайте перший рядок -- і переклад
+      <p>Усі локації розкладу показуються українською. Додайте перший рядок – і переклад
          підхопиться скрізь, де ця назва зустрічається.</p>
     </div>
     {% endif %}

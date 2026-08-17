@@ -179,7 +179,7 @@
         {% set ref = referrer_map.get(rw.referral_code) %}
         {% set reg = rw.registration %}
         <tr>
-          <td>{{ rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '--' }}</td>
+          <td>{{ rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '–' }}</td>
           <td>
             {% if ref %}
             <a href="{{ url_for('admin.referral_referrer_detail', kind=ref.kind, referrer_id=ref.id) }}">{{ ref.name }}</a>
@@ -193,7 +193,7 @@
             {{ reg.user.first_name }} {{ reg.user.last_name }}<br>
             <small class="admin-text-muted">{{ reg.user.email }}</small>
             {% else %}
-            <span class="admin-text-muted">--</span>
+            <span class="admin-text-muted">–</span>
             {% endif %}
           </td>
           <td>
@@ -201,7 +201,7 @@
             {{ reg.instance.course.title }}
             {% if reg.instance.start_date %}<br><small class="admin-text-muted">{{ reg.instance.start_date.strftime('%d.%m.%Y') }}</small>{% endif %}
             {% else %}
-            <span class="admin-text-muted">--</span>
+            <span class="admin-text-muted">–</span>
             {% endif %}
           </td>
           <td><strong>{{ rw.points }}</strong></td>

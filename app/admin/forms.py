@@ -324,14 +324,14 @@ class SiteSettingsForm(FlaskForm):
         default=0,
         description=(
             'Бали лежать неактивними цю кількість днів (антифрод проти '
-            'повернень). 0 -- активуються одразу.'
+            'повернень). 0 – активуються одразу.'
         ),
     )
     referral_max_per_referrer = IntegerField(
         'Стеля нарахувань на реферера',
         validators=[Optional(), NumberRange(min=0, max=1000000)],
         default=0,
-        description='Максимум активних нарахувань на одного реферера. 0 -- без ліміту.',
+        description='Максимум активних нарахувань на одного реферера. 0 – без ліміту.',
     )
     referral_notify_referrer = BooleanField(
         'Слати рефереру лист про нарахування',
@@ -360,7 +360,7 @@ class SiteSettingsForm(FlaskForm):
         validators=[Optional(), NumberRange(min=1, max=365)],
         default=30,
         filters=[lambda v: 30 if v in (None, '') else v],
-        description='Дедлайн -- те, що змушує повернутись, а не відкласти.',
+        description='Дедлайн – те, що змушує повернутись, а не відкласти.',
     )
     registration_email_delay_minutes = IntegerField(
         'Затримка листа про реєстрацію (хвилин)',
@@ -369,8 +369,8 @@ class SiteSettingsForm(FlaskForm):
         filters=[lambda v: 5 if v in (None, '') else v],
         description=(
             'Пауза перед листом "Реєстрацію підтверджено" для неоплачених '
-            'реєстрацій -- щоб платіж встиг дійти. Якщо за цей час оплата '
-            'надійшла, лист не надсилається взагалі. 0 -- слати негайно.'
+            'реєстрацій – щоб платіж встиг дійти. Якщо за цей час оплата '
+            'надійшла, лист не надсилається взагалі. 0 – слати негайно.'
         ),
     )
 
@@ -446,7 +446,7 @@ class CourseForm(FlaskForm):
         'Фінальний заклик',
         validators=[Optional(), Length(max=300)],
         description='Одне речення у блоці з кнопкою реєстрації внизу сторінки. '
-                    'Порожньо -- показуємо стандартний текст.',
+                    'Порожньо – показуємо стандартний текст.',
     )
     base_price = DecimalField(
         'Базова ціна (UAH)',
@@ -517,7 +517,7 @@ class InstanceTariffForm(FlaskForm):
         choices=[],  # заповнюється у роуті з InstanceTariff.FORMAT_CHOICES
         validators=[Optional()],
         description='Онлайн-тариф не просить підтверджувати приїзд на місце. '
-                    'Не вказано -- вважається очною участю.',
+                    'Не вказано – вважається очною участю.',
     )
     sort_order = IntegerField(
         'Порядок',
@@ -613,7 +613,7 @@ class CourseInstanceForm(FlaskForm):
         'Місто',
         coerce=int,
         validators=[Optional()],
-        description='Окремо від адреси -- саме за ним працює фільтр розкладу, '
+        description='Окремо від адреси – саме за ним працює фільтр розкладу, '
                     'зокрема на партнерських сайтах',
     )
     online_link = StringField(
@@ -681,7 +681,7 @@ class BlogPostForm(FlaskForm):
     excerpt = TextAreaField(
         'Короткий опис',
         validators=[Optional(), Length(max=500)],
-        description='Для картки в списку та соцмереж. Якщо порожньо -- візьметься з тексту',
+        description='Для картки в списку та соцмереж. Якщо порожньо – візьметься з тексту',
     )
     # media_id обкладинки з реєстру (заповнює dropzone). Рядок -> int у routes.
     cover_media_id = HiddenField('Обкладинка (media)', validators=[Optional()])
@@ -727,7 +727,7 @@ class ReviewForm(FlaskForm):
     )
     course_id = SelectField(
         'Курс (опційно)', choices=[], validators=[Optional()], coerce=str,
-        description='Привʼязати відгук до курсу -- показати на його сторінці.',
+        description='Привʼязати відгук до курсу – показати на його сторінці.',
     )
     is_published = BooleanField('Опубліковано', default=False)
 
@@ -759,30 +759,30 @@ class PromoCodeForm(FlaskForm):
         'Розмір знижки',
         validators=[InputRequired(message='Вкажіть розмір знижки'),
                     NumberRange(min=0.01)],
-        description='Для відсотка -- від 1 до 100 (100 = безкоштовно). '
-                    'Для суми -- гривні; більша за ціну знижка просто '
+        description='Для відсотка – від 1 до 100 (100 = безкоштовно). '
+                    'Для суми – гривні; більша за ціну знижка просто '
                     'обнуляє рахунок.',
     )
     max_uses = IntegerField(
         'Ліміт застосувань',
         validators=[Optional(), NumberRange(min=1)],
         description='Скільки разів кодом можна скористатись загалом. '
-                    'Порожнє -- без обмежень.',
+                    'Порожнє – без обмежень.',
     )
     per_user_limit = IntegerField(
         'Ліміт на одну людину',
         default=1,
         validators=[Optional(), NumberRange(min=1)],
-        description='Порожнє -- без обмежень (людина зможе застосувати код '
+        description='Порожнє – без обмежень (людина зможе застосувати код '
                     'на кількох заходах).',
     )
     valid_from = DateTimeLocalField(
         'Діє з', format='%Y-%m-%dT%H:%M', validators=[Optional()],
-        description='Порожнє -- діє одразу.',
+        description='Порожнє – діє одразу.',
     )
     valid_until = DateTimeLocalField(
         'Діє до', format='%Y-%m-%dT%H:%M', validators=[Optional()],
-        description='Порожнє -- безстроково.',
+        description='Порожнє – безстроково.',
     )
     course_id = SelectField(
         'Лише для курсу', choices=[], validators=[Optional()], coerce=str,
@@ -790,7 +790,7 @@ class PromoCodeForm(FlaskForm):
     )
     instance_id = SelectField(
         'Лише для проведення', choices=[], validators=[Optional()], coerce=str,
-        description='Найвужча прив\'язка -- одна конкретна дата. Має '
+        description='Найвужча прив\'язка – одна конкретна дата. Має '
                     'пріоритет над курсом.',
     )
     is_active = BooleanField('Активний', default=True)
@@ -798,7 +798,7 @@ class PromoCodeForm(FlaskForm):
         'Скільки кодів створити',
         default=1,
         validators=[Optional(), NumberRange(min=1, max=200)],
-        description='Більше одного -- поле «Промокод» стає префіксом, і кожен '
+        description='Більше одного – поле «Промокод» стає префіксом, і кожен '
                     'код отримає власний суфікс (напр. PHARMA-A7K3XY). '
                     'Зручно, коли партнер роздає коди різним людям.',
     )

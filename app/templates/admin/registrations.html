@@ -155,7 +155,7 @@
             {% if reg.instance_id and reg.target_title %}
               <a href="{{ url_for('admin.instance_registrations', instance_id=reg.instance_id) }}">{{ reg.target_title }}</a>
             {% else %}
-              <span class="admin-text-muted">---</span>
+              <span class="admin-text-muted">–</span>
             {% endif %}
           </td>
           <td data-place-cell>
@@ -177,7 +177,7 @@
             {% elif reg.referral_code %}
               <span class="admin-text-muted" title="Код реферера не знайдено серед активних">{{ reg.referral_code }}</span>
             {% else %}
-              <span class="admin-text-muted">--</span>
+              <span class="admin-text-muted">–</span>
             {% endif %}
           </td>
           <td>{{ reg.phone }}</td>
@@ -208,7 +208,7 @@
             {% if reg.payment_amount %}
               {{ reg.payment_amount | int }} &#8372;
             {% else %}
-              <span class="admin-text-muted">--</span>
+              <span class="admin-text-muted">–</span>
             {% endif %}
             {% if reg.has_discount %}
               {# Без цього рядка менеджер бачить занижену суму і не знає, чому. #}

@@ -64,7 +64,7 @@ def b2b_requests_export():
     rows = _b2b_query(filters).all()
     summary = _listing.export_summary(
         [
-            ('Пошук', filters['q'] or '--'),
+            ('Пошук', filters['q'] or '–'),
             ('Статус', dict(B2BRequest.STATUSES).get(filters['status'], 'Усі')),
             ('Розмір команди',
              dict(B2BRequest.TEAM_SIZES).get(filters['team_size'], 'Усі')),
