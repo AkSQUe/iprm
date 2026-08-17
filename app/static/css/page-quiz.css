@@ -1,0 +1,378 @@
+/* Публічний потік тестування: умови -> питання -> звірка -> результат.
+
+   Кольори, радіуси й тіні -- лише через токени дизайн-системи, тож тёмна тема
+   (data-theme="dark") підхоплюється без окремих правил. Текст на акцентному
+   фоні -- через --iprm-on-accent, а не --iprm-white: другий у темній темі є
+   темною поверхнею, і напис зник би. */
+
+.quiz-layout {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+}
+
+/* ========== ЗАГОЛОВОК ========== */
+
+.quiz-head {
+  margin-bottom: 24px;
+}
+
+.quiz-head__title {
+  margin: 0 0 6px;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-weight: 700;
+  color: var(--iprm-text);
+}
+
+.quiz-head__event {
+  margin: 0;
+  color: var(--iprm-text-light);
+}
+
+/* ========== КАРТКА ========== */
+
+.quiz-card {
+  padding: 24px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  background: var(--iprm-white);
+  box-shadow: var(--iprm-shadow-card);
+}
+
+.quiz-card + .quiz-card,
+.quiz-review + .quiz-card {
+  margin-top: 20px;
+}
+
+.quiz-card__title {
+  margin: 0 0 16px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--iprm-text);
+}
+
+.quiz-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+}
+
+.quiz-card--blocked {
+  border-left: 3px solid var(--iprm-warning);
+}
+
+.quiz-card--warning {
+  border-left: 3px solid var(--iprm-warning);
+  background: var(--iprm-warning-bg);
+}
+
+.quiz-terms {
+  margin: 0 0 20px;
+  padding-left: 20px;
+  color: var(--iprm-text);
+  line-height: 1.7;
+}
+
+.quiz-note {
+  margin: 12px 0 0;
+  font-size: 0.9rem;
+  color: var(--iprm-text-light);
+}
+
+.quiz-link {
+  color: var(--iprm-accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.quiz-link:hover {
+  text-decoration: underline;
+}
+
+/* ========== ПРОГРЕС ========== */
+
+.quiz-progress {
+  margin-bottom: 20px;
+}
+
+.quiz-progress__bar {
+  height: 6px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-divider);
+  overflow: hidden;
+}
+
+.quiz-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-accent);
+  transition: width var(--iprm-transition);
+}
+
+.quiz-progress__label {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--iprm-text);
+}
+
+.quiz-progress__answered {
+  font-weight: 500;
+  color: var(--iprm-text-light);
+}
+
+/* ========== ПИТАННЯ ========== */
+
+.quiz-question {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.quiz-question__text {
+  padding: 0;
+  margin-bottom: 20px;
+  font-size: clamp(1.1rem, 2.6vw, 1.35rem);
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--iprm-text);
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Варіант -- велика клікабельна площа: тест проходять переважно з телефону,
+   і поціляти в саму радіокнопку там незручно. */
+.quiz-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
+  background: var(--iprm-bg);
+  cursor: pointer;
+  transition: border-color var(--iprm-transition),
+              background var(--iprm-transition);
+}
+
+.quiz-option:hover {
+  border-color: var(--iprm-accent);
+}
+
+.quiz-option input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  accent-color: var(--iprm-accent);
+  cursor: pointer;
+}
+
+.quiz-option__text {
+  color: var(--iprm-text);
+  line-height: 1.5;
+}
+
+/* Обраний варіант підсвічуємо всією карткою. :has() підтримують усі цільові
+   браузери; де ні -- лишається сама радіокнопка, тобто вибір усе одно видно. */
+.quiz-option:has(input:checked) {
+  border-color: var(--iprm-accent);
+  background: var(--iprm-accent-light);
+}
+
+/* Клавіатурна навігація мусить бути видимою: фокус на прихованому в картці
+   інпуті інакше не читається. */
+.quiz-option:focus-within {
+  outline: 2px solid var(--iprm-accent);
+  outline-offset: 2px;
+}
+
+.quiz-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* «Далі» тримаємо праворуч, «Назад» -- ліворуч, навіть коли «Назад» немає. */
+.quiz-nav .apple-btn--primary {
+  margin-left: auto;
+}
+
+/* ========== ЗВІРКА ========== */
+
+.quiz-review {
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: quiz-review;
+}
+
+.quiz-review__item {
+  position: relative;
+  padding: 16px 16px 16px 48px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
+  background: var(--iprm-white);
+  counter-increment: quiz-review;
+}
+
+.quiz-review__item + .quiz-review__item {
+  margin-top: 10px;
+}
+
+.quiz-review__item::before {
+  content: counter(quiz-review);
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--iprm-accent);
+  color: var(--iprm-on-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Питання без відповіді -- єдине, що тут треба виділити: саме воно блокує
+   завершення. */
+.quiz-review__item--empty {
+  border-color: var(--iprm-warning-border);
+}
+
+.quiz-review__item--empty::before {
+  background: var(--iprm-warning);
+}
+
+.quiz-review__question {
+  margin: 0 0 6px;
+  font-weight: 600;
+  color: var(--iprm-text);
+}
+
+.quiz-review__answer {
+  margin: 0 0 6px;
+  color: var(--iprm-text-light);
+}
+
+/* ========== РЕЗУЛЬТАТ ========== */
+
+.quiz-result {
+  text-align: center;
+}
+
+.quiz-result__score {
+  margin: 0 0 8px;
+  font-size: clamp(2.4rem, 8vw, 3.6rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.quiz-result__of {
+  font-size: 0.45em;
+  font-weight: 600;
+  color: var(--iprm-text-light);
+}
+
+.quiz-result--pass .quiz-result__score {
+  color: var(--iprm-success);
+}
+
+.quiz-result--fail .quiz-result__score {
+  color: var(--iprm-error);
+}
+
+.quiz-result__title {
+  margin: 0 0 12px;
+  font-size: clamp(1.4rem, 3.6vw, 1.9rem);
+  font-weight: 700;
+  color: var(--iprm-text);
+}
+
+.quiz-result .apple-btn,
+.quiz-done .apple-btn {
+  margin-top: 20px;
+}
+
+.quiz-result .quiz-link,
+.quiz-done .quiz-link {
+  display: inline-block;
+  margin-top: 20px;
+}
+
+/* ========== ПРИВІТАННЯ ========== */
+
+.quiz-done {
+  text-align: center;
+}
+
+.quiz-done__title {
+  margin: 0 0 12px;
+  font-size: clamp(1.6rem, 4.4vw, 2.4rem);
+  font-weight: 800;
+  color: var(--iprm-text);
+}
+
+.quiz-done__lead {
+  margin: 0 auto;
+  max-width: 46ch;
+  color: var(--iprm-text);
+  line-height: 1.6;
+}
+
+/* Номер і бали -- двома рядками «підпис / значення», по центру. */
+.quiz-done__meta {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  gap: 6px 16px;
+  margin: 24px 0 0;
+  text-align: left;
+}
+
+.quiz-done__meta dt {
+  color: var(--iprm-text-light);
+  font-size: 0.9rem;
+}
+
+.quiz-done__meta dd {
+  margin: 0;
+  font-weight: 700;
+  color: var(--iprm-text);
+}
+
+@media (max-width: 520px) {
+  .quiz-layout {
+    padding: 20px 16px 48px;
+  }
+
+  .quiz-card {
+    padding: 18px;
+  }
+
+  /* На вузькому екрані кнопки на всю ширину: так у них нормальна площа
+     натискання, і «Далі» не тікає в куток. */
+  .quiz-nav {
+    flex-direction: column-reverse;
+  }
+
+  .quiz-nav .apple-btn {
+    width: 100%;
+    margin-left: 0;
+    text-align: center;
+  }
+}

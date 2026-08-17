@@ -723,3 +723,114 @@ def test_view_model_rejects_position_out_of_range(app, position):
     reg, _ = _setup()
     attempt = quiz_service.start_attempt(reg)
     assert quiz_service.attempt_view_model(attempt, position) is None
+
+
+# ---- питання, видалене під час спроби ---------------------------------------
+
+def test_deleted_question_is_not_counted_against_participant(app, no_pdf):
+    """Адмін видалив питання, поки людина проходила тест.
+
+    Перевірити відповідь уже неможливо, і карати за це учасника нема за що: він
+    не актор цієї зміни, а спроб у нього лише три. Раніше таке питання тихо
+    ставало помилкою.
+    """
+    reg, quiz = _setup(bank=12, per_attempt=10, passing=10)
+    attempt = quiz_service.start_attempt(reg)
+    _answer_all(attempt, 10)
+
+    victim_id = attempt.question_ids[0]
+    db.session.delete(db.session.get(QuizQuestion, victim_id))
+    db.session.flush()
+
+    assert quiz_service.grade_attempt(attempt) == 10
+    assert victim_id not in [
+        qid for _n, qid, ok in quiz_service.question_results(attempt) if not ok
+    ]
+
+
+def test_deleted_question_leaves_other_answers_intact(app, no_pdf):
+    """Решта питань оцінюється як звичайно."""
+    reg, quiz = _setup(bank=12, per_attempt=10, passing=8)
+    attempt = quiz_service.start_attempt(reg)
+    _answer_all(attempt, 8)      # два останні -- неправильні
+
+    # Видаляємо питання, на яке відповіли ПРАВИЛЬНО: оцінка не має змінитись.
+    db.session.delete(db.session.get(QuizQuestion, attempt.question_ids[0]))
+    db.session.flush()
+
+    assert quiz_service.grade_attempt(attempt) == 8
+    assert quiz_service.wrong_numbers(attempt) == [9, 10]
+
+
+def test_deleted_question_forgives_a_wrong_answer(app, no_pdf):
+    """Свідома ціна політики: видалене питання прощається, навіть якщо на нього
+    відповіли неправильно.
+
+    Альтернатива -- карати за питання, якого вже немає, а перевірити відповідь
+    неможливо. Актор тут адмін, а не учасник, тож помилятися краще на його
+    користь. Випадок логується як WARNING.
+    """
+    reg, quiz = _setup(bank=12, per_attempt=10, passing=8)
+    attempt = quiz_service.start_attempt(reg)
+    _answer_all(attempt, 8)      # питання 9 і 10 -- неправильні
+
+    db.session.delete(db.session.get(QuizQuestion, attempt.question_ids[8]))
+    db.session.flush()
+
+    assert quiz_service.grade_attempt(attempt) == 9
+    assert quiz_service.wrong_numbers(attempt) == [10]
+
+
+# ---- єдине джерело оцінювання ----------------------------------------------
+
+def test_wrong_numbers_agrees_with_score(app):
+    """Оцінка і перелік незарахованих ідуть з однієї функції."""
+    reg, _ = _setup(bank=12, per_attempt=10, passing=8)
+    attempt = quiz_service.start_attempt(reg)
+    _answer_all(attempt, 6)
+
+    score = quiz_service.grade_attempt(attempt)
+    wrong = quiz_service.wrong_numbers(attempt)
+    assert score == 6
+    assert len(wrong) == attempt.total - score
+
+
+def test_unanswered_appears_in_wrong_numbers(app):
+    reg, _ = _setup(bank=12, per_attempt=10, passing=8)
+    attempt = quiz_service.start_attempt(reg)
+    # Відповідаємо лише на перше питання.
+    question = db.session.get(QuizQuestion, attempt.question_ids[0])
+    order = attempt.ordered_answer_indexes(question.id)
+    quiz_service.record_answer(
+        attempt, question.id, order.index(question.correct_index))
+
+    assert quiz_service.wrong_numbers(attempt) == list(range(2, 11))
+
+
+# ---- подвійний старт --------------------------------------------------------
+
+def test_concurrent_start_reuses_attempt(app, monkeypatch):
+    """Подвійне натискання «Почати тест» не має давати 500.
+
+    Імітуємо гонку: перший запит уже вставив спробу з тим самим
+    attempt_number, тож flush другого падає на unique-констрейнті.
+    """
+    from sqlalchemy.exc import IntegrityError
+
+    reg, _ = _setup()
+    first = quiz_service.start_attempt(reg)
+    db.session.commit()
+
+    # Друга спроба «не бачить» першої -- підміняємо пошук незавершеної.
+    calls = {'n': 0}
+    real = quiz_service._unfinished_attempt
+
+    def _blind_once(registration):
+        calls['n'] += 1
+        return None if calls['n'] == 1 else real(registration)
+
+    monkeypatch.setattr(quiz_service, '_unfinished_attempt', _blind_once)
+
+    again = quiz_service.start_attempt(reg)
+    assert again.id == first.id
+    assert QuizAttempt.query.filter_by(registration_id=reg.id).count() == 1

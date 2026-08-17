@@ -249,6 +249,12 @@ def account():
     )
     profile = current_user.medical_profile
 
+    # Стан тестування на кожну реєстрацію: кабінет -- єдиний вхід у тест, тож
+    # без цього до нього просто не було б звідки перейти. Рахуємо тут, а не в
+    # шаблоні: `eligibility` робить запити, і в Jinja це було б непомітно.
+    from app.services import quiz_service
+    quiz_states = {reg.id: quiz_service.eligibility(reg) for reg in registrations}
+
     # Реферальна програма (показуємо блок лише коли увімкнено). Код
     # генерується лениво при першому відкритті кабінету.
     from app.models.site_settings import SiteSettings
@@ -274,6 +280,8 @@ def account():
         registrations=registrations,
         certificates=certificates,
         certificate_data_complete=bool(profile and profile.is_complete),
+        quiz_states=quiz_states,
+        quiz_statuses=quiz_service,
         referral_link=referral_link,
         referral_qr=referral_qr,
         referral_balance=referral_balance,

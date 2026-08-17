@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Перевірка відповідей') }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-quiz.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page quiz-layout">
+
+  <header class="quiz-head">
+    <h1 class="quiz-head__title">{{ _('Перевірка відповідей') }}</h1>
+    <p class="quiz-head__event">
+      {{ _('Після завершення змінити відповіді буде неможливо.') }}
+    </p>
+  </header>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {% if unanswered %}
+  <div class="quiz-card quiz-card--warning">
+    <p>
+      {% trans numbers=unanswered | join(', ') %}
+      Немає відповіді на питання: {{ numbers }}. Завершити можна лише коли
+      відповіді є на всі — непозначене питання зарахувалось би як помилка.
+      {% endtrans %}
+    </p>
+  </div>
+  {% endif %}
+
+  <ol class="quiz-review">
+    {% for item in items %}
+    <li class="quiz-review__item{% if item.chosen is none %} quiz-review__item--empty{% endif %}">
+      <p class="quiz-review__question">{{ item.text }}</p>
+      <p class="quiz-review__answer">
+        {% if item.chosen is not none %}
+          {% for answer in item.answers %}
+            {%- if answer.position == item.chosen %}{{ answer.text }}{% endif -%}
+          {% endfor %}
+        {% else %}
+        <em>{{ _('Відповіді немає') }}</em>
+        {% endif %}
+      </p>
+      <a href="{{ url_for('quiz.question', attempt_id=attempt.id, position=item.position) }}"
+         class="quiz-link">{{ _('Змінити') }}</a>
+    </li>
+    {% endfor %}
+  </ol>
+
+  <div class="quiz-card quiz-card__actions">
+    {% if not unanswered %}
+    <form method="POST" action="{{ url_for('quiz.submit', attempt_id=attempt.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="apple-btn apple-btn--primary"
+              data-confirm="{{ _('Завершити тест? Змінити відповіді після цього не можна.') }}">
+        {{ _('Завершити тест') }}
+      </button>
+    </form>
+    {% else %}
+    <a href="{{ url_for('quiz.question', attempt_id=attempt.id, position=unanswered[0] - 1) }}"
+       class="apple-btn apple-btn--primary">
+      {{ _('Перейти до питання') }} {{ unanswered[0] }}
+    </a>
+    {% endif %}
+  </div>
+
+{# data-confirm обробляє глобальний js/confirm-action.js з base.html. #}
+</div>
+{% endblock %}

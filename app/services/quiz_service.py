@@ -22,6 +22,8 @@ import logging
 import random
 from typing import NamedTuple
 
+from sqlalchemy.exc import IntegrityError
+
 from app.extensions import db
 from app.models.course_quiz import ANSWERS_PER_QUESTION, CourseQuiz, QuizQuestion
 from app.models.mixins import utcnow
@@ -80,6 +82,32 @@ def resolve_quiz(instance):
         return None
     quiz = CourseQuiz.query.filter_by(course_id=instance.course_id).first()
     return quiz if quiz is not None and quiz.is_active else None
+
+
+def public_quiz_for_course(course):
+    """Тест курсу для ПУБЛІЧНОЇ сторінки або None.
+
+    Віддаємо лише тест, який реально можна скласти й за який реально видадуть
+    сертифікат: увімкнений, з достатнім банком і з заповненими даними БПР.
+    Інакше блок «Умови отримання сертифікату» обіцяв би те, чого система не
+    виконує -- саме через це партіал `_event_certificate.html` і прожив без
+    діла, обіцяючи тестування, якого не існувало.
+
+    Перевизначення на проведеннях тут свідомо не враховуємо: сторінка курсу
+    описує курс загалом, і різні набори на різних датах на ній не описати.
+    """
+    from app.models.site_settings import SiteSettings
+
+    if course is None:
+        return None
+    quiz = CourseQuiz.query.filter_by(course_id=course.id).first()
+    if quiz is None or not quiz.is_active or not quiz.is_ready:
+        return None
+    if not (SiteSettings.get().bpr_provider_number or '').strip():
+        return None
+    if not (course.bpr_event_number or '').strip() or not course.cpd_points:
+        return None
+    return quiz
 
 
 def _bpr_is_configured(instance):
@@ -226,7 +254,23 @@ def start_attempt(registration):
         started_at=utcnow(),
     )
     db.session.add(attempt)
-    db.session.flush()
+    try:
+        db.session.flush()
+    except IntegrityError:
+        # Подвійне натискання «Почати тест» (на мобільному -- звична річ): два
+        # запити не бачать чужої незакоміченої спроби і беруть один
+        # attempt_number. Unique-констрейнт це ловить, але 500 замість тесту
+        # виглядав би як зламаний сайт. Віддаємо ту спробу, що виграла гонку.
+        db.session.rollback()
+        existing = _unfinished_attempt(registration)
+        if existing is not None:
+            logger.info(
+                'Concurrent quiz start for reg=%s -- reusing attempt %s',
+                registration.id, existing.id,
+            )
+            return existing
+        raise
+
     logger.info(
         'Quiz attempt %d started: reg=%s quiz=%s questions=%d',
         attempt.attempt_number, registration.id, quiz.id, attempt.total,
@@ -261,25 +305,56 @@ def record_answer(attempt, question_id, position):
     return True
 
 
+def question_results(attempt):
+    """Результат по кожному питанню спроби: [(номер, question_id, зараховано)].
+
+    Єдине місце, де вирішується «зараховано чи ні». І оцінювання, і показ
+    незарахованих номерів на сторінці результату йдуть звідси: доки це були дві
+    окремі реалізації, вони неминуче розійшлися б на першій правці.
+    """
+    ids = attempt.question_ids or []
+    questions = {
+        q.id: q for q in QuizQuestion.query.filter(QuizQuestion.id.in_(ids or [0]))
+    }
+
+    results = []
+    for position, question_id in enumerate(ids):
+        question = questions.get(question_id)
+        if question is None:
+            # Адмін видалив питання, поки людина проходила тест. Перевірити
+            # відповідь уже неможливо, і карати за це учасника нема за що: він
+            # не є актором цієї зміни, а спроб у нього лише три.
+            logger.warning(
+                'Quiz question %s vanished mid-attempt %s -- counted as correct',
+                question_id, attempt.id,
+            )
+            results.append((position + 1, question_id, True))
+            continue
+
+        chosen = attempt.chosen_position(question_id)
+        order = attempt.ordered_answer_indexes(question_id)
+        correct = (
+            chosen is not None
+            and 0 <= chosen < len(order)
+            and order[chosen] == question.correct_index
+        )
+        results.append((position + 1, question_id, correct))
+    return results
+
+
 def grade_attempt(attempt):
     """Скільки правильних у спробі. Не змінює стан -- лише рахує."""
-    questions = {
-        q.id: q for q in QuizQuestion.query.filter(
-            QuizQuestion.id.in_(attempt.question_ids or [0])
-        )
-    }
-    score = 0
-    for question_id in attempt.question_ids or []:
-        question = questions.get(question_id)
-        position = attempt.chosen_position(question_id)
-        if question is None or position is None:
-            continue
-        order = attempt.ordered_answer_indexes(question_id)
-        if not 0 <= position < len(order):
-            continue
-        if order[position] == question.correct_index:
-            score += 1
-    return score
+    return sum(1 for _number, _qid, correct in question_results(attempt) if correct)
+
+
+def wrong_numbers(attempt):
+    """Номери незарахованих питань -- БЕЗ правильних відповідей.
+
+    Показуємо на результаті, щоб людина знала, куди дивитись, але не
+    перетворюємо другу й третю спроби на формальність.
+    """
+    return [number for number, _qid, correct in question_results(attempt)
+            if not correct]
 
 
 def submit_attempt(attempt):

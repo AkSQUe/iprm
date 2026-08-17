@@ -118,6 +118,9 @@ def create_app(config_name=None):
     from app.registration import registration_bp
     app.register_blueprint(registration_bp)
 
+    from app.quiz import quiz_bp
+    app.register_blueprint(quiz_bp)
+
     from app.trainers import trainers_bp
     app.register_blueprint(trainers_bp)
 
@@ -333,8 +336,10 @@ def create_app(config_name=None):
         - certdata_incomplete -- індикатор-тултіп біля імені в header
           (усі публічні сторінки);
         - show_certdata_reminder -- плаваючий pop-up; додатково вимкнений
-          у кабінеті (там власний банер і сама анкета) та у флоу
-          реєстрації/оплати, щоб не відволікати. Закриття -- sessionStorage.
+          у кабінеті (там власний банер і сама анкета), у флоу
+          реєстрації/оплати та у тестуванні (там гейт сам каже, чого
+          бракує, а поверх питань поп-ап -- лише шум).
+          Закриття -- sessionStorage.
         """
         from flask import request
         from flask_login import current_user
@@ -357,6 +362,7 @@ def create_app(config_name=None):
             flags['certdata_incomplete'] = has_reg
             flags['show_certdata_reminder'] = has_reg and not (
                 path.startswith('/auth') or path.startswith('/registration')
+                or path.startswith('/quiz')
             )
             return flags
         except Exception:
@@ -454,7 +460,9 @@ def create_app(config_name=None):
     # Блупринти, чий HTML може містити приватні дані або одноразовий стан
     # (кабінет, адмінка, форми реєстрації на захід, оплати). Для них лишається
     # no-store.
-    PRIVATE_HTML_BLUEPRINTS = frozenset({'auth', 'admin', 'registration', 'payments'})
+    PRIVATE_HTML_BLUEPRINTS = frozenset({
+        'auth', 'admin', 'registration', 'payments', 'quiz',
+    })
 
     @app.after_request
     def cache_control_html(response):

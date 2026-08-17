@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Результат тестування') }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-quiz.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page quiz-layout">
+
+  {% include 'partials/flash_messages.html' %}
+
+  <section class="quiz-card quiz-result{{ ' quiz-result--pass' if attempt.passed else ' quiz-result--fail' }}">
+    <p class="quiz-result__score">
+      {{ attempt.score }} <span class="quiz-result__of">/ {{ attempt.total }}</span>
+    </p>
+
+    {% if attempt.passed %}
+    <h1 class="quiz-result__title">{{ _('Тест складено') }}</h1>
+    <p>
+      {% trans need=attempt.passing_score %}
+      Потрібно було {{ need }} правильних відповідей.
+      {% endtrans %}
+    </p>
+    <a href="{{ url_for('quiz.done', reg_id=registration.id) }}" class="apple-btn apple-btn--primary">
+      {{ _('До сертифіката') }}
+    </a>
+
+    {% else %}
+    <h1 class="quiz-result__title">{{ _('Тест не складено') }}</h1>
+    <p>
+      {% trans need=attempt.passing_score %}
+      Для успішного проходження потрібно {{ need }} правильних відповідей.
+      {% endtrans %}
+    </p>
+
+    {% if wrong_numbers %}
+    <p class="quiz-note">
+      {% trans numbers=wrong_numbers | join(', ') %}
+      Не зараховані питання: {{ numbers }}.
+      {% endtrans %}
+      {{ _('Правильні відповіді не показуємо — повторіть матеріал заходу.') }}
+    </p>
+    {% endif %}
+
+    {% if state.status == statuses.AVAILABLE %}
+    <p>
+      {% trans left=state.attempts_left %}
+      Спроб залишилось: {{ left }}.
+      {% endtrans %}
+    </p>
+    <a href="{{ url_for('quiz.start', reg_id=registration.id) }}" class="apple-btn apple-btn--primary">
+      {{ _('Спробувати ще раз') }}
+    </a>
+    {% elif state.status == statuses.ATTEMPTS_EXHAUSTED %}
+    <p>{{ _('Спроби вичерпано. Зверніться до організаторів — вони можуть відкрити додаткову спробу.') }}</p>
+    <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--primary">{{ _('Написати нам') }}</a>
+    {% endif %}
+    {% endif %}
+
+    <a href="{{ url_for('auth.account') }}" class="quiz-link">{{ _('Назад до кабінету') }}</a>
+  </section>
+
+</div>
+{% endblock %}

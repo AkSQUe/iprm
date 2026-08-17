@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Вітаємо!') }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-quiz.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page quiz-layout">
+
+  {% include 'partials/flash_messages.html' %}
+
+  <section class="quiz-card quiz-done">
+    <h1 class="quiz-done__title">{{ _('Вітаємо!') }}</h1>
+    <p class="quiz-done__lead">
+      {% trans title=(instance.course.t('title') if instance and instance.course else _('заходу')) %}
+      Ви успішно завершили навчання за програмою «{{ title }}» і склали тестування.
+      {% endtrans %}
+    </p>
+
+    {% if certificate %}
+    <dl class="quiz-done__meta">
+      <dt>{{ _('Номер сертифіката') }}</dt>
+      <dd>{{ certificate.number }}</dd>
+      <dt>{{ _('Бали БПР') }}</dt>
+      <dd>{{ certificate.cpd_points }} {{ certificate.cpd_points | plural('bpr_points') }}</dd>
+    </dl>
+
+    <a href="{{ url_for('auth.certificate_download', cert_id=certificate.id) }}"
+       class="apple-btn apple-btn--primary">
+      {{ _('Завантажити сертифікат (PDF)') }}
+    </a>
+    <p class="quiz-note">
+      {{ _('Копію надіслано на вашу пошту. Сертифікат завжди доступний у кабінеті.') }}
+    </p>
+
+    {% else %}
+    {# Тест складено, але видача не відбулась: бракує даних БПР у курсі або
+       технічний збій. Результат зафіксовано, тож людина нічого не втратила. #}
+    <p class="quiz-done__lead">
+      {{ _('Сертифікат готується — ми надішлемо його на вашу пошту найближчим часом.') }}
+    </p>
+    <p class="quiz-note">
+      {{ _('Результат тестування збережено, повторно складати не потрібно.') }}
+    </p>
+    {% endif %}
+
+    <a href="{{ url_for('auth.account') }}" class="quiz-link">{{ _('До моїх курсів') }}</a>
+  </section>
+
+</div>
+{% endblock %}

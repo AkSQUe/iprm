@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Тестування') }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-quiz.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page quiz-layout">
+
+  <header class="quiz-head">
+    <h1 class="quiz-head__title">{{ _('Тестування') }}</h1>
+    <p class="quiz-head__event">
+      {{ instance.course.t('title') if instance and instance.course else _('Захід') }}
+      {%- if instance and instance.start_date %},
+      {{ instance.start_date.strftime('%d.%m.%Y') }}
+      {%- endif %}
+    </p>
+  </header>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {% if state.status == statuses.AVAILABLE or state.status == statuses.IN_PROGRESS %}
+  <section class="quiz-card">
+    <h2 class="quiz-card__title">{{ _('Умови') }}</h2>
+    <ul class="quiz-terms">
+      <li>
+        {% trans count=quiz.questions_per_attempt, need=quiz.passing_score %}
+        {{ count }} питань, потрібно правильних — {{ need }}.
+        {% endtrans %}
+      </li>
+      <li>{{ _('Одне питання на екран, по чотири варіанти. Правильний — один.') }}</li>
+      <li>{{ _('Відповіді зберігаються одразу: якщо закриєте сторінку, продовжите з того ж місця.') }}</li>
+      <li>
+        {% trans left=state.attempts_left %}
+        Спроб залишилось: {{ left }}.
+        {% endtrans %}
+      </li>
+    </ul>
+
+    <form method="POST" action="{{ url_for('quiz.begin', reg_id=registration.id) }}"
+          class="quiz-card__actions">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="apple-btn apple-btn--primary">
+        {% if state.status == statuses.IN_PROGRESS %}
+        {{ _('Продовжити тест') }}
+        {% else %}
+        {{ _('Почати тест') }}
+        {% endif %}
+      </button>
+      <a href="{{ url_for('auth.account') }}" class="quiz-link">{{ _('Назад до кабінету') }}</a>
+    </form>
+  </section>
+
+  {% else %}
+  <section class="quiz-card quiz-card--blocked">
+    <h2 class="quiz-card__title">{{ _('Тестування поки недоступне') }}</h2>
+
+    {% if state.status == statuses.PROFILE_INCOMPLETE %}
+    <p>{{ _('Спершу заповніть анкету для сертифіката — без неї бали БПР нарахувати неможливо.') }}</p>
+    {% if state.missing_fields %}
+    <p class="quiz-note">
+      {{ _('Не заповнено:') }} {{ state.missing_fields | join(', ') }}
+    </p>
+    {% endif %}
+    <a href="{{ url_for('auth.certificate_data') }}" class="apple-btn apple-btn--primary">
+      {{ _('Заповнити анкету') }}
+    </a>
+
+    {% elif state.status == statuses.NOT_PAID %}
+    <p>{{ _('Тестування відкривається після оплати участі.') }}</p>
+    <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--primary">{{ _('До моїх курсів') }}</a>
+
+    {% elif state.status == statuses.NOT_STARTED %}
+    <p>{{ _('Тест відкриється після початку заходу.') }}</p>
+    <a href="{{ url_for('auth.account') }}" class="quiz-link">{{ _('Назад до кабінету') }}</a>
+
+    {% elif state.status == statuses.ATTEMPTS_EXHAUSTED %}
+    <p>{{ _('Спроби вичерпано. Зверніться до організаторів — вони можуть відкрити додаткову спробу.') }}</p>
+    <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--primary">{{ _('Написати нам') }}</a>
+
+    {% elif state.status == statuses.QUIZ_NOT_READY or state.status == statuses.BPR_NOT_CONFIGURED %}
+    <p>{{ _('Тест ще готується. Ми повідомимо, коли його можна буде пройти.') }}</p>
+    <a href="{{ url_for('auth.account') }}" class="quiz-link">{{ _('Назад до кабінету') }}</a>
+
+    {% elif state.status == statuses.CANCELLED %}
+    <p>{{ _('Реєстрацію скасовано.') }}</p>
+    <a href="{{ url_for('auth.account') }}" class="quiz-link">{{ _('Назад до кабінету') }}</a>
+
+    {% else %}
+    <p>{{ _('Для цього заходу тестування не передбачене.') }}</p>
+    <a href="{{ url_for('auth.account') }}" class="quiz-link">{{ _('Назад до кабінету') }}</a>
+    {% endif %}
+  </section>
+  {% endif %}
+
+</div>
+{% endblock %}

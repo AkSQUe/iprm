@@ -98,6 +98,31 @@
             {% if reg.attended and reg.cpd_points_awarded %}
               <div class="account-course__awarded">{% trans points=reg.cpd_points_awarded %}Нараховано {{ points }} балів БПР{% endtrans %}</div>
             {% endif %}
+            {# Тестування: кабінет -- єдиний вхід у тест. Показуємо лише коли
+               є що зробити або вже складено; решту станів (не оплачено, захід
+               не почався) і так видно з бейджів вище. #}
+            {% set quiz_state = quiz_states.get(reg.id) %}
+            {% if quiz_state %}
+              {% if quiz_state.status == quiz_statuses.AVAILABLE %}
+              <a href="{{ url_for('quiz.start', reg_id=reg.id) }}" class="account-course__quiz-btn">
+                {{ _('Пройти тестування') }}
+              </a>
+              {% elif quiz_state.status == quiz_statuses.IN_PROGRESS %}
+              <a href="{{ url_for('quiz.start', reg_id=reg.id) }}" class="account-course__quiz-btn">
+                {{ _('Продовжити тестування') }}
+              </a>
+              {% elif quiz_state.status == quiz_statuses.PASSED %}
+              <a href="{{ url_for('quiz.done', reg_id=reg.id) }}" class="account-course__quiz-done">
+                {{ _('Тестування складено') }}
+              </a>
+              {% elif quiz_state.status == quiz_statuses.PROFILE_INCOMPLETE %}
+              <a href="{{ url_for('auth.certificate_data') }}" class="account-course__quiz-btn account-course__quiz-btn--muted">
+                {{ _('Заповніть анкету, щоб пройти тестування') }}
+              </a>
+              {% elif quiz_state.status == quiz_statuses.ATTEMPTS_EXHAUSTED %}
+              <span class="account-course__quiz-note">{{ _('Спроби тестування вичерпано') }}</span>
+              {% endif %}
+            {% endif %}
             {% if reg.payment_status != 'paid' and reg.payment_amount and reg.payment_amount > 0 %}
             <div class="account-course__payment">
               <a href="{{ url_for('registration.confirmation', registration_id=reg.id) }}" class="account-course__pay-btn">

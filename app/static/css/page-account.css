@@ -316,3 +316,54 @@
     animation: none;
   }
 }
+
+/* ========== ТЕСТУВАННЯ ==========
+
+   Кабінет -- єдиний вхід у тест, тож кнопка мусить читатись як дія, а не як
+   ще один бейдж статусу. Геометрія та ж, що в «Оплатити», але акцент інший:
+   оплата -- головна дія картки, тестування -- наступна за нею. */
+
+.account-course__quiz-btn {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 20px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--iprm-accent);
+  background: var(--iprm-accent-light);
+  border-radius: var(--iprm-radius-sm);
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.account-course__quiz-btn:hover {
+  opacity: 0.85;
+}
+
+/* Анкета не заповнена: те саме посилання за геометрією, але приглушене --
+   це підготовчий крок, а не сам тест. */
+.account-course__quiz-btn--muted {
+  color: var(--iprm-text-light);
+  background: var(--iprm-bg);
+  border: 1px solid var(--iprm-border);
+}
+
+.account-course__quiz-done {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--iprm-success);
+  text-decoration: none;
+}
+
+.account-course__quiz-done:hover {
+  text-decoration: underline;
+}
+
+.account-course__quiz-note {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 0.8125rem;
+  color: var(--iprm-text-light);
+}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}{% trans number=view.number, total=view.total %}Питання {{ number }} з {{ total }}{% endtrans %} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-quiz.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page quiz-layout">
+
+  <div class="quiz-progress">
+    <div class="quiz-progress__bar">
+      {# Смуга рахує ВІДПОВІДІ, а не поточну позицію: людина може ходити
+         питаннями туди-сюди, і прогрес мусить показувати зроблене. #}
+      <span class="quiz-progress__fill"
+            style="width: {{ (answered / view.total * 100) | round | int }}%"></span>
+    </div>
+    <p class="quiz-progress__label">
+      {% trans number=view.number, total=view.total %}Питання {{ number }} з {{ total }}{% endtrans %}
+      <span class="quiz-progress__answered">
+        {% trans answered=answered, total=view.total %}Відповіли: {{ answered }} з {{ total }}{% endtrans %}
+      </span>
+    </p>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <form method="POST" action="{{ url_for('quiz.answer', attempt_id=attempt.id) }}"
+        class="quiz-card">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="position" value="{{ view.position }}">
+    <input type="hidden" name="question_id" value="{{ view.question_id }}">
+
+    <fieldset class="quiz-question">
+      <legend class="quiz-question__text">{{ view.text }}</legend>
+
+      <div class="quiz-options">
+        {% for answer in view.answers %}
+        <label class="quiz-option">
+          <input type="radio" name="choice" value="{{ answer.position }}"
+                 {% if view.chosen == answer.position %}checked{% endif %}>
+          <span class="quiz-option__text">{{ answer.text }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <div class="quiz-nav">
+      {% if view.position > 0 %}
+      <button type="submit" name="direction" value="back" class="apple-btn apple-btn--secondary">
+        {{ _('Назад') }}
+      </button>
+      {% endif %}
+      <button type="submit" name="direction" value="next" class="apple-btn apple-btn--primary">
+        {% if view.number == view.total %}
+        {{ _('До перевірки') }}
+        {% else %}
+        {{ _('Далі') }}
+        {% endif %}
+      </button>
+    </div>
+    <p class="quiz-note">
+      {{ _('Відповідь зберігається при переході. Можна повернутися й змінити її до завершення.') }}
+    </p>
+  </form>
+
+</div>
+{% endblock %}
