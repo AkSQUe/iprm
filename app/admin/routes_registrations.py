@@ -70,6 +70,8 @@ def instance_registrations(instance_id):
         # Колонка "Сума" показує код знижки -- без цього рядок на кожну
         # реєстрацію тягнув би окремий SELECT.
         joinedload(EventRegistration.promo_code),
+        # Та сама колонка показує назву тарифу (instance_registrations.html).
+        joinedload(EventRegistration.tariff),
     ).filter(EventRegistration.instance_id == instance.id)
 
     if filters['q']:
@@ -82,7 +84,17 @@ def instance_registrations(instance_id):
     if filters['payment']:
         query = query.filter(EventRegistration.payment_status == filters['payment'])
 
-    registrations = query.order_by(EventRegistration.created_at.desc()).all()
+    # Пагінація тут не про сьогоднішній обсяг (у проді ~10 реєстрацій на
+    # проведення), а про те, що сторінка будує на кожен рядок стан тестування,
+    # анкети й сертифіката. `.all()` означав, що вебінар на 300 осіб рахував би
+    # це все за один запит -- і батч-контекст будувався б на 300 рядків замість
+    # 50. Лічильники нижче навмисно лишаються по всьому заходу.
+    page = request.args.get('page', 1, type=int)
+    per_page = _listing.per_page_arg()
+    pagination = query.order_by(EventRegistration.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False,
+    )
+    registrations = pagination.items
 
     # Лічильники -- по ВСЬОМУ заходу: скільки людей записано, не залежить від
     # того, що зараз шукає менеджер.
@@ -112,19 +124,29 @@ def instance_registrations(instance_id):
     # кожну реєстрацію: поштучно це давало +5 SELECT на рядок, а тут рядків
     # стільки ж, скільки учасників у групі.
     from app.services import quiz_service
-    quiz_states = quiz_service.eligibility_map(registrations)
+    # Контекст один на сторінку: `resolve_quiz` без нього перечитував ті самі
+    # два рядки `course_quizzes`. На порожньому списку контекст не передаємо --
+    # у ньому не було б ні перевизначення, ні тесту курсу (див. коментар у
+    # routes_quizzes.instance_quiz_results).
+    quiz_context = (quiz_service.build_batch_context(registrations)
+                    if registrations else None)
+    quiz_states = quiz_service.eligibility_map(registrations, context=quiz_context)
 
     return render_template(
         'admin/instance_registrations.html',
         instance=instance,
         registrations=registrations,
+        pagination=pagination,
         stats=stats,
         filters=filters,
         status_options=EventRegistration.STATUSES,
         payment_options=EventRegistration.PAYMENT_STATUSES,
         quiz_states=quiz_states,
         quiz_statuses=quiz_service,
-        quiz=quiz_service.resolve_quiz(instance),
+        quiz=quiz_service.resolve_quiz(instance, quiz_context),
+        # Один набір параметрів на пілюлі, пагінацію й експорт -- усі три мусять
+        # вести на той самий зріз (як у registrations_all).
+        filter_args=_listing.filter_args(filters),
     )
 
 

@@ -20,9 +20,43 @@
     </p>
   </header>
 
-  {% include 'partials/flash_messages.html' %}
-
   {% if state.status == statuses.AVAILABLE or state.status == statuses.IN_PROGRESS %}
+  {# Звірка анкети перед тестом. Гейт уже переконався, що поля заповнені, але
+     заповнено не означає правильно: саме ці рядки друкуються в сертифікаті, а
+     побачити їх людина досі могла тільки окремим заходом у кабінет. #}
+  {% if certdata %}
+  <section class="quiz-card quiz-certdata">
+    <h2 class="quiz-card__title">{{ _('Дані для сертифіката') }}</h2>
+    <p class="quiz-note quiz-certdata__lead">
+      {{ _('Перевірте, чи все правильно — саме ці дані буде вписано у сертифікат.') }}
+    </p>
+    <dl class="quiz-certdata__list">
+      {% for label, value in certdata %}
+      <div class="quiz-certdata__row">
+        <dt class="quiz-certdata__label">{{ label }}</dt>
+        <dd class="quiz-certdata__value">{{ value }}</dd>
+      </div>
+      {% endfor %}
+    </dl>
+    <p class="quiz-certdata__actions">
+      <a href="{{ url_for('auth.certificate_data') }}" class="quiz-link">
+        {{ _('Змінити дані') }}
+      </a>
+    </p>
+  </section>
+  {% endif %}
+
+  {# Вступний текст від організатора: правила заходу й на що звернути увагу.
+     Раніше цьому не було де жити, і сторінка показувала лише числа. #}
+  {% if quiz.t('intro') %}
+  <section class="quiz-card quiz-intro">
+    {# Переноси рядків показує CSS (`white-space: pre-line`), а не `<br>` через
+       `| safe`: текст пишуть в адмінці звичайним textarea, і пропускати його в
+       HTML як розмітку означало б відкрити інʼєкцію заради форматування. #}
+    <div class="quiz-intro__text">{{ quiz.t('intro') }}</div>
+  </section>
+  {% endif %}
+
   <section class="quiz-card">
     <h2 class="quiz-card__title">{{ _('Умови') }}</h2>
     <ul class="quiz-terms">
@@ -38,14 +72,25 @@
         Спроб залишилось: {{ left }}.
         {% endtrans %}
       </li>
+      {% if deadline_label %}
+      <li>
+        {% trans until=deadline_label %}
+        Скласти можна до {{ until }}.
+        {% endtrans %}
+      </li>
+      {% endif %}
     </ul>
 
     <form method="POST" action="{{ url_for('quiz.begin', reg_id=registration.id) }}"
           class="quiz-card__actions">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {# Напис на кнопці і є підтвердженням даних: окремого прапорця в БД для
+         цього не заводимо -- старт тесту вже фіксується спробою. #}
       <button type="submit" class="apple-btn apple-btn--primary">
         {% if state.status == statuses.IN_PROGRESS %}
         {{ _('Продовжити тест') }}
+        {% elif certdata %}
+        {{ _('Дані правильні, почати тест') }}
         {% else %}
         {{ _('Почати тест') }}
         {% endif %}
@@ -76,6 +121,15 @@
     {% elif state.status == statuses.NOT_STARTED %}
     <p>{{ _('Тест відкриється після початку заходу.') }}</p>
     <a href="{{ url_for('auth.account') }}" class="quiz-link">{{ _('Назад до кабінету') }}</a>
+
+    {% elif state.status == statuses.DEADLINE_PASSED %}
+    <p>
+      {% trans until=deadline_label %}
+      Термін складання завершився {{ until }}.
+      {% endtrans %}
+      {{ _('Якщо ви не встигли з поважної причини — напишіть організаторам.') }}
+    </p>
+    <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--primary">{{ _('Написати нам') }}</a>
 
     {% elif state.status == statuses.ATTEMPTS_EXHAUSTED %}
     <p>{{ _('Спроби вичерпано. Зверніться до організаторів — вони можуть відкрити додаткову спробу.') }}</p>

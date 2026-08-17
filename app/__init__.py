@@ -11,6 +11,13 @@ from app.extensions import db, login_manager, csrf, migrate, limiter, mail, babe
 
 _cached_assets_version = None
 
+# Блюпринти, де плаваючий поп-ап "заповніть дані для сертифіката" зайвий: у
+# кабінеті вже є власний банер і сама анкета, а у флоу реєстрації, оплати й
+# тестування поп-ап поверх форми -- лише шум. Порівнюємо назву блюпринта, а не
+# префікс шляху: auth/registration/quiz локалізовані, тож у ru/en їхні шляхи
+# починаються з /ru або /en (див. inject_certdata_reminder).
+_CERTDATA_POPUP_MUTED = frozenset({'auth', 'registration', 'payments', 'quiz'})
+
 
 def get_assets_version(static_folder):
     global _cached_assets_version
@@ -343,6 +350,14 @@ def create_app(config_name=None):
           реєстрації/оплати та у тестуванні (там гейт сам каже, чого
           бракує, а поверх питань поп-ап -- лише шум).
           Закриття -- sessionStorage.
+
+        Винятки визначаємо по НАЗВІ БЛЮПРИНТА, а не по префіксу шляху. Раніше
+        стояло `path.startswith('/quiz')`, і для ru/en це не спрацьовувало
+        ніколи: `auth`, `registration` і `quiz` -- LocalizedBlueprint, тобто
+        реальний шлях у них `/ru/quiz/5`. Російсько- й англомовний учасник
+        отримував поп-ап поверх питань тесту, а в кабінеті -- поп-ап разом із
+        власним банером і самою анкетою. Той самий ідіом уже вживає
+        `cache_control_html` нижче.
         """
         from flask import request
         from flask_login import current_user
@@ -350,8 +365,7 @@ def create_app(config_name=None):
         try:
             if not current_user.is_authenticated:
                 return flags
-            path = request.path or ''
-            if path.startswith('/admin') or path.startswith('/static'):
+            if request.blueprint == 'admin':
                 return flags
             profile = current_user.medical_profile
             if profile and profile.is_complete:
@@ -363,9 +377,8 @@ def create_app(config_name=None):
                 EventRegistration.status != 'cancelled',
             ).first() is not None
             flags['certdata_incomplete'] = has_reg
-            flags['show_certdata_reminder'] = has_reg and not (
-                path.startswith('/auth') or path.startswith('/registration')
-                or path.startswith('/quiz')
+            flags['show_certdata_reminder'] = has_reg and (
+                request.blueprint not in _CERTDATA_POPUP_MUTED
             )
             return flags
         except Exception:

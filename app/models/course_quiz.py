@@ -34,8 +34,12 @@ DEFAULT_PASSING_SCORE = 8
 DEFAULT_MAX_ATTEMPTS = 3
 
 
-class CourseQuiz(TimestampMixin, db.Model):
+class CourseQuiz(TimestampMixin, TranslatableMixin, db.Model):
     __tablename__ = 'course_quizzes'
+
+    # Вступний текст читає учасник, а сторінка тесту локалізована (uk/ru/en),
+    # тож він мусить перекладатись -- як і самі питання.
+    __translatable__ = ('intro',)
 
     id = db.Column(BigIntPK, primary_key=True)
 
@@ -75,6 +79,21 @@ class CourseQuiz(TimestampMixin, db.Model):
         db.Boolean, nullable=False, default=True, server_default=db.true(),
     )
 
+    # Вступний текст, який учасник читає перед стартом: правила заходу, на що
+    # звернути увагу, посилання на матеріали. Без цього поля роздатка з умовами
+    # тесту не мала де жити, і сторінка старту показувала лише згенеровані числа
+    # («10 питань, потрібно 8»).
+    intro = db.Column(db.Text)
+
+    # Скільки днів після завершення заходу тест лишається відкритим.
+    # NULL -- без обмеження (початкова поведінка: відкрився з початком заходу і
+    # не закривався ніколи). 0 -- до кінця дня, коли захід завершився: саме так
+    # правило сформульоване в роздатці учасникам («до 23:59 у день завершення»).
+    #
+    # Днями від дати заходу, а не абсолютною міткою: тест може належати КУРСУ,
+    # спільному для десятка проведень, і одна дата на всіх там безглузда.
+    deadline_days_after_end = db.Column(db.Integer)
+
     # Свідомо False за замовчуванням: щойно створений тест ще не має банку
     # питань, і відкривати його учасникам не можна.
     is_active = db.Column(
@@ -112,6 +131,10 @@ class CourseQuiz(TimestampMixin, db.Model):
         ),
         db.CheckConstraint(
             'max_attempts >= 1', name='ck_course_quizzes_max_attempts',
+        ),
+        db.CheckConstraint(
+            'deadline_days_after_end IS NULL OR deadline_days_after_end >= 0',
+            name='ck_course_quizzes_deadline_non_negative',
         ),
         # Один тест на курс і один на проведення. Partial-unique, бо друга
         # колонка у своєму рядку завжди NULL (той самий підхід, що в

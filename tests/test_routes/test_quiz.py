@@ -57,6 +57,29 @@ def _login(client, user):
         s['_user_id'] = str(user.id)
 
 
+def _flashes(resp):
+    r"""Тексти flash-повідомлень зі сторінки (той самий хелпер, що в test_auth).
+
+    Єдиний канал показу -- toast: base.html віддає повідомлення JSON-ом у
+    <script id="iprm-flash-data">, а `|tojson` екранує кирилицю у \uXXXX, тож
+    шукати підрядок у сирому HTML не можна.
+
+    Раніше шаблони quiz/ ще й інклюдили `partials/flash_messages.html`, і текст
+    траплявся в HTML напряму. Це не був другий шлях «на випадок чого»: Flask
+    кешує flashes у межах запиту (повторний `get_flashed_messages` віддає ті
+    самі повідомлення), тож людина бачила тост І дубль-плашку під ним.
+    """
+    import json
+    import re
+    match = re.search(
+        r'<script type="application/json" id="iprm-flash-data">(.*?)</script>',
+        resp.data.decode(), re.S,
+    )
+    if not match:
+        return []
+    return [item['message'] for item in json.loads(match.group(1))]
+
+
 def _user(profile=True):
     user = User.create_with_password(
         f'q-{uuid4().hex[:6]}@test.com', 'password123',
@@ -189,7 +212,9 @@ def test_start_shows_terms(client, app):
     reg, _ = _setup()
     _login(client, reg.user)
     html = client.get(f'/quiz/{reg.id}').get_data(as_text=True)
-    assert 'Почати тест' in html
+    # Напис на кнопці і є підтвердженням анкети, тому він не просто «Почати
+    # тест» -- див. блок звірки нижче в цьому файлі.
+    assert 'почати тест' in html
     assert 'Спроб залишилось' in html
 
 
@@ -368,7 +393,7 @@ def test_submit_refuses_with_unanswered(client, app):
     attempt = QuizAttempt.query.filter_by(registration_id=reg.id).one()
 
     resp = client.post(f'/quiz/attempt/{attempt.id}/submit', follow_redirects=True)
-    assert 'Спершу відповідьте на всі питання' in resp.get_data(as_text=True)
+    assert any('Спершу відповідьте на всі питання' in m for m in _flashes(resp))
     db.session.expire_all()
     assert db.session.get(QuizAttempt, attempt.id).is_finished is False
 
@@ -695,3 +720,231 @@ def test_done_does_not_promise_email_that_was_not_sent(client, app, no_pdf,
     html = client.get(f'/quiz/{reg.id}/done').get_data(as_text=True)
     assert 'Копію надіслано' not in html
     assert 'завжди доступний у кабінеті' in html
+
+
+# --- єдиний канал повідомлень -------------------------------------------------
+#
+# Шаблони quiz/ інклюдили `partials/flash_messages.html` на додачу до тоста з
+# base.html. Мертвим цей інклюд не був: Flask кешує flashes у межах запиту, тож
+# людина бачила і тост, і плашку під ним -- а на сторінці звірки ще й третій
+# показ, бо там є власний блок «залишились питання». Тост -- єдине джерело
+# (див. коментар у base.html), і ці тести стежать, щоб дубль не повернувся.
+
+@pytest.mark.parametrize('template', ['start', 'question', 'review', 'result', 'done'])
+def test_quiz_templates_do_not_include_flash_partial(app, template):
+    from pathlib import Path
+    source = Path(app.root_path, 'templates', 'quiz', f'{template}.html').read_text(
+        encoding='utf-8')
+    assert 'flash_messages.html' not in source
+
+
+def test_error_still_reaches_the_user_as_toast(client, app):
+    """Прибрали плашку -- повідомлення мусить лишитись хоч в одному каналі."""
+    reg, _ = _setup()
+    _login(client, reg.user)
+    client.post(f'/quiz/{reg.id}/start')
+    attempt = QuizAttempt.query.filter_by(registration_id=reg.id).one()
+
+    resp = client.post(f'/quiz/attempt/{attempt.id}/submit', follow_redirects=True)
+    messages = _flashes(resp)
+    assert messages, 'повідомлення не дійшло жодним каналом'
+    assert any('Спершу відповідьте' in m for m in messages)
+
+
+def test_message_is_not_shown_twice(client, app):
+    """Один текст -- один показ: у JSON тоста і НЕ в розмітці сторінки."""
+    reg, _ = _setup()
+    _login(client, reg.user)
+    client.post(f'/quiz/{reg.id}/start')
+    attempt = QuizAttempt.query.filter_by(registration_id=reg.id).one()
+
+    resp = client.post(f'/quiz/attempt/{attempt.id}/submit', follow_redirects=True)
+    html = resp.get_data(as_text=True)
+    assert 'alert alert--error' not in html
+    assert any('Спершу відповідьте' in m for m in _flashes(resp))
+
+
+# --- звірка анкети перед тестом ------------------------------------------------
+#
+# Вимога до потоку -- «заповнити анкету АБО перевірити вже заповнену». Друга
+# половина була відсутня: людині з повним профілем показувались лише умови, а
+# ПІБ, освіту й місце роботи, які потім друкуються в сертифікаті, вона
+# підтверджувала молча -- і помилку знаходила вже на готовому документі.
+
+def test_start_shows_certificate_data(client, app):
+    reg, _ = _setup()
+    _login(client, reg.user)
+    html = client.get(f'/quiz/{reg.id}').get_data(as_text=True)
+
+    assert 'Дані для сертифіката' in html
+    assert 'Змінити дані' in html
+    # ПІБ саме в тому вигляді, як його друкує сертифікат.
+    assert reg.user.full_name in html
+    assert 'Іванович' in html          # по батькові з анкети
+    assert '12.03.1985' in html        # дата народження у людському форматі
+    assert '2010, НМУ' in html         # освіта
+    assert 'Клініка' in html           # місце роботи
+
+
+def test_shown_name_matches_the_one_certificate_will_print(app, no_pdf):
+    """Головна цінність блоку: показане мусить дорівнювати надрукованому."""
+    reg, _ = _setup()
+    summary = dict(quiz_service.certificate_data_summary(reg))
+    cert = certificate_service.issue_certificate(reg)
+    assert summary['ПІБ'] == cert.recipient_name
+
+
+def test_summary_covers_every_field_is_complete_requires(app):
+    """Нове обов'язкове поле в моделі зобов'язане з'явитися і в звірці.
+
+    Інакше гейт вимагатиме те, чого людина на сторінці не бачить, і сенс
+    «перевірте свої дані» тихо зіпсується.
+    """
+    from app.models.medical_profile import MedicalProfile
+
+    # Єдине свідоме розходження: «По батькові» окремим рядком не показуємо --
+    # воно входить у ПІБ, а саме ПІБ і друкується в сертифікаті. Показати його
+    # ще й окремо означало б двічі те саме.
+    COVERED_BY = {'По батькові': 'ПІБ'}
+
+    reg, _ = _setup()
+    profile = reg.user.medical_profile
+    shown = {label for label, _value in quiz_service.certificate_data_summary(reg)}
+
+    # `missing_fields` рахує рівно те, що потрібно для повноти; обнуляємо все,
+    # щоб отримати повний перелік підписів.
+    for field in ('participant_type', 'middle_name', 'birth_date', 'education',
+                  'workplace', 'position'):
+        setattr(profile, field, None)
+    profile.specializations = []
+    db.session.flush()
+
+    required = {COVERED_BY.get(label, label)
+                for label in MedicalProfile.missing_fields.fget(profile)}
+    assert required <= shown, f'у звірці не показані поля: {required - shown}'
+
+
+def test_middle_name_is_visible_inside_the_full_name(app):
+    """Окремого рядка «По батькові» немає -- то воно мусить бути видним у ПІБ."""
+    reg, _ = _setup()
+    summary = dict(quiz_service.certificate_data_summary(reg))
+    assert 'Іванович' in summary['ПІБ']
+
+
+def test_no_certdata_block_when_profile_incomplete(client, app):
+    """Поверх «заповніть анкету» зведення анкети суперечило б саме собі."""
+    reg, _ = _setup(profile=False)
+    _login(client, reg.user)
+    html = client.get(f'/quiz/{reg.id}').get_data(as_text=True)
+    assert 'Дані для сертифіката' not in html
+    assert 'Заповнити анкету' in html
+
+
+def test_no_certdata_block_when_test_is_locked(client, app):
+    reg, _ = _setup(paid=False)
+    _login(client, reg.user)
+    html = client.get(f'/quiz/{reg.id}').get_data(as_text=True)
+    assert 'Дані для сертифіката' not in html
+
+
+def test_certdata_block_survives_resumed_attempt(client, app):
+    """Незавершена спроба -- кнопка «Продовжити», але дані показуємо далі."""
+    reg, _ = _setup()
+    _login(client, reg.user)
+    client.post(f'/quiz/{reg.id}/start')
+    html = client.get(f'/quiz/{reg.id}').get_data(as_text=True)
+    assert 'Дані для сертифіката' in html
+    assert 'Продовжити тест' in html
+
+
+def test_summary_is_empty_when_there_is_no_profile_row(app):
+    """`create_with_password` заводить порожній профіль, тож None тут -- рідкість
+    (акаунт без профілю взагалі). Але падати на ньому функція не має права."""
+    reg, _ = _setup(profile=False)
+    reg.user.medical_profile = None
+    db.session.flush()
+    assert quiz_service.certificate_data_summary(reg) == []
+
+
+def test_summary_of_empty_profile_has_no_values(app):
+    """Порожній профіль дає рядки без значень -- і саме тому блок показується
+    лише в `is_actionable`-станах, де гейт уже переконався в повноті."""
+    reg, _ = _setup(profile=False)
+    values = [value for _label, value in quiz_service.certificate_data_summary(reg)]
+    assert not any(values[1:]), 'усе, крім ПІБ, мусить бути порожнім'
+
+
+# --- вступний текст і дедлайн --------------------------------------------------
+
+def test_intro_is_shown_when_filled(client, app):
+    reg, quiz = _setup()
+    quiz.intro = 'Уважно прочитайте матеріали заходу.\nДругий рядок.'
+    db.session.flush()
+    _login(client, reg.user)
+
+    html = client.get(f'/quiz/{reg.id}').get_data(as_text=True)
+    assert 'Уважно прочитайте матеріали заходу.' in html
+    assert 'quiz-intro' in html
+
+
+def test_intro_block_absent_when_empty(client, app):
+    reg, _ = _setup()
+    _login(client, reg.user)
+    assert 'quiz-intro' not in client.get(f'/quiz/{reg.id}').get_data(as_text=True)
+
+
+def test_intro_is_escaped_not_rendered_as_html(client, app):
+    """Текст пишуть у textarea в адмінці -- він не має ставати розміткою."""
+    reg, quiz = _setup()
+    quiz.intro = '<script>alert(1)</script>'
+    db.session.flush()
+    _login(client, reg.user)
+
+    html = client.get(f'/quiz/{reg.id}').get_data(as_text=True)
+    assert '<script>alert(1)</script>' not in html
+    assert '&lt;script&gt;' in html
+
+
+def test_deadline_is_shown_in_terms(client, app):
+    reg, quiz = _setup()
+    reg.instance.end_date = datetime.now(timezone.utc) - timedelta(hours=1)
+    quiz.deadline_days_after_end = 2
+    db.session.flush()
+    _login(client, reg.user)
+
+    html = client.get(f'/quiz/{reg.id}').get_data(as_text=True)
+    assert 'Скласти можна до' in html
+    assert '23:59' in html
+
+
+def test_no_deadline_line_without_a_deadline(client, app):
+    reg, _ = _setup()
+    _login(client, reg.user)
+    assert 'Скласти можна до' not in client.get(f'/quiz/{reg.id}').get_data(as_text=True)
+
+
+def test_expired_deadline_blocks_and_explains(client, app):
+    reg, quiz = _setup()
+    reg.instance.end_date = datetime.now(timezone.utc) - timedelta(days=5)
+    quiz.deadline_days_after_end = 0
+    db.session.flush()
+    _login(client, reg.user)
+
+    html = client.get(f'/quiz/{reg.id}').get_data(as_text=True)
+    assert 'Термін складання завершився' in html
+    assert 'Написати нам' in html
+    # Дані анкети у заблокованому стані не показуємо -- сторінка про інше.
+    assert 'Дані для сертифіката' not in html
+
+
+def test_expired_deadline_refuses_to_start_an_attempt(client, app):
+    """Головне: заборона мусить діяти на POST, а не лише ховати кнопку."""
+    reg, quiz = _setup()
+    reg.instance.end_date = datetime.now(timezone.utc) - timedelta(days=5)
+    quiz.deadline_days_after_end = 0
+    db.session.flush()
+    _login(client, reg.user)
+
+    resp = client.post(f'/quiz/{reg.id}/start', follow_redirects=True)
+    assert QuizAttempt.query.filter_by(registration_id=reg.id).count() == 0
+    assert any('недоступне' in m for m in _flashes(resp))

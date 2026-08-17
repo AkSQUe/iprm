@@ -1,6 +1,6 @@
 import os
 import re
-from datetime import timezone
+from datetime import timedelta, timezone
 
 import bleach
 from markupsafe import Markup
@@ -55,6 +55,17 @@ def normalize_name(value):
         )
 
     return ' '.join(cap_word(w) for w in s.split(' '))
+
+
+# Київський час. Потрібен там, де межа доби має бути людською, а не UTC:
+# «до 23:59 у день завершення заходу» в UTC означало б для когось «до обіду».
+#
+# УВАГА: та сама константа вже живе в `app/admin/_listing.py`,
+# `app/services/xlsx_io.py` і `app/services/participant_service.py`. Тут вона
+# оголошена як канонічна (поряд з `ensure_utc`, з якою завжди вживається); ті
+# три копії варто звести сюди окремою правкою -- вони на шляху xlsx-експорту, і
+# чіпати їх мимохідь означало б ризикнути ним без потреби.
+KYIV = timezone(timedelta(hours=3))
 
 
 def ensure_utc(dt):

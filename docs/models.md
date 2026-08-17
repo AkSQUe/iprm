@@ -306,12 +306,22 @@ WHERE `status = 'applied'`) гарантує рівно одне активне 
 | `max_attempts` | Integer, default 3 | Ліміт спроб |
 | `shuffle_answers` | Boolean, default True | Перемішувати варіанти |
 | `is_active` | Boolean, default **False** | Чернетка, поки банк не готовий |
+| `intro` | Text, nullable | Вступний текст перед стартом (перекладний) |
+| `deadline_days_after_end` | Integer, nullable | Днів на складання після завершення заходу; NULL -- без обмеження, 0 -- до 23:59 останнього дня |
+
+`__translatable__ = ('intro',)` -- сторінку тесту читають трьома мовами;
+редагується мовними вкладками в білдері (префікс `trqz__<id>`).
+
+Дедлайн рахується від `end_date` проведення (з відкатом на `start_date`, якщо
+не заповнене), а не абсолютною міткою: тест може належати курсу, спільному для
+десятка проведень. Межа доби -- київська (`app.utils.KYIV`), бо правило
+сформульоване для людини як «до 23:59».
 
 Обмеження: `ck_course_quizzes_owner` (рівно одне з course_id/instance_id),
 `ck_course_quizzes_passing_within` (`passing_score <= questions_per_attempt`),
-плюс позитивність налаштувань. Partial-unique
-`uq_course_quizzes_course`/`_instance` -- один тест на курс і один на
-проведення.
+`ck_course_quizzes_deadline_non_negative`, плюс позитивність налаштувань.
+Partial-unique `uq_course_quizzes_course`/`_instance` -- один тест на курс і
+один на проведення.
 
 Властивості: `bank_size`, `active_questions`, `is_ready` (банк достатній І всі
 питання коректні -- окремо від `is_active`, бо адмін міг увімкнути тест і потім

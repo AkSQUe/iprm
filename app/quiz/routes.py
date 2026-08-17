@@ -28,6 +28,25 @@ from app.services import quiz_service
 logger = logging.getLogger(__name__)
 
 
+def _commit(context):
+    """Коміт із відкотом і повідомленням замість 500 посеред тесту.
+
+    Голий `db.session.commit()` тут коштував дорого: збій БД віддавав 500 із
+    побитою сесією рівно там, де людина витрачає одну з трьох спроб, і не
+    лишав їй жодної підказки, що робити далі. Адмінська частина цього ж потоку
+    вже давно ходить через `try_commit`; тут своя копія, бо публічний блюпринт
+    не має залежати від пакета `admin`, а повідомлення мусить перекладатись.
+    """
+    try:
+        db.session.commit()
+        return True
+    except Exception:
+        db.session.rollback()
+        logger.exception('Quiz commit failed: %s', context)
+        flash(_('Не вдалося зберегти. Спробуйте ще раз.'), 'error')
+        return False
+
+
 def _own_registration(reg_id):
     """Реєстрація поточного користувача або 404.
 
@@ -73,6 +92,12 @@ def start(reg_id):
     if state.status == quiz_service.PASSED:
         return redirect(url_for('quiz.done', reg_id=reg.id))
 
+    # Дані для сертифіката показуємо лише коли тест справді можна почати: у
+    # заблокованих станах сторінка й так пояснює, чого бракує, а зведення
+    # анкети поверх «заповніть анкету» суперечило б саме собі.
+    certdata = (quiz_service.certificate_data_summary(reg)
+                if state.is_actionable else [])
+
     return render_template(
         'quiz/start.html',
         registration=reg,
@@ -80,6 +105,10 @@ def start(reg_id):
         state=state,
         quiz=state.quiz,
         statuses=quiz_service,
+        certdata=certdata,
+        # Київський час: дедлайн лежить в UTC, і показ «як є» написав би людині
+        # час на три години раніше за той, що вона почула на заході.
+        deadline_label=quiz_service.deadline_label(state.deadline),
     )
 
 
@@ -94,7 +123,8 @@ def begin(reg_id):
         return redirect(url_for('quiz.start', reg_id=reg.id))
 
     attempt = quiz_service.start_attempt(reg)
-    db.session.commit()
+    if not _commit(f'start_attempt reg={reg.id}'):
+        return redirect(url_for('quiz.start', reg_id=reg.id))
     return redirect(url_for('quiz.question', attempt_id=attempt.id))
 
 
@@ -146,12 +176,18 @@ def answer(attempt_id):
     choice = request.form.get('choice')
 
     if choice is not None and choice != '':
-        if not quiz_service.record_answer(attempt, question_id, choice):
+        if quiz_service.record_answer(attempt, question_id, choice):
+            # Комітимо ЛИШЕ коли щось справді записалось: на відкинутому вводі
+            # (чуже питання, позиція поза межами) сесія чиста, і COMMIT був би
+            # холостим -- по одному на кожен такий POST.
+            if not _commit(f'record_answer attempt={attempt.id}'):
+                return redirect(url_for('quiz.question', attempt_id=attempt.id,
+                                        position=position))
+        else:
             logger.warning(
                 'Rejected quiz answer: attempt=%s question=%r choice=%r',
                 attempt.id, question_id, choice,
             )
-        db.session.commit()
 
     total = len(attempt.question_ids or [])
     target = position + 1 if request.form.get('direction') != 'back' else position - 1
@@ -194,7 +230,17 @@ def submit(attempt_id):
                 numbers=', '.join(str(n) for n in missing)), 'error')
         return redirect(url_for('quiz.review', attempt_id=attempt.id))
 
-    quiz_service.submit_attempt(attempt)
+    try:
+        quiz_service.submit_attempt(attempt)
+    except Exception:
+        # `submit_attempt` комітить результат сам (до видачі сертифіката).
+        # Якщо той коміт упав, сесія зламана: без відкоту людина отримала б 500
+        # і не змогла б навіть повернутися до звірки. Спробу при цьому не
+        # втрачено -- вона лишається незавершеною, тобто продовжуваною.
+        db.session.rollback()
+        logger.exception('Quiz submit failed: attempt=%s', attempt.id)
+        flash(_('Не вдалося зберегти результат. Спробуйте ще раз.'), 'error')
+        return redirect(url_for('quiz.review', attempt_id=attempt_id))
     return redirect(url_for('quiz.result', attempt_id=attempt.id))
 
 

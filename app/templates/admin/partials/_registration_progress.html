@@ -69,6 +69,13 @@
   </span>
   {% elif state.status == quiz_statuses.QUIZ_NOT_READY %}
   <span class="badge badge--danger" title="Банк питань недостатній або є зіпсовані питання">Тест не готовий</span>
+  {% elif state.status == quiz_statuses.DEADLINE_PASSED %}
+  {# Без цієї гілки загальний else написав би «Не починав» -- тобто показав би
+     стан без причини саме там, де причина єдина, що має значення. #}
+  <span class="badge badge--danger"
+        title="Термін складання завершився {{ quiz_statuses.deadline_label(state.deadline) }}">
+    Термін вийшов
+  </span>
   {% else %}
   <span class="badge badge--draft">Не починав</span>
   {% endif %}

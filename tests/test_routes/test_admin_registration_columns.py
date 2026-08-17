@@ -626,3 +626,24 @@ def test_detail_loads_quiz_css_for_sticky_bar(client, admin):
     reg = _registration(inst)
     _login(client, admin)
     assert 'css/admin-quiz.css' in _detail(client, reg)
+
+
+def test_expired_deadline_is_named_not_hidden(client, admin, app):
+    """Новий статус мусить мати власну гілку в макросі.
+
+    Загальний `{% else %}` написав би «Не починав» -- тобто показав би стан без
+    причини саме там, де причина єдина, що має значення.
+    """
+    from app.models.course_quiz import CourseQuiz
+
+    inst = _instance()
+    _registration(inst)
+    quiz = CourseQuiz.query.filter_by(course_id=inst.course_id).one()
+    quiz.deadline_days_after_end = 0
+    inst.end_date = datetime.now(timezone.utc) - timedelta(days=5)
+    db.session.flush()
+    _login(client, admin)
+
+    html = _html(client, inst)
+    assert 'Термін вийшов' in html
+    assert 'Не починав' not in html

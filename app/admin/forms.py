@@ -1053,6 +1053,19 @@ class CourseQuizForm(FlaskForm):
         default=True,
         description='Ускладнює передавання відповідей між учасниками.',
     )
+    intro = TextAreaField(
+        'Вступний текст',
+        validators=[Optional(), Length(max=5000)],
+        description='Учасник читає його перед стартом: правила, на що звернути '
+                    'увагу, посилання на матеріали. Порожньо -- показуємо лише '
+                    'умови (кількість питань, поріг, спроби).',
+    )
+    deadline_days_after_end = IntegerField(
+        'Днів на складання після заходу',
+        validators=[Optional(), NumberRange(min=0, max=365)],
+        description='0 -- до 23:59 у день завершення заходу. Порожньо -- без '
+                    'обмеження: тест лишається відкритим і далі.',
+    )
     is_active = BooleanField(
         'Тест увімкнено',
         default=False,

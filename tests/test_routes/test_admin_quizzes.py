@@ -513,3 +513,229 @@ def test_registry_query_count_does_not_grow_with_courses(client, admin):
         f'вісім курсів з проведеннями дали +{grown - baseline} SELECT '
         f'({baseline} -> {grown}) -- схоже, повернувся N+1 по проведеннях'
     )
+
+
+# --- пагінація сторінки результатів групи -------------------------------------
+#
+# Сторінка робила `.all()` і будувала батч-контекст на всю групу, а сортування й
+# три лічильники рахувалися в Python із того самого списку. З пагінацією такі
+# лічильники тихо перетворилися б на «скільки на цьому екрані», а сортування
+# впорядковувало б кожну сторінку окремо -- тому і те, і те винесено в SQL.
+
+def _quiz_with_bank(course, bank=2):
+    quiz = CourseQuiz(course_id=course.id, questions_per_attempt=bank,
+                      passing_score=1, max_attempts=3, shuffle_answers=False,
+                      is_active=True)
+    db.session.add(quiz)
+    db.session.flush()
+    for i in range(bank):
+        db.session.add(QuizQuestion(
+            quiz_id=quiz.id, text=f'Питання {i + 1}?', sort_order=i,
+            answers=[{'text': 'a', 'is_correct': False},
+                     {'text': 'b', 'is_correct': True},
+                     {'text': 'c', 'is_correct': False},
+                     {'text': 'd', 'is_correct': False}]))
+    db.session.flush()
+    return quiz
+
+
+def test_results_page_paginates(client, admin, app):
+    course = _course()
+    inst = _instance(course)
+    _quiz_with_bank(course)
+    for _ in range(30):
+        _registration(inst)
+    _login(client, admin)
+
+    html = client.get(
+        f'/admin/instances/{inst.id}/quiz-results?per_page=25').get_data(as_text=True)
+    assert 'admin-pagination' in html
+    assert '1 / 2 (30)' in html
+
+
+def test_counters_cover_the_whole_group_not_the_page(client, admin, app, no_pdf):
+    """Головна пастка пагінації: «склали тест» мусить лишитись груповим."""
+    course = _course()
+    inst = _instance(course)
+    _quiz_with_bank(course)
+    regs = [_registration(inst) for _ in range(30)]
+
+    # Складений тест лише в одного, і він навмисно НЕ на першій сторінці за
+    # алфавітом -- сортування ставить тих, хто склав, першими.
+    passed = regs[-1]
+    passed.quiz_passed_at = datetime.now(timezone.utc)
+    db.session.flush()
+
+    _login(client, admin)
+    page2 = client.get(
+        f'/admin/instances/{inst.id}/quiz-results?per_page=25&page=2'
+    ).get_data(as_text=True)
+
+    # На другій сторінці учасника, що склав, немає -- але лічильники ті самі.
+    assert '>30<' in page2, 'лічильник учасників став посторінковим'
+    assert '>1<' in page2, 'лічильник складених став посторінковим'
+
+
+def test_passed_participants_come_first_across_pages(client, admin, app):
+    course = _course()
+    inst = _instance(course)
+    _quiz_with_bank(course)
+    regs = [_registration(inst) for _ in range(30)]
+    regs[-1].quiz_passed_at = datetime.now(timezone.utc)
+    db.session.flush()
+    winner_email = regs[-1].user.email
+
+    _login(client, admin)
+    page1 = client.get(
+        f'/admin/instances/{inst.id}/quiz-results?per_page=25'
+    ).get_data(as_text=True)
+    assert winner_email in page1, 'сортування «склали спершу» не в SQL'
+
+
+def test_empty_group_still_shows_the_quiz(client, admin, app):
+    """Контекст із нуля реєстрацій не має перетворити наявний тест у «немає»."""
+    course = _course()
+    inst = _instance(course)
+    _quiz_with_bank(course)
+    _login(client, admin)
+
+    html = client.get(f'/admin/instances/{inst.id}/quiz-results').get_data(as_text=True)
+    assert 'Реєстрацій немає' in html
+    assert 'Тест не налаштований' not in html
+
+
+def test_instance_registrations_paginates(client, admin, app):
+    course = _course()
+    inst = _instance(course)
+    for _ in range(30):
+        _registration(inst)
+    _login(client, admin)
+
+    html = client.get(
+        f'/admin/instances/{inst.id}/registrations?per_page=25').get_data(as_text=True)
+    assert 'admin-pagination' in html
+    assert '1 / 2 (30)' in html
+
+
+def test_instance_registrations_stats_stay_group_wide(client, admin, app):
+    course = _course()
+    inst = _instance(course)
+    for _ in range(30):
+        _registration(inst)
+    _login(client, admin)
+
+    html = client.get(
+        f'/admin/instances/{inst.id}/registrations?per_page=25&page=2'
+    ).get_data(as_text=True)
+    assert '>30<' in html, 'лічильник «всього» став посторінковим'
+
+
+def test_pagination_keeps_the_filter(client, admin, app):
+    course = _course()
+    inst = _instance(course)
+    for _ in range(30):
+        _registration(inst)
+    _login(client, admin)
+
+    html = client.get(
+        f'/admin/instances/{inst.id}/registrations?per_page=25&payment=paid'
+    ).get_data(as_text=True)
+    assert 'payment=paid' in html, 'посилання пагінації втрачає фільтр'
+
+
+# --- вступний текст і дедлайн у білдері ---------------------------------------
+
+def test_builder_saves_intro_and_deadline(client, admin, app):
+    course = _course()
+    _login(client, admin)
+    payload = _builder_payload()
+    payload['intro'] = 'Умови заходу.\nДругий рядок.'
+    payload['deadline_days_after_end'] = '0'
+
+    client.post(f'/admin/courses/{course.id}/quiz', data=payload,
+                follow_redirects=True)
+    quiz = CourseQuiz.query.filter_by(course_id=course.id).one()
+    assert quiz.intro == 'Умови заходу.\nДругий рядок.'
+    assert quiz.deadline_days_after_end == 0
+
+
+def test_blank_intro_is_stored_as_null(client, admin, app):
+    """Порожній textarea не має ставати рядком з пробілів: сторінка тесту
+    вирішує «показувати чи ні» саме за наявністю значення."""
+    course = _course()
+    _login(client, admin)
+    payload = _builder_payload()
+    payload['intro'] = '   \n  '
+
+    client.post(f'/admin/courses/{course.id}/quiz', data=payload,
+                follow_redirects=True)
+    assert CourseQuiz.query.filter_by(course_id=course.id).one().intro is None
+
+
+def test_blank_deadline_means_no_limit(client, admin, app):
+    course = _course()
+    _login(client, admin)
+    payload = _builder_payload()
+    payload['deadline_days_after_end'] = ''
+
+    client.post(f'/admin/courses/{course.id}/quiz', data=payload,
+                follow_redirects=True)
+    assert CourseQuiz.query.filter_by(
+        course_id=course.id).one().deadline_days_after_end is None
+
+
+def test_negative_deadline_is_rejected(client, admin, app):
+    """«-1 день» закрив би тест до початку заходу."""
+    course = _course()
+    _login(client, admin)
+    payload = _builder_payload()
+    payload['deadline_days_after_end'] = '-1'
+
+    client.post(f'/admin/courses/{course.id}/quiz', data=payload)
+    assert CourseQuiz.query.filter_by(course_id=course.id).first() is None
+
+
+def test_editor_shows_saved_values(client, admin, app):
+    course = _course()
+    _login(client, admin)
+    payload = _builder_payload()
+    payload['intro'] = 'Текст-маркер вступу'
+    payload['deadline_days_after_end'] = '3'
+    client.post(f'/admin/courses/{course.id}/quiz', data=payload,
+                follow_redirects=True)
+
+    html = client.get(f'/admin/courses/{course.id}/quiz').get_data(as_text=True)
+    assert 'Текст-маркер вступу' in html
+    assert 'value="3"' in html
+
+
+def test_intro_has_language_tabs(client, admin, app):
+    """Сторінку тесту читають трьома мовами, тож вступ мусить перекладатись."""
+    course = _course()
+    _login(client, admin)
+    client.post(f'/admin/courses/{course.id}/quiz', data=_builder_payload(),
+                follow_redirects=True)
+    quiz = CourseQuiz.query.filter_by(course_id=course.id).one()
+
+    html = client.get(f'/admin/courses/{course.id}/quiz').get_data(as_text=True)
+    assert f'trqz__{quiz.id}' in html
+
+
+def test_intro_translation_is_saved_and_served(client, admin, app):
+    course = _course()
+    _login(client, admin)
+    client.post(f'/admin/courses/{course.id}/quiz', data=_builder_payload(),
+                follow_redirects=True)
+    quiz = CourseQuiz.query.filter_by(course_id=course.id).one()
+
+    payload = _builder_payload()
+    payload['intro'] = 'Український вступ'
+    # Порядок сегментів задає `_i18n_tabs.panes`: prefix__lang__field.
+    payload[f'trqz__{quiz.id}__en__intro'] = 'English intro'
+    client.post(f'/admin/courses/{course.id}/quiz', data=payload,
+                follow_redirects=True)
+
+    db.session.expire_all()
+    quiz = CourseQuiz.query.filter_by(course_id=course.id).one()
+    assert quiz.t('intro') == 'Український вступ'
+    assert quiz.t('intro', 'en') == 'English intro'

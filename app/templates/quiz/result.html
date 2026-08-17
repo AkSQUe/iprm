@@ -10,8 +10,6 @@
 {% block content %}
 <div class="apple-page quiz-layout">
 
-  {% include 'partials/flash_messages.html' %}
-
   <section class="quiz-card quiz-result{{ ' quiz-result--pass' if attempt.passed else ' quiz-result--fail' }}">
     <p class="quiz-result__score">
       {{ attempt.score }} <span class="quiz-result__of">/ {{ attempt.total }}</span>

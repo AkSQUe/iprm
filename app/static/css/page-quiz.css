@@ -91,6 +91,74 @@
   text-decoration: underline;
 }
 
+/* Вихід зі сторінки питання -- окремо від картки з питанням, щоб не читався
+   як частина навігації тестом. */
+.quiz-leave {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 0.9375rem;
+}
+
+/* ========== ВСТУПНИЙ ТЕКСТ ========== */
+
+.quiz-intro {
+  border-left: 3px solid var(--iprm-accent);
+}
+
+/* Переноси рядків з адмінського textarea -- стилем, а не `<br>` через `| safe`:
+   інакше форматування коштувало б відкритої HTML-інʼєкції. */
+.quiz-intro__text {
+  white-space: pre-line;
+  line-height: 1.7;
+  color: var(--iprm-text);
+  overflow-wrap: anywhere;
+}
+
+/* ========== ЗВІРКА АНКЕТИ ПЕРЕД ТЕСТОМ ========== */
+
+.quiz-certdata__lead {
+  margin: -8px 0 16px;
+}
+
+.quiz-certdata__list {
+  margin: 0;
+}
+
+.quiz-certdata__row {
+  display: grid;
+  grid-template-columns: minmax(140px, 34%) 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--iprm-divider);
+}
+
+.quiz-certdata__row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.quiz-certdata__label {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--iprm-text-light);
+}
+
+.quiz-certdata__value {
+  margin: 0;
+  color: var(--iprm-text);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* ПІБ -- головне, що варто перечитати: саме він друкується в сертифікаті. */
+.quiz-certdata__row:first-child .quiz-certdata__value {
+  font-size: 1.05rem;
+}
+
+.quiz-certdata__actions {
+  margin: 16px 0 0;
+}
+
 /* ========== ПРОГРЕС ========== */
 
 .quiz-progress {
@@ -389,5 +457,23 @@
     width: 100%;
     margin-left: 0;
     text-align: center;
+  }
+}
+
+/* Смуга прогресу і підсвітка обраного варіанта -- єдина анімація в потоці.
+   Патерн той самий, що в page-account.css і auth.css. */
+@media (prefers-reduced-motion: reduce) {
+  .quiz-progress__fill,
+  .quiz-option {
+    transition: none;
+  }
+}
+
+@media (max-width: 520px) {
+  /* Підпис над значенням: два стовпці на вузькому екрані ріжуть ПІБ і назву
+     місця роботи на переноси по складах. */
+  .quiz-certdata__row {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
 }

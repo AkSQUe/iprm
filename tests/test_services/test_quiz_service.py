@@ -23,6 +23,9 @@ from app.models.medical_profile import MedicalProfile
 from app.models.quiz_attempt import QuizAttempt
 from app.models.registration import EventRegistration
 from app.models.site_settings import SiteSettings
+# Межа доби для дедлайну -- київська. Імпортуємо ту саму константу, якою її
+# рахує сервіс: власна копія UTC+3 тут перевіряла б себе, а не код.
+from app.utils import KYIV
 from app.models.user import User
 from app.services import certificate_service, quiz_service
 
@@ -988,3 +991,126 @@ def test_attempt_view_models_never_leak_correctness(app):
     reg, _ = _setup()
     attempt = quiz_service.start_attempt(reg)
     assert 'is_correct' not in repr(quiz_service.attempt_view_models(attempt))
+
+
+# --- дедлайн складання --------------------------------------------------------
+#
+# Роздатка учасникам обіцяла «до 23:59 у день завершення заходу», а тест
+# відкривався з початком заходу і не закривався ніколи. NULL зберігає стару
+# поведінку, 0 означає рівно те, що в роздатці.
+
+class TestDeadline:
+
+    def test_no_deadline_by_default(self, app):
+        reg, quiz = _setup()
+        assert quiz.deadline_days_after_end is None
+        assert quiz_service.deadline_for(quiz, reg.instance) is None
+        assert quiz_service.eligibility(reg).status == quiz_service.AVAILABLE
+
+    def test_zero_days_means_end_of_the_last_day(self, app):
+        """0 -- до 23:59 київського дня, коли захід завершився."""
+        reg, quiz = _setup()
+        reg.instance.end_date = datetime(2026, 8, 20, 10, 0, tzinfo=timezone.utc)
+        quiz.deadline_days_after_end = 0
+        db.session.flush()
+
+        deadline = quiz_service.deadline_for(quiz, reg.instance)
+        local = deadline.astimezone(KYIV)
+        assert (local.year, local.month, local.day) == (2026, 8, 20)
+        assert (local.hour, local.minute) == (23, 59)
+
+    def test_counted_from_end_not_from_start(self, app):
+        """На триденному заході відлік від початку закрив би тест посеред нього."""
+        reg, quiz = _setup()
+        reg.instance.start_date = datetime(2026, 8, 18, 9, 0, tzinfo=timezone.utc)
+        reg.instance.end_date = datetime(2026, 8, 20, 18, 0, tzinfo=timezone.utc)
+        quiz.deadline_days_after_end = 0
+        db.session.flush()
+
+        local = quiz_service.deadline_for(quiz, reg.instance).astimezone(KYIV)
+        assert local.day == 20
+
+    def test_falls_back_to_start_when_end_is_empty(self, app):
+        reg, quiz = _setup()
+        reg.instance.start_date = datetime(2026, 8, 18, 9, 0, tzinfo=timezone.utc)
+        reg.instance.end_date = None
+        quiz.deadline_days_after_end = 0
+        db.session.flush()
+
+        local = quiz_service.deadline_for(quiz, reg.instance).astimezone(KYIV)
+        assert local.day == 18
+
+    def test_extra_days_shift_the_window(self, app):
+        reg, quiz = _setup()
+        reg.instance.end_date = datetime(2026, 8, 20, 10, 0, tzinfo=timezone.utc)
+        quiz.deadline_days_after_end = 3
+        db.session.flush()
+
+        local = quiz_service.deadline_for(quiz, reg.instance).astimezone(KYIV)
+        assert local.day == 23
+
+    def test_expired_window_blocks_the_start(self, app):
+        reg, quiz = _setup()
+        reg.instance.end_date = datetime.now(timezone.utc) - timedelta(days=5)
+        quiz.deadline_days_after_end = 0
+        db.session.flush()
+
+        state = quiz_service.eligibility(reg)
+        assert state.status == quiz_service.DEADLINE_PASSED
+        assert state.deadline is not None
+
+    def test_open_window_still_allows_the_start(self, app):
+        reg, quiz = _setup()
+        reg.instance.end_date = datetime.now(timezone.utc) - timedelta(hours=1)
+        quiz.deadline_days_after_end = 1
+        db.session.flush()
+
+        state = quiz_service.eligibility(reg)
+        assert state.status == quiz_service.AVAILABLE
+        assert state.deadline is not None
+
+    def test_started_attempt_can_be_finished_after_the_deadline(self, app):
+        """Обривати тест на середині за годинником -- це з'їсти спробу дарма."""
+        reg, quiz = _setup()
+        reg.instance.end_date = datetime.now(timezone.utc) - timedelta(hours=2)
+        quiz.deadline_days_after_end = 0
+        db.session.flush()
+
+        # Спроба почата, доки вікно ще було відкрите.
+        quiz.deadline_days_after_end = None
+        db.session.flush()
+        attempt = quiz_service.start_attempt(reg)
+        quiz.deadline_days_after_end = 0
+        reg.instance.end_date = datetime.now(timezone.utc) - timedelta(days=5)
+        db.session.flush()
+
+        state = quiz_service.eligibility(reg)
+        assert state.status == quiz_service.IN_PROGRESS
+        assert state.attempt.id == attempt.id
+
+    def test_passed_wins_over_deadline(self, app):
+        """Складений тест не має ставати «прострочений» назавтра."""
+        reg, quiz = _setup()
+        reg.quiz_passed_at = datetime.now(timezone.utc)
+        reg.instance.end_date = datetime.now(timezone.utc) - timedelta(days=30)
+        quiz.deadline_days_after_end = 0
+        db.session.flush()
+
+        assert quiz_service.eligibility(reg).status == quiz_service.PASSED
+
+    def test_label_is_in_kyiv_time(self, app):
+        deadline = datetime(2026, 8, 20, 20, 59, 59, tzinfo=timezone.utc)
+        assert quiz_service.deadline_label(deadline) == '20.08.2026, 23:59'
+
+    def test_label_of_none_is_empty(self, app):
+        assert quiz_service.deadline_label(None) == ''
+
+    def test_deadline_survives_batch_context(self, app):
+        """Батч-шлях мусить давати той самий статус, що й поштучний."""
+        reg, quiz = _setup()
+        reg.instance.end_date = datetime.now(timezone.utc) - timedelta(days=5)
+        quiz.deadline_days_after_end = 0
+        db.session.flush()
+
+        states = quiz_service.eligibility_map([reg])
+        assert states[reg.id].status == quiz_service.DEADLINE_PASSED

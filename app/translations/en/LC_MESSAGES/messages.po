@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-17 19:07+0300\n"
+"POT-Creation-Date: 2026-08-17 19:38+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -61,7 +61,7 @@ msgid "Місце роботи обов'язкове"
 msgstr "Place of work is required"
 
 msgid "Займана посада"
-msgstr "Position held"
+msgstr "Position"
 
 msgid "Займана посада обов'язкова"
 msgstr "Position held is required"
@@ -70,7 +70,7 @@ msgid "асистент, лікар-ординатор, головний лік�
 msgstr "assistant, resident physician, chief physician..."
 
 msgid "Спеціалізації"
-msgstr "Specializations"
+msgstr "Specialisations"
 
 msgid "Оберіть хоча б одну спеціалізацію"
 msgstr "Select at least one specialization"
@@ -993,12 +993,18 @@ msgstr "Unknown order"
 msgid "Оплата ще обробляється. Оновіть сторінку через хвилину."
 msgstr "Payment is still processing. Refresh the page in a minute."
 
+msgid "Не вдалося зберегти. Спробуйте ще раз."
+msgstr "Could not save. Please try again."
+
 msgid "Тестування зараз недоступне."
 msgstr "Testing is currently unavailable."
 
 #, python-format
 msgid "Спершу відповідьте на всі питання. Залишились: %(numbers)s"
 msgstr "Please answer every question first. Remaining: %(numbers)s"
+
+msgid "Не вдалося зберегти результат. Спробуйте ще раз."
+msgstr "Could not save the result. Please try again."
 
 msgid "Невалідний email"
 msgstr "Invalid email"
@@ -1143,6 +1149,15 @@ msgstr "Attendance is already free — no promo code needed"
 
 msgid "Ви вже використали цей промокод"
 msgstr "You have already used this promo code"
+
+msgid "ПІБ"
+msgstr "Full name"
+
+msgid "Освіта"
+msgstr "Education"
+
+msgid "Місце роботи"
+msgstr "Place of work"
 
 msgid "ІПРМ | Інститут Плазмотерапії та Регенеративної Медицини"
 msgstr "IPRM | Institute of Plasma Therapy and Regenerative Medicine"
@@ -4708,6 +4723,9 @@ msgstr "My courses"
 msgid "Питання %(number)s з %(total)s"
 msgstr "Question %(number)s of %(total)s"
 
+msgid "Тестування"
+msgstr "Testing"
+
 msgid "Прогрес тестування"
 msgstr "Test progress"
 
@@ -4727,6 +4745,9 @@ msgid ""
 msgstr ""
 "Your answer is saved when you move on. You can go back and change it "
 "until you finish."
+
+msgid "Вийти й продовжити пізніше"
+msgstr "Leave and continue later"
 
 msgid "Результат тестування"
 msgstr "Test result"
@@ -4813,8 +4834,13 @@ msgstr "Finish the test"
 msgid "Перейти до питання"
 msgstr "Go to question"
 
-msgid "Тестування"
-msgstr "Testing"
+msgid "Перевірте, чи все правильно — саме ці дані буде вписано у сертифікат."
+msgstr ""
+"Please check that everything is correct — these are the details that will"
+" appear on the certificate."
+
+msgid "Змінити дані"
+msgstr "Edit details"
 
 msgid "Умови"
 msgstr "Rules"
@@ -4843,8 +4869,21 @@ msgid ""
 "        "
 msgstr "Attempts left: %(left)s."
 
+#, python-format
+msgid ""
+"\n"
+"        Скласти можна до %(until)s.\n"
+"        "
+msgstr ""
+"\n"
+"        You can take the test until %(until)s.\n"
+"        "
+
 msgid "Продовжити тест"
 msgstr "Continue the test"
+
+msgid "Дані правильні, почати тест"
+msgstr "Details are correct, start the test"
 
 msgid "Почати тест"
 msgstr "Start the test"
@@ -4867,6 +4906,19 @@ msgstr "Testing opens once your participation is paid."
 
 msgid "Тест відкриється після початку заходу."
 msgstr "The test opens after the event starts."
+
+#, python-format
+msgid ""
+"\n"
+"      Термін складання завершився %(until)s.\n"
+"      "
+msgstr ""
+"\n"
+"      The deadline passed on %(until)s.\n"
+"      "
+
+msgid "Якщо ви не встигли з поважної причини — напишіть організаторам."
+msgstr "If you missed it for a valid reason, please contact the organisers."
 
 msgid "Тест ще готується. Ми повідомимо, коли його можна буде пройти."
 msgstr "The test is still being prepared. We will let you know when it is ready."

@@ -97,6 +97,11 @@
             {{ form.max_attempts(class="form-input", id="max_attempts") }}
             <div class="form-hint">{{ form.max_attempts.description }}</div>
           </div>
+          <div class="form-group">
+            <label for="deadline_days_after_end">{{ form.deadline_days_after_end.label.text }}</label>
+            {{ form.deadline_days_after_end(class="form-input", id="deadline_days_after_end") }}
+            <div class="form-hint">{{ form.deadline_days_after_end.description }}</div>
+          </div>
           <div class="form-group admin-form__full">
             <label class="form-checkbox">
               {{ form.shuffle_answers(id="shuffle_answers") }}
@@ -111,6 +116,20 @@
             </label>
             <div class="form-hint">{{ form.is_active.description }}</div>
           </div>
+        </div>
+      </div>
+
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">Вступний текст</h3>
+        <div class="form-group">
+          {{ form.intro(class="form-input", id="intro", rows=6) }}
+          <div class="form-hint">{{ form.intro.description }}</div>
+          {# Мовні вкладки лише для збереженого тесту: до першого запису в нього
+             немає id, а без id немає й куди прив'язати переклад. #}
+          {% if quiz.id %}
+          {{ i18n.panes(quiz.translations or {}, 'intro', widget='textarea',
+                        rows=6, obj=quiz, prefix='trqz__' ~ quiz.id) }}
+          {% endif %}
         </div>
       </div>
 

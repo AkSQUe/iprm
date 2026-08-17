@@ -13,7 +13,7 @@ import logging
 
 from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import contains_eager, joinedload, selectinload
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit
@@ -90,6 +90,8 @@ def _save_editor(quiz, redirect_endpoint, **redirect_kwargs):
     quiz.max_attempts = form.max_attempts.data
     quiz.shuffle_answers = bool(form.shuffle_answers.data)
     quiz.is_active = bool(form.is_active.data)
+    quiz.intro = (form.intro.data or '').strip() or None
+    quiz.deadline_days_after_end = form.deadline_days_after_end.data
     if quiz.id is None:
         db.session.add(quiz)
 
@@ -97,6 +99,9 @@ def _save_editor(quiz, redirect_endpoint, **redirect_kwargs):
     quiz_service.save_questions_for_quiz(quiz, questions)
     db.session.flush()
     _apply_question_translations(quiz)
+    # Переклад вступного тексту -- після flush, з тієї самої причини, що й у
+    # питань: до нього тест може ще не мати id.
+    apply_inline_translations(quiz, prefix=f'trqz__{quiz.id}')
 
     if try_commit(log_context=f'quiz_save id={quiz.id}'):
         audit_logger.info(
@@ -229,23 +234,44 @@ def instance_quiz_results(instance_id):
         flash('Проведення не знайдено', 'error')
         return redirect(url_for('admin.instances_list'))
 
-    registrations = (
+    base = (
         EventRegistration.query
         .filter_by(instance_id=instance.id)
         .filter(EventRegistration.status != 'cancelled')
+    )
+
+    # Сортування перенесене в SQL (було `rows.sort` у Python): при пагінації
+    # сортування всередині сторінки впорядковувало б лише її, і «ще не склали»
+    # опинялися б на кожній сторінці окремою купкою.
+    query = (
+        base
+        .join(User, EventRegistration.user_id == User.id)
         .options(
             # medical_profile -- бо `eligibility` питає повноту анкети, і без
             # цього кожен рядок групи тягнув би окремий запит (учасники різні,
             # тож identity-map не рятує, як у кабінеті одного користувача).
-            joinedload(EventRegistration.user).joinedload(User.medical_profile),
+            contains_eager(EventRegistration.user).joinedload(User.medical_profile),
             joinedload(EventRegistration.quiz_attempts),
             joinedload(EventRegistration.certificate),
         )
-        .all()
+        .order_by(EventRegistration.quiz_passed_at.is_(None), User.last_name)
     )
 
-    quiz = quiz_service.resolve_quiz(instance)
-    states = quiz_service.eligibility_map(registrations)
+    page = request.args.get('page', 1, type=int)
+    per_page = _listing.per_page_arg()
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    registrations = pagination.items
+
+    # Контекст будуємо один раз: `eligibility_map` і `resolve_quiz` без нього
+    # вибирали ті самі два рядки `course_quizzes` удруге.
+    #
+    # На порожній сторінці контекст НЕ передаємо в `resolve_quiz`: він
+    # побудований із нуля реєстрацій, тож у ньому немає ні перевизначення, ні
+    # тесту курсу, і заголовок сторінки збрехав би «тест не налаштований» там,
+    # де тест є.
+    context = quiz_service.build_batch_context(registrations) if registrations else None
+    quiz = quiz_service.resolve_quiz(instance, context)
+    states = quiz_service.eligibility_map(registrations, context=context)
     rows = []
     for reg in registrations:
         finished = [a for a in reg.quiz_attempts if a.is_finished]
@@ -255,15 +281,26 @@ def instance_quiz_results(instance_id):
             'attempts': finished,
             'best': max((a.score or 0 for a in finished), default=None),
         })
-    rows.sort(key=lambda r: (r['reg'].quiz_passed_at is None,
-                             r['reg'].user.last_name or ''))
+
+    # Лічильники -- по ВСІЙ групі, а не по сторінці: це показник готовності
+    # заходу до видачі сертифікатів, і «12 із 40» на другій сторінці мусить
+    # означати те саме, що на першій. Раніше вони рахувались із `rows`, тобто
+    # з пагінацією тихо перетворилися б на «скільки на цьому екрані».
+    from app.models.certificate import Certificate
+    passed_count = base.filter(
+        EventRegistration.quiz_passed_at.isnot(None)).count()
+    issued_count = base.join(
+        Certificate, Certificate.registration_id == EventRegistration.id).count()
 
     return render_template(
         'admin/quiz_results.html',
         instance=instance,
         quiz=quiz,
         rows=rows,
-        passed_count=sum(1 for r in rows if r['reg'].quiz_passed_at),
+        pagination=pagination,
+        total_count=pagination.total,
+        passed_count=passed_count,
+        issued_count=issued_count,
     )
 
 

@@ -28,7 +28,7 @@ from app.extensions import db
 from app.models.course_quiz import ANSWERS_PER_QUESTION, CourseQuiz, QuizQuestion
 from app.models.mixins import utcnow
 from app.models.quiz_attempt import QuizAttempt
-from app.utils import ensure_utc
+from app.utils import KYIV, ensure_utc
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
@@ -45,6 +45,7 @@ IN_PROGRESS = 'in_progress'                # є незавершена спро�
 QUIZ_NOT_READY = 'quiz_not_ready'          # банк питань недостатній/зіпсований
 BPR_NOT_CONFIGURED = 'bpr_not_configured'  # немає номерів/балів БПР
 PROFILE_INCOMPLETE = 'profile_incomplete'  # анкета МОЗ №725 не заповнена
+DEADLINE_PASSED = 'deadline_passed'        # вікно складання закрилось
 ATTEMPTS_EXHAUSTED = 'attempts_exhausted'  # спроби вичерпано
 AVAILABLE = 'available'                    # можна починати
 
@@ -59,6 +60,7 @@ class Eligibility(NamedTuple):
     attempt: QuizAttempt = None
     attempts_left: int = 0
     missing_fields: tuple = ()
+    deadline: object = None  # datetime, коли вікно складання закривається
 
     @property
     def is_actionable(self):
@@ -138,16 +140,21 @@ def build_batch_context(registrations):
     )
 
 
-def eligibility_map(registrations):
+def eligibility_map(registrations, context=None):
     """{registration_id: Eligibility} без N+1.
 
     Кабінет робив +5 SELECT на кожну реєстрацію (заміряно: 10/30/55 запитів на
     1/5/10 реєстрацій). Навіть заходи без тесту платили два запити.
+
+    `context` -- готовий `BatchContext`, якщо він потрібен виклику ще для
+    чогось (напр. `resolve_quiz` для заголовка сторінки). Без нього ті самі
+    дані вибиралися б удруге.
     """
     registrations = list(registrations)
     if not registrations:
         return {}
-    context = build_batch_context(registrations)
+    if context is None:
+        context = build_batch_context(registrations)
     return {reg.id: eligibility(reg, context=context) for reg in registrations}
 
 
@@ -262,6 +269,44 @@ def attempts_left(registration, quiz, context=None):
     return max(allowed - _finished_attempts_count(registration, context), 0)
 
 
+def deadline_for(quiz, instance):
+    """Мить, коли тест закривається, або None якщо обмеження немає.
+
+    Рахуємо від ЗАВЕРШЕННЯ заходу (`end_date`), а не від початку: одноденний
+    захід має ці дати однаковими, а на триденному «наступного дня після
+    початку» закрило б тест посеред заходу. Якщо `end_date` не заповнене --
+    беремо `start_date`, інакше багатоденні чернетки лишались би без дедлайну.
+
+    Межа -- 23:59:59 київського дня, бо саме так правило звучить для людини
+    («до 23:59 у день завершення»). UTC-полудень тут дав би для когось «до
+    обіду», і скарга була б справедливою.
+    """
+    from datetime import timedelta, timezone as _tz
+
+    if quiz is None or quiz.deadline_days_after_end is None or instance is None:
+        return None
+
+    base = ensure_utc(instance.end_date or instance.start_date)
+    if base is None:
+        return None
+
+    local_day = base.astimezone(KYIV) + timedelta(days=quiz.deadline_days_after_end)
+    end_of_day = local_day.replace(hour=23, minute=59, second=59, microsecond=0)
+    return end_of_day.astimezone(_tz.utc)
+
+
+def deadline_label(deadline):
+    """Дедлайн у київському часі -- «23.08.2026, 23:59».
+
+    Форматуємо тут, а не в шаблоні: `deadline` зберігається в UTC, і показати
+    його як є означало б написати людині час на три години раніше, ніж вона
+    почує на заході.
+    """
+    if deadline is None:
+        return ''
+    return ensure_utc(deadline).astimezone(KYIV).strftime('%d.%m.%Y, %H:%M')
+
+
 def eligibility(registration, context=None):
     """Чи може учасник проходити тест зараз -- і якщо ні, то чому.
 
@@ -297,7 +342,15 @@ def eligibility(registration, context=None):
         return Eligibility(
             IN_PROGRESS, quiz=quiz, attempt=unfinished,
             attempts_left=attempts_left(registration, quiz, context),
+            deadline=deadline_for(quiz, instance),
         )
+
+    # Дедлайн -- ПІСЛЯ гілки IN_PROGRESS і свідомо: людина, яка почала до
+    # закриття, мусить мати змогу дописати. Обривати тест на середині через
+    # настання 23:59 означало б з'їсти спробу за годинником, а не за помилками.
+    deadline = deadline_for(quiz, instance)
+    if deadline is not None and utcnow() > deadline:
+        return Eligibility(DEADLINE_PASSED, quiz=quiz, deadline=deadline)
 
     if not quiz.is_ready:
         return Eligibility(QUIZ_NOT_READY, quiz=quiz)
@@ -316,7 +369,48 @@ def eligibility(registration, context=None):
     if left <= 0:
         return Eligibility(ATTEMPTS_EXHAUSTED, quiz=quiz)
 
-    return Eligibility(AVAILABLE, quiz=quiz, attempts_left=left)
+    return Eligibility(AVAILABLE, quiz=quiz, attempts_left=left, deadline=deadline)
+
+
+# ---- Звірка анкети перед тестом ----
+#
+# Вимога до потоку -- «заповнити анкету АБО перевірити вже заповнену». Гейт
+# закривав лише першу половину: людині з повним профілем показувались умови й
+# кнопка «Почати тест», а власних даних вона не бачила ніде. Тобто ПІБ, освіта
+# й місце роботи, які потім друкуються в сертифікаті, підтверджувалися нею
+# молча -- і помилку в них вона знаходила вже на готовому документі.
+#
+# Нових полів у БД для цього не треба: підтвердженням вважаємо сам старт тесту.
+
+def certificate_data_summary(registration):
+    """Дані, що потраплять у сертифікат: [(підпис, значення)] у порядку форми.
+
+    Перший рядок -- ПІБ саме в тому вигляді, як його друкує сертифікат
+    (`certificate_service` бере `user.full_name`), бо це головне, що варто
+    перечитати перед тестом.
+
+    Порядок і склад свідомо повторюють `MedicalProfile.missing_fields`: людина
+    бачить ті самі поля в тому самому порядку, що й у списку «не заповнено».
+    Звірку цих двох переліків тримає тест -- нове обов'язкове поле в моделі
+    зобов'язане з'явитися й тут.
+    """
+    from flask_babel import gettext as _
+
+    user = registration.user
+    profile = user.medical_profile if user else None
+    if profile is None:
+        return []
+
+    birth = profile.birth_date
+    return [
+        (_('ПІБ'), user.full_name),
+        (_('Тип учасника'), profile.participant_type_label),
+        (_('Дата народження'), birth.strftime('%d.%m.%Y') if birth else ''),
+        (_('Освіта'), profile.education or ''),
+        (_('Місце роботи'), profile.workplace or ''),
+        (_('Займана посада'), profile.position or ''),
+        (_('Спеціалізації'), ', '.join(profile.specialization_labels)),
+    ]
 
 
 # ---- Проходження ----
@@ -409,17 +503,22 @@ def record_answer(attempt, question_id, position):
     return True
 
 
-def question_results(attempt):
+def question_results(attempt, questions=None):
     """Результат по кожному питанню спроби: [(номер, question_id, зараховано)].
 
     Єдине місце, де вирішується «зараховано чи ні». І оцінювання, і показ
     незарахованих номерів на сторінці результату йдуть звідси: доки це були дві
     окремі реалізації, вони неминуче розійшлися б на першій правці.
+
+    `questions` -- готовий {id: QuizQuestion}, якщо виклик уже їх вибрав
+    (`attempt_report`). Без нього той самий запит виконувався двічі на спробу,
+    тобто сторінка розбору на три спроби платила шість запитів замість трьох.
     """
     ids = attempt.question_ids or []
-    questions = {
-        q.id: q for q in QuizQuestion.query.filter(QuizQuestion.id.in_(ids or [0]))
-    }
+    if questions is None:
+        questions = {
+            q.id: q for q in QuizQuestion.query.filter(QuizQuestion.id.in_(ids or [0]))
+        }
 
     results = []
     for position, question_id in enumerate(ids):
@@ -481,7 +580,9 @@ def attempt_report(attempt):
     questions = {
         q.id: q for q in QuizQuestion.query.filter(QuizQuestion.id.in_(ids))
     }
-    correctness = {qid: ok for _number, qid, ok in question_results(attempt)}
+    correctness = {
+        qid: ok for _number, qid, ok in question_results(attempt, questions)
+    }
 
     rows = []
     for position, question_id in enumerate(ids):

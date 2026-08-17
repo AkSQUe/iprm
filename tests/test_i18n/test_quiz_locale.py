@@ -107,9 +107,44 @@ def test_start_page_is_translated(get_localized, client, ready_registration):
     ru = get_localized(f'/ru/quiz/{reg.id}').get_data(as_text=True)
     en = get_localized(f'/en/quiz/{reg.id}').get_data(as_text=True)
 
-    assert 'Почати тест' in uk
-    assert 'Начать тест' in ru
-    assert 'Start the test' in en
+    # Напис на кнопці підтверджує звірені дані анкети, тож він довший за просте
+    # «Почати тест» (те лишається для випадку, коли зведення показати нічим).
+    assert 'Дані правильні, почати тест' in uk
+    assert 'Данные верны, начать тест' in ru
+    assert 'Details are correct, start the test' in en
+
+
+def test_certificate_data_block_is_translated(get_localized, client,
+                                              ready_registration):
+    """Підписи полів анкети живуть у сервісі, а не в шаблоні -- їх легко
+    забути обгорнути в `_()`, і тоді ru/en побачили б українські назви."""
+    reg = ready_registration
+    _login(client, reg.user)
+
+    ru = get_localized(f'/ru/quiz/{reg.id}').get_data(as_text=True)
+    en = get_localized(f'/en/quiz/{reg.id}').get_data(as_text=True)
+
+    assert 'Данные для сертификата' in ru
+    assert 'Место работы' in ru
+    assert 'Certificate details' in en
+    assert 'Place of work' in en
+
+
+def test_deadline_line_is_translated(get_localized, client, ready_registration):
+    from app.services import quiz_service
+
+    reg = ready_registration
+    reg.instance.end_date = datetime.now(timezone.utc) - timedelta(hours=1)
+    quiz = quiz_service.resolve_quiz(reg.instance)
+    quiz.deadline_days_after_end = 2
+    db.session.flush()
+    _login(client, reg.user)
+
+    ru = get_localized(f'/ru/quiz/{reg.id}').get_data(as_text=True)
+    en = get_localized(f'/en/quiz/{reg.id}').get_data(as_text=True)
+
+    assert 'Пройти можно до' in ru
+    assert 'You can take the test until' in en
 
 
 def test_terms_with_placeholders_are_translated(get_localized, client,
