@@ -14,6 +14,7 @@
 | GET | `/refund` | Політика повернення коштів |
 | GET | `/disclaimer` | Медичний дисклеймер |
 | GET | `/cookies` | Політика Cookie |
+| GET | `/account` | Legacy redirect 301 -> `/auth/account` (посилання з уже надісланих листів про сертифікат) |
 
 ## Auth
 

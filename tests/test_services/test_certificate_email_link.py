@@ -81,3 +81,32 @@ def test_no_old_domain_left_in_app(app):
         if re.search(r'plasma-regen\.com', text):
             offenders.append(str(path.relative_to(root)))
     assert not offenders, f'зашитий старий домен: {offenders}'
+
+
+# ---- уже надіслані листи ----------------------------------------------------
+#
+# Виправлення шаблону лікує лише МАЙБУТНІ листи. Ті, що вже пішли людям, лежать
+# у поштах із `/account` назавжди, тож єдиний спосіб зробити їх робочими --
+# редирект. Ці перевірки стежать, щоб він не зник при чистці маршрутів.
+
+def test_legacy_account_path_redirects(client, app):
+    resp = client.get('/account')
+    assert resp.status_code == 301
+    assert resp.headers['Location'].endswith('/auth/account')
+
+
+def test_legacy_account_redirect_target_exists(client, app):
+    """Редирект мусить вести на живу сторінку, а не на ще один 404."""
+    target = client.get('/account').headers['Location']
+    path = target if target.startswith('/') else '/' + target.split('/', 3)[-1]
+    resp = client.get(path)
+    # Кабінет під логіном -> анонім отримує редирект на вхід, але НЕ 404.
+    assert resp.status_code != 404
+
+
+def test_legacy_account_works_for_localized_links(client, app):
+    """Листи ru/en-читачам могли містити мовний префікс."""
+    for prefix in ('/ru', '/en'):
+        resp = client.get(f'{prefix}/account')
+        assert resp.status_code == 301, prefix
+        assert '/auth/account' in resp.headers['Location'], prefix
