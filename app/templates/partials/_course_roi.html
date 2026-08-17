@@ -1,44 +1,65 @@
-{# Калькулятор окупності курсу.
+{# Калькулятор окупності курсу -- «економіка методу» еталона.
 
    Лише офлайн-курс. Очікує min_price / price_is_from і вмикається
-   налаштуванням site_settings.show_roi_calculator. #}
-  {% set roi_price = min_price %}
-  {% if site_settings.show_roi_calculator and roi_price and roi_price > 0 %}
-  <section id="roi" class="iprm-section apple-section-gray" aria-labelledby="roi-title">
-    <div class="iprm-section__inner">
-      <h2 id="roi-title" class="iprm-section__title apple-reveal">{{ _('Коли курс <span class="apple-gradient-text">окупиться?</span>') }}</h2>
-      <p class="iprm-section__subtitle apple-reveal">{{ _('Порахуйте на власних цифрах — середній чек процедури та кількість записів на місяць') }}</p>
-      {# Повзунки замість числових полів: на телефоні не треба викликати
-         клавіатуру, а значення видно в підписі (data-roi-*-out). #}
-      <div class="iprm-roi apple-reveal" data-roi-calc data-roi-price="{{ roi_price | int }}">
-        <div class="iprm-roi__inputs">
-          <label class="iprm-roi__field">
-            <span class="iprm-roi__label-row">
-              <span class="iprm-roi__label">{{ _('Середній чек процедури') }}</span>
-              <output class="iprm-roi__out" data-roi-check-out>&mdash;</output>
-            </span>
-            <input type="range" data-roi-check value="2500" min="500" max="20000" step="250">
-          </label>
-          <label class="iprm-roi__field">
-            <span class="iprm-roi__label-row">
-              <span class="iprm-roi__label">{{ _('Процедур на місяць') }}</span>
-              <output class="iprm-roi__out" data-roi-count-out>&mdash;</output>
-            </span>
-            <input type="range" data-roi-count value="8" min="1" max="40" step="1">
-          </label>
-        </div>
-        <div class="iprm-roi__results">
-          <div class="iprm-roi__result">
-            <span class="iprm-roi__value" data-roi-income>&mdash;</span>
-            <span class="iprm-roi__caption">{{ _('дохід на місяць') }}</span>
-          </div>
-          <div class="iprm-roi__result">
-            <span class="iprm-roi__value" data-roi-payback>&mdash;</span>
-            <span class="iprm-roi__caption">{{ _('окупність курсу') }}{% if price_is_from %} {{ _('(тариф «від»)') }}{% endif %}</span>
-          </div>
-        </div>
-        <p class="iprm-roi__note">{{ _('Розрахунок орієнтовний: вартість курсу') }} {{ _('від') ~ ' ' if price_is_from else '' }}{{ roi_price | int }} &#8372; &divide; {{ _('ваш чек. Податки та розхідники не враховано.') }}</p>
-      </div>
+   налаштуванням site_settings.show_roi_calculator.
+
+   Двопанельний: ліворуч світла половина з повзунками, праворуч тёмна з
+   головним числом. Тёмна половина тёмна в ОБОХ темах (як hero й оболонка
+   відгуків), тому текст на ній -- лише --iprm-on-accent і його прозорі
+   похідні, ніколи --iprm-white.
+
+   Числа підставляє roi-calc.js; до нього в розмітці стоять прочерки, а не
+   нулі: нуль читався б як порахований результат. #}
+{% set roi_price = min_price %}
+{% if site_settings.show_roi_calculator and roi_price and roi_price > 0 %}
+<section id="roi" class="iprm-section apple-section-gray" aria-labelledby="roi-title">
+  <div class="iprm-section__inner">
+    <div class="apple-section-head apple-reveal">
+      <span class="iprm-eyebrow">{{ _('Економіка методу') }}</span>
+      <h2 id="roi-title" class="iprm-section__title">
+        {{ _('Коли курс <span class="apple-gradient-text">окупиться?</span>') }}
+      </h2>
+      <p class="iprm-section__subtitle">
+        {{ _('Змініть параметри під свій прайс. Розрахунок орієнтовний і не враховує податки та витратні матеріали.') }}
+      </p>
     </div>
-  </section>
-  {% endif %}
+
+    <div class="iprm-roi apple-reveal" data-roi-calc data-roi-price="{{ roi_price | int }}">
+
+      <div class="iprm-roi__controls">
+        <h3 class="iprm-roi__controls-title">{{ _('Порахуйте на власних цифрах') }}</h3>
+        {# Повзунки замість числових полів: на телефоні не треба викликати
+           клавіатуру, а значення видно в підписі (data-roi-*-out). #}
+        <label class="iprm-roi__field">
+          <span class="iprm-roi__label-row">
+            <span class="iprm-roi__label">{{ _('Середній чек процедури') }}</span>
+            <output class="iprm-roi__out" data-roi-check-out>&mdash;</output>
+          </span>
+          <input type="range" data-roi-check value="2500" min="500" max="20000" step="250">
+        </label>
+        <label class="iprm-roi__field">
+          <span class="iprm-roi__label-row">
+            <span class="iprm-roi__label">{{ _('Процедур на місяць') }}</span>
+            <output class="iprm-roi__out" data-roi-count-out>&mdash;</output>
+          </span>
+          <input type="range" data-roi-count value="8" min="1" max="40" step="1">
+        </label>
+      </div>
+
+      <div class="iprm-roi__result">
+        <span class="iprm-roi__kicker">
+          {{ _('Орієнтовна окупність курсу') }}{% if price_is_from %} {{ _('(тариф «від»)') }}{% endif %}
+        </span>
+        <p class="iprm-roi__number" data-roi-payback>&mdash;</p>
+        <p class="iprm-roi__sentence">
+          {% trans %}За обраного темпу це близько{% endtrans %}
+          <b data-roi-time>&mdash;</b>.
+          {% trans %}Потенційний місячний оборот:{% endtrans %}
+          <b data-roi-income>&mdash;</b>.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endif %}

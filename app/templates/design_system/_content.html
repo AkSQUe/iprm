@@ -1176,19 +1176,22 @@
 
     <div class="apple-page">
 
-      <h3 class="ds-section-heading">Page nav — навігація сторінкою</h3>
+      <h3 class="ds-section-heading">Якорі секцій у шапці</h3>
       <div class="ds-demo">
-        <nav class="iprm-page-nav">
-          <div class="iprm-page-nav__inner">
-            <a class="iprm-page-nav__link" href="#course-landing" aria-current="true">Результат</a>
-            <a class="iprm-page-nav__link" href="#course-landing">Програма</a>
-            <a class="iprm-page-nav__link" href="#course-landing">Тренер</a>
-            <a class="iprm-page-nav__link" href="#course-landing">Тарифи</a>
-            <span class="iprm-page-nav__seats">Залишилось 6 місць</span>
-          </div>
+        {# Окремої липкої смуги більше немає: після WS-1 якорі живуть у
+           глобальній шапці (.iprm-header--anchors). Тут показано сам ряд
+           посилань і лічильник -- у бою вони стоять поруч із логотипом. #}
+        <nav class="iprm-header__anchors" aria-label="Приклад навігації сторінкою">
+          <a class="iprm-page-nav__link" href="#course-landing" aria-current="true">Результат</a>
+          <a class="iprm-page-nav__link" href="#course-landing">Програма</a>
+          <a class="iprm-page-nav__link" href="#course-landing">Тренер</a>
+          <a class="iprm-page-nav__link" href="#course-landing">Формати</a>
         </nav>
+        <div class="iprm-header__course-actions">
+          <span class="iprm-header__seats">Залишилось 6 місць</span>
+        </div>
       </div>
-      <p class="ds-hint">sticky під шапкою (top: --iprm-header-h) / активна секція — aria-current="true" від page-nav.js / індикатор місць ховається до 768px</p>
+      <p class="ds-hint">Живуть у глобальній шапці (.iprm-header--anchors), окремої смуги немає / активна секція — aria-current="true" від page-nav.js / нижче 980px якорі й лічильник ховаються, лишаються логотип, CTA і бургер</p>
 
       <h3 class="ds-section-heading">Trust stats — смуга цифр</h3>
       <div class="ds-demo">

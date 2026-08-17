@@ -82,20 +82,7 @@
      Course і OnlineCourse, тож партіали читають course.* без обгорток.
      =================================================================== #}
 
-  <!-- ===== PAGE NAV ===== -->
-  {% set nav_items = [] %}
-  {% if course.t('benefits') %}{% set _discard = nav_items.append({'href': 'benefits', 'label': _('Результат')}) %}{% endif %}
-  {% set _discard = nav_items.append({'href': 'about', 'label': _('Про курс')}) %}
-  {# #buy -- картка купівлі всередині секції #about, тож якір іде поруч. #}
-  {% set _discard = nav_items.append({'href': 'buy', 'label': _('Вартість')}) %}
-  {% if gallery %}{% set _discard = nav_items.append({'href': 'gallery', 'label': _('Як проходить')}) %}{% endif %}
-  {% if course.program_blocks or course.t('practice_note_title') %}{% set _discard = nav_items.append({'href': 'program', 'label': _('Програма')}) %}{% endif %}
-  {% if course.trainer %}{% set _discard = nav_items.append({'href': 'trainer', 'label': _('Тренер')}) %}{% endif %}
-  {% if course_reviews %}{% set _discard = nav_items.append({'href': 'reviews', 'label': _('Відгуки')}) %}{% endif %}
-  {% if course.faq is not none and course.faq | length %}{% set _discard = nav_items.append({'href': 'faq', 'label': _('Питання')}) %}{% endif %}
-  {# Місць в онлайн-курсі не буває -- індикатор не показуємо. #}
-  {% set nav_seats = none %}
-  {% include 'partials/_course_page_nav.html' %}
+  {# Якорі секцій -- у глобальній шапці; список будує роут. #}
 
   <!-- ===== HERO ===== -->
   {% set hero_image = course.hero_src or course.card_src %}
@@ -116,7 +103,10 @@
   {% endif %}
   {% set _discard = hero_meta.append({'value': _('Одразу'), 'label': _('старт після оплати')}) %}
   {% if course.effective_price %}
-    {% set _discard = hero_meta.append({'value': '%s %s' % (course.effective_price | int, course.currency), 'label': _('вартість')}) %}
+    {# Через макрос, а не рядком: інакше в hero друкувався сирий код валюти
+       ("4500 UAH"), тоді як картка купівлі поруч показує "4500 ₴". #}
+    {% set _price_value %}{{ money(course.effective_price, course.currency) }}{% endset %}
+    {% set _discard = hero_meta.append({'value': _price_value, 'label': _('вартість')}) %}
   {% endif %}
 
   {# Місць у навчанні без дат немає, тож картки вільних місць теж. #}
@@ -131,14 +121,15 @@
 
   {% set hero_actions %}
     <div class="iprm-hero__actions iprm-hero__actions--detail" data-sticky-cta-anchor>
+      {# Пара еталона: золота дія + біла другорядна (див. очний курс). #}
       {% if existing_enrollment and existing_enrollment.is_paid %}
-      <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--primary">{{ _('Перейти до навчання') }}</a>
+      <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--accent">{{ _('Перейти до навчання') }}</a>
       {% elif checkout_available %}
-      <a href="{{ url_for('online.checkout', slug=course.slug) }}" class="apple-btn apple-btn--primary">{{ _('Купити курс') }}</a>
+      <a href="{{ url_for('online.checkout', slug=course.slug) }}" class="apple-btn apple-btn--accent">{{ _('Купити курс') }}</a>
       {% else %}
-      <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--primary">{{ _('Запитати про курс') }}</a>
+      <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--accent">{{ _('Запитати про курс') }}</a>
       {% endif %}
-      <a href="#about" class="apple-btn apple-btn--secondary apple-btn--arrow">{{ _('Про курс') }}</a>
+      <a href="#about" class="apple-btn apple-btn--white">{{ _('Про курс') }}</a>
     </div>
   {% endset %}
 
@@ -282,7 +273,7 @@
     <div class="iprm-sticky-cta__info">
       <span class="iprm-sticky-cta__title">{{ course.effective_title }}</span>
       {% if course.effective_price %}
-      <span class="iprm-sticky-cta__price">{{ course.effective_price | int }} {{ course.currency }}</span>
+      <span class="iprm-sticky-cta__price">{{ money(course.effective_price, course.currency) }}</span>
       {% endif %}
     </div>
     <div class="iprm-sticky-cta__actions">

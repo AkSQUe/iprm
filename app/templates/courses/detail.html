@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 {% from 'partials/_location_badge.html' import location_badge %}
+{% from 'partials/_money.html' import money %}
 
 {% block title %}{% trans title=course.t('title') %}{{ title }} | ІПРМ{% endtrans %}{% endblock %}
 {% block meta_description %}{{ course.t('subtitle') or course.t('short_description') or course.t('title') }}{% endblock %}
@@ -143,21 +144,8 @@
   {% set price_is_from = (_prices | unique | list | length) > 1
                          or (upcoming_instances | selectattr('price_is_from') | list | length) > 0 %}
 
-  {# ===== PAGE NAV =====
-     Якорі йдуть у тому самому порядку, що й секції: інакше навігація вела б
-     назад по сторінці. Посилання рендеримо лише на секції, які реально є. #}
-  {% set nav_items = [] %}
-  {% if course.t('benefits') %}{% set _discard = nav_items.append({'href': 'benefits', 'label': _('Результат')}) %}{% endif %}
-  {% if course.description %}{% set _discard = nav_items.append({'href': 'about', 'label': _('Про курс')}) %}{% endif %}
-  {% if gallery %}{% set _discard = nav_items.append({'href': 'gallery', 'label': _('Як проходить')}) %}{% endif %}
-  {% if course.program_blocks or course.t('practice_note_title') %}{% set _discard = nav_items.append({'href': 'program', 'label': _('Програма')}) %}{% endif %}
-  {% if course.trainer %}{% set _discard = nav_items.append({'href': 'trainer', 'label': _('Тренер')}) %}{% endif %}
-  {% if course_reviews %}{% set _discard = nav_items.append({'href': 'reviews', 'label': _('Відгуки')}) %}{% endif %}
-  {% if format_inst %}{% set _discard = nav_items.append({'href': 'formats', 'label': _('Формати')}) %}{% endif %}
-  {% if course.faq is not none and course.faq | length %}{% set _discard = nav_items.append({'href': 'faq', 'label': _('Питання')}) %}{% endif %}
-  {% set _discard = nav_items.append({'href': 'schedule', 'label': _('Дати')}) %}
-  {% set nav_seats = ('%s %s' % (_('Залишилось'), '%s %s' % (seats_left, seats_left | plural('seats')))) if seats_left is not none else none %}
-  {% include 'partials/_course_page_nav.html' %}
+  {# Якорі секцій живуть у глобальній шапці (partials/header.html); список
+     будує роут -- шапка рендериться раніше за цей блок. #}
 
   <!-- ===== HERO ===== -->
   {% set hero_image = course.hero_src or course.card_src %}
@@ -188,7 +176,10 @@
   {% if course.cpd_points %}{% set _discard = hero_meta.append({'value': course.cpd_points, 'label': course.cpd_points | plural('bpr_points')}) %}{% endif %}
   {% if capacity %}{% set _discard = hero_meta.append({'value': '%s %s' % (_('до'), capacity), 'label': _('у групі')}) %}{% endif %}
   {% if min_price and min_price > 0 %}
-    {% set _discard = hero_meta.append({'value': '%s%s &#8372;' % ((_('від') ~ ' ') if price_is_from else '', min_price | int), 'label': _('вартість')}) %}
+    {# Через макрос, а не рядком: символ гривні -- HTML-сутність, і зібраний
+       рядок Jinja екранувала б, друкуючи в hero літеральне "&#8372;". #}
+    {% set _price_value %}{% if price_is_from %}{{ _('від') }} {% endif %}{{ money(min_price) }}{% endset %}
+    {% set _discard = hero_meta.append({'value': _price_value, 'label': _('вартість')}) %}
   {% endif %}
 
   {# Картка вільних місць. Плейсхолдери підпису передаємо аргументами
@@ -218,14 +209,16 @@
 
   {% set hero_actions %}
     <div class="iprm-hero__actions iprm-hero__actions--detail" data-sticky-cta-anchor>
+      {# Пара еталона: золота дія + біла другорядна. На тёмному hero
+         --primary (фіолетова) зливалася б із тлом. #}
       {% if format_inst %}
-      <a href="#formats" class="apple-btn apple-btn--primary">{{ _('Забронювати місце') }}</a>
+      <a href="#formats" class="apple-btn apple-btn--accent">{{ _('Забронювати місце') }}</a>
       {% elif upcoming_instances %}
-      <a href="#schedule" class="apple-btn apple-btn--primary">{{ _('Найближчі дати') }}</a>
+      <a href="#schedule" class="apple-btn apple-btn--accent">{{ _('Найближчі дати') }}</a>
       {% else %}
-      <a href="#request" class="apple-btn apple-btn--primary">{{ _('Залишити запит') }}</a>
+      <a href="#request" class="apple-btn apple-btn--accent">{{ _('Залишити запит') }}</a>
       {% endif %}
-      <a href="#request" class="apple-btn apple-btn--secondary apple-btn--arrow">{{ _('Отримати програму') }}</a>
+      <a href="#request" class="apple-btn apple-btn--white">{{ _('Отримати програму') }}</a>
     </div>
   {% endset %}
 
@@ -324,17 +317,22 @@
   <!-- ===== НАШЕ ДОДАТКОВЕ ===== -->
   {% include 'partials/_course_extras.html' %}
 
-{# ===== STICKY MOBILE CTA =====
-     Ціна -- min_price, той самий мінімальний effective_price найближчих
-     проведень, що й у hero та ROI. Пряме course.base_price розходилось із
-     блоком "Формат участі", коли тарифи проведення відрізняються від
-     базової ціни. #}
+  {# ===== STICKY MOBILE CTA =====
+     Копія за еталоном у два рядки: перший -- назва · дата · місто, другий --
+     місця й ціна. Ціна скрізь одна (min_price): пряме course.base_price
+     розходилось із блоком "Формат участі", коли тарифи проведення
+     відрізняються від базової. #}
+  {% set _sticky_place = (_('Онлайн') if open_inst.event_format == 'online'
+                          else (open_inst.location | localize_location if open_inst.location else none)) if open_inst else none %}
+  {% set _sticky_date = open_inst.start_date.strftime('%d.%m.%Y') if open_inst and open_inst.start_date else none %}
   <div class="iprm-sticky-cta" data-sticky-cta hidden>
     <div class="iprm-sticky-cta__info">
-      <span class="iprm-sticky-cta__title">{{ course.t('title') }}</span>
-      {% if min_price and min_price > 0 %}
-      <span class="iprm-sticky-cta__price">{% if price_is_from %}{{ _('від') }} {% endif %}{{ min_price | int }} &#8372;</span>
-      {% endif %}
+      <span class="iprm-sticky-cta__title">{{ [course.t('title'), _sticky_date, _sticky_place] | select | join(' · ') }}</span>
+      <span class="iprm-sticky-cta__price">
+        {%- if seats_left is not none %}{{ seats_left }} {{ seats_left | plural('free_seats') }}{% endif -%}
+        {%- if seats_left is not none and min_price and min_price > 0 %} · {% endif -%}
+        {%- if min_price and min_price > 0 %}{% if price_is_from %}{{ _('від') }} {% endif %}{{ money(min_price) }}{% endif -%}
+      </span>
     </div>
     <div class="iprm-sticky-cta__actions">
       {# Другорядна дія ховається на найвужчих екранах (CSS), тому основна

@@ -9,13 +9,19 @@
 {% if course.program_blocks or practice_title %}
 <section id="program" class="iprm-section" aria-labelledby="program-title">
   <div class="iprm-section__inner">
-    <h2 id="program-title" class="iprm-section__title apple-reveal">
-      {{ _('Програма <span class="apple-gradient-text">курсу</span>') }}
-    </h2>
+    {# Плашка каже про послідовність, а не дублює слово "Програма" з h2. #}
+    <div class="apple-section-head apple-reveal">
+      <span class="iprm-eyebrow">{{ _('Крок за кроком') }}</span>
+      <h2 id="program-title" class="iprm-section__title">
+        {{ _('Програма <span class="apple-gradient-text">курсу</span>') }}
+      </h2>
+      {% if course.program_blocks %}
+      <p class="iprm-section__subtitle">
+        {{ _('Структура навчання — від теорії до практичних навичок') }}
+      </p>
+      {% endif %}
+    </div>
     {% if course.program_blocks %}
-    <p class="iprm-section__subtitle apple-reveal">
-      {{ _('Структура навчання — від теорії до практичних навичок') }}
-    </p>
     <div class="iprm-program">
       {% for block in course.program_blocks %}
       <article class="iprm-program__block apple-reveal">

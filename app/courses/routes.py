@@ -348,14 +348,60 @@ def course_by_slug(slug):
         user=current_user if current_user.is_authenticated else None,
     )
 
+    # Найближче проведення з активними тарифами -- джерело блоку "Формат
+    # участі" й однойменного якоря. Рахуємо тут, а не в шаблоні: якорі
+    # потрібні шапці, яка рендериться ДО блоку content.
+    format_inst = next(
+        (i for i in upcoming_instances if i.active_tariffs), None,
+    )
+
+    gallery = course.gallery
+
+    # Якорі секцій для глобальної шапки. Порядок -- рівно той, у якому
+    # секції стоять на сторінці (WS-A): інакше навігація вела б назад.
+    # Показуємо лише те, що реально відрендериться.
+    anchors = []
+    if course.t('benefits'):
+        anchors.append(('benefits', _('Результат')))
+    if course.description:
+        anchors.append(('about', _('Про курс')))
+    if gallery:
+        anchors.append(('gallery', _('Як проходить')))
+    if course.program_blocks or course.t('practice_note_title'):
+        anchors.append(('program', _('Програма')))
+    if course.trainer:
+        anchors.append(('trainer', _('Тренер')))
+    if course_reviews:
+        anchors.append(('reviews', _('Відгуки')))
+    if format_inst:
+        anchors.append(('formats', _('Формати')))
+    if course.faq:
+        anchors.append(('faq', _('Питання')))
+    anchors.append(('schedule', _('Дати')))
+
+    # Лічильник місць у шапці -- за найближчим ВІДКРИТИМ проведенням.
+    seats_left = next(
+        (capacity.get(i.id) for i in upcoming_instances
+         if i.id in open_ids and capacity.get(i.id) is not None), None,
+    )
+
     return render_template(
         'courses/detail.html',
         active_nav='courses',
         course=course,
+        format_inst=format_inst,
+        page_anchors=anchors,
+        page_anchor_seats=seats_left,
+        page_anchor_cta={
+            'href': '#formats' if format_inst else (
+                '#schedule' if upcoming_instances else '#request'),
+            'label': _('Забронювати місце') if format_inst else (
+                _('Найближчі дати') if upcoming_instances else _('Залишити запит')),
+        },
         # Галерея -- окремий запит до медіа-реєстру (прив'язка поліморфна,
         # тому не joinedload). Беремо в роуті, а не в шаблоні: так видно
         # ціну сторінки в одному місці.
-        gallery=course.gallery,
+        gallery=gallery,
         upcoming_instances=upcoming_instances,
         past_instances=past_instances,
         open_instance_ids=open_ids,

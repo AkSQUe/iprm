@@ -51,9 +51,8 @@
 
 .iprm-online-buy {
   position: sticky;
-  /* Шапка + навігація сторінкою (--iprm-page-nav-h задає course-landing.css;
-     fallback 0 -- на випадок, якщо навігації на сторінці немає). */
-  top: calc(var(--iprm-header-h, 64px) + var(--iprm-page-nav-h, 0px) + 24px);
+  /* Тільки шапка: окремої смуги якорів більше немає, вони переїхали в неї. */
+  top: calc(var(--iprm-header-h, 72px) + 24px);
   padding: 28px;
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);

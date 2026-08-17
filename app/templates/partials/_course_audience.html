@@ -9,9 +9,14 @@
 {% if audience %}
 <section id="audience" class="iprm-section" aria-labelledby="audience-title">
   <div class="iprm-section__inner">
-    <h2 id="audience-title" class="iprm-section__title apple-reveal">
-      {{ _('Чи це <span class="apple-gradient-text">ваш курс</span>') }}
-    </h2>
+    {# Eyebrow не повторює h2: в еталона плашка каже "Чи це ваш курс", але в нас
+       це вже текст заголовка, тож плашка бере другу половину сенсу секції. #}
+    <div class="apple-section-head apple-reveal">
+      <span class="iprm-eyebrow">{{ _('Для кого') }}</span>
+      <h2 id="audience-title" class="iprm-section__title">
+        {{ _('Чи це <span class="apple-gradient-text">ваш курс</span>') }}
+      </h2>
+    </div>
     <div class="iprm-audience-grid">
 
       <article class="iprm-audience-card apple-reveal">

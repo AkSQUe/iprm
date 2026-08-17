@@ -21,7 +21,7 @@
     <div class="iprm-gallery" data-lightbox-group>
       {% for media in gallery %}
       <figure class="iprm-gallery__item apple-reveal">
-        <a href="{{ media.url }}" data-lightbox
+        <a class="iprm-gallery__link" href="{{ media.url }}" data-lightbox
            {% if media.caption %}data-caption="{{ media.caption }}"{% endif %}>
           <img class="iprm-gallery__img" src="{{ media.variant_url('card') }}"
                alt="{{ media.alt_text or '' }}" loading="lazy" decoding="async"

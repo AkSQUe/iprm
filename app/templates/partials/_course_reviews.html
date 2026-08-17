@@ -10,7 +10,8 @@
 <section id="reviews" class="iprm-section" aria-labelledby="reviews-title">
   <div class="iprm-section__inner">
     <div class="iprm-dark-shell apple-reveal">
-      <span class="iprm-eyebrow">{{ _('Відгуки та довіра') }}</span>
+      {# --on-dark, бо оболонка тёмна в ОБОХ темах: бренд на ній нечитабельний. #}
+      <span class="iprm-eyebrow iprm-eyebrow--on-dark">{{ _('Відгуки та довіра') }}</span>
       <h2 id="reviews-title" class="iprm-dark-shell__title">
         {{ _('Що учасники кажуть про навчання') }}
       </h2>
@@ -29,7 +30,9 @@
       {% if site_settings.instagram_url %}
       <div class="iprm-dark-shell__cta">
         <p>{{ _('Фото, відео та відгуки учасників попередніх навчань ми публікуємо у відкритому профілі Інституту.') }}</p>
-        <a class="apple-btn apple-btn--secondary" href="{{ site_settings.instagram_url }}"
+        {# Біла кнопка, а не --secondary: та бере --iprm-nav-active (#7437c9),
+           і на фіолетовому градієнті оболонки давала 1.9. #}
+        <a class="apple-btn apple-btn--white" href="{{ site_settings.instagram_url }}"
            target="_blank" rel="noopener noreferrer">{{ _('Дивитися в Instagram') }}</a>
       </div>
       {% endif %}

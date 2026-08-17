@@ -19,7 +19,8 @@
     <div class="iprm-lead-grid">
 
       <div class="apple-reveal">
-        <span class="iprm-eyebrow">{{ _('Залишити заявку') }}</span>
+        {# Секція заявки тёмна в обох темах, тож плашка -- у теплому варіанті. #}
+        <span class="iprm-eyebrow iprm-eyebrow--on-dark">{{ _('Залишити заявку') }}</span>
         <h2 id="request-title" class="iprm-section__title">{{ lead_title }}</h2>
         {% if lead_lead %}<p class="iprm-lead-grid__lead">{{ lead_lead }}</p>{% endif %}
         {% if lead_points %}

@@ -22,6 +22,10 @@
   var countInput = root.querySelector('[data-roi-count]');
   var incomeEl = root.querySelector('[data-roi-income]');
   var paybackEl = root.querySelector('[data-roi-payback]');
+  // Строк окупності окремим елементом: у двопанельному варіанті головне
+  // число ("4 процедури") стоїть саме, а "≈ 2 тижнів" живе в реченні під
+  // ним. Старий однорядковий варіант його не мав -- лишаємо опційним.
+  var timeEl = root.querySelector('[data-roi-time]');
   if (!checkInput || !countInput || !incomeEl || !paybackEl) return;
 
   // Дзеркала значень поруч із підписом. Потрібні лише повзунковому варіанту
@@ -65,6 +69,7 @@
     if (check <= 0 || price <= 0) {
       incomeEl.textContent = '—';
       paybackEl.textContent = '—';
+      if (timeEl) timeEl.textContent = '—';
       return;
     }
 
@@ -72,12 +77,24 @@
     incomeEl.textContent = count > 0 ? fmt(income) + ' ₴' : '—';
 
     var procedures = Math.ceil(price / check);
-    var text = procedures + ' ' + pluralUk(procedures, t('процедура'), t('процедури'), t('процедур'));
+    var proceduresText = procedures + ' '
+      + pluralUk(procedures, t('процедура'), t('процедури'), t('процедур'));
+
+    var weeksText = '';
     if (count > 0) {
       var weeks = Math.ceil((procedures / count) * WEEKS_PER_MONTH);
-      text += ' (≈ ' + weeks + ' ' + pluralUk(weeks, t('тиждень'), t('тижні'), t('тижнів')) + ')';
+      weeksText = weeks + ' ' + pluralUk(weeks, t('тиждень'), t('тижні'), t('тижнів'));
     }
-    paybackEl.textContent = text;
+
+    if (timeEl) {
+      // Двопанельний варіант: число окремо, строк -- у реченні під ним.
+      paybackEl.textContent = proceduresText;
+      timeEl.textContent = weeksText || '—';
+    } else {
+      // Однорядковий варіант (Головна): усе в одному рядку, як було.
+      paybackEl.textContent = proceduresText
+        + (weeksText ? ' (≈ ' + weeksText + ')' : '');
+    }
   }
 
   checkInput.addEventListener('input', recalc);

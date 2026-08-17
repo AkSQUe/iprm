@@ -1,10 +1,39 @@
-<header class="iprm-header">
+{# Глобальна шапка.
+
+   На сторінках курсу вона працює як смуга еталона: замість основної
+   навігації показує якорі секцій, лічильник вільних місць і CTA. Основна
+   навігація при цьому нікуди не дівається -- вона згортається в бургер-меню,
+   яке на цих сторінках видиме й на десктопі.
+
+   Якорі приходять із роуту (page_anchors), а не з блоку content: шапка
+   рендериться раніше за нього, і змінні шаблону сторінки тут не видно. #}
+{% set has_anchors = page_anchors is defined and page_anchors %}
+<header class="iprm-header{% if has_anchors %} iprm-header--anchors{% endif %}">
   <div class="iprm-header__inner">
     <a href="{{ url_for('main.index') }}" class="iprm-header__logo">
       <img src="{{ url_for('static', filename='svg/IPRM-logo-simple.svg') }}" alt="{{ _('ІПРМ') }}" class="iprm-header__logo-icon iprm-header__logo-icon--desktop" width="40" height="40">
       <img src="{{ url_for('static', filename='svg/IPRM-logo-complex.svg') }}" alt="{{ _('ІПРМ') }}" class="iprm-header__logo-icon iprm-header__logo-icon--mobile" width="96" height="48">
       <span>{% trans %}ІНСТИТУТ ПЛАЗМОТЕРАПІЇ<br>ТА РЕГЕНЕРАТИВНОЇ МЕДИЦИНИ{% endtrans %}</span>
     </a>
+
+    {% if has_anchors %}
+    {# Смуга якорів. Активний позначає page-nav.js через aria-current --
+       одне джерело правди для CSS і скрінрідера. Без JS лишаються звичайні
+       робочі якорі. #}
+    <nav class="iprm-header__anchors" data-page-nav aria-label="{{ _('Навігація сторінкою курсу') }}">
+      {% for href, label in page_anchors %}
+      <a class="iprm-page-nav__link" href="#{{ href }}">{{ label }}</a>
+      {% endfor %}
+    </nav>
+    <div class="iprm-header__course-actions">
+      {% if page_anchor_seats is defined and page_anchor_seats is not none %}
+      <span class="iprm-header__seats">{{ _('Залишилось') }} {{ page_anchor_seats }} {{ page_anchor_seats | plural('seats') }}</span>
+      {% endif %}
+      {% if page_anchor_cta is defined and page_anchor_cta %}
+      <a class="apple-btn apple-btn--primary iprm-header__cta" href="{{ page_anchor_cta.href }}">{{ page_anchor_cta.label }}</a>
+      {% endif %}
+    </div>
+    {% endif %}
 
     <nav class="iprm-header__nav" id="main-nav" aria-label="{{ _('Головна навігація') }}">
       <ul class="iprm-nav">

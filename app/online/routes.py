@@ -81,15 +81,47 @@ def course_detail(slug):
         online_course_id=course.id, is_published=True,
     ).order_by(Review.sort_order, Review.created_at.desc()).limit(6).all()
 
+    gallery = course.gallery
+
+    # Якорі секцій для глобальної шапки -- у порядку самих секцій. #buy
+    # живе всередині секції #about, тож іде одразу за нею.
+    anchors = []
+    if course.t('benefits'):
+        anchors.append(('benefits', _('Результат')))
+    anchors.append(('about', _('Про курс')))
+    anchors.append(('buy', _('Вартість')))
+    if gallery:
+        anchors.append(('gallery', _('Як проходить')))
+    if course.program_blocks or course.t('practice_note_title'):
+        anchors.append(('program', _('Програма')))
+    if course.trainer:
+        anchors.append(('trainer', _('Тренер')))
+    if course_reviews:
+        anchors.append(('reviews', _('Відгуки')))
+    if course.faq:
+        anchors.append(('faq', _('Питання')))
+
+    if existing and existing.is_paid:
+        cta = {'href': url_for('auth.account'), 'label': _('Перейти до навчання')}
+    elif course.is_purchasable:
+        cta = {'href': url_for('online.checkout', slug=course.slug),
+               'label': _('Купити курс')}
+    else:
+        cta = {'href': url_for('main.contact'), 'label': _('Запитати про курс')}
+
     return render_template(
         'online/detail.html',
         active_nav='online',
         course=course,
+        page_anchors=anchors,
+        # Місць в онлайн-курсі не буває -- лічильник у шапці не показуємо.
+        page_anchor_seats=None,
+        page_anchor_cta=cta,
         related=related,
         checkout_available=course.is_purchasable,
         existing_enrollment=existing,
         # Галерея -- окремий запит до медіа-реєстру (прив'язка поліморфна).
-        gallery=course.gallery,
+        gallery=gallery,
         course_reviews=course_reviews,
     )
 
