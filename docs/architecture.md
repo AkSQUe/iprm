@@ -31,6 +31,8 @@ site-iprm/
 │   ├── registration/            # Blueprint: реєстрація на заходи
 │   │   ├── routes.py            # /registration/<id>/register, confirmation
 │   │   └── forms.py             # EventRegistrationForm
+│   ├── quiz/                    # Blueprint: тестування учасників
+│   │   └── routes.py            # /quiz/<reg_id>, питання, звірка, результат
 │   ├── payments/                # Blueprint: платежі LiqPay
 │   │   └── routes.py            # /payments/liqpay/callback, success, failure
 │   ├── services/                # Шар бізнес-логіки
@@ -113,5 +115,6 @@ site-iprm/
 | `trainers` | `/trainers` | Список тренерів, сторінки тренерів |
 | `clinics` | `/clinics` | Список клінік, сторінки клінік |
 | `registration` | `/registration` | Реєстрація на заходи, підтвердження |
+| `quiz` | `/quiz` | Тестування учасників після заходу, видача сертифіката |
 | `payments` | `/payments` | LiqPay callback, результати оплати |
 | `errors` | - | Обробники помилок 401, 403, 404, 500 |

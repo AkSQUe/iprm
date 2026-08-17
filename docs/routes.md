@@ -78,6 +78,23 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 | GET | `/registration/<registration_id>` | Підтвердження реєстрації |
 | POST | `/registration/instance/<id>/promo-check` | Перевірка промокоду (JSON, без списання) |
 
+## Quiz (тестування учасників)
+
+Блюпринт `quiz` -- `noindex`, `login_required`, мовні префікси `/ru`, `/en`.
+Доступ лише до власної реєстрації та власної спроби; чужа й неіснуюча дають
+однаковий 404. Правильні відповіді у шаблони не передаються ніколи.
+
+| Метод | URL | Опис |
+|-------|-----|------|
+| GET | `/quiz/<reg_id>` | Умови тесту, спроби, гейт із причиною |
+| POST | `/quiz/<reg_id>/start` | Почати (або продовжити) спробу |
+| GET | `/quiz/attempt/<id>` | Поточне питання; `?position=N` -- конкретне |
+| POST | `/quiz/attempt/<id>/answer` | Зберегти відповідь, перейти далі/назад |
+| GET | `/quiz/attempt/<id>/review` | Звірка перед завершенням |
+| POST | `/quiz/attempt/<id>/submit` | Завершити й оцінити (лише коли всі відповіді є) |
+| GET | `/quiz/attempt/<id>/result` | Бал, склав/не склав, номери незарахованих |
+| GET | `/quiz/<reg_id>/done` | Привітання з посиланням на сертифікат |
+
 ## Payments
 
 | Метод | URL | Опис |
@@ -116,6 +133,13 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 | GET | `/admin/payments` | Redirect на LiqPay |
 | GET | `/admin/liqpay` | Дашборд LiqPay |
 | GET | `/admin/users` | Список користувачів |
+| GET | `/admin/quizzes` | Реєстр тестів: банк, готовність, дані БПР |
+| GET/POST | `/admin/courses/<id>/quiz` | Тест курсу (створюється при відкритті) |
+| GET/POST | `/admin/instances/<id>/quiz` | Перевизначення тесту для проведення |
+| POST | `/admin/quizzes/<id>/delete` | Видалити тест (результати лишаються) |
+| GET | `/admin/instances/<id>/quiz-results` | Результати тестування групи |
+| POST | `/admin/registrations/<id>/quiz/unlock` | Додати спроби учаснику |
+| POST | `/admin/registrations/<id>/quiz/reset` | Обнулити тестування учасника |
 | GET | `/admin/certificates` | Сертифікати (stub) |
 | GET | `/admin/clients` | Клієнти (stub) |
 | GET | `/admin/reviews` | Відгуки (stub) |
