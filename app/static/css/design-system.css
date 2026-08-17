@@ -198,6 +198,7 @@
 .ds-swatch__color--gold-light { background: var(--apple-orange-light); }
 .ds-swatch__color--gold-soft { background: var(--apple-gold-soft); }
 .ds-swatch__color--gold-ink { background: var(--apple-gold-ink); }
+.ds-swatch__color--grad-gold { background: var(--apple-grad-gold); }
 .ds-swatch__color--on-accent-warm { background: var(--iprm-on-accent-warm); }
 .ds-swatch__color--purple-mid { background: var(--apple-purple-mid); }
 .ds-swatch__color--section-bg { background: var(--apple-section-bg); }
@@ -251,7 +252,7 @@
 }
 
 .ds-gradient-sample--brand-gold {
-  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 42%, var(--apple-gold-ink) 100%);
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 42%, var(--apple-grad-gold) 100%);
 }
 
 .ds-gradient-sample--brand-gold-dark {
