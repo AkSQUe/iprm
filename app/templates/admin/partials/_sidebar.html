@@ -18,6 +18,10 @@
         {{ icon('school') }}
         Онлайн-курси
       </a>
+      <a href="{{ url_for('admin.online_orders_list') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.online_orders_list',) %} admin-sidebar__link--active{% endif %}">
+        {{ icon('notes') }}
+        Замовлення онлайн-курсів
+      </a>
       <a href="{{ url_for('admin.cities_list') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.cities_list', 'admin.cities_save', 'admin.cities_add', 'admin.cities_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('table_view') }}
         Довідник локацій

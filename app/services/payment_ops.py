@@ -239,6 +239,18 @@ class PaymentOps:
             logger.exception('Payment DB error for %s', order_id)
             return _fail('db error')
 
+        # Промокод: повернення коштів звільняє використання у ліміті -- код
+        # можна видати комусь іншому. Знімок знижки на замовленні лишається
+        # (історія платежу не переписується). Best-effort, як і для
+        # реєстрацій: збій тут не має відкочувати вже зафіксовану оплату.
+        try:
+            from app.services import promo_service
+            if promo_service.sync_for_enrollment(enrollment) is not None:
+                db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logger.exception('Promo sync failed for %s', order_id)
+
         # Видача доступу -- ПІСЛЯ коміту оплати й окремою транзакцією.
         # Якщо вона впаде, замовлення лишиться оплаченим і без доступу:
         # це видимий стан, який підбирає джоба. Зворотний порядок відкотив

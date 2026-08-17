@@ -18,6 +18,7 @@ Sintegrum віддає опис курсу готовою розміткою с�
 дизайн-системи, а не чужого редактора.
 """
 import re
+from html import unescape
 
 import bleach
 
@@ -71,11 +72,37 @@ def to_text(value, limit=None):
         return ''
     value = _WITH_CONTENT.sub('', value)
     text = bleach.clean(value, tags=[], strip=True)
-    # `&nbsp;` після зняття тегів лишається сутністю; разом із переносами
-    # рядків чужого редактора це дає рвані пробіли в мета-описі.
+    # bleach лишає сутності сутностями: `&nbsp;` після зняття тегів так і
+    # доїжджає до шаблону, а Jinja екранує в ньому `&` -- і людина бачить у
+    # картці курсу літеральне «&nbsp;» замість пробілу. Текст має бути
+    # текстом, тому сутності розкриваємо тут.
+    text = unescape(text)
+    # Нерозривні пробіли чужого редактора разом із його переносами рядків
+    # дають рвані діри в мета-описі.
     text = text.replace('\xa0', ' ')
     text = re.sub(r'\s+', ' ', text).strip()
-    return text[:limit] if limit else text
+    return shorten(text, limit) if limit else text
+
+
+def shorten(value, limit=240, suffix='…'):
+    """Обрізає текст по межі слова.
+
+    Простий `text[:limit]` рве останнє слово навпіл ("для усп"), і в картці
+    курсу це виглядає як побитий опис, а не як скорочення. Хвіст пунктуації
+    прибираємо, щоб не з'являлось ", …".
+    """
+    if not value:
+        return ''
+    text = value.strip()
+    if not limit or len(text) <= limit:
+        return text
+    cut = text[:limit].rstrip()
+    space = cut.rfind(' ')
+    # Одне довге слово без пробілів рубаємо як є: інакше від опису лишиться
+    # порожньо.
+    if space > limit * 0.5:
+        cut = cut[:space]
+    return cut.rstrip(' ,.;:!?-–—') + suffix
 
 
 def looks_like_html(value):

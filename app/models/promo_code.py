@@ -268,10 +268,18 @@ class PromoRedemption(TimestampMixin, db.Model):
         db.ForeignKey('promo_codes.id', ondelete='CASCADE'),
         nullable=False, index=True,
     )
+    # Рівно одне з двох посилань заповнене: реєстр спільний для обох типів
+    # замовлень. Розводити їх по таблицях означало б, що код із max_uses=1
+    # можна використати двічі -- по разу в кожному типі.
     registration_id = db.Column(
         db.BigInteger,
         db.ForeignKey('event_registrations.id', ondelete='CASCADE'),
-        nullable=False, index=True,
+        nullable=True, index=True,
+    )
+    enrollment_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('online_enrollments.id', ondelete='CASCADE'),
+        nullable=True, index=True,
     )
     user_id = db.Column(
         db.BigInteger,
@@ -294,6 +302,7 @@ class PromoRedemption(TimestampMixin, db.Model):
 
     promo_code = db.relationship('PromoCode', back_populates='redemptions')
     registration = db.relationship('EventRegistration', back_populates='promo_redemptions')
+    enrollment = db.relationship('OnlineEnrollment', back_populates='promo_redemptions')
     user = db.relationship('User')
 
     __table_args__ = (
@@ -313,6 +322,17 @@ class PromoRedemption(TimestampMixin, db.Model):
             unique=True,
             postgresql_where=db.text("status = 'applied'"),
             sqlite_where=db.text("status = 'applied'"),
+        ),
+        # Дзеркало попереднього для замовлень онлайн-курсів.
+        db.Index(
+            'uq_promo_redemptions_active_enrollment', 'enrollment_id',
+            unique=True,
+            postgresql_where=db.text("status = 'applied'"),
+            sqlite_where=db.text("status = 'applied'"),
+        ),
+        db.CheckConstraint(
+            '(registration_id IS NULL) <> (enrollment_id IS NULL)',
+            name='ck_promo_redemptions_single_owner',
         ),
     )
 

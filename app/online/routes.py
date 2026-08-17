@@ -11,7 +11,7 @@ access_url у публічні шаблони не передається нік
 """
 import logging
 
-from flask import abort, flash, redirect, render_template, url_for
+from flask import abort, flash, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 from flask_login import current_user, login_required
 
@@ -129,13 +129,65 @@ def checkout(slug):
                 flash(_('Не вдалося оформити замовлення. Спробуйте ще раз.'), 'error')
                 return redirect(url_for('online.course_detail', slug=course.slug))
 
+    promo_error = None
+    if request.method == 'POST':
+        promo_error = _handle_promo(enrollment, course)
+
     return render_template(
         'online/checkout.html',
         active_nav='online',
         course=course,
         enrollment=enrollment,
+        promo_error=promo_error,
         **_liqpay_context(enrollment, course),
     )
+
+
+def _handle_promo(enrollment, course):
+    """Застосувати або зняти промокод. Повертає текст помилки або None.
+
+    Сума перераховується від ЦІНИ КУРСУ, а не від поточної
+    `payment_amount`: інакше друге застосування коду рахувало б знижку від
+    уже здешевленої суми, і кожне натискання робило б курс дешевшим.
+    """
+    from app.services import promo_service
+    from app.services.promo_service import PromoError
+
+    if enrollment.is_paid:
+        return None
+
+    if request.form.get('remove_promo'):
+        promo_service.detach_from_enrollment(enrollment)
+        enrollment.payment_amount = course.effective_price
+        db.session.commit()
+        flash(_('Промокод знято'), 'info')
+        return None
+
+    raw = (request.form.get('promo_code') or '').strip()
+    if not raw:
+        return None
+
+    try:
+        promo, _discount, _final = promo_service.validate_for_online(
+            raw, amount=course.effective_price, user_id=current_user.id,
+        )
+        promo_service.assert_user_limit(
+            promo, current_user.id, ignore_enrollment_id=enrollment.id,
+        )
+        promo_service.apply_to_enrollment(
+            promo, enrollment, course.effective_price,
+        )
+        db.session.commit()
+    except PromoError as exc:
+        db.session.rollback()
+        return str(exc)
+    except Exception:
+        db.session.rollback()
+        logger.exception('Failed to apply promo to %s', enrollment.order_id)
+        return str(_('Не вдалося застосувати промокод. Спробуйте ще раз.'))
+
+    flash(_('Промокод застосовано'), 'success')
+    return None
 
 
 def _liqpay_context(enrollment, course):

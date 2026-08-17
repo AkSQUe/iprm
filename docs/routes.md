@@ -67,7 +67,7 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 |-------|-----|------|
 | GET | `/online-courses/` | Каталог опублікованих онлайн-курсів |
 | GET | `/online-courses/<slug>` | Сторінка курсу (неопублікований -> 404) |
-| GET, POST | `/online-courses/<slug>/checkout` | Оформлення покупки (потрібен логін) |
+| GET, POST | `/online-courses/<slug>/checkout` | Оформлення покупки, промокод (потрібен логін) |
 | GET | `/online-courses/access/<token>` | Тимчасове посилання -> 302 на Sintegrum |
 | POST | `/online-courses/access/<id>/reissue` | Перевипуск протермінованого посилання |
 
@@ -144,6 +144,9 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 | GET | `/admin/online-courses` | Каталог онлайн-курсів (УВЕСЬ перелік із дзеркала) |
 | GET, POST | `/admin/online-courses/<id>` | Редагування наших полів курсу |
 | POST | `/admin/online-courses/<id>/publish` | Перемикач публікації |
+| GET | `/admin/online-orders` | Замовлення онлайн-курсів: хто купив і чи є доступ |
+| POST | `/admin/online-orders/<id>/payment` | Ручна зміна статусу оплати |
+| POST | `/admin/online-orders/<id>/reissue` | Видати/перевидати доступ негайно |
 | GET | `/admin/events` | Список заходів |
 | GET/POST | `/admin/events/new` | Створення заходу |
 | GET/POST | `/admin/events/<id>/edit` | Редагування заходу |
@@ -213,6 +216,7 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 | GET | `/api/v1/events` | Список заходів для партнерів |
 | GET | `/api/v1/events/<slug>` | Деталі заходу для партнерів |
 | GET | `/api/v1/online-courses` | Каталог онлайн-курсів для партнерів |
+| GET | `/api/v1/online-enrollments` | Покупки онлайн-курсів (хто, що, чи оплачено) |
 | POST | `/api/v1/perf/runs` | Приймання прогону від `tools/perf/perf_check.py --push` |
 
 ## Errors

@@ -56,6 +56,16 @@ class OnlineEnrollment(TimestampMixin, db.Model):
     )
     paid_at = db.Column(db.DateTime(timezone=True))
 
+    # Промокод, застосований до замовлення. `payment_amount` уже містить суму
+    # ПІСЛЯ знижки; `discount_amount` -- знімок того, скільки ми віддали, щоб
+    # звіти лишались правдивими навіть після зміни ціни курсу. Історія
+    # застосувань (і лічильник) живуть у PromoRedemption.
+    promo_code_id = db.Column(
+        db.BigInteger, db.ForeignKey('promo_codes.id', ondelete='SET NULL'),
+        nullable=True, index=True,
+    )
+    discount_amount = db.Column(db.Numeric(10, 2))
+
     # Ідентифікатор учня в Sintegrum. За чинним сценарієм (рішення Q1)
     # лишається порожнім: учень реєструється сам за посиланням. Колонка є
     # під майбутню звірку прогресу за email.
@@ -101,6 +111,9 @@ class OnlineEnrollment(TimestampMixin, db.Model):
 
     user = db.relationship('User', backref=db.backref(
         'online_enrollments', lazy='dynamic'))
+    promo_code = db.relationship('PromoCode')
+    promo_redemptions = db.relationship(
+        'PromoRedemption', back_populates='enrollment', lazy='dynamic')
     course = db.relationship('OnlineCourse', backref=db.backref(
         'enrollments', lazy='dynamic'))
 

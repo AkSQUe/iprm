@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-17 16:49+0300\n"
+"POT-Creation-Date: 2026-08-17 17:16+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -948,6 +948,15 @@ msgstr "You already own this course"
 msgid "Не вдалося оформити замовлення. Спробуйте ще раз."
 msgstr "Could not create the order. Please try again."
 
+msgid "Промокод знято"
+msgstr "Promo code removed"
+
+msgid "Не вдалося застосувати промокод. Спробуйте ще раз."
+msgstr "Could not apply the promo code. Please try again."
+
+msgid "Промокод застосовано"
+msgstr "Promo code applied"
+
 msgid "Замовлення не оплачене"
 msgstr "The order is not paid"
 
@@ -1091,6 +1100,9 @@ msgstr "This promo code applies to a different event"
 msgid "Цей промокод діє на інший курс"
 msgstr "This promo code applies to a different course"
 
+msgid "Цей промокод діє лише на заходи"
+msgstr "This promo code applies to events only"
+
 msgid "Промокод не знайдено"
 msgstr "Promo code not found"
 
@@ -1105,6 +1117,9 @@ msgstr "Promo code has expired"
 
 msgid "Промокод вичерпано"
 msgstr "Promo code has been used up"
+
+msgid "Курс і так безкоштовний — промокод не потрібен"
+msgstr "The course is already free — no promo code needed"
 
 msgid "Участь і так безкоштовна — промокод не потрібен"
 msgstr "Attendance is already free — no promo code needed"
@@ -4020,6 +4035,15 @@ msgstr "Course payment"
 msgid "Оформлення покупки"
 msgstr "Checkout"
 
+msgid "Прибрати"
+msgstr "Remove"
+
+msgid "Введіть код"
+msgstr "Enter code"
+
+msgid "Застосувати"
+msgstr "Apply"
+
 msgid "Замовлення вже оплачено."
 msgstr "Order"
 
@@ -4289,6 +4313,9 @@ msgstr "Continue with Google"
 
 msgid "Продовжити з Apple"
 msgstr "Continue with Apple"
+
+msgid "Детальніше"
+msgstr "Details"
 
 msgid "Рекомендую курси ІПРМ"
 msgstr "I recommend IPRM courses"
@@ -4938,12 +4965,6 @@ msgstr ""
 
 msgid "Наприклад: SPRING2026"
 msgstr "For example: SPRING2026"
-
-msgid "Застосувати"
-msgstr "Apply"
-
-msgid "Промокод застосовано"
-msgstr "Promo code applied"
 
 msgid "Дані учасника"
 msgstr "Participant details"

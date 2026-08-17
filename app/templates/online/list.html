@@ -40,29 +40,9 @@
       {% if courses %}
       <div class="iprm-online-cards">
         {% for course in courses %}
-        <a href="{{ url_for('online.course_detail', slug=course.slug) }}" class="iprm-online-card apple-reveal">
-          {% if course.card_src %}
-          <div class="iprm-online-card__media">
-            <img src="{{ course.card_src }}" alt="{{ course.effective_title }}" width="400" height="240"
-                 {% if loop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
-          </div>
-          {% endif %}
-          <div class="iprm-online-card__body">
-            <h3 class="iprm-online-card__title">{{ course.effective_title }}</h3>
-            {% if course.effective_short_description %}
-            <p class="iprm-online-card__text">{{ course.effective_short_description }}</p>
-            {% endif %}
-            <div class="iprm-online-card__meta">
-              {% if course.duration_hours %}
-              <span class="iprm-tag">{{ course.duration_hours }} {{ _('год') }}</span>
-              {% endif %}
-              <span class="iprm-tag iprm-tag--accent">{{ _('Онлайн') }}</span>
-            </div>
-            {% if course.effective_price %}
-            <p class="iprm-online-card__price">{{ course.effective_price|int }} {{ course.currency }}</p>
-            {% endif %}
-          </div>
-        </a>
+        {# Перша картка -- LCP-кандидат каталогу: її зображення вантажимо жадібно. #}
+        {% set card_eager = loop.first %}
+        {% include 'partials/_online_course_card.html' %}
         {% endfor %}
       </div>
       {% else %}

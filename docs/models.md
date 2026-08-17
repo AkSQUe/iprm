@@ -193,10 +193,20 @@ xlsx-звіти.
 
 **`promo_redemptions`** -- реєстр застосувань (джерело правди для лічильника)
 
+Реєстр СПІЛЬНИЙ для обох типів замовлень: заповнене рівно одне з полів
+`registration_id` / `enrollment_id` (CHECK `ck_promo_redemptions_single_owner`).
+Розводити їх по таблицях означало б, що код із `max_uses=1` можна
+використати двічі -- по разу на захід і на онлайн-курс, і ліміт «на одну
+людину» рахувався б окремо в кожному.
+
+Промокод, прив'язаний до `course_id` чи `instance_id`, на онлайн-курси НЕ
+діє: у них немає відповідника цим полям (`promo_service.validate_for_online`).
+
 | Поле | Тип | Опис |
 |------|-----|------|
 | `promo_code_id` | FK -> promo_codes.id (CASCADE) | Код |
-| `registration_id` | FK -> event_registrations.id (CASCADE) | Реєстрація |
+| `registration_id` | FK -> event_registrations.id (CASCADE), NULLABLE | Реєстрація на захід |
+| `enrollment_id` | FK -> online_enrollments.id (CASCADE), NULLABLE | Купівля онлайн-курсу |
 | `user_id` | FK -> users.id (CASCADE) | Учасник (для ліміту на людину) |
 | `original_amount` / `discount_amount` / `final_amount` | Numeric(10,2) | Сума до, знижка, сума після |
 | `status` | String(10) | `applied` або `voided` |
@@ -429,6 +439,8 @@ Singleton-модель для зберігання SMTP-налаштувань �
 | `payment_status` | String(20) | unpaid / pending / paid / refunded |
 | `payment_amount` | Numeric(10,2) | Сума, зафіксована при оформленні |
 | `payment_id`, `payment_method`, `paid_at` | | Реквізити платежу |
+| `promo_code_id` | FK -> promo_codes.id (SET NULL) | Застосований промокод |
+| `discount_amount` | Numeric(10,2) | Знімок знижки (payment_amount уже після неї) |
 | `sintegrum_student_id` | Integer | Під майбутню звірку прогресу (зараз порожній) |
 | `provisioned_at` | DateTime (UTC) | Коли видано доступ |
 | `provision_error` | Text | Остання причина невдалої видачі |

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'partials/_money.html' import money %}
 
 {% block title %}{{ course.effective_title }} | {{ _('Онлайн-курси') }} | ІПРМ{% endblock %}
 {% block meta_description %}{{ course.effective_short_description|truncate(160) }}{% endblock %}
@@ -103,7 +104,7 @@
       <aside class="iprm-online-detail__aside apple-reveal">
         <div class="iprm-online-buy">
           {% if course.effective_price %}
-          <p class="iprm-online-buy__price">{{ course.effective_price|int }} <span class="iprm-online-buy__currency">{{ course.currency }}</span></p>
+          <p class="iprm-online-buy__price">{{ money(course.effective_price, course.currency, unit_class='iprm-online-buy__currency') }}</p>
           {% endif %}
           <ul class="iprm-online-buy__list">
             <li>{{ _('Доступ до навчальної платформи') }}</li>
@@ -130,18 +131,8 @@
     <div class="iprm-section__inner">
       <h2 id="online-related" class="iprm-section__title apple-reveal">{{ _('Інші <span class="apple-gradient-text">онлайн-курси</span>') }}</h2>
       <div class="iprm-online-cards">
-        {% for item in related %}
-        <a href="{{ url_for('online.course_detail', slug=item.slug) }}" class="iprm-online-card apple-reveal">
-          <div class="iprm-online-card__body">
-            <h3 class="iprm-online-card__title">{{ item.effective_title }}</h3>
-            {% if item.effective_short_description %}
-            <p class="iprm-online-card__text">{{ item.effective_short_description }}</p>
-            {% endif %}
-            {% if item.effective_price %}
-            <p class="iprm-online-card__price">{{ item.effective_price|int }} {{ item.currency }}</p>
-            {% endif %}
-          </div>
-        </a>
+        {% for course in related %}
+        {% include 'partials/_online_course_card.html' %}
         {% endfor %}
       </div>
     </div>

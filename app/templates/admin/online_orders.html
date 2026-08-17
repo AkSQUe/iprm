@@ -1,0 +1,156 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Замовлення онлайн-курсів | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Замовлення онлайн-курсів</span>
+        </div>
+        <h1 class="admin-hero__title">Замовлення онлайн-курсів</h1>
+        <p class="admin-hero__subtitle">
+          Хто купив, за скільки і чи відкрито доступ
+        </p>
+      </div>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.online_courses_list') }}" class="btn-admin btn-admin--secondary">Каталог курсів</a>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <p class="admin-text-muted">
+      Усього {{ totals.all }}, оплачено {{ totals.paid }}, не оплачено {{ totals.unpaid }}.
+    </p>
+
+    {% if totals.stuck %}
+    {# Оплачено, але доступ не видано -- людина заплатила й нічого не отримала.
+       Ця плашка і є причина, чому сторінка існує. #}
+    <div class="form-section admin-form__section">
+      <p class="admin-form__section-hint">
+        Оплачених замовлень без виданого доступу: <strong>{{ totals.stuck }}</strong>.
+        Фонова задача повторює спроби кожні 10 хвилин; кнопка «Видати доступ» робить це негайно.
+      </p>
+    </div>
+    {% endif %}
+
+    {{ filter_bar(
+         endpoint='admin.online_orders_list',
+         values=filters,
+         search={'name': 'q', 'placeholder': 'Email, ім\'я або курс'},
+         fields=[
+           {'name': 'payment', 'label': 'Оплата', 'placeholder': 'Будь-яка', 'options': payment_options},
+           {'name': 'status', 'label': 'Стан', 'placeholder': 'Будь-який', 'options': status_options},
+         ],
+       ) }}
+
+    {% if orders %}
+    <div class="admin-table-wrap">
+    <table class="admin-table admin-table--wide">
+      <thead>
+        <tr>
+          <th>Замовлення</th>
+          <th>Покупець</th>
+          <th>Курс</th>
+          <th>Сума</th>
+          <th>Оплата</th>
+          <th>Доступ</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        <tr>
+          <td>
+            <strong>{{ order.order_id }}</strong>
+            <br><small class="admin-text-muted">{{ order.created_at.strftime('%d.%m.%Y %H:%M') if order.created_at }}</small>
+          </td>
+          <td>
+            {{ order.user.full_name if order.user else '—' }}
+            {% if order.user %}<br><small class="admin-text-muted">{{ order.user.email }}</small>{% endif %}
+          </td>
+          <td>{{ order.course.effective_title if order.course else '—' }}</td>
+          <td>
+            <strong>{{ order.payment_amount|int if order.payment_amount else 0 }} {{ order.course.currency if order.course }}</strong>
+            {% if order.promo_code_id and order.discount_amount %}
+            <br><small class="admin-text-muted">
+              {{ order.promo_code.code if order.promo_code }} &minus;{{ order.discount_amount|int }}
+            </small>
+            {% endif %}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('admin.online_order_set_payment', enrollment_id=order.id) }}"
+                  class="admin-inline-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <select name="payment_status" class="form-input form-input--sm" onchange="this.form.submit()">
+                {% for value, label in payment_options %}
+                <option value="{{ value }}" {% if order.payment_status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              <noscript><button type="submit" class="btn-admin btn-admin--sm">Зберегти</button></noscript>
+            </form>
+          </td>
+          <td>
+            {% if order.provisioned_at %}
+              <span class="badge badge--active">Відкрито</span>
+              {% if order.sintegrum_student_id %}
+              <br><small class="admin-text-muted">студент #{{ order.sintegrum_student_id }}</small>
+              {% endif %}
+            {% elif order.is_paid %}
+              <span class="badge badge--rejected">Не видано</span>
+              {% if order.provision_error %}
+              <br><small class="admin-text-muted">{{ order.provision_error|truncate(80) }}</small>
+              {% endif %}
+            {% else %}
+              <span class="admin-text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if order.is_paid %}
+            <form method="POST" action="{{ url_for('admin.online_order_reissue', enrollment_id=order.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm"
+                      data-confirm="Видати доступ і надіслати лист покупцю?" data-confirm-ok="Видати">
+                {{ 'Перевидати' if order.provisioned_at else 'Видати доступ' }}
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+
+    {% else %}
+    <div class="admin-empty">
+      {{ icon('notes', cls='admin-empty__icon') }}
+      <h3 class="admin-empty__title">Замовлень немає</h3>
+      <p>
+        {% if filters.q or filters.payment or filters.status %}
+          За цим зрізом нічого не знайшлося. Спробуйте скинути фільтри.
+        {% else %}
+          Щойно хтось купить онлайн-курс, замовлення з'явиться тут.
+        {% endif %}
+      </p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

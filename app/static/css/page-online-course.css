@@ -163,3 +163,54 @@
   margin-top: 24px;
   text-align: center;
 }
+
+
+/* ===== Промокод у чекауті ===== */
+
+.iprm-online-promo {
+  margin: 20px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--iprm-border);
+}
+
+.iprm-online-promo__label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+  color: var(--iprm-text-light);
+}
+
+.iprm-online-promo__row {
+  display: flex;
+  gap: 8px;
+}
+
+.iprm-online-promo__row .form-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.iprm-online-promo--applied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9375rem;
+  color: var(--iprm-text);
+}
+
+.iprm-online-promo__remove {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--iprm-text-light);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.iprm-online-promo__error {
+  margin: 8px 0 0;
+  color: var(--iprm-error-text);
+  font-size: 0.875rem;
+}

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'partials/_money.html' import money %}
 
 {% block title %}{{ _('Оплата курсу') }} | {{ course.effective_title }} | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -17,9 +18,39 @@
       <div class="iprm-online-buy">
         <p class="iprm-online-checkout__course">{{ course.effective_title }}</p>
         <p class="iprm-online-buy__price">
-          {{ enrollment.payment_amount|int }} <span class="iprm-online-buy__currency">{{ course.currency }}</span>
+          {{ money(enrollment.payment_amount, course.currency, unit_class='iprm-online-buy__currency') }}
         </p>
         <p class="iprm-online-checkout__order">{{ _('Замовлення') }} {{ enrollment.order_id }}</p>
+
+        {% if enrollment.payment_status != 'paid' %}
+        {# Знижка показується окремим рядком, а не лише підсумком: людина має
+           бачити, що код спрацював, і на скільки саме. #}
+        {% if enrollment.promo_code_id and enrollment.discount_amount %}
+        <div class="iprm-online-promo iprm-online-promo--applied">
+          <span>{{ _('Промокод') }} <strong>{{ enrollment.promo_code.code }}</strong>
+            &minus;{{ money(enrollment.discount_amount, course.currency) }}</span>
+          <form method="POST" action="{{ url_for('online.checkout', slug=course.slug) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="remove_promo" value="1">
+            <button type="submit" class="iprm-online-promo__remove">{{ _('Прибрати') }}</button>
+          </form>
+        </div>
+        {% else %}
+        <form method="POST" action="{{ url_for('online.checkout', slug=course.slug) }}"
+              class="iprm-online-promo">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label class="iprm-online-promo__label" for="promo_code">{{ _('Промокод') }}</label>
+          <div class="iprm-online-promo__row">
+            <input type="text" name="promo_code" id="promo_code" class="form-input"
+                   autocomplete="off" placeholder="{{ _('Введіть код') }}">
+            <button type="submit" class="apple-btn apple-btn--secondary">{{ _('Застосувати') }}</button>
+          </div>
+          {% if promo_error %}
+          <p class="iprm-online-promo__error">{{ promo_error }}</p>
+          {% endif %}
+        </form>
+        {% endif %}
+        {% endif %}
 
         {% if enrollment.payment_status == 'paid' %}
         <p class="iprm-online-buy__note">{{ _('Замовлення вже оплачено.') }}</p>

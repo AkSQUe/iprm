@@ -119,7 +119,14 @@ class OnlineCourse(TranslatableMixin, TimestampMixin, db.Model):
 
     @property
     def effective_short_description(self):
-        return self.t('short_description') or self.remote_description_text[:300]
+        """Короткий опис: наш, інакше -- початок опису Sintegrum.
+
+        Чужий опис обрізаємо по межі слова: він іде і в картку каталогу, і в
+        підзаголовок hero, і в мета-опис, де обрубане навпіл слово читається
+        як зламаний текст.
+        """
+        from app.services.remote_html import shorten
+        return self.t('short_description') or shorten(self.remote_description_text, 220)
 
     # ---- опис для показу ----
     #

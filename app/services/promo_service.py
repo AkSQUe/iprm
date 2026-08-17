@@ -131,6 +131,52 @@ def _check_scope(promo, instance):
         raise PromoError(_('Цей промокод діє на інший курс'))
 
 
+def _check_online_scope(promo):
+    """Чи діє код на онлайн-курс.
+
+    Код, прив'язаний до конкретного заходу чи курсу, -- це офлайн-область:
+    ані `course_id`, ані `instance_id` не мають відповідника серед
+    онлайн-курсів. Пропустити такий код сюди означало б дати знижку там,
+    де її не задумували.
+    """
+    if promo.instance_id is not None or promo.course_id is not None:
+        raise PromoError(_('Цей промокод діє лише на заходи'))
+
+
+def validate_for_online(raw_code, amount=None, user_id=None):
+    """Перевірити код для замовлення онлайн-курсу.
+
+    Дзеркало `validate`, але з іншою перевіркою області: у онлайн-курсів
+    немає ані проведення, ані офлайн-курсу, до яких код міг би бути
+    прив'язаний.
+    """
+    promo = find(raw_code)
+    if promo is None:
+        raise PromoError(_('Промокод не знайдено'))
+    if not promo.is_active:
+        raise PromoError(_('Промокод вимкнено'))
+    if promo.is_not_started:
+        raise PromoError(_('Промокод ще не діє'))
+    if promo.is_expired:
+        raise PromoError(_('Термін дії промокоду минув'))
+    if promo.is_exhausted:
+        raise PromoError(_('Промокод вичерпано'))
+    _check_online_scope(promo)
+
+    if user_id is not None:
+        assert_user_limit(promo, user_id)
+
+    if amount is None:
+        return promo, None, None
+
+    base = Decimal(amount or 0)
+    if base <= 0:
+        raise PromoError(_('Курс і так безкоштовний — промокод не потрібен'))
+
+    discount = promo.discount_for(base)
+    return promo, discount, base - discount
+
+
 def validate(raw_code, instance=None, amount=None, user_id=None):
     """Перевірити код і повернути (promo, discount, final).
 
@@ -169,11 +215,16 @@ def validate(raw_code, instance=None, amount=None, user_id=None):
     return promo, discount, base - discount
 
 
-def assert_user_limit(promo, user_id, ignore_registration_id=None):
+def assert_user_limit(promo, user_id, ignore_registration_id=None,
+                      ignore_enrollment_id=None):
     """Перевірити ліміт застосувань коду однією людиною.
 
-    ignore_registration_id -- не рахувати застосування цієї реєстрації
-    (потрібно при редагуванні: людина повторно зберігає ту саму форму).
+    Рахує ОБИДВА типи замовлень: реєстр спільний саме заради цього --
+    інакше код з лімітом 1 можна було б використати двічі, по разу на
+    захід і на онлайн-курс.
+
+    ignore_* -- не рахувати застосування цього ж замовлення (потрібно при
+    редагуванні: людина повторно зберігає ту саму форму).
     """
     if promo.per_user_limit is None or user_id is None:
         return
@@ -183,17 +234,53 @@ def assert_user_limit(promo, user_id, ignore_registration_id=None):
         PromoRedemption.status == 'applied',
     )
     if ignore_registration_id is not None:
-        q = q.filter(PromoRedemption.registration_id != ignore_registration_id)
+        q = q.filter(db.or_(
+            PromoRedemption.registration_id.is_(None),
+            PromoRedemption.registration_id != ignore_registration_id,
+        ))
+    if ignore_enrollment_id is not None:
+        q = q.filter(db.or_(
+            PromoRedemption.enrollment_id.is_(None),
+            PromoRedemption.enrollment_id != ignore_enrollment_id,
+        ))
     if (q.scalar() or 0) >= promo.per_user_limit:
         raise PromoError(_('Ви вже використали цей промокод'))
 
 
 # ===================== застосування =====================
 
-def apply_to_registration(promo, reg, original_amount):
-    """Застосувати код до реєстрації: сума, знімок знижки, реєстр, лічильник.
+# ===================== застосування =====================
+#
+# Реєстрація на захід і замовлення онлайн-курсу поводяться однаково: обидва
+# мають `payment_amount`, `discount_amount`, `promo_code_id` і `user_id`.
+# Тому логіка одна, а різниця зведена до одного поля-звʼязку. Дві копії тут
+# означали б два набори правил на грошах, які рано чи пізно розійдуться.
 
-    reg має бути вже у сесії з призначеним id (робимо flush за потреби).
+_REGISTRATION = 'registration_id'
+_ENROLLMENT = 'enrollment_id'
+
+
+def _label(kind, target_id):
+    return f'{"REG" if kind == _REGISTRATION else "ONL"}-{target_id}'
+
+
+def _active_redemption(registration_id):
+    """Активне списання на реєстрацію (сумісність із наявними викликами)."""
+    return _active_for(_REGISTRATION, registration_id)
+
+
+def _active_for(kind, target_id):
+    if target_id is None:
+        return None
+    return PromoRedemption.query.filter_by(
+        status='applied', **{kind: target_id}
+    ).first()
+
+
+def _apply(promo, target, original_amount, kind):
+    """Застосувати код до замовлення: сума, знімок знижки, реєстр, лічильник.
+
+    target має бути вже у сесії з призначеним id (робимо flush за потреби).
     Повертає PromoRedemption. Не комітить.
 
     Повторне застосування ТОГО САМОГО коду (менеджер ще раз зберіг форму)
@@ -201,26 +288,26 @@ def apply_to_registration(promo, reg, original_amount):
     Інший код спершу анулює попередній: інакше в реєстрі лишилася б сума,
     якої ніхто не платив.
     """
-    if reg.id is None:
+    if target.id is None:
         db.session.flush()
 
     base = Decimal(original_amount or 0)
     discount = promo.discount_for(base)
     final = base - discount
 
-    current = _active_redemption(reg.id)
+    current = _active_for(kind, target.id)
     if current is not None and current.promo_code_id == promo.id:
         current.original_amount = base
         current.discount_amount = discount
         current.final_amount = final
-        reg.discount_amount = discount
-        reg.payment_amount = final
+        target.discount_amount = discount
+        target.payment_amount = final
         return current
 
     if current is not None:
         _void(current, 'Замінено іншим промокодом')
-        reg.promo_code_id = None
-        reg.discount_amount = None
+        target.promo_code_id = None
+        target.discount_amount = None
         # Явний flush: інакше INSERT нового рядка міг би піти в БД раніше
         # за UPDATE старого (порядок операцій у межах flush визначає
         # SQLAlchemy), і partial-unique index на активне списання впав би.
@@ -242,68 +329,89 @@ def apply_to_registration(promo, reg, original_amount):
 
     redemption = PromoRedemption(
         promo_code_id=locked.id,
-        registration_id=reg.id,
-        user_id=reg.user_id,
+        user_id=target.user_id,
         original_amount=base,
         discount_amount=discount,
         final_amount=final,
+        **{kind: target.id},
     )
     db.session.add(redemption)
 
-    reg.promo_code_id = locked.id
-    reg.discount_amount = discount
-    reg.payment_amount = final
+    target.promo_code_id = locked.id
+    target.discount_amount = discount
+    target.payment_amount = final
 
+    order = _label(kind, target.id)
     logger.info(
-        'Promo %s applied to REG-%s: %s -> %s (-%s)',
-        locked.code, reg.id, base, final, discount,
+        'Promo %s applied to %s: %s -> %s (-%s)',
+        locked.code, order, base, final, discount,
     )
     audit_logger.info(
-        'promo_applied code="%s" reg=%s user=%s amount=%s discount=%s final=%s '
-        'used=%s actor=%s',
-        locked.code, reg.id, reg.user_id, base, discount, final,
+        'promo_applied code="%s" order=%s user=%s amount=%s discount=%s '
+        'final=%s used=%s actor=%s',
+        locked.code, order, target.user_id, base, discount, final,
         locked.used_count, _actor(),
     )
     return redemption
 
 
-def detach(reg, reason='Промокод знято'):
-    """Зняти активне списання з реєстрації (лічильник повертається).
+def apply_to_registration(promo, reg, original_amount):
+    """Застосувати код до реєстрації на захід."""
+    return _apply(promo, reg, original_amount, _REGISTRATION)
 
-    Знімок discount_amount на реєстрації теж чистимо: сума, яку caller
+
+def apply_to_enrollment(promo, enrollment, original_amount):
+    """Застосувати код до замовлення онлайн-курсу."""
+    return _apply(promo, enrollment, original_amount, _ENROLLMENT)
+
+
+def _detach(target, kind, reason):
+    """Зняти активне списання (лічильник повертається).
+
+    Знімок discount_amount на замовленні теж чистимо: сума, яку caller
     виставить далі, вже не має знижки. Не комітить.
     """
-    redemption = _active_redemption(reg.id)
+    redemption = _active_for(kind, target.id)
     if redemption is None:
-        reg.promo_code_id = None
-        reg.discount_amount = None
+        target.promo_code_id = None
+        target.discount_amount = None
         return None
     _void(redemption, reason)
-    reg.promo_code_id = None
-    reg.discount_amount = None
+    target.promo_code_id = None
+    target.discount_amount = None
     return redemption
 
 
-def void_for_registration(reg, reason='Повернення коштів'):
-    """Анулювати списання, але лишити знімок знижки на реєстрації.
+def detach(reg, reason='Промокод знято'):
+    """Зняти код із реєстрації на захід."""
+    return _detach(reg, _REGISTRATION, reason)
+
+
+def detach_from_enrollment(enrollment, reason='Промокод знято'):
+    """Зняти код із замовлення онлайн-курсу."""
+    return _detach(enrollment, _ENROLLMENT, reason)
+
+
+def _void_for(target, kind, reason):
+    """Анулювати списання, але лишити знімок знижки на замовленні.
 
     Використовується при поверненні коштів/скасуванні: місце у ліміті
     звільняється (код можна видати комусь іншому), а історія того, що
     людина платила зі знижкою, лишається у звітах.
     """
-    redemption = _active_redemption(reg.id)
+    redemption = _active_for(kind, target.id)
     if redemption is None:
         return None
     _void(redemption, reason)
     return redemption
 
 
-def _active_redemption(registration_id):
-    if registration_id is None:
-        return None
-    return PromoRedemption.query.filter_by(
-        registration_id=registration_id, status='applied',
-    ).first()
+def void_for_registration(reg, reason='Повернення коштів'):
+    return _void_for(reg, _REGISTRATION, reason)
+
+
+def void_for_enrollment(enrollment, reason='Повернення коштів'):
+    return _void_for(enrollment, _ENROLLMENT, reason)
 
 
 def _void(redemption, reason):
@@ -318,15 +426,15 @@ def _void(redemption, reason):
         # max(0, ...) -- захист від розсинхрону денормалізованого лічильника
         # (ручні правки в БД, історичні рядки); реєстр усе одно головніший.
         promo.used_count = max(0, (promo.used_count or 0) - 1)
-    logger.info(
-        'Promo redemption #%s voided (reg=%s): %s',
-        redemption.id, redemption.registration_id, reason,
-    )
+    order = (_label(_REGISTRATION, redemption.registration_id)
+             if redemption.registration_id is not None
+             else _label(_ENROLLMENT, redemption.enrollment_id))
+    logger.info('Promo redemption #%s voided (%s): %s',
+                redemption.id, order, reason)
     audit_logger.info(
-        'promo_voided code="%s" reg=%s discount=%s reason="%s" actor=%s',
+        'promo_voided code="%s" order=%s discount=%s reason="%s" actor=%s',
         promo.code if promo is not None else redemption.promo_code_id,
-        redemption.registration_id, redemption.discount_amount,
-        reason, _actor(),
+        order, redemption.discount_amount, reason, _actor(),
     )
 
 
@@ -341,6 +449,15 @@ def sync_for_registration(reg):
         return void_for_registration(reg, reason='Повернення коштів')
     if reg.status == 'cancelled':
         return void_for_registration(reg, reason='Реєстрацію скасовано')
+    return None
+
+
+def sync_for_enrollment(enrollment):
+    """Те саме для замовлення онлайн-курсу."""
+    if enrollment.payment_status == 'refunded':
+        return void_for_enrollment(enrollment, reason='Повернення коштів')
+    if enrollment.status == 'cancelled':
+        return void_for_enrollment(enrollment, reason='Замовлення скасовано')
     return None
 
 
