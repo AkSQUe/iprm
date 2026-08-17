@@ -3,7 +3,7 @@ from flask import request, jsonify
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
 from app.extensions import db
-from app.services import media_service
+from app.services import image_service, media_service
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
@@ -158,6 +158,27 @@ def upload_blog_image():
         'width': media.width,
         'height': media.height,
     }), 200
+
+
+@admin_bp.route('/upload/trainer-signature', methods=['POST'])
+@admin_required
+def upload_trainer_signature():
+    """Завантажити підпис тренера у static/images/trainers/{slug}/.
+
+    Не через медіа-реєстр: підпис друкується на PDF-сертифікаті, який WeasyPrint
+    рендерить відносно теки static, тож /media/-URL там не резолвиться.
+    Повертає {path, url, width, height}; у Trainer.signature пишеться path.
+    """
+    slug = (request.form.get('slug') or '').strip()
+    if not slug:
+        return jsonify({'error': 'Спочатку вкажіть slug тренера'}), 400
+
+    data, error = image_service.process_trainer_signature(request.files.get('file'), slug)
+    if error:
+        return jsonify({'error': error}), 400
+
+    audit_logger.info('Uploaded trainer signature: %s', data['path'])
+    return jsonify(data), 200
 
 
 @admin_bp.route('/upload/trainer-certificate', methods=['POST'])

@@ -98,6 +98,18 @@ class Trainer(TranslatableMixin, TimestampMixin, db.Model):
         """URL повнорозмірного фото (для og/srcset 1600w)."""
         return self.photo_media.url if self.photo_media else None
 
+    @property
+    def signature_src(self):
+        """URL підпису для <img src> в адмінці. None, якщо немає.
+
+        У БД лежить шлях відносно static; історичні значення могли зберігатися
+        вже з /static/ або з провідним слешем -- нормалізуємо обидва випадки.
+        """
+        path = (self.signature or '').strip()
+        if not path:
+            return None
+        return path if path.startswith('/') else f'/static/{path}'
+
     def get_referral_code(self):
         """Повернути (за потреби -- згенерувати) реферальний код тренера.
         Робить flush, але не commit."""

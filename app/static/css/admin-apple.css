@@ -809,6 +809,26 @@
   object-position: center top;
 }
 
+/* Підпис тренера: широке невисоке зображення, зазвичай тёмне перо на
+   прозорому тлі. Показуємо цілком (contain, а не cover) на завжди світлому
+   полотні -- --iprm-white для цього не годиться, бо в тёмній темі це тёмна
+   поверхня, на якій підпис зникає. */
+.admin-dropzone--signature {
+  --signature-canvas: #fff;
+  min-height: 160px;
+}
+
+.admin-dropzone--signature .admin-dropzone__preview {
+  background: var(--signature-canvas);
+  border-radius: calc(var(--iprm-radius-md) - 2px);
+}
+
+.admin-dropzone--signature .admin-dropzone__preview img {
+  height: 156px;
+  padding: 12px;
+  object-fit: contain;
+}
+
 .admin-dropzone:hover,
 .admin-dropzone--dragover {
   border-color: var(--iprm-nav-active);

@@ -39,6 +39,10 @@
       var hiddenInput = targetId ? document.getElementById(targetId) : null;
       var mediaTargetId = zone.getAttribute('data-target-media');
       var mediaInput = mediaTargetId ? document.getElementById(mediaTargetId) : null;
+      // Зона може мати власний ендпоінт і власне поле відповіді (напр. підпис
+      // тренера: зберігається у static, у форму йде data.path, а не data.url).
+      var zoneEndpoint = zone.getAttribute('data-endpoint') || endpoint;
+      var valueField = zone.getAttribute('data-value-field') || 'url';
 
       zone.addEventListener('click', function(e) {
         if (e.target === removeBtn || e.target.closest('.admin-dropzone__remove')) return;
@@ -135,7 +139,7 @@
         formData.append('slug', slug);
         if (csrfToken) formData.append('csrf_token', csrfToken.value);
 
-        fetch(endpoint, {
+        fetch(zoneEndpoint, {
           method: 'POST',
           body: formData
         })
@@ -150,7 +154,7 @@
         .then(function(result) {
           zone.classList.remove('admin-dropzone--uploading');
           if (result.ok) {
-            if (hiddenInput) hiddenInput.value = result.data.url;
+            if (hiddenInput) hiddenInput.value = result.data[valueField] || '';
             if (mediaInput) mediaInput.value = result.data.media_id || '';
             // Оновлюємо прев'ю реальним результатом із сервера: для HEIC
             // локальний FileReader не рендериться, тож показуємо WebP-відповідь.

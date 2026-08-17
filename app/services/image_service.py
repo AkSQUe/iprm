@@ -24,6 +24,8 @@ _FULL_MAX = 1600     # макс. сторона повної версії, px
 _THUMB_MAX = 400     # макс. сторона мініатюри, px
 _FULL_QUALITY = 82
 _THUMB_QUALITY = 80
+_SIGN_MAX = 1200     # макс. сторона підпису, px (друкується на сертифікаті ~40 мм)
+_SIGN_QUALITY = 90   # вище звичайного: тонкі лінії пера не прощають артефактів
 
 # Реєструємо HEIF-декодер один раз. pillow-heif постачає libheif у колесі,
 # тож імпорт безпечний; але про всяк випадок не валимо модуль, якщо його нема.
@@ -133,3 +135,51 @@ def process_trainer_certificate(file, slug):
         return None, err
     safe_slug = secure_filename(slug or '') or 'trainer'
     return _save_processed(file, f'trainers/{safe_slug}/certificates')
+
+
+def process_trainer_signature(file, slug):
+    """Підпис тренера -> images/trainers/{slug}/{slug}_signature.webp.
+
+    Ім'я детерміноване (без uuid): повторне завантаження перезаписує підпис
+    того самого тренера, а не плодить сиріт. Файл лежить у static, бо
+    сертифікати рендерить WeasyPrint із base_url=static_folder і
+    Trainer.signature зберігає саме такий відносний шлях (не /media/).
+    Прозорість зберігається (_normalize -> RGBA), без thumb: підпис і так
+    маленький. Повертає ({path, url, width, height}, None) або (None, error).
+    """
+    err = _validate_upload(file)
+    if err:
+        return None, err
+
+    from PIL import Image, UnidentifiedImageError
+
+    safe_slug = secure_filename(slug or '') or 'trainer'
+    rel_dir = f'trainers/{safe_slug}'
+    name = f'{safe_slug}_signature.webp'
+    upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], *rel_dir.split('/'))
+    abs_path = os.path.join(upload_dir, name)
+
+    try:
+        img = _fit(_normalize(Image.open(file.stream)), _SIGN_MAX)
+        os.makedirs(upload_dir, exist_ok=True)
+        img.save(abs_path, 'WEBP', quality=_SIGN_QUALITY, method=6)
+    except Image.DecompressionBombError as exc:
+        logger.warning('Signature image too large (%s): %s', file.filename, exc)
+        return None, 'Зображення завелике для обробки'
+    except (UnidentifiedImageError, OSError, ValueError) as exc:
+        logger.warning('Bad signature upload (%s): %s', file.filename, exc)
+        return None, 'Не вдалося прочитати зображення'
+    except Exception:
+        logger.exception('Unexpected error processing signature %s', file.filename)
+        return None, 'Помилка обробки зображення'
+
+    rel = f'images/{rel_dir}/{name}'
+    logger.info('Trainer signature saved: %s (%dx%d)', rel, img.width, img.height)
+    # url -- лише для прев'ю в адмінці; ?v збиває кеш браузера, бо ім'я файлу
+    # при перезавантаженні підпису не змінюється. У БД пишеться чистий path.
+    return {
+        'path': rel,
+        'url': f'/static/{rel}?v={int(os.path.getmtime(abs_path))}',
+        'width': img.width,
+        'height': img.height,
+    }, None
