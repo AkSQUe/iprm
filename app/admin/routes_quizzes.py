@@ -13,7 +13,7 @@ import logging
 
 from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit
@@ -26,6 +26,7 @@ from app.models.course_instance import CourseInstance
 from app.models.course_quiz import CourseQuiz
 from app.models.quiz_attempt import QuizAttempt
 from app.models.registration import EventRegistration
+from app.models.user import User
 from app.services import quiz_service
 
 audit_logger = logging.getLogger('audit')
@@ -120,11 +121,17 @@ def quizzes_list():
     """Реєстр тестів: де вони є, чи готові, чи вистачає даних БПР."""
     filters = {'q': _listing.text_arg('q')}
 
+    # selectinload на instances: нижче ми обходимо `course.instances`, щоб
+    # знайти перевизначення тесту, і без цього кожен курс у реєстрі тягнув
+    # окремий запит за своїми проведеннями.
     courses = _listing.apply_search(
         Course.query, filters['q'], [Course.title, Course.slug],
-    ).order_by(Course.title).all()
+    ).options(selectinload(Course.instances)).order_by(Course.title).all()
 
-    quizzes = CourseQuiz.query.options(joinedload(CourseQuiz.questions)).all()
+    # Теж selectinload, а не joinedload: questions -- колекція, і join
+    # розмножував би рядок тесту на кожне питання (13 тестів по 30 питань дають
+    # 390 рядків замість двох запитів).
+    quizzes = CourseQuiz.query.options(selectinload(CourseQuiz.questions)).all()
     by_course = {q.course_id: q for q in quizzes if q.course_id}
     by_instance = {q.instance_id: q for q in quizzes if q.instance_id}
 
@@ -227,7 +234,10 @@ def instance_quiz_results(instance_id):
         .filter_by(instance_id=instance.id)
         .filter(EventRegistration.status != 'cancelled')
         .options(
-            joinedload(EventRegistration.user),
+            # medical_profile -- бо `eligibility` питає повноту анкети, і без
+            # цього кожен рядок групи тягнув би окремий запит (учасники різні,
+            # тож identity-map не рятує, як у кабінеті одного користувача).
+            joinedload(EventRegistration.user).joinedload(User.medical_profile),
             joinedload(EventRegistration.quiz_attempts),
             joinedload(EventRegistration.certificate),
         )
@@ -235,12 +245,13 @@ def instance_quiz_results(instance_id):
     )
 
     quiz = quiz_service.resolve_quiz(instance)
+    states = quiz_service.eligibility_map(registrations)
     rows = []
     for reg in registrations:
         finished = [a for a in reg.quiz_attempts if a.is_finished]
         rows.append({
             'reg': reg,
-            'state': quiz_service.eligibility(reg),
+            'state': states[reg.id],
             'attempts': finished,
             'best': max((a.score or 0 for a in finished), default=None),
         })
@@ -309,7 +320,7 @@ def registration_quiz_reset(reg_id):
             'Admin %s reset quiz for reg %s (%d attempts removed)',
             current_user.email, reg_id, removed,
         )
-        note = ('. Сертифікат лишився виданим -- відкликайте окремо, якщо треба'
+        note = ('. Сертифікат лишився виданим – відкликайте окремо, якщо треба'
                 if reg.certificate is not None else '')
         flash(f'Тестування обнулено, спроб видалено: {removed}{note}.', 'success')
     return redirect(url_for('admin.instance_quiz_results',

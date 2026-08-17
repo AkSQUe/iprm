@@ -106,7 +106,15 @@ def question(attempt_id):
         return redirect(url_for('quiz.result', attempt_id=attempt.id))
 
     requested = request.args.get('position', type=int)
-    position = _first_unanswered(attempt) if requested is None else requested
+    if requested is None:
+        # Відповіді є на все -- людині лишилось завершити, а не гортати з
+        # першого питання. Так, зокрема, поводиться повернення за старим
+        # посиланням: інакше кнопку «Завершити» довелось би шукати кліками.
+        if not _unanswered_numbers(attempt):
+            return redirect(url_for('quiz.review', attempt_id=attempt.id))
+        position = _first_unanswered(attempt)
+    else:
+        position = requested
     view = quiz_service.attempt_view_model(attempt, position)
     if view is None:
         # Позиція поза межами -- не 404: людина могла правити URL або
@@ -162,14 +170,10 @@ def review(attempt_id):
     if attempt.is_finished:
         return redirect(url_for('quiz.result', attempt_id=attempt.id))
 
-    items = [
-        quiz_service.attempt_view_model(attempt, position)
-        for position in range(len(attempt.question_ids or []))
-    ]
     return render_template(
         'quiz/review.html',
         attempt=attempt,
-        items=[i for i in items if i],
+        items=quiz_service.attempt_view_models(attempt),
         unanswered=_unanswered_numbers(attempt),
     )
 
@@ -225,9 +229,15 @@ def done(reg_id):
         return redirect(url_for('quiz.start', reg_id=reg.id))
 
     certificate = reg.certificate
+    if certificate is not None and certificate.revoked:
+        certificate = None
     return render_template(
         'quiz/done.html',
         registration=reg,
         instance=reg.instance,
-        certificate=certificate if certificate and not certificate.revoked else None,
+        certificate=certificate,
+        # Про лист питаємо журнал, а не вгадуємо: ця сторінка відкривається
+        # іншим запитом, ніж той, що видавав сертифікат.
+        email_sent=(certificate is not None
+                    and quiz_service.certificate_email_sent(reg)),
     )

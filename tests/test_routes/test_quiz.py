@@ -565,3 +565,133 @@ def test_account_silent_when_no_quiz(client, app):
     _login(client, reg.user)
     html = client.get('/auth/account').get_data(as_text=True)
     assert 'тестування' not in html.lower()
+
+
+# ---- перф-інваріант кабінету ------------------------------------------------
+
+def _count_account_selects(client, user):
+    """Скільки SELECT робить /auth/account для цього користувача."""
+    from sqlalchemy import event
+
+    with client.session_transaction() as s:
+        s['_user_id'] = str(user.id)
+
+    counted = []
+
+    def _count(_conn, _cursor, statement, _params, _context, _many):
+        if statement.lstrip().upper().startswith('SELECT'):
+            counted.append(statement)
+
+    event.listen(db.engine, 'before_cursor_execute', _count)
+    try:
+        assert client.get('/auth/account').status_code == 200
+    finally:
+        event.remove(db.engine, 'before_cursor_execute', _count)
+    return len(counted)
+
+
+def _user_with_registrations(how_many):
+    user = _user()
+    for _ in range(how_many):
+        reg, _quiz = _setup()
+        reg.user_id = user.id
+        db.session.flush()
+    db.session.commit()
+    return user
+
+
+def test_cabinet_query_count_does_not_grow_with_registrations(client, app):
+    """Кабінет не має дорожчати з кожним курсом користувача.
+
+    Поштучний виклик `eligibility` давав +5 SELECT на реєстрацію: заміряно
+    10/30/55 запитів на 1/5/10 курсів. Тобто сторінка тим повільніша, чим
+    активніший учасник -- рівно навпаки до потрібного. `eligibility_map`
+    вибирає все чотирма запитами незалежно від кількості рядків.
+
+    Міряємо ПРИРІСТ, а не абсолютне число: постійна ціна сторінки залежить від
+    речей поза цим тестом (наприклад від того, чи ввімкнена реферальна програма
+    в налаштуваннях), і поріг на абсолют ламався б від чужих тестів.
+    """
+    few = _count_account_selects(client, _user_with_registrations(2))
+    many = _count_account_selects(client, _user_with_registrations(10))
+
+    assert many - few <= 4, (
+        f'вісім додаткових реєстрацій дали +{many - few} SELECT '
+        f'({few} -> {many}) -- схоже, повернувся N+1 у стані тестування'
+    )
+
+
+# ---- прогрес-бар без inline-стилю -------------------------------------------
+
+def test_progress_uses_step_class_not_inline_style(client, app):
+    """У проєкті діє No Inline Policy, а JS у цьому потоці свідомо немає.
+
+    Ширина смуги задається кроковим класом. Раніше тут стояв style="width: N%" --
+    єдиний inline-стиль серед публічних шаблонів проєкту.
+    """
+    reg, _ = _setup(bank=10, per_attempt=10, passing=8)
+    _login(client, reg.user)
+    client.post(f'/quiz/{reg.id}/start')
+    attempt = QuizAttempt.query.filter_by(registration_id=reg.id).one()
+
+    html = client.get(f'/quiz/attempt/{attempt.id}').get_data(as_text=True)
+    assert 'style=' not in html.split('quiz-progress')[1][:400]
+    assert 'quiz-progress__fill--0' in html      # жодної відповіді
+    assert 'role="progressbar"' in html
+    assert 'aria-valuemax="10"' in html
+
+
+def test_progress_class_follows_answers(client, app):
+    reg, _ = _setup(bank=10, per_attempt=10, passing=8)
+    _login(client, reg.user)
+    client.post(f'/quiz/{reg.id}/start')
+    attempt = QuizAttempt.query.filter_by(registration_id=reg.id).one()
+
+    for position in range(3):
+        client.post(f'/quiz/attempt/{attempt.id}/answer', data={
+            'position': str(position),
+            'question_id': str(attempt.question_ids[position]),
+            'choice': '1', 'direction': 'next',
+        })
+
+    html = client.get(f'/quiz/attempt/{attempt.id}').get_data(as_text=True)
+    assert 'quiz-progress__fill--30' in html
+    assert 'aria-valuenow="3"' in html
+
+
+def test_all_answered_opens_review(client, app):
+    """Повернення за старим посиланням, коли відповіді вже є на все.
+
+    Раніше показувалось питання 1, і кнопку «Завершити» треба було шукати
+    десятьма кліками.
+    """
+    reg, _ = _setup(bank=10, per_attempt=10, passing=8)
+    _login(client, reg.user)
+    client.post(f'/quiz/{reg.id}/start')
+    attempt = QuizAttempt.query.filter_by(registration_id=reg.id).one()
+    _answer_all(client, attempt, 10)
+
+    resp = client.get(f'/quiz/attempt/{attempt.id}')
+    assert resp.status_code == 302
+    assert '/review' in resp.headers['Location']
+
+
+def test_done_does_not_promise_email_that_was_not_sent(client, app, no_pdf,
+                                                      monkeypatch):
+    """Сторінка привітання не має обіцяти лист, якого не було."""
+    from app.services.email_service import EmailService
+
+    monkeypatch.setattr(
+        EmailService, 'send_certificate',
+        staticmethod(lambda cert: (_ for _ in ()).throw(RuntimeError('SMTP'))))
+
+    reg, _ = _setup(bank=10, per_attempt=10, passing=8)
+    _login(client, reg.user)
+    client.post(f'/quiz/{reg.id}/start')
+    attempt = QuizAttempt.query.filter_by(registration_id=reg.id).one()
+    _answer_all(client, attempt, 10)
+    client.post(f'/quiz/attempt/{attempt.id}/submit')
+
+    html = client.get(f'/quiz/{reg.id}/done').get_data(as_text=True)
+    assert 'Копію надіслано' not in html
+    assert 'завжди доступний у кабінеті' in html

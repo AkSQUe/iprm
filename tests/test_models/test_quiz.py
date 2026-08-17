@@ -405,3 +405,43 @@ def test_registration_quiz_defaults(app):
     reg = _registration()
     assert reg.quiz_passed_at is None
     assert reg.quiz_extra_attempts == 0
+
+
+def test_answers_translate_by_source_key(app):
+    """Канонічний ключ перекладу JSON-листка -- хеш українського джерела.
+
+    Path-ключі (`0.text`) лишились лише як legacy: після переходу на
+    source-key переклад не з'їжджає при зміні порядку варіантів. Наповнення
+    банку скриптом мусить писати саме хеші, інакше тексти просто не
+    підставляться.
+    """
+    from app.i18n import source_key
+
+    quiz = _quiz()
+    q = _question(quiz, correct=1)
+    uk_second = q.answers[1]['text']
+
+    q.set_translation('en', 'answers', {source_key(uk_second): 'Second option'})
+    db.session.flush()
+
+    translated = q.t('answers', lang='en')
+    assert translated[1]['text'] == 'Second option'
+    assert translated[1]['is_correct'] is True
+    assert translated[0]['text'] == q.answers[0]['text']
+
+
+def test_source_key_translation_survives_reordering(app):
+    """Саме заради цього ключі й перевели з шляхів на хеш джерела."""
+    from app.i18n import source_key
+
+    quiz = _quiz()
+    q = _question(quiz, correct=0)
+    uk_last = q.answers[3]['text']
+    q.set_translation('ru', 'answers', {source_key(uk_last): 'Последний'})
+    db.session.flush()
+
+    # Переставляємо варіанти: переклад мусить лишитись на своєму тексті.
+    q.answers = list(reversed(q.answers))
+    db.session.flush()
+
+    assert q.t('answers', lang='ru')[0]['text'] == 'Последний'

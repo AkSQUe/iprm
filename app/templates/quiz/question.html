@@ -10,12 +10,19 @@
 {% block content %}
 <div class="apple-page quiz-layout">
 
+  {# Смуга рахує ВІДПОВІДІ, а не поточну позицію: людина може ходити питаннями
+     туди-сюди, і прогрес мусить показувати зроблене.
+
+     Ширина -- кроковим класом (10%), а не inline-стилем: у проєкті діє
+     No Inline Policy, а JS у цьому потоці свідомо немає. Точність тут не
+     потрібна -- поруч стоїть точний лічильник «Відповіли: N з M». #}
+  {% set progress = ((answered / view.total) * 10) | round | int * 10 %}
   <div class="quiz-progress">
-    <div class="quiz-progress__bar">
-      {# Смуга рахує ВІДПОВІДІ, а не поточну позицію: людина може ходити
-         питаннями туди-сюди, і прогрес мусить показувати зроблене. #}
-      <span class="quiz-progress__fill"
-            style="width: {{ (answered / view.total * 100) | round | int }}%"></span>
+    <div class="quiz-progress__bar" role="progressbar"
+         aria-valuenow="{{ answered }}" aria-valuemin="0"
+         aria-valuemax="{{ view.total }}"
+         aria-label="{{ _('Прогрес тестування') }}">
+      <span class="quiz-progress__fill quiz-progress__fill--{{ progress }}"></span>
     </div>
     <p class="quiz-progress__label">
       {% trans number=view.number, total=view.total %}Питання {{ number }} з {{ total }}{% endtrans %}

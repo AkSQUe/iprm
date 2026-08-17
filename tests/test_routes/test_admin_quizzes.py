@@ -463,3 +463,53 @@ def test_reset_does_not_revoke_certificate(client, admin, no_pdf):
     assert fresh.certificate is not None
     assert fresh.certificate.number == number
     assert fresh.certificate.revoked is False
+
+
+# ---- перф-інваріант реєстру -------------------------------------------------
+
+def _count_registry_selects(client):
+    from sqlalchemy import event
+
+    counted = []
+
+    def _count(_conn, _cursor, statement, _params, _context, _many):
+        if statement.lstrip().upper().startswith('SELECT'):
+            counted.append(statement)
+
+    event.listen(db.engine, 'before_cursor_execute', _count)
+    try:
+        assert client.get('/admin/quizzes').status_code == 200
+    finally:
+        event.remove(db.engine, 'before_cursor_execute', _count)
+    return len(counted)
+
+
+def test_registry_query_count_does_not_grow_with_courses(client, admin):
+    """Реєстр не має дорожчати з кожним курсом.
+
+    Рядок реєстру обходить `course.instances`, щоб знайти перевизначення тесту,
+    і без selectinload кожен курс тягнув окремий запит за своїми проведеннями.
+
+    Міряємо ПРИРІСТ, а не абсолют: постійна ціна сторінки залежить від речей
+    поза цим тестом, і поріг на абсолютне число ламався б від чужих тестів.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    from app.models.course_instance import CourseInstance
+
+    _login(client, admin)
+    baseline = _count_registry_selects(client)
+
+    for _ in range(8):
+        course = _course()
+        for _ in range(2):
+            db.session.add(CourseInstance(
+                course_id=course.id, status='published', event_format='offline',
+                start_date=datetime.now(timezone.utc) + timedelta(days=10)))
+    db.session.commit()
+
+    grown = _count_registry_selects(client)
+    assert grown - baseline <= 2, (
+        f'вісім курсів з проведеннями дали +{grown - baseline} SELECT '
+        f'({baseline} -> {grown}) -- схоже, повернувся N+1 по проведеннях'
+    )

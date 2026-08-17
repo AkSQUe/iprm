@@ -57,6 +57,13 @@
     {% elif state.status == statuses.ATTEMPTS_EXHAUSTED %}
     <p>{{ _('Спроби вичерпано. Зверніться до організаторів — вони можуть відкрити додаткову спробу.') }}</p>
     <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--primary">{{ _('Написати нам') }}</a>
+    {% elif state.status == statuses.PROFILE_INCOMPLETE %}
+    {# Анкету зіпсували вже після старту спроби. Без цієї гілки сторінка була б
+       тупиком: бал є, а що робити далі -- незрозуміло. #}
+    <p>{{ _('Щоб спробувати ще раз, спершу заповніть анкету для сертифіката.') }}</p>
+    <a href="{{ url_for('auth.certificate_data') }}" class="apple-btn apple-btn--primary">
+      {{ _('Заповнити анкету') }}
+    </a>
     {% endif %}
     {% endif %}
 

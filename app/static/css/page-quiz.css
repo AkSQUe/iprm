@@ -107,10 +107,25 @@
 .quiz-progress__fill {
   display: block;
   height: 100%;
+  width: 0;
   border-radius: var(--iprm-radius-pill);
   background: var(--iprm-accent);
   transition: width var(--iprm-transition);
 }
+
+/* Ширина -- кроковими класами замість inline-стилю (No Inline Policy), бо JS у
+   цьому потоці свідомо немає. Крок 10%: точне число дає текстовий лічильник
+   поруч, а смуга лише показує рух. */
+.quiz-progress__fill--10 { width: 10%; }
+.quiz-progress__fill--20 { width: 20%; }
+.quiz-progress__fill--30 { width: 30%; }
+.quiz-progress__fill--40 { width: 40%; }
+.quiz-progress__fill--50 { width: 50%; }
+.quiz-progress__fill--60 { width: 60%; }
+.quiz-progress__fill--70 { width: 70%; }
+.quiz-progress__fill--80 { width: 80%; }
+.quiz-progress__fill--90 { width: 90%; }
+.quiz-progress__fill--100 { width: 100%; }
 
 .quiz-progress__label {
   display: flex;

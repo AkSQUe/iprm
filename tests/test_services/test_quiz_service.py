@@ -815,8 +815,6 @@ def test_concurrent_start_reuses_attempt(app, monkeypatch):
     Імітуємо гонку: перший запит уже вставив спробу з тим самим
     attempt_number, тож flush другого падає на unique-констрейнті.
     """
-    from sqlalchemy.exc import IntegrityError
-
     reg, _ = _setup()
     first = quiz_service.start_attempt(reg)
     db.session.commit()
@@ -825,12 +823,168 @@ def test_concurrent_start_reuses_attempt(app, monkeypatch):
     calls = {'n': 0}
     real = quiz_service._unfinished_attempt
 
-    def _blind_once(registration):
+    def _blind_once(registration, context=None):
         calls['n'] += 1
-        return None if calls['n'] == 1 else real(registration)
+        return None if calls['n'] == 1 else real(registration, context)
 
     monkeypatch.setattr(quiz_service, '_unfinished_attempt', _blind_once)
 
     again = quiz_service.start_attempt(reg)
     assert again.id == first.id
     assert QuizAttempt.query.filter_by(registration_id=reg.id).count() == 1
+
+
+# ---- лист із сертифікатом при автовидачі ------------------------------------
+
+def test_passing_sends_certificate_email(app, no_pdf, monkeypatch):
+    """Автовидача мусить надсилати лист, як і ручна.
+
+    Без цього кроку сертифікат з'являвся лише в кабінеті, а сторінка привітання
+    обіцяла «копію надіслано на вашу пошту» -- тобто казала неправду.
+    """
+    from app.services.email_service import EmailService
+
+    sent = []
+    monkeypatch.setattr(EmailService, 'send_certificate',
+                        staticmethod(lambda cert: sent.append(cert.number)))
+
+    reg, _ = _setup()
+    attempt = quiz_service.start_attempt(reg)
+    _answer_all(attempt, 10)
+    quiz_service.submit_attempt(attempt)
+
+    assert sent == [reg.certificate.number]
+
+
+def test_email_failure_does_not_lose_certificate(app, no_pdf, monkeypatch):
+    """Лист -- best-effort: сертифікат уже закомічений."""
+    from app.services.email_service import EmailService
+
+    def _boom(_cert):
+        raise RuntimeError('SMTP недоступний')
+
+    monkeypatch.setattr(EmailService, 'send_certificate', staticmethod(_boom))
+
+    reg, _ = _setup()
+    attempt = quiz_service.start_attempt(reg)
+    _answer_all(attempt, 10)
+    quiz_service.submit_attempt(attempt)
+
+    db.session.expire_all()
+    fresh = db.session.get(EventRegistration, reg.id)
+    assert fresh.certificate is not None
+    assert fresh.quiz_passed_at is not None
+
+
+def test_certificate_email_sent_reads_the_log(app, no_pdf):
+    """Стан відправки відновлюється з журналу, а не з пам'яті запиту."""
+    from app.models.email_log import EmailLog
+
+    reg, _ = _setup()
+    assert quiz_service.certificate_email_sent(reg) is False
+
+    db.session.add(EmailLog(
+        to_email=reg.user.email, subject='Ваш сертифікат',
+        template_name='certificate_issued', status='sent',
+        trigger='certificate', registration_id=reg.id))
+    db.session.flush()
+    assert quiz_service.certificate_email_sent(reg) is True
+
+
+def test_failed_email_log_does_not_count_as_sent(app, no_pdf):
+    from app.models.email_log import EmailLog
+
+    reg, _ = _setup()
+    db.session.add(EmailLog(
+        to_email=reg.user.email, subject='Ваш сертифікат',
+        template_name='certificate_issued', status='failed',
+        trigger='certificate', registration_id=reg.id))
+    db.session.flush()
+    assert quiz_service.certificate_email_sent(reg) is False
+
+
+# ---- статус реєстрації ------------------------------------------------------
+
+def test_passing_marks_registration_completed(app, no_pdf):
+    """Ручна відмітка присутності ставить status='completed' -- автовидача теж.
+
+    Інакше два шляхи «участь відбулась» дають різні стани: кабінет показував би
+    «Підтверджено» людині з сертифікатом, а адмінський фільтр «без сертифіката»
+    (status='completed') таких реєстрацій не бачив би.
+    """
+    reg, _ = _setup()
+    assert reg.status == 'confirmed'
+
+    attempt = quiz_service.start_attempt(reg)
+    _answer_all(attempt, 10)
+    quiz_service.submit_attempt(attempt)
+
+    assert reg.status == 'completed'
+    assert reg.attended is True
+
+
+# ---- батч-контекст ----------------------------------------------------------
+
+def test_batch_context_matches_single_calls(app):
+    """Батч не має бути другою реалізацією правил: результати мусять збігатися."""
+    regs = [_setup()[0] for _ in range(3)]
+    regs[0].payment_status = 'unpaid'
+    regs[1].user.medical_profile.workplace = None
+    db.session.flush()
+
+    batched = quiz_service.eligibility_map(regs)
+    for reg in regs:
+        single = quiz_service.eligibility(reg)
+        assert batched[reg.id].status == single.status
+        assert batched[reg.id].attempts_left == single.attempts_left
+        assert batched[reg.id].missing_fields == single.missing_fields
+
+
+def test_batch_context_sees_in_progress_attempt(app):
+    reg, _ = _setup()
+    quiz_service.start_attempt(reg)
+    db.session.flush()
+
+    state = quiz_service.eligibility_map([reg])[reg.id]
+    assert state.status == quiz_service.IN_PROGRESS
+    assert state.attempt is not None
+
+
+def test_batch_context_handles_instance_override(app):
+    reg, _ = _setup()
+    override = CourseQuiz(instance_id=reg.instance_id, is_active=True)
+    db.session.add(override)
+    db.session.flush()
+
+    assert quiz_service.eligibility_map([reg])[reg.id].quiz is override
+
+
+def test_eligibility_map_empty_input(app):
+    assert quiz_service.eligibility_map([]) == {}
+
+
+# ---- батч представлень питань -----------------------------------------------
+
+def test_attempt_view_models_returns_all_questions(app):
+    reg, _ = _setup()
+    attempt = quiz_service.start_attempt(reg)
+    views = quiz_service.attempt_view_models(attempt)
+
+    assert [v['number'] for v in views] == list(range(1, 11))
+    assert all(set(v['answers'][0]) == {'position', 'text'} for v in views)
+
+
+def test_attempt_view_models_skips_deleted_question(app):
+    reg, _ = _setup()
+    attempt = quiz_service.start_attempt(reg)
+    db.session.delete(db.session.get(QuizQuestion, attempt.question_ids[0]))
+    db.session.flush()
+
+    views = quiz_service.attempt_view_models(attempt)
+    assert len(views) == 9
+
+
+def test_attempt_view_models_never_leak_correctness(app):
+    reg, _ = _setup()
+    attempt = quiz_service.start_attempt(reg)
+    assert 'is_correct' not in repr(quiz_service.attempt_view_models(attempt))

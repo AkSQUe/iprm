@@ -65,7 +65,93 @@ class Eligibility(NamedTuple):
         return self.status in ACTIONABLE
 
 
-def resolve_quiz(instance):
+class BatchContext(NamedTuple):
+    """Заздалегідь вибрані дані для набору реєстрацій -- проти N+1.
+
+    `eligibility()` приймає цей контекст і бере все з нього замість власних
+    запитів. ПРАВИЛА при цьому лишаються в одному місці: контекст постачає
+    дані, а не рішення. Друга реалізація умов допуску розійшлася б із першою --
+    цю помилку в підсистемі вже виправляли (оцінювання жило у двох місцях).
+    """
+    quiz_by_instance: dict
+    quiz_by_course: dict
+    finished_counts: dict
+    unfinished: dict
+    provider_ok: bool
+
+
+def build_batch_context(registrations):
+    """Чотири запити на будь-яку кількість реєстрацій."""
+    from app.models.site_settings import SiteSettings
+    from sqlalchemy import func as sa_func
+    from sqlalchemy.orm import selectinload
+
+    registrations = list(registrations)
+    reg_ids = [r.id for r in registrations]
+    instance_ids = {r.instance_id for r in registrations if r.instance_id}
+    course_ids = {
+        r.instance.course_id for r in registrations
+        if r.instance is not None and r.instance.course_id
+    }
+
+    quizzes = []
+    if instance_ids or course_ids:
+        quizzes = (
+            CourseQuiz.query
+            .options(selectinload(CourseQuiz.questions))
+            .filter(
+                CourseQuiz.instance_id.in_(instance_ids or [0])
+                | CourseQuiz.course_id.in_(course_ids or [0])
+            )
+            .all()
+        )
+
+    finished_counts = {}
+    unfinished = {}
+    if reg_ids:
+        finished_counts = dict(
+            db.session.query(
+                QuizAttempt.registration_id, sa_func.count(QuizAttempt.id),
+            )
+            .filter(QuizAttempt.registration_id.in_(reg_ids),
+                    QuizAttempt.submitted_at.isnot(None))
+            .group_by(QuizAttempt.registration_id)
+            .all()
+        )
+        # Незавершена спроба на реєстрацію одна (нову не почати, доки є ця),
+        # тож простий dict без вибору «найсвіжішої» тут достатній.
+        for attempt in (
+            QuizAttempt.query
+            .filter(QuizAttempt.registration_id.in_(reg_ids),
+                    QuizAttempt.submitted_at.is_(None))
+            .order_by(QuizAttempt.attempt_number)
+            .all()
+        ):
+            unfinished[attempt.registration_id] = attempt
+
+    return BatchContext(
+        quiz_by_instance={q.instance_id: q for q in quizzes if q.instance_id},
+        quiz_by_course={q.course_id: q for q in quizzes if q.course_id},
+        finished_counts=finished_counts,
+        unfinished=unfinished,
+        provider_ok=bool((SiteSettings.get().bpr_provider_number or '').strip()),
+    )
+
+
+def eligibility_map(registrations):
+    """{registration_id: Eligibility} без N+1.
+
+    Кабінет робив +5 SELECT на кожну реєстрацію (заміряно: 10/30/55 запитів на
+    1/5/10 реєстрацій). Навіть заходи без тесту платили два запити.
+    """
+    registrations = list(registrations)
+    if not registrations:
+        return {}
+    context = build_batch_context(registrations)
+    return {reg.id: eligibility(reg, context=context) for reg in registrations}
+
+
+def resolve_quiz(instance, context=None):
     """Чинний тест для проведення: перевизначення проведення -> тест курсу.
 
     Неактивне перевизначення НЕ блокує тест курсу: воно ще чернетка, і поки
@@ -74,13 +160,19 @@ def resolve_quiz(instance):
     if instance is None:
         return None
 
-    override = CourseQuiz.query.filter_by(instance_id=instance.id).first()
+    if context is not None:
+        override = context.quiz_by_instance.get(instance.id)
+    else:
+        override = CourseQuiz.query.filter_by(instance_id=instance.id).first()
     if override is not None and override.is_active:
         return override
 
     if instance.course_id is None:
         return None
-    quiz = CourseQuiz.query.filter_by(course_id=instance.course_id).first()
+    if context is not None:
+        quiz = context.quiz_by_course.get(instance.course_id)
+    else:
+        quiz = CourseQuiz.query.filter_by(course_id=instance.course_id).first()
     return quiz if quiz is not None and quiz.is_active else None
 
 
@@ -110,7 +202,7 @@ def public_quiz_for_course(course):
     return quiz
 
 
-def _bpr_is_configured(instance):
+def _bpr_is_configured(instance, context=None):
     """Чи вистачає даних, щоб видати сертифікат за цей захід.
 
     Перевіряємо ДО того, як пустити людину в тест. Інакше вона склала б його і
@@ -123,7 +215,11 @@ def _bpr_is_configured(instance):
     course = instance.course if instance is not None else None
     if course is None:
         return False
-    if not (SiteSettings.get().bpr_provider_number or '').strip():
+    provider_ok = (
+        context.provider_ok if context is not None
+        else bool((SiteSettings.get().bpr_provider_number or '').strip())
+    )
+    if not provider_ok:
         return False
     if not (course.bpr_event_number or '').strip():
         return False
@@ -131,7 +227,9 @@ def _bpr_is_configured(instance):
     return bool(instance.effective_cpd_points)
 
 
-def _unfinished_attempt(registration):
+def _unfinished_attempt(registration, context=None):
+    if context is not None:
+        return context.unfinished.get(registration.id)
     return (
         QuizAttempt.query
         .filter_by(registration_id=registration.id)
@@ -141,12 +239,14 @@ def _unfinished_attempt(registration):
     )
 
 
-def _finished_attempts_count(registration):
+def _finished_attempts_count(registration, context=None):
     """Витрачені спроби -- лише завершені.
 
     Незавершена спроба не рахується: закрита вкладка чи втрачений зв'язок не
     мусять з'їдати одну з трьох спроб, людина повертається й продовжує ту саму.
     """
+    if context is not None:
+        return context.finished_counts.get(registration.id, 0)
     return (
         QuizAttempt.query
         .filter_by(registration_id=registration.id)
@@ -155,17 +255,21 @@ def _finished_attempts_count(registration):
     )
 
 
-def attempts_left(registration, quiz):
+def attempts_left(registration, quiz, context=None):
     if quiz is None:
         return 0
     allowed = quiz.max_attempts + (registration.quiz_extra_attempts or 0)
-    return max(allowed - _finished_attempts_count(registration), 0)
+    return max(allowed - _finished_attempts_count(registration, context), 0)
 
 
-def eligibility(registration):
-    """Чи може учасник проходити тест зараз -- і якщо ні, то чому."""
+def eligibility(registration, context=None):
+    """Чи може учасник проходити тест зараз -- і якщо ні, то чому.
+
+    `context` -- необов'язковий `BatchContext` для набору реєстрацій: правила
+    ті самі, лише дані вже вибрані (див. `eligibility_map`).
+    """
     instance = registration.instance
-    quiz = resolve_quiz(instance)
+    quiz = resolve_quiz(instance, context)
 
     # Тесту немає -- у кабінеті блок тестування взагалі не показуємо, тож ця
     # перевірка стоїть перед усіма іншими: казати «захід не розпочався» про
@@ -188,17 +292,17 @@ def eligibility(registration):
 
     # Незавершена спроба -- перед рештою заборон: спробу, яку вже почали, треба
     # дати завершити, навіть якщо тим часом змінились налаштування чи анкета.
-    unfinished = _unfinished_attempt(registration)
+    unfinished = _unfinished_attempt(registration, context)
     if unfinished is not None:
         return Eligibility(
             IN_PROGRESS, quiz=quiz, attempt=unfinished,
-            attempts_left=attempts_left(registration, quiz),
+            attempts_left=attempts_left(registration, quiz, context),
         )
 
     if not quiz.is_ready:
         return Eligibility(QUIZ_NOT_READY, quiz=quiz)
 
-    if not _bpr_is_configured(instance):
+    if not _bpr_is_configured(instance, context):
         return Eligibility(BPR_NOT_CONFIGURED, quiz=quiz)
 
     profile = registration.user.medical_profile if registration.user else None
@@ -208,7 +312,7 @@ def eligibility(registration):
             missing_fields=tuple(profile.missing_fields if profile else ()),
         )
 
-    left = attempts_left(registration, quiz)
+    left = attempts_left(registration, quiz, context)
     if left <= 0:
         return Eligibility(ATTEMPTS_EXHAUSTED, quiz=quiz)
 
@@ -391,6 +495,46 @@ def submit_attempt(attempt):
     return attempt
 
 
+def _email_certificate(certificate):
+    """Надіслати сертифікат листом -- best-effort, як в адмінському шляху.
+
+    Автовидача без цього кроку віддавала сертифікат лише в кабінет, а сторінка
+    привітання при цьому обіцяла «копію надіслано на вашу пошту». Ручна видача
+    (admin/routes_registrations.py) лист надсилає окремим викликом -- тут його
+    просто не було.
+
+    Провал не відкочує видачу: сертифікат уже закомічений, і лист можна
+    переслати з картки реєстрації. Відкочуємо лише невдалий INSERT у email_logs,
+    інакше сесія лишилась би зламаною для решти запиту.
+    """
+    from app.services.email_service import EmailService
+
+    try:
+        EmailService.send_certificate(certificate)
+        return True
+    except Exception:
+        db.session.rollback()
+        logger.exception(
+            'Failed to email auto-issued certificate %s', certificate.number)
+        return False
+
+
+def certificate_email_sent(registration):
+    """Чи справді пішов лист із сертифікатом по цій реєстрації.
+
+    Питаємо журнал, а не прапорець у пам'яті: сторінка привітання рендериться
+    ІНШИМ запитом (submit -> result -> done), тож стан відправки має бути
+    відновлюваним. Заодно це враховує повторне надсилання з адмінки.
+    """
+    from app.models.email_log import EmailLog
+
+    return db.session.query(EmailLog.id).filter(
+        EmailLog.registration_id == registration.id,
+        EmailLog.trigger == 'certificate',
+        EmailLog.status == 'sent',
+    ).first() is not None
+
+
 def award_and_issue(registration):
     """Нарахувати бали, позначити присутність і видати сертифікат.
 
@@ -407,6 +551,13 @@ def award_and_issue(registration):
 
     instance = registration.instance
     registration.attended = True
+    # Статус теж переводимо, як це робить ручна відмітка присутності
+    # (admin/routes_registrations.py -> registration_attendance). Інакше два
+    # шляхи «участь відбулась» дають різні стани: кабінет показував би
+    # «Підтверджено» людині з сертифікатом на руках, а адмінський фільтр
+    # «без сертифіката» (status='completed') таких реєстрацій не бачив би.
+    if registration.status != 'cancelled':
+        registration.status = 'completed'
     if registration.cpd_points_awarded is None:
         registration.cpd_points_awarded = (
             instance.effective_cpd_points if instance else None
@@ -425,6 +576,8 @@ def award_and_issue(registration):
         logger.exception(
             'Auto-issue failed after passed quiz: reg=%s', registration.id)
         return None
+
+    _email_certificate(certificate)
 
     audit_logger.info(
         'Certificate %s auto-issued after quiz: reg=%s',
@@ -541,27 +694,19 @@ def validation_errors(quiz):
     return errors
 
 
-def attempt_view_model(attempt, position):
-    """Дані для показу одного питання спроби.
+def _build_view_model(attempt, position, question, total):
+    """Представлення одного питання. Єдине місце, що будує його для учасника.
 
-    Правильність відповіді НЕ потрапляє у результат -- взагалі. Це єдине місце,
-    що будує представлення питання для учасника, тож витік `is_correct` у HTML
-    неможливий за побудовою.
+    Правильність відповіді НЕ потрапляє у результат -- взагалі, тож витік
+    `is_correct` у HTML неможливий за побудовою.
     """
-    question_ids = attempt.question_ids or []
-    if not 0 <= position < len(question_ids):
-        return None
-    question = db.session.get(QuizQuestion, question_ids[position])
-    if question is None:
-        return None
-
     texts = question.answer_texts()
     order = attempt.ordered_answer_indexes(question.id)
     return {
         'question_id': question.id,
         'position': position,
         'number': position + 1,
-        'total': len(question_ids),
+        'total': total,
         'text': question.t('text'),
         # Варіанти вже у порядку цієї спроби; клієнт бачить лише позиції.
         'answers': [
@@ -571,3 +716,33 @@ def attempt_view_model(attempt, position):
         ],
         'chosen': attempt.chosen_position(question.id),
     }
+
+
+def attempt_view_model(attempt, position):
+    """Дані для показу одного питання спроби (None -- позиція поза межами)."""
+    question_ids = attempt.question_ids or []
+    if not 0 <= position < len(question_ids):
+        return None
+    question = db.session.get(QuizQuestion, question_ids[position])
+    if question is None:
+        return None
+    return _build_view_model(attempt, position, question, len(question_ids))
+
+
+def attempt_view_models(attempt):
+    """Представлення ВСІХ питань спроби -- одним запитом.
+
+    Сторінка звірки раніше кликала `attempt_view_model` у циклі, тобто робила
+    окремий SELECT на кожне питання (десять на сторінку). Видалені питання
+    просто пропускаються: сама звірка нічого не оцінює.
+    """
+    ids = attempt.question_ids or []
+    if not ids:
+        return []
+    questions = {
+        q.id: q for q in QuizQuestion.query.filter(QuizQuestion.id.in_(ids))
+    }
+    return [
+        _build_view_model(attempt, position, questions[qid], len(ids))
+        for position, qid in enumerate(ids) if qid in questions
+    ]
