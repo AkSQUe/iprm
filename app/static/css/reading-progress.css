@@ -15,7 +15,7 @@
   display: block;
   height: 100%;
   width: 0;
-  background: linear-gradient(90deg, var(--iprm-accent, #7055a4), var(--apple-purple-mid, #9b59b6));
+  background: linear-gradient(90deg, var(--iprm-accent, #7437c9), var(--apple-purple-mid, #9b59b6));
   transition: width 0.1s linear;
 }
 
@@ -28,7 +28,7 @@
   height: 44px;
   border-radius: 50%;
   border: none;
-  background: var(--iprm-accent, #7055a4);
+  background: var(--iprm-accent, #7437c9);
   color: #fff;
   font-size: 20px;
   line-height: 1;
@@ -47,11 +47,11 @@
 }
 
 .iprm-to-top:hover {
-  background: var(--iprm-accent-hover, #5d4691);
+  background: var(--iprm-accent-hover, #6229ae);
 }
 
 .iprm-to-top:focus-visible {
-  outline: 2px solid var(--iprm-accent, #7055a4);
+  outline: 2px solid var(--iprm-accent, #7437c9);
   outline-offset: 3px;
 }
 

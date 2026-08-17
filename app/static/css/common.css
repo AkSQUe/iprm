@@ -3,22 +3,30 @@
 :root {
   color-scheme: light;
   --iprm-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  --iprm-dark: #1a1a2e;
-  --iprm-text: #1d1d1f;
-  --iprm-text-light: #86868b;
-  --iprm-bg: #f5f5f7;
+  --iprm-dark: #1d0838;
+  --iprm-text: #17131d;
+  --iprm-text-light: #625a6d;
+  --iprm-bg: #f7f4fb;
   --iprm-white: #fff;
   /* Текст поверх акцентного/тёмного тла. Лишається світлим в обох темах
      (на відміну від --iprm-white, що у dark стає темною поверхнею). */
   --iprm-on-accent: #fff;
-  --iprm-border: rgba(0, 0, 0, 0.06);
-  --iprm-radius: 24px;
-  --iprm-radius-md: 16px;
+  /* Текст поверх золотого (акцент дії). Золото світле, тож білий по ньому
+     нечитабельний -- потрібен тёмний тёплий, і в обох темах той самий. */
+  --iprm-on-accent-warm: #352000;
+  --iprm-border: #e9e4ef;
+  /* Помітніша межа: outline-кнопка, плашки, поля вводу. Тонка --iprm-border
+     на них зникає, а брендова рамка читається як активний стан. */
+  --iprm-border-strong: #d8c7ed;
+  --iprm-radius: 22px;
+  --iprm-radius-md: 14px;
   --iprm-radius-sm: 12px;
+  /* Великий радіус: hero, ROI-панель, тёмні оболонки секцій */
+  --iprm-radius-lg: 28px;
   --iprm-radius-pill: 980px;
   --iprm-transition: 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --iprm-max-content: 1200px;
-  --iprm-card-bg: #f5f5f7;
+  --iprm-card-bg: #f7f4fb;
 
   /* Висота фіксованої шапки. --iprm-header-h -- ПОВНА висота разом із нижнім
      бордером; саме на неї відступає body і від неї рахуються всі похідні
@@ -31,34 +39,43 @@
   /* Surfaces, dividers, shadows (theme-aware) */
   --iprm-surface-glass: rgba(255, 255, 255, 0.72);
   --iprm-surface-menu: rgba(255, 255, 255, 0.95);
-  --iprm-divider: rgba(0, 0, 0, 0.06);
+  --iprm-divider: #e9e4ef;
   --iprm-shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.04);
   --iprm-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.12);
   --iprm-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.18);
-  --iprm-shadow-card: 0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  /* Тінь картки -- бренд у прозорості замість нейтрального чорного: на
+     фіолетуватому тлі секцій сірий підпал читався як брудна пляма. */
+  --iprm-shadow-card: 0 18px 55px rgba(46, 13, 87, 0.12);
+  /* Ледь помітна тінь звичайної картки (в еталона всі .card саме така) */
+  --iprm-shadow-soft: 0 8px 28px rgba(46, 13, 87, 0.04);
   --iprm-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.2);
 
   /* Brand colors */
-  --iprm-accent: #7055a4;
-  --iprm-accent-hover: #5d4691;
-  --iprm-accent-light: #ede9f6;
-  --iprm-btn-bg: #7055a4;
-  --iprm-btn-bg-hover: #5d4691;
-  --iprm-nav-active: #7055a4;
-  --iprm-hero-grad-1: #2d1b4e;
-  --iprm-hero-grad-2: #3b2368;
-  --iprm-hero-grad-3: #4a2d80;
-  --iprm-hero-glow: rgba(112, 85, 164, 0.2);
-  --iprm-hero-glow-dim: rgba(232, 121, 58, 0.1);
-  --iprm-placeholder-grad: linear-gradient(135deg, #ede9f6 0%, #e8e0f4 50%, #fef0e6 100%);
-  --iprm-molecular-rgb: 140, 110, 180;
+  --iprm-accent: #7437c9;
+  --iprm-accent-hover: #6229ae;
+  --iprm-accent-light: #f1e9fb;
+  --iprm-btn-bg: #7437c9;
+  --iprm-btn-bg-hover: #6229ae;
+  --iprm-nav-active: #7437c9;
+  --iprm-hero-grad-1: #43127c;
+  --iprm-hero-grad-2: #2e0d57;
+  --iprm-hero-grad-3: #1d0838;
+  --iprm-hero-glow: rgba(144, 72, 239, 0.38);
+  --iprm-hero-glow-dim: rgba(255, 173, 22, 0.21);
+  --iprm-placeholder-grad: linear-gradient(135deg, #f1e9fb 0%, #e8ddf8 50%, #fff8e9 100%);
+  --iprm-molecular-rgb: 144, 72, 239;
 
   /* Status / feedback colors */
   --iprm-error: #ef4444;
   --iprm-error-light: #fecaca;
   --iprm-error-bg: #fef2f2;
   --iprm-error-text: #dc2626;
-  --iprm-success: #16a34a;
+  /* Зелений еталона -- #2c8b68, але він дає лише 4.20 на білому й провалює AA
+     для звичайного тексту (а токен використовується як колір тексту в бейджах
+     і підказці окупності, не лише як галочка). Затемнено до найближчого
+     відтінку тієї ж родини, який проходить AA і на білому (5.28), і на
+     фіолетуватому тлі секцій (4.85). */
+  --iprm-success: #1f7a56;
   --iprm-success-bg: #f0fdf4;
   --iprm-success-light: #bbf7d0;
   --iprm-info: #0369a1;
@@ -72,22 +89,40 @@
   --iprm-neutral-bg: #e5e7eb;
   --iprm-neutral-text: #4b5563;
 
+  /* Тепла ІНФОРМАЦІЙНА родина -- окремо від золота.
+     Золото тепер означає ДІЮ (кнопка, прапорець тарифу), тому все, що раніше
+     фарбувалось у помаранчевий як мітка (тип заходу, бейдж міста офлайн),
+     мусить читатись як мітка, а не як клікабельний елемент. Розводимо їх за
+     відтінком: мітка -- терракота, дія -- золото. */
+  --iprm-warm-bg: #fdf1e7;
+  --iprm-warm-text: #a8420a;
+  --iprm-warm-border: #f7dac3;
+
   /* Apple-style neutral palette */
-  --apple-black: #1d1d1f;
-  --apple-gray-dark: #424245;
-  --apple-gray: #86868b;
+  --apple-black: #17131d;
+  --apple-gray-dark: #4f4758;
+  --apple-gray: #625a6d;
   --apple-gray-light: #d2d2d7;
-  --apple-section-bg: #f5f5f7;
+  --apple-section-bg: #f7f4fb;
   --apple-purple-light: #c4b5fd;
-  --apple-orange: #e8913a;
-  --apple-purple-mid: #9b59b6;
-  --apple-orange-light: #fef0e6;
-  --apple-grad-dark-1: #2d1b4e;
-  --apple-grad-dark-2: #3b2368;
-  --apple-grad-dark-3: #4a2d80;
-  --apple-accent-rgb: 112, 85, 164;
-  --apple-orange-rgb: 232, 145, 58;
-  --apple-black-rgb: 29, 29, 31;
+  --apple-orange: #ffad16;
+  --apple-purple-mid: #9048ef;
+  /* Світлий фіолет для градієнтів НА ТЁМНОМУ (той самий в обох темах) */
+  --apple-purple-soft: #c9aaff;
+  --apple-orange-light: #fff8e9;
+  /* Дві похідні золота, бо саме золото читабельне лише як тло:
+     --gold-soft -- текст на тёмному, --gold-ink -- текст на світлому. */
+  --apple-gold-soft: #ffd47c;
+  --apple-gold-ink: #a35f00;
+  --apple-grad-dark-1: #43127c;
+  --apple-grad-dark-2: #2e0d57;
+  --apple-grad-dark-3: #1d0838;
+  /* rgb-трійки живуть у десятках rgba(var(--...), .12) -- тіней, ореолів і
+     напівпрозорих плашок. Забути їх при зміні hex означає старі тіні під
+     новими кнопками, тож вони мусять їхати разом із бренд-кольорами. */
+  --apple-accent-rgb: 116, 55, 201;
+  --apple-orange-rgb: 255, 173, 22;
+  --apple-black-rgb: 23, 19, 29;
 
   /* Badge colors */
   --iprm-badge-draft-bg: #f3f4f6;
@@ -133,21 +168,28 @@
   --iprm-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.55);
   --iprm-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
   --iprm-shadow-card: 0 10px 30px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --iprm-shadow-soft: 0 8px 28px rgba(0, 0, 0, 0.35);
   --iprm-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.65);
+  --iprm-border-strong: rgba(255, 255, 255, 0.18);
 
   /* Brand colors: акцент піднято для контрасту на тёмному тлі.
-     Кнопки лишаються насиченими (білий текст на великому елементі). */
-  --iprm-accent: #b39ae0;
-  --iprm-accent-hover: #c4b0ea;
-  --iprm-accent-light: rgba(179, 154, 224, 0.14);
-  --iprm-btn-bg: #7d5fb8;
-  --iprm-btn-bg-hover: #8d6fc8;
-  --iprm-nav-active: #b39ae0;
+     Насичений #7437c9 світлої теми дає на #1c1c22 лише 2.53 -- як колір
+     тексту він нечитабельний, тож для тексту й іконок беремо світлішу
+     похідну (#b48cff, 6.57 на картці й 7.17 на тлі сторінки).
+     Кнопки -- окремий токен: там текст білий по насиченому тлу, і тло має
+     бути достатньо тёмним для білого (5.04) і достатньо світлим, щоб
+     відділятись від картки (3.36). */
+  --iprm-accent: #b48cff;
+  --iprm-accent-hover: #c4a4ff;
+  --iprm-accent-light: rgba(180, 140, 255, 0.14);
+  --iprm-btn-bg: #8a4ddb;
+  --iprm-btn-bg-hover: #8f55e0;
+  --iprm-nav-active: #b48cff;
   /* Hero-градієнти вже тёмні -- лишаємо; тло-glow трохи підсилюємо */
-  --iprm-hero-glow: rgba(112, 85, 164, 0.28);
-  --iprm-hero-glow-dim: rgba(232, 121, 58, 0.14);
-  --iprm-placeholder-grad: linear-gradient(135deg, #241d33 0%, #2a2140 50%, #33262e 100%);
-  --iprm-molecular-rgb: 160, 130, 210;
+  --iprm-hero-glow: rgba(144, 72, 239, 0.42);
+  --iprm-hero-glow-dim: rgba(255, 173, 22, 0.24);
+  --iprm-placeholder-grad: linear-gradient(135deg, #251b38 0%, #2b1f47 50%, #33291c 100%);
+  --iprm-molecular-rgb: 180, 140, 255;
 
   /* Status / feedback: світлий текст на приглушеному напівпрозорому тлі */
   --iprm-error: #ff6b6b;
@@ -168,13 +210,31 @@
   --iprm-neutral-bg: rgba(255, 255, 255, 0.08);
   --iprm-neutral-text: #c7c7cc;
 
+  /* Тепла інформаційна родина: терракота світлішає до читабельної на
+     #1c1c22 (8.10), тло стає напівпрозорим, як решта тёмних плашок */
+  --iprm-warm-bg: rgba(255, 154, 92, 0.16);
+  --iprm-warm-text: #ff9a5c;
+  --iprm-warm-border: rgba(255, 154, 92, 0.3);
+
   /* Apple-style neutral palette (інверсія світлот) */
   --apple-black: #f5f5f7;
   --apple-gray-dark: #c7c7cc;
   --apple-gray: #98989d;
   --apple-gray-light: #48484a;
   --apple-section-bg: #1c1c22;
-  --apple-orange-light: rgba(232, 145, 58, 0.16);
+  /* Золото світлішає: #ffad16 на #1c1c22 дає 9.08, але поруч із піднятим
+     бренд-акцентом виглядає брудним, тому беремо #ffc247 (10.54). */
+  --apple-orange: #ffc247;
+  --apple-orange-light: rgba(255, 194, 71, 0.16);
+  /* На тёмному "чорнило по світлому теплому" не існує -- воно збігається
+     з самим золотом. Градієнтний фіолет теж мусить світлішати. */
+  --apple-gold-ink: #ffc247;
+  --apple-purple-mid: #c58cff;
+  /* --apple-accent-rgb / --apple-orange-rgb СВІДОМО не перевизначаємо: вони
+     живуть у тінях та ореолах (rgba(var(--...), .12)), а тінь на тёмному
+     мусить лишатись насиченою -- світліша трійка дала б сірий пух.
+     --apple-gold-soft і --iprm-on-accent-warm теж однакові в обох темах:
+     перший завжди лежить на тёмному, другий -- завжди на золоті. */
 
   /* Badge colors */
   --iprm-badge-draft-bg: rgba(255, 255, 255, 0.08);
@@ -1251,30 +1311,26 @@ select.badge-select:disabled {
   margin-left: 2px;
 }
 
-/* Офлайн -- найпомітніший (помаранчевий-наголос), бо це критична інфо */
+/* Офлайн -- найпомітніший (теплий наголос), бо це критична інфо.
+   Свідомо ТЕРРАКОТА, а не золото: золото стало кольором дії, і золотий
+   бейдж міста читався б як кнопка. Значення тепер у токенах теплої
+   інформаційної родини -- разом із бейджем типу заходу. */
 .iprm-loc-badge--offline {
-  background: #fff1e6;
-  color: #c2410c;
-  border: 1px solid #fed7aa;
+  background: var(--iprm-warm-bg);
+  color: var(--iprm-warm-text);
+  border: 1px solid var(--iprm-warm-border);
 }
 
-/* Онлайн -- спокійний блакитний */
+/* Онлайн -- спокійний брендовий */
 .iprm-loc-badge--online {
-  background: var(--iprm-accent-light, #ede9f6);
-  color: var(--iprm-accent, #7055a4);
-  border: 1px solid #d8cdf0;
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
+  border: 1px solid var(--iprm-border-strong);
 }
 
-/* Тёмна тема: світлі помаранчеві/бузкові плашки вище задані константами (для
-   світлої теми вони точніші за токени), тож тут перекриваємо їх токенами.
-   Раніше бейдж жив лише в розкладі й на реєстрації, тепер він у кожній картці
-   каталогу -- світла плашка на тёмній картці била б в очі. */
-[data-theme="dark"] .iprm-loc-badge--offline {
-  background: var(--iprm-warning-bg);
-  color: var(--iprm-warning-text);
-  border-color: var(--iprm-warning-border);
-}
-
+/* Тёмна тема: обидві плашки тепер їдуть на токенах, тож окремих перекриттів
+   для кольорів більше не треба -- лишається тільки межа онлайн-варіанта,
+   яку варто в'язати до самого акценту, а не до загальної межі. */
 [data-theme="dark"] .iprm-loc-badge--online {
   border-color: color-mix(in oklch, var(--iprm-accent), transparent 65%);
 }

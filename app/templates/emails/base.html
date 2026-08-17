@@ -50,14 +50,17 @@
         }
     </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #F5F5F7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-    <!-- Preview text -->
-    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all; font-size: 1px; line-height: 1px; color: #F5F5F7;" aria-hidden="true">
+<body style="margin: 0; padding: 0; background-color: #F1E9FB; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+    <!-- Preview text.
+         Колір тексту тут МУСИТЬ дорівнювати тлу сторінки (#F1E9FB):
+         частина клієнтів ігнорує display:none, і тоді прехедер видно
+         рядком над логотипом. Змінюючи тло листа, зміни й цей колір. -->
+    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all; font-size: 1px; line-height: 1px; color: #F1E9FB;" aria-hidden="true">
         {% block preview_text %}{% endblock %}
         &#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;
     </div>
 
-    <table role="presentation" style="width: 100%; background-color: #F5F5F7;" cellpadding="0" cellspacing="0" border="0">
+    <table role="presentation" style="width: 100%; background-color: #F1E9FB;" cellpadding="0" cellspacing="0" border="0">
         <tr>
             <td style="padding: 40px 0;" align="center">
 
@@ -65,7 +68,7 @@
 
                     <!-- Header -->
                     <tr>
-                        <td style="padding: 32px 40px 24px 40px; text-align: center; border-bottom: 1px solid #E5E7EB;">
+                        <td style="padding: 32px 40px 24px 40px; text-align: center; border-bottom: 1px solid #E9E4EF;">
                             {% block header %}
                             <a href="{{ site_settings.website_url }}" style="text-decoration: none;">
                                 <img src="{{ site_settings.website_url }}/static/img/email-logo.png"
@@ -85,12 +88,12 @@
 
                     <!-- Footer -->
                     <tr>
-                        <td style="padding: 32px 40px; background-color: #F9FAFB; border-top: 1px solid #E5E7EB; border-radius: 0 0 8px 8px;">
+                        <td style="padding: 32px 40px; background-color: #F7F4FB; border-top: 1px solid #E9E4EF; border-radius: 0 0 8px 8px;">
                             {% block footer %}
                             <table role="presentation" style="width: 100%;" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
                                     <td style="text-align: center; padding-bottom: 16px;">
-                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #6B7280;">
+                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #625A6D;">
                                             {{ site_settings.company_name }} &mdash; {{ site_settings.company_full_name }}
                                         </p>
                                     </td>
@@ -100,11 +103,11 @@
                                         <table role="presentation" style="margin: auto;" cellpadding="0" cellspacing="0" border="0">
                                             <tr>
                                                 <td style="padding: 0 8px;">
-                                                    <a href="{{ site_settings.website_url }}" style="text-decoration: none; color: #7055a4; font-size: 14px; font-weight: 500;">{{ _('Сайт') }}</a>
+                                                    <a href="{{ site_settings.website_url }}" style="text-decoration: none; color: #7437C9; font-size: 14px; font-weight: 500;">{{ _('Сайт') }}</a>
                                                 </td>
-                                                <td style="padding: 0 8px; color: #D1D5DB;">|</td>
+                                                <td style="padding: 0 8px; color: #D8C7ED;">|</td>
                                                 <td style="padding: 0 8px;">
-                                                    <a href="{{ site_settings.website_url }}/contact" style="text-decoration: none; color: #6B7280; font-size: 14px;">{{ _('Контакти') }}</a>
+                                                    <a href="{{ site_settings.website_url }}/contact" style="text-decoration: none; color: #625A6D; font-size: 14px;">{{ _('Контакти') }}</a>
                                                 </td>
                                             </tr>
                                         </table>
@@ -112,7 +115,7 @@
                                 </tr>
                                 <tr>
                                     <td style="text-align: center;">
-                                        <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #9CA3AF;">
+                                        <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #6E667A;">
                                             {{ _('Ви отримали цей лист, бо зареєстровані на платформі ІПРМ.') }}
                                         </p>
                                     </td>

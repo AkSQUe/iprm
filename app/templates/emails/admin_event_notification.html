@@ -16,19 +16,19 @@
 {% block preview_text %}{{ kind_label or 'Подія в системі' }}: {{ event.title if event else 'захід' }}{% endblock %}
 
 {% block content %}
-    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 26px; font-weight: 700; color: #111827; line-height: 1.25;">
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 26px; font-weight: 700; color: #17131D; line-height: 1.25;">
         {{ kind_label or 'Admin сповіщення' }}
     </h1>
 
     {% if event %}
-    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
         {{ event.title }}
     </p>
     {% endif %}
 
     {% if registration %}
     {{ section_title('Учасник') }}
-    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
         <tr>
             <td style="padding: 20px 24px;">
                 {{ detail_row("Ім'я", (registration.user.full_name or registration.user.email) if registration.user else '–', LW) }}
@@ -56,7 +56,7 @@
     </table>
 
     {{ section_title('Оплата') }}
-    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
         <tr>
             <td style="padding: 20px 24px;">
                 {{ detail_row('Статус', registration.payment_status_label, LW) }}
@@ -89,7 +89,7 @@
 
     {% if event and (event.start_date or event.location) %}
     {{ section_title('Захід') }}
-    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
         <tr>
             <td style="padding: 20px 24px;">
                 {% if event.start_date %}
@@ -109,7 +109,7 @@
 
     {{ spacer(8) }}
 
-    <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
+    <p style="margin: 0; font-size: 13px; color: #6E667A; line-height: 1.5;">
         Автоматичне сповіщення. Налаштувати одержувачів можна у
         розділі «Сповіщення → Одержувачі» адмінки.
     </p>

@@ -6,11 +6,11 @@
 {% block preview_text %}{{ _('Підтвердіть email для доступу до всіх функцій ІПРМ') }}{% endblock %}
 
 {% block content %}
-    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
         {{ _('Підтвердіть ваш email') }}
     </h1>
 
-    <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+    <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
         {{ user.first_name or _('Вітаємо') }}, {{ _('дякуємо за реєстрацію в ІПРМ. Натисніть кнопку нижче, щоб підтвердити вашу email-адресу.') }}
     </p>
 
@@ -18,14 +18,14 @@
 
     {{ spacer(16) }}
 
-    <p style="margin: 0 0 8px 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
+    <p style="margin: 0 0 8px 0; font-size: 13px; color: #6E667A; line-height: 1.5;">
         {{ _('Посилання дійсне протягом 24 годин. Якщо ви не реєструвалися на ІПРМ, просто проігноруйте цей лист.') }}
     </p>
 
-    <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
+    <p style="margin: 0; font-size: 13px; color: #6E667A; line-height: 1.5;">
         {{ _('Якщо кнопка не працює, скопіюйте це посилання у браузер:') }}
     </p>
-    <p style="margin: 4px 0 0 0; font-size: 12px; color: #7055a4; word-break: break-all; line-height: 1.5;">
+    <p style="margin: 4px 0 0 0; font-size: 12px; color: #7437C9; word-break: break-all; line-height: 1.5;">
         {{ confirm_url }}
     </p>
 {% endblock %}

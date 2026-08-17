@@ -262,7 +262,7 @@
 .cert-progress__fill {
   height: 100%;
   width: 5%;
-  background: linear-gradient(90deg, #f0a02a, #b85a7e, #7055a4);
+  background: linear-gradient(90deg, #f0a02a, #b85a7e, #7437c9);
   transition: width 0.4s ease;
 }
 .cert-progress__text {

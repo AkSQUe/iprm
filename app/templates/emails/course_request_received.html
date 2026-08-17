@@ -6,23 +6,23 @@
 {% block preview_text %}{% trans title=course.title if course else '' %}Дякуємо! Ми отримали ваш запит на курс "{{ title }}".{% endtrans %}{% endblock %}
 
 {% block content %}
-    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
         {{ _('Дякуємо за ваш запит!') }}
     </h1>
 
-    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
         {{ _("Ми отримали ваш запит на курс і вже опрацьовуємо його. Як тільки буде заплановано чергове проведення – ми обов'язково зв'яжемось з вами на цю адресу.") }}
     </p>
 
     {{ alert_success(_('Запит зареєстровано'), _('Ваше повідомлення успішно надіслано команді ІПРМ.')) }}
 
-    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #625A6D; text-transform: uppercase; letter-spacing: 0.05em;">
         {{ _('Деталі запиту') }}
     </p>
-    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
         <tr>
             <td style="padding: 20px 24px;">
-                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #17131D; line-height: 1.3;">
                     {{ course.title if course else '–' }}
                 </p>
                 {{ detail_row("Email", request_obj.email) }}
@@ -35,10 +35,10 @@
     </table>
 
     {% if request_obj.message %}
-    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em;">
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #625A6D; text-transform: uppercase; letter-spacing: 0.05em;">
         {{ _('Ваше повідомлення') }}
     </p>
-    <div style="padding: 16px 20px; background-color: #F9FAFB; border-left: 3px solid #7055a4; border-radius: 4px; margin-bottom: 24px; font-size: 15px; color: #374151; line-height: 1.6; white-space: pre-line;">{{ request_obj.message }}</div>
+    <div style="padding: 16px 20px; background-color: #F7F4FB; border-left: 3px solid #7437C9; border-radius: 4px; margin-bottom: 24px; font-size: 15px; color: #3A3345; line-height: 1.6; white-space: pre-line;">{{ request_obj.message }}</div>
     {% endif %}
 
     {% if course_url %}
@@ -47,7 +47,7 @@
 
     {{ spacer(8) }}
 
-    <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
+    <p style="margin: 0; font-size: 13px; color: #6E667A; line-height: 1.5;">
         {{ _("Якщо ви не залишали цей запит – проігноруйте лист. Це автоматичне повідомлення, відповідати на нього не обов'язково.") }}
     </p>
 {% endblock %}

@@ -45,7 +45,7 @@
 .regalia-link__upload {
   position: absolute; inset: 0;
   width: 100%; height: 100%; border: none; cursor: pointer;
-  background: rgba(0, 0, 0, 0.04); color: var(--iprm-accent, #7055a4);
+  background: rgba(0, 0, 0, 0.04); color: var(--iprm-accent, #7437c9);
   display: inline-flex; align-items: center; justify-content: center;
 }
 .regalia-link__thumb-img[src] + .regalia-link__upload {

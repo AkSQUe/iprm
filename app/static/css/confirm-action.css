@@ -78,11 +78,11 @@
 }
 
 .iprm-confirm__btn--ok {
-  background: var(--iprm-accent, #7055a4);
+  background: var(--iprm-accent, #7437c9);
   color: #fff;
 }
 .iprm-confirm__btn--ok:hover {
-  background: var(--iprm-accent-hover, #5d4691);
+  background: var(--iprm-accent-hover, #6229ae);
 }
 
 .iprm-confirm__btn--danger {
@@ -93,7 +93,7 @@
 }
 
 .iprm-confirm__btn:focus-visible {
-  outline: 2px solid var(--iprm-accent, #7055a4);
+  outline: 2px solid var(--iprm-accent, #7437c9);
   outline-offset: 2px;
 }
 

@@ -1,6 +1,59 @@
 /* apple-pages.css -- Apple-style shared styles for all public pages (concept v2) */
 /* Easing curves defined in common.css :root */
 
+/* ========== SCROLL ANCHORS ==========
+
+   82px -- метрика еталона (шапка 72px + 10px повітря). common.css рахує це
+   від --iprm-header-h і зараз віддає 65px, бо шапка ще 57px: WS-1 підіймає її
+   до 72px, і числа зійдуться. До того моменту трохи більше повітря під якорем
+   безпечніше, ніж заголовок, який упирається в шапку. Правило живе тут, а не
+   в common.css, бо стосується лише публічних сторінок -- адмінка з власною
+   геометрією шапки лишається на розрахунку. */
+html {
+  scroll-padding-top: 82px;
+}
+
+/* ========== EYEBROW (плашка над заголовком секції) ==========
+
+   Скоуплено на .apple-page (0,2,0), щоб не сперечатися з базовим
+   .iprm-eyebrow у course-landing.css (0,1,0) -- той файл підключається
+   пізніше й інакше перебивав би цей примітив. */
+
+.apple-page .iprm-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 7px 13px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-accent-light);
+  color: var(--iprm-nav-active);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Точка перед текстом успадковує колір тексту, тож тёмний варіант нижче
+   не мусить її фарбувати окремо. */
+.apple-page .iprm-eyebrow::before {
+  content: '';
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Тёмна поверхня (hero, оболонка відгуків, секція заявки). Це НЕ тёмна тема:
+   такі поверхні тёмні в обох темах, тож варіант вибирається класом, а не
+   [data-theme]. Бренд на тёмному нечитабельний -- беремо м'яке золото. */
+.apple-page .iprm-eyebrow--on-dark {
+  color: var(--apple-gold-soft);
+  background: rgba(var(--apple-orange-rgb), 0.13);
+  border: 1px solid rgba(var(--apple-orange-rgb), 0.25);
+}
+
 /* ========== INTERNAL HERO (compact, white, centered) ========== */
 
 .apple-page .iprm-hero-wrap {
@@ -43,22 +96,33 @@
   text-align: center;
 }
 
+/* Клемп і метрики h1 еталона; вага 900 доступна після розблокування осі
+   wght у fonts.css -- до того браузер синтезував жирність із 800. */
 .apple-page .iprm-hero__title {
-  font-size: clamp(2rem, 5vw, 3.25rem);
-  font-weight: 800;
+  font-size: clamp(40px, 5.5vw, 72px);
+  font-weight: 900;
   letter-spacing: -0.035em;
-  line-height: 1.07;
+  line-height: 1.12;
   color: var(--apple-black);
-  margin-bottom: 16px;
+  margin-bottom: 22px;
 }
 
-/* Глобальний градієнтний текст -- використовується на apple-page, error-page, index */
+/* Глобальний градієнтний текст -- використовується на apple-page, error-page, index.
+
+   Хвіст градієнта -- НЕ саме золото: #ffad16 як текст на білому дає 1.9, тобто
+   останнє слово заголовка ставало нечитабельним. Беремо тёмнішу похідну золота
+   (--apple-gold-ink, 5.01 на білому), а на тёмних поверхнях -- окремий
+   модифікатор, бо там градієнт мусить світлішати, а не темніти. */
 .apple-gradient-text {
-  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 40%, var(--apple-orange) 100%);
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 42%, var(--apple-gold-ink) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   padding-block: 0.05em;
+}
+
+.apple-gradient-text--on-dark {
+  background-image: linear-gradient(135deg, var(--apple-purple-soft) 0%, var(--apple-gold-soft) 100%);
 }
 
 .apple-page .iprm-hero__subtitle {
@@ -98,43 +162,86 @@
   background: var(--apple-section-bg);
 }
 
-/* Section header centered */
+/* ---------- Заголовковий блок секції: eyebrow + h2 + lede ----------
+
+   Обгортка .apple-section-head тримає центрування й один відступ під усім
+   блоком (46px за еталоном). Класи заголовка й ліда працюють і без обгортки:
+   на сайті сотні секцій, які їх уже використовують поодинці. */
+
+.apple-page .apple-section-head {
+  text-align: center;
+  margin-bottom: 46px;
+}
+
 .apple-page .iprm-section__title {
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.07;
+  font-size: clamp(31px, 4vw, 50px);
+  font-weight: 880;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
   color: var(--apple-black);
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+}
+
+/* Заголовок без ліда сам відповідає за відступ під блоком -- інакше 18px
+   лишали б h2 приклеєним до першої картки. */
+.apple-page .iprm-section__title:not(:has(+ .iprm-section__subtitle)) {
+  margin-bottom: 46px;
+}
+
+.apple-page .apple-section-head .iprm-section__title,
+.apple-page .apple-section-head .iprm-section__subtitle {
+  margin-bottom: 0;
+}
+
+.apple-page .apple-section-head .iprm-section__title:has(+ .iprm-section__subtitle) {
+  margin-bottom: 18px;
 }
 
 .apple-page .iprm-section__subtitle {
-  font-size: 17px;
+  max-width: 760px;
+  margin: 0 auto 46px;
+  font-size: 18px;
+  line-height: 1.6;
   color: var(--apple-gray);
   text-align: center;
-  margin-bottom: 64px;
 }
 
-/* ========== APPLE BUTTONS (global, 3-state) ========== */
+/* ========== APPLE BUTTONS (global, 3-state) ==========
+
+   Метрики еталона: висота 54px, падінг 14x24, радіус 12px, вага 800,
+   hover -- підйом на 2px без масштабування. Капсульний варіант із common.css
+   лишається чинним для адмінки: там .apple-page немає, а CSS адмінки
+   переїжджає в нову палітру окремим етапом.
+
+   justify-content: center у базі, бо inline-flex без нього притискає текст
+   до лівого краю щойно кнопку розтягують на всю ширину картки. */
 
 .apple-page .apple-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  min-height: 54px;
+  padding: 14px 24px;
+  border: 1px solid transparent;
+  border-radius: var(--iprm-radius-sm);
   font-size: 1.0625rem;
-  font-weight: 500;
-  border: none;
-  padding: 14px 32px;
-  border-radius: var(--iprm-radius-pill);
+  font-weight: 800;
+  line-height: 1.2;
   cursor: pointer;
   text-decoration: none;
   font-family: var(--iprm-font);
   transition:
-    transform 0.15s var(--ease-interact),
-    box-shadow 0.15s var(--ease-interact),
-    background-color 0.15s var(--ease-interact),
-    color 0.15s var(--ease-interact);
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.apple-page .apple-btn:hover {
+  transform: translateY(-2px);
 }
 
 /* Кнопка на всю ширину контейнера -- для карток купівлі й форм.
@@ -143,24 +250,54 @@
 .apple-page .apple-btn--full {
   display: flex;
   width: 100%;
-  justify-content: center;
   text-align: center;
 }
 
 .apple-page .apple-btn--primary {
-  background: var(--iprm-nav-active);
+  background: var(--iprm-btn-bg);
   color: var(--iprm-on-accent);
+  box-shadow: 0 10px 24px rgba(var(--apple-accent-rgb), 0.27);
 }
 
 .apple-page .apple-btn--primary:hover {
-  background: var(--iprm-accent-hover);
-  transform: scale(1.02) translateY(-1px);
-  box-shadow: 0 8px 24px rgba(var(--apple-accent-rgb), 0.18);
+  background: var(--iprm-btn-bg-hover);
+  box-shadow: 0 14px 30px rgba(var(--apple-accent-rgb), 0.3);
 }
 
 .apple-page .apple-btn--primary:active {
-  transform: scale(0.98) translateY(0);
+  transform: translateY(0);
   box-shadow: 0 2px 8px rgba(var(--apple-accent-rgb), 0.15);
+}
+
+/* Золото -- головна дія (реєстрація, оплата). Текст тёмний тёплий:
+   білий по золоту дає 1.9, тёмний -- 8.28. */
+.apple-page .apple-btn--accent {
+  background: var(--apple-orange);
+  color: var(--iprm-on-accent-warm);
+  box-shadow: 0 12px 26px rgba(var(--apple-orange-rgb), 0.3);
+}
+
+.apple-page .apple-btn--accent:hover {
+  background: color-mix(in oklch, var(--apple-orange), white 14%);
+  box-shadow: 0 16px 32px rgba(var(--apple-orange-rgb), 0.34);
+}
+
+.apple-page .apple-btn--accent:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(var(--apple-orange-rgb), 0.2);
+}
+
+/* Біла -- другорядна дія НА ТЁМНОМУ (hero, оболонка відгуків). Тло беремо
+   з --iprm-on-accent, а не з --iprm-white: останній у тёмній темі стає
+   піднятою тёмною поверхнею, і кнопка зникла б у градієнті. */
+.apple-page .apple-btn--white {
+  background: var(--iprm-on-accent);
+  color: var(--apple-grad-dark-2);
+}
+
+.apple-page .apple-btn--white:hover {
+  background: var(--iprm-accent-light);
+  color: var(--apple-grad-dark-3);
 }
 
 .apple-page .apple-btn--secondary {
@@ -192,27 +329,30 @@
 
 /* Outline-варіант + compact-розмір. Дублюємо тут із .apple-page-префіксом,
    бо базова .apple-btn (specificity 0,1,1) у цьому файлі перебиває
-   common.css варіант (0,0,1). */
+   common.css варіант (0,0,1).
+
+   Межа -- 1px на --iprm-border-strong, а не 2px брендом: поруч із суцільною
+   брендовою кнопкою товста рамка читалась як другий такий самий заклик.
+   Бренд у межі з'являється лише на hover. Падінг не компенсуємо, бо база
+   вже має border: 1px solid transparent -- геометрія не стрибає. */
 .apple-page .apple-btn--outline {
-  background: transparent;
+  background: var(--iprm-white);
   color: var(--iprm-nav-active);
-  border: 2px solid var(--iprm-nav-active);
-  padding: 12px 30px; /* -2px на border */
+  border-color: var(--iprm-border-strong);
 }
 
 .apple-page .apple-btn--outline:hover {
   background: var(--iprm-accent-light);
+  border-color: var(--iprm-nav-active);
   color: var(--iprm-accent-hover);
-  transform: scale(1.02) translateY(-1px);
 }
 
+/* Compact-розмір: висоту треба знімати явно, бо min-height бази інакше
+   розтягує "маленьку" кнопку до 54px. */
 .apple-page .apple-btn--sm {
+  min-height: 40px;
   padding: 8px 18px;
   font-size: 0.875rem;
-}
-
-.apple-page .apple-btn--outline.apple-btn--sm {
-  padding: 6px 16px; /* -2px на border */
 }
 
 /* ========== CARD OVERRIDES ========== */
@@ -299,9 +439,14 @@
   border-radius: var(--iprm-radius-pill);
 }
 
+/* Бейдж типу заходу лишається ТЕПЛИМ, але не золотим: золото стало кольором
+   дії, а золотий бейдж поруч із золотою кнопкою реєстрації читався б як
+   друга кнопка. Тепла інформаційна родина -- терракота (--iprm-warm-*).
+   Раніше тут були --apple-orange-light + --apple-orange: після переходу на
+   еталонне золото ця пара давала ще й 1.9 контрасту. */
 .apple-page .iprm-card-badge--type {
-  background: var(--apple-orange-light);
-  color: var(--apple-orange);
+  background: var(--iprm-warm-bg);
+  color: var(--iprm-warm-text);
 }
 
 .apple-page .iprm-card-badge--format {
@@ -425,9 +570,13 @@
   gap: 20px;
 }
 
+/* Рецепт картки еталона: межа --line, радіус 22px і майже невидима тінь.
+   Без межі білі картки на фіолетуватому тлі секцій розпливались. */
 .apple-page .apple-feature-card {
   background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
+  box-shadow: var(--iprm-shadow-soft);
   padding: 48px 36px;
   transition:
     transform 0.3s var(--ease-interact),
@@ -481,7 +630,7 @@
   background: var(--iprm-white);
   border-radius: var(--iprm-radius);
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--iprm-shadow-soft);
   display: flex;
   flex-direction: column;
   transition:
@@ -551,9 +700,10 @@
 
 .apple-page .iprm-target-card {
   background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
+  box-shadow: var(--iprm-shadow-soft);
   padding: 36px 32px;
-  border: none;
   transition:
     transform 0.3s var(--ease-interact),
     box-shadow 0.3s var(--ease-interact);
@@ -586,7 +736,7 @@
   background: var(--iprm-white);
   border-radius: var(--iprm-radius);
   padding: 32px 32px 12px;
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--iprm-border);
   overflow: hidden;
   transition:
     transform 0.3s var(--ease-interact),
@@ -658,7 +808,7 @@
   color: var(--apple-gray-dark);
   line-height: 1.55;
   padding: 12px 0 12px 32px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-top: 1px solid var(--iprm-divider);
   position: relative;
   transition: color 0.2s var(--ease-interact);
 }
@@ -1071,7 +1221,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--iprm-border);
   transition:
     transform 0.2s var(--ease-interact),
     box-shadow 0.2s var(--ease-interact);
@@ -1114,8 +1264,8 @@
   display: inline-block;
   padding: 10px 18px;
   border-radius: 999px;
-  background: var(--iprm-accent-light, #ede9f6);
-  color: var(--iprm-accent, #7055a4);
+  background: var(--iprm-accent-light, #f1e9fb);
+  color: var(--iprm-accent, #7437c9);
   font-size: 0.9375rem;
   font-weight: 600;
   letter-spacing: -0.005em;
@@ -1136,7 +1286,7 @@
   padding: 14px 16px 14px 48px;
   background: var(--iprm-white);
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--iprm-border);
   font-size: 0.9375rem;
   color: var(--apple-gray-dark);
   line-height: 1.5;

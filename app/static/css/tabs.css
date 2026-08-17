@@ -39,14 +39,14 @@
 }
 
 .iprm-tabs__trigger:focus-visible {
-  outline: 2px solid var(--iprm-accent, #7055a4);
+  outline: 2px solid var(--iprm-accent, #7437c9);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 .iprm-tabs__trigger[aria-selected='true'] {
-  color: var(--iprm-accent, #7055a4);
-  border-bottom-color: var(--iprm-accent, #7055a4);
+  color: var(--iprm-accent, #7437c9);
+  border-bottom-color: var(--iprm-accent, #7437c9);
 }
 
 /* Панель — за замовчуванням прихована, показуємо активну */

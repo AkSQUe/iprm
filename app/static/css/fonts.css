@@ -1,4 +1,4 @@
-/* Inter - self-hosted, варіативний (вага 400-800), latin + cyrillic.
+/* Inter - self-hosted, варіативний (вага 400-900), latin + cyrillic.
 
    Було п'ять статичних накреслень по ~24 КБ, і сторінка тягнула ВСІ п'ять
    (118.6 КБ, виміряно) -- при тому жодне з них не мало кириличних гліфів, тож
@@ -6,12 +6,18 @@
    варіативні файли покривають увесь діапазон ваг і обидві абетки за 65.4 КБ.
 
    Регенерація файлів -- scripts/fetch-inter.py (мережа потрібна лише там).
-   unicode-range розділяє підмножини: сторінка без латиниці не тягне latin. */
+   unicode-range розділяє підмножини: сторінка без латиниці не тягне latin.
+
+   Діапазон дескриптора -- 400 900, і файли для цього перезбирати НЕ треба:
+   вісь wght у наявних .woff2 уже 100-900 (перевірено fontTools). Дескриптор
+   400 800 штучно її обрізав, через що вага 900 синтезувалась браузером --
+   тобто заголовки малювались підробленою жирністю при наявних справжніх
+   гліфах. Вага сторінки від розширення діапазону не змінюється. */
 
 @font-face {
   font-family: 'Inter';
   font-style: normal;
-  font-weight: 400 800;
+  font-weight: 400 900;
   font-display: optional;
   src: url('../fonts/inter-var-cyrillic.woff2') format('woff2');
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
@@ -20,7 +26,7 @@
 @font-face {
   font-family: 'Inter';
   font-style: normal;
-  font-weight: 400 800;
+  font-weight: 400 900;
   font-display: optional;
   src: url('../fonts/inter-var-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,

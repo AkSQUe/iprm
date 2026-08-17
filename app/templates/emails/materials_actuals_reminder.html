@@ -6,18 +6,18 @@
 {% block preview_text %}Захід {{ event_title }} відбувся — внесіть фактично використані матеріали{% endblock %}
 
 {% block content %}
-    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
         Внесіть фактичні матеріали
     </h1>
 
-    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
         Захід відбувся, але зарезервовані матеріали ще не списано. Внесіть фактично використані кількості — залишки повернуться на склад MM Medic.
     </p>
 
-    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
         <tr>
             <td style="padding: 20px 24px;">
-                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #111827; line-height: 1.3;">{{ event_title }}</p>
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #17131D; line-height: 1.3;">{{ event_title }}</p>
                 {% if event_date %}{{ detail_row("Дата", event_date) }}{% endif %}
                 {{ detail_row("Зарезервовано позицій", items|length) }}
             </td>

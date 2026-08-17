@@ -6,11 +6,11 @@
 {% block preview_text %}{% trans points=points %}+{{ points }} бонусних балів за вашу рекомендацію{% endtrans %}{% endblock %}
 
 {% block content %}
-    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.25;">
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
         {{ _('Дякуємо за рекомендацію') }}
     </h1>
 
-    <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #6B7280; line-height: 1.5;">
+    <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
         {{ referrer_name or _('Вітаємо') }},
         {% if event_title %}{% trans title=event_title %}за оплачену реєстрацію на курс «{{ title }}» за вашим реферальним посиланням вам нараховано бонусні бали лояльності.{% endtrans %}{% else %}{{ _('за оплачену реєстрацію за вашим реферальним посиланням вам нараховано бонусні бали лояльності.') }}{% endif %}
     </p>
@@ -25,7 +25,7 @@
 
     {{ spacer(16) }}
 
-    <p style="margin: 0; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
+    <p style="margin: 0; font-size: 13px; color: #6E667A; line-height: 1.5;">
         {{ _('Продовжуйте ділитися посиланням – кожна оплачена реєстрація за ним приносить вам нові бали.') }}
     </p>
 {% endblock %}

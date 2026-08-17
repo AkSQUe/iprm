@@ -79,13 +79,13 @@
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--iprm-white, #fff);
-  background: var(--iprm-accent, #7055a4);
+  background: var(--iprm-accent, #7437c9);
   border-radius: var(--iprm-radius-pill, 980px);
   text-decoration: none;
   transition: background var(--iprm-transition, 0.25s ease);
 }
 .certdata-reminder__btn:hover {
-  background: var(--iprm-accent-hover, #5d4691);
+  background: var(--iprm-accent-hover, #6229ae);
   color: var(--iprm-white, #fff);
 }
 

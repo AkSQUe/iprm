@@ -2,14 +2,16 @@
 
 /* ========== NAV ========== */
 
+/* Смуга й роздільники їдуть на токенах поверхні, а не на константах: у тёмній
+   темі світла плашка з чорною межею читалась як зламана шапка. */
 .ds-nav {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(251, 251, 253, 0.72);
+  background: var(--iprm-surface-glass);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--iprm-border);
   padding: 0 32px;
   display: flex;
   align-items: center;
@@ -65,7 +67,7 @@
 }
 
 .ds-section + .ds-section {
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: 1px solid var(--iprm-divider);
 }
 
 .ds-section-alt {
@@ -167,7 +169,7 @@
   width: 48px;
   height: 48px;
   border-radius: var(--iprm-radius-sm);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--iprm-border);
   flex-shrink: 0;
 }
 
@@ -186,12 +188,33 @@
   font-family: 'SF Mono', 'Fira Code', monospace;
 }
 
+/* Зразки, які ЗМІНЮЮТЬСЯ разом із палітрою, беруть колір із токена, а не з
+   інлайн-hex: інакше вітрина показує кольори, яких на сайті вже немає.
+   Нейтральні й семантичні зразки лишились на інлайн-hex -- вони не мігрують. */
+.ds-swatch__color--accent { background: var(--iprm-accent); }
+.ds-swatch__color--accent-hover { background: var(--iprm-accent-hover); }
+.ds-swatch__color--accent-light { background: var(--iprm-accent-light); }
+.ds-swatch__color--gold { background: var(--apple-orange); }
+.ds-swatch__color--gold-light { background: var(--apple-orange-light); }
+.ds-swatch__color--gold-soft { background: var(--apple-gold-soft); }
+.ds-swatch__color--gold-ink { background: var(--apple-gold-ink); }
+.ds-swatch__color--on-accent-warm { background: var(--iprm-on-accent-warm); }
+.ds-swatch__color--purple-mid { background: var(--apple-purple-mid); }
+.ds-swatch__color--section-bg { background: var(--apple-section-bg); }
+.ds-swatch__color--line { background: var(--iprm-border); }
+.ds-swatch__color--line-strong { background: var(--iprm-border-strong); }
+.ds-swatch__color--warm-bg { background: var(--iprm-warm-bg); }
+.ds-swatch__color--warm-text { background: var(--iprm-warm-text); }
+.ds-swatch__color--grad-1 { background: var(--apple-grad-dark-1); }
+.ds-swatch__color--grad-2 { background: var(--apple-grad-dark-2); }
+.ds-swatch__color--grad-3 { background: var(--apple-grad-dark-3); }
+
 /* ========== TYPOGRAPHY DEMO ========== */
 
 .ds-typo-item {
   margin-bottom: 8px;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid var(--iprm-divider);
 }
 
 .ds-typo-item:last-child {
@@ -227,13 +250,50 @@
   color: var(--iprm-on-accent);
 }
 
+.ds-gradient-sample--brand-gold {
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 42%, var(--apple-gold-ink) 100%);
+}
+
+.ds-gradient-sample--brand-gold-dark {
+  background: linear-gradient(135deg, var(--apple-purple-soft) 0%, var(--apple-gold-soft) 100%);
+  color: var(--apple-grad-dark-3);
+}
+
+.ds-gradient-sample--hero {
+  background:
+    radial-gradient(circle at 91% 8%, var(--iprm-hero-glow-dim), transparent 28%),
+    radial-gradient(circle at 10% 95%, var(--iprm-hero-glow), transparent 30%),
+    linear-gradient(145deg, var(--apple-grad-dark-1), var(--apple-grad-dark-3));
+}
+
+.ds-gradient-sample--section-dark {
+  background:
+    radial-gradient(circle at 90% 0, rgba(var(--apple-orange-rgb), 0.2), transparent 34%),
+    linear-gradient(145deg, var(--apple-grad-dark-2), var(--apple-grad-dark-3));
+}
+
+/* ========== ETALON PRIMITIVES ==========
+
+   Тёмна підкладка потрібна, щоб показати варіанти "на тёмному" (eyebrow,
+   градієнтний текст, біла кнопка) -- у бою вони живуть у hero й оболонках
+   секцій, тёмних в обох темах. */
+
+.ds-on-dark {
+  padding: 32px;
+  border-radius: var(--iprm-radius-lg);
+  color: var(--iprm-on-accent);
+  background:
+    radial-gradient(circle at 90% 0, rgba(var(--apple-orange-rgb), 0.2), transparent 34%),
+    linear-gradient(145deg, var(--apple-grad-dark-2), var(--apple-grad-dark-3));
+}
+
 /* ========== COMPONENT DEMOS ========== */
 
 .ds-demo {
   padding: 32px;
   background: var(--iprm-white);
   border-radius: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--iprm-border);
   margin-bottom: 16px;
 }
 
@@ -279,7 +339,7 @@
 }
 
 .ds-pages a:hover {
-  background: #ede9f6;
+  background: var(--iprm-accent-light);
   color: var(--iprm-nav-active);
   transform: translateY(-2px);
 }

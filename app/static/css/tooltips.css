@@ -9,8 +9,8 @@
   height: 16px;
   margin-left: 6px;
   border-radius: 50%;
-  background: var(--iprm-accent-light, #ede9f6);
-  color: var(--iprm-accent, #7055a4);
+  background: var(--iprm-accent-light, #f1e9fb);
+  color: var(--iprm-accent, #7437c9);
   font-size: 11px;
   font-weight: 700;
   font-style: italic;
@@ -22,7 +22,7 @@
 }
 .iprm-tooltip-trigger:hover,
 .iprm-tooltip-trigger:focus-visible {
-  background: var(--iprm-accent, #7055a4);
+  background: var(--iprm-accent, #7437c9);
   color: #fff;
   outline: none;
 }

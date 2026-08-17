@@ -209,7 +209,7 @@
 .trainer-patent__label {
   font-weight: 600;
   line-height: 1.4;
-  color: var(--iprm-accent, #7055a4);
+  color: var(--iprm-accent, #7437c9);
   text-decoration: none;
 }
 a.trainer-patent__label:hover { text-decoration: underline; }
@@ -231,7 +231,7 @@ a.trainer-patent__label:hover { text-decoration: underline; }
 .iprm-skills-list__group {
   font-weight: 700;
   font-size: 1.05rem;
-  color: var(--iprm-accent, #7055a4);
+  color: var(--iprm-accent, #7437c9);
   margin: 18px 0 10px;
 }
 .iprm-skills-list__group:first-child { margin-top: 0; }
@@ -249,7 +249,7 @@ a.trainer-patent__label:hover { text-decoration: underline; }
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--iprm-accent, #7055a4);
+  background: var(--iprm-accent, #7437c9);
 }
 
 /* ===== Timeline (освіта / стажування / досвід) ===== */
@@ -278,7 +278,7 @@ a.trainer-patent__label:hover { text-decoration: underline; }
   top: 6px;
   bottom: -18px;
   width: 2px;
-  background: linear-gradient(180deg, var(--iprm-accent, #7055a4), rgba(112, 85, 164, 0.15));
+  background: linear-gradient(180deg, var(--iprm-accent, #7437c9), rgba(116, 55, 201, 0.15));
 }
 .iprm-timeline__item:last-child::before { display: none; }
 .iprm-timeline__year {
@@ -287,8 +287,8 @@ a.trainer-patent__label:hover { text-decoration: underline; }
   text-align: center;
   font-weight: 700;
   font-size: 0.85rem;
-  color: var(--iprm-accent, #7055a4);
-  background: var(--iprm-accent-light, #ede9f6);
+  color: var(--iprm-accent, #7437c9);
+  background: var(--iprm-accent-light, #f1e9fb);
   border-radius: var(--iprm-radius-pill, 980px);
   padding: 5px 12px;
   white-space: nowrap;

@@ -172,7 +172,7 @@
 
 .iprm-directions__card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(112, 85, 164, 0.08);
+  box-shadow: 0 12px 40px rgba(116, 55, 201, 0.08);
 }
 
 .iprm-directions__img {
@@ -258,7 +258,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 60% 80% at 50% 0%, rgba(112, 85, 164, 0.25) 0%, transparent 70%);
+  background: radial-gradient(ellipse 60% 80% at 50% 0%, rgba(116, 55, 201, 0.25) 0%, transparent 70%);
 }
 
 .iprm-appointment > * {
