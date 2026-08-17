@@ -169,11 +169,36 @@ def test_registry_search(client, admin):
 
 # ---- редактор ---------------------------------------------------------------
 
-def test_editor_creates_quiz_lazily(client, admin):
-    """Окремої кнопки «створити тест» немає -- він з'являється при відкритті."""
+def test_editor_opens_without_creating_a_row(client, admin):
+    """Окремої кнопки «створити тест» немає -- редактор відкривається завжди.
+
+    Але рядок у БД з'являється лише при збереженні. Раніше редактор флашив
+    новий тест уже на GET: рядок не переживав teardown сесії, зате `quiz.id`
+    заповнювався, і шаблон малював кнопку «Видалити тест» для тесту, якого не
+    існує -- клік вів у «Тест не знайдено».
+    """
     course = _course()
     _login(client, admin)
-    assert client.get(f'/admin/courses/{course.id}/quiz').status_code == 200
+    html = client.get(f'/admin/courses/{course.id}/quiz').get_data(as_text=True)
+
+    assert 'Банк питань' in html
+    assert 'Видалити тест' not in html
+    assert CourseQuiz.query.filter_by(course_id=course.id).count() == 0
+
+
+def test_delete_button_appears_only_for_saved_quiz(client, admin):
+    course = _course()
+    _login(client, admin)
+    client.post(f'/admin/courses/{course.id}/quiz', data=_builder_payload(10))
+
+    html = client.get(f'/admin/courses/{course.id}/quiz').get_data(as_text=True)
+    assert 'Видалити тест' in html
+
+
+def test_first_save_creates_quiz(client, admin):
+    course = _course()
+    _login(client, admin)
+    client.post(f'/admin/courses/{course.id}/quiz', data=_builder_payload(10))
     assert CourseQuiz.query.filter_by(course_id=course.id).count() == 1
 
 
@@ -256,13 +281,28 @@ def test_active_quiz_with_small_bank_warns(client, admin):
 
 
 def test_passing_score_above_questions_rejected(client, admin):
+    """Відхилена форма не створює й не змінює нічого."""
     course = _course()
     _login(client, admin)
     resp = client.post(f'/admin/courses/{course.id}/quiz',
                        data=_builder_payload(10, per_attempt=10, passing=11))
     assert resp.status_code == 200      # форма повернулась з помилкою
+    assert CourseQuiz.query.filter_by(course_id=course.id).count() == 0
+
+
+def test_rejected_form_does_not_damage_saved_quiz(client, admin):
+    course = _course()
+    _login(client, admin)
+    client.post(f'/admin/courses/{course.id}/quiz',
+                data=_builder_payload(10, per_attempt=10, passing=8))
+
+    client.post(f'/admin/courses/{course.id}/quiz',
+                data=_builder_payload(10, per_attempt=10, passing=11))
+
+    db.session.expire_all()
     quiz = CourseQuiz.query.filter_by(course_id=course.id).one()
-    assert quiz.passing_score != 11
+    assert quiz.passing_score == 8
+    assert quiz.bank_size == 10
 
 
 def test_question_translations_are_saved(client, admin):

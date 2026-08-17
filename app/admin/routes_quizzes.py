@@ -1,8 +1,8 @@
 """Адмінка тестування: реєстр тестів, білдер питань, результати, розблокування.
 
 Тест живе на курсі (базовий набір) або на проведенні (перевизначення), тож
-редактор один, а входів до нього два. Створюється лениво -- при першому
-відкритті сторінки, щоб адмін не тиснув окрему кнопку «створити тест».
+редактор один, а входів до нього два. Окремої кнопки «створити тест» немає:
+редактор відкривається завжди, а рядок у БД з'являється при першому збереженні.
 
 Банк питань не входить у WTForms-форму: 10+ питань по 4 варіанти -- це репітер
 із динамічною кількістю полів. У цьому проєкті такі речі робляться плоскими
@@ -31,20 +31,27 @@ from app.services import quiz_service
 audit_logger = logging.getLogger('audit')
 
 
-def _quiz_for(course=None, instance=None, create=False):
-    """Знайти (або створити) тест для курсу чи проведення."""
+def _quiz_for(course=None, instance=None):
+    """Наявний тест або НОВИЙ незбережений об'єкт (без id, не в сесії).
+
+    Раніше новий тест тут одразу додавався і флашився. На GET це не давало
+    рядка в БД (сесія відкочується при teardown), зате `quiz.id` уже був
+    заповнений -- і шаблон малював кнопку «Видалити тест» для тесту, якого не
+    існує. Клік по ній вів у «Тест не знайдено».
+
+    Тепер об'єкт без id живе лише в пам'яті, а в сесію потрапляє тільки при
+    збереженні (`_save_editor`).
+    """
     if instance is not None:
         quiz = CourseQuiz.query.filter_by(instance_id=instance.id).first()
     else:
         quiz = CourseQuiz.query.filter_by(course_id=course.id).first()
-    if quiz is None and create:
-        quiz = CourseQuiz(
-            course_id=course.id if instance is None else None,
-            instance_id=instance.id if instance is not None else None,
-        )
-        db.session.add(quiz)
-        db.session.flush()
-    return quiz
+    if quiz is not None:
+        return quiz
+    return CourseQuiz(
+        course_id=course.id if instance is None else None,
+        instance_id=instance.id if instance is not None else None,
+    )
 
 
 def _apply_question_translations(quiz):
@@ -82,6 +89,8 @@ def _save_editor(quiz, redirect_endpoint, **redirect_kwargs):
     quiz.max_attempts = form.max_attempts.data
     quiz.shuffle_answers = bool(form.shuffle_answers.data)
     quiz.is_active = bool(form.is_active.data)
+    if quiz.id is None:
+        db.session.add(quiz)
 
     questions = quiz_service.extract_questions_from_form(request.form)
     quiz_service.save_questions_for_quiz(quiz, questions)
@@ -153,7 +162,7 @@ def course_quiz_edit(course_id):
         flash('Курс не знайдено', 'error')
         return redirect(url_for('admin.courses_list'))
 
-    quiz = _quiz_for(course=course, create=True)
+    quiz = _quiz_for(course=course)
     if request.method == 'POST':
         response, form = _save_editor(
             quiz, 'admin.course_quiz_edit', course_id=course.id)
@@ -174,7 +183,7 @@ def instance_quiz_edit(instance_id):
         flash('Проведення не знайдено', 'error')
         return redirect(url_for('admin.instances_list'))
 
-    quiz = _quiz_for(instance=instance, create=True)
+    quiz = _quiz_for(instance=instance)
     if request.method == 'POST':
         response, form = _save_editor(
             quiz, 'admin.instance_quiz_edit', instance_id=instance.id)
