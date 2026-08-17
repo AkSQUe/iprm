@@ -14,7 +14,7 @@
 
       <h1 id="online-failure-title" class="iprm-section__title">{{ _('Оплату не завершено') }}</h1>
 
-      <div class="iprm-online-buy">
+      <div class="iprm-checkout-card">
         <p>{{ _('Кошти не списано. Замовлення збережено — можна спробувати оплатити ще раз.') }}</p>
         {% if course %}
         <a href="{{ url_for('online.checkout', slug=course.slug) }}" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Спробувати ще раз') }}</a>

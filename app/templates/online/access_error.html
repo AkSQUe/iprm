@@ -17,7 +17,7 @@
         {% else %}{{ _('Посилання недоступне') }}{% endif %}
       </h1>
 
-      <div class="iprm-online-buy">
+      <div class="iprm-checkout-card">
         {% if reason == 'expired' %}
         <p>{{ _('Посилання на навчання діє обмежений час. Отримайте нове — це займе секунду.') }}</p>
         {% if current_user.is_authenticated and enrollment and current_user.id == enrollment.user_id %}

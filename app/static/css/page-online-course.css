@@ -7,6 +7,9 @@
    окремими <link>: @import змусив би браузер тягнути другий файл лише
    після розбору першого. */
 
+/* Опис курсу тепер рендериться класом .iprm-prose (course-landing.css), а
+   надзаголовок став чипом hero -- власні правила під них тут не потрібні. */
+
 .iprm-online-detail {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
@@ -17,20 +20,7 @@
   text-align: left;
 }
 
-.iprm-online-detail__eyebrow {
-  margin: 0 0 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--iprm-accent);
-}
 
-.iprm-online-detail__text {
-  color: var(--iprm-text);
-  font-size: 1.0625rem;
-  line-height: 1.7;
-}
 
 .iprm-online-detail__facts {
   display: grid;
@@ -61,7 +51,9 @@
 
 .iprm-online-buy {
   position: sticky;
-  top: calc(var(--iprm-header-h, 64px) + 24px);
+  /* Шапка + навігація сторінкою (--iprm-page-nav-h задає course-landing.css;
+     fallback 0 -- на випадок, якщо навігації на сторінці немає). */
+  top: calc(var(--iprm-header-h, 64px) + var(--iprm-page-nav-h, 0px) + 24px);
   padding: 28px;
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
@@ -100,11 +92,8 @@
   line-height: 1.5;
 }
 
-.apple-btn--full {
-  display: block;
-  width: 100%;
-  text-align: center;
-}
+/* .apple-btn--full переїхав в apple-pages.css: це модифікатор системи
+   кнопок, а не стиль сторінки онлайн-курсу. */
 
 @media (max-width: 960px) {
   .iprm-online-detail {
@@ -122,7 +111,12 @@
   }
 }
 
-/* ===== Чекаут: вузька колонка з одним блоком оплати ===== */
+/* ===== Чекаут і службові сторінки оплати =====
+   Вузька колонка з однією карткою: чекаут, «оплату отримано», «оплату не
+   завершено», «посилання недоступне». Картка -- біла поверхня з м'якою
+   тінню, як картка курсу в каталозі. --iprm-card-bg тут не підходить: у
+   світлій темі це #f5f5f7, і на білому тлі секції картка виглядала сірою
+   плямою без глибини. */
 
 .iprm-online-checkout {
   max-width: 560px;
@@ -130,46 +124,136 @@
   text-align: left;
 }
 
-.iprm-online-checkout__course {
-  margin: 0 0 8px;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--iprm-text);
+.apple-page .iprm-online-checkout .iprm-section__title {
+  margin-bottom: 10px;
 }
 
-.iprm-online-checkout__order,
-.iprm-online-checkout__note,
-.iprm-online-checkout__hint {
+.iprm-online-checkout__lead {
+  margin: 0 0 32px;
+  text-align: center;
   color: var(--iprm-text-light);
-  font-size: 0.875rem;
+  font-size: 1.0625rem;
   line-height: 1.5;
 }
 
-.iprm-online-checkout__order {
+.iprm-checkout-card {
+  padding: 32px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  background: var(--iprm-white);
+  box-shadow: var(--iprm-shadow-card);
+}
+
+.iprm-checkout-card > p {
   margin: 0 0 20px;
+  color: var(--iprm-text);
+  line-height: 1.6;
 }
 
-.iprm-online-checkout__note {
-  margin: 12px 0 0;
+/* ---- Шапка: обкладинка + що саме купують ---- */
+
+.iprm-checkout-card__head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.iprm-online-checkout__hint {
-  margin: 20px 0 0;
-  padding-top: 16px;
+.iprm-checkout-card__thumb {
+  flex: none;
+  width: 88px;
+  height: 64px;
+  border-radius: var(--iprm-radius-sm);
+  object-fit: cover;
+  background: var(--iprm-placeholder-grad);
+}
+
+.iprm-checkout-card__eyebrow {
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--iprm-accent);
+}
+
+.iprm-checkout-card__title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--iprm-text);
+}
+
+.iprm-checkout-card__order {
+  margin: 6px 0 0;
+  font-size: 0.8125rem;
+  color: var(--iprm-text-light);
+}
+
+/* ---- Підсумок замовлення ---- */
+
+.iprm-checkout-summary {
+  margin: 24px 0 0;
+  padding: 20px 0 0;
   border-top: 1px solid var(--iprm-border);
 }
 
-.iprm-online-checkout__back {
-  margin-top: 24px;
-  text-align: center;
+.iprm-checkout-summary__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 10px;
+  font-size: 0.9375rem;
+  color: var(--iprm-text-light);
 }
 
+.iprm-checkout-summary__row dt,
+.iprm-checkout-summary__row dd {
+  margin: 0;
+}
 
-/* ===== Промокод у чекауті ===== */
+.iprm-checkout-summary__row--discount {
+  color: var(--iprm-success);
+}
+
+.iprm-checkout-summary__row--total {
+  align-items: center;
+  margin: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--iprm-border);
+  color: var(--iprm-text);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Підсумок без знижки -- єдиний рядок, роздільник над ним зайвий. */
+.iprm-checkout-summary__row--total:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.iprm-checkout-total {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--iprm-text);
+}
+
+.iprm-checkout-total__currency {
+  margin-left: 2px;
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--iprm-text-light);
+}
+
+/* ---- Промокод ---- */
 
 .iprm-online-promo {
-  margin: 20px 0 0;
-  padding-top: 16px;
+  margin: 22px 0 0;
+  padding-top: 20px;
   border-top: 1px solid var(--iprm-border);
 }
 
@@ -182,12 +266,41 @@
 
 .iprm-online-promo__row {
   display: flex;
+  align-items: stretch;
   gap: 8px;
 }
 
+/* Поле стилюємо тут: глобальний .form-input описаний лише всередині
+   .form-section, тож на цій сторінці інпут лишався б системним. */
 .iprm-online-promo__row .form-input {
   flex: 1;
   min-width: 0;
+  padding: 12px 18px;
+  font-family: var(--iprm-font);
+  font-size: 0.9375rem;
+  color: var(--iprm-text);
+  background: color-mix(in oklch, var(--iprm-text) 4%, transparent);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-pill);
+  transition:
+    border-color 0.15s var(--ease-interact),
+    box-shadow 0.15s var(--ease-interact);
+}
+
+.iprm-online-promo__row .form-input::placeholder {
+  color: var(--iprm-placeholder-text);
+}
+
+.iprm-online-promo__row .form-input:focus {
+  outline: none;
+  border-color: var(--iprm-accent);
+  box-shadow: 0 0 0 3px var(--iprm-accent-light);
+}
+
+/* Кнопка тягнеться на висоту поля: власні вертикальні відступи прибираємо. */
+.apple-page .iprm-online-promo__row .apple-btn {
+  flex: none;
+  padding: 0 22px;
 }
 
 .iprm-online-promo--applied {
@@ -199,6 +312,22 @@
   color: var(--iprm-text);
 }
 
+.iprm-online-promo__applied {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iprm-online-promo__code {
+  padding: 4px 12px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
 .iprm-online-promo__remove {
   border: 0;
   background: none;
@@ -207,18 +336,102 @@
   text-decoration: underline;
   cursor: pointer;
   font-size: 0.875rem;
+  font-family: var(--iprm-font);
 }
 
-.iprm-online-promo__error {
-  margin: 8px 0 0;
-  color: var(--iprm-error-text);
-  font-size: 0.875rem;
+.iprm-online-promo__remove:hover {
+  color: var(--iprm-accent);
 }
 
+/* ---- Оплата ---- */
+
+.iprm-checkout-pay {
+  margin: 24px 0 0;
+}
+
+.iprm-checkout__secure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  color: var(--iprm-text-light);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.iprm-checkout__secure svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
 
 /* Рахунок для юросіб -- другорядна дія поруч із кнопкою оплати. */
 .iprm-online-checkout__invoice {
-  margin: 16px 0 0;
+  margin: 14px 0 0;
   font-size: 0.875rem;
   color: var(--iprm-text-light);
+  text-align: center;
+}
+
+/* ---- Підказка внизу картки ---- */
+
+.iprm-online-checkout__hint {
+  display: flex;
+  gap: 12px;
+  margin: 24px 0 0;
+  padding: 16px;
+  border-radius: var(--iprm-radius-md);
+  background: color-mix(in oklch, var(--iprm-text) 4%, transparent);
+  color: var(--iprm-text-light);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.iprm-online-checkout__hint svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--iprm-accent);
+}
+
+.iprm-online-checkout__back {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.iprm-online-checkout__back a {
+  color: var(--iprm-text-light);
+  font-size: 0.9375rem;
+  text-decoration: none;
+}
+
+.iprm-online-checkout__back a:hover {
+  color: var(--iprm-accent);
+}
+
+@media (max-width: 560px) {
+  .iprm-checkout-card {
+    padding: 24px 20px;
+  }
+
+  .iprm-checkout-card__thumb {
+    width: 64px;
+    height: 48px;
+  }
+
+  .iprm-checkout-total {
+    font-size: 1.75rem;
+  }
+
+  /* Поле й кнопка в стовпчик: удвох у рядку кнопка з'їдала поле до
+     нечитабельної ширини. */
+  .iprm-online-promo__row {
+    flex-direction: column;
+  }
+
+  .apple-page .iprm-online-promo__row .apple-btn {
+    padding: 12px 22px;
+  }
 }

@@ -12,15 +12,20 @@
   <section class="iprm-section" aria-labelledby="online-success-title">
     <div class="iprm-section__inner iprm-online-checkout">
 
-      <h1 id="online-success-title" class="iprm-section__title">{{ _('Оплату отримано') }}</h1>
-      <p class="iprm-online-checkout__course">{{ course.effective_title }}</p>
+      <h1 id="online-success-title" class="iprm-section__title">{{ _('Оплату <span class="apple-gradient-text">отримано</span>') }}</h1>
+      <p class="iprm-online-checkout__lead">{{ course.effective_title }}</p>
 
-      <div class="iprm-online-buy">
+      <div class="iprm-checkout-card">
         {% if enrollment.access_is_valid %}
         <p>{{ _('Доступ до курсу відкрито на навчальній платформі. Лист із входом надіслано на вашу пошту.') }}</p>
         <a href="{{ url_for('online.access', token=enrollment.access_token) }}" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Почати навчання') }}</a>
         <p class="iprm-online-checkout__hint">
-          {{ _('Заходьте під своїм email. Якщо кнопка перестане працювати, відкрийте курс з особистого кабінету.') }}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M8.5 12.5l2.5 2.5 4.5-5"/>
+          </svg>
+          <span>{{ _('Заходьте під своїм email. Якщо кнопка перестане працювати, відкрийте курс з особистого кабінету.') }}</span>
         </p>
         {% else %}
         <p class="iprm-online-buy__note">

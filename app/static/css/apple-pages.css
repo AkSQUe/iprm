@@ -137,6 +137,16 @@
     color 0.15s var(--ease-interact);
 }
 
+/* Кнопка на всю ширину контейнера -- для карток купівлі й форм.
+   Жила в page-online-course.css, через що на сторінці очного курсу
+   модифікатор мовчки не діяв. */
+.apple-page .apple-btn--full {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
 .apple-page .apple-btn--primary {
   background: var(--iprm-nav-active);
   color: var(--iprm-on-accent);
