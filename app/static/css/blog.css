@@ -75,26 +75,8 @@
 .blog-gallery__item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.2s ease; }
 .blog-gallery__item:hover img { transform: scale(1.05); }
 
-/* Лайтбокс */
-.blog-lightbox {
-  position: fixed; inset: 0; z-index: 9999;
-  background: rgba(0, 0, 0, 0.92);
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s ease;
-}
-.blog-lightbox--open { opacity: 1; visibility: visible; }
-.blog-lightbox__img { max-width: 92vw; max-height: 84vh; object-fit: contain; border-radius: 6px; }
-.blog-lightbox__caption { position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; color: #fff; font-size: 0.9rem; padding: 0 20px; }
-.blog-lightbox__btn {
-  position: absolute; top: 50%; transform: translateY(-50%);
-  width: 48px; height: 48px; border: none; border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12); color: #fff; font-size: 1.6rem; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
-.blog-lightbox__btn:hover { background: rgba(255, 255, 255, 0.22); }
-.blog-lightbox__prev { left: 16px; }
-.blog-lightbox__next { right: 16px; }
-.blog-lightbox__close { top: 18px; right: 18px; transform: none; width: 44px; height: 44px; }
+/* Лайтбокс переїхав у css/lightbox.css: компонент спільний із
+   галереєю курсу й регаліями тренера. */
 
 /* ---- Коментарі ---- */
 .blog-comments { max-width: 760px; margin: 56px auto 0; padding-top: 32px; border-top: 1px solid var(--iprm-border); }
@@ -148,6 +130,5 @@
 
 @media (max-width: 600px) {
   .blog-post__title { font-size: 1.6rem; }
-  .blog-lightbox__btn { width: 40px; height: 40px; }
   .blog-comment__children { margin-left: 12px; padding-left: 10px; }
 }

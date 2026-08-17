@@ -465,6 +465,57 @@ class PaymentOps:
             raw_payload=status_data,
         )
 
+    def initiate_enrollment_refund(self, enrollment, admin_user):
+        """Повернути кошти за онлайн-курс через LiqPay.
+
+        Дзеркало `initiate_refund` для другого типу замовлень. Статус
+        міняється не присвоєнням, а тим самим `update_enrollment_status`:
+        там і журнал транзакцій, і зняття доступу, і анулювання промокоду.
+
+        Замовлення на нуль гривень LiqPay не знає -- його «повернення» це
+        лише скасування доступу на нашому боці.
+        """
+        from app.models.online_enrollment import OnlineEnrollment
+
+        locked = db.session.query(OnlineEnrollment).with_for_update().filter_by(
+            id=enrollment.id
+        ).first()
+        if not locked or locked.payment_status != 'paid':
+            return _fail('Повернення можливе тільки для оплачених замовлень')
+
+        amount = float(locked.payment_amount or 0)
+        order_id = locked.order_id
+
+        if amount <= 0:
+            ok, msg = self.update_enrollment_status(
+                locked, 'refunded', source='refund',
+            )
+            if ok:
+                audit_logger.info('Admin %s cancelled free %s',
+                                  admin_user.email, order_id)
+                return True, 'Доступ скасовано (замовлення було безкоштовним)'
+            return False, f'Помилка оновлення статусу: {msg}'
+
+        result = self.liqpay.create_refund_request(order_id, amount)
+        if result is None:
+            return _fail('Не вдалося зв\'єднатися з LiqPay API')
+
+        lp_status = result.get('status', '')
+        if lp_status in ('reversed', 'sandbox'):
+            ok, msg = self.update_enrollment_status(
+                locked, 'refunded', source='refund',
+                liqpay_status=lp_status, raw_payload=result,
+            )
+            if ok:
+                audit_logger.info('Admin %s refunded %s (%s UAH)',
+                                  admin_user.email, order_id, amount)
+                return True, f'Повернення коштів ініційовано: {amount} UAH'
+            return False, f'Помилка оновлення статусу: {msg}'
+
+        err = result.get('err_description', result.get('status', 'unknown'))
+        logger.warning('LiqPay refund failed %s: %s', order_id, err)
+        return _fail(f'LiqPay відхилив повернення: {err}')
+
     def initiate_refund(self, reg, admin_user):
         locked_reg = db.session.query(EventRegistration).with_for_update().filter_by(
             id=reg.id

@@ -24,6 +24,12 @@
   var paybackEl = root.querySelector('[data-roi-payback]');
   if (!checkInput || !countInput || !incomeEl || !paybackEl) return;
 
+  // Дзеркала значень поруч із підписом. Потрібні лише повзунковому варіанту
+  // (range не показує число сам); у числових полях значення видно в самому
+  // полі, тож там цих елементів у розмітці немає.
+  var checkOut = root.querySelector('[data-roi-check-out]');
+  var countOut = root.querySelector('[data-roi-count-out]');
+
   function currentPrice() {
     if (courseSel && courseSel.options.length) {
       var opt = courseSel.options[courseSel.selectedIndex];
@@ -52,6 +58,9 @@
 
     var check = Math.max(0, parseFloat(checkInput.value) || 0);
     var count = Math.max(0, parseFloat(countInput.value) || 0);
+
+    if (checkOut) checkOut.textContent = fmt(check) + ' ₴';
+    if (countOut) countOut.textContent = String(count);
 
     if (check <= 0 || price <= 0) {
       incomeEl.textContent = '—';

@@ -32,6 +32,14 @@ class Review(TranslatableMixin, TimestampMixin, SoftDeleteMixin, db.Model):
         db.BigInteger, db.ForeignKey('courses.id', ondelete='SET NULL'), nullable=True,
     )
     course = db.relationship('Course')
+    # Те саме для онлайн-курсу. CHECK "рівно один власник" тут НЕ потрібен, на
+    # відміну від program_blocks: відгук без прив'язки -- штатний випадок
+    # (загальні відгуки про Інститут, див. Review.published).
+    online_course_id = db.Column(
+        db.BigInteger, db.ForeignKey('online_courses.id', ondelete='SET NULL'),
+        nullable=True,
+    )
+    online_course = db.relationship('OnlineCourse')
 
     __table_args__ = (
         db.CheckConstraint('rating >= 1 AND rating <= 5', name='ck_reviews_rating'),

@@ -6,8 +6,10 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}?v={{ assets_version }}">
+{# Регалії відкриваються в лайтбоксі. Раніше тут підключався весь blog.css --
+   типографіка допису, коментарі, теги -- заради двадцяти рядків оверлея. #}
 {% if trainer.certificates or (trainer.patents and trainer.patents | selectattr('image') | list) %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/lightbox.css') }}?v={{ assets_version }}">
 {% endif %}
 {% endblock %}
 
@@ -244,6 +246,6 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/apple-reveal.js') }}" defer></script>
 {% if trainer.certificates or (trainer.patents and trainer.patents | selectattr('image') | list) %}
-<script defer src="{{ url_for('static', filename='js/blog-lightbox.js') }}?v={{ assets_version }}"></script>
+<script defer src="{{ url_for('static', filename='js/lightbox.js') }}?v={{ assets_version }}"></script>
 {% endif %}
 {% endblock %}

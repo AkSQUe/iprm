@@ -61,7 +61,9 @@ def test_common_css_is_loaded_everywhere():
 TOGGLED_COMPONENTS = [
     ('registration.css', 'reg-location-callout'),
     ('registration.css', 'reg-sticky-cta'),
-    ('page-courses.css', 'iprm-sticky-cta'),
+    # Переїхав із page-courses.css: компонент спільний для сторінок очного
+    # й онлайн-курсу, тому живе в course-landing.css.
+    ('course-landing.css', 'iprm-sticky-cta'),
 ]
 
 

@@ -38,6 +38,17 @@
 | `created_by` | FK users | Хто створив |
 | `is_active` | Boolean | Видимий у каталозі |
 | `is_featured` | Boolean | Рекомендований |
+| `proof_stats` | JSON | Смуга цифр довіри: `[{value, label}]` |
+| `benefits` | JSON | Картки «що зміниться у практиці»: `[{title, text}]` |
+| `practice_note_title`, `practice_note_text` | String(200), Text | Акцентна плашка в блоці програми |
+| `gallery_intro` | String(500) | Лід над галереєю |
+
+Галерея власного поля не має: фото беруться з медіа-реєстру
+(`entity_type='course'`, `usage_type='gallery'`) через властивість
+`Course.gallery`. Порядок — `MediaFile.sort_order`, підпис — `MediaFile.caption`.
+
+Контентні поля продажної сторінки порожні за замовчуванням: курс, якому їх не
+заповнили, просто не показує відповідну секцію.
 
 ## CourseInstance (проведення)
 
@@ -78,6 +89,9 @@ xlsx-звіти.
 | `course_id` | FK courses | Курс |
 | `user_id` | FK users nullable | Автентифікований користувач (або null для гостя) |
 | `email`, `phone`, `message` | Text | Контактні дані |
+| `name` | String(120) nullable | Ім'я (поле продажної форми) |
+| `messenger` | String(20) nullable | telegram/viber/whatsapp/phone/email |
+| `consent_at` | DateTime nullable | Коли дано згоду на обробку даних |
 | `status` | String(20) | pending/responded/scheduled/dismissed |
 | `admin_notes` | Text | Нотатки адміна |
 | `resolved_by_id`, `resolved_at` | FK + DateTime | Хто і коли обробив |
@@ -124,21 +138,33 @@ xlsx-звіти.
 | `slug` | String(200) | URL-slug, унікальний |
 | `role` | String(300) | Посада / спеціалізація |
 | `bio` | Text | Розгорнутий опис |
-| `photo` | String(500) | Шлях до фото |
+| `photo_media_id` | FK media_files | Фото (лише через медіа-реєстр) |
 | `experience_years` | Integer | Стаж (років) |
+| `highlights` | JSON | Короткі цифри для блоку тренера: `[{value, label}]` |
 | `is_active` | Boolean | Активний |
 | `created_at` | DateTime (UTC) | TimestampMixin |
 | `updated_at` | DateTime (UTC) | TimestampMixin |
 
 ## ProgramBlock
 
+Належить АБО офлайн-курсу, АБО онлайн-курсу — рівно одному з двох. Поліморфність
+свідома: блок програми виглядає й редагується однаково для обох типів, тож
+окрема сутність (чи JSON-колонка на `online_courses`) дала б два джерела правди
+і два редактори в адмінці.
+
 | Поле | Тип | Опис |
 |------|-----|------|
 | `id` | BigInteger | Первинний ключ |
-| `event_id` | FK -> events.id | Захід |
+| `course_id` | FK -> courses.id nullable | Офлайн-курс |
+| `online_course_id` | FK -> online_courses.id nullable | Онлайн-курс |
 | `heading` | String(200) | Заголовок блоку ("Теоретична частина", ...) |
 | `items` | JSON | Масив пунктів програми |
 | `sort_order` | Integer | Порядок відображення |
+
+`CheckConstraint ck_program_blocks_single_owner`:
+`(course_id IS NULL) <> (online_course_id IS NULL)`. Блок без власника мовчки
+випав би з обох сторінок і лишився б у базі назавжди, тому вставка такого рядка
+падає одразу. Властивість `ProgramBlock.owner` віддає курс незалежно від типу.
 
 ## EventRegistration
 
@@ -420,6 +446,17 @@ Singleton-модель для зберігання SMTP-налаштувань �
 | `card_avatar_src` | String(1000) | Посилання Sintegrum, з якого зроблено `card_media` |
 | `access_url` | String(1000) | Посилання реєстрації Sintegrum. НІКОЛИ не віддається назовні |
 | `access_ttl_hours` | Integer | Термін життя виданого токена; порожньо -> з налаштувань |
+| `target_audience`, `faq` | JSON | Аудиторія та поширені запитання |
+| `final_cta_text` | String(300) | Фінальний заклик |
+| `proof_stats`, `benefits` | JSON | Як у `Course` |
+| `practice_note_title`, `practice_note_text` | String(200), Text | Як у `Course` |
+| `gallery_intro` | String(500) | Лід над галереєю |
+| `trainer_id` | FK -> trainers nullable | Автор курсу (у Sintegrum тренера немає) |
+
+Контентні поля продажної сторінки дзеркалять однойменні поля `Course`: сторінки
+онлайн- і офлайн-курсу зібрані з тих самих партіалів, тож і дані називаються
+однаково. Програма — через поліморфний `ProgramBlock.online_course_id`,
+галерея — через `OnlineCourse.gallery` (`entity_type='online_course'`).
 
 Синхронізація (`app/services/online_course_sync.py`) пише ЛИШЕ `remote_*`.
 Локальні поля переживають будь-яку кількість прогонів -- інакше кожен прогін
@@ -577,3 +614,7 @@ EventRegistration 1--* PaymentTransaction (registration_id, CASCADE)
 - `ck_email_logs_status` - валідація статусу листа (pending, sent, failed)
 - `ck_email_logs_trigger` - валідація тригера (registration, payment, reminder, status_change, test)
 - `ck_email_settings_port` - порт > 0
+- `ck_program_blocks_single_owner` - блок програми належить рівно одному курсу
+  (офлайновому АБО онлайновому), сироти неможливі
+- `ck_course_requests_messenger` - валідація каналу зв'язку; NULL дозволено
+  (історичні заявки й коротка форма запиту месенджера не мають)

@@ -6,6 +6,12 @@
 {% block extra_css %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}?v={{ assets_version }}">
+  {# Секція #course-landing показує компоненти ЖИВИМИ, а не мокапом з
+     інлайн-стилів: так вітрина ламається разом із компонентом, якщо той
+     зламали, і тёмна тема перевіряється сама собою. apple-pages.css --
+     залежність course-landing.css (обидва скоуплені на .apple-page). #}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/apple-pages.css') }}?v={{ assets_version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/course-landing.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block header %}
@@ -38,6 +44,7 @@
     <a href="#modern-css">Modern CSS</a>
     <a href="#cookie-banner">Cookie</a>
     <a href="#spacing">Spacing</a>
+    <a href="#course-landing">Course Landing</a>
     <a href="#admin">Admin</a>
     <a href="#footer">Footer</a>
   </nav>

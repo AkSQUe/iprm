@@ -520,7 +520,21 @@ def stats(promo):
 
 # ===================== промокод-подяка =====================
 
+def issue_thankyou_code_for_enrollment(enrollment):
+    """Персональний код на наступний курс за покупку онлайн-курсу.
+
+    Той самий механізм, що для заходів: лист про оплату -- глухий кут, а код
+    зі строком дії дає причину повернутись, поки враження свіже.
+    """
+    return _issue_thankyou(enrollment, 'issued_for_enrollment_id', 'ONL')
+
+
 def issue_thankyou_code(registration):
+    """Персональний код на наступний курс за оплачену реєстрацію."""
+    return _issue_thankyou(registration, 'issued_for_registration_id', 'REG')
+
+
+def _issue_thankyou(target, issued_field, label):
     """Персональний код на НАСТУПНИЙ курс для щойно оплаченої реєстрації.
 
     Навіщо: лист про оплату сам по собі -- глухий кут. Код зі строком дії
@@ -540,12 +554,12 @@ def issue_thankyou_code(registration):
     from app.models.mixins import utcnow
     from app.models.site_settings import SiteSettings
 
-    if registration is None or not registration.id:
+    if target is None or not target.id:
         return None
 
     existing = (
         PromoCode.query
-        .filter_by(issued_for_registration_id=registration.id)
+        .filter_by(**{issued_field: target.id})
         .order_by(PromoCode.id.desc())
         .first()
     )
@@ -576,19 +590,19 @@ def issue_thankyou_code(registration):
     promo = PromoCode(
         code=code,
         code_norm=normalize_code(code),
-        description=f'Подяка за оплату REG-{registration.id}',
+        description=f'Подяка за оплату {label}-{target.id}',
         discount_type=DISCOUNT_PERCENT,
         discount_value=Decimal(percent),
         max_uses=1,
         per_user_limit=1,
         valid_until=utcnow() + timedelta(days=days),
-        issued_for_registration_id=registration.id,
+        **{issued_field: target.id},
         is_active=True,
     )
     db.session.add(promo)
     audit_logger.info(
-        'promo_thankyou_issued code=%s percent=%s days=%s reg=%s',
-        code, percent, days, registration.id,
+        'promo_thankyou_issued code=%s percent=%s days=%s order=%s-%s',
+        code, percent, days, label, target.id,
     )
     return promo
 

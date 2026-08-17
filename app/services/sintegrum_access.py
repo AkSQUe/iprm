@@ -242,13 +242,34 @@ def notify(enrollment):
         return None
     from app.services.email_service import EmailService
 
+    promo = _thankyou_code(enrollment)
+
     try:
         return EmailService.send_online_access(
-            enrollment, access_url_for(enrollment),
+            enrollment, access_url_for(enrollment), promo=promo,
         )
     except Exception:
         logger.exception('Failed to queue access email for %s',
                          enrollment.order_id)
+        return None
+
+
+def _thankyou_code(enrollment):
+    """Код на наступний курс -- причина повернутись на сайт.
+
+    Best-effort: механіка маркетингова, і її збій не має чіпати ані доступ,
+    ані лист. Видача ідемпотентна, тож повторний лист несе той самий код.
+    """
+    from app.services import promo_service
+
+    try:
+        promo = promo_service.issue_thankyou_code_for_enrollment(enrollment)
+        if promo is not None:
+            db.session.commit()
+        return promo
+    except Exception:
+        db.session.rollback()
+        logger.exception('Thankyou promo failed for %s', enrollment.order_id)
         return None
 
 

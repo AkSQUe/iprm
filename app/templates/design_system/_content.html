@@ -1039,3 +1039,196 @@
     </div>
   </div>
 
+  <!-- ===== COURSE LANDING (живі компоненти course-landing.css) ===== -->
+  <div class="ds-section" id="course-landing">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Course Landing</h2>
+    <p class="ds-hint">
+      Компоненти продажної сторінки курсу. На відміну від решти вітрини це не
+      мокап з інлайн-стилів, а справжня розмітка з course-landing.css:
+      демонстрація ламається разом із компонентом і сама показує тёмну тему.
+      Спільні для courses/detail.html і online/detail.html.
+    </p>
+
+    <div class="apple-page">
+
+      <h3 class="ds-section-heading">Page nav — навігація сторінкою</h3>
+      <div class="ds-demo">
+        <nav class="iprm-page-nav">
+          <div class="iprm-page-nav__inner">
+            <a class="iprm-page-nav__link" href="#course-landing" aria-current="true">Результат</a>
+            <a class="iprm-page-nav__link" href="#course-landing">Програма</a>
+            <a class="iprm-page-nav__link" href="#course-landing">Тренер</a>
+            <a class="iprm-page-nav__link" href="#course-landing">Тарифи</a>
+            <span class="iprm-page-nav__seats">Залишилось 6 місць</span>
+          </div>
+        </nav>
+      </div>
+      <p class="ds-hint">sticky під шапкою (top: --iprm-header-h) / активна секція — aria-current="true" від page-nav.js / індикатор місць ховається до 768px</p>
+
+      <h3 class="ds-section-heading">Trust stats — смуга цифр</h3>
+      <div class="ds-demo">
+        <div class="iprm-trust-stats iprm-trust-stats--band">
+          <div class="iprm-trust-stats__item">
+            <span class="iprm-trust-stats__value">6+</span>
+            <span class="iprm-trust-stats__label">проведених груп за програмою</span>
+          </div>
+          <div class="iprm-trust-stats__item">
+            <span class="iprm-trust-stats__value">100%</span>
+            <span class="iprm-trust-stats__label">очна практика під контролем</span>
+          </div>
+          <div class="iprm-trust-stats__item">
+            <span class="iprm-trust-stats__value">13 років</span>
+            <span class="iprm-trust-stats__label">досвіду тренера</span>
+          </div>
+          <div class="iprm-trust-stats__item">
+            <span class="iprm-trust-stats__value">1 метод</span>
+            <span class="iprm-trust-stats__label">який розширює ваш прайс</span>
+          </div>
+        </div>
+      </div>
+      <p class="ds-hint">Базовий варіант — 4 колонки. Модифікатор --band: тонка смуга одразу під hero (у парі з секцією .iprm-section--band)</p>
+
+      <h3 class="ds-section-heading">Progress + seats card</h3>
+      <div class="ds-demo">
+        <div class="iprm-hero__seats">
+          <span class="iprm-hero__seats-kicker">Набір відкрито</span>
+          <span class="iprm-hero__seats-value">6 вільних місць</span>
+          <div class="iprm-progress" role="img" aria-label="4 з 10 місць уже зайнято">
+            <span class="iprm-progress__fill" data-progress="40"></span>
+          </div>
+          <p class="iprm-hero__seats-note">Київ, клініка «Мультимед»</p>
+        </div>
+      </div>
+      <p class="ds-hint">Заповнення — CSS-змінна --iprm-progress, яку виставляє JS із data-progress (No Inline Policy). У hero — накладка на фото, до 768px стає звичайним блоком</p>
+
+      <h3 class="ds-section-heading">Benefit cards</h3>
+      <div class="ds-demo">
+        <div class="iprm-benefit-grid">
+          <article class="iprm-benefit-card">
+            <div class="iprm-benefit-card__num" aria-hidden="true">01</div>
+            <h4 class="iprm-benefit-card__title">Готуєте препарат прогнозовано</h4>
+            <p class="iprm-benefit-card__text">Розумієте різницю між режимами підготовки та вибір форми під конкретну задачу.</p>
+          </article>
+          <article class="iprm-benefit-card">
+            <div class="iprm-benefit-card__num" aria-hidden="true">02</div>
+            <h4 class="iprm-benefit-card__title">Працюєте впевнено руками</h4>
+            <p class="iprm-benefit-card__text">Відпрацьовуєте техніку на практиці. Тренер бачить роботу й коригує в моменті.</p>
+          </article>
+          <article class="iprm-benefit-card">
+            <div class="iprm-benefit-card__num" aria-hidden="true">03</div>
+            <h4 class="iprm-benefit-card__title">Додаєте нову послугу</h4>
+            <p class="iprm-benefit-card__text">Готовий протокол, логіка ціноутворення й розуміння, як вписати процедуру у прайс.</p>
+          </article>
+        </div>
+      </div>
+      <p class="ds-hint">3 колонки / 2 до 980px / 1 до 768px. Номер декоративний, тому aria-hidden</p>
+
+      <h3 class="ds-section-heading">Audience cards</h3>
+      <div class="ds-demo">
+        <div class="iprm-audience-grid">
+          <article class="iprm-audience-card">
+            <span class="iprm-audience-card__tag">Підходить</span>
+            <h4 class="iprm-audience-card__title">Вам варто приєднатися, якщо ви</h4>
+            <ul class="iprm-check-list">
+              <li>дерматолог або косметолог із медичною освітою;</li>
+              <li>цінуєте малу групу та персональну корекцію техніки.</li>
+            </ul>
+          </article>
+          <article class="iprm-audience-card iprm-audience-card--ask">
+            <span class="iprm-audience-card__tag">Є питання?</span>
+            <h4 class="iprm-audience-card__title">Залиште контакт</h4>
+            <p>Координатор зателефонує у зручний час і відповість на запитання.</p>
+            <a class="apple-btn apple-btn--primary" href="#course-landing">Зворотний дзвінок</a>
+          </article>
+        </div>
+      </div>
+      <p class="ds-hint">Кольорова верхня межа розрізняє картки: акцент / помаранчевий (--ask)</p>
+
+      <h3 class="ds-section-heading">Gallery</h3>
+      <div class="ds-demo">
+        <div class="iprm-gallery">
+          <figure class="iprm-gallery__item">
+            <figcaption class="iprm-gallery__caption">Навчання в клінічному кабінеті</figcaption>
+          </figure>
+          <figure class="iprm-gallery__item">
+            <figcaption class="iprm-gallery__caption">Покрокове приготування</figcaption>
+          </figure>
+          <figure class="iprm-gallery__item">
+            <figcaption class="iprm-gallery__caption">Практика під наглядом тренера</figcaption>
+          </figure>
+        </div>
+      </div>
+      <p class="ds-hint">aspect-ratio 4/5 / hover-zoom 1.03 (вимикається за prefers-reduced-motion) / підпис — MediaFile.caption, не alt. Тут без зображень: показано тло-плейсхолдер</p>
+
+      <h3 class="ds-section-heading">Practice note</h3>
+      <div class="ds-demo">
+        <div class="iprm-practice-note">
+          <div class="iprm-practice-note__icon" aria-hidden="true">&check;</div>
+          <div>
+            <h4 class="iprm-practice-note__title">Ви не просто дивитеся — ви робите</h4>
+            <p class="iprm-practice-note__text">Тренер контролює виконання і дає персональні рекомендації.</p>
+          </div>
+        </div>
+      </div>
+      <p class="ds-hint">Акцентна плашка всередині блоку програми. Токени попередження (--iprm-warning-*) працюють в обох темах</p>
+
+      <h3 class="ds-section-heading">Dark shell — відгуки</h3>
+      <div class="ds-demo">
+        <div class="iprm-dark-shell">
+          <span class="iprm-eyebrow">Відгуки та довіра</span>
+          <h4 class="iprm-dark-shell__title">Що учасники цінують у навчанні</h4>
+          <div class="iprm-review-grid">
+            <article class="iprm-review-tile">
+              <span class="iprm-review-tile__title">Персональну корекцію</span>
+              <p>Тренер бачить роботу кожного учасника й допомагає виправити техніку.</p>
+            </article>
+            <article class="iprm-review-tile">
+              <span class="iprm-review-tile__title">Малу групу</span>
+              <p>Досить часу на запитання, практику та розбір клінічних ситуацій.</p>
+            </article>
+            <article class="iprm-review-tile">
+              <span class="iprm-review-tile__title">Готовий алгоритм</span>
+              <p>Після курсу лишається зрозуміла послідовність дій, а не конспект.</p>
+            </article>
+          </div>
+          <div class="iprm-dark-shell__cta">
+            <p>Фото й відгуки учасників публікуємо у відкритому профілі Інституту.</p>
+            <a class="apple-btn apple-btn--secondary" href="#course-landing">Дивитися в Instagram</a>
+          </div>
+        </div>
+      </div>
+      <p class="ds-hint">Зумисне тёмна в ОБОХ темах: --apple-grad-dark-* у тёмній не перевизначаються. Текст — лише --iprm-on-accent, ніколи --iprm-white</p>
+
+      <h3 class="ds-section-heading">FAQ</h3>
+      <div class="ds-demo">
+        <div class="iprm-faq">
+          <details class="iprm-faq__item">
+            <summary class="iprm-faq__question">Чи буде практика саме моїми руками?</summary>
+            <div class="iprm-faq__answer">Так. Ви відпрацьовуєте техніки під контролем тренера.</div>
+          </details>
+          <details class="iprm-faq__item" open>
+            <summary class="iprm-faq__question">Що входить у вартість?</summary>
+            <div class="iprm-faq__answer">Навчання, матеріали для практики, протокол, сертифікат і бали БПР.</div>
+          </details>
+        </div>
+      </div>
+      <p class="ds-hint">Тонкі роздільники замість карток. "+" повертається на 45deg — плавно і не залежить від шрифту (раніше символ підмінявся на "-")</p>
+
+      <h3 class="ds-section-heading">Sticky CTA (dual)</h3>
+      <div class="ds-demo">
+        <div class="iprm-sticky-cta ds-sticky-static">
+          <div class="iprm-sticky-cta__info">
+            <span class="iprm-sticky-cta__title">Плазмогель в естетичній медицині</span>
+            <span class="iprm-sticky-cta__price">від 10 000 &#8372;</span>
+          </div>
+          <div class="iprm-sticky-cta__actions">
+            <a class="iprm-sticky-cta__btn iprm-sticky-cta__btn--ghost" href="#course-landing">Програма</a>
+            <a class="iprm-sticky-cta__btn" href="#course-landing">Реєстрація</a>
+          </div>
+        </div>
+      </div>
+      <p class="ds-hint">У бою — position: fixed, лише на mobile і лише коли JS зняв [hidden]. Тут статично через .ds-sticky-static. До 480px другорядна кнопка ховається</p>
+
+    </div>
+  </div>

@@ -317,9 +317,10 @@ def test_transaction_requires_exactly_one_owner(app, enrollment):
 def test_access_email_is_queued_on_payment(ops, enrollment, monkeypatch):
     sent = {}
 
-    def _capture(item, url):
+    def _capture(item, url, promo=None):
         sent['order_id'] = item.order_id
         sent['url'] = url
+        sent['promo'] = promo
         return None
 
     from app.services.email_service import EmailService

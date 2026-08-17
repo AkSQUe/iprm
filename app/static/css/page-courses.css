@@ -1,111 +1,14 @@
 /* page-courses.css -- Apple-style overrides for course detail page */
 /* Base styles defined in apple-pages.css (.apple-page scope) */
 
-/* Scroll offset для anchor-навігації: header (56px) + anchor-nav (~46px) */
-.apple-page {
-  scroll-padding-top: 110px;
-}
+/* Компоненти, спільні зі сторінкою онлайн-курсу (навігація сторінкою, смуга
+   цифр, FAQ, блок тренера, sticky-CTA), живуть у course-landing.css -- він
+   один власник для обох сторінок. Тут лишається те, що стосується саме
+   офлайнового курсу: графік проведень, тарифи, календар, фільтри каталогу. */
 
 /* Target card full-width modifier */
 .iprm-target-card--full {
   grid-column: 1 / -1;
-}
-
-/* ========== ANCHOR NAV ========== */
-
-.iprm-anchor-nav {
-  position: sticky;
-  top: var(--iprm-header-h);
-  z-index: 90;
-  background: var(--iprm-surface-glass);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border-bottom: 1px solid var(--iprm-border);
-}
-
-.iprm-anchor-nav__inner {
-  display: flex;
-  gap: 4px;
-  max-width: var(--iprm-max-content);
-  margin: 0 auto;
-  padding: 0 24px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.iprm-anchor-nav__inner::-webkit-scrollbar {
-  display: none;
-}
-
-.iprm-anchor-nav__link {
-  padding: 12px 16px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--apple-gray-dark);
-  text-decoration: none;
-  white-space: nowrap;
-  border-bottom: 2px solid transparent;
-  transition: color var(--iprm-transition), border-color var(--iprm-transition);
-}
-
-.iprm-anchor-nav__link:hover {
-  color: var(--iprm-accent);
-  border-bottom-color: var(--iprm-accent);
-}
-
-/* ========== FAQ ========== */
-
-.iprm-faq {
-  max-width: 800px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.iprm-faq__item {
-  background: var(--iprm-white);
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm);
-  overflow: hidden;
-}
-
-.iprm-faq__question {
-  padding: 16px 20px;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--iprm-text);
-  cursor: pointer;
-  list-style: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.iprm-faq__question::-webkit-details-marker {
-  display: none;
-}
-
-.iprm-faq__question::after {
-  content: '+';
-  font-size: 1.25rem;
-  font-weight: 300;
-  color: var(--iprm-text-light);
-  flex-shrink: 0;
-  transition: color var(--iprm-transition);
-}
-
-.iprm-faq__item[open] .iprm-faq__question::after {
-  content: '-';
-}
-
-.iprm-faq__answer {
-  padding: 0 20px 16px;
-  font-size: 0.875rem;
-  line-height: 1.6;
-  color: var(--iprm-text-light);
-  white-space: pre-line;
 }
 
 /* ========== EVENT META (характеристика заходу) ========== */
@@ -443,36 +346,6 @@
   white-space: nowrap;
 }
 
-/* ========== TRUST STATS ========== */
-
-.iprm-trust-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.iprm-trust-stats__item {
-  text-align: center;
-  padding: 24px 16px;
-}
-
-.iprm-trust-stats__value {
-  display: block;
-  font-size: 2rem;
-  font-weight: 800;
-  margin-bottom: 8px;
-}
-
-.iprm-trust-stats__label {
-  display: block;
-  font-size: 0.8125rem;
-  font-weight: 300;
-  line-height: 1.4;
-  color: var(--iprm-text-light);
-}
-
 /* ========== APPOINTMENT CTA (shared with clinics) ========== */
 
 .iprm-appointment {
@@ -608,84 +481,11 @@
   margin-top: 8px;
 }
 
-/* ========== TRAINER BLOCK (на сторінці курсу) ========== */
-
-.iprm-trainer-block {
-  max-width: 900px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 48px;
-  align-items: center;
-  background: var(--iprm-white);
-  border-radius: var(--iprm-radius);
-  padding: 40px;
-  border: 1px solid var(--iprm-border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.iprm-trainer-block__photo {
-  width: 280px;
-  height: 280px;
-  object-fit: cover;
-  border-radius: var(--iprm-radius-md);
-  background: linear-gradient(135deg, var(--iprm-accent-light), var(--apple-orange-light));
-  display: block;
-}
-
-.iprm-trainer-block__body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.iprm-trainer-block__body h3 {
-  font-size: clamp(1.5rem, 2.8vw, 2rem);
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  color: var(--apple-black);
-  margin: 0;
-}
-
-.iprm-trainer-block__role {
-  font-size: 0.9375rem;
-  font-weight: 500;
-  color: var(--iprm-nav-active);
-  margin: 0;
-}
-
-.iprm-trainer-block__body p:not(.iprm-trainer-block__role) {
-  font-size: 17px;
-  line-height: 1.65;
-  color: var(--apple-gray-dark);
-  margin: 0;
-}
-
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 640px) {
   .iprm-request-form__row {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .iprm-trainer-block {
-    grid-template-columns: 1fr;
-    gap: 24px;
-    padding: 24px;
-    text-align: center;
-  }
-
-  .iprm-trainer-block__photo {
-    width: min(220px, 100%);
-    height: auto;
-    aspect-ratio: 1 / 1;
-    margin: 0 auto;
-  }
-
-  .iprm-trainer-block__body {
-    align-items: center;
   }
 }
 
@@ -717,21 +517,6 @@
     gap: 8px;
   }
 
-  .iprm-anchor-nav__link {
-    padding: 10px 12px;
-    font-size: 0.75rem;
-  }
-
-  .iprm-faq__question {
-    font-size: 0.875rem;
-    padding: 14px 16px;
-  }
-
-  .iprm-faq__answer {
-    padding: 0 16px 14px;
-    font-size: 0.8125rem;
-  }
-
   .iprm-event-meta {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
@@ -745,14 +530,6 @@
     font-size: 0.9375rem;
   }
 
-  .iprm-trust-stats {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-  }
-
-  .iprm-trust-stats__value {
-    font-size: 1.75rem;
-  }
 }
 
 @media (max-width: 480px) {
@@ -794,32 +571,6 @@
     font-size: 0.875rem;
   }
 
-  .iprm-trust-stats {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .iprm-trust-stats__value {
-    font-size: 1.5rem;
-  }
-
-  .iprm-faq__question {
-    font-size: 0.8125rem;
-    padding: 12px 14px;
-  }
-
-  .iprm-faq__answer {
-    padding: 0 14px 12px;
-    font-size: 0.75rem;
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .iprm-anchor-nav {
-    background: var(--iprm-surface-menu);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
 }
 
 /* ========== UTILITY OVERRIDES (замість inline-стилів) ========== */
@@ -1474,81 +1225,6 @@ button.iprm-tag:focus-visible {
   }
 }
 
-/* ========== STICKY MOBILE CTA ========== */
-
-.iprm-sticky-cta {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 80;
-  display: none; /* показ лише на mobile через media-query */
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 16px;
-  background: var(--iprm-surface-menu);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-  border-top: 1px solid var(--iprm-border);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
-}
-
-.iprm-sticky-cta__info {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.iprm-sticky-cta__title {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--apple-black);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 52vw;
-}
-
-.iprm-sticky-cta__price {
-  font-size: 0.9375rem;
-  font-weight: 800;
-  color: var(--iprm-accent);
-}
-
-.iprm-sticky-cta__btn {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  padding: 12px 24px;
-  border-radius: var(--iprm-radius-pill);
-  background: var(--iprm-accent);
-  color: #fff;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background 0.15s;
-}
-
-.iprm-sticky-cta__btn:hover {
-  background: var(--iprm-accent-hover);
-}
-
-/* Показ лише на mobile і лише коли JS зняв [hidden]. */
-@media (max-width: 768px) {
-  .iprm-sticky-cta:not([hidden]) {
-    display: flex;
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .iprm-sticky-cta {
-    background: var(--iprm-white);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-}
-
 /* ========== COURSE SEARCH RESULT BAR ========== */
 
 /* display:flex перекриває браузерне [hidden]{display:none} -- повертаємо. */
@@ -1969,6 +1645,40 @@ button.iprm-tag:focus-visible {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--iprm-text-light);
+}
+
+/* Повзунковий варіант (сторінка курсу). Правила вище задають вигляд
+   текстового поля -- для range їх треба зняти, інакше доріжка отримає
+   рамку й падінг поля вводу. */
+.iprm-roi__field input[type='range'] {
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  accent-color: var(--iprm-accent);
+  cursor: pointer;
+}
+
+.iprm-roi__field input[type='range']:focus {
+  border: none;
+  box-shadow: none;
+}
+
+/* Підпис із живим значенням: "Середній чек процедури — 2 500 ₴". */
+.iprm-roi__label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.iprm-roi__out {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--iprm-accent);
+  text-transform: none;
+  white-space: nowrap;
 }
 
 .iprm-roi__results {

@@ -9,6 +9,7 @@
 access_url у публічні шаблони не передається ніколи -- це фактично ключ від
 навчання. Учасник отримує його лише через наш токен-редірект після оплати.
 """
+import io
 import logging
 
 from flask import abort, flash, redirect, render_template, request, url_for
@@ -341,3 +342,49 @@ def reissue_access(enrollment_id):
 
     flash(_('Нове посилання на навчання видано'), 'success')
     return redirect(url_for('online.access', token=enrollment.access_token))
+
+
+@online_bp.route('/orders/<int:enrollment_id>/invoice.pdf')
+@login_required
+@limiter.limit('20 per hour')
+def order_invoice(enrollment_id):
+    """Рахунок на оплату онлайн-курсу.
+
+    Потрібен юрособам: клініка платить за навчання співробітника з рахунку,
+    а не карткою. Для заходів такий рахунок є давно -- тут була дірка, через
+    яку такі покупці просто не могли купити.
+
+    Доступний, поки замовлення не оплачене: після оплати рахунок ролі не
+    грає, а от «сплатіть ще раз» у пошті плутає.
+    """
+    from app.services.invoice_service import (
+        InvoiceError, invoice_filename, render_invoice_pdf,
+    )
+
+    enrollment = db.session.get(OnlineEnrollment, enrollment_id)
+    if enrollment is None or enrollment.user_id != current_user.id:
+        abort(404)
+
+    if enrollment.is_paid:
+        flash(_('Замовлення вже оплачено'), 'info')
+        return redirect(url_for('auth.account'))
+
+    if not enrollment.payment_amount or enrollment.payment_amount <= 0:
+        flash(_('Для безкоштовного замовлення рахунок не потрібен'), 'info')
+        return redirect(url_for('auth.account'))
+
+    try:
+        pdf = render_invoice_pdf(enrollment)
+    except InvoiceError as exc:
+        logger.warning('Invoice for %s failed: %s', enrollment.order_id, exc)
+        flash(_('Не вдалося сформувати рахунок. Напишіть нам.'), 'error')
+        return redirect(url_for('online.checkout', slug=enrollment.course.slug))
+
+    from flask import send_file
+
+    return send_file(
+        io.BytesIO(pdf),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=invoice_filename(enrollment, 'pdf'),
+    )

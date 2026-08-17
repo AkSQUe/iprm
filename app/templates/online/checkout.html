@@ -64,6 +64,13 @@
         <a href="{{ url_for('main.contact') }}" class="apple-btn apple-btn--secondary apple-btn--full">{{ _('Написати нам') }}</a>
         {% endif %}
 
+        {% if enrollment.payment_status != 'paid' and enrollment.payment_amount and enrollment.payment_amount > 0 %}
+        <p class="iprm-online-checkout__invoice">
+          {{ _('Платите від організації?') }}
+          <a href="{{ url_for('online.order_invoice', enrollment_id=enrollment.id) }}">{{ _('Завантажити рахунок') }}</a>
+        </p>
+        {% endif %}
+
         <p class="iprm-online-checkout__hint">
           {{ _('Одразу після оплати ми відкриємо вам доступ до курсу на навчальній платформі й надішлемо лист із входом.') }}
         </p>

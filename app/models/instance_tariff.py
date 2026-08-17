@@ -15,7 +15,7 @@ from app.models.mixins import TimestampMixin, TranslatableMixin, BigIntPK
 
 class InstanceTariff(TranslatableMixin, TimestampMixin, db.Model):
     __tablename__ = 'instance_tariffs'
-    __translatable__ = ('name', 'description')
+    __translatable__ = ('name', 'description', 'badge')
 
     id = db.Column(BigIntPK, primary_key=True)
     instance_id = db.Column(
@@ -41,6 +41,16 @@ class InstanceTariff(TranslatableMixin, TimestampMixin, db.Model):
 
     sort_order = db.Column(db.Integer, default=0, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+
+    # Прапорець над карткою тарифу ("З підтримкою після курсу"). Порожньо --
+    # прапорця немає.
+    badge = db.Column(db.String(60))
+    # Виділена картка на сторінці курсу. Раніше "головним" був просто
+    # останній тариф у списку (loop.last у шаблоні) -- порядок сортування
+    # вирішував за маркетинг. Тепер це явний вибір адміна.
+    is_featured = db.Column(
+        db.Boolean, default=False, nullable=False, server_default=db.false(),
+    )
 
     __table_args__ = (
         db.Index('ix_instance_tariffs_instance_sort', 'instance_id', 'sort_order'),
@@ -81,10 +91,37 @@ class InstanceTariff(TranslatableMixin, TimestampMixin, db.Model):
 
     @property
     def description_items(self):
-        """Опис тарифу як список пунктів (по одному на рядок)."""
+        """Опис тарифу як список пунктів (по одному на рядок).
+
+        Свідомо читає канонічну колонку, а не self.t(): єдині споживачі --
+        адмінка й форма реєстрації, де потрібен український оригінал.
+        Для публічної сторінки курсу є description_entries.
+        """
         if not self.description:
             return []
         return [line.strip() for line in self.description.splitlines() if line.strip()]
+
+    @property
+    def description_entries(self):
+        """Пункти тарифу для публічної сторінки: [{'text', 'is_plus'}].
+
+        Рядок, що починається з "+", позначає перевагу цього тарифу над
+        базовим і рендериться іншим маркером. Конвенція в тексті, а не
+        окреме поле: адміну простіше дописати "+" у рядок, ніж вести
+        паралельний список, і порядок пунктів лишається один.
+        """
+        raw = self.t('description') or ''
+        entries = []
+        for line in raw.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            is_plus = line.startswith('+')
+            entries.append({
+                'text': line.lstrip('+').strip() if is_plus else line,
+                'is_plus': is_plus,
+            })
+        return entries
 
     def __repr__(self):
         return f'<InstanceTariff {self.name} instance={self.instance_id} price={self.price}>'

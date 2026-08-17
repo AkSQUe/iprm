@@ -129,6 +129,15 @@
                 {{ 'Перевидати' if order.provisioned_at else 'Видати доступ' }}
               </button>
             </form>
+            {# Повернення грошей -- окремо від зміни статусу в селекті: там
+               менеджер лише фіксує те, що вже сталося, а тут гроші справді
+               рухаються. Тому і підтвердження, і небезпечний стиль. #}
+            <form method="POST" action="{{ url_for('admin.online_order_refund', enrollment_id=order.id) }}"
+                  data-confirm="Повернути {{ order.payment_amount|int if order.payment_amount else 0 }} грн покупцю через LiqPay? Доступ до курсу буде закрито."
+                  data-confirm-ok="Повернути" data-confirm-danger>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Повернути кошти</button>
+            </form>
             {% endif %}
           </td>
         </tr>

@@ -374,3 +374,10 @@
     padding: 10px 12px;
   }
 }
+
+/* Sticky-CTA у вітрині показуємо на місці, а не приклеєним до вікна:
+   компонент у бою -- position: fixed і лише на mobile. */
+.ds-demo .iprm-sticky-cta.ds-sticky-static {
+  position: static;
+  display: flex;
+}

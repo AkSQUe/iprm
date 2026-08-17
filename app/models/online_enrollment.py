@@ -111,7 +111,11 @@ class OnlineEnrollment(TimestampMixin, db.Model):
 
     user = db.relationship('User', backref=db.backref(
         'online_enrollments', lazy='dynamic'))
-    promo_code = db.relationship('PromoCode')
+    # foreign_keys обов'язкові: між таблицями тепер ДВА шляхи --
+    # online_enrollments.promo_code_id (застосований код) і
+    # promo_codes.issued_for_enrollment_id (код, виданий за цю покупку).
+    promo_code = db.relationship(
+        'PromoCode', foreign_keys=[promo_code_id])
     promo_redemptions = db.relationship(
         'PromoRedemption', back_populates='enrollment', lazy='dynamic')
     course = db.relationship('OnlineCourse', backref=db.backref(

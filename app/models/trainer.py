@@ -8,6 +8,7 @@ class Trainer(TranslatableMixin, TimestampMixin, db.Model):
         'full_name', 'full_name_dative', 'role', 'bio',
         'certificates', 'patents', 'articles', 'research',
         'skills', 'education', 'additional_education', 'work_experience',
+        'highlights',
     )
 
     id = db.Column(BigIntPK, primary_key=True)
@@ -58,6 +59,12 @@ class Trainer(TranslatableMixin, TimestampMixin, db.Model):
     education = db.Column(db.JSON, default=list)
     additional_education = db.Column(db.JSON, default=list)
     work_experience = db.Column(db.JSON, default=list)
+
+    # Короткі цифри для блоку тренера на сторінці курсу:
+    # [{"value": "13 років", "label": "у косметології"}]. Це не дублікат
+    # experience_years -- те поле одне число про стаж загалом, а тут 2-3
+    # маркетингові акценти, які пише редактор.
+    highlights = db.Column(db.JSON, default=list)
 
     __table_args__ = (
         db.CheckConstraint(

@@ -27,6 +27,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/lightbox.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
@@ -64,6 +65,6 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script defer src="{{ url_for('static', filename='js/blog-lightbox.js') }}?v={{ assets_version }}"></script>
+<script defer src="{{ url_for('static', filename='js/lightbox.js') }}?v={{ assets_version }}"></script>
 <script defer src="{{ url_for('static', filename='js/blog-comments.js') }}?v={{ assets_version }}"></script>
 {% endblock %}

@@ -1,0 +1,95 @@
+/* lightbox.css -- повноекранний перегляд зображення.
+   Компонент спільний: галереї блогу, регалії тренера, галерея курсу.
+   Розмітку оверлея будує js/lightbox.js, тому в шаблонах цих класів немає --
+   там лише атрибути [data-lightbox] і [data-caption].
+
+   Раніше жив у blog.css, через що сторінка тренерів вантажила увесь блог
+   (типографіка допису, коментарі, теги) заради двадцяти рядків лайтбокса. */
+
+.iprm-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.iprm-lightbox--open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.iprm-lightbox__img {
+  max-width: 92vw;
+  max-height: 84vh;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+/* Оверлей завжди тёмний в обох темах, тому колір тексту тут -- незмінно
+   світлий (--iprm-on-accent), а не --iprm-white. */
+.iprm-lightbox__caption {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  right: 0;
+  padding: 0 20px;
+  text-align: center;
+  color: var(--iprm-on-accent);
+  font-size: 0.9rem;
+}
+
+.iprm-lightbox__btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--iprm-on-accent);
+  font-size: 1.6rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iprm-lightbox__btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.iprm-lightbox__prev {
+  left: 16px;
+}
+
+.iprm-lightbox__next {
+  right: 16px;
+}
+
+.iprm-lightbox__close {
+  top: 18px;
+  right: 18px;
+  transform: none;
+  width: 44px;
+  height: 44px;
+}
+
+@media (max-width: 768px) {
+  .iprm-lightbox__btn {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iprm-lightbox {
+    transition: none;
+  }
+}

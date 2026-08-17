@@ -15,6 +15,8 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
         'title', 'subtitle', 'description', 'short_description',
         'target_audience', 'tags', 'speaker_info', 'agenda', 'faq',
         'roi_hint', 'bpr_specialties', 'final_cta_text',
+        'proof_stats', 'benefits', 'practice_note_title', 'practice_note_text',
+        'gallery_intro',
     )
 
     id = db.Column(BigIntPK, primary_key=True)
@@ -59,6 +61,21 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     # Бали БПР, що нараховуються ЛЕКТОРУ заходу (відрізняються від балів
     # учасника) -- для лекторського сертифіката.
     bpr_lecturer_points = db.Column(db.Integer)
+
+    # ---- контент продажної сторінки (docs/plan-course-landing-redesign.md) ----
+    # Усі поля порожні за замовчуванням: курс без заповненого контенту просто
+    # не показує відповідну секцію, а не рендерить порожню рамку.
+    #
+    # Смуга цифр довіри під hero: [{"value": "6+", "label": "проведених груп"}].
+    proof_stats = db.Column(db.JSON, default=list)
+    # Картки "що зміниться у практиці": [{"title": ..., "text": ...}].
+    benefits = db.Column(db.JSON, default=list)
+    # Акцентна плашка всередині блоку програми. Без заголовка плашки немає.
+    practice_note_title = db.Column(db.String(200))
+    practice_note_text = db.Column(db.Text)
+    # Лід над галереєю. Самі фото живуть у медіа-реєстрі
+    # (entity_type='course', usage_type='gallery'), а не тут.
+    gallery_intro = db.Column(db.String(500))
 
     trainer_id = db.Column(
         db.BigInteger,
@@ -140,6 +157,18 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     def card_src(self):
         """URL картки/прев'ю (card-варіант). None, якщо немає."""
         return self.card_media.variant_url('card') if self.card_media else None
+
+    @property
+    def gallery(self):
+        """Фото галереї у порядку sort_order. Порожній список -- секції немає.
+
+        Окремий запит, а не relationship: прив'язка медіа поліморфна
+        (entity_type/entity_id), тож ORM-зв'язок тут вийшов би з
+        primaryjoin на рядковий літерал. На сторінці курсу це один запит;
+        у списках галерею не чіпаємо, тож N+1 не виникає.
+        """
+        from app.models.media_file import MediaFile
+        return MediaFile.for_entity('course', self.id, 'gallery').all()
 
     EVENT_TYPES = [
         ('seminar', 'Семінар'),

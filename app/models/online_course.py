@@ -31,7 +31,12 @@ REMOTE_STATUS_LABELS = {
 
 class OnlineCourse(TranslatableMixin, TimestampMixin, db.Model):
     __tablename__ = 'online_courses'
-    __translatable__ = ('title', 'description', 'short_description')
+    __translatable__ = (
+        'title', 'description', 'short_description',
+        'target_audience', 'faq', 'final_cta_text',
+        'proof_stats', 'benefits', 'practice_note_title', 'practice_note_text',
+        'gallery_intro',
+    )
 
     id = db.Column(BigIntPK, primary_key=True)
 
@@ -99,6 +104,27 @@ class OnlineCourse(TranslatableMixin, TimestampMixin, db.Model):
     # Термін життя виданого токена. Порожньо -- беремо з налаштувань сайту.
     access_ttl_hours = db.Column(db.Integer)
 
+    # ---- контент продажної сторінки (docs/plan-course-landing-redesign.md) ----
+    # Дзеркалять однойменні поля Course: сторінки онлайн- і офлайн-курсу
+    # зібрані з тих самих партіалів, тож і дані мають називатися однаково.
+    # Синхронізація Sintegrum їх не чіпає -- це наш редакторський контент.
+    target_audience = db.Column(db.JSON, default=list)
+    faq = db.Column(db.JSON, default=list)
+    final_cta_text = db.Column(db.String(300))
+    proof_stats = db.Column(db.JSON, default=list)
+    benefits = db.Column(db.JSON, default=list)
+    practice_note_title = db.Column(db.String(200))
+    practice_note_text = db.Column(db.Text)
+    gallery_intro = db.Column(db.String(500))
+
+    # Автор курсу. У Sintegrum тренера немає -- це наші дані.
+    trainer_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('trainers.id', ondelete='SET NULL'),
+        nullable=True,
+        index=True,
+    )
+
     __table_args__ = (
         db.Index('ix_online_courses_published_sort', 'is_published', 'sort_order'),
         db.CheckConstraint('price >= 0 OR price IS NULL',
@@ -111,6 +137,19 @@ class OnlineCourse(TranslatableMixin, TimestampMixin, db.Model):
 
     hero_media = db.relationship('MediaFile', foreign_keys=[hero_media_id])
     card_media = db.relationship('MediaFile', foreign_keys=[card_media_id])
+    trainer = db.relationship('Trainer', foreign_keys=[trainer_id])
+    program_blocks = db.relationship(
+        'ProgramBlock',
+        back_populates='online_course',
+        order_by='ProgramBlock.sort_order',
+        cascade='all, delete-orphan',
+    )
+
+    @property
+    def gallery(self):
+        """Фото галереї у порядку sort_order. Див. Course.gallery."""
+        from app.models.media_file import MediaFile
+        return MediaFile.for_entity('online_course', self.id, 'gallery').all()
 
     # ---- ефективні значення (наше перекриває чуже) ----
 

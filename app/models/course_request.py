@@ -36,6 +36,16 @@ class CourseRequest(TimestampMixin, db.Model):
     phone = db.Column(db.String(20))
     message = db.Column(db.Text)
 
+    # Поля продажної форми. Nullable, бо історичні заявки їх не мають, а
+    # форма існує й у скороченому вигляді (блок "залишити запит на курс").
+    name = db.Column(db.String(120))
+    # Зручний канал зв'язку: telegram/viber/whatsapp/phone/email.
+    messenger = db.Column(db.String(20))
+    # Момент згоди на обробку контактних даних. Саме час, а не булеве:
+    # для згоди важливо КОЛИ вона дана, і NULL чесно означає "згоди немає"
+    # (історичні заявки), чого false не розрізнив би.
+    consent_at = db.Column(db.DateTime(timezone=True))
+
     status = db.Column(db.String(20), default='pending', nullable=False, index=True)
     admin_notes = db.Column(db.Text)
 
@@ -53,6 +63,11 @@ class CourseRequest(TimestampMixin, db.Model):
             "status IN ('pending', 'responded', 'scheduled', 'dismissed')",
             name='ck_course_requests_status',
         ),
+        db.CheckConstraint(
+            "messenger IN ('telegram', 'viber', 'whatsapp', 'phone', 'email')"
+            " OR messenger IS NULL",
+            name='ck_course_requests_messenger',
+        ),
     )
 
     course = db.relationship('Course', back_populates='requests')
@@ -66,9 +81,21 @@ class CourseRequest(TimestampMixin, db.Model):
         ('dismissed', 'Відхилено'),
     ]
 
+    MESSENGERS = [
+        ('telegram', 'Telegram'),
+        ('viber', 'Viber'),
+        ('whatsapp', 'WhatsApp'),
+        ('phone', 'Телефонний дзвінок'),
+        ('email', 'Email'),
+    ]
+
     @property
     def status_label(self):
         return dict(self.STATUSES).get(self.status, self.status)
+
+    @property
+    def messenger_label(self):
+        return dict(self.MESSENGERS).get(self.messenger)
 
     @validates('email')
     def _validate_email(self, _key, value):

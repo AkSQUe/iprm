@@ -75,7 +75,42 @@ def _date_phrase(dt):
     return f'{dt.day} {_MONTHS[dt.month]} {dt.year} р.'
 
 
+def _is_enrollment(order):
+    """Замовлення онлайн-курсу відрізняємо за наявністю курсу без проведення.
+
+    Перевірка за атрибутом, а не isinstance: інакше сервіс рахунків мусив
+    би імпортувати модель замовлень і знати про неї більше, ніж треба для
+    друку однієї сторінки.
+    """
+    return hasattr(order, 'online_course_id')
+
+
+def _enrollment_invoice_context(enrollment):
+    """Рахунок за онлайн-курс.
+
+    Дати проведення в назві позиції немає й бути не може: курс проходять у
+    власному темпі. Замість неї -- слово «онлайн-курс», щоб у бухгалтерії
+    рядок читався без здогадів, за що платили.
+    """
+    settings = SiteSettings.get()
+    course = enrollment.course
+    title = course.effective_title if course else f'Замовлення {enrollment.order_id}'
+    payer = ''
+    if enrollment.user:
+        payer = (enrollment.user.full_name or '').strip() or enrollment.user.email or ''
+    return {
+        'settings': settings,
+        'number': enrollment.id,
+        'date': enrollment.created_at,
+        'item_name': f'Онлайн-курс: {title}',
+        'amount': Decimal(enrollment.payment_amount or 0),
+        'payer': payer or 'Фізична особа',
+    }
+
+
 def _invoice_context(reg):
+    if _is_enrollment(reg):
+        return _enrollment_invoice_context(reg)
     settings = SiteSettings.get()
     course = reg.instance.course if reg.instance else None
     title = course.title if course else (reg.target_title or f'Реєстрація #{reg.id}')

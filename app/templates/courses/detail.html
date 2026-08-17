@@ -8,6 +8,9 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}?v={{ assets_version }}">
+{# Компоненти, спільні зі сторінкою онлайн-курсу. Підключати ПІСЛЯ
+   page-courses.css: там лишились специфічні для офлайну переозначення. #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/course-landing.css') }}?v={{ assets_version }}">
 {% if rec_courses %}<link rel="stylesheet" href="{{ url_for('static', filename='css/course-recommend.css') }}?v={{ assets_version }}">{% endif %}
 {% if referral_link %}<link rel="stylesheet" href="{{ url_for('static', filename='css/referral-share.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}

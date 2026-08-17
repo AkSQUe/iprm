@@ -1,0 +1,1204 @@
+/* course-landing.css -- компоненти продажної сторінки курсу.
+   Спільний для очної (courses/detail.html) і онлайн (online/detail.html):
+   обидві зібрані з тих самих партіалів, тож CSS має бути один.
+
+   Базові стилі -- apple-pages.css (скоуп .apple-page), токени -- common.css.
+   Палітра сайту не змінюється: від референсу взято композицію, ритм і
+   щільність, а не кольори.
+
+   Тёмна тема. Секції, що зумисне тёмні в ОБОХ темах (hero, відгуки, лід-форма),
+   побудовані на --apple-grad-dark-*: ці токени в тёмній темі не
+   перевизначаються, бо вже тёмні. Тому вони не потребують [data-theme]-гілок.
+   Текст поверх них -- лише --iprm-on-accent, ніколи --iprm-white: останній у
+   тёмній темі стає тёмною поверхнею.
+*/
+
+/* Зсув якорів: шапка + власна навігація сторінки. */
+.apple-page {
+  scroll-padding-top: calc(var(--iprm-header-h) + 46px);
+}
+
+/* ========== PAGE NAV (навігація сторінкою) ==========
+   Сторінка має ~19 секцій, тож ця навігація -- не оздоблення, а єдиний
+   спосіб нею користуватися. */
+
+.iprm-page-nav {
+  position: sticky;
+  top: var(--iprm-header-h);
+  z-index: 90;
+  background: var(--iprm-surface-glass);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid var(--iprm-border);
+}
+
+.iprm-page-nav__inner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: var(--iprm-max-content);
+  margin: 0 auto;
+  padding: 0 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.iprm-page-nav__inner::-webkit-scrollbar {
+  display: none;
+}
+
+.iprm-page-nav__link {
+  padding: 12px 16px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--apple-gray-dark);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color var(--iprm-transition), border-color var(--iprm-transition);
+}
+
+.iprm-page-nav__link:hover {
+  color: var(--iprm-accent);
+  border-bottom-color: var(--iprm-accent);
+}
+
+/* Активну секцію проставляє page-nav.js через IntersectionObserver. */
+.iprm-page-nav__link[aria-current='true'] {
+  color: var(--iprm-accent);
+  border-bottom-color: var(--iprm-accent);
+}
+
+/* Індикатор вільних місць -- відповідник .nav-note референсу. */
+.iprm-page-nav__seats {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-left: auto;
+  padding-left: 16px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--iprm-text-light);
+  white-space: nowrap;
+}
+
+.iprm-page-nav__seats::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--apple-orange);
+  box-shadow: 0 0 0 5px rgba(var(--apple-orange-rgb), 0.15);
+}
+
+/* ========== HERO (продажний варіант) ==========
+   На відміну від .iprm-hero (по центру, білий) -- дві колонки, тёмний,
+   з фото й карткою вільних місць. */
+
+.apple-page .iprm-hero--landing {
+  display: block;
+  color: var(--iprm-on-accent);
+  background:
+    radial-gradient(circle at 91% 8%, rgba(var(--apple-orange-rgb), 0.18), transparent 28%),
+    radial-gradient(circle at 10% 95%, rgba(var(--apple-accent-rgb), 0.38), transparent 30%),
+    linear-gradient(145deg, var(--apple-grad-dark-3), var(--apple-grad-dark-1));
+}
+
+/* Крапковий патерн референсу. Декоративний -- прибираємо з дерева доступності. */
+.apple-page .iprm-hero--landing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.32;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: linear-gradient(to bottom, #000, transparent 76%);
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent 76%);
+}
+
+.apple-page .iprm-hero--landing .iprm-hero__content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 62px;
+  align-items: center;
+  max-width: var(--iprm-max-content);
+  margin: 0 auto;
+  padding: 78px 24px 72px;
+  text-align: left;
+  color: var(--iprm-on-accent);
+}
+
+.iprm-hero__copy,
+.iprm-hero__visual {
+  min-width: 0;
+}
+
+.apple-page .iprm-hero--landing .iprm-hero__title {
+  color: var(--iprm-on-accent);
+}
+
+.apple-page .iprm-hero--landing .iprm-hero__subtitle {
+  max-width: 670px;
+  margin: 0 0 26px;
+  color: rgba(255, 255, 255, 0.77);
+  font-size: 19px;
+  text-align: left;
+}
+
+/* Чипи: дата/місто, формат, розмір групи. */
+.iprm-hero__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 24px;
+}
+
+.iprm-hero__chip {
+  padding: 8px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--iprm-radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.iprm-hero__chip--accent {
+  color: #ffd77f;
+  border-color: rgba(var(--apple-orange-rgb), 0.45);
+  background: rgba(var(--apple-orange-rgb), 0.13);
+}
+
+.apple-page .iprm-hero--landing .iprm-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+  justify-content: flex-start;
+}
+
+/* Рядок ключових параметрів. Показуємо лише заповнені -- тому auto-fit. */
+.iprm-hero__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--iprm-radius-md);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.iprm-hero__meta-item {
+  padding: 16px;
+  background: rgba(29, 8, 56, 0.66);
+}
+
+.iprm-hero__meta-value {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.iprm-hero__meta-label {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.57);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.iprm-hero__visual {
+  position: relative;
+}
+
+.iprm-hero__photo {
+  width: 100%;
+  aspect-ratio: 640 / 500;
+  object-fit: contain;
+  border-radius: var(--iprm-radius);
+  background: var(--iprm-accent-light);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 32px 75px rgba(5, 0, 14, 0.36);
+}
+
+/* Картка "вільні місця" -- світла пляма поверх тёмного hero. */
+.iprm-hero__seats {
+  position: absolute;
+  left: -28px;
+  bottom: -28px;
+  width: min(330px, 80%);
+  padding: 22px;
+  border-radius: var(--iprm-radius-md);
+  background: var(--iprm-white);
+  color: var(--iprm-text);
+  box-shadow: var(--iprm-shadow-card);
+}
+
+.iprm-hero__seats-kicker {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--iprm-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.iprm-hero__seats-value {
+  display: block;
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--apple-black);
+}
+
+.iprm-hero__seats-note {
+  margin: 0;
+  color: var(--iprm-text-light);
+  font-size: 13px;
+}
+
+/* Заповнення передається змінною --iprm-progress з шаблону (No Inline Policy:
+   це дані, а не стиль, тому style тут не використовуємо -- значення ставить
+   data-атрибут + page-nav.js). */
+.iprm-progress {
+  height: 8px;
+  margin: 14px 0 8px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--apple-section-bg);
+  overflow: hidden;
+}
+
+.iprm-progress__fill {
+  display: block;
+  width: var(--iprm-progress, 0%);
+  height: 100%;
+  background: linear-gradient(90deg, var(--apple-orange), #ef8e00);
+  transition: width 0.6s var(--ease-reveal);
+}
+
+/* ========== TRUST STATS / смуга цифр ==========
+   Перенесено з page-courses.css: компонент потрібен обом сторінкам.
+   Модифікатор --band -- варіант референсу: тонка смуга одразу під hero. */
+
+.iprm-trust-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.iprm-trust-stats__item {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.iprm-trust-stats__value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.iprm-trust-stats__label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 300;
+  line-height: 1.4;
+  color: var(--iprm-text-light);
+}
+
+.iprm-trust-stats--band {
+  max-width: var(--iprm-max-content);
+  gap: 24px;
+}
+
+.iprm-trust-stats--band .iprm-trust-stats__item {
+  padding: 6px 16px;
+}
+
+.iprm-trust-stats--band .iprm-trust-stats__value {
+  font-size: 1.9375rem;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: var(--iprm-accent);
+  margin-bottom: 7px;
+}
+
+.iprm-trust-stats--band .iprm-trust-stats__label {
+  font-weight: 500;
+}
+
+/* Смуга-обгортка: вужчі відступи, ніж у звичайної секції. */
+.apple-page .iprm-section--band {
+  padding: 30px 24px;
+  border-bottom: 1px solid var(--iprm-border);
+}
+
+/* ========== BENEFITS (що зміниться у практиці) ========== */
+
+.iprm-benefit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  max-width: var(--iprm-max-content);
+  margin: 0 auto;
+}
+
+.iprm-benefit-card {
+  padding: 28px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  background: var(--iprm-white);
+  box-shadow: var(--iprm-shadow-xs);
+}
+
+.iprm-benefit-card__num {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 18px;
+  border-radius: var(--iprm-radius-sm);
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
+  font-size: 1.4375rem;
+  font-weight: 800;
+}
+
+.iprm-benefit-card__title {
+  margin: 0 0 10px;
+  font-size: 1.3125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--apple-black);
+}
+
+.iprm-benefit-card__text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--iprm-text-light);
+}
+
+/* ========== AUDIENCE (для кого + зворотний дзвінок) ========== */
+
+.iprm-audience-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: var(--iprm-max-content);
+  margin: 0 auto;
+  align-items: start;
+}
+
+.iprm-audience-card {
+  padding: 28px;
+  border: 1px solid var(--iprm-border);
+  border-top: 4px solid var(--iprm-accent);
+  border-radius: var(--iprm-radius);
+  background: var(--iprm-white);
+  box-shadow: var(--iprm-shadow-xs);
+}
+
+.iprm-audience-card--ask {
+  border-top-color: var(--apple-orange);
+  background: var(--apple-orange-light);
+}
+
+.iprm-audience-card__tag {
+  display: inline-block;
+  margin-bottom: 15px;
+  color: var(--iprm-accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.iprm-audience-card--ask .iprm-audience-card__tag {
+  color: var(--apple-orange);
+}
+
+.iprm-audience-card__title {
+  margin: 0 0 10px;
+  font-size: 1.3125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--apple-black);
+}
+
+.iprm-audience-card p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--iprm-text-light);
+}
+
+/* Список із галочками -- спільний для карток аудиторії й тарифів. */
+.iprm-check-list {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.iprm-check-list li {
+  position: relative;
+  padding: 8px 0 8px 27px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--iprm-text-light);
+}
+
+.iprm-check-list li::before {
+  content: '\2713';
+  position: absolute;
+  left: 0;
+  color: var(--iprm-success);
+  font-weight: 800;
+}
+
+.iprm-audience-card .apple-btn {
+  margin-top: 20px;
+}
+
+/* ========== GALLERY ========== */
+
+.iprm-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  max-width: var(--iprm-max-content);
+  margin: 0 auto;
+}
+
+.iprm-gallery__item {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--iprm-radius-md);
+  background: var(--apple-section-bg);
+}
+
+.iprm-gallery__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.45s var(--ease-reveal);
+}
+
+.iprm-gallery__item:hover .iprm-gallery__img {
+  transform: scale(1.03);
+}
+
+.iprm-gallery__caption {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  max-width: calc(100% - 28px);
+  padding: 8px 11px;
+  border-radius: 9px;
+  color: var(--iprm-on-accent);
+  background: rgba(29, 8, 56, 0.78);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ========== PRACTICE NOTE (акцент у програмі) ========== */
+
+.iprm-practice-note {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  max-width: var(--iprm-max-content);
+  margin: 24px auto 0;
+  padding: 24px;
+  border: 1px solid var(--iprm-warning-border);
+  border-radius: var(--iprm-radius-md);
+  background: var(--iprm-warning-bg);
+}
+
+.iprm-practice-note__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border-radius: var(--iprm-radius-sm);
+  background: var(--apple-orange);
+  color: var(--iprm-on-accent);
+  font-size: 1.4375rem;
+  font-weight: 800;
+}
+
+.iprm-practice-note__title {
+  margin: 0 0 4px;
+  font-size: 1.3125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--apple-black);
+}
+
+.iprm-practice-note__text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--iprm-warning-text);
+}
+
+/* ========== TRAINER BLOCK ==========
+   Перенесено з page-courses.css і доповнено тегами й цифрами. */
+
+.iprm-trainer-block {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 48px;
+  align-items: center;
+  background: var(--iprm-white);
+  border-radius: var(--iprm-radius);
+  padding: 40px;
+  border: 1px solid var(--iprm-border);
+  box-shadow: var(--iprm-shadow-xs);
+}
+
+.iprm-trainer-block__photo {
+  width: 280px;
+  height: 280px;
+  object-fit: cover;
+  border-radius: var(--iprm-radius-md);
+  background: var(--iprm-placeholder-grad);
+  display: block;
+}
+
+.iprm-trainer-block__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.iprm-trainer-block__body h3 {
+  font-size: clamp(1.5rem, 2.8vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--apple-black);
+  margin: 0;
+}
+
+.iprm-trainer-block__role {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--iprm-nav-active);
+  margin: 0;
+}
+
+.iprm-trainer-block__body p:not(.iprm-trainer-block__role) {
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--apple-gray-dark);
+  margin: 0;
+}
+
+/* Варіант із фото 3/4 -- ближче до референсу, коли є теги й цифри. */
+.iprm-trainer-block--rich {
+  grid-template-columns: 360px 1fr;
+  align-items: center;
+  max-width: var(--iprm-max-content);
+}
+
+.iprm-trainer-block--rich .iprm-trainer-block__photo {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-position: center top;
+  border-radius: var(--iprm-radius);
+}
+
+.iprm-trainer-block__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 10px 0 0;
+}
+
+.iprm-trainer-block__tag {
+  padding: 7px 12px;
+  border-radius: var(--iprm-radius-pill);
+  color: var(--iprm-accent);
+  background: var(--iprm-accent-light);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.iprm-trainer-block__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.iprm-trainer-block__stat {
+  padding: 18px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  background: var(--iprm-white);
+}
+
+.iprm-trainer-block__stat-value {
+  display: block;
+  color: var(--iprm-accent);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.iprm-trainer-block__stat-label {
+  display: block;
+  margin-top: 5px;
+  color: var(--iprm-text-light);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ========== DARK SHELL (відгуки, лід-форма) ==========
+   Свідомо тёмна в обох темах: --apple-grad-dark-* у тёмній не
+   перевизначаються. Текст -- лише --iprm-on-accent. */
+
+.iprm-dark-shell {
+  max-width: var(--iprm-max-content);
+  margin: 0 auto;
+  padding: 36px;
+  border-radius: var(--iprm-radius);
+  color: var(--iprm-on-accent);
+  background:
+    radial-gradient(circle at 95% 15%, rgba(var(--apple-orange-rgb), 0.18), transparent 30%),
+    linear-gradient(145deg, var(--apple-grad-dark-2), var(--apple-grad-dark-1));
+}
+
+.iprm-dark-shell .iprm-section__title,
+.iprm-dark-shell .iprm-dark-shell__title {
+  color: var(--iprm-on-accent);
+  text-align: left;
+}
+
+.iprm-dark-shell__lead {
+  max-width: 760px;
+  margin: 0 0 28px;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+/* Плашка-надзаголовок. На тёмному тлі -- у теплому акценті. */
+.iprm-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 7px 13px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.iprm-eyebrow::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.iprm-dark-shell .iprm-eyebrow {
+  color: #ffd47c;
+  background: rgba(var(--apple-orange-rgb), 0.13);
+  border: 1px solid rgba(var(--apple-orange-rgb), 0.25);
+}
+
+.iprm-review-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 28px 0;
+}
+
+.iprm-review-tile {
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--iprm-radius-md);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.iprm-review-tile__title {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--iprm-on-accent);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.iprm-review-tile p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.iprm-dark-shell__cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.iprm-dark-shell__cta p {
+  max-width: 720px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* ========== LEAD SECTION (тёмна секція з формою) ========== */
+
+.apple-page .iprm-lead-section {
+  color: var(--iprm-on-accent);
+  background:
+    radial-gradient(circle at 90% 0, rgba(var(--apple-orange-rgb), 0.2), transparent 34%),
+    linear-gradient(145deg, var(--apple-grad-dark-2), var(--apple-grad-dark-1));
+}
+
+.iprm-lead-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: center;
+  max-width: var(--iprm-max-content);
+  margin: 0 auto;
+}
+
+.apple-page .iprm-lead-section .iprm-section__title {
+  text-align: left;
+  color: var(--iprm-on-accent);
+}
+
+.iprm-lead-grid__lead {
+  margin: 0 0 22px;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.iprm-lead-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.iprm-lead-list li {
+  position: relative;
+  padding: 8px 0 8px 28px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.iprm-lead-list li::before {
+  content: '\2713';
+  position: absolute;
+  left: 0;
+  color: var(--apple-orange);
+  font-weight: 800;
+}
+
+/* Картка форми -- світла пляма на тёмній секції, тому --iprm-white доречний. */
+.iprm-lead-form {
+  padding: 30px;
+  border-radius: var(--iprm-radius);
+  background: var(--iprm-white);
+  color: var(--iprm-text);
+  box-shadow: var(--iprm-shadow-modal);
+}
+
+.iprm-lead-form__title {
+  margin: 0 0 6px;
+  font-size: 1.5625rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--apple-black);
+}
+
+.iprm-lead-form__note {
+  margin: 0 0 8px;
+  color: var(--iprm-text-light);
+  font-size: 14px;
+}
+
+.iprm-lead-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.iprm-lead-form__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 14px 0;
+  color: var(--iprm-text-light);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.iprm-lead-form__consent input {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-top: 1px;
+}
+
+/* ========== FAQ ==========
+   Перенесено з page-courses.css. Розмітка референсу: тонкі роздільники
+   замість карток, "+" повертається на 45deg замість підміни символу
+   (плавно і не залежить від шрифту). */
+
+.iprm-faq {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.iprm-faq__item {
+  border-bottom: 1px solid var(--iprm-border);
+}
+
+.iprm-faq__question {
+  position: relative;
+  padding: 22px 46px 22px 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--iprm-text);
+  cursor: pointer;
+  list-style: none;
+}
+
+.iprm-faq__question::-webkit-details-marker {
+  display: none;
+}
+
+.iprm-faq__question::after {
+  content: '+';
+  position: absolute;
+  right: 10px;
+  top: 18px;
+  color: var(--iprm-accent);
+  font-size: 1.75rem;
+  font-weight: 300;
+  line-height: 1;
+  transition: transform 0.2s var(--ease-interact);
+}
+
+.iprm-faq__item[open] .iprm-faq__question::after {
+  transform: rotate(45deg);
+}
+
+.iprm-faq__answer {
+  max-width: 800px;
+  padding: 0 46px 22px 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--iprm-text-light);
+  white-space: pre-line;
+}
+
+/* ========== STICKY CTA ==========
+   Перенесено з page-courses.css, додано двокнопковий варіант. */
+
+.iprm-sticky-cta {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  display: none; /* показ лише на mobile через media-query */
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--iprm-surface-menu);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border-top: 1px solid var(--iprm-border);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.iprm-sticky-cta__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.iprm-sticky-cta__title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--apple-black);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 52vw;
+}
+
+.iprm-sticky-cta__price {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--iprm-accent);
+}
+
+.iprm-sticky-cta__actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.iprm-sticky-cta__btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-accent);
+  color: var(--iprm-on-accent);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s var(--ease-interact);
+}
+
+.iprm-sticky-cta__btn:hover {
+  background: var(--iprm-accent-hover);
+}
+
+.iprm-sticky-cta__btn--ghost {
+  background: transparent;
+  color: var(--iprm-accent);
+  border: 1px solid var(--iprm-accent);
+}
+
+.iprm-sticky-cta__btn--ghost:hover {
+  background: var(--iprm-accent-light);
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 980px) {
+  .apple-page .iprm-hero--landing .iprm-hero__content,
+  .iprm-lead-grid {
+    grid-template-columns: 1fr;
+    gap: 42px;
+  }
+
+  .iprm-hero__visual {
+    max-width: 720px;
+  }
+
+  .iprm-hero__seats {
+    left: 18px;
+  }
+
+  .iprm-trust-stats,
+  .iprm-benefit-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .iprm-trainer-block--rich {
+    grid-template-columns: 300px 1fr;
+    gap: 36px;
+  }
+
+  .iprm-review-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .apple-page .iprm-hero--landing .iprm-hero__content {
+    padding: 52px 20px 66px;
+  }
+
+  .apple-page .iprm-hero--landing .iprm-hero__subtitle {
+    font-size: 17px;
+  }
+
+  .iprm-hero__meta {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Картка місць перестає бути накладкою: на вузькому екрані вона
+     перекривала б фото. */
+  .iprm-hero__seats {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    width: calc(100% - 28px);
+    margin: -32px auto 0;
+  }
+
+  .iprm-benefit-grid,
+  .iprm-audience-grid,
+  .iprm-lead-form__row,
+  .iprm-trainer-block--rich {
+    grid-template-columns: 1fr;
+  }
+
+  .iprm-trainer-block--rich .iprm-trainer-block__photo {
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .iprm-trainer-block__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .iprm-gallery {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .iprm-dark-shell__cta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .iprm-page-nav__link {
+    padding: 10px 12px;
+    font-size: 0.75rem;
+  }
+
+  /* Індикатор місць на вузькому екрані з'їдав би всю навігацію. */
+  .iprm-page-nav__seats {
+    display: none;
+  }
+
+  .iprm-faq__question {
+    font-size: 0.9375rem;
+    padding: 18px 40px 18px 0;
+  }
+
+  .iprm-faq__answer {
+    padding: 0 40px 18px 0;
+    font-size: 0.875rem;
+  }
+
+  .iprm-sticky-cta:not([hidden]) {
+    display: flex;
+  }
+
+  /* Другорядна дія на вузькому екрані поступається місцем основній. */
+  .iprm-sticky-cta__btn--ghost {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .iprm-trust-stats__value {
+    font-size: 1.625rem;
+  }
+
+  .iprm-gallery {
+    gap: 10px;
+  }
+
+  .iprm-gallery__item {
+    border-radius: var(--iprm-radius-sm);
+  }
+
+  .iprm-gallery__caption {
+    left: 8px;
+    bottom: 8px;
+    max-width: calc(100% - 16px);
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  .iprm-dark-shell,
+  .iprm-lead-form,
+  .iprm-benefit-card,
+  .iprm-audience-card {
+    padding: 24px;
+  }
+
+  .iprm-sticky-cta__info {
+    display: none;
+  }
+
+  .iprm-sticky-cta__actions {
+    width: 100%;
+  }
+
+  .iprm-sticky-cta__actions .iprm-sticky-cta__btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .iprm-page-nav,
+  .iprm-sticky-cta {
+    background: var(--iprm-white);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .iprm-gallery__caption {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iprm-gallery__item:hover .iprm-gallery__img,
+  .iprm-progress__fill {
+    transition: none;
+  }
+
+  .iprm-gallery__item:hover .iprm-gallery__img {
+    transform: none;
+  }
+}
+
+/* ========== ТЁМНА ТЕМА ==========
+   Більшість компонентів адаптується через токени. Тут -- лише те, де
+   світлий градієнт/тінь у тёмній темі виглядали б чужорідно. */
+
+[data-theme='dark'] .iprm-practice-note {
+  border-color: var(--iprm-warning-border);
+}
+
+/* Картка місць і форма лежать на зумисне тёмному тлі: у тёмній темі
+   --iprm-white уже тёмний, тож потрібна видима межа, інакше вони
+   зіллються з секцією. */
+[data-theme='dark'] .iprm-hero__seats,
+[data-theme='dark'] .iprm-lead-form {
+  border: 1px solid var(--iprm-border);
+}
+
+[data-theme='dark'] .iprm-sticky-cta {
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}

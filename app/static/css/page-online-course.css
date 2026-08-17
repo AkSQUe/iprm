@@ -214,3 +214,11 @@
   color: var(--iprm-error-text);
   font-size: 0.875rem;
 }
+
+
+/* Рахунок для юросіб -- другорядна дія поруч із кнопкою оплати. */
+.iprm-online-checkout__invoice {
+  margin: 16px 0 0;
+  font-size: 0.875rem;
+  color: var(--iprm-text-light);
+}

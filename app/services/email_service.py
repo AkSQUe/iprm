@@ -834,7 +834,7 @@ class EmailService:
         return result
 
     @staticmethod
-    def send_online_access(enrollment, access_url):
+    def send_online_access(enrollment, access_url, promo=None):
         """Посилання на навчання після оплати онлайн-курсу.
 
         trigger='payment', а не окремий 'online_access': це продовження
@@ -864,6 +864,7 @@ class EmailService:
                 'enrollment': enrollment,
                 'access_url': access_url,
                 'account_url': f'{base}/auth/account' if base else None,
+                'promo': promo,
             },
             trigger='payment',
         )

@@ -104,10 +104,22 @@ class PromoCode(TimestampMixin, db.Model):
         ),
         index=True,
     )
+    # Те саме для покупок онлайн-курсів. Nullable і без CHECK «рівно одне
+    # з двох»: код може бути й загальним, не виданим ні за що конкретне --
+    # саме такі створює адмін руками. Ці колонки означають «за що видано»,
+    # а не власника коду.
+    issued_for_enrollment_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('online_enrollments.id', ondelete='SET NULL'),
+        nullable=True, index=True,
+    )
 
     course = db.relationship('Course')
     instance = db.relationship('CourseInstance')
     created_by = db.relationship('User', foreign_keys=[created_by_id])
+    issued_for_enrollment = db.relationship(
+        'OnlineEnrollment', foreign_keys=[issued_for_enrollment_id],
+    )
     issued_for_registration = db.relationship(
         'EventRegistration', foreign_keys=[issued_for_registration_id],
     )

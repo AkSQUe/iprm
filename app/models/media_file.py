@@ -40,6 +40,12 @@ class MediaFile(TimestampMixin, SoftDeleteMixin, db.Model):
     width = db.Column(db.Integer)
     height = db.Column(db.Integer)
     alt_text = db.Column(db.String(255))
+    # Видимий підпис під/над зображенням (галереї). На відміну від alt_text --
+    # це контент для читача, а не для скрінрідера. Свідомо НЕ перекладається:
+    # реєстр не під TranslatableMixin, і заводити його туди заради підписів
+    # означало б зачепити блог і тренерів. Показується однією мовою в усіх
+    # локалях (рішення від 17.08.2026).
+    caption = db.Column(db.String(255))
 
     # Поліморфна прив'язка
     entity_type = db.Column(db.String(50), index=True)          # blog_post, trainer, course

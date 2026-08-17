@@ -175,3 +175,26 @@ def online_order_reissue(enrollment_id):
                       current_user.email, enrollment.order_id)
     flash('Доступ видано, лист надіслано', 'success')
     return redirect(url_for('admin.online_orders_list'))
+
+
+@admin_bp.route('/online-orders/<int:enrollment_id>/refund', methods=['POST'])
+@admin_required
+def online_order_refund(enrollment_id):
+    """Повернути кошти через LiqPay.
+
+    Окремо від зміни статусу вручну: там менеджер лише фіксує те, що вже
+    сталося поза системою, а тут ми справді просимо LiqPay повернути гроші.
+    Плутати ці дві дії не можна -- одна з них рухає гроші.
+    """
+    from app.services.liqpay import get_liqpay_service
+    from app.services.payment_ops import PaymentOps
+
+    enrollment = db.session.get(OnlineEnrollment, enrollment_id)
+    if enrollment is None:
+        flash('Замовлення не знайдено', 'error')
+        return redirect(url_for('admin.online_orders_list'))
+
+    ops = PaymentOps(get_liqpay_service())
+    ok, message = ops.initiate_enrollment_refund(enrollment, current_user)
+    flash(message, 'success' if ok else 'error')
+    return redirect(url_for('admin.online_orders_list'))
