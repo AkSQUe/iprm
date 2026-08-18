@@ -95,6 +95,43 @@
   text-align: center;
 }
 
+/* ===== ROI-калькулятор Головної =====
+
+   Тут він інший, ніж на сторінці курсу: три плитки результату поспіль, а не
+   дві половини картки. Класи .iprm-roi* спільні історично, тому розкладка
+   ЦЬОГО калькулятора живе тут і скоуплена на .page-home, а двопанельний
+   варіант курсу носить модифікатор .iprm-roi--split (page-courses.css).
+   Поки картку описував голий .iprm-roi, переверстка сторінки курсу мовчки
+   забирала Головну з собою. */
+
+.page-home .iprm-roi {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px;
+  background: var(--iprm-white);
+  border: 1px solid rgba(var(--apple-accent-rgb), 0.25);
+  border-radius: var(--iprm-radius);
+  box-shadow: 0 8px 32px rgba(var(--apple-accent-rgb), 0.08);
+}
+
+.page-home .iprm-roi__inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 640px) {
+  .page-home .iprm-roi {
+    padding: 24px 20px;
+  }
+
+  .page-home .iprm-roi__inputs,
+  .page-home .iprm-roi__results {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ===== ROI: селектор курсу (на курсі його немає -- стилі лише тут) ===== */
 /* Поле курсу займає весь рядок; чек і к-сть -- нижче у дві колонки. */
 .page-home .iprm-roi__field--course {

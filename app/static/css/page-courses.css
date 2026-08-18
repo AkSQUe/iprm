@@ -542,7 +542,7 @@
 @media (max-width: 760px) {
   /* Дві половини ROI не вміщаються поруч -- складаємо. Тёмна половина
      лишається другою: спершу крутиш повзунки, потім бачиш результат. */
-  .iprm-roi {
+  .iprm-roi--split {
     grid-template-columns: 1fr;
   }
 }
@@ -1636,8 +1636,13 @@ button.iprm-tag:focus-visible {
 /* ========== ROI-КАЛЬКУЛЯТОР ОКУПНОСТІ ========== */
 
 /* Дві половини еталона: ліворуч світлі повзунки, праворуч тёмний підсумок.
-   overflow: hidden -- щоб тёмна половина не вилазила за радіус. */
-.iprm-roi {
+   overflow: hidden -- щоб тёмна половина не вилазила за радіус.
+
+   Модифікатор, а не голий .iprm-roi: ті самі класи носить калькулятор
+   Головної (три плитки поспіль), а вона підключає цей файл. Двопанельна
+   сітка лягала на її розмітку -- поля виповзали за край картки, а підписи
+   зрізало радіусом. */
+.iprm-roi--split {
   display: grid;
   grid-template-columns: 1fr 1fr;
   overflow: hidden;
@@ -1649,11 +1654,11 @@ button.iprm-tag:focus-visible {
   box-shadow: var(--iprm-shadow-card);
 }
 
-.iprm-roi__controls {
+.iprm-roi--split .iprm-roi__controls {
   padding: 38px;
 }
 
-.iprm-roi__controls-title {
+.iprm-roi--split .iprm-roi__controls-title {
   margin: 0 0 4px;
   font-size: 21px;
   font-weight: 800;
@@ -1663,7 +1668,7 @@ button.iprm-tag:focus-visible {
 
 /* Тёмна половина тёмна в ОБОХ темах, як hero й оболонка відгуків, тож
    текст на ній -- лише --iprm-on-accent та його прозорі похідні. */
-.iprm-roi__result {
+.iprm-roi--split .iprm-roi__result {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1863,17 +1868,6 @@ button.iprm-tag:focus-visible {
   color: var(--iprm-text-light);
   text-align: center;
   margin: 0;
-}
-
-@media (max-width: 640px) {
-  .iprm-roi {
-    padding: 24px 20px;
-  }
-
-  .iprm-roi__inputs,
-  .iprm-roi__results {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* ===== Банер довіри "вас рекомендує" (реферальний лендинг) ===== */
