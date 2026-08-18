@@ -141,6 +141,18 @@
   <!-- ===== BENEFITS ===== -->
   {% include 'partials/_course_benefits.html' %}
 
+  <!-- ===== ROI ===== -->
+  {# «Економіка методу» еталона працює і для онлайну: питання «коли це
+     окупиться» не залежить від того, очно людина вчиться чи ні. Ціна одна
+     (тарифів у онлайн-курсу немає), тому й вилки «від» тут не буває.
+
+     Лише для гривні: калькулятор рахує й підписує суми в ₴, а ціна
+     онлайн-курсу може бути в іншій валюті -- тоді число було б правдивим, а
+     позначка брехливою. #}
+  {% set min_price = course.effective_price if course.currency == 'UAH' else none %}
+  {% set price_is_from = false %}
+  {% include 'partials/_course_roi.html' %}
+
   <!-- ===== ABOUT + BUY ===== -->
   <section id="about" class="iprm-section" aria-labelledby="online-course-about">
     <div class="iprm-section__inner iprm-online-detail">
