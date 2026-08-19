@@ -239,7 +239,10 @@ def _upsert(payloads, now, report):
             # її зняли (чи не вмикали) люди, їм і вирішувати.
             course.is_vanished = False
             report.restored += 1
-        elif changed:
+        # Лічильники незалежні: курс міг і повернутись, і приїхати зміненим,
+        # а звіт із "повернувся 1, оновлено 0" читається так, ніби дані ті
+        # самі, що й були.
+        if changed:
             report.updated += 1
 
     return seen_ids

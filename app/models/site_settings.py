@@ -309,6 +309,11 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
     sintegrum_access_ttl_hours = db.Column(
         db.Integer, default=72, nullable=False, server_default='72',
     )
+    # Через скільки днів нагадати покупцю, що доступ відкрито, а він жодного
+    # разу не заходив. 0 -- не нагадувати (так само, як certdata_reminder_days).
+    sintegrum_access_reminder_days = db.Column(
+        db.Integer, default=3, nullable=False, server_default='3',
+    )
     # Результат останнього прогону синхронізації -- для сторінки інтеграції.
     sintegrum_last_sync_at = db.Column(db.DateTime(timezone=True))
     sintegrum_last_sync_status = db.Column(db.String(20), default='', server_default='')

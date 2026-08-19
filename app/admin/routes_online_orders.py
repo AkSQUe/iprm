@@ -19,9 +19,11 @@ from sqlalchemy.orm import contains_eager, joinedload
 from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
 from app.extensions import db
+from app.models.mixins import utcnow
 from app.models.online_course import OnlineCourse
 from app.models.online_enrollment import OnlineEnrollment
 from app.models.user import User
+from app.utils import ensure_utc
 
 audit_logger = logging.getLogger('audit')
 
@@ -42,6 +44,13 @@ STATUS_OPTIONS = [
     ('cancelled', 'Скасоване'),
 ]
 
+# Стан доступу -- окремий зріз від статусу оплати. Заради `stuck` сторінка
+# здебільшого й відкривається: людина заплатила і нічого не отримала.
+ACCESS_OPTIONS = [
+    ('stuck', 'Оплачено без доступу'),
+    ('granted', 'Доступ видано'),
+]
+
 
 def _order_filters():
     return {
@@ -50,6 +59,8 @@ def _order_filters():
                                        [key for key, _ in PAYMENT_OPTIONS]),
         'status': _listing.choice_arg('status',
                                       [key for key, _ in STATUS_OPTIONS]),
+        'access': _listing.choice_arg('access',
+                                      [key for key, _ in ACCESS_OPTIONS]),
     }
 
 
@@ -79,8 +90,33 @@ def _orders_query(filters):
         query = query.filter(OnlineEnrollment.payment_status == filters['payment'])
     if filters['status']:
         query = query.filter(OnlineEnrollment.status == filters['status'])
+    if filters['access'] == 'stuck':
+        query = query.filter(
+            OnlineEnrollment.payment_status == 'paid',
+            OnlineEnrollment.provisioned_at.is_(None),
+        )
+    elif filters['access'] == 'granted':
+        query = query.filter(OnlineEnrollment.provisioned_at.isnot(None))
 
     return query.order_by(OnlineEnrollment.created_at.desc())
+
+
+def _waiting_hours(orders):
+    """Скільки годин оплачене замовлення чекає на доступ.
+
+    Рахуємо тут, а не в шаблоні: різниця дат потребує ensure_utc (SQLite
+    віддає naive), а це правило має жити в одному місці.
+    """
+    now = utcnow()
+    waiting = {}
+    for order in orders:
+        if not order.is_paid or order.provisioned_at is not None:
+            continue
+        since = ensure_utc(order.paid_at or order.created_at)
+        if since is None:
+            continue
+        waiting[order.id] = int((now - since).total_seconds() // 3600)
+    return waiting
 
 
 @admin_bp.route('/online-orders')
@@ -116,7 +152,9 @@ def online_orders_list():
         filters=filters,
         payment_options=PAYMENT_OPTIONS,
         status_options=STATUS_OPTIONS,
+        access_options=ACCESS_OPTIONS,
         totals=totals,
+        waiting_hours=_waiting_hours(orders),
     )
 
 
@@ -132,25 +170,25 @@ def online_order_set_payment(enrollment_id):
     from app.services.liqpay import get_liqpay_service
     from app.services.payment_ops import PaymentOps
 
-    enrollment = db.session.get(OnlineEnrollment, enrollment_id)
-    if enrollment is None:
-        flash('Замовлення не знайдено', 'error')
-        return redirect(url_for('admin.online_orders_list'))
-
     new_status = request.form.get('payment_status', '')
     if new_status not in [key for key, _ in PAYMENT_OPTIONS]:
         flash('Невідомий статус оплати', 'error')
         return redirect(url_for('admin.online_orders_list'))
 
-    # Блокування рядка -- як у callback: менеджер може натиснути статус тієї
-    # ж миті, коли прийде відповідь LiqPay, і без нього обидва переходи
-    # прочитали б однаковий стан.
+    # Одразу під блокуванням, без попереднього читання: менеджер може
+    # натиснути статус тієї ж миті, коли прийде відповідь LiqPay, і обидва
+    # переходи прочитали б однаковий стан. populate_existing() -- щоб
+    # блокування давало ще й свіжі дані, а не об'єкт з identity map.
     enrollment = (
         db.session.query(OnlineEnrollment)
+        .with_for_update().populate_existing()
         .filter_by(id=enrollment_id)
-        .with_for_update()
         .first()
     )
+    if enrollment is None:
+        flash('Замовлення не знайдено', 'error')
+        return redirect(url_for('admin.online_orders_list'))
+
     old_status = enrollment.payment_status
     ops = PaymentOps(get_liqpay_service())
     ok, message = ops.update_enrollment_status(
@@ -244,6 +282,7 @@ def online_orders_export():
             ('Пошук', filters['q'] or '–'),
             ('Оплата', dict(PAYMENT_OPTIONS).get(filters['payment'], 'Будь-яка')),
             ('Стан', dict(STATUS_OPTIONS).get(filters['status'], 'Будь-який')),
+            ('Доступ', dict(ACCESS_OPTIONS).get(filters['access'], 'Будь-який')),
         ],
         len(orders),
     )

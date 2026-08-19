@@ -190,6 +190,15 @@ def init_scheduler(app):
         name='Видача доступу до оплачених онлайн-курсів',
     )
 
+    # Раз на добу, вранці: лист "ви ще не заходили" не має приходити вночі.
+    scheduler.add_job(
+        send_online_access_reminders,
+        trigger=CronTrigger(hour=10, minute=40),
+        id='online_access_reminders',
+        replace_existing=True,
+        name='Нагадування про невикористаний онлайн-курс',
+    )
+
     scheduler.start()
     _initialized = True
     logger.info('APScheduler started with SQLAlchemy jobstore')
@@ -549,6 +558,85 @@ def retry_online_access_provisioning():
                                          enrollment.order_id)
             except Exception:
                 logger.exception('retry_online_access_provisioning failed')
+
+
+def send_online_access_reminders():
+    """Нагадати тим, кому доступ відкрито, а вони жодного разу не заходили.
+
+    Курс без дати легко відкласти "на потім" і забути -- на відміну від
+    заходу, який сам нагадує про себе датою. Один лист на замовлення:
+    позначку тримає `access_reminder_sent_at`, як у нагадування про дані
+    для сертифіката.
+    """
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('online_access_reminders') as got:
+            if not got:
+                logger.debug('online access reminders: another worker holds the lock')
+                return
+            try:
+                _send_online_access_reminders()
+            except Exception:
+                logger.exception('send_online_access_reminders failed')
+
+
+def _send_online_access_reminders():
+    from sqlalchemy.orm import joinedload
+
+    from app.extensions import db
+    from app.models.online_enrollment import OnlineEnrollment
+    from app.models.site_settings import SiteSettings
+    from app.services.email_service import EmailService
+
+    days = SiteSettings.get().sintegrum_access_reminder_days or 0
+    if days <= 0:
+        logger.debug('online access reminders disabled (days=0)')
+        return
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    pending = (
+        OnlineEnrollment.query
+        .options(
+            joinedload(OnlineEnrollment.user),
+            joinedload(OnlineEnrollment.course),
+        )
+        .filter(
+            OnlineEnrollment.payment_status == 'paid',
+            OnlineEnrollment.provisioned_at.isnot(None),
+            OnlineEnrollment.provisioned_at <= cutoff,
+            OnlineEnrollment.access_last_opened_at.is_(None),
+            OnlineEnrollment.access_reminder_sent_at.is_(None),
+        )
+        .all()
+    )
+    if not pending:
+        return
+
+    now = datetime.now(timezone.utc)
+    sent = 0
+    for enrollment in pending:
+        user = enrollment.user
+        if user is None or not user.email:
+            # Позначаємо, щоб не перебирати цей рядок щодня.
+            enrollment.access_reminder_sent_at = now
+            continue
+        try:
+            EmailService.send_online_access_reminder(enrollment)
+            enrollment.access_reminder_sent_at = now
+            sent += 1
+        except Exception:
+            logger.exception('Access reminder failed for %s',
+                             enrollment.order_id)
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception('Could not store access reminder marks')
+        return
+
+    logger.info('Online access reminders: %d sent of %d pending',
+                sent, len(pending))
 
 
 def sintegrum_sync_is_due(now=None):

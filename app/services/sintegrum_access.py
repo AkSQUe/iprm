@@ -99,8 +99,11 @@ class StudentApiProvider:
         if not remote_course_id:
             raise AccessProvisionError('У курсу немає ідентифікатора Sintegrum')
 
-        student_id = enrollment.sintegrum_student_id or self._resolve_student(
-            enrollment)
+        student_id = (
+            enrollment.sintegrum_student_id
+            or known_student_id(enrollment.user_id)
+            or self._resolve_student(enrollment)
+        )
 
         assigned = self.client.assign_course(student_id, remote_course_id)
         if not assigned.ok:
@@ -111,7 +114,12 @@ class StudentApiProvider:
                             student_id=student_id)
 
     def _resolve_student(self, enrollment):
-        """Знайти студента за email або завести нового. Повертає id."""
+        """Знайти студента за email у Sintegrum або завести нового.
+
+        Викликається лише тоді, коли свого запису про цю людину немає (див.
+        `known_student_id`): звернення до чужого API дорожче за SELECT і
+        залежить від того, чи partner правильно зрозумів наш фільтр.
+        """
         user = enrollment.user
         email = (getattr(user, 'email', '') or '').strip()
         if not email:
@@ -137,6 +145,31 @@ class StudentApiProvider:
             raise AccessProvisionError(
                 'Sintegrum не повернув ідентифікатор створеного студента')
         return student_id
+
+
+def known_student_id(user_id):
+    """Ідентифікатор учня Sintegrum, який ми вже отримували для цієї людини.
+
+    Найнадійніше джерело: його записало НАШЕ попереднє замовлення. Пошук за
+    email на боці партнера лишається запасним шляхом -- він залежить від
+    того, чи спрацював фільтр, а не знайшовши, ми заводимо ще одного учня на
+    ту саму адресу. Тобто два кабінети, у кожному по половині навчання.
+    """
+    if not user_id:
+        return None
+
+    from app.models.online_enrollment import OnlineEnrollment
+
+    row = (
+        db.session.query(OnlineEnrollment.sintegrum_student_id)
+        .filter(
+            OnlineEnrollment.user_id == user_id,
+            OnlineEnrollment.sintegrum_student_id.isnot(None),
+        )
+        .order_by(OnlineEnrollment.id.desc())
+        .first()
+    )
+    return row[0] if row else None
 
 
 def portal_url(settings=None):
@@ -374,21 +407,31 @@ def reissue(enrollment, commit=True):
 def pending_provisioning(older_than_minutes=10):
     """Оплачені замовлення, яким доступ так і не видали.
 
-    У чинному сценарії це майже завжди означає, що в курсу зник
-    access_url між оплатою і видачею. Мовчки лишати такий стан не можна:
-    людина заплатила.
+    Відлік -- від ОПЛАТИ, а не від оформлення. Замовлення живе від чекауту
+    до платежу, і за рахунком це дні: до моменту оплати воно вже давно
+    "старе", тож джоба бралася б за нього тієї ж хвилини, коли доступ
+    видає callback. Два одночасні прогони означають два токени -- другий
+    гасить перший, той самий, що вже пішов листом.
+
+    `created_at` лишається запасним джерелом: у давніх замовлень і в тих,
+    що їх проставили руками до появи поля, paid_at може бути порожнім.
     """
     from datetime import timedelta
+
+    from sqlalchemy import func
 
     from app.models.online_enrollment import OnlineEnrollment
 
     cutoff = utcnow() - timedelta(minutes=older_than_minutes)
+    paid_moment = func.coalesce(
+        OnlineEnrollment.paid_at, OnlineEnrollment.created_at,
+    )
     return (
         OnlineEnrollment.query
         .filter(
             OnlineEnrollment.payment_status == 'paid',
             OnlineEnrollment.provisioned_at.is_(None),
-            OnlineEnrollment.created_at <= cutoff,
+            paid_moment <= cutoff,
         )
         .all()
     )

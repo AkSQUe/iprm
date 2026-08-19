@@ -80,6 +80,7 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 | GET, POST | `/online-courses/<slug>/checkout` | Оформлення покупки, промокод; аноніму -- форма покупця |
 | GET, POST | `/online-courses/order/<token>` | Сторінка замовлення гостя: оплата, промокод, кабінет |
 | POST | `/online-courses/order/<token>/set-password` | Створення кабінету після оплати |
+| POST | `/online-courses/order/<token>/reissue` | Перевипуск протермінованого посилання гостем |
 | GET | `/online-courses/order/<token>/invoice.pdf` | Рахунок для покупця без акаунта |
 | GET | `/online-courses/orders/<id>/invoice.pdf` | Рахунок із кабінету |
 | GET | `/online-courses/access/<token>` | Тимчасове посилання -> 302 на Sintegrum |
@@ -92,6 +93,12 @@ Google/Apple. Логіка входу спільна -- `_resolve_oauth_login()`
 `order_token` (30 днів), бо входу ще не має; пароль пропонується після
 оплати. Токен замовлення -- це НЕ токен доступу: перший живе до оплати й
 веде на наш сайт, другий видається після неї й веде в Sintegrum.
+
+Перевипуск доступу є в обох світах: у кабінеті (`access/<id>/reissue`,
+login_required) і на сторінці замовлення (`order/<token>/reissue`,
+авторизація -- токен). Без другого гість із протермінованим посиланням
+опинявся в глухому куті: сторінка помилки пропонує перевипуск лише власнику
+акаунта.
 
 `online.checkout`, `online.order` і `online.order_set_password` додано до
 `PRIVATE_HTML_ENDPOINTS` -- решта публічного блупринта лишається придатною

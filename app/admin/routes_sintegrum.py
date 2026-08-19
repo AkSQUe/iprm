@@ -28,6 +28,9 @@ MIN_SYNC_INTERVAL_MINUTES = 5
 MAX_SYNC_INTERVAL_MINUTES = 1440
 MIN_ACCESS_TTL_HOURS = 1
 MAX_ACCESS_TTL_HOURS = 24 * 30
+# 0 -- не нагадувати взагалі (той самий сенс, що в certdata_reminder_days).
+MIN_REMINDER_DAYS = 0
+MAX_REMINDER_DAYS = 60
 
 
 def _config(settings):
@@ -42,6 +45,7 @@ def _config(settings):
         'api_key_set_at': settings.sintegrum_api_key_set_at,
         'sync_interval': settings.sintegrum_sync_interval_minutes,
         'access_ttl': settings.sintegrum_access_ttl_hours,
+        'reminder_days': settings.sintegrum_access_reminder_days,
         'last_sync_at': settings.sintegrum_last_sync_at,
         'last_sync_status': settings.sintegrum_last_sync_status or '',
         'last_sync_error': settings.sintegrum_last_sync_error or '',
@@ -103,6 +107,15 @@ def sintegrum_save():
         flash(err, 'error')
         return redirect(url_for('admin.sintegrum'))
 
+    reminder_days, err = _int_field(
+        'reminder_days', settings.sintegrum_access_reminder_days,
+        MIN_REMINDER_DAYS, MAX_REMINDER_DAYS,
+        'Нагадування про невикористаний курс',
+    )
+    if err:
+        flash(err, 'error')
+        return redirect(url_for('admin.sintegrum'))
+
     if base_url and not base_url.startswith('https://'):
         # Ключ їде в заголовку кожного запиту -- по http він поїхав би відкритим.
         flash('Базовий URL має починатися з https://', 'error')
@@ -125,6 +138,7 @@ def sintegrum_save():
         'show_online_courses': request.form.get('show_section') == 'on',
         'sintegrum_sync_interval_minutes': interval,
         'sintegrum_access_ttl_hours': ttl,
+        'sintegrum_access_reminder_days': reminder_days,
     }
     if api_key:
         updates['sintegrum_api_key'] = api_key
@@ -140,6 +154,7 @@ def sintegrum_save():
             'api_key_changed': bool(api_key),
             'sync_interval': interval,
             'access_ttl': ttl,
+            'reminder_days': reminder_days,
         },
         success_msg='Налаштування Sintegrum збережено',
     )

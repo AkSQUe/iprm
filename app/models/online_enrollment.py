@@ -97,6 +97,10 @@ class OnlineEnrollment(TimestampMixin, db.Model):
         db.Integer, default=0, server_default='0', nullable=False,
     )
     access_last_opened_at = db.Column(db.DateTime(timezone=True))
+    # Коли надіслали нагадування "доступ відкрито, а ви не заходили".
+    # Колонка, а не пошук у журналі пошти: правило "один лист на замовлення"
+    # має читатись у самому замовленні (так само зроблено в реєстраціях).
+    access_reminder_sent_at = db.Column(db.DateTime(timezone=True))
 
     __table_args__ = (
         db.CheckConstraint(

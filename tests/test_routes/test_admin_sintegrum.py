@@ -385,3 +385,40 @@ def test_translations_survive_the_edit_form(client, admin, course):
     db.session.refresh(course)
     assert course.title == 'Українська назва'
     assert (course.translations or {}).get('ru', {}).get('title') == 'Русское название'
+
+
+def test_slug_from_the_form_is_slugified(client, admin, course):
+    """`Курс/2` дав би адресу з другим сегментом -- маршрут її не ловить.
+
+    Сторінка курсу тихо зникала б, і адмін бачив би "збережено".
+    """
+    _login(client, admin)
+
+    client.post(f'/admin/online-courses/{course.id}', data={
+        'slug': 'Курс/2 Плазма',
+        'price': '4500',
+        'access_url': '',
+        'sort_order': '0',
+    }, follow_redirects=True)
+
+    db.session.refresh(course)
+    assert '/' not in course.slug
+    assert ' ' not in course.slug
+    assert course.slug
+
+
+def test_slug_normalisation_is_announced(client, admin, course):
+    """Мовчазна підміна адреси -- те, що потім шукають годину."""
+    _login(client, admin)
+
+    response = client.post(f'/admin/online-courses/{course.id}', data={
+        'slug': 'Курс/2 Плазма',
+        'price': '4500',
+        'access_url': '',
+        'sort_order': '0',
+    }, follow_redirects=True)
+
+    db.session.refresh(course)
+    body = response.get_data(as_text=True)
+    assert 'приведено до вигляду' in body
+    assert course.slug in body

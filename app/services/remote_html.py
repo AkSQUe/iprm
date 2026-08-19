@@ -28,11 +28,18 @@ ALLOWED_TAGS = [
     'p', 'br', 'ul', 'ol', 'li', 'strong', 'b', 'em', 'i', 'u',
     'h3', 'h4', 'h5', 'blockquote', 'a',
 ]
-ALLOWED_ATTRS = {'a': ['href', 'title', 'rel', 'target']}
+# `target` свідомо НЕ дозволений: посилання з чужого редактора відкриються
+# у тій же вкладці, а `rel` ми проставляємо самі (див. _harden_links) --
+# інакше довелося б довіряти партнеру ще й у тому, що він не забув noopener.
+ALLOWED_ATTRS = {'a': ['href', 'title']}
 ALLOWED_PROTOCOLS = ['http', 'https', 'mailto']
 
 # Порожні абзаци-роздільники, якими рясніє чужий редактор.
 _EMPTY_PARAGRAPH = re.compile(r'<p>(\s|&nbsp;|<br\s*/?>)*</p>', re.I)
+
+# Посилання в чужому описі -- не наша рекомендація, тож ваги пошуку їм не
+# передаємо, а noopener лишає нову вкладку без доступу до нашого вікна.
+_LINK_OPEN = re.compile(r'<a\s', re.I)
 
 # Теги, які треба прибрати РАЗОМ ІЗ ВМІСТОМ. bleach зі `strip=True` знімає
 # сам тег, але лишає те, що всередині: `<script>alert(1)</script>` стає
@@ -57,6 +64,7 @@ def clean_html(value):
         value, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS,
         protocols=ALLOWED_PROTOCOLS, strip=True,
     )
+    cleaned = _LINK_OPEN.sub('<a rel="nofollow noopener" ', cleaned)
     # Прибираємо порожні абзаци ПІСЛЯ очищення: до нього вони могли бути
     # не порожні, а лише зі span-ами, які щойно вирізало.
     previous = None

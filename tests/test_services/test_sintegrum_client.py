@@ -291,6 +291,14 @@ def test_create_student_sends_expected_payload(monkeypatch):
 
 
 def test_list_students_passes_filter(monkeypatch):
+    """Фільтр іде окремими параметрами, а не рядком у параметрі `filter`.
+
+    Раніше запит виглядав як `?filter=filter[email][eq]=...`: назва
+    параметра дублювалась у власному значенні, тож партнер фільтр
+    ігнорував, і пошук учня за email мовчки не працював.
+    """
+    from urllib.parse import parse_qs, urlparse
+
     seen = {}
 
     def fake_request(method, url, **kw):
@@ -299,9 +307,104 @@ def test_list_students_passes_filter(monkeypatch):
 
     monkeypatch.setattr(sc.requests, 'request', fake_request)
     SintegrumClient('https://x', 'acme', 'k').list_students(
-        filter_expr='filter[email][eq]=a@b.c',
+        filters={'filter[email][eq]': 'a@b.c'},
     )
-    assert 'filter' in seen['url']
+
+    query = parse_qs(urlparse(seen['url']).query)
+    assert query['filter[email][eq]'] == ['a@b.c']
+    assert 'filter' not in query
+
+
+def test_find_student_filters_by_email(monkeypatch):
+    seen = {}
+
+    def fake_request(method, url, **kw):
+        seen['url'] = url
+        return _FakeResp(200, [{'id': 7, 'email': 'a@b.c'}])
+
+    monkeypatch.setattr(sc.requests, 'request', fake_request)
+    result = SintegrumClient('https://x', 'acme', 'k').find_student_by_email('a@b.c')
+
+    assert result.ok is True
+    assert result.data['id'] == 7
+    assert 'filter%5Bemail%5D%5Beq%5D=a%40b.c' in seen['url']
+
+
+def test_find_student_ignores_someone_else(monkeypatch):
+    """Відповідь, яку не відфільтрували, не має видати чужого учня за свого."""
+    def fake_request(method, url, **kw):
+        return _FakeResp(200, [{'id': 1, 'email': 'other@example.com'}])
+
+    monkeypatch.setattr(sc.requests, 'request', fake_request)
+    result = SintegrumClient('https://x', 'acme', 'k').find_student_by_email('a@b.c')
+
+    assert result.ok is True
+    assert result.data is None
+
+
+# ----------------------------- ретраї -----------------------------
+
+def test_post_is_not_retried_after_read_timeout(monkeypatch):
+    """POST /student не ідемпотентний: повтор завів би другого учня.
+
+    Таймаут ЧИТАННЯ означає, що запит уже поїхав і на тому боці міг
+    виконатись -- на відміну від невдалого з'єднання.
+    """
+    calls = []
+
+    def fake_request(method, url, **kw):
+        calls.append(method)
+        raise sc.requests.ReadTimeout('too slow')
+
+    monkeypatch.setattr(sc.requests, 'request', fake_request)
+    result = SintegrumClient('https://x', 'acme', 'k').create_student('a@b.c')
+
+    assert result.ok is False
+    assert len(calls) == 1
+
+
+def test_post_is_retried_when_connection_never_opened(monkeypatch):
+    calls = []
+
+    def fake_request(method, url, **kw):
+        calls.append(method)
+        raise sc.requests.ConnectTimeout('no route')
+
+    monkeypatch.setattr(sc.requests, 'request', fake_request)
+    monkeypatch.setattr(sc.time, 'sleep', lambda *a: None)
+    result = SintegrumClient('https://x', 'acme', 'k').create_student('a@b.c')
+
+    assert result.ok is False
+    assert len(calls) == sc._MAX_ATTEMPTS
+
+
+def test_post_is_not_retried_on_server_error(monkeypatch):
+    calls = []
+
+    def fake_request(method, url, **kw):
+        calls.append(method)
+        return _FakeResp(500, None)
+
+    monkeypatch.setattr(sc.requests, 'request', fake_request)
+    monkeypatch.setattr(sc.time, 'sleep', lambda *a: None)
+    result = SintegrumClient('https://x', 'acme', 'k').assign_course(1, 2)
+
+    assert result.ok is False
+    assert len(calls) == 1
+
+
+def test_get_is_still_retried_on_server_error(monkeypatch):
+    calls = []
+
+    def fake_request(method, url, **kw):
+        calls.append(method)
+        return _FakeResp(500, None)
+
+    monkeypatch.setattr(sc.requests, 'request', fake_request)
+    monkeypatch.setattr(sc.time, 'sleep', lambda *a: None)
+    SintegrumClient('https://x', 'acme', 'k').list_courses_page()
+
+    assert len(calls) == sc._MAX_ATTEMPTS
 
 
 # ----------------------------- health-check -----------------------------

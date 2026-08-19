@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-17 23:08+0300\n"
+"POT-Creation-Date: 2026-08-19 22:10+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -632,6 +632,13 @@ msgstr "Confirmation email resent"
 msgid "Не вдалося надіслати лист"
 msgstr "Failed to send email"
 
+msgid ""
+"Заявку прийнято. Ми розглянемо її протягом 3 робочих днів і надішлемо "
+"відповідь на вашу пошту."
+msgstr ""
+"Request received. We will review it within 3 business days and email you "
+"our decision. "
+
 msgid "Вкажіть імʼя"
 msgstr "Enter your name"
 
@@ -1046,15 +1053,6 @@ msgstr "Passwords do not match"
 msgid "Кабінет створено. Тут ви завжди знайдете свої курси."
 msgstr "Your account is ready. You will always find your courses here."
 
-msgid "Замовлення вже оплачено"
-msgstr "The order is already paid"
-
-msgid "Для безкоштовного замовлення рахунок не потрібен"
-msgstr "No invoice is needed for a free order"
-
-msgid "Не вдалося сформувати рахунок. Напишіть нам."
-msgstr "Could not generate the invoice. Please contact us."
-
 msgid "Замовлення не оплачене"
 msgstr "The order is not paid"
 
@@ -1064,6 +1062,15 @@ msgid ""
 msgstr ""
 "We could not issue the link. We are looking into it — write to us if it "
 "is urgent."
+
+msgid "Замовлення вже оплачено"
+msgstr "The order is already paid"
+
+msgid "Для безкоштовного замовлення рахунок не потрібен"
+msgstr "No invoice is needed for a free order"
+
+msgid "Не вдалося сформувати рахунок. Напишіть нам."
+msgstr "Could not generate the invoice. Please contact us."
 
 msgid "Нове посилання на навчання видано"
 msgstr "A new learning link has been issued"
@@ -1160,6 +1167,22 @@ msgstr "You're on the list: %(title)s"
 #, python-format
 msgid "Доступ до курсу: %(title)s"
 msgstr "Course access: %(title)s"
+
+#, python-format
+msgid "Повернення коштів: %(title)s"
+msgstr "Refund issued: %(title)s"
+
+#, python-format
+msgid "Заявку на повернення прийнято: %(title)s"
+msgstr "Refund request received: %(title)s"
+
+#, python-format
+msgid "Щодо вашої заявки на повернення: %(title)s"
+msgstr "About your refund request: %(title)s"
+
+#, python-format
+msgid "Ваш курс чекає: %(title)s"
+msgstr "Your course is waiting: %(title)s"
 
 #, python-format
 msgid "Нагадування: %(title)s через %(days)s дн."
@@ -1358,6 +1381,15 @@ msgstr "Pay"
 msgid "Завантажити рахунок"
 msgstr "Download invoice"
 
+msgid "Заявку на повернення подано, вона на розгляді"
+msgstr "Refund request submitted and under review"
+
+msgid "Заявку на повернення відхилено"
+msgstr "Refund request declined"
+
+msgid "Подати заявку на повернення"
+msgstr "Request a refund"
+
 msgid "У вас поки немає зареєстрованих курсів"
 msgstr "You have no registered courses yet"
 
@@ -1378,6 +1410,15 @@ msgstr "Get a new link"
 
 msgid "Доступ готується"
 msgstr "Access is being prepared"
+
+msgid "Заявка на розгляді"
+msgstr "Request under review"
+
+msgid "Заявку відхилено"
+msgstr "Request declined"
+
+msgid "Повернення коштів"
+msgstr "Refund"
 
 msgid "Мої сертифікати"
 msgstr "My certificates"
@@ -1635,6 +1676,108 @@ msgstr "Just sign in"
 
 msgid "На головну"
 msgstr "To home"
+
+msgid "Онлайн-курс"
+msgstr "Online course"
+
+msgid "Повернення коштів | ІПРМ"
+msgstr "Refund | IPRM"
+
+msgid "Заявка на <span class=\"apple-gradient-text\">повернення коштів</span>"
+msgstr "Request a <span class=\"apple-gradient-text\">refund</span>"
+
+#, python-format
+msgid ""
+"\n"
+"        За умовами Політики повернення коштів вам буде повернуто\n"
+"        <strong>%(amount)s грн</strong> — повну сплачену суму.\n"
+"        "
+msgstr ""
+"        Under our Refund Policy you will receiv        <strong>UAH "
+"%(amount)s</strong> — the full amount you paid         "
+
+#, python-format
+msgid ""
+"\n"
+"        За умовами Політики повернення коштів вам буде повернуто\n"
+"        <strong>%(amount)s грн</strong> із %(total)s грн (%(percent)s%%)."
+"\n"
+"        Розмір повернення залежить від того, за скільки днів до заходу "
+"подано заявку.\n"
+"        "
+msgstr ""
+"        Under our Refund Policy you will receiv        <strong>UAH "
+"%(amount)s</strong> of UAH %(total)s (%(percent)s%%)        The amount "
+"depends on how many days before the event the request is submitted"
+"         "
+
+msgid ""
+"\n"
+"        За умовами Політики повернення коштів повернення за цим "
+"замовленням\n"
+"        не передбачене. Ви можете подати заявку — ми розглянемо обставини"
+" окремо.\n"
+"        "
+msgstr ""
+"        Under our Refund Policy no refund is due for this order        "
+"You may still submit a request — we will review the circumstances "
+"separately         "
+
+msgid "Повний текст Політики"
+msgstr "Read the full Policy"
+
+msgid "Замовлення"
+msgstr "Order"
+
+msgid "Номер"
+msgstr "Number"
+
+msgid "Сплачено"
+msgstr "Paid"
+
+msgid "Дата оплати"
+msgstr "Payment date"
+
+msgid "Початок заходу"
+msgstr "Event starts"
+
+msgid "Причина повернення"
+msgstr "Reason for the refund"
+
+msgid "Чому ви відмовляєтесь від участі"
+msgstr "Why you are cancelling"
+
+msgid "Опишіть причину — без неї заявку не можна розглянути"
+msgstr "Describe the reason — we cannot review the request without it"
+
+msgid "Напр. змінився графік чергувань, не зможу бути присутнім"
+msgstr "E.g. my shift schedule changed and I cannot attend"
+
+msgid "Політика повернення коштів (п. 6.2) вимагає вказати причину у заявці."
+msgstr "Our Refund Policy (clause 6.2) requires a reason in the request."
+
+msgid "Реквізити для повернення"
+msgstr "Payout details"
+
+msgid "Заповніть, лише якщо потрібно повернути на інший рахунок"
+msgstr "Fill in only if the refund should go to a different account"
+
+msgid ""
+"За умовчанням кошти повертаються на ту саму картку, з якої була оплата — "
+"заповнювати не потрібно."
+msgstr ""
+"By default the money goes back to the card used for payment — you can "
+"leave this empty. "
+
+msgid "Подати заявку"
+msgstr "Submit request"
+
+msgid ""
+"Ми розглянемо заявку протягом 3 робочих днів і надішлемо відповідь на "
+"вашу пошту."
+msgstr ""
+"We will review the request within 3 business days and email you our "
+"decision. "
 
 msgid "Реєстрація | ІПРМ"
 msgstr "Sign up | IPRM"
@@ -2397,9 +2540,6 @@ msgstr ""
 msgid "Деталі сертифіката"
 msgstr "Certificate details"
 
-msgid "Номер"
-msgstr "Number"
-
 msgid "Дата заходу"
 msgstr "Event date"
 
@@ -2579,9 +2719,6 @@ msgstr "h"
 msgid "Оплачено"
 msgstr "Paid"
 
-msgid "Замовлення"
-msgstr "Order"
-
 msgid ""
 "Посилання діє обмежений час і призначене особисто вам. Якщо воно "
 "перестане працювати, відкрийте сторінку свого замовлення — курс "
@@ -2607,6 +2744,37 @@ msgstr "Valid until %(until)s"
 
 msgid "Моє замовлення"
 msgstr "My order"
+
+msgid "Ваш курс чекає"
+msgstr "Your course is waiting"
+
+#, python-format
+msgid "Ви ще не заходили на курс: %(title)s"
+msgstr "You have not opened the course yet: %(title)s"
+
+msgid ""
+"доступ до курсу відкрито, але ви ще жодного разу не заходили. Навчання "
+"йде у власному темпі — почати можна будь-коли."
+msgstr ""
+"your course access is open, but you have not opened it yet. The course "
+"goes at your own pace — you can start any time."
+
+msgid "Відкрити курс"
+msgstr "Open the course"
+
+msgid ""
+"Сторінка вашого замовлення видасть свіже посилання на навчання. Курс "
+"залишається за вами — термін навчання ми не обмежуємо."
+msgstr ""
+"Your order page will issue a fresh learning link. The course stays yours "
+"— we do not limit how long you study."
+
+msgid ""
+"В особистому кабінеті завжди можна отримати свіже посилання на навчання. "
+"Курс залишається за вами — термін навчання ми не обмежуємо."
+msgstr ""
+"You can always get a fresh learning link in your account. The course "
+"stays yours — we do not limit how long you study."
 
 msgid "Встановіть новий пароль для вашого облікового запису ІПРМ"
 msgstr "Set a new password for your IPRM account"
@@ -2777,6 +2945,133 @@ msgid ""
 msgstr ""
 "Keep sharing your link — every paid registration made through it earns "
 "you new points."
+
+msgid "Кошти повернено"
+msgstr "Your refund has been issued"
+
+#, python-format
+msgid "Повернення %(amount)s грн за %(title)s"
+msgstr "Refund of UAH %(amount)s for %(title)s"
+
+msgid "ми повернули повну суму вашого замовлення."
+msgstr "we have refunded your order in full."
+
+msgid ""
+"ми повернули частину суми вашого замовлення згідно з умовами Політики "
+"повернення коштів."
+msgstr "we have refunded part of your order under the terms of our Refund Policy."
+
+msgid "Деталі повернення"
+msgstr "Refund details"
+
+msgid "Повернено зараз"
+msgstr "Refunded now"
+
+msgid "Разом повернено"
+msgstr "Refunded in total"
+
+msgid "Повернено"
+msgstr "Refunded"
+
+msgid "Утримано"
+msgstr "Withheld"
+
+msgid "Підстава"
+msgstr "Reason"
+
+msgid "Коли кошти надійдуть"
+msgstr "When the money arrives"
+
+msgid ""
+"Повернення виконано на картку, з якої була здійснена оплата. Строк "
+"зарахування залежить від банку-емітента і зазвичай складає від 3 до 14 "
+"календарних днів."
+msgstr ""
+"The refund was issued to the card used for payment. The time it takes to "
+"appear depends on your issuing bank and is usually 3 to 14 calendar days."
+
+msgid "Умови повернення коштів"
+msgstr "Refund Policy"
+
+msgid ""
+"Якщо сума або підстава повернення викликають запитання, просто дайте "
+"відповідь на цей лист."
+msgstr ""
+"If you have questions about the amount or the reason, simply reply to "
+"this email."
+
+msgid "Щодо вашої заявки на повернення"
+msgstr "About your refund request"
+
+#, python-format
+msgid "Рішення за заявкою на повернення коштів за %(title)s"
+msgstr "Decision on your refund request for %(title)s"
+
+msgid "Щодо вашої заявки"
+msgstr "About your request"
+
+msgid ""
+"ми розглянули вашу заявку на повернення коштів і, на жаль, не можемо її "
+"задовольнити."
+msgstr "we have reviewed your refund request and unfortunately cannot grant it. "
+
+msgid "Заявку подано"
+msgstr "Request submitted"
+
+msgid "Пояснення"
+msgstr "Explanation"
+
+msgid ""
+"Якщо ви вважаєте рішення помилковим або маєте додаткові обставини, дайте "
+"відповідь на цей лист -- ми розглянемо ще раз."
+msgstr ""
+"If you believe this is a mistake, or new circumstances apply, reply to "
+"this email and we will review it again. "
+
+msgid "Заявку на повернення прийнято"
+msgstr "Refund request received"
+
+#, python-format
+msgid "Ми отримали вашу заявку на повернення коштів за %(title)s"
+msgstr "We received your refund request for %(title)s"
+
+msgid "Заявку прийнято"
+msgstr "Request received"
+
+msgid ""
+"ми отримали вашу заявку на повернення коштів і розглянемо її протягом 3 "
+"робочих днів."
+msgstr ""
+"we have received your refund request and will review it within 3 business"
+" days. "
+
+msgid "Ваша заявка"
+msgstr "Your request"
+
+msgid "До повернення"
+msgstr "To be refunded"
+
+msgid "Причина, яку ви вказали"
+msgstr "The reason you gave"
+
+msgid "Чому сума менша за сплачену"
+msgstr "Why the amount is lower than what you paid"
+
+msgid ""
+"Розмір повернення визначається строком подання заявки згідно з Політикою "
+"повернення коштів. Суму розраховано на дату, коли ми отримали ваше "
+"звернення."
+msgstr ""
+"The refund amount is set by how far in advance the request was submitted,"
+" under our Refund Policy. It was calculated for the date we received your"
+" request. "
+
+msgid ""
+"Якщо потрібно щось уточнити або доповнити заявку, просто дайте відповідь "
+"на цей лист."
+msgstr ""
+"If you need to clarify or add anything to your request, simply reply to "
+"this email. "
 
 #, python-format
 msgid "Ви зареєстровані на курс %(title)s"
@@ -4082,9 +4377,6 @@ msgid ""
 "до оплати."
 msgstr "No account needed: tell us who gets access and go straight to payment."
 
-msgid "Онлайн-курс"
-msgstr "Online course"
-
 msgid "До сплати"
 msgstr "Amount due"
 
@@ -4140,9 +4432,6 @@ msgstr "Course price"
 msgid "Знижка за промокодом"
 msgstr "Promo code discount"
 
-msgid "Сплачено"
-msgstr "Paid"
-
 msgid "промокод застосовано"
 msgstr "promo code applied"
 
@@ -4154,6 +4443,9 @@ msgstr "Enter code"
 
 msgid "Застосувати"
 msgstr "Apply"
+
+msgid "Термін дії посилання минув. Отримайте нове — це займе секунду."
+msgstr "The link has expired. Get a new one — it takes a second."
 
 msgid "Доступ уже готуємо — посилання надійде на вашу пошту за кілька хвилин."
 msgstr ""

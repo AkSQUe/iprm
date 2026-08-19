@@ -287,7 +287,9 @@
    полем легко пропустити повз очі, коли дивишся на суму. */
 .iprm-online-checkout .form-input.is-invalid {
   border-color: var(--iprm-error);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+  /* Через токен: у темній темі --iprm-error стає коралевим, і застиглий
+     rgba() лишав би довкола коралевої рамки світло-червоне сяйво. */
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--iprm-error) 12%, transparent);
 }
 
 /* ---- Промокод ---- */

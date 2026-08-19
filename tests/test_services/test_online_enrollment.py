@@ -5,6 +5,7 @@
 вважала б неоплаченим замовлення, за яке гроші вже прийшли.
 """
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -544,3 +545,246 @@ class TestEffectivePrice:
         course.price = None
         course.remote_price = None
         assert 'ціна' in course.missing_for_publication
+
+# ----------------------------- черга довидачі -----------------------------
+
+class TestPendingProvisioning:
+    """Відлік -- від оплати, а не від оформлення замовлення."""
+
+    def _paid(self, user, course, *, created_ago_h, paid_ago_min):
+        from datetime import timedelta
+
+        from app.models.mixins import utcnow
+
+        item = OnlineEnrollment(
+            user_id=user.id, online_course_id=course.id,
+            payment_amount=Decimal('4500'), payment_status='paid',
+            status='active',
+        )
+        db.session.add(item)
+        db.session.flush()
+        item.created_at = utcnow() - timedelta(hours=created_ago_h)
+        item.paid_at = utcnow() - timedelta(minutes=paid_ago_min)
+        db.session.flush()
+        return item
+
+    def test_just_paid_old_order_is_not_picked_up(self, user, course):
+        """Рахунок виставили тиждень тому, оплатили щойно.
+
+        Раніше таке замовлення джоба забирала одразу -- і видавала другий
+        токен паралельно з callback-ом, гасячи посилання, яке щойно пішло
+        листом.
+        """
+        self._paid(user, course, created_ago_h=168, paid_ago_min=1)
+
+        assert sintegrum_access.pending_provisioning() == []
+
+    def test_order_paid_long_ago_is_picked_up(self, user, course):
+        stuck = self._paid(user, course, created_ago_h=168, paid_ago_min=30)
+
+        assert stuck in sintegrum_access.pending_provisioning()
+
+    def test_order_without_paid_at_falls_back_to_created_at(self, user, course):
+        """У давніх і проставлених руками замовлень paid_at може бути порожнім."""
+        stuck = self._paid(user, course, created_ago_h=2, paid_ago_min=0)
+        stuck.paid_at = None
+        db.session.flush()
+
+        assert stuck in sintegrum_access.pending_provisioning()
+
+
+# ----------------------------- реєстр учнів -----------------------------
+
+class TestKnownStudentId:
+    """Свій запис про учня надійніший за пошук на боці партнера."""
+
+    def test_returns_id_from_previous_order(self, user, course):
+        previous = OnlineEnrollment(
+            user_id=user.id, online_course_id=course.id,
+            payment_amount=Decimal('4500'), payment_status='paid',
+            status='cancelled', sintegrum_student_id=77,
+        )
+        db.session.add(previous)
+        db.session.flush()
+
+        assert sintegrum_access.known_student_id(user.id) == 77
+
+    def test_returns_none_for_first_purchase(self, user):
+        assert sintegrum_access.known_student_id(user.id) is None
+
+    def test_provision_does_not_ask_partner_when_id_is_known(self, user, course,
+                                                             monkeypatch):
+        """Повторна покупка не має заводити другого учня на той самий email."""
+        previous = OnlineEnrollment(
+            user_id=user.id, online_course_id=course.id,
+            payment_amount=Decimal('4500'), payment_status='paid',
+            status='cancelled', sintegrum_student_id=77,
+        )
+        db.session.add(previous)
+        db.session.flush()
+
+        second_course = OnlineCourse(
+            sintegrum_id=98765, remote_name='Другий курс',
+            slug=f'second-{uuid4().hex[:8]}', price=Decimal('3000'),
+            is_published=True,
+        )
+        db.session.add(second_course)
+        db.session.flush()
+
+        order = OnlineEnrollment(
+            user_id=user.id, online_course_id=second_course.id,
+            payment_amount=Decimal('3000'), payment_status='paid',
+            status='active',
+        )
+        db.session.add(order)
+        db.session.flush()
+
+        calls = []
+
+        class _Client:
+            def find_student_by_email(self, email):
+                calls.append('find')
+                raise AssertionError('партнера питати не мали')
+
+            def create_student(self, **kw):
+                calls.append('create')
+                raise AssertionError('другого учня заводити не мали')
+
+            def assign_course(self, student_id, course_id):
+                calls.append(('assign', student_id, course_id))
+                return SimpleNamespace(ok=True, error=None)
+
+        provider = sintegrum_access.StudentApiProvider(
+            client=_Client(), settings=SimpleNamespace(
+                sintegrum_company_alias='acme'),
+        )
+        monkeypatch.setattr(sintegrum_access, 'get_provider',
+                            lambda course=None, settings=None: provider)
+
+        sintegrum_access.provision(order, commit=False)
+
+        assert calls == [('assign', 77, 98765)]
+        assert order.sintegrum_student_id == 77
+
+
+# ------------------- свіжість даних під блокуванням -------------------
+
+class TestLockedReadIsFresh:
+    """with_for_update() бере лок, але сам по собі НЕ оновлює об'єкт.
+
+    Без populate_existing() SQLAlchemy віддає той самий екземпляр з
+    identity map, і перевірка переходу дивиться на стан, якого в базі вже
+    немає. Наслідок був би дорогий: оплата проводиться вдруге, у журналі
+    з'являється другий запис, а видача доступу випускає новий токен --
+    гасячи посилання, яке щойно пішло листом.
+    """
+
+    def _mark_paid_behind_the_orm(self, enrollment):
+        """Імітація callback-а, що зафіксував оплату в іншому з'єднанні."""
+        from sqlalchemy import text
+
+        db.session.execute(
+            text('UPDATE online_enrollments SET payment_status = :s '
+                 'WHERE id = :i'),
+            {'s': 'paid', 'i': enrollment.id},
+        )
+
+    def test_status_check_sees_payment_that_landed_meanwhile(self, ops,
+                                                             enrollment):
+        ops.liqpay.check_status.return_value = {
+            'status': 'success', 'payment_id': 'pay-1', 'amount': 4500,
+        }
+        before = PaymentTransaction.query.count()
+        self._mark_paid_behind_the_orm(enrollment)
+
+        ok, msg = ops.check_enrollment_and_update(enrollment)
+
+        assert ok is True
+        assert msg == 'no-op transition'
+        # Другого запису в журналі не з'явилось: оплату вже провів callback.
+        assert PaymentTransaction.query.count() == before
+
+    def test_second_provisioning_does_not_replace_a_live_token(self, ops,
+                                                               enrollment):
+        """Токен, уже надісланий листом, не має гаснути через гонку."""
+        ops.update_enrollment_status(enrollment, 'paid', 'pay-1', amount=4500)
+        issued = enrollment.access_token
+        assert issued
+
+        ops.liqpay.check_status.return_value = {
+            'status': 'success', 'payment_id': 'pay-1', 'amount': 4500,
+        }
+        ops.check_enrollment_and_update(enrollment)
+
+        db.session.refresh(enrollment)
+        assert enrollment.access_token == issued
+        assert enrollment.access_issued_count == 1
+
+
+# ----------------------------- нагадування про курс -----------------------------
+
+class TestAccessReminders:
+    """Курс без дати легко відкласти "на потім" і забути."""
+
+    def _provisioned(self, user, course, *, days_ago, opened=False):
+        from datetime import timedelta
+
+        from app.models.mixins import utcnow
+
+        item = OnlineEnrollment(
+            user_id=user.id, online_course_id=course.id,
+            payment_amount=Decimal('4500'), payment_status='paid',
+            status='active', access_token='tok', provisioned_at=(
+                utcnow() - timedelta(days=days_ago)),
+        )
+        if opened:
+            item.access_last_opened_at = utcnow()
+        db.session.add(item)
+        db.session.commit()
+        return item
+
+    def _run(self, monkeypatch, days=3):
+        from app.models.site_settings import SiteSettings
+        from app.services import scheduler_service
+        from app.services.email_service import EmailService
+
+        settings = SiteSettings.get()
+        settings.sintegrum_access_reminder_days = days
+        db.session.commit()
+
+        sent = []
+        monkeypatch.setattr(
+            EmailService, 'send_online_access_reminder',
+            staticmethod(lambda enrollment: sent.append(enrollment.id)),
+        )
+        scheduler_service._send_online_access_reminders()
+        return sent
+
+    def test_reminds_about_an_untouched_course(self, user, course, monkeypatch):
+        order = self._provisioned(user, course, days_ago=5)
+
+        assert self._run(monkeypatch) == [order.id]
+        db.session.refresh(order)
+        assert order.access_reminder_sent_at is not None
+
+    def test_does_not_remind_twice(self, user, course, monkeypatch):
+        self._provisioned(user, course, days_ago=5)
+
+        self._run(monkeypatch)
+        assert self._run(monkeypatch) == []
+
+    def test_silent_about_a_course_already_opened(self, user, course,
+                                                  monkeypatch):
+        self._provisioned(user, course, days_ago=5, opened=True)
+
+        assert self._run(monkeypatch) == []
+
+    def test_waits_for_the_configured_period(self, user, course, monkeypatch):
+        self._provisioned(user, course, days_ago=1)
+
+        assert self._run(monkeypatch, days=3) == []
+
+    def test_zero_days_turns_reminders_off(self, user, course, monkeypatch):
+        self._provisioned(user, course, days_ago=30)
+
+        assert self._run(monkeypatch, days=0) == []

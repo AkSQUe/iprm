@@ -883,6 +883,45 @@ class EmailService:
         )
 
     @staticmethod
+    def send_online_access_reminder(enrollment):
+        """Нагадування: доступ відкрито, а людина жодного разу не заходила.
+
+        Посилання ведемо не на сам доступ, а на сторінку, з якої його завжди
+        можна відкрити наново: токен доступу живе годинами і до моменту
+        нагадування майже напевно протермінований.
+        """
+        user = enrollment.user
+        course = enrollment.course
+        if user is None or not user.email:
+            logger.warning('Cannot send online_access_reminder: %s has no email',
+                           enrollment.order_id)
+            return None
+
+        base = EmailService._site_base_url()
+        guest_order = bool(
+            not user.has_password and enrollment.order_token_active)
+        if guest_order:
+            open_url = (f'{base}/online-courses/order/{enrollment.order_token}'
+                        if base else None)
+        else:
+            open_url = f'{base}/auth/account' if base else None
+
+        return EmailService.send_email(
+            to=user.email,
+            subject=lambda: _('Ваш курс чекає: %(title)s',
+                              title=course.effective_title),
+            template_name='online_access_reminder',
+            context={
+                'user': user,
+                'course': course,
+                'enrollment': enrollment,
+                'open_url': open_url,
+                'guest_order': guest_order,
+            },
+            trigger='reminder',
+        )
+
+    @staticmethod
     def send_course_reminder(registration, days_until):
         event = EmailService._event_from_registration(registration)
         if event is None:

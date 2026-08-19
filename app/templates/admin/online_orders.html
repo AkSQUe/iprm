@@ -43,7 +43,8 @@
        Ця плашка і є причина, чому сторінка існує. #}
     <div class="form-section admin-form__section">
       <p class="admin-form__section-hint">
-        Оплачених замовлень без виданого доступу: <strong>{{ totals.stuck }}</strong>.
+        Оплачених замовлень без виданого доступу:
+        <a href="{{ url_for('admin.online_orders_list', access='stuck') }}"><strong>{{ totals.stuck }}</strong></a>.
         Фонова задача повторює спроби кожні 10 хвилин; кнопка «Видати доступ» робить це негайно.
       </p>
     </div>
@@ -56,6 +57,7 @@
          fields=[
            {'name': 'payment', 'label': 'Оплата', 'placeholder': 'Будь-яка', 'options': payment_options},
            {'name': 'status', 'label': 'Стан', 'placeholder': 'Будь-який', 'options': status_options},
+           {'name': 'access', 'label': 'Доступ', 'placeholder': 'Будь-який', 'options': access_options},
          ],
          export_endpoint='admin.online_orders_export',
        ) }}
@@ -114,6 +116,11 @@
               {% endif %}
             {% elif order.is_paid %}
               <span class="badge badge--rejected">Не видано</span>
+              {# Скільки людина вже чекає -- головне для сортування розбору:
+                 хвилина після оплати це норма, доба -- ні. #}
+              {% if waiting_hours.get(order.id) is not none %}
+              <br><small class="admin-text-muted">{{ waiting_hours[order.id] }} год без доступу</small>
+              {% endif %}
               {% if order.provision_error %}
               <br><small class="admin-text-muted">{{ order.provision_error|truncate(80) }}</small>
               {% endif %}

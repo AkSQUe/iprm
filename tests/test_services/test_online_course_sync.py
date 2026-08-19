@@ -350,6 +350,28 @@ class TestRemoteHtml:
         assert 'alert(1)' not in cleaned
         assert 'Опис' in cleaned
 
+    def test_foreign_links_get_nofollow_and_noopener(self):
+        """Посилання з чужого редактора -- не наша рекомендація.
+
+        nofollow не передає ваги пошуку тому, що вписали в опис на боці
+        партнера, а noopener лишає нову вкладку без доступу до нашого вікна.
+        """
+        from app.services.remote_html import clean_html
+
+        cleaned = clean_html('<p><a href="https://example.com">Тиць</a></p>')
+
+        assert 'rel="nofollow noopener"' in cleaned
+        assert 'href="https://example.com"' in cleaned
+
+    def test_foreign_links_cannot_open_a_new_tab(self):
+        """target у чужій розмітці не лишаємо: вкладками керуємо ми."""
+        from app.services.remote_html import clean_html
+
+        cleaned = clean_html(
+            '<p><a href="https://example.com" target="_blank">Тиць</a></p>')
+
+        assert 'target=' not in cleaned
+
     def test_inline_styles_are_stripped(self):
         """`color: rgb(0, 0, 0)` у темній темі -- чорний текст на темному."""
         from app.services.remote_html import clean_html
@@ -640,3 +662,19 @@ class TestDescriptionMemo:
 
         assert 'Новий' in course.remote_description_html
         assert 'Старий' not in course.remote_description_html
+
+def test_restored_course_with_changes_counts_as_updated_too(configured,
+                                                            monkeypatch):
+    """Звіт "повернувся 1, оновлено 0" читається як "дані ті самі"."""
+    course = OnlineCourse(
+        sintegrum_id=4242, remote_name='Стара назва', slug='vanished-one',
+        is_vanished=True, is_published=False,
+    )
+    db.session.add(course)
+    db.session.commit()
+
+    _feed(monkeypatch, [{'id': 4242, 'name': 'Нова назва', 'status': 1}])
+    report = sync_courses(with_covers=False)
+
+    assert report.restored == 1
+    assert report.updated == 1

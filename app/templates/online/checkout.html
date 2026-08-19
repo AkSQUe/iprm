@@ -96,7 +96,13 @@
              пароля, якого в нього ще немає. Поки доступ готується, кнопки
              немає взагалі -- вести в нікуди гірше, ніж не вести. Двох
              повідомлень поспіль теж не буває: або кнопка, або пояснення. #}
-          {% if access_href %}
+          {% if access_expired and reissue_url %}
+          <p class="iprm-online-buy__note">{{ _('Термін дії посилання минув. Отримайте нове — це займе секунду.') }}</p>
+          <form method="POST" action="{{ reissue_url }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Отримати нове посилання') }}</button>
+          </form>
+          {% elif access_href %}
           <a href="{{ access_href }}" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Перейти до навчання') }}</a>
           {% else %}
           <p class="iprm-online-buy__note">{{ _('Доступ уже готуємо — посилання надійде на вашу пошту за кілька хвилин.') }}</p>

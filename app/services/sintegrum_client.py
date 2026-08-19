@@ -34,10 +34,17 @@ _RETRY_BACKOFF = 0.4       # секунди, множаться на номер 
 _MAX_PAGES = 50
 _DEFAULT_PER_PAGE = 100
 
+# Методи, повтор яких безпечний за визначенням.
+_IDEMPOTENT_METHODS = frozenset({'GET', 'HEAD', 'PUT', 'DELETE', 'OPTIONS'})
+
 # Статуси курсу (вони ж треки/позиції) на боці Sintegrum.
 COURSE_STATUS_INACTIVE = 0
 COURSE_STATUS_ACTIVE = 1
 COURSE_STATUS_ARCHIVED = 2
+
+
+def _no_link(exc) -> str:
+    return 'Немає зв' + chr(39) + 'язку з Sintegrum: ' + str(exc)
 
 
 @dataclass
@@ -83,6 +90,13 @@ class SintegrumClient:
 
         4xx вважаємо остаточними: невірний ключ чи аліас від повтору не
         полагодяться, а зайві спроби лише сповільнять сторінку адмінки.
+
+        POST повторюємо ЛИШЕ тоді, коли з'єднання навіть не встановилось:
+        читання, що впало в таймаут, і 500 у відповідь означають, що на тому
+        боці запит могли й виконати. `POST /student` не ідемпотентний, тож
+        повтор завів би другого учня на той самий email -- рівно те, від
+        чого захищає пошук перед створенням. GET і DELETE повторюємо як
+        раніше.
         """
         url = f'{self.base_url}/external/{self.company}{path}'
         if params:
@@ -96,14 +110,24 @@ class SintegrumClient:
         if payload is not None:
             headers['Content-Type'] = 'application/json; charset=utf-8'
 
+        idempotent = method.upper() in _IDEMPOTENT_METHODS
+
         last = SintegrumResult(ok=False, error='Не вдалося виконати запит')
         for attempt in range(_MAX_ATTEMPTS):
             try:
                 response = requests.request(
                     method, url, json=payload, headers=headers, timeout=TIMEOUT,
                 )
+            except requests.ConnectTimeout as exc:
+                # З'єднання не встановилось -- сервер запиту не бачив,
+                # тож повторити можна навіть неідемпотентний метод.
+                last = SintegrumResult(ok=False, error=_no_link(exc))
+                self._backoff(attempt)
+                continue
             except (requests.Timeout, requests.ConnectionError) as exc:
-                last = SintegrumResult(ok=False, error=f'Немає зв\'язку з Sintegrum: {exc}')
+                last = SintegrumResult(ok=False, error=_no_link(exc))
+                if not idempotent:
+                    return last
                 self._backoff(attempt)
                 continue
             except requests.RequestException as exc:
@@ -122,6 +146,8 @@ class SintegrumClient:
                     ok=False, http_status=response.status_code,
                     error=f'Sintegrum {response.status_code}',
                 )
+                if not idempotent:
+                    return last
                 self._backoff(attempt)
                 continue
 
@@ -220,10 +246,18 @@ class SintegrumClient:
         return self._request('GET', f'/student/{student_id}')
 
     def list_students(self, page: int = 1, per_page: int = _DEFAULT_PER_PAGE,
-                      filter_expr: str = '') -> SintegrumResult:
+                      filters: Optional[dict] = None) -> SintegrumResult:
+        """Список учнів. `filters` -- готові параметри фільтра партнера.
+
+        Саме словник, а не зібраний рядок: у документації фільтр -- це набір
+        параметрів із дужками (`filter[поле][оператор]=значення`). Рядок
+        довелося б класти в ПАРАМЕТР `filter`, і його назва продублювалася б
+        у власному значенні -- запит виглядав би як
+        `?filter=filter[email][eq]=...`, і фільтрація мовчки не спрацьовувала.
+        """
         params = {'page': str(page), 'per-page': str(per_page)}
-        if filter_expr:
-            params['filter'] = filter_expr
+        if filters:
+            params.update(filters)
         return self._request('GET', '/student/list', params=params)
 
     # ---- службове ----
@@ -237,10 +271,13 @@ class SintegrumClient:
         Синтаксис фільтра -- як у документації партнера
         (`filter[<поле>][<оператор>]=<значення>`). Якщо він не спрацює,
         падати не можна: краще не знайти й піти шляхом створення, ніж
-        зронити видачу доступу цілком.
+        зронити видачу доступу цілком. Саме тому збіг email перевіряється
+        ще й тут, локально: відповідь, яку не відфільтрували, не має видати
+        першого-ліпшого учня за свого.
         """
         result = self.list_students(
-            per_page=5, filter_expr=f'filter[email][eq]={email}',
+            per_page=_DEFAULT_PER_PAGE,
+            filters={'filter[email][eq]': (email or '').strip()},
         )
         if not result.ok:
             return result

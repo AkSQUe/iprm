@@ -782,3 +782,18 @@ class TestThankyouPromo:
         assert promo is not None
         assert promo.issued_for_registration_id == reg.id
         assert promo.issued_for_enrollment_id is None
+
+def test_orders_page_filters_by_access_state(client, admin, buyer, course):
+    """Лічильник "зависло" тепер клікабельний -- фільтр за ним існує."""
+    stuck = OnlineEnrollment(
+        user_id=buyer.id, online_course_id=course.id,
+        payment_amount=Decimal('4000'), payment_status='paid', status='active',
+    )
+    db.session.add(stuck)
+    db.session.commit()
+
+    _login(client, admin)
+    body = client.get('/admin/online-orders?access=stuck').get_data(as_text=True)
+
+    assert stuck.order_id in body
+    assert 'без доступу' in body

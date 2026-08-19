@@ -405,3 +405,72 @@ def test_invoice_by_token_is_refused_after_payment(client, course):
 
     assert response.status_code == 302
     assert f'/order/{enrollment.order_token}' in response.headers['Location']
+
+
+def test_paid_order_page_has_no_payment_form(client, course):
+    """Підписаний платіжний пакет на вже сплачену суму не створюємо."""
+    enrollment = _paid_order(client, course)
+
+    body = client.get(
+        f'/online-courses/order/{enrollment.order_token}').get_data(as_text=True)
+
+    assert 'liqpay' not in body.lower()
+
+
+# ----------------------------- перевипуск доступу -----------------------------
+
+def test_guest_can_reissue_an_expired_link(client, course, monkeypatch):
+    """Гість із протермінованим токеном не має впиратись у логін.
+
+    Сторінка помилки пропонує перевипуск лише власнику акаунта -- а в
+    гостя його немає, тож без цього маршруту шлях закінчувався нічим.
+    """
+    from app.services import sintegrum_access
+
+    enrollment = _paid_order(client, course)
+    enrollment.access_token = 'stale-token'
+    enrollment.access_expires_at = utcnow() - timedelta(hours=1)
+    db.session.commit()
+
+    monkeypatch.setattr(
+        sintegrum_access, 'get_provider',
+        lambda course=None, settings=None: _StubProvider(),
+    )
+
+    body = client.get(
+        f'/online-courses/order/{enrollment.order_token}').get_data(as_text=True)
+    assert 'Отримати нове посилання' in body
+
+    response = client.post(
+        f'/online-courses/order/{enrollment.order_token}/reissue')
+
+    db.session.refresh(enrollment)
+    assert response.status_code == 302
+    assert enrollment.access_token != 'stale-token'
+    assert f'/access/{enrollment.access_token}' in response.headers['Location']
+
+
+def test_reissue_needs_a_paid_order(client, course):
+    _, email = _buy(client, course)
+    enrollment = _order_of(email)
+
+    response = client.post(
+        f'/online-courses/order/{enrollment.order_token}/reissue')
+
+    db.session.refresh(enrollment)
+    assert response.status_code == 302
+    assert enrollment.access_token is None
+
+
+def test_reissue_by_unknown_token_is_gone(client, course):
+    assert client.post(
+        '/online-courses/order/no-such-token/reissue').status_code == 410
+
+
+class _StubProvider:
+    """Партнера в тестах не смикаємо -- видача доступу тут не предмет."""
+
+    def provision(self, enrollment):
+        from app.services.sintegrum_access import AccessResult
+
+        return AccessResult(target_url='https://acme.sintegrum.com')

@@ -140,9 +140,11 @@ class PaymentOps:
             )
 
         reg_id = object_id
-        reg = db.session.query(EventRegistration).with_for_update().filter_by(
-            id=reg_id
-        ).first()
+        reg = (
+            db.session.query(EventRegistration)
+            .with_for_update().populate_existing()
+            .filter_by(id=reg_id).first()
+        )
         if not reg:
             logger.warning('LiqPay callback: registration %d not found', reg_id)
             return False, 'registration not found'
@@ -168,9 +170,11 @@ class PaymentOps:
                                      liqpay_status, payment_id):
         from app.models.online_enrollment import OnlineEnrollment
 
-        enrollment = db.session.query(OnlineEnrollment).with_for_update().filter_by(
-            id=enrollment_id
-        ).first()
+        enrollment = (
+            db.session.query(OnlineEnrollment)
+            .with_for_update().populate_existing()
+            .filter_by(id=enrollment_id).first()
+        )
         if not enrollment:
             logger.warning('LiqPay callback: enrollment %d not found', enrollment_id)
             return False, 'enrollment not found'
@@ -427,9 +431,20 @@ class PaymentOps:
         if not new_status or new_status == enrollment.payment_status:
             return True, 'no change'
 
-        locked = db.session.query(OnlineEnrollment).with_for_update().filter_by(
-            id=enrollment.id
-        ).first()
+        # populate_existing() тут ОБОВ'ЯЗКОВИЙ, а не гігієнічний. Викликач
+        # уже прочитав це замовлення (сторінка успіху, сторінка гостьового
+        # замовлення), тож воно лежить в identity map. Без явної вказівки
+        # SQLAlchemy віддасть саме той -- старий -- об'єкт, і блокування
+        # візьметься на рядок, стан якого ми не побачимо. Наслідок реальний:
+        # callback устиг зафіксувати 'paid', ми ще бачимо 'unpaid', перевірка
+        # переходу пропускає, і оплата проводиться вдруге -- другий запис у
+        # журналі й друга видача доступу, яка гасить щойно надіслане
+        # посилання. Той самий висновок описано в certificate_service.
+        locked = (
+            db.session.query(OnlineEnrollment)
+            .with_for_update().populate_existing()
+            .filter_by(id=enrollment.id).first()
+        )
         if not locked:
             return False, 'enrollment not found'
 
@@ -453,9 +468,11 @@ class PaymentOps:
         payment_id = str(status_data.get('payment_id', ''))
         callback_amount = status_data.get('amount')
 
-        locked_reg = db.session.query(EventRegistration).with_for_update().filter_by(
-            id=reg.id
-        ).first()
+        locked_reg = (
+            db.session.query(EventRegistration)
+            .with_for_update().populate_existing()
+            .filter_by(id=reg.id).first()
+        )
         if not locked_reg:
             return False, 'registration not found'
 
@@ -477,9 +494,11 @@ class PaymentOps:
         """
         from app.models.online_enrollment import OnlineEnrollment
 
-        locked = db.session.query(OnlineEnrollment).with_for_update().filter_by(
-            id=enrollment.id
-        ).first()
+        locked = (
+            db.session.query(OnlineEnrollment)
+            .with_for_update().populate_existing()
+            .filter_by(id=enrollment.id).first()
+        )
         if not locked or locked.payment_status != 'paid':
             return _fail('Повернення можливе тільки для оплачених замовлень')
 
@@ -517,9 +536,11 @@ class PaymentOps:
         return _fail(f'LiqPay відхилив повернення: {err}')
 
     def initiate_refund(self, reg, admin_user):
-        locked_reg = db.session.query(EventRegistration).with_for_update().filter_by(
-            id=reg.id
-        ).first()
+        locked_reg = (
+            db.session.query(EventRegistration)
+            .with_for_update().populate_existing()
+            .filter_by(id=reg.id).first()
+        )
         if not locked_reg or locked_reg.payment_status != 'paid':
             return _fail('Повернення можливе тільки для оплачених реєстрацій')
 

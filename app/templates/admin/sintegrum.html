@@ -51,6 +51,12 @@
     <span class="admin-readonly-config__value">{{ cfg.access_ttl }} год</span>
   </div>
   <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Нагадування про курс</span>
+    <span class="admin-readonly-config__value">
+      {% if cfg.reminder_days %}через {{ cfg.reminder_days }} дн.{% else %}вимкнено{% endif %}
+    </span>
+  </div>
+  <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">Останній прогін</span>
     <span class="admin-readonly-config__value">
       {% if cfg.last_sync_at %}
@@ -159,7 +165,13 @@
       <label for="access_ttl">Термін дії посилання на навчання, год</label>
       <input type="number" name="access_ttl" id="access_ttl" class="form-input"
              min="1" max="720" step="1" value="{{ cfg.access_ttl }}">
-      <p class="form-hint">Скільки живе видане учаснику посилання. Протерміноване він перевипускає сам у кабінеті.</p>
+      <p class="form-hint">Скільки живе видане учаснику посилання. Протерміноване він перевипускає сам -- у кабінеті або на сторінці свого замовлення.</p>
+    </div>
+    <div class="form-group">
+      <label for="reminder_days">Нагадування про невикористаний курс, днів</label>
+      <input type="number" name="reminder_days" id="reminder_days" class="form-input"
+             min="0" max="60" step="1" value="{{ cfg.reminder_days }}">
+      <p class="form-hint">Лист тим, кому доступ відкрито, а вони жодного разу не заходили. 0 -- не нагадувати.</p>
     </div>
   </div>
 

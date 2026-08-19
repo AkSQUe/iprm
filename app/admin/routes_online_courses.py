@@ -191,7 +191,17 @@ def _save_course(course):
         flash('Посилання на навчання має починатися з https://', 'error')
         return redirect(url_for('admin.online_course_edit', course_id=course.id))
 
-    slug = (request.form.get('slug') or '').strip()
+    # Через slugify, а не як введено: `Курс/2` дав би адресу з другим
+    # сегментом, на яку маршрут `/<slug>` просто не відгукується -- сторінка
+    # зникала б без жодного повідомлення адміну.
+    from app.services.blog_service import slugify
+
+    raw_slug = (request.form.get('slug') or '').strip()
+    slug = slugify(raw_slug) if raw_slug else ''
+    # Про зміну кажемо вголос: людина ввела одне, збережеться інше, і мовчазна
+    # підміна адреси -- саме те, що потім шукають годину.
+    if slug and slug != raw_slug:
+        flash(f'Адресу сторінки приведено до вигляду «{slug}»', 'info')
     if slug and slug != course.slug:
         taken = OnlineCourse.query.filter(
             OnlineCourse.slug == slug, OnlineCourse.id != course.id,

@@ -337,6 +337,12 @@ def _order_context(enrollment, course, token=None):
                      else url_for('online.order_invoice',
                                   enrollment_id=enrollment.id)),
         access_href=_access_href(enrollment, token),
+        # Токен доступу живе годинами, сторінка замовлення -- тижнями. Тож
+        # тут цілком звична ситуація: оплачено, доступ був, посилання
+        # протермінувалось. Кнопка перевипуску має бути на місці.
+        reissue_url=(url_for('online.order_reissue', token=token)
+                     if token and enrollment.is_paid else None),
+        access_expired=bool(enrollment.is_paid and enrollment.access_is_expired),
         # Кабінет заводиться тут-таки, після оплати: решта даних уже зібрана
         # покупкою, лишається пароль. Якщо пароль уже є (email виявився
         # наявним акаунтом) -- пропонуємо вхід, а не створення.
@@ -470,7 +476,10 @@ def _liqpay_context(enrollment, course, token=None):
     from app.services.liqpay import get_liqpay_service
 
     service = get_liqpay_service()
-    if not service.is_configured or not enrollment.payment_amount:
+    # Оплачене замовлення форми не потребує: шаблон її не показує, а
+    # підписаний платіжний пакет на вже сплачену суму краще й не створювати.
+    if (enrollment.is_paid or not service.is_configured
+            or not enrollment.payment_amount):
         return {'liqpay_data': None, 'liqpay_signature': None,
                 'liqpay_checkout_url': None}
 
@@ -595,6 +604,38 @@ def order_set_password(token):
                 enrollment.order_id, user.id)
     flash(_('Кабінет створено. Тут ви завжди знайдете свої курси.'), 'success')
     return redirect(url_for('auth.account'))
+
+
+@online_bp.route('/order/<token>/reissue', methods=['POST'])
+@limiter.limit('10 per hour')
+def order_reissue(token):
+    """Перевипуск посилання на навчання для покупця без акаунта.
+
+    Без цього маршруту гість із протермінованим токеном опинявся в глухому
+    куті: сторінка помилки пропонує перевипуск лише власнику акаунта, а
+    акаунта в нього немає. Авторизація -- сам токен замовлення.
+    """
+    enrollment = _load_order(token)
+    if enrollment is None or not enrollment.order_token_active:
+        return render_template('online/order_invalid.html'), 410
+
+    if not enrollment.is_paid:
+        flash(_('Замовлення не оплачене'), 'error')
+        return redirect(url_for('online.order', token=token))
+
+    from app.services import sintegrum_access
+    try:
+        sintegrum_access.close_transaction_before_network()
+        sintegrum_access.reissue(enrollment)
+    except sintegrum_access.AccessProvisionError:
+        flash(
+            _('Не вдалося видати посилання. Ми вже розбираємось, '
+              'напишіть нам, якщо це терміново.'),
+            'error',
+        )
+        return redirect(url_for('online.order', token=token))
+
+    return redirect(url_for('online.access', token=enrollment.access_token))
 
 
 @online_bp.route('/order/<token>/invoice.pdf')
