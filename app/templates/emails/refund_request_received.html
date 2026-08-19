@@ -1,0 +1,53 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, alert_info, spacer %}
+
+{% block title %}{{ _('Заявку на повернення прийнято') }}{% endblock %}
+
+{% block preview_text %}{% trans title=title %}Ми отримали вашу заявку на повернення коштів за {{ title }}{% endtrans %}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        {{ _('Заявку прийнято') }}
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        {{ user.first_name or _('Шановний учаснику') }}, {{ _('ми отримали вашу заявку на повернення коштів і розглянемо її протягом 3 робочих днів.') }}
+    </p>
+
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #625A6D; text-transform: uppercase; letter-spacing: 0.05em;">
+        {{ _('Ваша заявка') }}
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #17131D; line-height: 1.3;">{{ title }}</p>
+
+                {{ detail_row(_('Замовлення'), request_obj.order_code, '150px') }}
+                {{ detail_row(_('Сплачено'), '%s грн' % request_obj.order.payment_amount, '150px') }}
+                {{ detail_row(_('До повернення'), '%s грн (%s%%)' % (request_obj.quoted_amount, request_obj.quoted_percent), '150px') }}
+            </td>
+        </tr>
+    </table>
+
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #625A6D; text-transform: uppercase; letter-spacing: 0.05em;">
+        {{ _('Причина, яку ви вказали') }}
+    </p>
+    <p style="margin: 0 0 24px 0; font-size: 15px; color: #17131D; line-height: 1.5;">{{ request_obj.reason }}</p>
+
+    {% if request_obj.quoted_percent < 100 %}
+    {{ alert_info(
+        _('Чому сума менша за сплачену'),
+        _('Розмір повернення визначається строком подання заявки згідно з Політикою повернення коштів. Суму розраховано на дату, коли ми отримали ваше звернення.')
+    ) }}
+    {% endif %}
+
+    {% if refund_policy_url %}
+    {{ button_primary(_('Умови повернення коштів'), refund_policy_url) }}
+    {{ spacer(16) }}
+    {% endif %}
+
+    <p style="margin: 0; font-size: 13px; color: #6E667A; line-height: 1.5;">
+        {{ _('Якщо потрібно щось уточнити або доповнити заявку, просто дайте відповідь на цей лист.') }}
+    </p>
+{% endblock %}

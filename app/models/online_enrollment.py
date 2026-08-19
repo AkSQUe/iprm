@@ -13,7 +13,9 @@
 import secrets
 
 from app.extensions import db
-from app.models.mixins import TimestampMixin, BigIntPK, utcnow
+from app.models.mixins import (
+    TimestampMixin, BigIntPK, RefundableMixin, utcnow,
+)
 from app.utils import ensure_utc
 
 # Довжина токена в байтах до base64: 32 байти -- 43 символи URL-safe.
@@ -31,7 +33,7 @@ STATUSES = (STATUS_PENDING, STATUS_ACTIVE, STATUS_CANCELLED)
 PAYMENT_STATUSES = ('unpaid', 'pending', 'paid', 'refunded')
 
 
-class OnlineEnrollment(TimestampMixin, db.Model):
+class OnlineEnrollment(TimestampMixin, RefundableMixin, db.Model):
     __tablename__ = 'online_enrollments'
 
     id = db.Column(BigIntPK, primary_key=True)
@@ -60,6 +62,8 @@ class OnlineEnrollment(TimestampMixin, db.Model):
         db.String(20), default='liqpay', server_default='liqpay', nullable=False,
     )
     paid_at = db.Column(db.DateTime(timezone=True))
+
+    # Повернення коштів -- колонки й правила у RefundableMixin.
 
     # Промокод, застосований до замовлення. `payment_amount` уже містить суму
     # ПІСЛЯ знижки; `discount_amount` -- знімок того, скільки ми віддали, щоб
@@ -114,6 +118,10 @@ class OnlineEnrollment(TimestampMixin, db.Model):
         db.CheckConstraint(
             'payment_amount >= 0 OR payment_amount IS NULL',
             name='ck_online_enrollments_amount_non_negative',
+        ),
+        db.CheckConstraint(
+            'refunded_amount >= 0',
+            name='ck_online_enrollments_refunded_amount_non_negative',
         ),
         # Одна людина -- одна діюча покупка курсу. Часткова унікальність, бо
         # скасоване замовлення не має блокувати повторну купівлю.

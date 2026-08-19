@@ -7,6 +7,8 @@ from app.admin import routes_quizzes  # noqa: F401
 from app.admin import routes_cities  # noqa: F401
 from app.admin import routes_participants  # noqa: F401
 from app.admin import routes_payments  # noqa: F401
+from app.admin import routes_refunds  # noqa: F401
+from app.admin import routes_refund_requests  # noqa: F401
 from app.admin import routes_recaptcha  # noqa: F401
 from app.admin import routes_analytics  # noqa: F401
 from app.admin import routes_meta_pixel  # noqa: F401

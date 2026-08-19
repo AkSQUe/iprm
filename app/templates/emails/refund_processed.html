@@ -1,0 +1,66 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, alert_info, spacer %}
+
+{% block title %}{{ _('Кошти повернено') }}{% endblock %}
+
+{% block preview_text %}{% trans amount=amount, title=title %}Повернення {{ amount }} грн за {{ title }}{% endtrans %}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        {{ _('Кошти повернено') }}
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        {{ user.first_name or _('Шановний учаснику') }}, {% if is_full %}{{ _('ми повернули повну суму вашого замовлення.') }}{% else %}{{ _('ми повернули частину суми вашого замовлення згідно з умовами Політики повернення коштів.') }}{% endif %}
+    </p>
+
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #625A6D; text-transform: uppercase; letter-spacing: 0.05em;">
+        {{ _('Деталі повернення') }}
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #17131D; line-height: 1.3;">{{ title }}</p>
+
+                {{ detail_row(_('Замовлення'), order_id, '140px') }}
+                {{ detail_row(_('Сплачено'), '%s грн' % total, '140px') }}
+                {# Повторне повернення за тим самим замовленням: сума цієї
+                   операції й сукупна -- різні числа, і людина має бачити
+                   обидва, інакше вони не сходяться з карткою замовлення. #}
+                {% if is_repeat %}
+                {{ detail_row(_('Повернено зараз'), '%s грн' % amount, '140px') }}
+                {{ detail_row(_('Разом повернено'), '%s грн' % refunded_total, '140px') }}
+                {% else %}
+                {{ detail_row(_('Повернено'), '%s грн' % amount, '140px') }}
+                {% endif %}
+                {% if not is_full %}
+                {{ detail_row(_('Утримано'), '%s грн' % withheld, '140px') }}
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    {% if reason %}
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #625A6D; text-transform: uppercase; letter-spacing: 0.05em;">
+        {{ _('Підстава') }}
+    </p>
+    <p style="margin: 0 0 24px 0; font-size: 15px; color: #17131D; line-height: 1.5;">{{ reason }}</p>
+    {% endif %}
+
+    {{ alert_info(
+        _('Коли кошти надійдуть'),
+        _('Повернення виконано на картку, з якої була здійснена оплата. Строк зарахування залежить від банку-емітента і зазвичай складає від 3 до 14 календарних днів.')
+    ) }}
+
+    {{ spacer(16) }}
+
+    {% if refund_policy_url %}
+    {{ button_primary(_('Умови повернення коштів'), refund_policy_url) }}
+    {{ spacer(16) }}
+    {% endif %}
+
+    <p style="margin: 0; font-size: 13px; color: #6E667A; line-height: 1.5;">
+        {{ _('Якщо сума або підстава повернення викликають запитання, просто дайте відповідь на цей лист.') }}
+    </p>
+{% endblock %}

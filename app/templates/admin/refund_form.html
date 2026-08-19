@@ -1,0 +1,194 @@
+{% extends "admin/base_admin.html" %}
+
+{% set is_enrollment = kind == 'enrollment' %}
+{% set order_code = order.order_id if is_enrollment else 'REG-' ~ order.id %}
+{% set order_title = (order.course.effective_title if order.course else 'Онлайн-курс') if is_enrollment else (order.target_title or 'Захід') %}
+
+{% block title %}Повернення коштів {{ order_code }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ back_url }}" class="admin-breadcrumb__link">{{ 'Замовлення онлайн-курсів' if is_enrollment else 'LiqPay' }}</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">{{ order_code }}</span>
+        </div>
+        <h1 class="admin-hero__title">Повернення коштів</h1>
+        <p class="admin-hero__subtitle">
+          Гроші підуть на картку, з якої була оплата. Операцію не можна відкотити:
+          щоб повернути ще частину, доведеться проводити нове повернення.
+        </p>
+      </div>
+      <div class="admin-hero__actions">
+        <a href="{{ back_url }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <div class="admin-stat-cards">
+      <div class="admin-stat-card">
+        <span class="admin-stat-card__value">{{ order.payment_amount | int }} &#8372;</span>
+        <span class="admin-stat-card__label">Сплачено</span>
+      </div>
+      <div class="admin-stat-card admin-stat-card--warning">
+        <span class="admin-stat-card__value">{{ order.refunded_total | int }} &#8372;</span>
+        <span class="admin-stat-card__label">Уже повернуто</span>
+      </div>
+      <div class="admin-stat-card admin-stat-card--accent">
+        <span class="admin-stat-card__value">{{ order.refund_remaining | int }} &#8372;</span>
+        <span class="admin-stat-card__label">Залишок</span>
+      </div>
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Замовлення</h3>
+      <table class="admin-table">
+        <tbody>
+          <tr><td>Номер</td><td>{{ order_code }}</td></tr>
+          <tr><td>{{ 'Курс' if is_enrollment else 'Захід' }}</td><td>{{ order_title }}</td></tr>
+          <tr>
+            <td>Покупець</td>
+            <td>{{ order.user.first_name }} {{ order.user.last_name }} &mdash; {{ order.user.email }}</td>
+          </tr>
+          <tr>
+            <td>Оплачено</td>
+            <td>{{ order.paid_at.strftime('%d.%m.%Y %H:%M') if order.paid_at else '&mdash;' | safe }}</td>
+          </tr>
+          {% if is_enrollment %}
+          <tr>
+            <td>Доступ до матеріалів</td>
+            <td>
+              {% if order.provisioned_at %}
+                <span class="badge badge--active">Надано {{ order.provisioned_at.strftime('%d.%m.%Y') }}</span>
+              {% else %}
+                <span class="badge badge--draft">Ще не надано</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% elif order.instance and order.instance.start_date %}
+          <tr>
+            <td>Початок заходу</td>
+            <td>{{ order.instance.start_date.strftime('%d.%m.%Y %H:%M') }}</td>
+          </tr>
+          {% endif %}
+          {% if order.refund_reason %}
+          <tr><td>Попередня підстава</td><td>{{ order.refund_reason }}</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if refund_req %}
+    {# Заявка учасника. Найважливіше тут -- дата подання: саме від неї
+       §4.2 велить рахувати відсоток, і саме її знімок підставлено у
+       форму нижче, навіть якщо заявка пролежала в черзі кілька днів. #}
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Заявка учасника №{{ refund_req.id }}</h3>
+      <table class="admin-table">
+        <tbody>
+          <tr><td>Подано</td><td>{{ refund_req.created_at.strftime('%d.%m.%Y %H:%M') }}</td></tr>
+          <tr><td>Причина</td><td>{{ refund_req.reason }}</td></tr>
+          {% if refund_req.payout_details %}
+          <tr><td>Реквізити від учасника</td><td>{{ refund_req.payout_details }}</td></tr>
+          {% endif %}
+          <tr>
+            <td>Сума на дату подання</td>
+            <td>{{ refund_req.quoted_amount }} грн ({{ refund_req.quoted_percent }}%)</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="form-hint">
+        Успішне повернення автоматично закриє цю заявку як задоволену.
+      </p>
+    </div>
+    {% endif %}
+
+    {# Рекомендація за Політикою повернення. Показуємо ЗАВЖДИ і до вводу
+       суми: адмін має спершу побачити, скільки належить за правилами, і
+       лише потім свідомо відступати від них. #}
+    <div class="form-section admin-form__section{% if not quote.refundable %} admin-queue-alert admin-queue-alert--error{% elif quote.percent < 100 %} admin-queue-alert admin-queue-alert--warning{% endif %}">
+      <h3 class="admin-form__section-title{% if not quote.refundable %} admin-queue-alert__title--error{% endif %}">
+        За Політикою повернення: {{ quote.percent }}%
+      </h3>
+      <p>{{ quote.label }}{% if quote.days is not none %} &mdash; {{ quote.days | round(1) }} дн. до початку на момент розрахунку{% endif %}.</p>
+      <p><strong>Рекомендована сума: {{ quote.amount }} грн</strong> з {{ order.payment_amount }} грн.</p>
+      {% if quote.note %}
+      <p class="form-hint">{{ quote.note }}</p>
+      {% endif %}
+      <p class="form-hint">
+        <a href="{{ url_for('main.refund') }}" target="_blank" rel="noopener">Повний текст Політики повернення коштів</a>
+      </p>
+    </div>
+
+    <form method="POST" class="admin-form"
+          action="{{ url_for('admin.refund_form', kind=kind, order_id=order.id, request=refund_req.id if refund_req else none, next=back_url) }}"
+          data-confirm="Провести повернення через LiqPay? Гроші підуть покупцю, операцію не можна відкотити."
+          data-confirm-ok="Провести повернення" data-confirm-danger>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">Що повертаємо</h3>
+        <div class="admin-form__grid">
+
+          <div class="form-group">
+            <label for="refund-amount">Сума повернення, грн</label>
+            <input type="number" step="0.01" min="0.01" max="{{ order.refund_remaining }}"
+                   class="form-input" id="refund-amount" name="amount"
+                   value="{{ suggested }}">
+            <div class="form-hint">
+              Порожнє поле означає повернути весь залишок ({{ order.refund_remaining }} грн).
+              Більше за залишок ввести не можна.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="refund-reason">Підстава</label>
+            <input type="text" maxlength="500" class="form-input" id="refund-reason" name="reason"
+                   placeholder="Напр. заявка учасника від 12.08, перенесення заходу">
+            <div class="form-hint">
+              Потрапляє в лист покупцю і в журнал операцій. Політика (п. 6.2) вимагає
+              підставу в заявці &mdash; сюди переносимо її коротко.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {% if is_enrollment and order.provisioned_at %}
+      <div class="form-section admin-form__section admin-form__danger-zone">
+        <h3 class="admin-form__section-title">Виняток із п. 5.1</h3>
+        <p>
+          Доступ до матеріалів уже надано, тому за Політикою повернення коштів за цей
+          цифровий продукт не здійснюється. Провести повернення попри це можна лише
+          свідомо &mdash; позначка нижче потрапить у журнал разом з вашим email.
+        </p>
+        <div class="form-group">
+          <label for="refund-force">
+            <input type="checkbox" id="refund-force" name="force">
+            Повернути попри надані матеріали, доступ буде закрито
+          </label>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="admin-form__actions">
+        <button type="submit" class="btn-admin btn-admin--danger">Провести повернення</button>
+        <a href="{{ back_url }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

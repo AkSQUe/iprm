@@ -125,6 +125,7 @@ NUMBER_FORMATS = {
     'valid_from': FMT_DATE,
     'valid_until': FMT_DATE,
     'payment_amount': FMT_CURRENCY_UAH,
+    'refunded_amount': FMT_CURRENCY_UAH,
     'discount_amount': FMT_CURRENCY_UAH,
     'cpd_points_awarded': FMT_INT,
     'experience_years': FMT_INT,

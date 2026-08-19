@@ -292,10 +292,18 @@ def account():
         .all()
     )
 
+    # Заявки на повернення: одним запитом на весь кабінет, щоб кнопка
+    # "подати" не перетворилась на SELECT на кожне замовлення.
+    from app.services import refund_requests
+    refund_reqs_by_reg, refund_reqs_by_enrollment = (
+        refund_requests.latest_by_order(current_user))
+
     return render_template(
         'auth/account.html',
         registrations=registrations,
         online_enrollments=online_enrollments,
+        refund_reqs_by_reg=refund_reqs_by_reg,
+        refund_reqs_by_enrollment=refund_reqs_by_enrollment,
         certificates=certificates,
         certificate_data_complete=bool(profile and profile.is_complete),
         quiz_states=quiz_states,

@@ -8,11 +8,10 @@ from app.admin._helpers import (
     mask_secret, rotation_status, save_integration_settings,
     validate_liqpay_credentials,
 )
-from app.extensions import db, limiter
+from app.extensions import limiter
 from app.models.registration import EventRegistration
 from app.models.site_settings import SiteSettings
 from app.services.liqpay import get_liqpay_service
-from app.services.payment_ops import PaymentOps
 
 audit_logger = logging.getLogger('audit')
 
@@ -136,18 +135,4 @@ def liqpay_test():
         flash('Не вдалося з\'єднатися з LiqPay API. Перевірте ключі.', 'error')
 
     audit_logger.info('Admin %s tested LiqPay connection', current_user.email)
-    return redirect(url_for('admin.liqpay'))
-
-
-@admin_bp.route('/liqpay/refund/<int:reg_id>', methods=['POST'])
-@admin_required
-def liqpay_refund(reg_id):
-    reg = db.session.get(EventRegistration, reg_id)
-    if not reg:
-        flash('Реєстрацію не знайдено', 'error')
-        return redirect(url_for('admin.liqpay'))
-
-    ops = PaymentOps(get_liqpay_service())
-    ok, msg = ops.initiate_refund(reg, current_user)
-    flash(msg, 'success' if ok else 'error')
     return redirect(url_for('admin.liqpay'))

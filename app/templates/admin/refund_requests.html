@@ -1,0 +1,155 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Заявки на повернення | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Заявки на повернення</span>
+      </div>
+      <h1 class="admin-hero__title">Заявки на повернення</h1>
+      <p class="admin-hero__subtitle">
+        Політика повернення коштів (п. 6.3) дає 3 робочі дні на відповідь.
+        Нових: {{ new_count }}. Сума в кожній заявці порахована на дату подання &mdash;
+        саме її вимагає п. 4.2, і саме вона підставиться у форму повернення.
+      </p>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {{ filter_bar(
+       endpoint='admin.refund_requests_list',
+       values=filters,
+       search={'name': 'q', 'placeholder': 'Пошук за причиною або рішенням'},
+       fields=[
+         {'name': 'status', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': status_options},
+         {'name': 'date_from', 'label': 'Подані з', 'type': 'date'},
+         {'name': 'date_to', 'label': 'Подані по', 'type': 'date'},
+       ],
+       export_endpoint='admin.refund_requests_export',
+     ) }}
+
+  {% if requests %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Подано</th>
+        <th>Замовлення</th>
+        <th>Учасник</th>
+        <th>За політикою</th>
+        <th>Причина</th>
+        <th>Статус</th>
+        <th>Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for req in requests %}
+      <tr>
+        <td>{{ req.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+        <td>
+          {{ req.order_code }}
+          <div class="admin-text-muted">{{ req.title }}</div>
+        </td>
+        <td>
+          {{ req.user.full_name or '—' }}
+          <div class="admin-text-muted">{{ req.user.email }}</div>
+        </td>
+        <td>
+          {% if req.quoted_amount is not none %}
+            {{ req.quoted_amount | int }} &#8372;
+            <div class="admin-text-muted">{{ req.quoted_percent }}% від {{ req.order.payment_amount | int if req.order else '—' }} &#8372;</div>
+          {% else %}
+            <span class="admin-text-muted">—</span>
+          {% endif %}
+          {% if req.order and req.order.has_refund %}
+          <div class="admin-text-muted">Уже повернуто {{ req.order.refunded_total | int }} &#8372;</div>
+          {% endif %}
+        </td>
+        <td>
+          {{ req.reason }}
+          {% if req.payout_details %}
+          <div class="admin-text-muted">Реквізити: {{ req.payout_details }}</div>
+          {% endif %}
+        </td>
+        <td>
+          <span class="badge badge--{{ 'published' if req.status == 'new' else ('active' if req.status == 'approved' else 'cancelled') }}">
+            {{ req.status_label }}
+          </span>
+          {% if req.decided_at %}
+          <div class="admin-text-muted">
+            {{ req.decided_at.strftime('%d.%m.%Y') }}{% if req.decided_by %}, {{ req.decided_by.email }}{% endif %}
+          </div>
+          {% endif %}
+          {% if req.decision_note %}
+          <div class="admin-text-muted">{{ req.decision_note }}</div>
+          {% endif %}
+        </td>
+        <td>
+          {% if req.is_open %}
+          <a href="{{ url_for('admin.refund_form', kind=req.kind, order_id=req.order.id, request=req.id, next=request.full_path) }}"
+             class="btn-admin btn-admin--primary btn-admin--sm">
+            Повернути кошти
+          </a>
+          {# Відмова вимагає пояснення: воно їде в лист учаснику, і без
+             нього заявка перетворюється на мовчазне "ні". #}
+          <details class="admin-actions-menu">
+            <summary class="btn-admin btn-admin--secondary btn-admin--sm">Відхилити</summary>
+            <div class="admin-actions-menu__items">
+              <form method="POST" action="{{ url_for('admin.refund_request_reject', request_id=req.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                  <label for="note-{{ req.id }}">Причина відмови (піде в лист)</label>
+                  <input type="text" class="form-input" id="note-{{ req.id }}"
+                         name="decision_note" maxlength="500" required
+                         placeholder="Напр. захід уже відбувся, п. 4.3 Політики">
+                </div>
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">
+                  Відхилити заявку
+                </button>
+              </form>
+            </div>
+          </details>
+          {% else %}
+          <span class="admin-text-muted">Розглянуто</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="admin-empty">
+    {{ icon('notes', cls='admin-empty__icon') }}
+    <h3 class="admin-empty__title">Заявок немає</h3>
+    <p>
+      {% if filters.q or filters.status %}
+        За цим зрізом нічого не знайшлося &mdash;
+        <a href="{{ url_for('admin.refund_requests_list') }}">скинути фільтри</a>.
+      {% else %}
+        Учасники подають заявки з особистого кабінету.
+      {% endif %}
+    </p>
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}

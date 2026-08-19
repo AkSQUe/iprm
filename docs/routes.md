@@ -25,6 +25,7 @@
 | POST | `/auth/logout` | Вихід |
 | GET | `/auth/account` | Обліковий запис (курси + сертифікати) |
 | GET | `/auth/account/certificates/<id>/download` | Завантажити власний сертифікат (PDF) |
+| GET/POST | `/auth/account/refund/<kind>/<id>` | Заявка на повернення коштів. Показує суму за Політикою до заповнення; `kind` -- `registration` або `enrollment` |
 | GET | `/auth/settings` | Налаштування профілю |
 | GET | `/auth/confirm-email/<token>` | Підтвердження email |
 | GET/POST | `/auth/account/set-password` | Встановити пароль (лише якщо його ще немає) |
@@ -205,6 +206,11 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | GET | `/admin/registrations` | Всі реєстрації (stub) |
 | GET | `/admin/payments` | Redirect на LiqPay |
 | GET | `/admin/liqpay` | Дашборд LiqPay |
+| POST | `/admin/liqpay/save-keys` | Зберегти ключі (з валідацією перед збереженням) |
+| POST | `/admin/liqpay/test` | Перевірити з'єднання з LiqPay API |
+| GET/POST | `/admin/refunds/<kind>/<id>` | Повернення коштів: сума за Політикою, підстава, виняток п. 5.1. `kind` -- `registration` або `enrollment`. `?request=<id>` підставляє суму із заявки й закриває її після проведення |
+| GET | `/admin/refund-requests` | Черга заявок учасників на повернення (найстаріші відкриті зверху) |
+| POST | `/admin/refund-requests/<id>/reject` | Відхилити заявку з поясненням (їде в лист учаснику) |
 | GET | `/admin/users` | Список користувачів |
 | GET | `/admin/quizzes` | Реєстр тестів: банк, готовність, дані БПР |
 | GET/POST | `/admin/courses/<id>/quiz` | Тест курсу (створюється при відкритті) |

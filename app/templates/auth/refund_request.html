@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% set is_enrollment = kind == 'enrollment' %}
+{% set order_code = order.order_id if is_enrollment else 'REG-' ~ order.id %}
+{% set order_title = (order.course.effective_title if order.course else _('Онлайн-курс')) if is_enrollment else (order.target_title or _('Захід')) %}
+
+{% block title %}{{ _('Повернення коштів | ІПРМ') }}{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page reg-layout">
+
+  <h1 class="reg-confirmation__title">{% trans %}Заявка на <span class="apple-gradient-text">повернення коштів</span>{% endtrans %}</h1>
+
+  {# Скільки саме повернеться -- показуємо ДО заповнення. Людина має
+     ухвалювати рішення, знаючи суму, а не дізнаватись про утримання
+     постфактум із листа. #}
+  <aside class="reg-moh-notice" role="note">
+    <div class="reg-moh-notice__icon" aria-hidden="true">i</div>
+    <p>
+      {% if quote.percent >= 100 %}
+        {% trans amount=quote.amount %}
+        За умовами Політики повернення коштів вам буде повернуто
+        <strong>{{ amount }} грн</strong> — повну сплачену суму.
+        {% endtrans %}
+      {% elif quote.percent > 0 %}
+        {% trans amount=quote.amount, total=order.payment_amount, percent=quote.percent %}
+        За умовами Політики повернення коштів вам буде повернуто
+        <strong>{{ amount }} грн</strong> із {{ total }} грн ({{ percent }}%).
+        Розмір повернення залежить від того, за скільки днів до заходу подано заявку.
+        {% endtrans %}
+      {% else %}
+        {% trans %}
+        За умовами Політики повернення коштів повернення за цим замовленням
+        не передбачене. Ви можете подати заявку — ми розглянемо обставини окремо.
+        {% endtrans %}
+      {% endif %}
+      <br>
+      <a href="{{ url_for('main.refund') }}" target="_blank" rel="noopener">{{ _('Повний текст Політики') }}</a>
+    </p>
+  </aside>
+
+  <form method="POST" action="{{ url_for('auth.refund_request', kind=kind, order_id=order.id) }}"
+        data-validate data-single-submit>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="form-section reg-form-section">
+      <h3 class="form-section__title reg-form-section__title">{{ _('Замовлення') }}</h3>
+      <div class="reg-user-info">
+        <div class="reg-user-info__item"><span>{{ _('Номер') }}</span>{{ order_code }}</div>
+        <div class="reg-user-info__item"><span>{{ is_enrollment and _('Курс') or _('Захід') }}</span>{{ order_title }}</div>
+        <div class="reg-user-info__item"><span>{{ _('Сплачено') }}</span>{{ order.payment_amount }} &#8372;</div>
+        {% if order.paid_at %}
+        <div class="reg-user-info__item"><span>{{ _('Дата оплати') }}</span>{{ order.paid_at.strftime('%d.%m.%Y') }}</div>
+        {% endif %}
+        {% if not is_enrollment and order.instance and order.instance.start_date %}
+        <div class="reg-user-info__item"><span>{{ _('Початок заходу') }}</span>{{ order.instance.start_date.strftime('%d.%m.%Y') }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="form-section reg-form-section">
+      <h3 class="form-section__title reg-form-section__title">{{ _('Причина повернення') }}</h3>
+
+      <div class="form-group">
+        <label for="refund-reason">{{ _('Чому ви відмовляєтесь від участі') }} <span class="required">*</span></label>
+        <textarea class="form-input" id="refund-reason" name="reason" rows="4" required
+                  maxlength="2000"
+                  data-hint="{{ _('Опишіть причину — без неї заявку не можна розглянути') }}"
+                  placeholder="{{ _('Напр. змінився графік чергувань, не зможу бути присутнім') }}">{{ submitted_reason or '' }}</textarea>
+        <div class="form-hint">{{ _('Політика повернення коштів (п. 6.2) вимагає вказати причину у заявці.') }}</div>
+      </div>
+
+      <div class="form-group">
+        <label for="refund-payout">{{ _('Реквізити для повернення') }}</label>
+        <input type="text" class="form-input" id="refund-payout" name="payout_details"
+               maxlength="500"
+               placeholder="{{ _('Заповніть, лише якщо потрібно повернути на інший рахунок') }}">
+        <div class="form-hint">
+          {{ _('За умовчанням кошти повертаються на ту саму картку, з якої була оплата — заповнювати не потрібно.') }}
+        </div>
+      </div>
+    </div>
+
+    <div class="reg-actions">
+      <a href="{{ url_for('auth.account') }}" class="apple-btn apple-btn--secondary">{{ _('Скасувати') }}</a>
+      <button type="submit" class="apple-btn apple-btn--primary">{{ _('Подати заявку') }}</button>
+    </div>
+
+    <p class="reg-form-section__hint">
+      {{ _('Ми розглянемо заявку протягом 3 робочих днів і надішлемо відповідь на вашу пошту.') }}
+    </p>
+  </form>
+
+</div>
+{% endblock %}

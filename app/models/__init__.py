@@ -13,6 +13,7 @@ from app.models.email_settings import EmailSettings
 from app.models.email_suppression import EmailSuppression
 from app.models.notification_rule import NotificationRule
 from app.models.payment_transaction import PaymentTransaction
+from app.models.refund_request import RefundRequest
 from app.models.site_settings import SiteSettings
 from app.models.error_log import ErrorLog
 from app.models.course import Course
@@ -46,7 +47,7 @@ __all__ = [
     'MedicalProfile', 'Trainer', 'ProgramBlock', 'EventRegistration',
     'Certificate', 'LecturerCertificate',
     'Clinic', 'EmailLog', 'EmailSettings', 'EmailSuppression', 'NotificationRule',
-    'PaymentTransaction', 'SiteSettings', 'ErrorLog',
+    'PaymentTransaction', 'RefundRequest', 'SiteSettings', 'ErrorLog',
     'Course', 'CourseInstance', 'InstanceTariff', 'CourseTariff',
     'CourseRequest', 'CourseRequestAudit', 'B2BRequest',
     'WebhookDelivery', 'BlogPost', 'BlogComment', 'MediaFile',

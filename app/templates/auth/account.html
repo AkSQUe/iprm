@@ -134,6 +134,24 @@
               </a>
             </div>
             {% endif %}
+            {# Заявка на повернення (Політика, розділ 6). Показуємо і стан:
+               відмова без видимого результату -- та сама тиша, від якої
+               заявка мала рятувати. #}
+            {% set refund_req = refund_reqs_by_reg.get(reg.id) %}
+            {% if refund_req and refund_req.is_open %}
+            <p class="account-course__quiz-note">{{ _('Заявку на повернення подано, вона на розгляді') }}</p>
+            {% elif refund_req and refund_req.status == 'rejected' %}
+            <p class="account-course__quiz-note">
+              {{ _('Заявку на повернення відхилено') }}{% if refund_req.decision_note %}: {{ refund_req.decision_note }}{% endif %}
+            </p>
+            {% endif %}
+            {% if reg.payment_status == 'paid' and reg.refund_remaining > 0
+                  and not (refund_req and refund_req.is_open) %}
+            <a href="{{ url_for('auth.refund_request', kind='registration', order_id=reg.id) }}"
+               class="account-course__invoice-btn">
+              {{ _('Подати заявку на повернення') }}
+            </a>
+            {% endif %}
           </div>
         </div>
         {% endfor %}
@@ -176,6 +194,17 @@
               </form>
             {% else %}
               <span class="badge badge--pending">{{ _('Доступ готується') }}</span>
+            {% endif %}
+            {% set refund_req = refund_reqs_by_enrollment.get(item.id) %}
+            {% if refund_req and refund_req.is_open %}
+            <span class="badge badge--pending">{{ _('Заявка на розгляді') }}</span>
+            {% elif refund_req and refund_req.status == 'rejected' %}
+            <span class="badge badge--cancelled">{{ _('Заявку відхилено') }}</span>
+            {% endif %}
+            {% if item.is_paid and item.refund_remaining > 0
+                  and not (refund_req and refund_req.is_open) %}
+            <a href="{{ url_for('auth.refund_request', kind='enrollment', order_id=item.id) }}"
+               class="apple-btn apple-btn--secondary">{{ _('Повернення коштів') }}</a>
             {% endif %}
           </div>
         </div>

@@ -6,6 +6,7 @@ Uses row-level locking to prevent race conditions.
 """
 import logging
 from datetime import datetime, timezone
+from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
 from app.extensions import db
 from app.models.registration import EventRegistration
@@ -35,6 +36,10 @@ PERMANENT_ERRORS = frozenset({
     'invalid signature', 'unknown order_id', 'invalid order_id',
     'amount mismatch', 'invalid amount',
 })
+
+# Один текст на обидва типи замовлень: адмін бачить те саме повідомлення
+# незалежно від того, за що він повертає гроші.
+LIQPAY_UNREACHABLE = "Не вдалося з'єднатися з LiqPay API"
 
 
 def _fail(msg):
@@ -94,6 +99,77 @@ def check_amount(expected, actual, order_id):
         logger.warning('Payment invalid amount for %s', order_id)
         return 'invalid amount'
     return None
+
+
+def _money(value):
+    return Decimal(str(value or 0)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+
+def resolve_refund_amount(order, requested):
+    """Сума до повернення: перевірена, округлена до копійки.
+
+    Повертає (Decimal, None) або (None, причина відмови). `requested is
+    None` означає «решту», тобто повне повернення того, що ще не повернуто.
+
+    Перевірка робиться ПІД блокуванням рядка (див. виклики): без цього два
+    адміни, що відкрили картку одночасно, обидва побачили б повний залишок
+    і повернули б суму двічі.
+    """
+    remaining = order.refund_remaining
+    if remaining <= 0:
+        return None, 'За цим замовленням уже повернуто всю суму'
+
+    if requested is None or requested == '':
+        return remaining, None
+
+    try:
+        parsed = Decimal(str(requested).replace(',', '.').strip())
+    except (InvalidOperation, ValueError, AttributeError):
+        return None, 'Некоректна сума повернення'
+
+    # NaN і нескінченність -- теж валідні Decimal, але порівнювати їх не
+    # можна: `Decimal('NaN') <= 0` не повертає False, а піднімає
+    # InvalidOperation. Без цієї перевірки рядок "nan" у полі суми клав
+    # сторінку повернення 500-ю замість повідомлення про помилку.
+    if not parsed.is_finite():
+        return None, 'Некоректна сума повернення'
+
+    amount = _money(parsed)
+
+    if amount <= 0:
+        return None, 'Сума повернення має бути більшою за нуль'
+    if amount > remaining:
+        return None, f'Сума перевищує доступний залишок ({remaining} грн)'
+    return amount, None
+
+
+def _fill_full_refund(order):
+    """Дописати суму повернення, якщо перехід у 'refunded' прийшов ззовні.
+
+    Наші власні виклики (`initiate_refund`) заповнюють `refunded_amount` до
+    зміни статусу. Але статус 'refunded' може прийти й callback-ом після
+    повернення в кабінеті LiqPay, і ручним оновленням адміном -- тоді сума
+    лишилась би нулем, а звірка показала б «повернено 0 грн» за
+    поверненим замовленням.
+    """
+    if order.refunded_total > 0:
+        return
+    order.refunded_amount = _money(order.payment_amount)
+    order.refunded_at = datetime.now(timezone.utc)
+
+
+def _is_partial_refund_echo(order):
+    """Чи є зовнішній сигнал `reversed` луною нашого часткового повернення.
+
+    LiqPay повідомляє про повернення тим самим статусом `reversed`, і
+    `check_status` віддає його ж. Якщо ми повернули половину, такий сигнал
+    без цієї перевірки перевів би замовлення у 'refunded' цілком: людина
+    втратила б місце на заході, за яке половина грошей лишилась у нас.
+
+    Нуль повернень -- інша ситуація: повернення провели повз систему (у
+    кабінеті LiqPay), і його треба прийняти як повне.
+    """
+    return order.has_refund and not order.is_fully_refunded
 
 
 def parse_order_id(order_id):
@@ -209,6 +285,13 @@ class PaymentOps:
             if problem:
                 return _fail(problem)
 
+        if (new_status == 'refunded' and source != 'refund'
+                and _is_partial_refund_echo(enrollment)):
+            logger.info('Partial refund echo ignored for %s (%s of %s returned)',
+                        order_id, enrollment.refunded_total,
+                        enrollment.payment_amount)
+            return _noop('partial refund already recorded')
+
         if new_status not in ALLOWED_TRANSITIONS.get(enrollment.payment_status, set()):
             logger.warning('Payment invalid transition %s -> %s for %s',
                            enrollment.payment_status, new_status, order_id)
@@ -223,6 +306,7 @@ class PaymentOps:
             enrollment.status = 'active'
         elif new_status == 'refunded':
             enrollment.status = 'cancelled'
+            _fill_full_refund(enrollment)
             # Повернення коштів забирає доступ: інакше людина лишалася б із
             # відкритим курсом, за який гроші вже повернуто. Тут -- ЛИШЕ наш
             # токен: звернення до Sintegrum іде після коміту, бо його
@@ -287,6 +371,12 @@ class PaymentOps:
             if problem:
                 return _fail(problem)
 
+        if (new_status == 'refunded' and source != 'refund'
+                and _is_partial_refund_echo(reg)):
+            logger.info('Partial refund echo ignored for REG-%d (%s of %s returned)',
+                        reg.id, reg.refunded_total, reg.payment_amount)
+            return _noop('partial refund already recorded')
+
         if new_status not in ALLOWED_TRANSITIONS.get(reg.payment_status, set()):
             logger.warning(
                 'Payment invalid transition %s -> %s for REG-%d',
@@ -313,6 +403,7 @@ class PaymentOps:
                 # не блокуючий збій -- статус оновимо, номер можна вручну
         elif new_status == 'refunded':
             reg.status = 'cancelled'
+            _fill_full_refund(reg)
 
         _log_transaction(
             reg_id=reg.id,
@@ -482,12 +573,145 @@ class PaymentOps:
             raw_payload=status_data,
         )
 
-    def initiate_enrollment_refund(self, enrollment, admin_user):
+    # ---- повернення коштів ----
+
+    @staticmethod
+    def _rescue_refund_record(order, refund_amount, order_id, lp_status,
+                              raw_payload, reason):
+        """Гроші вже пішли, а транзакція впала: врятувати хоча б слід.
+
+        Найгірший стан у всьому платіжному контурі. Rollback стер щойно
+        проставлений `refunded_amount`, і без сліду адмін побачить лише
+        «помилка» -- натисне ще раз, і LiqPay проведе ДРУГЕ часткове
+        повернення на ту саму суму: підстав відхилити його в нього немає.
+
+        Тому окремою й максимально простою транзакцією пишемо суму та
+        рядок журналу. Статус замовлення не чіпаємо: він оживе сам, коли
+        прийде callback `reversed` (сума вже дорівнюватиме сплаченій, і
+        захист від луни його пропустить).
+
+        Повертаємо ПОМИЛКУ навіть при вдалому рятуванні -- свідомо: стан
+        потребує людини, і червоне повідомлення тут доречніше за зелене.
+        """
+        db.session.rollback()
+        is_enrollment = hasattr(order, 'online_course_id')
+
+        try:
+            fresh = db.session.get(type(order), order.id)
+            if fresh is None:
+                raise RuntimeError(f'{order_id} зник після rollback')
+
+            fresh.refunded_amount = fresh.refunded_total + refund_amount
+            fresh.refunded_at = datetime.now(timezone.utc)
+            _log_transaction(
+                reg_id=None if is_enrollment else fresh.id,
+                enrollment_id=fresh.id if is_enrollment else None,
+                order_id=order_id, mapped_status='paid', source='refund',
+                liqpay_status=lp_status, amount=refund_amount,
+                raw_payload=raw_payload,
+            )
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            audit_logger.critical(
+                'REFUND NOT RECORDED: LiqPay returned %s UAH for %s, '
+                'both the main write (%s) and the rescue write failed. '
+                'Reconcile manually against the LiqPay dashboard.',
+                refund_amount, order_id, reason,
+            )
+            logger.exception('Rescue write failed for %s', order_id)
+            return False, (
+                f'УВАГА: LiqPay повернув {refund_amount} грн, але записати '
+                f'операцію не вдалося ({reason}). НЕ повторюйте повернення -- '
+                'звірте замовлення з кабінетом LiqPay вручну.'
+            )
+
+        audit_logger.error(
+            'Refund recorded by rescue write: %s UAH for %s after failure (%s); '
+            'payment_status left untouched, needs manual review.',
+            refund_amount, order_id, reason,
+        )
+        return False, (
+            f'LiqPay повернув {refund_amount} грн, суму збережено, але статус '
+            f'замовлення оновити не вдалося ({reason}). НЕ повторюйте '
+            'повернення -- перевірте замовлення вручну.'
+        )
+
+    def _record_refund(self, order, refund_amount, reason, admin_user,
+                       order_id, lp_status, raw_payload, finalize):
+        """Зафіксувати успішне повернення: сума, підстава, статус, лист.
+
+        Тут проходить розвилка, заради якої все й затівалось. ПОВНЕ
+        повернення проводиться через update_*_status -- саме там живуть
+        наслідки: скасування замовлення, звільнення місця, анулювання
+        промокоду й реферальних балів, зняття доступу. ЧАСТКОВЕ не чіпає
+        нічого з цього: людина повернула половину грошей за перенесений
+        захід, але лишається учасником, і місце за нею зберігається.
+        """
+        is_enrollment = hasattr(order, 'online_course_id')
+
+        order.refunded_amount = order.refunded_total + refund_amount
+        order.refunded_at = datetime.now(timezone.utc)
+        if reason:
+            order.refund_reason = reason[:500]
+
+        if order.is_fully_refunded:
+            ok, msg = finalize()
+            if not ok:
+                return self._rescue_refund_record(
+                    order, refund_amount, order_id, lp_status, raw_payload, msg)
+        else:
+            _log_transaction(
+                reg_id=None if is_enrollment else order.id,
+                enrollment_id=order.id if is_enrollment else None,
+                order_id=order_id,
+                # Часткове повернення лишає замовлення оплаченим, тому й у
+                # журналі mapped_status='paid'. Саму операцію видно за
+                # source='refund' + amount; окремого статусу свідомо не
+                # заводимо, щоб не міняти CHECK на продовій таблиці.
+                mapped_status='paid',
+                source='refund',
+                liqpay_status=lp_status,
+                amount=refund_amount,
+                raw_payload=raw_payload,
+            )
+            try:
+                db.session.commit()
+            except Exception:
+                logger.exception('Refund DB error for %s', order_id)
+                return self._rescue_refund_record(
+                    order, refund_amount, order_id, lp_status, raw_payload,
+                    'db error')
+
+        audit_logger.info(
+            'Admin %s refunded %s: %s UAH of %s (total returned %s), reason=%s',
+            admin_user.email, order_id, refund_amount, order.payment_amount,
+            order.refunded_total, reason or '-',
+        )
+
+        # Лист -- поза транзакцією й best-effort: гроші вже пішли, і збій
+        # пошти не має перетворювати успішне повернення на помилку.
+        try:
+            from app.services.email_service import EmailService
+            EmailService.send_refund_notification(order, refund_amount, reason)
+        except Exception:
+            logger.exception('Failed to queue refund email for %s', order_id)
+
+        if order.is_fully_refunded:
+            return True, f'Повернено повну суму: {refund_amount} грн'
+        return True, (f'Повернено {refund_amount} грн '
+                      f'(залишок за замовленням: {order.refund_remaining} грн)')
+
+    def initiate_enrollment_refund(self, enrollment, admin_user, amount=None,
+                                   reason=None, force=False):
         """Повернути кошти за онлайн-курс через LiqPay.
 
-        Дзеркало `initiate_refund` для другого типу замовлень. Статус
-        міняється не присвоєнням, а тим самим `update_enrollment_status`:
-        там і журнал транзакцій, і зняття доступу, і анулювання промокоду.
+        `amount is None` -- повернути весь залишок; інакше часткова сума.
+
+        `force` знімає заборону §5.1 (цифровий продукт після надання
+        доступу не повертається). Прапорець, а не мовчазний дозвіл: у
+        типовому випадку політика має спрацювати сама, а виняток мусить
+        бути свідомим рішенням адміна, видимим у логах.
 
         Замовлення на нуль гривень LiqPay не знає -- його «повернення» це
         лише скасування доступу на нашому боці.
@@ -502,10 +726,12 @@ class PaymentOps:
         if not locked or locked.payment_status != 'paid':
             return _fail('Повернення можливе тільки для оплачених замовлень')
 
-        amount = float(locked.payment_amount or 0)
         order_id = locked.order_id
 
-        if amount <= 0:
+        # Безкоштовне замовлення проходить ПЕРЕД перевіркою п. 5.1: там
+        # немає грошей, а отже й повернення коштів, яке ця норма забороняє.
+        # Скасувати виданий безкоштовно доступ адмін має право завжди.
+        if float(locked.payment_amount or 0) <= 0:
             ok, msg = self.update_enrollment_status(
                 locked, 'refunded', source='refund',
             )
@@ -515,27 +741,44 @@ class PaymentOps:
                 return True, 'Доступ скасовано (замовлення було безкоштовним)'
             return False, f'Помилка оновлення статусу: {msg}'
 
-        result = self.liqpay.create_refund_request(order_id, amount)
+        if locked.provisioned_at is not None and not force:
+            return _fail(
+                'Доступ до матеріалів уже надано -- за політикою 5.1 '
+                'повернення за цифровий продукт не здійснюється. '
+                'Повернення попри це потребує окремого підтвердження.'
+            )
+
+        refund_amount, problem = resolve_refund_amount(locked, amount)
+        if problem:
+            return _fail(problem)
+
+        result = self.liqpay.create_refund_request(order_id, float(refund_amount))
         if result is None:
-            return _fail('Не вдалося зв\'єднатися з LiqPay API')
+            return _fail(LIQPAY_UNREACHABLE)
 
         lp_status = result.get('status', '')
-        if lp_status in ('reversed', 'sandbox'):
-            ok, msg = self.update_enrollment_status(
+        if lp_status not in ('reversed', 'sandbox'):
+            err = result.get('err_description', result.get('status', 'unknown'))
+            logger.warning('LiqPay refund failed %s: %s', order_id, err)
+            return _fail(f'LiqPay відхилив повернення: {err}')
+
+        return self._record_refund(
+            locked, refund_amount, reason, admin_user, order_id,
+            lp_status=lp_status, raw_payload=result,
+            finalize=lambda: self.update_enrollment_status(
                 locked, 'refunded', source='refund',
                 liqpay_status=lp_status, raw_payload=result,
-            )
-            if ok:
-                audit_logger.info('Admin %s refunded %s (%s UAH)',
-                                  admin_user.email, order_id, amount)
-                return True, f'Повернення коштів ініційовано: {amount} UAH'
-            return False, f'Помилка оновлення статусу: {msg}'
+            ),
+        )
 
-        err = result.get('err_description', result.get('status', 'unknown'))
-        logger.warning('LiqPay refund failed %s: %s', order_id, err)
-        return _fail(f'LiqPay відхилив повернення: {err}')
+    def initiate_refund(self, reg, admin_user, amount=None, reason=None):
+        """Повернути кошти за реєстрацію на захід через LiqPay.
 
-    def initiate_refund(self, reg, admin_user):
+        `amount is None` -- повернути весь залишок. Часткова сума
+        обчислюється не тут: рекомендацію за політикою 4.1 дає
+        `services.refund_policy`, а рішення ухвалює адмін у формі. Тут --
+        лише перевірка, що сума не більша за залишок, і проведення.
+        """
         locked_reg = (
             db.session.query(EventRegistration)
             .with_for_update().populate_existing()
@@ -544,27 +787,27 @@ class PaymentOps:
         if not locked_reg or locked_reg.payment_status != 'paid':
             return _fail('Повернення можливе тільки для оплачених реєстрацій')
 
+        refund_amount, problem = resolve_refund_amount(locked_reg, amount)
+        if problem:
+            return _fail(problem)
+
         order_id = f'REG-{locked_reg.id}'
-        result = self.liqpay.create_refund_request(order_id, float(locked_reg.payment_amount))
+        result = self.liqpay.create_refund_request(order_id, float(refund_amount))
 
         if result is None:
-            return _fail('Не вдалося зв\'єднатися з LiqPay API')
+            return _fail(LIQPAY_UNREACHABLE)
 
         lp_status = result.get('status', '')
-        if lp_status in ('reversed', 'sandbox'):
-            ok, msg = self.update_payment_status(
-                locked_reg, 'refunded',
-                source='refund', liqpay_status=lp_status,
-                raw_payload=result,
-            )
-            if ok:
-                audit_logger.info(
-                    'Admin %s refunded REG-%d (%s UAH)',
-                    admin_user.email, locked_reg.id, locked_reg.payment_amount,
-                )
-                return True, f'Повернення коштів ініційовано: {locked_reg.payment_amount} UAH'
-            return False, f'Помилка оновлення статусу: {msg}'
+        if lp_status not in ('reversed', 'sandbox'):
+            err = result.get('err_description', result.get('status', 'unknown'))
+            logger.warning('LiqPay refund failed REG-%d: %s', locked_reg.id, err)
+            return _fail(f'LiqPay відхилив повернення: {err}')
 
-        err = result.get('err_description', result.get('status', 'unknown'))
-        logger.warning('LiqPay refund failed REG-%d: %s', locked_reg.id, err)
-        return _fail(f'LiqPay відхилив повернення: {err}')
+        return self._record_refund(
+            locked_reg, refund_amount, reason, admin_user, order_id,
+            lp_status=lp_status, raw_payload=result,
+            finalize=lambda: self.update_payment_status(
+                locked_reg, 'refunded', source='refund',
+                liqpay_status=lp_status, raw_payload=result,
+            ),
+        )

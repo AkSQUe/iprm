@@ -602,7 +602,12 @@ class TestRefundThroughLiqpay:
         enrollment = self._paid(buyer, course, monkeypatch)
         ops, service = self._ops({'status': 'reversed'})
 
-        ok, message = ops.initiate_enrollment_refund(enrollment, admin)
+        # force=True: оплата вже видала доступ, а п. 5.1 забороняє
+        # повертати кошти за цифровий продукт після цього. Тут перевіряємо
+        # саму механіку повернення, тож виняток ставимо явно (заборону
+        # стереже tests/test_services/test_refunds.py).
+        ok, message = ops.initiate_enrollment_refund(
+            enrollment, admin, force=True)
 
         assert ok is True
         assert '4000' in message
@@ -618,7 +623,8 @@ class TestRefundThroughLiqpay:
         ops, _service = self._ops({'status': 'error',
                                    'err_description': 'no funds'})
 
-        ok, message = ops.initiate_enrollment_refund(enrollment, admin)
+        ok, message = ops.initiate_enrollment_refund(
+            enrollment, admin, force=True)
 
         assert ok is False
         assert 'no funds' in message
@@ -782,6 +788,7 @@ class TestThankyouPromo:
         assert promo is not None
         assert promo.issued_for_registration_id == reg.id
         assert promo.issued_for_enrollment_id is None
+
 
 def test_orders_page_filters_by_access_state(client, admin, buyer, course):
     """Лічильник "зависло" тепер клікабельний -- фільтр за ним існує."""

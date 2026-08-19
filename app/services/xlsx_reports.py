@@ -83,7 +83,8 @@ _REGISTRATION_COLS = [
     'reg_id', 'event', 'event_date', 'location', 'trainer', 'place_number',
     'last_name', 'first_name', 'email', 'phone', 'workplace',
     'referrer', 'referrer_type', 'status', 'payment_status', 'payment_method',
-    'payment_amount', 'promo_code', 'discount_amount', 'attended',
+    'payment_amount', 'refunded_amount', 'promo_code', 'discount_amount',
+    'attended',
     'cpd_points_awarded', 'certificate', 'created_at',
 ]
 _REGISTRATION_LABELS = {
@@ -94,6 +95,7 @@ _REGISTRATION_LABELS = {
     'referrer': 'Реферер', 'referrer_type': 'Тип реферера',
     'status': 'Статус', 'payment_status': 'Оплата',
     'payment_method': 'Спосіб оплати', 'payment_amount': 'Сума (грн)',
+    'refunded_amount': 'Повернено (грн)',
     'promo_code': 'Промокод', 'discount_amount': 'Знижка (грн)',
     'attended': 'Присутній', 'cpd_points_awarded': 'Бали БПР',
     'certificate': 'Сертифікат', 'created_at': 'Дата реєстрації',
@@ -103,7 +105,8 @@ _REGISTRATION_WIDTHS = {
     'place_number': 10, 'last_name': 20, 'first_name': 18, 'email': 30,
     'phone': 18, 'workplace': 34, 'referrer': 26, 'referrer_type': 14,
     'status': 16, 'payment_status': 16, 'payment_method': 22,
-    'payment_amount': 14, 'promo_code': 16, 'discount_amount': 14,
+    'payment_amount': 14, 'refunded_amount': 15, 'promo_code': 16,
+    'discount_amount': 14,
     'attended': 12, 'cpd_points_awarded': 12, 'certificate': 22,
     'created_at': 18,
 }
@@ -221,6 +224,9 @@ def export_registrations_xlsx(regs, referrer_map=None,
             PAYMENT_STATUS_LABEL.get(reg.payment_status, reg.payment_status or ''),
             reg.payment_method_label or '',
             float(reg.payment_amount) if reg.payment_amount is not None else None,
+            # Порожньо, а не нуль: стовпець із нулями в кожному рядку
+            # ховає ті кілька, де повернення справді було.
+            float(reg.refunded_total) if reg.has_refund else None,
             reg.promo_code.code if reg.promo_code else '',
             float(reg.discount_amount) if reg.discount_amount is not None else None,
             'Так' if reg.attended else 'Ні',
@@ -443,18 +449,21 @@ _PROMO_WIDTHS = {
 
 
 _ONLINE_ORDER_COLS = ['order_id', 'created_at', 'participant', 'email',
-                      'phone', 'course', 'amount', 'discount', 'promo',
+                      'phone', 'course', 'amount', 'refunded', 'discount',
+                      'promo',
                       'payment_status', 'paid_at', 'access', 'opened_at']
 _ONLINE_ORDER_LABELS = {
     'order_id': 'Замовлення', 'created_at': 'Оформлено',
     'participant': 'Покупець', 'email': 'Email', 'phone': 'Телефон',
-    'course': 'Курс', 'amount': 'Сума', 'discount': 'Знижка',
+    'course': 'Курс', 'amount': 'Сума', 'refunded': 'Повернено',
+    'discount': 'Знижка',
     'promo': 'Промокод', 'payment_status': 'Оплата', 'paid_at': 'Оплачено',
     'access': 'Доступ', 'opened_at': 'Відкрито',
 }
 _ONLINE_ORDER_WIDTHS = {
     'order_id': 12, 'created_at': 18, 'participant': 24, 'email': 26,
-    'phone': 16, 'course': 34, 'amount': 12, 'discount': 12, 'promo': 14,
+    'phone': 16, 'course': 34, 'amount': 12, 'refunded': 13,
+    'discount': 12, 'promo': 14,
     'payment_status': 14, 'paid_at': 18, 'access': 14, 'opened_at': 18,
 }
 
@@ -489,6 +498,7 @@ def export_online_orders_xlsx(orders, applied_filters=None) -> io.BytesIO:
              if user is not None and user.medical_profile else '') or '',
             course.effective_title if course else '',
             float(order.payment_amount) if order.payment_amount is not None else None,
+            float(order.refunded_total) if order.has_refund else None,
             float(order.discount_amount) if order.discount_amount is not None else None,
             order.promo_code.code if order.promo_code else '',
             _ONLINE_PAYMENT_LABELS.get(order.payment_status, order.payment_status),
@@ -500,6 +510,70 @@ def export_online_orders_xlsx(orders, applied_filters=None) -> io.BytesIO:
     return build_list_xlsx(
         'Замовлення онлайн-курсів', _ONLINE_ORDER_COLS, _ONLINE_ORDER_LABELS,
         _ONLINE_ORDER_WIDTHS, rows, 'tblOnlineOrders',
+        applied_filters=applied_filters,
+    )
+
+
+_REFUND_REQUEST_COLS = [
+    'created_at', 'order_id', 'target', 'participant', 'email',
+    'payment_amount', 'quoted_percent', 'quoted_amount', 'refunded_amount',
+    'reason', 'payout_details', 'status', 'decision_note', 'decided_by',
+    'decided_at',
+]
+_REFUND_REQUEST_LABELS = {
+    'created_at': 'Подано', 'order_id': 'Замовлення', 'target': 'Захід / курс',
+    'participant': 'Учасник', 'email': 'Email',
+    'payment_amount': 'Сплачено (грн)', 'quoted_percent': 'За політикою, %',
+    'quoted_amount': 'За політикою (грн)', 'refunded_amount': 'Повернено (грн)',
+    'reason': 'Причина', 'payout_details': 'Реквізити', 'status': 'Статус',
+    'decision_note': 'Рішення', 'decided_by': 'Розглянув',
+    'decided_at': 'Дата рішення',
+}
+_REFUND_REQUEST_WIDTHS = {
+    'created_at': 18, 'order_id': 12, 'target': 40, 'participant': 24,
+    'email': 28, 'payment_amount': 14, 'quoted_percent': 14,
+    'quoted_amount': 16, 'refunded_amount': 15, 'reason': 48,
+    'payout_details': 28, 'status': 14, 'decision_note': 40,
+    'decided_by': 24, 'decided_at': 18,
+}
+
+
+def export_refund_requests_xlsx(requests, applied_filters=None) -> io.BytesIO:
+    """Заявки на повернення (/admin/refund-requests) -> xlsx.
+
+    Тут гроші й строки: п. 6.3 Політики дає 3 робочі дні на відповідь, і
+    звіряти це очима по екрану так само незручно, як і суми повернень.
+    Колонка «Подано» лишається першою свідомо -- саме від неї рахується і
+    строк відповіді, і відсоток за п. 4.2.
+    """
+    rows = []
+    for item in requests:
+        order = item.order
+        user = item.user
+        rows.append([
+            _to_kyiv_naive(item.created_at),
+            item.order_code,
+            item.title,
+            (user.full_name or '').strip() if user else '',
+            user.email if user else '',
+            float(order.payment_amount) if order is not None
+            and order.payment_amount is not None else None,
+            item.quoted_percent,
+            float(item.quoted_amount) if item.quoted_amount is not None else None,
+            # Порожньо, а не нуль: стовпець із нулями ховає ті рядки, де
+            # повернення справді відбулось.
+            float(order.refunded_total) if order is not None
+            and order.has_refund else None,
+            item.reason or '',
+            item.payout_details or '',
+            item.status_label,
+            item.decision_note or '',
+            item.decided_by.email if item.decided_by else '',
+            _to_kyiv_naive(item.decided_at) if item.decided_at else None,
+        ])
+    return build_list_xlsx(
+        'Заявки на повернення', _REFUND_REQUEST_COLS, _REFUND_REQUEST_LABELS,
+        _REFUND_REQUEST_WIDTHS, rows, 'tblRefundRequests',
         applied_filters=applied_filters,
     )
 

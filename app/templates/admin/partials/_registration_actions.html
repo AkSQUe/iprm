@@ -38,6 +38,15 @@
       {{ icon('table_view') }} Рахунок (Excel)
     </a>
     {% endif %}
+    {# Повернення живе тут, а не лише на сторінці LiqPay: там видно тільки
+       останні 20 платежів, і повернути гроші за старішу реєстрацію було
+       нічим. Сама сторінка покаже суму за Політикою і залишок. #}
+    {% if reg.payment_status == 'paid' %}
+    <a href="{{ url_for('admin.refund_form', kind='registration', order_id=reg.id, next=back_url) }}"
+       class="admin-actions-menu__item admin-actions-menu__item--danger">
+      {{ icon('restart_alt') }} {{ 'Повернути ще' if reg.has_refund else 'Повернути кошти' }}
+    </a>
+    {% endif %}
     {% if reg.status == 'pending' %}
     <form method="POST" action="{{ url_for('admin.registration_status', reg_id=reg.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

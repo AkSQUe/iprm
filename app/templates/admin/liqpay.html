@@ -32,13 +32,19 @@
     <span class="admin-stat-card__value">{{ stats.pending }}</span>
     <span class="admin-stat-card__label">Очікує</span>
   </div>
+  {# Дві різні речі: скільки замовлень повернено ПОВНІСТЮ (статус) і скільки
+     грошей повернуто взагалі (разом із частковими, що лишились 'paid'). #}
   <div class="admin-stat-card admin-stat-card--danger">
     <span class="admin-stat-card__value">{{ stats.refunded }}</span>
-    <span class="admin-stat-card__label">Повернено</span>
+    <span class="admin-stat-card__label">Повернено повністю</span>
+  </div>
+  <div class="admin-stat-card admin-stat-card--danger">
+    <span class="admin-stat-card__value">{{ stats.refunded_amount | int }} &#8372;</span>
+    <span class="admin-stat-card__label">Сума повернень</span>
   </div>
   <div class="admin-stat-card admin-stat-card--accent">
     <span class="admin-stat-card__value">{{ stats.total_amount | int }} &#8372;</span>
-    <span class="admin-stat-card__label">Загальна сума</span>
+    <span class="admin-stat-card__label">Дохід за вирахуванням повернень</span>
   </div>
 </div>
 
@@ -139,10 +145,15 @@
         <td>{{ reg.paid_at.strftime('%d.%m.%Y %H:%M') if reg.paid_at else reg.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
         <td>
           {% if reg.payment_status == 'paid' %}
-          <form method="POST" action="{{ url_for('admin.liqpay_refund', reg_id=reg.id) }}" data-confirm="Повернути {{ reg.payment_amount | int }} грн? Операцію не можна відкотити." data-confirm-ok="Повернути кошти" data-confirm-danger>
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Повернення</button>
-          </form>
+          {# Посилання, а не форма: суму й підставу вводять на окремій
+             сторінці, де видно і рекомендацію за Політикою. #}
+          <a href="{{ url_for('admin.refund_form', kind='registration', order_id=reg.id, next=request.path) }}"
+             class="btn-admin btn-admin--danger btn-admin--sm">
+            {{ 'Повернути ще' if reg.has_refund else 'Повернення' }}
+          </a>
+          {% if reg.has_refund %}
+          <div class="admin-text-muted">Повернуто {{ reg.refunded_total | int }} з {{ reg.payment_amount | int }} &#8372;</div>
+          {% endif %}
           {% elif reg.payment_status == 'refunded' %}
           <span class="admin-text-muted">Повернено</span>
           {% else %}

@@ -16,6 +16,7 @@ import logging
 import re
 import smtplib
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from threading import Thread
 
 from flask import current_app, render_template
@@ -880,6 +881,159 @@ class EmailService:
                 'promo': promo,
             },
             trigger='payment',
+        )
+
+    @staticmethod
+    def send_refund_notification(order, amount, reason=None):
+        """Повідомити клієнта про повернення коштів.
+
+        Спільний лист для обох типів замовлень: людині байдуже, чи це
+        REG-, чи ONL- -- вона хоче бачити суму, підставу і коли гроші
+        будуть на картці.
+
+        trigger='payment', а не окремий 'refund': повернення -- частина
+        платіжного контуру, і так не доводиться правити CHECK
+        ck_email_logs_trigger заради одного шаблону (той самий підхід, що
+        в send_online_access і send_completion_link).
+
+        `amount` -- сума ЦІЄЇ операції, а от «утримано» й «повністю»
+        рахуються від СУКУПНОЇ (`order.refunded_total`). Інакше друге
+        часткове повернення (400, потім 600 із 1000) слало б лист
+        «повернули частину, утримано 400», хоча повернено вже все й не
+        утримано нічого.
+        """
+        user = order.user
+        if user is None or not user.email:
+            logger.warning('Cannot send refund_processed: order has no user email')
+            return None
+
+        is_enrollment = hasattr(order, 'online_course_id')
+        if is_enrollment:
+            course = order.course
+            title = course.effective_title if course else 'Онлайн-курс'
+            order_id = order.order_id
+            registration_id = None
+        else:
+            event = EmailService._event_from_registration(order)
+            title = event.title if event else 'Захід'
+            order_id = f'REG-{order.id}'
+            registration_id = order.id
+
+        total = Decimal(str(order.payment_amount or 0))
+        amount = Decimal(str(amount or 0))
+        refunded_total = Decimal(str(order.refunded_amount or 0))
+        base = EmailService._site_base_url()
+
+        return EmailService.send_email(
+            to=user.email,
+            subject=lambda: _('Повернення коштів: %(title)s', title=title),
+            template_name='refund_processed',
+            context={
+                'user': user,
+                'title': title,
+                'order_id': order_id,
+                'amount': amount,
+                'total': total,
+                'refunded_total': refunded_total,
+                # Друга операція за тим самим замовленням: показуємо і її
+                # суму, і скільки повернуто разом -- інакше цифри в листі
+                # не сходяться з тим, що людина бачить на картці.
+                'is_repeat': refunded_total > amount,
+                'withheld': max(Decimal('0'), total - refunded_total),
+                'is_full': refunded_total >= total > 0,
+                'reason': reason,
+                'refund_policy_url': EmailService._with_utm(
+                    f'{base}/refund', 'refund_processed', 'policy',
+                ) if base else None,
+            },
+            trigger='payment',
+            registration_id=registration_id,
+        )
+
+    @staticmethod
+    def send_refund_request_received(refund_request):
+        """Підтвердити учаснику, що заявку на повернення прийнято.
+
+        Політика (п. 6.3) обіцяє відповідь за 3 робочі дні -- лист і є
+        точкою відліку для людини: вона має бачити, що звернення не
+        загубилось, і знати, скільки чекати.
+
+        Тут же показуємо суму за політикою на дату подання: якщо вона менша
+        за сплачену, дізнатись про це краще одразу, а не при поверненні.
+        """
+        user = refund_request.user
+        if user is None or not user.email:
+            return None
+
+        base = EmailService._site_base_url()
+        return EmailService.send_email(
+            to=user.email,
+            subject=lambda: _('Заявку на повернення прийнято: %(title)s',
+                              title=refund_request.title),
+            template_name='refund_request_received',
+            context={
+                'user': user,
+                'request_obj': refund_request,
+                'title': refund_request.title,
+                'account_url': f'{base}/auth/account' if base else None,
+                'refund_policy_url': EmailService._with_utm(
+                    f'{base}/refund', 'refund_request_received', 'policy',
+                ) if base else None,
+            },
+            trigger='payment',
+            registration_id=refund_request.registration_id,
+        )
+
+    @staticmethod
+    def send_refund_request_notification(refund_request):
+        """Повідомити адмінів про нову заявку на повернення.
+
+        event_type='payment' -- і список отримувачів, і тригер беруться
+        з платіжної події: заявка про гроші має дійти до тих, хто за гроші
+        відповідає.
+        """
+        from app.models.site_settings import SiteSettings
+        settings = SiteSettings.get()
+        base = (settings.website_url or '').rstrip('/')
+        admin_url = f'{base}/admin/refund-requests' if base else '/admin/refund-requests'
+        return EmailService.notify_admins_with_template(
+            event_type='payment',
+            subject=(f'Заявка на повернення {refund_request.order_code}: '
+                     f'{refund_request.quoted_amount} грн'),
+            template_name='refund_request_notification',
+            context={
+                'request_obj': refund_request,
+                'admin_url': admin_url,
+            },
+        )
+
+    @staticmethod
+    def send_refund_request_declined(refund_request):
+        """Повідомити учаснику про відмову з поясненням (п. 6.3).
+
+        Відмова без причини -- гірше за мовчання: людина не розуміє, що
+        робити далі. Тому пояснення адміна їде в листі як є.
+        """
+        user = refund_request.user
+        if user is None or not user.email:
+            return None
+
+        base = EmailService._site_base_url()
+        return EmailService.send_email(
+            to=user.email,
+            subject=lambda: _('Щодо вашої заявки на повернення: %(title)s',
+                              title=refund_request.title),
+            template_name='refund_request_declined',
+            context={
+                'user': user,
+                'request_obj': refund_request,
+                'title': refund_request.title,
+                'refund_policy_url': EmailService._with_utm(
+                    f'{base}/refund', 'refund_request_declined', 'policy',
+                ) if base else None,
+            },
+            trigger='payment',
+            registration_id=refund_request.registration_id,
         )
 
     @staticmethod

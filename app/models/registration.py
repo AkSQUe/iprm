@@ -4,14 +4,16 @@ from datetime import timedelta, timezone
 from sqlalchemy import func as sa_func
 
 from app.extensions import db
-from app.models.mixins import TimestampMixin, BigIntPK, utcnow
+from app.models.mixins import (
+    TimestampMixin, BigIntPK, RefundableMixin, utcnow,
+)
 
 
 # Термін дії токена посилання на самостійне завершення реєстрації учасником.
 COMPLETION_TOKEN_TTL_DAYS = 30
 
 
-class EventRegistration(TimestampMixin, db.Model):
+class EventRegistration(TimestampMixin, RefundableMixin, db.Model):
     """Реєстрація на CourseInstance.
 
     Ім'я класу (EventRegistration) і таблиці (event_registrations)
@@ -53,6 +55,8 @@ class EventRegistration(TimestampMixin, db.Model):
     payment_amount = db.Column(db.Numeric(10, 2))
     payment_id = db.Column(db.String(255))
     paid_at = db.Column(db.DateTime(timezone=True))
+
+    # Повернення коштів -- колонки й правила у RefundableMixin.
 
     # Ідемпотентність авто-нагадування "заповніть дані для сертифіката":
     # один лист на реєстрацію (scheduler-джоба send_certdata_reminders).
@@ -195,6 +199,10 @@ class EventRegistration(TimestampMixin, db.Model):
             'discount_amount >= 0 OR discount_amount IS NULL',
             name='ck_registrations_discount_non_negative',
         ),
+        db.CheckConstraint(
+            'refunded_amount >= 0',
+            name='ck_event_registrations_refunded_amount_non_negative',
+        ),
     )
 
     STATUSES = [
@@ -273,9 +281,17 @@ class EventRegistration(TimestampMixin, db.Model):
             sa_func.count(cls.id).filter(
                 cls.payment_status == 'refunded'
             ).label('refunded'),
+            # Дохід -- ЗА ВИРАХУВАННЯМ повернень. Часткове повернення лишає
+            # реєстрацію в статусі 'paid', тож без цього віднімання
+            # повернені гроші й далі рахувались би виручкою.
             sa_func.coalesce(sa_func.sum(
-                cls.payment_amount
+                cls.payment_amount - sa_func.coalesce(cls.refunded_amount, 0)
             ).filter(cls.payment_status == 'paid'), 0).label('total_amount'),
+            # Повернене -- по ВСІХ рядках, а не лише зі статусом 'refunded':
+            # частково повернені лишаються 'paid' і випали б зі звіту.
+            sa_func.coalesce(sa_func.sum(
+                cls.refunded_amount
+            ), 0).label('refunded_amount'),
         ).filter(
             cls.payment_amount > 0,
         ).one()

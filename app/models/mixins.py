@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 
 from app.extensions import db
 from app.i18n import DEFAULT_LANGUAGE, PREFIXED_LANGUAGES, apply_json_overrides
@@ -44,6 +45,49 @@ class SoftDeleteMixin:
     def alive(cls):
         """Запит лише за невидаленими рядками."""
         return cls.query.filter(cls.deleted_at.is_(None))
+
+
+class RefundableMixin:
+    """Повернення коштів за замовлення (реєстрація на захід чи онлайн-курс).
+
+    Спільний міксин, а не по копії колонок у кожній моделі: розбіжність між
+    двома типами замовлень тут означала б, що за один з них можна повернути
+    більше, ніж заплачено.
+
+    `refunded_amount` накопичувальна -- політика (§4.1) допускає повернення
+    частини, а рішень про повернення за одне замовлення може бути кілька.
+    NOT NULL DEFAULT 0, щоб жодна перевірка залишку не порівнювала None із
+    сумою. `payment_status` стає 'refunded' ЛИШЕ коли повернено все:
+    часткове повернення лишає замовлення оплаченим і діючим.
+    """
+    refunded_amount = db.Column(
+        db.Numeric(10, 2), default=0, server_default='0', nullable=False,
+    )
+    refunded_at = db.Column(db.DateTime(timezone=True))
+    refund_reason = db.Column(db.String(500))
+
+    @property
+    def refunded_total(self):
+        return Decimal(str(self.refunded_amount or 0))
+
+    @property
+    def refund_remaining(self):
+        """Скільки ще можна повернути за цим замовленням."""
+        paid = Decimal(str(self.payment_amount or 0))
+        return max(Decimal('0'), paid - self.refunded_total)
+
+    @property
+    def has_refund(self):
+        return self.refunded_total > 0
+
+    @property
+    def is_fully_refunded(self):
+        paid = Decimal(str(self.payment_amount or 0))
+        return paid > 0 and self.refunded_total >= paid
+
+    @property
+    def is_partially_refunded(self):
+        return self.has_refund and not self.is_fully_refunded
 
 
 def _current_language():

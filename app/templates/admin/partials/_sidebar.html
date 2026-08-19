@@ -38,6 +38,11 @@
         {{ icon('group') }}
         B2B-заявки
       </a>
+      <a href="{{ url_for('admin.refund_requests_list') }}" class="admin-sidebar__link{% if ep in ('admin.refund_requests_list', 'admin.refund_request_reject') %} admin-sidebar__link--active{% endif %}">
+        {{ icon('restart_alt') }}
+        Заявки на повернення
+        {% if pending_refund_requests %}<span class="badge badge--danger">{{ pending_refund_requests }}</span>{% endif %}
+      </a>
       <a href="{{ url_for('admin.trainers_list') }}" class="admin-sidebar__link{% if ep in ('admin.trainers_list', 'admin.trainer_create', 'admin.trainer_edit', 'admin.trainer_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('school') }}
         Тренери
@@ -110,7 +115,7 @@
         {{ icon('group') }}
         Одержувачі
       </a>
-      <a href="{{ url_for('admin.integrations') }}" class="admin-sidebar__link{% if ep in ('admin.integrations', 'admin.liqpay', 'admin.liqpay_save_keys', 'admin.liqpay_test', 'admin.liqpay_refund', 'admin.recaptcha', 'admin.recaptcha_save_keys', 'admin.recaptcha_test') %} admin-sidebar__link--active{% endif %}">
+      <a href="{{ url_for('admin.integrations') }}" class="admin-sidebar__link{% if ep in ('admin.integrations', 'admin.liqpay', 'admin.liqpay_save_keys', 'admin.liqpay_test', 'admin.refund_form', 'admin.recaptcha', 'admin.recaptcha_save_keys', 'admin.recaptcha_test') %} admin-sidebar__link--active{% endif %}">
         {{ icon('hub') }}
         Інтеграції
       </a>

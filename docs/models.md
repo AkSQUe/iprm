@@ -183,6 +183,9 @@ xlsx-звіти.
 | `payment_amount` | Numeric(10,2) | Сума оплати |
 | `payment_id` | String(255) | ID платежу (LiqPay) |
 | `paid_at` | DateTime (UTC) | Дата оплати |
+| `refunded_amount` | Numeric(10,2), NOT NULL, default 0 | RefundableMixin. Накопичувальна сума повернень; `payment_status` стає `refunded`, лише коли вона дорівнює `payment_amount` |
+| `refunded_at` | DateTime (UTC) | RefundableMixin. Коли проведено ОСТАННЄ повернення |
+| `refund_reason` | String(500) | RefundableMixin. Підстава останнього повернення (Політика п. 6.2) |
 | `promo_code_id` | FK -> promo_codes.id (SET NULL) | Застосований промокод |
 | `discount_amount` | Numeric(10,2) | Знімок знижки (payment_amount уже без неї) |
 | `attended` | Boolean | Чи відвідав захід |
@@ -498,6 +501,9 @@ Singleton-модель для зберігання SMTP-налаштувань �
 | `payment_status` | String(20) | unpaid / pending / paid / refunded |
 | `payment_amount` | Numeric(10,2) | Сума, зафіксована при оформленні |
 | `payment_id`, `payment_method`, `paid_at` | | Реквізити платежу |
+| `refunded_amount` | Numeric(10,2), NOT NULL, default 0 | RefundableMixin. Накопичувальна сума повернень; `payment_status` стає `refunded`, лише коли вона дорівнює `payment_amount` |
+| `refunded_at` | DateTime (UTC) | RefundableMixin. Коли проведено ОСТАННЄ повернення |
+| `refund_reason` | String(500) | RefundableMixin. Підстава останнього повернення (Політика п. 6.2) |
 | `promo_code_id` | FK -> promo_codes.id (SET NULL) | Застосований промокод |
 | `discount_amount` | Numeric(10,2) | Знімок знижки (payment_amount уже після неї) |
 | `sintegrum_student_id` | Integer | Під майбутню звірку прогресу (зараз порожній) |
@@ -539,6 +545,42 @@ Singleton-модель для зберігання SMTP-налаштувань �
 | `transaction_data` | Text | JSON-дані відповіді LiqPay |
 | `created_at` | DateTime (UTC) | TimestampMixin |
 | `updated_at` | DateTime (UTC) | TimestampMixin |
+
+## RefundRequest
+
+Заявка учасника на повернення коштів (Політика повернення, розділ 6). Подається
+з особистого кабінету, розглядається на `/admin/refund-requests`.
+
+Гроші звідси не рухаються. Сенс окремої сутності -- у даті: §4.2 велить рахувати
+відсоток повернення від ДАТИ ПОДАННЯ заявки, тож `created_at` є юридично
+значущим, а `quoted_*` -- знімком політики на цю мить. Знімок, а не
+перерахунок при відкритті: дата заходу може змінитись (перенесення, §3), і
+жива формула дала б не те число, яке учасник бачив, коли подавав заявку.
+
+Дві часткові унікальності (`uq_refund_requests_open_*`) дозволяють лише одну
+ВІДКРИТУ заявку на замовлення. Закриті накопичуються в історії: повторне
+звернення після відмови -- нормальний сценарій.
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ |
+| `registration_id` | FK -> event_registrations.id (CASCADE), NULLABLE | Реєстрація на захід |
+| `enrollment_id` | FK -> online_enrollments.id (CASCADE), NULLABLE | Купівля онлайн-курсу |
+| `user_id` | FK -> users.id (CASCADE) | Хто подав |
+| `reason` | Text, NOT NULL | Причина відмови від участі (п. 6.2) |
+| `payout_details` | String(500) | Реквізити, якщо повернення має піти на інший рахунок |
+| `status` | String(20) | new / approved / rejected |
+| `quoted_percent` | Integer | Сходинка політики на дату подання |
+| `quoted_amount` | Numeric(10,2) | Сума за політикою на дату подання |
+| `quoted_code` | String(30) | Код сходинки (`early`, `standard`, `late`, `no_show`, `digital_*`) |
+| `decided_at` | DateTime (UTC) | Коли розглянуто |
+| `decided_by_id` | FK -> users.id (SET NULL) | Хто розглянув |
+| `decision_note` | String(500) | Пояснення рішення; при відмові їде в лист учаснику |
+| `created_at` | DateTime (UTC) | TimestampMixin. Дата подання заявки (§4.2) |
+| `updated_at` | DateTime (UTC) | TimestampMixin |
+
+CHECK `ck_refund_requests_single_owner`: заповнене рівно одне з
+`registration_id` / `enrollment_id` -- як у PaymentTransaction.
 
 ## SiteSettings
 

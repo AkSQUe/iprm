@@ -11,3 +11,4 @@ def add_noindex_header(response):
 
 from app.auth import routes  # noqa: F401,E402
 from app.auth import oauth   # noqa: F401,E402
+from app.auth import routes_refunds  # noqa: F401,E402
