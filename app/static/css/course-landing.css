@@ -1354,8 +1354,24 @@
   .iprm-benefit-grid,
   .iprm-audience-grid,
   .iprm-lead-form__row,
-  .iprm-trainer-block--rich {
+  .iprm-trainer-block--rich,
+  /* Базовий блок тренера теж, і це не дрібниця: без цього правила він лишався
+     двоколонковим (280px фото + ~160px тексту), біографія стискалась у вузьку
+     стрічку заввишки 1400px, а фото через align-items: center висіло посеред
+     порожнього поля. Виглядало як «фото розтягнулось», хоча розтягувалась
+     колонка поруч. Модифікатор --rich таке правило мав, базовий блок -- ні. */
+  .iprm-trainer-block {
     grid-template-columns: 1fr;
+  }
+
+  /* Фото стає повноширинним, але не вищим за пів-екрана: квадрат 280px на
+     вузькому екрані виглядав маркою, а на всю ширину без стелі -- банером. */
+  .iprm-trainer-block__photo {
+    width: 100%;
+    height: auto;
+    max-height: 50vh;
+    aspect-ratio: 1 / 1;
+    object-position: center top;
   }
 
   .iprm-trainer-block--rich .iprm-trainer-block__photo {

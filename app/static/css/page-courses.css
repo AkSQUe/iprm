@@ -1657,6 +1657,21 @@ button.iprm-tag:focus-visible {
 .iprm-roi--split .iprm-roi__controls {
   padding: 38px;
 }
+/* Нижче 760px двопанельність не працює: колонки 1fr 1fr не стискаються
+   менше за свій вміст, сумарна ширина лишалась ~533px у картці 458px, і
+   тёмну половину зрізало overflow: hidden. Еталон ламає той самий блок на
+   760px, тримаємось його числа. */
+@media (max-width: 760px) {
+  .iprm-roi--split {
+    grid-template-columns: 1fr;
+  }
+
+  .iprm-roi--split .iprm-roi__controls,
+  .iprm-roi--split .iprm-roi__result {
+    padding: 24px;
+  }
+}
+
 
 .iprm-roi--split .iprm-roi__controls-title {
   margin: 0 0 4px;
