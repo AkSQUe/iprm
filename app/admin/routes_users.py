@@ -7,9 +7,11 @@ from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
+from app.admin.routes_meta_leads import LEAD_STATUS_BADGE
 from app.extensions import db
 from app.services import xlsx_reports
 from app.models.medical_profile import MedicalProfile
+from app.models.registration import EventRegistration
 from app.models.user import User
 
 audit_logger = logging.getLogger('audit')
@@ -139,6 +141,56 @@ def users_export():
         users_list, 'users',
         lambda: xlsx_reports.export_users_xlsx(users_list, applied_filters=summary),
         'admin.users', **_listing.filter_args(filters),
+    )
+
+
+@admin_bp.route('/users/<int:user_id>')
+@admin_required
+def user_detail(user_id):
+    """Картка контакту: анкета, заявки з Meta, реєстрації, онлайн-курси.
+
+    Кількість заявок і дата останньої рахуються ЗАПИТОМ, а не денормалізованими
+    колонками в `users`: контакт -- це запис про особу, і стан обробки живе на
+    заявці. Денормалізований лічильник тут довелося б синхронізувати з
+    кожним видаленням і кожною повторною заявкою, а вигоди на півтори тисячі
+    контактів він не дає жодної.
+    """
+    from app.models.meta_lead import MetaLead
+    from app.models.online_enrollment import OnlineEnrollment
+
+    user = db.session.get(User, user_id)
+    if not user:
+        flash('Користувача не знайдено', 'error')
+        return redirect(url_for('admin.users'))
+
+    leads = (
+        MetaLead.alive()
+        .filter(MetaLead.user_id == user.id)
+        .order_by(MetaLead.created_time.desc())
+        .all()
+    )
+    registrations = (
+        user.registrations
+        .options(joinedload(EventRegistration.instance))
+        .order_by(EventRegistration.created_at.desc())
+        .all()
+    )
+    enrollments = (
+        OnlineEnrollment.query
+        .options(joinedload(OnlineEnrollment.course))
+        .filter(OnlineEnrollment.user_id == user.id)
+        .order_by(OnlineEnrollment.created_at.desc())
+        .all()
+    )
+
+    return render_template(
+        'admin/user_detail.html',
+        user=user,
+        profile=user.medical_profile,
+        leads=leads,
+        registrations=registrations,
+        enrollments=enrollments,
+        status_badge=LEAD_STATUS_BADGE,
     )
 
 

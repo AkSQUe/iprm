@@ -41,6 +41,7 @@ from app.models.quiz_attempt import QuizAttempt
 from app.models.perf_run import PerfRun, PerfPageMetric
 from app.models.online_course import OnlineCourse
 from app.models.online_enrollment import OnlineEnrollment
+from app.models.meta_lead import MetaLead, MetaLeadEvent
 
 __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'AuthIdentity',
@@ -59,4 +60,5 @@ __all__ = [
     'CourseQuiz', 'QuizQuestion', 'QuizAttempt',
     'PerfRun', 'PerfPageMetric',
     'OnlineCourse', 'OnlineEnrollment',
+    'MetaLead', 'MetaLeadEvent',
 ]

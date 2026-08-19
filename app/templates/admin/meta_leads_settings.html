@@ -1,0 +1,317 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Налаштування Meta Lead Ads | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-integration.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-meta-leads.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.meta_leads_list') }}" class="admin-breadcrumb__link">Ліди Meta</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Налаштування</span>
+      </div>
+      <h1 class="admin-hero__title">Meta Lead Ads</h1>
+      <p class="admin-hero__subtitle">
+        {% if cfg.enabled and cfg.is_configured %}
+          <span class="badge badge--active">Увімкнено</span>
+        {% elif cfg.is_configured %}
+          <span class="badge badge--published">Налаштовано, вимкнено</span>
+        {% else %}
+          <span class="badge badge--draft">Не налаштовано</span>
+        {% endif %}
+        Приймання заявок з інстант-форм Facebook та Instagram
+      </p>
+    </div>
+    <div class="admin-hero__actions">
+      <a href="{{ url_for('admin.meta_lead_events') }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('webhook') }} Сира черга</a>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {% if cfg.test_mode %}
+  <div class="alert alert--warning">
+    Режим тестування увімкнено{% if cfg.test_mode_since %} з {{ cfg.test_mode_since.strftime('%d.%m.%Y %H:%M') }}{% endif %}.
+    Усі заявки, що прийдуть зараз, позначаються як тестові й не потраплять ані в реєстр за замовчуванням, ані до партнера.
+  </div>
+  {% endif %}
+
+  <div class="admin-form">
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Стан інтеграції</h3>
+      <div class="admin-readonly-config">
+        <div class="admin-readonly-config__row">
+          <span class="admin-readonly-config__label">URL вебхука для Meta</span>
+          <code class="admin-readonly-config__value">{{ cfg.webhook_url }}</code>
+        </div>
+        <div class="admin-readonly-config__row">
+          <span class="admin-readonly-config__label">Verify token</span>
+          <span class="admin-readonly-config__value">
+            {% if cfg.verify_token_is_set %}<code>{{ cfg.verify_token_masked }}</code>{% else %}Не встановлено{% endif %}
+          </span>
+        </div>
+        <div class="admin-readonly-config__row">
+          <span class="admin-readonly-config__label">Page Access Token</span>
+          <span class="admin-readonly-config__value">
+            {% if cfg.page_token_is_set %}
+              Збережено{% if cfg.page_token_set_at %} {{ cfg.page_token_set_at.strftime('%d.%m.%Y') }}{% endif %}
+              {% if cfg.token_valid is none %}
+                <span class="badge badge--draft">не перевірявся</span>
+              {% elif cfg.token_valid %}
+                <span class="badge badge--active">дійсний</span>
+              {% else %}
+                <span class="badge badge--danger">недійсний</span>
+              {% endif %}
+            {% else %}
+              Немає -- обміняйте User token нижче
+            {% endif %}
+          </span>
+        </div>
+        <div class="admin-readonly-config__row">
+          <span class="admin-readonly-config__label">Термін дії токена</span>
+          <span class="admin-readonly-config__value">
+            {% if not cfg.page_token_is_set %}–
+            {% elif cfg.token_expires_at %}до {{ cfg.token_expires_at.strftime('%d.%m.%Y %H:%M') }}
+            {% else %}безстроковий{% endif %}
+            {% if cfg.token_checked_at %}
+              <span class="form-hint">перевірено {{ cfg.token_checked_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            {% endif %}
+          </span>
+        </div>
+        {% if cfg.token_error %}
+        <div class="admin-readonly-config__row">
+          <span class="admin-readonly-config__label">Помилка токена</span>
+          <span class="admin-readonly-config__value">{{ cfg.token_error }}</span>
+        </div>
+        {% endif %}
+        <div class="admin-readonly-config__row">
+          <span class="admin-readonly-config__label">Сторінка</span>
+          <span class="admin-readonly-config__value">
+            {{ cfg.page_name or 'без назви' }} {% if cfg.page_id %}<code>{{ cfg.page_id }}</code>{% endif %}
+          </span>
+        </div>
+        <div class="admin-readonly-config__row">
+          <span class="admin-readonly-config__label">Останній штовх вебхука</span>
+          <span class="admin-readonly-config__value">
+            {{ cfg.last_webhook_at.strftime('%d.%m.%Y %H:%M') if cfg.last_webhook_at else 'ще не було' }}
+          </span>
+        </div>
+        <div class="admin-readonly-config__row">
+          <span class="admin-readonly-config__label">Останній успішний лід</span>
+          <span class="admin-readonly-config__value">
+            {{ cfg.last_lead_at.strftime('%d.%m.%Y %H:%M') if cfg.last_lead_at else 'ще не було' }}
+          </span>
+        </div>
+        <div class="admin-readonly-config__row">
+          <span class="admin-readonly-config__label">Остання звірка</span>
+          <span class="admin-readonly-config__value">
+            {% if cfg.last_reconcile_at %}
+              {{ cfg.last_reconcile_at.strftime('%d.%m.%Y %H:%M') }}
+              {% if cfg.last_reconcile_status == 'ok' %}
+                <span class="badge badge--active">успішно</span>
+              {% elif cfg.last_reconcile_status %}
+                <span class="badge badge--danger">{{ cfg.last_reconcile_status }}</span>
+              {% endif %}
+            {% else %}
+              ще не запускалась
+            {% endif %}
+          </span>
+        </div>
+        {% if cfg.last_reconcile_error %}
+        <div class="admin-readonly-config__row">
+          <span class="admin-readonly-config__label">Помилка звірки</span>
+          <span class="admin-readonly-config__value">{{ cfg.last_reconcile_error }}</span>
+        </div>
+        {% endif %}
+        <div class="admin-readonly-config__row">
+          <span class="admin-readonly-config__label">Черга подій</span>
+          <span class="admin-readonly-config__value">
+            в обробці {{ cfg.queue.pending }}, помилок {{ cfg.queue.failed }}
+            (за добу {{ cfg.queue.failed_24h }}), усього {{ cfg.queue.total }}
+            <a href="{{ url_for('admin.meta_lead_events') }}">Відкрити чергу</a>
+          </span>
+        </div>
+        <div class="admin-readonly-config__row">
+          <span class="admin-readonly-config__label">Заявок у базі</span>
+          <span class="admin-readonly-config__value">
+            {{ cfg.leads_total }} усього{% if cfg.leads_test %}, з них тестових {{ cfg.leads_test }}{% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Дії</h3>
+      <div class="ml-actions">
+        <form method="POST" action="{{ url_for('admin.meta_leads_check_token') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-admin btn-admin--secondary">Перевірити токен зараз</button>
+        </form>
+        <form method="POST" action="{{ url_for('admin.meta_leads_subscribe') }}"
+              data-confirm="Підписати Сторінку на події leadgen?" data-confirm-ok="Підписати">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-admin btn-admin--secondary">Підписати Сторінку на leadgen</button>
+        </form>
+        <form method="POST" action="{{ url_for('admin.meta_leads_reconcile') }}"
+              data-confirm="Запустити звірку лідів зараз?" data-confirm-ok="Звірити">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-admin btn-admin--secondary">Звірити зараз</button>
+        </form>
+        <form method="POST" action="{{ url_for('admin.meta_leads_test_mode') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-admin btn-admin--secondary">
+            {% if cfg.test_mode %}Вимкнути режим тестування{% else %}Увімкнути режим тестування{% endif %}
+          </button>
+        </form>
+      </div>
+      <p class="form-hint">
+        Перевірка токена працює і при вимкненій інтеграції: інакше ключі
+        неможливо було б перевірити до її увімкнення.
+      </p>
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Надіслати тестову подію</h3>
+      <p class="form-hint">
+        Формує коректно підписаний POST на <code>{{ cfg.webhook_url }}</code>
+        і показує відповідь. Успіх доводить одразу три речі: ендпоінт
+        доступний ззовні, App Secret збігається, черга приймає події.
+      </p>
+      <form method="POST" action="{{ url_for('admin.meta_leads_test_event') }}" class="ml-test-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="admin-form__grid">
+          <div class="form-group">
+            <label for="test_leadgen_id">leadgen_id</label>
+            <input type="text" name="leadgen_id" id="test_leadgen_id" class="form-input"
+                   placeholder="лишіть пустим -- згенеруємо" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="test_form_id">form_id</label>
+            <input type="text" name="form_id" id="test_form_id" class="form-input"
+                   placeholder="0" autocomplete="off">
+          </div>
+        </div>
+        <div class="admin-form__actions">
+          <button type="submit" class="btn-admin btn-admin--secondary">Надіслати тестову подію</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Обмін токенів</h3>
+      <p class="form-hint">
+        Вставте короткоживучий User token із Graph API Explorer. Ми обміняємо
+        його на довгоживучий, дістанемо безстроковий Page token і збережемо
+        зашифрованим у БД -- ротація більше не потребує деплою.
+      </p>
+      <form method="POST" action="{{ url_for('admin.meta_leads_exchange_token') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="admin-form__grid">
+          <div class="form-group admin-form__full">
+            <label for="user_token">User token</label>
+            <input type="password" name="user_token" id="user_token" class="form-input"
+                   autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="exchange_page_id">ID Сторінки</label>
+            <input type="text" name="page_id" id="exchange_page_id" class="form-input"
+                   value="{{ cfg.page_id }}" autocomplete="off">
+          </div>
+        </div>
+        <div class="admin-form__actions">
+          <button type="submit" class="btn-admin btn-admin--primary">Обміняти на Page token</button>
+        </div>
+      </form>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.meta_leads_settings_save') }}">
+      {{ form.hidden_tag() }}
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">Облікові дані та режим роботи</h3>
+        <div class="admin-form__grid">
+          <div class="form-group">
+            {{ form.app_id.label }}
+            {{ form.app_id(class='form-input', autocomplete='off') }}
+          </div>
+          <div class="form-group">
+            {{ form.page_id.label }}
+            {{ form.page_id(class='form-input', autocomplete='off') }}
+          </div>
+          <div class="form-group">
+            {{ form.app_secret.label }}
+            {{ form.app_secret(class='form-input', type='password', autocomplete='off',
+                               placeholder='залиште пустим, щоб не змінювати' if cfg.app_secret_is_set else 'вставте App Secret') }}
+            <p class="form-hint">
+              {% if cfg.app_secret_is_set %}
+                Збережено <code>{{ cfg.app_secret_masked }}</code>{% if cfg.app_secret_set_at %}, {{ cfg.app_secret_set_at.strftime('%d.%m.%Y') }}{% endif %}.
+              {% endif %}
+              Зберігається зашифрованим (Fernet/SECRET_KEY) і назад не показується.
+            </p>
+          </div>
+          <div class="form-group">
+            {{ form.verify_token.label }}
+            {{ form.verify_token(class='form-input', type='password', autocomplete='off',
+                                 placeholder='залиште пустим, щоб не змінювати' if cfg.verify_token_is_set else 'вигадайте довільний рядок') }}
+            <p class="form-hint">Той самий рядок вставляється в Meta при налаштуванні вебхука.</p>
+          </div>
+          <div class="form-group">
+            {{ form.graph_version.label }}
+            {{ form.graph_version(class='form-input', autocomplete='off') }}
+            <p class="form-hint">Meta виводить версії з ужитку за розкладом.</p>
+          </div>
+          <div class="form-group">
+            <div class="form-checkbox form-checkbox--row-align">
+              {{ form.enabled() }}
+              {{ form.enabled.label }}
+            </div>
+            <p class="form-hint">Вимкнена інтеграція не ходить у Graph API. Вебхук усе одно приймає й кладе події в чергу.</p>
+          </div>
+        </div>
+
+        <h3 class="admin-form__section-title">Звірка і моніторинг</h3>
+        <div class="admin-form__grid">
+          <div class="form-group">
+            {{ form.reconcile_interval_minutes.label }}
+            {{ form.reconcile_interval_minutes(class='form-input', type='number', min=5, max=1440) }}
+          </div>
+          <div class="form-group">
+            {{ form.reconcile_lookback_hours.label }}
+            {{ form.reconcile_lookback_hours(class='form-input', type='number', min=1, max=720) }}
+            <p class="form-hint">48 годин -- запас на вихідні.</p>
+          </div>
+          <div class="form-group">
+            {{ form.silence_alert_hours.label }}
+            {{ form.silence_alert_hours(class='form-input', type='number', min=0, max=720) }}
+            <p class="form-hint">0 -- не сповіщати про тишу.</p>
+          </div>
+          <div class="form-group">
+            {{ form.error_alert_threshold.label }}
+            {{ form.error_alert_threshold(class='form-input', type='number', min=1, max=1000) }}
+          </div>
+        </div>
+
+        <div class="admin-form__actions">
+          <button type="submit" class="btn-admin btn-admin--primary"
+                  data-confirm="Зберегти налаштування Meta Lead Ads?" data-confirm-ok="Зберегти">Зберегти налаштування</button>
+        </div>
+      </div>
+    </form>
+
+  </div>
+
+  </div>
+</div>
+{% endblock %}

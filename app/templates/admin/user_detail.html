@@ -1,0 +1,163 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Контакт #{{ user.id }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-meta-leads.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.users') }}" class="admin-breadcrumb__link">Користувачі</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">#{{ user.id }}</span>
+      </div>
+      <h1 class="admin-hero__title">{{ user.full_name or user.email }}</h1>
+      <p class="admin-hero__subtitle">
+        {% if user.is_admin %}<span class="badge badge--active">адміністратор</span>{% endif %}
+        {% if user.is_active %}<span class="badge badge--published">активний</span>{% else %}<span class="badge badge--draft">неактивний</span>{% endif %}
+        {% if user.email_confirmed %}<span class="badge badge--success">пошту підтверджено</span>{% endif %}
+        Зареєстровано {{ user.created_at.strftime('%d.%m.%Y') if user.created_at else '–' }}
+      </p>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <div class="admin-form">
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Картка контакту</h3>
+      <div class="admin-form__grid">
+        <div class="form-group">
+          <label>Email</label>
+          <div class="form-input admin-field-readonly">{{ user.email }}</div>
+        </div>
+        <div class="form-group">
+          <label>Телефон</label>
+          <div class="form-input admin-field-readonly">
+            {{ profile.phone_e164 or profile.phone or '–' if profile else '–' }}
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Джерело картки</label>
+          <div class="form-input admin-field-readonly">{{ profile.source if profile else '–' }}</div>
+        </div>
+        <div class="form-group">
+          <label>Місце роботи</label>
+          <div class="form-input admin-field-readonly">{{ profile.workplace or '–' if profile else '–' }}</div>
+        </div>
+        <div class="form-group">
+          <label>Посада</label>
+          <div class="form-input admin-field-readonly">{{ profile.position or '–' if profile else '–' }}</div>
+        </div>
+        <div class="form-group">
+          <label>Вхід за паролем</label>
+          <div class="form-input admin-field-readonly">{{ 'так' if user.has_password else 'ні' }}</div>
+        </div>
+      </div>
+      <p class="form-hint">
+        Стану обробки в контакта немає навмисно: питання «чи вже передзвонили»
+        стосується конкретної заявки, а не особи. Один контакт -- багато
+        заявок, і стан у кожної свій.
+      </p>
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">
+        Заявки з Meta
+        {% if leads %}<span class="badge badge--warning">{{ leads | length }}</span>{% endif %}
+      </h3>
+      {% if leads %}
+      <p class="form-hint">
+        Остання заявка: {{ leads[0].created_time.strftime('%d.%m.%Y %H:%M') if leads[0].created_time else '–' }}
+      </p>
+      <table class="admin-table">
+        <thead>
+          <tr><th>Дата</th><th>Джерело</th><th>Платформа</th><th>Статус</th><th>Перша реакція</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for lead in leads %}
+          <tr>
+            <td class="ml-nowrap">{{ lead.created_time.strftime('%d.%m.%Y %H:%M') if lead.created_time else '–' }}</td>
+            <td>
+              {{ lead.campaign_name or lead.campaign_id or '–' }}
+              <div class="ml-muted">{{ lead.form_name or lead.form_id or '–' }}</div>
+            </td>
+            <td>{{ lead.platform_label }}</td>
+            <td>
+              <span class="badge badge--{{ status_badge.get(lead.status, 'pending') }}">{{ lead.status_label }}</span>
+              {% if lead.is_repeat %}<span class="badge badge--published">повторно</span>{% endif %}
+              {% if lead.is_test %}<span class="badge badge--draft">тест</span>{% endif %}
+            </td>
+            <td class="ml-nowrap">{{ lead.first_touch_at.strftime('%d.%m %H:%M') if lead.first_touch_at else 'ще не було' }}</td>
+            <td><a href="{{ url_for('admin.meta_lead_detail', lead_id=lead.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Відкрити</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="form-hint">Заявок з Meta у цього контакта немає.</p>
+      {% endif %}
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Реєстрації на заходи</h3>
+      {% if registrations %}
+      <table class="admin-table">
+        <thead>
+          <tr><th>Дата</th><th>Захід</th><th>Статус</th><th>Оплата</th></tr>
+        </thead>
+        <tbody>
+          {% for reg in registrations %}
+          <tr>
+            <td class="ml-nowrap">{{ reg.created_at.strftime('%d.%m.%Y') if reg.created_at else '–' }}</td>
+            <td>{{ reg.target_title or '–' }}</td>
+            <td>{{ reg.status_label }}</td>
+            <td>{{ reg.payment_status_label }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="form-hint">Реєстрацій немає.</p>
+      {% endif %}
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Онлайн-курси</h3>
+      {% if enrollments %}
+      <table class="admin-table">
+        <thead>
+          <tr><th>Замовлення</th><th>Курс</th><th>Оплата</th><th>Сума</th></tr>
+        </thead>
+        <tbody>
+          {% for item in enrollments %}
+          <tr>
+            <td class="ml-nowrap">{{ item.order_id }}</td>
+            <td>{{ item.course.effective_title if item.course else '–' }}</td>
+            <td>{{ item.payment_status }}</td>
+            <td>{{ item.payment_amount or '–' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="form-hint">Замовлень онлайн-курсів немає.</p>
+      {% endif %}
+    </div>
+
+  </div>
+
+  </div>
+</div>
+{% endblock %}

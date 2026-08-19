@@ -59,7 +59,8 @@ class EmailLog(TimestampMixin, db.Model):
         db.CheckConstraint(
             "trigger IN ('registration', 'payment', 'reminder', 'status_change', "
             "'email_confirm', 'course_request', 'certificate', 'blog_comment', "
-            "'password_reset', 'backup_failure', 'materials', 'referral', 'test')",
+            "'password_reset', 'backup_failure', 'materials', 'referral', "
+            "'meta_lead', 'test')",
             name='ck_email_logs_trigger',
         ),
         db.Index('ix_email_logs_created_at', 'created_at'),
@@ -85,6 +86,7 @@ class EmailLog(TimestampMixin, db.Model):
         ('backup_failure', 'Помилка бекапу'),
         ('materials', 'Матеріали заходу'),
         ('referral', 'Реферальний бонус'),
+        ('meta_lead', 'Збій приймання лідів Meta'),
         ('test', 'Тест'),
     ]
 

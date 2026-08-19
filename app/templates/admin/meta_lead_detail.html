@@ -1,0 +1,257 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Заявка Meta #{{ lead.id }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-meta-leads.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.meta_leads_list') }}" class="admin-breadcrumb__link">Ліди Meta</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">#{{ lead.id }}</span>
+      </div>
+      <h1 class="admin-hero__title">{{ lead.display_name }}</h1>
+      <p class="admin-hero__subtitle">
+        <span class="badge badge--{{ status_badge.get(lead.status, 'pending') }}">{{ lead.status_label }}</span>
+        {% if lead.is_test %}<span class="badge badge--draft">тестова</span>{% endif %}
+        {% if lead.is_repeat %}<span class="badge badge--published">повторне звернення</span>{% endif %}
+        {% if lead.needs_attention %}<span class="badge badge--warning">потребує уваги</span>{% endif %}
+        Заявка від {{ lead.created_time.strftime('%d.%m.%Y %H:%M') if lead.created_time else '–' }}
+      </p>
+    </div>
+    <div class="admin-hero__actions">
+      <form method="POST" action="{{ url_for('admin.meta_lead_delete', lead_id=lead.id) }}"
+            data-confirm="{% if contact_check.can_delete %}Видалити заявку разом зі створеним нею контактом? Контакт зникне остаточно, відкату не буде.{% else %}Видалити заявку? Сира подія лишиться в черзі, контакт не чіпаємо.{% endif %}"
+            data-confirm-ok="Видалити" data-confirm-danger>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">{{ icon('delete') }} Видалити</button>
+      </form>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <div class="ml-wait-panel ml-wait-panel--{{ wait_level(lead) }}">
+    <div class="ml-wait-panel__value">{{ wait_text(lead.waiting_seconds) }}</div>
+    <div class="ml-wait-panel__label">
+      {% if lead.first_touch_at %}
+        чекала до першої реакції
+        ({{ lead.first_touch_at.strftime('%d.%m.%Y %H:%M') }}{% if lead.toucher %}, {{ lead.toucher.email }}{% endif %})
+      {% else %}
+        чекає першої реакції. Переведіть заявку у «В роботі», щойно взяли її
+      {% endif %}
+    </div>
+  </div>
+
+  {% if lead.needs_attention and lead.attention_reason %}
+  <div class="alert alert--warning">{{ lead.attention_reason }}</div>
+  {% endif %}
+
+  <div class="admin-form">
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Відповіді у формі</h3>
+      <div class="admin-form__grid">
+        <div class="form-group">
+          <label>Ім'я</label>
+          <div class="form-input admin-field-readonly">{{ lead.first_name or '–' }}</div>
+        </div>
+        <div class="form-group">
+          <label>Прізвище</label>
+          <div class="form-input admin-field-readonly">{{ lead.last_name or '–' }}</div>
+        </div>
+        <div class="form-group">
+          <label>Повне ім'я з форми</label>
+          <div class="form-input admin-field-readonly">{{ lead.full_name or '–' }}</div>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <div class="form-input admin-field-readonly">{{ lead.email or '–' }}</div>
+        </div>
+        <div class="form-group">
+          <label>Телефон (як ввели)</label>
+          <div class="form-input admin-field-readonly">{{ lead.phone_raw or '–' }}</div>
+        </div>
+        <div class="form-group">
+          <label>Телефон канонічний</label>
+          <div class="form-input admin-field-readonly">
+            {{ lead.phone_e164 or 'не розпізнано' }}
+          </div>
+        </div>
+        {% for name, value in custom_answers.items() %}
+        <div class="form-group admin-form__full">
+          <label>{{ name }}</label>
+          <div class="form-input admin-field-readonly">{{ value }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% if not custom_answers %}
+      <p class="form-hint">Кастомних питань у цій формі немає.</p>
+      {% endif %}
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Джерело</h3>
+      <div class="admin-form__grid">
+        <div class="form-group">
+          <label>Кампанія</label>
+          <div class="form-input admin-field-readonly">{{ lead.campaign_name or lead.campaign_id or '–' }}</div>
+        </div>
+        <div class="form-group">
+          <label>Група оголошень</label>
+          <div class="form-input admin-field-readonly">{{ lead.adset_name or lead.adset_id or '–' }}</div>
+        </div>
+        <div class="form-group">
+          <label>Оголошення</label>
+          <div class="form-input admin-field-readonly">{{ lead.ad_name or lead.ad_id or '–' }}</div>
+        </div>
+        <div class="form-group">
+          <label>Форма</label>
+          <div class="form-input admin-field-readonly">{{ lead.form_name or lead.form_id or '–' }}</div>
+        </div>
+        <div class="form-group">
+          <label>Платформа</label>
+          <div class="form-input admin-field-readonly">
+            {{ lead.platform_label }}{% if lead.is_organic %} (органіка){% endif %}
+          </div>
+        </div>
+        <div class="form-group">
+          <label>ID у Meta</label>
+          <div class="form-input admin-field-readonly">{{ lead.leadgen_id }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Контакт</h3>
+      <div class="admin-form__grid">
+        <div class="form-group">
+          <label>Як знайшли</label>
+          <div class="form-input admin-field-readonly">{{ lead.match_label }}</div>
+        </div>
+        <div class="form-group">
+          <label>Картка контакту</label>
+          <div class="form-input admin-field-readonly">
+            {% if lead.user %}
+              <a href="{{ url_for('admin.user_detail', user_id=lead.user.id) }}">
+                {{ lead.user.full_name or lead.user.email }} (#{{ lead.user.id }})
+              </a>
+            {% else %}
+              Контакт не прив'язано
+            {% endif %}
+          </div>
+        </div>
+        {% if lead.conflict_user %}
+        <div class="form-group admin-form__full">
+          <label>Конфлікт: пошта вказала на інший контакт</label>
+          <div class="form-input admin-field-readonly">
+            <a href="{{ url_for('admin.user_detail', user_id=lead.conflict_user.id) }}">
+              {{ lead.conflict_user.full_name or lead.conflict_user.email }} (#{{ lead.conflict_user.id }})
+            </a>
+            -- контакти не зливаються автоматично, рішення за менеджером
+          </div>
+        </div>
+        {% endif %}
+        {% if lead.alt_email %}
+        <div class="form-group admin-form__full">
+          <label>Пошта із заявки, що не збіглася з поштою контакту</label>
+          <div class="form-input admin-field-readonly">{{ lead.alt_email }}</div>
+        </div>
+        {% endif %}
+      </div>
+      {% if lead.user %}
+        {% if contact_check.can_delete %}
+        <p class="form-hint">
+          Контакт створила саме ця заявка й інших слідів у нього немає --
+          при видаленні заявки він теж буде прибраний.
+        </p>
+        {% elif contact_check.reasons %}
+        <p class="form-hint">
+          Контакт лишиться навіть при видаленні заявки: {{ contact_check.reasons | join(', ') }}.
+        </p>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.meta_lead_detail', lead_id=lead.id) }}">
+      {{ form.hidden_tag() }}
+      <div class="form-section admin-form__section">
+        <h3 class="admin-form__section-title">Обробка</h3>
+        <div class="admin-form__grid">
+          <div class="form-group">
+            {{ form.status.label }}
+            {{ form.status(class='form-input') }}
+            <p class="form-hint">
+              Переведення у «В роботі» фіксує момент першої реакції -- саме
+              за ним рахується швидкість дзвінка.
+            </p>
+          </div>
+          <div class="form-group">
+            <div class="form-checkbox form-checkbox--row-align">
+              {{ form.is_test() }}
+              {{ form.is_test.label }}
+            </div>
+            <p class="form-hint">Тестові заявки сховані в реєстрі й не йдуть партнеру.</p>
+          </div>
+          <div class="form-group admin-form__full">
+            {{ form.admin_notes.label }}
+            {{ form.admin_notes(class='form-input', rows=4) }}
+          </div>
+        </div>
+        <div class="admin-form__actions">
+          <button type="submit" class="btn-admin btn-admin--primary">Зберегти</button>
+          <a href="{{ url_for('admin.meta_leads_list') }}" class="btn-admin btn-admin--secondary">Назад до реєстру</a>
+        </div>
+      </div>
+    </form>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Сирі події черги</h3>
+      {% if events %}
+      <table class="admin-table">
+        <thead>
+          <tr><th>Отримано</th><th>Джерело</th><th>Статус</th><th>Спроб</th><th>Помилка</th></tr>
+        </thead>
+        <tbody>
+          {% for event in events %}
+          <tr>
+            <td>{{ event.received_at.strftime('%d.%m.%Y %H:%M:%S') if event.received_at else '–' }}</td>
+            <td>{{ event.source }}</td>
+            <td><span class="badge badge--{{ event_status_badge.get(event.status, 'pending') }}">{{ event.status_label }}</span></td>
+            <td>{{ event.attempts }} / {{ max_attempts }}</td>
+            <td>{{ event.last_error or '–' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="form-hint">
+        Сира подія не видаляється ніколи: саме вона не дає повторній доставці
+        того самого ліда створити дубль.
+      </p>
+      {% else %}
+      <p class="form-hint">Подій у черзі за цим лідом немає.</p>
+      {% endif %}
+    </div>
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Сира відповідь Graph API</h3>
+      <details>
+        <summary>Показати JSON</summary>
+        <pre class="ml-raw">{{ lead.raw_lead | tojson(indent=2) }}</pre>
+      </details>
+    </div>
+  </div>
+
+  </div>
+</div>
+{% endblock %}

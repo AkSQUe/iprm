@@ -38,6 +38,10 @@
         {{ icon('group') }}
         B2B-заявки
       </a>
+      <a href="{{ url_for('admin.meta_leads_list') }}" class="admin-sidebar__link{% if ep in ('admin.meta_leads_list', 'admin.meta_lead_detail', 'admin.meta_lead_events', 'admin.meta_leads_settings', 'admin.meta_lead_event_retry') %} admin-sidebar__link--active{% endif %}">
+        {{ icon('campaign') }}
+        Ліди Meta
+      </a>
       <a href="{{ url_for('admin.refund_requests_list') }}" class="admin-sidebar__link{% if ep in ('admin.refund_requests_list', 'admin.refund_request_reject') %} admin-sidebar__link--active{% endif %}">
         {{ icon('restart_alt') }}
         Заявки на повернення

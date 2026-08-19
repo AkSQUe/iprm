@@ -1,0 +1,225 @@
+/* admin-meta-leads.css -- сторінки лідів Meta Lead Ads.
+   Завантажується після admin.css + admin-apple.css і покриває лише те,
+   чого немає у спільних стилях адмінки.
+
+   Головне тут -- годинник очікування. Швидкість першого дзвінка визначає
+   конверсію заявки, тому час до реакції має читатись із таблиці за пів
+   секунди, без вчитування в цифри. Звідси три пороги й три кольори:
+   до 15 хв -- ще встигаємо, до години -- вже пізно, понад -- лід охолов.
+   Кольори -- семантичні токени дизайн-системи (--iprm-success / warning /
+   error): вони вже узгоджені з тёмною темою й міняються разом із нею. */
+
+/* ===== Годинник очікування у рядку реєстру ===== */
+
+.ml-wait {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 96px;
+  padding: 6px 10px;
+  border-radius: var(--iprm-radius-sm, 10px);
+  border: 1px solid var(--iprm-border);
+  border-left-width: 3px;
+  line-height: 1.2;
+}
+
+.ml-wait__value {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ml-wait__note {
+  font-size: 0.6875rem;
+  color: var(--apple-gray);
+}
+
+/* Уже взятий у роботу лід -- нейтрально: червоне на зробленій роботі
+   кричало б про те, чого вже не виправити. */
+.ml-wait--done {
+  background: var(--apple-section-bg);
+  border-left-color: var(--iprm-border-strong, var(--iprm-border));
+}
+
+.ml-wait--fresh {
+  background: var(--iprm-success-bg);
+  border-left-color: var(--iprm-success);
+}
+
+.ml-wait--fresh .ml-wait__value {
+  color: var(--iprm-success);
+}
+
+.ml-wait--warn {
+  background: var(--iprm-warning-bg);
+  border-left-color: var(--iprm-warning);
+}
+
+.ml-wait--warn .ml-wait__value {
+  color: var(--iprm-warning-text, var(--iprm-warning));
+}
+
+.ml-wait--late {
+  background: var(--iprm-error-bg);
+  border-left-color: var(--iprm-error);
+}
+
+.ml-wait--late .ml-wait__value {
+  color: var(--iprm-error-text, var(--iprm-error));
+}
+
+/* ===== Годинник у картці заявки ===== */
+
+.ml-wait-panel {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  padding: 18px 22px;
+  margin-bottom: 24px;
+  border: 1px solid var(--iprm-border);
+  border-left: 4px solid var(--iprm-border-strong, var(--iprm-border));
+  border-radius: var(--iprm-radius, 14px);
+  background: var(--iprm-white);
+}
+
+.ml-wait-panel__value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ml-wait-panel__label {
+  font-size: 0.875rem;
+  color: var(--apple-gray-dark);
+}
+
+.ml-wait-panel--done {
+  background: var(--apple-section-bg);
+}
+
+.ml-wait-panel--fresh {
+  border-left-color: var(--iprm-success);
+  background: var(--iprm-success-bg);
+}
+
+.ml-wait-panel--fresh .ml-wait-panel__value {
+  color: var(--iprm-success);
+}
+
+.ml-wait-panel--warn {
+  border-left-color: var(--iprm-warning);
+  background: var(--iprm-warning-bg);
+}
+
+.ml-wait-panel--warn .ml-wait-panel__value {
+  color: var(--iprm-warning-text, var(--iprm-warning));
+}
+
+.ml-wait-panel--late {
+  border-left-color: var(--iprm-error);
+  background: var(--iprm-error-bg);
+}
+
+.ml-wait-panel--late .ml-wait-panel__value {
+  color: var(--iprm-error-text, var(--iprm-error));
+}
+
+/* ===== Дрібниці реєстру ===== */
+
+.ml-stats {
+  margin-bottom: 24px;
+}
+
+.ml-muted {
+  font-size: 0.8125rem;
+  color: var(--apple-gray);
+}
+
+.ml-nowrap {
+  white-space: nowrap;
+}
+
+.ml-lead-name {
+  font-weight: 600;
+}
+
+.ml-test-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 18px;
+  margin-bottom: 20px;
+  border: 1px dashed var(--iprm-border-strong, var(--iprm-border));
+  border-radius: var(--iprm-radius, 14px);
+  background: var(--apple-section-bg);
+  font-size: 0.875rem;
+}
+
+/* ===== Сира черга ===== */
+
+.ml-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-left: 3px solid var(--iprm-nav-active);
+  border-radius: var(--iprm-radius, 14px);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--apple-gray-dark);
+}
+
+.ml-info__icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-size: 22px;
+  color: var(--iprm-nav-active);
+}
+
+.ml-error summary {
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--iprm-error-text, var(--iprm-error));
+}
+
+.ml-error pre,
+.ml-raw {
+  max-height: 320px;
+  overflow: auto;
+  padding: 10px 12px;
+  margin: 6px 0 0;
+  background: var(--apple-section-bg);
+  border-radius: var(--iprm-radius-sm, 10px);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ===== Сторінка налаштувань ===== */
+
+.ml-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ml-test-form {
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .ml-wait {
+    min-width: 0;
+  }
+
+  .ml-wait-panel__value {
+    font-size: 1.375rem;
+  }
+}

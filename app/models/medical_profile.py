@@ -16,7 +16,11 @@ True ще до того як `completed_at` встановлено (наприк
 
 `source` -- звідки взялись дані ('self' -- сам заповнив, 'legacy' --
 backfill з User в момент розділення таблиць, 'partner' -- prefill від
-mm-medic, 'imported' -- ручний імпорт з xlsx).
+mm-medic, 'imported' -- ручний імпорт з xlsx, 'meta' -- контакт заведено
+із заявки Meta Lead Ads). Останнє джерело відрізняється від решти тим, що
+профіль створюється БЕЗ участі людини і майже порожній: у списках адмінки
+такі контакти треба вміти відсікати, інакше холодні ліди змішаються з
+учасниками заходів.
 """
 from sqlalchemy.orm import validates
 
@@ -31,6 +35,7 @@ class MedicalProfile(TimestampMixin, db.Model):
     SOURCE_LEGACY = 'legacy'
     SOURCE_PARTNER = 'partner'
     SOURCE_IMPORTED = 'imported'
+    SOURCE_META = 'meta'
 
     PARTICIPANT_TYPES = [
         ('doctor', 'Лікар'),

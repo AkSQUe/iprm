@@ -16,6 +16,7 @@ from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest
 from app.models.medical_profile import MedicalProfile
+from app.models.meta_lead import MetaLead
 from app.models.promo_code import PromoCode
 from app.models.registration import EventRegistration
 from app.models.specializations import SPECIALIZATIONS
@@ -714,6 +715,76 @@ class CourseRequestAdminForm(FlaskForm):
     admin_notes = TextAreaField(
         'Нотатки адміна',
         validators=[Optional()],
+    )
+
+
+class MetaLeadAdminForm(FlaskForm):
+    """Картка ліда з Meta: стан обробки, нотатки, позначка тестового.
+
+    Полів заявки тут немає навмисно -- вони прийшли від людини через
+    інстант-форму Meta і мусять лишитись такими, як вона їх заповнила.
+    Редагується лише те, що додає менеджер.
+    """
+    status = SelectField(
+        'Статус',
+        choices=MetaLead.STATUSES,
+        validators=[DataRequired()],
+    )
+    admin_notes = TextAreaField(
+        'Нотатки',
+        validators=[Optional(), Length(max=5000)],
+    )
+    is_test = BooleanField('Тестова заявка')
+
+
+class MetaLeadsSettingsForm(FlaskForm):
+    """Налаштування інтеграції Meta Lead Ads.
+
+    Секрети (App Secret, verify token) -- необов'язкові поля: порожнє
+    означає "лишити наявний". Інакше кожне збереження інтервалу звірки
+    вимагало б заново вставляти ключі, а маска з БД, вставлена назад,
+    затерла б справжнє значення.
+    """
+    enabled = BooleanField('Приймати ліди з Meta')
+    app_id = StringField(
+        'App ID',
+        validators=[Optional(), Length(max=50)],
+    )
+    app_secret = StringField(
+        'App Secret',
+        validators=[Optional(), Length(max=255)],
+    )
+    verify_token = StringField(
+        'Verify token',
+        validators=[Optional(), Length(max=255)],
+    )
+    page_id = StringField(
+        'ID Сторінки',
+        validators=[Optional(), Length(max=64)],
+    )
+    graph_version = StringField(
+        'Версія Graph API',
+        validators=[
+            Optional(),
+            Length(max=10),
+            Regexp(r'^v\d+\.\d+$', message='Формат версії -- vNN.N (наприклад v21.0)'),
+        ],
+    )
+    reconcile_interval_minutes = IntegerField(
+        'Інтервал звірки, хв',
+        validators=[Optional(), NumberRange(min=5, max=1440)],
+    )
+    reconcile_lookback_hours = IntegerField(
+        'Глибина звірки, год',
+        validators=[Optional(), NumberRange(min=1, max=720)],
+    )
+    silence_alert_hours = IntegerField(
+        'Тиша до сигналу, год',
+        validators=[Optional(), NumberRange(min=0, max=720)],
+    )
+    error_alert_threshold = IntegerField(
+        'Помилок до сигналу',
+        validators=[Optional(), NumberRange(min=1, max=1000)],
     )
 
 

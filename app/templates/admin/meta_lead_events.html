@@ -1,0 +1,148 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Черга подій Meta | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-meta-leads.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.meta_leads_list') }}" class="admin-breadcrumb__link">Ліди Meta</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Сира черга</span>
+      </div>
+      <h1 class="admin-hero__title">Черга подій leadgen</h1>
+      <p class="admin-hero__subtitle">Те, що прийшло вебхуком або знайшла звірка, до розбору</p>
+    </div>
+    <div class="admin-hero__actions">
+      <a href="{{ url_for('admin.meta_leads_list') }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('inbox') }} Реєстр заявок</a>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <div class="ml-info">
+    {{ icon('info', cls='ml-info__icon') }}
+    <div>
+      Вебхук Meta приносить лише ідентифікатор ліда, тож рядок тут означає
+      «сходи в Graph API і забери заявку». Події <strong>не видаляються</strong>:
+      саме вони не дають повторній доставці того самого <code>leadgen_id</code>
+      створити другу картку. Максимум спроб -- {{ max_attempts }}.
+    </div>
+  </div>
+
+  <div class="admin-stat-cards ml-stats">
+    <div class="admin-stat-card">
+      <span class="admin-stat-card__value">{{ counts.values() | sum }}</span>
+      <span class="admin-stat-card__label">Усього подій</span>
+    </div>
+    <div class="admin-stat-card admin-stat-card--accent">
+      <span class="admin-stat-card__value">{{ counts.get('pending', 0) + counts.get('processing', 0) }}</span>
+      <span class="admin-stat-card__label">Очікують обробки</span>
+    </div>
+    <div class="admin-stat-card admin-stat-card--warning">
+      <span class="admin-stat-card__value">{{ counts.get('retrying', 0) }}</span>
+      <span class="admin-stat-card__label">Повторюються</span>
+    </div>
+    <div class="admin-stat-card admin-stat-card--success">
+      <span class="admin-stat-card__value">{{ counts.get('done', 0) }}</span>
+      <span class="admin-stat-card__label">Оброблено</span>
+    </div>
+    <div class="admin-stat-card admin-stat-card--danger">
+      <span class="admin-stat-card__value">{{ counts.get('failed', 0) }}</span>
+      <span class="admin-stat-card__label">Помилок</span>
+    </div>
+  </div>
+
+  {{ filter_bar(
+       endpoint='admin.meta_lead_events',
+       values=filters,
+       search={'name': 'q', 'placeholder': 'Пошук за leadgen_id, формою або текстом помилки'},
+       fields=[
+         {'name': 'status', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': status_options},
+         {'name': 'source', 'label': 'Джерело', 'placeholder': 'Усі джерела', 'options': source_options},
+       ],
+     ) }}
+
+  {% if events %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Отримано</th>
+        <th>leadgen_id</th>
+        <th>Джерело</th>
+        <th>Статус</th>
+        <th>Спроб</th>
+        <th>Наступна спроба</th>
+        <th>Заявка</th>
+        <th>Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for event in events %}
+      <tr>
+        <td class="ml-nowrap">{{ event.received_at.strftime('%d.%m.%Y %H:%M:%S') if event.received_at else '–' }}</td>
+        <td><code>{{ event.leadgen_id }}</code></td>
+        <td>{{ source_labels.get(event.source, event.source) }}</td>
+        <td>
+          <span class="badge badge--{{ event_status_badge.get(event.status, 'pending') }}">{{ event.status_label }}</span>
+          {% if event.last_error %}
+          <details class="ml-error">
+            <summary>{{ icon('error') }} Деталі</summary>
+            <pre>{{ event.last_error }}</pre>
+          </details>
+          {% endif %}
+        </td>
+        <td>{{ event.attempts }} / {{ max_attempts }}</td>
+        <td class="ml-nowrap">{{ event.next_retry_at.strftime('%d.%m %H:%M') if event.next_retry_at else '–' }}</td>
+        <td>
+          {% if event.lead_id %}
+            <a href="{{ url_for('admin.meta_lead_detail', lead_id=event.lead_id) }}">#{{ event.lead_id }}</a>
+          {% else %}
+            <span class="ml-muted">–</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="admin-table__actions">
+            {% if event.status in ('failed', 'retrying', 'processing') %}
+            <form method="POST" action="{{ url_for('admin.meta_lead_event_retry', event_id=event.id) }}"
+                  data-confirm="Повернути подію в чергу?" data-confirm-ok="Повторити">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('refresh', label='Повторити') }}</button>
+            </form>
+            {% else %}
+            <span class="ml-muted">–</span>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  {{ pager('admin.meta_lead_events', pagination, filter_args) }}
+  {% else %}
+  <div class="admin-empty">
+    {{ icon('inbox', cls='admin-empty__icon') }}
+    <h3 class="admin-empty__title">Подій немає</h3>
+    <p>Надішліть тестову подію з <a href="{{ url_for('admin.meta_leads_settings') }}">налаштувань</a>, щоб перевірити доставку.</p>
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}

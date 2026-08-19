@@ -328,6 +328,86 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
         db.Integer, default=5, nullable=False, server_default='5',
     )
 
+    # === Meta Lead Ads (ліди з інстант-форм Facebook/Instagram) ===
+    #
+    # App Secret і Page Access Token -- секрети з доступом до персональних
+    # даних чужих людей, тож Fernet, як liqpay_private_key. Verify token --
+    # теж секрет: знаючи його, сторонній може підписатись на наш ендпоінт
+    # верифікації і дізнатись, що інтеграція існує.
+    #
+    # Page token навмисно БЕЗСТРОКОВИЙ (обміняний через довгоживучий User
+    # token). Зберігати його в env означало б ручний деплой при кожній
+    # ротації і рестарт застосунку -- критерій приймання N8 вимагає
+    # протилежного: токен переживає перезапуск і не потребує втручання.
+    meta_leads_enabled = db.Column(
+        db.Boolean, default=False, nullable=False, server_default=db.false(),
+    )
+    meta_app_id = db.Column(db.String(50), default='', server_default='', nullable=False)
+    _meta_app_secret_encrypted = db.Column(
+        'meta_app_secret', db.String(500), default='', server_default='',
+    )
+    meta_app_secret_set_at = db.Column(db.DateTime(timezone=True))
+    _meta_verify_token_encrypted = db.Column(
+        'meta_verify_token', db.String(500), default='', server_default='',
+    )
+    _meta_page_token_encrypted = db.Column(
+        'meta_page_token', db.String(2000), default='', server_default='',
+    )
+    meta_page_token_set_at = db.Column(db.DateTime(timezone=True))
+    meta_page_id = db.Column(db.String(64), default='', server_default='', nullable=False)
+    meta_page_name = db.Column(db.String(255), default='', server_default='', nullable=False)
+    # Версія Graph API у шляху запитів. У налаштуваннях, а не в константі:
+    # Meta виводить версії з ужитку за розкладом, і підняти її має бути
+    # можна без релізу.
+    meta_graph_version = db.Column(
+        db.String(10), default='v21.0', server_default='v21.0', nullable=False,
+    )
+
+    # Звірка: як часто добирати ліди з Meta і за який період назад. 48 годин
+    # -- запас на вихідні: збій у п'ятницю ввечері помічають у понеділок, а
+    # Meta тримає ліди лише 90 днів.
+    meta_reconcile_interval_minutes = db.Column(
+        db.Integer, default=30, nullable=False, server_default='30',
+    )
+    meta_reconcile_lookback_hours = db.Column(
+        db.Integer, default=48, nullable=False, server_default='48',
+    )
+
+    # Скільки годин тиші при активних формах вважати збоєм. 0 -- не сповіщати.
+    meta_silence_alert_hours = db.Column(
+        db.Integer, default=24, nullable=False, server_default='24',
+    )
+    # Скільки помилок у черзі накопичити, перш ніж написати менеджерам.
+    meta_error_alert_threshold = db.Column(
+        db.Integer, default=5, nullable=False, server_default='5',
+    )
+
+    # Режим тестування. Graph API не віддає надійного прапорця «це тест»:
+    # заявки з Lead Ads Testing Tool приходять тим самим шляхом і виглядають
+    # як справжні. Тому позначку ставимо самі й детерміновано -- усе, що
+    # прийшло при увімкненому перемикачі, лягає з MetaLead.is_test=True.
+    # Час увімкнення зберігаємо окремо: без нього неможливо відповісти, чи
+    # був режим активний на момент конкретної заявки, коли його вже вимкнули.
+    meta_test_mode = db.Column(
+        db.Boolean, default=False, nullable=False, server_default=db.false(),
+    )
+    meta_test_mode_since = db.Column(db.DateTime(timezone=True))
+
+    # Стан інтеграції для сторінки налаштувань і моніторингу.
+    meta_last_lead_at = db.Column(db.DateTime(timezone=True))
+    meta_last_webhook_at = db.Column(db.DateTime(timezone=True))
+    meta_last_reconcile_at = db.Column(db.DateTime(timezone=True))
+    meta_last_reconcile_status = db.Column(db.String(20), default='', server_default='')
+    meta_last_reconcile_error = db.Column(db.Text, default='', server_default='')
+    meta_token_checked_at = db.Column(db.DateTime(timezone=True))
+    meta_token_valid = db.Column(db.Boolean)
+    # NULL = безстроковий (Meta віддає expires_at=0 для page token).
+    meta_token_expires_at = db.Column(db.DateTime(timezone=True))
+    meta_token_error = db.Column(db.Text, default='', server_default='')
+    # Коли востаннє слали алерт -- щоб не писати менеджерам щогодини про
+    # ту саму тишу.
+    meta_alert_sent_at = db.Column(db.DateTime(timezone=True))
+
     __table_args__ = (
         db.CheckConstraint(
             "referral_attribution IN ('first', 'last')",
@@ -597,6 +677,90 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
         if not value:
             return True
         return bool(META_PIXEL_ID_RE.match(value))
+
+    @property
+    def meta_app_secret(self):
+        if not self._meta_app_secret_encrypted:
+            return ''
+        try:
+            return _get_fernet().decrypt(
+                self._meta_app_secret_encrypted.encode()
+            ).decode()
+        except (InvalidToken, Exception):
+            logger.warning('Failed to decrypt meta_app_secret')
+            return ''
+
+    @meta_app_secret.setter
+    def meta_app_secret(self, value):
+        if not value:
+            self._meta_app_secret_encrypted = ''
+            return
+        self._meta_app_secret_encrypted = _get_fernet().encrypt(value.encode()).decode()
+
+    @property
+    def meta_app_secret_is_set(self):
+        return bool(self._meta_app_secret_encrypted)
+
+    @property
+    def meta_verify_token(self):
+        if not self._meta_verify_token_encrypted:
+            return ''
+        try:
+            return _get_fernet().decrypt(
+                self._meta_verify_token_encrypted.encode()
+            ).decode()
+        except (InvalidToken, Exception):
+            logger.warning('Failed to decrypt meta_verify_token')
+            return ''
+
+    @meta_verify_token.setter
+    def meta_verify_token(self, value):
+        if not value:
+            self._meta_verify_token_encrypted = ''
+            return
+        self._meta_verify_token_encrypted = _get_fernet().encrypt(value.encode()).decode()
+
+    @property
+    def meta_verify_token_is_set(self):
+        return bool(self._meta_verify_token_encrypted)
+
+    @property
+    def meta_page_token(self):
+        if not self._meta_page_token_encrypted:
+            return ''
+        try:
+            return _get_fernet().decrypt(
+                self._meta_page_token_encrypted.encode()
+            ).decode()
+        except (InvalidToken, Exception):
+            logger.warning('Failed to decrypt meta_page_token')
+            return ''
+
+    @meta_page_token.setter
+    def meta_page_token(self, value):
+        if not value:
+            self._meta_page_token_encrypted = ''
+            return
+        self._meta_page_token_encrypted = _get_fernet().encrypt(value.encode()).decode()
+
+    @property
+    def meta_page_token_is_set(self):
+        return bool(self._meta_page_token_encrypted)
+
+    @property
+    def is_meta_leads_configured(self):
+        """Чи вистачає налаштувань, щоб приймати й забирати ліди.
+
+        Verify token у перевірку НЕ входить: він потрібен один раз, при
+        підписці, і після неї його можна прибрати -- вебхук від цього не
+        перестане працювати, бо POST-и підписані App Secret.
+        """
+        return bool(
+            self.meta_app_id
+            and self._meta_app_secret_encrypted
+            and self._meta_page_token_encrypted
+            and self.meta_page_id
+        )
 
     @classmethod
     def get(cls):

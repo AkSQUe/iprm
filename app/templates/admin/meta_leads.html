@@ -1,0 +1,166 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Ліди Meta | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-meta-leads.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Ліди Meta</span>
+      </div>
+      <h1 class="admin-hero__title">Заявки з Meta Lead Ads</h1>
+      <p class="admin-hero__subtitle">Інстант-форми Facebook та Instagram. Головне тут -- час до першого дзвінка</p>
+    </div>
+    <div class="admin-hero__actions">
+      <a href="{{ url_for('admin.meta_lead_events') }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('webhook') }} Сира черга</a>
+      <a href="{{ url_for('admin.meta_leads_settings') }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('settings') }} Налаштування</a>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <div class="admin-stat-cards ml-stats">
+    <div class="admin-stat-card">
+      <span class="admin-stat-card__value">{{ summary.total }}</span>
+      <span class="admin-stat-card__label">Усього заявок</span>
+    </div>
+    <div class="admin-stat-card admin-stat-card--accent">
+      <span class="admin-stat-card__value">{{ summary.new }}</span>
+      <span class="admin-stat-card__label">Нових</span>
+    </div>
+    <div class="admin-stat-card">
+      <span class="admin-stat-card__value">{{ summary.in_work }}</span>
+      <span class="admin-stat-card__label">У роботі</span>
+    </div>
+    <div class="admin-stat-card admin-stat-card--danger">
+      <span class="admin-stat-card__value">{{ summary.late }}</span>
+      <span class="admin-stat-card__label">Чекають понад годину</span>
+    </div>
+    <div class="admin-stat-card admin-stat-card--warning">
+      <span class="admin-stat-card__value">{{ summary.attention }}</span>
+      <span class="admin-stat-card__label">Потребують уваги</span>
+    </div>
+  </div>
+
+  {{ filter_bar(
+       endpoint='admin.meta_leads_list',
+       values=filters,
+       search={'name': 'q', 'placeholder': 'Пошук за іменем, поштою або телефоном'},
+       fields=[
+         {'name': 'status', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': status_options},
+         {'name': 'campaign_id', 'label': 'Кампанія', 'placeholder': 'Усі кампанії', 'options': campaign_options},
+         {'name': 'form_id', 'label': 'Форма', 'placeholder': 'Усі форми', 'options': form_options},
+         {'name': 'platform', 'label': 'Платформа', 'placeholder': 'Усі платформи', 'options': platform_options},
+         {'name': 'attention', 'label': 'Потребує уваги', 'placeholder': 'Байдуже', 'options': attention_options},
+         {'name': 'test', 'label': 'Тестові заявки', 'placeholder': 'Приховані', 'options': test_options},
+         {'name': 'date_from', 'label': 'Заявки з', 'type': 'date'},
+         {'name': 'date_to', 'label': 'Заявки по', 'type': 'date'},
+         {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
+       ],
+       export_endpoint='admin.meta_leads_export',
+     ) }}
+
+  {% if summary.test %}
+  <div class="ml-test-bar">
+    <span>Тестових заявок у базі: <strong>{{ summary.test }}</strong>. За замовчуванням вони сховані.</span>
+    <form method="POST" action="{{ url_for('admin.meta_leads_delete_test') }}"
+          data-confirm="Видалити всі тестові заявки? Сирі події лишаться в черзі, контакти прибираються лише ті, що створені саме цими заявками."
+          data-confirm-ok="Видалити тестові" data-confirm-danger>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">{{ icon('delete') }} Видалити тестові</button>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if leads %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Очікування</th>
+        <th>Заявка</th>
+        <th>Контакти</th>
+        <th>Джерело</th>
+        <th>Збіг</th>
+        <th>Статус</th>
+        <th>Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for lead in leads %}
+      <tr>
+        <td>
+          <span class="ml-wait ml-wait--{{ wait_level(lead) }}">
+            <span class="ml-wait__value">{{ wait_text(lead.waiting_seconds) }}</span>
+            <span class="ml-wait__note">
+              {%- if lead.first_touch_at %}до реакції{% else %}без реакції{% endif -%}
+            </span>
+          </span>
+        </td>
+        <td>
+          <a href="{{ url_for('admin.meta_lead_detail', lead_id=lead.id) }}" class="ml-lead-name">{{ lead.display_name }}</a>
+          <div class="ml-muted">{{ lead.created_time.strftime('%d.%m.%Y %H:%M') if lead.created_time else '–' }}</div>
+          {% if lead.is_test %}<span class="badge badge--draft">тест</span>{% endif %}
+          {% if lead.is_repeat %}<span class="badge badge--published">повторно</span>{% endif %}
+          {% if lead.needs_attention %}<span class="badge badge--warning">увага</span>{% endif %}
+        </td>
+        <td>
+          <div>{{ lead.email or '–' }}</div>
+          <div class="ml-muted">{{ lead.phone_e164 or lead.phone_raw or '–' }}</div>
+        </td>
+        <td>
+          <div>{{ lead.campaign_name or lead.campaign_id or '–' }}</div>
+          <div class="ml-muted">{{ lead.form_name or lead.form_id or '–' }} · {{ lead.platform_label }}</div>
+        </td>
+        <td>
+          {{ lead.match_label }}
+          {% if lead.user_id %}
+          <div class="ml-muted"><a href="{{ url_for('admin.user_detail', user_id=lead.user_id) }}">контакт #{{ lead.user_id }}</a></div>
+          {% endif %}
+        </td>
+        <td><span class="badge badge--{{ status_badge.get(lead.status, 'pending') }}">{{ lead.status_label }}</span></td>
+        <td>
+          <div class="admin-table__actions">
+            <a href="{{ url_for('admin.meta_lead_detail', lead_id=lead.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('edit', label='Відкрити') }}</a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  {{ pager('admin.meta_leads_list', pagination, filter_args) }}
+  {% else %}
+  <div class="admin-empty">
+    {{ icon('inbox', cls='admin-empty__icon') }}
+    {% if filter_args %}
+      <h3 class="admin-empty__title">Нічого не знайдено</h3>
+      <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.meta_leads_list') }}">скинути їх</a></p>
+    {% else %}
+      <h3 class="admin-empty__title">Заявок немає</h3>
+      <p>Щойно з інстант-форми Meta прийде перша заявка — вона з'явиться тут.
+         Перевірити доставку можна кнопкою «Надіслати тестову подію» в
+         <a href="{{ url_for('admin.meta_leads_settings') }}">налаштуваннях</a>.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}

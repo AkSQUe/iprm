@@ -38,6 +38,7 @@ REGISTRATION_PAID = 'registration.paid'
 REGISTRATION_CANCELLED = 'registration.cancelled'
 REGISTRATION_ATTENDED = 'registration.attended'
 COMMUNICATION_SENT = 'communication.sent'
+LEAD_CREATED = 'lead.created'
 
 
 def _session_of(target, fallback_session):
@@ -177,3 +178,70 @@ def emit_communication_sent(log_entry) -> None:
         'sent_at': log_entry.sent_at.isoformat() if log_entry.sent_at else None,
         'trigger': getattr(log_entry, 'trigger', None),
     })
+
+
+def _lead_payload(lead) -> dict:
+    """Заявка з Meta Lead Ads у формі, яку розуміє картка клієнта партнера.
+
+    Три неочевидні речі, кожна з них -- наслідок улаштування приймача.
+
+    **Телефон трьома ключами.** На тому боці два різні резолвери читають
+    його з РІЗНИХ полів: пошук ліда -- з ``phone``, пошук клієнта -- з
+    ``phone_e164``/``phone_raw``. Payload, що годує лише один із них,
+    мовчки не зіставить людину -- ані помилки, ані картки.
+
+    **Сирий номер іде завжди**, навіть коли канонічної форми немає. Ми
+    зводимо до E.164 лише українські номери, а в партнера повноцінний
+    нормалізатор: те, з чим не впорався слабший, цілком розбирає сильніший.
+    Не дублювання даних, а передача роботи туди, де її зроблять краще.
+
+    **`iprm_user_id` завжди відомий**, бо подія народжується ПІСЛЯ
+    прив'язки контакту. Для партнера це найсильніший ключ зіставлення --
+    сильніший за телефон.
+    """
+    return {
+        'leadgen_id': lead.leadgen_id,
+        'created_time': lead.created_time.isoformat() if lead.created_time else None,
+        'iprm_user_id': lead.user_id,
+        'first_name': lead.first_name,
+        'last_name': lead.last_name,
+        'email': lead.email,
+        # Канонічна форма, якщо є; інакше сирий рядок -- аби резолверу
+        # ліда було що читати.
+        'phone': lead.phone_e164 or lead.phone_raw,
+        'phone_e164': lead.phone_e164,
+        'phone_raw': lead.phone_raw,
+        'source': {
+            'channel': 'meta_lead_ads',
+            'platform': lead.platform,
+            'form_id': lead.form_id,
+            'form_name': lead.form_name,
+            'campaign_id': lead.campaign_id,
+            'campaign_name': lead.campaign_name,
+            'ad_id': lead.ad_id,
+        },
+        'is_repeat': bool(lead.is_repeat),
+        'custom_fields': lead.field_data or {},
+    }
+
+
+def emit_lead_created(lead) -> None:
+    """Розповісти партнеру про нову заявку з реклами.
+
+    Викликається З ЧЕРГИ розбору, після успішної прив'язки контакту й
+    коміту: подія про заявку, яка ще може відкотитись, -- це подія про те,
+    чого не сталося.
+
+    **Тестові заявки не йдуть нікуди.** Lead Ads Testing Tool ллє їх тим
+    самим шляхом, що й справжні; пропустити їх у чужу базу означає
+    засмітити її картками, яких ніхто не замовляв, і чужими руками.
+
+    Заявка без жодного контакту теж не йде: зіставити її нема за чим, а
+    картка з самим лише іменем -- це майбутній дубль на тезці.
+    """
+    if lead is None or lead.is_test:
+        return
+    if not (lead.email or lead.phone_e164 or lead.phone_raw):
+        return
+
+    emit(LEAD_CREATED, _lead_payload(lead))

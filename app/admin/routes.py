@@ -41,3 +41,4 @@ from app.admin import routes_media  # noqa: F401
 from app.admin import routes_backup  # noqa: F401
 from app.admin import routes_translations  # noqa: F401
 from app.admin import routes_perf  # noqa: F401
+from app.admin import routes_meta_leads  # noqa: F401
