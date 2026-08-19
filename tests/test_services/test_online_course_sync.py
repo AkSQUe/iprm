@@ -663,6 +663,7 @@ class TestDescriptionMemo:
         assert 'Новий' in course.remote_description_html
         assert 'Старий' not in course.remote_description_html
 
+
 def test_restored_course_with_changes_counts_as_updated_too(configured,
                                                             monkeypatch):
     """Звіт "повернувся 1, оновлено 0" читається як "дані ті самі"."""

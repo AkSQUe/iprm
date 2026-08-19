@@ -546,6 +546,7 @@ class TestEffectivePrice:
         course.remote_price = None
         assert 'ціна' in course.missing_for_publication
 
+
 # ----------------------------- черга довидачі -----------------------------
 
 class TestPendingProvisioning:
