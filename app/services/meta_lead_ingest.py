@@ -364,14 +364,14 @@ def ingest_lead(raw_lead, *, event=None):
         created_time=_created_time(raw_lead, event),
         page_id=_source_value(raw_lead, event, 'page_id'),
         form_id=_source_value(raw_lead, event, 'form_id'),
-        form_name=raw_lead.get('form_name'),
-        campaign_id=raw_lead.get('campaign_id'),
-        campaign_name=raw_lead.get('campaign_name'),
-        adset_id=raw_lead.get('adset_id'),
-        adset_name=raw_lead.get('adset_name'),
+        form_name=_clip(raw_lead.get('form_name'), 255),
+        campaign_id=_clip(raw_lead.get('campaign_id'), 64),
+        campaign_name=_clip(raw_lead.get('campaign_name'), 255),
+        adset_id=_clip(raw_lead.get('adset_id'), 64),
+        adset_name=_clip(raw_lead.get('adset_name'), 255),
         ad_id=_source_value(raw_lead, event, 'ad_id'),
-        ad_name=raw_lead.get('ad_name'),
-        platform=raw_lead.get('platform'),
+        ad_name=_clip(raw_lead.get('ad_name'), 255),
+        platform=_clip(raw_lead.get('platform'), 10),
         is_organic=bool(raw_lead.get('is_organic')),
         field_data=flat,
         raw_lead=raw_lead,
@@ -388,7 +388,7 @@ def ingest_lead(raw_lead, *, event=None):
         needs_attention=bool(reasons),
         attention_reason=' '.join(reasons) or None,
         is_repeat=is_repeat,
-        is_test=_is_test_lead(parsed, flat),
+        is_test=_is_test_lead(parsed),
         status=MetaLead.STATUS_NEW,
     )
 
@@ -482,7 +482,7 @@ def _alt_email_reason(user, alt_email):
     )
 
 
-def _is_test_lead(parsed, flat):
+def _is_test_lead(parsed):
     """Чи вважати заявку тестовою.
 
     Надійного прапорця Graph API не віддає: ліди з Lead Ads Testing Tool
