@@ -20,7 +20,16 @@
     var r = summary.getBoundingClientRect();
     panel.style.left = 'auto';
     // Прив'язуємо праву межу панелі до правої межі кнопки.
-    panel.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+    var right = Math.max(8, window.innerWidth - r.right);
+    // ...але не даємо вилізти за лівий край. Вузьке меню-список поруч із
+    // кнопкою в правій колонці вміщалось завжди; широка панель із формою
+    // (причина відмови) біля кнопки зліва опинялась за екраном -- виглядало
+    // так, ніби меню взагалі не відкривається.
+    var width = panel.offsetWidth;
+    if (window.innerWidth - right - width < 8) {
+      right = Math.max(8, window.innerWidth - width - 8);
+    }
+    panel.style.right = right + 'px';
     var ph = panel.offsetHeight;
     if (r.bottom + 4 + ph > window.innerHeight && r.top - 4 - ph > 0) {
       // Не влазить донизу -- відкриваємо вгору.
@@ -46,6 +55,35 @@
     if (!e.target.closest('.admin-actions-menu')) closeAll(null);
   });
 
-  window.addEventListener('resize', function () { closeAll(null); });
-  document.addEventListener('scroll', function () { closeAll(null); }, true);
+  function openMenu() {
+    return document.querySelector('details.admin-actions-menu[open]');
+  }
+
+  function focusInsideMenu() {
+    var el = document.activeElement;
+    return !!(el && el.closest && el.closest('.admin-actions-menu'));
+  }
+
+  /* Клавіатура на телефоні -- це теж resize. Поки курсор усередині меню,
+     переставляємо панель, а не закриваємо: інакше меню зникало рівно тоді,
+     коли людина почала друкувати. */
+  window.addEventListener('resize', function () {
+    var open = openMenu();
+    if (open && focusInsideMenu()) {
+      position(open);
+      return;
+    }
+    closeAll(null);
+  });
+
+  /* Слухаємо у фазі захоплення, бо scroll не спливає -- інакше не впіймати
+     прокрутку .admin-table-wrap. Але так само сюди прилітає scroll ВІД ПОЛЯ
+     ВВЕДЕННЯ: текст, довший за ширину поля, прокручує його вміст. Через це
+     меню закривалось на першому ж зайвому символі причини відмови. Тому
+     прокрутку зсередини меню пропускаємо. */
+  document.addEventListener('scroll', function (e) {
+    var t = e.target;
+    if (t && t.closest && t.closest('.admin-actions-menu')) return;
+    closeAll(null);
+  }, true);
 })();

@@ -570,6 +570,40 @@
   display: block;
 }
 
+/* Панель із ФОРМОЮ, а не списком дій. Меню-список живе на 224px і падінгу
+   6px, і форма в ньому виглядала чужою: поле причини відмови стискалось до
+   кількох видимих символів, підпис злипався з рамкою, а кнопка впиралась у
+   край. Тут -- ширина під введення й нормальні поля. */
+.admin-actions-menu__items--form {
+  min-width: 340px;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 16px;
+  gap: 12px;
+}
+
+.admin-actions-menu__items--form label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--apple-black);
+}
+
+.admin-actions-menu__items--form .form-group {
+  margin-bottom: 12px;
+}
+
+/* Поле на всю ширину панелі: інакше воно тримає власну ширину за замовчуванням
+   і в панелі лишається порожнє місце праворуч. */
+.admin-actions-menu__items--form .form-input {
+  width: 100%;
+}
+
+.admin-actions-menu__items--form button[type='submit'] {
+  width: 100%;
+  justify-content: center;
+}
+
 .admin-actions-menu__item {
   display: flex;
   align-items: center;

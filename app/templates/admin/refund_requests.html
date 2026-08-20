@@ -74,7 +74,17 @@
         <td>
           {% if req.quoted_amount is not none %}
             {{ req.quoted_amount | int }} &#8372;
-            <div class="admin-text-muted">{{ req.quoted_percent }}% від {{ req.order.payment_amount | int if req.order else '—' }} &#8372;</div>
+            {# Явно кажемо, що база -- СПЛАЧЕНЕ, а не прайс: payment_amount
+               уже за вирахуванням промокоду, і без цієї підказки цифра
+               поруч із дорожчим курсом читається як помилка. #}
+            <div class="admin-text-muted">
+              {{ req.quoted_percent }}% від {{ req.order.payment_amount | int if req.order else '—' }} &#8372; сплачених
+            </div>
+            {% if req.order and req.order.has_discount %}
+            <div class="admin-text-muted">
+              прайс {{ req.order.amount_before_discount | int }} &#8372;, знижка {{ req.order.discount_amount | int }} &#8372;
+            </div>
+            {% endif %}
           {% else %}
             <span class="admin-text-muted">—</span>
           {% endif %}
@@ -111,7 +121,7 @@
              нього заявка перетворюється на мовчазне "ні". #}
           <details class="admin-actions-menu">
             <summary class="btn-admin btn-admin--secondary btn-admin--sm">Відхилити</summary>
-            <div class="admin-actions-menu__items">
+            <div class="admin-actions-menu__items admin-actions-menu__items--form">
               <form method="POST" action="{{ url_for('admin.refund_request_reject', request_id=req.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-group">
