@@ -92,6 +92,35 @@
 }
 .materials-history__item::before { content: '·'; margin-right: 12px; }
 
+/* Коментар тренера. Помітний, але не тривожний: це не помилка, а те, що
+   людина написала про підготовлений набір. */
+.materials-trainer-note {
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  border: 1px solid var(--iprm-border);
+  border-left: 3px solid var(--iprm-info);
+  border-radius: var(--iprm-radius-sm, 8px);
+  background: var(--iprm-info-bg);
+  font-size: 0.92rem;
+}
+.materials-trainer-note__title { margin-right: 6px; color: var(--iprm-info); }
+.materials-trainer-note__text { color: var(--apple-gray-dark); }
+
+/* Комірка «Тренер» у зведенні: дата підтвердження і, якщо він щось написав,
+   сам текст -- обрізаний до трьох рядків, щоб один балакучий коментар не
+   розтягнув рядок таблиці на пів екрана. */
+.materials-trainer-cell__date { display: block; }
+.materials-trainer-cell__comment {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 32ch;
+  margin-top: 2px;
+  color: var(--apple-gray);
+  font-size: 0.82rem;
+}
+
 .materials-qty-input.is-over {
   border-color: var(--iprm-error);
   box-shadow: 0 0 0 3px rgba(215, 0, 21, 0.12);

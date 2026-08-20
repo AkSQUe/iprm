@@ -84,6 +84,10 @@
         <th>Дата</th>
         <th>Статус</th>
         <th>Позицій</th>
+        {# Підтвердження тренера видно у зведенні, а не лише на картці заходу:
+           івент-менеджер проходить саме цим списком, і «ще треба голок»
+           мусить трапитись йому на очі без зайвого кліку. #}
+        <th>Тренер</th>
         <th>Оновлено</th>
         <th>Дії</th>
       </tr>
@@ -95,6 +99,14 @@
         <td>{{ r.instance.start_date.strftime('%d.%m.%Y') if r.instance and r.instance.start_date else '—' }}</td>
         <td><span class="materials-status-badge materials-status-badge--{{ r.status }}">{{ r.status_label }}</span></td>
         <td>{{ r.items|length }}</td>
+        <td class="materials-trainer-cell">
+          {% if r.trainer_confirmed_at %}
+          <span class="materials-trainer-cell__date">{{ r.trainer_confirmed_at.strftime('%d.%m.%Y') }}</span>
+          {% else %}—{% endif %}
+          {% if r.trainer_comment %}
+          <span class="materials-trainer-cell__comment">{{ r.trainer_comment }}</span>
+          {% endif %}
+        </td>
         <td>{{ r.updated_at.strftime('%d.%m.%Y %H:%M') if r.updated_at else '—' }}</td>
         <td>
           <a href="{{ url_for('admin.instance_materials', instance_id=r.instance_id) }}"

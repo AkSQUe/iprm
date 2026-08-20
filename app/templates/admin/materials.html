@@ -74,7 +74,24 @@
     {% if reservation.sent_at %}<span class="materials-history__item">надіслано {{ reservation.sent_at.strftime('%d.%m.%Y %H:%M') }}</span>{% endif %}
     {% if reservation.consumed_at %}<span class="materials-history__item">списано {{ reservation.consumed_at.strftime('%d.%m.%Y %H:%M') }}</span>{% endif %}
     <span class="materials-history__item">позицій: {{ reservation.items|length }}</span>
+    {% if reservation.created_by %}<span class="materials-history__item">подав {{ reservation.created_by.full_name or reservation.created_by.email }}</span>{% endif %}
+    {% if reservation.trainer_confirmed_at %}
+    <span class="materials-history__item">тренер підтвердив {{ reservation.trainer_confirmed_at.strftime('%d.%m.%Y %H:%M') }}</span>
+    {% endif %}
   </div>
+
+  {# Підтвердження тренера читається САМЕ тут: далі по сторінці немає нічого,
+     що змусило б івент-менеджера відкрити ще один екран. Коментар («ще треба
+     голок») -- єдине, заради чого тренеру дали форму; без нього підтвердження
+     було обіцянкою, якої система не виконувала. #}
+  {% if reservation.trainer_comment %}
+  <div class="materials-trainer-note">
+    <strong class="materials-trainer-note__title">Коментар тренера{% if reservation.trainer_confirmed_at %} ({{ reservation.trainer_confirmed_at.strftime('%d.%m.%Y %H:%M') }}){% endif %}:</strong>
+    <span class="materials-trainer-note__text">{{ reservation.trainer_comment }}</span>
+  </div>
+  {% elif trainer_url and not reservation.trainer_confirmed_at %}
+  <p class="materials-summary__hint">Тренер ще не підтвердив перелік.</p>
+  {% endif %}
   {% endif %}
 
   {% if catalog_stale %}
