@@ -202,6 +202,14 @@ def create_app(config_name=None):
     app.jinja_env.filters['money'] = money
     app.jinja_env.filters['amount'] = format_amount
 
+    # Час у київській зоні. Колонки timezone=True лежать у UTC, і `strftime`
+    # без переведення друкував їх на три години раніше -- нічне замовлення
+    # виглядало вчорашнім. Решта адмінських шаблонів досі друкує UTC: перехід
+    # робиться посторінково, бо частина полів -- `date`, а частина вже
+    # київська (`_listing.now_kyiv`).
+    from app.utils import kyiv_dt
+    app.jinja_env.filters['kyiv'] = kyiv_dt
+
     # Дані перекладів для інлайн мовних вкладок в адмін-формах
     # (partials/_i18n_tabs.html). Єдине джерело -- translation_registry.
     from app.services.translation_registry import (

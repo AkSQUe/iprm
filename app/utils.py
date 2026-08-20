@@ -1,6 +1,6 @@
 import os
 import re
-from datetime import timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 import bleach
 from markupsafe import Markup
@@ -80,6 +80,34 @@ def ensure_utc(dt):
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)
     return dt
+
+
+def to_kyiv(value):
+    """Перевести datetime у київський час.
+
+    Колонки лежать у UTC, а шаблони друкували їх без переведення: замовлення,
+    оформлене о 00:40 київської ночі, показувалось учорашнім 21:40. Для
+    підпису під очима людини це просто неправда.
+
+    `date` (без часу) і None повертаються як є: у зсуві вони не потребують
+    нічого, а формат дати від нього не залежить. Naive-значення вважаємо UTC
+    -- те саме припущення, що й в `ensure_utc` (так їх віддає SQLite).
+    """
+    if not isinstance(value, datetime):
+        return value
+    return ensure_utc(value).astimezone(KYIV)
+
+
+def kyiv_dt(value, fmt='%d.%m.%Y %H:%M'):
+    """Jinja-фільтр `| kyiv`: підпис часу в київській зоні.
+
+    Порожнє значення -> порожній рядок, щоб шаблон не обставляв кожен виклик
+    перевіркою `{% if %}`.
+    """
+    value = to_kyiv(value)
+    if value is None:
+        return ''
+    return value.strftime(fmt)
 
 # Whitelist тегів, дозволених у rich-text полях адмінки (course.description,
 # faq.answer). Все інше (скрипти, iframe, event handlers) видаляється.
