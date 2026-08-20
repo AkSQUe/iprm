@@ -3,17 +3,20 @@ from flask_babel import lazy_gettext as _l
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
-from app.forms_medical import MedicalProfileFieldsMixin
+from app.forms_medical import MedicalProfileFieldsMixin, UserNameFieldsMixin
 from app.models.user import User
 
 
-class CertificateDataForm(MedicalProfileFieldsMixin, FlaskForm):
+class CertificateDataForm(UserNameFieldsMixin, MedicalProfileFieldsMixin, FlaskForm):
     """Анкета "Дані для сертифіката" (МОЗ №725 п.13) в особистому кабінеті.
 
     Винесена за рамки flow реєстрації/оплати (рішення 08.07.2026):
     заповнення -- умова отримання сертифіката з балами БПР, а не участі.
-    Усі поля -- з MedicalProfileFieldsMixin (спільні з формою завершення
-    реєстрації за токеном)."""
+    Поля -- з двох міксинів, спільних з формою завершення реєстрації за
+    токеном: МОЗ-поля (MedicalProfileFieldsMixin) та ПІБ, яке зберігається
+    в User (UserNameFieldsMixin). Прізвище й ім'я тут, а не на окремій
+    сторінці, щоб увесь ПІБ редагувався в одній формі -- по батькові й так
+    жило тільки тут."""
 
 
 class LoginForm(FlaskForm):

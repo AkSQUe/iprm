@@ -6,7 +6,7 @@ from wtforms.validators import (
     DataRequired, Length, Email, Optional, ValidationError,
 )
 
-from app.forms_medical import MedicalProfileFieldsMixin
+from app.forms_medical import MedicalProfileFieldsMixin, UserNameFieldsMixin
 from app.utils import UA_PHONE_RE, normalize_phone
 
 
@@ -93,24 +93,15 @@ class EventRegistrationForm(FlaskForm):
     consent_marketing = BooleanField()
 
 
-class ParticipantCompletionForm(MedicalProfileFieldsMixin, FlaskForm):
+class ParticipantCompletionForm(UserNameFieldsMixin, MedicalProfileFieldsMixin, FlaskForm):
     """Публічна форма самостійного завершення реєстрації за токеном.
 
     Учасник заповнює анкету повністю -- УСІ поля обов'язкові (на відміну від
     admin-форми, де частина опціональна). МОЗ-поля -- з
-    MedicalProfileFieldsMixin (спільні з анкетою в кабінеті).
+    MedicalProfileFieldsMixin, ПІБ -- з UserNameFieldsMixin (обидва спільні
+    з анкетою "Дані для сертифіката" в кабінеті).
     Реєстраційні/адмін-поля (статус, оплата, бали) сюди не виносяться --
     ними керує менеджер."""
-    last_name = StringField(
-        _l('Прізвище'),
-        validators=[DataRequired(message=_l('Прізвище обов\'язкове')), Length(max=100)],
-        render_kw={'autocomplete': 'family-name'},
-    )
-    first_name = StringField(
-        _l('Ім\'я'),
-        validators=[DataRequired(message=_l('Ім\'я обов\'язкове')), Length(max=100)],
-        render_kw={'autocomplete': 'given-name'},
-    )
     email = StringField(
         'Email',
         validators=[

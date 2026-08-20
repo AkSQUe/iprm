@@ -325,6 +325,12 @@ def certificate_data():
     учасник заповнює її тут, щоб отримати сертифікат з балами БПР.
     Після збереження бекфілимо порожні снапшоти specialty/workplace
     в активних реєстраціях (для звітів БПР/xlsx).
+
+    Тут же учасник редагує власне ПІБ: прізвище й ім'я лежать у `User`,
+    по батькові -- у `MedicalProfile`, і без цих двох полів ПІБ був би
+    розрізаний між кабінетом і адмінкою. Уже видані сертифікати не
+    переоформлюються -- `Certificate.recipient_name` є незмінним знімком,
+    тож про це попереджаємо в самій формі.
     """
     from app.auth.forms import CertificateDataForm
     from app.models.medical_profile import MedicalProfile
@@ -334,6 +340,8 @@ def certificate_data():
 
     if request.method == 'GET':
         form = CertificateDataForm(data={
+            'last_name': current_user.last_name or '',
+            'first_name': current_user.first_name or '',
             'user_type': (profile.participant_type if profile else '') or '',
             'middle_name': (profile.middle_name if profile else '') or '',
             'birth_date': profile.birth_date if profile else None,
@@ -352,6 +360,8 @@ def certificate_data():
             )
             db.session.add(profile)
             current_user.medical_profile = profile
+        current_user.last_name = (form.last_name.data or '').strip()
+        current_user.first_name = (form.first_name.data or '').strip()
         profile.participant_type = form.user_type.data
         profile.middle_name = (form.middle_name.data or '').strip() or None
         profile.birth_date = form.birth_date.data
@@ -399,7 +409,18 @@ def certificate_data():
             )
             flash(_('Помилка при збереженні. Спробуйте ще раз.'), 'error')
 
-    return render_template('auth/certificate_data.html', form=form)
+    # Нотис "старі сертифікати не переоформлюються" показуємо лише тому, кому
+    # він адресований -- інакше він лякав би кожного, хто вперше заповнює анкету.
+    has_certificates = db.session.query(
+        Certificate.query
+        .filter_by(user_id=current_user.id, revoked=False)
+        .exists()
+    ).scalar()
+
+    return render_template(
+        'auth/certificate_data.html', form=form,
+        has_certificates=has_certificates,
+    )
 
 
 @auth_bp.route('/account/certificates/<int:cert_id>/download')
