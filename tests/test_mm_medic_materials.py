@@ -7,6 +7,7 @@ Neither needs a database.
 """
 import hashlib
 import hmac
+import json
 import tempfile
 from pathlib import Path
 
@@ -202,3 +203,49 @@ def test_client_4xx_not_retried(monkeypatch):
     res = mmc.MMMedicClient('https://x', 's').create_reservation('r', {}, [{'sku': 'A', 'quantity': 1}])
     assert res.ok is False and res.http_status == 409
     assert calls['n'] == 1 and res.shortfalls
+
+
+# ----------------------------- submit / update-items (Task 1 routes) -----------------------------
+
+def test_submit_request_posts_items_and_event_meta_no_replace_partial(monkeypatch):
+    seen = {}
+
+    def fake_request(method, url, **kw):
+        seen['method'] = method
+        seen['url'] = url
+        seen['body'] = json.loads(kw['data'])
+        return _FakeResp(201, {'status': 'created', 'reservation': {}})
+
+    monkeypatch.setattr(mmc.requests, 'request', fake_request)
+    res = mmc.MMMedicClient('https://x', 's').submit_request(
+        'ref-1', {'event_title': 'Курс', 'event_starts_at': None},
+        [{'sku': 'A', 'quantity': 3}],
+    )
+    assert res.ok is True
+    assert seen['method'] == 'POST'
+    assert seen['url'].endswith('/reservations/ref-1/submit')
+    assert seen['body']['items'] == [{'sku': 'A', 'quantity': 3}]
+    assert seen['body']['event_title'] == 'Курс'
+    assert 'event_starts_at' not in seen['body']  # None dropped, like create_reservation
+    assert 'replace' not in seen['body']  # endpoint has no such concept
+    assert 'partial' not in seen['body']
+    assert 'external_ref' not in seen['body']  # ref travels in the URL, not the body
+
+
+def test_update_request_items_posts_to_items_endpoint(monkeypatch):
+    seen = {}
+
+    def fake_request(method, url, **kw):
+        seen['method'] = method
+        seen['url'] = url
+        seen['body'] = json.loads(kw['data'])
+        return _FakeResp(200, {'status': 'updated'})
+
+    monkeypatch.setattr(mmc.requests, 'request', fake_request)
+    res = mmc.MMMedicClient('https://x', 's').update_request_items(
+        'ref-1', [{'sku': 'A', 'quantity': 5}],
+    )
+    assert res.ok is True
+    assert seen['method'] == 'POST'
+    assert seen['url'].endswith('/reservations/ref-1/items')
+    assert seen['body'] == {'items': [{'sku': 'A', 'quantity': 5}]}

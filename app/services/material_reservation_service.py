@@ -219,6 +219,53 @@ def create_reservation(instance, items, catalog_by_sku, replace=False):
     return True, result, reservation
 
 
+def submit_request(instance, items, catalog_by_sku):
+    """File `items` [{sku, quantity}] on MM Medic as a request awaiting approval,
+    and persist locally. Unlike `create_reservation`, this does NOT put a hold on
+    stock -- the warehouse approves (or rejects) it separately, which is what
+    produces the actual hold on MM Medic's side.
+
+    Returns (ok, result, reservation).
+    """
+    client = get_client()
+    ref = external_ref_for(instance.id)
+    result = client.submit_request(ref, _event_meta(instance), items)
+    if not result.ok:
+        return False, result, None
+
+    reservation = get_reservation(instance.id)
+    if reservation is None:
+        reservation = MaterialReservation(instance_id=instance.id, external_ref=ref)
+        db.session.add(reservation)
+    reservation.status = MaterialReservationStatus.SUBMITTED
+    reservation.sent_at = datetime.now(timezone.utc)
+    reservation.consumed_at = None
+    reservation.actuals_reminder_sent_at = None  # fresh cycle -> reminder eligible again
+    reservation.last_response = result.data
+
+    # Rebuild the line snapshot from what we sent + catalog identity.
+    for existing in list(reservation.items):
+        reservation.items.remove(existing)
+    db.session.flush()
+    for it in items:
+        sku = it['sku']
+        cat = catalog_by_sku.get(sku, {})
+        reservation.items.append(MaterialReservationItem(
+            sku=sku,
+            name=cat.get('name'),
+            image_url=cat.get('image'),
+            # The approved quantity does not exist yet -- an unpicked, unapproved
+            # request has nothing to put in quantity_reserved (which the picking
+            # list and consumption reports treat as "on hold").
+            quantity_requested=it['quantity'],
+        ))
+    db.session.commit()
+    invalidate_catalog_cache()  # derived availability changed
+    # Note: the "request submitted" notification is sent by MM Medic to its
+    # storekeeper (warehouse managers); IPRM does not email the trainer.
+    return True, result, reservation
+
+
 def submit_actuals(instance, actuals, catalog_by_sku=None, request_id=None):
     """actuals: [{sku, actual_qty}]. Writes off stock on MM Medic + updates local.
 

@@ -312,15 +312,15 @@ def instance_materials_reserve(instance_id):
         return _redirect_page(instance_id)
 
     try:
-        ok, result, _res = mrs.create_reservation(instance, items, catalog_by_sku)
+        ok, result, _res = mrs.submit_request(instance, items, catalog_by_sku)
     except MMConfigError as exc:
         flash(str(exc), 'error')
         return _redirect_page(instance_id)
 
     if ok:
-        audit_logger.info('Admin %s reserved %d materials for instance %s',
+        audit_logger.info('Admin %s submitted %d materials for instance %s',
                           current_user.email, len(items), instance_id)
-        flash(f'Зарезервовано {len(items)} позицій на MM Medic', 'success')
+        flash(f'Подано на погодження {len(items)} позицій на MM Medic', 'success')
     else:
         _flash_result_error(result)
     return _redirect_page(instance_id)

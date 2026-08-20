@@ -176,6 +176,20 @@ class MMMedicClient:
         return self._request('POST', '/reservations', payload,
                              request_id=uuid.uuid4().hex)
 
+    def submit_request(self, external_ref: str, event_meta: dict,
+                       items: list, request_id: Optional[str] = None) -> MMResult:
+        payload = {
+            'items': items,
+            **{k: v for k, v in event_meta.items() if v is not None},
+        }
+        return self._request('POST', f'/reservations/{external_ref}/submit',
+                             payload, request_id=request_id or uuid.uuid4().hex)
+
+    def update_request_items(self, external_ref: str, items: list,
+                             request_id: Optional[str] = None) -> MMResult:
+        return self._request('POST', f'/reservations/{external_ref}/items',
+                             {'items': items}, request_id=request_id or uuid.uuid4().hex)
+
     def get_reservation(self, external_ref: str) -> MMResult:
         return self._request('GET', f'/reservations/{external_ref}')
 

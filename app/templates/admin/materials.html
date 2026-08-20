@@ -13,7 +13,7 @@
 {% set input_name = 'quantity' if qty_mode else 'actual' %}
 {% if mode == 'reserve' %}
   {% set form_action = url_for('admin.instance_materials_reserve', instance_id=instance.id) %}
-  {% set submit_label = 'Зберегти резервування' %}
+  {% set submit_label = 'Подати на погодження' %}
 {% elif mode == 'edit' %}
   {% set form_action = url_for('admin.instance_materials_edit', instance_id=instance.id) %}
   {% set submit_label = 'Зберегти зміни' %}
