@@ -98,9 +98,26 @@ class MaterialReservation(TimestampMixin, db.Model):
     last_response = db.Column(db.JSON, nullable=True)
     notes = db.Column(db.Text, nullable=True)
 
+    # Trainer confirmation: the trainer never logs in, they open a signed
+    # `/materials/<token>` link and either confirm the prepared set or leave a
+    # comment (or both -- see app/main/routes.py:trainer_materials_confirm).
+    # NULL means "not confirmed yet"; re-confirming updates the comment
+    # in place rather than erroring, so a clarification added later is not
+    # treated as a duplicate submission.
+    trainer_confirmed_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    trainer_comment = db.Column(db.Text, nullable=True)
+    # Who filed the request in the IPRM admin. IPRM has no role system, so
+    # this is the only accountability trail available (see plan 5.3).
+    created_by_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('users.id', ondelete='SET NULL'),
+        nullable=True,
+    )
+
     instance = db.relationship('CourseInstance', backref=db.backref(
         'material_reservations', lazy='selectin', cascade='all, delete-orphan',
     ))
+    created_by = db.relationship('User', foreign_keys=[created_by_id])
     items = db.relationship(
         'MaterialReservationItem',
         backref='reservation',

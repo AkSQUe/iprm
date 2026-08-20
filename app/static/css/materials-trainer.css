@@ -51,7 +51,61 @@
 .mt-sku { color: var(--apple-gray); font-size: 0.9rem; }
 .mt-empty { color: var(--apple-gray); }
 
+.mt-confirm {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--iprm-divider);
+}
+
+.mt-confirm-status {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--iprm-success-bg);
+  color: var(--iprm-success);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.mt-confirm-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mt-textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid var(--iprm-border-strong);
+  border-radius: var(--iprm-radius-sm);
+  font-family: var(--iprm-font);
+  font-size: 0.95rem;
+  color: var(--iprm-text);
+}
+
+.mt-textarea:focus {
+  outline: 2px solid var(--iprm-accent);
+  outline-offset: 1px;
+}
+
+.mt-confirm-btn {
+  align-self: flex-start;
+  padding: 10px 24px;
+  border: none;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-btn-bg);
+  color: var(--iprm-on-accent);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background var(--iprm-transition);
+}
+
+.mt-confirm-btn:hover { background: var(--iprm-btn-bg-hover); }
+
 @media (max-width: 560px) {
   .mt-card { padding: 18px; }
   .mt-table th, .mt-table td { padding: 8px 6px; font-size: 0.9rem; }
+  .mt-confirm-btn { align-self: stretch; }
 }

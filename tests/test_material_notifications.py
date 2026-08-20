@@ -156,6 +156,58 @@ def test_submit_request_stores_partner_response_not_sent_items(app, monkeypatch)
     )
 
 
+def test_submit_request_sets_created_by_id_for_logged_in_admin(app, monkeypatch):
+    """`created_by_id` is who filed the request in the IPRM admin -- the only
+    accountability trail IPRM has (no role system, plan 5.3). Task 2
+    deliberately left this unset (column didn't exist yet); this task adds
+    both the column and the assignment together."""
+    from types import SimpleNamespace
+
+    from flask_login import login_user
+
+    from app.models.user import User
+    from app.services import material_reservation_service as mrs
+
+    monkeypatch.setattr(mrs, 'get_client', lambda: SimpleNamespace(
+        submit_request=lambda ref, meta, items: SimpleNamespace(
+            ok=True, data={'status': 'created', 'reservation': {'items': []}}),
+    ))
+
+    with app.test_request_context('/'):
+        inst = _make_instance(slug_suffix='creator')
+        admin = User(email='admin-creator@example.com', is_admin=True)
+        db.session.add(admin)
+        db.session.flush()
+        login_user(admin)
+
+        ok, _result, reservation = mrs.submit_request(
+            inst, [{'sku': 'NDL-21', 'quantity': 5}])
+
+        assert ok is True
+        assert reservation.created_by_id == admin.id
+
+
+def test_submit_request_leaves_created_by_id_unset_outside_request_context(app, monkeypatch):
+    """No authenticated caller (e.g. a direct service-layer call, or a future
+    scheduler-driven resubmit) must not raise, and must not stamp a bogus
+    submitter."""
+    from types import SimpleNamespace
+
+    from app.services import material_reservation_service as mrs
+
+    monkeypatch.setattr(mrs, 'get_client', lambda: SimpleNamespace(
+        submit_request=lambda ref, meta, items: SimpleNamespace(
+            ok=True, data={'status': 'created', 'reservation': {'items': []}}),
+    ))
+
+    inst = _make_instance(slug_suffix='nocreator')
+    ok, _result, reservation = mrs.submit_request(
+        inst, [{'sku': 'NDL-21', 'quantity': 5}])
+
+    assert ok is True
+    assert reservation.created_by_id is None
+
+
 # ----------------------------- reverse status webhook (MM Medic -> IPRM) -----------------------------
 
 _MM_SECRET = 'reverse-webhook-secret'

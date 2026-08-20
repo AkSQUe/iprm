@@ -249,6 +249,22 @@ def create_reservation(instance, items, catalog_by_sku, replace=False):
     return True, result, reservation
 
 
+def _submitter_id():
+    """Хто подав заявку в ІПРМ -- `created_by_id`. IPRM has no role system, so
+    this is the only accountability trail available (plan 5.3). None outside
+    a request context or for an anonymous caller -- guarded the same way
+    `_actor()` in promo_service.py is, since `current_user` raises when
+    evaluated with no request context (e.g. a direct service-layer call in
+    tests or a future scheduler-driven resubmit)."""
+    try:
+        from flask_login import current_user
+        if current_user and current_user.is_authenticated:
+            return current_user.id
+    except Exception:
+        pass
+    return None
+
+
 def submit_request(instance, items):
     """File `items` [{sku, quantity}] on MM Medic as a request awaiting approval,
     and persist locally. Unlike `create_reservation`, this does NOT put a hold on
@@ -283,6 +299,9 @@ def submit_request(instance, items):
     reservation.consumed_at = None
     reservation.actuals_reminder_sent_at = None  # fresh cycle -> reminder eligible again
     reservation.last_response = result.data
+    submitter_id = _submitter_id()
+    if submitter_id is not None:
+        reservation.created_by_id = submitter_id
 
     remote = (result.data or {}).get('reservation') or {}
     apply_items(

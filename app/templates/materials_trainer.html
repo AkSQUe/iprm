@@ -41,6 +41,24 @@
     {% else %}
     <p class="mt-empty">{{ _('Для цього заходу ще немає позицій.') }}</p>
     {% endif %}
+
+    <div class="mt-confirm">
+      {% if reservation.trainer_confirmed_at %}
+      <p class="mt-confirm-status">
+        {{ _('Підтверджено') }}
+        {{ reservation.trainer_confirmed_at.strftime('%d.%m.%Y %H:%M') }}
+      </p>
+      {% endif %}
+      <form class="mt-confirm-form" method="post"
+            action="{{ url_for('main.trainer_materials_confirm', token=token) }}">
+        {{ form.hidden_tag() }}
+        {{ form.comment(class_='mt-textarea') }}
+        <button type="submit" class="mt-confirm-btn">
+          {{ _('Підтверджую') if not reservation.trainer_confirmed_at
+             else _('Оновити') }}
+        </button>
+      </form>
+    </div>
   </div>
 </section>
 {% endblock %}

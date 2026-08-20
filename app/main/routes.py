@@ -23,6 +23,7 @@ def index():
 def trainer_materials(token):
     """Public read-only view of an event's reserved materials, opened by trainers
     via a signed link (no login). 404 on a bad/unknown token or no reservation."""
+    from app.main.forms import TrainerConfirmForm
     from app.services import material_reservation_service as mrs
     from app.models.course_instance import CourseInstance
     from app.models.material_reservation import MaterialReservation
@@ -34,8 +35,41 @@ def trainer_materials(token):
     reservation = MaterialReservation.query.filter_by(instance_id=instance_id).first()
     if instance is None or reservation is None:
         abort(404)
+    form = TrainerConfirmForm(comment=reservation.trainer_comment)
     return render_template('materials_trainer.html',
-                           instance=instance, reservation=reservation)
+                           instance=instance, reservation=reservation, form=form,
+                           token=token)
+
+
+@main_bp.route('/materials/<token>/confirm', methods=['POST'], localize=False)
+@limiter.limit('60 per minute')
+def trainer_materials_confirm(token):
+    """Trainer confirms the prepared kit (or leaves a comment about what's
+    missing -- see app/main/forms.py:TrainerConfirmForm). One action, not two:
+    confirmation always happens, the comment is free text beside it. Same
+    signed token as the read-only page, no login. Re-confirming (a trainer
+    adding a clarification later) updates the comment in place rather than
+    erroring or duplicating the confirmation timestamp."""
+    from app.main.forms import TrainerConfirmForm
+    from app.services import material_reservation_service as mrs
+    from app.models.material_reservation import MaterialReservation
+
+    instance_id = mrs.load_trainer_token(token)
+    if instance_id is None:
+        abort(404)
+    reservation = MaterialReservation.query.filter_by(instance_id=instance_id).first()
+    if reservation is None:
+        abort(404)
+
+    form = TrainerConfirmForm()
+    if form.validate_on_submit():
+        from datetime import datetime, timezone
+        reservation.trainer_comment = (form.comment.data or '').strip() or None
+        if reservation.trainer_confirmed_at is None:
+            reservation.trainer_confirmed_at = datetime.now(timezone.utc)
+        db.session.commit()
+        flash(_('Дякуємо! Ваше підтвердження отримано.'), 'success')
+    return redirect(url_for('main.trainer_materials', token=token))
 
 
 @main_bp.route('/r/<token>', localize=False)
