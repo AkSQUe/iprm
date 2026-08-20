@@ -63,11 +63,7 @@ def trainer_materials_confirm(token):
 
     form = TrainerConfirmForm()
     if form.validate_on_submit():
-        from datetime import datetime, timezone
-        reservation.trainer_comment = (form.comment.data or '').strip() or None
-        if reservation.trainer_confirmed_at is None:
-            reservation.trainer_confirmed_at = datetime.now(timezone.utc)
-        db.session.commit()
+        mrs.confirm_reservation(reservation, form.comment.data)
         flash(_('Дякуємо! Ваше підтвердження отримано.'), 'success')
     return redirect(url_for('main.trainer_materials', token=token))
 
