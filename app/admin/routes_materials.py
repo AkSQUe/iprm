@@ -312,7 +312,7 @@ def instance_materials_reserve(instance_id):
         return _redirect_page(instance_id)
 
     try:
-        ok, result, _res = mrs.submit_request(instance, items, catalog_by_sku)
+        ok, result, _res = mrs.submit_request(instance, items)
     except MMConfigError as exc:
         flash(str(exc), 'error')
         return _redirect_page(instance_id)

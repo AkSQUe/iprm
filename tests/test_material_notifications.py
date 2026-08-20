@@ -107,6 +107,55 @@ def test_actuals_reminder_not_marked_without_recipients(app, monkeypatch):
     assert res.actuals_reminder_sent_at is None  # left NULL -> retried later
 
 
+# ----------------------------- mrs.submit_request (IPRM -> MM Medic) -----------------------------
+
+def test_submit_request_stores_partner_response_not_sent_items(app, monkeypatch):
+    """MM Medic's `submit()` is idempotent on an already-open document: a repeat
+    submit does NOT apply the new items, it returns the existing document as-is
+    ('exists', 200). The local snapshot must mirror what MM Medic actually holds
+    (the response), not what this particular call sent -- otherwise a second
+    submit with different quantities silently desyncs IPRM's picking list from
+    the real document, which never received those quantities at all.
+    """
+    from types import SimpleNamespace
+
+    from app.services import material_reservation_service as mrs
+
+    inst = _make_instance(slug_suffix='resub')
+
+    # What MM Medic's response would look like: first call creates the
+    # document with what was sent; the resubmit below returns that SAME
+    # document unchanged, regardless of what this call's `items` say.
+    responses = [
+        {'status': 'created', 'reservation': {
+            'items': [{'sku': 'NDL-21', 'name': 'Голка 21G', 'quantity_requested': 5}]}},
+        {'status': 'exists', 'reservation': {
+            'items': [{'sku': 'NDL-21', 'name': 'Голка 21G', 'quantity_requested': 5}]}},
+    ]
+    sent = []
+
+    class _Client:
+        def submit_request(self, ref, event_meta, items):
+            sent.append(items)
+            return SimpleNamespace(ok=True, data=responses.pop(0))
+
+    monkeypatch.setattr(mrs, 'get_client', lambda: _Client())
+
+    ok1, _r1, res1 = mrs.submit_request(inst, [{'sku': 'NDL-21', 'quantity': 5}])
+    assert ok1 is True
+    assert res1.items[0].quantity_requested == 5
+
+    # Resubmit with a DIFFERENT quantity. The fake mirrors what the real
+    # `submit()` does for an already-open ref: it ignores this payload and
+    # answers with the original document.
+    ok2, _r2, res2 = mrs.submit_request(inst, [{'sku': 'NDL-21', 'quantity': 9}])
+    assert ok2 is True
+    assert sent[1] == [{'sku': 'NDL-21', 'quantity': 9}]  # this IS what we sent
+    assert res2.items[0].quantity_requested == 5, (
+        'local snapshot must mirror what MM Medic returned, not what we sent'
+    )
+
+
 # ----------------------------- reverse status webhook (MM Medic -> IPRM) -----------------------------
 
 _MM_SECRET = 'reverse-webhook-secret'

@@ -219,11 +219,22 @@ def create_reservation(instance, items, catalog_by_sku, replace=False):
     return True, result, reservation
 
 
-def submit_request(instance, items, catalog_by_sku):
+def submit_request(instance, items):
     """File `items` [{sku, quantity}] on MM Medic as a request awaiting approval,
     and persist locally. Unlike `create_reservation`, this does NOT put a hold on
     stock -- the warehouse approves (or rejects) it separately, which is what
     produces the actual hold on MM Medic's side.
+
+    The local row snapshot is built from the partner's RESPONSE
+    (`result.data['reservation']['items']`), not from the `items` we sent. The
+    response is the authority; our payload is only a request -- MM Medic is
+    free to leave it unapplied (a repeat submit on an already-open document
+    returns that document as-is, unchanged). Building rows from what we sent
+    would silently drift the local snapshot from what MM Medic actually holds
+    in exactly that case. `apply_items` is the one place this partner-items-
+    to-local-rows mapping lives (the status webhook and
+    `reconcile_reservation` already go through it); a second, hand-rolled copy
+    here is exactly what its own docstring warns will drift on the first edit.
 
     Returns (ok, result, reservation).
     """
@@ -243,22 +254,12 @@ def submit_request(instance, items, catalog_by_sku):
     reservation.actuals_reminder_sent_at = None  # fresh cycle -> reminder eligible again
     reservation.last_response = result.data
 
-    # Rebuild the line snapshot from what we sent + catalog identity.
-    for existing in list(reservation.items):
-        reservation.items.remove(existing)
-    db.session.flush()
-    for it in items:
-        sku = it['sku']
-        cat = catalog_by_sku.get(sku, {})
-        reservation.items.append(MaterialReservationItem(
-            sku=sku,
-            name=cat.get('name'),
-            image_url=cat.get('image'),
-            # The approved quantity does not exist yet -- an unpicked, unapproved
-            # request has nothing to put in quantity_reserved (which the picking
-            # list and consumption reports treat as "on hold").
-            quantity_requested=it['quantity'],
-        ))
+    remote = (result.data or {}).get('reservation') or {}
+    apply_items(
+        reservation, remote.get('items') or [],
+        MaterialReservationStatus.SUBMITTED, True,
+    )
+
     db.session.commit()
     invalidate_catalog_cache()  # derived availability changed
     # Note: the "request submitted" notification is sent by MM Medic to its
