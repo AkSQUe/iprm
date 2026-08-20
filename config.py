@@ -1,7 +1,15 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Guarded: tests/test_config_dev_database.py reloads this module per case
+# via importlib.reload() to recompute class-level SQLALCHEMY_DATABASE_URI
+# from a monkeypatched os.environ. An unguarded load_dotenv() re-reads .env
+# on every reload and repopulates keys the test deliberately deleted
+# (override=False only protects keys still PRESENT in os.environ, not ones
+# a test just removed), silently breaking the fallback-to-DATABASE_URL case.
+if not os.environ.get('_DOTENV_LOADED'):
+    load_dotenv()
+    os.environ['_DOTENV_LOADED'] = '1'
 
 
 class Config:
@@ -102,6 +110,15 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SESSION_COOKIE_SECURE = False
+    # Окрема база для розробки. Доти `DATABASE_URL` був один на все, і
+    # будь-яка міграція вперше виконувалась у бойовій базі -- у проєкті без
+    # dev-контуру це не необережність, а єдиний спосіб узагалі перевірити DDL.
+    # Fallback на `DATABASE_URL` лишається свідомо: на машині без dev-бази
+    # додаток має піднятись, а не впасти на імпорті конфігу.
+    SQLALCHEMY_DATABASE_URI = (
+        os.environ.get('DATABASE_URL_DEV')
+        or os.environ.get('DATABASE_URL', 'sqlite:///iprm.db')
+    )
 
 
 class ProductionConfig(Config):
