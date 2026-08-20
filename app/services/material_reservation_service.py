@@ -196,25 +196,6 @@ def get_reservation(instance_id):
     return MaterialReservation.query.filter_by(instance_id=instance_id).first()
 
 
-def confirm_reservation(reservation, comment):
-    """Trainer confirms the prepared kit via the public `/materials/<token>`
-    page (app/main/routes.py:trainer_materials_confirm). Local-only -- MM
-    Medic is not involved, this is IPRM's own record of what the trainer
-    said, since the trainer never logs in anywhere.
-
-    Idempotent: `trainer_confirmed_at` is set only the first time. A second
-    confirmation (e.g. a clarification the trainer adds an hour later) must
-    not look like an error, and must not move the original timestamp.
-    `trainer_comment` is always overwritten with what was submitted --
-    including clearing it to NULL when the field comes back blank, so what
-    is in the box is always what gets saved.
-    """
-    reservation.trainer_comment = (comment or '').strip() or None
-    if reservation.trainer_confirmed_at is None:
-        reservation.trainer_confirmed_at = datetime.now(timezone.utc)
-    db.session.commit()
-
-
 def _event_meta(instance) -> dict:
     title = getattr(instance, 'effective_title', None)
     if not title and instance.course is not None:

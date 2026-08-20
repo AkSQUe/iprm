@@ -80,7 +80,7 @@ class TrainerConfirmForm(FlaskForm):
     необов'язковий (тренер, що дописав «ще треба голок», підтвердив і
     повідомив одночасно, а не обирав між двома кнопками)."""
     comment = TextAreaField(
-        _l('Коментар'),
+        'comment',
         validators=[
             Optional(),
             Length(max=2000, message=_l('Коментар не може перевищувати 2000 символів')),

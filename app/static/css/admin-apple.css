@@ -1553,22 +1553,8 @@
   white-space: nowrap;
 }
 
-/* Форма посилання на встановлення пароля живе в меню рядка, де є ширина:
-   в комірці таблиці поле було ширшим за всю колонку. */
-.admin-login-link {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px;
-  border-bottom: 1px solid var(--iprm-divider);
-  margin-bottom: 6px;
-}
-
-.admin-login-link__label {
-  font-size: 0.75rem;
-  color: var(--apple-gray);
-}
-
+/* Позначка «надіслано» під кнопкою в панелі-формі. Сама форма стилю не
+   потребує: для неї є `.admin-actions-menu__items--form`. */
 .admin-actions-menu__note {
   display: block;
   padding: 4px 8px;

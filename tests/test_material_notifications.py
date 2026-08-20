@@ -208,48 +208,6 @@ def test_submit_request_leaves_created_by_id_unset_outside_request_context(app, 
     assert reservation.created_by_id is None
 
 
-# ----------------------------- mrs.confirm_reservation (trainer confirms) -----------------------------
-
-def test_confirm_reservation_is_idempotent(app):
-    """Unit-level (no Flask test client, no route) proof of the idempotency
-    rule the route relies on: `trainer_confirmed_at` is set only the first
-    time, and a second confirmation with a different comment updates the
-    comment without moving the original timestamp. This test would fail if
-    either the `is None` guard or the comment overwrite were removed."""
-    from app.services import material_reservation_service as mrs
-
-    inst = _make_instance(slug_suffix='confirm-svc')
-    res = _make_reservation(inst, slug_suffix='confirm-svc')
-
-    mrs.confirm_reservation(res, 'все на місці')
-    first_confirmed_at = res.trainer_confirmed_at
-    assert first_confirmed_at is not None
-    assert res.trainer_comment == 'все на місці'
-
-    mrs.confirm_reservation(res, 'ще треба голок')
-
-    assert res.trainer_confirmed_at == first_confirmed_at, (
-        're-confirming must not move the original confirmation timestamp'
-    )
-    assert res.trainer_comment == 'ще треба голок'
-
-
-def test_confirm_reservation_blank_comment_clears_previous(app):
-    """What is in the box is what gets saved: submitting an empty comment on
-    a re-confirm clears the earlier one rather than silently preserving it."""
-    from app.services import material_reservation_service as mrs
-
-    inst = _make_instance(slug_suffix='confirm-blank')
-    res = _make_reservation(inst, slug_suffix='confirm-blank')
-
-    mrs.confirm_reservation(res, 'спочатку був коментар')
-    assert res.trainer_comment == 'спочатку був коментар'
-
-    mrs.confirm_reservation(res, '   ')  # whitespace-only, same as blank
-
-    assert res.trainer_comment is None
-
-
 # ----------------------------- reverse status webhook (MM Medic -> IPRM) -----------------------------
 
 _MM_SECRET = 'reverse-webhook-secret'

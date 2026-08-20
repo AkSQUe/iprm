@@ -184,25 +184,30 @@
                 <summary class="btn-admin btn-admin--secondary btn-admin--sm" title="Ще дії" aria-label="Ще дії">
                   {{ icon('more_vert') }}
                 </summary>
-                <div class="admin-actions-menu__items">
+                {# Панель саме під форму, а не список дій -- той самий
+                   варіант, що у відмові в заявках на повернення. Власний
+                   стиль тут не працює: `.admin-actions-menu__items form`
+                   специфічніше і робить форму блоковою. #}
+                <div class="admin-actions-menu__items admin-actions-menu__items--form">
                   {# Посилання на встановлення пароля Sintegrum не віддає через
                      API: адмін бере його в кабінеті партнера руками, вставляє
                      сюди -- і покупцю йде лист. Єдиний ручний крок. #}
-                  <form method="POST" action="{{ url_for('admin.online_order_login_link', enrollment_id=order.id) }}"
-                        class="admin-login-link">
+                  <form method="POST" action="{{ url_for('admin.online_order_login_link', enrollment_id=order.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <label class="admin-login-link__label" for="login-link-{{ order.id }}">
-                      Посилання на встановлення пароля
-                    </label>
-                    <input type="url" name="login_link" id="login-link-{{ order.id }}"
-                           class="form-input form-input--sm"
-                           placeholder="https://sntgr.me/..." required
-                           value="{{ order.login_link or '' }}">
+                    <div class="form-group">
+                      <label for="login-link-{{ order.id }}">Посилання на встановлення пароля</label>
+                      <input type="url" name="login_link" id="login-link-{{ order.id }}"
+                             class="form-input"
+                             placeholder="https://sntgr.me/..." required
+                             value="{{ order.login_link or '' }}">
+                    </div>
                     <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">
                       {{ 'Надіслати ще раз' if order.login_link_sent_at else 'Надіслати вхід' }}
                     </button>
                     {% if order.login_link_sent_at %}
-                    <small class="admin-text-muted">надіслано {{ order.login_link_sent_at.strftime('%d.%m %H:%M') }}</small>
+                    <small class="admin-text-muted admin-actions-menu__note">
+                      надіслано {{ order.login_link_sent_at.strftime('%d.%m %H:%M') }}
+                    </small>
                     {% endif %}
                   </form>
 

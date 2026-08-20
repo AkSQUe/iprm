@@ -52,8 +52,7 @@
       <form class="mt-confirm-form" method="post"
             action="{{ url_for('main.trainer_materials_confirm', token=token) }}">
         {{ form.hidden_tag() }}
-        <label for="comment" class="mt-label">{{ _('Коментар') }}</label>
-        {{ form.comment(class_='mt-textarea', id='comment') }}
+        {{ form.comment(class_='mt-textarea') }}
         <button type="submit" class="mt-confirm-btn">
           {{ _('Підтверджую') if not reservation.trainer_confirmed_at
              else _('Оновити') }}

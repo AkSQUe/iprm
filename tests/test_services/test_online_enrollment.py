@@ -897,3 +897,82 @@ class TestAssignmentIsConfirmed:
         assert enrollment.provisioned_at is None
         assert enrollment.access_token is None
         assert 'не з\'явився' in (enrollment.provision_error or '')
+
+
+class TestAlreadyAssigned:
+    """Сценарій ONL-5: партнер відмовляє, бо курс уже призначено.
+
+    422 «Комбінацію 273-32 з User Id and Position Id уже використано»
+    означає, що потрібний стан ДОСЯГНУТО. Трактувати це як збій -- лишити
+    людину без доступу назавжди: кожна наступна спроба отримає те саме 422,
+    а в адмінці й далі світитиметься «Не видано» з кнопкою «Видати доступ».
+    """
+
+    def _result(self, **kw):
+        from app.services.sintegrum_client import SintegrumResult
+
+        return SintegrumResult(**kw)
+
+    def test_422_with_confirmation_is_success(self, app, enrollment):
+        enrollment.course.access_url = None
+        db.session.flush()
+        provider, calls = TestStudentApiProvider()._provider(
+            app,
+            assign=self._result(ok=False, http_status=422,
+                                error='Sintegrum 422: уже використано'),
+            progress=self._result(ok=True, data=[
+                {'user_id': 777, 'position_id': enrollment.course.sintegrum_id},
+            ]),
+        )
+
+        result = provider.provision(enrollment)
+
+        assert result.student_id == 777
+        assert ('progress', 777) in calls
+
+    def test_422_without_confirmation_is_still_success(self, app, enrollment):
+        """Звірка не відповіла -- віримо самому партнеру: пара вже існує."""
+        enrollment.course.access_url = None
+        db.session.flush()
+        provider, _calls = TestStudentApiProvider()._provider(
+            app,
+            assign=self._result(ok=False, http_status=422, error='уже використано'),
+            progress=self._result(ok=False, error='таймаут'),
+        )
+
+        assert provider.provision(enrollment).student_id == 777
+
+    def test_other_failure_without_confirmation_is_an_error(self, app, enrollment):
+        """500 -- це справді збій, а не «вже зроблено»."""
+        enrollment.course.access_url = None
+        db.session.flush()
+        provider, _calls = TestStudentApiProvider()._provider(
+            app,
+            assign=self._result(ok=False, http_status=500, error='Sintegrum 500'),
+            progress=self._result(ok=False, error='таймаут'),
+        )
+
+        with pytest.raises(sintegrum_access.AccessProvisionError):
+            provider.provision(enrollment)
+
+    def test_order_becomes_provisioned_after_the_fix(self, ops, enrollment,
+                                                     monkeypatch):
+        """Те, заради чого все: рядок в адмінці перестає брехати."""
+        enrollment.course.access_url = None
+        db.session.flush()
+        provider, _calls = TestStudentApiProvider()._provider(
+            None,
+            assign=self._result(ok=False, http_status=422, error='уже використано'),
+            progress=self._result(ok=True, data=[
+                {'user_id': 777, 'position_id': enrollment.course.sintegrum_id},
+            ]),
+        )
+        monkeypatch.setattr(sintegrum_access, 'get_provider',
+                            lambda course=None, settings=None: provider)
+
+        ops.update_enrollment_status(enrollment, 'paid', 'pay-1', amount=4500)
+        db.session.refresh(enrollment)
+
+        assert enrollment.provisioned_at is not None
+        assert enrollment.access_token
+        assert enrollment.provision_error is None
