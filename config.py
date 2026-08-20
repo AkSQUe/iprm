@@ -1,15 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-# Guarded: tests/test_config_dev_database.py reloads this module per case
-# via importlib.reload() to recompute class-level SQLALCHEMY_DATABASE_URI
-# from a monkeypatched os.environ. An unguarded load_dotenv() re-reads .env
-# on every reload and repopulates keys the test deliberately deleted
-# (override=False only protects keys still PRESENT in os.environ, not ones
-# a test just removed), silently breaking the fallback-to-DATABASE_URL case.
-if not os.environ.get('_DOTENV_LOADED'):
-    load_dotenv()
-    os.environ['_DOTENV_LOADED'] = '1'
+load_dotenv()
 
 
 class Config:
