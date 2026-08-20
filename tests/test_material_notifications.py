@@ -794,9 +794,17 @@ def test_mm_status_webhook_null_cost_stays_null(app, client):
     Записати сюди `false` означало б стверджувати «собівартість неповна» там,
     де її ще не рахували: до відвантаження партій у рядка немає взагалі.
     """
+    from decimal import Decimal
     _enable_mm()
     inst = _make_instance(slug_suffix='cost2')
     res = _make_reservation(inst, slug_suffix='cost2')
+    # Рядок ЗАСІЯНО навмисно. Свіжий рядок і так має None в обох колонках,
+    # тож без цього тест проходив би навіть після повного відкату
+    # функціональності -- тобто не перевіряв би нічого. Перевіряємо саме
+    # повернення в None, а не його наявність.
+    res.items[0].cost_uah = Decimal('50.00')
+    res.items[0].cost_complete = True
+    db.session.commit()
 
     r = _post_status(client, {
         'external_ref': res.external_ref,
@@ -828,6 +836,38 @@ def test_mm_status_webhook_zero_cost_is_kept(app, client):
     item = MaterialReservation.query.get(res.id).items[0]
     assert item.cost_uah == Decimal('0.00')
     assert item.cost_complete is True
+
+
+def test_mm_status_webhook_incomplete_cost_is_stored_as_false(app, client):
+    """Справжня сума з ознакою «порахована не вся» лягає саме як `False`.
+
+    `cost_complete=False` -- це те, чим звіт маржинальності позначає колонку
+    як приблизну: частина партій рядка не мала ціни, тож сума занижена.
+    Регресія, що зашила б сюди `True`, пройшла б усі тести в обох
+    репозиторіях, і звіт читався б як точний.
+
+    Наявні тести перевіряли `False` лише в парі з порожньою вартістю -- а там
+    він і так примусово стає `None`, тобто гілку зі справжньою сумою не
+    перевіряв ніхто.
+    """
+    from decimal import Decimal
+    _enable_mm()
+    inst = _make_instance(slug_suffix='cost5')
+    res = _make_reservation(inst, slug_suffix='cost5')
+
+    r = _post_status(client, {
+        'external_ref': res.external_ref,
+        'status': 'completed',
+        'items': [{'sku': 'NDL-21', 'quantity_issued': 10, 'quantity_returned': 0,
+                   'cost_uah': '80.00', 'cost_complete': False}],
+    })
+
+    assert r.status_code == 200
+    item = MaterialReservation.query.get(res.id).items[0]
+    assert item.cost_uah == Decimal('80.00')
+    # Саме `False`, не `None` і не «щось хибне»: `None` означає «не рахували»,
+    # а тут рахували -- просто не все.
+    assert item.cost_complete is False
 
 
 def test_mm_status_webhook_old_payload_keeps_existing_cost(app, client):
