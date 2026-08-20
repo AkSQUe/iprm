@@ -510,12 +510,25 @@ _TERMINAL_BRANCHES = (
 )
 
 
+def _holds_exist(local_status) -> bool:
+    """Чи означає цей стан, що утримання на боці MM Medic ІСНУЮТЬ.
+
+    Від RESERVED і вище по основній лінії. До погодження їх немає за
+    побудовою циклу (подання складу не займає), а гілки відмови й скасування
+    в `_STAGE_ORDER` не входять -- і не мають: писати «зарезервовано» в
+    скасовану заявку нема підстав.
+    """
+    return (_STAGE_ORDER.get(local_status, -1)
+            >= _STAGE_ORDER[MaterialReservationStatus.RESERVED])
+
+
 def _may_advance(current, new_status) -> bool:
     """Чи має звірка право застосувати цей статус."""
     if new_status in _TERMINAL_BRANCHES:
         return True
     return (_STAGE_ORDER.get(new_status, -1)
             > _STAGE_ORDER.get(current, -1))
+
 
 #: Статус на боці MM Medic -> локальний. ЄДИНЕ джерело цієї відповідності:
 #: приймач вебхука (`app/api/mm_status.py`) імпортує саме її. Дві літеральні
@@ -660,7 +673,19 @@ def apply_items(reservation, items, local_status, has_items_key):
         # живий. У термінальному штовху воно вже означає спожите (див.
         # докстрінг), тож погодженого в такому payload немає взагалі, і
         # чіпати `quantity_reserved` не можна.
-        if approved is None and not terminal:
+        #
+        # І так само не можна ДО погодження. MM Medic шле `quantity` завжди, а
+        # для поданого документа воно дорівнює ЗАПИТАНОМУ
+        # (`partner_event_reservation_service._serialize_item`: поки немає
+        # погодженого, у legacy-поле кладеться `quantity_requested`). Доки
+        # відкат спрацьовував на будь-якому непідсумковому статусі, і відповідь
+        # на подання, і штовх `submitted` писали запитану кількість у
+        # `quantity_reserved` -- тобто ІПРМ показував резерв, якого не існує:
+        # у колонці «Зарезервовано» на сторінці тренера (саме те число, яке ми
+        # просимо його підтвердити), у пікінг-листі, у підсумках зведення і в
+        # xlsx-експорті. Відкат писався під payload-и форми утримань, тож і
+        # дійсний він лише там, де утримання є, -- від RESERVED і вище.
+        if approved is None and not terminal and _holds_exist(local_status):
             approved = legacy_qty
 
         fields = {
@@ -673,6 +698,13 @@ def apply_items(reservation, items, local_status, has_items_key):
         }
         if approved is not None:
             fields['quantity_reserved'] = approved
+        elif local_status == MaterialReservationStatus.SUBMITTED:
+            # У поданої заявки утримань НЕМАЄ за визначенням -- нуль тут це
+            # факт, а не відсутність даних. Важливо для другого кола: після
+            # відмови документ подають заново, і стара погоджена кількість
+            # інакше лишалась би висіти як діючий резерв. Симетрично до
+            # скидання `quantity_actual` при поверненні в RESERVED нижче.
+            fields['quantity_reserved'] = 0
 
         # Гроші за видане. Відсутнє поле означає «не повідомили» (старий
         # MM Medic), і тоді вже відоме значення лишається; явний null означає
