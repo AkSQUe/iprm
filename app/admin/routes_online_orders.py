@@ -12,7 +12,7 @@
 """
 import logging
 
-from flask import flash, redirect, render_template, request, url_for
+from flask import flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy.orm import contains_eager, joinedload
 
@@ -24,6 +24,18 @@ from app.models.online_course import OnlineCourse
 from app.models.online_enrollment import OnlineEnrollment
 from app.models.user import User
 from app.utils import ensure_utc
+
+def _wants_json():
+    """Клієнт очікує JSON (inline-AJAX), а не redirect (noscript-форма).
+
+    Той самий контракт, що в routes_instances: спільний
+    admin-status-select.js шле X-Requested-With і Accept: application/json.
+    """
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return True
+    accept = request.accept_mimetypes
+    return accept.best_match(['application/json', 'text/html']) == 'application/json'
+
 
 audit_logger = logging.getLogger('audit')
 
@@ -170,8 +182,15 @@ def online_order_set_payment(enrollment_id):
     from app.services.liqpay import get_liqpay_service
     from app.services.payment_ops import PaymentOps
 
-    new_status = request.form.get('payment_status', '')
+    # `status` -- поле спільного admin-status-select.js, `payment_status` --
+    # історична назва з noscript-форми. Приймаємо обидва: інакше сторінка
+    # працювала б або з JS, або без нього.
+    wants_json = _wants_json()
+    new_status = (request.form.get('status')
+                  or request.form.get('payment_status') or '').strip()
     if new_status not in [key for key, _ in PAYMENT_OPTIONS]:
+        if wants_json:
+            return jsonify({'ok': False, 'error': 'Невідомий статус оплати'}), 400
         flash('Невідомий статус оплати', 'error')
         return redirect(url_for('admin.online_orders_list'))
 
@@ -186,6 +205,8 @@ def online_order_set_payment(enrollment_id):
         .first()
     )
     if enrollment is None:
+        if wants_json:
+            return jsonify({'ok': False, 'error': 'Замовлення не знайдено'}), 404
         flash('Замовлення не знайдено', 'error')
         return redirect(url_for('admin.online_orders_list'))
 
@@ -201,13 +222,22 @@ def online_order_set_payment(enrollment_id):
         current_user.email, enrollment.order_id, old_status, new_status, message,
     )
 
+    labels = dict(PAYMENT_OPTIONS)
     if ok and message == 'ok':
-        flash(f'Оплату змінено на «{dict(PAYMENT_OPTIONS)[new_status]}»', 'success')
+        if wants_json:
+            return jsonify({'ok': True, 'status': enrollment.payment_status,
+                            'status_label': labels[enrollment.payment_status]})
+        flash(f'Оплату змінено на «{labels[new_status]}»', 'success')
     elif ok:
         # Перехід не відбувся, але це не помилка: наприклад, статус уже той
         # самий. Мовчати не можна -- адмін вирішить, що спрацювало.
+        if wants_json:
+            return jsonify({'ok': False,
+                            'error': 'Такий перехід недопустимий'}), 400
         flash('Статус не змінено: такий перехід недопустимий', 'warning')
     else:
+        if wants_json:
+            return jsonify({'ok': False, 'error': message}), 400
         flash(f'Не вдалося змінити статус: {message}', 'error')
 
     return redirect(url_for('admin.online_orders_list'))

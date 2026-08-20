@@ -381,6 +381,50 @@ class TestAdminOrders:
         assert enrollment.access_token
         assert sintegrum_access  # модуль справді бере участь у шляху
 
+    def test_inline_select_speaks_json(self, client, admin, buyer, course,
+                                       monkeypatch):
+        """Селект статусу шле поле `status` і чекає JSON, а не redirect.
+
+        Форма в таблиці -- той самий badge-select, що на статусах проведень,
+        і його спільний скрипт іменує поле `status`. Роут мусить розуміти
+        обидві назви: без JS браузер шле `payment_status`.
+        """
+        monkeypatch.setattr(
+            'app.services.email_service.EmailService.send_online_access',
+            staticmethod(lambda *a, **k: None))
+        enrollment = _enrollment(buyer, course)
+        _login(client, admin)
+
+        response = client.post(
+            f'/admin/online-orders/{enrollment.id}/payment',
+            data={'status': 'paid'},
+            headers={'X-Requested-With': 'XMLHttpRequest'},
+        )
+
+        assert response.status_code == 200
+        payload = response.get_json()
+        assert payload['ok'] is True
+        assert payload['status'] == 'paid'
+        assert payload['status_label'] == 'Оплачено'
+        db.session.refresh(enrollment)
+        assert enrollment.payment_status == 'paid'
+
+    def test_unknown_status_returns_json_error(self, client, admin, buyer,
+                                               course):
+        enrollment = _enrollment(buyer, course)
+        _login(client, admin)
+
+        response = client.post(
+            f'/admin/online-orders/{enrollment.id}/payment',
+            data={'status': 'whatever'},
+            headers={'X-Requested-With': 'XMLHttpRequest'},
+        )
+
+        assert response.status_code == 400
+        assert response.get_json()['ok'] is False
+        db.session.refresh(enrollment)
+        assert enrollment.payment_status == 'unpaid'
+
     def test_refund_voids_the_promo(self, app, buyer, course, monkeypatch):
         """Повернення коштів звільняє використання коду, але лишає знімок.
 

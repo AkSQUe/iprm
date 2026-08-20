@@ -1171,6 +1171,12 @@ select.badge-select:-moz-focusring {
 .badge-select-form:has(.badge-select--active) { color: var(--iprm-badge-active-text); }
 .badge-select-form:has(.badge-select--completed) { color: var(--iprm-badge-completed-text); }
 .badge-select-form:has(.badge-select--cancelled) { color: var(--iprm-error-text); }
+/* Статуси ОПЛАТИ (замовлення онлайн-курсів). Окремі від статусів курсу:
+   там життєвий цикл заходу, тут -- гроші, і збіг назв був би випадковим. */
+.badge-select-form:has(.badge-select--unpaid) { color: var(--iprm-badge-draft-text); }
+.badge-select-form:has(.badge-select--pending) { color: var(--iprm-warning-text); }
+.badge-select-form:has(.badge-select--paid) { color: var(--iprm-badge-active-text); }
+.badge-select-form:has(.badge-select--refunded) { color: var(--iprm-error-text); }
 
 select.badge-select:focus-visible {
   outline: 2px solid var(--iprm-accent);
@@ -1200,6 +1206,28 @@ select.badge-select:disabled {
 .badge-select--completed {
   background-color: var(--iprm-badge-completed-bg);
   color: var(--iprm-badge-completed-text);
+}
+
+.badge-select--unpaid {
+  background-color: var(--iprm-badge-draft-bg);
+  color: var(--iprm-badge-draft-text);
+}
+
+.badge-select--pending {
+  background-color: var(--iprm-warning-bg);
+  color: var(--iprm-warning-text);
+}
+
+.badge-select--paid {
+  background-color: var(--iprm-badge-active-bg);
+  color: var(--iprm-badge-active-text);
+}
+
+/* Повернення -- не помилка, але й не спокійний стан: та сама червона родина,
+   що в скасованого, бо для менеджера це «гроші пішли назад». */
+.badge-select--refunded {
+  background-color: var(--iprm-error-bg);
+  color: var(--iprm-error-text);
 }
 
 .badge-select--cancelled {

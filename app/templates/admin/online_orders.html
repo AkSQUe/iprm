@@ -8,7 +8,15 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% block extra_scripts %}
+{{ super() }}
+{# Той самий скрипт, що на статусах проведень: міняє статус без перезавантаження
+   й повертає селект назад, якщо сервер відмовив. #}
+<script src="{{ url_for('static', filename='js/admin-status-select.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}
+
 {% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
+{% from 'partials/_money.html' import money %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -89,23 +97,31 @@
           </td>
           <td>{{ order.course.effective_title if order.course else '—' }}</td>
           <td>
-            <strong>{{ order.payment_amount|int if order.payment_amount else 0 }} {{ order.course.currency if order.course }}</strong>
+            <strong>{{ money(order.payment_amount or 0, order.course.currency if order.course else 'UAH') }}</strong>
             {% if order.promo_code_id and order.discount_amount %}
             <br><small class="admin-text-muted">
-              {{ order.promo_code.code if order.promo_code }} &minus;{{ order.discount_amount|int }}
+              {{ order.promo_code.code if order.promo_code }} &minus;{{ money(order.discount_amount, order.course.currency if order.course else 'UAH') }}
             </small>
             {% endif %}
           </td>
           <td>
+            {# Той самий badge-select, що на статусах проведень і реєстрацій:
+               inline-AJAX через admin-status-select.js, без onchange у розмітці
+               (No Inline Policy) і з видимою кнопкою, коли JS вимкнено.
+               Поле зветься `status` -- саме його шле спільний скрипт. #}
             <form method="POST" action="{{ url_for('admin.online_order_set_payment', enrollment_id=order.id) }}"
-                  class="admin-inline-form">
+                  class="badge-select-form" data-status-form>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <select name="payment_status" class="form-input form-input--sm" onchange="this.form.submit()">
+              <select name="status"
+                      class="badge badge-select badge-select--{{ order.payment_status }}"
+                      aria-label="Статус оплати замовлення {{ order.order_id }}">
                 {% for value, label in payment_options %}
                 <option value="{{ value }}" {% if order.payment_status == value %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
-              <noscript><button type="submit" class="btn-admin btn-admin--sm">Зберегти</button></noscript>
+              <noscript>
+                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">OK</button>
+              </noscript>
             </form>
           </td>
           <td>
