@@ -30,6 +30,7 @@ from app.models.database_backup import DatabaseBackup
 from app.models.material_reservation import (
     MaterialReservation, MaterialReservationItem, MaterialReservationStatus,
 )
+from app.models.material_kit import MaterialKit, MaterialKitItem
 from app.models.referral_reward import ReferralReward
 from app.models.referral_adjustment import ReferralAdjustment
 from app.models.referral_click import ReferralClick
@@ -54,6 +55,7 @@ __all__ = [
     'WebhookDelivery', 'BlogPost', 'BlogComment', 'MediaFile',
     'DatabaseBackup',
     'MaterialReservation', 'MaterialReservationItem', 'MaterialReservationStatus',
+    'MaterialKit', 'MaterialKitItem',
     'ReferralReward', 'ReferralAdjustment', 'ReferralClick',
     'PromoCode', 'PromoRedemption', 'Review',
     'City',
