@@ -178,6 +178,18 @@ _REASON_LABELS = {
 }
 
 
+#: Що ІПРМ каже, коли дію виконує MM Medic, а не ми.
+_DOCUMENT_OWNED = ('Цією заявкою керує документ MM Medic: видачу, повернення '
+                   'і закриття виконує комірник на боці MM Medic.')
+
+
+#: Відмови MM Medic, у яких сира англійська нічого не пояснює комірнику.
+_ERROR_MESSAGES = {
+    'actuals_unsupported_for_document': _DOCUMENT_OWNED,
+    'adjust_unsupported_for_document': _DOCUMENT_OWNED,
+}
+
+
 def _flash_result_error(result):
     data = result.data if isinstance(result.data, dict) else {}
     status = data.get('status')
@@ -202,12 +214,30 @@ def _flash_result_error(result):
         flash(f'Недостатньо матеріалів на складі: {", ".join(parts)}', 'error')
     elif status == 'already_consumed' or result.error == 'already_consumed':
         flash('Резервування вже списано — захід завершено. Змінити неможливо.', 'error')
+    elif result.error in _ERROR_MESSAGES:
+        flash(_ERROR_MESSAGES[result.error], 'error')
     else:
         flash(f'MM Medic відхилив запит: {result.error or "невідома помилка"}', 'error')
 
 
 def _redirect_page(instance_id, **kw):
     return redirect(url_for('admin.instance_materials', instance_id=instance_id, **kw))
+
+
+def _refuse_document(reservation, instance_id, **kw):
+    """Відмовити діям утримань для документа. Повертає redirect або None.
+
+    Легасі-списання (`/actuals`, `/adjust`) написане під резерв БЕЗ рядків,
+    і для документа воно незворотне: MM Medic закриє заголовок, не створивши
+    жодного рядка видачі, тобто собівартість заходу -- те, заради чого
+    документ і зʼявився, -- стане недосяжною назавжди. MM Medic відмовляє й сам
+    (`actuals_unsupported_for_document`); тут ми не даємо людині натиснути
+    кнопку, яка все одно не спрацює, і пояснюємо чому.
+    """
+    if reservation is not None and reservation.is_mm_document:
+        flash(_DOCUMENT_OWNED, 'error')
+        return _redirect_page(instance_id, **kw)
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -275,6 +305,7 @@ def instance_materials(instance_id):
         mode=mode,
         is_reserved=is_reserved,
         is_consumed=is_consumed,
+        is_mm_document=bool(reservation) and reservation.is_mm_document,
         est_cost=round(est_cost, 2),
         participants=participants,
         trainer_url=trainer_url,
@@ -373,6 +404,9 @@ def instance_materials_actuals(instance_id):
     if not reservation or reservation.status != MaterialReservationStatus.RESERVED:
         flash('Немає активного резервування для списання', 'error')
         return _redirect_page(instance_id)
+    refused = _refuse_document(reservation, instance_id)
+    if refused:
+        return refused
 
     actuals = _actuals_from_form()
     catalog, _err, _stale = _load_catalog()
@@ -405,6 +439,9 @@ def instance_materials_adjust(instance_id):
     if not reservation or reservation.status != MaterialReservationStatus.CONSUMED:
         flash('Коригувати можна лише вже списане резервування', 'error')
         return _redirect_page(instance_id)
+    refused = _refuse_document(reservation, instance_id)
+    if refused:
+        return refused
 
     actuals = _actuals_from_form()
     catalog, _err, _stale = _load_catalog()

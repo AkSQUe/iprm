@@ -131,6 +131,33 @@ class MaterialReservation(TimestampMixin, db.Model):
         return MaterialReservationStatus.LABELS.get(self.status, self.status)
 
     @property
+    def is_mm_document(self):
+        """Чи цим резервуванням керує ДОКУМЕНТ на боці MM Medic.
+
+        Два канали пишуть в одне й те саме дзеркало. Легасі-канал
+        (``create_reservation``) створює на MM Medic лише утримання складу:
+        списати його можна звідси, кнопкою «Провести списання». Новий канал
+        (``submit_request``) створює документ із власними рядками, і списання
+        там -- це видача комірником, яка вішає на рядок партії, а з партій
+        береться собівартість заходу. Легасі-списання таких рядків не
+        створює: воно закриває документ, і собівартість зникає НАЗАВЖДИ
+        (``issue()`` після цього неможливий). Тому для документа ІПРМ не
+        пропонує ні списання, ні коригування, ні редагування утримань.
+
+        Ознака -- ДВІ, і обидві потрібні. ``quantity_requested`` приходить
+        лише в новому payload, тож непорожнє значення однозначно вказує на
+        документ. Але штовх статусу летить без ретраїв, і рядки можуть
+        відстати; SUBMITTED та ISSUED легасі-канал не виробляє взагалі, тож
+        самого статусу вже досить. MM Medic про всяк випадок відмовляє й на
+        своєму боці (``actuals_unsupported_for_document``) -- тут гейт для
+        того, щоб людина не бачила кнопки, яка все одно не спрацює.
+        """
+        if self.status in (MaterialReservationStatus.SUBMITTED,
+                           MaterialReservationStatus.ISSUED):
+            return True
+        return any(item.quantity_requested is not None for item in self.items)
+
+    @property
     def origin_label(self):
         return MaterialReservationOrigin.LABELS.get(self.origin, self.origin)
 

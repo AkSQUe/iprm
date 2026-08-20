@@ -214,6 +214,12 @@
       <a href="{{ url_for('admin.instances_list') }}" class="btn-admin btn-admin--secondary">Назад</a>
       {% if qty_mode %}
       <button type="submit" class="btn-admin btn-admin--primary">{{ icon('send') }} {{ submit_label }}</button>
+      {% elif is_mm_document %}
+      {# Списання документа -- це видача комірником на боці MM Medic: саме вона
+         вішає партії на рядки, а з партій береться собівартість заходу.
+         Кнопка тут кликала легасі-шлях, який закривав документ без жодної
+         партії, і собівартість зникала назавжди. #}
+      <span class="materials-summary__hint">Списання виконує комірник на боці MM Medic.</span>
       {% else %}
       <button type="submit" class="btn-admin btn-admin--primary"
               data-confirm="{% if is_consumed %}Провести коригування списання?{% else %}Провести списання за фактичними кількостями? Порожні поля = списати повністю зарезервоване.{% endif %}"
