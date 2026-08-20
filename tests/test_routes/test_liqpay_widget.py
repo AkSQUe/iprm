@@ -17,7 +17,6 @@ from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.mixins import utcnow
 from app.models.registration import EventRegistration
-from app.models.site_settings import SiteSettings
 from app.models.user import User
 
 
@@ -32,19 +31,8 @@ def clean(app):
 
 
 @pytest.fixture(autouse=True)
-def liqpay_configured(app):
-    """Ключі LiqPay -- інакше маршрут не будує платіжну форму взагалі."""
-    settings = SiteSettings.get()
-    before = (settings.liqpay_public_key, settings.liqpay_private_key,
-              settings.liqpay_sandbox)
-    settings.liqpay_public_key = 'sandbox_i000000000'
-    settings.liqpay_private_key = 'sandbox_secret'
-    settings.liqpay_sandbox = True
-    db.session.flush()
-    yield
-    (settings.liqpay_public_key, settings.liqpay_private_key,
-     settings.liqpay_sandbox) = before
-    db.session.flush()
+def _keys(liqpay_keys):
+    """Ключі потрібні кожному тесту тут -- фікстура спільна (conftest)."""
 
 
 @pytest.fixture
@@ -89,6 +77,21 @@ def test_csp_allows_the_widget_library(client):
 
     script_src = [p for p in csp.split('; ') if p.startswith('script-src')][0]
     assert 'https://static.liqpay.ua' in script_src
+
+
+def test_csp_allows_the_apple_pay_sdk(client):
+    """checkout.js довантажує Apple Pay SDK У НАШУ сторінку, не в свій iframe.
+
+    ApplePaySession працює лише у верхньому документі, тому вендор робить
+    document.createElement('script') з applepay.cdn-apple.com. Їхній
+    script.onerror лише резолвить проміс -- тобто без цього дозволу віджет
+    підніметься без жодної помилки, а Apple Pay, обіцяний на сторінці
+    оплати, просто зникне.
+    """
+    csp = client.get('/').headers.get('Content-Security-Policy', '')
+
+    script_src = [p for p in csp.split('; ') if p.startswith('script-src')][0]
+    assert 'https://applepay.cdn-apple.com' in script_src
 
 
 def test_csp_still_allows_the_payment_frames(client):
@@ -155,3 +158,47 @@ def test_paid_registration_has_no_payment_form(client, buyer, unpaid_reg):
     body = client.get(f'/registration/{unpaid_reg.id}').get_data(as_text=True)
 
     assert 'data-liqpay-form' not in body
+
+
+# ------------------------------ мова оплати ------------------------------
+
+class TestCheckoutLanguage:
+    """Сторінка LiqPay має бути тією ж мовою, якою людина читає сайт.
+
+    Раніше в пакеті стояло жорстке 'uk': покупець, що зайшов англійською
+    версією, потрапляв на українську сторінку оплати. LiqPay приймає рівно
+    наші три коди, тож підставляти поточну локаль безпечно.
+    """
+
+    @staticmethod
+    def _language_of(app, locale):
+        import base64
+        import json
+
+        from flask_babel import force_locale
+
+        from app.services.liqpay import LiqPayService
+
+        service = LiqPayService('pub', 'priv', sandbox=True)
+        with app.test_request_context('/'):
+            with force_locale(locale):
+                data, _sig, _url = service.create_payment_form(
+                    order_id='REG-1', amount=100, description='Курс',
+                    result_url='https://iprm.test/ok',
+                    server_url='https://iprm.test/cb',
+                )
+        return json.loads(base64.b64decode(data))['language']
+
+    @pytest.mark.parametrize('locale', ['uk', 'ru', 'en'])
+    def test_package_follows_the_site_locale(self, app, locale):
+        assert self._language_of(app, locale) == locale
+
+    def test_unknown_locale_falls_back_to_ukrainian(self, app):
+        """Невідомий код не має ставати причиною відмови LiqPay."""
+        assert self._language_of(app, 'de') == 'uk'
+
+    def test_outside_request_context_falls_back(self, app):
+        """Поза запитом (фонові задачі) резолвити нема з чого."""
+        from app.services.liqpay import checkout_language
+
+        assert checkout_language() == 'uk'

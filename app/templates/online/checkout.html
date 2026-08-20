@@ -8,6 +8,13 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-course.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% block extra_head %}
+{#- Раннє з'єднання з хостом бібліотеки віджета: вона вантажиться
+    вже після розбору сторінки, і клік до її готовності мовчки
+    повертає старий флоу з квитанцією LiqPay. -#}
+<link rel="preconnect" href="https://static.liqpay.ua" crossorigin>
+{% endblock %}
+
 {% block content %}
 <div class="apple-page">
   <section class="iprm-section" aria-labelledby="checkout-title">

@@ -5,7 +5,7 @@ from sqlalchemy import func as sa_func
 
 from app.extensions import db
 from app.models.mixins import (
-    TimestampMixin, BigIntPK, RefundableMixin, utcnow,
+    TimestampMixin, BigIntPK, DiscountedMixin, RefundableMixin, utcnow,
 )
 
 
@@ -13,7 +13,8 @@ from app.models.mixins import (
 COMPLETION_TOKEN_TTL_DAYS = 30
 
 
-class EventRegistration(TimestampMixin, RefundableMixin, db.Model):
+class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
+                        db.Model):
     """Реєстрація на CourseInstance.
 
     Ім'я класу (EventRegistration) і таблиці (event_registrations)
@@ -306,17 +307,6 @@ class EventRegistration(TimestampMixin, RefundableMixin, db.Model):
         if not (self.payment_amount and self.payment_amount > 0):
             return False
         return self.payment_status in ('unpaid', 'pending')
-
-    @property
-    def has_discount(self):
-        return bool(self.discount_amount and self.discount_amount > 0)
-
-    @property
-    def amount_before_discount(self):
-        """Сума до знижки (payment_amount уже містить суму після неї)."""
-        if not self.has_discount:
-            return self.payment_amount
-        return (self.payment_amount or 0) + self.discount_amount
 
     @property
     def target_title(self):

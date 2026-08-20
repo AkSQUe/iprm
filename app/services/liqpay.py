@@ -19,6 +19,27 @@ logger = logging.getLogger(__name__)
 CHECKOUT_URL = 'https://www.liqpay.ua/api/3/checkout'
 API_URL = 'https://www.liqpay.ua/api/request'
 
+# LiqPay приймає рівно ті самі три коди, що й наш сайт.
+SUPPORTED_LANGUAGES = ('uk', 'ru', 'en')
+
+
+def checkout_language():
+    """Мова сторінки оплати -- та сама, якою людина читає сайт.
+
+    Раніше тут стояло жорстке 'uk': покупець, що зайшов англійською
+    версією, потрапляв на українську сторінку LiqPay.
+
+    Фолбек українською -- і поза request-контекстом, і при будь-якому збої
+    резолву: чужа мова на сторінці оплати незручна, а виняток тут поклав би
+    оплату всім.
+    """
+    try:
+        from flask_babel import get_locale
+        code = str(get_locale() or '').split('_')[0].lower()
+    except Exception:
+        return 'uk'
+    return code if code in SUPPORTED_LANGUAGES else 'uk'
+
 
 class LiqPayService:
 
@@ -55,7 +76,7 @@ class LiqPayService:
             'order_id': order_id,
             'result_url': result_url,
             'server_url': server_url,
-            'language': 'uk',
+            'language': checkout_language(),
         }
         if self.sandbox:
             params['sandbox'] = 1

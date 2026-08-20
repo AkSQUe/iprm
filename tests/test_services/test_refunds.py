@@ -570,3 +570,54 @@ class TestRepeatRefundEmail:
         assert ctx['is_repeat'] is True
         assert ctx['withheld'] == Decimal('0')
         assert ctx['refunded_total'] == Decimal('1000')
+
+
+class TestDiscountIsNotSubtractedTwice:
+    """Повернення рахується від СПЛАЧЕНОГО, і знижка вже в ньому.
+
+    `promo_service` виставляє payment_amount як (прайс - знижка), тож усе
+    нижче по контуру працює з чистою сумою. Спокуса відняти знижку ще раз
+    виникає щоразу, коли хтось бачить у черзі "100%" поруч із дорожчим
+    прайсом -- і коштувала б людям частини їхніх грошей.
+    """
+
+    def test_quote_is_based_on_paid_amount(self, paid_reg, instance):
+        """Прайс 6000, промокод -1200, сплачено 4800 -> повертаємо 4800."""
+        paid_reg.payment_amount = Decimal('4800')
+        paid_reg.discount_amount = Decimal('1200')
+        db.session.flush()
+
+        quote = refund_policy.quote_registration(paid_reg)
+
+        assert quote.percent == 100
+        assert quote.amount == Decimal('4800.00')
+
+    def test_remaining_ignores_the_discount(self, paid_reg):
+        paid_reg.payment_amount = Decimal('4800')
+        paid_reg.discount_amount = Decimal('1200')
+        db.session.flush()
+
+        assert paid_reg.refund_remaining == Decimal('4800')
+
+    def test_refund_returns_what_was_paid(self, ops, paid_reg, user):
+        paid_reg.payment_amount = Decimal('4800')
+        paid_reg.discount_amount = Decimal('1200')
+        db.session.flush()
+
+        ok, message = ops.initiate_refund(paid_reg, user)
+
+        assert ok, message
+        assert paid_reg.refunded_total == Decimal('4800.00')
+
+    def test_price_before_discount_is_available_for_display(self, paid_reg):
+        """Прайс потрібен лише щоб пояснити цифру адміну, не для розрахунку."""
+        paid_reg.payment_amount = Decimal('4800')
+        paid_reg.discount_amount = Decimal('1200')
+
+        assert paid_reg.has_discount is True
+        assert paid_reg.amount_before_discount == Decimal('6000')
+
+    def test_order_without_discount_reports_none(self, paid_reg):
+        assert paid_reg.has_discount is False
+        assert paid_reg.amount_before_discount == paid_reg.payment_amount
+

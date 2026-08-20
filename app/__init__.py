@@ -469,11 +469,16 @@ def create_app(config_name=None):
 
         csp = (
             "default-src 'self'; "
-            # static.liqpay.ua -- бібліотека віджета оплати (checkout.js).
-            # Вона потрібна, щоб покупець платив у вікні поверх нашої сторінки
-            # й повертався одразу, а не кнопкою з квитанції LiqPay. Домени
-            # самої оплати вже дозволені нижче у frame-src.
+            # Два хости віджета оплати LiqPay (див. docs/integrations/liqpay.md):
+            #   static.liqpay.ua      -- сама бібліотека checkout.js;
+            #   applepay.cdn-apple.com -- Apple Pay SDK, який checkout.js
+            #     довантажує В НАШУ сторінку (ApplePaySession працює лише в
+            #     верхньому документі, тому не в їхньому iframe).
+            # Без другого Apple Pay мовчки не працює: у їхньому коді
+            # script.onerror лише резолвить проміс, тож віджет піднімається
+            # без помилки, а обіцяний на сторінці спосіб оплати зникає.
             "script-src 'self' 'unsafe-inline' https://static.liqpay.ua"
+            " https://applepay.cdn-apple.com"
             + gstatic + ga_script + gsi + px_script + "; "
             "style-src 'self' 'unsafe-inline'" + gsi + "; "
             "font-src 'self' data:; "

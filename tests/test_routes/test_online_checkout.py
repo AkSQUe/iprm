@@ -311,18 +311,12 @@ def test_account_never_exposes_access_url(client, buyer, course):
     assert 'secret-abc' not in body
 
 
-def test_checkout_form_carries_widget_data(client, buyer, course):
+def test_checkout_form_carries_widget_data(client, buyer, course, liqpay_keys):
     """Оплата у вікні LiqPay -- на чекауті онлайн-курсу так само, як на заходах.
 
     Разом із тим форма лишається POST-ом: без завантаженого checkout.js
     людина мусить мати змогу оплатити старим шляхом.
     """
-    from app.models.site_settings import SiteSettings
-
-    settings = SiteSettings.get()
-    settings.liqpay_public_key = 'sandbox_i000000000'
-    settings.liqpay_private_key = 'sandbox_secret'
-    db.session.flush()
     _login(client, buyer)
 
     body = client.get(

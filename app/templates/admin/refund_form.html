@@ -40,7 +40,9 @@
     <div class="admin-stat-cards">
       <div class="admin-stat-card">
         <span class="admin-stat-card__value">{{ order.payment_amount | int }} &#8372;</span>
-        <span class="admin-stat-card__label">Сплачено</span>
+        <span class="admin-stat-card__label">
+          Сплачено{% if order.has_discount %} (прайс {{ order.amount_before_discount | int }}, знижка {{ order.discount_amount | int }}){% endif %}
+        </span>
       </div>
       <div class="admin-stat-card admin-stat-card--warning">
         <span class="admin-stat-card__value">{{ order.refunded_total | int }} &#8372;</span>
