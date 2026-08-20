@@ -47,6 +47,31 @@ class SoftDeleteMixin:
         return cls.query.filter(cls.deleted_at.is_(None))
 
 
+class DiscountedMixin:
+    """Знижка на замовленні -- спільна для реєстрації та онлайн-курсу.
+
+    Ключове правило, заради якого це винесено: `payment_amount` ЗАВЖДИ
+    містить суму ПІСЛЯ знижки, а `discount_amount` -- лише знімок того,
+    скільки ми віддали. Все, що рахує гроші далі (повернення в тому числі),
+    працює з payment_amount і нічого віднімати вдруге не мусить.
+
+    Обидва типи замовлень мали однакові колонки, але властивості були лише
+    в реєстрації: шаблон, спільний для обох, мовчки не показував би знижку
+    на курсах.
+    """
+
+    @property
+    def has_discount(self):
+        return bool(self.discount_amount and self.discount_amount > 0)
+
+    @property
+    def amount_before_discount(self):
+        """Сума до знижки (payment_amount уже містить суму після неї)."""
+        if not self.has_discount:
+            return self.payment_amount
+        return (self.payment_amount or 0) + self.discount_amount
+
+
 class RefundableMixin:
     """Повернення коштів за замовлення (реєстрація на захід чи онлайн-курс).
 
