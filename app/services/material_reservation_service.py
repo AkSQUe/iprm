@@ -8,6 +8,7 @@ import logging
 import re
 import time
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal, InvalidOperation
 
 from app.extensions import db
 from app.models.course_instance import CourseInstance
@@ -381,6 +382,172 @@ REMOTE_TO_LOCAL = {
 }
 
 
+def _as_int(value):
+    """Coerce a payload number to int; None stays None (means 'not reported')."""
+    if value is None or value == '':
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _as_decimal(value):
+    """Coerce a payload money value to Decimal; None stays None ('not reported').
+
+    Через рядок, а не через float: `Decimal(0.1)` дає 0.1000000000000000055,
+    і після кількох додавань у звіті з'являються копійки нізвідки.
+    """
+    if value is None or value == '':
+        return None
+    try:
+        return Decimal(str(value))
+    except (TypeError, ValueError, InvalidOperation):
+        return None
+
+
+def _trim(value, length):
+    """Обрізати ОПИСОВЕ поле під довжину колонки.
+
+    SQLite мовчки пише будь-яку довжину, PostgreSQL кидає
+    StringDataRightTruncation — тобто без цього тести зелені, а прод віддає
+    500 і губить штовх (ретраїв у відправника немає).
+
+    Обрізаємо мовчки саме описові поля: зіпсована назва товару гірша за
+    відсутню, але не ламає звʼязків. Ідентифікатори натомість відхиляються
+    (`_payload_error`): обрізаний ідентифікатор -- це ІНШИЙ рядок.
+    """
+    if value is None:
+        return None
+    text = str(value)
+    return text[:length] if len(text) > length else text
+
+
+def apply_items(reservation, items, local_status, has_items_key):
+    """Оновити рядки дзеркала зі знімка партнера. Повертає True, якщо змінилось.
+
+    Живе в сервісі, а не в модулі API, бо шляхів надходження стану ДВА:
+    штовх (`mm_status`) і фонова звірка (`reconcile_reservation`). Копія
+    цієї логіки в кожному з них розійшлася б на першій же правці, і тоді
+    локальний стан залежав би від того, який шлях спрацював першим -- рівно
+    та помилка, від якої вже застерігає спільний `REMOTE_TO_LOCAL`.
+
+    Handles both payload shapes: the legacy one carries a single ``quantity``,
+    the new one carries the four lifecycle quantities.
+
+    ЗМІСТ ``quantity`` ЗАЛЕЖИТЬ ВІД СТАТУСУ, і це не наша примха. MM Medic на
+    ``consumed`` перезаписує кількість рядка фактично спожитою
+    (``partner_event_reservation_service.submit_actuals``), тож у термінальному
+    штовху те саме поле означає «використано», а не «погоджено». Приймати його
+    як погоджене означало б стерти в дзеркалі цифру, на якій тримаються
+    пікінг-лист і звіт «зарезервовано проти спожитого».
+
+    ``local_status``, а не сирий рядок: спершу тут стояв власний список
+    (``'consumed', 'completed'``), і це відтворювало ту саму регресію на один
+    статус далі -- перший новий термінальний статус партнера в список не
+    потрапив би, ``quantity`` знову ліг би в ``quantity_reserved``. Джерело
+    істини одне -- мапа статусів.
+
+    ``has_items_key`` розрізняє «рядків НЕ НАДІСЛАНО» і «надіслано порожній
+    список». Це різні твердження, і плутати їх дорого: рядок зникає з
+    термінального payload рівно тоді, коли повернули все, але status-only штовх
+    (``{"external_ref": …, "status": "completed"}``) не говорить про рядки
+    НІЧОГО. Доки обидва випадки зводились до ``[]``, легкий штовх стирав
+    фактику по всьому документу.
+    """
+    if not isinstance(items, list):
+        return False
+
+    terminal = local_status == MaterialReservationStatus.CONSUMED
+
+    by_sku = {}
+    for raw in items:
+        if isinstance(raw, dict) and raw.get('sku'):
+            by_sku[raw['sku']] = raw
+    if not by_sku and not (terminal and has_items_key):
+        return False
+
+    changed = False
+    existing = {item.sku: item for item in reservation.items}
+
+    if terminal and has_items_key:
+        for sku, item in existing.items():
+            if sku not in by_sku and item.quantity_actual != 0:
+                item.quantity_actual = 0
+                item.quantity_returned = item.quantity_reserved
+                changed = True
+
+    for sku, raw in by_sku.items():
+        item = existing.get(sku)
+        if item is None:
+            item = MaterialReservationItem(sku=sku, quantity_reserved=0)
+            reservation.items.append(item)
+            existing[sku] = item
+            changed = True
+
+        legacy_qty = _as_int(raw.get('quantity'))
+        requested = _as_int(raw.get('quantity_requested'))
+        approved = _as_int(raw.get('quantity_approved'))
+        issued = _as_int(raw.get('quantity_issued'))
+        returned = _as_int(raw.get('quantity_returned'))
+
+        # Legacy payload: `quantity` -- це погоджене, але ЛИШЕ поки резерв
+        # живий. У термінальному штовху воно вже означає спожите (див.
+        # докстрінг), тож погодженого в такому payload немає взагалі, і
+        # чіпати `quantity_reserved` не можна.
+        if approved is None and not terminal:
+            approved = legacy_qty
+
+        fields = {
+            'name': _trim(raw.get('name'), 255) or item.name,
+            'image_url': _trim(raw.get('image') or raw.get('image_url'),
+                               500) or item.image_url,
+            'quantity_requested': requested if requested is not None else item.quantity_requested,
+            'quantity_issued': issued if issued is not None else item.quantity_issued,
+            'quantity_returned': returned if returned is not None else item.quantity_returned,
+        }
+        if approved is not None:
+            fields['quantity_reserved'] = approved
+
+        # Гроші за видане. Відсутнє поле означає «не повідомили» (старий
+        # MM Medic), і тоді вже відоме значення лишається; явний null означає
+        # «оцінити нічим», і тоді `cost_complete` теж мусить бути NULL, а не
+        # `false` -- інакше документ до відвантаження виглядав би як такий, у
+        # якого собівартість порахована неповно.
+        if 'cost_uah' in raw:
+            cost = _as_decimal(raw.get('cost_uah'))
+            fields['cost_uah'] = cost
+            fields['cost_complete'] = (
+                bool(raw.get('cost_complete')) if cost is not None else None
+            )
+
+        # Consumed = issued minus returned. Fall back to the legacy behaviour
+        # (a `consumed` push whose `quantity` IS the used amount) so an older
+        # MM Medic build keeps working until it ships the new payload.
+        effective_issued = fields['quantity_issued']
+        if effective_issued is not None:
+            fields['quantity_actual'] = effective_issued - (fields['quantity_returned'] or 0)
+        elif terminal and legacy_qty is not None:
+            fields['quantity_actual'] = legacy_qty
+
+        if local_status == MaterialReservationStatus.RESERVED:
+            # Документ повернувся в резерв -- MM Medic скасував помилкове
+            # списання (`revert_consumption` з target=active). Фактичних
+            # кількостей у зарезервованого документа за визначенням немає, а
+            # лишені старі показували б у пікінг-листі й у звіті
+            # «зарезервовано проти спожитого» витрату по документу, який нічого
+            # не спожив. Жоден інший штовх сюди не потрапляє з непорожнім
+            # `quantity_actual`: у резерв документ інакше не повертається.
+            fields['quantity_actual'] = None
+
+        for attr, value in fields.items():
+            if getattr(item, attr) != value:
+                setattr(item, attr, value)
+                changed = True
+
+    return changed
+
+
 def reconcile_reservation(reservation):
     """Sync one local record with MM Medic (detect consumed / lapsed).
 
@@ -413,17 +580,33 @@ def reconcile_reservation(reservation):
         # `_RECONCILABLE` не входить, тож звірка більше ніколи на нього не
         # подивиться, а партнер завершений стан не перештовхує.
         new_status = MaterialReservationStatus.EXPIRED
+
+    remote_items = remote.get('items')
+    items_changed = apply_items(
+        reservation, remote_items or [], reservation.status,
+        isinstance(remote_items, list),
+    )
+
     if new_status and not _may_advance(reservation.status, new_status):
         # Знімок партнера відстає від того, що ми вже знаємо. Мовчати тут
         # правильно: це не помилка, а нормальний стан legacy-заголовка.
+        new_status = None
+
+    status_changed = bool(new_status and new_status != reservation.status)
+    if status_changed:
+        reservation.status = new_status
+
+    if not (status_changed or items_changed):
         return False
-    if not new_status or new_status == reservation.status:
-        return False
-    reservation.status = new_status
+
     reservation.last_response = result.data
     db.session.commit()
-    logger.info('Reconciled material reservation %s -> %s',
-                reservation.external_ref, new_status)
+    if status_changed:
+        logger.info('Reconciled material reservation %s -> %s',
+                    reservation.external_ref, new_status)
+    else:
+        logger.info('Reconciled material reservation %s (lines only)',
+                    reservation.external_ref)
     return True
 
 
