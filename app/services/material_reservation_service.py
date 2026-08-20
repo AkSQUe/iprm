@@ -401,9 +401,17 @@ def _as_decimal(value):
     if value is None or value == '':
         return None
     try:
-        return Decimal(str(value))
+        cost = Decimal(str(value))
     except (TypeError, ValueError, InvalidOperation):
         return None
+    # NaN та Infinity конструюються успішно, і обидва шкодять по-різному.
+    # NaN не дорівнює сам собі, тож звірка `getattr(item, attr) != value`
+    # завжди істинна: кожен опит рапортує «змінилось», комітить і пише в лог.
+    # Infinity PostgreSQL відхиляє на вставці -- 500 на публічному вебхуці.
+    # Наш відправник такого не шле; це загартування зовні досяжної точки.
+    if not cost.is_finite():
+        return None
+    return cost
 
 
 def _trim(value, length):

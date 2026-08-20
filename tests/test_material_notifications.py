@@ -870,6 +870,27 @@ def test_mm_status_webhook_incomplete_cost_is_stored_as_false(app, client):
     assert item.cost_complete is False
 
 
+def test_nan_and_infinity_are_refused(app):
+    """`Decimal('nan')` і `Decimal('inf')` конструюються успішно -- і саме тому
+    небезпечні на ПУБЛІЧНОМУ вебхуці.
+
+    NaN не дорівнює сам собі, тож звірка `getattr(item, attr) != value` завжди
+    істинна: кожен опит рапортував би «змінилось», комітив і писав у лог.
+    Infinity PostgreSQL відхиляє на вставці -- це 500 на вебхуці.
+    """
+    from decimal import Decimal
+
+    from app.services.material_reservation_service import _as_decimal
+
+    assert _as_decimal('nan') is None
+    assert _as_decimal('inf') is None
+    assert _as_decimal('-Infinity') is None
+    assert _as_decimal(float('nan')) is None
+    # Звичайні значення не зачеплені, включно з нулем -- він теж ціна.
+    assert _as_decimal('80.00') == Decimal('80.00')
+    assert _as_decimal('0.00') == Decimal('0.00')
+
+
 def test_mm_status_webhook_old_payload_keeps_existing_cost(app, client):
     """Старий MM Medic полів вартості не шле. Це не привід стирати вже відоме.
 
