@@ -766,3 +766,90 @@ def test_overview_export_xlsx_bytes(app):
         bio = xlsx_io.export_material_reservations_xlsx([res])
         data = bio.getvalue()
         assert data[:2] == b'PK'  # xlsx is a zip
+
+
+def test_mm_status_webhook_stores_cost(app, client):
+    """Гроші за видане приїжджають разом зі станом документа."""
+    from decimal import Decimal
+    _enable_mm()
+    inst = _make_instance(slug_suffix='cost1')
+    res = _make_reservation(inst, slug_suffix='cost1')
+
+    r = _post_status(client, {
+        'external_ref': res.external_ref,
+        'status': 'completed',
+        'items': [{'sku': 'NDL-21', 'quantity_issued': 10, 'quantity_returned': 3,
+                   'cost_uah': '148.75', 'cost_complete': True}],
+    })
+
+    assert r.status_code == 200
+    item = MaterialReservation.query.get(res.id).items[0]
+    assert item.cost_uah == Decimal('148.75')
+    assert item.cost_complete is True
+
+
+def test_mm_status_webhook_null_cost_stays_null(app, client):
+    """`cost_uah: null` -- це «оцінити нічим», і `cost_complete` тоді теж NULL.
+
+    Записати сюди `false` означало б стверджувати «собівартість неповна» там,
+    де її ще не рахували: до відвантаження партій у рядка немає взагалі.
+    """
+    _enable_mm()
+    inst = _make_instance(slug_suffix='cost2')
+    res = _make_reservation(inst, slug_suffix='cost2')
+
+    r = _post_status(client, {
+        'external_ref': res.external_ref,
+        'status': 'approved',
+        'items': [{'sku': 'NDL-21', 'quantity_approved': 10,
+                   'cost_uah': None, 'cost_complete': False}],
+    })
+
+    assert r.status_code == 200
+    item = MaterialReservation.query.get(res.id).items[0]
+    assert item.cost_uah is None
+    assert item.cost_complete is None
+
+
+def test_mm_status_webhook_zero_cost_is_kept(app, client):
+    """Нуль -- це порахована вартість, а не її відсутність."""
+    from decimal import Decimal
+    _enable_mm()
+    inst = _make_instance(slug_suffix='cost3')
+    res = _make_reservation(inst, slug_suffix='cost3')
+
+    _post_status(client, {
+        'external_ref': res.external_ref,
+        'status': 'completed',
+        'items': [{'sku': 'NDL-21', 'quantity_issued': 4, 'quantity_returned': 4,
+                   'cost_uah': '0.00', 'cost_complete': True}],
+    })
+
+    item = MaterialReservation.query.get(res.id).items[0]
+    assert item.cost_uah == Decimal('0.00')
+    assert item.cost_complete is True
+
+
+def test_mm_status_webhook_old_payload_keeps_existing_cost(app, client):
+    """Старий MM Medic полів вартості не шле. Це не привід стирати вже відоме.
+
+    Той самий принцип, за яким тут уже влаштовані кількості: відсутнє поле
+    означає «не повідомили», а не «стало порожнім».
+    """
+    from decimal import Decimal
+    _enable_mm()
+    inst = _make_instance(slug_suffix='cost4')
+    res = _make_reservation(inst, slug_suffix='cost4')
+    res.items[0].cost_uah = Decimal('50.00')
+    res.items[0].cost_complete = True
+    db.session.commit()
+
+    _post_status(client, {
+        'external_ref': res.external_ref,
+        'status': 'completed',
+        'items': [{'sku': 'NDL-21', 'quantity_issued': 5, 'quantity_returned': 0}],
+    })
+
+    item = MaterialReservation.query.get(res.id).items[0]
+    assert item.cost_uah == Decimal('50.00')
+    assert item.cost_complete is True

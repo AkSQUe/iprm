@@ -18,6 +18,7 @@ import hmac
 import logging
 import time
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 
 from flask import Blueprint, jsonify, request
 from sqlalchemy.exc import IntegrityError
@@ -85,6 +86,20 @@ def _as_int(value):
     try:
         return int(value)
     except (TypeError, ValueError):
+        return None
+
+
+def _as_decimal(value):
+    """Coerce a payload money value to Decimal; None stays None ('not reported').
+
+    Через рядок, а не через float: `Decimal(0.1)` дає 0.1000000000000000055,
+    і після кількох додавань у звіті з'являються копійки нізвідки.
+    """
+    if value is None or value == '':
+        return None
+    try:
+        return Decimal(str(value))
+    except (TypeError, ValueError, InvalidOperation):
         return None
 
 
@@ -219,6 +234,18 @@ def _apply_items(reservation, items, local_status, has_items_key):
         }
         if approved is not None:
             fields['quantity_reserved'] = approved
+
+        # Гроші за видане. Відсутнє поле означає «не повідомили» (старий
+        # MM Medic), і тоді вже відоме значення лишається; явний null означає
+        # «оцінити нічим», і тоді `cost_complete` теж мусить бути NULL, а не
+        # `false` -- інакше документ до відвантаження виглядав би як такий, у
+        # якого собівартість порахована неповно.
+        if 'cost_uah' in raw:
+            cost = _as_decimal(raw.get('cost_uah'))
+            fields['cost_uah'] = cost
+            fields['cost_complete'] = (
+                bool(raw.get('cost_complete')) if cost is not None else None
+            )
 
         # Consumed = issued minus returned. Fall back to the legacy behaviour
         # (a `consumed` push whose `quantity` IS the used amount) so an older
