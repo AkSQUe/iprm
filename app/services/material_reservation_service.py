@@ -553,7 +553,12 @@ def reconcile_reservation(reservation):
 
     MM Medic keeps the header 'active' even after its per-line holds expire, so an
     'active' header with no current lines means the reservation lapsed (event
-    passed without actuals). Returns True if the local status changed.
+    passed without actuals). Returns True if anything changed -- the header
+    status, the line items, or both. A lines-only change (status unchanged) is
+    exactly the case this function exists to catch: the header push is a
+    daemon thread with no retries, so a lost terminal push must still be
+    repaired here even when the status snapshot agrees with what we already
+    have.
     """
     if reservation is None or reservation.status not in _RECONCILABLE:
         return False
@@ -581,18 +586,27 @@ def reconcile_reservation(reservation):
         # подивиться, а партнер завершений стан не перештовхує.
         new_status = MaterialReservationStatus.EXPIRED
 
-    remote_items = remote.get('items')
-    items_changed = apply_items(
-        reservation, remote_items or [], reservation.status,
-        isinstance(remote_items, list),
-    )
-
     if new_status and not _may_advance(reservation.status, new_status):
         # Знімок партнера відстає від того, що ми вже знаємо. Мовчати тут
         # правильно: це не помилка, а нормальний стан legacy-заголовка.
         new_status = None
 
     status_changed = bool(new_status and new_status != reservation.status)
+
+    # Рядки розбираються під ТИМ статусом, який справді набуде чинності.
+    # Порядок тут несучий, а не косметичний: `apply_items` рахує ознаку
+    # `terminal` саме з цього аргументу, і під нетермінальним прочитанням
+    # термінального знімка спрацьовує гілка «`quantity` це погоджене» --
+    # тобто `quantity_reserved` затирається спожитою цифрою. Саме та
+    # регресія, яку описує докстрінг `apply_items`.
+    effective_status = new_status if status_changed else reservation.status
+
+    remote_items = remote.get('items')
+    items_changed = apply_items(
+        reservation, remote_items or [], effective_status,
+        isinstance(remote_items, list),
+    )
+
     if status_changed:
         reservation.status = new_status
 
@@ -655,7 +669,11 @@ def send_pending_actuals_reminders(within_days=14, max_items=200):
 def reconcile_stale(max_items=200):
     """Batch reconcile open reservations for instances whose end date passed.
 
-    Intended for a scheduled job. Returns the number of records updated.
+    Intended for a scheduled job. Returns the number of records updated -- a
+    record counts even if only its line items (cost, quantities) changed and
+    the header status stayed put; "updated" already covers that honestly, no
+    narrower "status changed" claim is made here or by the callers that log
+    this count.
 
     Бере всі незакриті статуси (`_RECONCILABLE`), а не лише RESERVED: штовх
     статусу не має ретраїв, тож документ може застрягти на будь-якому кроці, і
