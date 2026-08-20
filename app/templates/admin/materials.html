@@ -88,12 +88,12 @@
       <input type="search" id="materialsSearch" class="form-input" placeholder="Пошук за назвою або артикулом" autocomplete="off">
     </div>
 
-    {% if qty_mode and templates %}
+    {% if qty_mode and kits %}
     <form method="POST" class="materials-tpl" action="{{ url_for('admin.instance_materials_apply_template', instance_id=instance.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <select name="template" class="form-input" aria-label="Шаблон матеріалів">
-        <option value="">Шаблон матеріалів…</option>
-        {% for t in templates %}<option value="{{ t.name }}">{{ t.name }}{% if t.event_type %} ({{ t.event_type }}){% endif %}</option>{% endfor %}
+      <select name="kit_id" class="form-input" aria-label="Комплект матеріалів">
+        <option value="">Комплект матеріалів…</option>
+        {% for k in kits %}<option value="{{ k.id }}">{{ k.name }}{% if k.course_id is none %} (універсальний){% endif %}</option>{% endfor %}
       </select>
       <input type="number" name="multiplier" class="form-input materials-mult" min="1" step="1" value="1" title="Множник" aria-label="Множник">
       <button type="submit" class="btn-admin btn-admin--secondary">Застосувати</button>

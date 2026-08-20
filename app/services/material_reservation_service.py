@@ -10,8 +10,11 @@ import time
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 
+from sqlalchemy import or_
+
 from app.extensions import db
 from app.models.course_instance import CourseInstance
+from app.models.material_kit import MaterialKit
 from app.models.material_reservation import (
     MaterialReservation, MaterialReservationItem, MaterialReservationStatus,
 )
@@ -136,7 +139,18 @@ def get_catalog(consumable=False, search=None, force=False):
 
 
 def get_templates(force=False):
-    """Fetch material templates (BOM). Returns (templates, error).
+    """Fetch material templates (BOM) over the MM Medic partner API. Returns
+    (templates, error).
+
+    Task 5 moved the materials page's prefill source to local MaterialKit
+    records (see `kits_for_instance` below) -- ІPRM, not MM Medic, knows which
+    set of materials belongs to which course. This function is no longer
+    called from that page. It stays because the partner endpoint it calls
+    (`/api/partner/iprm/templates`) is still live on the MM Medic side, and
+    retiring it is a later plan's job, in a specific order: ІPRM stops
+    calling first (done here), then MM Medic removes the endpoint. Deleting
+    this function now would strand that route with no caller to prove it is
+    safe to remove.
 
     Cached for a short TTL; on MM Medic failure the last good copy is served.
     """
@@ -160,6 +174,22 @@ def get_templates(force=False):
     _templates_cache['data'] = data
     _templates_cache['ts'] = now
     return data, None
+
+
+def kits_for_instance(instance):
+    """Active material kits available to this instance: its course's own kits
+    plus the universal ones (`course_id IS NULL`), see app/models/material_kit.py.
+
+    Replaces `get_templates()` as the materials page's prefill source (Task 5).
+    """
+    return (
+        MaterialKit.query
+        .filter(MaterialKit.is_active.is_(True))
+        .filter(or_(MaterialKit.course_id == instance.course_id,
+                    MaterialKit.course_id.is_(None)))
+        .order_by(MaterialKit.name)
+        .all()
+    )
 
 
 def get_reservation(instance_id):

@@ -240,9 +240,7 @@ def instance_materials(instance_id):
     consumable = request.args.get('consumable', '').lower() in ('1', 'true', 'yes')
     catalog, catalog_error, catalog_stale = _load_catalog(consumable=consumable, search=search)
 
-    templates, _tpl_err = ([], None)
-    if mode in ('reserve', 'edit'):
-        templates, _tpl_err = mrs.get_templates()
+    kits = mrs.kits_for_instance(instance) if mode in ('reserve', 'edit') else []
 
     prefill = _load_prefill(request.args.get('prefill', ''))
     rows = _build_rows(catalog, reservation, prefill, mode)
@@ -273,7 +271,7 @@ def instance_materials(instance_id):
         rows=rows,
         catalog_error=catalog_error,
         catalog_stale=catalog_stale,
-        templates=templates,
+        kits=kits,
         mode=mode,
         is_reserved=is_reserved,
         is_consumed=is_consumed,
@@ -457,7 +455,7 @@ def instance_materials_cancel(instance_id):
 
 
 # ---------------------------------------------------------------------------
-# Templates (bill-of-materials) apply
+# Kits (Task 5: replaces the remote MM Medic template) apply
 # ---------------------------------------------------------------------------
 
 @admin_bp.route('/instances/<int:instance_id>/materials/apply-template', methods=['POST'])
@@ -467,34 +465,36 @@ def instance_materials_apply_template(instance_id):
     if not instance:
         return redirect(url_for('admin.instances_list'))
 
-    name = (request.form.get('template') or '').strip()
+    # Selected by id, not name: a kit's name can be renamed from the admin
+    # screen (Task 4), and an id survives that rename while a name match
+    # would silently stop finding the kit.
+    try:
+        kit_id = int(request.form.get('kit_id') or 0)
+    except ValueError:
+        kit_id = 0
     try:
         multiplier = max(1, int(request.form.get('multiplier') or 1))
     except ValueError:
         multiplier = 1
 
-    templates, err = mrs.get_templates()
-    if err:
-        flash(err, 'error')
-        return _redirect_page(instance_id)
-    tpl = next((t for t in templates if t['name'] == name), None)
-    if not tpl:
-        flash('Шаблон не знайдено', 'error')
+    # Only a kit this instance could actually be offered (its course's own,
+    # or universal, and active) is eligible -- same set the picker renders.
+    kit = next((k for k in mrs.kits_for_instance(instance) if k.id == kit_id), None)
+    if not kit:
+        flash('Комплект не знайдено', 'error')
         return _redirect_page(instance_id)
 
     prefill = {}
-    for it in tpl.get('items', []):
-        sku = it.get('sku')
-        qty = it.get('quantity') or 0
-        if sku and qty > 0:
-            prefill[sku] = qty * multiplier
+    for it in kit.items:
+        if it.sku and it.quantity > 0:
+            prefill[it.sku] = it.quantity * multiplier
 
     if not prefill:
-        flash('Шаблон порожній', 'error')
+        flash('Комплект порожній', 'error')
         return _redirect_page(instance_id)
 
     token = _save_prefill(prefill)
-    flash(f'Застосовано шаблон «{name}» ({len(prefill)} позицій). Перевірте й збережіть.',
+    flash(f'Застосовано комплект «{kit.name}» ({len(prefill)} позицій). Перевірте й збережіть.',
           'success')
     reservation = mrs.get_reservation(instance_id)
     edit = 1 if (reservation and reservation.status == MaterialReservationStatus.RESERVED) else None

@@ -3,17 +3,24 @@
 Covers the XLSX template round-trip and the outgoing client's request signing,
 which must match what the MM Medic partner API verifies:
     HMAC-SHA256(secret, "<timestamp>.<raw_body>")
-Neither needs a database.
+Also covers `mrs.kits_for_instance` (Task 5), which needs the database --
+everything else in this file does not.
 """
 import hashlib
 import hmac
 import json
 import tempfile
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from openpyxl import load_workbook
 
+from app.extensions import db
+from app.models.course import Course
+from app.models.course_instance import CourseInstance
+from app.models.material_kit import MaterialKit
+from app.services import material_reservation_service as mrs
 from app.services import xlsx_io
 from app.services.mm_medic_client import MMMedicClient, _sign, MMConfigError
 
@@ -249,3 +256,57 @@ def test_update_request_items_posts_to_items_endpoint(monkeypatch):
     assert seen['method'] == 'POST'
     assert seen['url'].endswith('/reservations/ref-1/items')
     assert seen['body'] == {'items': [{'sku': 'A', 'quantity': 5}]}
+
+
+# ----------------------------- kits_for_instance (Task 5) -----------------------------
+
+def _course(title='Курс', is_active=False):
+    course = Course(title=title, slug=f'kfi-{uuid4().hex[:8]}', is_active=is_active)
+    db.session.add(course)
+    db.session.flush()
+    return course
+
+
+def _instance(course):
+    inst = CourseInstance(course_id=course.id)
+    db.session.add(inst)
+    db.session.flush()
+    return inst
+
+
+def _kit(course_id=None, name='Набір', is_active=True):
+    kit = MaterialKit(name=name, course_id=course_id, is_active=is_active)
+    db.session.add(kit)
+    db.session.flush()
+    return kit
+
+
+def test_kits_for_instance_returns_course_and_universal_not_other_course(db_session):
+    course_a = _course('Курс A')
+    course_b = _course('Курс B')
+    instance_a = _instance(course_a)
+
+    kit_a = _kit(course_id=course_a.id, name='Набір A')
+    kit_universal = _kit(course_id=None, name='Універсальний')
+    _kit(course_id=course_b.id, name='Набір B')  # інший курс -- не має потрапити
+
+    kits = mrs.kits_for_instance(instance_a)
+    ids = {k.id for k in kits}
+
+    assert kit_a.id in ids
+    assert kit_universal.id in ids
+    assert len(ids) == 2  # набір курсу B відсутній
+
+
+def test_kits_for_instance_excludes_inactive(db_session):
+    course_a = _course('Курс C')
+    instance_a = _instance(course_a)
+
+    active_kit = _kit(course_id=course_a.id, name='Активний')
+    _kit(course_id=course_a.id, name='Неактивний', is_active=False)
+    _kit(course_id=None, name='Універсальний, неактивний', is_active=False)
+
+    kits = mrs.kits_for_instance(instance_a)
+    ids = {k.id for k in kits}
+
+    assert ids == {active_kit.id}
