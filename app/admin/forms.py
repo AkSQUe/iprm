@@ -580,6 +580,37 @@ class InstanceTariffForm(FlaskForm):
     )
 
 
+class MaterialKitForm(FlaskForm):
+    """Комплект матеріалів: заголовок (позиції додаються окремою формою).
+
+    `course_id` навмисно необов'язковий: порожній варіант -- це не "не
+    обрав", а свідомий вибір "універсальний комплект" (task 3). Роут
+    заповнює choices курсами і додає порожній варіант ПЕРШИМ, з окремим
+    підписом -- див. _populate_course_choices у routes_material_kits.
+    """
+    name = StringField(
+        'Назва комплекту',
+        validators=[DataRequired(message='Назва обов\'язкова'), Length(max=200)],
+        description='Напр. "Базовий набір — плазмотерапія" або "Стандарт".',
+    )
+    course_id = SelectField(
+        'Курс',
+        choices=[], validators=[Optional()], coerce=str,
+        description='Порожньо -- комплект універсальний і підходить будь-якому курсу.',
+    )
+    is_default = BooleanField(
+        'За замовчуванням для курсу',
+        default=False,
+        description='Пропонується першим при застосуванні комплекту до заходу.',
+    )
+    is_active = BooleanField('Активний', default=True)
+    notes = TextAreaField(
+        'Примітки',
+        validators=[Optional()],
+        description='Службова примітка для команди, на застосування не впливає.',
+    )
+
+
 class CourseTariffForm(FlaskForm):
     """Шаблонний тариф курсу (дефолтна вилка; копіюється у нові проведення)."""
     name = StringField(

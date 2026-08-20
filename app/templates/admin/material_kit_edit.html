@@ -1,0 +1,198 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{% if kit %}{{ kit.name }} — комплект матеріалів{% else %}Новий комплект матеріалів{% endif %} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-materials.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <a href="{{ url_for('admin.material_kits_list') }}" class="admin-breadcrumb__link">Комплекти матеріалів</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">{% if kit %}{{ kit.name }}{% else %}Новий комплект{% endif %}</span>
+      </div>
+      <h1 class="admin-hero__title">{% if kit %}Редагувати комплект{% else %}Новий комплект матеріалів{% endif %}</h1>
+      <p class="admin-hero__subtitle">
+        {% if kit %}Позицій у комплекті: {{ kit.items|length }}{% else %}Спершу заповніть заголовок — позиції з каталогу MM Medic додаються після збереження.{% endif %}
+      </p>
+    </div>
+    <div class="admin-hero__actions">
+      {% if kit %}
+      <form method="POST" action="{{ url_for('admin.material_kit_delete', kit_id=kit.id) }}" data-confirm="Видалити комплект «{{ kit.name }}»? Усі його позиції буде видалено." data-confirm-ok="Видалити комплект" data-confirm-danger>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--danger">{{ icon('delete') }} Видалити комплект</button>
+      </form>
+      {% endif %}
+      <a href="{{ url_for('admin.material_kits_list') }}" class="btn-admin btn-admin--secondary">Назад до списку</a>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  <form method="POST" class="admin-form" action="{% if kit %}{{ url_for('admin.material_kit_edit', kit_id=kit.id) }}{% else %}{{ url_for('admin.material_kit_create') }}{% endif %}">
+    {{ form.hidden_tag() }}
+    {% include 'admin/partials/_form_errors.html' %}
+
+    <div class="form-section admin-form__section">
+      <h3 class="admin-form__section-title">Заголовок комплекту</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group">
+          <label for="mk-name">Назва комплекту <span class="required">*</span></label>
+          {{ form.name(class="form-input" + (" is-invalid" if form.name.errors else ""), id="mk-name", placeholder="Базовий набір — плазмотерапія") }}
+          <div class="form-hint">{{ form.name.description }}</div>
+          {% for error in form.name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="mk-course">Курс</label>
+          {{ form.course_id(class="form-input", id="mk-course") }}
+          <div class="form-hint">{{ form.course_id.description }}</div>
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="mk-notes">Примітки</label>
+          {{ form.notes(class="form-input", id="mk-notes", rows="3") }}
+          <div class="form-hint">{{ form.notes.description }}</div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-checkbox">
+            {{ form.is_default(id="mk-default") }}
+            <label for="mk-default">За замовчуванням для курсу</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-checkbox">
+            {{ form.is_active(id="mk-active") }}
+            <label for="mk-active">Активний</label>
+          </div>
+        </div>
+
+      </div>
+      <div class="admin-form__actions">
+        <button type="submit" class="btn-admin btn-admin--primary">{% if kit %}Зберегти зміни{% else %}Створити комплект{% endif %}</button>
+      </div>
+    </div>
+  </form>
+
+  {% if kit %}
+  <div class="form-section admin-form__section">
+    <h3 class="admin-form__section-title">Позиції комплекту</h3>
+
+    {% if kit.items %}
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Артикул</th>
+          <th>Назва (на момент додавання)</th>
+          <th>Кількість</th>
+          <th>Обов'язкова</th>
+          <th>Примітка</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in kit.items %}
+        <tr>
+          <td><code>{{ item.sku }}</code></td>
+          <td>{{ item.name_snapshot or '—' }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>
+            {% if item.is_required %}<span class="badge badge--active">Так</span>
+            {% else %}<span class="badge badge--draft">Ні</span>{% endif %}
+          </td>
+          <td>{{ item.note or '—' }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('admin.material_kit_item_delete', kit_id=kit.id, item_id=item.id) }}" data-confirm="Прибрати «{{ item.name_snapshot or item.sku }}» з комплекту?" data-confirm-ok="Прибрати" data-confirm-danger>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити позицію">{{ icon('delete') }}</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="form-hint">У комплекті ще немає жодної позиції. Додайте першу з каталогу нижче.</p>
+    {% endif %}
+
+    {% if catalog_stale %}
+    <div class="materials-banner">
+      {{ icon('error') }} MM Medic зараз недоступний — показано останній відомий каталог.
+    </div>
+    {% elif catalog_error %}
+    <div class="materials-banner">
+      {{ icon('error') }} Каталог MM Medic недоступний: {{ catalog_error }}.
+    </div>
+    {% endif %}
+
+    {% if catalog %}
+    <form method="POST" action="{{ url_for('admin.material_kit_item_add', kit_id=kit.id) }}" class="admin-form__grid" id="kitItemAddForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="name_snapshot" id="kitItemNameSnapshot" value="">
+
+      <div class="form-group admin-form__full">
+        <label for="kitItemSku">Позиція з каталогу MM Medic</label>
+        <select name="sku" id="kitItemSku" class="form-input" required>
+          <option value="">— оберіть позицію —</option>
+          {% for c in catalog %}
+          <option value="{{ c.sku }}" data-name="{{ c.name or '' }}">
+            {{ c.sku }} — {{ c.name or '—' }}{% if c.category %} ({{ c.category }}){% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="kitItemQuantity">Кількість</label>
+        <input type="number" name="quantity" id="kitItemQuantity" class="form-input" min="1" step="1" value="1" required>
+      </div>
+
+      <div class="form-group">
+        <label for="kitItemNote">Примітка</label>
+        <input type="text" name="note" id="kitItemNote" class="form-input" placeholder="Необов'язково">
+      </div>
+
+      <div class="form-group">
+        <div class="form-checkbox">
+          <input type="checkbox" name="is_required" id="kitItemRequired" value="y">
+          <label for="kitItemRequired">Обов'язкова позиція</label>
+        </div>
+      </div>
+
+      <div class="admin-form__actions admin-form__full">
+        <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('add') }} Додати позицію</button>
+      </div>
+    </form>
+    {% elif not catalog_error and not catalog_stale %}
+    <p class="form-hint">Усі витратні позиції каталогу MM Medic вже додано до цього комплекту.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+{% if kit and catalog %}
+<script src="{{ url_for('static', filename='js/admin-material-kits.js') }}?v={{ assets_version }}" defer></script>
+{% endif %}
+{% endblock %}

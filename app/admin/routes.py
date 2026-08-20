@@ -33,6 +33,7 @@ from app.admin import routes_course_requests  # noqa: F401
 from app.admin import routes_b2b_requests  # noqa: F401
 from app.admin import routes_webhooks  # noqa: F401
 from app.admin import routes_materials  # noqa: F401
+from app.admin import routes_material_kits  # noqa: F401
 from app.admin import routes_xlsx  # noqa: F401
 from app.admin import routes_tools  # noqa: F401
 from app.admin import routes_blog  # noqa: F401

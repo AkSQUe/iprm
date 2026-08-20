@@ -1,0 +1,87 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Комплекти матеріалів | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Комплекти матеріалів</span>
+      </div>
+      <h1 class="admin-hero__title">Комплекти матеріалів</h1>
+      <p class="admin-hero__subtitle">Стандартні набори позицій MM Medic під курс -- прив'язані до конкретного курсу або універсальні, для будь-якого заходу.</p>
+    </div>
+    <div class="admin-hero__actions">
+      <a href="{{ url_for('admin.material_kit_create') }}" class="btn-admin btn-admin--primary">{{ icon('add') }} Новий комплект</a>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {% if kits %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Назва</th>
+        <th>Курс</th>
+        <th>Позицій</th>
+        <th>За замовчуванням</th>
+        <th>Активний</th>
+        <th>Дії</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for kit in kits %}
+      <tr>
+        <td><strong>{{ kit.name }}</strong></td>
+        <td>
+          {% if kit.course %}{{ kit.course.title }}
+          {% else %}<span class="badge badge--pending">Універсальний</span>{% endif %}
+        </td>
+        <td>{{ kit.items|length }}</td>
+        <td>
+          {% if kit.is_default %}<span class="badge badge--active">Так</span>
+          {% else %}<span class="badge badge--draft">Ні</span>{% endif %}
+        </td>
+        <td>
+          {% if kit.is_active %}<span class="badge badge--active">Так</span>
+          {% else %}<span class="badge badge--draft">Ні</span>{% endif %}
+        </td>
+        <td>
+          <div class="admin-table__actions">
+            <a href="{{ url_for('admin.material_kit_edit', kit_id=kit.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
+            <form method="POST" action="{{ url_for('admin.material_kit_delete', kit_id=kit.id) }}" data-confirm="Видалити комплект «{{ kit.name }}»? Усі його позиції буде видалено." data-confirm-ok="Видалити комплект" data-confirm-danger>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити">{{ icon('delete') }}</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="admin-empty">
+    {{ icon('apps', cls='admin-empty__icon') }}
+    <h3 class="admin-empty__title">Комплектів ще немає</h3>
+    <p>Створіть перший комплект і заповніть його позиціями з каталогу MM Medic.</p>
+  </div>
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}
