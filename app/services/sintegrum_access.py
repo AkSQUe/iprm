@@ -121,21 +121,30 @@ class StudentApiProvider:
         )
 
         assigned = self.client.assign_course(student_id, remote_course_id)
-        confirmed = self._is_assigned(student_id, remote_course_id)
 
-        if confirmed is False:
-            # Партнер сказав "прийнято", а в призначених курсу немає.
+        # Порядок сигналів має значення. "Вже призначено" -- це відповідь
+        # САМОГО партнера про стан його бази, і вона сильніша за нашу звірку:
+        # /progress/assigned показує не все, що призначено (перевірено на
+        # ONL-5 -- курс у покупця був, а в прогресі не з'являвся). Спершу
+        # довіряємо партнеру, і лише потім перевіряємо себе.
+        if _already_assigned(assigned):
+            logger.info('Курс %s уже призначений учню %s -- зараховуємо як '
+                        'видачу', remote_course_id, student_id)
+            return AccessResult(target_url=portal_url(self.settings),
+                                student_id=student_id)
+
+        if not assigned.ok:
+            raise AccessProvisionError(
+                f'Не вдалося відкрити доступ до курсу: {assigned.error}')
+
+        # Партнер сказав "прийнято". Ось тут звірка й потрібна: порожній 200
+        # означає лише те, що запит узяли, а не що людина бачить курс.
+        if self._is_assigned(student_id, remote_course_id) is False:
             raise AccessProvisionError(
                 'Sintegrum прийняв запит, але курс у списку призначених не '
                 f'з\'явився (учень {student_id}, курс {remote_course_id}). '
                 'Найімовірніше, ідентифікатор учня не збігається з тим, '
-                'якого чекає призначення позиції.'
-                if assigned.ok else
-                f'Не вдалося відкрити доступ до курсу: {assigned.error}')
-
-        if confirmed is None and not assigned.ok and not _already_assigned(assigned):
-            raise AccessProvisionError(
-                f'Не вдалося відкрити доступ до курсу: {assigned.error}')
+                'якого чекає призначення позиції.')
 
         return AccessResult(target_url=portal_url(self.settings),
                             student_id=student_id)

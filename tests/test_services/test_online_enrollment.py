@@ -667,7 +667,7 @@ class TestKnownStudentId:
 
             def assign_course(self, student_id, course_id):
                 calls.append(('assign', student_id, course_id))
-                return SimpleNamespace(ok=True, error=None)
+                return SimpleNamespace(ok=True, error=None, http_status=200)
 
             def assigned_positions(self, user_id):
                 return SimpleNamespace(
@@ -928,7 +928,9 @@ class TestAlreadyAssigned:
         result = provider.provision(enrollment)
 
         assert result.student_id == 777
-        assert ('progress', 777) in calls
+        # Звірку не робимо взагалі: партнер сам сказав, що пара вже існує,
+        # і його слово про власну базу сильніше за нашу перевірку.
+        assert ('progress', 777) not in calls
 
     def test_422_without_confirmation_is_still_success(self, app, enrollment):
         """Звірка не відповіла -- віримо самому партнеру: пара вже існує."""
@@ -976,3 +978,27 @@ class TestAlreadyAssigned:
         assert enrollment.provisioned_at is not None
         assert enrollment.access_token
         assert enrollment.provision_error is None
+
+
+def test_partner_verdict_beats_our_probe(app, enrollment):
+    """ONL-5, 20.08.2026: замовлення висіло годину саме через порядок.
+
+    Партнер відповідав 422 «пара 273-32 вже використана» -- курс призначений,
+    покупець його бачив. Наша звірка через /progress/assigned його не
+    показувала (там не все, що призначено), і я дозволив звірці скасувати
+    відповідь партнера. Через це виправлення 422 не спрацювало жодного разу:
+    воно стояло ПІСЛЯ вето.
+    """
+    from app.services.sintegrum_client import SintegrumResult
+
+    enrollment.course.access_url = None
+    db.session.flush()
+    provider, _calls = TestStudentApiProvider()._provider(
+        app,
+        assign=SintegrumResult(ok=False, http_status=422,
+                               error='Sintegrum 422: уже використано'),
+        # Прогрес мовчить -- саме так поводився живий API.
+        progress=SintegrumResult(ok=True, data=[]),
+    )
+
+    assert provider.provision(enrollment).student_id == 777
