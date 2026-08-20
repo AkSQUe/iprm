@@ -42,21 +42,25 @@
 
     {% include 'partials/flash_messages.html' %}
 
-    <p class="admin-text-muted">
-      Усього {{ totals.all }}, оплачено {{ totals.paid }}, не оплачено {{ totals.unpaid }}.
-    </p>
-
-    {% if totals.stuck %}
-    {# Оплачено, але доступ не видано -- людина заплатила й нічого не отримала.
-       Ця плашка і є причина, чому сторінка існує. #}
-    <div class="form-section admin-form__section">
-      <p class="admin-form__section-hint">
-        Оплачених замовлень без виданого доступу:
-        <a href="{{ url_for('admin.online_orders_list', access='stuck') }}"><strong>{{ totals.stuck }}</strong></a>.
+    {# Один блок замість трьох: лічильники, наголос на зависших і пояснення
+       поруч. Раніше рядок підсумку висів окремо, а однорядкова підказка
+       займала картку з падінгом форми -- ритм сторінки ламався на кожному
+       блоці. #}
+    <div class="admin-orders-summary">
+      <p class="admin-orders-summary__counts">
+        Усього {{ totals.all }} &middot; оплачено {{ totals.paid }} &middot; не оплачено {{ totals.unpaid }}
+        {% if totals.stuck %}
+        &middot;
+        <a href="{{ url_for('admin.online_orders_list', access='stuck') }}"
+           class="admin-orders-summary__stuck">без доступу {{ totals.stuck }}</a>
+        {% endif %}
+      </p>
+      {% if totals.stuck %}
+      <p class="admin-orders-summary__hint">
         Фонова задача повторює спроби кожні 10 хвилин; кнопка «Видати доступ» робить це негайно.
       </p>
+      {% endif %}
     </div>
-    {% endif %}
 
     {{ filter_bar(
          endpoint='admin.online_orders_list',
@@ -72,7 +76,18 @@
 
     {% if orders %}
     <div class="admin-table-wrap">
-    <table class="admin-table admin-table--wide">
+    <table class="admin-table admin-table--wide admin-table--fixed">
+      {# Ширини задані явно: інакше браузер роздає їх за вмістом, і одна
+         довга помилка видачі забирає місце в назви курсу. #}
+      <colgroup>
+        <col class="admin-col--order">
+        <col class="admin-col--buyer">
+        <col class="admin-col--course">
+        <col class="admin-col--money">
+        <col class="admin-col--status">
+        <col class="admin-col--access">
+        <col class="admin-col--actions">
+      </colgroup>
       <thead>
         <tr>
           <th>Замовлення</th>
@@ -87,16 +102,19 @@
       <tbody>
         {% for order in orders %}
         <tr>
-          <td>
+          <td class="admin-nowrap">
             <strong>{{ order.order_id }}</strong>
             <br><small class="admin-text-muted">{{ order.created_at.strftime('%d.%m.%Y %H:%M') if order.created_at }}</small>
           </td>
           <td>
             {{ order.user.full_name if order.user else '—' }}
-            {% if order.user %}<br><small class="admin-text-muted">{{ order.user.email }}</small>{% endif %}
+            {# Адресу ріжемо, а не переносимо: у вузькій колонці вона ламалась
+               посеред домену ("...gmail.co / m") і читалась як помилка. #}
+            {% if order.user %}<br><small class="admin-text-muted admin-truncate"
+                                          title="{{ order.user.email }}">{{ order.user.email }}</small>{% endif %}
           </td>
           <td>{{ order.course.effective_title if order.course else '—' }}</td>
-          <td>
+          <td class="admin-nowrap">
             <strong>{{ money(order.payment_amount or 0, order.course.currency if order.course else 'UAH') }}</strong>
             {% if order.promo_code_id and order.discount_amount %}
             <br><small class="admin-text-muted">
@@ -138,52 +156,75 @@
               <br><small class="admin-text-muted">{{ waiting_hours[order.id] }} год без доступу</small>
               {% endif %}
               {% if order.provision_error %}
-              <br><small class="admin-text-muted">{{ order.provision_error|truncate(80) }}</small>
+              {# Повний текст -- у title: у комірці він займав шість рядків і
+                 розсував таблицю, а прочитати його треба раз на розбір. #}
+              <br><small class="admin-text-muted admin-truncate"
+                         title="{{ order.provision_error }}">{{ order.provision_error }}</small>
               {% endif %}
             {% else %}
               <span class="admin-text-muted">—</span>
             {% endif %}
           </td>
           <td>
-            {# Посилання на встановлення пароля Sintegrum не віддає через API:
-               адмін бере його в кабінеті партнера руками, вставляє сюди -- і
-               покупцю йде лист. Це єдиний ручний крок у ланцюжку. #}
-            {% if order.is_paid %}
-            <form method="POST" action="{{ url_for('admin.online_order_login_link', enrollment_id=order.id) }}"
-                  class="admin-inline-form admin-login-link">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <input type="url" name="login_link" class="form-input form-input--sm"
-                     placeholder="https://sntgr.me/..." required
-                     value="{{ order.login_link or '' }}">
-              <button type="submit" class="btn-admin btn-admin--sm">
-                {{ 'Надіслати ще раз' if order.login_link_sent_at else 'Надіслати вхід' }}
-              </button>
-            </form>
-            {% if order.login_link_sent_at %}
-            <small class="admin-text-muted">надіслано {{ order.login_link_sent_at.strftime('%d.%m %H:%M') }}</small>
-            {% endif %}
-            {% endif %}
+            <div class="admin-table__actions">
+              {% if order.is_paid %}
+              <form method="POST" action="{{ url_for('admin.online_order_reissue', enrollment_id=order.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm"
+                        data-confirm="Видати доступ і надіслати лист покупцю?" data-confirm-ok="Видати">
+                  {{ 'Перевидати' if order.provisioned_at else 'Видати доступ' }}
+                </button>
+              </form>
 
-            {% if order.is_paid %}
-            <form method="POST" action="{{ url_for('admin.online_order_reissue', enrollment_id=order.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm"
-                      data-confirm="Видати доступ і надіслати лист покупцю?" data-confirm-ok="Видати">
-                {{ 'Перевидати' if order.provisioned_at else 'Видати доступ' }}
-              </button>
-            </form>
-            {# Повернення грошей -- окремо від зміни статусу в селекті: там
-               менеджер лише фіксує те, що вже сталося, а тут гроші справді
-               рухаються. Веде на окрему сторінку, бо повернення має суму,
-               підставу і заборону з п. 5.1, яку треба показати. #}
-            <a href="{{ url_for('admin.refund_form', kind='enrollment', order_id=order.id, next=request.full_path) }}"
-               class="btn-admin btn-admin--danger btn-admin--sm">
-              {{ 'Повернути ще' if order.has_refund else 'Повернути кошти' }}
-            </a>
-            {% if order.has_refund %}
-            <div class="admin-text-muted">Повернуто {{ order.refunded_total | int }} з {{ order.payment_amount | int }} &#8372;</div>
-            {% endif %}
-            {% endif %}
+              {# Решта дій -- у меню рядка: поле під посилання ширше за всю
+                 колонку, а повернення коштів робиться раз на сто замовлень.
+                 Панель позиціюється fixed (admin-row-menu.js), тож не
+                 обрізається прокруткою таблиці. #}
+              <details class="admin-actions-menu">
+                <summary class="btn-admin btn-admin--secondary btn-admin--sm" title="Ще дії" aria-label="Ще дії">
+                  {{ icon('more_vert') }}
+                </summary>
+                <div class="admin-actions-menu__items">
+                  {# Посилання на встановлення пароля Sintegrum не віддає через
+                     API: адмін бере його в кабінеті партнера руками, вставляє
+                     сюди -- і покупцю йде лист. Єдиний ручний крок. #}
+                  <form method="POST" action="{{ url_for('admin.online_order_login_link', enrollment_id=order.id) }}"
+                        class="admin-login-link">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label class="admin-login-link__label" for="login-link-{{ order.id }}">
+                      Посилання на встановлення пароля
+                    </label>
+                    <input type="url" name="login_link" id="login-link-{{ order.id }}"
+                           class="form-input form-input--sm"
+                           placeholder="https://sntgr.me/..." required
+                           value="{{ order.login_link or '' }}">
+                    <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">
+                      {{ 'Надіслати ще раз' if order.login_link_sent_at else 'Надіслати вхід' }}
+                    </button>
+                    {% if order.login_link_sent_at %}
+                    <small class="admin-text-muted">надіслано {{ order.login_link_sent_at.strftime('%d.%m %H:%M') }}</small>
+                    {% endif %}
+                  </form>
+
+                  {# Повернення грошей -- окремо від зміни статусу в селекті:
+                     там менеджер лише фіксує те, що вже сталося, а тут гроші
+                     справді рухаються. Веде на окрему сторінку, бо повернення
+                     має суму, підставу і заборону з п. 5.1. #}
+                  <a href="{{ url_for('admin.refund_form', kind='enrollment', order_id=order.id, next=request.full_path) }}"
+                     class="admin-actions-menu__item admin-actions-menu__item--danger">
+                    {{ 'Повернути ще' if order.has_refund else 'Повернути кошти' }}
+                  </a>
+                  {% if order.has_refund %}
+                  <small class="admin-text-muted admin-actions-menu__note">
+                    Повернуто {{ order.refunded_total | int }} з {{ order.payment_amount | int }} &#8372;
+                  </small>
+                  {% endif %}
+                </div>
+              </details>
+              {% else %}
+              <span class="admin-text-muted">&mdash;</span>
+              {% endif %}
+            </div>
           </td>
         </tr>
         {% endfor %}

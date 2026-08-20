@@ -1523,16 +1523,97 @@
   margin-bottom: 6px;
 }
 
-/* Поле «посилання на встановлення пароля» у рядку замовлення: вузьке поле
-   поруч із кнопкою, як решта інлайн-форм таблиці. */
+/* ===== Таблиця замовлень онлайн-курсів =====
+   Ширини колонок задані явно. Без них браузер роздає місце за вмістом, і
+   одна довга помилка видачі забирає його в назви курсу: та йшла в шість
+   рядків, а колонка дій виїжджала за край таблиці. */
+/* Лише на широких екранах: із 768px таблиця стає картками
+   (admin-table-cards.js), і задана ширина колонки перетворюється на ширину
+   картки -- мітка «ЗАМОВЛЕННЯ» друкувалась по літері в стовпчик. */
+@media (min-width: 769px) {
+  .admin-col--order { width: 12%; }
+  .admin-col--buyer { width: 15%; }
+  .admin-col--course { width: 19%; }
+  .admin-col--money { width: 8%; }
+  .admin-col--status { width: 10%; }
+  .admin-col--access { width: 15%; }
+  /* Дії найширші: кнопка видачі плюс меню рядка. Коли колонка була вужча,
+     кнопка вилазила на сусідню комірку і затуляла стан доступу. */
+  .admin-col--actions { width: 21%; }
+}
+
+/* Довгий технічний текст (помилка партнера) -- одним рядком; повний
+   лишається в title. Читають його раз на розбір, а місце він з'їдав
+   постійно. */
+.admin-truncate {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Форма посилання на встановлення пароля живе в меню рядка, де є ширина:
+   в комірці таблиці поле було ширшим за всю колонку. */
 .admin-login-link {
   display: flex;
+  flex-direction: column;
   gap: 6px;
-  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid var(--iprm-divider);
   margin-bottom: 6px;
 }
 
-.admin-login-link .form-input {
-  min-width: 0;
-  flex: 1 1 auto;
+.admin-login-link__label {
+  font-size: 0.75rem;
+  color: var(--apple-gray);
+}
+
+.admin-actions-menu__note {
+  display: block;
+  padding: 4px 8px;
+}
+
+/* Фіксований розкрій. Без нього ширини з <colgroup> лишаються лише
+   побажанням: браузер роздає місце за вмістом, і один довгий рядок (JSON
+   помилки партнера) розсуває таблицю за межі екрана разом із колонкою дій.
+   Заразом `text-overflow: ellipsis` починає працювати -- він потребує
+   визначеної ширини комірки. */
+@media (min-width: 769px) {
+  .admin-table--fixed {
+    table-layout: fixed;
+  }
+}
+
+/* Довгі назви й адреси переносимо будь-де: у фіксованому розкрої слово,
+   довше за колонку, інакше вилазить поверх сусідньої. */
+.admin-table--fixed td,
+.admin-table--fixed th {
+  overflow-wrap: anywhere;
+}
+
+/* Підсумок над таблицею замовлень. Один блок із власним відступом замість
+   рядка тексту й картки форми: ті мали різні відступи, і сторінка вище
+   таблиці виглядала складеною з чужих шматків. */
+.admin-orders-summary {
+  margin-bottom: 20px;
+}
+
+.admin-orders-summary__counts {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--apple-gray);
+}
+
+/* Зависші виділяємо кольором помилки: це єдине число тут, заради якого
+   сторінку відкривають. */
+.admin-orders-summary__stuck {
+  font-weight: 600;
+  color: var(--iprm-error-text);
+}
+
+.admin-orders-summary__hint {
+  margin: 6px 0 0;
+  font-size: 0.8125rem;
+  color: var(--apple-gray);
 }
