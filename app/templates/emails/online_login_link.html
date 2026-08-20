@@ -1,0 +1,34 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row %}
+
+{% block title %}{{ _('Вхід на навчальну платформу') }}{% endblock %}
+
+{% block preview_text %}{{ _('Задайте пароль і починайте навчання') }}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        {{ _('Вхід на навчальну платформу') }}
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        {{ user.first_name or _('Шановний учаснику') }}, {{ _('ваш курс уже відкрито. Лишилось задати пароль — і можна починати.') }}
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #17131D; line-height: 1.3;">{{ course.effective_title }}</p>
+                {{ detail_row(_('Логін'), user.email) }}
+                {{ detail_row(_('Замовлення'), enrollment.order_id) }}
+            </td>
+        </tr>
+    </table>
+
+    {# Посилання персональне: його згенеровано в кабінеті платформи саме під
+       цього учня, тож пересилати його комусь іншому не можна. #}
+    {{ button_primary(_('Встановити пароль'), login_link) }}
+
+    <p class="mobile-text" style="margin: 24px 0 0 0; font-size: 14px; color: #625A6D; line-height: 1.6;">
+        {{ _('Посилання призначене особисто вам — не пересилайте його. Після встановлення пароля заходьте на платформу за своєю адресою, і курс буде у вашому списку.') }}
+    </p>
+{% endblock %}

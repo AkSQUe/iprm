@@ -866,3 +866,87 @@ def url_for_online_orders():
     from flask import url_for
 
     return url_for('admin.online_orders_list')
+
+
+class TestLoginLink:
+    """Ручна передача посилання на встановлення пароля.
+
+    API Sintegrum не вміє ані видати пароль новому учню, ані надіслати
+    запрошення -- посилання генерується руками в кабінеті партнера. Тому
+    єдиний ручний крок: адмін переносить його до нас, а надсилає система.
+    """
+
+    def _paid(self, buyer, course):
+        order = OnlineEnrollment(
+            user_id=buyer.id, online_course_id=course.id,
+            payment_amount=Decimal('4000'), payment_status='paid',
+            status='active',
+        )
+        db.session.add(order)
+        db.session.commit()
+        return order
+
+    def test_link_is_saved_and_sent(self, client, admin, buyer, course,
+                                    monkeypatch):
+        from app.services.email_service import EmailService
+
+        sent = []
+        monkeypatch.setattr(
+            EmailService, 'send_online_login_link',
+            staticmethod(lambda enrollment: sent.append(enrollment.id) or 1))
+
+        order = self._paid(buyer, course)
+        _login(client, admin)
+        client.post(f'/admin/online-orders/{order.id}/login-link',
+                    data={'login_link': 'https://sntgr.me/ft9Ws'},
+                    follow_redirects=True)
+
+        db.session.refresh(order)
+        assert order.login_link == 'https://sntgr.me/ft9Ws'
+        assert order.login_link_sent_at is not None
+        assert sent == [order.id]
+
+    def test_plain_http_is_refused(self, client, admin, buyer, course):
+        order = self._paid(buyer, course)
+        _login(client, admin)
+
+        client.post(f'/admin/online-orders/{order.id}/login-link',
+                    data={'login_link': 'http://sntgr.me/ft9Ws'},
+                    follow_redirects=True)
+
+        db.session.refresh(order)
+        assert order.login_link is None
+
+    def test_page_requires_admin(self, client, buyer, course):
+        order = self._paid(buyer, course)
+        _login(client, buyer)
+
+        response = client.post(f'/admin/online-orders/{order.id}/login-link',
+                               data={'login_link': 'https://sntgr.me/x'})
+
+        assert response.status_code in (302, 403, 404)
+        db.session.refresh(order)
+        assert order.login_link is None
+
+    def test_access_email_carries_the_link_when_known(self, buyer, course,
+                                                     monkeypatch):
+        """Якщо посилання вже є, окремого листа не треба -- воно в тому самому."""
+        from flask import render_template
+
+        from app.services.email_service import EmailService
+
+        order = self._paid(buyer, course)
+        order.login_link = 'https://sntgr.me/ft9Ws'
+        db.session.commit()
+
+        rendered = {}
+        monkeypatch.setattr(EmailService, 'send_email', staticmethod(
+            lambda **kw: rendered.update(html=render_template(
+                f'emails/{kw["template_name"]}.html', **kw['context']))))
+        monkeypatch.setattr(EmailService, '_site_base_url',
+                            staticmethod(lambda: 'https://iprm.space'))
+
+        EmailService.send_online_access(order, 'https://iprm.space/access/x')
+
+        assert 'https://sntgr.me/ft9Ws' in rendered['html']
+        assert 'Забули пароль' not in rendered['html']

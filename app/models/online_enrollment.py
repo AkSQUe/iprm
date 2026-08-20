@@ -14,7 +14,7 @@ import secrets
 
 from app.extensions import db
 from app.models.mixins import (
-    TimestampMixin, BigIntPK, RefundableMixin, utcnow,
+    TimestampMixin, BigIntPK, DiscountedMixin, RefundableMixin, utcnow,
 )
 from app.utils import ensure_utc
 
@@ -33,7 +33,8 @@ STATUSES = (STATUS_PENDING, STATUS_ACTIVE, STATUS_CANCELLED)
 PAYMENT_STATUSES = ('unpaid', 'pending', 'paid', 'refunded')
 
 
-class OnlineEnrollment(TimestampMixin, RefundableMixin, db.Model):
+class OnlineEnrollment(TimestampMixin, RefundableMixin, DiscountedMixin,
+                       db.Model):
     __tablename__ = 'online_enrollments'
 
     id = db.Column(BigIntPK, primary_key=True)
@@ -105,6 +106,13 @@ class OnlineEnrollment(TimestampMixin, RefundableMixin, db.Model):
     # Колонка, а не пошук у журналі пошти: правило "один лист на замовлення"
     # має читатись у самому замовленні (так само зроблено в реєстраціях).
     access_reminder_sent_at = db.Column(db.DateTime(timezone=True))
+
+    # Персональне посилання Sintegrum на встановлення пароля
+    # (`https://sntgr.me/<код>`). Партнер не вміє ані видати пароль через
+    # API, ані надіслати запрошення, тож адмін бере посилання в кабінеті
+    # руками, а надсилає його вже система.
+    login_link = db.Column(db.String(500))
+    login_link_sent_at = db.Column(db.DateTime(timezone=True))
 
     __table_args__ = (
         db.CheckConstraint(

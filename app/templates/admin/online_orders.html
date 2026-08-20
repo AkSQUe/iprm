@@ -145,6 +145,25 @@
             {% endif %}
           </td>
           <td>
+            {# Посилання на встановлення пароля Sintegrum не віддає через API:
+               адмін бере його в кабінеті партнера руками, вставляє сюди -- і
+               покупцю йде лист. Це єдиний ручний крок у ланцюжку. #}
+            {% if order.is_paid %}
+            <form method="POST" action="{{ url_for('admin.online_order_login_link', enrollment_id=order.id) }}"
+                  class="admin-inline-form admin-login-link">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="url" name="login_link" class="form-input form-input--sm"
+                     placeholder="https://sntgr.me/..." required
+                     value="{{ order.login_link or '' }}">
+              <button type="submit" class="btn-admin btn-admin--sm">
+                {{ 'Надіслати ще раз' if order.login_link_sent_at else 'Надіслати вхід' }}
+              </button>
+            </form>
+            {% if order.login_link_sent_at %}
+            <small class="admin-text-muted">надіслано {{ order.login_link_sent_at.strftime('%d.%m %H:%M') }}</small>
+            {% endif %}
+            {% endif %}
+
             {% if order.is_paid %}
             <form method="POST" action="{{ url_for('admin.online_order_reissue', enrollment_id=order.id) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

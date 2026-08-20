@@ -1522,3 +1522,17 @@
 .admin-remote-html li {
   margin-bottom: 6px;
 }
+
+/* Поле «посилання на встановлення пароля» у рядку замовлення: вузьке поле
+   поруч із кнопкою, як решта інлайн-форм таблиці. */
+.admin-login-link {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.admin-login-link .form-input {
+  min-width: 0;
+  flex: 1 1 auto;
+}

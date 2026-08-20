@@ -50,6 +50,21 @@ class RegistrationLinkProvider:
         return AccessResult(target_url=target)
 
 
+def _already_assigned(result) -> bool:
+    """Чи означає відмова партнера "курс уже призначено".
+
+    Ендпоінт призначення відповідає 422, коли пара учень-курс уже існує:
+    `{"field": "user_id", "message": "Комбінацію 273-32 ... уже
+    використано."}`. Потрібний стан при цьому ДОСЯГНУТО, і вважати це
+    збоєм означає лишити людину без доступу назавжди -- кожна наступна
+    спроба отримає те саме 422.
+
+    Дивимось на код відповіді, а не на текст: повідомлення приходить
+    людською мовою й будь-коли може змінитись.
+    """
+    return result.http_status == 422
+
+
 class StudentApiProvider:
     """Основна реалізація: заводимо студента й відкриваємо йому курс.
 
@@ -106,52 +121,56 @@ class StudentApiProvider:
         )
 
         assigned = self.client.assign_course(student_id, remote_course_id)
-        if not assigned.ok:
+        confirmed = self._is_assigned(student_id, remote_course_id)
+
+        if confirmed is False:
+            # Партнер сказав "прийнято", а в призначених курсу немає.
             raise AccessProvisionError(
+                'Sintegrum прийняв запит, але курс у списку призначених не '
+                f'з\'явився (учень {student_id}, курс {remote_course_id}). '
+                'Найімовірніше, ідентифікатор учня не збігається з тим, '
+                'якого чекає призначення позиції.'
+                if assigned.ok else
                 f'Не вдалося відкрити доступ до курсу: {assigned.error}')
 
-        self._confirm_assignment(student_id, remote_course_id)
+        if confirmed is None and not assigned.ok and not _already_assigned(assigned):
+            raise AccessProvisionError(
+                f'Не вдалося відкрити доступ до курсу: {assigned.error}')
 
         return AccessResult(target_url=portal_url(self.settings),
                             student_id=student_id)
 
-    def _confirm_assignment(self, student_id, remote_course_id):
-        """Звірити з партнером, що курс справді призначений.
+    def _is_assigned(self, student_id, remote_course_id):
+        """Чи справді курс у списку призначених. True / False / None.
 
         `POST .../positions/...` відповідає порожнім 200 -- це "запит
         прийнято", а не "людина бачить курс". Без звірки будь-яке
-        непорозуміння (не той простір ідентифікаторів, не той курс) виглядає
-        як успіх: замовлення позначається виданим, лист іде, а людина
-        відкриває платформу й нічого там не знаходить. Саме так і сталося
-        20.08.2026.
+        непорозуміння (не той простір ідентифікаторів, не той курс)
+        виглядало як успіх: замовлення позначалось виданим, лист ішов, а
+        людина відкривала платформу й нічого там не знаходила. Саме так і
+        сталося 20.08.2026.
 
-        Якщо звірка неможлива (партнер недоступний, формат несподіваний) --
-        НЕ валимо видачу: краще видати доступ і не знати напевно, ніж
-        відмовити людині через власну перевірку. Пишемо в лог.
+        `None` означає "перевірити не вдалося" -- партнер недоступний або
+        віддав несподіваний формат. Це НЕ привід відмовляти людині, яка
+        заплатила: рішення тоді ухвалює відповідь самого призначення.
         """
         progress = self.client.assigned_positions(student_id)
         if not progress.ok:
             logger.warning(
                 'Не вдалося звірити призначення курсу %s учню %s: %s',
                 remote_course_id, student_id, progress.error)
-            return
+            return None
 
-        rows = progress.data if isinstance(progress.data, list) else None
-        if rows is None:
+        if not isinstance(progress.data, list):
             logger.warning(
                 'Sintegrum віддав несподіваний формат прогресу для учня %s',
                 student_id)
-            return
+            return None
 
-        assigned_ids = {
-            row.get('position_id') for row in rows if isinstance(row, dict)
+        return remote_course_id in {
+            row.get('position_id') for row in progress.data
+            if isinstance(row, dict)
         }
-        if remote_course_id not in assigned_ids:
-            raise AccessProvisionError(
-                'Sintegrum прийняв запит, але курс у списку призначених не '
-                f'з\'явився (учень {student_id}, курс {remote_course_id}). '
-                'Найімовірніше, ідентифікатор учня не збігається з тим, '
-                'якого чекає призначення позиції.')
 
     def _resolve_student(self, enrollment):
         """Знайти студента за email у Sintegrum або завести нового.

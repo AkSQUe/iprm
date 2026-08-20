@@ -44,9 +44,18 @@
                 <p style="margin: 0 0 4px 0; font-size: 14px; color: #625A6D; line-height: 1.6;">
                     {% trans email=user.email %}Ваш логін на навчальній платформі — <strong>{{ email }}</strong>.{% endtrans %}
                 </p>
+                {% if enrollment.login_link %}
+                <p style="margin: 0 0 12px 0; font-size: 14px; color: #625A6D; line-height: 1.6;">
+                    {{ _('Пароль задайте за персональним посиланням нижче — воно тільки для вас.') }}
+                </p>
+                <p style="margin: 0;">
+                    <a href="{{ enrollment.login_link }}" style="color: #7437C9; font-weight: 600;">{{ _('Встановити пароль') }}</a>
+                </p>
+                {% else %}
                 <p style="margin: 0; font-size: 14px; color: #625A6D; line-height: 1.6;">
                     {{ _('Заходите вперше? На сторінці входу натисніть «Забули пароль?» і задайте свій — акаунт уже створено на цю адресу.') }}
                 </p>
+                {% endif %}
             </td>
         </tr>
     </table>

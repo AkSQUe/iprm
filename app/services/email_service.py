@@ -1037,6 +1037,39 @@ class EmailService:
         )
 
     @staticmethod
+    def send_online_login_link(enrollment):
+        """Персональне посилання на встановлення пароля.
+
+        Окремий лист, а не рядок у листі про доступ: посилання зазвичай
+        з'являється ПІСЛЯ того, як той уже надіслано -- адмін бере його в
+        кабінеті партнера руками.
+        """
+        user = enrollment.user
+        course = enrollment.course
+        if user is None or not user.email:
+            logger.warning('Cannot send online_login_link: %s has no email',
+                           enrollment.order_id)
+            return None
+        if not enrollment.login_link:
+            logger.warning('Cannot send online_login_link: %s has no link',
+                           enrollment.order_id)
+            return None
+
+        return EmailService.send_email(
+            to=user.email,
+            subject=lambda: _('Вхід на навчальну платформу: %(title)s',
+                              title=course.effective_title),
+            template_name='online_login_link',
+            context={
+                'user': user,
+                'course': course,
+                'enrollment': enrollment,
+                'login_link': enrollment.login_link,
+            },
+            trigger='payment',
+        )
+
+    @staticmethod
     def send_online_access_reminder(enrollment):
         """Нагадування: доступ відкрито, а людина жодного разу не заходила.
 

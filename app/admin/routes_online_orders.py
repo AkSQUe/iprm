@@ -25,6 +25,7 @@ from app.models.online_enrollment import OnlineEnrollment
 from app.models.user import User
 from app.utils import ensure_utc
 
+
 def _wants_json():
     """Клієнт очікує JSON (inline-AJAX), а не redirect (noscript-форма).
 
@@ -269,6 +270,50 @@ def online_order_reissue(enrollment_id):
     audit_logger.info('Admin %s reissued access for %s',
                       current_user.email, enrollment.order_id)
     flash('Доступ видано, лист надіслано', 'success')
+    return redirect(url_for('admin.online_orders_list'))
+
+
+@admin_bp.route('/online-orders/<int:enrollment_id>/login-link', methods=['POST'])
+@admin_required
+def online_order_login_link(enrollment_id):
+    """Передати покупцю посилання на встановлення пароля.
+
+    Єдиний ручний крок у всьому ланцюжку: API партнера не вміє ані видати
+    пароль новому учню, ані надіслати запрошення. Адмін бере персональне
+    посилання в кабінеті Sintegrum, вставляє сюди -- і система надсилає
+    його покупцю сама, замість листування вручну.
+    """
+    from app.admin._helpers import try_commit
+    from app.models.mixins import utcnow
+    from app.services.email_service import EmailService
+
+    enrollment = db.session.get(OnlineEnrollment, enrollment_id)
+    if enrollment is None:
+        flash('Замовлення не знайдено', 'error')
+        return redirect(url_for('admin.online_orders_list'))
+
+    link = (request.form.get('login_link') or '').strip()
+    if not link.startswith('https://'):
+        flash('Посилання на встановлення пароля має починатися з https://',
+              'error')
+        return redirect(url_for('admin.online_orders_list'))
+    if len(link) > 500:
+        flash('Посилання задовге', 'error')
+        return redirect(url_for('admin.online_orders_list'))
+
+    enrollment.login_link = link
+    enrollment.login_link_sent_at = utcnow()
+    if not try_commit(log_context=f'login link for {enrollment.order_id}'):
+        return redirect(url_for('admin.online_orders_list'))
+
+    if EmailService.send_online_login_link(enrollment) is None:
+        flash('Посилання збережено, але лист не пішов -- перевірте пошту в логах',
+              'warning')
+    else:
+        flash('Посилання надіслано покупцю', 'success')
+
+    audit_logger.info('Admin %s sent login link for %s',
+                      current_user.email, enrollment.order_id)
     return redirect(url_for('admin.online_orders_list'))
 
 

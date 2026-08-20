@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-20 18:00+0300\n"
+"POT-Creation-Date: 2026-08-20 18:32+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -80,6 +80,18 @@ msgstr "Date of birth cannot be in the future"
 
 msgid "Некоректний рік народження"
 msgstr "Invalid year of birth"
+
+msgid "Прізвище"
+msgstr "Last name"
+
+msgid "Прізвище обов'язкове"
+msgstr "Last name is required"
+
+msgid "Ім'я"
+msgstr "First name"
+
+msgid "Ім'я обов'язкове"
+msgstr "First name is required"
 
 msgid "Будь ласка, заповніть це поле"
 msgstr "Please fill in this field"
@@ -157,6 +169,9 @@ msgstr "Back to top"
 
 msgid "Надсилаємо…"
 msgstr "Sending…"
+
+msgid "Відкриваємо оплату…"
+msgstr "Opening payment…"
 
 msgid "Слабкий"
 msgstr "Weak"
@@ -422,23 +437,11 @@ msgstr "Invalid email format"
 msgid "Email занадто довгий"
 msgstr "Email is too long"
 
-msgid "Ім'я"
-msgstr "First name"
-
-msgid "Ім'я обов'язкове"
-msgstr "First name is required"
-
 msgid "Ім'я повинно бути від 2 до 100 символів"
 msgstr "First name must be between 2 and 100 characters"
 
 msgid "Ваше ім'я"
 msgstr "Your first name"
-
-msgid "Прізвище"
-msgstr "Last name"
-
-msgid "Прізвище обов'язкове"
-msgstr "Last name is required"
 
 msgid "Прізвище повинно бути від 2 до 100 символів"
 msgstr "Last name must be between 2 and 100 characters"
@@ -1181,6 +1184,10 @@ msgid "Щодо вашої заявки на повернення: %(title)s"
 msgstr "About your refund request: %(title)s"
 
 #, python-format
+msgid "Вхід на навчальну платформу: %(title)s"
+msgstr "Sign in to the learning platform: %(title)s"
+
+#, python-format
 msgid "Ваш курс чекає: %(title)s"
 msgstr "Your course is waiting: %(title)s"
 
@@ -1411,6 +1418,9 @@ msgstr "Get a new link"
 msgid "Доступ готується"
 msgstr "Access is being prepared"
 
+msgid "Встановити пароль"
+msgstr "Set a password"
+
 msgid "Заявка на розгляді"
 msgstr "Request under review"
 
@@ -1445,8 +1455,8 @@ msgstr "Account"
 msgid "Дані для сертифіката"
 msgstr "Certificate details"
 
-msgid "Заповнено. Можна оновити за потреби."
-msgstr "Filled in. You can update it if needed."
+msgid "Заповнено. Тут можна оновити ПІБ та інші дані."
+msgstr "Completed. You can update your full name and other details here."
 
 msgid "Не заповнено — потрібно для балів БПР і сертифіката (МОЗ №725)."
 msgstr "Not filled in — required for BPR points and the certificate (MoH No. 725)."
@@ -1521,6 +1531,15 @@ msgstr "Personal details"
 msgid "Потрібна для ідентифікації у системі БПР МОЗ при нарахуванні балів."
 msgstr "Required for identification in the MoH BPR system when awarding points."
 
+msgid ""
+"Ви вже отримували сертифікат. Зміна ПІБ діятиме для нових сертифікатів, а"
+" вже видані не переоформлюються автоматично — якщо потрібен сертифікат з "
+"новим ПІБ, зверніться до нас."
+msgstr ""
+"You have already received a certificate. A name change applies to new "
+"certificates; those already issued are not reissued automatically — if "
+"you need a certificate with your new name, please contact us."
+
 msgid "Освіта та робота"
 msgstr "Education and employment"
 
@@ -1571,9 +1590,6 @@ msgstr "Active"
 
 msgid "Не встановлено"
 msgstr "Not set"
-
-msgid "Встановити пароль"
-msgstr "Set a password"
 
 msgid "Прив'язано"
 msgstr "Linked"
@@ -2726,6 +2742,9 @@ msgstr "How to sign in"
 msgid "Ваш логін на навчальній платформі — <strong>%(email)s</strong>."
 msgstr "Your login on the learning platform is <strong>%(email)s</strong>."
 
+msgid "Пароль задайте за персональним посиланням нижче — воно тільки для вас."
+msgstr "Set your password using the personal link below — it is for you only."
+
 msgid ""
 "Заходите вперше? На сторінці входу натисніть «Забули пароль?» і задайте "
 "свій — акаунт уже створено на цю адресу."
@@ -2789,6 +2808,27 @@ msgid ""
 msgstr ""
 "You can always get a fresh learning link in your account. The course "
 "stays yours — we do not limit how long you study."
+
+msgid "Вхід на навчальну платформу"
+msgstr "Sign in to the learning platform"
+
+msgid "Задайте пароль і починайте навчання"
+msgstr "Set a password and start learning"
+
+msgid "ваш курс уже відкрито. Лишилось задати пароль — і можна починати."
+msgstr "your course is already open. Just set a password and you can start."
+
+msgid "Логін"
+msgstr "Login"
+
+msgid ""
+"Посилання призначене особисто вам — не пересилайте його. Після "
+"встановлення пароля заходьте на платформу за своєю адресою, і курс буде у"
+" вашому списку."
+msgstr ""
+"The link is meant for you personally — please do not forward it. Once the"
+" password is set, sign in with your own address and the course will be in"
+" your list."
 
 msgid "Встановіть новий пароль для вашого облікового запису ІПРМ"
 msgstr "Set a new password for your IPRM account"

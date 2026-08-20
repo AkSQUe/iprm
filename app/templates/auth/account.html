@@ -195,6 +195,12 @@
             {% else %}
               <span class="badge badge--pending">{{ _('Доступ готується') }}</span>
             {% endif %}
+            {# Пароль на платформі людина ставить сама -- API партнера його не
+               видає. Посилання персональне, тож показуємо лише власнику. #}
+            {% if item.is_paid and item.login_link %}
+            <a href="{{ item.login_link }}" class="apple-btn apple-btn--outline"
+               target="_blank" rel="noopener">{{ _('Встановити пароль') }}</a>
+            {% endif %}
             {% set refund_req = refund_reqs_by_enrollment.get(item.id) %}
             {% if refund_req and refund_req.is_open %}
             <span class="badge badge--pending">{{ _('Заявка на розгляді') }}</span>
@@ -294,7 +300,7 @@
         <a href="{{ url_for('auth.certificate_data') }}" class="account-card account-card--link apple-reveal{% if not certificate_data_complete %} account-card--attention{% endif %}">
           <h3 class="account-card__title">{{ _('Дані для сертифіката') }}</h3>
           <p class="account-card__text">
-            {% if certificate_data_complete %}{{ _('Заповнено. Можна оновити за потреби.') }}{% else %}{{ _('Не заповнено — потрібно для балів БПР і сертифіката (МОЗ №725).') }}{% endif %}
+            {% if certificate_data_complete %}{{ _('Заповнено. Тут можна оновити ПІБ та інші дані.') }}{% else %}{{ _('Не заповнено — потрібно для балів БПР і сертифіката (МОЗ №725).') }}{% endif %}
           </p>
         </a>
         <a href="{{ url_for('auth.connections') }}" class="account-card account-card--link apple-reveal">
