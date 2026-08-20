@@ -804,3 +804,21 @@ def test_orders_page_filters_by_access_state(client, admin, buyer, course):
 
     assert stuck.order_id in body
     assert 'без доступу' in body
+
+
+def test_registrations_page_points_at_online_orders(client, admin):
+    """Покупки онлайн-курсів -- окрема сутність, і це має бути видно.
+
+    Менеджер шукає "хто оплатив" у Реєстраціях: там лише заходи, тож без
+    вказівника він робить висновок, що замовлення не дійшло.
+    """
+    _login(client, admin)
+    body = client.get('/admin/registrations?scope=all').get_data(as_text=True)
+
+    assert url_for_online_orders() in body
+
+
+def url_for_online_orders():
+    from flask import url_for
+
+    return url_for('admin.online_orders_list')

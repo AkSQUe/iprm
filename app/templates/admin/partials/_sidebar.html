@@ -18,10 +18,6 @@
         {{ icon('school') }}
         Онлайн-курси
       </a>
-      <a href="{{ url_for('admin.online_orders_list') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.online_orders_list',) %} admin-sidebar__link--active{% endif %}">
-        {{ icon('notes') }}
-        Замовлення онлайн-курсів
-      </a>
       <a href="{{ url_for('admin.cities_list') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.cities_list', 'admin.cities_save', 'admin.cities_add', 'admin.cities_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('table_view') }}
         Довідник локацій
@@ -70,6 +66,14 @@
       <a href="{{ url_for('admin.registrations_all') }}" class="admin-sidebar__link{% if ep in ('admin.registrations_all', 'admin.instance_registrations', 'admin.registration_status', 'admin.registration_attendance') %} admin-sidebar__link--active{% endif %}">
         {{ icon('how_to_reg') }}
         Реєстрації
+      </a>
+      {# Поруч із «Реєстраціями», а не в «Контенті» біля каталогу: людина,
+         яка шукає "хто оплатив", відкриває саме цей розділ. Доти покупки
+         онлайн-курсів були в адмінці невидимі -- сторінка є, а натрапити на
+         неї нема як. #}
+      <a href="{{ url_for('admin.online_orders_list') }}" class="admin-sidebar__link{% if ep in ('admin.online_orders_list',) %} admin-sidebar__link--active{% endif %}">
+        {{ icon('notes') }}
+        Онлайн-курси: замовлення
       </a>
       <a href="{{ url_for('admin.certificates') }}" class="admin-sidebar__link{% if ep == 'admin.certificates' %} admin-sidebar__link--active{% endif %}">
         {{ icon('workspace_premium') }}
@@ -130,6 +134,10 @@
       <a href="{{ url_for('admin.materials_overview') }}" class="admin-sidebar__link{% if ep in ('admin.materials_overview', 'admin.instance_materials') %} admin-sidebar__link--active{% endif %}">
         {{ icon('widgets') }}
         Резервування матеріалів
+      </a>
+      <a href="{{ url_for('admin.material_kits_list') }}" class="admin-sidebar__link{% if ep in ('admin.material_kits_list', 'admin.material_kit_create', 'admin.material_kit_edit') %} admin-sidebar__link--active{% endif %}">
+        {{ icon('apps') }}
+        Комплекти матеріалів
       </a>
       <a href="{{ url_for('admin.error_logs') }}" class="admin-sidebar__link{% if ep in ('admin.error_logs', 'admin.error_log_detail') %} admin-sidebar__link--active{% endif %}">
         {{ icon('bug_report') }}

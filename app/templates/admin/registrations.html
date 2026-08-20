@@ -31,7 +31,14 @@
           <span class="admin-breadcrumb__current">Реєстрації</span>
         </div>
         <h1 class="admin-hero__title">Реєстрації</h1>
-        <p class="admin-hero__subtitle">Всі реєстрації на заходи</p>
+        <p class="admin-hero__subtitle">
+          Всі реєстрації на заходи.
+          {# Покупки онлайн-курсів -- окрема сутність і окрема сторінка. Без
+             цього рядка людина шукає їх тут і робить висновок, що замовлення
+             не дійшло. #}
+          Покупки онлайн-курсів сюди не потрапляють &mdash;
+          <a href="{{ url_for('admin.online_orders_list') }}">вони на своїй сторінці</a>.
+        </p>
       </div>
       <div class="admin-hero__actions">
         <div class="admin-xlsx-toolbar">

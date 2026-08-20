@@ -408,13 +408,18 @@ def test_invoice_by_token_is_refused_after_payment(client, course):
 
 
 def test_paid_order_page_has_no_payment_form(client, course):
-    """Підписаний платіжний пакет на вже сплачену суму не створюємо."""
+    """Підписаний платіжний пакет на вже сплачену суму не створюємо.
+
+    Перевіряємо саме пакет, а не слово "liqpay": скрипт віконця оплати
+    підключений до сторінки завжди, і його наявність нічого не означає.
+    """
     enrollment = _paid_order(client, course)
 
     body = client.get(
         f'/online-courses/order/{enrollment.order_token}').get_data(as_text=True)
 
-    assert 'liqpay' not in body.lower()
+    assert 'name="signature"' not in body
+    assert 'data-liqpay-data' not in body
 
 
 # ----------------------------- перевипуск доступу -----------------------------

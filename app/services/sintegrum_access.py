@@ -110,8 +110,48 @@ class StudentApiProvider:
             raise AccessProvisionError(
                 f'Не вдалося відкрити доступ до курсу: {assigned.error}')
 
+        self._confirm_assignment(student_id, remote_course_id)
+
         return AccessResult(target_url=portal_url(self.settings),
                             student_id=student_id)
+
+    def _confirm_assignment(self, student_id, remote_course_id):
+        """Звірити з партнером, що курс справді призначений.
+
+        `POST .../positions/...` відповідає порожнім 200 -- це "запит
+        прийнято", а не "людина бачить курс". Без звірки будь-яке
+        непорозуміння (не той простір ідентифікаторів, не той курс) виглядає
+        як успіх: замовлення позначається виданим, лист іде, а людина
+        відкриває платформу й нічого там не знаходить. Саме так і сталося
+        20.08.2026.
+
+        Якщо звірка неможлива (партнер недоступний, формат несподіваний) --
+        НЕ валимо видачу: краще видати доступ і не знати напевно, ніж
+        відмовити людині через власну перевірку. Пишемо в лог.
+        """
+        progress = self.client.assigned_positions(student_id)
+        if not progress.ok:
+            logger.warning(
+                'Не вдалося звірити призначення курсу %s учню %s: %s',
+                remote_course_id, student_id, progress.error)
+            return
+
+        rows = progress.data if isinstance(progress.data, list) else None
+        if rows is None:
+            logger.warning(
+                'Sintegrum віддав несподіваний формат прогресу для учня %s',
+                student_id)
+            return
+
+        assigned_ids = {
+            row.get('position_id') for row in rows if isinstance(row, dict)
+        }
+        if remote_course_id not in assigned_ids:
+            raise AccessProvisionError(
+                'Sintegrum прийняв запит, але курс у списку призначених не '
+                f'з\'явився (учень {student_id}, курс {remote_course_id}). '
+                'Найімовірніше, ідентифікатор учня не збігається з тим, '
+                'якого чекає призначення позиції.')
 
     def _resolve_student(self, enrollment):
         """Знайти студента за email у Sintegrum або завести нового.

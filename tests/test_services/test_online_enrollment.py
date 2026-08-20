@@ -407,6 +407,7 @@ class TestStudentApiProvider:
         from app.services.sintegrum_client import SintegrumResult
 
         calls = []
+        assigned = []
 
         class _Client:
             def find_student_by_email(self, email):
@@ -421,7 +422,20 @@ class TestStudentApiProvider:
 
             def assign_course(self, student_id, course_id):
                 calls.append(('assign', student_id, course_id))
-                return overrides.get('assign', SintegrumResult(ok=True, data={}))
+                result = overrides.get('assign', SintegrumResult(ok=True, data={}))
+                if result.ok:
+                    assigned.append(course_id)
+                return result
+
+            def assigned_positions(self, user_id):
+                calls.append(('progress', user_id))
+                # За замовчуванням партнер підтверджує те, що ми щойно
+                # призначили: тести, написані до появи звірки, перевіряють
+                # не її. Розбіжність задається через overrides.
+                return overrides.get('progress', SintegrumResult(
+                    ok=True,
+                    data=[{'user_id': user_id, 'position_id': cid}
+                          for cid in assigned]))
 
             def revoke_course(self, student_id, course_id):
                 calls.append(('revoke', student_id, course_id))
@@ -447,8 +461,8 @@ class TestStudentApiProvider:
 
         result = provider.provision(enrollment)
 
-        assert [c[0] for c in calls] == ['find', 'create', 'assign']
-        assert calls[-1] == ('assign', 777, enrollment.course.sintegrum_id)
+        assert [c[0] for c in calls] == ['find', 'create', 'assign', 'progress']
+        assert ('assign', 777, enrollment.course.sintegrum_id) in calls
         assert result.student_id == 777
         assert result.target_url == 'https://multimededu.sintegrum.com'
 
@@ -471,7 +485,7 @@ class TestStudentApiProvider:
 
         provider.provision(enrollment)
 
-        assert [c[0] for c in calls] == ['assign']
+        assert [c[0] for c in calls] == ['assign', 'progress']
 
     def test_failed_assignment_raises(self, app, enrollment):
         from app.services.sintegrum_client import SintegrumResult
@@ -655,6 +669,11 @@ class TestKnownStudentId:
                 calls.append(('assign', student_id, course_id))
                 return SimpleNamespace(ok=True, error=None)
 
+            def assigned_positions(self, user_id):
+                return SimpleNamespace(
+                    ok=True, error=None,
+                    data=[{'user_id': user_id, 'position_id': 98765}])
+
         provider = sintegrum_access.StudentApiProvider(
             client=_Client(), settings=SimpleNamespace(
                 sintegrum_company_alias='acme'),
@@ -664,7 +683,7 @@ class TestKnownStudentId:
 
         sintegrum_access.provision(order, commit=False)
 
-        assert calls == [('assign', 77, 98765)]
+        assert calls == [('assign', 77, 98765)]  # партнера про пошук не питали
         assert order.sintegrum_student_id == 77
 
 
@@ -789,3 +808,92 @@ class TestAccessReminders:
         self._provisioned(user, course, days_ago=30)
 
         assert self._run(monkeypatch, days=0) == []
+
+
+# ------------------- звірка призначення на боці партнера -------------------
+
+class TestAssignmentIsConfirmed:
+    """Інцидент 20.08.2026: оплачено, "видано", а курсу в людини немає.
+
+    `POST .../positions/...` відповідає порожнім 200 -- це "запит прийнято",
+    а не "людина бачить курс". Без звірки будь-яке непорозуміння виглядало
+    як успіх: замовлення позначалось виданим, лист ішов, покупець відкривав
+    платформу й нічого там не знаходив.
+    """
+
+    def _provider(self, app, **overrides):
+        return TestStudentApiProvider()._provider(app, **overrides)
+
+    def test_silence_from_partner_is_not_success(self, app, enrollment):
+        """Партнер прийняв запит, але курс у призначених не з'явився."""
+        from app.services.sintegrum_client import SintegrumResult
+
+        enrollment.course.access_url = None
+        db.session.flush()
+        provider, _calls = self._provider(
+            app, progress=SintegrumResult(ok=True, data=[]))
+
+        with pytest.raises(sintegrum_access.AccessProvisionError) as exc:
+            provider.provision(enrollment)
+
+        assert 'не з\'явився' in str(exc.value)
+
+    def test_someone_elses_course_is_not_ours(self, app, enrollment):
+        from app.services.sintegrum_client import SintegrumResult
+
+        enrollment.course.access_url = None
+        db.session.flush()
+        provider, _calls = self._provider(app, progress=SintegrumResult(
+            ok=True, data=[{'user_id': 777, 'position_id': 999999}]))
+
+        with pytest.raises(sintegrum_access.AccessProvisionError):
+            provider.provision(enrollment)
+
+    def test_unreachable_partner_does_not_block_the_buyer(self, app, enrollment):
+        """Наша перевірка не має ставати новою причиною відмови.
+
+        Краще видати доступ і не знати напевно, ніж не видати через те, що
+        звірка не відповіла.
+        """
+        from app.services.sintegrum_client import SintegrumResult
+
+        enrollment.course.access_url = None
+        db.session.flush()
+        provider, _calls = self._provider(app, progress=SintegrumResult(
+            ok=False, error='таймаут'))
+
+        result = provider.provision(enrollment)
+
+        assert result.student_id == 777
+
+    def test_unexpected_shape_does_not_block_the_buyer(self, app, enrollment):
+        from app.services.sintegrum_client import SintegrumResult
+
+        enrollment.course.access_url = None
+        db.session.flush()
+        provider, _calls = self._provider(app, progress=SintegrumResult(
+            ok=True, data={'unexpected': 'object'}))
+
+        assert provider.provision(enrollment).student_id == 777
+
+    def test_failed_confirmation_leaves_the_order_visibly_stuck(
+            self, ops, enrollment, monkeypatch):
+        """Замовлення лишається в списку "оплачено без доступу" з причиною."""
+        from app.services.sintegrum_client import SintegrumResult
+
+        enrollment.course.access_url = None
+        db.session.flush()
+        provider, _calls = TestStudentApiProvider()._provider(
+            None, progress=SintegrumResult(ok=True, data=[]))
+        monkeypatch.setattr(sintegrum_access, 'get_provider',
+                            lambda course=None, settings=None: provider)
+
+        ok, _msg = ops.update_enrollment_status(
+            enrollment, 'paid', 'pay-1', amount=4500)
+        db.session.refresh(enrollment)
+
+        assert ok is True
+        assert enrollment.payment_status == 'paid'
+        assert enrollment.provisioned_at is None
+        assert enrollment.access_token is None
+        assert 'не з\'явився' in (enrollment.provision_error or '')

@@ -42,6 +42,15 @@ COURSE_STATUS_INACTIVE = 0
 COURSE_STATUS_ACTIVE = 1
 COURSE_STATUS_ARCHIVED = 2
 
+# У учня шкала ІНША, і сплутати їх легко -- вони лежать поруч, а числа
+# збігаються за формою. Саме на цьому ми й спіткнулись: створювали покупця
+# зі status=1, вважаючи це "активний", а в Sintegrum одиниця означає
+# "непідтверджений".
+STUDENT_STATUS_BLOCKED = 0
+STUDENT_STATUS_UNCONFIRMED = 1
+STUDENT_STATUS_ACTIVE = 2
+STUDENT_STATUS_ARCHIVED = 3
+
 
 def _no_link(exc) -> str:
     return 'Немає зв' + chr(39) + 'язку з Sintegrum: ' + str(exc)
@@ -231,7 +240,12 @@ class SintegrumClient:
     # ---- учні ----
     def create_student(self, email: str, first_name: str = '', last_name: str = '',
                        phone: str = '', language: str = 'uk',
-                       status: int = 1) -> SintegrumResult:
+                       status: int = STUDENT_STATUS_ACTIVE) -> SintegrumResult:
+        """Завести учня. За замовчуванням -- одразу активного.
+
+        `status` тут зі шкали УЧНЯ (0 заблокований, 1 непідтверджений,
+        2 активний, 3 архів), а не зі шкали курсу.
+        """
         payload = {
             'email': email,
             'first_name': first_name,
@@ -301,6 +315,15 @@ class SintegrumClient:
         return self._request(
             'POST', f'/user/{student_id}/positions/{course_id}',
         )
+
+    def assigned_positions(self, user_id: int) -> SintegrumResult:
+        """Що людині справді призначено на боці партнера.
+
+        Єдиний спосіб перевірити, що відкриття курсу спрацювало: сам
+        `POST .../positions/...` відповідає порожнім 200, тобто "запит
+        прийнято", а не "людина бачить курс".
+        """
+        return self._request('GET', f'/progress/assigned/{user_id}')
 
     def revoke_course(self, student_id: int, course_id: int) -> SintegrumResult:
         """Забрати доступ (повернення коштів)."""
