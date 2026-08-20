@@ -5,6 +5,8 @@
     Очікує у контексті (через {% with %}):
       chosen             -- обраний спосіб ('liqpay'|'invoice') для підсвітки (опц.)
       liqpay_data, liqpay_signature, liqpay_checkout_url -- дані LiqPay-форми
+      liqpay_result_url  -- куди вести після оплати у віджеті (опц.; без нього
+                            працює звичайний POST на сторінку LiqPay)
       invoice_url        -- URL завантаження рахунка; falsy -> блок рахунка прихований
 -#}
 {% set _chosen = chosen | default('liqpay') %}
@@ -14,7 +16,14 @@
     <h3 class="reg-pay-option__title">{{ _('Онлайн-оплата') }}</h3>
     <p class="reg-pay-option__desc">{% trans %}Картка, Google&nbsp;Pay, Apple&nbsp;Pay — миттєве підтвердження.{% endtrans %}</p>
     {% if liqpay_data and liqpay_signature %}
-    <form method="POST" action="{{ liqpay_checkout_url }}" accept-charset="utf-8" data-single-submit>
+    {#- data-liqpay-* вмикає оплату у вікні поверх сторінки (liqpay-checkout.js).
+        Сама форма лишається звичайним POST-ом: без JS або із заблокованим
+        скриптом LiqPay оплата йде старим шляхом. -#}
+    <form method="POST" action="{{ liqpay_checkout_url }}" accept-charset="utf-8" data-single-submit
+          {% if liqpay_result_url %}data-liqpay-form
+          data-liqpay-data="{{ liqpay_data }}"
+          data-liqpay-signature="{{ liqpay_signature }}"
+          data-liqpay-result-url="{{ liqpay_result_url }}"{% endif %}>
       <input type="hidden" name="data" value="{{ liqpay_data }}">
       <input type="hidden" name="signature" value="{{ liqpay_signature }}">
       <button type="submit" class="reg-pay-cta__btn">

@@ -481,7 +481,7 @@ def _liqpay_context(enrollment, course, token=None):
     if (enrollment.is_paid or not service.is_configured
             or not enrollment.payment_amount):
         return {'liqpay_data': None, 'liqpay_signature': None,
-                'liqpay_checkout_url': None}
+                'liqpay_checkout_url': None, 'liqpay_result_url': None}
 
     order_id = enrollment.order_id
     # Гостя повертаємо на його ж сторінку замовлення: payments.success
@@ -498,8 +498,11 @@ def _liqpay_context(enrollment, course, token=None):
         result_url=result_url,
         server_url=url_for('payments.liqpay_callback', _external=True),
     )
+    # result_url віддаємо і в шаблон: він підписаний усередині data, але
+    # віджет не вміє його звідти дістати, а вести після оплати треба туди ж.
     return {'liqpay_data': data, 'liqpay_signature': signature,
-            'liqpay_checkout_url': checkout_url}
+            'liqpay_checkout_url': checkout_url,
+            'liqpay_result_url': result_url}
 
 
 # --------------------------- гостьове замовлення ---------------------------

@@ -552,6 +552,9 @@ def confirmation(registration_id):
     liqpay_data = None
     liqpay_signature = None
     liqpay_checkout_url = None
+    # Той самий result_url, що підписаний усередині data: віджет не вміє його
+    # звідти дістати, а вести після оплати треба саме туди.
+    liqpay_result_url = None
 
     needs_payment = (
         reg.status == 'pending'
@@ -565,6 +568,7 @@ def confirmation(registration_id):
         if service.is_configured:
             order_id = f'REG-{reg.id}'
             result_url = url_for('payments.success', order_id=order_id, _external=True)
+            liqpay_result_url = result_url
             server_url = url_for('payments.liqpay_callback', _external=True)
             description = (
                 reg.instance.course.title if reg.instance and reg.instance.course
@@ -608,6 +612,7 @@ def confirmation(registration_id):
         liqpay_data=liqpay_data,
         liqpay_signature=liqpay_signature,
         liqpay_checkout_url=liqpay_checkout_url,
+        liqpay_result_url=liqpay_result_url,
         invoice_available=bool(invoice_available),
         invoice_url=url_for('registration.invoice_download', registration_id=reg.id),
         certificate_data_complete=bool(profile and profile.is_complete),
@@ -782,6 +787,7 @@ def complete_payment(token):
                 )
 
     liqpay_data = liqpay_signature = liqpay_checkout_url = None
+    liqpay_result_url = None
     needs_payment = (
         reg.payment_status in ('unpaid', 'pending')
         and reg.payment_amount and reg.payment_amount > 0
@@ -796,6 +802,7 @@ def complete_payment(token):
             result_url = url_for(
                 'registration.complete_payment', token=token, ret=1, _external=True,
             )
+            liqpay_result_url = result_url
             server_url = url_for('payments.liqpay_callback', _external=True)
             description = (
                 reg.instance.course.title if reg.instance and reg.instance.course
@@ -835,6 +842,7 @@ def complete_payment(token):
         liqpay_data=liqpay_data,
         liqpay_signature=liqpay_signature,
         liqpay_checkout_url=liqpay_checkout_url,
+        liqpay_result_url=liqpay_result_url,
         invoice_url=url_for('registration.complete_invoice', token=token),
         **recommend,
     )

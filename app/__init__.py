@@ -469,7 +469,12 @@ def create_app(config_name=None):
 
         csp = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'" + gstatic + ga_script + gsi + px_script + "; "
+            # static.liqpay.ua -- бібліотека віджета оплати (checkout.js).
+            # Вона потрібна, щоб покупець платив у вікні поверх нашої сторінки
+            # й повертався одразу, а не кнопкою з квитанції LiqPay. Домени
+            # самої оплати вже дозволені нижче у frame-src.
+            "script-src 'self' 'unsafe-inline' https://static.liqpay.ua"
+            + gstatic + ga_script + gsi + px_script + "; "
             "style-src 'self' 'unsafe-inline'" + gsi + "; "
             "font-src 'self' data:; "
             "img-src 'self' data:" + ga_img + gsi_img + mm_img + px_img + "; "

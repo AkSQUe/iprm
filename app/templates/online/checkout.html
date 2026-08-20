@@ -108,7 +108,12 @@
           <p class="iprm-online-buy__note">{{ _('Доступ уже готуємо — посилання надійде на вашу пошту за кілька хвилин.') }}</p>
           {% endif %}
           {% elif liqpay_data and liqpay_signature %}
-          <form method="POST" action="{{ liqpay_checkout_url }}" accept-charset="utf-8" data-single-submit>
+          {#- Оплата у вікні поверх сторінки; без JS -- звичайний POST. -#}
+          <form method="POST" action="{{ liqpay_checkout_url }}" accept-charset="utf-8" data-single-submit
+                {% if liqpay_result_url %}data-liqpay-form
+                data-liqpay-data="{{ liqpay_data }}"
+                data-liqpay-signature="{{ liqpay_signature }}"
+                data-liqpay-result-url="{{ liqpay_result_url }}"{% endif %}>
             <input type="hidden" name="data" value="{{ liqpay_data }}">
             <input type="hidden" name="signature" value="{{ liqpay_signature }}">
             <button type="submit" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Оплатити через LiqPay') }}</button>
@@ -179,4 +184,8 @@
     </div>
   </section>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/liqpay-checkout.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
