@@ -65,7 +65,28 @@ ACCESS_OPTIONS = [
 ]
 
 
-def _order_filters():
+def _course_options():
+    """Курси, за якими є хоч одне замовлення.
+
+    Не весь каталог: у селекті з десятками треків більшість позицій нічого
+    не відфільтрувала б, а порожній результат читається як поламаний
+    фільтр. Назва -- наша, інакше з Sintegrum (те саме, що `effective_title`
+    дає в адмінці, де мова завжди українська).
+    """
+    rows = (
+        db.session.query(OnlineCourse.id, OnlineCourse.title,
+                         OnlineCourse.remote_name)
+        .join(OnlineEnrollment,
+              OnlineEnrollment.online_course_id == OnlineCourse.id)
+        .distinct()
+        .order_by(OnlineCourse.remote_name)
+        .all()
+    )
+    return [(str(course_id), title or remote_name)
+            for course_id, title, remote_name in rows]
+
+
+def _order_filters(course_keys=()):
     return {
         'q': _listing.text_arg('q'),
         'payment': _listing.choice_arg('payment',
@@ -74,6 +95,12 @@ def _order_filters():
                                       [key for key, _ in STATUS_OPTIONS]),
         'access': _listing.choice_arg('access',
                                       [key for key, _ in ACCESS_OPTIONS]),
+        'course': _listing.choice_arg('course', list(course_keys)),
+        # Гроші звіряють за період -- як у реєстраціях, сертифікатах і
+        # заявках на повернення. Межі рахуються київською добою
+        # (_listing.apply_date_range), бо саме нею закривають місяць.
+        'date_from': _listing.date_arg('date_from'),
+        'date_to': _listing.date_arg('date_to'),
     }
 
 
@@ -103,6 +130,13 @@ def _orders_query(filters):
         query = query.filter(OnlineEnrollment.payment_status == filters['payment'])
     if filters['status']:
         query = query.filter(OnlineEnrollment.status == filters['status'])
+    if filters['course']:
+        query = query.filter(
+            OnlineEnrollment.online_course_id == int(filters['course']))
+    query = _listing.apply_date_range(
+        query, OnlineEnrollment.created_at,
+        filters['date_from'], filters['date_to'],
+    )
     if filters['access'] == 'stuck':
         query = query.filter(
             OnlineEnrollment.payment_status == 'paid',
@@ -135,7 +169,8 @@ def _waiting_hours(orders):
 @admin_bp.route('/online-orders')
 @admin_required
 def online_orders_list():
-    filters = _order_filters()
+    course_options = _course_options()
+    filters = _order_filters([key for key, _ in course_options])
     pagination = _orders_query(filters).paginate(
         page=request.args.get('page', 1, type=int),
         per_page=PER_PAGE, error_out=False,
@@ -145,16 +180,26 @@ def online_orders_list():
     # Лічильники рахуємо по ВСІХ замовленнях, а не по зрізу: картка, що
     # змінюється разом із фільтром, відповідає на інше питання, ніж та,
     # заради якої на неї дивляться.
-    totals = {
-        'all': OnlineEnrollment.query.count(),
-        'paid': OnlineEnrollment.query.filter_by(payment_status='paid').count(),
-        'unpaid': OnlineEnrollment.query.filter_by(payment_status='unpaid').count(),
+    # Один прохід замість чотирьох COUNT(*) по тій самій таблиці: замовлення
+    # накопичуються без стелі, і чотири окремі запити читали її чотири рази.
+    # `count(case(...))` рахує лише непорожні значення, тож працює і на SQLite.
+    counted = db.session.query(
+        db.func.count(OnlineEnrollment.id),
+        db.func.count(db.case(
+            (OnlineEnrollment.payment_status == 'paid', 1))),
+        db.func.count(db.case(
+            (OnlineEnrollment.payment_status == 'unpaid', 1))),
         # Оплачено, але доступ не видано -- саме той стан, заради якого
         # сторінка й потрібна найбільше.
-        'stuck': OnlineEnrollment.query.filter(
+        db.func.count(db.case((db.and_(
             OnlineEnrollment.payment_status == 'paid',
-            OnlineEnrollment.provisioned_at.is_(None),
-        ).count(),
+            OnlineEnrollment.provisioned_at.is_(None)), 1))),
+    ).one()
+    totals = {
+        'all': counted[0],
+        'paid': counted[1],
+        'unpaid': counted[2],
+        'stuck': counted[3],
     }
 
     return render_template(
@@ -166,6 +211,7 @@ def online_orders_list():
         payment_options=PAYMENT_OPTIONS,
         status_options=STATUS_OPTIONS,
         access_options=ACCESS_OPTIONS,
+        course_options=course_options,
         totals=totals,
         waiting_hours=_waiting_hours(orders),
     )
@@ -327,7 +373,8 @@ def online_orders_export():
     """
     from app.services import xlsx_reports
 
-    filters = _order_filters()
+    course_options = _course_options()
+    filters = _order_filters([key for key, _ in course_options])
     orders = _orders_query(filters).all()
     summary = _listing.export_summary(
         [
@@ -335,6 +382,8 @@ def online_orders_export():
             ('Оплата', dict(PAYMENT_OPTIONS).get(filters['payment'], 'Будь-яка')),
             ('Стан', dict(STATUS_OPTIONS).get(filters['status'], 'Будь-який')),
             ('Доступ', dict(ACCESS_OPTIONS).get(filters['access'], 'Будь-який')),
+            ('Курс', dict(course_options).get(filters['course'], 'Усі')),
+            ('Період', _listing.date_range_label(filters, empty='Увесь')),
         ],
         len(orders),
     )

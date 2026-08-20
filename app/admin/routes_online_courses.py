@@ -35,7 +35,7 @@ STATUS_OPTIONS = [
     ('published', 'Опубліковані'),
     ('hidden', 'Приховані'),
     ('ready', 'Готові до публікації'),
-    ('incomplete', 'Не готові (немає ціни чи посилання)'),
+    ('incomplete', 'Не готові (немає ціни або курс зник)'),
     ('vanished', 'Зниклі з Sintegrum'),
 ]
 
@@ -62,20 +62,12 @@ def online_courses_list():
     elif status == 'vanished':
         query = query.filter(OnlineCourse.is_vanished.is_(True))
     elif status == 'ready':
-        query = query.filter(
-            OnlineCourse.is_vanished.is_(False),
-            OnlineCourse.access_url.isnot(None),
-            OnlineCourse.access_url != '',
-            OnlineCourse.price.isnot(None),
-            OnlineCourse.price > 0,
-        )
+        # Той самий предикат, що й `can_be_published` у колонці «Готовність»:
+        # доки це були дві копії, зріз і бейдж у тому самому рядку казали
+        # протилежне (курс без власної ціни продається за ціною Sintegrum).
+        query = query.filter(OnlineCourse.publishable_clause())
     elif status == 'incomplete':
-        query = query.filter(db.or_(
-            OnlineCourse.access_url.is_(None),
-            OnlineCourse.access_url == '',
-            OnlineCourse.price.is_(None),
-            OnlineCourse.price <= 0,
-        ))
+        query = query.filter(db.not_(OnlineCourse.publishable_clause()))
 
     pagination = query.order_by(
         OnlineCourse.is_vanished,
@@ -88,6 +80,14 @@ def online_courses_list():
     courses = pagination.items
 
     settings = SiteSettings.get()
+    # Один прохід замість трьох COUNT(*): лічильники завжди рахуються по
+    # ВСЬОМУ каталогу, тож три окремі запити читали ту саму таблицю тричі.
+    counted = db.session.query(
+        db.func.count(OnlineCourse.id),
+        db.func.count(db.case((OnlineCourse.is_published.is_(True), 1))),
+        db.func.count(db.case((OnlineCourse.is_vanished.is_(True), 1))),
+    ).one()
+
     return render_template(
         'admin/online_courses.html',
         courses=courses,
@@ -98,9 +98,9 @@ def online_courses_list():
         integration_enabled=settings.sintegrum_enabled,
         last_sync_at=settings.sintegrum_last_sync_at,
         totals={
-            'all': OnlineCourse.query.count(),
-            'published': OnlineCourse.query.filter_by(is_published=True).count(),
-            'vanished': OnlineCourse.query.filter_by(is_vanished=True).count(),
+            'all': counted[0],
+            'published': counted[1],
+            'vanished': counted[2],
         },
     )
 

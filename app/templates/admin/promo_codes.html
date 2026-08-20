@@ -78,7 +78,7 @@
           <td>{{ p.scope_label }}</td>
           <td><span class="badge {{ p.status_badge }}">{{ p.status_label }}</span></td>
           <td>
-            <div class="admin-actions-row">
+            <div class="admin-table__actions">
               <a href="{{ url_for('admin.promo_code_edit', promo_id=p.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
               <form method="POST" action="{{ url_for('admin.promo_code_toggle', promo_id=p.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

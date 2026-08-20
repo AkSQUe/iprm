@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
+{% from 'partials/_money.html' import money %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -47,10 +48,20 @@
     </div>
     {% endif %}
 
-    <p class="admin-text-muted">
-      Усього {{ totals.all }}, опубліковано {{ totals.published }}{% if totals.vanished %}, зникло з Sintegrum {{ totals.vanished }}{% endif %}.
-      {% if last_sync_at %}Останнє оновлення {{ last_sync_at.strftime('%d.%m.%Y %H:%M') }}.{% endif %}
-    </p>
+    {# Той самий підсумок, що над таблицею замовлень: лічильники в рядок,
+       тривожне число -- посиланням у свій зріз. #}
+    <div class="admin-list-summary">
+      <p class="admin-list-summary__counts">
+        Усього {{ totals.all }} &middot; опубліковано {{ totals.published }}
+        {%- if totals.vanished %} &middot;
+        <a href="{{ url_for('admin.online_courses_list', status='vanished') }}"
+           class="admin-list-summary__alert">зникло з Sintegrum {{ totals.vanished }}</a>
+        {%- endif %}
+      </p>
+      {% if last_sync_at %}
+      <p class="admin-list-summary__hint">Останнє оновлення {{ last_sync_at | kyiv }}.</p>
+      {% endif %}
+    </div>
 
     {{ filter_bar(
          endpoint='admin.online_courses_list',
@@ -85,7 +96,7 @@
           <td>{{ c.sintegrum_id }}</td>
           <td>
             {% if c.is_vanished %}
-              <span class="badge badge--rejected">Зник</span>
+              <span class="badge badge--danger">Зник</span>
             {% elif c.is_remote_active %}
               <span class="badge badge--active">{{ c.remote_status_label }}</span>
             {% else %}
@@ -94,14 +105,14 @@
           </td>
           <td>
             {% if c.remote_price is not none %}
-              <span class="admin-text-muted">{{ c.remote_price }}</span>
+              <span class="admin-text-muted">{{ money(c.remote_price, c.currency) }}</span>
             {% else %}
               <span class="admin-text-muted">—</span>
             {% endif %}
           </td>
           <td>
             {% if c.effective_price %}
-              <strong>{{ c.effective_price }} {{ c.currency }}</strong>
+              <strong>{{ money(c.effective_price, c.currency) }}</strong>
               {% if c.price_is_overridden %}<br><small class="admin-text-muted">своя ціна</small>{% endif %}
             {% else %}<span class="admin-text-muted">не задана</span>{% endif %}
           </td>
@@ -121,8 +132,14 @@
             {% endif %}
           </td>
           <td>
-            <div class="admin-actions-row">
-              <a href="{{ url_for('admin.online_course_edit', course_id=c.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
+            <div class="admin-table__actions">
+              <a href="{{ url_for('admin.online_course_edit', course_id=c.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати" title="Редагувати">{{ icon('edit') }}</a>
+              {# Публічна сторінка існує лише для опублікованого й наявного курсу:
+                 online.course_detail віддає 404 на решту, тож кнопка, що веде в
+                 404, була б гіршою за її відсутність. #}
+              {% if c.is_published and not c.is_vanished %}
+              <a href="{{ url_for('online.course_detail', slug=c.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm" target="_blank" rel="noopener noreferrer" aria-label="Переглянути публічну сторінку" title="Переглянути на сайті">{{ icon('visibility') }}</a>
+              {% endif %}
               {% if c.is_published or c.can_be_published %}
               <form method="POST" action="{{ url_for('admin.online_course_toggle_publish', course_id=c.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -153,7 +170,9 @@
       {{ icon('school', cls='admin-empty__icon') }}
       <h3 class="admin-empty__title">Курсів немає</h3>
       <p>
-        {% if filters.q or filters.status %}
+        {# filter_args -- ті самі непорожні фільтри, що й у чіпсах і пагінації.
+           Копія переліку тут відставала б від кожного нового фільтра. #}
+        {% if filter_args %}
           За цим зрізом нічого не знайшлося &mdash;
           <a href="{{ url_for('admin.online_courses_list') }}">скинути фільтри</a>.
         {% else %}

@@ -46,17 +46,17 @@
        поруч. Раніше рядок підсумку висів окремо, а однорядкова підказка
        займала картку з падінгом форми -- ритм сторінки ламався на кожному
        блоці. #}
-    <div class="admin-orders-summary">
-      <p class="admin-orders-summary__counts">
+    <div class="admin-list-summary">
+      <p class="admin-list-summary__counts">
         Усього {{ totals.all }} &middot; оплачено {{ totals.paid }} &middot; не оплачено {{ totals.unpaid }}
         {% if totals.stuck %}
         &middot;
         <a href="{{ url_for('admin.online_orders_list', access='stuck') }}"
-           class="admin-orders-summary__stuck">без доступу {{ totals.stuck }}</a>
+           class="admin-list-summary__alert">без доступу {{ totals.stuck }}</a>
         {% endif %}
       </p>
       {% if totals.stuck %}
-      <p class="admin-orders-summary__hint">
+      <p class="admin-list-summary__hint">
         Фонова задача повторює спроби кожні 10 хвилин; кнопка «Видати доступ» робить це негайно.
       </p>
       {% endif %}
@@ -70,6 +70,9 @@
            {'name': 'payment', 'label': 'Оплата', 'placeholder': 'Будь-яка', 'options': payment_options},
            {'name': 'status', 'label': 'Стан', 'placeholder': 'Будь-який', 'options': status_options},
            {'name': 'access', 'label': 'Доступ', 'placeholder': 'Будь-який', 'options': access_options},
+           {'name': 'course', 'label': 'Курс', 'placeholder': 'Усі курси', 'options': course_options},
+           {'name': 'date_from', 'label': 'Замовлені з', 'type': 'date'},
+           {'name': 'date_to', 'label': 'Замовлені по', 'type': 'date'},
          ],
          export_endpoint='admin.online_orders_export',
        ) }}
@@ -101,10 +104,13 @@
       </thead>
       <tbody>
         {% for order in orders %}
+        {# Валюта береться з курсу. Без курсу замовлення існувати не може
+           (FK RESTRICT), але шаблон не має падати на порожньому зв'язку. #}
+        {% set currency = order.course.currency if order.course else 'UAH' %}
         <tr>
           <td class="admin-nowrap">
             <strong>{{ order.order_id }}</strong>
-            <br><small class="admin-text-muted">{{ order.created_at.strftime('%d.%m.%Y %H:%M') if order.created_at }}</small>
+            <br><small class="admin-text-muted">{{ order.created_at | kyiv }}</small>
           </td>
           <td>
             {{ order.user.full_name if order.user else '—' }}
@@ -113,12 +119,16 @@
             {% if order.user %}<br><small class="admin-text-muted admin-truncate"
                                           title="{{ order.user.email }}">{{ order.user.email }}</small>{% endif %}
           </td>
-          <td>{{ order.course.effective_title if order.course else '—' }}</td>
+          <td>
+            {% if order.course %}
+            <a href="{{ url_for('admin.online_course_edit', course_id=order.course.id) }}">{{ order.course.effective_title }}</a>
+            {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
+          </td>
           <td class="admin-nowrap">
-            <strong>{{ money(order.payment_amount or 0, order.course.currency if order.course else 'UAH') }}</strong>
+            <strong>{{ money(order.payment_amount or 0, currency) }}</strong>
             {% if order.promo_code_id and order.discount_amount %}
             <br><small class="admin-text-muted">
-              {{ order.promo_code.code if order.promo_code }} &minus;{{ money(order.discount_amount, order.course.currency if order.course else 'UAH') }}
+              {{ order.promo_code.code if order.promo_code }} &minus;{{ money(order.discount_amount, currency) }}
             </small>
             {% endif %}
           </td>
@@ -149,7 +159,7 @@
               <br><small class="admin-text-muted">студент #{{ order.sintegrum_student_id }}</small>
               {% endif %}
             {% elif order.is_paid %}
-              <span class="badge badge--rejected">Не видано</span>
+              <span class="badge badge--danger">Не видано</span>
               {# Скільки людина вже чекає -- головне для сортування розбору:
                  хвилина після оплати це норма, доба -- ні. #}
               {% if waiting_hours.get(order.id) is not none %}
@@ -206,7 +216,7 @@
                     </button>
                     {% if order.login_link_sent_at %}
                     <small class="admin-text-muted admin-actions-menu__note">
-                      надіслано {{ order.login_link_sent_at.strftime('%d.%m %H:%M') }}
+                      надіслано {{ order.login_link_sent_at | kyiv('%d.%m %H:%M') }}
                     </small>
                     {% endif %}
                   </form>
@@ -221,11 +231,20 @@
                   </a>
                   {% if order.has_refund %}
                   <small class="admin-text-muted admin-actions-menu__note">
-                    Повернуто {{ order.refunded_total | int }} з {{ order.payment_amount | int }} &#8372;
+                    Повернуто {{ money(order.refunded_total, currency) }} з {{ money(order.payment_amount or 0, currency) }}
                   </small>
                   {% endif %}
                 </div>
               </details>
+              {% elif order.order_token_active %}
+              {# Гостьове замовлення має власну сторінку оплати -- єдине, що
+                 менеджер може дати покупцю, який не завершив оплату. Покупцю з
+                 акаунтом токен не видається (app/online/routes.py), тож там
+                 посилання немає й показувати нічого. #}
+              <a href="{{ url_for('online.order', token=order.order_token) }}"
+                 class="btn-admin btn-admin--secondary btn-admin--sm"
+                 target="_blank" rel="noopener noreferrer"
+                 title="Сторінка оплати покупця">{{ icon('link') }} Оплата</a>
               {% else %}
               <span class="admin-text-muted">&mdash;</span>
               {% endif %}
@@ -244,7 +263,10 @@
       {{ icon('notes', cls='admin-empty__icon') }}
       <h3 class="admin-empty__title">Замовлень немає</h3>
       <p>
-        {% if filters.q or filters.payment or filters.status %}
+        {# filter_args -- ті самі непорожні фільтри, що й у чіпсах і пагінації.
+           Копія переліку тут уже відстала: зріз `access` вона не бачила, і
+           порожня черга «оплачено без доступу» звітувала «замовлень немає». #}
+        {% if filter_args %}
           За цим зрізом нічого не знайшлося &mdash;
           <a href="{{ url_for('admin.online_orders_list') }}">скинути фільтри</a>.
         {% else %}

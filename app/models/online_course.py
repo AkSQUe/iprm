@@ -279,6 +279,29 @@ class OnlineCourse(TranslatableMixin, TimestampMixin, db.Model):
     def can_be_published(self):
         return not self.missing_for_publication
 
+    # Те саме правило для SQL-фільтра списку. Живе тут, впритул до
+    # `missing_for_publication`, а не в маршруті: копія в адмінці вже одного
+    # разу відстала -- вона й далі вимагала `access_url` і дивилась на власну
+    # ціну замість ефективної, тож курс, який сторінка позначала «Готовий»,
+    # у зріз «Готові до публікації» не потрапляв.
+    @classmethod
+    def has_price_clause(cls):
+        """Ефективна ціна більша за нуль (наша, інакше -- ціна Sintegrum)."""
+        # coalesce обов'язковий: без нього курс зовсім без цін дає в SQL
+        # NULL, і `NOT (...)` теж NULL -- тобто такий курс не потрапляв би
+        # ані в «Готові», ані в «Не готові» й зникав би з обох зрізів.
+        # Сама умова згортається до «хоч одна з цін додатна»: ефективна ціна
+        # бере нашу лише тоді, коли вона більша за нуль.
+        return db.or_(
+            db.func.coalesce(cls.price, 0) > 0,
+            db.func.coalesce(cls.remote_price, 0) > 0,
+        )
+
+    @classmethod
+    def publishable_clause(cls):
+        """SQL-відповідник `can_be_published`."""
+        return db.and_(cls.is_vanished.is_(False), cls.has_price_clause())
+
     @property
     def is_purchasable(self):
         """Чи можна купити просто зараз (публічна сторона)."""

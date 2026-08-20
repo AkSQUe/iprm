@@ -29,7 +29,7 @@
         <p class="admin-hero__subtitle">
           Трек Sintegrum #{{ course.sintegrum_id }}
           {% if course.is_vanished %}
-            <span class="badge badge--rejected">Зник із Sintegrum</span>
+            <span class="badge badge--danger">Зник із Sintegrum</span>
           {% endif %}
           {% if course.is_published %}
             <span class="badge badge--published">Опубліковано</span>
@@ -39,6 +39,10 @@
         </p>
       </div>
       <div class="admin-hero__actions">
+        {% if course.is_published and not course.is_vanished %}
+        <a href="{{ url_for('online.course_detail', slug=course.slug) }}" class="btn-admin btn-admin--secondary"
+           target="_blank" rel="noopener noreferrer">{{ icon('open_in_new') }} Переглянути</a>
+        {% endif %}
         <a href="{{ url_for('admin.online_courses_list') }}" class="btn-admin btn-admin--secondary">Назад до списку</a>
       </div>
     </div>
@@ -78,7 +82,7 @@
         <div class="admin-readonly-config__row">
           <span class="admin-readonly-config__label">Останній раз бачили</span>
           <span class="admin-readonly-config__value">
-            {% if course.last_seen_at %}{{ course.last_seen_at.strftime('%d.%m.%Y %H:%M') }}{% else %}—{% endif %}
+            {% if course.last_seen_at %}{{ course.last_seen_at | kyiv }}{% else %}—{% endif %}
           </span>
         </div>
       </div>
