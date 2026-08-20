@@ -26,10 +26,51 @@ from app.models.user import User
 
 COMMENT = 'Ще треба голок 21G, привезіть із запасом'
 
+_SLUG_PREFIX = 'tc-'
+_EMAIL_PREFIX = 'tc-admin-'
+
 FAKE_CATALOG = [
     {'sku': 'NDL-21', 'name': 'Голка 21G', 'available': 100, 'price': 12.5,
      'category': 'Голки', 'is_consumable': True},
 ]
+
+
+@pytest.fixture(autouse=True)
+def _no_leftovers(app):
+    """Прибрати за собою те, що ПЕРЕЖИЛО відкат фікстури.
+
+    Частина тестів тут проходить маршрутом, який комітить (правка заявки),
+    а коміт виносить із транзакції ВСЕ, що на той момент було в сесії, --
+    у тому числі адміна, курс і захід. Рядки лишаються в тестовій базі до
+    кінця сесії й додаються до кожного списку, який хтось десь читає:
+    `/api/v1/participants` віддає першу сторінку на 200 користувачів у
+    порядку `updated_at`, і зайві облікові записи мовчки виштовхують з неї
+    того, кого шукає чужий тест. Саме так це й проявилось -- три падіння в
+    ІНШОМУ файлі, зелені при запуску поодинці.
+    """
+    yield
+
+    from app.models.course_instance import CourseInstance
+
+    # Видаляємо ОРМ-ом, а не bulk-delete: у SQLite (тестова БД) каскади FK
+    # вимкнені, а первинні ключі ПЕРЕВИКОРИСТОВУЮТЬСЯ після видалення. Осиротілі
+    # рядки позицій діставались наступному резервуванню, яке отримало той самий
+    # id, і воно падало на UNIQUE (reservation_id, sku).
+    try:
+        courses = Course.query.filter(Course.slug.like(f'{_SLUG_PREFIX}%')).all()
+        for course in courses:
+            for instance in CourseInstance.query.filter_by(
+                    course_id=course.id).all():
+                for reservation in MaterialReservation.query.filter_by(
+                        instance_id=instance.id).all():
+                    db.session.delete(reservation)
+                db.session.delete(instance)
+            db.session.delete(course)
+        for user in User.query.filter(User.email.like(f'{_EMAIL_PREFIX}%')).all():
+            db.session.delete(user)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 
 @pytest.fixture(autouse=True)

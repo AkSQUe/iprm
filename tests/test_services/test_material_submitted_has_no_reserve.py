@@ -23,6 +23,40 @@ from app.models.material_reservation import (
 )
 from app.services import material_reservation_service as mrs
 
+_SLUG_PREFIX = 'sub-'
+
+
+@pytest.fixture(autouse=True)
+def _no_leftovers(app):
+    """Прибрати за собою те, що ПЕРЕЖИЛО відкат фікстури.
+
+    Наскрізний тест подання проходить через `submit_request`, а той
+    комітить -- і виносить із транзакції курс із заходом. Рядки лишились би
+    в тестовій базі до кінця сесії й додавались до кожного списку, який
+    хтось десь читає.
+    """
+    yield
+
+    from app.models.course_instance import CourseInstance
+
+    # Видаляємо ОРМ-ом, а не bulk-delete: у SQLite (тестова БД) каскади FK
+    # вимкнені, а первинні ключі ПЕРЕВИКОРИСТОВУЮТЬСЯ після видалення. Осиротілі
+    # рядки позицій діставались наступному резервуванню, яке отримало той самий
+    # id, і воно падало на UNIQUE (reservation_id, sku).
+    try:
+        courses = Course.query.filter(Course.slug.like(f'{_SLUG_PREFIX}%')).all()
+        for course in courses:
+            for instance in CourseInstance.query.filter_by(
+                    course_id=course.id).all():
+                for reservation in MaterialReservation.query.filter_by(
+                        instance_id=instance.id).all():
+                    db.session.delete(reservation)
+                db.session.delete(instance)
+            db.session.delete(course)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
 
 class _Result:
     ok = True
