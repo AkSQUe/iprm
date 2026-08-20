@@ -23,6 +23,7 @@ from app.models.material_reservation import (
     MaterialReservation, MaterialReservationItem, MaterialReservationStatus,
 )
 from app.models.user import User
+from app.services import material_reservation_service as mrs_module
 
 FAKE_CATALOG = [
     {'sku': 'NDL-21', 'name': 'Голка 21G', 'available': 100, 'price': 12.5,
@@ -174,3 +175,166 @@ class TestWriteOffIsRefusedForADocument:
 
         assert 'Провести списання' not in html
         assert 'Списання виконує комірник' in html
+
+
+class _Result:
+    """Мінімальний двійник `MMResult`: сервіс дивиться на ok/data/error."""
+
+    ok = True
+    error = None
+    shortfalls = ()
+
+    def __init__(self, data=None):
+        self.data = data or {}
+
+
+class TestSubmittedRequestIsCorrectedNotResubmitted:
+    """Гвард дивився лише на RESERVED, тож подана заявка падала в режим
+    подання. Натискання кликало `submit_request` ще раз, MM Medic повертав
+    той самий документ БЕЗ ЗМІН (ідемпотентність), а людині писало «Подано
+    на погодження N позицій»: не змінилось нічого, а сказано, що змінилось.
+    """
+
+    def test_the_page_offers_saving_the_request(self, app, client, admin):
+        instance = _instance()
+        _reservation(instance, MaterialReservationStatus.SUBMITTED,
+                     requested=4, reserved=0)
+        _login(client, admin)
+
+        html = client.get(
+            f'/admin/instances/{instance.id}/materials').get_data(as_text=True)
+
+        assert 'Зберегти заявку' in html
+        assert 'Подати на погодження' not in html
+        assert f'/admin/instances/{instance.id}/materials/update' in html
+
+    def test_the_form_carries_what_was_asked_for(self, app, client, admin):
+        instance = _instance()
+        _reservation(instance, MaterialReservationStatus.SUBMITTED,
+                     requested=4, reserved=0)
+        _login(client, admin)
+
+        html = client.get(
+            f'/admin/instances/{instance.id}/materials').get_data(as_text=True)
+
+        assert 'value="4"' in html, 'у полі не запитана кількість'
+
+    def test_update_route_rewrites_the_list_through_the_items_endpoint(
+            self, app, client, admin, monkeypatch):
+        instance = _instance()
+        reservation = _reservation(instance, MaterialReservationStatus.SUBMITTED,
+                                   requested=4, reserved=0)
+        _login(client, admin)
+        seen = {}
+
+        class _Client:
+            def update_request_items(self, ref, items, request_id=None):
+                seen['ref'] = ref
+                seen['items'] = items
+                return _Result({'reservation': {
+                    'status': 'submitted',
+                    'items': [{'sku': 'NDL-21', 'name': 'Голка 21G',
+                               'quantity': 9, 'quantity_requested': 9,
+                               'quantity_approved': None}],
+                }})
+
+        monkeypatch.setattr(mrs_module, 'get_client', lambda: _Client())
+
+        response = client.post(
+            f'/admin/instances/{instance.id}/materials/update',
+            data={'sku': 'NDL-21', 'quantity': '9'}, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert seen['ref'] == f'iprm-instance-{instance.id}'
+        assert seen['items'] == [{'sku': 'NDL-21', 'quantity': 9}]
+        fresh = db.session.get(MaterialReservation, reservation.id)
+        assert fresh.status == MaterialReservationStatus.SUBMITTED
+        assert fresh.items[0].quantity_requested == 9
+
+    def test_a_line_dropped_from_the_request_disappears_locally(
+            self, app, client, admin, monkeypatch):
+        """Залишений рядок показував би в пікінг-листі позицію, від якої
+        людина щойно відмовилась."""
+        instance = _instance()
+        reservation = _reservation(instance, MaterialReservationStatus.SUBMITTED,
+                                   requested=4, reserved=0)
+        reservation.items.append(MaterialReservationItem(
+            sku='GLV-M', name='Рукавички M', quantity_requested=2,
+            quantity_reserved=0))
+        db.session.flush()
+        _login(client, admin)
+
+        class _Client:
+            def update_request_items(self, ref, items, request_id=None):
+                return _Result({'reservation': {
+                    'status': 'submitted',
+                    'items': [{'sku': 'NDL-21', 'quantity_requested': 4}],
+                }})
+
+        monkeypatch.setattr(mrs_module, 'get_client', lambda: _Client())
+
+        client.post(f'/admin/instances/{instance.id}/materials/update',
+                    data={'sku': 'NDL-21', 'quantity': '4'},
+                    follow_redirects=True)
+
+        fresh = db.session.get(MaterialReservation, reservation.id)
+        assert {item.sku for item in fresh.items} == {'NDL-21'}
+
+    def test_resubmitting_a_submitted_request_is_refused(
+            self, app, client, admin, monkeypatch):
+        instance = _instance()
+        _reservation(instance, MaterialReservationStatus.SUBMITTED,
+                     requested=4, reserved=0)
+        _login(client, admin)
+
+        def _explode(*a, **kw):
+            raise AssertionError('повторне подання пішло в MM Medic')
+
+        monkeypatch.setattr(routes.mrs, 'submit_request', _explode)
+
+        response = client.post(
+            f'/admin/instances/{instance.id}/materials/reserve',
+            data={'sku': 'NDL-21', 'quantity': '4'}, follow_redirects=True)
+
+        assert 'Заявку вже подано' in response.get_data(as_text=True)
+
+
+class TestIssuedRequestIsNotRolledBack:
+    """У стані ISSUED -- нормальному на весь час заходу -- кнопка подання теж
+    була жива, і натискання відкочувало дзеркало в SUBMITTED, стираючи
+    `consumed_at` і `actuals_reminder_sent_at`. Звірка це не лікує: вона
+    дивиться лише на заходи, чия дата вже минула."""
+
+    def test_the_page_is_read_only(self, app, client, admin):
+        instance = _instance()
+        _reservation(instance, MaterialReservationStatus.ISSUED,
+                     requested=4, reserved=4)
+        _login(client, admin)
+
+        html = client.get(
+            f'/admin/instances/{instance.id}/materials').get_data(as_text=True)
+
+        assert 'Подати на погодження' not in html
+        assert 'Провести списання' not in html
+        assert 'name="quantity"' not in html
+        assert 'Списання виконує комірник' in html
+
+    def test_submitting_again_is_refused_and_the_mirror_stands(
+            self, app, client, admin, monkeypatch):
+        instance = _instance()
+        reservation = _reservation(instance, MaterialReservationStatus.ISSUED,
+                                   requested=4, reserved=4)
+        _login(client, admin)
+
+        def _explode(*a, **kw):
+            raise AssertionError('подання пішло в MM Medic на відвантаженому')
+
+        monkeypatch.setattr(routes.mrs, 'submit_request', _explode)
+
+        response = client.post(
+            f'/admin/instances/{instance.id}/materials/reserve',
+            data={'sku': 'NDL-21', 'quantity': '4'}, follow_redirects=True)
+
+        assert 'вже відвантажено' in response.get_data(as_text=True)
+        fresh = db.session.get(MaterialReservation, reservation.id)
+        assert fresh.status == MaterialReservationStatus.ISSUED

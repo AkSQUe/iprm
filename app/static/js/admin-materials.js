@@ -59,7 +59,9 @@
     var usedEl = document.getElementById('materialsUsed');
     var returnsEl = document.getElementById('materialsReturns');
     var withdrawEl = document.getElementById('materialsWithdraw');
-    var actualsMode = mode !== 'reserve' && mode !== 'edit';
+    // `update` -- правка ЩЕ НЕ погодженої заявки: у полі кількість до
+    // замовлення, як у reserve/edit, а не факт після заходу.
+    var actualsMode = mode !== 'reserve' && mode !== 'edit' && mode !== 'update';
     // Коригування вже списаного заходу: сервер рахує delta від ПОТОЧНОГО списаного
     // (quantity_actual), а не від зарезервованого. Порожнє поле = "без змін".
     var consumedMode = form ? form.getAttribute('data-consumed') === '1' : false;

@@ -9,11 +9,18 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-materials.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% set qty_mode = mode in ['reserve', 'edit'] %}
+{# Режими: reserve/update/edit -- у полі КІЛЬКІСТЬ до замовлення;
+   actuals -- ФАКТ після заходу; view -- лише читання, документом керує
+   MM Medic (видача комірником, вона ж дає собівартість). #}
+{% set qty_mode = mode in ['reserve', 'edit', 'update'] %}
+{% set readonly = mode == 'view' %}
 {% set input_name = 'quantity' if qty_mode else 'actual' %}
 {% if mode == 'reserve' %}
   {% set form_action = url_for('admin.instance_materials_reserve', instance_id=instance.id) %}
   {% set submit_label = 'Подати на погодження' %}
+{% elif mode == 'update' %}
+  {% set form_action = url_for('admin.instance_materials_update', instance_id=instance.id) %}
+  {% set submit_label = 'Зберегти заявку' %}
 {% elif mode == 'edit' %}
   {% set form_action = url_for('admin.instance_materials_edit', instance_id=instance.id) %}
   {% set submit_label = 'Зберегти зміни' %}
@@ -120,9 +127,14 @@
 
     <span class="materials-toolbar__spacer"></span>
 
-    {% if is_reserved and mode != 'edit' %}
+    {% if is_reserved and mode != 'edit' and not is_mm_document %}
     <a href="{{ url_for('admin.instance_materials', instance_id=instance.id, edit=1) }}"
        class="btn-admin btn-admin--secondary">{{ icon('edit') }} Редагувати</a>
+    {% endif %}
+    {# Скасування лишається доступним і для документа: воно звільняє утримання,
+       нічого не списуючи, і це єдина дія, яку івент-менеджер мусить мати під
+       рукою, коли захід відмінили. #}
+    {% if is_reserved and mode != 'edit' %}
     <form method="POST" class="admin-inline" data-confirm="Скасувати резервування і повернути залишки на склад MM Medic?"
           data-confirm-ok="Скасувати резерв" data-confirm-cancel="Залишити резерв" data-confirm-danger
           data-single-submit data-submitting-label="Скасовуємо…"
@@ -136,6 +148,9 @@
   </div>
 
   {# ---------- Summary ---------- #}
+  {# У режимі читання рахувати нічого: полів немає, і лічильники показували б
+     нулі там, де людина шукає стан документа. #}
+  {% if not readonly %}
   <div class="materials-summary">
     <span>Обрано позицій: <strong id="materialsCount">0</strong></span>
     <span>Орієнтовна вартість: <strong id="materialsCost">{{ '%.2f'|format(est_cost) }}</strong> грн</span>
@@ -149,6 +164,7 @@
     {% endif %}
     {% if is_consumed and mode != 'edit' %}<span class="materials-summary__hint">Захід списано — можна коригувати фактичні кількості.</span>{% endif %}
   </div>
+  {% endif %}
 
   {% if rows %}
   <form method="POST" action="{{ form_action }}" id="materialsForm" data-mode="{{ mode }}" data-consumed="{{ '1' if is_consumed else '' }}"
@@ -163,9 +179,10 @@
           <th class="materials-name">Назва</th>
           <th>Категорія</th>
           <th>Наявно</th>
+          {% if readonly %}<th>Запитано</th>{% endif %}
           {% if not qty_mode %}<th>Зарезервовано</th>{% endif %}
           <th>{% if qty_mode %}Кількість{% else %}Фактично використано{% endif %}</th>
-          {% if not qty_mode %}<th>Повертається</th>{% endif %}
+          {% if not qty_mode and not readonly %}<th>Повертається</th>{% endif %}
         </tr>
       </thead>
       <tbody>
@@ -185,8 +202,12 @@
           </td>
           <td>{{ row.category or '—' }}</td>
           <td>{{ row.available if row.available is not none else '—' }}</td>
+          {% if readonly %}<td>{{ row.requested if row.requested is not none else '—' }}</td>{% endif %}
           {% if not qty_mode %}<td>{{ row.reserved if row.reserved is not none else '—' }}</td>{% endif %}
           <td>
+            {% if readonly %}
+            {{ row.actual if row.actual is not none else '—' }}
+            {% else %}
             <input type="hidden" name="sku" value="{{ row.sku }}">
             <input type="number" name="{{ input_name }}" min="0" step="1"
                    class="form-input materials-qty-input"
@@ -200,8 +221,9 @@
                    value="{{ row.value if row.value is not none else '' }}"
                    placeholder="{% if not qty_mode and row.reserved is not none %}{{ row.reserved }}{% else %}0{% endif %}">
             <span class="materials-hint" data-hint></span>
+            {% endif %}
           </td>
-          {% if not qty_mode %}
+          {% if not qty_mode and not readonly %}
           <td class="materials-returns"><span data-returns>—</span></td>
           {% endif %}
         </tr>
@@ -214,7 +236,7 @@
       <a href="{{ url_for('admin.instances_list') }}" class="btn-admin btn-admin--secondary">Назад</a>
       {% if qty_mode %}
       <button type="submit" class="btn-admin btn-admin--primary">{{ icon('send') }} {{ submit_label }}</button>
-      {% elif is_mm_document %}
+      {% elif readonly %}
       {# Списання документа -- це видача комірником на боці MM Medic: саме вона
          вішає партії на рядки, а з партій береться собівартість заходу.
          Кнопка тут кликала легасі-шлях, який закривав документ без жодної
