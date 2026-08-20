@@ -330,8 +330,16 @@ def submit_request(instance, items):
 
     db.session.commit()
     invalidate_catalog_cache()  # derived availability changed
-    # Note: the "request submitted" notification is sent by MM Medic to its
-    # storekeeper (warehouse managers); IPRM does not email the trainer.
+    # Складу пише MM Medic, не ми: `event_material_request.submit()` шле
+    # комірникам лист `admin/iprm_materials_requested` -- «заявка подана,
+    # потрібне погодження», з посиланням на /admin/reservations/documents.
+    # Це ІНШИЙ лист, ніж у легасі-каналі вище: там «зарезервовано,
+    # підготуйте до видачі», а тут утримань ще немає жодного.
+    #
+    # Коментар довго стверджував це, коли шляху не існувало: він був
+    # скопійований із `create_reservation` разом із кодом, а `submit()` на
+    # той час лише писав у лог. Заявка чекала нескінченно, і про це не знав
+    # ніхто.
     return True, result, reservation
 
 
