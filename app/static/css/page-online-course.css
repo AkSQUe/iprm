@@ -527,3 +527,14 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Логін на платформі під кнопкою переходу: людина має бачити, ЧИМ заходити,
+   ще до того, як опиниться на чужій формі входу. */
+.iprm-online-checkout__login {
+  margin: 12px 0 0;
+  color: var(--iprm-text-light);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-align: center;
+}

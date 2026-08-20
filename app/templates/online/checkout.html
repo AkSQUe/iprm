@@ -104,6 +104,12 @@
           </form>
           {% elif access_href %}
           <a href="{{ access_href }}" class="apple-btn apple-btn--primary apple-btn--full">{{ _('Перейти до навчання') }}</a>
+          {# Акаунт на платформі створюємо ми, а пароль людина ставить сама:
+             API партнера не вміє ані видати його, ані надіслати запрошення. #}
+          <p class="iprm-online-checkout__login">
+            {% trans email=enrollment.user.email %}Логін на платформі — <strong>{{ email }}</strong>.{% endtrans %}
+            {{ _('Заходите вперше? Натисніть на сторінці входу «Забули пароль?» і задайте свій.') }}
+          </p>
           {% else %}
           <p class="iprm-online-buy__note">{{ _('Доступ уже готуємо — посилання надійде на вашу пошту за кілька хвилин.') }}</p>
           {% endif %}

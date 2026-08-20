@@ -31,6 +31,26 @@
 
     {{ button_primary(_('Почати навчання'), access_url) }}
 
+    {# Головне, чого бракувало людині 20.08.2026: вона потрапляла на форму
+       входу, не знаючи ані під чим заходити, ані де взяти пароль. Акаунт на
+       платформі ми створюємо самі, але пароля до нього не маємо -- його
+       людина ставить сама через відновлення. #}
+    <table role="presentation" style="width: 100%; margin-top: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #17131D;">
+                    {{ _('Як увійти') }}
+                </p>
+                <p style="margin: 0 0 4px 0; font-size: 14px; color: #625A6D; line-height: 1.6;">
+                    {% trans email=user.email %}Ваш логін на навчальній платформі — <strong>{{ email }}</strong>.{% endtrans %}
+                </p>
+                <p style="margin: 0; font-size: 14px; color: #625A6D; line-height: 1.6;">
+                    {{ _('Заходите вперше? На сторінці входу натисніть «Забули пароль?» і задайте свій — акаунт уже створено на цю адресу.') }}
+                </p>
+            </td>
+        </tr>
+    </table>
+
     <p class="mobile-text" style="margin: 24px 0 0 0; font-size: 14px; color: #625A6D; line-height: 1.6;">
         {# Покупця без кабінету туди не відправляємо: він купував без акаунта
            і пароля ще не має. Його сторінка замовлення вміє те саме. #}

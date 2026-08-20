@@ -479,3 +479,31 @@ class _StubProvider:
         from app.services.sintegrum_access import AccessResult
 
         return AccessResult(target_url='https://acme.sintegrum.com')
+
+
+def test_access_email_tells_the_buyer_how_to_log_in(client, course, monkeypatch):
+    """Акаунт на платформі створюємо ми, а пароля до нього не маємо.
+
+    API партнера не вміє ані видати пароль, ані надіслати запрошення --
+    перевірено по документації. Тому лист мусить назвати логін і сказати,
+    де поставити пароль: інакше людина впирається у форму входу з порожніми
+    руками, як це сталося 20.08.2026.
+    """
+    from app.services.email_service import EmailService
+
+    enrollment = _paid_order(client, course)
+    rendered = {}
+
+    def _fake_send(**kwargs):
+        from flask import render_template
+        rendered['html'] = render_template(
+            f'emails/{kwargs["template_name"]}.html', **kwargs['context'])
+
+    monkeypatch.setattr(EmailService, 'send_email', staticmethod(_fake_send))
+    monkeypatch.setattr(EmailService, '_site_base_url',
+                        staticmethod(lambda: 'https://iprm.space'))
+
+    EmailService.send_online_access(enrollment, 'https://iprm.space/access/x')
+
+    assert enrollment.user.email in rendered['html']
+    assert 'Забули пароль' in rendered['html']
