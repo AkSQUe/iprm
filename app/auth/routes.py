@@ -1,7 +1,9 @@
 import logging
 import os
 from datetime import datetime, timezone
-from flask import render_template, redirect, url_for, flash, request, session, send_file
+from flask import (
+    abort, render_template, redirect, url_for, flash, request, session, send_file,
+)
 from flask_babel import get_locale, gettext as _
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy.orm import contains_eager
@@ -25,6 +27,10 @@ from app.services.email_service import EmailService
 from app.services.recaptcha import verify_request as verify_recaptcha
 
 logger = logging.getLogger(__name__)
+# Той самий канал, що й для адмінських правок учасників
+# (app.admin.routes_participants): зміна ПІБ -- identity-подія
+# незалежно від того, хто її зробив.
+audit_logger = logging.getLogger('audit')
 
 # Фіктивний хеш для вирівнювання часу відповіді, коли акаунта з такою
 # адресою немає: без нього відповідь на неіснуючий email поверталась би
@@ -323,18 +329,19 @@ def certificate_data():
 
     Винесена за рамки flow реєстрації/оплати (рішення 08.07.2026):
     учасник заповнює її тут, щоб отримати сертифікат з балами БПР.
-    Після збереження бекфілимо порожні снапшоти specialty/workplace
-    в активних реєстраціях (для звітів БПР/xlsx).
 
     Тут же учасник редагує власне ПІБ: прізвище й ім'я лежать у `User`,
     по батькові -- у `MedicalProfile`, і без цих двох полів ПІБ був би
     розрізаний між кабінетом і адмінкою. Уже видані сертифікати не
     переоформлюються -- `Certificate.recipient_name` є незмінним знімком,
     тож про це попереджаємо в самій формі.
+
+    Сам запис (нормалізація ПІБ, створення профілю, бекфіл снапшотів
+    реєстрацій) живе в `participant_profile`; тут лишається лише форма,
+    транзакція та повідомлення користувачу.
     """
     from app.auth.forms import CertificateDataForm
-    from app.models.medical_profile import MedicalProfile
-    from app.models.specializations import labels_for_codes
+    from app.services import participant_profile
 
     profile = current_user.medical_profile
 
@@ -354,73 +361,94 @@ def certificate_data():
         form = CertificateDataForm()
 
     if form.validate_on_submit():
-        if profile is None:
-            profile = MedicalProfile(
-                user_id=current_user.id, source=MedicalProfile.SOURCE_SELF,
-            )
-            db.session.add(profile)
-            current_user.medical_profile = profile
-        current_user.last_name = (form.last_name.data or '').strip()
-        current_user.first_name = (form.first_name.data or '').strip()
-        profile.participant_type = form.user_type.data
-        profile.middle_name = (form.middle_name.data or '').strip() or None
-        profile.birth_date = form.birth_date.data
-        profile.education = (form.education.data or '').strip() or None
-        profile.workplace = (form.workplace.data or '').strip() or None
-        profile.position = (form.position.data or '').strip() or None
-        profile.specializations = list(form.specializations.data or [])
-        if profile.is_complete and profile.completed_at is None:
-            profile.completed_at = datetime.now(timezone.utc)
-
-        specialty_snapshot = ', '.join(
-            labels_for_codes(profile.specializations or [])
-        ) or (profile.position or '').strip()
-        workplace_snapshot = (profile.workplace or '').strip()
-        regs = (
-            EventRegistration.query
-            .filter(
-                EventRegistration.user_id == current_user.id,
-                EventRegistration.status != 'cancelled',
-            )
-            .all()
-        )
-        for reg in regs:
-            if not (reg.specialty or '').strip() and specialty_snapshot:
-                reg.specialty = specialty_snapshot
-            if not (reg.workplace or '').strip() and workplace_snapshot:
-                reg.workplace = workplace_snapshot
-
-        backfilled = sum(
-            1 for reg in regs
-            if reg.specialty == specialty_snapshot or reg.workplace == workplace_snapshot
-        )
         try:
+            result = participant_profile.save(current_user, {
+                'last_name': form.last_name.data,
+                'first_name': form.first_name.data,
+                'middle_name': form.middle_name.data,
+                'participant_type': form.user_type.data,
+                'birth_date': form.birth_date.data,
+                'education': form.education.data,
+                'workplace': form.workplace.data,
+                'position': form.position.data,
+                'specializations': form.specializations.data,
+            })
             db.session.commit()
-            logger.info(
-                'Certificate data saved: user=%d complete=%s backfilled_regs=%d',
-                current_user.id, profile.is_complete, backfilled,
-            )
-            flash(_('Дані для сертифіката збережено. Дякуємо!'), 'success')
-            return redirect(url_for('auth.account'))
         except Exception:
             db.session.rollback()
             logger.exception(
                 'Failed to save certificate data for user %d', current_user.id,
             )
             flash(_('Помилка при збереженні. Спробуйте ще раз.'), 'error')
+        else:
+            logger.info(
+                'Certificate data saved: user=%d complete=%s backfilled_regs=%d',
+                current_user.id, result['profile_complete'], result['backfilled'],
+            )
+            # Аудит -- лише після успішного коміту, інакше слід лишався б і від
+            # збереження, яке відкотилось.
+            if result['name_after'] != result['name_before']:
+                audit_logger.info(
+                    'User %s changed own name: "%s" -> "%s"',
+                    current_user.email, result['name_before'],
+                    result['name_after'],
+                )
+                # Лист -- побічний ефект: збережене ПІБ не має залежати від SMTP.
+                try:
+                    EmailService.send_name_changed(
+                        current_user, result['name_before'], result['name_after'],
+                    )
+                except Exception:
+                    logger.exception(
+                        'Failed to send name-changed email to user %d',
+                        current_user.id,
+                    )
+            flash(_('Дані для сертифіката збережено. Дякуємо!'), 'success')
+            return redirect(url_for('auth.account'))
 
     # Нотис "старі сертифікати не переоформлюються" показуємо лише тому, кому
     # він адресований -- інакше він лякав би кожного, хто вперше заповнює анкету.
-    has_certificates = db.session.query(
-        Certificate.query
-        .filter_by(user_id=current_user.id, revoked=False)
-        .exists()
-    ).scalar()
-
     return render_template(
         'auth/certificate_data.html', form=form,
-        has_certificates=has_certificates,
+        has_certificates=participant_profile.has_issued_certificates(current_user),
     )
+
+
+@auth_bp.route('/account/certificates/reissue-request', methods=['POST'])
+@login_required
+def certificate_reissue_request():
+    """Заявка на переоформлення сертифікатів під новий ПІБ.
+
+    Нотис у формі каже "зверніться до нас" -- ця кнопка робить із цього дію.
+    Запису в БД не створюємо: політику переоформлення ще не зафіксовано
+    (див. EmailService.send_certificate_reissue_request), тож заявка йде
+    листом адмінам, а рішення ухвалюється вручну.
+    """
+    certificates = (
+        Certificate.query
+        .filter_by(user_id=current_user.id, revoked=False)
+        .order_by(Certificate.issued_at.desc())
+        .all()
+    )
+    if not certificates:
+        abort(404)
+
+    try:
+        EmailService.send_certificate_reissue_request(current_user, certificates)
+    except Exception:
+        logger.exception(
+            'Failed to send reissue request for user %d', current_user.id,
+        )
+        flash(_('Не вдалося надіслати заявку. Спробуйте ще раз або напишіть нам.'),
+              'error')
+    else:
+        logger.info(
+            'Certificate reissue requested: user=%d certificates=%d',
+            current_user.id, len(certificates),
+        )
+        flash(_("Заявку надіслано. Ми зв'яжемось з вами щодо переоформлення."),
+              'success')
+    return redirect(url_for('auth.certificate_data'))
 
 
 @auth_bp.route('/account/certificates/<int:cert_id>/download')

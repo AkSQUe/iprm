@@ -86,13 +86,24 @@ class UserNameFieldsMixin:
     Підмішується ПЕРЕД FlaskForm, як і сусідній міксин.
     """
 
+    # Межі ті самі, що й у формі реєстрації (app.auth.forms.RegistrationForm):
+    # анкета не має бути слабшою за signup, інакше через неї можна поставити
+    # ПІБ, якого при реєстрації не прийняли б.
     last_name = StringField(
         _l('Прізвище'),
-        validators=[DataRequired(message=_l('Прізвище обов\'язкове')), Length(max=100)],
+        validators=[
+            DataRequired(message=_l("Прізвище обов'язкове")),
+            Length(min=2, max=100,
+                   message=_l('Прізвище повинно бути від 2 до 100 символів')),
+        ],
         render_kw={'autocomplete': 'family-name'},
     )
     first_name = StringField(
-        _l('Ім\'я'),
-        validators=[DataRequired(message=_l('Ім\'я обов\'язкове')), Length(max=100)],
+        _l("Ім'я"),
+        validators=[
+            DataRequired(message=_l("Ім'я обов'язкове")),
+            Length(min=2, max=100,
+                   message=_l("Ім'я повинно бути від 2 до 100 символів")),
+        ],
         render_kw={'autocomplete': 'given-name'},
     )

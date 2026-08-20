@@ -351,6 +351,13 @@
 
 .reg-moh-notice p { margin: 0; }
 
+/* Кнопка дії всередині нотиса: сітка тут 40px + 1fr, тож без grid-column
+   форма з'їхала б під іконку, у першу колонку. */
+.reg-moh-notice__action {
+  grid-column: 2;
+  margin-top: 12px;
+}
+
 .reg-attention {
   font-size: 0.9375rem;
   color: var(--iprm-text-light);

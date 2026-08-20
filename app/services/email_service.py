@@ -1312,6 +1312,56 @@ class EmailService:
         )
 
     @staticmethod
+    def send_name_changed(user, old_name, new_name):
+        """Повідомити власника акаунта, що його ПІБ змінили.
+
+        Та сама гігієна, що й для зміни email: людина має побачити зміну
+        identity-даних, навіть якщо зробила її не вона. ПІБ друкується на
+        сертифікаті, тож тиха зміна найдорожча саме тут.
+
+        trigger='certificate' -- наявне значення CHECK ck_email_logs_trigger
+        і семантично точне (ПІБ важить рівно тим, що йде в сертифікат);
+        власний тригер коштував би міграції CHECK.
+        """
+        from app.models.site_settings import SiteSettings
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        return EmailService.send_email(
+            to=user.email,
+            subject=lambda: _('ПІБ у вашому акаунті змінено'),
+            template_name='name_changed',
+            context={
+                'user': user,
+                'old_name': old_name,
+                'new_name': new_name,
+                'account_url': f'{base}/auth/account',
+            },
+            trigger='certificate',
+        )
+
+    @staticmethod
+    def send_certificate_reissue_request(user, certificates):
+        """Заявка учасника на переоформлення сертифіката під новий ПІБ.
+
+        Адмінської черги в БД немає навмисно: політику переоформлення ще не
+        зафіксовано, тож таблиця зі статусами, життєвий цикл яких ніхто не
+        визначив, була б передчасною. Лист адміну -- мінімальне, що робить
+        "зверніться до нас" у формі дією, а не текстом.
+        """
+        from app.models.site_settings import SiteSettings
+        settings = SiteSettings.get()
+        base = (settings.website_url or '').rstrip('/')
+        return EmailService.notify_admins_with_template(
+            event_type='certificate',
+            subject=f'Заявка на переоформлення сертифіката: {user.full_name}',
+            template_name='certificate_reissue_request',
+            context={
+                'participant': user,
+                'certificates': certificates,
+                'admin_url': f'{base}/admin/users' if base else '/admin/users',
+            },
+        )
+
+    @staticmethod
     def send_b2b_request_notification(b2b_request):
         """Повідомити адмінів про нову B2B-заявку (корпоративне навчання).
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: IPRM VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-08-20 18:32+0300\n"
+"POT-Creation-Date: 2026-08-20 19:30+0300\n"
 "PO-Revision-Date: 2026-07-24 15:52+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -87,11 +87,17 @@ msgstr "Last name"
 msgid "Прізвище обов'язкове"
 msgstr "Last name is required"
 
+msgid "Прізвище повинно бути від 2 до 100 символів"
+msgstr "Last name must be between 2 and 100 characters"
+
 msgid "Ім'я"
 msgstr "First name"
 
 msgid "Ім'я обов'язкове"
 msgstr "First name is required"
+
+msgid "Ім'я повинно бути від 2 до 100 символів"
+msgstr "First name must be between 2 and 100 characters"
 
 msgid "Будь ласка, заповніть це поле"
 msgstr "Please fill in this field"
@@ -437,14 +443,8 @@ msgstr "Invalid email format"
 msgid "Email занадто довгий"
 msgstr "Email is too long"
 
-msgid "Ім'я повинно бути від 2 до 100 символів"
-msgstr "First name must be between 2 and 100 characters"
-
 msgid "Ваше ім'я"
 msgstr "Your first name"
-
-msgid "Прізвище повинно бути від 2 до 100 символів"
-msgstr "Last name must be between 2 and 100 characters"
 
 msgid "Ваше прізвище"
 msgstr "Your last name"
@@ -588,11 +588,17 @@ msgstr "Password changed successfully. You can now sign in."
 msgid "Ви вийшли з облікового запису"
 msgstr "You have signed out"
 
+msgid "Помилка при збереженні. Спробуйте ще раз."
+msgstr "Error saving. Please try again."
+
 msgid "Дані для сертифіката збережено. Дякуємо!"
 msgstr "Certificate details saved. Thank you!"
 
-msgid "Помилка при збереженні. Спробуйте ще раз."
-msgstr "Error saving. Please try again."
+msgid "Не вдалося надіслати заявку. Спробуйте ще раз або напишіть нам."
+msgstr "Could not send the request. Please try again or contact us."
+
+msgid "Заявку надіслано. Ми зв'яжемось з вами щодо переоформлення."
+msgstr "Request sent. We will contact you about the reissue."
 
 msgid "Сертифікат не знайдено"
 msgstr "Certificate not found"
@@ -752,6 +758,18 @@ msgstr "Message must be between 10 and 5000 characters"
 
 msgid "Ваше повідомлення..."
 msgstr "Your message..."
+
+msgid "Коментар"
+msgstr "Comment"
+
+msgid "Коментар не може перевищувати 2000 символів"
+msgstr "Comment cannot exceed 2000 characters"
+
+msgid "Якщо чогось бракує -- напишіть тут (необов'язково)"
+msgstr "If something is missing, write here (optional)"
+
+msgid "Дякуємо! Ваше підтвердження отримано."
+msgstr "Thank you! Your confirmation has been received."
 
 msgid "Не вдалося сформувати PDF. Спробуйте пізніше."
 msgstr "Could not generate the PDF. Please try again later."
@@ -1207,6 +1225,9 @@ msgstr "Your certificate: %(title)s"
 msgid "Заповніть дані для сертифіката: %(title)s"
 msgstr "Fill in your certificate details: %(title)s"
 
+msgid "ПІБ у вашому акаунті змінено"
+msgstr "The name on your account has changed"
+
 msgid "Не вдалося згенерувати вільний код. Спробуйте інший префікс."
 msgstr "Could not generate a free code. Try a different prefix."
 
@@ -1294,6 +1315,15 @@ msgstr "Actual"
 
 msgid "Для цього заходу ще немає позицій."
 msgstr "No items for this event yet."
+
+msgid "Підтверджено"
+msgstr "Confirmed"
+
+msgid "Підтверджую"
+msgstr "Confirm"
+
+msgid "Оновити"
+msgstr "Update"
 
 msgid "Реферальний кабінет | ІПРМ"
 msgstr "Referral dashboard | IPRM"
@@ -1528,17 +1558,17 @@ msgstr "Select participant type — this is required"
 msgid "Персональні дані"
 msgstr "Personal details"
 
-msgid "Потрібна для ідентифікації у системі БПР МОЗ при нарахуванні балів."
-msgstr "Required for identification in the MoH BPR system when awarding points."
-
 msgid ""
 "Ви вже отримували сертифікат. Зміна ПІБ діятиме для нових сертифікатів, а"
 " вже видані не переоформлюються автоматично — якщо потрібен сертифікат з "
-"новим ПІБ, зверніться до нас."
-msgstr ""
-"You have already received a certificate. A name change applies to new "
-"certificates; those already issued are not reissued automatically — if "
-"you need a certificate with your new name, please contact us."
+"новим ПІБ, надішліть заявку — ми зв'яжемось з вами."
+msgstr "You have already received a certificate. A name change applies to new certificates; those already issued are not reissued automatically — if you need a certificate with your new name, send a request and we will contact you."
+
+msgid "Надіслати заявку на переоформлення"
+msgstr "Request a reissue"
+
+msgid "Потрібна для ідентифікації у системі БПР МОЗ при нарахуванні балів."
+msgstr "Required for identification in the MoH BPR system when awarding points."
 
 msgid "Освіта та робота"
 msgstr "Education and employment"
@@ -2713,6 +2743,31 @@ msgstr ""
 
 msgid "Якщо кнопка не працює, скопіюйте це посилання у браузер:"
 msgstr "If the button does not work, copy this link into your browser:"
+
+msgid "Прізвище, ім'я та по батькові у вашому акаунті ІПРМ оновлено"
+msgstr "Your name on your IPRM account has been updated"
+
+msgid ""
+"Ми надсилаємо цей лист, бо ПІБ — це те, що друкується на ваших "
+"сертифікатах."
+msgstr "We are sending this because your name is what gets printed on your certificates."
+
+msgid "Було"
+msgstr "Before"
+
+msgid "Стало"
+msgstr "After"
+
+msgid ""
+"Нові сертифікати виписуватимуться з оновленим ПІБ. Уже видані залишаються"
+" з тим ім’ям, яке було на момент видачі."
+msgstr "New certificates will be issued with the updated name. Those already issued keep the name they had at the time of issue."
+
+msgid "Відкрити кабінет"
+msgstr "Open my account"
+
+msgid "Якщо ПІБ змінили не ви — напишіть нам, і ми розберемось."
+msgstr "If you did not make this change, contact us and we will look into it."
 
 msgid "Доступ до курсу"
 msgstr "Course access"

@@ -51,22 +51,45 @@
     {# ----- Персональні дані ----- #}
     <div class="form-section reg-form-section">
       <h3 class="form-section__title reg-form-section__title">{{ _('Персональні дані') }}</h3>
+
+      {% if has_certificates %}
+      <aside class="reg-moh-notice" role="note" id="certdata-name-notice">
+        <div class="reg-moh-notice__icon" aria-hidden="true">i</div>
+        <p>
+          {% trans trimmed %}
+          Ви вже отримували сертифікат. Зміна ПІБ діятиме для нових сертифікатів,
+          а вже видані не переоформлюються автоматично — якщо потрібен сертифікат
+          з новим ПІБ, надішліть заявку — ми зв'яжемось з вами.
+          {% endtrans %}
+        </p>
+        <form method="POST" action="{{ url_for('auth.certificate_reissue_request') }}"
+              class="reg-moh-notice__action" data-single-submit>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="apple-btn apple-btn--secondary apple-btn--sm">
+            {{ _('Надіслати заявку на переоформлення') }}
+          </button>
+        </form>
+      </aside>
+      {% endif %}
+      {# Поля ПІБ посилаються на нотис через aria-describedby -- але тільки коли
+         він є на сторінці, інакше атрибут вказував би в нікуди. #}
+      {% set name_attrs = {'aria-describedby': 'certdata-name-notice'} if has_certificates else {} %}
       <div class="form-section__grid">
         <div class="form-group">
           <label for="last_name">{{ _('Прізвище') }} <span class="required">*</span></label>
-          {{ form.last_name(class="form-input" + (" is-invalid" if form.last_name.errors else ""), id="last_name", required=true) }}
+          {{ form.last_name(class="form-input" + (" is-invalid" if form.last_name.errors else ""), id="last_name", required=true, **name_attrs) }}
           {% for e in form.last_name.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group">
           <label for="first_name">{{ _("Ім'я") }} <span class="required">*</span></label>
-          {{ form.first_name(class="form-input" + (" is-invalid" if form.first_name.errors else ""), id="first_name", required=true) }}
+          {{ form.first_name(class="form-input" + (" is-invalid" if form.first_name.errors else ""), id="first_name", required=true, **name_attrs) }}
           {% for e in form.first_name.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
         <div class="form-group">
           <label for="middle_name">{{ _('По батькові') }} <span class="required">*</span></label>
-          {{ form.middle_name(class="form-input" + (" is-invalid" if form.middle_name.errors else ""), id="middle_name", required=true) }}
+          {{ form.middle_name(class="form-input" + (" is-invalid" if form.middle_name.errors else ""), id="middle_name", required=true, **name_attrs) }}
           {% for e in form.middle_name.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
 
@@ -79,19 +102,6 @@
           {% for e in form.birth_date.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
         </div>
       </div>
-
-      {% if has_certificates %}
-      <aside class="reg-moh-notice" role="note" id="certdata-name-notice">
-        <div class="reg-moh-notice__icon" aria-hidden="true">i</div>
-        <p>
-          {% trans trimmed %}
-          Ви вже отримували сертифікат. Зміна ПІБ діятиме для нових сертифікатів,
-          а вже видані не переоформлюються автоматично — якщо потрібен сертифікат
-          з новим ПІБ, зверніться до нас.
-          {% endtrans %}
-        </p>
-      </aside>
-      {% endif %}
     </div>
 
     {# ----- Освіта і місце роботи ----- #}

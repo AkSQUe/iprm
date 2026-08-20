@@ -1,0 +1,37 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, spacer %}
+
+{% block title %}{{ _('ПІБ у вашому акаунті змінено') }}{% endblock %}
+
+{% block preview_text %}{% trans %}Прізвище, ім'я та по батькові у вашому акаунті ІПРМ оновлено{% endtrans %}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        {{ _('ПІБ у вашому акаунті змінено') }}
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        {{ _('Ми надсилаємо цей лист, бо ПІБ — це те, що друкується на ваших сертифікатах.') }}
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                {{ detail_row(_('Було'), old_name) }}
+                {{ detail_row(_('Стало'), new_name) }}
+            </td>
+        </tr>
+    </table>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        {{ _('Нові сертифікати виписуватимуться з оновленим ПІБ. Уже видані залишаються з тим ім’ям, яке було на момент видачі.') }}
+    </p>
+
+    {{ button_primary(_('Відкрити кабінет'), account_url) }}
+
+    {{ spacer(16) }}
+
+    <p style="margin: 0; font-size: 13px; color: #6E667A; line-height: 1.5;">
+        {{ _('Якщо ПІБ змінили не ви — напишіть нам, і ми розберемось.') }}
+    </p>
+{% endblock %}
