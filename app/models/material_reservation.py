@@ -147,6 +147,19 @@ class MaterialReservationItem(TimestampMixin, db.Model):
     quantity_returned = db.Column(db.Integer, nullable=True)
     quantity_actual = db.Column(db.Integer, nullable=True)
 
+    # Гривнева вартість спожитого по цьому рядку, як її порахував MM Medic:
+    # (видано - повернено) * ціна партії, підсумовано по партіях видачі.
+    #
+    # NULL != 0. NULL -- «оцінити нічим»: партій ще немає (документ до
+    # відвантаження) або в жодної з них не було ціни. Нуль -- «порахували,
+    # вийшло нуль». У звіті перше має бути прочерком, друге -- нулем.
+    cost_uah = db.Column(db.Numeric(12, 2), nullable=True)
+
+    # Чи ВСІ партії рядка мали ціну. Має значення тільки разом із `cost_uah`:
+    # доки вартості немає, писати сюди `false` означало б стверджувати
+    # «собівартість неповна» там, де її ще просто не рахували.
+    cost_complete = db.Column(db.Boolean, nullable=True)
+
     __table_args__ = (
         db.UniqueConstraint('reservation_id', 'sku', name='uq_material_item_sku'),
     )
