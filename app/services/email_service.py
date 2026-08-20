@@ -1522,6 +1522,37 @@ class EmailService:
             registration_id=registration.id if registration is not None else None,
         )
 
+    @staticmethod
+    def send_meta_leads_alert(reasons, stats=None):
+        """Сповістити менеджерів про збій приймання лідів з Meta Lead Ads.
+
+        Лист моніторингу, а не сповіщення про заявку: на кожен лід ми
+        свідомо не пишемо (рішення Q9 плану інтеграції). Тому подія має
+        власний тип `meta_lead` -- адмін, який вимкнув шум про запити на
+        курси, не має разом із ним вимкнути сигнал "реклама три дні ллє в
+        порожнечу".
+
+        `reasons` -- список словників {'code', 'title', 'detail'}: сигналів
+        може спрацювати кілька одразу (тиша, помилки черги, мертвий токен),
+        і слати три окремі листи про один і той самий діагноз немає сенсу.
+        Антиспам (не частіше разу на добу) живе у викликача --
+        `meta_lead_queue.run_health_alerts`, бо саме він знає, коли слав
+        попередній.
+        """
+        from app.models.site_settings import SiteSettings
+        base = (SiteSettings.get().website_url or '').rstrip('/')
+        tail = '/admin/meta-leads/settings'
+        return EmailService.notify_admins_with_template(
+            event_type='meta_lead',
+            subject='Приймання лідів Meta: потрібна увага',
+            template_name='meta_leads_alert',
+            context={
+                'reasons': list(reasons or []),
+                'stats': stats or {},
+                'admin_url': f'{base}{tail}' if base else tail,
+            },
+        )
+
     # ---- MM Medic materials notifications ----
 
     @staticmethod

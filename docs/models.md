@@ -582,6 +582,85 @@ Singleton-модель для зберігання SMTP-налаштувань �
 CHECK `ck_refund_requests_single_owner`: заповнене рівно одне з
 `registration_id` / `enrollment_id` -- як у PaymentTransaction.
 
+## MetaLeadEvent / MetaLead (заявки з Meta Lead Ads)
+
+Дві таблиці, бо в них різна довіра до вмісту. Докладно --
+[docs/integrations/meta-lead-ads.md](integrations/meta-lead-ads.md).
+
+`meta_lead_events` -- сире, що принесли вебхук або звірка. Вебхук Meta
+приносить ЛИШЕ ідентифікатор заявки, не дані, тож рядок тут означає «сходи
+в Graph API». **Payload не редагується і не видаляється** -- це єдиний
+спосіб переграти розбір, якщо той виявиться помилковим, і водночас те, що
+тримає ідемпотентність: після видалення заявки повторна доставка впізнає
+подію як оброблену і не воскресить прибране.
+
+`meta_leads` -- результат розбору. Має `SoftDeleteMixin`: тестові заявки з
+Lead Ads Testing Tool приходять тим самим шляхом, що й справжні, і
+прибирати їх треба з можливістю скасувати помилковий клік.
+
+Ідемпотентність тримається на `leadgen_id`, унікальному в ОБОХ таблицях:
+Meta повторює доставку при будь-якому сумніві, а звірка навмисно перечитує
+ті самі 48 годин.
+
+### meta_lead_events
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ |
+| `leadgen_id` | String(64), UNIQUE | Ідентифікатор заявки в Meta. Рядок, не число: 64-бітний і буває з провідними нулями |
+| `page_id`, `form_id`, `ad_id` | String(64) | Ідентифікатори джерела з вебхука |
+| `created_time` | DateTime (UTC) | Час подання за версією Meta |
+| `received_at` | DateTime (UTC), NOT NULL | Час прийому нами |
+| `raw_payload` | JSON, NOT NULL | `value` з `changes[]` цілком. Не редагується |
+| `source` | String(20) | webhook / reconcile / manual |
+| `status` | String(20) | pending / processing / retrying / done / skipped / failed |
+| `attempts` | Integer | Спроб забрати дані; стеля -- `MAX_EVENT_ATTEMPTS` = 5 |
+| `last_error` | Text | Текст останньої помилки |
+| `next_retry_at` | DateTime (UTC) | Backoff 1/2/4/8/16 хв |
+| `processed_at` | DateTime (UTC) | Коли розібрано |
+| `lead_id` | FK -> meta_leads.id (SET NULL) | Створена заявка |
+
+### meta_leads
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ |
+| `leadgen_id` | String(64), UNIQUE | Ідентифікатор у Meta |
+| `created_time` | DateTime (UTC), NOT NULL | Час подання. Від нього рахується час очікування |
+| `page_id`, `form_id`, `form_name` | String | Форма-джерело |
+| `campaign_id`, `campaign_name` | String | Кампанія |
+| `adset_id`, `adset_name`, `ad_id`, `ad_name` | String | Група й оголошення |
+| `platform` | String(10) | fb / ig |
+| `is_organic` | Boolean | Заявка не з платної реклами |
+| `field_data` | JSON, NOT NULL | Усі відповіді форми. Набір питань змінюється щокампанії, тож JSON, а не колонки |
+| `raw_lead` | JSON | Повна відповідь Graph API |
+| `first_name`, `last_name`, `full_name` | String | Нормалізоване ПІБ |
+| `email` | String(255) | Нормалізована пошта |
+| `phone_raw` | String(50) | Номер як його дала Meta |
+| `phone_e164` | String(16) | Канонічна форма. NULL = **не розпізнано**, а не «немає» |
+| `user_id` | FK -> users.id (SET NULL) | Прив'язана картка |
+| `match_method` | String(20) | phone / email / created / none |
+| `needs_attention` | Boolean | Потребує ручного розбору |
+| `attention_reason` | Text | Готовий людиночитний текст для менеджера |
+| `conflict_user_id` | FK -> users.id (SET NULL) | Друга картка при конфлікті телефон/пошта |
+| `alt_email` | String(255) | Нова пошта при збігу за телефоном. `users.email` не перезаписується ніколи |
+| `is_repeat` | Boolean | Контакт уже звертався |
+| `is_test` | Boolean | Заявка з режиму тестування |
+| `status` | String(20) | new / in_work / closed / dismissed |
+| `admin_notes` | Text | Нотатки менеджера |
+| `first_touch_at` | DateTime (UTC) | Момент першої реакції. Ставиться ОДИН раз |
+| `first_touch_by` | FK -> users.id (SET NULL) | Хто взяв у роботу |
+| `deleted_at` | DateTime (UTC) | SoftDeleteMixin |
+
+**Стан живе на заявці, а не на людині.** У `User` статусу немає навмисно:
+одна людина -- багато заявок, і «чи вже передзвонили» стосується заявки.
+Друга заявка від того, з ким говорили місяць тому, інакше або перезатерла б
+старий стан, або загубилась би під ним.
+
+**`phone_e164` в `medical_profiles` -- індекс, а не UNIQUE**, тож збіг за
+телефоном може дати кілька карток: заявка чіпляється до найстарішої і
+позначається «потребує уваги». Автоматичного злиття немає.
+
 ## SiteSettings
 
 Singleton-модель глобальних налаштувань сайту. Керується через адмін-панель "Налаштування".

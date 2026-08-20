@@ -15,6 +15,7 @@ from datetime import timedelta
 from app.extensions import db
 from app.models.blog_comment import BlogComment
 from app.models.media_file import MediaFile
+from app.models.meta_lead import MetaLead, MetaLeadEvent
 from app.models.mixins import utcnow
 from app.models.review import Review
 
@@ -26,7 +27,8 @@ RETENTION_DAYS = 30
 def purge_expired(retention_days=RETENTION_DAYS):
     """Видалити рядки, позначені deleted_at раніше за витримку.
 
-    Повертає {'reviews': N, 'blog_comments': N, 'media_files': N}.
+    Повертає {'reviews': N, 'blog_comments': N, 'media_files': N,
+    'meta_leads': N}.
     """
     cutoff = utcnow() - timedelta(days=retention_days)
     stats = {}
@@ -47,6 +49,20 @@ def purge_expired(retention_days=RETENTION_DAYS):
         for row in rows:
             db.session.delete(row)
         stats[key] = len(rows)
+
+    # Заявки з Meta. Сира подія leadgen НЕ видаляється НІКОЛИ -- ані тут,
+    # ані в адмінці: саме вона тримає ідемпотентність, і без неї повторна
+    # доставка того самого leadgen_id (Meta ретраїть, звірка перечитує
+    # останні години) воскресила б заявку, яку адмін навмисно прибрав.
+    # Тому подія лише відв'язується від видаленого рядка.
+    meta_leads = MetaLead.query.filter(
+        MetaLead.deleted_at.isnot(None), MetaLead.deleted_at < cutoff,
+    ).all()
+    for lead in meta_leads:
+        for event in MetaLeadEvent.query.filter_by(lead_id=lead.id).all():
+            event.lead_id = None
+        db.session.delete(lead)
+    stats['meta_leads'] = len(meta_leads)
 
     if any(stats.values()):
         db.session.commit()

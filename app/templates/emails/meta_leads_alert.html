@@ -1,0 +1,50 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, alert_warning, spacer %}
+
+{#- Лист моніторингу, а не сповіщення про лід: на кожну заявку ми свідомо
+    не пишемо (рішення Q9 плану). Сигналів може бути кілька одразу -- тиша,
+    помилки черги, мертвий токен, -- тому вони йдуть списком, а не окремими
+    листами: для менеджера це один висновок «приймання лідів зламалось». -#}
+
+{% block title %}Приймання лідів Meta: потрібна увага{% endblock %}
+
+{% block preview_text %}{{ reasons[0].title if reasons else 'Перевірте інтеграцію з Meta Lead Ads' }}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        Приймання лідів Meta: потрібна увага
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        Автоматична перевірка інтеграції з Meta Lead Ads знайшла проблему.
+        Доки її не усунено, заявки з реклами можуть не потрапляти в адмінку.
+    </p>
+
+    {% for reason in reasons %}
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #625A6D; text-transform: uppercase; letter-spacing: 0.05em;">
+        {{ reason.title }}
+    </p>
+    <div style="padding: 16px 20px; background-color: #F7F4FB; border-left: 3px solid #7437C9; border-radius: 4px; margin-bottom: 24px; font-size: 15px; color: #3A3345; line-height: 1.6;">{{ reason.detail }}</div>
+    {% endfor %}
+
+    <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 500; color: #625A6D; text-transform: uppercase; letter-spacing: 0.05em;">
+        Стан інтеграції
+    </p>
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                {{ detail_row("Остання заявка", stats.last_lead_at.strftime('%d.%m.%Y %H:%M') if stats.last_lead_at else 'не було жодної', label_width='170px') }}
+                {{ detail_row("Останній вебхук", stats.last_webhook_at.strftime('%d.%m.%Y %H:%M') if stats.last_webhook_at else 'не було жодного', label_width='170px') }}
+                {{ detail_row("Остання звірка", stats.last_reconcile_at.strftime('%d.%m.%Y %H:%M') if stats.last_reconcile_at else 'не виконувалась', label_width='170px') }}
+                {{ detail_row("Помилок у черзі за добу", stats.failed_events, label_width='170px') }}
+            </td>
+        </tr>
+    </table>
+
+    {% if admin_url %}
+    {{ button_primary("Відкрити налаштування Meta Lead Ads", admin_url) }}
+    {{ spacer(8) }}
+    {% endif %}
+
+    {{ alert_warning(None, "Наступне таке повідомлення прийде не раніше ніж за добу -- навіть якщо проблема триватиме.") }}
+{% endblock %}

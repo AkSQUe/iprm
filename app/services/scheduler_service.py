@@ -199,6 +199,35 @@ def init_scheduler(app):
         name='Нагадування про невикористаний онлайн-курс',
     )
 
+    # Приймання лідів Meta. Воркер щохвилини: заявку з реклами міряють
+    # хвилинами очікування дзвінка, тож рідший прогін з'їв би саме ту
+    # метрику, заради якої інтеграція й робилась.
+    scheduler.add_job(
+        process_meta_lead_queue,
+        trigger=CronTrigger(minute='*'),
+        id='meta_lead_queue_worker',
+        replace_existing=True,
+        name='Приймання лідів з Meta Lead Ads',
+    )
+
+    # Період звірки задається в адмінці й може змінитись без перезапуску
+    # процесу, тому cron ставимо частий, а сама джоба питає, чи час.
+    scheduler.add_job(
+        reconcile_meta_leads,
+        trigger=CronTrigger(minute='*/10'),
+        id='meta_leads_reconcile',
+        replace_existing=True,
+        name='Звірка лідів з Meta Lead Ads',
+    )
+
+    scheduler.add_job(
+        meta_leads_health,
+        trigger=CronTrigger(hour=9, minute=50),
+        id='meta_leads_health',
+        replace_existing=True,
+        name='Стан токена й моніторинг лідів Meta',
+    )
+
     scheduler.start()
     _initialized = True
     logger.info('APScheduler started with SQLAlchemy jobstore')
@@ -446,6 +475,72 @@ def process_webhook_queue():
                     logger.info('Webhook queue: %s', stats)
             except Exception:
                 logger.exception('process_webhook_queue failed')
+
+
+def process_meta_lead_queue():
+    """Periodic job: забрати з Graph API ліди за подіями вхідної черги."""
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('meta_lead_queue_worker') as got:
+            if not got:
+                logger.debug('meta lead queue: another worker holds the lock, skipping')
+                return
+            from app.services.meta_lead_queue import process_queue
+            try:
+                stats = process_queue()
+                if stats.get('processed'):
+                    logger.info('Meta lead queue: %s', stats)
+            except Exception:
+                logger.exception('process_meta_lead_queue failed')
+
+
+def reconcile_meta_leads():
+    """Periodic job: добрати ліди, які не доїхали вебхуком.
+
+    Інтервал звіряється всередині (`reconcile_is_due`), а не в cron-виразі:
+    адмін міняє його в адмінці без перезапуску процесу. Той самий підхід,
+    що в синхронізації каталогу Sintegrum.
+    """
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('meta_leads_reconcile') as got:
+            if not got:
+                logger.debug('meta reconcile: another worker holds the lock, skipping')
+                return
+            from app.services.meta_lead_queue import reconcile, reconcile_is_due
+            try:
+                if not reconcile_is_due():
+                    return
+                stats = reconcile()
+                logger.info('Meta leads reconcile: %s', stats)
+            except Exception:
+                logger.exception('reconcile_meta_leads failed')
+
+
+def meta_leads_health():
+    """Daily job: стан Page token і сигнали моніторингу приймання лідів.
+
+    Перевірка токена йде ПЕРЕД алертами навмисно: інакше сигнал про
+    недійсний токен спізнювався б рівно на добу -- саме на той час, поки
+    жодна заявка не забирається.
+    """
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('meta_leads_health') as got:
+            if not got:
+                logger.debug('meta health: another worker holds the lock, skipping')
+                return
+            from app.services.meta_lead_queue import check_token, run_health_alerts
+            try:
+                check_token()
+            except Exception:
+                logger.exception('meta_leads_health: token check failed')
+            try:
+                report = run_health_alerts()
+                if report.get('reasons'):
+                    logger.warning('Meta leads health: %s', report)
+            except Exception:
+                logger.exception('meta_leads_health: alerts failed')
 
 
 def cleanup_xlsx_uploads():

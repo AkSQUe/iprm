@@ -244,6 +244,23 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | POST | `/admin/perf/<id>/delete` | Видалити прогін |
 | POST | `/admin/perf/key/rotate` | Згенерувати новий ключ приймання замірів |
 | POST | `/admin/perf/key/clear` | Вимкнути приймання замірів |
+| GET | `/admin/users/<id>` | Картка людини: історія заявок з Meta, реєстрації, платежі |
+| GET | `/admin/meta-leads` | Реєстр заявок з Meta Lead Ads (фільтри, годинник очікування) |
+| GET | `/admin/meta-leads/export` | Експорт реєстру в XLSX |
+| GET/POST | `/admin/meta-leads/<id>` | Картка заявки; перехід у «В роботі» ставить час першої реакції |
+| POST | `/admin/meta-leads/<id>/delete` | М'яко видалити заявку |
+| POST | `/admin/meta-leads/<id>/restore` | Відновити видалену |
+| POST | `/admin/meta-leads/delete-test` | Пакетно прибрати тестові заявки |
+| GET | `/admin/meta-leads/events` | Сира черга подій leadgen |
+| POST | `/admin/meta-leads/events/<id>/retry` | Повернути подію в чергу |
+| GET | `/admin/meta-leads/settings` | Стан токена, остання заявка, помилки, діагностика |
+| POST | `/admin/meta-leads/settings/save` | Зберегти App ID / App Secret / verify token / ID Сторінки |
+| POST | `/admin/meta-leads/settings/test-mode` | Увімкнути або вимкнути режим тестування |
+| POST | `/admin/meta-leads/settings/check-token` | `debug_token`: чинність, термін, дозволи |
+| POST | `/admin/meta-leads/settings/exchange-token` | Обміняти User token на безстроковий Page token |
+| POST | `/admin/meta-leads/settings/subscribe` | Підписати Сторінку на подію `leadgen` |
+| POST | `/admin/meta-leads/settings/reconcile` | Звірити з Meta негайно |
+| POST | `/admin/meta-leads/settings/test-event` | Надіслати собі підписану тестову подію |
 
 ## API v1 (партнери та інструменти)
 
@@ -258,6 +275,19 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | GET | `/api/v1/online-courses` | Каталог онлайн-курсів для партнерів |
 | GET | `/api/v1/online-enrollments` | Покупки онлайн-курсів (хто, що, чи оплачено) |
 | POST | `/api/v1/perf/runs` | Приймання прогону від `tools/perf/perf_check.py --push` |
+
+## Вебхуки від зовнішніх систем
+
+| Метод | URL | Опис |
+|-------|-----|------|
+| GET | `/api/webhooks/meta/leads` | Верифікація підписки Meta (`hub.challenge`) |
+| POST | `/api/webhooks/meta/leads` | Приймання подій `leadgen`. Підпис `X-Hub-Signature-256` по СИРОМУ тілу; 200 віддається ДО будь-якого походу в Graph API |
+| POST | `/api/partner/mm-medic/...` | Стан резервувань матеріалів від MM Medic |
+
+Обидва блюпринти виведені з-під CSRF: підписувач -- зовнішня система, а не
+браузер. Ендпоінт Meta навмисно НЕ гейтиться на прапорці інтеграції:
+відкинути валідно підписаний запит означало б втратити заявку назавжди --
+у Meta вони живуть 90 днів.
 
 ## Errors
 
