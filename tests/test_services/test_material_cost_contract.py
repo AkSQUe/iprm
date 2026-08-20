@@ -53,7 +53,7 @@ def test_partner_item_payload_lands_whole(app):
                     MaterialReservationStatus.ISSUED, True)
     db.session.commit()
 
-    item = MaterialReservation.query.get(res.id).items[0]
+    item = db.session.get(MaterialReservation, res.id).items[0]
     assert item.quantity_requested == 12
     assert item.quantity_reserved == 11
     assert item.quantity_issued == 10
