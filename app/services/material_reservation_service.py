@@ -10,6 +10,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 
+from flask_login import current_user
 from sqlalchemy import or_
 
 from app.extensions import db
@@ -271,16 +272,22 @@ def create_reservation(instance, items, catalog_by_sku, replace=False):
 def _submitter_id():
     """Хто подав заявку в ІПРМ -- `created_by_id`. IPRM has no role system, so
     this is the only accountability trail available (plan 5.3). None outside
-    a request context or for an anonymous caller -- guarded the same way
-    `_actor()` in promo_service.py is, since `current_user` raises when
-    evaluated with no request context (e.g. a direct service-layer call in
-    tests or a future scheduler-driven resubmit)."""
-    try:
-        from flask_login import current_user
-        if current_user and current_user.is_authenticated:
-            return current_user.id
-    except Exception:
-        pass
+    a request context or for an anonymous caller (e.g. a direct service-layer
+    call in tests or a future scheduler-driven resubmit).
+
+    No try/except here on purpose: `_actor()` in promo_service.py assumes
+    `current_user` raises with no request context and blankets the whole
+    body with `except Exception`, but verified against this project's stack
+    (Flask 3.1, Flask-Login 0.6.3) that assumption does not hold --
+    `has_request_context()` reads a contextvar with an explicit default and
+    `flask_login._get_user()` returns `None` without touching `current_app`
+    or `g`, so `current_user` just evaluates falsy and the `and` above
+    short-circuits before `.is_authenticated` is ever touched. Nothing
+    raises for the case this function exists to handle. A genuinely broken
+    `current_user.id` or a bad import is a real bug and must surface, not
+    be reported as "no submitter"."""
+    if current_user and current_user.is_authenticated:
+        return current_user.id
     return None
 
 
