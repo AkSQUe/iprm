@@ -103,6 +103,7 @@ def db_session(app):
 
         def _plain_get_bind_for_test(self, *args, **kwargs):
             if threading.get_ident() == test_thread:
+                self.join_transaction_mode = 'rollback_only'
                 return connection
             return original_plain_get_bind(self, *args, **kwargs)
 

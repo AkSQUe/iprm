@@ -492,12 +492,28 @@ def test_registry_query_count_does_not_grow_with_courses(client, admin):
 
     Міряємо ПРИРІСТ, а не абсолют: постійна ціна сторінки залежить від речей
     поза цим тестом, і поріг на абсолютне число ламався б від чужих тестів.
+
+    Перший курс створюється ДО заміру базової лінії, і це не косметика.
+    Порожній реєстр не виконує вторинних запитів selectinload узагалі --
+    вантажити нічого. Тобто базова лінія на порожньому реєстрі не містить
+    ПОСТІЙНОЇ ціни (material_kits, course_instances, material_reservations),
+    і приріст показував +5 навіть там, де N+1 немає. Раніше цього не було
+    видно лише тому, що попередні тести файлу лишали за собою закомічені
+    курси й реєстр був непорожній -- тест перевіряв не те, що обіцяв.
     """
     from datetime import datetime, timedelta, timezone
 
     from app.models.course_instance import CourseInstance
 
     _login(client, admin)
+
+    seed = _course()
+    for _ in range(2):
+        db.session.add(CourseInstance(
+            course_id=seed.id, status='published', event_format='offline',
+            start_date=datetime.now(timezone.utc) + timedelta(days=10)))
+    db.session.commit()
+
     baseline = _count_registry_selects(client)
 
     for _ in range(8):
