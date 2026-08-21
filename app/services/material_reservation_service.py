@@ -603,8 +603,12 @@ def _as_decimal(value):
     return cost
 
 
-def _trim(value, length):
+def trim(value, length):
     """Обрізати ОПИСОВЕ поле під довжину колонки.
+
+    Публічна: викликається і звідси (`apply_items`), і з приймача вебхука
+    (`app/api/mm_status.py`) для `document_number` -- той самий випадок, що
+    зробив колись публічною `apply_items`.
 
     SQLite мовчки пише будь-яку довжину, PostgreSQL кидає
     StringDataRightTruncation — тобто без цього тести зелені, а прод віддає
@@ -708,9 +712,9 @@ def apply_items(reservation, items, local_status, has_items_key):
             approved = legacy_qty
 
         fields = {
-            'name': _trim(raw.get('name'), 255) or item.name,
-            'image_url': _trim(raw.get('image') or raw.get('image_url'),
-                               500) or item.image_url,
+            'name': trim(raw.get('name'), 255) or item.name,
+            'image_url': trim(raw.get('image') or raw.get('image_url'),
+                              500) or item.image_url,
             'quantity_requested': requested if requested is not None else item.quantity_requested,
             'quantity_issued': issued if issued is not None else item.quantity_issued,
             'quantity_returned': returned if returned is not None else item.quantity_returned,

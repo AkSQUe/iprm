@@ -15,6 +15,11 @@
 {% set qty_mode = mode in ['reserve', 'edit', 'update'] %}
 {% set readonly = mode == 'view' %}
 {% set input_name = 'quantity' if qty_mode else 'actual' %}
+{# У readonly (view) немає ні кнопки сабміту, ні поля вводу всередині --
+   а `form_action` у цьому режимі вказує на write-off роут, який сервер для
+   документа однаково відмовить. Тег обирається так, щоб непридатна форма не
+   лежала пасткою для наступної правки цього шаблону. #}
+{% set rows_wrapper_tag = 'div' if readonly else 'form' %}
 {% if mode == 'reserve' %}
   {% set form_action = url_for('admin.instance_materials_reserve', instance_id=instance.id) %}
   {% set submit_label = 'Подати на погодження' %}
@@ -184,9 +189,11 @@
   {% endif %}
 
   {% if rows %}
-  <form method="POST" action="{{ form_action }}" id="materialsForm" data-mode="{{ mode }}" data-consumed="{{ '1' if is_consumed else '' }}"
-        data-single-submit data-submitting-label="Обробляємо…">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <{{ rows_wrapper_tag }}
+      {% if not readonly %}method="POST" action="{{ form_action }}"{% endif %}
+      id="materialsForm" data-mode="{{ mode }}" data-consumed="{{ '1' if is_consumed else '' }}"
+      {% if not readonly %}data-single-submit data-submitting-label="Обробляємо…"{% endif %}>
+    {% if not readonly %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
     <div class="admin-table-wrap">
     <table class="admin-table" id="materialsTable">
       <thead>
@@ -267,7 +274,7 @@
       </button>
       {% endif %}
     </div>
-  </form>
+  </{{ rows_wrapper_tag }}>
   {% else %}
   <div class="admin-empty admin-text-center">
     {{ icon('inbox', cls='admin-empty__icon') }}

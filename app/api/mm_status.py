@@ -33,7 +33,7 @@ from app.models.site_settings import SiteSettings
 from app.services import material_reservation_service as mrs
 from app.services.material_reservation_service import (
     apply_items as _apply_items,
-    _trim,
+    trim,
 )
 
 logger = logging.getLogger(__name__)
@@ -246,7 +246,7 @@ def reservation_status():
         reservation.status = local_status
         changed = True
 
-    document_number = _trim(payload.get('document_number'), 50)
+    document_number = trim(payload.get('document_number'), 50)
     if document_number and reservation.document_number != document_number:
         reservation.document_number = document_number
         changed = True

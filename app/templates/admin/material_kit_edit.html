@@ -143,7 +143,7 @@
     {% endif %}
 
     {% if catalog %}
-    <form method="POST" action="{{ url_for('admin.material_kit_item_add', kit_id=kit.id) }}" class="admin-form__grid" id="kitItemAddForm">
+    <form method="POST" action="{{ url_for('admin.material_kit_item_add', kit_id=kit.id) }}" class="admin-form__grid">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="name_snapshot" id="kitItemNameSnapshot" value="">
 
