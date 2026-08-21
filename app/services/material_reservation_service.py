@@ -562,6 +562,10 @@ REMOTE_TO_LOCAL = {
     'completed': MaterialReservationStatus.CONSUMED,
     'rejected': MaterialReservationStatus.REJECTED,
     'cancelled': MaterialReservationStatus.CANCELLED,
+    # MM Medic наразі НЕ шле 'released' -- фактичне скасоване утримання
+    # приходить як 'expired'. Запис лишається як дешева страховка на випадок,
+    # якщо партнер почне його слати; шукати код, що його відправляє, не
+    # варто -- такого коду зараз немає.
     'released': MaterialReservationStatus.CANCELLED,
     'expired': MaterialReservationStatus.EXPIRED,
 }
@@ -825,6 +829,10 @@ def reconcile_reservation(reservation):
     if not (status_changed or items_changed):
         return False
 
+    # Записується і тоді, коли `_may_advance` вище відхилив `new_status`, а
+    # змінились тільки рядки: поле фіксує ОСТАННЮ ВІДПОВІДЬ партнера, а не
+    # останній застосований статус, і саме цей знімок пояснює, звідки взялась
+    # зміна рядків, якщо статус лишився попереднім.
     reservation.last_response = result.data
     db.session.commit()
     if status_changed:
