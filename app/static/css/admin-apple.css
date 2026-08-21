@@ -331,6 +331,13 @@
   color: var(--apple-black);
 }
 
+/* Базове поле адмінки. Раніше тут був перелік контекстів -- і кожне нове
+   місце з полем поза цим переліком отримувало голий браузерний інпут:
+   `.form-input` визначений у auth.css, а адмінка його не підключає. Саме так
+   виглядало поле посилання в меню замовлення. Файл вантажать лише адмінські
+   сторінки, тож базовий селектор нічого за їхніми межами не зачіпає, а
+   контекстні правила нижче так і лишаються сильнішими. */
+.form-input,
 .form-section .form-input,
 .admin-form .form-input,
 .admin-filter-form .form-input,
@@ -345,6 +352,7 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.form-input:focus,
 .form-section .form-input:focus,
 .admin-form .form-input:focus,
 .admin-filter-form .form-input:focus,
@@ -358,6 +366,7 @@
 /* Плейсхолдер бере --apple-gray, а не --apple-gray-light: останній -- рівень
    ЛІНІЙ (#d2d2d7 / #48484a), і як текст давав 1.38 у світлій та 1.86 у тёмній
    темі, тобто читався лише на здогад. --apple-gray дає 6.02 / 5.90. */
+.form-input::placeholder,
 .form-section .form-input::placeholder,
 .admin-form .form-input::placeholder,
 .backup-actions__form .form-input::placeholder {
