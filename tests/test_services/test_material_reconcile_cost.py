@@ -73,8 +73,12 @@ def test_reconcile_applies_cost_even_when_status_unchanged(app, reservation, mon
     assert item.quantity_returned == 2
 
 
-def test_reconcile_leaves_status_alone_when_partner_agrees(app, reservation, monkeypatch):
-    """Читання рядків не має права рухати статус: це різні питання."""
+def test_reading_items_never_moves_header_status(app, reservation, monkeypatch):
+    """Інваріант, а не покриття правки з цього файлу: цей тест НЕ впаде,
+    якщо відкотити зміну, що навчила `reconcile_reservation` застосовувати
+    cost_uah при незмінному статусі (її стереже тест вище). Він стереже
+    інший, ширший факт, що має лишатись істинним завжди: читання рядків не
+    має права рухати заголовок-статус, це різні питання."""
     class _Client:
         def get_reservation(self, ref):
             return _FakeResult({'reservation': {

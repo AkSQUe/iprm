@@ -34,20 +34,26 @@ PARTNER_ITEM_PAYLOAD = {
 }
 
 
-def test_partner_item_payload_lands_whole(app):
+def _make_reservation(ref_suffix):
     # `instance_id` оголошено nullable=False, тож захід має бути справжнім.
-    course = Course(title='Плазмотерапія', slug='course-cost-contract')
+    course = Course(title='Плазмотерапія', slug=f'course-cost-contract-{ref_suffix}')
     db.session.add(course)
     db.session.flush()
     inst = CourseInstance(course_id=course.id, location='Київ')
     db.session.add(inst)
     db.session.flush()
-    res = MaterialReservation(instance_id=inst.id, external_ref='iprm-instance-8001',
+    res = MaterialReservation(instance_id=inst.id,
+                              external_ref=f'iprm-instance-{ref_suffix}',
                               status=MaterialReservationStatus.ISSUED)
     db.session.add(res)
     db.session.flush()
     res.items.append(MaterialReservationItem(sku='NDL-21', quantity_reserved=11))
     db.session.commit()
+    return res
+
+
+def test_partner_item_payload_lands_whole(app):
+    res = _make_reservation('8001')
 
     mrs.apply_items(res, [PARTNER_ITEM_PAYLOAD],
                     MaterialReservationStatus.ISSUED, True)
@@ -61,3 +67,34 @@ def test_partner_item_payload_lands_whole(app):
     assert item.quantity_actual == 8
     assert item.cost_uah == Decimal('80.00')
     assert item.cost_complete is True
+
+
+def test_partner_item_payload_accepts_bare_json_number_cost(app):
+    """Контракт обіцяє ОБИДВІ форми числа. Наш відправник шле рядок
+    (``"80.00"``, тест вище), але сторонній JSON-клієнт партнера цілком може
+    віддати голе число -- і воно мусить лягти так само, а не мовчки
+    згубитись через `_as_decimal`."""
+    res = _make_reservation('8002')
+
+    payload = dict(PARTNER_ITEM_PAYLOAD, cost_uah=80)  # голе число, не '80.00'
+    mrs.apply_items(res, [payload], MaterialReservationStatus.ISSUED, True)
+    db.session.commit()
+
+    item = db.session.get(MaterialReservation, res.id).items[0]
+    assert item.cost_uah == Decimal('80')
+    assert item.cost_complete is True
+
+
+def test_partner_item_payload_malformed_cost_degrades_to_none(app):
+    """Биту суму `_as_decimal` мусить звести до None, а не кинути виняток:
+    у відправника немає ретраїв, тож необроблений виняток тут губить весь
+    штовх, а не лише грошове поле."""
+    res = _make_reservation('8003')
+
+    payload = dict(PARTNER_ITEM_PAYLOAD, cost_uah='abc')
+    mrs.apply_items(res, [payload], MaterialReservationStatus.ISSUED, True)
+    db.session.commit()
+
+    item = db.session.get(MaterialReservation, res.id).items[0]
+    assert item.cost_uah is None
+    assert item.cost_complete is None

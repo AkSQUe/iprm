@@ -9,6 +9,7 @@ everything else in this file does not.
 import hashlib
 import hmac
 import json
+import re
 import tempfile
 from pathlib import Path
 from uuid import uuid4
@@ -16,10 +17,12 @@ from uuid import uuid4
 import pytest
 from openpyxl import load_workbook
 
+from app.admin import routes_materials as routes
 from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
-from app.models.material_kit import MaterialKit
+from app.models.material_kit import MaterialKit, MaterialKitItem
+from app.models.user import User
 from app.services import material_reservation_service as mrs
 from app.services import xlsx_io
 from app.services.mm_medic_client import MMMedicClient, _sign, MMConfigError
@@ -310,3 +313,114 @@ def test_kits_for_instance_excludes_inactive(db_session):
     ids = {k.id for k in kits}
 
     assert ids == {active_kit.id}
+
+
+# --------------------- apply-template route (Task 8 debt item) ---------------------
+#
+# `kits_for_instance` вище перевірено напряму (виклик функції). Тут -- сам
+# роут `instance_materials_apply_template`, що нею користується: гарантія
+# роута полягає в тому, що `kit_id`, надісланий руками в POST-запиті, не
+# може застосувати комплект ЧУЖОГО курсу чи НЕАКТИВНИЙ, бо придатність
+# комплекту перераховується ТІЄЮ Ж функцією, що наповнює випадаючий список
+# у формі. Досі це підтверджувалось лише читанням коду.
+
+def _admin():
+    u = User.create_with_password(
+        f'kit-route-{uuid4().hex[:8]}@test.com', 'password123',
+        first_name='K', last_name='R', is_admin=True, email_confirmed=True,
+    )
+    db.session.commit()
+    return u
+
+
+def _login(client, user):
+    with client.session_transaction() as s:
+        s['_user_id'] = str(user.id)
+
+
+def _flashes(resp):
+    """Тексти flash-повідомлень зі сторінки (JSON-блок, |tojson екранує
+    кирилицю у \\uXXXX -- шукати підрядок у сирому HTML не можна)."""
+    match = re.search(
+        r'<script type="application/json" id="iprm-flash-data">(.*?)</script>',
+        resp.get_data(as_text=True), re.S,
+    )
+    if not match:
+        return []
+    return [item['message'] for item in json.loads(match.group(1))]
+
+
+def test_apply_template_rejects_foreign_course_kit_id(client):
+    admin = _admin()
+    course_own = _course('Курс власний для комплекту')
+    course_foreign = _course('Курс чужий для комплекту')
+    instance = _instance(course_own)
+    kit_foreign = _kit(course_id=course_foreign.id, name='Комплект чужого курсу')
+    db.session.add(MaterialKitItem(kit_id=kit_foreign.id, sku='SKU-FOREIGN', quantity=5))
+    db.session.commit()
+
+    _login(client, admin)
+    resp = client.post(
+        f'/admin/instances/{instance.id}/materials/apply-template',
+        data={'kit_id': kit_foreign.id, 'multiplier': 1},
+    )
+
+    # Роут не приймає rows="чужого" комплекту: редірект без токена
+    # передзаповнення -- нічого прикладати.
+    assert resp.status_code == 302
+    assert 'prefill=' not in resp.headers['Location']
+
+    follow = client.get(resp.headers['Location'])
+    assert any('не знайдено' in m for m in _flashes(follow))
+
+
+def test_apply_template_rejects_inactive_kit_id(client):
+    admin = _admin()
+    course = _course('Курс з неактивним комплектом')
+    instance = _instance(course)
+    kit_inactive = _kit(course_id=course.id, name='Неактивний комплект', is_active=False)
+    db.session.add(MaterialKitItem(kit_id=kit_inactive.id, sku='SKU-INACTIVE', quantity=4))
+    db.session.commit()
+
+    _login(client, admin)
+    resp = client.post(
+        f'/admin/instances/{instance.id}/materials/apply-template',
+        data={'kit_id': kit_inactive.id, 'multiplier': 1},
+    )
+
+    assert resp.status_code == 302
+    assert 'prefill=' not in resp.headers['Location']
+
+    follow = client.get(resp.headers['Location'])
+    assert any('не знайдено' in m for m in _flashes(follow))
+
+
+def test_apply_template_valid_kit_prefills_selected_items(client, monkeypatch):
+    admin = _admin()
+    course = _course('Курс з власним комплектом')
+    instance = _instance(course)
+    kit = _kit(course_id=course.id, name='Комплект курсу')
+    db.session.add(MaterialKitItem(kit_id=kit.id, sku='SKU-OWN', quantity=3))
+    db.session.commit()
+
+    # Каталог MM Medic не сконфігуровано в тестах -- підмінюємо, щоб рядок
+    # SKU-OWN узагалі опинився на сторінці (див. `_build_rows`).
+    monkeypatch.setattr(routes.mrs, 'get_catalog', lambda **kw: (
+        [{'sku': 'SKU-OWN', 'name': 'Матеріал курсу', 'available': 50, 'price': 1.0}],
+        None, False,
+    ))
+
+    _login(client, admin)
+    resp = client.post(
+        f'/admin/instances/{instance.id}/materials/apply-template',
+        data={'kit_id': kit.id, 'multiplier': 2},
+    )
+
+    assert resp.status_code == 302
+    assert 'prefill=' in resp.headers['Location']
+
+    page = client.get(resp.headers['Location'])
+    html = page.get_data(as_text=True)
+    match = re.search(r'name="sku" value="SKU-OWN">.*?value="(\d+)"', html, re.S)
+    assert match is not None, 'рядок SKU-OWN не знайдено на сторінці матеріалів'
+    assert match.group(1) == '6'  # 3 (у комплекті) * 2 (множник)
