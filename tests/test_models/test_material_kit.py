@@ -69,3 +69,35 @@ def test_zero_quantity_is_rejected_by_check_constraint(db_session):
 
     with pytest.raises(IntegrityError):
         db_session.flush()
+
+
+def test_detaching_kit_from_course_makes_it_universal_not_deleted(db_session):
+    """`kit.course = None` -- це "зроби набір універсальним", не "видали набір".
+
+    `course_id` навмисно nullable (NULL = універсальний комплект, доступний
+    будь-якому курсу -- документований дизайн і явний вибір у формі адмінки).
+    `delete-orphan` на backref'і `Course.material_kits` раніше трактував
+    відв'язаний від курсу набір як сирота і видаляв його разом з позиціями --
+    ORM-каскад суперечив навмисно nullable колонці. Видалення курсу і так
+    обробляється на рівні БД через `ondelete='CASCADE'` на FK, тож прибрати
+    `delete-orphan` нічого не втрачає.
+    """
+    course = Course(title='Плазмотерапія', slug='kit-course-detach')
+    db_session.add(course)
+    db_session.flush()
+
+    kit = MaterialKit(name='Набір, що стане універсальним', course_id=course.id)
+    db_session.add(kit)
+    db_session.flush()
+    kit.items.append(MaterialKitItem(sku='NDL-21', quantity=5))
+    db_session.flush()
+    kit_id = kit.id
+
+    kit.course = None
+    db_session.commit()
+
+    survived = db_session.get(MaterialKit, kit_id)
+    assert survived is not None
+    assert survived.course_id is None
+    assert len(survived.items) == 1
+    assert survived.items[0].sku == 'NDL-21'

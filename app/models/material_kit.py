@@ -33,8 +33,14 @@ class MaterialKit(TimestampMixin, db.Model):
                           server_default=db.true())
     notes = db.Column(db.Text, nullable=True)
 
+    # NB: без 'delete-orphan' на backref'і. course_id навмисно nullable
+    # (NULL = універсальний комплект, доступний будь-якому курсу -- див.
+    # докстрінг модуля); 'delete-orphan' трактував би `kit.course = None`
+    # як "набір-сирота" і видаляв його разом з items, хоча це легітимний
+    # спосіб зробити набір універсальним. Видалення курсу і так каскадує на
+    # рівні БД через ondelete='CASCADE' на FK нижче -- нічого не втрачається.
     course = db.relationship('Course', backref=db.backref(
-        'material_kits', lazy='selectin', cascade='all, delete-orphan',
+        'material_kits', lazy='selectin',
     ))
     items = db.relationship(
         'MaterialKitItem',
