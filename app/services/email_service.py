@@ -1676,6 +1676,43 @@ class EmailService:
         )
 
     @staticmethod
+    def send_materials_trainer_confirmed(reservation, instance, user):
+        """Tell whoever filed the request that the trainer answered.
+
+        Unlike `send_materials_actuals_reminder` above (an admin-configurable
+        broadcast resolved through `notification_recipients.resolve`), this
+        goes straight to the one person recorded in
+        `reservation.created_by_id`. The plan's premise for storing the
+        trainer's comment at all is that this specific person reads it and
+        adjusts the request -- a rule-based recipient list (admins/managers/
+        trainer) cannot guarantee reaching them, since they may be none of
+        those roles.
+
+        Caller (`material_reservation_service._notify_submitter`) already
+        checked `user` and `user.email`; the guard is repeated here since
+        this is a public staticmethod other callers could reach directly.
+        """
+        if user is None or not user.email:
+            return None
+        event_title = (instance.course.title
+                       if instance and instance.course else 'Захід')
+        return EmailService.send_email(
+            to=user.email,
+            subject=lambda: _('Тренер підтвердив матеріали: %(title)s',
+                              title=event_title),
+            template_name='materials_trainer_confirmed',
+            context={
+                'user': user,
+                'event_title': event_title,
+                'confirmed_at': reservation.trainer_confirmed_at,
+                'comment': reservation.trainer_comment,
+                'admin_url': EmailService._materials_admin_url(
+                    instance.id if instance else reservation.instance_id),
+            },
+            trigger='materials',
+        )
+
+    @staticmethod
     def send_course_request_received(course_request):
         """Підтвердити клієнту, що його запит на курс отримано.
 

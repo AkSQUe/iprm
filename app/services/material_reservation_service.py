@@ -209,11 +209,57 @@ def confirm_reservation(reservation, comment):
     `trainer_comment` is always overwritten with what was submitted --
     including clearing it to NULL when the field comes back blank, so what
     is in the box is always what gets saved.
+
+    A GENUINE confirmation -- the first one, or one whose comment differs
+    from what was already stored -- emails whoever filed the request
+    (`created_by_id`). Without that, the trainer's comment ("нам ще
+    потрібні голки") just sits on this record until someone happens to open
+    the materials card, which defeats the reason the field exists. Comparing
+    against the OLD comment (captured below, before it is overwritten) is
+    what keeps a repeated POST of the identical form -- double-click,
+    browser back-and-resubmit -- from re-sending: `/materials/<token>/confirm`
+    is public and rate-limited, not idempotent per person, so this
+    comparison is the only thing standing between it and a flood.
     """
-    reservation.trainer_comment = (comment or '').strip() or None
-    if reservation.trainer_confirmed_at is None:
+    old_comment = reservation.trainer_comment
+    is_first_confirmation = reservation.trainer_confirmed_at is None
+    new_comment = (comment or '').strip() or None
+
+    reservation.trainer_comment = new_comment
+    if is_first_confirmation:
         reservation.trainer_confirmed_at = datetime.now(timezone.utc)
     db.session.commit()
+
+    if is_first_confirmation or new_comment != old_comment:
+        _notify_submitter(reservation)
+
+
+def _notify_submitter(reservation):
+    """Best-effort email to whoever filed the request that the trainer
+    answered (see `confirm_reservation`).
+
+    `created_by_id` is nullable -- NULL for every request filed before that
+    column existed, and for any filed outside a request context (see
+    `_submitter_id`). That is the ordinary case for old rows, not a fault,
+    so it is handled silently here: no email, no exception, no log line
+    that would read as something having gone wrong.
+
+    A mailer failure must not undo the trainer's confirmation, which is
+    already committed by the time this function runs. Same guard MM
+    Medic's own `event_material_request._notify_storekeeper` uses for its
+    best-effort notice, and for the same reason: the trainer's answer is
+    what matters here, the email is a courtesy on top of it.
+    """
+    user = reservation.created_by
+    if user is None or not user.email:
+        return
+    try:
+        from app.services.email_service import EmailService
+        EmailService.send_materials_trainer_confirmed(
+            reservation, reservation.instance, user)
+    except Exception:
+        logger.exception(
+            'trainer-confirmation notice failed for %s', reservation.external_ref)
 
 
 def _event_meta(instance) -> dict:

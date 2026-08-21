@@ -250,6 +250,176 @@ def test_confirm_reservation_blank_comment_clears_previous(app):
     assert res.trainer_comment is None
 
 
+# ------------------ mrs.confirm_reservation: submitter notice ------------------
+
+def _make_submitter(email='manager@example.com', slug_suffix='sub'):
+    from app.models.user import User
+    user = User(email=f'{slug_suffix}-{email}', is_admin=True)
+    db.session.add(user)
+    db.session.flush()
+    return user
+
+
+def test_confirm_reservation_emails_submitter_on_first_confirmation(app, monkeypatch):
+    """The whole point of storing `created_by_id`: the person who filed the
+    request gets told the trainer answered, not just whoever later opens
+    the materials card."""
+    from app.services import material_reservation_service as mrs
+    from app.services.email_service import EmailService
+
+    calls = []
+    monkeypatch.setattr(
+        EmailService, 'send_materials_trainer_confirmed',
+        staticmethod(lambda reservation, instance, user: calls.append(
+            (reservation.external_ref, instance.id, user.id, reservation.trainer_comment))),
+    )
+
+    inst = _make_instance(slug_suffix='notify1')
+    res = _make_reservation(inst, slug_suffix='notify1')
+    submitter = _make_submitter(slug_suffix='notify1')
+    res.created_by_id = submitter.id
+    db.session.commit()
+
+    mrs.confirm_reservation(res, 'все на місці')
+
+    assert calls == [(res.external_ref, inst.id, submitter.id, 'все на місці')]
+
+
+def test_confirm_reservation_does_not_resend_on_identical_resubmit(app, monkeypatch):
+    """Double-click / browser back-and-resubmit sends the SAME comment again.
+    `/materials/<token>/confirm` is public and rate-limited, not idempotent
+    per person -- the comment-diff check is what stands between a repeated
+    POST and a flood of identical emails."""
+    from app.services import material_reservation_service as mrs
+    from app.services.email_service import EmailService
+
+    calls = []
+    monkeypatch.setattr(
+        EmailService, 'send_materials_trainer_confirmed',
+        staticmethod(lambda reservation, instance, user: calls.append(1)),
+    )
+
+    inst = _make_instance(slug_suffix='notify2')
+    res = _make_reservation(inst, slug_suffix='notify2')
+    submitter = _make_submitter(slug_suffix='notify2')
+    res.created_by_id = submitter.id
+    db.session.commit()
+
+    mrs.confirm_reservation(res, 'все на місці')
+    mrs.confirm_reservation(res, 'все на місці')  # identical resubmit
+
+    assert len(calls) == 1
+
+
+def test_confirm_reservation_resends_when_comment_changes(app, monkeypatch):
+    """A trainer adding a clarification an hour later IS a genuine new
+    confirmation and must email again, even though `trainer_confirmed_at`
+    does not move a second time."""
+    from app.services import material_reservation_service as mrs
+    from app.services.email_service import EmailService
+
+    comments_sent = []
+    monkeypatch.setattr(
+        EmailService, 'send_materials_trainer_confirmed',
+        staticmethod(lambda reservation, instance, user:
+                     comments_sent.append(reservation.trainer_comment)),
+    )
+
+    inst = _make_instance(slug_suffix='notify3')
+    res = _make_reservation(inst, slug_suffix='notify3')
+    submitter = _make_submitter(slug_suffix='notify3')
+    res.created_by_id = submitter.id
+    db.session.commit()
+
+    mrs.confirm_reservation(res, 'все на місці')
+    mrs.confirm_reservation(res, 'ще треба голок')  # clarification
+
+    assert comments_sent == ['все на місці', 'ще треба голок']
+
+
+def test_confirm_reservation_silent_without_submitter(app, monkeypatch):
+    """`created_by_id` is NULL for every request filed before that column
+    existed, and for any filed outside a request context. That path is
+    normal, not a fault: no email attempted, and confirming must not raise."""
+    from app.services import material_reservation_service as mrs
+    from app.services.email_service import EmailService
+
+    calls = []
+    monkeypatch.setattr(
+        EmailService, 'send_materials_trainer_confirmed',
+        staticmethod(lambda reservation, instance, user: calls.append(1)),
+    )
+
+    inst = _make_instance(slug_suffix='notify4')
+    res = _make_reservation(inst, slug_suffix='notify4')
+    assert res.created_by_id is None
+
+    mrs.confirm_reservation(res, 'все на місці')  # must not raise
+
+    assert calls == []
+    assert res.trainer_confirmed_at is not None  # confirmation itself still stands
+
+
+def test_confirm_reservation_survives_mailer_failure(app, monkeypatch):
+    """The trainer's answer is the important thing; the email is a courtesy.
+    A raising mailer must not undo the already-committed confirmation, and
+    must not propagate out of confirm_reservation -- same guard as MM
+    Medic's `event_material_request._notify_storekeeper`."""
+    from app.services import material_reservation_service as mrs
+    from app.services.email_service import EmailService
+
+    def _boom(reservation, instance, user):
+        raise RuntimeError('SMTP is down')
+
+    monkeypatch.setattr(
+        EmailService, 'send_materials_trainer_confirmed', staticmethod(_boom))
+
+    inst = _make_instance(slug_suffix='notify5')
+    res = _make_reservation(inst, slug_suffix='notify5')
+    submitter = _make_submitter(slug_suffix='notify5')
+    res.created_by_id = submitter.id
+    db.session.commit()
+
+    mrs.confirm_reservation(res, 'все на місці')  # must not raise
+
+    assert res.trainer_confirmed_at is not None
+    assert res.trainer_comment == 'все на місці'
+
+
+def test_materials_trainer_confirmed_template_renders(app):
+    from datetime import datetime, timezone as tz
+
+    with app.app_context():
+        html = render_template(
+            'emails/materials_trainer_confirmed.html',
+            site_settings=SiteSettings.get(),
+            user=None,
+            event_title='Плазмотерапія',
+            confirmed_at=datetime(2026, 8, 21, 10, 30, tzinfo=tz.utc),
+            comment='ще треба голок',
+            admin_url='https://plasma-regen.com/admin/instances/1/materials',
+        )
+        assert 'Плазмотерапія' in html
+        assert 'ще треба голок' in html
+        assert 'instances/1/materials' in html
+
+
+def test_materials_trainer_confirmed_template_renders_without_comment(app):
+    from datetime import datetime, timezone as tz
+
+    with app.app_context():
+        html = render_template(
+            'emails/materials_trainer_confirmed.html',
+            site_settings=SiteSettings.get(),
+            user=None,
+            event_title='Плазмотерапія',
+            confirmed_at=datetime(2026, 8, 21, 10, 30, tzinfo=tz.utc),
+            comment=None,
+            admin_url='https://plasma-regen.com/admin/instances/1/materials',
+        )
+        assert 'без зауважень' in html
+
+
 # ----------------------------- reverse status webhook (MM Medic -> IPRM) -----------------------------
 
 _MM_SECRET = 'reverse-webhook-secret'

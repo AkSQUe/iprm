@@ -1,0 +1,37 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, detail_row, alert_warning %}
+
+{% block title %}{{ _('Тренер підтвердив матеріали') }}{% endblock %}
+
+{% block preview_text %}{% trans %}Тренер відповів на запит матеріалів — перегляньте, чи є коментар{% endtrans %}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        {{ _('Тренер підтвердив матеріали') }}
+    </h1>
+
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        {{ _('Тренер відкрив підготовлений комплект і підтвердив його — це заявка, яку подали ви.') }}
+    </p>
+
+    <table role="presentation" style="width: 100%; margin-bottom: 24px; background-color: #F7F4FB; border: 1px solid #E9E4EF; border-radius: 8px;" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="padding: 20px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #17131D; line-height: 1.3;">{{ event_title }}</p>
+                {% if confirmed_at %}{{ detail_row(_('Підтверджено'), confirmed_at.strftime('%d.%m.%Y %H:%M')) }}{% endif %}
+            </td>
+        </tr>
+    </table>
+
+    {% if comment %}
+    {{ alert_warning(_('Коментар тренера'), comment) }}
+    {% else %}
+    <p class="mobile-text" style="margin: 0 0 24px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        {{ _('Коментаря тренер не залишив — комплект підтверджено без зауважень.') }}
+    </p>
+    {% endif %}
+
+    {% if admin_url %}
+    {{ button_primary(_('Відкрити картку матеріалів'), admin_url) }}
+    {% endif %}
+{% endblock %}
