@@ -116,15 +116,51 @@ html {
    AA-поріг 3:1 для великого тексту -- це свідоме рішення від 17.08.2026.
    На тёмних поверхнях градієнт мусить світлішати, а не темніти: для них
    лишається окремий модифікатор нижче. */
+/* Градієнтне слово в заголовку. Сам текст прозорий, видимим його робить
+   фон, обрізаний по літерах.
+
+   Тому колір задається ЗАВЖДИ, а прозорість -- лише там, де кліп справді
+   підтримується. Без цього фолбеку слово перетворюється на порожнє місце
+   скрізь, де фон не малюється: у друку, у старих браузерах і в режимі
+   високого контрасту Windows. Саме так воно й зникає в програвачі сесій
+   PostHog -- він масштабує сторінку трансформом, і Chrome у цьому режимі
+   часто не малює background-clip: text. */
 .apple-gradient-text {
+  color: var(--iprm-nav-active);
   background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 42%, var(--apple-grad-gold) 100%);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
   padding-block: 0.05em;
 }
 
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .apple-gradient-text {
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+/* Високий контраст: система підміняє кольори власними, але прозорий текст
+   лишається прозорим -- повертаємо заливку. */
+@media (forced-colors: active) {
+  .apple-gradient-text {
+    -webkit-text-fill-color: currentColor;
+    background: none;
+  }
+}
+
+/* Друк: браузер типово не друкує фони, а прозорий текст лишається прозорим --
+   на папері слово зникало разом із градієнтом. */
+@media print {
+  .apple-gradient-text {
+    -webkit-text-fill-color: currentColor;
+    background: none;
+  }
+}
+
+/* На тёмних поверхнях фолбек мусить бути світлим: брендовий фіолет на
+   тёмному градієнті дав би ~2 контрасту. */
 .apple-gradient-text--on-dark {
+  color: var(--apple-gold-soft);
   background-image: linear-gradient(135deg, var(--apple-purple-soft) 0%, var(--apple-gold-soft) 100%);
 }
 
@@ -933,10 +969,34 @@ html {
   font-weight: 800;
   letter-spacing: -0.06em;
   line-height: 1;
+  /* Фолбек кольору -- як у .apple-gradient-text: без нього цифра помилки
+     зникає скрізь, де фон по тексту не малюється. */
+  color: var(--iprm-nav-active);
   background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 40%, var(--apple-orange) 100%);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .iprm-error-page__code {
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+@media (forced-colors: active) {
+  .iprm-error-page__code {
+    -webkit-text-fill-color: currentColor;
+    background: none;
+  }
+}
+
+/* Друк: браузер типово не друкує фони, а прозорий текст лишається прозорим --
+   на папері слово зникало разом із градієнтом. */
+@media print {
+  .iprm-error-page__code {
+    -webkit-text-fill-color: currentColor;
+    background: none;
+  }
 }
 
 .iprm-error-page__title {

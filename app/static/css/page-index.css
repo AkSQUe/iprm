@@ -248,10 +248,34 @@
   font-size: clamp(2.5rem, 6vw, 4rem);
   font-weight: 800;
   letter-spacing: -0.04em;
+  /* Фолбек кольору -- як у .apple-gradient-text (apple-pages.css): цифра
+     статистики не має зникати там, де фон по тексту не малюється. */
+  color: var(--iprm-nav-active);
   background: linear-gradient(135deg, var(--iprm-nav-active), var(--apple-purple-mid), var(--apple-orange));
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .page-index .apple-stat h3 {
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+@media (forced-colors: active) {
+  .page-index .apple-stat h3 {
+    -webkit-text-fill-color: currentColor;
+    background: none;
+  }
+}
+
+/* Друк: браузер типово не друкує фони, а прозорий текст лишається прозорим --
+   на папері слово зникало разом із градієнтом. */
+@media print {
+  .page-index .apple-stat h3 {
+    -webkit-text-fill-color: currentColor;
+    background: none;
+  }
 }
 
 .page-index .apple-stat p {
