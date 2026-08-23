@@ -21,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
 import requests
-from flask import current_app
+from flask import current_app, g
 
 logger = logging.getLogger(__name__)
 
@@ -233,13 +233,17 @@ def _check_sintegrum(settings):
 # ----------------------------------------------------------------
 # Реєстр + parallel runner
 def _check_posthog(settings):
-    """PostHog -- client-side; перевіряємо формат активного ключа і
-    доступність апстріму зі статикою.
+    """PostHog -- перевіряємо формат ключа і ВЛАСНИЙ проксі, а не апстрім.
 
-    Чого ця перевірка НЕ ловить: справність самого nginx-проксі. Запит іде
-    напряму на eu-assets, а відвідувач ходить через /ngx-e/ на нашому
-    домені -- зламаний rewrite чи відсутній Host-хедер звідси не видно.
-    Проксі перевіряється курлом з docs/integrations/posthog.md.
+    Спочатку тут стояв HEAD на eu-assets.i.posthog.com. Перевірка була
+    зелена рівно тоді, коли інтеграція не працювала: сніпет nginx на сервері
+    лишався старим, /ngx-e/static/array.js віддавав 404-сторінку Flask, і за
+    тиждень не долетіла жодна подія. Апстрім при цьому був живий.
+
+    Тому стукаємо туди ж, куди ходить браузер відвідувача. Відрізняти 404 від
+    200 замало: коли локації немає, запит підхоплює `location /`, і
+    застосунок віддає власну 404-сторінку -- HTML зі статусом, який теж
+    треба зловити. Тому дивимось і на content-type.
     """
     from app.models.site_settings import SiteSettings
     eff = settings.effective_posthog_api_key
@@ -255,24 +259,44 @@ def _check_posthog(settings):
             'status': HealthStatus.DEGRADED,
             'error': f'Формат ключа невалідний: {eff!r}',
         }
-    try:
-        r = requests.head(
-            'https://eu-assets.i.posthog.com/static/array.js',
-            timeout=_HTTP_TIMEOUT_SECONDS, allow_redirects=True,
-        )
-        r.raise_for_status()
-    except requests.RequestException as e:
-        # Апстрім недоступний саме з сервера -- у браузерів відвідувачів
-        # може бути інакше, тож degraded, а не down (як і з Meta Pixel).
+
+    base_url = (getattr(g, 'health_base_url', None) or '').rstrip('/')
+    api_host = (current_app.config.get('POSTHOG_API_HOST', '/ngx-e') or '').rstrip('/')
+    if not base_url or not api_host.startswith('/'):
+        # Немає зовнішньої адреси (CLI, тести) або проксі вимкнено на
+        # користь прямого хосту -- перевіряти шлях нічим.
         return {
-            'status': HealthStatus.DEGRADED,
-            'error': f'array.js недоступний з сервера: {e}',
+            'status': HealthStatus.OK,
+            'detail': f'Ключ {eff[:12]}... (проксі не перевірявся)',
         }
+
+    url = f'{base_url}{api_host}/static/array.js'
+    try:
+        r = requests.head(url, timeout=_HTTP_TIMEOUT_SECONDS, allow_redirects=True)
+    except requests.RequestException as e:
+        return {
+            'status': HealthStatus.DOWN,
+            'error': f'Проксі {api_host} недоступний: {e}',
+        }
+    if r.status_code != 200:
+        return {
+            'status': HealthStatus.DOWN,
+            'error': (f'{api_host}/static/array.js -> {r.status_code}. '
+                      f'Схоже, локації nginx не застосовані (deploy/apply.sh).'),
+        }
+    ctype = r.headers.get('content-type', '')
+    if 'javascript' not in ctype:
+        return {
+            'status': HealthStatus.DOWN,
+            'error': (f'{api_host}/static/array.js віддає {ctype!r} замість '
+                      f'JavaScript -- запит підхопив застосунок, а не проксі.'),
+        }
+
     recording = 'запис сесій увімкнено' if (
         settings.effective_posthog_session_recording) else 'запис сесій вимкнено'
     return {
         'status': HealthStatus.OK,
-        'detail': f'Ключ {eff[:12]}..., array.js доступний, {recording}',
+        'detail': f'Ключ {eff[:12]}..., проксі {api_host} віддає SDK, {recording}',
     }
 
 
@@ -318,7 +342,7 @@ def clear_cache():
     _CACHE.clear()
 
 
-def run_all_checks(settings, use_cache=True):
+def run_all_checks(settings, use_cache=True, base_url=None):
     """Запускає всі checks parallel у thread-pool. Повертає dict
     {provider_key: {'label': ..., 'status': ..., 'detail': ..., 'checked_at': ...}}.
     Загальний час -- максимум серед одиничних checks (~5s timeout).
@@ -326,6 +350,11 @@ def run_all_checks(settings, use_cache=True):
     Thread-workers потребують app_context (бо service-factories звертаються
     до current_app.config за env-fallback'ами). Захоплюємо реальний app
     і push'аємо context всередині кожного потоку.
+
+    base_url -- зовнішня адреса сайту (request.host_url). Потрібна тим
+    checks, які мусять пройти ВЛАСНИМ проксі, а не постукати в апстрім:
+    у потоці request-контексту немає, тож адресу передаємо явно і кладемо
+    в g всередині воркера.
     """
     if not use_cache:
         clear_cache()
@@ -335,6 +364,7 @@ def run_all_checks(settings, use_cache=True):
 
     def _worker(provider):
         with app.app_context():
+            g.health_base_url = base_url
             return runner(provider, settings)
 
     results = {}

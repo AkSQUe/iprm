@@ -140,7 +140,10 @@ def integrations_health():
         flash('Не вдалось завантажити налаштування', 'error')
         return redirect(url_for('admin.integrations'))
 
-    results = run_all_checks(settings, use_cache=not refresh)
+    # host_url потрібен PostHog-check'у: він мусить пройти власним проксі, а
+    # не постукати в апстрім -- у робочому потоці request-контексту немає.
+    results = run_all_checks(
+        settings, use_cache=not refresh, base_url=request.host_url)
     return render_template(
         'admin/integration_health.html',
         results=results,
