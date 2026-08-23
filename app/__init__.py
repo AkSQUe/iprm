@@ -412,6 +412,9 @@ def create_app(config_name=None):
         except Exception:
             return flags
 
+    class _SkipIntegrationCsp(Exception):
+        """Сентинел: на не-HTML відповідях інтеграції не опитуємо."""
+
     @app.after_request
     def set_security_headers(response):
         response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -419,16 +422,30 @@ def create_app(config_name=None):
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         response.headers['X-XSS-Protection'] = '1; mode=block'
 
-        # reCAPTCHA-v3 потребує script-src/frame-src/connect-src для Google,
-        # тому розширюємо CSP лише коли інтеграція active (інакше -- зайва дірка).
-        from app.services.recaptcha import get_recaptcha_service
-        try:
-            recaptcha_active = get_recaptcha_service().is_active
-        except Exception:
-            recaptcha_active = False
-        gstatic = ' https://www.google.com https://www.gstatic.com' if recaptcha_active else ''
-        gframe = ' https://www.google.com' if recaptcha_active else ''
-        gconn = ' https://www.google.com' if recaptcha_active else ''
+        # Дозволи для сторонніх доменів рахуємо ЛИШЕ для HTML: скрипти
+        # виконуються в документі, а цей хук спрацьовує на кожну відповідь --
+        # включно з JSON API, редиректами і файлами. Для них політика
+        # лишається базовою, тобто СТРОГІШОЮ, а не слабшою: сторонні домени
+        # просто не додаються.
+        #
+        # Сама структура CSP нижче не змінюється -- інакше PDF-відповіді
+        # (сертифікати, рахунки) могли б втратити 'self' і перестати
+        # відкриватись у вбудованому переглядачі.
+        is_html = (response.mimetype or '').startswith('text/html')
+
+        gstatic = gframe = gconn = ''
+        recaptcha_active = False
+        if is_html:
+            # reCAPTCHA-v3 потребує script-src/frame-src/connect-src для Google,
+            # тому розширюємо CSP лише коли інтеграція active (інакше -- зайва дірка).
+            from app.services.recaptcha import get_recaptcha_service
+            try:
+                recaptcha_active = get_recaptcha_service().is_active
+            except Exception:
+                recaptcha_active = False
+            gstatic = ' https://www.google.com https://www.gstatic.com' if recaptcha_active else ''
+            gframe = ' https://www.google.com' if recaptcha_active else ''
+            gconn = ' https://www.google.com' if recaptcha_active else ''
 
         # Google Analytics 4 (gtag.js): домени додаємо лише коли GA увімкнено
         # (інакше gtag.js і маяки збору даних блокуються CSP -> нуль даних у GA).
@@ -437,7 +454,10 @@ def create_app(config_name=None):
         gsi_active = False
         pixel_active = False
         posthog_cfg = None
+        settings = None
         try:
+            if not is_html:
+                raise _SkipIntegrationCsp
             settings = getattr(g, 'site_settings', None)
             if settings is None:
                 from app.models.site_settings import SiteSettings

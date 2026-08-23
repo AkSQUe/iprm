@@ -240,6 +240,34 @@ class TestCSP:
         assert 'eu-assets.i.posthog.com' not in csp
 
 
+class TestCspScope:
+    """CSP рахує дозволи сторонніх доменів лише для HTML.
+
+    Хук after_request спрацьовує на КОЖНУ відповідь -- включно з JSON API
+    і редиректами, де скрипти не виконуються взагалі. Для них політика
+    лишається базовою: це строгіше, а не слабше.
+    """
+
+    def test_html_keeps_third_party_allowances(self, client, posthog_on):
+        resp = client.get('/')
+        assert resp.mimetype == 'text/html'
+        assert 'https://eu.posthog.com' in _csp(resp)
+
+    def test_non_html_has_no_third_party_allowances(self, client, posthog_on):
+        resp = client.get('/sitemap.xml')
+        assert resp.status_code == 200
+        assert not resp.mimetype.startswith('text/html')
+        csp = _csp(resp)
+        assert csp, 'CSP не має зникати на не-HTML відповідях'
+        assert 'posthog.com' not in csp
+        assert 'worker-src' not in csp
+
+    def test_non_html_still_carries_base_headers(self, client, posthog_on):
+        resp = client.get('/sitemap.xml')
+        assert resp.headers.get('X-Content-Type-Options') == 'nosniff'
+        assert resp.headers.get('X-Frame-Options') == 'DENY'
+
+
 class TestAdminForm:
     def test_save_rejects_personal_api_key(self, client, admin, posthog_on):
         _login(client, admin)
