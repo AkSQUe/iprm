@@ -33,11 +33,24 @@ def admin(app):
     return u
 
 
+@pytest.fixture(autouse=True)
+def restore_banner(app):
+    """SiteSettings -- singleton (id=1), спільний на всю сесію тестів, а
+    /admin/settings комітить усередині запиту, і цей коміт ПЕРЕЖИВАЄ відкат
+    db_session-фікстури (те саме застереження -- у test_meta_pixel.py::site).
+    Без явного відновлення вимкнений тут банер зник би у сусідніх файлах.
+    """
+    yield
+    s = SiteSettings.get()
+    s.show_cookie_banner = True
+    db.session.commit()
+
+
 @pytest.fixture
 def banner_off(app):
     s = SiteSettings.get()
     s.show_cookie_banner = False
-    db.session.flush()
+    db.session.commit()
     return s
 
 
@@ -45,7 +58,7 @@ def banner_off(app):
 def banner_on(app):
     s = SiteSettings.get()
     s.show_cookie_banner = True
-    db.session.flush()
+    db.session.commit()
     return s
 
 
