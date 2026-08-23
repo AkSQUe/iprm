@@ -40,6 +40,12 @@ EXPORTABLE = [
 
     ('META_PIXEL_ENABLED',         'meta_pixel_enabled',         False, False),
     ('META_PIXEL_ID',              'meta_pixel_id',              False, ''),
+
+    # Project API Key -- не секрет: він адресує проєкт і їде у HTML кожної
+    # сторінки. Писати в нього можна, читати дані проєкту -- ні.
+    ('POSTHOG_ENABLED',            'posthog_enabled',            False, False),
+    ('POSTHOG_PROJECT_API_KEY',    'posthog_project_api_key',    False, ''),
+    ('POSTHOG_SESSION_RECORDING',  'posthog_session_recording',  False, False),
 ]
 
 

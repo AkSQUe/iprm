@@ -312,6 +312,16 @@ def create_app(config_name=None):
         return {'meta_pixel_id': active_pixel_id()}
 
     @app.context_processor
+    def inject_posthog():
+        """Конфіг активного PostHog для _posthog.html і підключення
+        posthog-events.js. Через сервіс, а не властивість налаштувань
+        напряму: рішення залежить ще й від блупринту (розділ у подіях,
+        глибина маскування реплею), і воно мусить збігатися з тим, що
+        дозволяє CSP."""
+        from app.services.posthog import active_posthog_config
+        return {'posthog_config': active_posthog_config()}
+
+    @app.context_processor
     def inject_upcoming_events():
         """Два найближчі майбутні заходи для плаваючого блоку на ПУБЛІЧНИХ
         сторінках (вмикається в Налаштуваннях сайту). Порожньо, якщо вимкнено,
@@ -426,6 +436,7 @@ def create_app(config_name=None):
         ga_active = False
         gsi_active = False
         pixel_active = False
+        posthog_cfg = None
         try:
             settings = getattr(g, 'site_settings', None)
             if settings is None:
@@ -439,6 +450,10 @@ def create_app(config_name=None):
             # де скрипта немає.
             from app.services.meta_pixel import active_pixel_id
             pixel_active = bool(active_pixel_id(settings))
+            # Через той самий сервіс, що вирішує вставку скрипта -- інакше
+            # CSP світив би worker-src blob: на сторінках без PostHog.
+            from app.services.posthog import active_posthog_config
+            posthog_cfg = active_posthog_config(settings)
         except Exception:
             pass
         ga_script = ' https://www.googletagmanager.com' if ga_active else ''
@@ -454,6 +469,27 @@ def create_app(config_name=None):
         px_script = ' https://connect.facebook.net' if pixel_active else ''
         px_img = ' https://www.facebook.com' if pixel_active else ''
         px_conn = ' https://www.facebook.com https://connect.facebook.net' if pixel_active else ''
+
+        # PostHog: увесь трафік іде на власний домен (nginx проксує /ngx-e/ на
+        # eu.i.posthog.com), тож 'self' покриває і SDK, і збір подій -- зайвих
+        # доменів у script-src/connect-src не треба.
+        #
+        # А от worker-src потрібен окремо: запис сесій стискає дані у Web
+        # Worker, створеному з blob:. Директиви worker-src у політиці немає,
+        # тож вона впала б на default-src 'self', і реплей мовчки не
+        # запрацював би -- помилка видна лише в консолі браузера відвідувача.
+        #
+        # ui_host додаємо в script-src/connect-src заради тулбара: він
+        # вантажиться з самого кабінету PostHog, а не через проксі.
+        ph_worker = ''
+        ph_script = ''
+        ph_conn = ''
+        if posthog_cfg:
+            ph_worker = " worker-src 'self' blob:; "
+            ui_host = posthog_cfg.get('ui_host') or ''
+            if ui_host.startswith('https://'):
+                ph_script = f' {ui_host}'
+                ph_conn = f' {ui_host}'
 
         # Google One Tap / Sign-In (GSI): script + style + frame + connect з
         # accounts.google.com, аватарки -- з googleusercontent.
@@ -487,14 +523,15 @@ def create_app(config_name=None):
             # без помилки, а обіцяний на сторінці спосіб оплати зникає.
             "script-src 'self' 'unsafe-inline' https://static.liqpay.ua"
             " https://applepay.cdn-apple.com"
-            + gstatic + ga_script + gsi + px_script + "; "
+            + gstatic + ga_script + gsi + px_script + ph_script + "; "
             "style-src 'self' 'unsafe-inline'" + gsi + "; "
             "font-src 'self' data:; "
             "img-src 'self' data:" + ga_img + gsi_img + mm_img + px_img + "; "
             "frame-src 'self' blob: https://www.liqpay.ua https://checkout.liqpay.ua"
             " https://www.youtube-nocookie.com"
             + gframe + gsi + "; "
-            "connect-src 'self'" + gconn + ga_conn + gsi + px_conn
+            + ph_worker +
+            "connect-src 'self'" + gconn + ga_conn + gsi + px_conn + ph_conn
         )
         response.headers['Content-Security-Policy'] = csp
         if not app.debug:

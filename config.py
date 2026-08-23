@@ -64,6 +64,27 @@ class Config:
     META_PIXEL_ENABLED = os.environ.get('META_PIXEL_ENABLED', 'false').lower() == 'true'
     META_PIXEL_ID = os.environ.get('META_PIXEL_ID', '')
 
+    # PostHog -- fallback на env, якщо в БД (SiteSettings) пусто. Як і Meta,
+    # потрібні обидві змінні: ключ сам собою трекінг не вмикає. Дефолт
+    # вимкнено, щоб dev/test не слали події у прод-проєкт (на відміну від
+    # Meta, події тут видаляються, але статистику вони псують однаково).
+    POSTHOG_ENABLED = os.environ.get('POSTHOG_ENABLED', 'false').lower() == 'true'
+    POSTHOG_PROJECT_API_KEY = os.environ.get('POSTHOG_PROJECT_API_KEY', '')
+    POSTHOG_SESSION_RECORDING = os.environ.get(
+        'POSTHOG_SESSION_RECORDING', 'false').lower() == 'true'
+
+    # Шлях first-party проксі (nginx) і адреса самого кабінету PostHog.
+    #
+    # api_host -- ВЛАСНИЙ шлях, не домен PostHog: nginx проксує його на
+    # eu.i.posthog.com, тож для блокувальників запити виглядають
+    # first-party. ui_host потрібен окремо -- без нього тулбар і плеєр
+    # записів не працюють, бо SDK не знає, де живе сам кабінет.
+    #
+    # Префікс навмисно непрозорий: дока PostHog застерігає від '/posthog',
+    # '/ph', '/analytics' -- блокувальники ловлять їх за назвою.
+    POSTHOG_API_HOST = os.environ.get('POSTHOG_API_HOST', '/ngx-e')
+    POSTHOG_UI_HOST = os.environ.get('POSTHOG_UI_HOST', 'https://eu.posthog.com')
+
     # Блог: розмір сторінки лістингу та ліміт RSS-стрічки (тюнінг без коду).
     BLOG_POSTS_PER_PAGE = int(os.environ.get('BLOG_POSTS_PER_PAGE', '9'))
     BLOG_FEED_LIMIT = int(os.environ.get('BLOG_FEED_LIMIT', '20'))
@@ -120,6 +141,13 @@ class ProductionConfig(Config):
     PREFERRED_URL_SCHEME = 'https'
     SEND_FILE_MAX_AGE_DEFAULT = 31536000
     GOOGLE_ANALYTICS_ID = os.environ.get('GOOGLE_ANALYTICS_ID', 'G-T2LHJ436ZG')
+    # Проєкт "IPRM" (id 255460) на EU Cloud. Ключ phc_* публічний -- він і так
+    # їде у HTML кожної сторінки, тож тут йому не гірше, ніж GA-шному G-*.
+    # Реплей вмикається окремою змінною: увімкнути його -- рішення власника
+    # про медданi, а не дефолт деплою.
+    POSTHOG_ENABLED = os.environ.get('POSTHOG_ENABLED', 'true').lower() == 'true'
+    POSTHOG_PROJECT_API_KEY = os.environ.get(
+        'POSTHOG_PROJECT_API_KEY', 'phc_wi73dtG77zD6oQua7i8xFERD9CYDqHYac9xcRBvEMKof')
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_size': 10,
         'pool_recycle': 3600,

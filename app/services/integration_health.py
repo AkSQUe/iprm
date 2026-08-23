@@ -232,6 +232,50 @@ def _check_sintegrum(settings):
 
 # ----------------------------------------------------------------
 # Реєстр + parallel runner
+def _check_posthog(settings):
+    """PostHog -- client-side; перевіряємо формат активного ключа і
+    доступність апстріму зі статикою.
+
+    Чого ця перевірка НЕ ловить: справність самого nginx-проксі. Запит іде
+    напряму на eu-assets, а відвідувач ходить через /ngx-e/ на нашому
+    домені -- зламаний rewrite чи відсутній Host-хедер звідси не видно.
+    Проксі перевіряється курлом з docs/integrations/posthog.md.
+    """
+    from app.models.site_settings import SiteSettings
+    eff = settings.effective_posthog_api_key
+    if not eff:
+        if settings.posthog_project_api_key:
+            return {
+                'status': HealthStatus.NOT_CONFIGURED,
+                'detail': 'Ключ збережено, але трекінг вимкнено',
+            }
+        return {'status': HealthStatus.NOT_CONFIGURED}
+    if not SiteSettings.is_valid_posthog_key(eff):
+        return {
+            'status': HealthStatus.DEGRADED,
+            'error': f'Формат ключа невалідний: {eff!r}',
+        }
+    try:
+        r = requests.head(
+            'https://eu-assets.i.posthog.com/static/array.js',
+            timeout=_HTTP_TIMEOUT_SECONDS, allow_redirects=True,
+        )
+        r.raise_for_status()
+    except requests.RequestException as e:
+        # Апстрім недоступний саме з сервера -- у браузерів відвідувачів
+        # може бути інакше, тож degraded, а не down (як і з Meta Pixel).
+        return {
+            'status': HealthStatus.DEGRADED,
+            'error': f'array.js недоступний з сервера: {e}',
+        }
+    recording = 'запис сесій увімкнено' if (
+        settings.effective_posthog_session_recording) else 'запис сесій вимкнено'
+    return {
+        'status': HealthStatus.OK,
+        'detail': f'Ключ {eff[:12]}..., array.js доступний, {recording}',
+    }
+
+
 # ----------------------------------------------------------------
 
 CHECKERS = {
@@ -241,6 +285,7 @@ CHECKERS = {
     'recaptcha': ('reCAPTCHA v3', _check_recaptcha),
     'google_analytics': ('Google Analytics 4', _check_google_analytics),
     'meta_pixel': ('Meta Pixel', _check_meta_pixel),
+    'posthog': ('PostHog', _check_posthog),
     'sintegrum': ('Sintegrum', _check_sintegrum),
 }
 

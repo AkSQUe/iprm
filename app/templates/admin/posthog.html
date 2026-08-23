@@ -1,0 +1,116 @@
+{% extends "admin/_integration_page.html" %}
+
+{% block title %}PostHog | ІПРМ{% endblock %}
+{% block integration_title %}PostHog{% endblock %}
+{% block integration_subtitle_lead %}Продуктова аналітика, теплові карти, запис сесій{% endblock %}
+
+{% block integration_status_badges %}
+  {% if cfg.is_configured %}
+    <span class="badge badge--active">Активно</span>
+    {% if cfg.source == 'db' %}
+      <span class="badge badge--published">З БД</span>
+    {% elif cfg.source == 'env' %}
+      <span class="badge badge--pending">З env (fallback)</span>
+    {% endif %}
+    {% if cfg.effective_recording %}
+      <span class="badge badge--pending">Запис сесій</span>
+    {% endif %}
+  {% elif cfg.db_key and not cfg.db_enabled %}
+    <span class="badge badge--pending">Ключ збережено, вимкнено</span>
+  {% else %}
+    <span class="badge badge--draft">Не налаштовано</span>
+  {% endif %}
+{% endblock %}
+
+{% block integration_readonly_rows %}
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Project API Key (БД)</span>
+    <code class="admin-readonly-config__value">{{ cfg.db_key or 'Не задано' }}</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Увімкнено в БД</span>
+    <span class="admin-readonly-config__value">{{ 'Так' if cfg.db_enabled else 'Ні' }}</span>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Fallback з env (POSTHOG_PROJECT_API_KEY)</span>
+    <code class="admin-readonly-config__value">{{ cfg.env_key or 'Не задано' }}{% if cfg.env_key and not cfg.env_enabled %} (POSTHOG_ENABLED=false){% endif %}</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Активний ключ</span>
+    <code class="admin-readonly-config__value">{{ cfg.effective_key or 'PostHog вимкнено' }}</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Запис сесій (активний стан)</span>
+    <span class="admin-readonly-config__value">{{ 'Увімкнено' if cfg.effective_recording else 'Вимкнено' }}</span>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">First-party проксі</span>
+    <code class="admin-readonly-config__value">{{ cfg.api_host }}</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Кабінет PostHog</span>
+    <code class="admin-readonly-config__value">{{ cfg.ui_host }}</code>
+  </div>
+{% endblock %}
+
+{% block integration_readonly_hint %}
+<p class="form-hint">
+  Події йдуть через власний домен (<code>{{ cfg.api_host }}</code>), який nginx
+  проксує на eu.i.posthog.com. Якщо статистика порожня, а ключ активний –
+  перевіряйте саме проксі:
+  <code>curl -sI {{ request.host_url }}{{ cfg.api_host.lstrip('/') }}/static/array.js</code>
+  має віддати 200. Health-check вище перевіряє апстрім PostHog напряму і
+  зламаного проксі не бачить.
+</p>
+{% endblock %}
+
+{% block integration_edit_title %}Налаштування{% endblock %}
+{% block integration_edit_form %}
+<form method="POST" action="{{ url_for('admin.posthog_save') }}" class="admin-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="form-group admin-form__full">
+    <label for="posthog_project_api_key">Project API Key</label>
+    <input type="text" name="posthog_project_api_key" id="posthog_project_api_key"
+           class="form-input" pattern="^phc_[A-Za-z0-9]{20,60}$"
+           value="{{ cfg.db_key }}"
+           placeholder="phc_..." autocomplete="off" spellcheck="false">
+    <p class="form-hint">
+      PostHog → Settings → Project → Project API Key. Починається з
+      <code>phc_</code>. Ключ, що починається з <code>phx_</code>, – це
+      Personal API Key: він дає доступ до читання даних проєкту, і в HTML
+      йому не місце.
+    </p>
+  </div>
+
+  <div class="form-group admin-form__full">
+    <div class="form-checkbox">
+      <input type="checkbox" name="posthog_enabled" id="posthog_enabled"
+             {% if cfg.db_enabled %}checked{% endif %}>
+      <label for="posthog_enabled">Увімкнути аналітику</label>
+    </div>
+  </div>
+
+  <div class="form-group admin-form__full">
+    <div class="form-checkbox">
+      <input type="checkbox" name="posthog_session_recording" id="posthog_session_recording"
+             {% if cfg.db_recording %}checked{% endif %}>
+      <label for="posthog_session_recording">Записувати сесії</label>
+    </div>
+    <p class="form-hint">
+      Окремий рубильник, щоб вимкнути саме запис екрана, не стираючи ключ і
+      не гасячи заразом усю статистику. Поля вводу маскуються завжди; в
+      адмінці маскується весь текст, тож картки учасників не потрапляють у
+      відео. Запис сесій обробляє стороннім процесором поведінку відвідувачів
+      – переконайтеся, що це відображено в політиці конфіденційності.
+    </p>
+  </div>
+
+  <div class="admin-form__actions">
+    <button type="submit" class="btn-admin btn-admin--primary"
+            data-confirm="Зберегти налаштування PostHog?" data-confirm-ok="Зберегти">
+      Зберегти
+    </button>
+  </div>
+</form>
+{% endblock %}

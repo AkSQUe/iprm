@@ -144,14 +144,26 @@
           <p>Каталог онлайн-курсів: синхронізація треків, ключ API, посилання на навчання.</p>
         </a>
 
-        <!-- Microsoft Clarity -->
-        <div class="admin-integration-card admin-integration-card--planned">
+        <!-- PostHog (замінив плановану Microsoft Clarity: теплові карти й
+             записи сесій закриті ним же, тримати два плани на одне -- зайве) -->
+        <a href="{{ url_for('admin.posthog') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
-            <h4 class="admin-integration-card__title">Microsoft Clarity</h4>
-            <span class="badge badge--pending">Планується</span>
+            <h4 class="admin-integration-card__title">PostHog</h4>
+            {% if posthog_status.error %}
+              <span class="badge badge--draft">Статус недоступний</span>
+            {% elif posthog_status.is_configured %}
+              <span class="badge badge--active">Активно</span>
+              {% if posthog_status.recording %}
+                <span class="badge badge--pending">Запис сесій</span>
+              {% endif %}
+            {% elif posthog_status.has_key %}
+              <span class="badge badge--pending">Вимкнено</span>
+            {% else %}
+              <span class="badge badge--draft">Не налаштовано</span>
+            {% endif %}
           </div>
-          <p>Теплові карти, записи сесій, аналітика поведінки.</p>
-        </div>
+          <p>Продуктова аналітика, теплові карти, записи сесій. Через власний проксі.</p>
+        </a>
 
         <!-- Meta Pixel -->
         <a href="{{ url_for('admin.meta_pixel') }}" class="admin-integration-card admin-integration-card--link">

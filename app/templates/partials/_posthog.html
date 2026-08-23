@@ -1,0 +1,32 @@
+{# PostHog -- умовно вмикається, якщо Project API Key заданий у БД
+   (SiteSettings.posthog_project_api_key) з увімкненим прапорцем, або через
+   env-fallback (config.POSTHOG_PROJECT_API_KEY + POSTHOG_ENABLED). Рішення
+   інкапсулює services/posthog.py::active_posthog_config -- ту саму функцію
+   питає CSP, щоб worker-src і наявність скрипта не розходились.
+
+   На відміну від Meta Pixel, адмінка НЕ виключена: власник обрав трекінг
+   скрізь. Замість вимикання вона позначається iprm_section (фільтрується в
+   UI PostHog) і вмикає повне маскування тексту в записах сесій.
+
+   Канонічний snippet PostHog -- inline-скрипт; тут він винесений у
+   /static/js/posthog.js, який читає конфіг з data-атрибутів (CLAUDE.md:
+   No Inline Policy). Сам SDK (array.js) вантажиться ліниво -- так само, як
+   gtag.js у _analytics.html.
+
+   Ключ phc_* публічний за задумом PostHog: він лише адресує проєкт, писати
+   в нього можна, читати -- ні. #}
+{% if posthog_config %}
+<script async src="{{ url_for('static', filename='js/posthog.js') }}?v={{ assets_version }}"
+        data-ph-key="{{ posthog_config.project_api_key }}"
+        data-ph-api-host="{{ posthog_config.api_host }}"
+        data-ph-ui-host="{{ posthog_config.ui_host }}"
+        data-ph-section="{{ posthog_config.section }}"
+        data-ph-recording="{{ '1' if posthog_config.session_recording else '0' }}"
+        data-ph-mask-all-text="{{ '1' if posthog_config.mask_all_text else '0' }}"
+        {%- if current_user.is_authenticated %}
+        data-ph-user-id="{{ current_user.id }}"
+        data-ph-email="{{ current_user.email }}"
+        data-ph-role="{{ 'admin' if current_user.is_admin else 'user' }}"
+        data-ph-lang="{{ current_user.preferred_language or current_lang }}"
+        {%- endif %}></script>
+{% endif %}

@@ -180,6 +180,10 @@ def integrations():
         liqpay_status = {'is_configured': False, 'sandbox': True, 'error': True}
         ga_status = {'is_configured': False, 'error': True}
         meta_pixel_status = {'is_configured': False, 'has_id': False, 'error': True}
+        posthog_status = {
+            'is_configured': False, 'has_key': False,
+            'recording': False, 'error': True,
+        }
         recaptcha_status = {'is_configured': False, 'is_active': False, 'error': True}
         google_oauth_status = {'is_configured': False, 'enabled': False, 'error': True}
         apple_status = {'is_configured': False, 'enabled': False, 'error': True}
@@ -222,6 +226,17 @@ def integrations():
             'is_configured': bool(pixel_id),
             'has_id': bool(pixel_db_id),
             'error': pixel_err or pixel_db_err,
+        }
+
+        ph_key, ph_err = _safe(lambda: settings.effective_posthog_api_key, '')
+        ph_db_key, ph_db_err = _safe(lambda: settings.posthog_project_api_key, '')
+        ph_rec, ph_rec_err = _safe(
+            lambda: settings.effective_posthog_session_recording, False)
+        posthog_status = {
+            'is_configured': bool(ph_key),
+            'has_key': bool(ph_db_key),
+            'recording': bool(ph_rec),
+            'error': ph_err or ph_db_err or ph_rec_err,
         }
 
         google_oauth_status = {
@@ -269,6 +284,7 @@ def integrations():
         liqpay_status=liqpay_status,
         ga_status=ga_status,
         meta_pixel_status=meta_pixel_status,
+        posthog_status=posthog_status,
         recaptcha_status=recaptcha_status,
         google_oauth_status=google_oauth_status,
         apple_status=apple_status,
