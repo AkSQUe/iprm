@@ -36,7 +36,7 @@ python tools/perf/perf_check.py --json tools/perf/runs/before.json
 python tools/perf/perf_check.py --baseline tools/perf/runs/before.json
 
 # надіслати результат в адмінку (історія + порівняння там же)
-python tools/perf/perf_check.py --push https://plasma-regen.com/api/v1/perf/runs \
+python tools/perf/perf_check.py --push https://iprm.space/api/v1/perf/runs \
     --token <ключ з /admin/perf> --note "після лінивої recaptcha"
 ```
 
@@ -47,7 +47,7 @@ python tools/perf/perf_check.py --push https://plasma-regen.com/api/v1/perf/runs
 
 | Аргумент | Типово | Опис |
 |---|---|---|
-| `--base-url` | `https://plasma-regen.com` | корінь сайту, від якого будуються шляхи |
+| `--base-url` | `https://iprm.space` | корінь сайту, від якого будуються шляхи |
 | `--path` | типовий набір (9 сторінок) | шлях для заміру; можна вказати кілька разів |
 | `--profile` | обидва | `desktop` або `mobile`; можна вказати обидва |
 | `--runs` | `3` | прогонів на сторінку; у звіт іде медіана |
@@ -138,7 +138,7 @@ Core Web Vitals, для `desktop` - жорсткіші, бо тротлінгу 
 вимірювання:
 
 ```bash
-python tools/perf/perf_check.py --push https://plasma-regen.com/api/v1/perf/runs \
+python tools/perf/perf_check.py --push https://iprm.space/api/v1/perf/runs \
     --token <ключ> --push-json tools/perf/runs/before.json --note "до правок"
 ```
 
@@ -185,7 +185,7 @@ python tools/perf/perf_check.py --baseline tools/perf/runs/before.json
 ```json
 {
   "mobile:/blog/": {
-    "url": "https://plasma-regen.com/blog/",
+    "url": "https://iprm.space/blog/",
     "status": 200,
     "ttfb": 48, "fcp": 932, "lcp": 2752, "tbt": 106, "cls": 0,
     "dcl": 1180, "load": 3414,

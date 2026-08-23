@@ -22,7 +22,7 @@
     python tools/perf/perf_check.py --path / --path /courses/ --runs 5
     python tools/perf/perf_check.py --json runs/today.json
     python tools/perf/perf_check.py --baseline runs/before.json   # порівняти з попереднім
-    python tools/perf/perf_check.py --push https://plasma-regen.com/api/v1/perf/runs \
+    python tools/perf/perf_check.py --push https://iprm.space/api/v1/perf/runs \
         --token <ключ з /admin/perf> --note "після лінивої recaptcha"
 
 Код повернення: 0 -- усі сторінки в бюджеті; 1 -- є FAIL; 2 -- сторінки не
@@ -48,7 +48,7 @@ from urllib.parse import urljoin, urlparse
 
 from playwright.sync_api import sync_playwright
 
-DEFAULT_BASE_URL = 'https://plasma-regen.com'
+DEFAULT_BASE_URL = 'https://iprm.space'
 
 # Версія формату payload-а для /api/v1/perf/runs. Піднімати при зміні полів.
 TOOL_VERSION = '1.0'

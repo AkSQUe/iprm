@@ -9,7 +9,7 @@
 
 $ARGUMENTS
 
-Якщо аргументи не передано - повний аудит типового набору сторінок на проді (`https://plasma-regen.com`) в обох профілях.
+Якщо аргументи не передано - повний аудит типового набору сторінок на проді (`https://iprm.space`) в обох профілях.
 
 ## Інструмент
 
@@ -27,7 +27,7 @@ $ARGUMENTS
 
 - Flask 3.0+ / Jinja2, базовий шаблон `app/templates/base.html` (усі CSS/JS/preload у head)
 - Статика: `app/static/css/`, `app/static/js/`, шрифти `app/static/fonts/inter-*.woff2`
-- Прод: nginx + gunicorn на VPS, домен `plasma-regen.com`, статика віддається з `max-age=2592000, immutable`
+- Прод: nginx + gunicorn на VPS, домен `iprm.space`, статика віддається з `max-age=2592000, immutable`
 - GA4 ходить через first-party nginx-проксі `/ngx-i/` (див. память проекту про GA-проксі)
 - reCAPTCHA підключається блоком `{% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}` у шаблонах, де є форми
 - HTML віддається без кешу: обробник `no_cache_html` в `app/__init__.py`
