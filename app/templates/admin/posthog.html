@@ -7,16 +7,16 @@
 {% block integration_status_badges %}
   {% if cfg.is_configured %}
     <span class="badge badge--active">Активно</span>
-    {% if cfg.source == 'db' %}
-      <span class="badge badge--published">З БД</span>
-    {% elif cfg.source == 'env' %}
-      <span class="badge badge--pending">З env (fallback)</span>
+    {% if cfg.key_source == 'db' %}
+      <span class="badge badge--published">Ключ з БД</span>
+    {% elif cfg.key_source == 'env' %}
+      <span class="badge badge--pending">Ключ з env</span>
     {% endif %}
-    {% if cfg.effective_recording %}
+    {% if cfg.recording %}
       <span class="badge badge--pending">Запис сесій</span>
     {% endif %}
-  {% elif cfg.db_key and not cfg.db_enabled %}
-    <span class="badge badge--pending">Ключ збережено, вимкнено</span>
+  {% elif cfg.db_key or cfg.env_key %}
+    <span class="badge badge--pending">Ключ є, трекінг вимкнено</span>
   {% else %}
     <span class="badge badge--draft">Не налаштовано</span>
   {% endif %}
@@ -28,20 +28,33 @@
     <code class="admin-readonly-config__value">{{ cfg.db_key or 'Не задано' }}</code>
   </div>
   <div class="admin-readonly-config__row">
-    <span class="admin-readonly-config__label">Увімкнено в БД</span>
-    <span class="admin-readonly-config__value">{{ 'Так' if cfg.db_enabled else 'Ні' }}</span>
-  </div>
-  <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">Fallback з env (POSTHOG_PROJECT_API_KEY)</span>
-    <code class="admin-readonly-config__value">{{ cfg.env_key or 'Не задано' }}{% if cfg.env_key and not cfg.env_enabled %} (POSTHOG_ENABLED=false){% endif %}</code>
+    <code class="admin-readonly-config__value">{{ cfg.env_key or 'Не задано' }}</code>
   </div>
   <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">Активний ключ</span>
     <code class="admin-readonly-config__value">{{ cfg.effective_key or 'PostHog вимкнено' }}</code>
   </div>
   <div class="admin-readonly-config__row">
-    <span class="admin-readonly-config__label">Запис сесій (активний стан)</span>
-    <span class="admin-readonly-config__value">{{ 'Увімкнено' if cfg.effective_recording else 'Вимкнено' }}</span>
+    <span class="admin-readonly-config__label">Аналітика</span>
+    <span class="admin-readonly-config__value">
+      {{ 'Увімкнено' if cfg.enabled else 'Вимкнено' }}
+      ({{ 'задано тут' if cfg.enabled_source == 'db' else 'успадковано з env' }})
+    </span>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Запис сесій</span>
+    <span class="admin-readonly-config__value">
+      {{ 'Увімкнено' if cfg.recording else 'Вимкнено' }}
+      ({{ 'задано тут' if cfg.recording_source == 'db' else 'успадковано з env' }})
+    </span>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Адмінка</span>
+    <span class="admin-readonly-config__value">
+      {{ 'Не збирається' if cfg.exclude_admin else 'Збирається' }}
+      ({{ 'задано тут' if cfg.exclude_admin_source == 'db' else 'успадковано з env' }})
+    </span>
   </div>
   <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">First-party проксі</span>
@@ -54,13 +67,17 @@
 {% endblock %}
 
 {% block integration_readonly_hint %}
+{% if cfg.is_configured %}
+<div class="admin-integration-test">
+  <a href="{{ url_for('admin.posthog_test') }}" class="btn-admin btn-admin--secondary">
+    Перевірити проксі й надіслати тестову подію
+  </a>
+</div>
+{% endif %}
 <p class="form-hint">
-  Події йдуть через власний домен (<code>{{ cfg.api_host }}</code>), який nginx
-  проксує на eu.i.posthog.com. Якщо статистика порожня, а ключ активний –
-  перевіряйте саме проксі:
-  <code>curl -sI {{ request.host_url }}{{ cfg.api_host.lstrip('/') }}/static/array.js</code>
-  має віддати 200. Health-check вище перевіряє апстрім PostHog напряму і
-  зламаного проксі не бачить.
+  Будь-яке збереження цієї форми робить прапорці явними: далі вирішує саме
+  вона, а не змінні оточення. Доки галки не торкались, рішення успадковується
+  з env – саме тому поруч з кожним станом вище написано його джерело.
 </p>
 {% endblock %}
 
@@ -72,29 +89,33 @@
   <div class="form-group admin-form__full">
     <label for="posthog_project_api_key">Project API Key</label>
     <input type="text" name="posthog_project_api_key" id="posthog_project_api_key"
-           class="form-input" pattern="^phc_[A-Za-z0-9]{20,60}$"
+           class="form-input" pattern="^phc_[A-Za-z0-9_-]{20,60}$"
            value="{{ cfg.db_key }}"
            placeholder="phc_..." autocomplete="off" spellcheck="false">
     <p class="form-hint">
       PostHog → Settings → Project → Project API Key. Починається з
       <code>phc_</code>. Ключ, що починається з <code>phx_</code>, – це
       Personal API Key: він дає доступ до читання даних проєкту, і в HTML
-      йому не місце.
+      йому не місце. Порожнє поле означає «брати ключ з env».
     </p>
   </div>
 
   <div class="form-group admin-form__full">
     <div class="form-checkbox">
       <input type="checkbox" name="posthog_enabled" id="posthog_enabled"
-             {% if cfg.db_enabled %}checked{% endif %}>
+             {% if cfg.enabled %}checked{% endif %}>
       <label for="posthog_enabled">Увімкнути аналітику</label>
     </div>
+    <p class="form-hint">
+      Аварійний рубильник. Знята галка гасить збір повністю – зокрема й тоді,
+      коли ключ приходить зі змінних оточення.
+    </p>
   </div>
 
   <div class="form-group admin-form__full">
     <div class="form-checkbox">
       <input type="checkbox" name="posthog_session_recording" id="posthog_session_recording"
-             {% if cfg.db_recording %}checked{% endif %}>
+             {% if cfg.recording %}checked{% endif %}>
       <label for="posthog_session_recording">Записувати сесії</label>
     </div>
     <p class="form-hint">
@@ -103,6 +124,22 @@
       адмінці маскується весь текст, тож картки учасників не потрапляють у
       відео. Запис сесій обробляє стороннім процесором поведінку відвідувачів
       – переконайтеся, що це відображено в політиці конфіденційності.
+      Потребує ще й увімкненого <code>session_recording_opt_in</code> у
+      самому проєкті PostHog.
+    </p>
+  </div>
+
+  <div class="form-group admin-form__full">
+    <div class="form-checkbox">
+      <input type="checkbox" name="posthog_exclude_admin" id="posthog_exclude_admin"
+             {% if cfg.exclude_admin %}checked{% endif %}>
+      <label for="posthog_exclude_admin">Не збирати дані в адмінці</label>
+    </div>
+    <p class="form-hint">
+      Без цієї галки адмінка теж трекається, але кожна подія несе
+      <code>iprm_section=admin</code> – відфільтрувати її можна в самому
+      PostHog. Галка прибирає збір узагалі й економить квоту подій.
+      Сторінка перевірки лишається під трекінгом у будь-якому разі.
     </p>
   </div>
 

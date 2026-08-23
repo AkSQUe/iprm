@@ -16,7 +16,7 @@ META_PIXEL_ID_RE = re.compile(r'^[0-9]{15,16}$')
 # PostHog Project API Key -- завжди префікс 'phc_' + base62-хвіст. Строгий
 # префікс ловить найчастішу плутанину: у поле вставляють Personal API Key
 # ('phx_...'), який дає доступ до читання даних проєкту і в HTML йому не місце.
-POSTHOG_KEY_RE = re.compile(r'^phc_[A-Za-z0-9]{20,60}$')
+POSTHOG_KEY_RE = re.compile(r'^phc_[A-Za-z0-9_-]{20,60}$')
 
 logger = logging.getLogger(__name__)
 
@@ -115,14 +115,23 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
     # PostHog (product analytics + session replay). Project API Key публічний
     # -- він і так їде у HTML кожної сторінки, тож не шифрується.
     #
-    # Прапорців ДВА, і другий не надмірність. posthog_enabled гасить усю
-    # аналітику; posthog_session_recording гасить САМЕ запис екрана. На сайті
-    # з медданими це різні за ціною дії: реплей знімає на відео картки
-    # учасників, і вимкнути його треба вміти миттєво -- не стираючи ключ і не
-    # осліплюючи заразом усю статистику.
-    posthog_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    # Прапорці NULLABLE, і NULL тут значуще: "в адмінці не задано, вирішує
+    # env". Без цієї тристанності прапорець БД мовчки ігнорувався, коли ключ
+    # приходив з env -- а на проді він приходить саме звідти. Адміністратор
+    # знімав галку, бачив "Збережено" і далі слав дані; поставити галку
+    # реплею так само не давало нічого. Аварійний рубильник на сайті з
+    # медданими зобов'язаний діяти незалежно від того, звідки взявся ключ.
+    #
+    # Прапорців три, і жоден не надмірність: posthog_enabled гасить усю
+    # аналітику, posthog_session_recording -- САМЕ запис екрана (реплей
+    # знімає на відео картки учасників, і гасити його треба вміти, не
+    # осліплюючи заразом статистику), posthog_exclude_admin прибирає адмінку
+    # з-під збору цілком -- iprm_section дає фільтр у звітах, але квоту
+    # подій усе одно витрачає.
+    posthog_enabled = db.Column(db.Boolean, nullable=True)
     posthog_project_api_key = db.Column(db.String(60), default='', nullable=False)
-    posthog_session_recording = db.Column(db.Boolean, default=False, nullable=False)
+    posthog_session_recording = db.Column(db.Boolean, nullable=True)
+    posthog_exclude_admin = db.Column(db.Boolean, nullable=True)
 
     # Реєстраційний номер провайдера БПР (4 цифри) -- сегмент номера
     # сертифіката (формат РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ).
@@ -694,41 +703,67 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
             return True
         return bool(META_PIXEL_ID_RE.match(value))
 
+    @staticmethod
+    def _resolve_posthog_flag(db_value, config_key):
+        """Тристанний прапорець: значення з БД, а NULL => env.
+
+        Ключова властивість -- прапорець БД перекриває env В ОБИДВА БОКИ,
+        незалежно від того, звідки взявся сам ключ. Попередня версія
+        дивилась на наявність ключа в БД і через це мовчки ігнорувала
+        вимкнення на проді, де ключ приходить з env.
+        """
+        if db_value is not None:
+            return bool(db_value)
+        return bool(current_app.config.get(config_key, False))
+
+    @property
+    def posthog_is_enabled(self):
+        """Чи ввімкнена аналітика взагалі (без огляду на наявність ключа)."""
+        return self._resolve_posthog_flag(self.posthog_enabled, 'POSTHOG_ENABLED')
+
     @property
     def effective_posthog_api_key(self):
-        """PostHog Project API Key -- БД, інакше env-fallback. Порожній рядок
-        => PostHog не вмикається.
+        """PostHog Project API Key або '' якщо трекінгу немає.
 
-        Дзеркалить Meta Pixel, а не GA: прапорець живе поруч з ключем, тож
-        джерело обираємо цілою парою. Якщо ключ заданий у БД -- саме його
-        прапорець і вирішує; env у цьому разі не підміняє вимкнення (інакше
-        "вимкнув в адмінці, а воно й далі шле" -- пастка).
+        Прапорець і ключ розв'язуються НЕЗАЛЕЖНО: прапорець вирішує, чи
+        збираємо взагалі, ключ -- куди слати. Саме тому вимкнення в адмінці
+        діє й тоді, коли ключ лежить в env.
         """
-        if self.posthog_project_api_key:
-            return self.posthog_project_api_key if self.posthog_enabled else ''
-        env_key = current_app.config.get('POSTHOG_PROJECT_API_KEY', '') or ''
-        if env_key and current_app.config.get('POSTHOG_ENABLED', False):
-            return env_key
-        return ''
+        if not self.posthog_is_enabled:
+            return ''
+        return (
+            self.posthog_project_api_key
+            or current_app.config.get('POSTHOG_PROJECT_API_KEY', '')
+            or ''
+        )
 
     @property
     def effective_posthog_session_recording(self):
-        """Чи писати сесії. Має сенс лише коли сам PostHog активний.
-
-        Джерело читаємо ТІЄЮ САМОЮ парою, що й ключ: якщо активний ключ
-        прийшов з env, то й рішення про реплей -- з env. Інакше порожній
-        рядок у БД мовчки вимикав би реплей на проді, налаштованому змінними.
-        """
+        """Чи писати сесії. Має сенс лише коли сам PostHog активний."""
         if not self.effective_posthog_api_key:
             return False
-        if self.posthog_project_api_key:
-            return bool(self.posthog_session_recording)
-        return bool(current_app.config.get('POSTHOG_SESSION_RECORDING', False))
+        return self._resolve_posthog_flag(
+            self.posthog_session_recording, 'POSTHOG_SESSION_RECORDING')
+
+    @property
+    def effective_posthog_exclude_admin(self):
+        """Чи прибрати адмінку з-під збору цілком.
+
+        Окремо від iprm_section: та властивість дає фільтр у звітах, але
+        події все одно доходять і витрачають квоту.
+        """
+        return self._resolve_posthog_flag(
+            self.posthog_exclude_admin, 'POSTHOG_EXCLUDE_ADMIN')
 
     @staticmethod
     def is_valid_posthog_key(value):
-        """Project API Key -- 'phc_' + base62. Порожній рядок валідний
-        (вимкнення)."""
+        """Project API Key -- 'phc_' + хвіст. Порожній рядок валідний
+        (вимкнення).
+
+        Хвіст допускає '-' і '_': алфавіт токена PostHog ніде не
+        зафіксований як строго алфавітно-цифровий, а зайва строгість тут
+        відхиляла б валідний ключ із незрозумілою для адміна помилкою.
+        """
         if not value:
             return True
         return bool(POSTHOG_KEY_RE.match(value))

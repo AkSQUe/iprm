@@ -72,6 +72,11 @@ class Config:
     POSTHOG_PROJECT_API_KEY = os.environ.get('POSTHOG_PROJECT_API_KEY', '')
     POSTHOG_SESSION_RECORDING = os.environ.get(
         'POSTHOG_SESSION_RECORDING', 'false').lower() == 'true'
+    # Прибрати адмінку з-під збору цілком. Окремо від iprm_section: та
+    # властивість дає фільтр у звітах, але події все одно доходять і
+    # витрачають квоту.
+    POSTHOG_EXCLUDE_ADMIN = os.environ.get(
+        'POSTHOG_EXCLUDE_ADMIN', 'false').lower() == 'true'
 
     # Шлях first-party проксі (nginx) і адреса самого кабінету PostHog.
     #

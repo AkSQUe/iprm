@@ -1,0 +1,75 @@
+{% extends "admin/_integration_page.html" %}
+
+{% block title %}Перевірка PostHog | ІПРМ{% endblock %}
+{% block integration_title %}Перевірка PostHog{% endblock %}
+{% block integration_subtitle_lead %}Проксі та тестова подія{% endblock %}
+
+{% block integration_status_badges %}
+  <span class="badge badge--active">{{ posthog_config.api_host }}</span>
+{% endblock %}
+
+{% block integration_readonly_title %}Що робить ця сторінка{% endblock %}
+{% block integration_readonly_rows %}
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">SDK</span>
+    <code class="admin-readonly-config__value" id="ph-check-static">чекаємо…</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Ремоут-конфіг</span>
+    <code class="admin-readonly-config__value" id="ph-check-array">чекаємо…</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">SDK у браузері</span>
+    <code class="admin-readonly-config__value" id="ph-check-sdk">чекаємо…</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Подія</span>
+    <code class="admin-readonly-config__value">IPRMTestEvent</code>
+  </div>
+  <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Де перевіряти</span>
+    <span class="admin-readonly-config__value">PostHog &rarr; Activity</span>
+  </div>
+{% endblock %}
+
+{% block integration_readonly_hint %}
+<p class="form-hint">
+  Перевірка йде <strong>з браузера і через власний проксі</strong> – тим самим
+  шляхом, яким ходять відвідувачі. Health-check на сторінці інтеграції б'є в
+  апстрім PostHog напряму, тож зламаного проксі він не бачить; саме цю сліпу
+  пляму сторінка й закриває.
+</p>
+<p class="form-hint">
+  Якщо SDK віддає <code>404</code> – nginx не має локацій <code>/ngx-e/</code>
+  (застосуйте <code>deploy/apply.sh</code>, далі
+  <code>nginx -t &amp;&amp; systemctl reload nginx</code>). Якщо
+  <code>401</code> – загубився заголовок <code>Host</code> у відповідній
+  локації.
+</p>
+<p class="form-hint">
+  Назва події навмисно нестандартна: <code>$pageview</code> чи
+  <code>sign_up</code> засмітили б реальні звіти вигаданими конверсіями.
+  Ця сторінка лишається під трекінгом навіть тоді, коли решта адмінки з
+  нього виключена – інакше перевіряти було б нічого.
+</p>
+{% endblock %}
+
+{% block integration_edit_title %}Надіслати подію{% endblock %}
+{% block integration_edit_form %}
+<div class="admin-form">
+  <p class="form-hint" id="ph-test-result" role="status" aria-live="polite">
+    Перевірки проксі запускаються самі при відкритті сторінки.
+  </p>
+  <div class="admin-form__actions">
+    <button type="button" class="btn-admin btn-admin--primary" id="ph-test-send">
+      Надіслати тестову подію
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script defer src="{{ url_for('static', filename='js/admin-posthog-test.js') }}?v={{ assets_version }}"
+        data-ph-api-host="{{ posthog_config.api_host }}"
+        data-ph-key="{{ posthog_config.project_api_key }}"></script>
+{% endblock %}
