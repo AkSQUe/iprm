@@ -36,7 +36,7 @@
 
   /* HEAD, а не GET: тіло array.js важить сотні кілобайт, а нас цікавить
      лише статус і те, що віддається саме JavaScript. */
-  function probe(id, url, label) {
+  function probe(id, url) {
     fetch(url, { method: 'HEAD', cache: 'no-store' })
       .then(function (r) {
         var type = r.headers.get('content-type') || '';
@@ -57,9 +57,9 @@
       });
   }
 
-  probe('ph-check-static', apiHost + '/static/array.js', 'SDK');
+  probe('ph-check-static', apiHost + '/static/array.js');
   if (key) {
-    probe('ph-check-array', apiHost + '/array/' + key + '/config.js', 'конфіг');
+    probe('ph-check-array', apiHost + '/array/' + key + '/config.js');
   } else {
     setCell('ph-check-array', 'ключ невідомий', false);
   }
@@ -91,10 +91,19 @@
       say('SDK ще не готовий -- зачекайте кілька секунд і спробуйте знову.');
       return;
     }
-    window.posthog.capture('IPRMTestEvent', {
-      source: 'admin_test_page',
-      sent_at: new Date().toISOString(),
-    });
+    /* try/catch навколо capture -- як у meta-pixel-test.js. Виняток тут
+       цілком реальний: SDK міг завантажитись частково або бути обрізаний
+       блокувальником, і тоді метод є, а виклик кидає. Без перехоплення
+       адміністратор лишився б узагалі без відповіді на натиснуту кнопку. */
+    try {
+      window.posthog.capture('IPRMTestEvent', {
+        source: 'admin_test_page',
+        sent_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      say('Не вдалося надіслати подію: ' + (e && e.message ? e.message : e));
+      return;
+    }
     say('Подію IPRMTestEvent надіслано. Шукайте її в PostHog -> Activity '
       + '(зазвичай приходить за кілька секунд).');
   });

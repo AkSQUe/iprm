@@ -47,6 +47,26 @@
   margin-top: 16px;
 }
 
+/* Результат живої перевірки (сторінка /admin/posthog/test).
+   Класи навішує admin-posthog-test.js на комірки readonly-конфігу.
+
+   Правила з'явилися після того, як виявилось, що JS їх навішує, а в CSS
+   їх немає взагалі: успішна і провалена перевірка виглядали однаково, і
+   сторінка, зроблена для діагностики, сама нічого не показувала.
+
+   Колір -- не єдиний носій сенсу: сам текст комірки каже "200 OK" чи
+   "404 Not Found", тож для дальтоніків і монохромних екранів інформація
+   не губиться. */
+.admin-readonly-config__value.is-ok {
+  color: var(--iprm-success);
+  font-weight: 600;
+}
+
+.admin-readonly-config__value.is-error {
+  color: var(--iprm-error);
+  font-weight: 600;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .admin-readonly-config__row {

@@ -28,6 +28,7 @@ def posthog():
         'env_key': env_key,
         'env_enabled': bool(current_app.config.get('POSTHOG_ENABLED', False)),
         'env_recording': bool(current_app.config.get('POSTHOG_SESSION_RECORDING', False)),
+        'env_exclude_admin': bool(current_app.config.get('POSTHOG_EXCLUDE_ADMIN', False)),
         'effective_key': effective,
         'is_configured': bool(effective),
         # Діючі стани -- саме їх показуємо в чекбоксах. Показувати "сире"
@@ -100,12 +101,11 @@ def posthog_save():
 def posthog_test():
     """Сторінка перевірки: шле тестову подію і курлить власний проксі.
 
-    Потрібна саме окрема сторінка, бо перевірити PostHog з сервера
-    неможливо в тій частині, яка найчастіше і ламається. Health-check б'є в
-    апстрім PostHog напряму і зламаного проксі не бачить -- а проксі це
-    рівно те, що ми тут і будували. Тут же перевірка йде з БРАУЗЕРА і тим
-    самим шляхом, яким ходять відвідувачі: /ngx-e/static/, /ngx-e/array/ і
-    сам прийом подій.
+    Health-check на сторінці інтеграції теж ходить через проксі, але
+    з СЕРВЕРА і лише по /static/. Тут перевірка йде з БРАУЗЕРА і тим самим
+    шляхом, яким ходять відвідувачі: окремо /ngx-e/static/, окремо
+    /ngx-e/array/ і окремо факт того, що SDK справді ініціалізувався.
+    Різницю видно, наприклад, коли проксі живий, а CSP ріже blob-воркер.
 
     Виняток "не трекати адмінку" на цю сторінку не поширюється
     (services/posthog.py::FORCED_ENDPOINTS) -- інакше перевіряти було б

@@ -39,21 +39,21 @@
     <span class="admin-readonly-config__label">Аналітика</span>
     <span class="admin-readonly-config__value">
       {{ 'Увімкнено' if cfg.enabled else 'Вимкнено' }}
-      ({{ 'задано тут' if cfg.enabled_source == 'db' else 'успадковано з env' }})
+      &mdash; {{ 'з БД' if cfg.enabled_source == 'db' else 'з env (POSTHOG_ENABLED=' ~ ('true' if cfg.env_enabled else 'false') ~ ')' }}
     </span>
   </div>
   <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">Запис сесій</span>
     <span class="admin-readonly-config__value">
       {{ 'Увімкнено' if cfg.recording else 'Вимкнено' }}
-      ({{ 'задано тут' if cfg.recording_source == 'db' else 'успадковано з env' }})
+      &mdash; {{ 'з БД' if cfg.recording_source == 'db' else 'з env (POSTHOG_SESSION_RECORDING=' ~ ('true' if cfg.env_recording else 'false') ~ ')' }}
     </span>
   </div>
   <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">Адмінка</span>
     <span class="admin-readonly-config__value">
       {{ 'Не збирається' if cfg.exclude_admin else 'Збирається' }}
-      ({{ 'задано тут' if cfg.exclude_admin_source == 'db' else 'успадковано з env' }})
+      &mdash; {{ 'з БД' if cfg.exclude_admin_source == 'db' else 'з env (POSTHOG_EXCLUDE_ADMIN=' ~ ('true' if cfg.env_exclude_admin else 'false') ~ ')' }}
     </span>
   </div>
   <div class="admin-readonly-config__row">

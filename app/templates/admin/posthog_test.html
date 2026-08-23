@@ -12,15 +12,15 @@
 {% block integration_readonly_rows %}
   <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">SDK</span>
-    <code class="admin-readonly-config__value" id="ph-check-static">чекаємо…</code>
+    <code class="admin-readonly-config__value admin-readonly-config__value--mono" id="ph-check-static">чекаємо…</code>
   </div>
   <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">Ремоут-конфіг</span>
-    <code class="admin-readonly-config__value" id="ph-check-array">чекаємо…</code>
+    <code class="admin-readonly-config__value admin-readonly-config__value--mono" id="ph-check-array">чекаємо…</code>
   </div>
   <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">SDK у браузері</span>
-    <code class="admin-readonly-config__value" id="ph-check-sdk">чекаємо…</code>
+    <code class="admin-readonly-config__value admin-readonly-config__value--mono" id="ph-check-sdk">чекаємо…</code>
   </div>
   <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">Подія</span>
@@ -64,11 +64,15 @@
     <button type="button" class="btn-admin btn-admin--primary" id="ph-test-send">
       Надіслати тестову подію
     </button>
+    <a href="{{ url_for('admin.posthog') }}" class="btn-admin btn-admin--secondary">
+      До налаштувань
+    </a>
   </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
+{{ super() }}
 <script defer src="{{ url_for('static', filename='js/admin-posthog-test.js') }}?v={{ assets_version }}"
         data-ph-api-host="{{ posthog_config.api_host }}"
         data-ph-key="{{ posthog_config.project_api_key }}"></script>
