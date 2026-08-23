@@ -240,6 +240,47 @@ class TestCSP:
         assert 'eu-assets.i.posthog.com' not in csp
 
 
+class TestPurchaseMarkup:
+    """Подія purchase має бути розмічена на ОБОХ сторінках успіху.
+
+    Доти її не було ніде: Meta бачила покупки лише для заходів, а GA4 і
+    PostHog обривались на begin_checkout -- воронка закінчувалась
+    натисканням кнопки, і рекламу можна було оптимізувати під сабміти форм,
+    а не під гроші. Онлайн-курси не трекались зовсім.
+    """
+
+    def _markup(self, name):
+        from pathlib import Path
+        root = Path(__file__).resolve().parents[2] / 'app' / 'templates'
+        return (root / name).read_text(encoding='utf-8')
+
+    @pytest.mark.parametrize('template', [
+        'payments/success.html', 'online/success.html',
+    ])
+    def test_sends_purchase_to_all_three_sinks(self, template):
+        html = self._markup(template)
+        assert 'data-ga-event-load="purchase"' in html, 'GA4 і PostHog не отримають покупку'
+        assert 'data-meta-event-load="Purchase"' in html, 'Meta не отримає покупку'
+
+    @pytest.mark.parametrize('template', [
+        'payments/success.html', 'online/success.html',
+    ])
+    def test_purchase_is_deduplicated(self, template):
+        """Сторінку успіху відкривають повторно (F5, "назад" після редиректу
+        LiqPay). Без стабільного ID кожен перегляд рахувався б покупкою."""
+        html = self._markup(template)
+        assert 'data-ga-event-id=' in html
+        assert 'data-meta-event-id=' in html
+
+    @pytest.mark.parametrize('template', [
+        'payments/success.html', 'online/success.html',
+    ])
+    def test_purchase_carries_value_and_currency(self, template):
+        html = self._markup(template)
+        assert 'data-ga-param-value=' in html
+        assert 'data-ga-param-currency="UAH"' in html
+
+
 class TestCspScope:
     """CSP рахує дозволи сторонніх доменів лише для HTML.
 

@@ -12,6 +12,33 @@
   <section class="iprm-section" aria-labelledby="online-success-title">
     <div class="iprm-section__inner iprm-online-checkout">
 
+      {# Конверсія "оплачено" для Meta, GA4 і PostHog. Доти цієї сторінки не
+         було в трекінгу ВЗАГАЛІ: онлайн-курси доходили лише до
+         begin_checkout, тож продажі цифрового продукту не бачив жоден
+         приймач.
+
+         Стабільний ID (ONL-<id>) дедуплікує повторні відкриття: після
+         редиректу LiqPay сторінку оновлюють і повертаються на неї "назад".
+         Meta має власне вікно 48 годин, GA4 і PostHog -- список надісланих
+         у localStorage (analytics-events.js).
+
+         Умова на payment_amount: колонка nullable, а фільтр int перетворив
+         би None на 0 -- покупка з нульовою вартістю псує статистику
+         сильніше, ніж її відсутність. #}
+      {% if enrollment.payment_amount %}
+      <span hidden data-meta-event-load="Purchase"
+            data-meta-event-id="ONL-{{ enrollment.id }}"
+            data-meta-param-value="{{ enrollment.payment_amount | int }}"
+            data-meta-param-currency="UAH"
+            data-meta-param-content-name="{{ course.effective_title }}"
+            data-ga-event-load="purchase"
+            data-ga-event-id="ONL-{{ enrollment.id }}"
+            data-ga-param-value="{{ enrollment.payment_amount | int }}"
+            data-ga-param-currency="UAH"
+            data-ga-param-transaction-id="ONL-{{ enrollment.id }}"
+            data-ga-param-item-name="{{ course.effective_title }}"></span>
+      {% endif %}
+
       <h1 id="online-success-title" class="iprm-section__title">{{ _('Оплату <span class="apple-gradient-text">отримано</span>') }}</h1>
       <p class="iprm-online-checkout__lead">{{ course.effective_title }}</p>
 
