@@ -28,7 +28,10 @@ def site():
     """
     s = SiteSettings.get()
     s.meta_pixel_id = ''
-    s.meta_pixel_enabled = False
+    # None, а не False: прапорець тристанний, і явний False тепер ПЕРЕКРИВАЄ
+    # env. Скидати треба саме в "не задано", інакше жоден тест env-фолбеку
+    # не мав би шансу спрацювати.
+    s.meta_pixel_enabled = None
     db.session.commit()
     return s
 
@@ -82,12 +85,51 @@ def test_db_id_with_flag_off_disables_tracking(app, site):
 
 
 def test_env_fallback_requires_both_vars(app, site):
-    """Сам лише META_PIXEL_ID трекінг не вмикає."""
+    """Сам лише META_PIXEL_ID трекінг не вмикає.
+
+    Прапорець у БД тут NULL ("в адмінці не задано"), тож рішення справді
+    належить env. Якби він був явним False, env не мав би права голосу --
+    саме це й перевіряє test_db_flag_off_wins_over_env нижче.
+    """
     app.config['META_PIXEL_ID'] = '999999999999999'
     app.config['META_PIXEL_ENABLED'] = False
     try:
         assert site.effective_meta_pixel_id == ''
         app.config['META_PIXEL_ENABLED'] = True
+        assert site.effective_meta_pixel_id == '999999999999999'
+    finally:
+        app.config['META_PIXEL_ID'] = ''
+        app.config['META_PIXEL_ENABLED'] = False
+
+
+def test_kill_switch_works_with_env_id(app, site):
+    """Аварійний рубильник діє й тоді, коли ID приходить З ENV.
+
+    Регресія на реальний дефект: доти прапорець дивився на наявність ID В БД,
+    тож при ID зі змінних оточення зняття галки не робило нічого. Meta була
+    останнім з трьох трекерів, де це лишалось зламаним (PostHog і GA
+    полагоджено раніше того самого дня).
+    """
+    site.meta_pixel_id = ''
+    site.meta_pixel_enabled = False
+    db.session.flush()
+    app.config['META_PIXEL_ID'] = '999999999999999'
+    app.config['META_PIXEL_ENABLED'] = True
+    try:
+        assert site.effective_meta_pixel_id == '', (
+            'вимкнення в адмінці не спрацювало при ID з env'
+        )
+    finally:
+        app.config['META_PIXEL_ID'] = ''
+        app.config['META_PIXEL_ENABLED'] = False
+
+
+def test_null_flag_inherits_env(app, site):
+    """NULL означає "в адмінці не задано" -- вирішує env."""
+    assert site.meta_pixel_enabled is None
+    app.config['META_PIXEL_ID'] = '999999999999999'
+    app.config['META_PIXEL_ENABLED'] = True
+    try:
         assert site.effective_meta_pixel_id == '999999999999999'
     finally:
         app.config['META_PIXEL_ID'] = ''
@@ -242,7 +284,9 @@ def test_save_rejects_enable_without_id(client, admin, site):
     client.post('/admin/meta-pixel/save', data={
         'meta_pixel_enabled': 'on',
     }, follow_redirects=True)
-    assert SiteSettings.get().meta_pixel_enabled is False
+    # `is not True`, а не `is False`: форму відхилено, тож у БД лишається
+    # те, що там було -- а тристанний прапорець цілком може бути None.
+    assert SiteSettings.get().meta_pixel_enabled is not True
 
 
 def test_save_keeps_id_when_disabling(client, admin, site):

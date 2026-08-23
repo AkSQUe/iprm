@@ -104,12 +104,29 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
 
     # Google Analytics 4 Measurement ID (формат "G-XXXXXXXXXX"). Публічний
     # ідентифікатор, що віддається у HTML на кожній сторінці.
+    #
+    # Прапорець NULLABLE і тристанний -- та сама схема, що в PostHog, і з тієї
+    # самої причини. Доти вимикача не було взагалі: єдиним важелем лишалось
+    # поле ID, а порожнє поле означало не "вимкнути", а "взяти з env" -- де в
+    # ProductionConfig вшитий реальний Measurement ID. Адміністратор стирав
+    # ID, бачив "Збережено" і далі слав дані в Google.
+    #
+    # NULL значить "в адмінці не задано, вирішує env".
+    google_analytics_enabled = db.Column(db.Boolean, nullable=True)
     google_analytics_id = db.Column(db.String(50), default='', nullable=False)
 
     # Meta (Facebook) Pixel. ID публічний -- віддається у HTML на кожній
     # сторінці. Прапорець окремо від ID навмисно: вимкнути трекінг треба вміти
     # миттєво (домен/consent/інцидент), не стираючи сам ID.
-    meta_pixel_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    #
+    # Прапорець NULLABLE і тристанний -- як у PostHog і GA, і з тієї самої
+    # причини. Доти він дивився на наявність ID В БД: якщо ID приходив з env,
+    # галка в адмінці не робила нічого. Meta лишалась останнім з трьох
+    # трекерів зі зламаним рубильником -- найгірший стан, бо три сторінки
+    # інтеграцій виглядали однаково, а поводились по-різному.
+    #
+    # NULL значить "в адмінці не задано, вирішує env".
+    meta_pixel_enabled = db.Column(db.Boolean, nullable=True)
     meta_pixel_id = db.Column(db.String(50), default='', nullable=False)
 
     # PostHog (product analytics + session replay). Project API Key публічний
@@ -180,6 +197,17 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
     # Фонове відео у hero Головної. Вимкнення повертає hero до вигляду до
     # впровадження відео: ні відео, ні постера -- лише світле тло.
     show_home_hero_video = db.Column(db.Boolean, default=True, nullable=False)
+
+    # Банер-повідомлення про cookie. Вимкнення прибирає і розмітку, і
+    # cookie-banner.js -- сторінка не тягне зайвий запит.
+    #
+    # Банер ІНФОРМАЦІЙНИЙ: він нічого не гейтить, аналітика і маркетингові
+    # скрипти працюють незалежно від натискання "Прийняти" (див.
+    # static/js/cookie-banner.js). Тож вимкнення не змінює обсяг збору даних
+    # -- воно прибирає саме ПОВІДОМЛЕННЯ про цей збір. Рішення власника:
+    # Політика Cookie лишається доступною за посиланням у футері.
+    show_cookie_banner = db.Column(
+        db.Boolean, default=True, server_default=db.true(), nullable=False)
 
     # Авто-email "заповніть дані для сертифіката": за скільки днів до заходу
     # нагадувати учасникам з незаповненою МОЗ-анкетою. 0 -- вимкнено.
@@ -664,9 +692,22 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
         ).decode()
 
     @property
+    def google_analytics_is_enabled(self):
+        """Чи збираємо GA взагалі (без огляду на наявність Measurement ID)."""
+        return self._resolve_tristate_flag(
+            self.google_analytics_enabled, 'GOOGLE_ANALYTICS_ENABLED')
+
+    @property
     def effective_google_analytics_id(self):
-        """GA Measurement ID -- спершу з БД, інакше з config (env-var).
-        Порожній рядок => GA вимкнено."""
+        """GA Measurement ID або '' якщо трекінгу немає.
+
+        Прапорець і ID розв'язуються НЕЗАЛЕЖНО (як у PostHog): прапорець
+        вирішує, чи збираємо взагалі, ID -- куди слати. Саме тому вимкнення в
+        адмінці діє й тоді, коли ID приходить з env, а стирання ID більше не
+        вдає з себе вимикач.
+        """
+        if not self.google_analytics_is_enabled:
+            return ''
         if self.google_analytics_id:
             return self.google_analytics_id
         return current_app.config.get('GOOGLE_ANALYTICS_ID', '') or ''
@@ -680,21 +721,24 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
         return bool(GA_ID_RE.match(value))
 
     @property
-    def effective_meta_pixel_id(self):
-        """Meta Pixel ID -- БД, інакше env-fallback. Порожній рядок => Pixel
-        не вмикається.
+    def meta_pixel_is_enabled(self):
+        """Чи збираємо Pixel взагалі (без огляду на наявність ID)."""
+        return self._resolve_tristate_flag(
+            self.meta_pixel_enabled, 'META_PIXEL_ENABLED')
 
-        Дзеркалить логіку reCAPTCHA, а не GA: прапорець enabled живе поруч з
-        ID, тож джерело обираємо цілою парою. Якщо ID заданий у БД -- саме
-        його прапорець і вирішує; env у цьому разі не підмінює вимкнення
-        (інакше "вимкнув у адмінці, а воно й далі шле" -- пастка).
+    @property
+    def effective_meta_pixel_id(self):
+        """Meta Pixel ID або '' якщо трекінгу немає.
+
+        Прапорець і ID розв'язуються НЕЗАЛЕЖНО (як у PostHog і GA): прапорець
+        вирішує, чи збираємо взагалі, ID -- куди слати. Саме тому вимкнення в
+        адмінці діє й тоді, коли ID приходить з env.
         """
+        if not self.meta_pixel_is_enabled:
+            return ''
         if self.meta_pixel_id:
-            return self.meta_pixel_id if self.meta_pixel_enabled else ''
-        env_id = current_app.config.get('META_PIXEL_ID', '') or ''
-        if env_id and current_app.config.get('META_PIXEL_ENABLED', False):
-            return env_id
-        return ''
+            return self.meta_pixel_id
+        return current_app.config.get('META_PIXEL_ID', '') or ''
 
     @staticmethod
     def is_valid_meta_pixel_id(value):
@@ -704,13 +748,16 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
         return bool(META_PIXEL_ID_RE.match(value))
 
     @staticmethod
-    def _resolve_posthog_flag(db_value, config_key):
+    def _resolve_tristate_flag(db_value, config_key):
         """Тристанний прапорець: значення з БД, а NULL => env.
 
         Ключова властивість -- прапорець БД перекриває env В ОБИДВА БОКИ,
-        незалежно від того, звідки взявся сам ключ. Попередня версія
-        дивилась на наявність ключа в БД і через це мовчки ігнорувала
-        вимкнення на проді, де ключ приходить з env.
+        незалежно від того, звідки взявся сам ідентифікатор інтеграції.
+        Попередня версія дивилась на наявність ключа в БД і через це мовчки
+        ігнорувала вимкнення на проді, де ключ приходить з env.
+
+        Спільний для PostHog і GA навмисно: рубильник, що в різних
+        інтеграціях працює по-різному, -- це рубильник, якому не вірять.
         """
         if db_value is not None:
             return bool(db_value)
@@ -719,7 +766,7 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
     @property
     def posthog_is_enabled(self):
         """Чи ввімкнена аналітика взагалі (без огляду на наявність ключа)."""
-        return self._resolve_posthog_flag(self.posthog_enabled, 'POSTHOG_ENABLED')
+        return self._resolve_tristate_flag(self.posthog_enabled, 'POSTHOG_ENABLED')
 
     @property
     def effective_posthog_api_key(self):
@@ -742,7 +789,7 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
         """Чи писати сесії. Має сенс лише коли сам PostHog активний."""
         if not self.effective_posthog_api_key:
             return False
-        return self._resolve_posthog_flag(
+        return self._resolve_tristate_flag(
             self.posthog_session_recording, 'POSTHOG_SESSION_RECORDING')
 
     @property
@@ -752,7 +799,7 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
         Окремо від iprm_section: та властивість дає фільтр у звітах, але
         події все одно доходять і витрачають квоту.
         """
-        return self._resolve_posthog_flag(
+        return self._resolve_tristate_flag(
             self.posthog_exclude_admin, 'POSTHOG_EXCLUDE_ADMIN')
 
     @staticmethod

@@ -19,7 +19,13 @@
 
      data-meta-event-id -- дедуплікація: сторінку успіху відкривають
      повторно (F5, кнопка "назад" після редиректу LiqPay), і без стабільного
-     ID кожен перегляд рахувався б окремою покупкою.
+     ID кожен перегляд рахувався б окремою покупкою. Для GA4 і PostHog те
+     саме робить data-ga-event-id (analytics-events.js тримає список
+     надісланих у localStorage) -- власного вікна дедуплікації в них немає.
+
+     Раніше тут стояли ЛИШЕ meta-атрибути, тож Meta бачила покупки, а GA4 і
+     PostHog обривались на begin_checkout: воронка закінчувалась натисканням
+     кнопки, і оптимізувати рекламу можна було під сабміти, а не під гроші.
 
      Умова на payment_amount: колонка nullable, а фільтр int перетворив би
      None на 0 -- Purchase з нульовою вартістю псує статистику сильніше, ніж
@@ -29,7 +35,13 @@
         data-meta-event-id="REG-{{ reg.id }}"
         data-meta-param-value="{{ reg.payment_amount | int }}"
         data-meta-param-currency="UAH"
-        data-meta-param-content-name="{{ reg.target_title or '' }}"></span>
+        data-meta-param-content-name="{{ reg.target_title or '' }}"
+        data-ga-event-load="purchase"
+        data-ga-event-id="REG-{{ reg.id }}"
+        data-ga-param-value="{{ reg.payment_amount | int }}"
+        data-ga-param-currency="UAH"
+        data-ga-param-transaction-id="REG-{{ reg.id }}"
+        data-ga-param-item-name="{{ reg.target_title or '' }}"></span>
   {% endif %}
 
   <div class="reg-confirmation">

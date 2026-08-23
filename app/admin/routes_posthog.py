@@ -2,19 +2,8 @@ from flask import flash, redirect, render_template, request, url_for, current_ap
 
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
-from app.admin._helpers import save_integration_settings
+from app.admin._helpers import save_integration_settings, tristate_checkbox
 from app.models.site_settings import SiteSettings
-
-
-def _checkbox(name):
-    """Значення тристанного прапорця з форми.
-
-    Форма не вміє надіслати "не задано": знята галка і відсутнє поле
-    виглядають однаково. Тому будь-яке збереження робить прапорець ЯВНИМ --
-    саме цього ми й хочемо, бо після свідомого тику рішення має належати
-    адмінці, а не змінним оточення.
-    """
-    return request.form.get(name) == 'on'
 
 
 @admin_bp.route('/posthog')
@@ -52,9 +41,9 @@ def posthog():
 @admin_required
 def posthog_save():
     api_key = request.form.get('posthog_project_api_key', '').strip()
-    enabled = _checkbox('posthog_enabled')
-    recording = _checkbox('posthog_session_recording')
-    exclude_admin = _checkbox('posthog_exclude_admin')
+    enabled = tristate_checkbox('posthog_enabled')
+    recording = tristate_checkbox('posthog_session_recording')
+    exclude_admin = tristate_checkbox('posthog_exclude_admin')
 
     if not SiteSettings.is_valid_posthog_key(api_key):
         flash('Project API Key починається з "phc_". Ключ, що починається з '

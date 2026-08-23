@@ -121,7 +121,9 @@
   {% include 'partials/footer.html' %}
   {% endblock %}
 
-  {% include 'partials/cookie_banner.html' %}
+  {# Вимкнений банер не рендериться зовсім -- разом з розміткою зникає
+     й cookie-banner.js, тож сторінка не тягне зайвий запит. #}
+  {% if site_settings.show_cookie_banner %}{% include 'partials/cookie_banner.html' %}{% endif %}
   {% include 'partials/upcoming_events.html' %}
   {% include 'partials/certdata_reminder.html' %}
 

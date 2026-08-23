@@ -2,7 +2,7 @@ from flask import flash, redirect, render_template, request, url_for, current_ap
 
 from app.admin import admin_bp
 from app.admin.decorators import admin_required
-from app.admin._helpers import save_integration_settings
+from app.admin._helpers import save_integration_settings, tristate_checkbox
 from app.models.site_settings import SiteSettings
 
 
@@ -15,11 +15,15 @@ def meta_pixel():
     effective = settings.effective_meta_pixel_id
     cfg = {
         'db_id': settings.meta_pixel_id or '',
-        'db_enabled': bool(settings.meta_pixel_enabled),
         'env_id': env_id,
         'env_enabled': env_enabled,
         'effective_id': effective,
         'is_configured': bool(effective),
+        # Діючий стан прапорця -- саме його показуємо в чекбоксі. Показувати
+        # "сире" значення БД означало б знята галка при увімкненому через env
+        # трекінгу: інтерфейс суперечив би сам собі.
+        'enabled': settings.meta_pixel_is_enabled,
+        'enabled_source': 'db' if settings.meta_pixel_enabled is not None else 'env',
         'source': 'db' if settings.meta_pixel_id else ('env' if env_id else 'none'),
     }
     return render_template('admin/meta_pixel.html', cfg=cfg)
@@ -29,7 +33,7 @@ def meta_pixel():
 @admin_required
 def meta_pixel_save():
     pixel_id = request.form.get('meta_pixel_id', '').strip()
-    enabled = request.form.get('meta_pixel_enabled') == 'on'
+    enabled = tristate_checkbox('meta_pixel_enabled')
 
     if not SiteSettings.is_valid_meta_pixel_id(pixel_id):
         flash('Meta Pixel ID – 15-16 цифр без пробілів. Скопіюйте саме ID, '
@@ -37,11 +41,10 @@ def meta_pixel_save():
         return redirect(url_for('admin.meta_pixel'))
 
     # Увімкнути без ID неможливо: порожній ID при enabled=True дав би
-    # мовчазно неактивну інтеграцію з бейджем "Активно".
-    if enabled and not pixel_id and not (
-        current_app.config.get('META_PIXEL_ID')
-        and current_app.config.get('META_PIXEL_ENABLED')
-    ):
+    # мовчазно неактивну інтеграцію з бейджем "Активно". Дзеркалить PostHog
+    # і GA: дивимось лише на НАЯВНІСТЬ ID, бо прапорець тепер вирішує сам.
+    env_id = current_app.config.get('META_PIXEL_ID', '') or ''
+    if enabled and not pixel_id and not env_id:
         flash('Щоб увімкнути Pixel, спершу вкажіть ID.', 'error')
         return redirect(url_for('admin.meta_pixel'))
 

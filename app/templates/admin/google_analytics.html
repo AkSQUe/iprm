@@ -8,10 +8,12 @@
   {% if cfg.is_configured %}
     <span class="badge badge--active">Активно</span>
     {% if cfg.source == 'db' %}
-      <span class="badge badge--published">З БД</span>
+      <span class="badge badge--published">ID з БД</span>
     {% elif cfg.source == 'env' %}
-      <span class="badge badge--pending">З env (fallback)</span>
+      <span class="badge badge--pending">ID з env</span>
     {% endif %}
+  {% elif cfg.db_id or cfg.env_id %}
+    <span class="badge badge--pending">ID є, трекінг вимкнено</span>
   {% else %}
     <span class="badge badge--draft">Не налаштовано</span>
   {% endif %}
@@ -27,6 +29,13 @@
     <code class="admin-readonly-config__value">{{ cfg.env_id or 'Не задано' }}</code>
   </div>
   <div class="admin-readonly-config__row">
+    <span class="admin-readonly-config__label">Аналітика</span>
+    <span class="admin-readonly-config__value">
+      {{ 'Увімкнено' if cfg.enabled else 'Вимкнено' }}
+      &mdash; {{ 'з БД' if cfg.enabled_source == 'db' else 'з env (GOOGLE_ANALYTICS_ENABLED=' ~ ('true' if cfg.env_enabled else 'false') ~ ')' }}
+    </span>
+  </div>
+  <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">Активний ID</span>
     <code class="admin-readonly-config__value">{{ cfg.effective_id or 'GA вимкнено' }}</code>
   </div>
@@ -34,15 +43,20 @@
 
 {% block integration_readonly_hint %}
 <p class="form-hint">
-  Спочатку береться значення з БД. Якщо порожнє – беремо з env-змінної
-  <code>GOOGLE_ANALYTICS_ID</code>. Якщо обидва порожні – GA не вмикається.
+  Прапорець і Measurement ID незалежні: прапорець вирішує, чи збираємо
+  взагалі, ID &ndash; куди слати. Порожнє поле ID означає &laquo;брати з
+  env&raquo;, а не &laquo;вимкнути&raquo;; вимикає саме галка. Будь-яке
+  збереження цієї форми робить прапорець явним: далі вирішує вона, а не
+  змінні оточення. Доки галки не торкались, рішення успадковується з env
+  &ndash; саме тому поруч зі станом вище написано його джерело.
 </p>
 {% endblock %}
 
-{% block integration_edit_title %}Встановити Measurement ID{% endblock %}
+{% block integration_edit_title %}Налаштування{% endblock %}
 {% block integration_edit_form %}
 <form method="POST" action="{{ url_for('admin.google_analytics_save') }}" class="admin-form">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
   <div class="form-group admin-form__full">
     <label for="google_analytics_id">GA4 Measurement ID</label>
     <input type="text" name="google_analytics_id" id="google_analytics_id"
@@ -51,13 +65,28 @@
            placeholder="G-XXXXXXXXXX" autocomplete="off">
     <p class="form-hint">
       Формат: <code>G-XXXXXXXXXX</code>. Знайти можна в Google Analytics:
-      Admin → Data Streams → Web → Measurement ID. Залиште порожнім, щоб
-      використати fallback з env або вимкнути GA.
+      Admin &rarr; Data Streams &rarr; Web &rarr; Measurement ID. Порожнє
+      поле означає &laquo;брати ID з env&raquo;.
     </p>
   </div>
+
+  <div class="form-group admin-form__full">
+    <div class="form-checkbox">
+      <input type="checkbox" name="google_analytics_enabled" id="google_analytics_enabled"
+             {% if cfg.enabled %}checked{% endif %}>
+      <label for="google_analytics_enabled">Увімкнути аналітику</label>
+    </div>
+    <p class="form-hint">
+      Аварійний рубильник. Знята галка гасить збір повністю &ndash; зокрема й
+      тоді, коли Measurement ID приходить зі змінних оточення. Разом зі
+      скриптом зникає <code>gtag.js</code> (169 КБ gzip) і дозволи доменів
+      Google у CSP.
+    </p>
+  </div>
+
   <div class="admin-form__actions">
     <button type="submit" class="btn-admin btn-admin--primary"
-            data-confirm="Зберегти Measurement ID?" data-confirm-ok="Зберегти">
+            data-confirm="Зберегти налаштування Google Analytics?" data-confirm-ok="Зберегти">
       Зберегти
     </button>
   </div>

@@ -12,7 +12,7 @@
     {% elif cfg.source == 'env' %}
       <span class="badge badge--pending">З env (fallback)</span>
     {% endif %}
-  {% elif cfg.db_id and not cfg.db_enabled %}
+  {% elif cfg.db_id or cfg.env_id %}
     <span class="badge badge--pending">ID збережено, вимкнено</span>
   {% else %}
     <span class="badge badge--draft">Не налаштовано</span>
@@ -25,12 +25,15 @@
     <code class="admin-readonly-config__value">{{ cfg.db_id or 'Не задано' }}</code>
   </div>
   <div class="admin-readonly-config__row">
-    <span class="admin-readonly-config__label">Увімкнено в БД</span>
-    <span class="admin-readonly-config__value">{{ 'Так' if cfg.db_enabled else 'Ні' }}</span>
+    <span class="admin-readonly-config__label">Трекінг</span>
+    <span class="admin-readonly-config__value">
+      {{ 'Увімкнено' if cfg.enabled else 'Вимкнено' }}
+      &mdash; {{ 'з БД' if cfg.enabled_source == 'db' else 'з env (META_PIXEL_ENABLED=' ~ ('true' if cfg.env_enabled else 'false') ~ ')' }}
+    </span>
   </div>
   <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">Fallback з env (META_PIXEL_ID)</span>
-    <code class="admin-readonly-config__value">{{ cfg.env_id or 'Не задано' }}{% if cfg.env_id and not cfg.env_enabled %} (META_PIXEL_ENABLED=false){% endif %}</code>
+    <code class="admin-readonly-config__value">{{ cfg.env_id or 'Не задано' }}</code>
   </div>
   <div class="admin-readonly-config__row">
     <span class="admin-readonly-config__label">Активний ID</span>
@@ -68,9 +71,13 @@
   <div class="form-group admin-form__full">
     <div class="form-checkbox">
       <input type="checkbox" name="meta_pixel_enabled" id="meta_pixel_enabled"
-             {% if cfg.db_enabled %}checked{% endif %}>
+             {% if cfg.enabled %}checked{% endif %}>
       <label for="meta_pixel_enabled">Увімкнути трекінг</label>
     </div>
+    <p class="form-hint">
+      Аварійний рубильник. Знята галка гасить збір повністю – зокрема й тоді,
+      коли ID приходить зі змінних оточення.
+    </p>
   </div>
 
   <div class="admin-form__actions">

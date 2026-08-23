@@ -76,6 +76,18 @@ def mask_secret(value, style='tail'):
 
 # === Універсальний save-helper для admin integrations ===
 
+def tristate_checkbox(name):
+    """Значення тристанного прапорця інтеграції з форми.
+
+    Форма не вміє надіслати "не задано": знята галка і відсутнє поле
+    виглядають однаково. Тому будь-яке збереження робить прапорець ЯВНИМ --
+    саме цього ми й хочемо, бо після свідомого тику рішення має належати
+    адмінці, а не змінним оточення.
+    """
+    from flask import request
+    return request.form.get(name) == 'on'
+
+
 def save_integration_settings(provider, settings, updates, audit_summary=None,
                                success_msg=None, error_msg=None):
     """Атомарно оновити SiteSettings + commit + audit + flash.

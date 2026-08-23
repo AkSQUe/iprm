@@ -55,6 +55,13 @@ class Config:
     # сторінці). Порожній рядок -- GA вимкнено. Дефолт у базі -- порожній,
     # щоб dev/test не слали події у прод-аналітику. ProductionConfig
     # переозначає реальний ID.
+    #
+    # Прапорець потрібен окремо від ID (як у Meta й PostHog): ID сам собою
+    # трекінг не вмикає, а стирання ID не є вимиканням -- порожнє поле в
+    # адмінці означає "взяти з env". Прапорець у БД перекриває цю змінну в
+    # обидва боки, тож аварійний рубильник діє й на проді, де ID з env.
+    GOOGLE_ANALYTICS_ENABLED = os.environ.get(
+        'GOOGLE_ANALYTICS_ENABLED', 'false').lower() == 'true'
     GOOGLE_ANALYTICS_ID = os.environ.get('GOOGLE_ANALYTICS_ID', '')
 
     # Meta (Facebook) Pixel -- fallback на env, якщо в БД (SiteSettings) пусто.
@@ -145,6 +152,11 @@ class ProductionConfig(Config):
     REMEMBER_COOKIE_SECURE = True
     PREFERRED_URL_SCHEME = 'https'
     SEND_FILE_MAX_AGE_DEFAULT = 31536000
+    # Дефолт true зберігає поточну поведінку проду: GA працює доти, доки
+    # адмін свідомо не зніме галку. Вимкнення -- дія в адмінці (вона йде в
+    # audit-лог), а не тиха правка конфіга.
+    GOOGLE_ANALYTICS_ENABLED = os.environ.get(
+        'GOOGLE_ANALYTICS_ENABLED', 'true').lower() == 'true'
     GOOGLE_ANALYTICS_ID = os.environ.get('GOOGLE_ANALYTICS_ID', 'G-T2LHJ436ZG')
     # Проєкт "IPRM" (id 255460) на EU Cloud. Ключ phc_* публічний -- він і так
     # їде у HTML кожної сторінки, тож тут йому не гірше, ніж GA-шному G-*.
