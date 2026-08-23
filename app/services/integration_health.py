@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 
 import requests
 from flask import current_app, g
+from sqlalchemy import inspect as sa_inspect
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,9 @@ logger = logging.getLogger(__name__)
 _CACHE = {}
 _CACHE_TTL_SECONDS = 60
 _HTTP_TIMEOUT_SECONDS = 5
+# Самозапит у власний домен: коротше за спільний бюджет, бо у зламаному
+# стані він займає воркер із того самого пулу, що рендерить цю сторінку.
+_SELF_PROBE_TIMEOUT_SECONDS = 3
 
 
 # === Status enum (string-based, JSON-friendly) ===
@@ -272,11 +276,29 @@ def _check_posthog(settings):
 
     url = f'{base_url}{api_host}/static/array.js'
     try:
-        r = requests.head(url, timeout=_HTTP_TIMEOUT_SECONDS, allow_redirects=True)
+        # allow_redirects=False навмисно. По-перше, таймаут у requests --
+        # НА ПЕРЕХІД, тож із увімкненими редиректами бюджет множиться, а на
+        # цьому хості аліаси 301-ляться на apex. По-друге, редирект на
+        # власному домені сам собою є дефектом конфігурації, і показати його
+        # корисніше, ніж мовчки пройти наскрізь.
+        #
+        # Таймаут коротший за спільний: коли локації nginx не застосовані,
+        # запит підхоплює `location /` і йде в ТОЙ САМИЙ пул gunicorn (на
+        # проді 3 воркери, 1 vCPU). Один з них уже зайнятий рендером цієї
+        # сторінки, тож довге очікування з'їдало б пул заради перевірки.
+        r = requests.head(url, timeout=_SELF_PROBE_TIMEOUT_SECONDS,
+                          allow_redirects=False)
     except requests.RequestException as e:
         return {
             'status': HealthStatus.DOWN,
             'error': f'Проксі {api_host} недоступний: {e}',
+        }
+    if r.is_redirect:
+        return {
+            'status': HealthStatus.DEGRADED,
+            'error': (f'{api_host}/static/array.js -> {r.status_code} на '
+                      f'{r.headers.get("location", "?")}. Проксі має віддавати '
+                      f'SDK напряму, без переходу.'),
         }
     if r.status_code != 200:
         return {
@@ -327,13 +349,23 @@ def _run_one(provider, settings):
 
 
 def _cached_run(provider, settings):
-    """Запустити з cache (TTL 60s). При cache-hit повертає старий результат."""
+    """Запустити з cache (TTL 60s). При cache-hit повертає старий результат.
+
+    Ключ -- пара (provider, base_url), а не сам provider. PostHog-перевірка
+    ходить у ВЛАСНИЙ домен, тож її результат залежить від того, з якого
+    хоста відкрито адмінку. З ключем лише за provider перевірка, зроблена
+    з одного домену, протягом хвилини віддавалась би як результат для
+    іншого. Зараз аліаси 301-ляться на apex і шкода була б невидима -- саме
+    тому це варто було полагодити до того, як з'явиться домен, який
+    обслуговується напряму.
+    """
     now = time.time()
-    cached = _CACHE.get(provider)
+    key = (provider, getattr(g, 'health_base_url', None))
+    cached = _CACHE.get(key)
     if cached and (now - cached[0] < _CACHE_TTL_SECONDS):
         return cached[1]
     result = _run_one(provider, settings)
-    _CACHE[provider] = (now, result)
+    _CACHE[key] = (now, result)
     return result
 
 
@@ -356,11 +388,30 @@ def run_all_checks(settings, use_cache=True, base_url=None):
     у потоці request-контексту немає, тож адресу передаємо явно і кладемо
     в g всередині воркера.
     """
+    # ?refresh=1 чистить кеш і йде тим самим шляхом, що звичайне
+    # завантаження. Доти refresh запускав _run_one, який у кеш нічого не
+    # писав, -- і НАСТУПНЕ звичайне відкриття сторінки знову ганяло всі
+    # вісім живих запитів, бо кеш лишався порожнім.
     if not use_cache:
         clear_cache()
 
-    runner = _cached_run if use_cache else _run_one
+    runner = _cached_run
     app = current_app._get_current_object()
+
+    # Прогріваємо ORM-об'єкт У ЦЬОМУ потоці, перш ніж віддати його восьми
+    # робочим. SQLAlchemy Session не потокобезпечний, а `settings` прив'язаний
+    # до сесії запиту: варто одному атрибуту виявитись expired (а після
+    # commit'у expired УСІ), і перше ж звертання з чужого потоку піде
+    # довантажувати його через спільну сесію. Відмова була б рідкою,
+    # плавучою і невідтворюваною -- найгірший різновид.
+    #
+    # SiteSettings -- один рядок, тож повне довантаження тут дешеве.
+    try:
+        state = sa_inspect(settings)
+        for attr in list(state.unloaded):
+            getattr(settings, attr, None)
+    except Exception:
+        logger.exception('Failed to warm SiteSettings before health checks')
 
     def _worker(provider):
         with app.app_context():
