@@ -27,7 +27,15 @@
 
   {# ===== 3-step progress (другий крок активний, поки не оплачено) ===== #}
   {% set _is_paid = reg.payment_status == 'paid' %}
-  {% set _needs_pay = reg.status == 'pending' and reg.payment_status == 'unpaid' and reg.payment_amount and reg.payment_amount > 0 %}
+  {#- Умова та сама, що й `needs_payment` у роуті (там же й пояснення, чому
+      статус лише `!= 'cancelled'`, а оплата саме `unpaid`). Розійтись їм не
+      можна: роут будує форму LiqPay, шаблон її показує. -#}
+  {% set _needs_pay = reg.status != 'cancelled' and reg.payment_status == 'unpaid' and reg.payment_amount and reg.payment_amount > 0 %}
+  {#- Окремий прапорець для банера: він відповідає на ІНШЕ питання -- «що з
+      реєстрацією», а не «чи лишились гроші». Поки це був один прапорець,
+      розширення умови оплати змусило б завершений захід вітати учасника
+      «заявку подано». -#}
+  {% set _fresh_application = _needs_pay and reg.status == 'pending' %}
   <ol class="reg-steps" aria-label="{{ _('Процес реєстрації') }}">
     <li class="reg-steps__item reg-steps__item--done">
       <span class="reg-steps__num">1</span>
@@ -37,14 +45,16 @@
       <span class="reg-steps__num">2</span>
       <span class="reg-steps__label">{{ _('Оплатіть участь') }}</span>
     </li>
-    <li class="reg-steps__item {% if _is_paid or reg.status == 'confirmed' %}reg-steps__item--current{% endif %}">
+    {#- `not _needs_pay` -- бо підтверджена, але неоплачена реєстрація стоїть
+        саме на кроці оплати. Без цього підсвічувались би два кроки з трьох. -#}
+    <li class="reg-steps__item {% if not _needs_pay and (_is_paid or reg.status == 'confirmed') %}reg-steps__item--current{% endif %}">
       <span class="reg-steps__num">3</span>
       <span class="reg-steps__label">{{ _('Отримайте підтвердження') }}</span>
     </li>
   </ol>
 
   {# ===== Великий банер статусу ===== #}
-  {% if _needs_pay %}
+  {% if _fresh_application %}
     <div class="reg-success-banner">
       <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>
       <div class="reg-success-banner__body">
