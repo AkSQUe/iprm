@@ -17,7 +17,7 @@
    39% ваги сторінки і забирав канал у LCP-зображення. Його адресу віддаємо
    через data-ga-loader, а вставляє його analytics.js після рендеру. Команди
    gtag() до того моменту чекають у черзі dataLayer і програються, щойно
-   лоадер приїде -- тож page_view і події з ga-events.js не губляться. #}
+   лоадер приїде -- тож page_view і події з analytics-events.js не губляться. #}
 <script async src="{{ url_for('static', filename='js/analytics.js') }}?v={{ assets_version }}"
         data-ga-id="{{ _ga_id }}" data-ga-transport="/ngx-i"
         data-ga-loader="/ngx-i/loader.js?id={{ _ga_id }}"></script>

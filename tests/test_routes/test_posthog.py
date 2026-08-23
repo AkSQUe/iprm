@@ -113,9 +113,9 @@ class TestScriptInjection:
         assert 'data-ph-api-host="/ngx-e"' in html
 
     def test_events_handler_follows_the_script(self, client, posthog_on):
-        """posthog-events.js підключається рівно тоді, коли є сам SDK."""
+        """Обробник підключається рівно тоді, коли є сам SDK."""
         html = client.get('/').get_data(as_text=True)
-        assert 'js/posthog-events.js' in html
+        assert 'js/analytics-events.js' in html
 
 
 class TestSectionProperty:

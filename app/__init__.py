@@ -314,7 +314,7 @@ def create_app(config_name=None):
     @app.context_processor
     def inject_posthog():
         """Конфіг активного PostHog для _posthog.html і підключення
-        posthog-events.js. Через сервіс, а не властивість налаштувань
+        analytics-events.js. Через сервіс, а не властивість налаштувань
         напряму: рішення залежить ще й від блупринту (розділ у подіях,
         глибина маскування реплею), і воно мусить збігатися з тим, що
         дозволяє CSP."""
