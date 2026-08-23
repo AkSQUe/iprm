@@ -20,23 +20,43 @@ _CERTDATA_POPUP_MUTED = frozenset({'auth', 'registration', 'payments', 'quiz'})
 
 
 def get_assets_version(static_folder):
+    """Ключ ?v= для CSS/JS -- хеш ВМІСТУ файлів, а не їхніх mtime.
+
+    Раніше рахувались mtime, і це зривало кеш на кожному деплої: rsync
+    оновлює час модифікації й тим файлам, вміст яких не змінився. Статика
+    віддається з `max-age=2592000, immutable`, тож кожен повторний відвідувач
+    після кожного деплою наново тягнув усі CSS і JS. За вмістом ключ міняється
+    лише тоді, коли щось справді змінилось.
+
+    133 файли / 1.2 МБ читаються один раз на першому запиті й лягають у кеш
+    процесу, тож на подальші запити це не впливає.
+    """
     global _cached_assets_version
     if _cached_assets_version:
         return _cached_assets_version
 
-    css_dir = os.path.join(static_folder, 'css')
-    js_dir = os.path.join(static_folder, 'js')
-    mtimes = []
+    digest = hashlib.md5()
+    seen = False
 
-    for folder in (css_dir, js_dir):
-        if os.path.isdir(folder):
-            for f in sorted(os.listdir(folder)):
-                if f.endswith(('.css', '.js')):
-                    mtimes.append(f'{f}:{os.path.getmtime(os.path.join(folder, f))}')
+    for folder in (os.path.join(static_folder, 'css'),
+                   os.path.join(static_folder, 'js')):
+        if not os.path.isdir(folder):
+            continue
+        for name in sorted(os.listdir(folder)):
+            if not name.endswith(('.css', '.js')):
+                continue
+            try:
+                with open(os.path.join(folder, name), 'rb') as fh:
+                    digest.update(name.encode())
+                    for chunk in iter(lambda: fh.read(65536), b''):
+                        digest.update(chunk)
+            except OSError:
+                # Файл міг зникнути просто під rsync-деплоєм. Пропускаємо:
+                # менш точний ключ кешу краще за 500 на всьому сайті.
+                continue
+            seen = True
 
-    _cached_assets_version = (
-        hashlib.md5('|'.join(mtimes).encode()).hexdigest()[:8] if mtimes else '1.0'
-    )
+    _cached_assets_version = digest.hexdigest()[:8] if seen else '1.0'
     return _cached_assets_version
 
 
