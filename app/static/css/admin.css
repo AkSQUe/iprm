@@ -1198,6 +1198,21 @@
     text-align: right;
   }
 
+  /* Довге значення (назва заходу, email, ПІБ) переноситься під підпис і
+     вирівнюється ліворуч, замість того щоб ламатись по слову у вузькій
+     правій колонці. Підпис при цьому лишається на своєму рядку. */
+  .admin-table td {
+    flex-wrap: wrap;
+  }
+
+  .admin-table td > * {
+    min-width: 0;
+  }
+
+  .admin-table td::before {
+    flex: 0 0 auto;
+  }
+
   .admin-table td:last-child {
     border-bottom: 0;
   }
@@ -1245,8 +1260,21 @@
 }
 
 @media (max-width: 480px) {
+  /* Дві колонки, а не одна: п'ять карток стовпчиком з'їдали два з половиною
+     екрана до першого рядка списку -- статистика витісняла те, заради чого
+     сторінку відкривають. Остання картка (сума) лишається на всю ширину:
+     її значення найдовше і в половину ряду не влазить. */
   .admin-stat-cards {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .admin-stat-card {
+    padding: 14px 10px;
+  }
+
+  .admin-stat-cards > .admin-stat-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 
   .admin-layout {

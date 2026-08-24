@@ -1410,7 +1410,38 @@
   border: 0;
 }
 
+@media (max-width: 768px) {
+  /* Чіпси -- горизонтальна стрічка, а не три ряди. Шість пресетів у стовпчик
+     відсували список ще на екран нижче, а прокрутка вбік лишає їх одним
+     рядком і не бреше про кількість: видно, що праворуч є ще. */
+  .admin-filter-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    /* Щоб крайній чіп не прилипав до краю під час прокрутки. */
+    padding-inline: 2px;
+  }
+
+  .admin-filter-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-filter-pills .admin-pill {
+    flex: 0 0 auto;
+  }
+}
+
 @media (max-width: 640px) {
+  /* Три кнопки панелі ділять один ряд порівну: інакше «Експорт XLSX»
+     переносився на власний рядок і панель займала три поверхи. */
+  .admin-filters__bar > .btn-admin,
+  .admin-filters__bar > a.btn-admin {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+  }
+
   .admin-filters {
     padding: 12px;
   }
@@ -1467,6 +1498,13 @@
 /* Комірки, які не можна ламати переносом (дати, лічильники, стан). */
 .admin-table .admin-nowrap {
   white-space: nowrap;
+}
+
+/* Комірка з назвою (захід, курс, документ). Без нижньої межі ширини таблиця
+   з десятком колонок стискала її до ~90px, і назва ламалась по слову в
+   чотири поверхи, розганяючи висоту всього рядка. */
+.admin-table .admin-cell-title {
+  min-width: 200px;
 }
 
 /* Комірка порядку: бейдж і число в один рядок, а не двома поверхами. */

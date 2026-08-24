@@ -10,6 +10,7 @@
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'partials/_money.html' import money %}
 {% from 'admin/partials/_registration_actions.html' import registration_actions %}
 {% import 'admin/partials/_registration_progress.html' as progress %}
 
@@ -88,7 +89,7 @@
         <span class="admin-stat-card__label">Скасовано</span>
       </div>
       <div class="admin-stat-card admin-stat-card--accent">
-        <span class="admin-stat-card__value">{{ stats.total_paid | int }} &#8372;</span>
+        <span class="admin-stat-card__value">{{ money(stats.total_paid) }}</span>
         <span class="admin-stat-card__label">Оплачено</span>
       </div>
     </div>
@@ -145,7 +146,7 @@
     <table class="admin-table admin-table--wide">
       <thead>
         <tr>
-          <th>Захід</th>
+          <th class="admin-cell-title">Захід</th>
           <th>№</th>
           <th>Учасник</th>
           <th>Реферер</th>
@@ -161,7 +162,7 @@
       <tbody>
         {% for reg in registrations %}
         <tr>
-          <td>
+          <td class="admin-cell-title">
             {% if reg.instance_id and reg.target_title %}
               <a href="{{ url_for('admin.instance_registrations', instance_id=reg.instance_id) }}">{{ reg.target_title }}</a>
             {% else %}
@@ -216,7 +217,9 @@
           </td>
           <td>
             {% if reg.payment_amount %}
-              {{ reg.payment_amount | int }} &#8372;
+              {# nowrap: у вузькій колонці «10000» і «₴» опинялись на різних
+                 рядках, і сума читалась як два різні числа. #}
+              <span class="admin-nowrap">{{ money(reg.payment_amount) }}</span>
             {% else %}
               <span class="admin-text-muted">–</span>
             {% endif %}
