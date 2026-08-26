@@ -382,6 +382,16 @@
     </div>
     <p class="ds-hint">.badge: padding 3px 12px / font-size 0.6875rem / font-weight 600 / border-radius var(--iprm-radius-pill) / CSS-змінні --iprm-badge-*</p>
 
+    <h3 class="ds-section-heading">Бейдж формату</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <span class="badge badge--format">Офлайн</span>
+        <span class="badge badge--format">Онлайн</span>
+        <span class="badge badge--format">Гібрид</span>
+      </div>
+    </div>
+    <p class="ds-hint">.badge--format: bg accent-light, color accent – адмінський двійник .iprm-card-badge--format із публічної картки курсу. МІТКА, не статус: терракота зайнята типом заходу</p>
+
     <h3 class="ds-section-heading">Семантичні бейджі</h3>
     <div class="ds-demo">
       <div class="ds-row">
@@ -1078,7 +1088,36 @@
   <div class="ds-section" id="admin">
     <p class="ds-label">Admin Components</p>
     <h2 class="ds-title">Адмін-панель</h2>
-    <p style="font-size:0.9375rem;color:#625a6d;margin-bottom:32px;">Адмін-компоненти зберігають legacy-стиль (iprm-btn, square corners, dark hero). Не підлягають Apple-style редизайну.</p>
+    <p class="ds-hint">Адмінка їде на тих самих токенах, що й публічна частина (admin-apple.css), і відрізняється лише щільністю: та сама кнопка, той самий бейдж, менші відступи. Пряме переозначення атомів у CSS сторінки заборонене -- правка базового елемента робиться тут.</p>
+
+    <h3 class="ds-section-heading">Реєстр (таблиця)</h3>
+    <div class="ds-demo">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Курс</th>
+            <th>Статус</th>
+            <th>Місця</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="admin-nowrap">07.09.2026</td>
+            <td><strong>Базовий курс плазмотерапії</strong></td>
+            <td><span class="badge badge--published">Опубліковано</span></td>
+            <td><span class="admin-seats">9/16</span></td>
+          </tr>
+          <tr>
+            <td class="admin-nowrap">29.08.2026</td>
+            <td><strong>PRP-терапія в ортопедії</strong></td>
+            <td><span class="badge badge--active">Активний</span></td>
+            <td><span class="admin-seats admin-seats--over">7/6</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="ds-hint">.admin-table: поверхня --iprm-white, шапка --iprm-table-head-bg (окремий токен: у тёмній темі --apple-section-bg дорівнює поверхні картки, і шапка зникала) / .admin-seats: нейтральна плашка лічильника, --over вмикає червону</p>
 
     <h3 class="ds-section-heading">Todo List</h3>
     <div class="ds-demo">

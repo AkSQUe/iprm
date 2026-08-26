@@ -180,8 +180,11 @@
   border: 1px solid var(--iprm-border);
 }
 
+/* Той самий токен, що в admin-apple.css: обидва файли оголошують
+   `.admin-table th`, і розбіжність значень означала б, що вигляд шапки
+   залежить від того, чи підключено другий файл (на /design-system -- ні). */
 .admin-table th {
-  background: var(--iprm-card-bg);
+  background: var(--iprm-table-head-bg);
   padding: 12px 16px;
   font-size: 12px;
   font-weight: 600;
@@ -546,9 +549,14 @@
 
 /* ========== XLSX IMPORT/EXPORT ========== */
 
+/* Перенос обов'язковий: у різних сторінок у цій панелі різна кількість
+   кнопок (дві на реєстраціях, три на розкладі), і nowrap-ряд з трьох
+   виштовхував сторінку за екран на 200px -- горизонтальний скрол на всій
+   адмінці з телефона. */
 .admin-xlsx-toolbar {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -1006,9 +1014,18 @@
 /* Місце тримає лише оплачена реєстрація (services.seating). Перевищення
    пулу -- коли оплата прийшла після того, як місця вже розібрали, --
    червона плашка: менеджер має побачити це у списку, а не в залі. */
+/* Лічильник місць. Був голим текстом і губився серед сусідніх чисел
+   (реєстрацій, номерів) -- при тому що це головна цифра рядка: за нею
+   вирішують, чи відкривати набір. Плашка нейтральна: зайнятість -- факт,
+   а не дія і не попередження; попередження вмикає модифікатор --over. */
 .admin-seats {
   display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-neutral-bg);
+  color: var(--iprm-neutral-text);
   font-variant-numeric: tabular-nums;
+  font-weight: 600;
   white-space: nowrap;
 }
 

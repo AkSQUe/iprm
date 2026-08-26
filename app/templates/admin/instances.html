@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-instances.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block extra_scripts %}
@@ -13,7 +14,7 @@
 <script src="{{ url_for('static', filename='js/admin-status-select.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -102,32 +103,61 @@
 
   {% if instances %}
   <div class="admin-table-wrap">
-  <table class="admin-table admin-table--wide">
+  {# Ширини колонок задані явно (page-admin-instances.css). Без них браузер
+     роздає місце за вмістом, і на 1440px вісім колонок просили 1136 при
+     доступних 1078: колонка дій обрізалась контейнером прокрутки. #}
+  <table class="admin-table admin-table--fixed admin-instances-table">
+    <colgroup>
+      <col class="admin-instances-col--date">
+      <col class="admin-instances-col--course">
+      <col class="admin-instances-col--status">
+      <col class="admin-instances-col--regs">
+      <col class="admin-instances-col--seats">
+      <col class="admin-instances-col--place">
+      <col class="admin-instances-col--actions">
+    </colgroup>
     <thead>
       <tr>
         <th>Дата</th>
         <th>Курс</th>
-        <th>Формат</th>
         <th>Статус</th>
         <th>Реєстрацій</th>
         <th>Місця</th>
-        <th>Локація</th>
+        {# Формат і адреса відповідають на одне питання -- куди їхати. Окрема
+           колонка «Формат» коштувала 97px і в половині рядків дублювала те,
+           що вже видно з адреси: онлайн-проведення місця не має. #}
+        <th class="admin-instances-place">Місце</th>
         <th>Дії</th>
       </tr>
     </thead>
     <tbody>
       {% for inst in instances %}
       <tr>
-        <td>{{ inst.start_date.strftime('%d.%m.%Y %H:%M') if inst.start_date else '–' }}</td>
+        {# Час друкуємо, лише коли він заданий: у більшості проведень його
+           немає, і «00:00» у кожному рядку -- шум. Другим поверхом, а не в
+           рядок: у колонці на 115px дата з часом не вміщається, а ширшати
+           заради часу в меншості рядків -- забирати місце в назви курсу. #}
+        <td class="admin-nowrap">
+          {% if inst.start_date %}
+            {{ inst.start_date.strftime('%d.%m.%Y') }}
+            {% if inst.start_date.hour or inst.start_date.minute %}
+            <small class="admin-text-muted admin-instances-time">{{ inst.start_date.strftime('%H:%M') }}</small>
+            {% endif %}
+          {% else %}&ndash;{% endif %}
+        </td>
+        {# Назва -- максимум два рядки: однорядкове обрізання зробило б два
+           проведення одного курсу однаковими рядками, а вільний перенос гнав
+           назву в чотири поверхи й розганяв висоту всієї таблиці. Повна
+           назва лишається в title. #}
         <td>
           {% if inst.course %}
           <a href="{{ url_for('admin.instance_registrations', instance_id=inst.id) }}"
-             title="Зареєстровані на це проведення"><strong>{{ inst.course.title }}</strong></a>
+             class="admin-clamp-2"
+             title="{{ inst.course.title }} — зареєстровані на це проведення"><strong>{{ inst.course.title }}</strong></a>
           {% else %}
-          <strong>–</strong>
+          <strong>&ndash;</strong>
           {% endif %}
         </td>
-        <td>{{ inst.format_label or '–' }}</td>
         <td>
           <form method="POST"
                 action="{{ url_for('admin.instance_status_update', instance_id=inst.id) }}"
@@ -162,15 +192,51 @@
           <span class="admin-seats" title="Місткість не задана">{{ occupied }}/&infin;</span>
           {% endif %}
         </td>
-        <td>{{ inst.location or '–' }}</td>
+        {# Формат -- МІТКА (той самий .badge--format, що на публічній картці
+           курсу), адреса під ним -- одним рядком із повним текстом у title:
+           «м. Харків, вул. Сковороди, 80, ДУ ...» розганяв рядок на три
+           поверхи, а читають його повністю раз на розбір. #}
+        <td class="admin-instances-place">
+          {% if inst.format_label %}
+          <span class="badge badge--format">{{ inst.format_label }}</span>
+          {% endif %}
+          {% if inst.location %}
+          <span class="admin-truncate admin-text-muted" title="{{ inst.location }}">{{ inst.location }}</span>
+          {% elif not inst.format_label %}
+          <span class="admin-text-muted">&ndash;</span>
+          {% endif %}
+        </td>
         <td>
+          {# Часта дія -- одразу, решта під «...»: три кнопки поспіль роздували
+             колонку до 147px, найширшої після назви курсу. Видалення до того ж
+             незворотне -- йому не місце під випадковим дотиком у ряду сусідів. #}
           <div class="admin-table__actions">
-            <a href="{{ url_for('admin.instance_edit', instance_id=inst.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('edit', label='Редагувати') }}</a>
-            <a href="{{ url_for('admin.instance_materials', instance_id=inst.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Витратні матеріали">{{ icon('widgets', label='Матеріали') }}</a>
-            <form method="POST" action="{{ url_for('admin.instance_delete', instance_id=inst.id) }}" data-confirm="Видалити проведення?" data-confirm-ok="Видалити проведення" data-confirm-danger>
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">{{ icon('delete', label='Видалити') }}</button>
-            </form>
+            <a href="{{ url_for('admin.instance_edit', instance_id=inst.id) }}"
+               class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+               title="Редагувати">{{ icon('edit', label='Редагувати') }}</a>
+            <details class="admin-actions-menu">
+              <summary class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+                       title="Ще дії" aria-label="Ще дії">
+                {{ icon('more_vert') }}
+              </summary>
+              <div class="admin-actions-menu__items">
+                <a href="{{ url_for('admin.instance_registrations', instance_id=inst.id) }}"
+                   class="admin-actions-menu__item">
+                  {{ icon('how_to_reg') }} Реєстрації
+                </a>
+                <a href="{{ url_for('admin.instance_materials', instance_id=inst.id) }}"
+                   class="admin-actions-menu__item">
+                  {{ icon('widgets') }} Витратні матеріали
+                </a>
+                <form method="POST" action="{{ url_for('admin.instance_delete', instance_id=inst.id) }}"
+                      data-confirm="Видалити проведення?" data-confirm-ok="Видалити проведення" data-confirm-danger>
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--danger">
+                    {{ icon('delete') }} Видалити
+                  </button>
+                </form>
+              </div>
+            </details>
           </div>
         </td>
       </tr>
@@ -179,28 +245,26 @@
   </table>
   </div>
 
-  {% if pagination and pagination.pages > 1 %}
-  <nav class="admin-pagination">
-    {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.instances_list', page=pagination.prev_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
-    {% endif %}
-    <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }} ({{ pagination.total }})</span>
-    {% if pagination.has_next %}
-    <a href="{{ url_for('admin.instances_list', page=pagination.next_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
-    {% endif %}
-  </nav>
-  {% endif %}
+  {{ pager('admin.instances_list', pagination, filter_args) }}
   {% elif pagination and pagination.total %}
   <div class="admin-empty">
     {{ icon('event', cls='admin-empty__icon') }}
     <h3 class="admin-empty__title">На цій сторінці немає проведень</h3>
     <p><a href="{{ url_for('admin.instances_list', **filter_args) }}">Повернутись до першої сторінки</a></p>
   </div>
+  {% elif filter_args %}
+  {# Порожньо через зріз, а не через порожню базу: пропонувати «додайте перше
+     проведення» тут -- брехати. Проведення є, їх не видно за фільтром. #}
+  <div class="admin-empty">
+    {{ icon('search', cls='admin-empty__icon') }}
+    <h3 class="admin-empty__title">За цим зрізом проведень немає</h3>
+    <p>Спробуйте інший фільтр або <a href="{{ url_for('admin.instances_list') }}">подивіться весь розклад</a></p>
+  </div>
   {% else %}
   <div class="admin-empty">
     {{ icon('event', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">Проведень не знайдено</h3>
-    <p>Додайте перше проведення натиснувши кнопку вище</p>
+    <h3 class="admin-empty__title">Проведень ще немає</h3>
+    <p>Додайте перше проведення кнопкою «Додати проведення» вгорі</p>
   </div>
   {% endif %}
 
