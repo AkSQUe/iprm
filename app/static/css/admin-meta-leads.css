@@ -27,6 +27,9 @@
   font-size: 0.9375rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  /* «1 год 52 хв» у вузькій колонці ламалось на два поверхи, і година
+     відривалась від хвилин -- саме те число, заради якого стоїть колонка. */
+  white-space: nowrap;
 }
 
 .ml-wait__note {

@@ -6,7 +6,6 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-meta-leads.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
@@ -88,10 +87,10 @@
         <tbody>
           {% for lead in leads %}
           <tr>
-            <td class="ml-nowrap">{{ lead.created_time.strftime('%d.%m.%Y %H:%M') if lead.created_time else '–' }}</td>
+            <td class="admin-nowrap">{{ lead.created_time.strftime('%d.%m.%Y %H:%M') if lead.created_time else '–' }}</td>
             <td>
               {{ lead.campaign_name or lead.campaign_id or '–' }}
-              <div class="ml-muted">{{ lead.form_name or lead.form_id or '–' }}</div>
+              <div class="admin-text-muted">{{ lead.form_name or lead.form_id or '–' }}</div>
             </td>
             <td>{{ lead.platform_label }}</td>
             <td>
@@ -99,7 +98,7 @@
               {% if lead.is_repeat %}<span class="badge badge--published">повторно</span>{% endif %}
               {% if lead.is_test %}<span class="badge badge--draft">тест</span>{% endif %}
             </td>
-            <td class="ml-nowrap">{{ lead.first_touch_at.strftime('%d.%m %H:%M') if lead.first_touch_at else 'ще не було' }}</td>
+            <td class="admin-nowrap">{{ lead.first_touch_at.strftime('%d.%m %H:%M') if lead.first_touch_at else 'ще не було' }}</td>
             <td><a href="{{ url_for('admin.meta_lead_detail', lead_id=lead.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Відкрити</a></td>
           </tr>
           {% endfor %}
@@ -120,7 +119,7 @@
         <tbody>
           {% for reg in registrations %}
           <tr>
-            <td class="ml-nowrap">{{ reg.created_at.strftime('%d.%m.%Y') if reg.created_at else '–' }}</td>
+            <td class="admin-nowrap">{{ reg.created_at.strftime('%d.%m.%Y') if reg.created_at else '–' }}</td>
             <td>{{ reg.target_title or '–' }}</td>
             <td>{{ reg.status_label }}</td>
             <td>{{ reg.payment_status_label }}</td>
@@ -143,7 +142,7 @@
         <tbody>
           {% for item in enrollments %}
           <tr>
-            <td class="ml-nowrap">{{ item.order_id }}</td>
+            <td class="admin-nowrap">{{ item.order_id }}</td>
             <td>{{ item.course.effective_title if item.course else '–' }}</td>
             <td>{{ item.payment_status }}</td>
             <td>{{ item.payment_amount or '–' }}</td>
