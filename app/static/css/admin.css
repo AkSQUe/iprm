@@ -251,6 +251,33 @@
   opacity: 1;
 }
 
+/* Серверне сортування колонки (макрос `sort_th` у _filter_bar.html).
+   Знак навмисно той самий, що в клієнтського сорту вище: менеджер не має
+   вчити дві мови стрілок для однієї й тієї самої дії. Різниця лише в тому,
+   що це посилання -- порядок переживає гортання сторінок і експорт. */
+.admin-th-sort {
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.admin-th-sort::after {
+  content: '↕';
+  margin-left: 6px;
+  font-size: 11px;
+  opacity: 0.35;
+}
+
+.admin-th-sort:hover,
+.admin-th-sort.is-active {
+  color: var(--iprm-accent);
+}
+
+.admin-th-sort.is-active::after {
+  content: '↓';
+  opacity: 1;
+}
+
 /* ========== Прогрес фонової генерації сертифікатів ========== */
 .cert-progress {
   max-width: 560px;
@@ -1002,6 +1029,25 @@
   color: var(--iprm-text-light);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+/* Картка-посилання. Число над списком мусить вести на власний зріз: інакше
+   «Чекають понад годину: 17» лишається числом, до якого немає дороги --
+   менеджер бачить проблему й не має способу побачити ці 17 рядків. */
+a.admin-stat-card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+a.admin-stat-card:hover .admin-stat-card__label,
+a.admin-stat-card:focus-visible .admin-stat-card__label {
+  color: var(--iprm-accent);
+}
+
+a.admin-stat-card:focus-visible {
+  outline: 2px solid var(--iprm-accent);
+  outline-offset: 2px;
 }
 
 .admin-stat-card--success .admin-stat-card__value { color: var(--iprm-badge-active-text); }

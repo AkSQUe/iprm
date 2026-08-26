@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-meta-leads.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, sort_th %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -34,27 +34,29 @@
 
   {% include 'partials/flash_messages.html' %}
 
+  {# Кожна картка -- посилання на власний зріз: «Чекають понад годину: 17»
+     без дороги до цих 17 рядків лишалося б числом, на яке нічого не вдієш. #}
   <div class="admin-stat-cards ml-stats">
-    <div class="admin-stat-card">
+    <a class="admin-stat-card" href="{{ summary_links.total }}">
       <span class="admin-stat-card__value">{{ summary.total }}</span>
       <span class="admin-stat-card__label">Усього заявок</span>
-    </div>
-    <div class="admin-stat-card admin-stat-card--accent">
+    </a>
+    <a class="admin-stat-card admin-stat-card--accent" href="{{ summary_links.new }}">
       <span class="admin-stat-card__value">{{ summary.new }}</span>
       <span class="admin-stat-card__label">Нових</span>
-    </div>
-    <div class="admin-stat-card">
+    </a>
+    <a class="admin-stat-card" href="{{ summary_links.in_work }}">
       <span class="admin-stat-card__value">{{ summary.in_work }}</span>
       <span class="admin-stat-card__label">У роботі</span>
-    </div>
-    <div class="admin-stat-card admin-stat-card--danger">
+    </a>
+    <a class="admin-stat-card admin-stat-card--danger" href="{{ summary_links.late }}">
       <span class="admin-stat-card__value">{{ summary.late }}</span>
       <span class="admin-stat-card__label">Чекають понад годину</span>
-    </div>
-    <div class="admin-stat-card admin-stat-card--warning">
+    </a>
+    <a class="admin-stat-card admin-stat-card--warning" href="{{ summary_links.attention }}">
       <span class="admin-stat-card__value">{{ summary.attention }}</span>
       <span class="admin-stat-card__label">Потребують уваги</span>
-    </div>
+    </a>
   </div>
 
   {{ filter_bar(
@@ -67,17 +69,20 @@
          {'name': 'form_id', 'label': 'Форма', 'placeholder': 'Усі форми', 'options': form_options},
          {'name': 'platform', 'label': 'Платформа', 'placeholder': 'Усі платформи', 'options': platform_options},
          {'name': 'attention', 'label': 'Потребує уваги', 'placeholder': 'Байдуже', 'options': attention_options},
+         {'name': 'wait', 'label': 'Очікування', 'placeholder': 'Будь-яке', 'options': wait_options},
          {'name': 'test', 'label': 'Тестові заявки', 'placeholder': 'Приховані', 'options': test_options},
          {'name': 'date_from', 'label': 'Заявки з', 'type': 'date'},
          {'name': 'date_to', 'label': 'Заявки по', 'type': 'date'},
          {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
        ],
        export_endpoint='admin.meta_leads_export',
+       base_args={'sort': filters.sort} if filters.sort else {},
      ) }}
 
   {% if summary.test %}
   <div class="ml-test-bar">
-    <span>Тестових заявок у базі: <strong>{{ summary.test }}</strong>. За замовчуванням вони сховані.</span>
+    <span>Тестових заявок у базі: <strong>{{ summary.test }}</strong>. За замовчуванням вони сховані &mdash;
+      <a href="{{ summary_links.test }}">показати їх</a>.</span>
     <form method="POST" action="{{ url_for('admin.meta_leads_delete_test') }}"
           data-confirm="Видалити всі тестові заявки? Сирі події лишаться в черзі, контакти прибираються лише ті, що створені саме цими заявками."
           data-confirm-ok="Видалити тестові" data-confirm-danger>
@@ -90,15 +95,21 @@
   {% if leads %}
   <div class="admin-table-wrap">
   <table class="admin-table">
+    {# Сортування СЕРВЕРНЕ, тому `data-no-sort` стоїть на всіх заголовках:
+       клієнтський `admin-table-sort.js` переставив би лише 50 рядків
+       поточної сторінки, та ще й за текстом («10 хв» опинялось вище за
+       «2 год»). Одна обіцянка на колонку, і та виконувана. #}
     <thead>
       <tr>
-        <th>Очікування</th>
-        <th>Заявка</th>
-        <th>Контакти</th>
-        <th>Джерело</th>
-        <th>Збіг</th>
-        <th>Статус</th>
-        <th>Дії</th>
+        {{ sort_th('Очікування', 'wait', 'admin.meta_leads_list', filters.sort,
+                   filter_args, 'Спершу ті, до кого ще не дійшли руки') }}
+        {{ sort_th('Заявка', 'oldest', 'admin.meta_leads_list', filters.sort,
+                   filter_args, 'Найстаріші заявки зверху') }}
+        <th class="admin-text-left" data-no-sort>Контакти</th>
+        <th class="admin-text-left" data-no-sort>Джерело</th>
+        <th class="admin-text-left" data-no-sort>Збіг</th>
+        <th data-no-sort>Статус</th>
+        <th data-no-sort>Дії</th>
       </tr>
     </thead>
     <tbody>
@@ -113,30 +124,36 @@
           </span>
         </td>
         <td>
-          <a href="{{ url_for('admin.meta_lead_detail', lead_id=lead.id) }}" class="ml-lead-name">{{ lead.display_name }}</a>
-          <div class="ml-muted">{{ lead.created_time.strftime('%d.%m.%Y %H:%M') if lead.created_time else '–' }}</div>
+          <a href="{{ url_for('admin.meta_lead_detail', lead_id=lead.id) }}">{{ lead.display_name }}</a>
+          <div class="admin-text-muted admin-nowrap">{{ lead.created_time | kyiv or '–' }}</div>
           {% if lead.is_test %}<span class="badge badge--draft">тест</span>{% endif %}
           {% if lead.is_repeat %}<span class="badge badge--published">повторно</span>{% endif %}
           {% if lead.needs_attention %}<span class="badge badge--warning">увага</span>{% endif %}
         </td>
-        <td>
-          <div>{{ lead.email or '–' }}</div>
-          <div class="ml-muted">{{ lead.phone_e164 or lead.phone_raw or '–' }}</div>
+        {# Пошта й телефон -- посилання, а не текст: єдина дія, заради якої
+           сюди заходять, це подзвонити, і вона не має починатися з
+           виділення номера мишею. #}
+        {% set phone = lead.phone_e164 or lead.phone_raw %}
+        <td class="admin-text-left">
+          <div>{% if lead.email %}<a href="mailto:{{ lead.email }}">{{ lead.email }}</a>{% else %}–{% endif %}</div>
+          <div class="admin-text-muted">
+            {%- if phone %}<a href="tel:{{ phone | replace(' ', '') }}">{{ phone }}</a>{% else %}–{% endif -%}
+          </div>
         </td>
-        <td>
+        <td class="admin-text-left">
           <div>{{ lead.campaign_name or lead.campaign_id or '–' }}</div>
-          <div class="ml-muted">{{ lead.form_name or lead.form_id or '–' }} · {{ lead.platform_label }}</div>
+          <div class="admin-text-muted">{{ lead.form_name or lead.form_id or '–' }} · {{ lead.platform_label }}</div>
         </td>
-        <td>
+        <td class="admin-text-left">
           {{ lead.match_label }}
           {% if lead.user_id %}
-          <div class="ml-muted"><a href="{{ url_for('admin.user_detail', user_id=lead.user_id) }}">контакт #{{ lead.user_id }}</a></div>
+          <div class="admin-text-muted"><a href="{{ url_for('admin.user_detail', user_id=lead.user_id) }}">контакт #{{ lead.user_id }}</a></div>
           {% endif %}
         </td>
         <td><span class="badge badge--{{ status_badge.get(lead.status, 'pending') }}">{{ lead.status_label }}</span></td>
         <td>
           <div class="admin-table__actions">
-            <a href="{{ url_for('admin.meta_lead_detail', lead_id=lead.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('edit', label='Відкрити') }}</a>
+            <a href="{{ url_for('admin.meta_lead_detail', lead_id=lead.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon">{{ icon('edit', label='Відкрити') }}</a>
           </div>
         </td>
       </tr>

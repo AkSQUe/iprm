@@ -74,6 +74,19 @@ def per_page_arg(default=LIST_PER_PAGE):
     return int(raw) if raw else default
 
 
+def sort_arg(allowed, default=''):
+    """Ключ сортування зі списку дозволених ('' -- типовий порядок сторінки).
+
+    Сортування СЕРВЕРНЕ і навмисно живе поруч із фільтрами: клієнтський
+    `admin-table-sort.js` переставляє лише рядки поточної сторінки, тож на
+    пагінованому реєстрі «згори найдовше очікування» він обіцяє те, чого не
+    робить. Ключ -- назва порядку, а не колонка з `ORDER BY`: сторінка сама
+    вирішує, що саме означає її «найдовше», і жодне значення з URL не
+    потрапляє в запит.
+    """
+    return choice_arg('sort', allowed, default)
+
+
 # Пошуковий рядок довший за це -- завідомо не запит людини, а сміття з
 # автопідстановки чи чужого скрипта; ILIKE по кількох колонках від нього лише
 # страждає.
@@ -169,6 +182,30 @@ def filter_args(filters):
     """Непорожні фільтри для URL: пілюлі, пагінація й експорт мають вести на
     той самий зріз, тож набір параметрів у них один."""
     return {key: value for key, value in filters.items() if value}
+
+
+def export_query(query, back_endpoint, **back_args):
+    """Матеріалізувати зріз під експорт, звіривши стелю ДО вибірки.
+
+    Повертає пару (rows, refusal): рівно одне з двох не None. Сенс саме в
+    порядку дій -- `xlsx_export` міряє вже готовий список, тож зріз на сто
+    тисяч рядків спершу піднімався б у пам'ять цілком (з усіма приєднаними
+    об'єктами) і лише потім отримував відмову. `COUNT(*)` коштує один запит
+    і не тримає нічого.
+
+        rows, refusal = _listing.export_query(q, 'admin.users')
+        if refusal:
+            return refusal
+    """
+    total = query.order_by(None).count()
+    if total > MAX_EXPORT_ROWS:
+        flash(
+            f'У зрізі {total} рядків – це більше за ліміт {MAX_EXPORT_ROWS}. '
+            'Звузьте фільтр (наприклад, діапазоном дат) і повторіть експорт.',
+            'error',
+        )
+        return None, redirect(url_for(back_endpoint, **back_args))
+    return query.all(), None
 
 
 def xlsx_download(buf, basename):

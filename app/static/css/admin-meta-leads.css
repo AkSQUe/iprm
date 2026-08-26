@@ -134,18 +134,10 @@
   margin-bottom: 24px;
 }
 
-.ml-muted {
-  font-size: 0.8125rem;
-  color: var(--apple-gray);
-}
-
-.ml-nowrap {
-  white-space: nowrap;
-}
-
-.ml-lead-name {
-  font-weight: 600;
-}
+/* .ml-muted, .ml-nowrap і .ml-lead-name звідси прибрано: перші дві були
+   копіями .admin-text-muted й .admin-nowrap зі спільної адмінки, а третя
+   перебивала вагою 600 те, що .admin-table a вже задає для всіх реєстрів.
+   Через них user_detail.html тягнув увесь цей файл заради двох правил. */
 
 .ml-test-bar {
   display: flex;

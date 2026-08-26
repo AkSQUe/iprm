@@ -74,6 +74,7 @@
          {'name': 'status', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': status_options},
          {'name': 'source', 'label': 'Джерело', 'placeholder': 'Усі джерела', 'options': source_options},
        ],
+       export_endpoint='admin.meta_lead_events_export',
      ) }}
 
   {% if events %}
@@ -94,7 +95,7 @@
     <tbody>
       {% for event in events %}
       <tr>
-        <td class="ml-nowrap">{{ event.received_at.strftime('%d.%m.%Y %H:%M:%S') if event.received_at else '–' }}</td>
+        <td class="admin-nowrap">{{ event.received_at | kyiv('%d.%m.%Y %H:%M:%S') or '–' }}</td>
         <td><code>{{ event.leadgen_id }}</code></td>
         <td>{{ source_labels.get(event.source, event.source) }}</td>
         <td>
@@ -107,12 +108,12 @@
           {% endif %}
         </td>
         <td>{{ event.attempts }} / {{ max_attempts }}</td>
-        <td class="ml-nowrap">{{ event.next_retry_at.strftime('%d.%m %H:%M') if event.next_retry_at else '–' }}</td>
+        <td class="admin-nowrap">{{ event.next_retry_at | kyiv('%d.%m %H:%M') or '–' }}</td>
         <td>
           {% if event.lead_id %}
             <a href="{{ url_for('admin.meta_lead_detail', lead_id=event.lead_id) }}">#{{ event.lead_id }}</a>
           {% else %}
-            <span class="ml-muted">–</span>
+            <span class="admin-text-muted">–</span>
           {% endif %}
         </td>
         <td>
@@ -124,7 +125,7 @@
               <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('refresh', label='Повторити') }}</button>
             </form>
             {% else %}
-            <span class="ml-muted">–</span>
+            <span class="admin-text-muted">–</span>
             {% endif %}
           </div>
         </td>
@@ -138,8 +139,13 @@
   {% else %}
   <div class="admin-empty">
     {{ icon('inbox', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">Подій немає</h3>
-    <p>Надішліть тестову подію з <a href="{{ url_for('admin.meta_leads_settings') }}">налаштувань</a>, щоб перевірити доставку.</p>
+    {% if filter_args %}
+      <h3 class="admin-empty__title">Нічого не знайдено</h3>
+      <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.meta_lead_events') }}">скинути їх</a></p>
+    {% else %}
+      <h3 class="admin-empty__title">Подій немає</h3>
+      <p>Надішліть тестову подію з <a href="{{ url_for('admin.meta_leads_settings') }}">налаштувань</a>, щоб перевірити доставку.</p>
+    {% endif %}
   </div>
   {% endif %}
 

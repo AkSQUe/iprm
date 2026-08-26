@@ -27,7 +27,7 @@
         {% if lead.is_test %}<span class="badge badge--draft">тестова</span>{% endif %}
         {% if lead.is_repeat %}<span class="badge badge--published">повторне звернення</span>{% endif %}
         {% if lead.needs_attention %}<span class="badge badge--warning">потребує уваги</span>{% endif %}
-        Заявка від {{ lead.created_time.strftime('%d.%m.%Y %H:%M') if lead.created_time else '–' }}
+        Заявка від {{ lead.created_time | kyiv or '–' }}
       </p>
     </div>
     <div class="admin-hero__actions">
@@ -47,7 +47,7 @@
     <div class="ml-wait-panel__label">
       {% if lead.first_touch_at %}
         чекала до першої реакції
-        ({{ lead.first_touch_at.strftime('%d.%m.%Y %H:%M') }}{% if lead.toucher %}, {{ lead.toucher.email }}{% endif %})
+        ({{ lead.first_touch_at | kyiv }}{% if lead.toucher %}, {{ lead.toucher.email }}{% endif %})
       {% else %}
         чекає першої реакції. Переведіть заявку у «В роботі», щойно взяли її
       {% endif %}
@@ -74,18 +74,23 @@
           <label>Повне ім'я з форми</label>
           <div class="form-input admin-field-readonly">{{ lead.full_name or '–' }}</div>
         </div>
+        {# Пошта й телефон клікабельні: картку відкривають, щоб подзвонити. #}
         <div class="form-group">
           <label>Email</label>
-          <div class="form-input admin-field-readonly">{{ lead.email or '–' }}</div>
+          <div class="form-input admin-field-readonly">
+            {%- if lead.email %}<a href="mailto:{{ lead.email }}">{{ lead.email }}</a>{% else %}–{% endif -%}
+          </div>
         </div>
         <div class="form-group">
           <label>Телефон (як ввели)</label>
-          <div class="form-input admin-field-readonly">{{ lead.phone_raw or '–' }}</div>
+          <div class="form-input admin-field-readonly">
+            {%- if lead.phone_raw %}<a href="tel:{{ (lead.phone_e164 or lead.phone_raw) | replace(' ', '') }}">{{ lead.phone_raw }}</a>{% else %}–{% endif -%}
+          </div>
         </div>
         <div class="form-group">
           <label>Телефон канонічний</label>
           <div class="form-input admin-field-readonly">
-            {{ lead.phone_e164 or 'не розпізнано' }}
+            {%- if lead.phone_e164 %}<a href="tel:{{ lead.phone_e164 }}">{{ lead.phone_e164 }}</a>{% else %}не розпізнано{% endif -%}
           </div>
         </div>
         {% for name, value in custom_answers.items() %}
@@ -225,7 +230,7 @@
         <tbody>
           {% for event in events %}
           <tr>
-            <td>{{ event.received_at.strftime('%d.%m.%Y %H:%M:%S') if event.received_at else '–' }}</td>
+            <td>{{ event.received_at | kyiv('%d.%m.%Y %H:%M:%S') or '–' }}</td>
             <td>{{ event.source }}</td>
             <td><span class="badge badge--{{ event_status_badge.get(event.status, 'pending') }}">{{ event.status_label }}</span></td>
             <td>{{ event.attempts }} / {{ max_attempts }}</td>

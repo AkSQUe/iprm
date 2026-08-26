@@ -22,7 +22,6 @@ from datetime import datetime, timedelta, timezone
 import requests
 from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
-from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import mask_secret, save_integration_settings, try_commit
@@ -122,9 +121,40 @@ _TEST_OPTIONS = {'with': 'Разом із тестовими', 'only': 'Лише
 
 _PLATFORM_OPTIONS = {'fb': 'Facebook', 'ig': 'Instagram'}
 
+# Зрізи годинника очікування. `late` -- рівно той, що рахує картка над
+# списком: без цього фільтра її число лишалось би тупиковим, бо ані
+# сортування, ані інший фільтр того самого набору рядків не давали.
+_WAIT_OPTIONS = {
+    'late': 'Чекають понад годину',
+    'waiting': 'Ще без реакції',
+    'done': 'Реакція вже була',
+}
+
+# Серверні порядки реєстру. Типовий (порожній ключ) -- найновіші зверху.
+_SORT_OPTIONS = ('wait', 'oldest')
+
+
+def _late_clause():
+    """SQL-умова «чекає першої реакції понад годину».
+
+    Одна на всіх: і лічильник над списком, і фільтр `wait=late`. Дві копії
+    розійшлися б на першій же правці порога, і картка почала б обіцяти зріз,
+    якого фільтр не дає.
+    """
+    return db.and_(
+        MetaLead.first_touch_at.is_(None),
+        MetaLead.status == MetaLead.STATUS_NEW,
+        MetaLead.created_time < utcnow() - timedelta(seconds=WAIT_LATE_SECONDS),
+    )
+
 
 def _lead_filters():
-    """Фільтри реєстру -- спільні для сторінки й експорту."""
+    """Фільтри реєстру -- спільні для сторінки й експорту.
+
+    `sort` лежить тут же, хоч і не звужує зріз: пагінація й експорт беруть
+    параметри саме звідси, а порядок, що губиться на другій сторінці або в
+    файлі, гірший за його відсутність.
+    """
     return {
         'q': _listing.text_arg('q'),
         'status': _listing.choice_arg('status', dict(MetaLead.STATUSES)),
@@ -132,16 +162,24 @@ def _lead_filters():
         'campaign_id': _listing.text_arg('campaign_id'),
         'platform': _listing.choice_arg('platform', _PLATFORM_OPTIONS),
         'attention': _listing.choice_arg('attention', _ATTENTION_OPTIONS),
+        'wait': _listing.choice_arg('wait', _WAIT_OPTIONS),
         'test': _listing.choice_arg('test', _TEST_OPTIONS),
         'date_from': _listing.date_arg('date_from'),
         'date_to': _listing.date_arg('date_to'),
         'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
+        'sort': _listing.sort_arg(_SORT_OPTIONS),
     }
 
 
 def _leads_query(filters):
-    """Заявки під фільтри, найновіші першими. М'яко видалені не показуються."""
-    query = MetaLead.alive().options(joinedload(MetaLead.user))
+    """Заявки під фільтри й порядок. М'яко видалені не показуються.
+
+    Контакт навмисно НЕ підвантажується: реєстр друкує лише `user_id`
+    (посилання «контакт #N»), а повна картка користувача потрібна тільки в
+    `meta_lead_detail`, який бере заявку окремим запитом. JOIN сюди коштував
+    би гідрації `User` на кожен рядок сторінки -- і на весь зріз експорту.
+    """
+    query = MetaLead.alive()
 
     query = _listing.apply_search(query, filters['q'], [
         MetaLead.full_name, MetaLead.first_name, MetaLead.last_name,
@@ -160,6 +198,13 @@ def _leads_query(filters):
         query = query.filter(
             MetaLead.needs_attention.is_(filters['attention'] == 'yes')
         )
+    if filters['wait'] == 'late':
+        query = query.filter(_late_clause())
+    elif filters['wait'] == 'waiting':
+        query = query.filter(MetaLead.first_touch_at.is_(None),
+                             MetaLead.status == MetaLead.STATUS_NEW)
+    elif filters['wait'] == 'done':
+        query = query.filter(MetaLead.first_touch_at.isnot(None))
     if filters['test'] == 'only':
         query = query.filter(MetaLead.is_test.is_(True))
     elif filters['test'] != 'with':
@@ -167,47 +212,83 @@ def _leads_query(filters):
     query = _listing.apply_date_range(
         query, MetaLead.created_time, filters['date_from'], filters['date_to'],
     )
+
+    if filters['sort'] == 'wait':
+        # Спершу ті, до кого ще не дійшли руки, і серед них найстаріші --
+        # рівно те питання, яке ставлять до реєстру щоранку. Тривалість
+        # очікування вже закритих заявок сюди не мішаємо: це історія, і
+        # піднімати її нагору означало б ховати живу роботу під звітом.
+        return query.order_by(MetaLead.first_touch_at.is_(None).desc(),
+                              MetaLead.created_time.asc())
+    if filters['sort'] == 'oldest':
+        return query.order_by(MetaLead.created_time.asc())
     return query.order_by(MetaLead.created_time.desc())
 
 
-def _source_options(column_id, column_name):
-    """Пари (id, назва) для селектів «форма» / «кампанія».
+def _source_options():
+    """Пари (id, назва) для селектів «форма» і «кампанія».
 
     Беремо з наявних заявок, а не з Graph API: сторінка має відкриватись і
     при мертвому токені, а перелік у селекті потрібен рівно той, за яким у
     базі справді є що показати.
+
+    Обидва селекти -- одним проходом: два окремі DISTINCT читали ту саму
+    таблицю двічі за рендер, а різних пар «кампанія + форма» у заявках усе
+    одно на порядки менше, ніж рядків.
     """
     rows = (
-        db.session.query(column_id, column_name)
-        .filter(MetaLead.deleted_at.is_(None), column_id.isnot(None))
+        db.session.query(
+            MetaLead.form_id, MetaLead.form_name,
+            MetaLead.campaign_id, MetaLead.campaign_name,
+        )
+        .filter(MetaLead.deleted_at.is_(None))
         .distinct()
         .all()
     )
-    seen = {}
-    for value, label in rows:
-        seen.setdefault(value, label or value)
-    return sorted(seen.items(), key=lambda pair: (pair[1] or '').lower())
+    forms, campaigns = {}, {}
+    for form_id, form_name, campaign_id, campaign_name in rows:
+        if form_id:
+            forms.setdefault(form_id, form_name or form_id)
+        if campaign_id:
+            campaigns.setdefault(campaign_id, campaign_name or campaign_id)
+
+    def _sorted(pairs):
+        return sorted(pairs.items(), key=lambda pair: (pair[1] or '').lower())
+
+    return _sorted(forms), _sorted(campaigns)
 
 
 def _lead_summary():
     """Лічильники над реєстром: скільки чекає і скільки вже прострочено.
 
-    Прострочені рахуються тим самим порогом, що фарбує колонку -- інакше
-    цифра над списком і кольори в ньому розповідали б різні історії.
+    Прострочені рахуються тим самим виразом, що живить фільтр `wait=late` --
+    інакше цифра над списком і зріз, у який вона веде, розповідали б різні
+    історії.
+
+    Один прохід замість шести COUNT(*): заявки накопичуються без стелі, і
+    кожен рендер читав таблицю шість разів. `count(case(...))` рахує лише
+    непорожні значення, тож працює і на SQLite -- той самий патерн, що в
+    `routes_online_orders` і `routes_registrations`.
     """
-    base = MetaLead.alive().filter(MetaLead.is_test.is_(False))
-    late_before = utcnow() - timedelta(seconds=WAIT_LATE_SECONDS)
+    real = MetaLead.is_test.is_(False)
+    counted = db.session.query(
+        db.func.count(db.case((real, 1))),
+        db.func.count(db.case(
+            (db.and_(real, MetaLead.status == MetaLead.STATUS_NEW), 1))),
+        db.func.count(db.case(
+            (db.and_(real, MetaLead.status == MetaLead.STATUS_IN_WORK), 1))),
+        db.func.count(db.case(
+            (db.and_(real, MetaLead.needs_attention.is_(True)), 1))),
+        db.func.count(db.case((db.and_(real, _late_clause()), 1))),
+        db.func.count(db.case((MetaLead.is_test.is_(True), 1))),
+    ).filter(MetaLead.deleted_at.is_(None)).one()
     return {
-        'total': base.count(),
-        'new': base.filter(MetaLead.status == MetaLead.STATUS_NEW).count(),
-        'in_work': base.filter(MetaLead.status == MetaLead.STATUS_IN_WORK).count(),
-        'attention': base.filter(MetaLead.needs_attention.is_(True)).count(),
-        'late': base.filter(
-            MetaLead.first_touch_at.is_(None),
-            MetaLead.status == MetaLead.STATUS_NEW,
-            MetaLead.created_time < late_before,
-        ).count(),
-        'test': MetaLead.alive().filter(MetaLead.is_test.is_(True)).count(),
+        'total': counted[0],
+        'new': counted[1],
+        'in_work': counted[2],
+        'attention': counted[3],
+        'late': counted[4],
+        'test': counted[5],
     }
 
 
@@ -219,6 +300,7 @@ def meta_leads_list():
         page=request.args.get('page', 1, type=int),
         per_page=_listing.per_page_arg(), error_out=False,
     )
+    form_options, campaign_options = _source_options()
     return render_template(
         'admin/meta_leads.html',
         leads=pagination.items,
@@ -227,12 +309,26 @@ def meta_leads_list():
         filter_args=_listing.filter_args(filters),
         per_page_options=_listing.PER_PAGE_OPTIONS,
         status_options=MetaLead.STATUSES,
-        form_options=_source_options(MetaLead.form_id, MetaLead.form_name),
-        campaign_options=_source_options(MetaLead.campaign_id, MetaLead.campaign_name),
+        form_options=form_options,
+        campaign_options=campaign_options,
         platform_options=list(_PLATFORM_OPTIONS.items()),
         attention_options=list(_ATTENTION_OPTIONS.items()),
+        wait_options=list(_WAIT_OPTIONS.items()),
         test_options=list(_TEST_OPTIONS.items()),
         summary=_lead_summary(),
+        # Кожна картка веде на ЧИСТИЙ зріз, а не на поточний плюс себе:
+        # лічильники рахуються по всій базі незалежно від фільтрів, тож
+        # домішувати до них активний фільтр означало б вести на список, у
+        # якому рядків менше, ніж обіцяє число над ним.
+        summary_links={
+            'total': url_for('admin.meta_leads_list'),
+            'new': url_for('admin.meta_leads_list', status=MetaLead.STATUS_NEW),
+            'in_work': url_for('admin.meta_leads_list',
+                               status=MetaLead.STATUS_IN_WORK),
+            'late': url_for('admin.meta_leads_list', wait='late'),
+            'attention': url_for('admin.meta_leads_list', attention='yes'),
+            'test': url_for('admin.meta_leads_list', test='only'),
+        },
         status_badge=LEAD_STATUS_BADGE,
         wait_level=wait_level,
         wait_text=wait_text,
@@ -276,7 +372,15 @@ def meta_leads_export():
     from app.services import xlsx_reports
 
     filters = _lead_filters()
-    rows = _leads_query(filters).all()
+    back_args = _listing.filter_args(filters)
+    # Стелю рядків міряємо COUNT-ом ДО вибірки: інакше зріз на сотню тисяч
+    # заявок спершу піднімався б у пам'ять цілком і лише потім отримував
+    # відмову.
+    rows, refusal = _listing.export_query(
+        _leads_query(filters), 'admin.meta_leads_list', **back_args,
+    )
+    if refusal:
+        return refusal
     data = [
         [
             _kyiv_naive(lead.created_time),
@@ -306,6 +410,7 @@ def meta_leads_export():
             ('Платформа', _PLATFORM_OPTIONS.get(filters['platform'], 'Усі')),
             ('Потребує уваги',
              _ATTENTION_OPTIONS.get(filters['attention'], 'Усі')),
+            ('Очікування', _WAIT_OPTIONS.get(filters['wait'], 'Будь-яке')),
             ('Тестові', _TEST_OPTIONS.get(filters['test'], 'Сховані')),
             ('Дата заявки', _listing.date_range_label(filters)),
         ],
@@ -321,7 +426,7 @@ def meta_leads_export():
             'Ліди Meta', _LEAD_COLS, _LEAD_LABELS, _LEAD_WIDTHS, data,
             'tblMetaLeads', applied_filters=summary,
         ),
-        'admin.meta_leads_list', **_listing.filter_args(filters),
+        'admin.meta_leads_list', **back_args,
     )
 
 
@@ -450,6 +555,62 @@ def _contact_removal_check(lead):
     return {'user': user, 'can_delete': not reasons, 'reasons': reasons}
 
 
+def _bulk_removable_contacts(leads):
+    """Контакти, які підуть під ніж разом із цілим пакетом заявок.
+
+    Ті самі межі, що в `_contact_removal_check`, але чотирма запитами на весь
+    пакет замість шести на кожен рядок: прибирання сотні тестових заявок
+    інакше означало б шістсот запитів в одному POST.
+
+    Одна відмінність від поодинокої перевірки навмисна: заявки самого пакета
+    не рахуються «іншими слідами» контакту. Вони йдуть разом із ним у цій же
+    транзакції, і рахувати їх означало б лишати контакт живим рівно тому, що
+    ми видаляємо забагато за раз.
+    """
+    from app.models.online_enrollment import OnlineEnrollment
+    from app.models.registration import EventRegistration
+    from app.models.user import User
+
+    lead_ids = {lead.id for lead in leads}
+    candidates = {
+        lead.user_id for lead in leads
+        if lead.user_id and lead.match_method == MetaLead.MATCH_CREATED
+    }
+    if not candidates:
+        return []
+
+    def _ids(query):
+        return {row[0] for row in query.distinct()}
+
+    blocked = _ids(db.session.query(EventRegistration.user_id).filter(
+        EventRegistration.user_id.in_(candidates)))
+    blocked |= _ids(db.session.query(OnlineEnrollment.user_id).filter(
+        OnlineEnrollment.user_id.in_(candidates)))
+    blocked |= _ids(db.session.query(MetaLead.user_id).filter(
+        MetaLead.user_id.in_(candidates),
+        MetaLead.id.notin_(lead_ids),
+        MetaLead.deleted_at.is_(None),
+    ))
+    blocked |= _ids(db.session.query(MetaLead.conflict_user_id).filter(
+        MetaLead.conflict_user_id.in_(candidates)))
+
+    survivors = User.query.filter(User.id.in_(candidates - blocked)).all()
+    return [u for u in survivors if not u.has_password and not u.is_admin]
+
+
+def _detach_events_bulk(lead_ids):
+    """Відв'язати сирі події цілого пакета заявок одним UPDATE.
+
+    Подія leadgen не видаляється ніколи -- див. `_detach_events`; тут
+    змінюється лише кількість запитів, а не правило.
+    """
+    if not lead_ids:
+        return
+    MetaLeadEvent.query.filter(MetaLeadEvent.lead_id.in_(lead_ids)).update(
+        {MetaLeadEvent.lead_id: None}, synchronize_session=False,
+    )
+
+
 def _detach_events(lead):
     """Відв'язати сирі події від заявки, не видаляючи їх.
 
@@ -543,24 +704,35 @@ def meta_leads_delete_test():
     однією кнопкою «Повернути» приховував би, що саме повертається.
     """
     leads = MetaLead.alive().filter(MetaLead.is_test.is_(True)).all()
-    contacts = 0
-    for lead in leads:
-        if _remove_lead(lead):
-            contacts += 1
-
     if not leads:
         flash('Тестових заявок немає', 'success')
         return redirect(url_for('admin.meta_leads_list'))
+
+    # Пакетом, а не циклом `_remove_lead`: перевірка «чи можна знести
+    # контакт» коштує чотири COUNT на заявку, і на сотні тестових рядків це
+    # клало б запит у таймаут.
+    removable = _bulk_removable_contacts(leads)
+    removable_ids = {user.id for user in removable}
+    _detach_events_bulk([lead.id for lead in leads])
+
+    for lead in leads:
+        lead.soft_delete()
+        if lead.user_id in removable_ids:
+            # Зв'язок зануляємо явно: рядок заявки лишається жити (м'яке
+            # видалення), і без цього FK вказував би на неіснуючий контакт.
+            lead.user_id = None
+    for user in removable:
+        db.session.delete(user)
 
     if try_commit(log_context='meta_leads_delete_test',
                   error_msg='Помилка при видаленні'):
         audit_logger.info(
             'Admin %s bulk-deleted %d test meta leads (%d contacts removed)',
-            current_user.email, len(leads), contacts,
+            current_user.email, len(leads), len(removable),
         )
         flash(
             f'Видалено тестових заявок: {len(leads)}. '
-            f'Прибрано створених ними контактів: {contacts}. '
+            f'Прибрано створених ними контактів: {len(removable)}. '
             'Сирі події лишились у черзі.',
             'success',
         )
@@ -578,16 +750,17 @@ _EVENT_SOURCES = {
 }
 
 
-@admin_bp.route('/meta-leads/events')
-@admin_required
-def meta_lead_events():
-    """Сира черга подій leadgen. Видалення тут немає і бути не може."""
-    filters = {
+def _event_filters():
+    """Фільтри черги -- спільні для сторінки й експорту."""
+    return {
         'q': _listing.text_arg('q'),
         'status': _listing.choice_arg('status', dict(MetaLeadEvent.STATUSES)),
         'source': _listing.choice_arg('source', _EVENT_SOURCES),
     }
 
+
+def _events_query(filters):
+    """Події черги під фільтри, найсвіжіші першими."""
     query = MetaLeadEvent.query
     query = _listing.apply_search(query, filters['q'], [
         MetaLeadEvent.leadgen_id, MetaLeadEvent.form_id, MetaLeadEvent.last_error,
@@ -596,8 +769,16 @@ def meta_lead_events():
         query = query.filter(MetaLeadEvent.status == filters['status'])
     if filters['source']:
         query = query.filter(MetaLeadEvent.source == filters['source'])
+    return query.order_by(MetaLeadEvent.received_at.desc())
 
-    pagination = query.order_by(MetaLeadEvent.received_at.desc()).paginate(
+
+@admin_bp.route('/meta-leads/events')
+@admin_required
+def meta_lead_events():
+    """Сира черга подій leadgen. Видалення тут немає і бути не може."""
+    filters = _event_filters()
+
+    pagination = _events_query(filters).paginate(
         page=request.args.get('page', 1, type=int),
         per_page=_listing.per_page_arg(), error_out=False,
     )
@@ -618,6 +799,76 @@ def meta_lead_events():
         source_labels=_EVENT_SOURCES,
         event_status_badge=EVENT_STATUS_BADGE,
         max_attempts=MAX_EVENT_ATTEMPTS,
+    )
+
+
+_EVENT_COLS = [
+    'received_at', 'leadgen_id', 'source', 'status', 'attempts',
+    'next_retry_at', 'lead_id', 'last_error',
+]
+_EVENT_XLSX_LABELS = {
+    'received_at': 'Отримано', 'leadgen_id': 'leadgen_id',
+    'source': 'Джерело', 'status': 'Статус', 'attempts': 'Спроб',
+    'next_retry_at': 'Наступна спроба', 'lead_id': 'Заявка',
+    'last_error': 'Остання помилка',
+}
+_EVENT_WIDTHS = {
+    'received_at': 20, 'leadgen_id': 24, 'source': 14, 'status': 16,
+    'attempts': 10, 'next_retry_at': 20, 'lead_id': 10, 'last_error': 60,
+}
+
+
+@admin_bp.route('/meta-leads/events/export')
+@admin_required
+def meta_lead_events_export():
+    """Експорт сирої черги у xlsx з урахуванням активних фільтрів.
+
+    Черга -- це те, що показують інтеграторові, коли доставка розійшлася з
+    очікуваннями. Доти єдиним способом винести її з адмінки був скріншот.
+    """
+    from app.services import xlsx_reports
+
+    filters = _event_filters()
+    back_args = _listing.filter_args(filters)
+    rows, refusal = _listing.export_query(
+        _events_query(filters), 'admin.meta_lead_events', **back_args,
+    )
+    if refusal:
+        return refusal
+
+    data = [
+        [
+            _kyiv_naive(event.received_at),
+            event.leadgen_id,
+            _EVENT_SOURCES.get(event.source, event.source),
+            event.status_label,
+            f'{event.attempts} / {MAX_EVENT_ATTEMPTS}',
+            _kyiv_naive(event.next_retry_at),
+            event.lead_id or '',
+            event.last_error or '',
+        ]
+        for event in rows
+    ]
+    summary = _listing.export_summary(
+        [
+            ('Пошук', filters['q'] or '–'),
+            ('Статус', dict(MetaLeadEvent.STATUSES).get(
+                filters['status'], 'Усі')),
+            ('Джерело', _EVENT_SOURCES.get(filters['source'], 'Усі')),
+        ],
+        len(data),
+    )
+    audit_logger.info(
+        'Admin %s exported meta lead events xlsx (%d rows, filters=%s)',
+        current_user.email, len(data), filters,
+    )
+    return _listing.xlsx_export(
+        rows, 'meta-lead-events',
+        lambda: xlsx_reports.build_list_xlsx(
+            'Черга подій Meta', _EVENT_COLS, _EVENT_XLSX_LABELS, _EVENT_WIDTHS,
+            data, 'tblMetaLeadEvents', applied_filters=summary,
+        ),
+        'admin.meta_lead_events', **back_args,
     )
 
 

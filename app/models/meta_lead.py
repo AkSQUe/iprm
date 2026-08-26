@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 
 from app.extensions import db
 from app.models.mixins import TimestampMixin, SoftDeleteMixin, BigIntPK
+from app.utils import ensure_utc
 
 
 # Скільки разів пробуємо забрати лід із Graph API, перш ніж визнати подію
@@ -255,6 +256,20 @@ class MetaLead(TimestampMixin, SoftDeleteMixin, db.Model):
 
     __table_args__ = (
         db.Index('ix_meta_leads_status_created', 'status', 'created_time'),
+        # Два часткові індекси під зрізи, які реєстр виконує на кожен рендер:
+        # типовий порядок (найновіші живі нетестові) і порядок «спершу без
+        # реакції». Часткові -- бо видалені й тестові заявки в реєстрі не
+        # показуються ніколи, тож у індексі їм робити нічого.
+        db.Index(
+            'ix_meta_leads_active_created', db.text('created_time DESC'),
+            postgresql_where=db.text('deleted_at IS NULL AND is_test = false'),
+        ),
+        db.Index(
+            'ix_meta_leads_active_wait',
+            db.text('(first_touch_at IS NULL) DESC'),
+            db.text('created_time ASC'),
+            postgresql_where=db.text('deleted_at IS NULL AND is_test = false'),
+        ),
         db.CheckConstraint(
             "status IN ('new', 'in_work', 'closed', 'dismissed')",
             name='ck_meta_leads_status',
@@ -297,12 +312,10 @@ class MetaLead(TimestampMixin, SoftDeleteMixin, db.Model):
         сторінки, тому лічильник живе на моделі, а не в шаблоні."""
         if not self.created_time:
             return 0
-        end = self.first_touch_at or datetime.now(timezone.utc)
-        start = self.created_time
-        if start.tzinfo is None:
-            start = start.replace(tzinfo=timezone.utc)
-        if end.tzinfo is None:
-            end = end.replace(tzinfo=timezone.utc)
+        # `ensure_utc` замість ручної перевірки tzinfo: SQLite віддає ці
+        # колонки наївними, і різниця з aware `now()` інакше падає TypeError.
+        start = ensure_utc(self.created_time)
+        end = ensure_utc(self.first_touch_at) or datetime.now(timezone.utc)
         return max(0, int((end - start).total_seconds()))
 
     @property

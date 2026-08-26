@@ -42,6 +42,7 @@ from app.services import partner_events
 from app.services.meta_graph_client import MetaConfigError, MetaGraphClient
 from app.services.meta_lead_ingest import MetaIngestError, ingest_lead
 from app.services.meta_lead_intake import enqueue_event
+from app.utils import ensure_utc
 
 logger = logging.getLogger(__name__)
 
@@ -86,11 +87,8 @@ def _as_utc(value):
     вже aware, тож функція нічого не змінює -- вона потрібна рівно для
     того, щоб тести не брехали про робочий код.
     """
-    if value is None:
-        return None
-    if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc)
+    value = ensure_utc(value)
+    return value.astimezone(timezone.utc) if value is not None else None
 
 
 # --- воркер черги ---------------------------------------------------------

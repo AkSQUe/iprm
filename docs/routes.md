@@ -252,6 +252,7 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | POST | `/admin/meta-leads/<id>/restore` | Відновити видалену |
 | POST | `/admin/meta-leads/delete-test` | Пакетно прибрати тестові заявки |
 | GET | `/admin/meta-leads/events` | Сира черга подій leadgen |
+| GET | `/admin/meta-leads/events/export` | Експорт черги подій у XLSX |
 | POST | `/admin/meta-leads/events/<id>/retry` | Повернути подію в чергу |
 | GET | `/admin/meta-leads/settings` | Стан токена, остання заявка, помилки, діагностика |
 | POST | `/admin/meta-leads/settings/save` | Зберегти App ID / App Secret / verify token / ID Сторінки |

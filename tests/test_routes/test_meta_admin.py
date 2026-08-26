@@ -181,6 +181,55 @@ def test_test_leads_hidden_by_default(client, admin):
     assert 'Лідов'.encode() in only.data
 
 
+def test_wait_late_filter_matches_the_card(client, admin):
+    """Картка «чекають понад годину» має вести на зріз, який її й дає.
+
+    Число над списком і фільтр рахуються одним виразом (`_late_clause`);
+    щойно вони розійдуться, картка почне обіцяти рядки, яких у списку немає.
+    """
+    _login(client, admin)
+    _make_lead(first_name='Довго', last_name='Чекаєв',
+               created_time=datetime.now(timezone.utc) - timedelta(hours=3))
+    _make_lead(first_name='Щойно', last_name='Прийшов')
+
+    page = client.get('/admin/meta-leads?wait=late')
+    assert page.status_code == 200
+    assert 'Чекаєв'.encode() in page.data
+    assert 'Прийшов'.encode() not in page.data
+
+
+def test_sort_wait_lifts_untouched_leads(client, admin):
+    """`sort=wait` піднімає тих, до кого ще не дійшли руки.
+
+    Саме це питання ставлять до реєстру щоранку, і відповідь мусить бути
+    серверною: клієнтський сорт переставив би лише поточну сторінку.
+    """
+    _login(client, admin)
+    _make_lead(first_name='Взяли', last_name='Вроботу',
+               created_time=datetime.now(timezone.utc) - timedelta(hours=5),
+               first_touch_at=datetime.now(timezone.utc),
+               status=MetaLead.STATUS_IN_WORK)
+    _make_lead(first_name='Ніхто', last_name='Незаймав',
+               created_time=datetime.now(timezone.utc) - timedelta(hours=1))
+
+    page = client.get('/admin/meta-leads?sort=wait').get_data(as_text=True)
+    assert page.index('Незаймав') < page.index('Вроботу')
+
+
+def test_list_prints_kyiv_time(client, admin):
+    """Час у списку -- київський, а не UTC із колонки.
+
+    Колонки лежать у UTC; без переведення заявка, створена о 00:40 київської
+    ночі, показувалась би вчорашнім 21:40.
+    """
+    _login(client, admin)
+    _make_lead(first_name='Часова', last_name='Мітка',
+               created_time=datetime(2026, 8, 20, 6, 30, tzinfo=timezone.utc))
+
+    page = client.get('/admin/meta-leads').get_data(as_text=True)
+    assert '20.08.2026 09:30' in page
+
+
 def test_export_returns_xlsx(client, admin):
     _login(client, admin)
     _make_lead(first_name='Експорт', last_name='Тестовий')
@@ -328,6 +377,44 @@ def test_bulk_delete_test_leads(client, admin):
     assert not db.session.get(MetaLead, real_lead.id).is_deleted
 
 
+def test_bulk_delete_applies_the_same_contact_limits(client, admin):
+    """Пакетне прибирання тримає ті самі межі, що й поодиноке видалення.
+
+    Перевірка «чи можна знести контакт» стала батчевою (чотири запити на
+    весь пакет замість чотирьох на рядок) -- і це найлегше місце, де вона
+    могла б розійтися з поодинокою: контакт зі слідами мусить вижити.
+    """
+    _login(client, admin)
+
+    orphan = _contact()
+    orphan_id = orphan.id
+    _make_lead(is_test=True, user_id=orphan_id,
+               match_method=MetaLead.MATCH_CREATED)
+
+    busy = _contact()
+    busy_id = busy.id
+    course = Course(title=f'Курс {_uid()}', slug=f'kurs-{_uid()}')
+    db.session.add(course)
+    db.session.flush()
+    instance = CourseInstance(course_id=course.id,
+                              start_date=datetime.now(timezone.utc),
+                              event_format='offline', location=f'Київ-{_uid()}')
+    db.session.add(instance)
+    db.session.flush()
+    db.session.add(EventRegistration(
+        user_id=busy_id, instance_id=instance.id, phone='+380671110002',
+        specialty='T', workplace='Клініка', status='confirmed',
+    ))
+    _make_lead(is_test=True, user_id=busy_id,
+               match_method=MetaLead.MATCH_CREATED)
+    db.session.flush()
+
+    client.post('/admin/meta-leads/delete-test', follow_redirects=True)
+
+    assert db.session.get(User, orphan_id) is None
+    assert db.session.get(User, busy_id) is not None
+
+
 # ----------------------------- сира черга -----------------------------
 
 def test_events_page_and_retry(client, admin):
@@ -340,6 +427,10 @@ def test_events_page_and_retry(client, admin):
     )
     db.session.add(event)
     db.session.flush()
+
+    export = client.get('/admin/meta-leads/events/export')
+    assert export.status_code == 200
+    assert 'spreadsheetml' in export.headers['Content-Type']
 
     page = client.get('/admin/meta-leads/events')
     assert page.status_code == 200
