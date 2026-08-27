@@ -393,6 +393,10 @@
 }
 
 /* Copy error button (inline in table) */
+/* Текст помилки -- кнопка «скопіювати для ШІ». Виглядав рівно як сусідній
+   нерухомий текст, тож про цю дію дізнавались випадково: пунктирне
+   підкреслення -- найдешевший спосіб сказати «сюди можна натиснути», не
+   роблячи з рядка таблиці ще одну кнопку. */
 .admin-copy-error {
   display: block;
   width: 100%;
@@ -403,22 +407,43 @@
   font: inherit;
   color: inherit;
   cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--iprm-border-strong, var(--iprm-border));
   transition: color 0.15s;
 }
 
 .admin-copy-error:hover {
   color: var(--iprm-accent);
+  text-decoration-color: currentColor;
+}
+
+.admin-copy-error:focus-visible {
+  outline: 2px solid var(--iprm-nav-active);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .admin-copy-error--copied {
   color: var(--iprm-success);
 }
 
-/* Toggle status button (badge as submit) */
+/* Таблетка стану, яка насправді перемикач: та сама пастка, що й вище --
+   бейдж читається як мітка. Обвід на наведенні й фокусі показує, що це
+   орган керування, а не підпис. */
 .admin-toggle-status {
   cursor: pointer;
-  border: none;
+  border: 1px solid transparent;
   font: inherit;
+}
+
+.admin-toggle-status:hover {
+  border-color: currentColor;
+}
+
+.admin-toggle-status:focus-visible {
+  outline: 2px solid var(--iprm-nav-active);
+  outline-offset: 2px;
 }
 
 /* ========== EMPTY STATE ========== */

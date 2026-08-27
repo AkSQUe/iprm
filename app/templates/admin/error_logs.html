@@ -6,9 +6,10 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-error-logs.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -18,7 +19,7 @@
   <div class="admin-hero">
     <div>
       <div class="admin-breadcrumb">
-        <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Панель</a>
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
         <span class="admin-breadcrumb__sep">/</span>
         <span class="admin-breadcrumb__current">Журнал помилок</span>
       </div>
@@ -31,27 +32,25 @@
 
   {% include 'partials/flash_messages.html' %}
 
-  <!-- Статистика -->
   <div class="admin-stat-cards admin-stat-cards--4">
     <div class="admin-stat-card admin-stat-card--danger">
-      <div class="admin-stat-card__value">{{ stats.by_code.get('500', 0) }}</div>
-      <div class="admin-stat-card__label">500 Server</div>
+      <span class="admin-stat-card__value">{{ stats.by_code.get('500', 0) }}</span>
+      <span class="admin-stat-card__label">500 Server</span>
     </div>
     <div class="admin-stat-card admin-stat-card--warning">
-      <div class="admin-stat-card__value">{{ stats.by_code.get('404', 0) }}</div>
-      <div class="admin-stat-card__label">404 Not Found</div>
+      <span class="admin-stat-card__value">{{ stats.by_code.get('404', 0) }}</span>
+      <span class="admin-stat-card__label">404 Not Found</span>
     </div>
     <div class="admin-stat-card">
-      <div class="admin-stat-card__value">{{ stats.unresolved_errors }}</div>
-      <div class="admin-stat-card__label">Невирішені</div>
+      <span class="admin-stat-card__value">{{ stats.unresolved_errors }}</span>
+      <span class="admin-stat-card__label">Невирішені</span>
     </div>
     <div class="admin-stat-card admin-stat-card--success">
-      <div class="admin-stat-card__value">{{ stats.total_errors - stats.unresolved_errors }}</div>
-      <div class="admin-stat-card__label">Вирішені</div>
+      <span class="admin-stat-card__value">{{ stats.total_errors - stats.unresolved_errors }}</span>
+      <span class="admin-stat-card__label">Вирішені</span>
     </div>
   </div>
 
-  <!-- Фільтри -->
   {{ filter_bar(
        endpoint='admin.error_logs',
        values=filters,
@@ -64,19 +63,29 @@
        export_endpoint='admin.error_logs_export',
      ) }}
 
-  <!-- Таблиця -->
   {% if logs %}
   <div class="admin-table-wrap">
-    <table class="admin-table admin-table--wide">
+    {# Ширини колонок задані явно (admin-error-logs.css). Без них колонка URL
+       забирала 421px і ховала за прокруткою решту рядка. #}
+    <table class="admin-table admin-table--fixed admin-errors-table">
+      <colgroup>
+        <col class="admin-errors-col--code">
+        <col class="admin-errors-col--type">
+        <col class="admin-errors-col--message">
+        <col class="admin-errors-col--url">
+        <col class="admin-errors-col--time">
+        <col class="admin-errors-col--state">
+        <col class="admin-errors-col--actions">
+      </colgroup>
       <thead>
         <tr>
           <th>Код</th>
           <th>Тип</th>
-          <th>Повідомлення</th>
-          <th>URL</th>
+          <th class="admin-text-left">Повідомлення</th>
+          <th class="admin-text-left">URL</th>
           <th>Час</th>
           <th>Статус</th>
-          <th>Дії</th>
+          <th data-no-sort>Дії</th>
         </tr>
       </thead>
       <tbody>
@@ -91,8 +100,8 @@
             <span class="badge badge--draft">{{ log.error_code }}</span>
             {% endif %}
           </td>
-          <td><code>{{ log.error_type }}</code></td>
-          <td>
+          <td title="{{ log.error_type }}"><code class="admin-truncate">{{ log.error_type }}</code></td>
+          <td class="admin-text-left">
             <button type="button" class="admin-copy-error"
                     title="Копіювати для ШІ"
                     data-error-id="{{ log.id }}"
@@ -103,11 +112,16 @@
                     data-error-method="{{ log.method or 'GET' }}"
                     data-error-time="{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else '' }}"
                     {% if log.traceback %}data-traceback="{{ log.traceback | e }}"{% endif %}>
-              {{ log.error_message[:80] }}{% if log.error_message|length > 80 %}...{% endif %}
+              {{ log.error_message | truncate(80, True, '&hellip;'|safe) }}
             </button>
           </td>
-          <td title="{{ log.url }}">{{ (log.url or '')[-60:] }}</td>
-          <td>{{ log.created_at.strftime('%d.%m %H:%M') if log.created_at else '' }}</td>
+          {# Шлях, а не повна адреса: `https://iprm.space` -- 18 однакових
+             символів у кожному рядку, які витісняли за край саме кінець
+             шляху. Обрізає CSS із трьома крапками, повне -- у title. #}
+          <td class="admin-text-left" title="{{ log.url }}">
+            <span class="admin-truncate">{{ log.url_path or '&ndash;'|safe }}</span>
+          </td>
+          <td class="admin-nowrap">{{ log.created_at.strftime('%d.%m %H:%M') if log.created_at else '&ndash;'|safe }}</td>
           <td>
             <form method="POST" action="{{ url_for('admin.resolve_error', error_id=log.id) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -120,7 +134,7 @@
           </td>
           <td>
             <div class="admin-table__actions">
-              <a href="{{ url_for('admin.error_log_detail', error_id=log.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('info', label='Деталі') }}</a>
+              <a href="{{ url_for('admin.error_log_detail', error_id=log.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon" title="Деталі">{{ icon('info', label='Деталі') }}</a>
             </div>
           </td>
         </tr>
@@ -129,24 +143,18 @@
     </table>
   </div>
 
-  <!-- Пагінація -->
-  {% if pagination.pages > 1 %}
-  <nav class="admin-pagination">
-    {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.error_logs', page=pagination.prev_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
-    {% endif %}
-    <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }}</span>
-    {% if pagination.has_next %}
-    <a href="{{ url_for('admin.error_logs', page=pagination.next_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
-    {% endif %}
-  </nav>
-  {% endif %}
+  {{ pager('admin.error_logs', pagination, filter_args) }}
 
   {% else %}
   <div class="admin-empty">
     {{ icon('bug_report', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">Помилок не знайдено</h3>
-    <p>Немає записів{% if filters.q or filters.error_code or filters.resolved or filters.days %} за обраними фільтрами. <a href="{{ url_for('admin.error_logs') }}">Скинути</a>{% endif %}</p>
+    {% if filter_args %}
+      <h3 class="admin-empty__title">Нічого не знайдено</h3>
+      <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.error_logs') }}">скинути їх</a></p>
+    {% else %}
+      <h3 class="admin-empty__title">Помилок немає</h3>
+      <p>За обраний період додаток не впав жодного разу.</p>
+    {% endif %}
   </div>
   {% endif %}
 

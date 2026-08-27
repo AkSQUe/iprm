@@ -61,6 +61,21 @@ class ErrorLog(db.Model):
     def __repr__(self):
         return f'<ErrorLog {self.id}: {self.error_code} {self.error_type}>'
 
+    @property
+    def url_path(self):
+        """Шлях без схеми й хоста -- те єдине, що читають у реєстрі.
+
+        У базі лежить `request.url` цілком, тобто кожен рядок починається з
+        `https://iprm.space` -- 18 однакових символів, які з'їдали ширину
+        колонки й витісняли за край саме кінець шляху, заради якого в реєстр
+        і заходять. Повна адреса лишається в `title`.
+        """
+        if not self.url:
+            return ''
+        tail = self.url.split('://', 1)[-1]
+        slash = tail.find('/')
+        return tail[slash:] if slash >= 0 else '/'
+
     def get_request_data(self):
         if self.request_data:
             try:
