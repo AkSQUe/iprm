@@ -48,7 +48,7 @@
     <tbody>
       {% for it in reservation.items %}
       <tr>
-        <td><code>{{ it.sku }}</code></td>
+        <td><code class="admin-code">{{ it.sku }}</code></td>
         <td class="materials-name">{{ it.name or '—' }}</td>
         <td>{{ it.quantity_reserved }}</td>
         <td>{{ it.quantity_actual if it.quantity_actual is not none else '—' }}</td>

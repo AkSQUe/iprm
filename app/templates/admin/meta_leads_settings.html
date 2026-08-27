@@ -60,7 +60,7 @@
         <div class="admin-readonly-config__row">
           <span class="admin-readonly-config__label">Verify token</span>
           <span class="admin-readonly-config__value">
-            {% if cfg.verify_token_is_set %}<code>{{ cfg.verify_token_masked }}</code>{% else %}Не встановлено{% endif %}
+            {% if cfg.verify_token_is_set %}<code class="admin-code">{{ cfg.verify_token_masked }}</code>{% else %}Не встановлено{% endif %}
           </span>
         </div>
         <div class="admin-readonly-config__row">
@@ -100,7 +100,7 @@
         <div class="admin-readonly-config__row">
           <span class="admin-readonly-config__label">Сторінка</span>
           <span class="admin-readonly-config__value">
-            {{ cfg.page_name or 'без назви' }} {% if cfg.page_id %}<code>{{ cfg.page_id }}</code>{% endif %}
+            {{ cfg.page_name or 'без назви' }} {% if cfg.page_id %}<code class="admin-code">{{ cfg.page_id }}</code>{% endif %}
           </span>
         </div>
         <div class="admin-readonly-config__row">
@@ -186,7 +186,7 @@
     <div class="form-section">
       <h3 class="admin-form__section-title">Надіслати тестову подію</h3>
       <p class="form-hint">
-        Формує коректно підписаний POST на <code>{{ cfg.webhook_url }}</code>
+        Формує коректно підписаний POST на <code class="admin-code">{{ cfg.webhook_url }}</code>
         і показує відповідь. Успіх доводить одразу три речі: ендпоінт
         доступний ззовні, App Secret збігається, черга приймає події.
       </p>
@@ -256,7 +256,7 @@
                                placeholder='залиште пустим, щоб не змінювати' if cfg.app_secret_is_set else 'вставте App Secret') }}
             <p class="form-hint">
               {% if cfg.app_secret_is_set %}
-                Збережено <code>{{ cfg.app_secret_masked }}</code>{% if cfg.app_secret_set_at %}, {{ cfg.app_secret_set_at.strftime('%d.%m.%Y') }}{% endif %}.
+                Збережено <code class="admin-code">{{ cfg.app_secret_masked }}</code>{% if cfg.app_secret_set_at %}, {{ cfg.app_secret_set_at.strftime('%d.%m.%Y') }}{% endif %}.
               {% endif %}
               Зберігається зашифрованим (Fernet/SECRET_KEY) і назад не показується.
             </p>

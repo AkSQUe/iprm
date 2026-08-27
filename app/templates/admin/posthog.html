@@ -94,7 +94,7 @@
            placeholder="phc_..." autocomplete="off" spellcheck="false">
     <p class="form-hint">
       PostHog → Settings → Project → Project API Key. Починається з
-      <code>phc_</code>. Ключ, що починається з <code>phx_</code>, – це
+      <code class="admin-code">phc_</code>. Ключ, що починається з <code class="admin-code">phx_</code>, – це
       Personal API Key: він дає доступ до читання даних проєкту, і в HTML
       йому не місце. Порожнє поле означає «брати ключ з env».
     </p>
@@ -124,7 +124,7 @@
       адмінці маскується весь текст, тож картки учасників не потрапляють у
       відео. Запис сесій обробляє стороннім процесором поведінку відвідувачів
       – переконайтеся, що це відображено в політиці конфіденційності.
-      Потребує ще й увімкненого <code>session_recording_opt_in</code> у
+      Потребує ще й увімкненого <code class="admin-code">session_recording_opt_in</code> у
       самому проєкті PostHog.
     </p>
   </div>
@@ -137,7 +137,7 @@
     </div>
     <p class="form-hint">
       Без цієї галки адмінка теж трекається, але кожна подія несе
-      <code>iprm_section=admin</code> – відфільтрувати її можна в самому
+      <code class="admin-code">iprm_section=admin</code> – відфільтрувати її можна в самому
       PostHog. Галка прибирає збір узагалі й економить квоту подій.
       Сторінка перевірки лишається під трекінгом у будь-якому разі.
     </p>

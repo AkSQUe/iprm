@@ -40,15 +40,15 @@
   пляму сторінка й закриває.
 </p>
 <p class="form-hint">
-  Якщо SDK віддає <code>404</code> – nginx не має локацій <code>/ngx-e/</code>
-  (застосуйте <code>deploy/apply.sh</code>, далі
-  <code>nginx -t &amp;&amp; systemctl reload nginx</code>). Якщо
-  <code>401</code> – загубився заголовок <code>Host</code> у відповідній
+  Якщо SDK віддає <code class="admin-code">404</code> – nginx не має локацій <code class="admin-code">/ngx-e/</code>
+  (застосуйте <code class="admin-code">deploy/apply.sh</code>, далі
+  <code class="admin-code">nginx -t &amp;&amp; systemctl reload nginx</code>). Якщо
+  <code class="admin-code">401</code> – загубився заголовок <code class="admin-code">Host</code> у відповідній
   локації.
 </p>
 <p class="form-hint">
-  Назва події навмисно нестандартна: <code>$pageview</code> чи
-  <code>sign_up</code> засмітили б реальні звіти вигаданими конверсіями.
+  Назва події навмисно нестандартна: <code class="admin-code">$pageview</code> чи
+  <code class="admin-code">sign_up</code> засмітили б реальні звіти вигаданими конверсіями.
   Ця сторінка лишається під трекінгом навіть тоді, коли решта адмінки з
   нього виключена – інакше перевіряти було б нічого.
 </p>

@@ -219,7 +219,7 @@
             <span class="materials-thumb materials-thumb--empty">{{ icon('image') }}</span>
             {% endif %}
           </td>
-          <td><code>{{ row.sku }}</code></td>
+          <td><code class="admin-code">{{ row.sku }}</code></td>
           <td class="materials-name">
             {{ row.name or '—' }}
             {% if row.available is none %}<div class="materials-oos">немає в поточному каталозі</div>{% endif %}

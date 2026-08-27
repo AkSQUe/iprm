@@ -34,7 +34,7 @@
 
     <div class="form-section">
       <h3 class="admin-form__section-title">Export → .env download</h3>
-      <p>Згенерувати <code>.env</code>-блок з поточних налаштувань для бекапу або bootstrap'у staging-інстанції.</p>
+      <p>Згенерувати <code class="admin-code">.env</code>-блок з поточних налаштувань для бекапу або bootstrap'у staging-інстанції.</p>
 
       <form method="POST" action="{{ url_for('admin.integrations_export') }}" class="admin-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -59,7 +59,7 @@
 
     <div class="form-section">
       <h3 class="admin-form__section-title">Import ← paste .env</h3>
-      <p>Вставити <code>.env</code>-блок для оновлення налаштувань. Спочатку покажемо diff – ви побачите що зміниться перш ніж підтвердити.</p>
+      <p>Вставити <code class="admin-code">.env</code>-блок для оновлення налаштувань. Спочатку покажемо diff – ви побачите що зміниться перш ніж підтвердити.</p>
 
       <form method="POST" action="{{ url_for('admin.integrations_import_preview') }}" class="admin-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

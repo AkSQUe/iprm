@@ -98,7 +98,7 @@
           {% endif %}
         </td>
         {% if entity == 'courses' %}
-        <td><code>{{ ch.slug }}</code></td>
+        <td><code class="admin-code">{{ ch.slug }}</code></td>
         <td>
           {% if ch.action == 'error' %}<span class="form-error">{{ ch.error }}</span>
           {% elif ch.fields_changed %}{{ ch.fields_changed | join(', ') }}
@@ -106,7 +106,7 @@
         </td>
         {% elif entity == 'participants' %}
         <td><strong>{{ ch.name }}</strong></td>
-        <td>{% if ch.event %}<code>{{ ch.event }}</code>{% else %}—{% endif %}</td>
+        <td>{% if ch.event %}<code class="admin-code">{{ ch.event }}</code>{% else %}—{% endif %}</td>
         <td>
           {% if ch.action == 'error' %}<span class="form-error">{{ ch.error }}</span>
           {% elif ch.fields_changed %}{{ ch.fields_changed | join(', ') }}
@@ -114,7 +114,7 @@
         </td>
         {% else %}
         <td>{{ ch.start_date or '—' }}</td>
-        <td><code>{{ ch.course_slug }}</code></td>
+        <td><code class="admin-code">{{ ch.course_slug }}</code></td>
         <td>
           {% if ch.action == 'error' %}<span class="form-error">{{ ch.error }}</span>
           {% elif ch.fields_changed %}{{ ch.fields_changed | join(', ') }}

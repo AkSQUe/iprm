@@ -38,7 +38,7 @@
     <div>
       Вебхук Meta приносить лише ідентифікатор ліда, тож рядок тут означає
       «сходи в Graph API і забери заявку». Події <strong>не видаляються</strong>:
-      саме вони не дають повторній доставці того самого <code>leadgen_id</code>
+      саме вони не дають повторній доставці того самого <code class="admin-code">leadgen_id</code>
       створити другу картку. Максимум спроб -- {{ max_attempts }}.
     </div>
   </div>
@@ -96,7 +96,7 @@
       {% for event in events %}
       <tr>
         <td class="admin-nowrap">{{ event.received_at | kyiv('%d.%m.%Y %H:%M:%S') or '–' }}</td>
-        <td><code>{{ event.leadgen_id }}</code></td>
+        <td><code class="admin-code">{{ event.leadgen_id }}</code></td>
         <td>{{ source_labels.get(event.source, event.source) }}</td>
         <td>
           <span class="badge badge--{{ event.status_badge }}">{{ event.status_label }}</span>

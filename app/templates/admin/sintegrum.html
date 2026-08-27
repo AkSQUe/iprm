@@ -33,7 +33,7 @@
     <span class="admin-readonly-config__label">Ключ API</span>
     <span class="admin-readonly-config__value">
       {% if cfg.api_key_is_set %}
-        <code>{{ cfg.api_key_masked }}</code>
+        <code class="admin-code">{{ cfg.api_key_masked }}</code>
         {% if cfg.api_key_set_at %}
           <span class="form-hint">встановлено {{ cfg.api_key_set_at.strftime('%d.%m.%Y') }}</span>
         {% endif %}
@@ -126,7 +126,7 @@
       <input type="text" name="company_alias" id="company_alias" class="form-input"
              value="{{ cfg.company_alias }}" placeholder="multimededu"
              autocomplete="off">
-      <p class="form-hint">Піддомен вашого кабінету: <code>&lt;аліас&gt;.sintegrum.com</code>.</p>
+      <p class="form-hint">Піддомен вашого кабінету: <code class="admin-code">&lt;аліас&gt;.sintegrum.com</code>.</p>
     </div>
   </div>
 

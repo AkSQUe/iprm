@@ -31,7 +31,7 @@
   <div class="wh-info">
     {{ icon('bolt', cls='wh-info__icon') }}
     <div>
-      POST на <code>partner_webhook_url</code> формується при створенні, оновленні
+      POST на <code class="admin-code">partner_webhook_url</code> формується при створенні, оновленні
       чи видаленні курсу. Чергу обробляє планувальник щохвилини з експоненційним
       backoff та circuit breaker – записи не губляться при збоях, а ретраї
       виконуються автоматично до {{ max_attempts }} спроб.

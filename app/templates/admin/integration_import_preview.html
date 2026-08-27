@@ -55,7 +55,7 @@
           <tbody>
             {% for row in diff %}
             <tr class="{% if row.changed %}diff-row--changed{% endif %}">
-              <td><code>{{ row.key }}</code>{% if row.is_secret %} <span class="badge badge--draft badge--sm">секрет</span>{% endif %}</td>
+              <td><code class="admin-code">{{ row.key }}</code>{% if row.is_secret %} <span class="badge badge--draft badge--sm">секрет</span>{% endif %}</td>
               <td>
                 <code class="diff-value">
                   {% if row.is_secret and row.before %}

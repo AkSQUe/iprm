@@ -101,7 +101,7 @@
 
   <p class="form-hint form-hint--spaced">
     Отримати ключі: <a href="https://www.google.com/recaptcha/admin/create" target="_blank" rel="noopener">google.com/recaptcha/admin/create</a>
-    – оберіть тип <strong>reCAPTCHA v3</strong>, додайте домени (включно з локальним <code>127.0.0.1</code> для розробки).
+    – оберіть тип <strong>reCAPTCHA v3</strong>, додайте домени (включно з локальним <code class="admin-code">127.0.0.1</code> для розробки).
   </p>
 </form>
 {% endblock %}
@@ -111,11 +111,11 @@
   <h3 class="admin-form__section-title">Захищені форми</h3>
   <p>Перевірка автоматично застосовується до наступних форм:</p>
   <ul>
-    <li><code>login</code> – /login (вхід)</li>
-    <li><code>register</code> – /register (створення акаунта)</li>
-    <li><code>contact</code> – /contact (контактна форма)</li>
-    <li><code>course_request</code> – /courses/&lt;slug&gt;/request (запит на проведення)</li>
-    <li><code>event_register</code> – /register-instance (реєстрація на захід)</li>
+    <li><code class="admin-code">login</code> – /login (вхід)</li>
+    <li><code class="admin-code">register</code> – /register (створення акаунта)</li>
+    <li><code class="admin-code">contact</code> – /contact (контактна форма)</li>
+    <li><code class="admin-code">course_request</code> – /courses/&lt;slug&gt;/request (запит на проведення)</li>
+    <li><code class="admin-code">event_register</code> – /register-instance (реєстрація на захід)</li>
   </ul>
   <p class="form-hint">
     При <em>fail-open</em>: якщо Google API недоступний – сабміт пропускається (щоб не блокувати реальних користувачів).
