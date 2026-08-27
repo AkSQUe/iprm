@@ -78,11 +78,11 @@
         </td>
         <td>
           <div class="admin-table__actions">
-            <a href="{{ url_for('admin.course_tariff_edit', tariff_id=tariff.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
+            <a href="{{ url_for('admin.course_tariff_edit', tariff_id=tariff.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon" aria-label="Редагувати">{{ icon('edit') }}</a>
             <a href="{{ url_for('admin.translations_edit', entity='course_tariff', obj_id=tariff.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Переклади">Переклади</a>
             <form method="POST" action="{{ url_for('admin.course_tariff_delete', tariff_id=tariff.id) }}" data-confirm="Видалити шаблон «{{ tariff.name }}»? Скопійовані тарифи проведень не зачепить." data-confirm-ok="Видалити шаблон" data-confirm-danger>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити">{{ icon('delete') }}</button>
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm btn-admin--icon" aria-label="Видалити">{{ icon('delete') }}</button>
             </form>
           </div>
         </td>

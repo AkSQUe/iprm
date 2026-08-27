@@ -120,7 +120,7 @@
           <td>
             <form method="POST" action="{{ url_for('admin.material_kit_item_delete', kit_id=kit.id, item_id=item.id) }}" data-confirm="Прибрати «{{ item.name_snapshot or item.sku }}» з комплекту?" data-confirm-ok="Прибрати" data-confirm-danger>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити позицію">{{ icon('delete') }}</button>
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm btn-admin--icon" aria-label="Видалити позицію">{{ icon('delete') }}</button>
             </form>
           </td>
         </tr>

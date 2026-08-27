@@ -133,12 +133,12 @@
           </td>
           <td>
             <div class="admin-table__actions">
-              <a href="{{ url_for('admin.online_course_edit', course_id=c.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати" title="Редагувати">{{ icon('edit') }}</a>
+              <a href="{{ url_for('admin.online_course_edit', course_id=c.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon" aria-label="Редагувати" title="Редагувати">{{ icon('edit') }}</a>
               {# Публічна сторінка існує лише для опублікованого й наявного курсу:
                  online.course_detail віддає 404 на решту, тож кнопка, що веде в
                  404, була б гіршою за її відсутність. #}
               {% if c.is_published and not c.is_vanished %}
-              <a href="{{ url_for('online.course_detail', slug=c.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm" target="_blank" rel="noopener noreferrer" aria-label="Переглянути публічну сторінку" title="Переглянути на сайті">{{ icon('visibility') }}</a>
+              <a href="{{ url_for('online.course_detail', slug=c.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon" target="_blank" rel="noopener noreferrer" aria-label="Переглянути публічну сторінку" title="Переглянути на сайті">{{ icon('visibility') }}</a>
               {% endif %}
               {% if c.is_published or c.can_be_published %}
               <form method="POST" action="{{ url_for('admin.online_course_toggle_publish', course_id=c.id) }}">

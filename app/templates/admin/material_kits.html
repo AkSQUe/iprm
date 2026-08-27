@@ -62,10 +62,10 @@
         </td>
         <td>
           <div class="admin-table__actions">
-            <a href="{{ url_for('admin.material_kit_edit', kit_id=kit.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
+            <a href="{{ url_for('admin.material_kit_edit', kit_id=kit.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon" aria-label="Редагувати">{{ icon('edit') }}</a>
             <form method="POST" action="{{ url_for('admin.material_kit_delete', kit_id=kit.id) }}" data-confirm="Видалити комплект «{{ kit.name }}»? Усі його позиції буде видалено." data-confirm-ok="Видалити комплект" data-confirm-danger>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити">{{ icon('delete') }}</button>
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm btn-admin--icon" aria-label="Видалити">{{ icon('delete') }}</button>
             </form>
           </div>
         </td>
