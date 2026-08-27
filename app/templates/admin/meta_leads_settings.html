@@ -50,7 +50,7 @@
 
   <div class="admin-form">
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Стан інтеграції</h3>
       <div class="admin-readonly-config">
         <div class="admin-readonly-config__row">
@@ -153,7 +153,7 @@
       </div>
     </div>
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Дії</h3>
       <div class="ml-actions">
         <form method="POST" action="{{ url_for('admin.meta_leads_check_token') }}">
@@ -183,7 +183,7 @@
       </p>
     </div>
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Надіслати тестову подію</h3>
       <p class="form-hint">
         Формує коректно підписаний POST на <code>{{ cfg.webhook_url }}</code>
@@ -210,7 +210,7 @@
       </form>
     </div>
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Обмін токенів</h3>
       <p class="form-hint">
         Вставте короткоживучий User token із Graph API Explorer. Ми обміняємо
@@ -239,7 +239,7 @@
 
     <form method="POST" action="{{ url_for('admin.meta_leads_settings_save') }}">
       {{ form.hidden_tag() }}
-      <div class="form-section admin-form__section">
+      <div class="form-section">
         <h3 class="admin-form__section-title">Облікові дані та режим роботи</h3>
         <div class="admin-form__grid">
           <div class="form-group">

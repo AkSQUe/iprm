@@ -50,14 +50,14 @@
     {% include 'partials/flash_messages.html' %}
 
     {% if not course.can_be_published %}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <p class="admin-form__section-hint">
         Курс не можна опублікувати, поки не заповнено: {{ course.missing_for_publication|join(', ') }}.
       </p>
     </div>
     {% endif %}
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Дані Sintegrum</h3>
       <p class="form-hint">
         Ці поля оновлює синхронізація, редагувати їх тут не можна: наступний
@@ -102,7 +102,7 @@
     <form method="POST" action="{{ url_for('admin.online_course_edit', course_id=course.id) }}" class="admin-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-      <div class="form-section admin-form__section">
+      <div class="form-section">
         <h3 class="admin-form__section-title">Продаж</h3>
         <div class="admin-form__grid">
           <div class="form-group">
@@ -145,7 +145,7 @@
         </div>
       </div>
 
-      <div class="form-section admin-form__section">
+      <div class="form-section">
         <h3 class="admin-form__section-title">Сторінка курсу</h3>
         {{ i18n.tabs(course) }}
         <div class="form-group">
@@ -176,7 +176,7 @@
       {# Контент продажної сторінки. Ті самі формати введення, що у формі
          офлайнового курсу: сторінки зібрані з тих самих партіалів, тож і
          редактор має поводитись однаково. #}
-      <div class="form-section admin-form__section">
+      <div class="form-section">
         <h3 class="admin-form__section-title">Продажна сторінка</h3>
         <div class="form-group">
           <label for="trainer_id">Автор курсу</label>
@@ -237,7 +237,7 @@
       {# Блоки програми. Розмітка навмисно та сама, що у формі офлайнового
          курсу (block_N_heading / block_N_items): після переходу блоків на
          поліморфну прив'язку обидві форми читає той самий парсер. #}
-      <div class="form-section admin-form__section">
+      <div class="form-section">
         <h3 class="admin-form__section-title">Блоки програми</h3>
         <div id="program-blocks">
           {% for block in course.program_blocks %}
@@ -271,7 +271,7 @@
 
       {# Галерея. Фото живуть у медіа-реєстрі, а не в JSON курсу: приховане
          поле несе лише порядок і підписи. #}
-      <div class="form-section admin-form__section">
+      <div class="form-section">
         <h3 class="admin-form__section-title">Галерея з практики</h3>
         <div class="admin-gallery" data-gallery-editor
              data-entity-type="online_course"
@@ -292,7 +292,7 @@
       </div>
 
 
-      <div class="form-section admin-form__section">
+      <div class="form-section">
         <h3 class="admin-form__section-title">Публікація</h3>
         <div class="admin-form__grid">
           <div class="form-group">

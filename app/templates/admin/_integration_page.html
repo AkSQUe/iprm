@@ -61,7 +61,7 @@
     {% include 'partials/flash_messages.html' %}
 
     {% block integration_body %}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">{% block integration_readonly_title %}Поточна конфігурація{% endblock %}</h3>
       <div class="admin-readonly-config">
         {% block integration_readonly_rows %}{% endblock %}
@@ -69,7 +69,7 @@
       {% block integration_readonly_hint %}{% endblock %}
     </div>
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">{% block integration_edit_title %}Оновити налаштування{% endblock %}</h3>
       {% block integration_edit_form %}{% endblock %}
     </div>

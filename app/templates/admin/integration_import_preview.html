@@ -39,7 +39,7 @@
 
     {% include 'partials/flash_messages.html' %}
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Що зміниться</h3>
       {% if diff %}
       <div class="admin-table-wrap">
@@ -94,7 +94,7 @@
     </div>
 
     {% if changes_count > 0 %}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Підтвердити імпорт</h3>
       <form method="POST" action="{{ url_for('admin.integrations_import_apply') }}" class="admin-form"
             data-single-submit data-submitting-label="Записуємо…">

@@ -53,7 +53,7 @@
       {{ form.csrf_token }}
       {% include 'admin/partials/_form_errors.html' %}
 
-      <div class="form-section admin-form__section">
+      <div class="form-section">
         {{ i18n.tabs() }}
         <h3 class="admin-form__section-title">Основне</h3>
         <div class="admin-form__grid">
@@ -81,7 +81,7 @@
         </div>
       </div>
 
-      <div class="form-section admin-form__section">
+      <div class="form-section">
         <h3 class="admin-form__section-title">Обкладинка</h3>
         {% set cover_prev = post.cover_src if post else None %}
         <div class="form-group">
@@ -101,7 +101,7 @@
         </div>
       </div>
 
-      <div class="form-section admin-form__section">
+      <div class="form-section">
         <h3 class="admin-form__section-title">Контент</h3>
         <p class="admin-text-muted admin-mb-sm">Додавайте блоки кнопками нижче. Перетягуйте або рухайте стрілками, щоб змінити порядок.</p>
         <div id="blog-editor" class="blog-editor"></div>
@@ -109,7 +109,7 @@
         {{ form.content(id="blog-content-field") }}
       </div>
 
-      <div class="form-section admin-form__section">
+      <div class="form-section">
         <h3 class="admin-form__section-title">SEO</h3>
         <div class="admin-form__grid">
           <div class="form-group admin-form__full">

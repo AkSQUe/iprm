@@ -40,7 +40,7 @@
     {% include 'partials/flash_messages.html' %}
 
     {% if not integration_enabled %}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <p class="admin-form__section-hint">
         Інтеграцію вимкнено, тож каталог не оновлюється.
         <a href="{{ url_for('admin.sintegrum') }}">Увімкнути</a>

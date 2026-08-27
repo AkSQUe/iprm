@@ -32,7 +32,7 @@
     {% include 'admin/partials/_form_errors.html' ignore missing %}
 
     {# ----- Глобальний пул менеджерів ----- #}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Менеджери заходів</h3>
       <p class="admin-text-muted recipients-managers__hint">
         Глобальний пул email-ів менеджерів. На цей список посилається прапор
@@ -58,7 +58,7 @@
       {% for event_type, label in event_types %}
         {% set rule = rules[event_type] %}
         {% set preview_data = previews.get(event_type) %}
-        <div class="form-section admin-form__section" data-event-type="{{ event_type }}">
+        <div class="form-section" data-event-type="{{ event_type }}">
           <h3 class="admin-form__section-title">{{ label }}</h3>
 
           <div class="form-checkbox recipients-rule__enabled">

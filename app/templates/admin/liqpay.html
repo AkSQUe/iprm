@@ -53,7 +53,7 @@
 </div>
 
 {# Current config (read-only) #}
-<div class="form-section admin-form__section">
+<div class="form-section">
   <h3 class="admin-form__section-title">Поточна конфігурація</h3>
   <div class="admin-readonly-config">
     <div class="admin-readonly-config__row">
@@ -84,7 +84,7 @@
 </div>
 
 {# Update keys #}
-<div class="form-section admin-form__section">
+<div class="form-section">
   <h3 class="admin-form__section-title">Встановити ключі</h3>
   <form method="POST" action="{{ url_for('admin.liqpay_save_keys') }}" class="admin-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -117,7 +117,7 @@
 </div>
 
 {# Recent payments #}
-<div class="form-section admin-form__section">
+<div class="form-section">
   <h3 class="admin-form__section-title">Останні платежі</h3>
 
   {% if recent %}

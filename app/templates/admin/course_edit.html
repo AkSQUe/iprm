@@ -45,7 +45,7 @@
     {{ form.hidden_tag() }}
     {% include 'admin/partials/_form_errors.html' %}
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       {{ i18n.tabs(course) }}
       <h3 class="admin-form__section-title">Основна інформація</h3>
       <div class="admin-form__grid">
@@ -120,7 +120,7 @@
       </div>
     </div>
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Default-налаштування для проведень</h3>
       <p class="admin-form__section-hint">Ці значення використовуються як default, якщо в конкретному проведенні не задано інше.</p>
       <div class="admin-form__grid">
@@ -167,7 +167,7 @@
       </div>
     </div>
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Зображення</h3>
       {% set hero_prev = course.hero_src if course else None %}
       {% set card_prev = course.card_src if course else None %}
@@ -207,7 +207,7 @@
       </div>
     </div>
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Контент</h3>
       <div class="admin-form__grid">
         <div class="form-group admin-form__full">
@@ -259,7 +259,7 @@
 
     {# Контент продажної сторінки. Кожне поле необов'язкове: незаповнена
        секція просто не показується на сайті. #}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Продажна сторінка</h3>
       <div class="admin-form__grid">
         <div class="form-group admin-form__full">
@@ -296,7 +296,7 @@
 
     {# Галерея. Фото живуть у медіа-реєстрі, а не в JSON курсу: приховане
        поле несе лише порядок і підписи. #}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Галерея з практики</h3>
       <div class="admin-gallery" data-gallery-editor
            data-entity-type="course"
@@ -316,7 +316,7 @@
       {{ form.gallery_json(id="gallery_json", **{'data-gallery-field': '1'}) }}
     </div>
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Блоки програми</h3>
       <div id="program-blocks">
         {% if course and course.program_blocks %}
@@ -352,7 +352,7 @@
     </div>
 
     {% if course %}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Проведення цього курсу ({{ course.instances | length }})</h3>
       {% if course.instances %}
       <table class="admin-table">

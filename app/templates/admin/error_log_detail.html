@@ -58,7 +58,7 @@
 
   <!-- Основна інформація -->
   <div class="admin-form">
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Інформація про помилку</h3>
       <div class="admin-form__grid">
         <div class="form-group">
@@ -89,35 +89,35 @@
     </div>
 
     {% if error_log.traceback %}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Traceback</h3>
       <pre class="admin-code-block">{{ error_log.traceback }}</pre>
     </div>
     {% endif %}
 
     {% if request_data %}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Request Data</h3>
       <pre class="admin-code-block">{{ request_data | tojson(indent=2) if request_data is mapping else request_data }}</pre>
     </div>
     {% endif %}
 
     {% if headers %}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Headers</h3>
       <pre class="admin-code-block">{{ headers | tojson(indent=2) if headers is mapping else headers }}</pre>
     </div>
     {% endif %}
 
     {% if error_log.user_agent %}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">User Agent</h3>
       <div class="admin-text-muted">{{ error_log.user_agent }}</div>
     </div>
     {% endif %}
 
     {% if not error_log.resolved %}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Вирішити помилку</h3>
       <form method="POST" action="{{ url_for('admin.resolve_error', error_id=error_log.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

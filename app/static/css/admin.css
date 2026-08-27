@@ -519,8 +519,6 @@
   gap: 24px;
 }
 
-/* .admin-form__section extends .form-section from common.css */
-
 .admin-form__section-title {
   margin-bottom: 24px;
 }
@@ -1343,10 +1341,6 @@ a.admin-stat-card:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .admin-form__section {
-    padding: 20px;
-  }
-
   .admin-hero__title {
     font-size: 20px;
   }
@@ -1492,10 +1486,6 @@ a.admin-stat-card:focus-visible {
 
   .admin-hero__title {
     font-size: 18px;
-  }
-
-  .admin-form__section {
-    padding: 16px;
   }
 
   .btn-admin {

@@ -45,7 +45,7 @@
     {{ form.hidden_tag() }}
     {% include 'admin/partials/_form_errors.html' %}
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Заголовок комплекту</h3>
       <div class="admin-form__grid">
 
@@ -90,7 +90,7 @@
   </form>
 
   {% if kit %}
-  <div class="form-section admin-form__section">
+  <div class="form-section">
     <h3 class="admin-form__section-title">Позиції комплекту</h3>
 
     {% if kit.items %}

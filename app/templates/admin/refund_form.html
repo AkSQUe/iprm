@@ -55,7 +55,7 @@
       </div>
     </div>
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Замовлення</h3>
       <table class="admin-table">
         <tbody>
@@ -97,7 +97,7 @@
     {# Заявка учасника. Найважливіше тут -- дата подання: саме від неї
        §4.2 велить рахувати відсоток, і саме її знімок підставлено у
        форму нижче, навіть якщо заявка пролежала в черзі кілька днів. #}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Заявка учасника №{{ refund_req.id }}</h3>
       <table class="admin-table">
         <tbody>
@@ -141,7 +141,7 @@
           data-confirm-ok="Провести повернення" data-confirm-danger>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-      <div class="form-section admin-form__section">
+      <div class="form-section">
         <h3 class="admin-form__section-title">Що повертаємо</h3>
         <div class="admin-form__grid">
 
@@ -170,7 +170,7 @@
       </div>
 
       {% if is_enrollment and order.provisioned_at %}
-      <div class="form-section admin-form__section admin-form__danger-zone">
+      <div class="form-section admin-form__danger-zone">
         <h3 class="admin-form__section-title">Виняток із п. 5.1</h3>
         <p>
           Доступ до матеріалів уже надано, тому за Політикою повернення коштів за цей

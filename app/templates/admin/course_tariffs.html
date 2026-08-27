@@ -103,7 +103,7 @@
     {{ form.hidden_tag() }}
     {% include 'admin/partials/_form_errors.html' %}
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       {% if edit_tariff %}{{ i18n.tabs(edit_tariff) }}{% endif %}
       <h3 class="admin-form__section-title">{% if edit_tariff %}Редагувати шаблон «{{ edit_tariff.name }}»{% else %}Додати шаблонний тариф{% endif %}</h3>
       <div class="admin-form__grid">

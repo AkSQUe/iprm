@@ -275,10 +275,19 @@
 }
 
 .admin-form__section-hint {
-  margin-top: -12px;
   margin-bottom: 16px;
   font-size: 0.8125rem;
   color: var(--apple-gray);
+}
+
+/* Підказка одразу під заголовком секції належить йому, а не наступному
+   блоку: власний відступ заголовка (24px) між ними завеликий. Раніше це
+   робив `margin-top: -12px` на самій підказці -- і підказка, що стояла не
+   під заголовком, затягувалась на 12px у попередній блок: у довіднику
+   рефералів вона налазила на список, у картці онлайн-курсу -- на опис. */
+.form-section__title + .admin-form__section-hint,
+.admin-form__section-title + .admin-form__section-hint {
+  margin-top: -12px;
 }
 
 .admin-form__danger-zone {
@@ -1087,6 +1096,14 @@
     border-top: 1px solid var(--iprm-border);
     padding: 12px 0;
   }
+
+  /* Секцію на телефоні тиснемо: 32px з двох боків з'їдали шосту частину
+     екрана. Значення ті самі, що доти давав другий клас
+     `.admin-form__section` -- він стояв на 106 секціях із 132, і решта
+     26 через це стискались інакше, ніж сусідні. */
+  .form-section {
+    padding: 20px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1095,7 +1112,7 @@
   }
 
   .form-section {
-    padding: 24px 20px;
+    padding: 16px;
   }
 }
 

@@ -55,7 +55,7 @@
 
   <!-- Queue Health -->
   {% if queue_health and (queue_health.circuit_open or queue_health.retryable > 0) %}
-  <div class="form-section admin-form__section admin-queue-alert{% if queue_health.circuit_open %} admin-queue-alert--error{% else %} admin-queue-alert--warning{% endif %}">
+  <div class="form-section admin-queue-alert{% if queue_health.circuit_open %} admin-queue-alert--error{% else %} admin-queue-alert--warning{% endif %}">
     {% if queue_health.circuit_open %}
     <h3 class="admin-form__section-title admin-queue-alert__title--error">Circuit Breaker: OPEN</h3>
     <p class="admin-text-muted">
@@ -72,7 +72,7 @@
   {% endif %}
 
   <!-- SMTP Settings -->
-  <form method="POST" action="{{ url_for('admin.notifications_settings') }}" class="form-section admin-form__section admin-form">
+  <form method="POST" action="{{ url_for('admin.notifications_settings') }}" class="form-section admin-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <h3 class="admin-form__section-title">Налаштування SMTP</h3>
     <div class="admin-form__grid">
@@ -129,7 +129,7 @@
   </form>
 
   <!-- Test & Scheduler -->
-  <div class="form-section admin-form__section">
+  <div class="form-section">
     <h3 class="admin-form__section-title">Діагностика</h3>
     <p class="admin-form__section-hint">Перевірка налаштувань відправки та статус фонового планувальника</p>
     <div class="admin-form__grid admin-form__grid--spaced">
@@ -184,7 +184,7 @@
   </div>
 
   <!-- Recent sends -->
-  <div class="form-section admin-form__section">
+  <div class="form-section">
     <h3 class="admin-form__section-title">Останні відправки</h3>
     {% if recent %}
     <div class="admin-table-wrap">

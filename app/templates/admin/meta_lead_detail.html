@@ -59,7 +59,7 @@
   {% endif %}
 
   <div class="admin-form">
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Відповіді у формі</h3>
       <div class="admin-form__grid">
         <div class="form-group">
@@ -105,7 +105,7 @@
       {% endif %}
     </div>
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Джерело</h3>
       <div class="admin-form__grid">
         <div class="form-group">
@@ -137,7 +137,7 @@
       </div>
     </div>
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Контакт</h3>
       <div class="admin-form__grid">
         <div class="form-group">
@@ -190,7 +190,7 @@
 
     <form method="POST" action="{{ url_for('admin.meta_lead_detail', lead_id=lead.id) }}">
       {{ form.hidden_tag() }}
-      <div class="form-section admin-form__section">
+      <div class="form-section">
         <h3 class="admin-form__section-title">Обробка</h3>
         <div class="admin-form__grid">
           <div class="form-group">
@@ -220,7 +220,7 @@
       </div>
     </form>
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Сирі події черги</h3>
       {% if events %}
       <table class="admin-table">
@@ -248,7 +248,7 @@
       {% endif %}
     </div>
 
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Сира відповідь Graph API</h3>
       <details>
         <summary>Показати JSON</summary>

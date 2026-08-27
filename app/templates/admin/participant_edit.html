@@ -48,7 +48,7 @@
     {% include 'admin/partials/_form_errors.html' %}
 
     {# ----- Захід ----- #}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Захід</h3>
       {% if fixed_instance %}
       <input type="hidden" name="instance_id" value="{{ instance.id if instance else form.instance_id.data }}">
@@ -75,7 +75,7 @@
     </div>
 
     {# ----- Ідентифікація ----- #}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Учасник</h3>
       <div class="admin-form__grid">
         <div class="form-group">
@@ -121,7 +121,7 @@
     </div>
 
     {# ----- Медичний профіль ----- #}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Медичний профіль</h3>
       <div class="admin-form__grid">
         <div class="form-group">
@@ -157,7 +157,7 @@
     </div>
 
     {# ----- Реєстрація ----- #}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Реєстрація</h3>
       <div class="admin-form__grid">
         <div class="form-group">

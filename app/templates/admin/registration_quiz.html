@@ -105,7 +105,7 @@
     {% endif %}
 
     {# ===== Анкета й сертифікат ===== #}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">Анкета та сертифікат</h3>
       <div class="admin-form__grid">
         <div class="form-group">
@@ -143,7 +143,7 @@
     {# ===== Спроби ===== #}
     {% for report in reports %}
     {% set attempt = report.attempt %}
-    <div class="form-section admin-form__section">
+    <div class="form-section">
       <h3 class="admin-form__section-title">
         Спроба {{ attempt.attempt_number }}
         {% if attempt.is_finished %}
