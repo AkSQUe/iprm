@@ -106,9 +106,28 @@ class MetaLeadEvent(TimestampMixin, db.Model):
         db.CheckConstraint('attempts >= 0', name='ck_meta_lead_events_attempts'),
     )
 
+    # Модифікатор `.badge--*` на кожен стан обробки. Раніше жив словником у
+    # роуті; `retrying` і `failed` там указували на модифікатори, яких у
+    # системі немає -- вони існували лише в admin-webhooks.css, а сторінки
+    # лідів того файлу не підключають, тож «Повтор» і «Помилка» виходили
+    # плашками без тла.
+    STATUS_BADGES = {
+        STATUS_PENDING: 'pending',
+        STATUS_PROCESSING: 'pending',
+        STATUS_RETRYING: 'warning',
+        STATUS_DONE: 'active',
+        STATUS_SKIPPED: 'draft',
+        STATUS_FAILED: 'cancelled',
+    }
+
     @property
     def status_label(self):
         return dict(self.STATUSES).get(self.status, self.status)
+
+    @property
+    def status_badge(self):
+        """Модифікатор `.badge--*` під поточний стан (див. STATUS_BADGES)."""
+        return self.STATUS_BADGES.get(self.status, 'draft')
 
     @property
     def is_terminal(self):
@@ -280,9 +299,22 @@ class MetaLead(TimestampMixin, SoftDeleteMixin, db.Model):
         ),
     )
 
+    # Модифікатор `.badge--*` на кожен стан заявки -- раніше словником у роуті.
+    STATUS_BADGES = {
+        STATUS_NEW: 'warning',
+        STATUS_IN_WORK: 'pending',
+        STATUS_CLOSED: 'active',
+        STATUS_DISMISSED: 'draft',
+    }
+
     @property
     def status_label(self):
         return dict(self.STATUSES).get(self.status, self.status)
+
+    @property
+    def status_badge(self):
+        """Модифікатор `.badge--*` під поточний стан (див. STATUS_BADGES)."""
+        return self.STATUS_BADGES.get(self.status, 'draft')
 
     @property
     def match_label(self):

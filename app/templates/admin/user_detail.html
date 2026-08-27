@@ -94,7 +94,7 @@
             </td>
             <td>{{ lead.platform_label }}</td>
             <td>
-              <span class="badge badge--{{ status_badge.get(lead.status, 'pending') }}">{{ lead.status_label }}</span>
+              <span class="badge badge--{{ lead.status_badge }}">{{ lead.status_label }}</span>
               {% if lead.is_repeat %}<span class="badge badge--published">повторно</span>{% endif %}
               {% if lead.is_test %}<span class="badge badge--draft">тест</span>{% endif %}
             </td>

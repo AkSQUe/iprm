@@ -22,7 +22,7 @@
       <h1 class="admin-hero__title">Запит на курс</h1>
       <p class="admin-hero__subtitle">
         {{ request_obj.course.title if request_obj.course else '–' }}
-        <span class="badge badge--{{ request_obj.status }}">{{ request_obj.status_label }}</span>
+        <span class="badge badge--{{ request_obj.status_badge }}">{{ request_obj.status_label }}</span>
       </p>
     </div>
     <div class="admin-hero__actions">
@@ -85,9 +85,9 @@
           <td>{{ audit.created_at.strftime('%d.%m.%Y %H:%M') if audit.created_at else '–' }}</td>
           <td>{{ audit.changed_by.email if audit.changed_by else '–' }}</td>
           <td>
-            {% if audit.from_status %}<span class="badge badge--{{ audit.from_status }}">{{ audit.from_status }}</span>{% else %}–{% endif %}
+            {% if audit.from_status %}<span class="badge badge--{{ audit.from_badge }}">{{ audit.from_label }}</span>{% else %}–{% endif %}
             {{ icon('arrow_forward') }}
-            <span class="badge badge--{{ audit.to_status }}">{{ audit.to_status }}</span>
+            <span class="badge badge--{{ audit.to_badge }}">{{ audit.to_label }}</span>
           </td>
           <td>{{ audit.notes or '–' }}</td>
         </tr>

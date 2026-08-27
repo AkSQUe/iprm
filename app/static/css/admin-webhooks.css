@@ -71,20 +71,6 @@ a.wh-stat-card:focus-visible {
 
 /* ===== Бейджі статусів, яких немає в common.css ===== */
 
-.badge--sent {
-  background: var(--iprm-badge-active-bg);
-  color: var(--iprm-badge-active-text);
-}
-
-.badge--failed {
-  background: var(--iprm-error-bg);
-  color: var(--iprm-error-text);
-}
-
-.badge--retrying {
-  background: var(--iprm-warning-bg);
-  color: var(--iprm-warning-text);
-}
 
 /* ===== Чип дії (created / updated / deleted) ===== */
 

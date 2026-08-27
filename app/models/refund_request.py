@@ -106,6 +106,19 @@ class RefundRequest(TimestampMixin, db.Model):
         (STATUS_REJECTED, 'Відхилена'),
     ]
 
+    # Модифікатор `.badge--*` на кожен стан -- раніше стояв тернарником у
+    # розмітці реєстру заявок.
+    STATUS_BADGES = {
+        STATUS_NEW: 'published',
+        STATUS_APPROVED: 'active',
+        STATUS_REJECTED: 'cancelled',
+    }
+
+    @property
+    def status_badge(self):
+        """Модифікатор `.badge--*` під поточний стан (див. STATUS_BADGES)."""
+        return self.STATUS_BADGES.get(self.status, 'draft')
+
     @property
     def status_label(self):
         return dict(self.STATUSES).get(self.status, self.status)

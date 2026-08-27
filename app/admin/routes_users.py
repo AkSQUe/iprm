@@ -7,7 +7,6 @@ from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
-from app.admin.routes_meta_leads import LEAD_STATUS_BADGE
 from app.extensions import db
 from app.services import xlsx_reports
 from app.models.medical_profile import MedicalProfile
@@ -190,7 +189,6 @@ def user_detail(user_id):
         leads=leads,
         registrations=registrations,
         enrollments=enrollments,
-        status_badge=LEAD_STATUS_BADGE,
     )
 
 

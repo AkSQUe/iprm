@@ -54,6 +54,19 @@ class WebhookDelivery(TimestampMixin, db.Model):
     # 'failed' -- остаточно (досягнуто MAX_ATTEMPTS або permanent error)
     # 'retrying' -- transient fail, next_retry_at задано
 
+    # Модифікатор `.badge--*` на кожен стан доставки. Раніше шаблон писав
+    # `badge--{{ d.status }}` навпростець, а правила під `sent`, `failed` і
+    # `retrying` дописував собі admin-webhooks.css -- тобто модифікатори
+    # загального компонента жили у файлі однієї сторінки. Ті самі значення
+    # вживають і події лідів Meta, які того файлу не підключають, тож там
+    # «Повтор» і «Помилка» виходили плашками без тла зовсім.
+    STATUS_BADGES = {
+        'pending': 'pending',
+        'sent': 'active',
+        'retrying': 'warning',
+        'failed': 'cancelled',
+    }
+
     attempts = db.Column(db.Integer, nullable=False, default=0)
     last_error = db.Column(db.Text)
     last_http_status = db.Column(db.Integer)

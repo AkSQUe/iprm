@@ -91,22 +91,6 @@ def wait_text(seconds):
 
 # Бейджі спільної адмінської палітри. Мапа, а не властивість моделі: колір
 # -- це рішення шару подання, і модель про CSS знати не мусить.
-LEAD_STATUS_BADGE = {
-    MetaLead.STATUS_NEW: 'warning',
-    MetaLead.STATUS_IN_WORK: 'pending',
-    MetaLead.STATUS_CLOSED: 'success',
-    MetaLead.STATUS_DISMISSED: 'draft',
-}
-
-EVENT_STATUS_BADGE = {
-    MetaLeadEvent.STATUS_PENDING: 'pending',
-    MetaLeadEvent.STATUS_PROCESSING: 'pending',
-    MetaLeadEvent.STATUS_RETRYING: 'retrying',
-    MetaLeadEvent.STATUS_DONE: 'success',
-    MetaLeadEvent.STATUS_SKIPPED: 'draft',
-    MetaLeadEvent.STATUS_FAILED: 'failed',
-}
-
 
 # ---------------------------------------------------------------------------
 # Реєстр лідів
@@ -329,7 +313,6 @@ def meta_leads_list():
             'attention': url_for('admin.meta_leads_list', attention='yes'),
             'test': url_for('admin.meta_leads_list', test='only'),
         },
-        status_badge=LEAD_STATUS_BADGE,
         wait_level=wait_level,
         wait_text=wait_text,
     )
@@ -495,8 +478,6 @@ def meta_lead_detail(lead_id):
         form=form,
         events=events,
         custom_answers=_custom_answers(lead),
-        status_badge=LEAD_STATUS_BADGE,
-        event_status_badge=EVENT_STATUS_BADGE,
         max_attempts=MAX_EVENT_ATTEMPTS,
         wait_level=wait_level,
         wait_text=wait_text,
@@ -797,7 +778,6 @@ def meta_lead_events():
         status_options=MetaLeadEvent.STATUSES,
         source_options=list(_EVENT_SOURCES.items()),
         source_labels=_EVENT_SOURCES,
-        event_status_badge=EVENT_STATUS_BADGE,
         max_attempts=MAX_EVENT_ATTEMPTS,
     )
 

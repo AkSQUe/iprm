@@ -189,6 +189,24 @@ class CourseRequestAudit(TimestampMixin, db.Model):
     )
     changed_by = db.relationship('User', foreign_keys=[changed_by_id])
 
+    # Обидва боки переходу малюються плашками, тож беруть ту саму мапу, що й
+    # сам запит: журнал і поточний стан не мають розходитись у кольорі.
+    @property
+    def from_label(self):
+        return dict(CourseRequest.STATUSES).get(self.from_status, self.from_status)
+
+    @property
+    def to_label(self):
+        return dict(CourseRequest.STATUSES).get(self.to_status, self.to_status)
+
+    @property
+    def from_badge(self):
+        return CourseRequest.STATUS_BADGES.get(self.from_status, 'draft')
+
+    @property
+    def to_badge(self):
+        return CourseRequest.STATUS_BADGES.get(self.to_status, 'draft')
+
     def __repr__(self):
         return (
             f'<CourseRequestAudit request={self.request_id} '

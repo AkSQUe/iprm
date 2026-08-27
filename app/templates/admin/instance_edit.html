@@ -23,7 +23,7 @@
       <p class="admin-hero__subtitle">
         {% if instance %}
           {{ instance.course.title if instance.course else '' }}
-          <span class="badge badge--{{ instance.status }}">{{ instance.status_label }}</span>
+          <span class="badge badge--{{ instance.status_badge }}">{{ instance.status_label }}</span>
         {% else %}
           Створення нового запланованого проведення
         {% endif %}

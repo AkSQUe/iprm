@@ -99,7 +99,7 @@
         <td><code>{{ event.leadgen_id }}</code></td>
         <td>{{ source_labels.get(event.source, event.source) }}</td>
         <td>
-          <span class="badge badge--{{ event_status_badge.get(event.status, 'pending') }}">{{ event.status_label }}</span>
+          <span class="badge badge--{{ event.status_badge }}">{{ event.status_label }}</span>
           {% if event.last_error %}
           <details class="ml-error">
             <summary>{{ icon('error') }} Деталі</summary>

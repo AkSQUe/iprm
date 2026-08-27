@@ -23,7 +23,7 @@
       </div>
       <h1 class="admin-hero__title">{{ lead.display_name }}</h1>
       <p class="admin-hero__subtitle">
-        <span class="badge badge--{{ status_badge.get(lead.status, 'pending') }}">{{ lead.status_label }}</span>
+        <span class="badge badge--{{ lead.status_badge }}">{{ lead.status_label }}</span>
         {% if lead.is_test %}<span class="badge badge--draft">тестова</span>{% endif %}
         {% if lead.is_repeat %}<span class="badge badge--published">повторне звернення</span>{% endif %}
         {% if lead.needs_attention %}<span class="badge badge--warning">потребує уваги</span>{% endif %}
@@ -232,7 +232,7 @@
           <tr>
             <td>{{ event.received_at | kyiv('%d.%m.%Y %H:%M:%S') or '–' }}</td>
             <td>{{ event.source }}</td>
-            <td><span class="badge badge--{{ event_status_badge.get(event.status, 'pending') }}">{{ event.status_label }}</span></td>
+            <td><span class="badge badge--{{ event.status_badge }}">{{ event.status_label }}</span></td>
             <td>{{ event.attempts }} / {{ max_attempts }}</td>
             <td>{{ event.last_error or '–' }}</td>
           </tr>

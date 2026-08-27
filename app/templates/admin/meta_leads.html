@@ -150,7 +150,7 @@
           <div class="admin-text-muted"><a href="{{ url_for('admin.user_detail', user_id=lead.user_id) }}">контакт #{{ lead.user_id }}</a></div>
           {% endif %}
         </td>
-        <td><span class="badge badge--{{ status_badge.get(lead.status, 'pending') }}">{{ lead.status_label }}</span></td>
+        <td><span class="badge badge--{{ lead.status_badge }}">{{ lead.status_label }}</span></td>
         <td>
           <div class="admin-table__actions">
             <a href="{{ url_for('admin.meta_lead_detail', lead_id=lead.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon">{{ icon('edit', label='Відкрити') }}</a>

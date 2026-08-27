@@ -119,9 +119,26 @@ class CourseInstance(TimestampMixin, db.Model):
         'cancelled': {'draft', 'published'},
     }
 
+    # Модифікатор `.badge--*` дизайн-системи на кожен стан. Відображення тут
+    # тотожне -- правило під кожен із п'яти станів у системі вже є. Властивість
+    # усе одно потрібна: вона робить це збігом за домовленістю, а не
+    # випадковістю, і шостий стан не з'явиться на екрані плашкою без тла.
+    STATUS_BADGES = {
+        'draft': 'draft',
+        'published': 'published',
+        'active': 'active',
+        'completed': 'completed',
+        'cancelled': 'cancelled',
+    }
+
     @property
     def status_label(self):
         return dict(self.STATUSES).get(self.status, self.status)
+
+    @property
+    def status_badge(self):
+        """Модифікатор `.badge--*` під поточний стан (див. STATUS_BADGES)."""
+        return self.STATUS_BADGES.get(self.status, 'draft')
 
     def can_transition_to(self, new_status):
         """Перевірити чи дозволено перейти з поточного у new_status.

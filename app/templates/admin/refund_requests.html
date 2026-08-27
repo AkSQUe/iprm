@@ -100,7 +100,7 @@
           {% endif %}
         </td>
         <td>
-          <span class="badge badge--{{ 'published' if req.status == 'new' else ('active' if req.status == 'approved' else 'cancelled') }}">
+          <span class="badge badge--{{ req.status_badge }}">
             {{ req.status_label }}
           </span>
           {% if req.decided_at %}

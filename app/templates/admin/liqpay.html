@@ -142,7 +142,7 @@
         <td>{{ reg.user.first_name }} {{ reg.user.last_name }}</td>
         <td class="admin-nowrap admin-num">{{ money(reg.payment_amount) }}</td>
         <td>
-          <span class="badge badge--{{ 'active' if reg.payment_status == 'paid' else ('published' if reg.payment_status == 'pending' else ('cancelled' if reg.payment_status == 'refunded' else 'draft')) }}">
+          <span class="badge badge--{{ reg.payment_badge }}">
             {{ reg.payment_status_label }}
           </span>
         </td>

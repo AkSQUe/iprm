@@ -261,6 +261,41 @@ class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
     def status_label(self):
         return dict(self.STATUSES).get(self.status, self.status)
 
+    # Модифікатор `.badge--*` на кожен стан. Тримається тут, поруч зі
+    # `status_label`, а не в шаблоні: `badge--{{ reg.status }}` навпростець
+    # давав «Підтверджено» без тла -- модифікатора `confirmed` у системі немає.
+    #   pending   -- сірий: заявка є, підтвердження ще немає;
+    #   confirmed -- синій: підтверджено, попереду сам захід;
+    #   completed -- зелений: цикл закритий;
+    #   cancelled -- червоний.
+    STATUS_BADGES = {
+        'pending': 'pending',
+        'confirmed': 'published',
+        'cancelled': 'cancelled',
+        'completed': 'active',
+    }
+
+    # Оплата -- окрема вісь від статусу реєстрації: людина може бути
+    # підтверджена й не оплачена. Це відображення двічі стояло тернарником
+    # просто в розмітці -- в instance_registrations.html і в liqpay.html, і
+    # дослівно однаковим.
+    PAYMENT_BADGES = {
+        'unpaid': 'draft',
+        'pending': 'published',
+        'paid': 'active',
+        'refunded': 'cancelled',
+    }
+
+    @property
+    def status_badge(self):
+        """Модифікатор `.badge--*` під статус реєстрації."""
+        return self.STATUS_BADGES.get(self.status, 'draft')
+
+    @property
+    def payment_badge(self):
+        """Модифікатор `.badge--*` під статус оплати."""
+        return self.PAYMENT_BADGES.get(self.payment_status, 'draft')
+
     @property
     def payment_status_label(self):
         return dict(self.PAYMENT_STATUSES).get(self.payment_status, self.payment_status)
