@@ -126,5 +126,9 @@
 {% endblock %}
 
 {% block extra_scripts %}
+{# {{ super() }} обов'язковий: без нього блок ПЕРЕКРИВАЄ батьківський, і
+   сторінка лишається без усіх шести глобальних скриптів адмінки -- разом із
+   admin-confirm.js, тобто без діалогу підтвердження перед видаленням. #}
+{{ super() }}
 <script src="{{ url_for('static', filename='js/admin-promo-code.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
