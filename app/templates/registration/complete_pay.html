@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'partials/_money.html' import money %}
 {% from 'partials/_location_badge.html' import location_badge %}
 
 {% block title %}{{ _('Оплата участі | ІПРМ') }}{% endblock %}
@@ -43,7 +44,7 @@
     <div class="reg-event-card__meta">
       {% if event.start_date %}<div>{{ _('Дата:') }} <strong>{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</strong></div>{% endif %}
       {% if reg.payment_amount and reg.payment_amount > 0 %}
-        <div>{{ _('До оплати:') }} <strong>{{ reg.payment_amount | int }} &#8372;</strong></div>
+        <div>{{ _('До оплати:') }} <strong>{{ money(reg.payment_amount) }}</strong></div>
       {% endif %}
       {% if reg.has_discount %}
         <div class="reg-event-card__discount">

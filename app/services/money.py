@@ -15,8 +15,29 @@ from decimal import Decimal, InvalidOperation
 CURRENCY = 'UAH'
 
 
+# Нерозривний пробіл: "20 000" не має шансу переламатись між рядками так,
+# щоб "20" лишилось наприкінці одного, а "000" поїхало на наступний.
+GROUP_SEP = ' '
+
+
+def _group_thousands(digits):
+    """'20000' -> '20 000'. Розряди по три, справа наліво."""
+    parts = []
+    while len(digits) > 3:
+        parts.append(digits[-3:])
+        digits = digits[:-3]
+    parts.append(digits)
+    return GROUP_SEP.join(reversed(parts))
+
+
 def format_amount(value):
-    """Сума без валюти: '6000', '0.60'. Порожнє значення -> ''."""
+    """Сума без валюти: '6 000', '0.60'. Порожнє значення -> ''.
+
+    Розряди розділені нерозривним пробілом: «20000 ₴» читається як набір
+    цифр, який доводиться рахувати очима, а «20 000 ₴» -- як сума. Це
+    український стандарт запису й водночас те, як число виглядає в будь-якій
+    виписці, з якою адмін звіряє цифри.
+    """
     if value is None or value == '':
         return ''
     try:
@@ -24,10 +45,13 @@ def format_amount(value):
     except (InvalidOperation, ValueError, TypeError):
         return str(value)
     amount = amount.quantize(Decimal('0.01'))
+    sign = '-' if amount < 0 else ''
+    amount = abs(amount)
     if amount == amount.to_integral_value():
-        return str(int(amount))
+        return sign + _group_thousands(str(int(amount)))
     # normalize прибрав би значущий нуль у "0.60" -> "0.6"; формат фіксований.
-    return f'{amount:.2f}'
+    whole, _, cents = f'{amount:.2f}'.partition('.')
+    return f'{sign}{_group_thousands(whole)}.{cents}'
 
 
 def money(value, currency=CURRENCY):

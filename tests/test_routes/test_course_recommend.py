@@ -205,7 +205,8 @@ class TestCourseDetailBlock:
         assert 'Найближча дата' in block
         assert 'Вільні місця' in block
         assert '8 місць' in block
-        assert '7500' in block
+        # Розряди -- нерозривним пробілом (services/money.format_amount).
+        assert '7 500' in block
         assert 'Короткий опис курсу для картки.' in block
 
     def test_css_is_linked_when_block_renders(self, client):

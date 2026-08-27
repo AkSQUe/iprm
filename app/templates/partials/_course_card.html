@@ -1,3 +1,4 @@
+{% from 'partials/_money.html' import money %}
 {# Картка курсу для каталогу й Головної.
    Очікує: course; upcoming_by_course, seats_left_map, open_instance_ids,
    site_settings (глобальний). show_tag_filter=false ховає теги-фільтри
@@ -109,7 +110,7 @@
         <span class="iprm-course-card__seats{% if site_settings.seats_low_threshold and seats <= site_settings.seats_low_threshold %} iprm-course-card__seats--warning{% endif %}">{{ seats }} {{ seats | plural('seats') }}</span>
         {% endif %}
         {% if price_min and price_min > 0 %}
-        <span class="iprm-course-card__price">{% if price_varies %}{{ _('від') }} {% endif %}{{ price_min | int }} &#8372;</span>
+        <span class="iprm-course-card__price">{% if price_varies %}{{ _('від') }} {% endif %}{{ money(price_min) }}</span>
         {% endif %}
       </div>
     </div>

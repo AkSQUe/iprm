@@ -1,5 +1,6 @@
 {% extends "admin/base_admin.html" %}
 
+{% from 'partials/_money.html' import money %}
 {% block title %}Промокод «{{ promo.code }}» | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
@@ -58,7 +59,7 @@
         <span class="admin-stat-card__label">Дійшли до оплати</span>
       </div>
       <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ stats.discount_total | int }} &#8372;</span>
+        <span class="admin-stat-card__value">{{ money(stats.discount_total) }}</span>
         <span class="admin-stat-card__label">Віддано знижками</span>
       </div>
       <div class="admin-stat-card">
@@ -106,9 +107,9 @@
               {% endif %}
             {% else %}<span class="admin-text-muted">—</span>{% endif %}
           </td>
-          <td>{{ r.original_amount | int }} &#8372;</td>
-          <td><strong>&minus;{{ r.discount_amount | int }} &#8372;</strong></td>
-          <td>{{ r.final_amount | int }} &#8372;</td>
+          <td>{{ money(r.original_amount) }}</td>
+          <td><strong>&minus;{{ money(r.discount_amount) }}</strong></td>
+          <td>{{ money(r.final_amount) }}</td>
           <td>
             {% if r.registration %}{{ r.registration.payment_status_label }}
             {% else %}<span class="admin-text-muted">—</span>{% endif %}

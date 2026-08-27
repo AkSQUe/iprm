@@ -138,7 +138,7 @@ def test_order_page_opens_without_login(client, course):
     response = client.get(f'/online-courses/order/{enrollment.order_token}')
 
     assert response.status_code == 200
-    assert '4500' in response.get_data(as_text=True)
+    assert '4 500' in response.get_data(as_text=True)
 
 
 def test_order_page_never_leaks_access_url(client, course):

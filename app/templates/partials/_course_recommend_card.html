@@ -1,3 +1,4 @@
+{% from 'partials/_money.html' import money %}
 {# Інформативна картка курсу для блоку рекомендацій ("Наступний крок").
 
    Очікує: course; rec_upcoming, rec_seats, rec_open_ids
@@ -112,7 +113,7 @@
       {% if is_free %}
       <span class="iprm-course-card__price">{{ _('Безкоштовно') }}</span>
       {% elif show_price %}
-      <span class="iprm-course-card__price">{% if price_from %}{{ _('від') }} {% endif %}{{ price_min | int }} &#8372;</span>
+      <span class="iprm-course-card__price">{% if price_from %}{{ _('від') }} {% endif %}{{ money(price_min) }}</span>
       {% endif %}
       <span class="iprm-rec-card__cta">{% if has_seats %}{{ _('Обрати дату') }}{% else %}{{ _('Дізнатись більше') }}{% endif %}</span>
     </div>

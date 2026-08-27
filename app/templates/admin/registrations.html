@@ -229,7 +229,7 @@
                 {% if reg.promo_code %}
                   <a href="{{ url_for('admin.promo_code_detail', promo_id=reg.promo_code_id) }}">{{ reg.promo_code.code }}</a>
                 {% else %}промокод{% endif %}
-                &minus;{{ reg.discount_amount | int }} &#8372;
+                &minus;{{ money(reg.discount_amount) }}
               </div>
             {% endif %}
           </td>

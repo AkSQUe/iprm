@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'partials/_money.html' import money %}
 {% from 'partials/_location_badge.html' import location_badge %}
 
 {% block title %}{% trans event_title=event.title %}Реєстрація: {{ event_title }} | ІПРМ{% endtrans %}{% endblock %}
@@ -184,7 +185,7 @@
     <div class="reg-status-card__row">
       <span class="reg-status-card__label">{{ _('Оплата') }}</span>
       <span class="reg-status-card__value">
-        {{ reg.payment_amount | int }} &#8372; &mdash;
+        {{ money(reg.payment_amount) }} &mdash;
         <span class="badge badge--{{ 'active' if reg.payment_status == 'paid' else 'draft' }}">{{ reg.payment_status_label }}</span>
       </span>
     </div>
@@ -193,8 +194,8 @@
     <div class="reg-status-card__row">
       <span class="reg-status-card__label">{{ _('Знижка за промокодом') }}</span>
       <span class="reg-status-card__value">
-        &minus;{{ reg.discount_amount | int }} &#8372;
-        <small>({{ _('було') }} {{ reg.amount_before_discount | int }} &#8372;)</small>
+        &minus;{{ money(reg.discount_amount) }}
+        <small>({{ _('було') }} {{ money(reg.amount_before_discount) }})</small>
       </span>
     </div>
     {% endif %}

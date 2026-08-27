@@ -1,5 +1,6 @@
 {% extends "admin/base_admin.html" %}
 
+{% from 'partials/_money.html' import money %}
 {% block title %}Тарифи курсу (за замовчуванням) | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
@@ -62,7 +63,7 @@
       <tr>
         <td>{{ tariff.sort_order }}</td>
         <td><strong>{{ tariff.name }}</strong></td>
-        <td>{{ tariff.price | int }} &#8372;</td>
+        <td>{{ money(tariff.price) }}</td>
         <td>{{ tariff.format_label }}</td>
         <td>
           {% if tariff.description_items %}

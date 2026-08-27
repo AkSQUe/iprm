@@ -25,6 +25,7 @@ from flask_mail import Message
 
 from app.extensions import db
 from app.models.email_log import EmailLog, MAX_RETRIES, STALE_PENDING_MINUTES
+from app.services.money import format_amount
 
 logger = logging.getLogger(__name__)
 
@@ -1467,7 +1468,10 @@ class EmailService:
         if registration is not None:
             amount = registration.payment_amount
             if event_type == 'payment' and amount and amount > 0:
-                prefix = f'Оплата {int(amount)} UAH'
+                # Той самий формат, що й у тілі листа: `int()` тут не лише
+                # губив розряди, а й округлював копійки вниз -- рівно та
+                # помилка, заради якої заведено services/money.
+                prefix = f'Оплата {format_amount(amount)} UAH'
             elif event_type == 'registration' and registration.payment_status == 'paid':
                 prefix = 'Нова реєстрація (безкоштовно)'
         title = event.title if event is not None else event_type

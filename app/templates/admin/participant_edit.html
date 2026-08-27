@@ -1,5 +1,6 @@
 {% extends "admin/base_admin.html" %}
 
+{% from 'partials/_money.html' import money %}
 {% block title %}{% if reg %}Редагування учасника{% else %}Новий учасник{% endif %} | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
@@ -179,8 +180,8 @@
           <div class="form-hint">{{ form.promo_code.description }}</div>
           {% if reg and reg.has_discount %}
           <div class="form-hint">
-            Застосовано знижку <strong>{{ reg.discount_amount | int }} &#8372;</strong>
-            &rarr; до сплати <strong>{{ reg.payment_amount | int }} &#8372;</strong>
+            Застосовано знижку <strong>{{ money(reg.discount_amount) }}</strong>
+            &rarr; до сплати <strong>{{ money(reg.payment_amount) }}</strong>
           </div>
           {% endif %}
           {% for error in form.promo_code.errors %}<div class="form-error">{{ error }}</div>{% endfor %}

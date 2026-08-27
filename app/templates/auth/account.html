@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'partials/_money.html' import money %}
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 
 {% block title %}{{ _('Обліковий запис | ІПРМ') }}{% endblock %}
@@ -126,7 +127,7 @@
             {% if reg.payment_status != 'paid' and reg.payment_amount and reg.payment_amount > 0 %}
             <div class="account-course__payment">
               <a href="{{ url_for('registration.confirmation', registration_id=reg.id) }}" class="account-course__pay-btn">
-                {{ _('Оплатити') }} {{ reg.payment_amount | int }} &#8372;
+                {{ _('Оплатити') }} {{ money(reg.payment_amount) }}
               </a>
               <a href="{{ url_for('registration.invoice_download', registration_id=reg.id) }}"
                  class="account-course__invoice-btn" data-invoice-download>

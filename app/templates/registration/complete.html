@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'partials/_money.html' import money %}
 {% from 'partials/_location_badge.html' import location_badge %}
 
 {% block title %}{{ _('Завершення реєстрації | ІПРМ') }}{% endblock %}
@@ -41,7 +42,7 @@
     <div class="reg-event-card__meta">
       {% if event.start_date %}<div>{{ _('Дата:') }} <strong>{{ event.start_date.strftime('%d.%m.%Y %H:%M') }}</strong></div>{% endif %}
       {% if event.price and event.price > 0 %}
-        <div>{{ _('Вартість:') }} <strong>{{ event.price | int }} &#8372;</strong></div>
+        <div>{{ _('Вартість:') }} <strong>{{ money(event.price) }}</strong></div>
       {% else %}
         <div>{{ _('Вартість:') }} <strong>{{ _('Безкоштовно') }}</strong></div>
       {% endif %}

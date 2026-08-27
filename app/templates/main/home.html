@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 
+{% from 'partials/_money.html' import money %}
 {% block title %}{{ _('Інститут Плазмотерапії та Регенеративної Медицини | ІПРМ') }}{% endblock %}
 {% block meta_description %}{{ _('Післядипломна освіта для лікарів: плазмотерапія (PRP/PRF/PPP), регенеративна медицина, ін\'єкційні та апаратні методики. Практика, дати старту, бали БПР.') }}{% endblock %}
 
@@ -239,7 +240,7 @@
             </div>
           </div>
           <div class="home-calendar__price">
-            {% if inst.effective_price and inst.effective_price > 0 %}{% if inst.price_is_from %}{{ _('від') }} {% endif %}{{ inst.effective_price | int }} &#8372;{% else %}{{ _('безкоштовно') }}{% endif %}
+            {% if inst.effective_price and inst.effective_price > 0 %}{% if inst.price_is_from %}{{ _('від') }} {% endif %}{{ money(inst.effective_price) }}{% else %}{{ _('безкоштовно') }}{% endif %}
           </div>
           <a class="apple-btn apple-btn--primary apple-btn--sm" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">{{ _('Деталі') }}</a>
         </div>

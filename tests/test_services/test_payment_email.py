@@ -264,7 +264,8 @@ def test_admin_email_carries_money_and_contacts(site, registration, admin,
     assert log is not None, 'admin-нотифікація не сформувалась'
     body = log.html_body or ''
 
-    assert '12500 UAH' in body
+    # Розряди розділені нерозривним пробілом (services/money.format_amount).
+    assert '12 500 UAH' in body
     assert '+380501112233' in body
     assert 'tel:+380501112233' in body
     assert f'mailto:{registration.user.email}' in body
@@ -275,7 +276,7 @@ def test_admin_subject_leads_with_the_amount(site, registration, admin,
                                              monkeypatch):
     """У списку листів адмін відрізняє платежі саме за сумою."""
     _send(monkeypatch, registration)
-    assert _admin_log(registration).subject.startswith('Оплата 12500 UAH:')
+    assert _admin_log(registration).subject.startswith('Оплата 12 500 UAH:')
 
 
 def test_admin_email_explains_zero_amount(site, registration, admin,
@@ -287,7 +288,7 @@ def test_admin_email_explains_zero_amount(site, registration, admin,
     _send(monkeypatch, registration)
     body = _admin_log(registration).html_body or ''
     assert 'Оплачено промокодом' in body
-    assert '-12500 UAH' in body and 'було 12500 UAH' in body
+    assert '-12 500 UAH' in body and 'було 12 500 UAH' in body
 
 
 def test_no_promo_is_issued_when_sending_is_disabled(site, registration,

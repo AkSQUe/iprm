@@ -1,5 +1,6 @@
 {% extends "admin/base_admin.html" %}
 
+{% from 'partials/_money.html' import money %}
 {% set is_enrollment = kind == 'enrollment' %}
 {% set order_code = order.order_id if is_enrollment else 'REG-' ~ order.id %}
 {% set order_title = (order.course.effective_title if order.course else 'Онлайн-курс') if is_enrollment else (order.target_title or 'Захід') %}
@@ -39,17 +40,17 @@
 
     <div class="admin-stat-cards">
       <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ order.payment_amount | int }} &#8372;</span>
+        <span class="admin-stat-card__value">{{ money(order.payment_amount) }}</span>
         <span class="admin-stat-card__label">
           Сплачено{% if order.has_discount %} (прайс {{ order.amount_before_discount | int }}, знижка {{ order.discount_amount | int }}){% endif %}
         </span>
       </div>
       <div class="admin-stat-card admin-stat-card--warning">
-        <span class="admin-stat-card__value">{{ order.refunded_total | int }} &#8372;</span>
+        <span class="admin-stat-card__value">{{ money(order.refunded_total) }}</span>
         <span class="admin-stat-card__label">Уже повернуто</span>
       </div>
       <div class="admin-stat-card admin-stat-card--accent">
-        <span class="admin-stat-card__value">{{ order.refund_remaining | int }} &#8372;</span>
+        <span class="admin-stat-card__value">{{ money(order.refund_remaining) }}</span>
         <span class="admin-stat-card__label">Залишок</span>
       </div>
     </div>

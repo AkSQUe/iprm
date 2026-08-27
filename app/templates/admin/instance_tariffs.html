@@ -1,5 +1,6 @@
 {% extends "admin/base_admin.html" %}
 
+{% from 'partials/_money.html' import money %}
 {% block title %}Тарифи проведення | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
@@ -66,7 +67,7 @@
       <tr>
         <td>{{ tariff.sort_order }}</td>
         <td><strong>{{ tariff.name }}</strong></td>
-        <td>{{ tariff.price | int }} &#8372;</td>
+        <td>{{ money(tariff.price) }}</td>
         <td>{{ tariff.format_label }}</td>
         <td>
           {% if tariff.description_items %}
@@ -98,7 +99,7 @@
   <div class="admin-empty">
     {{ icon('bolt', cls='admin-empty__icon') }}
     <h3 class="admin-empty__title">Тарифів ще немає</h3>
-    <p>Без тарифів діє звичайна ціна проведення ({{ instance.effective_price | int }} &#8372;). Рекомендована вилка: Онлайн → Онлайн+ → Практикум → Практикум з менторством.</p>
+    <p>Без тарифів діє звичайна ціна проведення ({{ money(instance.effective_price) }}). Рекомендована вилка: Онлайн → Онлайн+ → Практикум → Практикум з менторством.</p>
   </div>
   {% endif %}
 

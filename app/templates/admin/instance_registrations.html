@@ -1,5 +1,6 @@
 {% extends "admin/base_admin.html" %}
 
+{% from 'partials/_money.html' import money %}
 {% block title %}Реєстрації на захід | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
@@ -138,14 +139,14 @@
             </span>
           </td>
           <td>
-            {% if reg.payment_amount %}{{ reg.payment_amount | int }} &#8372;{% else %}<span class="admin-text-muted">–</span>{% endif %}
+            {% if reg.payment_amount %}{{ money(reg.payment_amount) }}{% else %}<span class="admin-text-muted">–</span>{% endif %}
             {% if reg.tariff %}<div class="admin-text-muted">{{ reg.tariff.name }}</div>{% endif %}
             {% if reg.has_discount %}
               <div class="admin-text-muted">
                 {% if reg.promo_code %}
                   <a href="{{ url_for('admin.promo_code_detail', promo_id=reg.promo_code_id) }}">{{ reg.promo_code.code }}</a>
                 {% else %}промокод{% endif %}
-                &minus;{{ reg.discount_amount | int }} &#8372;
+                &minus;{{ money(reg.discount_amount) }}
               </div>
             {% endif %}
           </td>

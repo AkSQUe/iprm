@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
+{% from 'partials/_money.html' import money %}
 {% block title %}{{ _('Оплата успішна | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
@@ -62,7 +63,7 @@
     {% endif %}
     <div class="reg-status-card__row">
       <span class="reg-status-card__label">{{ _('Сума') }}</span>
-      <span class="reg-status-card__value">{{ reg.payment_amount | int }} &#8372;</span>
+      <span class="reg-status-card__value">{{ money(reg.payment_amount) }}</span>
     </div>
     <div class="reg-status-card__row">
       <span class="reg-status-card__label">{{ _('Статус') }}</span>

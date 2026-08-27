@@ -1,5 +1,6 @@
 {% extends "admin/base_admin.html" %}
 
+{% from 'partials/_money.html' import money %}
 {% block title %}Заявки на повернення | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
@@ -73,7 +74,7 @@
         </td>
         <td>
           {% if req.quoted_amount is not none %}
-            {{ req.quoted_amount | int }} &#8372;
+            {{ money(req.quoted_amount) }}
             {# Явно кажемо, що база -- СПЛАЧЕНЕ, а не прайс: payment_amount
                уже за вирахуванням промокоду, і без цієї підказки цифра
                поруч із дорожчим курсом читається як помилка. #}
@@ -82,14 +83,14 @@
             </div>
             {% if req.order and req.order.has_discount %}
             <div class="admin-text-muted">
-              прайс {{ req.order.amount_before_discount | int }} &#8372;, знижка {{ req.order.discount_amount | int }} &#8372;
+              прайс {{ money(req.order.amount_before_discount) }}, знижка {{ money(req.order.discount_amount) }}
             </div>
             {% endif %}
           {% else %}
             <span class="admin-text-muted">—</span>
           {% endif %}
           {% if req.order and req.order.has_refund %}
-          <div class="admin-text-muted">Уже повернуто {{ req.order.refunded_total | int }} &#8372;</div>
+          <div class="admin-text-muted">Уже повернуто {{ money(req.order.refunded_total) }}</div>
           {% endif %}
         </td>
         <td>

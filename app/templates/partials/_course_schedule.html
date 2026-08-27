@@ -1,3 +1,4 @@
+{% from 'partials/_money.html' import money %}
 {# Найближчі дати проведень.
 
    Лише офлайн-курс. Очікує upcoming_instances, open_instance_ids,
@@ -24,7 +25,7 @@
             <div class="iprm-schedule__meta">
               {{ location_badge(inst.event_format, inst.location) }}
               {% if inst.effective_cpd_points %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | plural('bpr_points') }}</span>{% endif %}
-              {% if inst.effective_price and inst.effective_price > 0 %}<span class="iprm-schedule__price">{% if inst.price_is_from %}{{ _('від') }} {% endif %}{{ inst.effective_price | int }} &#8372;</span>{% endif %}
+              {% if inst.effective_price and inst.effective_price > 0 %}<span class="iprm-schedule__price">{% if inst.price_is_from %}{{ _('від') }} {% endif %}{{ money(inst.effective_price) }}</span>{% endif %}
               {% if remaining is not none %}
               <span class="iprm-schedule__tag iprm-schedule__tag--seats{% if site_settings.seats_low_threshold and remaining <= site_settings.seats_low_threshold %} iprm-schedule__tag--warning{% endif %}">{{ _('Залишилось') }} {{ remaining }} {{ remaining | plural('seats') }}</span>
               {% endif %}
@@ -39,12 +40,12 @@
                  href="{{ url_for('registration.register_instance', instance_id=inst.id, tariff=tariff.id) }}"
                  {% if tariff_items %} title="{{ tariff_items | join('; ') }}"{% endif %}>
                 <span class="iprm-tariff-pill__name">{{ tariff.t('name') }}</span>
-                <span class="iprm-tariff-pill__price">{{ tariff.price | int }} &#8372;</span>
+                <span class="iprm-tariff-pill__price">{{ money(tariff.price) }}</span>
               </a>
               {% else %}
               <span class="iprm-tariff-pill" role="listitem"{% if tariff_items %} title="{{ tariff_items | join('; ') }}"{% endif %}>
                 <span class="iprm-tariff-pill__name">{{ tariff.t('name') }}</span>
-                <span class="iprm-tariff-pill__price">{{ tariff.price | int }} &#8372;</span>
+                <span class="iprm-tariff-pill__price">{{ money(tariff.price) }}</span>
               </span>
               {% endif %}
               {% endfor %}
