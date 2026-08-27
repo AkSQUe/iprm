@@ -78,7 +78,7 @@
           <tr>
             <td>
               {{ row.reg.user.full_name }}
-              <div class="quiz-muted">{{ row.reg.user.email }}</div>
+              <div class="admin-text-muted">{{ row.reg.user.email }}</div>
             </td>
             <td>
               {% if row.reg.quiz_passed_at %}
@@ -103,7 +103,7 @@
                 {{ row.best }}{% if row.attempts %} / {{ row.attempts[0].total }}{% endif %}
               </span>
               {% else %}
-              <span class="quiz-muted">–</span>
+              <span class="admin-text-muted">–</span>
               {% endif %}
             </td>
             <td>
@@ -133,7 +133,7 @@
               <span class="badge badge--danger">відкликано</span>
               {% endif %}
               {% else %}
-              <span class="quiz-muted">–</span>
+              <span class="admin-text-muted">–</span>
               {% endif %}
             </td>
             <td>

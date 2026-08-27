@@ -19,6 +19,8 @@
     <div class="admin-hero">
       <div>
         <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
           <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Курси</a>
           <span class="admin-breadcrumb__sep">/</span>
           <span class="admin-breadcrumb__current">Тестування</span>
@@ -56,21 +58,22 @@
          search={'name': 'q', 'placeholder': 'Пошук за назвою або slug'},
     ) }}
 
+    {% if rows %}
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead>
           <tr>
-            <th>Курс</th>
-            <th>Питань у банку</th>
-            <th>Налаштування</th>
+            <th class="admin-cell-title">Курс</th>
+            <th class="admin-nowrap">Питань у банку</th>
+            <th class="admin-nowrap">Налаштування</th>
             <th>Стан</th>
-            <th>Дії</th>
+            <th data-no-sort>Дії</th>
           </tr>
         </thead>
         <tbody>
           {% for row in rows %}
           <tr>
-            <td>
+            <td class="admin-cell-title">
               <a href="{{ url_for('admin.course_edit', course_id=row.course.id) }}">{{ row.course.title }}</a>
               {% if row.bpr_missing %}
               <span class="badge badge--danger" title="Без номера заходу БПР і балів тест не відкриється учасникам">
@@ -92,15 +95,15 @@
               </ul>
               {% endif %}
             </td>
-            <td>
-              {% if row.quiz %}{{ row.quiz.bank_size }}{% else %}<span class="quiz-muted">–</span>{% endif %}
+            <td class="admin-num">
+              {% if row.quiz %}{{ row.quiz.bank_size }}{% else %}<span class="admin-text-muted">&ndash;</span>{% endif %}
             </td>
-            <td>
+            <td class="admin-nowrap">
               {% if row.quiz %}
               {{ row.quiz.passing_score }} з {{ row.quiz.questions_per_attempt }},
               спроб: {{ row.quiz.max_attempts }}
               {% else %}
-              <span class="quiz-muted">тесту немає</span>
+              <span class="admin-text-muted">тесту немає</span>
               {% endif %}
             </td>
             <td>
@@ -116,7 +119,7 @@
             </td>
             <td>
               <a href="{{ url_for('admin.course_quiz_edit', course_id=row.course.id) }}"
-                 class="btn-admin btn-admin--sm btn-admin--secondary">
+                 class="btn-admin btn-admin--secondary btn-admin--sm">
                 {{ 'Редагувати' if row.quiz else 'Створити' }}
               </a>
             </td>
@@ -125,8 +128,10 @@
         </tbody>
       </table>
     </div>
-
-    {% if not rows %}
+    {% else %}
+    {# Порожній стан ЗАМІСТЬ таблиці, а не під нею: раніше при порожньому
+       реєстрі друкувалась шапка таблиці без жодного рядка, і одразу під нею
+       плашка «курсів ще немає» -- дві відповіді на одне питання. #}
     <div class="admin-empty">
       {{ icon('quiz', cls='admin-empty__icon') }}
       {% if filters.q %}
