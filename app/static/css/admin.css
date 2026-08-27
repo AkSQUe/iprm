@@ -89,6 +89,9 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  /* Заголовок і панель дій інакше стикаються впритул, щойно панель
+     починає стискатись. */
+  gap: 16px;
   margin-bottom: 32px;
 }
 
