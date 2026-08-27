@@ -28,7 +28,3 @@
   .admin-materials-col--actions { width: 8%; }
 }
 
-/* Час другим поверхом під датою оновлення. */
-.admin-materials-time {
-  display: block;
-}

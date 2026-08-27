@@ -36,12 +36,9 @@
        ще один крок. #}
     {% if not provider_number %}
     <div class="alert alert--warning">
-      {{ icon('error') }}
-      <span>
-        <strong class="alert__title">Спочатку задайте номер провайдера БПР</strong>
-        Номер провайдера (4 цифри) входить у номер кожного сертифіката, тож генерація
-        вимкнена. Задайте його в <a href="{{ url_for('admin.settings') }}">Налаштуваннях сайту</a>.
-      </span>
+      <strong class="alert__title">{{ icon('error') }} Спочатку задайте номер провайдера БПР</strong>
+      Номер провайдера (4 цифри) входить у номер кожного сертифіката, тож генерація
+      вимкнена. Задайте його в <a href="{{ url_for('admin.settings') }}">Налаштуваннях сайту</a>.
     </div>
     {% endif %}
 

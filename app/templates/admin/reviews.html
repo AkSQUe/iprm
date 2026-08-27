@@ -82,7 +82,7 @@
               <strong class="admin-clamp-2" title="{{ r.author_name }}">{{ r.author_name }}</strong>
               {% set meta = [r.city, r.author_role] | select | join(' · ') %}
               {% if meta %}
-              <small class="admin-text-muted admin-truncate admin-reviews-meta" title="{{ meta }}">{{ meta }}</small>
+              <small class="admin-text-muted admin-truncate admin-subline" title="{{ meta }}">{{ meta }}</small>
               {% endif %}
             </div>
           </td>

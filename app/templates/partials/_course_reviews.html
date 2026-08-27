@@ -20,8 +20,7 @@
         {# Байлайн і переклади -- як у _review_card.html: та сама сутність
            не повинна показуватись по-різному на різних сторінках. #}
         <figure class="iprm-review-tile">
-          <span class="iprm-review-tile__title"
-                aria-label="{% trans rating=review.rating %}Оцінка {{ rating }} з 5{% endtrans %}">{{ '★' * review.rating }}</span>
+          <span class="iprm-review-tile__title"><span class="iprm-rating iprm-rating--on-dark" role="img" aria-label="{% trans rating=review.rating %}Оцінка {{ rating }} з 5{% endtrans %}"><span class="iprm-rating__stars">{{ ('&#9733;' * review.rating) | safe }}{% if review.rating < 5 %}<span class="iprm-rating__off">{{ ('&#9733;' * (5 - review.rating)) | safe }}</span>{% endif %}</span><span class="iprm-rating__value">{{ review.rating }}/5</span></span></span>
           <blockquote>{{ review.t('text') }}</blockquote>
           <figcaption>{{ [review.t('author_name'), review.t('city'), review.t('author_role')] | select | join(' · ') }}</figcaption>
         </figure>

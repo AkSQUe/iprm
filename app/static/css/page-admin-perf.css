@@ -70,11 +70,6 @@
   .admin-perf-col--actions { width: 11%; }
 }
 
-/* Час другим поверхом під датою заміру. */
-.admin-perf-time {
-  display: block;
-}
-
 /* ===== Таблиця метрик ===== */
 
 .perf-profile {

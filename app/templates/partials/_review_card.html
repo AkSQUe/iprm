@@ -1,7 +1,9 @@
 {# Картка відгуку. Очікує `review` (Review з .rating/.text/.byline).
    Спільна для Головної та сторінки курсу. #}
 <figure class="iprm-review apple-reveal">
-  <div class="iprm-review__stars" aria-label="{% trans rating=review.rating %}Оцінка {{ rating }} з 5{% endtrans %}">{{ '★' * review.rating }}</div>
+  {# П'ять гліфів, а не `rating` штук: чотири зірки самі по собі не
+     відрізнити від чотирьох із чотирьох. Значення поруч цифрою. #}
+  <div class="iprm-review__stars"><span class="iprm-rating" role="img" aria-label="{% trans rating=review.rating %}Оцінка {{ rating }} з 5{% endtrans %}"><span class="iprm-rating__stars">{{ ('&#9733;' * review.rating) | safe }}{% if review.rating < 5 %}<span class="iprm-rating__off">{{ ('&#9733;' * (5 - review.rating)) | safe }}</span>{% endif %}</span><span class="iprm-rating__value">{{ review.rating }}/5</span></span></div>
   <blockquote class="iprm-review__text">{{ review.t('text') }}</blockquote>
   <figcaption class="iprm-review__author">{{ [review.t('author_name'), review.t('city'), review.t('author_role')] | select | join(' · ') }}</figcaption>
 </figure>

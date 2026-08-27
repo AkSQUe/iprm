@@ -141,7 +141,7 @@
           {% if inst.start_date %}
             {{ inst.start_date.strftime('%d.%m.%Y') }}
             {% if inst.start_date.hour or inst.start_date.minute %}
-            <small class="admin-text-muted admin-instances-time">{{ inst.start_date.strftime('%H:%M') }}</small>
+            <small class="admin-text-muted admin-subline">{{ inst.start_date.strftime('%H:%M') }}</small>
             {% endif %}
           {% else %}&ndash;{% endif %}
         </td>

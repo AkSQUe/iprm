@@ -1,14 +1,5 @@
 /* Admin: MM Medic materials reservation page */
 
-.materials-banner {
-  padding: 14px 16px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  background: #fff4e5;
-  color: #7a4a00;
-  border: 1px solid #ffd8a8;
-}
-
 .materials-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -194,11 +185,6 @@
 }
 
 /* ==========================================================================
-   Тёмна тема: банер, підказки, статус-бейджи
+   Тёмна тема: підказки
    ========================================================================== */
-[data-theme="dark"] .materials-banner {
-  background: rgba(217, 119, 6, 0.16);
-  color: var(--iprm-warning-text);
-  border-color: rgba(255, 216, 168, 0.3);
-}
 [data-theme="dark"] .materials-hint { color: #fbbf24; }

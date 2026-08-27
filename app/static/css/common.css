@@ -1605,19 +1605,20 @@ select.badge-select:disabled {
 }
 
 .alert {
-  display: flex;
-  /* По першому рядку, а не по центру блока: у банері на три рядки іконка
-     інакше висить посередині. */
-  align-items: flex-start;
-  gap: 10px;
   padding: 12px 16px;
   border-radius: var(--iprm-radius-sm);
   font-size: 14px;
   margin-bottom: 16px;
 }
 
+/* Іконка стоїть у потоці першого рядка, а не окремою колонкою. Флекс тут
+   спокушає (іконка ліворуч, текст праворуч), але робить кожен вузол банера
+   окремим елементом: «Перевірте <a>Налаштування</a>.» розповзалось на три
+   шматки з проміжками по 10px, і кожен банер довелось би обгортати зайвим
+   span. Вертикальне зміщення -- щоб іконка сіла на базову лінію тексту. */
 .alert .material-symbols-rounded {
-  flex-shrink: 0;
+  vertical-align: -5px;
+  margin-right: 8px;
 }
 
 /* Заголовок банера: перший рядок жирним, далі пояснення. */
@@ -2437,12 +2438,27 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   color: var(--iprm-text-light);
 }
 
-/* Публічна картка відгуку: та сама пара токенів, поки картка не перейшла на
-   компонент цілком (див. передачі). */
+/* На тёмній оболонці (секція відгуків на сторінці курсу) вона тёмна
+   незалежно від теми сайту, тож світлотемний --apple-gold-ink там був би
+   майже невидимий. Беремо золото «для тёмного» -- той самий токен, що
+   тримала власна плитка до переходу на компонент. */
+.iprm-rating--on-dark .iprm-rating__stars {
+  color: var(--apple-gold-soft);
+  letter-spacing: 0.08em;
+}
+
+.iprm-rating--on-dark .iprm-rating__off {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.iprm-rating--on-dark .iprm-rating__value {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Обгортка рядка зірок на картці відгуку: лишився самий відступ -- колір,
+   трекінг і кількість гліфів тепер тримає .iprm-rating. */
 .iprm-review__stars {
   margin-bottom: 0.75rem;
-  color: var(--apple-gold-ink);
-  letter-spacing: 2px;
 }
 
 .iprm-review__text {

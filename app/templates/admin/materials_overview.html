@@ -161,7 +161,7 @@
           {% if r.updated_at %}
           <div>
             {{ r.updated_at.strftime('%d.%m.%Y') }}
-            <small class="admin-text-muted admin-materials-time">{{ r.updated_at.strftime('%H:%M') }}</small>
+            <small class="admin-text-muted admin-subline">{{ r.updated_at.strftime('%H:%M') }}</small>
           </div>
           {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
         </td>

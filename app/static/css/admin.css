@@ -393,6 +393,17 @@
   font-size: 13px;
 }
 
+/* Другий поверх у комірці таблиці: час під датою, пошта під іменем, місто й
+   роль під ПІБ. `<small>` і `<span>` інлайнові, тож без цього значення
+   лягають в один рядок із першим.
+
+   Чотири сторінки встигли завести це правило кожна під власним іменем
+   (.admin-instances-time, .admin-materials-time, .admin-perf-time,
+   .admin-reviews-meta) -- однакове до символу. */
+.admin-subline {
+  display: block;
+}
+
 /* Readonly field display */
 .admin-field-readonly {
   pointer-events: none;

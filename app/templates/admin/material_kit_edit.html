@@ -133,11 +133,11 @@
     {% endif %}
 
     {% if catalog_stale %}
-    <div class="materials-banner">
+    <div class="alert alert--warning">
       {{ icon('error') }} MM Medic зараз недоступний — показано останній відомий каталог.
     </div>
     {% elif catalog_error %}
-    <div class="materials-banner">
+    <div class="alert alert--warning">
       {{ icon('error') }} Каталог MM Medic недоступний: {{ catalog_error }}.
     </div>
     {% endif %}
