@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-course-requests.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import filter_bar %}
@@ -30,20 +31,36 @@
   {% include 'partials/flash_messages.html' %}
 
   {% if counts_by_course %}
-  <div class="form-section admin-form__section">
+  {# .admin-table--wide тут просив 1120px без жодного контейнера прокрутки --
+     і виштовхував за край не таблицю, а всю сторінку: на 1440 scrollWidth
+     був 1441. Трьом колонкам нижня межа ширини не потрібна взагалі. #}
+  <div class="form-section">
     <h3 class="admin-form__section-title">Найбільш запитувані курси</h3>
-    <table class="admin-table admin-table--wide">
+    <table class="admin-table admin-requests-top">
+      <colgroup>
+        <col>
+        <col class="admin-requests-top__count">
+        <col class="admin-requests-top__action">
+      </colgroup>
       <thead>
-        <tr><th>Курс</th><th>Нових запитів</th><th>Дії</th></tr>
+        <tr>
+          <th class="admin-text-left">Курс</th>
+          <th>Нових запитів</th>
+          <th>Дії</th>
+        </tr>
       </thead>
       <tbody>
         {% for course, count in counts_by_course %}
         <tr>
-          <td><strong>{{ course.title if course else '–' }}</strong></td>
-          <td><span class="badge badge--warning">{{ count }}</span></td>
+          <td class="admin-text-left"><strong>{{ course.title if course else '&mdash;' }}</strong></td>
+          {# Число, а не бурштинова плашка: бурштин на сайті означає «потребує
+             дії», і на лічильнику він кричав там, де просто рахують. Стан
+             позначає бейдж у самому реєстрі нижче. #}
+          <td><strong>{{ count }}</strong></td>
           <td>
             {% if course %}
-            <a href="{{ url_for('admin.instance_create', course_id=course.id) }}" class="btn-admin btn-admin--primary btn-admin--sm">+ Запланувати проведення</a>
+            <a href="{{ url_for('admin.instance_create', course_id=course.id) }}"
+               class="btn-admin btn-admin--primary btn-admin--sm">{{ icon('add') }} Запланувати проведення</a>
             {% endif %}
           </td>
         </tr>
@@ -68,13 +85,24 @@
 
   {% if requests %}
   <div class="admin-table-wrap">
-  <table class="admin-table">
+  {# Ширини колонок задані явно (page-admin-course-requests.css): без них
+     назва курсу ламалась на чотири поверхи й розганяла рядок до 101px. #}
+  <table class="admin-table admin-table--fixed admin-requests-table">
+    <colgroup>
+      <col class="admin-requests-col--date">
+      <col class="admin-requests-col--course">
+      <col class="admin-requests-col--email">
+      <col class="admin-requests-col--phone">
+      <col class="admin-requests-col--status">
+      <col class="admin-requests-col--updated">
+      <col class="admin-requests-col--actions">
+    </colgroup>
     <thead>
       <tr>
         <th>Дата</th>
-        <th>Курс</th>
-        <th>Email</th>
-        <th>Телефон</th>
+        <th class="admin-text-left">Курс</th>
+        <th class="admin-text-left">Email</th>
+        <th class="admin-text-left">Телефон</th>
         <th>Статус</th>
         <th>Оновлено</th>
         <th>Дії</th>
@@ -83,18 +111,54 @@
     <tbody>
       {% for req in requests %}
       <tr>
-        <td>{{ req.created_at.strftime('%d.%m.%Y %H:%M') if req.created_at else '–' }}</td>
-        <td>{{ req.course.title if req.course else '–' }}</td>
-        <td>{{ req.email }}</td>
-        <td>{{ req.phone or '–' }}</td>
-        <td><span class="badge badge--{{ req.status }}">{{ req.status_label }}</span></td>
-        <td>{{ req.updated_at.strftime('%d.%m.%Y %H:%M') if req.updated_at else '–' }}</td>
+        {# Час другим поверхом: «27.08.2026 10:00» в одному рядку не вміщався
+           й переносився посеред дати. #}
+        <td class="admin-nowrap">
+          {% if req.created_at %}
+          <div>
+            {{ req.created_at.strftime('%d.%m.%Y') }}
+            <small class="admin-text-muted admin-subline">{{ req.created_at.strftime('%H:%M') }}</small>
+          </div>
+          {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
+        </td>
+        <td class="admin-text-left">
+          {% if req.course %}
+          <span class="admin-clamp-2" title="{{ req.course.title }}">{{ req.course.title }}</span>
+          {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
+        </td>
+        {# Пошта й телефон -- посилання, а не текст: єдина дія, заради якої
+           сюди заходять, це відповісти клієнту, і вона не має починатися з
+           виділення адреси мишею. Так само зроблено в реєстрі лідів Meta. #}
+        <td class="admin-text-left">
+          <a class="admin-truncate" href="mailto:{{ req.email }}" title="{{ req.email }}">{{ req.email }}</a>
+        </td>
+        <td class="admin-text-left">
+          {% if req.phone %}
+          <a class="admin-nowrap" href="tel:{{ req.phone | replace(' ', '') }}">{{ req.phone }}</a>
+          {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
+        </td>
+        {# Модифікатор бейджа береться з моделі. Раніше тут стояло
+           `badge--{{ req.status }}`, а правило існувало лише для `pending`:
+           «Оброблено», «Заплановано» й «Відхилено» друкувались голим текстом. #}
+        <td><span class="badge badge--{{ req.status_badge }}">{{ req.status_label }}</span></td>
+        <td class="admin-nowrap">
+          {% if req.updated_at %}
+          <div>
+            {{ req.updated_at.strftime('%d.%m.%Y') }}
+            <small class="admin-text-muted admin-subline">{{ req.updated_at.strftime('%H:%M') }}</small>
+          </div>
+          {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
+        </td>
         <td>
           <div class="admin-table__actions">
-            <a href="{{ url_for('admin.course_request_edit', request_id=req.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('edit', label='Редагувати') }}</a>
-            <form method="POST" action="{{ url_for('admin.course_request_delete', request_id=req.id) }}" data-confirm="Видалити запит?" data-confirm-ok="Видалити запит" data-confirm-danger>
+            <a href="{{ url_for('admin.course_request_edit', request_id=req.id) }}"
+               class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+               title="Редагувати">{{ icon('edit', label='Редагувати') }}</a>
+            <form method="POST" action="{{ url_for('admin.course_request_delete', request_id=req.id) }}"
+                  data-confirm="Видалити запит?" data-confirm-ok="Видалити запит" data-confirm-danger>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">{{ icon('delete', label='Видалити') }}</button>
+              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm btn-admin--icon"
+                      title="Видалити">{{ icon('delete', label='Видалити') }}</button>
             </form>
           </div>
         </td>
@@ -104,14 +168,19 @@
   </table>
   </div>
   {% else %}
+  {# Зріз рахуємо по ВСІХ фільтрах: умова перевіряла лише пошук, статус і
+     курс, тож фільтр за датою давав «Запитів немає» -- неправду, бо запити
+     є, просто не в цьому проміжку. #}
+  {% set has_filters = filters.values() | select | list | length > 0 %}
   <div class="admin-empty">
-    {{ icon('inbox', cls='admin-empty__icon') }}
-    {% if filters.q or filters.status or filters.course_id %}
-      <h3 class="admin-empty__title">Нічого не знайдено</h3>
-      <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.course_requests_list') }}">скинути їх</a></p>
+    {% if has_filters %}
+      {{ icon('search', cls='admin-empty__icon') }}
+      <h3 class="admin-empty__title">За цим зрізом запитів немає</h3>
+      <p>Спробуйте інший фільтр або <a href="{{ url_for('admin.course_requests_list') }}">подивіться всі запити</a></p>
     {% else %}
+      {{ icon('inbox', cls='admin-empty__icon') }}
       <h3 class="admin-empty__title">Запитів немає</h3>
-      <p>Коли користувачі залишать заявку на проведення курсу — вона з'явиться тут.</p>
+      <p>Коли користувачі залишать заявку на проведення курсу &mdash; вона з'явиться тут.</p>
     {% endif %}
   </div>
   {% endif %}

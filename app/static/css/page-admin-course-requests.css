@@ -1,0 +1,31 @@
+/* page-admin-course-requests.css -- розкладка реєстру запитів на курси
+   (/admin/course-requests).
+
+   Тільки розкладка. Бейджі, кнопки, картка, панель фільтрів і порожній стан --
+   компоненти дизайн-системи. Переозначень атомів немає.
+
+   Причина існування файлу: назва курсу без обмеження ламалась на чотири
+   поверхи й розганяла рядок до 101px, а зведена таблиця у картці носила
+   .admin-table--wide (нижня межа 1120px) без контейнера прокрутки -- і
+   виштовхувала за край УСЮ сторінку: на 1440 scrollWidth був 1441. */
+
+@media (min-width: 769px) {
+  /* 1000px -- сума виміряних мінімумів: дата з часом, плашка «Заплановано»,
+     мітка шапки «ОНОВЛЕНО» зі стрілкою сортування, дві кнопки-іконки. */
+  .admin-requests-table {
+    min-width: 1000px;
+  }
+
+  .admin-requests-col--date { width: 12%; }
+  .admin-requests-col--course { width: 21%; }
+  .admin-requests-col--email { width: 22%; }
+  .admin-requests-col--phone { width: 14%; }
+  .admin-requests-col--status { width: 13%; }
+  .admin-requests-col--updated { width: 12%; }
+  .admin-requests-col--actions { width: 6%; }
+
+  /* Зведення «найбільш запитувані» -- три колонки, ширини яких диктує назва
+     курсу; лічильник і кнопка тримаються праворуч і не розтягуються. */
+  .admin-requests-top__count { width: 16%; }
+  .admin-requests-top__action { width: 24%; }
+}

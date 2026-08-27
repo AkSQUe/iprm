@@ -81,6 +81,21 @@ class CourseRequest(TimestampMixin, db.Model):
         ('dismissed', 'Відхилено'),
     ]
 
+    # Модифікатор .badge--* дизайн-системи на кожен стан. Шаблон раніше
+    # писав `badge--{{ status }}` навпростець, і з чотирьох станів правило
+    # мало лише `pending`: «Оброблено», «Заплановано» й «Відхилено»
+    # друкувались голим текстом без плашки.
+    #   pending    -- бурштин: єдиний стан, що чекає дії менеджера;
+    #   responded  -- синій: у роботі;
+    #   scheduled  -- зелений: цикл закритий, проведення заплановане;
+    #   dismissed  -- сірий: нічого не сталось і не станеться.
+    STATUS_BADGES = {
+        'pending': 'warning',
+        'responded': 'published',
+        'scheduled': 'active',
+        'dismissed': 'draft',
+    }
+
     MESSENGERS = [
         ('telegram', 'Telegram'),
         ('viber', 'Viber'),
@@ -92,6 +107,11 @@ class CourseRequest(TimestampMixin, db.Model):
     @property
     def status_label(self):
         return dict(self.STATUSES).get(self.status, self.status)
+
+    @property
+    def status_badge(self):
+        """Модифікатор `.badge--*` під поточний стан (див. STATUS_BADGES)."""
+        return self.STATUS_BADGES.get(self.status, 'draft')
 
     @property
     def messenger_label(self):
