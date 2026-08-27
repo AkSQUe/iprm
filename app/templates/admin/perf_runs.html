@@ -10,6 +10,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-perf.css') }}?v={{ assets_version }}">
 {% endblock %}
 
+{% from 'admin/partials/_filter_bar.html' import pager %}
+
 {% block content %}
 <div class="admin-with-sidebar">
   {% include 'admin/partials/_sidebar.html' %}
@@ -25,10 +27,10 @@
       <h1 class="admin-hero__title">Швидкість сторінок</h1>
       <p class="admin-hero__subtitle">
         {% if latest %}
-        Останній замір {{ latest.measured_at.strftime('%d.%m.%Y %H:%M') }} -
-        {{ latest.pages_total }} сторінок, вердикт {{ latest.verdict }}
+        Останній замір {{ latest.measured_at.strftime('%d.%m.%Y %H:%M') }} &ndash;
+        {{ latest.pages_total }} сторінок
         {% else %}
-        Замірів ще немає - надішліть перший з інструменту
+        Замірів ще немає &ndash; надішліть перший з інструменту
         {% endif %}
       </p>
     </div>
@@ -57,15 +59,131 @@
   </div>
   {% endif %}
 
+  {% if runs %}
+  <div class="admin-table-wrap">
+    {# Ширини колонок задані явно (page-admin-perf.css). З .admin-table--wide
+       таблиця просила 1120px там, де на 1440 доступно 1078: колонка дій
+       обрізалась контейнером прокрутки. #}
+    <table class="admin-table admin-table--fixed admin-perf-table">
+      <colgroup>
+        <col class="admin-perf-col--run">
+        <col class="admin-perf-col--site">
+        <col class="admin-perf-col--source">
+        <col class="admin-perf-col--note">
+        <col class="admin-perf-col--pages">
+        <col class="admin-perf-col--warn">
+        <col class="admin-perf-col--fail">
+        <col class="admin-perf-col--verdict">
+        <col class="admin-perf-col--actions">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Замір</th>
+          <th class="admin-text-left">Сайт</th>
+          <th>Джерело</th>
+          <th class="admin-text-left">Нотатка</th>
+          <th>Сторінок</th>
+          <th>WARN</th>
+          <th>FAIL</th>
+          <th>Вердикт</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in runs %}
+        <tr>
+          {# Час другим поверхом: «27.08.2026 10:00» в одному рядку не
+             вміщався й переносився посеред дати. #}
+          <td class="admin-nowrap">
+            <div>
+              <strong>{{ run.measured_at.strftime('%d.%m.%Y') }}</strong>
+              <small class="admin-text-muted admin-perf-time">{{ run.measured_at.strftime('%H:%M') }}</small>
+            </div>
+          </td>
+          {# Схему не показуємо: у колонці на 118px «https://» з'їдало рівно
+             стільки, скільки лишалось на сам хост, і всі рядки виглядали
+             однаково обрізаними. Повна адреса -- у title. #}
+          <td class="admin-text-left">
+            <span class="admin-truncate" title="{{ run.base_url }}">{{ run.base_url | replace('https://', '') | replace('http://', '') }}</span>
+          </td>
+          <td>{% if run.source %}{{ run.source }}{% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}</td>
+          {# Обрізання -- справа CSS, а не шаблону: `note[:40]` рахував символи
+             наосліп, різав слово посеред і додавав власні три крапки навіть
+             там, де до межі лишалась одна літера. #}
+          <td class="admin-text-left">
+            {% if run.note %}
+            <span class="admin-clamp-2" title="{{ run.note }}">{{ run.note }}</span>
+            {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
+          </td>
+          <td>{{ run.pages_total }}</td>
+          <td>{{ run.pages_warn }}</td>
+          <td>{{ run.pages_fail }}</td>
+          <td>
+            {% if run.verdict == 'FAIL' %}
+            <span class="badge badge--danger">FAIL</span>
+            {% elif run.verdict == 'WARN' %}
+            <span class="badge badge--warning">WARN</span>
+            {% else %}
+            <span class="badge badge--success">OK</span>
+            {% endif %}
+          </td>
+          <td>
+            {# Часта дія -- одразу, видалення під «...»: воно незворотне, а
+               стояло за один промах від «Деталі». #}
+            <div class="admin-table__actions">
+              <a href="{{ url_for('admin.perf_run_detail', run_id=run.id) }}"
+                 class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+                 title="Деталі заміру">{{ icon('info', label='Деталі') }}</a>
+              <details class="admin-actions-menu">
+                <summary class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+                         title="Ще дії" aria-label="Ще дії">
+                  {{ icon('more_vert') }}
+                </summary>
+                <div class="admin-actions-menu__items">
+                  <form method="POST" action="{{ url_for('admin.perf_run_delete', run_id=run.id) }}"
+                        data-confirm="Видалити цей прогін?" data-confirm-ok="Видалити прогін" data-confirm-danger>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--danger">
+                      {{ icon('delete') }} Видалити прогін
+                    </button>
+                  </form>
+                </div>
+              </details>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {{ pager('admin.perf_runs', pagination) }}
+
+  {% else %}
+  <div class="admin-empty">
+    {{ icon('bolt', cls='admin-empty__icon') }}
+    <h3 class="admin-empty__title">Замірів ще немає</h3>
+    <p>
+      {% if key_state.present %}
+      Запустіть інструмент командою нижче &ndash; перший прогін зʼявиться тут.
+      {% else %}
+      Згенеруйте ключ нижче і запустіть інструмент з прапорцем <code>--push</code>.
+      {% endif %}
+    </p>
+  </div>
+  {% endif %}
+
   {# Приймання замірів: адмінка сама не вимірює -- браузер на 1-ядерному
      VPS конкурував би за CPU з gunicorn і псував би і сайт, і цифри. #}
-  <div class="perf-ingest">
-    <h2 class="perf-ingest__title">Як надсилати заміри</h2>
+  {# Картка -- компонент дизайн-системи (.form-section), а не власна:
+     .perf-ingest малював ту саму поверхню, межу й радіус своїми руками. #}
+  <div class="form-section perf-ingest">
+    <h2 class="form-section__title">Як надсилати заміри</h2>
 
     {% if reveal_key %}
     <div class="perf-key">
       <p class="perf-key__label">Новий ключ приймання - скопіюйте зараз, повторно він не показується:</p>
-      <code class="perf-key__value">{{ reveal_key }}</code>
+      <code class="admin-code-block perf-key__value">{{ reveal_key }}</code>
     </div>
     {% endif %}
 
@@ -91,7 +209,9 @@
       {% include 'admin/_rotation_row.html' with context %}
     </div>
 
-    <code class="perf-code">python tools/perf/perf_check.py --push {{ key_state.ingest_url }} --token &lt;ключ&gt; --note "опис змін"</code>
+    {# Той самий блок коду, що в журналі помилок: власний .perf-code
+       дублював його й до того ж вбивав шрифт літералом. #}
+    <code class="admin-code-block admin-mt-sm">python tools/perf/perf_check.py --push {{ key_state.ingest_url }} --token &lt;ключ&gt; --note "опис змін"</code>
 
     <div class="perf-actions">
       <form method="POST" action="{{ url_for('admin.perf_key_rotate') }}"
@@ -107,88 +227,14 @@
             data-confirm="Вимкнути приймання замірів? Ендпоінт більше не прийматиме дані."
             data-confirm-ok="Вимкнути приймання">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn-admin btn-admin--sm">{{ icon('block') }} Вимкнути приймання</button>
+        {# --danger, а не голий .btn-admin: без варіанта кнопка лишалась
+           системним сірим прямокутником -- єдиним елементом на сторінці, що
+           не належав дизайн-системі, і при тому найпомітнішим у картці. #}
+        <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">{{ icon('block') }} Вимкнути приймання</button>
       </form>
       {% endif %}
     </div>
   </div>
-
-  {% if runs %}
-  <div class="admin-table-wrap">
-    <table class="admin-table admin-table--wide">
-      <thead>
-        <tr>
-          <th>Замір</th>
-          <th>Сайт</th>
-          <th>Джерело</th>
-          <th>Нотатка</th>
-          <th>Сторінок</th>
-          <th>WARN</th>
-          <th>FAIL</th>
-          <th>Вердикт</th>
-          <th>Дії</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for run in runs %}
-        <tr>
-          <td><strong>{{ run.measured_at.strftime('%d.%m.%Y %H:%M') }}</strong></td>
-          <td>{{ run.base_url }}</td>
-          <td>{{ run.source or '-' }}</td>
-          <td title="{{ run.note }}">{{ run.note[:40] }}{% if run.note|length > 40 %}...{% endif %}</td>
-          <td>{{ run.pages_total }}</td>
-          <td>{{ run.pages_warn }}</td>
-          <td>{{ run.pages_fail }}</td>
-          <td>
-            {% if run.verdict == 'FAIL' %}
-            <span class="badge badge--danger">FAIL</span>
-            {% elif run.verdict == 'WARN' %}
-            <span class="badge badge--warning">WARN</span>
-            {% else %}
-            <span class="badge badge--success">OK</span>
-            {% endif %}
-          </td>
-          <td>
-            <div class="admin-table__actions">
-              <a href="{{ url_for('admin.perf_run_detail', run_id=run.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('info', label='Деталі') }}</a>
-              <form method="POST" action="{{ url_for('admin.perf_run_delete', run_id=run.id) }}" class="admin-inline-form"
-                    data-confirm="Видалити цей прогін?" data-confirm-ok="Видалити прогін" data-confirm-danger>
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn-admin btn-admin--sm">{{ icon('delete', label='Видалити') }}</button>
-              </form>
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
-  {% if pagination.pages > 1 %}
-  <nav class="admin-pagination">
-    {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.perf_runs', page=pagination.prev_num) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
-    {% endif %}
-    <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }}</span>
-    {% if pagination.has_next %}
-    <a href="{{ url_for('admin.perf_runs', page=pagination.next_num) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
-    {% endif %}
-  </nav>
-  {% endif %}
-
-  {% else %}
-  <div class="admin-empty">
-    {{ icon('bolt', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">Замірів ще немає</h3>
-    <p>
-      {% if key_state.present %}
-      Запустіть інструмент командою вище - перший прогін зʼявиться тут.
-      {% else %}
-      Згенеруйте ключ вище і запустіть інструмент з прапорцем <code>--push</code>.
-      {% endif %}
-    </p>
-  </div>
-  {% endif %}
 
   </div>
 </div>

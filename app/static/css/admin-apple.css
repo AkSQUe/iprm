@@ -514,7 +514,7 @@
 }
 
 .admin-table th {
-  background: var(--iprm-table-head-bg);
+  background: var(--iprm-surface-inset);
   padding: 14px 16px;
   font-size: 0.6875rem;
   font-weight: 600;

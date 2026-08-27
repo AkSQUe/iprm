@@ -184,7 +184,7 @@
    `.admin-table th`, і розбіжність значень означала б, що вигляд шапки
    залежить від того, чи підключено другий файл (на /design-system -- ні). */
 .admin-table th {
-  background: var(--iprm-table-head-bg);
+  background: var(--iprm-surface-inset);
   padding: 12px 16px;
   font-size: 12px;
   font-weight: 600;
@@ -383,7 +383,13 @@
 
 /* Code/traceback block */
 .admin-code-block {
-  background: var(--iprm-card-bg);
+  /* Блок -- на будь-якому тегу. На <pre> і <div> це виходило само собою, а на
+     <code> блок лишався інлайновим і стискався до ширини вмісту: ключ
+     приймання малювався коробочкою на пів рядка посеред панелі. */
+  display: block;
+  /* Не --iprm-card-bg: у тёмній темі він дорівнює поверхні картки, і блок
+     коду всередині картки ставав невидимим прямокутником. */
+  background: var(--iprm-surface-inset);
   padding: 16px;
   border-radius: var(--iprm-radius-sm);
   font-size: 0.75rem;
