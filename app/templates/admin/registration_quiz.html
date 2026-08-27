@@ -73,7 +73,7 @@
         </span>
         <span class="admin-stat-card__label">Поріг складання</span>
       </div>
-      <div class="admin-stat-card{{ ' quiz-stat--alert' if attempts_left == 0 and not reg.quiz_passed_at }}">
+      <div class="admin-stat-card{{ ' admin-stat-card--alert' if attempts_left == 0 and not reg.quiz_passed_at }}">
         <span class="admin-stat-card__value">{{ attempts_left }}</span>
         <span class="admin-stat-card__label">Спроб залишилось</span>
       </div>

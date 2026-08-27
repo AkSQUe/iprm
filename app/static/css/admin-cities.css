@@ -20,17 +20,8 @@
   color: var(--iprm-text-light);
 }
 
-/* «Немає в довіднику» -- бурштиновим, а не готовим модифікатором
-   .admin-stat-card--warning: той у дизайн-системі синій (той самий токен, що
-   й бейдж «Опубліковано»), і на увагу тут не спрацював би. */
-.cities-stat--alert {
-  border-color: var(--iprm-warning-border);
-}
-
-.cities-stat--alert .admin-stat-card__value {
-  color: var(--iprm-warning);
-}
-
+/* Бурштинова картка переїхала в дизайн-систему як .admin-stat-card--alert
+   (admin.css): той самий вигляд був тут і в admin-quiz.css. */
 /* ========== ПАНЕЛІ (картки-секції) ========== */
 
 .cities-panel__head {

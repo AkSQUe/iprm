@@ -1164,6 +1164,23 @@ a.admin-stat-card:focus-visible {
 .admin-stat-card--danger .admin-stat-card__value { color: var(--iprm-error-text); }
 .admin-stat-card--accent .admin-stat-card__value { color: var(--iprm-accent); }
 
+/* Бурштинова картка «щось потребує уваги». Заведена тому, що --warning у цій
+   системі СИНЯ: вона бере токен бейджа «Опубліковано», і на увагу не
+   спрацьовує. Дві сторінки вже обходили це власними класами (quiz-stat--alert,
+   cities-stat--alert) -- тепер варіант один.
+
+   Значення -- --iprm-warning-text, а не --iprm-warning: другий дає на білому
+   лише 3.19, тобто проходить рівно як великий текст і розсипається, щойно
+   модифікатор застосують до чогось дрібнішого. Перший дає 7.09. */
+/* Подвійний клас навмисно: admin-apple.css вантажиться пізніше й задає
+   `border` цілим скороченням, тож звичайний .admin-stat-card--alert програвав
+   би йому за порядком при однаковій вазі. */
+.admin-stat-card.admin-stat-card--alert {
+  border-color: var(--iprm-warning-border);
+}
+
+.admin-stat-card--alert .admin-stat-card__value { color: var(--iprm-warning-text); }
+
 /* ========== МІСЦЯ В ЗАЛІ (зайнято/місткість) ========== */
 
 /* Місце тримає лише оплачена реєстрація (services.seating). Перевищення

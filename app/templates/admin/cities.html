@@ -44,7 +44,7 @@
         <span class="admin-stat-card__label">{{ 'Російська' if lang == 'ru' else 'Англійська' }}</span>
       </div>
       {% endfor %}
-      <div class="admin-stat-card{{ ' cities-stat--alert' if missing }}">
+      <div class="admin-stat-card{{ ' admin-stat-card--alert' if missing }}">
         <span class="admin-stat-card__value">{{ missing | length }}</span>
         <span class="admin-stat-card__label">Немає в довіднику</span>
       </div>

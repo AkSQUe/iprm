@@ -46,7 +46,7 @@
         <span class="admin-stat-card__label">Увімкнених тестів</span>
       </div>
       {% set blocked = rows | selectattr('bpr_missing') | list | length %}
-      <div class="admin-stat-card{{ ' quiz-stat--alert' if blocked }}">
+      <div class="admin-stat-card{{ ' admin-stat-card--alert' if blocked }}">
         <span class="admin-stat-card__value">{{ blocked }}</span>
         <span class="admin-stat-card__label">Курсів без даних БПР</span>
       </div>

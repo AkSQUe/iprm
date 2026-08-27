@@ -95,7 +95,7 @@
     </div>
 
     <!-- Quick-filter pills (за часом заходу) -->
-    <div class="admin-filter-pills">
+    <div class="admin-pills">
       {% for value, label, ico in [
            ('upcoming', 'Майбутні заходи', 'event_upcoming'),
            ('past', 'Минулі', 'history'),
@@ -109,7 +109,7 @@
 
     {# Пресети: щоденні зрізи в один клік. Кожен -- звичайний набір фільтрів,
        тож панель і чіпси одразу показують, що саме увімкнено. #}
-    <div class="admin-filter-pills admin-filter-pills--presets">
+    <div class="admin-pills admin-pills--presets">
       {% for key, label, ico, args in presets %}
       <a href="{{ url_for('admin.registrations_all', scope=filters.scope, **args) }}"
          class="admin-pill{% if active_preset == key %} admin-pill--active{% endif %}">

@@ -80,7 +80,7 @@
     ('full', 'Заповнені', 'event_busy'),
     ('attention', 'Потребують уваги', 'priority_high')
   ] %}
-  <div class="admin-filter-pills">
+  <div class="admin-pills">
     {% for key, label, icon_name in pills %}
     <a href="{{ url_for('admin.instances_list', **dict(filter_args, quick=key or none)) }}"
        class="admin-pill{% if filters.quick == key %} admin-pill--active{% endif %}">

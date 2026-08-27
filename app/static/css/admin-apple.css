@@ -901,9 +901,6 @@
 .admin-dropzone--square .admin-dropzone__preview img {
   width: 100%;
   height: 100%;
-}
-
-.admin-dropzone--square .admin-dropzone__preview img {
   object-fit: cover;
   object-position: center top;
 }
@@ -1110,8 +1107,12 @@
   }
 }
 
-/* ========== QUICK-FILTER PILLS (таблетки швидких фільтрів) ========== */
-.admin-filter-pills {
+/* ========== PILLS (стрічка таблеток) ==========
+   Спершу це були лише швидкі фільтри реєстру, звідси й попереднє ім'я
+   .admin-filter-pills. Тепер тією самою стрічкою зроблено покажчик секцій у
+   налаштуваннях -- поведінка потрібна та сама (один ряд із прокруткою вбік на
+   телефоні), а «фільтр» у назві став неправдою. */
+.admin-pills {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -1466,7 +1467,7 @@
   /* Чіпси -- горизонтальна стрічка, а не три ряди. Шість пресетів у стовпчик
      відсували список ще на екран нижче, а прокрутка вбік лишає їх одним
      рядком і не бреше про кількість: видно, що праворуч є ще. */
-  .admin-filter-pills {
+  .admin-pills {
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
@@ -1475,11 +1476,11 @@
     padding-inline: 2px;
   }
 
-  .admin-filter-pills::-webkit-scrollbar {
+  .admin-pills::-webkit-scrollbar {
     display: none;
   }
 
-  .admin-filter-pills .admin-pill {
+  .admin-pills .admin-pill {
     flex: 0 0 auto;
   }
 }
@@ -1525,7 +1526,7 @@
 
 /* Пресети списку реєстрацій -- той самий вигляд, що й пілюлі періоду, лише
    з меншим відступом: два ряди пілюль поспіль інакше "розповзаються". */
-.admin-filter-pills--presets {
+.admin-pills--presets {
   margin-top: -8px;
 }
 
