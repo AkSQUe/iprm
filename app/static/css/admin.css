@@ -1385,12 +1385,17 @@ a.admin-stat-card:focus-visible {
     padding: 40px 16px;
   }
 
+  /* Один ряд, а не стовпчик: панель тепер липка й на телефоні (див.
+     admin-apple.css), а стовпчик із трьох кнопок з'їдав би чверть екрана.
+     Кнопки ділять ряд порівну й переносяться лише коли їх забагато. */
   .admin-form__actions {
-    flex-direction: column;
+    flex-wrap: wrap;
   }
 
   .admin-form__actions .btn-admin {
+    flex: 1 1 auto;
     justify-content: center;
+    padding-inline: 12px;
   }
 
   .admin-integrations__grid {

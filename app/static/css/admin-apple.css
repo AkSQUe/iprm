@@ -1079,10 +1079,15 @@
     padding: 24px 16px;
   }
 
+  /* Липка панель лишається липкою і на телефоні. Раніше тут стояло
+     `position: static` -- і на «Налаштуваннях сайту» до кнопки «Зберегти»
+     доводилось прогортати 7743px, тобто десяток екранів, після зміни
+     одного прапорця. Градієнт на вузькому екрані не годиться (під ним
+     видно текст, що проїжджає), тому суцільний фон і межа. */
   .admin-form__actions {
-    position: static;
-    background: none;
-    padding: 24px 0 0;
+    background: var(--apple-section-bg);
+    border-top: 1px solid var(--iprm-border);
+    padding: 12px 0;
   }
 }
 
@@ -1139,13 +1144,19 @@
   color: var(--apple-black);
 }
 
-.admin-pill--active {
+/* Два джерела активності, один вигляд: модифікатор -- коли стан прийшов із
+   сервера (обраний фільтр), aria-current -- коли його веде скрипт
+   (page-nav.js стежить за прокруткою). Атрибут, а не другий клас: це стан
+   і для скрінрідера теж. */
+.admin-pill--active,
+.admin-pill[aria-current="true"] {
   background: var(--iprm-btn-bg);
   border-color: var(--iprm-nav-active);
   color: var(--iprm-on-accent);
 }
 
-.admin-pill--active:hover {
+.admin-pill--active:hover,
+.admin-pill[aria-current="true"]:hover {
   background: var(--iprm-btn-bg-hover);
   border-color: var(--iprm-accent-hover);
   color: var(--iprm-on-accent);

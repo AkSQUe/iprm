@@ -15,23 +15,39 @@
   <div class="admin-hero">
     <div>
       <div class="admin-breadcrumb">
-        <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Панель</a>
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
         <span class="admin-breadcrumb__sep">/</span>
         <span class="admin-breadcrumb__current">Налаштування</span>
       </div>
       <h1 class="admin-hero__title">Налаштування сайту</h1>
-      <p class="admin-hero__subtitle">Контактна інформація та реквізити компанії</p>
+      <p class="admin-hero__subtitle">Реквізити, контакти, інтеграції та поведінка сайту</p>
     </div>
   </div>
 
   {% include 'partials/flash_messages.html' %}
 
+  {# Покажчик секцій. Сторінка -- дев'ять секцій і 36 полів, 5718px на
+     десктопі й 7743px на телефоні; приходять сюди заради ОДНОГО перемикача,
+     а знаходили його прокруткою. Компонент той самий, що й стрічка швидких
+     фільтрів у реєстрах: на телефоні вона так само стає рядком із
+     прокруткою вбік. #}
+  <nav class="admin-filter-pills" data-page-nav aria-label="Секції налаштувань">
+    <a class="admin-pill" href="#company">Компанія</a>
+    <a class="admin-pill" href="#contacts">Контакти</a>
+    <a class="admin-pill" href="#social">Соцмережі</a>
+    <a class="admin-pill" href="#business">Бізнес</a>
+    <a class="admin-pill" href="#navigation">Навігація</a>
+    <a class="admin-pill" href="#partners">Партнери</a>
+    <a class="admin-pill" href="#referral">Реферали</a>
+    <a class="admin-pill" href="#thankyou-promo">Промокод</a>
+    <a class="admin-pill" href="#registration-email">Лист</a>
+  </nav>
+
   <form method="POST" class="admin-form">
     {{ form.hidden_tag() }}
     {% include 'admin/partials/_form_errors.html' %}
 
-    <!-- Company info -->
-    <div class="form-section admin-form__section">
+    <div class="form-section admin-form__section" id="company">
       <h3 class="admin-form__section-title">Інформація про компанію</h3>
       <div class="admin-form__grid">
 
@@ -87,8 +103,7 @@
       </div>
     </div>
 
-    <!-- Contacts -->
-    <div class="form-section admin-form__section">
+    <div class="form-section admin-form__section" id="contacts">
       <h3 class="admin-form__section-title">Контактна інформація</h3>
       <div class="admin-form__grid">
 
@@ -120,8 +135,7 @@
       </div>
     </div>
 
-    <!-- Social media -->
-    <div class="form-section admin-form__section">
+    <div class="form-section admin-form__section" id="social">
       <h3 class="admin-form__section-title">Соціальні мережі</h3>
       <div class="admin-form__grid">
 
@@ -143,8 +157,7 @@
       </div>
     </div>
 
-    <!-- Business -->
-    <div class="form-section admin-form__section">
+    <div class="form-section admin-form__section" id="business">
       <h3 class="admin-form__section-title">Бізнес-інформація</h3>
       <div class="admin-form__grid">
 
@@ -167,8 +180,7 @@
       </div>
     </div>
 
-    <!-- Navigation sections -->
-    <div class="form-section admin-form__section">
+    <div class="form-section admin-form__section" id="navigation">
       <h3 class="admin-form__section-title">Навігація сайту</h3>
       <div class="admin-form__grid">
 
@@ -191,7 +203,7 @@
           {{ form.seats_low_threshold(class="form-input", id="seats_low_threshold", type="number", min="0", max="1000") }}
           <small class="form-hint">{{ form.seats_low_threshold.description }}</small>
           {% if form.seats_low_threshold.errors %}
-          <small class="form-error">{{ form.seats_low_threshold.errors[0] }}</small>
+          <div class="form-error">{{ form.seats_low_threshold.errors[0] }}</div>
           {% endif %}
         </div>
 
@@ -224,7 +236,7 @@
           {{ form.certdata_reminder_days(class="form-input", id="certdata_reminder_days", type="number", min="0", max="60") }}
           <small class="form-hint">{{ form.certdata_reminder_days.description }}</small>
           {% if form.certdata_reminder_days.errors %}
-          <small class="form-error">{{ form.certdata_reminder_days.errors[0] }}</small>
+          <div class="form-error">{{ form.certdata_reminder_days.errors[0] }}</div>
           {% endif %}
         </div>
 
@@ -245,8 +257,7 @@
       </div>
     </div>
 
-    <!-- Partner integration -->
-    <div class="form-section admin-form__section">
+    <div class="form-section admin-form__section" id="partners">
       <h3 class="admin-form__section-title">Інтеграція з партнерами (MM Medic)</h3>
       <div class="admin-form__grid">
 
@@ -304,7 +315,6 @@
       </div>
     </div>
 
-    <!-- Referral program -->
     <div class="form-section admin-form__section" id="referral">
       <h3 class="admin-form__section-title">Реферальна програма</h3>
       <div class="admin-form__grid">
@@ -355,7 +365,6 @@
       </div>
     </div>
 
-    <!-- Thank-you promo code -->
     <div class="form-section admin-form__section" id="thankyou-promo">
       <h3 class="admin-form__section-title">Промокод-подяка</h3>
       <div class="admin-form__grid">
@@ -382,7 +391,6 @@
       </div>
     </div>
 
-    <!-- Registration email delay -->
     <div class="form-section admin-form__section" id="registration-email">
       <h3 class="admin-form__section-title">Лист про реєстрацію</h3>
       <div class="admin-form__grid">
@@ -396,16 +404,23 @@
       </div>
     </div>
 
-    <!-- Actions -->
     <div class="admin-form__actions">
-      <a href="{{ url_for('admin.translations_edit', entity='site_settings', obj_id=1) }}" class="btn-admin btn-admin--secondary">Переклади</a>
-      <a href="{{ url_for('admin.courses_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
-      <button type="submit" class="btn-admin btn-admin--primary">
-        <span class="iprm-btn__arrow">&#x2197;</span>
-        Зберегти налаштування
-      </button>
+      <a href="{{ url_for('admin.translations_edit', entity='site_settings', obj_id=1) }}" class="btn-admin btn-admin--secondary">{{ icon('title') }} Переклади</a>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      {# Стрілку .iprm-btn__arrow прибрано: це деталь ПУБЛІЧНОЇ кнопки
+         (.iprm-btn), яка тут стояла всередині .btn-admin -- чужий атом у
+         чужому компоненті. Іконка береться макросом, як на решті адмінки. #}
+      <button type="submit" class="btn-admin btn-admin--primary">{{ icon('check') }} Зберегти</button>
     </div>
   </form>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+{# Той самий скрипт, що веде навігацію на сторінці курсу: позначає секцію,
+   на якій ти зараз. Без нього покажчик лишається робочим -- перехід по
+   якорю робить браузер (Progressive Enhancement). #}
+<script src="{{ url_for('static', filename='js/page-nav.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

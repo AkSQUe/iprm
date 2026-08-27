@@ -15,9 +15,11 @@
   var nav = document.querySelector('[data-page-nav]');
   if (!nav) return;
 
-  var links = Array.prototype.slice.call(
-    nav.querySelectorAll('.iprm-page-nav__link[href^="#"]')
-  );
+  // Контракт -- атрибут data-page-nav на контейнері, а не клас посилання:
+  // тим самим скриптом користується покажчик секцій в адмінці, де таблетки
+  // звуться .admin-pill. Всередині позначеного контейнера будь-яке
+  // посилання-якір є пунктом навігації.
+  var links = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]'));
   if (!links.length) return;
 
   // Секція -> посилання. Шаблон рендерить лише наявні секції, але сторінку
