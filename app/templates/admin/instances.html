@@ -48,14 +48,14 @@
         </details>
         <form method="POST" action="{{ url_for('admin.instances_import_upload') }}" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="file" name="xlsx" id="instances-xlsx-input" accept=".xlsx" onchange="this.form.submit()">
+          <input type="file" name="xlsx" id="instances-xlsx-input" accept=".xlsx" data-autosubmit>
           <label for="instances-xlsx-input" class="btn-admin btn-admin--secondary admin-clickable" title="Завантажити змінений xlsx">
             {{ icon('upload') }} Імпорт XLSX
           </label>
         </form>
         <form method="POST" action="{{ url_for('admin.translations_import_upload', scope='instances') }}" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="file" name="xlsx" id="instances-tr-input" accept=".xlsx" onchange="this.form.submit()">
+          <input type="file" name="xlsx" id="instances-tr-input" accept=".xlsx" data-autosubmit>
           <label for="instances-tr-input" class="btn-admin btn-admin--secondary admin-clickable" title="Завантажити заповнений файл перекладів">
             {{ icon('upload') }} Імпорт перекладів
           </label>
