@@ -223,6 +223,41 @@
   justify-content: flex-end;
 }
 
+/* ========== АВАТАР У СПИСКУ ==========
+   Живе тут, а не в admin-apple.css: /design-system підключає лише admin.css,
+   і компонент із другого файлу показувався б у вітрині голим <span>.
+   Реєстр людей без облич -- список рядків, які доводиться читати щоразу
+   заново: обличчя впізнається швидше за прізвище. Модель уже готова до
+   цього (`Trainer.photo_thumb` віддає 400px-варіант саме «для аватарів у
+   списках»), бракувало компонента.
+
+   Один клас на два випадки: <img class="admin-avatar"> для фото і
+   <span class="admin-avatar"> з ініціалами, коли фото немає. Робити два
+   компоненти нема сенсу -- у списку вони мусять займати рівно однакове
+   місце, інакше стовпчик імен ходить туди-сюди залежно від того, чиє фото
+   встигли завантажити. `object-fit` на span інертний, `inline-flex` на img
+   нешкідливий, тож обидва варіанти живуть в одному правилі.
+
+   Тонка межа -- не декор: світле фото на білій картці інакше не має де
+   закінчитись. */
+.admin-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--iprm-border);
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  object-fit: cover;
+  overflow: hidden;
+}
+
 /* Сортовані заголовки (admin-table-sort.js) */
 .admin-th--sortable {
   cursor: pointer;

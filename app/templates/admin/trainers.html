@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-trainers.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import filter_bar %}
@@ -59,11 +60,23 @@
 
   {% if trainers %}
   <div class="admin-table-wrap">
-  <table class="admin-table">
+  {# Ширини колонок задані явно (page-admin-trainers.css). Без них браузер
+     роздавав місце за вмістом: «Дії» забирали 258px під три кнопки, «Посада»
+     -- 304px під нічим не обмежений текст, а ПІБ тиснувся до 197 і ламався
+     надвоє. #}
+  <table class="admin-table admin-table--fixed admin-trainers-table">
+    <colgroup>
+      <col class="admin-trainers-col--person">
+      <col class="admin-trainers-col--role">
+      <col class="admin-trainers-col--years">
+      <col class="admin-trainers-col--state">
+      <col class="admin-trainers-col--i18n">
+      <col class="admin-trainers-col--actions">
+    </colgroup>
     <thead>
       <tr>
-        <th>ПІБ</th>
-        <th>Посада</th>
+        <th class="admin-text-left">ПІБ</th>
+        <th class="admin-text-left">Посада</th>
         <th>Стаж</th>
         <th>Статус</th>
         <th title="Скільки перекладних фрагментів заповнено">Переклад</th>
@@ -73,9 +86,47 @@
     <tbody>
       {% for trainer in trainers %}
       <tr>
-        <td><strong>{{ trainer.full_name }}</strong></td>
-        <td>{{ trainer.role or '–' }}</td>
-        <td>{{ (trainer.experience_years | string) + ' р.' if trainer.experience_years else '–' }}</td>
+        {# Обличчя впізнається швидше за прізвище, а модель віддає окремий
+           thumb саме під списки. Немає фото -- ініціали в тому самому колі:
+           стовпчик імен не має стрибати залежно від того, чиє фото встигли
+           завантажити. #}
+        <td class="admin-text-left">
+          <div class="admin-trainers-person">
+            {% if trainer.photo_thumb %}
+            <img class="admin-avatar" src="{{ trainer.photo_thumb }}"
+                 alt="" width="36" height="36" loading="lazy">
+            {% else %}
+            <span class="admin-avatar" aria-hidden="true">{{ trainer.full_name.split()[:2] | map('first') | join }}</span>
+            {% endif %}
+            <div class="admin-trainers-person__body">
+              {# ПІБ -- посилання на редагування: у решті реєстрів головний
+                 ідентифікатор рядка клікабельний, і цілитись у піктограму
+                 олівця заради тієї самої дії тут не має причин. #}
+              <a href="{{ url_for('admin.trainer_edit', trainer_id=trainer.id) }}"
+                 class="admin-clamp-2"><strong>{{ trainer.full_name }}</strong></a>
+              {% if trainer.email %}
+              <small class="admin-text-muted admin-truncate admin-trainers-person__mail">{{ trainer.email }}</small>
+              {% endif %}
+            </div>
+          </div>
+        </td>
+        {# Посада буває в рядок і буває в абзац («Лікар-дерматовенеролог,
+           косметолог, тренер з ін'єкційних методик»). Два рядки максимум --
+           інакше один тренер задає висоту всієї таблиці. #}
+        <td class="admin-text-left">
+          {% if trainer.role %}
+          <span class="admin-clamp-2" title="{{ trainer.role }}">{{ trainer.role }}</span>
+          {% else %}<span class="admin-text-muted">&ndash;</span>{% endif %}
+        </td>
+        {# Значення одним елементом, а не числом і текстом окремо: у
+           картковому режимі комірка -- flex зі space-between, і два дочірні
+           вузли роз'їжджались до протилежних країв картки («21» ліворуч,
+           «р.» праворуч). #}
+        <td class="admin-nowrap">
+          {%- if trainer.experience_years -%}
+            <span>{{ trainer.experience_years }} р.</span>
+          {%- else -%}<span class="admin-text-muted">&ndash;</span>{%- endif -%}
+        </td>
         <td>
           {% if trainer.is_active %}
             <span class="badge badge--active">Активний</span>
@@ -83,15 +134,52 @@
             <span class="badge badge--draft">Неактивний</span>
           {% endif %}
         </td>
-        <td><small class="admin-text-muted">{{ tr_coverage_label(trainer) }}</small></td>
+        {# Було «ru 1/2, en 2/2» суцільним сірим рядком -- діагностичний вивід,
+           який ще й ламався надвоє. Стан кожної мови окремою плашкою: зелена
+           -- готово, жовта -- почали й кинули, сіра -- не бралися. Колір видно
+           з іншого кінця таблиці, цифри лишаються для тих, кому треба точно. #}
         <td>
+          <span class="admin-trainers-i18n">
+            {% for lang, counts in tr_coverage(trainer).items() %}
+            <span class="badge badge--{{ 'active' if counts[0] and counts[0] == counts[1] else ('draft' if not counts[0] else 'warning') }}"
+                  title="Перекладено {{ counts[0] }} з {{ counts[1] }} фрагментів ({{ lang }})">{{ lang }} {{ counts[0] }}/{{ counts[1] }}</span>
+            {% endfor %}
+          </span>
+        </td>
+        <td>
+          {# Часта дія -- одразу, решта під «...». Видалення незворотне, і в
+             ряду сусідів воно стояло за одним промахом від «Переклади». #}
           <div class="admin-table__actions">
-            <a href="{{ url_for('admin.trainer_edit', trainer_id=trainer.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('edit', label='Редагувати') }}</a>
-            <a href="{{ url_for('admin.translations_edit', entity='trainer', obj_id=trainer.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Переклади">Переклади</a>
-            <form method="POST" action="{{ url_for('admin.trainer_delete', trainer_id=trainer.id) }}" data-confirm="Видалити тренера?" data-confirm-ok="Видалити тренера" data-confirm-danger>
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">{{ icon('delete', label='Видалити') }}</button>
-            </form>
+            <a href="{{ url_for('admin.trainer_edit', trainer_id=trainer.id) }}"
+               class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+               title="Редагувати">{{ icon('edit', label='Редагувати') }}</a>
+            <details class="admin-actions-menu">
+              <summary class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+                       title="Ще дії" aria-label="Ще дії">
+                {{ icon('more_vert') }}
+              </summary>
+              <div class="admin-actions-menu__items">
+                <a href="{{ url_for('admin.translations_edit', entity='trainer', obj_id=trainer.id) }}"
+                   class="admin-actions-menu__item">
+                  {{ icon('title') }} Переклади
+                </a>
+                {# Лише для активних: публічний роут віддає 404 прихованому
+                   тренерові, і посилання вело б у нікуди. #}
+                {% if trainer.is_active %}
+                <a href="{{ url_for('trainers.trainer_detail', slug=trainer.slug) }}"
+                   class="admin-actions-menu__item" target="_blank" rel="noopener noreferrer">
+                  {{ icon('visibility') }} Переглянути на сайті
+                </a>
+                {% endif %}
+                <form method="POST" action="{{ url_for('admin.trainer_delete', trainer_id=trainer.id) }}"
+                      data-confirm="Видалити тренера?" data-confirm-ok="Видалити тренера" data-confirm-danger>
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--danger">
+                    {{ icon('delete') }} Видалити
+                  </button>
+                </form>
+              </div>
+            </details>
           </div>
         </td>
       </tr>

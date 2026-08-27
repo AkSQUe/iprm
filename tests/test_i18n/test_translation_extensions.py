@@ -179,7 +179,12 @@ def test_trainers_list_shows_coverage(client, admin):
     db.session.add(t)
     db.session.commit()
     html = client.get('/admin/trainers').get_data(as_text=True)
-    assert registry.coverage_label(t) in html
+    # Покриття показане окремою плашкою на кожну мову, а не одним рядком
+    # «ru 0/2, en 0/2»: стан реєстру читають кольором, цифри лишаються для
+    # точності. Перевіряємо кожну мову -- це сильніше за перевірку склеєного
+    # підпису, бо ловить зникнення однієї з них.
+    for lang, (done, total) in registry.coverage(t).items():
+        assert f'{lang} {done}/{total}' in html
 
 
 # --- C2: осиротілі переклади ------------------------------------------------
