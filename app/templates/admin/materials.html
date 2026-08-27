@@ -75,7 +75,7 @@
 
   {% if reservation %}
   <div class="materials-history">
-    <span class="materials-status-badge materials-status-badge--{{ reservation.status }}">{{ reservation.status_label }}</span>
+    <span class="badge badge--{{ reservation.status_badge }}">{{ reservation.status_label }}</span>
     {% if reservation.sent_at %}<span class="materials-history__item">надіслано {{ reservation.sent_at.strftime('%d.%m.%Y %H:%M') }}</span>{% endif %}
     {% if reservation.consumed_at %}<span class="materials-history__item">списано {{ reservation.consumed_at.strftime('%d.%m.%Y %H:%M') }}</span>{% endif %}
     <span class="materials-history__item">позицій: {{ reservation.items|length }}</span>

@@ -825,10 +825,24 @@ def materials_overview():
                       MaterialReservationItem.reservation_id == MaterialReservation.id))
     reserved_units, actual_units = _apply_overview_filters(totals_q, f).first()
 
+    # Панель фільтрів дизайн-системи читає один dict `values` і будує всі
+    # посилання сама (чіпси, «Скинути все», експорт), тому зріз віддаємо ще й
+    # у її форматі. Старі три змінні лишаються: на них тримаються картки-зрізи.
+    filters = {
+        'status': f['status'],
+        'date_from': f['date_from_raw'],
+        'date_to': f['date_to_raw'],
+    }
     return render_template('admin/materials_overview.html',
                            reservations=pagination.items, pagination=pagination,
                            counts=counts, filter_status=f['status'],
                            date_from=f['date_from_raw'], date_to=f['date_to_raw'],
+                           filters=filters,
+                           filter_args={k: v for k, v in filters.items() if v},
+                           status_options=[
+                               (key, MaterialReservationStatus.LABELS[key])
+                               for key in MaterialReservationStatus.ALL
+                           ],
                            total_reservations=pagination.total,
                            reserved_units=int(reserved_units or 0),
                            actual_units=int(actual_units or 0),

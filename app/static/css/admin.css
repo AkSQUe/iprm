@@ -1110,6 +1110,20 @@ a.admin-stat-card:focus-visible {
   outline-offset: 2px;
 }
 
+/* Обраний зріз. Розмітка вже ставила `is-active` і `aria-current`, але
+   правила не було зовсім: людина натискала картку, список звужувався -- і
+   ніщо на екрані не показувало, ЯКИМ саме зрізом вона дивиться. Межа й
+   значення беруть --iprm-nav-active: це колір ТЕКСТУ, не заливки, тож
+   картка лишається карткою, а не перетворюється на натиснуту кнопку. */
+.admin-stat-card.is-active {
+  border-color: var(--iprm-nav-active);
+  box-shadow: inset 0 0 0 1px var(--iprm-nav-active);
+}
+
+.admin-stat-card.is-active .admin-stat-card__value {
+  color: var(--iprm-nav-active);
+}
+
 .admin-stat-card--success .admin-stat-card__value { color: var(--iprm-badge-active-text); }
 .admin-stat-card--warning .admin-stat-card__value { color: var(--iprm-badge-published-text); }
 .admin-stat-card--danger .admin-stat-card__value { color: var(--iprm-error-text); }

@@ -37,25 +37,6 @@
 
 .materials-mult { width: 72px; text-align: right; }
 
-.materials-daterange {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.materials-daterange label {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-  font-size: 0.9rem;
-  color: var(--apple-gray);
-}
-.materials-daterange .form-input {
-  padding: 6px 10px;
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm, 8px);
-  background: var(--apple-section-bg);
-}
 
 .materials-summary {
   display: flex;
@@ -75,11 +56,6 @@
 }
 .materials-summary__hint { color: var(--apple-gray); font-size: 0.85rem; }
 
-.materials-cap {
-  font-size: 0.72rem;
-  color: var(--apple-gray);
-  opacity: 0.85;
-}
 
 .materials-history {
   display: flex;
@@ -217,23 +193,6 @@
   font-size: 0.85em;
 }
 
-.materials-status-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-/* "Зарезервовано" -- це стан партії, а не дія, тому бейдж лишається синім, але
-   тепер бере --iprm-info замість власного #0057d8: роль та сама, зате колір
-   знає обидві теми. "Скасовано" -- нейтральний стан, тож іде на нову вісь
-   (--iprm-border + --apple-gray-dark). "Списано" й "чернетка" не чіпаємо: це
-   успіх і попередження, вони означають стан, а не бренд. */
-.materials-status-badge--reserved { background: var(--iprm-info-bg); color: var(--iprm-info); }
-.materials-status-badge--consumed { background: #e6f7ea; color: #1a7f37; }
-.materials-status-badge--cancelled { background: var(--iprm-border); color: var(--apple-gray-dark); }
-.materials-status-badge--draft { background: #fff4e5; color: #7a4a00; }
-
 /* ==========================================================================
    Тёмна тема: банер, підказки, статус-бейджи
    ========================================================================== */
@@ -243,8 +202,3 @@
   border-color: rgba(255, 216, 168, 0.3);
 }
 [data-theme="dark"] .materials-hint { color: #fbbf24; }
-/* Бейджі "зарезервовано" і "скасовано" тут більше не перекриваються: після
-   переходу на --iprm-info-* і --iprm-border/--apple-gray-dark вони знають
-   тёмну тему самі, а ручне перекриття лишалось би другим джерелом правди. */
-[data-theme="dark"] .materials-status-badge--consumed { background: rgba(26, 127, 55, 0.28); color: #4ade80; }
-[data-theme="dark"] .materials-status-badge--draft { background: rgba(217, 119, 6, 0.18); color: #fbbf24; }

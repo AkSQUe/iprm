@@ -7,7 +7,10 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-materials.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-materials.css') }}?v={{ assets_version }}">
 {% endblock %}
+
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -23,6 +26,16 @@
       </div>
       <h1 class="admin-hero__title">Резервування матеріалів MM Medic</h1>
       <p class="admin-hero__subtitle">Історія резервувань по всіх заходах</p>
+    </div>
+    {# «Звірити зараз» -- дія над усім реєстром, а не фільтр. У тулбарі вона
+       стояла поруч із полями дат і читалась як частина зрізу. #}
+    <div class="admin-hero__actions">
+      <form method="POST" action="{{ url_for('admin.materials_reconcile_now') }}" class="admin-inline"
+            data-confirm="Звірити стан резервувань з MM Medic зараз?" data-confirm-ok="Звірити"
+            data-single-submit data-submitting-label="Звіряємо…">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('refresh') }} Звірити зараз</button>
+      </form>
     </div>
   </div>
 
@@ -47,47 +60,61 @@
     {% endfor %}
   </div>
 
-  <div class="materials-toolbar">
-    <form method="GET" action="{{ url_for('admin.materials_overview') }}" class="materials-daterange">
-      {% if filter_status %}<input type="hidden" name="status" value="{{ filter_status }}">{% endif %}
-      <label>Дата заходу з <input type="date" name="date_from" value="{{ date_from }}" class="form-input"></label>
-      <label>по <input type="date" name="date_to" value="{{ date_to }}" class="form-input"></label>
-      <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('filter_list') }} Фільтр</button>
-      {% if date_from or date_to %}
-      <a href="{{ url_for('admin.materials_overview', status=filter_status or none) }}" class="btn-admin btn-admin--secondary">Скинути</a>
-      {% endif %}
-    </form>
-    <span class="materials-toolbar__spacer"></span>
-    <a href="{{ url_for('admin.materials_overview_export', status=filter_status or none, date_from=date_from or none, date_to=date_to or none) }}"
-       class="btn-admin btn-admin--secondary"
-       {% if export_capped %}title="Експортуються перші {{ export_cap }} — уточніть фільтр для повного експорту"{% endif %}>{{ icon('download') }} Експорт XLSX{% if export_capped %} <span class="materials-cap">до {{ export_cap }}</span>{% endif %}</a>
-    <form method="POST" action="{{ url_for('admin.materials_reconcile_now') }}" class="admin-inline"
-          data-confirm="Звірити стан резервувань з MM Medic зараз?" data-confirm-ok="Звірити"
-          data-single-submit data-submitting-label="Звіряємо…">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('refresh') }} Звірити зараз</button>
-    </form>
-  </div>
+  {# Панель фільтрів дизайн-системи замість власної форми з двома голими
+     `<input type="date">`. Макрос уже вміє поля дати, чіпси активного зрізу,
+     «Скинути все» і кнопку експорту -- усе те, що тут було зібране руками й
+     виглядало інакше, ніж на решті реєстрів. Заразом статус нарешті можна
+     обрати будь-який: картки-зрізи показують п'ять станів із восьми. #}
+  {{ filter_bar(
+       endpoint='admin.materials_overview',
+       values=filters,
+       fields=[
+         {'name': 'status', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': status_options},
+         {'name': 'date_from', 'label': 'Дата заходу з', 'type': 'date'},
+         {'name': 'date_to', 'label': 'Дата заходу по', 'type': 'date'},
+       ],
+       export_endpoint='admin.materials_overview_export',
+     ) }}
 
-  <div class="materials-summary">
-    <span>Резервувань: <strong>{{ total_reservations }}</strong></span>
-    <span>Зарезервовано одиниць: <strong>{{ reserved_units }}</strong></span>
-    <span>Фактично використано: <strong>{{ actual_units }}</strong></span>
+  <div class="admin-list-summary">
+    <p class="admin-list-summary__counts">
+      Резервувань {{ total_reservations }} &middot; зарезервовано одиниць {{ reserved_units }}
+      &middot; фактично використано {{ actual_units }}
+    </p>
+    {% if export_capped %}
+    {# Стеля експорту -- не властивість кнопки, а властивість поточного зрізу:
+       підпис усередині кнопки бачили вже після того, як файл вийшов урізаним. #}
+    <p class="admin-list-summary__hint">
+      Експорт віддасть перші {{ export_cap }} рядків — звузьте фільтр, щоб вивантажити все.
+    </p>
+    {% endif %}
   </div>
 
   {% if reservations %}
   <div class="admin-table-wrap">
-  <table class="admin-table">
+  {# Ширини колонок задані явно (page-admin-materials.css): без них колонка
+     «Тренер» із коментарем забирала місце в назви заходу, а «Дії» під
+     текстову кнопку -- 124px. #}
+  <table class="admin-table admin-table--fixed admin-materials-table">
+    <colgroup>
+      <col class="admin-materials-col--event">
+      <col class="admin-materials-col--date">
+      <col class="admin-materials-col--status">
+      <col class="admin-materials-col--items">
+      <col class="admin-materials-col--trainer">
+      <col class="admin-materials-col--updated">
+      <col class="admin-materials-col--actions">
+    </colgroup>
     <thead>
       <tr>
-        <th>Захід</th>
+        <th class="admin-text-left">Захід</th>
         <th>Дата</th>
         <th>Статус</th>
         <th>Позицій</th>
         {# Підтвердження тренера видно у зведенні, а не лише на картці заходу:
            івент-менеджер проходить саме цим списком, і «ще треба голок»
            мусить трапитись йому на очі без зайвого кліку. #}
-        <th>Тренер</th>
+        <th class="admin-text-left">Тренер</th>
         <th>Оновлено</th>
         <th>Дії</th>
       </tr>
@@ -95,22 +122,55 @@
     <tbody>
       {% for r in reservations %}
       <tr>
-        <td class="materials-name">{{ r.instance.course.title if r.instance and r.instance.course else '—' }}</td>
-        <td>{{ r.instance.start_date.strftime('%d.%m.%Y') if r.instance and r.instance.start_date else '—' }}</td>
-        <td><span class="materials-status-badge materials-status-badge--{{ r.status }}">{{ r.status_label }}</span></td>
-        <td>{{ r.items|length }}</td>
-        <td class="materials-trainer-cell">
-          {% if r.trainer_confirmed_at %}
-          <span class="materials-trainer-cell__date">{{ r.trainer_confirmed_at.strftime('%d.%m.%Y') }}</span>
-          {% else %}—{% endif %}
-          {% if r.trainer_comment %}
-          <span class="materials-trainer-cell__comment">{{ r.trainer_comment }}</span>
-          {% endif %}
-        </td>
-        <td>{{ r.updated_at.strftime('%d.%m.%Y %H:%M') if r.updated_at else '—' }}</td>
-        <td>
+        {# Назва заходу -- посилання на його матеріали: у решті реєстрів
+           головний ідентифікатор рядка клікабельний, і цілитись у кнопку
+           праворуч заради тієї самої дії тут не було причин. #}
+        <td class="admin-text-left">
+          {% if r.instance and r.instance.course %}
           <a href="{{ url_for('admin.instance_materials', instance_id=r.instance_id) }}"
-             class="btn-admin btn-admin--secondary btn-admin--sm">Відкрити</a>
+             class="admin-clamp-2"
+             title="{{ r.instance.course.title }}"><strong>{{ r.instance.course.title }}</strong></a>
+          {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
+        </td>
+        <td class="admin-nowrap">
+          {%- if r.instance and r.instance.start_date -%}
+            {{ r.instance.start_date.strftime('%d.%m.%Y') }}
+          {%- else -%}<span class="admin-text-muted">&mdash;</span>{%- endif -%}
+        </td>
+        {# Бейдж дизайн-системи замість власного: `.materials-status-badge`
+           дублював `.badge` хардкодом і знав чотири стани з восьми -- решта
+           друкувалась голим текстом без плашки. #}
+        <td><span class="badge badge--{{ r.status_badge }}">{{ r.status_label }}</span></td>
+        <td>{{ r.items|length }}</td>
+        {# Обгортка обов'язкова: у картковому режимі комірка -- flex зі
+           space-between, і дата з коментарем роз'їхались би до протилежних
+           країв картки замість того, щоб стояти одне під одним. #}
+        <td class="admin-text-left">
+          <div>
+            {% if r.trainer_confirmed_at %}
+            <span class="materials-trainer-cell__date">{{ r.trainer_confirmed_at.strftime('%d.%m.%Y') }}</span>
+            {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
+            {% if r.trainer_comment %}
+            <span class="materials-trainer-cell__comment">{{ r.trainer_comment }}</span>
+            {% endif %}
+          </div>
+        </td>
+        {# Час другим поверхом: «27.08.2026 12:57» в одному рядку не вміщався
+           й переносився посеред дати. #}
+        <td class="admin-nowrap">
+          {% if r.updated_at %}
+          <div>
+            {{ r.updated_at.strftime('%d.%m.%Y') }}
+            <small class="admin-text-muted admin-materials-time">{{ r.updated_at.strftime('%H:%M') }}</small>
+          </div>
+          {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
+        </td>
+        <td>
+          <div class="admin-table__actions">
+            <a href="{{ url_for('admin.instance_materials', instance_id=r.instance_id) }}"
+               class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+               title="Відкрити матеріали заходу">{{ icon('article', label='Відкрити') }}</a>
+          </div>
         </td>
       </tr>
       {% endfor %}
@@ -118,21 +178,20 @@
   </table>
   </div>
 
-  {% if pagination and pagination.pages > 1 %}
-  <nav class="admin-pagination">
-    {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.materials_overview', page=pagination.prev_num, status=filter_status or none, date_from=date_from or none, date_to=date_to or none) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня') }}</a>
-    {% endif %}
-    <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }} ({{ pagination.total }})</span>
-    {% if pagination.has_next %}
-    <a href="{{ url_for('admin.materials_overview', page=pagination.next_num, status=filter_status or none, date_from=date_from or none, date_to=date_to or none) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна') }}</a>
-    {% endif %}
-  </nav>
-  {% endif %}
+  {{ pager('admin.materials_overview', pagination, filter_args) }}
+  {% elif filter_args %}
+  {# Порожньо через зріз, а не через порожню базу: «Немає резервувань» тут
+     було б неправдою -- вони є, просто не в цьому фільтрі. #}
+  <div class="admin-empty">
+    {{ icon('search', cls='admin-empty__icon') }}
+    <h3 class="admin-empty__title">За цим зрізом резервувань немає</h3>
+    <p>Спробуйте інший фільтр або <a href="{{ url_for('admin.materials_overview') }}">подивіться всі резервування</a></p>
+  </div>
   {% else %}
-  <div class="admin-empty admin-text-center">
+  <div class="admin-empty">
     {{ icon('inbox', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">Немає резервувань</h3>
+    <h3 class="admin-empty__title">Резервувань ще немає</h3>
+    <p>Перше з'явиться тут, щойно захід подасть заявку на матеріали.</p>
   </div>
   {% endif %}
 

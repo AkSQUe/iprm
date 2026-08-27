@@ -121,7 +121,11 @@
     {% for f in ns.active %}
       <a class="admin-chip" href="{{ url_for(endpoint, **dict(url_args, **{f.name: none})) }}">
         <span class="admin-chip__key">{{ f.label }}:</span>
-        {% if f.type == 'date' %}{{ values.get(f.name) }}
+        {# Дата в чіпсі -- у тому ж вигляді, у якому вона написана скрізь на
+           сайті. Поле вводу віддає ISO ('2026-08-01'), і чіп друкував саме
+           його: у рядку з «Статус: Зарезервовано» це читалось як службовий
+           код, а не як дата заходу. #}
+        {% if f.type == 'date' %}{{ (values.get(f.name) or '').split('-') | reverse | join('.') }}
         {%- else -%}
           {%- for val, label in f.options if val | string == values.get(f.name) | string -%}
             {{ label }}

@@ -34,6 +34,29 @@ class MaterialReservationStatus:
 
     ALL = (DRAFT, SUBMITTED, RESERVED, ISSUED, CONSUMED,
            REJECTED, CANCELLED, EXPIRED)
+
+    # Модифікатор .badge--* дизайн-системи на кожен стан. Власного бейджа в
+    # матеріалів більше немає: `.materials-status-badge` дублював `.badge`
+    # хардкодом і знав лише чотири стани з восьми -- «Відвантажено»,
+    # «Відмовлено», «Протерміновано» і «На погодженні» друкувались голим
+    # текстом без плашки.
+    #   submitted -- бурштин: єдиний стан, що чекає чиєїсь дії;
+    #   reserved  -- синій: утримання активне (той самий синій, що був);
+    #   issued    -- індиго: матеріали пішли зі складу, але захід ще попереду;
+    #   consumed  -- зелений: цикл закритий;
+    #   rejected/expired -- червоний: заявка не відбулась, обидва потребують
+    #                       рішення менеджера;
+    #   draft/cancelled  -- сірий: нічого не сталось і не станеться.
+    BADGES = {
+        DRAFT: 'draft',
+        SUBMITTED: 'warning',
+        RESERVED: 'published',
+        ISSUED: 'completed',
+        CONSUMED: 'active',
+        REJECTED: 'cancelled',
+        CANCELLED: 'draft',
+        EXPIRED: 'cancelled',
+    }
     LABELS = {
         DRAFT: 'Чернетка',
         SUBMITTED: 'На погодженні',
@@ -129,6 +152,11 @@ class MaterialReservation(TimestampMixin, db.Model):
     @property
     def status_label(self):
         return MaterialReservationStatus.LABELS.get(self.status, self.status)
+
+    @property
+    def status_badge(self):
+        """Модифікатор `.badge--*` під поточний стан (див. STATUS.BADGES)."""
+        return MaterialReservationStatus.BADGES.get(self.status, 'draft')
 
     @property
     def is_mm_document(self):
