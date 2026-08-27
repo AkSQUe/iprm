@@ -372,7 +372,7 @@
 
 /* ========== FILTER FORM ========== */
 
-.admin-filter-form {
+.admin-control-row {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -382,11 +382,11 @@
 
 /* Коли фільтр-форма вкладена у .admin-stats-bar (вже має margin-bottom),
    не подвоюємо відступ. */
-.admin-stats-bar .admin-filter-form {
+.admin-stats-bar .admin-control-row {
   margin-bottom: 0;
 }
 
-.admin-filter-form .form-input {
+.admin-control-row .form-input {
   width: auto;
   min-width: 160px;
   padding: 6px 12px;

@@ -260,7 +260,7 @@
 
 /* Відступ, коли за карткою-секцією одразу йде панель фільтрів (напр. сторінка
    "Запити на курси": картка "Найбільш запитувані" -> фільтри). */
-.form-section + .admin-filter-form {
+.form-section + .admin-control-row {
   margin-top: 24px;
 }
 
@@ -374,7 +374,7 @@
 .form-input,
 .form-section .form-input,
 .admin-form .form-input,
-.admin-filter-form .form-input,
+.admin-control-row .form-input,
 .admin-filters__form .form-input,
 .backup-actions__form .form-input {
   padding: 10px 14px;
@@ -389,7 +389,7 @@
 .form-input:focus,
 .form-section .form-input:focus,
 .admin-form .form-input:focus,
-.admin-filter-form .form-input:focus,
+.admin-control-row .form-input:focus,
 .admin-filters__form .form-input:focus,
 .backup-actions__form .form-input:focus {
   border-color: var(--iprm-nav-active);
@@ -459,7 +459,7 @@
    Без appearance:none було видно дві стрілки поруч (native + background-image). */
 /* Контроли панелі фільтрів розтягуються, заповнюючи ширину контейнера
    (рядок flex-wrap). Кнопки-дії (.btn-admin) лишаються по контенту. */
-.admin-filter-form .form-input {
+.admin-control-row .form-input {
   flex: 1 1 200px;
 }
 
@@ -468,7 +468,7 @@
    (3.64), і на тёмному (4.28). Токен сюди підставити не можна: CSS-змінні
    всередині url() браузер не розгортає, тому колір доводиться вбивати hex-ом. */
 .admin-form select.form-input,
-.admin-filter-form select.form-input,
+.admin-control-row select.form-input,
 .admin-filters__form select.form-input,
 .backup-actions__form select.form-input {
   appearance: none;
@@ -483,7 +483,7 @@
 
 /* Firefox: прибрати пунктирну рамку в фокусі на select */
 .admin-form select.form-input:-moz-focusring,
-.admin-filter-form select.form-input:-moz-focusring,
+.admin-control-row select.form-input:-moz-focusring,
 .admin-filters__form select.form-input:-moz-focusring,
 .backup-actions__form select.form-input:-moz-focusring {
   color: transparent;
@@ -1410,7 +1410,7 @@
 }
 
 /* Поля панелі тягнуться на всю ширину комірки: інакше flex-правило
-   .admin-filter-form .form-input (flex: 1 1 200px) ламало б сітку. */
+   .admin-control-row .form-input (flex: 1 1 200px) ламало б сітку. */
 .admin-filters__field .form-input {
   width: 100%;
   min-width: 0;

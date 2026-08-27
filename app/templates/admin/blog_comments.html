@@ -28,11 +28,19 @@
     {% include 'partials/flash_messages.html' %}
 
     <div class="form-section">
-      <div class="admin-filter-form admin-mb-md">
-        {% set tabs = [('pending','На модерації'),('approved','Схвалені'),('spam','Спам'),('all','Усі')] %}
-        {% for val, label in tabs %}
+      {# Та сама стрічка зрізів, що в розкладі й реєстраціях. Доти це були
+         кнопки: активний зріз малювався як `btn-admin--primary`, тобто як
+         головна дія сторінки, хоча нічого не робить -- лише показує, де ти. #}
+      {% set tabs = [('pending', 'На модерації', 'history'),
+                     ('approved', 'Схвалені', 'check'),
+                     ('spam', 'Спам', 'block'),
+                     ('all', 'Усі', 'apps')] %}
+      <div class="admin-pills">
+        {% for val, label, icon_name in tabs %}
         <a href="{{ url_for('admin.blog_comments', status=val) }}"
-           class="btn-admin btn-admin--{{ 'primary' if status == val else 'secondary' }} btn-admin--sm">{{ label }}</a>
+           class="admin-pill{% if status == val %} admin-pill--active{% endif %}">
+          {{ icon(icon_name) }} {{ label }}
+        </a>
         {% endfor %}
       </div>
 

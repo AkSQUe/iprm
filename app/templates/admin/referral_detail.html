@@ -60,7 +60,7 @@
     <!-- Ручна корекція -->
     <div class="form-section">
       <h2 class="admin-form__section-title">Ручна корекція балансу</h2>
-      <form method="POST" action="{{ url_for('admin.referral_referrer_adjust', kind=kind, referrer_id=referrer_id) }}" class="admin-filter-form">
+      <form method="POST" action="{{ url_for('admin.referral_referrer_adjust', kind=kind, referrer_id=referrer_id) }}" class="admin-control-row">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="number" name="points" class="form-input form-input--sm" placeholder="Бали (+/-)" required
                aria-label="Кількість балів">
