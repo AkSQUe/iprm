@@ -169,6 +169,23 @@
   line-height: 1;
 }
 
+/* Вимкнена кнопка. Стану не було зовсім: на генераторі сертифікатів
+   «Завантажити й переглянути» стоїть disabled, поки не заданий номер
+   провайдера, і виглядала точнісінько як робоча -- натиснув, нічого не
+   сталось, пояснення нема. Прозорість тут доречна: вимкнені органи
+   керування виведені з-під вимоги 1.4.3. */
+.btn-admin:disabled,
+.btn-admin[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-admin:disabled:hover,
+.btn-admin[aria-disabled='true']:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 /* ========== TABLE ========== */
 
 .admin-table {
@@ -396,6 +413,18 @@
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* Код усередині речення (назва прапорця, формат номера). Блоковий
+   .admin-code-block для цього не годиться -- він розриває абзац, а тут код
+   стоїть у рядку тексту. Досі такі місця друкувались голим <code>: різниця
+   зводилась до моношрифту, і в реченні вона майже не читалась. */
+.admin-code {
+  padding: 1px 6px;
+  border-radius: var(--iprm-radius-sm);
+  background: var(--iprm-surface-inset);
+  font-size: 0.9em;
+  white-space: nowrap;
 }
 
 /* Copy error button (inline in table) */

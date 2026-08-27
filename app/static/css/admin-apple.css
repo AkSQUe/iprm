@@ -211,6 +211,7 @@
   outline-offset: 3px;
 }
 
+
 /* ========== HERO ACTIONS & IMPORT ========== */
 
 .admin-hero__actions {
@@ -1022,18 +1023,18 @@
 
 /* ========== ALERTS ========== */
 
+/* Накладка адмінки: та сама родина, що в common.css, лише щільніша --
+   більший падінг і відступ, бо в адмінці банер стоїть між картками, а не в
+   потоці тексту. Кольори й розкладка лишаються в common.css: два джерела
+   правди на один компонент -- це вже було, і --success тут розходився з
+   тамтешнім. */
 .alert {
-  border-radius: var(--iprm-radius-sm);
   padding: 16px 20px;
   font-size: 0.875rem;
   margin-bottom: 24px;
 }
 
-.alert--success {
-  background: var(--iprm-badge-active-bg);
-  color: var(--iprm-badge-active-text);
-  border: 1px solid rgba(52, 199, 89, 0.2);
-}
+
 
 /* ========== QUEUE ALERT ========== */
 

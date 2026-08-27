@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-certgen.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
@@ -29,18 +30,24 @@
 
     {% include 'partials/flash_messages.html' %}
 
+    {# Умова, без якої сторінка не працює, -- банером попередження, а не
+       порожнім станом: .admin-empty давав білу картку без жодної ознаки
+       тривоги, і серед трьох таких самих карток кроків вона читалась як
+       ще один крок. #}
     {% if not provider_number %}
-    <div class="admin-empty admin-pad-24 admin-text-left">
-      <h3 class="admin-empty__title">Спочатку задайте номер провайдера БПР</h3>
-      <p>Номер провайдера (4 цифри) використовується у номері кожного сертифіката.
-         Задайте його в <a href="{{ url_for('admin.settings') }}">Налаштуваннях сайту</a>.</p>
+    <div class="alert alert--warning">
+      {{ icon('error') }}
+      <span>
+        <strong class="alert__title">Спочатку задайте номер провайдера БПР</strong>
+        Номер провайдера (4 цифри) входить у номер кожного сертифіката, тож генерація
+        вимкнена. Задайте його в <a href="{{ url_for('admin.settings') }}">Налаштуваннях сайту</a>.
+      </span>
     </div>
     {% endif %}
 
-    <!-- Крок 1 -->
     <div class="form-section">
       <h2 class="admin-form__section-title">Крок 1. Завантажте шаблон</h2>
-      <p class="admin-text-muted admin-mb-md">
+      <p class="admin-form__section-hint">
         Скачайте xlsx-шаблон, заповніть по одному рядку на учасника й збережіть.
       </p>
       <a href="{{ url_for('admin.tool_certificate_generator_template') }}" class="btn-admin btn-admin--secondary">
@@ -48,15 +55,19 @@
       </a>
     </div>
 
-    <!-- Крок 2 -->
     <div class="form-section admin-mt-md">
       <h2 class="admin-form__section-title">Крок 2. Завантажте заповнену таблицю</h2>
-      <p class="admin-text-muted admin-mb-md">
+      <p class="admin-form__section-hint">
         Спершу побачите прев'ю розпарсених рядків (з перевіркою), потім запустите
-        генерацію. На виході — ZIP-архів з PDF-сертифікатом для кожного рядка.
+        генерацію. На виході &mdash; ZIP-архів з PDF-сертифікатом для кожного рядка.
       </p>
+      {# .admin-filter-form тут стояв заради `display: flex` -- і заразом
+         тримав вигляд поля: `.form-input` в адмінці малюється переліком
+         контекстів, і той клас був одним із них. Поле лишається стилізованим
+         через `.form-section .form-input`, тобто через картку, у якій воно
+         справді лежить. #}
       <form method="POST" action="{{ url_for('admin.tool_certificate_generator_preview') }}"
-            enctype="multipart/form-data" class="admin-filter-form">
+            enctype="multipart/form-data" class="admin-flex-center certgen-upload">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="file" name="xlsx" accept=".xlsx" required
                class="form-input admin-input-narrow">
@@ -66,31 +77,81 @@
       </form>
     </div>
 
-    <!-- Довідка -->
     <div class="form-section admin-mt-md">
       <h2 class="admin-form__section-title">Колонки таблиці</h2>
       <div class="admin-table-wrap">
-      <table class="admin-table">
+      {# Ширини задані явно: без них опис розтягувався на 700px, а `.admin-table`
+         центрує все, крім двох перших колонок -- виходив абзац, вирівняний по
+         центру на всю ширину екрана. #}
+      <table class="admin-table admin-table--fixed certgen-columns">
+        <colgroup>
+          <col class="certgen-columns__name">
+          <col class="certgen-columns__required">
+          <col class="certgen-columns__desc">
+        </colgroup>
         <thead>
-          <tr><th>Колонка</th><th>Обов'язкова</th><th>Опис</th></tr>
+          <tr>
+            <th class="admin-text-left">Колонка</th>
+            <th>Обов'язкова</th>
+            <th class="admin-text-left">Опис</th>
+          </tr>
         </thead>
+        {# «так»/«ні» -- бейджами: це стан, а стан на сайті скрізь плашка.
+           Голим текстом дев'ять рядків читались як суцільний стовпчик слів. #}
         <tbody>
-          <tr><td><strong>Тип особи</strong></td><td>ні</td><td>Випадаючий список <em>Учасник</em> / <em>Тренер</em>. «Тренер» друкує сертифікат лектора (інший текст тіла, лише підпис директора). Порожньо = Учасник</td></tr>
-          <tr><td><strong>ПІБ</strong></td><td>так</td><td>Прізвище Ім'я По-батькові. Для лектора — у давальному відмінку</td></tr>
-          <tr><td><strong>Назва заходу</strong></td><td>так</td><td>Тема, що друкується на сертифікаті</td></tr>
-          <tr><td><strong>Дата проведення</strong></td><td>так</td><td>Формат ДД.ММ.РРРР. Рік іде в номер сертифіката</td></tr>
-          <tr><td><strong>Бали БПР</strong></td><td>ні</td><td>Число; друкується у тексті сертифіката («… балів БПР»)</td></tr>
-          <tr><td><strong>ПІБ лектора</strong></td><td>ні</td><td>Лише для типу «Учасник» — блок «Лектор». Для лектора не потрібне</td></tr>
-          <tr><td><strong>Спеціальності</strong></td><td>ні</td><td>Друкуються у тілі сертифіката («Спеціальності: …»)</td></tr>
-          <tr><td><strong>Номер заходу БПР</strong></td><td>так</td><td>7 цифр — сегмент номера сертифіката</td></tr>
-          <tr><td><strong>Номер</strong></td><td>так</td><td>До 6 цифр — сегмент номера сертифіката. Для лекторів — діапазон 1xxxxx</td></tr>
+          <tr>
+            <td class="admin-text-left"><strong>Тип особи</strong></td>
+            <td><span class="badge badge--draft">ні</span></td>
+            <td class="admin-text-left"><span>Випадаючий список <em>Учасник</em> / <em>Тренер</em>. «Тренер» друкує сертифікат лектора (інший текст тіла, лише підпис директора). Порожньо = Учасник</span></td>
+          </tr>
+          <tr>
+            <td class="admin-text-left"><strong>ПІБ</strong></td>
+            <td><span class="badge badge--active">так</span></td>
+            <td class="admin-text-left"><span>Прізвище Ім'я По-батькові. Для лектора &mdash; у давальному відмінку</span></td>
+          </tr>
+          <tr>
+            <td class="admin-text-left"><strong>Назва заходу</strong></td>
+            <td><span class="badge badge--active">так</span></td>
+            <td class="admin-text-left"><span>Тема, що друкується на сертифікаті</span></td>
+          </tr>
+          <tr>
+            <td class="admin-text-left"><strong>Дата проведення</strong></td>
+            <td><span class="badge badge--active">так</span></td>
+            <td class="admin-text-left"><span>Формат <code class="admin-code">ДД.ММ.РРРР</code>. Рік іде в номер сертифіката</span></td>
+          </tr>
+          <tr>
+            <td class="admin-text-left"><strong>Бали БПР</strong></td>
+            <td><span class="badge badge--draft">ні</span></td>
+            <td class="admin-text-left"><span>Число; друкується у тексті сертифіката («… балів БПР»)</span></td>
+          </tr>
+          <tr>
+            <td class="admin-text-left"><strong>ПІБ лектора</strong></td>
+            <td><span class="badge badge--draft">ні</span></td>
+            <td class="admin-text-left"><span>Лише для типу «Учасник» &mdash; блок «Лектор». Для лектора не потрібне</span></td>
+          </tr>
+          <tr>
+            <td class="admin-text-left"><strong>Спеціальності</strong></td>
+            <td><span class="badge badge--draft">ні</span></td>
+            <td class="admin-text-left"><span>Друкуються у тілі сертифіката («Спеціальності: …»)</span></td>
+          </tr>
+          <tr>
+            <td class="admin-text-left"><strong>Номер заходу БПР</strong></td>
+            <td><span class="badge badge--active">так</span></td>
+            <td class="admin-text-left"><span>7 цифр &mdash; сегмент номера сертифіката</span></td>
+          </tr>
+          <tr>
+            <td class="admin-text-left"><strong>Номер</strong></td>
+            <td><span class="badge badge--active">так</span></td>
+            <td class="admin-text-left"><span>До 6 цифр &mdash; сегмент номера сертифіката. Для лекторів &mdash; діапазон 1xxxxx</span></td>
+          </tr>
         </tbody>
       </table>
       </div>
       <p class="admin-text-muted admin-mt-sm">
-        Номер формується як <code>РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ</code>, де ПППП — номер провайдера
-        {% if provider_number %}(<strong>{{ provider_number }}</strong>){% endif %} з налаштувань сайту.
-        Сертифікати <strong>не зберігаються</strong> в системі — це разова генерація PDF.
+        Номер формується як <code class="admin-code">РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ</code>, де ПППП &mdash;
+        номер провайдера{% if provider_number %} (<code class="admin-code">{{ provider_number }}</code>){% endif %}
+        з налаштувань сайту. Сертифікати <strong>не зберігаються</strong> в системі &mdash;
+        це разова генерація PDF.
       </p>
     </div>
 

@@ -1605,10 +1605,35 @@ select.badge-select:disabled {
 }
 
 .alert {
+  display: flex;
+  /* По першому рядку, а не по центру блока: у банері на три рядки іконка
+     інакше висить посередині. */
+  align-items: flex-start;
+  gap: 10px;
   padding: 12px 16px;
   border-radius: var(--iprm-radius-sm);
   font-size: 14px;
   margin-bottom: 16px;
+}
+
+.alert .material-symbols-rounded {
+  flex-shrink: 0;
+}
+
+/* Заголовок банера: перший рядок жирним, далі пояснення. */
+.alert__title {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* Посилання в банері успадковує його колір і підкреслюється: власний бузок
+   на бурштиновому тлі був би плямою іншої родини, а без підкреслення єдина
+   дія в банері не відрізнялась від тексту навколо. */
+.alert a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .alert--error {
@@ -1627,6 +1652,16 @@ select.badge-select:disabled {
   background: var(--iprm-info-bg);
   color: var(--iprm-info);
   border: 1px solid var(--iprm-info-light);
+}
+
+/* Попередження: умова, без якої сторінка не працює. Модифікатора не було, і
+   кожна сторінка викручувалась сама -- генератор сертифікатів малював
+   попередження порожнім станом (.admin-empty), тобто карткою без жодної
+   ознаки тривоги, матеріали завели власний .materials-banner. */
+.alert--warning {
+  background: var(--iprm-warning-bg);
+  color: var(--iprm-warning-text);
+  border: 1px solid var(--iprm-warning-border);
 }
 
 /* ========== CONTENT PAGE (Apple-style v2: legal, contact) ========== */
