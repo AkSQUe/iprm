@@ -4,6 +4,8 @@
 {% block integration_title %}LiqPay{% endblock %}
 {% block integration_subtitle_lead %}Платіжна інтеграція{% endblock %}
 
+{% from 'partials/_money.html' import money %}
+
 {% block integration_status_badges %}
   {% if cfg.is_configured %}
     <span class="badge badge--active">Налаштовано</span>
@@ -19,7 +21,9 @@
 
 {# Кастомний body: статистика + readonly + edit + recent payments. #}
 {% block integration_body %}
-<div class="admin-stat-cards">
+{# Шість карток у сітці на п'ять колонок давали 5 + 1: сама на другому рядку
+   лишалась картка доходу -- головне число сторінки. Три колонки дають 3 + 3. #}
+<div class="admin-stat-cards admin-stat-cards--3">
   <div class="admin-stat-card">
     <span class="admin-stat-card__value">{{ stats.total }}</span>
     <span class="admin-stat-card__label">Всього</span>
@@ -39,16 +43,16 @@
     <span class="admin-stat-card__label">Повернено повністю</span>
   </div>
   <div class="admin-stat-card admin-stat-card--danger">
-    <span class="admin-stat-card__value">{{ stats.refunded_amount | int }} &#8372;</span>
+    <span class="admin-stat-card__value">{{ money(stats.refunded_amount or 0) }}</span>
     <span class="admin-stat-card__label">Сума повернень</span>
   </div>
   <div class="admin-stat-card admin-stat-card--accent">
-    <span class="admin-stat-card__value">{{ stats.total_amount | int }} &#8372;</span>
+    <span class="admin-stat-card__value">{{ money(stats.total_amount or 0) }}</span>
     <span class="admin-stat-card__label">Дохід за вирахуванням повернень</span>
   </div>
 </div>
 
-<!-- Current config (read-only) -->
+{# Current config (read-only) #}
 <div class="form-section admin-form__section">
   <h3 class="admin-form__section-title">Поточна конфігурація</h3>
   <div class="admin-readonly-config">
@@ -79,7 +83,7 @@
   {% endif %}
 </div>
 
-<!-- Update keys -->
+{# Update keys #}
 <div class="form-section admin-form__section">
   <h3 class="admin-form__section-title">Встановити ключі</h3>
   <form method="POST" action="{{ url_for('admin.liqpay_save_keys') }}" class="admin-form">
@@ -112,7 +116,7 @@
   </form>
 </div>
 
-<!-- Recent payments -->
+{# Recent payments #}
 <div class="form-section admin-form__section">
   <h3 class="admin-form__section-title">Останні платежі</h3>
 
@@ -121,28 +125,28 @@
   <table class="admin-table">
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Захід</th>
+        <th class="admin-nowrap">ID</th>
+        <th class="admin-cell-title">Захід</th>
         <th>Учасник</th>
-        <th>Сума</th>
+        <th class="admin-nowrap">Сума</th>
         <th>Статус</th>
-        <th>Дата</th>
-        <th>Дії</th>
+        <th class="admin-nowrap">Дата</th>
+        <th data-no-sort>Дії</th>
       </tr>
     </thead>
     <tbody>
       {% for reg in recent %}
       <tr>
-        <td>REG-{{ reg.id }}</td>
-        <td>{{ reg.target_title or '–' }}</td>
+        <td class="admin-nowrap admin-num">REG-{{ reg.id }}</td>
+        <td class="admin-cell-title">{{ reg.target_title or '&ndash;'|safe }}</td>
         <td>{{ reg.user.first_name }} {{ reg.user.last_name }}</td>
-        <td>{{ reg.payment_amount | int }} &#8372;</td>
+        <td class="admin-nowrap admin-num">{{ money(reg.payment_amount) }}</td>
         <td>
           <span class="badge badge--{{ 'active' if reg.payment_status == 'paid' else ('published' if reg.payment_status == 'pending' else ('cancelled' if reg.payment_status == 'refunded' else 'draft')) }}">
             {{ reg.payment_status_label }}
           </span>
         </td>
-        <td>{{ reg.paid_at.strftime('%d.%m.%Y %H:%M') if reg.paid_at else reg.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+        <td class="admin-nowrap">{{ reg.paid_at.strftime('%d.%m.%Y %H:%M') if reg.paid_at else reg.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
         <td>
           {% if reg.payment_status == 'paid' %}
           {# Посилання, а не форма: суму й підставу вводять на окремій
@@ -152,7 +156,7 @@
             {{ 'Повернути ще' if reg.has_refund else 'Повернення' }}
           </a>
           {% if reg.has_refund %}
-          <div class="admin-text-muted">Повернуто {{ reg.refunded_total | int }} з {{ reg.payment_amount | int }} &#8372;</div>
+          <div class="admin-text-muted">Повернуто {{ money(reg.refunded_total) }} з {{ money(reg.payment_amount) }}</div>
           {% endif %}
           {% elif reg.payment_status == 'refunded' %}
           <span class="admin-text-muted">Повернено</span>
@@ -167,7 +171,9 @@
   </div>
   {% else %}
   <div class="admin-empty">
-    <p>Платежів ще немає</p>
+    {{ icon('inbox', cls='admin-empty__icon') }}
+    <h3 class="admin-empty__title">Платежів ще немає</h3>
+    <p>Тут з'являться замовлення, оплачені через LiqPay.</p>
   </div>
   {% endif %}
 </div>

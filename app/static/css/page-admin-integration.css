@@ -176,11 +176,9 @@
 }
 
 /* Маленька версія бейджа для rotation-hint у hub-картках. */
-.badge--sm {
-  font-size: 0.625rem;
-  padding: 2px 6px;
-  margin-left: 6px;
-}
+/* .badge--sm переїхав у common.css, до самого .badge: розмірний варіант
+   компонента не може жити у файлі однієї сторінки -- ним користуються ще
+   картки хаба інтеграцій і попередній перегляд імпорту. */
 
 /* Import diff table */
 .diff-row--changed {

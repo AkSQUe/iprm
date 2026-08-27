@@ -15,7 +15,12 @@
     {% else %}
       <span class="badge {{ rotation.badge_class }}">Секрет не встановлено</span>
     {% endif %}
+    {# Підпис лише тоді, коли він додає щось до бейджа. За порожнього секрету
+       `label` дорівнює тексту самого бейджа, і рядок друкував «Секрет не
+       встановлено» двічі поспіль. #}
+    {% if rotation.status != 'empty' %}
     <span class="admin-text-muted">&nbsp;{{ rotation.label }}</span>
+    {% endif %}
     {% if rotation.next_rotation_days is not none and rotation.next_rotation_days > 0 and rotation.status != 'stale' %}
       <span class="admin-text-muted">(через {{ rotation.next_rotation_days }} дн.)</span>
     {% endif %}

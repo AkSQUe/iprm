@@ -17,6 +17,8 @@
     <div class="admin-hero">
       <div>
         <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
           <a href="{{ url_for('admin.integrations') }}" class="admin-breadcrumb__link">Інтеграції</a>
           <span class="admin-breadcrumb__sep">/</span>
           <span class="admin-breadcrumb__current">Health-check</span>
@@ -33,9 +35,9 @@
       </div>
       <div class="admin-hero__actions">
         <a href="{{ url_for('admin.integrations_health', refresh=1) }}"
-           class="btn-admin btn-admin--primary">Перевірити заново</a>
+           class="btn-admin btn-admin--primary btn-admin--sm">{{ icon('refresh') }} Перевірити заново</a>
         <a href="{{ url_for('admin.integrations') }}"
-           class="btn-admin btn-admin--secondary">Назад до інтеграцій</a>
+           class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left') }} Усі інтеграції</a>
       </div>
     </div>
 

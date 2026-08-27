@@ -37,7 +37,12 @@
   <div class="admin-layout">
     <div class="admin-hero">
       <div>
+        {# Шлях від «Панелі», як на кожній іншій сторінці адмінки: сам хаб
+           інтеграцій уже мав «Панель / Інтеграції», а дев'ять його дітей
+           починались одразу з «Інтеграції» -- і ланцюжок обривався. #}
         <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.dashboard') }}" class="admin-breadcrumb__link">Панель</a>
+          <span class="admin-breadcrumb__sep">/</span>
           <a href="{{ url_for('admin.integrations') }}" class="admin-breadcrumb__link">Інтеграції</a>
           <span class="admin-breadcrumb__sep">/</span>
           <span class="admin-breadcrumb__current">{% block integration_breadcrumb_current %}{% block integration_title %}{% endblock %}{% endblock %}</span>
@@ -49,7 +54,7 @@
         </p>
       </div>
       <div class="admin-hero__actions">
-        <a href="{{ url_for('admin.integrations') }}" class="btn-admin btn-admin--secondary">Назад до інтеграцій</a>
+        <a href="{{ url_for('admin.integrations') }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left') }} Усі інтеграції</a>
       </div>
     </div>
 

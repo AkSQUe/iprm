@@ -24,20 +24,20 @@
       </div>
       <div class="admin-hero__actions">
         <a href="{{ url_for('admin.integrations_health') }}"
-           class="btn-admin btn-admin--secondary">Health-check</a>
+           class="btn-admin btn-admin--secondary btn-admin--sm">Health-check</a>
         <a href="{{ url_for('admin.integrations_io') }}"
-           class="btn-admin btn-admin--secondary">Export/Import</a>
+           class="btn-admin btn-admin--secondary btn-admin--sm">Export/Import</a>
       </div>
     </div>
 
     {% include 'partials/flash_messages.html' %}
 
-    <!-- Активні інтеграції -->
+    {# Активні інтеграції #}
     <div class="admin-integrations">
 
       <div class="admin-integrations__grid">
 
-        <!-- LiqPay -->
+        {# LiqPay #}
         <a href="{{ url_for('admin.liqpay') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">LiqPay</h4>
@@ -57,7 +57,7 @@
           <p>Платіжна система: оплата картою, Google Pay, Apple Pay. Webhook, рефанди.</p>
         </a>
 
-        <!-- Google OAuth -->
+        {# Google OAuth #}
         <a href="{{ url_for('admin.google_oauth') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">Google OAuth</h4>
@@ -75,7 +75,7 @@
           <p>Вхід через Google-акаунт. Client ID, redirect URI, One Tap.</p>
         </a>
 
-        <!-- Google Analytics -->
+        {# Google Analytics #}
         <a href="{{ url_for('admin.google_analytics') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">Google Analytics</h4>
@@ -90,7 +90,7 @@
           <p>GA4 Measurement ID, відстеження конверсій реєстрації та оплати.</p>
         </a>
 
-        <!-- reCAPTCHA -->
+        {# reCAPTCHA #}
         <a href="{{ url_for('admin.recaptcha') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">reCAPTCHA v3</h4>
@@ -108,7 +108,7 @@
           <p>Захист форм від ботів. Site Key, Secret Key, поріг score.</p>
         </a>
 
-        <!-- Apple Sign In -->
+        {# Apple Sign In #}
         <a href="{{ url_for('admin.apple_signin') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">Apple Sign In</h4>
@@ -126,7 +126,7 @@
           <p>Авторизація через Apple ID. Service ID, Team ID, relay email.</p>
         </a>
 
-        <!-- Sintegrum -->
+        {# Sintegrum #}
         <a href="{{ url_for('admin.sintegrum') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">Sintegrum</h4>
@@ -144,8 +144,8 @@
           <p>Каталог онлайн-курсів: синхронізація треків, ключ API, посилання на навчання.</p>
         </a>
 
-        <!-- PostHog (замінив плановану Microsoft Clarity: теплові карти й
-             записи сесій закриті ним же, тримати два плани на одне -- зайве) -->
+        {# PostHog (замінив плановану Microsoft Clarity: теплові карти й
+             записи сесій закриті ним же, тримати два плани на одне -- зайве) #}
         <a href="{{ url_for('admin.posthog') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">PostHog</h4>
@@ -165,7 +165,7 @@
           <p>Продуктова аналітика, теплові карти, записи сесій. Через власний проксі.</p>
         </a>
 
-        <!-- Meta Pixel -->
+        {# Meta Pixel #}
         <a href="{{ url_for('admin.meta_pixel') }}" class="admin-integration-card admin-integration-card--link">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">Meta Pixel</h4>
@@ -182,7 +182,7 @@
           <p>Pixel ID, конверсії Facebook / Instagram: заявки, реєстрації, оплати.</p>
         </a>
 
-        <!-- Facebook OAuth -->
+        {# Facebook OAuth #}
         <div class="admin-integration-card admin-integration-card--planned">
           <div class="admin-integration-card__header">
             <h4 class="admin-integration-card__title">Facebook OAuth</h4>
