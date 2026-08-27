@@ -25,6 +25,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from app.extensions import db
 from app.models.mixins import TimestampMixin, BigIntPK, utcnow
+from app.services.money import format_amount
 from app.utils import ensure_utc
 
 
@@ -240,12 +241,17 @@ class PromoCode(TimestampMixin, db.Model):
 
     @property
     def discount_label(self):
+        """«10%» або «2 000 ₴».
+
+        Сума -- тим самим форматувальником і тим самим символом, що всюди на
+        сайті: код на 2000 друкувався тут як «2000 грн», а та сама сума в
+        сусідній колонці й у листі -- як «2 000 ₴».
+        """
         value = Decimal(self.discount_value or 0)
-        # 50.00 -> "50", 12.50 -> "12.5"
-        text = format(value.normalize(), 'f')
         if self.discount_type == DISCOUNT_PERCENT:
-            return f'{text}%'
-        return f'{text} грн'
+            # 50.00 -> "50", 12.50 -> "12.5"
+            return f"{format(value.normalize(), 'f')}%"
+        return f'{format_amount(value)} ₴'
 
     @property
     def usage_label(self):

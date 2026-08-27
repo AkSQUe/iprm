@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -29,7 +29,7 @@
         </p>
       </div>
       <div class="admin-hero__actions">
-        <a href="{{ url_for('admin.promo_code_create') }}" class="btn-admin btn-admin--primary">{{ icon('add') }} Створити промокод</a>
+        <a href="{{ url_for('admin.promo_code_create') }}" class="btn-admin btn-admin--primary btn-admin--sm">{{ icon('add') }} Створити промокод</a>
       </div>
     </div>
 
@@ -45,50 +45,57 @@
 
     {% if promos %}
     <div class="admin-table-wrap">
-    <table class="admin-table admin-table--wide">
+    <table class="admin-table">
       <thead>
         <tr>
-          <th>Код</th>
-          <th>Знижка</th>
-          <th>Використано</th>
-          <th>На людину</th>
-          <th>Діє</th>
-          <th>Область</th>
+          <th class="admin-cell-title">Код</th>
+          <th class="admin-nowrap">Знижка</th>
+          <th class="admin-nowrap">Використано</th>
+          <th class="admin-nowrap">На людину</th>
+          <th class="admin-nowrap">Діє</th>
+          <th class="admin-text-left">Область</th>
           <th>Статус</th>
-          <th>Дії</th>
+          <th data-no-sort>Дії</th>
         </tr>
       </thead>
       <tbody>
         {% for p in promos %}
         <tr>
-          <td>
+          <td class="admin-cell-title">
             <a href="{{ url_for('admin.promo_code_detail', promo_id=p.id) }}"><strong>{{ p.code }}</strong></a>
-            <button type="button" class="btn-admin btn-admin--sm" data-copy-text="{{ p.code }}" title="Скопіювати код" aria-label="Скопіювати код">{{ icon('content_copy') }}</button>
-            {% if p.description %}<br><small class="admin-text-muted">{{ p.description }}</small>{% endif %}
+            <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon" data-copy-text="{{ p.code }}" title="Скопіювати код" aria-label="Скопіювати код">{{ icon('content_copy') }}</button>
+            {# Опис -- у два рядки максимум: «Безкоштовна участь для перевірки
+               механіки реєстрації та автолистів» розганяв рядок на три
+               поверхи, а читають його раз на розбір. Повний -- у title. #}
+            {% if p.description %}
+            <div class="admin-text-muted admin-clamp-2" title="{{ p.description }}">{{ p.description }}</div>
+            {% endif %}
           </td>
-          <td><strong>{{ p.discount_label }}</strong></td>
-          <td>{{ p.usage_label }}</td>
-          <td>{% if p.per_user_limit %}{{ p.per_user_limit }}{% else %}<span class="admin-text-muted">без ліміту</span>{% endif %}</td>
-          <td>
+          <td class="admin-nowrap admin-num"><strong>{{ p.discount_label }}</strong></td>
+          <td class="admin-nowrap admin-num">{{ p.usage_label }}</td>
+          <td class="admin-num">{% if p.per_user_limit %}{{ p.per_user_limit }}{% else %}<span class="admin-text-muted">без ліміту</span>{% endif %}</td>
+          <td class="admin-num">
             {% if p.valid_from or p.valid_until %}
-              {{ p.valid_from.strftime('%d.%m.%Y') if p.valid_from else '…' }} —
-              {{ p.valid_until.strftime('%d.%m.%Y') if p.valid_until else '…' }}
+              <span class="admin-nowrap">{{ p.valid_from.strftime('%d.%m.%Y') if p.valid_from else '…' }}&nbsp;&mdash;</span>
+              <span class="admin-nowrap">{{ p.valid_until.strftime('%d.%m.%Y') if p.valid_until else '…' }}</span>
             {% else %}<span class="admin-text-muted">безстроково</span>{% endif %}
           </td>
-          <td>{{ p.scope_label }}</td>
+          <td class="admin-text-left">{{ p.scope_label }}</td>
           <td><span class="badge {{ p.status_badge }}">{{ p.status_label }}</span></td>
           <td>
             <div class="admin-table__actions">
-              <a href="{{ url_for('admin.promo_code_edit', promo_id=p.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати">{{ icon('edit') }}</a>
+              <a href="{{ url_for('admin.promo_code_edit', promo_id=p.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon" title="Редагувати" aria-label="Редагувати">{{ icon('edit') }}</a>
               <form method="POST" action="{{ url_for('admin.promo_code_toggle', promo_id=p.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">{{ 'Вимкнути' if p.is_active else 'Увімкнути' }}</button>
+                {% set toggle = 'Вимкнути' if p.is_active else 'Увімкнути' %}
+                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+                        title="{{ toggle }}" aria-label="{{ toggle }}">{{ icon('block' if p.is_active else 'check') }}</button>
               </form>
               <form method="POST" action="{{ url_for('admin.promo_code_delete', promo_id=p.id) }}"
                     data-confirm="Видалити промокод «{{ p.code }}»? Історія його застосувань зникне, знижки на реєстраціях залишаться."
                     data-confirm-ok="Видалити" data-confirm-danger>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm" aria-label="Видалити">{{ icon('delete') }}</button>
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm btn-admin--icon" title="Видалити" aria-label="Видалити">{{ icon('delete') }}</button>
               </form>
             </div>
           </td>
@@ -98,17 +105,7 @@
     </table>
     </div>
 
-    {% if pagination.pages > 1 %}
-    <nav class="admin-pagination">
-      {% if pagination.has_prev %}
-      <a href="{{ url_for('admin.promo_codes_list', page=pagination.prev_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
-      {% endif %}
-      <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }}</span>
-      {% if pagination.has_next %}
-      <a href="{{ url_for('admin.promo_codes_list', page=pagination.next_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
-      {% endif %}
-    </nav>
-    {% endif %}
+    {{ pager('admin.promo_codes_list', pagination, filter_args) }}
 
     {% else %}
     <div class="admin-empty">
