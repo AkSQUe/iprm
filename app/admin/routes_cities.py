@@ -69,6 +69,7 @@ def cities_list():
         missing=missing,
         translated=translated,
         filters=filters,
+        filter_args=_listing.filter_args(filters),
     )
 
 

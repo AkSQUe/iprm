@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -94,25 +94,12 @@
   </div>
 
   <!-- Pagination -->
-  {% if pagination.pages > 1 %}
-  <nav class="admin-pagination">
-    {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.notifications_log', page=pagination.prev_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">&larr;</a>
-    {% endif %}
-    <span class="admin-pagination__info">
-      {{ pagination.page }} / {{ pagination.pages }}
-    </span>
-    {% if pagination.has_next %}
-    <a href="{{ url_for('admin.notifications_log', page=pagination.next_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">&rarr;</a>
-    {% endif %}
-  </nav>
-  {% endif %}
-
+  {{ pager('admin.notifications_log', pagination, filter_args) }}
   {% else %}
-  <div class="admin-empty">
-    <h3 class="admin-empty__title">Записів не знайдено</h3>
-    <p>Немає записів{% if filters.q or filters.status or filters.trigger %} за обраними фільтрами. <a href="{{ url_for('admin.notifications_log') }}">Скинути фільтри</a>{% endif %}</p>
-  </div>
+  {% call empty_state('admin.notifications_log', filter_args,
+                      icon_name='mail', title='Журнал порожній') %}
+    <p>Сюди потрапляє кожен лист, який система намагалась відправити.</p>
+  {% endcall %}
   {% endif %}
 
   </div>

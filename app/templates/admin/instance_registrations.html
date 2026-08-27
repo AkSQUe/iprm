@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-quiz.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
 {% from 'admin/partials/_registration_actions.html' import registration_actions %}
 {% import 'admin/partials/_registration_progress.html' as progress %}
 
@@ -163,17 +163,7 @@
     </div>
 
     <!-- Пагінація -->
-    {% if pagination and pagination.pages > 1 %}
-    <nav class="admin-pagination">
-      {% if pagination.has_prev %}
-      <a href="{{ url_for('admin.instance_registrations', instance_id=instance.id, page=pagination.prev_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
-      {% endif %}
-      <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }} ({{ pagination.total }})</span>
-      {% if pagination.has_next %}
-      <a href="{{ url_for('admin.instance_registrations', instance_id=instance.id, page=pagination.next_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
-      {% endif %}
-    </nav>
-    {% endif %}
+    {{ pager('admin.instance_registrations', pagination, dict(filter_args, instance_id=instance.id)) }}
     {% else %}
     <div class="admin-empty">
       {{ icon('how_to_reg', cls='admin-empty__icon') }}

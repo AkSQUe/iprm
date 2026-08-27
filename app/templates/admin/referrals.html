@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -221,17 +221,7 @@
     </div>
 
     <!-- Пагінація -->
-    {% if pagination and pagination.pages > 1 %}
-    <nav class="admin-pagination">
-      {% if pagination.has_prev %}
-      <a href="{{ url_for('admin.referrals_overview', page=pagination.prev_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
-      {% endif %}
-      <span class="admin-pagination__info">{{ pagination.page }} / {{ pagination.pages }} ({{ pagination.total }})</span>
-      {% if pagination.has_next %}
-      <a href="{{ url_for('admin.referrals_overview', page=pagination.next_num, **filter_args) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
-      {% endif %}
-    </nav>
-    {% endif %}
+    {{ pager('admin.referrals_overview', pagination, filter_args) }}
     {% else %}
     <div class="admin-empty">
       {{ icon('add_link', cls='admin-empty__icon') }}

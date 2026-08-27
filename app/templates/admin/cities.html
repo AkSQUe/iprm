@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-cities.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -188,12 +188,11 @@
     </form>
     {% endfor %}
     {% else %}
-    <div class="admin-empty">
-      {{ icon('table_view', cls='admin-empty__icon') }}
-      <h3 class="admin-empty__title">Довідник порожній</h3>
+    {% call empty_state('admin.cities_list', filter_args,
+                        icon_name='table_view', title='Довідник порожній') %}
       <p>Усі локації розкладу показуються українською. Додайте перший рядок – і переклад
          підхопиться скрізь, де ця назва зустрічається.</p>
-    </div>
+    {% endcall %}
     {% endif %}
 
   </div>

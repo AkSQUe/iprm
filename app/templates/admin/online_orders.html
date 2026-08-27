@@ -15,7 +15,7 @@
 <script src="{{ url_for('static', filename='js/admin-status-select.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state %}
 {% from 'partials/_money.html' import money %}
 
 {% block content %}
@@ -259,21 +259,10 @@
     {{ pager('admin.online_orders_list', pagination, filter_args) }}
 
     {% else %}
-    <div class="admin-empty">
-      {{ icon('notes', cls='admin-empty__icon') }}
-      <h3 class="admin-empty__title">Замовлень немає</h3>
-      <p>
-        {# filter_args -- ті самі непорожні фільтри, що й у чіпсах і пагінації.
-           Копія переліку тут уже відстала: зріз `access` вона не бачила, і
-           порожня черга «оплачено без доступу» звітувала «замовлень немає». #}
-        {% if filter_args %}
-          За цим зрізом нічого не знайшлося &mdash;
-          <a href="{{ url_for('admin.online_orders_list') }}">скинути фільтри</a>.
-        {% else %}
-          Щойно хтось купить онлайн-курс, замовлення з'явиться тут.
-        {% endif %}
-      </p>
-    </div>
+    {% call empty_state('admin.online_orders_list', filter_args,
+                        icon_name='notes', title='Замовлень немає') %}
+      <p>Щойно хтось купить онлайн-курс, замовлення з'явиться тут.</p>
+    {% endcall %}
     {% endif %}
 
   </div>

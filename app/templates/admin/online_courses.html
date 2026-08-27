@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state %}
 {% from 'partials/_money.html' import money %}
 
 {% block content %}
@@ -166,20 +166,10 @@
     {{ pager('admin.online_courses_list', pagination, filter_args) }}
 
     {% else %}
-    <div class="admin-empty">
-      {{ icon('school', cls='admin-empty__icon') }}
-      <h3 class="admin-empty__title">Курсів немає</h3>
-      <p>
-        {# filter_args -- ті самі непорожні фільтри, що й у чіпсах і пагінації.
-           Копія переліку тут відставала б від кожного нового фільтра. #}
-        {% if filter_args %}
-          За цим зрізом нічого не знайшлося &mdash;
-          <a href="{{ url_for('admin.online_courses_list') }}">скинути фільтри</a>.
-        {% else %}
-          Каталог порожній. Перевірте налаштування інтеграції і запустіть синхронізацію.
-        {% endif %}
-      </p>
-    </div>
+    {% call empty_state('admin.online_courses_list', filter_args,
+                        icon_name='school', title='Курсів немає') %}
+      <p>Каталог порожній. Перевірте налаштування інтеграції і запустіть синхронізацію.</p>
+    {% endcall %}
     {% endif %}
 
   </div>

@@ -71,6 +71,7 @@ def refund_requests_list():
         'admin/refund_requests.html',
         requests=_query(filters).all(),
         filters=filters,
+        filter_args=_listing.filter_args(filters),
         active_status=filters['status'],
         status_options=RefundRequest.STATUSES,
         new_count=refund_requests.pending_count(),
