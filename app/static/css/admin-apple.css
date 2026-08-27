@@ -8,6 +8,9 @@
 .admin-mb-md { margin-bottom: 16px; }
 .admin-text-center { text-align: center; }
 .admin-text-left { text-align: left; }
+/* Цифри однакової ширини: у колонці лічильників «2 / 3» під «10 / 12» інакше
+   стоять урозбіг, і стовпчик чисел перестає читатись як стовпчик. */
+.admin-num { font-variant-numeric: tabular-nums; }
 .admin-pad-24 { padding: 24px; }
 .admin-pad-32 { padding: 32px; }
 .admin-input-narrow { max-width: 360px; }

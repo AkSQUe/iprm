@@ -23,12 +23,12 @@
         <span class="admin-breadcrumb__current">Курси</span>
       </div>
       <h1 class="admin-hero__title">Курси (каталог)</h1>
-      <p class="admin-hero__subtitle">Контент курсів інституту. Дати проведення керуються в розділі "Розклад".</p>
+      <p class="admin-hero__subtitle">Контент курсів інституту. Дати проведення керуються в розділі «Розклад».</p>
     </div>
     <div class="admin-hero__actions">
       <div class="admin-xlsx-toolbar">
         <details class="admin-xlsx-menu">
-          <summary class="btn-admin btn-admin--secondary" title="Завантажити xlsx з курсами">
+          <summary class="btn-admin btn-admin--secondary btn-admin--sm" title="Завантажити xlsx з курсами">
             {{ icon('download') }} Експорт XLSX
           </summary>
           <div class="admin-xlsx-menu__items">
@@ -42,20 +42,20 @@
         </details>
         <form method="POST" action="{{ url_for('admin.courses_import_upload') }}" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="file" name="xlsx" id="courses-xlsx-input" accept=".xlsx" onchange="this.form.submit()">
-          <label for="courses-xlsx-input" class="btn-admin btn-admin--secondary admin-clickable" title="Завантажити змінений xlsx">
+          <input type="file" name="xlsx" id="courses-xlsx-input" accept=".xlsx" data-autosubmit>
+          <label for="courses-xlsx-input" class="btn-admin btn-admin--secondary btn-admin--sm admin-clickable" title="Завантажити змінений xlsx">
             {{ icon('upload') }} Імпорт XLSX
           </label>
         </form>
         <form method="POST" action="{{ url_for('admin.translations_import_upload', scope='courses') }}" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="file" name="xlsx" id="courses-tr-input" accept=".xlsx" onchange="this.form.submit()">
-          <label for="courses-tr-input" class="btn-admin btn-admin--secondary admin-clickable" title="Завантажити заповнений файл перекладів">
+          <input type="file" name="xlsx" id="courses-tr-input" accept=".xlsx" data-autosubmit>
+          <label for="courses-tr-input" class="btn-admin btn-admin--secondary btn-admin--sm admin-clickable" title="Завантажити заповнений файл перекладів">
             {{ icon('upload') }} Імпорт перекладів
           </label>
         </form>
       </div>
-      <a href="{{ url_for('admin.course_create') }}" class="btn-admin btn-admin--primary">{{ icon('add') }} Додати курс</a>
+      <a href="{{ url_for('admin.course_create') }}" class="btn-admin btn-admin--primary btn-admin--sm">{{ icon('add') }} Додати курс</a>
     </div>
   </div>
 
@@ -73,40 +73,51 @@
 
   {% if courses %}
   <div class="admin-table-wrap">
-  <table class="admin-table admin-table--wide">
+  {# Без --wide: нижня межа в 1120px ширша за контейнер навіть на 1440 (1104),
+     тож колонка дій завжди лишалась за краєм прокрутки. Назву від стискання
+     тепер тримає власна межа .admin-cell-title, і блокова межа зайва. #}
+  <table class="admin-table">
     <thead>
+      {# Назва -- перша: за нею шукають рядок очима, а в картковому режимі
+         перший рядок картки стає її заголовком. Порядок у каталозі --
+         службове число, воно йде слідом. #}
       <tr>
+        <th class="admin-cell-title">Назва</th>
         <th>Порядок</th>
-        <th>Назва</th>
         <th>Тип</th>
         <th>Тренер</th>
         <th>Проведень</th>
         <th>Запити</th>
         <th>Активний</th>
         <th title="Скільки перекладних фрагментів заповнено">Переклад</th>
-        <th>Дії</th>
+        <th data-no-sort>Дії</th>
       </tr>
     </thead>
     <tbody>
       {% for course in courses %}
       {% set stats = stats_by_id[course.id] %}
       <tr>
+        <td class="admin-cell-title"><strong>{{ course.title }}</strong></td>
+        {# «Закріплено» -- синім, а не зеленим: зелена таблетка в цьому ж рядку
+           означає «активний», і два різні факти читались як один стан. #}
         <td>
           <span class="admin-order-cell">
-            {% if course.is_pinned %}<span class="badge badge--active" title="Закріплено вгорі каталогу">Закріплено</span>{% endif %}
+            {% if course.is_pinned %}<span class="badge badge--published" title="Закріплено вгорі каталогу">Вгорі</span>{% endif %}
             {{ course.sort_order }}
           </span>
         </td>
-        <td><strong>{{ course.title }}</strong></td>
         <td class="admin-nowrap">{{ course.event_type_label }}</td>
         <td>{{ course.trainer.full_name if course.trainer else '–' }}</td>
-        <td class="admin-nowrap">
-          <a href="{{ url_for('admin.instances_list', course_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="upcoming / total">
+        {# Лічильники -- посилання на зріз, а не кнопки: за мовою сайту таблетка
+           з падінгом означає ДІЮ, а тут це просто число. Два овали в кожному
+           рядку ще й змагались за увагу з таблеткою стану поруч. #}
+        <td class="admin-nowrap admin-num">
+          <a href="{{ url_for('admin.instances_list', course_id=course.id) }}" title="Найближчих проведень / усього">
             {{ stats.upcoming }} / {{ stats.total }}
           </a>
         </td>
-        <td>
-          <a href="{{ url_for('admin.course_requests_list', course_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">
+        <td class="admin-num">
+          <a href="{{ url_for('admin.course_requests_list', course_id=course.id) }}" title="Запити на курс, що чекають відповіді">
             {{ stats.pending_requests }}
           </a>
         </td>
@@ -117,15 +128,15 @@
             <span class="badge badge--draft">Ні</span>
           {% endif %}
         </td>
-        <td class="admin-nowrap"><small class="admin-text-muted">{{ tr_coverage_label(course) }}</small></td>
+        <td class="admin-nowrap admin-num admin-text-muted">{{ tr_coverage_label(course) }}</td>
         <td>
           {# Часті дії -- одразу, решта під «...»: пʼять кнопок поспіль
              розсипались у стовпчик і робили рядок у пʼять поверхів. #}
           <div class="admin-table__actions">
-            <a href="{{ url_for('admin.course_edit', course_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" aria-label="Редагувати" title="Редагувати">{{ icon('edit') }}</a>
-            <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm" target="_blank" rel="noopener noreferrer" aria-label="Переглянути публічну сторінку" title="Переглянути на сайті">{{ icon('visibility') }}</a>
+            <a href="{{ url_for('admin.course_edit', course_id=course.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon" aria-label="Редагувати" title="Редагувати">{{ icon('edit') }}</a>
+            <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon" target="_blank" rel="noopener noreferrer" aria-label="Переглянути публічну сторінку" title="Переглянути на сайті">{{ icon('visibility') }}</a>
             <details class="admin-actions-menu">
-              <summary class="btn-admin btn-admin--secondary btn-admin--sm" title="Ще дії" aria-label="Ще дії">
+              <summary class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon" title="Ще дії" aria-label="Ще дії">
                 {{ icon('more_vert') }}
               </summary>
               <div class="admin-actions-menu__items">

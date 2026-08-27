@@ -139,13 +139,18 @@
   --apple-orange-rgb: 255, 173, 22;
   --apple-black-rgb: 23, 19, 29;
 
-  /* Badge colors */
+  /* Badge colors.
+     Текст на кожній таблетці -- на крок темніший за палітру-джерело: у
+     світлій темі попередні пари не добирали до 4.5 за WCAG (draft 4.39,
+     published 4.24, active 3.32), а напис на бейджі -- це 11px напівжирним,
+     тобто найдрібніший текст в інтерфейсі, якому запас потрібен найбільше.
+     Тёмна тема рахувалась окремо й уже проходить (7.2-7.4). */
   --iprm-badge-draft-bg: #f3f4f6;
-  --iprm-badge-draft-text: #6b7280;
+  --iprm-badge-draft-text: #4b5563;
   --iprm-badge-published-bg: #dbeafe;
-  --iprm-badge-published-text: #2563eb;
+  --iprm-badge-published-text: #1d4ed8;
   --iprm-badge-active-bg: #d1fae5;
-  --iprm-badge-active-text: #059669;
+  --iprm-badge-active-text: #047857;
   --iprm-badge-completed-bg: #e0e7ff;
   --iprm-badge-completed-text: #4338ca;
 
