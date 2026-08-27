@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-reviews.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import filter_bar %}
@@ -45,33 +46,103 @@
 
     {% if reviews %}
     <div class="admin-table-wrap">
-    <table class="admin-table">
+    {# Ширини колонок задані явно (page-admin-reviews.css). В автоматичному
+       розкрої «Дії» забирали 378px -- третину таблиці -- під чотири контроли,
+       а автору лишалось 113px на двоповерхове ім'я. #}
+    <table class="admin-table admin-table--fixed admin-reviews-table">
+      <colgroup>
+        <col class="admin-reviews-col--author">
+        <col class="admin-reviews-col--rating">
+        <col class="admin-reviews-col--text">
+        <col class="admin-reviews-col--course">
+        <col class="admin-reviews-col--state">
+        <col class="admin-reviews-col--order">
+        <col class="admin-reviews-col--actions">
+      </colgroup>
       <thead>
-        <tr><th>Автор</th><th>Оцінка</th><th>Текст</th><th>Курс</th><th>Статус</th><th>Порядок</th><th>Дії</th></tr>
+        <tr>
+          <th class="admin-text-left">Автор</th>
+          <th>Оцінка</th>
+          <th class="admin-text-left">Текст</th>
+          <th class="admin-text-left">Курс</th>
+          <th>Статус</th>
+          <th>Порядок</th>
+          <th>Дії</th>
+        </tr>
       </thead>
       <tbody>
         {% for r in reviews %}
         <tr>
-          <td><strong>{{ r.author_name }}</strong>{% if r.byline != r.author_name %}<br><small class="admin-text-muted">{{ r.byline }}</small>{% endif %}</td>
-          <td>{{ '★' * r.rating }}</td>
-          <td>{{ r.text[:90] }}{% if r.text|length > 90 %}…{% endif %}</td>
-          <td>{% if r.course %}{{ r.course.title }}{% else %}<span class="admin-text-muted">—</span>{% endif %}</td>
+          {# Другим поверхом -- лише місто й роль. Раніше тут стояв `byline`,
+             який ПОЧИНАЄТЬСЯ з імені, тож ім'я друкувалось двічі поспіль:
+             умова `byline != author_name` відсікала лише випадок, коли
+             ні міста, ні ролі немає. #}
+          <td class="admin-text-left">
+            <div>
+              <strong class="admin-clamp-2" title="{{ r.author_name }}">{{ r.author_name }}</strong>
+              {% set meta = [r.city, r.author_role] | select | join(' · ') %}
+              {% if meta %}
+              <small class="admin-text-muted admin-truncate admin-reviews-meta" title="{{ meta }}">{{ meta }}</small>
+              {% endif %}
+            </div>
+          </td>
+          {# П'ять гліфів завжди: чотири зірки самі по собі не відрізнити від
+             чотирьох із чотирьох. Значення поруч цифрою -- воно ж робить
+             незаповнені зірки декором. #}
+          <td>
+            <span class="iprm-rating" role="img" aria-label="Оцінка {{ r.rating }} з 5">
+              <span class="iprm-rating__stars">{{ ('&#9733;' * r.rating) | safe }}{% if r.rating < 5 %}<span class="iprm-rating__off">{{ ('&#9733;' * (5 - r.rating)) | safe }}</span>{% endif %}</span>
+              <span class="iprm-rating__value">{{ r.rating }}/5</span>
+            </span>
+          </td>
+          {# Обрізання -- справа CSS: `text[:90]` рахував символи наосліп і різав
+             посеред слова, а витяг усе одно розгортався на сім рядків. #}
+          <td class="admin-text-left">
+            <span class="admin-clamp-2" title="{{ r.text }}">{{ r.text }}</span>
+          </td>
+          <td class="admin-text-left">
+            {% if r.course %}
+            <span class="admin-clamp-2" title="{{ r.course.title }}">{{ r.course.title }}</span>
+            {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
+          </td>
           <td>
             {% if r.is_published %}<span class="badge badge--active">Опубліковано</span>{% else %}<span class="badge badge--draft">Чернетка</span>{% endif %}
           </td>
           <td>{{ r.sort_order }}</td>
           <td>
+            {# Часта дія -- одразу, решта під «...». Чотири контроли поспіль
+               роздували колонку до третини таблиці, а дві текстові кнопки
+               серед іконок читались як окремий вид елемента. #}
             <div class="admin-table__actions">
-              <a href="{{ url_for('admin.review_edit', review_id=r.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('edit') }}</a>
-              <a href="{{ url_for('admin.translations_edit', entity='review', obj_id=r.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm" title="Переклади">Переклади</a>
-              <form method="POST" action="{{ url_for('admin.review_toggle', review_id=r.id) }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">{{ 'Зняти' if r.is_published else 'Опублікувати' }}</button>
-              </form>
-              <form method="POST" action="{{ url_for('admin.review_delete', review_id=r.id) }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">{{ icon('delete') }}</button>
-              </form>
+              <a href="{{ url_for('admin.review_edit', review_id=r.id) }}"
+                 class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+                 title="Редагувати">{{ icon('edit', label='Редагувати') }}</a>
+              <details class="admin-actions-menu">
+                <summary class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+                         title="Ще дії" aria-label="Ще дії">
+                  {{ icon('more_vert') }}
+                </summary>
+                <div class="admin-actions-menu__items">
+                  <a href="{{ url_for('admin.translations_edit', entity='review', obj_id=r.id) }}"
+                     class="admin-actions-menu__item">
+                    {{ icon('title') }} Переклади
+                  </a>
+                  <form method="POST" action="{{ url_for('admin.review_toggle', review_id=r.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="admin-actions-menu__item">
+                      {{ icon('visibility') }} {{ 'Зняти з публікації' if r.is_published else 'Опублікувати' }}
+                    </button>
+                  </form>
+                  {# Без data-confirm свідомо: видалення м'яке, а замість діалогу
+                     йде тост із кнопкою «Повернути» (routes_reviews.review_delete). #}
+                  <form method="POST" action="{{ url_for('admin.review_delete', review_id=r.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--danger">
+                      {{ icon('delete') }} Видалити
+                    </button>
+                  </form>
+                </div>
+              </details>
             </div>
           </td>
         </tr>

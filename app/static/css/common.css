@@ -2358,9 +2358,43 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   border-radius: var(--iprm-radius);
 }
 
+/* Оцінка зірками. Гліф U+2605 малює текстовий шрифт: у субсет-шрифті іконок
+   зірки немає, а тягнути її туди заради п'яти символів невигідно.
+
+   П'ять гліфів завжди, а не `rating` штук: три зірки самі по собі не
+   відрізнити від трьох із трьох, і в реєстрі відгуків «4» читалось як «5»,
+   поки не порахуєш. Саме значення стоїть поруч ЦИФРОЮ -- через неї шкалу
+   видно без рахунку, і завдяки їй незаповнені зірки лишаються декором, з
+   якого не треба знімати контраст. */
+.iprm-rating {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.iprm-rating__stars {
+  letter-spacing: 2px;
+  /* Золото-чорнило, а не колишній літерал #f5a623: той давав на білому 2.03,
+     тобто зірки були світлішою плямою, а не позначкою. */
+  color: var(--apple-gold-ink);
+}
+
+.iprm-rating__off {
+  color: var(--apple-gray-light);
+}
+
+.iprm-rating__value {
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--iprm-text-light);
+}
+
+/* Публічна картка відгуку: та сама пара токенів, поки картка не перейшла на
+   компонент цілком (див. передачі). */
 .iprm-review__stars {
   margin-bottom: 0.75rem;
-  color: #f5a623;
+  color: var(--apple-gold-ink);
   letter-spacing: 2px;
 }
 

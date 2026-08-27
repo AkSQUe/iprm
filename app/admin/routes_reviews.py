@@ -47,7 +47,9 @@ def reviews_list():
             (c.id, c.title)
             for c in Course.query.order_by(Course.title).all()
         ],
-        rating_options=[(n, '★' * n) for n in range(5, 0, -1)],
+        # «5 з 5», а не рядок зірок: у нативному селекті гліфи не мають
+        # шкали, і «★★★★» від «★★★★★» відрізнялось лише довжиною.
+        rating_options=[(n, f'{n} з 5') for n in range(5, 0, -1)],
     )
 
 
