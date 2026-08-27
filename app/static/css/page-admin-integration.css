@@ -108,9 +108,12 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.health-card--ok { border-left-color: #16a34a; }
-.health-card--degraded { border-left-color: #f59e0b; }
-.health-card--down { border-left-color: #dc2626; }
+/* Стани картки -- на семантичних токенах. Літерали #16a34a / #f59e0b /
+   #dc2626 тёмної теми не знали: у ній вони лишались тими самими
+   насиченими, і кожен стан довелось перекривати вручну нижче. */
+.health-card--ok { border-left-color: var(--iprm-success); }
+.health-card--degraded { border-left-color: var(--iprm-warning); }
+.health-card--down { border-left-color: var(--iprm-error-text); }
 .health-card--not_configured { border-left-color: var(--iprm-border); opacity: 0.85; }
 
 .health-card__header {
@@ -134,9 +137,20 @@
   flex-shrink: 0;
 }
 
-.health-card__dot--ok { background: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.18); }
-.health-card__dot--degraded { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.2); }
-.health-card__dot--down { background: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.2); }
+.health-card__dot--ok {
+  background: var(--iprm-success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--iprm-success) 18%, transparent);
+}
+
+.health-card__dot--degraded {
+  background: var(--iprm-warning);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--iprm-warning) 20%, transparent);
+}
+
+.health-card__dot--down {
+  background: var(--iprm-error-text);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--iprm-error-text) 20%, transparent);
+}
 .health-card__dot--not_configured { background: var(--iprm-text-light); }
 
 .health-card__status-badge {
@@ -146,13 +160,24 @@
   letter-spacing: 0.06em;
   padding: 3px 8px;
   border-radius: 4px;
-  background: var(--iprm-bg, rgba(0,0,0,0.04));
+  background: var(--iprm-bg);
   color: var(--iprm-text-light);
 }
 
-.health-card--ok .health-card__status-badge { background: rgba(22,163,74,0.1); color: #16a34a; }
-.health-card--degraded .health-card__status-badge { background: rgba(245,158,11,0.12); color: #b45309; }
-.health-card--down .health-card__status-badge { background: rgba(220,38,38,0.1); color: #dc2626; }
+.health-card--ok .health-card__status-badge {
+  background: var(--iprm-success-bg);
+  color: var(--iprm-success);
+}
+
+.health-card--degraded .health-card__status-badge {
+  background: var(--iprm-warning-bg);
+  color: var(--iprm-warning-text);
+}
+
+.health-card--down .health-card__status-badge {
+  background: var(--iprm-error-bg);
+  color: var(--iprm-error-text);
+}
 
 .health-card__detail {
   font-size: 0.875rem;
@@ -163,7 +188,7 @@
 
 .health-card__error {
   font-size: 0.875rem;
-  color: #dc2626;
+  color: var(--iprm-error-text);
   margin: 6px 0;
   word-break: break-word;
   line-height: 1.45;
@@ -181,11 +206,14 @@
    картки хаба інтеграцій і попередній перегляд імпорту. */
 
 /* Import diff table */
+/* Змінений рядок у діфі імпорту -- та сама бурштинова вісь «зверни увагу»,
+   що й у решті адмінки, тож на тих самих токенах. */
 .diff-row--changed {
-  background: rgba(245, 158, 11, 0.06);
+  background: color-mix(in srgb, var(--iprm-warning) 6%, transparent);
 }
+
 .diff-row--changed td:first-child {
-  border-left: 3px solid #f59e0b;
+  border-left: 3px solid var(--iprm-warning);
 }
 
 .diff-value {
@@ -203,7 +231,3 @@
 /* ==========================================================================
    Тёмна тема: світлі кольорові тексти статусів -> яскравіші для контрасту
    ========================================================================== */
-[data-theme="dark"] .health-card--ok .health-card__status-badge { color: #4ade80; }
-[data-theme="dark"] .health-card--degraded .health-card__status-badge { color: #fbbf24; }
-[data-theme="dark"] .health-card--down .health-card__status-badge { color: #ff6b6b; }
-[data-theme="dark"] .health-card__error { color: var(--iprm-error); }

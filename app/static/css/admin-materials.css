@@ -94,8 +94,8 @@
 }
 
 .materials-qty-input.is-low {
-  border-color: #d97706;
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
+  border-color: var(--iprm-warning);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--iprm-warning) 12%, transparent);
 }
 
 .materials-hint {
@@ -103,7 +103,7 @@
   margin-top: 3px;
   font-size: 0.72rem;
   line-height: 1.2;
-  color: #b45309;
+  color: var(--iprm-warning-text);
 }
 .materials-qty-input.is-over ~ .materials-hint { color: var(--iprm-error-text); }
 
@@ -187,4 +187,3 @@
 /* ==========================================================================
    Тёмна тема: підказки
    ========================================================================== */
-[data-theme="dark"] .materials-hint { color: #fbbf24; }

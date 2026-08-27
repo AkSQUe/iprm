@@ -152,15 +152,19 @@
   background: var(--iprm-error-bg);
 }
 
+/* Колір ролі -- з токена. Літерал #34c759 (системний зелений iOS) як ТЕКСТ
+   на білому давав 2.22, тобто напис на кнопці читався гірше за будь-який
+   інший в адмінці; --iprm-success тієї ж ролі дає 5.28 і знає тёмну тему.
+   Копію цієї кнопки в admin-apple.css перевели раніше, ця лишалась. */
 .btn-admin--success {
   background: var(--iprm-white);
-  color: #34c759;
-  border: 1px solid rgba(52, 199, 89, 0.3);
+  color: var(--iprm-success);
+  border: 1px solid color-mix(in srgb, var(--iprm-success) 30%, transparent);
 }
 
 .btn-admin--success:hover {
-  background: #f0faf3;
-  border-color: rgba(52, 199, 89, 0.5);
+  background: var(--iprm-success-bg);
+  border-color: color-mix(in srgb, var(--iprm-success) 50%, transparent);
 }
 
 .btn-admin--sm {

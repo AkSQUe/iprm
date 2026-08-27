@@ -223,7 +223,7 @@
     <a href="{{ url_for('admin.perf_runs') }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left') }} До списку</a>
     <form method="POST" action="{{ url_for('admin.perf_run_delete', run_id=run.id) }}" data-confirm="Видалити цей прогін?" data-confirm-ok="Видалити прогін" data-confirm-danger>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="btn-admin btn-admin--sm">{{ icon('delete') }} Видалити прогін</button>
+      <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">{{ icon('delete') }} Видалити прогін</button>
     </form>
   </div>
 
