@@ -17,18 +17,18 @@ $ARGUMENTS
 - `app/static/css/common.css` -- CSS-класи для всіх публічних компонентів
 - `app/static/css/admin.css` -- CSS-класи для адмін-компонентів
 - `app/static/css/auth.css` -- CSS-класи для авторизації
-- `app/templates/design_system/_content.html` -- каталог компонентів з прикладами використання
-- `app/templates/design_system/index.html` -- навігація по компонентах
+- `app/templates/admin/design_system.html` -- каталог компонентів (`/admin/design-system`), п'ять вкладок
+- `app/templates/design_system/_tab_*.html` -- партіали вкладок (foundation, atoms, molecules, admin, rules) з прикладами використання
 
 ## Крок 1: Побудувати реєстр дизайн-системи
 
-Прочитай `common.css`, `admin.css`, `auth.css` та `design_system/_content.html`.
+Прочитай `common.css`, `admin.css`, `auth.css` та партіали `design_system/_tab_*.html`.
 
 Для кожного компонента зафіксуй:
 - **Назва** та CSS-клас (напр. "Primary Button" -> `.iprm-btn.iprm-btn--primary`)
 - **Ключові стилі**: розмір шрифту, padding, border-radius, background, color
 - **Варіанти/модифікатори**: `--sm`, `--primary`, `--disabled` тощо
-- **Контекст**: де задокументований -- в `_content.html` чи лише в CSS
+- **Контекст**: де задокументований -- у `design_system/_tab_*.html` чи лише в CSS
 
 Категоризуй компоненти:
 
@@ -159,7 +159,7 @@ CSS-класи з різними іменами, але однаковими с�
 --- Реєстр дизайн-системи ---
 Публічних компонентів: N
 Адмін-компонентів: N
-Задокументованих в _content.html: N
+Задокументованих у design_system/_tab_*.html: N
 
 --- Порушення уніфікації ---
 
@@ -217,8 +217,10 @@ CSS-класи з різними іменами, але однаковими с�
 2. **Потім -- нові компоненти**:
    - Визначити стандартний CSS-клас (з BEM-іменуванням)
    - Додати стилі у відповідний CSS-файл (common.css для публічних, admin.css для адмін)
-   - Додати приклад у `design_system/_content.html`
-   - Додати посилання в навігацію `design_system/index.html`
+   - Додати приклад у відповідний партіал `design_system/_tab_*.html`
+     (atoms -- одиничні елементи, molecules -- складені, admin -- адмінські)
+   - Вкладка вже є в навігації (`admin/design_system.html`, `iprm-tabs`) --
+     нової не заводь без потреби
    - Замінити кастомні класи у шаблонах на нові стандартні
 
 ### Правила заміни класів
@@ -237,7 +239,7 @@ CSS-класи з різними іменами, але однаковими с�
    - Адмін: `.admin-{block}__{element}--{modifier}`
 2. Використовуй лише CSS-змінні з `:root` (не хардкоджені значення)
 3. Додай responsive-стилі (@media 768px, 480px)
-4. Додай приклад в `_content.html` за шаблоном:
+4. Додай приклад у відповідний `design_system/_tab_*.html` за шаблоном:
 ```html
 <div class="ds-section" id="{component-id}">
   <p class="ds-label">Components</p>

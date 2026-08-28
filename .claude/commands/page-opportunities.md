@@ -92,7 +92,7 @@ $ARGUMENTS
 - **Sticky-панель дій** -- клас `admin-form__actions` уже є `position: sticky; bottom: 0`. Ставити його треба **в кінці сторінки, поза секціями**: усередині короткої секції він липне лише в її межах.
 - **Порожній стан** -- `admin-empty` з іконкою, заголовком і підказкою, що робити (див. `admin/courses.html`).
 - **Підтвердження дії** -- атрибут `data-confirm` (обробляє глобальний `confirm-action.js` з `base.html`); в адмінці -- `admin-confirm.js`. Свій діалог не писати.
-- **Ширина без inline-стилю** -- крокові класи (`quiz-progress__fill--40` у [app/static/css/page-quiz.css](app/static/css/page-quiz.css)) там, де JS свідомо немає.
+- **Ширина без inline-стилю** -- крокові класи (`quiz-progress__fill--40` у [app/static/css/quiz.css](app/static/css/quiz.css)) там, де JS свідомо немає.
 - **Партіальні unique-індекси** -- `uq_registrations_instance_place`, `uq_promo_redemptions_active_reg`, `uq_course_quizzes_course`: унікальність «лише коли поле заповнене».
 
 ### Антипатерни (не пропонувати)

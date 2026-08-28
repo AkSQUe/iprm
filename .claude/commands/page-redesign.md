@@ -47,7 +47,7 @@ $ARGUMENTS
 |---|---|---|
 | Токени | `app/static/css/common.css`, обидва блоки (`:root` і `[data-theme="dark"]`) | кольори, радіуси, тіні, шрифт |
 | Примітиви | `app/static/css/apple-pages.css` (публіка), `admin.css` (адмінка) | кнопки, eyebrow, заголовковий блок, поля, картки |
-| Показ | `/design-system` (`app/templates/design_system/_content.html`) | як компонент виглядає й називається |
+| Показ | `/admin/design-system` (`app/templates/admin/design_system.html` + `design_system/_tab_*.html`) | як компонент виглядає й називається |
 
 Мова візуалу задана еталоном продажного лендінгу --
 `docs/plan-landing-etalon-migration.md` (ухвалені рішення, Додатки А і Б).

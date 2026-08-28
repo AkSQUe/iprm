@@ -18,17 +18,27 @@ molecular-background.css -- молекулярний фон (завантажу�
 auth.css            -- загальні стилі для ВСІХ сторінок авторизації
 admin.css           -- загальні стилі для ВСІХ адмін-сторінок
 page-home.css       -- тільки для main/index.html
-page-courses.css    -- тільки для courses/*.html
-page-404.css        -- тільки для errors/*.html
+page-contact.css    -- тільки для main/contact.html
+courses.css         -- 2+ споживачі (courses/*.html, online/*.html, main/home.html) -- компонентний, БЕЗ префікса page-
 page-admin-*.css    -- тільки для конкретної адмін-сторінки
 ```
 
 ### Правила розподілу CSS
 
-1. **Загальний CSS** (common.css, admin.css, auth.css) -- класи, що використовуються на 2+ сторінках свого контексту
+1. **Загальний CSS** (common.css, admin.css, auth.css, і будь-який інший файл БЕЗ префікса page- -- напр. courses.css) -- класи, що використовуються на 2+ сторінках свого контексту
 2. **Сторінковий CSS** (page-*.css) -- класи, що використовуються ТІЛЬКИ на одній сторінці
 3. **Шаблон** підключає загальний CSS + свій page-*.css через `{% block extra_css %}`
 4. **Жодних inline styles** (`style="..."`) в шаблонах
+
+> Межа "2+ споживачі -- компонентний, рівно 1 -- сторінковий" рахується
+> транзитивно через `extends`/`include` (`tools/ds/ds_audit.py`), а не лише
+> прямим підключенням у шаблоні -- і тримається незалежно від префікса
+> файла. Файл без `page-` при народженні (`page-courses.css`) не лишається
+> з ним назавжди: коли в нього зʼявляється другий споживач, він стає
+> компонентним і переїжджає під ім'я без префікса (так `page-courses.css`
+> став `courses.css`, коли до `courses/*.html` додався `online/*.html` і
+> `main/home.html`). Ця межа збігається з `/ds-consolidate`, а не окрема
+> від неї.
 
 ## Що потрібно зробити
 
@@ -190,7 +200,10 @@ JS порушень: N
 
 ### CSS-файли
 - Загальні: `common.css`, `admin.css`, `auth.css`
-- Сторінкові: `page-{blueprint}.css` або `page-{blueprint}-{page}.css`
+- Домен, спільний для 2+ шаблонів: без префікса page- (`courses.css`,
+  `course-landing.css`), навіть якщо назва повʼязана з однією зоною сайту
+- Сторінкові: `page-{blueprint}.css` або `page-{blueprint}-{page}.css` --
+  рівно ОДИН шаблон-споживач; другий споживач -- привід прибрати префікс
 
 ### CSS-класи
 - Публічні: `.iprm-{block}__{element}--{modifier}`
@@ -207,7 +220,7 @@ JS порушень: N
 
 - НЕ змінюй CSS-змінні в `:root` або `[data-theme]`
 - НЕ використовуй `!important`
-- НЕ видаляй стилі design-system.css (демонстраційна сторінка)
+- НЕ видаляй стилі `page-admin-design-system.css` (сторінка каталогу `/admin/design-system`)
 - НЕ змінюй desktop-стилі при переносі -- тільки copy-paste
 - НЕ аналізуй Python-код, конфігурацію, моделі -- це зона `/audit-structure`
 - @media queries переносяться разом з класом
