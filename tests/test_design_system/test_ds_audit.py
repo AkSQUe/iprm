@@ -65,6 +65,53 @@ def test_duplicate_classes_detects_class_declared_in_two_files(tmp_path):
     assert dupes['shared-btn'] == ['common.css', 'page-demo.css']
 
 
+# naming_mismatch -- четверте число концепту, і єдине з чотирьох без
+# сторожа: Задача 6 звела його до нуля руками, а `git grep naming_mismatch`
+# показує, що це ім'я не імпортує жоден тест і жоден інший інструмент --
+# лише сам ds_audit.py і README. Нічого не заважає 21-му файлу знову
+# збрехати про свою суть (page-* у компонента чи навпаки).
+
+def test_naming_matches_component_boundary():
+    """Реальний стан проєкту: обидва списки порожні. Якщо colись зʼявиться
+    легітимний виняток (наприклад, chrome каталогу -- сам каталог не
+    рахує себе споживачем, тож `page-admin-design-system.css` лишається
+    'page' з нулем споживачів і не потрапляє в жоден зі списків), його
+    треба назвати тут поіменно, а не просто виключити перевірку.
+    """
+    result = ds_audit.naming_mismatch(ROOT)
+    assert result['should_lose_prefix'] == [], (
+        'компонентні файли з префіксом page- (ім\'я суперечить суті): '
+        + ', '.join(result['should_lose_prefix'])
+    )
+    assert result['should_gain_prefix'] == [], (
+        'посторінкові файли без префікса page- (ім\'я суперечить суті): '
+        + ', '.join(result['should_gain_prefix'])
+    )
+
+
+def test_naming_mismatch_catches_component_file_with_page_prefix(tmp_path):
+    """Синтетичне доведення: файл із 2+ споживачами (компонентний за межею
+    аудиту) і префіксом page- -- це і є розбіжність імені й суті, яку
+    naming_mismatch мусить назвати в should_lose_prefix.
+    """
+    tpl_dir = tmp_path / 'app' / 'templates'
+    tpl_dir.mkdir(parents=True)
+    for i in (1, 2):
+        (tpl_dir / f'consumer{i}.html').write_text(
+            '<link rel="stylesheet" href="{{ url_for(\'static\', '
+            'filename=\'css/page-shared.css\') }}">\n',
+            encoding='utf-8')
+    css_dir = tmp_path / 'app' / 'static' / 'css'
+    css_dir.mkdir(parents=True)
+    (css_dir / 'page-shared.css').write_text('.shared { color: red; }', encoding='utf-8')
+
+    result = ds_audit.naming_mismatch(tmp_path)
+    assert result['should_lose_prefix'] == ['page-shared.css'], (
+        'page-shared.css -- 2 споживачі, отже компонентний, але з префіксом '
+        'page-: має бути названий у should_lose_prefix.'
+    )
+
+
 # Семантика суб'єкта селектора -- пришпилено на літеральних рядках CSS, а
 # не на живих файлах проєкту: файли зміняться, а правило "суб'єкт -- це
 # останній компаунд, поза дужками псевдокласів" мусить лишатись перевіреним
