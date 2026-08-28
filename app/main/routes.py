@@ -233,8 +233,15 @@ def unsubscribe(token):
 @main_bp.route('/design-system', localize=False)
 def design_system():
     """Каталог переїхав в адмінку. Редирект -- щоб не ламались закладки
-    й посилання в docs/; сам каталог тепер під admin_required."""
-    return redirect(url_for('admin.design_system'), code=301)
+    й посилання в docs/; сам каталог тепер під admin_required.
+
+    302, не 301: сторінка noindex/nofollow і закрита в robots.txt, тож
+    передавати SEO-вагу нема чого -- єдиний аргумент за 301 тут не діє.
+    А 301 браузери кешують назавжди; каталог іще змінюватиметься (наступний
+    крок ділить його на таби), і якщо переїзд доведеться відкотити,
+    розробники із закешованим 301 не побачать нову адресу без ручного
+    чищення кешу."""
+    return redirect(url_for('admin.design_system'), code=302)
 
 
 @main_bp.route('/set-lang/<lang>', localize=False)
