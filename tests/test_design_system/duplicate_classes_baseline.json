@@ -1,0 +1,449 @@
+{
+  "active": [
+    "common.css",
+    "design-system.css"
+  ],
+  "admin-control-row": [
+    "admin-materials.css",
+    "admin.css"
+  ],
+  "admin-dropzone__link": [
+    "admin-media.css",
+    "admin.css"
+  ],
+  "admin-dropzone__preview": [
+    "admin.css",
+    "blog-editor.css"
+  ],
+  "admin-form": [
+    "admin-participants.css",
+    "admin.css"
+  ],
+  "admin-queue-alert": [
+    "admin.css",
+    "page-admin-notifications.css"
+  ],
+  "admin-queue-alert--error": [
+    "admin.css",
+    "page-admin-notifications.css"
+  ],
+  "admin-queue-alert--warning": [
+    "admin.css",
+    "page-admin-notifications.css"
+  ],
+  "admin-queue-alert__title--error": [
+    "admin.css",
+    "page-admin-notifications.css"
+  ],
+  "admin-table": [
+    "admin-materials.css",
+    "admin.css",
+    "page-admin-instances.css"
+  ],
+  "admin-toast-container": [
+    "common.css",
+    "molecular-background.css"
+  ],
+  "alert": [
+    "admin.css",
+    "common.css"
+  ],
+  "apple-bento-card": [
+    "apple-pages.css",
+    "page-index.css"
+  ],
+  "apple-btn": [
+    "apple-pages.css",
+    "common.css",
+    "course-landing.css",
+    "page-contact.css",
+    "page-courses.css",
+    "page-online-course.css",
+    "page-quiz.css"
+  ],
+  "apple-btn--arrow": [
+    "apple-pages.css",
+    "common.css"
+  ],
+  "apple-btn--disabled": [
+    "apple-pages.css",
+    "common.css"
+  ],
+  "apple-btn--outline": [
+    "apple-pages.css",
+    "common.css"
+  ],
+  "apple-btn--primary": [
+    "apple-pages.css",
+    "common.css",
+    "page-quiz.css"
+  ],
+  "apple-btn--secondary": [
+    "apple-pages.css",
+    "common.css"
+  ],
+  "apple-btn--sm": [
+    "apple-pages.css",
+    "common.css"
+  ],
+  "apple-feature-card": [
+    "apple-pages.css",
+    "page-index.css"
+  ],
+  "apple-feature-card__icon": [
+    "apple-pages.css",
+    "page-index.css"
+  ],
+  "apple-features-grid": [
+    "apple-pages.css",
+    "page-index.css"
+  ],
+  "apple-gradient-text": [
+    "apple-pages.css",
+    "course-landing.css"
+  ],
+  "apple-page": [
+    "apple-pages.css",
+    "course-landing.css",
+    "course-recommend.css",
+    "molecular-background.css",
+    "page-online-course.css",
+    "page-online-courses.css",
+    "page-trainers.css"
+  ],
+  "apple-reveal": [
+    "apple-pages.css",
+    "page-index.css"
+  ],
+  "auth-page": [
+    "auth.css",
+    "molecular-background.css"
+  ],
+  "backup-actions__form": [
+    "admin-backup.css",
+    "admin.css"
+  ],
+  "badge": [
+    "admin.css",
+    "common.css",
+    "page-admin-instances.css",
+    "page-courses.css"
+  ],
+  "btn-admin": [
+    "admin-cities.css",
+    "admin.css"
+  ],
+  "certdata-reminder": [
+    "certdata-reminder.css",
+    "molecular-background.css"
+  ],
+  "cookie-banner": [
+    "common.css",
+    "molecular-background.css"
+  ],
+  "form-checkbox": [
+    "admin.css",
+    "auth.css",
+    "form-validate.css",
+    "page-admin-notifications.css",
+    "registration.css"
+  ],
+  "form-consent": [
+    "auth.css",
+    "page-contact.css",
+    "page-online-course.css"
+  ],
+  "form-group": [
+    "admin.css",
+    "auth.css",
+    "common.css",
+    "course-landing.css",
+    "page-contact.css",
+    "page-courses.css",
+    "page-online-course.css"
+  ],
+  "form-hint": [
+    "admin.css",
+    "common.css"
+  ],
+  "form-input": [
+    "admin-cities.css",
+    "admin-participants.css",
+    "admin-quiz.css",
+    "admin.css",
+    "auth.css",
+    "blog.css",
+    "common.css",
+    "course-landing.css",
+    "page-contact.css",
+    "page-courses.css",
+    "page-online-course.css"
+  ],
+  "form-input--sm": [
+    "admin.css",
+    "common.css"
+  ],
+  "form-section": [
+    "admin.css",
+    "common.css"
+  ],
+  "form-section__title": [
+    "admin.css",
+    "common.css"
+  ],
+  "iprm-appointment": [
+    "page-clinics.css",
+    "page-courses.css"
+  ],
+  "iprm-appointment__btn": [
+    "page-clinics.css",
+    "page-courses.css"
+  ],
+  "iprm-confirm": [
+    "confirm-action.css",
+    "molecular-background.css"
+  ],
+  "iprm-content-page__inner": [
+    "common.css",
+    "page-sitemap.css"
+  ],
+  "iprm-course-card": [
+    "apple-pages.css",
+    "common.css",
+    "page-index.css"
+  ],
+  "iprm-course-card__image": [
+    "apple-pages.css",
+    "common.css",
+    "course-recommend.css"
+  ],
+  "iprm-course-card__price": [
+    "apple-pages.css",
+    "course-recommend.css"
+  ],
+  "iprm-course-card__tags": [
+    "apple-pages.css",
+    "common.css",
+    "page-courses.css"
+  ],
+  "iprm-course-card__title": [
+    "apple-pages.css",
+    "common.css"
+  ],
+  "iprm-course-cards": [
+    "apple-pages.css",
+    "common.css"
+  ],
+  "iprm-empty-state": [
+    "apple-pages.css",
+    "common.css"
+  ],
+  "iprm-error-page": [
+    "apple-pages.css",
+    "molecular-background.css"
+  ],
+  "iprm-final-cta": [
+    "course-landing.css",
+    "page-courses.css"
+  ],
+  "iprm-header": [
+    "common.css",
+    "molecular-background.css"
+  ],
+  "iprm-hero": [
+    "apple-pages.css",
+    "common.css",
+    "page-home.css",
+    "page-index.css"
+  ],
+  "iprm-hero-wrap": [
+    "apple-pages.css",
+    "common.css"
+  ],
+  "iprm-hero__actions": [
+    "apple-pages.css",
+    "course-landing.css",
+    "page-index.css"
+  ],
+  "iprm-hero__bg": [
+    "apple-pages.css",
+    "common.css"
+  ],
+  "iprm-hero__content": [
+    "apple-pages.css",
+    "common.css",
+    "course-landing.css",
+    "page-home.css",
+    "page-index.css"
+  ],
+  "iprm-hero__price": [
+    "apple-pages.css",
+    "common.css"
+  ],
+  "iprm-hero__subtitle": [
+    "apple-pages.css",
+    "common.css",
+    "course-landing.css",
+    "page-index.css",
+    "page-trainers.css"
+  ],
+  "iprm-hero__title": [
+    "apple-pages.css",
+    "common.css",
+    "course-landing.css",
+    "page-index.css"
+  ],
+  "iprm-loc-badge": [
+    "apple-pages.css",
+    "common.css",
+    "page-online-courses.css"
+  ],
+  "iprm-loc-badge__icon": [
+    "apple-pages.css",
+    "common.css",
+    "page-online-courses.css"
+  ],
+  "iprm-program": [
+    "apple-pages.css",
+    "course-landing.css"
+  ],
+  "iprm-program__badge": [
+    "apple-pages.css",
+    "course-landing.css"
+  ],
+  "iprm-program__block": [
+    "apple-pages.css",
+    "course-landing.css"
+  ],
+  "iprm-program__head": [
+    "apple-pages.css",
+    "course-landing.css"
+  ],
+  "iprm-program__item": [
+    "apple-pages.css",
+    "course-landing.css"
+  ],
+  "iprm-program__list": [
+    "apple-pages.css",
+    "course-landing.css"
+  ],
+  "iprm-reading-progress": [
+    "molecular-background.css",
+    "reading-progress.css"
+  ],
+  "iprm-request-form__honeypot": [
+    "course-landing.css",
+    "page-courses.css"
+  ],
+  "iprm-roi__field": [
+    "page-courses.css",
+    "page-home.css"
+  ],
+  "iprm-roi__results": [
+    "page-courses.css",
+    "page-home.css"
+  ],
+  "iprm-section": [
+    "apple-pages.css",
+    "common.css",
+    "page-index.css"
+  ],
+  "iprm-section__inner": [
+    "common.css",
+    "page-courses.css"
+  ],
+  "iprm-section__subtitle": [
+    "apple-pages.css",
+    "common.css",
+    "course-recommend.css"
+  ],
+  "iprm-section__title": [
+    "apple-pages.css",
+    "common.css",
+    "course-landing.css",
+    "course-recommend.css",
+    "page-online-course.css"
+  ],
+  "iprm-sticky-cta": [
+    "course-landing.css",
+    "design-system.css"
+  ],
+  "iprm-tag": [
+    "apple-pages.css",
+    "common.css",
+    "page-courses.css"
+  ],
+  "iprm-to-top": [
+    "molecular-background.css",
+    "reading-progress.css"
+  ],
+  "iprm-toasts": [
+    "molecular-background.css",
+    "toast.css"
+  ],
+  "iprm-tooltip-bubble": [
+    "molecular-background.css",
+    "tooltips.css"
+  ],
+  "is-active": [
+    "admin.css",
+    "page-settings.css",
+    "tabs.css"
+  ],
+  "is-error": [
+    "admin.css",
+    "page-admin-integration.css"
+  ],
+  "is-invalid": [
+    "auth.css",
+    "blog.css",
+    "common.css",
+    "page-online-course.css"
+  ],
+  "is-visible": [
+    "confirm-action.css",
+    "reading-progress.css",
+    "toast.css",
+    "tooltips.css"
+  ],
+  "material-symbols-rounded": [
+    "admin-participants.css",
+    "admin-regalia.css",
+    "admin-webhooks.css",
+    "admin.css",
+    "blog-editor.css",
+    "common.css",
+    "material-symbols.css"
+  ],
+  "page-home": [
+    "page-courses.css",
+    "page-home.css"
+  ],
+  "required": [
+    "auth.css",
+    "common.css",
+    "course-landing.css",
+    "page-courses.css"
+  ],
+  "reviews-grid": [
+    "common.css",
+    "page-home.css"
+  ],
+  "skip-link": [
+    "common.css",
+    "molecular-background.css"
+  ],
+  "upcoming-bar": [
+    "molecular-background.css",
+    "upcoming-events.css"
+  ],
+  "upcoming-events": [
+    "certdata-reminder.css",
+    "molecular-background.css",
+    "upcoming-events.css"
+  ],
+  "upcoming-events--hidden": [
+    "certdata-reminder.css",
+    "upcoming-events.css"
+  ]
+}
