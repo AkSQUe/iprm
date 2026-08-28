@@ -19,13 +19,10 @@
     "admin.css",
     "common.css"
   ],
-  "form-checkbox": [
-    "auth.css",
-    "form-validate.css"
-  ],
   "form-input": [
     "admin.css",
-    "auth.css"
+    "auth.css",
+    "common.css"
   ],
   "form-section": [
     "admin.css",
@@ -55,23 +52,32 @@
     "course-landing.css",
     "courses.css"
   ],
-  "iprm-tag": [
-    "common.css",
-    "courses.css"
+  "iprm-program": [
+    "apple-pages.css",
+    "course-landing.css"
   ],
-  "is-active": [
-    "admin.css",
-    "page-settings.css",
-    "tabs.css"
+  "iprm-program__badge": [
+    "apple-pages.css",
+    "course-landing.css"
   ],
-  "is-error": [
-    "admin-integration.css",
-    "admin.css"
+  "iprm-program__block": [
+    "apple-pages.css",
+    "course-landing.css"
   ],
-  "is-visible": [
-    "confirm-action.css",
-    "reading-progress.css",
-    "toast.css",
-    "tooltips.css"
+  "iprm-program__head": [
+    "apple-pages.css",
+    "course-landing.css"
+  ],
+  "iprm-program__item": [
+    "apple-pages.css",
+    "course-landing.css"
+  ],
+  "iprm-program__list": [
+    "apple-pages.css",
+    "course-landing.css"
+  ],
+  "iprm-roi__results": [
+    "courses.css",
+    "page-home.css"
   ]
 }

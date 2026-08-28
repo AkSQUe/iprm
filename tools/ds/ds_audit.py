@@ -13,12 +13,26 @@
 одного прямого споживача (сам партіал), хоча партіал інклюдять десятки
 сторінок.
 
-Клас вважається ОГОЛОШЕНИМ у файлі лише тоді, коли він стоїть у СУБ'ЄКТІ
-правила -- останній компаунд селектора, після всіх комбінаторів (пробіл,
-`>`, `+`, `~`) і поза аргументами :not()/:has()/:is()/:where(). Згадка
-класу як предка (`.card .badge` -- предок `.card`) чи як цілі `:has()`
-нічого не перестилізовує, тож дублікатом не рахується: правку компонента
-в дизайн-системі така згадка "не ловить" помилково.
+ДУБЛІКАТ -- це ОДНАКОВИЙ СЕЛЕКТОР у двох файлах, а не однаковий клас.
+Два правила перебивають одне одного порядком підключення лише тоді, коли
+селектор той самий: у них однакова вага й вони добирають ті самі елементи.
+Усе інше вирішується специфічністю, детерміновано:
+
+  .alert {}            в admin.css і common.css   -> ДУБЛІКАТ
+  .apple-page .iprm-program {} у двох файлах      -> ДУБЛІКАТ (скоуп не рятує)
+  .alert {} проти .zone .alert {}                 -> варіант, не борг
+  .toast.is-visible проти .dialog.is-visible      -> різні елементи, не борг
+  .widget {} проти .widget:hover {}               -> різні стани, не борг
+
+Метрику довелось уточнювати тричі, і кожне уточнення міняло число:
+69 (будь-який спільний клас) -> 18 (клас без скоупу) -> 20 (спільний
+селектор). Останнє число більше за попереднє не тому, що борг виріс, а
+тому, що правило "скоуплений = не борг" ховало шість класів
+`.apple-page .iprm-program*`, оголошених ОДНАКОВО у двох файлах.
+
+Клас усередині селектора рахується лише в СУБ'ЄКТІ правила -- останній
+компаунд, поза аргументами :not()/:has()/:is()/:where(): згадка класу як
+предка нічого не перестилізовує.
 
 Використання:
     python tools/ds/ds_audit.py                # повний звіт
@@ -201,70 +215,62 @@ def _declared_classes(path):
     return names
 
 
-def _unscoped_subject_classes(head):
-    """Класи-суб'єкти селекторів БЕЗ зовнішнього скоупу.
+def _selector_owners(root):
+    """{нормалізований селектор: {файли, де він оголошений}}.
 
-    Різниця, яку це ловить, вирішальна для концепту:
-
-    * `.alert { }` в двох файлах -- СПРАВЖНІЙ дублікат: який вигляд
-      переможе, вирішує порядок підключення, тобто правка в одному файлі
-      до частини сторінок не доходить;
-    * `.apple-page .apple-btn { }` поруч із `.alert { }` в іншому файлі --
-      СКОУПЛЕНИЙ варіант: виграє специфічність, детерміновано й незалежно
-      від порядку. Це штатний спосіб зробити варіант компонента для зони
-      сайту, а не борг.
-
-    Без цієї різниці число дублікатів перебільшувало борг утричі (69
-    замість 17), а храповик спрацьовував би на законному новому варіанті --
-    і його вимкнули б першого ж дня.
+    Ключ -- САМ СЕЛЕКТОР, а не клас. Два правила перебивають одне одного
+    порядком підключення лише тоді, коли селектор той самий: тоді в них
+    однакова вага й вони добирають ті самі елементи. Різні скоупи
+    (`.alert` проти `.zone .alert`) вирішуються специфічністю,
+    детерміновано, і дублікатом не є.
     """
-    stripped = _strip_nested(head, _PAREN)
-    stripped = _strip_nested(stripped, _BRACKET)
-    names = set()
-    for selector in stripped.split(','):
-        compounds = [c for c in _COMBINATOR.split(selector.strip()) if c]
-        if len(compounds) != 1:
-            continue
-        names |= set(re.findall(r'\.([a-zA-Z][\w-]*)', compounds[0]))
-    return names
-
-
-def _declared_unscoped(path):
-    css = _COMMENT.sub(' ', path.read_text(encoding='utf-8'))
-    names = set()
-    for head in re.findall(r'([^{}]+)\{', css):
-        if head.lstrip().startswith('@'):
-            continue
-        names |= _unscoped_subject_classes(head)
-    return names
-
-
-def _owners(root, extractor):
     owners = {}
     for path in sorted((root / 'app' / 'static' / 'css').rglob('*.css')):
-        for cls in extractor(path):
-            owners.setdefault(cls, set()).add(path.name)
+        css = _COMMENT.sub(' ', path.read_text(encoding='utf-8'))
+        for head in re.findall(r'([^{}]+)\{', css):
+            if head.lstrip().startswith('@'):
+                continue
+            for selector in head.split(','):
+                norm = re.sub(r'\s+', ' ', selector.strip())
+                if not norm or '.' not in norm:
+                    continue
+                owners.setdefault(norm, set()).add(path.name)
     return owners
 
 
-def duplicate_classes(root=ROOT):
-    """СПРАВЖНІ дублікати: клас оголошений БЕЗ скоупу у 2+ файлах.
+def duplicate_selectors(root=ROOT):
+    """Селектори, оголошені ОДНАКОВО у 2+ файлах."""
+    return {s: sorted(f) for s, f in sorted(_selector_owners(root).items())
+            if len(f) > 1}
 
-    Саме тут порушується критерій концепту -- правка компонента не доходить
-    до сторінки, бо інший файл перебиває його порядком підключення.
-    Скоуплені варіанти сюди НЕ входять: див. `scoped_variants`.
+
+def duplicate_classes(root=ROOT):
+    """СПРАВЖНІ дублікати: клас, якого торкається селектор, оголошений
+    однаково у 2+ файлах.
+
+    Саме тут порушується критерій концепту -- який вигляд переможе,
+    вирішує порядок підключення, тож правка компонента до частини сторінок
+    не доходить. Класи, оголошені в різних файлах під РІЗНИМИ скоупами, --
+    не сюди: див. `scoped_variants`.
     """
-    owners = _owners(root, _declared_unscoped)
-    return {c: sorted(f) for c, f in sorted(owners.items()) if len(f) > 1}
+    classes = {}
+    for selector, files in duplicate_selectors(root).items():
+        for cls in _selector_subject_classes(selector):
+            classes.setdefault(cls, set()).update(files)
+    return {c: sorted(f) for c, f in sorted(classes.items())}
 
 
 def scoped_variants(root=ROOT):
-    """Клас оголошений у 2+ файлах, але хоча б в одному -- під предком.
+    """Клас оголошений у 2+ файлах, але жодного СПІЛЬНОГО селектора.
 
-    Не борг: виграє специфічність, а не порядок. Друкується як контекст,
-    щоб число було видно й не сприймалось як дублікати.
+    Тобто різні скоупи: `.alert` в одному файлі, `.zone .alert` в іншому.
+    Виграє специфічність, детерміновано й незалежно від порядку -- це
+    штатний варіант компонента для зони сайту, а не борг.
     """
-    everywhere = _owners(root, _declared_classes)
+    everywhere = {}
+    for path in sorted((root / 'app' / 'static' / 'css').rglob('*.css')):
+        for cls in _declared_classes(path):
+            everywhere.setdefault(cls, set()).add(path.name)
     true = duplicate_classes(root)
     return {c: sorted(f) for c, f in sorted(everywhere.items())
             if len(f) > 1 and c not in true}
@@ -311,6 +317,9 @@ def naming_mismatch(root=ROOT):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--rebaseline', action='store_true',
+                    help='перезаписати baseline, навіть якщо число зросло -- '
+                         'ЛИШЕ коли змінилась сама метрика, не код')
     ap.add_argument('--write-baseline', action='store_true',
                     help='перезаписати baseline дублікатів (лише коли він ЗМЕНШУЄТЬСЯ)')
     args = ap.parse_args()
@@ -325,14 +334,15 @@ def main():
     if kinds['unresolved']:
         print('  УВАГА: динамічний include у %d шаблонах, споживачі недораховані: %s'
               % (len(kinds['unresolved']), ', '.join(kinds['unresolved'][:5])))
-    print('\nДУБЛІКАТИ (клас БЕЗ скоупу у 2+ файлах): %d' % len(dupes))
+    print('\nДУБЛІКАТИ (ОДНАКОВИЙ селектор у 2+ файлах): %d класів, %d селекторів'
+          % (len(dupes), len(duplicate_selectors())))
     for cls, files in list(dupes.items())[:10]:
         print('   .%-28s %s' % (cls, ', '.join(files)))
     if len(dupes) > 10:
         print('   ... ще %d' % (len(dupes) - 10))
 
     variants = scoped_variants()
-    print('\nСКОУПЛЕНІ ВАРІАНТИ (не борг -- виграє специфічність, '
+    print('\nРІЗНІ СКОУПИ (не борг -- виграє специфічність, '
           'а не порядок): %d' % len(variants))
     print('\nКОМПОНЕНТНІ ФАЙЛИ ПОЗА КАТАЛОГОМ: %d' % len(gap))
     for name in gap:
@@ -349,7 +359,7 @@ def main():
         # Без цієї гілки len(old) завжди був би 0, і будь-яка ненульова
         # кількість дублікатів трактувалась би як "стало більше" -- baseline
         # неможливо було б створити взагалі.
-        if BASELINE.exists():
+        if BASELINE.exists() and not args.rebaseline:
             old = json.loads(BASELINE.read_text(encoding='utf-8'))
             # Не лише "стало більше": обмін "прибрав одного власника -- завів
             # іншого" не змінює len(dupes), але це так само новий дублікат --

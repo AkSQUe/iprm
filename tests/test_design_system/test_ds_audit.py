@@ -310,10 +310,44 @@ def test_child_and_sibling_combinators_also_count_as_scoped(tmp_path):
     assert 'widget' not in ds_audit.duplicate_classes(root)
 
 
-def test_pseudo_on_the_class_itself_stays_unscoped(tmp_path):
-    """`.widget:hover` -- той самий компаунд, зовнішнього скоупу немає."""
+def test_different_state_is_not_a_duplicate(tmp_path):
+    """`.widget` і `.widget:hover` одне одного не перебивають.
+
+    Це різні селектори: базове правило й правило стану. Порядок
+    підключення між ними нічого не вирішує, тож дублікатом вони не є.
+    """
     root = _css_tree(tmp_path, {
         'a.css': '.widget { color: red; }',
         'b.css': '.widget:hover { color: blue; }',
     })
+    assert 'widget' not in ds_audit.duplicate_classes(root)
+
+
+def test_same_scoped_selector_in_two_files_is_a_duplicate(tmp_path):
+    """Скоуп не рятує, якщо селектор ОДНАКОВИЙ у двох файлах.
+
+    `.zone .widget {}` в обох -- однакова вага, ті самі елементи, виграє
+    порядок підключення. Правило "скоуплений = не борг" це ховало: саме
+    так у проєкті лишились непоміченими шість класів `.apple-page
+    .iprm-program*`, оголошених однаково в apple-pages.css і
+    course-landing.css.
+    """
+    root = _css_tree(tmp_path, {
+        'a.css': '.zone .widget { max-width: 980px; }',
+        'b.css': '.zone .widget { max-width: 1200px; }',
+    })
     assert 'widget' in ds_audit.duplicate_classes(root)
+
+
+def test_compound_qualified_state_classes_do_not_collide(tmp_path):
+    """`.toast.is-visible` і `.dialog.is-visible` -- різні селектори.
+
+    Обидва правила добирають різні елементи, тож спільний клас стану
+    зіткненням не є. Метрика, яка рахувала компаунд голим оголошенням,
+    хибно показувала `.is-visible` дублікатом у чотирьох файлах.
+    """
+    root = _css_tree(tmp_path, {
+        'a.css': '.toast.is-visible { opacity: 1; }',
+        'b.css': '.dialog.is-visible { opacity: 1; }',
+    })
+    assert 'is-visible' not in ds_audit.duplicate_classes(root)
