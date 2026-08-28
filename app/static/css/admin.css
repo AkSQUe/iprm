@@ -159,31 +159,7 @@
   opacity: 1;
 }
 
-/* ========== Прогрес фонової генерації сертифікатів ========== */
-.cert-progress {
-  max-width: 560px;
-}
-.cert-progress__track {
-  height: 14px;
-  background: var(--iprm-border);
-  border-radius: 999px;
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-/* Кінці градієнта -- золото й бренд палітри, тому беремо токени: інакше в
-   тёмній темі смуга лишалась би темно-фіолетовою на темному тлі. Середня
-   точка #b85a7e -- це перехід між ними, окремого токена для неї немає. */
-.cert-progress__fill {
-  height: 100%;
-  width: 5%;
-  background: linear-gradient(90deg, var(--apple-orange), #b85a7e, var(--iprm-accent));
-  transition: width 0.4s ease;
-}
-.cert-progress__text {
-  font-size: 14px;
-  color: var(--iprm-text);
-  margin-bottom: 16px;
-}
+
 #cert-progress-done,
 #cert-progress-failed {
   display: flex;
@@ -275,42 +251,6 @@
      на плашку тригера. `anywhere` ламає рядок ЛИШЕ коли інакше не влізе,
      тож короткі ключі й слаги лишаються цілими, як і доти. */
   overflow-wrap: anywhere;
-}
-
-/* Copy error button (inline in table) */
-/* Текст помилки -- кнопка «скопіювати для ШІ». Виглядав рівно як сусідній
-   нерухомий текст, тож про цю дію дізнавались випадково: пунктирне
-   підкреслення -- найдешевший спосіб сказати «сюди можна натиснути», не
-   роблячи з рядка таблиці ще одну кнопку. */
-.admin-copy-error {
-  display: block;
-  width: 100%;
-  text-align: left;
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-  text-decoration: underline dotted;
-  text-underline-offset: 3px;
-  text-decoration-color: var(--iprm-border-strong, var(--iprm-border));
-  transition: color 0.15s;
-}
-
-.admin-copy-error:hover {
-  color: var(--iprm-accent);
-  text-decoration-color: currentColor;
-}
-
-.admin-copy-error:focus-visible {
-  outline: 2px solid var(--iprm-nav-active);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-.admin-copy-error--copied {
-  color: var(--iprm-success);
 }
 
 /* Таблетка стану, яка насправді перемикач: та сама пастка, що й вище --
@@ -1595,7 +1535,10 @@ a.admin-stat-card:focus-visible {
 
 .btn-admin--success:hover {
   border-color: color-mix(in srgb, var(--iprm-success) 50%, transparent);
-  background: #f0faf3;
+  /* Токен, а не літерал: #f0faf3 не знав тёмної теми, і нижче доводилось
+     тримати окрему латку `[data-theme="dark"] .btn-admin--success:hover`.
+     Токен має власне значення в обох темах, тож латка стала непотрібна. */
+  background: var(--iprm-success-bg);
 }
 
 .btn-admin--sm {
@@ -1728,24 +1671,12 @@ a.admin-stat-card:focus-visible {
   border-top: 1px solid var(--iprm-border);
 }
 
-/* Реферальне посилання: поле + кнопка "Копіювати" в один ряд. */
-.admin-referral-row {
-  display: flex;
-  gap: 12px;
-  align-items: stretch;
-  flex-wrap: wrap;
-}
+/* .admin-referral-row звідси прибрано: це була копія `.admin-input-row`
+   (поле + кнопка в один ряд) з іншими числами -- проміжок 12 замість 8 і
+   власна база розтягування. Реферальний рядок у картці тренера тепер
+   бере спільний клас. */
 
-.admin-referral-row .form-input {
-  flex: 1 1 320px;
-  min-width: 0;
-}
 
-.admin-referral-balance {
-  margin-top: 12px;
-  font-size: 0.9375rem;
-  color: var(--apple-black);
-}
 
 /* Списки сторінки-інструкції (тезово/покроково). */
 .admin-guide__list {
@@ -1949,8 +1880,19 @@ a.admin-stat-card:focus-visible {
   z-index: 10;
 }
 
-/* Danger кнопка зліва, решта справа */
-.admin-form__actions .btn-admin--danger {
+/* Danger кнопка зліва, решта справа.
+
+   `order: -1` разом із `margin-right: auto`, а не сам відступ: сам він
+   працює лише коли кнопка стоїть у розмітці ПЕРШОЮ, а вона там де завгодно
+   (у деталях прогону -- після «До списку», у картці тренера -- після двох
+   посилань). Доти на половині сторінок «Видалити» стояло впритул до
+   «Зберегти» -- за один промах.
+
+   Два селектори, бо кнопка буває і прямим нащадком, і всередині <form>:
+   видалення -- POST, і тоді флекс-елементом є форма. */
+.admin-form__actions > .btn-admin--danger,
+.admin-form__actions > form:has(.btn-admin--danger) {
+  order: -1;
   margin-right: auto;
 }
 
@@ -2808,9 +2750,6 @@ a.admin-stat-card:focus-visible {
 /* ==========================================================================
    Тёмна тема: кольорові статуси інлайн-селектів і кнопок
    ========================================================================== */
-[data-theme="dark"] .btn-admin--success:hover {
-  background: rgba(52, 199, 89, 0.16);
-}
 [data-theme="dark"] .admin-inline-select[data-state="confirmed"],
 [data-theme="dark"] .admin-inline-select[data-state="paid"] {
   background-color: rgba(52, 199, 89, 0.16);
@@ -2843,7 +2782,7 @@ a.admin-stat-card:focus-visible {
   /* Лівий кант тримаємо завжди -- активний фільтр лише перефарбовує його.
      Зміна ширини зсувала б вміст панелі на 2px при кожному фільтрі. */
   border-left: 3px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-md, 14px);
+  border-radius: var(--iprm-radius-md);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
@@ -3147,49 +3086,7 @@ a.admin-stat-card:focus-visible {
   }
 }
 
-/* ===== Опис із чужої системи (Sintegrum) у картці онлайн-курсу =====
-   Розмітка приходить від стороннього редактора: заголовки, списки, абзаци.
-   Обмежуємо висоту й даємо прокрутку -- інакше опис на кілька тисяч
-   символів відсуває форму редагування далеко вниз. */
 
-.admin-remote-html {
-  max-height: 320px;
-  overflow-y: auto;
-  padding: 16px 20px;
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm);
-  background: var(--iprm-card-bg);
-  color: var(--iprm-text);
-  font-size: 0.9375rem;
-  line-height: 1.6;
-}
-
-.admin-remote-html > :first-child { margin-top: 0; }
-.admin-remote-html > :last-child { margin-bottom: 0; }
-
-.admin-remote-html p,
-.admin-remote-html ul,
-.admin-remote-html ol,
-.admin-remote-html blockquote {
-  margin: 0 0 12px;
-}
-
-.admin-remote-html h3,
-.admin-remote-html h4,
-.admin-remote-html h5 {
-  margin: 20px 0 8px;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.admin-remote-html ul,
-.admin-remote-html ol {
-  padding-left: 22px;
-}
-
-.admin-remote-html li {
-  margin-bottom: 6px;
-}
 
 /* ===== Таблиця замовлень онлайн-курсів =====
    Ширини колонок задані явно. Без них браузер роздає місце за вмістом, і

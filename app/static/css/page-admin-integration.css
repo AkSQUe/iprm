@@ -31,7 +31,7 @@
 }
 
 .admin-readonly-config__value--mono {
-  font-family: 'Courier New', monospace;
+  font-family: var(--iprm-font-mono);
   font-size: 0.8125rem;
   background: var(--iprm-white);
   padding: 4px 10px;
@@ -217,7 +217,7 @@
 }
 
 .diff-value {
-  font-family: 'Courier New', monospace;
+  font-family: var(--iprm-font-mono);
   font-size: 0.8125rem;
   background: var(--iprm-white);
   padding: 2px 6px;

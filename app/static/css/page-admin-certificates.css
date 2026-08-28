@@ -1,0 +1,33 @@
+/* page-admin-certificates.css -- розкладка й вигляд однієї сторінки.
+
+   Перенесено зі спільного admin.css: цей вигляд вживає рівно
+   одна сторінка, і в базовому файлі він лише збільшував те, що
+   доводиться прочитати, аби зрозуміти компонент. */
+
+
+/* Перенесено з admin.css: прогрес генерації. */
+/* ========== Прогрес фонової генерації сертифікатів ========== */
+.cert-progress {
+  max-width: 560px;
+}
+.cert-progress__track {
+  height: 14px;
+  background: var(--iprm-border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+/* Кінці градієнта -- золото й бренд палітри, тому беремо токени: інакше в
+   тёмній темі смуга лишалась би темно-фіолетовою на темному тлі. Середня
+   точка #b85a7e -- це перехід між ними, окремого токена для неї немає. */
+.cert-progress__fill {
+  height: 100%;
+  width: 5%;
+  background: linear-gradient(90deg, var(--apple-orange), #b85a7e, var(--iprm-accent));
+  transition: width 0.4s ease;
+}
+.cert-progress__text {
+  font-size: 14px;
+  color: var(--iprm-text);
+  margin-bottom: 16px;
+}

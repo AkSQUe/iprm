@@ -17,7 +17,7 @@
   gap: 2px;
   min-width: 96px;
   padding: 6px 10px;
-  border-radius: var(--iprm-radius-sm, 10px);
+  border-radius: var(--iprm-radius-sm);
   border: 1px solid var(--iprm-border);
   border-left-width: 3px;
   line-height: 1.2;
@@ -41,7 +41,7 @@
    кричало б про те, чого вже не виправити. */
 .ml-wait--done {
   background: var(--apple-section-bg);
-  border-left-color: var(--iprm-border-strong, var(--iprm-border));
+  border-left-color: var(--iprm-border-strong));
 }
 
 .ml-wait--fresh {
@@ -59,7 +59,7 @@
 }
 
 .ml-wait--warn .ml-wait__value {
-  color: var(--iprm-warning-text, var(--iprm-warning));
+  color: var(--iprm-warning-text));
 }
 
 .ml-wait--late {
@@ -68,7 +68,7 @@
 }
 
 .ml-wait--late .ml-wait__value {
-  color: var(--iprm-error-text, var(--iprm-error));
+  color: var(--iprm-error-text));
 }
 
 /* ===== Годинник у картці заявки ===== */
@@ -81,8 +81,8 @@
   padding: 18px 22px;
   margin-bottom: 24px;
   border: 1px solid var(--iprm-border);
-  border-left: 4px solid var(--iprm-border-strong, var(--iprm-border));
-  border-radius: var(--iprm-radius, 14px);
+  border-left: 4px solid var(--iprm-border-strong));
+  border-radius: var(--iprm-radius);
   background: var(--iprm-white);
 }
 
@@ -116,7 +116,7 @@
 }
 
 .ml-wait-panel--warn .ml-wait-panel__value {
-  color: var(--iprm-warning-text, var(--iprm-warning));
+  color: var(--iprm-warning-text));
 }
 
 .ml-wait-panel--late {
@@ -125,7 +125,7 @@
 }
 
 .ml-wait-panel--late .ml-wait-panel__value {
-  color: var(--iprm-error-text, var(--iprm-error));
+  color: var(--iprm-error-text));
 }
 
 /* ===== Дрібниці реєстру ===== */
@@ -147,8 +147,8 @@
   gap: 12px;
   padding: 12px 18px;
   margin-bottom: 20px;
-  border: 1px dashed var(--iprm-border-strong, var(--iprm-border));
-  border-radius: var(--iprm-radius, 14px);
+  border: 1px dashed var(--iprm-border-strong));
+  border-radius: var(--iprm-radius);
   background: var(--apple-section-bg);
   font-size: 0.875rem;
 }
@@ -164,7 +164,7 @@
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
   border-left: 3px solid var(--iprm-nav-active);
-  border-radius: var(--iprm-radius, 14px);
+  border-radius: var(--iprm-radius);
   font-size: 0.875rem;
   line-height: 1.55;
   color: var(--apple-gray-dark);
@@ -180,7 +180,7 @@
 .ml-error summary {
   cursor: pointer;
   font-size: 0.75rem;
-  color: var(--iprm-error-text, var(--iprm-error));
+  color: var(--iprm-error-text));
 }
 
 .ml-error pre,
@@ -190,8 +190,8 @@
   padding: 10px 12px;
   margin: 6px 0 0;
   background: var(--apple-section-bg);
-  border-radius: var(--iprm-radius-sm, 10px);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  border-radius: var(--iprm-radius-sm);
+  font-family: var(--iprm-font-mono);
   font-size: 0.75rem;
   white-space: pre-wrap;
   word-break: break-word;

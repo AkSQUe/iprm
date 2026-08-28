@@ -349,7 +349,7 @@
   background: var(--iprm-accent-light);
   color: var(--iprm-accent);
   font-weight: 600;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--iprm-font-mono);
   font-size: 0.9375rem;
   letter-spacing: -0.005em;
 }

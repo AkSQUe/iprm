@@ -24,6 +24,10 @@
   /* Великий радіус: hero, ROI-панель, тёмні оболонки секцій */
   --iprm-radius-lg: 28px;
   --iprm-radius-pill: 980px;
+  /* Моношрифт: технічні значення (ключі, слаги, uuid, код). Стек
+     повторювався дослівно в трьох файлах, а ще два писали свій
+     ('Courier New'), тож те саме за змістом виглядало по-різному. */
+  --iprm-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --iprm-transition: 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --iprm-max-content: 1200px;
   --iprm-card-bg: #f7f4fb;

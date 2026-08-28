@@ -1,0 +1,51 @@
+/* page-admin-online-course.css -- розкладка й вигляд однієї сторінки.
+
+   Перенесено зі спільного admin.css: цей вигляд вживає рівно
+   одна сторінка, і в базовому файлі він лише збільшував те, що
+   доводиться прочитати, аби зрозуміти компонент. */
+
+
+/* Перенесено з admin.css: опис із Sintegrum. */
+/* ===== Опис із чужої системи (Sintegrum) у картці онлайн-курсу =====
+   Розмітка приходить від стороннього редактора: заголовки, списки, абзаци.
+   Обмежуємо висоту й даємо прокрутку -- інакше опис на кілька тисяч
+   символів відсуває форму редагування далеко вниз. */
+
+.admin-remote-html {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 16px 20px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  background: var(--iprm-card-bg);
+  color: var(--iprm-text);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.admin-remote-html > :first-child { margin-top: 0; }
+.admin-remote-html > :last-child { margin-bottom: 0; }
+
+.admin-remote-html p,
+.admin-remote-html ul,
+.admin-remote-html ol,
+.admin-remote-html blockquote {
+  margin: 0 0 12px;
+}
+
+.admin-remote-html h3,
+.admin-remote-html h4,
+.admin-remote-html h5 {
+  margin: 20px 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.admin-remote-html ul,
+.admin-remote-html ol {
+  padding-left: 22px;
+}
+
+.admin-remote-html li {
+  margin-bottom: 6px;
+}

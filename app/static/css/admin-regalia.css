@@ -2,7 +2,7 @@
 
 .regalia-certs__grid { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
 .regalia-cert { width: 130px; }
-.regalia-cert__thumb { position: relative; width: 130px; height: 100px; border-radius: var(--iprm-radius-sm, 8px); overflow: hidden; border: 1px solid var(--iprm-border); cursor: grab; }
+.regalia-cert__thumb { position: relative; width: 130px; height: 100px; border-radius: var(--iprm-radius-sm); overflow: hidden; border: 1px solid var(--iprm-border); cursor: grab; }
 .regalia-cert__thumb:active { cursor: grabbing; }
 .regalia-cert__thumb--drag { opacity: 0.45; }
 .regalia-cert__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -23,7 +23,7 @@
 .regalia-link__move,
 .regalia-link__remove {
   flex: 0 0 auto;
-  width: 36px; height: 36px; border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm, 8px);
+  width: 36px; height: 36px; border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm);
   background: var(--iprm-white); color: var(--apple-gray-dark); cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
 }
@@ -37,7 +37,7 @@
 .regalia-link__thumb {
   flex: 0 0 auto; position: relative;
   width: 56px; height: 56px;
-  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm, 8px);
+  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm);
   background: var(--apple-section-bg); overflow: hidden;
 }
 .regalia-link__thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -61,3 +61,10 @@
 }
 .regalia-link__thumb-clear:hover { background: var(--iprm-error); }
 .regalia-link__thumb-clear .material-symbols-rounded { font-size: 14px; }
+
+/* Перенесено з admin.css: баланс реферальних балів. */
+.admin-referral-balance {
+  margin-top: 12px;
+  font-size: 0.9375rem;
+  color: var(--apple-black);
+}

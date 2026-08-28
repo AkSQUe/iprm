@@ -38,8 +38,8 @@
 .recipients-rule__trigger-statuses {
   margin-top: 16px;
   padding: 12px 16px;
-  background: var(--iprm-bg, #f7f7f8);
-  border-radius: var(--iprm-radius-sm, 8px);
+  background: var(--iprm-bg);
+  border-radius: var(--iprm-radius-sm);
 }
 
 .recipients-rule__trigger-statuses-title {
@@ -59,29 +59,29 @@
 .recipients-preview {
   margin-top: 16px;
   padding: 12px 16px;
-  background: var(--iprm-accent-light, #f1eeff);
-  border: 1px solid var(--iprm-border, #e3e3ea);
-  border-radius: var(--iprm-radius-sm, 8px);
+  background: var(--iprm-accent-light);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
   font-size: 13px;
   line-height: 1.5;
 }
 
 .recipients-preview__total {
   font-weight: 700;
-  color: var(--iprm-accent, #7437c9);
+  color: var(--iprm-accent);
 }
 
 .recipients-preview__source-label {
   display: inline-block;
   font-weight: 600;
-  color: var(--iprm-text-light, #6b6b73);
+  color: var(--iprm-text-light);
   margin-right: 6px;
 }
 
 .recipients-preview__emails {
-  font-family: var(--iprm-font-mono, monospace);
+  font-family: var(--iprm-font-mono);
   font-size: 12px;
-  color: var(--iprm-text, #222);
+  color: var(--iprm-text);
   word-break: break-all;
 }
 

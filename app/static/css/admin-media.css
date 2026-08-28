@@ -3,7 +3,7 @@
 .media-upload {
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   padding: 28px; text-align: center; cursor: pointer;
-  border: 2px dashed var(--iprm-border); border-radius: var(--iprm-radius-sm, 10px);
+  border: 2px dashed var(--iprm-border); border-radius: var(--iprm-radius-sm);
   background: var(--apple-section-bg); color: var(--apple-gray-dark);
   transition: border-color 0.15s, background-color 0.15s;
 }
@@ -36,7 +36,7 @@
   position: relative;
   display: flex; flex-direction: column; gap: 8px;
   background: var(--iprm-white); border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm, 10px); padding: 10px;
+  border-radius: var(--iprm-radius-sm); padding: 10px;
 }
 .media-card__check {
   position: absolute; top: 14px; left: 14px; z-index: 1;
@@ -45,7 +45,7 @@
 .media-card__used { color: var(--apple-gray-dark); }
 .media-card__thumb {
   display: block; aspect-ratio: 4 / 3; overflow: hidden;
-  border-radius: var(--iprm-radius-sm, 8px); background: var(--apple-section-bg);
+  border-radius: var(--iprm-radius-sm); background: var(--apple-section-bg);
 }
 .media-card__thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .media-card__meta { font-size: 0.75rem; color: var(--apple-gray); line-height: 1.3; }
@@ -76,7 +76,7 @@
 .admin-dropzone__library {
   display: inline-block; margin-top: 8px;
   background: none; border: 1px solid var(--iprm-border); cursor: pointer;
-  border-radius: var(--iprm-radius-sm, 8px); padding: 4px 12px;
+  border-radius: var(--iprm-radius-sm); padding: 4px 12px;
   font-size: 0.8125rem; color: var(--iprm-nav-active);
 }
 .admin-dropzone__library:hover { background: var(--apple-section-bg); }
@@ -92,7 +92,7 @@
 .media-picker__dialog {
   position: relative; z-index: 1; width: min(880px, 92vw); max-height: 86vh;
   display: flex; flex-direction: column;
-  background: var(--iprm-white); border-radius: var(--iprm-radius-md, 14px);
+  background: var(--iprm-white); border-radius: var(--iprm-radius-md);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3); overflow: hidden;
 }
 .media-picker__head {
@@ -110,7 +110,7 @@
 }
 .media-picker__item {
   display: block; padding: 0; cursor: pointer; background: var(--apple-section-bg);
-  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm, 8px);
+  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm);
   overflow: hidden; aspect-ratio: 1 / 1;
 }
 .media-picker__item:hover { border-color: var(--iprm-nav-active); }

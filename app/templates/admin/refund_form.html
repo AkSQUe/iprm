@@ -120,7 +120,7 @@
     {# Рекомендація за Політикою повернення. Показуємо ЗАВЖДИ і до вводу
        суми: адмін має спершу побачити, скільки належить за правилами, і
        лише потім свідомо відступати від них. #}
-    <div class="form-section admin-form__section{% if not quote.refundable %} admin-queue-alert admin-queue-alert--error{% elif quote.percent < 100 %} admin-queue-alert admin-queue-alert--warning{% endif %}">
+    <div class="form-section{% if not quote.refundable %} admin-queue-alert admin-queue-alert--error{% elif quote.percent < 100 %} admin-queue-alert admin-queue-alert--warning{% endif %}">
       <h3 class="admin-form__section-title{% if not quote.refundable %} admin-queue-alert__title--error{% endif %}">
         За Політикою повернення: {{ quote.percent }}%
       </h3>

@@ -10,7 +10,7 @@
   display: inline-flex;
   gap: 4px;
   padding: 4px;
-  border-radius: var(--iprm-radius-pill, 999px);
+  border-radius: var(--iprm-radius-pill);
   background: var(--iprm-border);
   margin-bottom: 16px;
 }
@@ -20,7 +20,7 @@
   background: none;
   cursor: pointer;
   padding: 6px 14px;
-  border-radius: var(--iprm-radius-pill, 999px);
+  border-radius: var(--iprm-radius-pill);
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--apple-gray-dark);
@@ -65,7 +65,7 @@
   display: inline-block;
   margin-left: 6px;
   padding: 1px 6px;
-  border-radius: var(--iprm-radius-pill, 999px);
+  border-radius: var(--iprm-radius-pill);
   background: var(--iprm-accent-light);
   font-size: 0.6875rem;
   font-weight: 600;
@@ -91,7 +91,7 @@
    що й вище: у тёмній темі чіп був світло-сірим з ледь видимим текстом. */
 .i18n-status__chip {
   padding: 1px 6px;
-  border-radius: var(--iprm-radius-pill, 999px);
+  border-radius: var(--iprm-radius-pill);
   background: var(--iprm-border);
   font-size: 0.6875rem;
   font-weight: 600;

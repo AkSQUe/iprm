@@ -35,3 +35,39 @@
   .admin-errors-col--state { width: 11%; }
   .admin-errors-col--actions { width: 5%; }
 }
+
+/* Перенесено з admin.css: копіювання тексту помилки. */
+/* Текст помилки -- кнопка «скопіювати для ШІ». Виглядав рівно як сусідній
+   нерухомий текст, тож про цю дію дізнавались випадково: пунктирне
+   підкреслення -- найдешевший спосіб сказати «сюди можна натиснути», не
+   роблячи з рядка таблиці ще одну кнопку. */
+.admin-copy-error {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--iprm-border-strong));
+  transition: color 0.15s;
+}
+
+.admin-copy-error:hover {
+  color: var(--iprm-accent);
+  text-decoration-color: currentColor;
+}
+
+.admin-copy-error:focus-visible {
+  outline: 2px solid var(--iprm-nav-active);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.admin-copy-error--copied {
+  color: var(--iprm-success);
+}
