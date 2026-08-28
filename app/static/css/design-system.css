@@ -450,3 +450,22 @@
   position: static;
   display: flex;
 }
+
+/* Нейтралі й семантика: доти ці зразки мали вбитий hex просто в
+   розмітці -- і показували значення СВІТЛОЇ теми навіть у тёмній,
+   тобто каталог кольорів брехав саме там, де його читають. Плюс
+   п'ять із них називали токени, яких у системі немає взагалі
+   (--black, --success, --error), а --success: #34c759 -- це рівно
+   той літерал, який admin.css окремо викинув за контраст 2.22. */
+.ds-swatch__color--black { background: var(--apple-black); }
+.ds-swatch__color--dark { background: var(--iprm-dark); }
+.ds-swatch__color--gray-dark { background: var(--apple-gray-dark); }
+.ds-swatch__color--gray { background: var(--apple-gray); }
+.ds-swatch__color--gray-light { background: var(--apple-gray-light); }
+.ds-swatch__color--white { background: var(--iprm-white); }
+.ds-swatch__color--success { background: var(--iprm-success); }
+.ds-swatch__color--warning-bg { background: var(--iprm-warning-bg); }
+.ds-swatch__color--warning-border { background: var(--iprm-warning-border); }
+.ds-swatch__color--warning { background: var(--iprm-warning); }
+.ds-swatch__color--warning-text { background: var(--iprm-warning-text); }
+.ds-swatch__color--error { background: var(--iprm-error); }
