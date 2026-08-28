@@ -1,63 +1,75 @@
 {% set ep = request.endpoint or '' %}
-<aside class="admin-sidebar">
+{#- У спокої панель — смуга іконок, розкривається наведенням (це робить
+    сам CSS). Закріплений стан рендерить СЕРВЕР із кукі, а не JS після
+    завантаження: інакше закріплена панель на КОЖНІЙ сторінці спершу
+    малювалась би смугою й стрибала. Кукі пише admin-sidebar.js. -#}
+{% set sidebar_pinned = request.cookies.get('admin_sidebar_pinned') == '1' %}
+{% set pin_label = 'Відкріпити панель навігації' if sidebar_pinned else 'Закріпити панель навігації' %}
+<aside class="admin-sidebar{% if sidebar_pinned %} admin-sidebar--pinned{% endif %}" id="admin-sidebar">
   <div class="admin-sidebar__brand">
-    <a href="{{ url_for('admin.dashboard') }}">ІПРМ Admin</a>
+    <a href="{{ url_for('admin.dashboard') }}" class="admin-sidebar__text">ІПРМ Admin</a>
+    <button type="button" class="admin-sidebar__pin" id="admin-sidebar-pin"
+            aria-controls="admin-sidebar"
+            aria-pressed="{{ 'true' if sidebar_pinned else 'false' }}"
+            title="{{ pin_label }}" aria-label="{{ pin_label }}">
+      {{ icon('keep', cls='admin-sidebar__pin-icon') }}
+    </button>
   </div>
   <nav class="admin-sidebar__nav">
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Контент</p>
       <a href="{{ url_for('admin.courses_list') }}" class="admin-sidebar__link{% if ep in ('admin.courses_list', 'admin.course_create', 'admin.course_edit', 'admin.course_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('menu_book') }}
-        Курси
+        <span class="admin-sidebar__text">Курси</span>
       </a>
       <a href="{{ url_for('admin.instances_list') }}" class="admin-sidebar__link{% if ep in ('admin.instances_list', 'admin.instance_create', 'admin.instance_edit', 'admin.instance_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('event') }}
-        Розклад
+        <span class="admin-sidebar__text">Розклад</span>
       </a>
       <a href="{{ url_for('admin.online_courses_list') }}" class="admin-sidebar__link{% if ep in ('admin.online_courses_list', 'admin.online_course_edit', 'admin.online_course_toggle_publish') %} admin-sidebar__link--active{% endif %}">
         {{ icon('school') }}
-        Онлайн-курси
+        <span class="admin-sidebar__text">Онлайн-курси</span>
       </a>
       <a href="{{ url_for('admin.cities_list') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.cities_list', 'admin.cities_save', 'admin.cities_add', 'admin.cities_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('table_view') }}
-        Довідник локацій
+        <span class="admin-sidebar__text">Довідник локацій</span>
       </a>
       <a href="{{ url_for('admin.quizzes_list') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.quizzes_list', 'admin.course_quiz_edit', 'admin.instance_quiz_edit', 'admin.quiz_delete', 'admin.instance_quiz_results') %} admin-sidebar__link--active{% endif %}">
         {{ icon('quiz') }}
-        Тестування
+        <span class="admin-sidebar__text">Тестування</span>
       </a>
       <a href="{{ url_for('admin.course_requests_list') }}" class="admin-sidebar__link{% if ep in ('admin.course_requests_list', 'admin.course_request_edit', 'admin.course_request_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('inbox') }}
-        Запити на курси
+        <span class="admin-sidebar__text">Запити на курси</span>
       </a>
       <a href="{{ url_for('admin.b2b_requests_list') }}" class="admin-sidebar__link{% if ep in ('admin.b2b_requests_list', 'admin.b2b_request_update') %} admin-sidebar__link--active{% endif %}">
         {{ icon('group') }}
-        B2B-заявки
+        <span class="admin-sidebar__text">B2B-заявки</span>
       </a>
       <a href="{{ url_for('admin.meta_leads_list') }}" class="admin-sidebar__link{% if ep in ('admin.meta_leads_list', 'admin.meta_lead_detail', 'admin.meta_lead_events', 'admin.meta_leads_settings', 'admin.meta_lead_event_retry') %} admin-sidebar__link--active{% endif %}">
         {{ icon('campaign') }}
-        Ліди Meta
+        <span class="admin-sidebar__text">Ліди Meta</span>
       </a>
       <a href="{{ url_for('admin.refund_requests_list') }}" class="admin-sidebar__link{% if ep in ('admin.refund_requests_list', 'admin.refund_request_reject') %} admin-sidebar__link--active{% endif %}">
         {{ icon('restart_alt') }}
-        Заявки на повернення
+        <span class="admin-sidebar__text">Заявки на повернення</span>
         {% if pending_refund_requests %}<span class="badge badge--danger">{{ pending_refund_requests }}</span>{% endif %}
       </a>
       <a href="{{ url_for('admin.trainers_list') }}" class="admin-sidebar__link{% if ep in ('admin.trainers_list', 'admin.trainer_create', 'admin.trainer_edit', 'admin.trainer_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('school') }}
-        Тренери
+        <span class="admin-sidebar__text">Тренери</span>
       </a>
       <a href="{{ url_for('admin.blog_list') }}" class="admin-sidebar__link{% if ep in ('admin.blog_list', 'admin.blog_create', 'admin.blog_edit', 'admin.blog_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('article') }}
-        Блог
+        <span class="admin-sidebar__text">Блог</span>
       </a>
       <a href="{{ url_for('admin.blog_comments') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.blog_comments', 'admin.blog_comment_approve', 'admin.blog_comment_spam', 'admin.blog_comment_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('forum') }}
-        Коментарі
+        <span class="admin-sidebar__text">Коментарі</span>
       </a>
       <a href="{{ url_for('admin.media_library') }}" class="admin-sidebar__link{% if ep in ('admin.media_library', 'admin.media_update_alt', 'admin.media_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('perm_media') }}
-        Медіа
+        <span class="admin-sidebar__text">Медіа</span>
       </a>
     </div>
 
@@ -65,7 +77,7 @@
       <p class="admin-sidebar__group-title">Продажі</p>
       <a href="{{ url_for('admin.registrations_all') }}" class="admin-sidebar__link{% if ep in ('admin.registrations_all', 'admin.instance_registrations', 'admin.registration_status', 'admin.registration_attendance') %} admin-sidebar__link--active{% endif %}">
         {{ icon('how_to_reg') }}
-        Реєстрації
+        <span class="admin-sidebar__text">Реєстрації</span>
       </a>
       {# Поруч із «Реєстраціями», а не в «Контенті» біля каталогу: людина,
          яка шукає "хто оплатив", відкриває саме цей розділ. Доти покупки
@@ -73,19 +85,19 @@
          неї нема як. #}
       <a href="{{ url_for('admin.online_orders_list') }}" class="admin-sidebar__link{% if ep in ('admin.online_orders_list',) %} admin-sidebar__link--active{% endif %}">
         {{ icon('notes') }}
-        Онлайн-курси: замовлення
+        <span class="admin-sidebar__text">Онлайн-курси: замовлення</span>
       </a>
       <a href="{{ url_for('admin.certificates') }}" class="admin-sidebar__link{% if ep == 'admin.certificates' %} admin-sidebar__link--active{% endif %}">
         {{ icon('workspace_premium') }}
-        Сертифікати
+        <span class="admin-sidebar__text">Сертифікати</span>
       </a>
       <a href="{{ url_for('admin.referrals_overview') }}" class="admin-sidebar__link{% if ep == 'admin.referrals_overview' %} admin-sidebar__link--active{% endif %}">
         {{ icon('add_link') }}
-        Реферали
+        <span class="admin-sidebar__text">Реферали</span>
       </a>
       <a href="{{ url_for('admin.promo_codes_list') }}" class="admin-sidebar__link{% if ep in ('admin.promo_codes_list', 'admin.promo_code_create', 'admin.promo_code_edit', 'admin.promo_code_detail') %} admin-sidebar__link--active{% endif %}">
         {{ icon('campaign') }}
-        Промокоди
+        <span class="admin-sidebar__text">Промокоди</span>
       </a>
     </div>
 
@@ -93,11 +105,11 @@
       <p class="admin-sidebar__group-title">Аудиторія</p>
       <a href="{{ url_for('admin.users') }}" class="admin-sidebar__link{% if ep == 'admin.users' %} admin-sidebar__link--active{% endif %}">
         {{ icon('group') }}
-        Користувачі
+        <span class="admin-sidebar__text">Користувачі</span>
       </a>
       <a href="{{ url_for('admin.reviews_list') }}" class="admin-sidebar__link{% if ep in ('admin.reviews_list', 'admin.review_create', 'admin.review_edit') %} admin-sidebar__link--active{% endif %}">
         {{ icon('reviews') }}
-        Відгуки
+        <span class="admin-sidebar__text">Відгуки</span>
       </a>
     </div>
 
@@ -105,7 +117,7 @@
       <p class="admin-sidebar__group-title">Інструменти</p>
       <a href="{{ url_for('admin.tool_certificate_generator') }}" class="admin-sidebar__link{% if ep in ('admin.tool_certificate_generator', 'admin.tool_certificate_generator_template', 'admin.tool_certificate_generator_preview', 'admin.tool_certificate_generator_run', 'admin.tool_certificate_generator_job', 'admin.tool_certificate_generator_job_status', 'admin.tool_certificate_generator_job_download') %} admin-sidebar__link--active{% endif %}">
         {{ icon('workspace_premium') }}
-        Генератор сертифікатів
+        <span class="admin-sidebar__text">Генератор сертифікатів</span>
       </a>
     </div>
 
@@ -113,43 +125,43 @@
       <p class="admin-sidebar__group-title">Система</p>
       <a href="{{ url_for('admin.marketing') }}" class="admin-sidebar__link{% if ep == 'admin.marketing' %} admin-sidebar__link--active{% endif %}">
         {{ icon('campaign') }}
-        Маркетинг
+        <span class="admin-sidebar__text">Маркетинг</span>
       </a>
       <a href="{{ url_for('admin.notifications') }}" class="admin-sidebar__link{% if ep in ('admin.notifications', 'admin.notifications_log', 'admin.notifications_test', 'admin.notifications_settings', 'admin.notifications_templates') %} admin-sidebar__link--active{% endif %}">
         {{ icon('notifications') }}
-        Сповіщення
+        <span class="admin-sidebar__text">Сповіщення</span>
       </a>
       <a href="{{ url_for('admin.notifications_recipients') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.notifications_recipients', 'admin.notifications_recipients_save', 'admin.notifications_recipients_managers_save', 'admin.notifications_recipients_test', 'admin.notifications_recipients_preview') %} admin-sidebar__link--active{% endif %}">
         {{ icon('group') }}
-        Одержувачі
+        <span class="admin-sidebar__text">Одержувачі</span>
       </a>
       <a href="{{ url_for('admin.integrations') }}" class="admin-sidebar__link{% if ep in ('admin.integrations', 'admin.liqpay', 'admin.liqpay_save_keys', 'admin.liqpay_test', 'admin.refund_form', 'admin.recaptcha', 'admin.recaptcha_save_keys', 'admin.recaptcha_test') %} admin-sidebar__link--active{% endif %}">
         {{ icon('hub') }}
-        Інтеграції
+        <span class="admin-sidebar__text">Інтеграції</span>
       </a>
       <a href="{{ url_for('admin.webhooks_list') }}" class="admin-sidebar__link{% if ep in ('admin.webhooks_list', 'admin.webhook_retry', 'admin.webhook_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('webhook') }}
-        Webhook черга
+        <span class="admin-sidebar__text">Webhook черга</span>
       </a>
       <a href="{{ url_for('admin.materials_overview') }}" class="admin-sidebar__link{% if ep in ('admin.materials_overview', 'admin.instance_materials') %} admin-sidebar__link--active{% endif %}">
         {{ icon('widgets') }}
-        Резервування матеріалів
+        <span class="admin-sidebar__text">Резервування матеріалів</span>
       </a>
       <a href="{{ url_for('admin.material_kits_list') }}" class="admin-sidebar__link{% if ep in ('admin.material_kits_list', 'admin.material_kit_create', 'admin.material_kit_edit') %} admin-sidebar__link--active{% endif %}">
         {{ icon('apps') }}
-        Комплекти матеріалів
+        <span class="admin-sidebar__text">Комплекти матеріалів</span>
       </a>
       <a href="{{ url_for('admin.error_logs') }}" class="admin-sidebar__link{% if ep in ('admin.error_logs', 'admin.error_log_detail') %} admin-sidebar__link--active{% endif %}">
         {{ icon('bug_report') }}
-        Журнал помилок
+        <span class="admin-sidebar__text">Журнал помилок</span>
       </a>
       <a href="{{ url_for('admin.perf_runs') }}" class="admin-sidebar__link{% if ep in ('admin.perf_runs', 'admin.perf_run_detail', 'admin.perf_run_delete', 'admin.perf_key_rotate', 'admin.perf_key_clear') %} admin-sidebar__link--active{% endif %}">
         {{ icon('bolt') }}
-        Швидкість сторінок
+        <span class="admin-sidebar__text">Швидкість сторінок</span>
       </a>
       <a href="{{ url_for('admin.settings') }}" class="admin-sidebar__link{% if ep == 'admin.settings' %} admin-sidebar__link--active{% endif %}">
         {{ icon('settings') }}
-        Налаштування
+        <span class="admin-sidebar__text">Налаштування</span>
       </a>
     </div>
   </nav>

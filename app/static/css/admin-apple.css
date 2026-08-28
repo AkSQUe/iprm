@@ -22,7 +22,11 @@
 /* ========== SIDEBAR ========== */
 
 .admin-sidebar {
-  width: 240px;
+  /* 260, а не 240: підпис у смузі не переносить рядок (інакше висота
+     пунктів стрибала б на пів анімації), тож найдовший з них --
+     «Онлайн-курси: замовлення», 163px -- має вміститись в один рядок.
+     У спокої панель усе одно 79px, тож ці 20px коштують дешево. */
+  width: 260px;
   background: var(--iprm-white);
   border-right: 1px solid var(--iprm-border);
   position: sticky;
@@ -32,10 +36,20 @@
 }
 
 .admin-sidebar__brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 0 20px 24px;
 }
 
+/* Стискається до нуля, коли панель стає смугою: без min-width: 0
+   flex-елемент не звужується менше за свій текст, і напис виштовхнув би
+   шпильку за край панелі. */
 .admin-sidebar__brand a {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
   font-size: 0.8125rem;
   font-weight: 700;
   color: var(--iprm-nav-active);
@@ -87,6 +101,260 @@
    (self-hosted шрифт). Тут лишаються тільки контекстні розміри. */
 .admin-sidebar__link .material-symbols-rounded {
   font-size: 24px;
+}
+
+/* Шпилька: закріплює розкриту панель. Сама по собі кнопка ні на що не
+   впливає -- розкриття по наведенню робить CSS нижче, а шпилька лише
+   вимикає стан спокою. На планшеті й телефоні панель -- горизонтальна
+   стрічка, закріплювати там нема чого (правило в @media нижче ховає). */
+.admin-sidebar__pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--apple-gray);
+  cursor: pointer;
+  transition: background 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
+              color 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+}
+
+.admin-sidebar__pin:hover {
+  background: var(--iprm-divider);
+  color: var(--apple-black);
+}
+
+.admin-sidebar__pin:focus-visible {
+  outline: 2px solid var(--iprm-accent);
+  outline-offset: 2px;
+}
+
+.admin-sidebar__pin-icon {
+  font-size: 20px;
+  transition: transform 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+}
+
+/* Незакріплена шпилька лежить навскіс -- та сама іконка читається як
+   «не встромлена», тож двох різних гліфів для цього не треба. */
+.admin-sidebar:not(.admin-sidebar--pinned) .admin-sidebar__pin-icon {
+  transform: rotate(45deg);
+}
+
+.admin-sidebar--pinned .admin-sidebar__pin {
+  color: var(--iprm-nav-active);
+}
+
+/* ==========================================================================
+   Смуга іконок -> розкриття по наведенню -> закріплення
+   --------------------------------------------------------------------------
+   Стан спокою описаний ОДНИМ селектором: не закріплено, курсора немає,
+   фокуса всередині немає. Розкриття -- це просто невиконання цієї умови,
+   тому наведення не проходить через JS: немає ні мерехтіння, ні гонок
+   таймерів, ні стану, який можна розсинхронізувати з розміткою. JS
+   відповідає рівно за одне -- за шпильку.
+
+   :focus-within тут не прикраса. Без нього дійти до меню табом було б
+   неможливо: фокус їхав би по посиланнях, яких не видно.
+
+   Панель -- flex-елемент поруч із .admin-layout { flex: 1 }, тож контент
+   розсувається сам, без другого набору правил на margin.
+
+   На сенсорних екранах :hover просто ніколи не збігається, тож панель
+   лишається смугою, а розкриває її шпилька.
+
+   Нижче 1025px діє горизонтальна стрічка (див. RESPONSIVE) -- смуги там
+   немає, і жодне правило звідси туди не заходить.
+   ========================================================================== */
+
+@media (min-width: 1025px) {
+  .admin-sidebar {
+    /* Ширина смуги не вибрана «на око», а порахована від іконки, яка в
+       смузі не зсувається ВЗАГАЛІ: 12px відступ групи + підкладка 48px
+       (12 + 24 іконка + 12) + 8px залишку + 10px смуги прокрутки + 1px
+       рамки = 79. Іконка через це стоїть на тій самій горизонталі
+       (24..48px), що й у розкритій панелі, тож рухається РІВНО ОДНА
+       річ -- ширина панелі.
+
+       Залишок справа 8px, а не 12: рівно на стільки підкладка стоїть
+       правіше від середини -- на 2px, і цього не видно. Симетрія
+       коштувала б іще 4px ширини смуги. */
+    --iprm-admin-rail-w: 79px;
+    /* Пауза на ВХІД коротша за паузу на ВИХІД: розкриття мусить читатись
+       як відгук, а курсор, що ковзнув по лівому краю, не має переверстувати
+       таблицю праворуч. Клавіатура випадковою не буває -- там паузи немає. */
+    --iprm-sb-delay: 220ms;
+    /* Меню довше за екран у ОБОХ станах, тож смуга прокрутки є завжди --
+       і саме її 10px закладено в ширину смуги вище. Кольори тут гасяться:
+       глобальний фіолетовий градієнт (common.css) на 79px читався б як
+       ще один елемент навігації, а не як смуга прокрутки.
+
+       Стандартні властивості й -webkit-псевдоелементи не дублюють одне
+       одного, а покривають різні рушії: Chrome, коли задано
+       scrollbar-width, псевдоелементи ІГНОРУЄ, а Safari до 18.2 не знає
+       стандартних властивостей. Ширина в обох гілках однакова -- інакше
+       іконки з'їхали б рівно на різницю. */
+    scrollbar-width: thin;
+    scrollbar-color: var(--iprm-border) transparent;
+    transition: width var(--iprm-transition) var(--iprm-sb-delay);
+  }
+
+  .admin-sidebar::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .admin-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .admin-sidebar::-webkit-scrollbar-thumb {
+    background: var(--iprm-border);
+    border: 2px solid transparent;
+    background-clip: content-box;
+    border-radius: 10px;
+  }
+
+  .admin-sidebar:hover {
+    --iprm-sb-delay: 120ms;
+  }
+
+  .admin-sidebar:focus-within {
+    --iprm-sb-delay: 0ms;
+  }
+
+  /* Усе, що зникає, згасає ОДНІЄЮ тривалістю і з ТІЄЮ САМОЮ паузою, що й
+     ширина. Саме через розбіг тут підписи зникали б миттєво, а панель
+     їхала б уже потім. */
+  .admin-sidebar__text,
+  .admin-sidebar__group-title,
+  .admin-sidebar__link .badge {
+    opacity: 1;
+    transition: opacity var(--iprm-transition) var(--iprm-sb-delay);
+  }
+
+  .admin-sidebar__brand,
+  .admin-sidebar__group {
+    transition: padding var(--iprm-transition) var(--iprm-sb-delay);
+  }
+
+  /* Базове правило дає посиланню `transition: all 0.2s` -- тут воно
+     перетирається, тож фон і колір перелічені явно: без них зник би
+     плавний ховер пункту меню. */
+  .admin-sidebar__link {
+    /* Підпис їде за край панелі, а не тисне її зсередини; position --
+       система координат для крапки-нагадування нижче. */
+    overflow: hidden;
+    position: relative;
+    transition: width var(--iprm-transition) var(--iprm-sb-delay),
+                padding var(--iprm-transition) var(--iprm-sb-delay),
+                background 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
+                color 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+  }
+
+  /* Підпис не переносить рядок: під час згортання він ще видимий, і
+     перенесення давало б стрибок висоти пункту на пів анімації. Саме
+     через це розкрита панель має бути достатньо широкою для найдовшого
+     підпису -- див. width на .admin-sidebar. */
+  .admin-sidebar__text {
+    white-space: nowrap;
+  }
+
+  /* Крапка-нагадування замість пігулки лічильника. Окремий шар, а не
+     переставлений бейдж: бейджу треба згаснути РАЗОМ з написами, а
+     крапці -- з'явитись уже після того, як панель стала на місце.
+     Одному елементу двох різних доль не дати. */
+  .admin-sidebar__link:has(.badge)::after {
+    content: '';
+    position: absolute;
+    /* Правий верхній кут іконки: вона стоїть на 24..48px від краю панелі. */
+    top: 6px;
+    left: 40px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--iprm-error);
+    opacity: 0;
+    transition: opacity 0.2s linear;
+  }
+
+  /* ---- Стан спокою ---- */
+
+  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) {
+    width: var(--iprm-admin-rail-w);
+  }
+
+  /* Шпилька притиснута до правого краю (space-between), тож їде вліво
+     разом із ним. Відступи підібрані так, щоб у смузі вона стала рівно
+     на стовпчик іконок: 68px вмісту - 18px справа = правий край на 50,
+     тобто кнопка на 22..50 -- та сама середина 36, що й у іконок. Напис
+     бренду при цьому стискається до нуля (min-width: 0 у базовому
+     правилі); саме тому центрувати рядок не можна -- центрувалась би
+     пара «напис + шпилька», і шпильку винесло б за край так само, як
+     виносило іконки. */
+  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__brand {
+    padding: 0 18px 24px 14px;
+  }
+
+  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__group {
+    padding: 0 12px;
+  }
+
+  /* Іконку НЕ центруємо: підпис поруч не переносить рядок, тож flex
+     центрував би пару «іконка + підпис», а не іконку -- і виносив би
+     іконку за лівий край тим далі, чим довший підпис. Іконка лишається
+     притиснутою до незмінного лівого відступу (12px групи + 12px
+     посилання = ті самі 24px, що й у розкритій панелі), тобто при
+     згортанні не рухається взагалі. Рухається рівно одна річ -- ширина.
+
+     Ширина підкладки задана явно (24px іконки + по 12px з боків):
+     інакше вона тягнулась би на всю ширину групи і стояла б навколо
+     іконки несиметрично. Вкладеним пунктам скидаємо їхній лівий
+     відступ 32px -- у смузі він збив би іконку з ряду. */
+  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__link {
+    width: 48px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__text,
+  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__group-title,
+  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__link .badge {
+    opacity: 0;
+  }
+
+  /* Заголовок групи лишається порожнім проміжком -- саме він і розділяє
+     групи іконок, тож ховається він згасанням, а не display: none. */
+  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__group-title {
+    pointer-events: none;
+  }
+
+  /* Крапка проявляється, коли рух уже скінчився: підпис до того часу
+     згас, пігулка бейджа поїхала за край, стрибати нема чому. */
+  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__link:has(.badge)::after {
+    opacity: 1;
+    transition-delay: calc(var(--iprm-sb-delay) + 0.25s);
+  }
+
+  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__link--active:has(.badge)::after {
+    background: var(--iprm-on-accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-sidebar,
+  .admin-sidebar__brand,
+  .admin-sidebar__group,
+  .admin-sidebar__link,
+  .admin-sidebar__text,
+  .admin-sidebar__group-title,
+  .admin-sidebar__link .badge,
+  .admin-sidebar__link:has(.badge)::after,
+  .admin-sidebar__pin-icon {
+    transition: none;
+  }
 }
 
 /* ========== LAYOUT ========== */
@@ -1099,6 +1367,12 @@
     border-right: none;
     overflow-x: auto;
     overflow-y: visible;
+  }
+
+  /* Смуги іконок тут немає -- панель уже горизонтальна стрічка, тож
+     закріплювати нема чого, і кнопка була б кнопкою в нікуди. */
+  .admin-sidebar__pin {
+    display: none;
   }
 }
 

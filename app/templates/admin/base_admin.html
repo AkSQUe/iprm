@@ -63,6 +63,9 @@ window.msGlyph = function (name) {
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/admin-confirm.js') }}?v={{ assets_version }}"></script>
+{# Шпилька бокової панелі. Розкриття по наведенню робить CSS -- сюди воно
+   не заходить, скрипт лише перемикає закріплення й пише кукі. #}
+<script src="{{ url_for('static', filename='js/admin-sidebar.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/admin-table-sort.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/admin-table-cards.js') }}?v={{ assets_version }}" defer></script>
 {# Панель фільтрів і меню дій у рядку є на десятку реєстрів -- підключаємо
