@@ -1259,12 +1259,8 @@ a.admin-stat-card:focus-visible {
   flex: 1;
 }
 
-/* Рядок фільтр-чипів у hero (статуси списків) */
-.admin-filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
+/* .admin-filter-chips звідси прибрано: рядок зрізів у шапці робить
+   `.admin-pills`, і ця копія (flex + wrap + gap) не мала користувачів. */
 
 /* Відступ між списком тарифів і формою додавання/редагування тарифу */
 .admin-tariffs-form {

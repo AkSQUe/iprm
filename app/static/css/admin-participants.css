@@ -19,12 +19,8 @@
   font-size: 22px;
 }
 
-/* Підказка під полем email (необов'язкове -> заповнюється пізніше). */
-.participant-hint {
-  margin-top: 6px;
-  font-size: 0.75rem;
-  color: var(--apple-gray);
-}
+/* .participant-hint звідси прибрано: це була копія системного `.form-hint`
+   (той самий розмір і колір) без жодного користувача. */
 
 /* Банер про placeholder-email на сторінці редагування. */
 .participant-email-note {

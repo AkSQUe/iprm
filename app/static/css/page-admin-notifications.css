@@ -1,10 +1,5 @@
 /* Адмін: сповіщення -- IPRM */
 
-/* Скидання padding для кнопок у hero */
-.admin-hero .admin-form__actions--flush {
-  padding-top: 0;
-}
-
 /* Індикатор стану черги */
 .admin-queue-alert {
   padding-left: 20px;
@@ -101,10 +96,6 @@
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
-}
-
-.recipients-rule__test-form {
-  display: inline-block;
 }
 
 /* ========== Таблиці листів (/admin/notifications і /notifications/log) ==========
