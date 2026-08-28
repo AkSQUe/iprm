@@ -1,8 +1,4 @@
 {
-  "admin-dropzone__link": [
-    "admin-media.css",
-    "admin.css"
-  ],
   "admin-queue-alert": [
     "admin-notifications.css",
     "admin.css"
@@ -23,115 +19,13 @@
     "admin.css",
     "common.css"
   ],
-  "apple-bento-card": [
-    "apple-pages.css",
-    "page-index.css"
-  ],
-  "apple-btn": [
-    "apple-pages.css",
-    "common.css",
-    "course-landing.css",
-    "courses.css",
-    "online-course.css",
-    "page-contact.css",
-    "quiz.css"
-  ],
-  "apple-btn--arrow": [
-    "apple-pages.css",
-    "common.css"
-  ],
-  "apple-btn--disabled": [
-    "apple-pages.css",
-    "common.css"
-  ],
-  "apple-btn--outline": [
-    "apple-pages.css",
-    "common.css"
-  ],
-  "apple-btn--primary": [
-    "apple-pages.css",
-    "common.css",
-    "quiz.css"
-  ],
-  "apple-btn--secondary": [
-    "apple-pages.css",
-    "common.css"
-  ],
-  "apple-btn--sm": [
-    "apple-pages.css",
-    "common.css"
-  ],
-  "apple-feature-card": [
-    "apple-pages.css",
-    "page-index.css"
-  ],
-  "apple-feature-card__icon": [
-    "apple-pages.css",
-    "page-index.css"
-  ],
-  "apple-features-grid": [
-    "apple-pages.css",
-    "page-index.css"
-  ],
-  "apple-gradient-text": [
-    "apple-pages.css",
-    "course-landing.css"
-  ],
-  "apple-reveal": [
-    "apple-pages.css",
-    "page-index.css"
-  ],
-  "badge": [
-    "admin.css",
-    "common.css",
-    "courses.css",
-    "page-admin-instances.css"
-  ],
-  "btn-admin": [
-    "admin.css",
-    "page-admin-cities.css"
-  ],
   "form-checkbox": [
-    "admin-notifications.css",
-    "admin.css",
     "auth.css",
-    "form-validate.css",
-    "registration.css"
-  ],
-  "form-consent": [
-    "auth.css",
-    "online-course.css",
-    "page-contact.css"
-  ],
-  "form-group": [
-    "admin.css",
-    "auth.css",
-    "common.css",
-    "course-landing.css",
-    "courses.css",
-    "online-course.css",
-    "page-contact.css"
-  ],
-  "form-hint": [
-    "admin.css",
-    "common.css"
+    "form-validate.css"
   ],
   "form-input": [
-    "admin-quiz.css",
     "admin.css",
-    "auth.css",
-    "blog.css",
-    "common.css",
-    "course-landing.css",
-    "courses.css",
-    "online-course.css",
-    "page-admin-cities.css",
-    "page-admin-participants.css",
-    "page-contact.css"
-  ],
-  "form-input--sm": [
-    "admin.css",
-    "common.css"
+    "auth.css"
   ],
   "form-section": [
     "admin.css",
@@ -153,149 +47,15 @@
     "common.css",
     "page-sitemap.css"
   ],
-  "iprm-course-card": [
-    "apple-pages.css",
-    "common.css",
-    "page-index.css"
-  ],
-  "iprm-course-card__image": [
-    "apple-pages.css",
-    "common.css",
-    "course-recommend.css"
-  ],
-  "iprm-course-card__price": [
-    "apple-pages.css",
-    "course-recommend.css"
-  ],
   "iprm-course-card__tags": [
-    "apple-pages.css",
     "common.css",
     "courses.css"
-  ],
-  "iprm-course-card__title": [
-    "apple-pages.css",
-    "common.css"
-  ],
-  "iprm-course-cards": [
-    "apple-pages.css",
-    "common.css"
-  ],
-  "iprm-empty-state": [
-    "apple-pages.css",
-    "common.css"
   ],
   "iprm-final-cta": [
     "course-landing.css",
     "courses.css"
   ],
-  "iprm-hero": [
-    "apple-pages.css",
-    "common.css",
-    "page-home.css",
-    "page-index.css"
-  ],
-  "iprm-hero-wrap": [
-    "apple-pages.css",
-    "common.css"
-  ],
-  "iprm-hero__actions": [
-    "apple-pages.css",
-    "course-landing.css",
-    "page-index.css"
-  ],
-  "iprm-hero__bg": [
-    "apple-pages.css",
-    "common.css"
-  ],
-  "iprm-hero__content": [
-    "apple-pages.css",
-    "common.css",
-    "course-landing.css",
-    "page-home.css",
-    "page-index.css"
-  ],
-  "iprm-hero__price": [
-    "apple-pages.css",
-    "common.css"
-  ],
-  "iprm-hero__subtitle": [
-    "apple-pages.css",
-    "common.css",
-    "course-landing.css",
-    "page-index.css",
-    "trainers.css"
-  ],
-  "iprm-hero__title": [
-    "apple-pages.css",
-    "common.css",
-    "course-landing.css",
-    "page-index.css"
-  ],
-  "iprm-loc-badge": [
-    "apple-pages.css",
-    "common.css",
-    "online-courses.css"
-  ],
-  "iprm-loc-badge__icon": [
-    "apple-pages.css",
-    "common.css",
-    "online-courses.css"
-  ],
-  "iprm-program": [
-    "apple-pages.css",
-    "course-landing.css"
-  ],
-  "iprm-program__badge": [
-    "apple-pages.css",
-    "course-landing.css"
-  ],
-  "iprm-program__block": [
-    "apple-pages.css",
-    "course-landing.css"
-  ],
-  "iprm-program__head": [
-    "apple-pages.css",
-    "course-landing.css"
-  ],
-  "iprm-program__item": [
-    "apple-pages.css",
-    "course-landing.css"
-  ],
-  "iprm-program__list": [
-    "apple-pages.css",
-    "course-landing.css"
-  ],
-  "iprm-request-form__honeypot": [
-    "course-landing.css",
-    "courses.css"
-  ],
-  "iprm-roi__results": [
-    "courses.css",
-    "page-home.css"
-  ],
-  "iprm-section": [
-    "apple-pages.css",
-    "common.css",
-    "page-index.css"
-  ],
-  "iprm-section__subtitle": [
-    "apple-pages.css",
-    "common.css",
-    "course-recommend.css"
-  ],
-  "iprm-section__title": [
-    "apple-pages.css",
-    "common.css",
-    "course-landing.css",
-    "course-recommend.css",
-    "online-course.css"
-  ],
-  "iprm-sticky-cta": [
-    "course-landing.css",
-    "page-admin-design-system.css"
-  ],
   "iprm-tag": [
-    "apple-pages.css",
     "common.css",
     "courses.css"
   ],
@@ -308,31 +68,10 @@
     "admin-integration.css",
     "admin.css"
   ],
-  "is-invalid": [
-    "auth.css",
-    "blog.css",
-    "common.css",
-    "online-course.css"
-  ],
   "is-visible": [
     "confirm-action.css",
     "reading-progress.css",
     "toast.css",
     "tooltips.css"
-  ],
-  "material-symbols-rounded": [
-    "admin.css",
-    "common.css",
-    "material-symbols.css",
-    "page-admin-blog-editor.css",
-    "page-admin-participants.css",
-    "page-admin-regalia.css",
-    "page-admin-webhooks.css"
-  ],
-  "required": [
-    "auth.css",
-    "common.css",
-    "course-landing.css",
-    "courses.css"
   ]
 }

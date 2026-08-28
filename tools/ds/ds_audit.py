@@ -201,17 +201,73 @@ def _declared_classes(path):
     return names
 
 
-def duplicate_classes(root=ROOT):
-    """{клас: [файли]} для класів, оголошених у 2+ файлах."""
+def _unscoped_subject_classes(head):
+    """Класи-суб'єкти селекторів БЕЗ зовнішнього скоупу.
+
+    Різниця, яку це ловить, вирішальна для концепту:
+
+    * `.alert { }` в двох файлах -- СПРАВЖНІЙ дублікат: який вигляд
+      переможе, вирішує порядок підключення, тобто правка в одному файлі
+      до частини сторінок не доходить;
+    * `.apple-page .apple-btn { }` поруч із `.alert { }` в іншому файлі --
+      СКОУПЛЕНИЙ варіант: виграє специфічність, детерміновано й незалежно
+      від порядку. Це штатний спосіб зробити варіант компонента для зони
+      сайту, а не борг.
+
+    Без цієї різниці число дублікатів перебільшувало борг утричі (69
+    замість 17), а храповик спрацьовував би на законному новому варіанті --
+    і його вимкнули б першого ж дня.
+    """
+    stripped = _strip_nested(head, _PAREN)
+    stripped = _strip_nested(stripped, _BRACKET)
+    names = set()
+    for selector in stripped.split(','):
+        compounds = [c for c in _COMBINATOR.split(selector.strip()) if c]
+        if len(compounds) != 1:
+            continue
+        names |= set(re.findall(r'\.([a-zA-Z][\w-]*)', compounds[0]))
+    return names
+
+
+def _declared_unscoped(path):
+    css = _COMMENT.sub(' ', path.read_text(encoding='utf-8'))
+    names = set()
+    for head in re.findall(r'([^{}]+)\{', css):
+        if head.lstrip().startswith('@'):
+            continue
+        names |= _unscoped_subject_classes(head)
+    return names
+
+
+def _owners(root, extractor):
     owners = {}
-    # rglob, а не glob: підкаталогів у app/static/css сьогодні немає, але
-    # тиха діра (файл у підкаталозі мовчки випадає з підрахунку) нічого не
-    # коштує закрити наперед. path.name лишається базовим ім'ям -- ключі
-    # baseline не зміняться, навіть якщо підкаталоги колись з'являться.
     for path in sorted((root / 'app' / 'static' / 'css').rglob('*.css')):
-        for cls in _declared_classes(path):
+        for cls in extractor(path):
             owners.setdefault(cls, set()).add(path.name)
+    return owners
+
+
+def duplicate_classes(root=ROOT):
+    """СПРАВЖНІ дублікати: клас оголошений БЕЗ скоупу у 2+ файлах.
+
+    Саме тут порушується критерій концепту -- правка компонента не доходить
+    до сторінки, бо інший файл перебиває його порядком підключення.
+    Скоуплені варіанти сюди НЕ входять: див. `scoped_variants`.
+    """
+    owners = _owners(root, _declared_unscoped)
     return {c: sorted(f) for c, f in sorted(owners.items()) if len(f) > 1}
+
+
+def scoped_variants(root=ROOT):
+    """Клас оголошений у 2+ файлах, але хоча б в одному -- під предком.
+
+    Не борг: виграє специфічність, а не порядок. Друкується як контекст,
+    щоб число було видно й не сприймалось як дублікати.
+    """
+    everywhere = _owners(root, _declared_classes)
+    true = duplicate_classes(root)
+    return {c: sorted(f) for c, f in sorted(everywhere.items())
+            if len(f) > 1 and c not in true}
 
 
 def new_duplicate_owners(current, baseline):
@@ -269,11 +325,15 @@ def main():
     if kinds['unresolved']:
         print('  УВАГА: динамічний include у %d шаблонах, споживачі недораховані: %s'
               % (len(kinds['unresolved']), ', '.join(kinds['unresolved'][:5])))
-    print('\nДУБЛІКАТИ (клас у 2+ файлах): %d' % len(dupes))
+    print('\nДУБЛІКАТИ (клас БЕЗ скоупу у 2+ файлах): %d' % len(dupes))
     for cls, files in list(dupes.items())[:10]:
         print('   .%-28s %s' % (cls, ', '.join(files)))
     if len(dupes) > 10:
         print('   ... ще %d' % (len(dupes) - 10))
+
+    variants = scoped_variants()
+    print('\nСКОУПЛЕНІ ВАРІАНТИ (не борг -- виграє специфічність, '
+          'а не порядок): %d' % len(variants))
     print('\nКОМПОНЕНТНІ ФАЙЛИ ПОЗА КАТАЛОГОМ: %d' % len(gap))
     for name in gap:
         print('   ' + name)

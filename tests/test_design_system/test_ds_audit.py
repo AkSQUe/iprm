@@ -260,3 +260,60 @@ def test_effective_css_stops_on_cycle():
     parents = {'a.html': {'b.html'}, 'b.html': {'a.html'}}
     effective = ds_audit._effective_css('a.html', direct, parents)
     assert effective == {'a.css', 'b.css'}
+
+
+# --- скоуплений варіант проти справжнього дубліката ----------------------
+#
+# Різниця вирішальна для концепту, і метрика без неї перебільшувала борг
+# утричі (69 замість 18). Клас, оголошений БЕЗ скоупу у двох файлах, --
+# справжній дублікат: який вигляд переможе, вирішує порядок підключення.
+# Клас, оголошений під предком (`.apple-page .apple-btn`), -- штатний
+# варіант компонента для зони сайту: виграє специфічність, детерміновано.
+# Храповик на нерозділеному числі спрацьовував би на законному новому
+# варіанті, і його вимкнули б першого ж дня.
+
+
+def _css_tree(tmp_path, files):
+    root = tmp_path / 'app' / 'static' / 'css'
+    root.mkdir(parents=True)
+    for name, body in files.items():
+        (root / name).write_text(body, encoding='utf-8')
+    return tmp_path
+
+
+def test_unscoped_declaration_in_two_files_is_a_duplicate(tmp_path):
+    root = _css_tree(tmp_path, {
+        'a.css': '.widget { color: red; }',
+        'b.css': '.widget { color: blue; }',
+    })
+    assert 'widget' in ds_audit.duplicate_classes(root)
+    assert 'widget' not in ds_audit.scoped_variants(root)
+
+
+def test_scoped_declaration_is_a_variant_not_a_duplicate(tmp_path):
+    root = _css_tree(tmp_path, {
+        'a.css': '.widget { color: red; }',
+        'b.css': '.zone .widget { color: blue; }',
+    })
+    assert 'widget' not in ds_audit.duplicate_classes(root), (
+        '`.zone .widget` -- варіант під предком: він виграє специфічністю '
+        'незалежно від порядку підключення, тож це не дублікат.'
+    )
+    assert 'widget' in ds_audit.scoped_variants(root)
+
+
+def test_child_and_sibling_combinators_also_count_as_scoped(tmp_path):
+    root = _css_tree(tmp_path, {
+        'a.css': '.widget { color: red; }',
+        'b.css': '.zone > .widget, .other + .widget { color: blue; }',
+    })
+    assert 'widget' not in ds_audit.duplicate_classes(root)
+
+
+def test_pseudo_on_the_class_itself_stays_unscoped(tmp_path):
+    """`.widget:hover` -- той самий компаунд, зовнішнього скоупу немає."""
+    root = _css_tree(tmp_path, {
+        'a.css': '.widget { color: red; }',
+        'b.css': '.widget:hover { color: blue; }',
+    })
+    assert 'widget' in ds_audit.duplicate_classes(root)

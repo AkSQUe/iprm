@@ -81,3 +81,6 @@ docs/legal/*.docx
 *.HEIC
 *.heic
 *_backup.webp
+
+# Знімки обчислених стилів (tools/ds/computed_snapshot.py): вивід прогону.
+tools/ds/computed/
