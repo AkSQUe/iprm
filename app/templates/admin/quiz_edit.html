@@ -44,10 +44,10 @@
         <a href="{{ url_for('admin.instance_quiz_results', instance_id=instance.id) }}"
            class="btn-admin btn-admin--secondary">Результати групи</a>
         <a href="{{ url_for('admin.instance_edit', instance_id=instance.id) }}"
-           class="btn-admin btn-admin--ghost">До проведення</a>
+           class="btn-admin btn-admin--secondary">До проведення</a>
         {% else %}
         <a href="{{ url_for('admin.course_edit', course_id=course.id) }}"
-           class="btn-admin btn-admin--ghost">До курсу</a>
+           class="btn-admin btn-admin--secondary">До курсу</a>
         {% endif %}
       </div>
     </div>

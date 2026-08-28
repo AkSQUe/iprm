@@ -38,13 +38,13 @@
   <div class="form-section">
     <h3 class="admin-form__section-title">Дані запиту</h3>
     <div class="admin-form__grid">
-      <div class="form-group"><label>Email</label><div class="form-readonly">{{ request_obj.email }}</div></div>
-      <div class="form-group"><label>Телефон</label><div class="form-readonly">{{ request_obj.phone or '–' }}</div></div>
+      <div class="form-group"><label>Email</label><div class="form-input admin-field-readonly">{{ request_obj.email }}</div></div>
+      <div class="form-group"><label>Телефон</label><div class="form-input admin-field-readonly">{{ request_obj.phone or '–' }}</div></div>
       <div class="form-group admin-form__full"><label>Повідомлення</label>
-        <div class="form-readonly">{{ request_obj.message or '–' }}</div>
+        <div class="form-input admin-field-readonly">{{ request_obj.message or '–' }}</div>
       </div>
-      <div class="form-group"><label>Створено</label><div class="form-readonly">{{ request_obj.created_at.strftime('%d.%m.%Y %H:%M') if request_obj.created_at else '' }}</div></div>
-      <div class="form-group"><label>Оброблено</label><div class="form-readonly">
+      <div class="form-group"><label>Створено</label><div class="form-input admin-field-readonly">{{ request_obj.created_at.strftime('%d.%m.%Y %H:%M') if request_obj.created_at else '' }}</div></div>
+      <div class="form-group"><label>Оброблено</label><div class="form-input admin-field-readonly">
         {% if request_obj.resolved_at %}{{ request_obj.resolved_at.strftime('%d.%m.%Y %H:%M') }} ({{ request_obj.resolver.email if request_obj.resolver else '–' }}){% else %}–{% endif %}
       </div></div>
     </div>

@@ -146,7 +146,7 @@
           </div>
           {{ form.signature(type="hidden", id="signature") }}
           {% for e in form.signature.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
-          <small class="admin-form__hint">Файл зберігається як images/trainers/{slug}/{slug}_signature.webp. Якщо порожньо – на сертифікаті спільний підпис за замовчуванням.</small>
+          <small class="form-hint">Файл зберігається як images/trainers/{slug}/{slug}_signature.webp. Якщо порожньо – на сертифікаті спільний підпис за замовчуванням.</small>
         </div>
 
         <div class="form-group form-group--align-end">
@@ -174,7 +174,7 @@
               {{ icon('add_photo_alternate') }} Додати сертифікати
             </button>
           </div>
-          <small class="admin-form__hint">PNG, JPG, WebP, HEIC. Перетягуйте мініатюри, щоб змінити порядок. Перегляд у lightbox на сайті.</small>
+          <small class="form-hint">PNG, JPG, WebP, HEIC. Перетягуйте мініатюри, щоб змінити порядок. Перегляд у lightbox на сайті.</small>
           {{ form.certificates(id="regalia-cert-field") }}
         </div>
 
@@ -186,7 +186,7 @@
               {{ icon('add') }} Додати патент
             </button>
           </div>
-          <small class="admin-form__hint">Можна завантажити скан патенту (іконка зображення в рядку) і вказати назву та посилання. Скан необовʼязковий.</small>
+          <small class="form-hint">Можна завантажити скан патенту (іконка зображення в рядку) і вказати назву та посилання. Скан необовʼязковий.</small>
           {{ form.patents(id="regalia-pat-field") }}
         </div>
 
@@ -204,7 +204,7 @@
         <div class="form-group admin-form__full">
           <label for="research">Наукова та дослідницька діяльність</label>
           {{ form.research(class="form-input", id="research", rows="8", placeholder="Один пункт на рядок") }}
-          <small class="admin-form__hint">Кожен рядок – окремий пункт списку. Порожньо – блок не показується.</small>
+          <small class="form-hint">Кожен рядок – окремий пункт списку. Порожньо – блок не показується.</small>
         </div>
 
       </div>
