@@ -189,4 +189,49 @@
     <p class="ds-hint">All modern CSS features use progressive enhancement – fallbacks always provided for older browsers.</p>
   </div>
 
+  <!-- ===== МЕЖА КАТАЛОГУ ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="catalog-boundary">
+      <p class="ds-label">Concept</p>
+      <h2 class="ds-title">Межа цієї сторінки</h2>
+
+      <div class="ds-demo">
+        <div class="alert alert--warning">
+          <strong class="alert__title">{{ icon('error') }} Каталог -- не остаточна істина</strong>
+          Тут підключено всі компонентні CSS одночасно. У 69 місцях один клас
+          оголошений у двох файлах, і виграє той, що підключений останнім --
+          тобто компонент на цій сторінці може виглядати не так, як на
+          реальній сторінці сайту. Це не вада каталогу, а видима проєкція
+          боргу: доки клас має двох власників, правка дизайн-системи до
+          частини сторінок не доходить. Поточне число --
+          у <code class="ds-code">python tools/ds/ds_audit.py</code>.
+        </div>
+      </div>
+
+      <h3 class="ds-section-heading">Не показується</h3>
+      <div class="ds-demo">
+        <table class="admin-table">
+          <thead><tr><th class="admin-cell-title">Файл</th><th>Чому</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="admin-cell-title">fonts.css</td>
+              <td>Компонентний за межею аудиту (споживачів багато -- підключається
+                з <code class="ds-code">base.html</code>), але містить лише
+                <code class="ds-code">@font-face</code>: інфраструктура шрифту
+                Inter, не компонент. Показувати нема чого.</td>
+            </tr>
+            <tr>
+              <td class="admin-cell-title">material-symbols.css</td>
+              <td>Так само компонентний за межею аудиту й так само інфраструктура
+                шрифту -- клас <code class="ds-code">.material-symbols-rounded</code>
+                ставиться глобалом <code class="ds-code">icon('назва')</code>,
+                а не вживається напряму. Сам клас уже описаний у табі
+                «Адмінка», розділ «Не показується».</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== COOKIE BANNER ===== -->
