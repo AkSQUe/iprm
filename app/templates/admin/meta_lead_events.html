@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-meta-leads.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards  %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -122,16 +122,12 @@
 
   {{ pager('admin.meta_lead_events', pagination, filter_args) }}
   {% else %}
-  <div class="admin-empty">
-    {{ icon('inbox', cls='admin-empty__icon') }}
-    {% if filter_args %}
-      <h3 class="admin-empty__title">Нічого не знайдено</h3>
-      <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.meta_lead_events') }}">скинути їх</a></p>
-    {% else %}
-      <h3 class="admin-empty__title">Подій немає</h3>
-      <p>Надішліть тестову подію з <a href="{{ url_for('admin.meta_leads_settings') }}">налаштувань</a>, щоб перевірити доставку.</p>
-    {% endif %}
-  </div>
+  {% call empty_state('admin.meta_lead_events',
+                      filter_args,
+                      icon_name='inbox',
+                      title='Подій немає') %}
+    <p>Надішліть тестову подію з <a href="{{ url_for('admin.meta_leads_settings') }}">налаштувань</a>, щоб перевірити доставку.</p>
+  {% endcall %}
   {% endif %}
 
   </div>

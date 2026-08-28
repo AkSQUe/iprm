@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -116,15 +116,11 @@
 
     {{ pager('admin.users', pagination, filter_args) }}
     {% else %}
-    <div class="admin-empty">
-      {{ icon('group', cls='admin-empty__icon') }}
-      {% if filters.q or filters.role or filters.state or filters.confirmed or filters.regs %}
-        <h3 class="admin-empty__title">Нічого не знайдено</h3>
-        <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.users') }}">скинути їх</a></p>
-      {% else %}
-        <h3 class="admin-empty__title">Користувачів ще немає</h3>
-      {% endif %}
-    </div>
+    {% call empty_state('admin.users',
+                        filter_args,
+                        icon_name='group',
+                        title='Користувачів ще немає') %}
+    {% endcall %}
     {% endif %}
   </div>
 </div>

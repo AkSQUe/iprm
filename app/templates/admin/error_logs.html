@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-error-logs.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards  %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -134,16 +134,12 @@
   {{ pager('admin.error_logs', pagination, filter_args) }}
 
   {% else %}
-  <div class="admin-empty">
-    {{ icon('bug_report', cls='admin-empty__icon') }}
-    {% if filter_args %}
-      <h3 class="admin-empty__title">Нічого не знайдено</h3>
-      <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.error_logs') }}">скинути їх</a></p>
-    {% else %}
-      <h3 class="admin-empty__title">Помилок немає</h3>
-      <p>За обраний період додаток не впав жодного разу.</p>
-    {% endif %}
-  </div>
+  {% call empty_state('admin.error_logs',
+                      filter_args,
+                      icon_name='bug_report',
+                      title='Помилок немає') %}
+    <p>За обраний період додаток не впав жодного разу.</p>
+  {% endcall %}
   {% endif %}
 
   </div>

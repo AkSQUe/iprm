@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards  %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -114,16 +114,12 @@
 
     {{ pager('admin.certificates', pagination, filter_args) }}
     {% else %}
-    <div class="admin-empty">
-      {{ icon('workspace_premium', cls='admin-empty__icon') }}
-      {% if filters.q or filters.state or filters.course_id or filters.year %}
-        <h3 class="admin-empty__title">Нічого не знайдено</h3>
-        <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.certificates') }}">скинути їх</a></p>
-      {% else %}
-        <h3 class="admin-empty__title">Сертифікатів ще немає</h3>
-        <p>Видавайте сертифікати на сторінці <a href="{{ url_for('admin.registrations_all') }}">Реєстрації</a> кнопкою «Видати сертифікат»</p>
-      {% endif %}
-    </div>
+    {% call empty_state('admin.certificates',
+                        filter_args,
+                        icon_name='workspace_premium',
+                        title='Сертифікатів ще немає') %}
+      <p>Видавайте сертифікати на сторінці <a href="{{ url_for('admin.registrations_all') }}">Реєстрації</a> кнопкою «Видати сертифікат»</p>
+    {% endcall %}
     {% endif %}
 
   </div>

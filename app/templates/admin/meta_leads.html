@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-meta-leads.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, sort_th, stat_cards  %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, sort_th, stat_cards, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -149,18 +149,14 @@
 
   {{ pager('admin.meta_leads_list', pagination, filter_args) }}
   {% else %}
-  <div class="admin-empty">
-    {{ icon('inbox', cls='admin-empty__icon') }}
-    {% if filter_args %}
-      <h3 class="admin-empty__title">Нічого не знайдено</h3>
-      <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.meta_leads_list') }}">скинути їх</a></p>
-    {% else %}
-      <h3 class="admin-empty__title">Заявок немає</h3>
-      <p>Щойно з інстант-форми Meta прийде перша заявка — вона з'явиться тут.
-         Перевірити доставку можна кнопкою «Надіслати тестову подію» в
-         <a href="{{ url_for('admin.meta_leads_settings') }}">налаштуваннях</a>.</p>
-    {% endif %}
-  </div>
+  {% call empty_state('admin.meta_leads_list',
+                      filter_args,
+                      icon_name='inbox',
+                      title='Заявок немає') %}
+    <p>Щойно з інстант-форми Meta прийде перша заявка — вона з'явиться тут.
+    Перевірити доставку можна кнопкою «Надіслати тестову подію» в
+    <a href="{{ url_for('admin.meta_leads_settings') }}">налаштуваннях</a>.</p>
+  {% endcall %}
   {% endif %}
 
   </div>
