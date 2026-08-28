@@ -121,8 +121,25 @@ PROPS = [
 _SETTLE_JS = """
 () => new Promise((resolve) => {
   const QUIET = 500, CAP = 6000;
+  // Перед тишею в DOM чекаємо, доки БРАУЗЕР ЗАСТОСУЄ всі таблиці стилів.
+  // networkidle цього не гарантує: на одній сторінці другий прогін знімав
+  // елементи з дефолтами браузера (border 0px, колір rgb(0,0,0)), бо
+  // stylesheet ще не був розібраний -- 25 хибних розбіжностей на рівному
+  // місці, які виглядали як справжня втрата стилів.
+  const sheetsReady = () => Array.from(
+    document.querySelectorAll('link[rel="stylesheet"]')
+  ).every((l) => { try { return l.sheet !== null; } catch (e) { return true; } });
   let timer = null;
-  const done = () => { obs.disconnect(); clearTimeout(hard); resolve(true); };
+  const done = () => {
+    if (!sheetsReady() && Date.now() - started < CAP) {
+      timer = setTimeout(done, 100);
+      return;
+    }
+    obs.disconnect();
+    clearTimeout(hard);
+    resolve(true);
+  };
+  const started = Date.now();
   const obs = new MutationObserver(() => {
     clearTimeout(timer);
     timer = setTimeout(done, QUIET);
@@ -135,20 +152,36 @@ _SETTLE_JS = """
 """
 
 _WALK_JS = """
-(props) => {
+(arg) => {
+  const props = arg.props, wanted = arg.wanted;
   const out = {};
+  // Ключ елемента -- ПІДПИС (тег + класи), а не позиція серед сусідів.
+  //
+  // Позиційний ключ (`div[3]/p[1]`) виглядає нейтральним, але ламається
+  // від однієї зайвої вставки: флеш-повідомлення в одному прогоні зсуває
+  // індекси всіх наступних сусідів, і далі порівнюються РІЗНІ елементи.
+  // На адмінських сторінках це давало ~1900 хибних розбіжностей.
+  //
+  // Класи для цієї задачі стабільні: знімок порівнює правки в CSS, а вони
+  // розмітки не міняють. Якщо клас усе ж змінили, елемент чесно покажеться
+  // як зниклий і новий -- це видима зміна, а не тихий зсув.
+  function sigOf(el) {
+    const cls = Array.from(el.classList).sort().join('.');
+    return el.tagName.toLowerCase() + (cls ? '.' + cls : '');
+  }
   function pathOf(el) {
     const parts = [];
     while (el && el.nodeType === 1 && el.tagName !== 'HTML') {
       const parent = el.parentElement;
+      const sig = sigOf(el);
       let idx = 1;
       if (parent) {
         for (const sib of parent.children) {
           if (sib === el) break;
-          if (sib.tagName === el.tagName) idx++;
+          if (sigOf(sib) === sig) idx++;
         }
       }
-      parts.unshift(el.tagName.toLowerCase() + '[' + idx + ']');
+      parts.unshift(sig + '[' + idx + ']');
       el = parent;
     }
     return parts.join('/');
@@ -167,6 +200,10 @@ _WALK_JS = """
     for (const el of root.querySelectorAll('*')) all.push(el);
   }
   for (const el of all) {
+    // Звуження до елементів, які нас цікавлять. Без нього знімок тягне
+    // всю сторінку, і будь-який чужий віджет зі станом (валідація форми,
+    // мовні вкладки, фокус) дає розбіжності, що не стосуються правки.
+    if (wanted.length && !wanted.some((c) => el.classList.contains(c))) continue;
     const cs = getComputedStyle(el);
     const rec = {};
     for (const p of props) rec[p] = cs.getPropertyValue(p);
@@ -317,7 +354,8 @@ def capture(label, explicit, only_classes, theme='light', quiet=False):
                 # то в одному прогоні, то в іншому: саме це давало вісім
                 # хибних розбіжностей на прогін.
                 page.evaluate(_SETTLE_JS)
-                data = page.evaluate(_WALK_JS, PROPS)
+                data = page.evaluate(_WALK_JS, {'props': PROPS,
+                                'wanted': [c.lstrip('.') for c in only_classes]})
                 (outdir / ('%s.json' % endpoint.replace('/', '_'))).write_text(
                     json.dumps(data, ensure_ascii=False, sort_keys=True, indent=0),
                     encoding='utf-8')
