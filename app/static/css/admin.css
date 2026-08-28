@@ -8,10 +8,13 @@
    до екрана. Щоб знати, який компонент насправді, доводилось читати два
    файли й пам'ятати порядок підключення.
 
-   Порядок правил у цьому файлі -- рівно той, у якому браузер їх і бачив:
-   спершу колишній admin.css, за ним колишній admin-apple.css. Тому злиття
-   не змінило нічого; перевірено знімком обчислених стилів 8522 елементів на
-   26 сторінках -- нуль розбіжностей.
+   Однойменні правила зведені: 63 селектори були оголошені двічі, лишилось
+   три пари, і кожна -- свідомо (див. позначки нижче: між ними стоїть
+   правило, яке справді має перебивати перше й програвати другому).
+
+   Ані злиття, ані зведення нічого не змінили у вигляді: обидва кроки
+   перевірені знімком обчислених стилів -- 8515 елементів на 26 сторінках,
+   63 властивості на кожен, нуль розбіжностей.
 */
 
 /* ========== SIDEBAR LAYOUT ========== */
@@ -21,57 +24,9 @@
   min-height: calc(100vh - 120px);
 }
 
-.admin-sidebar {
-  width: 220px;
-  flex-shrink: 0;
-  background: var(--iprm-card-bg);
-  border-right: 1px solid var(--iprm-border);
-  padding: 24px 0;
-}
-
 .admin-sidebar__nav {
   position: sticky;
   top: 80px;
-}
-
-.admin-sidebar__group {
-  margin-bottom: 20px;
-  padding: 0 16px;
-}
-
-.admin-sidebar__group-title {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--iprm-text-light);
-  padding: 0 12px;
-  margin-bottom: 6px;
-}
-
-.admin-sidebar__link {
-  display: block;
-  padding: 7px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--iprm-text);
-  border-radius: 6px;
-  transition: all var(--iprm-transition);
-}
-
-.admin-sidebar__link:hover {
-  background: var(--iprm-border);
-  color: var(--iprm-text);
-}
-
-.admin-sidebar__link--active {
-  background: var(--iprm-accent);
-  color: var(--iprm-on-accent);
-}
-
-.admin-sidebar__link--active:hover {
-  background: var(--iprm-accent-hover);
-  color: var(--iprm-on-accent);
 }
 
 /* Sub-link: візуальний відступ для пунктів, вкладених під батьківським
@@ -83,111 +38,10 @@
   font-weight: 500;
 }
 
-/* ========== CONTENT LAYOUT ========== */
-
-.admin-layout {
-  flex: 1;
-  min-width: 0;
-  padding: 32px;
-}
-
 /* Сторінки з широкими таблицями (реєстрації, сертифікати) -- на всю
    доступну ширину, щоб колонки й кнопки дій не обрізались. */
 .admin-layout--wide {
   max-width: none;
-}
-
-/* ========== HERO ========== */
-
-.admin-hero {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  /* Заголовок і панель дій інакше стикаються впритул, щойно панель
-     починає стискатись. */
-  gap: 16px;
-  margin-bottom: 32px;
-}
-
-.admin-hero__title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--iprm-text);
-  line-height: 1.25;
-}
-
-.admin-hero__subtitle {
-  font-size: 14px;
-  color: var(--iprm-text-light);
-  margin-top: 4px;
-}
-
-/* ========== BUTTONS ========== */
-
-.btn-admin {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--iprm-font);
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  transition: all var(--iprm-transition);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.btn-admin--primary {
-  background: var(--iprm-btn-bg);
-  color: var(--iprm-on-accent);
-}
-
-.btn-admin--primary:hover {
-  background: var(--iprm-btn-bg-hover);
-}
-
-.btn-admin--secondary {
-  background: var(--iprm-white);
-  color: var(--iprm-text);
-  border: 1px solid var(--iprm-border);
-}
-
-.btn-admin--secondary:hover {
-  background: var(--iprm-card-bg);
-}
-
-.btn-admin--danger {
-  background: var(--iprm-white);
-  color: var(--iprm-error-text);
-  border: 1px solid var(--iprm-error-light);
-}
-
-.btn-admin--danger:hover {
-  background: var(--iprm-error-bg);
-}
-
-/* Колір ролі -- з токена. Літерал #34c759 (системний зелений iOS) як ТЕКСТ
-   на білому давав 2.22, тобто напис на кнопці читався гірше за будь-який
-   інший в адмінці; --iprm-success тієї ж ролі дає 5.28 і знає тёмну тему.
-   Копію цієї кнопки нижче в цьому файлі перевели раніше, ця лишалась. */
-.btn-admin--success {
-  background: var(--iprm-white);
-  color: var(--iprm-success);
-  border: 1px solid color-mix(in srgb, var(--iprm-success) 30%, transparent);
-}
-
-.btn-admin--success:hover {
-  background: var(--iprm-success-bg);
-  border-color: color-mix(in srgb, var(--iprm-success) 50%, transparent);
-}
-
-.btn-admin--sm {
-  padding: 5px 14px;
-  font-size: 13px;
-  line-height: 1;
 }
 
 /* Вимкнена кнопка. Стану не було зовсім: на генераторі сертифікатів
@@ -207,58 +61,14 @@
   box-shadow: none;
 }
 
-/* ========== TABLE ========== */
-
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--iprm-white);
-  border-radius: var(--iprm-radius);
-  overflow: hidden;
-  border: 1px solid var(--iprm-border);
-}
-
-/* Той самий токен, що й у другого оголошення `.admin-table th` нижче в
-   цьому файлі. Доти файлів було два, і розбіжність значень означала б, що
-   вигляд шапки залежить від того, чи підключено другий. */
-.admin-table th {
-  background: var(--iprm-surface-inset);
-  padding: 12px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--iprm-text-light);
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
 .admin-table th:first-child,
 .admin-table th:nth-child(2) {
   text-align: left;
 }
 
-.admin-table td {
-  padding: 12px 16px;
-  font-size: 14px;
-  border-top: 1px solid var(--iprm-border);
-  color: var(--iprm-text);
-  text-align: center;
-}
-
 .admin-table td:first-child,
 .admin-table td:nth-child(2) {
   text-align: left;
-}
-
-.admin-table tr:hover td {
-  background: var(--iprm-card-bg);
-}
-
-.admin-table__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
 }
 
 /* ========== АВАТАР У СПИСКУ ==========
@@ -398,6 +208,11 @@
   margin-bottom: 0;
 }
 
+/* ДРУГЕ ОГОЛОШЕННЯ ЦЬОГО СЕЛЕКТОРА -- нижче у файлі, і це навмисно:
+   між ними стоїть базовий перелік `.form-input`, який мусить перебивати
+   ці падінги (поле пошуку в ряду керування має падінг звичайного поля) і
+   програвати `flex` із нижнього оголошення. Звести їх в одне не можна --
+   зникне саме той порядок, заради якого вони й розділені. */
 .admin-control-row .form-input {
   width: auto;
   min-width: 160px;
@@ -516,21 +331,6 @@
   outline-offset: 2px;
 }
 
-/* ========== EMPTY STATE ========== */
-
-.admin-empty {
-  text-align: center;
-  padding: 64px 32px;
-  color: var(--iprm-text-light);
-}
-
-.admin-empty__title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--iprm-text);
-  margin-bottom: 8px;
-}
-
 /* ========== FORM ========== */
 
 .admin-form {
@@ -630,23 +430,6 @@
   margin-top: 18px;
 }
 
-.admin-form .form-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 0;
-  padding: 12px 16px;
-  background: var(--iprm-white);
-  border-radius: var(--iprm-radius-sm);
-  border: 1px solid var(--iprm-border);
-  cursor: pointer;
-  transition: border-color var(--iprm-transition);
-}
-
-.admin-form .form-checkbox:hover {
-  border-color: var(--iprm-text);
-}
-
 .admin-form .form-checkbox input[type="checkbox"] {
   width: 18px;
   height: 18px;
@@ -654,21 +437,15 @@
   cursor: pointer;
 }
 
+/* Друге оголошення -- нижче; між ними перелік `.form-input`, який має
+   перебивати частину властивостей. Див. пояснення при
+   `.admin-control-row .form-input`. */
 .admin-form .form-checkbox label {
   font-size: 14px;
   font-weight: 500;
   color: var(--iprm-text);
   margin-bottom: 0;
   cursor: pointer;
-}
-
-/* ========== FORM ACTIONS ========== */
-
-.admin-form__actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  padding-top: 8px;
 }
 
 /* ========== FORM ERRORS SUMMARY ========== */
@@ -872,28 +649,8 @@
   gap: 12px;
 }
 
-.admin-integration-card {
-  background: var(--iprm-white);
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm);
-  padding: 20px;
-  transition: border-color var(--iprm-transition), box-shadow var(--iprm-transition);
-}
-
-.admin-integration-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.admin-integration-card__title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--iprm-text);
-}
-
+/* Друге оголошення -- нижче; між ними `.admin-empty p`, який на порожньому
+   стані всередині картки мусить лишитись сильнішим за це правило. */
 .admin-integration-card p {
   font-size: 13px;
   line-height: 1.5;
@@ -907,35 +664,9 @@
   cursor: pointer;
 }
 
-.admin-integration-card--link:hover {
-  border-color: var(--iprm-accent);
-  box-shadow: 0 4px 16px var(--iprm-border);
-}
-
 /* Картка запланованої інтеграції */
 .admin-integration-card--planned {
   opacity: 0.7;
-}
-
-/* ========== BREADCRUMB ========== */
-
-.admin-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  margin-bottom: 16px;
-}
-
-.admin-breadcrumb__link {
-  color: var(--iprm-accent);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color var(--iprm-transition);
-}
-
-.admin-breadcrumb__link:hover {
-  color: var(--iprm-accent-hover);
 }
 
 .admin-breadcrumb__sep {
@@ -953,79 +684,8 @@
   padding: 0;
 }
 
-.admin-todo li {
-  position: relative;
-  padding: 8px 0 8px 24px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--iprm-text);
-  border-bottom: 1px solid var(--iprm-border);
-}
-
 .admin-todo li:last-child {
   border-bottom: none;
-}
-
-.admin-todo li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 14px;
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--iprm-border);
-  border-radius: 3px;
-}
-
-/* ========== PAGINATION ========== */
-
-.admin-pagination {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin-top: 24px;
-}
-
-.admin-pagination__info {
-  padding: 8px 16px;
-  font-size: 14px;
-  color: var(--iprm-text-light);
-}
-
-/* ========== STATS BAR (реєстрації) ========== */
-
-.admin-stats-bar {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-  font-size: 14px;
-  color: var(--iprm-text-light);
-}
-
-/* ========== IMAGE DROPZONE ========== */
-
-.admin-dropzone {
-  /* Токени для overlay-кнопки видалення */
-  --dropzone-overlay: rgba(0, 0, 0, 0.6);
-  --dropzone-remove-hover: rgba(239, 68, 68, 0.9);
-
-  position: relative;
-  border: 2px dashed var(--iprm-border);
-  border-radius: var(--iprm-radius);
-  background: var(--iprm-card-bg);
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
-  overflow: hidden;
-  min-height: 180px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.admin-dropzone:hover,
-.admin-dropzone--dragover {
-  border-color: var(--iprm-nav-active);
-  background: var(--iprm-accent-light);
 }
 
 .admin-dropzone--uploading {
@@ -1035,16 +695,6 @@
 
 .admin-dropzone__input {
   display: none;
-}
-
-.admin-dropzone__prompt {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 32px 16px;
-  text-align: center;
-  color: var(--iprm-text-light);
 }
 
 .admin-dropzone__prompt svg {
@@ -1060,12 +710,6 @@
 .admin-dropzone__prompt small {
   font-size: 12px;
   color: var(--iprm-text-light);
-}
-
-.admin-dropzone__link {
-  color: var(--iprm-nav-active);
-  font-weight: 500;
-  text-decoration: underline;
 }
 
 .admin-dropzone__preview {
@@ -1091,25 +735,6 @@
   display: none;
 }
 
-.admin-dropzone__remove {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: none;
-  background: var(--dropzone-overlay);
-  color: var(--iprm-on-accent);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-}
-
 .admin-dropzone__remove:hover {
   background: var(--dropzone-remove-hover);
 }
@@ -1129,30 +754,6 @@
 
 .admin-stat-cards--3 {
   grid-template-columns: repeat(3, 1fr);
-}
-
-.admin-stat-card {
-  background: var(--iprm-card-bg);
-  border-radius: var(--iprm-radius-sm);
-  padding: 16px;
-  text-align: center;
-  border: 1px solid var(--iprm-border);
-}
-
-.admin-stat-card__value {
-  display: block;
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--iprm-text);
-  line-height: 1.2;
-  margin-bottom: 4px;
-}
-
-.admin-stat-card__label {
-  font-size: 12px;
-  color: var(--iprm-text-light);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 /* Картка-посилання. Число над списком мусить вести на власний зріз: інакше
@@ -1250,16 +851,6 @@ a.admin-stat-card:focus-visible {
   font-weight: 700;
 }
 
-/* ========== PROGRAM BLOCKS (редагування заходу) ========== */
-
-.admin-program-block {
-  background: var(--iprm-white);
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm);
-  padding: 20px;
-  margin-bottom: 16px;
-}
-
 .admin-program-block__header {
   display: flex;
   gap: 8px;
@@ -1303,16 +894,7 @@ a.admin-stat-card:focus-visible {
     flex-direction: column;
   }
 
-  .admin-sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid var(--iprm-border);
-    padding: 12px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .admin-sidebar__nav {
+    .admin-sidebar__nav {
     position: static;
     display: flex;
     gap: 4px;
@@ -1355,13 +937,7 @@ a.admin-stat-card:focus-visible {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  /* Сайдбар і hero стають вертикальними вже з 1024px (див. вище). */
-
-  .admin-layout {
-    padding: 20px 16px;
-  }
-
-  .admin-form__grid {
+    .admin-form__grid {
     grid-template-columns: 1fr;
   }
 
@@ -1402,18 +978,7 @@ a.admin-stat-card:focus-visible {
     background: transparent;
   }
 
-  .admin-table td {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    text-align: right;
-    padding: 9px 0;
-    border-top: 0;
-    border-bottom: 1px solid var(--iprm-border);
-  }
-
-  /* перші колонки в десктоп-таблиці ліво-вирівняні -- у картці значення
+    /* перші колонки в десктоп-таблиці ліво-вирівняні -- у картці значення
      теж праворуч, для однорідності */
   .admin-table td:first-child,
   .admin-table td:nth-child(2) {
@@ -1423,7 +988,15 @@ a.admin-stat-card:focus-visible {
   /* Довге значення (назва заходу, email, ПІБ) переноситься під підпис і
      вирівнюється ліворуч, замість того щоб ламатись по слову у вузькій
      правій колонці. Підпис при цьому лишається на своєму рядку. */
-  .admin-table td {
+.admin-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    text-align: right;
+    padding: 9px 0;
+    border-top: 0;
+    border-bottom: 1px solid var(--iprm-border);
     flex-wrap: wrap;
   }
 
@@ -1431,11 +1004,7 @@ a.admin-stat-card:focus-visible {
     min-width: 0;
   }
 
-  .admin-table td::before {
-    flex: 0 0 auto;
-  }
-
-  .admin-table td:last-child {
+    .admin-table td:last-child {
     border-bottom: 0;
   }
 
@@ -1456,22 +1025,11 @@ a.admin-stat-card:focus-visible {
     content: '';
   }
 
-  .admin-table__actions {
-    justify-content: flex-end;
-  }
-
-  .admin-empty {
+    .admin-empty {
     padding: 40px 16px;
   }
 
-  /* Один ряд, а не стовпчик: панель тепер липка й на телефоні (див.
-     нижче), а стовпчик із трьох кнопок з'їдав би чверть екрана.
-     Кнопки ділять ряд порівну й переносяться лише коли їх забагато. */
-  .admin-form__actions {
-    flex-wrap: wrap;
-  }
-
-  .admin-form__actions .btn-admin {
+    .admin-form__actions .btn-admin {
     flex: 1 1 auto;
     justify-content: center;
     padding-inline: 12px;
@@ -1504,11 +1062,7 @@ a.admin-stat-card:focus-visible {
     grid-column: 1 / -1;
   }
 
-  .admin-layout {
-    padding: 16px 12px;
-  }
-
-  .admin-hero__title {
+    .admin-hero__title {
     font-size: 18px;
   }
 
@@ -1519,21 +1073,10 @@ a.admin-stat-card:focus-visible {
 }
 
 /* ==========================================================================
-   Тёмна тема: кольорові статуси (світлі тла -> напівпрозорі на тёмному)
-
-   Плиток підсумку імпорту й жовтої нотатки тут більше немає: після переходу
-   на токени --iprm-success-* / --iprm-info-* / --iprm-warning-* вони знають
-   тёмну тему самі, а ручні перекриття лишались би другим джерелом правди.
-   ========================================================================== */
-[data-theme="dark"] .btn-admin--success:hover {
-  background: rgba(52, 199, 89, 0.16);
-}
-
-
-/* ==========================================================================
-   Нижче -- колишній admin-apple.css. Межу лишено навмисно: правила під нею
-   перебивають однойменні над нею, і поки дублікати не зведені, порядок цих
-   двох частин має значення.
+   Нижче -- те, що раніше було окремим файлом admin-apple.css. Межу лишено
+   як орієнтир: однойменних правил по обидва боки вже немає, але порядок
+   між РІЗНИМИ селекторами однакової ваги досі має значення, і при перенесенні
+   правила через цю межу його треба перевіряти.
    ========================================================================== */
 
 /* Loaded AFTER admin.css, overrides legacy styles */
@@ -1557,12 +1100,9 @@ a.admin-stat-card:focus-visible {
 .admin-col-90 { width: 90px; }
 
 /* ========== SIDEBAR ========== */
-
 .admin-sidebar {
-  /* 260, а не 240: підпис у смузі не переносить рядок (інакше висота
-     пунктів стрибала б на пів анімації), тож найдовший з них --
-     «Онлайн-курси: замовлення», 163px -- має вміститись в один рядок.
-     У спокої панель усе одно 79px, тож ці 20px коштують дешево. */
+  flex-shrink: 0;
+  padding: 24px 0;
   width: 260px;
   background: var(--iprm-white);
   border-right: 1px solid var(--iprm-border);
@@ -1595,10 +1135,13 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-sidebar__group {
+  margin-bottom: 20px;
   padding: 0 12px;
 }
 
 .admin-sidebar__group-title {
+  padding: 0 12px;
+  margin-bottom: 6px;
   font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -1894,20 +1437,29 @@ a.admin-stat-card:focus-visible {
   }
 }
 
-/* ========== LAYOUT ========== */
+/* ========== CONTENT LAYOUT ========== */
 
+/* ========== LAYOUT ========== */
 .admin-layout {
+  flex: 1;
+  min-width: 0;
   padding: 40px 48px;
   background: var(--apple-section-bg);
 }
 
 /* ========== HERO ========== */
 
+/* ========== HERO ========== */
 .admin-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 40px;
 }
 
 .admin-hero__title {
+  line-height: 1.25;
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;
   letter-spacing: -0.03em;
@@ -1922,7 +1474,13 @@ a.admin-stat-card:focus-visible {
 
 /* ========== BUTTONS ========== */
 
+/* ========== BUTTONS ========== */
 .btn-admin {
+  font-family: var(--iprm-font);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1930,8 +1488,7 @@ a.admin-stat-card:focus-visible {
   border-radius: var(--iprm-radius-pill);
   font-weight: 500;
   font-size: 0.875rem;
-  transition:
-    transform 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
+  transition: transform 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
     box-shadow 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
     background-color 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
 }
@@ -1980,6 +1537,11 @@ a.admin-stat-card:focus-visible {
   background: var(--iprm-error-bg);
 }
 
+/* Колір ролі -- з токена. Літерал #34c759 (системний зелений iOS) як ТЕКСТ
+   на білому давав 2.22, тобто напис на кнопці читався гірше за будь-який
+   інший в адмінці; --iprm-success тієї ж ролі дає 5.28 і знає тёмну тему.
+   Копію цієї кнопки нижче в цьому файлі перевели раніше, ця лишалась. */
+
 /* Колір ролі лишається зеленим, але береться з токена: літерал #34c759 --
    це системний зелений iOS, і як ТЕКСТ на білому він дає 2.24, тобто напис
    на кнопці читався гірше за будь-який інший в адмінці. --iprm-success тієї
@@ -1991,6 +1553,7 @@ a.admin-stat-card:focus-visible {
 }
 
 .btn-admin--success:hover {
+  border-color: color-mix(in srgb, var(--iprm-success) 50%, transparent);
   background: #f0faf3;
 }
 
@@ -2308,6 +1871,13 @@ a.admin-stat-card:focus-visible {
 
 /* Checkbox */
 .admin-form .form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: border-color var(--iprm-transition);
   border-radius: var(--iprm-radius-sm);
   border: 1px solid var(--iprm-border);
   background: var(--apple-section-bg);
@@ -2323,9 +1893,14 @@ a.admin-stat-card:focus-visible {
   color: var(--apple-gray-dark);
 }
 
-/* ========== FORM ACTIONS (sticky bottom) ========== */
+/* ========== FORM ACTIONS ========== */
 
+/* ========== FORM ACTIONS (sticky bottom) ========== */
 .admin-form__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 8px;
   position: sticky;
   bottom: 0;
   background: linear-gradient(to top, var(--apple-section-bg) 60%, transparent);
@@ -2340,6 +1915,7 @@ a.admin-stat-card:focus-visible {
 
 /* ========== TABLE ========== */
 
+/* ========== TABLE ========== */
 .admin-table {
   width: 100%;
   border-collapse: collapse;
@@ -2349,7 +1925,12 @@ a.admin-stat-card:focus-visible {
   overflow: hidden;
 }
 
+/* Той самий токен, що й у другого оголошення `.admin-table th` нижче в
+   цьому файлі. Доти файлів було два, і розбіжність значень означала б, що
+   вигляд шапки залежить від того, чи підключено другий. */
 .admin-table th {
+  text-align: center;
+  text-transform: uppercase;
   background: var(--iprm-surface-inset);
   padding: 14px 16px;
   font-size: 0.6875rem;
@@ -2359,6 +1940,7 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-table td {
+  text-align: center;
   padding: 14px 16px;
   font-size: 0.875rem;
   border-top: 1px solid var(--iprm-divider);
@@ -2377,6 +1959,8 @@ a.admin-stat-card:focus-visible {
 /* Ряд кнопок у комірці «Дії»: одним рядком, без переносу -- інакше друга
    кнопка падає під першу й розганяє висоту всього рядка таблиці. */
 .admin-table__actions {
+  display: flex;
+  justify-content: flex-end;
   gap: 6px;
   flex-wrap: nowrap;
   align-items: center;
@@ -2529,7 +2113,10 @@ a.admin-stat-card:focus-visible {
 
 /* ========== EMPTY STATE ========== */
 
+/* ========== EMPTY STATE ========== */
 .admin-empty {
+  text-align: center;
+  color: var(--iprm-text-light);
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
@@ -2573,8 +2160,9 @@ a.admin-stat-card:focus-visible {
 }
 
 /* ========== STAT CARDS ========== */
-
 .admin-stat-card {
+  padding: 16px;
+  text-align: center;
   background: var(--iprm-white);
   border-radius: var(--iprm-radius-md);
   border: 1px solid var(--iprm-border);
@@ -2586,6 +2174,9 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-stat-card__value {
+  display: block;
+  line-height: 1.2;
+  margin-bottom: 4px;
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -2593,6 +2184,7 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-stat-card__label {
+  text-transform: uppercase;
   font-size: 0.6875rem;
   color: var(--apple-gray);
   letter-spacing: 0.06em;
@@ -2600,12 +2192,18 @@ a.admin-stat-card:focus-visible {
 
 /* ========== BREADCRUMB ========== */
 
+/* ========== BREADCRUMB ========== */
 .admin-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.8125rem;
   margin-bottom: 8px;
 }
 
 .admin-breadcrumb__link {
+  text-decoration: none;
+  transition: color var(--iprm-transition);
   color: var(--iprm-nav-active);
   font-weight: 500;
 }
@@ -2620,13 +2218,12 @@ a.admin-stat-card:focus-visible {
 }
 
 /* ========== INTEGRATION CARDS ========== */
-
 .admin-integration-card {
+  padding: 20px;
   background: var(--iprm-white);
   border-radius: var(--iprm-radius-md);
   border: 1px solid var(--iprm-border);
-  transition:
-    border-color 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
+  transition: border-color 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
     box-shadow 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
 }
 
@@ -2660,6 +2257,8 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-integration-card__title {
+  font-size: 14px;
+  font-weight: 600;
   color: var(--apple-black);
 }
 
@@ -2669,6 +2268,10 @@ a.admin-stat-card:focus-visible {
 
 /* Header картки: розсунути заголовок і statusbadge */
 .admin-integration-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--iprm-border);
@@ -2706,9 +2309,17 @@ a.admin-stat-card:focus-visible {
   white-space: nowrap;
 }
 
-/* ========== DROPZONE ========== */
+/* ========== IMAGE DROPZONE ========== */
 
+/* ========== DROPZONE ========== */
 .admin-dropzone {
+  --dropzone-overlay: rgba(0, 0, 0, 0.6);
+  --dropzone-remove-hover: rgba(239, 68, 68, 0.9);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 2px dashed var(--iprm-border);
   border-radius: var(--iprm-radius-md);
   background: var(--apple-section-bg);
@@ -2718,6 +2329,21 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-dropzone__remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--dropzone-overlay);
+  color: var(--iprm-on-accent);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0;
   transition: opacity 0.2s;
 }
@@ -2760,24 +2386,33 @@ a.admin-stat-card:focus-visible {
   object-fit: contain;
 }
 
-.admin-dropzone:hover,
-.admin-dropzone--dragover {
+.admin-dropzone:hover, .admin-dropzone--dragover {
   border-color: var(--iprm-nav-active);
   background: var(--iprm-accent-light);
 }
 
 .admin-dropzone__prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  text-align: center;
   color: var(--apple-gray);
 }
 
 .admin-dropzone__link {
+  text-decoration: underline;
   color: var(--iprm-nav-active);
   font-weight: 500;
 }
 
-/* ========== PROGRAM BLOCK ========== */
+/* ========== PROGRAM BLOCKS (редагування заходу) ========== */
 
+/* ========== PROGRAM BLOCK ========== */
 .admin-program-block {
+  padding: 20px;
+  margin-bottom: 16px;
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-sm);
@@ -2825,31 +2460,50 @@ a.admin-stat-card:focus-visible {
 }
 
 /* ========== TODO LIST ========== */
-
 .admin-todo li {
+  position: relative;
+  padding: 8px 0 8px 24px;
+  font-size: 14px;
+  line-height: 1.6;
   border-bottom: 1px solid var(--iprm-border);
   color: var(--apple-gray-dark);
 }
 
 .admin-todo li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  width: 12px;
+  height: 12px;
   border: 2px solid var(--iprm-border);
   border-radius: 4px;
 }
 
 /* ========== PAGINATION ========== */
 
+/* ========== PAGINATION ========== */
 .admin-pagination {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
   margin-top: 32px;
 }
 
 .admin-pagination__info {
+  padding: 8px 16px;
   font-size: 0.875rem;
   color: var(--apple-gray);
 }
 
-/* ========== FILTER BAR ========== */
+/* ========== STATS BAR (реєстрації) ========== */
 
+/* ========== FILTER BAR ========== */
 .admin-stats-bar {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+  color: var(--iprm-text-light);
   margin-bottom: 24px;
 }
 
@@ -2896,7 +2550,9 @@ a.admin-stat-card:focus-visible {
   /* Планшети (вкл. портрет 768-1024px): сайдбар стає горизонтальною стрічкою
      зверху, а не високою боковою колонкою -- інакше контент затиснутий і
      широкі таблиці обрізаються. Горизонтальне розкладання nav -- в admin.css. */
-  .admin-sidebar {
+.admin-sidebar {
+    padding: 12px 0;
+    -webkit-overflow-scrolling: touch;
     width: 100%;
     position: static;
     height: auto;
@@ -2914,16 +2570,22 @@ a.admin-stat-card:focus-visible {
 }
 
 @media (max-width: 768px) {
-  .admin-layout {
+  /* Сайдбар і hero стають вертикальними вже з 1024px (див. вище). */
+.admin-layout {
     padding: 24px 16px;
   }
 
-  /* Липка панель лишається липкою і на телефоні. Раніше тут стояло
+  /* Один ряд, а не стовпчик: панель тепер липка й на телефоні (див.
+     нижче), а стовпчик із трьох кнопок з'їдав би чверть екрана.
+     Кнопки ділять ряд порівну й переносяться лише коли їх забагато. */
+
+/* Липка панель лишається липкою і на телефоні. Раніше тут стояло
      `position: static` -- і на «Налаштуваннях сайту» до кнопки «Зберегти»
      доводилось прогортати 7743px, тобто десяток екранів, після зміни
      одного прапорця. Градієнт на вузькому екрані не годиться (під ним
      видно текст, що проїжджає), тому суцільний фон і межа. */
-  .admin-form__actions {
+.admin-form__actions {
+    flex-wrap: wrap;
     background: var(--apple-section-bg);
     border-top: 1px solid var(--iprm-border);
     padding: 12px 0;
@@ -3093,6 +2755,14 @@ a.admin-stat-card:focus-visible {
 .admin-layout--stack > .admin-stat-cards {
   margin-bottom: 0;
 }
+
+/* ==========================================================================
+   Тёмна тема: кольорові статуси (світлі тла -> напівпрозорі на тёмному)
+
+   Плиток підсумку імпорту й жовтої нотатки тут більше немає: після переходу
+   на токени --iprm-success-* / --iprm-info-* / --iprm-warning-* вони знають
+   тёмну тему самі, а ручні перекриття лишались би другим джерелом правди.
+   ========================================================================== */
 
 /* ==========================================================================
    Тёмна тема: кольорові статуси інлайн-селектів і кнопок
@@ -3431,6 +3101,7 @@ a.admin-stat-card:focus-visible {
   }
 
   .admin-table__actions {
+    justify-content: flex-end;
     flex-wrap: wrap;
   }
 }
