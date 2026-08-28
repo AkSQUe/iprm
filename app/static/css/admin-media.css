@@ -63,7 +63,7 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 /* --apple-gray-light -- рівень ліній, як текст він давав 1.38: плейсхолдер
-   бере --apple-gray, як і решта полів адмінки (див. admin-apple.css). */
+   бере --apple-gray, як і решта полів адмінки (див. admin.css). */
 .media-card__alt::placeholder { color: var(--apple-gray); }
 .media-card__alt:focus {
   border-color: var(--iprm-nav-active);

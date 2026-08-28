@@ -1,5 +1,5 @@
 /* Shared image-dropzone handler for admin forms.
-   Requires markup per .admin-dropzone convention (see admin-apple.css).
+   Requires markup per .admin-dropzone convention (see admin.css).
    Caller must provide: upload endpoint URL, slug source function. */
 (function() {
   /* Сповіщення через toast-систему сайту (window.iprmToast), а не нативний
