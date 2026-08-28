@@ -106,3 +106,42 @@
 .recipients-rule__test-form {
   display: inline-block;
 }
+
+/* ========== Таблиці листів (/admin/notifications і /notifications/log) ==========
+
+   Обидві сторінки показують той самий журнал, тому ширини живуть в одному
+   файлі. Доти розкрій роздавав вміст, а тему підрізав сам шаблон -- рівно
+   50 символів, наосліп: на широкому екрані місця вистачало ще на пів теми,
+   на вузькому обрізок усе одно не вміщався. Тепер обрізає розкрій
+   (`.admin-truncate` потребує визначеної ширини комірки), повний текст
+   лишається в title. */
+
+@media (min-width: 769px) {
+  /* Журнал: сім колонок. 1060px, а не спільні 1120 із .admin-table--wide --
+     ті 1120 не вміщались у картку навіть на 1440 (сайдбар 240 + падінги
+     лишають 1088), і реєстр прокручувався вбік на найширшому екрані. */
+  .admin-maillog-table {
+    min-width: 1060px;
+  }
+
+  .admin-maillog-col--to { width: 16%; }
+  .admin-maillog-col--subject { width: 24%; }
+  .admin-maillog-col--template { width: 15%; }
+  .admin-maillog-col--trigger { width: 14%; }
+  .admin-maillog-col--status { width: 12%; }
+  .admin-maillog-col--date { width: 11%; }
+  .admin-maillog-col--actions { width: 8%; }
+
+  /* Картка «останні листи»: колонки шаблону немає, дата коротка (без року),
+     тож 900px вистачає. */
+  .admin-mailrecent-table {
+    min-width: 900px;
+  }
+
+  .admin-mailrecent-col--to { width: 20%; }
+  .admin-mailrecent-col--subject { width: 28%; }
+  .admin-mailrecent-col--trigger { width: 16%; }
+  .admin-mailrecent-col--status { width: 14%; }
+  .admin-mailrecent-col--date { width: 12%; }
+  .admin-mailrecent-col--actions { width: 10%; }
+}

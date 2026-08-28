@@ -348,6 +348,33 @@ class TranslationChange:
     error: str | None = None
     warning: str | None = None
 
+    # Підпис і модифікатор `.badge--*` на кожну дію. Раніше це був
+    # п'ятигілковий тернарник у розмітці -- тобто перелік дій жив у двох
+    # місцях, і шоста дія з'явилась би на екрані плашкою «Помилка».
+    ACTION_LABELS = {
+        'add': 'Додати',
+        'update': 'Оновити',
+        'unchanged': 'Без змін',
+        'conflict': 'Конфлікт',
+        'error': 'Помилка',
+    }
+    ACTION_BADGES = {
+        'add': 'active',
+        'update': 'published',
+        'unchanged': 'draft',
+        'conflict': 'cancelled',
+        'error': 'cancelled',
+    }
+
+    @property
+    def action_label(self):
+        return self.ACTION_LABELS.get(self.action, self.action)
+
+    @property
+    def action_badge(self):
+        """Модифікатор `.badge--*` під дію (див. ACTION_BADGES)."""
+        return self.ACTION_BADGES.get(self.action, 'draft')
+
 
 @dataclass
 class TranslationsImportPlan:

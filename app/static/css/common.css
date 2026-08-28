@@ -1949,9 +1949,17 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   margin-top: 4px;
 }
 
-.form-section .form-error {
+/* Помилка поля -- скрізь, а не лише в картці форми. Селектор був
+   `.form-section .form-error`, а другий, безумовний, лежав в auth.css,
+   якого адмінка не підключає. Тому в прев'ю імпорту перекладів, де
+   таблиця стоїть без картки, текст помилки друкувався звичайним чорним --
+   рядок із проблемою виглядав так само, як рядок без неї. */
+.form-error {
   font-size: 12px;
-  color: var(--iprm-error);
+  /* --iprm-error-text, не --iprm-error: другий дає на білому 3.76, нижче
+     порога 4.5 для тексту (у тёмній темі обидва токени однакові). Саме
+     для цього крок --iprm-error-text і заведено -- див. його коментар. */
+  color: var(--iprm-error-text);
   margin-top: 4px;
 }
 

@@ -222,12 +222,6 @@
 }
 
 /* Errors */
-.form-error {
-  font-size: 0.8rem;
-  color: var(--iprm-error);
-  margin-top: 4px;
-}
-
 /* Submit button */
 .btn-auth {
   width: 100%;

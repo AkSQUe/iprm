@@ -79,16 +79,12 @@
               <div class="admin-text-muted">/{{ post.slug }}</div>
             </td>
             <td>
-              {% if post.status == 'published' %}
-              <span class="admin-badge admin-badge--success">Опубліковано</span>
-              {% else %}
-              <span class="admin-badge">Чернетка</span>
-              {% endif %}
+              <span class="badge badge--{{ post.status_badge }}">{{ post.status_label }}</span>
             </td>
             <td>{{ post.published_at.strftime('%d.%m.%Y') if post.published_at else '—' }}</td>
             <td>
               {% if pending_counts.get(post.id) %}
-              <span class="admin-badge admin-badge--warning">{{ pending_counts.get(post.id) }} на модерації</span>
+              <span class="badge badge--pending">{{ pending_counts.get(post.id) }} на модерації</span>
               {% else %}
               <span class="admin-text-muted">—</span>
               {% endif %}

@@ -17,6 +17,16 @@ class BlogPost(TranslatableMixin, TimestampMixin, db.Model):
     STATUS_PUBLISHED = 'published'
     STATUSES = (STATUS_DRAFT, STATUS_PUBLISHED)
 
+    # Див. коментар у BlogComment: та сама вада, той самий спосіб.
+    STATUS_LABELS = {
+        STATUS_DRAFT: 'Чернетка',
+        STATUS_PUBLISHED: 'Опубліковано',
+    }
+    STATUS_BADGES = {
+        STATUS_DRAFT: 'draft',
+        STATUS_PUBLISHED: 'active',
+    }
+
     id = db.Column(BigIntPK, primary_key=True)
     slug = db.Column(db.String(200), unique=True, nullable=False, index=True)
     title = db.Column(db.String(255), nullable=False)
@@ -65,6 +75,15 @@ class BlogPost(TranslatableMixin, TimestampMixin, db.Model):
         # Лістинг опублікованих за датою (DESC сортуємо у запиті).
         db.Index('ix_blog_posts_status_published', 'status', 'published_at'),
     )
+
+    @property
+    def status_label(self):
+        return self.STATUS_LABELS.get(self.status, self.status)
+
+    @property
+    def status_badge(self):
+        """Модифікатор `.badge--*` під поточний стан (див. STATUS_BADGES)."""
+        return self.STATUS_BADGES.get(self.status, 'draft')
 
     @property
     def is_published(self):

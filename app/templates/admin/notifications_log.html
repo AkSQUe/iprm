@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-notifications.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state %}
@@ -47,7 +48,16 @@
   <!-- Log table -->
   {% if logs %}
   <div class="admin-table-wrap">
-    <table class="admin-table admin-table--wide">
+    <table class="admin-table admin-table--fixed admin-maillog-table">
+      <colgroup>
+        <col class="admin-maillog-col--to">
+        <col class="admin-maillog-col--subject">
+        <col class="admin-maillog-col--template">
+        <col class="admin-maillog-col--trigger">
+        <col class="admin-maillog-col--status">
+        <col class="admin-maillog-col--date">
+        <col class="admin-maillog-col--actions">
+      </colgroup>
       <thead>
         <tr>
           <th>Кому</th>
@@ -62,18 +72,20 @@
       <tbody>
         {% for log in logs %}
         <tr>
-          <td>{{ log.to_email }}</td>
-          <td>{{ log.subject[:50] }}{% if log.subject|length > 50 %}...{% endif %}</td>
-          <td><code class="admin-code">{{ log.template_name }}</code></td>
+          <td><span class="admin-truncate" title="{{ log.to_email }}">{{ log.to_email }}</span></td>
+          {# Обрізає розкрій, а не шаблон: 50 символів різались наосліп -- на
+             широкому екрані місця вистачало ще на пів теми, на вузькому
+             обрізок усе одно не вміщався. Повна тема -- в title. #}
+          <td><span class="admin-truncate" title="{{ log.subject }}">{{ log.subject }}</span></td>
+          {# Плашка в один рядок: перенос усередині неї читається гірше за
+             трикрапку, а повне ім'я є в title. #}
+          <td><span class="admin-truncate" title="{{ log.template_name }}"><code class="admin-code">{{ log.template_name }}</code></span></td>
           <td><span class="badge badge--draft">{{ log.trigger_label }}</span></td>
           <td>
-            {% if log.status == 'sent' %}
-            <span class="badge badge--success">{{ log.status_label }}</span>
-            {% elif log.status == 'failed' %}
-            <span class="badge badge--danger" title="{{ log.error_message or '' }}">{{ log.status_label }}{% if log.retry_count > 0 %} ({{ log.retry_count }}x){% endif %}</span>
-            {% else %}
-            <span class="badge badge--warning">{{ log.status_label }}</span>
-            {% endif %}
+            <span class="badge badge--{{ log.status_badge }}"
+                  {% if log.error_message %}title="{{ log.error_message }}"{% endif %}>
+              {{ log.status_label }}{% if log.retry_count %} ({{ log.retry_count }}x){% endif %}
+            </span>
           </td>
           <td>{{ (log.sent_at or log.created_at).strftime('%d.%m.%Y %H:%M') if (log.sent_at or log.created_at) else '' }}</td>
           <td>
@@ -81,7 +93,8 @@
             <form method="POST" action="{{ url_for('admin.notifications_log_resend', log_id=log.id) }}"
                   data-confirm="Переслати лист #{{ log.id }} на {{ log.to_email }}?" data-confirm-ok="Переслати">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Переслати</button>
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+                      title="Переслати" aria-label="Переслати лист">{{ icon('forward_to_inbox') }}</button>
             </form>
             {% else %}
             <span class="admin-text-muted">–</span>

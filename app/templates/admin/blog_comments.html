@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-blog-comments.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
@@ -46,9 +47,17 @@
 
       {% if comments %}
       <div class="admin-table-wrap">
-      <table class="admin-table">
+      <table class="admin-table admin-table--fixed admin-comments-table">
+        <colgroup>
+          <col class="admin-comments-col--author">
+          <col class="admin-comments-col--body">
+          <col class="admin-comments-col--post">
+          <col class="admin-comments-col--date">
+          <col class="admin-comments-col--status">
+          <col class="admin-comments-col--actions">
+        </colgroup>
         <thead>
-          <tr><th>Автор</th><th>Коментар</th><th>Допис</th><th>Дата</th><th>Статус</th><th></th></tr>
+          <tr><th>Автор</th><th>Коментар</th><th>Допис</th><th>Дата</th><th>Статус</th><th>Дії</th></tr>
         </thead>
         <tbody>
           {% for c in comments %}
@@ -58,35 +67,42 @@
               {% if c.email %}<div class="admin-text-muted">{{ c.email }}</div>{% endif %}
               {% if c.parent_id %}<div class="admin-text-muted">↳ відповідь</div>{% endif %}
             </td>
-            <td class="admin-input-narrow">{{ c.body }}</td>
+            {# Два рядки з трикрапкою, повний текст -- у title: модерувати
+               треба саме за текстом, і рядок, розігнаний довгим коментарем
+               на пів екрана, читати нічим не краще, ніж обрізаний. #}
+            <td><span class="admin-clamp-2" title="{{ c.body }}">{{ c.body }}</span></td>
             <td>
               {% if c.post %}<a href="{{ url_for('admin.blog_edit', post_id=c.post_id) }}">{{ c.post.title }}</a>{% else %}—{% endif %}
             </td>
             <td>{{ c.created_at.strftime('%d.%m.%Y %H:%M') if c.created_at else '—' }}</td>
             <td>
-              {% if c.status == 'approved' %}<span class="admin-badge admin-badge--success">Схвалено</span>
-              {% elif c.status == 'spam' %}<span class="admin-badge admin-badge--danger">Спам</span>
-              {% else %}<span class="admin-badge admin-badge--warning">На модерації</span>{% endif %}
+              <span class="badge badge--{{ c.status_badge }}">{{ c.status_label }}</span>
             </td>
             <td class="admin-table__actions">
               {% if c.status != 'approved' %}
               <form method="POST" action="{{ url_for('admin.blog_comment_approve', comment_id=c.id) }}" class="admin-inline-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="status" value="{{ status }}">
-                <button type="submit" class="btn-admin btn-admin--success btn-admin--sm">Схвалити</button>
+                <button type="submit" class="btn-admin btn-admin--success btn-admin--sm btn-admin--icon"
+                        title="Схвалити" aria-label="Схвалити коментар">{{ icon('check') }}</button>
               </form>
               {% endif %}
               {% if c.status != 'spam' %}
               <form method="POST" action="{{ url_for('admin.blog_comment_spam', comment_id=c.id) }}" class="admin-inline-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="status" value="{{ status }}">
-                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Спам</button>
+                <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
+                        title="Спам" aria-label="Позначити спамом">{{ icon('block') }}</button>
               </form>
               {% endif %}
-              <form method="POST" action="{{ url_for('admin.blog_comment_delete', comment_id=c.id) }}" class="admin-inline-form">
+              {# Питаємо підтвердження: кнопка стала іконкою, а видалення
+                 незворотне -- напис «Видалити» більше не попереджає сам. #}
+              <form method="POST" action="{{ url_for('admin.blog_comment_delete', comment_id=c.id) }}" class="admin-inline-form"
+                    data-confirm="Видалити коментар від {{ c.author_name }}?" data-confirm-ok="Видалити" data-confirm-danger>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="status" value="{{ status }}">
-                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити</button>
+                <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm btn-admin--icon"
+                        title="Видалити" aria-label="Видалити коментар">{{ icon('delete') }}</button>
               </form>
             </td>
           </tr>

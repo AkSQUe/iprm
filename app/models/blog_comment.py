@@ -16,6 +16,21 @@ class BlogComment(TimestampMixin, SoftDeleteMixin, db.Model):
     STATUS_SPAM = 'spam'
     STATUSES = (STATUS_PENDING, STATUS_APPROVED, STATUS_SPAM)
 
+    # Підпис і модифікатор `.badge--*` на кожен стан. Тримається тут, а не
+    # тернарником у розмітці: там він писав `admin-badge--success`, класу
+    # з таким іменем у системі немає взагалі, і плашка виходила голим
+    # текстом -- у реєстрі коментарів колонка «Статус» була просто словом.
+    STATUS_LABELS = {
+        STATUS_PENDING: 'На модерації',
+        STATUS_APPROVED: 'Схвалено',
+        STATUS_SPAM: 'Спам',
+    }
+    STATUS_BADGES = {
+        STATUS_PENDING: 'pending',
+        STATUS_APPROVED: 'active',
+        STATUS_SPAM: 'cancelled',
+    }
+
     # Максимальна глибина вкладеності гілок (0 -- кореневий коментар).
     MAX_DEPTH = 3
 
@@ -61,6 +76,15 @@ class BlogComment(TimestampMixin, SoftDeleteMixin, db.Model):
         ),
         db.Index('ix_blog_comments_post_status', 'post_id', 'status'),
     )
+
+    @property
+    def status_label(self):
+        return self.STATUS_LABELS.get(self.status, self.status)
+
+    @property
+    def status_badge(self):
+        """Модифікатор `.badge--*` під поточний стан (див. STATUS_BADGES)."""
+        return self.STATUS_BADGES.get(self.status, 'draft')
 
     @property
     def is_approved(self):

@@ -194,7 +194,7 @@
       <ul class="perf-details__list">
         {% for res in worst.heaviest %}
         <li class="perf-details__row">
-          <span class="perf-details__name" title="{{ res.name }}">{{ res.name.split('/')[-1][:48] }}</span>
+          <span class="perf-details__name admin-truncate" title="{{ res.name }}">{{ res.name.split('/')[-1] }}</span>
           <span class="perf-details__value">{{ kb(res.transfer) }} / {{ res.dur }}мс</span>
         </li>
         {% else %}
@@ -209,7 +209,7 @@
       <ul class="perf-details__list">
         {% for res in worst.uncompressed %}
         <li class="perf-details__row">
-          <span class="perf-details__name" title="{{ res.name }}">{{ res.name.split('/')[-1][:48] }}</span>
+          <span class="perf-details__name admin-truncate" title="{{ res.name }}">{{ res.name.split('/')[-1] }}</span>
           <span class="perf-details__value">{{ kb(res.transfer) }}</span>
         </li>
         {% endfor %}

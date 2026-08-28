@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-apple.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-xlsx-preview.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
@@ -92,10 +93,20 @@
 
   {% if plan.changes %}
   <div class="admin-table-wrap">
-  <table class="admin-table">
+  <table class="admin-table admin-table--fixed admin-xlsxtr-table">
+    <colgroup>
+      <col class="admin-xlsxtr-col--action">
+      <col class="admin-xlsxtr-col--line">
+      <col class="admin-xlsxtr-col--object">
+      <col class="admin-xlsxtr-col--field">
+      <col class="admin-xlsxtr-col--lang">
+      <col class="admin-xlsxtr-col--value">
+      <col class="admin-xlsxtr-col--value">
+      <col class="admin-xlsxtr-col--warning">
+    </colgroup>
     <thead>
       <tr>
-        <th class="admin-col-90">Дія</th>
+        <th>Дія</th>
         <th>Рядок</th>
         <th>Об'єкт</th>
         <th>Поле</th>
@@ -108,30 +119,24 @@
     <tbody>
       {% for ch in plan.changes %}
       <tr>
-        <td>
-          {% if ch.action == 'add' %}<span class="badge badge--success">Додати</span>
-          {% elif ch.action == 'update' %}<span class="badge badge--published">Оновити</span>
-          {% elif ch.action == 'unchanged' %}<span class="badge badge--draft">Без змін</span>
-          {% elif ch.action == 'conflict' %}<span class="badge badge--cancelled">Конфлікт</span>
-          {% else %}<span class="badge badge--cancelled">Помилка</span>{% endif %}
-        </td>
+        <td><span class="badge badge--{{ ch.action_badge }}">{{ ch.action_label }}</span></td>
         <td><small class="admin-text-muted">{{ ch.sheet }}:{{ ch.line_no }}</small></td>
         <td>{{ ch.object_label or '—' }}</td>
         <td>{{ ch.field_label or '—' }}</td>
         <td>{{ ch.lang | upper if ch.lang else '—' }}</td>
         <td>
           {% if ch.action in ('conflict', 'error') %}
-          <span class="form-error">{{ ch.error }}</span>
-          {% elif ch.old %}{{ ch.old[:120] }}{% if ch.old | length > 120 %}…{% endif %}
+          <span class="form-error admin-clamp-2" title="{{ ch.error }}">{{ ch.error }}</span>
+          {% elif ch.old %}<span class="admin-clamp-2" title="{{ ch.old }}">{{ ch.old }}</span>
           {% else %}—{% endif %}
         </td>
         <td>
           {% if ch.action == 'conflict' %}
-          <small class="admin-text-muted">у файлі: {{ ch.new[:80] }}{% if ch.new | length > 80 %}…{% endif %}</small>
-          {% elif ch.new %}{{ ch.new[:120] }}{% if ch.new | length > 120 %}…{% endif %}
+          <small class="admin-text-muted admin-clamp-2" title="{{ ch.new }}">у файлі: {{ ch.new }}</small>
+          {% elif ch.new %}<span class="admin-clamp-2" title="{{ ch.new }}">{{ ch.new }}</span>
           {% else %}—{% endif %}
         </td>
-        <td>{% if ch.warning %}<span class="badge badge--draft" title="{{ ch.warning }}">{{ ch.warning }}</span>{% else %}—{% endif %}</td>
+        <td>{% if ch.warning %}<span class="badge badge--warning" title="{{ ch.warning }}">{{ ch.warning }}</span>{% else %}—{% endif %}</td>
       </tr>
       {% endfor %}
     </tbody>

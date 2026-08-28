@@ -442,7 +442,12 @@
   border-radius: var(--iprm-radius-sm);
   background: var(--iprm-surface-inset);
   font-size: 0.9em;
-  white-space: nowrap;
+  /* Не `white-space: nowrap`: у фіксованому розкрої таблиці нерозривна
+     вставка не дає комірці стиснутись і просто вилазить на сусідню --
+     ім'я шаблону `registration_confirmed.html` у журналі листів налазило
+     на плашку тригера. `anywhere` ламає рядок ЛИШЕ коли інакше не влізе,
+     тож короткі ключі й слаги лишаються цілими, як і доти. */
+  overflow-wrap: anywhere;
 }
 
 /* Copy error button (inline in table) */

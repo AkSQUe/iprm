@@ -73,6 +73,15 @@ class EmailLog(TimestampMixin, db.Model):
         ('failed', 'Помилка'),
     ]
 
+    # Модифікатор `.badge--*` на кожен стан. Раніше стан розкладався
+    # тернарником у розмітці, причому по-різному на двох сторінках: журнал
+    # писав success/danger/warning, картка сповіщень -- те саме ще раз.
+    STATUS_BADGES = {
+        'pending': 'pending',
+        'sent': 'active',
+        'failed': 'cancelled',
+    }
+
     TRIGGERS = [
         ('registration', 'Реєстрація'),
         ('payment', 'Оплата'),
@@ -109,6 +118,11 @@ class EmailLog(TimestampMixin, db.Model):
     @property
     def status_label(self):
         return dict(self.STATUSES).get(self.status, self.status)
+
+    @property
+    def status_badge(self):
+        """Модифікатор `.badge--*` під поточний стан (див. STATUS_BADGES)."""
+        return self.STATUS_BADGES.get(self.status, 'draft')
 
     @property
     def trigger_label(self):
