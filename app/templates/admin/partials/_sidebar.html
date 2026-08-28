@@ -159,6 +159,10 @@
         {{ icon('bolt') }}
         <span class="admin-sidebar__text">Швидкість сторінок</span>
       </a>
+      <a href="{{ url_for('admin.design_system') }}" class="admin-sidebar__link{% if ep == 'admin.design_system' %} admin-sidebar__link--active{% endif %}">
+        {{ icon('palette') }}
+        <span class="admin-sidebar__text">Дизайн-система</span>
+      </a>
       <a href="{{ url_for('admin.settings') }}" class="admin-sidebar__link{% if ep == 'admin.settings' %} admin-sidebar__link--active{% endif %}">
         {{ icon('settings') }}
         <span class="admin-sidebar__text">Налаштування</span>

@@ -232,7 +232,9 @@ def unsubscribe(token):
 
 @main_bp.route('/design-system', localize=False)
 def design_system():
-    return render_template('design_system/index.html')
+    """Каталог переїхав в адмінку. Редирект -- щоб не ламались закладки
+    й посилання в docs/; сам каталог тепер під admin_required."""
+    return redirect(url_for('admin.design_system'), code=301)
 
 
 @main_bp.route('/set-lang/<lang>', localize=False)

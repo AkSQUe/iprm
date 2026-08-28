@@ -71,6 +71,7 @@ ICON_CODEPOINTS = {
     'notifications': 0xe7f5,
     'open_in_new': 0xe89e,
     'outgoing_mail': 0xf0d2,
+    'palette': 0xe40a,
     'perm_media': 0xe8a7,
     'person_add': 0xea4d,
     'person_off': 0xe510,
