@@ -8,9 +8,9 @@
 {% block og_image %}{% if course.card_src %}{{ request.url_root.rstrip('/') ~ course.card_src }}{% else %}{{ super() }}{% endif %}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/courses.css') }}?v={{ assets_version }}">
 {# Компоненти, спільні зі сторінкою онлайн-курсу. Підключати ПІСЛЯ
-   page-courses.css: там лишились специфічні для офлайну переозначення. #}
+   courses.css: там лишились специфічні для офлайну переозначення. #}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/course-landing.css') }}?v={{ assets_version }}">
 {% if gallery %}<link rel="stylesheet" href="{{ url_for('static', filename='css/lightbox.css') }}?v={{ assets_version }}">{% endif %}
 {% if rec_courses %}<link rel="stylesheet" href="{{ url_for('static', filename='css/course-recommend.css') }}?v={{ assets_version }}">{% endif %}

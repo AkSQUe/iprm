@@ -5,7 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-error-logs.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-error-logs.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards, empty_state  %}
@@ -53,7 +53,7 @@
 
   {% if logs %}
   <div class="admin-table-wrap">
-    {# Ширини колонок задані явно (admin-error-logs.css). Без них колонка URL
+    {# Ширини колонок задані явно (page-admin-error-logs.css). Без них колонка URL
        забирала 421px і ховала за прокруткою решту рядка. #}
     <table class="admin-table admin-table--fixed admin-errors-table">
       <colgroup>

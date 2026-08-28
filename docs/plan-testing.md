@@ -138,7 +138,7 @@
   доданий у `PRIVATE_HTML_BLUEPRINTS`; вісім маршрутів -- див.
   [docs/routes.md](routes.md);
 * шаблони `quiz/start.html`, `question.html`, `review.html`, `result.html`,
-  `done.html` + `static/css/page-quiz.css`. Власного JS немає: потік працює на
+  `done.html` + `static/css/quiz.css`. Власного JS немає: потік працює на
   звичайних формах, тобто й без JS;
 * вхід із кабінету -- кнопка в картці кожної реєстрації за станом
   `eligibility()`; `quiz_states` рахується у роуті, а не в Jinja (там запити
@@ -661,7 +661,7 @@ extract_questions_from_form(form) / save_questions_for_quiz(quiz, data)
   перекласти ru/en, закомітити `.po` (`.mo` компілюється на деплої).
 - Публічні JS-рядки (таймер, підтвердження) — у `app/js_strings.py`, читати
   через `window.iprmI18n.t()`.
-- CSS `static/css/page-quiz.css` + `static/css/admin-quiz.css`; лише
+- CSS `static/css/quiz.css` + `static/css/admin-quiz.css`; лише
   `var(--iprm-*)`-токени, без хардкоду кольорів — тоді тёмна тема працює сама.
   Текст на акцентному фоні — `--iprm-on-accent`, не `--iprm-white`.
 - Кожен ассет підключати з `?v={{ assets_version }}`.

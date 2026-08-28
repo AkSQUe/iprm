@@ -5,7 +5,7 @@
 {% block og_image %}{% if trainer.photo_full %}{{ request.url_root.rstrip('/') ~ trainer.photo_full }}{% else %}{{ super() }}{% endif %}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/trainers.css') }}?v={{ assets_version }}">
 {# Регалії відкриваються в лайтбоксі. Раніше тут підключався весь blog.css --
    типографіка допису, коментарі, теги -- заради двадцяти рядків оверлея. #}
 {% if trainer.certificates or (trainer.patents and trainer.patents | selectattr('image') | list) %}

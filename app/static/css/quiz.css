@@ -461,7 +461,7 @@
 }
 
 /* Смуга прогресу і підсвітка обраного варіанта -- єдина анімація в потоці.
-   Патерн той самий, що в page-account.css і auth.css. */
+   Патерн той самий, що в account.css і auth.css. */
 @media (prefers-reduced-motion: reduce) {
   .quiz-progress__fill,
   .quiz-option {

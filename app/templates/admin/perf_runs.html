@@ -5,8 +5,8 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-integration.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-perf.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-integration.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-perf.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import pager, empty_state  %}
@@ -62,7 +62,7 @@
 
   {% if runs %}
   <div class="admin-table-wrap">
-    {# Ширини колонок задані явно (page-admin-perf.css). З .admin-table--wide
+    {# Ширини колонок задані явно (admin-perf.css). З .admin-table--wide
        таблиця просила 1120px там, де на 1440 доступно 1078: колонка дій
        обрізалась контейнером прокрутки. #}
     <table class="admin-table admin-table--fixed admin-perf-table">

@@ -14,7 +14,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-design-system.css') }}?v={{ assets_version }}">
 
 {# Порядок нижче навмисний: виграє клас з файлу, підключеного останнім, тож
    каскад іде від основи до найвужчого. Спершу спільні компоненти адмінки
@@ -31,15 +31,15 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-media.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-meta-leads.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-quiz.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-integration.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-notifications.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-perf.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-integration.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-notifications.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-perf.css') }}?v={{ assets_version }}">
 
 {# Спільні компоненти сайту (2+ споживачі поза адмінкою). #}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/course-recommend.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/form-progress.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/lightbox.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-account.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/password-strength.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/referral-share.css') }}?v={{ assets_version }}">
 
@@ -48,12 +48,12 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-clinics.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-trainers.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-courses.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-quiz.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-courses.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-course.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/clinics.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/trainers.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/courses.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/quiz.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/online-courses.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/online-course.css') }}?v={{ assets_version }}">
 {# apple-pages.css -- залежність course-landing.css (обидва скоуплені на
    .apple-page); лишаються останніми в блоці, як і раніше. #}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/apple-pages.css') }}?v={{ assets_version }}">

@@ -454,7 +454,7 @@ DRY, щоб редактор блоків в адмінці й партіал ш
 ### Трек C -- дизайн-система: CSS-компоненти
 
 Файли: **новий** `app/static/css/course-landing.css` (спільний для очної й
-онлайн-сторінок), `app/static/css/design-system.css`,
+онлайн-сторінок), `app/static/css/page-admin-design-system.css`,
 `app/templates/design_system/_content.html`.
 
 Чому окремий файл: `page-courses.css` уже 2055 рядків, а компоненти потрібні
@@ -525,7 +525,7 @@ entity_id=course.id, usage_type='gallery', is_active=True).order_by(sort_order)`
 ### Трек E -- шаблон онлайн-курсу
 
 Файли: `app/templates/online/detail.html`, `app/online/routes.py`,
-`app/static/css/page-online-course.css`.
+`app/static/css/online-course.css`.
 
 Роботи: перебудувати сторінку зі 147 рядків на структуру з партіалів треку D;
 підключити `course-landing.css`; блок купівлі (`iprm-online-buy`) переверстати

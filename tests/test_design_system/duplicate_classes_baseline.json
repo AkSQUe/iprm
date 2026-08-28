@@ -4,20 +4,20 @@
     "admin.css"
   ],
   "admin-queue-alert": [
-    "admin.css",
-    "page-admin-notifications.css"
+    "admin-notifications.css",
+    "admin.css"
   ],
   "admin-queue-alert--error": [
-    "admin.css",
-    "page-admin-notifications.css"
+    "admin-notifications.css",
+    "admin.css"
   ],
   "admin-queue-alert--warning": [
-    "admin.css",
-    "page-admin-notifications.css"
+    "admin-notifications.css",
+    "admin.css"
   ],
   "admin-queue-alert__title--error": [
-    "admin.css",
-    "page-admin-notifications.css"
+    "admin-notifications.css",
+    "admin.css"
   ],
   "alert": [
     "admin.css",
@@ -31,10 +31,10 @@
     "apple-pages.css",
     "common.css",
     "course-landing.css",
+    "courses.css",
+    "online-course.css",
     "page-contact.css",
-    "page-courses.css",
-    "page-online-course.css",
-    "page-quiz.css"
+    "quiz.css"
   ],
   "apple-btn--arrow": [
     "apple-pages.css",
@@ -51,7 +51,7 @@
   "apple-btn--primary": [
     "apple-pages.css",
     "common.css",
-    "page-quiz.css"
+    "quiz.css"
   ],
   "apple-btn--secondary": [
     "apple-pages.css",
@@ -84,50 +84,50 @@
   "badge": [
     "admin.css",
     "common.css",
-    "page-admin-instances.css",
-    "page-courses.css"
+    "courses.css",
+    "page-admin-instances.css"
   ],
   "btn-admin": [
-    "admin-cities.css",
-    "admin.css"
+    "admin.css",
+    "page-admin-cities.css"
   ],
   "form-checkbox": [
+    "admin-notifications.css",
     "admin.css",
     "auth.css",
     "form-validate.css",
-    "page-admin-notifications.css",
     "registration.css"
   ],
   "form-consent": [
     "auth.css",
-    "page-contact.css",
-    "page-online-course.css"
+    "online-course.css",
+    "page-contact.css"
   ],
   "form-group": [
     "admin.css",
     "auth.css",
     "common.css",
     "course-landing.css",
-    "page-contact.css",
-    "page-courses.css",
-    "page-online-course.css"
+    "courses.css",
+    "online-course.css",
+    "page-contact.css"
   ],
   "form-hint": [
     "admin.css",
     "common.css"
   ],
   "form-input": [
-    "admin-cities.css",
-    "admin-participants.css",
     "admin-quiz.css",
     "admin.css",
     "auth.css",
     "blog.css",
     "common.css",
     "course-landing.css",
-    "page-contact.css",
-    "page-courses.css",
-    "page-online-course.css"
+    "courses.css",
+    "online-course.css",
+    "page-admin-cities.css",
+    "page-admin-participants.css",
+    "page-contact.css"
   ],
   "form-input--sm": [
     "admin.css",
@@ -142,12 +142,12 @@
     "common.css"
   ],
   "iprm-appointment": [
-    "page-clinics.css",
-    "page-courses.css"
+    "clinics.css",
+    "courses.css"
   ],
   "iprm-appointment__btn": [
-    "page-clinics.css",
-    "page-courses.css"
+    "clinics.css",
+    "courses.css"
   ],
   "iprm-content-page__inner": [
     "common.css",
@@ -170,7 +170,7 @@
   "iprm-course-card__tags": [
     "apple-pages.css",
     "common.css",
-    "page-courses.css"
+    "courses.css"
   ],
   "iprm-course-card__title": [
     "apple-pages.css",
@@ -186,7 +186,7 @@
   ],
   "iprm-final-cta": [
     "course-landing.css",
-    "page-courses.css"
+    "courses.css"
   ],
   "iprm-hero": [
     "apple-pages.css",
@@ -223,7 +223,7 @@
     "common.css",
     "course-landing.css",
     "page-index.css",
-    "page-trainers.css"
+    "trainers.css"
   ],
   "iprm-hero__title": [
     "apple-pages.css",
@@ -234,12 +234,12 @@
   "iprm-loc-badge": [
     "apple-pages.css",
     "common.css",
-    "page-online-courses.css"
+    "online-courses.css"
   ],
   "iprm-loc-badge__icon": [
     "apple-pages.css",
     "common.css",
-    "page-online-courses.css"
+    "online-courses.css"
   ],
   "iprm-program": [
     "apple-pages.css",
@@ -267,10 +267,10 @@
   ],
   "iprm-request-form__honeypot": [
     "course-landing.css",
-    "page-courses.css"
+    "courses.css"
   ],
   "iprm-roi__results": [
-    "page-courses.css",
+    "courses.css",
     "page-home.css"
   ],
   "iprm-section": [
@@ -288,16 +288,16 @@
     "common.css",
     "course-landing.css",
     "course-recommend.css",
-    "page-online-course.css"
+    "online-course.css"
   ],
   "iprm-sticky-cta": [
     "course-landing.css",
-    "design-system.css"
+    "page-admin-design-system.css"
   ],
   "iprm-tag": [
     "apple-pages.css",
     "common.css",
-    "page-courses.css"
+    "courses.css"
   ],
   "is-active": [
     "admin.css",
@@ -305,14 +305,14 @@
     "tabs.css"
   ],
   "is-error": [
-    "admin.css",
-    "page-admin-integration.css"
+    "admin-integration.css",
+    "admin.css"
   ],
   "is-invalid": [
     "auth.css",
     "blog.css",
     "common.css",
-    "page-online-course.css"
+    "online-course.css"
   ],
   "is-visible": [
     "confirm-action.css",
@@ -321,18 +321,18 @@
     "tooltips.css"
   ],
   "material-symbols-rounded": [
-    "admin-participants.css",
-    "admin-regalia.css",
-    "admin-webhooks.css",
     "admin.css",
-    "blog-editor.css",
     "common.css",
-    "material-symbols.css"
+    "material-symbols.css",
+    "page-admin-blog-editor.css",
+    "page-admin-participants.css",
+    "page-admin-regalia.css",
+    "page-admin-webhooks.css"
   ],
   "required": [
     "auth.css",
     "common.css",
     "course-landing.css",
-    "page-courses.css"
+    "courses.css"
   ]
 }

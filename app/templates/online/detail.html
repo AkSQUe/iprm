@@ -9,11 +9,11 @@
 
 {% block extra_css %}
 {# Картки блоку «інші онлайн-курси» стилюються тим самим файлом, що й каталог. #}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-courses.css') }}?v={{ assets_version }}">
-{# Компоненти, спільні зі сторінкою очного курсу. ПЕРЕД page-online-course.css:
+<link rel="stylesheet" href="{{ url_for('static', filename='css/online-courses.css') }}?v={{ assets_version }}">
+{# Компоненти, спільні зі сторінкою очного курсу. ПЕРЕД online-course.css:
    там лишились специфічні для онлайну переозначення (картка купівлі, факти). #}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/course-landing.css') }}?v={{ assets_version }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/page-online-course.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/online-course.css') }}?v={{ assets_version }}">
 {% if gallery %}<link rel="stylesheet" href="{{ url_for('static', filename='css/lightbox.css') }}?v={{ assets_version }}">{% endif %}
 {% endblock %}
 

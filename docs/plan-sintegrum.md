@@ -570,7 +570,7 @@ C, D і H незалежні між собою -- можна вести пара
 * `app/online/__init__.py`, `app/online/routes.py` -- новий блюпринт,
   реєстрація в `app/__init__.py`;
 * `app/templates/online/list.html`, `app/templates/online/detail.html`;
-* `app/static/css/page-online-courses.css`, `page-online-course.css`;
+* `app/static/css/online-courses.css`, `online-course.css`;
 * `tests/test_routes/test_online_courses.py`,
   `tests/test_i18n/test_online_locale.py`.
 

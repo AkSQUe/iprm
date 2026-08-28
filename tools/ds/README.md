@@ -130,7 +130,7 @@ CSS (`tests/test_design_system/test_ds_audit.py`), а не на живих фа�
 Число зі специфікації задачі (80) орієнтиром не було -- воно рахувалось
 ad-hoc скриптом контролера, який до того ж пропускав чотири файли
 (`fonts.css`, `material-symbols.css`, `molecular-background.css`,
-`design-system.css`). Правильне число -- те, що дає полагоджена метрика:
+`page-admin-design-system.css`). Правильне число -- те, що дає полагоджена метрика:
 **69**.
 
 ### Чого тут ще немає

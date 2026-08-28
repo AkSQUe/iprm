@@ -1,63 +1,5 @@
 /* IPRM - Design System Page Styles (Apple-style redesign) */
 
-/* ========== NAV ========== */
-
-/* Смуга й роздільники їдуть на токенах поверхні, а не на константах: у тёмній
-   темі світла плашка з чорною межею читалась як зламана шапка. */
-.ds-nav {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: var(--iprm-surface-glass);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid var(--iprm-border);
-  padding: 0 32px;
-  display: flex;
-  align-items: center;
-  gap: 0;
-  overflow-x: auto;
-  height: 52px;
-}
-
-.ds-nav__title {
-  font-size: 1.0625rem;
-  font-weight: 700;
-  color: var(--iprm-nav-active);
-  white-space: nowrap;
-  margin-right: 32px;
-  letter-spacing: -0.02em;
-}
-
-.ds-nav a {
-  font-size: 0.8125rem;
-  font-weight: 400;
-  color: var(--apple-gray-dark);
-  white-space: nowrap;
-  padding: 16px 12px;
-  transition: color 0.2s;
-  position: relative;
-}
-
-.ds-nav a:hover {
-  color: var(--iprm-nav-active);
-}
-
-.ds-nav a.active {
-  color: var(--iprm-nav-active);
-}
-
-.ds-nav a.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 12px;
-  right: 12px;
-  height: 2px;
-  background: var(--iprm-nav-active);
-  border-radius: 1px;
-}
-
 /* ========== SECTIONS ========== */
 
 .ds-section {
@@ -380,22 +322,6 @@
     padding: 48px 16px;
   }
 
-  .ds-nav {
-    padding: 0 16px;
-    gap: 0;
-    height: 44px;
-  }
-
-  .ds-nav__title {
-    font-size: 0.9375rem;
-    margin-right: 16px;
-  }
-
-  .ds-nav a {
-    padding: 12px 8px;
-    font-size: 0.75rem;
-  }
-
   .ds-title {
     font-size: 1.5rem;
   }
@@ -417,21 +343,6 @@
 @media (max-width: 480px) {
   .ds-section {
     padding: 32px 12px;
-  }
-
-  .ds-nav {
-    padding: 0 12px;
-    height: 40px;
-  }
-
-  .ds-nav__title {
-    font-size: 0.875rem;
-    margin-right: 12px;
-  }
-
-  .ds-nav a {
-    padding: 10px 6px;
-    font-size: 0.6875rem;
   }
 
   .ds-demo {
