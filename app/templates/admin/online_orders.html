@@ -36,7 +36,7 @@
         </p>
       </div>
       <div class="admin-hero__actions">
-        <a href="{{ url_for('admin.online_courses_list') }}" class="btn-admin btn-admin--secondary">Каталог курсів</a>
+        <a href="{{ url_for('admin.online_courses_list') }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('apps') }} Каталог курсів</a>
       </div>
     </div>
 
@@ -79,7 +79,7 @@
 
     {% if orders %}
     <div class="admin-table-wrap">
-    <table class="admin-table admin-table--wide admin-table--fixed">
+    <table class="admin-table admin-table--fixed">
       {# Ширини задані явно: інакше браузер роздає їх за вмістом, і одна
          довга помилка видачі забирає місце в назви курсу. #}
       <colgroup>
@@ -94,12 +94,12 @@
       <thead>
         <tr>
           <th>Замовлення</th>
-          <th>Покупець</th>
-          <th>Курс</th>
+          <th class="admin-text-left">Покупець</th>
+          <th class="admin-text-left">Курс</th>
           <th>Сума</th>
           <th>Оплата</th>
-          <th>Доступ</th>
-          <th>Дії</th>
+          <th class="admin-text-left">Доступ</th>
+          <th data-no-sort>Дії</th>
         </tr>
       </thead>
       <tbody>
@@ -110,16 +110,16 @@
         <tr>
           <td class="admin-nowrap">
             <strong>{{ order.order_id }}</strong>
-            <br><small class="admin-text-muted">{{ order.created_at | kyiv }}</small>
+            <small class="admin-text-muted admin-subline">{{ order.created_at | kyiv }}</small>
           </td>
           <td>
             {{ order.user.full_name if order.user else '—' }}
             {# Адресу ріжемо, а не переносимо: у вузькій колонці вона ламалась
                посеред домену ("...gmail.co / m") і читалась як помилка. #}
-            {% if order.user %}<br><small class="admin-text-muted admin-truncate"
-                                          title="{{ order.user.email }}">{{ order.user.email }}</small>{% endif %}
+            {% if order.user %}<small class="admin-text-muted admin-subline admin-truncate"
+                                      title="{{ order.user.email }}">{{ order.user.email }}</small>{% endif %}
           </td>
-          <td>
+          <td class="admin-text-left">
             {% if order.course %}
             <a href="{{ url_for('admin.online_course_edit', course_id=order.course.id) }}">{{ order.course.effective_title }}</a>
             {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
@@ -127,7 +127,7 @@
           <td class="admin-nowrap">
             <strong>{{ money(order.payment_amount or 0, currency) }}</strong>
             {% if order.promo_code_id and order.discount_amount %}
-            <br><small class="admin-text-muted">
+            <small class="admin-text-muted admin-subline">
               {{ order.promo_code.code if order.promo_code }} &minus;{{ money(order.discount_amount, currency) }}
             </small>
             {% endif %}
@@ -152,24 +152,24 @@
               </noscript>
             </form>
           </td>
-          <td>
+          <td class="admin-text-left">
             {% if order.provisioned_at %}
               <span class="badge badge--active">Відкрито</span>
               {% if order.sintegrum_student_id %}
-              <br><small class="admin-text-muted">студент #{{ order.sintegrum_student_id }}</small>
+              <small class="admin-text-muted admin-subline">студент #{{ order.sintegrum_student_id }}</small>
               {% endif %}
             {% elif order.is_paid %}
               <span class="badge badge--danger">Не видано</span>
               {# Скільки людина вже чекає -- головне для сортування розбору:
                  хвилина після оплати це норма, доба -- ні. #}
               {% if waiting_hours.get(order.id) is not none %}
-              <br><small class="admin-text-muted">{{ waiting_hours[order.id] }} год без доступу</small>
+              <small class="admin-text-muted admin-subline">{{ waiting_hours[order.id] }} год без доступу</small>
               {% endif %}
               {% if order.provision_error %}
               {# Повний текст -- у title: у комірці він займав шість рядків і
                  розсував таблицю, а прочитати його треба раз на розбір. #}
-              <br><small class="admin-text-muted admin-truncate"
-                         title="{{ order.provision_error }}">{{ order.provision_error }}</small>
+              <small class="admin-text-muted admin-subline admin-truncate"
+                     title="{{ order.provision_error }}">{{ order.provision_error }}</small>
               {% endif %}
             {% else %}
               <span class="admin-text-muted">—</span>
@@ -191,7 +191,7 @@
                  Панель позиціюється fixed (admin-row-menu.js), тож не
                  обрізається прокруткою таблиці. #}
               <details class="admin-actions-menu">
-                <summary class="btn-admin btn-admin--secondary btn-admin--sm" title="Ще дії" aria-label="Ще дії">
+                <summary class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon" title="Ще дії" aria-label="Ще дії">
                   {{ icon('more_vert') }}
                 </summary>
                 {# Панель саме під форму, а не список дій -- той самий
