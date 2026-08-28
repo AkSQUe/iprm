@@ -1726,7 +1726,6 @@ a.admin-stat-card:focus-visible {
    auth.css підключається пізніше, і властивості, яких немає в жодному з
    контекстних правил тут (напр. width), бере від НЬОГО. Хто виграє в
    такому випадку, вирішує порядок підключення в шаблоні, а не цей файл. */
-.form-input,
 .form-section .form-input,
 .admin-form .form-input,
 .admin-control-row .form-input,
@@ -1741,7 +1740,6 @@ a.admin-stat-card:focus-visible {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.form-input:focus,
 .form-section .form-input:focus,
 .admin-form .form-input:focus,
 .admin-control-row .form-input:focus,
@@ -1755,7 +1753,6 @@ a.admin-stat-card:focus-visible {
 /* Плейсхолдер бере --apple-gray, а не --apple-gray-light: останній -- рівень
    ЛІНІЙ (#d2d2d7 / #48484a), і як текст давав 1.38 у світлій та 1.86 у тёмній
    темі, тобто читався лише на здогад. --apple-gray дає 6.02 / 5.90. */
-.form-input::placeholder,
 .form-section .form-input::placeholder,
 .admin-form .form-input::placeholder,
 .backup-actions__form .form-input::placeholder {

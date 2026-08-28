@@ -21,7 +21,6 @@
   ],
   "form-input": [
     "admin.css",
-    "auth.css",
     "common.css"
   ],
   "form-section": [
