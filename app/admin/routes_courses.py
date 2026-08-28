@@ -72,6 +72,7 @@ def courses_list():
         courses=courses,
         stats_by_id=stats_by_id,
         filters=filters,
+        filter_args=_listing.filter_args(filters),
         state_options=list(_COURSE_STATES.items()),
         trainer_options=[
             (t.id, t.full_name)

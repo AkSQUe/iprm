@@ -47,6 +47,7 @@ def b2b_requests_list():
         'admin/b2b_requests.html',
         requests=_b2b_query(filters).all(),
         filters=filters,
+        filter_args=_listing.filter_args(filters),
         active_status=filters['status'],
         status_options=B2BRequest.STATUSES,
         team_size_options=B2BRequest.TEAM_SIZES,

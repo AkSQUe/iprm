@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -103,18 +103,16 @@
       </div>
     </div>
     {% else %}
-    <div class="admin-empty admin-pad-32 admin-text-center">
-      {% if filters.q or filters.state %}
-      <h3 class="admin-empty__title">Нічого не знайдено</h3>
-      <p class="admin-text-muted">Спробуйте змінити фільтри або <a href="{{ url_for('admin.blog_list') }}">скинути їх</a>.</p>
-      {% else %}
-      <h3 class="admin-empty__title">Ще немає дописів</h3>
+    {# Кнопка «Новий допис» -- лише в гілці «дописів немає». Доти вона стояла
+       після {% endif %}, тобто й тоді, коли фільтр нічого не знайшов: там
+       правильна дія -- скинути фільтр, а не створювати ще один допис. #}
+    {% call empty_state('admin.blog_list', filter_args,
+                        icon_name='article', title='Ще немає дописів') %}
       <p class="admin-text-muted">Створіть перший допис блогу.</p>
-      {% endif %}
       <a href="{{ url_for('admin.blog_create') }}" class="btn-admin btn-admin--primary admin-mt-sm">
         {{ icon('add') }} Новий допис
       </a>
-    </div>
+    {% endcall %}
     {% endif %}
 
   </div>

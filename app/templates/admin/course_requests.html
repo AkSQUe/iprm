@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-course-requests.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -171,17 +171,12 @@
      курс, тож фільтр за датою давав «Запитів немає» -- неправду, бо запити
      є, просто не в цьому проміжку. #}
   {% set has_filters = filters.values() | select | list | length > 0 %}
-  <div class="admin-empty">
-    {% if has_filters %}
-      {{ icon('search', cls='admin-empty__icon') }}
-      <h3 class="admin-empty__title">За цим зрізом запитів немає</h3>
-      <p>Спробуйте інший фільтр або <a href="{{ url_for('admin.course_requests_list') }}">подивіться всі запити</a></p>
-    {% else %}
-      {{ icon('inbox', cls='admin-empty__icon') }}
-      <h3 class="admin-empty__title">Запитів немає</h3>
-      <p>Коли користувачі залишать заявку на проведення курсу &mdash; вона з'явиться тут.</p>
-    {% endif %}
-  </div>
+  {% call empty_state('admin.course_requests_list',
+                      filter_args,
+                      icon_name='inbox',
+                      title='Запитів немає') %}
+    <p>Коли користувачі залишать заявку на проведення курсу &mdash; вона з'явиться тут.</p>
+  {% endcall %}
   {% endif %}
 
   </div>

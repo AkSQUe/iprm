@@ -42,6 +42,7 @@ def reviews_list():
         'admin/reviews.html',
         reviews=query.order_by(Review.sort_order, Review.created_at.desc()).all(),
         filters=filters,
+        filter_args=_listing.filter_args(filters),
         state_options=list(_REVIEW_STATES.items()),
         course_options=[
             (c.id, c.title)

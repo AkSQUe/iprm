@@ -136,6 +136,7 @@ def trainers_list():
         'admin/trainers.html',
         trainers=query.order_by(Trainer.full_name).all(),
         filters=filters,
+        filter_args=_listing.filter_args(filters),
         state_options=list(_TRAINER_STATES.items()),
     )
 

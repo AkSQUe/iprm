@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-quiz.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -131,16 +131,12 @@
     {# Порожній стан ЗАМІСТЬ таблиці, а не під нею: раніше при порожньому
        реєстрі друкувалась шапка таблиці без жодного рядка, і одразу під нею
        плашка «курсів ще немає» -- дві відповіді на одне питання. #}
-    <div class="admin-empty">
-      {{ icon('quiz', cls='admin-empty__icon') }}
-      {% if filters.q %}
-      <h3 class="admin-empty__title">Нічого не знайдено</h3>
-      <p>Спробуйте змінити пошук або <a href="{{ url_for('admin.quizzes_list') }}">скинути його</a></p>
-      {% else %}
-      <h3 class="admin-empty__title">Курсів ще немає</h3>
+    {% call empty_state('admin.quizzes_list',
+                        filter_args,
+                        icon_name='quiz',
+                        title='Курсів ще немає') %}
       <p>Тест створюється в картці курсу</p>
-      {% endif %}
-    </div>
+    {% endcall %}
     {% endif %}
 
   </div>

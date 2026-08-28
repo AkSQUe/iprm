@@ -63,6 +63,7 @@ def blog_list():
         'admin/blog_list.html',
         posts=posts, pending_counts=pending, total_pending=total_pending,
         filters=filters,
+        filter_args=_listing.filter_args(filters),
         state_options=list(_POST_STATES.items()),
     )
 

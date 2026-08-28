@@ -160,6 +160,7 @@ def quizzes_list():
         'admin/quizzes.html',
         rows=rows,
         filters=filters,
+        filter_args=_listing.filter_args(filters),
         total_active=sum(1 for q in quizzes if q.is_active),
     )
 

@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-reviews.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -150,16 +150,12 @@
     </table>
     </div>
     {% else %}
-    <div class="admin-empty">
-      {{ icon('reviews', cls='admin-empty__icon') }}
-      {% if filters.q or filters.state or filters.course_id or filters.rating %}
-        <h3 class="admin-empty__title">Нічого не знайдено</h3>
-        <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.reviews_list') }}">скинути їх</a></p>
-      {% else %}
-        <h3 class="admin-empty__title">Відгуків ще немає</h3>
-        <p>Поки їх нема, на Головній показується тимчасова заглушка. Додайте перший відгук.</p>
-      {% endif %}
-    </div>
+    {% call empty_state('admin.reviews_list',
+                        filter_args,
+                        icon_name='reviews',
+                        title='Відгуків ще немає') %}
+      <p>Поки їх нема, на Головній показується тимчасова заглушка. Додайте перший відгук.</p>
+    {% endcall %}
     {% endif %}
 
   </div>

@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -83,16 +83,12 @@
   </table>
   </div>
   {% else %}
-  <div class="admin-empty">
-    {{ icon('group', cls='admin-empty__icon') }}
-    {% if filters.q or filters.status or filters.team_size %}
-      <h3 class="admin-empty__title">Нічого не знайдено</h3>
-      <p>Спробуйте змінити фільтри або <a href="{{ url_for('admin.b2b_requests_list') }}">скинути їх</a></p>
-    {% else %}
-      <h3 class="admin-empty__title">Заявок поки немає</h3>
-      <p>Ліди з форми «Отримати корпоративні умови» з'являться тут</p>
-    {% endif %}
-  </div>
+  {% call empty_state('admin.b2b_requests_list',
+                      filter_args,
+                      icon_name='group',
+                      title='Заявок поки немає') %}
+    <p>Ліди з форми «Отримати корпоративні умови» з'являться тут</p>
+  {% endcall %}
   {% endif %}
 
   </div>

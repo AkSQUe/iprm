@@ -68,6 +68,7 @@ def course_requests_list():
         requests=requests_all,
         counts_by_course=counts_by_course,
         filters=filters,
+        filter_args=_listing.filter_args(filters),
         status_options=CourseRequest.STATUSES,
         course_options=[
             (c.id, c.title) for c in Course.query.order_by(Course.title).all()
