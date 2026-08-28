@@ -23,19 +23,46 @@ def test_css_from_partial_counts_transitively():
     assert result['component']['material-symbols.css'] > 1
 
 
-def test_page_only_css_stays_page():
-    result = ds_audit.classify_css(ROOT)
-    assert 'page-contact.css' in result['page']
-    assert result['page']['page-contact.css'] == 1
+# Наступні два тести раніше пришпилювали механізм на ЖИВИХ фактах проєкту
+# (page-contact.css -- один споживач, apple-btn -- дублікат): `apple-btn`
+# -- перша ціль Етапу 2, і в день, коли його зведуть в один файл, пришпилений
+# тест почервоніє, хоча концепт саме тоді нарешті виконано. Синтетичні дані
+# перевіряють той самий механізм незалежно від того, що зараз лежить у
+# app/static/css і app/templates.
+
+def test_page_only_css_declared_by_one_template_is_page(tmp_path):
+    """classify_css кладе файл у 'page', коли в нього рівно один споживач."""
+    tpl_dir = tmp_path / 'app' / 'templates'
+    tpl_dir.mkdir(parents=True)
+    (tpl_dir / 'solo.html').write_text(
+        '<link rel="stylesheet" href="{{ url_for(\'static\', '
+        'filename=\'css/only-here.css\') }}">\n',
+        encoding='utf-8')
+    css_dir = tmp_path / 'app' / 'static' / 'css'
+    css_dir.mkdir(parents=True)
+    (css_dir / 'only-here.css').write_text('.solo { color: red; }', encoding='utf-8')
+
+    result = ds_audit.classify_css(tmp_path)
+    assert 'only-here.css' in result['page']
+    assert result['page']['only-here.css'] == 1
 
 
-def test_duplicate_classes_finds_apple_btn():
-    dupes = ds_audit.duplicate_classes(ROOT)
-    assert 'apple-btn' in dupes, (
-        'apple-btn переоголошений у кількох сторінкових файлах -- саме той '
-        'випадок, коли правка кнопки в дизайн-системі до сторінки не доходить.'
+def test_duplicate_classes_detects_class_declared_in_two_files(tmp_path):
+    """duplicate_classes ловить клас, суб'єктом якого він є у двох файлах --
+    саме той механізм, що не дає правці компонента в дизайн-системі дійти
+    до сторінки, яка переоголосила його в себе.
+    """
+    css_dir = tmp_path / 'app' / 'static' / 'css'
+    css_dir.mkdir(parents=True)
+    (css_dir / 'common.css').write_text('.shared-btn { color: red; }', encoding='utf-8')
+    (css_dir / 'page-demo.css').write_text('.shared-btn { color: blue; }', encoding='utf-8')
+
+    dupes = ds_audit.duplicate_classes(tmp_path)
+    assert 'shared-btn' in dupes, (
+        '.shared-btn оголошений суб\'єктом у common.css І page-demo.css -- '
+        'це і є дублікат, який метрика мусить зловити.'
     )
-    assert len(dupes['apple-btn']) >= 2
+    assert dupes['shared-btn'] == ['common.css', 'page-demo.css']
 
 
 # Семантика суб'єкта селектора -- пришпилено на літеральних рядках CSS, а
