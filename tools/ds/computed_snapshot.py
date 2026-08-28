@@ -151,6 +151,22 @@ _SETTLE_JS = """
 })
 """
 
+_SHEETS_JS = """
+// Таблиці стилів, які НЕ готові: або браузер їх не отримав (`sheet === null`),
+// або отримав, але не розібрав -- тоді `cssRules` кидає SecurityError чи дає
+// нуль правил. Друге трапляється саме на дев-сервері під навантаженням
+// статики, і воно небезпечніше за перше: `sheet` не null, сторінка виглядає
+// цілою, а частина правил не діє. Знімок при цьому пише дефолти браузера
+// (border 0px, rgb(0,0,0)) -- і це не відрізнити від справжньої втрати
+// стилів під час зведення компонентів.
+() => Array.from(document.querySelectorAll('link[rel=\"stylesheet\"]'))
+  .filter((l) => {
+    if (l.sheet === null) return true;
+    try { return l.sheet.cssRules.length === 0; } catch (e) { return true; }
+  })
+  .map((l) => (l.getAttribute('href') || '').split('/').pop())
+"""
+
 _WALK_JS = """
 (arg) => {
   const props = arg.props, wanted = arg.wanted;
@@ -204,11 +220,32 @@ _WALK_JS = """
     // всю сторінку, і будь-який чужий віджет зі станом (валідація форми,
     // мовні вкладки, фокус) дає розбіжності, що не стосуються правки.
     if (wanted.length && !wanted.some((c) => el.classList.contains(c))) continue;
-    const cs = getComputedStyle(el);
-    const rec = {};
-    for (const p of props) rec[p] = cs.getPropertyValue(p);
-    out[pathOf(el)] = rec;
+    const key = pathOf(el);
+    // Псевдоелементи знімаємо ОКРЕМО. Без них знімок сліпий рівно там, де
+    // компоненти найчастіше розходяться: галочка списку, стрілка, плейсхолдер.
+    // `content: none` в іншому файлі гасить цілий псевдоелемент, не змінивши
+    // в розмітці жодного байта -- і знімок без цього блоку засвідчить таку
+    // правку як "змін немає".
+    for (const pseudo of [null, '::before', '::after', '::placeholder']) {
+      const cs = getComputedStyle(el, pseudo);
+      if (pseudo && pseudo !== '::placeholder'
+          && cs.getPropertyValue('content') === 'none') continue;
+      const rec = {};
+      for (const p of props) rec[p] = cs.getPropertyValue(p);
+      if (pseudo) rec['content'] = cs.getPropertyValue('content');
+      out[key + (pseudo || '')] = rec;
+    }
   }
+  // Службовий запис: які таблиці стилів реально застосувались і скільки в
+  // них правил. Якщо два прогони дають різні значення -- проблема не в
+  // знімку, а в тому, що сторінка щоразу малюється інакше.
+  out['__sheets__'] = {
+    'list': Array.from(document.styleSheets).map((s) => {
+      let n = -1;
+      try { n = s.cssRules.length; } catch (e) { n = -2; }
+      return (s.href ? s.href.split('/').pop() : 'inline') + ':' + n;
+    }).join(' | '),
+  };
   return out;
 }
 """
@@ -354,6 +391,24 @@ def capture(label, explicit, only_classes, theme='light', quiet=False):
                 # то в одному прогоні, то в іншому: саме це давало вісім
                 # хибних розбіжностей на прогін.
                 page.evaluate(_SETTLE_JS)
+                # Якщо якийсь stylesheet не застосувався, знімати НЕ МОЖНА:
+                # браузер віддасть дефолти (border 0px, rgb(0,0,0)), і це
+                # виглядатиме як справжня втрата стилів. Дев-сервер під
+                # навантаженням статики іноді таки не віддає файл, тож одна
+                # спроба перезавантажити -- і, якщо не допомогло, гучна
+                # відмова замість тихого сміття.
+                missing = page.evaluate(_SHEETS_JS)
+                for _ in range(3):
+                    if not missing:
+                        break
+                    page.reload(wait_until='networkidle')
+                    page.evaluate(_SETTLE_JS)
+                    missing = page.evaluate(_SHEETS_JS)
+                if missing:
+                    raise SystemExit(
+                        'ВІДМОВА на %s: не застосувались таблиці стилів %s. '
+                        'Знімок із дефолтами браузера гірший за відсутній.'
+                        % (url, ', '.join(missing)))
                 data = page.evaluate(_WALK_JS, {'props': PROPS,
                                 'wanted': [c.lstrip('.') for c in only_classes]})
                 (outdir / ('%s.json' % endpoint.replace('/', '_'))).write_text(
