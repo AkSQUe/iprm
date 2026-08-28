@@ -43,7 +43,7 @@
         </details>
         <form method="POST" action="{{ url_for('admin.translations_import_upload', scope='blog') }}" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="file" name="xlsx" id="blog-tr-input" accept=".xlsx" data-autosubmit>
+          <input type="file" name="xlsx" id="blog-tr-input" class="admin-file-input" accept=".xlsx" data-autosubmit>
           <label for="blog-tr-input" class="btn-admin btn-admin--secondary admin-clickable" title="Завантажити заповнений файл перекладів">
             {{ icon('upload') }} Імпорт перекладів
           </label>

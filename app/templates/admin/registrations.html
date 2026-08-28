@@ -56,7 +56,7 @@
           </details>
           <form method="POST" action="{{ url_for('admin.participants_import_upload') }}" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="file" name="xlsx" id="participants-xlsx-input" accept=".xlsx" data-autosubmit>
+            <input type="file" name="xlsx" id="participants-xlsx-input" class="admin-file-input" accept=".xlsx" data-autosubmit>
             <label for="participants-xlsx-input" class="btn-admin btn-admin--secondary admin-clickable" title="Завантажити заповнений xlsx для імпорту">
               {{ icon('upload') }} Імпорт XLSX
             </label>

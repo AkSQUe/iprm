@@ -42,14 +42,14 @@
         </details>
         <form method="POST" action="{{ url_for('admin.courses_import_upload') }}" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="file" name="xlsx" id="courses-xlsx-input" accept=".xlsx" data-autosubmit>
+          <input type="file" name="xlsx" id="courses-xlsx-input" class="admin-file-input" accept=".xlsx" data-autosubmit>
           <label for="courses-xlsx-input" class="btn-admin btn-admin--secondary btn-admin--sm admin-clickable" title="Завантажити змінений xlsx">
             {{ icon('upload') }} Імпорт XLSX
           </label>
         </form>
         <form method="POST" action="{{ url_for('admin.translations_import_upload', scope='courses') }}" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="file" name="xlsx" id="courses-tr-input" accept=".xlsx" data-autosubmit>
+          <input type="file" name="xlsx" id="courses-tr-input" class="admin-file-input" accept=".xlsx" data-autosubmit>
           <label for="courses-tr-input" class="btn-admin btn-admin--secondary btn-admin--sm admin-clickable" title="Завантажити заповнений файл перекладів">
             {{ icon('upload') }} Імпорт перекладів
           </label>

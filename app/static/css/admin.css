@@ -707,10 +707,6 @@
   display: inline;
 }
 
-.admin-xlsx-toolbar input[type="file"] {
-  display: none;
-}
-
 /* Native <details>-based dropdown для пресетів експорту. */
 .admin-xlsx-menu {
   position: relative;

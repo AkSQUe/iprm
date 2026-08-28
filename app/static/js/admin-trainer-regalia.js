@@ -143,7 +143,9 @@
             setThumb(); syncLinks();
           });
           setThumb();
-          var fileIn = el('input', {type: 'file', 'class': 'regalia-hidden-file',
+          // tabindex=-1: табстопом тут є кнопка поруч, яка й клікає по полю.
+          var fileIn = el('input', {type: 'file', 'class': 'admin-file-input',
+            tabindex: '-1',
             accept: 'image/png,image/jpeg,image/webp,.heic,.heif'});
           var upBtn = el('button', {type: 'button', 'class': 'regalia-link__upload', title: 'Завантажити скан'}, [icon('add_photo_alternate')]);
           upBtn.addEventListener('click', function() { fileIn.click(); });

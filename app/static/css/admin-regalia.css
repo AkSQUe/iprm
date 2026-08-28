@@ -15,7 +15,6 @@
 .regalia-cert__remove .material-symbols-rounded { font-size: 16px; }
 .regalia-cert__cap { margin-top: 6px; font-size: 0.8125rem; padding: 6px 8px; }
 
-.regalia-hidden-file { display: none; }
 
 .regalia-links__rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
 .regalia-link { display: flex; gap: 8px; align-items: center; }
