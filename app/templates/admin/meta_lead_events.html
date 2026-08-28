@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-meta-leads.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -42,30 +42,14 @@
     </div>
   </div>
 
-  <div class="admin-stat-cards ml-stats">
-    <div class="admin-stat-card">
-      <span class="admin-stat-card__value">{{ counts.values() | sum }}</span>
-      <span class="admin-stat-card__label">Усього подій</span>
-    </div>
-    <div class="admin-stat-card admin-stat-card--accent">
-      <span class="admin-stat-card__value">{{ counts.get('pending', 0) + counts.get('processing', 0) }}</span>
-      <span class="admin-stat-card__label">Очікують обробки</span>
-    </div>
     {# --alert, не --warning: другий у цій системі СИНІЙ (бере токен
        бейджа «Опубліковано») і читається як «очікує», а не як «глянь сюди». #}
-    <div class="admin-stat-card admin-stat-card--alert">
-      <span class="admin-stat-card__value">{{ counts.get('retrying', 0) }}</span>
-      <span class="admin-stat-card__label">Повторюються</span>
-    </div>
-    <div class="admin-stat-card admin-stat-card--success">
-      <span class="admin-stat-card__value">{{ counts.get('done', 0) }}</span>
-      <span class="admin-stat-card__label">Оброблено</span>
-    </div>
-    <div class="admin-stat-card admin-stat-card--danger">
-      <span class="admin-stat-card__value">{{ counts.get('failed', 0) }}</span>
-      <span class="admin-stat-card__label">Помилок</span>
-    </div>
-  </div>
+  {{ stat_cards([{'value': counts.values() | sum, 'label': 'Усього подій'},
+                {'value': counts.get('pending', 0) + counts.get('processing', 0), 'label': 'Очікують обробки', 'mod': 'accent'},
+                {'value': counts.get('retrying', 0), 'label': 'Повторюються', 'mod': 'alert'},
+                {'value': counts.get('done', 0), 'label': 'Оброблено', 'mod': 'success'},
+                {'value': counts.get('failed', 0), 'label': 'Помилок', 'mod': 'danger'}],
+               cls='ml-stats') }}
 
   {{ filter_bar(
        endpoint='admin.meta_lead_events',

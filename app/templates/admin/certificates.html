@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -29,20 +29,9 @@
     {% include 'partials/flash_messages.html' %}
 
     <!-- Statistics -->
-    <div class="admin-stat-cards">
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ stats.total }}</span>
-        <span class="admin-stat-card__label">Всього</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--success">
-        <span class="admin-stat-card__value">{{ stats.active }}</span>
-        <span class="admin-stat-card__label">Дійсні</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--danger">
-        <span class="admin-stat-card__value">{{ stats.revoked }}</span>
-        <span class="admin-stat-card__label">Відкликані</span>
-      </div>
-    </div>
+        {{ stat_cards([{'value': stats.total, 'label': 'Всього'},
+                  {'value': stats.active, 'label': 'Дійсні', 'mod': 'success'},
+                  {'value': stats.revoked, 'label': 'Відкликані', 'mod': 'danger'}]) }}
 
     {{ filter_bar(
          endpoint='admin.certificates',

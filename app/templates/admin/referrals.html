@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -59,36 +59,13 @@
     {% endif %}
 
     <!-- Statistics -->
-    <div class="admin-stat-cards">
-      <div class="admin-stat-card admin-stat-card--accent">
-        <span class="admin-stat-card__value">{{ stats.granted_points }}</span>
-        <span class="admin-stat-card__label">Активних балів</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--success">
-        <span class="admin-stat-card__value">{{ stats.granted }}</span>
-        <span class="admin-stat-card__label">Нарахувань</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--warning">
-        <span class="admin-stat-card__value">{{ stats.pending }}</span>
-        <span class="admin-stat-card__label">Очікують дозрівання</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--danger">
-        <span class="admin-stat-card__value">{{ stats.voided }}</span>
-        <span class="admin-stat-card__label">Анульовано</span>
-      </div>
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ total_clicks }}</span>
-        <span class="admin-stat-card__label">Кліків по посиланнях</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--warning">
-        <span class="admin-stat-card__value">{{ pipeline_count }}</span>
-        <span class="admin-stat-card__label">Приведені, не оплачені</span>
-      </div>
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ top_referrers | length }}</span>
-        <span class="admin-stat-card__label">Активних рефереров</span>
-      </div>
-    </div>
+        {{ stat_cards([{'value': stats.granted_points, 'label': 'Активних балів', 'mod': 'accent'},
+                  {'value': stats.granted, 'label': 'Нарахувань', 'mod': 'success'},
+                  {'value': stats.pending, 'label': 'Очікують дозрівання', 'mod': 'warning'},
+                  {'value': stats.voided, 'label': 'Анульовано', 'mod': 'danger'},
+                  {'value': total_clicks, 'label': 'Кліків по посиланнях'},
+                  {'value': pipeline_count, 'label': 'Приведені, не оплачені', 'mod': 'warning'},
+                  {'value': top_referrers | length, 'label': 'Активних рефереров'}]) }}
 
     <!-- Fraud flags -->
     {% if fraud %}

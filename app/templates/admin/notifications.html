@@ -1,4 +1,5 @@
 {% extends "admin/base_admin.html" %}
+{% from 'admin/partials/_filter_bar.html' import stat_cards %}
 
 {% block title %}Сповіщення | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -33,24 +34,11 @@
   {% include 'partials/flash_messages.html' %}
 
   <!-- Stats -->
-  <div class="admin-stat-cards admin-stat-cards--4">
-    <div class="admin-stat-card">
-      <span class="admin-stat-card__value">{{ stats.total }}</span>
-      <span class="admin-stat-card__label">Всього</span>
-    </div>
-    <div class="admin-stat-card admin-stat-card--success">
-      <span class="admin-stat-card__value">{{ stats.sent }}</span>
-      <span class="admin-stat-card__label">Відправлено</span>
-    </div>
-    <div class="admin-stat-card admin-stat-card--danger">
-      <span class="admin-stat-card__value">{{ stats.failed }}</span>
-      <span class="admin-stat-card__label">Помилки</span>
-    </div>
-    <div class="admin-stat-card admin-stat-card--warning">
-      <span class="admin-stat-card__value">{{ stats.pending }}</span>
-      <span class="admin-stat-card__label">Очікує</span>
-    </div>
-  </div>
+    {{ stat_cards([{'value': stats.total, 'label': 'Всього'},
+                {'value': stats.sent, 'label': 'Відправлено', 'mod': 'success'},
+                {'value': stats.failed, 'label': 'Помилки', 'mod': 'danger'},
+                {'value': stats.pending, 'label': 'Очікує', 'mod': 'warning'}],
+               cols=4) }}
 
   <!-- Queue Health -->
   {% if queue_health and (queue_health.circuit_open or queue_health.retryable > 0) %}

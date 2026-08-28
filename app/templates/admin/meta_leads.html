@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-meta-leads.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, sort_th %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, sort_th, stat_cards  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -35,30 +35,14 @@
 
   {# Кожна картка -- посилання на власний зріз: «Чекають понад годину: 17»
      без дороги до цих 17 рядків лишалося б числом, на яке нічого не вдієш. #}
-  <div class="admin-stat-cards ml-stats">
-    <a class="admin-stat-card" href="{{ summary_links.total }}">
-      <span class="admin-stat-card__value">{{ summary.total }}</span>
-      <span class="admin-stat-card__label">Усього заявок</span>
-    </a>
-    <a class="admin-stat-card admin-stat-card--accent" href="{{ summary_links.new }}">
-      <span class="admin-stat-card__value">{{ summary.new }}</span>
-      <span class="admin-stat-card__label">Нових</span>
-    </a>
-    <a class="admin-stat-card" href="{{ summary_links.in_work }}">
-      <span class="admin-stat-card__value">{{ summary.in_work }}</span>
-      <span class="admin-stat-card__label">У роботі</span>
-    </a>
-    <a class="admin-stat-card admin-stat-card--danger" href="{{ summary_links.late }}">
-      <span class="admin-stat-card__value">{{ summary.late }}</span>
-      <span class="admin-stat-card__label">Чекають понад годину</span>
-    </a>
     {# --alert, не --warning: другий у цій системі СИНІЙ (бере токен
        бейджа «Опубліковано») і читається як «очікує», а не як «глянь сюди». #}
-    <a class="admin-stat-card admin-stat-card--alert" href="{{ summary_links.attention }}">
-      <span class="admin-stat-card__value">{{ summary.attention }}</span>
-      <span class="admin-stat-card__label">Потребують уваги</span>
-    </a>
-  </div>
+  {{ stat_cards([{'value': summary.total, 'label': 'Усього заявок', 'href': summary_links.total},
+                {'value': summary.new, 'label': 'Нових', 'mod': 'accent', 'href': summary_links.new},
+                {'value': summary.in_work, 'label': 'У роботі', 'href': summary_links.in_work},
+                {'value': summary.late, 'label': 'Чекають понад годину', 'mod': 'danger', 'href': summary_links.late},
+                {'value': summary.attention, 'label': 'Потребують уваги', 'mod': 'alert', 'href': summary_links.attention}],
+               cls='ml-stats') }}
 
   {{ filter_bar(
        endpoint='admin.meta_leads_list',

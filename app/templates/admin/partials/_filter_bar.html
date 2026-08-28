@@ -229,3 +229,48 @@
   {% endif %}
 </div>
 {% endmacro %}
+
+{# Картка-зріз і стрічка з них.
+
+   83 картки в 21 реєстрі писались руками, і форма в них одна: значення,
+   підпис, модифікатор кольору. Різнились лише дрібниці, які й мусить
+   тримати макрос: клікабельний зріз -- це <a>, обраний -- ще й
+   aria-current (стан для скрінрідера, а не тільки колір).
+
+   Модифікатори -- імена без префікса: 'success', 'danger', 'alert',
+   'accent', 'warning'. Увага: `warning` у цій системі СИНІЙ (бере токен
+   бейджа «Опубліковано») і читається як «очікує»; бурштинове «глянь сюди»
+   -- це `alert`.
+
+     {{ stat_cards([
+          {'value': stats.total, 'label': 'Усього'},
+          {'value': stats.failed, 'label': 'Помилки', 'mod': 'danger'},
+          {'value': stats.new, 'label': 'Нові', 'mod': 'alert',
+           'href': url_for('admin.leads', status='new'), 'active': filters.status == 'new'},
+        ], cols=4) }}
+#}
+{% macro stat_card(card) %}
+{% set cls = 'admin-stat-card'
+   ~ (' admin-stat-card--' ~ card.mod if card.get('mod') else '')
+   ~ (' is-active' if card.get('active') else '') %}
+{%- if card.get('href') %}
+<a class="{{ cls }}" href="{{ card.href }}"{% if card.get('active') %} aria-current="true"{% endif %}>
+  <span class="admin-stat-card__value">{{ card.value }}</span>
+  <span class="admin-stat-card__label">{{ card.label }}</span>
+</a>
+{%- else %}
+<div class="{{ cls }}">
+  <span class="admin-stat-card__value">{{ card.value }}</span>
+  <span class="admin-stat-card__label">{{ card.label }}</span>
+</div>
+{%- endif %}
+{%- endmacro %}
+
+{# cols -- скільки карток в один ряд (3 або 4); без нього сітка сама
+   розкладає їх за наявним місцем. cls -- додатковий клас сітки для
+   сторінок, що звужують її по-своєму. #}
+{% macro stat_cards(cards, cols=None, cls='') %}
+<div class="admin-stat-cards{% if cols %} admin-stat-cards--{{ cols }}{% endif %}{% if cls %} {{ cls }}{% endif %}">
+  {%- for card in cards %}{{ stat_card(card) }}{% endfor %}
+</div>
+{% endmacro %}

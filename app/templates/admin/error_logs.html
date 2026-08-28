@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-error-logs.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -31,26 +31,13 @@
 
   {% include 'partials/flash_messages.html' %}
 
-  <div class="admin-stat-cards admin-stat-cards--4">
-    <div class="admin-stat-card admin-stat-card--danger">
-      <span class="admin-stat-card__value">{{ stats.by_code.get('500', 0) }}</span>
-      <span class="admin-stat-card__label">500 Server</span>
-    </div>
     {# --alert, не --warning: другий у цій системі СИНІЙ (бере токен
        бейджа «Опубліковано») і читається як «очікує», а не як «глянь сюди». #}
-    <div class="admin-stat-card admin-stat-card--alert">
-      <span class="admin-stat-card__value">{{ stats.by_code.get('404', 0) }}</span>
-      <span class="admin-stat-card__label">404 Not Found</span>
-    </div>
-    <div class="admin-stat-card">
-      <span class="admin-stat-card__value">{{ stats.unresolved_errors }}</span>
-      <span class="admin-stat-card__label">Невирішені</span>
-    </div>
-    <div class="admin-stat-card admin-stat-card--success">
-      <span class="admin-stat-card__value">{{ stats.total_errors - stats.unresolved_errors }}</span>
-      <span class="admin-stat-card__label">Вирішені</span>
-    </div>
-  </div>
+  {{ stat_cards([{'value': stats.by_code.get('500', 0), 'label': '500 Server', 'mod': 'danger'},
+                {'value': stats.by_code.get('404', 0), 'label': '404 Not Found', 'mod': 'alert'},
+                {'value': stats.unresolved_errors, 'label': 'Невирішені'},
+                {'value': stats.total_errors - stats.unresolved_errors, 'label': 'Вирішені', 'mod': 'success'}],
+               cols=4) }}
 
   {{ filter_bar(
        endpoint='admin.error_logs',

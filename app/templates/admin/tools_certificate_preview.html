@@ -1,4 +1,5 @@
 {% extends "admin/base_admin.html" %}
+{% from 'admin/partials/_filter_bar.html' import stat_cards %}
 
 {% block title %}Прев'ю генерації | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -26,20 +27,9 @@
 
     {% include 'partials/flash_messages.html' %}
 
-    <div class="admin-stat-cards">
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ rows|length }}</span>
-        <span class="admin-stat-card__label">Рядків</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--success">
-        <span class="admin-stat-card__value">{{ ok_count }}</span>
-        <span class="admin-stat-card__label">Готові</span>
-      </div>
-      <div class="admin-stat-card admin-stat-card--danger">
-        <span class="admin-stat-card__value">{{ err_count }}</span>
-        <span class="admin-stat-card__label">З помилками</span>
-      </div>
-    </div>
+        {{ stat_cards([{'value': rows|length, 'label': 'Рядків'},
+                  {'value': ok_count, 'label': 'Готові', 'mod': 'success'},
+                  {'value': err_count, 'label': 'З помилками', 'mod': 'danger'}]) }}
 
     <div class="admin-stats-bar admin-flex-center">
       <form method="POST" action="{{ url_for('admin.tool_certificate_generator_run') }}">

@@ -1,4 +1,5 @@
 {% extends "admin/_integration_page.html" %}
+{% from 'admin/partials/_filter_bar.html' import stat_cards %}
 
 {% block title %}LiqPay | ІПРМ{% endblock %}
 {% block integration_title %}LiqPay{% endblock %}
@@ -23,34 +24,15 @@
 {% block integration_body %}
 {# Шість карток у сітці на п'ять колонок давали 5 + 1: сама на другому рядку
    лишалась картка доходу -- головне число сторінки. Три колонки дають 3 + 3. #}
-<div class="admin-stat-cards admin-stat-cards--3">
-  <div class="admin-stat-card">
-    <span class="admin-stat-card__value">{{ stats.total }}</span>
-    <span class="admin-stat-card__label">Всього</span>
-  </div>
-  <div class="admin-stat-card admin-stat-card--success">
-    <span class="admin-stat-card__value">{{ stats.paid }}</span>
-    <span class="admin-stat-card__label">Оплачено</span>
-  </div>
-  <div class="admin-stat-card admin-stat-card--warning">
-    <span class="admin-stat-card__value">{{ stats.pending }}</span>
-    <span class="admin-stat-card__label">Очікує</span>
-  </div>
-  {# Дві різні речі: скільки замовлень повернено ПОВНІСТЮ (статус) і скільки
+{# Дві різні речі: скільки замовлень повернено ПОВНІСТЮ (статус) і скільки
      грошей повернуто взагалі (разом із частковими, що лишились 'paid'). #}
-  <div class="admin-stat-card admin-stat-card--danger">
-    <span class="admin-stat-card__value">{{ stats.refunded }}</span>
-    <span class="admin-stat-card__label">Повернено повністю</span>
-  </div>
-  <div class="admin-stat-card admin-stat-card--danger">
-    <span class="admin-stat-card__value">{{ money(stats.refunded_amount or 0) }}</span>
-    <span class="admin-stat-card__label">Сума повернень</span>
-  </div>
-  <div class="admin-stat-card admin-stat-card--accent">
-    <span class="admin-stat-card__value">{{ money(stats.total_amount or 0) }}</span>
-    <span class="admin-stat-card__label">Дохід за вирахуванням повернень</span>
-  </div>
-</div>
+{{ stat_cards([{'value': stats.total, 'label': 'Всього'},
+              {'value': stats.paid, 'label': 'Оплачено', 'mod': 'success'},
+              {'value': stats.pending, 'label': 'Очікує', 'mod': 'warning'},
+              {'value': stats.refunded, 'label': 'Повернено повністю', 'mod': 'danger'},
+              {'value': money(stats.refunded_amount or 0), 'label': 'Сума повернень', 'mod': 'danger'},
+              {'value': money(stats.total_amount or 0), 'label': 'Дохід за вирахуванням повернень', 'mod': 'accent'}],
+             cols=3) }}
 
 {# Current config (read-only) #}
 <div class="form-section">

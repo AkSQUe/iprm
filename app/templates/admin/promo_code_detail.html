@@ -1,4 +1,5 @@
 {% extends "admin/base_admin.html" %}
+{% from 'admin/partials/_filter_bar.html' import stat_cards %}
 
 {% from 'partials/_money.html' import money %}
 {% block title %}Промокод «{{ promo.code }}» | ІПРМ{% endblock %}
@@ -48,28 +49,11 @@
 
     {% include 'partials/flash_messages.html' %}
 
-    <div class="admin-stat-cards">
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ promo.usage_label }}</span>
-        <span class="admin-stat-card__label">Використано</span>
-      </div>
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ stats.paid_count }}</span>
-        <span class="admin-stat-card__label">Дійшли до оплати</span>
-      </div>
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ money(stats.discount_total) }}</span>
-        <span class="admin-stat-card__label">Віддано знижками</span>
-      </div>
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ stats.voided }}</span>
-        <span class="admin-stat-card__label">Анульовано</span>
-      </div>
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value"><span class="badge {{ promo.status_badge }}">{{ promo.status_label }}</span></span>
-        <span class="admin-stat-card__label">Статус</span>
-      </div>
-    </div>
+        {{ stat_cards([{'value': promo.usage_label, 'label': 'Використано'},
+                  {'value': stats.paid_count, 'label': 'Дійшли до оплати'},
+                  {'value': money(stats.discount_total), 'label': 'Віддано знижками'},
+                  {'value': stats.voided, 'label': 'Анульовано'},
+                  {'value': '<span class="badge {{ promo.status_badge }}">{{ promo.status_label }}</span>', 'label': 'Статус'}]) }}
 
     <h2 class="admin-form__section-title">Історія застосувань</h2>
 

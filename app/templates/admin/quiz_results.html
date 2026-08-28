@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-quiz.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import pager %}
+{% from 'admin/partials/_filter_bar.html' import pager, stat_cards  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -45,22 +45,12 @@
     </div>
     {% endif %}
 
-    <div class="admin-stat-cards admin-stat-cards--3">
-      {# Лічильники -- по всій групі, не по цій сторінці: див. коментар у
+        {# Лічильники -- по всій групі, не по цій сторінці: див. коментар у
          routes_quizzes.instance_quiz_results. #}
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ total_count }}</span>
-        <span class="admin-stat-card__label">Учасників</span>
-      </div>
-      <div class="admin-stat-card{{ ' admin-stat-card--success' if passed_count }}">
-        <span class="admin-stat-card__value">{{ passed_count }}</span>
-        <span class="admin-stat-card__label">Склали тест</span>
-      </div>
-      <div class="admin-stat-card">
-        <span class="admin-stat-card__value">{{ issued_count }}</span>
-        <span class="admin-stat-card__label">Сертифікатів видано</span>
-      </div>
-    </div>
+    {{ stat_cards([{'value': total_count, 'label': 'Учасників'},
+                  {'value': passed_count, 'label': 'Склали тест', 'mod': 'success'},
+                  {'value': issued_count, 'label': 'Сертифікатів видано'}],
+                 cols=3) }}
 
     <div class="admin-table-wrap">
       <table class="admin-table">
