@@ -1243,8 +1243,20 @@ a.admin-stat-card:focus-visible {
    Панель -- flex-елемент поруч із .admin-layout { flex: 1 }, тож контент
    розсувається сам, без другого набору правил на margin.
 
+   РУХ РОЗВЕДЕНО В ЧАСІ, і саме тому переходи оголошені ДВІЧІ: у базових
+   правилах (їх бере розкриття) і ще раз у стані спокою (їх бере
+   згортання). Правило просте -- діють переходи того стану, В ЯКИЙ ідемо.
+   Доти обидва напрямки ділили один набір, підпис і край панелі рушали
+   одночасно, і край з'їдав напис швидше, ніж той устигав згаснути:
+   замість згасання виходило обрізання.
+
+   Згортання: спершу гасне підпис, потім рушає край.
+   Розкриття: спершу їде край, підпис проявляється навздогін.
+
    На сенсорних екранах :hover просто ніколи не збігається, тож панель
-   лишається смугою, а розкриває її шпилька.
+   лишається смугою. Шпилька в смузі схована разом із написами, тож
+   розкрити панель дотиком можна лише фокусом -- на десктопній ширині
+   (>= 1025px) це прийнятно, бо там є курсор.
 
    Нижче 1025px діє горизонтальна стрічка (див. RESPONSIVE) -- смуги там
    немає, і жодне правило звідси туди не заходить.
@@ -1252,24 +1264,32 @@ a.admin-stat-card:focus-visible {
 
 @media (min-width: 1025px) {
   .admin-sidebar {
-    /* Ширина смуги не вибрана «на око», а порахована від іконки, яка в
-       смузі не зсувається ВЗАГАЛІ: 12px відступ групи + підкладка 48px
-       (12 + 24 іконка + 12) + 8px залишку + 10px смуги прокрутки + 1px
-       рамки = 79. Іконка через це стоїть на тій самій горизонталі
-       (24..48px), що й у розкритій панелі, тож рухається РІВНО ОДНА
-       річ -- ширина панелі.
+    /* Ширина смуги порахована, а не вибрана на око: 8px відступ групи +
+       підкладка 40px (8 + 24 іконка + 8) + 8px відступ групи + 10px
+       смуги прокрутки + 1px рамки = 67. Іконка через це стоїть рівно
+       посередині вмісту (16..40 у полі 0..56), а підкладка обіймає її
+       симетрично.
 
-       Залишок справа 8px, а не 12: рівно на стільки підкладка стоїть
-       правіше від середини -- на 2px, і цього не видно. Симетрія
-       коштувала б іще 4px ширини смуги. */
-    --iprm-admin-rail-w: 79px;
+       Іконка в смузі зсувається на 8px проти розкритого стану (24 -> 16):
+       це ціна того, щоб стовпчик не був завширшки з розкриту підкладку.
+       Зсув їде тією ж тривалістю, що й ширина, тож читається як частина
+       одного руху, а не як окремий стрибок. */
+    --iprm-admin-rail-w: 67px;
     /* Пауза на ВХІД коротша за паузу на ВИХІД: розкриття мусить читатись
        як відгук, а курсор, що ковзнув по лівому краю, не має переверстувати
        таблицю праворуч. Клавіатура випадковою не буває -- там паузи немає. */
-    --iprm-sb-delay: 220ms;
+    --iprm-sb-delay: 200ms;
+    /* Ширина панелі. */
+    --iprm-sb-dur: 0.3s;
+    /* Підписи. Коротше за ширину -- напис має встигнути згаснути до того,
+       як край його дожене. */
+    --iprm-sb-fade: 0.24s;
+    /* Наскільки один рух випереджає інший. */
+    --iprm-sb-lead: 0.16s;
+    --iprm-sb-ease: var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
     /* Меню довше за екран у ОБОХ станах, тож смуга прокрутки є завжди --
        і саме її 10px закладено в ширину смуги вище. Кольори тут гасяться:
-       глобальний фіолетовий градієнт (common.css) на 79px читався б як
+       глобальний фіолетовий градієнт (common.css) на 67px читався б як
        ще один елемент навігації, а не як смуга прокрутки.
 
        Стандартні властивості й -webkit-псевдоелементи не дублюють одне
@@ -1279,7 +1299,8 @@ a.admin-stat-card:focus-visible {
        іконки з'їхали б рівно на різницю. */
     scrollbar-width: thin;
     scrollbar-color: var(--iprm-border) transparent;
-    transition: width var(--iprm-transition) var(--iprm-sb-delay);
+    /* Розкриття: край рушає одразу. */
+    transition: width var(--iprm-sb-dur) var(--iprm-sb-ease) var(--iprm-sb-delay);
   }
 
   .admin-sidebar::-webkit-scrollbar {
@@ -1305,19 +1326,25 @@ a.admin-stat-card:focus-visible {
     --iprm-sb-delay: 0ms;
   }
 
-  /* Усе, що зникає, згасає ОДНІЄЮ тривалістю і з ТІЄЮ САМОЮ паузою, що й
-     ширина. Саме через розбіг тут підписи зникали б миттєво, а панель
-     їхала б уже потім. */
+  /* Розкриття: підписи проявляються навздогін краю, коли місце під них
+     уже здебільшого є. Крива -- linear: згасання читається рівним лише
+     так, будь-яке прискорення на кінцях дає «моргання». */
   .admin-sidebar__text,
   .admin-sidebar__group-title,
+  .admin-sidebar__pin,
   .admin-sidebar__link .badge {
     opacity: 1;
-    transition: opacity var(--iprm-transition) var(--iprm-sb-delay);
+    transition: opacity var(--iprm-sb-fade) linear
+                calc(var(--iprm-sb-delay) + var(--iprm-sb-lead));
   }
 
+  /* Обрізати тут нічого не треба: напис бренду ріже сам себе (overflow у
+     базовому правилі), шпилька в смузі стоїть на 20..48 при полі 0..56,
+     а підписи ріже підкладка пункта. Зайвий overflow тут з'їдав би
+     фокусну обвідку шпильки й посилань. */
   .admin-sidebar__brand,
   .admin-sidebar__group {
-    transition: padding var(--iprm-transition) var(--iprm-sb-delay);
+    transition: padding var(--iprm-sb-dur) var(--iprm-sb-ease) var(--iprm-sb-delay);
   }
 
   /* Базове правило дає посиланню `transition: all 0.2s` -- тут воно
@@ -1328,10 +1355,10 @@ a.admin-stat-card:focus-visible {
        система координат для крапки-нагадування нижче. */
     overflow: hidden;
     position: relative;
-    transition: width var(--iprm-transition) var(--iprm-sb-delay),
-                padding var(--iprm-transition) var(--iprm-sb-delay),
-                background 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
-                color 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+    transition: width var(--iprm-sb-dur) var(--iprm-sb-ease) var(--iprm-sb-delay),
+                padding var(--iprm-sb-dur) var(--iprm-sb-ease) var(--iprm-sb-delay),
+                background 0.2s var(--iprm-sb-ease),
+                color 0.2s var(--iprm-sb-ease);
   }
 
   /* Підпис не переносить рядок: під час згортання він ще видимий, і
@@ -1349,9 +1376,10 @@ a.admin-stat-card:focus-visible {
   .admin-sidebar__link:has(.badge)::after {
     content: '';
     position: absolute;
-    /* Правий верхній кут іконки: вона стоїть на 24..48px від краю панелі. */
+    /* Правий верхній кут іконки: у смузі вона стоїть на 8..32px від краю
+       підкладки. */
     top: 6px;
-    left: 40px;
+    left: 24px;
     width: 8px;
     height: 8px;
     border-radius: 50%;
@@ -1362,52 +1390,60 @@ a.admin-stat-card:focus-visible {
 
   /* ---- Стан спокою ---- */
 
+  /* Згортання: край чекає, поки згасне підпис. */
   .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) {
     width: var(--iprm-admin-rail-w);
+    transition: width var(--iprm-sb-dur) var(--iprm-sb-ease)
+                calc(var(--iprm-sb-delay) + var(--iprm-sb-lead));
   }
 
-  /* Шпилька притиснута до правого краю (space-between), тож їде вліво
-     разом із ним. Відступи підібрані так, щоб у смузі вона стала рівно
-     на стовпчик іконок: 68px вмісту - 18px справа = правий край на 50,
-     тобто кнопка на 22..50 -- та сама середина 36, що й у іконок. Напис
-     бренду при цьому стискається до нуля (min-width: 0 у базовому
-     правилі); саме тому центрувати рядок не можна -- центрувалась би
-     пара «напис + шпилька», і шпильку винесло б за край так само, як
-     виносило іконки. */
-  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__brand {
-    padding: 0 18px 24px 14px;
-  }
-
+  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__brand,
   .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__group {
-    padding: 0 12px;
+    padding-left: 8px;
+    padding-right: 8px;
+    transition: padding var(--iprm-sb-dur) var(--iprm-sb-ease)
+                calc(var(--iprm-sb-delay) + var(--iprm-sb-lead));
   }
 
-  /* Іконку НЕ центруємо: підпис поруч не переносить рядок, тож flex
-     центрував би пару «іконка + підпис», а не іконку -- і виносив би
-     іконку за лівий край тим далі, чим довший підпис. Іконка лишається
-     притиснутою до незмінного лівого відступу (12px групи + 12px
-     посилання = ті самі 24px, що й у розкритій панелі), тобто при
-     згортанні не рухається взагалі. Рухається рівно одна річ -- ширина.
+  /* Підкладка обіймає іконку і більше нічого: 24px іконки + по 8px з
+     боків. Ширші відступи робили стовпчик завширшки з пів меню.
 
-     Ширина підкладки задана явно (24px іконки + по 12px з боків):
-     інакше вона тягнулась би на всю ширину групи і стояла б навколо
-     іконки несиметрично. Вкладеним пунктам скидаємо їхній лівий
-     відступ 32px -- у смузі він збив би іконку з ряду. */
+     Заразом це прибирає останній видимий шматок підпису. Ріже його край
+     ПІДКЛАДКИ (overflow ріже по padding-box), а підпис починається через
+     проміжок 10px після іконки -- тобто на 42px, тоді як край тепер на
+     40. Доти відступ був 12px, край стояв на 48, і в смузі назавжди
+     лишалась двопіксельна смужка першої літери.
+
+     Вкладеним пунктам скидаємо їхній лівий відступ 32px -- у смузі він
+     збив би іконку з ряду. */
   .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__link {
-    width: 48px;
-    padding-left: 12px;
-    padding-right: 12px;
+    width: 40px;
+    padding-left: 8px;
+    padding-right: 8px;
+    transition: width var(--iprm-sb-dur) var(--iprm-sb-ease)
+                calc(var(--iprm-sb-delay) + var(--iprm-sb-lead)),
+                padding var(--iprm-sb-dur) var(--iprm-sb-ease)
+                calc(var(--iprm-sb-delay) + var(--iprm-sb-lead)),
+                background 0.2s var(--iprm-sb-ease),
+                color 0.2s var(--iprm-sb-ease);
   }
 
+  /* Згортання: підписи гаснуть ПЕРШИМИ, без паузи на випередження.
+     Шпилька тут разом із ними: закріплювати можна лише те, що видно, а
+     в смузі меню й так закрите. */
   .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__text,
   .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__group-title,
+  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__pin,
   .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__link .badge {
     opacity: 0;
+    transition: opacity var(--iprm-sb-fade) linear var(--iprm-sb-delay);
   }
 
   /* Заголовок групи лишається порожнім проміжком -- саме він і розділяє
-     групи іконок, тож ховається він згасанням, а не display: none. */
-  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__group-title {
+     групи іконок, тож ховається він згасанням, а не display: none.
+     Погашена шпилька так само не має ловити кліки. */
+  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__group-title,
+  .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__pin {
     pointer-events: none;
   }
 
@@ -1415,7 +1451,7 @@ a.admin-stat-card:focus-visible {
      згас, пігулка бейджа поїхала за край, стрибати нема чому. */
   .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__link:has(.badge)::after {
     opacity: 1;
-    transition-delay: calc(var(--iprm-sb-delay) + 0.25s);
+    transition-delay: calc(var(--iprm-sb-delay) + var(--iprm-sb-lead) + var(--iprm-sb-dur));
   }
 
   .admin-sidebar:not(.admin-sidebar--pinned):not(:hover):not(:focus-within) .admin-sidebar__link--active:has(.badge)::after {
@@ -1432,6 +1468,7 @@ a.admin-stat-card:focus-visible {
   .admin-sidebar__group-title,
   .admin-sidebar__link .badge,
   .admin-sidebar__link:has(.badge)::after,
+  .admin-sidebar__pin,
   .admin-sidebar__pin-icon {
     transition: none;
   }
