@@ -23,6 +23,58 @@ def test_css_from_partial_counts_transitively():
     assert result['component']['material-symbols.css'] > 1
 
 
+# _CSS_LINK раніше знав лише форму `filename='css/x.css'` (url_for).
+# Форма `href="/static/css/x.css?v={{ assets_version }}"` -- літеральний
+# шлях без url_for -- так само валідна за правилами проєкту (кожен <link>
+# несе ?v=, а ЯК побудований href -- не регламентовано), але для старого
+# regexp була невидимою: файл, підключений лише так, давав 0 споживачів у
+# classify_css і взагалі не згадувався в catalog_gap.
+
+def test_css_link_recognizes_url_for_and_literal_href_forms(tmp_path):
+    """Синтетичне доведення: два шаблони підключають ОДИН файл -- один
+    формою url_for, інший буквальним href -- разом мають дати компонентний
+    файл із 2 споживачами, а не 0 чи 1.
+    """
+    tpl_dir = tmp_path / 'app' / 'templates'
+    tpl_dir.mkdir(parents=True)
+    (tpl_dir / 'via_url_for.html').write_text(
+        '<link rel="stylesheet" href="{{ url_for(\'static\', '
+        'filename=\'css/shared-widget.css\') }}?v={{ assets_version }}">\n',
+        encoding='utf-8')
+    (tpl_dir / 'via_literal_href.html').write_text(
+        '<link rel="stylesheet" href="/static/css/shared-widget.css'
+        '?v={{ assets_version }}">\n',
+        encoding='utf-8')
+    css_dir = tmp_path / 'app' / 'static' / 'css'
+    css_dir.mkdir(parents=True)
+    (css_dir / 'shared-widget.css').write_text('.widget { color: red; }', encoding='utf-8')
+
+    result = ds_audit.classify_css(tmp_path)
+    assert 'shared-widget.css' in result['component'], (
+        'shared-widget.css підключений двома шаблонами -- один через '
+        'url_for, інший буквальним href="/static/css/...". Обидві форми '
+        'мають рахуватись як підключення.'
+    )
+    assert result['component']['shared-widget.css'] == 2
+
+
+def test_css_files_have_no_unrecognized_zero_consumers():
+    """Нуль споживачів у classify_css означає, що підключення НЕ
+    розпізнане regexp-ом, а не "файл нікому не потрібен" -- єдиний
+    легітимний нуль сьогодні належить chrome самого каталогу
+    (page-admin-design-system.css: каталог виключений з підрахунку
+    споживачів навмисно, бо він ПОКАЗУЄ компоненти, а не вживає їх).
+    Будь-який інший нуль -- підозра на нерозпізнану форму <link>.
+    """
+    result = ds_audit.classify_css(ROOT)
+    zero = sorted(name for name, count in result['page'].items() if count == 0)
+    assert zero == ['page-admin-design-system.css'], (
+        'CSS-файли з 0 розпізнаними споживачами: ' + ', '.join(zero)
+        + '\nЯкщо файл справді підключений -- перевірте форму <link>: '
+          'можливо, _CSS_LINK у tools/ds/ds_audit.py не впізнає її.'
+    )
+
+
 # Наступні два тести раніше пришпилювали механізм на ЖИВИХ фактах проєкту
 # (page-contact.css -- один споживач, apple-btn -- дублікат): `apple-btn`
 # -- перша ціль Етапу 2, і в день, коли його зведуть в один файл, пришпилений

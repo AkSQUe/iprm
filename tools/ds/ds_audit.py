@@ -40,7 +40,20 @@ CATALOG_GLOBS = ('design_system/*.html', 'admin/design_system*.html')
 _EXTENDS = re.compile(r"{%-?\s*extends\s+['\"]([^'\"]+)['\"]")
 _INCLUDE = re.compile(r"{%-?\s*include\s+['\"]([^'\"]+)['\"]")
 _INCLUDE_DYNAMIC = re.compile(r"{%-?\s*include\s+(?!['\"])")
-_CSS_LINK = re.compile(r"filename=['\"]css/([\w.-]+\.css)['\"]")
+# Дві форми <link>, якими шаблон підключає CSS -- обидві валідні за
+# правилами проєкту (кожен <link> несе ?v={{ assets_version }}, а ЯК саме
+# побудований href -- не regламентовано):
+#   1. href="{{ url_for('static', filename='css/x.css') }}?v=..." -- ловить
+#      перша частина, на буквальному `filename=`;
+#   2. href="/static/css/x.css?v={{ assets_version }}" -- літеральний шлях
+#      без url_for; ловить друга частина, на буквальному `static/css/`.
+# Файл, підключений лише другою формою, для першої версії regexp був
+# невидимий: classify_css рахував 0 споживачів, catalog_gap його не бачив
+# узагалі, і 91 тест лишався зеленим.
+_CSS_LINK = re.compile(
+    r"filename=['\"]css/([\w.-]+\.css)['\"]"
+    r"|href=['\"][^'\"]*?static/css/([\w.-]+\.css)"
+)
 _COMMENT = re.compile(r'/\*.*?\*/', re.S)
 
 # Розбір суб'єкта селектора (той компаунд, який правило РЕАЛЬНО стилізує):
@@ -72,15 +85,24 @@ def _catalog_names(root):
     return names
 
 
+def _css_links(text):
+    """Імена CSS-файлів, підключених у `text` -- обидві форми `<link>`
+    (`filename='css/...'` через `url_for` і буквальний `static/css/...`).
+    `_CSS_LINK` має два групи захоплення, по одній на форму -- у кожному
+    збігу рівно одна з них непорожня.
+    """
+    return {a or b for a, b in _CSS_LINK.findall(text)}
+
+
 def _link_graph(texts):
     """(direct, parents) для графа шаблонів `texts` (ім'я -> вміст).
 
-    `direct[name]` -- CSS, підключений У ЦЬОМУ файлі напряму (`{% assets %}`
-    на `filename='css/...'`). `parents[name]` -- файли, які `name`
+    `direct[name]` -- CSS, підключений У ЦЬОМУ файлі напряму (обидві форми
+    `<link>` -- див. `_css_links`). `parents[name]` -- файли, які `name`
     розширює чи інклюдить (`extends`/`include`), лише ті, що реально є в
     `texts`. Разом -- граф, яким рекурсивно ходить `_effective_css`.
     """
-    direct = {name: set(_CSS_LINK.findall(text)) for name, text in texts.items()}
+    direct = {name: _css_links(text) for name, text in texts.items()}
     parents = {}
     for name, text in texts.items():
         refs = set(_EXTENDS.findall(text)) | set(_INCLUDE.findall(text))
