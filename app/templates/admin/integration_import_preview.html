@@ -1,4 +1,5 @@
 {% extends "admin/base_admin.html" %}
+{% from 'admin/partials/_filter_bar.html' import empty_state %}
 
 {% block title %}Import preview | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -86,9 +87,9 @@
         </table>
       </div>
       {% else %}
-      <div class="admin-empty">
-        <p>Розпізнаних ключів немає у paste'нутому тексті.</p>
-      </div>
+      {% call empty_state(icon_name='search', title='Ключів не розпізнано') %}
+        <p>У вставленому тексті немає жодного рядка, схожого на ключ.</p>
+      {% endcall %}
       {% endif %}
     </div>
 

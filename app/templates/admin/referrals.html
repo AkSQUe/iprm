@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards  %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards, empty_state   %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -37,8 +37,11 @@
     {% include 'partials/flash_messages.html' %}
 
     {% if denorm_total != real_total %}
-    <div class="admin-empty admin-pad-24 admin-text-left admin-mb-md">
-      <h3 class="admin-empty__title">Розбіжність балансів</h3>
+    {# Це не порожній стан, а ПОПЕРЕДЖЕННЯ з дією: `.admin-empty` малює
+       картку «тут нічого немає», а тут дані є, просто розійшлись. #}
+    <div class="alert alert--warning">
+      {{ icon('error') }}
+      <strong class="alert__title">Розбіжність у балах</strong>
       <p>Денормалізована сума ({{ denorm_total }}) не збігається з перерахунком
          ({{ real_total }}). Ймовірно, дрейф після видалення/ручної правки БД.
          Натисніть «Звірити», щоб виправити.</p>
@@ -50,8 +53,10 @@
     {% endif %}
 
     {% if not settings.referral_enabled %}
-    <div class="admin-empty admin-pad-24 admin-text-left admin-mb-md">
-      <h3 class="admin-empty__title">Програму вимкнено</h3>
+    {# Теж не порожній стан: реферери можуть бути, просто нарахування вимкнено. #}
+    <div class="alert alert--info admin-mb-md">
+      {{ icon('info') }}
+      <strong class="alert__title">Програму вимкнено</strong>
       <p>Реферальні посилання й нарахування балів не активні. Увімкніть програму
          в <a href="{{ url_for('admin.settings') }}">Налаштуваннях сайту</a>
          (ставка: {{ settings.referral_points_per_paid }} бал(ів) за оплачену реєстрацію).</p>
@@ -199,11 +204,9 @@
     <!-- Пагінація -->
     {{ pager('admin.referrals_overview', pagination, filter_args) }}
     {% else %}
-    <div class="admin-empty">
-      {{ icon('add_link', cls='admin-empty__icon') }}
-      <h3 class="admin-empty__title">Нарахувань ще немає</h3>
+    {% call empty_state(icon_name='add_link', title='Нарахувань ще немає') %}
       <p>Бали з'являться тут після першої оплаченої реєстрації по реферальному посиланню</p>
-    </div>
+    {% endcall %}
     {% endif %}
 
   </div>

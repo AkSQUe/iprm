@@ -1,4 +1,5 @@
 {% extends "admin/base_admin.html" %}
+{% from 'admin/partials/_filter_bar.html' import empty_state %}
 
 {% block title %}Коментарі блогу | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -110,9 +111,9 @@
       </table>
       </div>
       {% else %}
-      <div class="admin-empty admin-pad-24 admin-text-center">
-        <p class="admin-text-muted">Немає коментарів у цій категорії.</p>
-      </div>
+      {% call empty_state(icon_name='forum', title='Коментарів немає') %}
+        <p class="admin-text-muted">У цій категорії порожньо. Зріз перемикається стрічкою вгорі.</p>
+      {% endcall %}
       {% endif %}
     </div>
 

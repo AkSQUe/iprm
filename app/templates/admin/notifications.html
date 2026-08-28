@@ -1,5 +1,5 @@
 {% extends "admin/base_admin.html" %}
-{% from 'admin/partials/_filter_bar.html' import stat_cards %}
+{% from 'admin/partials/_filter_bar.html' import stat_cards, empty_state  %}
 
 {% block title %}Сповіщення | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -226,10 +226,9 @@
       </table>
     </div>
     {% else %}
-    <div class="admin-empty">
-      <h3 class="admin-empty__title">Немає відправок</h3>
+    {% call empty_state(title='Немає відправок') %}
       <p>Ще немає відправлених листів</p>
-    </div>
+    {% endcall %}
     {% endif %}
   </div>
 

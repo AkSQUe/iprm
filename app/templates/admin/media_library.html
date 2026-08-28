@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-media.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -112,9 +112,9 @@
     {% endif %}
 
     {% else %}
-    <div class="admin-empty admin-pad-32 admin-text-center">
-      <p class="admin-text-muted">Немає медіафайлів за цим фільтром.</p>
-    </div>
+    {% call empty_state(icon_name='perm_media', title='Медіафайлів немає') %}
+      <p class="admin-text-muted">За цим фільтром порожньо.</p>
+    {% endcall %}
     {% endif %}
 
   </div>

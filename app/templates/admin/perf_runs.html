@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-perf.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import pager %}
+{% from 'admin/partials/_filter_bar.html' import pager, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -153,17 +153,15 @@
   {{ pager('admin.perf_runs', pagination) }}
 
   {% else %}
-  <div class="admin-empty">
-    {{ icon('bolt', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">Замірів ще немає</h3>
+  {% call empty_state(icon_name='bolt', title='Замірів ще немає') %}
     <p>
-      {% if key_state.present %}
-      Запустіть інструмент командою нижче &ndash; перший прогін зʼявиться тут.
-      {% else %}
-      Згенеруйте ключ нижче і запустіть інструмент з прапорцем <code class="admin-code">--push</code>.
-      {% endif %}
+    {% if key_state.present %}
+    Запустіть інструмент командою нижче &ndash; перший прогін зʼявиться тут.
+    {% else %}
+    Згенеруйте ключ нижче і запустіть інструмент з прапорцем <code class="admin-code">--push</code>.
+    {% endif %}
     </p>
-  </div>
+  {% endcall %}
   {% endif %}
 
   {# Приймання замірів: адмінка сама не вимірює -- браузер на 1-ядерному

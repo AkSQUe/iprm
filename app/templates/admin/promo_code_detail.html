@@ -1,5 +1,5 @@
 {% extends "admin/base_admin.html" %}
-{% from 'admin/partials/_filter_bar.html' import stat_cards %}
+{% from 'admin/partials/_filter_bar.html' import stat_cards, empty_state  %}
 
 {% from 'partials/_money.html' import money %}
 {% block title %}Промокод «{{ promo.code }}» | ІПРМ{% endblock %}
@@ -109,11 +109,9 @@
     </table>
     </div>
     {% else %}
-    <div class="admin-empty">
-      {{ icon('history', cls='admin-empty__icon') }}
-      <h3 class="admin-empty__title">Кодом ще не користувались</h3>
+    {% call empty_state(icon_name='history', title='Кодом ще не користувались') %}
       <p>Передайте код людині — вона введе його у полі «Промокод» на формі реєстрації.</p>
-    </div>
+    {% endcall %}
     {% endif %}
 
   </div>

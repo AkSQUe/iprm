@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-materials.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_card  %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_card, empty_state   %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -176,20 +176,11 @@
   </div>
 
   {{ pager('admin.materials_overview', pagination, filter_args) }}
-  {% elif filter_args %}
-  {# Порожньо через зріз, а не через порожню базу: «Немає резервувань» тут
-     було б неправдою -- вони є, просто не в цьому фільтрі. #}
-  <div class="admin-empty">
-    {{ icon('search', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">За цим зрізом резервувань немає</h3>
-    <p>Спробуйте інший фільтр або <a href="{{ url_for('admin.materials_overview') }}">подивіться всі резервування</a></p>
-  </div>
   {% else %}
-  <div class="admin-empty">
-    {{ icon('inbox', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">Резервувань ще немає</h3>
+  {% call empty_state('admin.materials_overview', filter_args,
+                      icon_name='inbox', title='Резервувань ще немає') %}
     <p>Перше з'явиться тут, щойно захід подасть заявку на матеріали.</p>
-  </div>
+  {% endcall %}
   {% endif %}
 
   </div>

@@ -1,5 +1,5 @@
 {% extends "admin/base_admin.html" %}
-{% from 'admin/partials/_filter_bar.html' import stat_card %}
+{% from 'admin/partials/_filter_bar.html' import stat_card, empty_state  %}
 
 {% block title %}Webhook черга | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -140,19 +140,13 @@
   </table>
   </div>
   {% else %}
-  <div class="admin-empty admin-text-center">
-    {{ icon('inbox', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">
-      {% if filter_status %}Немає записів зі статусом "{{ filter_status }}"{% else %}Записів немає{% endif %}
-    </h3>
-    <p>
-      {% if filter_status %}
-        Спробуйте інший фільтр або <a href="{{ url_for('admin.webhooks_list') }}">показати всі</a>.
-      {% else %}
-        Доставки з'являться тут при зміні курсів, якщо увімкнено partner_webhook.
-      {% endif %}
-    </p>
-  </div>
+  {# Зріз тут задає filter_status, а не спільний `filters`, тож словник для
+     макроса збираємо на місці -- сенс той самий: непорожній зріз. #}
+  {% call empty_state('admin.webhooks_list',
+                      {'status': filter_status} if filter_status else {},
+                      icon_name='inbox', title='Записів немає') %}
+    <p>Доставки з'являться тут при зміні курсів, якщо увімкнено partner_webhook.</p>
+  {% endcall %}
   {% endif %}
 
   </div>

@@ -1,4 +1,5 @@
 {% extends "admin/base_admin.html" %}
+{% from 'admin/partials/_filter_bar.html' import empty_state %}
 
 {% from 'partials/_money.html' import money %}
 {% block title %}Тарифи проведення | ІПРМ{% endblock %}
@@ -95,11 +96,9 @@
   </table>
   </div>
   {% else %}
-  <div class="admin-empty">
-    {{ icon('bolt', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">Тарифів ще немає</h3>
+  {% call empty_state(icon_name='bolt', title='Тарифів ще немає') %}
     <p>Без тарифів діє звичайна ціна проведення ({{ money(instance.effective_price) }}). Рекомендована вилка: Онлайн → Онлайн+ → Практикум → Практикум з менторством.</p>
-  </div>
+  {% endcall %}
   {% endif %}
 
   <form method="POST" class="admin-form admin-tariffs-form" action="{% if edit_tariff %}{{ url_for('admin.instance_tariff_edit', tariff_id=edit_tariff.id) }}{% else %}{{ url_for('admin.instance_tariffs', instance_id=instance.id) }}{% endif %}">

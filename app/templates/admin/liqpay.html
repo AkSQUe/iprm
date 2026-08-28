@@ -1,5 +1,5 @@
 {% extends "admin/_integration_page.html" %}
-{% from 'admin/partials/_filter_bar.html' import stat_cards %}
+{% from 'admin/partials/_filter_bar.html' import stat_cards, empty_state  %}
 
 {% block title %}LiqPay | ІПРМ{% endblock %}
 {% block integration_title %}LiqPay{% endblock %}
@@ -152,11 +152,9 @@
   </table>
   </div>
   {% else %}
-  <div class="admin-empty">
-    {{ icon('inbox', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">Платежів ще немає</h3>
+  {% call empty_state(icon_name='inbox', title='Платежів ще немає') %}
     <p>Тут з'являться замовлення, оплачені через LiqPay.</p>
-  </div>
+  {% endcall %}
   {% endif %}
 </div>
 {% endblock %}

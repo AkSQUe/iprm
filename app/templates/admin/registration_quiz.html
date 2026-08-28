@@ -1,4 +1,5 @@
 {% extends "admin/base_admin.html" %}
+{% from 'admin/partials/_filter_bar.html' import empty_state %}
 
 {% block title %}Тестування: {{ reg.user.full_name }} | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -215,11 +216,9 @@
       </div>
     </div>
     {% else %}
-    <div class="admin-empty">
-      {{ icon('quiz', cls='admin-empty__icon') }}
-      <h3 class="admin-empty__title">Спроб ще не було</h3>
+    {% call empty_state(icon_name='quiz', title='Спроб ще не було') %}
       <p>Тут з'явиться розбір кожної відповіді, щойно учасник почне тест</p>
-    </div>
+    {% endcall %}
     {% endfor %}
 
     {# Дії -- у кінці сторінки, ПОЗА секціями: `.admin-form__actions` це

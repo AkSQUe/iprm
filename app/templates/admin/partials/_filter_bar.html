@@ -206,6 +206,14 @@
    base_args -- те, що переживає скидання (scope, instance_id): фільтром не
    рахується й лишається в посиланні «скинути».
 
+   endpoint не обов'язковий: на сторінці без фільтрів гілки «фільтр нічого не
+   знайшов» просто не буває, і посилання «скинути фільтри» там було б
+   неправдою. Тоді макрос кличеться коротко:
+
+     {% call empty_state(icon_name='apps', title='Комплектів ще немає') %}
+       <p>Створіть перший комплект...</p>
+     {% endcall %}
+
    Текст справді порожнього реєстру пише сторінка -- він щоразу свій:
 
      {% call empty_state('admin.cities_list', filter_args,
@@ -213,11 +221,11 @@
        <p>Додайте перший рядок...</p>
      {% endcall %}
 #}
-{% macro empty_state(endpoint, filter_args={}, base_args={},
+{% macro empty_state(endpoint=None, filter_args={}, base_args={},
                      icon_name='inbox', title='Записів немає') %}
 {% set narrowed = filter_args | reject('in', base_args) | list %}
 <div class="admin-empty">
-  {% if narrowed %}
+  {% if narrowed and endpoint %}
     {{ icon('search', cls='admin-empty__icon') }}
     <h3 class="admin-empty__title">Нічого не знайдено</h3>
     <p>За цим зрізом порожньо &mdash;

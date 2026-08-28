@@ -13,7 +13,7 @@
 <script src="{{ url_for('static', filename='js/admin-status-select.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -246,25 +246,17 @@
 
   {{ pager('admin.instances_list', pagination, filter_args) }}
   {% elif pagination and pagination.total %}
-  <div class="admin-empty">
-    {{ icon('event', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">На цій сторінці немає проведень</h3>
+  {# Третій стан, якого макрос не знає: рядки є, але номер сторінки за межами.
+     Тут не фільтр винен, тож і пропонувати «скинути фільтри» неправильно --
+     треба повернутись на першу сторінку того самого зрізу. #}
+  {% call empty_state(icon_name='event', title='На цій сторінці немає проведень') %}
     <p><a href="{{ url_for('admin.instances_list', **filter_args) }}">Повернутись до першої сторінки</a></p>
-  </div>
-  {% elif filter_args %}
-  {# Порожньо через зріз, а не через порожню базу: пропонувати «додайте перше
-     проведення» тут -- брехати. Проведення є, їх не видно за фільтром. #}
-  <div class="admin-empty">
-    {{ icon('search', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">За цим зрізом проведень немає</h3>
-    <p>Спробуйте інший фільтр або <a href="{{ url_for('admin.instances_list') }}">подивіться весь розклад</a></p>
-  </div>
+  {% endcall %}
   {% else %}
-  <div class="admin-empty">
-    {{ icon('event', cls='admin-empty__icon') }}
-    <h3 class="admin-empty__title">Проведень ще немає</h3>
+  {% call empty_state('admin.instances_list', filter_args,
+                      icon_name='event', title='Проведень ще немає') %}
     <p>Додайте перше проведення кнопкою «Додати проведення» вгорі</p>
-  </div>
+  {% endcall %}
   {% endif %}
 
   </div>

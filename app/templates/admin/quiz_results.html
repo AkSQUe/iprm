@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-quiz.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import pager, stat_cards  %}
+{% from 'admin/partials/_filter_bar.html' import pager, stat_cards, empty_state   %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -156,11 +156,9 @@
 
     {{ pager('admin.instance_quiz_results', pagination, {'instance_id': instance.id}) }}
     {% if not rows %}
-    <div class="admin-empty">
-      {{ icon('how_to_reg', cls='admin-empty__icon') }}
-      <h3 class="admin-empty__title">Реєстрацій немає</h3>
+    {% call empty_state(icon_name='how_to_reg', title='Реєстрацій немає') %}
       <p>Результати з'являться після того, як учасники складуть тест</p>
-    </div>
+    {% endcall %}
     {% endif %}
 
   </div>
