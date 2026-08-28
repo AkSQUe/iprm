@@ -1,0 +1,326 @@
+{# Таб <<Основа>>: сторінки-приклади, кольорова палітра, примітиви еталона, типографіка, spacing-шкала, анімації.
+   Різано з колишнього _content.html копіюванням -- текст підказок і заголовків не переписаний. #}
+  <div class="ds-section" id="pages">
+    <p class="ds-label">Navigation</p>
+    <h2 class="ds-title">Сторінки</h2>
+    <div class="ds-pages">
+      <a href="{{ url_for('main.index') }}">Головна</a>
+      <a href="{{ url_for('courses.course_list') }}">Курси</a>
+      <a href="{{ url_for('trainers.trainer_list') }}">Тренери</a>
+      <a href="{{ url_for('clinics.clinic_list') }}">Клініки</a>
+      <a href="{{ url_for('main.contact') }}">Контакти</a>
+    </div>
+  </div>
+
+  <!-- ===== COLORS ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="colors">
+        <p class="ds-label">Foundations</p>
+        <h2 class="ds-title">Кольорова палітра</h2>
+
+        <h3 class="ds-section-heading">Нейтральні</h3>
+        <div class="ds-swatches">
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--black"></div>
+            <div class="ds-swatch__info">Black<span class="ds-swatch__value">--apple-black</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--dark"></div>
+            <div class="ds-swatch__info">Dark<span class="ds-swatch__value">--iprm-dark</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--gray-dark"></div>
+            <div class="ds-swatch__info">Gray Dark<span class="ds-swatch__value">--apple-gray-dark</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--gray"></div>
+            <div class="ds-swatch__info">Gray<span class="ds-swatch__value">--apple-gray</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--gray-light"></div>
+            <div class="ds-swatch__info">Gray Light<span class="ds-swatch__value">--apple-gray-light</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--section-bg"></div>
+            <div class="ds-swatch__info">Section BG<span class="ds-swatch__value">--apple-section-bg</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--line"></div>
+            <div class="ds-swatch__info">Line<span class="ds-swatch__value">--iprm-border</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--line-strong"></div>
+            <div class="ds-swatch__info">Line strong<span class="ds-swatch__value">--iprm-border-strong</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--white"></div>
+            <div class="ds-swatch__info">White<span class="ds-swatch__value">--iprm-white</span></div>
+          </div>
+        </div>
+
+        <h3 class="ds-section-heading">Бренд</h3>
+        <div class="ds-swatches">
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--accent"></div>
+            <div class="ds-swatch__info">Accent<span class="ds-swatch__value">--iprm-accent</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--accent-hover"></div>
+            <div class="ds-swatch__info">Accent Hover<span class="ds-swatch__value">--iprm-accent-hover</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--accent-light"></div>
+            <div class="ds-swatch__info">Accent Light<span class="ds-swatch__value">--iprm-accent-light</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--purple-mid"></div>
+            <div class="ds-swatch__info">Purple Mid<span class="ds-swatch__value">--apple-purple-mid</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--grad-1"></div>
+            <div class="ds-swatch__info">Grad Dark 1<span class="ds-swatch__value">--apple-grad-dark-1</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--grad-2"></div>
+            <div class="ds-swatch__info">Grad Dark 2<span class="ds-swatch__value">--apple-grad-dark-2</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--grad-3"></div>
+            <div class="ds-swatch__info">Grad Dark 3<span class="ds-swatch__value">--apple-grad-dark-3</span></div>
+          </div>
+        </div>
+
+        <h3 class="ds-section-heading">Золото -- колір ДІЇ</h3>
+        <div class="ds-swatches">
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--gold"></div>
+            <div class="ds-swatch__info">Gold<span class="ds-swatch__value">--apple-orange</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--on-accent-warm"></div>
+            <div class="ds-swatch__info">On Gold<span class="ds-swatch__value">--iprm-on-accent-warm</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--gold-soft"></div>
+            <div class="ds-swatch__info">Gold Soft (текст на тёмному)<span class="ds-swatch__value">--apple-gold-soft</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--gold-ink"></div>
+            <div class="ds-swatch__info">Gold Ink (текст на світлому)<span class="ds-swatch__value">--apple-gold-ink</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--grad-gold"></div>
+            <div class="ds-swatch__info">Grad Gold (хвіст градієнта)<span class="ds-swatch__value">--apple-grad-gold</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--gold-light"></div>
+            <div class="ds-swatch__info">Gold Light<span class="ds-swatch__value">--apple-orange-light</span></div>
+          </div>
+        </div>
+        <p class="ds-hint">Золото -- ЛИШЕ дія: CTA, прапорець виділеного тарифу, головне число ROI. Текст по золоту завжди --iprm-on-accent-warm (контраст 8.28); білий по ньому дає 1.9. Як колір тексту золото працює тільки в похідних: --apple-gold-soft на тёмному, --apple-gold-ink на світлому.</p>
+
+        <h3 class="ds-section-heading">Тепла інформаційна родина -- НЕ дія</h3>
+        <div class="ds-swatches">
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--warm-bg"></div>
+            <div class="ds-swatch__info">Warm BG<span class="ds-swatch__value">--iprm-warm-bg</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--warm-text"></div>
+            <div class="ds-swatch__info">Warm Text<span class="ds-swatch__value">--iprm-warm-text</span></div>
+          </div>
+        </div>
+        <p class="ds-hint">Терракота, а не золото: бейдж типу заходу й плашка міста офлайн мусять читатись як мітки. Поки помаранчевий був приглушеним, він годився і для мітки, і для акценту -- золоте CTA цю двозначність зламало.</p>
+
+        <h3 class="ds-section-heading">Семантичні (Apple system colors)</h3>
+        <div class="ds-swatches">
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--success"></div>
+            <div class="ds-swatch__info">Success<span class="ds-swatch__value">--iprm-success</span></div>
+          </div>
+          
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--warning-bg"></div>
+            <div class="ds-swatch__info">Warning BG<span class="ds-swatch__value">--iprm-warning-bg</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--warning-border"></div>
+            <div class="ds-swatch__info">Warning Border<span class="ds-swatch__value">--iprm-warning-border</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--warning"></div>
+            <div class="ds-swatch__info">Warning<span class="ds-swatch__value">--iprm-warning</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--warning-text"></div>
+            <div class="ds-swatch__info">Warning Text<span class="ds-swatch__value">--iprm-warning-text</span></div>
+          </div>
+          <div class="ds-swatch">
+            <div class="ds-swatch__color ds-swatch__color--error"></div>
+            <div class="ds-swatch__info">Error<span class="ds-swatch__value">--iprm-error</span></div>
+          </div>
+        </div>
+
+        <h3 class="ds-section-heading">Тёмні поверхні</h3>
+        <div class="ds-gradient-row">
+          <div class="ds-gradient-sample ds-gradient-sample--hero">Hero</div>
+          <div class="ds-gradient-sample ds-gradient-sample--section-dark">Section dark</div>
+        </div>
+        <p class="ds-hint">Обидві збираються з --apple-grad-dark-* і золотого відблиску rgba(var(--apple-orange-rgb), .2). Тёмні в ОБОХ темах: у [data-theme="dark"] ці токени не перевизначаються.</p>
+
+        <h3 class="ds-section-heading">Градієнти</h3>
+        <div class="ds-gradient-row">
+          <div class="ds-gradient-sample ds-gradient-sample--brand-gold">Gradient Text</div>
+          <div class="ds-gradient-sample ds-gradient-sample--brand-gold-dark">Gradient Text (on dark)</div>
+        </div>
+        <p class="ds-hint">Градієнти -- лише для тексту (1-2 слова), маркерів списків і чисел статистики; не для фонів кнопок. Хвіст на світлому -- --apple-grad-gold (#ffad36): у градієнті золото з'їдається лише на останніх літерах, тож тут воно живе, а не чорнильне. Плата відома -- 1.86 на білому, тобто нижче AA 3:1; для суцільного тексту по світлому лишається --apple-gold-ink.</p>
+    </div>
+  </div>
+
+  <!-- ===== ETALON PRIMITIVES (живі класи, без інлайн-стилів) ===== -->
+  <div class="ds-section" id="typography">
+    <p class="ds-label">Foundations</p>
+    <h2 class="ds-title">Типографіка</h2>
+    <div class="ds-col">
+      <div class="ds-typo-item" style="font-size: clamp(40px, 5.5vw, 72px); font-weight: 900; letter-spacing: -0.035em; line-height: 1.12; color: var(--apple-black);">
+        Hero Title
+        <span class="ds-typo-meta">clamp(40px, 5.5vw, 72px) / 900 / -0.035em / 1.12</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: clamp(31px, 4vw, 50px); font-weight: 880; letter-spacing: -0.035em; line-height: 1.12; color: var(--apple-black);">
+        Section Title
+        <span class="ds-typo-meta">clamp(31px, 4vw, 50px) / 880 / -0.035em / 1.12</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: var(--apple-black);">
+        Card Heading
+        <span class="ds-typo-meta">1.5rem / 700 / -0.02em</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; color: var(--apple-black);">
+        Bento Heading
+        <span class="ds-typo-meta">1.25rem / 700 / -0.02em</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: 1.125rem; font-weight: 400; color: var(--apple-gray); line-height: 1.5;">
+        Section description text
+        <span class="ds-typo-meta">1.125rem / 400 / gray</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: 1.0625rem; font-weight: 400; color: var(--apple-gray-dark); line-height: 1.7;">
+        Body text for longer content
+        <span class="ds-typo-meta">1.0625rem / 400 / gray-dark</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: 0.9375rem; font-weight: 400; color: var(--apple-gray); line-height: 1.6;">
+        Card description text
+        <span class="ds-typo-meta">0.9375rem / 400 / gray</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: 0.8125rem; font-weight: 400; color: var(--apple-gray-dark);">
+        Nav link, footer text
+        <span class="ds-typo-meta">0.8125rem / 400</span>
+      </div>
+      <div class="ds-typo-item" style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--iprm-accent);">
+        LABEL / TAG
+        <span class="ds-typo-meta">0.6875rem / 600 / uppercase / 0.08em</span>
+      </div>
+    </div>
+    <p class="ds-hint">Font: Inter (варіативний, вага 400-900). Fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif. Всі заголовки з негативним letter-spacing (tight).</p>
+  </div>
+
+  <div class="ds-section" id="animations">
+    <p class="ds-label">Interactions</p>
+    <h2 class="ds-title">Анімації та переходи</h2>
+
+    <h3 class="ds-section-heading">Easing Curves (Apple-specific)</h3>
+    <div class="ds-demo">
+      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:2;">
+        <code class="ds-code">--ease-reveal: cubic-bezier(0.28, 0.11, 0.32, 1)</code> – Reveal / fade-in<br>
+        <code class="ds-code">--ease-interact: cubic-bezier(0.25, 0.46, 0.45, 0.94)</code> – Interaction (hover, press)<br>
+        <code class="ds-code">--ease-spring: cubic-bezier(0.32, 0.08, 0.24, 1)</code> – Spring-like bounce
+      </div>
+    </div>
+    <p class="ds-hint">Apple NEVER uses generic ease or linear. Always specific cubic-bezier with deceleration at the end.</p>
+
+    <h3 class="ds-section-heading">Scroll Reveal (CSS-first, JS fallback)</h3>
+    <div class="ds-demo">
+      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+        <strong>CSS Scroll-Driven Animations (primary):</strong><br>
+        <code class="ds-code">.apple-reveal { animation: enter-view linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }</code><br>
+        opacity: 0, translateY(24px) -> opacity: 1, translateY(0)<br><br>
+        <strong>JS Fallback (IntersectionObserver):</strong><br>
+        <code class="ds-code">.apple-reveal</code> – threshold: 0.12, rootMargin: '0px 0px -40px 0px'<br>
+        Duration: 0.8s <code class="ds-code">cubic-bezier(0.28, 0.11, 0.32, 1)</code>, one-time (unobserve after)<br><br>
+        <strong>Default (no animation):</strong> .apple-reveal { opacity: 1; transform: none; } – visible for reduced-motion and fallback
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">Hero fadeUp</h3>
+    <div class="ds-demo">
+      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+        <code class="ds-code">@keyframes appleHeroFadeUp { to { opacity: 1; transform: translateY(0); } }</code><br>
+        Start: opacity: 0, translateY(20-30px)<br>
+        Badge: delay 0s / h1: 0.15s / subtitle: 0.3s / actions: 0.45s<br>
+        Duration: 0.8s <code class="ds-code">cubic-bezier(0.28, 0.11, 0.32, 1)</code>
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">Hover ефекти</h3>
+    <div class="ds-demo">
+      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+        Cards: <code class="ds-code">translateY(-4px) + box-shadow 0 12px 40px rgba(0,0,0,0.1)</code> – 0.3s<br>
+        Bento: <code class="ds-code">scale(1.01)</code> – 0.3s<br>
+        Buttons: <code class="ds-code">scale(1.02) translateY(-1px)</code> – 0.15s<br>
+        Links: <code class="ds-code">color transition</code> – 0.2s<br>
+        Easing: <code class="ds-code">cubic-bezier(0.25, 0.46, 0.45, 0.94)</code> for all interactions
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">Dropdown staggered fade-in</h3>
+    <div class="ds-demo">
+      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+        <code class="ds-code">.dropdown-item:nth-child(1) { transition-delay: 0.02s; }</code><br>
+        <code class="ds-code">.dropdown-item:nth-child(2) { transition-delay: 0.05s; }</code><br>
+        <code class="ds-code">.dropdown-item:nth-child(3) { transition-delay: 0.08s; }</code><br>
+        <code class="ds-code">.dropdown-item:nth-child(4) { transition-delay: 0.11s; }</code>
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">4 правила Apple-руху</h3>
+    <div class="ds-demo">
+      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+        1. <strong>Duration &lt; 300ms</strong> для UI-відповідей – довше відчувається повільним<br>
+        2. <strong>Ease curves, ніколи linear</strong> – cubic-bezier з уповільненням в кінці<br>
+        3. <strong>Рух має сенс</strong> – кожна анімація комунікує (зв'язок, стан, ієрархію)<br>
+        4. <strong>Субтильність &gt; спектакль</strong> – найкращі анімації ті, що користувач відчуває, але не може описати
+      </div>
+    </div>
+    <p class="ds-hint">prefers-reduced-motion: анімації ВИДАЛЯЮТЬСЯ, не сповільнюються. Сповільнені анімації можуть викликати більше нудоти у вестибулярно-чутливих користувачів.</p>
+  </div>
+
+  <!-- ===== SPACING ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="spacing">
+        <p class="ds-label">Foundations</p>
+        <h2 class="ds-title">Spacing та Layout</h2>
+        <div class="ds-demo">
+          <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:2.2;">
+            <strong>Section padding:</strong> Desktop 120px 24px / Tablet 80px 24px / Mobile 64px 16px<br>
+            <strong>Section header margin:</strong> 0 auto 72px (desktop), 48px (mobile)<br>
+            <strong>Content max-width:</strong> 1200px (wide/grid), 980px (default/hero), 800px (narrow/text), 700px (section header)<br>
+            <strong>Card border-radius:</strong> 24px (cards), 20px (audience), var(--iprm-radius-pill) (buttons/badges)<br>
+            <strong>Card padding:</strong> 48px 36px (features), 40px 32px (bento/program), 28px 24px (body)<br>
+            <strong>Grid gaps:</strong> 20px (cards), 16px (audience), 24px (program), 48px (stats)<br>
+            <strong>8px grid:</strong> All padding/margin multiples of 8px: 8, 16, 24, 32, 48, 64, 80, 120px
+          </div>
+        </div>
+
+        <h3 class="ds-section-heading">Секції чергують фони</h3>
+        <div style="display:flex;gap:4px;margin-bottom:16px;border-radius:12px;overflow:hidden;">
+          <div style="flex:1;height:48px;background:var(--iprm-white);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--apple-gray);">White</div>
+          <div style="flex:1;height:48px;background:var(--apple-section-bg);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--apple-gray);">Gray</div>
+          <div style="flex:1;height:48px;background:var(--iprm-dark);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--apple-gray-light);">Dark</div>
+          <div style="flex:1;height:48px;background:var(--apple-section-bg);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--apple-gray);">Gray</div>
+          <div style="flex:1;height:48px;background:var(--iprm-white);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--apple-gray);">White</div>
+          <div style="flex:1;height:48px;background:var(--apple-section-bg);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--apple-gray);">Gray</div>
+          <div style="flex:1;height:48px;background:var(--iprm-white);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--apple-gray);">White</div>
+        </div>
+        <p class="ds-hint">Ритм: hero (white) -> features (gray) -> stats (dark) -> courses (white) -> labs (gray) -> clinic (white) -> history (gray) -> cta (white)</p>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN ===== -->

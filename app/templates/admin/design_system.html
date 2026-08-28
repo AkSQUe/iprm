@@ -3,8 +3,10 @@
    якщо той зламали, і тёмна тема перевіряється сама собою.
 
    Жив на публічному /design-system із noindex; переїхав в адмінку, бо це
-   інструмент розробки, а не сторінка сайту. Вміст поки НЕ ділиться на
-   таби -- переїзд окремо від переверстки (наступний крок). #}
+   інструмент розробки, а не сторінка сайту. Вміст ділиться на п'ять
+   табів (iprm-tabs з tabs.css/tabs.js, вантажаться глобально з base.html)
+   -- партіали design_system/_tab_*.html, кожен колишня секція
+   _content.html без змін тексту. #}
 {% extends "admin/base_admin.html" %}
 
 {% block title %}Дизайн-система | ІПРМ Admin{% endblock %}
@@ -37,7 +39,20 @@
     </div>
   </div>
 
-  {% include 'design_system/_content.html' %}
+  <div class="iprm-tabs" data-iprm-tabs>
+    <div class="iprm-tabs__list" role="tablist" aria-label="Розділи дизайн-системи">
+      <button type="button" class="iprm-tabs__trigger" data-tab-trigger="foundation" data-tab-default>Основа</button>
+      <button type="button" class="iprm-tabs__trigger" data-tab-trigger="atoms">Атоми</button>
+      <button type="button" class="iprm-tabs__trigger" data-tab-trigger="molecules">Молекули</button>
+      <button type="button" class="iprm-tabs__trigger" data-tab-trigger="admin">Адмінка</button>
+      <button type="button" class="iprm-tabs__trigger" data-tab-trigger="rules">Правила</button>
+    </div>
+    <div class="iprm-tabs__panel" data-tab-panel="foundation">{% include 'design_system/_tab_foundation.html' %}</div>
+    <div class="iprm-tabs__panel" data-tab-panel="atoms">{% include 'design_system/_tab_atoms.html' %}</div>
+    <div class="iprm-tabs__panel" data-tab-panel="molecules">{% include 'design_system/_tab_molecules.html' %}</div>
+    <div class="iprm-tabs__panel" data-tab-panel="admin">{% include 'design_system/_tab_admin.html' %}</div>
+    <div class="iprm-tabs__panel" data-tab-panel="rules">{% include 'design_system/_tab_rules.html' %}</div>
+  </div>
 
   </div>
 </div>

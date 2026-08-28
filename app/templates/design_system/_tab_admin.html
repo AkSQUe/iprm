@@ -1,0 +1,424 @@
+{# Таб <<Адмінка>>: адмінські компоненти (admin.css).
+   Різано з колишнього _content.html копіюванням -- текст підказок і заголовків не переписаний. #}
+  <div class="ds-section" id="admin">
+    <p class="ds-label">Admin Components</p>
+    <h2 class="ds-title">Адмін-панель</h2>
+    <p class="ds-hint">Адмінка їде на тих самих токенах, що й публічна частина (admin.css), і відрізняється лише щільністю: та сама кнопка, той самий бейдж, менші відступи. Пряме переозначення атомів у CSS сторінки заборонене -- правка базового елемента робиться тут.</p>
+
+    <h3 class="ds-section-heading">Реєстр (таблиця)</h3>
+    <div class="ds-demo">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Курс</th>
+            <th>Статус</th>
+            <th>Місця</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="admin-nowrap">07.09.2026</td>
+            <td><strong>Базовий курс плазмотерапії</strong></td>
+            <td><span class="badge badge--published">Опубліковано</span></td>
+            <td><span class="admin-seats">9/16</span></td>
+          </tr>
+          <tr>
+            <td class="admin-nowrap">29.08.2026</td>
+            <td><strong>PRP-терапія в ортопедії</strong></td>
+            <td><span class="badge badge--active">Активний</span></td>
+            <td><span class="admin-seats admin-seats--over">7/6</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="ds-hint">.admin-table: поверхня --iprm-white, шапка --iprm-surface-inset (окремий токен для вкладеної в картку поверхні: у тёмній темі --apple-section-bg і --iprm-card-bg дорівнюють поверхні картки, і шапка зникала) / .admin-seats: нейтральна плашка лічильника, --over вмикає червону</p>
+
+    <h3 class="ds-section-heading">Аватар у списку</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <span class="admin-avatar">ГВ</span>
+        <span class="admin-avatar">АЄ</span>
+        <span class="admin-avatar">ТА</span>
+      </div>
+    </div>
+    <p class="ds-hint">.admin-avatar: 36px, коло, межа --iprm-border, пара accent-light/accent. Один клас на два випадки -- &lt;img&gt; з фото і &lt;span&gt; з ініціалами, щоб рядки не стрибали, коли в когось фото ще немає</p>
+
+    <h3 class="ds-section-heading">Банер умови</h3>
+    <div class="ds-demo">
+      <div class="alert alert--warning">
+        <strong class="alert__title">{{ icon('error') }} Спочатку задайте номер провайдера БПР</strong>
+        Без нього номер сертифіката зібрати нема з чого, тож генерація вимкнена.
+      </div>
+      <div class="alert alert--success">Налаштування збережено.</div>
+    </div>
+    <p class="ds-hint">.alert--warning: умова, без якої сторінка не працює (--iprm-warning-*) / .alert--success: підтвердження / іконка стоїть у потоці тексту, обгортати вміст не треба</p>
+
+    <h3 class="ds-section-heading">Вимкнена кнопка</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <button type="button" class="btn-admin btn-admin--primary">Активна</button>
+        <button type="button" class="btn-admin btn-admin--primary" disabled>Вимкнена</button>
+        <button type="button" class="btn-admin btn-admin--secondary" disabled>Вимкнена</button>
+      </div>
+    </div>
+    <p class="ds-hint">.btn-admin:disabled -- opacity 0.5, cursor not-allowed, без наведення. Прозорість тут доречна: вимкнені органи керування виведені з-під вимоги 1.4.3</p>
+
+    <h3 class="ds-section-heading">Код у рядку</h3>
+    <div class="ds-demo">
+      <p>Запустіть інструмент із прапорцем <code class="admin-code">--push</code>; номер формується як <code class="admin-code">РРРР-ПППП-ЗЗЗЗЗЗЗ-УУУУУУ</code>.</p>
+    </div>
+    <p class="ds-hint">.admin-code: код усередині речення, тло --iprm-surface-inset. Блоковий .admin-code-block розриває абзац і для цього не годиться</p>
+
+    <h3 class="ds-section-heading">Todo List</h3>
+    <div class="ds-demo">
+      <div class="form-section" style="margin: 0;">
+        <ul class="admin-todo">
+          <li>Перший пункт завдання</li>
+          <li>Другий пункт завдання</li>
+          <li>Третій пункт завдання</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">Stats Bar</h3>
+    <div class="ds-demo">
+      <div class="admin-stats-bar">
+        <span>Всього: <strong>42</strong></span>
+        <span>Підтверджено: <strong>35</strong></span>
+        <span>Очікує: <strong>7</strong></span>
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">Stat Cards</h3>
+    <div class="ds-demo">
+      <div class="admin-stat-cards">
+        <div class="admin-stat-card">
+          <span class="admin-stat-card__value">128</span>
+          <span class="admin-stat-card__label">Всього</span>
+        </div>
+        <div class="admin-stat-card admin-stat-card--success">
+          <span class="admin-stat-card__value">96</span>
+          <span class="admin-stat-card__label">Оплачено</span>
+        </div>
+        <div class="admin-stat-card admin-stat-card--warning">
+          <span class="admin-stat-card__value">24</span>
+          <span class="admin-stat-card__label">Очікує</span>
+        </div>
+        <div class="admin-stat-card admin-stat-card--danger">
+          <span class="admin-stat-card__value">8</span>
+          <span class="admin-stat-card__label">Повернено</span>
+        </div>
+        <div class="admin-stat-card admin-stat-card--accent">
+          <span class="admin-stat-card__value">45 200 &#8372;</span>
+          <span class="admin-stat-card__label">Загальна сума</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">Картки-зрізи (обрана)</h3>
+    <div class="ds-demo">
+      <div class="admin-stat-cards admin-stat-cards--3">
+        <a href="#stat-cards" class="admin-stat-card">
+          <span class="admin-stat-card__value">128</span>
+          <span class="admin-stat-card__label">Усі</span>
+        </a>
+        <a href="#stat-cards" class="admin-stat-card is-active" aria-current="true">
+          <span class="admin-stat-card__value">96</span>
+          <span class="admin-stat-card__label">Зарезервовано</span>
+        </a>
+        <a href="#stat-cards" class="admin-stat-card">
+          <span class="admin-stat-card__value">24</span>
+          <span class="admin-stat-card__label">Списано</span>
+        </a>
+      </div>
+    </div>
+    <p class="ds-hint">a.admin-stat-card -- число веде на власний зріз списку / .is-active + aria-current: обраний зріз, межа й значення --iprm-nav-active (колір тексту, не заливки: картка лишається карткою)</p>
+
+    <h3 class="ds-section-heading">Program Block</h3>
+    <div class="ds-demo">
+      <div class="form-section" style="margin: 0;">
+        <div class="admin-program-block" style="margin: 0; border: none; padding: 0;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Заголовок блоку</label>
+            <div class="admin-program-block__header">
+              <input type="text" class="form-input" value="Теоретична частина" readonly>
+              <button type="button" class="btn-admin btn-admin--danger btn-admin--sm">X</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">Шапка сторінки</h3>
+    <div class="ds-demo">
+      <div class="admin-hero">
+        <div>
+          <div class="admin-breadcrumb">
+            <a href="#admin" class="admin-breadcrumb__link">Панель</a>
+            <span class="admin-breadcrumb__sep">/</span>
+            <span class="admin-breadcrumb__current">Розклад</span>
+          </div>
+          <h1 class="admin-hero__title">Розклад проведень</h1>
+          <p class="admin-hero__subtitle">Конкретні дати, формат, статус реєстрації</p>
+        </div>
+        <div class="admin-hero__actions">
+          <button type="button" class="btn-admin btn-admin--secondary">{{ icon('download') }} Експорт XLSX</button>
+          <button type="button" class="btn-admin btn-admin--primary">{{ icon('add') }} Додати проведення</button>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">.admin-hero -- крихти + заголовок + підзаголовок ліворуч, дії праворуч. Панель дій переноситься, а не вилазить: кнопки в ній від стискання захищені, стискається сама панель.</p>
+
+    <h3 class="ds-section-heading">Стрічка зрізів</h3>
+    <div class="ds-demo">
+      <div class="admin-pills">
+        <a href="#admin" class="admin-pill admin-pill--active">Усі</a>
+        <a href="#admin" class="admin-pill">Майбутні</a>
+        <a href="#admin" class="admin-pill">Минулі</a>
+        <a href="#admin" class="admin-pill">Потребують уваги</a>
+      </div>
+    </div>
+    <p class="ds-hint">.admin-pills / .admin-pill -- один активний зріз серед кількох. НЕ кнопки: зріз нічого не робить, він показує, де ти. Активний -- .admin-pill--active або aria-current="true" (коли стан веде скрипт).</p>
+
+    <h3 class="ds-section-heading">Панель фільтрів і пагінація</h3>
+    <div class="ds-demo">
+      <div class="admin-filters">
+        <form class="admin-filters__form">
+          <div class="admin-filters__search">
+            {{ icon('search', cls='admin-filters__search-icon') }}
+            <input type="search" class="form-input admin-filters__search-input" placeholder="Пошук за назвою курсу або місцем">
+          </div>
+          <button type="button" class="btn-admin btn-admin--secondary admin-filters__toggle">
+            Фільтри <span class="admin-filters__count">2</span>
+          </button>
+          <button type="submit" class="btn-admin btn-admin--primary">Застосувати</button>
+        </form>
+        <div class="admin-filters__chips">
+          <a class="admin-chip" href="#admin"><span class="admin-chip__key">Пошук:</span> плазмо <span class="admin-chip__x" aria-hidden="true">&times;</span></a>
+          <a class="admin-chip" href="#admin"><span class="admin-chip__key">Статус:</span> Опубліковано <span class="admin-chip__x" aria-hidden="true">&times;</span></a>
+          <a class="admin-filters__reset" href="#admin">{{ icon('clear') }} Скинути все</a>
+        </div>
+      </div>
+      <nav class="admin-pagination">
+        <a href="#admin" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon">{{ icon('chevron_left', label='Попередня сторінка') }}</a>
+        <span class="admin-pagination__info">2 / 7 (168)</span>
+        <a href="#admin" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon">{{ icon('chevron_right', label='Наступна сторінка') }}</a>
+      </nav>
+    </div>
+    <p class="ds-hint">Розмітку не пишуть руками: макроси <code class="ds-code">filter_bar()</code>, <code class="ds-code">pager()</code> і <code class="ds-code">sort_th()</code> в <code class="ds-code">admin/partials/_filter_bar.html</code>. Чіпси й посилання пагінації макрос збирає сам, тож зріз не губиться при гортанні.</p>
+
+    <h3 class="ds-section-heading">Сортовний заголовок колонки</h3>
+    <div class="ds-demo">
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th class="admin-cell-title"><a class="admin-th-sort is-active" href="#admin">Назва</a></th>
+              <th><a class="admin-th-sort" href="#admin">Оновлено</a></th>
+              <th>Порядок</th>
+              <th>Ціна</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="admin-cell-title">
+                Базовий курс плазмотерапії
+                <span class="admin-subline admin-text-muted">/bazovyi-kurs-plazmoterapii</span>
+              </td>
+              <td class="admin-nowrap">26.08.2026</td>
+              <td><span class="admin-order-cell"><input type="number" class="form-input" value="10"></span></td>
+              <td class="admin-num">12 000</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="ds-hint">.admin-th-sort -- серверний сорт (посилання, не JS): .is-active на поточній колонці. .admin-cell-title -- ліве вирівнювання головної колонки, .admin-num -- табличні цифри праворуч, .admin-subline -- другий рядок під значенням, .admin-order-cell -- вузьке поле порядку в комірці.</p>
+
+    <h3 class="ds-section-heading">Меню дій у рядку</h3>
+    <div class="ds-demo ds-demo--menu">
+      <details class="admin-actions-menu" open>
+        <summary class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon" title="Ще дії">{{ icon('more_vert') }}</summary>
+        <div class="admin-actions-menu__items">
+          <a href="#admin" class="admin-actions-menu__item">Переклади</a>
+          <a href="#admin" class="admin-actions-menu__item">Проведення курсу</a>
+          <button type="button" class="admin-actions-menu__item">Клонувати</button>
+          <span class="admin-actions-menu__note">Надіслано 26.08</span>
+        </div>
+      </details>
+    </div>
+    <p class="ds-hint">Часта дія стоїть у рядку кнопкою-іконкою, решта -- під &laquo;...&raquo;. Видалення завжди сюди: воно незворотне й не має стояти за один промах від &laquo;Редагувати&raquo;.</p>
+
+    <h3 class="ds-section-heading">Тулбар XLSX</h3>
+    <div class="ds-demo ds-demo--menu">
+      <div class="admin-xlsx-toolbar">
+        <details class="admin-xlsx-menu" open>
+          <summary class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('download') }} Експорт XLSX</summary>
+          <div class="admin-xlsx-menu__items">
+            <a href="#admin">Усі курси</a>
+            <a href="#admin">Лише активні</a>
+          </div>
+        </details>
+        <div class="admin-xlsx-actions">
+          <input type="file" id="ds-xlsx" class="admin-file-input" tabindex="-1">
+          <label for="ds-xlsx" class="btn-admin btn-admin--secondary btn-admin--sm admin-clickable">{{ icon('upload') }} Імпорт XLSX</label>
+        </div>
+      </div>
+      <p class="admin-xlsx-note">Файл повертають тим самим форматом, у якому вивантажили.</p>
+      <p class="admin-xlsx-summary">Оновлено 12, створено 3, пропущено 1.</p>
+    </div>
+    <p class="ds-hint">.admin-file-input -- приховане поле, по якому клікає сусідня мітка. Не display:none: так поле випадає з порядку табуляції й дістатись до нього з клавіатури неможливо. Видимий фокус малює кнопка-мітка.</p>
+
+    <h3 class="ds-section-heading">Підсумок реєстру</h3>
+    <div class="ds-demo">
+      <div class="admin-list-summary">
+        <p class="admin-list-summary__counts">Резервувань 42 &middot; зарезервовано одиниць 1 280 &middot; фактично використано 1 154</p>
+        <p class="admin-list-summary__hint">Експорт віддасть перші 5 000 рядків -- звузьте фільтр, щоб вивантажити все.</p>
+      </div>
+    </div>
+    <p class="ds-hint">Один блок над таблицею замість рядка тексту й картки форми: доти вони мали різні відступи, і сторінка вище таблиці виглядала складеною з чужих шматків.</p>
+
+    <h3 class="ds-section-heading">Порожній стан</h3>
+    <div class="ds-demo">
+      <div class="admin-empty">
+        {{ icon('search', cls='admin-empty__icon') }}
+        <h3 class="admin-empty__title">Нічого не знайдено</h3>
+        <p>За цим зрізом порожньо &mdash; <a href="#admin">скинути фільтри</a>.</p>
+      </div>
+    </div>
+    <p class="ds-hint">Макрос <code class="ds-code">empty_state()</code>. Два різні факти, які легко переплутати: &laquo;тут ще нічого немає&raquo; й &laquo;фільтр нічого не знайшов&raquo;. Реєстр із сорока заявками під пошуком, що нічого не впіймав, не має писати &laquo;заявок немає&raquo;.</p>
+
+    <h3 class="ds-section-heading">Картка інтеграції</h3>
+    <div class="ds-demo">
+      <div class="admin-integrations">
+        <div class="admin-integration-card">
+          <div class="admin-integration-card__header">
+            <span class="admin-integration-card__title">LiqPay</span>
+            <span class="badge badge--active">Увімкнено</span>
+          </div>
+          <p>Приймання оплат за реєстрації.</p>
+        </div>
+        <a href="#admin" class="admin-integration-card admin-integration-card--link">
+          <div class="admin-integration-card__header">
+            <span class="admin-integration-card__title">Sintegrum</span>
+            <span class="badge badge--draft">Не налаштовано</span>
+          </div>
+          <p>Каталог онлайн-курсів і доступи.</p>
+        </a>
+      </div>
+    </div>
+    <p class="ds-hint">Та сама картка й для розбору швидкодії, і для довідкових блоків: біла поверхня, межа, радіус --iprm-radius-md, заголовок 14px/600. Модифікатор --link робить її клікабельною цілком.</p>
+
+    <h3 class="ds-section-heading">Форма</h3>
+    <div class="ds-demo">
+      <form class="admin-form">
+        <div class="form-section">
+          <h2 class="admin-form__section-title">Основна інформація</h2>
+          <p class="admin-form__section-hint">Підказка одразу під заголовком належить йому, а не наступному блоку.</p>
+          <div class="admin-form__grid">
+            <div class="form-group">
+              <label for="ds-name">Назва курсу</label>
+              <input type="text" id="ds-name" class="form-input" value="Базовий курс плазмотерапії">
+              <div class="form-hint">Показується в каталозі й на сертифікаті.</div>
+            </div>
+            <div class="form-group">
+              <label for="ds-slug">Створено</label>
+              <div class="form-input admin-field-readonly" id="ds-slug">26.08.2026 10:00</div>
+            </div>
+            <div class="form-group">
+              <label for="ds-code">Промокод</label>
+              <div class="admin-input-row">
+                <input type="text" id="ds-code" class="form-input" value="PLASMA-2026">
+                <button type="button" class="btn-admin btn-admin--secondary">Згенерувати</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-checkbox">
+                <input type="checkbox" checked> Активний у каталозі
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="admin-control-row">
+          <select class="form-input">
+            <option>Комплект матеріалів&hellip;</option>
+          </select>
+          <button type="button" class="btn-admin btn-admin--secondary">Застосувати</button>
+        </div>
+        <div class="admin-form__actions">
+          <button type="button" class="btn-admin btn-admin--danger">Видалити</button>
+          <button type="button" class="btn-admin btn-admin--secondary">Скасувати</button>
+          <button type="button" class="btn-admin btn-admin--primary">Зберегти</button>
+        </div>
+      </form>
+    </div>
+    <p class="ds-hint">.admin-control-row -- ряд керування (селект + кнопка), НЕ фільтр: фільтри збирає макрос і в них свій клас .admin-filters__form. .admin-field-readonly на .form-input -- значення, яке не редагують, але яке має виглядати полем, а не голим текстом.</p>
+
+    <h3 class="ds-section-heading">Зона перетягування</h3>
+    <div class="ds-demo">
+      <div class="admin-dropzone">
+        <div class="admin-dropzone__prompt">
+          <p>Перетягніть зображення або <span class="admin-dropzone__link">оберіть файл</span></p>
+        </div>
+        <div class="admin-dropzone__preview">
+          <button type="button" class="admin-dropzone__remove" aria-label="Прибрати">&times;</button>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">Стан у комірці</h3>
+    <div class="ds-demo">
+      <button type="button" class="badge badge--success admin-toggle-status" title="Повернути у відкриті">Вирішено</button>
+      <button type="button" class="badge badge--draft admin-toggle-status" title="Позначити вирішеною">Відкрита</button>
+      <span class="admin-code">registration_confirmed.html</span>
+      <code class="admin-code-block">python tools/perf/perf_check.py --push &lt;url&gt; --token &lt;ключ&gt;</code>
+    </div>
+    <p class="ds-hint">.admin-toggle-status -- плашка, яка водночас є кнопкою: стан і дія в одному елементі там, де станів рівно два. .admin-code -- технічне значення в реченні, .admin-code-block -- те саме блоком.</p>
+
+    <h3 class="ds-section-heading">Утиліти</h3>
+    <p class="ds-hint">Дрібні класи без власного вигляду -- беруть одну властивість. Тримаються тут, щоб не заводились по десятому разу в page-файлах.</p>
+    <div class="ds-demo">
+      <table class="admin-table">
+        <thead><tr><th class="admin-cell-title">Клас</th><th>Що робить</th></tr></thead>
+        <tbody>
+          <tr><td class="admin-cell-title">admin-mt-sm / admin-mt-md</td><td>відступ згори 12 / 24px</td></tr>
+          <tr><td class="admin-cell-title">admin-mb-sm / admin-mb-md</td><td>відступ знизу 12 / 24px</td></tr>
+          <tr><td class="admin-cell-title">admin-text-muted</td><td>приглушений текст (--apple-gray)</td></tr>
+          <tr><td class="admin-cell-title">admin-text-left</td><td>ліве вирівнювання в комірці</td></tr>
+          <tr><td class="admin-cell-title">admin-nowrap</td><td>комірка без переносу (дати, лічильники)</td></tr>
+          <tr><td class="admin-cell-title">admin-truncate</td><td>один рядок із трикрапкою; потребує визначеної ширини комірки</td></tr>
+          <tr><td class="admin-cell-title">admin-clamp-2</td><td>два рядки з трикрапкою</td></tr>
+          <tr><td class="admin-cell-title">admin-flex-center</td><td>ряд елементів по центру з проміжком 12px</td></tr>
+          <tr><td class="admin-cell-title">admin-inline / admin-inline-form</td><td>форма в рядок, не блоком</td></tr>
+          <tr><td class="admin-cell-title">admin-inline-select</td><td>селект у комірці таблиці</td></tr>
+          <tr><td class="admin-cell-title">admin-input-narrow</td><td>поле не ширше 360px</td></tr>
+          <tr><td class="admin-cell-title">admin-col-90</td><td>колонка 90px</td></tr>
+          <tr><td class="admin-cell-title">admin-clickable</td><td>курсор-вказівник на мітці, що клікає приховане поле</td></tr>
+          <tr><td class="admin-cell-title">admin-visually-hidden</td><td>текст лише для скрінрідера</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="ds-section-heading">Не показується</h3>
+    <div class="ds-demo">
+      <table class="admin-table">
+        <thead><tr><th class="admin-cell-title">Клас</th><th>Чому</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="admin-cell-title">admin-layout, admin-with-sidebar, admin-sidebar</td>
+            <td>Каркас сторінки: обгортає всю адмінку разом із бічною панеллю. Всередині вітрини, яка сама вже в каркасі, показати його ніяк.</td>
+          </tr>
+          <tr>
+            <td class="admin-cell-title">material-symbols-rounded</td>
+            <td>Не компонент, а клас шрифту іконок. Іконки ставляться глобалом <code class="ds-code">icon('назва')</code>, а не сирим span: реєстр у <code class="ds-code">app/icons.py</code> задає субсет шрифту.</td>
+          </tr>
+          <tr>
+            <td class="admin-cell-title">admin-queue-alert, admin-tariffs-form</td>
+            <td>Вигляд, який вживають рівно дві незв'язані сторінки: картка, підфарбована за серйозністю (черга листів і форма повернення), і відступ між списком тарифів та формою. Два користувачі -- це вже спільний вигляд, а не борг однієї сторінки, тож лишаються тут; демонструвати їх окремо нема чого.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+

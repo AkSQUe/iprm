@@ -1,0 +1,260 @@
+{# Таб <<Атоми>>: примітиви, кнопки, бейджі, алерти, форми, порожній стан.
+   Різано з колишнього _content.html копіюванням -- текст підказок і заголовків не переписаний. #}
+  <div class="ds-section" id="primitives">
+    <p class="ds-label">Foundations</p>
+    <h2 class="ds-title">Примітиви еталона</h2>
+    <p class="ds-hint">
+      Фундамент міграції на еталон продажного лендінгу: eyebrow, варіанти
+      кнопок, заголовковий блок секції та градієнтний текст. Показано ЖИВИМИ
+      класами з apple-pages.css -- вітрина ламається разом із примітивом і
+      сама показує тёмну тему.
+    </p>
+
+    <div class="apple-page">
+
+      <h3 class="ds-section-heading">Eyebrow</h3>
+      <div class="ds-demo">
+        <div class="ds-row">
+          <span class="iprm-eyebrow">Результат навчання</span>
+        </div>
+        <div class="ds-on-dark">
+          <span class="iprm-eyebrow iprm-eyebrow--on-dark">Відгуки та довіра</span>
+        </div>
+      </div>
+      <p class="ds-hint">12px / 850 / letter-spacing .12em / верcал / падінг 7x13 / точка 6px перед текстом. Модифікатор --on-dark вибирається КЛАСОМ, а не темою: тёмні оболонки лишаються тёмними в обох темах.</p>
+
+      <h3 class="ds-section-heading">Кнопки (метрики еталона)</h3>
+      <div class="ds-demo">
+        <div class="ds-row">
+          <a href="#primitives" class="apple-btn apple-btn--accent">Зареєструватися</a>
+          <a href="#primitives" class="apple-btn apple-btn--primary">Обрати курс</a>
+          <a href="#primitives" class="apple-btn apple-btn--outline">Дивитися програму</a>
+          <a href="#primitives" class="apple-btn apple-btn--secondary apple-btn--arrow">Детальніше</a>
+          <a href="#primitives" class="apple-btn apple-btn--primary apple-btn--sm">Compact</a>
+          <a href="#primitives" class="apple-btn apple-btn--primary apple-btn--disabled">Disabled</a>
+        </div>
+        <div class="ds-on-dark">
+          <div class="ds-row">
+            <a href="#primitives" class="apple-btn apple-btn--accent">Зареєструватися</a>
+            <a href="#primitives" class="apple-btn apple-btn--white">Отримати програму</a>
+          </div>
+        </div>
+        <a href="#primitives" class="apple-btn apple-btn--accent apple-btn--full">На всю ширину (--full)</a>
+      </div>
+      <p class="ds-hint">min-height 54px / падінг 14x24 / радіус --iprm-radius-sm (12px) / вага 800 / hover translateY(-2px). --accent -- золото з тёмним теплим текстом (головна дія), --primary -- бренд, --outline -- біла з межею --iprm-border-strong, --white -- лише на тёмному, --sm знижує висоту до 40px.</p>
+
+      <h3 class="ds-section-heading">Заголовковий блок секції</h3>
+      <div class="ds-demo">
+        <div class="apple-section-head">
+          <span class="iprm-eyebrow">Для кого</span>
+          <h2 class="iprm-section__title">Кому підійде <span class="apple-gradient-text">практикум</span></h2>
+          <p class="iprm-section__subtitle">Лід у 18px і не ширше 760px: рядок довший за це око вже не тримає, і центрований блок розсипається.</p>
+        </div>
+      </div>
+      <p class="ds-hint">eyebrow + h2 clamp(31px, 4vw, 50px) вага 880 + лід 18px до 760px, центровано. Відступ 46px під УСІМ блоком тримає обгортка .apple-section-head; заголовок без ліда бере ці 46px собі через :not(:has(+ .iprm-section__subtitle)).</p>
+
+      <h3 class="ds-section-heading">Градієнтний текст</h3>
+      <div class="ds-demo">
+        <div class="apple-section-head">
+          <h2 class="iprm-section__title">Плазмогель. <span class="apple-gradient-text">Постановка руки</span></h2>
+        </div>
+        <div class="ds-on-dark">
+          <h2 class="iprm-section__title">Плазмогель. <span class="apple-gradient-text apple-gradient-text--on-dark">Постановка руки</span></h2>
+        </div>
+      </div>
+      <p class="ds-hint">Гібрид: плашка eyebrow з еталона плюс наше градієнтне останнє слово. На світлому хвіст градієнта -- --apple-grad-gold, на тёмному -- --apple-gold-soft.</p>
+
+      <h3 class="ds-section-heading">Семантика тепла: мітка проти дії</h3>
+      <div class="ds-demo">
+        <div class="ds-row">
+          <span class="iprm-card-badge iprm-card-badge--type">Практикум</span>
+          <span class="iprm-loc-badge iprm-loc-badge--offline"><span class="iprm-loc-badge__text">Київ</span></span>
+          <span class="iprm-loc-badge iprm-loc-badge--online"><span class="iprm-loc-badge__text">Онлайн</span></span>
+          <a href="#primitives" class="apple-btn apple-btn--accent apple-btn--sm">Зареєструватися</a>
+        </div>
+      </div>
+      <p class="ds-hint">Мітки -- терракота (--iprm-warm-*), дія -- золото. Раніше бейдж типу й офлайн-плашка фарбувались тим самим помаранчевим, що й акцент; із золотим CTA вони почали читатись як кнопки.</p>
+
+    </div>
+  </div>
+
+  <!-- ===== TYPOGRAPHY ===== -->
+  <!-- ===== BUTTONS ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="buttons">
+        <p class="ds-label">Components</p>
+        <h2 class="ds-title">Кнопки</h2>
+
+        <h3 class="ds-section-heading">Apple-style (capsule)</h3>
+        <div class="ds-demo">
+          <div class="ds-row">
+            <a href="#" class="apple-btn apple-btn--primary">Primary</a>
+            <a href="#" class="apple-btn apple-btn--secondary">Secondary</a>
+            <a href="#" class="apple-btn apple-btn--primary apple-btn--disabled">Disabled</a>
+          </div>
+        </div>
+        <p class="ds-hint">border-radius: var(--iprm-radius-pill) / Primary: bg accent, color white / Secondary: transparent, accent text, ::after ' >' / 3 interaction states:</p>
+        <div class="ds-hint" style="margin-top: 8px;">
+          :hover { transform: scale(1.02) translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }<br>
+          :active { transform: scale(0.98) translateY(0); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }<br>
+          :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+        </div>
+
+        <h3 class="ds-section-heading">Legacy (iprm-btn)</h3>
+        <div class="ds-demo">
+          <div class="ds-row">
+            <a href="#" class="iprm-btn iprm-btn--primary"><span class="iprm-btn__arrow">&#x2197;</span> Primary</a>
+            <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--sm"><span class="iprm-btn__arrow">&#x2197;</span> Small</a>
+            <a href="#" class="iprm-btn iprm-btn--secondary">Secondary</a>
+            <a href="#" class="iprm-btn iprm-btn--primary iprm-btn--disabled"><span class="iprm-btn__arrow">&#x2197;</span> Disabled</a>
+          </div>
+        </div>
+        <p class="ds-hint">border-radius: 10px / bg: var(--iprm-btn-bg) / Збережено для адмін-панелі та внутрішніх сторінок</p>
+
+        <h3 class="ds-section-heading">Link-style</h3>
+        <div class="ds-demo">
+          <div class="ds-row">
+            <a href="#" style="font-size:0.875rem;font-weight:500;color:var(--iprm-accent);text-decoration:none;">На сторінку клініки ></a>
+          </div>
+        </div>
+        <p class="ds-hint">font-size: 0.875rem / weight: 500 / color: accent / ::after ' >' / Hover: accent-hover</p>
+    </div>
+  </div>
+
+  <!-- ===== BADGES ===== -->
+  <div class="ds-section" id="badges">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Бейджі та теги</h2>
+
+    <h3 class="ds-section-heading">Hero Badge / Price Pill</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <span style="display:inline-block;font-size:0.8125rem;font-weight:500;color:var(--iprm-accent);background:var(--iprm-accent-light);padding:6px 16px;border-radius:980px;">Бали БПР</span>
+        <span style="display:inline-flex;align-items:center;gap:8px;font-size:1rem;font-weight:600;color:var(--iprm-accent);background:var(--iprm-accent-light);padding:8px 24px;border-radius:980px;">7 500 &#8372; за курс</span>
+      </div>
+    </div>
+    <p class="ds-hint">border-radius: var(--iprm-radius-pill) / bg: accent-light / color: accent / Використовуються в hero</p>
+
+    <h3 class="ds-section-heading">Теги</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <span class="iprm-tag">Очні курси</span>
+        <span class="iprm-tag">Онлайн курси</span>
+        <span class="iprm-tag iprm-tag--accent">Accent тег</span>
+      </div>
+    </div>
+    <p class="ds-hint">.iprm-tag: border 1px solid / .iprm-tag--accent: bg accent-light, color accent</p>
+
+    <h3 class="ds-section-heading">Бейджі статусу</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <span class="badge badge--draft">Чернетка</span>
+        <span class="badge badge--published">Опубліковано</span>
+        <span class="badge badge--active">Активний</span>
+        <span class="badge badge--completed">Завершено</span>
+        <span class="badge badge--cancelled">Скасовано</span>
+        <span class="badge badge--pending">Очікує</span>
+      </div>
+    </div>
+    <p class="ds-hint">.badge: padding 3px 12px / font-size 0.6875rem / font-weight 600 / border-radius var(--iprm-radius-pill) / CSS-змінні --iprm-badge-*</p>
+
+    <h3 class="ds-section-heading">Бейдж формату</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <span class="badge badge--format">Офлайн</span>
+        <span class="badge badge--format">Онлайн</span>
+        <span class="badge badge--format">Гібрид</span>
+      </div>
+    </div>
+    <p class="ds-hint">.badge--format: bg accent-light, color accent – адмінський двійник .iprm-card-badge--format із публічної картки курсу. МІТКА, не статус: терракота зайнята типом заходу</p>
+
+    <h3 class="ds-section-heading">Оцінка зірками</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <span class="iprm-rating" role="img" aria-label="Оцінка 5 з 5">
+          <span class="iprm-rating__stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="iprm-rating__value">5/5</span>
+        </span>
+        <span class="iprm-rating" role="img" aria-label="Оцінка 4 з 5">
+          <span class="iprm-rating__stars">&#9733;&#9733;&#9733;&#9733;<span class="iprm-rating__off">&#9733;</span></span>
+          <span class="iprm-rating__value">4/5</span>
+        </span>
+        <span class="iprm-rating" role="img" aria-label="Оцінка 3 з 5">
+          <span class="iprm-rating__stars">&#9733;&#9733;&#9733;<span class="iprm-rating__off">&#9733;&#9733;</span></span>
+          <span class="iprm-rating__value">3/5</span>
+        </span>
+      </div>
+    </div>
+    <p class="ds-hint">.iprm-rating: завжди п'ять гліфів (три зірки самі по собі не відрізнити від трьох із трьох) / заповнені --apple-gold-ink, порожні --apple-gray-light / значення цифрою поруч -- через нього шкалу видно без рахунку, і порожні зірки лишаються декором / role="img" + aria-label на обгортці</p>
+
+    <h3 class="ds-section-heading">Семантичні бейджі</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <span class="badge badge--success">Success</span>
+        <span class="badge badge--danger">Danger</span>
+        <span class="badge badge--warning">Warning</span>
+      </div>
+    </div>
+    <p class="ds-hint">.badge--success / .badge--danger / .badge--warning – aliases для сповіщень та статусів</p>
+  </div>
+
+  <!-- ===== ALERTS ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="alerts">
+        <p class="ds-label">Components</p>
+        <h2 class="ds-title">Алерти</h2>
+        <div class="ds-demo" style="max-width: 600px;">
+          <div class="ds-col">
+            <div class="alert alert--error">Помилка: щось пішло не так</div>
+            <div class="alert alert--success">Операцію виконано успішно</div>
+            <div class="alert alert--info">Зверніть увагу на цю інформацію</div>
+          </div>
+        </div>
+        <p class="ds-hint">padding: 12px 16px / border-radius: var(--iprm-radius-sm) / CSS-змінні --iprm-error-*, --iprm-success-*, --iprm-info-*, --iprm-warning-*</p>
+    </div>
+  </div>
+
+  <!-- ===== FORM SECTION ===== -->
+  <div class="ds-section" id="form-section">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Форми</h2>
+    <div class="ds-demo">
+      <div class="form-section" style="margin: 0;">
+        <h3 class="form-section__title">Заголовок секції</h3>
+        <div class="form-section__grid">
+          <div class="form-group">
+            <label>Поле 1 <span class="required">*</span></label>
+            <input type="text" class="form-input" placeholder="Введіть значення">
+          </div>
+          <div class="form-group">
+            <label>Поле 2</label>
+            <input type="text" class="form-input" placeholder="Введіть значення">
+          </div>
+          <div class="form-group form-section__full">
+            <label>Поле на всю ширину</label>
+            <input type="text" class="form-input" placeholder="Широке поле">
+            <div class="form-hint">Підказка для поля</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">bg: var(--iprm-card-bg) / padding: 28px / grid: 2col / input: 10px 14px / focus: accent ring</p>
+  </div>
+
+  <div class="ds-section" id="empty-state">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Порожній стан</h2>
+    <div class="ds-demo">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+        <div class="iprm-empty-state" style="background: var(--iprm-card-bg); border-radius: var(--iprm-radius);">
+          <p>Інформація скоро з'явиться</p>
+        </div>
+        <div class="iprm-empty-state iprm-empty-state--full" style="background: var(--iprm-card-bg); border-radius: var(--iprm-radius); grid-column: 1 / -1;">
+          <p>Порожній стан на всю ширину (--full)</p>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">.iprm-empty-state: text-align center, padding 48px 24px / .iprm-empty-state--full: grid-column 1 / -1</p>
+  </div>
+
+  <!-- ===== ANIMATIONS ===== -->

@@ -20,7 +20,14 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 CSS = ROOT / 'app' / 'static' / 'css' / 'admin.css'
-SHOWCASE = ROOT / 'app' / 'templates' / 'design_system' / '_content.html'
+SHOWCASE_DIR = ROOT / 'app' / 'templates' / 'design_system'
+
+
+def _showcase_text():
+    """Каталог тепер -- п'ять партіалів під табами, а не один файл."""
+    return '\n'.join(
+        p.read_text(encoding='utf-8') for p in sorted(SHOWCASE_DIR.glob('_tab_*.html'))
+    )
 
 
 def _blocks():
@@ -39,7 +46,7 @@ def _blocks():
 
 @pytest.fixture(scope='module')
 def showcase_words():
-    text = SHOWCASE.read_text(encoding='utf-8')
+    text = _showcase_text()
     return set(re.findall(r'[\w-]+', text))
 
 
@@ -47,7 +54,7 @@ def showcase_words():
 def test_block_is_on_showcase(cls, showcase_words):
     assert cls in showcase_words, (
         f'клас .{cls} оголошений в admin.css, але на /design-system його немає.\n'
-        f'Додайте його у app/templates/design_system/_content.html: компонент -- '
+        f'Додайте його у відповідний app/templates/design_system/_tab_*.html: компонент -- '
         f'живою розміткою, утиліту -- рядком у таблиці утиліт. Якщо показувати '
         f'нема чого (каркас сторінки, шрифтовий клас) -- впишіть його в розділ '
         f'«Не показується» з поясненням, чому.'
@@ -61,7 +68,7 @@ def test_showcase_has_no_stale_admin_classes(showcase_words):
     голим текстом, бо правила не було ніде) -- вітрина мовчки їх узаконювала.
     """
     blocks = _blocks()
-    text = SHOWCASE.read_text(encoding='utf-8')
+    text = _showcase_text()
     used = set()
     for attr in re.findall(r'class="([^"]*)"', text):
         for token in attr.split():

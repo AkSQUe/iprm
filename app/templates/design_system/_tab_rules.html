@@ -1,0 +1,192 @@
+{# Таб <<Правила>>: доступність, responsive, продуктивність, сучасний CSS.
+   Різано з колишнього _content.html копіюванням -- текст підказок і заголовків не переписаний. #}
+  <!-- ===== ACCESSIBILITY ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="accessibility">
+        <p class="ds-label">Standards</p>
+        <h2 class="ds-title">Accessibility</h2>
+
+        <h3 class="ds-section-heading">Focus indicators (Apple pattern)</h3>
+        <div class="ds-demo">
+          <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:2;">
+            <code class="ds-code">:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }</code><br>
+            <code class="ds-code">.apple-btn:focus-visible { outline-offset: 4px; border-radius: 980px; }</code>
+          </div>
+        </div>
+
+        <h3 class="ds-section-heading">prefers-reduced-motion</h3>
+        <div class="ds-demo">
+          <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+            <code class="ds-code">@media (prefers-reduced-motion: reduce) { .apple-reveal { transition: none; opacity: 1; transform: none; animation: none; } }</code><br>
+            Apple rule: REMOVE animations, never slow them down.
+          </div>
+        </div>
+
+        <h3 class="ds-section-heading">prefers-reduced-transparency</h3>
+        <div class="ds-demo">
+          <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+            <code class="ds-code">@media (prefers-reduced-transparency: reduce) { .iprm-header, .cookie-banner, .dropdown { background: rgba(255,255,255,0.95); backdrop-filter: none; } }</code><br>
+            Solid fallback for all glass elements.
+          </div>
+        </div>
+
+        <h3 class="ds-section-heading">prefers-contrast: high</h3>
+        <div class="ds-demo">
+          <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+            <code class="ds-code">@media (prefers-contrast: more) { :root { --black: #000; --gray: #000; --section-bg: #fff; } .glass-panel { backdrop-filter: none; border: 2px solid #000; } }</code>
+          </div>
+        </div>
+
+        <h3 class="ds-section-heading">::selection</h3>
+        <div class="ds-demo">
+          <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+            <code class="ds-code">::selection { background: var(--accent-light); color: var(--black); }</code>
+          </div>
+          <div style="margin-top:12px;">
+            <span style="background:var(--iprm-accent-light);color:var(--apple-black);padding:2px 6px;">Selected text looks like this</span>
+          </div>
+        </div>
+
+        <h3 class="ds-section-heading">Semantic HTML</h3>
+        <div class="ds-demo">
+          <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:2;">
+            <code class="ds-code">&lt;nav aria-label="..."&gt;</code> – for each navigation region<br>
+            <code class="ds-code">&lt;main&gt;</code> – with skip-link target<br>
+            <code class="ds-code">&lt;section aria-labelledby="..."&gt;</code> – referencing h2<br>
+            <code class="ds-code">&lt;article&gt;</code> – for course cards with heading hierarchy<br>
+            Burger: <code class="ds-code">aria-label="Menu" aria-expanded="true/false"</code><br>
+            Contrast: WCAG AA (4.5:1 minimum, including after blur)
+          </div>
+        </div>
+        <p class="ds-hint">Skip-link: &lt;a href="#main" class="skip-link"&gt;Skip to content&lt;/a&gt; – positioned off-screen, visible on :focus</p>
+    </div>
+  </div>
+
+  <!-- ===== RESPONSIVE ===== -->
+  <div class="ds-section" id="responsive">
+    <p class="ds-label">Layout</p>
+    <h2 class="ds-title">Responsive</h2>
+
+    <h3 class="ds-section-heading">Breakpoints (Apple reference: 1068px, 734px)</h3>
+    <div class="ds-demo">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center;">
+        <div style="background:var(--apple-section-bg);border-radius:16px;padding:24px 16px;">
+          <div style="font-size:1.5rem;font-weight:800;letter-spacing:-0.02em;color:var(--apple-black);margin-bottom:4px;">&gt;1200px</div>
+          <div style="font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--iprm-accent);margin-bottom:12px;">Desktop</div>
+          <div style="font-size:0.8125rem;color:var(--apple-gray);line-height:1.6;">Full layout, 2-3 col grids, glass nav</div>
+        </div>
+        <div style="background:var(--apple-section-bg);border-radius:16px;padding:24px 16px;">
+          <div style="font-size:1.5rem;font-weight:800;letter-spacing:-0.02em;color:var(--apple-black);margin-bottom:4px;">1024px</div>
+          <div style="font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--iprm-accent);margin-bottom:12px;">Tablet</div>
+          <div style="font-size:0.8125rem;color:var(--apple-gray);line-height:1.6;">Grids 2-col, padding reduced</div>
+        </div>
+        <div style="background:var(--apple-section-bg);border-radius:16px;padding:24px 16px;">
+          <div style="font-size:1.5rem;font-weight:800;letter-spacing:-0.02em;color:var(--apple-black);margin-bottom:4px;">768px</div>
+          <div style="font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--iprm-accent);margin-bottom:12px;">Mobile</div>
+          <div style="font-size:0.8125rem;color:var(--apple-gray);line-height:1.6;">Grids 1-col, burger-menu, stacked</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">Mobile-specific rules</h3>
+    <div class="ds-demo">
+      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:2;">
+        <strong>Navigation:</strong> burger (3 lines -> X) with aria-label="Menu", aria-expanded, full-width dropdown<br>
+        <strong>Hero actions:</strong> flex-direction: column (stacked)<br>
+        <strong>Feature grid:</strong> 1 column, featured card no span<br>
+        <strong>Bento grid:</strong> 1 column, hero card min-height reduced<br>
+        <strong>Stats:</strong> 2x2 grid (repeat(2, 1fr))<br>
+        <strong>Trainer:</strong> 1 column, photo above with aspect-ratio: 1<br>
+        <strong>Program:</strong> 1 column<br>
+        <strong>Footer:</strong> stacked, text-align: center
+      </div>
+    </div>
+    <p class="ds-hint">Section padding: Desktop 120px 24px / Tablet 80px 24px / Mobile 64px 16px</p>
+  </div>
+
+  <!-- ===== PERFORMANCE ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="performance">
+        <p class="ds-label">Optimization</p>
+        <h2 class="ds-title">Performance (Apple patterns)</h2>
+
+        <h3 class="ds-section-heading">CSS Containment</h3>
+        <div class="ds-demo">
+          <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+            <code class="ds-code">.iprm-section { content-visibility: auto; contain-intrinsic-size: auto 600px; }</code><br>
+            Below-fold sections not rendered until needed – significant paint time reduction.
+          </div>
+        </div>
+
+        <h3 class="ds-section-heading">Font loading</h3>
+        <div class="ds-demo">
+          <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+            <code class="ds-code">&lt;link rel="preconnect" href="https://fonts.googleapis.com"&gt;</code><br>
+            <code class="ds-code">&lt;link rel="preload" href="/static/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin&gt;</code><br>
+            <code class="ds-code">font-display: swap</code> for Inter.
+          </div>
+        </div>
+
+        <h3 class="ds-section-heading">Images</h3>
+        <div class="ds-demo">
+          <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:2;">
+            <code class="ds-code">&lt;picture&gt;</code> with WebP + JPEG fallback<br>
+            Above-fold: <code class="ds-code">loading="eager" fetchpriority="high"</code><br>
+            Below-fold: <code class="ds-code">loading="lazy"</code><br>
+            Always explicit <code class="ds-code">width</code> and <code class="ds-code">height</code> to prevent CLS.
+          </div>
+        </div>
+
+        <h3 class="ds-section-heading">will-change</h3>
+        <div class="ds-demo">
+          <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+            <code class="ds-code">.card:hover { will-change: transform; }</code><br>
+            Only during animation, never permanently. Permanent will-change consumes GPU memory.
+          </div>
+        </div>
+        <p class="ds-hint">Apple pattern: performance is invisible. Users should never notice optimization – they should notice speed.</p>
+    </div>
+  </div>
+
+  <!-- ===== MODERN CSS ===== -->
+  <div class="ds-section" id="modern-css">
+    <p class="ds-label">Progressive Enhancement</p>
+    <h2 class="ds-title">Modern CSS</h2>
+
+    <h3 class="ds-section-heading">Container Queries</h3>
+    <div class="ds-demo">
+      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+        Components adapt to container, not viewport:<br>
+        <code class="ds-code">.card-container { container-type: inline-size; }</code><br>
+        <code class="ds-code">@container (min-width: 400px) { .card-body { grid-template-columns: 1fr 1fr; } }</code>
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">CSS Scroll-Driven Animations</h3>
+    <div class="ds-demo">
+      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+        Replace JavaScript scroll listeners for reveal animations:<br>
+        <code class="ds-code">.apple-reveal { animation: enter-view linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }</code>
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">View Transitions (page navigation)</h3>
+    <div class="ds-demo">
+      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+        <code class="ds-code">@view-transition { navigation: auto; }</code><br>
+        <code class="ds-code">::view-transition-old(root) { animation: fade-out 0.25s ease-out; }</code><br>
+        <code class="ds-code">::view-transition-new(root) { animation: fade-in 0.25s ease-in; }</code>
+      </div>
+    </div>
+
+    <h3 class="ds-section-heading">color-mix() for hover states</h3>
+    <div class="ds-demo">
+      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+        <code class="ds-code">.btn:hover { background: color-mix(in oklch, var(--accent), black 15%); }</code><br>
+        Programmatic darkening without separate hover variables.
+      </div>
+    </div>
+    <p class="ds-hint">All modern CSS features use progressive enhancement – fallbacks always provided for older browsers.</p>
+  </div>
+
+  <!-- ===== COOKIE BANNER ===== -->
