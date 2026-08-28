@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-materials.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, pager %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_card  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -50,12 +50,10 @@
   ] %}
   <div class="admin-stat-cards">
     {% for c in cards %}
-    {% set is_active = (filter_status == c.key) %}
-    <a href="{{ url_for('admin.materials_overview', status=c.key or none, date_from=date_from or none, date_to=date_to or none) }}"
-       class="admin-stat-card{{ ' is-active' if is_active }}"{% if is_active %} aria-current="true"{% endif %}>
-      <span class="admin-stat-card__value">{{ c.value }}</span>
-      <span class="admin-stat-card__label">{{ c.label }}</span>
-    </a>
+    {{ stat_card({'value': c.value, 'label': c.label,
+                  'href': url_for('admin.materials_overview', status=c.key or none,
+                                  date_from=date_from or none, date_to=date_to or none),
+                  'active': filter_status == c.key}) }}
     {% endfor %}
   </div>
 

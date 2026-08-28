@@ -43,31 +43,11 @@
   margin-bottom: 24px;
 }
 
-a.wh-stat-card {
-  display: block;
-  text-decoration: none;
-  position: relative;
-  transition:
-    transform 0.15s var(--ease-interact, ease),
-    box-shadow 0.15s var(--ease-interact, ease),
-    border-color 0.15s var(--ease-interact, ease);
-}
-
-a.wh-stat-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--iprm-nav-active);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-}
-
-a.wh-stat-card:focus-visible {
-  outline: 2px solid var(--iprm-nav-active);
-  outline-offset: 3px;
-}
-
-.wh-stat-card.is-active {
-  border-color: var(--iprm-nav-active);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
-}
+/* .wh-stat-card звідси прибрано: це була власна копія клікабельної
+   картки-зрізу -- підйом на ховері, свій фокусний контур, своя активна
+   рамка. У системі така картка вже є (`a.admin-stat-card` і
+   `.admin-stat-card.is-active`), і решта реєстрів користується нею. Через
+   копію зріз вебхуків поводився не так, як зріз резервувань чи лідів. */
 
 /* ===== Бейджі статусів, яких немає в common.css ===== */
 

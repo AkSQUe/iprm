@@ -1,4 +1,5 @@
 {% extends "admin/base_admin.html" %}
+{% from 'admin/partials/_filter_bar.html' import stat_card %}
 
 {% block title %}Webhook черга | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -40,21 +41,17 @@
   {# Stat-картки водночас є фільтром за статусом #}
   {% set total = counts.values() | sum %}
   {% set cards = [
-    {'key': '',         'label': 'Усі',      'value': total,                  'mod': 'admin-stat-card--accent'},
+    {'key': '',         'label': 'Усі',      'value': total,                     'mod': 'accent'},
     {'key': 'pending',  'label': 'Pending',  'value': counts.get('pending', 0),  'mod': ''},
-    {'key': 'retrying', 'label': 'Retrying', 'value': counts.get('retrying', 0), 'mod': 'admin-stat-card--alert'},
-    {'key': 'sent',     'label': 'Sent',     'value': counts.get('sent', 0),     'mod': 'admin-stat-card--success'},
-    {'key': 'failed',   'label': 'Failed',   'value': counts.get('failed', 0),   'mod': 'admin-stat-card--danger'}
+    {'key': 'retrying', 'label': 'Retrying', 'value': counts.get('retrying', 0), 'mod': 'alert'},
+    {'key': 'sent',     'label': 'Sent',     'value': counts.get('sent', 0),     'mod': 'success'},
+    {'key': 'failed',   'label': 'Failed',   'value': counts.get('failed', 0),   'mod': 'danger'}
   ] %}
   <div class="admin-stat-cards wh-stats">
     {% for c in cards %}
-    {% set is_active = (filter_status == c.key) %}
-    <a href="{{ url_for('admin.webhooks_list', status=c.key) if c.key else url_for('admin.webhooks_list') }}"
-       class="admin-stat-card wh-stat-card {{ c.mod }}{{ ' is-active' if is_active }}"
-       {% if is_active %}aria-current="true"{% endif %}>
-      <span class="admin-stat-card__value">{{ c.value }}</span>
-      <span class="admin-stat-card__label">{{ c.label }}</span>
-    </a>
+    {{ stat_card({'value': c.value, 'label': c.label, 'mod': c.mod,
+                  'href': url_for('admin.webhooks_list', status=c.key) if c.key else url_for('admin.webhooks_list'),
+                  'active': filter_status == c.key}) }}
     {% endfor %}
   </div>
 
