@@ -185,12 +185,3 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  a.wh-stat-card {
-    transition: none;
-  }
-
-  a.wh-stat-card:hover {
-    transform: none;
-  }
-}

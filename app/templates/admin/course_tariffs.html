@@ -67,7 +67,7 @@
         <td>{{ tariff.format_label }}</td>
         <td>
           {% if tariff.description_items %}
-          <ul class="admin-tariff-items">
+          <ul>
             {% for item in tariff.description_items %}<li>{{ item }}</li>{% endfor %}
           </ul>
           {% else %}–{% endif %}

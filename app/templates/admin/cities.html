@@ -80,7 +80,7 @@
             <input type="hidden" name="name" value="{{ entry.name }}">
             <button type="submit" class="cities-chip" title="Додати «{{ entry.name }}» у довідник">
               {{ icon('add', cls='cities-chip__icon') }}
-              <span class="cities-chip__name">{{ entry.name }}</span>
+              <span>{{ entry.name }}</span>
               <span class="cities-chip__count" title="Проведень із цією локацією">{{ entry.count }}</span>
             </button>
           </form>
