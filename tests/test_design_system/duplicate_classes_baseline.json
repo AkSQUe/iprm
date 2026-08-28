@@ -1,22 +1,6 @@
 {
-  "active": [
-    "common.css",
-    "design-system.css"
-  ],
-  "admin-control-row": [
-    "admin-materials.css",
-    "admin.css"
-  ],
   "admin-dropzone__link": [
     "admin-media.css",
-    "admin.css"
-  ],
-  "admin-dropzone__preview": [
-    "admin.css",
-    "blog-editor.css"
-  ],
-  "admin-form": [
-    "admin-participants.css",
     "admin.css"
   ],
   "admin-queue-alert": [
@@ -34,15 +18,6 @@
   "admin-queue-alert__title--error": [
     "admin.css",
     "page-admin-notifications.css"
-  ],
-  "admin-table": [
-    "admin-materials.css",
-    "admin.css",
-    "page-admin-instances.css"
-  ],
-  "admin-toast-container": [
-    "common.css",
-    "molecular-background.css"
   ],
   "alert": [
     "admin.css",
@@ -102,26 +77,9 @@
     "apple-pages.css",
     "course-landing.css"
   ],
-  "apple-page": [
-    "apple-pages.css",
-    "course-landing.css",
-    "course-recommend.css",
-    "molecular-background.css",
-    "page-online-course.css",
-    "page-online-courses.css",
-    "page-trainers.css"
-  ],
   "apple-reveal": [
     "apple-pages.css",
     "page-index.css"
-  ],
-  "auth-page": [
-    "auth.css",
-    "molecular-background.css"
-  ],
-  "backup-actions__form": [
-    "admin-backup.css",
-    "admin.css"
   ],
   "badge": [
     "admin.css",
@@ -132,14 +90,6 @@
   "btn-admin": [
     "admin-cities.css",
     "admin.css"
-  ],
-  "certdata-reminder": [
-    "certdata-reminder.css",
-    "molecular-background.css"
-  ],
-  "cookie-banner": [
-    "common.css",
-    "molecular-background.css"
   ],
   "form-checkbox": [
     "admin.css",
@@ -199,10 +149,6 @@
     "page-clinics.css",
     "page-courses.css"
   ],
-  "iprm-confirm": [
-    "confirm-action.css",
-    "molecular-background.css"
-  ],
   "iprm-content-page__inner": [
     "common.css",
     "page-sitemap.css"
@@ -238,17 +184,9 @@
     "apple-pages.css",
     "common.css"
   ],
-  "iprm-error-page": [
-    "apple-pages.css",
-    "molecular-background.css"
-  ],
   "iprm-final-cta": [
     "course-landing.css",
     "page-courses.css"
-  ],
-  "iprm-header": [
-    "common.css",
-    "molecular-background.css"
   ],
   "iprm-hero": [
     "apple-pages.css",
@@ -327,17 +265,9 @@
     "apple-pages.css",
     "course-landing.css"
   ],
-  "iprm-reading-progress": [
-    "molecular-background.css",
-    "reading-progress.css"
-  ],
   "iprm-request-form__honeypot": [
     "course-landing.css",
     "page-courses.css"
-  ],
-  "iprm-roi__field": [
-    "page-courses.css",
-    "page-home.css"
   ],
   "iprm-roi__results": [
     "page-courses.css",
@@ -347,10 +277,6 @@
     "apple-pages.css",
     "common.css",
     "page-index.css"
-  ],
-  "iprm-section__inner": [
-    "common.css",
-    "page-courses.css"
   ],
   "iprm-section__subtitle": [
     "apple-pages.css",
@@ -372,18 +298,6 @@
     "apple-pages.css",
     "common.css",
     "page-courses.css"
-  ],
-  "iprm-to-top": [
-    "molecular-background.css",
-    "reading-progress.css"
-  ],
-  "iprm-toasts": [
-    "molecular-background.css",
-    "toast.css"
-  ],
-  "iprm-tooltip-bubble": [
-    "molecular-background.css",
-    "tooltips.css"
   ],
   "is-active": [
     "admin.css",
@@ -415,35 +329,10 @@
     "common.css",
     "material-symbols.css"
   ],
-  "page-home": [
-    "page-courses.css",
-    "page-home.css"
-  ],
   "required": [
     "auth.css",
     "common.css",
     "course-landing.css",
     "page-courses.css"
-  ],
-  "reviews-grid": [
-    "common.css",
-    "page-home.css"
-  ],
-  "skip-link": [
-    "common.css",
-    "molecular-background.css"
-  ],
-  "upcoming-bar": [
-    "molecular-background.css",
-    "upcoming-events.css"
-  ],
-  "upcoming-events": [
-    "certdata-reminder.css",
-    "molecular-background.css",
-    "upcoming-events.css"
-  ],
-  "upcoming-events--hidden": [
-    "certdata-reminder.css",
-    "upcoming-events.css"
   ]
 }

@@ -13,6 +13,13 @@
 одного прямого споживача (сам партіал), хоча партіал інклюдять десятки
 сторінок.
 
+Клас вважається ОГОЛОШЕНИМ у файлі лише тоді, коли він стоїть у СУБ'ЄКТІ
+правила -- останній компаунд селектора, після всіх комбінаторів (пробіл,
+`>`, `+`, `~`) і поза аргументами :not()/:has()/:is()/:where(). Згадка
+класу як предка (`.card .badge` -- предок `.card`) чи як цілі `:has()`
+нічого не перестилізовує, тож дублікатом не рахується: правку компонента
+в дизайн-системі така згадка "не ловить" помилково.
+
 Використання:
     python tools/ds/ds_audit.py                # повний звіт
     python tools/ds/ds_audit.py --write-baseline
@@ -35,6 +42,17 @@ _INCLUDE = re.compile(r"{%-?\s*include\s+['\"]([^'\"]+)['\"]")
 _INCLUDE_DYNAMIC = re.compile(r"{%-?\s*include\s+(?!['\"])")
 _CSS_LINK = re.compile(r"filename=['\"]css/([\w.-]+\.css)['\"]")
 _COMMENT = re.compile(r'/\*.*?\*/', re.S)
+
+# Розбір суб'єкта селектора (той компаунд, який правило РЕАЛЬНО стилізує):
+# _PAREN викидає аргументи функціональних псевдокласів (:not(), :has(),
+# :is(), :where(), :nth-child() тощо) -- клас усередині нічого не
+# перестилізовує, він лише умова відбору; _BRACKET так само викидає вміст
+# атрибутних селекторів (там трапляються `>`/`+`/`~`, які інакше сплутати
+# з комбінаторами); _COMBINATOR ділить те, що лишилось, на компаунди --
+# суб'єкт це ОСТАННІЙ компаунд.
+_PAREN = re.compile(r'\([^()]*\)')
+_BRACKET = re.compile(r'\[[^\[\]]*\]')
+_COMBINATOR = re.compile(r'[\s>+~]+')
 
 
 def _templates(root):
@@ -92,13 +110,48 @@ def classify_css(root=ROOT):
     return {'component': component, 'page': page, 'unresolved': sorted(unresolved)}
 
 
+def _strip_nested(text, pattern):
+    """Прибрати вміст дужок/квадратних дужок навіть при вкладеності.
+
+    Одного проходу regex недостатньо для `:not(:is(.a, .b))` -- внутрішні
+    дужки лишаться. Проганяємо, доки текст перестає мінятись.
+    """
+    prev = None
+    while prev != text:
+        prev = text
+        text = pattern.sub('', text)
+    return text
+
+
+def _selector_subject_classes(head):
+    """Класи, які СЕЛЕКТОР(и) з `head` реально оголошують -- суб'єкт
+    правила, а не предок у descendant-селекторі й не аргумент
+    :not()/:has()/:is()/:where().
+
+    `head` -- усе, що стоїть перед `{` (може містити список селекторів
+    через кому). Суб'єкт кожного селектора зі списку -- його ОСТАННІЙ
+    компаунд після розбиття на комбінатори (пробіл, `>`, `+`, `~`), уже
+    без вмісту дужок і атрибутних селекторів. Компаунд може містити
+    кілька класів (`.card.card--wide`) -- тоді суб'єкт усі вони.
+    """
+    stripped = _strip_nested(head, _PAREN)
+    stripped = _strip_nested(stripped, _BRACKET)
+    names = set()
+    for selector in stripped.split(','):
+        compounds = [c for c in _COMBINATOR.split(selector.strip()) if c]
+        if not compounds:
+            continue
+        names |= set(re.findall(r'\.([a-zA-Z][\w-]*)', compounds[-1]))
+    return names
+
+
 def _declared_classes(path):
     css = _COMMENT.sub(' ', path.read_text(encoding='utf-8'))
     names = set()
     for head in re.findall(r'([^{}]+)\{', css):
         if head.lstrip().startswith('@'):
             continue
-        names |= set(re.findall(r'\.([a-zA-Z][\w-]*)', head))
+        names |= _selector_subject_classes(head)
     return names
 
 
