@@ -1,0 +1,23 @@
+{# Іконковий шрифт: preload + @font-face + клас.
+
+   Один партіал на всі сторінки, яким потрібні іконки. Доти цей блок стояв
+   інлайн у admin/base_admin.html, і будь-яка сторінка поза адмінкою діставала
+   лише клас `.material-symbols-rounded` без самого шрифту -- гліфи виходили
+   порожніми квадратами. Саме так /design-system і показувала компоненти з
+   іконками: кнопку-іконку, лупу в пошуку, стрілки пагінації.
+
+   @font-face саме тут, а не в material-symbols.css: у ньому потрібна версія
+   (?v=assets_version), щоб оновлений субсет не залипав у 1-річному кеші
+   статики (SEND_FILE_MAX_AGE_DEFAULT), а статичний CSS її підставити не може.
+#}
+<link rel="preload" href="{{ url_for('static', filename='fonts/material-symbols-rounded.woff2') }}?v={{ assets_version }}" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  font-style: normal;
+  font-weight: 300;
+  font-display: block;
+  src: url("{{ url_for('static', filename='fonts/material-symbols-rounded.woff2') }}?v={{ assets_version }}") format('woff2');
+}
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/material-symbols.css') }}?v={{ assets_version }}">

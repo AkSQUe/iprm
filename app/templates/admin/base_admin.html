@@ -1,21 +1,7 @@
 {% extends "base.html" %}
 
 {% block extra_head %}
-{# Self-hosted іконковий шрифт (раніше вантажився з Google Fonts CDN, який
-   на мобільних ріжуть блокувальники -> ламались іконки). Тепер 'self'.
-   @font-face -- інлайн із версією (?v=assets_version), щоб оновлений субсет
-   не залипав у 1-річному кеші статики (SEND_FILE_MAX_AGE_DEFAULT). #}
-<link rel="preload" href="{{ url_for('static', filename='fonts/material-symbols-rounded.woff2') }}?v={{ assets_version }}" as="font" type="font/woff2" crossorigin>
-<style>
-@font-face {
-  font-family: 'Material Symbols Rounded';
-  font-style: normal;
-  font-weight: 300;
-  font-display: block;
-  src: url("{{ url_for('static', filename='fonts/material-symbols-rounded.woff2') }}?v={{ assets_version }}") format('woff2');
-}
-</style>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/material-symbols.css') }}?v={{ assets_version }}">
+{% include 'partials/_icon_font.html' %}
 {# Мапа кодпойнтів для JS-редакторів: субсет без лігатур, тож JS рендерить
    іконку через кодпойнт (window.msGlyph), а не текст-назву. #}
 <script>

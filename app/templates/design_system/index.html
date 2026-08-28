@@ -4,6 +4,7 @@
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
+  {% include 'partials/_icon_font.html' %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}?v={{ assets_version }}">
   {# Секція #course-landing показує компоненти ЖИВИМИ, а не мокапом з
