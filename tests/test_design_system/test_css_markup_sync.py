@@ -29,6 +29,20 @@ EXTERNAL = {
     'material-symbols-rounded',   # клас іконкового шрифту
 }
 
+# Теги (`<...>`) і жинжа-блоки (`{{ ... }}`, `{% ... %}`) -- саме там живуть
+# СПРАВЖНІ вживання класу: у class=, у kwarg cls= макроса icon(), у
+# {% set %}-словнику, звідки клас підставляється рядком. Текст МІЖ тегами
+# (проза підказок на кшталт `<p class="ds-hint">...</p>`) навмисно НЕ
+# островом: інакше слово-згадка класу в описі рахується користувачем,
+# хоча в class= клас ніде не стоїть -- саме так мертвий клас зеленів від
+# одного слова в каталозі (I6).
+_CODE_ISLAND = re.compile(r'<[^>]*>|\{[{%].*?[%}]\}', re.S)
+
+
+def _code_text(text):
+    """`text` без прози -- лише вміст тегів і жинжа-виразів/стейтментів."""
+    return ' '.join(_CODE_ISLAND.findall(text))
+
 
 def _read(dirpath, pattern):
     return '\n'.join(p.read_text(encoding='utf-8') for p in dirpath.rglob(pattern))
@@ -109,11 +123,22 @@ def test_every_class_in_markup_has_a_rule():
 
 
 def test_admin_css_has_no_unused_rules():
-    """Мертве правило заманює наступного зробити другу копію компонента."""
-    tpl = _template_text()
+    """Мертве правило заманює наступного зробити другу копію компонента.
+
+    "Використаний" рахується лише вживання в коді -- тегах (`class=`,
+    kwarg `cls=` макроса `icon()`) і жинжа-виразах/стейтментах (`{{ }}`,
+    `{% set %}`), а не будь-яке входження слова в прозовий текст партіала.
+    Раніше сканер шукав клас підрядком по ВСЬОМУ тексту шаблонів -- і
+    будь-яка згадка класу словом ("admin-zzztest" у підказці на вітрині)
+    рахувалась як користувач, хоч насправді клас ніде не СТОЯВ у class=.
+    Мертвий клас зеленів від одного слова в каталозі (I6). `_code_text`
+    звужує пошук до тегів і жинжа-блоків -- туди, де класи РЕАЛЬНО
+    потрапляють у розмітку, і викидає прозу підказок.
+    """
+    tpl_code = _code_text(_template_text())
     js = _js_text()
     py = _read(ROOT / 'app', '*.py')
-    haystack = tpl + js + py
+    haystack = tpl_code + js + py
     dead = []
     for path in sorted(CSS_DIR.glob('*.css')):
         if not path.name.startswith(('admin', 'page-admin')):
@@ -130,7 +155,7 @@ def test_admin_css_has_no_unused_rules():
             # модифікатор, який збирає жинжа: `.wh-action--created` у CSS,
             # `wh-action--{{ x }}` у шаблоні
             stem = re.split(r'--|__', cls)[0]
-            if re.search(re.escape(stem) + r'(--|__)[\w-]*\s*\{\{', haystack):
+            if re.search(re.escape(stem) + r'(--|__)[\w-]*\s*\{\{', tpl_code):
                 continue
             dead.append(f'{path.name}: .{cls}')
     assert not dead, (
