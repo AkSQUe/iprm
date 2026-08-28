@@ -90,9 +90,10 @@
      голок») -- єдине, заради чого тренеру дали форму; без нього підтвердження
      було обіцянкою, якої система не виконувала. #}
   {% if reservation.trainer_comment %}
-  <div class="materials-trainer-note">
-    <strong class="materials-trainer-note__title">Коментар тренера{% if reservation.trainer_confirmed_at %} ({{ reservation.trainer_confirmed_at.strftime('%d.%m.%Y %H:%M') }}){% endif %}:</strong>
-    <span class="materials-trainer-note__text">{{ reservation.trainer_comment }}</span>
+  <div class="alert alert--info">
+    {{ icon('info') }}
+    <strong class="alert__title">Коментар тренера{% if reservation.trainer_confirmed_at %} ({{ reservation.trainer_confirmed_at.strftime('%d.%m.%Y %H:%M') }}){% endif %}:</strong>
+    {{ reservation.trainer_comment }}
   </div>
   {% elif trainer_url and not reservation.trainer_confirmed_at %}
   <p class="materials-summary__hint">Тренер ще не підтвердив перелік.</p>
@@ -111,10 +112,14 @@
   {% endif %}
 
   {# ---------- Toolbar ---------- #}
-  <div class="materials-toolbar">
-    <div class="materials-search">
-      {{ icon('filter_list') }}
-      <input type="search" id="materialsSearch" class="form-input" placeholder="Пошук за назвою або артикулом" autocomplete="off">
+  <div class="admin-control-row">
+    {# Той самий пошук, що в панелі фільтрів реєстрів: лупа всередині поля,
+       а не окрема іконка збоку. Доти тут стояв знак фільтра (`filter_list`)
+       над полем пошуку -- інша дія, інший знак. #}
+    <div class="admin-filters__search">
+      {{ icon('search', cls='admin-filters__search-icon') }}
+      <input type="search" id="materialsSearch" class="form-input admin-filters__search-input"
+             placeholder="Пошук за назвою або артикулом" autocomplete="off">
     </div>
 
     {% if qty_mode and kits %}
@@ -133,21 +138,29 @@
     <div class="materials-xn">
       <input type="number" id="materialsXn" class="form-input materials-mult" min="1" step="1"
              value="{{ participants if participants else 1 }}" title="Помножити кількості" aria-label="Кількість учасників">
-      <button type="button" class="btn-admin btn-admin--secondary" id="materialsXnBtn" title="Помножити всі кількості">×</button>
+      {# Знак множення, а не іконка з реєстру: `close` читався б як
+         «скасувати». Кнопка без напису -- отже `--icon` і доступна назва. #}
+      <button type="button" class="btn-admin btn-admin--secondary btn-admin--icon" id="materialsXnBtn"
+              title="Помножити всі кількості" aria-label="Помножити всі кількості">×</button>
     </div>
     {% endif %}
 
     <a href="{{ url_for('admin.instance_materials_template', instance_id=instance.id) }}"
        class="btn-admin btn-admin--secondary">{{ icon('download') }} Шаблон XLSX</a>
-    <form method="POST" enctype="multipart/form-data" class="materials-import"
+    {# Прихований інпут і кнопка-мітка -- той самий вигляд, що в тулбарі
+       розкладу: одна пілюля замість нативного поля на 300px плюс окремої
+       кнопки сабміту. Форма йде сама, щойно файл обрано (data-autosubmit). #}
+    <form method="POST" enctype="multipart/form-data"
           action="{{ url_for('admin.instance_materials_import', instance_id=instance.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       {% if mode == 'edit' %}<input type="hidden" name="edit" value="1">{% endif %}
-      <input type="file" name="xlsx" accept=".xlsx" class="form-input">
-      <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('upload') }} Імпорт</button>
+      <input type="file" name="xlsx" id="materials-xlsx-input" accept=".xlsx"
+             class="admin-file-input" data-autosubmit>
+      <label for="materials-xlsx-input" class="btn-admin btn-admin--secondary admin-clickable"
+             title="Завантажити заповнений шаблон">{{ icon('upload') }} Імпорт XLSX</label>
     </form>
 
-    <span class="materials-toolbar__spacer"></span>
+    <span class="materials-spacer"></span>
 
     {% if is_reserved and mode != 'edit' and not is_mm_document %}
     <a href="{{ url_for('admin.instance_materials', instance_id=instance.id, edit=1) }}"
@@ -195,10 +208,23 @@
       {% if not readonly %}data-single-submit data-submitting-label="Обробляємо…"{% endif %}>
     {% if not readonly %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
     <div class="admin-table-wrap">
-    <table class="admin-table" id="materialsTable">
+    <table class="admin-table admin-table--fixed materials-table" id="materialsTable">
+      {# Колонок різна кількість за режимами, тому <col> ідуть тими самими
+         умовами, що й <th> нижче -- інакше ширини поїхали б на одну колонку. #}
+      <colgroup>
+        <col class="materials-col--image">
+        <col class="materials-col--sku">
+        <col>
+        <col class="materials-col--category">
+        <col class="materials-col--num">
+        {% if readonly %}<col class="materials-col--num">{% endif %}
+        {% if not qty_mode %}<col class="materials-col--num">{% endif %}
+        <col class="materials-col--qty">
+        {% if not qty_mode and not readonly %}<col class="materials-col--num">{% endif %}
+      </colgroup>
       <thead>
         <tr>
-          <th>Зображення</th>
+          <th data-no-sort>Фото</th>
           <th>Артикул</th>
           <th class="materials-name">Назва</th>
           <th>Категорія</th>

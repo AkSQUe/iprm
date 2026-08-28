@@ -43,7 +43,7 @@
   {% set cards = [
     {'key': '',         'label': 'Усі',      'value': total,                  'mod': 'admin-stat-card--accent'},
     {'key': 'pending',  'label': 'Pending',  'value': counts.get('pending', 0),  'mod': ''},
-    {'key': 'retrying', 'label': 'Retrying', 'value': counts.get('retrying', 0), 'mod': 'admin-stat-card--warning'},
+    {'key': 'retrying', 'label': 'Retrying', 'value': counts.get('retrying', 0), 'mod': 'admin-stat-card--alert'},
     {'key': 'sent',     'label': 'Sent',     'value': counts.get('sent', 0),     'mod': 'admin-stat-card--success'},
     {'key': 'failed',   'label': 'Failed',   'value': counts.get('failed', 0),   'mod': 'admin-stat-card--danger'}
   ] %}

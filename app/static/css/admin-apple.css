@@ -244,7 +244,10 @@
   overflow: hidden;
 }
 
-.admin-file-input:focus-visible + span {
+/* Кнопкою тут може бути і <span>, і <label for=...>: селектор мусить ловити
+   обидва, інакше приховане поле лишається без видимого фокуса -- а це
+   єдиний спосіб дістатись до нього з клавіатури. */
+.admin-file-input:focus-visible + .btn-admin {
   outline: 2px solid var(--iprm-nav-active);
   outline-offset: 3px;
 }

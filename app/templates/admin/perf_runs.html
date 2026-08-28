@@ -40,11 +40,13 @@
 
   {% if latest %}
   <div class="admin-stat-cards admin-stat-cards--4">
-    <div class="admin-stat-card{% if latest.verdict == 'FAIL' %} admin-stat-card--danger{% elif latest.verdict == 'WARN' %} admin-stat-card--warning{% else %} admin-stat-card--success{% endif %}">
+    <div class="admin-stat-card admin-stat-card--{{ latest.verdict_card }}">
       <div class="admin-stat-card__value">{{ latest.verdict }}</div>
       <div class="admin-stat-card__label">Останній замір</div>
     </div>
-    <div class="admin-stat-card admin-stat-card--warning">
+    {# --alert, не --warning: другий у цій системі СИНІЙ (бере токен
+       бейджа «Опубліковано») і читається як «очікує», а не як «глянь сюди». #}
+    <div class="admin-stat-card admin-stat-card--alert">
       <div class="admin-stat-card__value">{{ latest.pages_warn }}</div>
       <div class="admin-stat-card__label">Сторінок з WARN</div>
     </div>
@@ -118,15 +120,7 @@
           <td>{{ run.pages_total }}</td>
           <td>{{ run.pages_warn }}</td>
           <td>{{ run.pages_fail }}</td>
-          <td>
-            {% if run.verdict == 'FAIL' %}
-            <span class="badge badge--danger">FAIL</span>
-            {% elif run.verdict == 'WARN' %}
-            <span class="badge badge--warning">WARN</span>
-            {% else %}
-            <span class="badge badge--success">OK</span>
-            {% endif %}
-          </td>
+          <td><span class="badge badge--{{ run.verdict_badge }}">{{ run.verdict }}</span></td>
           <td>
             {# Часта дія -- одразу, видалення під «...»: воно незворотне, а
                стояло за один промах від «Деталі». #}
@@ -213,7 +207,9 @@
        дублював його й до того ж вбивав шрифт літералом. #}
     <code class="admin-code-block admin-mt-sm">python tools/perf/perf_check.py --push {{ key_state.ingest_url }} --token &lt;ключ&gt; --note "опис змін"</code>
 
-    <div class="perf-actions">
+    {# Ряд керування всередині картки -- спільний `.admin-control-row`.
+       Власний `.perf-actions` був його копією без жодної відмінності. #}
+    <div class="admin-control-row admin-mt-sm">
       <form method="POST" action="{{ url_for('admin.perf_key_rotate') }}"
             data-confirm="Згенерувати новий ключ? Старий перестане працювати - інструмент доведеться переналаштувати."
             data-confirm-ok="Згенерувати новий" data-confirm-danger>

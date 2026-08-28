@@ -31,7 +31,41 @@ def worst_verdict(verdicts):
     return max(verdicts, key=lambda v: _VERDICT_RANK.get(v, 0), default=VERDICT_OK)
 
 
-class PerfRun(TimestampMixin, db.Model):
+# Вердикт малюється двома різними компонентами -- плашкою в таблиці й
+# карткою-зрізом угорі, -- і кожен із них розкладався тернарником просто в
+# розмітці: двічі в реєстрі прогонів, двічі в деталях. Четвертий вердикт
+# з'явився б на екрані плашкою «OK».
+VERDICT_BADGES = {
+    VERDICT_OK: 'success',
+    VERDICT_WARN: 'warning',
+    VERDICT_FAIL: 'danger',
+}
+
+# Картка-зріз має ВЛАСНУ шкалу: `.admin-stat-card--warning` у цій системі
+# синя (бере токен бейджа «Опубліковано»), а бурштинове «потребує уваги» --
+# це `--alert`. Тому WARN тут не той самий модифікатор, що в плашці.
+VERDICT_CARDS = {
+    VERDICT_OK: 'success',
+    VERDICT_WARN: 'alert',
+    VERDICT_FAIL: 'danger',
+}
+
+
+class VerdictVisualsMixin:
+    """Спільне для прогону й окремої сторінки: обидва мають колонку verdict."""
+
+    @property
+    def verdict_badge(self):
+        """Модифікатор `.badge--*` під вердикт."""
+        return VERDICT_BADGES.get(self.verdict, 'draft')
+
+    @property
+    def verdict_card(self):
+        """Модифікатор `.admin-stat-card--*` під вердикт (див. VERDICT_CARDS)."""
+        return VERDICT_CARDS.get(self.verdict, 'success')
+
+
+class PerfRun(VerdictVisualsMixin, TimestampMixin, db.Model):
     __tablename__ = 'perf_runs'
 
     id = db.Column(BigIntPK, primary_key=True)
@@ -98,7 +132,7 @@ class PerfRun(TimestampMixin, db.Model):
         return None
 
 
-class PerfPageMetric(TimestampMixin, db.Model):
+class PerfPageMetric(VerdictVisualsMixin, TimestampMixin, db.Model):
     __tablename__ = 'perf_page_metrics'
 
     id = db.Column(BigIntPK, primary_key=True)

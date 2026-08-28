@@ -37,7 +37,9 @@
       <span class="admin-stat-card__value">{{ stats.by_code.get('500', 0) }}</span>
       <span class="admin-stat-card__label">500 Server</span>
     </div>
-    <div class="admin-stat-card admin-stat-card--warning">
+    {# --alert, не --warning: другий у цій системі СИНІЙ (бере токен
+       бейджа «Опубліковано») і читається як «очікує», а не як «глянь сюди». #}
+    <div class="admin-stat-card admin-stat-card--alert">
       <span class="admin-stat-card__value">{{ stats.by_code.get('404', 0) }}</span>
       <span class="admin-stat-card__label">404 Not Found</span>
     </div>

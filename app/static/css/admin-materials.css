@@ -1,32 +1,27 @@
 /* Admin: MM Medic materials reservation page */
 
-.materials-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 14px;
-}
+/* Ряд керування сторінкою -- `.admin-control-row` дизайн-системи; тут
+   лишається лише те, чого спільний клас дати не може. */
 
-.materials-toolbar__spacer { flex: 1 1 auto; }
+/* Відсуває дії справа (редагувати / скасувати резерв) від засобів вводу. */
+.materials-spacer { flex: 1 1 auto; }
 
-.materials-import,
 .materials-tpl,
-.materials-xn,
-.materials-search {
+.materials-xn {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-.materials-search {
-  min-width: 240px;
-  flex: 1 1 240px;
-  max-width: 360px;
+/* Множник -- поле на два-три знаки. `.admin-control-row .form-input` тягне
+   його до `flex: 1 1 200px` з `min-width: 160px`, тобто вдвічі ширше за
+   найдовше можливе значення. */
+.admin-control-row .materials-mult {
+  flex: 0 0 72px;
+  min-width: 0;
+  width: 72px;
+  text-align: right;
 }
-.materials-search .form-input { flex: 1 1 auto; }
-
-.materials-mult { width: 72px; text-align: right; }
 
 
 .materials-summary {
@@ -36,13 +31,15 @@
   align-items: center;
   padding: 10px 14px;
   margin-bottom: 16px;
-  border-radius: 12px;
-  /* Токена --admin-surface-2 у проекті немає, тож завжди малювався фолбек
-     #f5f5f7 -- у тёмній темі світла смуга зі світлим текстом (контраст 1.00,
-     тобто рядок був нечитабельний). Смуга лежить на тлі сторінки, а воно в
-     тёмній темі збігається з тлом картки, тому потрібен саме --iprm-border:
-     він відрізняється від тла в обох темах. */
-  background: var(--iprm-border);
+  border-radius: var(--iprm-radius-sm);
+  /* Смуга лежить на тлі СТОРІНКИ, не всередині картки, тож поверхня їй
+     потрібна карткова: --iprm-white (у тёмній темі токен сам стає #1c1c22)
+     плюс межа. Ані --iprm-surface-inset, ані --apple-section-bg сюди не
+     годяться -- обидва дорівнюють тлу сторінки, і смуга зникає. Доти тут
+     стояв --iprm-border, тобто колір лінії у ролі тла: працювало, але
+     поверхня з палітри ліній -- випадковий вибір. */
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
   font-size: 0.9375rem;
 }
 .materials-summary__hint { color: var(--apple-gray); font-size: 0.85rem; }
@@ -59,19 +56,10 @@
 }
 .materials-history__item::before { content: '·'; margin-right: 12px; }
 
-/* Коментар тренера. Помітний, але не тривожний: це не помилка, а те, що
-   людина написала про підготовлений набір. */
-.materials-trainer-note {
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  border: 1px solid var(--iprm-border);
-  border-left: 3px solid var(--iprm-info);
-  border-radius: var(--iprm-radius-sm, 8px);
-  background: var(--iprm-info-bg);
-  font-size: 0.92rem;
-}
-.materials-trainer-note__title { margin-right: 6px; color: var(--iprm-info); }
-.materials-trainer-note__text { color: var(--apple-gray-dark); }
+/* Коментар тренера малюється `.alert .alert--info` дизайн-системи: це та
+   сама «помітна, але не тривожна» смуга, що й решта повідомлень сторінки
+   (недоступний каталог -- `.alert--warning` поруч). Власна коробка
+   відрізнялась від них падінгом, радіусом і розміром шрифту. */
 
 /* Комірка «Тренер» у зведенні: дата підтвердження і, якщо він щось написав,
    сам текст -- обрізаний до трьох рядків, щоб один балакучий коментар не
@@ -140,43 +128,35 @@
   color: var(--apple-gray);
 }
 
-/* Спільний Apple-стиль для всіх інпутів/селекта сторінки матеріалів
-   (базовий .form-input стилюється лише всередині .admin-form, а тут його немає). */
-.materials-search .form-input,
-.materials-tpl .form-input,
-.materials-mult,
-.materials-qty-input {
-  padding: 8px 12px;
-  font-size: 0.9375rem;
-  color: var(--apple-black);
-  background: var(--apple-section-bg);
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm, 8px);
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-}
-
-.materials-search .form-input:hover,
-.materials-tpl .form-input:hover,
-.materials-mult:hover,
-.materials-qty-input:hover {
-  border-color: var(--iprm-nav-active);
-}
-
-.materials-search .form-input:focus,
-.materials-tpl .form-input:focus,
-.materials-mult:focus,
-.materials-qty-input:focus {
-  outline: none;
-  background: var(--iprm-white);
-  border-color: var(--iprm-nav-active);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
-}
-
+/* Вигляд полів приходить із базового `.form-input` адмінки. Тут колись
+   лежала власна копія на тридцять рядків -- вона з'явилась, коли базового
+   правила ще не було (`.form-input` живе в auth.css, якого адмінка не
+   підключає), і пережила його появу: поля цієї сторінки лишились на
+   8px/12px, тоді як решта адмінки перейшла на 10px/14px. */
 .materials-qty-input { width: 96px; text-align: right; }
 
 .admin-table th.materials-name,
 .admin-table td.materials-name {
   text-align: left;
+}
+
+/* Розкрій таблиці позицій. Набір колонок залежить від режиму (шість у
+   заявці, вісім у списанні й у режимі читання), тому ширини задано в
+   пікселях кожній вузькій колонці, а «Назва» лишається без ширини й
+   забирає решту -- при `table-layout: fixed` саме так ділиться залишок.
+   Доти місце роздавав вміст, і назва товару -- єдине поле, заради якого
+   рядок і читають, -- тиснулась між артикулом і чотирма числами. */
+@media (min-width: 769px) {
+  .materials-table {
+    min-width: 1000px;
+  }
+
+  .materials-col--image { width: 68px; }
+  .materials-col--sku { width: 120px; }
+  .materials-col--category { width: 150px; }
+  .materials-col--num { width: 110px; }
+  /* Поле вводу 96px плюс падінги комірки; під ним ще рядок підказки. */
+  .materials-col--qty { width: 150px; }
 }
 
 .materials-oos {

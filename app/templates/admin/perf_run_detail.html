@@ -25,11 +25,14 @@
   {% endif %}
 {% endmacro %}
 
-{# Клітинка метрики: заливка за вердиктом + межа бюджету, коли є промах. #}
+{# Клітинка метрики: заливка за вердиктом + межа бюджету, коли є промах.
+   Заливка -- НЕ плашка: вердикт тут стосується одного числа, а не рядка,
+   тож і класи свої. Відображення тримається словником, як і на моделі. #}
+{% set METRIC_FILL = {'FAIL': ' perf-metric--fail', 'WARN': ' perf-metric--warn'} %}
 {% macro cell(page, metric, value, unit) %}
   {% set verdict = page.budget.get(metric, 'OK') %}
   {% set limits = run.budget_for(page.profile, metric) %}
-  <td class="perf-metric{% if verdict == 'FAIL' %} perf-metric--fail{% elif verdict == 'WARN' %} perf-metric--warn{% endif %}">
+  <td class="perf-metric{{ METRIC_FILL.get(verdict, '') }}">
     {{ value }}
     {% if verdict != 'OK' and limits %}
     <span class="perf-metric__budget">бюджет {% if unit == 'kb' %}{{ (limits[0] / 1024) | round | int }} KB{% elif unit == 'ms' %}{{ limits[0] }}мс{% else %}{{ limits[0] }}{% endif %}</span>
@@ -62,11 +65,12 @@
   {% include 'partials/flash_messages.html' %}
 
   <div class="admin-stat-cards admin-stat-cards--4">
-    <div class="admin-stat-card{% if run.verdict == 'FAIL' %} admin-stat-card--danger{% elif run.verdict == 'WARN' %} admin-stat-card--warning{% else %} admin-stat-card--success{% endif %}">
+    <div class="admin-stat-card admin-stat-card--{{ run.verdict_card }}">
       <div class="admin-stat-card__value">{{ run.verdict }}</div>
       <div class="admin-stat-card__label">Вердикт прогону</div>
     </div>
-    <div class="admin-stat-card admin-stat-card--warning">
+    {# --alert, не --warning: другий у цій системі синій (див. admin.css). #}
+    <div class="admin-stat-card admin-stat-card--alert">
       <div class="admin-stat-card__value">{{ run.pages_warn }}</div>
       <div class="admin-stat-card__label">Сторінок з WARN</div>
     </div>
@@ -93,7 +97,7 @@
 
   {% for profile in run.profiles %}
   <div class="perf-profile">
-    <h2 class="perf-profile__title">{{ profile }}</h2>
+    <h2 class="admin-form__section-title perf-profile__title">{{ profile }}</h2>
     <p class="perf-profile__hint">
       {% if profile == 'mobile' %}
       390x844, CPU x4, Slow 4G - наближено до реального смартфона
@@ -103,7 +107,22 @@
     </p>
 
     <div class="admin-table-wrap">
-      <table class="admin-table">
+      <table class="admin-table admin-table--fixed perf-table">
+        {# Вісім метрик -- однією шириною: таблицю читають порівнянням колонок,
+           а при розкрої за вмістом вони виходили від 68 до 98px, тобто ширина
+           колонки означала довжину числа в ній, а не її вагу. #}
+        <colgroup>
+          <col>
+          <col class="perf-col--metric">
+          <col class="perf-col--metric">
+          <col class="perf-col--metric">
+          <col class="perf-col--metric">
+          <col class="perf-col--metric">
+          <col class="perf-col--metric">
+          <col class="perf-col--metric">
+          <col class="perf-col--metric">
+          <col class="perf-col--verdict">
+        </colgroup>
         <thead>
           <tr>
             <th>Сторінка</th>
@@ -131,15 +150,7 @@
             <td class="perf-metric">{{ ms(page.load_ms) }}</td>
             {{ cell(page, 'total_transfer', kb(page.total_transfer), 'kb') }}
             <td class="perf-metric">{{ page.req_count }}</td>
-            <td>
-              {% if page.verdict == 'FAIL' %}
-              <span class="badge badge--danger">FAIL</span>
-              {% elif page.verdict == 'WARN' %}
-              <span class="badge badge--warning">WARN</span>
-              {% else %}
-              <span class="badge badge--success">OK</span>
-              {% endif %}
-            </td>
+            <td><span class="badge badge--{{ page.verdict_badge }}">{{ page.verdict }}</span></td>
             {% else %}
             <td colspan="9" class="admin-text-muted">Не виміряно: {{ page.error }}</td>
             {% endif %}
@@ -153,12 +164,12 @@
 
   {% set worst = run.worst_page %}
   {% if worst %}
-  <h2 class="perf-profile__title">Найповільніша сторінка: {{ worst.path }} ({{ worst.profile }}, LCP {{ ms(worst.lcp) }})</h2>
+  <h2 class="admin-form__section-title perf-profile__title">Найповільніша сторінка: {{ worst.path }} ({{ worst.profile }}, LCP {{ ms(worst.lcp) }})</h2>
   <p class="perf-profile__hint">З неї починають розбір: саме тут найбільший запас для покращення.</p>
 
   <div class="perf-details">
-    <div class="perf-details__card">
-      <h3 class="perf-details__title">Документ і заголовки</h3>
+    <div class="admin-integration-card">
+      <h3 class="admin-integration-card__title perf-details__title">Документ і заголовки</h3>
       <ul class="perf-details__list">
         <li class="perf-details__row">
           <span class="perf-details__name">По мережі / розпаковано</span>
@@ -175,8 +186,8 @@
       </ul>
     </div>
 
-    <div class="perf-details__card">
-      <h3 class="perf-details__title">Вага за типами</h3>
+    <div class="admin-integration-card">
+      <h3 class="admin-integration-card__title perf-details__title">Вага за типами</h3>
       <ul class="perf-details__list">
         {% for type_name, bucket in worst.by_type_sorted %}
         <li class="perf-details__row">
@@ -189,8 +200,8 @@
       </ul>
     </div>
 
-    <div class="perf-details__card">
-      <h3 class="perf-details__title">Найважчі ресурси</h3>
+    <div class="admin-integration-card">
+      <h3 class="admin-integration-card__title perf-details__title">Найважчі ресурси</h3>
       <ul class="perf-details__list">
         {% for res in worst.heaviest %}
         <li class="perf-details__row">
@@ -204,8 +215,8 @@
     </div>
 
     {% if worst.uncompressed %}
-    <div class="perf-details__card">
-      <h3 class="perf-details__title">Без стиснення (текстові >20 KB)</h3>
+    <div class="admin-integration-card">
+      <h3 class="admin-integration-card__title perf-details__title">Без стиснення (текстові >20 KB)</h3>
       <ul class="perf-details__list">
         {% for res in worst.uncompressed %}
         <li class="perf-details__row">
@@ -219,7 +230,7 @@
   </div>
   {% endif %}
 
-  <div class="perf-actions">
+  <div class="admin-form__actions">
     <a href="{{ url_for('admin.perf_runs') }}" class="btn-admin btn-admin--secondary btn-admin--sm">{{ icon('chevron_left') }} До списку</a>
     <form method="POST" action="{{ url_for('admin.perf_run_delete', run_id=run.id) }}" data-confirm="Видалити цей прогін?" data-confirm-ok="Видалити прогін" data-confirm-danger>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
