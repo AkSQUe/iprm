@@ -72,34 +72,58 @@ def _catalog_names(root):
     return names
 
 
-def classify_css(root=ROOT):
-    """{'component': {файл: споживачів}, 'page': {...}, 'unresolved': [...]}"""
-    texts = _templates(root)
-    catalog = _catalog_names(root)
+def _link_graph(texts):
+    """(direct, parents) для графа шаблонів `texts` (ім'я -> вміст).
 
+    `direct[name]` -- CSS, підключений У ЦЬОМУ файлі напряму (`{% assets %}`
+    на `filename='css/...'`). `parents[name]` -- файли, які `name`
+    розширює чи інклюдить (`extends`/`include`), лише ті, що реально є в
+    `texts`. Разом -- граф, яким рекурсивно ходить `_effective_css`.
+    """
     direct = {name: set(_CSS_LINK.findall(text)) for name, text in texts.items()}
     parents = {}
     for name, text in texts.items():
         refs = set(_EXTENDS.findall(text)) | set(_INCLUDE.findall(text))
         parents[name] = {r for r in refs if r in texts}
+    return direct, parents
+
+
+def _effective_css(name, direct, parents, seen=None):
+    """CSS, транзитивно підключений при рендері шаблону `name`.
+
+    Це сам файл плюс усе, що він extends/include, рекурсивно, БЕЗ
+    обмеження глибини -- партіал у партіалі у партіалі так само
+    враховується, як і прямий include. `seen` захищає від циклів у
+    графі extends/include.
+
+    Єдина реалізація обходу графа: і `classify_css` (споживачі шаблону),
+    і `catalog_gap` (що підключає сторінка каталогу) мусять користуватись
+    саме нею, а не власним розгортанням на N рівнів -- бо ручне
+    розгортання на фіксовану глибину мовчки недораховує все, що глибше.
+    """
+    seen = seen if seen is not None else set()
+    if name in seen:
+        return set()
+    seen.add(name)
+    out = set(direct.get(name, ()))
+    for parent in parents.get(name, ()):
+        out |= _effective_css(parent, direct, parents, seen)
+    return out
+
+
+def classify_css(root=ROOT):
+    """{'component': {файл: споживачів}, 'page': {...}, 'unresolved': [...]}"""
+    texts = _templates(root)
+    catalog = _catalog_names(root)
+    direct, parents = _link_graph(texts)
 
     unresolved = [n for n, t in texts.items() if _INCLUDE_DYNAMIC.search(t)]
-
-    def effective(name, seen=None):
-        seen = seen or set()
-        if name in seen:
-            return set()
-        seen.add(name)
-        out = set(direct.get(name, ()))
-        for parent in parents.get(name, ()):
-            out |= effective(parent, seen)
-        return out
 
     counts = {}
     for name in texts:
         if name in catalog:
             continue
-        for css in effective(name):
+        for css in _effective_css(name, direct, parents):
             counts[css] = counts.get(css, 0) + 1
 
     for css_file in (root / 'app' / 'static' / 'css').glob('*.css'):
@@ -158,7 +182,11 @@ def _declared_classes(path):
 def duplicate_classes(root=ROOT):
     """{клас: [файли]} для класів, оголошених у 2+ файлах."""
     owners = {}
-    for path in sorted((root / 'app' / 'static' / 'css').glob('*.css')):
+    # rglob, а не glob: підкаталогів у app/static/css сьогодні немає, але
+    # тиха діра (файл у підкаталозі мовчки випадає з підрахунку) нічого не
+    # коштує закрити наперед. path.name лишається базовим ім'ям -- ключі
+    # baseline не зміняться, навіть якщо підкаталоги колись з'являться.
+    for path in sorted((root / 'app' / 'static' / 'css').rglob('*.css')):
         for cls in _declared_classes(path):
             owners.setdefault(cls, set()).add(path.name)
     return {c: sorted(f) for c, f in sorted(owners.items()) if len(f) > 1}
@@ -166,19 +194,11 @@ def duplicate_classes(root=ROOT):
 
 def catalog_gap(root=ROOT):
     """Компонентні файли, яких каталог не підключає."""
-    tpl = root / 'app' / 'templates'
+    texts = _templates(root)
+    direct, parents = _link_graph(texts)
     linked = set()
     for name in _catalog_names(root):
-        linked |= set(_CSS_LINK.findall((tpl / name).read_text(encoding='utf-8')))
-    # Каталог розширює base_admin.html -> отримує все, що той тягне.
-    texts = _templates(root)
-    for name in _catalog_names(root):
-        for ref in set(_EXTENDS.findall(texts[name])) | set(_INCLUDE.findall(texts[name])):
-            if ref in texts:
-                linked |= set(_CSS_LINK.findall(texts[ref]))
-                for ref2 in set(_EXTENDS.findall(texts[ref])) | set(_INCLUDE.findall(texts[ref])):
-                    if ref2 in texts:
-                        linked |= set(_CSS_LINK.findall(texts[ref2]))
+        linked |= _effective_css(name, direct, parents)
     return sorted(set(classify_css(root)['component']) - linked)
 
 

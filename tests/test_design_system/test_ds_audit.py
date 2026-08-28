@@ -90,3 +90,47 @@ def test_selector_subject_catches_naive_regression():
         '.foo:not(.bar):has(.baz) .qux '
     )
     assert subjects == {'qux'}
+
+
+# _effective_css -- чиста функція над словниками direct/parents, тож обхід
+# графа глибиною 3+ пришпилюється на штучному графі, а не на живих шаблонах
+# проєкту (їхня глибина include-ланцюжків може змінитись).
+
+def test_effective_css_walks_three_levels_deep():
+    """Історична вада: catalog_gap розгортав extends/include вручну на
+    рівно два рівні (ref, потім ref2) і на цьому зупинявся. CSS,
+    підключений на третьому рівні вкладеності (партіал у партіалі у
+    партіалі), тихо не вважався б підключеним. Сьогодні в проєкті партіали
+    третього рівня CSS не лінкують, тож ручне розгортання випадково давало
+    правильне число -- цей тест ловить ваду незалежно від того, що зараз
+    лежить у app/templates.
+    """
+    direct = {
+        'catalog.html': set(),
+        'base.html': set(),
+        'partials/header.html': set(),
+        'partials/lang_switcher.html': {'lang-switcher.css'},
+    }
+    parents = {
+        'catalog.html': {'base.html'},
+        'base.html': {'partials/header.html'},
+        'partials/header.html': {'partials/lang_switcher.html'},
+        'partials/lang_switcher.html': set(),
+    }
+    effective = ds_audit._effective_css('catalog.html', direct, parents)
+    assert 'lang-switcher.css' in effective, (
+        'lang-switcher.css підключений на третьому рівні '
+        '(catalog -> base -> header -> lang_switcher). Обхід графа, '
+        'обмежений двома рівнями, цей CSS втратить.'
+    )
+
+
+def test_effective_css_stops_on_cycle():
+    """extends/include теоретично можуть утворити цикл -- рекурсія без
+    захисту від цього піде в нескінченність. `seen` мусить зупиняти обхід
+    на повторному вузлі, а не губити CSS, зібраний до цього.
+    """
+    direct = {'a.html': {'a.css'}, 'b.html': {'b.css'}}
+    parents = {'a.html': {'b.html'}, 'b.html': {'a.html'}}
+    effective = ds_audit._effective_css('a.html', direct, parents)
+    assert effective == {'a.css', 'b.css'}
