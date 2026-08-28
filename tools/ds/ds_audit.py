@@ -192,6 +192,23 @@ def duplicate_classes(root=ROOT):
     return {c: sorted(f) for c, f in sorted(owners.items()) if len(f) > 1}
 
 
+def new_duplicate_owners(current, baseline):
+    """{клас: [нові власники]} -- те, чого немає в `baseline` для цього класу.
+
+    Порівняння МНОЖИН ІМЕН класів (`set(current) - set(baseline)`) ловить
+    лише 70-й новий клас; храповик мусить ловити й обмін власника
+    всередині наявного класу з двома власниками ("прибрав один -- завів
+    інший"), тому звіряється саме ЦЕЙ словник -- окремо для кожного класу,
+    що вже є в baseline чи новий цілком.
+    """
+    result = {}
+    for cls, files in current.items():
+        added = sorted(set(files) - set(baseline.get(cls, [])))
+        if added:
+            result[cls] = added
+    return result
+
+
 def catalog_gap(root=ROOT):
     """Компонентні файли, яких каталог не підключає."""
     texts = _templates(root)
@@ -252,9 +269,17 @@ def main():
         # неможливо було б створити взагалі.
         if BASELINE.exists():
             old = json.loads(BASELINE.read_text(encoding='utf-8'))
-            if len(dupes) > len(old):
-                print('\nВІДМОВА: дублікатів стало БІЛЬШЕ (%d проти %d). Baseline '
-                      'може лише зменшуватись.' % (len(dupes), len(old)))
+            # Не лише "стало більше": обмін "прибрав одного власника -- завів
+            # іншого" не змінює len(dupes), але це так само новий дублікат --
+            # просто в іншому файлі. new_duplicate_owners ловить обидва
+            # випадки: і новий ключ-клас, і нового власника в наявному.
+            fresh = new_duplicate_owners(dupes, old)
+            if fresh:
+                print('\nВІДМОВА: зʼявились нові власники дублікатів:')
+                for cls, files in sorted(fresh.items()):
+                    print('   .%-28s %s' % (cls, ', '.join(files)))
+                print('Baseline фіксує ІСНУЮЧИХ власників кожного класу; новий '
+                      'власник -- це новий дублікат, навіть якщо старий зник.')
                 return 1
         BASELINE.write_text(
             json.dumps(dupes, ensure_ascii=False, indent=2, sort_keys=True) + '\n',
