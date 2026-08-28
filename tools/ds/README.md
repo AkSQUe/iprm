@@ -39,7 +39,7 @@ python tools/ds/html_snapshot.py diff before after
 **Тільки `create_app('testing')`.** Інструмент відмовляється працювати без
 `TESTING`. У конфізі за замовчуванням база береться з `DATABASE_URL`
 (`config.py:17`), а `create_app` наприкінці підіймає APScheduler
-(`app/__init__.py:637`); єдиний запобіжник від розсилки запланованих листів
+(`app/__init__.py:638`); єдиний запобіжник від розсилки запланованих листів
 живим людям стоїть саме на `TESTING` (`app/services/scheduler_service.py:66`).
 Ad-hoc скрипт із голим `create_app()` обходить обидва -- так робити не можна.
 
