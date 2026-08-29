@@ -32,7 +32,29 @@
         </tbody>
       </table>
     </div>
-    <p class="ds-hint">.admin-table: поверхня --iprm-white, шапка --iprm-surface-inset (окремий токен для вкладеної в картку поверхні: у тёмній темі --iprm-card-bg і --iprm-card-bg дорівнюють поверхні картки, і шапка зникала) / .admin-seats: нейтральна плашка лічильника, --over вмикає червону</p>
+    <p class="ds-hint">.admin-table: поверхня --iprm-white, шапка --iprm-surface-inset (окремий токен для вкладеної в картку поверхні: у тёмній темі --iprm-card-bg сам стає поверхнею картки, і шапка зливалася з даними) / .admin-seats: нейтральна плашка лічильника, --over вмикає червону</p>
+
+    <h3 class="ds-section-heading">Стани інлайн-селекта</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <select class="admin-inline-select" data-state="confirmed" aria-label="Статус: підтверджено">
+          <option selected>Підтверджено</option>
+        </select>
+        <select class="admin-inline-select" data-state="pending" aria-label="Статус: очікує">
+          <option selected>Очікує</option>
+        </select>
+        <select class="admin-inline-select" data-state="cancelled" aria-label="Статус: скасовано">
+          <option selected>Скасовано</option>
+        </select>
+        <select class="admin-inline-select" data-state="completed" aria-label="Статус: завершено">
+          <option selected>Завершено</option>
+        </select>
+        <select class="admin-inline-select" data-state="unpaid" aria-label="Оплата: не оплачено">
+          <option selected>Не оплачено</option>
+        </select>
+      </div>
+    </div>
+    <p class="ds-hint">Вигляд задає атрибут data-state, а не клас-модифікатор: значення приходить із поля моделі, тож окремий стан не треба заводити в CSS двічі. Кольори -- семантичні токени (--iprm-success-*, --iprm-warning-*, --iprm-error-*), тому тёмну тему стани знають самі й ручного [data-theme="dark"] перекриття не мають. Тут демо статичне: у реєстрі селект несе ще data-inline-url, і саме цей атрибут вмикає надсилання зміни через admin-inline-edit.js.</p>
 
     <h3 class="ds-section-heading">Аватар у списку</h3>
     <div class="ds-demo">
