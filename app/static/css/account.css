@@ -86,12 +86,6 @@
   justify-content: center;
 }
 
-.account-course__image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .account-course__body {
   flex: 1;
   padding: 16px 16px 16px 0;

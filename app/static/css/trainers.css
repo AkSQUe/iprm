@@ -31,12 +31,6 @@
   background: linear-gradient(135deg, var(--iprm-accent-light), var(--iprm-gold-bg));
 }
 
-.iprm-hero-trainer__photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .apple-page .iprm-hero__content--trainer .iprm-hero__subtitle {
   margin: 0 0 16px;
 }

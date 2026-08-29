@@ -114,6 +114,6 @@
   overflow: hidden; aspect-ratio: 1 / 1;
 }
 .media-picker__item:hover { border-color: var(--iprm-nav-active); }
-.media-picker__item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.media-picker__item img { display: block; }
 .media-picker__empty { padding: 0 20px 20px; color: var(--apple-gray); }
 .media-picker__foot { padding: 12px 20px; border-top: 1px solid var(--iprm-border); text-align: center; }

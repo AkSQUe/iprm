@@ -428,12 +428,6 @@ html {
   margin-bottom: 0;
 }
 
-.apple-page .iprm-course-card__image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .apple-page .iprm-course-card > a {
   display: flex;
   flex-direction: column;
@@ -1107,13 +1101,6 @@ html {
   aspect-ratio: 4 / 3;
   background: var(--iprm-card-bg);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
-}
-
-.apple-page .iprm-about-hero__media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
 }
 
 .apple-page .iprm-about-hero__info {
