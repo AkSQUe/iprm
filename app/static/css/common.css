@@ -62,6 +62,9 @@
   /* Ледь помітна тінь звичайної картки (в еталона всі .card саме така) */
   --iprm-shadow-soft: 0 8px 28px rgba(46, 13, 87, 0.04);
   --iprm-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.2);
+  /* D1: тінь плаваючих віджетів (certdata-reminder, upcoming-events) --
+     жила як однаковий літерал у двох файлах, зведена без зміни вигляду. */
+  --iprm-shadow-float: 0 12px 40px rgba(29, 29, 31, 0.16);
 
   /* Brand colors */
   --iprm-accent: #7437c9;
@@ -115,6 +118,16 @@
   --iprm-warm-text: #a8420a;
   --iprm-warm-border: #f7dac3;
 
+  /* D1 (Фаза D "Ідеальна CSS-архітектура"): значення, що жили як
+     повторений літерал у 2-3 файлах одразу, зведені сюди БЕЗ зміни
+     вигляду -- тёмного перевизначення навмисно не додано, це рішення
+     власника (див. звіт /ds-consolidate). */
+  --iprm-warm-grad-1: #f0a02a; /* стартовий стоп теплого градієнта (certdata-reminder, upcoming-events, registration) */
+  --iprm-warm-grad-2: #b85a7e; /* середній стоп того самого градієнта (page-admin-certificates, upcoming-events) */
+  --iprm-alert: #e05252; /* тривожний акцент -- пульс, бейдж лічильника (certdata-reminder, common, account) */
+  --iprm-offline-bg: #d67e2e; /* мітка офлайн-формату заходу (courses), той самий відтінок у скролбарі (common) */
+  --iprm-seats-warning-text: #b25c00; /* текст «мало місць» (apple-pages, courses) */
+
   /* Нейтральна й акцентна палітра. --apple-gray -- єдиний легасі-виняток:
      у тёмній темі розходиться з --iprm-text-light на один щабель світлоти
      (#98989d проти #a1a1a6), і чи це недогляд чи свідома різниця -- рішення
@@ -143,6 +156,8 @@
   --iprm-accent-rgb: 116, 55, 201;
   --iprm-gold-rgb: 255, 173, 22;
   --iprm-text-rgb: 23, 19, 29;
+  --iprm-alert-rgb: 224, 82, 82;
+  --iprm-error-rgb: 239, 68, 68;
 
   /* Badge colors.
      Текст на кожній таблетці -- на крок темніший за палітру-джерело: у
@@ -396,7 +411,7 @@ html {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, var(--iprm-accent-hover) 0%, #8a4aa5 35%, #b56a3a 70%, #d67e2e 100%);
+  background: linear-gradient(180deg, var(--iprm-accent-hover) 0%, #8a4aa5 35%, #b56a3a 70%, var(--iprm-offline-bg) 100%);
 }
 
 body {
@@ -773,13 +788,13 @@ a {
   height: 18px;
   padding: 0 4px;
   border-radius: var(--iprm-radius-pill);
-  background: #e05252;
+  background: var(--iprm-alert);
   border: 2px solid var(--iprm-white);
   color: var(--iprm-on-accent);
   font-size: 0.6875rem;
   font-weight: 700;
   line-height: 1;
-  box-shadow: 0 1px 4px rgba(224, 82, 82, 0.4);
+  box-shadow: 0 1px 4px rgba(var(--iprm-alert-rgb), 0.4);
 }
 
 .iprm-header__certdata-tip {
@@ -1981,7 +1996,7 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
 
 .form-section .form-input.is-invalid {
   border-color: var(--iprm-error);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+  box-shadow: 0 0 0 3px rgba(var(--iprm-error-rgb), 0.08);
 }
 
 .form-section .form-input::placeholder {

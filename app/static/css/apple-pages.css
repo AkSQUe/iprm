@@ -564,7 +564,7 @@ html {
 }
 
 .apple-page .iprm-course-card__seats--warning {
-  color: #b25c00;
+  color: var(--iprm-seats-warning-text);
   font-weight: 600;
 }
 

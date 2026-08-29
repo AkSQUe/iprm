@@ -120,7 +120,7 @@
 }
 .blog-comment-form .form-input.is-invalid {
   border-color: var(--iprm-error);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+  box-shadow: 0 0 0 3px rgba(var(--iprm-error-rgb), 0.08);
 }
 .blog-comment-form .form-input::placeholder { color: var(--iprm-placeholder-text); }
 .blog-comment-form__note { font-size: 0.8rem; color: var(--apple-gray); margin-bottom: 14px; }

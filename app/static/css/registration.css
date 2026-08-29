@@ -978,7 +978,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #f0a02a;
+  background: var(--iprm-warm-grad-1);
   color: var(--iprm-on-accent);
   font-weight: 800;
 }

@@ -701,7 +701,7 @@ button.iprm-tag:focus-visible {
 /* Попередження про малу кількість місць (перекриває --seats) */
 .iprm-schedule__tag--warning {
   background: #fff4e5;
-  color: #b25c00;
+  color: var(--iprm-seats-warning-text);
 }
 
 [data-theme="dark"] .iprm-schedule__tag--warning {
@@ -1037,7 +1037,7 @@ button.iprm-tag:focus-visible {
 }
 
 .iprm-fc-ev--offline {
-  background: #d67e2e;
+  background: var(--iprm-offline-bg);
   color: var(--iprm-on-accent);
 }
 
@@ -1052,7 +1052,7 @@ button.iprm-tag:focus-visible {
 }
 
 .iprm-cal-legend__swatch.iprm-fc-ev--online { background: var(--iprm-accent); }
-.iprm-cal-legend__swatch.iprm-fc-ev--offline { background: #d67e2e; }
+.iprm-cal-legend__swatch.iprm-fc-ev--offline { background: var(--iprm-offline-bg); }
 .iprm-cal-legend__swatch.iprm-fc-ev--hybrid { background: #2e9e8f; }
 
 .iprm-fc .fc-event.iprm-fc-ev:hover {

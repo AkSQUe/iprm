@@ -10,7 +10,7 @@
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-md);
-  box-shadow: 0 12px 40px rgba(29, 29, 31, 0.16);
+  box-shadow: var(--iprm-shadow-float);
   overflow: hidden;
   animation: upcoming-in 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }
@@ -20,7 +20,7 @@
   content: "";
   display: block;
   height: 4px;
-  background: linear-gradient(90deg, #f0a02a 0%, #b85a7e 55%, var(--iprm-accent) 100%);
+  background: linear-gradient(90deg, var(--iprm-warm-grad-1) 0%, var(--iprm-warm-grad-2) 55%, var(--iprm-accent) 100%);
 }
 
 .upcoming-events__head {
@@ -129,7 +129,7 @@ body.has-upcoming-bar {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #f0a02a 0%, #b85a7e 55%, var(--iprm-accent) 100%);
+  background: linear-gradient(90deg, var(--iprm-warm-grad-1) 0%, var(--iprm-warm-grad-2) 55%, var(--iprm-accent) 100%);
 }
 
 .upcoming-bar__inner {
