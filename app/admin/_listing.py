@@ -184,6 +184,39 @@ def filter_args(filters):
     return {key: value for key, value in filters.items() if value}
 
 
+def back_args(active_filters, page, extra=None):
+    """Параметри для action-URL рядкової форми (retry/delete/unlock тощо),
+    що веде користувача назад на той самий зріз списку.
+
+    active_filters -- вже звужені фільтри (`filter_args(...)`); extra --
+    додаткові вже звірені параметри поза `filters` (status, instance_id).
+    page додається лише коли він не 1 -- інакше кожна дія в реєстрі тягнула б
+    за собою порожній ?...&page=1.
+    """
+    args = dict(active_filters)
+    if extra:
+        args.update({key: value for key, value in extra.items() if value not in (None, '')})
+    if page != 1:
+        args['page'] = page
+    return args
+
+
+def back_redirect(endpoint, filters, extra=None):
+    """Безпечний POST -> GET редірект назад до списку зі збереженим зрізом.
+
+    НЕ використовує request.referrer (керований клієнтом -> open redirect):
+    будує URL через url_for з параметрів, звіданих і звірених тим самим
+    способом, що й роут списку -- `filters` тут читається через ті самі
+    text_arg / choice_arg / int_arg / date_arg, `extra` -- уже звірені
+    значення поза `filters` (status, instance_id). Джерело значень --
+    query-string самого запиту дії: рядкові форми несуть зріз в action-URL
+    через `back_args()`, викликаний при рендері списку.
+    """
+    page = request.args.get('page', 1, type=int)
+    args = back_args(filter_args(filters), page, extra)
+    return redirect(url_for(endpoint, **args))
+
+
 def export_query(query, back_endpoint, **back_args):
     """Матеріалізувати зріз під експорт, звіривши стелю ДО вибірки.
 

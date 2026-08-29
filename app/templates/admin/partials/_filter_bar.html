@@ -220,10 +220,33 @@
                          icon_name='table_view', title='Довідник порожній') %}
        <p>Додайте перший рядок...</p>
      {% endcall %}
+
+   narrow_args -- параметр, що ЖИВЕ в base_args (мусить пережити «скинути»),
+   але водночас звужує вибірку так само, як звичайний фільтр (стрічка
+   status-вкладок понад stat-картками, як у webhooks.html). Без нього зріз
+   «лише status, решта фільтрів порожні» не рахувався б звуженням узагалі --
+   filter_args не містить status (він не в fields макроса), тож `narrowed`
+   лишався б порожнім, і сторінка з активним лише статусом друкувала б «тут
+   ще нічого немає» замість «нічого не знайдено» під цим зрізом. Приклад:
+
+     {% call empty_state('admin.webhooks_list', filter_args, {'status': filter_status},
+                         narrow_args={'status': filter_status},
+                         icon_name='inbox', title='Записів немає') %}
+       ...
+     {% endcall %}
+
+   За замовчуванням порожній: сторінки на кшталт коментарів блогу, де
+   status -- це вкладка «поточний вид», а не звуження (порожня вкладка
+   «Спам» -- це чесно «спаму немає», а не «нічого не знайдено»), його не
+   передають і поводяться, як і раніше.
 #}
 {% macro empty_state(endpoint=None, filter_args={}, base_args={},
-                     icon_name='inbox', title='Записів немає') %}
-{% set narrowed = filter_args | reject('in', base_args) | list %}
+                     narrow_args={}, icon_name='inbox', title='Записів немає') %}
+{% set active_narrow = {} %}
+{% for k, v in narrow_args.items() %}
+  {% if v not in (none, '') %}{% set _ = active_narrow.update({k: v}) %}{% endif %}
+{% endfor %}
+{% set narrowed = ((filter_args | list) + (active_narrow | list)) | reject('in', base_args) | list %}
 <div class="admin-empty">
   {% if narrowed and endpoint %}
     {{ icon('search', cls='admin-empty__icon') }}

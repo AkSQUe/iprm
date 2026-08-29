@@ -5,7 +5,7 @@
 """
 import logging
 
-from flask import render_template, redirect, url_for, flash, request, abort
+from flask import render_template, url_for, flash, request, abort
 from flask_login import current_user
 from sqlalchemy import desc
 
@@ -58,16 +58,15 @@ def _post_options():
 def _back():
     """Безпечний редірект назад до списку зі збереженням поточного зрізу.
 
-    НЕ використовуємо request.referrer (керований клієнтом -> open redirect):
-    будуємо URL через url_for, перечитавши й перевіривши кожен параметр зрізу
-    тим самим способом, що й роут списку. Джерело значень -- query string
-    самого запиту дії (approve/spam/delete): рядкові форми несуть зріз у
-    action-URL через `back_args`, прихованих полів тут більше немає.
+    Спільний `_listing.back_redirect` перечитує й перевіряє кожен параметр
+    зрізу тим самим способом, що й роут списку (НЕ request.referrer -- той
+    керований клієнтом і відкриває open redirect). Джерело значень -- query
+    string самого запиту дії (approve/spam/delete): рядкові форми несуть
+    зріз у action-URL через `back_args`, прихованих полів тут більше немає.
     """
-    args = _listing.filter_args(_filters())
-    args['status'] = _status_arg()
-    args['page'] = request.args.get('page', 1, type=int)
-    return redirect(url_for('admin.blog_comments', **args))
+    return _listing.back_redirect(
+        'admin.blog_comments', _filters(), {'status': _status_arg()},
+    )
 
 
 @admin_bp.route('/blog/comments')
@@ -98,7 +97,7 @@ def blog_comments():
         status=status,
         filters=filters,
         filter_args=filter_args,
-        back_args=dict(filter_args, status=status, page=pagination.page),
+        back_args=_listing.back_args(filter_args, pagination.page, {'status': status}),
         post_options=_post_options(),
         per_page_options=_listing.PER_PAGE_OPTIONS,
     )

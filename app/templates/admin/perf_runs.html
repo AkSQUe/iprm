@@ -28,6 +28,8 @@
         {% if latest %}
         Останній замір {{ latest.measured_at.strftime('%d.%m.%Y %H:%M') }} &ndash;
         {{ latest.pages_total }} сторінок
+        {% elif runs %}
+        Показано зріз замірів &ndash; скиньте фільтр, щоб побачити останній
         {% else %}
         Замірів ще немає &ndash; надішліть перший з інструменту
         {% endif %}
@@ -145,7 +147,7 @@
                   {{ icon('more_vert') }}
                 </summary>
                 <div class="admin-actions-menu__items">
-                  <form method="POST" action="{{ url_for('admin.perf_run_delete', run_id=run.id) }}"
+                  <form method="POST" action="{{ url_for('admin.perf_run_delete', run_id=run.id, **back_args) }}"
                         data-confirm="Видалити цей прогін?" data-confirm-ok="Видалити прогін" data-confirm-danger>
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--danger">

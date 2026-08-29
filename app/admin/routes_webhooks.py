@@ -2,7 +2,7 @@
 import logging
 from datetime import datetime, timezone
 
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, flash, request
 from flask_login import current_user
 
 from app.admin import _listing, admin_bp
@@ -60,18 +60,15 @@ def _filters(event_type_choices=None):
 def _back():
     """Безпечний редірект назад до списку зі збереженням поточного зрізу.
 
-    НЕ використовуємо request.referrer (керований клієнтом -> open redirect):
-    будуємо URL через url_for, перечитавши й перевіривши кожен параметр зрізу
-    тим самим способом, що й роут списку. Джерело значень -- query string
-    самого запиту дії (retry/delete): рядкові форми несуть зріз у action-URL
-    через `back_args`, прихованих полів тут немає.
+    Спільний `_listing.back_redirect` перечитує й перевіряє кожен параметр
+    зрізу тим самим способом, що й роут списку (НЕ request.referrer -- той
+    керований клієнтом і відкриває open redirect). Джерело значень -- query
+    string самого запиту дії (retry/delete): рядкові форми несуть зріз у
+    action-URL через `back_args`, прихованих полів тут немає.
     """
-    args = _listing.filter_args(_filters())
-    status = _status_arg()
-    if status:
-        args['status'] = status
-    args['page'] = request.args.get('page', 1, type=int)
-    return redirect(url_for('admin.webhooks_list', **args))
+    return _listing.back_redirect(
+        'admin.webhooks_list', _filters(), {'status': _status_arg()},
+    )
 
 
 @admin_bp.route('/webhooks')
@@ -116,10 +113,7 @@ def webhooks_list():
     )
 
     filter_args = _listing.filter_args(filters)
-    back_args = dict(filter_args)
-    if filter_status:
-        back_args['status'] = filter_status
-    back_args['page'] = pagination.page
+    back_args = _listing.back_args(filter_args, pagination.page, {'status': filter_status})
 
     return render_template(
         'admin/webhooks.html',

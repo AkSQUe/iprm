@@ -50,7 +50,7 @@
   <div class="admin-stat-cards wh-stats">
     {% for c in cards %}
     {{ stat_card({'value': c.value, 'label': c.label, 'mod': c.mod,
-                  'href': url_for('admin.webhooks_list', status=c.key) if c.key else url_for('admin.webhooks_list'),
+                  'href': url_for('admin.webhooks_list', status=c.key, **filter_args) if c.key else url_for('admin.webhooks_list', **filter_args),
                   'active': filter_status == c.key}) }}
     {% endfor %}
   </div>
@@ -93,11 +93,11 @@
         <td>
           {# Доставки не мають id курсу -- лише slug, тож ведемо в реєстр курсів,
              звужений пошуком по ньому (Course.slug -- єдиний точний вхід). #}
-          <div class="wh-target">
+          <div class="wh-target" title="{{ d.target_url }}">
             {% if d.course_slug %}
-            <a href="{{ url_for('admin.courses_list', q=d.course_slug) }}" class="wh-slug" title="{{ d.target_url }}">{{ d.course_slug }}</a>
+            <a href="{{ url_for('admin.courses_list', q=d.course_slug) }}" class="wh-slug">{{ d.course_slug }}</a>
             {% else %}
-            <span class="wh-slug" title="{{ d.target_url }}">{{ d.course_slug }}</span>
+            <span class="wh-slug">{{ d.course_slug }}</span>
             {% endif %}
             <span class="wh-action wh-action--{{ d.action }}">{{ d.action }}</span>
           </div>
@@ -152,6 +152,7 @@
   {{ pager('admin.webhooks_list', pagination, dict(filter_args, status=filter_status)) }}
   {% else %}
   {% call empty_state('admin.webhooks_list', filter_args, {'status': filter_status},
+                      narrow_args={'status': filter_status},
                       icon_name='inbox', title='Записів немає') %}
     <p>Доставки з'являться тут при зміні курсів, якщо увімкнено partner_webhook.</p>
   {% endcall %}

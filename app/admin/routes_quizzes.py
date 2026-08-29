@@ -240,6 +240,32 @@ _QUIZ_STATE_CHOICES = {
 _QUIZ_PAYMENT_CHOICES = {'paid': 'Оплачено', 'unpaid': 'Не оплачено'}
 
 
+def _quiz_results_filters():
+    """Фільтри реєстру результатів -- спільні для списку й для `_back()`."""
+    return {
+        'q': _listing.text_arg('q'),
+        'state': _listing.choice_arg('state', _QUIZ_STATE_CHOICES),
+        'payment': _listing.choice_arg('payment', _QUIZ_PAYMENT_CHOICES),
+        'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
+    }
+
+
+def _back_to_quiz_results(instance_id):
+    """Безпечний редірект назад до результатів групи зі збереженим зрізом.
+
+    Спільний `_listing.back_redirect` перечитує й перевіряє кожен параметр
+    зрізу тим самим способом, що й роут списку (НЕ request.referrer -- той
+    керований клієнтом і відкриває open redirect). `instance_id` не з
+    query string -- він завжди відомий із самої реєстрації (reg.instance_id),
+    тож звірки не потребує. Джерело фільтрів -- query string запиту дії
+    (unlock/reset): рядкові форми несуть зріз у action-URL через `back_args`.
+    """
+    return _listing.back_redirect(
+        'admin.instance_quiz_results', _quiz_results_filters(),
+        {'instance_id': instance_id},
+    )
+
+
 # ---- Результати по групі ---------------------------------------------------
 
 @admin_bp.route('/instances/<int:instance_id>/quiz-results')
@@ -256,12 +282,7 @@ def instance_quiz_results(instance_id):
         .filter(EventRegistration.status != 'cancelled')
     )
 
-    filters = {
-        'q': _listing.text_arg('q'),
-        'state': _listing.choice_arg('state', _QUIZ_STATE_CHOICES),
-        'payment': _listing.choice_arg('payment', _QUIZ_PAYMENT_CHOICES),
-        'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
-    }
+    filters = _quiz_results_filters()
 
     # Сортування перенесене в SQL (було `rows.sort` у Python): при пагінації
     # сортування всередині сторінки впорядковувало б лише її, і «ще не склали»
@@ -331,6 +352,7 @@ def instance_quiz_results(instance_id):
     issued_count = base.join(
         Certificate, Certificate.registration_id == EventRegistration.id).count()
 
+    filter_args = _listing.filter_args(filters)
     return render_template(
         'admin/quiz_results.html',
         instance=instance,
@@ -341,7 +363,8 @@ def instance_quiz_results(instance_id):
         passed_count=passed_count,
         issued_count=issued_count,
         filters=filters,
-        filter_args=_listing.filter_args(filters),
+        filter_args=filter_args,
+        back_args=_listing.back_args(filter_args, pagination.page),
         state_options=list(_QUIZ_STATE_CHOICES.items()),
         payment_options=list(_QUIZ_PAYMENT_CHOICES.items()),
         per_page_options=_listing.PER_PAGE_OPTIONS,
@@ -409,8 +432,7 @@ def registration_quiz_unlock(reg_id):
     extra = request.form.get('extra', type=int)
     if extra is None or not 1 <= extra <= 10:
         flash('Вкажіть від 1 до 10 додаткових спроб', 'error')
-        return redirect(url_for('admin.instance_quiz_results',
-                                instance_id=reg.instance_id))
+        return _back_to_quiz_results(reg.instance_id)
 
     reg.quiz_extra_attempts = (reg.quiz_extra_attempts or 0) + extra
     if try_commit(log_context=f'quiz_unlock reg={reg_id}'):
@@ -419,8 +441,7 @@ def registration_quiz_unlock(reg_id):
             current_user.email, extra, reg_id, reg.quiz_extra_attempts,
         )
         flash(f'Додано спроб: {extra}.', 'success')
-    return redirect(url_for('admin.instance_quiz_results',
-                            instance_id=reg.instance_id))
+    return _back_to_quiz_results(reg.instance_id)
 
 
 @admin_bp.route('/registrations/<int:reg_id>/quiz/reset', methods=['POST'])
@@ -447,5 +468,4 @@ def registration_quiz_reset(reg_id):
         note = ('. Сертифікат лишився виданим – відкликайте окремо, якщо треба'
                 if reg.certificate is not None else '')
         flash(f'Тестування обнулено, спроб видалено: {removed}{note}.', 'success')
-    return redirect(url_for('admin.instance_quiz_results',
-                            instance_id=reg.instance_id))
+    return _back_to_quiz_results(reg.instance_id)

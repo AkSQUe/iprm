@@ -578,3 +578,94 @@ class TestPerfRunsFilters:
         # в кожне посилання зрізу.
         assert 'reveal' not in chips.group()
         assert 'reveal' not in pager_nav.group()
+
+
+# --------------------- Фінальний прогін ревʼю: чотири правки ---------------
+#
+# Секція для чотирьох Important-знахідок фінального ревʼю плану
+# `docs/superpowers/plans/2026-08-29-admin-filter-bar-rollout.md`:
+#
+#   1. stat-картка статусу webhook-черги губила решту фільтрів;
+#   2. шапка перф-прогонів брехала "Замірів ще немає" під зрізом із рядками;
+#   3. (empty_state/narrow_args) уже покрито тестами вище й у самому макросі;
+#   4. POST-редіректи тестування учасників губили активний зріз.
+#
+# Власних фікстур не заводимо -- використовуємо ті самі фабрики й autouse-
+# teardown, що й секції вище (вони прибирають за собою в тому самому файлі).
+
+
+class TestWebhookStatCardPreservesFilters:
+    def test_stat_card_link_keeps_active_search(self, client, admin):
+        marker = 'whcard' + uuid4().hex[:6]
+        _delivery(course_slug=f'{marker}-pending', status='pending')
+        _delivery(course_slug=f'{marker}-failed', status='failed')
+
+        _login(client, admin)
+        body = client.get(f'/admin/webhooks?q={marker}').get_data(as_text=True)
+
+        # Картка "Failed" веде на status=failed, і той самий href мусить
+        # нести активний пошук -- інакше клік по картці показує ВСІ
+        # помилки, а не лише ті, що під поточним пошуком.
+        card_href = re.search(r'href="([^"]*status=failed[^"]*)"', body)
+        assert card_href is not None
+        assert f'q={marker}' in card_href.group(1)
+
+
+class TestPerfHeroUnderFilter:
+    def test_hero_does_not_claim_no_measurements_when_filtered_rows_exist(
+        self, client, admin,
+    ):
+        _perf_run(source='ci', verdict=VERDICT_OK,
+                  note='Наявний під фільтром ' + uuid4().hex[:6])
+
+        _login(client, admin)
+        body = client.get('/admin/perf?source=ci').get_data(as_text=True)
+
+        # 40 прогонів джерела ci з рядками на екрані -- шапка не мусить
+        # писати "Замірів ще немає": це неправда під активним зрізом, що й
+        # містить справжні рядки.
+        assert 'Замірів ще немає' not in body
+
+
+class TestQuizResultsActionsKeepSlice:
+    def test_unlock_action_redirects_back_to_active_slice(self, client, admin):
+        course = _qr_course()
+        instance = _qr_instance(course)
+        participant = _qr_participant(last_name='Розблокування' + uuid4().hex[:6])
+        reg = _qr_registration(participant, instance)
+
+        _login(client, admin)
+        resp = client.post(
+            f'/admin/registrations/{reg.id}/quiz/unlock'
+            '?state=not_passed&payment=paid&page=2',
+            data={'extra': '1'},
+            follow_redirects=False,
+        )
+
+        assert resp.status_code == 302
+        location = resp.headers['Location']
+        assert f'/admin/instances/{instance.id}/quiz-results' in location
+        assert 'state=not_passed' in location
+        assert 'payment=paid' in location
+        assert 'page=2' in location
+
+    def test_reset_action_redirects_back_to_active_slice(self, client, admin):
+        course = _qr_course()
+        instance = _qr_instance(course)
+        participant = _qr_participant(last_name='Обнулення' + uuid4().hex[:6])
+        reg = _qr_registration(
+            participant, instance, quiz_passed_at=datetime.now(timezone.utc))
+
+        _login(client, admin)
+        resp = client.post(
+            f'/admin/registrations/{reg.id}/quiz/reset?state=passed',
+            follow_redirects=False,
+        )
+
+        assert resp.status_code == 302
+        location = resp.headers['Location']
+        assert f'/admin/instances/{instance.id}/quiz-results' in location
+        assert 'state=passed' in location
+        # Сторінка не задана в запиті (типова, 1) -- back_redirect не мусить
+        # дописувати порожній page=1 у кожен пост-екшн-URL.
+        assert 'page=' not in location

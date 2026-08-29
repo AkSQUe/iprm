@@ -144,7 +144,7 @@
             </td>
             <td>
               <form method="POST" class="quiz-unlock"
-                    action="{{ url_for('admin.registration_quiz_unlock', reg_id=row.reg.id) }}">
+                    action="{{ url_for('admin.registration_quiz_unlock', reg_id=row.reg.id, **back_args) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="number" name="extra" value="1" min="1" max="10"
                        class="form-input quiz-unlock__input" aria-label="Скільки спроб додати">
@@ -154,7 +154,7 @@
               </form>
               {% if row.attempts or row.reg.quiz_passed_at %}
               <form method="POST"
-                    action="{{ url_for('admin.registration_quiz_reset', reg_id=row.reg.id) }}">
+                    action="{{ url_for('admin.registration_quiz_reset', reg_id=row.reg.id, **back_args) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-admin btn-admin--sm btn-admin--danger"
                         data-confirm="Обнулити тестування цього учасника? Спроби буде видалено. Сертифікат лишиться виданим.">

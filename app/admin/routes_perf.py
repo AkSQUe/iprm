@@ -135,6 +135,7 @@ def perf_runs():
         reveal_key=reveal_key,
         filters=filters,
         filter_args=filter_args,
+        back_args=_listing.back_args(filter_args, pagination.page),
         verdict_options=list(_VERDICT_CHOICES.items()),
         source_options=list(source_choices.items()),
     )
@@ -172,7 +173,10 @@ def perf_run_delete(run_id):
     db.session.commit()
     audit_logger.info('Admin %s deleted perf run #%d', current_user.email, run_id)
     flash('Прогін видалено.', 'success')
-    return redirect(url_for('admin.perf_runs'))
+    # Зріз береться з query string самого запиту дії -- action-URL у шаблоні
+    # несе його через back_args, зібраний тим самим _listing.back_args, що й
+    # у списку. Той самий шаблон, що для webhooks/blog_comments.
+    return _listing.back_redirect('admin.perf_runs', _filters())
 
 
 @admin_bp.route('/perf/key/rotate', methods=['POST'])
