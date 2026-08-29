@@ -1,0 +1,37 @@
+{# AggregateRating + вузли Review для схеми курсу.
+
+   Джерело -- ЛИШЕ опубліковані рядки Review, привʼязані до цього курсу.
+   Порожній список означає, що макрос не додає нічого: розмітки не буде
+   взагалі. Демо-цитати з головної сюди потрапити не можуть -- вони не є
+   рядками БД.
+
+   Макрос МУТУЄ переданий schema, а не повертає JSON: схема курсу
+   збирається dict-ом вище по шаблону, і вливати фрагмент рядком
+   означало б парсити його назад. #}
+{% macro apply_rating(schema, reviews) -%}
+{%- if reviews -%}
+  {%- set _values = reviews | map(attribute='rating') | list -%}
+  {%- set _nodes = [] -%}
+  {%- for review in reviews -%}
+    {%- set _discard = _nodes.append({
+      '@type': 'Review',
+      'author': {'@type': 'Person', 'name': review.t('author_name')},
+      'reviewRating': {
+        '@type': 'Rating', 'ratingValue': review.rating,
+        'bestRating': 5, 'worstRating': 1,
+      },
+      'reviewBody': review.t('text'),
+    }) -%}
+  {%- endfor -%}
+  {%- set _discard = schema.update({
+    'aggregateRating': {
+      '@type': 'AggregateRating',
+      'ratingValue': ((_values | sum) / (_values | length)) | round(1),
+      'reviewCount': _values | length,
+      'bestRating': 5,
+      'worstRating': 1,
+    },
+    'review': _nodes,
+  }) -%}
+{%- endif -%}
+{%- endmacro %}

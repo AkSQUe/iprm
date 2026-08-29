@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% from 'partials/schema/_breadcrumbs.html' import breadcrumbs with context %}
+{% from 'partials/schema/_aggregate_rating.html' import apply_rating with context %}
 {% from 'partials/_money.html' import money %}
 
 {% block title %}{{ course.effective_title }} | {{ _('Онлайн-курси') }} | ІПРМ{% endblock %}
@@ -54,6 +55,7 @@
 {% if course.card_src or course.hero_src %}
 {% set _discard = course_schema.update({'image': abs_url(course.card_src or course.hero_src)}) %}
 {% endif %}
+{{ apply_rating(course_schema, course_reviews) }}
 <script type="application/ld+json">{{ course_schema | tojson }}</script>
 {{ breadcrumbs([
   (_('Онлайн-курси'), url_for('online.course_list', _external=True)),

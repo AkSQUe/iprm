@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% from 'partials/schema/_breadcrumbs.html' import breadcrumbs with context %}
+{% from 'partials/schema/_aggregate_rating.html' import apply_rating with context %}
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 {% from 'partials/_location_badge.html' import location_badge %}
 {% from 'partials/_money.html' import money %}
@@ -76,6 +77,11 @@
   {% endfor %}
   {% set _discard = course_schema.update({'hasCourseInstance': _instances_schema}) %}
 {% endif %}
+{# apply_rating -- side-effект-макрос без реального виводу: голий {{ }} поза
+   блоком у дочірньому шаблоні з extends Jinja взагалі не обчислює (виконує
+   лише {% set %} на верхньому рівні), тож виклик обгорнуто в _discard, як і
+   решта мутацій course_schema вище. #}
+{% set _discard = apply_rating(course_schema, course_reviews) %}
 
 {% block jsonld %}
 {{ super() }}
