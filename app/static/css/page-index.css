@@ -46,7 +46,8 @@
 }
 
 .page-index .iprm-hero__subtitle {
-  font-size: 17px;
+  /* font-size лишається компонентним (apple-pages.css): тут лише ширина,
+     відступ і fade-up-анімація, унікальні для fullscreen-hero landing. */
   max-width: 640px;
   margin-bottom: 40px;
   opacity: 0;
@@ -89,10 +90,10 @@
 
 /* ========== SECTIONS ========== */
 
+/* content-visibility/contain-intrinsic-size лишаються компонентними
+   (apple-pages.css) -- тут лише вищий padding для fullscreen landing. */
 .page-index .iprm-section {
   padding: 120px 24px;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 600px;
 }
 
 .page-index .apple-section-dark {
@@ -152,10 +153,8 @@
   grid-template-columns: repeat(2, 1fr);
 }
 
-.page-index .apple-feature-card {
-  padding: 48px 36px;
-}
-/* hover/active визначено в apple-pages.css (.apple-page .apple-feature-card) */
+/* Базовий padding (48px 36px), hover/active визначені в apple-pages.css
+   (.apple-page .apple-feature-card) -- тут перевизначень немає. */
 
 .page-index .apple-feature-card--featured {
   --white-alpha-12: rgba(255, 255, 255, 0.12);
@@ -208,13 +207,14 @@
 }
 
 .page-index .apple-feature-card--icon-right .apple-feature-card__icon {
+  /* object-fit лишається компонентним (apple-pages.css): тут лише
+     абсолютне позиціювання й більший розмір для index-варіанту картки. */
   position: absolute;
   right: -16px;
   top: 50%;
   transform: translateY(-50%);
   width: 120px;
   height: 120px;
-  object-fit: contain;
   pointer-events: none;
   filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.12));
 }
@@ -582,11 +582,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .page-index .apple-reveal {
-    transition: none;
-    opacity: 1;
-    translate: none;
-  }
+  /* .apple-reveal (transition/opacity/translate) та transition: none для
+     .apple-feature-card/.apple-bento-card/.iprm-course-card тут не
+     перевизначені: apple-pages.css вже глушить їх на prefers-reduced-motion. */
 
   .page-index .iprm-hero__badge,
   .page-index .iprm-hero__title,
@@ -595,12 +593,6 @@
     animation: none;
     opacity: 1;
     transform: none;
-  }
-
-  .page-index .apple-feature-card,
-  .page-index .apple-bento-card,
-  .page-index .iprm-course-card {
-    transition: none;
   }
 }
 
@@ -634,6 +626,11 @@
     gap: 36px;
   }
 
+  /* Значення (80px 24px) збігається з apple-pages.css на 1024px, але це НЕ
+     мертве перевизначення: власна БЕЗумовна .iprm-section (120px 24px,
+     рядок 96) вантажиться пізніше за весь apple-pages.css і перебиває його
+     медіа-правило незалежно від ширини. Без цього рядка на 1024px лишався б
+     desktop-падінг 120px 24px. */
   .page-index .iprm-section {
     padding: 80px 24px;
   }
@@ -723,11 +720,12 @@
     font-size: clamp(2rem, 8vw, 3rem);
   }
 
-  .page-index .iprm-hero__actions {
-    flex-direction: column;
-    align-items: center;
-  }
+  /* .iprm-hero__actions тут не перевизначено: flex-direction/align-items
+     уже задає apple-pages.css на цьому ж брейкпоінті. */
 
+  /* .iprm-section: значення (64px 16px) збігається з apple-pages.css на
+     768px, але не мертве -- та сама причина, що на 1024px вище: власна
+     безумовна .iprm-section вантажиться пізніше за apple-pages.css. */
   .page-index .iprm-section {
     padding: 64px 16px;
   }
@@ -870,6 +868,8 @@
     padding: 72px 12px 48px;
   }
 
+  /* .iprm-section: значення (48px 16px) збігається з apple-pages.css на
+     480px, але не мертве -- та сама причина, що на 1024/768px вище. */
   .page-index .iprm-section {
     padding: 48px 16px;
   }
