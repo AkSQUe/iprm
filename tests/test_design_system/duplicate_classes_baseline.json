@@ -19,10 +19,6 @@
     "clinics.css",
     "courses.css"
   ],
-  "iprm-appointment__btn": [
-    "clinics.css",
-    "courses.css"
-  ],
   "iprm-content-page__inner": [
     "common.css",
     "page-sitemap.css"
