@@ -163,3 +163,60 @@ def test_admin_css_has_no_unused_rules():
         + '\nПрибрати -- або, якщо компонент потрібен, показати його '
           'на /design-system і вживати.'
     )
+
+# Токени, яких у CSS немає НАВМИСНО: їх ставить скрипт у рантаймі через
+# style.setProperty, а CSS лише читає.
+RUNTIME_TOKENS = {
+    '--iprm-progress',   # progress-fill.js малює смугу заповнення
+}
+
+_TOKEN_NAME = re.compile(r'--(?:iprm|apple)-[\w-]*')
+
+
+def _declared_tokens():
+    out = set()
+    for path in CSS_DIR.rglob('*.css'):
+        out |= set(re.findall(r'(--[a-z][\w-]*)\s*:', path.read_text(encoding='utf-8')))
+    return out
+
+
+def test_every_token_named_outside_css_exists():
+    """Ім'я токена, вимовлене в каталозі чи в JS, мусить існувати.
+
+    Дві різні вади, обидві тихі, обидві вже траплялись за один прохід.
+
+    `molecular-background.js` читав `--apple-accent-rgb` і
+    `--apple-orange-rgb` через getComputedStyle. Після перейменування
+    токенів обидва повертали порожньо, і код падав на зашиті запасні
+    значення -- а вони НЕ дорівнювали справжнім. Тло змінило колір без
+    помилки в консолі й без сліду в знімку обчислених стилів: полотно малює
+    скрипт, а знімок дивиться на CSS.
+
+    Проза каталогу називала 26 старих імен по всіх табах. Сторож підробок
+    цього не бачить -- він перевіряє inline-стилі, а не слова. Вітрина
+    брехала знову, тільки підписами.
+
+    Обрізки жинжі (`--iprm-badge-{{ status }}` дає в тексті
+    `--iprm-badge-`) відкидаються за хвостовим дефісом. BEM-модифікатори
+    (`--sm`, `--draft`) під патерн не підпадають узагалі: він вимагає
+    префікса проєкту.
+    """
+    declared = _declared_tokens() | RUNTIME_TOKENS
+    sources = sorted((TPL_DIR / 'design_system').glob('_tab_*.html'))
+    sources += sorted((TPL_DIR / 'admin').glob('design_system*.html'))
+    sources += sorted(JS_DIR.glob('*.js'))
+
+    missing = {}
+    for path in sources:
+        for name in sorted(set(_TOKEN_NAME.findall(path.read_text(encoding='utf-8')))):
+            if name.endswith('-') or name in declared:
+                continue
+            missing.setdefault(name, []).append(path.name)
+
+    assert not missing, (
+        'згадані імена токенів, яких немає в жодному CSS-файлі: '
+        + '; '.join('%s (%s)' % (n, ', '.join(f)) for n, f in sorted(missing.items()))
+        + '\nЯкщо токен перейменували -- оновіть і тих, хто його НАЗИВАЄ: '
+          'JS читає токени через getComputedStyle і мовчки падає на запасне '
+          'значення, а каталог починає документувати неіснуючу палітру.'
+    )
