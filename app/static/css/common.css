@@ -912,6 +912,25 @@ a {
   height: 100%;
 }
 
+/* Бейдж над заголовком hero. Жив у page-index.css під `.page-index`,
+   хоча розмітку має і Головна -- а вона того файлу не вантажить, тож
+   там бейдж малювався звичайним текстом: без капсули, без тла, 17px
+   замість 13. Класична тиха вада -- "щось же намальовано". Тепер
+   компонент лежить поруч із рештою родини hero. */
+.iprm-hero__badge {
+  display: inline-block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--iprm-nav-active);
+  background: var(--iprm-accent-light);
+  padding: 8px 20px;
+  border-radius: var(--iprm-radius-pill);
+  margin-bottom: 24px;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: appleHeroFadeUp 0.8s var(--ease-reveal) forwards;
+}
+
 .iprm-hero__title {
   font-size: 24px;
   font-weight: 700;
