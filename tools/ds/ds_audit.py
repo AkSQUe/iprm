@@ -382,6 +382,45 @@ def cross_domain_components(root=ROOT):
     return out
 
 
+def catalog_only_components(root=ROOT):
+    """{клас: файл} -- компоненти, яких не вживає НІХТО, крім каталогу.
+
+    Каталог існує, щоб побачити наявний компонент було легше, ніж написати
+    свій. Але в нього є зворотний бік, на який легко натрапити, роблячи
+    вітрину чеснішою: якщо мертвий компонент показати живими класами, у
+    нього з'являється споживач -- сама вітрина. Після цього сторож "правило
+    без розмітки" мовчить назавжди, бо розмітка є, і мертвий CSS дістає
+    алібі.
+
+    Так уже сталося з `.iprm-target-grid`/`.iprm-target-card`: вони повністю
+    оформлені в глобальному `apple-pages.css`, справжня секція аудиторії
+    вживає інакше названий `.iprm-audience-card`, і єдиним їхнім споживачем
+    став таб молекул.
+
+    Це не наказ видаляти. Клас звідси -- або мертвий CSS, або компонент,
+    який комусь варто нарешті вжити; вибір залежить від того, чи він
+    потрібен. Але лишати його непоміченим не можна саме тому, що вітрина
+    робить його схожим на живий.
+    """
+    tpl = root / 'app' / 'templates'
+    texts = {p.relative_to(tpl).as_posix(): p.read_text(encoding='utf-8', errors='ignore')
+             for p in tpl.rglob('*.html')}
+    component = classify_css(root)['component']
+    out = {}
+    for name in sorted(component):
+        for cls in sorted(_declared_classes(root / 'app' / 'static' / 'css' / name)):
+            if '__' in cls or '--' in cls or cls.startswith('is-'):
+                continue
+            pattern = re.compile(r'class="[^"]*\b' + re.escape(cls) + r'\b')
+            users = [n for n, text in texts.items() if pattern.search(text)]
+            if not users:
+                continue
+            if all(n.startswith('design_system/') or n.startswith('admin/design_system')
+                   for n in users):
+                out[cls] = name
+    return out
+
+
 # Властивості, які ЗАДАЮТЬ ВИГЛЯД. Inline-стиль із такою властивістю в
 # каталозі -- підробка компонента: вітрина малює його значеннями, СКОПІЙОВАНИМИ
 # з CSS, а не самим компонентом. Копія розходиться, і каталог починає брехати
@@ -456,6 +495,11 @@ def main():
     print('\nКОМПОНЕНТНІ ФАЙЛИ ПОЗА КАТАЛОГОМ: %d' % len(gap))
     for name in gap:
         print('   ' + name)
+    only = catalog_only_components()
+    print('\nЖИВУТЬ ЛИШЕ У ВІТРИНІ (єдиний споживач -- каталог): %d' % len(only))
+    for cls, name in sorted(only.items()):
+        print('   .%-28s %s' % (cls, name))
+
     mockups = catalog_mockups()
     print('\nПІДРОБЛЕНІ ДЕМО В КАТАЛОЗІ (inline-стиль задає вигляд): %d'
           % sum(mockups.values()))
