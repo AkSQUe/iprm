@@ -25,9 +25,24 @@
    це правило перебиває їх (вища специфічність) і ламає позиціонування
    (напр. tooltip-bubble отримував position:relative і йшов під footer).
    Нові body-level fixed-оверлеї додавайте сюди у :not(). */
-body > *:not(#molecular-background):not(script):not(.iprm-header):not(.skip-link):not(.cookie-banner):not(.iprm-tooltip-bubble):not(.iprm-toasts):not(.iprm-reading-progress):not(.iprm-to-top):not(.iprm-confirm):not(.admin-toast-container):not(.iprm-lightbox):not(.upcoming-events):not(.upcoming-bar):not(.certdata-reminder) {
+body > *:not(#molecular-background):not(script):not(main):not(.iprm-header):not(.skip-link):not(.cookie-banner):not(.iprm-tooltip-bubble):not(.iprm-toasts):not(.iprm-reading-progress):not(.iprm-to-top):not(.iprm-confirm):not(.admin-toast-container):not(.iprm-lightbox):not(.upcoming-events):not(.upcoming-bar):not(.certdata-reminder) {
   position: relative;
   z-index: 1;
+}
+
+/* main -- на щабель вище за footer, а не врівень з ним.
+   Обидва прямі діти body, тож при однаковому z-index футер як пізніший
+   сусід лягав ПОВЕРХ усього вмісту main. Помітно це ставало на fixed-
+   елементах усередині main: їхній z-index замкнений контекстом накладання,
+   який створює саме це правило, тож підняти їх над футером власним
+   значенням неможливо. Так липка CTA курсу (z-index:80) ховалась під
+   футером на мобільному внизу сторінки -- кнопка реєстрації переставала
+   натискатись саме там, де сторінку дочитали.
+   main виведено з переліку вище, бо звичайне правило його не перебило б:
+   там #id плюс чотирнадцять класів у :not(). */
+body > main {
+  position: relative;
+  z-index: 2;
 }
 
 /* Hide molecular background on Apple-style pages */

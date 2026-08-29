@@ -75,6 +75,37 @@ def test_exclusions_reference_live_classes():
     )
 
 
+def test_main_outranks_footer():
+    """`main` мусить мати власний z-index, вищий за спільне правило.
+
+    `main` і `footer` -- прямі діти body. Поки обидва мали z-index:1,
+    футер як пізніший сусід лягав поверх усього вмісту main, а fixed-
+    елементи всередині main не могли з-під нього вибратись: їхній
+    z-index замкнений контекстом накладання, який створює саме те
+    правило. Так липка CTA курсу ховалась під футером на мобільному.
+
+    Тому main виведено з переліку і має власне правило. Якщо його
+    повернуть під спільне -- CTA знову перестане натискатись унизу
+    сторінки, і жоден інший тест цього не помітить.
+    """
+    text = CSS_FILE.read_text(encoding='utf-8')
+
+    shared = _RULE.search(text)
+    assert ':not(main)' in shared.group(1), (
+        'main більше не виключений зі спільного правила body > *:not(...) -- '
+        'він знову отримає z-index:1 нарівні з футером, і футер '
+        'перекриватиме липку CTA курсу.'
+    )
+
+    own = re.search(r'body\s*>\s*main\s*\{([^}]*)\}', text)
+    assert own, 'немає власного правила `body > main` із підвищеним z-index'
+    z_index = re.search(r'z-index:\s*(\d+)', own.group(1))
+    assert z_index and int(z_index.group(1)) > 1, (
+        'у `body > main` z-index мусить бути більший за 1 (значення '
+        'спільного правила), інакше футер знову перекриє вміст main.'
+    )
+
+
 def test_lightbox_is_excluded():
     """Лайтбокс -- body-level fixed-оверлей, отже мусить бути у списку.
 
