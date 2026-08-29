@@ -2004,7 +2004,8 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   border-radius: var(--iprm-radius-sm);
   background: var(--iprm-white);
   color: var(--iprm-text);
-  transition: border-color var(--iprm-transition), box-shadow var(--iprm-transition);
+  /* transition прибрано: база дає 0.2s cubic-bezier, а тут стояло 0.25s --
+     той самий компонент мав три різні криві на трьох шарах. */
 }
 
 /* Кільце фокуса тут БУЛО і дослівно повторювало базове

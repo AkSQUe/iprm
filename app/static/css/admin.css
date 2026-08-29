@@ -1724,25 +1724,21 @@ a.admin-stat-card:focus-visible {
    auth.css підключається пізніше, і властивості, яких немає в жодному з
    контекстних правил тут (напр. width), бере від НЬОГО. Хто виграє в
    такому випадку, вирішує порядок підключення в шаблоні, а не цей файл. */
-.admin-with-sidebar .form-section .form-input,
-.admin-form .form-input,
-.admin-control-row .form-input,
-.admin-filters__form .form-input {
-  /* .backup-actions__form .form-input прибрано зі списку: правило було
-     мертве. Єдиний шаблон, що вживає цей клас -- admin/backups.html, --
-     успадковує base.html, а не admin/base_admin.html, і admin.css не
-     підключає взагалі. */
-  padding: 10px 14px;
+/* Єдиний селектор, який тут ще потрібен, і причина в СУСІДІ, а не в адмінці:
+   `.form-section .form-input` у common.css робить поле публічним -- біле тло
+   й 14px, -- а секція форми в адмінці лежить на картковій поверхні.
+
+   Решту селекторів прибрано, і це полагодило ваду, якої ніхто не бачив.
+   `.admin-filters__form .form-input` важив 0,2,0 і перемагав модифікатор
+   `.form-input--sm` (0,1,0), хоч розмітка панелі фільтрів явно його
+   ставить. Тобто дизайн-система мовчки ігнорувала те, що в неї просили:
+   сімдесят із гаком полів малювались звичайним розміром замість малого.
+
+   Заразом зникла третя крива переходу: група мала власну (0.2s ease), і
+   правка плавності в базі до адмінки не доходила. */
+.admin-with-sidebar .form-section .form-input {
   font-size: 0.9375rem;
-  color: var(--iprm-text);
-  /* background-COLOR, не скорочення: `background` скидає background-image, а
-     нижче в цьому ж файлі `select.form-input` малює стрілку розкриття саме
-     ним. Поки цей селектор був менш специфічний за стрілку, скорочення не
-     шкодило; щойно він виграв -- стрілка зникла б мовчки. */
   background-color: var(--iprm-card-bg);
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm);
-  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 /* Правило фокуса тут БУЛО, і воно дослівно повторювало базове
