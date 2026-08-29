@@ -99,7 +99,7 @@
 .blog-comment-form__cancel { background: none; border: none; color: var(--iprm-accent); cursor: pointer; font-size: 0.85rem; margin-left: 6px; }
 .blog-comment-form__row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
 .blog-comment-form__row .form-input { flex: 1 1 200px; }
-.blog-comment-form textarea.form-input { width: 100%; margin-bottom: 10px; resize: vertical; }
+.blog-comment-form textarea.form-input { margin-bottom: 10px; resize: vertical; }
 
 /* Поля коментаря використовують токени дизайн-системи (форма поза .form-section) */
 .blog-comment-form .form-input {

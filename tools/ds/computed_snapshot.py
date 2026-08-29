@@ -136,6 +136,11 @@ PROPS = [
     # width/height свідомо відсутні (див. вище), і від правила лишалось
     # нуль видимих інструментові властивостей.
     'object-fit', 'object-position',
+    # transition-* -- теж детерміновані. Без них не видно розходження, яке
+    # ловиться лише в русі: два поля вводу можуть мати однакові кольори й
+    # відступи, але різну криву переходу, і правка бази до одного з них не
+    # доходить.
+    'transition-property', 'transition-duration', 'transition-timing-function',
     'position', 'box-shadow', 'opacity', 'overflow-x', 'overflow-y',
     'text-overflow', 'white-space', 'z-index', 'box-sizing', 'cursor',
 ]

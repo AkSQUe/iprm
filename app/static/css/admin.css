@@ -192,8 +192,6 @@
 .admin-control-row .form-input {
   width: auto;
   min-width: 160px;
-  padding: 6px 12px;
-  font-size: 13px;
 }
 
 /* ========== MUTED TEXT ========== */
@@ -2036,10 +2034,6 @@ a.admin-stat-card:focus-visible {
 
 /* Поле на всю ширину панелі: інакше воно тримає власну ширину за замовчуванням
    і в панелі лишається порожнє місце праворуч. */
-.admin-actions-menu__items--form .form-input {
-  width: 100%;
-}
-
 .admin-actions-menu__items--form button[type='submit'] {
   width: 100%;
   justify-content: center;
@@ -2222,10 +2216,6 @@ a.admin-stat-card:focus-visible {
   font-weight: 600;
   color: var(--iprm-text-secondary);
   margin-bottom: 6px;
-}
-
-.admin-integration-card .form-input {
-  width: 100%;
 }
 
 .admin-integration-card .admin-table {
@@ -2818,7 +2808,6 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-filters__search-input.form-input {
-  width: 100%;
   padding-left: 40px;
   border-radius: 999px;
 }
@@ -2878,7 +2867,6 @@ a.admin-stat-card:focus-visible {
 /* Поля панелі тягнуться на всю ширину комірки: інакше flex-правило
    .admin-control-row .form-input (flex: 1 1 200px) ламало б сітку. */
 .admin-filters__field .form-input {
-  width: 100%;
   min-width: 0;
 }
 
