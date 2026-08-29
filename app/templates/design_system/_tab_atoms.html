@@ -257,4 +257,190 @@
     <p class="ds-hint">.iprm-empty-state: text-align center, padding 48px 24px / .iprm-empty-state--full: grid-column 1 / -1</p>
   </div>
 
+  <!-- ===== FORM FEEDBACK ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="form-feedback">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Форми: згода і помилка поля</h2>
+
+      <h3 class="ds-section-heading">Блок згоди (.form-consent)</h3>
+      <div class="ds-demo">
+        <div class="form-consent">
+          <div class="form-checkbox">
+            <input type="checkbox" id="ds-consent-data" required>
+            <label for="ds-consent-data">Я надаю згоду на обробку моїх персональних даних з метою оформлення реєстрації. <span class="required">*</span></label>
+          </div>
+          <div class="form-checkbox">
+            <input type="checkbox" id="ds-consent-marketing">
+            <label for="ds-consent-marketing">Я надаю згоду на отримання інформації про акції та новини.</label>
+          </div>
+        </div>
+      </div>
+      <p class="ds-hint">Живе в auth, main (unsubscribe), online і registration -- скрізь, де є чекбокси згоди. На офлайн-заходах той самий клас (`.form-consent.reg-location-confirm`) обгортає ще й подвійне підтвердження міста; видимість і required тоді перемикає reg-tariffs.js, а без JS блок лишається прихованим і необов'язковим.</p>
+
+      <h3 class="ds-section-heading">Помилка поля (.form-error)</h3>
+      <div class="ds-demo">
+        <div class="form-group">
+          <label for="ds-phone-error">Телефон <span class="required">*</span></label>
+          <input type="tel" class="form-input is-invalid" id="ds-phone-error" value="123">
+          <div class="form-error">Введіть коректний номер телефону</div>
+        </div>
+      </div>
+      <p class="ds-hint">Найпоширеніший клас каталогу -- 22 шаблони admin, auth, main, online, registration. Друкується в jinja-циклі `for error in field.errors`, тож під одним полем може бути кілька рядків підряд; клас `is-invalid` на самому інпуті -- окремий, і без нього рамка лишається нейтральною навіть за наявності form-error під полем.</p>
+    </div>
+  </div>
+
+  <!-- ===== AUTH BUTTON ===== -->
+  <div class="ds-section" id="btn-auth">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Кнопка автентифікації</h2>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <button type="submit" class="btn-auth">Увійти</button>
+      </div>
+    </div>
+    <p class="ds-hint">Живе в auth.css; вживається на login, register, forgot/reset-password і в main/unsubscribe.html (повернути підписку). На відміну від .apple-btn -- завжди на всю ширину картки форми, без варіантів кольору чи розміру.</p>
+  </div>
+
+  <!-- ===== TOOLTIP TRIGGER ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="tooltip-trigger">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Тултип-тригер</h2>
+      <div class="ds-demo">
+        <div class="ds-row">
+          <label>Телефон <span class="required">*</span>
+            <span class="iprm-tooltip-trigger" data-tooltip="Вкажіть номер саме учасника заходу — на нього надішлемо нагадування та деталі підключення.">i</span>
+          </label>
+        </div>
+      </div>
+      <p class="ds-hint">Тільки CSS: сам тригер -- кружечок з "i", статичний навіть без JS. Спливаючу бульбашку малює tooltips.js (парний файл, вантажиться глобально з base.html) за атрибутом data-tooltip -- наведіть курсор або сфокусуйте клавіатурою, щоб побачити її тут. Живе в admin, auth і registration -- скрізь, де полю треба короткий контекст без розтягування label.</p>
+    </div>
+  </div>
+
+  <!-- ===== REGISTRATION SCREEN FAMILY ===== -->
+  <div class="ds-section" id="reg-family">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Екран реєстрації (reg-*)</h2>
+    <p class="ds-hint">
+      Сім класів нижче -- одна родина екрана реєстрації, а не сім окремих
+      компонентів: вони й вжиті разом, у тому самому порядку, що й на
+      registration/register.html. Ту саму розмітку без змін бере кабінет
+      (auth/certificate_data.html -- дозаповнення анкети МОЗ) і сторінки
+      оплати (payments/success.html, payments/failure.html,
+      registration/confirmation.html -- підсумкова картка й ряд дій).
+    </p>
+    <div class="ds-demo">
+      <div class="apple-page reg-layout">
+
+        <aside class="reg-moh-notice" role="note">
+          <div class="reg-moh-notice__icon" aria-hidden="true">i</div>
+          <p>Реєстрація займе хвилину -- анкету для сертифіката з балами БПР (вимоги МОЗ №725, п. 13) ви заповните пізніше в особистому кабінеті.</p>
+        </aside>
+
+        <div class="form-section reg-form-section">
+          <h3 class="form-section__title reg-form-section__title">Тип учасника <span class="required">*</span></h3>
+          <div class="reg-user-type" data-required-group="radio">
+            <label class="reg-user-type__option">
+              <input type="radio" name="ds-user-type" checked>
+              <span>Лікар</span>
+            </label>
+            <label class="reg-user-type__option">
+              <input type="radio" name="ds-user-type">
+              <span>Медсестра/медбрат</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section reg-form-section">
+          <h3 class="form-section__title reg-form-section__title">Спеціалізації <span class="required">*</span></h3>
+          <p class="reg-form-section__hint">Можна обрати декілька. Пошук -- Ctrl+F у браузері.</p>
+          <div class="reg-specializations" data-required-group="checkbox">
+            <label class="reg-specializations__item">
+              <input type="checkbox" name="ds-spec" checked>
+              <span>Дерматологія</span>
+            </label>
+            <label class="reg-specializations__item">
+              <input type="checkbox" name="ds-spec">
+              <span>Косметологія</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="reg-status-card">
+          <div class="reg-status-card__row">
+            <span class="reg-status-card__label">Курс</span>
+            <span class="reg-status-card__value">Ін'єкційна корекція обличчя</span>
+          </div>
+          <div class="reg-status-card__row">
+            <span class="reg-status-card__label">Статус реєстрації</span>
+            <span class="reg-status-card__value"><span class="badge badge--active">Підтверджено</span></span>
+          </div>
+        </div>
+
+        <div class="reg-actions">
+          <a href="#reg-family" class="apple-btn apple-btn--secondary">Назад</a>
+          <button type="submit" class="apple-btn apple-btn--primary">Зареєструватися</button>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="ds-demo">
+      <table class="admin-table">
+        <thead><tr><th class="admin-cell-title">Клас</th><th>Де живе</th><th>Пастка</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="admin-cell-title">reg-layout</td>
+            <td>auth, payments, registration</td>
+            <td>Стоїть поруч із .apple-page на кореневому div сторінки -- сам лише тримає max-width і центрування, декору в ньому немає.</td>
+          </tr>
+          <tr>
+            <td class="admin-cell-title">reg-form-section</td>
+            <td>auth, registration</td>
+            <td>Модифікатор до .form-section, а не заміна -- клас навішується поруч (`form-section reg-form-section`) і додає лише __title/__hint.</td>
+          </tr>
+          <tr>
+            <td class="admin-cell-title">reg-user-type</td>
+            <td>auth, registration</td>
+            <td>data-required-group="radio" -- без обраного варіанта форма не сабмітиться; JS підсвічує обраний .reg-user-type__option.</td>
+          </tr>
+          <tr>
+            <td class="admin-cell-title">reg-specializations</td>
+            <td>auth, registration</td>
+            <td>data-spec-list + data-required-group="checkbox" -- потрібна хоча б одна галочка; список довгий, тому підказка радить Ctrl+F.</td>
+          </tr>
+          <tr>
+            <td class="admin-cell-title">reg-moh-notice</td>
+            <td>auth, registration</td>
+            <td>Банер показується лише коли анкета МОЗ №725 ще не заповнена (profile_complete=False) -- на повторній реєстрації зникає сам.</td>
+          </tr>
+          <tr>
+            <td class="admin-cell-title">reg-status-card</td>
+            <td>payments, registration</td>
+            <td>__row/__label/__value -- та сама картка на трьох різних сторінках (confirmation, success, failure), не три копії.</td>
+          </tr>
+          <tr>
+            <td class="admin-cell-title">reg-actions</td>
+            <td>auth, payments, registration</td>
+            <td>Модифікатор --center вирівнює кнопки на сторінках оплати; на реєстрації додатково несе data-sticky-cta-anchor для липкої CTA-панелі.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="ds-section-heading">Не показується</h3>
+    <div class="ds-demo">
+      <table class="admin-table">
+        <thead><tr><th class="admin-cell-title">Клас</th><th>Чому</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="admin-cell-title">visually-hidden</td>
+            <td>Живе в admin, auth, main, quiz -- clip-обгортка для тексту лише для скрінрідера (position: absolute; width/height 1px; overflow hidden). Показати його на вітрині означало б навмисно намалювати щось невидиме: сенс класу саме в тому, щоб оком нічого не побачити. Приклад реального вжитку -- quiz/question.html, де це h1 сторінки тестування.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- ===== ANIMATIONS ===== -->
