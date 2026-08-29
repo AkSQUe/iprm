@@ -2703,17 +2703,19 @@ a.admin-stat-card:focus-visible {
 .admin-inline-select:focus-visible { outline: 2px solid var(--iprm-accent); outline-offset: 2px; }
 .admin-inline-select:disabled { opacity: 0.6; cursor: progress; }
 
-/* Кольорове кодування стану (спільне для статусу й оплати) */
+/* Кольорове кодування стану (спільне для статусу й оплати). На семантичних
+   токенах -- як і плитки імпорту (див. коментар нижче): тему знають самі,
+   ручного [data-theme="dark"] перекриття більше не потрібно. */
 .admin-inline-select[data-state="confirmed"],
 .admin-inline-select[data-state="paid"] {
-  background-color: #e8f7ee; color: #177a3e; border-color: #bfe6cd;
+  background-color: var(--iprm-success-bg); color: var(--iprm-success); border-color: var(--iprm-success-light);
 }
 .admin-inline-select[data-state="pending"] {
-  background-color: #fff4e0; color: #a86400; border-color: #ffe0b0;
+  background-color: var(--iprm-warning-bg); color: var(--iprm-warning-text); border-color: var(--iprm-warning-border);
 }
 .admin-inline-select[data-state="cancelled"],
 .admin-inline-select[data-state="refunded"] {
-  background-color: #fdeaea; color: #c0392b; border-color: #f5c6c6;
+  background-color: var(--iprm-error-bg); color: var(--iprm-error-text); border-color: var(--iprm-error-light);
 }
 .admin-inline-select[data-state="completed"] {
   background-color: var(--iprm-accent-light); color: var(--iprm-accent); border-color: var(--iprm-border-strong);
@@ -2757,31 +2759,14 @@ a.admin-stat-card:focus-visible {
 /* ==========================================================================
    Тёмна тема: кольорові статуси (світлі тла -> напівпрозорі на тёмному)
 
-   Плиток підсумку імпорту й жовтої нотатки тут більше немає: після переходу
-   на токени --iprm-success-* / --iprm-info-* / --iprm-warning-* вони знають
-   тёмну тему самі, а ручні перекриття лишались би другим джерелом правди.
+   Тут більше немає жодних ручних перекриттів. Спершу пішли плитки підсумку
+   імпорту й жовта нотатка -- перевід на --iprm-success-* / --iprm-info-* /
+   --iprm-warning-*; тепер (D2, план "Ідеальна CSS-архітектура") так само
+   пішли confirmed/paid, pending, cancelled/refunded в .admin-inline-select
+   -- переведені на --iprm-success-*/-warning-*/-error-*, як і completed/
+   unpaid, які були на токенах від самого початку. Ручне перекриття
+   лишалось би другим джерелом правди -- токен знає тему сам.
    ========================================================================== */
-
-/* ==========================================================================
-   Тёмна тема: кольорові статуси інлайн-селектів і кнопок
-   ========================================================================== */
-[data-theme="dark"] .admin-inline-select[data-state="confirmed"],
-[data-theme="dark"] .admin-inline-select[data-state="paid"] {
-  background-color: rgba(52, 199, 89, 0.16);
-  color: #4ade80;
-  border-color: rgba(52, 199, 89, 0.4);
-}
-[data-theme="dark"] .admin-inline-select[data-state="pending"] {
-  background-color: rgba(217, 119, 6, 0.18);
-  color: #fbbf24;
-  border-color: rgba(217, 119, 6, 0.4);
-}
-[data-theme="dark"] .admin-inline-select[data-state="cancelled"],
-[data-theme="dark"] .admin-inline-select[data-state="refunded"] {
-  background-color: rgba(239, 68, 68, 0.16);
-  color: #ff6b6b;
-  border-color: rgba(239, 68, 68, 0.4);
-}
 
 /* ==========================================================================
    ПАНЕЛЬ ФІЛЬТРІВ СПИСКІВ (макрос admin/partials/_filter_bar.html)
