@@ -15,22 +15,6 @@
     "admin-notifications.css",
     "admin.css"
   ],
-  "alert": [
-    "admin.css",
-    "common.css"
-  ],
-  "form-input": [
-    "admin.css",
-    "common.css"
-  ],
-  "form-section": [
-    "admin.css",
-    "common.css"
-  ],
-  "form-section__title": [
-    "admin.css",
-    "common.css"
-  ],
   "iprm-appointment": [
     "clinics.css",
     "courses.css"

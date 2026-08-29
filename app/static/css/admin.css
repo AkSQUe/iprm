@@ -1614,7 +1614,7 @@ a.admin-stat-card:focus-visible {
 
 /* ========== FORM SECTIONS ========== */
 
-.form-section {
+.admin-with-sidebar .form-section {
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
@@ -1636,7 +1636,7 @@ a.admin-stat-card:focus-visible {
   margin-top: 24px;
 }
 
-.form-section__title,
+.admin-with-sidebar .form-section__title,
 .admin-form__section-title {
   font-size: 1.125rem;
   font-weight: 700;
@@ -1709,7 +1709,7 @@ a.admin-stat-card:focus-visible {
 
 /* ========== FORM CONTROLS ========== */
 
-.form-section .form-group label,
+.admin-with-sidebar .form-section .form-group label,
 .admin-form .form-group label {
   font-size: 0.8125rem;
   font-weight: 600;
@@ -1726,7 +1726,7 @@ a.admin-stat-card:focus-visible {
    auth.css підключається пізніше, і властивості, яких немає в жодному з
    контекстних правил тут (напр. width), бере від НЬОГО. Хто виграє в
    такому випадку, вирішує порядок підключення в шаблоні, а не цей файл. */
-.form-section .form-input,
+.admin-with-sidebar .form-section .form-input,
 .admin-form .form-input,
 .admin-control-row .form-input,
 .admin-filters__form .form-input,
@@ -1734,13 +1734,17 @@ a.admin-stat-card:focus-visible {
   padding: 10px 14px;
   font-size: 0.9375rem;
   color: var(--apple-black);
-  background: var(--apple-section-bg);
+  /* background-COLOR, не скорочення: `background` скидає background-image, а
+     нижче в цьому ж файлі `select.form-input` малює стрілку розкриття саме
+     ним. Поки цей селектор був менш специфічний за стрілку, скорочення не
+     шкодило; щойно він виграв -- стрілка зникла б мовчки. */
+  background-color: var(--apple-section-bg);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-sm);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.form-section .form-input:focus,
+.admin-with-sidebar .form-section .form-input:focus,
 .admin-form .form-input:focus,
 .admin-control-row .form-input:focus,
 .admin-filters__form .form-input:focus,
@@ -1753,7 +1757,7 @@ a.admin-stat-card:focus-visible {
 /* Плейсхолдер бере --apple-gray, а не --apple-gray-light: останній -- рівень
    ЛІНІЙ (#d2d2d7 / #48484a), і як текст давав 1.38 у світлій та 1.86 у тёмній
    темі, тобто читався лише на здогад. --apple-gray дає 6.02 / 5.90. */
-.form-section .form-input::placeholder,
+.admin-with-sidebar .form-section .form-input::placeholder,
 .admin-form .form-input::placeholder,
 .backup-actions__form .form-input::placeholder {
   color: var(--apple-gray);
@@ -1763,11 +1767,11 @@ a.admin-stat-card:focus-visible {
    дизайн-системи (.btn-admin--secondary: white + border + pill). Стандартний
    ::file-selector-button і -webkit- варіант пишемо ОКРЕМИМИ правилами: невідомий
    псевдоелемент у списку селекторів інвалідує весь список. */
-.form-input[type="file"] {
+.admin-with-sidebar .form-input[type="file"] {
   padding: 6px 8px;
   cursor: pointer;
 }
-.form-input[type="file"]::file-selector-button {
+.admin-with-sidebar .form-input[type="file"]::file-selector-button {
   margin-right: 12px;
   padding: 8px 18px;
   font-family: inherit;
@@ -1780,11 +1784,11 @@ a.admin-stat-card:focus-visible {
   cursor: pointer;
   transition: background-color 0.15s, border-color 0.15s;
 }
-.form-input[type="file"]::file-selector-button:hover {
+.admin-with-sidebar .form-input[type="file"]::file-selector-button:hover {
   background: var(--apple-section-bg);
   border-color: var(--iprm-nav-active);
 }
-.form-input[type="file"]::-webkit-file-upload-button {
+.admin-with-sidebar .form-input[type="file"]::-webkit-file-upload-button {
   margin-right: 12px;
   padding: 8px 18px;
   font-family: inherit;
@@ -1797,7 +1801,7 @@ a.admin-stat-card:focus-visible {
   cursor: pointer;
   transition: background-color 0.15s, border-color 0.15s;
 }
-.form-input[type="file"]::-webkit-file-upload-button:hover {
+.admin-with-sidebar .form-input[type="file"]::-webkit-file-upload-button:hover {
   background: var(--apple-section-bg);
   border-color: var(--iprm-nav-active);
 }
@@ -1819,10 +1823,13 @@ a.admin-stat-card:focus-visible {
    щоб тримати 3:1 (поріг для нетекстової графіки) і на світлому тлі поля
    (3.64), і на тёмному (4.28). Токен сюди підставити не можна: CSS-змінні
    всередині url() браузер не розгортає, тому колір доводиться вбивати hex-ом. */
-.admin-form select.form-input,
-.admin-control-row select.form-input,
-.admin-filters__form select.form-input,
-.backup-actions__form select.form-input {
+/* Скоуплено так само, як `.form-section .form-input` вище: інакше та
+   заскоуплена база (0,3,0) перебиває цей перелік (0,2,1), і select лишається
+   без стрілки та без місця під неї. */
+.admin-with-sidebar .admin-form select.form-input,
+.admin-with-sidebar .admin-control-row select.form-input,
+.admin-with-sidebar .admin-filters__form select.form-input,
+.admin-with-sidebar .backup-actions__form select.form-input {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -2498,7 +2505,7 @@ a.admin-stat-card:focus-visible {
    потоці тексту. Кольори й розкладка лишаються в common.css: два джерела
    правди на один компонент -- це вже було, і --success тут розходився з
    тамтешнім. */
-.alert {
+.admin-with-sidebar .alert {
   padding: 16px 20px;
   font-size: 0.875rem;
   margin-bottom: 24px;
@@ -2579,7 +2586,7 @@ a.admin-stat-card:focus-visible {
      екрана. Значення ті самі, що доти давав другий клас
      `.admin-form__section` -- він стояв на 106 секціях із 132, і решта
      26 через це стискались інакше, ніж сусідні. */
-  .form-section {
+.admin-with-sidebar .form-section {
     padding: 20px;
   }
 }
@@ -2589,7 +2596,7 @@ a.admin-stat-card:focus-visible {
     padding: 16px 12px;
   }
 
-  .form-section {
+.admin-with-sidebar .form-section {
     padding: 16px;
   }
 }
