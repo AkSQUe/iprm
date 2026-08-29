@@ -55,11 +55,13 @@
   'url': course_url
 }}) %}{% endif %}
 {% if course.cpd_points %}{% set _discard = course_schema.update({'numberOfCredits': course.cpd_points}) %}{% endif %}
-{% if course.trainer %}{% set _discard = course_schema.update({'instructor': {
-  '@type': 'Person',
-  'name': course.trainer.t('full_name'),
-  'jobTitle': course.trainer.t('role') or ''
-}}) %}{% endif %}
+{# jobTitle -- лише коли в тренера справді заповнена посада: порожній
+   рядок у JSON-LD -- це заявлене й порожнє значення, а не відсутнє поле. #}
+{% if course.trainer %}
+  {% set _instructor = {'@type': 'Person', 'name': course.trainer.t('full_name')} %}
+  {% if course.trainer.t('role') %}{% set _discard = _instructor.update({'jobTitle': course.trainer.t('role')}) %}{% endif %}
+  {% set _discard = course_schema.update({'instructor': _instructor}) %}
+{% endif %}
 {% if upcoming_instances %}
   {% set _instances_schema = [] %}
   {% for inst in upcoming_instances %}
@@ -76,6 +78,7 @@
 {% endif %}
 
 {% block jsonld %}
+{{ super() }}
 <script type="application/ld+json">{{ course_schema | tojson }}</script>
 {{ breadcrumbs([
   (_('Курси'), url_for('courses.course_list', _external=True)),

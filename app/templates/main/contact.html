@@ -10,31 +10,31 @@
 {% endblock %}
 
 {% block jsonld %}
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "ContactPage",
-  "name": "Контакти ІПРМ",
-  "url": "{{ url_for('main.contact', _external=True) }}",
-  "mainEntity": {
-    "@type": "EducationalOrganization",
-    "name": "{{ site_settings.company_name }}",
-    "alternateName": "{{ site_settings.company_full_name }}",
-    "telephone": "{{ site_settings.phone_primary }}",
-    "address": {
-      "@type": "PostalAddress",
-      "addressCountry": "UA",
-      "addressLocality": "{{ site_settings.city }}"
+{{ super() }}
+{% set _contact_schema = {
+  '@context': 'https://schema.org',
+  '@type': 'ContactPage',
+  'name': 'Контакти ІПРМ',
+  'url': url_for('main.contact', _external=True),
+  'mainEntity': {
+    '@type': 'EducationalOrganization',
+    'name': site_settings.company_name,
+    'alternateName': site_settings.company_full_name,
+    'telephone': site_settings.phone_primary,
+    'address': {
+      '@type': 'PostalAddress',
+      'addressCountry': 'UA',
+      'addressLocality': site_settings.city
     },
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "telephone": "{{ site_settings.phone_primary }}",
-      "contactType": "customer service",
-      "availableLanguage": "Ukrainian"
+    'contactPoint': {
+      '@type': 'ContactPoint',
+      'telephone': site_settings.phone_primary,
+      'contactType': 'customer service',
+      'availableLanguage': 'Ukrainian'
     }
   }
-}
-</script>
+} %}
+<script type="application/ld+json">{{ _contact_schema | tojson }}</script>
 {% endblock %}
 
 {% block content %}

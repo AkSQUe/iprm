@@ -4,14 +4,14 @@
 {% block meta_description %}{{ _('Інтерактивна карта сайту Інституту Плазмотерапії та Регенеративної Медицини. Швидкий доступ до курсів, тренерів, блогу та інших розділів.') }}{% endblock %}
 
 {% block jsonld %}
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SiteNavigationElement",
-  "name": "Карта сайту ІПРМ",
-  "url": "{{ url_for('main.sitemap_page', _external=True) }}"
-}
-</script>
+{{ super() }}
+{% set _sitemap_schema = {
+  '@context': 'https://schema.org',
+  '@type': 'SiteNavigationElement',
+  'name': 'Карта сайту ІПРМ',
+  'url': url_for('main.sitemap_page', _external=True)
+} %}
+<script type="application/ld+json">{{ _sitemap_schema | tojson }}</script>
 {% endblock %}
 
 {% block extra_css %}

@@ -177,8 +177,15 @@ def test_jsonld_keeps_canonical_ukrainian(get_localized):
     _city(uk, ru=ru)
     _clear_cache()
 
+    # Сторінка курсу несе кілька блоків JSON-LD (організація, курс, крихти) --
+    # відколи courses/detail.html викликає super() для схеми організації,
+    # вона більше не єдина чи перша. Беремо саме блок Course: лише в ньому
+    # через CourseInstance з'являється Place з локацією.
     page = get_localized(f'/ru/courses/{slug}').get_data(as_text=True)
-    start = page.find('application/ld+json')
-    jsonld = page[start:page.find('</script>', start)]
+    course_marker = '"@type": "Course"'
+    start = page.find(course_marker)
+    assert start != -1, 'блок Course відсутній на сторінці'
+    script_start = page.rfind('<script', 0, start)
+    jsonld = page[script_start:page.find('</script>', start)]
     assert '"@type": "Place"' in jsonld
     assert ru not in jsonld
