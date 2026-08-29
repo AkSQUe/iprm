@@ -285,6 +285,31 @@ class TestWebhookQueueFilters:
         assert 'q=abc' in location
         assert 'page=2' in location
 
+    def test_status_filter_with_no_matches_says_nothing_found(self, client, admin):
+        # Черга не порожня -- в ній є доставки, просто жодної "failed". Це
+        # той самий зріз "лише status", що й у docstring narrow_args:
+        # filter_args сама по собі не містить status (він не в fields
+        # макроса), тож без narrow_args -- і без фіксу порядку reject у
+        # empty_state -- сторінка брехала б "Записів немає".
+        _delivery(status='pending')
+        _delivery(status='sent')
+
+        _login(client, admin)
+        body = client.get('/admin/webhooks?status=failed').get_data(as_text=True)
+
+        assert 'Нічого не знайдено' in body
+        assert 'скинути фільтри' in body
+        assert 'Записів немає' not in body
+
+    def test_empty_queue_without_filter_says_no_records(self, client, admin):
+        # Черга справді порожня (жодної власної доставки, жодного фільтра) --
+        # тут "Записів немає" лишається правдою.
+        _login(client, admin)
+        body = client.get('/admin/webhooks').get_data(as_text=True)
+
+        assert 'Записів немає' in body
+        assert 'Нічого не знайдено' not in body
+
 
 # ------------------------- Результати тестування по групі -------------------
 
@@ -625,6 +650,20 @@ class TestPerfHeroUnderFilter:
         # писати "Замірів ще немає": це неправда під активним зрізом, що й
         # містить справжні рядки.
         assert 'Замірів ще немає' not in body
+
+    def test_unfiltered_page_two_does_not_ask_to_reset_filter(self, client, admin):
+        # `latest` -- None і без жодного фільтра на другій сторінці
+        # (routes_perf.py: `page == 1 and not filter_args`), а не лише під
+        # активним зрізом. Шапка не мусить пропонувати "скинути фільтр",
+        # якого тут узагалі нема -- це той самий факт, що й на сторінці 1
+        # без фільтра, просто інший рядок замірів попереду.
+        for _ in range(25):
+            _perf_run(verdict=VERDICT_OK)
+
+        _login(client, admin)
+        body = client.get('/admin/perf?page=2').get_data(as_text=True)
+
+        assert 'скиньте фільтр' not in body
 
 
 class TestQuizResultsActionsKeepSlice:

@@ -246,7 +246,7 @@
 {% for k, v in narrow_args.items() %}
   {% if v not in (none, '') %}{% set _ = active_narrow.update({k: v}) %}{% endif %}
 {% endfor %}
-{% set narrowed = ((filter_args | list) + (active_narrow | list)) | reject('in', base_args) | list %}
+{% set narrowed = (filter_args | reject('in', base_args) | list) + (active_narrow | list) %}
 <div class="admin-empty">
   {% if narrowed and endpoint %}
     {{ icon('search', cls='admin-empty__icon') }}

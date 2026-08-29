@@ -28,8 +28,10 @@
         {% if latest %}
         Останній замір {{ latest.measured_at.strftime('%d.%m.%Y %H:%M') }} &ndash;
         {{ latest.pages_total }} сторінок
-        {% elif runs %}
+        {% elif runs and filter_args %}
         Показано зріз замірів &ndash; скиньте фільтр, щоб побачити останній
+        {% elif runs %}
+        Сторінка {{ pagination.page }} &ndash; останній замір на першій сторінці
         {% else %}
         Замірів ще немає &ndash; надішліть перший з інструменту
         {% endif %}
