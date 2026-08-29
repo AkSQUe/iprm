@@ -1,8 +1,4 @@
 {
-  "iprm-content-page__inner": [
-    "common.css",
-    "page-sitemap.css"
-  ],
   "iprm-course-card__tags": [
     "common.css",
     "courses.css"
