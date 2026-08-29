@@ -1992,11 +1992,9 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   transition: border-color var(--iprm-transition), box-shadow var(--iprm-transition);
 }
 
-.form-section .form-input:focus {
-  outline: none;
-  border-color: var(--iprm-accent);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
-}
+/* Кільце фокуса тут БУЛО і дослівно повторювало базове
+   `.form-input:focus` (common.css). Скоуп не додавав нічого:
+   базове правило діє на кожен .form-input. */
 
 .form-section .form-input.is-invalid {
   border-color: var(--iprm-error);

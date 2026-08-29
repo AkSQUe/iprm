@@ -1467,12 +1467,9 @@ button.iprm-tag:focus-visible {
   color: var(--iprm-placeholder-text);
 }
 
-.iprm-b2b__form .form-input:focus,
-.iprm-b2b__form .form-input:focus-visible {
-  outline: none;
-  border-color: var(--iprm-accent);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
-}
+/* Кільце фокуса тут БУЛО і дослівно повторювало базове
+   `.form-input:focus` (common.css). Скоуп не додавав нічого:
+   базове правило діє на кожен .form-input. */
 
 /* Select: прибрати native-стрілку, намалювати власний шеврон. */
 .iprm-b2b__form select.form-input {

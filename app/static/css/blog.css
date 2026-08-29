@@ -113,11 +113,9 @@
   color: var(--iprm-text);
   transition: border-color var(--iprm-transition), box-shadow var(--iprm-transition);
 }
-.blog-comment-form .form-input:focus {
-  outline: none;
-  border-color: var(--iprm-accent);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
-}
+/* Кільце фокуса тут БУЛО і дослівно повторювало базове
+   `.form-input:focus` (common.css). Скоуп не додавав нічого:
+   базове правило діє на кожен .form-input. */
 .blog-comment-form .form-input.is-invalid {
   border-color: var(--iprm-error);
   box-shadow: 0 0 0 3px rgba(var(--iprm-error-rgb), 0.08);

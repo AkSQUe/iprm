@@ -277,11 +277,9 @@
   color: var(--iprm-placeholder-text);
 }
 
-.iprm-online-checkout .form-input:focus {
-  outline: none;
-  border-color: var(--iprm-accent);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
-}
+/* Кільце фокуса тут БУЛО і дослівно повторювало базове
+   `.form-input:focus` (common.css). Скоуп не додавав нічого:
+   базове правило діє на кожен .form-input. */
 
 /* Помилку валідації показує рамка: на сторінці покупки червоний текст під
    полем легко пропустити повз очі, коли дивишся на суму. */
