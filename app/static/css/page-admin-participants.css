@@ -85,6 +85,9 @@
   50%      { box-shadow: 0 0 0 4px var(--iprm-accent-light); }
 }
 
+/* Не стан :focus, а безумовна підсвітка НЕЗАПОВНЕНОГО поля -- інший
+   факт, тому й інший колір за базовий фокус. Клас .field-await живе
+   лише на цій сторінці. */
 .admin-form .form-input.field-await,
 .admin-form select.form-input.field-await {
   border-color: var(--iprm-accent);

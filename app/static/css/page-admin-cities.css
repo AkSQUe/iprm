@@ -142,6 +142,8 @@
   flex-wrap: wrap;
 }
 
+/* flex і max-width база не задає: поле ділить рядок із кнопкою «Додати»,
+   і це властивість РЯДКА, а не поля вводу. */
 .cities-add .form-input {
   flex: 1 1 240px;
   max-width: 360px;

@@ -148,11 +148,17 @@
   flex-direction: column;
 }
 
+/* resize і min-height база .form-input не задає взагалі -- вони потрібні
+   лише полю повідомлення. Це не перевизначення компонента, а
+   властивості, яких у нього немає. */
 .contact-page__form-wrap textarea.form-input {
   resize: vertical;
   min-height: 120px;
 }
 
+/* Значення СВІДОМО інше за базове (24px проти 20px у auth.css): перед
+   кнопкою відправки треба трохи більше повітря. Не прибирати як
+   дублікат -- воно не збігається з компонентом. */
 .contact-page__form-wrap .form-consent {
   margin-bottom: 24px;
 }
