@@ -94,7 +94,7 @@
 
 .ml-wait-panel__label {
   font-size: 0.875rem;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .ml-wait-panel--done {
@@ -167,7 +167,7 @@
   border-radius: var(--iprm-radius);
   font-size: 0.875rem;
   line-height: 1.55;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .ml-info__icon {

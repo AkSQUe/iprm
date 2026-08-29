@@ -184,7 +184,7 @@
    без JS і без окремої колонки-індикатора. Колір беремо помітніший за
    типовий --iprm-border (він майже прозорий, пунктир на ньому не читався б).
    Саме для цього є --iprm-border-strong -- посилена межа на новій осі; сірий
-   --apple-gray-light дає ту саму помітність, але лишається поза віссю. */
+   --iprm-border-neutral дає ту саму помітність, але лишається поза віссю. */
 .cities-table .cities-input:placeholder-shown {
   border-style: dashed;
   border-color: var(--iprm-border-strong);

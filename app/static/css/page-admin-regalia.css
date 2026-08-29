@@ -24,7 +24,7 @@
 .regalia-link__remove {
   flex: 0 0 auto;
   width: 36px; height: 36px; border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm);
-  background: var(--iprm-white); color: var(--apple-gray-dark); cursor: pointer;
+  background: var(--iprm-white); color: var(--iprm-text-secondary); cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
 }
 .regalia-link__move:hover { background: var(--iprm-card-bg); }

@@ -15,7 +15,7 @@
 .form-progress__bar {
   flex: 1;
   height: 8px;
-  background: var(--apple-gray-light);
+  background: var(--iprm-border-neutral);
   border-radius: 4px;
   overflow: hidden;
 }

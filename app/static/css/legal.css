@@ -27,7 +27,7 @@
 .legal-page__preamble {
   font-size: 17px;
   line-height: 1.65;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   margin-bottom: 32px;
   padding: 24px;
   background: var(--iprm-card-bg);
@@ -63,7 +63,7 @@
 .legal-section p {
   font-size: 17px;
   line-height: 1.65;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   margin-bottom: 12px;
 }
 
@@ -76,7 +76,7 @@
 .legal-section ol {
   font-size: 17px;
   line-height: 1.65;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   margin: 8px 0 16px 24px;
 }
 
@@ -110,7 +110,7 @@
 .legal-definitions dd {
   font-size: 17px;
   line-height: 1.65;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   margin-left: 0;
   margin-bottom: 4px;
 }
@@ -147,7 +147,7 @@
 .legal-refund-table td {
   padding: 12px 16px;
   border-bottom: 1px solid var(--iprm-border);
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .legal-refund-table__highlight {
@@ -166,7 +166,7 @@
 .legal-details td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--iprm-border);
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   vertical-align: top;
 }
 
@@ -283,7 +283,7 @@
   gap: 14px;
   font-size: 1rem;
   line-height: 1.55;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .bpr-docs-page__list li {

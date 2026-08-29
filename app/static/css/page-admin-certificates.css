@@ -23,7 +23,7 @@
 .cert-progress__fill {
   height: 100%;
   width: 5%;
-  background: linear-gradient(90deg, var(--apple-orange), #b85a7e, var(--iprm-accent));
+  background: linear-gradient(90deg, var(--iprm-gold), #b85a7e, var(--iprm-accent));
   transition: width 0.4s ease;
 }
 .cert-progress__text {

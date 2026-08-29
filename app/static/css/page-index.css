@@ -14,7 +14,7 @@
   right: -200px;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(var(--apple-accent-rgb), 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--iprm-accent-rgb), 0.06) 0%, transparent 70%);
 }
 
 .page-index .iprm-hero::after {
@@ -24,7 +24,7 @@
   left: -100px;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(var(--apple-orange-rgb), 0.05) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--iprm-gold-rgb), 0.05) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -100,7 +100,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(var(--apple-accent-rgb), 0.18) 0%, transparent 70%);
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(var(--iprm-accent-rgb), 0.18) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -131,7 +131,7 @@
 }
 
 .page-index .apple-section-dark .apple-section-header p {
-  color: var(--apple-gray-light);
+  color: var(--iprm-border-neutral);
 }
 
 /* ========== FEATURES GRID -- 2-col with featured ========== */
@@ -216,7 +216,7 @@
 }
 
 .page-index .apple-feature-card--featured p {
-  color: var(--apple-gray-light);
+  color: var(--iprm-border-neutral);
 }
 
 /* ========== STATS ROW ========== */
@@ -238,7 +238,7 @@
   /* Фолбек кольору -- як у .apple-gradient-text (apple-pages.css): цифра
      статистики не має зникати там, де фон по тексту не малюється. */
   color: var(--iprm-nav-active);
-  background: linear-gradient(135deg, var(--iprm-nav-active), var(--apple-purple-mid), var(--apple-orange));
+  background: linear-gradient(135deg, var(--iprm-nav-active), var(--iprm-accent-mid), var(--iprm-gold));
   -webkit-background-clip: text;
   background-clip: text;
 }
@@ -268,7 +268,7 @@
 .page-index .apple-stat p {
   font-size: 0.9375rem;
   font-weight: 300;
-  color: var(--apple-gray-light);
+  color: var(--iprm-border-neutral);
   margin-top: 8px;
   letter-spacing: 0.01em;
 }
@@ -345,7 +345,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--apple-orange-light) 100%);
+  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--iprm-gold-bg) 100%);
 }
 
 /* Зображення лабораторій у bento-картках */
@@ -412,13 +412,13 @@
 
 .page-index .apple-clinic-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
+  box-shadow: 0 12px 40px rgba(var(--iprm-accent-rgb), 0.1);
   will-change: transform;
 }
 
 .page-index .apple-clinic-card__image {
   height: 220px;
-  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--apple-orange-light) 100%);
+  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--iprm-gold-bg) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -478,7 +478,7 @@
 
 .page-index .apple-about p {
   font-size: 17px;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   line-height: 1.65;
   margin-bottom: 20px;
 }
@@ -491,7 +491,7 @@
 
 .page-index .apple-about ul li {
   font-size: 17px;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   line-height: 1.65;
   padding: 8px 0 8px 28px;
   position: relative;
@@ -505,7 +505,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--iprm-nav-active), var(--apple-orange));
+  background: linear-gradient(135deg, var(--iprm-nav-active), var(--iprm-gold));
 }
 
 .page-index .apple-about h2 {
@@ -658,7 +658,7 @@
   padding-left: 24px;
   font-size: 0.9375rem;
   line-height: 1.5;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .iprm-lab-list li::before {
@@ -669,7 +669,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--iprm-nav-active), var(--apple-orange));
+  background: linear-gradient(135deg, var(--iprm-nav-active), var(--iprm-gold));
 }
 
 .iprm-lab-impact {
@@ -689,7 +689,7 @@
 .iprm-lab-impact p {
   font-size: 1.0625rem;
   line-height: 1.6;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .iprm-lab-impact__note {

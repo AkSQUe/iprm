@@ -105,7 +105,7 @@
   padding: 12px 16px;
   text-align: left;
   font-weight: 600;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   font-size: 0.8125rem;
   text-transform: uppercase;
   letter-spacing: 0.02em;
@@ -115,7 +115,7 @@
 .backup-table td {
   padding: 12px 16px;
   border-bottom: 1px solid var(--iprm-border);
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   vertical-align: middle;
 }
 

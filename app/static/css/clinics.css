@@ -26,13 +26,13 @@
 
 .iprm-clinic-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
+  box-shadow: 0 12px 40px rgba(var(--iprm-accent-rgb), 0.1);
 }
 
 .iprm-clinic-card__photo {
   width: 100%;
   height: 240px;
-  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--apple-orange-light) 100%);
+  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--iprm-gold-bg) 100%);
   border: none;
   border-radius: 0;
   display: flex;
@@ -109,7 +109,7 @@
   width: 100%;
   height: auto;
   aspect-ratio: 1;
-  background: linear-gradient(135deg, var(--iprm-accent-light), var(--apple-orange-light));
+  background: linear-gradient(135deg, var(--iprm-accent-light), var(--iprm-gold-bg));
   border: none;
   border-radius: var(--iprm-radius);
   display: flex;
@@ -142,7 +142,7 @@
 .iprm-clinic-detail__text {
   font-size: 17px;
   line-height: 1.65;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .iprm-clinic-detail__text p {
@@ -237,7 +237,7 @@
   display: block;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   letter-spacing: -0.01em;
 }
 
@@ -277,7 +277,7 @@
 
 .iprm-appointment p {
   font-size: 17px;
-  color: var(--apple-gray-light);
+  color: var(--iprm-border-neutral);
   line-height: 1.65;
   margin-bottom: 32px;
   max-width: 500px;
@@ -339,7 +339,7 @@
 
 .iprm-results-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
+  box-shadow: 0 12px 40px rgba(var(--iprm-accent-rgb), 0.1);
 }
 
 .iprm-results-card h3 {
@@ -353,7 +353,7 @@
 .iprm-results-card p {
   font-size: 0.9375rem;
   line-height: 1.5;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 @media (max-width: 1024px) {

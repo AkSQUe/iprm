@@ -95,7 +95,7 @@
 
 .blog-comment-form { margin-top: 36px; background: var(--iprm-card-bg); border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-md); padding: 24px; }
 .blog-comment-form__title { font-size: 1.15rem; font-weight: 700; margin-bottom: 14px; }
-.blog-comment-form__reply-to { font-size: 0.9rem; color: var(--apple-gray-dark); margin-bottom: 12px; }
+.blog-comment-form__reply-to { font-size: 0.9rem; color: var(--iprm-text-secondary); margin-bottom: 12px; }
 .blog-comment-form__cancel { background: none; border: none; color: var(--iprm-accent); cursor: pointer; font-size: 0.85rem; margin-left: 6px; }
 .blog-comment-form__row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
 .blog-comment-form__row .form-input { flex: 1 1 200px; }

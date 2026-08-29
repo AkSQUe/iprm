@@ -67,7 +67,7 @@
 
 .settings-option.is-active {
   border-color: var(--iprm-nav-active);
-  box-shadow: 0 0 0 3px rgba(var(--apple-accent-rgb), 0.15);
+  box-shadow: 0 0 0 3px rgba(var(--iprm-accent-rgb), 0.15);
   background: var(--iprm-white);
 }
 
@@ -125,7 +125,7 @@
 .settings-option__label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 /* Мова листів */

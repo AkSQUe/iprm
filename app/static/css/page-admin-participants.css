@@ -59,7 +59,7 @@
   align-items: center;
   gap: 8px;
   font-size: 0.8125rem;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   cursor: pointer;
   line-height: 1.3;
 }

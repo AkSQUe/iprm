@@ -74,7 +74,7 @@
   color: var(--iprm-text);
 }
 .iprm-confirm__btn--cancel:hover {
-  background: var(--apple-gray-light);
+  background: var(--iprm-border-neutral);
 }
 
 .iprm-confirm__btn--ok {

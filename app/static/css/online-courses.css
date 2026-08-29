@@ -52,7 +52,7 @@
 .apple-page .iprm-online-card:hover {
   transform: translateY(-4px);
   border-color: color-mix(in oklch, var(--iprm-accent), transparent 70%);
-  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
+  box-shadow: 0 12px 40px rgba(var(--iprm-accent-rgb), 0.1);
 }
 
 .apple-page .iprm-online-card:focus-visible {
@@ -67,7 +67,7 @@
 .iprm-online-card__media {
   height: 200px;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--apple-orange-light) 100%);
+  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--iprm-gold-bg) 100%);
 }
 
 .iprm-online-card__media img {

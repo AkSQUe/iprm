@@ -1093,7 +1093,7 @@ a.admin-stat-card:focus-visible {
   padding: 8px 12px;
   font-size: 0.8125rem;
   font-weight: 400;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   border-radius: 10px;
   transition: all 0.2s var(--ease-interact);
 }
@@ -1490,17 +1490,17 @@ a.admin-stat-card:focus-visible {
 .btn-admin--primary:hover {
   background: var(--iprm-btn-bg-hover);
   transform: scale(1.02) translateY(-1px);
-  box-shadow: 0 4px 16px rgba(var(--apple-accent-rgb), 0.25);
+  box-shadow: 0 4px 16px rgba(var(--iprm-accent-rgb), 0.25);
 }
 
 .btn-admin--primary:active {
   transform: scale(0.98) translateY(0);
-  box-shadow: 0 1px 4px rgba(var(--apple-accent-rgb), 0.1);
+  box-shadow: 0 1px 4px rgba(var(--iprm-accent-rgb), 0.1);
 }
 
 .btn-admin--secondary {
   background: var(--iprm-white);
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   border: 1px solid var(--iprm-border);
 }
 
@@ -1754,7 +1754,7 @@ a.admin-stat-card:focus-visible {
   outline: none;
 }
 
-/* Плейсхолдер бере --apple-gray, а не --apple-gray-light: останній -- рівень
+/* Плейсхолдер бере --apple-gray, а не --iprm-border-neutral: останній -- рівень
    ЛІНІЙ (#d2d2d7 / #48484a), і як текст давав 1.38 у світлій та 1.86 у тёмній
    темі, тобто читався лише на здогад. --apple-gray дає 6.02 / 5.90. */
 .admin-with-sidebar .form-section .form-input::placeholder,
@@ -1777,7 +1777,7 @@ a.admin-stat-card:focus-visible {
   font-family: inherit;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-pill);
@@ -1794,7 +1794,7 @@ a.admin-stat-card:focus-visible {
   font-family: inherit;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-pill);
@@ -1870,7 +1870,7 @@ a.admin-stat-card:focus-visible {
 .admin-form .form-checkbox label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 /* ========== FORM ACTIONS ========== */
@@ -1935,7 +1935,7 @@ a.admin-stat-card:focus-visible {
   padding: 14px 16px;
   font-size: 0.875rem;
   border-top: 1px solid var(--iprm-divider);
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .admin-table td strong {
@@ -1944,7 +1944,7 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-table tr:hover td {
-  background: rgba(var(--apple-accent-rgb), 0.02);
+  background: rgba(var(--iprm-accent-rgb), 0.02);
 }
 
 /* Ряд кнопок у комірці «Дії»: одним рядком, без переносу -- інакше друга
@@ -2114,13 +2114,13 @@ a.admin-stat-card:focus-visible {
   padding: 56px 32px;
 }
 
-/* Єдине місце, де --apple-gray-light лишається переднім планом свідомо: це
+/* Єдине місце, де --iprm-border-neutral лишається переднім планом свідомо: це
    декоративний 48px-знак порожнього стану, а не текст. Сенс несуть заголовок
    і абзац під ним, тому знак має бути ледь помітним -- і він такий в обох
    темах (#d2d2d7 на білому, #48484a на тёмному). */
 .admin-empty__icon {
   font-size: 48px;
-  color: var(--apple-gray-light);
+  color: var(--iprm-border-neutral);
   margin-bottom: 16px;
 }
 
@@ -2226,7 +2226,7 @@ a.admin-stat-card:focus-visible {
   display: block;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   margin-bottom: 6px;
 }
 
@@ -2244,7 +2244,7 @@ a.admin-stat-card:focus-visible {
 
 .admin-integration-card--link:hover {
   border-color: var(--iprm-nav-active);
-  box-shadow: 0 4px 16px rgba(var(--apple-accent-rgb), 0.08);
+  box-shadow: 0 4px 16px rgba(var(--iprm-accent-rgb), 0.08);
 }
 
 .admin-integration-card__title {
@@ -2296,7 +2296,7 @@ a.admin-stat-card:focus-visible {
 .admin-integration-card__job-time {
   text-align: right;
   font-variant-numeric: tabular-nums;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   white-space: nowrap;
 }
 
@@ -2457,7 +2457,7 @@ a.admin-stat-card:focus-visible {
   font-size: 14px;
   line-height: 1.6;
   border-bottom: 1px solid var(--iprm-border);
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .admin-todo li::before {
@@ -2636,7 +2636,7 @@ a.admin-stat-card:focus-visible {
   border-radius: var(--iprm-radius-pill);
   border: 1px solid var(--iprm-border);
   background: var(--iprm-white);
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   font-size: 0.8125rem;
   font-weight: 500;
   text-decoration: none;
@@ -2697,7 +2697,7 @@ a.admin-stat-card:focus-visible {
 }
 
 /* Hover-межа має бути помітнішою за спокійну --iprm-border, тож беремо
-   --iprm-border-strong: це та сама роль на новій осі, а --apple-gray-light
+   --iprm-border-strong: це та сама роль на новій осі, а --iprm-border-neutral
    лишається сірим поза віссю. */
 .admin-inline-select:hover { border-color: var(--iprm-border-strong); }
 .admin-inline-select:focus-visible { outline: 2px solid var(--iprm-accent); outline-offset: 2px; }
@@ -2719,7 +2719,7 @@ a.admin-stat-card:focus-visible {
   background-color: var(--iprm-accent-light); color: var(--iprm-accent); border-color: var(--iprm-border-strong);
 }
 .admin-inline-select[data-state="unpaid"] {
-  background-color: var(--iprm-card-bg); color: var(--apple-gray-dark);
+  background-color: var(--iprm-card-bg); color: var(--iprm-text-secondary);
 }
 
 /* Підтвердження збереження / помилки */
@@ -2831,7 +2831,7 @@ a.admin-stat-card:focus-visible {
   position: absolute;
   left: 12px;
   font-size: 20px;
-  /* Був --apple-gray-light (рівень ліній) з фолбеком #86868b, якого браузер
+  /* Був --iprm-border-neutral (рівень ліній) з фолбеком #86868b, якого браузер
      ніколи не бачив, бо токен визначений: знак лупи виходив 1.51 у світлій
      темі. --apple-gray дає 6.56 / 5.90. */
   color: var(--apple-gray);
@@ -2939,7 +2939,7 @@ a.admin-stat-card:focus-visible {
 }
 
 /* Хрестик -- це текстовий гліф, а не лінія, тому теж --apple-gray
-   (було --apple-gray-light: 1.38 у світлій темі, 1.56 у тёмній). */
+   (було --iprm-border-neutral: 1.38 у світлій темі, 1.56 у тёмній). */
 .admin-chip__x {
   font-size: 1rem;
   line-height: 1;

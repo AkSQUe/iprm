@@ -115,31 +115,34 @@
   --iprm-warm-text: #a8420a;
   --iprm-warm-border: #f7dac3;
 
-  /* Apple-style neutral palette */
-  --apple-gray-dark: #4f4758;
+  /* Нейтральна й акцентна палітра. --apple-gray -- єдиний легасі-виняток:
+     у тёмній темі розходиться з --iprm-text-light на один щабель світлоти
+     (#98989d проти #a1a1a6), і чи це недогляд чи свідома різниця -- рішення
+     власника, не зведене навмисно (Фаза A, план A2). */
+  --iprm-text-secondary: #4f4758;
   --apple-gray: #625a6d;
-  --apple-gray-light: #d2d2d7;
-  --apple-purple-light: #c4b5fd;
-  --apple-orange: #ffad16;
-  --apple-purple-mid: #9048ef;
+  --iprm-border-neutral: #d2d2d7;
+  --iprm-accent-pale: #c4b5fd;
+  --iprm-gold: #ffad16;
+  --iprm-accent-mid: #9048ef;
   /* Світлий фіолет для градієнтів НА ТЁМНОМУ (той самий в обох темах) */
-  --apple-purple-soft: #c9aaff;
-  --apple-orange-light: #fff8e9;
+  --iprm-accent-soft: #c9aaff;
+  --iprm-gold-bg: #fff8e9;
   /* Дві похідні золота, бо саме золото читабельне лише як тло:
      --gold-soft -- текст на тёмному, --gold-ink -- текст на світлому. */
-  --apple-gold-soft: #ffd47c;
-  --apple-gold-ink: #a35f00;
-  /* Хвіст градієнтного заголовка. Окремий токен, а не --apple-gold-ink:
+  --iprm-gold-soft: #ffd47c;
+  --iprm-gold-ink: #a35f00;
+  /* Хвіст градієнтного заголовка. Окремий токен, а не --iprm-gold-ink:
      той лишається чорнилом для суцільного тексту по світлому (5.01), а тут
      потрібне живе золото -- у градієнті воно з'їдається лише на останніх
      літерах, і тёмно-коричневий хвіст робив заголовок брудним. */
-  --apple-grad-gold: #ffad36;
+  --iprm-gold-grad: #ffad36;
   /* rgb-трійки живуть у десятках rgba(var(--...), .12) -- тіней, ореолів і
      напівпрозорих плашок. Забути їх при зміні hex означає старі тіні під
      новими кнопками, тож вони мусять їхати разом із бренд-кольорами. */
-  --apple-accent-rgb: 116, 55, 201;
-  --apple-orange-rgb: 255, 173, 22;
-  --apple-black-rgb: 23, 19, 29;
+  --iprm-accent-rgb: 116, 55, 201;
+  --iprm-gold-rgb: 255, 173, 22;
+  --iprm-text-rgb: 23, 19, 29;
 
   /* Badge colors.
      Текст на кожній таблетці -- на крок темніший за палітру-джерело: у
@@ -242,27 +245,27 @@
   --iprm-warm-text: #ff9a5c;
   --iprm-warm-border: rgba(255, 154, 92, 0.3);
 
-  /* Apple-style neutral palette (інверсія світлот) */
-  --apple-gray-dark: #c7c7cc;
+  /* Нейтральна й акцентна палітра (інверсія світлот) */
+  --iprm-text-secondary: #c7c7cc;
   --apple-gray: #98989d;
-  --apple-gray-light: #48484a;
+  --iprm-border-neutral: #48484a;
   /* Золото світлішає: #ffad16 на #1c1c22 дає 9.08, але поруч із піднятим
      бренд-акцентом виглядає брудним, тому беремо #ffc247 (10.54). */
-  --apple-orange: #ffc247;
-  --apple-orange-light: rgba(255, 194, 71, 0.16);
+  --iprm-gold: #ffc247;
+  --iprm-gold-bg: rgba(255, 194, 71, 0.16);
   /* На тёмному "чорнило по світлому теплому" не існує -- воно збігається
      з самим золотом. Градієнтний фіолет теж мусить світлішати. */
-  --apple-gold-ink: #ffc247;
+  --iprm-gold-ink: #ffc247;
   /* Хвіст градієнта на тёмному теж світлішає: #ffad36 поруч із піднятим
      фіолетом виглядає прикопченим. */
-  --apple-grad-gold: #ffc247;
-  --apple-purple-mid: #c58cff;
-  /* --apple-accent-rgb / --apple-orange-rgb СВІДОМО не перевизначаємо: вони
+  --iprm-gold-grad: #ffc247;
+  --iprm-accent-mid: #c58cff;
+  /* --iprm-accent-rgb / --iprm-gold-rgb СВІДОМО не перевизначаємо: вони
      живуть у тінях та ореолах (rgba(var(--...), .12)), а тінь на тёмному
      мусить лишатись насиченою -- світліша трійка дала б сірий пух.
-     --apple-gold-soft і --iprm-on-accent-warm теж однакові в обох темах:
+     --iprm-gold-soft і --iprm-on-accent-warm теж однакові в обох темах:
      перший завжди лежить на тёмному, другий -- завжди на золоті.
-     --apple-black-rgb із тієї ж родини: він тримає скляне тло плашки
+     --iprm-text-rgb із тієї ж родини: він тримає скляне тло плашки
      згоди (rgba(..., .88) під backdrop-filter), а скло темне в обох темах.
      --iprm-hero-grad-3 теж лишається темним завжди: він або стоп
      градієнта, або color: у .apple-btn--white:hover, а та кнопка навмисно
@@ -387,7 +390,7 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 35%, #c77b4a 70%, var(--apple-orange) 100%);
+  background: linear-gradient(180deg, var(--iprm-nav-active) 0%, var(--iprm-accent-mid) 35%, #c77b4a 70%, var(--iprm-gold) 100%);
   border-radius: 10px;
   border: 2px solid var(--iprm-card-bg);
 }
@@ -469,7 +472,7 @@ a {
 .iprm-page-nav__link {
   padding: 8px 12px;
   border-bottom: 2px solid transparent;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
@@ -507,8 +510,8 @@ a {
   height: 8px;
   flex: none;
   border-radius: 50%;
-  background: var(--apple-orange);
-  box-shadow: 0 0 0 5px rgba(var(--apple-orange-rgb), 0.15);
+  background: var(--iprm-gold);
+  box-shadow: 0 0 0 5px rgba(var(--iprm-gold-rgb), 0.15);
 }
 
 /* CTA в шапці нижчий за звичайну кнопку: 54px не влазять у смугу 72px. */
@@ -674,13 +677,13 @@ a {
 }
 
 .iprm-header__admin-link:hover {
-  background: var(--apple-gray-dark);
+  background: var(--iprm-text-secondary);
 }
 
 .iprm-header__user-link {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   transition: color 0.2s;
 }
 
@@ -691,7 +694,7 @@ a {
 .iprm-header__auth-link {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   background: none;
   border: none;
   cursor: pointer;
@@ -734,7 +737,7 @@ a {
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   text-decoration: none;
   transition: color 0.2s, background-color 0.2s;
 }
@@ -875,7 +878,7 @@ a {
 .iprm-nav a {
   font-size: 0.8125rem;
   font-weight: 400;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   line-height: 1;
   transition: color 0.2s;
 }
@@ -1568,7 +1571,7 @@ select.badge-select:disabled {
 .iprm-footer__phone {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   transition: color 0.2s;
 }
 
@@ -1762,7 +1765,7 @@ select.badge-select:disabled {
   left: calc(12.5% + 24px);
   right: calc(12.5% + 24px);
   height: 2px;
-  background: linear-gradient(90deg, var(--iprm-accent), var(--apple-orange));
+  background: linear-gradient(90deg, var(--iprm-accent), var(--iprm-gold));
   opacity: 0.2;
 }
 
@@ -1900,7 +1903,7 @@ select.badge-select:disabled {
 
 /* Активний тег-фільтр (градієнтна заливка) */
 .iprm-tag.iprm-tag--active {
-  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 50%, var(--apple-orange) 100%);
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--iprm-accent-mid) 50%, var(--iprm-gold) 100%);
   color: var(--iprm-on-accent);
   border: none;
 }
@@ -1995,7 +1998,7 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   padding: 12px 16px;
   font-size: 17px;
   font-family: var(--iprm-font);
-  border: 1px solid var(--apple-gray-light);
+  border: 1px solid var(--iprm-border-neutral);
   border-radius: var(--iprm-radius-sm);
   background: var(--iprm-white);
   color: var(--iprm-text);
@@ -2054,7 +2057,7 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   z-index: 1000;
   width: calc(100% - 32px);
   max-width: 800px;
-  background: rgba(var(--apple-black-rgb), 0.88);
+  background: rgba(var(--iprm-text-rgb), 0.88);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   color: var(--iprm-on-accent);
@@ -2078,7 +2081,7 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
 }
 
 .cookie-banner__text a {
-  color: var(--apple-purple-light);
+  color: var(--iprm-accent-pale);
   text-decoration: underline;
 }
 
@@ -2122,7 +2125,7 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
 
 @media (prefers-reduced-transparency: reduce) {
   .cookie-banner {
-    background: rgba(var(--apple-black-rgb), 0.98);
+    background: rgba(var(--iprm-text-rgb), 0.98);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
@@ -2514,11 +2517,11 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   letter-spacing: 2px;
   /* Золото-чорнило, а не колишній літерал #f5a623: той давав на білому 2.03,
      тобто зірки були світлішою плямою, а не позначкою. */
-  color: var(--apple-gold-ink);
+  color: var(--iprm-gold-ink);
 }
 
 .iprm-rating__off {
-  color: var(--apple-gray-light);
+  color: var(--iprm-border-neutral);
 }
 
 .iprm-rating__value {
@@ -2528,11 +2531,11 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
 }
 
 /* На тёмній оболонці (секція відгуків на сторінці курсу) вона тёмна
-   незалежно від теми сайту, тож світлотемний --apple-gold-ink там був би
+   незалежно від теми сайту, тож світлотемний --iprm-gold-ink там був би
    майже невидимий. Беремо золото «для тёмного» -- той самий токен, що
    тримала власна плитка до переходу на компонент. */
 .iprm-rating--on-dark .iprm-rating__stars {
-  color: var(--apple-gold-soft);
+  color: var(--iprm-gold-soft);
   letter-spacing: 0.08em;
 }
 

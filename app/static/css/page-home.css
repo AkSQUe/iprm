@@ -111,9 +111,9 @@
   margin: 0 auto;
   padding: 32px;
   background: var(--iprm-white);
-  border: 1px solid rgba(var(--apple-accent-rgb), 0.25);
+  border: 1px solid rgba(var(--iprm-accent-rgb), 0.25);
   border-radius: var(--iprm-radius);
-  box-shadow: 0 8px 32px rgba(var(--apple-accent-rgb), 0.08);
+  box-shadow: 0 8px 32px rgba(var(--iprm-accent-rgb), 0.08);
 }
 
 .page-home .iprm-roi__inputs {
@@ -160,7 +160,7 @@
   font-family: var(--iprm-font);
   color: var(--iprm-text);
   background: var(--iprm-white);
-  border: 1px solid var(--apple-gray-light);
+  border: 1px solid var(--iprm-border-neutral);
   border-radius: var(--iprm-radius-sm);
   transition: border-color 0.2s, box-shadow 0.2s;
   -webkit-appearance: none;
@@ -327,7 +327,7 @@
 }
 
 .trainer-carousel__arrow:focus-visible {
-  outline: 3px solid rgba(var(--apple-accent-rgb), 0.24);
+  outline: 3px solid rgba(var(--iprm-accent-rgb), 0.24);
   outline-offset: 3px;
 }
 
@@ -525,7 +525,7 @@
 
 .home-route__step--goal {
   background: var(--iprm-accent-light);
-  border-color: rgba(var(--apple-accent-rgb), 0.35);
+  border-color: rgba(var(--iprm-accent-rgb), 0.35);
 }
 
 .home-route__meta {

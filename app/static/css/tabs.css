@@ -25,7 +25,7 @@
   font-family: inherit;
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   cursor: pointer;
   letter-spacing: -0.01em;
   border-bottom: 2px solid transparent;

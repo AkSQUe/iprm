@@ -37,7 +37,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--apple-gray);
-  border-bottom: 1px solid var(--apple-gray-light);
+  border-bottom: 1px solid var(--iprm-border-neutral);
   padding: 8px 10px;
 }
 

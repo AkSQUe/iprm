@@ -1,6 +1,6 @@
 /* Мовні вкладки в адмін-формах (admin-i18n-tabs.js) */
 
-/* Трек сегментованого контролю. Раніше стояв --apple-gray-light із фолбеком
+/* Трек сегментованого контролю. Раніше стояв --iprm-border-neutral із фолбеком
    #f5f5f7: автор мав на увазі світлу поверхню, але токен насправді означає
    рівень ліній (#d2d2d7), тож трек виходив помітно темнішим за задумане.
    --iprm-card-bg сюди не годиться -- у тёмній темі він збігається з тлом
@@ -23,7 +23,7 @@
   border-radius: var(--iprm-radius-pill);
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   font-family: inherit;
   transition: background-color 0.2s, color 0.2s;
 }
@@ -70,7 +70,7 @@
   font-size: 0.6875rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .i18n-tabs__count--done {
@@ -96,7 +96,7 @@
   font-size: 0.6875rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   opacity: 0.75;
 }
 
@@ -123,5 +123,5 @@
   margin: 0 0 4px;
   font-size: 0.8125rem;
   line-height: 1.4;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }

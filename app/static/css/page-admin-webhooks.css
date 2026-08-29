@@ -18,7 +18,7 @@
   border-radius: var(--iprm-radius);
   font-size: 0.875rem;
   line-height: 1.55;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .wh-info__icon {
@@ -63,7 +63,7 @@
   letter-spacing: 0.02em;
   border-radius: var(--iprm-radius-pill);
   background: var(--iprm-card-bg);
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .wh-action--created { background: var(--iprm-badge-active-bg); color: var(--iprm-badge-active-text); }
@@ -83,7 +83,7 @@
   margin-top: 3px;
   font-family: var(--iprm-font-mono);
   font-size: 0.6875rem;
-  /* UUID -- текст, який реально читають і копіюють, а --apple-gray-light
+  /* UUID -- текст, який реально читають і копіюють, а --iprm-border-neutral
      означає рівень ліній: на білому це 1.51, у тёмній темі 1.86. */
   color: var(--apple-gray);
 }

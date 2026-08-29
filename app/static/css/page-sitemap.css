@@ -18,7 +18,7 @@
 
 .sitemap-section:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(var(--apple-accent-rgb), 0.08);
+  box-shadow: 0 8px 24px rgba(var(--iprm-accent-rgb), 0.08);
 }
 
 /* Section header (toggle button) */
@@ -156,7 +156,7 @@
   display: block;
   padding: 10px 0;
   font-size: 0.9375rem;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   text-decoration: none;
   transition: color 0.2s var(--ease-interact), padding-left 0.2s var(--ease-interact);
 }

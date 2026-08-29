@@ -14,7 +14,7 @@
   border-radius: var(--iprm-radius-pill);
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   background: var(--iprm-card-bg);
   text-decoration: none;
   border: none;

@@ -64,7 +64,7 @@
 
 .ds-section-dark .ds-hint {
   background: rgba(255, 255, 255, 0.06);
-  color: var(--apple-gray-light);
+  color: var(--iprm-border-neutral);
 }
 
 /* ========== LAYOUT HELPERS ========== */
@@ -136,13 +136,13 @@
 .ds-swatch__color--accent { background: var(--iprm-accent); }
 .ds-swatch__color--accent-hover { background: var(--iprm-accent-hover); }
 .ds-swatch__color--accent-light { background: var(--iprm-accent-light); }
-.ds-swatch__color--gold { background: var(--apple-orange); }
-.ds-swatch__color--gold-light { background: var(--apple-orange-light); }
-.ds-swatch__color--gold-soft { background: var(--apple-gold-soft); }
-.ds-swatch__color--gold-ink { background: var(--apple-gold-ink); }
-.ds-swatch__color--grad-gold { background: var(--apple-grad-gold); }
+.ds-swatch__color--gold { background: var(--iprm-gold); }
+.ds-swatch__color--gold-light { background: var(--iprm-gold-bg); }
+.ds-swatch__color--gold-soft { background: var(--iprm-gold-soft); }
+.ds-swatch__color--gold-ink { background: var(--iprm-gold-ink); }
+.ds-swatch__color--grad-gold { background: var(--iprm-gold-grad); }
 .ds-swatch__color--on-accent-warm { background: var(--iprm-on-accent-warm); }
-.ds-swatch__color--purple-mid { background: var(--apple-purple-mid); }
+.ds-swatch__color--purple-mid { background: var(--iprm-accent-mid); }
 .ds-swatch__color--section-bg { background: var(--iprm-card-bg); }
 .ds-swatch__color--line { background: var(--iprm-border); }
 .ds-swatch__color--line-strong { background: var(--iprm-border-strong); }
@@ -194,11 +194,11 @@
 }
 
 .ds-gradient-sample--brand-gold {
-  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 42%, var(--apple-grad-gold) 100%);
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--iprm-accent-mid) 42%, var(--iprm-gold-grad) 100%);
 }
 
 .ds-gradient-sample--brand-gold-dark {
-  background: linear-gradient(135deg, var(--apple-purple-soft) 0%, var(--apple-gold-soft) 100%);
+  background: linear-gradient(135deg, var(--iprm-accent-soft) 0%, var(--iprm-gold-soft) 100%);
   color: var(--iprm-hero-grad-3);
 }
 
@@ -211,7 +211,7 @@
 
 .ds-gradient-sample--section-dark {
   background:
-    radial-gradient(circle at 90% 0, rgba(var(--apple-orange-rgb), 0.2), transparent 34%),
+    radial-gradient(circle at 90% 0, rgba(var(--iprm-gold-rgb), 0.2), transparent 34%),
     linear-gradient(145deg, var(--iprm-hero-grad-2), var(--iprm-hero-grad-3));
 }
 
@@ -226,7 +226,7 @@
   border-radius: var(--iprm-radius-lg);
   color: var(--iprm-on-accent);
   background:
-    radial-gradient(circle at 90% 0, rgba(var(--apple-orange-rgb), 0.2), transparent 34%),
+    radial-gradient(circle at 90% 0, rgba(var(--iprm-gold-rgb), 0.2), transparent 34%),
     linear-gradient(145deg, var(--iprm-hero-grad-2), var(--iprm-hero-grad-3));
 }
 
@@ -324,7 +324,7 @@
 
 .ds-prose {
   font-size: 0.9375rem;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   line-height: 1.8;
 }
 
@@ -337,7 +337,7 @@
 }
 
 .ds-section-dark .ds-prose {
-  color: var(--apple-gray-light);
+  color: var(--iprm-border-neutral);
 }
 
 /* Приклад ::selection у розділі Accessibility -- фрагмент тексту, вигляд
@@ -442,7 +442,7 @@
 
 .ds-bg-chip--dark {
   background: var(--iprm-dark);
-  color: var(--apple-gray-light);
+  color: var(--iprm-border-neutral);
 }
 
 /* ========== RESPONSIVE ========== */
@@ -504,9 +504,9 @@
    той літерал, який admin.css окремо викинув за контраст 2.22. */
 .ds-swatch__color--black { background: var(--iprm-text); }
 .ds-swatch__color--dark { background: var(--iprm-dark); }
-.ds-swatch__color--gray-dark { background: var(--apple-gray-dark); }
+.ds-swatch__color--gray-dark { background: var(--iprm-text-secondary); }
 .ds-swatch__color--gray { background: var(--apple-gray); }
-.ds-swatch__color--gray-light { background: var(--apple-gray-light); }
+.ds-swatch__color--gray-light { background: var(--iprm-border-neutral); }
 .ds-swatch__color--white { background: var(--iprm-white); }
 .ds-swatch__color--success { background: var(--iprm-success); }
 .ds-swatch__color--warning-bg { background: var(--iprm-warning-bg); }

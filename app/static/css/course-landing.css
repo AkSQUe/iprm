@@ -36,8 +36,8 @@
      вилку тёмних секцій сайту, і підміна їх заради hero потягнула б за
      собою відгуки та секцію заявки. */
   background:
-    radial-gradient(circle at 91% 8%, rgba(var(--apple-orange-rgb), 0.21), transparent 28%),
-    radial-gradient(circle at 10% 95%, rgba(var(--apple-accent-rgb), 0.38), transparent 30%),
+    radial-gradient(circle at 91% 8%, rgba(var(--iprm-gold-rgb), 0.21), transparent 28%),
+    radial-gradient(circle at 10% 95%, rgba(var(--iprm-accent-rgb), 0.38), transparent 30%),
     linear-gradient(145deg, var(--hero-grad-from), var(--hero-grad-to));
 }
 
@@ -103,9 +103,9 @@
 }
 
 .iprm-hero__chip--accent {
-  color: var(--apple-gold-soft);
-  border-color: rgba(var(--apple-orange-rgb), 0.45);
-  background: rgba(var(--apple-orange-rgb), 0.13);
+  color: var(--iprm-gold-soft);
+  border-color: rgba(var(--iprm-gold-rgb), 0.45);
+  background: rgba(var(--iprm-gold-rgb), 0.13);
 }
 
 .apple-page .iprm-hero--landing .iprm-hero__actions {
@@ -229,7 +229,7 @@
      разом з іншими. */
   width: var(--iprm-progress, 0%);
   height: 100%;
-  background: linear-gradient(90deg, var(--apple-orange), #ef8e00);
+  background: linear-gradient(90deg, var(--iprm-gold), #ef8e00);
   transition: width 0.6s var(--ease-reveal);
 }
 
@@ -356,7 +356,7 @@
   margin: 0 auto;
   font-size: 17px;
   line-height: 1.7;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .iprm-prose > :first-child {
@@ -441,8 +441,8 @@
    (золото) і тепле тло: вона мусить читатись як запрошення, а не як
    другий пункт списку. */
 .iprm-audience-card--ask {
-  border-top-color: var(--apple-orange);
-  background: var(--apple-orange-light);
+  border-top-color: var(--iprm-gold);
+  background: var(--iprm-gold-bg);
 }
 
 .iprm-audience-card__tag {
@@ -541,7 +541,7 @@
 }
 
 .iprm-gallery__link:focus-visible {
-  outline: 3px solid var(--apple-gold-soft);
+  outline: 3px solid var(--iprm-gold-soft);
   outline-offset: -3px;
 }
 
@@ -624,7 +624,7 @@
 
 .apple-page .iprm-program__block:hover {
   transform: translateY(-4px);
-  box-shadow: 0 18px 48px rgba(var(--apple-accent-rgb), 0.12);
+  box-shadow: 0 18px 48px rgba(var(--iprm-accent-rgb), 0.12);
 }
 
 .apple-page .iprm-program__block:hover::before {
@@ -651,7 +651,7 @@
   font-weight: 800;
   color: var(--iprm-on-accent);
   background: var(--iprm-accent);
-  box-shadow: 0 6px 16px rgba(var(--apple-accent-rgb), 0.28);
+  box-shadow: 0 6px 16px rgba(var(--iprm-accent-rgb), 0.28);
 }
 
 .apple-page .iprm-program__heading {
@@ -671,7 +671,7 @@
 
 .apple-page .iprm-program__item {
   font-size: 0.9375rem;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   line-height: 1.55;
   padding: 12px 0 12px 32px;
   border-top: 1px solid var(--iprm-divider);
@@ -834,7 +834,7 @@
   height: 48px;
   flex: none;
   border-radius: var(--iprm-radius-md);
-  background: var(--apple-orange);
+  background: var(--iprm-gold);
   color: var(--iprm-on-accent-warm);
   font-size: 1.4375rem;
   font-weight: 900;
@@ -913,7 +913,7 @@
 .iprm-trainer-block__body p:not(.iprm-trainer-block__role) {
   font-size: 17px;
   line-height: 1.65;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   margin: 0;
 }
 
@@ -1012,7 +1012,7 @@
      точкою стояв --iprm-hero-grad-1 -- це початок hero, він СВІТЛІШИЙ за
      першу точку, тому оболонка вигорала до фіолетового замість темніти. */
   background:
-    radial-gradient(circle at 95% 15%, rgba(var(--apple-orange-rgb), 0.18), transparent 30%),
+    radial-gradient(circle at 95% 15%, rgba(var(--iprm-gold-rgb), 0.18), transparent 30%),
     linear-gradient(145deg, var(--iprm-hero-grad-2), var(--iprm-hero-grad-3));
 }
 
@@ -1062,7 +1062,7 @@
 }
 
 /* Обгортка рядка зірок над цитатою: розкладка й розмір. Колір тримає
-   .iprm-rating--on-dark -- золото м'яке (--apple-gold-soft), бо чисте
+   .iprm-rating--on-dark -- золото м'яке (--iprm-gold-soft), бо чисте
    #ffad16 на плитці rgba(255,255,255,.08) поверх глибокого фіолету дає 6.7,
    а світле 9.5, і воно однакове в обох темах.
 
@@ -1110,7 +1110,7 @@
 .apple-page .iprm-lead-section {
   color: var(--iprm-on-accent);
   background:
-    radial-gradient(circle at 90% 0, rgba(var(--apple-orange-rgb), 0.2), transparent 34%),
+    radial-gradient(circle at 90% 0, rgba(var(--iprm-gold-rgb), 0.2), transparent 34%),
     linear-gradient(145deg, var(--iprm-hero-grad-2), var(--iprm-hero-grad-3));
 }
 
@@ -1129,11 +1129,11 @@
 }
 
 /* Заголовок приходить із detail.html уже з .apple-gradient-text, а той
-   зібраний під світлий фон (хвіст -- --apple-grad-gold). На тёмній секції
+   зібраний під світлий фон (хвіст -- --iprm-gold-grad). На тёмній секції
    пара «бренд -> золото» гасне, тож перемикаємо на світлу тут, у CSS: шаблон,
    що збирає заголовок, -- не наш. */
 .apple-page .iprm-lead-section .apple-gradient-text {
-  background-image: linear-gradient(135deg, var(--apple-purple-soft) 0%, var(--apple-gold-soft) 100%);
+  background-image: linear-gradient(135deg, var(--iprm-accent-soft) 0%, var(--iprm-gold-soft) 100%);
 }
 
 .iprm-lead-grid__lead {
@@ -1155,13 +1155,13 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
-/* Галка -- м'яке золото, а не --apple-orange: на глибокому фіолеті чисте
+/* Галка -- м'яке золото, а не --iprm-gold: на глибокому фіолеті чисте
    #ffad16 дає 6.2, світле #ffd47c -- 9.1, і воно однакове в обох темах. */
 .iprm-lead-list li::before {
   content: '\2713';
   position: absolute;
   left: 0;
-  color: var(--apple-gold-soft);
+  color: var(--iprm-gold-soft);
   font-weight: 800;
 }
 
@@ -1230,7 +1230,7 @@
 .iprm-lead-form .form-group label {
   font-size: 0.8125rem;
   font-weight: 750;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 /* Зірочка обовʼязкового поля -- МІТКА, тому тепла, а не золота: золото на

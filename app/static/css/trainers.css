@@ -28,7 +28,7 @@
   aspect-ratio: 3 / 4;
   border-radius: var(--iprm-radius);
   overflow: hidden;
-  background: linear-gradient(135deg, var(--iprm-accent-light), var(--apple-orange-light));
+  background: linear-gradient(135deg, var(--iprm-accent-light), var(--iprm-gold-bg));
 }
 
 .iprm-hero-trainer__photo img {
@@ -53,7 +53,7 @@
   margin: 0 auto;
   font-size: 17px;
   line-height: 1.65;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   text-align: center;
 }
 

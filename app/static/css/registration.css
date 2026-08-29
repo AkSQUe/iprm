@@ -472,7 +472,7 @@
 }
 
 .reg-user-type__option:hover {
-  border-color: var(--apple-gray-light);
+  border-color: var(--iprm-border-neutral);
 }
 
 .reg-user-type__option:has(input:checked) {
@@ -830,7 +830,7 @@
   padding: 12px 14px;
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   background: var(--iprm-accent-light);
   border-radius: var(--iprm-radius-sm);
 }
@@ -937,7 +937,7 @@
   flex-direction: column;
   gap: 6px;
   font-size: 0.875rem;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .reg-tariff__items li {
@@ -992,7 +992,7 @@
 .reg-certdata-reminder__text {
   font-size: 0.875rem;
   line-height: 1.5;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   margin: 0 0 12px;
 }
 

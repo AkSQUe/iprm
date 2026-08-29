@@ -19,7 +19,7 @@
 }
 .blog-editor__btype {
   display: inline-flex; align-items: center; gap: 6px;
-  font-size: 0.8125rem; font-weight: 600; color: var(--apple-gray-dark);
+  font-size: 0.8125rem; font-weight: 600; color: var(--iprm-text-secondary);
 }
 .blog-editor__btype .material-symbols-rounded { font-size: 20px; }
 .blog-editor__bctrls { display: inline-flex; gap: 4px; }
@@ -28,7 +28,7 @@
   display: inline-flex; align-items: center; justify-content: center;
   width: 30px; height: 30px;
   border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm);
-  background: var(--iprm-white); color: var(--apple-gray-dark); cursor: pointer;
+  background: var(--iprm-white); color: var(--iprm-text-secondary); cursor: pointer;
   transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
 .blog-editor__ctrl:hover { background: var(--iprm-card-bg); }
@@ -45,7 +45,7 @@
   display: inline-flex; align-items: center; justify-content: center;
   width: 32px; height: 30px;
   border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm);
-  background: var(--iprm-white); cursor: pointer; color: var(--apple-gray-dark);
+  background: var(--iprm-white); cursor: pointer; color: var(--iprm-text-secondary);
 }
 .blog-editor__ibtn:hover { background: var(--iprm-card-bg); }
 .blog-editor__ibtn .material-symbols-rounded { font-size: 18px; }
@@ -70,7 +70,7 @@
   display: inline-flex; align-items: center; justify-content: center;
 }
 .blog-editor__g-remove .material-symbols-rounded { font-size: 16px; }
-.blog-editor__divider-prev { text-align: center; color: var(--apple-gray-light); letter-spacing: 0.3em; }
+.blog-editor__divider-prev { text-align: center; color: var(--iprm-border-neutral); letter-spacing: 0.3em; }
 
 /* Панель додавання блоків */
 .blog-editor__add { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
@@ -78,7 +78,7 @@
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 14px;
   border: 1px dashed var(--iprm-border); border-radius: var(--iprm-radius-pill);
-  background: var(--iprm-white); color: var(--apple-gray-dark);
+  background: var(--iprm-white); color: var(--iprm-text-secondary);
   font-size: 0.8125rem; font-weight: 500; cursor: pointer;
   transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 }

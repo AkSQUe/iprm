@@ -67,7 +67,7 @@
 
 .referral-share__input:focus {
   outline: none;
-  border-color: rgba(var(--apple-accent-rgb), 0.6);
+  border-color: rgba(var(--iprm-accent-rgb), 0.6);
 }
 
 .referral-share__copy {
@@ -142,7 +142,7 @@
 }
 
 .referral-tools__btn:hover {
-  border-color: rgba(var(--apple-accent-rgb), 0.6);
+  border-color: rgba(var(--iprm-accent-rgb), 0.6);
 }
 
 /* ===== Історія нарахувань ===== */

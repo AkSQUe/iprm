@@ -51,7 +51,7 @@
 .apple-page .iprm-rec-card__summary {
   font-size: 0.875rem;
   line-height: 1.45;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   margin: 0 0 16px;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -94,7 +94,7 @@
 
 .apple-page .iprm-rec-card__meta-value--muted {
   font-weight: 500;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 /* ===== Теги ===== */

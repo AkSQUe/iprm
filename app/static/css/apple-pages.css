@@ -49,9 +49,9 @@ html {
    такі поверхні тёмні в обох темах, тож варіант вибирається класом, а не
    [data-theme]. Бренд на тёмному нечитабельний -- беремо м'яке золото. */
 .apple-page .iprm-eyebrow--on-dark {
-  color: var(--apple-gold-soft);
-  background: rgba(var(--apple-orange-rgb), 0.13);
-  border: 1px solid rgba(var(--apple-orange-rgb), 0.25);
+  color: var(--iprm-gold-soft);
+  background: rgba(var(--iprm-gold-rgb), 0.13);
+  border: 1px solid rgba(var(--iprm-gold-rgb), 0.25);
 }
 
 /* ========== INTERNAL HERO (compact, white, centered) ========== */
@@ -85,7 +85,7 @@ html {
   right: -150px;
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, rgba(var(--apple-accent-rgb), 0.05) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(var(--iprm-accent-rgb), 0.05) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -109,8 +109,8 @@ html {
 
 /* Глобальний градієнтний текст -- використовується на apple-page, error-page, index.
 
-   Хвіст -- --apple-grad-gold (#ffad36 на світлому). Раніше тут стояло чорнило
-   --apple-gold-ink (#a35f00, 5.01 на білому) заради контрасту, але тёмно-
+   Хвіст -- --iprm-gold-grad (#ffad36 на світлому). Раніше тут стояло чорнило
+   --iprm-gold-ink (#a35f00, 5.01 на білому) заради контрасту, але тёмно-
    коричневий кінець читався як бруд, а не як золото. Плата за живий хвіст
    відома: #ffad36 на білому дає 1.86, тож останні літери формально нижчі за
    AA-поріг 3:1 для великого тексту -- це свідоме рішення від 17.08.2026.
@@ -127,7 +127,7 @@ html {
    часто не малює background-clip: text. */
 .apple-gradient-text {
   color: var(--iprm-nav-active);
-  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 42%, var(--apple-grad-gold) 100%);
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--iprm-accent-mid) 42%, var(--iprm-gold-grad) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   padding-block: 0.05em;
@@ -160,8 +160,8 @@ html {
 /* На тёмних поверхнях фолбек мусить бути світлим: брендовий фіолет на
    тёмному градієнті дав би ~2 контрасту. */
 .apple-gradient-text--on-dark {
-  color: var(--apple-gold-soft);
-  background-image: linear-gradient(135deg, var(--apple-purple-soft) 0%, var(--apple-gold-soft) 100%);
+  color: var(--iprm-gold-soft);
+  background-image: linear-gradient(135deg, var(--iprm-accent-soft) 0%, var(--iprm-gold-soft) 100%);
 }
 
 .apple-page .iprm-hero__subtitle {
@@ -295,35 +295,35 @@ html {
 .apple-page .apple-btn--primary {
   background: var(--iprm-btn-bg);
   color: var(--iprm-on-accent);
-  box-shadow: 0 10px 24px rgba(var(--apple-accent-rgb), 0.27);
+  box-shadow: 0 10px 24px rgba(var(--iprm-accent-rgb), 0.27);
 }
 
 .apple-page .apple-btn--primary:hover {
   background: var(--iprm-btn-bg-hover);
-  box-shadow: 0 14px 30px rgba(var(--apple-accent-rgb), 0.3);
+  box-shadow: 0 14px 30px rgba(var(--iprm-accent-rgb), 0.3);
 }
 
 .apple-page .apple-btn--primary:active {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(var(--apple-accent-rgb), 0.15);
+  box-shadow: 0 2px 8px rgba(var(--iprm-accent-rgb), 0.15);
 }
 
 /* Золото -- головна дія (реєстрація, оплата). Текст тёмний тёплий:
    білий по золоту дає 1.9, тёмний -- 8.28. */
 .apple-page .apple-btn--accent {
-  background: var(--apple-orange);
+  background: var(--iprm-gold);
   color: var(--iprm-on-accent-warm);
-  box-shadow: 0 12px 26px rgba(var(--apple-orange-rgb), 0.3);
+  box-shadow: 0 12px 26px rgba(var(--iprm-gold-rgb), 0.3);
 }
 
 .apple-page .apple-btn--accent:hover {
-  background: color-mix(in oklch, var(--apple-orange), white 14%);
-  box-shadow: 0 16px 32px rgba(var(--apple-orange-rgb), 0.34);
+  background: color-mix(in oklch, var(--iprm-gold), white 14%);
+  box-shadow: 0 16px 32px rgba(var(--iprm-gold-rgb), 0.34);
 }
 
 .apple-page .apple-btn--accent:active {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(var(--apple-orange-rgb), 0.2);
+  box-shadow: 0 2px 8px rgba(var(--iprm-gold-rgb), 0.2);
 }
 
 /* Біла -- другорядна дія НА ТЁМНОМУ (hero, оболонка відгуків). Тло беремо
@@ -411,7 +411,7 @@ html {
 
 .apple-page .iprm-course-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
+  box-shadow: 0 12px 40px rgba(var(--iprm-accent-rgb), 0.1);
 }
 
 /* Приховати картку при фільтрації (перекриває display: flex вище) */
@@ -424,7 +424,7 @@ html {
   aspect-ratio: auto;
   border: none;
   border-radius: 0;
-  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--apple-orange-light) 100%);
+  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--iprm-gold-bg) 100%);
   margin-bottom: 0;
 }
 
@@ -481,7 +481,7 @@ html {
 /* Бейдж типу заходу лишається ТЕПЛИМ, але не золотим: золото стало кольором
    дії, а золотий бейдж поруч із золотою кнопкою реєстрації читався б як
    друга кнопка. Тепла інформаційна родина -- терракота (--iprm-warm-*).
-   Раніше тут були --apple-orange-light + --apple-orange: після переходу на
+   Раніше тут були --iprm-gold-bg + --iprm-gold: після переходу на
    еталонне золото ця пара давала ще й 1.9 контрасту. */
 .apple-page .iprm-card-badge--type {
   background: var(--iprm-warm-bg);
@@ -541,7 +541,7 @@ html {
   gap: 8px;
   margin-bottom: 12px;
   font-size: 0.875rem;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .apple-page .iprm-course-card__trainer img {
@@ -560,7 +560,7 @@ html {
   margin-top: auto;
   padding-top: 8px;
   font-size: 0.875rem;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
 }
 
 .apple-page .iprm-course-card__seats--warning {
@@ -590,12 +590,12 @@ html {
 /* Рекомендований курс (is_featured): ширша картка + акцентна рамка */
 .apple-page .iprm-course-card--featured {
   grid-column: span 2;
-  border: 1px solid rgba(var(--apple-accent-rgb), 0.35);
-  box-shadow: 0 8px 32px rgba(var(--apple-accent-rgb), 0.08);
+  border: 1px solid rgba(var(--iprm-accent-rgb), 0.35);
+  box-shadow: 0 8px 32px rgba(var(--iprm-accent-rgb), 0.08);
 }
 
 .apple-page .iprm-card-badge--featured {
-  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 100%);
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--iprm-accent-mid) 100%);
   color: var(--iprm-on-accent);
 }
 
@@ -624,12 +624,12 @@ html {
 
 .apple-page .apple-feature-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
+  box-shadow: 0 12px 40px rgba(var(--iprm-accent-rgb), 0.1);
 }
 
 .apple-page .apple-feature-card:active {
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(var(--apple-accent-rgb), 0.06);
+  box-shadow: 0 4px 16px rgba(var(--iprm-accent-rgb), 0.06);
 }
 
 /* Зображення-іконка */
@@ -680,11 +680,11 @@ html {
 
 .apple-page .iprm-trainer-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
+  box-shadow: 0 12px 40px rgba(var(--iprm-accent-rgb), 0.1);
 }
 
 .apple-page .iprm-trainer-card__photo {
-  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--apple-orange-light) 100%);
+  background: linear-gradient(135deg, var(--iprm-accent-light) 0%, var(--iprm-gold-bg) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -750,12 +750,12 @@ html {
 
 .apple-page .iprm-target-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(var(--apple-accent-rgb), 0.1);
+  box-shadow: 0 12px 40px rgba(var(--iprm-accent-rgb), 0.1);
 }
 
 .apple-page .iprm-target-card p {
   font-size: 17px;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   line-height: 1.55;
 }
 
@@ -799,7 +799,7 @@ html {
   max-width: 800px;
   margin: 0 auto;
   font-size: 17px;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   line-height: 1.65;
 }
 
@@ -843,7 +843,7 @@ html {
   /* Фолбек кольору -- як у .apple-gradient-text: без нього цифра помилки
      зникає скрізь, де фон по тексту не малюється. */
   color: var(--iprm-nav-active);
-  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 40%, var(--apple-orange) 100%);
+  background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--iprm-accent-mid) 40%, var(--iprm-gold) 100%);
   -webkit-background-clip: text;
   background-clip: text;
 }
@@ -1125,7 +1125,7 @@ html {
 .apple-page .iprm-about-hero__lead {
   font-size: 1.125rem;
   line-height: 1.55;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   letter-spacing: -0.01em;
   margin: 0;
 }
@@ -1152,7 +1152,7 @@ html {
 
 .apple-page .iprm-stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(var(--apple-accent-rgb), 0.08);
+  box-shadow: 0 8px 24px rgba(var(--iprm-accent-rgb), 0.08);
 }
 
 .apple-page .iprm-stat-card__value {
@@ -1165,7 +1165,7 @@ html {
 
 .apple-page .iprm-stat-card__label {
   font-size: 0.8125rem;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   letter-spacing: -0.005em;
 }
 
@@ -1211,7 +1211,7 @@ html {
   border-radius: 12px;
   border: 1px solid var(--iprm-border);
   font-size: 0.9375rem;
-  color: var(--apple-gray-dark);
+  color: var(--iprm-text-secondary);
   line-height: 1.5;
   min-height: 50px;
 }
