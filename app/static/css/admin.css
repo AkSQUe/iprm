@@ -1727,8 +1727,11 @@ a.admin-stat-card:focus-visible {
 .admin-with-sidebar .form-section .form-input,
 .admin-form .form-input,
 .admin-control-row .form-input,
-.admin-filters__form .form-input,
-.backup-actions__form .form-input {
+.admin-filters__form .form-input {
+  /* .backup-actions__form .form-input прибрано зі списку: правило було
+     мертве. Єдиний шаблон, що вживає цей клас -- admin/backups.html, --
+     успадковує base.html, а не admin/base_admin.html, і admin.css не
+     підключає взагалі. */
   padding: 10px 14px;
   font-size: 0.9375rem;
   color: var(--iprm-text);
