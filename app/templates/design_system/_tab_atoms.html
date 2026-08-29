@@ -114,10 +114,10 @@
         <h3 class="ds-section-heading">Link-style</h3>
         <div class="ds-demo">
           <div class="ds-row">
-            <a href="#" style="font-size:0.875rem;font-weight:500;color:var(--iprm-accent);text-decoration:none;">На сторінку клініки ></a>
+            <a href="#auth-card" class="auth-card__link">Забули пароль?</a>
           </div>
         </div>
-        <p class="ds-hint">font-size: 0.875rem / weight: 500 / color: accent / ::after ' >' / Hover: accent-hover</p>
+        <p class="ds-hint">.auth-card__link (auth.css): 0.875rem / weight 500 / color accent / hover: accent-hover. Той самий клас показано в табі «Молекули» всередині картки авторизації -- тут лише сама лінк-типографіка.</p>
     </div>
   </div>
 
@@ -129,11 +129,11 @@
     <h3 class="ds-section-heading">Hero Badge / Price Pill</h3>
     <div class="ds-demo">
       <div class="ds-row">
-        <span style="display:inline-block;font-size:0.8125rem;font-weight:500;color:var(--iprm-accent);background:var(--iprm-accent-light);padding:6px 16px;border-radius:980px;">Бали БПР</span>
-        <span style="display:inline-flex;align-items:center;gap:8px;font-size:1rem;font-weight:600;color:var(--iprm-accent);background:var(--iprm-accent-light);padding:8px 24px;border-radius:980px;">7 500 &#8372; за курс</span>
+        <span class="iprm-hero__badge">Бали БПР</span>
+        <span class="iprm-hero__price">7 500 &#8372; за курс</span>
       </div>
     </div>
-    <p class="ds-hint">border-radius: var(--iprm-radius-pill) / bg: accent-light / color: accent / Використовуються в hero</p>
+    <p class="ds-hint">.iprm-hero__badge / .iprm-hero__price (common.css / apple-pages.css) -- ті самі класи, повністю показані в hero-демо табу «Молекули»; тут ізольовано як типографічний примітив. .iprm-hero__badge має вхідну анімацію appleHeroFadeUp (opacity 0 -> 1, 0.8s) -- на живій сторінці й тут вона одноразово програється при завантаженні.</p>
 
     <h3 class="ds-section-heading">Теги</h3>
     <div class="ds-demo">
@@ -245,16 +245,16 @@
     <p class="ds-label">Components</p>
     <h2 class="ds-title">Порожній стан</h2>
     <div class="ds-demo">
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
-        <div class="iprm-empty-state" style="background: var(--iprm-card-bg); border-radius: var(--iprm-radius);">
+      <div class="ds-empty-state-grid">
+        <div class="iprm-empty-state">
           <p>Інформація скоро з'явиться</p>
         </div>
-        <div class="iprm-empty-state iprm-empty-state--full" style="background: var(--iprm-card-bg); border-radius: var(--iprm-radius); grid-column: 1 / -1;">
+        <div class="iprm-empty-state iprm-empty-state--full">
           <p>Порожній стан на всю ширину (--full)</p>
         </div>
       </div>
     </div>
-    <p class="ds-hint">.iprm-empty-state: text-align center, padding 48px 24px / .iprm-empty-state--full: grid-column 1 / -1</p>
+    <p class="ds-hint">.iprm-empty-state (common.css): text-align center, padding 48px 24px, без власного фону -- саме так він і живе на сторінці (courses/trainers/clinics list.html), голим текстом у сітці карток. Попередній мокап домальовував фон і радіус, яких компонент не має. .iprm-empty-state--full: grid-column 1 / -1</p>
   </div>
 
   <!-- ===== FORM FEEDBACK ===== -->
