@@ -8,7 +8,7 @@
 {% set _sitemap_schema = {
   '@context': 'https://schema.org',
   '@type': 'SiteNavigationElement',
-  'name': 'Карта сайту ІПРМ',
+  'name': _('Карта сайту ІПРМ'),
   'url': url_for('main.sitemap_page', _external=True)
 } %}
 <script type="application/ld+json">{{ _sitemap_schema | tojson }}</script>
