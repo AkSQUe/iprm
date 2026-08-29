@@ -351,3 +351,59 @@ def test_compound_qualified_state_classes_do_not_collide(tmp_path):
         'b.css': '.dialog.is-visible { opacity: 1; }',
     })
     assert 'is-visible' not in ds_audit.duplicate_classes(root)
+
+
+def test_rule_clones_does_not_count_one_grouped_rule_as_copies(tmp_path):
+    """Правило з кількома селекторами через кому -- ЗВЕДЕНЕ, а не копії.
+
+    Регресія, через яку міра брехала майже вдвічі. `_rule_bodies` віддає
+    кожен селектор списку окремим записом (так треба решті мір), і перша
+    версія `rule_clones` рахувала кожен окремою копією. Через це вже
+    зведене правило
+
+        .field-invalid, input.field-invalid,
+        select.field-invalid, textarea.field-invalid { ... }
+
+    виглядало як чотири порушення -- хоча воно і є тим, до чого міра
+    закликає. Число копій у проєкті було завищене зі 88 до 157, а
+    найбільша \"група\", яку я взяв за приклад, виявилась одним правилом.
+    """
+    css_dir = tmp_path / 'app' / 'static' / 'css'
+    css_dir.mkdir(parents=True)
+    (css_dir / 'one.css').write_text(
+        '.a, input.a, select.a, textarea.a {\n'
+        '  color: red;\n  border: 1px solid blue;\n  padding: 4px;\n}\n',
+        encoding='utf-8')
+
+    assert ds_audit.rule_clones(tmp_path) == {}, (
+        'одне правило з чотирма селекторами -- це зведений компонент, '
+        'а не чотири копії.'
+    )
+
+
+def test_rule_clones_catches_the_same_rule_written_twice(tmp_path):
+    """Зуби: два ОКРЕМІ правила з тим самим набором -- це копія.
+
+    Без цієї перевірки попередній тест можна \"пройти\", зламавши міру
+    зовсім -- вона просто не знаходила б нічого.
+    """
+    css_dir = tmp_path / 'app' / 'static' / 'css'
+    css_dir.mkdir(parents=True)
+    body = '{\n  color: red;\n  border: 1px solid blue;\n  padding: 4px;\n}\n'
+    (css_dir / 'one.css').write_text('.a ' + body, encoding='utf-8')
+    (css_dir / 'two.css').write_text('.b ' + body, encoding='utf-8')
+
+    clones = ds_audit.rule_clones(tmp_path)
+    assert len(clones) == 1, clones
+    where = sorted(next(iter(clones.values())))
+    assert where == [('one.css', '.a'), ('two.css', '.b')], where
+
+
+def test_rule_clones_ignores_rules_smaller_than_the_threshold(tmp_path):
+    """Два оголошення з одного `display: flex` збігаються випадково."""
+    css_dir = tmp_path / 'app' / 'static' / 'css'
+    css_dir.mkdir(parents=True)
+    (css_dir / 'one.css').write_text('.a { display: flex; }', encoding='utf-8')
+    (css_dir / 'two.css').write_text('.b { display: flex; }', encoding='utf-8')
+
+    assert ds_audit.rule_clones(tmp_path) == {}
