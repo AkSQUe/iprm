@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'partials/schema/_breadcrumbs.html' import breadcrumbs with context %}
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 {% from 'partials/_location_badge.html' import location_badge %}
 {% from 'partials/_money.html' import money %}
@@ -76,17 +77,10 @@
 
 {% block jsonld %}
 <script type="application/ld+json">{{ course_schema | tojson }}</script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    {"@type": "ListItem", "position": 1, "name": {{ _('ІПРМ')|tojson }}, "item": "{{ url_for('main.index', _external=True) }}"},
-    {"@type": "ListItem", "position": 2, "name": {{ _('Курси')|tojson }}, "item": "{{ url_for('courses.course_list', _external=True) }}"},
-    {"@type": "ListItem", "position": 3, "name": {{ course.t('title') | tojson }}}
-  ]
-}
-</script>
+{{ breadcrumbs([
+  (_('Курси'), url_for('courses.course_list', _external=True)),
+  (course.t('title'), ''),
+]) }}
 {% include 'partials/_course_faq_jsonld.html' %}
 {% endblock %}
 

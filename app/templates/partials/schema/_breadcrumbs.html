@@ -1,0 +1,29 @@
+{# BreadcrumbList -- ОДНЕ оголошення на весь проєкт.
+
+   items: список (name, url). Кореневий "ІПРМ" макрос додає сам, тож
+   сторінка передає лише свій хвіст. Порожній url означає поточну
+   сторінку: за schema.org в останнього елемента "item" не буває.
+
+   Назви приходять рядками від сторінки, а не хардкодяться тут -- інакше
+   на ru/en крихти лишаються українськими, як було до цього макроса.
+
+   Імпортувати ЛИШЕ як `... import breadcrumbs with context`:
+   site_settings приходить з контекст-процесора, а імпортований без
+   контексту макрос його не бачить і впаде на UndefinedError. #}
+{% macro breadcrumbs(items) -%}
+{%- set _elements = [{
+  '@type': 'ListItem', 'position': 1,
+  'name': site_settings.t('company_name') or _('ІПРМ'),
+  'item': url_for('main.index', _external=True),
+}] -%}
+{%- for name, url in items -%}
+  {%- set _el = {'@type': 'ListItem', 'position': loop.index + 1, 'name': name} -%}
+  {%- if url %}{% set _discard = _el.update({'item': url}) %}{% endif -%}
+  {%- set _discard = _elements.append(_el) -%}
+{%- endfor -%}
+<script type="application/ld+json">{{ {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  'itemListElement': _elements,
+} | tojson }}</script>
+{%- endmacro %}

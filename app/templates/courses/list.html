@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'partials/schema/_breadcrumbs.html' import breadcrumbs with context %}
 {% from 'partials/_money.html' import money %}
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 {% from 'partials/_location_badge.html' import location_badge %}
@@ -9,16 +10,7 @@
 
 {% block jsonld %}
 {{ super() }}
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    {"@type": "ListItem", "position": 1, "name": "ІПРМ", "item": "{{ url_for('main.index', _external=True) }}"},
-    {"@type": "ListItem", "position": 2, "name": "Курси"}
-  ]
-}
-</script>
+{{ breadcrumbs([(_('Курси'), '')]) }}
 {% for node in events_jsonld %}
 <script type="application/ld+json">{{ node | tojson }}</script>
 {% endfor %}

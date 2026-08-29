@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'partials/schema/_breadcrumbs.html' import breadcrumbs with context %}
 {% from 'partials/_money.html' import money %}
 
 {% block title %}{{ course.effective_title }} | {{ _('Онлайн-курси') }} | ІПРМ{% endblock %}
@@ -54,18 +55,10 @@
 {% set _discard = course_schema.update({'image': course.card_src or course.hero_src}) %}
 {% endif %}
 <script type="application/ld+json">{{ course_schema | tojson }}</script>
-{% set breadcrumbs = {
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  'itemListElement': [
-    {'@type': 'ListItem', 'position': 1, 'name': site_settings.t('company_name'),
-     'item': url_for('main.index', _external=True)},
-    {'@type': 'ListItem', 'position': 2, 'name': _('Онлайн-курси'),
-     'item': url_for('online.course_list', _external=True)},
-    {'@type': 'ListItem', 'position': 3, 'name': course.effective_title}
-  ]
-} %}
-<script type="application/ld+json">{{ breadcrumbs | tojson }}</script>
+{{ breadcrumbs([
+  (_('Онлайн-курси'), url_for('online.course_list', _external=True)),
+  (course.effective_title, ''),
+]) }}
 {# FAQPage -- окремим блоком: schema.org не дозволяє вкладати його в Course,
    а Google читає кілька незалежних JSON-LD на сторінці. #}
 {% include 'partials/_course_faq_jsonld.html' %}

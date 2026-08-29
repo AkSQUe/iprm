@@ -3,7 +3,7 @@ import logging
 import os
 import time
 
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS
 from config import config
 from app.extensions import db, login_manager, csrf, migrate, limiter, mail, babel
@@ -251,6 +251,18 @@ def create_app(config_name=None):
     # admin-trainer-regalia.js), які рендерять іконки динамічно через
     # window.msGlyph. Субсет-шрифт без лігатур, тож JS теж має слати кодпойнт.
     app.jinja_env.globals['icon_codepoints'] = ICON_CODEPOINTS
+
+    # Абсолютний URL для структурованих даних: Google не приймає у JSON-LD
+    # відносний шлях, а MediaFile.url віддає саме такий (/media/...).
+    # None на порожньому вході, щоб виклик не треба було обгортати в {% if %}.
+    def _abs_url(path):
+        if not path:
+            return None
+        if path.startswith(('http://', 'https://')):
+            return path
+        return request.url_root.rstrip('/') + '/' + path.lstrip('/')
+
+    app.jinja_env.globals['abs_url'] = _abs_url
 
     # Словник i18n-рядків для публічних JS: рендериться у base.html як JSON
     # (#iprm-i18n-data) і читається js/i18n.js (window.iprmI18n.t).
