@@ -177,46 +177,60 @@
     </div>
   </div>
 
-  <!-- ===== ETALON PRIMITIVES (живі класи, без інлайн-стилів) ===== -->
+  <!-- ===== ETALON PRIMITIVES (живі класи, без інлайн-стилів) =====
+
+       Кожен рядок -- РЕАЛЬНИЙ клас із CSS, підключеного на цій-таки
+       сторінці (design_system.html), а не переписані числа. Підпис називає
+       клас і файл; якщо значення захочуть звірити -- дивляться computed
+       style самого елемента, а не текст поруч. page-index.css на цій
+       сторінці НЕ підключено (посторінковий файл одного домену), тож
+       .apple-bento-card і .iprm-lab-tag сюди не годяться, хоч і мають
+       ті самі числа -- обрано аналоги з файлів, які тут справді є. -->
   <div class="ds-section" id="typography">
     <p class="ds-label">Foundations</p>
     <h2 class="ds-title">Типографіка</h2>
-    <div class="ds-col">
-      <div class="ds-typo-item" style="font-size: clamp(40px, 5.5vw, 72px); font-weight: 900; letter-spacing: -0.035em; line-height: 1.12; color: var(--apple-black);">
-        Hero Title
-        <span class="ds-typo-meta">clamp(40px, 5.5vw, 72px) / 900 / -0.035em / 1.12</span>
+    <div class="ds-col apple-page">
+      <div class="ds-typo-item">
+        <h1 class="iprm-hero__title">Hero Title</h1>
+        <span class="ds-typo-meta">.apple-page .iprm-hero__title -- apple-pages.css (база .iprm-hero__title у common.css -- 24px/700, без .apple-page)</span>
       </div>
-      <div class="ds-typo-item" style="font-size: clamp(31px, 4vw, 50px); font-weight: 880; letter-spacing: -0.035em; line-height: 1.12; color: var(--apple-black);">
-        Section Title
-        <span class="ds-typo-meta">clamp(31px, 4vw, 50px) / 880 / -0.035em / 1.12</span>
+      <div class="ds-typo-item">
+        <h2 class="iprm-section__title">Section Title</h2>
+        <span class="ds-typo-meta">.apple-page .iprm-section__title -- apple-pages.css</span>
       </div>
-      <div class="ds-typo-item" style="font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: var(--apple-black);">
-        Card Heading
-        <span class="ds-typo-meta">1.5rem / 700 / -0.02em</span>
+      <div class="ds-typo-item">
+        <div class="apple-feature-card">
+          <h3>Feature Card Heading</h3>
+        </div>
+        <span class="ds-typo-meta">.apple-page .apple-feature-card h3 -- apple-pages.css (page-index.css переозначає до 1.5rem/-0.025em лише на Головній -- цей файл тут не підключений, тож бачите базу)</span>
       </div>
-      <div class="ds-typo-item" style="font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; color: var(--apple-black);">
-        Bento Heading
-        <span class="ds-typo-meta">1.25rem / 700 / -0.02em</span>
+      <div class="ds-typo-item">
+        <div class="iprm-results-card">
+          <h3>Card Heading (clinics)</h3>
+        </div>
+        <span class="ds-typo-meta">.iprm-results-card h3 -- clinics.css (той самий розмір/вага/letter-spacing, що й у Feature Card Heading вище -- збіг, не спільний клас)</span>
       </div>
-      <div class="ds-typo-item" style="font-size: 1.125rem; font-weight: 400; color: var(--apple-gray); line-height: 1.5;">
-        Section description text
-        <span class="ds-typo-meta">1.125rem / 400 / gray</span>
+      <div class="ds-typo-item">
+        <p class="iprm-section__subtitle">Section description text</p>
+        <span class="ds-typo-meta">.apple-page .iprm-section__subtitle -- apple-pages.css</span>
       </div>
-      <div class="ds-typo-item" style="font-size: 1.0625rem; font-weight: 400; color: var(--apple-gray-dark); line-height: 1.7;">
-        Body text for longer content
-        <span class="ds-typo-meta">1.0625rem / 400 / gray-dark</span>
+      <div class="ds-typo-item">
+        <p class="blog-content">Body text for longer content</p>
+        <span class="ds-typo-meta">.blog-content -- blog.css (колір тут var(--iprm-text); попередній мокап показував apple-gray-dark, якого цей клас не використовує)</span>
       </div>
-      <div class="ds-typo-item" style="font-size: 0.9375rem; font-weight: 400; color: var(--apple-gray); line-height: 1.6;">
-        Card description text
-        <span class="ds-typo-meta">0.9375rem / 400 / gray</span>
+      <div class="ds-typo-item">
+        <div class="apple-feature-card">
+          <p>Card description text</p>
+        </div>
+        <span class="ds-typo-meta">.apple-page .apple-feature-card p -- apple-pages.css</span>
       </div>
-      <div class="ds-typo-item" style="font-size: 0.8125rem; font-weight: 400; color: var(--apple-gray-dark);">
-        Nav link, footer text
-        <span class="ds-typo-meta">0.8125rem / 400</span>
+      <div class="ds-typo-item">
+        <a href="#" class="iprm-footer__link">Nav link, footer text</a>
+        <span class="ds-typo-meta">.iprm-footer__link -- common.css</span>
       </div>
-      <div class="ds-typo-item" style="font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--iprm-accent);">
-        LABEL / TAG
-        <span class="ds-typo-meta">0.6875rem / 600 / uppercase / 0.08em</span>
+      <div class="ds-typo-item">
+        <p class="ds-label">LABEL / TAG</p>
+        <span class="ds-typo-meta">.ds-label -- сам цей клас, ужитий вище на кожній секції сторінки (0.6875rem/600/uppercase/0.08em). Найближчий сайтовий аналог поза адмінкою -- .reg-user-info__item span у registration.css, той самий розмір/вага/regexp, але сірий текст, не accent</span>
       </div>
     </div>
     <p class="ds-hint">Font: Inter (варіативний, вага 400-900). Fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif. Всі заголовки з негативним letter-spacing (tight).</p>
@@ -228,7 +242,7 @@
 
     <h3 class="ds-section-heading">Easing Curves (Apple-specific)</h3>
     <div class="ds-demo">
-      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:2;">
+      <div class="ds-prose ds-prose--loose">
         <code class="ds-code">--ease-reveal: cubic-bezier(0.28, 0.11, 0.32, 1)</code> – Reveal / fade-in<br>
         <code class="ds-code">--ease-interact: cubic-bezier(0.25, 0.46, 0.45, 0.94)</code> – Interaction (hover, press)<br>
         <code class="ds-code">--ease-spring: cubic-bezier(0.32, 0.08, 0.24, 1)</code> – Spring-like bounce
@@ -238,7 +252,7 @@
 
     <h3 class="ds-section-heading">Scroll Reveal (CSS-first, JS fallback)</h3>
     <div class="ds-demo">
-      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+      <div class="ds-prose">
         <strong>CSS Scroll-Driven Animations (primary):</strong><br>
         <code class="ds-code">.apple-reveal { animation: enter-view linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }</code><br>
         opacity: 0, translateY(24px) -> opacity: 1, translateY(0)<br><br>
@@ -251,7 +265,7 @@
 
     <h3 class="ds-section-heading">Hero fadeUp</h3>
     <div class="ds-demo">
-      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+      <div class="ds-prose">
         <code class="ds-code">@keyframes appleHeroFadeUp { to { opacity: 1; transform: translateY(0); } }</code><br>
         Start: opacity: 0, translateY(20-30px)<br>
         Badge: delay 0s / h1: 0.15s / subtitle: 0.3s / actions: 0.45s<br>
@@ -261,7 +275,7 @@
 
     <h3 class="ds-section-heading">Hover ефекти</h3>
     <div class="ds-demo">
-      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+      <div class="ds-prose">
         Cards: <code class="ds-code">translateY(-4px) + box-shadow 0 12px 40px rgba(0,0,0,0.1)</code> – 0.3s<br>
         Bento: <code class="ds-code">scale(1.01)</code> – 0.3s<br>
         Buttons: <code class="ds-code">scale(1.02) translateY(-1px)</code> – 0.15s<br>
@@ -272,7 +286,7 @@
 
     <h3 class="ds-section-heading">Dropdown staggered fade-in</h3>
     <div class="ds-demo">
-      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+      <div class="ds-prose">
         <code class="ds-code">.dropdown-item:nth-child(1) { transition-delay: 0.02s; }</code><br>
         <code class="ds-code">.dropdown-item:nth-child(2) { transition-delay: 0.05s; }</code><br>
         <code class="ds-code">.dropdown-item:nth-child(3) { transition-delay: 0.08s; }</code><br>
@@ -282,7 +296,7 @@
 
     <h3 class="ds-section-heading">4 правила Apple-руху</h3>
     <div class="ds-demo">
-      <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:1.8;">
+      <div class="ds-prose">
         1. <strong>Duration &lt; 300ms</strong> для UI-відповідей – довше відчувається повільним<br>
         2. <strong>Ease curves, ніколи linear</strong> – cubic-bezier з уповільненням в кінці<br>
         3. <strong>Рух має сенс</strong> – кожна анімація комунікує (зв'язок, стан, ієрархію)<br>
@@ -298,7 +312,7 @@
         <p class="ds-label">Foundations</p>
         <h2 class="ds-title">Spacing та Layout</h2>
         <div class="ds-demo">
-          <div style="font-size:0.9375rem;color:var(--apple-gray-dark);line-height:2.2;">
+          <div class="ds-prose ds-prose--airy">
             <strong>Section padding:</strong> Desktop 120px 24px / Tablet 80px 24px / Mobile 64px 16px<br>
             <strong>Section header margin:</strong> 0 auto 72px (desktop), 48px (mobile)<br>
             <strong>Content max-width:</strong> 1200px (wide/grid), 980px (default/hero), 800px (narrow/text), 700px (section header)<br>
@@ -310,14 +324,14 @@
         </div>
 
         <h3 class="ds-section-heading">Секції чергують фони</h3>
-        <div style="display:flex;gap:4px;margin-bottom:16px;border-radius:12px;overflow:hidden;">
-          <div style="flex:1;height:48px;background:var(--iprm-white);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--apple-gray);">White</div>
-          <div style="flex:1;height:48px;background:var(--apple-section-bg);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--apple-gray);">Gray</div>
-          <div style="flex:1;height:48px;background:var(--iprm-dark);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--apple-gray-light);">Dark</div>
-          <div style="flex:1;height:48px;background:var(--apple-section-bg);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--apple-gray);">Gray</div>
-          <div style="flex:1;height:48px;background:var(--iprm-white);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--apple-gray);">White</div>
-          <div style="flex:1;height:48px;background:var(--apple-section-bg);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--apple-gray);">Gray</div>
-          <div style="flex:1;height:48px;background:var(--iprm-white);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:var(--apple-gray);">White</div>
+        <div class="ds-bg-strip">
+          <div class="ds-bg-chip ds-bg-chip--white">White</div>
+          <div class="ds-bg-chip ds-bg-chip--gray">Gray</div>
+          <div class="ds-bg-chip ds-bg-chip--dark">Dark</div>
+          <div class="ds-bg-chip ds-bg-chip--gray">Gray</div>
+          <div class="ds-bg-chip ds-bg-chip--white">White</div>
+          <div class="ds-bg-chip ds-bg-chip--gray">Gray</div>
+          <div class="ds-bg-chip ds-bg-chip--white">White</div>
         </div>
         <p class="ds-hint">Ритм: hero (white) -> features (gray) -> stats (dark) -> courses (white) -> labs (gray) -> clinic (white) -> history (gray) -> cta (white)</p>
     </div>

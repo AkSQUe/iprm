@@ -315,6 +315,136 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* ========== PROSE (текст-пояснення вітрини, не компонент) ==========
+
+   Абзаци довідки -- частина самої вітрини (правила, анімації, spacing),
+   а не мокап компонента: показувати їх живими класами нема чого імітувати.
+   Раніше кожен такий абзац ніс однакові inline-стилі -- клас лише переносить
+   ту саму пару значень з розмітки в CSS. */
+
+.ds-prose {
+  font-size: 0.9375rem;
+  color: var(--apple-gray-dark);
+  line-height: 1.8;
+}
+
+.ds-prose--loose {
+  line-height: 2;
+}
+
+.ds-prose--airy {
+  line-height: 2.2;
+}
+
+.ds-section-dark .ds-prose {
+  color: var(--apple-gray-light);
+}
+
+/* Приклад ::selection у розділі Accessibility -- фрагмент тексту, вигляд
+   якого демонструє саму псевдо-селекцію (її неможливо викликати скриптом
+   без реального виділення користувачем), тож підробка тут неминуча.
+   Значення -- ті самі, що задає ::selection у common.css. */
+.ds-selection-demo {
+  background: var(--iprm-accent-light);
+  color: var(--apple-black);
+  padding: 2px 6px;
+}
+
+.ds-selection-demo-wrap {
+  margin-top: 12px;
+}
+
+/* ========== BREAKPOINT CARDS (розділ Responsive) ==========
+
+   Власна плитка каталогу -- на сайті немає компонента «картка breakpoint»,
+   це спосіб показати три числа брейкпоінтів. Мітка всередині -- той самий
+   .ds-label, що й вище на сторінці (0.6875rem/600/uppercase/0.08em). */
+
+.ds-bp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  text-align: center;
+}
+
+.ds-bp-card {
+  background: var(--apple-section-bg);
+  border-radius: 16px;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.ds-bp-card__size {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--apple-black);
+  margin-bottom: 4px;
+}
+
+.ds-bp-card .ds-label {
+  margin-bottom: 12px;
+}
+
+.ds-bp-card__desc {
+  font-size: 0.8125rem;
+  color: var(--apple-gray);
+  line-height: 1.6;
+}
+
+/* Прибирає межу компонента лише в тісному демо -- вкладеність form-section
+   > admin-program-block без цього дублювала рамку. Реальне вживання
+   (course_edit.html) рамки не прибирає. */
+.ds-flush-border {
+  border: none;
+}
+
+/* ========== EMPTY STATE GRID (демо-риштування) ========== */
+
+.ds-empty-state-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* ========== BACKGROUND RHYTHM STRIP (розділ Spacing) ==========
+
+   Смуга кольорів секцій -- ілюстрація ритму фонів, не компонент; кольори --
+   ті самі токени, що вже показані зразками вище (розділ «Кольорова
+   палітра»), тут лише як послідовність. */
+
+.ds-bg-strip {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ds-bg-chip {
+  flex: 1;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+}
+
+.ds-bg-chip--white {
+  background: var(--iprm-white);
+  color: var(--apple-gray);
+}
+
+.ds-bg-chip--gray {
+  background: var(--apple-section-bg);
+  color: var(--apple-gray);
+}
+
+.ds-bg-chip--dark {
+  background: var(--iprm-dark);
+  color: var(--apple-gray-light);
+}
+
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 768px) {
@@ -327,6 +457,10 @@
   }
 
   .ds-swatches {
+    grid-template-columns: 1fr;
+  }
+
+  .ds-bp-grid {
     grid-template-columns: 1fr;
   }
 
