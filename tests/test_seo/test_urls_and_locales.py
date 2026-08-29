@@ -51,10 +51,25 @@ class TestHreflang:
 
 
 class TestPrivatePagesClosed:
+    # Голий шлях блюпринта ("/registration/", "/quiz/") не матчить жодного
+    # маршруту -- усі вони вимагають параметр -- тож 404 віддає дефолтний
+    # обробник Flask ДО диспетчеризації, і after_request, зареєстрований
+    # на блюпринті, не встигає спрацювати. Це нічого не довело б про сам
+    # блюпринт. Тому беремо шляхи, що справді туди потрапляють (штучні id,
+    # яких немає в БД) -- after_request виконується навіть коли view падає
+    # у 404 чи редіректить на логін.
     def test_private_blueprints_send_noindex_header(self, client):
-        # X-Robots-Tag ставиться в after_request незалежно від коду
-        # відповіді, тож редірект на логін теж має його нести.
-        for path in ('/auth/login', '/registration/', '/quiz/'):
+        for path in (
+            '/auth/login',
+            '/registration/999999/register',
+            '/quiz/999999',
+        ):
             resp = client.get(path, follow_redirects=False)
             header = resp.headers.get('X-Robots-Tag', '')
             assert 'noindex' in header, f'{path}: X-Robots-Tag = {header!r}'
+
+    def test_404_page_is_closed_to_indexing(self, client):
+        resp = client.get('/definitely-not-a-real-page', follow_redirects=False)
+        assert resp.status_code == 404
+        body = resp.data.decode('utf-8')
+        assert 'name="robots"' in body and 'noindex' in body
