@@ -554,3 +554,399 @@
 
     </div>
   </div>
+
+  <!-- ===== APPLE-PAGE: СПІЛЬНІ СЕКЦІЇ ПУБЛІЧНИХ СТОРІНОК ===== -->
+  <div class="ds-section" id="apple-feature-card">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Секції apple-page (жива розмітка)</h2>
+    <p class="ds-hint">
+      Чотири компоненти нижче стилюються лише всередині <code>.apple-page</code>
+      (apple-pages.css скоуплений саме на цей клас), тож кожна демонстрація
+      загорнута в нього, як на реальних сторінках. Зображень немає навмисно —
+      як і в решті каталогу, реальні файли сюди не тягнемо; порожній блок
+      із класом компонента показує його реальний fallback-стан без картинки.
+    </p>
+
+    <div class="apple-page">
+
+      <h3 class="ds-section-heading">Feature card / Features grid</h3>
+      <div class="ds-demo">
+        <div class="apple-features-grid">
+          <div class="apple-feature-card">
+            <div class="apple-feature-card__icon" aria-hidden="true"></div>
+            <h3>Персоналізований підхід</h3>
+            <p>Індивідуальний підхід до кожного пацієнта з урахуванням індивідуальних біомаркерів.</p>
+          </div>
+          <div class="apple-feature-card">
+            <div class="apple-feature-card__icon" aria-hidden="true"></div>
+            <h3>Сертифіковані протоколи</h3>
+            <p>Протоколи лікування, підтверджені клінічними дослідженнями.</p>
+          </div>
+          <div class="apple-feature-card">
+            <div class="apple-feature-card__icon" aria-hidden="true"></div>
+            <h3>Досвідчена команда</h3>
+            <p>Фахівці з багаторічним досвідом у регенеративній та клітинній медицині.</p>
+          </div>
+        </div>
+      </div>
+      <p class="ds-hint">.apple-features-grid — сітка 3 колонки (1 на mobile). apple-feature-card має ще модифікатор --featured --has-image (ширша картка, текст + фото) — на clinics/main його немає, лише на main/index. Живе в 5 доменах: clinics, courses, main, partials, trainers</p>
+
+      <h3 class="ds-section-heading">Section CTA</h3>
+      <div class="ds-demo">
+        <div class="apple-section-cta">
+          <a href="#apple-feature-card" class="apple-btn apple-btn--primary">Курси інституту</a>
+        </div>
+      </div>
+      <p class="ds-hint">Кнопка-місток одразу під apple-features-grid, центрована. Живе в clinics і trainers — завжди як завершення блоку переваг</p>
+
+      <h3 class="ds-section-heading">Section — модифікатор фону (apple-section-gray)</h3>
+      <div class="ds-demo ds-demo--flush">
+        <section class="iprm-section">
+          <div class="iprm-section__inner">
+            <h2 class="iprm-section__title">Звичайна секція</h2>
+            <p class="iprm-section__subtitle">Фон — сторінковий (білий)</p>
+          </div>
+        </section>
+        <section class="iprm-section apple-section-gray">
+          <div class="iprm-section__inner">
+            <h2 class="iprm-section__title">Секція з apple-section-gray</h2>
+            <p class="iprm-section__subtitle">Фон — var(--apple-section-bg)</p>
+          </div>
+        </section>
+      </div>
+      <p class="ds-hint">Не самостійний компонент, а модифікатор .iprm-section: сірий фон замість білого. Найпоширеніший клас у розмітці — 9 доменів. На реальних сторінках чергується з простою .iprm-section через одну, щоб довгий скрол не зливався в суцільне полотно</p>
+
+      <h3 class="ds-section-heading">Card body (тіло картки курсу)</h3>
+      <div class="ds-demo">
+        <article class="iprm-course-card iprm-course-card--linked">
+          <div class="iprm-course-card__image"></div>
+          <div class="apple-card-body">
+            <p class="iprm-course-card__title">Плазмотерапія обличчя</p>
+            <div class="iprm-course-card__badges">
+              <span class="iprm-card-badge iprm-card-badge--featured">Рекомендуємо</span>
+              <span class="iprm-card-badge iprm-card-badge--cpd">10 балів БПР</span>
+            </div>
+            <div class="iprm-course-card__facts">
+              <span class="iprm-course-card__seats">2 місця</span>
+              <span class="iprm-course-card__price">від 7 500 &#8372;</span>
+            </div>
+          </div>
+        </article>
+      </div>
+      <p class="ds-hint">Padding і вертикальний ритм тексту всередині .iprm-course-card — зображення лишається поза apple-card-body, без внутрішніх відступів. Спільне для каталогу курсів (partials/_course_card.html) і рекомендацій на сторінці курсу (trainers)</p>
+
+    </div>
+  </div>
+
+  <!-- ===== AUTH CARD ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="auth-card">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Auth Card</h2>
+      <div class="ds-demo" style="background: var(--apple-section-bg);">
+        <div class="auth-card">
+          <span class="auth-card__logo">ІПРМ</span>
+          <h1 class="auth-card__title">Вхід</h1>
+          <p class="auth-card__subtitle">Увійдіть до вашого облікового запису</p>
+
+          <div class="form-group">
+            <label for="ds-auth-email">Email</label>
+            <input type="email" id="ds-auth-email" class="form-input" placeholder="you@example.com">
+          </div>
+
+          <div class="auth-card__row auth-card__row--between">
+            <div class="form-checkbox">
+              <input type="checkbox" id="ds-auth-remember">
+              <label for="ds-auth-remember">Запам'ятати мене</label>
+            </div>
+            <a href="#auth-card" class="auth-card__link">Забули пароль?</a>
+          </div>
+
+          <button type="button" class="btn-auth">Увійти</button>
+
+          <div class="auth-card__footer">
+            <span>Ще не маєте акаунта? </span>
+            <a href="#auth-card">Зареєструватися</a>
+          </div>
+
+          <a href="#auth-card" class="auth-card__back">Повернутися на головну</a>
+        </div>
+      </div>
+      <p class="ds-hint">
+        Живе в auth (усі форми входу/реєстрації) і main (unsubscribe.html —
+        сторінка керування розпискою). Обгортка сторінки — .auth-page
+        (<code>.apple-page.auth-page</code>: min-height: 100vh, flex-центрування,
+        своя точка зламу на 480px) — тут навмисно НЕ показана: на весь
+        viewport вона займе всю вітрину і зіпсує решту табу, а всередині
+        .ds-demo її min-height: 100vh все одно нізащо не спрацює так, як на
+        реальній сторінці. Модифікатор --collision (auth.css) — під колізію
+        OAuth-email, ширший заголовок.
+      </p>
+    </div>
+  </div>
+
+  <!-- ===== BLOG PAGINATION ===== -->
+  <div class="ds-section" id="blog-pagination">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Blog Pagination</h2>
+    <div class="ds-demo">
+      <nav class="blog-pagination" aria-label="Сторінки">
+        <a class="apple-btn apple-btn--secondary" href="#blog-pagination">Новіші</a>
+        <span class="blog-pagination__info">Сторінка 2 з 5</span>
+        <a class="apple-btn apple-btn--secondary" href="#blog-pagination">Старіші</a>
+      </nav>
+    </div>
+    <p class="ds-hint">Живе в blog (стрічка дописів) і admin (media_library.html — та сама пагінація для медіатеки). Кнопки — apple-btn--secondary, а не власні; компонент дає лише розкладку й текст «Сторінка N з M»</p>
+  </div>
+
+  <!-- ===== IPRM B2B ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="iprm-b2b">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">B2B (команди й клініки)</h2>
+      <div class="ds-demo">
+        <div class="iprm-b2b">
+          <div>
+            <h2 class="iprm-section__title iprm-b2b__title">Навчи команду — підсиль практику</h2>
+            <p class="iprm-b2b__lead">Корпоративне навчання від трьох фахівців допомагає розширити перелік послуг і швидше впровадити нові протоколи.</p>
+            <ul class="iprm-b2b__benefits">
+              <li>20% знижки для груп від трьох фахівців</li>
+              <li>онлайн, офлайн або гібридний формат</li>
+              <li>програма під напрям клініки, салону або кабінету</li>
+            </ul>
+          </div>
+          <form class="iprm-b2b__form" onsubmit="return false;">
+            <h3 class="iprm-b2b__form-title">Отримати корпоративні умови</h3>
+            <div class="iprm-b2b__form-row">
+              <div class="form-group">
+                <label for="ds-b2b-name">Ім'я <span class="required">*</span></label>
+                <input type="text" id="ds-b2b-name" class="form-input" placeholder="Олена">
+              </div>
+              <div class="form-group">
+                <label for="ds-b2b-phone">Телефон <span class="required">*</span></label>
+                <input type="tel" id="ds-b2b-phone" class="form-input" placeholder="+380...">
+              </div>
+            </div>
+            <button type="submit" class="apple-btn apple-btn--primary">Обговорити навчання</button>
+          </form>
+        </div>
+      </div>
+      <p class="ds-hint">Живе в courses (лендинг каталогу курсів) і main (Головна). 2-колонкова сітка, 1 колонка до 768px. Форма шле на courses.b2b_request; тут кнопка знешкоджена (onsubmit="return false") — валідація й reCAPTCHA поза каталогом сенсу не мають. Ліву колонку тут показано без класу-обгортки .iprm-b2b__info: у бою цей клас не має власного CSS-правила (лише грід-позиція від батька), і його присутність тут ловив би test_css_markup_sync як хибний "клас без правила"</p>
+    </div>
+  </div>
+
+  <!-- ===== IPRM STEPS ===== -->
+  <div class="ds-section" id="iprm-steps">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Steps («Як це працює»)</h2>
+    <div class="ds-demo">
+      <div class="iprm-steps">
+        <div class="iprm-steps__item">
+          <span class="iprm-steps__number">1</span>
+          <h3 class="iprm-steps__heading">Оберіть курс</h3>
+          <p class="iprm-steps__text">Напрям, формат і дата проведення — у каталозі та графіку вище.</p>
+        </div>
+        <div class="iprm-steps__item">
+          <span class="iprm-steps__number">2</span>
+          <h3 class="iprm-steps__heading">Пройдіть навчання</h3>
+          <p class="iprm-steps__text">Теорія та практика під керівництвом тренера — очно або онлайн.</p>
+        </div>
+        <div class="iprm-steps__item">
+          <span class="iprm-steps__number">3</span>
+          <h3 class="iprm-steps__heading">Отримайте сертифікат</h3>
+          <p class="iprm-steps__text">Офіційний сертифікат з балами БПР після завершення курсу.</p>
+        </div>
+        <div class="iprm-steps__item">
+          <span class="iprm-steps__number">4</span>
+          <h3 class="iprm-steps__heading">Впровадьте у практику</h3>
+          <p class="iprm-steps__text">Застосовуйте методику в роботі; доступ до матеріалів залишається з вами.</p>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">::before малює сполучну лінію між номерами (позиційно, не border) — на mobile ховається, кроки стають вертикальним списком. Живе у 4 доменах: courses, clinics, main, partials</p>
+  </div>
+
+  <!-- ===== IPRM PROSE ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="iprm-prose">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Prose (опис курсу)</h2>
+      <div class="ds-demo">
+        <div class="iprm-prose">
+          <h2>Про методику</h2>
+          <p>Курс охоплює теоретичну базу та відпрацювання техніки в малій групі під наглядом тренера.</p>
+          <h3>Кому підходить</h3>
+          <ul>
+            <li>лікарям-косметологам і дерматологам;</li>
+            <li>тим, хто хоче додати процедуру у прайс клініки.</li>
+          </ul>
+          <p>Після курсу лишається доступ до <a href="#iprm-prose">протоколу проведення</a> і чат підтримки випускників.</p>
+        </div>
+      </div>
+      <p class="ds-hint">Стилює ТЕГИ (h2/h3/h4, p, ul/ol/li, a), не власні класи — опис приходить із CMS через sanitize_rich_text, тож розмітку задає редактор, не шаблон. max-width: 800px. Живе в courses і online (детальна сторінка курсу)</p>
+    </div>
+  </div>
+
+  <!-- ===== IPRM REVIEW ===== -->
+  <div class="ds-section" id="iprm-review">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Review (відгук)</h2>
+    <div class="ds-demo">
+      <figure class="iprm-review">
+        <div class="iprm-review__stars"><span class="iprm-rating" role="img" aria-label="Оцінка 5 з 5"><span class="iprm-rating__stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span><span class="iprm-rating__value">5/5</span></span></div>
+        <blockquote class="iprm-review__text">Після практики стало зрозуміло, як запускати процедуру без хаосу: протокол, матеріали, собівартість і комунікація з пацієнтом.</blockquote>
+        <figcaption class="iprm-review__author">Олена · Київ · лікарка-косметологиня</figcaption>
+      </figure>
+      <figure class="iprm-review">
+        <div class="iprm-review__stars"><span class="iprm-rating" role="img" aria-label="Оцінка 4 з 5"><span class="iprm-rating__stars">&#9733;&#9733;&#9733;&#9733;<span class="iprm-rating__off">&#9733;</span></span><span class="iprm-rating__value">4/5</span></span></div>
+        <blockquote class="iprm-review__text">Найцінніше — клінічна логіка й спокійний супровід тренера.</blockquote>
+        <figcaption class="iprm-review__author">Марина · Львів · власниця кабінету</figcaption>
+      </figure>
+    </div>
+    <p class="ds-hint">П'ять гліфів завжди (не review.rating штук): 4 зірки без сірих 5-ї непомітно від 4 з 4. Значення поруч цифрою для скрінрідера й тих, хто не бачить кольору. Живе на Головній (реальні Review з БД або TODO-заглушка, поки відгуків нема) і на сторінці курсу (partials/_course_reviews.html, у тёмній .iprm-dark-shell — див. секцію Course Landing вище)</p>
+  </div>
+
+  <!-- ===== IPRM SCHEDULE ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="iprm-schedule">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Schedule (найближчі дати)</h2>
+      <div class="ds-demo">
+        <div class="iprm-schedule">
+          <div class="iprm-schedule__item">
+            <div class="iprm-schedule__date">
+              <span class="iprm-schedule__day">12</span>
+              <span class="iprm-schedule__month">10.2026</span>
+            </div>
+            <div class="iprm-schedule__content">
+              <h3 class="iprm-schedule__title">Плазмотерапія обличчя</h3>
+              <div class="iprm-schedule__meta">
+                <span class="iprm-loc-badge iprm-loc-badge--offline">
+                  <span class="iprm-loc-badge__text">Київ</span>
+                </span>
+                <span class="iprm-schedule__tag iprm-schedule__tag--cpd">10 балів БПР</span>
+                <span class="iprm-schedule__tag iprm-schedule__tag--seats iprm-schedule__tag--warning">Залишилось 2 місця</span>
+              </div>
+              <div class="iprm-schedule__tariffs" role="list" aria-label="Тарифи участі">
+                <a class="iprm-tariff-pill iprm-tariff-pill--link" role="listitem" href="#iprm-schedule">
+                  <span class="iprm-tariff-pill__name">Стандарт</span>
+                  <span class="iprm-tariff-pill__price">7 500 &#8372;</span>
+                </a>
+              </div>
+            </div>
+            <div class="iprm-schedule__action">
+              <a href="#iprm-schedule" class="apple-btn apple-btn--primary apple-btn--sm">Реєстрація</a>
+            </div>
+          </div>
+          <div class="iprm-schedule__item">
+            <div class="iprm-schedule__date">
+              <span class="iprm-schedule__day">TBD</span>
+            </div>
+            <div class="iprm-schedule__content">
+              <h3 class="iprm-schedule__title">Плазмотерапія обличчя</h3>
+              <div class="iprm-schedule__meta">
+                <span class="iprm-loc-badge iprm-loc-badge--online">
+                  <span class="iprm-loc-badge__text">Онлайн</span>
+                </span>
+              </div>
+            </div>
+            <div class="iprm-schedule__action">
+              <span class="badge badge--draft">Реєстрацію закрито</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="ds-hint">.iprm-schedule__tag--warning — коли seats_left ≤ site_settings.seats_low_threshold. Друге проведення — стан "закрито" (registration_open=false): дата TBD, дій нема, лише badge--draft. Живе в courses (детальна сторінка) і partials/_course_schedule.html</p>
+    </div>
+  </div>
+
+  <!-- ===== QUIZ QUESTION ===== -->
+  <div class="ds-section" id="quiz-question">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Quiz Question</h2>
+    <div class="ds-demo">
+      <div class="quiz-card">
+        <fieldset class="quiz-question">
+          <legend class="quiz-question__text">Яка з відповідей найкраще описує показання до плазмотерапії?</legend>
+          <div class="quiz-options">
+            <label class="quiz-option">
+              <input type="radio" name="ds-quiz-choice">
+              <span class="quiz-option__text">Регенерація тканин після травми</span>
+            </label>
+            <label class="quiz-option">
+              <input type="radio" name="ds-quiz-choice" checked>
+              <span class="quiz-option__text">Стимуляція росту волосся</span>
+            </label>
+            <label class="quiz-option">
+              <input type="radio" name="ds-quiz-choice">
+              <span class="quiz-option__text">Гостра інфекція шкіри</span>
+            </label>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+    <p class="ds-hint">fieldset/legend, не div/p — доступність радіогрупи без aria-роздутості. quiz-card — контейнер з тіні й межі, quiz-question сама лише скидає їх у нуль. Живе в quiz (тестування учасників) і admin (admin/quiz_edit.html — той самий вигляд у режимі редагування)</p>
+  </div>
+
+  <!-- ===== REFERRAL SHARE / HISTORY ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="referral-share">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Referral Share / History</h2>
+      <div class="ds-demo">
+        <div class="referral-share__balance">
+          <span class="referral-share__balance-value">450</span>
+          <span class="referral-share__balance-label">бонусних балів</span>
+          <span class="referral-share__balance-pending">+50 очікують дозрівання</span>
+        </div>
+
+        <div class="referral-share">
+          <label class="referral-share__label" for="ds-ref-link">Ваше посилання</label>
+          <div class="referral-share__row">
+            <input type="text" id="ds-ref-link" class="referral-share__input" value="https://iprm.ua/r/olena123" readonly>
+            <button type="button" class="apple-btn apple-btn--primary referral-share__copy">Копіювати</button>
+          </div>
+        </div>
+
+        <div class="referral-history">
+          <h3 class="referral-history__title">Історія нарахувань</h3>
+          <div class="referral-history__list">
+            <div class="referral-history__item">
+              <div class="referral-history__info">
+                <span class="referral-history__course">Плазмотерапія обличчя</span>
+                <span class="referral-history__date">03.08.2026</span>
+              </div>
+              <span class="referral-history__points">+50</span>
+            </div>
+            <div class="referral-history__item referral-history__item--voided">
+              <div class="referral-history__info">
+                <span class="referral-history__course">Захід</span>
+                <span class="referral-history__date">21.07.2026</span>
+              </div>
+              <span class="referral-history__points">анульовано</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="ds-hint">Живе в auth (кабінет учасника) і root (referrer_dashboard.html); реєстрація й кнопка "Копіювати" — з copy-to-clipboard.js, тут неактивна, бо скрипта на цій сторінці нема. --item--voided сіріє й закреслює суму, коли реєстрацію, за яку нараховано бали, скасували</p>
+    </div>
+  </div>
+
+  <!-- ===== НЕ ПОКАЗУЄТЬСЯ ===== -->
+  <div class="ds-section" id="molecules-not-shown">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Не показується</h2>
+    <p class="ds-hint">
+      <strong>certdata-reminder</strong> і <strong>upcoming-bar</strong> —
+      обидва компоненти отримують свій CSS-файл умовно, лише в base.html
+      (за прапорцями show_certdata_reminder і upcoming_events),
+      і обидва прапорці явно обнулені для блупринта admin (inject_certdata_reminder,
+      inject_upcoming_events у app/__init__.py). Сторінка каталогу — /admin/design-system,
+      тож certdata-reminder.css і upcoming-events.css тут ніколи не підвантажуються:
+      жива розмітка цих класів намалювалась би зовсім без стилів, тобто збрехала б
+      саме там, де на неї дивляться. Довести їх сюди можна лише додавши в
+      admin/design_system.html безумовний &lt;link&gt; на обидва файли — за тим
+      самим порядком, яким туди вже додано course-landing.css і referral-share.css
+      — але цей файл поза межами поточної правки (лише _tab_molecules.html).
+    </p>
+  </div>
