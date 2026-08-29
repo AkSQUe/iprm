@@ -298,6 +298,14 @@ _WALK_JS = """
       const rec = {};
       for (const p of props) rec[p] = cs.getPropertyValue(p);
       if (pseudo) rec['content'] = cs.getPropertyValue('content');
+      // Чи має елемент ВЛАСНИЙ текст (не текст нащадків). Без цієї
+      // відомості будь-яка перевірка кольору тексту тоне в хибних
+      // спрацюваннях: смуги кнопки-бургера -- це порожні <span>, у них
+      // color чорний за замовчуванням, і формально це "чорне на чорному".
+      if (!pseudo) {
+        rec['__text'] = Array.from(el.childNodes).some(
+          (n) => n.nodeType === 3 && n.textContent.trim().length > 0) ? '1' : '';
+      }
       out[key + (pseudo || '')] = rec;
     }
   }
