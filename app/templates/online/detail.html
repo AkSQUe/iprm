@@ -6,7 +6,9 @@
 {% block title %}{{ course.effective_title }} | {{ _('Онлайн-курси') }} | ІПРМ{% endblock %}
 {% block meta_description %}{{ course.effective_short_description|truncate(160) }}{% endblock %}
 {% block og_type %}article{% endblock %}
-{% block og_image %}{% if course.hero_src %}{{ course.hero_src }}{% else %}{{ super() }}{% endif %}{% endblock %}
+{# abs_url обов'язковий: base.html віддає це саме значення і в og:image, і
+   в twitter:image, а відносний шлях у них не дає картки прев'ю взагалі. #}
+{% block og_image %}{% if course.hero_src %}{{ abs_url(course.hero_src) }}{% else %}{{ super() }}{% endif %}{% endblock %}
 {% block canonical %}{{ url_for('online.course_detail', slug=course.slug, _external=True) }}{% endblock %}
 
 {% block extra_css %}
@@ -25,6 +27,9 @@
 {# Схема збирається dict-ом і йде через `| tojson`, як на сторінці очного
    курсу: лапки, апострофи й кирилиця в назвах екрануються самі, а не
    покладаються на те, що в тексті не трапиться символу розмітки. #}
+{# provider -- посилання на @id організації з base.html, а не другий її
+   опис: два незв'язані вузли EducationalOrganization на одній сторінці
+   Google трактує як дві різні організації. #}
 {% set course_url = url_for('online.course_detail', slug=course.slug, _external=True) %}
 {% set course_schema = {
   '@context': 'https://schema.org',
@@ -33,11 +38,7 @@
   'description': course.effective_short_description,
   'inLanguage': current_lang,
   'url': course_url,
-  'provider': {
-    '@type': 'EducationalOrganization',
-    'name': site_settings.t('company_name'),
-    'url': url_for('main.index', _external=True)
-  },
+  'provider': {'@id': url_for('main.index', _external=True) ~ '#org'},
   'hasCourseInstance': {
     '@type': 'CourseInstance',
     'courseMode': 'online'

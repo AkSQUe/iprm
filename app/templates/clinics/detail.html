@@ -3,9 +3,13 @@
 
 {% block title %}{% trans name=clinic.t('name') %}{{ name }} | ІПРМ{% endtrans %}{% endblock %}
 {% block meta_description %}{{ clinic.t('short_description') or clinic.t('name') }}. {{ _('Клініка Інституту Плазмотерапії та Регенеративної Медицини.') }}{% endblock %}
-{% block og_image %}{% if clinic.photo %}{{ clinic.photo if '://' in clinic.photo else request.url_root.rstrip('/') ~ '/' ~ clinic.photo.lstrip('/') }}{% else %}{{ super() }}{% endif %}{% endblock %}
+{% block og_image %}{% if clinic.photo %}{{ abs_url(clinic.photo) }}{% else %}{{ super() }}{% endif %}{% endblock %}
 
 {% block jsonld %}
+{# super() -- інакше сторінка мовчки втрачає успадковану з base.html
+   EducationalOrganization: блок перевизначено, і без виклику батьківського
+   вмісту організації на сторінці немає взагалі. #}
+{{ super() }}
 {{ breadcrumbs([
   (_('Клініки'), url_for('clinics.clinic_list', _external=True)),
   (clinic.t('name'), ''),

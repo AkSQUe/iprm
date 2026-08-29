@@ -54,3 +54,60 @@ class TestBreadcrumbsMacro:
         refresh()
         en = _breadcrumb(client.get('/en/trainers/').data.decode('utf-8'))
         assert uk['itemListElement'][1]['name'] != en['itemListElement'][1]['name']
+
+
+# Публічні сторінки, яким BreadcrumbList не належить: ендпоінт -> причина.
+# Виняток завжди іменований -- як і всюди в цій сюїті.
+NO_BREADCRUMB = {
+    'main.index': (
+        'Головна -- корінь ієрархії. Крихти з єдиного елемента, що вказує '
+        'сам на себе, за schema.org безглузді; організацію головна описує '
+        'власним @graph.'
+    ),
+}
+
+
+class TestBreadcrumbCoverage:
+    """Шістнадцять місць виклику -- і рівно одне під сторожем.
+
+    До цього тесту перевірялась лише форма крихт на /trainers/. Сторінка,
+    що втратила виклик макроса (чи ніколи його не мала), не валила нічого.
+    """
+
+    def test_every_public_page_carries_breadcrumbs(self, app, client):
+        from tests.test_seo.helpers import fetch_public_pages, jsonld_blocks
+
+        bad = []
+        for endpoint, url, html in fetch_public_pages(app, client)[0]:
+            crumbs = [
+                b for b in jsonld_blocks(html)
+                if b.get('@type') == 'BreadcrumbList'
+            ]
+            if endpoint in NO_BREADCRUMB:
+                if crumbs:
+                    bad.append(f'{endpoint}: крихти є, хоча не мали бути')
+            elif len(crumbs) != 1:
+                bad.append(f'{endpoint} ({url}): BreadcrumbList {len(crumbs)} шт.')
+        assert not bad, 'Проблеми покриття крихтами:\n' + '\n'.join(bad)
+
+    def test_no_literal_breadcrumb_json_outside_shared_macro(self):
+        """Другого оголошення BreadcrumbList у проєкті бути не може.
+
+        План звів дев'ять копій на один макрос і залишив по собі ручний
+        крок "перевір грепом". Крок, який виконує людина, виконується
+        рівно доти, доки про нього пам'ятають.
+        """
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[2] / 'app' / 'templates'
+        allowed = root / 'partials' / 'schema'
+        offenders = []
+        for path in root.rglob('*.html'):
+            if allowed in path.parents:
+                continue
+            if 'BreadcrumbList' in path.read_text(encoding='utf-8'):
+                offenders.append(str(path.relative_to(root)))
+        assert not offenders, (
+            'BreadcrumbList оголошено поза partials/schema/ -- використайте '
+            'макрос breadcrumbs():\n  ' + '\n  '.join(offenders)
+        )

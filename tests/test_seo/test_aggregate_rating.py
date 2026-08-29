@@ -9,6 +9,7 @@ TestAggregateBeyondDisplayLimit), і ряд негативних сценарі�
 нуль покриття до цього раунду: онлайн-курс, м'яке видалення,
 крос-курсове протікання, загальний відгук без прив'язки.
 """
+import re
 from datetime import date, datetime, timezone
 from uuid import uuid4
 
@@ -287,3 +288,69 @@ class TestAggregateBeyondDisplayLimit:
         assert all(
             node['reviewRating']['ratingValue'] == 5 for node in schema['review']
         )
+
+
+class TestVisibleAggregateMatchesSchema:
+    """Розмічене число мусить бути видно читачеві.
+
+    Google не приймає розмітки того, чого на сторінці немає, а власне
+    правило плану -- структуровані дані описують лише те, що справді є на
+    сторінці. AggregateRating жив у <script> і ніде більше: сторінка
+    показувала окремі картки відгуків, але ні середньої оцінки, ні
+    загальної кількості.
+    """
+
+    def _rendered_aggregate(self, html):
+        found = re.search(
+            r'<p class="iprm-dark-shell__lead">(.*?)</p>', html, re.DOTALL,
+        )
+        return found.group(1).strip() if found else None
+
+    def test_visible_numbers_equal_schema_numbers(self, client, app):
+        course = _course(title='Курс із видимим рейтингом')
+        db.session.add_all([
+            Review(author_name='А', text='Чудово', rating=5,
+                   is_published=True, course_id=course.id),
+            Review(author_name='Б', text='Добре', rating=4,
+                   is_published=True, course_id=course.id),
+        ])
+        db.session.flush()
+
+        html = client.get(f'/courses/{course.slug}').data.decode('utf-8')
+        schema = _course_schema(html)
+        rating = schema['aggregateRating']
+        text = self._rendered_aggregate(html)
+
+        assert text is not None, 'Видимого рядка середньої оцінки немає'
+        assert str(rating['ratingValue']) in text, (
+            f'ratingValue={rating["ratingValue"]} не знайдено у {text!r}'
+        )
+        assert str(rating['reviewCount']) in text, (
+            f'reviewCount={rating["reviewCount"]} не знайдено у {text!r}'
+        )
+
+    def test_online_course_shows_the_same_pair(self, client, app):
+        course = _online_course()
+        db.session.add_all([
+            Review(author_name='О1', text='Корисно', rating=5,
+                   is_published=True, online_course_id=course.id),
+            Review(author_name='О2', text='Норм', rating=4,
+                   is_published=True, online_course_id=course.id),
+        ])
+        db.session.flush()
+
+        html = client.get(f'/online-courses/{course.slug}').data.decode('utf-8')
+        rating = _course_schema(html)['aggregateRating']
+        text = self._rendered_aggregate(html)
+        assert text is not None
+        assert str(rating['ratingValue']) in text
+        assert str(rating['reviewCount']) in text
+
+    def test_no_reviews_renders_neither_text_nor_schema(self, client, app):
+        """Обидві гілки гасне разом -- умова в шаблоні й у макросі одна."""
+        course = _course(title='Курс без жодного відгуку')
+        html = client.get(f'/courses/{course.slug}').data.decode('utf-8')
+        schema = _course_schema(html)
+        assert 'aggregateRating' not in schema
+        assert 'review' not in schema
+        assert self._rendered_aggregate(html) is None

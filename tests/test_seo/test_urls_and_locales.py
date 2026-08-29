@@ -11,7 +11,7 @@ from tests.test_seo.helpers import (
 class TestSchemaUrls:
     def test_schema_urls_absolute(self, app, client):
         bad = []
-        for endpoint, url, html in fetch_public_pages(app, client):
+        for endpoint, url, html in fetch_public_pages(app, client)[0]:
             for block in jsonld_blocks(html):
                 for key, value in iter_url_values(block):
                     if not value.startswith('http'):
@@ -31,7 +31,7 @@ class TestHreflang:
         # пропускається порожнім набором.
         expected = set(LANGUAGES) | {'x-default'}
         bad = []
-        for endpoint, url, html in fetch_public_pages(app, client):
+        for endpoint, url, html in fetch_public_pages(app, client)[0]:
             langs = set(re.findall(
                 r'<link rel="alternate" hreflang="([^"]+)"', html,
             ))
@@ -56,7 +56,7 @@ class TestHreflang:
 
     def test_hreflang_urls_absolute(self, app, client):
         bad = []
-        for endpoint, url, html in fetch_public_pages(app, client):
+        for endpoint, url, html in fetch_public_pages(app, client)[0]:
             for href in re.findall(
                 r'<link rel="alternate" hreflang="[^"]+" href="([^"]+)"', html,
             ):

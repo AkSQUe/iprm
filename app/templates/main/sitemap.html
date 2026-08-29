@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'partials/schema/_breadcrumbs.html' import breadcrumbs with context %}
 
 {% block title %}{{ _('Карта сайту ІПРМ: усі розділи та сторінки') }}{% endblock %}
 {% block meta_description %}{{ _('Інтерактивна карта сайту Інституту Плазмотерапії та Регенеративної Медицини. Швидкий доступ до курсів, тренерів, блогу та інших розділів.') }}{% endblock %}
@@ -12,6 +13,7 @@
   'url': url_for('main.sitemap_page', _external=True)
 } %}
 <script type="application/ld+json">{{ _sitemap_schema | tojson }}</script>
+{{ breadcrumbs([(_('Карта сайту'), '')]) }}
 {% endblock %}
 
 {% block extra_css %}

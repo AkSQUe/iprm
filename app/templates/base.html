@@ -35,6 +35,7 @@
   {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
+    "@id": "{{ url_for('main.index', _external=True) }}#org",
     "name": "{{ site_settings.t('company_name') }}",
     "alternateName": "{{ site_settings.t('company_full_name') }}",
     "url": "{{ url_for('main.index', _external=True) }}",

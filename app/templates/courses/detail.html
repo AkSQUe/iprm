@@ -7,7 +7,7 @@
 
 {% block title %}{% trans title=course.t('title') %}{{ title }} | ІПРМ{% endtrans %}{% endblock %}
 {% block meta_description %}{{ course.t('subtitle') or course.t('short_description') or course.t('title') }}{% endblock %}
-{% block og_image %}{% if course.card_src %}{{ request.url_root.rstrip('/') ~ course.card_src }}{% else %}{{ super() }}{% endif %}{% endblock %}
+{% block og_image %}{% if course.card_src %}{{ abs_url(course.card_src) }}{% else %}{{ super() }}{% endif %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/courses.css') }}?v={{ assets_version }}">
@@ -25,6 +25,9 @@
 {% endif %}
 {% endblock %}
 
+{# provider -- посилання на @id організації з base.html, а не другий її
+   опис: два незв'язані вузли EducationalOrganization на одній сторінці
+   Google трактує як дві різні організації. #}
 {% set course_url = url_for('courses.course_by_slug', slug=course.slug, _external=True) %}
 {% set _format_map = {'online': 'https://schema.org/OnlineEventAttendanceMode',
                      'offline': 'https://schema.org/OfflineEventAttendanceMode',
@@ -36,11 +39,7 @@
   'description': course.t('subtitle') or course.t('short_description') or course.t('title'),
   'inLanguage': current_lang,
   'url': course_url,
-  'provider': {
-    '@type': 'EducationalOrganization',
-    'name': site_settings.t('company_name'),
-    'url': url_for('main.index', _external=True)
-  }
+  'provider': {'@id': url_for('main.index', _external=True) ~ '#org'}
 } %}
 {# image: обкладинка плюс фото галереї. Google приймає масив і бере з нього
    найкраще під формат видачі, тож віддавати лише картку -- недобирати. #}

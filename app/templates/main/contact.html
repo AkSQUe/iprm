@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'partials/schema/_breadcrumbs.html' import breadcrumbs with context %}
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 
 {% block title %}{{ _('Контакти Інституту Плазмотерапії та Регенеративної Медицини') }}{% endblock %}
@@ -35,6 +36,7 @@
   }
 } %}
 <script type="application/ld+json">{{ _contact_schema | tojson }}</script>
+{{ breadcrumbs([(_('Контакти'), '')]) }}
 {% endblock %}
 
 {% block content %}

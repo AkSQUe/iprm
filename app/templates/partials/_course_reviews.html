@@ -15,6 +15,14 @@
       <h2 id="reviews-title" class="iprm-dark-shell__title">
         {{ _('Що учасники кажуть про навчання') }}
       </h2>
+      {# Середнє й кількість -- ті самі rating_average/rating_count, з яких
+         _aggregate_rating.html будує AggregateRating, і та сама умова
+         `if rating_count`. Google не приймає розмітки того, чого читач на
+         сторінці не бачить, тож видиме число й розмічене мусять збігатися
+         завжди -- звідси спільне джерело і дослівно однакова гілка. #}
+      {% if rating_count %}
+      <p class="iprm-dark-shell__lead">{% trans average=(rating_average | float) | round(1), count=rating_count, plural_form=rating_count | plural('reviews') %}Середня оцінка {{ average }} з 5 · {{ count }} {{ plural_form }}{% endtrans %}</p>
+      {% endif %}
       <div class="iprm-review-grid">
         {% for review in course_reviews %}
         {# Байлайн і переклади -- як у _review_card.html: та сама сутність
