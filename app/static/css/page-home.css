@@ -121,6 +121,15 @@
   margin-bottom: 24px;
 }
 
+/* Сітка з трьох плиток результату -- переїхала сюди з courses.css: інший
+   розклад ЦЬОГО калькулятора вже жив тут, а ця сітка лишалась окремо. */
+.page-home .iprm-roi__results {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
 @media (max-width: 640px) {
   .page-home .iprm-roi {
     padding: 24px 20px;

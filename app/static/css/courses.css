@@ -1768,8 +1768,11 @@ button.iprm-tag:focus-visible {
   white-space: nowrap;
 }
 
-/* Плитки результату СТАРОГО калькулятора -- він лишився на Головній
-   (main/home.html), де ROI показує три плитки поспіль.
+/* Плитка результату СТАРОГО калькулятора -- він лишився на Головній
+   (main/home.html). Сітка з трьох плиток (.iprm-roi__results) переїхала в
+   page-home.css: увесь інший розклад ЦЬОГО калькулятора (.iprm-roi,
+   .iprm-roi__inputs) уже жив там, а ця сітка лишалась тут окремо -- той
+   самий компонент у двох файлах.
 
    Скоуп `.page-home` тут обов'язковий, і ось чому. Сторінка курсу після
    переверстки під еталон малює `.iprm-roi__result` як тёмну праву половину
@@ -1777,13 +1780,6 @@ button.iprm-tag:focus-visible {
    НИЖЧЕ -- і його `background` перебивав градієнт: панель ставала світлою,
    а білий текст на ній давав контраст 1.11. Саме так і виглядало приймання
    WS-7, поки колізію не розвели. */
-.page-home .iprm-roi__results {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
 .page-home .iprm-roi__result {
   text-align: center;
   padding: 20px 16px;
