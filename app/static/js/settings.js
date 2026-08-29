@@ -1,7 +1,17 @@
 /* settings.js -- перемикач шрифту (сторінка налаштувань).
-   Тему обробляє глобальний theme.js (єдине runtime-джерело істини). */
+   Тему обробляє глобальний theme.js (єдине runtime-джерело істини).
+
+   Список шрифтів дублюється в трьох місцях, і інакше не виходить:
+     * тут            -- перевірка збереженого значення;
+     * base.html      -- інлайн-антифликер, який має відпрацювати ДО css;
+     * common.css     -- блоки [data-font="..."].
+   Щоб додати шрифт, треба торкнутись усіх трьох плюс fonts.css. Виносити
+   список у спільний JS-файл нема сенсу: антифликеру потрібен саме інлайн,
+   інакше шрифт стрибне після завантаження зовнішнього скрипта. */
 (function () {
   var FONT_KEY = 'iprm-font';
+  var DEFAULT_FONT = 'inter';
+  var FONTS = ['inter', 'fixel', 'roboto', 'nunito', 'calibri'];
 
   function storageGet(key) {
     try { return localStorage.getItem(key); } catch (e) { return null; }
@@ -12,7 +22,8 @@
   }
 
   function getFont() {
-    return storageGet(FONT_KEY) === 'fixel' ? 'fixel' : 'inter';
+    var saved = storageGet(FONT_KEY);
+    return FONTS.indexOf(saved) === -1 ? DEFAULT_FONT : saved;
   }
 
   function markActive(font) {
@@ -24,10 +35,12 @@
   }
 
   function applyFont(font) {
-    if (font === 'fixel') {
-      document.documentElement.setAttribute('data-font', 'fixel');
-    } else {
+    if (FONTS.indexOf(font) === -1) { font = DEFAULT_FONT; }
+    // Типовий шрифт живе в :root, тож атрибут для нього не потрібен.
+    if (font === DEFAULT_FONT) {
       document.documentElement.removeAttribute('data-font');
+    } else {
+      document.documentElement.setAttribute('data-font', font);
     }
     storageSet(FONT_KEY, font);
     markActive(font);

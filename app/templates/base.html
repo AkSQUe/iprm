@@ -69,7 +69,7 @@
     (function(){try{
       var d=document.documentElement;
       var f=localStorage.getItem('iprm-font');
-      if(f==='fixel')d.setAttribute('data-font','fixel');
+      if(['fixel','roboto','nunito','calibri'].indexOf(f)>-1)d.setAttribute('data-font',f);
       var t=localStorage.getItem('iprm-theme');
       if(t!=='light'&&t!=='dark'){
         t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
