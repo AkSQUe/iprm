@@ -1,5 +1,5 @@
 {% extends "admin/base_admin.html" %}
-{% from 'admin/partials/_filter_bar.html' import empty_state %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state %}
 
 {% block title %}Коментарі блогу | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -45,6 +45,19 @@
         {% endfor %}
       </div>
 
+      {{ filter_bar(
+           endpoint='admin.blog_comments',
+           values=filters,
+           search={'name': 'q', 'placeholder': 'Пошук за автором, email або текстом'},
+           fields=[
+             {'name': 'post_id', 'label': 'Допис', 'placeholder': 'Усі дописи', 'options': post_options},
+             {'name': 'date_from', 'label': 'Залишені з', 'type': 'date'},
+             {'name': 'date_to', 'label': 'Залишені по', 'type': 'date'},
+             {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
+           ],
+           base_args={'status': status},
+         ) }}
+
       {% if comments %}
       <div class="admin-table-wrap">
       <table class="admin-table admin-table--fixed admin-comments-table">
@@ -80,27 +93,24 @@
             </td>
             <td class="admin-table__actions">
               {% if c.status != 'approved' %}
-              <form method="POST" action="{{ url_for('admin.blog_comment_approve', comment_id=c.id) }}" class="admin-inline-form">
+              <form method="POST" action="{{ url_for('admin.blog_comment_approve', comment_id=c.id, **back_args) }}" class="admin-inline-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="status" value="{{ status }}">
                 <button type="submit" class="btn-admin btn-admin--success btn-admin--sm btn-admin--icon"
                         title="Схвалити" aria-label="Схвалити коментар">{{ icon('check') }}</button>
               </form>
               {% endif %}
               {% if c.status != 'spam' %}
-              <form method="POST" action="{{ url_for('admin.blog_comment_spam', comment_id=c.id) }}" class="admin-inline-form">
+              <form method="POST" action="{{ url_for('admin.blog_comment_spam', comment_id=c.id, **back_args) }}" class="admin-inline-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="status" value="{{ status }}">
                 <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
                         title="Спам" aria-label="Позначити спамом">{{ icon('block') }}</button>
               </form>
               {% endif %}
               {# Питаємо підтвердження: кнопка стала іконкою, а видалення
                  незворотне -- напис «Видалити» більше не попереджає сам. #}
-              <form method="POST" action="{{ url_for('admin.blog_comment_delete', comment_id=c.id) }}" class="admin-inline-form"
+              <form method="POST" action="{{ url_for('admin.blog_comment_delete', comment_id=c.id, **back_args) }}" class="admin-inline-form"
                     data-confirm="Видалити коментар від {{ c.author_name }}?" data-confirm-ok="Видалити" data-confirm-danger>
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="status" value="{{ status }}">
                 <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm btn-admin--icon"
                         title="Видалити" aria-label="Видалити коментар">{{ icon('delete') }}</button>
               </form>
@@ -110,9 +120,11 @@
         </tbody>
       </table>
       </div>
+      {{ pager('admin.blog_comments', pagination, dict(filter_args, status=status)) }}
       {% else %}
-      {% call empty_state(icon_name='forum', title='Коментарів немає') %}
-        <p class="admin-text-muted">У цій категорії порожньо. Зріз перемикається стрічкою вгорі.</p>
+      {% call empty_state('admin.blog_comments', filter_args, {'status': status},
+                          icon_name='forum', title='Коментарів немає') %}
+        <p class="admin-text-muted">Коментарі з'являться тут, щойно відвідувачі залишать перший.</p>
       {% endcall %}
       {% endif %}
     </div>

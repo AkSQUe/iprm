@@ -9,41 +9,99 @@ from flask import render_template, redirect, url_for, flash, request, abort
 from flask_login import current_user
 from sqlalchemy import desc
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
 from app.extensions import db
 from app.models.blog_comment import BlogComment
+from app.models.blog_post import BlogPost
 from app.models.mixins import utcnow
 from app.undo import offer_undo
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
 
+# status -- окремий параметр (стрічка admin-pills, не поле filter_bar), тож
+# 'all' звірений тут поруч, а не в STATUSES моделі.
+_STATUS_CHOICES = BlogComment.STATUSES + ('all',)
+
+
+def _filters():
+    """Фільтри реєстру -- спільні для списку й для `_back()`."""
+    return {
+        'q': _listing.text_arg('q'),
+        'post_id': _listing.int_arg('post_id'),
+        'date_from': _listing.date_arg('date_from'),
+        'date_to': _listing.date_arg('date_to'),
+        'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
+    }
+
+
+def _status_arg():
+    """Зріз статусу: звірка з переліком, невідоме значення падає в 'pending'."""
+    return _listing.choice_arg('status', _STATUS_CHOICES, default=BlogComment.STATUS_PENDING)
+
+
+def _post_options():
+    """Дописи з хоча б одним живим коментарем -- інакше селект стає
+    переліком усього блогу, а не тим, чим можна реально звузити список."""
+    rows = (
+        db.session.query(BlogPost.id, BlogPost.title)
+        .join(BlogComment, BlogComment.post_id == BlogPost.id)
+        .filter(BlogComment.deleted_at.is_(None))
+        .distinct()
+        .order_by(BlogPost.title)
+        .all()
+    )
+    return [(post_id, title) for post_id, title in rows]
+
 
 def _back():
-    """Безпечний редірект назад до списку зі збереженням фільтра статусу.
+    """Безпечний редірект назад до списку зі збереженням поточного зрізу.
 
     НЕ використовуємо request.referrer (керований клієнтом -> open redirect):
-    будуємо URL через url_for з валідованим status із форми.
+    будуємо URL через url_for, перечитавши й перевіривши кожен параметр зрізу
+    тим самим способом, що й роут списку. Джерело значень -- query string
+    самого запиту дії (approve/spam/delete): рядкові форми несуть зріз у
+    action-URL через `back_args`, прихованих полів тут більше немає.
     """
-    status = request.form.get('status')
-    if status not in BlogComment.STATUSES and status != 'all':
-        status = None
-    return redirect(url_for('admin.blog_comments', status=status) if status
-                    else url_for('admin.blog_comments'))
+    args = _listing.filter_args(_filters())
+    args['status'] = _status_arg()
+    args['page'] = request.args.get('page', 1, type=int)
+    return redirect(url_for('admin.blog_comments', **args))
 
 
 @admin_bp.route('/blog/comments')
 @admin_required
 def blog_comments():
-    status = request.args.get('status', BlogComment.STATUS_PENDING)
-    if status not in BlogComment.STATUSES and status != 'all':
-        status = BlogComment.STATUS_PENDING
-    q = BlogComment.alive()
+    status = _status_arg()
+    filters = _filters()
+    query = BlogComment.alive()
     if status != 'all':
-        q = q.filter(BlogComment.status == status)
-    comments = q.order_by(desc(BlogComment.created_at)).limit(200).all()
-    return render_template('admin/blog_comments.html', comments=comments, status=status)
+        query = query.filter(BlogComment.status == status)
+    query = _listing.apply_search(query, filters['q'], [
+        BlogComment.author_name, BlogComment.email, BlogComment.body,
+    ])
+    if filters['post_id']:
+        query = query.filter(BlogComment.post_id == filters['post_id'])
+    query = _listing.apply_date_range(
+        query, BlogComment.created_at, filters['date_from'], filters['date_to'],
+    )
+    pagination = query.order_by(desc(BlogComment.created_at)).paginate(
+        page=request.args.get('page', 1, type=int),
+        per_page=_listing.per_page_arg(), error_out=False,
+    )
+    filter_args = _listing.filter_args(filters)
+    return render_template(
+        'admin/blog_comments.html',
+        comments=pagination.items,
+        pagination=pagination,
+        status=status,
+        filters=filters,
+        filter_args=filter_args,
+        back_args=dict(filter_args, status=status, page=pagination.page),
+        post_options=_post_options(),
+        per_page_options=_listing.PER_PAGE_OPTIONS,
+    )
 
 
 def _set_status(comment_id, new_status):
