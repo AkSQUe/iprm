@@ -1650,3 +1650,27 @@
   letter-spacing: -0.01em;
   color: var(--iprm-text);
 }
+
+/* Адаптив програми -- переїхав сюди разом із базою: лишати його в
+   apple-pages.css означало б тримати один компонент у двох файлах
+   знову, тільки тепер по різні боки медіа-запиту. */
+
+@media (max-width: 768px) {
+  .apple-page .iprm-program {
+      grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+  .apple-page .iprm-program__block {
+      padding: 24px 20px 8px;
+    }
+  .apple-page .iprm-program__badge {
+      width: 42px;
+      height: 42px;
+      font-size: 1.125rem;
+    }
+  .apple-page .iprm-program__heading {
+      font-size: 1.1875rem;
+    }
+}

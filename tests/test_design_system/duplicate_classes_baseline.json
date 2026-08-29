@@ -31,27 +31,7 @@
     "course-landing.css",
     "courses.css"
   ],
-  "iprm-program": [
-    "apple-pages.css",
-    "course-landing.css"
-  ],
-  "iprm-program__badge": [
-    "apple-pages.css",
-    "course-landing.css"
-  ],
   "iprm-program__block": [
-    "apple-pages.css",
-    "course-landing.css"
-  ],
-  "iprm-program__head": [
-    "apple-pages.css",
-    "course-landing.css"
-  ],
-  "iprm-program__item": [
-    "apple-pages.css",
-    "course-landing.css"
-  ],
-  "iprm-program__list": [
     "apple-pages.css",
     "course-landing.css"
   ],

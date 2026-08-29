@@ -390,7 +390,8 @@ def page_urls(app, user_id, explicit, only_classes):
     return urls
 
 
-def capture(label, explicit, only_classes, theme='light', seed=False, quiet=False):
+def capture(label, explicit, only_classes, theme='light', seed=False,
+            width=1440, quiet=False):
     from werkzeug.serving import make_server
     from playwright.sync_api import sync_playwright
 
@@ -425,7 +426,7 @@ def capture(label, explicit, only_classes, theme='light', seed=False, quiet=Fals
             # системну, і знімок мовчки порівнює світлу тему з тёмною:
             # у першому ж вимірі це дало 1019 хибних розбіжностей.
             # Тёмна перевіряється окремим прогоном (--theme dark).
-            context = browser.new_context(viewport={'width': 1440, 'height': 900},
+            context = browser.new_context(viewport={'width': width, 'height': 900},
                                           reduced_motion='reduce',
                                           color_scheme=theme)
             context.add_init_script("""
@@ -532,6 +533,9 @@ def main():
         if name == 'capture':
             sp.add_argument('--label', required=True)
         sp.add_argument('--theme', default='light', choices=('light', 'dark'))
+        sp.add_argument('--width', type=int, default=1440,
+                        help='ширина вікна: медіа-запити інших ширин інакше '
+                             'поза знімком')
         sp.add_argument('--seed', action='store_true',
                         help='створити курс і онлайн-курс, щоб детальні '
                              'сторінки відрендерились')
@@ -548,7 +552,8 @@ def main():
     explicit = [p for p in getattr(args, 'pages', '').split(',') if p]
 
     if args.cmd == 'capture':
-        return 0 if capture(args.label, explicit, only, args.theme, args.seed) else 2
+        return 0 if capture(args.label, explicit, only, args.theme, args.seed,
+                            args.width) else 2
 
     if args.cmd == 'diff':
         return 1 if compare(args.before, args.after) else 0
@@ -558,6 +563,8 @@ def main():
     common = ['--theme', getattr(args, 'theme', 'light')]
     if getattr(args, 'seed', False):
         common.append('--seed')
+    if getattr(args, 'width', 1440) != 1440:
+        common += ['--width', str(args.width)]
     if only:
         common += ['--only', ','.join(only)]
     if explicit:

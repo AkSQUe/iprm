@@ -999,9 +999,7 @@ html {
     grid-template-columns: 1fr;
   }
 
-  .apple-page .iprm-program {
-    grid-template-columns: 1fr;
-  }
+  
 
   .apple-page .apple-section-cta {
     flex-direction: column;
@@ -1049,19 +1047,11 @@ html {
     padding: 24px 20px;
   }
 
-  .apple-page .iprm-program__block {
-    padding: 24px 20px 8px;
-  }
+  
 
-  .apple-page .iprm-program__badge {
-    width: 42px;
-    height: 42px;
-    font-size: 1.125rem;
-  }
+  
 
-  .apple-page .iprm-program__heading {
-    font-size: 1.1875rem;
-  }
+  
 
   .apple-page .iprm-trainer-card__photo {
     height: 220px;
