@@ -225,6 +225,21 @@ def quiz_delete(quiz_id):
     return redirect(url_for('admin.course_edit', course_id=course_id))
 
 
+# Стан тестування у фільтрі -- РІВНО ці три значення, і жодного більше.
+# attempts_exhausted / in_progress / profile_incomplete народжуються в
+# quiz_service.eligibility_map УЖЕ ПІСЛЯ вибірки сторінки (їм потрібен
+# контекст конкретних реєстрацій), тож фільтр по них звузив би лише поточну
+# сторінку, а пейджер і далі показував би повний total -- та сама пастка,
+# про яку попереджає коментар нижче про total_count/passed_count/issued_count.
+# Тут -- лише те, що виражається прямим SQL-виразом на EventRegistration.
+_QUIZ_STATE_CHOICES = {
+    'passed': 'Склали',
+    'not_passed': 'Не склали',
+    'no_certificate': 'Без сертифіката',
+}
+_QUIZ_PAYMENT_CHOICES = {'paid': 'Оплачено', 'unpaid': 'Не оплачено'}
+
+
 # ---- Результати по групі ---------------------------------------------------
 
 @admin_bp.route('/instances/<int:instance_id>/quiz-results')
@@ -241,6 +256,13 @@ def instance_quiz_results(instance_id):
         .filter(EventRegistration.status != 'cancelled')
     )
 
+    filters = {
+        'q': _listing.text_arg('q'),
+        'state': _listing.choice_arg('state', _QUIZ_STATE_CHOICES),
+        'payment': _listing.choice_arg('payment', _QUIZ_PAYMENT_CHOICES),
+        'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
+    }
+
     # Сортування перенесене в SQL (було `rows.sort` у Python): при пагінації
     # сортування всередині сторінки впорядковувало б лише її, і «ще не склали»
     # опинялися б на кожній сторінці окремою купкою.
@@ -255,8 +277,21 @@ def instance_quiz_results(instance_id):
             joinedload(EventRegistration.quiz_attempts),
             joinedload(EventRegistration.certificate),
         )
-        .order_by(EventRegistration.quiz_passed_at.is_(None), User.last_name)
     )
+    query = _listing.apply_search(query, filters['q'], [
+        User.first_name, User.last_name, User.email,
+    ])
+    if filters['state'] == 'passed':
+        query = query.filter(EventRegistration.quiz_passed_at.isnot(None))
+    elif filters['state'] == 'not_passed':
+        query = query.filter(EventRegistration.quiz_passed_at.is_(None))
+    elif filters['state'] == 'no_certificate':
+        query = query.filter(~EventRegistration.certificate.has())
+    if filters['payment'] == 'paid':
+        query = query.filter(EventRegistration.payment_status == 'paid')
+    elif filters['payment'] == 'unpaid':
+        query = query.filter(EventRegistration.payment_status != 'paid')
+    query = query.order_by(EventRegistration.quiz_passed_at.is_(None), User.last_name)
 
     page = request.args.get('page', 1, type=int)
     per_page = _listing.per_page_arg()
@@ -283,11 +318,14 @@ def instance_quiz_results(instance_id):
             'best': max((a.score or 0 for a in finished), default=None),
         })
 
-    # Лічильники -- по ВСІЙ групі, а не по сторінці: це показник готовності
-    # заходу до видачі сертифікатів, і «12 із 40» на другій сторінці мусить
-    # означати те саме, що на першій. Раніше вони рахувались із `rows`, тобто
-    # з пагінацією тихо перетворилися б на «скільки на цьому екрані».
+    # Лічильники -- по ВСІЙ групі (`base`), а не по зрізу й не по сторінці:
+    # це показник готовності заходу до видачі сертифікатів, і «12 із 40» під
+    # фільтром чи на другій сторінці мусить означати те саме, що без нього.
+    # Раніше total_count брався з `pagination.total`, що збігалося з розміром
+    # групи лише тому, що фільтрів на цій сторінці не було; тепер вони є, тож
+    # рахуємо його з `base` окремо, як і решту двох.
     from app.models.certificate import Certificate
+    total_count = base.count()
     passed_count = base.filter(
         EventRegistration.quiz_passed_at.isnot(None)).count()
     issued_count = base.join(
@@ -299,9 +337,14 @@ def instance_quiz_results(instance_id):
         quiz=quiz,
         rows=rows,
         pagination=pagination,
-        total_count=pagination.total,
+        total_count=total_count,
         passed_count=passed_count,
         issued_count=issued_count,
+        filters=filters,
+        filter_args=_listing.filter_args(filters),
+        state_options=list(_QUIZ_STATE_CHOICES.items()),
+        payment_options=list(_QUIZ_PAYMENT_CHOICES.items()),
+        per_page_options=_listing.PER_PAGE_OPTIONS,
     )
 
 

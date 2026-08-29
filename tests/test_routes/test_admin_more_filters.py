@@ -15,6 +15,7 @@ rollout.md`: кожне з його завдань додає СЮДИ свою 
 буває -- лишений тут акаунт валить TestParticipants ЛИШЕ в повному прогоні).
 """
 import re
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
@@ -23,7 +24,11 @@ from app.extensions import db
 from app.models.auth_identity import AuthIdentity
 from app.models.blog_comment import BlogComment
 from app.models.blog_post import BlogPost
+from app.models.certificate import Certificate
+from app.models.course import Course
+from app.models.course_instance import CourseInstance
 from app.models.medical_profile import MedicalProfile
+from app.models.registration import EventRegistration
 from app.models.user import User
 from app.models.webhook_delivery import WebhookDelivery
 
@@ -278,3 +283,182 @@ class TestWebhookQueueFilters:
         assert 'status=failed' in location
         assert 'q=abc' in location
         assert 'page=2' in location
+
+
+# ------------------------- Результати тестування по групі -------------------
+
+# Маркер у Course.slug і в email учасників -- за ним прибираємо власні
+# Course/CourseInstance/EventRegistration/Certificate і власних User.
+QR_PREFIX = 'qr-'
+
+
+@pytest.fixture(autouse=True)
+def clean_quiz_results(app):
+    """Порожня власна частина курсів/проведень/реєстрацій тестування.
+
+    Дитина перед батьком (SQLite тестового прогону PRAGMA foreign_keys=ON
+    усередині транзакції каскади не тримає, так само, як у секції коментарів
+    блогу вище): Certificate -> EventRegistration -> CourseInstance -> Course,
+    а власних User (маркер у email) -- AuthIdentity/MedicalProfile перед User.
+    """
+    def _wipe():
+        own_courses = db.session.query(Course.id).filter(
+            Course.slug.like(f'{QR_PREFIX}%'))
+        own_instances = db.session.query(CourseInstance.id).filter(
+            CourseInstance.course_id.in_(own_courses))
+        own_regs = db.session.query(EventRegistration.id).filter(
+            EventRegistration.instance_id.in_(own_instances))
+        Certificate.query.filter(
+            Certificate.registration_id.in_(own_regs)).delete(synchronize_session=False)
+        EventRegistration.query.filter(
+            EventRegistration.instance_id.in_(own_instances)).delete(synchronize_session=False)
+        CourseInstance.query.filter(
+            CourseInstance.course_id.in_(own_courses)).delete(synchronize_session=False)
+        Course.query.filter(Course.slug.like(f'{QR_PREFIX}%')).delete(synchronize_session=False)
+        stale = [
+            row.id for row in User.query.filter(
+                User.email.like(f'{QR_PREFIX}%@test.com')).all()
+        ]
+        if stale:
+            for model in (AuthIdentity, MedicalProfile):
+                model.query.filter(model.user_id.in_(stale)).delete(
+                    synchronize_session=False)
+            User.query.filter(User.id.in_(stale)).delete(
+                synchronize_session=False)
+        db.session.commit()
+
+    _wipe()
+    yield
+    _wipe()
+
+
+def _qr_course(**kwargs):
+    kwargs.setdefault('title', f'Курс {uuid4().hex[:6]}')
+    kwargs.setdefault('is_active', True)
+    course = Course(slug=f'{QR_PREFIX}{uuid4().hex[:8]}', **kwargs)
+    db.session.add(course)
+    db.session.commit()
+    return course
+
+
+def _qr_instance(course, **kwargs):
+    kwargs.setdefault('start_date', datetime.now(timezone.utc) + timedelta(days=7))
+    kwargs.setdefault('end_date', datetime.now(timezone.utc) + timedelta(days=7, hours=4))
+    kwargs.setdefault('event_format', 'offline')
+    kwargs.setdefault('status', 'published')
+    instance = CourseInstance(course_id=course.id, **kwargs)
+    db.session.add(instance)
+    db.session.commit()
+    return instance
+
+
+def _qr_participant(**kwargs):
+    kwargs.setdefault('first_name', 'Учасник')
+    last_name = kwargs.pop('last_name', f'Тест{uuid4().hex[:6]}')
+    user = User.create_with_password(
+        f'{QR_PREFIX}{uuid4().hex[:8]}@test.com', 'password123',
+        last_name=last_name, email_confirmed=True, **kwargs,
+    )
+    db.session.commit()
+    return user
+
+
+def _qr_registration(user, instance, **kwargs):
+    kwargs.setdefault('phone', '+380501234567')
+    kwargs.setdefault('specialty', 'Кардіологія')
+    kwargs.setdefault('workplace', 'Лікарня')
+    kwargs.setdefault('status', 'confirmed')
+    kwargs.setdefault('payment_status', 'paid')
+    reg = EventRegistration(user_id=user.id, instance_id=instance.id, **kwargs)
+    db.session.add(reg)
+    db.session.commit()
+    return reg
+
+
+def _qr_certificate(reg, **kwargs):
+    kwargs.setdefault('recipient_name', reg.user.full_name)
+    kwargs.setdefault('event_title', 'Захід')
+    kwargs.setdefault('number', f'QR-{uuid4().hex[:10]}')
+    kwargs.setdefault('pdf_path', f'certs/{uuid4().hex[:8]}.pdf')
+    cert = Certificate(registration_id=reg.id, user_id=reg.user_id, **kwargs)
+    db.session.add(cert)
+    db.session.commit()
+    return cert
+
+
+class TestQuizResultsFilters:
+    def test_state_not_passed_hides_who_passed_shows_who_did_not(self, client, admin):
+        course = _qr_course()
+        instance = _qr_instance(course)
+        passed = _qr_participant(last_name='Пройшов' + uuid4().hex[:6])
+        pending = _qr_participant(last_name='Очікує' + uuid4().hex[:6])
+        _qr_registration(passed, instance, quiz_passed_at=datetime.now(timezone.utc))
+        _qr_registration(pending, instance)
+
+        _login(client, admin)
+        body = client.get(
+            f'/admin/instances/{instance.id}/quiz-results?state=not_passed'
+        ).get_data(as_text=True)
+
+        assert pending.last_name in body
+        assert passed.last_name not in body
+
+    def test_state_no_certificate_hides_participant_with_issued_certificate(self, client, admin):
+        course = _qr_course()
+        instance = _qr_instance(course)
+        certified = _qr_participant(last_name='Сертифікований' + uuid4().hex[:6])
+        uncertified = _qr_participant(last_name='БезСертифіката' + uuid4().hex[:6])
+        reg_certified = _qr_registration(
+            certified, instance, quiz_passed_at=datetime.now(timezone.utc))
+        _qr_certificate(reg_certified)
+        _qr_registration(uncertified, instance)
+
+        _login(client, admin)
+        body = client.get(
+            f'/admin/instances/{instance.id}/quiz-results?state=no_certificate'
+        ).get_data(as_text=True)
+
+        assert uncertified.last_name in body
+        assert certified.last_name not in body
+
+    def test_search_by_last_name_narrows_list(self, client, admin):
+        course = _qr_course()
+        instance = _qr_instance(course)
+        target = _qr_participant(last_name='Неповторний' + uuid4().hex[:6])
+        other = _qr_participant(last_name='Інший' + uuid4().hex[:6])
+        _qr_registration(target, instance)
+        _qr_registration(other, instance)
+
+        _login(client, admin)
+        body = client.get(
+            f'/admin/instances/{instance.id}/quiz-results?q={target.last_name}'
+        ).get_data(as_text=True)
+
+        assert target.last_name in body
+        assert other.last_name not in body
+
+    def test_stat_card_counters_do_not_move_under_filter(self, client, admin):
+        course = _qr_course()
+        instance = _qr_instance(course)
+        passed = _qr_participant(last_name='Пройшов2' + uuid4().hex[:6])
+        pending = _qr_participant(last_name='Очікує2' + uuid4().hex[:6])
+        reg_passed = _qr_registration(
+            passed, instance, quiz_passed_at=datetime.now(timezone.utc))
+        _qr_certificate(reg_passed)
+        _qr_registration(pending, instance)
+
+        _login(client, admin)
+        unfiltered = client.get(
+            f'/admin/instances/{instance.id}/quiz-results'
+        ).get_data(as_text=True)
+        filtered = client.get(
+            f'/admin/instances/{instance.id}/quiz-results?state=not_passed'
+        ).get_data(as_text=True)
+
+        def _counts(body):
+            return re.findall(r'admin-stat-card__value">(\d+)<', body)
+
+        # Учасників: 2, склали: 1, сертифікатів видано: 1 -- і під фільтром, і
+        # без нього: лічильники рахуються з `base` (уся група), а не зі зрізу.
+        assert _counts(unfiltered) == ['2', '1', '1']
+        assert _counts(filtered) == ['2', '1', '1']

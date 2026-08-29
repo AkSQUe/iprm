@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-quiz.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import pager, stat_cards, empty_state   %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_cards, empty_state   %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -52,6 +52,18 @@
                   {'value': issued_count, 'label': 'Сертифікатів видано'}],
                  cols=3) }}
 
+    {{ filter_bar(
+         endpoint='admin.instance_quiz_results',
+         values=filters,
+         search={'name': 'q', 'placeholder': 'Пошук за іменем або email'},
+         fields=[
+           {'name': 'state', 'label': 'Стан', 'placeholder': 'Будь-який', 'options': state_options},
+           {'name': 'payment', 'label': 'Оплата', 'placeholder': 'Будь-яка', 'options': payment_options},
+           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
+         ],
+         base_args={'instance_id': instance.id},
+       ) }}
+
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead>
@@ -68,7 +80,7 @@
           {% for row in rows %}
           <tr>
             <td>
-              {{ row.reg.user.full_name }}
+              <a href="{{ url_for('admin.user_detail', user_id=row.reg.user.id) }}">{{ row.reg.user.full_name }}</a>
               <div class="admin-text-muted">{{ row.reg.user.email }}</div>
             </td>
             <td>
@@ -90,9 +102,12 @@
             </td>
             <td>
               {% if row.best is not none %}
-              <span class="quiz-score {{ 'quiz-score--pass' if row.reg.quiz_passed_at else 'quiz-score--fail' }}">
-                {{ row.best }}{% if row.attempts %} / {{ row.attempts[0].total }}{% endif %}
-              </span>
+              {# Розбір відповідей -- це саме те, звідки взявся бал. #}
+              <a href="{{ url_for('admin.registration_quiz_detail', reg_id=row.reg.id) }}">
+                <span class="quiz-score {{ 'quiz-score--pass' if row.reg.quiz_passed_at else 'quiz-score--fail' }}">
+                  {{ row.best }}{% if row.attempts %} / {{ row.attempts[0].total }}{% endif %}
+                </span>
+              </a>
               {% else %}
               <span class="admin-text-muted">–</span>
               {% endif %}
@@ -154,9 +169,10 @@
       </table>
     </div>
 
-    {{ pager('admin.instance_quiz_results', pagination, {'instance_id': instance.id}) }}
+    {{ pager('admin.instance_quiz_results', pagination, dict(filter_args, instance_id=instance.id)) }}
     {% if not rows %}
-    {% call empty_state(icon_name='how_to_reg', title='Реєстрацій немає') %}
+    {% call empty_state('admin.instance_quiz_results', filter_args, {'instance_id': instance.id},
+                        icon_name='how_to_reg', title='Реєстрацій немає') %}
       <p>Результати з'являться після того, як учасники складуть тест</p>
     {% endcall %}
     {% endif %}
