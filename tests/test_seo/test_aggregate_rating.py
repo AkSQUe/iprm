@@ -215,6 +215,46 @@ class TestExclusionsAndScoping:
         assert 'aggregateRating' not in schema_online
 
 
+class TestNullCreatedAt:
+    """Раунд 2 фіксу: created_at nullable у продовій схемі (TimestampMixin
+    виставляє дефолт лише на Python-рівні, без DB NOT NULL). Рядок з NULL
+    created_at не має класти сторінку -- і не має отримувати вигадану дату
+    публікації замість пропущеного ключа."""
+
+    def test_null_created_at_does_not_crash_page_and_omits_date_published(
+        self, client, app,
+    ):
+        course = _course(title='Курс з відгуком без дати')
+        review = Review(author_name='Без дати', text='Теж рахується',
+                         rating=5, is_published=True, course_id=course.id)
+        db.session.add(review)
+        db.session.flush()
+        # Явний UPDATE, а не просте setattr(None) до flush: TimestampMixin
+        # ставить default=utcnow лише коли атрибут ЖОДНОГО разу не був
+        # присвоєний -- присвоєння None перед первинним flush лишається
+        # None (перевірено), але явний UPDATE після флашу гарантує NULL у
+        # БД незалежно від того, як саме ORM трактує "не присвоєно".
+        db.session.execute(
+            db.update(Review).where(Review.id == review.id).values(created_at=None),
+        )
+        db.session.flush()
+        db.session.expire(review)
+        assert review.created_at is None
+
+        resp = client.get(f'/courses/{course.slug}')
+        assert resp.status_code == 200
+        schema = _course_schema(resp.data.decode('utf-8'))
+        rating = schema['aggregateRating']
+        # Рядок з NULL-датою все одно опублікований, живий і привʼязаний --
+        # рахується в count/average і йде в review-масив як звичайний.
+        assert int(rating['reviewCount']) == 1
+        assert float(rating['ratingValue']) == 5.0
+        assert len(schema['review']) == 1
+        node = schema['review'][0]
+        assert node['author']['name'] == 'Без дати'
+        assert 'datePublished' not in node
+
+
 class TestAggregateBeyondDisplayLimit:
     """Головна поведінка раунду 1: середнє й кількість -- за ВСІМА
     опублікованими відгуками, а не лише за шістьма показаними."""

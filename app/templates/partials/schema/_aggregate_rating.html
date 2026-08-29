@@ -23,7 +23,7 @@
 {%- if rating_count -%}
   {%- set _nodes = [] -%}
   {%- for review in reviews -%}
-    {%- set _discard = _nodes.append({
+    {%- set _node = {
       '@type': 'Review',
       'author': {'@type': 'Person', 'name': review.t('author_name')},
       'reviewRating': {
@@ -31,8 +31,15 @@
         'bestRating': 5, 'worstRating': 1,
       },
       'reviewBody': review.t('text'),
+    } -%}
+    {# created_at nullable в БД (TimestampMixin виставляє дефолт лише на
+       Python-рівні, без NOT NULL) -- на NULL ключ просто пропускаємо,
+       а не підставляємо вигадану дату: фабрикована дата публікації --
+       рівно те, чого це правило забороняє. #}
+    {%- if review.created_at %}{% set _discard = _node.update({
       'datePublished': review.created_at.date().isoformat(),
-    }) -%}
+    }) %}{% endif -%}
+    {%- set _discard = _nodes.append(_node) -%}
   {%- endfor -%}
   {%- set _discard = schema.update({
     'aggregateRating': {
