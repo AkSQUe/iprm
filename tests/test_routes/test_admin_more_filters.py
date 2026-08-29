@@ -25,8 +25,13 @@ from app.models.blog_comment import BlogComment
 from app.models.blog_post import BlogPost
 from app.models.medical_profile import MedicalProfile
 from app.models.user import User
+from app.models.webhook_delivery import WebhookDelivery
 
 EMAIL_PREFIX = 'mf-'
+
+# Маркер у target_url -- за ним прибираємо власні WebhookDelivery в teardown
+# (таблиця без FK-дітей, тож досить одного DELETE, на відміну від User нижче).
+WH_TARGET_MARKER = 'https://wh-test.example/'
 
 
 @pytest.fixture(autouse=True)
@@ -165,3 +170,111 @@ class TestBlogCommentsFilters:
         body = client.get('/admin/blog/comments?status=spam').get_data(as_text=True)
 
         assert 'Коментарів немає' in body
+
+
+# ----------------------------- Webhook черга -----------------------------
+
+
+@pytest.fixture(autouse=True)
+def clean_webhooks(app):
+    """Порожня власна частина webhook_deliveries.
+
+    Таблиця -- лист (немає FK-дітей), тож на відміну від User/BlogPost вище
+    досить одного DELETE за міткою в target_url.
+    """
+    def _wipe():
+        WebhookDelivery.query.filter(
+            WebhookDelivery.target_url.like(f'{WH_TARGET_MARKER}%')
+        ).delete(synchronize_session=False)
+        db.session.commit()
+
+    _wipe()
+    yield
+    _wipe()
+
+
+def _delivery(**kwargs):
+    """WebhookDelivery за замовчуванням -- каталожна подія (курс), якщо
+    виклик явно не задав event_type чи course_id (партнерська подія)."""
+    kwargs.setdefault('event_uuid', uuid4().hex)
+    kwargs.setdefault('target_url', WH_TARGET_MARKER + uuid4().hex[:8])
+    kwargs.setdefault('status', 'pending')
+    if 'event_type' not in kwargs and 'course_id' not in kwargs:
+        kwargs.setdefault('course_id', 1)
+        kwargs.setdefault('course_slug', 'course-' + uuid4().hex[:8])
+        kwargs.setdefault('action', 'updated')
+    delivery = WebhookDelivery(**kwargs)
+    db.session.add(delivery)
+    db.session.commit()
+    return delivery
+
+
+class TestWebhookQueueFilters:
+    def test_search_narrows_by_course_slug(self, client, admin):
+        marker = uuid4().hex[:10]
+        target = _delivery(course_slug=f'course-{marker}')
+        other = _delivery(course_slug='course-unrelated')
+
+        _login(client, admin)
+        body = client.get(f'/admin/webhooks?q={marker}').get_data(as_text=True)
+
+        assert target.course_slug in body
+        assert other.course_slug not in body
+
+    def test_search_narrows_by_event_uuid(self, client, admin):
+        target = _delivery()
+        other = _delivery()
+
+        _login(client, admin)
+        body = client.get(f'/admin/webhooks?q={target.event_uuid}').get_data(as_text=True)
+
+        assert target.event_uuid[:12] in body
+        assert other.event_uuid[:12] not in body
+
+    def test_event_type_catalog_shows_only_empty_event_type(self, client, admin):
+        catalog = _delivery()  # event_type=None, курс/дія задані
+        partner = _delivery(event_type='lead.created', target_url=WH_TARGET_MARKER + uuid4().hex[:8])
+
+        _login(client, admin)
+        body = client.get('/admin/webhooks?event_type=catalog').get_data(as_text=True)
+
+        assert catalog.event_uuid[:12] in body
+        assert partner.event_uuid[:12] not in body
+
+    def test_second_page_keeps_status_and_q(self, client, admin):
+        marker = 'whpage' + uuid4().hex[:6]
+        for _ in range(26):
+            _delivery(course_slug=f'{marker}-{uuid4().hex[:6]}', status='pending')
+
+        _login(client, admin)
+        page1 = client.get(
+            f'/admin/webhooks?per_page=25&status=pending&q={marker}'
+        ).get_data(as_text=True)
+        page2 = client.get(
+            f'/admin/webhooks?per_page=25&status=pending&q={marker}&page=2'
+        ).get_data(as_text=True)
+
+        assert 'page=2' in page1
+        assert 'status=pending' in page1
+        assert marker in page1
+
+        page1_slugs = set(re.findall(rf'{re.escape(marker)}-\w{{6}}', page1))
+        page2_slugs = set(re.findall(rf'{re.escape(marker)}-\w{{6}}', page2))
+        assert len(page1_slugs) == 25
+        assert len(page2_slugs) == 1
+        assert not (page1_slugs & page2_slugs)
+
+    def test_webhook_delete_redirects_with_saved_slice(self, client, admin):
+        delivery = _delivery(status='failed')
+
+        _login(client, admin)
+        resp = client.post(
+            f'/admin/webhooks/{delivery.id}/delete?status=failed&q=abc&page=2',
+            follow_redirects=False,
+        )
+
+        assert resp.status_code == 302
+        location = resp.headers['Location']
+        assert 'status=failed' in location
+        assert 'q=abc' in location
+        assert 'page=2' in location

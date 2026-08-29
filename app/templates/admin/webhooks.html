@@ -1,5 +1,5 @@
 {% extends "admin/base_admin.html" %}
-{% from 'admin/partials/_filter_bar.html' import stat_card, empty_state  %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, stat_card, empty_state  %}
 
 {% block title %}Webhook черга | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -55,17 +55,21 @@
     {% endfor %}
   </div>
 
-  {% if deliveries %}
-  <div class="wh-results-meta">
-    <span>
-      Показано {{ deliveries | length }}
-      {% if filter_status %}зі статусом <strong>{{ filter_status }}</strong>{% else %}останніх записів{% endif %}
-    </span>
-    {% if filter_status %}
-    <a href="{{ url_for('admin.webhooks_list') }}" class="wh-results-meta__clear">Скинути фільтр</a>
-    {% endif %}
-  </div>
+  {{ filter_bar(
+       endpoint='admin.webhooks_list',
+       values=filters,
+       search={'name': 'q', 'placeholder': 'Пошук за event_uuid, slug курсу, URL або текстом помилки'},
+       fields=[
+         {'name': 'event_type', 'label': 'Тип події', 'placeholder': 'Усі типи', 'options': event_type_options},
+         {'name': 'action', 'label': 'Дія', 'placeholder': 'Усі дії', 'options': action_options},
+         {'name': 'date_from', 'label': 'Створено з', 'type': 'date'},
+         {'name': 'date_to', 'label': 'Створено по', 'type': 'date'},
+         {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
+       ],
+       base_args={'status': filter_status},
+     ) }}
 
+  {% if deliveries %}
   <div class="admin-table-wrap">
   <table class="admin-table">
     <thead>
@@ -87,8 +91,14 @@
           {% if d.event_uuid %}<span class="wh-uuid" title="event_uuid">{{ d.event_uuid[:12] }}</span>{% endif %}
         </td>
         <td>
+          {# Доставки не мають id курсу -- лише slug, тож ведемо в реєстр курсів,
+             звужений пошуком по ньому (Course.slug -- єдиний точний вхід). #}
           <div class="wh-target">
+            {% if d.course_slug %}
+            <a href="{{ url_for('admin.courses_list', q=d.course_slug) }}" class="wh-slug" title="{{ d.target_url }}">{{ d.course_slug }}</a>
+            {% else %}
             <span class="wh-slug" title="{{ d.target_url }}">{{ d.course_slug }}</span>
+            {% endif %}
             <span class="wh-action wh-action--{{ d.action }}">{{ d.action }}</span>
           </div>
         </td>
@@ -119,14 +129,14 @@
         <td>
           <div class="admin-table__actions admin-flex-center">
             {% if d.status in ('failed', 'retrying') %}
-            <form method="POST" action="{{ url_for('admin.webhook_retry', delivery_id=d.id) }}" class="admin-inline" data-confirm="Повторити відправку зараз?" data-confirm-ok="Повторити">
+            <form method="POST" action="{{ url_for('admin.webhook_retry', delivery_id=d.id, **back_args) }}" class="admin-inline" data-confirm="Повторити відправку зараз?" data-confirm-ok="Повторити">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon" aria-label="Повторити відправку" title="Повторити">
                 {{ icon('refresh') }}
               </button>
             </form>
             {% endif %}
-            <form method="POST" action="{{ url_for('admin.webhook_delete', delivery_id=d.id) }}" class="admin-inline" data-confirm="Видалити запис?" data-confirm-ok="Видалити запис" data-confirm-danger>
+            <form method="POST" action="{{ url_for('admin.webhook_delete', delivery_id=d.id, **back_args) }}" class="admin-inline" data-confirm="Видалити запис?" data-confirm-ok="Видалити запис" data-confirm-danger>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm btn-admin--icon" aria-label="Видалити запис" title="Видалити">
                 {{ icon('delete') }}
@@ -139,11 +149,9 @@
     </tbody>
   </table>
   </div>
+  {{ pager('admin.webhooks_list', pagination, dict(filter_args, status=filter_status)) }}
   {% else %}
-  {# Зріз тут задає filter_status, а не спільний `filters`, тож словник для
-     макроса збираємо на місці -- сенс той самий: непорожній зріз. #}
-  {% call empty_state('admin.webhooks_list',
-                      {'status': filter_status} if filter_status else {},
+  {% call empty_state('admin.webhooks_list', filter_args, {'status': filter_status},
                       icon_name='inbox', title='Записів немає') %}
     <p>Доставки з'являться тут при зміні курсів, якщо увімкнено partner_webhook.</p>
   {% endcall %}

@@ -156,26 +156,6 @@
   line-height: 1.5;
 }
 
-/* ===== Рядок-меню результатів над таблицею ===== */
-
-.wh-results-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-  font-size: 0.8125rem;
-  color: var(--apple-gray);
-}
-
-.wh-results-meta__clear {
-  color: var(--iprm-nav-active);
-  font-weight: 500;
-}
-
-.wh-results-meta__clear:hover {
-  color: var(--iprm-accent-hover);
-}
-
 /* ===== Адаптив ===== */
 
 @media (max-width: 768px) {
