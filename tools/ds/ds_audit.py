@@ -303,6 +303,36 @@ def catalog_gap(root=ROOT):
     return sorted(set(classify_css(root)['component']) - linked)
 
 
+def page_overrides(root=ROOT):
+    """{файл: {клас: [шаблони]}} -- спільні компоненти, які перестилізовує
+    ПОСТОРІНКОВИЙ файл.
+
+    Четверте число концепту, яке досі рахувалось вручну й неправильно.
+    Рахувати «декоративні оголошення в page-*» безглуздо: декор, унікальний
+    для однієї сторінки, за суттю посторінковий і має там жити. Порушення --
+    це коли `page-*.css` перестилізовує клас, який вживають ІНШІ сторінки:
+    тоді правка компонента до цієї сторінки не доходить повністю.
+
+    Різниця в масштабі помітна: декоративних оголошень у page-* сімсот із
+    гаком, а спільних компонентів, які там перестилізовують, -- два десятки.
+    Перше число лякає й нічого не каже, друге -- робочий список.
+
+    Каталог із підрахунку споживачів виключений: він показує компоненти.
+    """
+    tpl = root / 'app' / 'templates'
+    texts = {p.relative_to(tpl).as_posix(): p.read_text(encoding='utf-8', errors='ignore')
+             for p in tpl.rglob('*.html')}
+    out = {}
+    for path in sorted((root / 'app' / 'static' / 'css').rglob('page-*.css')):
+        for cls in sorted(_declared_classes(path)):
+            pattern = re.compile(r'class="[^"]*\b' + re.escape(cls) + r'\b')
+            users = [n for n, text in texts.items()
+                     if pattern.search(text) and not n.startswith('design_system/')]
+            if len(users) > 1:
+                out.setdefault(path.name, {})[cls] = users
+    return out
+
+
 def naming_mismatch(root=ROOT):
     result = classify_css(root)
     return {
@@ -347,6 +377,13 @@ def main():
     print('\nКОМПОНЕНТНІ ФАЙЛИ ПОЗА КАТАЛОГОМ: %d' % len(gap))
     for name in gap:
         print('   ' + name)
+    overrides = page_overrides()
+    n_over = sum(len(v) for v in overrides.values())
+    print('\nСПІЛЬНІ КОМПОНЕНТИ, ПЕРЕСТИЛІЗОВАНІ В page-*: %d класів у %d файлах'
+          % (n_over, len(overrides)))
+    for name, classes in sorted(overrides.items()):
+        print('   %-38s %s' % (name, ', '.join('.' + c for c in sorted(classes))))
+
     print('\nІМ\'Я СУПЕРЕЧИТЬ СУТІ: %d'
           % (len(naming['should_lose_prefix']) + len(naming['should_gain_prefix'])))
     for name in naming['should_lose_prefix']:
