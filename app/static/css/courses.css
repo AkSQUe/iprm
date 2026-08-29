@@ -624,11 +624,14 @@
   opacity: 0.5;
 }
 
-/* Теги як кнопки у картках каталогу (поза <a>). */
-.iprm-course-card__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+/* display/flex-wrap/gap для .iprm-course-card__tags -- у common.css, це
+   спільна база для всіх карток курсу. Тут лише додатковий відступ: у
+   картці каталогу (--linked) контейнер тегів лежить ПОЗА .apple-card-body
+   (кнопки, а не посилання), тож власного padding немає й потрібен цей. На
+   Головній/сторінці тренера тег-рядок -- усередині вже відступленого
+   .apple-card-body/.apple-course-body, там цей padding не потрібен і не
+   застосовується. */
+.iprm-course-card--linked .iprm-course-card__tags {
   padding: 0 16px 16px;
 }
 

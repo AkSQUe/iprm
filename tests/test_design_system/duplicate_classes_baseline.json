@@ -1,8 +1,4 @@
 {
-  "iprm-course-card__tags": [
-    "common.css",
-    "courses.css"
-  ],
   "iprm-final-cta": [
     "course-landing.css",
     "courses.css"
