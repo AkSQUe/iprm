@@ -293,10 +293,25 @@ def new_duplicate_owners(current, baseline):
     return result
 
 
+def _unconditional_css_links(text):
+    """CSS-файли, підключені БЕЗУМОВНО -- поза `{% if %}`.
+
+    Для підрахунку споживачів умовний `<link>` рахувати можна: сторінка
+    його ІНОДІ отримує. Для каталогу -- ні: він мусить показувати компонент
+    ЗАВЖДИ. `upcoming-events.css` і `certdata-reminder.css` підключені в
+    base.html під прапорцями, які фабрика обнуляє для блупринта admin, тож
+    на сторінці каталогу вони не вантажаться ніколи -- а сторож вважав їх
+    показаними й мовчав.
+    """
+    stripped = re.sub(r'{%-?\s*if\b.*?{%-?\s*endif\s*-?%}', ' ', text, flags=re.S)
+    return _css_links(stripped)
+
+
 def catalog_gap(root=ROOT):
-    """Компонентні файли, яких каталог не підключає."""
+    """Компонентні файли, яких каталог не підключає БЕЗУМОВНО."""
     texts = _templates(root)
     direct, parents = _link_graph(texts)
+    direct = {name: _unconditional_css_links(text) for name, text in texts.items()}
     linked = set()
     for name in _catalog_names(root):
         linked |= _effective_css(name, direct, parents)
@@ -367,6 +382,36 @@ def cross_domain_components(root=ROOT):
     return out
 
 
+# Властивості, які ЗАДАЮТЬ ВИГЛЯД. Inline-стиль із такою властивістю в
+# каталозі -- підробка компонента: вітрина малює його значеннями, СКОПІЙОВАНИМИ
+# з CSS, а не самим компонентом. Копія розходиться, і каталог починає брехати
+# саме там, куди дивляться, щоб не писати копію.
+_LOOK = re.compile(r'\b(font-size|font-weight|font-family|background|border'
+                   r'|border-radius|box-shadow|color|letter-spacing)\s*:')
+
+
+def catalog_mockups(root=ROOT):
+    """{файл: кількість} -- inline-стилі каталогу, що ПІДРОБЛЯЮТЬ вигляд.
+
+    Риштування розкладки (`display`, `flex`, `margin`, `width`) сюди не
+    входить: воно лише розставляє демо на сторінці й нічого про компонент
+    не стверджує.
+
+    Приклад із життя: секція hero показувала заголовок як
+    `font-size: clamp(2rem, 5vw, 3rem); font-weight: 800`, тоді як
+    `.iprm-hero__title` має `24px` і `700`. Вітрина показувала компонент
+    удвічі більшим за нього самого.
+    """
+    out = {}
+    for path in sorted((root / 'app' / 'templates' / 'design_system').glob('_tab_*.html')):
+        n = sum(1 for style in re.findall(r'style="([^"]*)"',
+                                          path.read_text(encoding='utf-8'))
+                if _LOOK.search(style))
+        if n:
+            out[path.name] = n
+    return out
+
+
 def naming_mismatch(root=ROOT):
     result = classify_css(root)
     return {
@@ -411,6 +456,12 @@ def main():
     print('\nКОМПОНЕНТНІ ФАЙЛИ ПОЗА КАТАЛОГОМ: %d' % len(gap))
     for name in gap:
         print('   ' + name)
+    mockups = catalog_mockups()
+    print('\nПІДРОБЛЕНІ ДЕМО В КАТАЛОЗІ (inline-стиль задає вигляд): %d'
+          % sum(mockups.values()))
+    for name, n in sorted(mockups.items(), key=lambda x: -x[1]):
+        print('   %-34s %d' % (name, n))
+
     overrides = page_overrides()
     n_over = sum(len(v) for v in overrides.values())
     print('\nСПІЛЬНІ КОМПОНЕНТИ, ПЕРЕСТИЛІЗОВАНІ В page-*: %d класів у %d файлах'

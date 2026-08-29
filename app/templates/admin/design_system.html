@@ -58,6 +58,15 @@
    .apple-page); лишаються останніми в блоці, як і раніше. #}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/apple-pages.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/course-landing.css') }}?v={{ assets_version }}">
+
+{# Ці два в base.html підключені УМОВНО -- під прапорцями, які фабрика
+   обнуляє для блупринта admin. Тобто на сторінці каталогу вони не
+   вантажились ніколи, а сторож catalog_gap вважав їх показаними: він
+   бачив <link> у base.html і не бачив умови навколо нього. Тут --
+   безумовно, інакше компоненти смуги подій і нагадування про дані
+   сертифіката видно в каталозі не буде. #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/upcoming-events.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/certdata-reminder.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
