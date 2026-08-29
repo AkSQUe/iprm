@@ -115,3 +115,24 @@ def jsonld_blocks(html):
         html, re.DOTALL,
     )
     return [json.loads(chunk) for chunk in raw]
+
+
+# Поля JSON-LD, у яких Google очікує абсолютний URL.
+URL_KEYS = ('image', 'logo', 'item', 'url')
+
+
+def iter_url_values(node):
+    """Пари (ключ, значення) для URL-полів усередині JSON-LD, рекурсивно."""
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key in URL_KEYS:
+                if isinstance(value, str):
+                    yield key, value
+                elif isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, str):
+                            yield key, item
+            yield from iter_url_values(value)
+    elif isinstance(node, list):
+        for item in node:
+            yield from iter_url_values(item)
