@@ -330,7 +330,10 @@
   font-weight: 900;
 }
 
-.iprm-benefit-card__title {
+/* Заголовок картки -- один опис на два набори (переваги й аудиторія).
+   Були два побайтово однакові правила в цьому ж файлі. */
+.iprm-benefit-card__title,
+.iprm-audience-card__title {
   margin: 0 0 10px;
   font-size: 1.3125rem;
   font-weight: 700;
@@ -459,15 +462,6 @@
    означає дію, а ще саме золото як текст на теплому тлі дає 1.9 (провал AA). */
 .iprm-audience-card--ask .iprm-audience-card__tag {
   color: var(--iprm-warm-text);
-}
-
-.iprm-audience-card__title {
-  margin: 0 0 10px;
-  font-size: 1.3125rem;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  color: var(--iprm-text);
 }
 
 .iprm-audience-card p {

@@ -133,7 +133,11 @@
   align-items: flex-end;
   gap: 24px;
 }
-.trainer-certs__item {
+/* Плитка скана -- один опис на сертифікати й патенти. Були два
+   побайтово однакові правила; :hover у них теж збігався і зведений
+   нижче так само. */
+.trainer-certs__item,
+.trainer-patent__scan {
   display: block;
   cursor: zoom-in;
   background: var(--iprm-white);
@@ -143,7 +147,9 @@
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.10);
   transition: transform 0.2s var(--ease-interact), box-shadow 0.2s var(--ease-interact);
 }
-.trainer-certs__item:hover {
+/* Підняття плитки під курсором -- спільне для обох наборів. */
+.trainer-certs__item:hover,
+.trainer-patent__scan:hover {
   transform: translateY(-4px);
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
 }
@@ -179,20 +185,7 @@
   text-align: center;
   gap: 12px;
 }
-.trainer-patent__scan {
-  display: block;
-  cursor: zoom-in;
-  background: var(--iprm-white);
-  padding: 10px;
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm);
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.10);
-  transition: transform 0.2s var(--ease-interact), box-shadow 0.2s var(--ease-interact);
-}
-.trainer-patent__scan:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
-}
+
 .trainer-patent__scan img {
   display: block;
   width: 100%;
