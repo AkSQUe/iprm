@@ -85,6 +85,17 @@ def course_detail(slug):
         online_course_id=course.id, is_published=True,
     ).order_by(Review.sort_order, Review.created_at.desc()).limit(6).all()
 
+    # Справжні кількість і середнє для AggregateRating -- ОКРЕМИМ дешевим
+    # запитом (COUNT/AVG), а НЕ з course_reviews вище: той список обрізаний
+    # .limit(6) для відображення карток -- рахувати рейтинг з нього означало
+    # б, що керований адміном sort_order міг би "закріпити" 5.0, приховавши
+    # решту відгуків від Google. rating_count == 0 -- ознака "відгуків
+    # немає", яку читає apply_rating: нічого не рахуємо, нічого не додаємо.
+    from sqlalchemy import func
+    rating_count, rating_average = Review.alive().filter_by(
+        online_course_id=course.id, is_published=True,
+    ).with_entities(func.count(Review.id), func.avg(Review.rating)).one()
+
     gallery = course.gallery
 
     # Якорі секцій для глобальної шапки -- у порядку самих секцій. #buy
@@ -133,6 +144,8 @@ def course_detail(slug):
         # Галерея -- окремий запит до медіа-реєстру (прив'язка поліморфна).
         gallery=gallery,
         course_reviews=course_reviews,
+        rating_count=rating_count,
+        rating_average=rating_average,
     )
 
 

@@ -1,16 +1,26 @@
 {# AggregateRating + вузли Review для схеми курсу.
 
-   Джерело -- ЛИШЕ опубліковані рядки Review, привʼязані до цього курсу.
-   Порожній список означає, що макрос не додає нічого: розмітки не буде
-   взагалі. Демо-цитати з головної сюди потрапити не можуть -- вони не є
-   рядками БД.
+   Джерело для СЕРЕДНЬОГО і КІЛЬКОСТІ -- rating_count/rating_average, які
+   в'ю рахує ОКРЕМИМ SQL-запитом (COUNT/AVG) за ВСІМА опублікованими живими
+   відгуками курсу, а не з переданого списку reviews: той список обрізаний
+   лімітом показу карток (.limit(6)) і рахувати AggregateRating з нього
+   означало б, що керований адміном sort_order міг "закріпити" 5.0,
+   приховавши решту відгуків від Google -- саме той ризик фабрикації, якому
+   ця задача покликана запобігти.
+
+   rating_count == 0 -- єдина ознака "відгуків немає": тоді макрос не додає
+   НІЧОГО, розмітки не буде взагалі. Демо-цитати з головної сюди потрапити
+   не можуть -- вони не є рядками БД.
+
+   Вузли review (масив, що показується в структурованих даних) будуються з
+   `reviews` -- це той самий обрізаний список, що йде на сторінку: вузли
+   структурованих даних мають відповідати тому, що бачить відвідувач.
 
    Макрос МУТУЄ переданий schema, а не повертає JSON: схема курсу
    збирається dict-ом вище по шаблону, і вливати фрагмент рядком
    означало б парсити його назад. #}
-{% macro apply_rating(schema, reviews) -%}
-{%- if reviews -%}
-  {%- set _values = reviews | map(attribute='rating') | list -%}
+{% macro apply_rating(schema, reviews, rating_count, rating_average) -%}
+{%- if rating_count -%}
   {%- set _nodes = [] -%}
   {%- for review in reviews -%}
     {%- set _discard = _nodes.append({
@@ -21,13 +31,14 @@
         'bestRating': 5, 'worstRating': 1,
       },
       'reviewBody': review.t('text'),
+      'datePublished': review.created_at.date().isoformat(),
     }) -%}
   {%- endfor -%}
   {%- set _discard = schema.update({
     'aggregateRating': {
       '@type': 'AggregateRating',
-      'ratingValue': ((_values | sum) / (_values | length)) | round(1),
-      'reviewCount': _values | length,
+      'ratingValue': (rating_average | float) | round(1),
+      'reviewCount': rating_count,
       'bestRating': 5,
       'worstRating': 1,
     },

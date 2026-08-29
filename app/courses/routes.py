@@ -341,6 +341,17 @@ def course_by_slug(slug):
         course_id=course.id, is_published=True,
     ).order_by(Review.sort_order, Review.created_at.desc()).limit(6).all()
 
+    # Справжні кількість і середнє для AggregateRating -- ОКРЕМИМ дешевим
+    # запитом (COUNT/AVG), а НЕ з course_reviews вище: той список обрізаний
+    # .limit(6) для відображення карток, і рахувати рейтинг з нього означало
+    # б, що керований адміном sort_order міг би "закріпити" 5.0, приховавши
+    # решту відгуків від Google. rating_count == 0 -- ознака "відгуків
+    # немає", яку читає apply_rating: нічого не рахуємо, нічого не додаємо.
+    from sqlalchemy import func
+    rating_count, rating_average = Review.alive().filter_by(
+        course_id=course.id, is_published=True,
+    ).with_entities(func.count(Review.id), func.avg(Review.rating)).one()
+
     # Крос-сел "Наступний крок": спільний сервіс із екранами після оплати.
     from app.services.course_recommend import recommend_context
     recommend = recommend_context(
@@ -409,6 +420,8 @@ def course_by_slug(slug):
         referral_link=referral_link,
         referral_inviter=referral_inviter,
         course_reviews=course_reviews,
+        rating_count=rating_count,
+        rating_average=rating_average,
         certificate_quiz=quiz_service.public_quiz_for_course(course),
         **recommend,
     )

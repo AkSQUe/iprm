@@ -81,7 +81,7 @@
    блоком у дочірньому шаблоні з extends Jinja взагалі не обчислює (виконує
    лише {% set %} на верхньому рівні), тож виклик обгорнуто в _discard, як і
    решта мутацій course_schema вище. #}
-{% set _discard = apply_rating(course_schema, course_reviews) %}
+{% set _discard = apply_rating(course_schema, course_reviews, rating_count, rating_average) %}
 
 {% block jsonld %}
 {{ super() }}
