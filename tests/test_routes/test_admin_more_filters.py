@@ -33,6 +33,15 @@ EMAIL_PREFIX = 'mf-'
 def clean(app):
     """Порожні власні дописи/коментарі блогу і власні користувачі."""
     def _wipe():
+        own_posts = db.session.query(BlogPost.id).filter(
+            BlogPost.slug.like(f'{EMAIL_PREFIX}%'))
+        # Явно, дитина перед батьком: BlogPost.comments оголошено з
+        # passive_deletes=True (ORM свідомо покладається на БД-каскад), а
+        # SQLite тестового прогону PRAGMA foreign_keys=ON всередині
+        # транзакції не тримає -- каскад мовчки не спрацьовує, і коментарі
+        # лишаються сирітками з post_id на видалений допис.
+        BlogComment.query.filter(BlogComment.post_id.in_(own_posts)).delete(
+            synchronize_session=False)
         BlogPost.query.filter(BlogPost.slug.like(f'{EMAIL_PREFIX}%')).delete(
             synchronize_session=False)
         stale = [

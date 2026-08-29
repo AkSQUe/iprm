@@ -38,7 +38,7 @@
                      ('all', 'Усі', 'apps')] %}
       <div class="admin-pills">
         {% for val, label, icon_name in tabs %}
-        <a href="{{ url_for('admin.blog_comments', status=val) }}"
+        <a href="{{ url_for('admin.blog_comments', status=val, **filter_args) }}"
            class="admin-pill{% if status == val %} admin-pill--active{% endif %}">
           {{ icon(icon_name) }} {{ label }}
         </a>
