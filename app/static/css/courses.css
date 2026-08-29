@@ -262,7 +262,7 @@
   font-weight: 900;
   letter-spacing: -0.03em;
   line-height: 1;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin-bottom: 24px;
 }
 
@@ -324,7 +324,7 @@
    додатки читалися б однаково. */
 .iprm-format-card__item--plus {
   font-weight: 650;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .iprm-format-card__item--plus::before {
@@ -730,7 +730,7 @@ button.iprm-tag:focus-visible {
   gap: 4px;
   padding: 4px;
   margin: 0 auto 24px;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-radius: var(--iprm-radius-pill);
   align-self: center;
 }
@@ -759,7 +759,7 @@ button.iprm-tag:focus-visible {
 }
 
 .iprm-schedule-toggle__btn:hover {
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .iprm-schedule-toggle__btn--active {
@@ -819,8 +819,8 @@ button.iprm-tag:focus-visible {
   appearance: none;
   -webkit-appearance: none;
   border: 1px solid var(--iprm-border);
-  background: var(--apple-section-bg);
-  color: var(--apple-black);
+  background: var(--iprm-card-bg);
+  color: var(--iprm-text);
   font: inherit;
   font-size: 0.8125rem;
   line-height: 1;
@@ -892,7 +892,7 @@ button.iprm-tag:focus-visible {
   padding: 8px 16px;
   font-family: inherit;
   font-size: 0.8125rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-pill);
@@ -943,13 +943,13 @@ button.iprm-tag:focus-visible {
 .iprm-fc {
   --fc-border-color: var(--iprm-border);
   --fc-page-bg-color: var(--iprm-white);
-  --fc-neutral-bg-color: var(--apple-section-bg);
+  --fc-neutral-bg-color: var(--iprm-card-bg);
   --fc-today-bg-color: var(--iprm-accent-light);
   --fc-list-event-hover-bg-color: var(--iprm-accent-light);
   --fc-button-bg-color: var(--iprm-white);
   --fc-button-border-color: var(--iprm-border);
-  --fc-button-text-color: var(--apple-black);
-  --fc-button-hover-bg-color: var(--apple-section-bg);
+  --fc-button-text-color: var(--iprm-text);
+  --fc-button-hover-bg-color: var(--iprm-card-bg);
   --fc-button-hover-border-color: var(--apple-gray-light);
   --fc-button-active-bg-color: var(--iprm-accent);
   --fc-button-active-border-color: var(--iprm-accent);
@@ -963,7 +963,7 @@ button.iprm-tag:focus-visible {
 .iprm-fc .fc-toolbar-title {
   font-size: 1.125rem;
   font-weight: 700;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   text-transform: capitalize;
 }
 
@@ -1000,7 +1000,7 @@ button.iprm-tag:focus-visible {
 
 .iprm-fc .fc-daygrid-day-number {
   font-size: 0.8125rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   padding: 6px 8px;
 }
 
@@ -1069,7 +1069,7 @@ button.iprm-tag:focus-visible {
 }
 
 .iprm-fc .fc-list-empty {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   color: var(--iprm-text-light);
 }
 
@@ -1092,7 +1092,7 @@ button.iprm-tag:focus-visible {
   gap: 16px;
   align-items: center;
   padding: 16px 20px;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-radius: var(--iprm-radius-sm);
   text-decoration: none;
   color: inherit;
@@ -1106,7 +1106,7 @@ button.iprm-tag:focus-visible {
 .iprm-calendar__event-title {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin: 0 0 6px;
   line-height: 1.35;
 }
@@ -1331,7 +1331,7 @@ button.iprm-tag:focus-visible {
   padding: 10px 14px;
   font-family: inherit;
   font-size: 0.9375rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-sm);
@@ -1409,7 +1409,7 @@ button.iprm-tag:focus-visible {
   font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin-bottom: 20px;
 }
 
@@ -1537,7 +1537,7 @@ button.iprm-tag:focus-visible {
   padding: 12px 20px;
   font-family: inherit;
   font-size: 1rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-pill);
@@ -1607,7 +1607,7 @@ button.iprm-tag:focus-visible {
   font-size: 21px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 /* Тёмна половина тёмна в ОБОХ темах, як hero й оболонка відгуків, тож
@@ -1620,7 +1620,7 @@ button.iprm-tag:focus-visible {
   color: var(--iprm-on-accent);
   background:
     radial-gradient(circle at 100% 0, rgba(var(--apple-orange-rgb), 0.24), transparent 38%),
-    linear-gradient(145deg, var(--apple-grad-dark-2), var(--apple-grad-dark-1));
+    linear-gradient(145deg, var(--iprm-hero-grad-2), var(--iprm-hero-grad-1));
 }
 
 .iprm-roi__kicker {
@@ -1662,7 +1662,7 @@ button.iprm-tag:focus-visible {
   font-size: 1.0625rem;
   font-weight: 600;
   font-family: var(--iprm-font);
-  color: var(--apple-black);
+  color: var(--iprm-text);
   background: var(--iprm-white);
   border: 1px solid var(--apple-gray-light);
   border-radius: var(--iprm-radius-sm);
@@ -1818,7 +1818,7 @@ button.iprm-tag:focus-visible {
   padding: 0.6rem 2.5rem;
   text-align: center;
   font-size: 0.95rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   background: var(--iprm-accent-light);
   border-radius: var(--iprm-radius-sm);
 }
@@ -1842,7 +1842,7 @@ button.iprm-tag:focus-visible {
 }
 
 .referral-invite-banner__close:hover {
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 /* Тёмна тема: галка світлішає (--iprm-success там #4ade80), інакше тёмно-

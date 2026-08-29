@@ -181,7 +181,7 @@
 
 .health-card__detail {
   font-size: 0.875rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin: 6px 0;
   line-height: 1.45;
 }

@@ -35,7 +35,7 @@
 }
 
 .iprm-tabs__trigger:hover {
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .iprm-tabs__trigger:focus-visible {

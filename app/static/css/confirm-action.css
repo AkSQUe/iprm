@@ -45,7 +45,7 @@
   margin: 0 0 24px;
   font-size: 1.0625rem;
   line-height: 1.5;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   text-align: center;
 }
 
@@ -70,8 +70,8 @@
 .iprm-confirm__btn:active { transform: scale(0.97); }
 
 .iprm-confirm__btn--cancel {
-  background: var(--apple-section-bg);
-  color: var(--apple-black);
+  background: var(--iprm-card-bg);
+  color: var(--iprm-text);
 }
 .iprm-confirm__btn--cancel:hover {
   background: var(--apple-gray-light);

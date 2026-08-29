@@ -15,7 +15,7 @@
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--apple-gray-dark);
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   text-decoration: none;
   border: none;
   cursor: pointer;
@@ -50,7 +50,7 @@
   width: 100%;
   border: none;
   border-radius: var(--iprm-radius-md);
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   min-height: 700px;
 }
 
@@ -67,7 +67,7 @@
 }
 
 .template-preview__meta strong {
-  color: var(--apple-black);
+  color: var(--iprm-text);
   font-weight: 600;
 }
 

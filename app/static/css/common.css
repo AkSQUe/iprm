@@ -33,9 +33,9 @@
   --iprm-card-bg: #f7f4fb;
 
   /* Поверхня, вкладена В КАРТКУ: шапка таблиці, блок коду. Не тло секції --
-     --apple-section-bg і --iprm-card-bg у тёмній темі дорівнюють поверхні
-     картки (#1c1c22), і все, що на них покладалось, там зникало: рядок
-     заголовків ставав невідрізнимим від даних, блок коду -- від картки.
+     --iprm-card-bg у тёмній темі дорівнює поверхні картки (#1c1c22), і все,
+     що на них покладалось, там зникало: рядок заголовків ставав
+     невідрізнимим від даних, блок коду -- від картки.
      Окремий токен тримає ту саму різницю світлот в обох темах. */
   --iprm-surface-inset: #f7f4fb;
 
@@ -116,11 +116,9 @@
   --iprm-warm-border: #f7dac3;
 
   /* Apple-style neutral palette */
-  --apple-black: #17131d;
   --apple-gray-dark: #4f4758;
   --apple-gray: #625a6d;
   --apple-gray-light: #d2d2d7;
-  --apple-section-bg: #f7f4fb;
   --apple-purple-light: #c4b5fd;
   --apple-orange: #ffad16;
   --apple-purple-mid: #9048ef;
@@ -136,9 +134,6 @@
      потрібне живе золото -- у градієнті воно з'їдається лише на останніх
      літерах, і тёмно-коричневий хвіст робив заголовок брудним. */
   --apple-grad-gold: #ffad36;
-  --apple-grad-dark-1: #43127c;
-  --apple-grad-dark-2: #2e0d57;
-  --apple-grad-dark-3: #1d0838;
   /* rgb-трійки живуть у десятках rgba(var(--...), .12) -- тіней, ореолів і
      напівпрозорих плашок. Забути їх при зміні hex означає старі тіні під
      новими кнопками, тож вони мусять їхати разом із бренд-кольорами. */
@@ -248,11 +243,9 @@
   --iprm-warm-border: rgba(255, 154, 92, 0.3);
 
   /* Apple-style neutral palette (інверсія світлот) */
-  --apple-black: #f5f5f7;
   --apple-gray-dark: #c7c7cc;
   --apple-gray: #98989d;
   --apple-gray-light: #48484a;
-  --apple-section-bg: #1c1c22;
   /* Золото світлішає: #ffad16 на #1c1c22 дає 9.08, але поруч із піднятим
      бренд-акцентом виглядає брудним, тому беремо #ffc247 (10.54). */
   --apple-orange: #ffc247;
@@ -271,7 +264,7 @@
      перший завжди лежить на тёмному, другий -- завжди на золоті.
      --apple-black-rgb із тієї ж родини: він тримає скляне тло плашки
      згоди (rgba(..., .88) під backdrop-filter), а скло темне в обох темах.
-     --apple-grad-dark-3 теж лишається темним завжди: він або стоп
+     --iprm-hero-grad-3 теж лишається темним завжди: він або стоп
      градієнта, або color: у .apple-btn--white:hover, а та кнопка навмисно
      світла і в тёмній темі. Не плутати його з --iprm-dark, який тут
      ПОВЕРХНЯ і стає #0a0a0f -- у світлій темі їхні значення збігаються,
@@ -373,7 +366,7 @@
 /* Selection */
 ::selection {
   background: var(--iprm-accent-light);
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 html {
@@ -390,13 +383,13 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
 }
 
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, var(--iprm-nav-active) 0%, var(--apple-purple-mid) 35%, #c77b4a 70%, var(--apple-orange) 100%);
   border-radius: 10px;
-  border: 2px solid var(--apple-section-bg);
+  border: 2px solid var(--iprm-card-bg);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -405,7 +398,7 @@ html {
 
 body {
   font-family: var(--iprm-font);
-  color: var(--apple-black);
+  color: var(--iprm-text);
   background: var(--iprm-white);
   font-size: 17px;
   line-height: 1.47;
@@ -673,9 +666,9 @@ a {
 .iprm-header__admin-link {
   font-size: 0.6875rem;
   font-weight: 600;
-  color: var(--apple-section-bg);
+  color: var(--iprm-card-bg);
   padding: 3px 10px;
-  background: var(--apple-black);
+  background: var(--iprm-text);
   border-radius: 6px;
   transition: all 0.2s;
 }
@@ -751,7 +744,7 @@ a {
 }
 
 .lang-switcher__item--active {
-  color: var(--apple-black);
+  color: var(--iprm-text);
   background-color: var(--iprm-divider);
   cursor: default;
 }
@@ -854,7 +847,7 @@ a {
   display: block;
   width: 20px;
   height: 2px;
-  background: var(--apple-black);
+  background: var(--iprm-text);
   border-radius: 1px;
   transition: all 0.3s;
 }
@@ -1738,7 +1731,7 @@ select.badge-select:disabled {
   font-size: clamp(1.75rem, 4vw, 2.25rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin-bottom: 12px;
 }
 
@@ -2005,7 +1998,7 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   border: 1px solid var(--apple-gray-light);
   border-radius: var(--iprm-radius-sm);
   background: var(--iprm-white);
-  color: var(--apple-black);
+  color: var(--iprm-text);
   transition:
     border-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -2236,7 +2229,7 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
     padding: 10px 0;
     font-size: 0.9375rem;
     font-weight: 500;
-    color: var(--apple-black);
+    color: var(--iprm-text);
     text-decoration: none;
     background: none;
     border: none;
@@ -2561,7 +2554,7 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   margin: 0 0 1rem;
   font-size: 1.05rem;
   line-height: 1.6;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .iprm-review__author {

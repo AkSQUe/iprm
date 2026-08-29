@@ -88,7 +88,7 @@
 
 .apple-page .iprm-rec-card__meta-value {
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   text-align: right;
 }
 

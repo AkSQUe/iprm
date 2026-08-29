@@ -57,7 +57,7 @@
   margin: 0 0 2px;
   font-size: 14px;
   font-weight: 700;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .iprm-toast__msg {
@@ -107,7 +107,7 @@
   transition: color 0.15s, background 0.15s;
 }
 .iprm-toast__close:hover {
-  color: var(--apple-black);
+  color: var(--iprm-text);
   background: var(--iprm-divider);
 }
 

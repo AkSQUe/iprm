@@ -27,7 +27,7 @@
   background: var(--iprm-white); color: var(--apple-gray-dark); cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.regalia-link__move:hover { background: var(--apple-section-bg); }
+.regalia-link__move:hover { background: var(--iprm-card-bg); }
 .regalia-link__remove:hover { color: var(--iprm-error); border-color: rgba(239, 68, 68, 0.3); }
 .regalia-link__move .material-symbols-rounded,
 .regalia-link__remove .material-symbols-rounded { font-size: 18px; }
@@ -38,7 +38,7 @@
   flex: 0 0 auto; position: relative;
   width: 56px; height: 56px;
   border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm);
-  background: var(--apple-section-bg); overflow: hidden;
+  background: var(--iprm-card-bg); overflow: hidden;
 }
 .regalia-link__thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .regalia-link__upload {
@@ -66,5 +66,5 @@
 .admin-referral-balance {
   margin-top: 12px;
   font-size: 0.9375rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }

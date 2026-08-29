@@ -472,7 +472,7 @@
 .admin-xlsx-menu__items a {
   padding: 8px 12px;
   font-size: 14px;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   text-decoration: none;
   border-radius: var(--iprm-radius-sm);
   white-space: nowrap;
@@ -507,7 +507,7 @@
   display: block;
   font-size: 28px;
   font-weight: 700;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   line-height: 1;
 }
 
@@ -1100,7 +1100,7 @@ a.admin-stat-card:focus-visible {
 
 .admin-sidebar__link:hover {
   background: var(--iprm-divider);
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .admin-sidebar__link--active {
@@ -1142,7 +1142,7 @@ a.admin-stat-card:focus-visible {
 
 .admin-sidebar__pin:hover {
   background: var(--iprm-divider);
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .admin-sidebar__pin:focus-visible {
@@ -1425,7 +1425,7 @@ a.admin-stat-card:focus-visible {
   flex: 1;
   min-width: 0;
   padding: 40px 48px;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
 }
 
 /* ========== HERO ========== */
@@ -1444,7 +1444,7 @@ a.admin-stat-card:focus-visible {
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .admin-hero__subtitle {
@@ -1505,7 +1505,7 @@ a.admin-stat-card:focus-visible {
 }
 
 .btn-admin--secondary:hover {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
 }
 
 .btn-admin--danger {
@@ -1641,7 +1641,7 @@ a.admin-stat-card:focus-visible {
   font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   padding-bottom: 20px;
   margin-bottom: 24px;
   border-bottom: 1px solid var(--iprm-border);
@@ -1685,7 +1685,7 @@ a.admin-stat-card:focus-visible {
   list-style: disc;
   font-size: 0.9375rem;
   line-height: 1.6;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .admin-guide__list--num {
@@ -1713,7 +1713,7 @@ a.admin-stat-card:focus-visible {
 .admin-form .form-group label {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 /* Базове поле адмінки. Раніше тут був перелік контекстів -- і кожне нове
@@ -1733,12 +1733,12 @@ a.admin-stat-card:focus-visible {
 .backup-actions__form .form-input {
   padding: 10px 14px;
   font-size: 0.9375rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   /* background-COLOR, не скорочення: `background` скидає background-image, а
      нижче в цьому ж файлі `select.form-input` малює стрілку розкриття саме
      ним. Поки цей селектор був менш специфічний за стрілку, скорочення не
      шкодило; щойно він виграв -- стрілка зникла б мовчки. */
-  background-color: var(--apple-section-bg);
+  background-color: var(--iprm-card-bg);
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-sm);
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -1785,7 +1785,7 @@ a.admin-stat-card:focus-visible {
   transition: background-color 0.15s, border-color 0.15s;
 }
 .admin-with-sidebar .form-input[type="file"]::file-selector-button:hover {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-color: var(--iprm-nav-active);
 }
 .admin-with-sidebar .form-input[type="file"]::-webkit-file-upload-button {
@@ -1802,7 +1802,7 @@ a.admin-stat-card:focus-visible {
   transition: background-color 0.15s, border-color 0.15s;
 }
 .admin-with-sidebar .form-input[type="file"]::-webkit-file-upload-button:hover {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-color: var(--iprm-nav-active);
 }
 
@@ -1846,7 +1846,7 @@ a.admin-stat-card:focus-visible {
 .admin-filters__form select.form-input:-moz-focusring,
 .backup-actions__form select.form-input:-moz-focusring {
   color: transparent;
-  text-shadow: 0 0 0 var(--apple-black);
+  text-shadow: 0 0 0 var(--iprm-text);
 }
 
 /* Checkbox */
@@ -1860,7 +1860,7 @@ a.admin-stat-card:focus-visible {
   transition: border-color var(--iprm-transition);
   border-radius: var(--iprm-radius-sm);
   border: 1px solid var(--iprm-border);
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
 }
 
 .admin-form .form-checkbox:hover {
@@ -1883,7 +1883,7 @@ a.admin-stat-card:focus-visible {
   padding-top: 8px;
   position: sticky;
   bottom: 0;
-  background: linear-gradient(to top, var(--apple-section-bg) 60%, transparent);
+  background: linear-gradient(to top, var(--iprm-card-bg) 60%, transparent);
   padding: 24px 0 40px;
   z-index: 10;
 }
@@ -1939,7 +1939,7 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-table td strong {
-  color: var(--apple-black);
+  color: var(--iprm-text);
   font-weight: 600;
 }
 
@@ -1970,7 +1970,7 @@ a.admin-stat-card:focus-visible {
 }
 
 /* Жирний заголовок усередині посилання мусить лишатись посиланням.
-   `.admin-table td strong` фарбує його в --apple-black і специфічніше за
+   `.admin-table td strong` фарбує його в --iprm-text і специфічніше за
    правило вище -- через це на п'яти реєстрах (блог, онлайн-курси, промокоди,
    розклад, тренери) головний ідентифікатор рядка виглядав як звичайний
    текст, і про те, що він клікабельний, дізнавались випадково. */
@@ -2033,7 +2033,7 @@ a.admin-stat-card:focus-visible {
   margin-bottom: 6px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .admin-actions-menu__items--form .form-group {
@@ -2060,7 +2060,7 @@ a.admin-stat-card:focus-visible {
   font-family: inherit;
   font-size: 0.875rem;
   text-align: left;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   background: none;
   border: none;
   border-radius: var(--iprm-radius-sm);
@@ -2075,7 +2075,7 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-actions-menu__item:hover {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   color: var(--iprm-nav-active);
 }
 
@@ -2128,7 +2128,7 @@ a.admin-stat-card:focus-visible {
   font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin-bottom: 8px;
 }
 
@@ -2171,7 +2171,7 @@ a.admin-stat-card:focus-visible {
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .admin-stat-card__label {
@@ -2250,7 +2250,7 @@ a.admin-stat-card:focus-visible {
 .admin-integration-card__title {
   font-size: 14px;
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .admin-integration-card p {
@@ -2289,7 +2289,7 @@ a.admin-stat-card:focus-visible {
 .admin-integration-card__jobs td {
   padding: 12px 0;
   font-size: 0.875rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   background: transparent;
 }
 
@@ -2313,7 +2313,7 @@ a.admin-stat-card:focus-visible {
   justify-content: center;
   border: 2px dashed var(--iprm-border);
   border-radius: var(--iprm-radius-md);
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   min-height: 200px;
   transition: border-color 0.2s, background 0.2s;
   cursor: pointer;
@@ -2584,7 +2584,7 @@ a.admin-stat-card:focus-visible {
      видно текст, що проїжджає), тому суцільний фон і межа. */
 .admin-form__actions {
     flex-wrap: wrap;
-    background: var(--apple-section-bg);
+    background: var(--iprm-card-bg);
     border-top: 1px solid var(--iprm-border);
     padding: 12px 0;
   }
@@ -2651,8 +2651,8 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-pill:hover {
-  background: var(--apple-section-bg);
-  color: var(--apple-black);
+  background: var(--iprm-card-bg);
+  color: var(--iprm-text);
 }
 
 /* Два джерела активності, один вигляд: модифікатор -- коли стан прийшов із
@@ -2685,8 +2685,8 @@ a.admin-stat-card:focus-visible {
   max-width: 100%;
   border-radius: var(--iprm-radius-pill);
   border: 1px solid var(--iprm-border);
-  background-color: var(--apple-section-bg);
-  color: var(--apple-black);
+  background-color: var(--iprm-card-bg);
+  color: var(--iprm-text);
   /* Той самий #857c93, що й у решти селектів -- див. коментар вище. */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23857c93' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -2719,7 +2719,7 @@ a.admin-stat-card:focus-visible {
   background-color: var(--iprm-accent-light); color: var(--iprm-accent); border-color: var(--iprm-border-strong);
 }
 .admin-inline-select[data-state="unpaid"] {
-  background-color: var(--apple-section-bg); color: var(--apple-gray-dark);
+  background-color: var(--iprm-card-bg); color: var(--apple-gray-dark);
 }
 
 /* Підтвердження збереження / помилки */
@@ -2920,9 +2920,9 @@ a.admin-stat-card:focus-visible {
   max-width: 320px;
   padding: 5px 10px;
   font-size: 0.8125rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   text-decoration: none;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border: 1px solid var(--iprm-border);
   border-radius: 999px;
   transition: background 0.15s, border-color 0.15s;

@@ -158,7 +158,7 @@
   font-size: 1.0625rem;
   font-weight: 600;
   font-family: var(--iprm-font);
-  color: var(--apple-black);
+  color: var(--iprm-text);
   background: var(--iprm-white);
   border: 1px solid var(--apple-gray-light);
   border-radius: var(--iprm-radius-sm);
@@ -253,7 +253,7 @@
   margin: 0.5rem 0 0.5rem;
   font-size: 1.15rem;
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .home-specialty__desc {
@@ -399,7 +399,7 @@
   font-size: 1.05rem;
   font-weight: 600;
   line-height: 1.3;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .trainer-slide__role {
@@ -456,7 +456,7 @@
 
 .home-calendar__title {
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   text-decoration: none;
 }
 
@@ -480,7 +480,7 @@
 .home-calendar__price {
   flex: 0 0 auto;
   font-weight: 700;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 /* ===== Клініки ===== */
@@ -495,7 +495,7 @@
 .home-clinic {
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   text-decoration: none;
   background: var(--iprm-white);
   border: 1px solid var(--iprm-accent-light);
@@ -553,7 +553,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   line-height: 1.25;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .home-route__text {
@@ -604,7 +604,7 @@
   min-height: 64px;
   padding: 1rem 0;
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   cursor: pointer;
   list-style: none;
 }
@@ -651,7 +651,7 @@
   margin: 0 0 0.75rem;
   font-size: clamp(1.75rem, 4vw, 2.5rem);
   font-weight: 700;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .home-cta__text {
@@ -706,7 +706,7 @@
 .home-hero-proof strong {
   display: block;
   font-size: 1rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .home-hero-proof span {

@@ -13,7 +13,7 @@
 }
 
 .ds-section-alt {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
 }
 
 .ds-section-alt .ds-section {
@@ -42,7 +42,7 @@
 .ds-title {
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   letter-spacing: -0.03em;
   margin-bottom: 32px;
 }
@@ -56,7 +56,7 @@
   color: var(--apple-gray);
   margin-top: 16px;
   padding: 12px 16px;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-radius: var(--iprm-radius-sm);
   font-family: 'SF Mono', 'Fira Code', monospace;
   line-height: 1.6;
@@ -118,7 +118,7 @@
 .ds-swatch__info {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   line-height: 1.4;
 }
 
@@ -143,14 +143,14 @@
 .ds-swatch__color--grad-gold { background: var(--apple-grad-gold); }
 .ds-swatch__color--on-accent-warm { background: var(--iprm-on-accent-warm); }
 .ds-swatch__color--purple-mid { background: var(--apple-purple-mid); }
-.ds-swatch__color--section-bg { background: var(--apple-section-bg); }
+.ds-swatch__color--section-bg { background: var(--iprm-card-bg); }
 .ds-swatch__color--line { background: var(--iprm-border); }
 .ds-swatch__color--line-strong { background: var(--iprm-border-strong); }
 .ds-swatch__color--warm-bg { background: var(--iprm-warm-bg); }
 .ds-swatch__color--warm-text { background: var(--iprm-warm-text); }
-.ds-swatch__color--grad-1 { background: var(--apple-grad-dark-1); }
-.ds-swatch__color--grad-2 { background: var(--apple-grad-dark-2); }
-.ds-swatch__color--grad-3 { background: var(--apple-grad-dark-3); }
+.ds-swatch__color--grad-1 { background: var(--iprm-hero-grad-1); }
+.ds-swatch__color--grad-2 { background: var(--iprm-hero-grad-2); }
+.ds-swatch__color--grad-3 { background: var(--iprm-hero-grad-3); }
 
 /* ========== TYPOGRAPHY DEMO ========== */
 
@@ -199,20 +199,20 @@
 
 .ds-gradient-sample--brand-gold-dark {
   background: linear-gradient(135deg, var(--apple-purple-soft) 0%, var(--apple-gold-soft) 100%);
-  color: var(--apple-grad-dark-3);
+  color: var(--iprm-hero-grad-3);
 }
 
 .ds-gradient-sample--hero {
   background:
     radial-gradient(circle at 91% 8%, var(--iprm-hero-glow-dim), transparent 28%),
     radial-gradient(circle at 10% 95%, var(--iprm-hero-glow), transparent 30%),
-    linear-gradient(145deg, var(--apple-grad-dark-1), var(--apple-grad-dark-3));
+    linear-gradient(145deg, var(--iprm-hero-grad-1), var(--iprm-hero-grad-3));
 }
 
 .ds-gradient-sample--section-dark {
   background:
     radial-gradient(circle at 90% 0, rgba(var(--apple-orange-rgb), 0.2), transparent 34%),
-    linear-gradient(145deg, var(--apple-grad-dark-2), var(--apple-grad-dark-3));
+    linear-gradient(145deg, var(--iprm-hero-grad-2), var(--iprm-hero-grad-3));
 }
 
 /* ========== ETALON PRIMITIVES ==========
@@ -227,7 +227,7 @@
   color: var(--iprm-on-accent);
   background:
     radial-gradient(circle at 90% 0, rgba(var(--apple-orange-rgb), 0.2), transparent 34%),
-    linear-gradient(145deg, var(--apple-grad-dark-2), var(--apple-grad-dark-3));
+    linear-gradient(145deg, var(--iprm-hero-grad-2), var(--iprm-hero-grad-3));
 }
 
 /* ========== COMPONENT DEMOS ========== */
@@ -263,7 +263,7 @@
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin-top: 40px;
   margin-bottom: 16px;
 }
@@ -285,7 +285,7 @@
   border-radius: var(--iprm-radius-md);
   font-size: 0.9375rem;
   font-weight: 500;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   transition: all 0.2s;
 }
 
@@ -305,7 +305,7 @@
 /* ========== CODE INLINE ========== */
 
 .ds-code {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   padding: 2px 8px;
   border-radius: 6px;
   font-size: 0.8125rem;
@@ -346,7 +346,7 @@
    Значення -- ті самі, що задає ::selection у common.css. */
 .ds-selection-demo {
   background: var(--iprm-accent-light);
-  color: var(--apple-black);
+  color: var(--iprm-text);
   padding: 2px 6px;
 }
 
@@ -368,7 +368,7 @@
 }
 
 .ds-bp-card {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-radius: 16px;
   padding: 24px 16px;
   text-align: center;
@@ -378,7 +378,7 @@
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin-bottom: 4px;
 }
 
@@ -436,7 +436,7 @@
 }
 
 .ds-bg-chip--gray {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   color: var(--apple-gray);
 }
 
@@ -502,7 +502,7 @@
    п'ять із них називали токени, яких у системі немає взагалі
    (--black, --success, --error), а --success: #34c759 -- це рівно
    той літерал, який admin.css окремо викинув за контраст 2.22. */
-.ds-swatch__color--black { background: var(--apple-black); }
+.ds-swatch__color--black { background: var(--iprm-text); }
 .ds-swatch__color--dark { background: var(--iprm-dark); }
 .ds-swatch__color--gray-dark { background: var(--apple-gray-dark); }
 .ds-swatch__color--gray { background: var(--apple-gray); }

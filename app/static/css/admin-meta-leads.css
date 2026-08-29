@@ -40,7 +40,7 @@
 /* Уже взятий у роботу лід -- нейтрально: червоне на зробленій роботі
    кричало б про те, чого вже не виправити. */
 .ml-wait--done {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-left-color: var(--iprm-border-strong));
 }
 
@@ -98,7 +98,7 @@
 }
 
 .ml-wait-panel--done {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
 }
 
 .ml-wait-panel--fresh {
@@ -149,7 +149,7 @@
   margin-bottom: 20px;
   border: 1px dashed var(--iprm-border-strong));
   border-radius: var(--iprm-radius);
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   font-size: 0.875rem;
 }
 
@@ -189,7 +189,7 @@
   overflow: auto;
   padding: 10px 12px;
   margin: 6px 0 0;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-radius: var(--iprm-radius-sm);
   font-family: var(--iprm-font-mono);
   font-size: 0.75rem;

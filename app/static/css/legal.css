@@ -30,7 +30,7 @@
   color: var(--apple-gray-dark);
   margin-bottom: 32px;
   padding: 24px;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-left: 3px solid var(--iprm-nav-active);
   border-radius: var(--iprm-radius-sm);
 }
@@ -45,7 +45,7 @@
   font-size: 1.25rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin-bottom: 16px;
   padding: 4px 0 4px 16px;
   border-bottom: 1px solid var(--iprm-border);
@@ -56,7 +56,7 @@
   font-size: 1.0625rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin: 24px 0 12px;
 }
 
@@ -103,7 +103,7 @@
 .legal-definitions dt {
   font-size: 17px;
   font-weight: 700;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin-top: 16px;
 }
 
@@ -129,8 +129,8 @@
 .legal-refund-table th {
   text-align: left;
   padding: 14px 16px;
-  background: var(--apple-black);
-  color: var(--apple-section-bg);
+  background: var(--iprm-text);
+  color: var(--iprm-card-bg);
   font-weight: 600;
   font-size: 0.8125rem;
   letter-spacing: 0.01em;
@@ -172,7 +172,7 @@
 
 .legal-details td:first-child {
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   white-space: nowrap;
   width: 220px;
 }
@@ -296,7 +296,7 @@
 }
 
 .bpr-docs-page__list a {
-  color: var(--apple-black);
+  color: var(--iprm-text);
   text-decoration: underline;
   text-decoration-color: rgba(0, 0, 0, 0.2);
   text-underline-offset: 3px;

@@ -18,7 +18,7 @@
   font-size: 1.25rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin-bottom: 12px;
 }
 
@@ -31,12 +31,12 @@
 }
 
 .reg-event-card__meta strong {
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 /* User info read-only */
 .reg-user-info {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-radius: var(--iprm-radius-sm);
   padding: 20px 24px;
   margin-bottom: 24px;
@@ -47,7 +47,7 @@
 
 .reg-user-info__item {
   font-size: 0.9375rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .reg-user-info__item span {
@@ -89,7 +89,7 @@
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin-bottom: 12px;
 }
 
@@ -126,11 +126,11 @@
 
 .reg-status-card__value {
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .reg-liqpay-placeholder {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border: none;
   border-radius: var(--iprm-radius);
   padding: 48px 32px;
@@ -151,7 +151,7 @@
 
 .reg-liqpay-payment__label {
   font-size: 17px;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin-bottom: 16px;
 }
 
@@ -294,7 +294,7 @@
 }
 
 .reg-steps__item--current {
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .reg-steps__item--done .reg-steps__num {
@@ -332,7 +332,7 @@
   margin-bottom: 16px;
   font-size: 0.9375rem;
   line-height: 1.55;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .reg-moh-notice__icon {
@@ -363,11 +363,11 @@
   color: var(--iprm-text-light);
   margin: 0 0 24px;
   padding: 12px 16px;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-radius: var(--iprm-radius-sm);
 }
 
-.reg-attention strong { color: var(--apple-black); }
+.reg-attention strong { color: var(--iprm-text); }
 
 /* ---------- Місце проведення (наголос) ---------- */
 .reg-event-card__location {
@@ -492,7 +492,7 @@
   max-height: 320px;
   overflow-y: auto;
   padding: 16px;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-radius: var(--iprm-radius-sm);
   border: 1px solid var(--iprm-border);
 }
@@ -550,7 +550,7 @@
 
 .reg-payment-logos__label {
   font-weight: 500;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .reg-payment-logos__brand {
@@ -561,7 +561,7 @@
   border-radius: 4px;
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
-  color: var(--apple-black);
+  color: var(--iprm-text);
   text-transform: uppercase;
 }
 
@@ -813,7 +813,7 @@
 .reg-pay-method__label {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .reg-pay-method__desc {
@@ -852,7 +852,7 @@
 .reg-pay-option__title {
   font-size: 1.0625rem;
   font-weight: 700;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .reg-pay-option__desc {
@@ -920,7 +920,7 @@
 
 .reg-tariff__name {
   font-weight: 700;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .reg-tariff__price {
@@ -985,7 +985,7 @@
 
 .reg-certdata-reminder__title {
   font-weight: 700;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin: 2px 0 4px;
 }
 
@@ -1090,7 +1090,7 @@
   margin: 32px 0 0;
   padding: 24px;
   border-radius: var(--iprm-radius-md);
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
 }
 
 .reg-account-cta__title {
@@ -1124,7 +1124,7 @@
   margin: 0 0 20px;
   padding: 12px 16px;
   border-radius: var(--iprm-radius-sm);
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   font-size: 0.9375rem;
   color: var(--iprm-text-light);
 }

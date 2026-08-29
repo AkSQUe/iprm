@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   padding: 48px 24px;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   position: relative;
   overflow: hidden;
 }
@@ -81,7 +81,7 @@
   letter-spacing: -0.03em;
   text-align: center;
   margin-bottom: 8px;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .auth-card__subtitle {
@@ -128,7 +128,7 @@
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin-bottom: 6px;
 }
 
@@ -165,7 +165,7 @@
 .form-consent {
   margin: 20px 0;
   padding: 16px;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-radius: var(--iprm-radius-sm);
 }
 
@@ -335,7 +335,7 @@
   font-size: 0.9375rem;
   font-weight: 600;
   letter-spacing: -0.005em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin: 0 0 16px;
   text-align: center;
 }
@@ -388,7 +388,7 @@
 
 .auth-collision__steps em {
   font-style: normal;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   font-weight: 600;
 }
 
@@ -500,7 +500,7 @@
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
   background: var(--iprm-white);
-  color: var(--apple-black);
+  color: var(--iprm-text);
   font-size: 0.9375rem;
   font-weight: 500;
   text-decoration: none;
@@ -508,7 +508,7 @@
 }
 
 .oauth-btn:hover {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-color: var(--iprm-text-light);
 }
 

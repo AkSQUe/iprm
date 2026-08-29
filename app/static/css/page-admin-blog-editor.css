@@ -13,7 +13,7 @@
 .blog-editor__bhead {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 12px;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-bottom: 1px solid var(--iprm-border);
   cursor: grab;
 }
@@ -31,7 +31,7 @@
   background: var(--iprm-white); color: var(--apple-gray-dark); cursor: pointer;
   transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
-.blog-editor__ctrl:hover { background: var(--apple-section-bg); }
+.blog-editor__ctrl:hover { background: var(--iprm-card-bg); }
 .blog-editor__ctrl .material-symbols-rounded { font-size: 20px; }
 .blog-editor__ctrl--danger:hover { color: var(--iprm-error); border-color: rgba(239,68,68,0.3); }
 
@@ -47,13 +47,13 @@
   border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm);
   background: var(--iprm-white); cursor: pointer; color: var(--apple-gray-dark);
 }
-.blog-editor__ibtn:hover { background: var(--apple-section-bg); }
+.blog-editor__ibtn:hover { background: var(--iprm-card-bg); }
 .blog-editor__ibtn .material-symbols-rounded { font-size: 18px; }
 .blog-editor__rich {
   min-height: 64px; padding: 10px 14px;
   border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm);
-  background: var(--apple-section-bg); font-size: 0.9375rem; line-height: 1.6;
-  color: var(--apple-black);
+  background: var(--iprm-card-bg); font-size: 0.9375rem; line-height: 1.6;
+  color: var(--iprm-text);
 }
 .blog-editor__rich:focus { outline: none; border-color: var(--iprm-nav-active); box-shadow: 0 0 0 3px var(--iprm-accent-light); }
 
@@ -82,7 +82,7 @@
   font-size: 0.8125rem; font-weight: 500; cursor: pointer;
   transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 }
-.blog-editor__addbtn:hover { background: var(--apple-section-bg); border-color: var(--iprm-nav-active); color: var(--iprm-nav-active); }
+.blog-editor__addbtn:hover { background: var(--iprm-card-bg); border-color: var(--iprm-nav-active); color: var(--iprm-nav-active); }
 .blog-editor__addbtn .material-symbols-rounded { font-size: 20px; }
 
 /* Широкий dropzone обкладинки */

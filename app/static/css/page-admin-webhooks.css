@@ -32,9 +32,9 @@
   font-family: var(--iprm-font-mono);
   font-size: 0.8125em;
   padding: 1px 6px;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-radius: 6px;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 /* ===== Stat-картки як фільтри за статусом ===== */
@@ -62,7 +62,7 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   border-radius: var(--iprm-radius-pill);
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   color: var(--apple-gray-dark);
 }
 
@@ -75,7 +75,7 @@
 .wh-slug {
   font-family: var(--iprm-font-mono);
   font-size: 0.8125rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .wh-uuid {

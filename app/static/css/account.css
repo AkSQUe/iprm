@@ -111,7 +111,7 @@
   font-size: 1.0625rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   line-height: 1.35;
 }
 
@@ -200,7 +200,7 @@
 .account-empty {
   text-align: center;
   padding: 64px 24px;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   border-radius: var(--iprm-radius);
   margin-bottom: 48px;
 }
@@ -236,7 +236,7 @@
   font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin-bottom: 8px;
 }
 

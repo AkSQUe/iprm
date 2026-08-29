@@ -24,7 +24,7 @@
 .referral-share__balance-value {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .referral-share__balance-label {
@@ -44,7 +44,7 @@
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .referral-share__row {
@@ -59,7 +59,7 @@
   min-width: 0;
   padding: 0.75rem 1rem;
   font-size: 0.95rem;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   background: var(--iprm-white);
   border: 1px solid var(--iprm-accent-light);
   border-radius: var(--iprm-radius-sm);
@@ -133,7 +133,7 @@
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   text-decoration: none;
   background: var(--iprm-white);
   border: 1px solid var(--iprm-accent-light);
@@ -155,7 +155,7 @@
   margin: 0 0 1rem;
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .referral-history__list {
@@ -184,7 +184,7 @@
 
 .referral-history__course {
   font-weight: 500;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .referral-history__date {
@@ -195,7 +195,7 @@
 .referral-history__points {
   flex: 0 0 auto;
   font-weight: 700;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .referral-history__item--voided {

@@ -7,7 +7,7 @@
    щільність, а не кольори.
 
    Тёмна тема. Секції, що зумисне тёмні в ОБОХ темах (hero, відгуки, лід-форма),
-   побудовані на --apple-grad-dark-*: ці токени в тёмній темі не
+   побудовані на --iprm-hero-grad-*: ці токени в тёмній темі не
    перевизначаються, бо вже тёмні. Тому вони не потребують [data-theme]-гілок.
    Текст поверх них -- лише --iprm-on-accent, ніколи --iprm-white: останній у
    тёмній темі стає тёмною поверхнею.
@@ -32,7 +32,7 @@
   --hero-grad-to: #1d0838;
   /* Метрики еталона: золотий відблиск угорі праворуч, фіолетовий унизу
      ліворуч, під ними діагональ від --hero-grad-from до --hero-grad-to.
-     Кінці діагоналі -- окремі токени, а не --apple-grad-dark-*: ті тримають
+     Кінці діагоналі -- окремі токени, а не --iprm-hero-grad-*: ті тримають
      вилку тёмних секцій сайту, і підміна їх заради hero потягнула б за
      собою відгуки та секцію заявки. */
   background:
@@ -201,7 +201,7 @@
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: -0.03em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .iprm-hero__seats-note {
@@ -217,7 +217,7 @@
   height: 8px;
   margin: 14px 0 8px;
   border-radius: var(--iprm-radius-pill);
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   overflow: hidden;
 }
 
@@ -336,7 +336,7 @@
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.02em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .iprm-benefit-card__text {
@@ -377,7 +377,7 @@
   margin: 32px 0 12px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .iprm-prose h2 { font-size: 1.5rem; }
@@ -400,7 +400,7 @@
 }
 
 .iprm-prose strong {
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .iprm-prose img {
@@ -467,7 +467,7 @@
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.02em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .iprm-audience-card p {
@@ -529,7 +529,7 @@
   /* 20px -- число еталона; проміжне між --iprm-radius-md (14) і
      --iprm-radius (22), окремого токена під нього немає. */
   border-radius: 20px;
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
 }
 
 /* Посилання мусить бути блоком на всю картку: інлайновий <a> лишав під
@@ -557,7 +557,7 @@
   transform: scale(1.03);
 }
 
-/* Чип-підпис. Тло -- захардкоджений --apple-grad-dark-3 (#1d0838) з альфою:
+/* Чип-підпис. Тло -- захардкоджений --iprm-hero-grad-3 (#1d0838) з альфою:
    rgb-трійки під цей токен у common.css немає, а підпис мусить лежати на
    тому самому глибокому фіолеті в обох темах, бо фото під ним не світлішає. */
 .iprm-gallery__caption {
@@ -660,7 +660,7 @@
   letter-spacing: -0.02em;
   line-height: 1.2;
   margin: 0;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .apple-page .iprm-program__list {
@@ -712,7 +712,7 @@
 }
 
 .apple-page .iprm-program__block:hover .iprm-program__item {
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .apple-page .iprm-program*), там компонент
@@ -740,7 +740,7 @@
 
 /* Номер блоку -- єдине місце на сторінці з градієнтом на малій площі: він
    відрізняє «крок програми» від «пункту результату», у якого плашка світла.
-   Другий стоп -- --apple-grad-dark-1 замість еталонного #56219a: окремого
+   Другий стоп -- --iprm-hero-grad-1 замість еталонного #56219a: окремого
    токена під той відтінок немає, а common.css у цьому етапі не наш. */
 .apple-page .iprm-program__badge {
   width: 42px;
@@ -749,7 +749,7 @@
   font-size: 1rem;
   font-weight: 900;
   color: var(--iprm-on-accent);
-  background: linear-gradient(135deg, var(--iprm-accent), var(--apple-grad-dark-1));
+  background: linear-gradient(135deg, var(--iprm-accent), var(--iprm-hero-grad-1));
   box-shadow: none;
 }
 
@@ -845,7 +845,7 @@
   font-size: 1.3125rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .iprm-practice-note__text {
@@ -899,7 +899,7 @@
   font-size: clamp(1.5rem, 2.8vw, 2rem);
   font-weight: 800;
   letter-spacing: -0.025em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin: 0;
 }
 
@@ -972,7 +972,7 @@
   background: var(--iprm-white);
 }
 
-/* У тёмній темі --iprm-white і --apple-section-bg -- це один і той самий
+/* У тёмній темі --iprm-white і --iprm-card-bg -- це один і той самий
    #1c1c22, тож підняті плитки зливалися б із сірою секцією до однієї межі.
    Робимо їх, навпаки, врізаними (тло сторінки тёмніше за сіру секцію) і
    підсилюємо межу. */
@@ -999,7 +999,7 @@
 }
 
 /* ========== DARK SHELL (відгуки, лід-форма) ==========
-   Свідомо тёмна в обох темах: --apple-grad-dark-* у тёмній не
+   Свідомо тёмна в обох темах: --iprm-hero-grad-* у тёмній не
    перевизначаються. Текст -- лише --iprm-on-accent. */
 
 .iprm-dark-shell {
@@ -1009,11 +1009,11 @@
   border-radius: var(--iprm-radius-lg);
   color: var(--iprm-on-accent);
   /* Градієнт іде вглиб (dark-2 -> dark-3), як у еталона. Раніше другою
-     точкою стояв --apple-grad-dark-1 -- це початок hero, він СВІТЛІШИЙ за
+     точкою стояв --iprm-hero-grad-1 -- це початок hero, він СВІТЛІШИЙ за
      першу точку, тому оболонка вигорала до фіолетового замість темніти. */
   background:
     radial-gradient(circle at 95% 15%, rgba(var(--apple-orange-rgb), 0.18), transparent 30%),
-    linear-gradient(145deg, var(--apple-grad-dark-2), var(--apple-grad-dark-3));
+    linear-gradient(145deg, var(--iprm-hero-grad-2), var(--iprm-hero-grad-3));
 }
 
 /* Заголовок оболонки не проходить через .iprm-section__title, тому метрики
@@ -1111,7 +1111,7 @@
   color: var(--iprm-on-accent);
   background:
     radial-gradient(circle at 90% 0, rgba(var(--apple-orange-rgb), 0.2), transparent 34%),
-    linear-gradient(145deg, var(--apple-grad-dark-2), var(--apple-grad-dark-3));
+    linear-gradient(145deg, var(--iprm-hero-grad-2), var(--iprm-hero-grad-3));
 }
 
 .iprm-lead-grid {
@@ -1183,7 +1183,7 @@
   font-size: 1.5625rem;
   font-weight: 800;
   letter-spacing: -0.025em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
 }
 
 .iprm-lead-form__note {
@@ -1380,7 +1380,7 @@
 .iprm-sticky-cta__title {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

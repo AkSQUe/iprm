@@ -14,7 +14,7 @@
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: var(--apple-black);
+  color: var(--iprm-text);
   margin-bottom: 4px;
 }
 
@@ -101,7 +101,7 @@
 }
 
 .backup-table th {
-  background: var(--apple-section-bg);
+  background: var(--iprm-card-bg);
   padding: 12px 16px;
   text-align: left;
   font-weight: 600;
