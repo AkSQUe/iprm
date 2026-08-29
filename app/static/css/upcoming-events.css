@@ -20,7 +20,7 @@
   content: "";
   display: block;
   height: 4px;
-  background: linear-gradient(90deg, #f0a02a 0%, #b85a7e 55%, #7437c9 100%);
+  background: linear-gradient(90deg, #f0a02a 0%, #b85a7e 55%, var(--iprm-accent) 100%);
 }
 
 .upcoming-events__head {
@@ -129,7 +129,7 @@ body.has-upcoming-bar {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #f0a02a 0%, #b85a7e 55%, #7437c9 100%);
+  background: linear-gradient(90deg, #f0a02a 0%, #b85a7e 55%, var(--iprm-accent) 100%);
 }
 
 .upcoming-bar__inner {
