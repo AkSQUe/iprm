@@ -79,7 +79,7 @@
 
 .iprm-confirm__btn--ok {
   background: var(--iprm-accent);
-  color: #fff;
+  color: var(--iprm-on-accent);
 }
 .iprm-confirm__btn--ok:hover {
   background: var(--iprm-accent-hover);

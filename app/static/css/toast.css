@@ -47,7 +47,7 @@
   justify-content: center;
   font-size: 15px;
   font-weight: 700;
-  color: #fff;
+  color: var(--iprm-on-accent);
   background: var(--apple-gray);
 }
 
@@ -87,7 +87,7 @@
 }
 .iprm-toast__action:hover {
   background: var(--iprm-accent);
-  color: #fff;
+  color: var(--iprm-on-accent);
 }
 .iprm-toast__action:focus-visible {
   outline: 2px solid var(--iprm-accent);

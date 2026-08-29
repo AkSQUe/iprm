@@ -377,7 +377,7 @@
   height: 28px;
   border-radius: 50%;
   background: var(--iprm-accent);
-  color: #fff;
+  color: var(--iprm-on-accent);
   font-weight: 700;
   font-size: 0.875rem;
   display: flex;
@@ -525,7 +525,7 @@
 /* Apple Sign In: чорна кнопка з білим текстом, HIG-стиль. */
 .oauth-btn--apple {
   background: #000;
-  color: #fff;
+  color: var(--iprm-on-accent);
   border-color: #000;
   margin-top: 10px;
 }
@@ -536,7 +536,7 @@
 }
 
 .oauth-btn--apple .oauth-btn__icon {
-  color: #fff;
+  color: var(--iprm-on-accent);
 }
 
 /* ========== Connections page ========== */

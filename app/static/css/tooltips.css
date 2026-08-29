@@ -23,7 +23,7 @@
 .iprm-tooltip-trigger:hover,
 .iprm-tooltip-trigger:focus-visible {
   background: var(--iprm-accent);
-  color: #fff;
+  color: var(--iprm-on-accent);
   outline: none;
 }
 
@@ -37,7 +37,7 @@
   padding: 10px 14px;
   border-radius: 10px;
   background: var(--iprm-dark);
-  color: #fff;
+  color: var(--iprm-on-accent);
   font-size: 0.8125rem;
   line-height: 1.45;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
