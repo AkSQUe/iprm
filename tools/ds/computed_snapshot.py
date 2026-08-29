@@ -285,6 +285,51 @@ def make_admin(app):
         return str(user.id)
 
 
+def seed_detail_pages(app):
+    """Мінімальний контент, щоб детальні сторінки взагалі відрендерились.
+
+    Компоненти, які живуть лише на `/courses/<slug>` і `/online/<slug>`
+    (програма курсу, картка купівлі), інакше в знімок не потрапляють
+    узагалі: у роутів є аргумент у шляху, а база порожня. Це була
+    задокументована сліпа пляма інструмента.
+
+    Повертає список URL, які з'явились.
+    """
+    from app.extensions import db
+    from app.models.course import Course
+    from app.models.online_course import OnlineCourse
+    from app.models.program_block import ProgramBlock
+
+    urls = []
+    with app.app_context():
+        course = Course(title='Знімок: курс', slug='snapshot-course',
+                        is_active=True)
+        db.session.add(course)
+        db.session.flush()
+        db.session.add(ProgramBlock(
+            course_id=course.id, heading='Модуль знімка',
+            items=['Перший пункт', 'Другий пункт'], sort_order=0))
+        urls.append('/courses/snapshot-course')
+
+        # sintegrum_id і remote_name -- NOT NULL: онлайн-курси приходять із
+        # зовнішньої системи, локально створеного курсу модель не передбачає.
+        online = OnlineCourse(title='Знімок: онлайн-курс',
+                              slug='snapshot-online',
+                              sintegrum_id=999000,
+                              remote_name='Знімок')
+        for flag in ('is_published', 'is_active'):
+            if hasattr(online, flag):
+                setattr(online, flag, True)
+        db.session.add(online)
+        db.session.flush()
+        db.session.add(ProgramBlock(
+            online_course_id=online.id, heading='Модуль знімка',
+            items=['Перший пункт', 'Другий пункт'], sort_order=0))
+        urls.append('/online/snapshot-online')
+        db.session.commit()
+    return urls
+
+
 def page_urls(app, user_id, explicit, only_classes):
     """Сторінки для обходу.
 
@@ -323,18 +368,36 @@ def page_urls(app, user_id, explicit, only_classes):
                        for cls in only_classes):
                 continue
         urls.append((endpoint, url))
-    if explicit:
-        wanted = set(explicit)
-        urls = [(e, u) for e, u in urls if u in wanted]
+    # Явні адреси ДОДАЮТЬСЯ, а не фільтрують. Спершу вони були фільтром, і
+    # засіяні детальні сторінки (`/courses/<slug>`) не з'являлись ніколи: у
+    # перебір роутів вони не потрапляють за визначенням -- у них аргумент у
+    # шляху, -- тож фільтрувати не було чого.
+    for url in explicit:
+        if any(u == url for _, u in urls):
+            continue
+        try:
+            resp = client.get(url)
+        except Exception:                                   # noqa: BLE001
+            continue
+        if resp.status_code != 200:
+            print('  явна адреса %s віддала %d -- пропускаю'
+                  % (url, resp.status_code))
+            continue
+        body = resp.get_data(as_text=True)
+        if only_classes and not any(cls.lstrip('.') in body for cls in only_classes):
+            continue
+        urls.append((url.strip('/').replace('/', '.') or 'root', url))
     return urls
 
 
-def capture(label, explicit, only_classes, theme='light', quiet=False):
+def capture(label, explicit, only_classes, theme='light', seed=False, quiet=False):
     from werkzeug.serving import make_server
     from playwright.sync_api import sync_playwright
 
     app = build_app()
     user_id = make_admin(app)
+    if seed:
+        explicit = list(explicit) + seed_detail_pages(app)
     pages = page_urls(app, user_id, explicit, only_classes)
     if not pages:
         print('жодної сторінки не відібрано')
@@ -469,6 +532,9 @@ def main():
         if name == 'capture':
             sp.add_argument('--label', required=True)
         sp.add_argument('--theme', default='light', choices=('light', 'dark'))
+        sp.add_argument('--seed', action='store_true',
+                        help='створити курс і онлайн-курс, щоб детальні '
+                             'сторінки відрендерились')
         sp.add_argument('--only', default='',
                         help='лише сторінки з цими класами, через кому')
         sp.add_argument('--pages', default='', help='явні URL через кому')
@@ -482,7 +548,7 @@ def main():
     explicit = [p for p in getattr(args, 'pages', '').split(',') if p]
 
     if args.cmd == 'capture':
-        return 0 if capture(args.label, explicit, only, args.theme) else 2
+        return 0 if capture(args.label, explicit, only, args.theme, args.seed) else 2
 
     if args.cmd == 'diff':
         return 1 if compare(args.before, args.after) else 0
@@ -490,6 +556,8 @@ def main():
     # noise і selftest -- обидва потребують двох прогонів в ОКРЕМИХ процесах
     self_path = str(Path(__file__).resolve())
     common = ['--theme', getattr(args, 'theme', 'light')]
+    if getattr(args, 'seed', False):
+        common.append('--seed')
     if only:
         common += ['--only', ','.join(only)]
     if explicit:
