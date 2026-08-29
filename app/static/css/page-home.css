@@ -76,7 +76,9 @@
 }
 
 .page-home .iprm-hero__content {
-  position: relative;
+  /* position: relative лишається компонентним (common.css: .iprm-hero__content
+     { position: relative; ... }, нічим не перебите тут і в apple-pages.css):
+     тут потрібен лише z-index, щоб контент був над home-hero-media. */
   z-index: 1;
 }
 
