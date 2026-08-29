@@ -6,17 +6,23 @@
         <p class="ds-label">Components</p>
         <h2 class="ds-title">Hero</h2>
 
-        <h3 class="ds-section-heading">Apple-style (fullscreen, white bg)</h3>
-        <div class="ds-demo" style="text-align:center; padding: 80px 32px; position: relative; overflow: hidden; min-height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-          <div style="display:inline-block;font-size:0.8125rem;font-weight:500;color:var(--iprm-accent);background:var(--iprm-accent-light);padding:6px 16px;border-radius:980px;margin-bottom:24px;">Бали БПР – Сертифіковані курси</div>
-          <div style="font-size:clamp(2rem, 5vw, 3rem);font-weight:800;letter-spacing:-0.04em;line-height:1.08;color:var(--apple-black);max-width:700px;">Плазмотерапія.<br><span style="background:linear-gradient(135deg,var(--iprm-accent) 0%,var(--apple-purple-mid) 40%,var(--apple-orange) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Регенерація.</span></div>
-          <div style="font-size:1.0625rem;color:var(--apple-gray);max-width:500px;line-height:1.55;margin-top:16px;">Курси після дипломної освіти для лікарів та персоналізована регенеративна терапія</div>
-          <div style="display:flex;gap:16px;margin-top:32px;">
-            <a href="#" style="font-size:1.0625rem;font-weight:500;color:var(--iprm-on-accent);background:var(--iprm-accent);padding:14px 32px;border-radius:980px;text-decoration:none;">Обрати курс</a>
-            <a href="#" style="font-size:1.0625rem;font-weight:500;color:var(--iprm-accent);padding:14px 32px;border-radius:980px;text-decoration:none;">Про лабораторії ></a>
+        <h3 class="ds-section-heading">Базовий компонент</h3>
+        <div class="ds-demo">
+          <div class="iprm-hero-wrap">
+            <section class="iprm-hero" aria-label="Hero">
+              <div class="iprm-hero__content">
+                <div class="iprm-hero__badge">Бали БПР &#8212; Сертифіковані курси</div>
+                <h1 class="iprm-hero__title">Плазмотерапія.<br><span class="apple-gradient-text">Регенерація.</span></h1>
+                <p class="iprm-hero__subtitle">Курси після дипломної освіти для лікарів та персоналізована регенеративна терапія</p>
+                <div class="iprm-hero__actions">
+                  <a href="#" class="apple-btn apple-btn--primary">Обрати курс</a>
+                  <a href="#" class="apple-btn apple-btn--secondary apple-btn--arrow">Про лабораторії</a>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
-        <p class="ds-hint">min-height: 100vh / text-align: center / Badge -> h1 (.apple-gradient-text на 1-2 слова) -> subtitle -> actions / fadeUp animation з послідовним delay / Easing: cubic-bezier(0.28, 0.11, 0.32, 1)</p>
+        <p class="ds-hint">Розмітка та сама, що на Головній (<code class="ds-code">main/index.html</code>): badge &#8594; h1 з <code class="ds-code">.apple-gradient-text</code> на одному-двох словах &#8594; subtitle &#8594; actions. Тут показано БАЗОВИЙ вигляд із <code class="ds-code">common.css</code>: заголовок 24px/700. Лендинг <code class="ds-code">/</code> робить його більшим через <code class="ds-code">.page-index .iprm-hero__title</code> у <code class="ds-code">page-index.css</code> &#8212; це посторінковий варіант, і каталог його не вантажить навмисно. Доти тут стояв МОКАП inline-стилями, який відтворював саме той варіант: <code class="ds-code">clamp(2rem, 5vw, 3rem)</code> вагою 800. Копія розійшлася з компонентом удвічі, і каталог показував не те, що є.</p>
 
         <h3 class="ds-section-heading">Legacy (dark)</h3>
         <div class="ds-demo ds-demo--flush">
