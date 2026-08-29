@@ -72,7 +72,12 @@
   --iprm-accent-light: #f1e9fb;
   --iprm-btn-bg: #7437c9;
   --iprm-btn-bg-hover: #6229ae;
-  --iprm-nav-active: #7437c9;
+  /* Псевдонім, а не копія: значення --iprm-nav-active завжди дорівнювало
+     --iprm-accent в обох темах, і два оголошення того самого кольору
+     розводили кільце фокуса поля вводу на два різні правила. Ім'я лишається
+     (137 вжитків, несе семантику активного пункту навігації), джерело
+     правди стає одне. */
+  --iprm-nav-active: var(--iprm-accent);
   --iprm-hero-grad-1: #43127c;
   --iprm-hero-grad-2: #2e0d57;
   --iprm-hero-grad-3: #1d0838;
@@ -228,7 +233,6 @@
   --iprm-accent-light: rgba(180, 140, 255, 0.14);
   --iprm-btn-bg: #8a4ddb;
   --iprm-btn-bg-hover: #8f55e0;
-  --iprm-nav-active: #b48cff;
   /* Hero-градієнти вже тёмні -- лишаємо; тло-glow трохи підсилюємо */
   --iprm-hero-glow: rgba(144, 72, 239, 0.42);
   --iprm-hero-glow-dim: rgba(255, 173, 22, 0.24);
