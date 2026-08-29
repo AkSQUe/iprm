@@ -4,7 +4,7 @@ import re
 
 from app.i18n import LANGUAGES
 from tests.test_seo.helpers import (
-    fetch_public_pages, iter_url_values, jsonld_blocks,
+    fetch_public_pages, is_absolute_url, iter_url_values, jsonld_blocks,
 )
 
 
@@ -14,7 +14,7 @@ class TestSchemaUrls:
         for endpoint, url, html in fetch_public_pages(app, client)[0]:
             for block in jsonld_blocks(html):
                 for key, value in iter_url_values(block):
-                    if not value.startswith('http'):
+                    if not is_absolute_url(value):
                         bad.append(f'{endpoint}: {key} = {value}')
         assert not bad, (
             'Відносні URL у структурованих даних:\n' + '\n'.join(bad)

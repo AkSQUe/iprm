@@ -20,7 +20,7 @@ SERVICE_ENDPOINTS = {
 KNOWN_SEO_DEBT = {}
 
 # Ендпоінти, що навмисно не віддають 200 і тому не потрапляють у вибірку
-# сторінок: ендпоінт -> причина.
+# сторінок: ендпоінт -> (очікуваний код, причина).
 #
 # Без цього словника fetch_public_pages() мовчки викидала будь-яку
 # сторінку, що перестала віддавати 200, і всі структурні сторожі лишались
@@ -30,22 +30,29 @@ KNOWN_SEO_DEBT = {}
 # на рівність: сторінка, що зламалась, валить сюїту, а нова навмисна
 # не-HTML відповідь вимагає іменованого запису -- та сама дисципліна
 # "виняток завжди іменований", що й у LENGTH_EXCEPTIONS.
+#
+# Значення довго було голою прозою: рядок називав код у тексті, але його
+# ніхто не звіряв із фактичною відповіддю. Перевірено мутацією: підміна
+# main.design_system на abort(500) (замість документованого 302) лишала
+# сюїту зеленою -- набір пропущених ключів не змінюється, а саме число
+# всередині рядка ніхто не читав. Тепер код -- окреме машинозчитуване поле,
+# і test_page_seo.py звіряє його з фактичним skipped[endpoint].
 EXPECTED_NON_200 = {
-    'main.design_system': (
+    'main.design_system': (302,
         '302 -- каталог дизайн-системи під admin_required: анонімного '
         'відвідувача редіректить на логін. Сторінка службова, в індекс не '
         'йде, публічних SEO-тверджень до неї не застосовуємо.'
     ),
-    'main.legacy_account': (
+    'main.legacy_account': (301,
         '301 -- історичний /account лишений як постійний редірект на '
         'особистий кабінет. Власного HTML не має за визначенням.'
     ),
-    'i18n_uk_root': (
+    'i18n_uk_root': (301,
         '301 -- /uk/ канонізується в безпрефіксний корінь (українська, '
         'мова-джерело, живе без префікса). Редірект тут і є правильною '
         'поведінкою, окремої сторінки не існує.'
     ),
-    'meta_leads.verify_subscription': (
+    'meta_leads.verify_subscription': (403,
         '403 -- верифікаційний вебхук Meta Lead Ads: без правильних '
         'hub.mode/hub.verify_token відповідає відмовою. Це точка '
         'інтеграції, що віддає plain text, а не сторінка.'
@@ -54,13 +61,13 @@ EXPECTED_NON_200 = {
     # вимкнено -- навмисно, щоб не підтверджувати існування ендпоінта
     # (див. require_api_key у app/api/v1/auth.py). HTML не віддає в
     # жодному зі станів.
-    'api_v1.list_events': '404 -- партнерське JSON-API, інтеграцію вимкнено.',
-    'api_v1.list_leads': '404 -- партнерське JSON-API, інтеграцію вимкнено.',
-    'api_v1.list_online_courses': '404 -- партнерське JSON-API, інтеграцію вимкнено.',
-    'api_v1.list_online_enrollments': '404 -- партнерське JSON-API, інтеграцію вимкнено.',
-    'api_v1.list_participants': '404 -- партнерське JSON-API, інтеграцію вимкнено.',
-    'api_v1.list_registrations': '404 -- партнерське JSON-API, інтеграцію вимкнено.',
-    'api_v1.list_specializations': '404 -- партнерське JSON-API, інтеграцію вимкнено.',
+    'api_v1.list_events': (404, '404 -- партнерське JSON-API, інтеграцію вимкнено.'),
+    'api_v1.list_leads': (404, '404 -- партнерське JSON-API, інтеграцію вимкнено.'),
+    'api_v1.list_online_courses': (404, '404 -- партнерське JSON-API, інтеграцію вимкнено.'),
+    'api_v1.list_online_enrollments': (404, '404 -- партнерське JSON-API, інтеграцію вимкнено.'),
+    'api_v1.list_participants': (404, '404 -- партнерське JSON-API, інтеграцію вимкнено.'),
+    'api_v1.list_registrations': (404, '404 -- партнерське JSON-API, інтеграцію вимкнено.'),
+    'api_v1.list_specializations': (404, '404 -- партнерське JSON-API, інтеграцію вимкнено.'),
 }
 
 # Цільові межі довжин зі специфікації.
@@ -178,7 +185,16 @@ def jsonld_blocks(html):
 
 
 # Поля JSON-LD, у яких Google очікує абсолютний URL.
-URL_KEYS = ('image', 'logo', 'item', 'url')
+#
+# sameAs/contentUrl/thumbnailUrl/mainEntityOfPage додані цим раундом:
+# main.index уже сьогодні віддає "sameAs" (соцмережі організації з
+# SiteSettings -- facebook_url/instagram_url мають непорожні дефолти), а
+# blog/post.html -- "mainEntityOfPage". Без цих ключів обидва поля
+# лишались повністю поза перевіркою абсолютності.
+URL_KEYS = (
+    'image', 'logo', 'item', 'url',
+    'sameAs', 'contentUrl', 'thumbnailUrl', 'mainEntityOfPage',
+)
 
 
 def iter_url_values(node):
@@ -196,6 +212,66 @@ def iter_url_values(node):
     elif isinstance(node, list):
         for item in node:
             yield from iter_url_values(item)
+
+
+def is_absolute_url(value):
+    """Рядок зі справжньою схемою (http:// або https://).
+
+    Раніше сторожі перевіряли `value.startswith('http')` -- цей рядок
+    приймає й нонсенс на кшталт "httpfoo", бо перевіряє лише перші чотири
+    символи, а не наявність реальної схеми з "://".
+    """
+    return isinstance(value, str) and (
+        value.startswith('http://') or value.startswith('https://')
+    )
+
+
+# Типи вузлів JSON-LD, які рахуємо організацією для звірки provider.@id.
+ORGANIZATION_TYPES = {'EducationalOrganization', 'Organization'}
+
+
+def organization_ids(blocks):
+    """Множина @id усіх організаційних вузлів на сторінці (рекурсивно).
+
+    Рекурсія, а не лише верхній рівень блоку/@graph: так само побудований
+    iter_url_values, і той самий підхід не пропустить організацію,
+    вкладену глибше, ніж сьогоднішні шаблони.
+    """
+    ids = set()
+
+    def _walk(node):
+        if isinstance(node, dict):
+            if node.get('@type') in ORGANIZATION_TYPES and node.get('@id'):
+                ids.add(node['@id'])
+            for value in node.values():
+                _walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                _walk(item)
+
+    for block in blocks:
+        _walk(block)
+    return ids
+
+
+def provider_ids(blocks):
+    """Значення provider['@id'] з усіх вузлів на сторінці (рекурсивно)."""
+    ids = []
+
+    def _walk(node):
+        if isinstance(node, dict):
+            provider = node.get('provider')
+            if isinstance(provider, dict) and '@id' in provider:
+                ids.append(provider['@id'])
+            for value in node.values():
+                _walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                _walk(item)
+
+    for block in blocks:
+        _walk(block)
+    return ids
 
 
 def head_field(html, field):

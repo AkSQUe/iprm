@@ -31,8 +31,33 @@ class TestFetchIsFailClosed:
             f'{sorted(set(EXPECTED_NON_200) - set(skipped))}'
         )
 
+    def test_skipped_status_matches_documented_code(self, app, client):
+        """Ключ EXPECTED_NON_200 звірявся лише як МНОЖИНА -- сам код
+        усередині причини був прозою, яку ніхто не читав. Доведено
+        мутацією: підміна в'ю main.design_system на abort(500) замість
+        задокументованого 302 лишала сюїту зеленою -- набір пропущених
+        ключів не міняється, лише число під ключем."""
+        _, skipped = fetch_public_pages(app, client)
+        bad = []
+        for endpoint, actual_code in skipped.items():
+            if endpoint not in EXPECTED_NON_200:
+                continue  # test_skipped_set_matches_named_constant це вже ловить
+            expected_code, _reason = EXPECTED_NON_200[endpoint]
+            if actual_code != expected_code:
+                bad.append(
+                    f'{endpoint}: задокументовано {expected_code}, '
+                    f'фактично {actual_code}'
+                )
+        assert not bad, (
+            'Фактичний код розійшовся з задокументованим у '
+            'EXPECTED_NON_200:\n' + '\n'.join(bad)
+        )
+
     def test_every_expected_exception_has_a_reason(self):
-        empty = [ep for ep, why in EXPECTED_NON_200.items() if not (why or '').strip()]
+        empty = [
+            ep for ep, (code, why) in EXPECTED_NON_200.items()
+            if not (why or '').strip()
+        ]
         assert not empty, f'Записи без причини: {empty}'
 
     def test_selection_is_not_empty(self, app, client):

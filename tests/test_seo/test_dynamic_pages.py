@@ -6,7 +6,14 @@ fetch_public_pages() бачить лише ендпоінти без обов'я
 abs_url із Задачі 4 можна було повернути назад -- сюїта лишалась зеленою.
 
 Фікстури тут навмисно мінімальні: сторінка мусить триматись на порожніх
-полях так само, як на заповнених.
+полях так само, як на заповнених. Виняток -- зображення (цей раунд):
+доти жодна фікстура не прикріплювала MediaFile, тож `image` НІКОЛИ не
+потрапляв у JSON-LD, і всі десять викликів abs_url(...) у п'яти шаблонах
+(og:image і/або image в JSON-LD -- blog/post.html, clinics/detail.html,
+courses/detail.html, online/detail.html, trainers/detail.html) можна було
+повернути до відносного шляху -- сюїта лишалась зеленою: перевірка
+абсолютності проходила над порожнечею. Тепер кожна сутність має реальне
+зображення, і `{% if x.photo_full %}`-гілки справді виконуються.
 """
 import re
 from datetime import datetime, timezone
@@ -18,18 +25,45 @@ from app.extensions import db
 from app.models.blog_post import BlogPost
 from app.models.clinic import Clinic
 from app.models.course import Course
+from app.models.media_file import MediaFile
 from app.models.online_course import OnlineCourse
 from app.models.trainer import Trainer
-from tests.test_seo.helpers import iter_url_values, jsonld_blocks
+from tests.test_seo.helpers import (
+    is_absolute_url, iter_url_values, jsonld_blocks, organization_ids,
+    provider_ids,
+)
+
+
+def _media(suffix):
+    """Мінімальний MediaFile-рядок (як у test_course_landing_content.py).
+
+    Файл на диску не потрібен: `url`/`variant_url()` лише будують рядок з
+    `file_path`, дискового читання не роблять, а саме рядок -- усе, що
+    цікавить SEO-сторожів у HTML-відповіді.
+    """
+    media = MediaFile(
+        filename=f'{suffix}.webp',
+        file_path=f'2026/08/{suffix}-{uuid4().hex[:8]}.webp',
+        mime_type='image/webp',
+    )
+    db.session.add(media)
+    db.session.flush()
+    return media
 
 
 @pytest.fixture
 def dynamic_pages(app, client):
     """[(мітка, url, html)] -- по одній сторінці кожного динамічного типу."""
+    course_card = _media('course-card')
+    online_card = _media('online-card')
+    trainer_photo = _media('trainer-photo')
+    blog_cover = _media('blog-cover')
+
     course = Course(
         title='Курс структурних даних',
         slug=f'dyn-course-{uuid4().hex[:8]}',
         is_active=True,
+        card_media_id=course_card.id,
     )
     online = OnlineCourse(
         sintegrum_id=int(uuid4().int % 10_000_000),
@@ -37,16 +71,22 @@ def dynamic_pages(app, client):
         slug=f'dyn-online-{uuid4().hex[:8]}',
         is_published=True,
         is_vanished=False,
+        card_media_id=online_card.id,
     )
     trainer = Trainer(
         full_name='Іван Тренер',
         slug=f'dyn-trainer-{uuid4().hex[:8]}',
         is_active=True,
+        photo_media_id=trainer_photo.id,
     )
+    # Clinic.photo -- звичайний рядковий стовпець (НЕ медіа-реєстр, на
+    # відміну від решти): og:image читає його напряму, MediaFile тут
+    # взагалі не задіяний.
     clinic = Clinic(
         name='Клініка структурних даних',
         slug=f'dyn-clinic-{uuid4().hex[:8]}',
         is_active=True,
+        photo='/media/2026/08/clinic-photo.webp',
     )
     post = BlogPost(
         title='Допис структурних даних',
@@ -54,8 +94,19 @@ def dynamic_pages(app, client):
         content=[],
         status=BlogPost.STATUS_PUBLISHED,
         published_at=datetime.now(timezone.utc),
+        cover_media_id=blog_cover.id,
     )
     db.session.add_all([course, online, trainer, clinic, post])
+    db.session.flush()
+
+    # Галерея курсу -- окремий запит MediaFile.for_entity() (потребує вже
+    # присвоєного course.id), а не relationship. courses/detail.html має
+    # ДРУГИЙ abs_url-виклик саме під елементи галереї (окремо від card_src)
+    # -- без рядка в галереї він лишався б непокритим.
+    gallery_media = _media('course-gallery')
+    gallery_media.entity_type = 'course'
+    gallery_media.entity_id = course.id
+    gallery_media.usage_type = 'gallery'
     db.session.flush()
 
     targets = [
@@ -118,11 +169,28 @@ class TestDynamicPageStructure:
         for label, url, html in dynamic_pages:
             for block in jsonld_blocks(html):
                 for key, value in iter_url_values(block):
-                    if not value.startswith('http'):
+                    if not is_absolute_url(value):
                         bad.append(f'{label}: {key} = {value}')
         assert not bad, (
             'Відносні URL у структурованих даних:\n' + '\n'.join(bad)
         )
+
+    def test_og_image_absolute(self, dynamic_pages):
+        """Твердження вище бачить лише JSON-LD, а abs_url обслуговує ще й
+        og:image / twitter:image (base.html -- twitter:image бере те саме
+        значення через self.og_image()). Фікстури тепер прикріплюють медіа
+        до кожної сутності, тож `{% if x.photo_full %}`-гілка з
+        abs_url(...) справді виконується -- а не мовчки пропускається на
+        користь уже абсолютного дефолту з base.html."""
+        bad = []
+        for label, url, html in dynamic_pages:
+            found = re.search(r'<meta property="og:image" content="([^"]*)"', html)
+            if not found:
+                bad.append(f'{label}: og:image відсутній')
+                continue
+            if not is_absolute_url(found.group(1)):
+                bad.append(f'{label}: og:image не абсолютний -- {found.group(1)}')
+        assert not bad, 'Проблеми og:image:\n' + '\n'.join(bad)
 
     def test_breadcrumbs_present(self, dynamic_pages):
         """Динамічні сторінки -- саме ті, що потрапляють у видачу."""
@@ -157,6 +225,33 @@ class TestDynamicPageStructure:
         assert not bad, (
             'Сторінки без EducationalOrganization з base.html (немає '
             '{{ super() }} у block jsonld): ' + ', '.join(bad)
+        )
+
+
+class TestProviderLinkage:
+    """provider.@id мусить збігатися з реальним @id організації на
+    сторінці символ-у-символ, а не просто "щось таке є на сторінці".
+
+    test_inherited_organization_is_not_dropped вище перевіряє лише факт
+    присутності ЯКОГОСЬ вузла EducationalOrganization з ЯКИМСЬ @id -- сам
+    зв'язок provider -> @id не звірявся ніяк. Доведено мутацією: підміна
+    '#org' на '#ORG-TYPO' у provider курсу (курс і онлайн-курс -- єдині
+    сторінки з provider) лишала сюїту зеленою.
+    """
+
+    def test_provider_id_matches_an_organization_node(self, dynamic_pages):
+        bad = []
+        for label, url, html in dynamic_pages:
+            blocks = jsonld_blocks(html)
+            org_ids = organization_ids(blocks)
+            for provider_id in provider_ids(blocks):
+                if provider_id not in org_ids:
+                    bad.append(
+                        f'{label}: provider.@id={provider_id!r} немає '
+                        f'серед вузлів організації {sorted(org_ids)}'
+                    )
+        assert not bad, (
+            'Розірвані посилання provider.@id:\n' + '\n'.join(bad)
         )
 
 
