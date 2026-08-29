@@ -429,6 +429,9 @@ def _rule_bodies(path, split_selectors=True):
     return out
 
 
+_VENDOR_PSEUDO = re.compile(r'::-(?:webkit|moz|ms)-')
+
+
 def rule_clones(root=ROOT, min_props=3):
     """{(медіа, набір): [(файл, селектор)]} -- ОДНАКОВИЙ набір під різними
     селекторами.
@@ -461,7 +464,18 @@ def rule_clones(root=ROOT, min_props=3):
                 continue
             groups.setdefault((media, tuple(sorted(props.items()))),
                               []).append((path.name, sel))
-    return {k: v for k, v in groups.items() if len(v) > 1}
+    out = {}
+    for key, where in groups.items():
+        if len(where) < 2:
+            continue
+        # Префіксні псевдоелементи ОБОВ'ЯЗКОВО пишуться окремими правилами:
+        # браузер, який не знає селектора, викидає ціле правило, тож
+        # `::file-selector-button` і `::-webkit-file-upload-button` не можна
+        # об'єднати комою. Це вимушене дублювання, а не борг.
+        if any(_VENDOR_PSEUDO.search(sel) for _, sel in where):
+            continue
+        out[key] = where
+    return out
 
 
 def catalog_only_components(root=ROOT):
@@ -578,12 +592,21 @@ def main():
     for name in gap:
         print('   ' + name)
     clones = rule_clones()
-    extra = sum(len(v) - 1 for v in clones.values())
-    print('\nПРАВИЛА-БЛИЗНЮКИ (однаковий набір під різними селекторами): '
-          '%d груп, %d зайвих копій' % (len(clones), extra))
-    for (media, props), where in sorted(clones.items(), key=lambda x: -len(x[1]))[:5]:
-        print('   %d копій у %d файлах -- %s'
-              % (len(where), len({f for f, _ in where}),
+    # Не кожен близнюк -- борг. `display: flex; gap: 8px; align-items: center`
+    # у шести місцях -- це ідіома верстки, а не компонент, чию правку хтось
+    # чекає побачити всюди. Ознака СПРАВЖНЬОГО компонента -- або обсяг
+    # (5+ властивостей), або поширеність (4+ копій): обкладинку зображення
+    # варто було звести саме тому, що трьох властивостей було чотирнадцять.
+    big = {k: v for k, v in clones.items() if len(k[1]) >= 5 or len(v) >= 4}
+    small = {k: v for k, v in clones.items() if k not in big}
+    print('\nПРАВИЛА-БЛИЗНЮКИ (однаковий набір під різними селекторами)')
+    print('   варті уваги (5+ властивостей АБО 4+ копій): %d груп, %d копій'
+          % (len(big), sum(len(v) - 1 for v in big.values())))
+    print('   ідіома верстки (мале правило у 2-3 місцях): %d груп, %d копій'
+          % (len(small), sum(len(v) - 1 for v in small.values())))
+    for (media, props), where in sorted(big.items(), key=lambda x: -len(x[1]))[:5]:
+        print('   %d копій у %d файлах, %d власт. -- %s'
+              % (len(where), len({f for f, _ in where}), len(props),
                  ', '.join(p for p, _ in props[:4])))
 
     only = catalog_only_components()

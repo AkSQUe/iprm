@@ -2931,17 +2931,10 @@ a.admin-stat-card:focus-visible {
 }
 
 /* Доступний, але візуально прихований текст (підпис дії у чіпсі). */
-.admin-visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
+/* `.admin-visually-hidden` тут БУЛА -- дев'ять властивостей, побайтово
+   рівних `.visually-hidden` із common.css, який глобальний. Два імені
+   для одного й того самого: хто знав про адмінське, не знаходив
+   спільного, і навпаки. Лишилось спільне. */
 
 @media (max-width: 768px) {
   /* Чіпси -- горизонтальна стрічка, а не три ряди. Шість пресетів у стовпчик

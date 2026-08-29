@@ -115,7 +115,7 @@
       <a class="admin-chip" href="{{ url_for(endpoint, **dict(url_args, **{search.name: none})) }}">
         <span class="admin-chip__key">Пошук:</span> {{ values.get(search.name) }}
         <span class="admin-chip__x" aria-hidden="true">&times;</span>
-        <span class="admin-visually-hidden">Зняти фільтр</span>
+        <span class="visually-hidden">Зняти фільтр</span>
       </a>
     {% endif %}
     {% for f in ns.active %}
@@ -132,7 +132,7 @@
           {%- endfor -%}
         {%- endif %}
         <span class="admin-chip__x" aria-hidden="true">&times;</span>
-        <span class="admin-visually-hidden">Зняти фільтр</span>
+        <span class="visually-hidden">Зняти фільтр</span>
       </a>
     {% endfor %}
     <a class="admin-filters__reset" href="{{ url_for(endpoint, **base_args) }}">
