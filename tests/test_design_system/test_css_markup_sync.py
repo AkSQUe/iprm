@@ -220,3 +220,57 @@ def test_every_token_named_outside_css_exists():
           'JS читає токени через getComputedStyle і мовчки падає на запасне '
           'значення, а каталог починає документувати неіснуючу палітру.'
     )
+
+# Стани і псевдоелементи. Правило, чий список селекторів містить і те, і
+# те, майже завжди -- наслідок склеювання двох правил, а не задум.
+_STATE = re.compile(r':(?:focus|hover|active|checked|disabled'
+                    r'|focus-visible|focus-within)\b')
+_PSEUDO_EL = re.compile(r'::(?:placeholder|before|after|marker|selection'
+                        r'|file-selector-button|-webkit-[\w-]+|-moz-[\w-]+)')
+
+
+def test_no_rule_mixes_state_with_pseudo_element():
+    """Список селекторів не має змішувати стан із псевдоелементом.
+
+    Це сторож проти конкретної аварії, яка вже сталася. Видаляючи правило
+    кільця фокуса з `admin.css`, я збігся регексом із ДРУГОГО з п'яти
+    селекторів. Чотири зникли разом із тілом, перший лишився висіти:
+
+        .admin-with-sidebar .form-section .form-input:focus,
+        /* коментар про видалене правило */
+        .admin-with-sidebar .form-section .form-input::placeholder,
+        ... { color: var(--apple-gray); }
+
+    Кома коментарем не закривається, тож парсер приклеїв висячий селектор
+    до правила плейсхолдера, і текст поля в адмінській формі ставав сірим
+    ПІД ЧАС НАБОРУ.
+
+    Чому це не спіймав знімок обчислених стилів: він не знімає станів.
+    Нічого не сфокусоване, нічого не під курсором, тож `:focus` і `:hover`
+    для нього не існують -- а саме там живуть найтихіші регресії.
+
+    Легітимних змішувань у проєкті нуль, тож сторож не має винятків. Якщо
+    колись знадобиться справді змішати -- розділіть на два правила: читач
+    усе одно не здогадається, що ви мали на увазі.
+    """
+    import sys
+    sys.path.insert(0, str(ROOT / 'tools' / 'ds'))
+    import ds_audit
+
+    mixed = []
+    for path in sorted(CSS_DIR.rglob('*.css')):
+        for _media, sel, _props in ds_audit._rule_bodies(path, split_selectors=False):
+            parts = [s.strip() for s in sel.split(',') if s.strip()]
+            if len(parts) < 2:
+                continue
+            states = [s for s in parts if _STATE.search(s) and not _PSEUDO_EL.search(s)]
+            pseudos = [s for s in parts if _PSEUDO_EL.search(s)]
+            if states and pseudos:
+                mixed.append('%s: %s + %s' % (path.name, states[0], pseudos[0]))
+
+    assert not mixed, (
+        'правила, де стан змішано з псевдоелементом (майже завжди -- склеєні '
+        'два правила): ' + '; '.join(mixed)
+        + '\nПеревірте, чи не лишився висячий селектор від видаленого правила: '
+          'кома НЕ закривається коментарем, і список тягнеться далі.'
+    )
