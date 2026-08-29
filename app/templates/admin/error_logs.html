@@ -79,7 +79,11 @@
       <tbody>
         {% for log in logs %}
         <tr>
+          {# Код -- технічне значення діагностичного реєстру: клік веде в
+             ЦЕЙ ЖЕ журнал, звужений цим кодом, а не в перетин із поточним
+             фільтром по днях чи станом. #}
           <td>
+            <a href="{{ url_for('admin.error_logs', error_code=log.error_code) }}">
             {% if log.error_code >= 500 %}
             <span class="badge badge--danger">{{ log.error_code }}</span>
             {% elif log.error_code >= 400 %}
@@ -87,8 +91,13 @@
             {% else %}
             <span class="badge badge--draft">{{ log.error_code }}</span>
             {% endif %}
+            </a>
           </td>
-          <td title="{{ log.error_type }}"><code class="admin-truncate">{{ log.error_type }}</code></td>
+          <td title="{{ log.error_type }}">
+            {% if log.error_type %}
+            <a href="{{ url_for('admin.error_logs', q=log.error_type) }}"><code class="admin-truncate">{{ log.error_type }}</code></a>
+            {% else %}<code class="admin-truncate">{{ log.error_type }}</code>{% endif %}
+          </td>
           <td class="admin-text-left">
             <button type="button" class="admin-copy-error"
                     title="Копіювати для ШІ"
@@ -107,7 +116,9 @@
              символів у кожному рядку, які витісняли за край саме кінець
              шляху. Обрізає CSS із трьома крапками, повне -- у title. #}
           <td class="admin-text-left" title="{{ log.url }}">
-            <span class="admin-truncate">{{ log.url_path or '&ndash;'|safe }}</span>
+            {% if log.url_path %}
+            <a href="{{ url_for('admin.error_logs', q=log.url_path) }}"><span class="admin-truncate">{{ log.url_path }}</span></a>
+            {% else %}<span class="admin-truncate">&ndash;</span>{% endif %}
           </td>
           <td class="admin-nowrap">{{ log.created_at.strftime('%d.%m %H:%M') if log.created_at else '&ndash;'|safe }}</td>
           <td>

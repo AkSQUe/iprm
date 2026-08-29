@@ -99,9 +99,10 @@
           <td class="admin-text-left">
             <span class="admin-clamp-2" title="{{ r.text }}">{{ r.text }}</span>
           </td>
+          {# Курс -- сутність, клік веде в його картку. #}
           <td class="admin-text-left">
             {% if r.course %}
-            <span class="admin-clamp-2" title="{{ r.course.title }}">{{ r.course.title }}</span>
+            <a href="{{ url_for('admin.course_edit', course_id=r.course.id) }}"><span class="admin-clamp-2" title="{{ r.course.title }}">{{ r.course.title }}</span></a>
             {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
           </td>
           <td>

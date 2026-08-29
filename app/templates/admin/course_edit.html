@@ -370,7 +370,16 @@
             <td>{{ inst.start_date.strftime('%d.%m.%Y %H:%M') if inst.start_date else '–' }}</td>
             <td>{{ inst.format_label or '–' }}</td>
             <td><span class="badge badge--{{ inst.status_badge }}">{{ inst.status_label }}</span></td>
-            <td>{{ inst.registration_count }}</td>
+            <td>
+              {# Число реєстрацій -- вхід у перелік зареєстрованих, як і в
+                 розкладі проведень. Нуль лишається текстом -- розгортати
+                 там нічого. #}
+              {% if inst.registration_count %}
+              <a href="{{ url_for('admin.instance_registrations', instance_id=inst.id) }}">{{ inst.registration_count }}</a>
+              {% else %}
+              {{ inst.registration_count }}
+              {% endif %}
+            </td>
             <td>
               <a href="{{ url_for('admin.instance_edit', instance_id=inst.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Редагувати</a>
             </td>

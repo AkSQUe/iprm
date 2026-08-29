@@ -126,9 +126,11 @@
             {% if reg.place_number %}<strong>№{{ reg.place_number }}</strong>{% else %}<span class="admin-text-muted">—</span>{% endif %}
           </td>
           <td>
-            <strong>{{ reg.user.first_name }} {{ reg.user.last_name }}</strong>
+            {# Редагування учасника зараз ховається під меню «...»; ПІБ -- це
+               та ж дія, лиш без зайвого кліку й пошуку очима. #}
+            <strong><a href="{{ url_for('admin.participant_edit', reg_id=reg.id) }}">{{ reg.user.first_name }} {{ reg.user.last_name }}</a></strong>
             <br>
-            <small>{{ reg.user.email }}</small>
+            <small><a href="{{ url_for('admin.user_detail', user_id=reg.user.id) }}">{{ reg.user.email }}</a></small>
           </td>
           <td>{{ reg.phone }}</td>
           <td><span class="badge badge--{{ reg.status_badge }}">{{ reg.status_label }}</span></td>

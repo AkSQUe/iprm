@@ -67,9 +67,16 @@
         {% for cert in certificates %}
         <tr>
           <td><strong>{{ cert.number }}</strong></td>
+          {# ПІБ -- сутність, клік веде в картку, але лише коли зв'язок з
+             користувачем є: recipient_name -- знімок рядком і на видалений
+             акаунт посилатись нікуди. #}
           <td>
+            {% if cert.user %}
+            <strong><a href="{{ url_for('admin.user_detail', user_id=cert.user.id) }}">{{ cert.recipient_name }}</a></strong>
+            <br><small>{{ cert.user.email }}</small>
+            {% else %}
             <strong>{{ cert.recipient_name }}</strong>
-            {% if cert.user %}<br><small>{{ cert.user.email }}</small>{% endif %}
+            {% endif %}
           </td>
           <td>{{ cert.event_title }}</td>
           <td>

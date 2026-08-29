@@ -71,13 +71,22 @@
         <tr>
           <td>{{ user.id }}</td>
           <td>
-            <strong>{{ user.first_name or '' }} {{ user.last_name or '' }}</strong>
+            <strong><a href="{{ url_for('admin.user_detail', user_id=user.id) }}">{{ user.first_name or '' }} {{ user.last_name or '' }}</a></strong>
             {% if user.is_admin %}
               <span class="badge badge--active">admin</span>
             {% endif %}
           </td>
           <td>{{ user.email }}</td>
-          <td>{{ user.registration_count }}</td>
+          <td>
+            {# Картка контакту показує таблицю саме його реєстрацій -- цей
+               перелік точний, на відміну від пошуку по email, який ловить
+               чужі адреси-підрядки. #}
+            {% if user.registration_count %}
+            <a href="{{ url_for('admin.user_detail', user_id=user.id) }}">{{ user.registration_count }}</a>
+            {% else %}
+            {{ user.registration_count }}
+            {% endif %}
+          </td>
           <td>
             {% if user.last_login_at %}
               {{ user.last_login_at.strftime('%d.%m.%Y %H:%M') }}

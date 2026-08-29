@@ -47,8 +47,9 @@
       {% for kit in kits %}
       <tr>
         <td><strong>{{ kit.name }}</strong></td>
+        {# Курс -- сутність, клік веде в його картку. #}
         <td>
-          {% if kit.course %}{{ kit.course.title }}
+          {% if kit.course %}<a href="{{ url_for('admin.course_edit', course_id=kit.course.id) }}">{{ kit.course.title }}</a>
           {% else %}<span class="badge badge--pending">Універсальний</span>{% endif %}
         </td>
         <td>{{ kit.items|length }}</td>

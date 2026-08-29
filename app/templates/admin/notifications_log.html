@@ -71,7 +71,13 @@
       <tbody>
         {% for log in logs %}
         <tr>
-          <td><span class="admin-truncate" title="{{ log.to_email }}">{{ log.to_email }}</span></td>
+          {# Адресат -- технічне значення журналу: клік веде в ЦЕЙ ЖЕ журнал,
+             звужений цією поштою, а не в перетин із поточним фільтром. #}
+          <td>
+            {% if log.to_email %}
+            <a href="{{ url_for('admin.notifications_log', q=log.to_email) }}"><span class="admin-truncate" title="{{ log.to_email }}">{{ log.to_email }}</span></a>
+            {% else %}<span class="admin-truncate" title="{{ log.to_email }}">{{ log.to_email }}</span>{% endif %}
+          </td>
           {# Обрізає розкрій, а не шаблон: 50 символів різались наосліп -- на
              широкому екрані місця вистачало ще на пів теми, на вузькому
              обрізок усе одно не вміщався. Повна тема -- в title. #}
@@ -79,7 +85,13 @@
           {# Плашка в один рядок: перенос усередині неї читається гірше за
              трикрапку, а повне ім'я є в title. #}
           <td><span class="admin-truncate" title="{{ log.template_name }}"><code class="admin-code">{{ log.template_name }}</code></span></td>
-          <td><span class="badge badge--draft">{{ log.trigger_label }}</span></td>
+          {# Значення для фільтра -- саме поле `trigger` (код), яке приймає
+             роут, а не `trigger_label`: підпис -- лише текст для людини. #}
+          <td>
+            {% if log.trigger %}
+            <a href="{{ url_for('admin.notifications_log', trigger=log.trigger) }}"><span class="badge badge--draft">{{ log.trigger_label }}</span></a>
+            {% else %}<span class="badge badge--draft">{{ log.trigger_label }}</span>{% endif %}
+          </td>
           <td>
             <span class="badge badge--{{ log.status_badge }}"
                   {% if log.error_message %}title="{{ log.error_message }}"{% endif %}>

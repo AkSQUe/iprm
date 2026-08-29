@@ -159,8 +159,10 @@
             {% endif %}
           </td>
           <td>
-            <strong>{{ reg.user.first_name }} {{ reg.user.last_name }}</strong><br>
-            <small>{{ reg.user.email }}</small>
+            {# Редагування учасника зараз ховається під меню «...»; ПІБ -- це
+               та ж дія, лиш без зайвого кліку й пошуку очима. #}
+            <strong><a href="{{ url_for('admin.participant_edit', reg_id=reg.id) }}">{{ reg.user.first_name }} {{ reg.user.last_name }}</a></strong><br>
+            <small><a href="{{ url_for('admin.user_detail', user_id=reg.user.id) }}">{{ reg.user.email }}</a></small>
           </td>
           <td>
             {% set ref = referrer_map.get(reg.referral_code) if reg.referral_code else None %}

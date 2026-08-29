@@ -106,7 +106,13 @@
           </span>
         </td>
         <td class="admin-nowrap">{{ course.event_type_label }}</td>
-        <td>{{ course.trainer.full_name if course.trainer else '–' }}</td>
+        {# Тренер -- сутність, клік веде в його картку, а не в фільтр за іменем:
+           картка й так точніша ціль, ніж пошук по тексту. #}
+        <td>
+          {% if course.trainer %}
+          <a href="{{ url_for('admin.trainer_edit', trainer_id=course.trainer.id) }}">{{ course.trainer.full_name }}</a>
+          {% else %}–{% endif %}
+        </td>
         {# Лічильники -- посилання на зріз, а не кнопки: за мовою сайту таблетка
            з падінгом означає ДІЮ, а тут це просто число. Два овали в кожному
            рядку ще й змагались за увагу з таблеткою стану поруч. #}

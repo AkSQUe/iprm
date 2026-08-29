@@ -402,72 +402,6 @@
   white-space: nowrap;
 }
 
-/* ========== REQUEST FORM (на темному фоні .iprm-appointment) ========== */
-
-.iprm-request-form {
-  max-width: 520px;
-  margin: 0 auto;
-  text-align: left;
-}
-
-.iprm-request-form__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.iprm-request-form .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
-}
-
-.iprm-request-form .form-group label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.85);
-  letter-spacing: 0.01em;
-}
-
-.iprm-request-form .form-group label .required {
-  color: var(--iprm-gold);
-  margin-left: 2px;
-}
-
-.iprm-request-form .form-input {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: var(--iprm-radius-sm);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: var(--iprm-on-accent);
-  font-family: inherit;
-  font-size: 0.9375rem;
-  line-height: 1.4;
-  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
-}
-
-.iprm-request-form .form-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.iprm-request-form .form-input:focus,
-.iprm-request-form .form-input:focus-visible {
-  outline: none;
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
-}
-
-.iprm-request-form textarea.form-input {
-  min-height: 96px;
-  resize: vertical;
-}
-
-.iprm-request-form .apple-btn {
-  margin-top: 8px;
-}
 
 /* ========== RESPONSIVE ========== */
 
@@ -479,11 +413,6 @@
   }
 }
 
-@media (max-width: 640px) {
-  .iprm-request-form__row {
-    grid-template-columns: 1fr;
-  }
-}
 
 @media (max-width: 768px) {
   .iprm-schedule__item {
@@ -710,6 +639,13 @@ button.iprm-tag:focus-visible {
 }
 
 /* Honeypot: повністю приховано від користувачів, але доступно для ботів */
+/* Компонент `.iprm-request-form` тут БУВ -- дванадцять правил, і всі
+   мертві: клас не вживає ЖОДЕН шаблон. У розмітці лишився тільки інший,
+   `__honeypot`, і його правило нижче збережено.
+
+   Чому цього не спіймав сторож «правило без розмітки»: він обходить лише
+   адмінку й каталог, а це публічний компонент. */
+
 .iprm-request-form__honeypot {
   position: absolute;
   left: -10000px;
@@ -719,9 +655,6 @@ button.iprm-tag:focus-visible {
   overflow: hidden;
 }
 
-.iprm-request-form__alerts {
-  margin-bottom: 16px;
-}
 
 /* ========== SCHEDULE TOGGLE (Список / Календар) ========== */
 
