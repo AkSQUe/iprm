@@ -1,7 +1,7 @@
 """Спільний шар: abs_url і макрос хлібних крихт."""
 from flask_babel import refresh
 
-from tests.test_seo.helpers import jsonld_blocks
+from tests.test_seo.helpers import is_absolute_url, jsonld_blocks
 
 
 class TestAbsUrl:
@@ -37,7 +37,7 @@ class TestBreadcrumbsMacro:
         assert resp.status_code == 200
         items = _breadcrumb(resp.data.decode('utf-8'))['itemListElement']
         assert [i['position'] for i in items] == [1, 2]
-        assert items[0]['item'].startswith('http')
+        assert is_absolute_url(items[0]['item'])
         # Поточна сторінка не має "item" за специфікацією schema.org.
         assert 'item' not in items[1]
 

@@ -217,9 +217,13 @@ def iter_url_values(node):
 def is_absolute_url(value):
     """Рядок зі справжньою схемою (http:// або https://).
 
-    Раніше сторожі перевіряли `value.startswith('http')` -- цей рядок
-    приймає й нонсенс на кшталт "httpfoo", бо перевіряє лише перші чотири
-    символи, а не наявність реальної схеми з "://".
+    Раунд 1 фіксу: сторожі скрізь перевіряли `value.startswith('http')` --
+    цей рядок приймає й нонсенс на кшталт "httpfoo", бо перевіряє лише
+    перші чотири символи, а не наявність реальної схеми з "://". Тепер усі
+    місця, де сторожі звіряють абсолютність URL (JSON-LD-поля з
+    iter_url_values, canonical, hreflang, Person.url із трейлера), ідуть
+    через цю саму функцію -- жодного власного `startswith('http')` більше
+    немає ніде в tests/test_seo/.
     """
     return isinstance(value, str) and (
         value.startswith('http://') or value.startswith('https://')
@@ -230,18 +234,35 @@ def is_absolute_url(value):
 ORGANIZATION_TYPES = {'EducationalOrganization', 'Organization'}
 
 
+def _node_types(node):
+    """@type вузла як список -- schema.org дозволяє й голий рядок, і масив
+    ("@type": ["Organization", "LocalBusiness"] -- валідний JSON-LD)."""
+    node_type = node.get('@type')
+    if isinstance(node_type, list):
+        return node_type
+    return [node_type]
+
+
 def organization_ids(blocks):
     """Множина @id усіх організаційних вузлів на сторінці (рекурсивно).
 
     Рекурсія, а не лише верхній рівень блоку/@graph: так само побудований
     iter_url_values, і той самий підхід не пропустить організацію,
     вкладену глибше, ніж сьогоднішні шаблони.
+
+    @type звіряється і як рядок, і як список: `@type in ORGANIZATION_TYPES`
+    над списком кидає `TypeError: unhashable type: 'list'` замість
+    очікуваного повідомлення про розірване посилання -- сторож і тоді
+    фейлив би (крашем, не червоним твердженням), але не тим повідомленням,
+    що мало сенс.
     """
     ids = set()
 
     def _walk(node):
         if isinstance(node, dict):
-            if node.get('@type') in ORGANIZATION_TYPES and node.get('@id'):
+            if node.get('@id') and any(
+                t in ORGANIZATION_TYPES for t in _node_types(node)
+            ):
                 ids.add(node['@id'])
             for value in node.values():
                 _walk(value)
@@ -254,15 +275,37 @@ def organization_ids(blocks):
     return ids
 
 
+def _reference_ids(value):
+    """@id-подібні значення з value: dict-посилання ({'@id': ...}), голий
+    рядок-IRI (валідне JSON-LD скорочення того самого) або список будь-якої
+    суміші двох форм.
+
+    provider -- не обов'язково один dict: schema.org дозволяє й масив
+    провайдерів, і скорочену форму "provider": "https://...#org" без
+    обгортки в об'єкт. Стара версія приймала лише перше -- масив чи голий
+    рядок мовчки давали [] і перевірка проходила вакуумно (fail open),
+    хоч жодна сторінка сьогодні так не робить.
+    """
+    if isinstance(value, dict):
+        return [value['@id']] if '@id' in value else []
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        ids = []
+        for item in value:
+            ids.extend(_reference_ids(item))
+        return ids
+    return []
+
+
 def provider_ids(blocks):
     """Значення provider['@id'] з усіх вузлів на сторінці (рекурсивно)."""
     ids = []
 
     def _walk(node):
         if isinstance(node, dict):
-            provider = node.get('provider')
-            if isinstance(provider, dict) and '@id' in provider:
-                ids.append(provider['@id'])
+            if 'provider' in node:
+                ids.extend(_reference_ids(node['provider']))
             for value in node.values():
                 _walk(value)
         elif isinstance(node, list):
@@ -272,6 +315,26 @@ def provider_ids(blocks):
     for block in blocks:
         _walk(block)
     return ids
+
+
+def find_nodes_by_type(blocks, type_name):
+    """Усі вузли з @type == type_name на сторінці (рекурсивно, і рядок,
+    і масив @type -- див. _node_types)."""
+    found = []
+
+    def _walk(node):
+        if isinstance(node, dict):
+            if type_name in _node_types(node):
+                found.append(node)
+            for value in node.values():
+                _walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                _walk(item)
+
+    for block in blocks:
+        _walk(block)
+    return found
 
 
 def head_field(html, field):

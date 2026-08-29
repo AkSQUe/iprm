@@ -7,7 +7,8 @@ from flask_babel import refresh
 from app.i18n import LANGUAGES
 from tests.test_seo.helpers import (
     DESC_MAX, DESC_MIN, EXPECTED_NON_200, KNOWN_SEO_DEBT, LENGTH_EXCEPTIONS,
-    TITLE_MAX, TITLE_MIN, fetch_public_pages, head_field, jsonld_blocks,
+    TITLE_MAX, TITLE_MIN, fetch_public_pages, head_field, is_absolute_url,
+    jsonld_blocks,
 )
 
 
@@ -88,7 +89,7 @@ class TestPageStructure:
                 bad.append(f'{endpoint}: canonical відсутній')
                 continue
             href = found.group(1)
-            if not href.startswith('http'):
+            if not is_absolute_url(href):
                 bad.append(f'{endpoint}: canonical не абсолютний -- {href}')
             if '?' in href:
                 bad.append(f'{endpoint}: canonical із query -- {href}')

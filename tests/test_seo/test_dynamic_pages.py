@@ -6,14 +6,22 @@ fetch_public_pages() бачить лише ендпоінти без обов'я
 abs_url із Задачі 4 можна було повернути назад -- сюїта лишалась зеленою.
 
 Фікстури тут навмисно мінімальні: сторінка мусить триматись на порожніх
-полях так само, як на заповнених. Виняток -- зображення (цей раунд):
-доти жодна фікстура не прикріплювала MediaFile, тож `image` НІКОЛИ не
-потрапляв у JSON-LD, і всі десять викликів abs_url(...) у п'яти шаблонах
-(og:image і/або image в JSON-LD -- blog/post.html, clinics/detail.html,
+полях так само, як на заповнених. Виняток -- зображення: доти жодна
+фікстура не прикріплювала MediaFile, тож `image` НІКОЛИ не потрапляв у
+JSON-LD, і десять викликів abs_url(...) у п'яти шаблонах (og:image і/або
+image в JSON-LD -- blog/post.html, clinics/detail.html,
 courses/detail.html, online/detail.html, trainers/detail.html) можна було
-повернути до відносного шляху -- сюїта лишалась зеленою: перевірка
+повернути до відносного шляху -- суїта лишалась зеленою: перевірка
 абсолютності проходила над порожнечею. Тепер кожна сутність має реальне
 зображення, і `{% if x.photo_full %}`-гілки справді виконуються.
+
+Раунд 1 цього фіксу сам недорахував один виклик: online/detail.html:11
+бере og:image з `course.hero_src`, а не з `card_src` (на відміну від
+courses/detail.html) -- фікстура онлайн-курсу прикріпила лише
+card_media_id, і `{% if course.hero_src %}` лишалась хибною. Дев'ять із
+десяти справді почали виконуватись, десятий -- ні, а докстрінг і звіт
+раунду 1 стверджували "усі десять". Тепер online-фікстура несе окремий
+`hero_media_id`, і всі десять виконуються насправді.
 """
 import re
 from datetime import datetime, timezone
@@ -29,8 +37,8 @@ from app.models.media_file import MediaFile
 from app.models.online_course import OnlineCourse
 from app.models.trainer import Trainer
 from tests.test_seo.helpers import (
-    is_absolute_url, iter_url_values, jsonld_blocks, organization_ids,
-    provider_ids,
+    find_nodes_by_type, is_absolute_url, iter_url_values, jsonld_blocks,
+    organization_ids, provider_ids,
 )
 
 
@@ -56,6 +64,12 @@ def dynamic_pages(app, client):
     """[(мітка, url, html)] -- по одній сторінці кожного динамічного типу."""
     course_card = _media('course-card')
     online_card = _media('online-card')
+    # online/detail.html:11 бере og:image з course.hero_src, а НЕ
+    # card_src (на відміну від courses/detail.html) -- card_media_id сам
+    # по собі лишає цю гілку хибною. Пропущено в першому раунді: суїта
+    # лишалась зеленою на відкоті саме цього abs_url-виклику. hero_src і
+    # card_src -- різні MediaFile, бо в бойовому коді це різні поля.
+    online_hero = _media('online-hero')
     trainer_photo = _media('trainer-photo')
     blog_cover = _media('blog-cover')
 
@@ -72,6 +86,7 @@ def dynamic_pages(app, client):
         is_published=True,
         is_vanished=False,
         card_media_id=online_card.id,
+        hero_media_id=online_hero.id,
     )
     trainer = Trainer(
         full_name='Іван Тренер',
@@ -158,7 +173,7 @@ class TestDynamicPageStructure:
                 bad.append(f'{label}: canonical відсутній')
                 continue
             href = found.group(1)
-            if not href.startswith('http'):
+            if not is_absolute_url(href):
                 bad.append(f'{label}: canonical не абсолютний -- {href}')
             if '?' in href:
                 bad.append(f'{label}: canonical із query -- {href}')
@@ -254,6 +269,22 @@ class TestProviderLinkage:
             'Розірвані посилання provider.@id:\n' + '\n'.join(bad)
         )
 
+    def test_course_node_has_provider(self, dynamic_pages):
+        """Тест вище звіряє provider.@id, ЯКЩО він є -- цикл `for
+        provider_id in provider_ids(blocks)` над порожнім списком минає
+        вакуумно (0 ітерацій -- не помилка). Доведено мутацією: видалення
+        всього рядка `'provider': {...}` із courses/detail.html лишало
+        суїту зеленою, хоча приналежність курсу до організації в JSON-LD
+        зникала повністю. Тому вузол Course мусить МАТИ ключ provider, а
+        не лише "мати правильний, якщо він узагалі є"."""
+        bad = []
+        for label, url, html in dynamic_pages:
+            blocks = jsonld_blocks(html)
+            for node in find_nodes_by_type(blocks, 'Course'):
+                if 'provider' not in node:
+                    bad.append(f'{label}: вузол Course без provider')
+        assert not bad, 'Course без provider:\n' + '\n'.join(bad)
+
 
 class TestTrainerPersonSchema:
     """C1: Person будувався літеральним JSON із інтерпольованими рядками.
@@ -293,7 +324,7 @@ class TestTrainerPersonSchema:
         assert person['name'] == 'Іван "Док" Тренер'
         assert person['jobTitle'] == 'Лікар-дослідник'
         assert person['worksFor']['@type'] == 'EducationalOrganization'
-        assert person['url'].startswith('http')
+        assert is_absolute_url(person['url'])
         assert '\n\n' in person['description']
 
     def test_quotes_in_name_are_not_html_entities(self, hostile_trainer):

@@ -60,7 +60,7 @@ class TestHreflang:
             for href in re.findall(
                 r'<link rel="alternate" hreflang="[^"]+" href="([^"]+)"', html,
             ):
-                if not href.startswith('http'):
+                if not is_absolute_url(href):
                     bad.append(f'{endpoint}: {href}')
         assert not bad, 'Відносні hreflang:\n' + '\n'.join(bad)
 
