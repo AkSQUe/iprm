@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-perf.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import pager, empty_state  %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -59,6 +59,18 @@
     </div>
   </div>
   {% endif %}
+
+  {{ filter_bar(
+       endpoint='admin.perf_runs',
+       values=filters,
+       search={'name': 'q', 'placeholder': 'Пошук за нотаткою або адресою сайту'},
+       fields=[
+         {'name': 'verdict', 'label': 'Вердикт', 'placeholder': 'Усі вердикти', 'options': verdict_options},
+         {'name': 'source', 'label': 'Джерело', 'placeholder': 'Усі джерела', 'options': source_options},
+         {'name': 'date_from', 'label': 'Заміряно з', 'type': 'date'},
+         {'name': 'date_to', 'label': 'Заміряно по', 'type': 'date'},
+       ],
+     ) }}
 
   {% if runs %}
   <div class="admin-table-wrap">
@@ -150,10 +162,10 @@
     </table>
   </div>
 
-  {{ pager('admin.perf_runs', pagination) }}
+  {{ pager('admin.perf_runs', pagination, filter_args) }}
 
   {% else %}
-  {% call empty_state(icon_name='bolt', title='Замірів ще немає') %}
+  {% call empty_state('admin.perf_runs', filter_args, icon_name='bolt', title='Замірів ще немає') %}
     <p>
     {% if key_state.present %}
     Запустіть інструмент командою нижче &ndash; перший прогін зʼявиться тут.

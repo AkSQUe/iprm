@@ -28,6 +28,7 @@ from app.models.certificate import Certificate
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.medical_profile import MedicalProfile
+from app.models.perf_run import PerfPageMetric, PerfRun, VERDICT_FAIL, VERDICT_OK
 from app.models.registration import EventRegistration
 from app.models.user import User
 from app.models.webhook_delivery import WebhookDelivery
@@ -462,3 +463,118 @@ class TestQuizResultsFilters:
         # без нього: лічильники рахуються з `base` (уся група), а не зі зрізу.
         assert _counts(unfiltered) == ['2', '1', '1']
         assert _counts(filtered) == ['2', '1', '1']
+
+
+# ------------------------------- Перф-прогони -------------------------------
+
+# Маркер у base_url -- за ним прибираємо власні PerfRun (і дітей
+# PerfPageMetric, у цих тестах не використовуються, але teardown вписаний на
+# випадок появи в майбутньому).
+PERF_BASE_MARKER = 'https://perf-test.example/'
+
+
+@pytest.fixture(autouse=True)
+def clean_perf(app):
+    """Порожня власна частина perf_runs (+ дочірні perf_page_metrics).
+
+    PerfRun.pages оголошено з cascade='all, delete-orphan' на ORM-рівні, але
+    SQLite тестового прогону каскад на БД-рівні всередині транзакції не
+    тримає (та сама пастка, що й у секціях вище) -- дитина видаляється перед
+    батьком явним запитом.
+    """
+    def _wipe():
+        own_runs = db.session.query(PerfRun.id).filter(
+            PerfRun.base_url.like(f'{PERF_BASE_MARKER}%'))
+        PerfPageMetric.query.filter(PerfPageMetric.run_id.in_(own_runs)).delete(
+            synchronize_session=False)
+        PerfRun.query.filter(
+            PerfRun.base_url.like(f'{PERF_BASE_MARKER}%')
+        ).delete(synchronize_session=False)
+        db.session.commit()
+
+    _wipe()
+    yield
+    _wipe()
+
+
+def _perf_run(**kwargs):
+    kwargs.setdefault('measured_at', datetime.now(timezone.utc))
+    kwargs.setdefault('base_url', PERF_BASE_MARKER + uuid4().hex[:8])
+    kwargs.setdefault('source', 'local')
+    kwargs.setdefault('note', '')
+    kwargs.setdefault('runs_per_page', 1)
+    kwargs.setdefault('tool_version', '1.0.0')
+    kwargs.setdefault('verdict', VERDICT_OK)
+    kwargs.setdefault('pages_total', 1)
+    kwargs.setdefault('pages_warn', 0)
+    kwargs.setdefault('pages_fail', 0)
+    kwargs.setdefault('budgets', {})
+    run = PerfRun(**kwargs)
+    db.session.add(run)
+    db.session.commit()
+    return run
+
+
+class TestPerfRunsFilters:
+    def test_verdict_fail_leaves_only_failed_runs(self, client, admin):
+        failed = _perf_run(verdict=VERDICT_FAIL, note='Провалений ' + uuid4().hex[:6])
+        ok = _perf_run(verdict=VERDICT_OK, note='Успішний ' + uuid4().hex[:6])
+
+        _login(client, admin)
+        body = client.get('/admin/perf?verdict=FAIL').get_data(as_text=True)
+
+        assert failed.note in body
+        assert ok.note not in body
+
+    def test_source_ci_hides_local_runs(self, client, admin):
+        ci = _perf_run(source='ci', note='CI-замір ' + uuid4().hex[:6])
+        local = _perf_run(source='local', note='Локальний замір ' + uuid4().hex[:6])
+
+        _login(client, admin)
+        body = client.get('/admin/perf?source=ci').get_data(as_text=True)
+
+        assert ci.note in body
+        assert local.note not in body
+
+    def test_latest_run_block_hidden_under_active_filter(self, client, admin):
+        _perf_run(verdict=VERDICT_OK)
+
+        _login(client, admin)
+        unfiltered = client.get('/admin/perf').get_data(as_text=True)
+        filtered = client.get('/admin/perf?verdict=OK').get_data(as_text=True)
+
+        # Без фільтра сторінка 1 -- це і є найновіший замір узагалі, тож блок
+        # "останній замір" (шапка + картки) малюється. Під фільтром перший
+        # рядок сторінки 1 -- лише найновіший У ЗРІЗІ, і блок брехав би,
+        # підписуючи його як "останній замір" -- тому не малюється.
+        assert 'Останній замір' in unfiltered
+        assert 'Останній замір' not in filtered
+
+    def test_reveal_flag_not_in_chips_or_pagination(self, client, admin):
+        # 21 прогін під одним активним фільтром -- рівно дві сторінки при
+        # PER_PAGE=20, тож і чіпс фільтра, і посилання пагінації присутні.
+        for _ in range(21):
+            _perf_run(verdict=VERDICT_FAIL, source='ci')
+
+        _login(client, admin)
+        body = client.get(
+            '/admin/perf?verdict=FAIL&source=ci&reveal=1'
+        ).get_data(as_text=True)
+
+        # Доказ, що чіпси й пагінація справді відрендерились (інакше нижні
+        # перевірки нічого не доводили б).
+        chips = re.search(
+            r'<div class="admin-filters__chips">.*?</div>', body, re.DOTALL)
+        pager_nav = re.search(
+            r'<nav class="admin-pagination">.*?</nav>', body, re.DOTALL)
+        assert chips is not None
+        assert pager_nav is not None
+        assert 'page=2' in pager_nav.group()
+        # ?reveal=1 -- окремий, не-фільтровий параметр: не мусить потрапити
+        # ні в чіпси (кожен -- href на цей самий зріз), ні в посилання
+        # пагінації. Перевіряємо саме ці два блоки, а не весь body: тег
+        # og:url у <head> завжди відбиває поточний URL запиту, і це не
+        # витік -- лише сам факт запиту з ?reveal=1, а не копіювання прапорця
+        # в кожне посилання зрізу.
+        assert 'reveal' not in chips.group()
+        assert 'reveal' not in pager_nav.group()

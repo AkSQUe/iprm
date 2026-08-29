@@ -11,11 +11,11 @@ from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy.orm import selectinload
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin._helpers import rotation_status
 from app.admin.decorators import admin_required
 from app.extensions import db
-from app.models.perf_run import PerfRun
+from app.models.perf_run import PerfRun, VERDICT_FAIL, VERDICT_OK, VERDICT_WARN
 from app.models.site_settings import SiteSettings
 from app.models.mixins import utcnow
 from app.services import perf_service
@@ -24,6 +24,38 @@ from app.utils import ensure_utc
 audit_logger = logging.getLogger('audit')
 
 PER_PAGE = 20
+
+# Підписи -- самі значення вердикту, нових не вигадуємо: саме так вони й
+# друкуються в бейджі/картці (app/models/perf_run.py).
+_VERDICT_CHOICES = {VERDICT_OK: VERDICT_OK, VERDICT_WARN: VERDICT_WARN, VERDICT_FAIL: VERDICT_FAIL}
+
+
+def _source_choices():
+    """Перелік джерел, що фактично трапляються в БД (не вигаданий список).
+
+    Прогони з різних джерел (машина, "local", "ci") непорівнянні між собою --
+    див. коментар до колонки `source` у app/models/perf_run.py:76-78.
+    """
+    rows = (
+        db.session.query(PerfRun.source)
+        .filter(PerfRun.source.isnot(None), PerfRun.source != '')
+        .distinct()
+        .order_by(PerfRun.source)
+        .all()
+    )
+    return {source: source for (source,) in rows}
+
+
+def _filters(source_choices=None):
+    if source_choices is None:
+        source_choices = _source_choices()
+    return {
+        'q': _listing.text_arg('q'),
+        'verdict': _listing.choice_arg('verdict', _VERDICT_CHOICES),
+        'source': _listing.choice_arg('source', source_choices),
+        'date_from': _listing.date_arg('date_from'),
+        'date_to': _listing.date_arg('date_to'),
+    }
 
 # Пороги нагадування про ротацію (м'який / жорсткий, у днях). Ключ лише
 # приймає телеметрію і не дає доступу до даних, тож пороги м'які -- як у
@@ -53,13 +85,35 @@ def _key_state():
 @admin_required
 def perf_runs():
     page = request.args.get('page', 1, type=int)
+    source_choices = _source_choices()
+    filters = _filters(source_choices)
+    filter_args = _listing.filter_args(filters)
+
+    query = PerfRun.query
+    if filters['verdict']:
+        query = query.filter(PerfRun.verdict == filters['verdict'])
+    if filters['source']:
+        query = query.filter(PerfRun.source == filters['source'])
+    query = _listing.apply_date_range(
+        query, PerfRun.measured_at, filters['date_from'], filters['date_to'],
+    )
+    query = _listing.apply_search(query, filters['q'], [PerfRun.note, PerfRun.base_url])
+
     pagination = (
-        PerfRun.query
+        query
         .order_by(PerfRun.measured_at.desc(), PerfRun.id.desc())
         .paginate(page=page, per_page=PER_PAGE, error_out=False)
     )
 
-    latest = pagination.items[0] if page == 1 and pagination.items else None
+    # Під активним фільтром перший рядок сторінки 1 більше НЕ найновіший
+    # прогін узагалі -- лише найновіший у зрізі. Блок порівняння в шапці
+    # підписаний як "останній замір", тож під фільтром він просто не малюється
+    # -- так само, як уже не малюється на другій сторінці без фільтра.
+    latest = (
+        pagination.items[0]
+        if page == 1 and not filter_args and pagination.items
+        else None
+    )
     latest_comparison = {}
     if latest is not None:
         latest_comparison = perf_service.compare(latest, perf_service.previous_run(latest))
@@ -79,6 +133,10 @@ def perf_runs():
         latest_regressions=perf_service.regression_count(latest_comparison),
         key_state=_key_state(),
         reveal_key=reveal_key,
+        filters=filters,
+        filter_args=filter_args,
+        verdict_options=list(_VERDICT_CHOICES.items()),
+        source_options=list(source_choices.items()),
     )
 
 
