@@ -931,8 +931,7 @@ html {
   .apple-page .apple-bento-card,
   .apple-page .iprm-course-card,
   .apple-page .iprm-trainer-card,
-  .apple-page .iprm-target-card,
-  .apple-page .iprm-program__block {
+  .apple-page .iprm-target-card {
     transition: none;
   }
 }

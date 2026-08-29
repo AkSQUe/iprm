@@ -486,10 +486,6 @@
 }
 
 @media (max-width: 768px) {
-  .iprm-appointment {
-    padding: 48px 24px;
-  }
-
   .iprm-schedule__item {
     grid-template-columns: 80px 1fr;
     gap: 16px;

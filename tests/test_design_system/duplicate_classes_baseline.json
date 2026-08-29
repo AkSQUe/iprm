@@ -15,10 +15,6 @@
     "admin-notifications.css",
     "admin.css"
   ],
-  "iprm-appointment": [
-    "clinics.css",
-    "courses.css"
-  ],
   "iprm-content-page__inner": [
     "common.css",
     "page-sitemap.css"
@@ -30,10 +26,6 @@
   "iprm-final-cta": [
     "course-landing.css",
     "courses.css"
-  ],
-  "iprm-program__block": [
-    "apple-pages.css",
-    "course-landing.css"
   ],
   "iprm-roi__results": [
     "courses.css",
