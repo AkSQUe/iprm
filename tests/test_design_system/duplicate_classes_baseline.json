@@ -1,20 +1,4 @@
 {
-  "admin-queue-alert": [
-    "admin-notifications.css",
-    "admin.css"
-  ],
-  "admin-queue-alert--error": [
-    "admin-notifications.css",
-    "admin.css"
-  ],
-  "admin-queue-alert--warning": [
-    "admin-notifications.css",
-    "admin.css"
-  ],
-  "admin-queue-alert__title--error": [
-    "admin-notifications.css",
-    "admin.css"
-  ],
   "iprm-content-page__inner": [
     "common.css",
     "page-sitemap.css"

@@ -2514,21 +2514,28 @@ a.admin-stat-card:focus-visible {
 
 
 /* ========== QUEUE ALERT ========== */
-
+/* Було в admin.css і admin-notifications.css під однаковими селекторами;
+   зведено сюди. Стара версія тут ставила лише border-color без
+   border-style -- на .form-section (немає власного border) це не давало
+   жодної лінії, тож індикатор насправді малювала лише
+   admin-notifications.css (border-left). Той самий файл давав title
+   правильний --iprm-error-text (контраст на білому 4.5+; --iprm-error
+   дає 3.76 -- див. коментар біля .form-error в common.css). */
 .admin-queue-alert {
   margin-bottom: 24px;
-}
-
-.admin-queue-alert--warning {
-  border-color: var(--iprm-warning-border);
+  padding-left: 20px;
 }
 
 .admin-queue-alert--error {
-  border-color: rgba(239, 68, 68, 0.3);
+  border-left: 4px solid var(--iprm-error);
+}
+
+.admin-queue-alert--warning {
+  border-left: 4px solid var(--iprm-warning-text);
 }
 
 .admin-queue-alert__title--error {
-  color: var(--iprm-error);
+  color: var(--iprm-error-text);
 }
 
 /* ========== RESPONSIVE ========== */
