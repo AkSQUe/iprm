@@ -1744,7 +1744,6 @@ a.admin-stat-card:focus-visible {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.admin-with-sidebar .form-section .form-input:focus,
 /* Правило фокуса тут БУЛО, і воно дослівно повторювало базове
    `.form-input:focus` з common.css. Скоуп не давав нічого: значення
    ті самі, а базове правило вже діє на кожен .form-input. */

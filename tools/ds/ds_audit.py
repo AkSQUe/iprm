@@ -382,8 +382,14 @@ def cross_domain_components(root=ROOT):
     return out
 
 
-def _rule_bodies(path):
-    """[(медіа, селектор, {властивість: значення})] -- правила одного файлу."""
+def _rule_bodies(path, split_selectors=True):
+    """[(медіа, селектор, {властивість: значення})] -- правила одного файлу.
+
+    `split_selectors=False` віддає БЛОК цілим: селектори через кому
+    лишаються одним записом. Це потрібно пошукові копій -- одне
+    правило з чотирма селекторами не є чотирма копіями, воно вже
+    зведене.
+    """
     text = re.sub(r'/\*.*?\*/', '', path.read_text(encoding='utf-8'), flags=re.S)
     out, media, buf, i = [], '', [], 0
     while i < len(text):
@@ -407,8 +413,11 @@ def _rule_bodies(path):
                 j += 1
             props = {k: ' '.join(v.split())
                      for k, v in re.findall(r'([-a-z]+)\s*:\s*([^;]+)', body)}
-            for sel in head.split(','):
-                out.append((media, ' '.join(sel.split()), props))
+            if split_selectors:
+                for sel in head.split(','):
+                    out.append((media, ' '.join(sel.split()), props))
+            else:
+                out.append((media, ' '.join(head.split()), props))
             i = j + 1
             continue
         if ch == '}':
@@ -438,10 +447,16 @@ def rule_clones(root=ROOT, min_props=3):
 
     Правила менш ніж із `min_props` властивостями не рахуються: два
     оголошення з одного `display: flex` збігаються випадково.
+
+    Блок береться ЦІЛИМ. Перша версія цієї міри ділила список селекторів
+    через кому й рахувала кожен окремою копією -- через це вже зведене
+    правило `.field-invalid, input.field-invalid, select.field-invalid,
+    textarea.field-invalid` виглядало як чотири копії, хоча воно і є
+    прикладом того, до чого міра закликає. Число через це було завищене.
     """
     groups = {}
     for path in sorted((root / 'app' / 'static' / 'css').rglob('*.css')):
-        for media, sel, props in _rule_bodies(path):
+        for media, sel, props in _rule_bodies(path, split_selectors=False):
             if len(props) < min_props:
                 continue
             groups.setdefault((media, tuple(sorted(props.items()))),
