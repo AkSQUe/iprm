@@ -24,8 +24,8 @@
 
     function loadColorsFromCss() {
         GREY = parseCssRgb('--iprm-molecular-rgb') || [180, 180, 180];
-        PURPLE = parseCssRgb('--apple-accent-rgb') || [112, 85, 164];
-        ORANGE = parseCssRgb('--apple-orange-rgb') || [232, 145, 58];
+        PURPLE = parseCssRgb('--iprm-accent-rgb') || [112, 85, 164];
+        ORANGE = parseCssRgb('--iprm-gold-rgb') || [232, 145, 58];
     }
 
     function getColorMode() {
