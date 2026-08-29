@@ -573,7 +573,17 @@ html {
   color: var(--iprm-text);
 }
 
-.apple-page .iprm-course-cards {
+/* Сітка карток -- один опис на три набори. Були три однакові правила в
+   ЦЬОМУ Ж файлі: курси, переваги, тренери. Тепер правка ширини колонки чи
+   проміжку доходить до всіх трьох, а не до того, кого згадали.
+
+   Асиметрія, яку варто знати й яку я НЕ чіпав: на середньому брейкпоінті
+   нижче двоколонковими стають лише переваги й тренери, а картки курсів
+   лишаються трьома аж до 768px. Це або задум (картка курсу вужча), або
+   недогляд -- рішення не моє. */
+.apple-page .iprm-course-cards,
+.apple-page .apple-features-grid,
+.apple-page .iprm-trainer-cards {
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
@@ -594,14 +604,6 @@ html {
 }
 
 /* ========== FEATURE CARDS (reusable) ========== */
-
-.apple-page .apple-features-grid {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
 
 /* Рецепт картки еталона: межа --line, радіус 22px і майже невидима тінь.
    Без межі білі картки на фіолетуватому тлі секцій розпливались. */
@@ -650,14 +652,6 @@ html {
 }
 
 /* ========== TRAINER CARDS (grid) ========== */
-
-.apple-page .iprm-trainer-cards {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
 
 .apple-page .iprm-trainer-card {
   background: var(--iprm-white);
