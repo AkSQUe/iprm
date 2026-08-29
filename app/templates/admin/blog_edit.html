@@ -86,7 +86,7 @@
         <div class="form-group">
           <div class="admin-dropzone admin-dropzone--wide" id="dropzone-cover" data-target-media="cover_media_id">
             <div class="admin-dropzone__preview{% if cover_prev %} admin-dropzone__preview--active{% endif %}" id="preview-cover">
-              {% if cover_prev %}<img src="{{ cover_prev }}" alt="Обкладинка">{% endif %}
+              {% if cover_prev %}<img class="iprm-img-cover" src="{{ cover_prev }}" alt="Обкладинка">{% endif %}
               <button type="button" class="admin-dropzone__remove" aria-label="Видалити">X</button>
             </div>
             <div class="admin-dropzone__prompt{% if cover_prev %} admin-dropzone__prompt--hidden{% endif %}">

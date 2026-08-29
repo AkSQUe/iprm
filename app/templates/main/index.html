@@ -97,7 +97,7 @@
         <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">
           <div class="iprm-course-card__image">
             {% if course.card_src %}
-              <img src="{{ course.card_src }}" alt="{{ course.t('title') }}" loading="lazy" width="400" height="200">
+              <img class="iprm-img-cover" src="{{ course.card_src }}" alt="{{ course.t('title') }}" loading="lazy" width="400" height="200">
             {% endif %}
           </div>
           <div class="apple-course-body">
@@ -127,7 +127,7 @@
       <!-- Lab 1: hero -->
       <div class="apple-bento-card apple-bento-card--hero apple-reveal">
         <div class="apple-bento-visual">
-          <img src="{{ url_for('static', filename='images/labs/biological-age-and-disease-prediction.webp') }}" alt="{{ _('Лабораторія біологічного віку') }}" width="600" height="400" loading="lazy">
+          <img class="iprm-img-cover" src="{{ url_for('static', filename='images/labs/biological-age-and-disease-prediction.webp') }}" alt="{{ _('Лабораторія біологічного віку') }}" width="600" height="400" loading="lazy">
         </div>
         <h3>{{ _('Лабораторія біологічного віку та прогнозування захворювань') }}</h3>
         <p>{{ _('Вимірювання та модифікація біологічного віку, виявлення індивідуальних ризиків захворювань та персоналізовані стратегії профілактики') }}</p>
@@ -135,14 +135,14 @@
       <!-- Lab 1: cards -->
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <img src="{{ url_for('static', filename='images/labs/personalized-therapy.webp') }}" alt="{{ _('Персоналізована терапія') }}" width="400" height="300" loading="lazy">
+          <img class="iprm-img-cover" src="{{ url_for('static', filename='images/labs/personalized-therapy.webp') }}" alt="{{ _('Персоналізована терапія') }}" width="400" height="300" loading="lazy">
         </div>
         <h3>{{ _('Персоналізована терапія') }}</h3>
         <p>{{ _('Визначення індивідуальних параметрів для вибору персоналізованої терапії') }}</p>
       </div>
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <img src="{{ url_for('static', filename='images/labs/bioinformatics-ai.webp') }}" alt="{{ _('Біоінформатика та ШІ') }}" width="400" height="300" loading="lazy">
+          <img class="iprm-img-cover" src="{{ url_for('static', filename='images/labs/bioinformatics-ai.webp') }}" alt="{{ _('Біоінформатика та ШІ') }}" width="400" height="300" loading="lazy">
         </div>
         <h3>{{ _('Біоінформатика та ШІ') }}</h3>
         <p>{{ _('Інтегральний аналіз даних досліджень з використанням штучного інтелекту') }}</p>
@@ -150,21 +150,21 @@
       <!-- Lab 2: cards -->
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <img src="{{ url_for('static', filename='images/labs/aging-biomarcers.webp') }}" alt="{{ _('Біомаркери старіння') }}" width="400" height="300" loading="lazy">
+          <img class="iprm-img-cover" src="{{ url_for('static', filename='images/labs/aging-biomarcers.webp') }}" alt="{{ _('Біомаркери старіння') }}" width="400" height="300" loading="lazy">
         </div>
         <h3>{{ _('Біомаркери старіння') }}</h3>
         <p>{{ _('Пошук, апробація, валідація нових біомаркерів старіння та геропротекторів') }}</p>
       </div>
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <img src="{{ url_for('static', filename='images/labs/anti-age-protocols.webp') }}" alt="{{ _('Anti-age протоколи') }}" width="400" height="300" loading="lazy">
+          <img class="iprm-img-cover" src="{{ url_for('static', filename='images/labs/anti-age-protocols.webp') }}" alt="{{ _('Anti-age протоколи') }}" width="400" height="300" loading="lazy">
         </div>
         <h3>{{ _('Anti-age протоколи') }}</h3>
         <p>{{ _('Дослідження ефективності нових anti-age протоколів та процесів старіння на клітинному рівні') }}</p>
       </div>
       <div class="apple-bento-card apple-reveal">
         <div class="apple-bento-visual">
-          <img src="{{ url_for('static', filename='images/labs/cell-aging.webp') }}" alt="{{ _('Клітинне старіння') }}" width="400" height="300" loading="lazy">
+          <img class="iprm-img-cover" src="{{ url_for('static', filename='images/labs/cell-aging.webp') }}" alt="{{ _('Клітинне старіння') }}" width="400" height="300" loading="lazy">
         </div>
         <h3>{{ _('Клітинне старіння') }}</h3>
         <p>{{ _('Дослідження процесів старіння на клітинному рівні з використанням сучасних методів') }}</p>

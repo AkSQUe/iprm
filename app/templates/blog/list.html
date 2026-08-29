@@ -36,7 +36,7 @@
               {% if post.cover_src %}
               {# Перша обкладинка -- LCP-елемент сторінки: без lazy (інакше
                  браузер знаходить її аж після layout) і з високим пріоритетом. #}
-              <img src="{{ post.cover_src }}" alt="{{ post.t('title') }}"
+              <img class="iprm-img-cover" src="{{ post.cover_src }}" alt="{{ post.t('title') }}"
                    {% if loop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
               {% else %}
               <div class="blog-card__cover-placeholder" aria-hidden="true"></div>

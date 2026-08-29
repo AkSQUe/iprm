@@ -42,7 +42,7 @@
            картки більше не фіксована по висоті, тому саме ці числа резервують
            місце під зображення: із хардкодом 400x200 широкий банер смикав би
            верстку, коли доїде. Фолбек лишається для медіа без розмірів. #}
-        <img src="{{ course.card_src }}" alt="{{ course.t('title') }}"
+        <img class="iprm-img-cover" src="{{ course.card_src }}" alt="{{ course.t('title') }}"
              width="{{ course.card_media.width or 400 if course.card_media else 400 }}"
              height="{{ course.card_media.height or 200 if course.card_media else 200 }}"
              {% if card_eager | default(false) %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>

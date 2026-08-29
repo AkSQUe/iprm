@@ -35,7 +35,7 @@
 
     function addItems(items) {
       items.forEach(function (m) {
-        var img = el('img', { src: m.thumb || m.url, alt: m.alt || '', loading: 'lazy' });
+        var img = el('img', { 'class': 'iprm-img-cover', src: m.thumb || m.url, alt: m.alt || '', loading: 'lazy' });
         var btn = el('button', { type: 'button', 'class': 'media-picker__item', title: m.alt || ('#' + m.id) }, [img]);
         btn.addEventListener('click', function () {
           var cb = onPick;

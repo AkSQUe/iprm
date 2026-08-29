@@ -210,7 +210,7 @@
             var rm = el('button', {type: 'button', 'class': 'blog-editor__g-remove', title: 'Видалити'}, [icon('close')]);
             rm.addEventListener('click', function() { images.splice(i, 1); renderGrid(); serialize(); });
             grid.appendChild(el('div', {'class': 'blog-editor__g-item'}, [
-              el('img', {src: img.thumb || img.url, alt: ''}), rm
+              el('img', {'class': 'iprm-img-cover', src: img.thumb || img.url, alt: ''}), rm
             ]));
           });
         }

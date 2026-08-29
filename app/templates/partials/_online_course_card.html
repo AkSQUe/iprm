@@ -19,7 +19,7 @@
     {# Справжні розміри файлу: на мобільному коробка не фіксована по висоті,
        тож саме вони резервують місце під зображення (як у картці очного
        курсу). card_media еager-завантажене у _published_query. #}
-    <img src="{{ course.card_src }}" alt="{{ course.effective_title }}"
+    <img class="iprm-img-cover" src="{{ course.card_src }}" alt="{{ course.effective_title }}"
          width="{{ course.card_media.width or 400 if course.card_media else 400 }}"
          height="{{ course.card_media.height or 200 if course.card_media else 200 }}"
          {% if card_eager | default(false) %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>

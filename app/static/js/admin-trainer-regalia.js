@@ -40,7 +40,7 @@
       var render = function() {
         grid.innerHTML = '';
         certs.forEach(function(c, i) {
-          var img = el('img', {src: c.thumb || c.url, alt: '', draggable: 'false'});
+          var img = el('img', {'class': 'iprm-img-cover', src: c.thumb || c.url, alt: '', draggable: 'false'});
           var rm = el('button', {type: 'button', 'class': 'regalia-cert__remove', title: 'Видалити'}, [icon('close')]);
           rm.addEventListener('click', function() { certs.splice(i, 1); render(); sync(); });
           var cap = el('input', {'class': 'form-input regalia-cert__cap', type: 'text', placeholder: 'Підпис (необовʼязково)'});
@@ -130,7 +130,7 @@
           row.dataset.thumb = data.thumb || '';
           if (data.card) row.dataset.card = data.card;
           if (data.media_id) row.dataset.media = data.media_id;
-          var img = el('img', {'class': 'regalia-link__thumb-img', alt: ''});
+          var img = el('img', {'class': 'regalia-link__thumb-img iprm-img-cover', alt: ''});
           var clearBtn = el('button', {type: 'button', 'class': 'regalia-link__thumb-clear', title: 'Прибрати скан'}, [icon('close')]);
           var setThumb = function() {
             var src = row.dataset.thumb || row.dataset.image;

@@ -70,7 +70,7 @@
       <div class="iprm-hero__content iprm-hero__content--trainer">
         {% if trainer.photo_media %}
         <div class="iprm-hero-trainer__photo">
-          <img src="{{ trainer.photo_media.variant_url('card') }}" alt="{{ trainer.t('full_name') }}" width="280" height="373" fetchpriority="high"
+          <img class="iprm-img-cover" src="{{ trainer.photo_media.variant_url('card') }}" alt="{{ trainer.t('full_name') }}" width="280" height="373" fetchpriority="high"
                srcset="{{ trainer.photo_media.variant_url('thumb') }} 400w, {{ trainer.photo_media.variant_url('card') }} 800w" sizes="280px">
         </div>
         {% endif %}
@@ -109,7 +109,7 @@
           <a href="{{ url_for('courses.course_by_slug', slug=course.slug) }}">
             <div class="iprm-course-card__image">
               {% if course.card_src %}
-                <img src="{{ course.card_src }}" alt="{{ course.t('title') }}" loading="lazy" width="400" height="200">
+                <img class="iprm-img-cover" src="{{ course.card_src }}" alt="{{ course.t('title') }}" loading="lazy" width="400" height="200">
               {% endif %}
             </div>
             <div class="apple-card-body">

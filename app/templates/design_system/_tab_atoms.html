@@ -318,6 +318,22 @@
     </div>
   </div>
 
+  <!-- ===== UTILITY: IMAGE COVER ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="img-cover">
+      <p class="ds-label">Utility</p>
+      <h2 class="ds-title">iprm-img-cover</h2>
+      <div class="ds-demo">
+        <div class="ds-row">
+          <div style="width: 160px; height: 120px; overflow: hidden;">
+            <img class="iprm-img-cover" src="{{ url_for('static', filename='images/labs/cell-aging.webp') }}" alt="">
+          </div>
+        </div>
+      </div>
+      <p class="ds-hint">Ставиться класом прямо на &lt;img&gt; -- зображення розтягується на всю ширину/висоту рамки й обрізається до неї (`width: 100%; height: 100%; object-fit: cover`), пропорції не спотворюються. Заміняє 14 копій цього самого правила під різними селекторами "предок img", що жили в account.css, apple-pages.css, clinics.css, trainers.css, page-index.css, blog.css, online-courses.css, admin-media.css і page-admin-*.css. `display: block` у класі немає навмисно: половина з чотирнадцяти покладались на рядковий відступ під зображенням, і додати їм його означало б змінити розкладку -- ці сторінки лишають окреме однорядкове правило `display: block` на власному селекторі.</p>
+    </div>
+  </div>
+
   <!-- ===== REGISTRATION SCREEN FAMILY ===== -->
   <div class="ds-section" id="reg-family">
     <p class="ds-label">Components</p>

@@ -43,7 +43,7 @@
       <div class="iprm-clinic-detail apple-reveal">
         <div class="iprm-clinic-detail__photo">
           {% if clinic.photo %}
-            <img src="{{ clinic.photo }}" alt="{{ clinic.t('name') }}" loading="lazy" width="320" height="320">
+            <img class="iprm-img-cover" src="{{ clinic.photo }}" alt="{{ clinic.t('name') }}" loading="lazy" width="320" height="320">
           {% endif %}
         </div>
         <div class="iprm-clinic-detail__content">
