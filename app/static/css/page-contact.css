@@ -69,7 +69,7 @@
 .contact-page__info-value a {
   color: var(--iprm-nav-active);
   text-decoration: none;
-  transition: color 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+  transition: color 0.2s var(--ease-interact);
 }
 
 .contact-page__info-value a:hover {
@@ -118,8 +118,8 @@
   background: var(--iprm-accent-light);
   border-radius: var(--iprm-radius-sm);
   transition:
-    background 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
-    transform 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+    background 0.2s var(--ease-interact),
+    transform 0.15s var(--ease-interact);
 }
 
 .contact-page__social-link:hover {

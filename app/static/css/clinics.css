@@ -20,8 +20,8 @@
   flex-direction: column;
   overflow: hidden;
   transition:
-    transform 0.3s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
-    box-shadow 0.3s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+    transform 0.3s var(--ease-interact),
+    box-shadow 0.3s var(--ease-interact);
 }
 
 .iprm-clinic-card:hover {
@@ -333,8 +333,8 @@
   padding: 32px;
   text-align: center;
   transition:
-    transform 0.3s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
-    box-shadow 0.3s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+    transform 0.3s var(--ease-interact),
+    box-shadow 0.3s var(--ease-interact);
 }
 
 .iprm-results-card:hover {

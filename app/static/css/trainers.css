@@ -85,9 +85,9 @@
 }
 .iprm-regalia-links li {
   padding: 14px 18px;
-  background: var(--iprm-white, #fff);
+  background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-md, 14px);
+  border-radius: var(--iprm-radius-md);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .iprm-regalia-links li:hover {
@@ -117,7 +117,7 @@
   position: relative;
   padding: 4px 0 4px 26px;
   line-height: 1.6;
-  color: var(--iprm-text, #1d1d1f);
+  color: var(--iprm-text);
 }
 .iprm-research-list li::before {
   content: '';
@@ -145,9 +145,9 @@
   background: var(--iprm-white);
   padding: 10px;
   border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm, 10px);
+  border-radius: var(--iprm-radius-sm);
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.10);
-  transition: transform 0.2s var(--ease-interact, ease), box-shadow 0.2s var(--ease-interact, ease);
+  transition: transform 0.2s var(--ease-interact), box-shadow 0.2s var(--ease-interact);
 }
 .trainer-certs__item:hover {
   transform: translateY(-4px);
@@ -191,9 +191,9 @@
   background: var(--iprm-white);
   padding: 10px;
   border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm, 10px);
+  border-radius: var(--iprm-radius-sm);
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.10);
-  transition: transform 0.2s var(--ease-interact, ease), box-shadow 0.2s var(--ease-interact, ease);
+  transition: transform 0.2s var(--ease-interact), box-shadow 0.2s var(--ease-interact);
 }
 .trainer-patent__scan:hover {
   transform: translateY(-4px);
@@ -209,7 +209,7 @@
 .trainer-patent__label {
   font-weight: 600;
   line-height: 1.4;
-  color: var(--iprm-accent, #7437c9);
+  color: var(--iprm-accent);
   text-decoration: none;
 }
 a.trainer-patent__label:hover { text-decoration: underline; }
@@ -231,7 +231,7 @@ a.trainer-patent__label:hover { text-decoration: underline; }
 .iprm-skills-list__group {
   font-weight: 700;
   font-size: 1.05rem;
-  color: var(--iprm-accent, #7437c9);
+  color: var(--iprm-accent);
   margin: 18px 0 10px;
 }
 .iprm-skills-list__group:first-child { margin-top: 0; }
@@ -239,7 +239,7 @@ a.trainer-patent__label:hover { text-decoration: underline; }
   position: relative;
   padding: 4px 0 4px 26px;
   line-height: 1.6;
-  color: var(--iprm-text, #1d1d1f);
+  color: var(--iprm-text);
 }
 .iprm-skills-list__item::before {
   content: '';
@@ -249,7 +249,7 @@ a.trainer-patent__label:hover { text-decoration: underline; }
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--iprm-accent, #7437c9);
+  background: var(--iprm-accent);
 }
 
 /* ===== Timeline (освіта / стажування / досвід) ===== */
@@ -278,7 +278,7 @@ a.trainer-patent__label:hover { text-decoration: underline; }
   top: 6px;
   bottom: -18px;
   width: 2px;
-  background: linear-gradient(180deg, var(--iprm-accent, #7437c9), rgba(116, 55, 201, 0.15));
+  background: linear-gradient(180deg, var(--iprm-accent), rgba(116, 55, 201, 0.15));
 }
 .iprm-timeline__item:last-child::before { display: none; }
 .iprm-timeline__year {
@@ -287,16 +287,16 @@ a.trainer-patent__label:hover { text-decoration: underline; }
   text-align: center;
   font-weight: 700;
   font-size: 0.85rem;
-  color: var(--iprm-accent, #7437c9);
-  background: var(--iprm-accent-light, #f1e9fb);
-  border-radius: var(--iprm-radius-pill, 980px);
+  color: var(--iprm-accent);
+  background: var(--iprm-accent-light);
+  border-radius: var(--iprm-radius-pill);
   padding: 5px 12px;
   white-space: nowrap;
 }
 .iprm-timeline__text {
   flex: 1 1 auto;
   line-height: 1.6;
-  color: var(--iprm-text, #1d1d1f);
+  color: var(--iprm-text);
   padding-top: 3px;
 }
 

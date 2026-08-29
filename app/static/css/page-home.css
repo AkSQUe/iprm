@@ -474,7 +474,7 @@
 }
 
 .home-calendar__seats--warning {
-  color: var(--iprm-warning-text, #8a6d1a);
+  color: var(--iprm-warning-text);
 }
 
 .home-calendar__price {

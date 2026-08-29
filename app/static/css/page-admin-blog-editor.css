@@ -4,7 +4,7 @@
 
 .blog-editor__block {
   border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius-sm, 10px);
+  border-radius: var(--iprm-radius-sm);
   background: var(--iprm-white);
   overflow: hidden;
 }
@@ -27,13 +27,13 @@
 .blog-editor__ctrl {
   display: inline-flex; align-items: center; justify-content: center;
   width: 30px; height: 30px;
-  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm, 8px);
+  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm);
   background: var(--iprm-white); color: var(--apple-gray-dark); cursor: pointer;
   transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
 .blog-editor__ctrl:hover { background: var(--apple-section-bg); }
 .blog-editor__ctrl .material-symbols-rounded { font-size: 20px; }
-.blog-editor__ctrl--danger:hover { color: var(--iprm-error, #ef4444); border-color: rgba(239,68,68,0.3); }
+.blog-editor__ctrl--danger:hover { color: var(--iprm-error); border-color: rgba(239,68,68,0.3); }
 
 .blog-editor__block > div:not(.blog-editor__bhead) { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .blog-editor__row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
@@ -44,24 +44,24 @@
 .blog-editor__ibtn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 32px; height: 30px;
-  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm, 8px);
+  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm);
   background: var(--iprm-white); cursor: pointer; color: var(--apple-gray-dark);
 }
 .blog-editor__ibtn:hover { background: var(--apple-section-bg); }
 .blog-editor__ibtn .material-symbols-rounded { font-size: 18px; }
 .blog-editor__rich {
   min-height: 64px; padding: 10px 14px;
-  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm, 10px);
+  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-sm);
   background: var(--apple-section-bg); font-size: 0.9375rem; line-height: 1.6;
   color: var(--apple-black);
 }
 .blog-editor__rich:focus { outline: none; border-color: var(--iprm-nav-active); box-shadow: 0 0 0 3px var(--iprm-accent-light); }
 
 /* Зображення / галерея */
-.blog-editor__img-prev img { max-width: 240px; max-height: 160px; border-radius: var(--iprm-radius-sm, 8px); display: block; }
+.blog-editor__img-prev img { max-width: 240px; max-height: 160px; border-radius: var(--iprm-radius-sm); display: block; }
 .blog-editor__file { display: none; }
 .blog-editor__gallery { display: flex; flex-wrap: wrap; gap: 8px; }
-.blog-editor__g-item { position: relative; width: 110px; height: 90px; border-radius: var(--iprm-radius-sm, 8px); overflow: hidden; border: 1px solid var(--iprm-border); }
+.blog-editor__g-item { position: relative; width: 110px; height: 90px; border-radius: var(--iprm-radius-sm); overflow: hidden; border: 1px solid var(--iprm-border); }
 .blog-editor__g-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .blog-editor__g-remove {
   position: absolute; top: 4px; right: 4px;
@@ -77,7 +77,7 @@
 .blog-editor__addbtn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 14px;
-  border: 1px dashed var(--iprm-border); border-radius: var(--iprm-radius-pill, 999px);
+  border: 1px dashed var(--iprm-border); border-radius: var(--iprm-radius-pill);
   background: var(--iprm-white); color: var(--apple-gray-dark);
   font-size: 0.8125rem; font-weight: 500; cursor: pointer;
   transition: background-color 0.15s, border-color 0.15s, color 0.15s;

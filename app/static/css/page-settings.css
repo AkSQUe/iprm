@@ -28,13 +28,22 @@
   margin-bottom: 24px;
 }
 
+/* flex-wrap ОБОВʼЯЗКОВИЙ. Без нього ряд не стискається: `flex: 1` не пускає
+   елемент вужче за його ж вміст (min-width: auto), тож на 390px ряд виходив
+   428px і остання кнопка стояла на 74px за екраном -- недосяжна, бо сторінка
+   вбік не прокручується. З трьома кнопками теми це вже було так; п'ятий шрифт
+   лише зробив помітним. */
 .settings-switcher {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
 .settings-option {
-  flex: 1;
+  /* Базис 96px -- ширина превью (64) плюс падінги: на десктопі всі варіанти
+     стають в один ряд, на телефоні переносяться по три. */
+  flex: 1 1 96px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -82,6 +91,18 @@
 
 .settings-option__preview--fixel {
   font-family: 'Fixel', sans-serif;
+}
+
+.settings-option__preview--roboto {
+  font-family: 'Roboto', sans-serif;
+}
+
+.settings-option__preview--nunito {
+  font-family: 'Nunito', sans-serif;
+}
+
+.settings-option__preview--calibri {
+  font-family: Calibri, 'Carlito', sans-serif;
 }
 
 /* Превью теми -- літеральні кольори навмисно: превью має завжди показувати

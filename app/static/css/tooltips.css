@@ -9,8 +9,8 @@
   height: 16px;
   margin-left: 6px;
   border-radius: 50%;
-  background: var(--iprm-accent-light, #f1e9fb);
-  color: var(--iprm-accent, #7437c9);
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
   font-size: 11px;
   font-weight: 700;
   font-style: italic;
@@ -22,7 +22,7 @@
 }
 .iprm-tooltip-trigger:hover,
 .iprm-tooltip-trigger:focus-visible {
-  background: var(--iprm-accent, #7437c9);
+  background: var(--iprm-accent);
   color: #fff;
   outline: none;
 }
@@ -36,7 +36,7 @@
   max-width: 280px;
   padding: 10px 14px;
   border-radius: 10px;
-  background: var(--iprm-dark, #1a1a2e);
+  background: var(--iprm-dark);
   color: #fff;
   font-size: 0.8125rem;
   line-height: 1.45;
@@ -58,11 +58,11 @@
   left: 50%;
   transform: translateX(-50%);
   border: 6px solid transparent;
-  border-top-color: var(--iprm-dark, #1a1a2e);
+  border-top-color: var(--iprm-dark);
 }
 .iprm-tooltip-bubble--below::after {
   top: auto;
   bottom: 100%;
   border-top-color: transparent;
-  border-bottom-color: var(--iprm-dark, #1a1a2e);
+  border-bottom-color: var(--iprm-dark);
 }

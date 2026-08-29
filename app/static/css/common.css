@@ -281,9 +281,33 @@
   --iprm-badge-completed-text: #a5b4fc;
 }
 
-/* Перемикач шрифту */
+/* Перемикач шрифту. Значення атрибута ставить base.html (до першого рендеру,
+   з localStorage) і settings.js (за кліком). Змінюється рівно один токен --
+   --iprm-font, -- тому вибір діє скрізь, де він ужитий: і на публічній
+   частині, і в адмінці, включно з кнопками, полями й таблицями.
+
+   Inter -- типовий, окремого блоку не має: він у :root вище.
+
+   Системний хвіст стека однаковий у всіх: він працює рівно ті кількасот
+   мілісекунд, поки не приїхав свій файл (font-display: optional), і для
+   поодиноких гліфів поза latin+cyrillic. */
 [data-font="fixel"] {
   --iprm-font: 'Fixel', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+[data-font="roboto"] {
+  --iprm-font: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+[data-font="nunito"] {
+  --iprm-font: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+/* Calibri стоїть перед Carlito навмисно: на Windows береться справжній
+   системний Calibri без жодного завантаження, решті дістається метрично
+   сумісний Carlito (див. fonts.css). */
+[data-font="calibri"] {
+  --iprm-font: Calibri, 'Carlito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
 }
 
 *,
@@ -1838,7 +1862,7 @@ select.badge-select:disabled {
 .iprm-tag[data-tag-filter] {
   cursor: pointer;
   user-select: none;
-  transition: transform 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+  transition: transform 0.15s var(--ease-interact);
 }
 
 .iprm-tag[data-tag-filter]:hover {

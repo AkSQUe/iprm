@@ -5,7 +5,7 @@
   font-size: 0.8125rem;
   line-height: 1.4;
   margin-top: 6px;
-  color: var(--iprm-error-text, #dc2626);
+  color: var(--iprm-error-text);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -21,9 +21,9 @@
 input.field-invalid,
 select.field-invalid,
 textarea.field-invalid {
-  border-color: var(--iprm-error, #ef4444) !important;
-  box-shadow: 0 0 0 3px var(--iprm-error-bg, #fef2f2) !important;
-  background-color: var(--iprm-error-bg, #fef2f2);
+  border-color: var(--iprm-error) !important;
+  box-shadow: 0 0 0 3px var(--iprm-error-bg) !important;
+  background-color: var(--iprm-error-bg);
 }
 
 /* Позитивне підтвердження: поле пройшло перевірку.
@@ -74,9 +74,9 @@ textarea.field-valid {
 
 /* Для груп (radio/checkbox) підсвічуємо контейнер */
 [data-required-group].field-invalid {
-  outline: 2px solid var(--iprm-error, #ef4444);
+  outline: 2px solid var(--iprm-error);
   outline-offset: 4px;
-  border-radius: var(--iprm-radius-sm, 12px);
+  border-radius: var(--iprm-radius-sm);
 }
 
 /* Анімація трясіння при помилці */

@@ -10,9 +10,9 @@
   width: 320px;
   max-width: calc(100vw - 40px);
   padding: 16px 18px;
-  background: var(--iprm-white, #fff);
-  border: 1px solid var(--iprm-border, rgba(0, 0, 0, 0.06));
-  border-radius: var(--iprm-radius-md, 16px);
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
   box-shadow: 0 12px 40px rgba(29, 29, 31, 0.16);
   animation: certdata-in 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }
@@ -25,7 +25,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  border-radius: var(--iprm-radius-md, 16px) var(--iprm-radius-md, 16px) 0 0;
+  border-radius: var(--iprm-radius-md) var(--iprm-radius-md) 0 0;
   background: linear-gradient(90deg, #f0a02a 0%, #e05252 100%);
 }
 
@@ -36,23 +36,23 @@
   appearance: none;
   border: none;
   background: transparent;
-  color: var(--iprm-text-light, #86868b);
+  color: var(--iprm-text-light);
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
   padding: 0 4px;
-  transition: color var(--iprm-transition, 0.25s ease);
+  transition: color var(--iprm-transition);
 }
-.certdata-reminder__close:hover { color: var(--iprm-text, #1d1d1f); }
+.certdata-reminder__close:hover { color: var(--iprm-text); }
 
 .certdata-reminder__title {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--iprm-font, sans-serif);
+  font-family: var(--iprm-font);
   font-weight: 700;
   font-size: 0.9375rem;
-  color: var(--iprm-text, #1d1d1f);
+  color: var(--iprm-text);
   margin: 0 20px 6px 0;
 }
 
@@ -69,7 +69,7 @@
 .certdata-reminder__text {
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: var(--iprm-text-light, #86868b);
+  color: var(--iprm-text-light);
   margin: 0 0 12px;
 }
 
@@ -78,15 +78,15 @@
   padding: 8px 18px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--iprm-white, #fff);
-  background: var(--iprm-accent, #7437c9);
-  border-radius: var(--iprm-radius-pill, 980px);
+  color: var(--iprm-white);
+  background: var(--iprm-accent);
+  border-radius: var(--iprm-radius-pill);
   text-decoration: none;
-  transition: background var(--iprm-transition, 0.25s ease);
+  transition: background var(--iprm-transition);
 }
 .certdata-reminder__btn:hover {
-  background: var(--iprm-accent-hover, #6229ae);
-  color: var(--iprm-white, #fff);
+  background: var(--iprm-accent-hover);
+  color: var(--iprm-white);
 }
 
 @keyframes certdata-in {

@@ -1187,8 +1187,8 @@ html {
   display: inline-block;
   padding: 10px 18px;
   border-radius: 999px;
-  background: var(--iprm-accent-light, #f1e9fb);
-  color: var(--iprm-accent, #7437c9);
+  background: var(--iprm-accent-light);
+  color: var(--iprm-accent);
   font-size: 0.9375rem;
   font-weight: 600;
   letter-spacing: -0.005em;

@@ -1095,7 +1095,7 @@ a.admin-stat-card:focus-visible {
   font-weight: 400;
   color: var(--apple-gray-dark);
   border-radius: 10px;
-  transition: all 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+  transition: all 0.2s var(--ease-interact);
 }
 
 .admin-sidebar__link:hover {
@@ -1136,8 +1136,8 @@ a.admin-stat-card:focus-visible {
   background: transparent;
   color: var(--apple-gray);
   cursor: pointer;
-  transition: background 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
-              color 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+  transition: background 0.2s var(--ease-interact),
+              color 0.2s var(--ease-interact);
 }
 
 .admin-sidebar__pin:hover {
@@ -1152,7 +1152,7 @@ a.admin-stat-card:focus-visible {
 
 .admin-sidebar__pin-icon {
   font-size: 20px;
-  transition: transform 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+  transition: transform 0.2s var(--ease-interact);
 }
 
 /* Незакріплена шпилька лежить навскіс -- та сама іконка читається як
@@ -1228,7 +1228,7 @@ a.admin-stat-card:focus-visible {
     --iprm-sb-fade: 0.24s;
     /* Наскільки один рух випереджає інший. */
     --iprm-sb-lead: 0.16s;
-    --iprm-sb-ease: var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+    --iprm-sb-ease: var(--ease-interact);
     /* Меню довше за екран у ОБОХ станах, тож смуга прокрутки є завжди --
        і саме її 10px закладено в ширину смуги вище. Кольори тут гасяться:
        глобальний фіолетовий градієнт (common.css) на 67px читався б як
@@ -1469,9 +1469,9 @@ a.admin-stat-card:focus-visible {
   border-radius: var(--iprm-radius-pill);
   font-weight: 500;
   font-size: 0.875rem;
-  transition: transform 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
-    box-shadow 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
-    background-color 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+  transition: transform 0.15s var(--ease-interact),
+    box-shadow 0.15s var(--ease-interact),
+    background-color 0.15s var(--ease-interact);
 }
 
 .btn-admin .material-symbols-rounded {
@@ -2157,7 +2157,7 @@ a.admin-stat-card:focus-visible {
   background: var(--iprm-white);
   border-radius: var(--iprm-radius-md);
   border: 1px solid var(--iprm-border);
-  transition: box-shadow 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+  transition: box-shadow 0.2s var(--ease-interact);
 }
 
 .admin-stat-card:hover {
@@ -2214,8 +2214,8 @@ a.admin-stat-card:focus-visible {
   background: var(--iprm-white);
   border-radius: var(--iprm-radius-md);
   border: 1px solid var(--iprm-border);
-  transition: border-color 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
-    box-shadow 0.2s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+  transition: border-color 0.2s var(--ease-interact),
+    box-shadow 0.2s var(--ease-interact);
 }
 
 .admin-integration-card .form-group {
@@ -2641,9 +2641,9 @@ a.admin-stat-card:focus-visible {
   font-weight: 500;
   text-decoration: none;
   transition:
-    background-color 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
-    color 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94)),
-    border-color 0.15s var(--ease-interact, cubic-bezier(0.25, 0.46, 0.45, 0.94));
+    background-color 0.15s var(--ease-interact),
+    color 0.15s var(--ease-interact),
+    border-color 0.15s var(--ease-interact);
 }
 
 .admin-pill .material-symbols-rounded {

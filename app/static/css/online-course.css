@@ -52,7 +52,7 @@
 .iprm-online-buy {
   position: sticky;
   /* Тільки шапка: окремої смуги якорів більше немає, вони переїхали в неї. */
-  top: calc(var(--iprm-header-h, 72px) + 24px);
+  top: calc(var(--iprm-header-h) + 24px);
   padding: 28px;
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);

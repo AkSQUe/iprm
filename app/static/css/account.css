@@ -182,17 +182,17 @@
   padding: 8px 18px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--iprm-nav-active, #7437c9);
+  color: var(--iprm-nav-active);
   background: transparent;
-  border: 1px solid var(--iprm-border, #e5e5ea);
+  border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-sm);
   text-decoration: none;
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .account-course__invoice-btn:hover {
-  border-color: var(--iprm-nav-active, #7437c9);
-  background: var(--iprm-accent-light, #f1e9fb);
+  border-color: var(--iprm-nav-active);
+  background: var(--iprm-accent-light);
 }
 
 /* ========== ПОРОЖНІЙ СТАН ========== */
