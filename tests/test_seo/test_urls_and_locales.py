@@ -23,19 +23,34 @@ class TestSchemaUrls:
 
 class TestHreflang:
     def test_localized_pages_list_all_languages(self, app, client):
+        # Очікування виводимо з is_endpoint_expecting -- того самого
+        # предиката, яким керується _hreflang_alternates() -- а не зі
+        # списку локалізованих ендпоінтів, підтримуваного руками (він би
+        # розходився з реальністю). Сторінка, що втратила alternates через
+        # проковтнуте в i18n.py виключення, тепер падає, а не мовчки
+        # пропускається порожнім набором.
         expected = set(LANGUAGES) | {'x-default'}
         bad = []
         for endpoint, url, html in fetch_public_pages(app, client):
             langs = set(re.findall(
                 r'<link rel="alternate" hreflang="([^"]+)"', html,
             ))
-            if not langs:
-                # Нелокалізований ендпоінт (юридичні сторінки) -- штатно.
-                continue
-            if langs != expected:
-                bad.append(f'{endpoint}: {sorted(langs)}')
+            localized = app.url_map.is_endpoint_expecting(
+                endpoint, 'lang_code',
+            )
+            if localized:
+                if langs != expected:
+                    bad.append(
+                        f'{endpoint}: очікували {sorted(expected)}, '
+                        f'отримали {sorted(langs)}'
+                    )
+            elif langs:
+                bad.append(
+                    f'{endpoint}: hreflang не очікувався, отримали '
+                    f'{sorted(langs)}'
+                )
         assert not bad, (
-            f'Набір hreflang не дорівнює {sorted(expected)}:\n'
+            f'Невідповідність hreflang очікуваному {sorted(expected)}:\n'
             + '\n'.join(bad)
         )
 
