@@ -86,7 +86,12 @@
 .upcoming-events__place::before {
   content: "·";
   margin-right: 10px;
-  color: var(--iprm-gray-light, #d2d2d7);
+/* Роздільник -- рівень ЛІНІЙ, а не тексту: --apple-gray-light навмисно
+     світліший за --iprm-text-light поруч. Токена --iprm-gray-light не
+     існувало взагалі, тож працював лише фолбек #d2d2d7 -- у світлій темі
+     це те саме значення, а в тёмній роздільник лишався світлим на
+     темному тлі й був помітнішим за сам текст. */
+  color: var(--apple-gray-light);
 }
 
 .upcoming-events--hidden { display: none; }
@@ -177,7 +182,12 @@ body.has-upcoming-bar {
 .upcoming-bar__place::before {
   content: "·";
   margin-right: 8px;
-  color: var(--iprm-gray-light, #d2d2d7);
+/* Роздільник -- рівень ЛІНІЙ, а не тексту: --apple-gray-light навмисно
+     світліший за --iprm-text-light поруч. Токена --iprm-gray-light не
+     існувало взагалі, тож працював лише фолбек #d2d2d7 -- у світлій темі
+     це те саме значення, а в тёмній роздільник лишався світлим на
+     темному тлі й був помітнішим за сам текст. */
+  color: var(--apple-gray-light);
 }
 
 .upcoming-bar__close {

@@ -223,6 +223,10 @@
 
 .iprm-progress__fill {
   display: block;
+  /* НЕ токен палітри: цю властивість виставляє progress-fill.js прямо на
+     елементі (el.style.setProperty). 0% -- законний дефолт до запуску
+     скрипта, тож фолбек тут єдиний, який справді працює. Не прибирати
+     разом з іншими. */
   width: var(--iprm-progress, 0%);
   height: 100%;
   background: linear-gradient(90deg, var(--apple-orange), #ef8e00);

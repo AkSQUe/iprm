@@ -579,7 +579,7 @@
   display: block;
   margin-top: 2px;
   font-size: 0.8125rem;
-  color: var(--iprm-text-muted, var(--iprm-text-light));
+  color: var(--iprm-text-light);
 }
 
 .connection-item__status {
