@@ -1,0 +1,152 @@
+{
+  "apple-card-body": [
+    "partials",
+    "trainers"
+  ],
+  "apple-feature-card": [
+    "clinics",
+    "courses",
+    "main",
+    "partials",
+    "trainers"
+  ],
+  "apple-features-grid": [
+    "clinics",
+    "courses",
+    "main",
+    "partials",
+    "trainers"
+  ],
+  "apple-section-cta": [
+    "clinics",
+    "trainers"
+  ],
+  "apple-section-gray": [
+    "auth",
+    "blog",
+    "clinics",
+    "courses",
+    "main",
+    "online",
+    "partials",
+    "root",
+    "trainers"
+  ],
+  "auth-card": [
+    "auth",
+    "main"
+  ],
+  "auth-page": [
+    "auth",
+    "main"
+  ],
+  "blog-pagination": [
+    "admin",
+    "blog"
+  ],
+  "btn-auth": [
+    "auth",
+    "main"
+  ],
+  "certdata-reminder": [
+    "partials",
+    "registration"
+  ],
+  "form-consent": [
+    "auth",
+    "main",
+    "online",
+    "registration"
+  ],
+  "form-error": [
+    "admin",
+    "auth",
+    "main",
+    "online",
+    "registration"
+  ],
+  "iprm-b2b": [
+    "courses",
+    "main"
+  ],
+  "iprm-final-cta": [
+    "online",
+    "partials"
+  ],
+  "iprm-prose": [
+    "courses",
+    "online"
+  ],
+  "iprm-review": [
+    "main",
+    "partials"
+  ],
+  "iprm-schedule": [
+    "courses",
+    "partials"
+  ],
+  "iprm-steps": [
+    "clinics",
+    "courses",
+    "main",
+    "partials"
+  ],
+  "iprm-tooltip-trigger": [
+    "admin",
+    "auth",
+    "registration"
+  ],
+  "quiz-question": [
+    "admin",
+    "quiz"
+  ],
+  "referral-history": [
+    "auth",
+    "root"
+  ],
+  "referral-share": [
+    "auth",
+    "partials",
+    "root"
+  ],
+  "reg-actions": [
+    "auth",
+    "payments",
+    "registration"
+  ],
+  "reg-form-section": [
+    "auth",
+    "registration"
+  ],
+  "reg-layout": [
+    "auth",
+    "payments",
+    "registration"
+  ],
+  "reg-moh-notice": [
+    "auth",
+    "registration"
+  ],
+  "reg-specializations": [
+    "auth",
+    "registration"
+  ],
+  "reg-status-card": [
+    "payments",
+    "registration"
+  ],
+  "reg-user-type": [
+    "auth",
+    "registration"
+  ],
+  "upcoming-bar": [
+    "partials",
+    "root"
+  ],
+  "visually-hidden": [
+    "admin",
+    "auth",
+    "main",
+    "quiz"
+  ]
+}

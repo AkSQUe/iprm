@@ -333,6 +333,40 @@ def page_overrides(root=ROOT):
     return out
 
 
+def cross_domain_components(root=ROOT):
+    """{клас: [домени]} -- класи-блоки, ужиті БІЛЬШ НІЖ одним доменом.
+
+    Домен -- тека верхнього рівня в `app/templates` (`auth`, `admin`,
+    `courses`, `partials`...). Клас, який вживають два різні домени, --
+    справжній спільний компонент: його неминуче шукатиме наступний, і якщо
+    в каталозі його не видно, він напише свій.
+
+    Чому не всі класи компонентних файлів. Їх 421, і 271 у каталозі немає.
+    Але "компонентний файл" не дорівнює "перевикористовуваний компонент":
+    `blog-card` живе у двох блогових шаблонах і жодній іншій сторінці не
+    потрібен. Тест на всі 421 упав би першого ж дня з 271 порушенням, і
+    його вимкнули б -- рівно те, проти чого цей проєкт і працює.
+
+    Крос-доменних -- 90, і це вже робочий список.
+    """
+    tpl = root / 'app' / 'templates'
+    texts = {p.relative_to(tpl).as_posix(): p.read_text(encoding='utf-8', errors='ignore')
+             for p in tpl.rglob('*.html')}
+    component = classify_css(root)['component']
+    out = {}
+    for name in sorted(component):
+        for cls in sorted(_declared_classes(root / 'app' / 'static' / 'css' / name)):
+            if '__' in cls or '--' in cls or cls.startswith('is-'):
+                continue
+            pattern = re.compile(r'class="[^"]*\b' + re.escape(cls) + r'\b')
+            domains = {n.split('/')[0] if '/' in n else 'root'
+                       for n, text in texts.items()
+                       if pattern.search(text) and not n.startswith('design_system/')}
+            if len(domains) > 1:
+                out[cls] = sorted(domains)
+    return out
+
+
 def naming_mismatch(root=ROOT):
     result = classify_css(root)
     return {
