@@ -1,10 +1,16 @@
 {% extends 'base.html' %}
+{% from 'partials/schema/_breadcrumbs.html' import breadcrumbs with context %}
 
-{% block title %}{{ _('Інститут Плазмотерапії та Регенеративної Медицини | ІПРМ') }}{% endblock %}
+{% block title %}{{ _('Лабораторії біологічного віку | ІПРМ') }}{% endblock %}
 {% block meta_description %}{{ _('Курси після дипломної освіти з плазмотерапії для лікарів. Лабораторії біологічного віку, клініка регенеративних технологій. Офіційне нарахування балів БПР.') }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-index.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block jsonld %}
+{{ super() }}
+{{ breadcrumbs([(_('Лабораторії'), '')]) }}
 {% endblock %}
 
 {% block content %}

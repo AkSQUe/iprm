@@ -1,10 +1,16 @@
 {% extends "base.html" %}
+{% from 'partials/schema/_breadcrumbs.html' import breadcrumbs with context %}
 
-{% block title %}Політика Cookie | ІПРМ{% endblock %}
-{% block meta_description %}Політика використання Cookie на сайті ІПРМ. Які файли cookie ми використовуємо та як ви можете ними керувати.{% endblock %}
+{% block title %}Політика використання файлів Cookie | ІПРМ{% endblock %}
+{% block meta_description %}Політика використання Cookie на сайті ІПРМ: обов'язкові, функціональні, аналітичні та маркетингові файли cookie, їх призначення і строки зберігання.{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block jsonld %}
+{{ super() }}
+{{ breadcrumbs([(_('Політика cookie'), '')]) }}
 {% endblock %}
 
 {% block content %}

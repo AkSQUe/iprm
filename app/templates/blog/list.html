@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
+{% from 'partials/schema/_breadcrumbs.html' import breadcrumbs with context %}
 
-{% block title %}{{ _('Блог | ІПРМ') }}{% endblock %}
-{% block meta_description %}{{ _('Дайджести заходів, новини та статті Інституту плазмотерапії та регенеративної медицини.') }}{% endblock %}
+{% block title %}{{ _('Блог ІПРМ: новини, статті та дайджести заходів') }}{% endblock %}
+{% block meta_description %}{{ _('Дайджести проведених заходів, новини та статті Інституту плазмотерапії та регенеративної медицини: PRP-терапія, курси, дослідження біологічного віку.') }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/blog.css') }}?v={{ assets_version }}">
@@ -11,6 +12,19 @@
 <link rel="alternate" type="application/rss+xml" title="{{ _('Блог ІПРМ') }}" href="{{ url_for('blog.feed') }}">
 {% if pagination and pagination.has_prev %}<link rel="prev" href="{{ url_for('blog.index', page=pagination.prev_num, _external=True) }}">{% endif %}
 {% if pagination and pagination.has_next %}<link rel="next" href="{{ url_for('blog.index', page=pagination.next_num, _external=True) }}">{% endif %}
+{% endblock %}
+
+{% block jsonld %}
+{{ super() }}
+{# Тип Blog для розділу -- окремо від крихт, що описують саме позицію в
+   ієрархії сторінок. #}
+<script type="application/ld+json">{{ {
+  '@context': 'https://schema.org',
+  '@type': 'Blog',
+  'name': _('Блог ІПРМ'),
+  'url': url_for('blog.index', _external=True),
+} | tojson }}</script>
+{{ breadcrumbs([(_('Блог'), '')]) }}
 {% endblock %}
 
 {% block content %}

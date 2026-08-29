@@ -44,8 +44,8 @@
 {# image: обкладинка плюс фото галереї. Google приймає масив і бере з нього
    найкраще під формат видачі, тож віддавати лише картку -- недобирати. #}
 {% set _images = [] %}
-{% if course.card_src %}{% set _discard = _images.append(course.card_src) %}{% endif %}
-{% for media in gallery or [] %}{% set _discard = _images.append(media.url) %}{% endfor %}
+{% if course.card_src %}{% set _discard = _images.append(abs_url(course.card_src)) %}{% endif %}
+{% for media in gallery or [] %}{% set _discard = _images.append(abs_url(media.url)) %}{% endfor %}
 {% if _images %}{% set _discard = course_schema.update({'image': _images}) %}{% endif %}
 {% if course.base_price and course.base_price > 0 %}{% set _discard = course_schema.update({'offers': {
   '@type': 'Offer',
@@ -57,8 +57,8 @@
 {% if course.cpd_points %}{% set _discard = course_schema.update({'numberOfCredits': course.cpd_points}) %}{% endif %}
 {% if course.trainer %}{% set _discard = course_schema.update({'instructor': {
   '@type': 'Person',
-  'name': course.trainer.full_name,
-  'jobTitle': course.trainer.role or ''
+  'name': course.trainer.t('full_name'),
+  'jobTitle': course.trainer.t('role') or ''
 }}) %}{% endif %}
 {% if upcoming_instances %}
   {% set _instances_schema = [] %}

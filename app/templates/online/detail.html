@@ -52,7 +52,7 @@
 }}) %}
 {% endif %}
 {% if course.card_src or course.hero_src %}
-{% set _discard = course_schema.update({'image': course.card_src or course.hero_src}) %}
+{% set _discard = course_schema.update({'image': abs_url(course.card_src or course.hero_src)}) %}
 {% endif %}
 <script type="application/ld+json">{{ course_schema | tojson }}</script>
 {{ breadcrumbs([

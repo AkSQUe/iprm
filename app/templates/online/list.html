@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% from 'partials/schema/_breadcrumbs.html' import breadcrumbs with context %}
 
-{% block title %}{{ _('Онлайн-курси | ІПРМ') }}{% endblock %}
-{% block meta_description %}{{ _('Онлайн-курси Інституту Плазмотерапії та Регенеративної Медицини: навчайтеся у зручний час у власному темпі.') }}{% endblock %}
+{% block title %}{{ _('Онлайн-курси плазмотерапії та регенеративної медицини') }}{% endblock %}
+{% block meta_description %}{{ _('Онлайн-курси Інституту Плазмотерапії та Регенеративної Медицини: навчання у власному темпі, доступ відкривається одразу після оплати.') }}{% endblock %}
 {# Без цього каталог віддавав у соцмережі загальну картинку сайту, тоді як
    каталог заходів ставить логотип. #}
 {% block og_image %}{{ url_for('static', filename='img/og-logo-simple.png', _external=True) }}{% endblock %}
