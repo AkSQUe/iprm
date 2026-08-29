@@ -44,6 +44,10 @@ APScheduler (app/__init__.py:638); єдиний запобіжник від ро
 
 Код повернення: 0 -- розбіжностей немає; 1 -- є; 2 -- знімати нема чого.
 
+Порт сервера НЕ фіксований: береться вільний у системи. Раніше був
+захардкоджений 5099, і його перехоплювали чужі процеси -- знімок мовчки
+знімав не ту сторінку.
+
 ЗАМІРЯНІ МЕЖІ (стан на 28.08.2026 -- перевіряй прогоном, не вір тексту).
 
 Шум НУЛЬ доведено на наборі публічних сторінок (`--only .apple-btn,...`,
@@ -82,7 +86,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 OUT_DIR = Path(__file__).resolve().parent / 'computed'
-PORT = 5099
+# Порт НЕ фіксований. Був 5099, і це коштувало годину хибних розбіжностей:
+# його перехоплювали то забуті `flask run` цього ж проєкту, то девсервер
+# зовсім іншого. Знімок при цьому мовчки знімав ЧУЖУ сторінку й показував
+# «сторінка змінила структуру» — розбіжності, що не мали стосунку до CSS.
+# `make_server(..., 0, ...)` бере вільний порт у системи; фактичний номер
+# читається з сокета.
 
 # Сторінки, вміст яких залежить від самого прогону.
 SKIP_ENDPOINTS = {'admin.error_logs'}
@@ -404,7 +413,8 @@ def capture(label, explicit, only_classes, theme='light', seed=False,
         print('жодної сторінки не відібрано')
         return 0
 
-    server = make_server('127.0.0.1', PORT, app, threaded=True)
+    server = make_server('127.0.0.1', 0, app, threaded=True)
+    port = server.socket.getsockname()[1]
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
 
@@ -447,7 +457,7 @@ def capture(label, explicit, only_classes, theme='light', seed=False,
             }])
             page = context.new_page()
             for endpoint, url in pages:
-                page.goto('http://127.0.0.1:%d%s' % (PORT, url),
+                page.goto('http://127.0.0.1:%d%s' % (port, url),
                           wait_until='networkidle')
                 # Чекаємо на ТИШУ В DOM, а не на фіксований час. Скрипти
                 # дописують у body canvas фону, кнопку «вгору», контейнер
