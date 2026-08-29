@@ -376,9 +376,10 @@ def page_urls(app, user_id, explicit, only_classes):
 
     targets = html_snapshot.targets(app, [], set())
     client = app.test_client()
-    with client.session_transaction() as sess:
-        sess['_user_id'] = user_id
-        sess['_fresh'] = True
+    if user_id is not None:
+        with client.session_transaction() as sess:
+            sess['_user_id'] = user_id
+            sess['_fresh'] = True
 
     urls = []
     for endpoint, url in targets:
@@ -424,12 +425,15 @@ def page_urls(app, user_id, explicit, only_classes):
 
 
 def capture(label, explicit, only_classes, theme='light', seed=False,
-            width=1440, quiet=False):
+            width=1440, anonymous=False, quiet=False):
     from werkzeug.serving import make_server
     from playwright.sync_api import sync_playwright
 
     app = build_app()
-    user_id = make_admin(app)
+    # Анонімний прогін бачить ЗОВСІМ інші сторінки: під адміном вхід,
+    # реєстрація й відновлення пароля віддають редирект, тобто весь
+    # публічний шар авторизації для знімка не існував узагалі.
+    user_id = None if anonymous else make_admin(app)
     if seed:
         explicit = list(explicit) + seed_detail_pages(app)
     pages = page_urls(app, user_id, explicit, only_classes)
@@ -472,13 +476,14 @@ def capture(label, explicit, only_classes, theme='light', seed=False,
                 });
             """)
             # Сесія Flask-Login через cookie: підписуємо її самим додатком.
-            from flask.sessions import SecureCookieSessionInterface
-            serializer = SecureCookieSessionInterface().get_signing_serializer(app)
-            cookie = serializer.dumps({'_user_id': user_id, '_fresh': True})
-            context.add_cookies([{
-                'name': app.config.get('SESSION_COOKIE_NAME', 'session'),
-                'value': cookie, 'domain': '127.0.0.1', 'path': '/',
-            }])
+            if user_id is not None:
+                from flask.sessions import SecureCookieSessionInterface
+                serializer = SecureCookieSessionInterface().get_signing_serializer(app)
+                cookie = serializer.dumps({'_user_id': user_id, '_fresh': True})
+                context.add_cookies([{
+                    'name': app.config.get('SESSION_COOKIE_NAME', 'session'),
+                    'value': cookie, 'domain': '127.0.0.1', 'path': '/',
+                }])
             page = context.new_page()
             for endpoint, url in pages:
                 page.goto('http://127.0.0.1:%d%s' % (port, url),
@@ -576,6 +581,9 @@ def main():
         sp.add_argument('--only', default='',
                         help='лише сторінки з цими класами, через кому')
         sp.add_argument('--pages', default='', help='явні URL через кому')
+        sp.add_argument('--anonymous', action='store_true',
+                        help='без сесії адміна: публічний вигляд і сторінки '
+                             'входу/реєстрації, яких під адміном не видно')
 
     dif = sub.add_parser('diff')
     dif.add_argument('before')
@@ -587,7 +595,7 @@ def main():
 
     if args.cmd == 'capture':
         return 0 if capture(args.label, explicit, only, args.theme, args.seed,
-                            args.width) else 2
+                            args.width, args.anonymous) else 2
 
     if args.cmd == 'diff':
         return 1 if compare(args.before, args.after) else 0
@@ -599,6 +607,8 @@ def main():
         common.append('--seed')
     if getattr(args, 'width', 1440) != 1440:
         common += ['--width', str(args.width)]
+    if getattr(args, 'anonymous', False):
+        common += ['--anonymous']
     if only:
         common += ['--only', ','.join(only)]
     if explicit:

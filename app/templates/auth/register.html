@@ -29,7 +29,7 @@
       <div class="auth-card__row">
         <div class="form-group">
           <label for="first_name">{{ _("Ім'я") }} <span class="required">*</span></label>
-          {{ form.first_name(class="form-input" + (" is-invalid" if form.first_name.errors else ""), id="first_name", autocomplete="given-name", required=true) }}
+          {{ form.first_name(class="form-input form-input--lg" + (" is-invalid" if form.first_name.errors else ""), id="first_name", autocomplete="given-name", required=true) }}
           {% for error in form.first_name.errors %}
             <div class="form-error">{{ error }}</div>
           {% endfor %}
@@ -37,7 +37,7 @@
 
         <div class="form-group">
           <label for="last_name">{{ _('Прізвище') }} <span class="required">*</span></label>
-          {{ form.last_name(class="form-input" + (" is-invalid" if form.last_name.errors else ""), id="last_name", autocomplete="family-name", required=true) }}
+          {{ form.last_name(class="form-input form-input--lg" + (" is-invalid" if form.last_name.errors else ""), id="last_name", autocomplete="family-name", required=true) }}
           {% for error in form.last_name.errors %}
             <div class="form-error">{{ error }}</div>
           {% endfor %}
@@ -49,7 +49,7 @@
           {{ _('Email') }} <span class="required">*</span>
           <span class="iprm-tooltip-trigger" data-tooltip="{{ _('На цю адресу прийде лист підтвердження. Її ж використовуйте для входу в кабінет.') }}">i</span>
         </label>
-        {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email", autocomplete="email", required=true, **{'data-valid-hint': _('Формат адреси коректний')}) }}
+        {{ form.email(class="form-input form-input--lg" + (" is-invalid" if form.email.errors else ""), id="email", autocomplete="email", required=true, **{'data-valid-hint': _('Формат адреси коректний')}) }}
         {% for error in form.email.errors %}
           <div class="form-error">{{ error }}</div>
         {% endfor %}
@@ -62,7 +62,7 @@
           {{ _('Пароль') }} <span class="required">*</span>
           <span class="iprm-tooltip-trigger" data-tooltip="{{ _('Мінімум 8 символів. Для надійності додайте великі/малі літери, цифри та спецсимволи.') }}">i</span>
         </label>
-        {{ form.password(class="form-input" + (" is-invalid" if form.password.errors else ""), id="password", autocomplete="new-password", required=true, minlength=8) }}
+        {{ form.password(class="form-input form-input--lg" + (" is-invalid" if form.password.errors else ""), id="password", autocomplete="new-password", required=true, minlength=8) }}
         {# aria-live -- на підписі сили всередині (password-strength.js):
            на всьому блоці чекліст спамив би скрінрідер щонатискання. #}
         <div class="pw-strength" data-pw-strength-for="password"></div>
@@ -73,7 +73,7 @@
 
       <div class="form-group">
         <label for="password_confirm">{{ _('Підтвердження') }} <span class="required">*</span></label>
-        {{ form.password_confirm(class="form-input" + (" is-invalid" if form.password_confirm.errors else ""), id="password_confirm", autocomplete="new-password", required=true, **{
+        {{ form.password_confirm(class="form-input form-input--lg" + (" is-invalid" if form.password_confirm.errors else ""), id="password_confirm", autocomplete="new-password", required=true, **{
             'data-match': '#password',
             'data-match-hint': _('Паролі не співпадають'),
             'data-valid-hint': _('Паролі збігаються'),

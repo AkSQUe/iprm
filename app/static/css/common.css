@@ -2021,22 +2021,39 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
 }
 
 /* БАЗОВЕ ПОЛЕ ВВОДУ -- єдине оголошення на весь сайт.
-   Жило в auth.css, хоча той вантажать і публічні форми; адмінка мала власну
-   копію того самого голого `.form-input`, і яка з двох переможе, вирішував
-   порядок підключення. Тепер база тут, а адмінка лишає СКОУПЛЕНІ правила
-   (`.admin-form .form-input` тощо), які виграють специфічністю. */
+
+   База КОМПАКТНА, і це не смак, а замір. Раніше тут стояло 12px 16px /
+   17px, а сімнадцять скоуплених правил у дванадцяти файлах перевизначали
+   його на 10px 14px. Обхід сторінок браузером показав співвідношення:
+   компактне поле малювалось 325 разів, базове -- 12. База описувала
+   виняток, а виняток доводилось писати заново в кожній формі.
+
+   Велике поле лишилось там, де воно й було доречне -- публічні форми входу,
+   реєстрації та контактів, -- і стало явним модифікатором `--lg` нижче.
+
+   background-COLOR, а не скорочення: `background` скидає background-image,
+   а ним малюється стрілка розкриття `select.form-input`. */
 .form-input {
   width: 100%;
-  padding: 12px 16px;
-  font-size: 17px;
+  padding: 10px 14px;
+  font-size: 0.9375rem;
   font-family: var(--iprm-font);
-  border: 1px solid var(--iprm-border-neutral);
+  border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-sm);
-  background: var(--iprm-white);
+  background-color: var(--iprm-card-bg);
   color: var(--iprm-text);
   transition:
     border-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Велике поле: публічні форми, де воно єдиний елемент на екрані й має бути
+   зручним для пальця. Було базою до заміру, описаного вище. */
+.form-input--lg {
+  padding: 12px 16px;
+  font-size: 17px;
+  border-color: var(--iprm-border-neutral);
+  background-color: var(--iprm-white);
 }
 
 .form-input:focus {

@@ -514,3 +514,22 @@
 .ds-swatch__color--warning { background: var(--iprm-warning); }
 .ds-swatch__color--warning-text { background: var(--iprm-warning-text); }
 .ds-swatch__color--error { background: var(--iprm-error); }
+
+/* Демо трьох розмірів поля вводу: підпис ліворуч, поле праворуч. */
+.ds-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ds-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ds-field__label {
+  flex: 0 0 56px;
+  font-size: 0.8125rem;
+  color: var(--iprm-text-secondary);
+}

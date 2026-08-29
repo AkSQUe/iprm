@@ -14,7 +14,7 @@
 {% set _contact_schema = {
   '@context': 'https://schema.org',
   '@type': 'ContactPage',
-  'name': 'Контакти ІПРМ',
+  'name': _('Контакти ІПРМ'),
   'url': url_for('main.contact', _external=True),
   'mainEntity': {
     '@type': 'EducationalOrganization',
@@ -97,31 +97,31 @@
 
           <div class="form-group">
             <label for="name">{{ _('Ім\'я') }} <span class="required">*</span></label>
-            {{ form.name(class="form-input" + (" is-invalid" if form.name.errors else ""), id="name", autocomplete="name", required=true) }}
+            {{ form.name(class="form-input form-input--lg" + (" is-invalid" if form.name.errors else ""), id="name", autocomplete="name", required=true) }}
             {% for error in form.name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
           </div>
 
           <div class="form-group">
             <label for="email">Email <span class="required">*</span></label>
-            {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email", autocomplete="email", required=true) }}
+            {{ form.email(class="form-input form-input--lg" + (" is-invalid" if form.email.errors else ""), id="email", autocomplete="email", required=true) }}
             {% for error in form.email.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
           </div>
 
           <div class="form-group">
             <label for="phone">{{ _('Телефон') }}</label>
-            {{ form.phone(class="form-input", id="phone", autocomplete="tel") }}
+            {{ form.phone(class="form-input form-input--lg", id="phone", autocomplete="tel") }}
             {% for error in form.phone.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
           </div>
 
           <div class="form-group">
             <label for="subject">{{ _('Тема') }}</label>
-            {{ form.subject(class="form-input", id="subject") }}
+            {{ form.subject(class="form-input form-input--lg", id="subject") }}
             {% for error in form.subject.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
           </div>
 
           <div class="form-group">
             <label for="message">{{ _('Повідомлення') }} <span class="required">*</span></label>
-            {{ form.message(class="form-input" + (" is-invalid" if form.message.errors else ""), id="message", required=true) }}
+            {{ form.message(class="form-input form-input--lg" + (" is-invalid" if form.message.errors else ""), id="message", required=true) }}
             {% for error in form.message.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
           </div>
 

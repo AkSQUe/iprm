@@ -27,7 +27,7 @@
 
       <div class="form-group">
         <label for="email">{{ _('Email') }} <span class="required">*</span></label>
-        {{ form.email(class="form-input" + (" is-invalid" if form.email.errors else ""), id="email", autocomplete="email", required=true) }}
+        {{ form.email(class="form-input form-input--lg" + (" is-invalid" if form.email.errors else ""), id="email", autocomplete="email", required=true) }}
         {% for error in form.email.errors %}
           <div class="form-error">{{ error }}</div>
         {% endfor %}
@@ -35,7 +35,7 @@
 
       <div class="form-group">
         <label for="password">{{ _('Пароль') }} <span class="required">*</span></label>
-        {{ form.password(class="form-input" + (" is-invalid" if form.password.errors else ""), id="password", autocomplete="current-password", required=true) }}
+        {{ form.password(class="form-input form-input--lg" + (" is-invalid" if form.password.errors else ""), id="password", autocomplete="current-password", required=true) }}
         {% for error in form.password.errors %}
           <div class="form-error">{{ error }}</div>
         {% endfor %}
