@@ -382,6 +382,73 @@ def cross_domain_components(root=ROOT):
     return out
 
 
+def _rule_bodies(path):
+    """[(медіа, селектор, {властивість: значення})] -- правила одного файлу."""
+    text = re.sub(r'/\*.*?\*/', '', path.read_text(encoding='utf-8'), flags=re.S)
+    out, media, buf, i = [], '', [], 0
+    while i < len(text):
+        ch = text[i]
+        if ch == '{':
+            head = ''.join(buf).strip()
+            buf = []
+            if head.startswith('@'):
+                media = head
+                i += 1
+                continue
+            body, j, depth = '', i + 1, 1
+            while j < len(text) and depth:
+                if text[j] == '{':
+                    depth += 1
+                elif text[j] == '}':
+                    depth -= 1
+                    if not depth:
+                        break
+                body += text[j]
+                j += 1
+            props = {k: ' '.join(v.split())
+                     for k, v in re.findall(r'([-a-z]+)\s*:\s*([^;]+)', body)}
+            for sel in head.split(','):
+                out.append((media, ' '.join(sel.split()), props))
+            i = j + 1
+            continue
+        if ch == '}':
+            media, buf = '', []
+            i += 1
+            continue
+        buf.append(ch)
+        i += 1
+    return out
+
+
+def rule_clones(root=ROOT, min_props=3):
+    """{(медіа, набір): [(файл, селектор)]} -- ОДНАКОВИЙ набір під різними
+    селекторами.
+
+    Це не дублікат у сенсі `duplicate_selectors`: селектори різні, вони не
+    конфліктують, і порядок підключення ні на що не впливає. Саме тому
+    жодна інша міра цього не бачить, а `scoped_variants` навіть зараховує
+    такі правила в «не борг».
+
+    Але однаковий НАБІР означає, що правило описує один компонент,
+    скопійований під кілька скоупів. `.blog-comment-form .form-input` у
+    `blog.css` і `.form-section .form-input` у `common.css` побайтово
+    однакові -- це компактне поле вводу, про яке кожна форма домовилась
+    окремо. Правка одного до решти не доходить, і саме це порушує керівний
+    принцип, хоч дублікатів у проєкті нуль.
+
+    Правила менш ніж із `min_props` властивостями не рахуються: два
+    оголошення з одного `display: flex` збігаються випадково.
+    """
+    groups = {}
+    for path in sorted((root / 'app' / 'static' / 'css').rglob('*.css')):
+        for media, sel, props in _rule_bodies(path):
+            if len(props) < min_props:
+                continue
+            groups.setdefault((media, tuple(sorted(props.items()))),
+                              []).append((path.name, sel))
+    return {k: v for k, v in groups.items() if len(v) > 1}
+
+
 def catalog_only_components(root=ROOT):
     """{клас: файл} -- компоненти, яких не вживає НІХТО, крім каталогу.
 
@@ -495,6 +562,15 @@ def main():
     print('\nКОМПОНЕНТНІ ФАЙЛИ ПОЗА КАТАЛОГОМ: %d' % len(gap))
     for name in gap:
         print('   ' + name)
+    clones = rule_clones()
+    extra = sum(len(v) - 1 for v in clones.values())
+    print('\nПРАВИЛА-БЛИЗНЮКИ (однаковий набір під різними селекторами): '
+          '%d груп, %d зайвих копій' % (len(clones), extra))
+    for (media, props), where in sorted(clones.items(), key=lambda x: -len(x[1]))[:5]:
+        print('   %d копій у %d файлах -- %s'
+              % (len(where), len({f for f, _ in where}),
+                 ', '.join(p for p, _ in props[:4])))
+
     only = catalog_only_components()
     print('\nЖИВУТЬ ЛИШЕ У ВІТРИНІ (єдиний споживач -- каталог): %d' % len(only))
     for cls, name in sorted(only.items()):
