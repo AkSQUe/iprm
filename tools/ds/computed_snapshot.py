@@ -364,6 +364,8 @@ def seed_detail_pages(app):
     from app.models.course import Course
     from app.models.online_course import OnlineCourse
     from app.models.program_block import ProgramBlock
+    from app.models.trainer import Trainer
+    from app.models.clinic import Clinic
 
     urls = []
     with app.app_context():
@@ -374,7 +376,6 @@ def seed_detail_pages(app):
         db.session.add(ProgramBlock(
             course_id=course.id, heading='Модуль знімка',
             items=['Перший пункт', 'Другий пункт'], sort_order=0))
-        urls.append('/courses/snapshot-course')
 
         # sintegrum_id і remote_name -- NOT NULL: онлайн-курси приходять із
         # зовнішньої системи, локально створеного курсу модель не передбачає.
@@ -385,13 +386,61 @@ def seed_detail_pages(app):
         for flag in ('is_published', 'is_active'):
             if hasattr(online, flag):
                 setattr(online, flag, True)
+        # is_vanished теж у фільтрі публікації (app/online/routes.py), а
+        # дефолту в нього немає -- лишався None, і .is_(False) курс не
+        # пропускав. Через це /online/<slug> віддавав 404 і НЕ ЗНІМАВСЯ
+        # ЖОДНОГО РАЗУ, хоч докстрінг вище обіцяв його покриття.
+        if hasattr(online, 'is_vanished'):
+            online.is_vanished = False
         db.session.add(online)
         db.session.flush()
         db.session.add(ProgramBlock(
             online_course_id=online.id, heading='Модуль знімка',
             items=['Перший пункт', 'Другий пункт'], sort_order=0))
-        urls.append('/online/snapshot-online')
+
+        # Тренер із сертифікатами й патентами. Без нього плитки скана
+        # (.trainer-certs__item / .trainer-patent__scan) не рендерились
+        # НІДЕ, і зведення двох однакових правил довелось перевіряти
+        # читанням замість спостереження.
+        trainer = Trainer(full_name='Знімок Тренер', slug='snapshot-trainer',
+                          role='Лікар-дерматолог',
+                          bio='Біографія для знімка.',
+                          is_active=True)
+        # Сертифікати й патенти -- СЛОВНИКИ, не рядки: шаблон бере з них
+        # url/image і без нього просто не малює плитку. Рядок давав
+        # порожню секцію, тобто мовчазну прогалину покриття.
+        for field, value in (('certificates', [{'url': '/static/images/logo.svg',
+                                               'caption': 'Сертифікат знімка'}]),
+                             ('patents', [{'image': '/static/images/logo.svg',
+                                          'label': 'Патент знімка'}]),
+                             ('research', ['Дослідження знімка']),
+                             ('skills', ['Навичка знімка']),
+                             ('education', ['Освіта знімка'])):
+            if hasattr(trainer, field):
+                setattr(trainer, field, value)
+        db.session.add(trainer)
+
+        # Клініка: картка в переліку й детальна сторінка.
+        clinic = Clinic(name='Знімок Клініка', slug='snapshot-clinic',
+                        short_description='Короткий опис для знімка.',
+                        description='Опис для знімка.',
+                        is_active=True)
+        db.session.add(clinic)
+
         db.session.commit()
+
+        # Адреси беремо з url_for, а не рядком. Зашитий '/online/<slug>'
+        # НІКОЛИ не збігався: справжній роут -- '/online-courses/<slug>',
+        # тож сторінка онлайн-курсу мовчки віддавала 404 і в знімок не
+        # потрапляла жодного разу, хоч докстрінг вище обіцяв її покриття.
+        from flask import url_for
+        with app.test_request_context():
+            urls = [
+                url_for('courses.course_by_slug', slug=course.slug),
+                url_for('online.course_detail', slug=online.slug),
+                url_for('trainers.trainer_detail', slug=trainer.slug),
+                url_for('clinics.clinic_detail', slug=clinic.slug),
+            ]
     return urls
 
 
