@@ -3,6 +3,7 @@
 {% block title %}Резервні копії | Адмін-панель{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-backup.css') }}?v={{ assets_version }}">
 {% endblock %}
 
@@ -39,12 +40,12 @@
           data-single-submit data-submitting-label="Створюємо копію…">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="backup-actions__row">
-        <select name="backup_type" class="form-input form-input--lg backup-actions__select">
+        <select name="backup_type" class="form-input backup-actions__select">
           <option value="full">Повна копія</option>
           <option value="schema_only">Тільки схема</option>
           <option value="data_only">Тільки дані</option>
         </select>
-        <input type="text" name="description" class="form-input form-input--lg backup-actions__desc" placeholder="Опис (необов'язково)">
+        <input type="text" name="description" class="form-input backup-actions__desc" placeholder="Опис (необов'язково)">
         <button type="submit" class="apple-btn apple-btn--primary">Створити копію</button>
       </div>
     </form>
