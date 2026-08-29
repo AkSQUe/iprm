@@ -148,10 +148,6 @@
   flex-direction: column;
 }
 
-.contact-page__form-wrap .form-group {
-  margin-bottom: 20px;
-}
-
 .contact-page__form-wrap textarea.form-input {
   resize: vertical;
   min-height: 120px;
