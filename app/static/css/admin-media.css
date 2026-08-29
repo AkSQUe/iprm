@@ -16,7 +16,7 @@
    доти поле ховалось через `display: none`, а це викидало його з порядку
    табуляції -- завантажити файл із клавіатури було неможливо взагалі. */
 .media-upload:focus-within {
-  border-color: var(--iprm-nav-active);
+  border-color: var(--iprm-accent);
   outline: 2px solid var(--iprm-nav-active);
   outline-offset: 3px;
 }
@@ -66,7 +66,7 @@
    бере --apple-gray, як і решта полів адмінки (див. admin.css). */
 .media-card__alt::placeholder { color: var(--apple-gray); }
 .media-card__alt:focus {
-  border-color: var(--iprm-nav-active);
+  border-color: var(--iprm-accent);
   box-shadow: 0 0 0 3px var(--iprm-accent-light);
   outline: none;
 }

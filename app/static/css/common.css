@@ -2028,7 +2028,7 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
 
 .form-input:focus {
   outline: none;
-  border-color: var(--iprm-nav-active);
+  border-color: var(--iprm-accent);
   box-shadow: 0 0 0 3px var(--iprm-accent-light);
 }
 

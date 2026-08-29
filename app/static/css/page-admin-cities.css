@@ -192,7 +192,7 @@
 
 .cities-table .cities-input:focus {
   border-style: solid;
-  border-color: var(--iprm-nav-active);
+  border-color: var(--iprm-accent);
 }
 
 /* ========== ЛИПКА ПАНЕЛЬ ЗБЕРЕЖЕННЯ ========== */

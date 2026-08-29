@@ -1745,14 +1745,9 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-with-sidebar .form-section .form-input:focus,
-.admin-form .form-input:focus,
-.admin-control-row .form-input:focus,
-.admin-filters__form .form-input:focus,
-.backup-actions__form .form-input:focus {
-  border-color: var(--iprm-nav-active);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
-  outline: none;
-}
+/* Правило фокуса тут БУЛО, і воно дослівно повторювало базове
+   `.form-input:focus` з common.css. Скоуп не давав нічого: значення
+   ті самі, а базове правило вже діє на кожен .form-input. */
 
 /* Плейсхолдер бере --apple-gray, а не --iprm-border-neutral: останній -- рівень
    ЛІНІЙ (#d2d2d7 / #48484a), і як текст давав 1.38 у світлій та 1.86 у тёмній
