@@ -82,7 +82,7 @@
           {% if m.width %}{{ m.width }}×{{ m.height }}{% endif %}
           {% if m.entity_type %}· <span class="media-card__used">{{ ent_labels.get(m.entity_type, m.entity_type) }} #{{ m.entity_id }} · {{ m.usage_type }}</span>{% else %}· без прив'язки{% endif %}
         </div>
-        <input class="form-input media-card__alt iprm-focus-ring" data-id="{{ m.id }}" value="{{ m.alt_text or '' }}" placeholder="Alt-текст" maxlength="255">
+        <input class="form-input media-card__alt" data-id="{{ m.id }}" value="{{ m.alt_text or '' }}" placeholder="Alt-текст" maxlength="255">
         {# Привʼязаний файл питає підтвердження: видалення ще й чистить
            посилання на нього в контенті, і цього відкат не поверне.
            Непривʼязаний видаляється одразу -- з тостом "Повернути". #}

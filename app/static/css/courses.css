@@ -1429,8 +1429,9 @@ button.iprm-tag:focus-visible {
   color: var(--apple-gray);
 }
 
-/* Кільце фокуса -- .iprm-focus-ring (common.css), клас стоїть на самому
-   input поряд із .iprm-course-search__input. */
+/* Кільце фокуса -- через спільне з common.css правило .form-input:focus:
+   .iprm-course-search__input завжди стоїть поряд із .form-input, окрема
+   утиліта .iprm-focus-ring тут була зайвою й прибрана з розмітки. */
 
 .iprm-course-search__input:focus-visible {
   outline: 2px solid var(--iprm-accent);

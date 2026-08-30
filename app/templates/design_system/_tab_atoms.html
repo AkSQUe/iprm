@@ -357,10 +357,10 @@
       <h2 class="ds-title">iprm-focus-ring</h2>
       <div class="ds-demo">
         <div class="ds-row">
-          <input class="form-input iprm-focus-ring ds-field-narrow" value="Клацніть -- побачите кільце фокуса">
+          <input class="iprm-focus-ring ds-field-narrow" value="Клацніть -- побачите кільце фокуса">
         </div>
       </div>
-      <p class="ds-hint">Кільце фокуса (`outline: none` + рамка й тінь у колір акценту) поза `.form-input` -- на `contenteditable`-полі редакторів блогу, полі пошуку календаря й alt-тексті медіатеки. Клас ставиться прямо на елемент поряд із його власним; правило спільне з `.form-input:focus` (common.css). Заміняє сім копій цього самого правила під різними селекторами, що жили в admin-media.css, courses.css (тричі) і page-admin-blog-editor.css, page-home.css -- правка кільця раніше доходила лише до того селектора, який згадали.</p>
+      <p class="ds-hint">Кільце фокуса (`outline: none` + рамка й тінь у колір акценту) поза `.form-input` -- на `contenteditable`-полі редактора блогу (`blog-editor.js`) і полі пошуку календаря (`page-courses-schedule.js`). Клас ставиться прямо на елемент поряд із його власним; правило спільне з `.form-input:focus` (common.css). Демо вище -- без `.form-input`: саме на такому елементі кільце дає видимий ефект, тому поле й показує різницю, якщо клас прибрати. Заміняло сім копій цього самого правила під різними селекторами, що жили в admin-media.css, courses.css (тричі), page-admin-blog-editor.css і page-home.css; п'ять із них стояли на елементах, що вже мали `.form-input` і власне правило `.form-input:focus` -- клас там нічого не міняв, тож прибраний з розмітки (alt-текст медіатеки, пошук курсів, три поля ROI-калькулятора Головної).</p>
     </div>
   </div>
 
