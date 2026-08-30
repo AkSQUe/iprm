@@ -93,9 +93,15 @@
             <br><small class="admin-text-muted">/{{ c.slug }}</small>
           </td>
           <td>{{ c.sintegrum_id }}</td>
+          {# Ця колонка показує ВІДДАЛЕНИЙ стан Sintegrum, а фільтр `status`
+             реєстру звужує за ЛОКАЛЬНИМ станом публікації й готовності --
+             різні виміри. `is_vanished` -- єдина гілка, де вони збігаються:
+             "Зник" тут і `status=vanished` у фільтрі -- те саме поле
+             `is_vanished`. Активний/неактивний стан у Sintegrum (дві гілки
+             нижче) фільтр не розрізняє взагалі, тож лишаються текстом. #}
           <td>
             {% if c.is_vanished %}
-              <span class="badge badge--danger">Зник</span>
+              <a href="{{ url_for('admin.online_courses_list', status='vanished') }}"><span class="badge badge--danger">Зник</span></a>
             {% elif c.is_remote_active %}
               <span class="badge badge--active">{{ c.remote_status_label }}</span>
             {% else %}
@@ -115,19 +121,28 @@
               {% if c.price_is_overridden %}<br><small class="admin-text-muted">своя ціна</small>{% endif %}
             {% else %}<span class="admin-text-muted">не задана</span>{% endif %}
           </td>
+          {# `can_be_published` -- той самий предикат, що фільтр `status=ready`
+             (`OnlineCourse.publishable_clause()`), тож тут обидва боки --
+             один вимір, на відміну від колонки «Стан у Sintegrum» вище. #}
           <td>
             {% if c.can_be_published %}
-              <span class="badge badge--active">Готовий</span>
+              <a href="{{ url_for('admin.online_courses_list', status='ready') }}"><span class="badge badge--active">Готовий</span></a>
             {% else %}
-              <span class="badge badge--draft" title="Бракує: {{ c.missing_for_publication|join(', ') }}">Бракує даних</span>
+              {# Тултип на бейджі був би дублем -- той самий перелік уже
+                 друкується нижче в `<small>`, тож другого місця йому не
+                 треба. #}
+              <a href="{{ url_for('admin.online_courses_list', status='incomplete') }}"><span class="badge badge--draft">Бракує даних</span></a>
               <br><small class="admin-text-muted">{{ c.missing_for_publication|join(', ') }}</small>
             {% endif %}
           </td>
+          {# `is_published` -- те саме поле, за яким фільтр `status` звужує
+             на published/hidden: тут, на відміну від колонки «Стан у
+             Sintegrum», вимір колонки й вимір фільтра збігаються. #}
           <td>
             {% if c.is_published %}
-              <span class="badge badge--published">Опубліковано</span>
+              <a href="{{ url_for('admin.online_courses_list', status='published') }}"><span class="badge badge--published">Опубліковано</span></a>
             {% else %}
-              <span class="badge badge--draft">Приховано</span>
+              <a href="{{ url_for('admin.online_courses_list', status='hidden') }}"><span class="badge badge--draft">Приховано</span></a>
             {% endif %}
           </td>
           <td>

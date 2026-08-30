@@ -75,9 +75,19 @@
         <tbody>
           {% for c in comments %}
           <tr>
+            {# ПІБ веде в реєстр користувачів пошуком по email -- FK на User
+               в моделі немає (коментар анонімний), тож email -- єдиний ключ,
+               яким можна перевірити "чи є в нас акаунт цієї людини". Лінк
+               лише коли email заповнений: анонім без пошти шукати нема за
+               чим. Сам email під ПІБ лишається текстом, а не другим лінком
+               у ту саму ціль (принцип 3). #}
             <td>
+              {% if c.email %}
+              <a href="{{ url_for('admin.users', q=c.email) }}"><strong>{{ c.author_name }}</strong></a>
+              <div class="admin-text-muted">{{ c.email }}</div>
+              {% else %}
               <strong>{{ c.author_name }}</strong>
-              {% if c.email %}<div class="admin-text-muted">{{ c.email }}</div>{% endif %}
+              {% endif %}
               {% if c.parent_id %}<div class="admin-text-muted">↳ відповідь</div>{% endif %}
             </td>
             {# Два рядки з трикрапкою, повний текст -- у title: модерувати
@@ -88,8 +98,10 @@
               {% if c.post %}<a href="{{ url_for('admin.blog_edit', post_id=c.post_id) }}">{{ c.post.title }}</a>{% else %}—{% endif %}
             </td>
             <td>{{ c.created_at.strftime('%d.%m.%Y %H:%M') if c.created_at else '—' }}</td>
+            {# `status`, поле моделі, а не `status_label`: фільтр реєстру
+               приймає саме код. #}
             <td>
-              <span class="badge badge--{{ c.status_badge }}">{{ c.status_label }}</span>
+              <a href="{{ url_for('admin.blog_comments', status=c.status) }}"><span class="badge badge--{{ c.status_badge }}">{{ c.status_label }}</span></a>
             </td>
             <td class="admin-table__actions">
               {% if c.status != 'approved' %}

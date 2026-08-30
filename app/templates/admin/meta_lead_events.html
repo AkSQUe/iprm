@@ -82,9 +82,10 @@
       <tr>
         <td class="admin-nowrap">{{ event.received_at | kyiv('%d.%m.%Y %H:%M:%S') or '–' }}</td>
         <td><code class="admin-code">{{ event.leadgen_id }}</code></td>
-        <td>{{ source_labels.get(event.source, event.source) }}</td>
+        {# `source` -- поле моделі, а не лейбл: фільтр реєстру приймає код. #}
+        <td><a href="{{ url_for('admin.meta_lead_events', source=event.source) }}">{{ source_labels.get(event.source, event.source) }}</a></td>
         <td>
-          <span class="badge badge--{{ event.status_badge }}">{{ event.status_label }}</span>
+          <a href="{{ url_for('admin.meta_lead_events', status=event.status) }}"><span class="badge badge--{{ event.status_badge }}">{{ event.status_label }}</span></a>
           {% if event.last_error %}
           <details class="ml-error">
             <summary>{{ icon('error') }} Деталі</summary>

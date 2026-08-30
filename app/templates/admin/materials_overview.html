@@ -137,7 +137,11 @@
         {# Бейдж дизайн-системи замість власного: `.materials-status-badge`
            дублював `.badge` хардкодом і знав чотири стани з восьми -- решта
            друкувалась голим текстом без плашки. #}
-        <td><span class="badge badge--{{ r.status_badge }}">{{ r.status_label }}</span></td>
+        {# `status`, поле моделі, а не `status_label`: фільтр звужує саме по
+           ньому. Кількість позицій НЕ лінкуємо -- рядок уже двічі веде в
+           `instance_materials` (назва заходу, кнопка дій), третій лінк туди
+           ж порушив би принцип "дві комірки одного рядка не в одне місце". #}
+        <td><a href="{{ url_for('admin.materials_overview', status=r.status) }}"><span class="badge badge--{{ r.status_badge }}">{{ r.status_label }}</span></a></td>
         <td>{{ r.items|length }}</td>
         {# Обгортка обов'язкова: у картковому режимі комірка -- flex зі
            space-between, і дата з коментарем роз'їхались би до протилежних

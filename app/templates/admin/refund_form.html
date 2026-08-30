@@ -62,7 +62,12 @@
           <tr><td>{{ 'Курс' if is_enrollment else 'Захід' }}</td><td>{{ order_title }}</td></tr>
           <tr>
             <td>Покупець</td>
-            <td>{{ order.user.first_name }} {{ order.user.last_name }} &mdash; {{ order.user.email }}</td>
+            <td>
+              {# Рішення про повернення ухвалюють по людині -- сторінка досі
+                 не мала жодного входу в її картку. #}
+              <a href="{{ url_for('admin.user_detail', user_id=order.user.id) }}">{{ order.user.first_name }} {{ order.user.last_name }}</a>
+              &mdash; {{ order.user.email }}
+            </td>
           </tr>
           <tr>
             <td>Оплачено</td>

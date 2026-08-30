@@ -228,10 +228,13 @@
         </thead>
         <tbody>
           {% for event in events %}
+          {# Ця сторінка власного фільтра подій не має -- обидва значення
+             ведуть у РЕЄСТР подій (`admin.meta_lead_events`) з тим самим
+             фільтром, що й там. #}
           <tr>
             <td>{{ event.received_at | kyiv('%d.%m.%Y %H:%M:%S') or '–' }}</td>
-            <td>{{ event.source }}</td>
-            <td><span class="badge badge--{{ event.status_badge }}">{{ event.status_label }}</span></td>
+            <td><a href="{{ url_for('admin.meta_lead_events', source=event.source) }}">{{ event.source }}</a></td>
+            <td><a href="{{ url_for('admin.meta_lead_events', status=event.status) }}"><span class="badge badge--{{ event.status_badge }}">{{ event.status_label }}</span></a></td>
             <td>{{ event.attempts }} / {{ max_attempts }}</td>
             <td>{{ event.last_error or '–' }}</td>
           </tr>
