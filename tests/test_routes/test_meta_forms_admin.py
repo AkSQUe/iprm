@@ -175,3 +175,73 @@ def test_offer_choices_query_base_list_once(client, admin, monkeypatch):
 
     assert page.status_code == 200
     assert len(calls) == 1, f'очікували один запит бази, отримали {len(calls)}'
+
+
+def test_sync_forms_returns_to_the_forms_page(client, admin):
+    """Кнопка живе на сторінці форм -- і повертати мусить на неї.
+
+    Порожній стан цієї ж сторінки прямо каже «Натисніть „Оновити підписи
+    форм“». Редирект на Налаштування викидав адміна туди, де цієї кнопки
+    вже немає.
+    """
+    from app.models.site_settings import SiteSettings
+
+    settings = SiteSettings.get()
+    before = settings.meta_page_id
+    settings.meta_page_id = ''
+    db.session.flush()
+    _login(client, admin)
+
+    page = client.post('/admin/meta-leads/settings/sync-forms')
+
+    settings.meta_page_id = before
+    db.session.flush()
+    assert page.status_code == 302
+    assert page.headers['Location'].endswith('/admin/meta-leads/forms')
+
+
+def test_offer_dropdown_does_not_load_heavy_relations(client, admin):
+    """Випадайка бере рівно id, назву й дату -- і нічого більше.
+
+    `CourseInstance.material_reservations` і `Course.material_kits`
+    оголошені `lazy='selectin'`, тож завантаження заходу цілком тягло за
+    собою ще два SELECT на КОЖЕН варіант випадайки.
+    """
+    from sqlalchemy import event as sa_event
+
+    _login(client, admin)
+    for i in range(3):
+        _instance(10 + i)
+    db.session.add(MetaLeadForm(form_id='920', questions={}))
+    db.session.flush()
+
+    statements = []
+
+    def _record(conn, cursor, statement, params, context, executemany):
+        statements.append(statement)
+
+    sa_event.listen(db.engine, 'before_cursor_execute', _record)
+    try:
+        page = client.get('/admin/meta-leads/forms')
+    finally:
+        sa_event.remove(db.engine, 'before_cursor_execute', _record)
+
+    assert page.status_code == 200
+    heavy = [s for s in statements
+             if 'material_reservations' in s or 'material_kits' in s]
+    assert heavy == [], f'важкі зв\'язки підвантажились: {len(heavy)} запит(ів)'
+
+
+def test_active_form_is_not_painted_as_a_draft(client, admin):
+    """Стан форми має читатись: активна -- не чернетка."""
+    _login(client, admin)
+    db.session.add(MetaLeadForm(form_id='930', name='Активна', status='ACTIVE',
+                                questions={}))
+    db.session.add(MetaLeadForm(form_id='931', name='Архівна',
+                                status='ARCHIVED', questions={}))
+    db.session.flush()
+
+    body = client.get('/admin/meta-leads/forms').data.decode()
+
+    assert 'badge--active' in body
+    assert 'badge--completed' in body

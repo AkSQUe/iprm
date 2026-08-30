@@ -37,7 +37,46 @@ def _lead(days_ago, **over):
     return lead
 
 
-def test_only_leads_since_the_date_are_replayed(app, monkeypatch):
+@pytest.fixture
+def partner_on(app):
+    """Увімкнена партнерська інтеграція -- умова, за якої команда щось робить.
+
+    Без неї `enqueue_partner_event` не ставить у чергу нічого, і бекфіл
+    лише мовчки перебирає історію.
+    """
+    from app.models.site_settings import SiteSettings
+
+    settings = SiteSettings.get()
+    before = (settings.partner_integration_enabled,
+              settings.mm_medic_integration_enabled,
+              settings.mm_medic_api_base_url)
+    settings.partner_integration_enabled = True
+    settings.mm_medic_integration_enabled = True
+    settings.mm_medic_api_base_url = 'https://mm-medic.test'
+    db.session.commit()
+
+    yield settings
+
+    (settings.partner_integration_enabled,
+     settings.mm_medic_integration_enabled,
+     settings.mm_medic_api_base_url) = before
+    db.session.commit()
+
+
+def _since():
+    return (datetime.now(timezone.utc) - timedelta(days=7)).date().isoformat()
+
+
+def _clear_queue():
+    from app.models.webhook_delivery import WebhookDelivery
+
+    WebhookDelivery.query.filter(
+        WebhookDelivery.event_type.isnot(None)).delete(
+            synchronize_session=False)
+    db.session.commit()
+
+
+def test_only_leads_since_the_date_are_replayed(app, partner_on, monkeypatch):
     sent = []
     monkeypatch.setattr('app.services.partner_events.emit_lead_created',
                         lambda lead: sent.append(lead.leadgen_id))
@@ -46,8 +85,7 @@ def test_only_leads_since_the_date_are_replayed(app, monkeypatch):
     db.session.commit()
 
     runner = app.test_cli_runner()
-    since = (datetime.now(timezone.utc) - timedelta(days=7)).date().isoformat()
-    result = runner.invoke(args=['meta-reemit-leads', '--since', since])
+    result = runner.invoke(args=['meta-reemit-leads', '--since', _since()])
 
     assert result.exit_code == 0
     assert sent == [recent.leadgen_id]
@@ -61,16 +99,15 @@ def test_dry_run_sends_nothing(app, monkeypatch):
     db.session.commit()
 
     runner = app.test_cli_runner()
-    since = (datetime.now(timezone.utc) - timedelta(days=7)).date().isoformat()
     result = runner.invoke(
-        args=['meta-reemit-leads', '--since', since, '--dry-run'])
+        args=['meta-reemit-leads', '--since', _since(), '--dry-run'])
 
     assert result.exit_code == 0
     assert sent == []
     assert 'буде надіслано' in result.output
 
 
-def test_test_and_deleted_leads_are_skipped(app, monkeypatch):
+def test_test_and_deleted_leads_are_skipped(app, partner_on, monkeypatch):
     """Ті самі відсіювання, що й у живому шляху: чужу базу не смітимо."""
     sent = []
     monkeypatch.setattr('app.services.partner_events.emit_lead_created',
@@ -80,7 +117,89 @@ def test_test_and_deleted_leads_are_skipped(app, monkeypatch):
     db.session.commit()
 
     runner = app.test_cli_runner()
-    since = (datetime.now(timezone.utc) - timedelta(days=7)).date().isoformat()
-    runner.invoke(args=['meta-reemit-leads', '--since', since])
+    runner.invoke(args=['meta-reemit-leads', '--since', _since()])
 
     assert sent == []
+
+
+def test_report_counts_rows_that_really_reached_the_queue(app, partner_on):
+    """Рахуємо ПОСТАНОВКИ в чергу, а не виклики.
+
+    `emit_lead_created` мовчки відсіює заявку без жодного контакту, а
+    `enqueue_partner_event` не ставить нічого, коли слати нікуди. Лічильник
+    викликів казав «2 із 2» там, де в черзі нуль -- і оператор вважав
+    історію перенесеною.
+    """
+    from app.models.webhook_delivery import WebhookDelivery
+
+    _clear_queue()
+    _lead(1)
+    _lead(1, email=None)
+    db.session.commit()
+
+    runner = app.test_cli_runner()
+    result = runner.invoke(args=['meta-reemit-leads', '--since', _since()])
+
+    assert result.exit_code == 0
+    queued = WebhookDelivery.query.filter_by(event_type='lead.created').count()
+    assert queued == 1
+    assert 'Поставлено в чергу подій: 1 із 2' in result.output
+
+
+def test_disabled_integration_is_said_out_loud(app, monkeypatch):
+    """Вимкнена інтеграція -- окремий рядок, а не зелене число.
+
+    Інакше прогін звітував про успіх, не поставивши в чергу жодного рядка.
+    """
+    from app.models.site_settings import SiteSettings
+    from app.services import partner_events
+
+    settings = SiteSettings.get()
+    settings.partner_integration_enabled = False
+    db.session.commit()
+    sent = []
+    monkeypatch.setattr(partner_events, 'emit_lead_created',
+                        lambda lead: sent.append(lead.leadgen_id))
+    _lead(1)
+    db.session.commit()
+
+    runner = app.test_cli_runner()
+    result = runner.invoke(args=['meta-reemit-leads', '--since', _since()])
+
+    assert 'вимкнен' in result.output
+    assert sent == []
+
+
+def test_dry_run_shows_how_many_go_without_an_offer(app, partner_on):
+    """Заявку без прив'язаної форми видно ДО прогону, а не після.
+
+    Приймач партнера відсіює дубль за `leadgen_id` першим, тож перша
+    доставка -- єдина, що запише захід. Бекфіл, запущений до прив'язки
+    форм, лишає ці заявки без заходу назавжди.
+    """
+    from app.models.course import Course
+    from app.models.course_instance import CourseInstance
+    from app.models.meta_lead import MetaLeadForm
+
+    course = Course(title='Курс бекфілу', slug='backfill-course')
+    db.session.add(course)
+    db.session.flush()
+    instance = CourseInstance(
+        course_id=course.id, status='published',
+        start_date=datetime.now(timezone.utc) + timedelta(days=20))
+    db.session.add(instance)
+    db.session.flush()
+    db.session.add(MetaLeadForm(form_id='901', questions={},
+                                course_instance_id=instance.id))
+    db.session.flush()
+    _lead(1, form_id='901')
+    _lead(1, form_id='902')
+    db.session.commit()
+
+    runner = app.test_cli_runner()
+    result = runner.invoke(
+        args=['meta-reemit-leads', '--since', _since(), '--dry-run'])
+
+    assert result.exit_code == 0
+    assert 'Без заходу' in result.output
+    assert '1' in result.output.split('Без заходу')[1].splitlines()[0]

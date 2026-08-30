@@ -38,6 +38,15 @@ logger = logging.getLogger(__name__)
 #: одного ключа не трапляється.
 _MULTI_SEP = ', '
 
+#: Поля Meta, що вже розібрані в окремі колонки заявки. Хто показує або
+#: віддає їх окремо (картка ліда, payload партнера), той відсіває їх зі
+#: списку відповідей цим набором -- інакше ПІБ, пошта й телефон їдуть двічі.
+#: Список один на всіх саме тому: дві копії розійшлися б на першій правці,
+#: і одна з них почала б віддавати назовні зайві персональні дані.
+STANDARD_FIELDS = frozenset({
+    'email', 'phone_number', 'phone', 'full_name', 'first_name', 'last_name',
+})
+
 
 # --- розбір відповіді Graph API -------------------------------------------
 
@@ -246,7 +255,7 @@ def labels_for(form_id):
     return (form.questions or {}) if form is not None else {}
 
 
-def answers_for(field_data, form_id, skip=()):
+def answers_for(field_data, form_id, skip=(), schema=None):
     """Відповіді заявки з людськими підписами: список пар (питання, відповідь).
 
     Список, а не dict: два питання форми цілком можуть мати однаковий
@@ -254,13 +263,19 @@ def answers_for(field_data, form_id, skip=()):
     відповідей.
 
     Порядок -- як у відповіді Meta, тобто як у самій формі. `skip` --
-    ключі, які показані окремо (пошта, телефон, ПІБ).
+    ключі, які показані окремо (пошта, телефон, ПІБ), звичайно
+    `STANDARD_FIELDS`.
+
+    `schema` -- уже прочитана схема форми. Потрібна тому, що виклик, який
+    поруч бере з ТІЄЇ САМОЇ форми ще й прив'язаний захід (payload партнера),
+    інакше діставав би той самий рядок двічі -- і множив це на всю історію
+    під час бекфілу. None означає «прочитай сам».
     """
     data = field_data if isinstance(field_data, dict) else {}
     if not data:
         return []
 
-    schema = labels_for(form_id)
+    schema = labels_for(form_id) if schema is None else schema
     skip = frozenset(skip)
 
     answers = []

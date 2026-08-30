@@ -903,16 +903,22 @@ def meta_reemit_leads(since, limit, dry_run):
     старим payload-ом і самі себе не перевідправлять. Без цієї команди
     робота не має сенсу для всього, що вже сталося.
 
-    Ідемпотентність тримає ПРИЙМАЧ: у MM Medic `leadgen_id` унікальний, і
-    повтор там відповідає `skipped`. Тому переграти можна скільки завгодно
-    разів, і безпечніше переграти зайве, ніж недобрати.
+    Повтор БЕЗПЕЧНИЙ, але він НЕ ВИПРАВЛЯЄ вже доставлене. Приймач MM Medic
+    відсіює дубль за унікальним `leadgen_id` ПЕРШИМ і більше нічого з
+    подією не робить, тож `offer` і `answers` записує рівно перша доставка.
+    Практичний наслідок один: спершу прив'яжіть форми до заходів
+    (`/admin/meta-leads/forms`), і лише тоді переграйте історію. Заявка,
+    відправлена до прив'язки, лишиться без заходу назавжди -- і саме її
+    рахує окремим рядком `--dry-run`.
 
     Тестові й видалені заявки не йдуть -- ті самі відсіювання, що й у
     живому шляху `emit_lead_created`.
     """
     from datetime import datetime, timezone
 
-    from app.models.meta_lead import MetaLead
+    from app.extensions import db
+    from app.models.meta_lead import MetaLead, MetaLeadForm
+    from app.models.site_settings import SiteSettings
     from app.services import partner_events
 
     try:
@@ -933,21 +939,54 @@ def meta_reemit_leads(since, limit, dry_run):
     leads = query.all()
 
     if dry_run:
+        # Форми з прив'язаним заходом -- одним запитом на весь прогін:
+        # питання до бази те саме для кожної заявки.
+        linked = {
+            form_id for (form_id,) in db.session.query(MetaLeadForm.form_id)
+            .filter(MetaLeadForm.course_instance_id.isnot(None))
+        }
+        without_offer = sum(
+            1 for lead in leads if (lead.form_id or '') not in linked)
+
         click.echo(f'Заявок буде надіслано: {len(leads)}')
+        # Окремим рядком і ДО прогону: перша доставка -- єдина, що запише
+        # захід, тож ці заявки лишаться без нього назавжди. Побачити це
+        # після запуску вже нема сенсу.
+        click.echo(f'Без заходу (форма не прив\'язана): {without_offer}')
+        if without_offer:
+            click.echo('  Прив\'яжіть форми в /admin/meta-leads/forms ПЕРЕД '
+                       'прогоном -- повтор цього вже не виправить.')
         for lead in leads[:20]:
             click.echo(f'  {lead.leadgen_id}  {lead.created_time}  '
                        f'{lead.display_name}')
         return
 
-    sent = 0
+    # Вимкнена інтеграція -- окремим рядком, а не мовчазним нулем: інакше
+    # прогін звітував про успіх, не поставивши в чергу жодного рядка.
+    settings = SiteSettings.get()
+    if not (settings.partner_integration_enabled
+            and getattr(settings, 'mm_medic_integration_enabled', False)
+            and (settings.mm_medic_api_base_url or '').strip()):
+        click.echo('Партнерська інтеграція вимкнена або не має базового URL: '
+                   'у чергу не піде нічого. Увімкніть її в налаштуваннях '
+                   'інтеграцій і повторіть.', err=True)
+        return
+
+    queued = 0
     for lead in leads:
         try:
-            partner_events.emit_lead_created(lead)
-            sent += 1
+            # Рахуємо РЯДКИ ЧЕРГИ, а не виклики: заявку без жодного контакту
+            # `emit_lead_created` мовчки відсіює сам, і лічильник викликів
+            # обіцяв би доставку, якої не було.
+            if partner_events.emit_lead_created(lead) is not None:
+                queued += 1
         except Exception as exc:
             # Одна заявка, що не пішла, не має зупиняти решту: повторний
             # прогін безпечний, а зупинка посеред партії лишила б половину
             # історії неперенесеною й непомітно.
             click.echo(f'  ПОМИЛКА {lead.leadgen_id}: {exc}', err=True)
 
-    click.echo(f'Надіслано подій: {sent} із {len(leads)}')
+    click.echo(f'Поставлено в чергу подій: {queued} із {len(leads)}')
+    if queued < len(leads):
+        click.echo('Решта не поїхала: заявки без жодного контакту зіставити '
+                   'нема за чим, і партнеру вони не потрібні.')

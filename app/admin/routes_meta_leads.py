@@ -17,6 +17,7 @@ import hmac
 import json
 import logging
 import uuid
+from collections import namedtuple
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -438,13 +439,6 @@ def meta_leads_export():
 # Картка ліда
 # ---------------------------------------------------------------------------
 
-# Поля Meta, що вже розібрані в окремі колонки. У блоці «відповіді форми»
-# їх не дублюємо -- лишаються тільки кастомні питання кампанії.
-_STANDARD_FIELDS = frozenset({
-    'email', 'phone_number', 'phone', 'full_name', 'first_name', 'last_name',
-})
-
-
 def _custom_answers(lead):
     """Відповіді на нестандартні питання -- пари (питання, відповідь).
 
@@ -455,9 +449,14 @@ def _custom_answers(lead):
 
     Список пар, а не dict: два питання форми цілком можуть мати однаковий
     підпис, і dict тихо загубив би одну з відповідей.
+
+    Поля, вже розібрані в окремі колонки (ПІБ, пошта, телефон), відсіяні
+    спільним `STANDARD_FIELDS`: той самий набір читає payload партнера, і
+    друга копія списку розійшлася б із ним на першій же правці.
     """
     return meta_form_schema.answers_for(
-        lead.field_data, lead.form_id, skip=_STANDARD_FIELDS,
+        lead.field_data, lead.form_id,
+        skip=meta_form_schema.STANDARD_FIELDS,
     )
 
 
@@ -513,6 +512,53 @@ def meta_lead_detail(lead_id):
     )
 
 
+# ---------------------------------------------------------------------------
+# Форми: прив'язка до заходу
+# ---------------------------------------------------------------------------
+
+#: Один варіант випадайки: рівно те, що друкує `<option>`.
+#:
+#: Не ORM-об'єкт саме тому, що `<option>` більшого й не показує.
+#: `CourseInstance.material_reservations` і `Course.material_kits` оголошені
+#: `lazy='selectin'`, тож кожен завантажений захід тягнув за собою ще два
+#: SELECT, а звертання до `instance.course.title` -- третій. Виміряно на
+#: чистому HEAD: 10 форм на 40 живих заходів дали 87 запитів і 90 КБ HTML
+#: там, де сторінці треба три поля.
+OfferChoice = namedtuple('OfferChoice', 'id title start_date')
+
+# Стани форми в Meta -> бейджі спільної адмінської палітри. Мапа в шарі
+# подання, а не властивість моделі: колір -- рішення показу, і модель про
+# CSS знати не мусить. Активна форма фарбувалась як чернетка, тобто стан
+# на сторінці не читався взагалі.
+_FORM_STATUS_BADGES = {
+    'ACTIVE': 'badge--active',
+    'PAUSED': 'badge--warning',
+    'ARCHIVED': 'badge--completed',
+    'DELETED': 'badge--danger',
+    'DRAFT': 'badge--draft',
+}
+
+
+def form_status_badge(status):
+    """Модифікатор бейджа для стану форми Meta.
+
+    Невідомий стан отримує нейтральний бейдж, а не колір навмання: Meta
+    може завести новий, і пофарбувати його зеленим означало б збрехати.
+    """
+    return _FORM_STATUS_BADGES.get(
+        str(status or '').strip().upper(), 'badge--pending')
+
+
+def _offer_rows():
+    """Запит трьох полів заходу для випадайки -- без гідрації моделей."""
+    from app.models.course import Course
+    from app.models.course_instance import CourseInstance
+
+    return db.session.query(
+        CourseInstance.id, Course.title, CourseInstance.start_date,
+    ).join(Course, Course.id == CourseInstance.course_id)
+
+
 def _base_offer_choices():
     """Живі заходи для випадайок прив'язки -- ОДИН запит на всю сторінку.
 
@@ -532,15 +578,15 @@ def _base_offer_choices():
     """
     from app.models.course_instance import CourseInstance
 
-    return (
-        CourseInstance.query.filter(
-            CourseInstance.status.in_(('published', 'active')),
-            CourseInstance.start_date >= utcnow(),
-        )
+    rows = (
+        _offer_rows()
+        .filter(CourseInstance.status.in_(('published', 'active')),
+                CourseInstance.start_date >= utcnow())
         .order_by(CourseInstance.start_date.asc())
         .limit(100)
         .all()
     )
+    return [OfferChoice(*row) for row in rows]
 
 
 def _offer_choices_for(current_id, base):
@@ -552,12 +598,12 @@ def _offer_choices_for(current_id, base):
     ж збереження форми її б стерло. Найгірший випадок -- один зайвий
     запит на форму з минулим заходом, а не на кожну форму взагалі.
     """
-    if not current_id or any(i.id == current_id for i in base):
+    if not current_id or any(choice.id == current_id for choice in base):
         return base
     from app.models.course_instance import CourseInstance
 
-    current = db.session.get(CourseInstance, current_id)
-    return [current] + base if current is not None else base
+    row = _offer_rows().filter(CourseInstance.id == current_id).first()
+    return [OfferChoice(*row)] + base if row is not None else base
 
 
 @admin_bp.route('/meta-leads/forms')
@@ -580,6 +626,7 @@ def meta_lead_forms():
             f.id: _offer_choices_for(f.course_instance_id, base_choices)
             for f in forms
         },
+        status_badge=form_status_badge,
     )
 
 
@@ -1358,16 +1405,23 @@ def meta_leads_sync_forms():
     Потрібна саме кнопка, а не лише фонове оновлення: схеми підставляються
     на показі, тож один прогін одразу лагодить УСІ вже наявні картки --
     чекати на найближчу звірку заради цього не має сенсу.
+
+    УСІ виходи ведуть на сторінку форм, і це не косметика: кнопка живе саме
+    там (порожній стан тієї сторінки прямо каже «Натисніть „Оновити підписи
+    форм“»), а результат прогону -- рядки саме тієї таблиці. Редирект на
+    Налаштування викидав адміна туди, де цієї кнопки вже немає.
     """
+    back = url_for('admin.meta_lead_forms')
     settings = SiteSettings.get()
     page_id = (settings.meta_page_id or '').strip()
     if not page_id:
-        flash('Спершу вкажіть ID Сторінки', 'error')
-        return redirect(url_for('admin.meta_leads_settings'))
+        flash('Спершу вкажіть ID Сторінки в налаштуваннях Meta Lead Ads',
+              'error')
+        return redirect(back)
 
     client = _client(settings)
     if client is None:
-        return redirect(url_for('admin.meta_leads_settings'))
+        return redirect(back)
 
     saved = meta_form_schema.sync_page_forms(client, page_id)
     audit_logger.info('Admin %s synced meta form schemas: saved=%s',
@@ -1381,7 +1435,7 @@ def meta_leads_sync_forms():
               'success')
     else:
         flash('Форм на Сторінці не знайдено', 'warning')
-    return redirect(url_for('admin.meta_leads_settings'))
+    return redirect(back)
 
 
 @admin_bp.route('/meta-leads/settings/test-event', methods=['POST'])

@@ -88,9 +88,12 @@ def _registration_payload(registration):
         'status': registration.status,
         'payment_status': registration.payment_status,
         'attended': bool(registration.attended),
+        # Поле моделі зветься `start_date` (`app/models/course_instance.py`).
+        # Доки тут стояло `starts_at`, `getattr` мовчки давав None, і партнер
+        # роками отримував подію без дати заходу.
         'starts_at': (
-            instance.starts_at.isoformat()
-            if instance is not None and getattr(instance, 'starts_at', None) else None
+            instance.start_date.isoformat()
+            if instance is not None and getattr(instance, 'start_date', None) else None
         ),
     }
 
@@ -180,24 +183,35 @@ def emit_communication_sent(log_entry) -> None:
     })
 
 
-def _lead_offer(form_id):
-    """Захід, на який реагувала заявка, або None.
+def _lead_form(form_id):
+    """Рядок `MetaLeadForm` за id форми Meta або None -- ОДИН запит на подію.
 
-    Партнеру це потрібно як підказка «що пропонувати»: менеджер бере
-    трубку й має бачити дату, місто й ціну, а не шукати їх на нашому
-    сайті посеред розмови.
-
-    None -- нормальний стан, а не збій: форму могли не прив'язати, схеми
-    форми могло ще не бути, захід могли видалити. Жоден із цих випадків не
-    привід не відправити заявку.
+    Дістається рівно один раз і передається далі: підписи питань і захід
+    живуть в ОДНОМУ рядку, а два походи в базу за ним множились на всю
+    історію під час бекфілу.
     """
     from app.models.meta_lead import MetaLeadForm
 
     form_id = str(form_id or '').strip()
     if not form_id:
         return None
+    return MetaLeadForm.query.filter_by(form_id=form_id).first()
 
-    form = MetaLeadForm.query.filter_by(form_id=form_id).first()
+
+def _lead_offer(form):
+    """Захід, на який реагувала заявка, або None.
+
+    Партнеру це потрібно як підказка «що пропонувати»: менеджер бере
+    трубку й має бачити дату, місто й ціну, а не шукати їх на нашому
+    сайті посеред розмови.
+
+    Приймає вже прочитану форму, а не її id: рядок дістає `_lead_form`,
+    і другий запит за тим самим рядком тут був би чистою витратою.
+
+    None -- нормальний стан, а не збій: форму могли не прив'язати, схеми
+    форми могло ще не бути, захід могли видалити. Жоден із цих випадків не
+    привід не відправити заявку.
+    """
     instance = getattr(form, 'course_instance', None) if form else None
     if instance is None:
         return None
@@ -219,25 +233,34 @@ def _lead_offer(form_id):
 def _instance_url(instance):
     """Публічне посилання на захід. Абсолютне: його відкриють з іншого сайту.
 
-    Ендпоінт саме `courses.course_by_slug` -- той самий, яким будує
-    посилання `app/api/v1/serializers.py:_detail_url`. Друга назва тут
-    означала б два різні посилання на ту саму сторінку.
+    База -- `website_url` із налаштувань сайту, а НЕ `url_for(_external=True)`.
+    Обидва реальні виклики йдуть ПОЗА запитом (планувальник у
+    `scheduler_service` має лише `app_context`, CLI -- `@with_appcontext`), а
+    `SERVER_NAME` не заданий у жодному класі конфігу: зовнішній `url_for` там
+    кидає RuntimeError, і посилання на проді було б порожнім завжди. Той самий
+    патерн і з тієї ж причини вже вирішено двічі --
+    `email_service._account_url` і `certificate_service._site_url`.
+
+    Шлях -- `/courses/<slug>`, тобто правило `courses.course_by_slug` у
+    типовій (українській) мові. Та сама сторінка, на яку веде
+    `app/api/v1/serializers.py:_detail_url`; так само його збирає і
+    `calendar_service._course_url`.
     """
-    from flask import url_for
+    from app.models.site_settings import SiteSettings
 
     course = getattr(instance, 'course', None)
     slug = getattr(course, 'slug', None)
     if not slug:
         return None
-    try:
-        return url_for('courses.course_by_slug', slug=slug, _external=True)
-    except Exception:
-        # Подія може будуватись поза запитом (черга розбору), а SERVER_NAME
-        # налаштований не в кожному середовищі. Посилання -- зручність, і
-        # його відсутність не привід не відправити заявку.
-        logger.warning('Cannot build absolute URL for course instance %s',
-                       instance.id)
+
+    base = (SiteSettings.get().website_url or '').strip().rstrip('/')
+    if not base:
+        # Адреса сайту не заповнена в налаштуваннях. Посилання -- зручність,
+        # і його відсутність не привід не відправити заявку.
+        logger.warning('Cannot build absolute URL for course instance %s: '
+                       'website_url is empty', instance.id)
         return None
+    return f'{base}/courses/{slug}'
 
 
 def _lead_payload(lead) -> dict:
@@ -260,6 +283,10 @@ def _lead_payload(lead) -> dict:
     сильніший за телефон.
     """
     from app.services import meta_form_schema
+
+    # Рядок форми -- один на всю подію: з нього і підписи питань, і захід.
+    form = _lead_form(lead.form_id)
+    schema = (form.questions or {}) if form is not None else {}
 
     return {
         'leadgen_id': lead.leadgen_id,
@@ -289,17 +316,28 @@ def _lead_payload(lead) -> dict:
         'custom_fields': lead.field_data or {},
         # Те саме, але з людськими підписами зі схеми форми. Менеджер має
         # бачити питання й відповідь так, як їх бачила людина.
+        #
+        # Стандартні поля відсіяні тим самим списком, що й на картці ліда:
+        # ПІБ, пошта й телефон уже їдуть окремими ключами вище, і друга їх
+        # копія в чужій системі -- зайва видача персональних даних, а не
+        # зручність.
         'answers': [
             {'question': question, 'answer': answer}
             for question, answer in meta_form_schema.answers_for(
-                lead.field_data, lead.form_id)
+                lead.field_data, lead.form_id,
+                skip=meta_form_schema.STANDARD_FIELDS, schema=schema)
         ],
-        'offer': _lead_offer(lead.form_id),
+        'offer': _lead_offer(form),
     }
 
 
-def emit_lead_created(lead) -> None:
+def emit_lead_created(lead):
     """Розповісти партнеру про нову заявку з реклами.
+
+    Повертає id рядка черги або None, коли подія нікуди не поїхала
+    (тестова заявка, заявка без контактів, вимкнена інтеграція). Саме за
+    цим значенням бекфіл рахує РЕАЛЬНІ постановки в чергу: лічильник
+    викликів звітував про доставку там, де в черзі не з'явилось нічого.
 
     Викликається З ЧЕРГИ розбору, після успішної прив'язки контакту й
     коміту: подія про заявку, яка ще може відкотитись, -- це подія про те,
@@ -313,8 +351,8 @@ def emit_lead_created(lead) -> None:
     картка з самим лише іменем -- це майбутній дубль на тезці.
     """
     if lead is None or lead.is_test:
-        return
+        return None
     if not (lead.email or lead.phone_e164 or lead.phone_raw):
-        return
+        return None
 
-    emit(LEAD_CREATED, _lead_payload(lead))
+    return emit(LEAD_CREATED, _lead_payload(lead))

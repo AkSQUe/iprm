@@ -9,6 +9,7 @@
 тут ідемпотентний ``event_uuid``, підпис із часовою міткою й перевірка того,
 що подія йде РІВНО НА ПЕРЕХОДІ стану, а не на кожному збереженні.
 """
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
@@ -117,6 +118,24 @@ class TestRegistrationEvents:
         assert payload['iprm_user_id'] == registration.user_id
         assert payload['email']
         assert payload['course_slug']
+
+    def test_starts_at_carries_the_date_of_the_event(self, app, partner_on,
+                                                     registration):
+        """Дата заходу читається з `start_date` -- так поле зветься в моделі.
+
+        Роками payload віз `starts_at: null`: `_registration_payload` читав
+        неіснуючий `instance.starts_at`, і партнер не бачив, коли саме
+        людина вчиться.
+        """
+        registration.instance.start_date = datetime(
+            2027, 3, 14, 9, 0, tzinfo=timezone.utc)
+        registration.status = 'cancelled'
+        db.session.commit()
+
+        payload = _events('registration.cancelled')[0].payload
+
+        assert payload['starts_at'] is not None
+        assert payload['starts_at'].startswith('2027-03-14')
 
     def test_medical_details_do_not_leave(self, app, partner_on, registration):
         """Мінімізація видачі: ліцензія й стаж партнеру не потрібні."""

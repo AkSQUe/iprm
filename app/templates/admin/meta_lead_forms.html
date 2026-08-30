@@ -56,7 +56,7 @@
         <td>{{ form.name or '–' }}</td>
         <td><code class="admin-code">{{ form.form_id }}</code></td>
         <td>
-          {% if form.status %}<span class="badge badge--draft">{{ form.status }}</span>
+          {% if form.status %}<span class="badge {{ status_badge(form.status) }}">{{ form.status }}</span>
           {% else %}–{% endif %}
         </td>
         <td>{{ form.questions_count }}</td>
@@ -66,9 +66,9 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <select name="course_instance_id" class="form-input">
               <option value="">{{ '– не прив\'язано –' }}</option>
-              {% for instance in offer_choices[form.id] %}
-              <option value="{{ instance.id }}"{% if instance.id == form.course_instance_id %} selected{% endif %}>
-                {{ instance.course.title }} — {{ instance.start_date.strftime('%d.%m.%Y') }}
+              {% for choice in offer_choices[form.id] %}
+              <option value="{{ choice.id }}"{% if choice.id == form.course_instance_id %} selected{% endif %}>
+                {{ choice.title }}{% if choice.start_date %} — {{ choice.start_date.strftime('%d.%m.%Y') }}{% endif %}
               </option>
               {% endfor %}
             </select>
