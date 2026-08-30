@@ -49,6 +49,59 @@ def make_field_data(**answers):
     ]
 
 
+def make_question(key, label, options=None, qtype='CUSTOM'):
+    """Одне питання у форматі схеми форми Graph API.
+
+    `options` -- пари (ключ, підпис). Саме КЛЮЧ Meta кладе у відповідь
+    заявки, а підпис віддає лише тут; тест, написаний так, ніби у
+    `field_data` лежить текст варіанта, зелений на фікстурі й марний на
+    проді -- бо перевіряє те, чого не буває.
+    """
+    return {
+        'key': key,
+        'label': label,
+        'type': qtype,
+        'options': [{'key': k, 'value': v} for k, v in (options or [])],
+    }
+
+
+def make_form(form_id='9988776655', name='Плазмотерапія -- консультація',
+              status='ACTIVE', questions=None, **overrides):
+    """Форма Сторінки зі схемою питань -- відповідь на `GET /{form_id}`.
+
+    Дефолтна схема відтворює саме той випадок, з якого все й почалося:
+    питання з варіантами, ключі яких слугіфіковані (`так,_іноді`), і
+    вільне текстове питання, де людський текст приходить як є.
+    """
+    if questions is None:
+        questions = [
+            make_question(
+                'ваша_спеціальність?', 'Ваша спеціальність?',
+                [('ортопедія_/_травматологія', 'Ортопедія / травматологія'),
+                 ('дерматологія', 'Дерматологія')],
+            ),
+            make_question(
+                'чи_працюєте_ви_з_пацієнтами_після_бойових_ушкоджень?',
+                'Чи працюєте ви з пацієнтами після бойових ушкоджень?',
+                [('так,_іноді', 'Так, іноді'), ('ні', 'Ні')],
+            ),
+            make_question(
+                "напишіть_ваше_ім'я_та_прізвище",
+                "Напишіть ваше ім'я та прізвище",
+            ),
+        ]
+    form = {
+        'id': form_id,
+        'name': name,
+        'status': status,
+        'locale': 'uk_UA',
+        'leads_count': 0,
+        'questions': questions,
+    }
+    form.update(overrides)
+    return form
+
+
 def make_lead(leadgen_id='1000000000000001', created_time=None, **overrides):
     """Відповідь Graph API на `GET /{leadgen_id}`.
 
@@ -152,11 +205,7 @@ class FakeMetaGraphClient:
                  token_valid=True, token_expires_at=0):
         self.version = version
         self._leads = {str(l['id']): l for l in (leads or [])}
-        self._forms = list(forms or [{
-            'id': '9988776655',
-            'name': 'Плазмотерапія -- консультація',
-            'status': 'ACTIVE',
-        }])
+        self._forms = list(forms or [make_form()])
         self.token_valid = token_valid
         #: 0 == безстроковий, як його віддає сам Meta для page token.
         self.token_expires_at = token_expires_at
@@ -230,6 +279,20 @@ class FakeMetaGraphClient:
         if failure is not None:
             return failure
         return MetaResult(ok=True, http_status=200, data=list(self._forms))
+
+    def get_form(self, form_id):
+        self.calls.append(('get_form', str(form_id)))
+        failure = self._maybe_fail()
+        if failure is not None:
+            return failure
+        for form in self._forms:
+            if str(form.get('id')) == str(form_id):
+                return MetaResult(ok=True, http_status=200, data=form)
+        return MetaResult(
+            ok=False, http_status=400,
+            error=f'Unsupported get request: {form_id}',
+            retryable=False,
+        )
 
     def debug_token(self):
         self.calls.append(('debug_token',))

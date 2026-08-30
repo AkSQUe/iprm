@@ -31,6 +31,7 @@ from app.extensions import db, limiter
 from app.models.meta_lead import MAX_EVENT_ATTEMPTS, MetaLead, MetaLeadEvent
 from app.models.mixins import utcnow
 from app.models.site_settings import SiteSettings
+from app.services import meta_form_schema
 from app.services.meta_contracts import DEFAULT_GRAPH_VERSION
 from app.services.meta_graph_client import MetaConfigError, MetaGraphClient
 from app.undo import offer_undo
@@ -443,12 +444,19 @@ _STANDARD_FIELDS = frozenset({
 
 
 def _custom_answers(lead):
-    """Відповіді на нестандартні питання форми: {питання: відповідь}."""
-    data = lead.field_data if isinstance(lead.field_data, dict) else {}
-    return {
-        name: value for name, value in data.items()
-        if name not in _STANDARD_FIELDS
-    }
+    """Відповіді на нестандартні питання -- пари (питання, відповідь).
+
+    Підписи бере зі схеми форми: у `field_data` Meta кладе для питань із
+    варіантами внутрішні КЛЮЧІ (`ортопедія_/_травматологія`), а не текст,
+    який бачила людина. Підстановка робиться тут, на показі, тому схема,
+    забрана вже після заявки, лагодить і давні картки.
+
+    Список пар, а не dict: два питання форми цілком можуть мати однаковий
+    підпис, і dict тихо загубив би одну з відповідей.
+    """
+    return meta_form_schema.answers_for(
+        lead.field_data, lead.form_id, skip=_STANDARD_FIELDS,
+    )
 
 
 @admin_bp.route('/meta-leads/<int:lead_id>', methods=['GET', 'POST'])
@@ -1246,6 +1254,41 @@ def meta_leads_reconcile():
     audit_logger.info('Admin %s ran meta reconcile manually: %s',
                       current_user.email, report)
     flash(f'Звірку виконано: {report}', 'success')
+    return redirect(url_for('admin.meta_leads_settings'))
+
+
+@admin_bp.route('/meta-leads/settings/sync-forms', methods=['POST'])
+@admin_required
+@limiter.limit('10 per minute')
+def meta_leads_sync_forms():
+    """Забрати підписи питань і варіантів усіх форм Сторінки.
+
+    Потрібна саме кнопка, а не лише фонове оновлення: схеми підставляються
+    на показі, тож один прогін одразу лагодить УСІ вже наявні картки --
+    чекати на найближчу звірку заради цього не має сенсу.
+    """
+    settings = SiteSettings.get()
+    page_id = (settings.meta_page_id or '').strip()
+    if not page_id:
+        flash('Спершу вкажіть ID Сторінки', 'error')
+        return redirect(url_for('admin.meta_leads_settings'))
+
+    client = _client(settings)
+    if client is None:
+        return redirect(url_for('admin.meta_leads_settings'))
+
+    saved = meta_form_schema.sync_page_forms(client, page_id)
+    audit_logger.info('Admin %s synced meta form schemas: saved=%s',
+                      current_user.email, saved)
+    if saved is None:
+        flash('Не вдалося забрати схеми форм -- перевірте токен і ID Сторінки',
+              'error')
+    elif saved:
+        flash(f'Оновлено підписи {saved} форм(и). Питання й відповіді на '
+              f'картках заявок тепер показані так, як їх бачила людина',
+              'success')
+    else:
+        flash('Форм на Сторінці не знайдено', 'warning')
     return redirect(url_for('admin.meta_leads_settings'))
 
 

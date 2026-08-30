@@ -38,7 +38,7 @@ from app.models.meta_lead import (
 )
 from app.models.mixins import utcnow
 from app.models.site_settings import SiteSettings
-from app.services import partner_events
+from app.services import meta_form_schema, partner_events
 from app.services.meta_graph_client import MetaConfigError, MetaGraphClient
 from app.services.meta_lead_ingest import MetaIngestError, ingest_lead
 from app.services.meta_lead_intake import enqueue_event
@@ -209,6 +209,16 @@ def _process_event(event, client):
         return _mark_failure(event_id, attempts, f'{type(exc).__name__}: {exc}',
                              retryable=True, leadgen_id=leadgen_id), None
 
+    # Схема форми -- уже ПІСЛЯ коміту ліда й лише коли її ще немає. Без
+    # неї картка показує внутрішні ключі Meta замість підписів питань і
+    # відповідей, а чекати на найближчу звірку означало б показувати їх
+    # рівно тоді, коли заявка найгарячіша. Збій тут не має чіпати подію:
+    # лід уже наш, підписи доїдуть звіркою або кнопкою в адмінці.
+    try:
+        meta_form_schema.ensure_form(client, lead.form_id, lead.page_id)
+    except Exception:
+        logger.exception('meta_lead_queue: form schema for lead id=%s failed', lead.id)
+
     logger.info('meta_lead_queue: %s ingested as lead id=%s', leadgen_id, lead.id)
     return 'done', lead
 
@@ -281,7 +291,8 @@ def reconcile(lookback_hours=None):
     зараз" в адмінці, і чекати від неї півгодини було б знущанням. Час
     чергового прогону звіряє джоба через `reconcile_is_due`.
     """
-    stats = {'checked_forms': 0, 'fetched': 0, 'created': 0, 'skipped': 0}
+    stats = {'checked_forms': 0, 'fetched': 0, 'created': 0, 'skipped': 0,
+             'form_schemas': 0}
 
     settings = SiteSettings.get()
     if not settings.meta_leads_enabled:
@@ -309,6 +320,15 @@ def reconcile(lookback_hours=None):
         stats['reason'] = forms_result.error
         _finish_reconcile('error', forms_result.error)
         return stats
+
+    # Схеми форм -- ДО розбору лідів і з того самого списку: `FORM_FIELDS`
+    # уже привіз `questions`, тож підписи питань і варіантів оновлюються
+    # без жодного зайвого звернення до Graph API.
+    try:
+        stats['form_schemas'] = meta_form_schema.save_forms(forms_result.data, page_id)
+    except Exception:
+        db.session.rollback()
+        logger.exception('meta_lead_queue: saving form schemas failed')
 
     errors = []
     for form in forms_result.data or []:

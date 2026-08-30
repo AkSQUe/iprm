@@ -92,7 +92,8 @@
             {%- if lead.phone_e164 %}<a href="tel:{{ lead.phone_e164 }}">{{ lead.phone_e164 }}</a>{% else %}не розпізнано{% endif -%}
           </div>
         </div>
-        {% for name, value in custom_answers.items() %}
+        {# Пари, а не dict: два питання форми можуть мати однаковий підпис. #}
+        {% for name, value in custom_answers %}
         <div class="form-group admin-form__full">
           <label>{{ name }}</label>
           <div class="form-input admin-field-readonly">{{ value }}</div>

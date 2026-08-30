@@ -41,6 +41,7 @@ import requests
 # помилок -- діагноз, а не збій, і ретрай лише крутить чергу намарно.
 from app.services.meta_contracts import (
     DEFAULT_GRAPH_VERSION,
+    FORM_FIELDS,
     LEAD_FIELDS,
     MetaResult,
     RETRYABLE_ERROR_CODES,
@@ -285,11 +286,27 @@ class MetaGraphClient:
         return self._collect(self._request('GET', f'/{form_id}/leads', params=params))
 
     def list_page_forms(self, page_id) -> MetaResult:
-        """Форми Сторінки; `data` -- плаский список зі `status` кожної."""
+        """Форми Сторінки; `data` -- плаский список зі `status` кожної.
+
+        Разом зі станом просимо і `questions` (див. `FORM_FIELDS`): схеми
+        всіх форм приїжджають ТИМ САМИМ запитом, тож підписи питань не
+        коштують жодного зайвого звернення до квоти.
+        """
         return self._collect(self._request('GET', f'/{page_id}/leadgen_forms', params={
-            'fields': 'id,name,status,locale,leads_count',
+            'fields': ','.join(FORM_FIELDS),
             'limit': str(_DEFAULT_LIMIT),
         }))
+
+    def get_form(self, form_id) -> MetaResult:
+        """Одна форма зі схемою питань -- `GET /{form_id}`.
+
+        Потрібна для ліда, що приїхав вебхуком: чекати на найближчу звірку
+        Сторінки означало б показувати менеджеру ключі замість підписів
+        рівно тоді, коли заявка найгарячіша.
+        """
+        return self._request('GET', f'/{form_id}', params={
+            'fields': ','.join(FORM_FIELDS),
+        })
 
     # ---- токен ----
     def debug_token(self) -> MetaResult:

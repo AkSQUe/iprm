@@ -359,3 +359,52 @@ class MetaLead(TimestampMixin, SoftDeleteMixin, db.Model):
             f'<MetaLead id={self.id} leadgen_id={self.leadgen_id} '
             f'user_id={self.user_id} status={self.status}>'
         )
+
+
+class MetaLeadForm(TimestampMixin, db.Model):
+    """Схема інстант-форми: людські підписи питань і варіантів відповіді.
+
+    Існує рівно тому, що `field_data` ліда їх не містить. Для питання з
+    варіантами Meta кладе у відповідь ліда внутрішній КЛЮЧ варіанта
+    (`ортопедія_/_травматологія`), а не його текст; так само слугіфіковані
+    й назви питань. Підпис живе лише у схемі форми, і забирається вона
+    окремим полем `questions` Graph API.
+
+    Схема НЕ вшивається в лід копією: підстановка робиться на показі, тож
+    схема, яка приїхала пізніше за заявку, лагодить і вже наявні картки.
+    `field_data` при цьому лишається дослівним -- він страховка на випадок
+    помилки в самій підстановці.
+    """
+
+    __tablename__ = 'meta_lead_forms'
+
+    id = db.Column(BigIntPK, primary_key=True)
+
+    # Той самий тип, що й `MetaLead.form_id`: 64-бітні ідентифікатори Meta
+    # int псує мовчки.
+    form_id = db.Column(db.String(64), nullable=False, unique=True, index=True)
+    page_id = db.Column(db.String(64), index=True)
+    name = db.Column(db.String(255))
+    status = db.Column(db.String(32))
+    locale = db.Column(db.String(16))
+
+    # `{ключ_питання: {'label': ..., 'type': ..., 'options': {ключ: підпис}}}`.
+    # JSON, а не таблиця питань: набір питань змінюється щокампанії, а
+    # читається схема цілком і завжди однією формою -- нормалізація дала б
+    # тут лише зайвий JOIN на кожну картку ліда.
+    questions = db.Column(db.JSON, nullable=False, default=dict)
+
+    # Коли схему востаннє забрали з Graph API. Порожньо бути не може:
+    # рядок і створюється лише як результат успішного походу.
+    synced_at = db.Column(db.DateTime(timezone=True), nullable=False,
+                          default=lambda: datetime.now(timezone.utc))
+
+    @property
+    def questions_count(self):
+        return len(self.questions or {})
+
+    def __repr__(self):
+        return (
+            f'<MetaLeadForm form_id={self.form_id} '
+            f'questions={self.questions_count}>'
+        )

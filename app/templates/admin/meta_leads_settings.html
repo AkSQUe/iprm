@@ -169,6 +169,11 @@
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="btn-admin btn-admin--secondary">Звірити зараз</button>
         </form>
+        <form method="POST" action="{{ url_for('admin.meta_leads_sync_forms') }}"
+              data-confirm="Забрати з Meta підписи питань і варіантів відповіді?" data-confirm-ok="Оновити">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-admin btn-admin--secondary">Оновити підписи форм</button>
+        </form>
         <form method="POST" action="{{ url_for('admin.meta_leads_test_mode') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="btn-admin btn-admin--secondary">
@@ -179,6 +184,13 @@
       <p class="form-hint">
         Перевірка токена працює і при вимкненій інтеграції: інакше ключі
         неможливо було б перевірити до її увімкнення.
+      </p>
+      <p class="form-hint">
+        «Оновити підписи форм» потрібне тому, що у відповіді заявки Meta
+        віддає внутрішні ключі варіантів (<code>ортопедія_/_травматологія</code>),
+        а не текст, який бачила людина. Підписи живуть у схемі форми й
+        підставляються на показі, тож один прогін лагодить одразу всі
+        картки -- і вже наявні теж. Звірка оновлює їх сама.
       </p>
     </div>
 

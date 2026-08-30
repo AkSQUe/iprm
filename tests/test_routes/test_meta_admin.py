@@ -21,7 +21,7 @@ import requests
 from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
-from app.models.meta_lead import MetaLead, MetaLeadEvent
+from app.models.meta_lead import MetaLead, MetaLeadEvent, MetaLeadForm
 from app.models.registration import EventRegistration
 from app.models.site_settings import SiteSettings
 from app.models.user import User
@@ -33,7 +33,8 @@ def _uid():
 
 # Порядок видалення в прибиранні: спершу діти, потім батьки.
 _OWNED_MODELS = (
-    MetaLeadEvent, MetaLead, EventRegistration, CourseInstance, Course, User,
+    MetaLeadEvent, MetaLead, MetaLeadForm, EventRegistration, CourseInstance,
+    Course, User,
 )
 
 # Налаштування -- рядок-одинак, спільний з усіма іншими тестами: його не
@@ -464,6 +465,86 @@ def test_user_detail_shows_meta_leads(client, admin):
 def test_user_detail_unknown_redirects(client, admin):
     _login(client, admin)
     assert client.get('/admin/users/99999999').status_code == 302
+
+
+# --------------------------- підписи форми ---------------------------
+
+def test_card_shows_form_labels_instead_of_meta_keys(client, admin):
+    """Дефект, з якого це почалося: у картці були ключі, а не текст форми.
+
+    `field_data` тут -- дослівно те, що віддає Graph API: для питання з
+    варіантами він кладе КЛЮЧ (`ортопедія_/_травматологія`), а не підпис.
+    """
+    from app.services import meta_form_schema
+    from tests.support.fake_meta_graph import make_form
+
+    meta_form_schema.save_form(make_form('900'))
+    db.session.flush()
+    lead = _make_lead(form_id='900', field_data={
+        'email': 'lead@example.com',
+        'ваша_спеціальність?': 'ортопедія_/_травматологія',
+        'чи_працюєте_ви_з_пацієнтами_після_бойових_ушкоджень?': 'так,_іноді',
+    })
+
+    _login(client, admin)
+    page = client.get(f'/admin/meta-leads/{lead.id}')
+
+    assert page.status_code == 200
+    body = page.data.decode()
+    assert 'Ваша спеціальність?' in body
+    assert 'Ортопедія / травматологія' in body
+    assert 'Так, іноді' in body
+    assert 'ортопедія_/_травматологія' not in body
+    # Пошта показана окремим полем -- у списку питань її бути не має.
+    assert '<label>email</label>' not in body
+
+
+def test_card_reads_without_schema_too(client, admin):
+    """Схеми ще не забирали -- картка мусить читатись, а не показувати ключі."""
+    lead = _make_lead(form_id='форма-без-схеми', field_data={
+        'ваша_спеціальність?': 'ортопедія_/_травматологія',
+    })
+
+    _login(client, admin)
+    body = client.get(f'/admin/meta-leads/{lead.id}').data.decode()
+
+    assert 'Ваша спеціальність?' in body
+    assert 'Ортопедія / травматологія' in body
+
+
+def test_sync_forms_button_saves_schemas(client, admin, monkeypatch):
+    """Кнопка бекфілу: один прогін лагодить одразу всі наявні картки."""
+    from app.admin import routes_meta_leads
+    from tests.support.fake_meta_graph import FakeMetaGraphClient, make_form
+
+    settings = SiteSettings.get()
+    settings.meta_page_id = '555000111'
+    db.session.flush()
+
+    fake = FakeMetaGraphClient(forms=[make_form('901'), make_form('902')])
+    monkeypatch.setattr(routes_meta_leads, '_client', lambda *a, **kw: fake)
+
+    _login(client, admin)
+    page = client.post('/admin/meta-leads/settings/sync-forms',
+                       follow_redirects=True)
+
+    assert page.status_code == 200
+    assert MetaLeadForm.query.filter_by(form_id='901').first() is not None
+    assert MetaLeadForm.query.filter_by(form_id='902').first() is not None
+
+
+def test_sync_forms_needs_page_id(client, admin):
+    """Без ID Сторінки питати нема про що -- і в Graph API ми не йдемо."""
+    settings = SiteSettings.get()
+    settings.meta_page_id = ''
+    db.session.flush()
+
+    _login(client, admin)
+    page = client.post('/admin/meta-leads/settings/sync-forms',
+                       follow_redirects=True)
+
+    assert page.status_code == 200
+    assert MetaLeadForm.query.count() == 0
 
 
 # --------------------------- налаштування ---------------------------
