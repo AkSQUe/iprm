@@ -9,8 +9,9 @@
    вже тримає під цими іменами дані ПОТОЧНОГО курсу -- спільний партіал
    мовчки показував би в рекомендаціях чужі дати й вільні місця.
 
-   Уся картка -- одне посилання (__overlay). CTA всередині -- span, а не
-   <a>: візуальний афорданс без другого посилання на ту саму адресу. #}
+   Уся картка -- одне посилання (.iprm-stretched-link). CTA всередині --
+   span, а не <a>: візуальний афорданс без другого посилання на ту саму
+   адресу. #}
 {% from 'partials/_location_badge.html' import location_badge %}
 {% set insts = rec_upcoming.get(course.id, []) %}
 {% set nearest = insts[0] if insts else None %}
@@ -42,7 +43,7 @@
 {% set card_url = url_for('courses.course_by_slug', slug=course.slug)
                   ~ ('#formats' if has_seats and has_formats else '') %}
 <article class="iprm-course-card iprm-rec-card apple-reveal">
-  <a class="iprm-rec-card__overlay" href="{{ card_url }}" aria-label="{{ course.t('title') }}"></a>
+  <a class="iprm-stretched-link" href="{{ card_url }}" aria-label="{{ course.t('title') }}"></a>
 
   <div class="iprm-course-card__image">
     {% if course.card_src %}

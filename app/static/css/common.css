@@ -2064,6 +2064,26 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   margin-bottom: 8px;
 }
 
+/* .iprm-stretched-link -- розтягнуте на всю картку посилання: клікається
+   вся її площа, а не лише заголовок чи малюнок. Ставиться на <a> всередині
+   картки з `position: relative` -- сама картка лишається предком, оверлей
+   лягає поверх контенту (текстові елементи над ним свідомо НЕ піднімають
+   z-index, якщо другого клікабельного таргета в картці немає; де він є --
+   власне правило зі z-index: 2 лишається на сторінці).
+   `border-radius: inherit` не випадковість: накладка бере радіус картки, щоб
+   її кут не вилазив за скруглення -- прибрати рядок здається безпечним, поки
+   не побачиш квадратний кут оверлею на скругленій картці.
+   Заміняє два побайтово однакові правила під різними іменами:
+   .apple-page .iprm-rec-card__overlay (course-recommend.css) і
+   .iprm-course-card__overlay (courses.css). */
+.iprm-stretched-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  text-decoration: none;
+}
+
 /* ========== COOKIE BANNER (Apple-style) ========== */
 
 .cookie-banner {

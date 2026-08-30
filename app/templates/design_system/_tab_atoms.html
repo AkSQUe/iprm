@@ -376,6 +376,25 @@
     </div>
   </div>
 
+  <!-- ===== UTILITY: STRETCHED LINK ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="stretched-link">
+      <p class="ds-label">Utility</p>
+      <h2 class="ds-title">iprm-stretched-link</h2>
+      <div class="ds-demo">
+        <div class="ds-row">
+          <article class="iprm-course-card iprm-course-card--linked">
+            <a class="iprm-stretched-link" href="#stretched-link" aria-label="Ціла картка -- одне посилання"></a>
+            <div class="apple-card-body">
+              <p class="iprm-course-card__title">Клікається вся картка</p>
+            </div>
+          </article>
+        </div>
+      </div>
+      <p class="ds-hint">Посилання, розтягнуте на всю картку через `position: absolute; inset: 0` (`z-index: 1`), щоб клікалась уся її площа, а не лише заголовок. `border-radius: inherit` навмисний -- накладка бере радіус картки-предка, інакше кут оверлею вилазить за скруглення. Заміняє два побайтово однакові правила під різними іменами: `.apple-page .iprm-rec-card__overlay` (course-recommend.css) і `.iprm-course-card__overlay` (courses.css) -- обидва живуть на картках курсів (каталог і крос-сел "Наступний крок").</p>
+    </div>
+  </div>
+
   <!-- ===== REGISTRATION SCREEN FAMILY ===== -->
   <div class="ds-section" id="reg-family">
     <p class="ds-label">Components</p>

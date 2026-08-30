@@ -31,18 +31,10 @@
   position: relative;
 }
 
-/* Уся картка -- одне посилання. Оверлей поверх контенту, тому текстові
-   елементи всередині свідомо НЕ піднімаємо z-index-ом: другого клікабельного
-   таргета в картці немає. */
-.apple-page .iprm-rec-card__overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  border-radius: inherit;
-  text-decoration: none;
-}
-
-.apple-page .iprm-rec-card__overlay:focus-visible {
+/* Уся картка -- одне посилання (.iprm-stretched-link, common.css). Оверлей
+   поверх контенту, тому текстові елементи всередині свідомо НЕ піднімаємо
+   z-index-ом: другого клікабельного таргета в картці немає. */
+.apple-page .iprm-rec-card .iprm-stretched-link:focus-visible {
   outline: 2px solid var(--iprm-accent);
   outline-offset: 2px;
 }

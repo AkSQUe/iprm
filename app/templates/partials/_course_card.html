@@ -31,7 +31,7 @@
          data-date="{{ nearest.start_date.strftime('%Y-%m-%d') if nearest and nearest.start_date else '' }}"
          data-days="{{ duration_days or '' }}"
          data-created="{{ course.created_at.strftime('%Y-%m-%d') if course.created_at else '' }}">
-  <a class="iprm-course-card__overlay" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" aria-label="{{ course.t('title') }}"></a>
+  <a class="iprm-stretched-link" href="{{ url_for('courses.course_by_slug', slug=course.slug) }}" aria-label="{{ course.t('title') }}"></a>
     <div class="iprm-course-card__image">
       {% if course.card_src %}
         {# card_eager виставляє шаблон-господар для першої картки списку
