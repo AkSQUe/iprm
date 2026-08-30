@@ -46,7 +46,7 @@
            {'name': 'regs', 'label': 'Реєстрації', 'placeholder': 'Усі', 'options': regs_options},
            {'name': 'date_from', 'label': 'Зареєстровані з', 'type': 'date'},
            {'name': 'date_to', 'label': 'Зареєстровані по', 'type': 'date'},
-           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
+           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options, 'narrowing': False},
          ],
          export_endpoint='admin.users_export',
        ) }}
@@ -130,6 +130,7 @@
     {% else %}
     {% call empty_state('admin.users',
                         filter_args,
+                        narrow_args={'per_page': False},
                         icon_name='group',
                         title='Користувачів ще немає') %}
     {% endcall %}

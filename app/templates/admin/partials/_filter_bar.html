@@ -19,6 +19,9 @@
    values    -- поточні значення (той самий dict, що віддає роут у `filters`).
    fields    -- селекти: name / label (підпис і префікс чіпса) / placeholder
                 (опція «усі») / options; type='date' дає поле дати.
+                narrowing=False -- поле обране, але вибірку не звужує (розмір
+                сторінки): чіпс лишається знімним, але в лічильник біля
+                «Фільтри» воно не рахується.
 
    Панель згорнута, поки фільтри не задані: у 90% випадків менеджер приходить
    сюди читати список, а не фільтрувати. Якщо фільтр активний -- вона
@@ -33,7 +36,10 @@
 {% set ns = namespace(active=[], count=0, args=dict(base_args)) %}
 {% for f in fields %}
   {% if values.get(f.name) not in (none, '') %}
-    {% set ns.count = ns.count + 1 %}
+    {# per_page -- обране поле, але не звуження: чіпс має чим знятись,
+       а лічильник -- ні. f.narrowing за замовчуванням True: усе, що не
+       позначене явно, лишається звичайним фільтром. #}
+    {% if f.get('narrowing', True) %}{% set ns.count = ns.count + 1 %}{% endif %}
     {% set ns.active = ns.active + [f] %}
     {% set _ = ns.args.update({f.name: values.get(f.name)}) %}
   {% endif %}
@@ -41,7 +47,7 @@
 {% set has_search = search and values.get(search.name) %}
 {% if has_search %}{% set _ = ns.args.update({search.name: values.get(search.name)}) %}{% endif %}
 {% set url_args = ns.args %}
-<section class="admin-filters{% if ns.count or has_search %} admin-filters--on{% endif %}"
+<section class="admin-filters{% if ns.active or has_search %} admin-filters--on{% endif %}"
          data-filter-bar>
   {# base_args ідуть і в action (там можуть бути параметри ШЛЯХУ, як
      instance_id), і прихованими полями: GET-сабміт перезаписує query-string
@@ -64,8 +70,12 @@
       {% endif %}
 
       {% if fields %}
+        {# aria-expanded і "розгорнутість" панелі -- за ns.active (є обране
+           поле, панель має бути видно), а не за ns.count: per_page без
+           жодного іншого фільтра має лишати панель розгорнутою, просто без
+           бейджа-лічильника поруч. #}
         <button type="button" class="btn-admin btn-admin--secondary admin-filters__toggle"
-                data-filter-toggle aria-expanded="{{ 'true' if ns.count else 'false' }}"
+                data-filter-toggle aria-expanded="{{ 'true' if ns.active else 'false' }}"
                 aria-controls="{{ endpoint | replace('.', '-') }}-filters">
           {{ icon('tune') }} Фільтри
           {% if ns.count %}<span class="admin-filters__count">{{ ns.count }}</span>{% endif %}
@@ -86,7 +96,7 @@
     </div>
 
     <div class="admin-filters__panel" id="{{ endpoint | replace('.', '-') }}-filters"
-         data-filter-panel{% if not ns.count %} hidden{% endif %}>
+         data-filter-panel{% if not ns.active %} hidden{% endif %}>
       {% for f in fields %}
         <label class="admin-filters__field">
           <span class="admin-filters__label">{{ f.label }}</span>
@@ -109,7 +119,7 @@
   {# Чіпси активних фільтрів: видно, чим саме звужено список, і кожен
      знімається окремо. url_for пропускає параметри зі значенням none, тож
      «зняти» -- це те саме посилання без одного ключа. #}
-  {% if ns.count or has_search %}
+  {% if ns.active or has_search %}
   <div class="admin-filters__chips">
     {% if has_search %}
       <a class="admin-chip" href="{{ url_for(endpoint, **dict(url_args, **{search.name: none})) }}">
@@ -236,19 +246,39 @@
        <p>Додайте перший рядок...</p>
      {% endcall %}
 
-   narrow_args -- параметр, що ЖИВЕ в base_args (мусить пережити «скинути»),
-   але водночас звужує вибірку так само, як звичайний фільтр (стрічка
-   status-вкладок понад stat-картками, як у webhooks.html). Без нього зріз
-   «лише status, решта фільтрів порожні» не рахувався б звуженням узагалі --
-   filter_args не містить status (він не в fields макроса), тож `narrowed`
-   лишався б порожнім, і сторінка з активним лише статусом друкувала б «тут
-   ще нічого немає» замість «нічого не знайдено» під цим зрізом. Приклад:
+   narrow_args -- одне сховище для ДВОХ протилежних поправок до того, що
+   макрос вважає звуженням за замовчуванням (усе, що є в filter_args і
+   нема в base_args). Розрізняються за значенням:
+
+   * звичайне значення -- ключ ЖИВЕ в base_args (мусить пережити «скинути»),
+     але водночас звужує вибірку так само, як звичайний фільтр (стрічка
+     status-вкладок понад stat-картками, як у webhooks.html). Без нього зріз
+     «лише status, решта фільтрів порожні» не рахувався б звуженням узагалі --
+     filter_args не містить status (він не в fields макроса), тож `narrowed`
+     лишався б порожнім, і сторінка з активним лише статусом друкувала б «тут
+     ще нічого немає» замість «нічого не знайдено» під цим зрізом:
 
      {% call empty_state('admin.webhooks_list', filter_args, {'status': filter_status},
                          narrow_args={'status': filter_status},
                          icon_name='inbox', title='Записів немає') %}
        ...
      {% endcall %}
+
+   * значення False (буквальне, не будь-яке фальшиве) -- дзеркальний випадок:
+     ключ ЖИВЕ у filter_args (пагінатор, чіпси й експорт мають його нести),
+     але звуженням не є -- розмір сторінки (per_page). Без цього порожній
+     реєстр із самим лише `?per_page=25` друкував би «Нічого не знайдено»,
+     хоча жоден фільтр вибірку не звузив:
+
+     {% call empty_state('admin.b2b_requests_list', filter_args,
+                         narrow_args={'per_page': False},
+                         icon_name='group', title='Заявок поки немає') %}
+       ...
+     {% endcall %}
+
+   Обидва випадки можна комбінувати в одному dict -- саме так зроблено у
+   webhooks.html, де є і status (звужує понад base_args), і per_page
+   (не звужує попри filter_args).
 
    За замовчуванням порожній: сторінки на кшталт коментарів блогу, де
    status -- це вкладка «поточний вид», а не звуження (порожня вкладка
@@ -258,10 +288,15 @@
 {% macro empty_state(endpoint=None, filter_args={}, base_args={},
                      narrow_args={}, icon_name='inbox', title='Записів немає') %}
 {% set active_narrow = {} %}
+{% set excluded = {} %}
 {% for k, v in narrow_args.items() %}
-  {% if v not in (none, '') %}{% set _ = active_narrow.update({k: v}) %}{% endif %}
+  {% if v is false %}
+    {% set _ = excluded.update({k: true}) %}
+  {% elif v not in (none, '') %}
+    {% set _ = active_narrow.update({k: v}) %}
+  {% endif %}
 {% endfor %}
-{% set narrowed = (filter_args | reject('in', base_args) | list) + (active_narrow | list) %}
+{% set narrowed = (filter_args | reject('in', base_args) | reject('in', excluded) | list) + (active_narrow | list) %}
 <div class="admin-empty">
   {% if narrowed and endpoint %}
     {{ icon('search', cls='admin-empty__icon') }}

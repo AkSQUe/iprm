@@ -59,7 +59,7 @@
          fields=[
            {'name': 'state', 'label': 'Стан', 'placeholder': 'Будь-який', 'options': state_options},
            {'name': 'payment', 'label': 'Оплата', 'placeholder': 'Будь-яка', 'options': payment_options},
-           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
+           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options, 'narrowing': False},
          ],
          base_args={'instance_id': instance.id},
        ) }}
@@ -172,6 +172,7 @@
     {{ pager('admin.instance_quiz_results', pagination, dict(filter_args, instance_id=instance.id)) }}
     {% if not rows %}
     {% call empty_state('admin.instance_quiz_results', filter_args, {'instance_id': instance.id},
+                        narrow_args={'per_page': False},
                         icon_name='how_to_reg', title='Реєстрацій немає') %}
       <p>Результати з'являться після того, як учасники складуть тест</p>
     {% endcall %}

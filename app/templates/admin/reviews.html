@@ -40,7 +40,7 @@
            {'name': 'state', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': state_options},
            {'name': 'course_id', 'label': 'Курс', 'placeholder': 'Усі курси', 'options': course_options},
            {'name': 'rating', 'label': 'Оцінка', 'placeholder': 'Будь-яка', 'options': rating_options},
-           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
+           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options, 'narrowing': False},
          ],
        ) }}
 
@@ -157,7 +157,8 @@
        empty_state вважав би зріз СПРАВДІ порожнім і не дав би шляху назад. #}
     {% call empty_state('admin.reviews_list',
                         filter_args,
-                        narrow_args={'page': pagination.page if pagination.page > 1 else none},
+                        narrow_args={'page': pagination.page if pagination.page > 1 else none,
+                                     'per_page': False},
                         icon_name='reviews',
                         title='Відгуків ще немає') %}
       <p>Поки їх нема, на Головній показується тимчасова заглушка. Додайте перший відгук.</p>

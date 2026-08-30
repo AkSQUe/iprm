@@ -43,7 +43,7 @@
            {'name': 'year', 'label': 'Рік видачі', 'placeholder': 'Усі роки', 'options': year_options},
            {'name': 'date_from', 'label': 'Видані з', 'type': 'date'},
            {'name': 'date_to', 'label': 'Видані по', 'type': 'date'},
-           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
+           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options, 'narrowing': False},
          ],
          export_endpoint='admin.certificates_export',
        ) }}
@@ -126,6 +126,7 @@
     {% else %}
     {% call empty_state('admin.certificates',
                         filter_args,
+                        narrow_args={'per_page': False},
                         icon_name='workspace_premium',
                         title='Сертифікатів ще немає') %}
       <p>Видавайте сертифікати на сторінці <a href="{{ url_for('admin.registrations_all') }}">Реєстрації</a> кнопкою «Видати сертифікат»</p>

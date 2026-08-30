@@ -708,3 +708,69 @@ class TestQuizResultsActionsKeepSlice:
         # Сторінка не задана в запиті (типова, 1) -- back_redirect не мусить
         # дописувати порожній page=1 у кожен пост-екшн-URL.
         assert 'page=' not in location
+
+
+# --------------------- per_page не рахується звуженням ---------------------
+#
+# Task 2 плану `docs/superpowers/plans/2026-08-30-admin-listing-tails.md`:
+# на ПОРОЖНЬОМУ реєстрі ?per_page=25 -- вибір розміру сторінки, а не звуження
+# -- перемикав порожній стан на "Нічого не знайдено" і малював лічильник 1
+# біля кнопки "Фільтри". Черга webhook -- зручний майданчик: per_page уже в
+# fields її filter_bar, а autouse-фікстура clean_webhooks вище тримає таблицю
+# порожньою за замовчуванням.
+
+
+class TestPerPageDoesNotNarrow:
+    def test_empty_registry_with_per_page_says_no_records(self, client, admin):
+        _login(client, admin)
+        body = client.get('/admin/webhooks?per_page=25').get_data(as_text=True)
+
+        assert 'Записів немає' in body
+        assert 'Нічого не знайдено' not in body
+
+    def test_per_page_alone_shows_no_count_badge(self, client, admin):
+        _login(client, admin)
+        body = client.get('/admin/webhooks?per_page=25').get_data(as_text=True)
+
+        assert 'admin-filters__count' not in body
+
+    def test_per_page_with_genuine_filter_still_says_nothing_found(self, client, admin):
+        # Черга не порожня, але q не збігається ні з чим -- це q звужує
+        # (а не per_page), тож "Нічого не знайдено" тут -- правда.
+        _delivery(status='pending')
+
+        _login(client, admin)
+        body = client.get(
+            '/admin/webhooks?per_page=25&q=НемаєТакогоНіде'
+        ).get_data(as_text=True)
+
+        assert 'Нічого не знайдено' in body
+        assert 'Записів немає' not in body
+
+    def test_per_page_chip_present_and_removable(self, client, admin):
+        _delivery(status='pending')
+
+        _login(client, admin)
+        body = client.get('/admin/webhooks?per_page=25').get_data(as_text=True)
+
+        chip = re.search(
+            r'<a class="admin-chip" href="([^"]*)">.*?Рядків на сторінці.*?</a>',
+            body, re.DOTALL,
+        )
+        assert chip is not None
+        assert 'per_page' not in chip.group(1)
+
+    def test_second_page_still_carries_per_page(self, client, admin):
+        marker = 'wh2p' + uuid4().hex[:6]
+        for _ in range(26):
+            _delivery(course_slug=f'{marker}-{uuid4().hex[:6]}', status='pending')
+
+        _login(client, admin)
+        page1 = client.get(
+            f'/admin/webhooks?per_page=25&q={marker}'
+        ).get_data(as_text=True)
+
+        pager_nav = re.search(
+            r'<nav class="admin-pagination">.*?</nav>', page1, re.DOTALL)
+        assert pager_nav is not None
+        assert 'per_page=25' in pager_nav.group()

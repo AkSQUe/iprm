@@ -84,7 +84,7 @@
          {'name': 'course_id', 'label': 'Курс', 'placeholder': 'Всі курси', 'options': course_options},
          {'name': 'date_from', 'label': 'Отримані з', 'type': 'date'},
          {'name': 'date_to', 'label': 'Отримані по', 'type': 'date'},
-         {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
+         {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options, 'narrowing': False},
        ],
        export_endpoint='admin.course_requests_export',
      ) }}
@@ -179,7 +179,8 @@
      empty_state вважав би зріз СПРАВДІ порожнім і не дав би шляху назад. #}
   {% call empty_state('admin.course_requests_list',
                       filter_args,
-                      narrow_args={'page': pagination.page if pagination.page > 1 else none},
+                      narrow_args={'page': pagination.page if pagination.page > 1 else none,
+                                   'per_page': False},
                       icon_name='inbox',
                       title='Запитів немає') %}
     <p>Коли користувачі залишать заявку на проведення курсу &mdash; вона з'явиться тут.</p>

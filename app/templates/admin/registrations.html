@@ -122,7 +122,7 @@
            {'name': 'date_to', 'label': 'Реєстрації по', 'type': 'date'},
            {'name': 'no_certificate', 'label': 'Сертифікат',
             'placeholder': 'Будь-який', 'options': [('1', 'Ще не виданий')]},
-           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
+           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options, 'narrowing': False},
          ],
          base_args={'scope': filters.scope, 'user_id': filters.user_id},
          export_endpoint='admin.registrations_export',
@@ -239,7 +239,7 @@
     {% else %}
     {% call empty_state('admin.registrations_all', filter_args,
                         base_args={'scope': filters.scope},
-                        narrow_args={'user_id': filters.user_id},
+                        narrow_args={'user_id': filters.user_id, 'per_page': False},
                         icon_name='how_to_reg', title='Реєстрацій немає') %}
       {% if filters.scope == 'upcoming' %}
         <p>Немає реєстрацій на майбутні заходи. <a href="{{ url_for('admin.registrations_all', scope='all') }}">Показати всі</a> або <a href="{{ url_for('admin.registrations_all', scope='past') }}">минулі</a>.</p>

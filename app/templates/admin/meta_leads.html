@@ -58,7 +58,7 @@
          {'name': 'test', 'label': 'Тестові заявки', 'placeholder': 'Приховані', 'options': test_options},
          {'name': 'date_from', 'label': 'Заявки з', 'type': 'date'},
          {'name': 'date_to', 'label': 'Заявки по', 'type': 'date'},
-         {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
+         {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options, 'narrowing': False},
        ],
        export_endpoint='admin.meta_leads_export',
        base_args={'sort': filters.sort} if filters.sort else {},
@@ -167,6 +167,7 @@
   {% else %}
   {% call empty_state('admin.meta_leads_list',
                       filter_args,
+                      narrow_args={'per_page': False},
                       icon_name='inbox',
                       title='Заявок немає') %}
     <p>Щойно з інстант-форми Meta прийде перша заявка — вона з'явиться тут.

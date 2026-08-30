@@ -37,7 +37,7 @@
          {'name': 'team_size', 'label': 'Розмір команди', 'placeholder': 'Будь-який', 'options': team_size_options},
          {'name': 'date_from', 'label': 'Отримані з', 'type': 'date'},
          {'name': 'date_to', 'label': 'Отримані по', 'type': 'date'},
-         {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
+         {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options, 'narrowing': False},
        ],
        export_endpoint='admin.b2b_requests_export',
      ) }}
@@ -96,7 +96,8 @@
      показав би "Заявок поки немає" без жодного шляху назад. #}
   {% call empty_state('admin.b2b_requests_list',
                       filter_args,
-                      narrow_args={'page': pagination.page if pagination.page > 1 else none},
+                      narrow_args={'page': pagination.page if pagination.page > 1 else none,
+                                   'per_page': False},
                       icon_name='group',
                       title='Заявок поки немає') %}
     <p>Ліди з форми «Отримати корпоративні умови» з'являться тут</p>

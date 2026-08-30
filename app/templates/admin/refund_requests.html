@@ -41,7 +41,7 @@
          {'name': 'status', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': status_options},
          {'name': 'date_from', 'label': 'Подані з', 'type': 'date'},
          {'name': 'date_to', 'label': 'Подані по', 'type': 'date'},
-         {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
+         {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options, 'narrowing': False},
        ],
        export_endpoint='admin.refund_requests_export',
      ) }}
@@ -155,7 +155,8 @@
      порожній requests, навіть коли жоден фільтр не активний: без цього
      empty_state вважав би зріз СПРАВДІ порожнім і не дав би шляху назад. #}
   {% call empty_state('admin.refund_requests_list', filter_args,
-                      narrow_args={'page': pagination.page if pagination.page > 1 else none},
+                      narrow_args={'page': pagination.page if pagination.page > 1 else none,
+                                   'per_page': False},
                       icon_name='notes', title='Заявок немає') %}
     <p>Учасники подають заявки з особистого кабінету.</p>
   {% endcall %}

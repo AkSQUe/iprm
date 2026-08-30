@@ -53,7 +53,7 @@
              {'name': 'post_id', 'label': 'Допис', 'placeholder': 'Усі дописи', 'options': post_options},
              {'name': 'date_from', 'label': 'Залишені з', 'type': 'date'},
              {'name': 'date_to', 'label': 'Залишені по', 'type': 'date'},
-             {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
+             {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options, 'narrowing': False},
            ],
            base_args={'status': status},
          ) }}
@@ -123,6 +123,7 @@
       {{ pager('admin.blog_comments', pagination, dict(filter_args, status=status)) }}
       {% else %}
       {% call empty_state('admin.blog_comments', filter_args, {'status': status},
+                          narrow_args={'per_page': False},
                           icon_name='forum', title='Коментарів немає') %}
         <p class="admin-text-muted">Коментарі з'являться тут, щойно відвідувачі залишать перший.</p>
       {% endcall %}
