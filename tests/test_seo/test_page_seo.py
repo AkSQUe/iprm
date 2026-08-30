@@ -4,8 +4,9 @@ import re
 
 from tests.test_seo.helpers import (
     DESC_MAX, DESC_MIN, EXPECTED_NON_200, KNOWN_SEO_DEBT, LENGTH_EXCEPTIONS,
-    LOCALE_PASSES, TITLE_MAX, TITLE_MIN, fetch_public_pages, head_field,
-    is_absolute_url, jsonld_blocks, pass_label,
+    LOCALE_PASSES, MIN_PAGES_PER_PASS, TITLE_MAX, TITLE_MIN,
+    expected_pass_sets, fetch_public_pages, head_field, is_absolute_url,
+    jsonld_blocks, pass_label,
 )
 
 
@@ -66,6 +67,73 @@ class TestFetchIsFailClosed:
         assert len(pages) >= 10, (
             f'У вибірці лишилось {len(pages)} сторінок -- надто мало, '
             'щоб твердження нижче щось означали.'
+        )
+
+
+class TestEveryLocalePassIsFailClosed:
+    """Те саме правило -- для прогонів ru та en.
+
+    Дисципліна "вибірка мусить падати, а не худнути" діяла лише на
+    українському прогоні: TestFetchIsFailClosed вище дивиться на
+    fetch_public_pages(app) без локалі. Прогони ru та en, додані разом із
+    розширенням сторожів на локалі, лишились fail-open -- рівно той клас
+    дефекту, заради якого писався сусідній клас.
+
+    Доведено мутацією: abort(500) у trainers.trainer_list лише за
+    g.lang_code == 'ru' зменшував ru-вибірку з 10 сторінок до 9, і сюїта
+    лишалась зеленою -- усі сторожі, розширені на локалі, просто міряли
+    на сторінку менше й не казали про це нічого.
+    """
+
+    def test_every_locale_pass_serves_its_full_set(self, app):
+        bad = []
+        for lang in LOCALE_PASSES:
+            label = pass_label(lang)
+            expected_served, expected_skipped = expected_pass_sets(app, lang)
+            pages, skipped = fetch_public_pages(app, lang=lang)
+            served = {endpoint for endpoint, _url, _html in pages}
+
+            missing = sorted(expected_served - served)
+            if missing:
+                bad.append(
+                    f'[{label}] зникли з вибірки (перестали віддавати 200): '
+                    f'{missing}; фактичні коди: '
+                    f'{ {ep: skipped.get(ep) for ep in missing} }'
+                )
+            extra = sorted(served - expected_served)
+            if extra:
+                bad.append(
+                    f'[{label}] у вибірці зайві ендпоінти: {extra}'
+                )
+            if set(skipped) != set(expected_skipped):
+                bad.append(
+                    f'[{label}] набір пропущених розійшовся з очікуваним: '
+                    f'зайві {sorted(set(skipped) - set(expected_skipped))}, '
+                    f'застарілі {sorted(set(expected_skipped) - set(skipped))}'
+                )
+            for endpoint, code in sorted(skipped.items()):
+                if endpoint in expected_skipped and code != expected_skipped[endpoint]:
+                    bad.append(
+                        f'[{label}] {endpoint}: задокументовано '
+                        f'{expected_skipped[endpoint]}, фактично {code}'
+                    )
+        assert not bad, (
+            'Вибірка прогону локалі розійшлася з очікуваною:\n'
+            + '\n'.join(bad)
+        )
+
+    def test_no_locale_pass_collapses_to_a_handful(self, app):
+        """Запобіжник проти вакууму: очікуваний набір виводиться з
+        url_map, тож порожня вибірка дала б порожнє очікування, звірка
+        множин зійшлася б, і тест вище нічого б не сказав."""
+        small = []
+        for lang in LOCALE_PASSES:
+            expected_served, _ = expected_pass_sets(app, lang)
+            if len(expected_served) < MIN_PAGES_PER_PASS:
+                small.append(f'{pass_label(lang)}: {len(expected_served)}')
+        assert not small, (
+            f'Прогони з вибіркою менше за {MIN_PAGES_PER_PASS} сторінок -- '
+            'твердження над ними нічого не означають: ' + '; '.join(small)
         )
 
 

@@ -44,12 +44,20 @@
 
      @id лишається дослівно тим самим: courses/detail.html та
      online/detail.html посилаються на нього з provider, і сторож
-     tests/test_seo звіряє ці рядки посимвольно. #}
+     tests/test_seo звіряє ці рядки посимвольно.
+
+     `or _('ІПРМ')` на name -- та сама підстраховка, що й у mainEntity з
+     main/contact.html. Без неї порожнє налаштування давало на одній
+     сторінці дві організації з різними назвами: тут порожню, там
+     літерал. Порожнє ім'я гірше за літерал ще й саме по собі, а цей
+     вузол рендериться на КОЖНІЙ сторінці сайту. alternateName запасного
+     не має -- ані тут, ані в contact.html, тож вузли лишаються згодні
+     й на порожньому company_full_name. #}
   {% set _org_schema = {
     '@context': 'https://schema.org',
     '@type': 'EducationalOrganization',
     '@id': url_for('main.index', _external=True) ~ '#org',
-    'name': site_settings.t('company_name'),
+    'name': site_settings.t('company_name') or _('ІПРМ'),
     'alternateName': site_settings.t('company_full_name'),
     'url': url_for('main.index', _external=True),
     'logo': url_for('static', filename='svg/IPRM-logo-complex.svg', _external=True),

@@ -18,7 +18,7 @@
 {% set _org = {
   '@type': 'EducationalOrganization',
   '@id': _home ~ '#org',
-  'name': site_settings.t('company_name'),
+  'name': site_settings.t('company_name') or _('ІПРМ'),
   'alternateName': site_settings.t('company_full_name'),
   'url': _home,
   'logo': url_for('static', filename='svg/IPRM-logo-complex.svg', _external=True),
@@ -29,13 +29,17 @@
 {# sameAs -- лише коли соцмережі справді заповнені: порожній масив у
    JSON-LD це заявлене й порожнє поле, а не відсутнє. #}
 {% if socials %}{% set _discard = _org.update({'sameAs': socials}) %}{% endif %}
+{# Головна перекриває блок jsonld цілком, тож #org тут -- ЦЕЙ вузол, а не
+   той із base.html. Через це `or _('ІПРМ')` потрібне й тут: інакше
+   головна лишалась би єдиною сторінкою, де порожнє налаштування дає
+   організацію без імені. #}
 {% set _graph_schema = {
   '@context': 'https://schema.org',
   '@graph': [_org, {
     '@type': 'WebSite',
     '@id': _home ~ '#website',
     'url': _home,
-    'name': site_settings.t('company_name'),
+    'name': site_settings.t('company_name') or _('ІПРМ'),
     'inLanguage': current_lang,
     'publisher': {'@id': _home ~ '#org'}
   }]
