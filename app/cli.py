@@ -887,3 +887,67 @@ def backup_cleanup_cmd(dry_run):
             click.echo(f'  #{item["id"]} {item["filename"]} ({item["date"]})')
     else:
         click.echo(f'Очищення завершено: видалено {result["deleted"]} копій.')
+
+
+@click.command('meta-reemit-leads')
+@click.option('--since', required=True,
+              help='Дата у форматі YYYY-MM-DD: заявки від неї і новіші.')
+@click.option('--limit', default=0, type=int,
+              help='Стеля кількості заявок; 0 -- без стелі.')
+@click.option('--dry-run', is_flag=True, help='Лише показати, що поїде.')
+@with_appcontext
+def meta_reemit_leads(since, limit, dry_run):
+    """Переграти партнеру подію lead.created за вже розібраними заявками.
+
+    Навіщо: заявки, доставлені до появи `answers` і `offer`, поїхали
+    старим payload-ом і самі себе не перевідправлять. Без цієї команди
+    робота не має сенсу для всього, що вже сталося.
+
+    Ідемпотентність тримає ПРИЙМАЧ: у MM Medic `leadgen_id` унікальний, і
+    повтор там відповідає `skipped`. Тому переграти можна скільки завгодно
+    разів, і безпечніше переграти зайве, ніж недобрати.
+
+    Тестові й видалені заявки не йдуть -- ті самі відсіювання, що й у
+    живому шляху `emit_lead_created`.
+    """
+    from datetime import datetime, timezone
+
+    from app.models.meta_lead import MetaLead
+    from app.services import partner_events
+
+    try:
+        start = datetime.strptime(since, '%Y-%m-%d').replace(
+            tzinfo=timezone.utc)
+    except ValueError:
+        raise click.BadParameter('Дата має бути у форматі YYYY-MM-DD')
+
+    query = (
+        MetaLead.query
+        .filter(MetaLead.created_time >= start,
+                MetaLead.deleted_at.is_(None),
+                MetaLead.is_test.is_(False))
+        .order_by(MetaLead.created_time.asc())
+    )
+    if limit:
+        query = query.limit(limit)
+    leads = query.all()
+
+    if dry_run:
+        click.echo(f'Заявок буде надіслано: {len(leads)}')
+        for lead in leads[:20]:
+            click.echo(f'  {lead.leadgen_id}  {lead.created_time}  '
+                       f'{lead.display_name}')
+        return
+
+    sent = 0
+    for lead in leads:
+        try:
+            partner_events.emit_lead_created(lead)
+            sent += 1
+        except Exception as exc:
+            # Одна заявка, що не пішла, не має зупиняти решту: повторний
+            # прогін безпечний, а зупинка посеред партії лишила б половину
+            # історії неперенесеною й непомітно.
+            click.echo(f'  ПОМИЛКА {lead.leadgen_id}: {exc}', err=True)
+
+    click.echo(f'Надіслано подій: {sent} із {len(leads)}')
