@@ -290,6 +290,20 @@
      ПОВЕРХНЯ і стає #0a0a0f -- у світлій темі їхні значення збігаються,
      і на цьому збігу легко звести два різні поняття в одне. */
 
+  /* --iprm-warm-grad-1 / --iprm-warm-grad-2 / --iprm-alert / --iprm-alert-rgb /
+     --iprm-offline-bg / --iprm-shadow-float / --iprm-error-rgb визначені лише
+     в :root і СВІДОМО не перевизначені тут: жоден не малює текст.
+     --iprm-warm-grad-1 і --iprm-warm-grad-2 -- стопи брендового градієнта
+     (certdata-reminder, upcoming-events), --iprm-alert і --iprm-alert-rgb --
+     той самий тривожний акцент плюс ореоли пульсації й межі (account,
+     certdata-reminder), --iprm-offline-bg -- зразок кольору в легенді
+     календаря й ще один стоп градієнта (courses). Усі три лишаються
+     насиченими в обох темах з тієї ж причини, що й accent/gold вище:
+     світліша версія на тёмному дала б сірий пух. --iprm-shadow-float --
+     тінь, і на тёмному тлі вона природно тьмяніє, так і має бути.
+     --iprm-error-rgb -- ореол фокуса rgba(..., 0.08), тонкий у будь-якій
+     темі, окремого підсилення не потребує. */
+
   /* Badge colors */
   --iprm-badge-draft-bg: rgba(255, 255, 255, 0.08);
   --iprm-badge-draft-text: #a1a1a6;
