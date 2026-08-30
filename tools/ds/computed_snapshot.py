@@ -46,27 +46,49 @@ APScheduler (app/__init__.py:638); єдиний запобіжник від ро
 двічі БЕЗ правки й переконайтесь, що вона відтворюється. Інакше «це просто
 шум» -- зручна відмовка, якою легко поховати справжню регресію.
 
-СТАНИ (:focus, :hover) ЦЕЙ ЗНІМОК НЕ БАЧИТЬ. Нічого не сфокусоване й
-нічого не під курсором, тож кільце фокуса для нього не існує -- а саме там
-живуть найтихіші регресії: жоден із тестів і жоден із знімків не помітив,
-як текст адмінського поля почав сіріти під час набору.
+СТАНИ. `:focus` -- знімається (`capture --states`), `:hover` -- НІ.
 
-Якщо доведеться таке звіряти, рецепт нижче перевірений, і в ньому дві
-пастки, кожна з яких дає ПРАВДОПОДІБНУ брехню:
+Без --states знімок бачить лише те, що відрендерилось без взаємодії:
+нічого не сфокусоване, кільця фокуса для нього не існує -- а саме там
+живуть найтихіші регресії: жоден із тестів і жоден із знімків не помітив,
+як текст адмінського поля почав сіріти під час набору. `--states`
+дописує стан `:focus` кожного фокусованого елемента (input, select,
+textarea, button, a[href], [tabindex]) в межах того самого каркаса
+(header/main/footer), під ключем `<шлях елемента>:focus` -- так само, як
+уже зроблено для псевдоелементів (`.../input.form-input[1]:focus`).
+
+Дві пастки цього режиму, обидві дають ПРАВДОПОДІБНУ брехню (перевірено
+окремим зондом перед реалізацією):
 
 1. `el.focus()` УСЕРЕДИНІ `page.evaluate` не працює. `el.matches(':focus')`
    віддає true, а `getComputedStyle` -- значення НЕсфокусованого стану;
-   примусовий reflow не рятує. Фокусувати треба через API:
-   `page.focus(selector)`.
+   примусовий reflow не рятує. Фокусувати треба через API Playwright
+   (`ElementHandle.focus()`, той самий механізм, що й `page.focus`).
 2. Без вимкнення переходів значення ловиться посеред анімації. Замість
    акценту `rgb(116, 55, 201)` приходить `rgb(131, 77, 206)` -- проміжний
-   кадр, який виглядає як «майже те саме» і тим небезпечний.
+   кадр, який виглядає як «майже те саме» і тим небезпечний. Глушник
+   переходів у `capture()` вимикає це й для --states безкоштовно.
 
-Тобто: глушимо переходи (як робить `capture` нижче), фокусуємо через
-`page.focus`, коротко чекаємо, читаємо.
+`blur()` НЕ викликається -- на живих формах він запускає валідацію, яка
+дописує класи помилок і вчетверо піднімає шум; фокус знімається природно
+наступним `.focus()`.
 
-Покриття такої звірки все одно тонке: більшість станів живе на сторінках,
-де потрібні дані, а база знімка порожня.
+Властивості кільця фокуса -- ОКРЕМИЙ список (`FOCUS_PROPS`:
+outline-width/style/color/offset), не в загальному `PROPS`. Причина не
+недбалість: кільце кнопки, селекта й тегу (`.apple-btn:focus-visible`,
+`select.badge-select:focus-visible`, `.iprm-tag:focus-visible`) намальоване
+через outline, а не box-shadow (як у `.form-input`) -- без цих ключів
+"нуль розбіжностей" на трьох реальних компонентах означав би "інструмент
+не дивився туди". У `PROPS` вони НЕ йдуть: інакше звичайний `capture` (без
+--states) отримав би ці ключі в кожному елементі -- і його вивід більше не
+був би байт-у-байт таким самим, як до цієї задачі.
+
+Покриття тонке навіть зі --states: `:hover` не знімається (наведення
+відкриває меню й тултипи -- зміна DOM, окремий рід шуму від зміни
+властивостей); елементи поза header/main/footer, елементи, яких DOM ще не
+domalював (`.iprm-cal-search`, `.blog-editor__rich` -- малює JS у рантаймі
+й потребує сіда/кліку), і сторінки з порожньою базою (registries) лишаються
+поза цим режимом так само, як і без нього.
 
 Використання:
     python tools/ds/computed_snapshot.py noise
@@ -78,6 +100,8 @@ APScheduler (app/__init__.py:638); єдиний запобіжник від ро
 
     --only .apple-btn,.iprm-hero   обійти лише сторінки, де є ці класи
     --pages /,/courses/            явний перелік замість автопідбору
+    --states                       додати стан :focus (повільніше -- звужуй
+                                    --only/--pages, "Ціна прогону" нижче)
 
 Код повернення: 0 -- розбіжностей немає; 1 -- є; 2 -- знімати нема чого.
 
@@ -106,10 +130,42 @@ APScheduler (app/__init__.py:638); єдиний запобіжник від ро
 ПЕРЕД КОЖНИМ НОВИМ НАБОРОМ СТОРІНОК МІРЯЙ ШУМ ЗАНОВО. "Шум нуль" --
 твердження про конкретний набір, а не про інструмент.
 
+`--states`: власний шум, заміряний ОКРЕМО від базового (стан на 30.08.2026).
+
+* Одна сторінка (`--only .contact-page__grid`, 36 станів :focus): шум НУЛЬ
+  у двох процесах, ~20с на прогін.
+* 15 публічних сторінок (`--only .apple-btn`, ~568 станів :focus, ~80с на
+  прогін): шум НЕ нуль, і відтворено це стабільно (3 прогони поспіль,
+  однаковий результат) -- РІВНО одна розбіжність, завжди та сама:
+  `main.index` (Головна), `:focus` на `a.apple-btn--secondary` у ПЕРШІЙ
+  секції `.home-section-cta` (кнопка "Увесь каталог", `section
+  .apple-section-gray` -- рекомендовані курси). Ізольована перевірка (та
+  сама сторінка, той самий елемент, шість окремих завантажень поспіль)
+  щоразу показує `is_visible() == True` -- отже, причина НЕ в CSS-видимості
+  цього елемента. Розбіжність виглядає як `(відсутнє) є -> -`, тобто
+  зникнення ЕЛЕМЕНТА -- а секція, у якій він живе, обгорнута
+  `{% if featured_courses %}` (`app/templates/main/home.html:151`). Це
+  вказує на залежність від ЧАСУ: --states додає секунди на сторінку через
+  поелементне фокусування, і зсуває момент, коли рендериться Головна,
+  відносно чогось нестабільного в даних для цього блока (сама BASE
+  капча без --states на цій сторінці шуму не показує -- вона встигає
+  побачити Головну ДО того, як умова встигає змінитись). Джерело в даних
+  сторінки, не в механізмі фокусування: усі інші ~567 станів на цих 15
+  сторінках -- стабільні. Виключити не вдалось (це не CSS і не сама задача
+  фокусування) -- тому назване тут, а не приховане; для наборів БЕЗ Головної
+  (`main.index`) шум нуль.
+
+Кого фокусує --states: input/select/textarea/button/a[href]/[tabindex] у
+межах header/main/footer, крім невидимих (`is_visible()==False`) і
+вимкнених (`is_enabled()==False`, у т.ч. успадковане від `<fieldset
+disabled>`) -- Playwright сам падає на спробі сфокусувати такий елемент.
+На наборі з 15 сторінок вище: 568 станів captured, 258 hidden, 0 disabled,
+0 помилок фокусування.
+
 Межа інструмента. Він бачить лише те, що відрендерилось: база порожня, тож
 непорожні реєстри сюди не потрапляють, а сторінки з аргументом у шляху
-(`/courses/<slug>`) не обходяться взагалі. Стани `:hover`, `:focus` і
-медіа-запити інших ширин теж поза знімком -- вікно одне, 1440x900.
+(`/courses/<slug>`) не обходяться взагалі. Стан `:hover` і медіа-запити
+інших ширин поза знімком і без --states, і з ним -- вікно одне, 1440x900.
 
 Вивід (tools/ds/computed/) у .gitignore: у git живе інструмент, не результат.
 """
@@ -173,6 +229,28 @@ PROPS = [
     'text-overflow', 'white-space', 'z-index', 'box-sizing', 'cursor',
 ]
 
+# Властивості, потрібні ЛИШЕ для стану :focus (режим `capture --states`,
+# див. докстрінг файлу). У PROPS вони НЕ йдуть -- інакше звичайний capture
+# (без --states) отримав би ці ключі в кожному елементі, хоча нічого не
+# сфокусоване, і його вивід перестав би бути байт-у-байт таким самим, як
+# без цієї задачі. Потрібні саме тут: кільце фокуса на кнопці, селекті й
+# тезі (`.apple-btn:focus-visible`, `select.badge-select:focus-visible`,
+# `.iprm-tag:focus-visible`) намальоване через outline, а не box-shadow --
+# без цих ключів "нуль розбіжностей" на цих трьох компонентах означав би
+# "інструмент не дивився туди", а не "регресії нема".
+FOCUS_PROPS = ['outline-width', 'outline-style', 'outline-color', 'outline-offset']
+
+# Властивості, які РЕАЛЬНО звіряє diff (compare нижче). Для базових шляхів
+# FOCUS_PROPS завжди відсутні в обох знімках (.get() віддає None з обох
+# боків), тож розширення списку не чіпає порівняння звичайного capture.
+_DIFF_PROPS = PROPS + FOCUS_PROPS
+
+# Кого фокусуємо в режимі --states: ті самі елементи, яких стосується
+# кільце фокуса в дизайн-системі. Один комбінований селектор -- браузер
+# сам дедуплікує елемент, що збігається з кількома частинами (кнопка з
+# tabindex не повернеться двічі).
+_FOCUSABLE_SELECTOR = 'input, select, textarea, button, a[href], [tabindex]'
+
 # Обхід DOM: шлях елемента + значення властивостей. Шлях будується з
 # ТЕГА І КЛАСІВ (`sigOf`), а не з nth-of-type -- чому саме так, пояснено
 # над самою `sigOf`. Наслідок, про який треба пам'ятати: додавши елементу
@@ -233,10 +311,13 @@ _SHEETS_JS = """
   .map((l) => (l.getAttribute('href') || '').split('/').pop())
 """
 
-_WALK_JS = """
-(arg) => {
-  const props = arg.props, wanted = arg.wanted;
-  const out = {};
+# Спільний фрагмент: обчислення "шляху" елемента (тег+класи, не позиція
+# серед сусідів). Винесений з _WALK_JS окремо, бо його використовує ще й
+# _ELEMENT_PATH_JS (стан :focus, режим `capture --states`) -- і йому
+# ЖИТТЄВО важливо порахувати шлях СЛОВО В СЛОВО так само, як тут: інакше
+# ".../input.form-input[1]:focus" не збігся б зі своїм базовим записом
+# ".../input.form-input[1]", і diff порівнював би не той елемент.
+_PATH_JS = """
   // Ключ елемента -- ПІДПИС (тег + класи), а не позиція серед сусідів.
   //
   // Позиційний ключ (`div[3]/p[1]`) виглядає нейтральним, але ламається
@@ -276,6 +357,29 @@ _WALK_JS = """
     }
     return parts.join('/');
   }
+"""
+
+# Шлях ОДНОГО елемента -- викликається на ElementHandle (`el.evaluate(...)`)
+# у режимі --states, де елемент вже знайдено через Playwright, а не через
+# обхід усього дерева. Той самий _PATH_JS, тому той самий ключ.
+_ELEMENT_PATH_JS = "(el) => {" + _PATH_JS + "\n  return pathOf(el);\n}"
+
+# Значення PROPS+FOCUS_PROPS ОДНОГО елемента -- викликається так само на
+# ElementHandle одразу після page.focus(), поки стан ще тримається.
+_FOCUS_PROPS_JS = """
+(el, props) => {
+  const cs = getComputedStyle(el);
+  const rec = {};
+  for (const p of props) rec[p] = cs.getPropertyValue(p);
+  return rec;
+}
+"""
+
+_WALK_JS = """
+(arg) => {
+  const props = arg.props, wanted = arg.wanted;
+  const out = {};
+""" + _PATH_JS + """
   // Обходимо СЕРВЕРНИЙ каркас сторінки -- header/main/footer, -- а не
   // весь body. Усе, що лежить у body поза ними, малює й ховає JS:
   // фоновий canvas (#molecular-background, ще й із власним слуханням
@@ -638,8 +742,76 @@ def page_urls(app, user_id, explicit, only_classes):
     return urls
 
 
+def _capture_focus_states(page, data):
+    """Дописує стан `:focus` кожного фокусованого елемента в уже знятий `data`.
+
+    Викликається ПІСЛЯ базового обходу (`_WALK_JS`) на тій самій сторінці,
+    поки DOM ще той самий -- і дописує ключі `<шлях>:focus` до того самого
+    словника, який далі йде в один JSON-файл. Diff після цього не потребує
+    жодних правок: `<шлях>:focus` для нього такий самий шлях, як
+    `<шлях>::before` для псевдоелементів.
+
+    Дві пастки цього режиму, обидві -- ПРАВДОПОДІБНА БРЕХНЯ (перевірено
+    окремим зондом, рецепт у докстрінгу файлу):
+
+    1. `el.focus()` УСЕРЕДИНІ page.evaluate не працює: `matches(':focus')`
+       каже true, а `getComputedStyle` лишається на НЕсфокусованому стані.
+       Тут фокусуємо через `ElementHandle.focus()` -- API Playwright, а не
+       JS у сторінці, той самий механізм, що й `page.focus(selector)`.
+    2. Переходи посеред фокусування ловлять проміжний кадр. Глушник
+       переходів уже стоїть в `capture()` (add_init_script нижче) -- тут
+       нічого додатково робити не треба, лише не забути про нього.
+
+    НЕ викликаємо `blur()`: на живих формах він запускає валідацію, яка
+    дописує класи помилок (`.is-invalid` тощо) і вчетверо піднімає шум.
+    Фокус із елемента на елемент знімається природно наступним `.focus()`.
+
+    `--only` тут СВІДОМО не звужує елементи (лише сторінки, як і завжди --
+    це вже робить `page_urls`). Перша версія фільтрувала фокусовані
+    елементи тими самими класами -- і мовчки давала "станів :focus: 0" на
+    `--only .contact-page__grid`: клас стоїть на ОБГОРТЦІ, а не на самому
+    `<input>`, тож жоден елемент не проходив фільтр. Рівно та брехня, проти
+    якої ця задача застережена: "нуль" виглядав як "форма без фокусованих
+    елементів", а означав "інструмент дивився не туди".
+
+    Повертає (captured, skipped_hidden, skipped_disabled, skipped_error) --
+    для чесного звіту в консоль, скільки станів реально знято і скільки
+    пропущено та чому.
+    """
+    roots = page.query_selector_all('body > header, body > main, body > footer')
+    if not roots:
+        body = page.query_selector('body')
+        roots = [body] if body else []
+
+    captured = skipped_hidden = skipped_disabled = skipped_error = 0
+    for root in roots:
+        for el in root.query_selector_all(_FOCUSABLE_SELECTOR):
+            try:
+                # is_visible()/is_enabled() -- готова перевірка Playwright,
+                # не власний домисел: приховане (display:none, [hidden])
+                # і вимкнене (disabled, у т.ч. успадковане від fieldset)
+                # інакше валить .focus() виключенням, і рівно про це
+                # попереджає докстрінг файлу.
+                if not el.is_visible():
+                    skipped_hidden += 1
+                    continue
+                if not el.is_enabled():
+                    skipped_disabled += 1
+                    continue
+                el.focus()
+                page.wait_for_timeout(60)
+                path = el.evaluate(_ELEMENT_PATH_JS)
+                rec = el.evaluate(_FOCUS_PROPS_JS, _DIFF_PROPS)
+            except Exception:                                   # noqa: BLE001
+                skipped_error += 1
+                continue
+            data[path + ':focus'] = rec
+            captured += 1
+    return captured, skipped_hidden, skipped_disabled, skipped_error
+
+
 def capture(label, explicit, only_classes, theme='light', seed=False,
-            width=1440, anonymous=False, quiet=False):
+            width=1440, anonymous=False, states=False, quiet=False):
     from werkzeug.serving import make_server
     from playwright.sync_api import sync_playwright
 
@@ -667,6 +839,7 @@ def capture(label, explicit, only_classes, theme='light', seed=False,
     outdir.mkdir(parents=True, exist_ok=True)
 
     kept = 0
+    states_captured = states_hidden = states_disabled = states_error = 0
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
@@ -728,6 +901,12 @@ def capture(label, explicit, only_classes, theme='light', seed=False,
                         % (url, ', '.join(missing)))
                 data = page.evaluate(_WALK_JS, {'props': PROPS,
                                 'wanted': [c.lstrip('.') for c in only_classes]})
+                if states:
+                    n_c, n_h, n_d, n_e = _capture_focus_states(page, data)
+                    states_captured += n_c
+                    states_hidden += n_h
+                    states_disabled += n_d
+                    states_error += n_e
                 (outdir / ('%s.json' % endpoint.replace('/', '_'))).write_text(
                     json.dumps(data, ensure_ascii=False, sort_keys=True, indent=0),
                     encoding='utf-8')
@@ -739,6 +918,13 @@ def capture(label, explicit, only_classes, theme='light', seed=False,
     if not quiet:
         print('знімок "%s" (%s тема): %d сторінок -> %s'
               % (label, theme, kept, outdir))
+        if states:
+            # Пропуски НЕ ховаємо в тиші: "нуль пропусків" на реальному
+            # наборі сторінок був би підозрілим -- скоріше ознакою, що
+            # перевірка видимості/увімкненості сама не спрацювала.
+            print('   станів :focus: %d (приховано %d, вимкнено %d, '
+                  'помилок фокусування %d)'
+                  % (states_captured, states_hidden, states_disabled, states_error))
     return kept
 
 
@@ -755,7 +941,10 @@ def compare(before, after, quiet=False, limit=25):
         data_a = json.loads((dir_a / name).read_text(encoding='utf-8'))
         data_b = json.loads((dir_b / name).read_text(encoding='utf-8'))
         for path in sorted(set(data_a) & set(data_b)):
-            for prop in PROPS:
+            # _DIFF_PROPS = PROPS + FOCUS_PROPS. Для шляхів без ":focus"
+            # FOCUS_PROPS відсутні в обох словниках -- .get() дає None з
+            # обох боків, і жодного хибного рядка це не додає.
+            for prop in _DIFF_PROPS:
                 va, vb = data_a[path].get(prop), data_b[path].get(prop)
                 if va != vb:
                     diffs.append((name, path, prop, va, vb))
@@ -798,6 +987,11 @@ def main():
         sp.add_argument('--anonymous', action='store_true',
                         help='без сесії адміна: публічний вигляд і сторінки '
                              'входу/реєстрації, яких під адміном не видно')
+        sp.add_argument('--states', action='store_true',
+                        help='додати стан :focus кожного фокусованого '
+                             'елемента (input/select/textarea/button/'
+                             'a[href]/[tabindex]); повільніше -- звужуй '
+                             '--only і --pages')
 
     sub.add_parser('sheets', help='чи доходять правила до браузера')
     dif = sub.add_parser('diff')
@@ -810,7 +1004,7 @@ def main():
 
     if args.cmd == 'capture':
         return 0 if capture(args.label, explicit, only, args.theme, args.seed,
-                            args.width, args.anonymous) else 2
+                            args.width, args.anonymous, args.states) else 2
 
     if args.cmd == 'sheets':
         return 0 if sheets() else 1
@@ -827,6 +1021,8 @@ def main():
         common += ['--width', str(args.width)]
     if getattr(args, 'anonymous', False):
         common += ['--anonymous']
+    if getattr(args, 'states', False):
+        common += ['--states']
     if only:
         common += ['--only', ','.join(only)]
     if explicit:
