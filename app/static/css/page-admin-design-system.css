@@ -426,9 +426,14 @@
   border: none;
 }
 
-/* Пара до .ds-flush-border: прибирає власний зовнішній/внутрішній відступ
-   риштування демо -- form-section і form-group самі задають margin, що в
-   тісному демо дублює padding .ds-demo. */
+/* Пара до .ds-flush-border: прибирає зовнішній відступ КОНКРЕТНОГО
+   компонента демо, коли той сам задає margin, що в тісному демо дублює
+   padding .ds-demo -- як .admin-program-block (admin.css: margin-bottom:
+   16px), єдиний живий споживач класу. НЕ ставити на .form-section чи
+   .form-group: перший margin не оголошує взагалі (common.css:1923), а в
+   другого margin-bottom уже гасить .form-section .form-group (common.css:
+   1948) з вищою специфічністю -- клас там нічого не гасить, лише
+   стверджує, що гасити є що. */
 .ds-flush-margin {
   margin: 0;
 }
