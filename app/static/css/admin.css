@@ -318,7 +318,7 @@
 }
 
 /* Admin-specific form overrides */
-/* Стрілка селекта на осі --apple-gray (#857c93). Літерал, а не токен: CSS-змінні
+/* Стрілка селекта на осі --iprm-text-light (#857c93). Літерал, а не токен: CSS-змінні
    всередині url() не розгортаються. Було #666 -- 5.27 у світлій темі, але 2.95 у
    тёмній, тобто стрілка зникала. Це правило перекриває однойменне нижче в
    цьому файлі, тож колір тримаємо в них однаковим -- щоб від того, яке з
@@ -1081,7 +1081,7 @@ a.admin-stat-card:focus-visible {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .admin-sidebar__link {
@@ -1132,7 +1132,7 @@ a.admin-stat-card:focus-visible {
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   cursor: pointer;
   transition: background 0.2s var(--ease-interact),
               color 0.2s var(--ease-interact);
@@ -1447,7 +1447,7 @@ a.admin-stat-card:focus-visible {
 
 .admin-hero__subtitle {
   font-size: 0.9375rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   margin-top: 4px;
 }
 
@@ -1648,7 +1648,7 @@ a.admin-stat-card:focus-visible {
 .admin-form__section-hint {
   margin-bottom: 16px;
   font-size: 0.8125rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 /* Підказка одразу під заголовком секції належить йому, а не наступному
@@ -1701,7 +1701,7 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-guide__list em {
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   font-style: normal;
 }
 
@@ -1745,13 +1745,13 @@ a.admin-stat-card:focus-visible {
    `.form-input:focus` з common.css. Скоуп не давав нічого: значення
    ті самі, а базове правило вже діє на кожен .form-input. */
 
-/* Плейсхолдер бере --apple-gray, а не --iprm-border-neutral: останній -- рівень
-   ЛІНІЙ (#d2d2d7 / #48484a), і як текст давав 1.38 у світлій та 1.86 у тёмній
-   темі, тобто читався лише на здогад. --apple-gray дає 6.02 / 5.90. */
+/* Плейсхолдер бере --iprm-text-light, а не --iprm-border-neutral: останній --
+   рівень ЛІНІЙ (#d2d2d7 / #48484a), і як текст давав 1.38 у світлій та 1.86 у
+   тёмній темі, тобто читався лише на здогад. --iprm-text-light дає 6.02 / 6.59. */
 .admin-with-sidebar .form-section .form-input::placeholder,
 .admin-form .form-input::placeholder,
 .backup-actions__form .form-input::placeholder {
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 /* File input -- нативну кнопку вибору файлу стилізуємо під вторинну кнопку
@@ -1799,7 +1799,7 @@ a.admin-stat-card:focus-visible {
 
 .form-hint {
   font-size: 0.75rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 /* Select dropdown -- прибираємо native-стрілку браузера і малюємо свою.
@@ -1810,7 +1810,7 @@ a.admin-stat-card:focus-visible {
   flex: 1 1 200px;
 }
 
-/* Стрілка селекта: #857c93 -- світліший крок осі --apple-gray, підібраний так,
+/* Стрілка селекта: #857c93 -- світліший крок осі --iprm-text-light, підібраний так,
    щоб тримати 3:1 (поріг для нетекстової графіки) і на світлому тлі поля
    (3.64), і на тёмному (4.28). Токен сюди підставити не можна: CSS-змінні
    всередині url() браузер не розгортає, тому колір доводиться вбивати hex-ом. */
@@ -1917,7 +1917,7 @@ a.admin-stat-card:focus-visible {
   padding: 14px 16px;
   font-size: 0.6875rem;
   font-weight: 600;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   letter-spacing: 0.06em;
 }
 
@@ -2058,7 +2058,7 @@ a.admin-stat-card:focus-visible {
 
 .admin-actions-menu__item .material-symbols-rounded {
   font-size: 20px;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .admin-actions-menu__item:hover {
@@ -2112,7 +2112,7 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-empty p {
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   font-size: 0.9375rem;
 }
 
@@ -2156,7 +2156,7 @@ a.admin-stat-card:focus-visible {
 .admin-stat-card__label {
   text-transform: uppercase;
   font-size: 0.6875rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   letter-spacing: 0.06em;
 }
 
@@ -2184,7 +2184,7 @@ a.admin-stat-card:focus-visible {
 
 .admin-breadcrumb__sep,
 .admin-breadcrumb__current {
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 /* ========== INTEGRATION CARDS ========== */
@@ -2229,7 +2229,7 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-integration-card p {
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 /* Header картки: розсунути заголовок і statusbadge */
@@ -2364,7 +2364,7 @@ a.admin-stat-card:focus-visible {
   gap: 8px;
   padding: 32px 16px;
   text-align: center;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .admin-dropzone__link {
@@ -2390,7 +2390,7 @@ a.admin-stat-card:focus-visible {
   border-radius: 50%;
   border: 1px solid var(--iprm-border);
   background: var(--iprm-white);
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   transition: all 0.2s;
 }
 
@@ -2412,7 +2412,7 @@ a.admin-stat-card:focus-visible {
   border: 2px dashed var(--iprm-border);
   border-radius: var(--iprm-radius-sm);
   background: none;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
@@ -2459,7 +2459,7 @@ a.admin-stat-card:focus-visible {
 .admin-pagination__info {
   padding: 8px 16px;
   font-size: 0.875rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 /* ========== STATS BAR (реєстрації) ========== */
@@ -2801,8 +2801,8 @@ a.admin-stat-card:focus-visible {
   font-size: 20px;
   /* Був --iprm-border-neutral (рівень ліній) з фолбеком #86868b, якого браузер
      ніколи не бачив, бо токен визначений: знак лупи виходив 1.51 у світлій
-     темі. --apple-gray дає 6.56 / 5.90. */
-  color: var(--apple-gray);
+     темі. --iprm-text-light дає 6.56 / 6.59. */
+  color: var(--iprm-text-light);
   pointer-events: none;
 }
 
@@ -2860,7 +2860,7 @@ a.admin-stat-card:focus-visible {
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.01em;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 /* Поля панелі тягнуться на всю ширину комірки: інакше flex-правило
@@ -2901,15 +2901,15 @@ a.admin-stat-card:focus-visible {
 
 .admin-chip__key {
   font-weight: 600;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
-/* Хрестик -- це текстовий гліф, а не лінія, тому теж --apple-gray
+/* Хрестик -- це текстовий гліф, а не лінія, тому теж --iprm-text-light
    (було --iprm-border-neutral: 1.38 у світлій темі, 1.56 у тёмній). */
 .admin-chip__x {
   font-size: 1rem;
   line-height: 1;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .admin-chip:hover .admin-chip__x {
@@ -2921,7 +2921,7 @@ a.admin-stat-card:focus-visible {
   align-items: center;
   gap: 4px;
   font-size: 0.8125rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   text-decoration: none;
 }
 
@@ -3170,7 +3170,7 @@ a.admin-stat-card:focus-visible {
 .admin-list-summary__counts {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 /* Тривожне число виділяємо кольором помилки: зависле замовлення чи зниклий
@@ -3185,5 +3185,5 @@ a.admin-stat-card:focus-visible {
 .admin-list-summary__hint {
   margin: 6px 0 0;
   font-size: 0.8125rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }

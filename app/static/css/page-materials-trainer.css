@@ -22,7 +22,7 @@
 
 .mt-meta {
   margin: 0 0 22px;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   font-size: 0.95rem;
 }
 
@@ -36,7 +36,7 @@
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   border-bottom: 1px solid var(--iprm-border-neutral);
   padding: 8px 10px;
 }
@@ -48,8 +48,8 @@
 }
 
 .mt-num { text-align: right; }
-.mt-sku { color: var(--apple-gray); font-size: 0.9rem; }
-.mt-empty { color: var(--apple-gray); }
+.mt-sku { color: var(--iprm-text-light); font-size: 0.9rem; }
+.mt-empty { color: var(--iprm-text-light); }
 
 .mt-confirm {
   margin-top: 24px;

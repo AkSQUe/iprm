@@ -780,7 +780,7 @@ button.iprm-tag:focus-visible {
 }
 
 .iprm-cal-search::placeholder {
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 /* Кільце фокуса -- .iprm-focus-ring (common.css), клас додається на сам
@@ -1409,7 +1409,7 @@ button.iprm-tag:focus-visible {
 }
 
 .iprm-course-search__input::placeholder {
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 /* Кільце фокуса -- через спільне з common.css правило .form-input:focus:
@@ -1447,7 +1447,7 @@ button.iprm-tag:focus-visible {
   padding: 0 0.4rem;
   font-size: 1.25rem;
   line-height: 1;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   background: none;
   border: none;
   cursor: pointer;

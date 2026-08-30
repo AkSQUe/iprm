@@ -53,7 +53,7 @@
 
 .ds-hint {
   font-size: 0.8125rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   margin-top: 16px;
   padding: 12px 16px;
   background: var(--iprm-card-bg);
@@ -133,7 +133,7 @@
   display: block;
   font-size: 0.75rem;
   font-weight: 400;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   font-family: 'SF Mono', 'Fira Code', monospace;
 }
 
@@ -175,7 +175,7 @@
   display: block;
   font-size: 0.6875rem;
   font-weight: 400;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   margin-top: 2px;
   font-family: 'SF Mono', 'Fira Code', monospace;
 }
@@ -325,7 +325,7 @@
 .ds-pages a::after {
   content: '>';
   margin-left: auto;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   font-size: 0.75rem;
 }
 
@@ -415,7 +415,7 @@
 
 .ds-bp-card__desc {
   font-size: 0.8125rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   line-height: 1.6;
 }
 
@@ -475,12 +475,12 @@
 
 .ds-bg-chip--white {
   background: var(--iprm-white);
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .ds-bg-chip--gray {
   background: var(--iprm-card-bg);
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .ds-bg-chip--dark {
@@ -548,7 +548,7 @@
 .ds-swatch__color--black { background: var(--iprm-text); }
 .ds-swatch__color--dark { background: var(--iprm-dark); }
 .ds-swatch__color--gray-dark { background: var(--iprm-text-secondary); }
-.ds-swatch__color--gray { background: var(--apple-gray); }
+.ds-swatch__color--gray { background: var(--iprm-text-light); }
 .ds-swatch__color--gray-light { background: var(--iprm-border-neutral); }
 .ds-swatch__color--white { background: var(--iprm-white); }
 .ds-swatch__color--success { background: var(--iprm-success); }

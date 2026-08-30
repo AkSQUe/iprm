@@ -42,7 +42,7 @@
   border: 1px solid var(--iprm-border);
   font-size: 0.9375rem;
 }
-.materials-summary__hint { color: var(--apple-gray); font-size: 0.85rem; }
+.materials-summary__hint { color: var(--iprm-text-light); font-size: 0.85rem; }
 
 
 .materials-history {
@@ -51,7 +51,7 @@
   gap: 14px;
   align-items: center;
   margin-bottom: 16px;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   font-size: 0.9rem;
 }
 .materials-history__item::before { content: '·'; margin-right: 12px; }
@@ -72,7 +72,7 @@
   overflow: hidden;
   max-width: 32ch;
   margin-top: 2px;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   font-size: 0.82rem;
 }
 
@@ -98,7 +98,7 @@
 /* Колонка "Повертається" у режимі списання/коригування: зелений акцент, коли
    частина зарезервованого повертається на склад MM Medic. */
 .materials-returns { text-align: right; font-variant-numeric: tabular-nums; }
-.materials-returns [data-returns] { color: var(--apple-gray); }
+.materials-returns [data-returns] { color: var(--iprm-text-light); }
 .materials-returns [data-returns].is-returning { color: var(--iprm-success); font-weight: 600; }
 #materialsReturns { color: var(--iprm-success); }
 
@@ -125,7 +125,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 /* Вигляд полів приходить із базового `.form-input` адмінки. Тут колись

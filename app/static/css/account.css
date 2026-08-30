@@ -114,7 +114,7 @@
   gap: 12px;
   flex-wrap: wrap;
   font-size: 0.8125rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .account-course__details span {
@@ -201,7 +201,7 @@
 
 .account-empty__text {
   font-size: 17px;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   margin-bottom: 24px;
 }
 
@@ -228,7 +228,7 @@
 
 .account-card__text {
   font-size: 0.9375rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .account-actions {

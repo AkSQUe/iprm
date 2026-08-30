@@ -48,7 +48,7 @@
   border-radius: var(--iprm-radius-sm); background: var(--iprm-card-bg);
 }
 .media-card__thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
-.media-card__meta { font-size: 0.75rem; color: var(--apple-gray); line-height: 1.3; }
+.media-card__meta { font-size: 0.75rem; color: var(--iprm-text-light); line-height: 1.3; }
 /* Поле alt-тексту: компактний інпут (поза .admin-form-скоупом, тож стилізуємо
    напряму під дизайн-систему). */
 .media-card__alt {
@@ -63,8 +63,8 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 /* --iprm-border-neutral -- рівень ліній, як текст він давав 1.38: плейсхолдер
-   бере --apple-gray, як і решта полів адмінки (див. admin.css). */
-.media-card__alt::placeholder { color: var(--apple-gray); }
+   бере --iprm-text-light, як і решта полів адмінки (див. admin.css). */
+.media-card__alt::placeholder { color: var(--iprm-text-light); }
 /* Кільце фокуса -- через спільне з common.css правило .form-input:focus:
    .media-card__alt завжди стоїть поряд із .form-input, окрема утиліта
    .iprm-focus-ring тут була зайвою й прибрана з розмітки. */
@@ -100,7 +100,7 @@
 .media-picker__title { margin: 0; font-size: 1rem; }
 .media-picker__close {
   background: none; border: none; font-size: 1.5rem; line-height: 1;
-  cursor: pointer; color: var(--apple-gray); padding: 0 4px;
+  cursor: pointer; color: var(--iprm-text-light); padding: 0 4px;
 }
 .media-picker__grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -113,5 +113,5 @@
 }
 .media-picker__item:hover { border-color: var(--iprm-nav-active); }
 .media-picker__item img { display: block; }
-.media-picker__empty { padding: 0 20px 20px; color: var(--apple-gray); }
+.media-picker__empty { padding: 0 20px 20px; color: var(--iprm-text-light); }
 .media-picker__foot { padding: 12px 20px; border-top: 1px solid var(--iprm-border); text-align: center; }

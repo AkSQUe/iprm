@@ -38,7 +38,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   font-size: 0.8125rem;
   overflow: hidden;
 }
@@ -62,7 +62,7 @@
 .iprm-clinic-card__desc {
   font-size: 0.9375rem;
   line-height: 1.5;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   margin-bottom: 16px;
 }
 
@@ -109,7 +109,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   font-size: 0.8125rem;
   overflow: hidden;
 }

@@ -74,7 +74,7 @@
 }
 
 .apple-page .iprm-rec-card__meta-label {
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   flex-shrink: 0;
 }
 

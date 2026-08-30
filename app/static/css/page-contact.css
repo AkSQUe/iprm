@@ -50,7 +50,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   margin-bottom: 2px;
 }
 
@@ -62,7 +62,7 @@
 .contact-page__info-messengers {
   display: block;
   font-size: 0.75rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   margin-top: 2px;
 }
 
@@ -85,7 +85,7 @@
   padding: 2px 6px;
   font-size: 15px;
   line-height: 1;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   border-radius: 5px;
   vertical-align: middle;
   transition: color 0.15s, background 0.15s;

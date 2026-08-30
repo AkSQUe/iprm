@@ -132,12 +132,12 @@
   --iprm-alert: #e05252; /* тривожний акцент -- пульс, бейдж лічильника (certdata-reminder, common, account) */
   --iprm-offline-bg: #d67e2e; /* мітка офлайн-формату заходу (courses), той самий відтінок у скролбарі (common) */
 
-  /* Нейтральна й акцентна палітра. --apple-gray -- єдиний легасі-виняток:
-     у тёмній темі розходиться з --iprm-text-light на один щабель світлоти
-     (#98989d проти #a1a1a6), і чи це недогляд чи свідома різниця -- рішення
-     власника, не зведене навмисно (Фаза A, план A2). */
+  /* Нейтральна й акцентна палітра. --apple-gray зведено сюди, у
+     --iprm-text-light (Фаза A, план A2): світлі значення були однаковими
+     (#625a6d), а в тёмній темі --iprm-text-light дає кращий контраст
+     (#a1a1a6 -- 6.59 проти #98989d -- 5.90 у --apple-gray), тож рішення
+     власника -- лишити один токен, кращий. */
   --iprm-text-secondary: #4f4758;
-  --apple-gray: #625a6d;
   --iprm-border-neutral: #d2d2d7;
   --iprm-accent-pale: #c4b5fd;
   --iprm-gold: #ffad16;
@@ -265,7 +265,6 @@
 
   /* Нейтральна й акцентна палітра (інверсія світлот) */
   --iprm-text-secondary: #c7c7cc;
-  --apple-gray: #98989d;
   --iprm-border-neutral: #48484a;
   /* Золото світлішає: #ffad16 на #1c1c22 дає 9.08, але поруч із піднятим
      бренд-акцентом виглядає брудним, тому беремо #ffc247 (10.54). */
@@ -1452,7 +1451,7 @@ select.badge-select:disabled {
 
 .iprm-footer__copy {
   font-size: 0.8125rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   text-align: center;
 }
 
@@ -1507,7 +1506,7 @@ select.badge-select:disabled {
 
 .iprm-footer__link {
   font-size: 0.8125rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   text-decoration: none;
   transition: color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
@@ -1688,7 +1687,7 @@ select.badge-select:disabled {
 
 .iprm-content-page__subtitle {
   font-size: 0.9375rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   margin-bottom: 32px;
   padding-bottom: 24px;
   border-bottom: 1px solid var(--iprm-border);
@@ -1989,7 +1988,7 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
 }
 
 .form-input::placeholder {
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .form-input--sm {
@@ -2303,7 +2302,7 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   }
 
   .iprm-nav__mobile-link--logout {
-    color: var(--apple-gray);
+    color: var(--iprm-text-light);
   }
 
   .iprm-hero-wrap {
@@ -2598,7 +2597,7 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
 
 .iprm-review__author {
   font-size: 0.9rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 @media (max-width: 720px) {

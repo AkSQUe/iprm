@@ -63,7 +63,7 @@
 
 .template-preview__meta {
   font-size: 0.8125rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .template-preview__meta strong {

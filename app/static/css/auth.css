@@ -86,7 +86,7 @@
 
 .auth-card__subtitle {
   text-align: center;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   margin-bottom: 32px;
   font-size: 0.9375rem;
   line-height: 1.5;
@@ -157,7 +157,7 @@
 
 .form-checkbox label {
   font-size: 0.875rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   cursor: pointer;
 }
 
@@ -272,7 +272,7 @@
   display: block;
   text-align: center;
   margin-top: 16px;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   font-size: 0.875rem;
   transition: color 0.2s;
 }

@@ -19,20 +19,20 @@
 .blog-card__cover img { display: block; }
 .blog-card__cover-placeholder { width: 100%; height: 100%; background: var(--iprm-placeholder-grad); opacity: 0.5; }
 .blog-card__body { padding: 18px 20px 22px; background: var(--iprm-white); }
-.blog-card__date { font-size: 0.8125rem; color: var(--apple-gray); }
+.blog-card__date { font-size: 0.8125rem; color: var(--iprm-text-light); }
 .blog-card__title { font-size: 1.2rem; font-weight: 700; color: var(--iprm-text); margin: 6px 0 8px; line-height: 1.3; }
 .blog-card__excerpt { font-size: 0.95rem; color: var(--iprm-text-light); line-height: 1.55; }
 
 .blog-pagination { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 40px; }
-.blog-pagination__info { font-size: 0.9rem; color: var(--apple-gray); }
-.blog-empty { text-align: center; color: var(--apple-gray); padding: 40px 0; }
+.blog-pagination__info { font-size: 0.9rem; color: var(--iprm-text-light); }
+.blog-empty { text-align: center; color: var(--iprm-text-light); padding: 40px 0; }
 
 /* ---- Сторінка допису ---- */
 .blog-post { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
 .blog-post__back { font-size: 0.9rem; color: var(--iprm-accent); text-decoration: none; }
 .blog-post__back:hover { text-decoration: underline; }
 .blog-post__title { font-size: 2.2rem; font-weight: 800; line-height: 1.15; color: var(--iprm-text); margin: 12px 0 10px; }
-.blog-post__date { font-size: 0.9rem; color: var(--apple-gray); }
+.blog-post__date { font-size: 0.9rem; color: var(--iprm-text-light); }
 .blog-post__cover { margin: 28px 0; border-radius: var(--iprm-radius-md); overflow: hidden; }
 .blog-post__cover img { width: 100%; height: auto; display: block; }
 
@@ -51,11 +51,11 @@
   border-radius: 0 var(--iprm-radius-sm) var(--iprm-radius-sm) 0;
 }
 .blog-content__quote p { font-size: 1.15rem; font-style: italic; margin: 0; }
-.blog-content__quote cite { display: block; margin-top: 8px; font-size: 0.9rem; color: var(--apple-gray); font-style: normal; }
+.blog-content__quote cite { display: block; margin-top: 8px; font-size: 0.9rem; color: var(--iprm-text-light); font-style: normal; }
 .blog-content__figure { margin: 28px 0; }
 .blog-content__figure img { width: 100%; height: auto; border-radius: var(--iprm-radius-md); display: block; }
 .blog-content__figure figcaption,
-.blog-content__video figcaption { text-align: center; font-size: 0.875rem; color: var(--apple-gray); margin-top: 8px; }
+.blog-content__video figcaption { text-align: center; font-size: 0.875rem; color: var(--iprm-text-light); margin-top: 8px; }
 .blog-content__divider { border: none; border-top: 1px solid var(--iprm-border); margin: 36px auto; width: 60%; }
 
 /* Адаптивне відео 16:9 */
@@ -81,14 +81,14 @@
 /* ---- Коментарі ---- */
 .blog-comments { max-width: 760px; margin: 56px auto 0; padding-top: 32px; border-top: 1px solid var(--iprm-border); }
 .blog-comments__title { font-size: 1.4rem; font-weight: 700; margin-bottom: 22px; color: var(--iprm-text); }
-.blog-comments__empty { color: var(--apple-gray); margin-bottom: 24px; }
+.blog-comments__empty { color: var(--iprm-text-light); margin-bottom: 24px; }
 .blog-comments__list, .blog-comment__children { list-style: none; padding: 0; margin: 0; }
 .blog-comment { padding: 16px 0; border-bottom: 1px solid var(--iprm-border); }
 .blog-comment__children { margin-left: 24px; padding-left: 16px; border-left: 2px solid var(--iprm-border); margin-top: 12px; }
 .blog-comment__children .blog-comment:last-child { border-bottom: none; padding-bottom: 0; }
 .blog-comment__head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
 .blog-comment__author { font-weight: 700; color: var(--iprm-text); }
-.blog-comment__date { font-size: 0.8rem; color: var(--apple-gray); }
+.blog-comment__date { font-size: 0.8rem; color: var(--iprm-text-light); }
 .blog-comment__body { white-space: pre-wrap; line-height: 1.6; color: var(--iprm-text); }
 .blog-comment__reply { margin-top: 8px; background: none; border: none; padding: 0; color: var(--iprm-accent); font-size: 0.85rem; cursor: pointer; }
 .blog-comment__reply:hover { text-decoration: underline; }
@@ -121,7 +121,7 @@
   box-shadow: 0 0 0 3px rgba(var(--iprm-error-rgb), 0.08);
 }
 .blog-comment-form .form-input::placeholder { color: var(--iprm-placeholder-text); }
-.blog-comment-form__note { font-size: 0.8rem; color: var(--apple-gray); margin-bottom: 14px; }
+.blog-comment-form__note { font-size: 0.8rem; color: var(--iprm-text-light); margin-bottom: 14px; }
 
 /* Honeypot -- прибрано з потоку і з-перед очей (але не display:none, щоб боти заповнювали) */
 .blog-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }

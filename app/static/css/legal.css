@@ -191,7 +191,7 @@
 .legal-page__closing {
   font-size: 0.9375rem;
   font-style: italic;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   margin-top: 40px;
   padding-top: 24px;
   border-top: 1px solid var(--iprm-border);
@@ -236,7 +236,7 @@
     margin-bottom: 2px;
     font-size: 0.8125rem;
     font-weight: 600;
-    color: var(--apple-gray);
+    color: var(--iprm-text-light);
   }
 
   .legal-section p,
@@ -312,6 +312,6 @@
 .bpr-docs-page__list a::after {
   content: '\00a0↗';
   font-size: 0.85em;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   margin-left: 2px;
 }

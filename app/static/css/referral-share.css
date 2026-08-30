@@ -10,7 +10,7 @@
 .referral-share__lead {
   max-width: 640px;
   margin: 0 0 1.25rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   line-height: 1.5;
 }
 
@@ -28,7 +28,7 @@
 }
 
 .referral-share__balance-label {
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .referral-share__balance-pending {
@@ -120,7 +120,7 @@
   display: block;
   margin-bottom: 0.5rem;
   font-size: 0.85rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .referral-tools__buttons {
@@ -189,7 +189,7 @@
 
 .referral-history__date {
   font-size: 0.85rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .referral-history__points {
@@ -204,6 +204,6 @@
 
 .referral-history__item--voided .referral-history__points {
   font-weight: 500;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   text-decoration: line-through;
 }

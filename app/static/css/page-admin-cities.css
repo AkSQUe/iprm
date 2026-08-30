@@ -51,7 +51,7 @@
   max-width: 68ch;
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .cities-panel > .cities-panel__hint {
@@ -219,7 +219,7 @@
 
 .cities-savebar__hint {
   font-size: 0.8125rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 /* ========== АДАПТИВ ========== */

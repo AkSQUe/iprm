@@ -27,7 +27,7 @@
   flex-wrap: wrap;
   gap: 16px;
   font-size: 0.875rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .reg-event-card__meta strong {
@@ -56,7 +56,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   margin-bottom: 4px;
 }
 
@@ -95,7 +95,7 @@
 
 .reg-confirmation__subtitle {
   font-size: 17px;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   margin-bottom: 32px;
 }
 
@@ -121,7 +121,7 @@
 }
 
 .reg-status-card__label {
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .reg-status-card__value {
@@ -136,7 +136,7 @@
   padding: 48px 32px;
   margin-bottom: 24px;
   text-align: center;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   font-size: 0.9375rem;
 }
 
@@ -161,7 +161,7 @@
 
 .reg-liqpay-payment__note {
   font-size: 0.8125rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   margin-top: 12px;
 }
 
@@ -171,7 +171,7 @@
 }
 
 .reg-liqpay-payment--processing p {
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   font-size: 0.9375rem;
 }
 
@@ -256,7 +256,7 @@
   align-items: center;
   text-align: center;
   gap: 12px;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   position: relative;
 }
 
@@ -282,7 +282,7 @@
   font-weight: 700;
   background: var(--iprm-white);
   border: 2px solid var(--iprm-border);
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   position: relative;
   z-index: 1;
 }
@@ -525,13 +525,13 @@
 .reg-form-section__hint {
   margin: 0 0 12px;
   font-size: 0.8125rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .form-hint-inline {
   font-size: 0.75rem;
   font-weight: 400;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 /* ---------- Payment logos ---------- */
@@ -545,7 +545,7 @@
   border-top: 1px solid var(--iprm-border);
   border-bottom: 1px solid var(--iprm-border);
   font-size: 0.875rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .reg-payment-logos__label {
@@ -581,7 +581,7 @@
   text-align: center;
   margin: 24px 0 0;
   font-size: 0.9375rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .reg-contact-cta a {
@@ -707,7 +707,7 @@
 .reg-pay-cta__note {
   margin: 16px 0 0;
   font-size: 0.8125rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
 }
 
 .reg-pay-cta--processing {
@@ -818,7 +818,7 @@
 
 .reg-pay-method__desc {
   font-size: 0.8125rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   line-height: 1.45;
 }
 
@@ -857,7 +857,7 @@
 
 .reg-pay-option__desc {
   font-size: 0.875rem;
-  color: var(--apple-gray);
+  color: var(--iprm-text-light);
   line-height: 1.5;
   margin-bottom: 4px;
 }
