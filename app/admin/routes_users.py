@@ -1,7 +1,7 @@
 """Адмінський список користувачів: фільтри, пошук, xlsx-звіт, адмін-права."""
 import logging
 
-from flask import flash, redirect, render_template, request, url_for
+from flask import flash, redirect, render_template, url_for
 from flask_login import current_user
 from sqlalchemy.orm import joinedload
 

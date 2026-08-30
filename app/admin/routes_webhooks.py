@@ -2,7 +2,7 @@
 import logging
 from datetime import datetime, timezone
 
-from flask import render_template, flash, request
+from flask import render_template, flash
 from flask_login import current_user
 
 from app.admin import _listing, admin_bp

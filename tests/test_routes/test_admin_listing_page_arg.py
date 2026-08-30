@@ -100,6 +100,18 @@ def test_page_arg_falls_back_to_default_for_bad_input(app, raw):
         assert _listing.page_arg() == 1
 
 
+def test_page_arg_accepts_the_ceiling_itself(app):
+    """MAX_PAGE -- легітимна межа, не перше відкинуте значення: сторінка
+    1_000_000 має дійти як є, а не впасти в default."""
+    with app.test_request_context(f'/admin/users?page={_listing.MAX_PAGE}'):
+        assert _listing.page_arg() == _listing.MAX_PAGE
+
+
+def test_page_arg_rejects_just_above_the_ceiling(app):
+    with app.test_request_context(f'/admin/users?page={_listing.MAX_PAGE + 1}'):
+        assert _listing.page_arg() == 1
+
+
 def test_normal_page_still_works(app, client, admin):
     """`?page=2` і далі гортає реєстр так само, як до правки."""
     _login(client, admin)
@@ -108,11 +120,9 @@ def test_normal_page_still_works(app, client, admin):
     from datetime import datetime, timedelta, timezone
 
     base = datetime.now(timezone.utc)
-    oldest = None
     for i in range(26):
         req = _make_b2b(created_at=base - timedelta(minutes=26 - i))
         if i == 0:
-            oldest = req
             req.last_name = 'ЄдинаНаДругій'
     db.session.commit()
 

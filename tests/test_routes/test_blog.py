@@ -89,6 +89,13 @@ class TestPublicBlog:
         assert r.status_code == 200
         assert 'application/rss+xml' in r.mimetype or 'rss' in r.get_data(as_text=True)
 
+    def test_huge_page_returns_200_not_500(self, client):
+        """`/blog/` не потребує логіна: раніше величезний ?page= ішов в
+        OFFSET як параметр драйвера й падав 500 (OverflowError/"bigint out
+        of range") анонімному відвідувачу без жодного захисту."""
+        r = client.get('/blog/?page=99999999999999999999')
+        assert r.status_code == 200
+
 
 class TestComments:
     def test_honeypot_silently_drops(self, client):

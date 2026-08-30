@@ -130,12 +130,19 @@ def test_zero_id_is_not_treated_as_active_filter(client, admin):
 
 
 def test_search_term_is_capped(app):
+    """text_arg сам ріже до MAX_SEARCH_LENGTH (план admin-listing-tails,
+    Task 3): довгий рядок не має долітати навіть до URL/чіпса, а не лише до
+    запиту."""
     with app.test_request_context('/admin/users?q=' + 'я' * 500):
-        # text_arg сам ріже до MAX_SEARCH_LENGTH (план admin-listing-tails,
-        # Task 3): довгий рядок не має долітати навіть до URL/чіпса, а не
-        # лише до запиту -- той search_clause і раніше різав окремо.
         assert len(_listing.text_arg('q')) == _listing.MAX_SEARCH_LENGTH
-        clause = _listing.search_clause(_listing.text_arg('q'), [User.email])
+
+
+def test_search_clause_caps_on_its_own(app):
+    """search_clause ріже незалежно від text_arg -- другий, самостійний
+    захист: викликач, що не пройшов через text_arg (POST-фільтр,
+    сервісний шар), не мусить будувати ILIKE на сирому рядку без ліміту."""
+    with app.app_context():
+        clause = _listing.search_clause('я' * 500, [User.email])
         # У шаблон LIKE потрапляє обрізаний рядок + два '%'.
         rendered = str(clause.compile(compile_kwargs={'literal_binds': True}))
         assert 'я' * (_listing.MAX_SEARCH_LENGTH + 1) not in rendered

@@ -166,6 +166,22 @@ def media_update_alt(media_id):
     return jsonify({'ok': True, 'alt': media.alt_text or ''}), 200
 
 
+def _form_page_arg():
+    """Та сама перевірка, що й `_listing.page_arg()`, але для `request.form`:
+    рядкова форма несе сторінку прихованим полем, а не query-string, тож
+    `page_arg` сюди не застосовний як є. Без стелі сюди дійшло б будь-що з
+    POST-тіла -- у Location-заголовок редіректу, некероване клієнтом.
+    """
+    raw = request.form.get('page')
+    try:
+        page = int(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        return None
+    if page is None or page < 1 or page > _listing.MAX_PAGE:
+        return None
+    return page
+
+
 @admin_bp.route('/media/<int:media_id>/delete', methods=['POST'])
 @admin_required
 def media_delete(media_id):
@@ -201,7 +217,7 @@ def media_delete(media_id):
         'admin.media_library',
         entity_type=(request.form.get('entity_type') or None),
         usage_type=(request.form.get('usage_type') or None),
-        page=(request.form.get('page') or None),
+        page=_form_page_arg(),
     ))
 
 

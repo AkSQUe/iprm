@@ -36,6 +36,10 @@ from app.models.user import User
 
 MAX_PER_PAGE = 200
 DEFAULT_PER_PAGE = 100
+# Той самий ліміт, що в events.py / online_courses.py: без стелі величезний
+# ?page= іде в OFFSET як параметр драйвера й падає OverflowError/"bigint out
+# of range" замість чесної відмови 400.
+MAX_PAGE = 10_000
 
 # Персональні дані не кешуються ні браузером, ні проксі: на відміну від
 # каталогу заходів, тут кожна відповідь -- про конкретних людей.
@@ -68,8 +72,8 @@ def _parse_pagination():
         per_page = int(request.args.get('per_page', DEFAULT_PER_PAGE))
     except (TypeError, ValueError):
         return None, None, 'page/per_page must be integers'
-    if page < 1:
-        return None, None, 'page must be >= 1'
+    if page < 1 or page > MAX_PAGE:
+        return None, None, f'page must be in [1, {MAX_PAGE}]'
     if per_page < 1 or per_page > MAX_PER_PAGE:
         return None, None, f'per_page must be in [1, {MAX_PER_PAGE}]'
     return page, per_page, None

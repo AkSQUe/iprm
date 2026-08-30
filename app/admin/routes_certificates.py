@@ -5,7 +5,7 @@
 """
 import logging
 
-from flask import render_template, request
+from flask import render_template
 from flask_login import current_user
 from sqlalchemy import case, extract, func
 from sqlalchemy.orm import joinedload

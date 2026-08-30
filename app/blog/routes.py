@@ -47,9 +47,26 @@ def _published_query():
     )
 
 
+# Та сама пастка, що в app/admin/_listing.py:page_arg -- (page - 1) * per_page
+# іде в OFFSET як параметр драйвера, і величезне page не "порожня сторінка",
+# а OverflowError/"bigint out of range". Тут, а не імпортом _listing: цей
+# роут публічний і без логіна, а `app.admin` при імпорті тягне за собою
+# реєстрацію всього адмін-блупринта (`app/admin/__init__.py` імпортує
+# `routes`) -- зайва залежність публічної сторінки від адмінки.
+_MAX_PAGE = 1_000_000
+
+
+def _page_arg():
+    """Номер сторінки з query-string: ціле у [1, _MAX_PAGE], інакше 1."""
+    value = request.args.get('page', type=int)
+    if value is None or value < 1 or value > _MAX_PAGE:
+        return 1
+    return value
+
+
 @blog_bp.route('/')
 def index():
-    page = request.args.get('page', 1, type=int)
+    page = _page_arg()
     pagination = (
         _published_query()
         .order_by(BlogPost.published_at.desc())

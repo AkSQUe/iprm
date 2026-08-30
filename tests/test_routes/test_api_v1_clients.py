@@ -269,3 +269,17 @@ class TestPrivacyHeaders:
         resp = client.get('/api/v1/participants', headers=HEADERS)
 
         assert resp.headers.get('Cache-Control') == 'no-store'
+
+
+class TestPagination:
+    def test_over_ceiling_page_is_rejected(self, client, partner_settings):
+        """`clients.py` був єдиним із трьох партнерських ендпоінтів без
+        MAX_PAGE: величезний ?page= ішов в OFFSET як параметр драйвера й
+        падав OverflowError/"bigint out of range" замість чесного 400,
+        як уже роблять events.py й online_courses.py."""
+        from app.api.v1.clients import MAX_PAGE
+
+        resp = client.get(f'/api/v1/participants?page={MAX_PAGE + 1}', headers=HEADERS)
+
+        assert resp.status_code == 400
+        assert resp.get_json()['error'] == f'page must be in [1, {MAX_PAGE}]'

@@ -5,7 +5,7 @@
 """
 import logging
 
-from flask import render_template, url_for, flash, request, abort
+from flask import render_template, url_for, flash, abort
 from flask_login import current_user
 from sqlalchemy import desc
 
