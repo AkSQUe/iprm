@@ -156,7 +156,7 @@
             {% endif %}
           </div>
           <div class="iprm-schedule__content">
-            <h3 class="iprm-schedule__title">{{ inst.course.t('title') }}</h3>
+            <h3 class="iprm-schedule__title iprm-card-title">{{ inst.course.t('title') }}</h3>
             <div class="iprm-schedule__meta">
               {{ location_badge(inst.event_format, inst.location) }}
               {% if inst.course.event_type %}

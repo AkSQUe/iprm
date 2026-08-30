@@ -2088,6 +2088,20 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   overflow: hidden;
 }
 
+/* .iprm-card-title -- заголовок картки/блоку всередині сторінки (не заголовок
+   секції й не заголовок картки курсу). Заміняє три побайтово однакові
+   правила під різними іменами: .account-card__title (account.css),
+   .admin-empty__title (admin.css) і частину .iprm-schedule__title
+   (courses.css) -- останній лишає власне ім'я, бо там ще є друге правило
+   (адаптив під 480px), а до спільного класу переїжджає тільки типографіка. */
+.iprm-card-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--iprm-text);
+  margin-bottom: 8px;
+}
+
 /* ========== COOKIE BANNER (Apple-style) ========== */
 
 .cookie-banner {

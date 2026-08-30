@@ -2111,14 +2111,6 @@ a.admin-stat-card:focus-visible {
   margin-bottom: 16px;
 }
 
-.admin-empty__title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--iprm-text);
-  margin-bottom: 8px;
-}
-
 .admin-empty p {
   color: var(--apple-gray);
   font-size: 0.9375rem;

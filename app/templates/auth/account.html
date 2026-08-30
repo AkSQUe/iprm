@@ -229,7 +229,7 @@
       <div class="account-grid">
         {% for cert in certificates %}
         <a href="{{ url_for('auth.certificate_download', cert_id=cert.id) }}" class="account-card account-card--link apple-reveal">
-          <h3 class="account-card__title">{{ cert.event_title }}</h3>
+          <h3 class="iprm-card-title">{{ cert.event_title }}</h3>
           <p class="account-card__text">
             № {{ cert.number }}{% if cert.cpd_points %} &middot; {{ cert.cpd_points }} {{ cert.cpd_points | plural('bpr_points') }}{% endif %}
           </p>
@@ -299,21 +299,21 @@
       <h2 id="account-settings-title" class="iprm-section__title visually-hidden">{{ _('Обліковий запис') }}</h2>
       <div class="account-grid">
         <a href="{{ url_for('auth.certificate_data') }}" class="account-card account-card--link apple-reveal{% if not certificate_data_complete %} account-card--attention{% endif %}">
-          <h3 class="account-card__title">{{ _('Дані для сертифіката') }}</h3>
+          <h3 class="iprm-card-title">{{ _('Дані для сертифіката') }}</h3>
           <p class="account-card__text">
             {% if certificate_data_complete %}{{ _('Заповнено. Тут можна оновити ПІБ та інші дані.') }}{% else %}{{ _('Не заповнено — потрібно для балів БПР і сертифіката (МОЗ №725).') }}{% endif %}
           </p>
         </a>
         <a href="{{ url_for('auth.connections') }}" class="account-card account-card--link apple-reveal">
-          <h3 class="account-card__title">{{ _('Способи входу') }}</h3>
+          <h3 class="iprm-card-title">{{ _('Способи входу') }}</h3>
           <p class="account-card__text">{{ _('Пароль, Google, Apple – керуйте прив\'язками') }}</p>
         </a>
         <a href="{{ url_for('auth.settings') }}" class="account-card account-card--link apple-reveal">
-          <h3 class="account-card__title">{{ _('Налаштування') }}</h3>
+          <h3 class="iprm-card-title">{{ _('Налаштування') }}</h3>
           <p class="account-card__text">{{ _('Персоналізація інтерфейсу') }}</p>
         </a>
         <div class="account-card apple-reveal">
-          <h3 class="account-card__title">{{ _('Сертифікати') }}</h3>
+          <h3 class="iprm-card-title">{{ _('Сертифікати') }}</h3>
           <p class="account-card__text">
             {% if certificates %}{% trans count=certificates|length %}Видано: {{ count }}. Завантажуйте у розділі «Мої сертифікати».{% endtrans %}{% else %}{{ _("З'являться тут після видачі за участь у заході") }}{% endif %}
           </p>

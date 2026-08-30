@@ -226,14 +226,6 @@
   box-shadow: 0 12px 40px rgba(var(--iprm-accent-rgb), 0.1);
 }
 
-.account-card__title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--iprm-text);
-  margin-bottom: 8px;
-}
-
 .account-card__text {
   font-size: 0.9375rem;
   color: var(--apple-gray);
