@@ -753,12 +753,18 @@ class TestPerPageDoesNotNarrow:
         _login(client, admin)
         body = client.get('/admin/webhooks?per_page=25').get_data(as_text=True)
 
-        chip = re.search(
-            r'<a class="admin-chip" href="([^"]*)">.*?Рядків на сторінці.*?</a>',
-            body, re.DOTALL,
+        # Кожен чіпс -- окремий <a>...</a>, тож підпис шукаємо ВСЕРЕДИНІ
+        # свого ж елемента (не non-greedy "від першого href до першого
+        # знайденого підпису" -- з другим активним фільтром той знайшов би
+        # чужий href).
+        chips = re.findall(
+            r'<a class="admin-chip" href="([^"]*)">(.*?)</a>', body, re.DOTALL,
         )
-        assert chip is not None
-        assert 'per_page' not in chip.group(1)
+        per_page_chip = next(
+            (href for href, label in chips if 'Рядків на сторінці' in label), None,
+        )
+        assert per_page_chip is not None
+        assert 'per_page' not in per_page_chip
 
     def test_second_page_still_carries_per_page(self, client, admin):
         marker = 'wh2p' + uuid4().hex[:6]
