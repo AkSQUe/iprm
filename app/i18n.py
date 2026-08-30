@@ -38,6 +38,27 @@ OG_LOCALES = {'uk': 'uk_UA', 'ru': 'ru_RU', 'en': 'en_US'}
 # Підписи в перемикачі мов (короткі, без перекладу -- кожен своєю мовою).
 LANGUAGE_LABELS = {'uk': 'UA', 'ru': 'RU', 'en': 'EN'}
 
+# Сторінки, чий ВМІСТ існує лише українською: юридичні тексти.
+#
+# Їхні роути навмисно без мовного префікса (localize=False) -- /ru/privacy
+# не існує і віддає 404, -- але шаблони рендеряться під base.html, який
+# оголошував <html lang="{{ current_lang }}">, тобто мову СЕСІЇ. У самих
+# текстах немає жодного виклику перекладу, тож під ru-сесією сторінка
+# заявляла lang="ru" над суцільно українською офертою. Це хибна заява і
+# для краулера (мовний таргетинг видачі), і для скрінрідера (вибір
+# голосового рушія), і виправляє її не переклад роутингу, а правда про
+# те, якою мовою сторінка НАСПРАВДІ відрендерена.
+#
+# Список іменований, а не виведений з ширшого "ендпоінт не локалізований":
+# той предикат накрив би ще payments.success/failure і сторінки помилок,
+# які перекладені повністю (по 4-10 викликів _() у кожній), -- і збрехав
+# би вже в інший бік, оголошуючи uk над російським текстом. Виняток
+# завжди іменований -- та сама дисципліна, що й у сторожах SEO.
+UNTRANSLATED_ENDPOINTS = frozenset({
+    'main.cookies', 'main.disclaimer', 'main.offer', 'main.privacy',
+    'main.refund',
+})
+
 _LANG_PREFIX = '/<any(' + ', '.join(PREFIXED_LANGUAGES) + '):lang_code>'
 
 
@@ -278,13 +299,25 @@ def init_locale_routing(app):
         if not has_request_context():
             return {
                 'current_lang': DEFAULT_LANGUAGE,
+                'content_lang': DEFAULT_LANGUAGE,
                 'og_locale': OG_LOCALES[DEFAULT_LANGUAGE],
                 'lang_switcher': [],
             }
         current = str(babel_locale() or DEFAULT_LANGUAGE)
+        # content_lang -- мова, якою сторінку СПРАВДІ відрендерено, на
+        # відміну від current_lang (мова інтерфейсу й перемикача). Для
+        # переважної більшості сторінок це одне й те саме; розходяться вони
+        # рівно на UNTRANSLATED_ENDPOINTS. <html lang> і og:locale описують
+        # ВМІСТ, тож обидва беруться звідси -- інакше сторінка оголошувала б
+        # одну мову тегом і другу метою.
+        content = (
+            DEFAULT_LANGUAGE if request.endpoint in UNTRANSLATED_ENDPOINTS
+            else current
+        )
         return {
             'current_lang': current,
-            'og_locale': OG_LOCALES.get(current, OG_LOCALES[DEFAULT_LANGUAGE]),
+            'content_lang': content,
+            'og_locale': OG_LOCALES.get(content, OG_LOCALES[DEFAULT_LANGUAGE]),
             'hreflang_alternates': _hreflang_alternates(),
             'lang_switcher': [
                 {

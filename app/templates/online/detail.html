@@ -29,7 +29,10 @@
    покладаються на те, що в тексті не трапиться символу розмітки. #}
 {# provider -- посилання на @id організації з base.html, а не другий її
    опис: два незв'язані вузли EducationalOrganization на одній сторінці
-   Google трактує як дві різні організації. #}
+   Google трактує як дві різні організації. org_id(), а не url_for на
+   активну мову: url_for віддавав '/#org', '/ru/#org' чи '/en/#org'
+   залежно від локалі, тож курс із /ru/ вказував провайдером на іншу
+   сутність, ніж той самий курс з української версії. #}
 {% set course_url = url_for('online.course_detail', slug=course.slug, _external=True) %}
 {% set course_schema = {
   '@context': 'https://schema.org',
@@ -38,7 +41,7 @@
   'description': course.effective_short_description,
   'inLanguage': current_lang,
   'url': course_url,
-  'provider': {'@id': url_for('main.index', _external=True) ~ '#org'},
+  'provider': {'@id': org_id()},
   'hasCourseInstance': {
     '@type': 'CourseInstance',
     'courseMode': 'online'

@@ -34,6 +34,11 @@ from tests.test_seo.helpers import (
 # правдоподібний текст, а не як розбіжність.
 NAMES = {'uk': 'NAME-UK', 'ru': 'NAME-RU', 'en': 'NAME-EN'}
 FULL_NAMES = {'uk': 'FULL-UK', 'ru': 'FULL-RU', 'en': 'FULL-EN'}
+# city теж значиться в SiteSettings.__translatable__, і шаблони довго
+# читали сиру колонку: на /ru/ і /en/ адреса організації лишалась
+# українською поруч із перекладеною назвою. Без різних значень по локалях
+# ця вада невидима так само, як була невидима вада назви.
+CITIES = {'uk': 'CITY-UK', 'ru': 'CITY-RU', 'en': 'CITY-EN'}
 
 # Запасний варіант у шаблонах -- це `_('ІПРМ')`, тобто gettext-рядок, а не
 # константа: ru віддає "ИПРМ", en -- "IPRM". Тому твердження нижче звіряє
@@ -44,13 +49,15 @@ FULL_NAMES = {'uk': 'FULL-UK', 'ru': 'FULL-RU', 'en': 'FULL-EN'}
 
 @pytest.fixture
 def translated_settings(db_session):
-    """SiteSettings із РІЗНИМИ назвами компанії для uk/ru/en."""
+    """SiteSettings із РІЗНИМИ назвами компанії й містом для uk/ru/en."""
     settings = SiteSettings.get()
     settings.company_name = NAMES['uk']
     settings.company_full_name = FULL_NAMES['uk']
+    settings.city = CITIES['uk']
     for lang in ('ru', 'en'):
         settings.set_translation(lang, 'company_name', NAMES[lang])
         settings.set_translation(lang, 'company_full_name', FULL_NAMES[lang])
+        settings.set_translation(lang, 'city', CITIES[lang])
     db.session.flush()
     return NAMES
 
@@ -103,6 +110,20 @@ class TestOrganizationNameFollowsLocale:
     Твердження свідомо ширше за два поля, які лагодив цей раунд: воно
     накриває будь-яке поле назви, що зісковзне на сиру колонку, у будь-якому
     вузлі організації на будь-якій публічній сторінці.
+
+    alternateName вимагається ПОІМЕННО, а не "якщо він є". Стара умова
+    `if 'alternateName' not in node: continue` пропускала цілий клас
+    регресії: шаблон, який перестав віддавати поле взагалі, ставав
+    невидимим. Доведено мутацією -- видалення рядка alternateName і з
+    base.html, і з contact.html лишало сюїту зеленою.
+
+    Розділова лінія -- @id. Вузли з @id описують САМУ організацію (#org
+    із base.html, його ж перекриття з home.html і mainEntity з
+    contact.html; після Задачі C у всіх трьох він однаковий і не
+    залежить від локалі) -- повна назва в них є, і її зникнення це
+    регресія. Вузли без @id описують ПРИЧЕТНІСТЬ: worksFor у тренера,
+    author і publisher у дописі. Повної назви в них немає і в шаблонах,
+    тож вимагати її від них означало б вимагати вигаданого поля.
     """
 
     def test_every_organization_node_carries_translated_names(
@@ -112,6 +133,7 @@ class TestOrganizationNameFollowsLocale:
         for lang in LOCALE_PASSES:
             label = pass_label(lang)
             for endpoint, url, html in fetch_public_pages(app, lang=lang)[0]:
+                identified = 0
                 for node in _org_nodes(html):
                     marker = node.get('@id', node.get('@type'))
                     if node.get('name') != NAMES[label]:
@@ -119,17 +141,91 @@ class TestOrganizationNameFollowsLocale:
                             f'[{label}] {endpoint} {marker}: name = '
                             f'{node.get("name")!r}, очікували {NAMES[label]!r}'
                         )
-                    if 'alternateName' not in node:
+                    if '@id' not in node:
+                        # Вузол описує ПРИЧЕТНІСТЬ, а не сутність (див.
+                        # докстрінг класу): повної назви в нього немає й у
+                        # шаблоні, вимагати її означало б вимагати
+                        # вигаданого поля.
                         continue
-                    if node['alternateName'] != FULL_NAMES[label]:
+                    identified += 1
+                    if 'alternateName' not in node:
+                        bad.append(
+                            f'[{label}] {endpoint} {marker}: вузол самої '
+                            'організації без alternateName -- повна назва '
+                            'зникла з розмітки цілком'
+                        )
+                    elif node['alternateName'] != FULL_NAMES[label]:
                         bad.append(
                             f'[{label}] {endpoint} {marker}: alternateName = '
                             f'{node["alternateName"]!r}, очікували '
                             f'{FULL_NAMES[label]!r}'
                         )
+                if not identified:
+                    bad.append(
+                        f'[{label}] {endpoint}: жодного вузла організації з '
+                        '@id -- сторінка втратила ідентичність компанії, і '
+                        'вимога alternateName нижче стала б вакуумною'
+                    )
         assert not bad, (
             'Вузли організації з неперекладеною назвою (шаблон читає сиру '
             'колонку замість t()):\n' + '\n'.join(bad)
+        )
+
+    def test_postal_address_follows_locale(self, app, translated_settings):
+        """city -- таке саме перекладне поле, як і назва компанії.
+
+        Шаблони читали сиру колонку site_settings.city у трьох вузлах
+        (base.html, main/home.html, main/contact.html), і на /ru/ та /en/
+        сторінка віддавала українську назву міста поруч із перекладеною
+        назвою організації -- одна адреса двома мовами в одному вузлі.
+        Твердження ходить по УСІХ PostalAddress, а не по трьох відомих:
+        наступний вузол з адресою підпадає під нього автоматично.
+        """
+        bad = []
+        for lang in LOCALE_PASSES:
+            label = pass_label(lang)
+            for endpoint, url, html in fetch_public_pages(app, lang=lang)[0]:
+                found = find_nodes_by_type(jsonld_blocks(html), 'PostalAddress')
+                assert found, (
+                    f'[{label}] {endpoint}: жодного PostalAddress -- адреса '
+                    'зникла зі схеми організації'
+                )
+                for node in found:
+                    if node.get('addressLocality') != CITIES[label]:
+                        bad.append(
+                            f'[{label}] {endpoint}: addressLocality = '
+                            f'{node.get("addressLocality")!r}, очікували '
+                            f'{CITIES[label]!r}'
+                        )
+        assert not bad, (
+            'PostalAddress із неперекладеним містом (шаблон читає сиру '
+            'колонку замість t()):\n' + '\n'.join(bad)
+        )
+
+    def test_visible_city_on_contact_page_follows_locale(
+        self, app, translated_settings,
+    ):
+        """Те саме значення, але видиме людині.
+
+        Блок "Адреса" на /contact друкував site_settings.city напряму, і
+        російськомовний відвідувач бачив українську назву міста в
+        перекладеному інтерфейсі. Схема й видимий текст мусять називати
+        одне місто -- інакше структуровані дані описують не те, що на
+        сторінці.
+        """
+        bad = []
+        client = app.test_client()
+        for lang in LOCALE_PASSES:
+            label = pass_label(lang)
+            refresh()
+            resp = client.get(f'/{lang}/contact' if lang else '/contact')
+            assert resp.status_code == 200
+            html = resp.data.decode('utf-8')
+            marker = f'contact-page__info-value">{CITIES[label]}<'
+            if marker not in html:
+                bad.append(f'[{label}] /contact: не видно {CITIES[label]!r}')
+        assert not bad, (
+            'Видиме місто на /contact не пішло за локаллю:\n' + '\n'.join(bad)
         )
 
     def test_dynamic_pages_organization_nodes_follow_locale(
@@ -259,4 +355,38 @@ class TestOrganizationNodesAgreeOnEmptySetting:
                 )
         assert not bad, (
             'Вузли організації на порожньому company_name:\n' + '\n'.join(bad)
+        )
+
+    def test_no_page_publishes_a_nameless_node(self, app, blank_company_name):
+        """Те саме правило -- на КОЖНІЙ публічній сторінці в кожній локалі.
+
+        Тест вище ходить лише на /contact, і через це запасний літерал у
+        main/home.html не перевіряв ніхто: обидва `or _('ІПРМ')` на
+        головній (у вузлі організації та у WebSite) можна було прибрати --
+        уся сюїта репозиторію лишалась зеленою. Головна ж перекриває блок
+        jsonld ЦІЛКОМ, тобто не успадковує підстраховку з base.html: без
+        неї порожнє налаштування давало саме там організацію без імені.
+
+        WebSite перевіряється поруч із організацією, а не окремо: це
+        другий вузол, чиє ім'я береться з того самого налаштування, і
+        порожній рядок у ньому -- так само заявлене й порожнє поле, а не
+        відсутнє.
+        """
+        bad = []
+        for lang in LOCALE_PASSES:
+            label = pass_label(lang)
+            for endpoint, url, html in fetch_public_pages(app, lang=lang)[0]:
+                nodes = _org_nodes(html)
+                nodes += find_nodes_by_type(jsonld_blocks(html), 'WebSite')
+                assert nodes, f'[{label}] {endpoint}: жодного іменованого вузла'
+                for node in nodes:
+                    if not node.get('name'):
+                        marker = node.get('@id', node.get('@type'))
+                        bad.append(
+                            f'[{label}] {endpoint} {marker}: name = '
+                            f'{node.get("name")!r} -- порожня назва гірша '
+                            'за запасний літерал'
+                        )
+        assert not bad, (
+            'Вузли без імені на порожньому company_name:\n' + '\n'.join(bad)
         )

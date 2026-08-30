@@ -2,10 +2,16 @@
 закритості приватних розділів."""
 import re
 
-from app.i18n import LANGUAGES
+from flask import url_for
+from flask_babel import refresh
+
+from app.i18n import (
+    DEFAULT_LANGUAGE, LANGUAGES, OG_LOCALES, PREFIXED_LANGUAGES,
+)
 from tests.test_seo.helpers import (
-    LOCALE_PASSES, fetch_public_pages, is_absolute_url, iter_url_values,
-    jsonld_blocks, pass_label,
+    LOCALE_PASSES, fetch_public_pages, find_nodes_by_type, is_absolute_url,
+    iter_url_values, jsonld_blocks, organization_ids, pass_label, provider_ids,
+    rendered_lang,
 )
 
 
@@ -34,6 +40,102 @@ class TestSchemaUrls:
                         bad.append(f'{endpoint} [{label}]: {key} = {value}')
         assert not bad, (
             'Відносні URL у структурованих даних:\n' + '\n'.join(bad)
+        )
+
+
+class TestOrganizationIdIsLocaleIndependent:
+    """@id організації -- ОДИН рядок на весь сайт, у всіх трьох локалях.
+
+    Доти, доки він будувався з url_for('main.index', _external=True), він
+    ішов за активною мовою: '/#org', '/ru/#org', '/en/#org'. Для Google
+    @id -- це ідентичність сутності, тож одна компанія оголошувалась
+    трьома різними організаціями, а provider курсу з /ru/ вказував на
+    третю з них замість тієї, що описана на українській версії.
+
+    Твердження навмисно не називає очікуваного рядка: воно вимагає
+    ЗБІГУ між локалями й між посиланнями. Дослівне значення -- справа
+    шаблонів, а не сторожа; сторож ловить розходження.
+    """
+
+    def test_all_pages_and_locales_agree_on_one_organization_id(self, app):
+        seen = {}
+        for label, endpoint, _url, html in _pages_by_locale(app):
+            blocks = jsonld_blocks(html)
+            ids = organization_ids(blocks) | set(provider_ids(blocks))
+            assert ids, f'{endpoint} [{label}]: жодного @id організації'
+            for value in ids:
+                seen.setdefault(value, []).append(f'{endpoint} [{label}]')
+        assert len(seen) == 1, (
+            'Організація оголошена більш ніж одним @id -- для Google це '
+            'різні сутності:\n' + '\n'.join(
+                f'{value}: {sorted(where)}' for value, where in sorted(seen.items())
+            )
+        )
+
+    def test_the_canonical_id_has_no_language_prefix(self, app):
+        """Друга половина: збіг сам по собі виконався б і на трьох
+        однаково НЕправильних значеннях -- наприклад, якби всі сторінки
+        разом почали віддавати '/ru/#org'. Канонічним є безпрефіксний
+        корінь мови-джерела, бо саме він не міняється при зміні
+        дефолтної локалі відвідувача."""
+        with app.test_request_context():
+            expected = url_for(
+                'main.index', lang_code=DEFAULT_LANGUAGE, _external=True,
+            ) + '#org'
+        bad = []
+        for label, endpoint, _url, html in _pages_by_locale(app):
+            blocks = jsonld_blocks(html)
+            for value in organization_ids(blocks) | set(provider_ids(blocks)):
+                if value != expected:
+                    bad.append(f'{endpoint} [{label}]: {value!r}')
+        assert not bad, (
+            f'@id організації не дорівнює канонічному {expected!r}:\n'
+            + '\n'.join(bad)
+        )
+
+
+class TestContactPageIsOneEntity:
+    """mainEntity на /contact -- та сама організація, що й #org.
+
+    Вузол довго не мав @id взагалі, тож Google читав його як ДРУГУ
+    організацію поруч із #org із base.html: дві сутності з тим самим
+    телефоном і тими самими назвами. Спільний @id зшиває їх в одну, у
+    якій контактні дані доповнюють загальні.
+
+    Твердження окреме від сусіднього класу невипадково: organization_ids()
+    збирає лише вузли, що @id МАЮТЬ, тож зникнення @id з mainEntity для
+    нього невидиме -- вузол просто випадає з вибірки. Ця перевірка
+    заходить із іншого боку: бере ContactPage і вимагає @id від того, що
+    в ньому оголошено головною сутністю.
+    """
+
+    def test_main_entity_carries_the_canonical_organization_id(self, app):
+        with app.test_request_context():
+            expected = url_for(
+                'main.index', lang_code=DEFAULT_LANGUAGE, _external=True,
+            ) + '#org'
+        bad = []
+        client = app.test_client()
+        for lang in LOCALE_PASSES:
+            label = pass_label(lang)
+            refresh()
+            resp = client.get(f'/{lang}/contact' if lang else '/contact')
+            assert resp.status_code == 200
+            blocks = jsonld_blocks(resp.data.decode('utf-8'))
+            pages = find_nodes_by_type(blocks, 'ContactPage')
+            assert len(pages) == 1, f'[{label}] ContactPage: {len(pages)}'
+            entity = pages[0].get('mainEntity')
+            assert isinstance(entity, dict), (
+                f'[{label}] ContactPage без mainEntity-обʼєкта: {entity!r}'
+            )
+            if entity.get('@id') != expected:
+                bad.append(
+                    f'[{label}] mainEntity.@id = {entity.get("@id")!r}, '
+                    f'очікували {expected!r}'
+                )
+        assert not bad, (
+            'mainEntity на /contact -- окрема сутність, а не #org:\n'
+            + '\n'.join(bad)
         )
 
 
@@ -82,6 +184,87 @@ class TestHreflang:
                 if not is_absolute_url(href):
                     bad.append(f'{endpoint} [{label}]: {href}')
         assert not bad, 'Відносні hreflang:\n' + '\n'.join(bad)
+
+
+class TestDeclaredLanguageMatchesContent:
+    """<html lang> і og:locale описують ВМІСТ, а не сесію відвідувача.
+
+    П'ять юридичних сторінок (/cookies, /disclaimer, /offer, /privacy,
+    /refund) мовного префікса не мають узагалі -- /ru/privacy не існує і
+    віддає 404, -- а в їхніх текстах немає жодного виклику перекладу.
+    Але рендеряться вони під base.html, який брав мову з current_lang,
+    тобто з СЕСІЇ: досить було зайти на /ru/, щоб /privacy оголосив
+    lang="ru" над суцільно українською офертою. Хибна заява і для
+    краулера (мовний таргетинг видачі), і для скрінрідера (вибір
+    голосового рушія).
+
+    Сторожі вибірки цього не бачили за конструкцією: юридичні сторінки
+    живуть лише в українському прогоні, де очікування й так 'uk'. Тому
+    перевірка окрема й ходить саме тим шляхом, яким ходить відвідувач --
+    спершу на локалізовану сторінку, потім на юридичну тим самим
+    клієнтом.
+    """
+
+    LEGAL_PATHS = ('/cookies', '/disclaimer', '/offer', '/privacy', '/refund')
+
+    def test_untranslated_pages_declare_the_default_language(self, app):
+        bad = []
+        for lang in PREFIXED_LANGUAGES:
+            client = app.test_client()
+            refresh()
+            assert client.get(f'/{lang}/').status_code == 200
+            for path in self.LEGAL_PATHS:
+                refresh()
+                resp = client.get(path)
+                assert resp.status_code == 200, f'{path}: {resp.status_code}'
+                html = resp.data.decode('utf-8')
+                actual = rendered_lang(html)
+                if actual != DEFAULT_LANGUAGE:
+                    bad.append(
+                        f'[сесія {lang}] {path}: <html lang={actual!r}> над '
+                        'українським текстом'
+                    )
+                og = re.search(
+                    r'<meta property="og:locale" content="([^"]*)"', html,
+                )
+                if not og or og.group(1) != OG_LOCALES[DEFAULT_LANGUAGE]:
+                    bad.append(
+                        f'[сесія {lang}] {path}: og:locale = '
+                        f'{og.group(1) if og else None!r}, очікували '
+                        f'{OG_LOCALES[DEFAULT_LANGUAGE]!r}'
+                    )
+        assert not bad, (
+            'Сторінки оголошують не ту мову, якою написані:\n' + '\n'.join(bad)
+        )
+
+    def test_localized_pages_still_follow_the_session_locale(self, app):
+        """Друга половина: правило не мусить З'ЇСТИ мову там, де сторінка
+        справді перекладена. Без цього твердження вище проходило б і на
+        base.html, що прибив lang="uk" намертво."""
+        bad = []
+        for lang in PREFIXED_LANGUAGES:
+            client = app.test_client()
+            for path in (f'/{lang}/', f'/{lang}/contact', f'/{lang}/courses/'):
+                refresh()
+                resp = client.get(path)
+                assert resp.status_code == 200, f'{path}: {resp.status_code}'
+                html = resp.data.decode('utf-8')
+                actual = rendered_lang(html)
+                if actual != lang:
+                    bad.append(f'{path}: <html lang={actual!r}>')
+                og = re.search(
+                    r'<meta property="og:locale" content="([^"]*)"', html,
+                )
+                if not og or og.group(1) != OG_LOCALES[lang]:
+                    bad.append(
+                        f'{path}: og:locale = '
+                        f'{og.group(1) if og else None!r}, очікували '
+                        f'{OG_LOCALES[lang]!r}'
+                    )
+        assert not bad, (
+            'Локалізовані сторінки перестали оголошувати свою мову:\n'
+            + '\n'.join(bad)
+        )
 
 
 class TestPrivatePagesClosed:

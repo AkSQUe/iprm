@@ -3,7 +3,7 @@ import logging
 import os
 import time
 
-from flask import Flask, request
+from flask import Flask, request, url_for
 from flask_cors import CORS
 from config import config
 from app.extensions import db, login_manager, csrf, migrate, limiter, mail, babel
@@ -263,6 +263,30 @@ def create_app(config_name=None):
         return request.url_root.rstrip('/') + '/' + path.lstrip('/')
 
     app.jinja_env.globals['abs_url'] = _abs_url
+
+    # @id організації в JSON-LD -- ОДИН на весь сайт, незалежно від локалі.
+    #
+    # Доти, доки він будувався з url_for('main.index', _external=True), його
+    # значення йшло за активною мовою: '/#org' на українській, '/ru/#org' на
+    # російській, '/en/#org' на англійській. Для Google @id -- це
+    # ідентичність сутності, тож одна компанія оголошувалась ТРЬОМА
+    # різними організаціями, а provider курсу з /ru/ вказував на третю з
+    # них. lang_code=DEFAULT_LANGUAGE фіксує безпрефіксний корінь
+    # мови-джерела: url_for з явним lang_code обирає правило з defaults і
+    # віддає '/' у будь-якій локалі (префікс підставляє url_defaults-хук
+    # лише тоді, коли lang_code не переданий).
+    #
+    # Значення саме '<корінь>#org' -- дослівно те, що вже стояло в
+    # українському рендері, тож посилання provider/publisher і сторожі, які
+    # звіряють ці рядки посимвольно, лишаються чинними.
+    from app.i18n import DEFAULT_LANGUAGE as _DEFAULT_LANGUAGE
+
+    def _org_id():
+        return url_for(
+            'main.index', lang_code=_DEFAULT_LANGUAGE, _external=True,
+        ) + '#org'
+
+    app.jinja_env.globals['org_id'] = _org_id
 
     # Словник i18n-рядків для публічних JS: рендериться у base.html як JSON
     # (#iprm-i18n-data) і читається js/i18n.js (window.iprmI18n.t).

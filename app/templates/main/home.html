@@ -14,17 +14,27 @@
    &#34; приходив у видачу дослівно, -- а переводів рядка не екранує
    взагалі, а вони всередині JSON-рядка заборонені й ламають увесь граф.
    sameAs у літеральній формі до того ж збирався циклом із ручними комами:
-   кожен URL соцмережі так само йшов сирим. #}
+   кожен URL соцмережі так само йшов сирим.
+
+   @id організації -- org_id() (app/__init__.py), а не _home: _home іде за
+   активною мовою, і головна в трьох локалях оголошувала три РІЗНІ
+   організації замість однієї. publisher посилається на той самий рядок,
+   тож зв'язок WebSite -> Organization лишається цілим. url натомість
+   свідомо лишається _home: він описує САМУ ЦЮ сторінку, а не сутність.
+
+   addressLocality -- через t(): city перекладний
+   (SiteSettings.__translatable__), і сира колонка давала українську назву
+   міста поруч із перекладеною назвою організації. #}
 {% set _org = {
   '@type': 'EducationalOrganization',
-  '@id': _home ~ '#org',
+  '@id': org_id(),
   'name': site_settings.t('company_name') or _('ІПРМ'),
   'alternateName': site_settings.t('company_full_name'),
   'url': _home,
   'logo': url_for('static', filename='svg/IPRM-logo-complex.svg', _external=True),
   'telephone': site_settings.phone_primary,
   'email': site_settings.email,
-  'address': {'@type': 'PostalAddress', 'addressCountry': 'UA', 'addressLocality': site_settings.city}
+  'address': {'@type': 'PostalAddress', 'addressCountry': 'UA', 'addressLocality': site_settings.t('city')}
 } %}
 {# sameAs -- лише коли соцмережі справді заповнені: порожній масив у
    JSON-LD це заявлене й порожнє поле, а не відсутнє. #}
@@ -41,7 +51,7 @@
     'url': _home,
     'name': site_settings.t('company_name') or _('ІПРМ'),
     'inLanguage': current_lang,
-    'publisher': {'@id': _home ~ '#org'}
+    'publisher': {'@id': org_id()}
   }]
 } %}
 <script type="application/ld+json">{{ _graph_schema | tojson }}</script>

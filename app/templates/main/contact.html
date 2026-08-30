@@ -14,9 +14,14 @@
 {{ super() }}
 {# name і alternateName беруться через t(), а не з сирих стовпців: обидва
    поля перекладні, і на /ru/ та /en/ сира колонка давала українське
-   значення. Ціна саме тут вища, ніж деінде: цей mainEntity не має @id,
-   тож Google читає його як ДРУГУ організацію поруч із #org із base.html
-   -- дві сутності з тим самим телефоном і різними назвами. `or _('ІПРМ')`
+   значення. Те саме й addressLocality: city теж значиться в
+   SiteSettings.__translatable__.
+
+   @id тепер є і в mainEntity, і це той самий org_id(), що й у #org із
+   base.html. Доти, доки його не було, Google читав mainEntity як ДРУГУ
+   організацію поруч із #org -- дві сутності з тим самим телефоном і тими
+   самими назвами. Спільний @id робить із них один вузол, у якому
+   контактні дані просто доповнюють загальні. `or _('ІПРМ')`
    на name -- щоб порожнє налаштування не дало організацію без імені;
    alternateName запасного літерала НЕ має навмисно, бо його не має і
    #org: інакше на порожньому налаштуванні вузли знову розійшлись би. #}
@@ -27,13 +32,14 @@
   'url': url_for('main.contact', _external=True),
   'mainEntity': {
     '@type': 'EducationalOrganization',
+    '@id': org_id(),
     'name': site_settings.t('company_name') or _('ІПРМ'),
     'alternateName': site_settings.t('company_full_name'),
     'telephone': site_settings.phone_primary,
     'address': {
       '@type': 'PostalAddress',
       'addressCountry': 'UA',
-      'addressLocality': site_settings.city
+      'addressLocality': site_settings.t('city')
     },
     'contactPoint': {
       '@type': 'ContactPoint',
@@ -78,7 +84,7 @@
           </div>
           <div>
             <div class="contact-page__info-label">{{ _('Адреса') }}</div>
-            <div class="contact-page__info-value">{{ site_settings.city }}</div>
+            <div class="contact-page__info-value">{{ site_settings.t('city') }}</div>
           </div>
         </div>
 

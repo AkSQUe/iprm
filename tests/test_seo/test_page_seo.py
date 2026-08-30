@@ -3,10 +3,10 @@
 import re
 
 from tests.test_seo.helpers import (
-    DESC_MAX, DESC_MIN, EXPECTED_NON_200, KNOWN_SEO_DEBT, LENGTH_EXCEPTIONS,
-    LOCALE_PASSES, MIN_PAGES_PER_PASS, TITLE_MAX, TITLE_MIN,
-    expected_pass_sets, fetch_public_pages, head_field, is_absolute_url,
-    jsonld_blocks, pass_label,
+    CORE_PUBLIC_ENDPOINTS, DESC_MAX, DESC_MIN, EXPECTED_NON_200,
+    KNOWN_SEO_DEBT, LENGTH_EXCEPTIONS, LOCALE_PASSES, MIN_PAGES_PER_PASS,
+    TITLE_MAX, TITLE_MIN, count_h1, expected_pass_sets, fetch_public_pages,
+    head_field, is_absolute_url, jsonld_blocks, pass_label,
 )
 
 
@@ -122,6 +122,33 @@ class TestEveryLocalePassIsFailClosed:
             + '\n'.join(bad)
         )
 
+    def test_core_pages_are_still_public(self, app):
+        """Видалений роут мусить валити сюїту, а не худити вибірку.
+
+        Тест вище звіряє фактичну вибірку з очікуваною, але ОБИДВІ
+        виводяться з url_map: зникає роут -- зникає і рядок в очікуванні,
+        і множини далі збігаються. Доведено мутацією: monkeypatch
+        public_endpoints(), що викидає trainers.trainer_list, лишав усю
+        сюїту зеленою -- сторінка тренерів просто переставала існувати
+        для сторожів. MIN_PAGES_PER_PASS ловить лише обвал набору, не
+        втрату однієї сторінки.
+
+        CORE_PUBLIC_ENDPOINTS -- єдине місце, де очікування НЕ виведене з
+        url_map, тому саме воно й ловить видалення чи перейменування.
+        Звіряємо з набором сторінок, що ФАКТИЧНО віддали 200 в
+        українському прогоні (він єдиний містить і локалізовані сторінки,
+        і п'ять юридичних): так одне твердження накриває і зниклий роут,
+        і роут, що перестав віддавати сторінку.
+        """
+        served = {endpoint for endpoint, _url, _html in fetch_public_pages(app)[0]}
+        missing = sorted(CORE_PUBLIC_ENDPOINTS - served)
+        assert not missing, (
+            'Ядрові публічні сторінки зникли з сайту (роут видалено, '
+            'перейменовано або він перестав віддавати 200): '
+            f'{missing}. Якщо сторінку прибрано свідомо -- прибери її і з '
+            'CORE_PUBLIC_ENDPOINTS разом із причиною в коміті.'
+        )
+
     def test_no_locale_pass_collapses_to_a_handful(self, app):
         """Запобіжник проти вакууму: очікуваний набір виводиться з
         url_map, тож порожня вибірка дала б порожнє очікування, звірка
@@ -141,7 +168,7 @@ class TestPageStructure:
     def test_exactly_one_h1(self, app):
         bad = []
         for endpoint, url, html in fetch_public_pages(app)[0]:
-            count = len(re.findall(r'<h1[\s>]', html))
+            count = count_h1(html)
             if count != 1:
                 bad.append(f'{endpoint} ({url}): {count} <h1>')
         assert not bad, 'Сторінки не з одним <h1>:\n' + '\n'.join(bad)
