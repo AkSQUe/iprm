@@ -82,8 +82,13 @@
             </td>
             <td>{{ post.published_at.strftime('%d.%m.%Y') if post.published_at else '—' }}</td>
             <td>
-              {% if pending_counts.get(post.id) %}
-              <span class="badge badge--pending">{{ pending_counts.get(post.id) }} на модерації</span>
+              {% set pending = pending_counts.get(post.id) %}
+              {% if pending %}
+              {# status='pending' -- явно, хоч це й дефолт роуту: посилання
+                 мусить читатись без знання дефолтів цільового реєстру. #}
+              <a href="{{ url_for('admin.blog_comments', post_id=post.id, status='pending') }}">
+                <span class="badge badge--pending">{{ pending }} на модерації</span>
+              </a>
               {% else %}
               <span class="admin-text-muted">—</span>
               {% endif %}

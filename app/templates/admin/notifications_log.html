@@ -92,11 +92,15 @@
             <a href="{{ url_for('admin.notifications_log', trigger=log.trigger) }}"><span class="badge badge--draft">{{ log.trigger_label }}</span></a>
             {% else %}<span class="badge badge--draft">{{ log.trigger_label }}</span>{% endif %}
           </td>
+          {# Той самий клік у статус, що й на дашборді (notifications.html):
+             звужує ЦЕЙ ЖЕ журнал за статусом, а не веде нікуди осторонь. #}
           <td>
-            <span class="badge badge--{{ log.status_badge }}"
-                  {% if log.error_message %}title="{{ log.error_message }}"{% endif %}>
-              {{ log.status_label }}{% if log.retry_count %} ({{ log.retry_count }}x){% endif %}
-            </span>
+            <a href="{{ url_for('admin.notifications_log', status=log.status) }}">
+              <span class="badge badge--{{ log.status_badge }}"
+                    {% if log.error_message %}title="{{ log.error_message }}"{% endif %}>
+                {{ log.status_label }}{% if log.retry_count %} ({{ log.retry_count }}x){% endif %}
+              </span>
+            </a>
           </td>
           <td>{{ (log.sent_at or log.created_at).strftime('%d.%m.%Y %H:%M') if (log.sent_at or log.created_at) else '' }}</td>
           <td>

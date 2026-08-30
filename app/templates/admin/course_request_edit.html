@@ -82,7 +82,9 @@
         {% for audit in request_obj.audits %}
         <tr>
           <td>{{ audit.created_at.strftime('%d.%m.%Y %H:%M') if audit.created_at else '–' }}</td>
-          <td>{{ audit.changed_by.email if audit.changed_by else '–' }}</td>
+          {# Автор зміни -- сутність, клік веде в картку; запис без автора
+             (напр. системна міграція даних) лишається текстом. #}
+          <td>{% if audit.changed_by %}<a href="{{ url_for('admin.user_detail', user_id=audit.changed_by.id) }}">{{ audit.changed_by.email }}</a>{% else %}–{% endif %}</td>
           <td>
             {% if audit.from_status %}<span class="badge badge--{{ audit.from_badge }}">{{ audit.from_label }}</span>{% else %}–{% endif %}
             {{ icon('arrow_forward') }}

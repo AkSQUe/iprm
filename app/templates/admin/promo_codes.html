@@ -71,7 +71,11 @@
             {% endif %}
           </td>
           <td class="admin-nowrap admin-num"><strong>{{ p.discount_label }}</strong></td>
-          <td class="admin-nowrap admin-num">{{ p.usage_label }}</td>
+          {# «N / M» -- у картку коду, лише коли вживань хоч одне: саме там
+             лежить перелік застосувань, а на нулі дивитись нема на що. #}
+          <td class="admin-nowrap admin-num">
+            {% if p.used_count %}<a href="{{ url_for('admin.promo_code_detail', promo_id=p.id) }}">{{ p.usage_label }}</a>{% else %}{{ p.usage_label }}{% endif %}
+          </td>
           <td class="admin-num">{% if p.per_user_limit %}{{ p.per_user_limit }}{% else %}<span class="admin-text-muted">без ліміту</span>{% endif %}</td>
           <td class="admin-num">
             {% if p.valid_from or p.valid_until %}

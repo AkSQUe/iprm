@@ -135,7 +135,10 @@
           <td>{{ run.pages_total }}</td>
           <td>{{ run.pages_warn }}</td>
           <td>{{ run.pages_fail }}</td>
-          <td><span class="badge badge--{{ run.verdict_badge }}">{{ run.verdict }}</span></td>
+          {# Вердикт -- у той самий реєстр, звужений цим вердиктом. WARN/FAIL
+             сторінок лишаються текстом: у `perf_run_detail` немає фільтра
+             сторінок за вердиктом, вести нікуди. #}
+          <td><a href="{{ url_for('admin.perf_runs', verdict=run.verdict) }}"><span class="badge badge--{{ run.verdict_badge }}">{{ run.verdict }}</span></a></td>
           <td>
             {# Часта дія -- одразу, видалення під «...»: воно незворотне, а
                стояло за один промах від «Деталі». #}

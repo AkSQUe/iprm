@@ -84,7 +84,10 @@
           </td>
           <td>{{ cert.issued_at.strftime('%d.%m.%Y') }}</td>
           <td>
-            {% if cert.issued_by %}<small>{{ cert.issued_by.email }}</small>{% else %}<span class="admin-text-muted">–</span>{% endif %}
+            {# Ким видано -- сутність, клік веде в картку адміна, що видав;
+               без зв'язку (видалений акаунт) лишається текстом, як і ПІБ
+               учасника поруч. #}
+            {% if cert.issued_by %}<small><a href="{{ url_for('admin.user_detail', user_id=cert.issued_by.id) }}">{{ cert.issued_by.email }}</a></small>{% else %}<span class="admin-text-muted">–</span>{% endif %}
           </td>
           <td>
             {% if cert.revoked %}

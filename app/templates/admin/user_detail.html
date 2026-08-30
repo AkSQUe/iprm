@@ -109,7 +109,18 @@
     </div>
 
     <div class="form-section">
+      {# Чесна межа: лічильник на /admin/users рахує реєстрації БЕЗ
+         скасованих (User.with_registration_count), а реєстр за user_id
+         покаже всі, зокрема скасовані -- фільтра "будь-який, крім
+         скасованого" в реєстрі не існує. scope=all обов'язковий: дефолт
+         реєстру -- upcoming, без нього минулі реєстрації людини не видно. #}
       <h3 class="admin-form__section-title">Реєстрації на заходи</h3>
+      {# Та сама кнопка "відкрити деталізацію", що й у заявках з Meta вище
+         (btn-admin--secondary btn-admin--sm) -- а не посилання всередині
+         заголовка: заголовок секції -- 18px жирний текст, і посилання без
+         власного стилю губилось у ньому як звичайне слово. #}
+      <a href="{{ url_for('admin.registrations_all', user_id=user.id, scope='all') }}"
+         class="btn-admin btn-admin--secondary btn-admin--sm">Відкрити в реєстрі</a>
       {% if registrations %}
       <table class="admin-table">
         <thead>

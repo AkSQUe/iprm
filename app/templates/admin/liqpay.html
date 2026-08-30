@@ -119,9 +119,11 @@
     <tbody>
       {% for reg in recent %}
       <tr>
-        <td class="admin-nowrap admin-num">REG-{{ reg.id }}</td>
+        <td class="admin-nowrap admin-num">
+          <a href="{{ url_for('admin.instance_registrations', instance_id=reg.instance_id) }}">REG-{{ reg.id }}</a>
+        </td>
         <td class="admin-cell-title">{{ reg.target_title or '&ndash;'|safe }}</td>
-        <td>{{ reg.user.first_name }} {{ reg.user.last_name }}</td>
+        <td><a href="{{ url_for('admin.user_detail', user_id=reg.user.id) }}">{{ reg.user.first_name }} {{ reg.user.last_name }}</a></td>
         <td class="admin-nowrap admin-num">{{ money(reg.payment_amount) }}</td>
         <td>
           <span class="badge badge--{{ reg.payment_badge }}">

@@ -483,6 +483,8 @@ def _registration_filters():
         'instance_id': _listing.int_arg('instance_id'),
         'course_id': _listing.int_arg('course_id'),
         'trainer_id': _listing.int_arg('trainer_id'),
+        # Тільки для переходу з картки користувача -- у філтр-барі поля нема.
+        'user_id': _listing.int_arg('user_id'),
         'date_from': _listing.date_arg('date_from'),
         'date_to': _listing.date_arg('date_to'),
         'no_certificate': _listing.choice_arg('no_certificate', ('1',)),
@@ -513,6 +515,8 @@ def _apply_registration_filters(query, filters):
             EventRegistration.payment_method == filters['payment_method'])
     if filters['instance_id']:
         query = query.filter(EventRegistration.instance_id == filters['instance_id'])
+    if filters['user_id']:
+        query = query.filter(EventRegistration.user_id == filters['user_id'])
     query = _listing.apply_date_range(
         query, EventRegistration.created_at,
         filters['date_from'], filters['date_to'],
@@ -693,6 +697,20 @@ def _registration_filters_summary(filters, rows_count):
         summary.append(('Захід', participant_service.event_label(instance)))
     else:
         summary.append(('Захід', 'Усі'))
+
+    # user_id -- перехід із картки користувача (немає поля у філтр-барі, тож
+    # серед фільтрів вище цього рядка нема): без нього файл на одну людину
+    # звітував би "Курс: Усі, Захід: Усі, Статус: Усі" -- правда про кожен
+    # окремий фільтр і неправда про сам зріз.
+    user = db.session.get(User, filters['user_id']) if filters['user_id'] else None
+    if user:
+        summary.append(('Учасник', user.full_name or user.email))
+    elif filters['user_id']:
+        # Рахунок ще існує, а ПІБ/email прочитати нема з чого (видалений
+        # користувач) -- краще id, ніж мовчки пропустити рядок.
+        summary.append(('Учасник', f'ID {filters["user_id"]}'))
+    else:
+        summary.append(('Учасник', 'Усі'))
 
     return _listing.export_summary(summary, rows_count)
 

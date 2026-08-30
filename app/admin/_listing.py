@@ -33,6 +33,14 @@ def text_arg(name, default=''):
     return (request.args.get(name) or default).strip()
 
 
+# Межі, які тримає BIGINT у БД (усі id в схемі -- BigInteger, mixins.BigIntPK):
+# понад ними psycopg2 не мовчки округлює значення, а падає OverflowError при
+# байнді параметра -- запит долітав би до драйвера й клав сторінку на 500
+# замість чесного "нічого не знайдено" по сміттєвому id.
+_BIGINT_MIN = -9_223_372_036_854_775_808
+_BIGINT_MAX = 9_223_372_036_854_775_807
+
+
 def int_arg(name, positive=True):
     """Цілочисельний параметр або None (нечислове значення -> None).
 
@@ -42,6 +50,8 @@ def int_arg(name, positive=True):
     """
     value = request.args.get(name, type=int)
     if value is None or (positive and value <= 0):
+        return None
+    if value < _BIGINT_MIN or value > _BIGINT_MAX:
         return None
     return value
 

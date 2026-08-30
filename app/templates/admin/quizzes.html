@@ -94,13 +94,17 @@
               </ul>
               {% endif %}
             </td>
+            {# Розмір банку і прохідний бал -- у той самий редактор, що й
+               кнопка «Редагувати» цього рядка: обидва значення живуть у
+               тесті КУРСУ (row.quiz), навіть коли рядок ще й показує
+               перевизначення проведень нижче. #}
             <td class="admin-num">
-              {% if row.quiz %}{{ row.quiz.bank_size }}{% else %}<span class="admin-text-muted">&ndash;</span>{% endif %}
+              {% if row.quiz %}<a href="{{ url_for('admin.course_quiz_edit', course_id=row.course.id) }}">{{ row.quiz.bank_size }}</a>{% else %}<span class="admin-text-muted">&ndash;</span>{% endif %}
             </td>
             <td class="admin-nowrap">
               {% if row.quiz %}
-              {{ row.quiz.passing_score }} з {{ row.quiz.questions_per_attempt }},
-              спроб: {{ row.quiz.max_attempts }}
+              <a href="{{ url_for('admin.course_quiz_edit', course_id=row.course.id) }}">{{ row.quiz.passing_score }} з {{ row.quiz.questions_per_attempt }},
+              спроб: {{ row.quiz.max_attempts }}</a>
               {% else %}
               <span class="admin-text-muted">тесту немає</span>
               {% endif %}
