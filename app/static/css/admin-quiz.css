@@ -164,6 +164,22 @@
   color: var(--iprm-error);
 }
 
+/* Бал загорнутий у посилання на розбір відповідей, але власний колір
+   (склав / не склав) перебиває колір посилання з `.admin-table a`, а вага 700
+   -- його 500. Тобто клітинка виглядала точнісінько як звичайний текст, і про
+   посилання ніхто б не дізнався. Колір тут смисловий і лишається, тож
+   інтерактивність показує підкреслення -- тим самим прийомом, що й
+   `.admin-copy-error`. */
+.admin-table a:not(.btn-admin) .quiz-score {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--iprm-border-strong);
+}
+
+.admin-table a:not(.btn-admin):hover .quiz-score {
+  text-decoration-style: solid;
+}
+
 /* Історія спроб у клітинці -- дрібним, бо головне тут «склав / не склав». */
 .quiz-attempt-list {
   list-style: none;
