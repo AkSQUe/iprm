@@ -89,7 +89,7 @@ def instance_registrations(instance_id):
     # анкети й сертифіката. `.all()` означав, що вебінар на 300 осіб рахував би
     # це все за один запит -- і батч-контекст будувався б на 300 рядків замість
     # 50. Лічильники нижче навмисно лишаються по всьому заходу.
-    page = request.args.get('page', 1, type=int)
+    page = _listing.page_arg()
     per_page = _listing.per_page_arg()
     pagination = query.order_by(EventRegistration.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False,
@@ -558,7 +558,7 @@ def _apply_registration_filters(query, filters):
 @admin_required
 def registrations_all():
     filters = _registration_filters()
-    page = request.args.get('page', 1, type=int)
+    page = _listing.page_arg()
     per_page = _listing.per_page_arg()
 
     stats = db.session.query(

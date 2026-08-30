@@ -314,7 +314,7 @@ def instance_quiz_results(instance_id):
         query = query.filter(EventRegistration.payment_status != 'paid')
     query = query.order_by(EventRegistration.quiz_passed_at.is_(None), User.last_name)
 
-    page = request.args.get('page', 1, type=int)
+    page = _listing.page_arg()
     per_page = _listing.per_page_arg()
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     registrations = pagination.items

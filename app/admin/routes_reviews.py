@@ -47,7 +47,7 @@ def _current_back_args():
     review_delete): сама дія повертається через `_back()`, а restore_url
     у тості веде на ще один роут дії, тож зріз йому теж треба нести явно.
     """
-    page = request.args.get('page', 1, type=int)
+    page = _listing.page_arg()
     return _listing.back_args(_listing.filter_args(_review_filters()), page)
 
 
@@ -69,7 +69,7 @@ def reviews_list():
     pagination = query.order_by(
         Review.sort_order, Review.created_at.desc(),
     ).paginate(
-        page=request.args.get('page', 1, type=int),
+        page=_listing.page_arg(),
         per_page=_listing.per_page_arg(), error_out=False,
     )
     filter_args = _listing.filter_args(filters)

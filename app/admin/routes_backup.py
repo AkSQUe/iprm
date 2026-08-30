@@ -4,7 +4,7 @@ import logging
 from flask import render_template, request, jsonify, flash, redirect, url_for, send_file
 from flask_login import current_user
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
 from app.models.database_backup import DatabaseBackup
 
@@ -14,7 +14,7 @@ audit_logger = logging.getLogger('audit')
 @admin_bp.route('/backups')
 @admin_required
 def backups():
-    page = request.args.get('page', 1, type=int)
+    page = _listing.page_arg()
     per_page = 20
 
     from app.services.backup_service import BackupService

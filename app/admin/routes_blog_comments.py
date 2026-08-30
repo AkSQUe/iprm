@@ -86,7 +86,7 @@ def blog_comments():
         query, BlogComment.created_at, filters['date_from'], filters['date_to'],
     )
     pagination = query.order_by(desc(BlogComment.created_at)).paginate(
-        page=request.args.get('page', 1, type=int),
+        page=_listing.page_arg(),
         per_page=_listing.per_page_arg(), error_out=False,
     )
     filter_args = _listing.filter_args(filters)

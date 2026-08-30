@@ -14,7 +14,7 @@ from flask import (
 )
 from flask_login import current_user
 
-from app.admin import admin_bp
+from app.admin import _listing, admin_bp
 from app.admin.decorators import admin_required
 from app.extensions import db
 from app.models.course_instance import CourseInstance
@@ -805,7 +805,7 @@ def _overview_query(f):
 def materials_overview():
     from app.models.material_reservation import MaterialReservationItem
     f = _overview_filters()
-    page = request.args.get('page', 1, type=int)
+    page = _listing.page_arg()
     query = _overview_query(f)
     pagination = query.paginate(page=page, per_page=_OVERVIEW_PER_PAGE, error_out=False)
 

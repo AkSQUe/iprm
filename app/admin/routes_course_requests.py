@@ -51,7 +51,7 @@ def _course_requests_query(filters):
 def course_requests_list():
     filters = _course_request_filters()
     pagination = _course_requests_query(filters).paginate(
-        page=request.args.get('page', 1, type=int),
+        page=_listing.page_arg(),
         per_page=_listing.per_page_arg(), error_out=False,
     )
 
@@ -179,7 +179,7 @@ def _current_back_args():
     редагування -- окрема сторінка (не інлайн-форма рядка), тому зріз у
     ній береться з query-string власного запиту, а не з роуту списку.
     """
-    page = request.args.get('page', 1, type=int)
+    page = _listing.page_arg()
     return _listing.back_args(_listing.filter_args(_course_request_filters()), page)
 
 

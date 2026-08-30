@@ -86,7 +86,7 @@ def media_library():
     entity_type = (request.args.get('entity_type') or '').strip()
     usage_type = (request.args.get('usage_type') or '').strip()
     search = _listing.text_arg('q')
-    page = request.args.get('page', 1, type=int)
+    page = _listing.page_arg()
 
     q = MediaFile.alive()
     if entity_type == 'none':
@@ -127,7 +127,7 @@ def media_list_json():
     """JSON-список медіа для пікера в редакторах (вибір наявного файлу)."""
     entity_type = (request.args.get('entity_type') or '').strip()
     usage_type = (request.args.get('usage_type') or '').strip()
-    page = request.args.get('page', 1, type=int)
+    page = _listing.page_arg()
 
     q = MediaFile.alive()
     if entity_type == 'none':

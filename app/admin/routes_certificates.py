@@ -97,7 +97,7 @@ def certificates():
     # Реєстр росте після кожного заходу, тож сторінками; експорт лишається
     # по всьому зрізу -- пагінація це властивість екрана, а не звіту.
     pagination = _certificates_query(filters).paginate(
-        page=request.args.get('page', 1, type=int),
+        page=_listing.page_arg(),
         per_page=_listing.per_page_arg(), error_out=False,
     )
     return render_template(

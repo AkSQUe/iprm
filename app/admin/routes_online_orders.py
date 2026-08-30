@@ -172,7 +172,7 @@ def online_orders_list():
     course_options = _course_options()
     filters = _order_filters([key for key, _ in course_options])
     pagination = _orders_query(filters).paginate(
-        page=request.args.get('page', 1, type=int),
+        page=_listing.page_arg(),
         per_page=PER_PAGE, error_out=False,
     )
     orders = pagination.items

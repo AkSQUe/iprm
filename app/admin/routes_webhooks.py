@@ -98,7 +98,7 @@ def webhooks_list():
         query, WebhookDelivery.created_at, filters['date_from'], filters['date_to'],
     )
     pagination = query.order_by(WebhookDelivery.created_at.desc()).paginate(
-        page=request.args.get('page', 1, type=int),
+        page=_listing.page_arg(),
         per_page=_listing.per_page_arg(), error_out=False,
     )
 

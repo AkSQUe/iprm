@@ -74,7 +74,7 @@ def online_courses_list():
         OnlineCourse.sort_order,
         OnlineCourse.remote_name,
     ).paginate(
-        page=request.args.get('page', 1, type=int),
+        page=_listing.page_arg(),
         per_page=PER_PAGE, error_out=False,
     )
     courses = pagination.items

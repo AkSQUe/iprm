@@ -131,7 +131,10 @@ def test_zero_id_is_not_treated_as_active_filter(client, admin):
 
 def test_search_term_is_capped(app):
     with app.test_request_context('/admin/users?q=' + 'я' * 500):
-        assert len(_listing.text_arg('q')) == 500
+        # text_arg сам ріже до MAX_SEARCH_LENGTH (план admin-listing-tails,
+        # Task 3): довгий рядок не має долітати навіть до URL/чіпса, а не
+        # лише до запиту -- той search_clause і раніше різав окремо.
+        assert len(_listing.text_arg('q')) == _listing.MAX_SEARCH_LENGTH
         clause = _listing.search_clause(_listing.text_arg('q'), [User.email])
         # У шаблон LIKE потрапляє обрізаний рядок + два '%'.
         rendered = str(clause.compile(compile_kwargs={'literal_binds': True}))

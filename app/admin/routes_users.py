@@ -96,7 +96,7 @@ def users():
     # Базу вже переросли тисячу акаунтів -- сторінками. Експорт лишається по
     # всьому зрізу.
     pagination = _users_query(filters).paginate(
-        page=request.args.get('page', 1, type=int),
+        page=_listing.page_arg(),
         per_page=_listing.per_page_arg(), error_out=False,
     )
     return render_template(

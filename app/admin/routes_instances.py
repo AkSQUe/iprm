@@ -206,7 +206,7 @@ def instances_list():
         pagination = None
     else:
         pagination = query.order_by(*order).paginate(
-            page=request.args.get('page', 1, type=int),
+            page=_listing.page_arg(),
             per_page=_INSTANCES_PER_PAGE, error_out=False,
         )
         instances = pagination.items

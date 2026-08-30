@@ -45,7 +45,7 @@ def _b2b_query(filters):
 def b2b_requests_list():
     filters = _b2b_filters()
     pagination = _b2b_query(filters).paginate(
-        page=request.args.get('page', 1, type=int),
+        page=_listing.page_arg(),
         per_page=_listing.per_page_arg(), error_out=False,
     )
     filter_args = _listing.filter_args(filters)

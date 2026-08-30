@@ -109,7 +109,7 @@ def _promo_query(filters):
 def promo_codes_list():
     filters = _promo_filters()
     pagination = _promo_query(filters).paginate(
-        page=request.args.get('page', 1, type=int),
+        page=_listing.page_arg(),
         per_page=PER_PAGE, error_out=False,
     )
     return render_template(

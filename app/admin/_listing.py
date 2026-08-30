@@ -29,9 +29,24 @@ def now_kyiv():
     return datetime.now(KYIV)
 
 
-def text_arg(name, default=''):
-    """Текстовий параметр query-string, обрізаний по краях."""
-    return (request.args.get(name) or default).strip()
+# Пошуковий рядок довший за це -- завідомо не запит людини, а сміття з
+# автопідстановки чи чужого скрипта; ILIKE по кількох колонках від нього лише
+# страждає. Тут, а не нижче біля search_clause: text_arg ріже по цій межі всі
+# свої виклики, і search_clause на власному, вже обрізаному рядку -- лише
+# другий, надлишковий захист.
+MAX_SEARCH_LENGTH = 100
+
+
+def text_arg(name, default='', max_length=MAX_SEARCH_LENGTH):
+    """Текстовий параметр query-string, обрізаний по краях і за довжиною.
+
+    Дефолтна межа -- MAX_SEARCH_LENGTH: без неї довгий ?q=... не впливає на
+    запит (search_clause однаково ріже його перед ILIKE), але роздуває чіпс,
+    посилання пагінатора й кнопку експорту зайвими символами, яких запит
+    ніколи не бачить. Кому цієї межі замало (значення, не пошуковий рядок),
+    передає max_length окремо -- захардкодженого ліміту тут нема.
+    """
+    return (request.args.get(name) or default).strip()[:max_length]
 
 
 # Межі, які тримає BIGINT у БД (усі id в схемі -- BigInteger, mixins.BigIntPK):
@@ -100,6 +115,24 @@ def per_page_arg(default=LIST_PER_PAGE):
     return int(raw) if raw else default
 
 
+# Стеля НЕ лише проти від'ємних і нуля. `Pagination.paginate` рахує
+# offset = (page - 1) * per_page і віддає його драйверу як параметр OFFSET:
+# для сміттєво великого page це не «порожня сторінка», а виняток --
+# OverflowError у SQLite ("Python int too large to convert to SQLite
+# INTEGER"), "bigint out of range" у Postgres. Мільйон сторінок при
+# per_page=200 -- це вже 200 млн рядків, тобто завідомо поза будь-яким
+# реальним реєстром; менший запас не потрібен нікому.
+MAX_PAGE = 1_000_000
+
+
+def page_arg(default=1):
+    """Номер сторінки з query-string: ціле у [1, MAX_PAGE], інакше default."""
+    value = request.args.get('page', type=int)
+    if value is None or value < 1 or value > MAX_PAGE:
+        return default
+    return value
+
+
 def sort_arg(allowed, default=''):
     """Ключ сортування зі списку дозволених ('' -- типовий порядок сторінки).
 
@@ -112,11 +145,6 @@ def sort_arg(allowed, default=''):
     """
     return choice_arg('sort', allowed, default)
 
-
-# Пошуковий рядок довший за це -- завідомо не запит людини, а сміття з
-# автопідстановки чи чужого скрипта; ILIKE по кількох колонках від нього лише
-# страждає.
-MAX_SEARCH_LENGTH = 100
 
 # Стеля синхронного експорту. Понад неї файл будувався б хвилини й тримав би
 # у пам'яті весь зріз, поки nginx ріже запит на 60с; тож відмовляємо явно
@@ -238,7 +266,7 @@ def back_redirect(endpoint, filters, extra=None):
     query-string самого запиту дії: рядкові форми несуть зріз в action-URL
     через `back_args()`, викликаний при рендері списку.
     """
-    page = request.args.get('page', 1, type=int)
+    page = page_arg()
     args = back_args(filter_args(filters), page, extra)
     return redirect(url_for(endpoint, **args))
 

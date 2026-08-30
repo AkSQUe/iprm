@@ -69,7 +69,7 @@ def _query(filters):
 def refund_requests_list():
     filters = _filters()
     pagination = _query(filters).paginate(
-        page=request.args.get('page', 1, type=int),
+        page=_listing.page_arg(),
         per_page=_listing.per_page_arg(), error_out=False,
     )
     filter_args = _listing.filter_args(filters)

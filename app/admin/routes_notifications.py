@@ -155,7 +155,7 @@ def notifications_log():
     """Full email log with filtering."""
     filters = _email_log_filters()
     pagination = _email_log_query(filters).paginate(
-        page=request.args.get('page', 1, type=int), per_page=50, error_out=False,
+        page=_listing.page_arg(), per_page=50, error_out=False,
     )
     return render_template(
         'admin/notifications_log.html',

@@ -70,7 +70,7 @@ def _rewards_query(filters):
 def referrals_overview():
     settings = SiteSettings.get()
     filters = _reward_filters()
-    page = request.args.get('page', 1, type=int)
+    page = _listing.page_arg()
     per_page = 50
 
     # Зведення: активні/очікують/анульовані нарахування, сума активних балів.

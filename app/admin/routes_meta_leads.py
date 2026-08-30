@@ -281,7 +281,7 @@ def _lead_summary():
 def meta_leads_list():
     filters = _lead_filters()
     pagination = _leads_query(filters).paginate(
-        page=request.args.get('page', 1, type=int),
+        page=_listing.page_arg(),
         per_page=_listing.per_page_arg(), error_out=False,
     )
     form_options, campaign_options = _source_options()
@@ -760,7 +760,7 @@ def meta_lead_events():
     filters = _event_filters()
 
     pagination = _events_query(filters).paginate(
-        page=request.args.get('page', 1, type=int),
+        page=_listing.page_arg(),
         per_page=_listing.per_page_arg(), error_out=False,
     )
     counts = dict(
