@@ -14,6 +14,10 @@
 {% block extra_css %}
 {# Картки блоку «інші онлайн-курси» стилюються тим самим файлом, що й каталог. #}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/online-courses.css') }}?v={{ assets_version }}">
+{# Калькулятор окупності -- спільний компонент трьох сторінок (курс, тут,
+   Головна). Сторінка courses.css не підключає взагалі, тож раніше блок
+   ROI лишався зовсім без стилів. #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/roi-calculator.css') }}?v={{ assets_version }}">
 {# Компоненти, спільні зі сторінкою очного курсу. ПЕРЕД online-course.css:
    там лишились специфічні для онлайну переозначення (картка купівлі, факти). #}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/course-landing.css') }}?v={{ assets_version }}">

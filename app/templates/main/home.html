@@ -59,6 +59,10 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/courses.css') }}?v={{ assets_version }}">
+{# Калькулятор окупності -- спільний компонент трьох сторінок (курс,
+   онлайн-курс, тут). page-home.css нижче лише уточнює його розклад під
+   Головну (.page-home .iprm-roi*), базові правила звідси. #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/roi-calculator.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-home.css') }}?v={{ assets_version }}">
 {% endblock %}
 

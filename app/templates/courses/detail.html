@@ -11,6 +11,10 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/courses.css') }}?v={{ assets_version }}">
+{# Калькулятор окупності -- спільний компонент трьох сторінок (тут, онлайн-
+   курс, Головна). Підключати ПІСЛЯ courses.css: інакше правила, які там
+   перебивались пізнішими рядками того самого файлу, почнуть вигравати. #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/roi-calculator.css') }}?v={{ assets_version }}">
 {# Компоненти, спільні зі сторінкою онлайн-курсу. Підключати ПІСЛЯ
    courses.css: там лишились специфічні для офлайну переозначення. #}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/course-landing.css') }}?v={{ assets_version }}">
