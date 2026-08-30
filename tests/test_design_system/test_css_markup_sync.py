@@ -352,3 +352,64 @@ def test_no_stray_comment_terminator_in_css():
           'коментаря. Вона закриває коментар зарано, і наступне правило '
           'парсер викидає мовчки.'
     )
+
+
+_COMMENT = re.compile(r'/\*.*?\*/', re.S)
+_STRING = re.compile(r'"[^"\n]*"|\'[^\'\n]*\'')
+
+
+def _blank(match):
+    """Замінник тієї ж довжини -- щоб зміщення в тексті лишились чинними."""
+    return ' ' * len(match.group())
+
+
+def _unbalanced_declarations(path):
+    """Оголошення, у яких не сходяться круглі дужки.
+
+    Ріжемо не по рядках, а по роздільниках `;{}`: значення бувають
+    багаторядкові (градієнт на три рядки), і посимвольний скан рядка
+    оголосив би кожен його рядок битим. Рядки в лапках і коментарі
+    вибілюються пробілами тієї ж довжини -- вміст більше не заважає, а
+    зміщення лишаються придатними для номера рядка.
+    """
+    raw = path.read_text(encoding='utf-8')
+    css = _STRING.sub(_blank, _COMMENT.sub(_blank, raw))
+
+    out, start = [], 0
+    for sep in re.finditer(r'[;{}]', css):
+        chunk = css[start:sep.start()]
+        if ':' in chunk and chunk.count('(') != chunk.count(')'):
+            offset = start + len(chunk) - len(chunk.lstrip())
+            out.append((raw.count('\n', 0, offset) + 1,
+                        ' '.join(raw[start:sep.end()].split())))
+        start = sep.end()
+    return out
+
+
+def test_no_declaration_has_unbalanced_parentheses():
+    """Оголошення мусить парситись. Браузер про зайву дужку не скаже.
+
+    Справжня вада, заради якої цей сторож написаний: правка прибрала з
+    восьми оголошень запасне значення (`var(--iprm-warning-text,
+    var(--iprm-warning))` -> `var(--iprm-warning-text)`), а дужку від
+    запасного лишила. Браузер відкидає таке оголошення ЦІЛКОМ і мовчки, і
+    `.ml-wait--warn`/`.ml-wait--late` втратили колір узагалі: реєстр лідів
+    перестав відрізняти «щойно прийшов» від «прострочено» -- єдине, заради
+    чого шкала й існує. Ще один такий випадок жив у стилях журналу помилок.
+
+    Решта сторожів цього не бачить за визначенням: клас на місці, правило
+    на місці, токен існує й навіть названий правильно. Не парситься саме
+    оголошення, а на нього ніхто не дивився.
+    """
+    broken = {}
+    for path in sorted(CSS_DIR.glob('*.css')):
+        for line, text in _unbalanced_declarations(path):
+            broken.setdefault(path.name, []).append(f'{line}: {text}')
+
+    assert not broken, (
+        'оголошення з несиметричними дужками (браузер відкидає їх цілком): '
+        + '; '.join('%s -- %s' % (f, ', '.join(rows))
+                    for f, rows in sorted(broken.items()))
+        + '\nНайчастіша причина -- прибрали запасне значення з var(a, b), '
+          'а дужку від нього лишили.'
+    )

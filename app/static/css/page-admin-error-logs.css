@@ -53,7 +53,7 @@
   cursor: pointer;
   text-decoration: underline dotted;
   text-underline-offset: 3px;
-  text-decoration-color: var(--iprm-border-strong));
+  text-decoration-color: var(--iprm-border-strong);
   transition: color 0.15s;
 }
 
