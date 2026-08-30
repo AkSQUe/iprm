@@ -1376,57 +1376,6 @@ select.badge-select:disabled {
   outline-offset: 2px;
 }
 
-/* ========== ADMIN TOAST (client-side notifications) ========== */
-
-.admin-toast-container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  pointer-events: none;
-}
-
-.admin-toast {
-  min-width: 240px;
-  max-width: 360px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--iprm-text);
-  background: var(--iprm-white);
-  box-shadow: var(--iprm-shadow-card);
-  opacity: 0;
-  transform: translateY(-8px);
-  transition: opacity 0.25s ease, transform 0.25s ease;
-  pointer-events: auto;
-}
-
-.admin-toast--visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.admin-toast--success {
-  background: var(--iprm-success-bg);
-  color: var(--iprm-success);
-  border: 1px solid var(--iprm-success-light);
-}
-
-.admin-toast--error {
-  background: var(--iprm-error-bg);
-  color: var(--iprm-error-text);
-  border: 1px solid var(--iprm-error-light);
-}
-
-.admin-toast--info {
-  background: var(--iprm-badge-published-bg);
-  color: var(--iprm-badge-published-text);
-}
-
 /* ========== SECTIONS ========== */
 
 .iprm-section {

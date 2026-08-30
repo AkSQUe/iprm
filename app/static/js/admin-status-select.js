@@ -2,7 +2,6 @@
    Progressive Enhancement: форма працює і без JS (submit -> redirect). */
 (function () {
   var csrfToken = '';
-  var toastContainer = null;
 
   function init() {
     var csrfInput = document.querySelector('input[name="csrf_token"]');
@@ -44,29 +43,9 @@
     setTimeout(function () { select.classList.remove(cls); }, 1200);
   }
 
-  function ensureToastContainer() {
-    if (toastContainer && document.body.contains(toastContainer)) return toastContainer;
-    toastContainer = document.createElement('div');
-    toastContainer.className = 'admin-toast-container';
-    toastContainer.setAttribute('role', 'status');
-    toastContainer.setAttribute('aria-live', 'polite');
-    document.body.appendChild(toastContainer);
-    return toastContainer;
-  }
-
+  // Тост -- через спільний API (toast.js), як і admin-inline-edit.js.
   function showToast(message, variant) {
-    var container = ensureToastContainer();
-    var toast = document.createElement('div');
-    toast.className = 'admin-toast admin-toast--' + (variant || 'info');
-    toast.textContent = message;
-    container.appendChild(toast);
-    requestAnimationFrame(function () { toast.classList.add('admin-toast--visible'); });
-    setTimeout(function () {
-      toast.classList.remove('admin-toast--visible');
-      setTimeout(function () {
-        if (toast.parentNode) toast.parentNode.removeChild(toast);
-      }, 300);
-    }, 3000);
+    if (window.iprmToast) window.iprmToast(message, variant || 'info');
   }
 
   function handleChange(e) {
