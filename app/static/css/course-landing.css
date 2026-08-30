@@ -1279,18 +1279,6 @@
   appearance: none;
 }
 
-/* Honeypot ховаємо з екрана, але не display:none -- боти мають його бачити.
-   Правило дублює .iprm-request-form__honeypot із courses.css, бо на
-   сторінці онлайн-курсу того файлу немає. */
-.iprm-lead-form .iprm-request-form__honeypot {
-  position: absolute;
-  left: -10000px;
-  top: auto;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-}
-
 /* ========== FAQ ==========
    Перенесено з courses.css. Розмітка референсу: тонкі роздільники
    замість карток, "+" повертається на 45deg замість підміни символу

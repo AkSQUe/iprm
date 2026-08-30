@@ -252,7 +252,7 @@
               data-validate data-single-submit data-recaptcha-action="b2b_request" data-ga-event="generate_lead">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <h3 class="iprm-b2b__form-title">{{ _('Отримати корпоративні умови') }}</h3>
-          <div class="iprm-b2b__honeypot" aria-hidden="true">
+          <div class="iprm-honeypot" aria-hidden="true">
             <label for="b2b-website">{{ _('Не заповнюйте це поле') }}</label>
             <input type="text" name="website" id="b2b-website" tabindex="-1" autocomplete="off">
           </div>

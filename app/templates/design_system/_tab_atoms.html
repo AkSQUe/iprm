@@ -364,6 +364,15 @@
     </div>
   </div>
 
+  <!-- ===== UTILITY: HONEYPOT ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="honeypot">
+      <p class="ds-label">Utility</p>
+      <h2 class="ds-title">iprm-honeypot</h2>
+      <p class="ds-hint">Не показується демо навмисно: клас ставить `position: absolute; left: -10000px; ... overflow: hidden`, тобто буквально прибирає елемент з екрана -- живий приклад тут виглядав би порожнім місцем. Пастка для ботів на полі "website" -- ховає його і від ока, і від скрінрідера, на відміну від `.visually-hidden` (те лишає текст доступним читачу екрана навмисно, для підписів). Якщо поле прочитають і заповнять, форма відхилить живу людину як бота. Вжито в `_course_lead_form.html` і `courses/list.html` (форма B2B). Заміняє три побайтово однакові правила під різними іменами -- `.iprm-request-form__honeypot` і `.iprm-b2b__honeypot` у courses.css, і той самий перший селектор, зайво скоуплений на `.iprm-lead-form` у course-landing.css.</p>
+    </div>
+  </div>
+
   <!-- ===== REGISTRATION SCREEN FAMILY ===== -->
   <div class="ds-section" id="reg-family">
     <p class="ds-label">Components</p>

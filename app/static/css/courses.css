@@ -626,24 +626,6 @@ button.iprm-tag:focus-visible {
   color: var(--iprm-warning-text);
 }
 
-/* Honeypot: повністю приховано від користувачів, але доступно для ботів */
-/* Компонент `.iprm-request-form` тут БУВ -- дванадцять правил, і всі
-   мертві: клас не вживає ЖОДЕН шаблон. У розмітці лишився тільки інший,
-   `__honeypot`, і його правило нижче збережено.
-
-   Чому цього не спіймав сторож «правило без розмітки»: він обходить лише
-   адмінку й каталог, а це публічний компонент. */
-
-.iprm-request-form__honeypot {
-  position: absolute;
-  left: -10000px;
-  top: auto;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-}
-
-
 /* ========== SCHEDULE TOGGLE (Список / Календар) ========== */
 
 .iprm-schedule-toggle {
@@ -1335,16 +1317,6 @@ button.iprm-tag:focus-visible {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-}
-
-/* Honeypot: повністю приховано від користувачів, але доступно для ботів */
-.iprm-b2b__honeypot {
-  position: absolute;
-  left: -10000px;
-  top: auto;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
 }
 
 /* Поля форми B2B: світла тема під білою карткою (native-контроли інакше

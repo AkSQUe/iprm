@@ -2069,6 +2069,25 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   margin-top: 4px;
 }
 
+/* .iprm-honeypot -- пастка для ботів: поле приховане й від ока, і від
+   скрінрідера. НЕ те саме, що .visually-hidden: та ховає лише візуально й
+   свідомо лишає текст доступним читачу екрана (так задумано для підписів),
+   а тут навпаки -- якщо поле прочитають і заповнять, форма відхилить живу
+   людину як бота, тож ховати треба буквально повністю.
+   Заміняє три побайтово однакові правила під різними іменами:
+   .iprm-request-form__honeypot (courses.css), той самий селектор,
+   скоуплений на .iprm-lead-form (course-landing.css -- слід злиття двох
+   форм, .iprm-request-form як предок класу вже мертвий), і
+   .iprm-b2b__honeypot (courses.css). */
+.iprm-honeypot {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 /* ========== COOKIE BANNER (Apple-style) ========== */
 
 .cookie-banner {

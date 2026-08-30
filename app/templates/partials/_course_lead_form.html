@@ -38,7 +38,7 @@
         {# Honeypot: name="website" лишається приманкою для ботів, але label
            без слова "Website" -- щоб поле не сприймалось як справжнє, якщо
            колись стане видимим (переклад сторінки, reader mode, автофіл). #}
-        <div class="iprm-request-form__honeypot" aria-hidden="true">
+        <div class="iprm-honeypot" aria-hidden="true">
           <label for="lead-website">{{ _('Не заповнюйте це поле') }}</label>
           <input type="text" name="website" id="lead-website" tabindex="-1" autocomplete="off">
         </div>
