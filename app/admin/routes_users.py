@@ -120,7 +120,15 @@ def users_export():
     """Експорт користувачів у xlsx з урахуванням активних фільтрів."""
 
     filters = _user_filters()
-    users_list = _users_with_counts(_users_query(filters).all())
+    # Стелю рядків міряємо COUNT-ом ДО вибірки і ДО пост-обробки:
+    # _users_with_counts інакше рахувала б лічильники по зрізу, який усе
+    # одно буде відкинутий.
+    rows, refusal = _listing.export_query(
+        _users_query(filters), 'admin.users', **_listing.filter_args(filters),
+    )
+    if refusal:
+        return refusal
+    users_list = _users_with_counts(rows)
     summary = _listing.export_summary(
         [
             ('Пошук', filters['q'] or '–'),

@@ -99,7 +99,13 @@ def error_logs_export():
     from app.services import xlsx_reports
 
     filters = _error_log_filters()
-    logs = _error_log_query(filters).all()
+    # Стелю рядків міряємо COUNT-ом ДО вибірки: інакше зріз спершу
+    # піднімався б у пам'ять цілком і лише потім отримував відмову.
+    logs, refusal = _listing.export_query(
+        _error_log_query(filters), 'admin.error_logs', **_listing.filter_args(filters),
+    )
+    if refusal:
+        return refusal
     days = _error_log_days(filters)
     summary = _listing.export_summary(
         [

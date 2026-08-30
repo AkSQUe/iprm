@@ -243,7 +243,17 @@ def instances_report_export():
     filters = _instance_filters()
     query, order, next3 = _instances_query(filters)
     query = query.order_by(*order)
-    instances = query.limit(3).all() if next3 else query.all()
+    if next3:
+        # Гілка next3 завідомо не більша за три рядки: export_query рахує
+        # COUNT по запиту БЕЗ limit і відмовив би експорту, який насправді
+        # віддав би три рядки. Стеля тут ні до чого -- лишаємо як є.
+        instances = query.limit(3).all()
+    else:
+        instances, refusal = _listing.export_query(
+            query, 'admin.instances_list', **_listing.filter_args(filters),
+        )
+        if refusal:
+            return refusal
 
     course = (
         db.session.get(Course, filters['course_id'])

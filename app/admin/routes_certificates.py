@@ -123,7 +123,13 @@ def certificates_export():
     """Експорт реєстру сертифікатів у xlsx з урахуванням активних фільтрів."""
 
     filters = _certificate_filters()
-    certs = _certificates_query(filters).all()
+    # Стелю рядків міряємо COUNT-ом ДО вибірки: інакше зріз спершу
+    # піднімався б у пам'ять цілком і лише потім отримував відмову.
+    certs, refusal = _listing.export_query(
+        _certificates_query(filters), 'admin.certificates', **_listing.filter_args(filters),
+    )
+    if refusal:
+        return refusal
     course = (
         db.session.get(Course, filters['course_id'])
         if filters['course_id'] else None

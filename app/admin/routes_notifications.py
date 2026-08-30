@@ -179,7 +179,13 @@ def notifications_log_export():
     from app.services import xlsx_reports
 
     filters = _email_log_filters()
-    logs = _email_log_query(filters).all()
+    # Стелю рядків міряємо COUNT-ом ДО вибірки: інакше зріз спершу
+    # піднімався б у пам'ять цілком і лише потім отримував відмову.
+    logs, refusal = _listing.export_query(
+        _email_log_query(filters), 'admin.notifications_log', **_listing.filter_args(filters),
+    )
+    if refusal:
+        return refusal
     summary = _listing.export_summary(
         [
             ('Пошук', filters['q'] or '–'),

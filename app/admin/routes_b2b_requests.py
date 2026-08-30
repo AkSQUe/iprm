@@ -73,7 +73,13 @@ def b2b_requests_export():
     from app.services import xlsx_reports
 
     filters = _b2b_filters()
-    rows = _b2b_query(filters).all()
+    # Стелю рядків міряємо COUNT-ом ДО вибірки: інакше зріз спершу
+    # піднімався б у пам'ять цілком і лише потім отримував відмову.
+    rows, refusal = _listing.export_query(
+        _b2b_query(filters), 'admin.b2b_requests_list', **_listing.filter_args(filters),
+    )
+    if refusal:
+        return refusal
     summary = _listing.export_summary(
         [
             ('Пошук', filters['q'] or '–'),

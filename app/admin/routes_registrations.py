@@ -747,7 +747,16 @@ def registrations_export():
         ),
         filters,
     )
-    regs = query.order_by(EventRegistration.created_at.desc()).all()
+    query = query.order_by(EventRegistration.created_at.desc())
+    # Стелю рядків міряємо COUNT-ом ДО вибірки (export_query знімає
+    # сортування лише для COUNT-у, `.order_by(None)`, і рахує по ЦЬОМУ
+    # запиту) -- інакше зріз на сотню тисяч реєстрацій спершу піднімався б
+    # у пам'ять цілком, з усіма приєднаними об'єктами.
+    regs, refusal = _listing.export_query(
+        query, 'admin.registrations_all', **_listing.filter_args(filters),
+    )
+    if refusal:
+        return refusal
 
     referrer_map = referral_service.resolve_referrers_bulk(
         [r.referral_code for r in regs],

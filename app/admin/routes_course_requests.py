@@ -93,7 +93,14 @@ def course_requests_export():
     from app.services import xlsx_reports
 
     filters = _course_request_filters()
-    rows = _course_requests_query(filters).all()
+    # Стелю рядків міряємо COUNT-ом ДО вибірки: інакше зріз спершу
+    # піднімався б у пам'ять цілком і лише потім отримував відмову.
+    rows, refusal = _listing.export_query(
+        _course_requests_query(filters), 'admin.course_requests_list',
+        **_listing.filter_args(filters),
+    )
+    if refusal:
+        return refusal
     course = (
         db.session.get(Course, filters['course_id'])
         if filters['course_id'] else None

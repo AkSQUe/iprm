@@ -129,7 +129,13 @@ def promo_codes_export():
     from app.services import xlsx_reports
 
     filters = _promo_filters()
-    promos = _promo_query(filters).all()
+    # Стелю рядків міряємо COUNT-ом ДО вибірки: інакше зріз спершу
+    # піднімався б у пам'ять цілком і лише потім отримував відмову.
+    promos, refusal = _listing.export_query(
+        _promo_query(filters), 'admin.promo_codes_list', **_listing.filter_args(filters),
+    )
+    if refusal:
+        return refusal
     summary = _listing.export_summary(
         [
             ('Пошук', filters['q'] or '–'),

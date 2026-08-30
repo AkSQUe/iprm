@@ -375,7 +375,13 @@ def online_orders_export():
 
     course_options = _course_options()
     filters = _order_filters([key for key, _ in course_options])
-    orders = _orders_query(filters).all()
+    # Стелю рядків міряємо COUNT-ом ДО вибірки: інакше зріз спершу
+    # піднімався б у пам'ять цілком і лише потім отримував відмову.
+    orders, refusal = _listing.export_query(
+        _orders_query(filters), 'admin.online_orders_list', **_listing.filter_args(filters),
+    )
+    if refusal:
+        return refusal
     summary = _listing.export_summary(
         [
             ('Пошук', filters['q'] or '–'),

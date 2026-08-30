@@ -249,7 +249,13 @@ def referrals_export():
     from app.services import xlsx_reports
 
     filters = _reward_filters()
-    rewards = _rewards_query(filters).all()
+    # Стелю рядків міряємо COUNT-ом ДО вибірки: інакше зріз спершу
+    # піднімався б у пам'ять цілком і лише потім отримував відмову.
+    rewards, refusal = _listing.export_query(
+        _rewards_query(filters), 'admin.referrals_overview', **_listing.filter_args(filters),
+    )
+    if refusal:
+        return refusal
     name_map = referral_service.resolve_referrers_bulk(
         [r.referral_code for r in rewards],
     )
