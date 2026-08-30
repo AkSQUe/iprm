@@ -28,6 +28,9 @@ WeasyPrint==66.0
 segno==1.6.6
 qrcode-artistic==3.0.2
 pillow-heif==0.22.0
+# Системна база часових зон є не скрізь: на Windows і в тонких
+# контейнерах її немає, і zoneinfo падає на імпорті.
+tzdata==2026.3
 
 # Transitive dependencies
 joserfc==1.6.8
