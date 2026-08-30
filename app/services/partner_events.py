@@ -180,6 +180,66 @@ def emit_communication_sent(log_entry) -> None:
     })
 
 
+def _lead_offer(form_id):
+    """Захід, на який реагувала заявка, або None.
+
+    Партнеру це потрібно як підказка «що пропонувати»: менеджер бере
+    трубку й має бачити дату, місто й ціну, а не шукати їх на нашому
+    сайті посеред розмови.
+
+    None -- нормальний стан, а не збій: форму могли не прив'язати, схеми
+    форми могло ще не бути, захід могли видалити. Жоден із цих випадків не
+    привід не відправити заявку.
+    """
+    from app.models.meta_lead import MetaLeadForm
+
+    form_id = str(form_id or '').strip()
+    if not form_id:
+        return None
+
+    form = MetaLeadForm.query.filter_by(form_id=form_id).first()
+    instance = getattr(form, 'course_instance', None) if form else None
+    if instance is None:
+        return None
+
+    course = getattr(instance, 'course', None)
+    city = getattr(getattr(instance, 'city', None), 'name', None)
+    return {
+        'course_instance_id': instance.id,
+        'title': getattr(course, 'title', None),
+        'starts_at': instance.start_date.isoformat() if instance.start_date else None,
+        # Місто зі структурованого довідника, а якщо його немає -- адреса:
+        # менеджеру потрібне будь-яке «де», і порожнє поле гірше за адресу.
+        'city': city or instance.location or None,
+        'price': f'{instance.price:.2f}' if instance.price is not None else None,
+        'url': _instance_url(instance),
+    }
+
+
+def _instance_url(instance):
+    """Публічне посилання на захід. Абсолютне: його відкриють з іншого сайту.
+
+    Ендпоінт саме `courses.course_by_slug` -- той самий, яким будує
+    посилання `app/api/v1/serializers.py:_detail_url`. Друга назва тут
+    означала б два різні посилання на ту саму сторінку.
+    """
+    from flask import url_for
+
+    course = getattr(instance, 'course', None)
+    slug = getattr(course, 'slug', None)
+    if not slug:
+        return None
+    try:
+        return url_for('courses.course_by_slug', slug=slug, _external=True)
+    except Exception:
+        # Подія може будуватись поза запитом (черга розбору), а SERVER_NAME
+        # налаштований не в кожному середовищі. Посилання -- зручність, і
+        # його відсутність не привід не відправити заявку.
+        logger.warning('Cannot build absolute URL for course instance %s',
+                       instance.id)
+        return None
+
+
 def _lead_payload(lead) -> dict:
     """Заявка з Meta Lead Ads у формі, яку розуміє картка клієнта партнера.
 
@@ -199,6 +259,8 @@ def _lead_payload(lead) -> dict:
     прив'язки контакту. Для партнера це найсильніший ключ зіставлення --
     сильніший за телефон.
     """
+    from app.services import meta_form_schema
+
     return {
         'leadgen_id': lead.leadgen_id,
         'created_time': lead.created_time.isoformat() if lead.created_time else None,
@@ -221,7 +283,18 @@ def _lead_payload(lead) -> dict:
             'ad_id': lead.ad_id,
         },
         'is_repeat': bool(lead.is_repeat),
+        # Дослівно, як віддала Meta. НЕ змінювати: приймач партнера читає
+        # саме цей ключ, поки не оновиться, і це його штатний режим на час
+        # деплою.
         'custom_fields': lead.field_data or {},
+        # Те саме, але з людськими підписами зі схеми форми. Менеджер має
+        # бачити питання й відповідь так, як їх бачила людина.
+        'answers': [
+            {'question': question, 'answer': answer}
+            for question, answer in meta_form_schema.answers_for(
+                lead.field_data, lead.form_id)
+        ],
+        'offer': _lead_offer(lead.form_id),
     }
 
 
