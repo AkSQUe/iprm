@@ -513,32 +513,51 @@ def meta_lead_detail(lead_id):
     )
 
 
-def _offer_choices(current_id=None):
-    """Заходи для випадайки прив'язки.
+def _base_offer_choices():
+    """Живі заходи для випадайок прив'язки -- ОДИН запит на всю сторінку.
 
-    Опубліковані й майбутні -- бо саме на них ведуть кампанії. `published`
-    і `active` разом, а не лише перший: увесь проєкт послідовно вважає
-    живими обидва статуси (див. `CourseInstance.is_registration_open`), і
-    вужчий фільтр ховав би від менеджера захід, який уже почався, хоча
-    саме на нього й веде реклама.
+    Рахується ОДИН РАЗ поза циклом по формах, а не всередині нього: зріз
+    живих заходів (фільтр статусу й дати) той самий для кожного рядка
+    таблиці, тож виклик на кожну форму означав би K однакових SELECT для
+    K форм там, де досить одного. Форм сьогодні десятки, тож болю в цьому
+    немає -- але це рівно той шаблон, який наступний скопіює в місце, де
+    їх будуть тисячі. Форма, у якої прив'язаний захід минув і випав із
+    цього списку, добирає його собі точковим запитом окремо
+    (`_offer_choices_for`) -- і лише тоді, коли він справді відсутній тут.
 
-    Плюс уже прив'язаний захід, навіть якщо він минув: без нього сторінка
-    мовчки показувала б «не обрано» там, де прив'язка є, і перше ж
-    збереження форми її б стерло.
+    `published` і `active` разом, а не лише перший: увесь проєкт
+    послідовно вважає живими обидва статуси (див.
+    `CourseInstance.is_registration_open`), і вужчий фільтр ховав би від
+    менеджера захід, який уже почався, хоча саме на нього й веде реклама.
     """
     from app.models.course_instance import CourseInstance
 
-    query = CourseInstance.query.filter(
-        CourseInstance.status.in_(('published', 'active')),
-        CourseInstance.start_date >= utcnow(),
+    return (
+        CourseInstance.query.filter(
+            CourseInstance.status.in_(('published', 'active')),
+            CourseInstance.start_date >= utcnow(),
+        )
+        .order_by(CourseInstance.start_date.asc())
+        .limit(100)
+        .all()
     )
-    instances = query.order_by(CourseInstance.start_date.asc()).limit(100).all()
 
-    if current_id and all(i.id != current_id for i in instances):
-        current = db.session.get(CourseInstance, current_id)
-        if current is not None:
-            instances = [current] + instances
-    return instances
+
+def _offer_choices_for(current_id, base):
+    """Варіанти випадайки для ОДНІЄЇ форми з уже порахованого базового списку.
+
+    Точковий запит -- лише коли прив'язаного заходу немає в `base`: він
+    минув, і фільтр дати в `_base_offer_choices` його відсік. Без цього
+    сторінка мовчки показувала б «не обрано» там, де прив'язка є, і перше
+    ж збереження форми її б стерло. Найгірший випадок -- один зайвий
+    запит на форму з минулим заходом, а не на кожну форму взагалі.
+    """
+    if not current_id or any(i.id == current_id for i in base):
+        return base
+    from app.models.course_instance import CourseInstance
+
+    current = db.session.get(CourseInstance, current_id)
+    return [current] + base if current is not None else base
 
 
 @admin_bp.route('/meta-leads/forms')
@@ -553,10 +572,14 @@ def meta_lead_forms():
     """
     forms = MetaLeadForm.query.order_by(
         MetaLeadForm.status.asc(), MetaLeadForm.name.asc()).all()
+    base_choices = _base_offer_choices()
     return render_template(
         'admin/meta_lead_forms.html',
         forms=forms,
-        offer_choices={f.id: _offer_choices(f.course_instance_id) for f in forms},
+        offer_choices={
+            f.id: _offer_choices_for(f.course_instance_id, base_choices)
+            for f in forms
+        },
     )
 
 

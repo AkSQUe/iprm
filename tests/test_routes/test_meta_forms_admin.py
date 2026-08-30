@@ -143,3 +143,35 @@ def test_page_requires_admin(client, plain_user):
     _login(client, plain_user)
 
     assert client.get('/admin/meta-leads/forms').status_code in (302, 403, 404)
+
+
+def test_offer_choices_query_base_list_once(client, admin, monkeypatch):
+    """Базовий список живих заходів рахується ОДИН раз для всієї сторінки.
+
+    Раніше кожна форма викликала той самий SELECT наново (K форм -- K
+    однакових запитів там, де досить одного): зріз живих заходів той самий
+    для кожного рядка таблиці. Форм сьогодні десятки, тож болю не було, але
+    це рівно той шаблон, який наступний скопіює в місце, де форм будуть
+    тисячі. Лічимо виклики `_base_offer_choices`, а не самі SELECT -- це і є
+    межа, яку легко порушити знову.
+    """
+    from app.admin import routes_meta_leads
+
+    calls = []
+    original = routes_meta_leads._base_offer_choices
+
+    def _counting():
+        calls.append(1)
+        return original()
+
+    monkeypatch.setattr(routes_meta_leads, '_base_offer_choices', _counting)
+
+    _login(client, admin)
+    for i in range(3):
+        db.session.add(MetaLeadForm(form_id=f'91{i}', questions={}))
+    db.session.flush()
+
+    page = client.get('/admin/meta-leads/forms')
+
+    assert page.status_code == 200
+    assert len(calls) == 1, f'очікували один запит бази, отримали {len(calls)}'
