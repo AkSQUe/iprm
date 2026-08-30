@@ -12,6 +12,10 @@
 
 {% block jsonld %}
 {{ super() }}
+{# name організації береться через t(), а не з сирого стовпця: назва
+   перекладна, і на /ru/ та /en/ сира колонка давала українську назву
+   поруч із перекладеними рештою вузлів тієї самої сторінки. `or _('ІПРМ')`
+   -- щоб порожнє налаштування не дало організацію без імені. #}
 {% set _contact_schema = {
   '@context': 'https://schema.org',
   '@type': 'ContactPage',
@@ -19,7 +23,7 @@
   'url': url_for('main.contact', _external=True),
   'mainEntity': {
     '@type': 'EducationalOrganization',
-    'name': site_settings.company_name,
+    'name': site_settings.t('company_name') or _('ІПРМ'),
     'alternateName': site_settings.company_full_name,
     'telephone': site_settings.phone_primary,
     'address': {

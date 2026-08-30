@@ -31,23 +31,36 @@
   <link rel="preload" href="{{ url_for('static', filename='fonts/inter-var-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
   {% block extra_meta %}{% endblock %}
   {% block jsonld %}
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "EducationalOrganization",
-    "@id": "{{ url_for('main.index', _external=True) }}#org",
-    "name": "{{ site_settings.t('company_name') }}",
-    "alternateName": "{{ site_settings.t('company_full_name') }}",
-    "url": "{{ url_for('main.index', _external=True) }}",
-    "logo": "{{ url_for('static', filename='svg/IPRM-logo-complex.svg', _external=True) }}",
-    "telephone": "{{ site_settings.phone_primary }}",
-    "address": {
-      "@type": "PostalAddress",
-      "addressCountry": "UA",
-      "addressLocality": "{{ site_settings.city }}"
+  {# Схема організації збирається dict-ом і йде через `| tojson`, як на
+     сторінках курсів і тренерів. Літеральний JSON тут був найдорожчим із
+     усіх: чотири значення нижче -- вільний текст, який редагують в
+     адмінці, а автоекранування Jinja робить із них не JSON, а HTML.
+     Лапка в назві компанії приходила як &#34; -- усередині <script>
+     сутності не декодуються, тож рядок ламався; перенесення рядка не
+     екранувалось узагалі, а всередині JSON-рядка воно просто заборонене
+     і робить блок невалідним цілком. І цей блок рендериться на КОЖНІЙ
+     сторінці сайту -- один такий символ у налаштуваннях позбавляв би
+     Google схеми організації скрізь одночасно, мовчки.
+
+     @id лишається дослівно тим самим: courses/detail.html та
+     online/detail.html посилаються на нього з provider, і сторож
+     tests/test_seo звіряє ці рядки посимвольно. #}
+  {% set _org_schema = {
+    '@context': 'https://schema.org',
+    '@type': 'EducationalOrganization',
+    '@id': url_for('main.index', _external=True) ~ '#org',
+    'name': site_settings.t('company_name'),
+    'alternateName': site_settings.t('company_full_name'),
+    'url': url_for('main.index', _external=True),
+    'logo': url_for('static', filename='svg/IPRM-logo-complex.svg', _external=True),
+    'telephone': site_settings.phone_primary,
+    'address': {
+      '@type': 'PostalAddress',
+      'addressCountry': 'UA',
+      'addressLocality': site_settings.city
     }
-  }
-  </script>
+  } %}
+  <script type="application/ld+json">{{ _org_schema | tojson }}</script>
   {% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}?v={{ assets_version }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}?v={{ assets_version }}">

@@ -24,13 +24,17 @@
    опис, а ім'я, посаду, фото й worksFor разом із ним. Друга вада того ж
    роду: автоекранування перетворювало лапки в імені на &#34;, а всередині
    <script> сутності не декодуються -- ім'я приходило поламаним. #}
+{# worksFor.name береться з налаштувань через t(), як і решта схем сайту:
+   статичний _('ІПРМ') ігнорував те, що адміністратор вписав в адмінку, і
+   давав на сторінці тренера іншу назву організації, ніж у вузлі #org із
+   base.html. Літерал лишається запасним на випадок порожнього значення. #}
 {% set _person = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   'name': trainer.t('full_name'),
   'worksFor': {
     '@type': 'EducationalOrganization',
-    'name': _('ІПРМ')
+    'name': site_settings.t('company_name') or _('ІПРМ')
   },
   'url': url_for('trainers.trainer_detail', slug=trainer.slug, _external=True)
 } %}
