@@ -1,6 +1,7 @@
 import os
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 import bleach
 from markupsafe import Markup
@@ -60,12 +61,18 @@ def normalize_name(value):
 # Київський час. Потрібен там, де межа доби має бути людською, а не UTC:
 # «до 23:59 у день завершення заходу» в UTC означало б для когось «до обіду».
 #
+# Саме зона, а не фіксований зсув. Раніше тут стояло UTC+3 -- влітку це
+# правда, але з останньої неділі жовтня Київ переходить на UTC+2, і кожен
+# підпис часу, кожна межа фільтра по датах і кожна клітинка xlsx ставали на
+# годину попереду. Помилка мовчазна: числа виглядають правдоподібно, просто
+# не збігаються з годинником читача.
+#
 # УВАГА: та сама константа вже живе в `app/admin/_listing.py`,
 # `app/services/xlsx_io.py` і `app/services/participant_service.py`. Тут вона
 # оголошена як канонічна (поряд з `ensure_utc`, з якою завжди вживається); ті
 # три копії варто звести сюди окремою правкою -- вони на шляху xlsx-експорту, і
 # чіпати їх мимохідь означало б ризикнути ним без потреби.
-KYIV = timezone(timedelta(hours=3))
+KYIV = ZoneInfo('Europe/Kyiv')
 
 
 def ensure_utc(dt):

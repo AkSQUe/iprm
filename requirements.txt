@@ -24,3 +24,4 @@ WeasyPrint>=66,<67
 segno>=1.6,<2.0
 qrcode-artistic>=3.0,<4.0
 pillow-heif>=0.18,<1.0
+tzdata>=2025.1

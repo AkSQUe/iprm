@@ -29,7 +29,8 @@ import re
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone, timedelta
+from datetime import date, datetime, timezone
+from zoneinfo import ZoneInfo
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
@@ -75,7 +76,7 @@ def _resolve_media_id(url):
 # Загальні константи / утиліти
 # ----------------------------------------------------------------------
 
-KYIV = timezone(timedelta(hours=3))  # UTC+3
+KYIV = ZoneInfo('Europe/Kyiv')
 
 HEADER_FILL = PatternFill('solid', fgColor='4F46E5')
 HEADER_FONT = Font(color='FFFFFF', bold=True)

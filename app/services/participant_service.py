@@ -13,7 +13,8 @@ placeholder-email <цифри-телефону>@noemail.invalid ('.invalid' -- R
 """
 import logging
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from app.extensions import db
 from app.models.course_instance import CourseInstance
@@ -30,7 +31,7 @@ PLACEHOLDER_EMAIL_DOMAIN = 'noemail.invalid'
 _PLACEHOLDER_DOMAINS = {PLACEHOLDER_EMAIL_DOMAIN, 'xlsx.temp'}
 
 # Події зберігаються в UTC; для ярликів показуємо київську дату (UTC+3).
-_KYIV = timezone(timedelta(hours=3))
+_KYIV = ZoneInfo('Europe/Kyiv')
 
 # Максимальна довжина snapshot-поля specialty (EventRegistration.specialty).
 _SPECIALTY_MAX = 200
