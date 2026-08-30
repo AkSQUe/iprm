@@ -28,6 +28,11 @@
     </div>
     <div class="admin-hero__actions">
       {% if trainer %}
+      {# Курси цього тренера -- фільтр реєстру за trainer_id; тренер тут
+         бачить не форму, а результат: усе, що на ньому веде в каталог. #}
+      <a href="{{ url_for('admin.courses_list', trainer_id=trainer.id) }}" class="btn-admin btn-admin--secondary">
+        {{ icon('menu_book') }} Курси
+      </a>
       <a href="{{ url_for('admin.translations_edit', entity='trainer', obj_id=trainer.id) }}" class="btn-admin btn-admin--secondary">Переклади</a>
       <a href="{{ url_for('admin.translations_export_object', entity='trainer', obj_id=trainer.id) }}" class="btn-admin btn-admin--secondary" title="Файл перекладів лише цього об'єкта">{{ icon('download') }} Переклади XLSX</a>
       {% endif %}

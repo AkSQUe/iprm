@@ -142,7 +142,10 @@
             {% if lead.form_id %}
             <a href="{{ url_for('admin.meta_leads_list', form_id=lead.form_id, test='with') }}">{{ lead.form_name or lead.form_id }}</a>
             {% else %}–{% endif %}
-            · {{ lead.platform_label }}
+            ·
+            {% if lead.platform %}
+            <a href="{{ url_for('admin.meta_leads_list', platform=lead.platform, test='with') }}">{{ lead.platform_label }}</a>
+            {% else %}{{ lead.platform_label }}{% endif %}
           </div>
         </td>
         <td class="admin-text-left">

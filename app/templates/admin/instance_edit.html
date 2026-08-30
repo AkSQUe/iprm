@@ -30,6 +30,12 @@
     </div>
     <div class="admin-hero__actions">
       {% if instance %}
+      {# Реєстрації -- головна підсторінка проведення, а не бічна: сама
+         картка проведення досі не мала входу сюди, хоч це те, заради
+         чого проведення взагалі відкривають. #}
+      <a href="{{ url_for('admin.instance_registrations', instance_id=instance.id) }}" class="btn-admin btn-admin--secondary">
+        {{ icon('how_to_reg') }} Реєстрації
+      </a>
       <a href="{{ url_for('admin.instance_tariffs', instance_id=instance.id) }}" class="btn-admin btn-admin--secondary">
         {{ icon('bolt') }} Тарифи ({{ instance.tariffs | length }})
       </a>

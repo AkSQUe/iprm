@@ -28,6 +28,10 @@
     </div>
     <div class="admin-hero__actions">
       {% if course %}
+      {# Веде саме в РЕЄСТР проведень (пошук, статус, швидкі фільтри, xlsx-
+         експорт) -- таблиця нижче цього не має: ні пошуку, ні фільтра
+         статусу, ні експорту. #}
+      <a href="{{ url_for('admin.instances_list', course_id=course.id) }}" class="btn-admin btn-admin--secondary">{{ icon('event') }} Розклад</a>
       <a href="{{ url_for('admin.course_tariffs', course_id=course.id) }}" class="btn-admin btn-admin--secondary">{{ icon('bolt') }} Тарифи ({{ course.default_tariffs | length }})</a>
       <a href="{{ url_for('admin.instance_create', course_id=course.id) }}" class="btn-admin btn-admin--secondary">{{ icon('event_available') }} + Проведення</a>
       <a href="{{ url_for('admin.course_quiz_edit', course_id=course.id) }}" class="btn-admin btn-admin--secondary">{{ icon('quiz') }} Тест</a>

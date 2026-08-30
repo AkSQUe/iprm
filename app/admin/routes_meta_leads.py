@@ -103,6 +103,11 @@ _ATTENTION_OPTIONS = {'yes': 'Потребує уваги', 'no': 'Без зау
 # реєстр менеджера засмічувався б власними перевірками інтеграції.
 _TEST_OPTIONS = {'with': 'Разом із тестовими', 'only': 'Лише тестові'}
 
+# Лише зручність для випадної підказки -- НЕ валідатор: `MetaLead.platform`
+# (`String(10)`) пишеться просто з payload Meta (`meta_lead_ingest._clip`),
+# тож фільтр звіряє значення проти довжини колонки в `_lead_filters`, а не
+# проти цих двох ключів -- інакше платформа поза списком не фільтрувалась
+# би взагалі.
 _PLATFORM_OPTIONS = {'fb': 'Facebook', 'ig': 'Instagram'}
 
 # Зрізи годинника очікування. `late` -- рівно той, що рахує картка над
@@ -144,7 +149,15 @@ def _lead_filters():
         'status': _listing.choice_arg('status', dict(MetaLead.STATUSES)),
         'form_id': _listing.text_arg('form_id'),
         'campaign_id': _listing.text_arg('campaign_id'),
-        'platform': _listing.choice_arg('platform', _PLATFORM_OPTIONS),
+        # Межа -- довжина самої колонки, а не розмір випадної підказки: код
+        # поза fb/ig усе одно мусить фільтрувати. Береться з
+        # MetaLead.platform.type.length, а не переписана вручну числом --
+        # інакше майбутнє розширення колонки (String(10) -> String(20))
+        # тихо повертало б саме той дефект, який bounded_token_arg тут
+        # закриває: значення, довше за стару межу, знову відкидалось би.
+        'platform': _listing.bounded_token_arg(
+            'platform', MetaLead.__table__.c.platform.type.length,
+        ),
         'attention': _listing.choice_arg('attention', _ATTENTION_OPTIONS),
         'wait': _listing.choice_arg('wait', _WAIT_OPTIONS),
         'test': _listing.choice_arg('test', _TEST_OPTIONS),
@@ -390,7 +403,12 @@ def meta_leads_export():
             ('Статус', dict(MetaLead.STATUSES).get(filters['status'], 'Усі')),
             ('Кампанія', filters['campaign_id'] or 'Усі'),
             ('Форма', filters['form_id'] or 'Усі'),
-            ('Платформа', _PLATFORM_OPTIONS.get(filters['platform'], 'Усі')),
+            # Той самий fallback, що й у чіпсі фільтра: платформа поза
+            # списком (fb/ig) звужує зріз, і аркуш «Фільтри» мусить
+            # показати САМЕ її, а не «Усі», інакше файл каже, що зрізу
+            # немає, тоді як дані в ньому вже звужені.
+            ('Платформа', _PLATFORM_OPTIONS.get(filters['platform'])
+             or filters['platform'] or 'Усі'),
             ('Потребує уваги',
              _ATTENTION_OPTIONS.get(filters['attention'], 'Усі')),
             ('Очікування', _WAIT_OPTIONS.get(filters['wait'], 'Будь-яке')),
