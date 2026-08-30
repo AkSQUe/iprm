@@ -1548,8 +1548,9 @@ button.iprm-tag:focus-visible {
   appearance: none;
 }
 
-/* Кільце фокуса -- .iprm-focus-ring (common.css), клас стоїть на самих
-   input поряд із .iprm-roi__field input. */
+/* Кільце фокуса -- через спільне з common.css правило .form-input:focus:
+   поля калькулятора завжди стоять поряд із .form-input, окрема утиліта
+   .iprm-focus-ring тут була зайвою й прибрана з розмітки. */
 
 .iprm-roi__field input:focus-visible {
   outline: 2px solid var(--iprm-accent);
