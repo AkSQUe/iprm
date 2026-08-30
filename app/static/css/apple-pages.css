@@ -715,38 +715,6 @@ html {
   margin-bottom: 12px;
 }
 
-/* ========== TARGET GRID (audience) ========== */
-
-.apple-page .iprm-target-grid {
-  max-width: 1000px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.apple-page .iprm-target-card {
-  background: var(--iprm-white);
-  border: 1px solid var(--iprm-border);
-  border-radius: var(--iprm-radius);
-  box-shadow: var(--iprm-shadow-soft);
-  padding: 36px 32px;
-  transition:
-    transform 0.3s var(--ease-interact),
-    box-shadow 0.3s var(--ease-interact);
-}
-
-.apple-page .iprm-target-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(var(--iprm-accent-rgb), 0.1);
-}
-
-.apple-page .iprm-target-card p {
-  font-size: 17px;
-  color: var(--iprm-text-secondary);
-  line-height: 1.55;
-}
-
 /* ========== CLINIC CARDS ========== */
 
 /* CTA centered */
@@ -914,14 +882,6 @@ html {
     opacity: 1;
     translate: none;
   }
-
-  .apple-page .apple-feature-card,
-  .apple-page .apple-bento-card,
-  .apple-page .iprm-course-card,
-  .apple-page .iprm-trainer-card,
-  .apple-page .iprm-target-card {
-    transition: none;
-  }
 }
 
 /* ========== RESPONSIVE ========== */
@@ -982,10 +942,6 @@ html {
     text-align: center;
   }
 
-  .apple-page .iprm-target-grid {
-    grid-template-columns: 1fr;
-  }
-
   
 
   .apple-page .apple-section-cta {
@@ -1028,10 +984,6 @@ html {
 
   .apple-page .apple-card-body {
     padding: 16px;
-  }
-
-  .apple-page .iprm-target-card {
-    padding: 24px 20px;
   }
 
   

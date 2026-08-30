@@ -4,7 +4,8 @@
 
    Жив на публічному /design-system із noindex; переїхав в адмінку, бо це
    інструмент розробки, а не сторінка сайту. Вміст ділиться на п'ять
-   табів (iprm-tabs з tabs.css/tabs.js, вантажаться глобально з base.html)
+   табів (iprm-tabs; стилі в page-admin-design-system.css, скрипт нижче --
+   обидва підключені ЛИШЕ тут, бо потрібні лише тут)
    -- партіали design_system/_tab_*.html, кожен колишня секція
    _content.html без змін тексту. #}
 {% extends "admin/base_admin.html" %}
@@ -67,6 +68,12 @@
    сертифіката видно в каталозі не буде. #}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/upcoming-events.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/certdata-reminder.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block extra_scripts %}
+{# Скрипт вкладок переїхав із base.html разом зі стилями: обидва потрібні
+   рівно цій сторінці, а вантажились на кожній. #}
+<script defer src="{{ url_for('static', filename='js/tabs.js') }}?v={{ assets_version }}"></script>
 {% endblock %}
 
 {% block content %}

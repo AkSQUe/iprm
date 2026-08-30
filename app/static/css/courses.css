@@ -1,15 +1,3 @@
-/* courses.css -- Apple-style стилі для сторінок курсів (courses/*, online/*) і ROI-блоку на main/home.html */
-/* Base styles defined in apple-pages.css (.apple-page scope) */
-
-/* Компоненти, спільні зі сторінкою онлайн-курсу (навігація сторінкою, смуга
-   цифр, FAQ, блок тренера, sticky-CTA), живуть у course-landing.css -- він
-   один власник для обох сторінок. Тут лишається те, що стосується саме
-   офлайнового курсу: графік проведень, тарифи, календар, фільтри каталогу. */
-
-/* Target card full-width modifier */
-.iprm-target-card--full {
-  grid-column: 1 / -1;
-}
 
 /* ========== EVENT META (характеристика заходу) ========== */
 

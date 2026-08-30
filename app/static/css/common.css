@@ -1036,64 +1036,12 @@ a {
   margin-bottom: 16px;
 }
 
-/* Hero nav/dots/arrows -- видалено (legacy-слайдер замінено на Apple-style) */
-
-/* ========== BUTTONS ========== */
-
-.iprm-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  transition: all var(--iprm-transition);
-  font-family: var(--iprm-font);
-}
-
-.iprm-btn--primary {
-  background: var(--iprm-btn-bg);
-  color: var(--iprm-on-accent);
-  box-shadow: none;
-}
-
-.iprm-btn--primary:hover {
-  background: var(--iprm-btn-bg-hover);
-}
-
-.iprm-btn--sm {
-  padding: 3px 14px;
-  font-size: 13px;
-}
-
-.iprm-btn--secondary {
-  background: var(--iprm-white);
-  color: var(--iprm-text);
-  border: 1px solid var(--iprm-border);
-}
-
-.iprm-btn--secondary:hover {
-  background: var(--iprm-card-bg);
-}
-
-.iprm-btn--disabled {
-  opacity: 0.5;
-  cursor: default;
-  pointer-events: none;
-}
-
-.iprm-btn__arrow {
-  font-size: 16px;
-}
-
-.iprm-btn__arrow--back {
-  transform: rotate(225deg);
-}
-
 /* ========== APPLE BUTTONS (capsule-style, глобальний компонент) ========== */
+
+/* Легасі-кнопку .iprm-btn прибрано цілим сімейством: дев'ять правил, і
+   ЖОДНОГО споживача в розмітці. Єдиним, що від неї лишалось у шаблонах, була
+   стрілка .iprm-btn__arrow, і та стояла всередині адмінської .btn-admin --
+   елемент одного компонента в тілі іншого. Публічні кнопки бере .apple-btn. */
 
 .apple-btn {
   display: inline-flex;
