@@ -131,7 +131,6 @@
   --iprm-warm-grad-2: #b85a7e; /* середній стоп того самого градієнта (page-admin-certificates, upcoming-events) */
   --iprm-alert: #e05252; /* тривожний акцент -- пульс, бейдж лічильника (certdata-reminder, common, account) */
   --iprm-offline-bg: #d67e2e; /* мітка офлайн-формату заходу (courses), той самий відтінок у скролбарі (common) */
-  --iprm-seats-warning-text: #b25c00; /* текст «мало місць» (apple-pages, courses) */
 
   /* Нейтральна й акцентна палітра. --apple-gray -- єдиний легасі-виняток:
      у тёмній темі розходиться з --iprm-text-light на один щабель світлоти

@@ -594,12 +594,11 @@ button.iprm-tag:focus-visible {
 /* Попередження про малу кількість місць (перекриває --seats) */
 .iprm-schedule__tag--warning {
   background: #fff4e5;
-  color: var(--iprm-seats-warning-text);
+  color: var(--iprm-warning-text);
 }
 
 [data-theme="dark"] .iprm-schedule__tag--warning {
   background: rgba(217, 119, 6, 0.18);
-  color: var(--iprm-warning-text);
 }
 
 /* ========== SCHEDULE TOGGLE (Список / Календар) ========== */

@@ -558,12 +558,8 @@ html {
 }
 
 .apple-page .iprm-course-card__seats--warning {
-  color: var(--iprm-seats-warning-text);
-  font-weight: 600;
-}
-
-[data-theme="dark"] .apple-page .iprm-course-card__seats--warning {
   color: var(--iprm-warning-text);
+  font-weight: 600;
 }
 
 .apple-page .iprm-course-card__price {
