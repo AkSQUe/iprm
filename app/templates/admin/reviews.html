@@ -115,7 +115,7 @@
                роздували колонку до третини таблиці, а дві текстові кнопки
                серед іконок читались як окремий вид елемента. #}
             <div class="admin-table__actions">
-              <a href="{{ url_for('admin.review_edit', review_id=r.id) }}"
+              <a href="{{ url_for('admin.review_edit', review_id=r.id, **back_args) }}"
                  class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
                  title="Редагувати">{{ icon('edit', label='Редагувати') }}</a>
               <details class="admin-actions-menu">
@@ -164,8 +164,9 @@
     {% endcall %}
     {% endif %}
 
-    {# Поза if/else навмисно: сторінка за межею останньої віддає порожній
-       reviews при pagination.pages >= 1 -- пейджер дає prev/next і сюди. #}
+    {# Поза if/else навмисно, щоб показуватись і коли reviews порожній
+       (bookmark за межею останньої): сам шлях назад дає narrow_args в
+       empty_state вище, тут -- лише лічильник сторінок. #}
     {{ pager('admin.reviews_list', pagination, filter_args) }}
 
   </div>

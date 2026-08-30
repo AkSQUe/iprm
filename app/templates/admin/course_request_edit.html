@@ -14,7 +14,7 @@
   <div class="admin-hero">
     <div>
       <div class="admin-breadcrumb">
-        <a href="{{ url_for('admin.course_requests_list') }}" class="admin-breadcrumb__link">Запити</a>
+        <a href="{{ url_for('admin.course_requests_list', **back_args) }}" class="admin-breadcrumb__link">Запити</a>
         <span class="admin-breadcrumb__sep">/</span>
         <span class="admin-breadcrumb__current">#{{ request_obj.id }}</span>
       </div>
@@ -28,7 +28,7 @@
       {% if request_obj.course %}
       <a href="{{ url_for('admin.instance_create', course_id=request_obj.course.id) }}" class="btn-admin btn-admin--primary">{{ icon('event_available') }} Запланувати проведення</a>
       {% endif %}
-      <a href="{{ url_for('admin.course_requests_list') }}" class="btn-admin btn-admin--secondary">Назад</a>
+      <a href="{{ url_for('admin.course_requests_list', **back_args) }}" class="btn-admin btn-admin--secondary">Назад</a>
     </div>
   </div>
 
@@ -66,7 +66,7 @@
       </div>
     </div>
     <div class="admin-form__actions">
-      <a href="{{ url_for('admin.course_requests_list') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      <a href="{{ url_for('admin.course_requests_list', **back_args) }}" class="btn-admin btn-admin--secondary">Скасувати</a>
       <button type="submit" class="btn-admin btn-admin--primary">Зберегти</button>
     </div>
   </form>

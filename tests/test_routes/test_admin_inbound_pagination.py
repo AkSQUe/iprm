@@ -22,7 +22,8 @@ from app.extensions import db
 from app.models.auth_identity import AuthIdentity
 from app.models.b2b_request import B2BRequest
 from app.models.course import Course
-from app.models.course_request import CourseRequest
+from app.models.course_request import CourseRequest, CourseRequestAudit
+from app.models.email_log import EmailLog
 from app.models.medical_profile import MedicalProfile
 from app.models.online_course import OnlineCourse
 from app.models.online_enrollment import OnlineEnrollment
@@ -63,8 +64,8 @@ def clean(app):
     зносить і зовнішню транзакцію тесту -- покладатись саме на rollback
     ризиковано (див. tests/test_routes/test_admin_online_listings.py:30-58).
     Діти видаляються перед батьками: RefundRequest -> OnlineEnrollment ->
-    OnlineCourse; CourseRequest -> Course; User -- лише після заявок,
-    останнім, разом із AuthIdentity/MedicalProfile.
+    OnlineCourse; CourseRequestAudit -> CourseRequest -> Course; User --
+    лише після заявок, останнім, разом із AuthIdentity/MedicalProfile.
     """
     def _wipe():
         RefundRequest.query.filter(
@@ -83,11 +84,33 @@ def clean(app):
         B2BRequest.query.filter(
             B2BRequest.email.like('pgb2b-%@test.com')).delete(synchronize_session=False)
 
+        # CourseRequestAudit -- дитина CourseRequest (request_id). Масовий
+        # .delete() на CourseRequest обходить ORM-каскад
+        # (cascade='all, delete-orphan' у моделі), а conftest не вмикає
+        # PRAGMA foreign_keys, тож і БД-рівневий ON DELETE CASCADE не
+        # спрацьовує -- без явного видалення рядки аудиту лишаються
+        # сиротами з changed_by_id на вже видаленого користувача.
+        stale_requests = [
+            row.id for row in CourseRequest.query.filter(
+                CourseRequest.email.like('pgcr-%@test.com')).all()
+        ]
+        if stale_requests:
+            CourseRequestAudit.query.filter(
+                CourseRequestAudit.request_id.in_(stale_requests),
+            ).delete(synchronize_session=False)
         CourseRequest.query.filter(
             CourseRequest.email.like('pgcr-%@test.com')).delete(synchronize_session=False)
         Course.query.filter(Course.slug.like('pgcr-%')).delete(synchronize_session=False)
 
         Review.query.filter(Review.text.like('pgrv-%')).delete(synchronize_session=False)
+
+        # Один рядок на прогін test_refund_row_action_redirects_back_to_same_page:
+        # лист-відмова (refund_requests.reject -> EmailService) пише
+        # EmailLog(to_email=наш admin). Прямого FK на User тут немає, тож
+        # нічого сьогодні не падає, але залишене сміття в спільній
+        # сесійній БД -- саме той клас витоку, від якого рятує ця фікстура.
+        EmailLog.query.filter(
+            EmailLog.to_email.like('pgreq-%@test.com')).delete(synchronize_session=False)
 
         stale_users = [
             row.id for row in User.query.filter(
@@ -158,7 +181,13 @@ def _b2b_env(tag, n=PAGE + 1):
 
 def test_b2b_pagination_filter_perpage_export_and_new_count(client, admin):
     tag = _uid()
-    _b2b_env(tag)
+    _b2b_env(tag)  # PAGE + 1 -- рівно дві сторінки під тегом, усі status=new
+    # Ще дві заявки status=new, які НЕ підпадають під q=tag: new_count --
+    # ГЛОБАЛЬНИЙ підрахунок, а не розмір поточного (відфільтрованого)
+    # зрізу. Без цих двох мутація new_count=pagination.total лишалась би
+    # непоміченою -- під самим лише тегом обидва числа збігаються (51).
+    _b2b_env(_uid(), n=2)
+    expected_new_count = B2BRequest.query.filter_by(status='new').count()
     _login(client, admin)
     pattern = re.compile(rf'pgb2b-{tag}(\d{{3}})@test\.com')
 
@@ -183,10 +212,11 @@ def test_b2b_pagination_filter_perpage_export_and_new_count(client, admin):
     garbage = client.get(f'/admin/b2b-requests?q={tag}&per_page=99999').get_data(as_text=True)
     assert len(_indices(garbage, pattern)) == PAGE
 
-    # new_count -- незалежний запит, а не довжина поточної сторінки.
+    # new_count -- незалежний ГЛОБАЛЬНИЙ запит: не довжина сторінки і не
+    # pagination.total (розмір зрізу під q=tag, 51, а не 53).
     n1 = re.search(r'Нових:\s*(\d+)', page1).group(1)
     n2 = re.search(r'Нових:\s*(\d+)', page2).group(1)
-    assert n1 == n2
+    assert n1 == n2 == str(expected_new_count)
 
     # Експорт лишається по ВСЬОМУ зрізу (головний тест плану), і per_page не
     # потрапляє в аркуш «Фільтри», як нібито він теж звужує вибірку.
@@ -370,7 +400,15 @@ def _refund_env(admin, tag, n=PAGE + 1):
 
 def test_refund_requests_pagination_filter_perpage_export_and_new_count(client, admin):
     tag = _uid()
-    _refund_env(admin, tag)
+    _refund_env(admin, tag)  # PAGE + 1 -- рівно дві сторінки під тегом
+    # Ще дві заявки status=new поза q=tag -- той самий контраргумент, що й
+    # у B2B: new_count -- глобальний підрахунок, не розмір відфільтрованого
+    # зрізу (pagination.total під самим тегом дав би той самий збіг).
+    extra_tag = _uid()
+    for i, t in enumerate(_times(2)):
+        _refund_row(admin, i, STATUS_NEW, t, extra_tag)
+    db.session.commit()
+    expected_new_count = RefundRequest.query.filter_by(status=STATUS_NEW).count()
     _login(client, admin)
     pattern = re.compile(rf'pgrf-{tag}-(\d{{3}})')
 
@@ -392,9 +430,10 @@ def test_refund_requests_pagination_filter_perpage_export_and_new_count(client, 
     garbage = client.get(f'/admin/refund-requests?q={tag}&per_page=99999').get_data(as_text=True)
     assert len(_indices(garbage, pattern)) == PAGE
 
+    # new_count -- незалежний ГЛОБАЛЬНИЙ запит, не pagination.total.
     n1 = re.search(r'Нових:\s*(\d+)', page1).group(1)
     n2 = re.search(r'Нових:\s*(\d+)', page2).group(1)
-    assert n1 == n2
+    assert n1 == n2 == str(expected_new_count)
 
     r = client.get(f'/admin/refund-requests/export?q={tag}')
     wb = load_workbook(io.BytesIO(r.data))
@@ -490,6 +529,33 @@ def test_reviews_pagination_filter_and_perpage(client, admin):
     assert len(_indices(garbage, pattern)) == PAGE
 
 
+def test_reviews_sort_order_survives_pagination(client, admin):
+    """sort_order керує порядком публічного блоку на Головній -- і set-based
+    перевірка вище ("рівно per_page рядків, без повторів") цього не бачить:
+    заміна `Review.sort_order, Review.created_at.desc()` на голе
+    `Review.created_at.asc()` лишила б ті самі рядки на тих самих
+    сторінках, просто в іншому порядку. Тут -- відносна позиція двох
+    рядків, де порядок за sort_order і порядок за датою свідомо
+    протилежні: новіший рядок має МЕНШИЙ sort_order і мусить бути першим."""
+    tag = _uid()
+    old, new = _times(2)
+    db.session.add(Review(
+        author_name='Тест', text=f'pgrv-{tag}-low', rating=5,
+        is_published=True, sort_order=0, created_at=new,
+    ))
+    db.session.add(Review(
+        author_name='Тест', text=f'pgrv-{tag}-high', rating=5,
+        is_published=True, sort_order=5, created_at=old,
+    ))
+    db.session.commit()
+    _login(client, admin)
+
+    html = client.get(f'/admin/reviews?q={tag}').get_data(as_text=True)
+    low_pos = html.index(f'pgrv-{tag}-low')
+    high_pos = html.index(f'pgrv-{tag}-high')
+    assert low_pos < high_pos
+
+
 def test_reviews_out_of_range_page_offers_way_back(client, admin):
     # БЕЗ q= -- див. докстрінг test_b2b_out_of_range_page_offers_way_back.
     tag = _uid()
@@ -509,6 +575,28 @@ def test_review_row_action_redirects_back_to_same_page(client, admin):
     assert m, 'дію рядка з page=2 у action-URL не знайдено на другій сторінці'
     action_url = m.group(1).replace('&amp;', '&')
     resp = client.post(action_url)
+    assert resp.status_code == 302
+    assert 'page=2' in resp.headers['Location']
+    assert f'q={tag}' in resp.headers['Location']
+
+
+def test_review_edit_redirects_back_to_same_page(client, admin):
+    """`review_edit` -- окрема сторінка (не інлайн-форма рядка), як і
+    `course_request_edit`: посилання «Редагувати» на другій сторінці не
+    несло зрізу, тоді як «Опублікувати»/«Видалити» в тому самому рядку --
+    несли. Форма редагування (без action=) успадковує query-рядок
+    власного запиту, тож зріз, якщо він є в href, доїжджає й туди."""
+    tag = _uid()
+    _review_env(tag)  # PAGE + 1 -- рівно дві сторінки під тегом
+    _login(client, admin)
+    page2 = client.get(f'/admin/reviews?q={tag}&page=2').get_data(as_text=True)
+    m = re.search(r'href="(/admin/reviews/\d+/edit\?[^"]*page=2[^"]*)"', page2)
+    assert m, 'посилання редагування з page=2 не знайдено на другій сторінці'
+    edit_url = m.group(1).replace('&amp;', '&')
+    resp = client.post(edit_url, data={
+        'author_name': 'Тест Оновлений', 'text': 'оновлений текст відгуку',
+        'rating': '5', 'sort_order': '0', 'course_id': '',
+    })
     assert resp.status_code == 302
     assert 'page=2' in resp.headers['Location']
     assert f'q={tag}' in resp.headers['Location']

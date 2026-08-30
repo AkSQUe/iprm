@@ -157,7 +157,8 @@ def course_request_edit(request_id):
             flash('Запит оновлено', 'success')
             return _back()
 
-    return render_template('admin/course_request_edit.html', form=form, request_obj=req)
+    return render_template('admin/course_request_edit.html', form=form,
+                          request_obj=req, back_args=_current_back_args())
 
 
 def _back():
@@ -170,6 +171,16 @@ def _back():
     рядка несе зріз у своєму action-URL через `back_args`.
     """
     return _listing.back_redirect('admin.course_requests_list', _course_request_filters())
+
+
+def _current_back_args():
+    """Той самий зріз (фільтр + сторінка), що й у поточному запиті дії --
+    для посилань на СТОРІНЦІ дії (breadcrumb, «Скасувати»): сам запит
+    редагування -- окрема сторінка (не інлайн-форма рядка), тому зріз у
+    ній береться з query-string власного запиту, а не з роуту списку.
+    """
+    page = request.args.get('page', 1, type=int)
+    return _listing.back_args(_listing.filter_args(_course_request_filters()), page)
 
 
 @admin_bp.route('/course-requests/<int:request_id>/delete', methods=['POST'])

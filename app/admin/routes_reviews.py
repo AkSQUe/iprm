@@ -129,7 +129,7 @@ def review_create():
             logger.exception('Failed to create review')
             db.session.rollback()
             flash('Помилка при збереженні', 'error')
-    return render_template('admin/review_edit.html', form=form, review=None)
+    return render_template('admin/review_edit.html', form=form, review=None, back_args={})
 
 
 @admin_bp.route('/reviews/<int:review_id>/edit', methods=['GET', 'POST'])
@@ -138,7 +138,7 @@ def review_edit(review_id):
     review = db.session.get(Review, review_id)
     if not review or review.is_deleted:
         flash('Відгук не знайдено', 'error')
-        return redirect(url_for('admin.reviews_list'))
+        return _back()
     form = ReviewForm(obj=review)
     form.course_id.choices = _course_choices()
     if request.method == 'GET':
@@ -150,12 +150,13 @@ def review_edit(review_id):
             db.session.commit()
             audit_logger.info('Admin %s updated review %s', current_user.email, review_id)
             flash('Відгук оновлено', 'success')
-            return redirect(url_for('admin.reviews_list'))
+            return _back()
         except Exception:
             logger.exception('Failed to update review %d', review_id)
             db.session.rollback()
             flash('Помилка при збереженні', 'error')
-    return render_template('admin/review_edit.html', form=form, review=review)
+    return render_template('admin/review_edit.html', form=form, review=review,
+                          back_args=_current_back_args())
 
 
 @admin_bp.route('/reviews/<int:review_id>/toggle', methods=['POST'])

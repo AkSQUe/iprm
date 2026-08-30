@@ -59,10 +59,16 @@
       {% for req in requests %}
       <tr>
         <td>{{ req.created_at.strftime('%d.%m.%Y %H:%M') if req.created_at else '–' }}</td>
-        <td><strong>{{ req.full_name }}</strong></td>
+        {# ПІБ -- відповідь на "чи є в нас акаунт цієї людини": FK на User в
+           B2BRequest немає (app/models/b2b_request.py), а ПІБ не унікальне,
+           тож звужуємо реєстр користувачів пошуком по email, а не переходом
+           у чиюсь конкретну картку. #}
+        <td><a href="{{ url_for('admin.users', q=req.email) }}">{{ req.full_name }}</a></td>
         <td><a href="tel:{{ req.phone }}">{{ req.phone }}</a></td>
         <td><a href="mailto:{{ req.email }}">{{ req.email }}</a></td>
-        <td>{{ req.team_size_label }}</td>
+        {# Значення поля `team_size` (код, наприклад '10+'), а не лейбл --
+           фільтр реєстру приймає саме код. #}
+        <td><a href="{{ url_for('admin.b2b_requests_list', team_size=req.team_size) }}">{{ req.team_size_label }}</a></td>
         <td>
           {# Фільтри їдуть у query-string дії: після збереження менеджер має
              лишитись на тому самому зрізі, а не на повному списку. #}

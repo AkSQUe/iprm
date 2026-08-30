@@ -186,8 +186,9 @@
   {% endcall %}
   {% endif %}
 
-  {# Поза if/else навмисно: сторінка за межею останньої віддає порожній
-     requests при pagination.pages >= 1 -- пейджер дає prev/next і сюди. #}
+  {# Поза if/else навмисно, щоб показуватись і коли requests порожній
+     (bookmark за межею останньої): сам шлях назад дає narrow_args в
+     empty_state вище, тут -- лише лічильник сторінок. #}
   {{ pager('admin.course_requests_list', pagination, filter_args) }}
 
   </div>
