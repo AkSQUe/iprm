@@ -3,6 +3,10 @@
 import json
 import re
 
+from flask_babel import refresh
+
+from app.i18n import DEFAULT_LANGUAGE, PREFIXED_LANGUAGES
+
 # Розділи, закриті від індексації (мають X-Robots-Tag у своїх __init__.py).
 PRIVATE_BLUEPRINTS = {'admin', 'auth', 'payments', 'quiz', 'registration'}
 
@@ -131,22 +135,60 @@ def public_endpoints(app):
     return sorted(endpoints)
 
 
+# Прогони по локалях. None -- українська без префікса: саме так її віддає
+# прод, і саме в цьому прогоні живуть нелокалізовані сторінки.
+#
+# lang='uk' тут навмисно НЕ вживається: із заданою локаллю вибірка
+# звужується до локалізованих ендпоінтів, і п'ять сторінок без префікса
+# (/cookies, /disclaimer, /offer, /privacy, /refund) не потрапили б у
+# жоден прогін узагалі.
+LOCALE_PASSES = [None] + PREFIXED_LANGUAGES
+
+
+def pass_label(lang):
+    """Ім'я локалі для повідомлень і ключів: None -> 'uk'."""
+    return lang or DEFAULT_LANGUAGE
+
+
 def public_urls(app, lang=None):
-    """Ендпоінт -> URL публічної сторінки (за потреби -- у заданій локалі)."""
+    """Ендпоінт -> URL публічної сторінки (за потреби -- у заданій локалі).
+
+    Із ЗАДАНОЮ локаллю повертає лише локалізовані ендпоінти. П'ять
+    публічних сторінок мовного префікса не мають узагалі, і url_for
+    віддавав для них той самий непрефіксований шлях у всіх трьох
+    прогонах: /cookies міряли як uk, як ru і як en -- двадцять вимірів
+    над рендером, якого прод у цих локалях не віддає. Предикат той
+    самий, яким керується _hreflang_alternates() у app/i18n.py.
+    """
     from flask import url_for
 
     urls = {}
     with app.test_request_context():
         for endpoint in public_endpoints(app):
-            if lang and app.url_map.is_endpoint_expecting(endpoint, 'lang_code'):
+            localized = app.url_map.is_endpoint_expecting(endpoint, 'lang_code')
+            if lang and not localized:
+                continue
+            if lang and localized:
                 urls[endpoint] = url_for(endpoint, lang_code=lang)
             else:
                 urls[endpoint] = url_for(endpoint)
     return urls
 
 
-def fetch_public_pages(app, client, lang=None):
-    """(pages, skipped) для публічних сторінок.
+def rendered_lang(html):
+    """Значення lang у <html> -- мова, якою сторінка себе оголосила.
+
+    base.html бере його з current_lang, а current_lang -- це
+    str(flask_babel.get_locale()) (app/i18n.py, inject_i18n), тобто
+    справжній зонд локалі РЕНДЕРУ, а не URL-префікса запиту. Через це
+    воно й придатне як детектор обвалу локалі.
+    """
+    found = re.search(r'<html[^>]*\slang="([^"]*)"', html)
+    return found.group(1) if found else None
+
+
+def fetch_public_pages(app, lang=None):
+    """(pages, skipped) для публічних сторінок у заданій локалі.
 
     pages -- список (endpoint, url, html) тих, що віддали 200.
     skipped -- {ендпоінт: код} для решти.
@@ -155,15 +197,48 @@ def fetch_public_pages(app, client, lang=None):
     сторінка просто зникала з вибірки, а сторожі проходили над меншим
     набором, не сказавши й слова. Повертати пропущених окремо -- умова, за
     якої це взагалі можна перевірити (див. TestFetchIsFailClosed).
+
+    Клієнт створюється СВІЙ на кожен виклик, а не береться з фікстури:
+    pull_lang_code() робить вибір мови липким через session['lang'], тож
+    клієнт, який уже сходив на /ru/..., несе ru у наступний прогін --
+    en-прогін міряв би ru-рендер. Це друга, незалежна від кешу babel,
+    теча тієї самої діри.
+
+    refresh() -- перед КОЖНИМ запитом, а не раз на прогін. Autouse-фікстура
+    db_session (tests/conftest.py) тримає один app context на весь тест, а
+    RequestContext.push() перевикористовує вже відкритий контекст того
+    самого застосунку -- тож flask_babel віддає локаль, закешовану на
+    g._flask_babel ПЕРШИМ запитом, і вся решта вибірки мовчки рендериться
+    його мовою. Сьогодні воно виходило правильним лише тому, що sorted()
+    випадково ставив локалізований ендпоінт першим.
+
+    Звірка <html lang> -- те, через що обвал локалі більше не пройде
+    мовчки. Відтворено мутацією: досить було поставити нелокалізований
+    ендпоінт першим у public_endpoints(), щоб прогін uk дав uk, прогін ru
+    -- знову uk, а прогін en -- ru, і при цьому
+    test_title_and_description_within_targets лишався ЗЕЛЕНИМ: сторожі
+    читають html і не мають жодного способу помітити, що він не тією
+    мовою.
     """
+    expected = pass_label(lang)
     pages = []
     skipped = {}
+    client = app.test_client()
     for endpoint, url in public_urls(app, lang).items():
+        refresh()
         resp = client.get(url)
         if resp.status_code != 200:
             skipped[endpoint] = resp.status_code
             continue
-        pages.append((endpoint, url, resp.data.decode('utf-8')))
+        html = resp.data.decode('utf-8')
+        actual = rendered_lang(html)
+        assert actual == expected, (
+            f'{endpoint} ({url}): просили локаль {expected!r}, сторінка '
+            f'оголосила <html lang={actual!r}>. Це обвал локалі -- усі '
+            'твердження над цією вибіркою читали б чужий рендер і '
+            'лишались би зеленими.'
+        )
+        pages.append((endpoint, url, html))
     return pages, skipped
 
 

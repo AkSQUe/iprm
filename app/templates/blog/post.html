@@ -22,13 +22,18 @@
   'headline': post.t('title'),
   'mainEntityOfPage': request.url,
   'description': post.t('meta_description') or post.t('excerpt') or post.t('title'),
-  'dateModified': (post.updated_at or post.published_at).isoformat() if (post.updated_at or post.published_at) else '',
   'author': {'@type': 'Organization', 'name': site_settings.t('company_name') or _('ІПРМ')},
   'publisher': {'@type': 'Organization', 'name': site_settings.t('company_name') or _('ІПРМ')}
 } %}
-{# datePublished та image -- лише коли джерело справді заповнене: те саме
-   правило, що вже діє для instructor.jobTitle у courses/detail.html. #}
+{# datePublished, dateModified та image -- лише коли джерело справді
+   заповнене: те саме правило, що вже діє для instructor.jobTitle у
+   courses/detail.html. dateModified доти віддавався завжди, з порожнім
+   рядком замість дати. Через маршрут така сторінка недосяжна
+   (app/blog/routes.py фільтрує published_at IS NOT NULL, а updated_at має
+   default), тобто порожній рядок сидів за мертвим кодом -- і чекав на
+   перший же чернетковий чи прев'ю-маршрут, який його оприлюднить. #}
 {% if post.published_at %}{% set _discard = _post_schema.update({'datePublished': post.published_at.isoformat()}) %}{% endif %}
+{% if post.updated_at or post.published_at %}{% set _discard = _post_schema.update({'dateModified': (post.updated_at or post.published_at).isoformat()}) %}{% endif %}
 {% if post.cover_full %}{% set _discard = _post_schema.update({'image': abs_url(post.cover_full)}) %}{% endif %}
 <script type="application/ld+json">{{ _post_schema | tojson }}</script>
 {# Крихти на самому дописі, а не лише в лістингу: саме сторінка допису

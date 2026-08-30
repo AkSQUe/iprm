@@ -12,10 +12,14 @@
 
 {% block jsonld %}
 {{ super() }}
-{# name організації береться через t(), а не з сирого стовпця: назва
-   перекладна, і на /ru/ та /en/ сира колонка давала українську назву
-   поруч із перекладеними рештою вузлів тієї самої сторінки. `or _('ІПРМ')`
-   -- щоб порожнє налаштування не дало організацію без імені. #}
+{# name і alternateName беруться через t(), а не з сирих стовпців: обидва
+   поля перекладні, і на /ru/ та /en/ сира колонка давала українське
+   значення. Ціна саме тут вища, ніж деінде: цей mainEntity не має @id,
+   тож Google читає його як ДРУГУ організацію поруч із #org із base.html
+   -- дві сутності з тим самим телефоном і різними назвами. `or _('ІПРМ')`
+   на name -- щоб порожнє налаштування не дало організацію без імені;
+   alternateName запасного літерала НЕ має навмисно, бо його не має і
+   #org: інакше на порожньому налаштуванні вузли знову розійшлись би. #}
 {% set _contact_schema = {
   '@context': 'https://schema.org',
   '@type': 'ContactPage',
@@ -24,7 +28,7 @@
   'mainEntity': {
     '@type': 'EducationalOrganization',
     'name': site_settings.t('company_name') or _('ІПРМ'),
-    'alternateName': site_settings.company_full_name,
+    'alternateName': site_settings.t('company_full_name'),
     'telephone': site_settings.phone_primary,
     'address': {
       '@type': 'PostalAddress',

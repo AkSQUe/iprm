@@ -2,13 +2,10 @@
 структурованих даних."""
 import re
 
-from flask_babel import refresh
-
-from app.i18n import LANGUAGES
 from tests.test_seo.helpers import (
     DESC_MAX, DESC_MIN, EXPECTED_NON_200, KNOWN_SEO_DEBT, LENGTH_EXCEPTIONS,
-    TITLE_MAX, TITLE_MIN, fetch_public_pages, head_field, is_absolute_url,
-    jsonld_blocks,
+    LOCALE_PASSES, TITLE_MAX, TITLE_MIN, fetch_public_pages, head_field,
+    is_absolute_url, jsonld_blocks, pass_label,
 )
 
 
@@ -22,8 +19,8 @@ class TestFetchIsFailClosed:
     із іменованим списком.
     """
 
-    def test_skipped_set_matches_named_constant(self, app, client):
-        _, skipped = fetch_public_pages(app, client)
+    def test_skipped_set_matches_named_constant(self, app):
+        _, skipped = fetch_public_pages(app)
         assert set(skipped) == set(EXPECTED_NON_200), (
             'Набір сторінок поза вибіркою розійшовся з EXPECTED_NON_200.\n'
             f'Зайві (сторінка перестала віддавати 200): '
@@ -32,13 +29,13 @@ class TestFetchIsFailClosed:
             f'{sorted(set(EXPECTED_NON_200) - set(skipped))}'
         )
 
-    def test_skipped_status_matches_documented_code(self, app, client):
+    def test_skipped_status_matches_documented_code(self, app):
         """Ключ EXPECTED_NON_200 звірявся лише як МНОЖИНА -- сам код
         усередині причини був прозою, яку ніхто не читав. Доведено
         мутацією: підміна в'ю main.design_system на abort(500) замість
         задокументованого 302 лишала сюїту зеленою -- набір пропущених
         ключів не міняється, лише число під ключем."""
-        _, skipped = fetch_public_pages(app, client)
+        _, skipped = fetch_public_pages(app)
         bad = []
         for endpoint, actual_code in skipped.items():
             if endpoint not in EXPECTED_NON_200:
@@ -61,8 +58,8 @@ class TestFetchIsFailClosed:
         ]
         assert not empty, f'Записи без причини: {empty}'
 
-    def test_selection_is_not_empty(self, app, client):
-        pages, _ = fetch_public_pages(app, client)
+    def test_selection_is_not_empty(self, app):
+        pages, _ = fetch_public_pages(app)
         # Поріг навмисно нижчий за поточні 15: точну звірку набору робить
         # тест вище, а цей лишається підлогою здорового глузду -- він має
         # спрацювати, якщо вибірка обвалиться, а не дублювати сусіда.
@@ -73,17 +70,17 @@ class TestFetchIsFailClosed:
 
 
 class TestPageStructure:
-    def test_exactly_one_h1(self, app, client):
+    def test_exactly_one_h1(self, app):
         bad = []
-        for endpoint, url, html in fetch_public_pages(app, client)[0]:
+        for endpoint, url, html in fetch_public_pages(app)[0]:
             count = len(re.findall(r'<h1[\s>]', html))
             if count != 1:
                 bad.append(f'{endpoint} ({url}): {count} <h1>')
         assert not bad, 'Сторінки не з одним <h1>:\n' + '\n'.join(bad)
 
-    def test_canonical_absolute_and_clean(self, app, client):
+    def test_canonical_absolute_and_clean(self, app):
         bad = []
-        for endpoint, url, html in fetch_public_pages(app, client)[0]:
+        for endpoint, url, html in fetch_public_pages(app)[0]:
             found = re.search(r'<link rel="canonical" href="([^"]*)"', html)
             if not found:
                 bad.append(f'{endpoint}: canonical відсутній')
@@ -95,16 +92,16 @@ class TestPageStructure:
                 bad.append(f'{endpoint}: canonical із query -- {href}')
         assert not bad, 'Проблеми canonical:\n' + '\n'.join(bad)
 
-    def test_meta_description_present(self, app, client):
+    def test_meta_description_present(self, app):
         bad = []
-        for endpoint, url, html in fetch_public_pages(app, client)[0]:
+        for endpoint, url, html in fetch_public_pages(app)[0]:
             if not head_field(html, 'description'):
                 bad.append(f'{endpoint}: опис порожній або відсутній')
         assert not bad, 'Проблеми meta description:\n' + '\n'.join(bad)
 
-    def test_jsonld_parses(self, app, client):
+    def test_jsonld_parses(self, app):
         bad = []
-        for endpoint, url, html in fetch_public_pages(app, client)[0]:
+        for endpoint, url, html in fetch_public_pages(app)[0]:
             try:
                 blocks = jsonld_blocks(html)
             except ValueError as exc:
@@ -119,7 +116,7 @@ class TestPageStructure:
                     bad.append(f'{endpoint}: блок без @type і без @graph')
         assert not bad, 'Проблеми JSON-LD:\n' + '\n'.join(bad)
 
-    def test_every_public_page_has_at_least_one_jsonld_block(self, app, client):
+    def test_every_public_page_has_at_least_one_jsonld_block(self, app):
         """Мовчання -- теж помилка.
 
         test_jsonld_parses не відрізняє "усе валідне" від "нічого не
@@ -128,7 +125,7 @@ class TestPageStructure:
         твердження про структуровані дані одразу.
         """
         bad = []
-        for endpoint, url, html in fetch_public_pages(app, client)[0]:
+        for endpoint, url, html in fetch_public_pages(app)[0]:
             if not jsonld_blocks(html):
                 bad.append(f'{endpoint} ({url})')
         assert not bad, (
@@ -137,16 +134,16 @@ class TestPageStructure:
 
 
 class TestTitleUniqueness:
-    def _heads(self, app, client, field):
+    def _heads(self, app, field):
         values = {}
-        for endpoint, url, html in fetch_public_pages(app, client)[0]:
+        for endpoint, url, html in fetch_public_pages(app)[0]:
             value = head_field(html, field)
             assert value, f'{endpoint}: <{field}> відсутній'
             values[endpoint] = value
         return values
 
-    def test_titles_unique_except_known_debt(self, app, client):
-        titles = self._heads(app, client, 'title')
+    def test_titles_unique_except_known_debt(self, app):
+        titles = self._heads(app, 'title')
         by_title = {}
         for endpoint, title in titles.items():
             by_title.setdefault(title, []).append(endpoint)
@@ -159,14 +156,14 @@ class TestTitleUniqueness:
         }
         assert not unexpected, f'Неврахований дубль title: {unexpected}'
 
-    def test_descriptions_unique_except_known_debt(self, app, client):
+    def test_descriptions_unique_except_known_debt(self, app):
         """Специфікація вимагала унікальності й описів, а не лише заголовків.
 
         Описи унікальні вже сьогодні -- тест не виправляє борг, а
         закріплює наявну властивість: два однакові description -- сигнал
         Google, що сторінки дублюють одна одну.
         """
-        descriptions = self._heads(app, client, 'description')
+        descriptions = self._heads(app, 'description')
         by_desc = {}
         for endpoint, desc in descriptions.items():
             by_desc.setdefault(desc, []).append(endpoint)
@@ -177,9 +174,9 @@ class TestTitleUniqueness:
         }
         assert not unexpected, f'Неврахований дубль description: {unexpected}'
 
-    def test_known_debt_entries_are_still_real(self, app, client):
+    def test_known_debt_entries_are_still_real(self, app):
         """Виправив борг -- прибери запис. Інакше список бреше."""
-        titles = self._heads(app, client, 'title')
+        titles = self._heads(app, 'title')
         stale = []
         for endpoint in KNOWN_SEO_DEBT:
             if endpoint not in titles:
@@ -193,37 +190,43 @@ class TestTitleUniqueness:
         assert not stale, f'KNOWN_SEO_DEBT застарів, прибери записи: {stale}'
 
 
-def _measure_all_locales(app, client):
+def _measure_all_locales(app):
     """{(ендпоінт, локаль, поле): довжина} по всіх публічних сторінках.
 
-    flask_babel.refresh() між локалями обов'язковий: db_session (conftest)
-    тримає один app context на весь тест, і без refresh() flask_babel
-    віддає закешовану на g._flask_babel локаль -- усі три прогони
-    повернули б український рендер (та сама пастка описана в
-    test_breadcrumbs.py).
+    Уся робота з локаллю -- всередині fetch_public_pages(): свій клієнт на
+    прогін, refresh() перед КОЖНИМ запитом і звірка <html lang>. Тут
+    лишається сам обмір.
+
+    Доти, доки refresh() стояв ТУТ і один раз на прогін, локаль прогону
+    визначала перша ж отримана сторінка, а решта успадковувала її з
+    g._flask_babel. Правильним це виходило випадково -- бо sorted()
+    ставив локалізований ендпоінт першим.
+
+    LOCALE_PASSES, а не LANGUAGES: українська йде непрефіксованим
+    прогоном (None), і саме в ньому міряються п'ять сторінок, що мовного
+    префікса не мають узагалі. З lang='uk' вони не потрапили б у жоден
+    прогін.
     """
     measured = {}
-    for lang in LANGUAGES:
-        refresh()
-        pages, _ = fetch_public_pages(app, client, lang=lang)
+    for lang in LOCALE_PASSES:
+        pages, _ = fetch_public_pages(app, lang=lang)
         for endpoint, _url, html in pages:
             for field in ('title', 'description'):
                 value = head_field(html, field)
                 if value is not None:
-                    measured[(endpoint, lang, field)] = len(value)
-    refresh()
+                    measured[(endpoint, pass_label(lang), field)] = len(value)
     return measured
 
 
 class TestLengths:
-    def test_title_and_description_within_targets(self, app, client):
+    def test_title_and_description_within_targets(self, app):
         """Межі перевіряються в УСІХ локалях, а не лише в українській.
 
         Доти, доки дивились тільки uk-рендер, ru/en виходили за межі
         непоміченими -- і сам цей план так завів два нові порушення."""
         limits = {'title': (TITLE_MIN, TITLE_MAX), 'description': (DESC_MIN, DESC_MAX)}
         bad = []
-        for key, length in sorted(_measure_all_locales(app, client).items()):
+        for key, length in sorted(_measure_all_locales(app).items()):
             if key in LENGTH_EXCEPTIONS:
                 continue
             endpoint, lang, field = key
@@ -236,7 +239,7 @@ class TestLengths:
             f'description {DESC_MIN}-{DESC_MAX}: {report}'
         )
 
-    def test_length_exceptions_are_still_real(self, app, client):
+    def test_length_exceptions_are_still_real(self, app):
         """Сторінка вийшла в межі -- прибери запис.
 
         KNOWN_SEO_DEBT мав такого сторожа з першого дня, LENGTH_EXCEPTIONS
@@ -244,7 +247,7 @@ class TestLengths:
         проблем, який нічого не описує, зате прощає майбутні.
         """
         limits = {'title': (TITLE_MIN, TITLE_MAX), 'description': (DESC_MIN, DESC_MAX)}
-        measured = _measure_all_locales(app, client)
+        measured = _measure_all_locales(app)
         stale, unknown = [], []
         for key in LENGTH_EXCEPTIONS:
             endpoint, lang, field = key

@@ -74,11 +74,11 @@ class TestBreadcrumbCoverage:
     що втратила виклик макроса (чи ніколи його не мала), не валила нічого.
     """
 
-    def test_every_public_page_carries_breadcrumbs(self, app, client):
+    def test_every_public_page_carries_breadcrumbs(self, app):
         from tests.test_seo.helpers import fetch_public_pages, jsonld_blocks
 
         bad = []
-        for endpoint, url, html in fetch_public_pages(app, client)[0]:
+        for endpoint, url, html in fetch_public_pages(app)[0]:
             crumbs = [
                 b for b in jsonld_blocks(html)
                 if b.get('@type') == 'BreadcrumbList'
