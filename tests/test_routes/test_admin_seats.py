@@ -4,6 +4,7 @@
 перевищення пулу (оплата прийшла після заповнення) має бути видно
 червоною плашкою -- інакше менеджер дізнається про нього в залі.
 """
+import re
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -120,6 +121,35 @@ def test_course_title_links_to_registrations(client, admin, instance):
 
     html = _list_html(client, instance)
     assert f'/admin/instances/{instance.id}/registrations' in html
+
+
+def test_registration_count_links_to_registrations(client, admin, instance):
+    """Число в колонці «Реєстрацій» -- вхід у перелік зареєстрованих.
+
+    Курс у сусідній колонці веде туди ж, тож перевіряємо саме тег навколо
+    числа: інакше тест пройшов би й на неклікабельній цифрі.
+    """
+    reg = _add_reg(instance, 'pending', 'unpaid')
+    user_id = reg.user_id
+    _login(client, admin)
+    try:
+        html = _list_html(client, instance)
+        href = f'/admin/instances/{instance.id}/registrations'
+        assert re.search(rf'<a href="{re.escape(href)}">\s*1\s*</a>', html)
+    finally:
+        db.session.delete(db.session.merge(reg))
+        db.session.commit()
+        db.session.delete(db.session.get(User, user_id))
+        db.session.commit()
+
+
+def test_zero_registrations_stays_plain_text(client, admin, instance):
+    """Нуль не клікається -- розгортати там нічого."""
+    _login(client, admin)
+
+    html = _list_html(client, instance)
+    href = f'/admin/instances/{instance.id}/registrations'
+    assert not re.search(rf'<a href="{re.escape(href)}">\s*0\s*</a>', html)
 
 
 def test_next3_skips_drafts(client, admin, instance):

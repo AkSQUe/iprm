@@ -55,7 +55,13 @@
           {# Число, а не бурштинова плашка: бурштин на сайті означає «потребує
              дії», і на лічильнику він кричав там, де просто рахують. Стан
              позначає бейдж у самому реєстрі нижче. #}
-          <td><strong>{{ count }}</strong></td>
+          <td><strong>
+            {% if course %}
+            <a href="{{ url_for('admin.course_requests_list', course_id=course.id, status='pending') }}">{{ count }}</a>
+            {% else %}
+            {{ count }}
+            {% endif %}
+          </strong></td>
           <td>
             {% if course %}
             <a href="{{ url_for('admin.instance_create', course_id=course.id) }}"

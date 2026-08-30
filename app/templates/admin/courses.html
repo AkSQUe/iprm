@@ -111,7 +111,7 @@
         <td>
           {% if course.trainer %}
           <a href="{{ url_for('admin.trainer_edit', trainer_id=course.trainer.id) }}">{{ course.trainer.full_name }}</a>
-          {% else %}–{% endif %}
+          {% else %}<span class="admin-text-muted">–</span>{% endif %}
         </td>
         {# Лічильники -- посилання на зріз, а не кнопки: за мовою сайту таблетка
            з падінгом означає ДІЮ, а тут це просто число. Два овали в кожному

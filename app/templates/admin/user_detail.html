@@ -119,7 +119,13 @@
           {% for reg in registrations %}
           <tr>
             <td class="admin-nowrap">{{ reg.created_at.strftime('%d.%m.%Y') if reg.created_at else '–' }}</td>
-            <td>{{ reg.target_title or '–' }}</td>
+            <td>
+              {% if reg.target_title %}
+              <a href="{{ url_for('admin.instance_registrations', instance_id=reg.instance_id) }}">{{ reg.target_title }}</a>
+              {% else %}
+              <span class="admin-text-muted">–</span>
+              {% endif %}
+            </td>
             <td>{{ reg.status_label }}</td>
             <td>{{ reg.payment_status_label }}</td>
           </tr>

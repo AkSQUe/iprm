@@ -373,11 +373,14 @@
             <td>
               {# Число реєстрацій -- вхід у перелік зареєстрованих, як і в
                  розкладі проведень. Нуль лишається текстом -- розгортати
-                 там нічого. #}
-              {% if inst.registration_count %}
-              <a href="{{ url_for('admin.instance_registrations', instance_id=inst.id) }}">{{ inst.registration_count }}</a>
+                 там нічого. `registration_count` рахує COUNT на кожен виклик,
+                 тож беремо один раз -- як `reg_count` в instances.html --
+                 а не двічі (у перевірці й у виводі) на кожен рядок. #}
+              {% set reg_count = inst.registration_count %}
+              {% if reg_count %}
+              <a href="{{ url_for('admin.instance_registrations', instance_id=inst.id) }}">{{ reg_count }}</a>
               {% else %}
-              {{ inst.registration_count }}
+              {{ reg_count }}
               {% endif %}
             </td>
             <td>

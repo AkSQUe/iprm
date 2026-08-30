@@ -127,16 +127,20 @@
         </td>
         {# Кампанія й форма -- технічні значення діагностичного реєстру: клік
            веде в ЦЕЙ ЖЕ реєстр, звужений саме цим id, без успадкування
-           поточних фільтрів сторінки. #}
+           поточних фільтрів сторінки. `test='with'` тут не одне з тих
+           фільтрів, а нейтралізація нетипового замовчування: тестові заявки
+           сховані за замовчуванням, і без цього параметра клік із «Лише
+           тестові» приземлявся б у зрізі, звідки щойно натиснутий лід сам
+           же й відфільтрований. #}
         <td class="admin-text-left">
           <div>
             {% if lead.campaign_id %}
-            <a href="{{ url_for('admin.meta_leads_list', campaign_id=lead.campaign_id) }}">{{ lead.campaign_name or lead.campaign_id }}</a>
+            <a href="{{ url_for('admin.meta_leads_list', campaign_id=lead.campaign_id, test='with') }}">{{ lead.campaign_name or lead.campaign_id }}</a>
             {% else %}–{% endif %}
           </div>
           <div class="admin-text-muted">
             {% if lead.form_id %}
-            <a href="{{ url_for('admin.meta_leads_list', form_id=lead.form_id) }}">{{ lead.form_name or lead.form_id }}</a>
+            <a href="{{ url_for('admin.meta_leads_list', form_id=lead.form_id, test='with') }}">{{ lead.form_name or lead.form_id }}</a>
             {% else %}–{% endif %}
             · {{ lead.platform_label }}
           </div>

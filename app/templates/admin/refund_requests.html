@@ -68,7 +68,11 @@
           <div class="admin-text-muted">{{ req.title }}</div>
         </td>
         <td>
-          {{ req.user.full_name or '—' }}
+          {% if req.user.full_name %}
+          <a href="{{ url_for('admin.user_detail', user_id=req.user.id) }}">{{ req.user.full_name }}</a>
+          {% else %}
+          <span class="admin-text-muted">—</span>
+          {% endif %}
           <div class="admin-text-muted">{{ req.user.email }}</div>
         </td>
         <td>

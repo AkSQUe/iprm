@@ -79,11 +79,15 @@
       <tbody>
         {% for log in logs %}
         <tr>
-          {# Код -- технічне значення діагностичного реєстру: клік веде в
-             ЦЕЙ ЖЕ журнал, звужений цим кодом, а не в перетин із поточним
-             фільтром по днях чи станом. #}
+          {# Код, тип і шлях (тут і в двох комірках нижче) -- технічні
+             значення діагностичного реєстру: клік веде в ЦЕЙ ЖЕ журнал,
+             звужений саме цим значенням, а не в перетин із поточним
+             фільтром по стану. Кожен ще й несе `days=0`: журнал за
+             замовчуванням показує лише 7 днів, і без цього параметра клік
+             на тримісячну помилку з перегляду «За весь час» приземлявся б
+             у вікні, де цього рядка вже нема. #}
           <td>
-            <a href="{{ url_for('admin.error_logs', error_code=log.error_code) }}">
+            <a href="{{ url_for('admin.error_logs', error_code=log.error_code, days=0) }}">
             {% if log.error_code >= 500 %}
             <span class="badge badge--danger">{{ log.error_code }}</span>
             {% elif log.error_code >= 400 %}
@@ -95,7 +99,7 @@
           </td>
           <td title="{{ log.error_type }}">
             {% if log.error_type %}
-            <a href="{{ url_for('admin.error_logs', q=log.error_type) }}"><code class="admin-truncate">{{ log.error_type }}</code></a>
+            <a href="{{ url_for('admin.error_logs', q=log.error_type, days=0) }}"><code class="admin-truncate">{{ log.error_type }}</code></a>
             {% else %}<code class="admin-truncate">{{ log.error_type }}</code>{% endif %}
           </td>
           <td class="admin-text-left">
@@ -117,7 +121,7 @@
              шляху. Обрізає CSS із трьома крапками, повне -- у title. #}
           <td class="admin-text-left" title="{{ log.url }}">
             {% if log.url_path %}
-            <a href="{{ url_for('admin.error_logs', q=log.url_path) }}"><span class="admin-truncate">{{ log.url_path }}</span></a>
+            <a href="{{ url_for('admin.error_logs', q=log.url_path, days=0) }}"><span class="admin-truncate">{{ log.url_path }}</span></a>
             {% else %}<span class="admin-truncate">&ndash;</span>{% endif %}
           </td>
           <td class="admin-nowrap">{{ log.created_at.strftime('%d.%m %H:%M') if log.created_at else '&ndash;'|safe }}</td>

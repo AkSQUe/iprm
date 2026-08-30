@@ -77,7 +77,7 @@
         <tr>
           <td>{{ r.created_at.strftime('%d.%m.%Y %H:%M') if r.created_at else '—' }}</td>
           <td>
-            {% if r.user %}{{ r.user.full_name or r.user.email }}<br><small class="admin-text-muted">{{ r.user.email }}</small>
+            {% if r.user %}<a href="{{ url_for('admin.user_detail', user_id=r.user.id) }}">{{ r.user.full_name or r.user.email }}</a><br><small class="admin-text-muted">{{ r.user.email }}</small>
             {% else %}<span class="admin-text-muted">—</span>{% endif %}
           </td>
           <td>

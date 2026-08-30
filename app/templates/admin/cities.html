@@ -128,8 +128,12 @@
             <tr>
               <td><strong>{{ row.city.name }}</strong></td>
               <td class="cities-col-uses">
+                {# Найближче з наявного, не точне: `uses` рахує проведення за
+                   нормалізованою локацією (city_glossary.location_usage), а
+                   лінк -- підрядковий пошук по назві курсу ЧИ локації
+                   проведення, тож перелік ширший за це число. #}
                 {% if row.uses %}
-                  {{ row.uses }}
+                  <a href="{{ url_for('admin.instances_list', q=row.city.name) }}">{{ row.uses }}</a>
                 {% else %}
                   <span class="admin-text-muted" title="Локація не вживається в розкладі">–</span>
                 {% endif %}

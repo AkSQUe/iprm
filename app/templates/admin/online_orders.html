@@ -112,7 +112,9 @@
             <small class="admin-text-muted admin-subline">{{ order.created_at | kyiv }}</small>
           </td>
           <td>
-            {{ order.user.full_name if order.user else '—' }}
+            {% if order.user %}
+            <a href="{{ url_for('admin.user_detail', user_id=order.user.id) }}">{{ order.user.full_name }}</a>
+            {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
             {# Адресу ріжемо, а не переносимо: у вузькій колонці вона ламалась
                посеред домену ("...gmail.co / m") і читалась як помилка. #}
             {% if order.user %}<small class="admin-text-muted admin-subline admin-truncate"
