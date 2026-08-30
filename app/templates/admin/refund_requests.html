@@ -127,7 +127,7 @@
           <details class="admin-actions-menu">
             <summary class="btn-admin btn-admin--secondary btn-admin--sm">Відхилити</summary>
             <div class="admin-actions-menu__items admin-actions-menu__items--form">
-              <form method="POST" action="{{ url_for('admin.refund_request_reject', request_id=req.id) }}">
+              <form method="POST" action="{{ url_for('admin.refund_request_reject', request_id=req.id, **back_args) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-group">
                   <label for="note-{{ req.id }}">Причина відмови (піде в лист)</label>
@@ -150,14 +150,20 @@
     </tbody>
   </table>
   </div>
-
-  {{ pager('admin.refund_requests_list', pagination, filter_args) }}
   {% else %}
+  {# narrow_args={'page': ...} -- сторінка за межею останньої віддає
+     порожній requests, навіть коли жоден фільтр не активний: без цього
+     empty_state вважав би зріз СПРАВДІ порожнім і не дав би шляху назад. #}
   {% call empty_state('admin.refund_requests_list', filter_args,
+                      narrow_args={'page': pagination.page if pagination.page > 1 else none},
                       icon_name='notes', title='Заявок немає') %}
     <p>Учасники подають заявки з особистого кабінету.</p>
   {% endcall %}
   {% endif %}
+
+  {# Поза if/else навмисно: сторінка за межею останньої віддає порожній
+     requests при pagination.pages >= 1 -- пейджер дає prev/next і сюди. #}
+  {{ pager('admin.refund_requests_list', pagination, filter_args) }}
 
   </div>
 </div>

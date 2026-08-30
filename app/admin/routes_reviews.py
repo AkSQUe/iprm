@@ -18,16 +18,33 @@ audit_logger = logging.getLogger('audit')
 _REVIEW_STATES = {'published': 'Опубліковані', 'draft': 'Чернетки'}
 
 
-@admin_bp.route('/reviews')
-@admin_required
-def reviews_list():
-    filters = {
+def _review_filters():
+    """Фільтри списку відгуків -- спільні для сторінки й `_back()`."""
+    return {
         'q': _listing.text_arg('q'),
         'state': _listing.choice_arg('state', _REVIEW_STATES),
         'course_id': _listing.int_arg('course_id'),
         'rating': _listing.int_arg('rating'),
         'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
     }
+
+
+def _back():
+    """Безпечний POST -> GET редірект назад до списку зі збереженим зрізом
+    (фільтр + СТОРІНКА): без сторінки публікація/видалення в рядку на
+    третій сторінці щоразу відкидало б адміна на першу. `_listing.back_redirect`
+    перечитує й перевіряє кожен параметр тим самим способом, що й роут
+    списку (НЕ request.referrer -- той керований клієнтом і відкриває open
+    redirect). Джерело значень -- query-string самого запиту дії: форма
+    рядка несе зріз у своєму action-URL через `back_args`.
+    """
+    return _listing.back_redirect('admin.reviews_list', _review_filters())
+
+
+@admin_bp.route('/reviews')
+@admin_required
+def reviews_list():
+    filters = _review_filters()
     query = Review.alive().options(db.joinedload(Review.course))
     query = _listing.apply_search(query, filters['q'], [
         Review.author_name, Review.author_role, Review.city, Review.text,
@@ -45,13 +62,17 @@ def reviews_list():
         page=request.args.get('page', 1, type=int),
         per_page=_listing.per_page_arg(), error_out=False,
     )
+    filter_args = _listing.filter_args(filters)
     return render_template(
         'admin/reviews.html',
         reviews=pagination.items,
         pagination=pagination,
         per_page_options=_listing.PER_PAGE_OPTIONS,
         filters=filters,
-        filter_args=_listing.filter_args(filters),
+        filter_args=filter_args,
+        # Дії з рядка (публікація/видалення) ведуть сюди в action-URL, щоб
+        # зберегти й фільтр, і сторінку.
+        back_args=_listing.back_args(filter_args, pagination.page),
         state_options=list(_REVIEW_STATES.items()),
         course_options=[
             (c.id, c.title)
@@ -140,7 +161,7 @@ def review_toggle(review_id):
             logger.exception('Failed to toggle review %d', review_id)
             db.session.rollback()
             flash('Помилка при оновленні', 'error')
-    return redirect(url_for('admin.reviews_list'))
+    return _back()
 
 
 @admin_bp.route('/reviews/<int:review_id>/delete', methods=['POST'])
@@ -162,7 +183,7 @@ def review_delete(review_id):
             logger.exception('Failed to delete review %d', review_id)
             db.session.rollback()
             flash('Помилка при видаленні', 'error')
-    return redirect(url_for('admin.reviews_list'))
+    return _back()
 
 
 @admin_bp.route('/reviews/<int:review_id>/restore', methods=['POST'])

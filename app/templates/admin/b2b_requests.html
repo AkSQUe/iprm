@@ -66,7 +66,7 @@
         <td>
           {# Фільтри їдуть у query-string дії: після збереження менеджер має
              лишитись на тому самому зрізі, а не на повному списку. #}
-          <form method="POST" action="{{ url_for('admin.b2b_request_update', request_id=req.id, **filters) }}" class="admin-inline-form">
+          <form method="POST" action="{{ url_for('admin.b2b_request_update', request_id=req.id, **back_args) }}" class="admin-inline-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <select name="status" class="form-input form-input--sm">
               {% for code, label in req.STATUSES %}
@@ -83,16 +83,23 @@
     </tbody>
   </table>
   </div>
-
-  {{ pager('admin.b2b_requests_list', pagination, filter_args) }}
   {% else %}
+  {# narrow_args={'page': ...} -- сторінка за межею останньої (bookmark,
+     старий лінк) віддає порожній requests, навіть коли жоден фільтр не
+     активний: без цього empty_state вважав би зріз СПРАВДІ порожнім і
+     показав би "Заявок поки немає" без жодного шляху назад. #}
   {% call empty_state('admin.b2b_requests_list',
                       filter_args,
+                      narrow_args={'page': pagination.page if pagination.page > 1 else none},
                       icon_name='group',
                       title='Заявок поки немає') %}
     <p>Ліди з форми «Отримати корпоративні умови» з'являться тут</p>
   {% endcall %}
   {% endif %}
+
+  {# Поза if/else навмисно: сторінка за межею останньої віддає порожній
+     requests при pagination.pages >= 1 -- пейджер дає prev/next і сюди. #}
+  {{ pager('admin.b2b_requests_list', pagination, filter_args) }}
 
   </div>
 </div>

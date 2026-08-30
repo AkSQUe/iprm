@@ -67,6 +67,7 @@ def course_requests_list():
     else:
         counts_by_course = []
 
+    filter_args = _listing.filter_args(filters)
     return render_template(
         'admin/course_requests.html',
         requests=pagination.items,
@@ -74,7 +75,10 @@ def course_requests_list():
         per_page_options=_listing.PER_PAGE_OPTIONS,
         counts_by_course=counts_by_course,
         filters=filters,
-        filter_args=_listing.filter_args(filters),
+        filter_args=filter_args,
+        # Форма видалення в рядку веде сюди в action-URL, щоб зберегти й
+        # фільтр, і сторінку.
+        back_args=_listing.back_args(filter_args, pagination.page),
         status_options=CourseRequest.STATUSES,
         course_options=[
             (c.id, c.title) for c in Course.query.order_by(Course.title).all()
@@ -156,13 +160,25 @@ def course_request_edit(request_id):
     return render_template('admin/course_request_edit.html', form=form, request_obj=req)
 
 
+def _back():
+    """Безпечний POST -> GET редірект назад до списку зі збереженим зрізом
+    (фільтр + СТОРІНКА): без сторінки видалення в рядку на третій сторінці
+    щоразу відкидало б менеджера на першу. `_listing.back_redirect`
+    перечитує й перевіряє кожен параметр тим самим способом, що й роут
+    списку (НЕ request.referrer -- той керований клієнтом і відкриває open
+    redirect). Джерело значень -- query-string самого запиту дії: форма
+    рядка несе зріз у своєму action-URL через `back_args`.
+    """
+    return _listing.back_redirect('admin.course_requests_list', _course_request_filters())
+
+
 @admin_bp.route('/course-requests/<int:request_id>/delete', methods=['POST'])
 @admin_required
 def course_request_delete(request_id):
     req = db.session.get(CourseRequest, request_id)
     if not req:
         flash('Запит не знайдено', 'error')
-        return redirect(url_for('admin.course_requests_list'))
+        return _back()
 
     db.session.delete(req)
     if try_commit(
@@ -173,4 +189,4 @@ def course_request_delete(request_id):
             'Admin %s deleted request %s', current_user.email, request_id,
         )
         flash('Запит видалено', 'success')
-    return redirect(url_for('admin.course_requests_list'))
+    return _back()

@@ -6,7 +6,7 @@
 """
 import logging
 
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, flash, request
 from flask_login import current_user
 from sqlalchemy.orm import joinedload
 
@@ -72,13 +72,17 @@ def refund_requests_list():
         page=request.args.get('page', 1, type=int),
         per_page=_listing.per_page_arg(), error_out=False,
     )
+    filter_args = _listing.filter_args(filters)
     return render_template(
         'admin/refund_requests.html',
         requests=pagination.items,
         pagination=pagination,
         per_page_options=_listing.PER_PAGE_OPTIONS,
         filters=filters,
-        filter_args=_listing.filter_args(filters),
+        filter_args=filter_args,
+        # Форма відхилення в рядку веде сюди в action-URL: без сторінки
+        # відмова на третій сторінці черги щоразу скидала б на першу.
+        back_args=_listing.back_args(filter_args, pagination.page),
         active_status=filters['status'],
         status_options=RefundRequest.STATUSES,
         new_count=refund_requests.pending_count(),
@@ -113,24 +117,33 @@ def refund_requests_export():
     )
 
 
+def _back():
+    """Безпечний POST -> GET редірект назад до списку зі збереженим зрізом
+    (фільтр + СТОРІНКА): без сторінки відмова в рядку на третій сторінці
+    черги щоразу відкидала б менеджера на першу. `_listing.back_redirect`
+    перечитує й перевіряє кожен параметр тим самим способом, що й роут
+    списку (НЕ request.referrer -- той керований клієнтом і відкриває open
+    redirect). Джерело значень -- query-string самого запиту дії: форма
+    рядка несе зріз у своєму action-URL через `back_args`.
+    """
+    return _listing.back_redirect('admin.refund_requests_list', _filters())
+
+
 @admin_bp.route('/refund-requests/<int:request_id>/reject', methods=['POST'])
 @admin_required
 def refund_request_reject(request_id):
     item = db.session.get(RefundRequest, request_id)
     if item is None:
         flash('Заявку не знайдено', 'error')
-        return redirect(url_for('admin.refund_requests_list'))
+        return _back()
 
     note = (request.form.get('decision_note') or '').strip()
     if not note:
         # Відмова без пояснення -- це та сама тиша, від якої заявка й мала
         # рятувати: людина не дізнається, що робити далі.
         flash('Вкажіть причину відмови: вона піде в лист учаснику', 'error')
-        return redirect(url_for('admin.refund_requests_list'))
+        return _back()
 
     ok, message = refund_requests.reject(item, current_user, note)
     flash(message, 'success' if ok else 'error')
-    return redirect(url_for(
-        'admin.refund_requests_list',
-        **{k: v for k, v in _filters().items() if v},
-    ))
+    return _back()

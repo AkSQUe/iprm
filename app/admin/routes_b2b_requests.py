@@ -1,7 +1,7 @@
 """Admin: заявки на корпоративне навчання (B2B, блок "Для команд і клінік")."""
 import logging
 
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, flash, request
 from flask_login import current_user
 
 from app.admin import _listing, admin_bp
@@ -48,13 +48,17 @@ def b2b_requests_list():
         page=request.args.get('page', 1, type=int),
         per_page=_listing.per_page_arg(), error_out=False,
     )
+    filter_args = _listing.filter_args(filters)
     return render_template(
         'admin/b2b_requests.html',
         requests=pagination.items,
         pagination=pagination,
         per_page_options=_listing.PER_PAGE_OPTIONS,
         filters=filters,
-        filter_args=_listing.filter_args(filters),
+        filter_args=filter_args,
+        # Дія з рядка (форма статусу) веде сюди в action-URL, щоб зберегти
+        # і фільтр, і сторінку -- інакше збереження скидає на першу сторінку.
+        back_args=_listing.back_args(filter_args, pagination.page),
         active_status=filters['status'],
         status_options=B2BRequest.STATUSES,
         team_size_options=B2BRequest.TEAM_SIZES,
@@ -91,19 +95,31 @@ def b2b_requests_export():
     )
 
 
+def _back():
+    """Безпечний POST -> GET редірект назад до списку зі збереженим зрізом
+    (фільтр + СТОРІНКА): без сторінки збереження в рядку на третій сторінці
+    щоразу відкидало б менеджера на першу. `_listing.back_redirect`
+    перечитує й перевіряє кожен параметр тим самим способом, що й роут
+    списку (НЕ request.referrer -- той керований клієнтом і відкриває open
+    redirect). Джерело значень -- query-string самого запиту дії: форма
+    рядка несе зріз у своєму action-URL через `back_args`.
+    """
+    return _listing.back_redirect('admin.b2b_requests_list', _b2b_filters())
+
+
 @admin_bp.route('/b2b-requests/<int:request_id>/update', methods=['POST'])
 @admin_required
 def b2b_request_update(request_id):
     req = db.session.get(B2BRequest, request_id)
     if not req:
         flash('Заявку не знайдено', 'error')
-        return redirect(url_for('admin.b2b_requests_list'))
+        return _back()
 
     new_status = request.form.get('status', '')
     notes = (request.form.get('admin_notes') or '').strip()
     if new_status not in {code for code, _ in B2BRequest.STATUSES}:
         flash('Невідомий статус', 'error')
-        return redirect(url_for('admin.b2b_requests_list'))
+        return _back()
 
     req.status = new_status
     req.admin_notes = notes or None
@@ -118,8 +134,4 @@ def b2b_request_update(request_id):
         db.session.rollback()
         audit_logger.exception('Failed to update B2BRequest #%s', request_id)
         flash('Помилка при збереженні', 'error')
-    # Повертаємось на той самий зріз: фільтри прийшли у query-string дії.
-    return redirect(url_for(
-        'admin.b2b_requests_list',
-        **{k: v for k, v in _b2b_filters().items() if v},
-    ))
+    return _back()

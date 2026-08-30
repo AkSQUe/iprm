@@ -160,7 +160,7 @@
             <a href="{{ url_for('admin.course_request_edit', request_id=req.id) }}"
                class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
                title="Редагувати">{{ icon('edit', label='Редагувати') }}</a>
-            <form method="POST" action="{{ url_for('admin.course_request_delete', request_id=req.id) }}"
+            <form method="POST" action="{{ url_for('admin.course_request_delete', request_id=req.id, **back_args) }}"
                   data-confirm="Видалити запит?" data-confirm-ok="Видалити запит" data-confirm-danger>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm btn-admin--icon"
@@ -173,16 +173,22 @@
     </tbody>
   </table>
   </div>
-
-  {{ pager('admin.course_requests_list', pagination, filter_args) }}
   {% else %}
+  {# narrow_args={'page': ...} -- сторінка за межею останньої віддає
+     порожній requests, навіть коли жоден фільтр не активний: без цього
+     empty_state вважав би зріз СПРАВДІ порожнім і не дав би шляху назад. #}
   {% call empty_state('admin.course_requests_list',
                       filter_args,
+                      narrow_args={'page': pagination.page if pagination.page > 1 else none},
                       icon_name='inbox',
                       title='Запитів немає') %}
     <p>Коли користувачі залишать заявку на проведення курсу &mdash; вона з'явиться тут.</p>
   {% endcall %}
   {% endif %}
+
+  {# Поза if/else навмисно: сторінка за межею останньої віддає порожній
+     requests при pagination.pages >= 1 -- пейджер дає prev/next і сюди. #}
+  {{ pager('admin.course_requests_list', pagination, filter_args) }}
 
   </div>
 </div>

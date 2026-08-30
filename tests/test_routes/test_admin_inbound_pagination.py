@@ -114,6 +114,23 @@ def _indices(html, pattern):
     return {int(x) for x in pattern.findall(html)}
 
 
+_PAGER_RE = re.compile(r'<nav class="admin-pagination">.*?</nav>', re.S)
+
+
+def _pager_html(html):
+    """Витягти САМЕ <nav class="admin-pagination">.
+
+    Просто `f'q={tag}' in html` нічого не доводить: той самий рядок пише і
+    чіп активного фільтра, і посилання експорту -- обидва є на сторінці
+    незалежно від пейджера. Якби хтось написав
+    `pager(endpoint, pagination, {})`, загубивши фільтр саме в посиланнях
+    next/prev, повна перевірка все одно пройшла б.
+    """
+    m = _PAGER_RE.search(html)
+    assert m, 'пейджер не відрендерився'
+    return m.group(0)
+
+
 # --------------------------------- B2B ---------------------------------
 
 def _b2b_env(tag, n=PAGE + 1):
@@ -140,8 +157,11 @@ def test_b2b_pagination_filter_perpage_export_and_new_count(client, admin):
     assert len(idx2) == (PAGE + 1) - PAGE
     assert idx1.isdisjoint(idx2)
     assert idx1 | idx2 == set(range(PAGE + 1))
-    # page=2 не губить активний фільтр (посилання пагінатора несуть q=).
-    assert f'q={tag}' in page1 and f'q={tag}' in page2
+    # page=2 не губить активний фільтр САМЕ у посиланнях пейджера
+    # (next/prev), а не десь на сторінці взагалі (чіп/експорт теж
+    # містять q={tag}, але це не той факт, що перевіряється тут).
+    assert f'q={tag}' in _pager_html(page1)
+    assert f'q={tag}' in _pager_html(page2)
 
     # ?per_page=25 справді дає 25 рядків.
     p25 = client.get(f'/admin/b2b-requests?q={tag}&per_page=25').get_data(as_text=True)
@@ -163,6 +183,35 @@ def test_b2b_pagination_filter_perpage_export_and_new_count(client, admin):
     filter_labels = {c.value for c in wb['Фільтри']['A'] if c.value}
     assert 'Рядків на сторінці' not in filter_labels
     assert 'per_page' not in filter_labels
+
+
+def test_b2b_out_of_range_page_offers_way_back(client, admin):
+    """Бокмарк/старий лінк на сторінку за межею останньої не має брехати
+    "Заявок поки немає" (записи є, просто не тут) і не має лишати без
+    жодного шляху назад."""
+    tag = _uid()
+    _b2b_env(tag, n=3)
+    _login(client, admin)
+    html = client.get(f'/admin/b2b-requests?q={tag}&page=999').get_data(as_text=True)
+    assert html.count(f'pgb2b-{tag}') == 0
+    assert 'скинути фільтри' in html
+
+
+def test_b2b_row_action_redirects_back_to_same_page(client, admin):
+    """Дія в рядку (збереження статусу) на сторінці 3 черги не має скидати
+    менеджера на першу сторінку -- форма несе зріз (фільтр + сторінка) у
+    своєму action-URL, а роут повертає туди ж через `_back()`."""
+    tag = _uid()
+    _b2b_env(tag)  # PAGE + 1 -- рівно дві сторінки під тегом
+    _login(client, admin)
+    page2 = client.get(f'/admin/b2b-requests?q={tag}&page=2').get_data(as_text=True)
+    m = re.search(r'action="(/admin/b2b-requests/\d+/update\?[^"]*page=2[^"]*)"', page2)
+    assert m, 'дію рядка з page=2 у action-URL не знайдено на другій сторінці'
+    action_url = m.group(1).replace('&amp;', '&')
+    resp = client.post(action_url, data={'status': 'contacted', 'admin_notes': ''})
+    assert resp.status_code == 302
+    assert 'page=2' in resp.headers['Location']
+    assert f'q={tag}' in resp.headers['Location']
 
 
 # ----------------------------- Заявки на курси -----------------------------
@@ -193,7 +242,11 @@ def test_course_requests_pagination_filter_perpage_and_export(client, admin):
     assert len(idx2) == 1
     assert idx1.isdisjoint(idx2)
     assert idx1 | idx2 == set(range(PAGE + 1))
-    assert f'q={tag}' in page1 and f'q={tag}' in page2
+    # page=2 не губить активний фільтр САМЕ у посиланнях пейджера
+    # (next/prev), а не десь на сторінці взагалі (чіп/експорт теж
+    # містять q={tag}, але це не той факт, що перевіряється тут).
+    assert f'q={tag}' in _pager_html(page1)
+    assert f'q={tag}' in _pager_html(page2)
 
     p25 = client.get(f'/admin/course-requests?q={tag}&per_page=25').get_data(as_text=True)
     assert len(_indices(p25, pattern)) == 25
@@ -206,6 +259,29 @@ def test_course_requests_pagination_filter_perpage_and_export(client, admin):
     filter_labels = {c.value for c in wb['Фільтри']['A'] if c.value}
     assert 'Рядків на сторінці' not in filter_labels
     assert 'per_page' not in filter_labels
+
+
+def test_course_requests_out_of_range_page_offers_way_back(client, admin):
+    tag = _uid()
+    _course_request_env(tag, n=3)
+    _login(client, admin)
+    html = client.get(f'/admin/course-requests?q={tag}&page=999').get_data(as_text=True)
+    assert html.count(f'pgcr-{tag}') == 0
+    assert 'скинути фільтри' in html
+
+
+def test_course_request_row_action_redirects_back_to_same_page(client, admin):
+    tag = _uid()
+    _course_request_env(tag)  # PAGE + 1 -- рівно дві сторінки під тегом
+    _login(client, admin)
+    page2 = client.get(f'/admin/course-requests?q={tag}&page=2').get_data(as_text=True)
+    m = re.search(r'action="(/admin/course-requests/\d+/delete\?[^"]*page=2[^"]*)"', page2)
+    assert m, 'дію рядка з page=2 у action-URL не знайдено на другій сторінці'
+    action_url = m.group(1).replace('&amp;', '&')
+    resp = client.post(action_url)
+    assert resp.status_code == 302
+    assert 'page=2' in resp.headers['Location']
+    assert f'q={tag}' in resp.headers['Location']
 
 
 def test_course_requests_empty_state_without_has_filters(client, admin):
@@ -265,7 +341,11 @@ def test_refund_requests_pagination_filter_perpage_export_and_new_count(client, 
     assert len(idx2) == 1
     assert idx1.isdisjoint(idx2)
     assert idx1 | idx2 == set(range(PAGE + 1))
-    assert f'q={tag}' in page1 and f'q={tag}' in page2
+    # page=2 не губить активний фільтр САМЕ у посиланнях пейджера
+    # (next/prev), а не десь на сторінці взагалі (чіп/експорт теж
+    # містять q={tag}, але це не той факт, що перевіряється тут).
+    assert f'q={tag}' in _pager_html(page1)
+    assert f'q={tag}' in _pager_html(page2)
 
     p25 = client.get(f'/admin/refund-requests?q={tag}&per_page=25').get_data(as_text=True)
     assert len(_indices(p25, pattern)) == 25
@@ -282,6 +362,32 @@ def test_refund_requests_pagination_filter_perpage_export_and_new_count(client, 
     filter_labels = {c.value for c in wb['Фільтри']['A'] if c.value}
     assert 'Рядків на сторінці' not in filter_labels
     assert 'per_page' not in filter_labels
+
+
+def test_refund_requests_out_of_range_page_offers_way_back(client, admin):
+    tag = _uid()
+    _refund_env(admin, tag, n=3)
+    _login(client, admin)
+    html = client.get(f'/admin/refund-requests?q={tag}&page=999').get_data(as_text=True)
+    assert html.count(f'pgrf-{tag}-') == 0
+    assert 'скинути фільтри' in html
+
+
+def test_refund_row_action_redirects_back_to_same_page(client, admin):
+    """Відхилення заявки на третій сторінці черги не має скидати менеджера
+    на першу -- та сама пастка, що й з B2B, лише тут ціна помилки вища
+    (черга з дедлайном п. 6.3)."""
+    tag = _uid()
+    _refund_env(admin, tag)  # PAGE + 1 -- рівно дві сторінки під тегом
+    _login(client, admin)
+    page2 = client.get(f'/admin/refund-requests?q={tag}&page=2').get_data(as_text=True)
+    m = re.search(r'action="(/admin/refund-requests/\d+/reject\?[^"]*page=2[^"]*)"', page2)
+    assert m, 'дію рядка з page=2 у action-URL не знайдено на другій сторінці'
+    action_url = m.group(1).replace('&amp;', '&')
+    resp = client.post(action_url, data={'decision_note': 'тестова причина'})
+    assert resp.status_code == 302
+    assert 'page=2' in resp.headers['Location']
+    assert f'q={tag}' in resp.headers['Location']
 
 
 def test_refund_queue_order_survives_pagination(client, admin):
@@ -331,9 +437,36 @@ def test_reviews_pagination_filter_and_perpage(client, admin):
     assert len(idx2) == 1
     assert idx1.isdisjoint(idx2)
     assert idx1 | idx2 == set(range(PAGE + 1))
-    assert f'q={tag}' in page1 and f'q={tag}' in page2
+    # page=2 не губить активний фільтр САМЕ у посиланнях пейджера
+    # (next/prev), а не десь на сторінці взагалі (чіп/експорт теж
+    # містять q={tag}, але це не той факт, що перевіряється тут).
+    assert f'q={tag}' in _pager_html(page1)
+    assert f'q={tag}' in _pager_html(page2)
 
     p25 = client.get(f'/admin/reviews?q={tag}&per_page=25').get_data(as_text=True)
     assert len(_indices(p25, pattern)) == 25
     garbage = client.get(f'/admin/reviews?q={tag}&per_page=99999').get_data(as_text=True)
     assert len(_indices(garbage, pattern)) == PAGE
+
+
+def test_reviews_out_of_range_page_offers_way_back(client, admin):
+    tag = _uid()
+    _review_env(tag, n=3)
+    _login(client, admin)
+    html = client.get(f'/admin/reviews?q={tag}&page=999').get_data(as_text=True)
+    assert html.count(f'pgrv-{tag}-') == 0
+    assert 'скинути фільтри' in html
+
+
+def test_review_row_action_redirects_back_to_same_page(client, admin):
+    tag = _uid()
+    _review_env(tag)  # PAGE + 1 -- рівно дві сторінки під тегом
+    _login(client, admin)
+    page2 = client.get(f'/admin/reviews?q={tag}&page=2').get_data(as_text=True)
+    m = re.search(r'action="(/admin/reviews/\d+/toggle\?[^"]*page=2[^"]*)"', page2)
+    assert m, 'дію рядка з page=2 у action-URL не знайдено на другій сторінці'
+    action_url = m.group(1).replace('&amp;', '&')
+    resp = client.post(action_url)
+    assert resp.status_code == 302
+    assert 'page=2' in resp.headers['Location']
+    assert f'q={tag}' in resp.headers['Location']

@@ -128,7 +128,7 @@
                      class="admin-actions-menu__item">
                     {{ icon('title') }} Переклади
                   </a>
-                  <form method="POST" action="{{ url_for('admin.review_toggle', review_id=r.id) }}">
+                  <form method="POST" action="{{ url_for('admin.review_toggle', review_id=r.id, **back_args) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="admin-actions-menu__item">
                       {{ icon('visibility') }} {{ 'Зняти з публікації' if r.is_published else 'Опублікувати' }}
@@ -136,7 +136,7 @@
                   </form>
                   {# Без data-confirm свідомо: видалення м'яке, а замість діалогу
                      йде тост із кнопкою «Повернути» (routes_reviews.review_delete). #}
-                  <form method="POST" action="{{ url_for('admin.review_delete', review_id=r.id) }}">
+                  <form method="POST" action="{{ url_for('admin.review_delete', review_id=r.id, **back_args) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="admin-actions-menu__item admin-actions-menu__item--danger">
                       {{ icon('delete') }} Видалити
@@ -151,16 +151,22 @@
       </tbody>
     </table>
     </div>
-
-    {{ pager('admin.reviews_list', pagination, filter_args) }}
     {% else %}
+    {# narrow_args={'page': ...} -- сторінка за межею останньої віддає
+       порожній reviews, навіть коли жоден фільтр не активний: без цього
+       empty_state вважав би зріз СПРАВДІ порожнім і не дав би шляху назад. #}
     {% call empty_state('admin.reviews_list',
                         filter_args,
+                        narrow_args={'page': pagination.page if pagination.page > 1 else none},
                         icon_name='reviews',
                         title='Відгуків ще немає') %}
       <p>Поки їх нема, на Головній показується тимчасова заглушка. Додайте перший відгук.</p>
     {% endcall %}
     {% endif %}
+
+    {# Поза if/else навмисно: сторінка за межею останньої віддає порожній
+       reviews при pagination.pages >= 1 -- пейджер дає prev/next і сюди. #}
+    {{ pager('admin.reviews_list', pagination, filter_args) }}
 
   </div>
 </div>
