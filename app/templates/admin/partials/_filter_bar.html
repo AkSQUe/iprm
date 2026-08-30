@@ -250,12 +250,12 @@
 <div class="admin-empty">
   {% if narrowed and endpoint %}
     {{ icon('search', cls='admin-empty__icon') }}
-    <h3 class="iprm-card-title">Нічого не знайдено</h3>
+    <h3 class="iprm-block-title">Нічого не знайдено</h3>
     <p>За цим зрізом порожньо &mdash;
        <a href="{{ url_for(endpoint, **base_args) }}">скинути фільтри</a>.</p>
   {% else %}
     {{ icon(icon_name, cls='admin-empty__icon') }}
-    <h3 class="iprm-card-title">{{ title }}</h3>
+    <h3 class="iprm-block-title">{{ title }}</h3>
     {{ caller() }}
   {% endif %}
 </div>

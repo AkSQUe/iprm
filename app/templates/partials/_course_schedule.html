@@ -21,7 +21,7 @@
             {% endif %}
           </div>
           <div class="iprm-schedule__content">
-            <h3 class="iprm-schedule__title iprm-card-title">{{ course.t('title') }}</h3>
+            <h3 class="iprm-schedule__title iprm-block-title">{{ course.t('title') }}</h3>
             <div class="iprm-schedule__meta">
               {{ location_badge(inst.event_format, inst.location) }}
               {% if inst.effective_cpd_points %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | plural('bpr_points') }}</span>{% endif %}

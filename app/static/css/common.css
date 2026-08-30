@@ -2094,13 +2094,20 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   overflow: hidden;
 }
 
-/* .iprm-card-title -- заголовок картки/блоку всередині сторінки (не заголовок
-   секції й не заголовок картки курсу). Заміняє три побайтово однакові
-   правила під різними іменами: .account-card__title (account.css),
-   .admin-empty__title (admin.css) і частину .iprm-schedule__title
-   (courses.css) -- останній лишає власне ім'я, бо там ще є друге правило
-   (адаптив під 480px), а до спільного класу переїжджає тільки типографіка. */
-.iprm-card-title {
+/* .iprm-block-title -- заголовок блоку всередині сторінки (не заголовок
+   секції й не заголовок картки курсу). Ім'я НЕ "card-title": у проєкті вже
+   є чотири справжні заголовки карток з іншою типографікою --
+   .apple-page .iprm-course-card__title, .apple-page .iprm-online-card__title,
+   .iprm-clinic-card__name, .page-index .apple-clinic-card__body h3 (в усіх
+   line-height: 1.3, якого тут немає) -- ім'я "card-title" обіцяло б збіг,
+   якого нема. Три зведені вживання -- плитка кабінету, порожній стан
+   адмінки, рядок розкладу -- це блоки, не картки.
+   Заміняє три побайтово однакові правила під різними іменами:
+   .account-card__title (account.css), .admin-empty__title (admin.css) і
+   частину .iprm-schedule__title (courses.css) -- останній лишає власне
+   ім'я, бо там ще є друге правило (адаптив під 480px), а до спільного
+   класу переїжджає тільки типографіка. */
+.iprm-block-title {
   font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: -0.01em;
