@@ -1,0 +1,92 @@
+{% extends "admin/base_admin.html" %}
+{% from 'admin/partials/_filter_bar.html' import empty_state %}
+
+{% block title %}Форми Meta | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+
+  <div class="admin-hero">
+    <div>
+      <div class="admin-breadcrumb">
+        <a href="{{ url_for('admin.meta_leads_list') }}" class="admin-breadcrumb__link">Ліди Meta</a>
+        <span class="admin-breadcrumb__sep">/</span>
+        <span class="admin-breadcrumb__current">Форми</span>
+      </div>
+      <h1 class="admin-hero__title">Форми Meta</h1>
+      <p class="admin-hero__subtitle">
+        Meta про наші курси не знає нічого -- про який захід кожна форма,
+        вирішує тут людина.
+      </p>
+    </div>
+    <div class="admin-hero__actions">
+      <form method="POST" action="{{ url_for('admin.meta_leads_sync_forms') }}"
+            data-confirm="Забрати з Meta підписи питань і варіантів відповіді?" data-confirm-ok="Оновити">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">Оновити підписи форм</button>
+      </form>
+    </div>
+  </div>
+
+  {% include 'partials/flash_messages.html' %}
+
+  {% if forms %}
+  <div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Назва</th>
+        <th>form_id</th>
+        <th>Стан</th>
+        <th>Питань</th>
+        <th>Синхронізовано</th>
+        <th>Захід</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for form in forms %}
+      <tr>
+        <td>{{ form.name or '–' }}</td>
+        <td><code class="admin-code">{{ form.form_id }}</code></td>
+        <td>
+          {% if form.status %}<span class="badge badge--draft">{{ form.status }}</span>
+          {% else %}–{% endif %}
+        </td>
+        <td>{{ form.questions_count }}</td>
+        <td>{{ form.synced_at | kyiv or '–' }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin.meta_lead_form_offer', form_row_id=form.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="course_instance_id" class="form-input">
+              <option value="">{{ '– не прив\'язано –' }}</option>
+              {% for instance in offer_choices[form.id] %}
+              <option value="{{ instance.id }}"{% if instance.id == form.course_instance_id %} selected{% endif %}>
+                {{ instance.course.title }} — {{ instance.start_date.strftime('%d.%m.%Y') }}
+              </option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="btn-admin btn-admin--sm">Зберегти</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  {% call empty_state(icon_name='campaign', title='Форм ще немає') %}
+    <p>Натисніть «Оновити підписи форм» -- система забере всі інстант-форми
+    Сторінки з Graph API разом із їхніми питаннями.</p>
+  {% endcall %}
+  {% endif %}
+
+  </div>
+</div>
+{% endblock %}

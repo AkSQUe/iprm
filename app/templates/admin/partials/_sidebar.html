@@ -50,6 +50,10 @@
         {{ icon('campaign') }}
         <span class="admin-sidebar__text">Ліди Meta</span>
       </a>
+      <a href="{{ url_for('admin.meta_lead_forms') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.meta_lead_forms', 'admin.meta_lead_form_offer') %} admin-sidebar__link--active{% endif %}">
+        {{ icon('quiz') }}
+        <span class="admin-sidebar__text">Форми Meta</span>
+      </a>
       <a href="{{ url_for('admin.refund_requests_list') }}" class="admin-sidebar__link{% if ep in ('admin.refund_requests_list', 'admin.refund_request_reject') %} admin-sidebar__link--active{% endif %}">
         {{ icon('restart_alt') }}
         <span class="admin-sidebar__text">Заявки на повернення</span>

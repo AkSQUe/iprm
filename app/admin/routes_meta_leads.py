@@ -28,7 +28,9 @@ from app.admin._helpers import mask_secret, save_integration_settings, try_commi
 from app.admin.decorators import admin_required
 from app.admin.forms import MetaLeadAdminForm, MetaLeadsSettingsForm
 from app.extensions import db, limiter
-from app.models.meta_lead import MAX_EVENT_ATTEMPTS, MetaLead, MetaLeadEvent
+from app.models.meta_lead import (
+    MAX_EVENT_ATTEMPTS, MetaLead, MetaLeadEvent, MetaLeadForm,
+)
 from app.models.mixins import utcnow
 from app.models.site_settings import SiteSettings
 from app.services import meta_form_schema
@@ -509,6 +511,73 @@ def meta_lead_detail(lead_id):
         wait_text=wait_text,
         contact_check=_contact_removal_check(lead),
     )
+
+
+def _offer_choices(current_id=None):
+    """Заходи для випадайки прив'язки.
+
+    Опубліковані й майбутні -- бо саме на них ведуть кампанії. `published`
+    і `active` разом, а не лише перший: увесь проєкт послідовно вважає
+    живими обидва статуси (див. `CourseInstance.is_registration_open`), і
+    вужчий фільтр ховав би від менеджера захід, який уже почався, хоча
+    саме на нього й веде реклама.
+
+    Плюс уже прив'язаний захід, навіть якщо він минув: без нього сторінка
+    мовчки показувала б «не обрано» там, де прив'язка є, і перше ж
+    збереження форми її б стерло.
+    """
+    from app.models.course_instance import CourseInstance
+
+    query = CourseInstance.query.filter(
+        CourseInstance.status.in_(('published', 'active')),
+        CourseInstance.start_date >= utcnow(),
+    )
+    instances = query.order_by(CourseInstance.start_date.asc()).limit(100).all()
+
+    if current_id and all(i.id != current_id for i in instances):
+        current = db.session.get(CourseInstance, current_id)
+        if current is not None:
+            instances = [current] + instances
+    return instances
+
+
+@admin_bp.route('/meta-leads/forms')
+@admin_required
+def meta_lead_forms():
+    """Схеми Meta-форм і прив'язка кожної до заходу.
+
+    Сторінка існує заради однієї дії. Підписи питань система забирає сама,
+    а от про який захід форма -- знає лише людина: Meta про наші курси не
+    знає нічого, і вгадати захід із назви форми означало б мовчки
+    помилятись на другому потоці того самого курсу.
+    """
+    forms = MetaLeadForm.query.order_by(
+        MetaLeadForm.status.asc(), MetaLeadForm.name.asc()).all()
+    return render_template(
+        'admin/meta_lead_forms.html',
+        forms=forms,
+        offer_choices={f.id: _offer_choices(f.course_instance_id) for f in forms},
+    )
+
+
+@admin_bp.route('/meta-leads/forms/<int:form_row_id>/offer', methods=['POST'])
+@admin_required
+def meta_lead_form_offer(form_row_id):
+    """Прив'язати форму до заходу або зняти прив'язку."""
+    form = db.session.get(MetaLeadForm, form_row_id)
+    if form is None:
+        flash('Форму не знайдено', 'error')
+        return redirect(url_for('admin.meta_lead_forms'))
+
+    raw = (request.form.get('course_instance_id') or '').strip()
+    form.course_instance_id = int(raw) if raw.isdigit() else None
+
+    if try_commit(log_context=f'meta_lead_form_offer id={form_row_id}'):
+        audit_logger.info('Admin %s linked meta form %s to instance %s',
+                          current_user.email, form.form_id,
+                          form.course_instance_id)
+        flash('Прив\'язку збережено', 'success')
+    return redirect(url_for('admin.meta_lead_forms'))
 
 
 # ---------------------------------------------------------------------------
