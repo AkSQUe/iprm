@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-course-requests.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state  %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -84,6 +84,7 @@
          {'name': 'course_id', 'label': 'Курс', 'placeholder': 'Всі курси', 'options': course_options},
          {'name': 'date_from', 'label': 'Отримані з', 'type': 'date'},
          {'name': 'date_to', 'label': 'Отримані по', 'type': 'date'},
+         {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
        ],
        export_endpoint='admin.course_requests_export',
      ) }}
@@ -172,11 +173,9 @@
     </tbody>
   </table>
   </div>
+
+  {{ pager('admin.course_requests_list', pagination, filter_args) }}
   {% else %}
-  {# Зріз рахуємо по ВСІХ фільтрах: умова перевіряла лише пошук, статус і
-     курс, тож фільтр за датою давав «Запитів немає» -- неправду, бо запити
-     є, просто не в цьому проміжку. #}
-  {% set has_filters = filters.values() | select | list | length > 0 %}
   {% call empty_state('admin.course_requests_list',
                       filter_args,
                       icon_name='inbox',

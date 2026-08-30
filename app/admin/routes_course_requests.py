@@ -2,7 +2,7 @@
 import logging
 from datetime import datetime, timezone
 
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, request, url_for, flash
 from flask_login import current_user
 from sqlalchemy.orm import joinedload
 
@@ -25,6 +25,7 @@ def _course_request_filters():
         'course_id': _listing.int_arg('course_id'),
         'date_from': _listing.date_arg('date_from'),
         'date_to': _listing.date_arg('date_to'),
+        'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
     }
 
 
@@ -49,7 +50,10 @@ def _course_requests_query(filters):
 @admin_required
 def course_requests_list():
     filters = _course_request_filters()
-    requests_all = _course_requests_query(filters).all()
+    pagination = _course_requests_query(filters).paginate(
+        page=request.args.get('page', 1, type=int),
+        per_page=_listing.per_page_arg(), error_out=False,
+    )
 
     counts = course_request_counts(status='pending')
     if counts:
@@ -65,7 +69,9 @@ def course_requests_list():
 
     return render_template(
         'admin/course_requests.html',
-        requests=requests_all,
+        requests=pagination.items,
+        pagination=pagination,
+        per_page_options=_listing.PER_PAGE_OPTIONS,
         counts_by_course=counts_by_course,
         filters=filters,
         filter_args=_listing.filter_args(filters),

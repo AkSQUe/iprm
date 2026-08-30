@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state  %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -37,6 +37,7 @@
          {'name': 'team_size', 'label': 'Розмір команди', 'placeholder': 'Будь-який', 'options': team_size_options},
          {'name': 'date_from', 'label': 'Отримані з', 'type': 'date'},
          {'name': 'date_to', 'label': 'Отримані по', 'type': 'date'},
+         {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
        ],
        export_endpoint='admin.b2b_requests_export',
      ) }}
@@ -82,6 +83,8 @@
     </tbody>
   </table>
   </div>
+
+  {{ pager('admin.b2b_requests_list', pagination, filter_args) }}
   {% else %}
   {% call empty_state('admin.b2b_requests_list',
                       filter_args,

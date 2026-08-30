@@ -20,6 +20,7 @@ def _b2b_filters():
         'team_size': _listing.choice_arg('team_size', dict(B2BRequest.TEAM_SIZES)),
         'date_from': _listing.date_arg('date_from'),
         'date_to': _listing.date_arg('date_to'),
+        'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
     }
 
 
@@ -43,9 +44,15 @@ def _b2b_query(filters):
 @admin_required
 def b2b_requests_list():
     filters = _b2b_filters()
+    pagination = _b2b_query(filters).paginate(
+        page=request.args.get('page', 1, type=int),
+        per_page=_listing.per_page_arg(), error_out=False,
+    )
     return render_template(
         'admin/b2b_requests.html',
-        requests=_b2b_query(filters).all(),
+        requests=pagination.items,
+        pagination=pagination,
+        per_page_options=_listing.PER_PAGE_OPTIONS,
         filters=filters,
         filter_args=_listing.filter_args(filters),
         active_status=filters['status'],

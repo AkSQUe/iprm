@@ -1,0 +1,339 @@
+"""Пагінація чотирьох вхідних реєстрів адмінки: B2B, запити на курси,
+заявки на повернення, відгуки.
+
+Усі чотири раніше тягли ВЕСЬ зріз на кожен рендер списку (`.all()` без
+`paginate()`). Три з чотирьох ділять query-helper з роутом /export
+(`_b2b_query`, `_course_requests_query`, `_query`) -- головний ризик цієї
+правки в тому, щоб пагінація лишилась ЛИШЕ в роуті сторінки. Тому головний
+тест тут -- xlsx несе весь зріз, а не одну сторінку.
+"""
+import io
+import re
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal
+from uuid import uuid4
+
+import pytest
+from openpyxl import load_workbook
+
+from app.admin._listing import LIST_PER_PAGE
+from app.extensions import db
+from app.models.auth_identity import AuthIdentity
+from app.models.b2b_request import B2BRequest
+from app.models.course import Course
+from app.models.course_request import CourseRequest
+from app.models.medical_profile import MedicalProfile
+from app.models.online_course import OnlineCourse
+from app.models.online_enrollment import OnlineEnrollment
+from app.models.refund_request import RefundRequest, STATUS_APPROVED, STATUS_NEW
+from app.models.review import Review
+from app.models.user import User
+
+PAGE = LIST_PER_PAGE  # 50 -- типовий розмір сторінки (без ?per_page=)
+
+
+def _uid():
+    return uuid4().hex[:8]
+
+
+def _times(n, base=None):
+    """n зростаючих UTC-міток -- крок у секундах гарантує детермінований
+    порядок незалежно від того, як швидко виконається цикл вставки."""
+    base = base or datetime(2024, 1, 1, tzinfo=timezone.utc)
+    return [base + timedelta(seconds=i) for i in range(n)]
+
+
+@pytest.fixture
+def admin(app):
+    u = User.create_with_password(
+        f'pgreq-{_uid()}@test.com', 'password123',
+        first_name='П', last_name='А', is_admin=True, email_confirmed=True,
+    )
+    db.session.commit()
+    return u
+
+
+@pytest.fixture(autouse=True)
+def clean(app):
+    """Прибрати за собою: заявки, (онлайн-)курси й власних користувачів.
+
+    Явний autouse-teardown поверх відкату транзакції з conftest.db_session:
+    для частини шляхів комміт іде через окрему сесію (after_commit-хуки), яка
+    зносить і зовнішню транзакцію тесту -- покладатись саме на rollback
+    ризиковано (див. tests/test_routes/test_admin_online_listings.py:30-58).
+    Діти видаляються перед батьками: RefundRequest -> OnlineEnrollment ->
+    OnlineCourse; CourseRequest -> Course; User -- лише після заявок,
+    останнім, разом із AuthIdentity/MedicalProfile.
+    """
+    def _wipe():
+        RefundRequest.query.filter(
+            RefundRequest.reason.like('pgrf-%')).delete(synchronize_session=False)
+        stale_courses = [
+            row.id for row in OnlineCourse.query.filter(
+                OnlineCourse.slug.like('pgrf-%')).all()
+        ]
+        if stale_courses:
+            OnlineEnrollment.query.filter(
+                OnlineEnrollment.online_course_id.in_(stale_courses),
+            ).delete(synchronize_session=False)
+            OnlineCourse.query.filter(
+                OnlineCourse.id.in_(stale_courses)).delete(synchronize_session=False)
+
+        B2BRequest.query.filter(
+            B2BRequest.email.like('pgb2b-%@test.com')).delete(synchronize_session=False)
+
+        CourseRequest.query.filter(
+            CourseRequest.email.like('pgcr-%@test.com')).delete(synchronize_session=False)
+        Course.query.filter(Course.slug.like('pgcr-%')).delete(synchronize_session=False)
+
+        Review.query.filter(Review.text.like('pgrv-%')).delete(synchronize_session=False)
+
+        stale_users = [
+            row.id for row in User.query.filter(
+                User.email.like('pgreq-%@test.com')).all()
+        ]
+        if stale_users:
+            for model in (AuthIdentity, MedicalProfile):
+                model.query.filter(model.user_id.in_(stale_users)).delete(
+                    synchronize_session=False)
+            User.query.filter(User.id.in_(stale_users)).delete(
+                synchronize_session=False)
+        db.session.commit()
+
+    _wipe()
+    yield
+    _wipe()
+
+
+def _login(client, user):
+    with client.session_transaction() as s:
+        s['_user_id'] = str(user.id)
+
+
+def _indices(html, pattern):
+    return {int(x) for x in pattern.findall(html)}
+
+
+# --------------------------------- B2B ---------------------------------
+
+def _b2b_env(tag, n=PAGE + 1):
+    for i, t in enumerate(_times(n)):
+        db.session.add(B2BRequest(
+            first_name='Тест', last_name=f'{tag}{i:03d}', phone='+380670000000',
+            email=f'pgb2b-{tag}{i:03d}@test.com', team_size='3-5',
+            status='new', created_at=t,
+        ))
+    db.session.commit()
+
+
+def test_b2b_pagination_filter_perpage_export_and_new_count(client, admin):
+    tag = _uid()
+    _b2b_env(tag)
+    _login(client, admin)
+    pattern = re.compile(rf'pgb2b-{tag}(\d{{3}})@test\.com')
+
+    page1 = client.get(f'/admin/b2b-requests?q={tag}').get_data(as_text=True)
+    page2 = client.get(f'/admin/b2b-requests?q={tag}&page=2').get_data(as_text=True)
+    idx1, idx2 = _indices(page1, pattern), _indices(page2, pattern)
+    # Перша сторінка -- рівно per_page рядків, друга -- решта, без повторів.
+    assert len(idx1) == PAGE
+    assert len(idx2) == (PAGE + 1) - PAGE
+    assert idx1.isdisjoint(idx2)
+    assert idx1 | idx2 == set(range(PAGE + 1))
+    # page=2 не губить активний фільтр (посилання пагінатора несуть q=).
+    assert f'q={tag}' in page1 and f'q={tag}' in page2
+
+    # ?per_page=25 справді дає 25 рядків.
+    p25 = client.get(f'/admin/b2b-requests?q={tag}&per_page=25').get_data(as_text=True)
+    assert len(_indices(p25, pattern)) == 25
+    # Сміттєве значення відкочується на дефолт (50).
+    garbage = client.get(f'/admin/b2b-requests?q={tag}&per_page=99999').get_data(as_text=True)
+    assert len(_indices(garbage, pattern)) == PAGE
+
+    # new_count -- незалежний запит, а не довжина поточної сторінки.
+    n1 = re.search(r'Нових:\s*(\d+)', page1).group(1)
+    n2 = re.search(r'Нових:\s*(\d+)', page2).group(1)
+    assert n1 == n2
+
+    # Експорт лишається по ВСЬОМУ зрізу (головний тест плану), і per_page не
+    # потрапляє в аркуш «Фільтри», як нібито він теж звужує вибірку.
+    r = client.get(f'/admin/b2b-requests/export?q={tag}')
+    wb = load_workbook(io.BytesIO(r.data))
+    assert wb['B2B-заявки'].max_row - 1 == PAGE + 1
+    filter_labels = {c.value for c in wb['Фільтри']['A'] if c.value}
+    assert 'Рядків на сторінці' not in filter_labels
+    assert 'per_page' not in filter_labels
+
+
+# ----------------------------- Заявки на курси -----------------------------
+
+def _course_request_env(tag, n=PAGE + 1):
+    course = Course(title=f'Курс {tag}', slug=f'pgcr-{tag}', is_active=True)
+    db.session.add(course)
+    db.session.flush()
+    for i, t in enumerate(_times(n)):
+        db.session.add(CourseRequest(
+            course_id=course.id, email=f'pgcr-{tag}{i:03d}@test.com',
+            status='pending', created_at=t,
+        ))
+    db.session.commit()
+    return course
+
+
+def test_course_requests_pagination_filter_perpage_and_export(client, admin):
+    tag = _uid()
+    _course_request_env(tag)
+    _login(client, admin)
+    pattern = re.compile(rf'pgcr-{tag}(\d{{3}})@test\.com')
+
+    page1 = client.get(f'/admin/course-requests?q={tag}').get_data(as_text=True)
+    page2 = client.get(f'/admin/course-requests?q={tag}&page=2').get_data(as_text=True)
+    idx1, idx2 = _indices(page1, pattern), _indices(page2, pattern)
+    assert len(idx1) == PAGE
+    assert len(idx2) == 1
+    assert idx1.isdisjoint(idx2)
+    assert idx1 | idx2 == set(range(PAGE + 1))
+    assert f'q={tag}' in page1 and f'q={tag}' in page2
+
+    p25 = client.get(f'/admin/course-requests?q={tag}&per_page=25').get_data(as_text=True)
+    assert len(_indices(p25, pattern)) == 25
+    garbage = client.get(f'/admin/course-requests?q={tag}&per_page=99999').get_data(as_text=True)
+    assert len(_indices(garbage, pattern)) == PAGE
+
+    r = client.get(f'/admin/course-requests/export?q={tag}')
+    wb = load_workbook(io.BytesIO(r.data))
+    assert wb['Запити на курси'].max_row - 1 == PAGE + 1
+    filter_labels = {c.value for c in wb['Фільтри']['A'] if c.value}
+    assert 'Рядків на сторінці' not in filter_labels
+    assert 'per_page' not in filter_labels
+
+
+def test_course_requests_empty_state_without_has_filters(client, admin):
+    """course_requests.html:179 мав саморобний `has_filters`, який нічого не
+    керував (empty_state сам рахує зріз через filter_args). Прибраний рядок
+    не мав нічого зламати: порожній зріз під фільтром і далі каже "Нічого не
+    знайдено", а не 500-ку і не "Запитів немає"."""
+    tag = _uid()
+    _course_request_env(tag, n=1)
+    _login(client, admin)
+    r = client.get(f'/admin/course-requests?q={tag}-немає-такого')
+    assert r.status_code == 200
+    assert 'Нічого не знайдено'.encode() in r.data
+
+
+# --------------------------- Заявки на повернення ---------------------------
+
+def _refund_row(admin, i, status, created_at, tag):
+    # (user_id, online_course_id) унікальна пара -- на кожну заявку свій
+    # курс, інакше другий запис того самого власника впав би на constraint.
+    course = OnlineCourse(
+        sintegrum_id=int(uuid4().int % 10_000_000), slug=f'pgrf-{tag}-{i:03d}',
+        remote_name=f'Курс {tag}', remote_status=1,
+    )
+    db.session.add(course)
+    db.session.flush()
+    enrollment = OnlineEnrollment(
+        user_id=admin.id, online_course_id=course.id,
+        payment_amount=Decimal('1000.00'),
+    )
+    db.session.add(enrollment)
+    db.session.flush()
+    req = RefundRequest(
+        user_id=admin.id, enrollment_id=enrollment.id,
+        reason=f'pgrf-{tag}-{i:03d}', status=status, created_at=created_at,
+    )
+    db.session.add(req)
+    return req
+
+
+def _refund_env(admin, tag, n=PAGE + 1):
+    for i, t in enumerate(_times(n)):
+        _refund_row(admin, i, STATUS_NEW, t, tag)
+    db.session.commit()
+
+
+def test_refund_requests_pagination_filter_perpage_export_and_new_count(client, admin):
+    tag = _uid()
+    _refund_env(admin, tag)
+    _login(client, admin)
+    pattern = re.compile(rf'pgrf-{tag}-(\d{{3}})')
+
+    page1 = client.get(f'/admin/refund-requests?q={tag}').get_data(as_text=True)
+    page2 = client.get(f'/admin/refund-requests?q={tag}&page=2').get_data(as_text=True)
+    idx1, idx2 = _indices(page1, pattern), _indices(page2, pattern)
+    assert len(idx1) == PAGE
+    assert len(idx2) == 1
+    assert idx1.isdisjoint(idx2)
+    assert idx1 | idx2 == set(range(PAGE + 1))
+    assert f'q={tag}' in page1 and f'q={tag}' in page2
+
+    p25 = client.get(f'/admin/refund-requests?q={tag}&per_page=25').get_data(as_text=True)
+    assert len(_indices(p25, pattern)) == 25
+    garbage = client.get(f'/admin/refund-requests?q={tag}&per_page=99999').get_data(as_text=True)
+    assert len(_indices(garbage, pattern)) == PAGE
+
+    n1 = re.search(r'Нових:\s*(\d+)', page1).group(1)
+    n2 = re.search(r'Нових:\s*(\d+)', page2).group(1)
+    assert n1 == n2
+
+    r = client.get(f'/admin/refund-requests/export?q={tag}')
+    wb = load_workbook(io.BytesIO(r.data))
+    assert wb['Заявки на повернення'].max_row - 1 == PAGE + 1
+    filter_labels = {c.value for c in wb['Фільтри']['A'] if c.value}
+    assert 'Рядків на сторінці' not in filter_labels
+    assert 'per_page' not in filter_labels
+
+
+def test_refund_queue_order_survives_pagination(client, admin):
+    """Черга: нові зверху, потім найдавніші -- НЕ "найновіші першими". Новий
+    запис (status=new) мусить лишитись першим, навіть якщо він найстаріший
+    за датою подання серед усіх рядків зрізу."""
+    tag = _uid()
+    _refund_row(
+        admin, 0, STATUS_NEW,
+        datetime(2000, 1, 1, tzinfo=timezone.utc), tag,
+    )
+    for i in range(1, 4):
+        _refund_row(
+            admin, i, STATUS_APPROVED,
+            datetime(2026, 1, 1, tzinfo=timezone.utc), tag,
+        )
+    db.session.commit()
+    _login(client, admin)
+
+    html = client.get(f'/admin/refund-requests?q={tag}').get_data(as_text=True)
+    new_pos = html.index(f'pgrf-{tag}-000')
+    later_positions = [html.index(f'pgrf-{tag}-{i:03d}') for i in range(1, 4)]
+    assert all(new_pos < p for p in later_positions)
+
+
+# --------------------------------- Відгуки ---------------------------------
+
+def _review_env(tag, n=PAGE + 1):
+    for i, t in enumerate(_times(n)):
+        db.session.add(Review(
+            author_name='Тест', text=f'pgrv-{tag}-{i:03d} чудовий курс',
+            rating=5, is_published=True, sort_order=0, created_at=t,
+        ))
+    db.session.commit()
+
+
+def test_reviews_pagination_filter_and_perpage(client, admin):
+    tag = _uid()
+    _review_env(tag)
+    _login(client, admin)
+    pattern = re.compile(rf'pgrv-{tag}-(\d{{3}})')
+
+    page1 = client.get(f'/admin/reviews?q={tag}').get_data(as_text=True)
+    page2 = client.get(f'/admin/reviews?q={tag}&page=2').get_data(as_text=True)
+    idx1, idx2 = _indices(page1, pattern), _indices(page2, pattern)
+    assert len(idx1) == PAGE
+    assert len(idx2) == 1
+    assert idx1.isdisjoint(idx2)
+    assert idx1 | idx2 == set(range(PAGE + 1))
+    assert f'q={tag}' in page1 and f'q={tag}' in page2
+
+    p25 = client.get(f'/admin/reviews?q={tag}&per_page=25').get_data(as_text=True)
+    assert len(_indices(p25, pattern)) == 25
+    garbage = client.get(f'/admin/reviews?q={tag}&per_page=99999').get_data(as_text=True)
+    assert len(_indices(garbage, pattern)) == PAGE

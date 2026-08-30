@@ -26,6 +26,7 @@ def reviews_list():
         'state': _listing.choice_arg('state', _REVIEW_STATES),
         'course_id': _listing.int_arg('course_id'),
         'rating': _listing.int_arg('rating'),
+        'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
     }
     query = Review.alive().options(db.joinedload(Review.course))
     query = _listing.apply_search(query, filters['q'], [
@@ -38,9 +39,17 @@ def reviews_list():
     if filters['rating']:
         query = query.filter(Review.rating == filters['rating'])
 
+    pagination = query.order_by(
+        Review.sort_order, Review.created_at.desc(),
+    ).paginate(
+        page=request.args.get('page', 1, type=int),
+        per_page=_listing.per_page_arg(), error_out=False,
+    )
     return render_template(
         'admin/reviews.html',
-        reviews=query.order_by(Review.sort_order, Review.created_at.desc()).all(),
+        reviews=pagination.items,
+        pagination=pagination,
+        per_page_options=_listing.PER_PAGE_OPTIONS,
         filters=filters,
         filter_args=_listing.filter_args(filters),
         state_options=list(_REVIEW_STATES.items()),

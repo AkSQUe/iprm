@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -41,6 +41,7 @@
          {'name': 'status', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': status_options},
          {'name': 'date_from', 'label': 'Подані з', 'type': 'date'},
          {'name': 'date_to', 'label': 'Подані по', 'type': 'date'},
+         {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
        ],
        export_endpoint='admin.refund_requests_export',
      ) }}
@@ -149,6 +150,8 @@
     </tbody>
   </table>
   </div>
+
+  {{ pager('admin.refund_requests_list', pagination, filter_args) }}
   {% else %}
   {% call empty_state('admin.refund_requests_list', filter_args,
                       icon_name='notes', title='Заявок немає') %}

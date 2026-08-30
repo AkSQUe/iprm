@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-reviews.css') }}?v={{ assets_version }}">
 {% endblock %}
 
-{% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state  %}
+{% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state  %}
 
 {% block content %}
 <div class="admin-with-sidebar">
@@ -40,6 +40,7 @@
            {'name': 'state', 'label': 'Статус', 'placeholder': 'Усі статуси', 'options': state_options},
            {'name': 'course_id', 'label': 'Курс', 'placeholder': 'Усі курси', 'options': course_options},
            {'name': 'rating', 'label': 'Оцінка', 'placeholder': 'Будь-яка', 'options': rating_options},
+           {'name': 'per_page', 'label': 'Рядків на сторінці', 'placeholder': '50 (типово)', 'options': per_page_options},
          ],
        ) }}
 
@@ -150,6 +151,8 @@
       </tbody>
     </table>
     </div>
+
+    {{ pager('admin.reviews_list', pagination, filter_args) }}
     {% else %}
     {% call empty_state('admin.reviews_list',
                         filter_args,

@@ -28,6 +28,7 @@ def _filters():
         'status': _listing.choice_arg('status', dict(RefundRequest.STATUSES)),
         'date_from': _listing.date_arg('date_from'),
         'date_to': _listing.date_arg('date_to'),
+        'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
     }
 
 
@@ -67,9 +68,15 @@ def _query(filters):
 @admin_required
 def refund_requests_list():
     filters = _filters()
+    pagination = _query(filters).paginate(
+        page=request.args.get('page', 1, type=int),
+        per_page=_listing.per_page_arg(), error_out=False,
+    )
     return render_template(
         'admin/refund_requests.html',
-        requests=_query(filters).all(),
+        requests=pagination.items,
+        pagination=pagination,
+        per_page_options=_listing.PER_PAGE_OPTIONS,
         filters=filters,
         filter_args=_listing.filter_args(filters),
         active_status=filters['status'],
