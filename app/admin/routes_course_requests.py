@@ -2,7 +2,7 @@
 import logging
 from datetime import datetime, timezone
 
-from flask import render_template, redirect, request, url_for, flash
+from flask import render_template, request, flash
 from flask_login import current_user
 from sqlalchemy.orm import joinedload
 
@@ -124,7 +124,7 @@ def course_request_edit(request_id):
     req = db.session.get(CourseRequest, request_id)
     if not req:
         flash('Запит не знайдено', 'error')
-        return redirect(url_for('admin.course_requests_list'))
+        return _back()
 
     form = CourseRequestAdminForm(obj=req)
 
@@ -155,7 +155,7 @@ def course_request_edit(request_id):
                 current_user.email, request_id, req.status,
             )
             flash('Запит оновлено', 'success')
-            return redirect(url_for('admin.course_requests_list'))
+            return _back()
 
     return render_template('admin/course_request_edit.html', form=form, request_obj=req)
 

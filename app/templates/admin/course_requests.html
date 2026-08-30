@@ -157,7 +157,7 @@
         </td>
         <td>
           <div class="admin-table__actions">
-            <a href="{{ url_for('admin.course_request_edit', request_id=req.id) }}"
+            <a href="{{ url_for('admin.course_request_edit', request_id=req.id, **back_args) }}"
                class="btn-admin btn-admin--secondary btn-admin--sm btn-admin--icon"
                title="Редагувати">{{ icon('edit', label='Редагувати') }}</a>
             <form method="POST" action="{{ url_for('admin.course_request_delete', request_id=req.id, **back_args) }}"

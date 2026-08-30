@@ -8,6 +8,7 @@
 тест тут -- xlsx несе весь зріз, а не одну сторінку.
 """
 import io
+import json
 import re
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
@@ -131,6 +132,18 @@ def _pager_html(html):
     return m.group(0)
 
 
+_UNDO_RE = re.compile(
+    r'<script type="application/json" id="iprm-undo-data">(.*?)</script>', re.S,
+)
+
+
+def _undo_url(html):
+    """URL кнопки "Повернути" з тосту відкату (app/undo.py -> base.html)."""
+    m = _UNDO_RE.search(html)
+    assert m, 'тост відкату не відрендерився'
+    return json.loads(m.group(1))['url']
+
+
 # --------------------------------- B2B ---------------------------------
 
 def _b2b_env(tag, n=PAGE + 1):
@@ -188,11 +201,18 @@ def test_b2b_pagination_filter_perpage_export_and_new_count(client, admin):
 def test_b2b_out_of_range_page_offers_way_back(client, admin):
     """Бокмарк/старий лінк на сторінку за межею останньої не має брехати
     "Заявок поки немає" (записи є, просто не тут) і не має лишати без
-    жодного шляху назад."""
+    жодного шляху назад.
+
+    БЕЗ q=: активний фільтр сам по собі вже робить `filter_args` непорожнім
+    і викликає гілку "Нічого не знайдено" незалежно від сторінки -- це саме
+    те, як `empty_state` поводився і ДО фіксу. Єдиний спосіб перевірити, що
+    `narrow_args={'page': ...}` справді щось важить -- узяти незвужений
+    зріз, де без нього narrowed лишався б порожнім.
+    """
     tag = _uid()
     _b2b_env(tag, n=3)
     _login(client, admin)
-    html = client.get(f'/admin/b2b-requests?q={tag}&page=999').get_data(as_text=True)
+    html = client.get('/admin/b2b-requests?page=999').get_data(as_text=True)
     assert html.count(f'pgb2b-{tag}') == 0
     assert 'скинути фільтри' in html
 
@@ -262,10 +282,11 @@ def test_course_requests_pagination_filter_perpage_and_export(client, admin):
 
 
 def test_course_requests_out_of_range_page_offers_way_back(client, admin):
+    # БЕЗ q= -- див. докстрінг test_b2b_out_of_range_page_offers_way_back.
     tag = _uid()
     _course_request_env(tag, n=3)
     _login(client, admin)
-    html = client.get(f'/admin/course-requests?q={tag}&page=999').get_data(as_text=True)
+    html = client.get('/admin/course-requests?page=999').get_data(as_text=True)
     assert html.count(f'pgcr-{tag}') == 0
     assert 'скинути фільтри' in html
 
@@ -279,6 +300,25 @@ def test_course_request_row_action_redirects_back_to_same_page(client, admin):
     assert m, 'дію рядка з page=2 у action-URL не знайдено на другій сторінці'
     action_url = m.group(1).replace('&amp;', '&')
     resp = client.post(action_url)
+    assert resp.status_code == 302
+    assert 'page=2' in resp.headers['Location']
+    assert f'q={tag}' in resp.headers['Location']
+
+
+def test_course_request_edit_redirects_back_to_same_page(client, admin):
+    """`course_request_edit` -- окрема сторінка (не інлайн-форма рядка), але
+    ту саму пастку відтворює точно так само: посилання «Редагувати» на
+    другій сторінці не несло зрізу, форма редагування (без action=, тож
+    шле POST на свій же URL) успадковувала цю відсутність, і збереження
+    скидало на першу сторінку."""
+    tag = _uid()
+    _course_request_env(tag)  # PAGE + 1 -- рівно дві сторінки під тегом
+    _login(client, admin)
+    page2 = client.get(f'/admin/course-requests?q={tag}&page=2').get_data(as_text=True)
+    m = re.search(r'href="(/admin/course-requests/\d+/edit\?[^"]*page=2[^"]*)"', page2)
+    assert m, 'посилання редагування з page=2 не знайдено на другій сторінці'
+    edit_url = m.group(1).replace('&amp;', '&')
+    resp = client.post(edit_url, data={'status': 'responded', 'admin_notes': ''})
     assert resp.status_code == 302
     assert 'page=2' in resp.headers['Location']
     assert f'q={tag}' in resp.headers['Location']
@@ -365,10 +405,11 @@ def test_refund_requests_pagination_filter_perpage_export_and_new_count(client, 
 
 
 def test_refund_requests_out_of_range_page_offers_way_back(client, admin):
+    # БЕЗ q= -- див. докстрінг test_b2b_out_of_range_page_offers_way_back.
     tag = _uid()
     _refund_env(admin, tag, n=3)
     _login(client, admin)
-    html = client.get(f'/admin/refund-requests?q={tag}&page=999').get_data(as_text=True)
+    html = client.get('/admin/refund-requests?page=999').get_data(as_text=True)
     assert html.count(f'pgrf-{tag}-') == 0
     assert 'скинути фільтри' in html
 
@@ -450,10 +491,11 @@ def test_reviews_pagination_filter_and_perpage(client, admin):
 
 
 def test_reviews_out_of_range_page_offers_way_back(client, admin):
+    # БЕЗ q= -- див. докстрінг test_b2b_out_of_range_page_offers_way_back.
     tag = _uid()
     _review_env(tag, n=3)
     _login(client, admin)
-    html = client.get(f'/admin/reviews?q={tag}&page=999').get_data(as_text=True)
+    html = client.get('/admin/reviews?page=999').get_data(as_text=True)
     assert html.count(f'pgrv-{tag}-') == 0
     assert 'скинути фільтри' in html
 
@@ -467,6 +509,33 @@ def test_review_row_action_redirects_back_to_same_page(client, admin):
     assert m, 'дію рядка з page=2 у action-URL не знайдено на другій сторінці'
     action_url = m.group(1).replace('&amp;', '&')
     resp = client.post(action_url)
+    assert resp.status_code == 302
+    assert 'page=2' in resp.headers['Location']
+    assert f'q={tag}' in resp.headers['Location']
+
+
+def test_review_restore_redirects_back_to_same_page(client, admin):
+    """Видалення на сторінці 2 правильно повертає на сторінку 2 (уже
+    покрито test_review_row_action_redirects_back_to_same_page), але тост
+    "Повернути" з видалення досі вів на голий /admin/reviews -- клік по
+    ньому саме в тому потоці, яким адмін виправляє власну помилку, скидав
+    на першу сторінку. restore_url тепер несе той самий back_args, що й
+    редірект після видалення."""
+    tag = _uid()
+    _review_env(tag)  # PAGE + 1 -- рівно дві сторінки під тегом
+    _login(client, admin)
+    page2 = client.get(f'/admin/reviews?q={tag}&page=2').get_data(as_text=True)
+    m = re.search(r'action="(/admin/reviews/\d+/delete\?[^"]*page=2[^"]*)"', page2)
+    assert m, 'дію видалення з page=2 у action-URL не знайдено на другій сторінці'
+    delete_url = m.group(1).replace('&amp;', '&')
+
+    after_delete = client.post(delete_url, follow_redirects=True)
+    assert after_delete.status_code == 200
+    restore_url = _undo_url(after_delete.get_data(as_text=True))
+    assert 'page=2' in restore_url
+    assert f'q={tag}' in restore_url
+
+    resp = client.post(restore_url)
     assert resp.status_code == 302
     assert 'page=2' in resp.headers['Location']
     assert f'q={tag}' in resp.headers['Location']

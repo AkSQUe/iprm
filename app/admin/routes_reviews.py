@@ -41,6 +41,16 @@ def _back():
     return _listing.back_redirect('admin.reviews_list', _review_filters())
 
 
+def _current_back_args():
+    """Той самий зріз (фільтр + сторінка), що й у поточному запиті дії --
+    для посилань, які ЖИВУТЬ ДАЛІ за цей редірект (undo-тост із
+    review_delete): сама дія повертається через `_back()`, а restore_url
+    у тості веде на ще один роут дії, тож зріз йому теж треба нести явно.
+    """
+    page = request.args.get('page', 1, type=int)
+    return _listing.back_args(_listing.filter_args(_review_filters()), page)
+
+
 @admin_bp.route('/reviews')
 @admin_required
 def reviews_list():
@@ -177,7 +187,8 @@ def review_delete(review_id):
             audit_logger.info('Admin %s deleted review %s', current_user.email, review_id)
             offer_undo(
                 'Відгук «%s» видалено' % review.author_name,
-                url_for('admin.review_restore', review_id=review_id),
+                url_for('admin.review_restore', review_id=review_id,
+                       **_current_back_args()),
             )
         except Exception:
             logger.exception('Failed to delete review %d', review_id)
@@ -193,7 +204,7 @@ def review_restore(review_id):
     if not review or not review.is_deleted:
         # Рядок уже почистила фонова задача або відкат натиснули двічі.
         flash('Відгук уже не можна повернути', 'error')
-        return redirect(url_for('admin.reviews_list'))
+        return _back()
     review.restore()
     try:
         db.session.commit()
@@ -203,4 +214,4 @@ def review_restore(review_id):
         logger.exception('Failed to restore review %d', review_id)
         db.session.rollback()
         flash('Помилка при відновленні', 'error')
-    return redirect(url_for('admin.reviews_list'))
+    return _back()
