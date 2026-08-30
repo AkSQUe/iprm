@@ -113,6 +113,32 @@ def test_export_documents_applied_filters(client, admin, regs):
     assert values['Рядків у файлі'] == len(ids)
 
 
+def test_export_documents_no_certificate_filter(client, admin, regs):
+    """Аркуш «Фільтри» називає активний `no_certificate`, а не мовчить про
+    нього -- та ж вада, яку зняли для рядка «Учасник». Підпис і значення --
+    ті самі слова, що в чіпсі й опції `<select>` на сторінці
+    (`'Сертифікат'` / `'Ще не виданий'`), а не власна вигадана назва
+    фільтра."""
+    _login(client, admin)
+    r = client.get('/admin/registrations/export?scope=all&no_certificate=1')
+    wb, _ids = _rows(r)
+    values = {
+        row[0].value: row[1].value
+        for row in wb['Фільтри'].iter_rows(min_row=2, max_col=2)
+    }
+    assert values['Сертифікат'] == 'Ще не виданий'
+
+
+def test_export_without_no_certificate_omits_the_row(client, admin, regs):
+    """Без фільтра рядок не друкується взагалі -- не «Ні», якого запит не
+    задавав, а відсутність рядка."""
+    _login(client, admin)
+    r = client.get('/admin/registrations/export?scope=all')
+    wb, _ids = _rows(r)
+    labels = [row[0].value for row in wb['Фільтри'].iter_rows(min_row=2, max_col=1)]
+    assert 'Сертифікат' not in labels
+
+
 def test_search_filters_page_and_export(client, admin, regs):
     """Пошук по учаснику однаково звужує і сторінку, і файл."""
     paid, pending = regs

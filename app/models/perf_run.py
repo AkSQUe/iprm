@@ -115,9 +115,6 @@ class PerfRun(VerdictVisualsMixin, TimestampMixin, db.Model):
         ordered = [p for p in ('desktop', 'mobile') if p in found]
         return ordered + sorted(found - set(ordered))
 
-    def pages_for(self, profile):
-        return [p for p in self.pages if p.profile == profile]
-
     @property
     def worst_page(self):
         """Сторінка з найбільшим LCP -- з неї починають розбір."""

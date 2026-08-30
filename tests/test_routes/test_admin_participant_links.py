@@ -87,7 +87,9 @@ def test_registrations_all_links_name_and_email(client, admin, instance):
         edit_href = f'/admin/registrations/{reg.id}/edit'
         detail_href = f'/admin/users/{user_id}'
         assert re.search(rf'<a href="{re.escape(edit_href)}">\s*Тест Учасник', html)
-        assert re.search(rf'<a href="{re.escape(detail_href)}">\s*{reg.user.email}', html)
+        assert re.search(
+            rf'<a href="{re.escape(detail_href)}">\s*{re.escape(reg.user.email)}', html,
+        )
     finally:
         db.session.delete(db.session.merge(reg))
         db.session.delete(db.session.get(User, user_id))
@@ -105,7 +107,9 @@ def test_instance_registrations_links_name_and_email(client, admin, instance):
         edit_href = f'/admin/registrations/{reg.id}/edit'
         detail_href = f'/admin/users/{user_id}'
         assert re.search(rf'<a href="{re.escape(edit_href)}">\s*Тест Учасник', html)
-        assert re.search(rf'<a href="{re.escape(detail_href)}">\s*{reg.user.email}', html)
+        assert re.search(
+            rf'<a href="{re.escape(detail_href)}">\s*{re.escape(reg.user.email)}', html,
+        )
     finally:
         db.session.delete(db.session.merge(reg))
         db.session.delete(db.session.get(User, user_id))

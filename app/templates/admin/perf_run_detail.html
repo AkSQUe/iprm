@@ -68,15 +68,31 @@
       <div class="admin-stat-card__value">{{ run.verdict }}</div>
       <div class="admin-stat-card__label">Вердикт прогону</div>
     </div>
-    {# --alert, не --warning: другий у цій системі синій (див. admin.css). #}
+    {# --alert, не --warning: другий у цій системі синій (див. admin.css).
+       Клік -- лише коли є що показати: та сама сторінка, звужена фільтром
+       `verdict` за цим-таки вердиктом (див. perf_run_detail). #}
+    {% if run.pages_warn %}
+    <a class="admin-stat-card admin-stat-card--alert" href="{{ url_for('admin.perf_run_detail', run_id=run.id, verdict='WARN') }}">
+      <div class="admin-stat-card__value">{{ run.pages_warn }}</div>
+      <div class="admin-stat-card__label">Сторінок з WARN</div>
+    </a>
+    {% else %}
     <div class="admin-stat-card admin-stat-card--alert">
       <div class="admin-stat-card__value">{{ run.pages_warn }}</div>
       <div class="admin-stat-card__label">Сторінок з WARN</div>
     </div>
+    {% endif %}
+    {% if run.pages_fail %}
+    <a class="admin-stat-card admin-stat-card--danger" href="{{ url_for('admin.perf_run_detail', run_id=run.id, verdict='FAIL') }}">
+      <div class="admin-stat-card__value">{{ run.pages_fail }}</div>
+      <div class="admin-stat-card__label">Сторінок з FAIL</div>
+    </a>
+    {% else %}
     <div class="admin-stat-card admin-stat-card--danger">
       <div class="admin-stat-card__value">{{ run.pages_fail }}</div>
       <div class="admin-stat-card__label">Сторінок з FAIL</div>
     </div>
+    {% endif %}
     <div class="admin-stat-card{% if regressions %} admin-stat-card--danger{% endif %}">
       <div class="admin-stat-card__value">{{ regressions }}</div>
       <div class="admin-stat-card__label">Метрик просіло</div>
@@ -94,7 +110,18 @@
   <p class="admin-text-muted">Попереднього заміру цього сайту немає - порівнювати нема з чим.</p>
   {% endif %}
 
+  {% if page_verdict %}
+  {# Без цього рядка незрозуміло, чому таблиця раптом коротша за
+     pages_total у шапці -- зріз мовчки виглядав би як бракує даних. #}
+  <p class="admin-text-muted">
+    Показано лише сторінки з вердиктом {{ page_verdict }}.
+    <a href="{{ url_for('admin.perf_run_detail', run_id=run.id) }}">Показати всі сторінки прогону</a>.
+  </p>
+  {% endif %}
+
   {% for profile in run.profiles %}
+  {% set profile_pages = pages | selectattr('profile', 'equalto', profile) | list %}
+  {% if profile_pages %}
   <div class="perf-profile">
     <h2 class="admin-form__section-title perf-profile__title">{{ profile }}</h2>
     <p class="perf-profile__hint">
@@ -137,7 +164,7 @@
           </tr>
         </thead>
         <tbody>
-          {% for page in run.pages_for(profile) %}
+          {% for page in profile_pages %}
           <tr>
             <td><strong>{{ page.path }}</strong></td>
             {% if page.is_measured %}
@@ -159,6 +186,7 @@
       </table>
     </div>
   </div>
+  {% endif %}
   {% endfor %}
 
   {% set worst = run.worst_page %}

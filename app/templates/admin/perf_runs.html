@@ -48,15 +48,32 @@
       <div class="admin-stat-card__label">Останній замір</div>
     </div>
     {# --alert, не --warning: другий у цій системі СИНІЙ (бере токен
-       бейджа «Опубліковано») і читається як «очікує», а не як «глянь сюди». #}
+       бейджа «Опубліковано») і читається як «очікує», а не як «глянь сюди».
+       Клік -- лише коли є що показати: деталі ЦЬОГО прогону, звужені
+       фільтром сторінок за цим-таки вердиктом (та сама розмітка, що на
+       perf_run_detail). #}
+    {% if latest.pages_warn %}
+    <a class="admin-stat-card admin-stat-card--alert" href="{{ url_for('admin.perf_run_detail', run_id=latest.id, verdict='WARN') }}">
+      <div class="admin-stat-card__value">{{ latest.pages_warn }}</div>
+      <div class="admin-stat-card__label">Сторінок з WARN</div>
+    </a>
+    {% else %}
     <div class="admin-stat-card admin-stat-card--alert">
       <div class="admin-stat-card__value">{{ latest.pages_warn }}</div>
       <div class="admin-stat-card__label">Сторінок з WARN</div>
     </div>
+    {% endif %}
+    {% if latest.pages_fail %}
+    <a class="admin-stat-card admin-stat-card--danger" href="{{ url_for('admin.perf_run_detail', run_id=latest.id, verdict='FAIL') }}">
+      <div class="admin-stat-card__value">{{ latest.pages_fail }}</div>
+      <div class="admin-stat-card__label">Сторінок з FAIL</div>
+    </a>
+    {% else %}
     <div class="admin-stat-card admin-stat-card--danger">
       <div class="admin-stat-card__value">{{ latest.pages_fail }}</div>
       <div class="admin-stat-card__label">Сторінок з FAIL</div>
     </div>
+    {% endif %}
     <div class="admin-stat-card{% if latest_regressions %} admin-stat-card--danger{% endif %}">
       <div class="admin-stat-card__value">{{ latest_regressions }}</div>
       <div class="admin-stat-card__label">Просіло проти попереднього</div>
@@ -133,11 +150,14 @@
             {% else %}<span class="admin-text-muted">&mdash;</span>{% endif %}
           </td>
           <td>{{ run.pages_total }}</td>
-          <td>{{ run.pages_warn }}</td>
-          <td>{{ run.pages_fail }}</td>
-          {# Вердикт -- у той самий реєстр, звужений цим вердиктом. WARN/FAIL
-             сторінок лишаються текстом: у `perf_run_detail` немає фільтра
-             сторінок за вердиктом, вести нікуди. #}
+          {# WARN/FAIL -- у ДЕТАЛІ цього прогону, звужені фільтром сторінок
+             за цим-таки вердиктом (perf_run_detail). Інший ендпоінт і інший
+             рівень зрізу, ніж вердикт рядка нижче (той фільтрує СПИСОК
+             прогонів) -- тому два посилання в рядку не дублюють одне одного. #}
+          <td>{% if run.pages_warn %}<a href="{{ url_for('admin.perf_run_detail', run_id=run.id, verdict='WARN') }}">{{ run.pages_warn }}</a>{% else %}{{ run.pages_warn }}{% endif %}</td>
+          <td>{% if run.pages_fail %}<a href="{{ url_for('admin.perf_run_detail', run_id=run.id, verdict='FAIL') }}">{{ run.pages_fail }}</a>{% else %}{{ run.pages_fail }}{% endif %}</td>
+          {# Вердикт -- у той самий реєстр, звужений цим вердиктом (фільтрує
+             РЯДКИ /admin/perf, а не сторінки одного прогону). #}
           <td><a href="{{ url_for('admin.perf_runs', verdict=run.verdict) }}"><span class="badge badge--{{ run.verdict_badge }}">{{ run.verdict }}</span></a></td>
           <td>
             {# Часта дія -- одразу, видалення під «...»: воно незворотне, а

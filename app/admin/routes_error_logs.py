@@ -15,6 +15,10 @@ from app.models.error_log import ErrorLog
 audit_logger = logging.getLogger('audit')
 
 
+# Лише зручність для випадної підказки -- НЕ валідатор: ErrorLog.error_code
+# приймає будь-який http.HTTPStatus (getattr(exception, 'code', 500) у
+# app/models/error_log.py пише 410/413/422/502 і т.д. так само вільно), а
+# фільтр звіряє значення проти діапазону в `_error_log_filters`.
 _ERROR_CODES = ('400', '401', '403', '404', '405', '429', '500', '503')
 _ERROR_RESOLVED = {'false': 'Невирішені', 'true': 'Вирішені'}
 # Порожнє значення = типові 7 днів, тож самої «7» у списку немає.
@@ -27,7 +31,9 @@ def _error_log_filters():
     """Фільтри журналу помилок -- спільні для сторінки й експорту."""
     return {
         'q': _listing.text_arg('q'),
-        'error_code': _listing.choice_arg('error_code', _ERROR_CODES),
+        # 100-599 -- межі самого HTTP-статусу, а не список у підказці: код
+        # поза випадним переліком (410, 502...) усе одно мусить фільтрувати.
+        'error_code': _listing.ranged_int_arg('error_code', 100, 599),
         'resolved': _listing.choice_arg('resolved', _ERROR_RESOLVED),
         'days': _listing.choice_arg('days', _ERROR_PERIODS),
     }
@@ -68,7 +74,7 @@ def error_logs():
     filters = _error_log_filters()
     per_page = request.args.get('per_page', 50, type=int)
     pagination = _error_log_query(filters).paginate(
-        page=request.args.get('page', 1, type=int),
+        page=_listing.page_arg(),
         per_page=per_page, error_out=False,
     )
 

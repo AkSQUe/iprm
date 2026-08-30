@@ -84,7 +84,7 @@ def _key_state():
 @admin_bp.route('/perf')
 @admin_required
 def perf_runs():
-    page = request.args.get('page', 1, type=int)
+    page = _listing.page_arg()
     source_choices = _source_choices()
     filters = _filters(source_choices)
     filter_args = _listing.filter_args(filters)
@@ -155,9 +155,18 @@ def perf_run_detail(run_id):
     base = perf_service.previous_run(run)
     comparison = perf_service.compare(run, base)
 
+    # Фільтр звужує лише таблиці сторінок нижче -- інший рівень зрізу, ніж
+    # verdict у списку прогонів (той фільтрує РЯДКИ /admin/perf). Картки-
+    # лічильники, порівняння й найповільніша сторінка лишаються по всьому
+    # прогону: вони підписані як стан прогону, а не показаного зрізу.
+    page_verdict = _listing.choice_arg('verdict', _VERDICT_CHOICES)
+    pages = [p for p in run.pages if p.verdict == page_verdict] if page_verdict else run.pages
+
     return render_template(
         'admin/perf_run_detail.html',
         run=run,
+        pages=pages,
+        page_verdict=page_verdict,
         base=base,
         comparison=comparison,
         regressions=perf_service.regression_count(comparison),

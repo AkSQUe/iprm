@@ -156,6 +156,26 @@ def test_absurdly_large_user_id_returns_200_not_500(client, admin):
     assert resp2.status_code == 200
 
 
+def test_course_id_outside_options_still_shows_chip_value(client, admin):
+    """Курс, якого нема серед опцій `<select>` -- чіпс усе одно показує
+    значення, а не порожній `Курс:` без підпису.
+
+    `course_id` валідує `int_arg` (будь-яке позитивне число в межах BIGINT),
+    а опції `<select>` у filter_bar -- лише живий список курсів на момент
+    рендеру. Розбіжність між тим, що приймає фільтр, і тим, що показує
+    `<select>`, тут природна (взятий навмання id, або курс видалили після
+    того, як на нього хтось уже перейшов), а не ознака зламаного запиту.
+    """
+    missing_course_id = 9_000_000_000
+    _login(client, admin)
+    html = client.get(
+        f'/admin/registrations?scope=all&course_id={missing_course_id}',
+    ).get_data(as_text=True)
+    assert re.search(
+        rf'<span class="admin-chip__key">Курс:</span>\s*{missing_course_id}', html,
+    )
+
+
 def test_filter_bar_export_carries_user_id(client, admin):
     """Кнопка «Експорт XLSX» несе `user_id`, хоч у панелі й нема окремого
     поля під нього.

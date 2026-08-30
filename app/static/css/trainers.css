@@ -107,7 +107,22 @@
   gap: 12px;
   text-align: left;
 }
-/* Списки (дослідження та навички) -- один компонент під двома іменами */
+.iprm-research-list li {
+  position: relative;
+  padding: 4px 0 4px 26px;
+  line-height: 1.6;
+  color: var(--iprm-text);
+}
+.iprm-research-list li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 13px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--iprm-accent);
+}
 
 /* Сертифікати: "як на стіні" -- однакова висота, повне зображення без
    обрізки, по центру, у рамці. Клік -> lightbox. */
@@ -207,14 +222,12 @@ a.trainer-patent__label:hover { text-decoration: underline; }
   margin: 18px 0 10px;
 }
 .iprm-skills-list__group:first-child { margin-top: 0; }
-.iprm-research-list li,
 .iprm-skills-list__item {
   position: relative;
   padding: 4px 0 4px 26px;
   line-height: 1.6;
   color: var(--iprm-text);
 }
-.iprm-research-list li::before,
 .iprm-skills-list__item::before {
   content: '';
   position: absolute;

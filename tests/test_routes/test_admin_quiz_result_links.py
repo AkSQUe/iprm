@@ -136,7 +136,9 @@ def test_participant_name_links_to_user_detail(client, admin):
     try:
         html = client.get(f'/admin/instances/{inst.id}/quiz-results').get_data(as_text=True)
         href = f'/admin/users/{user_id}'
-        assert re.search(rf'<a href="{re.escape(href)}">\s*{reg.user.full_name}', html)
+        assert re.search(
+            rf'<a href="{re.escape(href)}">\s*{re.escape(reg.user.full_name)}', html,
+        )
     finally:
         db.session.delete(db.session.merge(reg))
         db.session.delete(db.session.get(User, user_id))
