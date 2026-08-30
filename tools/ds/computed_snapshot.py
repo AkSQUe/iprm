@@ -115,6 +115,7 @@ APScheduler (app/__init__.py:638); єдиний запобіжник від ро
 """
 import argparse
 import json
+import re
 import subprocess
 import sys
 import threading
@@ -330,6 +331,115 @@ _WALK_JS = """
   return out;
 }
 """
+
+
+# Селектори, яких Chromium не знає і викидає ЦІЛЕ правило разом із ними.
+# Це не вада: правила писані для Firefox, і в ньому вони працюють.
+_VENDOR_ONLY = re.compile(r':-moz-|::-moz-|:-ms-|::-ms-')
+
+
+def _top_level_rules(path):
+    """Селектори правил верхнього рівня файлу, з вирізаними коментарями."""
+    text = re.sub(r'/\*.*?\*/', '', path.read_text(encoding='utf-8'), flags=re.S)
+    out, depth, buf, i = [], 0, [], 0
+    while i < len(text):
+        ch = text[i]
+        if ch == '{':
+            if depth == 0:
+                head = ' '.join(''.join(buf).split())
+                if head:
+                    out.append(head)
+                buf = []
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+            if depth == 0:
+                buf = []
+        elif depth == 0:
+            buf.append(ch)
+        i += 1
+    return out
+
+
+def sheets(pages=None):
+    """Чи ДОХОДЯТЬ правила до браузера.
+
+    Найтихіша вада шару стилів, і сьогодні вона трапилась двічі: зірочка в
+    тексті коментаря закривала його зарано, парсер відновлювався й мовчки
+    викидав НАСТУПНЕ правило. Файл при цьому синтаксично цілий, дужки
+    збалансовані, сторінка рендериться, тести зелені. Так `.admin-filters`
+    зникла з 25 реєстрів адмінки, а `.home-cta` -- з Головної.
+
+    Тут те саме число рахується з двох боків: скільки правил ВЕРХНЬОГО РІВНЯ
+    в файлі й скільки їх у `document.styleSheets`. Розбіжність, не пояснена
+    вендорними селекторами, -- пряма вказівка на проковтнуте правило.
+    """
+    app = build_app()
+    user_id = make_admin(app)
+    targets = pages or ['/', '/courses/', '/admin/blog', '/admin/design-system']
+    from wsgiref.simple_server import make_server
+
+    server = make_server('127.0.0.1', 0, app)
+    port = server.server_port
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+
+    counts = {}
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            ctx = browser.new_context(viewport={'width': 1440, 'height': 900})
+            from flask.sessions import SecureCookieSessionInterface
+            ser = SecureCookieSessionInterface().get_signing_serializer(app)
+            ctx.add_cookies([{
+                'name': app.config.get('SESSION_COOKIE_NAME', 'session'),
+                'value': ser.dumps({'_user_id': user_id, '_fresh': True}),
+                'domain': '127.0.0.1', 'path': '/'}])
+            page = ctx.new_page()
+            for url in targets:
+                try:
+                    page.goto('http://127.0.0.1:%d%s' % (port, url),
+                              wait_until='networkidle')
+                except Exception:                           # noqa: BLE001
+                    continue
+                for name, n in page.evaluate("""() => {
+                    const out = {};
+                    for (const s of document.styleSheets) {
+                        if (!s.href) continue;
+                        const f = s.href.split('/').pop().split('?')[0];
+                        try { out[f] = s.cssRules.length; } catch (e) {}
+                    }
+                    return out;
+                }""").items():
+                    counts.setdefault(name, n)
+            browser.close()
+    finally:
+        server.shutdown()
+
+    css_dir = ROOT / 'app' / 'static' / 'css'
+    bad = []
+    for name, browser_n in sorted(counts.items()):
+        path = css_dir / name
+        if not path.exists():
+            continue
+        rules = _top_level_rules(path)
+        vendor = sum(1 for r in rules if _VENDOR_ONLY.search(r))
+        gap = len(rules) - vendor - browser_n
+        if gap > 0:
+            bad.append((name, len(rules), browser_n, vendor, gap))
+
+    print('перевірено таблиць стилів: %d' % len(counts))
+    if not bad:
+        print('усі правила доходять до браузера.')
+        return True
+    print()
+    for name, mine, got, vendor, gap in bad:
+        print('   %-30s у файлі %d, у браузері %d (вендорних %d) -- ПРОКОВТНУТО %d'
+              % (name, mine, got, vendor, gap))
+    print()
+    print('Найчастіша причина -- послідовність зірка-слеш у тексті коментаря: '
+          'вона закриває його зарано, і наступне правило парсер викидає.')
+    return False
 
 
 def build_app():
@@ -682,6 +792,7 @@ def main():
                         help='без сесії адміна: публічний вигляд і сторінки '
                              'входу/реєстрації, яких під адміном не видно')
 
+    sub.add_parser('sheets', help='чи доходять правила до браузера')
     dif = sub.add_parser('diff')
     dif.add_argument('before')
     dif.add_argument('after')
@@ -693,6 +804,9 @@ def main():
     if args.cmd == 'capture':
         return 0 if capture(args.label, explicit, only, args.theme, args.seed,
                             args.width, args.anonymous) else 2
+
+    if args.cmd == 'sheets':
+        return 0 if sheets() else 1
 
     if args.cmd == 'diff':
         return 1 if compare(args.before, args.after) else 0
