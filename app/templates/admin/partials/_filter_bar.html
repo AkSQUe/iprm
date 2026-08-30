@@ -127,8 +127,19 @@
            код, а не як дата заходу. #}
         {% if f.type == 'date' %}{{ (values.get(f.name) or '').split('-') | reverse | join('.') }}
         {%- else -%}
+          {# Опції поля не завжди й є повним переліком дозволених значень:
+             у журналі помилок код -- будь-який HTTP-статус, а `<select>`
+             показує лише вісім найчастіших; у реєстрі реєстрацій
+             курс/тренер/захід валідує `int_arg` (будь-яке позитивне число),
+             а `options` -- лише живий довідник на момент рендеру (заявку
+             видалили -- значення лишається в URL, а рядка серед опцій вже
+             нема). У всіх таких полях чіпс без підпису -- гірше за чіпс із
+             сирим значенням: for-else друкує його, коли жодна опція не
+             збіглась. #}
           {%- for val, label in f.options if val | string == values.get(f.name) | string -%}
             {{ label }}
+          {%- else -%}
+            {{ values.get(f.name) }}
           {%- endfor -%}
         {%- endif %}
         <span class="admin-chip__x" aria-hidden="true">&times;</span>
@@ -160,7 +171,11 @@
 #}
 {% macro sort_th(label, key, endpoint, current='', args={}, hint=None) %}
 {% set active = (current == key) %}
-<th data-no-sort>
+{#- `aria-sort` саме "other", а не ascending/descending: `key` -- це назва
+    готового порядку з роута («спершу ті, до кого не дійшли руки»), і в
+    термінах зростання-спадання він не виражається. Без атрибута екранний
+    диктор не повідомляє про порядок узагалі, хоча око бачить стрілку. -#}
+<th data-no-sort aria-sort="{{ 'other' if active else 'none' }}">
   <a class="admin-th-sort{% if active %} is-active{% endif %}"
      href="{{ url_for(endpoint, **dict(args, sort=none if active else key)) }}"
      {% if hint %}title="{{ hint }}"{% endif %}>{{ label }}</a>

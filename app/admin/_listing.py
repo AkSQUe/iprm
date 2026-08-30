@@ -10,7 +10,8 @@
 виглядати однаково на всіх списках, а посилання на експорт -- нести рівно ті
 самі параметри, що й сторінка.
 """
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from flask import current_app, flash, redirect, request, send_file, url_for
 from sqlalchemy import or_
@@ -21,7 +22,7 @@ XLSX_MIMETYPE = (
 
 # Київський час у назві файлу й у полі "Сформовано": менеджер звіряє файл із
 # тим, що бачив на екрані. Фіксований UTC+3 -- як у xlsx_io / participant_service.
-KYIV = timezone(timedelta(hours=3))
+KYIV = ZoneInfo('Europe/Kyiv')
 
 
 def now_kyiv():
@@ -64,6 +65,21 @@ def choice_arg(name, allowed, default=''):
     """
     value = request.args.get(name, default)
     return value if value in allowed else default
+
+
+def ranged_int_arg(name, lo, hi):
+    """Ціле число в межах [lo, hi] як РЯДОК ('' -- не число чи поза межами).
+
+    На відміну від `choice_arg`, дозволене значення тут не список варіантів,
+    а діапазон: код помилки -- будь-який HTTP-статус (100-599), а не лише
+    вісім найчастіших із випадної підказки. Рядком лишаємо навмисно -- це те
+    саме значення, яке звіряє шаблон `<select>` і друкує чіпс, а перетворення
+    на int -- відповідальність запиту, що накладає фільтр.
+    """
+    value = request.args.get(name, type=int)
+    if value is None or value < lo or value > hi:
+        return ''
+    return str(value)
 
 
 # Типовий розмір сторінки довгих реєстрів.
