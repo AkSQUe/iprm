@@ -7,11 +7,13 @@ from flask_babel import refresh
 
 from app.i18n import (
     DEFAULT_LANGUAGE, LANGUAGES, OG_LOCALES, PREFIXED_LANGUAGES,
+    UNTRANSLATED_ENDPOINTS,
 )
 from tests.test_seo.helpers import (
-    LOCALE_PASSES, fetch_public_pages, find_nodes_by_type, is_absolute_url,
-    iter_url_values, jsonld_blocks, organization_ids, pass_label, provider_ids,
-    rendered_lang,
+    LOCALE_PASSES, content_translation_calls, fetch_public_pages,
+    find_nodes_by_type, is_absolute_url, iter_url_values, jsonld_blocks,
+    organization_ids, pass_label, public_urls, reference_ids, rendered_lang,
+    templates_named_in_view, templates_rendered_by,
 )
 
 
@@ -55,13 +57,19 @@ class TestOrganizationIdIsLocaleIndependent:
     Твердження навмисно не називає очікуваного рядка: воно вимагає
     ЗБІГУ між локалями й між посиланнями. Дослівне значення -- справа
     шаблонів, а не сторожа; сторож ловить розходження.
+
+    Посилання беруться через reference_ids (provider, publisher, author),
+    а не через provider_ids: publisher і author не читав жоден хелпер, і
+    відкат `'publisher': {'@id': org_id()}` на головній до
+    локале-залежного `_home ~ '#org'` проходив зеленим -- WebSite починав
+    вказувати на організацію, якої на сторінці немає.
     """
 
     def test_all_pages_and_locales_agree_on_one_organization_id(self, app):
         seen = {}
         for label, endpoint, _url, html in _pages_by_locale(app):
             blocks = jsonld_blocks(html)
-            ids = organization_ids(blocks) | set(provider_ids(blocks))
+            ids = organization_ids(blocks) | set(reference_ids(blocks))
             assert ids, f'{endpoint} [{label}]: жодного @id організації'
             for value in ids:
                 seen.setdefault(value, []).append(f'{endpoint} [{label}]')
@@ -85,7 +93,7 @@ class TestOrganizationIdIsLocaleIndependent:
         bad = []
         for label, endpoint, _url, html in _pages_by_locale(app):
             blocks = jsonld_blocks(html)
-            for value in organization_ids(blocks) | set(provider_ids(blocks)):
+            for value in organization_ids(blocks) | set(reference_ids(blocks)):
                 if value != expected:
                     bad.append(f'{endpoint} [{label}]: {value!r}')
         assert not bad, (
@@ -205,15 +213,27 @@ class TestDeclaredLanguageMatchesContent:
     клієнтом.
     """
 
-    LEGAL_PATHS = ('/cookies', '/disclaimer', '/offer', '/privacy', '/refund')
+    def _paths(self, app):
+        """Шляхи сторінок із UNTRANSLATED_ENDPOINTS.
+
+        Виводяться з самої константи, а не переліком: другий рукописний
+        список звіряв би константу лише з її ж копією -- і те, і те
+        доводилось би правити руками, а розійтися вони могли мовчки.
+        """
+        with app.test_request_context():
+            return sorted(
+                url_for(endpoint) for endpoint in UNTRANSLATED_ENDPOINTS
+            )
 
     def test_untranslated_pages_declare_the_default_language(self, app):
+        paths = self._paths(app)
+        assert paths, 'UNTRANSLATED_ENDPOINTS порожній -- перевіряти нічого'
         bad = []
         for lang in PREFIXED_LANGUAGES:
             client = app.test_client()
             refresh()
             assert client.get(f'/{lang}/').status_code == 200
-            for path in self.LEGAL_PATHS:
+            for path in paths:
                 refresh()
                 resp = client.get(path)
                 assert resp.status_code == 200, f'{path}: {resp.status_code}'
@@ -264,6 +284,113 @@ class TestDeclaredLanguageMatchesContent:
         assert not bad, (
             'Локалізовані сторінки перестали оголошувати свою мову:\n'
             + '\n'.join(bad)
+        )
+
+
+class TestUntranslatedConstantIsDerivable:
+    """UNTRANSLATED_ENDPOINTS мусить збігатися з тим, що видно в розмітці.
+
+    Константа керує тим, яку мову сторінка оголошує світові, і доти, доки
+    вона звірялась лише сама із собою, небезпечний напрямок дрейфу був
+    відкритий навстіж. Доведено мутацією: додавання payments.success і
+    payments.failure лишало сюїту зеленою -- тобто дві повністю
+    перекладені сторінки мовчки почали б оголошувати себе українськими,
+    рівно та брехня, заради уникнення якої список і став іменованим.
+    Протилежні напрямки ловились: додавання локалізованого ендпоінта --
+    дванадцятьма падіннями, видалення юридичного -- одним.
+
+    Істина виводиться з розмітки: скільки викликів перекладу в
+    {% block content %} шаблона, який ендпоінт справді рендерить.
+    Розділення чисте й без сірої зони -- 0 у п'яти юридичних сторінок,
+    3 і більше в будь-якого іншого кандидата.
+    """
+
+    def _templates_for(self, app, client, endpoint, url):
+        """(шаблони, як їх здобули) для ендпоінта.
+
+        Основний шлях -- сигнал template_rendered на справжньому запиті.
+        Запасний -- render_template(...) у вихідному коді в'ю: під
+        @login_required (payments.success) анонімний GET віддає редірект і
+        не рендерить нічого, а запис у константі перевірити все одно
+        треба -- і назвати справжню причину відмови, а не "не змогли".
+        """
+        if url is not None:
+            status, names = templates_rendered_by(app, client, url)
+            if status == 200 and names:
+                return names, f'рендер {url} ({status})'
+        names = templates_named_in_view(app, endpoint)
+        if names:
+            return names, 'render_template у коді в\'ю'
+        return [], 'ні рендером, ні читанням коду в\'ю'
+
+    def test_every_listed_endpoint_renders_untranslated_content(self, app):
+        """Небезпечний напрямок: у списку не має бути перекладеної сторінки."""
+        client = app.test_client()
+        bad = []
+        with app.test_request_context():
+            urls = {}
+            for endpoint in UNTRANSLATED_ENDPOINTS:
+                try:
+                    urls[endpoint] = url_for(endpoint)
+                except Exception:
+                    urls[endpoint] = None
+        for endpoint in sorted(UNTRANSLATED_ENDPOINTS):
+            names, how = self._templates_for(app, client, endpoint, urls[endpoint])
+            if not names:
+                bad.append(
+                    f'{endpoint}: шаблон не знайдено ({how}) -- запис '
+                    'неперевірний, а неперевірному тут не місце'
+                )
+                continue
+            for name in names:
+                calls = content_translation_calls(app, name)
+                if calls is None:
+                    bad.append(
+                        f'{endpoint} ({name}): немає {{% block content %}} -- '
+                        'перевірити вміст цим способом не можна'
+                    )
+                elif calls:
+                    bad.append(
+                        f'{endpoint} ({name}): {calls} викликів перекладу в '
+                        'основному вмісті -- сторінка перекладена, і '
+                        'оголошувати її українською означає брехати '
+                        'краулеру й скрінрідеру'
+                    )
+        assert not bad, (
+            'UNTRANSLATED_ENDPOINTS містить те, що українським не є:\n'
+            + '\n'.join(bad)
+        )
+
+    def test_no_untranslated_public_page_is_missing_from_the_list(self, app):
+        """Зворотний напрямок, у межах публічних сторінок.
+
+        Кандидати -- ті самі публічні HTML-сторінки, якими ходять решта
+        сторожів. Нова сторінка з українським-лише вмістом мусить або
+        потрапити в список, або отримати переклад: мовчки лишитись із
+        оголошеною мовою сесії вона не має права.
+        """
+        client = app.test_client()
+        derived = set()
+        unverifiable = []
+        candidates = public_urls(app)
+        for endpoint, url in sorted(candidates.items()):
+            status, names = templates_rendered_by(app, client, url)
+            if status != 200 or not names:
+                continue  # не HTML-сторінка; це стереже TestFetchIsFailClosed
+            calls = [content_translation_calls(app, name) for name in names]
+            if any(c is None for c in calls):
+                unverifiable.append(f'{endpoint}: {names}')
+            elif not any(calls):
+                derived.add(endpoint)
+        assert not unverifiable, (
+            'Публічні сторінки без {% block content %} -- перевірити мову '
+            'їхнього вмісту нічим:\n' + '\n'.join(unverifiable)
+        )
+        listed = UNTRANSLATED_ENDPOINTS & set(candidates)
+        assert derived == listed, (
+            'Список українських-лише сторінок розійшовся з розміткою.\n'
+            f'У розмітці українські, але не в списку: {sorted(derived - listed)}\n'
+            f'У списку, але вміст перекладений: {sorted(listed - derived)}'
         )
 
 

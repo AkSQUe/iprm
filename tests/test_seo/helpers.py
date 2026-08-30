@@ -192,8 +192,9 @@ def public_urls(app, lang=None):
 # дублікат вибірки: вибірка описує "що є", а цей список -- "що не має
 # права зникнути". Сюди входять сторінки, зникнення яких означало б
 # втрату входу в цілий розділ сайту (головна, каталоги очних і онлайн
-# курсів, тренери, клініки, блог, контакти, лабораторії) і п'ять
-# юридичних сторінок, обов'язкових для торгівлі й для платіжних систем.
+# курсів, тренери, клініки, блог, контакти, лабораторії, документи БПР)
+# і п'ять юридичних сторінок, обов'язкових для торгівлі й для платіжних
+# систем.
 #
 # Динамічні сторінки (курс, тренер, допис) сюди не входять -- вони
 # потребують рядків у БД і живуть у test_dynamic_pages.py.
@@ -206,6 +207,7 @@ CORE_PUBLIC_ENDPOINTS = frozenset({
     'trainers.trainer_list',
     'clinics.clinic_list',
     'blog.index',
+    'main.bpr_documents',
     'main.cookies',
     'main.disclaimer',
     'main.offer',
@@ -284,8 +286,18 @@ def rendered_lang(html):
 
     base.html бере його з content_lang -- це current_lang
     (str(flask_babel.get_locale()), app/i18n.py, inject_i18n) для всього,
-    крім UNTRANSLATED_ENDPOINTS, де вміст існує лише українською і мовою
-    рендеру за визначенням є DEFAULT_LANGUAGE.
+    крім UNTRANSLATED_ENDPOINTS, де ОСНОВНИЙ вміст існує лише українською.
+
+    Точне формулювання має значення. Сторінка з UNTRANSLATED_ENDPOINTS не
+    є українською цілком: обрамлення з base.html (шапка, підвал, схема
+    організації) перекладене повністю, і під ru-сесією /privacy віддає
+    російські меню й підвал навколо українського юридичного тексту. У
+    самому ж юридичному шаблоні виклик перекладу рівно один -- `_()` у
+    блоці jsonld, поза {% block content %}. Оголосити одним значенням
+    можна лише щось одне, і правильне з двох -- мова ОСНОВНОГО вмісту:
+    саме її читає краулер, вирішуючи мовний таргетинг, і саме її бере
+    скрінрідер, обираючи голосовий рушій. Це строго краще за попередній
+    стан, де значення не описувало ні вміст, ні обрамлення, а лише сесію.
 
     Для локалізованих сторінок воно лишається справжнім зондом локалі
     РЕНДЕРУ (а не URL-префікса запиту) -- саме тим, чим і було, коли
@@ -484,14 +496,26 @@ def _reference_ids(value):
     return []
 
 
-def provider_ids(blocks):
-    """Значення provider['@id'] з усіх вузлів на сторінці (рекурсивно)."""
+# Ключі, під якими вузол ПОСИЛАЄТЬСЯ на іншу сутність, а не описує її.
+#
+# provider читався окремим хелпером, publisher і author -- ніким. Через це
+# висяче посилання ловилось рівно в одному з трьох місць: відкат
+# `'publisher': {'@id': org_id()}` на головній до локале-залежного значення
+# лишав сюїту зеленою, хоча WebSite починав вказувати на організацію, якої
+# на сторінці немає. Ключ, під яким лежить посилання, для дефекту не має
+# значення -- тому й перевіряються всі три одразу.
+REFERENCE_KEYS = ('provider', 'publisher', 'author')
+
+
+def _ids_under_keys(blocks, keys):
+    """@id-посилання, що лежать під заданими ключами (рекурсивно)."""
     ids = []
 
     def _walk(node):
         if isinstance(node, dict):
-            if 'provider' in node:
-                ids.extend(_reference_ids(node['provider']))
+            for key in keys:
+                if key in node:
+                    ids.extend(_reference_ids(node[key]))
             for value in node.values():
                 _walk(value)
         elif isinstance(node, list):
@@ -501,6 +525,36 @@ def provider_ids(blocks):
     for block in blocks:
         _walk(block)
     return ids
+
+
+def provider_ids(blocks):
+    """Значення provider['@id'] з усіх вузлів на сторінці (рекурсивно)."""
+    return _ids_under_keys(blocks, ('provider',))
+
+
+def canonical_org_id(app):
+    """Канонічний @id організації -- те саме, що віддає org_id() у шаблонах.
+
+    Будується тут незалежно від шаблонного глобала навмисно: якби сторож
+    кликав ту саму функцію, він звіряв би її саму із собою і будь-яка її
+    вада проходила б зеленою.
+    """
+    from flask import url_for
+
+    with app.test_request_context():
+        return url_for(
+            'main.index', lang_code=DEFAULT_LANGUAGE, _external=True,
+        ) + '#org'
+
+
+def reference_ids(blocks):
+    """Усі посилання на сутність: provider, publisher, author.
+
+    Вузол-ОПИС (author-Person із відгуку, author-Organization із допису)
+    @id не має, тож у результат не потрапляє: _reference_ids віддає для
+    нього порожньо. Сюди йдуть лише справжні посилання.
+    """
+    return _ids_under_keys(blocks, REFERENCE_KEYS)
 
 
 def find_nodes_by_type(blocks, type_name):
@@ -530,3 +584,146 @@ def head_field(html, field):
     else:
         found = re.search(r'<meta name="description" content="([^"]*)"', html)
     return found.group(1).strip() if found else None
+
+
+# --- Похідна перевірка UNTRANSLATED_ENDPOINTS ------------------------------
+#
+# UNTRANSLATED_ENDPOINTS (app/i18n.py) -- це рукописний список сторінок, чий
+# ВМІСТ існує лише українською. Він керує тим, яку мову сторінка оголошує
+# в <html lang> і og:locale, тож помилка в ньому -- це хибна заява
+# краулерові й скрінрідеру.
+#
+# Небезпечний напрямок дрейфу -- ДОДАВАННЯ. Дописати туди payments.success
+# означає оголосити "uk" над сторінкою, перекладеною повністю: та сама
+# брехня, лише дзеркальна, і саме через неї предикат "ендпоінт не
+# локалізований" був відкинутий на користь іменованого списку. Доведено
+# мутацією: доти, доки список звірявся лише сам із собою (другий рукописний
+# перелік шляхів у тесті), додавання payments.success і payments.failure
+# лишало сюїту зеленою.
+#
+# Тому істина ВИВОДИТЬСЯ з розмітки: беремо шаблон, який ендпоінт справді
+# рендерить, і рахуємо в його {% block content %} (разом із include'ами)
+# виклики перекладу. Нуль -- сторінка українська за вмістом; будь-що інше
+# -- ні. Розділення чисте: у п'яти юридичних сторінок рівно 0, у решти
+# кандидатів -- від трьох і більше.
+#
+# Саме {% block content %}, а не весь файл: обрамлення (шапка, підвал,
+# схема організації) приходить із base.html і перекладене завжди. Мова, яку
+# сторінка оголошує, описує її ОСНОВНИЙ вміст -- єдине значення, яке тут
+# взагалі можна назвати правильним.
+
+# Виклик перекладу в шаблоні Jinja: _( ... ), gettext-родина, {% trans %}.
+# `_` відсікається від атрибутів (`obj._(`) ретроспективною перевіркою --
+# інакше будь-яке ім'я, що закінчується підкресленням, читалось би як
+# виклик перекладу.
+TRANSLATION_CALL_RE = re.compile(
+    r'\b(?:gettext|ngettext|lazy_gettext)\s*\('
+    r'|(?<![\w.])_\s*\('
+    r'|{%-?\s*trans\b'
+)
+
+_BLOCK_TOKEN_RE = re.compile(r'{%-?\s*(block\s+(\w+)|endblock\b)')
+_INCLUDE_RE = re.compile(r"""{%-?\s*include\s+['"]([^'"]+)['"]""")
+_RENDER_TEMPLATE_RE = re.compile(r"""render_template\(\s*['"]([^'"]+\.html)['"]""")
+
+
+def _template_source(app, name):
+    return app.jinja_env.loader.get_source(app.jinja_env, name)[0]
+
+
+def content_block_source(source):
+    """Тіло {% block content %} або None, якщо блоку немає.
+
+    Вкладені блоки рахуються, тож `{% endblock %}` внутрішнього блоку не
+    обриває зовнішній передчасно.
+    """
+    start = re.search(r'{%-?\s*block\s+content\b', source)
+    if not start:
+        return None
+    depth = 0
+    for token in _BLOCK_TOKEN_RE.finditer(source, start.start()):
+        if token.group(1).startswith('block'):
+            depth += 1
+        else:
+            depth -= 1
+            if depth == 0:
+                return source[start.end():token.start()]
+    return None
+
+
+def content_translation_calls(app, template_name):
+    """Скільки викликів перекладу в основному вмісті шаблона.
+
+    None -- шаблон не має {% block content %}, тобто перевірити його цим
+    способом не можна (виклик мусить трактувати це як провал, а не як
+    нуль: мовчазний нуль оголосив би сторінку українською безпідставно).
+
+    Include'и розкриваються рекурсивно: юридичний текст оферти живе саме
+    в include'і (main/_offer_content.html), і без цього кроку перевірка
+    дивилась би на порожню обгортку.
+    """
+    block = content_block_source(_template_source(app, template_name))
+    if block is None:
+        return None
+    total = len(TRANSLATION_CALL_RE.findall(block))
+    seen = set()
+    pending = _INCLUDE_RE.findall(block)
+    while pending:
+        name = pending.pop()
+        if name in seen:
+            continue
+        seen.add(name)
+        try:
+            included = _template_source(app, name)
+        except Exception:
+            continue
+        total += len(TRANSLATION_CALL_RE.findall(included))
+        pending += _INCLUDE_RE.findall(included)
+    return total
+
+
+def templates_rendered_by(app, client, url):
+    """(код відповіді, [імена шаблонів]) -- що ендпоінт справді відрендерив.
+
+    Сигнал flask.template_rendered, а не рукописна мапа ендпоінт -> шаблон:
+    така мапа розійшлася б із кодом першої ж миті й мовчки. Сигнал
+    спрацьовує один раз на виклик render_template і несе САМЕ той шаблон,
+    що його викликали (include'и сигналу не дають -- їх розкриває
+    content_translation_calls).
+    """
+    from flask import template_rendered
+
+    seen = []
+
+    def record(sender, template, **extra):
+        if template.name:
+            seen.append(template.name)
+
+    template_rendered.connect(record, app)
+    try:
+        resp = client.get(url)
+    finally:
+        template_rendered.disconnect(record, app)
+    return resp.status_code, seen
+
+
+def templates_named_in_view(app, endpoint):
+    """Шаблони, названі у вихідному коді в'ю -- запасний шлях.
+
+    Потрібен для ендпоінтів, що анонімному GET сторінки не віддають
+    (payments.success під @login_required редіректить, шаблон не
+    рендериться зовсім). Без цього запасного шляху такий запис у
+    UNTRANSLATED_ENDPOINTS валив би перевірку як "неперевірний", а не як
+    "сторінка насправді перекладена" -- червоне в обох випадках, але
+    правильну причину називає лише другий.
+    """
+    import inspect
+
+    view = app.view_functions.get(endpoint)
+    if view is None:
+        return []
+    try:
+        source = inspect.getsource(inspect.unwrap(view))
+    except (OSError, TypeError):
+        return []
+    return _RENDER_TEMPLATE_RE.findall(source)

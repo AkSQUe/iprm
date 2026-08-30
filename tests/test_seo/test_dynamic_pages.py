@@ -28,6 +28,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
+from flask_babel import refresh
 
 from app.extensions import db
 from app.models.blog_post import BlogPost
@@ -36,9 +37,11 @@ from app.models.course import Course
 from app.models.media_file import MediaFile
 from app.models.online_course import OnlineCourse
 from app.models.trainer import Trainer
+from app.i18n import PREFIXED_LANGUAGES
 from tests.test_seo.helpers import (
-    find_nodes_by_type, is_absolute_url, iter_url_values, jsonld_blocks,
-    organization_ids, provider_ids,
+    canonical_org_id, count_h1, find_nodes_by_type, is_absolute_url,
+    iter_url_values, jsonld_blocks, organization_ids, provider_ids,
+    reference_ids, rendered_lang,
 )
 
 
@@ -139,6 +142,46 @@ def dynamic_pages(app, client):
     return pages
 
 
+@pytest.fixture
+def dynamic_pages_by_locale(app, dynamic_pages):
+    """[(мітка, локаль, url, html)] -- ті самі сторінки в uk/ru/en.
+
+    Без цього прогону вся структурна перевірка динамічних сторінок жила
+    ЛИШЕ в українському рендері, і саме там локале-залежний @id збігався
+    з канонічним випадково. Доведено мутацією: відкат provider у
+    courses/detail.html (або в online/detail.html) до
+    url_for('main.index', _external=True) лишав сюїту зеленою -- на /ru/
+    сторінка публікувала provider.@id = ".../ru/#org" при власному вузлі
+    організації ".../#org", тобто висяче посилання, а подивитись туди не
+    було кому: fetch_public_pages() динамічних сторінок не бачить
+    (потрібні параметри), а тутешні тести не виходили за межі uk.
+
+    Клієнт СВІЙ на кожну локаль і refresh() перед кожним запитом -- з тієї
+    самої причини, що й у fetch_public_pages(): вибір мови липкий через
+    session['lang'], а flask_babel кешує локаль на g в межах контексту.
+    Звірка <html lang> лишає прогін чесним: інакше "ru-прогін" міг би
+    мовчки віддавати український рендер.
+    """
+    pages = [('uk', label, url, html) for label, url, html in dynamic_pages]
+    for lang in PREFIXED_LANGUAGES:
+        client = app.test_client()
+        for label, url, _html in dynamic_pages:
+            refresh()
+            localized = f'/{lang}{url}'
+            resp = client.get(localized)
+            assert resp.status_code == 200, (
+                f'{label} ({localized}): {resp.status_code}'
+            )
+            html = resp.data.decode('utf-8')
+            actual = rendered_lang(html)
+            assert actual == lang, (
+                f'{label} ({localized}): просили локаль {lang!r}, сторінка '
+                f'оголосила <html lang={actual!r}> -- обвал локалі'
+            )
+            pages.append((lang, label, localized, html))
+    return pages
+
+
 class TestDynamicPageStructure:
     def test_jsonld_parses_and_is_typed(self, dynamic_pages):
         bad = []
@@ -158,9 +201,17 @@ class TestDynamicPageStructure:
         assert not bad, 'Проблеми JSON-LD:\n' + '\n'.join(bad)
 
     def test_exactly_one_h1(self, dynamic_pages):
+        """count_h1, а не регексп по сирому HTML.
+
+        Лічильників <h1> у сюїті було два, і виправили спершу лише той,
+        що в test_page_seo.py. Розбіжність гірша за спільну ваду: із
+        літералом "<h1" усередині inline-скрипта сусідній тест
+        правильно проходив, а ЦЕЙ падав -- червона збірка на коректній
+        розмітці, тобто рівно те, заради чого лічильник і переписували.
+        """
         bad = []
         for label, url, html in dynamic_pages:
-            count = len(re.findall(r'<h1[\s>]', html))
+            count = count_h1(html)
             if count != 1:
                 bad.append(f'{label} ({url}): {count} <h1>')
         assert not bad, 'Сторінки не з одним <h1>:\n' + '\n'.join(bad)
@@ -254,19 +305,24 @@ class TestProviderLinkage:
     сторінки з provider) лишала сюїту зеленою.
     """
 
-    def test_provider_id_matches_an_organization_node(self, dynamic_pages):
+    def test_reference_ids_match_an_organization_node(self, dynamic_pages):
+        """reference_ids, а не provider_ids: ключ, під яким лежить
+        посилання, для дефекту значення не має. publisher і author не
+        читав ЖОДЕН хелпер, тож висяче посилання під ними лишалось
+        невидимим цілком -- відкат publisher на головній до
+        локале-залежного значення проходив зеленим."""
         bad = []
         for label, url, html in dynamic_pages:
             blocks = jsonld_blocks(html)
             org_ids = organization_ids(blocks)
-            for provider_id in provider_ids(blocks):
-                if provider_id not in org_ids:
+            for ref_id in reference_ids(blocks):
+                if ref_id not in org_ids:
                     bad.append(
-                        f'{label}: provider.@id={provider_id!r} немає '
+                        f'{label}: посилання @id={ref_id!r} немає '
                         f'серед вузлів організації {sorted(org_ids)}'
                     )
         assert not bad, (
-            'Розірвані посилання provider.@id:\n' + '\n'.join(bad)
+            'Розірвані посилання на організацію:\n' + '\n'.join(bad)
         )
 
     def test_course_node_has_provider(self, dynamic_pages):
@@ -284,6 +340,55 @@ class TestProviderLinkage:
                 if 'provider' not in node:
                     bad.append(f'{label}: вузол Course без provider')
         assert not bad, 'Course без provider:\n' + '\n'.join(bad)
+
+
+class TestDynamicOrganizationIdIsLocaleIndependent:
+    """@id організації на динамічних сторінках -- канонічний у всіх локалях.
+
+    Симптом P1 жив саме тут: provider на сторінці курсу й онлайн-курсу.
+    Сторож у test_urls_and_locales.py туди не дістає (ці сторінки
+    потребують параметрів і в public_endpoints не потрапляють), а
+    TestProviderLinkage вище ходить лише по українських URL, де
+    локале-залежне значення збігається з канонічним і розбіжності не
+    видно. Доведено мутацією: відкат provider у courses/detail.html АБО в
+    online/detail.html поодинці лишав сюїту зеленою.
+    """
+
+    def test_every_reference_and_node_uses_the_canonical_id(
+        self, app, dynamic_pages_by_locale,
+    ):
+        expected = canonical_org_id(app)
+        bad = []
+        for lang, label, url, html in dynamic_pages_by_locale:
+            blocks = jsonld_blocks(html)
+            ids = organization_ids(blocks) | set(reference_ids(blocks))
+            assert ids, f'[{lang}] {label}: жодного @id організації'
+            for value in sorted(ids):
+                if value != expected:
+                    bad.append(f'[{lang}] {label} ({url}): {value!r}')
+        assert not bad, (
+            f'@id організації не дорівнює канонічному {expected!r} -- '
+            'Google читає це як різні сутності, а посилання provider і '
+            'publisher стають висячими:\n' + '\n'.join(bad)
+        )
+
+    def test_course_provider_survives_every_locale(
+        self, app, dynamic_pages_by_locale,
+    ):
+        """Друга половина: твердження вище минає вакуумно, якщо ключ
+        provider узагалі зник. Сторінки курсу й онлайн-курсу мусять
+        нести його в КОЖНІЙ локалі, а не лише в українській."""
+        without = []
+        locales = set()
+        for lang, label, url, html in dynamic_pages_by_locale:
+            for node in find_nodes_by_type(jsonld_blocks(html), 'Course'):
+                locales.add(lang)
+                if 'provider' not in node:
+                    without.append(f'[{lang}] {label}')
+        assert not without, f'Вузол Course без provider: {sorted(without)}'
+        assert locales == {'uk', *PREFIXED_LANGUAGES}, (
+            f'Вузол Course знайдено не в усіх локалях: {sorted(locales)}'
+        )
 
 
 class TestTrainerPersonSchema:
