@@ -497,6 +497,13 @@ def seed_detail_pages(app):
     with app.app_context():
         course = Course(title='Знімок: курс', slug='snapshot-course',
                         is_active=True)
+        # Ціна потрібна не для вигляду картки, а щоб узагалі відрендерився
+        # калькулятор окупності: `home_service` бере в roi_courses лише
+        # курси з ненульовою ціною, а на детальній сторінці блок ROI
+        # рахує від неї. Без ціни компонент не існує в DOM, і будь-яка
+        # перевірка його стилів мовчки міряє порожнечу.
+        if hasattr(course, 'base_price'):
+            course.base_price = 5000
         db.session.add(course)
         db.session.flush()
         db.session.add(ProgramBlock(
