@@ -86,7 +86,7 @@
     // ---- Інлайн rich-text (contenteditable + B/I/link) ----
     function richEditor(html) {
       var bar = el('div', {'class': 'blog-editor__inline-bar'});
-      var area = el('div', {'class': 'blog-editor__rich', contenteditable: 'true'});
+      var area = el('div', {'class': 'blog-editor__rich iprm-focus-ring', contenteditable: 'true'});
       area.innerHTML = html || '';
       [['format_bold', 'bold'], ['format_italic', 'italic']].forEach(function(b) {
         var btn = el('button', {type: 'button', 'class': 'blog-editor__ibtn', title: b[1]}, [icon(b[0])]);

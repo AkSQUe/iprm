@@ -427,7 +427,7 @@
     var searchHtml =
       '<div class="iprm-cal-filters__group iprm-cal-filters__group--search">' +
         '<span class="iprm-cal-filters__label">' + escapeHtml(t('Пошук')) + '</span>' +
-        '<input type="search" class="iprm-cal-search" data-cal-search ' +
+        '<input type="search" class="iprm-cal-search iprm-focus-ring" data-cal-search ' +
           'placeholder="' + escapeHtml(t('Назва заходу...')) + '" autocomplete="off" ' +
           'aria-label="' + escapeHtml(t('Пошук у календарі')) + '" ' +
           'value="' + escapeHtml(searchQuery) + '">' +

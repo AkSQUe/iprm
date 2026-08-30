@@ -271,7 +271,7 @@
         <div class="iprm-roi__inputs">
           <label class="iprm-roi__field iprm-roi__field--course">
             <span class="iprm-roi__label">{{ _('Курс') }}</span>
-            <select class="form-input" data-roi-course>
+            <select class="form-input iprm-focus-ring" data-roi-course>
               {% set preselect = request.args.get('course') %}
               {% for rc in roi_courses %}
               <option data-price="{{ rc.price }}"{% if preselect and preselect == rc.slug %} selected{% endif %}>{{ rc.title }} — {{ rc.price }} &#8372;</option>
@@ -280,11 +280,11 @@
           </label>
           <label class="iprm-roi__field">
             <span class="iprm-roi__label">{{ _('Середній чек процедури, ₴') }}</span>
-            <input type="number" class="form-input" data-roi-check value="2000" min="0" max="100000" step="100" inputmode="numeric">
+            <input type="number" class="form-input iprm-focus-ring" data-roi-check value="2000" min="0" max="100000" step="100" inputmode="numeric">
           </label>
           <label class="iprm-roi__field">
             <span class="iprm-roi__label">{{ _('Процедур на місяць') }}</span>
-            <input type="number" class="form-input" data-roi-count value="12" min="0" max="500" step="1" inputmode="numeric">
+            <input type="number" class="form-input iprm-focus-ring" data-roi-count value="12" min="0" max="500" step="1" inputmode="numeric">
           </label>
         </div>
         <div class="iprm-roi__results">
