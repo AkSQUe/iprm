@@ -95,6 +95,10 @@ class CourseInstance(TimestampMixin, db.Model):
         back_populates='instance',
         lazy='dynamic',
     )
+    # Зворотний бік MetaLeadForm.course_instance -- потрібен не для зручного
+    # обходу, а щоб ORM узагалі знала, чиї рядки нулювати при видаленні
+    # заходу (FK там ondelete='SET NULL', без cascade).
+    meta_lead_forms = db.relationship('MetaLeadForm', back_populates='course_instance')
 
     FORMATS = [
         ('online', 'Онлайн'),
