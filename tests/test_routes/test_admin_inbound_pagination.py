@@ -531,29 +531,41 @@ def test_reviews_pagination_filter_and_perpage(client, admin):
 
 def test_reviews_sort_order_survives_pagination(client, admin):
     """sort_order керує порядком публічного блоку на Головній -- і set-based
-    перевірка вище ("рівно per_page рядків, без повторів") цього не бачить:
-    заміна `Review.sort_order, Review.created_at.desc()` на голе
-    `Review.created_at.asc()` лишила б ті самі рядки на тих самих
-    сторінках, просто в іншому порядку. Тут -- відносна позиція двох
-    рядків, де порядок за sort_order і порядок за датою свідомо
-    протилежні: новіший рядок має МЕНШИЙ sort_order і мусить бути першим."""
+    перевірка вище ("рівно per_page рядків, без повторів") цього не бачить.
+
+    Два рядки з протилежними sort_order/датою цього не досить: "нижчий
+    sort_order = новіша дата" ловить лише мутацію на `created_at.asc()`,
+    а `created_at.desc()` (сам по собі, без sort_order) випадково дає той
+    самий порядок, що й справжній -- і тест мовчки минає мутанта.
+
+    Тому тут ТРИ рядки з різними sort_order і навмисно переплутаними
+    датами: X (sort_order=0, дата СЕРЕДНЯ), Y (sort_order=1, дата
+    НАЙДАВНІША), Z (sort_order=2, дата НАЙНОВІША). Справжній порядок --
+    X, Y, Z (sort_order рахується першим і сам по собі однозначний, дата
+    для tie-break тут узагалі не потрібна). Гола дата ASC дає Y, X, Z;
+    гола дата DESC дає Z, X, Y -- жодна не збігається зі справжньою."""
     tag = _uid()
-    old, new = _times(2)
-    db.session.add(Review(
-        author_name='Тест', text=f'pgrv-{tag}-low', rating=5,
-        is_published=True, sort_order=0, created_at=new,
+    oldest, middle, newest = _times(3)
+    db.session.add(Review(  # X: sort_order=0, дата -- середня
+        author_name='Тест', text=f'pgrv-{tag}-x', rating=5,
+        is_published=True, sort_order=0, created_at=middle,
     ))
-    db.session.add(Review(
-        author_name='Тест', text=f'pgrv-{tag}-high', rating=5,
-        is_published=True, sort_order=5, created_at=old,
+    db.session.add(Review(  # Y: sort_order=1, дата -- найдавніша
+        author_name='Тест', text=f'pgrv-{tag}-y', rating=5,
+        is_published=True, sort_order=1, created_at=oldest,
+    ))
+    db.session.add(Review(  # Z: sort_order=2, дата -- найновіша
+        author_name='Тест', text=f'pgrv-{tag}-z', rating=5,
+        is_published=True, sort_order=2, created_at=newest,
     ))
     db.session.commit()
     _login(client, admin)
 
     html = client.get(f'/admin/reviews?q={tag}').get_data(as_text=True)
-    low_pos = html.index(f'pgrv-{tag}-low')
-    high_pos = html.index(f'pgrv-{tag}-high')
-    assert low_pos < high_pos
+    x_pos = html.index(f'pgrv-{tag}-x')
+    y_pos = html.index(f'pgrv-{tag}-y')
+    z_pos = html.index(f'pgrv-{tag}-z')
+    assert x_pos < y_pos < z_pos
 
 
 def test_reviews_out_of_range_page_offers_way_back(client, admin):
