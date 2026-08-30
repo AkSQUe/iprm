@@ -520,6 +520,15 @@ def catalog_only_components(root=ROOT):
     tpl = root / 'app' / 'templates'
     texts = {p.relative_to(tpl).as_posix(): p.read_text(encoding='utf-8', errors='ignore')
              for p in tpl.rglob('*.html')}
+    # Класи ставить не лише шаблон. `page-courses-schedule.js` і
+    # `blog-editor.js` будують розмітку рядками, і клас, який живе ТІЛЬКИ
+    # там, без цього сканування виглядав би мертвим -- а міра радила б його
+    # видалити. Саме так `.iprm-focus-ring` потрапив у список одразу після
+    # того, як його завели.
+    js_dir = root / 'app' / 'static' / 'js'
+    js_texts = {'js/' + p.name: p.read_text(encoding='utf-8', errors='ignore')
+                for p in js_dir.glob('*.js')} if js_dir.exists() else {}
+
     component = classify_css(root)['component']
     out = {}
     for name in sorted(component):
@@ -528,6 +537,10 @@ def catalog_only_components(root=ROOT):
                 continue
             pattern = re.compile(r'class="[^"]*\b' + re.escape(cls) + r'\b')
             users = [n for n, text in texts.items() if pattern.search(text)]
+            # У JS клас трапляється і в `class="..."`, і в об'єкті атрибутів
+            # (`{'class': 'a b'}`), тож шукаємо саме ім'я в межах слова.
+            js_pattern = re.compile(r'\b' + re.escape(cls) + r'\b')
+            users += [n for n, text in js_texts.items() if js_pattern.search(text)]
             if not users:
                 continue
             if all(n.startswith('design_system/') or n.startswith('admin/design_system')
