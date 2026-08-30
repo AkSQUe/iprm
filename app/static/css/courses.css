@@ -826,11 +826,8 @@ button.iprm-tag:focus-visible {
   color: var(--apple-gray);
 }
 
-.iprm-cal-search:focus {
-  outline: none;
-  border-color: var(--iprm-accent);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
-}
+/* Кільце фокуса -- .iprm-focus-ring (common.css), клас додається на сам
+   input поряд із .iprm-cal-search (page-courses-schedule.js). */
 
 .iprm-cal-search:focus-visible {
   outline: 2px solid var(--iprm-accent);
@@ -1468,11 +1465,8 @@ button.iprm-tag:focus-visible {
   color: var(--apple-gray);
 }
 
-.iprm-course-search__input:focus {
-  outline: none;
-  border-color: var(--iprm-accent);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
-}
+/* Кільце фокуса -- .iprm-focus-ring (common.css), клас стоїть на самому
+   input поряд із .iprm-course-search__input. */
 
 .iprm-course-search__input:focus-visible {
   outline: 2px solid var(--iprm-accent);
@@ -1589,11 +1583,8 @@ button.iprm-tag:focus-visible {
   appearance: none;
 }
 
-.iprm-roi__field input:focus {
-  outline: none;
-  border-color: var(--iprm-accent);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
-}
+/* Кільце фокуса -- .iprm-focus-ring (common.css), клас стоїть на самих
+   input поряд із .iprm-roi__field input. */
 
 .iprm-roi__field input:focus-visible {
   outline: 2px solid var(--iprm-accent);

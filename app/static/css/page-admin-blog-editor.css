@@ -55,7 +55,8 @@
   background: var(--iprm-card-bg); font-size: 0.9375rem; line-height: 1.6;
   color: var(--iprm-text);
 }
-.blog-editor__rich:focus { outline: none; border-color: var(--iprm-accent); box-shadow: 0 0 0 3px var(--iprm-accent-light); }
+/* Кільце фокуса -- .iprm-focus-ring (common.css), клас додається на сам
+   contenteditable-div поряд із .blog-editor__rich. */
 
 /* Зображення / галерея */
 .blog-editor__img-prev img { max-width: 240px; max-height: 160px; border-radius: var(--iprm-radius-sm); display: block; }

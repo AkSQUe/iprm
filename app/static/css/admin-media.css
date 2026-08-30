@@ -65,11 +65,8 @@
 /* --iprm-border-neutral -- рівень ліній, як текст він давав 1.38: плейсхолдер
    бере --apple-gray, як і решта полів адмінки (див. admin.css). */
 .media-card__alt::placeholder { color: var(--apple-gray); }
-.media-card__alt:focus {
-  border-color: var(--iprm-accent);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
-  outline: none;
-}
+/* Кільце фокуса -- .iprm-focus-ring (common.css), клас стоїть на самому
+   input поряд із .media-card__alt. */
 .media-card__alt--saved { border-color: #34c759; }
 
 /* ---- Пікер вибору з бібліотеки (модалка) ---- */

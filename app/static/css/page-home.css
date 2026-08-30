@@ -150,8 +150,15 @@
 }
 
 /* .iprm-roi__field стилізує лише input; <select> потребує власних правил,
-   інакше бере інтринсивну ширину від довгої опції й вибиває сітку. */
-.page-home .iprm-roi__field select {
+   інакше бере інтринсивну ширину від довгої опції й вибиває сітку.
+
+   Без префікса `.page-home` НАВМИСНО (на відміну від сусідніх правил цього
+   блоку): `.iprm-roi__field select` живе лише в розмітці Головної, а зайвий
+   клас у селекторі підіймав специфічність до (0,2,1) -- вище за спільне
+   кільце фокуса `.iprm-focus-ring:focus` (0,2,0). border-color кільця тоді
+   програвав цьому ж правилу, і рамка при фокусі лишалась сірою замість
+   акцентної -- досвід зловлено зондом фокуса, не оком. */
+.iprm-roi__field select {
   width: 100%;
   min-width: 0;
   padding: 12px 16px;
@@ -168,11 +175,8 @@
   text-overflow: ellipsis;
 }
 
-.page-home .iprm-roi__field select:focus {
-  outline: none;
-  border-color: var(--iprm-accent);
-  box-shadow: 0 0 0 3px var(--iprm-accent-light);
-}
+/* Кільце фокуса -- .iprm-focus-ring (common.css), клас стоїть на самому
+   <select> поряд із .form-input. */
 
 /* ===== Лічильники ===== */
 .home-stats {

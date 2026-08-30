@@ -2023,7 +2023,13 @@ form[data-single-submit][data-submitting='true'] input[type='submit'] {
   background-color: var(--iprm-white);
 }
 
-.form-input:focus {
+/* .iprm-focus-ring -- утиліта: те саме кільце фокуса, що й у .form-input,
+   для елементів поза формою (contenteditable, поле пошуку в календарі,
+   alt-текст медіатеки), яким сам .form-input не пасує. Раніше це кільце
+   було продубльоване окремим правилом під сімома різними селекторами в
+   п'яти файлах -- правка одного не доходила до решти шести. */
+.form-input:focus,
+.iprm-focus-ring:focus {
   outline: none;
   border-color: var(--iprm-accent);
   box-shadow: 0 0 0 3px var(--iprm-accent-light);
