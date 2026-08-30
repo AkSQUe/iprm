@@ -399,6 +399,27 @@ class MetaLeadForm(TimestampMixin, db.Model):
     synced_at = db.Column(db.DateTime(timezone=True), nullable=False,
                           default=lambda: datetime.now(timezone.utc))
 
+    # Захід, про який ця форма. Прив'язка руками в адмінці: Meta про наші
+    # курси не знає нічого, а вгадувати захід із назви форми означало б
+    # мовчки помилятись на другому потоці того самого курсу.
+    #
+    # SET NULL, а не CASCADE: видалення заходу не має забирати з собою
+    # схему форми -- на ній тримаються підписи питань УСІХ уже наявних
+    # заявок, і картка ліда без неї знову показувала б внутрішні ключі.
+    course_instance_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('course_instances.id', ondelete='SET NULL'),
+        index=True,
+    )
+
+    # `back_populates`, а не однобічний зв'язок: без зворотної колекції на
+    # CourseInstance ORM не бачить, кому саме належить нулювати FK при
+    # видаленні заходу, і в тестах (SQLite без увімкненого PRAGMA
+    # foreign_keys) рядок форми лишається з посиланням на вже неіснуючий
+    # запис. У проді той самий результат додатково гарантує сам FK
+    # (ondelete='SET NULL') -- це підстраховка одне одного, не дублювання.
+    course_instance = db.relationship('CourseInstance', back_populates='meta_lead_forms')
+
     @property
     def questions_count(self):
         return len(self.questions or {})
