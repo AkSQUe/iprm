@@ -41,7 +41,7 @@
    кричало б про те, чого вже не виправити. */
 .ml-wait--done {
   background: var(--iprm-card-bg);
-  border-left-color: var(--iprm-border-strong));
+  border-left-color: var(--iprm-border-strong);
 }
 
 .ml-wait--fresh {
@@ -59,7 +59,7 @@
 }
 
 .ml-wait--warn .ml-wait__value {
-  color: var(--iprm-warning-text));
+  color: var(--iprm-warning-text);
 }
 
 .ml-wait--late {
@@ -68,7 +68,7 @@
 }
 
 .ml-wait--late .ml-wait__value {
-  color: var(--iprm-error-text));
+  color: var(--iprm-error-text);
 }
 
 /* ===== Годинник у картці заявки ===== */
@@ -81,7 +81,7 @@
   padding: 18px 22px;
   margin-bottom: 24px;
   border: 1px solid var(--iprm-border);
-  border-left: 4px solid var(--iprm-border-strong));
+  border-left: 4px solid var(--iprm-border-strong);
   border-radius: var(--iprm-radius);
   background: var(--iprm-white);
 }
@@ -116,7 +116,7 @@
 }
 
 .ml-wait-panel--warn .ml-wait-panel__value {
-  color: var(--iprm-warning-text));
+  color: var(--iprm-warning-text);
 }
 
 .ml-wait-panel--late {
@@ -125,7 +125,7 @@
 }
 
 .ml-wait-panel--late .ml-wait-panel__value {
-  color: var(--iprm-error-text));
+  color: var(--iprm-error-text);
 }
 
 /* ===== Дрібниці реєстру ===== */
@@ -147,7 +147,7 @@
   gap: 12px;
   padding: 12px 18px;
   margin-bottom: 20px;
-  border: 1px dashed var(--iprm-border-strong));
+  border: 1px dashed var(--iprm-border-strong);
   border-radius: var(--iprm-radius);
   background: var(--iprm-card-bg);
   font-size: 0.875rem;
@@ -180,7 +180,7 @@
 .ml-error summary {
   cursor: pointer;
   font-size: 0.75rem;
-  color: var(--iprm-error-text));
+  color: var(--iprm-error-text);
 }
 
 .ml-error pre,
@@ -207,6 +207,30 @@
 
 .ml-test-form {
   margin-top: 12px;
+}
+
+/* ===== Розкрій реєстру ===== */
+
+/* Ширини діють лише в табличному режимі: з 768px таблиця стає картками
+   (admin-table-cards.js), і ширина колонки перетворилась би на ширину
+   картки. Той самий прийом, що в page-admin-error-logs.css. */
+@media (min-width: 769px) {
+  /* 1080px -- стільки просять обов'язкові елементи: «Чекають понад годину»
+     у комірці очікування, пошта з телефоном під нею і назва кампанії з
+     назвою форми. Вужче -- прокрутка контейнера, не зламана таблиця. */
+  .ml-table {
+    min-width: 1080px;
+  }
+
+  .ml-col--wait { width: 10%; }
+  .ml-col--lead { width: 16%; }
+  /* Пошта й джерело -- найдовші вільні значення сторінки, і саме вони
+     розсували таблицю до фіксованого розкрою. */
+  .ml-col--contacts { width: 21%; }
+  .ml-col--source { width: 21%; }
+  .ml-col--match { width: 12%; }
+  .ml-col--status { width: 10%; }
+  .ml-col--actions { width: 10%; }
 }
 
 @media (max-width: 640px) {

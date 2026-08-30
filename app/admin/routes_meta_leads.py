@@ -330,6 +330,18 @@ def meta_leads_list():
             'attention': url_for('admin.meta_leads_list', attention='yes'),
             'test': url_for('admin.meta_leads_list', test='only'),
         },
+        # Яку картку зараз видно в списку. Звіряється ЛИШЕ визначальний
+        # параметр картки, а не весь зріз: людина часто добирає до нього
+        # пошук чи кампанію, і зникла підсвітка казала б, що вона вийшла
+        # з зрізу, тоді як вона його звузила. «Усього» -- навпаки, лише
+        # порожній зріз, бо будь-який фільтр робить його вже не всім.
+        summary_active={
+            'total': not any(filters.values()),
+            'new': filters['status'] == MetaLead.STATUS_NEW,
+            'in_work': filters['status'] == MetaLead.STATUS_IN_WORK,
+            'late': filters['wait'] == 'late',
+            'attention': filters['attention'] == 'yes',
+        },
         wait_level=wait_level,
         wait_text=wait_text,
     )
@@ -680,10 +692,15 @@ def _contact_removal_check(lead):
             'reasons': ['контакт існував до цієї заявки'],
         }
 
+    # Питання скрізь одне -- «чи є хоч один слід», тож і запит має бути про
+    # це. `count()` заради такої відповіді читає всі рядки: на контакті з
+    # тисячею реєстрацій це тисяча прочитаних записів, щоб дізнатись «так».
+    # Виняток один -- інші заявки: там число йде в текст підказки.
     reasons = []
-    if user.registrations.count():
+    if user.registrations.limit(1).first() is not None:
         reasons.append('має реєстрації на заходи')
-    if OnlineEnrollment.query.filter_by(user_id=user.id).count():
+    if db.session.query(OnlineEnrollment.id).filter_by(
+            user_id=user.id).first() is not None:
         reasons.append('має замовлення онлайн-курсів')
     other_leads = MetaLead.query.filter(
         MetaLead.user_id == user.id, MetaLead.id != lead.id,
@@ -691,7 +708,8 @@ def _contact_removal_check(lead):
     ).count()
     if other_leads:
         reasons.append(f'має інші заявки з Meta ({other_leads})')
-    if MetaLead.query.filter(MetaLead.conflict_user_id == user.id).count():
+    if db.session.query(MetaLead.id).filter(
+            MetaLead.conflict_user_id == user.id).first() is not None:
         reasons.append('на нього вказує конфлікт іншої заявки')
     if user.has_password:
         reasons.append('має пароль для входу')
@@ -704,7 +722,7 @@ def _contact_removal_check(lead):
 def _bulk_removable_contacts(leads):
     """Контакти, які підуть під ніж разом із цілим пакетом заявок.
 
-    Ті самі межі, що в `_contact_removal_check`, але чотирма запитами на весь
+    Ті самі межі, що в `_contact_removal_check`, але п'ятьма запитами на весь
     пакет замість шести на кожен рядок: прибирання сотні тестових заявок
     інакше означало б шістсот запитів в одному POST.
 
@@ -713,6 +731,7 @@ def _bulk_removable_contacts(leads):
     транзакції, і рахувати їх означало б лишати контакт живим рівно тому, що
     ми видаляємо забагато за раз.
     """
+    from app.models.auth_identity import AuthIdentity
     from app.models.online_enrollment import OnlineEnrollment
     from app.models.registration import EventRegistration
     from app.models.user import User
@@ -739,9 +758,20 @@ def _bulk_removable_contacts(leads):
     ))
     blocked |= _ids(db.session.query(MetaLead.conflict_user_id).filter(
         MetaLead.conflict_user_id.in_(candidates)))
+    # Пароль -- такий самий слід, як реєстрація, і береться так само пакетом.
+    # `User.has_password` б'є в `auth_identities` на КОЖНОГО користувача, тож
+    # у списковому вигляді він перетворював обіцяні чотири запити на чотири
+    # плюс довжина пакета: сотня тестових заявок -- сотня зайвих запитів в
+    # одному POST.
+    blocked |= _ids(db.session.query(AuthIdentity.user_id).filter(
+        AuthIdentity.user_id.in_(candidates),
+        AuthIdentity.provider == AuthIdentity.PROVIDER_PASSWORD,
+    ))
 
-    survivors = User.query.filter(User.id.in_(candidates - blocked)).all()
-    return [u for u in survivors if not u.has_password and not u.is_admin]
+    # `is_admin` -- звичайна колонка, тож відсівається в тому ж запиті.
+    return User.query.filter(
+        User.id.in_(candidates - blocked), User.is_admin.is_(False),
+    ).all()
 
 
 def _detach_events_bulk(lead_ids):
@@ -1060,22 +1090,44 @@ def _webhook_url():
     return f'{base}{WEBHOOK_PATH}' if base else WEBHOOK_PATH
 
 
+def _lead_totals():
+    """Скільки заявок усього і скільки з них тестові -- одним запитом.
+
+    Два `MetaLead.alive().count()` поспіль читали ту саму таблицю двічі
+    заради двох чисел з одного зрізу.
+    """
+    counted = db.session.query(
+        db.func.count(),
+        db.func.count(db.case((MetaLead.is_test.is_(True), 1))),
+    ).filter(MetaLead.deleted_at.is_(None)).one()
+    return {'leads_total': counted[0], 'leads_test': counted[1]}
+
+
 def _queue_stats():
-    """Стан черги для сторінки налаштувань."""
+    """Стан черги для сторінки налаштувань.
+
+    Один прохід замість чотирьох COUNT(*): черга подій росте без стелі, а
+    сторінка читала її таблицю чотири рази поспіль заради чотирьох чисел.
+    Той самий `count(case(...))`, що і в `_lead_summary` вище, і з тієї ж
+    причини -- він рахує лише непорожні значення, тож працює і на SQLite.
+    """
     day_ago = utcnow() - timedelta(days=1)
-    return {
-        'pending': MetaLeadEvent.query.filter(MetaLeadEvent.status.in_((
+    failed = MetaLeadEvent.status == MetaLeadEvent.STATUS_FAILED
+    counted = db.session.query(
+        db.func.count(db.case((MetaLeadEvent.status.in_((
             MetaLeadEvent.STATUS_PENDING, MetaLeadEvent.STATUS_PROCESSING,
             MetaLeadEvent.STATUS_RETRYING,
-        ))).count(),
-        'failed': MetaLeadEvent.query.filter(
-            MetaLeadEvent.status == MetaLeadEvent.STATUS_FAILED,
-        ).count(),
-        'failed_24h': MetaLeadEvent.query.filter(
-            MetaLeadEvent.status == MetaLeadEvent.STATUS_FAILED,
-            MetaLeadEvent.received_at >= day_ago,
-        ).count(),
-        'total': MetaLeadEvent.query.count(),
+        )), 1))),
+        db.func.count(db.case((failed, 1))),
+        db.func.count(db.case(
+            (db.and_(failed, MetaLeadEvent.received_at >= day_ago), 1))),
+        db.func.count(),
+    ).one()
+    return {
+        'pending': counted[0],
+        'failed': counted[1],
+        'failed_24h': counted[2],
+        'total': counted[3],
     }
 
 
@@ -1112,8 +1164,7 @@ def _settings_config(settings):
         'test_mode': settings.meta_test_mode,
         'test_mode_since': settings.meta_test_mode_since,
         'queue': _queue_stats(),
-        'leads_total': MetaLead.alive().count(),
-        'leads_test': MetaLead.alive().filter(MetaLead.is_test.is_(True)).count(),
+        **_lead_totals(),
     }
 
 

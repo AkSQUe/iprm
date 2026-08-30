@@ -46,11 +46,16 @@ def test_chain_has_a_single_head():
     for path in VERSIONS.glob('*.py'):
         text = path.read_text(encoding='utf-8')
         rev = re.search(r"^revision = '([^']+)'", text, re.M)
-        down = re.search(r"^down_revision = '([^']+)'", text, re.M)
+        # Батько буває ОДИН (`'abc'`) і буває КІЛЬКА (`('abc', 'def')`) --
+        # друге це ревізія-злиття, якою зводять дві гілки. Регулярка на
+        # один рядок їх не бачила, тож після кожного злиття обидві зведені
+        # гілки й далі рахувались головами: тест червонів саме тоді, коли
+        # проблему вже полагодили.
+        down = re.search(r'^down_revision = (.+)$', text, re.M)
         if rev:
             revisions[rev.group(1)] = path.name
         if down:
-            parents.add(down.group(1))
+            parents.update(re.findall(r"'([^']+)'", down.group(1)))
     heads = [r for r in revisions if r not in parents]
     # Перевіряємо кількість, а не імʼя голови: інакше кожна наступна міграція
     # «ламала» б цей тест, і його правили б машинально, не читаючи.

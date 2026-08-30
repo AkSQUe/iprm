@@ -21,6 +21,7 @@ import requests
 from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
+from app.models.auth_identity import AuthIdentity
 from app.models.meta_lead import MetaLead, MetaLeadEvent, MetaLeadForm
 from app.models.registration import EventRegistration
 from app.models.site_settings import SiteSettings
@@ -32,9 +33,12 @@ def _uid():
 
 
 # Порядок видалення в прибиранні: спершу діти, потім батьки.
+# AuthIdentity -- перед User: SQLite не має каскадів, і осиротіла
+# password-identity протікає в чужі вибірки (валиться test_api_v1_clients,
+# і лише в повному прогоні).
 _OWNED_MODELS = (
     MetaLeadEvent, MetaLead, MetaLeadForm, EventRegistration, CourseInstance,
-    Course, User,
+    Course, AuthIdentity, User,
 )
 
 # Налаштування -- рядок-одинак, спільний з усіма іншими тестами: його не
@@ -414,6 +418,121 @@ def test_bulk_delete_applies_the_same_contact_limits(client, admin):
 
     assert db.session.get(User, orphan_id) is None
     assert db.session.get(User, busy_id) is not None
+
+
+
+def test_bulk_delete_keeps_contact_with_password(client, admin):
+    """Пароль -- такий самий слід, як реєстрація.
+
+    Перевірка пароля стала батчевою (запит до `auth_identities` на весь
+    пакет замість `User.has_password` на кожен рядок), і це рівно те місце,
+    де батч міг би розійтися з поодинокою перевіркою: контакт, який уже
+    вміє входити, мусить пережити прибирання тестових заявок.
+    """
+    _login(client, admin)
+
+    with_password = User.create_with_password(
+        f'ml-pwd-{_uid()}@example.com', 'password123', first_name='Ніна',
+    )
+    db.session.flush()
+    kept_id = with_password.id
+    _make_lead(is_test=True, user_id=kept_id,
+               match_method=MetaLead.MATCH_CREATED)
+    db.session.flush()
+
+    client.post('/admin/meta-leads/delete-test', follow_redirects=True)
+
+    assert db.session.get(User, kept_id) is not None
+
+
+def _count_selects(fn):
+    from sqlalchemy import event
+
+    counted = []
+
+    def _count(_conn, _cursor, statement, _params, _context, _many):
+        if statement.lstrip().upper().startswith('SELECT'):
+            counted.append(statement)
+
+    event.listen(db.engine, 'before_cursor_execute', _count)
+    try:
+        fn()
+    finally:
+        event.remove(db.engine, 'before_cursor_execute', _count)
+    return len(counted)
+
+
+def test_removable_contacts_check_does_not_grow_with_pack_size(app):
+    """Перевірка «які контакти підуть під ніж» коштує однаково на будь-який пакет.
+
+    Міряємо саме перевірку, а не весь POST: сам `db.session.delete(user)`
+    законно дорожчає з кількістю контактів, бо ORM вантажить зв'язки заради
+    каскадів. А от РІШЕННЯ, кого видаляти, мусить бути пакетним -- і воно
+    таким не було: `User.has_password` б'є в `auth_identities` на кожного
+    вцілілого, тож обіцяні п'ять запитів були п'ять плюс довжина пакета.
+    """
+    from app.admin.routes_meta_leads import _bulk_removable_contacts
+
+    small = [_make_lead(is_test=True, user_id=_contact().id,
+                        match_method=MetaLead.MATCH_CREATED)
+             for _ in range(1)]
+    big = [_make_lead(is_test=True, user_id=_contact().id,
+                      match_method=MetaLead.MATCH_CREATED)
+           for _ in range(8)]
+    db.session.flush()
+
+    cheap = _count_selects(lambda: _bulk_removable_contacts(small))
+    dear = _count_selects(lambda: _bulk_removable_contacts(big))
+
+    assert len(_bulk_removable_contacts(big)) == 8, 'усі вісім мали б піти'
+    assert cheap == dear, (
+        f'пакет із восьми коштує {dear} запитів проти {cheap} на одному -- '
+        'перевірка контакту знову поштучна'
+    )
+
+
+# ----------------------------- розмітка реєстру -----------------------------
+
+def test_sorted_column_reports_its_state(client, admin):
+    """Стрілку сортування видно оком, а `aria-sort` -- диктором.
+
+    Заголовки малюються лише разом із таблицею, тож заявка тут обов'язкова:
+    на порожньому реєстрі сторінка показує `admin-empty`, і перевіряти було
+    б нічого.
+    """
+    _login(client, admin)
+    _make_lead()
+    db.session.flush()
+
+    body = client.get('/admin/meta-leads?sort=wait').get_data(as_text=True)
+    # Атрибут несуть лише сортовні заголовки (їх два): на несортовній
+    # колонці `aria-sort` не має стояти взагалі -- навіть зі значенням
+    # "none", бо воно означає «сортувати можна, зараз не відсортовано».
+    assert body.count('aria-sort="other"') == 1, 'рівно одна колонка сортована'
+    assert body.count('aria-sort="none"') == 1, 'друга сортовна -- поки ні'
+
+
+def test_stat_card_marks_the_slice_you_are_in(client, admin):
+    """Картка-зріз, у яку перейшли, мусить бути позначена.
+
+    Рахуємо позначку саме на картці, а не голий `aria-current`: останній є
+    ще й у навігації сайдбару, і його лічильник міряв би не те. Регулярка, а
+    не підрядок: у картки зі своїм тоном клас складений
+    (`admin-stat-card admin-stat-card--danger is-active`).
+    """
+    import re
+
+    _login(client, admin)
+    _make_lead(created_time=datetime.now(timezone.utc) - timedelta(hours=3))
+    db.session.flush()
+    marked = re.compile(r'class="admin-stat-card[^"]* is-active[^"]*"')
+
+    plain = client.get('/admin/meta-leads').get_data(as_text=True)
+    assert len(marked.findall(plain)) == 1, 'без фільтрів обрано «Усього заявок»'
+
+    late = client.get('/admin/meta-leads?wait=late').get_data(as_text=True)
+    assert len(marked.findall(late)) == 1, 'у зрізі «понад годину» -- саме він'
+    assert 'admin-stat-card--danger is-active' in late
 
 
 # ----------------------------- сира черга -----------------------------

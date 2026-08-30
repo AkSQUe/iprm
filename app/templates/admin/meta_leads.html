@@ -37,11 +37,13 @@
      без дороги до цих 17 рядків лишалося б числом, на яке нічого не вдієш. #}
     {# --alert, не --warning: другий у цій системі СИНІЙ (бере токен
        бейджа «Опубліковано») і читається як «очікує», а не як «глянь сюди». #}
-  {{ stat_cards([{'value': summary.total, 'label': 'Усього заявок', 'href': summary_links.total},
-                {'value': summary.new, 'label': 'Нових', 'mod': 'accent', 'href': summary_links.new},
-                {'value': summary.in_work, 'label': 'У роботі', 'href': summary_links.in_work},
-                {'value': summary.late, 'label': 'Чекають понад годину', 'mod': 'danger', 'href': summary_links.late},
-                {'value': summary.attention, 'label': 'Потребують уваги', 'mod': 'alert', 'href': summary_links.attention}],
+  {# `active` -- щоб після кліку було видно, ЯКИМ зрізом дивишся: посилання
+     вело в список, а на екрані ніщо не відрізняло його від решти. #}
+  {{ stat_cards([{'value': summary.total, 'label': 'Усього заявок', 'href': summary_links.total, 'active': summary_active.total},
+                {'value': summary.new, 'label': 'Нових', 'mod': 'accent', 'href': summary_links.new, 'active': summary_active.new},
+                {'value': summary.in_work, 'label': 'У роботі', 'href': summary_links.in_work, 'active': summary_active.in_work},
+                {'value': summary.late, 'label': 'Чекають понад годину', 'mod': 'danger', 'href': summary_links.late, 'active': summary_active.late},
+                {'value': summary.attention, 'label': 'Потребують уваги', 'mod': 'alert', 'href': summary_links.attention, 'active': summary_active.attention}],
                cls='ml-stats') }}
 
   {{ filter_bar(
@@ -79,7 +81,21 @@
 
   {% if leads %}
   <div class="admin-table-wrap">
-  <table class="admin-table">
+  <table class="admin-table admin-table--fixed ml-table">
+    {# Розкрій фіксований, ширини -- у colgroup. Без цього браузер роздає
+       місце за вмістом, і найдовше значення (назва кампанії, довга пошта)
+       розсуває таблицю разом із колонкою дій за межі екрана. Заразом
+       вмикається обрізання трьома крапками: воно потребує визначеної
+       ширини комірки. #}
+    <colgroup>
+      <col class="ml-col--wait">
+      <col class="ml-col--lead">
+      <col class="ml-col--contacts">
+      <col class="ml-col--source">
+      <col class="ml-col--match">
+      <col class="ml-col--status">
+      <col class="ml-col--actions">
+    </colgroup>
     {# Сортування СЕРВЕРНЕ, тому `data-no-sort` стоїть на всіх заголовках:
        клієнтський `admin-table-sort.js` переставив би лише 50 рядків
        поточної сторінки, та ще й за текстом («10 хв» опинялось вище за

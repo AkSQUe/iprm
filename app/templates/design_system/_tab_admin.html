@@ -157,6 +157,33 @@
     </div>
     <p class="ds-hint">a.admin-stat-card -- число веде на власний зріз списку / .is-active + aria-current: обраний зріз, межа й значення --iprm-nav-active (колір тексту, не заливки: картка лишається карткою)</p>
 
+    <h3 class="ds-section-heading">Шкала очікування</h3>
+    <div class="ds-demo">
+      <span class="ml-wait ml-wait--fresh">
+        <span class="ml-wait__value">4 хв</span>
+        <span class="ml-wait__note">без реакції</span>
+      </span>
+      <span class="ml-wait ml-wait--warn">
+        <span class="ml-wait__value">38 хв</span>
+        <span class="ml-wait__note">без реакції</span>
+      </span>
+      <span class="ml-wait ml-wait--late">
+        <span class="ml-wait__value">3 год</span>
+        <span class="ml-wait__note">без реакції</span>
+      </span>
+      <span class="ml-wait ml-wait--done">
+        <span class="ml-wait__value">12 хв</span>
+        <span class="ml-wait__note">до реакції</span>
+      </span>
+    </div>
+    <div class="ds-demo">
+      <div class="ml-wait-panel ml-wait-panel--late">
+        <div class="ml-wait-panel__value">3 год 20 хв</div>
+        <div class="ml-wait-panel__label">заявка чекає на перший дзвінок</div>
+      </div>
+    </div>
+    <p class="ds-hint">.ml-wait--fresh/--warn/--late/--done -- скільки заявка чекає на першу реакцію; --done нейтральний навмисно: червоне на вже зробленій роботі кричало б про те, чого не виправити / .ml-wait-panel--* -- та сама шкала на картці заявки</p>
+
     <h3 class="ds-section-heading">Program Block</h3>
     <div class="ds-demo">
       <div class="form-section">

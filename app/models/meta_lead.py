@@ -95,6 +95,14 @@ class MetaLeadEvent(TimestampMixin, db.Model):
 
     __table_args__ = (
         db.Index('ix_meta_lead_events_status_retry', 'status', 'next_retry_at'),
+        # Черга завжди сортується часом ПРИЙОМУ, а проіндексований був
+        # `created_time` -- час ліда за версією Meta. Два різні моменти, і
+        # порядок за другим індекс за першим не пришвидшує ніяк.
+        db.Index('ix_meta_lead_events_received', db.text('received_at DESC')),
+        # Той самий порядок усередині обраного статусу: і зріз реєстру за
+        # статусом, і лічильник «збоїв за добу» на сторінці налаштувань.
+        db.Index('ix_meta_lead_events_status_received',
+                 'status', db.text('received_at DESC')),
         db.CheckConstraint(
             "status IN ('pending', 'processing', 'retrying', 'done', 'skipped', 'failed')",
             name='ck_meta_lead_events_status',
@@ -388,17 +396,6 @@ class MetaLeadForm(TimestampMixin, db.Model):
     status = db.Column(db.String(32))
     locale = db.Column(db.String(16))
 
-    # `{ключ_питання: {'label': ..., 'type': ..., 'options': {ключ: підпис}}}`.
-    # JSON, а не таблиця питань: набір питань змінюється щокампанії, а
-    # читається схема цілком і завжди однією формою -- нормалізація дала б
-    # тут лише зайвий JOIN на кожну картку ліда.
-    questions = db.Column(db.JSON, nullable=False, default=dict)
-
-    # Коли схему востаннє забрали з Graph API. Порожньо бути не може:
-    # рядок і створюється лише як результат успішного походу.
-    synced_at = db.Column(db.DateTime(timezone=True), nullable=False,
-                          default=lambda: datetime.now(timezone.utc))
-
     # Захід, про який ця форма. Прив'язка руками в адмінці: Meta про наші
     # курси не знає нічого, а вгадувати захід із назви форми означало б
     # мовчки помилятись на другому потоці того самого курсу.
@@ -419,6 +416,17 @@ class MetaLeadForm(TimestampMixin, db.Model):
     # запис. У проді той самий результат додатково гарантує сам FK
     # (ondelete='SET NULL') -- це підстраховка одне одного, не дублювання.
     course_instance = db.relationship('CourseInstance', back_populates='meta_lead_forms')
+
+    # `{ключ_питання: {'label': ..., 'type': ..., 'options': {ключ: підпис}}}`.
+    # JSON, а не таблиця питань: набір питань змінюється щокампанії, а
+    # читається схема цілком і завжди однією формою -- нормалізація дала б
+    # тут лише зайвий JOIN на кожну картку ліда.
+    questions = db.Column(db.JSON, nullable=False, default=dict)
+
+    # Коли схему востаннє забрали з Graph API. Порожньо бути не може:
+    # рядок і створюється лише як результат успішного походу.
+    synced_at = db.Column(db.DateTime(timezone=True), nullable=False,
+                          default=lambda: datetime.now(timezone.utc))
 
     @property
     def questions_count(self):
