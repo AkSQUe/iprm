@@ -419,6 +419,18 @@ def test_export_over_ceiling_counts_before_materializing(client, admin, monkeypa
     assert count_queries, (
         f'{spec["name"]}: жодного COUNT-запиту в журналі SQL -- стеля не міряна ДО вибірки'
     )
+    # Порожній `materializing` доводить не-матеріалізацію лише тому, що
+    # COUNT-запит несе розпізнавальний слід (LIKE lower(...) від `q=tag`).
+    # Специфікація без пошукового фільтра (лише status/дата) лишила б цей
+    # слід відсутнім і в COUNT-і теж -- і `materializing` був би порожнім
+    # ВАКУУМНО, з тієї самої причини, що колись підвела 'ilike': перевірка
+    # нічого не побачила б, бо дивилась не туди. Спершу переконуємось, що
+    # сигнал узагалі є ДЕ шукати -- інакше висновок нижче не про що.
+    assert any(_LIKE_LOWER_RE.search(cq) for cq in count_queries), (
+        f'{spec["name"]}: у COUNT-запиті немає розпізнавального LIKE-сліду -- '
+        'висновок "не матеріалізувався" з порожнього materializing нічого не '
+        'доводить (додайте пошуковий фільтр у qs() цієї специфікації)'
+    )
     assert not materializing, (
         f'{spec["name"]}: зріз таки матеріалізувався ДО перевірки стелі:\n'
         + '\n'.join(materializing)

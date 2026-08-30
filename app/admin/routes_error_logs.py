@@ -72,7 +72,12 @@ def error_logs():
         pass
 
     filters = _error_log_filters()
-    per_page = request.args.get('per_page', 50, type=int)
+    # Було: request.args.get('per_page', 50, type=int) -- будь-яке ціле з
+    # URL напряму в paginate(), без переліку дозволених (як застерігає
+    # докстрінг per_page_arg: «свавільне ?per_page=100000 інакше клало б
+    # сторінку на прод-обсязі»). Сторінка не мала (і не має) власного
+    # селектора розміру сторінки -- звужуємо мовчки нікому не помітно.
+    per_page = _listing.per_page_arg()
     pagination = _error_log_query(filters).paginate(
         page=_listing.page_arg(),
         per_page=per_page, error_out=False,

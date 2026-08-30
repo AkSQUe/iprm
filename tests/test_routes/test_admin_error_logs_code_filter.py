@@ -105,3 +105,44 @@ def test_code_outside_dropdown_shows_in_chip(client, admin, logs):
     _login(client, admin)
     html = client.get('/admin/error-logs?error_code=502&days=0').get_data(as_text=True)
     assert re.search(r'<span class="admin-chip__key">Код:</span>\s*502', html)
+
+
+def test_junk_per_page_falls_back_to_default(client, admin):
+    """`?per_page=<сміття>` не має обходити стелю: журнал тепер читає
+    розмір сторінки через `_listing.per_page_arg()`, як і решта реєстрів,
+    а не сирим `request.args.get('per_page', 50, type=int)` -- те приймало
+    будь-яке ціле напряму в `paginate()`.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    from app.admin import _listing
+
+    tag = f'perpage-{_uid()}'
+    now = datetime.now(timezone.utc)
+    for i in range(_listing.LIST_PER_PAGE + 3):
+        db.session.add(ErrorLog(
+            error_code=500, error_type='ServerError',
+            error_message=f'{tag}-{i:03d}', created_at=now - timedelta(seconds=i),
+        ))
+    # commit, а не flush: та сама причина, що й для admin/logs вище --
+    # захисний db.session.rollback() на початку роуту.
+    db.session.commit()
+
+    try:
+        _login(client, admin)
+        html = client.get(
+            f'/admin/error-logs?q={tag}&per_page=999999999&days=0',
+        ).get_data(as_text=True)
+        shown = len(re.findall(
+            rf'data-error-message="{re.escape(tag)}-\d{{3}}"', html,
+        ))
+        assert shown == _listing.LIST_PER_PAGE, (
+            f'сміттєвий per_page мав відкотитись на дефолт '
+            f'({_listing.LIST_PER_PAGE}), показано {shown}'
+        )
+    finally:
+        db.session.rollback()
+        ErrorLog.query.filter(ErrorLog.error_message.like(f'{tag}-%')).delete(
+            synchronize_session=False,
+        )
+        db.session.commit()
