@@ -14,7 +14,6 @@
 фабрику рядків під власну модель.
 """
 import io
-import json
 import re
 from datetime import datetime, timedelta, timezone
 from urllib.parse import parse_qs, urlparse
@@ -66,22 +65,14 @@ def _login(client, user):
 # "SELECT count(*) AS count_1 FROM (<весь запит>) AS anon_1" -- рядковий
 # SELECT так НЕ починається, навіть коли сам несе count() усередині
 # корельованого підзапиту (як у users).
-_COUNT_SQL_RE = re.compile(r'^select\s+count\(', re.IGNORECASE)
+_COUNT_SQL_RE = re.compile(r'^select\s+count\(\*\)', re.IGNORECASE)
 
-_FLASH_RE = re.compile(
-    r'<script type="application/json" id="iprm-flash-data">(.*?)</script>',
-    re.DOTALL,
-)
-
-
-def _flash_messages(html):
-    """Повідомлення з JS-тостів base.html (не всі сторінки-списки мають
-    ще й дублюючий inline-блок `{% with messages %}`, тож шукати треба
-    саме тут, а не сирим текстом по HTML)."""
-    m = _FLASH_RE.search(html)
-    if not m:
-        return []
-    return [item['message'] for item in json.loads(m.group(1))]
+# `col.ilike(pattern, escape='\\')` на діалекті SQLite нема нативного ILIKE
+# -- компілятор розгортає його в "lower(col) LIKE lower(?) ESCAPE '\'".
+# Рядка 'ilike' у зібраних SQL НІКОЛИ не буде: ознака справжнього запиту
+# зрізу (усі дванадцять специфікацій завжди передають `q=tag`, який
+# apply_search перетворює саме на цю форму) -- ця LIKE-конструкція.
+_LIKE_LOWER_RE = re.compile(r'like\s+lower\(', re.IGNORECASE)
 
 
 # --- Спільні фабрики для рядків, що тримають FK-ланцюжок --------------------
@@ -351,6 +342,10 @@ def test_export_over_ceiling_counts_before_materializing(client, admin, monkeypa
     ceiling = 3
     monkeypatch.setattr(_listing, 'MAX_EXPORT_ROWS', ceiling)
 
+    # Не дискримінує стару поведінку від нової -- на дореформеному коді
+    # xlsx_export теж відмовляв ДО виклику білдера, просто пізніше (по
+    # len(rows) замість COUNT). Тримаємо як пасивний запобіжник другого
+    # порядку: справжній доказ порядку дій -- нижче, по журналу SQL.
     def _boom(*a, **kw):
         raise AssertionError(f'{spec["builder"]} не мав викликатись понад стелею')
 
@@ -386,9 +381,13 @@ def test_export_over_ceiling_counts_before_materializing(client, admin, monkeypa
             f'{spec["name"]}: параметр {key!r} не зберігся в редіректі ({q_values})'
         )
 
-    # Flash про перевищення.
-    follow = client.get(export_url, follow_redirects=True)
-    messages = _flash_messages(follow.get_data(as_text=True))
+    # Flash про перевищення -- із сесії ПЕРШОГО запиту (302 вище вже її
+    # встановив), а не другим повним запитом до export_url: другий запит
+    # заново пройшов би весь той самий шлях (і COUNT, і редірект), а нам
+    # тут потрібен лише текст, який flash() уже поклав у сесію.
+    with client.session_transaction() as sess:
+        raw_flashes = list(sess.get('_flashes', []))
+    messages = [msg for _category, msg in raw_flashes]
     assert any('більше за ліміт' in msg for msg in messages), (
         f'{spec["name"]}: немає flash про перевищення стелі ({messages})'
     )
@@ -399,21 +398,23 @@ def test_export_over_ceiling_counts_before_materializing(client, admin, monkeypa
     # запит адмінки йдуть побічні SELECT-и, до нашого зрізу не причетні
     # (сесія current_user через flask-login, SiteSettings у контекст-
     # процесорі). Відрізняємо їх не таблицею (для роуту users побічний
-    # SELECT б'є в ту саму таблицю users), а ILIKE-умовою: `q=tag` в усіх
-    # дванадцяти специфікаціях -- реальний пошуковий фільтр, і РІВНО він
-    # завжди потрапляє в WHERE справжнього запиту зрізу (і в COUNT, що
-    # той самий запит огортає). Побічні SELECT-и такої умови не несуть.
+    # SELECT б'є в ту саму таблицю users), а формою LIKE-умови: `q=tag` в
+    # усіх дванадцяти специфікаціях -- реальний пошуковий фільтр, і РІВНО
+    # він завжди потрапляє в WHERE справжнього запиту зрізу (і в COUNT, що
+    # той самий запит огортає) у вигляді "lower(col) LIKE lower(?)"
+    # (SQLite не має нативного ILIKE -- компілятор розгортає його саме
+    # так). Побічні SELECT-и такої умови не несуть.
     #
     # Розпізнавати COUNT ЛИШЕ підрядком 'count(' небезпечно: у users
     # рядковий SELECT сам несе корельований підзапит "(SELECT count(...)
     # AS _registration_count)" -- це підрядок 'count(' усередині запиту, що
     # якраз і мав НЕ виконуватись. Справжній `.count()` SQLAlchemy завжди
-    # огортає весь запит підзапитом і починається рівно з
-    # "SELECT count(*)" -- цей префікс і є ознакою.
+    # огортає весь запит підзапитом і починається рівно з "SELECT count(*)"
+    # -- цей префікс (а не підрядок будь-де) і є ознакою.
     count_queries = [s for s in selects if _COUNT_SQL_RE.match(s.strip())]
     materializing = [
         s for s in selects
-        if not _COUNT_SQL_RE.match(s.strip()) and 'ilike' in s.lower()
+        if not _COUNT_SQL_RE.match(s.strip()) and _LIKE_LOWER_RE.search(s)
     ]
     assert count_queries, (
         f'{spec["name"]}: жодного COUNT-запиту в журналі SQL -- стеля не міряна ДО вибірки'
@@ -430,10 +431,13 @@ def test_export_over_ceiling_counts_before_materializing(client, admin, monkeypa
 def test_export_under_ceiling_returns_whole_slice(client, admin, app, spec):
     """У межах стелі xlsx містить УСІ рядки зрізу, а не одну сторінку.
 
-    51 -- більше за будь-який спостережений розмір сторінки серед цих
-    роутів (25/30/50): якби експорт випадково почав пагінувати (напр.,
-    хтось замінив би `.all()` на `.paginate()` при рефакторингу), файл
-    мав би 50 чи менше рядків замість 51.
+    51 -- більше за найбільший спостережений розмір сторінки серед цих
+    роутів (LIST_PER_PAGE=50 -- b2b/certificates/course_requests/
+    refund_requests/registrations/users; так само 50 -- notifications,
+    error_logs; є й менші: _INSTANCES_PER_PAGE=25, PER_PAGE=30 в
+    online_orders/promo_codes). Якби експорт випадково почав пагінувати
+    (напр., хтось замінив би `.all()` на `.paginate()` при рефакторингу),
+    файл мав би не більше 50 рядків замість 51.
     """
     n = 51
     tag = f'{spec["name"]}-{_uid()}'
@@ -454,6 +458,56 @@ def test_export_under_ceiling_returns_whole_slice(client, admin, app, spec):
     data_rows = wb.active.max_row - 1  # мінус рядок заголовка
     assert data_rows == n, (
         f'{spec["name"]}: у файлі {data_rows} рядків замість {n} -- зріз обрізано'
+    )
+
+
+# --- Особливий випадок: routes_registrations.py -- сортування ---------------
+
+def test_registrations_export_keeps_newest_first_order(client, admin, app):
+    """`.order_by(EventRegistration.created_at.desc())` лишається на
+    матеріалізованому запиті: `export_query` знімає ORDER BY лише для
+    свого внутрішнього COUNT (`query.order_by(None).count()`), а не для
+    `.all()`, який виконується вже без цього виклику.
+
+    Рядки вставляємо у ЗРОСТАЮЧОМУ хронологічному порядку (найстаріший
+    -- перший за id/rowid): якщо колись `.order_by(...)` перед
+    `export_query` загубиться, дефолтний порядок видачі SQLite
+    (rowid/порядок вставки) буде РІВНО таким -- від найстарішого до
+    найновішого, тобто протилежним очікуваному «найновіший перший». Це і
+    ловить тест: сторож на ризик, який сам сформулював план -- рядок
+    `regs = query.order_by(...).all()` розбили на два, і саме сортування
+    можна тихо втратити при майбутній правці.
+    """
+    tag = f'order-{_uid()}'
+    course = _course(tag)
+    instance = _instance(course)
+    base = datetime.now(timezone.utc)
+    reg_ids = []
+    for i in range(5):
+        user = _plain_user(f'{tag}-{i}')
+        reg = EventRegistration(
+            user_id=user.id, instance_id=instance.id, phone='+380670000000',
+            specialty='Т', workplace='Клініка', status='confirmed',
+            payment_status='paid', created_at=base + timedelta(minutes=i),
+        )
+        db.session.add(reg)
+        db.session.flush()
+        reg_ids.append(reg.id)
+
+    _login(client, admin)
+    with app.test_request_context():
+        from flask import url_for
+        export_url = url_for('admin.registrations_export', q=tag, scope='all')
+
+    resp = client.get(export_url)
+    assert resp.status_code == 200
+
+    wb = load_workbook(io.BytesIO(resp.data))
+    ws = wb.active
+    exported_ids = [ws.cell(row=r, column=1).value for r in range(2, ws.max_row + 1)]
+    assert exported_ids == list(reversed(reg_ids)), (
+        f'реєстрації у файлі не в порядку "найновіша перша": {exported_ids} '
+        f'(мало бути {list(reversed(reg_ids))})'
     )
 
 
