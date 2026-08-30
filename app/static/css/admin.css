@@ -2735,7 +2735,8 @@ a.admin-stat-card:focus-visible {
 }
 
 .admin-layout--stack > .admin-hero,
-.admin-layout--stack > .admin-stat-cards {
+.admin-layout--stack > .admin-stat-cards,
+.admin-layout--stack > .admin-filters {
   margin-bottom: 0;
 }
 
@@ -2761,7 +2762,11 @@ a.admin-stat-card:focus-visible {
    ========================================================================== */
 
 .admin-filters {
-  margin-bottom: 20px;
+  /* 24px -- той самий крок, що й gap у .admin-layout--stack: інакше на
+     сторінках-стопках відступ складався з обох і виходив 44px проти 20px
+     на решті реєстрів. Усередині --stack власний margin обнуляється вище,
+     щоб джерело відступу лишалось одне. */
+  margin-bottom: 24px;
   padding: 14px 16px;
   background: var(--iprm-white);
   border: 1px solid var(--iprm-border);
