@@ -140,6 +140,13 @@ def test_search_term_is_capped(app):
 
 def test_inverted_date_range_is_swapped(client, admin):
     """Переставлені межі дають той самий зріз, а не порожній список."""
+    # Київський день фіксуємо ДО створення рядка, а не після. created_at
+    # у EventRegistration -- utcnow() за замовчуванням, а apply_date_range
+    # ріже за київським зсувом (+3): якщо між вставкою і зчитуванням
+    # реальний годинник переходив київську північ, рядок лишався у
+    # вчорашньому дні, today вказував уже на сьогоднішній -- і запит
+    # чесно не знаходив нічого. Тепер обидва посилаються на один день.
+    today = _listing.now_kyiv().strftime('%Y-%m-%d')
     course = Course(title='Дати', slug=f'dt-{_uid()}', is_active=True)
     db.session.add(course)
     db.session.flush()
@@ -154,7 +161,6 @@ def test_inverted_date_range_is_swapped(client, admin):
     db.session.flush()
 
     _login(client, admin)
-    today = _listing.now_kyiv().strftime('%Y-%m-%d')
     straight = client.get(
         f'/admin/registrations?scope=all&date_from={today}&date_to={today}')
     inverted = client.get(

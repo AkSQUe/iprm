@@ -2,18 +2,18 @@
 закритості приватних розділів."""
 import re
 
-from flask import url_for
+from flask import render_template_string, request, url_for
 from flask_babel import refresh
 
 from app.i18n import (
     DEFAULT_LANGUAGE, LANGUAGES, OG_LOCALES, PREFIXED_LANGUAGES,
-    UNTRANSLATED_ENDPOINTS,
+    UNTRANSLATED_BLUEPRINTS, UNTRANSLATED_ENDPOINTS,
 )
 from tests.test_seo.helpers import (
-    LOCALE_PASSES, content_translation_calls, fetch_public_pages,
-    find_nodes_by_type, is_absolute_url, iter_url_values, jsonld_blocks,
-    organization_ids, pass_label, public_urls, reference_ids, rendered_lang,
-    templates_named_in_view, templates_rendered_by,
+    LOCALE_PASSES, TRANSLATION_CALL_RE, content_translation_calls,
+    fetch_public_pages, find_nodes_by_type, is_absolute_url, iter_url_values,
+    jsonld_blocks, organization_ids, pass_label, public_urls, reference_ids,
+    rendered_lang, templates_named_in_view, templates_rendered_by,
 )
 
 
@@ -391,6 +391,110 @@ class TestUntranslatedConstantIsDerivable:
             'Список українських-лише сторінок розійшовся з розміткою.\n'
             f'У розмітці українські, але не в списку: {sorted(derived - listed)}\n'
             f'У списку, але вміст перекладений: {sorted(listed - derived)}'
+        )
+
+
+class TestUntranslatedBlueprintsAreReallyUntranslated:
+    """UNTRANSLATED_BLUEPRINTS -- правило, тож і перевіряти його правилом.
+
+    Адмінка успадковує base.html, а разом із ним і content_lang, тож під
+    ru-сесією вся панель оголошувала lang="ru" над українським
+    інтерфейсом. На видачу це не впливає (розділ закритий X-Robots-Tag),
+    зате скрінрідер саме за цим тегом обирає голосовий рушій.
+
+    Правило накриває близько сімдесяти ендпоінтів наперед, і тим воно й
+    небезпечне: воно мовчки лишиться чинним і того дня, коли адмінку
+    почнуть перекладати, -- а тоді збреше рівно в другий бік, оголошуючи
+    українську над російським інтерфейсом. Ця перевірка і є той момент,
+    коли брехня стає падінням: вона читає ВСІ шаблони названих
+    блюпринтів і вимагає нуля викликів перекладу.
+
+    Читається файл цілком, а не {% block content %}: правило заявляє
+    неперекладеність РОЗДІЛУ, а не основного вмісту однієї сторінки, тож
+    і виклик у сайдбарі чи в partial'і мусить його завалити. Обрамлення
+    з base.html до вибірки не входить -- воно перекладене завжди, і саме
+    тому оголошується мова ВМІСТУ, а не рамки.
+    """
+
+    def _templates_of(self, app, name):
+        """Шаблони блюпринта -- через завантажувач Jinja, не через
+        os.listdir: список бере той самий пошук, яким рендер знаходить
+        шаблон, тож переїзд теки не зробить перевірку мовчазним нулем."""
+        prefix = name + '/'
+        return sorted(
+            t for t in app.jinja_env.list_templates()
+            if t.startswith(prefix) and t.endswith('.html')
+        )
+
+    def test_listed_blueprints_exist_and_have_templates(self, app):
+        """Fail-closed: перейменований блюпринт або порожня вибірка мусять
+        падати, а не проходити нулем знайдених викликів."""
+        assert UNTRANSLATED_BLUEPRINTS, 'Набір порожній -- перевіряти нічого'
+        bad = []
+        for name in sorted(UNTRANSLATED_BLUEPRINTS):
+            if name not in app.blueprints:
+                bad.append(f'{name}: такого блюпринта в застосунку немає')
+                continue
+            if not self._templates_of(app, name):
+                bad.append(
+                    f'{name}: жодного шаблона -- перевірка нічого не читає, '
+                    'а правило все одно диктує мову'
+                )
+        assert not bad, (
+            'UNTRANSLATED_BLUEPRINTS розійшовся із застосунком:\n'
+            + '\n'.join(bad)
+        )
+
+    def test_listed_blueprints_contain_no_translation_calls(self, app):
+        offenders = []
+        for name in sorted(UNTRANSLATED_BLUEPRINTS):
+            for template in self._templates_of(app, name):
+                source = app.jinja_env.loader.get_source(
+                    app.jinja_env, template,
+                )[0]
+                calls = TRANSLATION_CALL_RE.findall(source)
+                if calls:
+                    offenders.append(f'{template}: {len(calls)} викликів')
+        assert not offenders, (
+            'Розділ із UNTRANSLATED_BLUEPRINTS перекладають, а правило все '
+            'ще прибиває йому мову до української -- тепер це брехня в '
+            'протилежний бік:\n' + '\n'.join(offenders)
+        )
+
+    def test_admin_declares_the_default_language_under_a_foreign_session(
+        self, app,
+    ):
+        """Друга половина: правило мусить справді доходити до розмітки.
+
+        Ходимо не запитом, а контекстом: сторінки адмінки під
+        @admin_required анонімному клієнту HTML не віддають, а перевірити
+        треба саме обчислення content_lang. Мова сесії при цьому
+        по-справжньому чужа -- current_lang лишається ru/en, і твердження
+        нижче падало б, якби правило просто перебило локаль усюди.
+        """
+        bad = []
+        for lang in PREFIXED_LANGUAGES:
+            with app.test_request_context(
+                '/admin/users', headers={'Accept-Language': lang},
+            ):
+                refresh()
+                assert request.blueprint == 'admin', (
+                    f'/admin/users належить блюпринту {request.blueprint!r}'
+                )
+                current = render_template_string('{{ current_lang }}')
+                content = render_template_string('{{ content_lang }}')
+                og = render_template_string('{{ og_locale }}')
+            if current != lang:
+                bad.append(
+                    f'[сесія {lang}] current_lang = {current!r} -- сесія не '
+                    'чужомовна, перевірка нічого не доводить'
+                )
+            if content != DEFAULT_LANGUAGE:
+                bad.append(f'[сесія {lang}] content_lang = {content!r}')
+            if og != OG_LOCALES[DEFAULT_LANGUAGE]:
+                bad.append(f'[сесія {lang}] og_locale = {og!r}')
+        assert not bad, (
+            'Адмінка оголошує не ту мову, якою написана:\n' + '\n'.join(bad)
         )
 
 
