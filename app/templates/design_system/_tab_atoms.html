@@ -94,7 +94,7 @@
           </div>
         </div>
         <p class="ds-hint">border-radius: var(--iprm-radius-pill) / Primary: bg accent, color white / Secondary: transparent, accent text, ::after ' >' / 3 interaction states:</p>
-        <div class="ds-hint" style="margin-top: 8px;">
+        <div class="ds-hint ds-hint--stacked">
           :hover { transform: scale(1.02) translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }<br>
           :active { transform: scale(0.98) translateY(0); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }<br>
           :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
@@ -197,7 +197,7 @@
     <div class="ds-section" id="alerts">
         <p class="ds-label">Components</p>
         <h2 class="ds-title">Алерти</h2>
-        <div class="ds-demo" style="max-width: 600px;">
+        <div class="ds-demo ds-demo-narrow">
           <div class="ds-col">
             <div class="alert alert--error">Помилка: щось пішло не так</div>
             <div class="alert alert--success">Операцію виконано успішно</div>
@@ -235,7 +235,7 @@
     <p class="ds-label">Components</p>
     <h2 class="ds-title">Форми</h2>
     <div class="ds-demo">
-      <div class="form-section" style="margin: 0;">
+      <div class="form-section ds-flush-margin">
         <h3 class="form-section__title">Заголовок секції</h3>
         <div class="form-section__grid">
           <div class="form-group">
@@ -341,7 +341,7 @@
       <h2 class="ds-title">iprm-img-cover</h2>
       <div class="ds-demo">
         <div class="ds-row">
-          <div style="width: 160px; height: 120px; overflow: hidden;">
+          <div class="ds-img-frame">
             <img class="iprm-img-cover" src="{{ url_for('static', filename='images/labs/cell-aging.webp') }}" alt="">
           </div>
         </div>
@@ -357,7 +357,7 @@
       <h2 class="ds-title">iprm-focus-ring</h2>
       <div class="ds-demo">
         <div class="ds-row">
-          <input class="form-input iprm-focus-ring" value="Клацніть -- побачите кільце фокуса" style="max-width: 320px;">
+          <input class="form-input iprm-focus-ring ds-field-narrow" value="Клацніть -- побачите кільце фокуса">
         </div>
       </div>
       <p class="ds-hint">Кільце фокуса (`outline: none` + рамка й тінь у колір акценту) поза `.form-input` -- на `contenteditable`-полі редакторів блогу, полі пошуку календаря й alt-тексті медіатеки. Клас ставиться прямо на елемент поряд із його власним; правило спільне з `.form-input:focus` (common.css). Заміняє сім копій цього самого правила під різними селекторами, що жили в admin-media.css, courses.css (тричі) і page-admin-blog-editor.css, page-home.css -- правка кільця раніше доходила лише до того селектора, який згадали.</p>

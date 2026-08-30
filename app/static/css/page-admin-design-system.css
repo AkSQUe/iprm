@@ -67,6 +67,13 @@
   color: var(--iprm-border-neutral);
 }
 
+/* Другий .ds-hint одразу під першим -- продовження тієї самої підказки,
+   а не нова: стандартні 16px відступу читаються як розрив між різними
+   думками, 8px -- як один блок. */
+.ds-hint--stacked {
+  margin-top: 8px;
+}
+
 /* ========== LAYOUT HELPERS ========== */
 
 .ds-row {
@@ -257,6 +264,26 @@
   padding-bottom: 160px;
 }
 
+/* Демо, якому за суттю потрібна вузька колонка -- стек алертів, картка
+   контент-сторінки -- а не повна ширина .ds-demo. */
+.ds-demo-narrow {
+  max-width: 600px;
+}
+
+/* Поле в демо, якому на всю ширину .ds-demo виглядало б розтягнутим
+   непропорційно вжитку -- одне вузьке поле, а не форма. */
+.ds-field-narrow {
+  max-width: 320px;
+}
+
+/* Рамка фіксованого розміру для демо .iprm-img-cover -- без неї показувати
+   обрізку зображення нема на чому. */
+.ds-img-frame {
+  width: 160px;
+  height: 120px;
+  overflow: hidden;
+}
+
 /* ========== SECTION HEADING ========== */
 
 .ds-section-heading {
@@ -397,6 +424,17 @@
    (course_edit.html) рамки не прибирає. */
 .ds-flush-border {
   border: none;
+}
+
+/* Пара до .ds-flush-border: прибирає власний зовнішній/внутрішній відступ
+   риштування демо -- form-section і form-group самі задають margin, що в
+   тісному демо дублює padding .ds-demo. */
+.ds-flush-margin {
+  margin: 0;
+}
+
+.ds-flush-padding {
+  padding: 0;
 }
 
 /* ========== EMPTY STATE GRID (демо-риштування) ========== */
