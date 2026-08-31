@@ -65,6 +65,35 @@
   {% endif %}
 </div>
 
+{# Звірка зависли платежів.
+   Окрема секція, а не кнопка поруч із «Тестувати з'єднання»: та перевіряє
+   ключі, ця рухає гроші. Поруч їх плутали б. #}
+<div class="form-section">
+  <h3 class="admin-form__section-title">Звірка з LiqPay</h3>
+  <p class="form-hint">
+    Перепитує LiqPay про замовлення зі статусом «Очікує оплати» і доводить їх
+    до кінця. Такі замовлення виходять зі стану очікування лише повторним
+    сповіщенням від LiqPay або заходом самого платника на сторінку оплати --
+    якщо не сталося ні того, ні іншого, платіж висить, а разом з ним мовчать
+    лист про оплату та передача партнеру. Тисніть після відновлення
+    верифікації магазину або якщо оплата пройшла, а статус не змінився.
+  </p>
+  <div class="admin-readonly-config">
+    <div class="admin-readonly-config__row">
+      <span class="admin-readonly-config__label">Очікує оплати</span>
+      <span class="admin-readonly-config__value">{{ stats.pending }}</span>
+    </div>
+  </div>
+  {% if cfg.is_configured %}
+  <form method="POST" action="{{ url_for('admin.liqpay_reconcile') }}" class="admin-integration-test">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn-admin btn-admin--secondary">Звірити з LiqPay</button>
+  </form>
+  {% else %}
+  <p class="form-hint">Спочатку збережіть ключі LiqPay.</p>
+  {% endif %}
+</div>
+
 {# Update keys #}
 <div class="form-section">
   <h3 class="admin-form__section-title">Встановити ключі</h3>

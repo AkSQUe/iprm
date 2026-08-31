@@ -5,6 +5,8 @@ Jobs:
 - daily_course_reminders: daily at 09:00, sends reminders for upcoming events.
 - email_queue_maintenance: every 5 min, cleans stale pending + retries failed.
 - webhook_queue_worker: every minute, dispatches partner webhooks.
+- payment_reconcile: every 15 min, re-asks LiqPay about payments stuck in
+  'pending' (a callback that never arrived leaves the order hanging forever).
 
 Multi-worker захист: gunicorn запускає N воркерів, у кожного власний
 BackgroundScheduler. Без координації job виконається N разів -- це і є
@@ -128,6 +130,14 @@ def init_scheduler(app):
         id='xlsx_uploads_cleanup',
         replace_existing=True,
         name='Очищення тимчасових xlsx-вивантажень',
+    )
+
+    scheduler.add_job(
+        reconcile_stuck_payments,
+        trigger=CronTrigger(minute='*/15'),  # every 15 minutes
+        id='payment_reconcile',
+        replace_existing=True,
+        name='Звірка зависли платежів (LiqPay)',
     )
 
     scheduler.add_job(
@@ -653,6 +663,59 @@ def retry_online_access_provisioning():
                                          enrollment.order_id)
             except Exception:
                 logger.exception('retry_online_access_provisioning failed')
+
+
+#: Наскільки свіжим має бути замовлення, щоб його чіпала ФОНОВА звірка.
+#: Платіж, який не вирішився за тиждень, сам уже не вирішиться: людина взяла
+#: рахунок або передумала, і `pending` лишиться назавжди. Без цієї межі
+#: джоба питала б LiqPay про такий рядок кожні чверть години роками. Старші
+#: замовлення лишаються кнопці в адмінці -- там межі немає навмисно.
+RECONCILE_MAX_AGE_DAYS = 7
+
+
+def reconcile_stuck_payments():
+    """Догнати платежі, про які нам не сказали.
+
+    Замовлення виходить із `pending` лише повторним колбеком LiqPay або
+    заходом самого платника на сторінку оплати. Загублений колбек не
+    перезапитує ніхто, а платник, який уже побачив «дякуємо» на боці
+    LiqPay, до нас не повернеться -- і замовлення висить разом із листом
+    про оплату, подією партнеру й вивозом у KeyCRM. Кнопка в адмінці
+    лагодить аварію, про яку вже знають; ця джоба -- ту, якої не помітили.
+    """
+    app = scheduler._app
+    with app.app_context():
+        with _job_lock('payment_reconcile') as got:
+            if not got:
+                logger.debug('payment reconcile: another worker holds the lock')
+                return
+            _reconcile_stuck_payments()
+
+
+def _reconcile_stuck_payments():
+    from app.services.payment_ops import reconcile_pending
+
+    try:
+        report = reconcile_pending(max_age_days=RECONCILE_MAX_AGE_DAYS)
+    except Exception:
+        logger.exception('reconcile_stuck_payments failed')
+        return
+
+    if report['error']:
+        # Ключі ще не збережені -- це стан налаштування, а не збій.
+        # WARNING щочверть години зробив би тривогу фоновим шумом.
+        logger.debug('payment reconcile skipped: %s', report['error'])
+        return
+
+    # Мовчимо, коли зависати нема чому. Рядок «нічого» щочверть години
+    # навчає читати лог по діагоналі -- і саме тоді пропускають той, що має
+    # значення. Той самий підхід, що у webhook_queue_worker.
+    if report['checked']:
+        logger.info(
+            'Payment reconcile: перевірено %d, оновлено %d, без змін %d, '
+            'помилок %d', report['checked'], report['updated'],
+            report['unchanged'], report['failed'],
+        )
 
 
 def send_online_access_reminders():

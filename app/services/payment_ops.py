@@ -5,7 +5,7 @@ Single code path for all payment status transitions.
 Uses row-level locking to prevent race conditions.
 """
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
 from app.extensions import db
@@ -811,3 +811,134 @@ class PaymentOps:
                 liqpay_status=lp_status, raw_payload=result,
             ),
         )
+
+
+#: Стеля одного прогону звірки. Сьогодні в 'pending' одиниці рядків, тож
+#: число ні на що не впливає -- воно стоїть проти майбутнього: звірка живе
+#: в HTTP-запиті адмінки, і сотня звернень до чужого API поспіль вичерпала б
+#: таймаут gunicorn замість того, щоб чесно сказати, скільки встигла.
+RECONCILE_LIMIT = 100
+
+
+def _check_one(report, order_id, call):
+    """Опитати одне замовлення й розкласти результат по кошиках звіту.
+
+    Виняток тут ловиться навмисно, а не спливає вище. Мережа до LiqPay
+    падає не лише чемним ``None``: таймаут чи розрив зʼєднання -- це
+    виняток, і без цієї ловушки перший же такий рядок перетворював би весь
+    прогін на 500, не зробивши нічого для решти.
+
+    Відкат обовʼязковий разом із ловушкою: виняток міг застати
+    ``update_payment_status`` посеред транзакції, і брудна сесія отруїла б
+    наступне замовлення чужою помилкою.
+    """
+    try:
+        ok, msg = call()
+    except Exception as exc:
+        db.session.rollback()
+        logger.exception('LiqPay reconcile failed for %s', order_id)
+        ok, msg = False, str(exc) or exc.__class__.__name__
+
+    if not ok:
+        report['failed'] += 1
+    elif msg == 'ok':
+        report['updated'] += 1
+    else:
+        report['unchanged'] += 1
+    report['details'].append(f'{order_id}: {msg}')
+
+
+def reconcile_pending(service=None, limit=RECONCILE_LIMIT, max_age_days=None):
+    """Перепитати LiqPay про замовлення, що зависли в 'pending'.
+
+    ЩО ЦЕ ЛАГОДИТЬ. `pending` означає, що гроші вже в дорозі: LiqPay
+    відповів `processing` або `wait_accept`. Вийти з цього стану замовлення
+    може лише двома шляхами, і обидва умовні -- повторний колбек (його бік,
+    не наш; загублений ніхто не перезапитує) або `check_and_update` на
+    сторінці, куди має зайти сам платник. Якщо не сталося ні того, ні
+    іншого, рядок висить вічно, а разом із ним мовчать лист про оплату,
+    подія партнеру й вивіз у KeyCRM.
+
+    ЧОМУ ЛИШЕ 'pending'. `unpaid` -- це 900+ рядків, і майже всі вони люди,
+    які просто не заплатили. Загублений колбек від «не платив» у даних не
+    відрізнити: в обох `payment_id IS NULL`. Мести по них означало б сотні
+    звернень до чужого API заради одиниць влучань.
+
+    ВЛАСНОЇ ЛОГІКИ ПЕРЕХОДІВ ТУТ НЕМАЄ -- і це навмисно. Вся вона живе в
+    `check_and_update` / `check_enrollment_and_update`: блокування рядка,
+    звірка суми, дозволений перехід, журнал транзакції, лист, номер місця,
+    подія партнеру. Друга копія поруч розійшлася б із першою при першій же
+    правці, і розбіжність жила б саме там, де її найважче помітити.
+
+    Обидва типи замовлень разом: звірка, яка мовчки бачить лише REG-, --
+    пастка на день, коли онлайн-курс зависне так само.
+
+    ``max_age_days`` обмежує вибірку свіжими замовленнями; ``None`` --
+    без обмеження. Деталі -- у коментарі біля самої умови.
+
+    Повертає звіт ``{'checked', 'updated', 'unchanged', 'failed', 'details',
+    'error'}``. Порожній звіт -- не помилка: зависати нема чому.
+    """
+    from app.models.online_enrollment import OnlineEnrollment
+
+    if service is None:
+        from app.services.liqpay import get_liqpay_service
+        service = get_liqpay_service()
+
+    report = {'checked': 0, 'updated': 0, 'unchanged': 0, 'failed': 0,
+              'details': [], 'error': None}
+
+    if not service.is_configured:
+        report['error'] = 'LiqPay не налаштовано -- спочатку збережіть ключі'
+        return report
+
+    ops = PaymentOps(service)
+
+    # Вікно за віком -- запобіжник саме для ПЕРІОДИЧНОГО виклику. Замовлення
+    # вміє зависнути назавжди: людина ткнула LiqPay, платіж лишився в
+    # `wait_accept`, а гроші потім прийшли за рахунком. Такий рядок не
+    # зрушить ніколи, і без вікна джоба питала б про нього кожні 15 хвилин
+    # роками. `None` -- поведінка кнопки: адмін попросив, дивимось усе.
+    since = (datetime.now(timezone.utc) - timedelta(days=max_age_days)
+             if max_age_days else None)
+
+    reg_q = (
+        db.session.query(EventRegistration)
+        .filter(EventRegistration.payment_status == 'pending',
+                EventRegistration.payment_amount > 0)
+    )
+    if since is not None:
+        reg_q = reg_q.filter(EventRegistration.created_at >= since)
+    regs = reg_q.order_by(EventRegistration.id).limit(limit).all()
+    for reg in regs:
+        report['checked'] += 1
+        _check_one(report, f'REG-{reg.id}',
+                   lambda item=reg: ops.check_and_update(item))
+
+    # Залишок ліміту -- онлайн-курсам. Спільна стеля, а не своя на кожен тип:
+    # обмежує вона час одного HTTP-запиту, а він у них один на двох.
+    rest = limit - len(regs)
+    if rest > 0:
+        enr_q = (
+            db.session.query(OnlineEnrollment)
+            .filter(OnlineEnrollment.payment_status == 'pending')
+        )
+        if since is not None:
+            enr_q = enr_q.filter(OnlineEnrollment.created_at >= since)
+        enrollments = enr_q.order_by(OnlineEnrollment.id).limit(rest).all()
+        for item in enrollments:
+            report['checked'] += 1
+            _check_one(report, item.order_id,
+                       lambda row=item: ops.check_enrollment_and_update(row))
+
+    # Без `details`: у лог іде підсумок, а перелік замовлень адмін бачить
+    # на екрані -- дублювати його рядком на кожен прогін немає навіщо.
+    #
+    # Рівень залежить від того, чи було що робити. Функцію викликає не лише
+    # кнопка, а й джоба кожні 15 хвилин, і в звичайний день зависли платежів
+    # немає взагалі: INFO «checked: 0» дав би сотню порожніх рядків на добу
+    # й навчив читати лог по діагоналі.
+    summary = {k: v for k, v in report.items() if k != 'details'}
+    log = logger.info if report['checked'] else logger.debug
+    log('LiqPay reconcile: %s', summary)
+    return report

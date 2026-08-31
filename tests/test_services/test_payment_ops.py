@@ -1,4 +1,5 @@
 """Tests for app.services.payment_ops -- payment state machine."""
+from datetime import timedelta
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -7,6 +8,7 @@ import pytest
 from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
+from app.models.mixins import utcnow
 from app.models.registration import EventRegistration
 from app.models.user import User
 from app.services.payment_ops import ALLOWED_TRANSITIONS, PaymentOps, STATUS_MAP
@@ -164,3 +166,221 @@ class TestProcessCallback:
         ok, msg = ops.process_callback('data', 'sig')
         assert ok
         assert msg == 'already processed'
+
+
+def _pending_reg(instance, amount=1000):
+    """Реєстрація, що зависла в 'pending'.
+
+    Свій користувач на кожну: `(user_id, instance_id)` унікальні, тож два
+    зависли платежі на одному заході -- це неодмінно двоє різних людей.
+    """
+    buyer = User.create_with_password(
+        f'pay-{_uid()}@test.com', 'password123',
+        first_name='Test', last_name='User',
+    )
+    db.session.flush()
+    reg = EventRegistration(
+        user_id=buyer.id, instance_id=instance.id,
+        phone='+380000000000', specialty='Test', workplace='Test',
+        status='pending', payment_status='pending', payment_amount=amount,
+    )
+    db.session.add(reg)
+    db.session.flush()
+    return reg
+
+
+@pytest.fixture
+def pending_enrollment(app, user):
+    """Замовлення онлайн-курсу, що зависло в 'pending'."""
+    from app.models.online_course import OnlineCourse
+    from app.models.online_enrollment import OnlineEnrollment
+
+    course = OnlineCourse(
+        sintegrum_id=int(uuid4().int % 10_000_000),
+        remote_name='Online', slug=f'online-{_uid()}', price=500,
+    )
+    db.session.add(course)
+    db.session.flush()
+    item = OnlineEnrollment(
+        user_id=user.id, online_course_id=course.id,
+        payment_status='pending', payment_amount=500,
+    )
+    db.session.add(item)
+    db.session.flush()
+    return item
+
+
+class TestReconcilePending:
+    """Ручна звірка: перепитати LiqPay про платежі, що зависли в 'pending'.
+
+    Потрібна саме окрема вибірка, а не полагодження колбека: колбек, який
+    не дійшов, ніхто не перезапитує, а `check_and_update` живе лише на
+    сторінках, куди має зайти сам платник.
+    """
+
+    def test_picks_only_pending(self, mock_liqpay, user, instance, registration):
+        """`unpaid` не чіпаємо: їх 900+, і від «не платив» їх не відрізнити."""
+        from app.services.payment_ops import reconcile_pending
+
+        _pending_reg(instance)
+        registration.payment_status = 'unpaid'
+        db.session.flush()
+        mock_liqpay.check_status.return_value = {
+            'status': 'wait_accept', 'payment_id': 'PAY-1', 'amount': 1000,
+        }
+
+        report = reconcile_pending(service=mock_liqpay)
+
+        assert report['checked'] == 1
+        assert registration.payment_status == 'unpaid'
+
+    def test_success_marks_paid_and_confirms(self, mock_liqpay, user, instance):
+        from app.services.payment_ops import reconcile_pending
+
+        reg = _pending_reg(instance)
+        mock_liqpay.check_status.return_value = {
+            'status': 'success', 'payment_id': 'PAY-OK', 'amount': 1000,
+        }
+
+        report = reconcile_pending(service=mock_liqpay)
+
+        assert report['updated'] == 1
+        assert reg.payment_status == 'paid'
+        assert reg.status == 'confirmed'
+
+    def test_still_wait_accept_changes_nothing(self, mock_liqpay, user, instance):
+        """Доки верифікація магазину не відновлена, звірка мусить мовчати."""
+        from app.services.payment_ops import reconcile_pending
+
+        reg = _pending_reg(instance)
+        mock_liqpay.check_status.return_value = {
+            'status': 'wait_accept', 'payment_id': 'PAY-W', 'amount': 1000,
+        }
+
+        report = reconcile_pending(service=mock_liqpay)
+
+        assert report['unchanged'] == 1
+        assert report['updated'] == 0
+        assert reg.payment_status == 'pending'
+
+    def test_api_failure_does_not_stop_the_rest(self, mock_liqpay, user, instance):
+        """Один недоступний рядок не має ховати решту -- інакше звірка
+        мовчки робить менше, ніж звітує."""
+        from app.services.payment_ops import reconcile_pending
+
+        first = _pending_reg(instance)
+        second = _pending_reg(instance)
+        by_order = {
+            f'REG-{first.id}': None,
+            f'REG-{second.id}': {
+                'status': 'success', 'payment_id': 'PAY-2', 'amount': 1000,
+            },
+        }
+        mock_liqpay.check_status.side_effect = lambda order_id: by_order[order_id]
+
+        report = reconcile_pending(service=mock_liqpay)
+
+        assert report['failed'] == 1
+        assert report['updated'] == 1
+        assert second.payment_status == 'paid'
+
+    def test_exception_on_one_row_does_not_abort_the_run(
+            self, mock_liqpay, instance):
+        """Мережа до LiqPay падає не лише поверненням None. Виняток на
+        одному замовленні не має ховати решту: інакше перший же таймаут
+        перетворює звірку на 500 і не робить нічого."""
+        from app.services.payment_ops import reconcile_pending
+
+        first = _pending_reg(instance)
+        second = _pending_reg(instance)
+        # Комітимо навмисно: у проді зависли платежі приїхали з попередніх
+        # запитів, тобто давно в базі. Лише flush лишив би їх усередині
+        # збереженої точки сесії, і відкат після винятку зніс би саме те,
+        # що тест перевіряє, -- обробку РЕШТИ рядків.
+        db.session.commit()
+
+        def _flaky(order_id):
+            if order_id == f'REG-{first.id}':
+                raise ConnectionError('boom')
+            return {'status': 'success', 'payment_id': 'PAY-2', 'amount': 1000}
+
+        mock_liqpay.check_status.side_effect = _flaky
+
+        report = reconcile_pending(service=mock_liqpay)
+
+        assert report['failed'] == 1
+        assert report['updated'] == 1
+        assert second.payment_status == 'paid'
+
+    def test_covers_online_enrollments(self, mock_liqpay, pending_enrollment):
+        """Звірка, що мовчки пропускає ONL-, -- пастка на майбутнє."""
+        from app.services.payment_ops import reconcile_pending
+
+        mock_liqpay.check_status.return_value = {
+            'status': 'success', 'payment_id': 'PAY-ONL', 'amount': 500,
+        }
+
+        report = reconcile_pending(service=mock_liqpay)
+
+        assert report['updated'] == 1
+        assert pending_enrollment.payment_status == 'paid'
+
+    def test_unconfigured_service_reports_error(self, mock_liqpay, user, instance):
+        from app.services.payment_ops import reconcile_pending
+
+        _pending_reg(instance)
+        mock_liqpay.is_configured = False
+
+        report = reconcile_pending(service=mock_liqpay)
+
+        assert report['error']
+        assert report['checked'] == 0
+        mock_liqpay.check_status.assert_not_called()
+
+    def test_max_age_skips_long_dead_rows(self, mock_liqpay, instance):
+        """Без вікна фонова джоба довбила б LiqPay ВІЧНО по рядку, який не
+        зрушить ніколи: людина взяла рахунок, а `pending` лишився назавжди."""
+        from app.services.payment_ops import reconcile_pending
+
+        fresh = _pending_reg(instance)
+        stale = _pending_reg(instance)
+        stale.created_at = utcnow() - timedelta(days=30)
+        db.session.flush()
+        mock_liqpay.check_status.return_value = {
+            'status': 'wait_accept', 'payment_id': 'PAY-W', 'amount': 1000,
+        }
+
+        report = reconcile_pending(service=mock_liqpay, max_age_days=7)
+
+        assert report['checked'] == 1
+        mock_liqpay.check_status.assert_called_once_with(f'REG-{fresh.id}')
+
+    def test_without_max_age_takes_everything(self, mock_liqpay, instance):
+        """Поведінка кнопки: адмін попросив -- дивимось усе, без вікна."""
+        from app.services.payment_ops import reconcile_pending
+
+        stale = _pending_reg(instance)
+        stale.created_at = utcnow() - timedelta(days=400)
+        db.session.flush()
+        mock_liqpay.check_status.return_value = {
+            'status': 'wait_accept', 'payment_id': 'PAY-W', 'amount': 1000,
+        }
+
+        report = reconcile_pending(service=mock_liqpay)
+
+        assert report['checked'] == 1
+
+    def test_limit_caps_one_run(self, mock_liqpay, user, instance):
+        """Запобіжник від майбутнього: прогін не має ставати сотнями
+        запитів до чужого API в одному HTTP-запиті адмінки."""
+        from app.services.payment_ops import reconcile_pending
+
+        for _ in range(3):
+            _pending_reg(instance)
+        mock_liqpay.check_status.return_value = {
+            'status': 'wait_accept', 'payment_id': 'PAY-W', 'amount': 1000,
+        }
+
+        report = reconcile_pending(service=mock_liqpay, limit=2)
+
+        assert report['checked'] == 2

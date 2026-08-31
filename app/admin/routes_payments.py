@@ -136,3 +136,43 @@ def liqpay_test():
 
     audit_logger.info('Admin %s tested LiqPay connection', current_user.email)
     return redirect(url_for('admin.liqpay'))
+
+
+@admin_bp.route('/liqpay/reconcile', methods=['POST'])
+@admin_required
+@limiter.limit('10 per minute')
+def liqpay_reconcile():
+    """Ручна звірка: перепитати LiqPay про платежі, що зависли в 'pending'.
+
+    Кнопка, а не лише фонова джоба, і це не зручність. Замовлення виходить
+    з `pending` тільки повторним колбеком (його шле LiqPay, і загублений
+    ніхто не перезапитує) або заходом самого платника на сторінку оплати.
+    Коли верифікацію магазину відновлюють, потрібен рівно один прогін --
+    чекати, поки кожен платник сам зайде, означає не дізнатись про оплату
+    ніколи.
+    """
+    from app.services.payment_ops import reconcile_pending
+
+    report = reconcile_pending()
+
+    if report['error']:
+        flash(report['error'], 'error')
+        return redirect(url_for('admin.liqpay'))
+
+    audit_logger.info(
+        'Admin %s ran LiqPay reconcile: checked=%s updated=%s unchanged=%s '
+        'failed=%s', current_user.email, report['checked'], report['updated'],
+        report['unchanged'], report['failed'],
+    )
+
+    if not report['checked']:
+        flash('Зависли платежів немає -- звіряти нема чого', 'info')
+        return redirect(url_for('admin.liqpay'))
+
+    # Порядкові підсумки И перелік замовлень: голі числа не кажуть, ЯКЕ саме
+    # замовлення лишилось незмінним, а саме це питання виникає першим.
+    summary = (f"Звірено {report['checked']}: оновлено {report['updated']}, "
+               f"без змін {report['unchanged']}, помилок {report['failed']}")
+    flash(f"{summary}. {'; '.join(report['details'])}",
+          'error' if report['failed'] else 'success')
+    return redirect(url_for('admin.liqpay'))
