@@ -223,6 +223,56 @@ def test_failed_deferral_falls_back_to_sending_now(site, registration,
     assert _confirmation_logs(registration) == 1
 
 
+def _sent_body(registration, monkeypatch):
+    """Надіслати лист про реєстрацію і повернути його HTML."""
+    _no_smtp(monkeypatch)
+    EmailService.send_registration_confirmation(registration)
+    log = EmailLog.query.filter_by(
+        template_name='registration_confirmed',
+        registration_id=registration.id).first()
+    return (log.html_body or '') if log else ''
+
+
+def test_unpaid_letter_still_asks_for_payment(site, registration, monkeypatch):
+    """Сторож для звичайного випадку: правка нижче не має його зачепити."""
+    body = _sent_body(registration, monkeypatch)
+
+    assert 'До оплати' in body
+    assert 'Перейти до оплати' in body
+
+
+def test_pending_letter_explains_instead_of_going_silent(
+        site, registration, monkeypatch):
+    """REG-4313: платіж завис у LiqPay (`wait_accept`), статус став
+    `pending` -- і лист поїхав БЕЗ жодної дії, бо блок оплати рендериться
+    лише при `unpaid`. Людина шукала рахунок на сайті сама."""
+    registration.payment_status = 'pending'
+    db.session.commit()
+
+    body = _sent_body(registration, monkeypatch)
+
+    assert 'обробляється' in body
+    assert 'Переглянути реєстрацію' in body
+
+
+def test_pending_letter_does_not_invite_a_second_payment(
+        site, registration, monkeypatch):
+    """Сторож проти спокусливої правки в один рядок.
+
+    Розширити умову блоку до `in ('unpaid', 'pending')` виглядає як
+    очевидне лікування -- і воно гірше за хворобу: `pending` означає, що
+    гроші вже пішли (у `wait_accept` вони ще й утримані). Лист «До оплати
+    8 000 грн» з кнопкою запрошує заплатити вдруге.
+    """
+    registration.payment_status = 'pending'
+    db.session.commit()
+
+    body = _sent_body(registration, monkeypatch)
+
+    assert 'До оплати' not in body
+    assert 'Перейти до оплати' not in body
+
+
 def test_letter_shows_kopiykas_left_after_promo(site, registration, monkeypatch):
     """Регресія REG-4299: до сплати 0.60, а в листі стояло "0 UAH"."""
     _no_smtp(monkeypatch)
