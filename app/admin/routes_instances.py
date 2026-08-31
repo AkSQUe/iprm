@@ -324,7 +324,16 @@ def instance_edit(instance_id):
     _populate_choices(form)
 
     if form.validate_on_submit():
-        course_service.populate_instance_from_form(instance, form)
+        try:
+            course_service.populate_instance_from_form(instance, form)
+        except course_service.InvalidStatusTransition as exc:
+            # Найчастіше -- спроба повернути в «Чернетку» проведення, на яке
+            # вже записались. Повідомлення гварда написане менеджеру й
+            # називає дію («оберіть Скасовано»), тож друкуємо його як є.
+            db.session.rollback()
+            flash(str(exc), 'error')
+            return render_template('admin/instance_edit.html', form=form,
+                                   instance=instance)
         if try_commit(log_context=f'instance_edit id={instance.id}'):
             audit_logger.info(
                 'Admin %s updated instance %s', current_user.email, instance.id,

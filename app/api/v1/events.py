@@ -328,6 +328,22 @@ def _list_instances(statuses, page, per_page, date_from, date_to, sort):
     партнерам (mm-medic) для звітності по минулих/завершених заходах, які в
     покурсовому режимі не видно. Картка та сама (serialize_event_card з явним
     instance); унікальний ключ елемента -- поле `instance_id`.
+
+    `Course.is_active` тут НЕ фільтрує, і це відмінність від покурсового
+    режиму, а не недогляд. Прапорець відповідає на питання «чи пропонуємо ми
+    цей курс зараз» -- тобто питання КАТАЛОГУ. Поштучний режим існує заради
+    іншого: історії проведень, які вже відбулись, і звітності по них. Курс,
+    знятий з продажу, минулого не скасовує.
+
+    Ціна старої поведінки виміряна: курс `avtorskyi-kurs-tsitaishvili`
+    деактивували, і разом із ним із партнерської видачі зникли два завершені
+    проведення 2024-2025 років (169 і 173) -- а з ними 22 реєстрації, тобто
+    майже весь розрив між 1098 реєстраціями тут і 1073 в дзеркалі MM Medic
+    станом на 31.08.2026.
+
+    Detail-ендпоінт (`GET /events/<slug>`) і далі віддає 410 на
+    деактивований курс, і це правильно: сторінку знятого курсу партнер
+    показувати не має. Список історії та лендинг -- різні питання.
     """
     order_by = _ordering(CourseInstance.start_date, sort)
 
@@ -338,7 +354,6 @@ def _list_instances(statuses, page, per_page, date_from, date_to, sort):
             joinedload(CourseInstance.course).joinedload(Course.trainer),
             joinedload(CourseInstance.trainer),
         )
-        .filter(Course.is_active.is_(True))
         .filter(CourseInstance.status.in_(statuses)),
         date_from, date_to,
     ).order_by(order_by, CourseInstance.id.asc())

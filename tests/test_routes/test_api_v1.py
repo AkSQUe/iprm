@@ -218,3 +218,77 @@ class TestSeatsLeft:
         ])
         db.session.commit()
         assert self._card(client, published_event.slug)['seats_left'] == 9
+
+
+class TestInstanceGranularityKeepsHistory:
+    """Поштучний режим -- це історія, а не каталог.
+
+    `Course.is_active` відповідає на питання «чи пропонуємо ми цей курс
+    зараз». Курс, знятий з продажу, минулого не скасовує, а поштучний режим
+    існує рівно заради минулого: партнер (mm-medic) будує з нього звітність
+    по проведених заходах.
+
+    Ціна старої поведінки виміряна 31.08.2026: курс
+    `avtorskyi-kurs-tsitaishvili` деактивували, і разом із ним із видачі
+    зникли два завершені проведення 2024-2025 років, а з ними 22 реєстрації
+    в дзеркалі партнера.
+    """
+
+    def _completed_on_disabled_course(self, user):
+        c = Course(
+            title='Знятий з продажу', slug=f'gone-{_uid()}',
+            event_type='course', base_price=0, is_active=False,
+            created_by=user.id,
+        )
+        db.session.add(c)
+        db.session.flush()
+        inst = CourseInstance(
+            course_id=c.id, status='completed', event_format='offline',
+            price=1000,
+            start_date=datetime.now(timezone.utc) - timedelta(days=300),
+        )
+        db.session.add(inst)
+        db.session.flush()
+        db.session.commit()
+        return c, inst
+
+    def test_completed_instance_of_a_disabled_course_is_listed(
+            self, client, partner_settings, user):
+        _course, inst = self._completed_on_disabled_course(user)
+
+        r = client.get(
+            '/api/v1/events?granularity=instance'
+            '&status=published,active,completed,cancelled&per_page=100',
+            headers={'X-API-Key': API_KEY},
+        )
+
+        assert r.status_code == 200
+        ids = {i['instance_id'] for i in r.get_json()['items']}
+        assert inst.id in ids
+
+    def test_the_catalogue_still_hides_it(self, client, partner_settings, user):
+        """Покурсовий режим -- це вітрина, і там прапорець далі діє."""
+        course, _inst = self._completed_on_disabled_course(user)
+
+        r = client.get(
+            '/api/v1/events?status=published,active,completed,cancelled'
+            '&per_page=100',
+            headers={'X-API-Key': API_KEY},
+        )
+
+        assert r.status_code == 200
+        slugs = {i['slug'] for i in r.get_json()['items']}
+        assert course.slug not in slugs
+
+    def test_detail_still_returns_410(self, client, partner_settings, user):
+        """Сторінку знятого курсу партнер показувати не має.
+
+        Список історії та лендинг -- різні питання, і послаблення першого не
+        має тихо послабити друге.
+        """
+        course, _inst = self._completed_on_disabled_course(user)
+
+        r = client.get(f'/api/v1/events/{course.slug}',
+                       headers={'X-API-Key': API_KEY})
+
+        assert r.status_code == 410

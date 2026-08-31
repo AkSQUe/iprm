@@ -262,11 +262,74 @@ class InvalidStatusTransition(ValueError):
     """Невалідний перехід між статусами проведення."""
 
 
+#: Статуси, які партнерський API віддає назовні (`ALLOWED_STATUSES` в
+#: `app/api/v1/events.py`). `draft` серед них немає навмисно: чернетка — це
+#: проведення, якого для партнера ЩЕ не існує.
+PARTNER_VISIBLE_STATUSES = ('published', 'active', 'completed', 'cancelled')
+
+
+def live_registration_count(instance):
+    """Скільки живих реєстрацій тримає проведення. Незбережене — нуль."""
+    from app.models.registration import EventRegistration
+
+    if instance is None or instance.id is None:
+        return 0
+    return (
+        EventRegistration.query
+        .filter(EventRegistration.instance_id == instance.id,
+                EventRegistration.status != 'cancelled')
+        .count()
+    )
+
+
+def ensure_status_change_allowed(instance, new_status):
+    """Заборонити ховати від партнерів проведення, на яке вже записались.
+
+    ЩО ЦЕ ЛОВИТЬ. Переведення в `draft` проведення, яке партнер уже бачив.
+    Для нього це не «стало чернеткою», а «зникло»: `draft` не входить у
+    `PARTNER_VISIBLE_STATUSES`, тобто ендпоінт `/events` не віддає такий
+    рядок НІ В ЯКОМУ запиті — його не можна навіть попросити.
+
+    ЧОМУ ЦЕ ВАРТЕ ОКРЕМОГО ГВАРДА. 31.08.2026 в дзеркалі MM Medic не
+    вистачило 25 реєстрацій, і три з них — саме через це. Проведення 52
+    (5 вересня, курс «Терапевтична сила плазми») перевели в `draft` уже
+    ПІСЛЯ того, як на нього записалась і заплатила людина: 1000 грн через
+    LiqPay. Партнер побачив зникнення проведення, вирішив, що ми його
+    видалили, прибрав його в себе — і реєстрація пішла слідом по CASCADE.
+    На проведенні 37 так само загубилась оплата на 7500 грн.
+
+    ЩО РОБИТИ НАТОМІСТЬ. `cancelled`. Він у списку видимих саме для цього:
+    партнер, який будує розклад, мусить ПОКАЗАТИ «Захід скасовано», а не
+    мовчки прибрати рядок — інакше скасування й видалення виглядають для
+    нього однаково. Ця відмінність описана в `api/v1/events.py` і тепер
+    підкріплена перевіркою, а не лише коментарем.
+
+    Зворотний напрямок (`draft` -> будь-що) не обмежується: сховати можна
+    лише те, що ще нікому не показували.
+    """
+    if new_status != 'draft':
+        return
+    if instance is None or instance.status == 'draft':
+        return
+    if instance.status not in PARTNER_VISIBLE_STATUSES:
+        return
+
+    live = live_registration_count(instance)
+    if live:
+        raise InvalidStatusTransition(
+            f'На проведення записано {live} — у «Чернетку» його повернути '
+            f'не можна: для партнерів воно просто зникне разом із їхніми '
+            f'копіями реєстрацій. Щоб зняти захід, оберіть «Скасовано».'
+        )
+
+
 def change_instance_status(instance, new_status):
     """Змінити статус проведення з валідацією переходу.
 
     Повертає tuple (old_status, new_status). Кидає InvalidStatusTransition
-    якщо перехід заборонений. Коміт — відповідальність caller.
+    якщо перехід заборонений або якщо проведення ховають від партнерів разом
+    із чужими реєстраціями (`ensure_status_change_allowed`). Коміт —
+    відповідальність caller.
     """
     valid = dict(CourseInstance.STATUSES)
     if new_status not in valid:
@@ -280,6 +343,8 @@ def change_instance_status(instance, new_status):
         raise InvalidStatusTransition(
             f'Перехід {old_status} -> {new_status} заборонений'
         )
+
+    ensure_status_change_allowed(instance, new_status)
 
     instance.status = new_status
     return old_status, new_status
@@ -390,6 +455,11 @@ def populate_instance_from_form(instance, form):
     instance.city_id = form.city_id.data or None
     instance.online_link = _clean_text(form.online_link.data)
     instance.trainer_id = form.trainer_id.data or None
+    # Гвард і тут, а не лише в `change_instance_status`: форма
+    # редагування писала статус напряму, тобто повз ОБИДВІ перевірки.
+    # Половина гварда гірша за його відсутність — вона створює
+    # враження, що шлях закритий.
+    ensure_status_change_allowed(instance, form.status.data)
     instance.status = form.status.data
 
 
