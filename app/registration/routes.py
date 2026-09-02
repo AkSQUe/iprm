@@ -974,6 +974,7 @@ def transfer_surcharge(token):
     Окремий order_id SUR-<transfer_id>: платіж стосується перенесення, а
     не початкового замовлення, і плутати їх у звітності не можна.
     """
+    from app.models.registration_transfer import RegistrationTransfer
     from app.services.liqpay import get_liqpay_service
 
     transfer = _transfer_by_token(token)
@@ -981,6 +982,15 @@ def transfer_surcharge(token):
         abort(404)
     if not transfer.surcharge_due:
         flash(_('Доплату вже отримано'), 'info')
+        return redirect(url_for('registration.transfer_consent', token=token))
+    # Учасник уже натиснув «Прошу повернення коштів»: приймати після цього
+    # доплату означало б підняти payment_amount уже ПІСЛЯ того, як суму
+    # повернення порахували й показали. Посилання на оплату живе 30 днів і
+    # лишається в пошті -- тож стан перевіряємо тут, а не сподіваємось, що
+    # людина на нього не натисне.
+    if transfer.state == RegistrationTransfer.STATE_REFUND_REQUESTED:
+        flash(_('Ви попросили повернення коштів, тому доплату ми більше не '
+                'приймаємо.'), 'info')
         return redirect(url_for('registration.transfer_consent', token=token))
 
     reg = transfer.registration

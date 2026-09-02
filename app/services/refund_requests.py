@@ -69,7 +69,11 @@ def can_request(order):
         return False, 'Замовлення не знайдено'
     if order.payment_status != 'paid':
         return False, 'Заявку можна подати лише за оплаченим замовленням'
-    if order.refund_remaining <= 0:
+    # Саме `refund_available`, а не `refund_remaining`: доплата різниці
+    # тарифу при перенесенні прийшла окремим замовленням SUR-, і повернути
+    # її за номером цього замовлення LiqPay не зможе. Заявка на суму, якої
+    # ця форма не віддасть, лише завела б людину в очікування.
+    if order.refund_available <= 0:
         return False, 'За цим замовленням уже повернуто всю суму'
     if open_request_for(order) is not None:
         return False, 'Заявку вже подано, вона на розгляді'

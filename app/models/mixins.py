@@ -102,6 +102,32 @@ class RefundableMixin:
         return max(Decimal('0'), paid - self.refunded_total)
 
     @property
+    def side_payments_received(self):
+        """Скільки надійшло ОКРЕМИМИ платежами поза цим order_id.
+
+        Базово нуль: у звичайного замовлення все зайшло одним платежем.
+        Перевизначає лише EventRegistration -- доплата різниці тарифу при
+        перенесенні йде окремим замовленням SUR-<transfer_id>.
+        """
+        return Decimal('0')
+
+    @property
+    def refund_available(self):
+        """Стеля повернення ПРОТИ ВЛАСНОГО order_id замовлення.
+
+        LiqPay уміє повернути лише те, що прийшло на конкретне замовлення.
+        `payment_amount` же несе суму всіх платежів разом, тож просити за
+        REG- більше, ніж на нього надійшло, -- це відмова LiqPay, після
+        якої адмін не може повернути навіть первісну суму: правильного
+        числа він нізвідки не знає.
+
+        Різницю, що лишилась поза цією стелею, повертають вручну в
+        кабінеті LiqPay -- див. docs/registration-transfer.md.
+        """
+        return max(Decimal('0'),
+                   self.refund_remaining - self.side_payments_received)
+
+    @property
     def has_refund(self):
         return self.refunded_total > 0
 

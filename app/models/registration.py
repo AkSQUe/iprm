@@ -1,5 +1,6 @@
 import secrets
 from datetime import timedelta, timezone
+from decimal import Decimal
 
 from sqlalchemy import func as sa_func
 
@@ -256,6 +257,30 @@ class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
         from app.services.participant_service import is_placeholder_email
         email = self.user.email if self.user else None
         return bool(email and not is_placeholder_email(email))
+
+    @property
+    def side_payments_received(self):
+        """Сума доплат різниці тарифу, що надійшли окремими замовленнями.
+
+        Кожна така доплата прийшла на власний order_id SUR-<transfer_id>,
+        а не на REG-<id>, і при цьому підняла `payment_amount` (там вона
+        має бути: інакше виторг за реєстрацією показував би менше, ніж
+        людина заплатила). Повернути її через REG- неможливо -- звідси
+        `refund_available`, що зменшує стелю повернення саме на неї.
+
+        Окремим запитом, а не колонкою: перенесення рідкісні, і зайве
+        поле на кожній з тисяч реєстрацій коштувало б дорожче. Списки, де
+        рядків багато, беруть це батчем через
+        transfer_service.unpaid_surcharge_amounts.
+        """
+        from app.models.registration_transfer import RegistrationTransfer
+        total = db.session.query(
+            sa_func.coalesce(sa_func.sum(RegistrationTransfer.difference), 0),
+        ).filter(
+            RegistrationTransfer.registration_id == self.id,
+            RegistrationTransfer.surcharge_paid_at.isnot(None),
+        ).scalar()
+        return Decimal(str(total or 0))
 
     @property
     def status_label(self):

@@ -154,3 +154,79 @@ def test_callback_rejects_amount_mismatch(transfer, mock_liqpay):
     db.session.refresh(reg)
     assert reg.payment_amount == 1000
     assert item.surcharge_paid_at is None
+
+
+# ------------------ повернення при сплаченій доплаті ------------------
+#
+# Доплата приходить на власне замовлення SUR-<transfer_id>, але піднімає
+# payment_amount реєстрації. Повернення ж завжди йде проти REG-<reg_id>,
+# на який ці гроші не приходили: без стелі LiqPay відхилив би повернення
+# цілком, і адмін не зміг би повернути навіть первісну суму.
+
+
+@pytest.fixture
+def paid_surcharge(transfer):
+    """Доплату 500 зараховано: payment_amount 1500, з них 1000 на REG-."""
+    from app.services.payment_ops import PaymentOps
+    item, reg = transfer
+    PaymentOps.apply_surcharge(item, payment_id='lp-sur-1', amount=500)
+    return item, reg
+
+
+def test_refund_ceiling_excludes_paid_surcharge(paid_surcharge):
+    from app.services.payment_ops import resolve_refund_amount
+    _item, reg = paid_surcharge
+    assert reg.payment_amount == 1500
+    assert reg.side_payments_received == 500
+    assert reg.refund_available == 1000  # рівно те, що надійшло на REG-
+    amount, problem = resolve_refund_amount(reg, None)
+    assert problem is None
+    assert amount == 1000
+
+
+def test_refund_over_ceiling_is_refused(paid_surcharge):
+    from app.services.payment_ops import resolve_refund_amount
+    _item, reg = paid_surcharge
+    amount, problem = resolve_refund_amount(reg, '1500')
+    assert amount is None
+    assert 'залишок' in problem
+
+
+def test_original_amount_is_refundable(paid_surcharge, monkeypatch):
+    """Головне: первісні 1000 повертаються, а не блокуються доплатою."""
+    from unittest.mock import MagicMock
+    from app.services.payment_ops import PaymentOps
+    _item, reg = paid_surcharge
+    liqpay = MagicMock()
+    liqpay.is_configured = True
+    liqpay.create_refund_request.return_value = {'status': 'reversed'}
+    monkeypatch.setattr(
+        'app.services.email_service.EmailService.send_refund_notification',
+        staticmethod(lambda *a, **k: None),
+    )
+    ok, message = PaymentOps(liqpay).initiate_refund(reg, reg.user)
+    assert ok, message
+    assert reg.refunded_total == 1000
+    # LiqPay просили саме про суму, що на це замовлення надходила.
+    assert liqpay.create_refund_request.call_args[0][1] == 1000.0
+
+
+def test_unpaid_surcharge_does_not_shrink_the_ceiling(transfer):
+    """Доплата, яка ще не надійшла, грошей нам не додала -- і стелі не
+    зменшує."""
+    _item, reg = transfer
+    assert reg.side_payments_received == 0
+    assert reg.refund_available == 1000
+
+
+def test_surcharge_page_refuses_after_refund_request(client, transfer):
+    """Посилання на оплату лишається в пошті 30 днів. Той, хто вже натиснув
+    «Прошу повернення коштів», не має змоги підняти payment_amount уже
+    після того, як суму повернення порахували."""
+    item, _reg = transfer
+    transfer_service.request_refund(item, 'Передумав')
+    resp = client.get(
+        f'/registration/transfer/{item.consent_token}/surcharge',
+        follow_redirects=False)
+    assert resp.status_code == 302
+    assert 'surcharge' not in resp.headers['Location']

@@ -49,10 +49,37 @@
         <span class="admin-stat-card__label">Уже повернуто</span>
       </div>
       <div class="admin-stat-card admin-stat-card--accent">
-        <span class="admin-stat-card__value">{{ money(order.refund_remaining) }}</span>
-        <span class="admin-stat-card__label">Залишок</span>
+        <span class="admin-stat-card__value">{{ money(order.refund_available) }}</span>
+        <span class="admin-stat-card__label">Можна повернути через LiqPay</span>
       </div>
+      {% if order.side_payments_received > 0 %}
+      {# Доплата різниці тарифу прийшла на власне замовлення SUR-, а не на
+         REG-. Повернути її цією формою неможливо -- LiqPay повертає лише
+         те, що надійшло на конкретний order_id. Тому показуємо окремо, а
+         не мовчки віднімаємо: інакше адмін бачив би "залишок", менший за
+         сплачене, і не знав би чому. #}
+      <div class="admin-stat-card admin-stat-card--warning">
+        <span class="admin-stat-card__value">{{ money(order.side_payments_received) }}</span>
+        <span class="admin-stat-card__label">Доплата різниці (окремий платіж)</span>
+      </div>
+      {% endif %}
     </div>
+
+    {% if order.side_payments_received > 0 %}
+    <div class="form-section admin-queue-alert admin-queue-alert--warning">
+      <h3 class="admin-form__section-title">Доплату це повернення НЕ покриває</h3>
+      <p>
+        {{ money(order.side_payments_received) }} надійшли окремим платежем за перенесенням
+        (замовлення SUR&#8209;...), і LiqPay не поверне їх за номером REG&#8209;{{ order.id }}.
+        Ця форма повертає лише те, що прийшло на початкове замовлення.
+      </p>
+      <p class="form-hint">
+        Доплату повертайте вручну в кабінеті LiqPay за її власним номером замовлення,
+        і після цього скасуйте реєстрацію руками: сума повернення тут не дорівнює
+        сплаченій, тож автоматичного скасування не станеться.
+      </p>
+    </div>
+    {% endif %}
 
     <div class="form-section">
       <h3 class="admin-form__section-title">Замовлення</h3>
@@ -151,11 +178,11 @@
 
           <div class="form-group">
             <label for="refund-amount">Сума повернення, грн</label>
-            <input type="number" step="0.01" min="0.01" max="{{ order.refund_remaining }}"
+            <input type="number" step="0.01" min="0.01" max="{{ order.refund_available }}"
                    class="form-input" id="refund-amount" name="amount"
                    value="{{ suggested }}">
             <div class="form-hint">
-              Порожнє поле означає повернути весь залишок ({{ order.refund_remaining }} грн).
+              Порожнє поле означає повернути весь залишок ({{ order.refund_available }} грн).
               Більше за залишок ввести не можна.
             </div>
           </div>
