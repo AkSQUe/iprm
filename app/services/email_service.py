@@ -1007,7 +1007,7 @@ class EmailService:
         return EmailService.send_email(
             to=user.email,
             subject=lambda: _('Ваш захід перенесено: %(title)s',
-                              title=reg.target_title or 'курс'),
+                              title=reg.target_title or _('курс')),
             template_name='transfer_offer',
             context={
                 'user': user,

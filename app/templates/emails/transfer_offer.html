@@ -37,7 +37,7 @@
     {% if transfer.note %}
     {{ spacer(16) }}
     {{ section_title(_('Примітка')) }}
-    <p style="margin: 0; font-size: 15px; color: #17131D; line-height: 1.5;">{{ transfer.note|replace('\n', '<br>')|safe }}</p>
+    <p style="margin: 0; font-size: 15px; color: #17131D; line-height: 1.5;">{{ transfer.note|e|replace('\n', '<br>')|safe }}</p>
     {% endif %}
 
     {% if transfer.difference and transfer.difference != 0 %}
@@ -46,7 +46,7 @@
             {% set diff_msg %}{% trans amount=transfer.difference|abs %}Новий тариф дешевший на {{ amount }} грн. Ми повернемо вам цю різницю -- заявку вже передано менеджеру.{% endtrans %}{% endset %}
             {{ alert_info(_('Різницю повернемо'), diff_msg) }}
         {% elif transfer.tariff_decision == 'surcharge' %}
-            {% set diff_msg %}{% trans amount=transfer.difference %}Новий тариф дорожчий на {{ amount }} грн.{% endtrans %}{% endset %}
+            {% set diff_msg %}{% trans amount=transfer.difference %}Новий тариф дорожчий на {{ amount }} грн. Натиснувши «Погоджуюсь на перенесення», ви підтверджуєте участь -- доплату можна внести окремо за посиланням нижче, вона не впливає на ваше місце.{% endtrans %}{% endset %}
             {{ alert_warning(_('Потрібна доплата'), diff_msg) }}
         {% else %}
             {{ alert_info(_('Вартість без змін'), _('Вартість участі для вас лишається без змін.')) }}
