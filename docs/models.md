@@ -582,6 +582,61 @@ Singleton-модель для зберігання SMTP-налаштувань �
 CHECK `ck_refund_requests_single_owner`: заповнене рівно одне з
 `registration_id` / `enrollment_id` -- як у PaymentTransaction.
 
+## RegistrationTransfer (перенесення реєстрації)
+
+Переведення учасника з одного проведення на інше. Окрема таблиця, а не
+колонки на `EventRegistration`: переносити можна повторно, і другий перенос
+не має затирати перший. Докладно --
+[docs/registration-transfer.md](registration-transfer.md).
+
+Суми тут -- ЗНІМКИ на момент переносу, як `quoted_*` у RefundRequest: тариф
+можна відредагувати заднім числом, і жива формула дала б інше число, ніж те,
+яке учасник побачив у листі.
+
+Гроші звідси не рухаються: повернення йде через `RefundRequest`, доплата --
+через LiqPay-callback з `order_id = SUR-<transfer_id>`.
+
+| Поле | Тип | Опис |
+|------|-----|------|
+| `id` | BigInteger | Первинний ключ |
+| `registration_id` | FK -> event_registrations.id (CASCADE) | Кого переносимо |
+| `from_instance_id` | FK -> course_instances.id (SET NULL) | Звідки |
+| `to_instance_id` | FK -> course_instances.id (SET NULL) | Куди |
+| `initiator` | String(20) | `organizer` / `participant` -- від нього залежить сума грошей |
+| `announced` | Boolean | Чи пішов учаснику лист із вибором |
+| `reason` | String(500) | Причина перенесення (порожнє -> NULL: лист не рендерить блок) |
+| `note` | Text | Примітка учаснику |
+| `tariff_decision` | String(20) | `keep` / `refund_diff` / `surcharge` |
+| `to_tariff_id` | FK -> instance_tariffs.id (SET NULL) | Обраний тариф цільового заходу |
+| `old_amount` | Numeric(10,2) | Знімок сплаченої суми |
+| `new_amount` | Numeric(10,2) | Знімок вартості нового тарифу |
+| `difference` | Numeric(10,2) | `new_amount - old_amount`; єдине джерело правди про суму доплати |
+| `state` | String(20) | `applied` / `awaiting_consent` / `accepted` / `refund_requested` |
+| `consent_token` | String(64), UNIQUE | Токен публічного посилання |
+| `consent_token_expires_at` | DateTime (UTC) | 30 днів від видачі |
+| `responded_at` | DateTime (UTC) | Коли учасник відповів |
+| `refund_request_id` | FK -> refund_requests.id (SET NULL) | Заявка, заведена цим перенесенням |
+| `surcharge_paid_at` | DateTime (UTC) | Коли надійшла доплата різниці |
+| `surcharge_payment_id` | String(255) | `payment_id` LiqPay за доплатою |
+| `created_by_id` | FK -> users.id (SET NULL) | Який адмін переніс |
+| `created_at` / `updated_at` | DateTime (UTC) | TimestampMixin |
+
+CHECK-обмеження: `ck_registration_transfers_state`,
+`..._initiator`, `..._decision` і найважливіше --
+`ck_registration_transfers_organizer_no_surcharge`: §3.2 Політики забороняє
+доплату при перенесенні з нашої ініціативи, і правило стоїть у БД, бо родом
+з опублікованої оферти.
+
+Частковий унікальний індекс `uq_registration_transfers_open` -- одне
+відкрите (`state='awaiting_consent'`) перенесення на реєстрацію: без нього
+повторний клік адміна лишав би дві пропозиції, і згода закривала б випадкову.
+
+**Сплачена доплата не належить замовленню `REG-`.** Вона підняла
+`payment_amount` реєстрації, але надійшла на власний `order_id`, тож стеля
+повернення (`EventRegistration.refund_available`) віднімає її від залишку --
+див. `side_payments_received` і розділ «Чого немає (свідомо)» в
+[docs/registration-transfer.md](registration-transfer.md).
+
 ## MetaLeadEvent / MetaLead (заявки з Meta Lead Ads)
 
 Дві таблиці, бо в них різна довіра до вмісту. Докладно --

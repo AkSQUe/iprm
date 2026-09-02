@@ -137,6 +137,15 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | GET/POST | `/registration/<event_id>/register` | Реєстрація на захід |
 | GET | `/registration/<registration_id>` | Підтвердження реєстрації |
 | POST | `/registration/instance/<id>/promo-check` | Перевірка промокоду (JSON, без списання) |
+| GET | `/registration/transfer/<token>` | Перенесення на інший захід: підсумок і вибір учасника |
+| POST | `/registration/transfer/<token>/accept` | Згода на перенесення |
+| POST | `/registration/transfer/<token>/refund` | Відмова: заявка на повернення коштів |
+| GET | `/registration/transfer/<token>/surcharge` | Оплата різниці тарифу (LiqPay, `SUR-<transfer_id>`) |
+
+Чотири останні -- токен-флоу без входу, дзеркало `/registration/complete/`.
+Токен живе 30 днів; сторінки відмовляють, якщо цільовий захід скасовано, а
+доплата -- ще й після того, як учасник попросив повернення. Докладно --
+[docs/registration-transfer.md](registration-transfer.md).
 
 ## Quiz (тестування учасників)
 
@@ -204,6 +213,8 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | POST | `/admin/registrations/<id>/certificate/resend` | Повторно надіслати сертифікат |
 | GET | `/admin/registrations/<id>/certificate/download` | Завантажити сертифікат (адмін) |
 | GET | `/admin/registrations` | Всі реєстрації (stub) |
+| GET | `/admin/registrations/<id>/transfer/options` | JSON для модалки перенесення: придатні заходи, тарифи, різниці, блокери |
+| POST | `/admin/registrations/<id>/transfer` | Перенести реєстрацію на інше проведення |
 | GET | `/admin/payments` | Redirect на LiqPay |
 | GET | `/admin/liqpay` | Дашборд LiqPay |
 | POST | `/admin/liqpay/save-keys` | Зберегти ключі (з валідацією перед збереженням) |
