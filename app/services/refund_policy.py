@@ -98,15 +98,32 @@ def _quote(code, base_amount, days=None, note=None, refundable=True):
     )
 
 
-def quote_registration(reg, requested_at=None):
+#: Дата заходу не задана явно -- беремо з самої реєстрації. Саме сентинел,
+#: а не None: None тут значуще й означає «дати немає» (сходинка
+#: no_event_date), і плутати ці два випадки не можна.
+_FROM_REGISTRATION = object()
+
+
+def quote_registration(reg, requested_at=None, start_date=_FROM_REGISTRATION):
     """Рекомендована сума повернення за реєстрацію на захід (§4.1).
 
     `requested_at` -- дата подання заявки учасником (§4.2), а не дата
     натискання кнопки адміном. Заявка могла пролежати в пошті три дні, і
     відсоток мусить рахуватись від дати листа.
+
+    `start_date` -- дата заходу, від якої рахується сходинка. Явно її
+    передає рівно один випадок: перенесення. Переїзд відбувається ДО того,
+    як учасник відповість, тож `reg.instance` на момент відмови вказує вже
+    на НОВИЙ захід -- і сітка порахувалась би від його дати. Учасник міг би
+    попросити перенести його на далеку дату й одразу відмовитись,
+    підвищивши собі повернення з 25% до 100%. Сходинку визначає дата того
+    заходу, від якого людина фактично відмовляється.
     """
-    instance = getattr(reg, 'instance', None)
-    start = getattr(instance, 'start_date', None) if instance else None
+    if start_date is _FROM_REGISTRATION:
+        instance = getattr(reg, 'instance', None)
+        start = getattr(instance, 'start_date', None) if instance else None
+    else:
+        start = start_date
     days = days_until(start, requested_at)
     code = tier_for_days(days)
 

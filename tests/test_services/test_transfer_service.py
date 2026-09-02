@@ -521,20 +521,56 @@ def test_organizer_refund_is_full_amount(world, monkeypatch):
 
 
 def test_participant_refund_uses_policy_grid(world, monkeypatch):
-    """§4.1: відмова за власною ініціативою -- за сіткою. Захід через 20
-    днів, тож сходинка 'early' = 100%; на 5-й день була б 50%."""
+    """§4.1: відмова за власною ініціативою -- за сіткою. Сходинка
+    рахується від ВИХІДНОГО заходу: за 5 днів до нього це 50%."""
     monkeypatch.setattr(
         'app.services.email_service.EmailService.send_transfer_offer',
         staticmethod(lambda transfer: None),
     )
     reg, src, dst, _, _ = world
-    dst.start_date = utcnow() + timedelta(days=5)
+    src.start_date = utcnow() + timedelta(days=5)
     db.session.commit()
     transfer = _execute(reg, dst, initiator='participant', announced=True)
     request, err = transfer_service.request_refund(transfer, 'Передумав')
     assert err is None
     assert request.quoted_percent == 50
     assert request.quoted_code == 'standard'
+
+
+def test_participant_refund_grid_ignores_new_event_date(world, monkeypatch):
+    """Далека нова дата НЕ підвищує сходинку. Інакше учасник за два дні до
+    заходу просив би перенести його на місяць уперед і одразу відмовлявся:
+    25% за сіткою перетворились би на 100%."""
+    monkeypatch.setattr(
+        'app.services.email_service.EmailService.send_transfer_offer',
+        staticmethod(lambda transfer: None),
+    )
+    reg, src, dst, _, _ = world
+    src.start_date = utcnow() + timedelta(days=2, hours=12)   # сходинка 'late'
+    dst.start_date = utcnow() + timedelta(days=60)            # була б 'early'
+    db.session.commit()
+    transfer = _execute(reg, dst, initiator='participant', announced=True)
+    request, err = transfer_service.request_refund(transfer, 'Передумав')
+    assert err is None
+    assert request.quoted_code == 'late'
+    assert request.quoted_percent == 25
+    assert request.quoted_amount == 250
+
+
+def test_organizer_refund_ignores_the_grid_entirely(world, monkeypatch):
+    """§3.2 сильніший за сітку: перенесли МИ -- 100% незалежно від дат."""
+    monkeypatch.setattr(
+        'app.services.email_service.EmailService.send_transfer_offer',
+        staticmethod(lambda transfer: None),
+    )
+    reg, src, dst, _, _ = world
+    src.start_date = utcnow() + timedelta(days=2, hours=12)
+    db.session.commit()
+    transfer = _execute(reg, dst, initiator='organizer', announced=True)
+    request, err = transfer_service.request_refund(transfer, 'Дата не підходить')
+    assert err is None
+    assert request.quoted_percent == 100
+    assert request.quoted_amount == 1000
 
 
 def test_second_refund_updates_open_request(world, monkeypatch):

@@ -306,7 +306,15 @@ def request_refund(transfer, reason, payout_details=None):
         amount = _money(reg.payment_amount)
         code = 'transfer_organizer'
     else:
-        quote = refund_policy.quote_registration(reg)
+        # Сітка §4.1 -- від дати ВИХІДНОГО заходу. Переїзд уже відбувся, і
+        # reg.instance вказує на новий: без цього учасник міг би попросити
+        # перенести його на далеку дату й одразу відмовитись, піднявши собі
+        # повернення з 25% до 100%. Заходу могло вже й не бути (FK SET
+        # NULL) -- тоді дати немає, і політика сама позначить це кодом
+        # no_event_date, щоб адмін глянув очима.
+        source = transfer.from_instance
+        quote = refund_policy.quote_registration(
+            reg, start_date=source.start_date if source is not None else None)
         percent = quote.percent
         amount = quote.amount
         code = quote.code
