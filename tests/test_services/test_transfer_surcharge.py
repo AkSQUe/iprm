@@ -196,6 +196,82 @@ def test_callback_rejects_amount_mismatch(transfer, mock_liqpay):
     assert item.surcharge_paid_at is None
 
 
+# ------------------ звірка зависли доплат ------------------
+#
+# У перенесення немає колонки payment_status, тож два інші проходи звірки
+# (реєстрації й онлайн-курси) його не бачать у принципі. Доплата, що
+# застрягла в LiqPay у wait_accept, лишалась би «не надійшла» вічно --
+# рівно та аварія, заради якої звірку й заводили.
+
+
+def test_reconcile_credits_hung_surcharge(transfer, mock_liqpay):
+    from app.services.payment_ops import reconcile_pending
+    item, reg = transfer
+    mock_liqpay.is_configured = True
+    mock_liqpay.check_status.side_effect = lambda order_id: (
+        {'status': 'success', 'payment_id': 'PAY-SUR', 'amount': 500}
+        if order_id == f'SUR-{item.id}' else None
+    )
+
+    report = reconcile_pending(service=mock_liqpay)
+
+    db.session.refresh(reg)
+    assert reg.payment_amount == 1500
+    assert item.surcharge_paid_at is not None
+    assert item.surcharge_payment_id == 'PAY-SUR'
+    assert any(f'SUR-{item.id}: ok' == line for line in report['details'])
+
+
+def test_reconcile_leaves_wait_accept_alone(transfer, mock_liqpay):
+    """Доки платіж не проведено, звірка мусить мовчати."""
+    from app.services.payment_ops import reconcile_pending
+    item, reg = transfer
+    mock_liqpay.is_configured = True
+    mock_liqpay.check_status.side_effect = lambda order_id: (
+        {'status': 'wait_accept', 'payment_id': 'PAY-W', 'amount': 500}
+        if order_id == f'SUR-{item.id}' else None
+    )
+
+    reconcile_pending(service=mock_liqpay)
+
+    db.session.refresh(reg)
+    assert reg.payment_amount == 1000
+    assert item.surcharge_paid_at is None
+
+
+def test_reconcile_ignores_closed_surcharge(transfer, mock_liqpay):
+    """Закриту доплату не питаємо: звірка не має щочверть години ходити
+    до чужого API за тим, що вже зараховано."""
+    from app.services.payment_ops import PaymentOps, reconcile_pending
+    item, _reg = transfer
+    PaymentOps.apply_surcharge(item, payment_id='lp-done', amount=500)
+    mock_liqpay.is_configured = True
+    mock_liqpay.check_status.return_value = None
+
+    reconcile_pending(service=mock_liqpay)
+
+    asked = [call.args[0] for call in mock_liqpay.check_status.call_args_list]
+    assert f'SUR-{item.id}' not in asked
+
+
+def test_reconcile_refuses_wrong_amount(transfer, mock_liqpay):
+    """Сума з LiqPay звіряється з transfer.difference і в звірці теж --
+    інакше обхідний шлях приймав би те, що callback відкинув."""
+    from app.services.payment_ops import reconcile_pending
+    item, reg = transfer
+    mock_liqpay.is_configured = True
+    mock_liqpay.check_status.side_effect = lambda order_id: (
+        {'status': 'success', 'payment_id': 'PAY-BAD', 'amount': 1}
+        if order_id == f'SUR-{item.id}' else None
+    )
+
+    reconcile_pending(service=mock_liqpay)
+
+    db.session.refresh(reg)
+    assert reg.payment_amount == 1000
+    assert item.surcharge_paid_at is None
+
+
 # ------------------ повернення при сплаченій доплаті ------------------
 #
 # Доплата приходить на власне замовлення SUR-<transfer_id>, але піднімає

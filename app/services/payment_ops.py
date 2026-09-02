@@ -678,6 +678,53 @@ class PaymentOps:
         )
         return True
 
+    def check_surcharge_and_update(self, transfer):
+        """Перепитати LiqPay про доплату різниці тарифу (SUR-<transfer_id>).
+
+        Рядок перенесення не має колонки `payment_status`, тож у два інші
+        проходи звірки він не потрапляє в принципі: зависла в `wait_accept`
+        доплата видима ЛИШЕ за власним order_id. Без цього методу адмін
+        бачив би «доплата не надійшла» вічно, тоді як гроші вже пішли з
+        рахунку учасника -- та сама пастка, що породила звірку взагалі.
+
+        Логіки переходів тут немає: зарахування живе в `apply_surcharge`,
+        і другої копії поруч не заводимо.
+        """
+        from app.models.registration_transfer import RegistrationTransfer
+
+        order_id = f'SUR-{transfer.id}'
+        status_data = self.liqpay.check_status(order_id)
+        if not status_data:
+            return False, 'api unavailable'
+
+        lp_status = status_data.get('status', '')
+        if STATUS_MAP.get(lp_status) != 'paid':
+            return True, f'no change ({lp_status or "?"})'
+
+        # Блокування -- як і в callback: паралельний callback і ця звірка
+        # інакше обидва прочитали б surcharge_paid_at=None.
+        locked = (
+            db.session.query(RegistrationTransfer)
+            .with_for_update().populate_existing()
+            .filter_by(id=transfer.id).first()
+        )
+        if locked is None:
+            return False, 'transfer not found'
+        if locked.surcharge_paid_at is not None:
+            return True, 'no change'
+
+        problem = check_amount(
+            locked.difference, status_data.get('amount'), order_id)
+        if problem:
+            return _fail(problem)
+
+        applied = self.apply_surcharge(
+            locked, payment_id=str(status_data.get('payment_id', '')),
+            amount=locked.difference, liqpay_status=lp_status,
+            source='status_check', raw_payload=status_data,
+        )
+        return (True, 'ok') if applied else (True, 'no change')
+
     # ---- повернення коштів ----
 
     @staticmethod
@@ -975,8 +1022,11 @@ def reconcile_pending(service=None, limit=RECONCILE_LIMIT, max_age_days=None):
     подія партнеру. Друга копія поруч розійшлася б із першою при першій же
     правці, і розбіжність жила б саме там, де її найважче помітити.
 
-    Обидва типи замовлень разом: звірка, яка мовчки бачить лише REG-, --
-    пастка на день, коли онлайн-курс зависне так само.
+    Усі три типи замовлень разом: звірка, яка мовчки бачить лише REG-, --
+    пастка на день, коли онлайн-курс чи доплата зависне так само. Доплата
+    різниці тарифу (`SUR-`) шукається інакше за решту: у перенесення немає
+    колонки `payment_status`, і «зависла» для нього означає
+    `tariff_decision='surcharge'` при порожньому `surcharge_paid_at`.
 
     ``max_age_days`` обмежує вибірку свіжими замовленнями; ``None`` --
     без обмеження. Деталі -- у коментарі біля самої умови.
@@ -1021,8 +1071,9 @@ def reconcile_pending(service=None, limit=RECONCILE_LIMIT, max_age_days=None):
                    lambda item=reg: ops.check_and_update(item))
 
     # Залишок ліміту -- онлайн-курсам. Спільна стеля, а не своя на кожен тип:
-    # обмежує вона час одного HTTP-запиту, а він у них один на двох.
+    # обмежує вона час одного HTTP-запиту, а він у них один на трьох.
     rest = limit - len(regs)
+    enrollments = []
     if rest > 0:
         enr_q = (
             db.session.query(OnlineEnrollment)
@@ -1035,6 +1086,25 @@ def reconcile_pending(service=None, limit=RECONCILE_LIMIT, max_age_days=None):
             report['checked'] += 1
             _check_one(report, item.order_id,
                        lambda row=item: ops.check_enrollment_and_update(row))
+
+    # Третій прохід -- доплати різниці тарифу. У перенесення немає
+    # `payment_status`, тож два проходи вище його не бачать узагалі:
+    # незакрита доплата -- це `tariff_decision='surcharge'` і порожній
+    # `surcharge_paid_at`. Без нього адмін бачив би «доплата не надійшла»
+    # вічно, поки гроші вже пішли з рахунку учасника.
+    rest = limit - len(regs) - len(enrollments)
+    if rest > 0:
+        from app.models.registration_transfer import RegistrationTransfer
+        from app.services import transfer_service
+
+        sur_q = db.session.query(RegistrationTransfer).filter(
+            *transfer_service.unpaid_surcharge_condition())
+        if since is not None:
+            sur_q = sur_q.filter(RegistrationTransfer.created_at >= since)
+        for item in sur_q.order_by(RegistrationTransfer.id).limit(rest).all():
+            report['checked'] += 1
+            _check_one(report, f'SUR-{item.id}',
+                       lambda row=item: ops.check_surcharge_and_update(row))
 
     # Без `details`: у лог іде підсумок, а перелік замовлень адмін бачить
     # на екрані -- дублювати його рядком на кожен прогін немає навіщо.
