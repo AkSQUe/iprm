@@ -46,7 +46,7 @@ class RegistrationTransfer(TimestampMixin, db.Model):
     registration_id = db.Column(
         db.BigInteger,
         db.ForeignKey('event_registrations.id', ondelete='CASCADE'),
-        nullable=False, index=True,
+        nullable=False,
     )
     # SET NULL, а не CASCADE: історія перенесення має пережити видалення
     # заходу, інакше зникає саме той запис, заради якого таблиця й заведена.
