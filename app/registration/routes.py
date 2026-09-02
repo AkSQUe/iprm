@@ -968,19 +968,29 @@ def transfer_consent(token):
 
 
 @registration_bp.route('/transfer/<token>/accept', methods=['POST'])
+@limiter.limit('10 per hour')
 def transfer_accept(token):
+    """Учасник погоджується. Токен-автентифікація, без входу -- як і set-password."""
     from app.services import transfer_service
 
     transfer = _transfer_by_token(token)
     if transfer is None:
         abort(404)
-    ok, message = transfer_service.accept(transfer)
-    flash(_(message), 'success' if ok else 'info')
+    # `message` від сервісу -- рядок для логів/адмінки, НЕ для показу: він
+    # ніколи не проходить pybabel extract на місці визначення, тож _()
+    # довкола змінної нічого не перекладає -- каталоги просто не мають
+    # такого msgid. Літерали тут, а не навколо `message`.
+    ok, _message = transfer_service.accept(transfer)
+    flash(_('Дякуємо, участь підтверджено') if ok
+          else _('Ви вже відповіли на цю пропозицію'),
+          'success' if ok else 'info')
     return redirect(url_for('registration.transfer_consent', token=token))
 
 
 @registration_bp.route('/transfer/<token>/refund', methods=['POST'])
+@limiter.limit('10 per hour')
 def transfer_refund(token):
+    """Учасник просить повернення замість перенесення. Токен-автентизація."""
     from app.services import transfer_service
 
     transfer = _transfer_by_token(token)
@@ -995,6 +1005,12 @@ def transfer_refund(token):
 
     _item, error = transfer_service.request_refund(
         transfer, reason, request.form.get('payout_details'))
-    flash(_(error) if error else _("Заявку прийнято, менеджер зв'яжеться з вами"),
+    # Єдиний можливий тут `error` -- "Ви вже відповіли": другий, "Реєстрацію
+    # не знайдено", неможливий на цій сторінці -- registration_id NOT NULL
+    # з ON DELETE CASCADE означає, що перенесення без реєстрації не існує.
+    # Тому літерал тут один, а не переклад змінної `error` (та ж причина,
+    # що й вище в transfer_accept).
+    flash(_('Ви вже відповіли на цю пропозицію') if error
+          else _("Заявку прийнято, менеджер зв'яжеться з вами"),
           'error' if error else 'success')
     return redirect(url_for('registration.transfer_consent', token=token))
