@@ -37,12 +37,22 @@
 
   {% if transfer.state == 'awaiting_consent' %}
 
+  {# Токен живе 30 днів -- за цей час новий захід могли скасувати. Тоді
+     погоджуватись нема на що, і лишається тільки повернення коштів. #}
+  {% if target_cancelled %}
+  <p class="reg-attention">
+    <strong>{{ _('Захід, на який вас перенесли, скасовано.') }}</strong>
+    {{ _('Оформіть, будь ласка, повернення коштів у формі нижче.') }}
+  </p>
+  {% else %}
+
   <p class="reg-attention">{{ _('Оберіть один із варіантів нижче.') }}</p>
 
   <form method="POST" action="{{ url_for('registration.transfer_accept', token=transfer.consent_token) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="apple-btn apple-btn--primary">{{ _('Погоджуюсь на перенесення') }}</button>
   </form>
+  {% endif %}
 
   <div class="form-section" id="refund">
     <h2 class="form-section__title">{{ _('Або поверніть кошти') }}</h2>

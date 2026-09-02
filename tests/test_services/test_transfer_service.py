@@ -104,6 +104,29 @@ def test_guard_6_cancelled_registration(world):
     assert any('скасовано' in p.lower() for p in transfer_service.check(reg, dst))
 
 
+def test_guard_6_completed_registration(world):
+    """Відмітка присутності ставить status='completed' і нараховує бали
+    ЦПР. Перенести такий рядок -- привезти на новий захід уже "відвідану"
+    реєстрацію з чужими балами."""
+    reg, src, dst, _, _ = world
+    reg.status = 'completed'
+    db.session.commit()
+    assert any('зарахован' in p for p in transfer_service.check(reg, dst))
+
+
+def test_guard_6_attended_registration(world):
+    """Гвардія 7 ловить це лише після видачі сертифіката -- тобто запізно."""
+    reg, src, dst, _, _ = world
+    reg.attended = True
+    reg.cpd_points_awarded = 6
+    db.session.commit()
+    problems = transfer_service.check(reg, dst)
+    assert any('відвідав' in p for p in problems)
+    with pytest.raises(ValueError):
+        _execute(reg, dst)
+    assert reg.instance_id == src.id
+
+
 def test_guard_7_certificate_issued(world):
     """Certificate має чотири NOT NULL-поля понад FK -- number,
     recipient_name, event_title, pdf_path; без них падає сам INSERT."""

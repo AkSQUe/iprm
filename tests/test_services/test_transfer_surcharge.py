@@ -196,6 +196,20 @@ def test_callback_rejects_amount_mismatch(transfer, mock_liqpay):
     assert item.surcharge_paid_at is None
 
 
+def test_surcharge_page_refuses_when_target_cancelled(client, transfer):
+    """Платити за захід, якого не буде, людині пропонувати не можна."""
+    item, _reg = transfer
+    item.to_instance.status = 'cancelled'
+    db.session.commit()
+
+    resp = client.get(
+        f'/registration/transfer/{item.consent_token}/surcharge',
+        follow_redirects=False)
+
+    assert resp.status_code == 302
+    assert 'surcharge' not in resp.headers['Location']
+
+
 # ------------------ звірка зависли доплат ------------------
 #
 # У перенесення немає колонки payment_status, тож два інші проходи звірки

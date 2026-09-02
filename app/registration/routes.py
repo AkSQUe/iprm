@@ -950,6 +950,17 @@ def _transfer_by_token(token):
     return item
 
 
+def _target_cancelled(transfer):
+    """Чи скасували захід, на який переносили.
+
+    Токен живе 30 днів -- за цей час новий захід могли скасувати. Без цієї
+    перевірки людина погоджувалась би на переїзд на захід, якого не буде,
+    і платила б за нього доплату.
+    """
+    target = transfer.to_instance
+    return target is not None and target.status == 'cancelled'
+
+
 @registration_bp.route('/transfer/<token>')
 def transfer_consent(token):
     """Сторінка вибору: погодитись чи просити повернення.
@@ -964,6 +975,7 @@ def transfer_consent(token):
         'registration/transfer_consent.html',
         transfer=transfer,
         registration=transfer.registration,
+        target_cancelled=_target_cancelled(transfer),
     )
 
 
@@ -980,6 +992,10 @@ def transfer_surcharge(token):
     transfer = _transfer_by_token(token)
     if transfer is None:
         abort(404)
+    if _target_cancelled(transfer):
+        flash(_('Захід скасовано, тому доплату ми не приймаємо. '
+                "Менеджер зв'яжеться з вами."), 'error')
+        return redirect(url_for('registration.transfer_consent', token=token))
     if not transfer.surcharge_due:
         flash(_('Доплату вже отримано'), 'info')
         return redirect(url_for('registration.transfer_consent', token=token))
@@ -1034,6 +1050,13 @@ def transfer_accept(token):
     transfer = _transfer_by_token(token)
     if transfer is None:
         abort(404)
+    if _target_cancelled(transfer):
+        # Погодитись на переїзд на скасований захід не можна. Заявка на
+        # повернення на цій же сторінці лишається доступною -- саме вона
+        # тепер і потрібна людині.
+        flash(_('Захід, на який вас перенесли, скасовано. Оформіть, будь '
+                'ласка, повернення коштів.'), 'error')
+        return redirect(url_for('registration.transfer_consent', token=token))
     # `message` від сервісу -- рядок для логів/адмінки, НЕ для показу: він
     # ніколи не проходить pybabel extract на місці визначення, тож _()
     # довкола змінної нічого не перекладає -- каталоги просто не мають

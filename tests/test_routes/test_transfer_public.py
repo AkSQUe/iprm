@@ -114,3 +114,50 @@ def test_second_answer_is_refused(client, offer):
                 data={'reason': 'Передумав'}, follow_redirects=True)
     db.session.refresh(transfer)
     assert transfer.state == RegistrationTransfer.STATE_ACCEPTED
+
+
+# ---- скасований цільовий захід ----
+#
+# Токен живе 30 днів: за цей час новий захід могли скасувати. Без цих
+# перевірок людина погоджувалась би на переїзд на захід, якого не буде, і
+# платила б за нього доплату -- усі 30 днів.
+
+
+def test_accept_is_refused_when_target_cancelled(client, offer):
+    transfer, _reg = offer
+    transfer.to_instance.status = 'cancelled'
+    db.session.commit()
+
+    client.post(f'/registration/transfer/{transfer.consent_token}/accept',
+                follow_redirects=True)
+
+    db.session.refresh(transfer)
+    assert transfer.state == RegistrationTransfer.STATE_AWAITING
+
+
+def test_page_warns_when_target_cancelled(client, offer):
+    """Кнопки згоди на сторінці бути не повинно -- лишається повернення."""
+    transfer, _reg = offer
+    transfer.to_instance.status = 'cancelled'
+    db.session.commit()
+
+    body = client.get(
+        f'/registration/transfer/{transfer.consent_token}').get_data(as_text=True)
+
+    assert 'скасовано' in body
+    assert 'Погоджуюсь на перенесення' not in body
+
+
+def test_refund_still_works_when_target_cancelled(client, offer):
+    """Саме повернення -- єдине, що людині тепер і потрібне."""
+    from app.models.refund_request import RefundRequest
+    transfer, reg = offer
+    transfer.to_instance.status = 'cancelled'
+    db.session.commit()
+
+    client.post(f'/registration/transfer/{transfer.consent_token}/refund',
+                data={'reason': 'Захід скасували'}, follow_redirects=True)
+
+    db.session.refresh(transfer)
+    assert transfer.state == RegistrationTransfer.STATE_REFUND_REQUESTED
+    assert RefundRequest.query.filter_by(registration_id=reg.id).count() == 1
