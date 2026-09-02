@@ -1,5 +1,6 @@
 """Доплата різниці тарифу при перенесенні."""
 from datetime import timedelta
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -90,3 +91,66 @@ def test_unpaid_surcharge_does_not_block_participation(transfer):
     item, reg = transfer
     assert reg.status == 'confirmed'
     assert reg.payment_status == 'paid'
+
+
+@pytest.fixture
+def mock_liqpay():
+    """Той самий фейк, що й у test_payment_ops.py -- MagicMock із
+    підписом, що завжди валідний; decode_callback підміняє кожен тест."""
+    service = MagicMock()
+    service.validate_callback_signature.return_value = True
+    return service
+
+
+def test_callback_credits_surcharge_once(transfer, mock_liqpay):
+    """Наскрізно через process_callback (не напряму apply_surcharge) --
+    саме тут живуть блокування рядка й звірка суми, додані після рев'ю."""
+    from app.services.payment_ops import PaymentOps
+    item, reg = transfer
+    mock_liqpay.decode_callback.return_value = {
+        'order_id': f'SUR-{item.id}', 'status': 'success',
+        'payment_id': 'lp-cb-1', 'amount': 500,
+    }
+    ops = PaymentOps(mock_liqpay)
+    ok, msg = ops.process_callback('data', 'sig')
+    assert ok
+    db.session.refresh(reg)
+    assert reg.payment_amount == 1500
+    assert item.surcharge_paid_at is not None
+
+
+def test_repeated_callback_does_not_double_credit(transfer, mock_liqpay):
+    """LiqPay повторює callback -- другий виклик того самого order_id не
+    повинен додати різницю вдруге. Перевіряємо шлях диспетчеризації
+    цілком (parse_order_id -> блокування -> apply_surcharge), а не лише
+    сам метод: саме тут регресія в диспетчеризації лишилась би непоміченою."""
+    from app.services.payment_ops import PaymentOps
+    item, reg = transfer
+    mock_liqpay.decode_callback.return_value = {
+        'order_id': f'SUR-{item.id}', 'status': 'success',
+        'payment_id': 'lp-cb-1', 'amount': 500,
+    }
+    ops = PaymentOps(mock_liqpay)
+    ops.process_callback('data', 'sig')
+    ok2, msg2 = ops.process_callback('data', 'sig')
+    assert ok2
+    db.session.refresh(reg)
+    assert reg.payment_amount == 1500
+
+
+def test_callback_rejects_amount_mismatch(transfer, mock_liqpay):
+    """payload['amount'] звіряється з transfer.difference -- підозрілу
+    суму не зараховуємо мовчки (Знахідка 2 рев'ю)."""
+    from app.services.payment_ops import PaymentOps
+    item, reg = transfer
+    mock_liqpay.decode_callback.return_value = {
+        'order_id': f'SUR-{item.id}', 'status': 'success',
+        'payment_id': 'lp-cb-2', 'amount': 1,
+    }
+    ops = PaymentOps(mock_liqpay)
+    ok, msg = ops.process_callback('data', 'sig')
+    assert not ok
+    assert msg == 'amount mismatch'
+    db.session.refresh(reg)
+    assert reg.payment_amount == 1000
+    assert item.surcharge_paid_at is None

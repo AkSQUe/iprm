@@ -221,15 +221,30 @@ class PaymentOps:
 
         if kind == 'surcharge':
             from app.models.registration_transfer import RegistrationTransfer
-            transfer = db.session.get(RegistrationTransfer, object_id)
+            # Блокування рядка -- як і для REG-/ONL- нижче/вище: два callback-и
+            # (справжній retry LiqPay і паралельна ручна звірка) інакше обидва
+            # прочитали б surcharge_paid_at=None і зарахували різницю двічі.
+            transfer = (
+                db.session.query(RegistrationTransfer)
+                .with_for_update().populate_existing()
+                .filter_by(id=object_id).first()
+            )
             if transfer is None:
                 return _fail(f'Перенесення #{object_id} не знайдено')
             new_status = STATUS_MAP.get(liqpay_status)
             if new_status != 'paid':
                 return _noop(f'Доплата #{object_id}: статус {liqpay_status}')
+            # transfer.difference -- знімок на момент перенесення й ЄДИНЕ
+            # джерело правди про суму; payload -- лише свідчення, яке звіряємо
+            # з ним (як check_amount нижче звіряє payload з reg.payment_amount).
+            # Якщо вони розходяться -- гроші, що не сходяться, і зарахувати
+            # мовчки не можна.
+            problem = check_amount(
+                transfer.difference, payload.get('amount'), f'SUR-{object_id}')
+            if problem:
+                return _fail(problem)
             applied = self.apply_surcharge(
-                transfer, payment_id=payment_id,
-                amount=payload.get('amount') or transfer.difference,
+                transfer, payment_id=payment_id, amount=transfer.difference,
             )
             if applied:
                 return _noop(f'Доплату за перенесенням #{object_id} зараховано')
@@ -603,7 +618,20 @@ class PaymentOps:
         миті вона лишалась такою, якою людина заплатила спочатку.
 
         Ідемпотентно за surcharge_paid_at: LiqPay повторює callback, і без
-        цієї перевірки різниця додалась би двічі.
+        цієї перевірки різниця додалась би двічі. Викликач (process_callback)
+        бере блокування рядка ДО цього виклику -- сама функція чужого
+        блокування не ставить, тож прямий виклик поза callback (як у тестах)
+        безпечний лише в однопотоковому контексті.
+
+        ВІДОМА ПРОГАЛИНА, залишена свідомо: тут немає перевірки
+        reg.status/payment_status. Якщо реєстрацію вже повністю скасували чи
+        повернули (initiate_refund) ПІСЛЯ того, як доплату запросили, а
+        запізнілий callback прийде вже після цього -- сума все одно
+        припишеться до payment_amount скасованого рядка. Свідомо не
+        вирішуємо це тут: автоповернення, блокування з позначкою для адміна,
+        чи повна відмова прийому -- окреме продуктове рішення власника, не
+        архітектурний вибір цього коду. Наразі рядок мовчки розходиться з
+        payment_status і чекає на ручну звірку.
         """
         if transfer.surcharge_paid_at is not None:
             logger.info('Surcharge for transfer #%s already applied',
