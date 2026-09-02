@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
 from app.extensions import db
+from app.models.mixins import utcnow
 from app.models.registration import EventRegistration
 from app.models.payment_transaction import PaymentTransaction
 
@@ -175,10 +176,13 @@ def _is_partial_refund_echo(order):
 def parse_order_id(order_id):
     """Розібрати order_id у пару (тип, числовий id).
 
-    Типи: 'registration' (REG-<id>) і 'enrollment' (ONL-<id>).
-    Повертає (None, None) для невідомого чи побитого формату.
+    Типи: 'registration' (REG-<id>), 'enrollment' (ONL-<id>) і
+    'surcharge' (SUR-<transfer_id>) -- доплата різниці тарифу при
+    перенесенні. Останній вказує на RegistrationTransfer, а не на
+    реєстрацію: сума й підстава живуть саме там.
     """
-    for prefix, kind in (('REG-', 'registration'), ('ONL-', 'enrollment')):
+    for prefix, kind in (('REG-', 'registration'), ('ONL-', 'enrollment'),
+                         ('SUR-', 'surcharge')):
         if order_id.startswith(prefix):
             try:
                 return kind, int(order_id.split('-', 1)[1])
@@ -214,6 +218,22 @@ class PaymentOps:
             return self._process_enrollment_callback(
                 object_id, payload, liqpay_status, payment_id,
             )
+
+        if kind == 'surcharge':
+            from app.models.registration_transfer import RegistrationTransfer
+            transfer = db.session.get(RegistrationTransfer, object_id)
+            if transfer is None:
+                return _fail(f'Перенесення #{object_id} не знайдено')
+            new_status = STATUS_MAP.get(liqpay_status)
+            if new_status != 'paid':
+                return _noop(f'Доплата #{object_id}: статус {liqpay_status}')
+            applied = self.apply_surcharge(
+                transfer, payment_id=payment_id,
+                amount=payload.get('amount') or transfer.difference,
+            )
+            if applied:
+                return _noop(f'Доплату за перенесенням #{object_id} зараховано')
+            return _noop(f'Доплата за перенесенням #{object_id} вже зарахована')
 
         reg_id = object_id
         reg = (
@@ -572,6 +592,38 @@ class PaymentOps:
             source='status_check', liqpay_status=lp_status,
             raw_payload=status_data,
         )
+
+    # ---- доплата різниці тарифу (order_id SUR-<transfer_id>) ----
+
+    @staticmethod
+    def apply_surcharge(transfer, payment_id, amount):
+        """Зарахувати доплату різниці тарифу. Комітить.
+
+        Саме тут payment_amount реєстрації доганяє новий тариф: до цієї
+        миті вона лишалась такою, якою людина заплатила спочатку.
+
+        Ідемпотентно за surcharge_paid_at: LiqPay повторює callback, і без
+        цієї перевірки різниця додалась би двічі.
+        """
+        if transfer.surcharge_paid_at is not None:
+            logger.info('Surcharge for transfer #%s already applied',
+                        transfer.id)
+            return False
+
+        reg = transfer.registration
+        if reg is None:
+            return False
+
+        reg.payment_amount = _money(reg.payment_amount) + _money(amount)
+        transfer.surcharge_paid_at = utcnow()
+        transfer.surcharge_payment_id = payment_id
+        db.session.commit()
+
+        audit_logger.info(
+            'Surcharge %s applied to REG-%s via transfer #%s (payment %s)',
+            amount, reg.id, transfer.id, payment_id,
+        )
+        return True
 
     # ---- повернення коштів ----
 

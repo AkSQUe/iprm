@@ -967,6 +967,54 @@ def transfer_consent(token):
     )
 
 
+@registration_bp.route('/transfer/<token>/surcharge')
+def transfer_surcharge(token):
+    """Сторінка оплати різниці тарифу.
+
+    Окремий order_id SUR-<transfer_id>: платіж стосується перенесення, а
+    не початкового замовлення, і плутати їх у звітності не можна.
+    """
+    from app.services.liqpay import get_liqpay_service
+
+    transfer = _transfer_by_token(token)
+    if transfer is None:
+        abort(404)
+    if not transfer.surcharge_due:
+        flash(_('Доплату вже отримано'), 'info')
+        return redirect(url_for('registration.transfer_consent', token=token))
+
+    reg = transfer.registration
+    liqpay_data = liqpay_signature = liqpay_checkout_url = None
+    service = get_liqpay_service()
+    if service.is_configured:
+        result_url = url_for(
+            'registration.transfer_consent', token=token, _external=True)
+        server_url = url_for('payments.liqpay_callback', _external=True)
+        description = (
+            f'Доплата різниці тарифу: '
+            f'{reg.target_title or "перенесення реєстрації"}'
+        )
+        liqpay_data, liqpay_signature, liqpay_checkout_url = (
+            service.create_payment_form(
+                order_id=f'SUR-{transfer.id}',
+                amount=float(transfer.difference),
+                description=description,
+                result_url=result_url,
+                server_url=server_url,
+            )
+        )
+
+    return render_template(
+        'registration/transfer_surcharge.html',
+        transfer=transfer,
+        reg=reg,
+        amount=transfer.difference,
+        liqpay_data=liqpay_data,
+        liqpay_signature=liqpay_signature,
+        liqpay_checkout_url=liqpay_checkout_url,
+    )
+
+
 @registration_bp.route('/transfer/<token>/accept', methods=['POST'])
 @limiter.limit('10 per hour')
 def transfer_accept(token):

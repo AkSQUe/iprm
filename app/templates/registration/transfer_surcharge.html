@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from 'partials/_money.html' import money %}
+
+{% block title %}{{ _('Доплата різниці тарифу | ІПРМ') }}{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block extra_head %}
+{#- Раннє з'єднання з хостом бібліотеки віджета -- див. пояснення в
+    complete_pay.html. -#}
+<link rel="preconnect" href="https://static.liqpay.ua" crossorigin>
+{% endblock %}
+
+{% block content %}
+<div class="apple-page reg-layout">
+
+  <h1 class="reg-confirmation__title">{{ _('Доплата різниці тарифу') }}</h1>
+
+  {% set course = reg.instance.course if reg.instance else None %}
+  <div class="reg-event-card">
+    {% if course %}<h2 class="reg-event-card__title">{{ course.title }}</h2>{% endif %}
+    <div class="reg-event-card__meta">
+      <div>{{ _('До оплати:') }} <strong>{{ money(amount) }}</strong></div>
+    </div>
+  </div>
+
+  <p class="reg-attention">
+    {% trans trimmed %}
+    Ви перенесли участь на тариф з вищою вартістю. Різниця не впливає на
+    саму участь -- її можна доплатити будь-коли.
+    {% endtrans %}
+  </p>
+
+  {% with liqpay_data=liqpay_data, liqpay_signature=liqpay_signature,
+          liqpay_checkout_url=liqpay_checkout_url %}
+    {% include 'registration/partials/_pay_options.html' %}
+  {% endwith %}
+
+  <a href="{{ url_for('registration.transfer_consent', token=transfer.consent_token) }}"
+     class="apple-btn apple-btn--secondary">
+    {{ _('Повернутись до перенесення') }}
+  </a>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/liqpay-checkout.js') }}?v={{ assets_version }}" defer></script>
+{% endblock %}

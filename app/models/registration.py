@@ -361,5 +361,20 @@ class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
             return self.instance.start_date
         return None
 
+    @property
+    def surcharge_due_amount(self):
+        """Незакрита доплата різниці тарифу, або None.
+
+        Денормалізації тут свідомо немає: перенесення -- рідкісна подія, і
+        зайва колонка на кожній реєстрації коштувала б більше, ніж запит на
+        тих небагатьох рядках, де плашка справді потрібна.
+        """
+        from app.models.registration_transfer import RegistrationTransfer
+        row = RegistrationTransfer.query.filter_by(
+            registration_id=self.id, tariff_decision='surcharge',
+            surcharge_paid_at=None,
+        ).first()
+        return row.difference if row is not None else None
+
     def __repr__(self):
         return f'<EventRegistration user={self.user_id} instance={self.instance_id}>'

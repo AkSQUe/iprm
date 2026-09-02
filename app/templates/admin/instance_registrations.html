@@ -151,6 +151,10 @@
                 &minus;{{ money(reg.discount_amount) }}
               </div>
             {% endif %}
+            {% set reg_surcharge_due = surcharge_due.get(reg.id) %}
+            {% if reg_surcharge_due %}
+              <div class="badge badge--pending">Доплата {{ money(reg_surcharge_due) }} не надійшла</div>
+            {% endif %}
           </td>
           {{ progress.cells(reg, quiz_states, quiz_statuses) }}
 

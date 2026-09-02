@@ -133,6 +133,23 @@ def instance_registrations(instance_id):
                     if registrations else None)
     quiz_states = quiz_service.eligibility_map(registrations, context=quiz_context)
 
+    # Незакрита доплата -- батчем, а не через reg.surcharge_due_amount у циклі
+    # шаблону: властивість навмисно робить окремий запит (перенесення рідкісні,
+    # і зайва колонка на кожній реєстрації коштувала б дорожче), але виклик на
+    # кожен рядок цієї таблиці перетворив би саме той запит на N+1 -- те, від
+    # чого стереже test_page_does_not_grow_with_participants.
+    surcharge_due = {}
+    if registrations:
+        from app.models.registration_transfer import RegistrationTransfer
+        surcharge_due = dict(db.session.query(
+            RegistrationTransfer.registration_id, RegistrationTransfer.difference,
+        ).filter(
+            RegistrationTransfer.registration_id.in_(
+                [r.id for r in registrations]),
+            RegistrationTransfer.tariff_decision == 'surcharge',
+            RegistrationTransfer.surcharge_paid_at.is_(None),
+        ).all())
+
     return render_template(
         'admin/instance_registrations.html',
         instance=instance,
@@ -145,6 +162,7 @@ def instance_registrations(instance_id):
         quiz_states=quiz_states,
         quiz_statuses=quiz_service,
         quiz=quiz_service.resolve_quiz(instance, quiz_context),
+        surcharge_due=surcharge_due,
         # Один набір параметрів на пілюлі, пагінацію й експорт -- усі три мусять
         # вести на той самий зріз (як у registrations_all).
         filter_args=_listing.filter_args(filters),
@@ -489,6 +507,7 @@ def _registration_filters():
         'date_from': _listing.date_arg('date_from'),
         'date_to': _listing.date_arg('date_to'),
         'no_certificate': _listing.choice_arg('no_certificate', ('1',)),
+        'surcharge': _listing.choice_arg('surcharge', ('due',)),
         'scope': scope,
         'per_page': _listing.choice_arg('per_page', _listing.PER_PAGE_CHOICES),
     }
@@ -525,6 +544,14 @@ def _apply_registration_filters(query, filters):
     if filters['no_certificate']:
         # Кому ще не видали документ: підстава для пресету «Без сертифіката».
         query = query.filter(~EventRegistration.certificate.has())
+    if filters.get('surcharge') == 'due':
+        from app.models.registration_transfer import RegistrationTransfer
+        query = query.filter(EventRegistration.id.in_(
+            db.session.query(RegistrationTransfer.registration_id).filter(
+                RegistrationTransfer.tariff_decision == 'surcharge',
+                RegistrationTransfer.surcharge_paid_at.is_(None),
+            )
+        ))
 
     # CourseInstance потрібен для scope (час заходу) та фільтрів курс/тренер.
     # Джойнимо один раз, щоб не дублювати join.
@@ -706,6 +733,9 @@ def _registration_filters_summary(filters, rows_count):
     # `'Ще не виданий'`): файл називає те, що людина щойно бачила на екрані.
     if filters['no_certificate']:
         summary.append(('Сертифікат', 'Ще не виданий'))
+
+    if filters['surcharge']:
+        summary.append(('Доплата', 'Не надійшла'))
 
     # user_id -- перехід із картки користувача (немає поля у філтр-барі, тож
     # серед фільтрів вище цього рядка нема): без нього файл на одну людину
