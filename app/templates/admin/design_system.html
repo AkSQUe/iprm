@@ -44,6 +44,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/password-strength.css') }}?v={{ assets_version }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/referral-share.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}?v={{ assets_version }}">
 
 {# Посторінково-компонентні набори за доменом (win за каскадом навмисно). #}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
@@ -75,6 +76,7 @@
 {# Скрипт вкладок переїхав із base.html разом зі стилями: обидва потрібні
    рівно цій сторінці, а вантажились на кожній. #}
 <script defer src="{{ url_for('static', filename='js/tabs.js') }}?v={{ assets_version }}"></script>
+<script src="{{ url_for('static', filename='js/modal.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
 
 {% block content %}

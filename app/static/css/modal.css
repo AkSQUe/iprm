@@ -1,0 +1,86 @@
+/* modal.css — модальне вікно з довільним вмістом. Парний до modal.js.
+
+   Чому окремо від .iprm-confirm: той приймає лише текст і дві кнопки, і
+   форма всередині нього ламає його ж розмітку. Чому не всередині
+   page-*.css: компонент, оголошений посторінково, невидимий для наступної
+   сторінки — і наступний розробник напише його заново. */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* display:flex вище за UA [hidden]{display:none} за порядком джерел, тож
+   ховаємо явно — інакше лишається невидимий перехоплювач кліків. */
+.modal[hidden] { display: none; }
+
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 16, 40, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.modal__dialog {
+  position: relative;
+  width: min(640px, 100%);
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  background: var(--iprm-white);
+  color: var(--iprm-text);
+  border-radius: var(--iprm-radius-md);
+  box-shadow: var(--iprm-shadow-modal);
+}
+
+.modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px 12px;
+}
+
+.modal__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.modal__close {
+  border: 0;
+  background: none;
+  color: var(--iprm-text-light);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--iprm-radius-sm);
+}
+
+.modal__close:hover { color: var(--iprm-text); }
+
+.modal__body {
+  padding: 0 24px;
+  overflow-y: auto;
+}
+
+.modal__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px 20px;
+}
+
+@media (max-width: 640px) {
+  .modal { padding: 12px; }
+  .modal__dialog { max-height: calc(100vh - 24px); }
+  .modal__foot { flex-direction: column-reverse; }
+  .modal__foot > * { width: 100%; }
+}

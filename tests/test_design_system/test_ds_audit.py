@@ -60,15 +60,20 @@ def test_css_link_recognizes_url_for_and_literal_href_forms(tmp_path):
 
 def test_css_files_have_no_unrecognized_zero_consumers():
     """Нуль споживачів у classify_css означає, що підключення НЕ
-    розпізнане regexp-ом, а не "файл нікому не потрібен" -- єдиний
-    легітимний нуль сьогодні належить chrome самого каталогу
-    (page-admin-design-system.css: каталог виключений з підрахунку
-    споживачів навмисно, бо він ПОКАЗУЄ компоненти, а не вживає їх).
+    розпізнане regexp-ом, а не "файл нікому не потрібен" -- легітимний
+    нуль сьогодні належить chrome самого каталогу (page-admin-design-
+    system.css: каталог виключений з підрахунку споживачів навмисно,
+    бо він ПОКАЗУЄ компоненти, а не вживає їх) і, тимчасово, modal.css:
+    компонент показаний у каталозі (Задача 5), але жоден реальний шаблон
+    ще не відкриває живу модалку -- це прийде із Задачею 6 (форма
+    переносу реєстрації в адмінці). Коли той шаблон отримає
+    data-modal-open, modal.css переведеться в component і рядок нижче
+    треба буде прибрати.
     Будь-який інший нуль -- підозра на нерозпізнану форму <link>.
     """
     result = ds_audit.classify_css(ROOT)
     zero = sorted(name for name, count in result['page'].items() if count == 0)
-    assert zero == ['page-admin-design-system.css'], (
+    assert zero == ['modal.css', 'page-admin-design-system.css'], (
         'CSS-файли з 0 розпізнаними споживачами: ' + ', '.join(zero)
         + '\nЯкщо файл справді підключений -- перевірте форму <link>: '
           'можливо, _CSS_LINK у tools/ds/ds_audit.py не впізнає її.'

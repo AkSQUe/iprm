@@ -855,3 +855,34 @@
       прибрано, а не переписано.
     </p>
   </div>
+
+  <!-- ===== MODAL ===== -->
+  <div class="ds-section-alt">
+    <div class="ds-section" id="modal">
+      <p class="ds-label">Components</p>
+      <h2 class="ds-title">Модальне вікно</h2>
+      <p class="ds-hint">Вікно з довільним вмістом — форма, список, підтвердження зі складнішим
+         поясненням. Для простого «так/ні» лишається <code class="ds-code">.iprm-confirm</code>.</p>
+      <div class="ds-demo">
+        <button type="button" class="btn-admin btn-admin--secondary" data-modal-open="ds-modal-demo">
+          Відкрити модалку
+        </button>
+        <div class="modal" id="ds-modal-demo" hidden>
+          <div class="modal__backdrop" data-modal-close></div>
+          <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="ds-modal-demo-title">
+            <div class="modal__head">
+              <h3 class="modal__title" id="ds-modal-demo-title">Заголовок вікна</h3>
+              <button type="button" class="modal__close" data-modal-close aria-label="Закрити">&times;</button>
+            </div>
+            <div class="modal__body">
+              <p>Тіло вікна прокручується, якщо вміст не вміщається.</p>
+            </div>
+            <div class="modal__foot">
+              <button type="button" class="btn-admin btn-admin--secondary" data-modal-close>Скасувати</button>
+              <button type="button" class="btn-admin btn-admin--primary">Підтвердити</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
