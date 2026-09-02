@@ -8,7 +8,10 @@
 .modal {
   position: fixed;
   inset: 0;
-  z-index: 10002;
+  /* Нижче за .iprm-confirm (confirm-action.css: 10001): форма всередині
+     .modal може відкрити підтвердження перед сабмітом, і те підтвердження
+     мусить лягти зверху, а не сховатись за модалкою, що його викликала. */
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
