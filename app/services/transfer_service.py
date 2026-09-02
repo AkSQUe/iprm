@@ -21,6 +21,7 @@ from app.models.registration_transfer import (
 from app.models.refund_request import RefundRequest, STATUS_NEW
 from app.models.mixins import utcnow
 from app.services import refund_policy, registration_service
+from app.services.refund_requests import MAX_PAYOUT, MAX_REASON
 from app.utils import ensure_utc
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ def hours_until(start_date):
 
 
 def _registration_problems(reg):
-    """Запобіжники, що не залежать від цільового заходу (1, 6, 7, 8, 9)."""
+    """Запобіжники, що не залежать від цільового заходу (1, 6, 7, 8, 9, 10)."""
     problems = []
 
     if reg.status == 'cancelled':
@@ -64,6 +65,18 @@ def _registration_problems(reg):
     if open_transfer is not None:
         problems.append(
             'Попереднє перенесення ще очікує відповіді учасника'
+        )
+
+    # Інакше друге перенесення з `refund_diff` мовчки зменшило б уже подану
+    # заявку учасника на повне повернення до різниці тарифів --
+    # _open_refund_request ОНОВЛЮЄ, а не додає другу.
+    open_refund = RefundRequest.query.filter_by(
+        registration_id=reg.id, status=STATUS_NEW,
+    ).first()
+    if open_refund is not None:
+        problems.append(
+            'За реєстрацією вже є відкрита заявка на повернення — '
+            'спершу розгляньте її'
         )
 
     return problems
@@ -141,10 +154,6 @@ def _clean(text, limit):
     """Порожній рядок -> None: лист вирішує за NULL, чи рендерити блок."""
     text = (text or '').strip()
     return text[:limit] if text else None
-
-
-MAX_REASON = 2000
-MAX_PAYOUT = 500
 
 
 def _open_refund_request(transfer, amount, reason, quoted_code, percent=None):

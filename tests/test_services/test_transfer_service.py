@@ -135,6 +135,20 @@ def test_guard_9_open_transfer_exists(world):
     assert any('очікує відповіді' in p for p in transfer_service.check(reg, dst))
 
 
+def test_guard_10_open_refund_request_blocks_transfer(world):
+    """Інакше друге перенесення з `refund_diff` мовчки зменшило б уже подану
+    заявку учасника на повне повернення до різниці тарифів."""
+    from app.models.refund_request import RefundRequest
+    reg, src, dst, user, _ = world
+    db.session.add(RefundRequest(
+        registration_id=reg.id, user_id=user.id,
+        reason='Хочу повернення', quoted_amount=1000, quoted_percent=100,
+    ))
+    db.session.commit()
+    assert any('заявка на повернення' in p
+               for p in transfer_service.check(reg, dst))
+
+
 def test_check_without_target_runs_only_registration_guards(world):
     """Без цілі перевіряємо лише стан самої реєстрації -- саме так модалка
     вирішує, чи пропонувати заходи взагалі."""
@@ -414,6 +428,7 @@ def test_second_refund_updates_open_request(world, monkeypatch):
     assert err is None
     assert RefundRequest.query.filter_by(registration_id=reg.id).count() == 1
     assert request.quoted_amount == 1000
+    assert request.quoted_percent == 100
     assert 'Хочу все назад' in request.reason
 
 
