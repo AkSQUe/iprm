@@ -138,6 +138,46 @@ def test_repeated_callback_does_not_double_credit(transfer, mock_liqpay):
     assert reg.payment_amount == 1500
 
 
+def test_callback_writes_payment_transaction(transfer, mock_liqpay):
+    """Доплата -- такі самі гроші, як решта: без рядка в журналі її не
+    видно ані звірці за транзакціями, ані бухгалтеру."""
+    from app.models.payment_transaction import PaymentTransaction
+    from app.services.payment_ops import PaymentOps
+    item, reg = transfer
+    mock_liqpay.decode_callback.return_value = {
+        'order_id': f'SUR-{item.id}', 'status': 'success',
+        'payment_id': 'lp-cb-3', 'amount': 500,
+    }
+    PaymentOps(mock_liqpay).process_callback('data', 'sig')
+
+    txn = PaymentTransaction.query.filter_by(
+        order_id=f'SUR-{item.id}').one()
+    assert txn.registration_id == reg.id
+    assert txn.enrollment_id is None
+    assert txn.amount == 500
+    assert txn.mapped_status == 'paid'
+    assert txn.source == 'callback'
+    assert txn.payment_id == 'lp-cb-3'
+    assert txn.liqpay_status == 'success'
+    assert txn.raw_payload['order_id'] == f'SUR-{item.id}'
+
+
+def test_repeated_callback_writes_one_transaction(transfer, mock_liqpay):
+    """Повтор callback-а не має подвоїти й рядок журналу."""
+    from app.models.payment_transaction import PaymentTransaction
+    from app.services.payment_ops import PaymentOps
+    item, _reg = transfer
+    mock_liqpay.decode_callback.return_value = {
+        'order_id': f'SUR-{item.id}', 'status': 'success',
+        'payment_id': 'lp-cb-4', 'amount': 500,
+    }
+    ops = PaymentOps(mock_liqpay)
+    ops.process_callback('data', 'sig')
+    ops.process_callback('data', 'sig')
+    assert PaymentTransaction.query.filter_by(
+        order_id=f'SUR-{item.id}').count() == 1
+
+
 def test_callback_rejects_amount_mismatch(transfer, mock_liqpay):
     """payload['amount'] звіряється з transfer.difference -- підозрілу
     суму не зараховуємо мовчки (Знахідка 2 рев'ю)."""

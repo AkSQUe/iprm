@@ -251,6 +251,8 @@ class PaymentOps:
                 return _fail(problem)
             applied = self.apply_surcharge(
                 transfer, payment_id=payment_id, amount=transfer.difference,
+                liqpay_status=liqpay_status, source='callback',
+                raw_payload=payload,
             )
             if applied:
                 return _noop(f'Доплату за перенесенням #{object_id} зараховано')
@@ -617,7 +619,8 @@ class PaymentOps:
     # ---- доплата різниці тарифу (order_id SUR-<transfer_id>) ----
 
     @staticmethod
-    def apply_surcharge(transfer, payment_id, amount):
+    def apply_surcharge(transfer, payment_id, amount, liqpay_status=None,
+                        source='callback', raw_payload=None):
         """Зарахувати доплату різниці тарифу. Комітить.
 
         Саме тут payment_amount реєстрації доганяє новий тариф: до цієї
@@ -651,6 +654,22 @@ class PaymentOps:
         reg.payment_amount = _money(reg.payment_amount) + _money(amount)
         transfer.surcharge_paid_at = utcnow()
         transfer.surcharge_payment_id = payment_id
+
+        # Журнал транзакцій -- на тих самих правах, що реєстрація й
+        # онлайн-курс. Без цього рядка гроші входили в payment_amount, але
+        # не існували ані для звірки за транзакціями, ані для бухгалтера:
+        # єдиний слід лишався в audit-логу, куди ніхто не ходить із
+        # питанням «за що ці 500 гривень».
+        _log_transaction(
+            reg_id=reg.id,
+            order_id=f'SUR-{transfer.id}',
+            mapped_status='paid',
+            source=source,
+            liqpay_status=liqpay_status,
+            payment_id=payment_id,
+            amount=amount,
+            raw_payload=raw_payload,
+        )
         db.session.commit()
 
         audit_logger.info(
