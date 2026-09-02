@@ -87,6 +87,7 @@ ICON_CODEPOINTS = {
     'send': 0xe163,
     'settings': 0xe8b8,
     'smart_display': 0xf06a,
+    'swap_horiz': 0xe8d4,
     'table_view': 0xf1be,
     'title': 0xe264,
     'tune': 0xe429,
