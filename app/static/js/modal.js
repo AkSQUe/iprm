@@ -24,9 +24,12 @@
     stack.push({ id: id, trigger: trigger || document.activeElement });
     el.hidden = false;
     document.body.style.overflow = 'hidden';
-    var focusable = el.querySelector(
-      'input:not([type=hidden]), select, textarea, button'
-    );
+    // Той самий FOCUSABLE, що й трап нижче -- інакше діалог лише зі
+    // списком посилань (без input/select/textarea/button) не отримує
+    // початкового фокусу, трап це бачить як "фокус поза host" і мовчки
+    // не вмикається: клавіатурний користувач протабулює прямо крізь
+    // aria-modal="true" на сторінку під ним.
+    var focusable = el.querySelector(FOCUSABLE);
     if (focusable) { focusable.focus(); }
   }
 
@@ -74,16 +77,21 @@
     var host = document.getElementById(top.id);
     if (!host) { return; }
 
+    // Обидві гілки нижче керуються верхнім .modal лише тоді, коли фокус
+    // справді в ньому: якщо над ним відкрито .iprm-confirm (той самий
+    // z-index-фікс, що зробив це можливим), і Tab, і Escape мусять дістатись
+    // ЙОГО власного обробника в confirm-action.js, а не закрити чи
+    // перехопити фокус діалогу, який під ним. Без цієї перевірки Escape,
+    // натиснутий, щоб закрити лише підтвердження, закрив би заразом і
+    // форму в .modal під ним, знищивши її вміст.
+    if (!host.contains(document.activeElement)) { return; }
+
     if (event.key === 'Escape') {
       close(top.id);
       return;
     }
 
     if (event.key !== 'Tab') { return; }
-    // Якщо фокус зараз не всередині верхнього .modal -- над ним стоїть
-    // щось інше (наприклад .iprm-confirm, у якого свій власний трап у
-    // confirm-action.js) -- не забираємо в нього фокус.
-    if (!host.contains(document.activeElement)) { return; }
 
     /* Той самий прийом, що й .iprm-confirm у confirm-action.js: Tab ходить
        по індексу серед фокусованих елементів діалогу з циклічним
