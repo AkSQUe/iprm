@@ -133,22 +133,13 @@ def instance_registrations(instance_id):
                     if registrations else None)
     quiz_states = quiz_service.eligibility_map(registrations, context=quiz_context)
 
-    # Незакрита доплата -- батчем, а не через reg.surcharge_due_amount у циклі
-    # шаблону: властивість навмисно робить окремий запит (перенесення рідкісні,
-    # і зайва колонка на кожній реєстрації коштувала б дорожче), але виклик на
-    # кожен рядок цієї таблиці перетворив би саме той запит на N+1 -- те, від
-    # чого стереже test_page_does_not_grow_with_participants.
-    surcharge_due = {}
-    if registrations:
-        from app.models.registration_transfer import RegistrationTransfer
-        surcharge_due = dict(db.session.query(
-            RegistrationTransfer.registration_id, RegistrationTransfer.difference,
-        ).filter(
-            RegistrationTransfer.registration_id.in_(
-                [r.id for r in registrations]),
-            RegistrationTransfer.tariff_decision == 'surcharge',
-            RegistrationTransfer.surcharge_paid_at.is_(None),
-        ).all())
+    # Незакрита доплата -- одним запитом на сторінку, а не перевіркою на
+    # рядок: поштучно це був би рівно той N+1, від якого стереже
+    # test_page_does_not_grow_with_participants. Умова спільна з
+    # запобіжником 11 і з фільтром списку (transfer_service).
+    from app.services import transfer_service
+    surcharge_due = transfer_service.unpaid_surcharge_amounts(
+        [r.id for r in registrations])
 
     return render_template(
         'admin/instance_registrations.html',
@@ -546,10 +537,10 @@ def _apply_registration_filters(query, filters):
         query = query.filter(~EventRegistration.certificate.has())
     if filters.get('surcharge') == 'due':
         from app.models.registration_transfer import RegistrationTransfer
+        from app.services import transfer_service
         query = query.filter(EventRegistration.id.in_(
             db.session.query(RegistrationTransfer.registration_id).filter(
-                RegistrationTransfer.tariff_decision == 'surcharge',
-                RegistrationTransfer.surcharge_paid_at.is_(None),
+                *transfer_service.unpaid_surcharge_condition()
             )
         ))
 

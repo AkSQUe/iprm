@@ -149,6 +149,50 @@ def test_guard_10_open_refund_request_blocks_transfer(world):
                for p in transfer_service.check(reg, dst))
 
 
+def test_guard_11_unpaid_surcharge_blocks_second_transfer(world):
+    """Друге перенесення при незакритій доплаті переоцінює різницю.
+
+    Сплачено 1000 -> перенос на 1500 із доплатою (борг 500, payment_amount
+    ще 1000) -> перенос на 2000 порахував би різницю 1000 замість 500.
+    Обидва посилання SUR- живі 30 днів: оплата обох дала б 2500 за захід
+    на 2000.
+    """
+    reg, _src, dst, _user, course = world
+    third = CourseInstance(course_id=course.id, status='published',
+                           start_date=utcnow() + timedelta(days=30), price=2000)
+    db.session.add(third)
+    db.session.commit()
+
+    first = _execute(reg, dst, tariff_decision='surcharge')
+    assert first.difference == 500
+    assert reg.payment_amount == 1000  # доплата ще не надійшла
+
+    assert any('доплата' in p for p in transfer_service.check(reg, third))
+    with pytest.raises(ValueError):
+        _execute(reg, third, tariff_decision='surcharge')
+    assert reg.instance_id == dst.id
+    assert RegistrationTransfer.query.filter_by(
+        registration_id=reg.id).count() == 1
+
+
+def test_paid_surcharge_unblocks_next_transfer(world):
+    """Закрита доплата знімає запобіжник 11: борг погашено."""
+    from app.services.payment_ops import PaymentOps
+    reg, _src, dst, _user, course = world
+    third = CourseInstance(course_id=course.id, status='published',
+                           start_date=utcnow() + timedelta(days=30), price=2000)
+    db.session.add(third)
+    db.session.commit()
+
+    first = _execute(reg, dst, tariff_decision='surcharge')
+    PaymentOps.apply_surcharge(first, payment_id='lp-guard-11', amount=500)
+
+    assert reg.payment_amount == 1500
+    assert transfer_service.check(reg, third) == []
+    second = _execute(reg, third, tariff_decision='surcharge')
+    assert second.difference == 500  # від 1500, а не від 1000
+
+
 def test_check_without_target_runs_only_registration_guards(world):
     """Без цілі перевіряємо лише стан самої реєстрації -- саме так модалка
     вирішує, чи пропонувати заходи взагалі."""

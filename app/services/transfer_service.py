@@ -39,8 +39,40 @@ def hours_until(start_date):
     return (ensure_utc(start_date) - utcnow()).total_seconds() / 3600.0
 
 
+def unpaid_surcharge_condition():
+    """Умова «доплату запросили, а вона не надійшла» -- одна на весь проєкт.
+
+    Тією самою умовою живляться три різні місця: запобіжник 11 нижче,
+    плашка в списку реєстрацій і фільтр «Доплата: не надійшла». Три копії
+    розійшлися б при першій же правці, і розбіжність жила б саме там, де
+    її найважче помітити -- у грошах.
+    """
+    return (
+        RegistrationTransfer.tariff_decision == DECISION_SURCHARGE,
+        RegistrationTransfer.surcharge_paid_at.is_(None),
+    )
+
+
+def unpaid_surcharge_amounts(registration_ids):
+    """{registration_id: сума незакритої доплати} -- ОДНИМ запитом.
+
+    Батчем, а не властивістю моделі в циклі шаблону: поштучний виклик на
+    кожен рядок таблиці -- це рівно той N+1, від якого стереже
+    test_page_does_not_grow_with_participants.
+    """
+    ids = list(registration_ids)
+    if not ids:
+        return {}
+    return dict(db.session.query(
+        RegistrationTransfer.registration_id, RegistrationTransfer.difference,
+    ).filter(
+        RegistrationTransfer.registration_id.in_(ids),
+        *unpaid_surcharge_condition(),
+    ).all())
+
+
 def _registration_problems(reg):
-    """Запобіжники, що не залежать від цільового заходу (1, 6, 7, 8, 9, 10)."""
+    """Запобіжники, що не залежать від цільового заходу (1, 6, 7, 8, 9-11)."""
     problems = []
 
     if reg.status == 'cancelled':
@@ -77,6 +109,23 @@ def _registration_problems(reg):
         problems.append(
             'За реєстрацією вже є відкрита заявка на повернення — '
             'спершу розгляньте її'
+        )
+
+    # Друге перенесення при незакритій доплаті переоцінює РІЗНИЦЮ: вона
+    # рахується від payment_amount, а той ще не ввібрав першу сходинку
+    # (apply_surcharge додає суму лише коли гроші надійшли). 1000 -> 1500
+    # (борг 500) -> 2000 дало б другу різницю 1000 замість 500, обидва
+    # посилання SUR- живі 30 днів, і оплата обох дала б 2500 за захід на
+    # 2000. Запобіжник 9 тут не рятує: стан awaiting_consent зникає в мить
+    # згоди учасника, а тихе перенесення в нього й не заходить.
+    unpaid_surcharge = RegistrationTransfer.query.filter(
+        RegistrationTransfer.registration_id == reg.id,
+        *unpaid_surcharge_condition(),
+    ).first()
+    if unpaid_surcharge is not None:
+        problems.append(
+            'За попереднім перенесенням не надійшла доплата — '
+            'спершу закрийте її'
         )
 
     return problems
