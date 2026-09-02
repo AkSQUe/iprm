@@ -1,0 +1,78 @@
+{% extends "emails/base.html" %}
+{% from "emails/_macros.html" import button_primary, button_outline, button_small, detail_row, alert_info, alert_warning, section_title, spacer %}
+
+{% block title %}{{ _('Вашу реєстрацію перенесено') }}{% endblock %}
+
+{% set event_title = transfer.to_instance.course.title if transfer.to_instance and transfer.to_instance.course else _('захід') %}
+
+{% block preview_text %}{% trans title=event_title %}Дату проведення «{{ title }}» змінено -- оберіть, що робимо далі{% endtrans %}{% endblock %}
+
+{% block content %}
+    <h1 class="mobile-h1" style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #17131D; line-height: 1.25;">
+        {{ _('Вашу реєстрацію перенесено') }}
+    </h1>
+
+    {% set greet_name = user.first_name or _('Шановний учаснику') %}
+    <p class="mobile-text" style="margin: 0 0 32px 0; font-size: 15px; color: #625A6D; line-height: 1.5;">
+        {% trans name=greet_name, title=event_title %}{{ name }}, дату проведення заходу «{{ title }}» змінено. Нижче -- деталі й вибір, що робимо далі.{% endtrans %}
+    </p>
+
+    {{ section_title(_('Дата проведення')) }}
+
+    {% set from_date = transfer.from_instance.start_date.strftime('%d.%m.%Y') if transfer.from_instance and transfer.from_instance.start_date else _('дата не вказана') %}
+    {% set from_value = from_date ~ (', ' ~ transfer.from_instance.location if transfer.from_instance and transfer.from_instance.location else '') %}
+    {% set to_date = transfer.to_instance.start_date.strftime('%d.%m.%Y') if transfer.to_instance and transfer.to_instance.start_date else _('дата не вказана') %}
+    {% set to_value = to_date ~ (', ' ~ transfer.to_instance.location if transfer.to_instance and transfer.to_instance.location else '') %}
+
+    {{ detail_row(_('Було'), from_value) }}
+    {{ detail_row(_('Стало'), to_value) }}
+
+    {# Порожні поля НЕ рендеряться -- ані заголовка, ані порожнього блоку. #}
+    {% if transfer.reason %}
+    {{ spacer(16) }}
+    {{ section_title(_('Причина перенесення')) }}
+    <p style="margin: 0; font-size: 15px; color: #17131D; line-height: 1.5;">{{ transfer.reason }}</p>
+    {% endif %}
+
+    {% if transfer.note %}
+    {{ spacer(16) }}
+    {{ section_title(_('Примітка')) }}
+    <p style="margin: 0; font-size: 15px; color: #17131D; line-height: 1.5;">{{ transfer.note|replace('\n', '<br>')|safe }}</p>
+    {% endif %}
+
+    {% if transfer.difference and transfer.difference != 0 %}
+        {{ spacer(16) }}
+        {% if transfer.tariff_decision == 'refund_diff' %}
+            {% set diff_msg %}{% trans amount=transfer.difference|abs %}Новий тариф дешевший на {{ amount }} грн. Ми повернемо вам цю різницю -- заявку вже передано менеджеру.{% endtrans %}{% endset %}
+            {{ alert_info(_('Різницю повернемо'), diff_msg) }}
+        {% elif transfer.tariff_decision == 'surcharge' %}
+            {% set diff_msg %}{% trans amount=transfer.difference %}Новий тариф дорожчий на {{ amount }} грн.{% endtrans %}{% endset %}
+            {{ alert_warning(_('Потрібна доплата'), diff_msg) }}
+        {% else %}
+            {{ alert_info(_('Вартість без змін'), _('Вартість участі для вас лишається без змін.')) }}
+        {% endif %}
+    {% endif %}
+
+    <p style="margin: 24px 0 4px 0; font-size: 15px; font-weight: 600; color: #17131D; line-height: 1.5;">
+        {{ _('Оберіть, будь ласка, що робимо далі:') }}
+    </p>
+
+    {% if consent_url %}
+        {{ button_primary(_('Погоджуюсь на перенесення'), consent_url) }}
+        {{ button_outline(_('Прошу повернення коштів'), consent_url ~ '#refund') }}
+
+        {% if surcharge_url %}
+            {% set surcharge_text %}{% trans amount=transfer.difference %}Доплатити {{ amount }} грн{% endtrans %}{% endset %}
+            {{ button_small(surcharge_text, surcharge_url) }}
+        {% endif %}
+
+        <p style="margin: 16px 0 0 0; font-size: 13px; color: #6E667A; line-height: 1.5;">
+            {{ _('Якщо кнопки не працюють, відкрийте посилання:') }}<br>
+            <a href="{{ consent_url }}" style="color: #7437C9; word-break: break-all;">{{ consent_url }}</a>
+        </p>
+    {% else %}
+        <p style="margin: 0; font-size: 15px; color: #17131D; line-height: 1.5;">
+            {{ _('Дайте відповідь на цей лист, і ми оформимо ваш вибір вручну.') }}
+        </p>
+    {% endif %}
+{% endblock %}

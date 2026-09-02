@@ -987,8 +987,38 @@ class EmailService:
 
     @staticmethod
     def send_transfer_offer(transfer):
-        """Лист-пропозиція при перенесенні. Реалізація -- окремим кроком."""
-        return None
+        """Повідомити учасника про перенесення й дати вибір (§3.2).
+
+        Лист учаснику, тож NotificationRule тут не залучається: список
+        отримувачів -- рівно одна людина, чию реєстрацію перенесли.
+        """
+        reg = transfer.registration
+        user = reg.user if reg is not None else None
+        if user is None or not user.email:
+            return None
+
+        base = EmailService._site_base_url()
+        consent_url = (f'{base}/registration/transfer/{transfer.consent_token}'
+                       if base and transfer.consent_token else None)
+        surcharge_url = None
+        if transfer.surcharge_due and consent_url:
+            surcharge_url = f'{consent_url}/surcharge'
+
+        return EmailService.send_email(
+            to=user.email,
+            subject=lambda: _('Ваш захід перенесено: %(title)s',
+                              title=reg.target_title or 'курс'),
+            template_name='transfer_offer',
+            context={
+                'user': user,
+                'transfer': transfer,
+                'registration': reg,
+                'consent_url': consent_url,
+                'surcharge_url': surcharge_url,
+            },
+            trigger='transfer',
+            registration_id=reg.id,
+        )
 
     @staticmethod
     def send_refund_request_notification(refund_request):

@@ -60,7 +60,7 @@ class EmailLog(TimestampMixin, db.Model):
             "trigger IN ('registration', 'payment', 'reminder', 'status_change', "
             "'email_confirm', 'course_request', 'certificate', 'blog_comment', "
             "'password_reset', 'backup_failure', 'materials', 'referral', "
-            "'meta_lead', 'test')",
+            "'meta_lead', 'transfer', 'test')",
             name='ck_email_logs_trigger',
         ),
         db.Index('ix_email_logs_created_at', 'created_at'),
@@ -96,6 +96,7 @@ class EmailLog(TimestampMixin, db.Model):
         ('materials', 'Матеріали заходу'),
         ('referral', 'Реферальний бонус'),
         ('meta_lead', 'Збій приймання лідів Meta'),
+        ('transfer', 'Перенесення заходу'),
         ('test', 'Тест'),
     ]
 
