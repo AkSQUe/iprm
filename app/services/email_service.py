@@ -986,6 +986,11 @@ class EmailService:
         )
 
     @staticmethod
+    def send_transfer_offer(transfer):
+        """Лист-пропозиція при перенесенні. Реалізація -- окремим кроком."""
+        return None
+
+    @staticmethod
     def send_refund_request_notification(refund_request):
         """Повідомити адмінів про нову заявку на повернення.
 

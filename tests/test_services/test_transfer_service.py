@@ -157,3 +157,157 @@ def test_eligible_instances_excludes_too_close(world):
     dst.start_date = utcnow() + timedelta(hours=12)
     db.session.commit()
     assert transfer_service.eligible_instances(reg) == []
+
+
+def _execute(reg, dst, **kwargs):
+    data = dict(target_instance=dst, initiator='participant',
+                tariff_decision='keep')
+    data.update(kwargs)
+    return transfer_service.execute(reg, **data)
+
+
+def test_execute_moves_registration(world):
+    reg, src, dst, _, _ = world
+    transfer = _execute(reg, dst)
+    assert reg.instance_id == dst.id
+    assert transfer.from_instance_id == src.id
+    assert transfer.to_instance_id == dst.id
+    assert transfer.state == RegistrationTransfer.STATE_APPLIED
+
+
+def test_execute_reassigns_place_number(world):
+    """place_number унікальний у межах заходу, а assign_place_number
+    ідемпотентний -- без знулення реєстрація приїхала б із чужим номером."""
+    reg, src, dst, _, _ = world
+    reg.place_number = 7
+    db.session.commit()
+    _execute(reg, dst)
+    assert reg.place_number == 1
+
+
+def test_execute_points_tariff_at_target(world):
+    """tariff_id мусить вказувати на тариф ЦІЛЬОВОГО заходу, інакше
+    лишається висяча вказівка на чужий тариф."""
+    from app.models.instance_tariff import InstanceTariff
+    reg, src, dst, _, _ = world
+    tariff = InstanceTariff(instance_id=dst.id, name='Практикум', price=1500)
+    db.session.add(tariff)
+    db.session.commit()
+    transfer = _execute(reg, dst, tariff=tariff, tariff_decision='keep')
+    assert reg.tariff_id == tariff.id
+    assert transfer.to_tariff_id == tariff.id
+    assert transfer.new_amount == 1500
+
+
+def test_execute_does_not_touch_money_or_promo(world):
+    """payment_amount рухає лише payment_ops; перенесення не має анулювати
+    вже надану знижку."""
+    reg, src, dst, _, _ = world
+    reg.discount_amount = 200
+    db.session.commit()
+    _execute(reg, dst)
+    assert reg.payment_amount == 1000
+    assert reg.discount_amount == 200
+    assert reg.payment_status == 'paid'
+
+
+def test_execute_snapshots_amounts(world):
+    from app.models.instance_tariff import InstanceTariff
+    reg, src, dst, _, _ = world
+    tariff = InstanceTariff(instance_id=dst.id, name='Практикум', price=1500)
+    db.session.add(tariff)
+    db.session.commit()
+    transfer = _execute(reg, dst, tariff=tariff)
+    assert transfer.old_amount == 1000
+    assert transfer.new_amount == 1500
+    assert transfer.difference == 500
+    # Знімок не переписується правкою тарифу заднім числом.
+    tariff.price = 9999
+    db.session.commit()
+    assert transfer.new_amount == 1500
+
+
+def test_execute_falls_back_to_instance_price_without_tariffs(world):
+    reg, src, dst, _, _ = world
+    transfer = _execute(reg, dst)
+    assert transfer.new_amount == 1500
+    assert transfer.difference == 500
+
+
+def test_execute_normalises_empty_reason_and_note(world):
+    """Порожні поля мусять бути NULL: лист вирішує за ними, чи рендерити
+    блок, і '' дав би порожній заголовок."""
+    reg, src, dst, _, _ = world
+    transfer = _execute(reg, dst, reason='   ', note='')
+    assert transfer.reason is None
+    assert transfer.note is None
+
+
+def test_execute_keeps_reason_and_note(world):
+    reg, src, dst, _, _ = world
+    transfer = _execute(reg, dst, reason='Тренер захворів', note='Місце те саме')
+    assert transfer.reason == 'Тренер захворів'
+    assert transfer.note == 'Місце те саме'
+
+
+def test_execute_rejects_blocked_transfer(world):
+    reg, src, dst, _, _ = world
+    reg.status = 'cancelled'
+    db.session.commit()
+    with pytest.raises(ValueError):
+        _execute(reg, dst)
+    assert reg.instance_id == src.id
+
+
+def test_execute_rejects_organizer_surcharge(world):
+    """§3.2: перенесення з нашої ініціативи -- без додаткової оплати."""
+    reg, src, dst, _, _ = world
+    with pytest.raises(ValueError):
+        _execute(reg, dst, initiator='organizer', tariff_decision='surcharge')
+    assert reg.instance_id == src.id
+
+
+def test_execute_rejects_refund_diff_on_pricier_tariff(world):
+    """Інакше "повернути різницю" на дорожчому тарифі тихо не зробило б
+    нічого, а адмін був би певен, що заявку заведено."""
+    reg, src, dst, _, _ = world  # dst дорожчий: 1500 проти сплачених 1000
+    with pytest.raises(ValueError):
+        _execute(reg, dst, tariff_decision='refund_diff')
+    assert reg.instance_id == src.id
+
+
+def test_execute_rejects_surcharge_on_cheaper_tariff(world):
+    from app.models.instance_tariff import InstanceTariff
+    reg, src, dst, _, _ = world
+    tariff = InstanceTariff(instance_id=dst.id, name='Онлайн', price=600)
+    db.session.add(tariff)
+    db.session.commit()
+    with pytest.raises(ValueError):
+        _execute(reg, dst, tariff=tariff, tariff_decision='surcharge')
+    assert reg.instance_id == src.id
+
+
+def test_execute_announced_issues_token(world, monkeypatch):
+    sent = []
+    monkeypatch.setattr(
+        'app.services.email_service.EmailService.send_transfer_offer',
+        staticmethod(lambda transfer: sent.append(transfer)),
+    )
+    reg, src, dst, _, _ = world
+    transfer = _execute(reg, dst, announced=True)
+    assert transfer.state == RegistrationTransfer.STATE_AWAITING
+    assert transfer.consent_token_active is True
+    assert sent == [transfer]
+
+
+def test_execute_silent_sends_nothing(world, monkeypatch):
+    sent = []
+    monkeypatch.setattr(
+        'app.services.email_service.EmailService.send_transfer_offer',
+        staticmethod(lambda transfer: sent.append(transfer)),
+    )
+    reg, src, dst, _, _ = world
+    transfer = _execute(reg, dst, announced=False)
+    assert transfer.state == RegistrationTransfer.STATE_APPLIED
+    assert transfer.consent_token is None
+    assert sent == []
