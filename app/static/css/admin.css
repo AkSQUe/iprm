@@ -1719,6 +1719,15 @@ a.admin-stat-card:focus-visible {
   color: var(--iprm-text);
 }
 
+/* `.required` сам по собі стилізований лише під `.form-section`
+   (common.css: `.form-section .form-group label .required`). Компактні
+   форми на кшталт модалки переносу (Задача 6) не мають картки
+   `.form-section` -- лише `.admin-form` -- і без цього рядка зірочка
+   лишалась би кольору тексту, невідрізнена від решти підпису. */
+.admin-form .form-group label .required {
+  color: var(--iprm-accent);
+}
+
 /* Базове поле адмінки. Раніше тут був перелік контекстів -- і кожне нове
    місце з полем поза цим переліком отримувало голий браузерний інпут:
    `.form-input` визначений у auth.css, а адмінка його не підключає. Саме так

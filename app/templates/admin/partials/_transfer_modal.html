@@ -10,7 +10,7 @@
       <button type="button" class="modal__close" data-modal-close aria-label="Закрити">&times;</button>
     </div>
 
-    <form method="POST" id="transfer-form" data-options-url-template="{{ url_for('admin.registration_transfer_options', reg_id=0) }}">
+    <form method="POST" class="admin-form" id="transfer-form" data-options-url-template="{{ url_for('admin.registration_transfer_options', reg_id=0) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="next" value="{{ back_url }}">
 
@@ -18,7 +18,7 @@
         <div id="transfer-problems" hidden></div>
 
         <div class="form-group">
-          <label for="transfer-instance">Перенести на захід</label>
+          <label for="transfer-instance">Перенести на захід <span class="required">*</span></label>
           <select class="form-input" name="instance_id" id="transfer-instance" required></select>
         </div>
 
