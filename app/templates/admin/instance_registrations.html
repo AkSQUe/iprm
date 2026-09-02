@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
 {# Колонки прогресу (_registration_progress.html) стилізує admin-quiz.css. #}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-quiz.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% from 'admin/partials/_filter_bar.html' import filter_bar, pager, empty_state  %}
@@ -176,9 +177,12 @@
 
   </div>
 </div>
+{% include 'admin/partials/_transfer_modal.html' %}
 {% endblock %}
 
 {% block extra_scripts %}
 {{ super() }}
 <script src="{{ url_for('static', filename='js/admin-copy-link.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/modal.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin-transfer.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime, timezone
+from decimal import Decimal
 from flask import (
     render_template, redirect, url_for, flash, request, send_file, jsonify,
 )
@@ -884,3 +885,94 @@ def registration_invoice_download(reg_id, ext):
         )
     flash('Невідомий формат рахунка', 'error')
     return redirect(back)
+
+
+@admin_bp.route('/registrations/<int:reg_id>/transfer/options')
+@admin_required
+def registration_transfer_options(reg_id):
+    """Дані для модалки перенесення: придатні заходи, тарифи, різниці.
+
+    Арифметика грошей рахується ТУТ, а не в JS: інакше сума в модалці й
+    сума в листі одного дня розійдуться, і дізнаємось ми про це від
+    учасника.
+    """
+    from app.services import transfer_service
+
+    reg = EventRegistration.query.get_or_404(reg_id)
+    problems = transfer_service.check(reg)
+    paid = Decimal(str(reg.payment_amount or 0))
+
+    instances = []
+    for item in transfer_service.eligible_instances(reg):
+        tariffs = [
+            {
+                'id': t.id,
+                'name': t.name,
+                'price': float(t.price or 0),
+                'difference': float(Decimal(str(t.price or 0)) - paid),
+            }
+            for t in item.tariffs if t.is_active
+        ]
+        instances.append({
+            'id': item.id,
+            'title': item.course.title if item.course else 'Захід',
+            'start_date': (item.start_date.strftime('%d.%m.%Y')
+                           if item.start_date else ''),
+            'location': item.location or '',
+            'price': float(item.price or 0),
+            'difference': float(Decimal(str(item.price or 0)) - paid),
+            'tariffs': tariffs,
+        })
+
+    return jsonify({
+        'paid': float(paid),
+        'problems': problems,
+        'instances': instances,
+    })
+
+
+@admin_bp.route('/registrations/<int:reg_id>/transfer', methods=['POST'])
+@admin_required
+def registration_transfer(reg_id):
+    """Перенести реєстрацію на інше проведення."""
+    from app.models.instance_tariff import InstanceTariff
+    from app.services import transfer_service
+
+    reg = EventRegistration.query.get_or_404(reg_id)
+    target = CourseInstance.query.get(
+        request.form.get('instance_id', type=int) or 0)
+    if target is None:
+        flash('Оберіть захід, на який переносимо', 'error')
+        return _redirect_after_action(reg)
+
+    tariff = None
+    tariff_id = request.form.get('tariff_id', type=int)
+    if tariff_id:
+        tariff = InstanceTariff.query.filter_by(
+            id=tariff_id, instance_id=target.id).first()
+        if tariff is None:
+            flash('Обраний тариф не належить цьому заходу', 'error')
+            return _redirect_after_action(reg)
+
+    try:
+        transfer = transfer_service.execute(
+            reg,
+            target_instance=target,
+            initiator=request.form.get('initiator', 'participant'),
+            tariff=tariff,
+            tariff_decision=request.form.get('tariff_decision', 'keep'),
+            reason=request.form.get('reason'),
+            note=request.form.get('note'),
+            announced=bool(request.form.get('announced')),
+            admin_user=current_user,
+        )
+    except ValueError as exc:
+        for problem in exc.args[0]:
+            flash(problem, 'error')
+        return _redirect_after_action(reg)
+
+    if transfer.announced:
+        flash('Учасника перенесено, лист із вибором надіслано', 'success')
+    else:
+        flash('Учасника перенесено', 'success')
+    return _redirect_after_action(reg)

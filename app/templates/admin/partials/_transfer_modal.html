@@ -1,0 +1,76 @@
+{# Модалка перенесення. Один екземпляр на сторінку: список заходів і
+   тарифів довантажується під конкретну реєстрацію з
+   admin.registration_transfer_options, тож копіювати розмітку в кожен
+   рядок таблиці немає потреби. #}
+<div class="modal" id="transfer-modal" hidden>
+  <div class="modal__backdrop" data-modal-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="transfer-modal-title">
+    <div class="modal__head">
+      <h3 class="modal__title" id="transfer-modal-title">Перенести учасника</h3>
+      <button type="button" class="modal__close" data-modal-close aria-label="Закрити">&times;</button>
+    </div>
+
+    <form method="POST" id="transfer-form" data-options-url-template="{{ url_for('admin.registration_transfer_options', reg_id=0) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="next" value="{{ back_url }}">
+
+      <div class="modal__body">
+        <div id="transfer-problems" hidden></div>
+
+        <div class="form-group">
+          <label for="transfer-instance">Перенести на захід</label>
+          <select class="form-input" name="instance_id" id="transfer-instance" required></select>
+        </div>
+
+        <div class="form-group" id="transfer-tariff-group" hidden>
+          <label for="transfer-tariff">Тариф на новому заході</label>
+          <select class="form-input" name="tariff_id" id="transfer-tariff"></select>
+        </div>
+
+        <div class="form-group">
+          <label for="transfer-initiator">Ініціатива</label>
+          <select class="form-input" name="initiator" id="transfer-initiator">
+            <option value="organizer">З ініціативи Організатора</option>
+            <option value="participant" selected>На прохання учасника</option>
+          </select>
+          <p class="form-hint" id="transfer-initiator-hint"></p>
+        </div>
+
+        <div class="form-group">
+          <label for="transfer-decision">Різниця тарифів</label>
+          <select class="form-input" name="tariff_decision" id="transfer-decision">
+            <option value="keep" selected>Лишити суму як є</option>
+            <option value="refund_diff">Повернути різницю</option>
+            <option value="surcharge">Запросити доплату різниці</option>
+          </select>
+          <p class="form-hint" id="transfer-difference"></p>
+        </div>
+
+        <div class="form-group">
+          <label for="transfer-reason">Причина переносу</label>
+          <input type="text" class="form-input" name="reason" id="transfer-reason"
+                 maxlength="500" placeholder="Не обов'язково">
+          <p class="form-hint">Якщо порожньо — у листі блок не показується.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="transfer-note">Примітка для учасника</label>
+          <textarea class="form-input" name="note" id="transfer-note" rows="3"
+                    placeholder="Не обов'язково"></textarea>
+        </div>
+
+        <div class="form-group">
+          <div class="form-checkbox">
+            <input type="checkbox" name="announced" value="1" id="transfer-announced">
+            <label for="transfer-announced">Сповістити учасника листом із вибором «погодитись / повернути кошти»</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal__foot">
+        <button type="button" class="btn-admin btn-admin--secondary" data-modal-close>Скасувати</button>
+        <button type="submit" class="btn-admin btn-admin--primary" id="transfer-submit">Перенести</button>
+      </div>
+    </form>
+  </div>
+</div>

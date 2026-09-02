@@ -30,6 +30,14 @@
     </button>
     {% endif %}
     {% endif %}
+    {% if reg.status != 'cancelled' %}
+    <button type="button" class="admin-actions-menu__item"
+            data-modal-open="transfer-modal"
+            data-transfer-reg="{{ reg.id }}"
+            data-transfer-action="{{ url_for('admin.registration_transfer', reg_id=reg.id) }}">
+      {{ icon('swap_horiz') }} Перенести на інший захід
+    </button>
+    {% endif %}
     {% if reg.payment_amount and reg.payment_amount > 0 %}
     <a href="{{ url_for('admin.registration_invoice_download', reg_id=reg.id, ext='pdf') }}" class="admin-actions-menu__item">
       {{ icon('picture_as_pdf') }} Рахунок (PDF)
