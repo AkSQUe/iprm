@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% from 'partials/_location_badge.html' import location_badge %}
+
+{% block title %}{{ _('Перенесення заходу | ІПРМ') }}{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/registration.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="apple-page reg-layout">
+
+  <h1 class="reg-confirmation__title">{{ _('Ваш захід перенесено') }}</h1>
+
+  {% set course = (transfer.to_instance.course if transfer.to_instance else None) or (transfer.from_instance.course if transfer.from_instance else None) %}
+  <div class="reg-event-card">
+    {% if course %}<h2 class="reg-event-card__title">{{ course.title }}</h2>{% endif %}
+    {% if transfer.to_instance and transfer.to_instance.event_format %}
+    <div class="reg-event-card__location">
+      {{ location_badge(transfer.to_instance.event_format, transfer.to_instance.location, size='lg') }}
+    </div>
+    {% endif %}
+    <div class="reg-event-card__meta">
+      <div>{{ _('Було:') }} <strong>{{ transfer.from_instance.start_date.strftime('%d.%m.%Y') if transfer.from_instance and transfer.from_instance.start_date else _('дата не вказана') }}</strong></div>
+      <div>{{ _('Стало:') }} <strong>{{ transfer.to_instance.start_date.strftime('%d.%m.%Y') if transfer.to_instance and transfer.to_instance.start_date else _('дата не вказана') }}</strong></div>
+    </div>
+  </div>
+
+  {% if transfer.reason %}
+  <p class="reg-attention"><strong>{{ _('Причина перенесення:') }}</strong> {{ transfer.reason }}</p>
+  {% endif %}
+  {% if transfer.note %}
+  <p class="reg-attention"><strong>{{ _('Примітка:') }}</strong> {{ transfer.note }}</p>
+  {% endif %}
+
+  {% if transfer.state == 'awaiting_consent' %}
+
+  <p class="reg-attention">{{ _('Оберіть один із варіантів нижче.') }}</p>
+
+  <form method="POST" action="{{ url_for('registration.transfer_accept', token=transfer.consent_token) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="apple-btn apple-btn--primary">{{ _('Погоджуюсь на перенесення') }}</button>
+  </form>
+
+  <div class="form-section" id="refund">
+    <h2 class="form-section__title">{{ _('Або поверніть кошти') }}</h2>
+    {% if transfer.initiator == 'organizer' %}
+    <p class="reg-attention">
+      {{ _('Оскільки захід перенесли ми, за §3.2 Політики ви маєте право на повернення 100%% сплаченої суми.') }}
+    </p>
+    {% endif %}
+    <form method="POST" action="{{ url_for('registration.transfer_refund', token=transfer.consent_token) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label for="transfer-refund-reason">{{ _('Причина відмови') }} <span class="required">*</span></label>
+        <textarea id="transfer-refund-reason" class="form-input" name="reason" rows="3" required></textarea>
+      </div>
+      <div class="form-group">
+        <label for="transfer-payout">{{ _('Реквізити для повернення (якщо на інший рахунок)') }}</label>
+        <input type="text" id="transfer-payout" class="form-input" name="payout_details" maxlength="500">
+      </div>
+      <button type="submit" class="apple-btn apple-btn--secondary">{{ _('Прошу повернення коштів') }}</button>
+    </form>
+  </div>
+
+  {% elif transfer.state == 'accepted' %}
+  <div class="reg-success-banner reg-success-banner--confirmed">
+    <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>
+    <div class="reg-success-banner__body">
+      <p class="reg-success-banner__title">{{ _('Дякуємо') }}</p>
+      <p class="reg-success-banner__subtitle">{{ _('Вашу участь у новій даті підтверджено.') }}</p>
+    </div>
+  </div>
+
+  {% elif transfer.state == 'refund_requested' %}
+  <div class="reg-success-banner reg-success-banner--confirmed">
+    <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>
+    <div class="reg-success-banner__body">
+      <p class="reg-success-banner__title">{{ _('Заявку прийнято') }}</p>
+      <p class="reg-success-banner__subtitle">{{ _("Заявку на повернення коштів прийнято. Менеджер зв'яжеться з вами.") }}</p>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -939,3 +939,62 @@ def complete_invoice(token):
         download_name=invoice_filename(reg, 'pdf'),
         max_age=0,
     )
+
+
+def _transfer_by_token(token):
+    """Активне перенесення за токеном або None."""
+    from app.models.registration_transfer import RegistrationTransfer
+    item = RegistrationTransfer.query.filter_by(consent_token=token).first()
+    if item is None or not item.consent_token_active:
+        return None
+    return item
+
+
+@registration_bp.route('/transfer/<token>')
+def transfer_consent(token):
+    """Сторінка вибору: погодитись чи просити повернення.
+
+    Саме сторінка, а не дія по GET: пре-фетчер поштового клієнта не має
+    вирішувати за людину. Той самий мотив, що у /registration/complete/.
+    """
+    transfer = _transfer_by_token(token)
+    if transfer is None:
+        abort(404)
+    return render_template(
+        'registration/transfer_consent.html',
+        transfer=transfer,
+        registration=transfer.registration,
+    )
+
+
+@registration_bp.route('/transfer/<token>/accept', methods=['POST'])
+def transfer_accept(token):
+    from app.services import transfer_service
+
+    transfer = _transfer_by_token(token)
+    if transfer is None:
+        abort(404)
+    ok, message = transfer_service.accept(transfer)
+    flash(_(message), 'success' if ok else 'info')
+    return redirect(url_for('registration.transfer_consent', token=token))
+
+
+@registration_bp.route('/transfer/<token>/refund', methods=['POST'])
+def transfer_refund(token):
+    from app.services import transfer_service
+
+    transfer = _transfer_by_token(token)
+    if transfer is None:
+        abort(404)
+
+    reason = (request.form.get('reason') or '').strip()
+    if not reason:
+        # §6.2 Політики вимагає письмову причину -- без неї заявки немає.
+        flash(_('Вкажіть, будь ласка, причину відмови'), 'error')
+        return redirect(url_for('registration.transfer_consent', token=token))
+
+    _item, error = transfer_service.request_refund(
+        transfer, reason, request.form.get('payout_details'))
+    flash(_(error) if error else _("Заявку прийнято, менеджер зв'яжеться з вами"),
+          'error' if error else 'success')
+    return redirect(url_for('registration.transfer_consent', token=token))
