@@ -136,12 +136,16 @@
 для `reg.payment_amount` у звичайному REG--callback). Розбіжність
 відмовляється й логується, а не приймається мовчки.
 
-**`apply_surcharge` бере блокування рядка перенесення** через
-`.with_for_update().populate_existing()` до читання `surcharge_paid_at` --
-мовою `process_callback`, до виклику самого `apply_surcharge`. Це той
-самий прийом, що вже стоїть на реєстрації й enrollment: LiqPay повторює
-callback, і без блокування два одночасні виклики обидва прочитали б
-`surcharge_paid_at=None` і зарахували різницю двічі.
+**Блокування рядка бере викликач, `process_callback`, а не сам
+`apply_surcharge`.** `process_callback` читає рядок перенесення через
+`.with_for_update().populate_existing()` і лише потім передає його в
+`apply_surcharge` -- той самий прийом, що вже стоїть на реєстрації й
+enrollment: LiqPay повторює callback, і без блокування два одночасні
+виклики обидва прочитали б `surcharge_paid_at=None` і зарахували різницю
+двічі. `apply_surcharge` сам жодного блокування не ставить -- ідемпотентність
+у ньому тримається лише на перевірці `surcharge_paid_at is not None`, тож
+прямий виклик поза callback (як у тестах) безпечний лише в однопотоковому
+контексті.
 
 ## Адмінка
 
