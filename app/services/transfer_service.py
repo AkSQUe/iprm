@@ -18,8 +18,9 @@ from app.models.registration import EventRegistration
 from app.models.registration_transfer import (
     DECISION_SURCHARGE, INITIATOR_ORGANIZER, RegistrationTransfer,
 )
+from app.models.refund_request import RefundRequest, STATUS_NEW
 from app.models.mixins import utcnow
-from app.services import registration_service
+from app.services import refund_policy, registration_service
 from app.utils import ensure_utc
 
 logger = logging.getLogger(__name__)
@@ -142,6 +143,117 @@ def _clean(text, limit):
     return text[:limit] if text else None
 
 
+MAX_REASON = 2000
+MAX_PAYOUT = 500
+
+
+def _open_refund_request(transfer, amount, reason, quoted_code, percent=None):
+    """Завести (або оновити) заявку на повернення від імені перенесення.
+
+    Партіальний унікальний індекс uq_refund_requests_open_registration
+    дозволяє ОДНУ відкриту заявку на реєстрацію. Тож коли на різницю тарифу
+    вже висить заявка, а учасник просить повернути все, ми ОНОВЛЮЄМО її, а
+    не створюємо другу: інакше сценарій падає IntegrityError рівно в момент
+    кліку учасника.
+
+    Не комітить -- caller відповідає за commit.
+    """
+    reg = transfer.registration
+    existing = RefundRequest.query.filter_by(
+        registration_id=reg.id, status=STATUS_NEW,
+    ).first()
+
+    reason = (reason or '').strip()[:MAX_REASON]
+
+    if existing is not None:
+        existing.reason = reason
+        existing.quoted_amount = amount
+        existing.quoted_percent = percent
+        existing.quoted_code = quoted_code
+        return existing
+
+    item = RefundRequest(
+        registration_id=reg.id,
+        enrollment_id=None,
+        user_id=reg.user_id,
+        reason=reason,
+        quoted_percent=percent,
+        quoted_amount=amount,
+        quoted_code=quoted_code,
+    )
+    db.session.add(item)
+    db.session.flush()
+    return item
+
+
+def accept(transfer):
+    """Учасник погодився на перенесення. Комітить.
+
+    Ідемпотентно за станом: повторний POST із тієї ж сторінки (або
+    подвійний клік) не має переписувати дату відповіді.
+    """
+    if not transfer.is_open:
+        return False, 'Ви вже відповіли на цю пропозицію'
+
+    transfer.state = RegistrationTransfer.STATE_ACCEPTED
+    transfer.responded_at = utcnow()
+    reg = transfer.registration
+    if reg is not None and reg.status == 'pending':
+        reg.status = 'confirmed'
+    db.session.commit()
+
+    audit_logger.info('Transfer #%s accepted by participant', transfer.id)
+    return True, 'Дякуємо, участь підтверджено'
+
+
+def request_refund(transfer, reason, payout_details=None):
+    """Учасник обрав повернення коштів замість перенесення. Комітить.
+
+    Сума залежить від того, ЧИЯ була ініціатива:
+    * organizer   -- 100% сплаченого (§3.2), бо перенесли ми;
+    * participant -- сітка §4.1 через refund_policy.
+    """
+    if not transfer.is_open:
+        return None, 'Ви вже відповіли на цю пропозицію'
+
+    reg = transfer.registration
+    if reg is None:
+        return None, 'Реєстрацію не знайдено'
+
+    if transfer.initiator == INITIATOR_ORGANIZER:
+        percent = 100
+        amount = _money(reg.payment_amount)
+        code = 'transfer_organizer'
+    else:
+        quote = refund_policy.quote_registration(reg)
+        percent = quote.percent
+        amount = quote.amount
+        code = quote.code
+
+    item = _open_refund_request(transfer, amount, reason, code, percent)
+    if payout_details:
+        item.payout_details = payout_details.strip()[:MAX_PAYOUT] or None
+
+    transfer.state = RegistrationTransfer.STATE_REFUND_REQUESTED
+    transfer.responded_at = utcnow()
+    transfer.refund_request_id = item.id
+    db.session.commit()
+
+    audit_logger.info(
+        'Transfer #%s: participant requested refund, request #%s (%s%%, %s)',
+        transfer.id, item.id, percent, amount,
+    )
+
+    from app.services.email_service import EmailService
+    try:
+        EmailService.send_refund_request_notification(item)
+    except Exception:
+        logger.exception(
+            'Failed to notify admins about refund request #%s', item.id)
+
+    return item, None
+
+
 def execute(registration, *, target_instance, initiator, tariff=None,
             tariff_decision='keep', reason=None, note=None, announced=False,
             admin_user=None):
@@ -221,6 +333,19 @@ def execute(registration, *, target_instance, initiator, tariff=None,
     if announced:
         transfer.issue_consent_token()
     db.session.add(transfer)
+
+    if tariff_decision == 'refund_diff' and transfer.difference < 0:
+        db.session.flush()  # transfer.id потрібен для аудиту заявки
+        request = _open_refund_request(
+            transfer,
+            amount=abs(transfer.difference),
+            reason=(f'Різниця тарифів при перенесенні на '
+                    f'{target_instance.course.title if target_instance.course else "інший захід"}'),
+            quoted_code='transfer_diff',
+            percent=None,
+        )
+        transfer.refund_request_id = request.id
+
     db.session.commit()
 
     audit_logger.info(

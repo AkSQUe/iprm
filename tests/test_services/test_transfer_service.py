@@ -311,3 +311,119 @@ def test_execute_silent_sends_nothing(world, monkeypatch):
     assert transfer.state == RegistrationTransfer.STATE_APPLIED
     assert transfer.consent_token is None
     assert sent == []
+
+
+def test_refund_diff_opens_request_for_absolute_difference(world):
+    """Новий тариф дешевший -- заявка на модуль різниці, гроші рухає адмін."""
+    from app.models.instance_tariff import InstanceTariff
+    from app.models.refund_request import RefundRequest, STATUS_NEW
+    reg, src, dst, _, _ = world
+    tariff = InstanceTariff(instance_id=dst.id, name='Онлайн', price=600)
+    db.session.add(tariff)
+    db.session.commit()
+    transfer = _execute(reg, dst, tariff=tariff, tariff_decision='refund_diff')
+    request = RefundRequest.query.get(transfer.refund_request_id)
+    assert request is not None
+    assert request.status == STATUS_NEW
+    assert request.quoted_amount == 400
+    assert reg.payment_amount == 1000  # гроші ще не рухались
+
+
+def test_accept_confirms_registration(world, monkeypatch):
+    monkeypatch.setattr(
+        'app.services.email_service.EmailService.send_transfer_offer',
+        staticmethod(lambda transfer: None),
+    )
+    reg, src, dst, _, _ = world
+    reg.status = 'pending'
+    db.session.commit()
+    transfer = _execute(reg, dst, announced=True)
+    ok, _msg = transfer_service.accept(transfer)
+    assert ok is True
+    assert transfer.state == RegistrationTransfer.STATE_ACCEPTED
+    assert transfer.responded_at is not None
+    assert reg.status == 'confirmed'
+
+
+def test_accept_is_idempotent(world, monkeypatch):
+    monkeypatch.setattr(
+        'app.services.email_service.EmailService.send_transfer_offer',
+        staticmethod(lambda transfer: None),
+    )
+    reg, src, dst, _, _ = world
+    transfer = _execute(reg, dst, announced=True)
+    transfer_service.accept(transfer)
+    first_response = transfer.responded_at
+    ok, _msg = transfer_service.accept(transfer)
+    assert ok is False
+    assert transfer.responded_at == first_response
+
+
+def test_organizer_refund_is_full_amount(world, monkeypatch):
+    """§3.2: перенесли ми -- повертаємо 100%, а не сітку §4.1."""
+    monkeypatch.setattr(
+        'app.services.email_service.EmailService.send_transfer_offer',
+        staticmethod(lambda transfer: None),
+    )
+    reg, src, dst, _, _ = world
+    transfer = _execute(reg, dst, initiator='organizer', announced=True)
+    request, err = transfer_service.request_refund(transfer, 'Не підходить дата')
+    assert err is None
+    assert request.quoted_percent == 100
+    assert request.quoted_amount == 1000
+    assert request.quoted_code == 'transfer_organizer'
+    assert transfer.state == RegistrationTransfer.STATE_REFUND_REQUESTED
+
+
+def test_participant_refund_uses_policy_grid(world, monkeypatch):
+    """§4.1: відмова за власною ініціативою -- за сіткою. Захід через 20
+    днів, тож сходинка 'early' = 100%; на 5-й день була б 50%."""
+    monkeypatch.setattr(
+        'app.services.email_service.EmailService.send_transfer_offer',
+        staticmethod(lambda transfer: None),
+    )
+    reg, src, dst, _, _ = world
+    dst.start_date = utcnow() + timedelta(days=5)
+    db.session.commit()
+    transfer = _execute(reg, dst, initiator='participant', announced=True)
+    request, err = transfer_service.request_refund(transfer, 'Передумав')
+    assert err is None
+    assert request.quoted_percent == 50
+    assert request.quoted_code == 'standard'
+
+
+def test_second_refund_updates_open_request(world, monkeypatch):
+    """uq_refund_requests_open_registration дозволяє ОДНУ відкриту заявку.
+    Сценарій "перенесли з поверненням різниці -> учасник просить усе назад"
+    інакше падає IntegrityError рівно в момент кліку учасника."""
+    from app.models.instance_tariff import InstanceTariff
+    from app.models.refund_request import RefundRequest
+    monkeypatch.setattr(
+        'app.services.email_service.EmailService.send_transfer_offer',
+        staticmethod(lambda transfer: None),
+    )
+    reg, src, dst, _, _ = world
+    tariff = InstanceTariff(instance_id=dst.id, name='Онлайн', price=600)
+    db.session.add(tariff)
+    db.session.commit()
+    transfer = _execute(reg, dst, tariff=tariff, initiator='organizer',
+                        tariff_decision='refund_diff', announced=True)
+    assert RefundRequest.query.filter_by(registration_id=reg.id).count() == 1
+
+    request, err = transfer_service.request_refund(transfer, 'Хочу все назад')
+    assert err is None
+    assert RefundRequest.query.filter_by(registration_id=reg.id).count() == 1
+    assert request.quoted_amount == 1000
+    assert 'Хочу все назад' in request.reason
+
+
+def test_request_refund_is_idempotent(world, monkeypatch):
+    monkeypatch.setattr(
+        'app.services.email_service.EmailService.send_transfer_offer',
+        staticmethod(lambda transfer: None),
+    )
+    reg, src, dst, _, _ = world
+    transfer = _execute(reg, dst, announced=True)
+    transfer_service.request_refund(transfer, 'Причина')
+    _second, err = transfer_service.request_refund(transfer, 'Ще раз')
+    assert err is not None
