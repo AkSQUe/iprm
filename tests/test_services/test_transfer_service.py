@@ -387,6 +387,93 @@ def test_refund_diff_opens_request_for_absolute_difference(world):
     assert reg.payment_amount == 1000  # гроші ще не рухались
 
 
+def test_refund_diff_is_refused_for_unpaid_registration(world):
+    """`payment_amount` ставиться при РЕЄСТРАЦІЇ, до оплати. Без воріт
+    перенесення неоплаченої реєстрації на дешевший тариф заводило б заявку
+    на повернення грошей, яких ми не отримували, -- і лист «ми повернемо
+    вам цю різницю» пішов би людині, яка нічого не платила."""
+    from app.models.instance_tariff import InstanceTariff
+    from app.models.refund_request import RefundRequest
+    reg, _src, dst, _user, _course = world
+    reg.payment_status = 'unpaid'
+    tariff = InstanceTariff(instance_id=dst.id, name='Онлайн', price=600)
+    db.session.add(tariff)
+    db.session.commit()
+
+    transfer = _execute(reg, dst, tariff=tariff, tariff_decision='refund_diff')
+
+    # Сам переїзд легітимний і мусить відбутись.
+    assert reg.instance_id == dst.id
+    assert transfer.refund_request_id is None
+    assert RefundRequest.query.filter_by(registration_id=reg.id).count() == 0
+    # Адмін мусить це побачити, а не думати, що заявка в черзі.
+    assert transfer.refund_claim_problem
+
+
+def test_refund_diff_claim_notifies_both_sides(world, monkeypatch):
+    """Заявка з перенесення мусить доходити і до менеджера, і до учасника --
+    як будь-яка інша заявка в системі."""
+    from app.models.instance_tariff import InstanceTariff
+    from app.services.email_service import EmailService
+    sent = []
+    monkeypatch.setattr(
+        EmailService, 'send_refund_request_received',
+        staticmethod(lambda item: sent.append('participant')))
+    monkeypatch.setattr(
+        EmailService, 'send_refund_request_notification',
+        staticmethod(lambda item: sent.append('manager')))
+
+    reg, _src, dst, _user, _course = world
+    tariff = InstanceTariff(instance_id=dst.id, name='Онлайн', price=600)
+    db.session.add(tariff)
+    db.session.commit()
+
+    _execute(reg, dst, tariff=tariff, tariff_decision='refund_diff')
+
+    assert sent == ['participant', 'manager']
+
+
+def test_participant_refund_notifies_both_sides(world, monkeypatch):
+    from app.services.email_service import EmailService
+    sent = []
+    monkeypatch.setattr(
+        EmailService, 'send_transfer_offer', staticmethod(lambda t: None))
+    monkeypatch.setattr(
+        EmailService, 'send_refund_request_received',
+        staticmethod(lambda item: sent.append('participant')))
+    monkeypatch.setattr(
+        EmailService, 'send_refund_request_notification',
+        staticmethod(lambda item: sent.append('manager')))
+
+    reg, _src, dst, _user, _course = world
+    transfer = _execute(reg, dst, announced=True)
+    _item, err = transfer_service.request_refund(transfer, 'Передумав')
+
+    assert err is None
+    assert sent == ['participant', 'manager']
+
+
+def test_participant_refund_refused_on_unpaid_registration(world, monkeypatch):
+    """Гроші не приходили -- заявки немає, і стан перенесення лишається
+    відкритим: людині ще можна погодитись."""
+    monkeypatch.setattr(
+        'app.services.email_service.EmailService.send_transfer_offer',
+        staticmethod(lambda transfer: None),
+    )
+    from app.models.refund_request import RefundRequest
+    reg, _src, dst, _user, _course = world
+    transfer = _execute(reg, dst, announced=True)
+    reg.payment_status = 'unpaid'
+    db.session.commit()
+
+    item, err = transfer_service.request_refund(transfer, 'Передумав')
+
+    assert item is None
+    assert err == transfer_service.ERROR_NOT_ELIGIBLE
+    assert transfer.state == RegistrationTransfer.STATE_AWAITING
+    assert RefundRequest.query.filter_by(registration_id=reg.id).count() == 0
+
+
 def test_accept_confirms_registration(world, monkeypatch):
     monkeypatch.setattr(
         'app.services.email_service.EmailService.send_transfer_offer',

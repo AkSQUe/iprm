@@ -20,7 +20,7 @@ from app.models.registration_transfer import (
 )
 from app.models.refund_request import RefundRequest, STATUS_NEW
 from app.models.mixins import utcnow
-from app.services import refund_policy, registration_service
+from app.services import refund_policy, refund_requests, registration_service
 from app.services.refund_requests import MAX_PAYOUT, MAX_REASON
 from app.utils import ensure_utc
 
@@ -30,6 +30,13 @@ logger = logging.getLogger(__name__)
 # робочими днями лише в §3.3, і саме про дедлайн заявки на повернення, а не
 # про перенесення. Одна константа: перехід на робочі дні -- одна правка.
 TRANSFER_MIN_HOURS = 48
+
+# Коди відмов для публічних роутів. Саме коди, а не готовий текст: `_()`
+# навколо змінної нічого не перекладає (каталог не має такого msgid), тож
+# літерали лишаються в роуті, а сервіс каже лише, ЩО сталось.
+ERROR_ANSWERED = 'answered'
+ERROR_NOT_FOUND = 'not_found'
+ERROR_NOT_ELIGIBLE = 'not_eligible'
 
 
 def hours_until(start_date):
@@ -208,13 +215,22 @@ def _clean(text, limit):
 def _open_refund_request(transfer, amount, reason, quoted_code, percent=None):
     """Завести (або оновити) заявку на повернення від імені перенесення.
 
+    Повертає (заявка, None) або (None, причина відмови).
+
     Партіальний унікальний індекс uq_refund_requests_open_registration
     дозволяє ОДНУ відкриту заявку на реєстрацію. Тож коли на різницю тарифу
     вже висить заявка, а учасник просить повернути все, ми ОНОВЛЮЄМО її, а
     не створюємо другу: інакше сценарій падає IntegrityError рівно в момент
-    кліку учасника.
+    кліку учасника. Саме тому ворота `refund_requests.can_request`
+    перевіряються ЛИШЕ перед створенням НОВОЇ заявки: серед них є «заявку
+    вже подано», і на шляху оновлення воно відбивало б само себе.
 
-    Не комітить -- caller відповідає за commit.
+    Нова заявка проходить ті самі ворота, що й заявка з кабінету. Без них
+    перенесення НЕОПЛАЧЕНОЇ реєстрації з `refund_diff` заводило б заявку на
+    повернення грошей, яких ми не отримували: `payment_amount` ставиться
+    при реєстрації, ДО оплати.
+
+    Не комітить -- caller відповідає за commit і за розсилку (_notify).
     """
     reg = transfer.registration
     existing = RefundRequest.query.filter_by(
@@ -222,13 +238,20 @@ def _open_refund_request(transfer, amount, reason, quoted_code, percent=None):
     ).first()
 
     reason = (reason or '').strip()[:MAX_REASON]
+    if not reason:
+        # §6.2 Політики: заявка без письмової причини -- не заявка.
+        return None, 'Вкажіть причину повернення'
 
     if existing is not None:
         existing.reason = reason
         existing.quoted_amount = amount
         existing.quoted_percent = percent
         existing.quoted_code = quoted_code
-        return existing
+        return existing, None
+
+    ok, problem = refund_requests.can_request(reg)
+    if not ok:
+        return None, problem
 
     item = RefundRequest(
         registration_id=reg.id,
@@ -241,7 +264,7 @@ def _open_refund_request(transfer, amount, reason, quoted_code, percent=None):
     )
     db.session.add(item)
     db.session.flush()
-    return item
+    return item, None
 
 
 def accept(transfer):
@@ -272,11 +295,11 @@ def request_refund(transfer, reason, payout_details=None):
     * participant -- сітка §4.1 через refund_policy.
     """
     if not transfer.is_open:
-        return None, 'Ви вже відповіли на цю пропозицію'
+        return None, ERROR_ANSWERED
 
     reg = transfer.registration
     if reg is None:
-        return None, 'Реєстрацію не знайдено'
+        return None, ERROR_NOT_FOUND
 
     if transfer.initiator == INITIATOR_ORGANIZER:
         percent = 100
@@ -288,7 +311,16 @@ def request_refund(transfer, reason, payout_details=None):
         amount = quote.amount
         code = quote.code
 
-    item = _open_refund_request(transfer, amount, reason, code, percent)
+    item, problem = _open_refund_request(transfer, amount, reason, code, percent)
+    if item is None:
+        # Реєстрація не в тому стані, щоб за нею щось повертати (не
+        # оплачена, вже повернута). Стан перенесення не чіпаємо: людині
+        # лишається натиснути «Погоджуюсь».
+        db.session.rollback()
+        logger.info('Transfer #%s: refund claim refused (%s)',
+                    transfer.id, problem)
+        return None, ERROR_NOT_ELIGIBLE
+
     if payout_details:
         item.payout_details = payout_details.strip()[:MAX_PAYOUT] or None
 
@@ -302,12 +334,10 @@ def request_refund(transfer, reason, payout_details=None):
         transfer.id, item.id, percent, amount,
     )
 
-    from app.services.email_service import EmailService
-    try:
-        EmailService.send_refund_request_notification(item)
-    except Exception:
-        logger.exception(
-            'Failed to notify admins about refund request #%s', item.id)
+    # Ті самі два листи, що й у заявки з кабінету: квитанція учаснику й
+    # сигнал менеджеру. Раніше йшов лише другий, тож людина не мала
+    # жодного підтвердження, що її звернення прийняли.
+    refund_requests._notify(item)
 
     return item, None
 
@@ -392,9 +422,10 @@ def execute(registration, *, target_instance, initiator, tariff=None,
         transfer.issue_consent_token()
     db.session.add(transfer)
 
+    request = refund_problem = None
     if tariff_decision == 'refund_diff' and transfer.difference < 0:
         db.session.flush()  # transfer.id потрібен для аудиту заявки
-        request = _open_refund_request(
+        request, refund_problem = _open_refund_request(
             transfer,
             amount=abs(transfer.difference),
             reason=(f'Різниця тарифів при перенесенні на '
@@ -402,7 +433,14 @@ def execute(registration, *, target_instance, initiator, tariff=None,
             quoted_code='transfer_diff',
             percent=None,
         )
-        transfer.refund_request_id = request.id
+        if request is not None:
+            transfer.refund_request_id = request.id
+        else:
+            # Сам переїзд легітимний -- не скасовуємо його через те, що
+            # повертати нічого. Але адмін мусить це побачити: інакше він
+            # певен, що заявку заведено, і чекає її в черзі.
+            logger.info('Transfer for REG-%s: refund claim skipped (%s)',
+                        registration.id, refund_problem)
 
     db.session.commit()
 
@@ -412,6 +450,12 @@ def execute(registration, *, target_instance, initiator, tariff=None,
         admin_user.email if admin_user is not None else 'system',
         initiator, tariff_decision, transfer.difference,
     )
+
+    if request is not None:
+        # Заявка на різницю -- така сама заявка, як із кабінету, і мусить
+        # дійти і до менеджера, і до учасника. Після коміту: лист про
+        # рядок, якого ще немає в базі, посилався б у порожнечу.
+        refund_requests._notify(request)
 
     if announced:
         # Best-effort: збій пошти не має скасовувати вже здійснений переїзд.
@@ -423,4 +467,8 @@ def execute(registration, *, target_instance, initiator, tariff=None,
             logger.exception(
                 'Failed to queue transfer offer for #%s', transfer.id)
 
+    # Транзиторна позначка (не колонка): роут показує її адміну флешем.
+    # Кортеж тут був би гірший -- `execute` читають як «перенести», і
+    # другий елемент, потрібний одному викликачу, губився б у решті.
+    transfer.refund_claim_problem = refund_problem
     return transfer

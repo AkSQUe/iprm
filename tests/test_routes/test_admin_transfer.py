@@ -118,3 +118,37 @@ def test_transfer_rejects_blocked(client, world, login_admin):
     }, follow_redirects=True)
     db.session.refresh(reg)
     assert reg.instance_id == world['src'].id
+
+
+def test_flash_reports_skipped_refund_claim(client, world, login_admin):
+    """Переїзд відбувся, заявку на різницю завести не змогли -- адмін
+    мусить прочитати про це, а не чекати заявку в черзі."""
+    login_admin(world['admin'])
+    reg = world['reg']
+    reg.payment_status = 'unpaid'
+    reg.payment_amount = 2000  # дорожче за цільові 1500 -> є що "повертати"
+    db.session.commit()
+
+    resp = client.post(f'/admin/registrations/{reg.id}/transfer', data={
+        'instance_id': world['dst'].id,
+        'initiator': 'participant',
+        'tariff_decision': 'refund_diff',
+    }, follow_redirects=True)
+
+    db.session.refresh(reg)
+    assert reg.instance_id == world['dst'].id
+    assert 'НЕ заведено' in resp.get_data(as_text=True)
+
+
+def test_transfer_requires_admin(client, world):
+    """Єдиний роут фічі, що змінює стан. Без цього тесту зняття
+    @admin_required з нього ніхто б не помітив."""
+    reg = world['reg']
+    resp = client.post(f'/admin/registrations/{reg.id}/transfer', data={
+        'instance_id': world['dst'].id,
+        'initiator': 'participant',
+        'tariff_decision': 'keep',
+    })
+    assert resp.status_code in (302, 401, 403)
+    db.session.refresh(reg)
+    assert reg.instance_id == world['src'].id

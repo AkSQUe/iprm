@@ -996,4 +996,11 @@ def registration_transfer(reg_id):
         flash('Учасника перенесено, лист із вибором надіслано', 'success')
     else:
         flash('Учасника перенесено', 'success')
+
+    # Переїзд відбувся, а заявку на різницю завести не вдалося (реєстрація
+    # не оплачена, гроші вже повернуті). Мовчати не можна: адмін інакше
+    # певен, що заявка в черзі, і чекає її там.
+    if transfer.refund_claim_problem:
+        flash(f'Заявку на повернення різниці НЕ заведено: '
+              f'{transfer.refund_claim_problem}', 'warning')
     return _redirect_after_action(reg)

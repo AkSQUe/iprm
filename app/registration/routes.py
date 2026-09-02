@@ -1063,12 +1063,18 @@ def transfer_refund(token):
 
     _item, error = transfer_service.request_refund(
         transfer, reason, request.form.get('payout_details'))
-    # Єдиний можливий тут `error` -- "Ви вже відповіли": другий, "Реєстрацію
-    # не знайдено", неможливий на цій сторінці -- registration_id NOT NULL
-    # з ON DELETE CASCADE означає, що перенесення без реєстрації не існує.
-    # Тому літерал тут один, а не переклад змінної `error` (та ж причина,
-    # що й вище в transfer_accept).
-    flash(_('Ви вже відповіли на цю пропозицію') if error
-          else _("Заявку прийнято, менеджер зв'яжеться з вами"),
-          'error' if error else 'success')
+    # Сервіс віддає КОД, а не готовий текст: `_()` навколо змінної нічого не
+    # перекладає -- каталог не має такого msgid. Тому розгалуження літералів
+    # тут (та ж причина, що й вище в transfer_accept). `not_found` на цій
+    # сторінці неможливий: registration_id NOT NULL з ON DELETE CASCADE.
+    if error == transfer_service.ERROR_NOT_ELIGIBLE:
+        # Оплати за реєстрацією не було (або її вже повернули) -- повертати
+        # нічого. Мовчазна заявка на неотримані гроші гірша за цей текст.
+        flash(_('За цією реєстрацією повертати нічого — оплату не отримано '
+                'або її вже повернуто. Напишіть менеджеру, якщо це помилка.'),
+              'error')
+    elif error:
+        flash(_('Ви вже відповіли на цю пропозицію'), 'error')
+    else:
+        flash(_("Заявку прийнято, менеджер зв'яжеться з вами"), 'success')
     return redirect(url_for('registration.transfer_consent', token=token))
