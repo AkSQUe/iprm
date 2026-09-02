@@ -152,3 +152,20 @@ def test_transfer_requires_admin(client, world):
     assert resp.status_code in (302, 401, 403)
     db.session.refresh(reg)
     assert reg.instance_id == world['src'].id
+
+
+def test_registrations_list_badges_unpaid_surcharge(client, world, login_admin):
+    """Фільтр «Доплата: не надійшла» без плашки видавав рядки, на яких про
+    доплату не написано нічого."""
+    login_admin(world['admin'])
+    reg = world['reg']
+    client.post(f'/admin/registrations/{reg.id}/transfer', data={
+        'instance_id': world['dst'].id,
+        'initiator': 'participant',
+        'tariff_decision': 'surcharge',
+    }, follow_redirects=True)
+
+    body = client.get('/admin/registrations?surcharge=due').get_data(as_text=True)
+
+    assert 'Доплата' in body
+    assert 'не надійшла' in body

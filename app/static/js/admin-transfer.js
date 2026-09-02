@@ -115,7 +115,15 @@
     if (!trigger) { return; }
     var regId = trigger.getAttribute('data-transfer-reg');
     form.action = trigger.getAttribute('data-transfer-action');
+    /* Чистимо ВСЕ, що лишилось від попереднього відкриття, включно з
+       кешем відповіді. Інакше поки летить fetch, адмін бачить тарифи й
+       різницю ПОПЕРЕДНЬОГО учасника поруч із формою, чия дія вже вказує
+       на нового: сума грошей навпроти чужого прізвища. */
+    data = null;
     instanceSelect.innerHTML = '';
+    tariffSelect.innerHTML = '';
+    tariffGroup.hidden = true;
+    differenceHint.textContent = '';
     problemsBox.hidden = true;
     submitBtn.disabled = true;
 

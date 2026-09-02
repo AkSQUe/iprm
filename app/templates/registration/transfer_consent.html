@@ -84,6 +84,18 @@
     </div>
   </div>
 
+  {#- Хто погодився першим, а платити збирався потім, інакше мусив би
+      вертатись по посилання в лист. Доплата участі не блокує, тож це
+      нагадування, а не вимога. -#}
+  {% if transfer.surcharge_due %}
+  <p class="reg-attention">
+    {{ _('Лишилась доплата різниці тарифу.') }}
+    <a href="{{ url_for('registration.transfer_surcharge', token=transfer.consent_token) }}">
+      {{ _('Сплатити зараз') }}
+    </a>
+  </p>
+  {% endif %}
+
   {% elif transfer.state == 'refund_requested' %}
   <div class="reg-success-banner reg-success-banner--confirmed">
     <div class="reg-success-banner__icon" aria-hidden="true">&#10003;</div>

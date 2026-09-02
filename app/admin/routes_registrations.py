@@ -619,9 +619,17 @@ def registrations_all():
     from app.services import quiz_service
     quiz_states = quiz_service.eligibility_map(pagination.items)
 
+    # Незакрита доплата -- тим самим батчем, що й на сторінці заходу.
+    # Без цього фільтр «Доплата: не надійшла» видавав би рядки, на яких
+    # про доплату не сказано нічого.
+    from app.services import transfer_service
+    surcharge_due = transfer_service.unpaid_surcharge_amounts(
+        [r.id for r in pagination.items])
+
     return render_template(
         'admin/registrations.html',
         registrations=pagination.items,
+        surcharge_due=surcharge_due,
         pagination=pagination,
         stats=stats,
         referrer_map=referrer_map,

@@ -238,6 +238,12 @@ class PaymentOps:
             if transfer is None:
                 return _fail(f'Перенесення #{object_id} не знайдено')
             new_status = STATUS_MAP.get(liqpay_status)
+            if new_status is None:
+                # Так само, як у двох сусідніх гілках. Успіх у відповіді
+                # означає для LiqPay "оброблено", і він перестає повторювати
+                # статус, якого ми не зрозуміли: подія зникає безслідно.
+                logger.warning('LiqPay callback: unknown status %s', liqpay_status)
+                return _fail(f'unknown status: {liqpay_status}')
             if new_status != 'paid':
                 return _noop(f'Доплата #{object_id}: статус {liqpay_status}')
             # transfer.difference -- знімок на момент перенесення й ЄДИНЕ

@@ -1011,10 +1011,14 @@ def transfer_surcharge(token):
 
     reg = transfer.registration
     liqpay_data = liqpay_signature = liqpay_checkout_url = None
+    liqpay_result_url = None
     service = get_liqpay_service()
     if service.is_configured:
+        # Публічний token-aware result_url -- як у complete_pay: учасник у
+        # token-флоу не залогінений, а payments.success вимагає входу.
         result_url = url_for(
             'registration.transfer_consent', token=token, _external=True)
+        liqpay_result_url = result_url
         server_url = url_for('payments.liqpay_callback', _external=True)
         description = (
             f'Доплата різниці тарифу: '
@@ -1038,6 +1042,7 @@ def transfer_surcharge(token):
         liqpay_data=liqpay_data,
         liqpay_signature=liqpay_signature,
         liqpay_checkout_url=liqpay_checkout_url,
+        liqpay_result_url=liqpay_result_url,
     )
 
 

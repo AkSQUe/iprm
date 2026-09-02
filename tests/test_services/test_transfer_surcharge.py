@@ -210,6 +210,37 @@ def test_surcharge_page_refuses_when_target_cancelled(client, transfer):
     assert 'surcharge' not in resp.headers['Location']
 
 
+def test_callback_fails_on_unknown_status(transfer, mock_liqpay):
+    """Успіх у відповіді означає для LiqPay «оброблено», і він перестає
+    повторювати статус, якого ми не зрозуміли. Обидві сусідні гілки
+    (REG-, ONL-) на невідомий статус падають -- ця мусить теж."""
+    from app.services.payment_ops import PaymentOps
+    item, reg = transfer
+    mock_liqpay.decode_callback.return_value = {
+        'order_id': f'SUR-{item.id}', 'status': 'subscribed',
+        'payment_id': 'lp-cb-9', 'amount': 500,
+    }
+
+    ok, msg = PaymentOps(mock_liqpay).process_callback('data', 'sig')
+
+    assert not ok
+    assert 'unknown status' in msg
+    db.session.refresh(reg)
+    assert reg.payment_amount == 1000
+    assert item.surcharge_paid_at is None
+
+
+def test_consent_page_links_to_surcharge_after_accept(client, transfer):
+    """Хто погодився першим, не має вертатись по посилання в лист."""
+    item, _reg = transfer
+    transfer_service.accept(item)
+
+    body = client.get(
+        f'/registration/transfer/{item.consent_token}').get_data(as_text=True)
+
+    assert f'/registration/transfer/{item.consent_token}/surcharge' in body
+
+
 # ------------------ звірка зависли доплат ------------------
 #
 # У перенесення немає колонки payment_status, тож два інші проходи звірки

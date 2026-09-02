@@ -225,6 +225,13 @@
                 &minus;{{ money(reg.discount_amount) }}
               </div>
             {% endif %}
+            {# Без плашки фільтр «Доплата: не надійшла» видавав рядки, на
+               яких нічого не написано: людина відфільтрувала й не бачить,
+               ЩО саме знайшлось. Словник -- один запит на сторінку. #}
+            {% set reg_surcharge_due = surcharge_due.get(reg.id) %}
+            {% if reg_surcharge_due %}
+              <div class="badge badge--pending">Доплата {{ money(reg_surcharge_due) }} не надійшла</div>
+            {% endif %}
           </td>
           {{ progress.cells(reg, quiz_states, quiz_statuses) }}
           <td>{{ reg.created_at.strftime('%d.%m.%Y') }}</td>

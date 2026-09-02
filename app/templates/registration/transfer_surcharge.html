@@ -35,8 +35,13 @@
     {% endtrans %}
   </p>
 
+  {#- liqpay_result_url обов'язковий: саме він вмикає віджет поверх
+      сторінки (data-liqpay-* у _pay_options.html). Без нього підключений
+      нижче liqpay-checkout.js не мав би до чого чіплятись, і preconnect
+      теж стояв би даремно. -#}
   {% with liqpay_data=liqpay_data, liqpay_signature=liqpay_signature,
-          liqpay_checkout_url=liqpay_checkout_url %}
+          liqpay_checkout_url=liqpay_checkout_url,
+          liqpay_result_url=liqpay_result_url %}
     {% include 'registration/partials/_pay_options.html' %}
   {% endwith %}
 
