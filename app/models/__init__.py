@@ -5,6 +5,7 @@ from app.models.medical_profile import MedicalProfile
 from app.models.trainer import Trainer
 from app.models.program_block import ProgramBlock
 from app.models.registration import EventRegistration
+from app.models.registration_transfer import RegistrationTransfer
 from app.models.certificate import Certificate
 from app.models.lecturer_certificate import LecturerCertificate
 from app.models.clinic import Clinic
@@ -47,6 +48,7 @@ from app.models.meta_lead import MetaLead, MetaLeadEvent, MetaLeadForm
 __all__ = [
     'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'AuthIdentity',
     'MedicalProfile', 'Trainer', 'ProgramBlock', 'EventRegistration',
+    'RegistrationTransfer',
     'Certificate', 'LecturerCertificate',
     'Clinic', 'EmailLog', 'EmailSettings', 'EmailSuppression', 'NotificationRule',
     'PaymentTransaction', 'RefundRequest', 'SiteSettings', 'ErrorLog',

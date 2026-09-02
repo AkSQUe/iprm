@@ -27,6 +27,7 @@ from app.models.online_enrollment import OnlineEnrollment
 from app.models.payment_transaction import PaymentTransaction
 from app.models.refund_request import RefundRequest
 from app.models.registration import EventRegistration
+from app.models.registration_transfer import RegistrationTransfer
 from app.models.user import User
 
 
@@ -54,6 +55,9 @@ def purge(email_prefix, slug_prefix=None, wipe_online=False):
                     synchronize_session=False)
             EmailLog.query.filter(
                 EmailLog.registration_id.in_(regs)).delete(
+                    synchronize_session=False)
+            RegistrationTransfer.query.filter(
+                RegistrationTransfer.registration_id.in_(regs)).delete(
                     synchronize_session=False)
             EventRegistration.query.filter(
                 EventRegistration.id.in_(regs)).delete(synchronize_session=False)
