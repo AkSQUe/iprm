@@ -5,7 +5,9 @@ from app.models.user import User
 
 def test_role_permissions_and_user_roles_roundtrip(db_session):
     role = Role(name='t_role', display_name='Тест', color='blue')
-    perm = Permission(name='courses.view', module='courses')
+    # Ім'я поза реєстром: sync() у фікстурі app вже насіяв реальні права,
+    # тож 'courses.view' конфліктував би з унікальним обмеженням.
+    perm = Permission(name='t_module.view', module='t_module')
     role.permissions.append(perm)
     user = User.create_with_password('rbac-model@test.com', 'password123')
     db.session.add(role)
@@ -16,7 +18,7 @@ def test_role_permissions_and_user_roles_roundtrip(db_session):
 
     assert [r.name for r in user.roles] == ['t_role']
     assert user.is_staff is True
-    assert [p.name for p in user.roles[0].permissions] == ['courses.view']
+    assert [p.name for p in user.roles[0].permissions] == ['t_module.view']
 
 
 def test_user_without_roles_is_not_staff(db_session):

@@ -42,10 +42,14 @@ def _sqlite_emit_explicit_begin(conn):
 
 @pytest.fixture(scope='session')
 def app():
-    """Flask-додаток для тестування."""
+    """Flask-додаток для тестування. Ролі й права сідяться один раз на сесію:
+    без них жоден адмін-маршрут не відкрити."""
     app = create_app('testing')
     with app.app_context():
         _db.create_all()
+        from app.rbac import service as rbac_service
+        rbac_service.sync()
+        _db.session.commit()
         yield app
         _db.drop_all()
 
