@@ -71,6 +71,16 @@ class User(TimestampMixin, UserMixin, db.Model):
         uselist=False,
         cascade='all, delete-orphan',
     )
+    # Ролі адмін-панелі. viewonly: у user_roles є assigned_at/assigned_by,
+    # тож призначення робиться через UserRole (app.rbac.service.assign_roles).
+    # primaryjoin/secondaryjoin явно: user_roles має ДВІ колонки, що ведуть
+    # на users (user_id і assigned_by), тож автовиведення зв'язку неоднозначне.
+    roles = db.relationship(
+        'Role', secondary='user_roles', viewonly=True, lazy='select',
+        primaryjoin='User.id == UserRole.user_id',
+        secondaryjoin='Role.id == UserRole.role_id',
+        order_by='Role.sort_order',
+    )
 
     def __init__(self, email, **kwargs):
         """Construct User зі strip+lower email. Пароль НЕ приймаємо тут
@@ -217,6 +227,17 @@ class User(TimestampMixin, UserMixin, db.Model):
         Робить flush, але не commit."""
         from app.services.referral_service import ensure_referral_code
         return ensure_referral_code(self, prefix='u')
+
+    @property
+    def is_staff(self):
+        """Співробітник = має хоч одну роль. Замінює колишній булевий
+        прапорець адміністратора там, де питання було «чи пускати в
+        адмінку / показувати адмін-лінк»."""
+        return bool(self.roles)
+
+    def has_permission(self, name):
+        from app.rbac.service import has_permission
+        return has_permission(self, name)
 
     @property
     def full_name(self):

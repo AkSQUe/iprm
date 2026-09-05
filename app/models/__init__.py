@@ -1,5 +1,6 @@
 from app.models.mixins import TimestampMixin, BigIntPK, utcnow
 from app.models.user import User
+from app.models.rbac import Role, Permission, UserRole
 from app.models.auth_identity import AuthIdentity
 from app.models.medical_profile import MedicalProfile
 from app.models.trainer import Trainer
@@ -46,7 +47,9 @@ from app.models.online_enrollment import OnlineEnrollment
 from app.models.meta_lead import MetaLead, MetaLeadEvent, MetaLeadForm
 
 __all__ = [
-    'TimestampMixin', 'BigIntPK', 'utcnow', 'User', 'AuthIdentity',
+    'TimestampMixin', 'BigIntPK', 'utcnow', 'User',
+    'Role', 'Permission', 'UserRole',
+    'AuthIdentity',
     'MedicalProfile', 'Trainer', 'ProgramBlock', 'EventRegistration',
     'RegistrationTransfer',
     'Certificate', 'LecturerCertificate',
