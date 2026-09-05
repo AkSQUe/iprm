@@ -197,6 +197,9 @@ def create_app(config_name=None):
     app.cli.add_command(legal_docx)
     app.cli.add_command(meta_reemit_leads)
 
+    from app import rbac as _rbac
+    _rbac.init_app(app)
+
     @app.context_processor
     def inject_assets_version():
         if app.debug:
