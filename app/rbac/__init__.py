@@ -10,6 +10,7 @@
 from flask_login import current_user
 
 from . import registry
+from .decorators import permission_required
 from .service import has_any, has_permission
 
 
@@ -20,4 +21,4 @@ def init_app(app):
     app.cli.add_command(rbac_group)
 
 
-__all__ = ['registry', 'has_permission', 'has_any', 'init_app']
+__all__ = ['registry', 'has_permission', 'has_any', 'permission_required', 'init_app']
