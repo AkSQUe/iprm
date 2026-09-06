@@ -3,7 +3,9 @@
    Перемикач шле PUT одразу після кліку; при помилці повертає стан і
    пише в рядок стану. Кнопки «усе/нічого» шлють POST на модуль і
    виставляють перемикачі модуля за відповіддю. Групи згортаються,
-   стан пам'ятається в localStorage. Пошук фільтрує рядки прав. */
+   стан пам'ятається в localStorage. Пошук фільтрує рядки прав.
+   Клік по заголовку колонки вмикає фокус на одну роль: решта колонок
+   приглушені, біля кожного модуля видно «n з m» для обраної ролі. */
 (function () {
   'use strict';
 
@@ -12,9 +14,13 @@
 
   var status = document.getElementById('access-status');
   var search = document.getElementById('access-search');
+  var focusBar = document.getElementById('access-focus');
+  var focusLabel = document.getElementById('access-focus-label');
+  var focusExit = document.getElementById('access-focus-exit');
   var csrf = root.getAttribute('data-csrf') || '';
   var readonly = root.getAttribute('data-readonly') === '1';
   var STORAGE_KEY = 'admin-access-collapsed';
+  var focusedRole = null;
 
   function setStatus(text, state) {
     if (!status) return;
@@ -53,6 +59,54 @@
     if (el) el.textContent = count + ' з ' + el.getAttribute('data-total');
   }
 
+  function moduleSwitches(module, roleId) {
+    return root.querySelectorAll(
+      '.access-perm[data-module="' + module + '"] .switch__input[data-role-id="' + roleId + '"]'
+    );
+  }
+
+  /* ---- фокус на одну роль ---- */
+  function refreshFocusCounts(module) {
+    if (focusedRole === null) return;
+    var rows = module
+      ? root.querySelectorAll('.access-module[data-module="' + module + '"]')
+      : root.querySelectorAll('.access-module');
+    rows.forEach(function (moduleRow) {
+      var name = moduleRow.getAttribute('data-module');
+      var inputs = moduleSwitches(name, focusedRole);
+      var checked = 0;
+      inputs.forEach(function (input) { if (input.checked) checked += 1; });
+      var span = moduleRow.querySelector('[data-module-focus]');
+      if (span) {
+        span.textContent = checked + ' з ' + inputs.length;
+        span.hidden = false;
+      }
+    });
+  }
+
+  function setFocus(roleId, label) {
+    focusedRole = roleId;
+    root.classList.toggle('is-focus', roleId !== null);
+    root.querySelectorAll('[data-role-col]').forEach(function (cell) {
+      cell.classList.toggle('is-focus-col', roleId !== null && cell.getAttribute('data-role-col') === String(roleId));
+    });
+    root.querySelectorAll('[data-focus-role]').forEach(function (btn) {
+      btn.setAttribute('aria-pressed', btn.getAttribute('data-focus-role') === String(roleId) ? 'true' : 'false');
+    });
+    root.querySelectorAll('[data-module-focus]').forEach(function (span) {
+      span.hidden = roleId === null;
+    });
+    if (focusBar) {
+      focusBar.hidden = roleId === null;
+      if (focusLabel) focusLabel.textContent = roleId === null ? '' : 'Фокус: ' + label;
+    }
+    refreshFocusCounts();
+  }
+
+  if (focusExit) {
+    focusExit.addEventListener('click', function () { setFocus(null, ''); });
+  }
+
   /* ---- перемикачі ---- */
   root.addEventListener('change', function (e) {
     var input = e.target;
@@ -72,10 +126,11 @@
       setStatus('Помилка, зміну скасовано: ' + err.message, 'error');
     }).then(function () {
       input.disabled = false;
+      refreshFocusCounts(input.getAttribute('data-module'));
     });
   });
 
-  /* ---- гуртові дії й згортання груп ---- */
+  /* ---- гуртові дії, фокус, згортання груп ---- */
   root.addEventListener('click', function (e) {
     var bulk = e.target.closest('[data-bulk]');
     if (bulk && !readonly) {
@@ -88,17 +143,28 @@
         role_id: roleId, module: module, mode: bulk.getAttribute('data-bulk')
       }).then(function (data) {
         var granted = data.granted || [];
-        root.querySelectorAll('.switch__input[data-role-id="' + roleId + '"][data-module="' + module + '"]')
-          .forEach(function (input) {
-            input.checked = granted.indexOf(input.getAttribute('data-permission')) !== -1;
-          });
+        moduleSwitches(module, roleId).forEach(function (input) {
+          input.checked = granted.indexOf(input.getAttribute('data-permission')) !== -1;
+        });
         updateCount(data.role_id, data.role_count);
         setStatus('Збережено', 'ok');
       }).catch(function (err) {
         setStatus('Помилка: ' + err.message, 'error');
       }).then(function () {
         buttons.forEach(function (b) { b.disabled = false; });
+        refreshFocusCounts(module);
       });
+      return;
+    }
+
+    var focusBtn = e.target.closest('[data-focus-role]');
+    if (focusBtn) {
+      var id = Number(focusBtn.getAttribute('data-focus-role'));
+      if (focusedRole === id) {
+        setFocus(null, '');
+      } else {
+        setFocus(id, focusBtn.getAttribute('data-role-label') || '');
+      }
       return;
     }
 
@@ -143,8 +209,7 @@
         tbody.querySelectorAll('.access-module').forEach(function (moduleRow) {
           var module = moduleRow.getAttribute('data-module');
           var visible = 0;
-          tbody.querySelectorAll('.access-perm .switch__input[data-module="' + module + '"]').forEach(function (input) {
-            var row = input.closest('.access-perm');
+          tbody.querySelectorAll('.access-perm[data-module="' + module + '"]').forEach(function (row) {
             var match = !q || row.getAttribute('data-search').indexOf(q) !== -1;
             row.hidden = !match;
             if (match) visible += 1;
@@ -152,10 +217,14 @@
           moduleRow.hidden = visible === 0;
           if (visible) anyVisible = true;
         });
-        if (q) tbody.querySelector('[data-group-toggle]').setAttribute('aria-expanded', 'true');
+        var groupToggle = tbody.querySelector('[data-group-toggle]');
+        if (q) groupToggle.setAttribute('aria-expanded', anyVisible ? 'true' : 'false');
         tbody.hidden = q ? !anyVisible : false;
       });
-      if (!q) loadCollapsed().forEach(function (key) { setCollapsed(key, true); });
+      if (!q) {
+        root.querySelectorAll('.access-group').forEach(function (tbody) { setCollapsed(tbody.getAttribute('data-group'), false); });
+        loadCollapsed().forEach(function (key) { setCollapsed(key, true); });
+      }
     });
   }
 })();

@@ -6,10 +6,12 @@ from flask_login import current_user
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.admin import _listing, admin_bp
-from app.rbac import permission_required
+from app.rbac import permission_required, service as rbac_service
+from app.rbac.service import NO_ROLE_FILTER, AccessError
 from app.extensions import db
 from app.services import xlsx_reports
 from app.models.medical_profile import MedicalProfile
+from app.models.rbac import Role
 from app.models.registration import EventRegistration
 from app.models.user import User
 
@@ -22,20 +24,19 @@ _USER_REGS = {'with': 'З реєстраціями', 'without': 'Без реєс
 
 
 def _role_choices():
-    """Фільтр «Роль»: реальні ролі + «без ролей». Рахується на запит, бо ролі
-    редагуються в адмінці."""
-    from app.models.rbac import Role
-    choices = {'none': 'Без ролей'}
+    """Фільтр «Роль»: реальні ролі + «без ролей». Рахується один раз на
+    запит (ролі редагуються в адмінці) і передається далі явно."""
+    choices = {NO_ROLE_FILTER: 'Без ролей'}
     for role in Role.query.order_by(Role.sort_order, Role.display_name):
         choices[role.name] = role.display_name
     return choices
 
 
-def _user_filters():
+def _user_filters(role_choices):
     """Фільтри списку користувачів -- спільні для сторінки й xlsx-експорту."""
     return {
         'q': _listing.text_arg('q'),
-        'role': _listing.choice_arg('role', _role_choices()),
+        'role': _listing.choice_arg('role', role_choices),
         'state': _listing.choice_arg('state', _USER_STATES),
         'confirmed': _listing.choice_arg('confirmed', _USER_CONFIRMED),
         'regs': _listing.choice_arg('regs', _USER_REGS),
@@ -64,10 +65,9 @@ def _users_query(filters):
     query = _listing.apply_search(query, filters['q'], [
         User.email, User.first_name, User.last_name, MedicalProfile.phone,
     ])
-    if filters['role'] == 'none':
+    if filters['role'] == NO_ROLE_FILTER:
         query = query.filter(~User.roles.any())
     elif filters['role']:
-        from app.models.rbac import Role
         query = query.filter(User.roles.any(Role.name == filters['role']))
     if filters['state']:
         # is_active має NULL у старих рядках -- 'Неактивні' мусить їх ловити.
@@ -105,7 +105,8 @@ def _users_with_counts(rows):
 @admin_bp.route('/users')
 @permission_required('users.view')
 def users():
-    filters = _user_filters()
+    role_choices = _role_choices()
+    filters = _user_filters(role_choices)
     # Базу вже переросли тисячу акаунтів -- сторінками. Експорт лишається по
     # всьому зрізу.
     pagination = _users_query(filters).paginate(
@@ -120,7 +121,7 @@ def users():
         total_found=pagination.total,
         filters=filters,
         filter_args=_listing.filter_args(filters),
-        role_options=list(_role_choices().items()),
+        role_options=list(role_choices.items()),
         state_options=list(_USER_STATES.items()),
         confirmed_options=list(_USER_CONFIRMED.items()),
         regs_options=list(_USER_REGS.items()),
@@ -132,7 +133,8 @@ def users():
 def users_export():
     """Експорт користувачів у xlsx з урахуванням активних фільтрів."""
 
-    filters = _user_filters()
+    role_choices = _role_choices()
+    filters = _user_filters(role_choices)
     # Стелю рядків міряємо COUNT-ом ДО вибірки і ДО пост-обробки:
     # _users_with_counts інакше рахувала б лічильники по зрізу, який усе
     # одно буде відкинутий.
@@ -145,7 +147,7 @@ def users_export():
     summary = _listing.export_summary(
         [
             ('Пошук', filters['q'] or '–'),
-            ('Роль', _role_choices().get(filters['role'], 'Усі')),
+            ('Роль', role_choices.get(filters['role'], 'Усі')),
             ('Стан', _USER_STATES.get(filters['state'], 'Усі')),
             ('Email', _USER_CONFIRMED.get(filters['confirmed'], 'Усі')),
             ('Реєстрації', _USER_REGS.get(filters['regs'], 'Усі')),
@@ -177,7 +179,6 @@ def user_detail(user_id):
     """
     from app.models.meta_lead import MetaLead
     from app.models.online_enrollment import OnlineEnrollment
-    from app.models.rbac import Role
 
     user = db.session.get(User, user_id)
     if not user:
@@ -218,16 +219,13 @@ def user_detail(user_id):
 @admin_bp.route('/users/<int:user_id>/roles', methods=['POST'])
 @permission_required('access.assign')
 def user_roles_update(user_id):
-    from app.rbac import service
-    from app.rbac.service import AccessError
-
     user = db.session.get(User, user_id)
     if not user:
         flash('Користувача не знайдено', 'error')
         return redirect(url_for('admin.users'))
     role_ids = {int(v) for v in request.form.getlist('roles') if v.isdigit()}
     try:
-        service.assign_roles(user, role_ids, current_user)
+        rbac_service.assign_roles(user, role_ids, current_user)
         db.session.commit()
         flash('Ролі оновлено', 'success')
     except AccessError as exc:

@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, flash, jsonify, redirect, url_for
+from flask import Blueprint
 from flask_login import current_user
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -8,21 +8,14 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 def require_staff():
     """Другий шар поверх @permission_required: у адмінку заходить лише
     носій хоч однієї ролі. В'юха без декоратора (якби сторож вимкнули)
-    все одно закрита для сторонніх.
-
-    JSON-запит (fetch з admin-access-matrix.js тощо) отримує JSON-тіло
-    замість редиректу/HTML-403 -- інакше `r.json()` на клієнті падає, і
-    autosave-код мовчки трактує обірвану сесію як успіх (Task 14, п.6)."""
-    from app.rbac.decorators import _wants_json
+    все одно закрита для сторонніх. Відмова та сама, що й у декораторі
+    (``deny``): JSON-запит отримує JSON-тіло, інакше fetch у
+    admin-access-matrix.js трактував би редирект на логін як успіх."""
+    from app.rbac.decorators import deny
     if not current_user.is_authenticated:
-        if _wants_json():
-            return jsonify(error='unauthorized'), 401
-        flash('Будь ласка, увійдіть для доступу до цієї сторінки.', 'info')
-        return redirect(url_for('auth.login'))
+        return deny(anonymous=True)
     if not current_user.is_staff:
-        if _wants_json():
-            return jsonify(error='forbidden'), 403
-        abort(403)
+        return deny(anonymous=False)
 
 
 @admin_bp.after_request

@@ -8,23 +8,16 @@ from app.extensions import db
 audit_logger = logging.getLogger('audit')
 logger = logging.getLogger(__name__)
 
-# Куди веде «/admin»: перша сторінка зі списку, яку користувач має право
-# бачити. Раніше редирект був на курси, і менеджер без courses.view
-# отримував 403 одразу після входу.
-_DASHBOARD_TARGETS = (
-    ('courses.view', 'admin.courses_list'),
-    ('registrations.view', 'admin.registrations_all'),
-    ('meta_leads.view', 'admin.meta_leads_list'),
-    ('users.view', 'admin.users'),
-    ('blog.view', 'admin.blog_list'),
-    ('access.view', 'admin.access'),
-)
-
-
 @admin_bp.route('/')
 @permission_required('dashboard.view')
 def dashboard():
-    for permission, endpoint in _DASHBOARD_TARGETS:
+    """«/admin» веде на першу сторінку-вхід реєстру, яку користувач має
+    право бачити (той самий перелік, що й пункти сайдбару). Раніше редирект
+    був на курси, і менеджер без courses.view отримував 403 одразу після
+    входу; далі -- фіксований список із шести цілей, і користувач лише з
+    materials.view упирався в 403 на логотипі."""
+    from app.rbac import registry
+    for permission, endpoint in registry.entry_targets():
         if current_user.has_permission(permission):
             return redirect(url_for(endpoint))
     abort(403)

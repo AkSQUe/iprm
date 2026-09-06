@@ -61,3 +61,20 @@ def test_sync_creates_missing_system_role_with_defaults(app):
     assert {p.name for p in created.permissions} == set(spec.defaults)
     assert created.is_system is True
     assert created.color == spec.color
+
+
+def test_sync_dry_run_reports_but_does_not_write(app):
+    db.session.add(Permission(name='ghost.view', module='ghost'))
+    db.session.delete(Role.query.filter_by(name='marketer').one())
+    db.session.flush()
+
+    result = service.sync(dry_run=True)
+
+    assert result['removed'] == ['ghost.view']
+    assert result['roles_created'] == ['marketer']
+    assert Permission.query.filter_by(name='ghost.view').first() is not None
+    assert Role.query.filter_by(name='marketer').first() is None
+    # справжній синк відновлює стан для решти тестів сесії
+    service.sync()
+    db.session.delete(Permission.query.filter_by(name='ghost.view').first()) if Permission.query.filter_by(name='ghost.view').first() else None
+    db.session.flush()

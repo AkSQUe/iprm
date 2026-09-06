@@ -5,7 +5,9 @@ from app.models.user import User
 from tests.support.rbac import make_super_admin, make_user_with_role
 
 SCAN_ROOTS = ('app', 'deploy', 'tools', '.preview')
-SKIP_DIR_PARTS = ('migrations', '__pycache__')
+# snapshots/computed -- згенеровані html_snapshot/computed_snapshot (гігабайти,
+# gitignored): без пропуску тест ходив би по них після кожного capture.
+SKIP_DIR_PARTS = ('migrations', '__pycache__', 'snapshots', 'computed', 'node_modules')
 
 
 def test_no_is_admin_left_in_app():

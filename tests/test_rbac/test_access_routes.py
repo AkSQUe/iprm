@@ -114,3 +114,29 @@ def test_bool_role_id_is_400_json(client):
     body = resp.get_json()
     assert set(body) == {'error'}
     assert body['error']
+
+
+def test_huge_role_id_is_400_json_not_db_overflow(client):
+    """10**30 -- ціле, але за межами bigint: Postgres падав би 500-ю."""
+    _login(client, make_super_admin())
+    resp = client.put('/admin/access/api/matrix', json={
+        'role_id': 10 ** 30, 'permission': 'courses.view', 'granted': True})
+    assert resp.status_code == 400
+    assert set(resp.get_json()) == {'error'}
+
+
+def test_unexpected_save_error_is_json_500(client, monkeypatch):
+    """Не-AccessError на збереженні теж віддає JSON, а не HTML-сторінку."""
+    from app.admin import routes_access
+
+    def boom(*args, **kwargs):
+        raise RuntimeError('db down')
+
+    monkeypatch.setattr(routes_access.service, 'set_role_permission', boom)
+    _login(client, make_super_admin())
+    role = Role.query.filter_by(name='viewer').one()
+    resp = client.put('/admin/access/api/matrix', json={
+        'role_id': role.id, 'permission': 'courses.manage', 'granted': True})
+    assert resp.status_code == 500
+    assert resp.is_json
+    assert 'error' in resp.get_json()

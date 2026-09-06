@@ -77,3 +77,21 @@ def test_grouped_modules_follow_group_order():
     groups = registry.grouped_modules()
     assert [key for key, _, _ in groups] == [key for key, _ in registry.GROUPS]
     assert all(modules for _, _, modules in groups)
+
+
+def test_entry_permission_is_view_or_manage():
+    assert registry.MODULES_BY_NAME['courses'].entry_permission == 'courses.view'
+    assert registry.MODULES_BY_NAME['settings'].entry_permission == 'settings.manage'
+    assert registry.MODULES_BY_NAME['dashboard'].endpoint is None
+    assert registry.MODULES_BY_NAME['translations'].endpoint is None
+
+
+def test_entry_endpoints_exist_and_are_gated_by_entry_permission(app):
+    """Сторінка-вхід кожного модуля існує і стоїть під правом входу: за
+    цим переліком дашборд обирає, куди вести користувача."""
+    targets = registry.entry_targets()
+    assert targets[0] == ('courses.view', 'admin.courses_list')
+    for permission, endpoint in targets:
+        view = app.view_functions.get(endpoint)
+        assert view is not None, endpoint
+        assert permission in view._rbac_permissions, (endpoint, permission)

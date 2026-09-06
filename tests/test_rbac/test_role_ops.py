@@ -199,3 +199,33 @@ def test_assign_roles_self_escalation_guard(app):
         service.assign_roles(sa, sa_current_ids | {manager_role.id}, sa)
         db.session.expire(sa, ['roles'])
         assert 'manager' in {r.name for r in sa.roles}
+
+
+def test_reserved_slugs_are_rejected(app):
+    """Сентинел фільтра «без ролей» і всі імена системних ролей реєстру
+    (навіть тих, яких ще нема в БД) не можна брати для кастомної ролі."""
+    with app.test_request_context():
+        actor = make_super_admin()
+        with pytest.raises(AccessError, match='зарезервований'):
+            service.create_role(service.NO_ROLE_FILTER, 'X', '', 'gray', 100, actor)
+        Role.query.filter_by(name='marketer').delete()
+        db.session.flush()
+        with pytest.raises(AccessError, match='зарезервований'):
+            service.create_role('marketer', 'Псевдо', '', 'gray', 100, actor)
+        custom = service.create_role('t_reserved_ok', 'Ok', '', 'gray', 100, actor)
+        with pytest.raises(AccessError, match='зарезервований'):
+            service.update_role(custom, 'Ok', '', 'gray', 100, actor, name='viewer')
+        assert custom.name == 't_reserved_ok'
+
+
+def test_system_actor_acts_as_super_admin_without_user_id(app):
+    with app.test_request_context():
+        target = make_user_with_role('viewer')
+        sa_role = Role.query.filter_by(name='super_admin').one()
+        actor = service.SystemActor()
+        assert service.is_super_admin(actor)
+        service.assign_roles(target, {sa_role.id}, actor)
+        db.session.expire(target, ['roles'])
+        assert [r.name for r in target.roles] == ['super_admin']
+        row = UserRole.query.filter_by(user_id=target.id, role_id=sa_role.id).one()
+        assert row.assigned_by is None

@@ -43,6 +43,16 @@ class Module:
     label: str
     group: str
     actions: tuple
+    # Ендпоінт сторінки-входу модуля (пункт сайдбару). None -- модуль без
+    # власної сторінки (dashboard, translations). За ним дашборд обирає, куди
+    # вести користувача, а тест сайдбару звіряє гейти з реєстром.
+    endpoint: str = None
+
+    @property
+    def entry_permission(self):
+        """Право, потрібне, щоб відкрити сторінку-вхід модуля."""
+        action = 'view' if 'view' in self.actions else 'manage'
+        return f'{self.name}.{action}'
 
     def permission_names(self):
         return tuple(f'{self.name}.{action}' for action in self.actions)
@@ -53,38 +63,69 @@ _VMD = ('view', 'manage', 'delete')
 
 MODULES = (
     Module('dashboard', 'Панель', 'dashboard', ('view',)),
-    Module('courses', 'Курси', 'content', ('view', 'manage', 'delete', 'export', 'import')),
-    Module('instances', 'Розклад', 'content', ('view', 'manage', 'delete', 'export', 'import')),
-    Module('online_courses', 'Онлайн-курси', 'content', _VM),
-    Module('cities', 'Довідник локацій', 'content', _VMD),
-    Module('quizzes', 'Тестування', 'content', _VMD),
-    Module('course_requests', 'Запити на курси', 'content', ('view', 'manage', 'delete', 'export')),
-    Module('b2b_requests', 'B2B-заявки', 'content', ('view', 'manage', 'export')),
-    Module('meta_leads', 'Ліди Meta', 'content', ('view', 'manage', 'delete', 'export', 'settings')),
-    Module('refund_requests', 'Заявки на повернення', 'content', ('view', 'manage', 'export')),
-    Module('trainers', 'Тренери', 'content', _VMD),
-    Module('blog', 'Блог', 'content', _VMD),
-    Module('media', 'Медіа', 'content', _VMD),
+    Module('courses', 'Курси', 'content', ('view', 'manage', 'delete', 'export', 'import'),
+           endpoint='admin.courses_list'),
+    Module('instances', 'Розклад', 'content', ('view', 'manage', 'delete', 'export', 'import'),
+           endpoint='admin.instances_list'),
+    Module('online_courses', 'Онлайн-курси', 'content', _VM,
+           endpoint='admin.online_courses_list'),
+    Module('cities', 'Довідник локацій', 'content', _VMD,
+           endpoint='admin.cities_list'),
+    Module('quizzes', 'Тестування', 'content', _VMD,
+           endpoint='admin.quizzes_list'),
+    Module('course_requests', 'Запити на курси', 'content', ('view', 'manage', 'delete', 'export'),
+           endpoint='admin.course_requests_list'),
+    Module('b2b_requests', 'B2B-заявки', 'content', ('view', 'manage', 'export'),
+           endpoint='admin.b2b_requests_list'),
+    Module('meta_leads', 'Ліди Meta', 'content', ('view', 'manage', 'delete', 'export', 'settings'),
+           endpoint='admin.meta_leads_list'),
+    Module('refund_requests', 'Заявки на повернення', 'content', ('view', 'manage', 'export'),
+           endpoint='admin.refund_requests_list'),
+    Module('trainers', 'Тренери', 'content', _VMD,
+           endpoint='admin.trainers_list'),
+    Module('blog', 'Блог', 'content', _VMD,
+           endpoint='admin.blog_list'),
+    Module('media', 'Медіа', 'content', _VMD,
+           endpoint='admin.media_library'),
     Module('translations', 'Переклади', 'content', ('manage', 'export', 'import')),
-    Module('registrations', 'Реєстрації', 'sales', ('view', 'manage', 'export', 'import', 'refund')),
-    Module('online_orders', 'Онлайн-курси: замовлення', 'sales', ('view', 'manage', 'export')),
-    Module('certificates', 'Сертифікати', 'sales', ('view', 'manage', 'export')),
-    Module('referrals', 'Реферали', 'sales', ('view', 'manage', 'export')),
-    Module('promo_codes', 'Промокоди', 'sales', ('view', 'manage', 'delete', 'export')),
-    Module('users', 'Користувачі', 'audience', ('view', 'export')),
-    Module('reviews', 'Відгуки', 'audience', _VMD),
-    Module('cert_generator', 'Генератор сертифікатів', 'tools', _VM),
-    Module('marketing', 'Маркетинг', 'system', _VM),
-    Module('notifications', 'Сповіщення', 'system', ('view', 'manage', 'export', 'receive')),
-    Module('integrations', 'Інтеграції', 'system', ('view', 'manage', 'keys')),
-    Module('webhooks', 'Webhook черга', 'system', _VMD),
-    Module('materials', 'Резервування матеріалів', 'system', ('view', 'manage', 'delete', 'export', 'import')),
-    Module('error_logs', 'Журнал помилок', 'system', ('view', 'manage', 'delete', 'export')),
-    Module('perf', 'Швидкість сторінок', 'system', _VM),
-    Module('design_system', 'Дизайн-система', 'system', ('view',)),
-    Module('settings', 'Налаштування', 'system', ('manage',)),
-    Module('backup', 'Резервні копії', 'system', ('view', 'manage', 'delete', 'export', 'restore')),
-    Module('access', 'Доступ', 'access', ('view', 'manage', 'assign')),
+    Module('registrations', 'Реєстрації', 'sales', ('view', 'manage', 'export', 'import', 'refund'),
+           endpoint='admin.registrations_all'),
+    Module('online_orders', 'Онлайн-курси: замовлення', 'sales', ('view', 'manage', 'export'),
+           endpoint='admin.online_orders_list'),
+    Module('certificates', 'Сертифікати', 'sales', ('view', 'manage', 'export'),
+           endpoint='admin.certificates'),
+    Module('referrals', 'Реферали', 'sales', ('view', 'manage', 'export'),
+           endpoint='admin.referrals_overview'),
+    Module('promo_codes', 'Промокоди', 'sales', ('view', 'manage', 'delete', 'export'),
+           endpoint='admin.promo_codes_list'),
+    Module('users', 'Користувачі', 'audience', ('view', 'export'),
+           endpoint='admin.users'),
+    Module('reviews', 'Відгуки', 'audience', _VMD,
+           endpoint='admin.reviews_list'),
+    Module('cert_generator', 'Генератор сертифікатів', 'tools', _VM,
+           endpoint='admin.tool_certificate_generator'),
+    Module('marketing', 'Маркетинг', 'system', _VM,
+           endpoint='admin.marketing'),
+    Module('notifications', 'Сповіщення', 'system', ('view', 'manage', 'export', 'receive'),
+           endpoint='admin.notifications'),
+    Module('integrations', 'Інтеграції', 'system', ('view', 'manage', 'keys'),
+           endpoint='admin.integrations'),
+    Module('webhooks', 'Webhook черга', 'system', _VMD,
+           endpoint='admin.webhooks_list'),
+    Module('materials', 'Резервування матеріалів', 'system', ('view', 'manage', 'delete', 'export', 'import'),
+           endpoint='admin.materials_overview'),
+    Module('error_logs', 'Журнал помилок', 'system', ('view', 'manage', 'delete', 'export'),
+           endpoint='admin.error_logs'),
+    Module('perf', 'Швидкість сторінок', 'system', _VM,
+           endpoint='admin.perf_runs'),
+    Module('design_system', 'Дизайн-система', 'system', ('view',),
+           endpoint='admin.design_system'),
+    Module('settings', 'Налаштування', 'system', ('manage',),
+           endpoint='admin.settings'),
+    Module('backup', 'Резервні копії', 'system', ('view', 'manage', 'delete', 'export', 'restore'),
+           endpoint='admin.backups'),
+    Module('access', 'Доступ', 'access', ('view', 'manage', 'assign'),
+           endpoint='admin.access'),
 )
 
 MODULES_BY_NAME = {m.name: m for m in MODULES}
@@ -111,6 +152,12 @@ def action_label(name):
 
 def permission_label(name):
     return f'{module_of(name).label}: {action_label(name)}'
+
+
+def entry_targets():
+    """[(право, endpoint), ...] для модулів зі сторінкою-входом, у порядку
+    реєстру: дашборд веде на перший дозволений."""
+    return [(m.entry_permission, m.endpoint) for m in MODULES if m.endpoint]
 
 
 def grouped_modules():
