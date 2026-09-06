@@ -3029,6 +3029,63 @@ a.admin-stat-card:focus-visible {
   min-width: 1120px;
 }
 
+/* ==========================================================================
+   СІТКА (--grid): матриця "рядок x колонка" (права x ролі), а не реєстр.
+   Відрізняється від реєстру трьома речами:
+   1) щільність адмінки -- 10px 12px замість 14px 16px: у сітці сотня рядків
+      і десяток колонок, реєстровий крок з'їдав би пів екрана на повітря;
+   2) шапка прилипає зверху, перша колонка -- зліва: без цього при
+      прокрутці невідомо, яку роль і яке право перемикаєш. Прилипання
+      зверху діє лише всередині обгортки з max-height (це вирішує сторінка);
+   3) на мобільному НЕ перетворюється на картки: картка "право" з шістьма
+      рядками-перемикачами на сотню прав -- це десятки екранів, а рядок
+      групи стає порожньою карткою. Сітка лишається таблицею з
+      горизонтальною прокруткою в .admin-table-wrap.
+
+   Тло рядка задає <tr> через --row-bg, комірки лише малюють його: прилипла
+   перша комірка інакше відрізнялась би від решти рядка (у неї тло мусить
+   бути непрозорим, а базовий hover реєстру фарбує лише <td>).
+   Лише перша колонка -- підпис: друга вирівнюється по центру, як решта
+   (у реєстрі другу колонку теж вирівнюють ліворуч, і перемикачі другої
+   ролі з'їжджали до лівого краю комірки).
+   ========================================================================== */
+
+.admin-table--grid tr {
+  --row-bg: var(--iprm-white);
+}
+
+.admin-table--grid thead tr {
+  --row-bg: var(--iprm-surface-inset);
+}
+
+.admin-table--grid th,
+.admin-table--grid td,
+.admin-table--grid tr:hover td {
+  padding: 10px 12px;
+  background: var(--row-bg);
+}
+
+.admin-table--grid th:nth-child(2),
+.admin-table--grid td:nth-child(2) {
+  text-align: center;
+}
+
+.admin-table--grid thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.admin-table--grid tr > :first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+.admin-table--grid thead th:first-child {
+  z-index: 3;
+}
+
 /* Комірки, які не можна ламати переносом (дати, лічильники, стан). */
 .admin-table .admin-nowrap {
   white-space: nowrap;
@@ -3076,6 +3133,48 @@ a.admin-stat-card:focus-visible {
   /* Картковий режим: жодних мінімальних ширин, інакше картки поїдуть вбік. */
   .admin-table--wide {
     min-width: 0;
+  }
+
+  /* Сітка лишається таблицею: скасовуємо картковий режим реєстру
+     (властивість за властивістю, у тому ж порядку, що й він вище). */
+  .admin-table-wrap:has(> .admin-table--grid) {
+    overflow-x: auto;
+  }
+
+  .admin-table--grid {
+    display: table;
+    background: var(--iprm-white);
+    border: 1px solid var(--iprm-border);
+    border-radius: var(--iprm-radius);
+  }
+
+  .admin-table--grid thead {
+    display: table-header-group;
+  }
+
+  .admin-table--grid tr {
+    display: table-row;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  .admin-table--grid td {
+    display: table-cell;
+    text-align: center;
+    padding: 10px 12px;
+    border-top: 1px solid var(--iprm-divider);
+    border-bottom: 0;
+  }
+
+  .admin-table--grid td:first-child {
+    text-align: left;
+  }
+
+  .admin-table--grid td::before {
+    content: none;
   }
 
   .admin-table__actions {
@@ -3236,7 +3335,9 @@ a.admin-stat-card:focus-visible {
   width: 34px;
   height: 20px;
   border-radius: var(--iprm-radius-pill);
-  background: var(--iprm-border-strong);
+  /* Не --iprm-border-strong: 1.58 на білому -- вимкнений перемикач зливався
+     з тлом. Токен доріжки тримає 3.0 для графіки в обох темах. */
+  background: var(--iprm-switch-track);
   transition: background var(--iprm-transition);
 }
 
@@ -3247,7 +3348,9 @@ a.admin-stat-card:focus-visible {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--iprm-white);
+  /* --iprm-on-accent, не --iprm-white: у темній темі «білий» токен стає
+     темним, і бігунок зливався б із зеленою доріжкою. */
+  background: var(--iprm-on-accent);
   box-shadow: var(--iprm-shadow-xs);
   transition: transform var(--iprm-transition);
 }
@@ -3308,27 +3411,101 @@ a.admin-stat-card:focus-visible {
   color: var(--iprm-success);
 }
 
+/* --iprm-error-text, не --iprm-error: сирий червоний на білому дає 3.76,
+   текстовий -- 5.9. */
 .access-status[data-state='error'] {
-  color: var(--iprm-error);
+  color: var(--iprm-error-text);
 }
 
 /* Підфарбовка службових рядків матриці: заголовок групи прав, заголовок
-   модуля, підсвітка рядка права під курсором. */
+   модуля, підсвітка рядка права під курсором. Тло задається рядку через
+   --row-bg (контракт .admin-table--grid): так його дістає й прилипла
+   перша комірка. */
+.access-group__head,
+.access-module {
+  --row-bg: var(--iprm-surface-inset);
+}
+
+.access-perm:hover {
+  --row-bg: var(--iprm-accent-light);
+}
+
 .access-group__head th {
-  background: var(--iprm-surface-inset);
+  text-align: left;
 }
 
-.access-module th,
-.access-module td {
-  background: var(--iprm-surface-inset);
+/* Підпис права -- заголовок рядка (<th scope="row">): скидаємо капітель і
+   центрування таблиці; назва й код права -- двома поверхами. Тло дає
+   --row-bg, прилипання -- .admin-table--grid. Селектор з тегом: голий клас
+   (0,1,0) програвав базовому `.admin-table th` (0,1,1), і підпис лишався
+   капітеллю. */
+th.access-perm__label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--iprm-text);
 }
 
-.access-perm:hover td {
-  background: var(--iprm-accent-light);
+/* Фокус на одну роль: заголовок колонки -- кнопка; інші колонки
+   приглушені, біля модуля видно «n з m» для обраної ролі. Стан тримає
+   admin-access-matrix.js класами is-focus / is-focus-col. */
+.access-matrix__focus {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  /* Кнопка не успадковує капітель <th> (UA-стиль button): повертаємо,
+     щоб назва ролі читалась як решта заголовків колонок. */
+  text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.access-matrix__focus[aria-pressed='true'] {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.is-focus [data-role-col]:not(.is-focus-col) {
+  opacity: 0.3;
+}
+
+.access-module__focus {
+  margin-left: 8px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--iprm-text-light);
+}
+
+/* Група радіокнопок у формі -- fieldset без рамки браузера; legend
+   поводиться як підпис поля. */
+.admin-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.admin-form legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 
 /* Кнопка згортання групи -- текстова, без тла й рамки кнопки; стрілка
-   обертається за aria-expanded. */
+   обертається за aria-expanded. Рівень групи вищий за рівень модуля: 13px
+   звичайним регістром і кольором тексту проти 11px капітелі модуля. Без
+   цього кнопка успадковувала стиль <th>, і група читалась дрібнішою за
+   свої модулі. */
 .access-group__toggle {
   display: inline-flex;
   align-items: center;
@@ -3337,24 +3514,32 @@ a.admin-stat-card:focus-visible {
   border: 0;
   padding: 0;
   font: inherit;
+  font-size: 0.8125rem;
   font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
   cursor: pointer;
-  color: inherit;
+  color: var(--iprm-text);
 }
 
 .access-group__toggle[aria-expanded='false'] .access-group__chevron {
   transform: rotate(-90deg);
 }
 
+/* Прилипання зліва дає .admin-table--grid (перша комірка кожного рядка). */
 .access-module__title {
   text-align: left;
   font-weight: 600;
 }
 
+/* У шапці колонки лічильник успадковує капітель <th>: "104 З 104" читалось
+   як абревіатура. Регістр і трекінг повертаються до звичайних. */
 .access-matrix__count {
   display: block;
   font-size: 0.75rem;
   font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
   color: var(--iprm-text-light);
 }
 
@@ -3364,12 +3549,34 @@ a.admin-stat-card:focus-visible {
   color: var(--iprm-text-light);
 }
 
-/* Картка ролі в бічній панелі /admin/access. */
+/* Секція ролей над матрицею /admin/access і сама картка ролі. Поверхня
+   -- --iprm-white, не --iprm-card-bg: у світлій темі той дорівнює тлу
+   .admin-layout, і картка зникала, лишаючи саму рамку. Ті самі поверхня,
+   рамка й радіус, що в .admin-stat-card і .admin-integration-card. */
+.access-roles {
+  margin-bottom: 24px;
+}
+
+/* Картки ролей -- рядком над матрицею: скільки влазить по 220px, решта
+   переноситься. Бічна колонка забирала 300px у матриці, і на 1440 вона
+   прокручувалась горизонтально вже з шістьма ролями. */
+.access-roles__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
 .access-role {
-  padding: 12px 14px;
+  padding: 14px 16px;
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius-md);
-  background: var(--iprm-card-bg);
+  background: var(--iprm-white);
+}
+
+.access-role__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .access-role__slug,
@@ -3378,12 +3585,24 @@ a.admin-stat-card:focus-visible {
   color: var(--iprm-text-light);
 }
 
+/* Системне ім'я ролі -- ідентифікатор, як і назва права: той самий моно. */
+.access-role__slug {
+  font-family: var(--iprm-font-mono);
+}
+
+.access-role__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
 .access-role__desc {
   margin: 6px 0 0;
   font-size: 0.8125rem;
 }
 
 .access-roles__title {
-  margin: 0;
+  margin: 0 0 12px;
   font-size: 1rem;
 }

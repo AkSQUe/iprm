@@ -1,60 +1,26 @@
 /* page-admin-access.css -- розкладка сторінки /admin/access. Лише сітка,
-   ширини й прилипання; декор беруть компоненти admin.css / common.css. */
-
-.access-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 24px;
-  align-items: start;
-}
-
-.access-matrix {
-  min-width: 0;
-}
-
-.access-group__head th {
-  text-align: left;
-}
+   ширини й висота прокрутки; декор і прилипання -- компоненти admin.css
+   (.admin-table--grid, .access-*) і common.css. */
 
 .access-group[hidden] {
   display: none;
 }
 
-@media (max-width: 1100px) {
-  .access-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-.access-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.access-toolbar__search {
-  max-width: 320px;
-}
-
+/* Матриця -- власне вікно прокрутки: шапка з ролями прилипає до його
+   верху (.admin-table--grid), а не їде за межі екрана разом зі сторінкою. */
 .access-matrix__scroll {
-  max-height: calc(100vh - 220px);
+  max-height: calc(100vh - 120px);
   overflow: auto;
 }
 
-.access-matrix__table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-
+/* Ширини колонок: підпис права тримає два поверхи (назва + код), колонка
+   ролі -- пару кнопок «усе / нічого». Решту місця віддає прокрутка. */
 .access-matrix__label {
-  min-width: 260px;
+  min-width: 220px;
 }
 
 .access-matrix__role {
   min-width: 120px;
-  text-align: center;
   vertical-align: bottom;
 }
 
@@ -63,35 +29,16 @@
 }
 
 .access-module__bulk {
-  text-align: center;
   white-space: nowrap;
 }
 
-.access-perm__label {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.access-perm__cell {
-  text-align: center;
-}
-
-.access-roles {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.access-role__head {
-  display: flex;
+/* Індикатор фокуса на ролі в тулбарі: підпис + кнопка виходу в один ряд. */
+.access-focus {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
-.access-role__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+.access-focus[hidden] {
+  display: none;
 }

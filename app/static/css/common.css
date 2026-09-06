@@ -18,6 +18,12 @@
   /* Помітніша межа: outline-кнопка, плашки, поля вводу. Тонка --iprm-border
      на них зникає, а брендова рамка читається як активний стан. */
   --iprm-border-strong: #d8c7ed;
+  /* Доріжка вимкненого перемикача (.switch). Окремий токен, бо жоден
+     наявний сірий не тримає 3.0 для графіки (WCAG 1.4.11): --iprm-border і
+     --iprm-border-neutral на білому дають 1.2-1.6. #828287 -- 3.8 на
+     білому, 3.5 на --iprm-surface-inset, 3.2 на --iprm-accent-light
+     (підсвічений рядок матриці). */
+  --iprm-switch-track: #828287;
   --iprm-radius: 22px;
   --iprm-radius-md: 14px;
   --iprm-radius-sm: 12px;
@@ -226,6 +232,9 @@
   --iprm-shadow-soft: 0 8px 28px rgba(0, 0, 0, 0.35);
   --iprm-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.65);
   --iprm-border-strong: rgba(255, 255, 255, 0.18);
+  /* 4.1 на поверхні картки #1c1c22, 3.6 на --iprm-surface-inset, 3.2 на
+     --iprm-accent-light поверх картки. */
+  --iprm-switch-track: #7c7c82;
 
   /* На 6 світлот вище картки (#1c1c22) -- рівно та сама ледь помітна
      різниця, що #f7f4fb дає на білому у світлій темі. */

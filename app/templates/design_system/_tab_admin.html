@@ -500,18 +500,44 @@
         <span class="access-status" data-state="ok">Збережено</span>
         <span class="access-status" data-state="error">Помилка</span>
       </div>
-      <h2 class="access-roles__title">Ролі</h2>
-      <article class="access-role role-color--green">
-        <header class="access-role__head">
-          <span class="role-dot"></span>
-          <strong>Менеджер</strong>
-          <span class="access-role__slug">manager</span>
-        </header>
-        <p class="access-role__desc">Керує заходами й учасниками, без доступу до налаштувань.</p>
-        <p class="access-role__meta">18 прав, 4 носії</p>
-      </article>
+      <section class="access-roles">
+        <h2 class="access-roles__title">Ролі</h2>
+        <div class="access-roles__list">
+          <article class="access-role role-color--green">
+            <header class="access-role__head">
+              <span class="role-dot"></span>
+              <strong>Менеджер</strong>
+              <span class="access-role__slug">manager</span>
+            </header>
+            <p class="access-role__desc">Керує заходами й учасниками, без доступу до налаштувань.</p>
+            <p class="access-role__meta">18 прав, 4 носії</p>
+            <div class="access-role__actions">
+              <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm">Редагувати</button>
+              <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm">Скинути</button>
+            </div>
+          </article>
+          <article class="access-role role-color--gray">
+            <header class="access-role__head">
+              <span class="role-dot"></span>
+              <strong>Спостерігач</strong>
+              <span class="access-role__slug">viewer</span>
+            </header>
+            <p class="access-role__meta">21 право, 0 носіїв, системна</p>
+          </article>
+        </div>
+      </section>
       <div class="admin-table-wrap">
-        <table class="admin-table access-matrix__table">
+        <table class="admin-table admin-table--grid">
+          <thead>
+            <tr>
+              <th class="access-matrix__label">Право</th>
+              <th class="access-matrix__role role-color--green">
+                <span class="role-dot"></span>
+                <span class="access-matrix__role-name">Менеджер</span>
+                <span class="access-matrix__count">18 з 104</span>
+              </th>
+            </tr>
+          </thead>
           <tbody class="access-group" data-group="ds-demo">
             <tr class="access-group__head">
               <th colspan="2">
@@ -527,11 +553,11 @@
               <td class="access-module__bulk"></td>
             </tr>
             <tr class="access-perm">
-              <td class="access-perm__label">
+              <th scope="row" class="access-perm__label">
                 <span>Перегляд</span>
                 <span class="access-perm__code">courses.view</span>
-              </td>
-              <td class="access-perm__cell">
+              </th>
+              <td>
                 <label class="switch"><input type="checkbox" class="switch__input" checked aria-label="Перегляд"><span class="switch__track"><span class="switch__knob"></span></span></label>
               </td>
             </tr>
@@ -539,6 +565,7 @@
         </table>
       </div>
     </div>
-    <p class="ds-hint">.access-status: рядок стану автозбереження, data-state перемикає колір (ok/error), нейтральний -- без атрибута. .access-roles__title: заголовок «Ролі» над списком карток. .access-role: картка ролі в бічній панелі /admin/access (__head/__slug/__desc/__meta). .access-group__head/.access-module/.access-perm: службові рядки матриці прав, .access-perm__code -- моноширинна назва права. Живий приклад -- /admin/access.</p>
+    <p class="ds-hint">.access-status: рядок стану автозбереження, data-state перемикає колір (ok/error), нейтральний -- без атрибута. .access-roles__title: заголовок «Ролі» над списком карток. .access-roles / __list: секція з картками ролей над матрицею (сітка по 220px). .access-role: картка ролі (__head/__slug/__desc/__meta/__actions). .access-group__head/.access-module/.access-perm: службові рядки матриці прав, .access-perm__code -- моноширинна назва права. Живий приклад -- /admin/access.</p>
+    <p class="ds-hint">.admin-table--grid: сітка «рядок x колонка» замість реєстру -- щільність 10px 12px, шапка прилипає зверху (в обгортці з max-height), перша колонка -- зліва, на мобільному лишається таблицею з горизонтальною прокруткою, а не картками. Тло рядка задає &lt;tr&gt; через --row-bg (так його дістає й прилипла перша комірка): .access-group__head і .access-module -- --iprm-surface-inset, .access-perm:hover -- --iprm-accent-light.</p>
   </div>
 

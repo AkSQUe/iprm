@@ -30,7 +30,8 @@
   }
 
   function run() {
-    document.querySelectorAll('table.admin-table').forEach(labelize);
+    /* Сітка (--grid) на мобільному лишається таблицею, мітки їй не потрібні. */
+    document.querySelectorAll('table.admin-table:not(.admin-table--grid)').forEach(labelize);
   }
 
   if (document.readyState === 'loading') {

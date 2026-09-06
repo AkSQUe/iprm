@@ -23,92 +23,17 @@
         <p class="admin-hero__subtitle">{{ total }} прав, {{ roles|length }} ролей. Зміни зберігаються одразу після кліку.</p>
       </div>
       {% if can_manage %}
-      <a href="{{ url_for('admin.access_role_new') }}" class="btn-admin btn-admin--primary">{{ icon('add') }} Нова роль</a>
+      <div class="admin-hero__actions">
+        <a href="{{ url_for('admin.access_role_new') }}" class="btn-admin btn-admin--primary">{{ icon('add') }} Нова роль</a>
+      </div>
       {% endif %}
     </div>
 
     {% include 'partials/flash_messages.html' %}
 
-    <div class="access-layout">
-      <section class="access-matrix" id="access-matrix"
-               data-api-toggle="{{ url_for('admin.access_matrix_toggle') }}"
-               data-api-bulk="{{ url_for('admin.access_matrix_bulk') }}"
-               data-csrf="{{ csrf_token() }}"
-               data-readonly="{{ '0' if can_manage else '1' }}">
-        <div class="access-toolbar">
-          <input type="search" id="access-search" class="form-input access-toolbar__search"
-                 placeholder="Пошук права або модуля" aria-label="Пошук права">
-          <span class="access-status" id="access-status" role="status" aria-live="polite">
-            {% if can_manage %}Готово{% else %}Лише перегляд: потрібне право «Доступ: Керування»{% endif %}
-          </span>
-        </div>
-
-        <div class="admin-table-wrap access-matrix__scroll">
-          <table class="admin-table access-matrix__table">
-            <thead>
-              <tr>
-                <th class="access-matrix__label">Право</th>
-                {% for role in roles %}
-                <th class="access-matrix__role role-color--{{ role.color }}">
-                  <span class="role-dot"></span>
-                  <span class="access-matrix__role-name">{{ role.display_name }}</span>
-                  <span class="access-matrix__count" data-role-count="{{ role.id }}" data-total="{{ total }}">{{ counts[role.id] }} з {{ total }}</span>
-                </th>
-                {% endfor %}
-              </tr>
-            </thead>
-            {% for group in groups %}
-            <tbody class="access-group" data-group="{{ group.key }}">
-              <tr class="access-group__head">
-                <th colspan="{{ roles|length + 1 }}">
-                  <button type="button" class="access-group__toggle" data-group-toggle="{{ group.key }}" aria-expanded="true">
-                    {{ icon('keyboard_arrow_down', cls='access-group__chevron') }}
-                    {{ group.label }}
-                    <span class="access-matrix__count">{{ group.total }}</span>
-                  </button>
-                </th>
-              </tr>
-              {% for module in group.modules %}
-              <tr class="access-module" data-module="{{ module.name }}">
-                <th class="access-module__title">{{ module.label }}</th>
-                {% for role in roles %}
-                <td class="access-module__bulk">
-                  {% if can_manage and role.name != super_admin %}
-                  <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" data-bulk="all" data-role-id="{{ role.id }}" data-module="{{ module.name }}" title="Усі права модуля для ролі {{ role.display_name }}">усе</button>
-                  <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" data-bulk="none" data-role-id="{{ role.id }}" data-module="{{ module.name }}" title="Зняти всі права модуля з ролі {{ role.display_name }}">нічого</button>
-                  {% endif %}
-                </td>
-                {% endfor %}
-              </tr>
-              {% for perm in module.permissions %}
-              <tr class="access-perm" data-permission-row="{{ perm.name }}" data-search="{{ (module.label ~ ' ' ~ perm.label ~ ' ' ~ perm.name)|lower }}">
-                <td class="access-perm__label">
-                  <span>{{ perm.label }}</span>
-                  <span class="access-perm__code">{{ perm.name }}</span>
-                </td>
-                {% for role in roles %}
-                <td class="access-perm__cell">
-                  <label class="switch">
-                    <input type="checkbox" class="switch__input"
-                           data-role-id="{{ role.id }}" data-permission="{{ perm.name }}" data-module="{{ module.name }}"
-                           aria-label="{{ module.label }}: {{ perm.label }} для ролі {{ role.display_name }}"
-                           {% if role.name == super_admin or perm.name in granted[role.id] %} checked{% endif %}
-                           {% if role.name == super_admin or not can_manage %} disabled{% endif %}>
-                    <span class="switch__track"><span class="switch__knob"></span></span>
-                  </label>
-                </td>
-                {% endfor %}
-              </tr>
-              {% endfor %}
-              {% endfor %}
-            </tbody>
-            {% endfor %}
-          </table>
-        </div>
-      </section>
-
-      <aside class="access-roles">
-        <h2 class="access-roles__title">Ролі</h2>
+    <section class="access-roles">
+      <h2 class="access-roles__title">Ролі</h2>
+      <div class="access-roles__list">
         {% for role in roles %}
         <article class="access-role role-color--{{ role.color }}">
           <header class="access-role__head">
@@ -117,7 +42,8 @@
             <span class="access-role__slug">{{ role.name }}</span>
           </header>
           {% if role.description %}<p class="access-role__desc">{{ role.description }}</p>{% endif %}
-          <p class="access-role__meta">{{ counts[role.id] }} прав, {{ holders.get(role.id, 0) }} носіїв{% if role.is_system %}, системна{% endif %}</p>
+          <p class="access-role__meta">{{ counts[role.id] }} прав,
+            {% if can('users.view') %}<a href="{{ url_for('admin.users', role=role.name) }}" title="Користувачі з цією роллю">{{ holders.get(role.id, 0) }} носіїв</a>{% else %}{{ holders.get(role.id, 0) }} носіїв{% endif %}{% if role.is_system %}, системна{% endif %}</p>
           {% if can_manage %}
           <div class="access-role__actions">
             <a href="{{ url_for('admin.access_role_edit', role_id=role.id) }}" class="btn-admin btn-admin--secondary btn-admin--sm">Редагувати</a>
@@ -137,8 +63,98 @@
           {% endif %}
         </article>
         {% endfor %}
-      </aside>
-    </div>
+      </div>
+    </section>
+
+    <section class="access-matrix" id="access-matrix"
+               data-api-toggle="{{ url_for('admin.access_matrix_toggle') }}"
+               data-api-bulk="{{ url_for('admin.access_matrix_bulk') }}"
+               data-csrf="{{ csrf_token() }}"
+               data-readonly="{{ '0' if can_manage else '1' }}">
+        <div class="admin-filters">
+          <div class="admin-filters__bar">
+            <label class="admin-filters__search">
+              {{ icon('search', cls='admin-filters__search-icon') }}
+              <input type="search" id="access-search" class="form-input admin-filters__search-input"
+                     placeholder="Пошук права або модуля" aria-label="Пошук права" autocomplete="off">
+            </label>
+            <span class="admin-filters__spacer"></span>
+            <span class="access-focus" id="access-focus" hidden>
+              <span id="access-focus-label"></span>
+              <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" id="access-focus-exit">Показати всі ролі</button>
+            </span>
+            <span class="access-status" id="access-status" role="status" aria-live="polite">
+              {% if can_manage %}Готово{% else %}Лише перегляд: потрібне право «Доступ: Керування»{% endif %}
+            </span>
+          </div>
+        </div>
+
+        <div class="admin-table-wrap access-matrix__scroll">
+          <table class="admin-table admin-table--grid">
+            <thead>
+              <tr>
+                <th class="access-matrix__label">Право</th>
+                {% for role in roles %}
+                <th class="access-matrix__role role-color--{{ role.color }}" data-role-col="{{ role.id }}">
+                  <button type="button" class="access-matrix__focus" data-focus-role="{{ role.id }}" data-role-label="{{ role.display_name }}" aria-pressed="false" title="Показати лише цю роль">
+                    <span class="role-dot"></span>
+                    <span class="access-matrix__role-name">{{ role.display_name }}</span>
+                  </button>
+                  <span class="access-matrix__count" data-role-count="{{ role.id }}" data-total="{{ total }}">{{ counts[role.id] }} з {{ total }}</span>
+                </th>
+                {% endfor %}
+              </tr>
+            </thead>
+            {% for group in groups %}
+            <tbody class="access-group" data-group="{{ group.key }}">
+              <tr class="access-group__head">
+                <th colspan="{{ roles|length + 1 }}">
+                  <button type="button" class="access-group__toggle" data-group-toggle="{{ group.key }}" aria-expanded="true">
+                    {{ icon('keyboard_arrow_down', cls='access-group__chevron') }}
+                    {{ group.label }}
+                    <span class="access-matrix__count">{{ group.total }}</span>
+                  </button>
+                </th>
+              </tr>
+              {% for module in group.modules %}
+              <tr class="access-module" data-module="{{ module.name }}">
+                <th class="access-module__title">{{ module.label }}<span class="access-module__focus" data-module-focus="{{ module.name }}" hidden></span></th>
+                {% for role in roles %}
+                <td class="access-module__bulk" data-role-col="{{ role.id }}">
+                  {% if can_manage and role.name != super_admin %}
+                  <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" data-bulk="all" data-role-id="{{ role.id }}" data-module="{{ module.name }}" title="Усі права модуля для ролі {{ role.display_name }}">усе</button>
+                  <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm" data-bulk="none" data-role-id="{{ role.id }}" data-module="{{ module.name }}" title="Зняти всі права модуля з ролі {{ role.display_name }}">нічого</button>
+                  {% endif %}
+                </td>
+                {% endfor %}
+              </tr>
+              {% for perm in module.permissions %}
+              <tr class="access-perm" data-permission-row="{{ perm.name }}" data-module="{{ module.name }}" data-search="{{ (module.label ~ ' ' ~ perm.label ~ ' ' ~ perm.name)|lower }}">
+                <th scope="row" class="access-perm__label">
+                  <span>{{ perm.label }}</span>
+                  <span class="access-perm__code">{{ perm.name }}</span>
+                </th>
+                {% for role in roles %}
+                <td data-role-col="{{ role.id }}">
+                  <label class="switch">
+                    <input type="checkbox" class="switch__input"
+                           data-role-id="{{ role.id }}" data-permission="{{ perm.name }}" data-module="{{ module.name }}"
+                           aria-label="{{ module.label }}: {{ perm.label }} для ролі {{ role.display_name }}"
+                           {% if role.name == super_admin or perm.name in granted[role.id] %} checked{% endif %}
+                           {% if role.name == super_admin or not can_manage %} disabled{% endif %}>
+                    <span class="switch__track"><span class="switch__knob"></span></span>
+                  </label>
+                </td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+              {% endfor %}
+            </tbody>
+            {% endfor %}
+          </table>
+        </div>
+      </section>
+
   </div>
 </div>
 {% endblock %}
