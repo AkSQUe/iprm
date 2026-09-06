@@ -54,7 +54,7 @@
       <div class="iprm-nav__mobile-account">
         {% include 'partials/lang_switcher.html' %}
         {% if current_user.is_authenticated %}
-          {% if current_user.is_admin %}
+          {% if current_user.is_staff %}
             <a href="{{ url_for('admin.dashboard') }}" class="iprm-nav__mobile-link iprm-nav__mobile-link--admin">{{ _('Панель адміністратора') }}</a>
           {% endif %}
           <a href="{{ url_for('auth.account') }}" class="iprm-nav__mobile-link">{{ _('Особистий кабінет') }}</a>
@@ -78,7 +78,7 @@
     <div class="iprm-header__actions">
       {% include 'partials/lang_switcher.html' %}
       {% if current_user.is_authenticated %}
-        {% if current_user.is_admin %}
+        {% if current_user.is_staff %}
           <a href="{{ url_for('admin.dashboard') }}" class="iprm-header__admin-link">Admin</a>
         {% endif %}
         <a href="{{ url_for('auth.account') }}" class="iprm-header__user-link">{{ current_user.first_name }}</a>

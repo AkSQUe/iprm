@@ -129,8 +129,8 @@ class MaterialReservation(TimestampMixin, db.Model):
     # treated as a duplicate submission.
     trainer_confirmed_at = db.Column(db.DateTime(timezone=True), nullable=True)
     trainer_comment = db.Column(db.Text, nullable=True)
-    # Who filed the request in the IPRM admin. IPRM has no role system, so
-    # this is the only accountability trail available (see plan 5.3).
+    # Who filed the request in the IPRM admin; kept alongside RBAC roles as
+    # the accountability trail (see plan 5.3).
     created_by_id = db.Column(
         db.BigInteger,
         db.ForeignKey('users.id', ondelete='SET NULL'),

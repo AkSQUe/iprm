@@ -21,7 +21,6 @@
       </div>
       <h1 class="admin-hero__title">{{ user.full_name or user.email }}</h1>
       <p class="admin-hero__subtitle">
-        {% if user.is_admin %}<span class="badge badge--active">адміністратор</span>{% endif %}
         {% if user.is_active %}<span class="badge badge--published">активний</span>{% else %}<span class="badge badge--draft">неактивний</span>{% endif %}
         {% if user.email_confirmed %}<span class="badge badge--success">пошту підтверджено</span>{% endif %}
         Зареєстровано {{ user.created_at.strftime('%d.%m.%Y') if user.created_at else '–' }}

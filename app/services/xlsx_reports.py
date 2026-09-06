@@ -254,7 +254,7 @@ def export_registrations_xlsx(regs, referrer_map=None,
 _USER_COLS = [
     'user_id', 'last_name', 'first_name', 'middle_name', 'email', 'phone',
     'participant_type', 'workplace', 'position', 'specializations',
-    'registrations', 'is_admin', 'is_active', 'email_confirmed',
+    'registrations', 'roles', 'is_active', 'email_confirmed',
     'email_opt_out', 'referral_code', 'last_login_at', 'created_at',
 ]
 _USER_LABELS = {
@@ -262,7 +262,7 @@ _USER_LABELS = {
     'middle_name': 'По батькові', 'email': 'Email', 'phone': 'Телефон',
     'participant_type': 'Тип учасника', 'workplace': 'Місце роботи / місто',
     'position': 'Посада', 'specializations': 'Спеціалізації',
-    'registrations': 'Реєстрацій', 'is_admin': 'Адмін',
+    'registrations': 'Реєстрацій', 'roles': 'Ролі',
     'is_active': 'Активний', 'email_confirmed': 'Email підтверджено',
     'email_opt_out': 'Відписка від розсилок', 'referral_code': 'Реф. код',
     'last_login_at': 'Останній вхід', 'created_at': 'Дата реєстрації',
@@ -271,7 +271,7 @@ _USER_WIDTHS = {
     'user_id': 8, 'last_name': 20, 'first_name': 18, 'middle_name': 20,
     'email': 32, 'phone': 18, 'participant_type': 26, 'workplace': 34,
     'position': 26, 'specializations': 40, 'registrations': 12,
-    'is_admin': 10, 'is_active': 12, 'email_confirmed': 18,
+    'roles': 24, 'is_active': 12, 'email_confirmed': 18,
     'email_opt_out': 20, 'referral_code': 14, 'last_login_at': 18,
     'created_at': 18,
 }
@@ -300,7 +300,7 @@ def export_users_xlsx(users, applied_filters=None) -> io.BytesIO:
             (profile.position if profile else '') or '',
             '\n'.join(user.specialization_labels or []),
             user.registration_count,
-            'Так' if user.is_admin else 'Ні',
+            ', '.join(r.display_name for r in user.roles),
             'Так' if user.is_active else 'Ні',
             'Так' if user.email_confirmed else 'Ні',
             'Так' if user.email_opt_out else 'Ні',

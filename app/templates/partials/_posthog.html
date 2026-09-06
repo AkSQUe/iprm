@@ -26,7 +26,7 @@
         {%- if current_user.is_authenticated %}
         data-ph-user-id="{{ current_user.id }}"
         data-ph-email="{{ current_user.email }}"
-        data-ph-role="{{ 'admin' if current_user.is_admin else 'user' }}"
+        data-ph-role="{{ 'staff' if current_user.is_staff else 'user' }}"
         data-ph-lang="{{ current_user.preferred_language or current_lang }}"
         {%- endif %}></script>
 {% endif %}

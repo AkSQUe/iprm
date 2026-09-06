@@ -78,8 +78,19 @@ def upgrade():
         'SELECT id, :rid, CURRENT_TIMESTAMP FROM users WHERE is_admin IS TRUE'
     ), {'rid': role_id})
 
+    with op.batch_alter_table('users', schema=None) as batch_op:
+        batch_op.drop_column('is_admin')
+
 
 def downgrade():
+    with op.batch_alter_table('users', schema=None) as batch_op:
+        batch_op.add_column(sa.Column('is_admin', sa.Boolean(), server_default=sa.false()))
+    op.execute(sa.text(
+        "UPDATE users SET is_admin = TRUE WHERE id IN ("
+        "SELECT ur.user_id FROM user_roles ur JOIN roles r ON r.id = ur.role_id "
+        "WHERE r.name = 'super_admin')"
+    ))
+
     op.drop_table('user_roles')
     op.drop_table('role_permissions')
     op.drop_index('ix_permissions_module', table_name='permissions')

@@ -26,6 +26,7 @@ from app.models.user import User
 from app.services import promo_service
 from app.services.email_service import EmailService
 from app.utils import ensure_utc
+from tests.support.rbac import grant_role
 
 
 @pytest.fixture(autouse=True)
@@ -246,7 +247,8 @@ def admin(app):
         f'adm-{uuid4().hex[:6]}@test.com', 'password123',
         first_name='Адмін', last_name='Тестовий', email_confirmed=True,
     )
-    u.is_admin = True
+    db.session.flush()
+    grant_role(u, 'super_admin')
     u.is_active = True
     db.session.flush()
     NotificationRule.query.delete()

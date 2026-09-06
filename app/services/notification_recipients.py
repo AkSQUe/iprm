@@ -5,7 +5,7 @@
   preview(event_type, instance=None, new_status=None) -> dict
 
 Джерела (комбінуються згідно з прапорами у NotificationRule):
-  - notify_admins -> усі User.is_admin=True, is_active=True
+  - notify_admins -> усі активні користувачі з правом notifications.receive (super_admin включно)
   - notify_managers -> SiteSettings.event_manager_emails
   - notify_event_trainer -> instance.effective_trainer.email
   - extra_emails завжди додаються (текстова конфігурація на правило)
@@ -44,7 +44,6 @@ def _resolve_sources(event_type, instance, new_status):
     # Імпорт у функцію щоб уникнути імпорт-циклів і дешеве lazy.
     from app.models.notification_rule import NotificationRule
     from app.models.site_settings import SiteSettings
-    from app.models.user import User
 
     rule = NotificationRule.get_or_stub(event_type)
     if not rule.enabled:
@@ -60,7 +59,8 @@ def _resolve_sources(event_type, instance, new_status):
     breakdown = {'admins': [], 'managers': [], 'trainer': [], 'extra': []}
 
     if rule.notify_admins:
-        admins = User.query.filter_by(is_admin=True, is_active=True).all()
+        from app.rbac.service import users_with_permission
+        admins = users_with_permission('notifications.receive')
         breakdown['admins'] = [u.email for u in admins if u.email]
 
     if rule.notify_managers:

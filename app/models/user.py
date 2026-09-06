@@ -18,7 +18,6 @@ class User(TimestampMixin, UserMixin, db.Model):
     # це claim від провайдера, окреме поняття.
     email_confirmed = db.Column(db.Boolean, default=False, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
-    is_admin = db.Column(db.Boolean, default=False)
     last_login_at = db.Column(db.DateTime(timezone=True))
 
     # Мова листів користувачу ('uk'/'ru'/'en'); NULL = українська.

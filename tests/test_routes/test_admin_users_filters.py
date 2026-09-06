@@ -28,9 +28,6 @@ def admin(app):
         first_name='Адмін', last_name='Головний', email_confirmed=True,
     )
     grant_role(u, 'super_admin')
-    # Роль пускає в адмінку; прапорець нижче -- для фільтра "role=admin"
-    # у списку користувачів, який досі читає стару колонку (Task 8).
-    u.is_admin = True
     db.session.flush()
     return u
 
@@ -107,7 +104,7 @@ def test_role_and_registration_filters(client, admin, people):
     with_reg, without = people
     _login(client, admin)
 
-    only_admins = client.get('/admin/users?role=admin').get_data(as_text=True)
+    only_admins = client.get('/admin/users?role=super_admin').get_data(as_text=True)
     assert admin.email in only_admins
     assert with_reg.email not in only_admins
 
@@ -140,10 +137,10 @@ def test_export_honours_filters(client, admin, people):
 
 def test_page_renders_filter_bar_with_export_link(client, admin, people):
     _login(client, admin)
-    html = client.get('/admin/users?role=admin').get_data(as_text=True)
+    html = client.get('/admin/users?role=super_admin').get_data(as_text=True)
     assert 'name="q"' in html
     assert '/admin/users/export?' in html
-    assert 'role=admin' in html
+    assert 'role=super_admin' in html
 
 
 def test_unknown_filter_value_is_ignored(client, admin, people):

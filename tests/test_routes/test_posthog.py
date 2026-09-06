@@ -39,9 +39,6 @@ def admin(app):
         first_name='A', last_name='D', email_confirmed=True,
     )
     grant_role(u, 'super_admin')
-    # Роль пускає в адмінку; прапорець нижче -- для data-ph-role у розмітці
-    # аналітики, яка досі читає стару колонку (Task 8).
-    u.is_admin = True
     db.session.flush()
     return u
 
@@ -190,7 +187,7 @@ class TestSectionAndMasking:
         _login(client, admin)
         html = client.get('/admin/settings').get_data(as_text=True)
         assert f'data-ph-user-id="{admin.id}"' in html
-        assert 'data-ph-role="admin"' in html
+        assert 'data-ph-role="staff"' in html
         assert admin.first_name not in html.split('data-ph-key')[1][:600]
 
 

@@ -713,8 +713,8 @@ def _contact_removal_check(lead):
         reasons.append('на нього вказує конфлікт іншої заявки')
     if user.has_password:
         reasons.append('має пароль для входу')
-    if user.is_admin:
-        reasons.append('має адмін-права')
+    if user.is_staff:
+        reasons.append('має роль в адмінці')
 
     return {'user': user, 'can_delete': not reasons, 'reasons': reasons}
 
@@ -768,9 +768,9 @@ def _bulk_removable_contacts(leads):
         AuthIdentity.provider == AuthIdentity.PROVIDER_PASSWORD,
     ))
 
-    # `is_admin` -- звичайна колонка, тож відсівається в тому ж запиті.
+    # Носіїв ролей відсіваємо в тому ж запиті.
     return User.query.filter(
-        User.id.in_(candidates - blocked), User.is_admin.is_(False),
+        User.id.in_(candidates - blocked), ~User.roles.any(),
     ).all()
 
 

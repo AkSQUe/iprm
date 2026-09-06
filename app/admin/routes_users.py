@@ -3,7 +3,7 @@ import logging
 
 from flask import flash, redirect, render_template, url_for
 from flask_login import current_user
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.admin import _listing, admin_bp
 from app.rbac import permission_required
@@ -16,17 +16,26 @@ from app.models.user import User
 audit_logger = logging.getLogger('audit')
 
 
-_USER_ROLES = {'admin': 'Адміністратори', 'user': 'Без адмін-прав'}
 _USER_STATES = {'active': 'Активні', 'inactive': 'Неактивні'}
 _USER_CONFIRMED = {'yes': 'Email підтверджено', 'no': 'Email не підтверджено'}
 _USER_REGS = {'with': 'З реєстраціями', 'without': 'Без реєстрацій'}
+
+
+def _role_choices():
+    """Фільтр «Роль»: реальні ролі + «без ролей». Рахується на запит, бо ролі
+    редагуються в адмінці."""
+    from app.models.rbac import Role
+    choices = {'none': 'Без ролей'}
+    for role in Role.query.order_by(Role.sort_order, Role.display_name):
+        choices[role.name] = role.display_name
+    return choices
 
 
 def _user_filters():
     """Фільтри списку користувачів -- спільні для сторінки й xlsx-експорту."""
     return {
         'q': _listing.text_arg('q'),
-        'role': _listing.choice_arg('role', _USER_ROLES),
+        'role': _listing.choice_arg('role', _role_choices()),
         'state': _listing.choice_arg('state', _USER_STATES),
         'confirmed': _listing.choice_arg('confirmed', _USER_CONFIRMED),
         'regs': _listing.choice_arg('regs', _USER_REGS),
@@ -47,6 +56,7 @@ def _users_query(filters):
     query = (
         db.session.query(User, reg_count)
         .options(joinedload(User.medical_profile))
+        .options(selectinload(User.roles))
         # Пошук ходить і по телефону з анкети, тож профіль джойнимо явно
         # (outer -- користувач без анкети не має зникати зі списку).
         .outerjoin(MedicalProfile, MedicalProfile.user_id == User.id)
@@ -54,8 +64,11 @@ def _users_query(filters):
     query = _listing.apply_search(query, filters['q'], [
         User.email, User.first_name, User.last_name, MedicalProfile.phone,
     ])
-    if filters['role']:
-        query = query.filter(User.is_admin.is_(filters['role'] == 'admin'))
+    if filters['role'] == 'none':
+        query = query.filter(~User.roles.any())
+    elif filters['role']:
+        from app.models.rbac import Role
+        query = query.filter(User.roles.any(Role.name == filters['role']))
     if filters['state']:
         # is_active має NULL у старих рядках -- 'Неактивні' мусить їх ловити.
         if filters['state'] == 'active':
@@ -107,7 +120,7 @@ def users():
         total_found=pagination.total,
         filters=filters,
         filter_args=_listing.filter_args(filters),
-        role_options=list(_USER_ROLES.items()),
+        role_options=list(_role_choices().items()),
         state_options=list(_USER_STATES.items()),
         confirmed_options=list(_USER_CONFIRMED.items()),
         regs_options=list(_USER_REGS.items()),
@@ -132,7 +145,7 @@ def users_export():
     summary = _listing.export_summary(
         [
             ('Пошук', filters['q'] or '–'),
-            ('Роль', _USER_ROLES.get(filters['role'], 'Усі')),
+            ('Роль', _role_choices().get(filters['role'], 'Усі')),
             ('Стан', _USER_STATES.get(filters['state'], 'Усі')),
             ('Email', _USER_CONFIRMED.get(filters['confirmed'], 'Усі')),
             ('Реєстрації', _USER_REGS.get(filters['regs'], 'Усі')),
@@ -199,28 +212,5 @@ def user_detail(user_id):
         enrollments=enrollments,
     )
 
-
-@admin_bp.route('/users/<int:user_id>/toggle-admin', methods=['POST'])
-@permission_required('access.assign')
-def toggle_admin(user_id):
-    user = db.session.get(User, user_id)
-    if not user:
-        flash('Користувача не знайдено', 'error')
-        return redirect(url_for('admin.users'))
-    if user.id == current_user.id:
-        flash('Неможливо змінити власні повноваження', 'error')
-        return redirect(url_for('admin.users'))
-    user.is_admin = not user.is_admin
-    try:
-        db.session.commit()
-        status = 'надано' if user.is_admin else 'знято'
-        audit_logger.info('Admin %s toggled admin for user %s (%s): %s',
-                          current_user.email, user.id, user.email, status)
-        flash(f'Адмін-повноваження {status}: {user.email}', 'success')
-    except Exception:
-        audit_logger.exception('Failed to toggle admin for user %d', user_id)
-        db.session.rollback()
-        flash('Помилка при оновленні', 'error')
-    return redirect(url_for('admin.users'))
 
 # Відгуки: stub замінено повноцінним CRUD -- див. app/admin/routes_reviews.py.

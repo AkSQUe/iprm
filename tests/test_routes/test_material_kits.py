@@ -38,7 +38,7 @@ def admin(app):
 def plain_user(app):
     u = User.create_with_password(
         f'mk-user-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='Н', last_name='Юзер', is_admin=False, email_confirmed=True,
+        first_name='Н', last_name='Юзер', email_confirmed=True,
     )
     db.session.flush()
     return u
