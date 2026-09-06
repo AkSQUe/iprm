@@ -3201,3 +3201,95 @@ a.admin-stat-card:focus-visible {
   font-size: 0.8125rem;
   color: var(--iprm-text-light);
 }
+
+/* ========== РОЛІ ТА ДОСТУП ========== */
+
+/* Крапка кольору ролі: у шапці матриці, у списку ролей, біля бейджа. */
+.role-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--role-color, var(--iprm-role-gray));
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* Перемикач (switch). Прихований чекбокс + доріжка з бігунком; стан
+   задає :checked, замок -- :disabled. */
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.switch__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch__track {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-border-strong);
+  transition: background var(--iprm-transition);
+}
+
+.switch__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--iprm-white);
+  box-shadow: var(--iprm-shadow-xs);
+  transition: transform var(--iprm-transition);
+}
+
+.switch__input:checked + .switch__track {
+  background: var(--iprm-success);
+}
+
+.switch__input:checked + .switch__track .switch__knob {
+  transform: translateX(14px);
+}
+
+.switch__input:disabled + .switch__track {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switch__input:focus-visible + .switch__track {
+  outline: 2px solid var(--iprm-nav-active);
+  outline-offset: 2px;
+}
+
+/* Зразок кольору в формі ролі: радіокнопка з крапкою й підписом. */
+.role-swatch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-pill);
+  cursor: pointer;
+  font-size: 0.8125rem;
+}
+
+.role-swatch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.role-swatch:has(input:checked) {
+  border-color: var(--role-color);
+  box-shadow: 0 0 0 1px var(--role-color);
+}

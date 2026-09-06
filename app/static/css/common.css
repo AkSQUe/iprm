@@ -178,6 +178,17 @@
   --iprm-badge-completed-bg: #e0e7ff;
   --iprm-badge-completed-text: #4338ca;
 
+  /* Палітра ролей адмінки. Роль зберігає ІМ'Я кольору, клас
+     .role-color--<name> перекладає його в --role-color. */
+  --iprm-role-red: #dc2626;
+  --iprm-role-orange: #ea580c;
+  --iprm-role-amber: #d97706;
+  --iprm-role-green: #059669;
+  --iprm-role-teal: #0d9488;
+  --iprm-role-blue: #2563eb;
+  --iprm-role-violet: #7c3aed;
+  --iprm-role-gray: #6b7280;
+
   /* Apple easing curves (global) */
   --ease-reveal: cubic-bezier(0.28, 0.11, 0.32, 1);
   --ease-interact: cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -313,6 +324,15 @@
   --iprm-badge-active-text: #4ade80;
   --iprm-badge-completed-bg: rgba(67, 56, 202, 0.28);
   --iprm-badge-completed-text: #a5b4fc;
+
+  --iprm-role-red: #f87171;
+  --iprm-role-orange: #fb923c;
+  --iprm-role-amber: #fbbf24;
+  --iprm-role-green: #34d399;
+  --iprm-role-teal: #2dd4bf;
+  --iprm-role-blue: #60a5fa;
+  --iprm-role-violet: #a78bfa;
+  --iprm-role-gray: #9ca3af;
 }
 
 /* Перемикач шрифту. Значення атрибута ставить base.html (до першого рендеру,
@@ -1232,6 +1252,22 @@ a {
 .badge--warning {
   background: var(--iprm-warning-bg);
   color: var(--iprm-warning-text);
+}
+
+/* Колір ролі: клас-перекладач імені з палітри в --role-color. Один набір
+   для бейджа, крапки та зразка в формі ролі. */
+.role-color--red { --role-color: var(--iprm-role-red); }
+.role-color--orange { --role-color: var(--iprm-role-orange); }
+.role-color--amber { --role-color: var(--iprm-role-amber); }
+.role-color--green { --role-color: var(--iprm-role-green); }
+.role-color--teal { --role-color: var(--iprm-role-teal); }
+.role-color--blue { --role-color: var(--iprm-role-blue); }
+.role-color--violet { --role-color: var(--iprm-role-violet); }
+.role-color--gray { --role-color: var(--iprm-role-gray); }
+
+.badge--role {
+  color: var(--role-color, var(--iprm-role-gray));
+  background: color-mix(in srgb, var(--role-color, var(--iprm-role-gray)) 14%, transparent);
 }
 
 /* ========== BADGE-SELECT (inline status dropdown) ========== */
