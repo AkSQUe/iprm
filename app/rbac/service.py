@@ -177,8 +177,13 @@ def set_module_permissions(role, module_name, granted, actor):
     names = set(module.permission_names())
     present = {p.name: p for p in role.permissions}
     if granted:
-        for name in names - set(present):
-            role.permissions.append(_permission(name))
+        # Розв'язати ВСІ права модуля через _permission() до першого append:
+        # відсутнє в БД право кидає AccessError раніше, ніж роль торкнеться --
+        # інакше частковий грант встигав би піти в role_permissions на
+        # наступному autoflush.
+        to_add = [_permission(name) for name in sorted(names - set(present))]
+        for perm in to_add:
+            role.permissions.append(perm)
     else:
         for name in names & set(present):
             role.permissions.remove(present[name])
@@ -214,9 +219,21 @@ def _validate_slug(name):
         raise AccessError(f'Роль з кодом {name} уже існує')
 
 
+def _assert_registry_synced():
+    """copy_from=super_admin копіює ALL_PERMISSION_NAMES, не факт-права
+    ролі (їх у super_admin у БД нема). Якщо реєстр і БД розійшлись,
+    _grant_names мовчки пропустить відсутні -- перевірити заздалегідь."""
+    wanted = registry.ALL_PERMISSION_NAMES
+    present = Permission.query.filter(Permission.name.in_(list(wanted))).count()
+    if present != len(wanted):
+        raise AccessError('Права ще не синхронізовані з реєстром: виконайте flask rbac sync')
+
+
 def create_role(name, display_name, description, color, sort_order, actor, copy_from=None):
     _validate_slug(name)
     _validate_role_fields(display_name, color, sort_order)
+    if copy_from is not None and copy_from.name == registry.SUPER_ADMIN:
+        _assert_registry_synced()
     role = Role(name=name, display_name=display_name.strip(),
                 description=(description or '').strip() or None,
                 color=color, sort_order=sort_order, is_system=False)

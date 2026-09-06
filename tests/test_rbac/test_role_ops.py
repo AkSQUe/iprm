@@ -1,7 +1,7 @@
 import pytest
 
 from app.extensions import db
-from app.models.rbac import Role, UserRole
+from app.models.rbac import Permission, Role, UserRole
 from app.rbac import registry, service
 from app.rbac.service import AccessError
 from tests.support.rbac import grant_role, make_super_admin, make_user_with_role
@@ -22,6 +22,42 @@ def test_toggle_permission_and_module_bulk(app):
         granted = service.set_module_permissions(role, 'blog', True, actor)
         assert set(granted) == {'blog.view', 'blog.manage', 'blog.delete'}
         assert service.set_module_permissions(role, 'blog', False, actor) == []
+
+
+def test_set_module_permissions_atomic_on_missing_db_permission(app):
+    with app.test_request_context():
+        actor = make_super_admin()
+        role = service.create_role('t_atomic', 'Atomic', '', 'gray', 100, actor)
+        perm = Permission.query.filter_by(name='blog.delete').one()
+        db.session.delete(perm)
+        db.session.flush()
+        try:
+            with pytest.raises(AccessError):
+                service.set_module_permissions(role, 'blog', True, actor)
+            # Нічого не приліпилось ані в пам'яті, ані в БД (не лишилось
+            # від часткового autoflush до підняття AccessError).
+            assert _perm_names(role) == set()
+            db.session.expire(role, ['permissions'])
+            assert _perm_names(role) == set()
+        finally:
+            db.session.add(Permission(name='blog.delete', module='blog'))
+            db.session.flush()
+
+
+def test_create_role_copy_from_super_admin_requires_synced_registry(app):
+    with app.test_request_context():
+        actor = make_super_admin()
+        sa = Role.query.filter_by(name='super_admin').one()
+        perm = Permission.query.filter_by(name='blog.delete').one()
+        db.session.delete(perm)
+        db.session.flush()
+        try:
+            with pytest.raises(AccessError):
+                service.create_role('t_copy_desync', 'D', '', 'gray', 100, actor, copy_from=sa)
+            assert Role.query.filter_by(name='t_copy_desync').first() is None
+        finally:
+            db.session.add(Permission(name='blog.delete', module='blog'))
+            db.session.flush()
 
 
 def test_super_admin_matrix_is_locked(app):
