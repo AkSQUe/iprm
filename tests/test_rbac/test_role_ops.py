@@ -133,7 +133,6 @@ def test_delete_role_rules(app):
 def test_assign_roles_guards(app):
     with app.test_request_context():
         boss = make_super_admin()
-        second = make_super_admin()
         viewer_role = Role.query.filter_by(name='viewer').one()
         sa_role = Role.query.filter_by(name='super_admin').one()
         admin_role = Role.query.filter_by(name='admin').one()
@@ -152,11 +151,51 @@ def test_assign_roles_guards(app):
         assert {r.name for r in target.roles} == {'viewer', 'admin'}
         row = UserRole.query.filter_by(user_id=target.id, role_id=admin_role.id).one()
         assert row.assigned_by == plain_admin.id
-        # останнього super_admin забрати не можна
-        service.assign_roles(second, set(), boss)  # ще є boss
-        others = UserRole.query.filter_by(role_id=sa_role.id).filter(UserRole.user_id != boss.id).all()
-        for row in others:
-            db.session.delete(row)
+
+        # останнього super_admin забрати не можна. Перевірка кількості
+        # носіїв читає БД наживо -- і рахує ГЛОБАЛЬНО, тож boss (досі
+        # super_admin із самого початку тесту) псував би підрахунок; він
+        # тут більше не потрібен, тож знімаємо його напряму.
+        db.session.delete(UserRole.query.filter_by(user_id=boss.id, role_id=sa_role.id).one())
         db.session.flush()
-        with pytest.raises(AccessError):
-            service.assign_roles(boss, set(), second)
+
+        # Підстава для гілки -- окремі a/t: видаляємо рядок UserRole
+        # супер-адміна a НАПРЯМУ в БД, лишаючи носієм тільки t, але не
+        # чіпаємо (не expire) a.roles у сесії -- він лишається закешованим
+        # "super_admin", і гілка авторства (actor) це пропускає. Спрацьовує
+        # саме гілка "останній носій".
+        a = make_super_admin()
+        t = make_super_admin()
+        assert service.is_super_admin(a)  # форсує завантаження і кеш a.roles
+        a_sa_row = UserRole.query.filter_by(user_id=a.id, role_id=sa_role.id).one()
+        db.session.delete(a_sa_row)
+        db.session.flush()
+        with pytest.raises(AccessError, match='Це останній super_admin: спершу призначте іншого'):
+            service.assign_roles(t, set(), a)
+
+
+def test_assign_roles_self_escalation_guard(app):
+    with app.test_request_context():
+        admin_role = Role.query.filter_by(name='admin').one()
+        manager_role = Role.query.filter_by(name='manager').one()
+        sa = make_super_admin()
+
+        # Кастомна роль на базі admin + access.assign -- сила super_admin
+        # без самого super_admin: саме такого носія й ловить запобіжник.
+        custom = service.create_role('t_selfesc', 'Т', '', 'gray', 100, sa, copy_from=admin_role)
+        service.set_role_permission(custom, 'access.assign', True, sa)
+        actor = make_user_with_role('t_selfesc')
+        current_ids = {r.id for r in actor.roles}
+
+        # собі не можна додати роль, якої не маєш
+        with pytest.raises(AccessError, match='Не можна видати собі роль, якої не маєте'):
+            service.assign_roles(actor, current_ids | {manager_role.id}, actor)
+        # собі не можна лишитись зовсім без ролей
+        with pytest.raises(AccessError, match='Не можна лишити себе без ролей'):
+            service.assign_roles(actor, set(), actor)
+
+        # super_admin, додаючи собі роль, і далі проходить без перешкод
+        sa_current_ids = {r.id for r in sa.roles}
+        service.assign_roles(sa, sa_current_ids | {manager_role.id}, sa)
+        db.session.expire(sa, ['roles'])
+        assert 'manager' in {r.name for r in sa.roles}

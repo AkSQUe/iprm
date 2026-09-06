@@ -74,9 +74,15 @@ def main():
         ]
         if not recipients:
             recipients = [r[0] for r in conn.execute(text(
-                'SELECT email FROM users '
-                'WHERE is_admin IS TRUE AND is_active IS TRUE '
-                "  AND email IS NOT NULL AND email <> ''"
+                'SELECT DISTINCT u.email FROM users u '
+                'JOIN user_roles ur ON ur.user_id = u.id '
+                'JOIN roles r ON r.id = ur.role_id '
+                "WHERE u.is_active IS TRUE AND u.email IS NOT NULL AND u.email <> '' "
+                "  AND (r.name = 'super_admin' OR EXISTS ("
+                '    SELECT 1 FROM role_permissions rp '
+                '    JOIN permissions p ON p.id = rp.permission_id '
+                "    WHERE rp.role_id = r.id AND p.name = 'notifications.receive'"
+                '  ))'
             ))]
 
     if not recipients:

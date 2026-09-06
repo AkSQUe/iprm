@@ -27,6 +27,27 @@ def test_sync_removes_orphan_permission_and_keeps_role_edits(app):
     db.session.flush()
 
 
+def test_sync_removes_orphan_permission_granted_to_role(app):
+    """Право, вилучене з реєстру, зникає з role_permissions разом із собою:
+    ondelete='CASCADE' на permission_id (app/models/rbac.py) прибирає
+    видачу автоматично, коли sync() видаляє сам рядок permissions."""
+    viewer = Role.query.filter_by(name='viewer').one()
+    before = {p.name for p in viewer.permissions}
+    ghost = Permission(name='ghost.view', module='ghost')
+    db.session.add(ghost)
+    db.session.flush()
+    viewer.permissions.append(ghost)
+    db.session.flush()
+    assert 'ghost.view' in {p.name for p in viewer.permissions}
+
+    result = service.sync()
+
+    assert result['removed'] == ['ghost.view']
+    assert Permission.query.filter_by(name='ghost.view').first() is None
+    db.session.expire(viewer, ['permissions'])
+    assert {p.name for p in viewer.permissions} == before
+
+
 def test_sync_creates_missing_system_role_with_defaults(app):
     role = Role.query.filter_by(name='marketer').one()
     db.session.delete(role)

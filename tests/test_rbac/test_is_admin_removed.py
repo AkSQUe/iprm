@@ -2,18 +2,28 @@ import re
 from pathlib import Path
 
 from app.models.user import User
-from app.rbac import service
 from tests.support.rbac import make_super_admin, make_user_with_role
+
+SCAN_ROOTS = ('app', 'deploy', 'tools', '.preview')
+SKIP_DIR_PARTS = ('migrations', '__pycache__')
 
 
 def test_no_is_admin_left_in_app():
     hits = []
-    for path in Path('app').rglob('*'):
-        if path.suffix not in ('.py', '.html') or 'migrations' in path.parts:
+    for root in SCAN_ROOTS:
+        root_path = Path(root)
+        if not root_path.exists():
             continue
-        for n, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
-            if re.search(r'\bis_admin\b', line):
-                hits.append(f'{path}:{n}')
+        for path in root_path.rglob('*'):
+            if not path.is_file() or path.suffix == '.pyc':
+                continue
+            if path.suffix not in ('.py', '.html'):
+                continue
+            if any(part in SKIP_DIR_PARTS for part in path.parts):
+                continue
+            for n, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+                if re.search(r'\bis_admin\b', line):
+                    hits.append(f'{path}:{n}')
     assert not hits, hits
 
 

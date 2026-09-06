@@ -288,6 +288,15 @@ def assign_roles(user, role_ids, actor):
     had_sa = sa_role.id in current_ids
     will_sa = sa_role.id in role_ids
 
+    # Самопризначення: носій access.assign без super_admin не сміє видати
+    # собі право, якого не має, ані лишити себе зовсім без ролей -- інакше
+    # access.assign сам стає шляхом до підвищення прав.
+    if user.id == actor.id and not is_super_admin(actor):
+        if role_ids - current_ids:
+            raise AccessError('Не можна видати собі роль, якої не маєте')
+        if not role_ids:
+            raise AccessError('Не можна лишити себе без ролей')
+
     if had_sa != will_sa and not is_super_admin(actor):
         raise AccessError('Видавати або забирати super_admin може лише super_admin')
     if had_sa and not will_sa:

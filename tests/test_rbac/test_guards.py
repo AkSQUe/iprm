@@ -37,3 +37,21 @@ def test_viewer_reaches_list(app, client):
     with client.session_transaction() as s:
         s['_user_id'] = str(make_user_with_role('viewer').id)
     assert client.get('/admin/courses').status_code == 200
+
+
+def test_json_request_anonymous_gets_401_json(client):
+    resp = client.put('/admin/access/api/matrix', json={'role_id': 1, 'permission': 'x', 'granted': True})
+    assert resp.status_code == 401
+    assert resp.get_json() == {'error': 'unauthorized'}
+
+
+def test_json_request_without_roles_gets_403_json(app, client):
+    from app.extensions import db
+    from app.models.user import User
+    user = User.create_with_password('norole-json@test.com', 'password123', email_confirmed=True)
+    db.session.flush()
+    with client.session_transaction() as s:
+        s['_user_id'] = str(user.id)
+    resp = client.put('/admin/access/api/matrix', json={'role_id': 1, 'permission': 'x', 'granted': True})
+    assert resp.status_code == 403
+    assert resp.get_json() == {'error': 'forbidden'}

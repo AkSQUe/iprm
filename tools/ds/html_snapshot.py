@@ -116,6 +116,12 @@ def build_app():
         raise SystemExit('ВІДМОВА: очікував in-memory SQLite, отримав %r.' % uri)
     with app.app_context():
         db.create_all()
+        # Права з реєстру -> цю in-memory базу: без цього роль super_admin
+        # нижче не знайшлась би, і адмін лишався б без жодної ролі -- усі
+        # адмін-сторінки віддавали б 403 замість того, щоб потрапити в знімок.
+        from app.rbac import service as rbac_service
+        rbac_service.sync()
+        db.session.commit()
     return app
 
 
@@ -127,13 +133,16 @@ def login_admin(app, client):
     контракт, що не змінюється.
     """
     from app.extensions import db
+    from app.models.rbac import Role, UserRole
     from app.models.user import User
 
     with app.app_context():
         user = User(email='ds-snapshot@example.invalid')
-        user.is_admin = True
         user.email_confirmed = True
         db.session.add(user)
+        db.session.flush()
+        sa_role = Role.query.filter_by(name='super_admin').one()
+        db.session.add(UserRole(user_id=user.id, role_id=sa_role.id))
         db.session.commit()
         user_id = str(user.id)
 

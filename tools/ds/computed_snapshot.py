@@ -557,6 +557,12 @@ def build_app():
         raise SystemExit('ВІДМОВА: очікував in-memory SQLite.')
     with app.app_context():
         db.create_all()
+        # Права з реєстру -> цю in-memory базу: без цього роль super_admin
+        # нижче не знайшлась би, і адмін лишався б без жодної ролі -- усі
+        # адмін-сторінки віддавали б 403 замість того, щоб потрапити в знімок.
+        from app.rbac import service as rbac_service
+        rbac_service.sync()
+        db.session.commit()
         # Створюємо рядок налаштувань ЗАРАЗ: SiteSettings.get() робить це
         # ліниво, а сервер тут багатопотоковий -- два одночасні запити
         # вставляли id=1 разом і падали на UNIQUE.
@@ -569,13 +575,16 @@ def make_admin(app):
     """Адмін у базі цього прогону. Без сесії адмінка віддає редирект, і
     сторінки, де живе admin.css, у знімок не потраплять зовсім."""
     from app.extensions import db
+    from app.models.rbac import Role, UserRole
     from app.models.user import User
 
     with app.app_context():
         user = User(email='computed-snapshot@example.invalid')
-        user.is_admin = True
         user.email_confirmed = True
         db.session.add(user)
+        db.session.flush()
+        sa_role = Role.query.filter_by(name='super_admin').one()
+        db.session.add(UserRole(user_id=user.id, role_id=sa_role.id))
         db.session.commit()
         return str(user.id)
 

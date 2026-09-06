@@ -22,6 +22,11 @@ with app.app_context():
     db.drop_all()
     db.create_all()
 
+    from app.rbac import service as rbac_service
+    rbac_service.sync()
+    db.session.commit()
+
+    from app.models.rbac import Role, UserRole
     from app.models.site_settings import SiteSettings
     from app.models.trainer import Trainer
     from app.models.course import Course
@@ -73,8 +78,10 @@ with app.app_context():
     user = User.create_with_password(
         'demo.participant@example.com', 'DemoPass123',
         first_name='Іван', last_name='Петренко', email_confirmed=True,
-        is_admin=True,
     )
+    db.session.flush()
+    sa_role = Role.query.filter_by(name='super_admin').one()
+    db.session.add(UserRole(user_id=user.id, role_id=sa_role.id))
 
     db.session.commit()
     print('Seeded: course=%s instance=%s user=%s' % (course.slug, inst.id, user.email))

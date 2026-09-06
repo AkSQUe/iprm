@@ -4,8 +4,6 @@
 перемикачів -- із role_permissions. Збереження -- JSON API після кожного
 кліку (admin-access-matrix.js). CRUD ролей -- серверні форми (Task 12).
 """
-import logging
-
 from flask import abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy import func
@@ -17,8 +15,6 @@ from app.extensions import db
 from app.models.rbac import Role, UserRole
 from app.rbac import permission_required, registry, service
 from app.rbac.service import AccessError
-
-audit_logger = logging.getLogger('audit')
 
 
 def _roles_ordered():

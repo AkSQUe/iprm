@@ -36,6 +36,13 @@
     }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (data) {
         if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+        /* Перехоплений редирект на логін (сесія збігла) повертає 200 і HTML:
+           r.json() падає в catch вище, data лишається {}. Без цієї
+           перевірки такий "успіх" писав би "Збережено", а гуртова дія
+           знімала б усі перемикачі модуля, бо data.granted теж {}. */
+        if (!data || data.ok !== true) {
+          throw new Error(data && data.error ? data.error : 'Сесія завершилась, оновіть сторінку');
+        }
         return data;
       });
     });
