@@ -14,7 +14,7 @@ from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin.forms import MaterialKitForm
 from app.extensions import db
 from app.models.course import Course
@@ -57,14 +57,14 @@ def _kit_or_404_redirect(kit_id):
 
 
 @admin_bp.route('/material-kits')
-@admin_required
+@permission_required('materials.view')
 def material_kits_list():
     kits = MaterialKit.query.order_by(MaterialKit.name).all()
     return render_template('admin/material_kits.html', kits=kits)
 
 
 @admin_bp.route('/material-kits/new', methods=['GET', 'POST'])
-@admin_required
+@permission_required('materials.manage')
 def material_kit_create():
     form = MaterialKitForm()
     _populate_course_choices(form)
@@ -93,7 +93,7 @@ def material_kit_create():
 
 
 @admin_bp.route('/material-kits/<int:kit_id>', methods=['GET', 'POST'])
-@admin_required
+@permission_required('materials.manage')
 def material_kit_edit(kit_id):
     kit = _kit_or_404_redirect(kit_id)
     if kit is None:
@@ -130,7 +130,7 @@ def material_kit_edit(kit_id):
 
 
 @admin_bp.route('/material-kits/<int:kit_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('materials.delete')
 def material_kit_delete(kit_id):
     kit = _kit_or_404_redirect(kit_id)
     if kit is None:
@@ -153,7 +153,7 @@ def material_kit_delete(kit_id):
 
 
 @admin_bp.route('/material-kits/<int:kit_id>/items/add', methods=['POST'])
-@admin_required
+@permission_required('materials.manage')
 def material_kit_item_add(kit_id):
     kit = _kit_or_404_redirect(kit_id)
     if kit is None:
@@ -212,7 +212,7 @@ def material_kit_item_add(kit_id):
 
 
 @admin_bp.route('/material-kits/<int:kit_id>/items/<int:item_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('materials.delete')
 def material_kit_item_delete(kit_id, item_id):
     item = MaterialKitItem.query.filter_by(id=item_id, kit_id=kit_id).first()
     if not item:

@@ -6,6 +6,7 @@ which must match what the MM Medic partner API verifies:
 Also covers `mrs.kits_for_instance` (Task 5), which needs the database --
 everything else in this file does not.
 """
+from tests.support.rbac import grant_role
 import hashlib
 import hmac
 import json
@@ -327,8 +328,9 @@ def test_kits_for_instance_excludes_inactive(db_session):
 def _admin():
     u = User.create_with_password(
         f'kit-route-{uuid4().hex[:8]}@test.com', 'password123',
-        first_name='K', last_name='R', is_admin=True, email_confirmed=True,
+        first_name='K', last_name='R', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.commit()
     return u
 

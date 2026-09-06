@@ -11,7 +11,7 @@ from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.auth._helpers import is_safe_redirect_url
 from app.extensions import db
 from app.models.course import Course
@@ -44,7 +44,7 @@ def _redirect_after_action(reg):
 
 
 @admin_bp.route('/instances/<int:instance_id>/registrations')
-@admin_required
+@permission_required('registrations.view')
 def instance_registrations(instance_id):
     instance = db.session.query(CourseInstance).options(
         joinedload(CourseInstance.course),
@@ -166,7 +166,7 @@ def _wants_json():
 
 
 @admin_bp.route('/registrations/<int:reg_id>/status', methods=['POST'])
-@admin_required
+@permission_required('registrations.manage')
 def registration_status(reg_id):
     xhr = _wants_json()
     reg = db.session.get(EventRegistration, reg_id)
@@ -209,7 +209,7 @@ def registration_status(reg_id):
 
 
 @admin_bp.route('/registrations/<int:reg_id>/payment', methods=['POST'])
-@admin_required
+@permission_required('registrations.manage')
 def registration_payment(reg_id):
     """Змінити статус оплати (inline-select у таблиці). При переході в 'paid'
     призначаємо номер місця (узгоджено з participant_service)."""
@@ -269,7 +269,7 @@ def registration_payment(reg_id):
 
 
 @admin_bp.route('/registrations/<int:reg_id>/attendance', methods=['POST'])
-@admin_required
+@permission_required('registrations.manage')
 def registration_attendance(reg_id):
     reg = db.session.get(EventRegistration, reg_id)
     if not reg:
@@ -303,7 +303,7 @@ def registration_attendance(reg_id):
 
 
 @admin_bp.route('/registrations/<int:reg_id>/certificate', methods=['POST'])
-@admin_required
+@permission_required('certificates.manage')
 def registration_certificate_issue(reg_id):
     """Видати сертифікат: створити запис, згенерувати PDF, надіслати email."""
     reg = db.session.get(EventRegistration, reg_id)
@@ -357,7 +357,7 @@ def registration_certificate_issue(reg_id):
 
 
 @admin_bp.route('/registrations/<int:reg_id>/certificate/resend', methods=['POST'])
-@admin_required
+@permission_required('certificates.manage')
 def registration_certificate_resend(reg_id):
     """Повторно надіслати вже виданий сертифікат на email."""
     reg = db.session.get(EventRegistration, reg_id)
@@ -381,7 +381,7 @@ def registration_certificate_resend(reg_id):
 
 
 @admin_bp.route('/registrations/<int:reg_id>/certificate/download')
-@admin_required
+@permission_required('registrations.view')
 def registration_certificate_download(reg_id):
     """Завантажити PDF сертифіката (адмін)."""
     reg = db.session.get(EventRegistration, reg_id)
@@ -403,7 +403,7 @@ def registration_certificate_download(reg_id):
 
 
 @admin_bp.route('/certificates/<int:cert_id>/revoke', methods=['POST'])
-@admin_required
+@permission_required('certificates.manage')
 def certificate_revoke(cert_id):
     """Відкликати або відновити сертифікат (toggle)."""
     from app.models.certificate import Certificate
@@ -574,7 +574,7 @@ def _apply_registration_filters(query, filters):
 
 
 @admin_bp.route('/registrations')
-@admin_required
+@permission_required('registrations.view')
 def registrations_all():
     filters = _registration_filters()
     page = _listing.page_arg()
@@ -754,7 +754,7 @@ def _registration_filters_summary(filters, rows_count):
 
 
 @admin_bp.route('/registrations/export')
-@admin_required
+@permission_required('registrations.export')
 def registrations_export():
     """Експорт списку реєстрацій у xlsx з урахуванням активних фільтрів.
 
@@ -809,7 +809,7 @@ def registrations_export():
 
 
 @admin_bp.route('/registrations/<int:reg_id>/completion-link', methods=['POST'])
-@admin_required
+@permission_required('registrations.manage')
 def registration_completion_link(reg_id):
     """Видати (або перевикористати) токен і повернути посилання на самостійне
     завершення реєстрації учасником. JSON для copy-to-clipboard у JS."""
@@ -831,7 +831,7 @@ def registration_completion_link(reg_id):
 
 
 @admin_bp.route('/registrations/<int:reg_id>/completion-link/email', methods=['POST'])
-@admin_required
+@permission_required('registrations.manage')
 def registration_completion_link_email(reg_id):
     """Видати токен (за потреби) і НАДІСЛАТИ учаснику посилання на самостійне
     завершення реєстрації листом. Лише для учасників із реальним email."""
@@ -871,7 +871,7 @@ def registration_completion_link_email(reg_id):
 
 
 @admin_bp.route('/registrations/<int:reg_id>/invoice.<ext>')
-@admin_required
+@permission_required('registrations.view')
 def registration_invoice_download(reg_id, ext):
     """Завантажити рахунок: ext=xlsx (Excel-оригінал) або pdf (конвертація)."""
     reg = db.session.get(EventRegistration, reg_id)
@@ -917,7 +917,7 @@ def registration_invoice_download(reg_id, ext):
 
 
 @admin_bp.route('/registrations/<int:reg_id>/transfer/options')
-@admin_required
+@permission_required('registrations.view')
 def registration_transfer_options(reg_id):
     """Дані для модалки перенесення: придатні заходи, тарифи, різниці.
 
@@ -961,7 +961,7 @@ def registration_transfer_options(reg_id):
 
 
 @admin_bp.route('/registrations/<int:reg_id>/transfer', methods=['POST'])
-@admin_required
+@permission_required('registrations.manage')
 def registration_transfer(reg_id):
     """Перенести реєстрацію на інше проведення."""
     from app.models.instance_tariff import InstanceTariff

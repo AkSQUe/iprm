@@ -7,7 +7,7 @@ from flask_login import current_user
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.models.webhook_delivery import MAX_ATTEMPTS, WebhookDelivery
 
@@ -72,7 +72,7 @@ def _back():
 
 
 @admin_bp.route('/webhooks')
-@admin_required
+@permission_required('webhooks.view')
 def webhooks_list():
     filter_status = _status_arg()
     event_type_choices = _event_type_choices()
@@ -132,7 +132,7 @@ def webhooks_list():
 
 
 @admin_bp.route('/webhooks/<int:delivery_id>/retry', methods=['POST'])
-@admin_required
+@permission_required('webhooks.manage')
 def webhook_retry(delivery_id):
     """Переставити рядок у pending і негайно спробувати відправити."""
     delivery = db.session.get(WebhookDelivery, delivery_id)
@@ -161,7 +161,7 @@ def webhook_retry(delivery_id):
 
 
 @admin_bp.route('/webhooks/<int:delivery_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('webhooks.delete')
 def webhook_delete(delivery_id):
     delivery = db.session.get(WebhookDelivery, delivery_id)
     if not delivery:

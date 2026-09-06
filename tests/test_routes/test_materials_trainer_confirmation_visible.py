@@ -10,6 +10,7 @@
 (`admin/materials.html`) і зведення `/admin/materials`. Окремого екрана під
 це не заводимо -- сторінка, куди ніхто не ходить, нічого не змінює.
 """
+from tests.support.rbac import grant_role
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -83,8 +84,9 @@ def fake_catalog(monkeypatch):
 def admin(app):
     user = User.create_with_password(
         f'tc-admin-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='А', last_name='Адмін', is_admin=True, email_confirmed=True,
+        first_name='А', last_name='Адмін', email_confirmed=True,
     )
+    grant_role(user, 'super_admin')
     db.session.flush()
     return user
 

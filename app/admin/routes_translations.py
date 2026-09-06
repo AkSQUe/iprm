@@ -18,7 +18,7 @@
 from flask import abort, flash, redirect, render_template, request, url_for
 
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.i18n import PREFIXED_LANGUAGES
 from app.services import translation_registry as registry
@@ -135,7 +135,7 @@ def apply_inline_translations(obj, form=None, prefix='tr'):
 
 
 @admin_bp.route('/translations/<entity>/<int:obj_id>', methods=['GET', 'POST'])
-@admin_required
+@permission_required('translations.manage')
 def translations_edit(entity, obj_id):
     meta = registry.entity_registry().get(entity)
     if meta is None:

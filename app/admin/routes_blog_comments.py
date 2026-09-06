@@ -10,7 +10,7 @@ from flask_login import current_user
 from sqlalchemy import desc
 
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.models.blog_comment import BlogComment
 from app.models.blog_post import BlogPost
@@ -70,7 +70,7 @@ def _back():
 
 
 @admin_bp.route('/blog/comments')
-@admin_required
+@permission_required('blog.view')
 def blog_comments():
     status = _status_arg()
     filters = _filters()
@@ -120,14 +120,14 @@ def _set_status(comment_id, new_status):
 
 
 @admin_bp.route('/blog/comments/<int:comment_id>/approve', methods=['POST'])
-@admin_required
+@permission_required('blog.manage')
 def blog_comment_approve(comment_id):
     _set_status(comment_id, BlogComment.STATUS_APPROVED)
     return _back()
 
 
 @admin_bp.route('/blog/comments/<int:comment_id>/spam', methods=['POST'])
-@admin_required
+@permission_required('blog.manage')
 def blog_comment_spam(comment_id):
     _set_status(comment_id, BlogComment.STATUS_SPAM)
     return _back()
@@ -148,7 +148,7 @@ def _subtree(comment):
 
 
 @admin_bp.route('/blog/comments/<int:comment_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('blog.delete')
 def blog_comment_delete(comment_id):
     """М'яке видалення гілки: діалогу немає, натомість тост із відкатом."""
     comment = db.session.get(BlogComment, comment_id)
@@ -177,7 +177,7 @@ def blog_comment_delete(comment_id):
 
 
 @admin_bp.route('/blog/comments/<int:comment_id>/restore', methods=['POST'])
-@admin_required
+@permission_required('blog.manage')
 def blog_comment_restore(comment_id):
     comment = db.session.get(BlogComment, comment_id)
     if not comment or not comment.is_deleted:

@@ -9,6 +9,7 @@
 * період і курс не були фільтрами взагалі, а суми друкувались через
   `| int`, який з'їдав копійки.
 """
+from tests.support.rbac import grant_role
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from uuid import uuid4
@@ -62,8 +63,9 @@ def clean(app):
 def admin(app):
     user = User.create_with_password(
         f'ol-{uuid4().hex[:8]}@test.com', 'password123',
-        first_name='А', last_name='Адмін', is_admin=True, email_confirmed=True,
+        first_name='А', last_name='Адмін', email_confirmed=True,
     )
+    grant_role(user, 'super_admin')
     db.session.commit()
     return user
 

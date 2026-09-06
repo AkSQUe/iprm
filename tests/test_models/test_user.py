@@ -11,7 +11,7 @@ def test_user_creation(db_session):
     assert user.check_password('secret123')
     assert not user.check_password('wrong')
     assert user.is_active is True
-    assert user.is_admin is False
+    assert user.is_staff is False
 
 
 def test_user_timestamps(db_session):

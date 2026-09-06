@@ -3,7 +3,7 @@ from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
 from sqlalchemy.orm import joinedload
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin._helpers import (
     mask_secret, rotation_status, save_integration_settings,
     validate_liqpay_credentials,
@@ -17,13 +17,13 @@ audit_logger = logging.getLogger('audit')
 
 
 @admin_bp.route('/payments')
-@admin_required
+@permission_required('registrations.view')
 def payments():
     return redirect(url_for('admin.integrations'))
 
 
 @admin_bp.route('/liqpay')
-@admin_required
+@permission_required('integrations.view')
 def liqpay():
     service = get_liqpay_service()
     from app.models.site_settings import SiteSettings
@@ -59,7 +59,7 @@ def liqpay():
 
 
 @admin_bp.route('/liqpay/save-keys', methods=['POST'])
-@admin_required
+@permission_required('integrations.keys')
 def liqpay_save_keys():
     public_key = request.form.get('public_key', '').strip()
     private_key = request.form.get('private_key', '').strip()
@@ -114,7 +114,7 @@ def liqpay_save_keys():
 
 
 @admin_bp.route('/liqpay/test', methods=['POST'])
-@admin_required
+@permission_required('integrations.manage')
 @limiter.limit("5 per minute")
 def liqpay_test():
     service = get_liqpay_service()
@@ -139,7 +139,7 @@ def liqpay_test():
 
 
 @admin_bp.route('/liqpay/reconcile', methods=['POST'])
-@admin_required
+@permission_required('integrations.manage')
 @limiter.limit('10 per minute')
 def liqpay_reconcile():
     """Ручна звірка: перепитати LiqPay про платежі, що зависли в 'pending'.

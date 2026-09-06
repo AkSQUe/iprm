@@ -1,4 +1,5 @@
 """Інтеграційні тести блогу: збереження контенту, рендер, коментарі, прев'ю."""
+from tests.support.rbac import grant_role
 import json
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -15,8 +16,9 @@ from app.models.blog_comment import BlogComment
 def admin(app):
     u = User.create_with_password(
         f'admin-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='A', last_name='D', is_admin=True, email_confirmed=True,
+        first_name='A', last_name='D', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

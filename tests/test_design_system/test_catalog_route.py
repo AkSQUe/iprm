@@ -1,4 +1,5 @@
 """Каталог живе в адмінці, під логіном, і має вихід зі старої адреси."""
+from tests.support.rbac import grant_role
 from uuid import uuid4
 
 import pytest
@@ -13,8 +14,9 @@ def admin():
     # зіткнулась би з unique-індексом users.email у сусідньому тесті.
     u = User.create_with_password(
         f'ds-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='A', last_name='D', is_admin=True, email_confirmed=True,
+        first_name='A', last_name='D', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

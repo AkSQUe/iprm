@@ -21,7 +21,7 @@ from flask_login import current_user
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.models.online_course import OnlineCourse
 from app.models.site_settings import SiteSettings
@@ -41,7 +41,7 @@ STATUS_OPTIONS = [
 
 
 @admin_bp.route('/online-courses')
-@admin_required
+@permission_required('online_courses.view')
 def online_courses_list():
     filters = {
         'q': _listing.text_arg('q'),
@@ -106,7 +106,7 @@ def online_courses_list():
 
 
 @admin_bp.route('/online-courses/<int:course_id>', methods=['GET', 'POST'])
-@admin_required
+@permission_required('online_courses.manage')
 def online_course_edit(course_id):
     course = db.session.get(OnlineCourse, course_id)
     if course is None:
@@ -303,7 +303,7 @@ def _save_course(course):
 
 
 @admin_bp.route('/online-courses/<int:course_id>/publish', methods=['POST'])
-@admin_required
+@permission_required('online_courses.manage')
 def online_course_toggle_publish(course_id):
     course = db.session.get(OnlineCourse, course_id)
     if course is None:

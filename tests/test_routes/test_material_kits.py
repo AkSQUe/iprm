@@ -4,6 +4,7 @@
 перевіряють, що вибір "універсальний" -- явний пункт списку курсів, а не
 просто відсутність вибору.
 """
+from tests.support.rbac import grant_role
 from uuid import uuid4
 
 import pytest
@@ -26,8 +27,9 @@ FAKE_CATALOG = [
 def admin(app):
     u = User.create_with_password(
         f'mk-admin-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='А', last_name='Адмін', is_admin=True, email_confirmed=True,
+        first_name='А', last_name='Адмін', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

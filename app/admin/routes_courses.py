@@ -10,7 +10,7 @@ from app.admin._helpers import (
     populate_trainer_choices,
     try_commit,
 )
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin.forms import CourseForm
 from app.admin.routes_translations import apply_inline_translations
 from app.extensions import db
@@ -38,7 +38,7 @@ _COURSE_STATES = {'active': 'Активні', 'inactive': 'Приховані'}
 
 
 @admin_bp.route('/courses')
-@admin_required
+@permission_required('courses.view')
 def courses_list():
     from app.models.trainer import Trainer
 
@@ -82,7 +82,7 @@ def courses_list():
 
 
 @admin_bp.route('/courses/new', methods=['GET', 'POST'])
-@admin_required
+@permission_required('courses.manage')
 def course_create():
     form = CourseForm()
     populate_trainer_choices(form)
@@ -120,7 +120,7 @@ def course_create():
 
 
 @admin_bp.route('/courses/<int:course_id>/edit', methods=['GET', 'POST'])
-@admin_required
+@permission_required('courses.manage')
 def course_edit(course_id):
     course = db.session.get(Course, course_id)
     if not course:
@@ -171,7 +171,7 @@ def course_edit(course_id):
 
 
 @admin_bp.route('/courses/<int:course_id>/clone', methods=['POST'])
-@admin_required
+@permission_required('courses.manage')
 def course_clone(course_id):
     source = db.session.get(Course, course_id)
     if not source:
@@ -193,7 +193,7 @@ def course_clone(course_id):
 
 
 @admin_bp.route('/courses/<int:course_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('courses.delete')
 def course_delete(course_id):
     course = db.session.get(Course, course_id)
     if not course:

@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import rotation_status
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.models.perf_run import PerfRun, VERDICT_FAIL, VERDICT_OK, VERDICT_WARN
 from app.models.site_settings import SiteSettings
@@ -82,7 +82,7 @@ def _key_state():
 
 
 @admin_bp.route('/perf')
-@admin_required
+@permission_required('perf.view')
 def perf_runs():
     page = _listing.page_arg()
     source_choices = _source_choices()
@@ -142,7 +142,7 @@ def perf_runs():
 
 
 @admin_bp.route('/perf/<int:run_id>')
-@admin_required
+@permission_required('perf.view')
 def perf_run_detail(run_id):
     # Метрики тут потрібні гарантовано (і для таблиць, і для порівняння),
     # тож тягнемо їх одним selectin-запитом замість лінивого довантаження.
@@ -175,7 +175,7 @@ def perf_run_detail(run_id):
 
 
 @admin_bp.route('/perf/<int:run_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('perf.manage')
 def perf_run_delete(run_id):
     run = PerfRun.query.get_or_404(run_id)
     db.session.delete(run)
@@ -189,7 +189,7 @@ def perf_run_delete(run_id):
 
 
 @admin_bp.route('/perf/key/rotate', methods=['POST'])
-@admin_required
+@permission_required('perf.manage')
 def perf_key_rotate():
     settings = SiteSettings.get()
     key = secrets.token_urlsafe(32)
@@ -205,7 +205,7 @@ def perf_key_rotate():
 
 
 @admin_bp.route('/perf/key/clear', methods=['POST'])
-@admin_required
+@permission_required('perf.manage')
 def perf_key_clear():
     settings = SiteSettings.get()
     settings.perf_api_key = ''

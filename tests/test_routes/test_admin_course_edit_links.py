@@ -3,6 +3,7 @@
 Дзеркалить розклад проведень (`instances.html`): нуль лишається текстом,
 непорожнє число -- посилання на `instance_registrations`.
 """
+from tests.support.rbac import grant_role
 import re
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
@@ -24,8 +25,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'cel-{_uid()}@test.com', 'password123',
-        first_name='C', last_name='E', is_admin=True, email_confirmed=True,
+        first_name='C', last_name='E', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.commit()
     yield u
     db.session.rollback()

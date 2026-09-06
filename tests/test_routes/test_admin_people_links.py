@@ -6,6 +6,7 @@
 САМЕ тег навколо імені: інакше перевірка пройшла б і на нерозгорнутому
 тексті.
 """
+from tests.support.rbac import grant_role
 import re
 from decimal import Decimal
 from uuid import uuid4
@@ -33,8 +34,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'pl-{_uid()}@test.com', 'password123',
-        first_name='P', last_name='L', is_admin=True, email_confirmed=True,
+        first_name='P', last_name='L', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.commit()
     yield u
     db.session.rollback()

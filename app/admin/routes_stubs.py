@@ -2,7 +2,7 @@ import logging
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 
 audit_logger = logging.getLogger('audit')
@@ -10,26 +10,26 @@ logger = logging.getLogger(__name__)
 
 
 @admin_bp.route('/')
-@admin_required
+@permission_required('dashboard.view')
 def dashboard():
     return redirect(url_for('admin.courses_list'))
 
 
 @admin_bp.route('/marketing')
-@admin_required
+@permission_required('marketing.view')
 def marketing():
     return render_template('admin/marketing.html')
 
 
 @admin_bp.route('/integrations/io')
-@admin_required
+@permission_required('integrations.keys')
 def integrations_io():
     """Сторінка Export/Import конфігурації інтеграцій."""
     return render_template('admin/integration_io.html')
 
 
 @admin_bp.route('/integrations/export', methods=['POST'])
-@admin_required
+@permission_required('integrations.keys')
 def integrations_export():
     """Згенерувати .env-блок з SiteSettings і віддати як download."""
     from flask import Response
@@ -58,7 +58,7 @@ def integrations_export():
 
 
 @admin_bp.route('/integrations/import-preview', methods=['POST'])
-@admin_required
+@permission_required('integrations.keys')
 def integrations_import_preview():
     """Parse uploaded .env-text, показати diff без apply."""
     from app.models.site_settings import SiteSettings
@@ -85,7 +85,7 @@ def integrations_import_preview():
 
 
 @admin_bp.route('/integrations/import-apply', methods=['POST'])
-@admin_required
+@permission_required('integrations.keys')
 def integrations_import_apply():
     """Apply parsed env values to SiteSettings + commit."""
     from app.models.site_settings import SiteSettings
@@ -119,7 +119,7 @@ def integrations_import_apply():
 
 
 @admin_bp.route('/integrations/health')
-@admin_required
+@permission_required('integrations.view')
 def integrations_health():
     """Live health-checks для всіх інтеграцій. ?refresh=1 -- очистити cache.
 
@@ -152,7 +152,7 @@ def integrations_health():
 
 
 @admin_bp.route('/integrations')
-@admin_required
+@permission_required('integrations.view')
 def integrations():
     """Hub-сторінка інтеграцій. Кожен статус збираємо у try/except --
     якщо одна інтеграція збойнула (DB зір'явана, encryption помилка), hub

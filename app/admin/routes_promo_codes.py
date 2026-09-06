@@ -13,7 +13,7 @@ from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin.forms import PromoCodeForm
 from app.extensions import db
 from app.models.course import Course
@@ -105,7 +105,7 @@ def _promo_query(filters):
 
 
 @admin_bp.route('/promo-codes')
-@admin_required
+@permission_required('promo_codes.view')
 def promo_codes_list():
     filters = _promo_filters()
     pagination = _promo_query(filters).paginate(
@@ -123,7 +123,7 @@ def promo_codes_list():
 
 
 @admin_bp.route('/promo-codes/export')
-@admin_required
+@permission_required('promo_codes.export')
 def promo_codes_export():
     """Експорт промокодів у xlsx з урахуванням активних фільтрів."""
     from app.services import xlsx_reports
@@ -194,7 +194,7 @@ def _create_batch(form, count):
 
 
 @admin_bp.route('/promo-codes/new', methods=['GET', 'POST'])
-@admin_required
+@permission_required('promo_codes.manage')
 def promo_code_create():
     form = PromoCodeForm()
     _populate_scope_choices(form)
@@ -229,7 +229,7 @@ def promo_code_create():
 
 
 @admin_bp.route('/promo-codes/<int:promo_id>/edit', methods=['GET', 'POST'])
-@admin_required
+@permission_required('promo_codes.manage')
 def promo_code_edit(promo_id):
     promo = db.session.get(PromoCode, promo_id)
     if promo is None:
@@ -272,7 +272,7 @@ def promo_code_edit(promo_id):
 
 
 @admin_bp.route('/promo-codes/<int:promo_id>')
-@admin_required
+@permission_required('promo_codes.view')
 def promo_code_detail(promo_id):
     promo = db.session.query(PromoCode).options(
         joinedload(PromoCode.course),
@@ -291,7 +291,7 @@ def promo_code_detail(promo_id):
 
 
 @admin_bp.route('/promo-codes/<int:promo_id>/toggle', methods=['POST'])
-@admin_required
+@permission_required('promo_codes.manage')
 def promo_code_toggle(promo_id):
     promo = db.session.get(PromoCode, promo_id)
     if promo is None:
@@ -311,7 +311,7 @@ def promo_code_toggle(promo_id):
 
 
 @admin_bp.route('/promo-codes/<int:promo_id>/recount', methods=['POST'])
-@admin_required
+@permission_required('promo_codes.manage')
 def promo_code_recount(promo_id):
     """Перерахувати лічильник з реєстру застосувань.
 
@@ -330,7 +330,7 @@ def promo_code_recount(promo_id):
 
 
 @admin_bp.route('/promo-codes/<int:promo_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('promo_codes.delete')
 def promo_code_delete(promo_id):
     """Видалити код. Реєстрації зберігають знімок знижки (FK SET NULL),
     історія застосувань іде разом із кодом (CASCADE)."""

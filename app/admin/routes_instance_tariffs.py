@@ -4,7 +4,7 @@ import logging
 from flask import render_template, redirect, url_for, flash, request
 
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin.forms import InstanceTariffForm
 from app.extensions import db
 from flask_login import current_user
@@ -42,7 +42,7 @@ def _keep_single_featured(instance_id, featured_id):
 
 
 @admin_bp.route('/instances/<int:instance_id>/tariffs', methods=['GET', 'POST'])
-@admin_required
+@permission_required('instances.manage')
 def instance_tariffs(instance_id):
     """Список тарифів проведення + форма додавання нового."""
     instance = _instance_or_redirect(instance_id)
@@ -88,7 +88,7 @@ def instance_tariffs(instance_id):
 
 
 @admin_bp.route('/tariffs/<int:tariff_id>/edit', methods=['GET', 'POST'])
-@admin_required
+@permission_required('instances.manage')
 def instance_tariff_edit(tariff_id):
     tariff = db.session.get(InstanceTariff, tariff_id)
     if not tariff:
@@ -130,7 +130,7 @@ def instance_tariff_edit(tariff_id):
 
 
 @admin_bp.route('/tariffs/<int:tariff_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('instances.delete')
 def instance_tariff_delete(tariff_id):
     tariff = db.session.get(InstanceTariff, tariff_id)
     if not tariff:

@@ -26,7 +26,7 @@ from flask_login import current_user
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import mask_secret, save_integration_settings, try_commit
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin.forms import MetaLeadAdminForm, MetaLeadsSettingsForm
 from app.extensions import db, limiter
 from app.models.meta_lead import (
@@ -294,7 +294,7 @@ def _lead_summary():
 
 
 @admin_bp.route('/meta-leads')
-@admin_required
+@permission_required('meta_leads.view')
 def meta_leads_list():
     filters = _lead_filters()
     pagination = _leads_query(filters).paginate(
@@ -378,7 +378,7 @@ def _kyiv_naive(value):
 
 
 @admin_bp.route('/meta-leads/export')
-@admin_required
+@permission_required('meta_leads.export')
 def meta_leads_export():
     """Експорт реєстру у xlsx з урахуванням активних фільтрів."""
     from app.services import xlsx_reports
@@ -473,7 +473,7 @@ def _custom_answers(lead):
 
 
 @admin_bp.route('/meta-leads/<int:lead_id>', methods=['GET', 'POST'])
-@admin_required
+@permission_required('meta_leads.manage')
 def meta_lead_detail(lead_id):
     lead = db.session.get(MetaLead, lead_id)
     if not lead or lead.is_deleted:
@@ -619,7 +619,7 @@ def _offer_choices_for(current_id, base):
 
 
 @admin_bp.route('/meta-leads/forms')
-@admin_required
+@permission_required('meta_leads.view')
 def meta_lead_forms():
     """Схеми Meta-форм і прив'язка кожної до заходу.
 
@@ -643,7 +643,7 @@ def meta_lead_forms():
 
 
 @admin_bp.route('/meta-leads/forms/<int:form_row_id>/offer', methods=['POST'])
-@admin_required
+@permission_required('meta_leads.manage')
 def meta_lead_form_offer(form_row_id):
     """Прив'язати форму до заходу або зняти прив'язку."""
     form = db.session.get(MetaLeadForm, form_row_id)
@@ -823,7 +823,7 @@ def _remove_lead(lead):
 
 
 @admin_bp.route('/meta-leads/<int:lead_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('meta_leads.delete')
 def meta_lead_delete(lead_id):
     lead = db.session.get(MetaLead, lead_id)
     if not lead or lead.is_deleted:
@@ -850,7 +850,7 @@ def meta_lead_delete(lead_id):
 
 
 @admin_bp.route('/meta-leads/<int:lead_id>/restore', methods=['POST'])
-@admin_required
+@permission_required('meta_leads.manage')
 def meta_lead_restore(lead_id):
     lead = db.session.get(MetaLead, lead_id)
     if not lead or not lead.is_deleted:
@@ -872,7 +872,7 @@ def meta_lead_restore(lead_id):
 
 
 @admin_bp.route('/meta-leads/delete-test', methods=['POST'])
-@admin_required
+@permission_required('meta_leads.delete')
 def meta_leads_delete_test():
     """Пакетне прибирання тестових заявок (рішення Q7).
 
@@ -949,7 +949,7 @@ def _events_query(filters):
 
 
 @admin_bp.route('/meta-leads/events')
-@admin_required
+@permission_required('meta_leads.view')
 def meta_lead_events():
     """Сира черга подій leadgen. Видалення тут немає і бути не може."""
     filters = _event_filters()
@@ -994,7 +994,7 @@ _EVENT_WIDTHS = {
 
 
 @admin_bp.route('/meta-leads/events/export')
-@admin_required
+@permission_required('meta_leads.export')
 def meta_lead_events_export():
     """Експорт сирої черги у xlsx з урахуванням активних фільтрів.
 
@@ -1048,7 +1048,7 @@ def meta_lead_events_export():
 
 
 @admin_bp.route('/meta-leads/events/<int:event_id>/retry', methods=['POST'])
-@admin_required
+@permission_required('meta_leads.manage')
 def meta_lead_event_retry(event_id):
     """Повернути подію в чергу: воркер забере її найближчим прогоном."""
     event = db.session.get(MetaLeadEvent, event_id)
@@ -1184,7 +1184,7 @@ def _settings_form(settings):
 
 
 @admin_bp.route('/meta-leads/settings')
-@admin_required
+@permission_required('meta_leads.settings')
 def meta_leads_settings():
     """Стан інтеграції. Мусить відкриватись і без жодного налаштування."""
     settings = SiteSettings.get()
@@ -1196,7 +1196,7 @@ def meta_leads_settings():
 
 
 @admin_bp.route('/meta-leads/settings/save', methods=['POST'])
-@admin_required
+@permission_required('meta_leads.settings')
 def meta_leads_settings_save():
     settings = SiteSettings.get()
     form = MetaLeadsSettingsForm()
@@ -1256,7 +1256,7 @@ def meta_leads_settings_save():
 
 
 @admin_bp.route('/meta-leads/settings/test-mode', methods=['POST'])
-@admin_required
+@permission_required('meta_leads.settings')
 def meta_leads_test_mode():
     """Перемикач «режим тестування».
 
@@ -1294,7 +1294,7 @@ def _client(settings, require_token=True):
 
 
 @admin_bp.route('/meta-leads/settings/check-token', methods=['POST'])
-@admin_required
+@permission_required('meta_leads.settings')
 @limiter.limit('10 per minute')
 def meta_leads_check_token():
     """`debug_token`: чи живий Page token, доки і з якими дозволами."""
@@ -1332,7 +1332,7 @@ def meta_leads_check_token():
 
 
 @admin_bp.route('/meta-leads/settings/exchange-token', methods=['POST'])
-@admin_required
+@permission_required('meta_leads.settings')
 @limiter.limit('10 per minute')
 def meta_leads_exchange_token():
     """Короткоживучий User token -> безстроковий Page token.
@@ -1397,7 +1397,7 @@ def meta_leads_exchange_token():
 
 
 @admin_bp.route('/meta-leads/settings/subscribe', methods=['POST'])
-@admin_required
+@permission_required('meta_leads.settings')
 @limiter.limit('10 per minute')
 def meta_leads_subscribe():
     """Підписати Сторінку на `leadgen`: без цього вебхук мовчить."""
@@ -1422,7 +1422,7 @@ def meta_leads_subscribe():
 
 
 @admin_bp.route('/meta-leads/settings/reconcile', methods=['POST'])
-@admin_required
+@permission_required('meta_leads.settings')
 @limiter.limit('10 per minute')
 def meta_leads_reconcile():
     """Ручна звірка: добрати ліди, які не доїхали вебхуком."""
@@ -1448,7 +1448,7 @@ def meta_leads_reconcile():
 
 
 @admin_bp.route('/meta-leads/settings/sync-forms', methods=['POST'])
-@admin_required
+@permission_required('meta_leads.settings')
 @limiter.limit('10 per minute')
 def meta_leads_sync_forms():
     """Забрати підписи питань і варіантів усіх форм Сторінки.
@@ -1490,7 +1490,7 @@ def meta_leads_sync_forms():
 
 
 @admin_bp.route('/meta-leads/settings/test-event', methods=['POST'])
-@admin_required
+@permission_required('meta_leads.settings')
 @limiter.limit('10 per minute')
 def meta_leads_test_event():
     """Надіслати самим собі коректно підписану подію leadgen.

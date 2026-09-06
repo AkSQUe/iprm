@@ -6,7 +6,7 @@ POST /admin/apple-signin/save  -- зберегти team_id/services_id/key_id/pr
 from flask import flash, redirect, render_template, request, url_for
 
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin._helpers import (
     is_valid_apple_id,
     is_valid_apple_services_id,
@@ -20,7 +20,7 @@ from app.models.site_settings import SiteSettings
 
 
 @admin_bp.route('/apple-signin')
-@admin_required
+@permission_required('integrations.view')
 def apple_signin():
     settings = SiteSettings.get()
     cfg = {
@@ -42,7 +42,7 @@ def apple_signin():
 
 
 @admin_bp.route('/apple-signin/save', methods=['POST'])
-@admin_required
+@permission_required('integrations.keys')
 def apple_signin_save():
     team_id = request.form.get('team_id', '').strip()
     services_id = request.form.get('services_id', '').strip()

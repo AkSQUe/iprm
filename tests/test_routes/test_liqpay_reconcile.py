@@ -6,6 +6,7 @@
 не сталося ні того, ні іншого, рядок висить вічно -- разом із листом про
 оплату, подією партнеру й вивозом у KeyCRM.
 """
+from tests.support.rbac import grant_role
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -28,8 +29,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'lpr-adm-{_uid()}@test.com', 'password123',
-        first_name='A', last_name='D', is_admin=True, email_confirmed=True,
+        first_name='A', last_name='D', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

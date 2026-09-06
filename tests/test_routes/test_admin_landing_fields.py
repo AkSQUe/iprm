@@ -9,6 +9,8 @@ from uuid import uuid4
 
 import pytest
 
+from tests.support.rbac import grant_role
+
 from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
@@ -25,8 +27,8 @@ def admin_client(app, client):
         f'landing-admin-{uuid4().hex[:8]}@test.com', 'Passw0rd!123',
         first_name='Адмін', email_confirmed=True,
     )
-    user.is_admin = True
     user.is_active = True
+    grant_role(user, 'super_admin')
     db.session.commit()
     with client.session_transaction() as session:
         session['_user_id'] = str(user.id)

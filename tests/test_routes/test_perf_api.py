@@ -15,6 +15,7 @@ from app.models.perf_run import PerfRun
 from app.models.site_settings import SiteSettings
 from app.models.user import User
 from app.services import perf_service
+from tests.support.rbac import grant_role
 
 
 PERF_KEY = 'test-perf-ingest-key-1234567890123456'
@@ -243,10 +244,12 @@ def test_compare_without_baseline_is_empty(app):
 
 @pytest.fixture
 def admin(app):
-    return User.create_with_password(
+    user = User.create_with_password(
         f'perf-admin-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='A', last_name='D', is_admin=True, email_confirmed=True,
+        first_name='A', last_name='D', email_confirmed=True,
     )
+    db.session.flush()
+    return grant_role(user, 'super_admin')
 
 
 def _login(client, user):

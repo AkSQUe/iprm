@@ -7,6 +7,7 @@
 навіть тоді, коли він минув. Інакше відкриття сторінки мовчки показувало б
 «не обрано» там, де прив'язка є, і перше ж збереження її б стерло.
 """
+from tests.support.rbac import grant_role
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -32,8 +33,9 @@ def _login(client, user):
 def admin(app):
     user = User.create_with_password(
         f'mf-adm-{_uid()}@test.com', 'password123',
-        first_name='М', last_name='Адмін', is_admin=True, email_confirmed=True,
+        first_name='М', last_name='Адмін', email_confirmed=True,
     )
+    grant_role(user, 'super_admin')
     db.session.flush()
     return user
 

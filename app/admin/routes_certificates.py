@@ -11,7 +11,7 @@ from sqlalchemy import case, extract, func
 from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.services import xlsx_reports
 from app.models.certificate import Certificate
@@ -83,7 +83,7 @@ def _certificate_stats():
 
 
 @admin_bp.route('/certificates')
-@admin_required
+@permission_required('certificates.view')
 def certificates():
 
     filters = _certificate_filters()
@@ -118,7 +118,7 @@ def certificates():
 
 
 @admin_bp.route('/certificates/export')
-@admin_required
+@permission_required('certificates.export')
 def certificates_export():
     """Експорт реєстру сертифікатів у xlsx з урахуванням активних фільтрів."""
 

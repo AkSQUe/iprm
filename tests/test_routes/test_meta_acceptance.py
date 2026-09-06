@@ -33,6 +33,7 @@ Meta -> вебхук -> черга -> воркер -> `MetaLead` -> реєстр
 * власні рядки прибираються після кожного тесту, щоб не зсувати чужу
   пагінацію в реєстрі лідів.
 """
+from tests.support.rbac import grant_role
 import base64
 import hashlib
 import json
@@ -150,9 +151,9 @@ def meta_env(app, monkeypatch):
 def admin(app):
     user = User.create_with_password(
         f'meta-acc-adm-{uuid4().hex[:8]}@test.com', 'password123',
-        first_name='Приймальний', last_name='Адмін',
-        is_admin=True, email_confirmed=True,
+        first_name='Приймальний', last_name='Адмін', email_confirmed=True,
     )
+    grant_role(user, 'super_admin')
     db.session.commit()
     return user
 

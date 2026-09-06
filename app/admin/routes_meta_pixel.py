@@ -1,13 +1,13 @@
 from flask import flash, redirect, render_template, request, url_for, current_app
 
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin._helpers import save_integration_settings, tristate_checkbox
 from app.models.site_settings import SiteSettings
 
 
 @admin_bp.route('/meta-pixel')
-@admin_required
+@permission_required('integrations.view')
 def meta_pixel():
     settings = SiteSettings.get()
     env_id = current_app.config.get('META_PIXEL_ID', '') or ''
@@ -30,7 +30,7 @@ def meta_pixel():
 
 
 @admin_bp.route('/meta-pixel/save', methods=['POST'])
-@admin_required
+@permission_required('integrations.keys')
 def meta_pixel_save():
     pixel_id = request.form.get('meta_pixel_id', '').strip()
     enabled = tristate_checkbox('meta_pixel_enabled')
@@ -59,7 +59,7 @@ def meta_pixel_save():
 
 
 @admin_bp.route('/meta-pixel/test')
-@admin_required
+@permission_required('integrations.manage')
 def meta_pixel_test():
     """Сторінка перевірки: шле тестову подію у Events Manager.
 

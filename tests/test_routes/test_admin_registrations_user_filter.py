@@ -5,6 +5,7 @@
 користувача мусить нейтралізувати цей дефолт через `scope=all` -- інакше
 минулі реєстрації людини зникають з результату.
 """
+from tests.support.rbac import grant_role
 import re
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
@@ -26,8 +27,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'ruf-{_uid()}@test.com', 'password123',
-        first_name='R', last_name='F', is_admin=True, email_confirmed=True,
+        first_name='R', last_name='F', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.commit()
     yield u
     db.session.rollback()

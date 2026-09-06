@@ -3,6 +3,7 @@
 Головне, що тут перевіряється: файл містить рівно той зріз, який менеджер
 бачить на екрані (ті самі фільтри), і не обмежений поточною сторінкою.
 """
+from tests.support.rbac import grant_role
 import io
 from uuid import uuid4
 
@@ -24,8 +25,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'exp-{_uid()}@test.com', 'password123',
-        first_name='E', last_name='A', is_admin=True, email_confirmed=True,
+        first_name='E', last_name='A', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

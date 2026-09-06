@@ -5,7 +5,7 @@ from flask import render_template, flash, request
 from flask_login import current_user
 
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.models.b2b_request import B2BRequest
 
@@ -41,7 +41,7 @@ def _b2b_query(filters):
 
 
 @admin_bp.route('/b2b-requests')
-@admin_required
+@permission_required('b2b_requests.view')
 def b2b_requests_list():
     filters = _b2b_filters()
     pagination = _b2b_query(filters).paginate(
@@ -67,7 +67,7 @@ def b2b_requests_list():
 
 
 @admin_bp.route('/b2b-requests/export')
-@admin_required
+@permission_required('b2b_requests.export')
 def b2b_requests_export():
     """Експорт B2B-заявок у xlsx з урахуванням активних фільтрів."""
     from app.services import xlsx_reports
@@ -114,7 +114,7 @@ def _back():
 
 
 @admin_bp.route('/b2b-requests/<int:request_id>/update', methods=['POST'])
-@admin_required
+@permission_required('b2b_requests.manage')
 def b2b_request_update(request_id):
     req = db.session.get(B2BRequest, request_id)
     if not req:

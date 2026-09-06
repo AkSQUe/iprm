@@ -4,6 +4,7 @@
 керує вмістом файлу; зріз, який не влазить у синхронний запит; параметри з
 чужого посилання.
 """
+from tests.support.rbac import grant_role
 import io
 from uuid import uuid4
 
@@ -27,8 +28,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'hd-{_uid()}@test.com', 'password123',
-        first_name='H', last_name='D', is_admin=True, email_confirmed=True,
+        first_name='H', last_name='D', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

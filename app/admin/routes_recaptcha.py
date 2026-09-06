@@ -10,7 +10,7 @@ from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
 
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin._helpers import (
     mask_secret, rotation_status, save_integration_settings,
     validate_recaptcha_secret,
@@ -23,7 +23,7 @@ audit_logger = logging.getLogger('audit')
 
 
 @admin_bp.route('/recaptcha')
-@admin_required
+@permission_required('integrations.view')
 def recaptcha():
     # Один SiteSettings.get() замість двох (через get_recaptcha_service +
     # власний виклик).
@@ -50,7 +50,7 @@ def recaptcha():
 
 
 @admin_bp.route('/recaptcha/save-keys', methods=['POST'])
-@admin_required
+@permission_required('integrations.keys')
 def recaptcha_save_keys():
     site_key = request.form.get('site_key', '').strip()
     secret_key = request.form.get('secret_key', '').strip()
@@ -113,7 +113,7 @@ def recaptcha_save_keys():
 
 
 @admin_bp.route('/recaptcha/test', methods=['POST'])
-@admin_required
+@permission_required('integrations.manage')
 @limiter.limit("5 per minute")
 def recaptcha_test():
     """Перевірка через siteverify з заздалегідь невалідним токеном.

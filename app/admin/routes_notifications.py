@@ -4,7 +4,7 @@ from flask_login import current_user
 from sqlalchemy import func as sa_func
 
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.models.email_log import EmailLog, MAX_RETRIES
 from app.models.email_settings import EmailSettings
@@ -14,7 +14,7 @@ audit_logger = logging.getLogger('audit')
 
 
 @admin_bp.route('/notifications')
-@admin_required
+@permission_required('notifications.view')
 def notifications():
     """Dashboard: stats, settings form, recent sends, scheduler."""
     settings = EmailSettings.get()
@@ -69,7 +69,7 @@ def notifications():
 
 
 @admin_bp.route('/notifications/settings', methods=['POST'])
-@admin_required
+@permission_required('notifications.manage')
 def notifications_settings():
     """Save SMTP settings to DB."""
     settings = EmailSettings.get()
@@ -150,7 +150,7 @@ def _email_log_query(filters):
 
 
 @admin_bp.route('/notifications/log')
-@admin_required
+@permission_required('notifications.view')
 def notifications_log():
     """Full email log with filtering."""
     filters = _email_log_filters()
@@ -169,7 +169,7 @@ def notifications_log():
 
 
 @admin_bp.route('/notifications/log/export')
-@admin_required
+@permission_required('notifications.export')
 def notifications_log_export():
     """Експорт журналу листів у xlsx з урахуванням активних фільтрів.
 
@@ -207,7 +207,7 @@ def notifications_log_export():
 
 
 @admin_bp.route('/notifications/log/<int:log_id>/resend', methods=['POST'])
-@admin_required
+@permission_required('notifications.manage')
 def notifications_log_resend(log_id):
     """Ручний resend конкретного failed-листа (адмін-кнопка).
     Без cutoff/MAX_RETRIES обмежень -- адмін явно тисне.
@@ -224,7 +224,7 @@ def notifications_log_resend(log_id):
 
 
 @admin_bp.route('/notifications/test', methods=['POST'])
-@admin_required
+@permission_required('notifications.manage')
 def notifications_test():
     """Send a test email."""
     to = request.form.get('to', '').strip()
@@ -251,7 +251,7 @@ def notifications_test():
 
 
 @admin_bp.route('/notifications/templates')
-@admin_required
+@permission_required('notifications.view')
 def notifications_templates():
     """Preview all email templates with mock data."""
     from datetime import datetime, timezone
@@ -595,7 +595,7 @@ def notifications_templates():
 
 
 @admin_bp.route('/notifications/scheduler/pause', methods=['POST'])
-@admin_required
+@permission_required('notifications.manage')
 def scheduler_pause():
     from app.services.scheduler_service import scheduler
     scheduler.pause()
@@ -605,7 +605,7 @@ def scheduler_pause():
 
 
 @admin_bp.route('/notifications/scheduler/resume', methods=['POST'])
-@admin_required
+@permission_required('notifications.manage')
 def scheduler_resume():
     from app.services.scheduler_service import scheduler
     scheduler.resume()

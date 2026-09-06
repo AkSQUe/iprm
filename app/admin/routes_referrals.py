@@ -11,7 +11,7 @@ from sqlalchemy import case, func
 from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.models.course_instance import CourseInstance
 from app.models.referral_reward import ReferralReward
@@ -66,7 +66,7 @@ def _rewards_query(filters):
 
 
 @admin_bp.route('/referrals')
-@admin_required
+@permission_required('referrals.view')
 def referrals_overview():
     settings = SiteSettings.get()
     filters = _reward_filters()
@@ -152,7 +152,7 @@ def referrals_overview():
 
 
 @admin_bp.route('/referrals/guide')
-@admin_required
+@permission_required('referrals.view')
 def referrals_guide():
     """Інструкція до реферальної програми (дочірня сторінка огляду).
 
@@ -166,7 +166,7 @@ def referrals_guide():
 
 
 @admin_bp.route('/referrals/reconcile', methods=['POST'])
-@admin_required
+@permission_required('referrals.manage')
 def referrals_reconcile():
     """Ручна звірка денормалізованих балансів (самозцілення дрейфу)."""
     from flask import flash, redirect, url_for
@@ -179,7 +179,7 @@ def referrals_reconcile():
 
 
 @admin_bp.route('/referrals/<kind>/<int:referrer_id>')
-@admin_required
+@permission_required('referrals.view')
 def referral_referrer_detail(kind, referrer_id):
     """Деталізація одного реферера: профіль, баланс, повна історія нарахувань."""
     from flask import abort
@@ -219,7 +219,7 @@ def referral_referrer_detail(kind, referrer_id):
 
 
 @admin_bp.route('/referrals/<kind>/<int:referrer_id>/adjust', methods=['POST'])
-@admin_required
+@permission_required('referrals.manage')
 def referral_referrer_adjust(kind, referrer_id):
     """Ручна корекція балансу реферера (+/- балів із причиною)."""
     from flask import abort, flash, redirect, url_for
@@ -243,7 +243,7 @@ def referral_referrer_adjust(kind, referrer_id):
 
 
 @admin_bp.route('/referrals/export')
-@admin_required
+@permission_required('referrals.export')
 def referrals_export():
     """Експорт реєстру нарахувань у xlsx з урахуванням активних фільтрів."""
     from app.services import xlsx_reports

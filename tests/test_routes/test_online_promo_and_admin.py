@@ -5,6 +5,7 @@
 повернення коштів звільняє використання, а ручне «оплачено» відкриває
 доступ так само, як це робить callback LiqPay.
 """
+from tests.support.rbac import grant_role
 from decimal import Decimal
 from uuid import uuid4
 
@@ -71,8 +72,9 @@ def buyer(app):
 def admin(app):
     user = User.create_with_password(
         f'pa-{uuid4().hex[:8]}@test.com', 'password123',
-        first_name='А', last_name='Адмін', is_admin=True, email_confirmed=True,
+        first_name='А', last_name='Адмін', email_confirmed=True,
     )
+    grant_role(user, 'super_admin')
     db.session.commit()
     return user
 

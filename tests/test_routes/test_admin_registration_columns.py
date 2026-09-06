@@ -7,6 +7,7 @@
 Стан тестування береться батчем (`eligibility_map`), тож окремо перевіряємо, що
 таблиця не дорожчає з кількістю учасників -- груп по 20-30 осіб тут звичайна річ.
 """
+from tests.support.rbac import grant_role
 from datetime import datetime, timedelta, timezone
 from itertools import count
 from uuid import uuid4
@@ -36,7 +37,8 @@ FULL_PROFILE = {
 def admin(app):
     u = User.create_with_password(
         f'ac-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='A', last_name='D', is_admin=True, email_confirmed=True)
+        first_name='A', last_name='D', email_confirmed=True)
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

@@ -1,4 +1,5 @@
 """Адмін-CRUD промокодів + ручне застосування коду у формі учасника."""
+from tests.support.rbac import grant_role
 from decimal import Decimal
 from uuid import uuid4
 
@@ -17,8 +18,9 @@ from app.services import promo_service
 def admin(app):
     u = User.create_with_password(
         f'ap-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='А', last_name='Адмін', is_admin=True, email_confirmed=True,
+        first_name='А', last_name='Адмін', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

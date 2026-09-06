@@ -1,7 +1,7 @@
 import logging
 from flask import request, jsonify
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.services import image_service, media_service
 
@@ -17,7 +17,7 @@ def _opt_int(value):
 
 
 @admin_bp.route('/upload/media', methods=['POST'])
-@admin_required
+@permission_required('media.manage')
 def upload_media():
     """Універсальне завантаження у медіа-реєстр (MediaFile).
 
@@ -59,7 +59,7 @@ def upload_media():
 
 
 @admin_bp.route('/upload/course-image', methods=['POST'])
-@admin_required
+@permission_required('media.manage')
 def upload_course_image():
     """Завантажити зображення курсу (hero/card) у медіа-реєстр (WebP+варіанти).
 
@@ -90,7 +90,7 @@ def upload_course_image():
 
 
 @admin_bp.route('/upload/trainer-image', methods=['POST'])
-@admin_required
+@permission_required('media.manage')
 def upload_trainer_image():
     """Завантажити фото тренера у медіа-реєстр (durable, з варіантами).
 
@@ -121,7 +121,7 @@ def upload_trainer_image():
 
 
 @admin_bp.route('/upload/blog-image', methods=['POST'])
-@admin_required
+@permission_required('media.manage')
 def upload_blog_image():
     """Завантажити зображення блогу у медіа-реєстр: HEIC/JPG/PNG/WebP -> WebP.
 
@@ -161,7 +161,7 @@ def upload_blog_image():
 
 
 @admin_bp.route('/upload/trainer-signature', methods=['POST'])
-@admin_required
+@permission_required('media.manage')
 def upload_trainer_signature():
     """Завантажити підпис тренера у static/images/trainers/{slug}/.
 
@@ -182,7 +182,7 @@ def upload_trainer_signature():
 
 
 @admin_bp.route('/upload/trainer-certificate', methods=['POST'])
-@admin_required
+@permission_required('media.manage')
 def upload_trainer_certificate():
     """Завантажити сертифікат/скан патента тренера у медіа-реєстр (WebP+варіанти).
 

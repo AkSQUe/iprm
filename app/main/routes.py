@@ -233,7 +233,7 @@ def unsubscribe(token):
 @main_bp.route('/design-system', localize=False)
 def design_system():
     """Каталог переїхав в адмінку. Редирект -- щоб не ламались закладки
-    й посилання в docs/; сам каталог тепер під admin_required.
+    й посилання в docs/; сам каталог тепер під правом design_system.view.
 
     302, не 301: сторінка noindex/nofollow і закрита в robots.txt, тож
     передавати SEO-вагу нема чого -- єдиний аргумент за 301 тут не діє.

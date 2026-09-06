@@ -3,6 +3,7 @@
 Сторінка й експорт читають ОДИН набір фільтрів (`_user_filters`), тож тести
 перевіряють обидва входи: те, що видно на екрані, і те, що лягає у файл.
 """
+from tests.support.rbac import grant_role
 import io
 from uuid import uuid4
 
@@ -24,9 +25,12 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'usr-admin-{_uid()}@test.com', 'password123',
-        first_name='Адмін', last_name='Головний',
-        is_admin=True, email_confirmed=True,
+        first_name='Адмін', last_name='Головний', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
+    # Роль пускає в адмінку; прапорець нижче -- для фільтра "role=admin"
+    # у списку користувачів, який досі читає стару колонку (Task 8).
+    u.is_admin = True
     db.session.flush()
     return u
 

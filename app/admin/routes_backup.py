@@ -5,14 +5,14 @@ from flask import render_template, request, jsonify, flash, redirect, url_for, s
 from flask_login import current_user
 
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.models.database_backup import DatabaseBackup
 
 audit_logger = logging.getLogger('audit')
 
 
 @admin_bp.route('/backups')
-@admin_required
+@permission_required('backup.view')
 def backups():
     page = _listing.page_arg()
     per_page = 20
@@ -35,7 +35,7 @@ def backups():
 
 
 @admin_bp.route('/backups/create', methods=['POST'])
-@admin_required
+@permission_required('backup.manage')
 def backup_create():
     from app.extensions import db
     from app.services.backup_service import BackupService, BackupError, BackupConcurrencyError
@@ -68,7 +68,7 @@ def backup_create():
 
 
 @admin_bp.route('/backups/<int:backup_id>/restore', methods=['POST'])
-@admin_required
+@permission_required('backup.restore')
 def backup_restore(backup_id):
     from app.services.backup_service import BackupService, BackupError
 
@@ -88,7 +88,7 @@ def backup_restore(backup_id):
 
 
 @admin_bp.route('/backups/<int:backup_id>/validate')
-@admin_required
+@permission_required('backup.view')
 def backup_validate(backup_id):
     from app.services.backup_service import BackupService, BackupError
 
@@ -105,7 +105,7 @@ def backup_validate(backup_id):
 
 
 @admin_bp.route('/backups/<int:backup_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('backup.delete')
 def backup_delete(backup_id):
     from app.services.backup_service import BackupService, BackupError
 
@@ -123,7 +123,7 @@ def backup_delete(backup_id):
 
 
 @admin_bp.route('/backups/<int:backup_id>/download')
-@admin_required
+@permission_required('backup.export')
 def backup_download(backup_id):
     backup = DatabaseBackup.query.get_or_404(backup_id)
     if backup.status != DatabaseBackup.STATUS_COMPLETED:
@@ -147,7 +147,7 @@ def backup_download(backup_id):
 
 
 @admin_bp.route('/backups/cleanup', methods=['POST'])
-@admin_required
+@permission_required('backup.manage')
 def backup_cleanup():
     from app.services.backup_service import BackupService
 
@@ -164,7 +164,7 @@ def backup_cleanup():
 
 
 @admin_bp.route('/backups/stats')
-@admin_required
+@permission_required('backup.view')
 def backup_stats():
     from app.services.backup_service import BackupService
     stats = BackupService.get_storage_stats()

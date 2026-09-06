@@ -17,7 +17,7 @@ from flask_login import current_user
 from sqlalchemy.orm import contains_eager, joinedload
 
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.models.mixins import utcnow
 from app.models.online_course import OnlineCourse
@@ -167,7 +167,7 @@ def _waiting_hours(orders):
 
 
 @admin_bp.route('/online-orders')
-@admin_required
+@permission_required('online_orders.view')
 def online_orders_list():
     course_options = _course_options()
     filters = _order_filters([key for key, _ in course_options])
@@ -218,7 +218,7 @@ def online_orders_list():
 
 
 @admin_bp.route('/online-orders/<int:enrollment_id>/payment', methods=['POST'])
-@admin_required
+@permission_required('online_orders.manage')
 def online_order_set_payment(enrollment_id):
     """Ручна зміна статусу оплати.
 
@@ -291,7 +291,7 @@ def online_order_set_payment(enrollment_id):
 
 
 @admin_bp.route('/online-orders/<int:enrollment_id>/reissue', methods=['POST'])
-@admin_required
+@permission_required('online_orders.manage')
 def online_order_reissue(enrollment_id):
     """Перевидати доступ -- для замовлень, що зависли без нього."""
     from app.services import sintegrum_access
@@ -320,7 +320,7 @@ def online_order_reissue(enrollment_id):
 
 
 @admin_bp.route('/online-orders/<int:enrollment_id>/login-link', methods=['POST'])
-@admin_required
+@permission_required('online_orders.manage')
 def online_order_login_link(enrollment_id):
     """Передати покупцю посилання на встановлення пароля.
 
@@ -364,7 +364,7 @@ def online_order_login_link(enrollment_id):
 
 
 @admin_bp.route('/online-orders/export')
-@admin_required
+@permission_required('online_orders.export')
 def online_orders_export():
     """Вивантажити поточний зріз замовлень у xlsx.
 

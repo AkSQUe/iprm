@@ -5,6 +5,7 @@
 тариф проведення взагалі не знав свого формату -- він губився при
 копіюванні з шаблону курсу.
 """
+from tests.support.rbac import grant_role
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -195,7 +196,8 @@ def test_admin_can_set_tariff_format(client):
     from app.models.user import User
     admin = User.create_with_password(
         f'a-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='A', last_name='D', is_admin=True, email_confirmed=True)
+        first_name='A', last_name='D', email_confirmed=True)
+    grant_role(admin, 'super_admin')
     db.session.commit()
     with client.session_transaction() as s:
         s['_user_id'] = str(admin.id)

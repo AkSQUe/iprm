@@ -11,7 +11,7 @@ from flask_login import current_user
 from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.models.course_instance import CourseInstance
 from app.models.online_enrollment import OnlineEnrollment
@@ -65,7 +65,7 @@ def _query(filters):
 
 
 @admin_bp.route('/refund-requests')
-@admin_required
+@permission_required('refund_requests.view')
 def refund_requests_list():
     filters = _filters()
     pagination = _query(filters).paginate(
@@ -90,7 +90,7 @@ def refund_requests_list():
 
 
 @admin_bp.route('/refund-requests/export')
-@admin_required
+@permission_required('refund_requests.export')
 def refund_requests_export():
     """Вивантажити поточний зріз заявок у xlsx."""
     from app.services import xlsx_reports
@@ -136,7 +136,7 @@ def _back():
 
 
 @admin_bp.route('/refund-requests/<int:request_id>/reject', methods=['POST'])
-@admin_required
+@permission_required('refund_requests.manage')
 def refund_request_reject(request_id):
     item = db.session.get(RefundRequest, request_id)
     if item is None:

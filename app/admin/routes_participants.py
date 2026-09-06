@@ -16,7 +16,7 @@ from sqlalchemy.orm import joinedload
 
 from app.admin import admin_bp
 from app.admin._helpers import try_commit
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin.forms import ParticipantForm
 from app.extensions import db
 from app.models.course_instance import CourseInstance
@@ -223,7 +223,7 @@ def _process_create(form, instance):
 
 
 @admin_bp.route('/participants/new', methods=['GET', 'POST'])
-@admin_required
+@permission_required('registrations.manage')
 def participant_create():
     """Окрема сторінка: додати учасника з вибором заходу у формі."""
     form = ParticipantForm()
@@ -250,7 +250,7 @@ def participant_create():
 
 
 @admin_bp.route('/instances/<int:instance_id>/participants/new', methods=['GET', 'POST'])
-@admin_required
+@permission_required('registrations.manage')
 def participant_create_for_instance(instance_id):
     """Додати учасника в контексті конкретного заходу (захід фіксований)."""
     instance = (
@@ -315,7 +315,7 @@ def _form_from_registration(reg):
 
 
 @admin_bp.route('/registrations/<int:reg_id>/edit', methods=['GET', 'POST'])
-@admin_required
+@permission_required('registrations.manage')
 def participant_edit(reg_id):
     """Редагувати дані учасника (User + MedicalProfile + EventRegistration)."""
     reg = (
@@ -376,7 +376,7 @@ def _participants_back_url():
 
 
 @admin_bp.route('/participants/export')
-@admin_required
+@permission_required('registrations.export')
 def participants_export():
     """Експорт учасників у xlsx. URL params:
       ?instance_id=  -- лише цей захід (форма-шаблон для його учасників)
@@ -403,7 +403,7 @@ def participants_export():
 
 
 @admin_bp.route('/participants/import', methods=['POST'])
-@admin_required
+@permission_required('registrations.import')
 def participants_import_upload():
     f = request.files.get('xlsx')
     back = _participants_back_url()
@@ -426,7 +426,7 @@ def participants_import_upload():
 
 
 @admin_bp.route('/participants/import/preview/<token>')
-@admin_required
+@permission_required('registrations.import')
 def participants_import_preview(token):
     path = xlsx_io.get_uploaded_path(token)
     if path is None:
@@ -448,7 +448,7 @@ def participants_import_preview(token):
 
 
 @admin_bp.route('/participants/import/apply/<token>', methods=['POST'])
-@admin_required
+@permission_required('registrations.import')
 def participants_import_apply(token):
     path = xlsx_io.get_uploaded_path(token)
     if path is None:
@@ -488,7 +488,7 @@ def participants_import_apply(token):
 
 
 @admin_bp.route('/participants/import/cancel/<token>', methods=['POST'])
-@admin_required
+@permission_required('registrations.import')
 def participants_import_cancel(token):
     xlsx_io.cleanup_upload(token)
     flash('Імпорт скасовано', 'info')

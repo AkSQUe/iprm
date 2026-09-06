@@ -4,6 +4,7 @@
 (`registration_quiz_detail`): саме звідти цей бал і взявся. Гілка «немає
 результату» лишається текстом -- розбирати нічого.
 """
+from tests.support.rbac import grant_role
 import re
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
@@ -44,8 +45,9 @@ def bpr_ready(app):
 def admin(app):
     u = User.create_with_password(
         f'qrl-{_uid()}@test.com', 'password123',
-        first_name='Q', last_name='A', is_admin=True, email_confirmed=True,
+        first_name='Q', last_name='A', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.commit()
     yield u
     db.session.rollback()

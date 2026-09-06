@@ -5,6 +5,7 @@
 сторінка звужується так само, як експорт, а сміття в query-string нічого
 не ламає.
 """
+from tests.support.rbac import grant_role
 import io
 from uuid import uuid4
 
@@ -33,8 +34,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'lst-{_uid()}@test.com', 'password123',
-        first_name='L', last_name='A', is_admin=True, email_confirmed=True,
+        first_name='L', last_name='A', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     # Саме commit, а не flush: сторінка журналу помилок починається із
     # захисного db.session.rollback(), який зніс би незакомічені рядки.
     db.session.commit()

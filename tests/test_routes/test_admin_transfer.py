@@ -10,6 +10,7 @@ from app.models.mixins import utcnow
 from app.models.registration import EventRegistration
 from app.models.user import User
 from tests.refund_fixtures import purge
+from tests.support.rbac import grant_role
 
 PREFIX = 'rta-'
 
@@ -26,12 +27,13 @@ def login_admin(client):
 @pytest.fixture
 def world(app):
     admin = User(email=f'{PREFIX}admin@example.com', first_name='Адмін',
-                 last_name='Тестовий', is_active=True, is_admin=True)
+                 last_name='Тестовий', is_active=True)
     user = User(email=f'{PREFIX}one@example.com', first_name='Тест',
                 last_name='Переносний', is_active=True)
     course = Course(title='Курс переносу', slug=f'{PREFIX}course')
     db.session.add_all([admin, user, course])
     db.session.flush()
+    grant_role(admin, 'super_admin')
     # Пароль ставимо ЛИШЕ після flush: set_password() вимагає persisted
     # User (self.id), інакше падає RuntimeError.
     admin.set_password('x' * 12)

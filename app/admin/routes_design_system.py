@@ -10,10 +10,10 @@
 from flask import render_template
 
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 
 
 @admin_bp.route('/design-system')
-@admin_required
+@permission_required('design_system.view')
 def design_system():
     return render_template('admin/design_system.html')

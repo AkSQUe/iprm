@@ -1,4 +1,5 @@
 """Тести інтеграції Meta Pixel: модель, адмін-сторінка, рендер, CSP."""
+from tests.support.rbac import grant_role
 from uuid import uuid4
 
 import pytest
@@ -12,8 +13,9 @@ from app.models.user import User
 def admin(app):
     u = User.create_with_password(
         f'mp-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='M', last_name='P', is_admin=True, email_confirmed=True,
+        first_name='M', last_name='P', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

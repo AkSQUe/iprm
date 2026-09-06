@@ -4,6 +4,7 @@
 віддає її JS-острівцем, відкат повертає рядок, а фонова чистка через
 витримку прибирає його назавжди.
 """
+from tests.support.rbac import grant_role
 from datetime import timedelta
 from uuid import uuid4
 
@@ -21,8 +22,9 @@ from app.models.user import User
 def admin(app):
     u = User.create_with_password(
         f'u-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='U', last_name='N', is_admin=True, email_confirmed=True,
+        first_name='U', last_name='N', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

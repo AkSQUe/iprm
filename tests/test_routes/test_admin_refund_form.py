@@ -5,6 +5,7 @@
 за залишок. Плюс `next` -- параметр, який приходить з посилання у списку,
 тож він мусить лишатись усередині сайту.
 """
+from tests.support.rbac import grant_role
 from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
@@ -33,8 +34,9 @@ def clean(app):
 def admin(app):
     item = User.create_with_password(
         f'ar-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='А', last_name='Адмін', is_admin=True, email_confirmed=True,
+        first_name='А', last_name='Адмін', email_confirmed=True,
     )
+    grant_role(item, 'super_admin')
     db.session.flush()
     return item
 

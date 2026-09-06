@@ -14,7 +14,7 @@ from flask import render_template, redirect, url_for, flash, request, abort
 from flask_login import current_user
 
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db, limiter
 from app.models.online_enrollment import OnlineEnrollment
 from app.models.registration import EventRegistration
@@ -69,7 +69,7 @@ def _load(kind, order_id):
 
 @admin_bp.route('/refunds/<any(registration, enrollment):kind>/<int:order_id>',
                 methods=['GET', 'POST'])
-@admin_required
+@permission_required('registrations.refund')
 @limiter.limit('30 per hour', methods=['POST'])
 def refund_form(kind, order_id):
     order, back_endpoint = _load(kind, order_id)

@@ -9,6 +9,7 @@
 той самий реєстр за team_size, ПІБ -> реєстр користувачів за q (FK на
 User в моделі немає, тож пошук по email), а email лишається mailto:.
 """
+from tests.support.rbac import grant_role
 import re
 from decimal import Decimal
 from uuid import uuid4
@@ -34,8 +35,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'dd-{_uid()}@test.com', 'password123',
-        first_name='D', last_name='D', is_admin=True, email_confirmed=True,
+        first_name='D', last_name='D', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.commit()
     yield u
     db.session.rollback()

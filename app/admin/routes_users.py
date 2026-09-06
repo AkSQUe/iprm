@@ -6,7 +6,7 @@ from flask_login import current_user
 from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.services import xlsx_reports
 from app.models.medical_profile import MedicalProfile
@@ -90,7 +90,7 @@ def _users_with_counts(rows):
 
 
 @admin_bp.route('/users')
-@admin_required
+@permission_required('users.view')
 def users():
     filters = _user_filters()
     # Базу вже переросли тисячу акаунтів -- сторінками. Експорт лишається по
@@ -115,7 +115,7 @@ def users():
 
 
 @admin_bp.route('/users/export')
-@admin_required
+@permission_required('users.export')
 def users_export():
     """Експорт користувачів у xlsx з урахуванням активних фільтрів."""
 
@@ -152,7 +152,7 @@ def users_export():
 
 
 @admin_bp.route('/users/<int:user_id>')
-@admin_required
+@permission_required('users.view')
 def user_detail(user_id):
     """Картка контакту: анкета, заявки з Meta, реєстрації, онлайн-курси.
 
@@ -201,7 +201,7 @@ def user_detail(user_id):
 
 
 @admin_bp.route('/users/<int:user_id>/toggle-admin', methods=['POST'])
-@admin_required
+@permission_required('access.assign')
 def toggle_admin(user_id):
     user = db.session.get(User, user_id)
     if not user:

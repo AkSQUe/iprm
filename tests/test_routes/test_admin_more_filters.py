@@ -14,6 +14,7 @@ rollout.md`: кожне з його завдань додає СЮДИ свою 
 /api/v1/participants?per_page=200 мовчки вважає, що більше 200 юзерів не
 буває -- лишений тут акаунт валить TestParticipants ЛИШЕ в повному прогоні).
 """
+from tests.support.rbac import grant_role
 import re
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
@@ -76,8 +77,9 @@ def clean(app):
 def admin(app):
     user = User.create_with_password(
         f'{EMAIL_PREFIX}{uuid4().hex[:8]}@test.com', 'password123',
-        first_name='А', last_name='Адмін', is_admin=True, email_confirmed=True,
+        first_name='А', last_name='Адмін', email_confirmed=True,
     )
+    grant_role(user, 'super_admin')
     db.session.commit()
     return user
 

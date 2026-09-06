@@ -7,6 +7,7 @@
 правки в тому, щоб пагінація лишилась ЛИШЕ в роуті сторінки. Тому головний
 тест тут -- xlsx несе весь зріз, а не одну сторінку.
 """
+from tests.support.rbac import grant_role
 import io
 import json
 import re
@@ -49,8 +50,9 @@ def _times(n, base=None):
 def admin(app):
     u = User.create_with_password(
         f'pgreq-{_uid()}@test.com', 'password123',
-        first_name='П', last_name='А', is_admin=True, email_confirmed=True,
+        first_name='П', last_name='А', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.commit()
     return u
 

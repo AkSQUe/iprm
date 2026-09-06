@@ -15,7 +15,7 @@ from flask import (
 from flask_login import current_user
 
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.models.course_instance import CourseInstance
 from app.models.material_reservation import (
@@ -277,7 +277,7 @@ def _refuse_document(reservation, instance_id, **kw):
 # ---------------------------------------------------------------------------
 
 @admin_bp.route('/instances/<int:instance_id>/materials')
-@admin_required
+@permission_required('materials.view')
 def instance_materials(instance_id):
     instance = _get_instance(instance_id)
     if not instance:
@@ -376,7 +376,7 @@ def instance_materials(instance_id):
 # ---------------------------------------------------------------------------
 
 @admin_bp.route('/instances/<int:instance_id>/materials/reserve', methods=['POST'])
-@admin_required
+@permission_required('materials.manage')
 def instance_materials_reserve(instance_id):
     instance = _get_instance(instance_id)
     if not instance:
@@ -433,7 +433,7 @@ def instance_materials_reserve(instance_id):
 
 
 @admin_bp.route('/instances/<int:instance_id>/materials/update', methods=['POST'])
-@admin_required
+@permission_required('materials.manage')
 def instance_materials_update(instance_id):
     """Переписати перелік ЩЕ НЕ погодженої заявки.
 
@@ -479,7 +479,7 @@ def instance_materials_update(instance_id):
 
 
 @admin_bp.route('/instances/<int:instance_id>/materials/edit', methods=['POST'])
-@admin_required
+@permission_required('materials.manage')
 def instance_materials_edit(instance_id):
     instance = _get_instance(instance_id)
     if not instance:
@@ -523,7 +523,7 @@ def instance_materials_edit(instance_id):
 
 
 @admin_bp.route('/instances/<int:instance_id>/materials/actuals', methods=['POST'])
-@admin_required
+@permission_required('materials.manage')
 def instance_materials_actuals(instance_id):
     instance = _get_instance(instance_id)
     if not instance:
@@ -558,7 +558,7 @@ def instance_materials_actuals(instance_id):
 
 
 @admin_bp.route('/instances/<int:instance_id>/materials/adjust', methods=['POST'])
-@admin_required
+@permission_required('materials.manage')
 def instance_materials_adjust(instance_id):
     instance = _get_instance(instance_id)
     if not instance:
@@ -593,7 +593,7 @@ def instance_materials_adjust(instance_id):
 
 
 @admin_bp.route('/instances/<int:instance_id>/materials/cancel', methods=['POST'])
-@admin_required
+@permission_required('materials.manage')
 def instance_materials_cancel(instance_id):
     instance = _get_instance(instance_id)
     if not instance:
@@ -625,7 +625,7 @@ def instance_materials_cancel(instance_id):
 # ---------------------------------------------------------------------------
 
 @admin_bp.route('/instances/<int:instance_id>/materials/apply-template', methods=['POST'])
-@admin_required
+@permission_required('materials.manage')
 def instance_materials_apply_template(instance_id):
     instance = _get_instance(instance_id)
     if not instance:
@@ -672,7 +672,7 @@ def instance_materials_apply_template(instance_id):
 # ---------------------------------------------------------------------------
 
 @admin_bp.route('/instances/<int:instance_id>/materials/template.xlsx')
-@admin_required
+@permission_required('materials.view')
 def instance_materials_template(instance_id):
     instance = _get_instance(instance_id)
     if not instance:
@@ -708,7 +708,7 @@ def _materials_filename(instance):
 
 
 @admin_bp.route('/instances/<int:instance_id>/materials/import-xlsx', methods=['POST'])
-@admin_required
+@permission_required('materials.import')
 def instance_materials_import(instance_id):
     instance = _get_instance(instance_id)
     if not instance:
@@ -745,7 +745,7 @@ def instance_materials_import(instance_id):
 # ---------------------------------------------------------------------------
 
 @admin_bp.route('/instances/<int:instance_id>/materials/picking-list')
-@admin_required
+@permission_required('materials.view')
 def instance_materials_picking(instance_id):
     instance = _get_instance(instance_id)
     if not instance:
@@ -801,7 +801,7 @@ def _overview_query(f):
 
 
 @admin_bp.route('/materials')
-@admin_required
+@permission_required('materials.view')
 def materials_overview():
     from app.models.material_reservation import MaterialReservationItem
     f = _overview_filters()
@@ -855,7 +855,7 @@ _OVERVIEW_EXPORT_CAP = 2000
 
 
 @admin_bp.route('/materials/export.xlsx')
-@admin_required
+@permission_required('materials.export')
 def materials_overview_export():
     f = _overview_filters()
     reservations = _overview_query(f).limit(_OVERVIEW_EXPORT_CAP).all()
@@ -874,7 +874,7 @@ def materials_overview_export():
 
 
 @admin_bp.route('/materials/reconcile', methods=['POST'])
-@admin_required
+@permission_required('materials.manage')
 def materials_reconcile_now():
     # Bound the manual trigger: each item is a live MM Medic HTTP call, so cap it
     # to keep the request responsive; the scheduled job handles the full backlog.

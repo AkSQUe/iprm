@@ -12,7 +12,7 @@ from flask_login import current_user
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.i18n import PREFIXED_LANGUAGES
 from app.models.city import City, normalize_city_name
@@ -22,7 +22,7 @@ audit_logger = logging.getLogger('audit')
 
 
 @admin_bp.route('/cities', methods=['GET'])
-@admin_required
+@permission_required('cities.view')
 def cities_list():
     filters = {'q': _listing.text_arg('q')}
     # Пошук звужує лише показані рядки: cities_save читає ті ключі форми, що
@@ -74,7 +74,7 @@ def cities_list():
 
 
 @admin_bp.route('/cities/save', methods=['POST'])
-@admin_required
+@permission_required('cities.manage')
 def cities_save():
     """Зберегти переклади наявних рядків одним сабмітом."""
     cities = City.query.all()
@@ -92,7 +92,7 @@ def cities_save():
 
 
 @admin_bp.route('/cities/add', methods=['POST'])
-@admin_required
+@permission_required('cities.manage')
 def cities_add():
     """Додати назву в довідник. Приймає і ручний ввід, і кнопку біля
     локації, якої бракує."""
@@ -116,7 +116,7 @@ def cities_add():
 
 
 @admin_bp.route('/cities/add-missing', methods=['POST'])
-@admin_required
+@permission_required('cities.manage')
 def cities_add_missing():
     """Додати всі локації розкладу, яких немає в довіднику.
 
@@ -138,7 +138,7 @@ def cities_add_missing():
 
 
 @admin_bp.route('/cities/<int:city_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('cities.delete')
 def cities_delete(city_id):
     city = db.session.get(City, city_id)
     if city is None:

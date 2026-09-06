@@ -8,7 +8,7 @@ from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import course_request_counts, try_commit
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin.forms import CourseRequestAdminForm
 from app.extensions import db
 from app.models.course import Course
@@ -47,7 +47,7 @@ def _course_requests_query(filters):
 
 
 @admin_bp.route('/course-requests')
-@admin_required
+@permission_required('course_requests.view')
 def course_requests_list():
     filters = _course_request_filters()
     pagination = _course_requests_query(filters).paginate(
@@ -87,7 +87,7 @@ def course_requests_list():
 
 
 @admin_bp.route('/course-requests/export')
-@admin_required
+@permission_required('course_requests.export')
 def course_requests_export():
     """Експорт запитів на курси у xlsx з урахуванням активних фільтрів."""
     from app.services import xlsx_reports
@@ -126,7 +126,7 @@ def course_requests_export():
 
 
 @admin_bp.route('/course-requests/<int:request_id>/edit', methods=['GET', 'POST'])
-@admin_required
+@permission_required('course_requests.manage')
 def course_request_edit(request_id):
     req = db.session.get(CourseRequest, request_id)
     if not req:
@@ -191,7 +191,7 @@ def _current_back_args():
 
 
 @admin_bp.route('/course-requests/<int:request_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('course_requests.delete')
 def course_request_delete(request_id):
     req = db.session.get(CourseRequest, request_id)
     if not req:

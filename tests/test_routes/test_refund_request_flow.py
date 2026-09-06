@@ -13,6 +13,7 @@ from uuid import uuid4
 import pytest
 
 from tests import refund_fixtures
+from tests.support.rbac import grant_role
 
 from app.extensions import db
 from app.models.course import Course
@@ -49,9 +50,11 @@ def _user(admin=False):
     item = User.create_with_password(
         f'rrf-{_uid()}@test.com', 'password123',
         first_name='Тарас', last_name='Бойко',
-        is_admin=admin, email_confirmed=True,
+        email_confirmed=True,
     )
     db.session.flush()
+    if admin:
+        grant_role(item, 'super_admin')
     return item
 
 

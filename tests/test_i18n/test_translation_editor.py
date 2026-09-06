@@ -1,5 +1,6 @@
 """Адмін-редактор перекладів: доступ, round-trip рядків і JSON,
 фільтр шляхів-ассетів, префіл, покриття."""
+from tests.support.rbac import grant_role
 from uuid import uuid4
 
 import pytest
@@ -15,8 +16,9 @@ from app.models.user import User
 def admin():
     u = User.create_with_password(
         f'a-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='A', last_name='D', is_admin=True, email_confirmed=True,
+        first_name='A', last_name='D', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

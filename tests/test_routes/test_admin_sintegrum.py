@@ -4,6 +4,7 @@
 витікає в HTML і не затирається порожнім полем, а курс без ціни чи посилання
 не можна опублікувати навіть POST-ом в обхід форми.
 """
+from tests.support.rbac import grant_role
 from decimal import Decimal
 from uuid import uuid4
 
@@ -20,8 +21,9 @@ from app.services import sintegrum_client as sc
 def admin(app):
     user = User.create_with_password(
         f'as-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='А', last_name='Адмін', is_admin=True, email_confirmed=True,
+        first_name='А', last_name='Адмін', email_confirmed=True,
     )
+    grant_role(user, 'super_admin')
     db.session.flush()
     return user
 

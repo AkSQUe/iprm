@@ -14,6 +14,8 @@ from uuid import uuid4
 
 import pytest
 
+from tests.support.rbac import grant_role
+
 from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
@@ -118,7 +120,7 @@ def test_muted_on_certificate_data_form(client, registered_user, prefix):
 def test_admin_is_not_touched(client, registered_user):
     """В адмінці поп-ап не рендериться, і контекст-процесор туди не ходить."""
     user, _reg = registered_user
-    user.is_admin = True
+    grant_role(user, 'super_admin')
     db.session.flush()
     _login(client, user)
     resp = client.get('/admin/')

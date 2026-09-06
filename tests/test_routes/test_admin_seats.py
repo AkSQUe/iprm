@@ -4,6 +4,7 @@
 перевищення пулу (оплата прийшла після заповнення) має бути видно
 червоною плашкою -- інакше менеджер дізнається про нього в залі.
 """
+from tests.support.rbac import grant_role
 import re
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
@@ -25,8 +26,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'seats-{_uid()}@test.com', 'password123',
-        first_name='S', last_name='A', is_admin=True, email_confirmed=True,
+        first_name='S', last_name='A', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.commit()
     yield u
     db.session.rollback()

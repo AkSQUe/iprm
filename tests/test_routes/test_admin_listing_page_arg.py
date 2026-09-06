@@ -7,6 +7,7 @@ Task 1: `?page=<величезне число>` кидав 500 (SQLite OverflowE
 роздував чіпс і кожне посилання сторінки символами, яких запит однаково не
 бачить (`search_clause` ріже до MAX_SEARCH_LENGTH до запиту).
 """
+from tests.support.rbac import grant_role
 import re
 from urllib.parse import urlencode
 from uuid import uuid4
@@ -44,8 +45,9 @@ def admin(app):
 
     user = User.create_with_password(
         f'{EMAIL_PREFIX}{_uid()}@test.com', 'password123',
-        first_name='П', last_name='Аргумент', is_admin=True, email_confirmed=True,
+        first_name='П', last_name='Аргумент', email_confirmed=True,
     )
+    grant_role(user, 'super_admin')
     db.session.flush()
     return user
 

@@ -13,6 +13,7 @@
 кожен запис несе своє посилання на список, посилання на xlsx-білдер і
 фабрику рядків під власну модель.
 """
+from tests.support.rbac import grant_role
 import io
 import re
 from datetime import datetime, timedelta, timezone
@@ -50,8 +51,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'ec-{_uid()}@test.com', 'password123',
-        first_name='Е', last_name='С', is_admin=True, email_confirmed=True,
+        first_name='Е', last_name='С', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

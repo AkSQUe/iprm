@@ -167,6 +167,7 @@ def test_submit_request_sets_created_by_id_for_logged_in_admin(app, monkeypatch)
 
     from app.models.user import User
     from app.services import material_reservation_service as mrs
+    from tests.support.rbac import grant_role
 
     monkeypatch.setattr(mrs, 'get_client', lambda: SimpleNamespace(
         submit_request=lambda ref, meta, items: SimpleNamespace(
@@ -175,9 +176,10 @@ def test_submit_request_sets_created_by_id_for_logged_in_admin(app, monkeypatch)
 
     with app.test_request_context('/'):
         inst = _make_instance(slug_suffix='creator')
-        admin = User(email='admin-creator@example.com', is_admin=True)
+        admin = User(email='admin-creator@example.com')
         db.session.add(admin)
         db.session.flush()
+        grant_role(admin, 'super_admin')
         login_user(admin)
 
         ok, _result, reservation = mrs.submit_request(
@@ -254,9 +256,11 @@ def test_confirm_reservation_blank_comment_clears_previous(app):
 
 def _make_submitter(email='manager@example.com', slug_suffix='sub'):
     from app.models.user import User
-    user = User(email=f'{slug_suffix}-{email}', is_admin=True)
+    from tests.support.rbac import grant_role
+    user = User(email=f'{slug_suffix}-{email}')
     db.session.add(user)
     db.session.flush()
+    grant_role(user, 'super_admin')
     return user
 
 

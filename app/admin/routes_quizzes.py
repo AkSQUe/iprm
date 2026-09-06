@@ -17,7 +17,7 @@ from sqlalchemy.orm import contains_eager, joinedload, selectinload
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin.forms import CourseQuizForm
 from app.admin.routes_translations import apply_inline_translations
 from app.extensions import db
@@ -121,7 +121,7 @@ def _save_editor(quiz, redirect_endpoint, **redirect_kwargs):
 # ---- Реєстр ----------------------------------------------------------------
 
 @admin_bp.route('/quizzes')
-@admin_required
+@permission_required('quizzes.view')
 def quizzes_list():
     """Реєстр тестів: де вони є, чи готові, чи вистачає даних БПР."""
     filters = {'q': _listing.text_arg('q')}
@@ -168,7 +168,7 @@ def quizzes_list():
 # ---- Редактор: тест курсу --------------------------------------------------
 
 @admin_bp.route('/courses/<int:course_id>/quiz', methods=['GET', 'POST'])
-@admin_required
+@permission_required('quizzes.manage')
 def course_quiz_edit(course_id):
     course = db.session.get(Course, course_id)
     if course is None:
@@ -189,7 +189,7 @@ def course_quiz_edit(course_id):
 # ---- Редактор: перевизначення на проведенні --------------------------------
 
 @admin_bp.route('/instances/<int:instance_id>/quiz', methods=['GET', 'POST'])
-@admin_required
+@permission_required('quizzes.manage')
 def instance_quiz_edit(instance_id):
     instance = db.session.get(CourseInstance, instance_id)
     if instance is None:
@@ -208,7 +208,7 @@ def instance_quiz_edit(instance_id):
 
 
 @admin_bp.route('/quizzes/<int:quiz_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('quizzes.delete')
 def quiz_delete(quiz_id):
     quiz = db.session.get(CourseQuiz, quiz_id)
     if quiz is None:
@@ -269,7 +269,7 @@ def _back_to_quiz_results(instance_id):
 # ---- Результати по групі ---------------------------------------------------
 
 @admin_bp.route('/instances/<int:instance_id>/quiz-results')
-@admin_required
+@permission_required('quizzes.view')
 def instance_quiz_results(instance_id):
     instance = db.session.get(CourseInstance, instance_id)
     if instance is None:
@@ -374,7 +374,7 @@ def instance_quiz_results(instance_id):
 # ---- Детальний розбір по учаснику ------------------------------------------
 
 @admin_bp.route('/registrations/<int:reg_id>/quiz')
-@admin_required
+@permission_required('quizzes.view')
 def registration_quiz_detail(reg_id):
     """Чому тест складено або ні: кожна спроба, кожне питання, кожна відповідь.
 
@@ -417,7 +417,7 @@ def registration_quiz_detail(reg_id):
 # ---- Спроби окремого учасника ----------------------------------------------
 
 @admin_bp.route('/registrations/<int:reg_id>/quiz/unlock', methods=['POST'])
-@admin_required
+@permission_required('quizzes.manage')
 def registration_quiz_unlock(reg_id):
     """Видати додаткові спроби (технічний збій, спірний випадок).
 
@@ -445,7 +445,7 @@ def registration_quiz_unlock(reg_id):
 
 
 @admin_bp.route('/registrations/<int:reg_id>/quiz/reset', methods=['POST'])
-@admin_required
+@permission_required('quizzes.manage')
 def registration_quiz_reset(reg_id):
     """Обнулити результат тестування.
 

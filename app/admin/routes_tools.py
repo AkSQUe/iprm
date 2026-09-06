@@ -17,7 +17,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.models.site_settings import SiteSettings
 from app.models.trainer import Trainer
 from app.services import certificate_batch as batch
@@ -31,7 +31,7 @@ def _provider():
 
 
 @admin_bp.route('/tools/certificate-generator')
-@admin_required
+@permission_required('cert_generator.view')
 def tool_certificate_generator():
     return render_template(
         'admin/tools_certificate_generator.html',
@@ -41,7 +41,7 @@ def tool_certificate_generator():
 
 
 @admin_bp.route('/tools/certificate-generator/template')
-@admin_required
+@permission_required('cert_generator.view')
 def tool_certificate_generator_template():
     """Порожній xlsx-шаблон із заголовками + приклад-рядок."""
     wb = Workbook()
@@ -107,7 +107,7 @@ def tool_certificate_generator_template():
 
 
 @admin_bp.route('/tools/certificate-generator/preview', methods=['POST'])
-@admin_required
+@permission_required('cert_generator.manage')
 def tool_certificate_generator_preview():
     """Розібрати завантажений xlsx і показати таблицю OK/помилки (dry-run)."""
     if not _provider():
@@ -141,7 +141,7 @@ def tool_certificate_generator_preview():
 
 
 @admin_bp.route('/tools/certificate-generator/generate', methods=['POST'])
-@admin_required
+@permission_required('cert_generator.manage')
 def tool_certificate_generator_run():
     """Запустити фонову генерацію для job-а з прев'ю."""
     provider = _provider()
@@ -166,7 +166,7 @@ def tool_certificate_generator_run():
 
 
 @admin_bp.route('/tools/certificate-generator/job/<job_id>')
-@admin_required
+@permission_required('cert_generator.view')
 def tool_certificate_generator_job(job_id):
     status = batch.read_status(job_id)
     if status is None:
@@ -177,7 +177,7 @@ def tool_certificate_generator_job(job_id):
 
 
 @admin_bp.route('/tools/certificate-generator/job/<job_id>/status')
-@admin_required
+@permission_required('cert_generator.view')
 def tool_certificate_generator_job_status(job_id):
     status = batch.read_status(job_id)
     if status is None:
@@ -186,7 +186,7 @@ def tool_certificate_generator_job_status(job_id):
 
 
 @admin_bp.route('/tools/certificate-generator/job/<job_id>/download')
-@admin_required
+@permission_required('cert_generator.view')
 def tool_certificate_generator_job_download(job_id):
     status = batch.read_status(job_id)
     if status is None or status.get('status') != 'done':

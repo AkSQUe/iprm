@@ -8,7 +8,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.models.error_log import ErrorLog
 
@@ -63,7 +63,7 @@ def _error_log_query(filters):
 
 
 @admin_bp.route('/error-logs')
-@admin_required
+@permission_required('error_logs.view')
 def error_logs():
     # Workaround: PostgreSQL InFailedSqlTransaction після попередніх помилок
     try:
@@ -98,7 +98,7 @@ def error_logs():
 
 
 @admin_bp.route('/error-logs/export')
-@admin_required
+@permission_required('error_logs.export')
 def error_logs_export():
     """Експорт журналу помилок у xlsx з урахуванням активних фільтрів."""
     from app.services import xlsx_reports
@@ -133,7 +133,7 @@ def error_logs_export():
 
 
 @admin_bp.route('/error-logs/<int:error_id>')
-@admin_required
+@permission_required('error_logs.view')
 def error_log_detail(error_id):
     error_log = db.session.get(ErrorLog, error_id)
     if not error_log:
@@ -149,7 +149,7 @@ def error_log_detail(error_id):
 
 
 @admin_bp.route('/error-logs/<int:error_id>/resolve', methods=['POST'])
-@admin_required
+@permission_required('error_logs.manage')
 def resolve_error(error_id):
     error_log = db.session.get(ErrorLog, error_id)
     if not error_log:
@@ -180,7 +180,7 @@ def resolve_error(error_id):
 
 
 @admin_bp.route('/error-logs/<int:error_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('error_logs.delete')
 def delete_error_log(error_id):
     error_log = db.session.get(ErrorLog, error_id)
     if error_log:
@@ -192,7 +192,7 @@ def delete_error_log(error_id):
 
 
 @admin_bp.route('/error-logs/bulk-action', methods=['POST'])
-@admin_required
+@permission_required('error_logs.delete')
 def error_logs_bulk_action():
     action = request.form.get('action')
     error_ids = request.form.getlist('error_ids[]')

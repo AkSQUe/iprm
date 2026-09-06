@@ -6,7 +6,7 @@ from flask import render_template, redirect, url_for, flash
 from flask_login import current_user
 
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin.routes_translations import apply_inline_translations
 from app.admin.forms import CourseTariffForm
 from app.extensions import db
@@ -19,7 +19,7 @@ audit_logger = logging.getLogger('audit')
 
 
 @admin_bp.route('/courses/<int:course_id>/tariffs', methods=['GET', 'POST'])
-@admin_required
+@permission_required('courses.manage')
 def course_tariffs(course_id):
     """Список шаблонів вилки курсу + форма додавання."""
     course = db.session.get(Course, course_id)
@@ -61,7 +61,7 @@ def course_tariffs(course_id):
 
 
 @admin_bp.route('/course-tariffs/<int:tariff_id>/edit', methods=['GET', 'POST'])
-@admin_required
+@permission_required('courses.manage')
 def course_tariff_edit(tariff_id):
     tariff = db.session.get(CourseTariff, tariff_id)
     if not tariff:
@@ -100,7 +100,7 @@ def course_tariff_edit(tariff_id):
 
 
 @admin_bp.route('/course-tariffs/<int:tariff_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('courses.delete')
 def course_tariff_delete(tariff_id):
     tariff = db.session.get(CourseTariff, tariff_id)
     if not tariff:
@@ -124,7 +124,7 @@ def course_tariff_delete(tariff_id):
 
 
 @admin_bp.route('/courses/<int:course_id>/tariffs/apply', methods=['POST'])
-@admin_required
+@permission_required('courses.manage')
 def course_tariffs_apply(course_id):
     """Застосувати дефолтну вилку до ВСІХ майбутніх проведень курсу.
 
@@ -171,7 +171,7 @@ def course_tariffs_apply(course_id):
 
 
 @admin_bp.route('/instances/<int:instance_id>/tariffs/sync', methods=['POST'])
-@admin_required
+@permission_required('instances.manage')
 def instance_tariffs_sync(instance_id):
     """Кнопка "Взяти з курсу": замінити тарифи проведення шаблонами курсу."""
     instance = db.session.get(CourseInstance, instance_id)

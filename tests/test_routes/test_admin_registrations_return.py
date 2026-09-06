@@ -3,6 +3,7 @@
 Дія зі списку реєстрацій шле у next поточний URL з фільтрами і сторінкою.
 Значення приходить із форми, тож перевіряємо і що чужий домен не пролізе.
 """
+from tests.support.rbac import grant_role
 from uuid import uuid4
 
 import pytest
@@ -22,8 +23,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'ret-{_uid()}@test.com', 'password123',
-        first_name='R', last_name='A', is_admin=True, email_confirmed=True,
+        first_name='R', last_name='A', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

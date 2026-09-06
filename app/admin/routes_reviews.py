@@ -5,7 +5,7 @@ from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
 
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin.forms import ReviewForm
 from app.extensions import db
 from app.models.course import Course
@@ -52,7 +52,7 @@ def _current_back_args():
 
 
 @admin_bp.route('/reviews')
-@admin_required
+@permission_required('reviews.view')
 def reviews_list():
     filters = _review_filters()
     query = Review.alive().options(db.joinedload(Review.course))
@@ -112,7 +112,7 @@ def _apply(form, review):
 
 
 @admin_bp.route('/reviews/new', methods=['GET', 'POST'])
-@admin_required
+@permission_required('reviews.manage')
 def review_create():
     form = ReviewForm()
     form.course_id.choices = _course_choices()
@@ -133,7 +133,7 @@ def review_create():
 
 
 @admin_bp.route('/reviews/<int:review_id>/edit', methods=['GET', 'POST'])
-@admin_required
+@permission_required('reviews.manage')
 def review_edit(review_id):
     review = db.session.get(Review, review_id)
     if not review or review.is_deleted:
@@ -160,7 +160,7 @@ def review_edit(review_id):
 
 
 @admin_bp.route('/reviews/<int:review_id>/toggle', methods=['POST'])
-@admin_required
+@permission_required('reviews.manage')
 def review_toggle(review_id):
     review = db.session.get(Review, review_id)
     if review and not review.is_deleted:
@@ -176,7 +176,7 @@ def review_toggle(review_id):
 
 
 @admin_bp.route('/reviews/<int:review_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('reviews.delete')
 def review_delete(review_id):
     """М'яке видалення: діалогу підтвердження немає, натомість тост із
     кнопкою "Повернути" (відкат тут повний -- відновлюється весь рядок)."""
@@ -199,7 +199,7 @@ def review_delete(review_id):
 
 
 @admin_bp.route('/reviews/<int:review_id>/restore', methods=['POST'])
-@admin_required
+@permission_required('reviews.manage')
 def review_restore(review_id):
     review = db.session.get(Review, review_id)
     if not review or not review.is_deleted:

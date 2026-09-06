@@ -13,6 +13,7 @@
 `leadgen_id` -- тому для скопіювання своїх рядків у спільній тестовій базі
 всюди нижче звужуємо саме за унікальним `last_name`.
 """
+from tests.support.rbac import grant_role
 import re
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -33,8 +34,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'mpf-{_uid()}@test.com', 'password123',
-        first_name='M', last_name='P', is_admin=True, email_confirmed=True,
+        first_name='M', last_name='P', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.commit()
     yield u
     db.session.rollback()

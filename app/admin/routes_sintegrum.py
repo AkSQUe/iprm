@@ -15,7 +15,7 @@ from flask_login import current_user
 
 from app.admin import admin_bp
 from app.admin._helpers import mask_secret, save_integration_settings
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import limiter
 from app.models.mixins import utcnow
 from app.models.online_course import OnlineCourse
@@ -61,14 +61,14 @@ def _config(settings):
 
 
 @admin_bp.route('/sintegrum')
-@admin_required
+@permission_required('integrations.view')
 def sintegrum():
     settings = SiteSettings.get()
     return render_template('admin/sintegrum.html', cfg=_config(settings))
 
 
 @admin_bp.route('/sintegrum/save', methods=['POST'])
-@admin_required
+@permission_required('integrations.keys')
 def sintegrum_save():
     settings = SiteSettings.get()
 
@@ -162,7 +162,7 @@ def sintegrum_save():
 
 
 @admin_bp.route('/sintegrum/test', methods=['POST'])
-@admin_required
+@permission_required('integrations.manage')
 @limiter.limit('10 per minute')
 def sintegrum_test():
     """Перевірка зв'язку. Працює і при вимкненій інтеграції -- інакше
@@ -200,7 +200,7 @@ def sintegrum_test():
 
 
 @admin_bp.route('/sintegrum/sync', methods=['POST'])
-@admin_required
+@permission_required('integrations.manage')
 @limiter.limit('10 per minute')
 def sintegrum_sync():
     from app.services.online_course_sync import sync_courses

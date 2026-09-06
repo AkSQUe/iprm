@@ -102,7 +102,7 @@ class TestDefaultValues:
         db_session.flush()
 
         assert user.is_active is True
-        assert user.is_admin is False
+        assert user.is_staff is False
 
     def test_registration_defaults(self, db_session, sample_user, sample_instance):
         """Реєстрація створюється з правильними defaults."""

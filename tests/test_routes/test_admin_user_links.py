@@ -7,6 +7,7 @@
 Зате число точно про того самого користувача, на відміну від пошуку по
 email, який ловить чужі адреси-підрядки.
 """
+from tests.support.rbac import grant_role
 import re
 from uuid import uuid4
 
@@ -27,8 +28,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'ul-{_uid()}@test.com', 'password123',
-        first_name='U', last_name='L', is_admin=True, email_confirmed=True,
+        first_name='U', last_name='L', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.commit()
     yield u
     db.session.rollback()

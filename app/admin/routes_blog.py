@@ -13,7 +13,7 @@ from sqlalchemy import func, desc
 from sqlalchemy.exc import IntegrityError
 
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin.forms import BlogPostForm
 from app.admin.routes_translations import apply_inline_translations
 from app.extensions import db
@@ -31,7 +31,7 @@ _POST_STATES = {'published': 'Опубліковані', 'draft': 'Чернет�
 
 
 @admin_bp.route('/blog')
-@admin_required
+@permission_required('blog.view')
 def blog_list():
     filters = {
         'q': _listing.text_arg('q'),
@@ -207,7 +207,7 @@ def _commit_post(post):
 
 
 @admin_bp.route('/blog/new', methods=['GET', 'POST'])
-@admin_required
+@permission_required('blog.manage')
 def blog_create():
     form = BlogPostForm()
     if request.method == 'GET':
@@ -237,7 +237,7 @@ def blog_create():
 
 
 @admin_bp.route('/blog/<int:post_id>/edit', methods=['GET', 'POST'])
-@admin_required
+@permission_required('blog.manage')
 def blog_edit(post_id):
     post = db.session.get(BlogPost, post_id)
     if not post:
@@ -271,12 +271,12 @@ def blog_edit(post_id):
 
 
 @admin_bp.route('/blog/<int:post_id>/preview')
-@admin_required
+@permission_required('blog.view')
 def blog_preview(post_id):
     """Прев'ю допису публічним шаблоном незалежно від статусу (admin-only).
 
     Дозволяє переглянути чернетку так, як вона виглядатиме на сайті, до
-    публікації. Доступ обмежено admin_required (без публічного токена)."""
+    публікації. Доступ обмежено правом blog.view (без публічного токена)."""
     post = db.session.get(BlogPost, post_id)
     if not post:
         flash('Допис не знайдено', 'error')
@@ -292,7 +292,7 @@ def blog_preview(post_id):
 
 
 @admin_bp.route('/blog/<int:post_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('blog.delete')
 def blog_delete(post_id):
     post = db.session.get(BlogPost, post_id)
     if post:

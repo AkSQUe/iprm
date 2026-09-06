@@ -1,4 +1,5 @@
 """Тести адмін-сторінки реферальної програми (рендер + дані)."""
+from tests.support.rbac import grant_role
 from decimal import Decimal
 from uuid import uuid4
 
@@ -18,8 +19,9 @@ from app.services import referral_service as rs
 def admin(app):
     u = User.create_with_password(
         f'a-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='A', last_name='D', is_admin=True, email_confirmed=True,
+        first_name='A', last_name='D', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

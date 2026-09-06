@@ -16,7 +16,7 @@ from flask_login import current_user
 from sqlalchemy.exc import IntegrityError
 
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.models.course_instance import CourseInstance
 from app.models.notification_rule import (
@@ -104,7 +104,7 @@ def _load_rules_map():
 
 
 @admin_bp.route('/notifications/recipients', methods=['GET'])
-@admin_required
+@permission_required('notifications.view')
 def notifications_recipients():
     rules_map = _load_rules_map()
     settings = SiteSettings.get()
@@ -128,7 +128,7 @@ def notifications_recipients():
 
 
 @admin_bp.route('/notifications/recipients', methods=['POST'])
-@admin_required
+@permission_required('notifications.manage')
 def notifications_recipients_save():
     rules_map = _load_rules_map()
     changed = []
@@ -189,7 +189,7 @@ def notifications_recipients_save():
 
 
 @admin_bp.route('/notifications/recipients/managers', methods=['POST'])
-@admin_required
+@permission_required('notifications.manage')
 def notifications_recipients_managers_save():
     settings = SiteSettings.get()
     new_emails = _parse_emails(request.form.get('manager_emails'))
@@ -212,7 +212,7 @@ def notifications_recipients_managers_save():
 
 
 @admin_bp.route('/notifications/recipients/test/<event_type>', methods=['POST'])
-@admin_required
+@permission_required('notifications.manage')
 def notifications_recipients_test(event_type):
     """Надіслати тестовий admin-лист на поточних резолвнутих одержувачів.
 
@@ -275,7 +275,7 @@ def notifications_recipients_test(event_type):
 
 
 @admin_bp.route('/notifications/recipients/preview', methods=['GET'])
-@admin_required
+@permission_required('notifications.view')
 def notifications_recipients_preview():
     """JSON-endpoint для live-preview одержувачів. Не змінює стан --
     лише читає поточні правила і повертає breakdown.

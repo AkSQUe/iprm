@@ -6,7 +6,7 @@ POST /admin/google-oauth/save    -- зберегти client_id, secret, enabled
 from flask import flash, redirect, render_template, request, url_for
 
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin._helpers import (
     is_valid_google_client_id,
     mask_secret,
@@ -17,7 +17,7 @@ from app.models.site_settings import SiteSettings
 
 
 @admin_bp.route('/google-oauth')
-@admin_required
+@permission_required('integrations.view')
 def google_oauth():
     settings = SiteSettings.get()
     cfg = {
@@ -40,7 +40,7 @@ def google_oauth():
 
 
 @admin_bp.route('/google-oauth/save', methods=['POST'])
-@admin_required
+@permission_required('integrations.keys')
 def google_oauth_save():
     client_id = request.form.get('client_id', '').strip()
     client_secret = request.form.get('client_secret', '').strip()

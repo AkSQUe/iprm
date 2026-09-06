@@ -8,7 +8,7 @@ from flask import (
 from flask_login import current_user
 
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.services import xlsx_io, xlsx_translations
 
@@ -31,7 +31,7 @@ _TRANSLATION_BACK = {
 
 
 @admin_bp.route('/translations/export/object/<entity>/<int:obj_id>')
-@admin_required
+@permission_required('translations.export')
 def translations_export_object(entity, obj_id):
     """Файл перекладів одного курсу/тренера/допису.
 
@@ -59,7 +59,7 @@ def translations_export_object(entity, obj_id):
 
 
 @admin_bp.route('/translations/export/<scope>')
-@admin_required
+@permission_required('translations.export')
 def translations_export(scope):
     """Файл перекладів розділу. ?mode=todo -- лише неперекладені рядки."""
     if scope not in xlsx_translations.SCOPES:
@@ -82,7 +82,7 @@ def translations_export(scope):
 
 
 @admin_bp.route('/translations/import/<scope>', methods=['POST'])
-@admin_required
+@permission_required('translations.import')
 def translations_import_upload(scope):
     if scope not in xlsx_translations.SCOPES:
         abort(404)
@@ -104,7 +104,7 @@ def translations_import_upload(scope):
 
 
 @admin_bp.route('/translations/import/<scope>/preview/<token>')
-@admin_required
+@permission_required('translations.import')
 def translations_import_preview(scope, token):
     if scope not in xlsx_translations.SCOPES:
         abort(404)
@@ -127,7 +127,7 @@ def translations_import_preview(scope, token):
 
 
 @admin_bp.route('/translations/import/<scope>/apply/<token>', methods=['POST'])
-@admin_required
+@permission_required('translations.import')
 def translations_import_apply(scope, token):
     if scope not in xlsx_translations.SCOPES:
         abort(404)
@@ -165,7 +165,7 @@ def translations_import_apply(scope, token):
 
 
 @admin_bp.route('/translations/import/<scope>/cancel/<token>', methods=['POST'])
-@admin_required
+@permission_required('translations.import')
 def translations_import_cancel(scope, token):
     if scope not in xlsx_translations.SCOPES:
         abort(404)
@@ -179,7 +179,7 @@ def translations_import_cancel(scope, token):
 # ----------------------------------------------------------------------
 
 @admin_bp.route('/courses/export')
-@admin_required
+@permission_required('courses.export')
 def courses_export():
     """Експорт курсів. URL params:
       ?active=true   -- лише активні
@@ -208,7 +208,7 @@ def courses_export():
 
 
 @admin_bp.route('/courses/import', methods=['POST'])
-@admin_required
+@permission_required('courses.import')
 def courses_import_upload():
     f = request.files.get('xlsx')
     if not f or not f.filename:
@@ -227,7 +227,7 @@ def courses_import_upload():
 
 
 @admin_bp.route('/courses/import/preview/<token>')
-@admin_required
+@permission_required('courses.import')
 def courses_import_preview(token):
     path = xlsx_io.get_uploaded_path(token)
     if path is None:
@@ -248,7 +248,7 @@ def courses_import_preview(token):
 
 
 @admin_bp.route('/courses/import/apply/<token>', methods=['POST'])
-@admin_required
+@permission_required('courses.import')
 def courses_import_apply(token):
     path = xlsx_io.get_uploaded_path(token)
     if path is None:
@@ -286,7 +286,7 @@ def courses_import_apply(token):
 
 
 @admin_bp.route('/courses/import/cancel/<token>', methods=['POST'])
-@admin_required
+@permission_required('courses.import')
 def courses_import_cancel(token):
     xlsx_io.cleanup_upload(token)
     flash('Імпорт скасовано', 'info')
@@ -298,7 +298,7 @@ def courses_import_cancel(token):
 # ----------------------------------------------------------------------
 
 @admin_bp.route('/instances/export')
-@admin_required
+@permission_required('instances.export')
 def instances_export():
     """Експорт розкладу. URL params:
       ?year=2026          -- лише цей рік
@@ -338,7 +338,7 @@ def instances_export():
 
 
 @admin_bp.route('/instances/import', methods=['POST'])
-@admin_required
+@permission_required('instances.import')
 def instances_import_upload():
     f = request.files.get('xlsx')
     if not f or not f.filename:
@@ -357,7 +357,7 @@ def instances_import_upload():
 
 
 @admin_bp.route('/instances/import/preview/<token>')
-@admin_required
+@permission_required('instances.import')
 def instances_import_preview(token):
     path = xlsx_io.get_uploaded_path(token)
     if path is None:
@@ -378,7 +378,7 @@ def instances_import_preview(token):
 
 
 @admin_bp.route('/instances/import/apply/<token>', methods=['POST'])
-@admin_required
+@permission_required('instances.import')
 def instances_import_apply(token):
     path = xlsx_io.get_uploaded_path(token)
     if path is None:
@@ -413,7 +413,7 @@ def instances_import_apply(token):
 
 
 @admin_bp.route('/instances/import/cancel/<token>', methods=['POST'])
-@admin_required
+@permission_required('instances.import')
 def instances_import_cancel(token):
     xlsx_io.cleanup_upload(token)
     flash('Імпорт скасовано', 'info')

@@ -8,6 +8,7 @@
 перевіряє тег навколо значення, а не саму наявність URL на сторінці --
 інакше пройшов би й на неклікабельному тексті.
 """
+from tests.support.rbac import grant_role
 import re
 from urllib.parse import quote_plus
 from uuid import uuid4
@@ -32,8 +33,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'fl-{_uid()}@test.com', 'password123',
-        first_name='F', last_name='L', is_admin=True, email_confirmed=True,
+        first_name='F', last_name='L', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.commit()
     yield u
     db.session.rollback()

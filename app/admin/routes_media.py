@@ -15,7 +15,7 @@ from flask_login import current_user
 from sqlalchemy import desc
 
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.extensions import db
 from app.models.media_file import MediaFile
 from app.undo import offer_undo
@@ -81,7 +81,7 @@ def _detach_media_refs(media):
 
 
 @admin_bp.route('/media')
-@admin_required
+@permission_required('media.view')
 def media_library():
     entity_type = (request.args.get('entity_type') or '').strip()
     usage_type = (request.args.get('usage_type') or '').strip()
@@ -122,7 +122,7 @@ def media_library():
 
 
 @admin_bp.route('/media/list.json')
-@admin_required
+@permission_required('media.view')
 def media_list_json():
     """JSON-список медіа для пікера в редакторах (вибір наявного файлу)."""
     entity_type = (request.args.get('entity_type') or '').strip()
@@ -151,7 +151,7 @@ def media_list_json():
 
 
 @admin_bp.route('/media/<int:media_id>/alt', methods=['POST'])
-@admin_required
+@permission_required('media.manage')
 def media_update_alt(media_id):
     media = db.session.get(MediaFile, media_id)
     if not media:
@@ -183,7 +183,7 @@ def _form_page_arg():
 
 
 @admin_bp.route('/media/<int:media_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('media.delete')
 def media_delete(media_id):
     """М'яке видалення: файл лишається на диску до purge, тож відкат можливий.
 
@@ -222,7 +222,7 @@ def media_delete(media_id):
 
 
 @admin_bp.route('/media/bulk-delete', methods=['POST'])
-@admin_required
+@permission_required('media.delete')
 def media_bulk_delete():
     """Видалити кілька медіа за раз (мультивибір у бібліотеці)."""
     ids = []
@@ -264,7 +264,7 @@ def media_bulk_delete():
 
 
 @admin_bp.route('/media/restore', methods=['POST'])
-@admin_required
+@permission_required('media.manage')
 def media_restore():
     """Відкат м'якого видалення. ids -- список через кому (одиничне видалення
     і масове користуються тим самим роутом)."""

@@ -3,6 +3,7 @@
 Макрос `admin/partials/_filter_bar.html` спільний для всіх реєстрів, тож
 поведінку перевіряємо на одному-двох представниках, а не на кожній сторінці.
 """
+from tests.support.rbac import grant_role
 import re
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
@@ -24,8 +25,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'fb-{_uid()}@test.com', 'password123',
-        first_name='F', last_name='B', is_admin=True, email_confirmed=True,
+        first_name='F', last_name='B', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.flush()
     return u
 

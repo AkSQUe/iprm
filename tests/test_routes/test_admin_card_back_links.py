@@ -9,6 +9,7 @@ app/admin/routes_registrations.py, routes_courses.py, routes_instances.py.
 Тому лінкам досить лише свого id-фільтра; сторож усе одно пінить URL через
 справжній url_for, щоб зміна дефолту в майбутньому впала тут, а не мовчки.
 """
+from tests.support.rbac import grant_role
 import re
 from uuid import uuid4
 
@@ -30,8 +31,9 @@ def _uid():
 def admin(app):
     u = User.create_with_password(
         f'cbl-{_uid()}@test.com', 'password123',
-        first_name='C', last_name='B', is_admin=True, email_confirmed=True,
+        first_name='C', last_name='B', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
     db.session.commit()
     yield u
     db.session.rollback()

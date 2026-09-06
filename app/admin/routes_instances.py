@@ -9,7 +9,7 @@ from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import try_commit, populate_trainer_choices
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin.forms import CourseInstanceForm
 from app.extensions import db, limiter
 from app.models.course import Course
@@ -196,7 +196,7 @@ def _instance_reg_counts(instances):
 
 
 @admin_bp.route('/instances')
-@admin_required
+@permission_required('instances.view')
 def instances_list():
     filters = _instance_filters()
     query, order, next3 = _instances_query(filters)
@@ -230,7 +230,7 @@ def instances_list():
 
 
 @admin_bp.route('/instances/report.xlsx')
-@admin_required
+@permission_required('instances.export')
 def instances_report_export():
     """Експорт проведень у xlsx з урахуванням активних фільтрів.
 
@@ -282,7 +282,7 @@ def instances_report_export():
 
 
 @admin_bp.route('/instances/new', methods=['GET', 'POST'])
-@admin_required
+@permission_required('instances.manage')
 def instance_create():
     preselected = request.args.get('course_id', type=int)
     form = CourseInstanceForm()
@@ -313,7 +313,7 @@ def instance_create():
 
 
 @admin_bp.route('/instances/<int:instance_id>/edit', methods=['GET', 'POST'])
-@admin_required
+@permission_required('instances.manage')
 def instance_edit(instance_id):
     instance = db.session.get(CourseInstance, instance_id)
     if not instance:
@@ -345,7 +345,7 @@ def instance_edit(instance_id):
 
 
 @admin_bp.route('/instances/<int:instance_id>/lecturer-certificate', methods=['POST'])
-@admin_required
+@permission_required('instances.manage')
 def instance_lecturer_certificate(instance_id):
     """Видати/завантажити сертифікат лектора для проведення (PDF)."""
     import io
@@ -374,7 +374,7 @@ def instance_lecturer_certificate(instance_id):
 
 
 @admin_bp.route('/instances/<int:instance_id>/status', methods=['POST'])
-@admin_required
+@permission_required('instances.manage')
 @limiter.limit('60 per minute')
 def instance_status_update(instance_id):
     wants_json = _wants_json()
@@ -430,7 +430,7 @@ def instance_status_update(instance_id):
 
 
 @admin_bp.route('/instances/<int:instance_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('instances.delete')
 def instance_delete(instance_id):
     instance = db.session.get(CourseInstance, instance_id)
     if not instance:

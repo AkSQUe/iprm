@@ -3,7 +3,7 @@ import logging
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
 from app.admin import _listing, admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin.forms import TrainerForm
 from app.admin.routes_translations import apply_inline_translations
 from app.extensions import db
@@ -121,7 +121,7 @@ _TRAINER_STATES = {'active': 'Активні', 'inactive': 'Приховані'}
 
 
 @admin_bp.route('/trainers')
-@admin_required
+@permission_required('trainers.view')
 def trainers_list():
     filters = {
         'q': _listing.text_arg('q'),
@@ -142,7 +142,7 @@ def trainers_list():
 
 
 @admin_bp.route('/trainers/new', methods=['GET', 'POST'])
-@admin_required
+@permission_required('trainers.manage')
 def trainer_create():
     form = TrainerForm()
 
@@ -183,7 +183,7 @@ def trainer_create():
 
 
 @admin_bp.route('/trainers/<int:trainer_id>/edit', methods=['GET', 'POST'])
-@admin_required
+@permission_required('trainers.manage')
 def trainer_edit(trainer_id):
     trainer = db.session.get(Trainer, trainer_id)
     if not trainer:
@@ -245,7 +245,7 @@ def trainer_edit(trainer_id):
 
 
 @admin_bp.route('/trainers/<int:trainer_id>/delete', methods=['POST'])
-@admin_required
+@permission_required('trainers.delete')
 def trainer_delete(trainer_id):
     trainer = db.session.get(Trainer, trainer_id)
     if trainer:

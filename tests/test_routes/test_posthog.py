@@ -10,6 +10,7 @@
   * worker-src blob: без скрипта -> дірка в політиці без жодної користі;
   * прапорець в адмінці, що не діє -> зламаний аварійний рубильник.
 """
+from tests.support.rbac import grant_role
 from uuid import uuid4
 
 import pytest
@@ -35,8 +36,12 @@ def _login(client, user):
 def admin(app):
     u = User.create_with_password(
         f'ph-{uuid4().hex[:6]}@test.com', 'password123',
-        first_name='A', last_name='D', is_admin=True, email_confirmed=True,
+        first_name='A', last_name='D', email_confirmed=True,
     )
+    grant_role(u, 'super_admin')
+    # Роль пускає в адмінку; прапорець нижче -- для data-ph-role у розмітці
+    # аналітики, яка досі читає стару колонку (Task 8).
+    u.is_admin = True
     db.session.flush()
     return u
 

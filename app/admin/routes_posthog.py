@@ -1,13 +1,13 @@
 from flask import flash, redirect, render_template, request, url_for, current_app
 
 from app.admin import admin_bp
-from app.admin.decorators import admin_required
+from app.rbac import permission_required
 from app.admin._helpers import save_integration_settings, tristate_checkbox
 from app.models.site_settings import SiteSettings
 
 
 @admin_bp.route('/posthog')
-@admin_required
+@permission_required('integrations.view')
 def posthog():
     settings = SiteSettings.get()
     env_key = current_app.config.get('POSTHOG_PROJECT_API_KEY', '') or ''
@@ -38,7 +38,7 @@ def posthog():
 
 
 @admin_bp.route('/posthog/save', methods=['POST'])
-@admin_required
+@permission_required('integrations.keys')
 def posthog_save():
     api_key = request.form.get('posthog_project_api_key', '').strip()
     enabled = tristate_checkbox('posthog_enabled')
@@ -86,7 +86,7 @@ def posthog_save():
 
 
 @admin_bp.route('/posthog/test')
-@admin_required
+@permission_required('integrations.manage')
 def posthog_test():
     """Сторінка перевірки: шле тестову подію і курлить власний проксі.
 
