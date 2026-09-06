@@ -10,10 +10,21 @@
 | `first_name` | String(100) | Ім'я |
 | `last_name` | String(100) | Прізвище |
 | `is_active` | Boolean | Активність акаунта |
-| `is_admin` | Boolean | Прапорець адміністратора |
+| `roles` | relationship | Ролі адмінки через `user_roles` (viewonly) |
 | `created_at` | DateTime (UTC) | Дата створення (TimestampMixin) |
 | `updated_at` | DateTime (UTC) | Дата оновлення (TimestampMixin) |
 | `last_login_at` | DateTime (UTC) | Останній вхід |
+
+## Role / Permission / UserRole (RBAC)
+
+| Таблиця | Поля |
+|---|---|
+| `roles` | `id`, `name` (slug, unique), `display_name`, `description`, `color`, `is_system`, `sort_order`, `created_at` |
+| `permissions` | `id`, `name` (`module.action`, unique), `module` (index) |
+| `role_permissions` | `role_id`, `permission_id` (складений PK, CASCADE) |
+| `user_roles` | `user_id`, `role_id` (складений PK), `assigned_at`, `assigned_by` |
+
+Деталі: [docs/rbac.md](rbac.md).
 
 ## Course (каталог)
 

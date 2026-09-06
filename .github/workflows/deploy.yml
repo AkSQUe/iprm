@@ -45,6 +45,7 @@ jobs:
             pip install -r requirements.lock --quiet
             pybabel compile -d app/translations
             flask db upgrade
+            flask rbac sync
             chown -R www-data:www-data /var/www/iprm
             systemctl restart iprm
             sleep 3

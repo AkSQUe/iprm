@@ -273,6 +273,14 @@ login_required) і на сторінці замовлення (`order/<token>/re
 | POST | `/admin/meta-leads/settings/subscribe` | Підписати Сторінку на подію `leadgen` |
 | POST | `/admin/meta-leads/settings/reconcile` | Звірити з Meta негайно |
 | POST | `/admin/meta-leads/settings/test-event` | Надіслати собі підписану тестову подію |
+| GET | `/admin/access` | Матриця прав і список ролей (`access.view`) |
+| PUT | `/admin/access/api/matrix` | Перемкнути право ролі, JSON (`access.manage`) |
+| POST | `/admin/access/api/matrix/bulk` | Усі/жодного права модуля для ролі (`access.manage`) |
+| GET/POST | `/admin/access/roles/new` | Нова роль (`access.manage`) |
+| GET/POST | `/admin/access/roles/<id>/edit` | Редагувати роль (`access.manage`) |
+| POST | `/admin/access/roles/<id>/delete` | Видалити несистемну роль без носіїв (`access.manage`) |
+| POST | `/admin/access/roles/<id>/reset` | Скинути системну роль до дефолтів (`access.manage`) |
+| POST | `/admin/users/<id>/roles` | Призначити ролі користувачу (`access.assign`) |
 
 ## API v1 (партнери та інструменти)
 
