@@ -3,7 +3,8 @@ from datetime import date
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField, TextAreaField, SelectField, SelectMultipleField, IntegerField,
-    DecimalField, BooleanField, DateField, DateTimeLocalField, HiddenField
+    DecimalField, BooleanField, DateField, DateTimeLocalField, HiddenField,
+    RadioField,
 )
 from wtforms.validators import (
     DataRequired, InputRequired, Length, Optional, NumberRange, Email, URL,
@@ -20,6 +21,7 @@ from app.models.meta_lead import MetaLead
 from app.models.promo_code import PromoCode
 from app.models.registration import EventRegistration
 from app.models.specializations import SPECIALIZATIONS
+from app.rbac import registry as _rbac_registry
 
 
 def _optional_url(message='Невалідний URL'):
@@ -1186,3 +1188,22 @@ class CourseQuizForm(FlaskForm):
             raise ValidationError(
                 'Потрібно правильних не може бути більше, ніж питань на спробу'
             )
+
+
+class RoleForm(FlaskForm):
+    """Роль адмін-панелі. Права ролі правляться в матриці, не тут."""
+    name = StringField('Код (латиницею)', validators=[
+        DataRequired(), Length(2, 50),
+        Regexp(r'^[a-z][a-z0-9_]*$',
+               message='Лише малі латинські літери, цифри та підкреслення'),
+    ])
+    display_name = StringField('Назва', validators=[DataRequired(), Length(1, 100)])
+    description = TextAreaField('Опис', validators=[Optional(), Length(max=500)])
+    color = RadioField('Колір', choices=[
+        (c, _rbac_registry.ROLE_COLOR_LABELS[c]) for c in _rbac_registry.ROLE_COLORS
+    ], default='gray')
+    sort_order = IntegerField('Порядок у матриці', default=100,
+                              validators=[InputRequired(), NumberRange(0, 1000)])
+    # 0 = не копіювати. Варіанти виставляє маршрут.
+    copy_from = SelectField('Скопіювати права з', coerce=int, default=0,
+                            validators=[Optional()])

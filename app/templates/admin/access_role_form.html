@@ -1,0 +1,77 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{{ 'Роль: ' ~ role.display_name if role else 'Нова роль' }} | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout">
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.access') }}" class="admin-breadcrumb__link">Доступ</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">{{ role.display_name if role else 'Нова роль' }}</span>
+        </div>
+        <h1 class="admin-hero__title">{{ 'Редагувати роль' if role else 'Нова роль' }}</h1>
+        <p class="admin-hero__subtitle">Права ролі налаштовуються в матриці після збереження.</p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    <form method="POST" class="admin-form">
+      {{ form.hidden_tag() }}
+      {% include 'admin/partials/_form_errors.html' %}
+
+      <div class="form-section">
+        <div class="admin-form__grid">
+          <div class="form-group">
+            {{ form.name.label }}
+            {{ form.name(class='form-control', readonly=(role.is_system if role else False)) }}
+            {% if role and role.is_system %}<p class="form-hint">Код системної ролі не змінюється.</p>{% endif %}
+          </div>
+          <div class="form-group">
+            {{ form.display_name.label }}
+            {{ form.display_name(class='form-control') }}
+          </div>
+          <div class="form-group">
+            {{ form.sort_order.label }}
+            {{ form.sort_order(class='form-control') }}
+          </div>
+          {% if not role %}
+          <div class="form-group">
+            {{ form.copy_from.label }}
+            {{ form.copy_from(class='form-control') }}
+          </div>
+          {% endif %}
+        </div>
+        <div class="form-group">
+          {{ form.description.label }}
+          {{ form.description(class='form-control', rows=3) }}
+        </div>
+        <div class="form-group">
+          <label>Колір</label>
+          <div class="admin-form__grid">
+            {% for value, label in form.color.choices %}
+            <label class="role-swatch role-color--{{ value }}">
+              <input type="radio" name="{{ form.color.name }}" value="{{ value }}"{% if form.color.data == value %} checked{% endif %}>
+              <span class="role-dot"></span> {{ label }}
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-form__actions">
+        <button type="submit" class="btn-admin btn-admin--primary">Зберегти</button>
+        <a href="{{ url_for('admin.access') }}" class="btn-admin btn-admin--secondary">Скасувати</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,7 +1,7 @@
 """Адмінський список користувачів: фільтри, пошук, xlsx-звіт, адмін-права."""
 import logging
 
-from flask import flash, redirect, render_template, url_for
+from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -177,6 +177,7 @@ def user_detail(user_id):
     """
     from app.models.meta_lead import MetaLead
     from app.models.online_enrollment import OnlineEnrollment
+    from app.models.rbac import Role
 
     user = db.session.get(User, user_id)
     if not user:
@@ -210,7 +211,29 @@ def user_detail(user_id):
         leads=leads,
         registrations=registrations,
         enrollments=enrollments,
+        all_roles=Role.query.order_by(Role.sort_order, Role.display_name).all(),
     )
+
+
+@admin_bp.route('/users/<int:user_id>/roles', methods=['POST'])
+@permission_required('access.assign')
+def user_roles_update(user_id):
+    from app.rbac import service
+    from app.rbac.service import AccessError
+
+    user = db.session.get(User, user_id)
+    if not user:
+        flash('Користувача не знайдено', 'error')
+        return redirect(url_for('admin.users'))
+    role_ids = {int(v) for v in request.form.getlist('roles') if v.isdigit()}
+    try:
+        service.assign_roles(user, role_ids, current_user)
+        db.session.commit()
+        flash('Ролі оновлено', 'success')
+    except AccessError as exc:
+        db.session.rollback()
+        flash(str(exc), 'error')
+    return redirect(url_for('admin.user_detail', user_id=user.id))
 
 
 # Відгуки: stub замінено повноцінним CRUD -- див. app/admin/routes_reviews.py.

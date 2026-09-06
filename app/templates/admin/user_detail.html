@@ -21,6 +21,7 @@
       </div>
       <h1 class="admin-hero__title">{{ user.full_name or user.email }}</h1>
       <p class="admin-hero__subtitle">
+        {% for role in user.roles %}<span class="badge badge--role role-color--{{ role.color }}"><span class="role-dot"></span> {{ role.display_name }}</span>{% endfor %}
         {% if user.is_active %}<span class="badge badge--published">активний</span>{% else %}<span class="badge badge--draft">неактивний</span>{% endif %}
         {% if user.email_confirmed %}<span class="badge badge--success">пошту підтверджено</span>{% endif %}
         Зареєстровано {{ user.created_at.strftime('%d.%m.%Y') if user.created_at else '–' }}
@@ -68,6 +69,25 @@
         заявок, і стан у кожної свій.
       </p>
     </div>
+
+    {% if can('access.assign') %}
+    <div class="form-section">
+      <h3 class="admin-form__section-title">Ролі в адмін-панелі</h3>
+      <form method="POST" action="{{ url_for('admin.user_roles_update', user_id=user.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% set current_ids = user.roles|map(attribute='id')|list %}
+        {% for role in all_roles %}
+        <div class="form-group">
+          <label for="role-{{ role.id }}">
+            <input type="checkbox" id="role-{{ role.id }}" name="roles" value="{{ role.id }}"{% if role.id in current_ids %} checked{% endif %}>
+            <span class="role-dot role-color--{{ role.color }}"></span> {{ role.display_name }}{% if role.description %} <span class="admin-text-muted">{{ role.description }}</span>{% endif %}
+          </label>
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn-admin btn-admin--primary btn-admin--sm">Зберегти ролі</button>
+      </form>
+    </div>
+    {% endif %}
 
     <div class="form-section">
       <h3 class="admin-form__section-title">

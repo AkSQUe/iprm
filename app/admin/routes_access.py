@@ -6,12 +6,13 @@
 """
 import logging
 
-from flask import abort, jsonify, render_template, request
+from flask import abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy import func
 from sqlalchemy.orm import selectinload
 
 from app.admin import admin_bp
+from app.admin.forms import RoleForm
 from app.extensions import db
 from app.models.rbac import Role, UserRole
 from app.rbac import permission_required, registry, service
@@ -115,27 +116,76 @@ def access_matrix_bulk():
                    role_count=_role_count(role, len(registry.ALL_PERMISSION_NAMES)))
 
 
-# Заглушки CRUD ролей: повна реалізація в Task 12. Потрібні вже тут, бо
-# шаблон матриці посилається на них.
+def _role_form(role=None):
+    form = RoleForm(obj=role) if request.method == 'GET' else RoleForm()
+    form.copy_from.choices = [(0, 'Не копіювати')] + [
+        (r.id, r.display_name) for r in _roles_ordered() if role is None or r.id != role.id
+    ]
+    return form
+
+
 @admin_bp.route('/access/roles/new', methods=['GET', 'POST'])
 @permission_required('access.manage')
 def access_role_new():
-    abort(404)
+    form = _role_form()
+    if form.validate_on_submit():
+        copy_from = db.session.get(Role, form.copy_from.data) if form.copy_from.data else None
+        try:
+            service.create_role(form.name.data, form.display_name.data,
+                                form.description.data, form.color.data,
+                                form.sort_order.data, current_user, copy_from=copy_from)
+            db.session.commit()
+            flash(f'Роль «{form.display_name.data}» створено', 'success')
+            return redirect(url_for('admin.access'))
+        except AccessError as exc:
+            db.session.rollback()
+            flash(str(exc), 'error')
+    return render_template('admin/access_role_form.html', form=form, role=None)
 
 
 @admin_bp.route('/access/roles/<int:role_id>/edit', methods=['GET', 'POST'])
 @permission_required('access.manage')
 def access_role_edit(role_id):
-    abort(404)
+    role = db.session.get(Role, role_id)
+    if role is None:
+        abort(404)
+    form = _role_form(role)
+    if form.validate_on_submit():
+        try:
+            service.update_role(role, form.display_name.data, form.description.data,
+                                form.color.data, form.sort_order.data, current_user,
+                                name=form.name.data)
+            db.session.commit()
+            flash('Роль оновлено', 'success')
+            return redirect(url_for('admin.access'))
+        except AccessError as exc:
+            db.session.rollback()
+            flash(str(exc), 'error')
+    return render_template('admin/access_role_form.html', form=form, role=role)
+
+
+def _role_action(role_id, action, success):
+    role = db.session.get(Role, role_id)
+    if role is None:
+        abort(404)
+    try:
+        action(role, current_user)
+        db.session.commit()
+        flash(success, 'success')
+    except AccessError as exc:
+        db.session.rollback()
+        flash(str(exc), 'error')
+    return redirect(url_for('admin.access'))
 
 
 @admin_bp.route('/access/roles/<int:role_id>/delete', methods=['POST'])
 @permission_required('access.manage')
 def access_role_delete(role_id):
-    abort(404)
+    return _role_action(role_id, service.delete_role, 'Роль видалено')
 
 
 @admin_bp.route('/access/roles/<int:role_id>/reset', methods=['POST'])
 @permission_required('access.manage')
 def access_role_reset(role_id):
-    abort(404)
+    return _role_action(role_id, service.reset_role_to_defaults,
+                        'Права ролі повернуто до дефолтів')
