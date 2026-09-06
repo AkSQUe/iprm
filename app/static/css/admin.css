@@ -3293,3 +3293,97 @@ a.admin-stat-card:focus-visible {
   border-color: var(--role-color);
   box-shadow: 0 0 0 1px var(--role-color);
 }
+
+/* ========== ДОСТУП: МАТРИЦЯ ТА РОЛІ ========== */
+
+/* Рядок стану автозбереження над матрицею /admin/access: нейтральний,
+   "ok" (зелений) і "error" (червоний) -- перемикає admin-access-matrix.js
+   атрибутом data-state. */
+.access-status {
+  font-size: 0.8125rem;
+  color: var(--iprm-text-light);
+}
+
+.access-status[data-state='ok'] {
+  color: var(--iprm-success);
+}
+
+.access-status[data-state='error'] {
+  color: var(--iprm-error);
+}
+
+/* Підфарбовка службових рядків матриці: заголовок групи прав, заголовок
+   модуля, підсвітка рядка права під курсором. */
+.access-group__head th {
+  background: var(--iprm-surface-inset);
+}
+
+.access-module th,
+.access-module td {
+  background: var(--iprm-surface-inset);
+}
+
+.access-perm:hover td {
+  background: var(--iprm-accent-light);
+}
+
+/* Кнопка згортання групи -- текстова, без тла й рамки кнопки; стрілка
+   обертається за aria-expanded. */
+.access-group__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  color: inherit;
+}
+
+.access-group__toggle[aria-expanded='false'] .access-group__chevron {
+  transform: rotate(-90deg);
+}
+
+.access-module__title {
+  text-align: left;
+  font-weight: 600;
+}
+
+.access-matrix__count {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--iprm-text-light);
+}
+
+.access-perm__code {
+  font-family: var(--iprm-font-mono);
+  font-size: 0.75rem;
+  color: var(--iprm-text-light);
+}
+
+/* Картка ролі в бічній панелі /admin/access. */
+.access-role {
+  padding: 12px 14px;
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius-md);
+  background: var(--iprm-card-bg);
+}
+
+.access-role__slug,
+.access-role__meta {
+  font-size: 0.75rem;
+  color: var(--iprm-text-light);
+}
+
+.access-role__desc {
+  margin: 6px 0 0;
+  font-size: 0.8125rem;
+}
+
+.access-roles__title {
+  margin: 0;
+  font-size: 1rem;
+}

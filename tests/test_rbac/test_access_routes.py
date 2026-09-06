@@ -88,3 +88,29 @@ def test_unknown_role_is_404(client):
     resp = client.put('/admin/access/api/matrix', json={
         'role_id': 999999, 'permission': 'courses.view', 'granted': True})
     assert resp.status_code == 404
+    body = resp.get_json()
+    assert set(body) == {'error'}
+    assert body['error']
+
+
+def test_bad_role_id_is_400_json(client):
+    _login(client, make_super_admin())
+    resp = client.post('/admin/access/api/matrix/bulk', json={
+        'role_id': 'x', 'module': 'blog', 'mode': 'all'})
+    assert resp.status_code == 400
+    body = resp.get_json()
+    assert set(body) == {'error'}
+    assert body['error']
+
+
+def test_bool_role_id_is_400_json(client):
+    """bool -- підклас int у Python: isinstance(True, int) істинний, тому
+    голе isinstance() пропускало True/False як валідний role_id. type(x)
+    is int відсікає це навмисно."""
+    _login(client, make_super_admin())
+    resp = client.put('/admin/access/api/matrix', json={
+        'role_id': True, 'permission': 'courses.view', 'granted': True})
+    assert resp.status_code == 400
+    body = resp.get_json()
+    assert set(body) == {'error'}
+    assert body['error']

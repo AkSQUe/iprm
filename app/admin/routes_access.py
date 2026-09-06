@@ -6,7 +6,7 @@
 """
 import logging
 
-from flask import abort, flash, jsonify, redirect, render_template, request, url_for
+from flask import abort, jsonify, render_template, request
 from flask_login import current_user
 from sqlalchemy import func
 from sqlalchemy.orm import selectinload
@@ -59,20 +59,30 @@ def access():
 
 
 def _json_role():
+    """Розбирає тіло запиту й дістає роль за role_id.
+
+    Повертає `(role, data, error)`: при валідному запиті `error` -- None,
+    інакше `role` -- None, а `error` -- готова пара (jsonify(...), статус)
+    для негайного `return` із виклику. Так обидва API-маршрути завжди
+    відповідають JSON, а не HTML-сторінкою помилки з global error handler,
+    яку рендерить голий `abort()`.
+    """
     data = request.get_json(silent=True) or {}
     role_id = data.get('role_id')
-    if not isinstance(role_id, int):
-        abort(400)
+    if type(role_id) is not int:
+        return None, data, (jsonify(error='role_id має бути цілим числом'), 400)
     role = db.session.get(Role, role_id)
     if role is None:
-        abort(404)
-    return role, data
+        return None, data, (jsonify(error='Роль не знайдено'), 404)
+    return role, data, None
 
 
 @admin_bp.route('/access/api/matrix', methods=['PUT'])
 @permission_required('access.manage')
 def access_matrix_toggle():
-    role, data = _json_role()
+    role, data, error = _json_role()
+    if error is not None:
+        return error
     try:
         service.set_role_permission(
             role, str(data.get('permission', '')), bool(data.get('granted')), current_user)
@@ -87,7 +97,9 @@ def access_matrix_toggle():
 @admin_bp.route('/access/api/matrix/bulk', methods=['POST'])
 @permission_required('access.manage')
 def access_matrix_bulk():
-    role, data = _json_role()
+    role, data, error = _json_role()
+    if error is not None:
+        return error
     mode = data.get('mode')
     if mode not in ('all', 'none'):
         return jsonify(error='mode має бути all або none'), 400

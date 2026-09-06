@@ -491,5 +491,53 @@
       </div>
     </div>
     <p class="ds-hint">.role-color--&lt;name&gt; перекладає ім'я з палітри (red orange amber green teal blue violet gray, токени --iprm-role-*) у --role-color; його читають .badge--role, .role-dot і .role-swatch. .switch: прихований чекбокс + доріжка; :checked фарбує в --iprm-success, :disabled ставить замок (колонка super_admin у матриці /admin/access).</p>
+
+    <h3 class="ds-section-heading">Доступ: матриця та ролі</h3>
+    <div class="ds-demo">
+      <div class="ds-row">
+        <span class="access-status">Готово</span>
+        <span class="access-status" data-state="busy">Зберігаю...</span>
+        <span class="access-status" data-state="ok">Збережено</span>
+        <span class="access-status" data-state="error">Помилка</span>
+      </div>
+      <article class="access-role role-color--green">
+        <header class="access-role__head">
+          <span class="role-dot"></span>
+          <strong>Менеджер</strong>
+          <span class="access-role__slug">manager</span>
+        </header>
+        <p class="access-role__desc">Керує заходами й учасниками, без доступу до налаштувань.</p>
+        <p class="access-role__meta">18 прав, 4 носії</p>
+      </article>
+      <div class="admin-table-wrap">
+        <table class="admin-table access-matrix__table">
+          <tbody class="access-group" data-group="ds-demo">
+            <tr class="access-group__head">
+              <th colspan="2">
+                <button type="button" class="access-group__toggle" aria-expanded="true">
+                  {{ icon('keyboard_arrow_down', cls='access-group__chevron') }}
+                  Заходи
+                  <span class="access-matrix__count">7</span>
+                </button>
+              </th>
+            </tr>
+            <tr class="access-module" data-module="courses">
+              <th class="access-module__title">Курси</th>
+              <td class="access-module__bulk"></td>
+            </tr>
+            <tr class="access-perm">
+              <td class="access-perm__label">
+                <span>Перегляд</span>
+                <span class="access-perm__code">courses.view</span>
+              </td>
+              <td class="access-perm__cell">
+                <label class="switch"><input type="checkbox" class="switch__input" checked aria-label="Перегляд"><span class="switch__track"><span class="switch__knob"></span></span></label>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="ds-hint">.access-status: рядок стану автозбереження, data-state перемикає колір (ok/error), нейтральний -- без атрибута. .access-role: картка ролі в бічній панелі /admin/access (__head/__slug/__desc/__meta). .access-group__head/.access-module/.access-perm: службові рядки матриці прав, .access-perm__code -- моноширинна назва права. Живий приклад -- /admin/access.</p>
   </div>
 
