@@ -1,5 +1,5 @@
 import logging
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, abort
 from flask_login import current_user
 from app.admin import admin_bp
 from app.rbac import permission_required
@@ -8,11 +8,26 @@ from app.extensions import db
 audit_logger = logging.getLogger('audit')
 logger = logging.getLogger(__name__)
 
+# Куди веде «/admin»: перша сторінка зі списку, яку користувач має право
+# бачити. Раніше редирект був на курси, і менеджер без courses.view
+# отримував 403 одразу після входу.
+_DASHBOARD_TARGETS = (
+    ('courses.view', 'admin.courses_list'),
+    ('registrations.view', 'admin.registrations_all'),
+    ('meta_leads.view', 'admin.meta_leads_list'),
+    ('users.view', 'admin.users'),
+    ('blog.view', 'admin.blog_list'),
+    ('access.view', 'admin.access'),
+)
+
 
 @admin_bp.route('/')
 @permission_required('dashboard.view')
 def dashboard():
-    return redirect(url_for('admin.courses_list'))
+    for permission, endpoint in _DASHBOARD_TARGETS:
+        if current_user.has_permission(permission):
+            return redirect(url_for(endpoint))
+    abort(403)
 
 
 @admin_bp.route('/marketing')

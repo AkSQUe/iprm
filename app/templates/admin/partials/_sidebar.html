@@ -16,161 +16,243 @@
     </button>
   </div>
   <nav class="admin-sidebar__nav">
+    {% if can_any('courses.view', 'instances.view', 'online_courses.view', 'cities.view', 'quizzes.view', 'course_requests.view', 'b2b_requests.view', 'meta_leads.view', 'refund_requests.view', 'trainers.view', 'blog.view', 'media.view') %}
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Контент</p>
+      {% if can('courses.view') %}
       <a href="{{ url_for('admin.courses_list') }}" class="admin-sidebar__link{% if ep in ('admin.courses_list', 'admin.course_create', 'admin.course_edit', 'admin.course_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('menu_book') }}
         <span class="admin-sidebar__text">Курси</span>
       </a>
+      {% endif %}
+      {% if can('instances.view') %}
       <a href="{{ url_for('admin.instances_list') }}" class="admin-sidebar__link{% if ep in ('admin.instances_list', 'admin.instance_create', 'admin.instance_edit', 'admin.instance_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('event') }}
         <span class="admin-sidebar__text">Розклад</span>
       </a>
+      {% endif %}
+      {% if can('online_courses.view') %}
       <a href="{{ url_for('admin.online_courses_list') }}" class="admin-sidebar__link{% if ep in ('admin.online_courses_list', 'admin.online_course_edit', 'admin.online_course_toggle_publish') %} admin-sidebar__link--active{% endif %}">
         {{ icon('school') }}
         <span class="admin-sidebar__text">Онлайн-курси</span>
       </a>
+      {% endif %}
+      {% if can('cities.view') %}
       <a href="{{ url_for('admin.cities_list') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.cities_list', 'admin.cities_save', 'admin.cities_add', 'admin.cities_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('table_view') }}
         <span class="admin-sidebar__text">Довідник локацій</span>
       </a>
+      {% endif %}
+      {% if can('quizzes.view') %}
       <a href="{{ url_for('admin.quizzes_list') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.quizzes_list', 'admin.course_quiz_edit', 'admin.instance_quiz_edit', 'admin.quiz_delete', 'admin.instance_quiz_results') %} admin-sidebar__link--active{% endif %}">
         {{ icon('quiz') }}
         <span class="admin-sidebar__text">Тестування</span>
       </a>
+      {% endif %}
+      {% if can('course_requests.view') %}
       <a href="{{ url_for('admin.course_requests_list') }}" class="admin-sidebar__link{% if ep in ('admin.course_requests_list', 'admin.course_request_edit', 'admin.course_request_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('inbox') }}
         <span class="admin-sidebar__text">Запити на курси</span>
       </a>
+      {% endif %}
+      {% if can('b2b_requests.view') %}
       <a href="{{ url_for('admin.b2b_requests_list') }}" class="admin-sidebar__link{% if ep in ('admin.b2b_requests_list', 'admin.b2b_request_update') %} admin-sidebar__link--active{% endif %}">
         {{ icon('group') }}
         <span class="admin-sidebar__text">B2B-заявки</span>
       </a>
+      {% endif %}
+      {% if can('meta_leads.view') %}
       <a href="{{ url_for('admin.meta_leads_list') }}" class="admin-sidebar__link{% if ep in ('admin.meta_leads_list', 'admin.meta_lead_detail', 'admin.meta_lead_events', 'admin.meta_leads_settings', 'admin.meta_lead_event_retry') %} admin-sidebar__link--active{% endif %}">
         {{ icon('campaign') }}
         <span class="admin-sidebar__text">Ліди Meta</span>
       </a>
+      {% endif %}
+      {% if can('meta_leads.view') %}
       <a href="{{ url_for('admin.meta_lead_forms') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.meta_lead_forms', 'admin.meta_lead_form_offer') %} admin-sidebar__link--active{% endif %}">
         {{ icon('quiz') }}
         <span class="admin-sidebar__text">Форми Meta</span>
       </a>
+      {% endif %}
+      {% if can('refund_requests.view') %}
       <a href="{{ url_for('admin.refund_requests_list') }}" class="admin-sidebar__link{% if ep in ('admin.refund_requests_list', 'admin.refund_request_reject') %} admin-sidebar__link--active{% endif %}">
         {{ icon('restart_alt') }}
         <span class="admin-sidebar__text">Заявки на повернення</span>
         {% if pending_refund_requests %}<span class="badge badge--danger">{{ pending_refund_requests }}</span>{% endif %}
       </a>
+      {% endif %}
+      {% if can('trainers.view') %}
       <a href="{{ url_for('admin.trainers_list') }}" class="admin-sidebar__link{% if ep in ('admin.trainers_list', 'admin.trainer_create', 'admin.trainer_edit', 'admin.trainer_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('school') }}
         <span class="admin-sidebar__text">Тренери</span>
       </a>
+      {% endif %}
+      {% if can('blog.view') %}
       <a href="{{ url_for('admin.blog_list') }}" class="admin-sidebar__link{% if ep in ('admin.blog_list', 'admin.blog_create', 'admin.blog_edit', 'admin.blog_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('article') }}
         <span class="admin-sidebar__text">Блог</span>
       </a>
+      {% endif %}
+      {% if can('blog.view') %}
       <a href="{{ url_for('admin.blog_comments') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.blog_comments', 'admin.blog_comment_approve', 'admin.blog_comment_spam', 'admin.blog_comment_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('forum') }}
         <span class="admin-sidebar__text">Коментарі</span>
       </a>
+      {% endif %}
+      {% if can('media.view') %}
       <a href="{{ url_for('admin.media_library') }}" class="admin-sidebar__link{% if ep in ('admin.media_library', 'admin.media_update_alt', 'admin.media_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('perm_media') }}
         <span class="admin-sidebar__text">Медіа</span>
       </a>
+      {% endif %}
     </div>
+    {% endif %}
 
+    {% if can_any('registrations.view', 'online_orders.view', 'certificates.view', 'referrals.view', 'promo_codes.view') %}
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Продажі</p>
+      {% if can('registrations.view') %}
       <a href="{{ url_for('admin.registrations_all') }}" class="admin-sidebar__link{% if ep in ('admin.registrations_all', 'admin.instance_registrations', 'admin.registration_status', 'admin.registration_attendance') %} admin-sidebar__link--active{% endif %}">
         {{ icon('how_to_reg') }}
         <span class="admin-sidebar__text">Реєстрації</span>
       </a>
+      {% endif %}
       {# Поруч із «Реєстраціями», а не в «Контенті» біля каталогу: людина,
          яка шукає "хто оплатив", відкриває саме цей розділ. Доти покупки
          онлайн-курсів були в адмінці невидимі -- сторінка є, а натрапити на
          неї нема як. #}
+      {% if can('online_orders.view') %}
       <a href="{{ url_for('admin.online_orders_list') }}" class="admin-sidebar__link{% if ep in ('admin.online_orders_list',) %} admin-sidebar__link--active{% endif %}">
         {{ icon('notes') }}
         <span class="admin-sidebar__text">Онлайн-курси: замовлення</span>
       </a>
+      {% endif %}
+      {% if can('certificates.view') %}
       <a href="{{ url_for('admin.certificates') }}" class="admin-sidebar__link{% if ep == 'admin.certificates' %} admin-sidebar__link--active{% endif %}">
         {{ icon('workspace_premium') }}
         <span class="admin-sidebar__text">Сертифікати</span>
       </a>
+      {% endif %}
+      {% if can('referrals.view') %}
       <a href="{{ url_for('admin.referrals_overview') }}" class="admin-sidebar__link{% if ep == 'admin.referrals_overview' %} admin-sidebar__link--active{% endif %}">
         {{ icon('add_link') }}
         <span class="admin-sidebar__text">Реферали</span>
       </a>
+      {% endif %}
+      {% if can('promo_codes.view') %}
       <a href="{{ url_for('admin.promo_codes_list') }}" class="admin-sidebar__link{% if ep in ('admin.promo_codes_list', 'admin.promo_code_create', 'admin.promo_code_edit', 'admin.promo_code_detail') %} admin-sidebar__link--active{% endif %}">
         {{ icon('campaign') }}
         <span class="admin-sidebar__text">Промокоди</span>
       </a>
+      {% endif %}
     </div>
+    {% endif %}
 
+    {% if can_any('users.view', 'reviews.view') %}
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Аудиторія</p>
+      {% if can('users.view') %}
       <a href="{{ url_for('admin.users') }}" class="admin-sidebar__link{% if ep == 'admin.users' %} admin-sidebar__link--active{% endif %}">
         {{ icon('group') }}
         <span class="admin-sidebar__text">Користувачі</span>
       </a>
+      {% endif %}
+      {% if can('reviews.view') %}
       <a href="{{ url_for('admin.reviews_list') }}" class="admin-sidebar__link{% if ep in ('admin.reviews_list', 'admin.review_create', 'admin.review_edit') %} admin-sidebar__link--active{% endif %}">
         {{ icon('reviews') }}
         <span class="admin-sidebar__text">Відгуки</span>
       </a>
+      {% endif %}
     </div>
+    {% endif %}
 
+    {% if can_any('cert_generator.view') %}
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Інструменти</p>
+      {% if can('cert_generator.view') %}
       <a href="{{ url_for('admin.tool_certificate_generator') }}" class="admin-sidebar__link{% if ep in ('admin.tool_certificate_generator', 'admin.tool_certificate_generator_template', 'admin.tool_certificate_generator_preview', 'admin.tool_certificate_generator_run', 'admin.tool_certificate_generator_job', 'admin.tool_certificate_generator_job_status', 'admin.tool_certificate_generator_job_download') %} admin-sidebar__link--active{% endif %}">
         {{ icon('workspace_premium') }}
         <span class="admin-sidebar__text">Генератор сертифікатів</span>
       </a>
+      {% endif %}
     </div>
+    {% endif %}
 
+    {% if can_any('marketing.view', 'notifications.view', 'integrations.view', 'webhooks.view', 'materials.view', 'error_logs.view', 'perf.view', 'design_system.view', 'settings.manage', 'access.view') %}
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Система</p>
+      {% if can('marketing.view') %}
       <a href="{{ url_for('admin.marketing') }}" class="admin-sidebar__link{% if ep == 'admin.marketing' %} admin-sidebar__link--active{% endif %}">
         {{ icon('campaign') }}
         <span class="admin-sidebar__text">Маркетинг</span>
       </a>
+      {% endif %}
+      {% if can('notifications.view') %}
       <a href="{{ url_for('admin.notifications') }}" class="admin-sidebar__link{% if ep in ('admin.notifications', 'admin.notifications_log', 'admin.notifications_test', 'admin.notifications_settings', 'admin.notifications_templates') %} admin-sidebar__link--active{% endif %}">
         {{ icon('notifications') }}
         <span class="admin-sidebar__text">Сповіщення</span>
       </a>
+      {% endif %}
+      {% if can('notifications.view') %}
       <a href="{{ url_for('admin.notifications_recipients') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.notifications_recipients', 'admin.notifications_recipients_save', 'admin.notifications_recipients_managers_save', 'admin.notifications_recipients_test', 'admin.notifications_recipients_preview') %} admin-sidebar__link--active{% endif %}">
         {{ icon('group') }}
         <span class="admin-sidebar__text">Одержувачі</span>
       </a>
+      {% endif %}
+      {% if can('integrations.view') %}
       <a href="{{ url_for('admin.integrations') }}" class="admin-sidebar__link{% if ep in ('admin.integrations', 'admin.liqpay', 'admin.liqpay_save_keys', 'admin.liqpay_test', 'admin.refund_form', 'admin.recaptcha', 'admin.recaptcha_save_keys', 'admin.recaptcha_test') %} admin-sidebar__link--active{% endif %}">
         {{ icon('hub') }}
         <span class="admin-sidebar__text">Інтеграції</span>
       </a>
+      {% endif %}
+      {% if can('webhooks.view') %}
       <a href="{{ url_for('admin.webhooks_list') }}" class="admin-sidebar__link{% if ep in ('admin.webhooks_list', 'admin.webhook_retry', 'admin.webhook_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('webhook') }}
         <span class="admin-sidebar__text">Webhook черга</span>
       </a>
+      {% endif %}
+      {% if can('materials.view') %}
       <a href="{{ url_for('admin.materials_overview') }}" class="admin-sidebar__link{% if ep in ('admin.materials_overview', 'admin.instance_materials') %} admin-sidebar__link--active{% endif %}">
         {{ icon('widgets') }}
         <span class="admin-sidebar__text">Резервування матеріалів</span>
       </a>
+      {% endif %}
+      {% if can('materials.view') %}
       <a href="{{ url_for('admin.material_kits_list') }}" class="admin-sidebar__link{% if ep in ('admin.material_kits_list', 'admin.material_kit_create', 'admin.material_kit_edit') %} admin-sidebar__link--active{% endif %}">
         {{ icon('apps') }}
         <span class="admin-sidebar__text">Комплекти матеріалів</span>
       </a>
+      {% endif %}
+      {% if can('error_logs.view') %}
       <a href="{{ url_for('admin.error_logs') }}" class="admin-sidebar__link{% if ep in ('admin.error_logs', 'admin.error_log_detail') %} admin-sidebar__link--active{% endif %}">
         {{ icon('bug_report') }}
         <span class="admin-sidebar__text">Журнал помилок</span>
       </a>
+      {% endif %}
+      {% if can('perf.view') %}
       <a href="{{ url_for('admin.perf_runs') }}" class="admin-sidebar__link{% if ep in ('admin.perf_runs', 'admin.perf_run_detail', 'admin.perf_run_delete', 'admin.perf_key_rotate', 'admin.perf_key_clear') %} admin-sidebar__link--active{% endif %}">
         {{ icon('bolt') }}
         <span class="admin-sidebar__text">Швидкість сторінок</span>
       </a>
+      {% endif %}
+      {% if can('design_system.view') %}
       <a href="{{ url_for('admin.design_system') }}" class="admin-sidebar__link{% if ep == 'admin.design_system' %} admin-sidebar__link--active{% endif %}">
         {{ icon('palette') }}
         <span class="admin-sidebar__text">Дизайн-система</span>
       </a>
+      {% endif %}
+      {% if can('settings.manage') %}
       <a href="{{ url_for('admin.settings') }}" class="admin-sidebar__link{% if ep == 'admin.settings' %} admin-sidebar__link--active{% endif %}">
         {{ icon('settings') }}
         <span class="admin-sidebar__text">Налаштування</span>
       </a>
+      {% endif %}
+      {% if can('access.view') %}
+      <a href="{{ url_for('admin.access') }}" class="admin-sidebar__link{% if ep in ('admin.access', 'admin.access_role_new', 'admin.access_role_edit') %} admin-sidebar__link--active{% endif %}">
+        {{ icon('group') }}
+        <span class="admin-sidebar__text">Доступ</span>
+      </a>
+      {% endif %}
     </div>
+    {% endif %}
   </nav>
 </aside>
