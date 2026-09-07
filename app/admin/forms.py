@@ -190,6 +190,13 @@ class SiteSettingsForm(FlaskForm):
                     NumberRange(min=0, max=60)],
         description='Авто-email «заповніть дані для сертифіката» учасникам з незаповненою МОЗ-анкетою, коли до заходу лишається стільки днів. 0 — вимкнено.',
     )
+    transfer_min_days = IntegerField(
+        'Перенесення закривається за, діб до заходу',
+        default=2,
+        validators=[InputRequired(message='Вкажіть кількість діб (0 вимикає обмеження)'),
+                    NumberRange(min=0, max=60)],
+        description='Коли до заходу лишається менше — перенести учасника вже не можна. Те саме число не пускає переносити на захід, що ось-ось почнеться. 0 — переносити можна аж до старту.',
+    )
 
     # Contacts
     phone_primary = StringField(

@@ -381,6 +381,17 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
         db.Integer, default=5, nullable=False, server_default='5',
     )
 
+    # Вікно перенесення реєстрації: за скільки діб до заходу перенесення
+    # вже неможливе. Керує ОБОМА запобіжниками -- і поточним заходом, і
+    # цільовим, -- бо це одне правило Політики, а не два.
+    #
+    # Доби, а не години: Політика оперує днями, сервіс множить на 24.
+    # 0 -- обмеження вимкнено, перенести можна аж до старту (захід, що вже
+    # почався, лишається заблокованим і тоді).
+    transfer_min_days = db.Column(
+        db.Integer, default=2, nullable=False, server_default='2',
+    )
+
     # === Meta Lead Ads (ліди з інстант-форм Facebook/Instagram) ===
     #
     # App Secret і Page Access Token -- секрети з доступом до персональних

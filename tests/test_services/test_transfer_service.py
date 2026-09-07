@@ -15,6 +15,7 @@ from app.models.course_instance import CourseInstance
 from app.models.mixins import utcnow
 from app.models.registration import EventRegistration
 from app.models.registration_transfer import RegistrationTransfer
+from app.models.site_settings import SiteSettings
 from app.models.user import User
 from app.services import transfer_service
 from tests.refund_fixtures import purge
@@ -632,3 +633,91 @@ def test_request_refund_is_idempotent(world, monkeypatch):
     transfer_service.request_refund(transfer, 'Причина')
     _second, err = transfer_service.request_refund(transfer, 'Ще раз')
     assert err is not None
+
+
+# --- Поріг перенесення як налаштування ---------------------------------
+#
+# Число діб живе в site_settings.transfer_min_days і керує ОБОМА
+# запобіжниками (поточний захід і цільовий) та списком доступних цілей.
+# Тести нижче міняють саме налаштування -- якщо поріг колись знову стане
+# константою в коді, вони впадуть.
+
+def _set_min_days(days):
+    settings = SiteSettings.get()
+    settings.transfer_min_days = days
+    db.session.commit()
+    return settings
+
+
+def test_min_days_setting_widens_source_guard(world):
+    """Поріг 5 діб блокує захід через 4 дні, який при типових 2 проходив."""
+    reg, src, dst, _, _ = world
+    src.start_date = utcnow() + timedelta(days=4)
+    db.session.commit()
+    assert transfer_service.check(reg, dst) == []
+
+    _set_min_days(5)
+    problems = transfer_service.check(reg, dst)
+    assert any('поточного заходу' in p for p in problems)
+
+
+def test_min_days_setting_widens_target_guard(world):
+    reg, src, dst, _, _ = world
+    dst.start_date = utcnow() + timedelta(days=4)
+    db.session.commit()
+    assert transfer_service.check(reg, dst) == []
+
+    _set_min_days(5)
+    problems = transfer_service.check(reg, dst)
+    assert any('обраного заходу' in p for p in problems)
+
+
+def test_min_days_zero_allows_transfer_until_start(world):
+    """0 -- обмеження вимкнено: перенести можна аж до початку заходу."""
+    reg, src, dst, _, _ = world
+    src.start_date = utcnow() + timedelta(hours=1)
+    dst.start_date = utcnow() + timedelta(hours=2)
+    db.session.commit()
+    assert transfer_service.check(reg, dst) != []
+
+    _set_min_days(0)
+    assert transfer_service.check(reg, dst) == []
+
+
+def test_min_days_zero_still_blocks_started_event(world):
+    """Нуль вимикає вікно, а не здоровий глузд: захід, що вже почався, --
+    досі не ціль."""
+    reg, src, dst, _, _ = world
+    _set_min_days(0)
+    dst.start_date = utcnow() - timedelta(hours=1)
+    db.session.commit()
+    problems = transfer_service.check(reg, dst)
+    assert any('обраного заходу' in p for p in problems)
+
+
+def test_min_days_shows_in_message_with_correct_plural(world):
+    """«менше 1 доби», а не «менше 1 діб»."""
+    reg, src, dst, _, _ = world
+    _set_min_days(1)
+    src.start_date = utcnow() + timedelta(hours=12)
+    db.session.commit()
+    problem = [p for p in transfer_service.check(reg, dst)
+               if 'поточного заходу' in p][0]
+    assert 'менше 1 доби' in problem
+
+    _set_min_days(5)
+    src.start_date = utcnow() + timedelta(days=4)
+    db.session.commit()
+    problem = [p for p in transfer_service.check(reg, dst)
+               if 'поточного заходу' in p][0]
+    assert 'менше 5 діб' in problem
+
+
+def test_min_days_setting_filters_eligible_instances(world):
+    reg, src, dst, _, _ = world
+    dst.start_date = utcnow() + timedelta(days=4)
+    db.session.commit()
+    assert [i.id for i in transfer_service.eligible_instances(reg)] == [dst.id]
+
+    _set_min_days(5)
+    assert transfer_service.eligible_instances(reg) == []

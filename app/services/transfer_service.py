@@ -20,16 +20,20 @@ from app.models.registration_transfer import (
 )
 from app.models.refund_request import RefundRequest, STATUS_NEW
 from app.models.mixins import utcnow
+from app.models.site_settings import SiteSettings
 from app.services import refund_policy, refund_requests, registration_service
 from app.services.refund_requests import MAX_PAYOUT, MAX_REASON
-from app.utils import ensure_utc
+from app.utils import ensure_utc, uk_plural
 
 logger = logging.getLogger(__name__)
 
-# "Не пізніше ніж за 2 дні" -- 48 календарних годин. Політика оперує
-# робочими днями лише в §3.3, і саме про дедлайн заявки на повернення, а не
-# про перенесення. Одна константа: перехід на робочі дні -- одна правка.
-TRANSFER_MIN_HOURS = 48
+# "Не пізніше ніж за 2 дні" -- календарні доби. Політика оперує робочими
+# днями лише в §3.3, і саме про дедлайн заявки на повернення, а не про
+# перенесення.
+#
+# Число діб задає адмін у налаштуваннях (site_settings.transfer_min_days);
+# це значення -- запасне, на випадок, коли рядка налаштувань ще немає.
+TRANSFER_MIN_DAYS_DEFAULT = 2
 
 # Коди відмов для публічних роутів. Саме коди, а не готовий текст: `_()`
 # навколо змінної нічого не перекладає (каталог не має такого msgid), тож
@@ -37,6 +41,25 @@ TRANSFER_MIN_HOURS = 48
 ERROR_ANSWERED = 'answered'
 ERROR_NOT_FOUND = 'not_found'
 ERROR_NOT_ELIGIBLE = 'not_eligible'
+
+
+def min_days():
+    """Вікно перенесення в добах -- з налаштувань, із запасним значенням.
+
+    Читається на кожну перевірку, а не кешується в модулі: адмін міняє
+    поріг у тій самій адмінці, і значення, замерзле до перезапуску,
+    пояснювало б "я ж змінив, а воно не діє". Ціна -- пошук рядка
+    site_settings за первинним ключем, який після першого разу бере
+    identity map сесії.
+    """
+    settings = SiteSettings.get()
+    days = getattr(settings, 'transfer_min_days', None)
+    return TRANSFER_MIN_DAYS_DEFAULT if days is None else days
+
+
+def days_word(n):
+    """«доби» / «діб» після «менше»: 1 і 21 -- родовий однини, решта -- множини."""
+    return uk_plural(n, 'доби', 'діб', 'діб')
 
 
 def hours_until(start_date):
@@ -100,10 +123,11 @@ def _registration_problems(reg):
         problems.append('Учасник уже відвідав цей захід — присутність '
                         'відмічено')
 
+    days = min_days()
     hours = hours_until(reg.instance.start_date if reg.instance else None)
-    if hours is not None and hours < TRANSFER_MIN_HOURS:
+    if hours is not None and hours < days * 24:
         problems.append(
-            'До поточного заходу лишилось менше 2 діб — '
+            f'До поточного заходу лишилось менше {days} {days_word(days)} — '
             'перенесення вже неможливе'
         )
 
@@ -160,9 +184,15 @@ def _target_problems(reg, target):
     if target.id == reg.instance_id:
         problems.append('Це той самий захід')
 
+    # Поріг 0 вимикає вікно, але не пускає на захід, який уже почався:
+    # при нулі умова читається як `hours < 0`, а в заходу, що почався,
+    # годин лишилось менше нуля.
+    days = min_days()
     hours = hours_until(target.start_date)
-    if hours is None or hours < TRANSFER_MIN_HOURS:
-        problems.append('До обраного заходу лишилось менше 2 діб')
+    if hours is None or hours < days * 24:
+        problems.append(
+            f'До обраного заходу лишилось менше {days} {days_word(days)}'
+        )
 
     if target.status not in ('published', 'active'):
         problems.append('Захід недоступний для реєстрації')

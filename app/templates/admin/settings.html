@@ -40,6 +40,7 @@
     <a class="admin-pill" href="#referral">Реферали</a>
     <a class="admin-pill" href="#thankyou-promo">Промокод</a>
     <a class="admin-pill" href="#registration-email">Лист</a>
+    <a class="admin-pill" href="#transfer">Перенесення</a>
   </nav>
 
   <form method="POST" class="admin-form">
@@ -398,6 +399,22 @@
           <label for="registration_email_delay_minutes">{{ form.registration_email_delay_minutes.label.text }}</label>
           {{ form.registration_email_delay_minutes(class="form-input", id="registration_email_delay_minutes", type="number", min="0", max="120") }}
           {% if form.registration_email_delay_minutes.description %}<small class="form-hint">{{ form.registration_email_delay_minutes.description }}</small>{% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    <div class="form-section" id="transfer">
+      <h3 class="admin-form__section-title">Перенесення реєстрації</h3>
+      <div class="admin-form__grid">
+
+        <div class="form-group">
+          <label for="transfer_min_days">{{ form.transfer_min_days.label.text }}</label>
+          {{ form.transfer_min_days(class="form-input", id="transfer_min_days", type="number", min="0", max="60") }}
+          {% if form.transfer_min_days.description %}<small class="form-hint">{{ form.transfer_min_days.description }}</small>{% endif %}
+          {% if form.transfer_min_days.errors %}
+          <div class="form-error">{{ form.transfer_min_days.errors[0] }}</div>
+          {% endif %}
         </div>
 
       </div>

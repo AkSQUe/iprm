@@ -75,3 +75,34 @@ def test_settings_post_unchecked_disables_hero_video(client, admin, app):
     r = client.post('/admin/settings', data=payload_on, follow_redirects=True)
     assert r.status_code == 200
     assert SiteSettings.get().show_home_hero_video is True
+
+
+def test_settings_page_has_transfer_min_days(client, admin):
+    _login(client, admin)
+    r = client.get('/admin/settings')
+    assert r.status_code == 200
+    assert b'transfer_min_days' in r.data
+
+
+def test_settings_post_saves_transfer_min_days(client, admin, app):
+    """Поріг перенесення доходить з форми до бази і назад до сервісу."""
+    from app.models.site_settings import SiteSettings
+    from app.services import transfer_service
+
+    _login(client, admin)
+    site = SiteSettings.get()
+    assert site.transfer_min_days == 2
+
+    payload_back = _form_payload(app, site)
+    payload = _form_payload(app, site)
+    payload['transfer_min_days'] = '7'
+
+    r = client.post('/admin/settings', data=payload, follow_redirects=True)
+    assert r.status_code == 200
+    assert SiteSettings.get().transfer_min_days == 7
+    assert transfer_service.min_days() == 7
+
+    # Роут комітить, тож стан переживає відкат фікстури -- повертаємо як було.
+    r = client.post('/admin/settings', data=payload_back, follow_redirects=True)
+    assert r.status_code == 200
+    assert SiteSettings.get().transfer_min_days == 2
