@@ -6198,6 +6198,13 @@ msgstr "Tariff difference payment, registration No. %(id)s"
 msgid "Повернутись до перенесення"
 msgstr "Back to the transfer"
 
+msgid ""
+"Сплатіть через банк за реквізитами — доступ відкриємо після надходження "
+"коштів."
+msgstr ""
+"Pay through your bank using the details provided — we will open access "
+"once the funds arrive."
+
 #~ msgid "Неможливо використати цей email"
 #~ msgstr "This email cannot be used"
 

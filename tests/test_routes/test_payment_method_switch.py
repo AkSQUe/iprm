@@ -14,6 +14,7 @@
 рахунком. Інакше адмінка й аналітика показували б «онлайн» для способу,
 якого на сайті немає.
 """
+import re
 from datetime import timedelta
 from decimal import Decimal
 from uuid import uuid4
@@ -247,3 +248,73 @@ class TestOnlineCourseOrder:
 
         assert 'Завантажити рахунок' in html
         assert LIQPAY_UNAVAILABLE not in html
+
+    def test_sole_method_gets_the_primary_button(self, client, buyer, enrollment,
+                                                 course, methods):
+        """Єдина дія сторінки не сміє лишатись виноскою.
+
+        Посилання на рахунок жило у слоті-виносці під кнопкою LiqPay -- і це
+        було правильно, доки воно було другорядним шляхом. Ставши єдиним
+        способом оплати, воно мусить зайняти той самий слот і той самий
+        компонент, що й кнопка, яку замінило.
+        """
+        methods.pay_liqpay_enabled = False
+        db.session.flush()
+        _login(client, buyer)
+
+        html = client.get(
+            f'/online-courses/{course.slug}/checkout').get_data(as_text=True)
+
+        assert re.search(
+            r'<a[^>]+invoice\.pdf"[^>]+class="apple-btn apple-btn--primary'
+            r' apple-btn--full"', html,
+        ), 'рахунок мав стати первинною кнопкою'
+
+    def test_sole_method_drops_the_warning_styling(self, client, buyer, enrollment,
+                                                   course, methods):
+        """Інструкція «як платити» -- не попередження.
+
+        iprm-online-buy__note малює жовту плашку (--iprm-warning-bg): нею
+        кажуть, що щось пішло не так. Звичайний спосіб оплати в ній читався
+        як аварія, а справжня дія поруч лишалась сірим текстом.
+        """
+        methods.pay_liqpay_enabled = False
+        db.session.flush()
+        _login(client, buyer)
+
+        html = client.get(
+            f'/online-courses/{course.slug}/checkout').get_data(as_text=True)
+
+        assert 'iprm-online-buy__note' not in html
+
+    def test_secondary_invoice_stays_a_footnote(self, client, buyer, enrollment,
+                                                course, methods):
+        """З увімкненим LiqPay рахунок другорядний -- кнопкою його робити не треба."""
+        _login(client, buyer)
+
+        html = client.get(
+            f'/online-courses/{course.slug}/checkout').get_data(as_text=True)
+
+        assert 'Платите від організації?' in html
+        assert not re.search(
+            r'<a[^>]+invoice\.pdf"[^>]+class="apple-btn', html,
+        )
+
+    def test_free_course_gets_no_invoice_button(self, client, buyer, enrollment,
+                                                course, methods):
+        """Рахунка на нуль не буває -- кнопка вела б у глухий кут.
+
+        _send_invoice на таке замовлення відповідає «для безкоштовного
+        рахунок не потрібен», тож пропонувати його означало б вести людину
+        по колу.
+        """
+        methods.pay_liqpay_enabled = False
+        enrollment.payment_amount = Decimal('0')
+        course.price = Decimal('0')
+        db.session.flush()
+        _login(client, buyer)
+
+        html = client.get(
+            f'/online-courses/{course.slug}/checkout').get_data(as_text=True)
+
+        assert not re.search(r'<a[^>]+invoice\.pdf"[^>]+class="apple-btn', html)
