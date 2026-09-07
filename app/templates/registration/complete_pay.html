@@ -14,8 +14,12 @@
 {% block extra_head %}
 {#- Раннє з'єднання з хостом бібліотеки віджета: вона вантажиться
     вже після розбору сторінки, і клік до її готовності мовчки
-    повертає старий флоу з квитанцією LiqPay. -#}
+    повертає старий флоу з квитанцією LiqPay.
+
+    Під умовою: коли онлайн-оплату вимкнено, з'єднуватись нема з чим. -#}
+{% if pay_methods.liqpay %}
 <link rel="preconnect" href="https://static.liqpay.ua" crossorigin>
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -86,9 +90,18 @@
     </div>
   </div>
   {% else %}
+  {#- Підводка описує рівно те, що людина побачить нижче: пропонувати вибір
+      там, де спосіб один, -- обіцянка, якої сторінка не виконує. -#}
+  {% if pay_methods.liqpay and pay_methods.invoice %}
   <p class="reg-attention"><strong>{{ _('Оберіть зручний спосіб оплати:') }}</strong></p>
+  {% elif pay_methods.invoice %}
+  <p class="reg-attention"><strong>{{ _('Оплата участі — на розрахунковий рахунок:') }}</strong></p>
+  {% else %}
+  <p class="reg-attention"><strong>{{ _('Оплата участі — онлайн карткою:') }}</strong></p>
+  {% endif %}
 
-  {% with chosen=reg.payment_method, invoice_url=invoice_url %}
+  {% with chosen=reg.payment_method, liqpay_enabled=pay_methods.liqpay,
+          invoice_url=invoice_url %}
     {% include 'registration/partials/_pay_options.html' %}
   {% endwith %}
   {% endif %}
@@ -145,5 +158,7 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/registration-pay.js') }}?v={{ assets_version }}" defer></script>
+{% if pay_methods.liqpay %}
 <script src="{{ url_for('static', filename='js/liqpay-checkout.js') }}?v={{ assets_version }}" defer></script>
+{% endif %}
 {% endblock %}

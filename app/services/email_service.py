@@ -508,6 +508,44 @@ class EmailService:
         return _EventShape()
 
     @staticmethod
+    def _registration_invoice_attachment(registration):
+        """Рахунок (PDF) вкладенням до листа про реєстрацію, або None.
+
+        Умови ті самі, що й для кнопки завантаження на сайті: спосіб оплати
+        ввімкнено в налаштуваннях, обрано саме його, участь платна і ще не
+        оплачена. Так лист і сторінка не розходяться в тому, що людині
+        доступно.
+
+        Збій рендера повертає None, а не піднімає виняток. WeasyPrint тягне
+        нативні бібліотеки і падає там, де його не тестували; лист про
+        реєстрацію -- єдине підтвердження, яке має людина, і втратити його
+        разом із вкладенням було б гіршим із двох результатів.
+        """
+        from app.models.site_settings import SiteSettings
+
+        if registration.payment_method != 'invoice':
+            return None
+        if registration.payment_status == 'paid':
+            return None
+        if not (registration.payment_amount and registration.payment_amount > 0):
+            return None
+        if not SiteSettings.enabled_payment_methods().invoice:
+            return None
+
+        from app.services.invoice_service import (
+            invoice_filename, render_invoice_pdf,
+        )
+        try:
+            pdf = render_invoice_pdf(registration)
+        except Exception:
+            logger.exception(
+                'REG-%s: рахунок не додано до листа -- рендер не вдався',
+                registration.id,
+            )
+            return None
+        return (invoice_filename(registration, 'pdf'), 'application/pdf', pdf)
+
+    @staticmethod
     def send_registration_confirmation(registration):
         event = EmailService._event_from_registration(registration)
         if event is None:
@@ -523,12 +561,17 @@ class EmailService:
         from app.models.site_settings import SiteSettings
         base = (SiteSettings.get().website_url or '').rstrip('/')
         certdata_url = f'{base}/auth/account/certificate-data'
+        invoice = EmailService._registration_invoice_attachment(registration)
         result = EmailService.send_email(
             to=user.email,
             subject=lambda: _('Реєстрацію підтверджено: %(title)s', title=event.title),
             template_name='registration_confirmed',
+            attachments=[invoice] if invoice else None,
             context={
                 'user': user, 'event': event, 'registration': registration,
+                # Шаблон розрізняє «рахунок у вкладенні» і «рахунок на сайті»:
+                # обіцяти вкладення, якого немає, гірше, ніж не обіцяти нічого.
+                'invoice_attached': invoice is not None,
                 'pay_url': EmailService._pay_url_for_registration(registration),
                 # Гість ще не має входу: анкета для сертифіката йому
                 # недоступна, тож замість неї пропонуємо завести кабінет

@@ -129,10 +129,12 @@
               <a href="{{ url_for('registration.confirmation', registration_id=reg.id) }}" class="account-course__pay-btn">
                 {{ _('Оплатити') }} {{ money(reg.payment_amount) }}
               </a>
+              {% if pay_methods.invoice %}
               <a href="{{ url_for('registration.invoice_download', registration_id=reg.id) }}"
                  class="account-course__invoice-btn" data-invoice-download>
                 {{ _('Завантажити рахунок') }}
               </a>
+              {% endif %}
             </div>
             {% endif %}
             {# Заявка на повернення (Політика, розділ 6). Показуємо і стан:

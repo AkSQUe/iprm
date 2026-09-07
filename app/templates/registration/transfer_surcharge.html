@@ -11,8 +11,10 @@
 
 {% block extra_head %}
 {#- Раннє з'єднання з хостом бібліотеки віджета -- див. пояснення в
-    complete_pay.html. -#}
+    complete_pay.html. Під умовою: вимкнену оплату не прогріваємо. -#}
+{% if pay_methods.liqpay %}
 <link rel="preconnect" href="https://static.liqpay.ua" crossorigin>
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -39,11 +41,21 @@
       сторінки (data-liqpay-* у _pay_options.html). Без нього підключений
       нижче liqpay-checkout.js не мав би до чого чіплятись, і preconnect
       теж стояв би даремно. -#}
-  {% with liqpay_data=liqpay_data, liqpay_signature=liqpay_signature,
+  {% if pay_methods.liqpay %}
+  {% with liqpay_enabled=true, liqpay_data=liqpay_data,
+          liqpay_signature=liqpay_signature,
           liqpay_checkout_url=liqpay_checkout_url,
           liqpay_result_url=liqpay_result_url %}
     {% include 'registration/partials/_pay_options.html' %}
   {% endwith %}
+  {% else %}
+  {#- Онлайн-оплату вимкнено, а PDF-рахунка на доплату не існує: рахунок
+      будується з payment_amount реєстрації, і для різниці тарифу видав би
+      неправильну суму. Тому реквізити -- текстом, вручну. -#}
+  {% with purpose=_('Доплата різниці тарифу, реєстрація №%(id)s', id=reg.id) %}
+    {% include 'registration/partials/_bank_requisites.html' %}
+  {% endwith %}
+  {% endif %}
 
   <a href="{{ url_for('registration.transfer_consent', token=transfer.consent_token) }}"
      class="apple-btn apple-btn--secondary">
@@ -54,5 +66,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
+{% if pay_methods.liqpay %}
 <script src="{{ url_for('static', filename='js/liqpay-checkout.js') }}?v={{ assets_version }}" defer></script>
+{% endif %}
 {% endblock %}

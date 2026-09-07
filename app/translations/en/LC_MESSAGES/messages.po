@@ -6092,6 +6092,112 @@ msgstr ""
 "Guidance for each participant from the start through receiving the "
 "certificate."
 
+msgid "курс"
+msgstr "course"
+
+msgid "захід"
+msgstr "event"
+
+msgid "Дякуємо"
+msgstr "Thank you"
+
+msgid "Оплата на рахунок IBAN"
+msgstr "Bank transfer (IBAN)"
+
+msgid "Отримувач"
+msgstr "Beneficiary"
+
+msgid "Код ЄДРПОУ"
+msgstr "EDRPOU code"
+
+msgid "Банк отримувача"
+msgstr "Beneficiary bank"
+
+msgid "Рахунок (IBAN)"
+msgstr "Account (IBAN)"
+
+msgid "Призначення платежу"
+msgstr "Payment purpose"
+
+msgid ""
+"Сплатіть за реквізитами через банк і повідомте менеджера — ми підтвердимо"
+" оплату вручну."
+msgstr ""
+"Pay through your bank using these details and let the manager know — we "
+"will confirm the payment manually."
+
+msgid "Оберіть зручний спосіб оплати — онлайн через LiqPay або на рахунок IBAN:"
+msgstr "Choose a payment method — online via LiqPay or bank transfer (IBAN):"
+
+msgid ""
+"Оплата участі — на розрахунковий рахунок. Завантажте рахунок і сплатіть "
+"через банк за реквізитами."
+msgstr ""
+"Participation is paid by bank transfer. Download the invoice and pay "
+"through your bank using the details provided."
+
+msgid "Оплата участі — онлайн карткою."
+msgstr "Participation is paid online by card."
+
+msgid "Оплата участі — на розрахунковий рахунок:"
+msgstr "Participation payment — bank transfer:"
+
+msgid "Оплата участі — онлайн карткою:"
+msgstr "Participation payment — online by card:"
+
+msgid ""
+"Ви обрали спосіб оплати: <strong>Оплата на рахунок IBAN</strong>. Можна "
+"скористатись будь-яким із варіантів нижче."
+msgstr ""
+"You chose the payment method: <strong>Bank transfer (IBAN)</strong>. You "
+"may use either of the options below."
+
+msgid ""
+"Оплата курсу — на розрахунковий рахунок. Завантажте рахунок нижче і "
+"сплатіть через банк за реквізитами."
+msgstr ""
+"The course is paid by bank transfer. Download the invoice below and pay "
+"through your bank using the details provided."
+
+msgid ""
+"Рахунок на оплату (PDF) додано до цього листа. Сплатіть його через банк "
+"за реквізитами — після надходження коштів ми підтвердимо вашу участь. "
+"Рахунок також доступний на сторінці реєстрації та в особистому кабінеті."
+msgstr ""
+"The invoice (PDF) is attached to this email. Pay it through your bank "
+"using the details provided — once the funds arrive we will confirm your "
+"participation. The invoice is also available on the registration page and"
+" in your account."
+
+msgid ""
+"Завантажте рахунок (PDF) на сторінці реєстрації або в особистому кабінеті"
+" та сплатіть через банк за реквізитами. Після оплати повідомте менеджера "
+"для підтвердження участі."
+msgstr ""
+"Download the invoice (PDF) from the registration page or your account and"
+" pay through your bank using the details provided. After payment, let the"
+" manager know so we can confirm your participation."
+
+msgid "Доплата різниці тарифу | ІПРМ"
+msgstr "Tariff difference payment | IPRM"
+
+msgid "Доплата різниці тарифу"
+msgstr "Tariff difference payment"
+
+msgid ""
+"Ви перенесли участь на тариф з вищою вартістю. Різниця не впливає на саму"
+" участь -- її можна доплатити будь-коли."
+msgstr ""
+"You moved your participation to a higher-priced tariff. The difference "
+"does not affect your participation — you can pay it at any time."
+
+#, python-format
+msgid "Доплата різниці тарифу, реєстрація №%(id)s"
+msgstr "Tariff difference payment, registration No. %(id)s"
+
+msgid "Повернутись до перенесення"
+msgstr "Back to the transfer"
+
 #~ msgid "Неможливо використати цей email"
 #~ msgstr "This email cannot be used"
 

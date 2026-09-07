@@ -37,6 +37,7 @@
     <a class="admin-pill" href="#business">Бізнес</a>
     <a class="admin-pill" href="#navigation">Навігація</a>
     <a class="admin-pill" href="#partners">Партнери</a>
+    <a class="admin-pill" href="#payment">Оплата</a>
     <a class="admin-pill" href="#referral">Реферали</a>
     <a class="admin-pill" href="#thankyou-promo">Промокод</a>
     <a class="admin-pill" href="#registration-email">Лист</a>
@@ -98,6 +99,36 @@
         <div class="form-group admin-form__full">
           <label for="company_legal_name">Юридична назва</label>
           {{ form.company_legal_name(class="form-input", id="company_legal_name", placeholder='ПО "ІПРМ"') }}
+        </div>
+
+      </div>
+    </div>
+
+    {# Одразу під реквізитами: IBAN, банк і ЄДРПОУ вище -- це те, що
+       потрапляє в рахунок, і перемикач читається як їх продовження. #}
+    <div class="form-section" id="payment">
+      <h3 class="admin-form__section-title">Оплата</h3>
+      <p class="admin-form__section-hint">
+        Способи оплати, які бачить клієнт на сторінці реєстрації, у кабінеті
+        та при купівлі онлайн-курсу. Хоча б один має лишатись увімкненим.
+      </p>
+      <div class="admin-form__grid">
+
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            {{ form.pay_liqpay_enabled(id="pay_liqpay_enabled") }}
+            <label for="pay_liqpay_enabled">{{ form.pay_liqpay_enabled.label.text }}</label>
+          </div>
+          <small class="form-hint">{{ form.pay_liqpay_enabled.description }}</small>
+        </div>
+
+        <div class="form-group admin-form__full">
+          <div class="form-checkbox">
+            {{ form.pay_invoice_enabled(id="pay_invoice_enabled") }}
+            <label for="pay_invoice_enabled">{{ form.pay_invoice_enabled.label.text }}</label>
+          </div>
+          <small class="form-hint">{{ form.pay_invoice_enabled.description }}</small>
+          {% for error in form.pay_invoice_enabled.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
         </div>
 
       </div>

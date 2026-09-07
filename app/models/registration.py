@@ -47,10 +47,15 @@ class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
 
     status = db.Column(db.String(20), default='pending', nullable=False, index=True)
     payment_status = db.Column(db.String(20), default='unpaid', nullable=False, index=True)
-    # Обраний користувачем спосіб оплати: 'liqpay' (онлайн, за замовчуванням)
-    # або 'invoice' (оплата за рахунком через банк). Впливає лише на UX
-    # сторінки підтвердження -- фактичний payment_status керується окремо
-    # (LiqPay-callback або менеджер). Для безкоштовних подій не релевантний.
+    # Обраний користувачем спосіб оплати: 'liqpay' (онлайн) або 'invoice'
+    # (на розрахунковий рахунок через банк). Керує тим, ЩО людині
+    # показують і надсилають: підсвітку на сторінці підтвердження і те, чи
+    # їде рахунок вкладенням у листі про реєстрацію. Фактичний
+    # payment_status керується окремо (LiqPay-callback або менеджер). Для
+    # безкоштовних подій не релевантний.
+    #
+    # server_default тут історичний; дефолт нового рядка дає
+    # default_payment_method() -- він дивиться, які способи ввімкнено.
     payment_method = db.Column(
         db.String(20), default='liqpay', server_default='liqpay', nullable=False,
     )
@@ -223,8 +228,22 @@ class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
 
     PAYMENT_METHODS = [
         ('liqpay', 'Онлайн-оплата (LiqPay)'),
-        ('invoice', 'Оплата за рахунком'),
+        ('invoice', 'Оплата на рахунок IBAN'),
     ]
+
+    @staticmethod
+    def default_payment_method():
+        """Спосіб оплати для нової реєстрації -- за станом налаштувань.
+
+        Колонка має default 'liqpay', і доти цього вистачало: онлайн-оплата
+        була на сайті завжди. Коли її вимкнено, той default перетворюється
+        на неправду -- адмінка й аналітика показували б «онлайн» для
+        способу, якого людині не пропонували. Тож новий рядок отримує те,
+        що покупець насправді бачив.
+        """
+        from app.models.site_settings import SiteSettings
+
+        return 'liqpay' if SiteSettings.enabled_payment_methods().liqpay else 'invoice'
 
     def issue_completion_token(self, ttl_days=COMPLETION_TOKEN_TTL_DAYS):
         """Згенерувати (або перевипустити) токен завершення реєстрації.

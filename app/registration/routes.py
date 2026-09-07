@@ -14,6 +14,7 @@ from app.extensions import db, limiter
 from app.models.course_instance import CourseInstance
 from app.models.mixins import utcnow
 from app.models.registration import EventRegistration
+from app.models.site_settings import SiteSettings
 from app.models.user import User
 from app.registration import registration_bp
 from app.registration.forms import EventRegistrationForm, ParticipantCompletionForm
@@ -573,7 +574,8 @@ def confirmation(registration_id):
         and reg.payment_amount
         and reg.payment_amount > 0
     )
-    if needs_payment:
+    methods = SiteSettings.enabled_payment_methods()
+    if needs_payment and methods.liqpay:
         from app.services.liqpay import get_liqpay_service
         service = get_liqpay_service()
         if service.is_configured:
@@ -599,7 +601,8 @@ def confirmation(registration_id):
 
     # Рахунок доступний поки реєстрацію не оплачено (і подія платна).
     invoice_available = (
-        reg.payment_status != 'paid'
+        methods.invoice
+        and reg.payment_status != 'paid'
         and reg.payment_amount and reg.payment_amount > 0
     )
 
@@ -641,6 +644,11 @@ def invoice_download(registration_id):
     if not reg or reg.user_id != current_user.id:
         abort(404)
     if not (reg.payment_amount and reg.payment_amount > 0):
+        abort(404)
+    # Спосіб оплати вимкнено -- закриваємо і сам роут, не лише кнопку.
+    # Адресу рахунка люди мають із попередніх листів і закладок, тож
+    # схований елемент інтерфейсу тут нічого не вирішує.
+    if not SiteSettings.enabled_payment_methods().invoice:
         abort(404)
     if reg.payment_status == 'paid':
         flash(_('Реєстрацію вже оплачено — рахунок не потрібен.'), 'info')
@@ -803,7 +811,8 @@ def complete_payment(token):
         reg.payment_status in ('unpaid', 'pending')
         and reg.payment_amount and reg.payment_amount > 0
     )
-    if needs_payment:
+    methods = SiteSettings.enabled_payment_methods()
+    if needs_payment and methods.liqpay:
         from app.services.liqpay import get_liqpay_service
         service = get_liqpay_service()
         if service.is_configured:
@@ -854,7 +863,8 @@ def complete_payment(token):
         liqpay_signature=liqpay_signature,
         liqpay_checkout_url=liqpay_checkout_url,
         liqpay_result_url=liqpay_result_url,
-        invoice_url=url_for('registration.complete_invoice', token=token),
+        invoice_url=(url_for('registration.complete_invoice', token=token)
+                     if methods.invoice else None),
         **recommend,
     )
 
@@ -908,6 +918,11 @@ def complete_invoice(token):
     reg = _load_reg_by_token(token)
     if reg is None or not reg.completion_token_active:
         return render_template('registration/complete_invalid.html'), 410
+
+    # Спосіб оплати вимкнено -- закриваємо роут, а не лише кнопку (те саме
+    # міркування, що й в invoice_download).
+    if not SiteSettings.enabled_payment_methods().invoice:
+        abort(404)
 
     # Після оплати рахунок не потрібен (узгоджено з invoice_download).
     if reg.payment_status == 'paid':
@@ -1012,8 +1027,13 @@ def transfer_surcharge(token):
     reg = transfer.registration
     liqpay_data = liqpay_signature = liqpay_checkout_url = None
     liqpay_result_url = None
+    # Рахунка на доплату не існує: invoice_service будує документ із
+    # payment_amount реєстрації, і для різниці тарифу видав би неправильну
+    # суму. Тому з вимкненим LiqPay сторінка показує реквізити текстом --
+    # див. transfer_surcharge.html.
+    methods = SiteSettings.enabled_payment_methods()
     service = get_liqpay_service()
-    if service.is_configured:
+    if methods.liqpay and service.is_configured:
         # Публічний token-aware result_url -- як у complete_pay: учасник у
         # token-флоу не залогінений, а payments.success вимагає входу.
         result_url = url_for(

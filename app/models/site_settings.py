@@ -2,6 +2,7 @@ import base64
 import hashlib
 import logging
 import re
+from collections import namedtuple
 
 from cryptography.fernet import Fernet, InvalidToken
 from flask import current_app
@@ -19,6 +20,11 @@ META_PIXEL_ID_RE = re.compile(r'^[0-9]{15,16}$')
 POSTHOG_KEY_RE = re.compile(r'^phc_[A-Za-z0-9_-]{20,60}$')
 
 logger = logging.getLogger(__name__)
+
+# Способи оплати, доступні покупцеві. Не enum і не таблиця: варіантів рівно
+# два, вони закладені в CHECK-констрейнт `registrations.payment_method`, і
+# третій з'явиться не раніше, ніж нова платіжна інтеграція.
+PaymentMethods = namedtuple('PaymentMethods', ('liqpay', 'invoice'))
 
 
 def _get_fernet():
@@ -89,6 +95,21 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
     # Секції навігації
     show_labs = db.Column(db.Boolean, default=True)
     show_clinics = db.Column(db.Boolean, default=True)
+
+    # Способи оплати, які бачить покупець. Два незалежні прапорці, а не один
+    # вибір із трьох: стан «обидва» -- робочий і донедавна єдиний, а тримати
+    # його окремим значенням означало б описувати ту саму річ двічі.
+    #
+    # Дефолт `true` в обох -- щоб міграція нічого не змінила: перемикають це
+    # в адмінці, а не деплоєм. Вимкнути обидва не дає форма налаштувань, а
+    # якщо такий стан усе ж приїхав у БД повз неї -- enabled_payment_methods()
+    # лишає рахунок. Платний захід без жодного способу оплати це глухий кут.
+    pay_liqpay_enabled = db.Column(
+        db.Boolean, default=True, server_default='true', nullable=False,
+    )
+    pay_invoice_enabled = db.Column(
+        db.Boolean, default=True, server_default='true', nullable=False,
+    )
 
     # LiqPay. Public key -- відкритий ідентифікатор, plaintext. Private
     # key -- секрет з доступом до коштів; зберігаємо Fernet-зашифрованим
@@ -933,6 +954,28 @@ class SiteSettings(TranslatableMixin, TimestampMixin, db.Model):
             db.session.add(settings)
             db.session.commit()
         return settings
+
+    @classmethod
+    def enabled_payment_methods(cls, settings=None):
+        """Способи оплати, які показуємо покупцеві.
+
+        Єдине місце, де живе правило «вимкнути обидва не можна». Форма
+        налаштувань такого стану не пропустить, але прапорці лежать у БД і
+        доїхати туди можуть і повз неї (ручний UPDATE, відновлення з
+        бекапу). Тому запобіжник стоїть саме тут, на читанні: рахунок
+        лишається ввімкненим, бо він, на відміну від LiqPay, не залежить
+        ані від чужого API, ані від наявності ключів.
+
+        settings -- опційно вже завантажений рядок (щоб не смикати
+        сесію вдруге там, де він і так під рукою).
+        """
+        settings = settings or cls.get()
+        liqpay = bool(settings.pay_liqpay_enabled)
+        invoice = bool(settings.pay_invoice_enabled)
+        if not liqpay and not invoice:
+            logger.warning('Both payment methods disabled; falling back to invoice')
+            return PaymentMethods(liqpay=False, invoice=True)
+        return PaymentMethods(liqpay=liqpay, invoice=invoice)
 
     def __repr__(self):
         return f'<SiteSettings {self.company_name}>'

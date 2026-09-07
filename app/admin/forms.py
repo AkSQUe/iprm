@@ -142,6 +142,26 @@ class SiteSettingsForm(FlaskForm):
         validators=[Optional(), Length(max=255)],
         description='Напр. Платник єдиного податку третьої групи (неплатник ПДВ).',
     )
+
+    # Способи оплати -- два незалежні прапорці. Вимкнути обидва не даємо:
+    # див. validate_pay_invoice_enabled нижче.
+    pay_liqpay_enabled = BooleanField(
+        'Онлайн-оплата (LiqPay)',
+        default=True,
+        description=(
+            'Картка, Google Pay, Apple Pay. Вимкнення ховає кнопку оплати на '
+            'сайті; вже розпочаті платежі, звірка й повернення коштів '
+            'працюють далі.'
+        ),
+    )
+    pay_invoice_enabled = BooleanField(
+        'Оплата на рахунок IBAN',
+        default=True,
+        description=(
+            'Рахунок-фактура (PDF) за реквізитами з розділу вище. '
+            'Надсилається у листі про реєстрацію і доступний у кабінеті.'
+        ),
+    )
     bpr_provider_number = StringField(
         'Реєстраційний номер провайдера БПР',
         validators=[Optional(), Length(max=20)],
@@ -401,6 +421,20 @@ class SiteSettingsForm(FlaskForm):
             'надійшла, лист не надсилається взагалі. 0 – слати негайно.'
         ),
     )
+
+    def validate_pay_invoice_enabled(self, field):
+        """Хоча б один спосіб оплати мусить лишитись увімкненим.
+
+        Читання (SiteSettings.enabled_payment_methods) має власний
+        запобіжник і в такому стані лишає рахунок -- але мовчки. Адмін
+        пішов би зі сторінки з хибним уявленням про те, що він налаштував,
+        тож форма цей стан не приймає взагалі.
+        """
+        if not field.data and not self.pay_liqpay_enabled.data:
+            raise ValidationError(
+                'Хоча б один спосіб оплати має лишатись увімкненим -- інакше '
+                'платний захід неможливо оплатити.'
+            )
 
 
 # ========== COURSES / INSTANCES / REQUESTS ==========

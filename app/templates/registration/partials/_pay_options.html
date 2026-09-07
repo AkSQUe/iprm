@@ -1,17 +1,28 @@
 {#- Спільний блок способів оплати: LiqPay + рахунок (PDF).
-    Використовується на сторінці підтвердження (confirmation.html) і у
-    токен-флоу самостійного завершення (complete_pay.html).
+    Використовується на сторінці підтвердження (confirmation.html), у
+    токен-флоу самостійного завершення (complete_pay.html) і на доплаті
+    різниці тарифу (transfer_surcharge.html).
 
     Очікує у контексті (через {% with %}):
       chosen             -- обраний спосіб ('liqpay'|'invoice') для підсвітки (опц.)
+      liqpay_enabled     -- чи ввімкнено онлайн-оплату в налаштуваннях; falsy
+                            ховає варіант ЦІЛКОМ, разом із плашкою про
+                            недоступність (див. нижче)
       liqpay_data, liqpay_signature, liqpay_checkout_url -- дані LiqPay-форми
       liqpay_result_url  -- куди вести після оплати у віджеті (опц.; без нього
                             працює звичайний POST на сторінку LiqPay)
       invoice_url        -- URL завантаження рахунка; falsy -> блок рахунка прихований
+
+    Плашка «Онлайн-оплата тимчасово недоступна» показується лише коли спосіб
+    УВІМКНЕНО, але форми немає -- тобто ключі не налаштовані чи щось зламалось.
+    Вимкнений в адмінці спосіб просто зникає: нічого не зламано, і читати про
+    поломку покупцеві нема за що.
 -#}
 {% set _chosen = chosen | default('liqpay') %}
+{% set _liqpay_on = liqpay_enabled if liqpay_enabled is defined else true %}
 <div class="reg-pay-options">
   {# ----- Варіант 1: LiqPay ----- #}
+  {% if _liqpay_on %}
   <div class="reg-pay-option{% if _chosen == 'liqpay' %} reg-pay-option--primary{% endif %}">
     <h3 class="reg-pay-option__title">{{ _('Онлайн-оплата') }}</h3>
     <p class="reg-pay-option__desc">{% trans %}Картка, Google&nbsp;Pay, Apple&nbsp;Pay — миттєве підтвердження.{% endtrans %}</p>
@@ -35,12 +46,13 @@
     <div class="reg-liqpay-placeholder">{{ _('Онлайн-оплата тимчасово недоступна — скористайтесь рахунком.') }}</div>
     {% endif %}
   </div>
+  {% endif %}
 
   {# ----- Варіант 2: Рахунок (PDF) ----- #}
   {% if invoice_url %}
   <div class="reg-pay-option{% if _chosen == 'invoice' %} reg-pay-option--primary{% endif %}">
     <h3 class="reg-pay-option__title">
-      {{ _('Оплата за рахунком') }}
+      {{ _('Оплата на рахунок IBAN') }}
       <span class="iprm-tooltip-trigger" data-tooltip="{{ _('Рахунок-фактура (PDF) з реквізитами для оплати через банк. Доступний, доки участь не оплачено. Після оплати повідомте менеджера для підтвердження.') }}">i</span>
     </h3>
     <p class="reg-pay-option__desc">{{ _('Завантажте рахунок у форматі PDF і сплатіть через банк за реквізитами.') }}</p>

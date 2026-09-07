@@ -133,11 +133,15 @@ def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=Non
     new_status = 'confirmed' if is_free else 'pending'
     new_payment = 'paid' if is_free else 'unpaid'
     # Безкоштовні події оплачуються одразу -- спосіб оплати не релевантний.
-    payment_method = 'liqpay' if is_free else (
-        form_data.get('payment_method') or 'liqpay'
+    # Для решти дефолт бере поточні налаштування сайту, а не константу:
+    # коли онлайн-оплату вимкнено, писати в рядок 'liqpay' означало б
+    # зафіксувати спосіб, якого людині не пропонували.
+    fallback = EventRegistration.default_payment_method()
+    payment_method = fallback if is_free else (
+        form_data.get('payment_method') or fallback
     )
     if payment_method not in dict(EventRegistration.PAYMENT_METHODS):
-        payment_method = 'liqpay'
+        payment_method = fallback
 
     if existing is not None:
         existing.phone = form_data['phone']

@@ -336,6 +336,7 @@ def _order_context(enrollment, course, token=None):
     Різниця між ними лише в адресах: гість усюди ходить із токеном, бо
     входу ще не має. Тому маршрути тут -- параметр, а не хардкод у шаблоні.
     """
+    pay_methods = SiteSettings.enabled_payment_methods()
     return dict(
         active_nav='online',
         course=course,
@@ -346,9 +347,10 @@ def _order_context(enrollment, course, token=None):
         base_amount=_order_base_amount(enrollment, course),
         form_action=(url_for('online.order', token=token) if token
                      else url_for('online.checkout', slug=course.slug)),
-        invoice_url=(url_for('online.order_invoice_token', token=token) if token
-                     else url_for('online.order_invoice',
-                                  enrollment_id=enrollment.id)),
+        invoice_url=((url_for('online.order_invoice_token', token=token) if token
+                      else url_for('online.order_invoice',
+                                   enrollment_id=enrollment.id))
+                     if pay_methods.invoice else None),
         access_href=_access_href(enrollment, token),
         # Токен доступу живе годинами, сторінка замовлення -- тижнями. Тож
         # тут цілком звична ситуація: оплачено, доступ був, посилання
@@ -485,13 +487,14 @@ def _handle_promo(enrollment, course):
 
 
 def _liqpay_context(enrollment, course, token=None):
-    """Дані форми LiqPay. Порожньо, якщо платіжку не налаштовано."""
-    from app.services.liqpay import get_liqpay_service
+    """Дані форми LiqPay. Порожньо, якщо платіжку не налаштовано або вимкнено."""
+    from app.services.liqpay import get_liqpay_service, liqpay_checkout_enabled
 
     service = get_liqpay_service()
     # Оплачене замовлення форми не потребує: шаблон її не показує, а
     # підписаний платіжний пакет на вже сплачену суму краще й не створювати.
     if (enrollment.is_paid or not service.is_configured
+            or not liqpay_checkout_enabled()
             or not enrollment.payment_amount):
         return {'liqpay_data': None, 'liqpay_signature': None,
                 'liqpay_checkout_url': None, 'liqpay_result_url': None}
@@ -671,11 +674,16 @@ def _send_invoice(enrollment, back_url):
     Спільне для обох входів -- за токеном і з кабінету: правила «після
     оплати рахунок не потрібен» і «для нуля рахунка не буває» одні.
     """
-    from flask import send_file
+    from flask import abort, send_file
 
     from app.services.invoice_service import (
         InvoiceError, invoice_filename, render_invoice_pdf,
     )
+
+    # Спосіб оплати вимкнено -- закриваємо роут, а не лише кнопку: адресу
+    # рахунка люди мають із листів і закладок.
+    if not SiteSettings.enabled_payment_methods().invoice:
+        abort(404)
 
     if enrollment.is_paid:
         flash(_('Замовлення вже оплачено'), 'info')

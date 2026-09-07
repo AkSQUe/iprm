@@ -108,6 +108,59 @@ def test_settings_post_saves_transfer_min_days(client, admin, app):
     assert SiteSettings.get().transfer_min_days == 2
 
 
+def test_settings_page_has_payment_method_toggles(client, admin):
+    _login(client, admin)
+    r = client.get('/admin/settings')
+    assert r.status_code == 200
+    assert b'pay_liqpay_enabled' in r.data
+    assert b'pay_invoice_enabled' in r.data
+
+
+def test_settings_post_disables_liqpay(client, admin, app):
+    """Знятий чекбокс LiqPay доходить до бази й до читача налаштувань."""
+    from app.models.site_settings import SiteSettings
+
+    _login(client, admin)
+    site = SiteSettings.get()
+    assert site.pay_liqpay_enabled is True
+
+    payload_back = _form_payload(app, site)
+    payload_off = _form_payload(app, site, drop=('pay_liqpay_enabled',))
+
+    r = client.post('/admin/settings', data=payload_off, follow_redirects=True)
+    assert r.status_code == 200
+    assert SiteSettings.get().pay_liqpay_enabled is False
+    assert SiteSettings.enabled_payment_methods().liqpay is False
+
+    # Роут комітить, тож стан переживає відкат фікстури -- повертаємо як було.
+    r = client.post('/admin/settings', data=payload_back, follow_redirects=True)
+    assert r.status_code == 200
+    assert SiteSettings.get().pay_liqpay_enabled is True
+
+
+def test_settings_post_rejects_disabling_both_methods(client, admin, app):
+    """Платний захід без жодного способу оплати -- глухий кут для покупця.
+
+    Запобіжник на читанні (enabled_payment_methods) урятував би сторінку, але
+    адмін лишився б із хибним уявленням про те, що він налаштував. Тому форма
+    такий стан не приймає взагалі.
+    """
+    from app.models.site_settings import SiteSettings
+
+    _login(client, admin)
+    site = SiteSettings.get()
+    payload = _form_payload(
+        app, site, drop=('pay_liqpay_enabled', 'pay_invoice_enabled'),
+    )
+
+    r = client.post('/admin/settings', data=payload, follow_redirects=True)
+
+    assert r.status_code == 200
+    saved = SiteSettings.get()
+    assert saved.pay_liqpay_enabled is True
+    assert saved.pay_invoice_enabled is True
+
+
 def test_settings_post_saves_transfer_after_days(client, admin, app):
     """Вікно пересадки після заходу доходить з форми до бази і до сервісу."""
     from app.models.site_settings import SiteSettings

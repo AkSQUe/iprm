@@ -1,0 +1,46 @@
+{#- Реквізити для оплати на розрахунковий рахунок -- текстом, без PDF.
+
+    Потрібен там, де сума не збігається з `payment_amount` реєстрації і
+    згенерувати рахунок нічим: доплата різниці тарифу при перенесенні.
+    invoice_service будує документ саме з `payment_amount`, тож для суми
+    доплати він видав би неправильний рахунок, а не жодного.
+
+    Свідомо не оголошує власних класів: пара «підпис -- значення» вже є
+    компонентом (reg-status-card), і другий її опис розійшовся б із першим
+    при найближчій правці.
+
+    Очікує у контексті:
+      amount  -- сума до сплати (Decimal/число)
+      purpose -- призначення платежу (рядок)
+-#}
+{% from 'partials/_money.html' import money %}
+{% set s = site_settings %}
+<div class="reg-status-card">
+  <div class="reg-status-card__row">
+    <span class="reg-status-card__label">{{ _('Отримувач') }}</span>
+    <span class="reg-status-card__value">{{ s.company_full_name }}</span>
+  </div>
+  <div class="reg-status-card__row">
+    <span class="reg-status-card__label">{{ _('Код ЄДРПОУ') }}</span>
+    <span class="reg-status-card__value">{{ s.edrpou }}</span>
+  </div>
+  <div class="reg-status-card__row">
+    <span class="reg-status-card__label">{{ _('Банк отримувача') }}</span>
+    <span class="reg-status-card__value">{{ s.bank_name }}</span>
+  </div>
+  <div class="reg-status-card__row">
+    <span class="reg-status-card__label">{{ _('Рахунок (IBAN)') }}</span>
+    <span class="reg-status-card__value">{{ s.bank_iban }}</span>
+  </div>
+  <div class="reg-status-card__row">
+    <span class="reg-status-card__label">{{ _('Призначення платежу') }}</span>
+    <span class="reg-status-card__value">{{ purpose }}</span>
+  </div>
+  <div class="reg-status-card__row">
+    <span class="reg-status-card__label">{{ _('Сума') }}</span>
+    <span class="reg-status-card__value">{{ money(amount) }}</span>
+  </div>
+</div>
+<p class="reg-pay-cta__note">
+  {{ _('Сплатіть за реквізитами через банк і повідомте менеджера — ми підтвердимо оплату вручну.') }}
+</p>

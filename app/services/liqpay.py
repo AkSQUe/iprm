@@ -156,3 +156,21 @@ def get_liqpay_service(app=None, settings=None):
         private_key=private_key,
         sandbox=sandbox,
     )
+
+
+def liqpay_checkout_enabled(settings=None):
+    """Чи пропонувати покупцеві онлайн-оплату.
+
+    Свідомо НЕ те саме, що `LiqPayService.is_configured`. Той відповідає на
+    питання «ключі на місці» і потрібен колбеку, звірці зависних платежів і
+    поверненню коштів -- тобто всьому, що обслуговує гроші, які ВЖЕ пішли.
+    Ці шляхи мусять працювати й тоді, коли приймання нових платежів вимкнено
+    в адмінці: інакше перемикач обірве платежі в дорозі.
+
+    Ця ж функція відповідає на інше питання -- «показувати кнопку». Там,
+    де поруч треба знати ще й про рахунок, зручніше брати обидва прапорці
+    одразу через SiteSettings.enabled_payment_methods().
+    """
+    from app.models.site_settings import SiteSettings
+
+    return SiteSettings.enabled_payment_methods(settings).liqpay

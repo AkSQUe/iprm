@@ -326,7 +326,16 @@ def create_app(config_name=None):
         settings = getattr(g, 'site_settings', None)
         if settings is None:
             settings = SiteSettings.get()
-        return {'site_settings': settings}
+        # pay_methods -- глобально, а не параметром кожного render_template:
+        # способи оплати впливають на шапку сторінки, підводки, підключення
+        # скрипта віджета й кнопки в кабінеті, тобто на шаблони, розкидані
+        # по чотирьох блупринтах. Правило «обидва вимкнути не можна» живе
+        # всередині enabled_payment_methods, тож шаблони не мають діставати
+        # прапорці з site_settings напряму -- так вони проминули б запобіжник.
+        return {
+            'site_settings': settings,
+            'pay_methods': SiteSettings.enabled_payment_methods(settings),
+        }
 
     @app.context_processor
     def inject_undo_offer():
