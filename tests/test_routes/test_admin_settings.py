@@ -106,3 +106,26 @@ def test_settings_post_saves_transfer_min_days(client, admin, app):
     r = client.post('/admin/settings', data=payload_back, follow_redirects=True)
     assert r.status_code == 200
     assert SiteSettings.get().transfer_min_days == 2
+
+
+def test_settings_post_saves_transfer_after_days(client, admin, app):
+    """Вікно пересадки після заходу доходить з форми до бази і до сервісу."""
+    from app.models.site_settings import SiteSettings
+    from app.services import transfer_service
+
+    _login(client, admin)
+    site = SiteSettings.get()
+    assert site.transfer_after_days == 90
+
+    payload_back = _form_payload(app, site)
+    payload = _form_payload(app, site)
+    payload['transfer_after_days'] = '30'
+
+    r = client.post('/admin/settings', data=payload, follow_redirects=True)
+    assert r.status_code == 200
+    assert SiteSettings.get().transfer_after_days == 30
+    assert transfer_service.after_days() == 30
+
+    r = client.post('/admin/settings', data=payload_back, follow_redirects=True)
+    assert r.status_code == 200
+    assert SiteSettings.get().transfer_after_days == 90

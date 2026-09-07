@@ -417,6 +417,15 @@
           {% endif %}
         </div>
 
+        <div class="form-group">
+          <label for="transfer_after_days">{{ form.transfer_after_days.label.text }}</label>
+          {{ form.transfer_after_days(class="form-input", id="transfer_after_days", type="number", min="0", max="1095") }}
+          {% if form.transfer_after_days.description %}<small class="form-hint">{{ form.transfer_after_days.description }}</small>{% endif %}
+          {% if form.transfer_after_days.errors %}
+          <div class="form-error">{{ form.transfer_after_days.errors[0] }}</div>
+          {% endif %}
+        </div>
+
       </div>
     </div>
 

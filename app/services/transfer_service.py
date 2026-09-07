@@ -35,6 +35,12 @@ logger = logging.getLogger(__name__)
 # це значення -- запасне, на випадок, коли рядка налаштувань ще немає.
 TRANSFER_MIN_DAYS_DEFAULT = 2
 
+# Друге вікно -- ПІСЛЯ заходу: скільки діб можна пересаджувати того, хто не
+# прийшов (site_settings.transfer_after_days). Окреме число, бо це
+# протилежне питання: не "чи не пізно перед заходом", а "чи не задавно
+# після нього". 0 -- пересадки після заходу немає взагалі.
+TRANSFER_AFTER_DAYS_DEFAULT = 90
+
 # Коди відмов для публічних роутів. Саме коди, а не готовий текст: `_()`
 # навколо змінної нічого не перекладає (каталог не має такого msgid), тож
 # літерали лишаються в роуті, а сервіс каже лише, ЩО сталось.
@@ -55,6 +61,13 @@ def min_days():
     settings = SiteSettings.get()
     days = getattr(settings, 'transfer_min_days', None)
     return TRANSFER_MIN_DAYS_DEFAULT if days is None else days
+
+
+def after_days():
+    """Вікно пересадки після заходу в добах -- з тих самих налаштувань."""
+    settings = SiteSettings.get()
+    days = getattr(settings, 'transfer_after_days', None)
+    return TRANSFER_AFTER_DAYS_DEFAULT if days is None else days
 
 
 def days_word(n):
@@ -123,13 +136,32 @@ def _registration_problems(reg):
         problems.append('Учасник уже відвідав цей захід — присутність '
                         'відмічено')
 
-    days = min_days()
+    # Два різні вікна, а не одне порівняння. Доти умова була одна -- "часу до
+    # початку менше за поріг", -- і захід, який УЖЕ ВІДБУВСЯ, провалювався в
+    # неї як окремий випадок "дуже мало часу". За змістом це протилежна
+    # ситуація: переносити не запізно, захід просто минув, а людина не
+    # прийшла. Заразом зникло повідомлення "лишилось менше 0 діб", яким
+    # вироджувався поріг 0 на минулому заході.
+    #
+    # Пересадку того, хто не з'явився, прикривають РЕШТА запобіжників:
+    # відвідав, сертифікат, тест, відкрита заявка, незакрита доплата.
     hours = hours_until(reg.instance.start_date if reg.instance else None)
-    if hours is not None and hours < days * 24:
-        problems.append(
-            f'До поточного заходу лишилось менше {days} {days_word(days)} — '
-            'перенесення вже неможливе'
-        )
+    if hours is not None and hours >= 0:
+        days = min_days()
+        if hours < days * 24:
+            problems.append(
+                f'До поточного заходу лишилось менше {days} {days_word(days)} — '
+                'перенесення вже неможливе'
+            )
+    elif hours is not None:
+        after = after_days()
+        if after <= 0:
+            problems.append('Захід уже відбувся — перенесення неможливе')
+        elif -hours > after * 24:
+            problems.append(
+                f'Захід відбувся понад {after} {days_word(after)} тому — '
+                'перенесення вже неможливе'
+            )
 
     if reg.certificate is not None and not reg.certificate.revoked:
         problems.append('За реєстрацією вже видано сертифікат')

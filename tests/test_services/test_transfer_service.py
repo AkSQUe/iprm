@@ -721,3 +721,103 @@ def test_min_days_setting_filters_eligible_instances(world):
 
     _set_min_days(5)
     assert transfer_service.eligible_instances(reg) == []
+
+
+# --- Захід уже минув: пересадка того, хто не прийшов -------------------
+#
+# Запобіжник 1 писався під питання "чи не пізно переносити ПЕРЕД заходом" і
+# порівнював час до початку з порогом. Захід, що минув, провалювався в те
+# саме порівняння як окремий випадок "дуже мало часу", хоча за змістом це
+# протилежна ситуація. Тепер вікно до заходу і вікно після нього -- дві
+# різні умови з двома різними налаштуваннями.
+
+def _set_after_days(days):
+    settings = SiteSettings.get()
+    settings.transfer_after_days = days
+    db.session.commit()
+    return settings
+
+
+def test_past_event_no_show_can_be_transferred(world):
+    """Головний випадок: захід був 5 днів тому, людина не прийшла."""
+    reg, src, dst, _, _ = world
+    src.start_date = utcnow() - timedelta(days=5)
+    db.session.commit()
+    assert reg.attended is False
+    assert reg.status == 'confirmed'
+    assert transfer_service.check(reg, dst) == []
+    assert [i.id for i in transfer_service.eligible_instances(reg)] == [dst.id]
+
+
+def test_past_event_beyond_after_window_is_blocked(world):
+    """Реєстрацію дворічної давнини не пересаджують."""
+    reg, src, dst, _, _ = world
+    _set_after_days(90)
+    src.start_date = utcnow() - timedelta(days=91)
+    db.session.commit()
+    problems = transfer_service.check(reg, dst)
+    assert any('відбувся понад 90 діб тому' in p for p in problems)
+
+
+def test_after_days_zero_restores_old_behaviour(world):
+    """0 -- пересадки після заходу немає взагалі, як було до цієї правки.
+
+    І повідомлення при цьому не вироджується в «понад 0 діб».
+    """
+    reg, src, dst, _, _ = world
+    _set_after_days(0)
+    src.start_date = utcnow() - timedelta(hours=1)
+    db.session.commit()
+    problems = transfer_service.check(reg, dst)
+    assert 'Захід уже відбувся — перенесення неможливе' in problems
+
+
+def test_pre_event_window_still_blocks(world):
+    """Звуження не відкрило вікно ПЕРЕД заходом."""
+    reg, src, dst, _, _ = world
+    src.start_date = utcnow() + timedelta(hours=12)
+    db.session.commit()
+    problems = transfer_service.check(reg, dst)
+    assert any('До поточного заходу лишилось менше' in p for p in problems)
+
+
+def test_min_days_zero_no_longer_says_less_than_zero(world):
+    """Поріг 0 більше не дає «лишилось менше 0 діб» на минулому заході."""
+    reg, src, dst, _, _ = world
+    _set_min_days(0)
+    src.start_date = utcnow() - timedelta(days=1)
+    db.session.commit()
+    assert not any('менше 0' in p for p in transfer_service.check(reg, dst))
+
+
+def test_past_event_still_blocked_when_attended(world):
+    """Решта запобіжників після заходу працює як раніше -- саме на них
+    спирається рішення пропускати минулий захід."""
+    reg, src, dst, _, _ = world
+    src.start_date = utcnow() - timedelta(days=5)
+    reg.attended = True
+    db.session.commit()
+    problems = transfer_service.check(reg, dst)
+    assert any('уже відвідав' in p for p in problems)
+
+
+def test_past_event_still_blocked_when_certificate_issued(world):
+    reg, src, dst, user, _ = world
+    src.start_date = utcnow() - timedelta(days=5)
+    db.session.add(Certificate(
+        registration_id=reg.id, user_id=user.id, number=f'{PREFIX}past',
+        recipient_name='Тест Переносний', event_title='Курс переносу',
+        pdf_path='certificates/rts-past.pdf',
+    ))
+    db.session.commit()
+    problems = transfer_service.check(reg, dst)
+    assert any('видано сертифікат' in p for p in problems)
+
+
+def test_past_event_still_blocked_when_quiz_passed(world):
+    reg, src, dst, _, _ = world
+    src.start_date = utcnow() - timedelta(days=5)
+    reg.quiz_passed_at = utcnow()
+    db.session.commit()
+    problems = transfer_service.check(reg, dst)
+    assert any('склав тест' in p for p in problems)
