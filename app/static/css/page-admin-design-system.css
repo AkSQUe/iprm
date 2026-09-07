@@ -245,6 +245,11 @@
   border-radius: 20px;
   border: 1px solid var(--iprm-border);
   margin-bottom: 16px;
+  /* Поверхня демо -- біла, тож прилипла смуга дій (.admin-form__actions)
+     усередині неї мусить малювати той самий колір. Це не переозначення
+     компонента, а контракт, який він читає: колір тла задає той, на кому
+     смуга стоїть. */
+  --admin-sticky-surface: var(--iprm-white);
 }
 
 .ds-section-alt .ds-demo {

@@ -33,6 +33,28 @@
   });
   if (!map.length) return;
 
+  // На вузькому екрані навігація прокручується горизонтально: активне
+  // посилання може опинитися за межами видимої частини стрічки.
+  //
+  // Рухаємо scrollLeft САМОЇ стрічки, а не scrollIntoView. Той прокручує
+  // кожного прокручуваного предка, зокрема документ: на сторінці курсу це
+  // непомітно, бо смуга якорів живе в липкій шапці й завжди у кадрі, тож
+  // по вертикалі `block: 'nearest'` нічого не робить. Покажчик секцій у
+  // налаштуваннях адмінки НЕ липкий -- щойно він іде вгору за край вікна,
+  // кожне спрацювання спостерігача повертало сторінку до нього, і
+  // прокрутка з'їжджала на початок (плавно, бо html { scroll-behavior:
+  // smooth }). Сторінку прокрутити було неможливо.
+  function keepInStrip(link) {
+    if (nav.scrollWidth <= nav.clientWidth) return;
+    var strip = nav.getBoundingClientRect();
+    var item = link.getBoundingClientRect();
+    if (item.left < strip.left) {
+      nav.scrollLeft -= strip.left - item.left;
+    } else if (item.right > strip.right) {
+      nav.scrollLeft += item.right - strip.right;
+    }
+  }
+
   function activate(link) {
     links.forEach(function (l) {
       if (l === link) {
@@ -41,11 +63,7 @@
         l.removeAttribute('aria-current');
       }
     });
-    // На вузькому екрані навігація прокручується горизонтально: активне
-    // посилання може опинитися за межами видимої частини.
-    if (link.scrollIntoView) {
-      link.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    }
+    keepInStrip(link);
   }
 
   if (!('IntersectionObserver' in window)) return;

@@ -1622,6 +1622,10 @@ a.admin-stat-card:focus-visible {
   border: 1px solid var(--iprm-border);
   border-radius: var(--iprm-radius);
   padding: 32px;
+  /* Картка біла, тож прилипла смуга дій усередині неї мусить малювати
+     той самий колір -- інакше вона кладе сіру плашку в білу картку
+     (наприклад, «Вирішити помилку» в деталях запису журналу). */
+  --admin-sticky-surface: var(--iprm-white);
 }
 
 /* Відступ, коли за карткою-секцією одразу йде панель фільтрів (напр. сторінка
@@ -1885,11 +1889,18 @@ a.admin-stat-card:focus-visible {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  padding-top: 8px;
   position: sticky;
   bottom: 0;
-  background: linear-gradient(to top, var(--iprm-card-bg) 60%, transparent);
-  padding: 24px 0 40px;
+  /* Непрозоре тло, а не градієнт `to top ... 60%, transparent`: крізь
+     прозорий верх смуги просвічували поля форми, що проїжджали під нею, і
+     смуга читалась як відірвана плашка, яка висить посеред сторінки.
+     Колір бере поверхня, на якій смуга стоїть: за замовчуванням тло
+     сторінки адмінки, всередині картки-секції -- колір картки. */
+  background: var(--admin-sticky-surface, var(--iprm-card-bg));
+  /* Роль та сама, що була в градієнта -- відділити смугу від вмісту під
+     нею, -- лише чесною лінією замість розмиву. */
+  border-top: 1px solid var(--iprm-border);
+  padding: 16px 0;
   z-index: 10;
 }
 
