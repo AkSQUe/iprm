@@ -22,6 +22,7 @@ from app.extensions import db
 from app.models.certificate import Certificate
 from app.models.mixins import utcnow
 from app.services import specialties as specialties_service
+from app.utils import format_points
 
 logger = logging.getLogger(__name__)
 
@@ -189,8 +190,8 @@ def _event_snapshot(registration):
     title = course.title if course else (registration.target_title or 'Захід')
     event_date = instance.start_date if instance else None
     cpd = registration.cpd_points_awarded
-    if cpd is None and instance is not None:
-        cpd = instance.effective_cpd_points
+    if cpd is None:
+        cpd = registration.due_cpd_points
     trainer = instance.effective_trainer if instance else None
     lecturer = trainer.full_name if trainer else None
     signature = (trainer.signature or '').strip() if trainer and trainer.signature else None
@@ -244,8 +245,11 @@ def points_badge_url(cpd_points):
     Якщо файлу під конкретну кількість ще немає -- беремо дефолт (10 балів).
     """
     base = os.path.join(current_app.static_folder, *_POINTS_BADGE_DIR)
-    points = cpd_points or _POINTS_BADGE_DEFAULT
-    fname = f'{points}-points-BPR.webp'
+    points = cpd_points if cpd_points is not None else _POINTS_BADGE_DEFAULT
+    # Ім'я збирається тим самим нормалізатором, що й показ, інакше
+    # Decimal('9.00') шукає файл «9.00-points-BPR.webp», якого немає, і
+    # дев'ятибальний захід тихо отримує десятибальну розетку.
+    fname = f'{format_points(points, sep=".")}-points-BPR.webp'
     if not os.path.exists(os.path.join(base, fname)):
         fname = f'{_POINTS_BADGE_DEFAULT}-points-BPR.webp'
     return '/'.join(_POINTS_BADGE_DIR) + '/' + fname

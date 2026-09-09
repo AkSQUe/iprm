@@ -67,6 +67,10 @@ def _registration(cpd_points=12, event_num=_AUTO):
     course = Course(
         title=f'Курс {uuid4().hex[:4]}', slug=f'cn-{uuid4().hex[:6]}',
         is_active=True, event_type='course', cpd_points=cpd_points,
+        # Дзеркалимо міграційний бекфіл (cpd_points_online = cpd_points_offline
+        # = cpd_points): _event_snapshot тепер бере відкат балів через
+        # due_cpd_points, який читає лише нові розщеплені колонки.
+        cpd_points_online=cpd_points, cpd_points_offline=cpd_points,
         bpr_event_number=event_num,
     )
     db.session.add(course)

@@ -28,7 +28,7 @@
                 {{ detail_row(_('Дата заходу'), certificate.event_date.strftime('%d.%m.%Y')) }}
                 {% endif %}
                 {% if certificate.cpd_points %}
-                {{ detail_row(_('Бали БПР'), certificate.cpd_points ~ " " ~ _('балів')) }}
+                {{ detail_row(_('Бали БПР'), (certificate.cpd_points | points) ~ " " ~ _('балів')) }}
                 {% endif %}
             </td>
         </tr>

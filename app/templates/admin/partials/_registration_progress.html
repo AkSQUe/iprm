@@ -95,7 +95,7 @@
   <a href="{{ url_for('admin.registration_certificate_download', reg_id=reg.id) }}"
      title="Завантажити PDF">{{ reg.certificate.number }}</a>
   <div class="admin-text-muted">
-    {{ reg.certificate.issued_at.strftime('%d.%m.%Y') }}{% if reg.certificate.cpd_points %}, {{ reg.certificate.cpd_points }} балів{% endif %}
+    {{ reg.certificate.issued_at.strftime('%d.%m.%Y') }}{% if reg.certificate.cpd_points %}, {{ reg.certificate.cpd_points | points }} балів{% endif %}
   </div>
   {% elif reg.certificate and reg.certificate.revoked %}
   <span class="badge badge--danger" title="Номер {{ reg.certificate.number }}">Відкликано</span>

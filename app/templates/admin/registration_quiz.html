@@ -127,7 +127,7 @@
           </a>
           <div class="form-hint">
             Видано {{ reg.certificate.issued_at.strftime('%d.%m.%Y %H:%M') }},
-            {{ reg.certificate.cpd_points }} балів БПР
+            {{ reg.certificate.cpd_points | points }} балів БПР
           </div>
           {% elif reg.certificate %}
           <span class="badge badge--danger">Відкликано</span>

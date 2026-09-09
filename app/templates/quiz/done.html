@@ -23,7 +23,7 @@
       <dt>{{ _('Номер сертифіката') }}</dt>
       <dd>{{ certificate.number }}</dd>
       <dt>{{ _('Бали БПР') }}</dt>
-      <dd>{{ certificate.cpd_points }} {{ certificate.cpd_points | plural('bpr_points') }}</dd>
+      <dd>{{ certificate.cpd_points | points }} {{ certificate.cpd_points | plural('bpr_points') }}</dd>
     </dl>
 
     <a href="{{ url_for('auth.certificate_download', cert_id=certificate.id) }}"
