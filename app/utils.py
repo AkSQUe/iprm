@@ -203,16 +203,20 @@ def sanitize_rich_text(raw):
     return Markup(cleaned)
 
 
-def uk_plural(n, one, few, many):
+def uk_plural(n, one, few, many, fraction=None):
     """Українська плюралізація: uk_plural(2, 'блок', 'блоки', 'блоків') -> 'блоки'.
 
     1 -> one, 2-4 -> few, 5-20/0 -> many (з урахуванням 11-14 та складених
-    числівників: 21 -> one, 22 -> few, 25 -> many).
+    числівників: 21 -> one, 22 -> few, 25 -> many). Неціле -> fraction
+    («4,5 бала»), а без нього -- many, щоб виклики без дробів не мінялись.
     """
     try:
-        n = abs(int(n))
+        number = abs(float(n))
     except (TypeError, ValueError):
         return many
+    if number != int(number):
+        return fraction or many
+    n = int(number)
     mod10, mod100 = n % 10, n % 100
     if mod10 == 1 and mod100 != 11:
         return one

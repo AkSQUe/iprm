@@ -11,16 +11,18 @@ uk/ru і просте (2 форми) для en.
 """
 from app.i18n import DEFAULT_LANGUAGE
 
-# Порядок форм: (one, few, many) для слов'янських; (one, other) для en.
+# Порядок форм: (one, few, many, fraction) для слов'янських; (one, other) для en.
+# Дробова форма (fourth) -- у родовому однині, для значень на кшталт 4,5.
+# Для bpr_points: 'бала' без суфіксу БПР, оскільки в контексті вже ясно.
 PLURAL_FORMS = {
     'bpr_points': {
-        'uk': ('бал БПР', 'бали БПР', 'балів БПР'),
-        'ru': ('балл БПР', 'балла БПР', 'баллов БПР'),
+        'uk': ('бал БПР', 'бали БПР', 'балів БПР', 'бала'),
+        'ru': ('балл БПР', 'балла БПР', 'баллов БПР', 'балла'),
         'en': ('BPR point', 'BPR points'),
     },
     'points': {
-        'uk': ('бал', 'бали', 'балів'),
-        'ru': ('балл', 'балла', 'баллов'),
+        'uk': ('бал', 'бали', 'балів', 'бала'),
+        'ru': ('балл', 'балла', 'баллов', 'балла'),
         'en': ('point', 'points'),
     },
     'bonus_points': {
@@ -90,10 +92,16 @@ def plural(n, key, lang=None):
     if not forms_by_lang:
         return key
     forms = forms_by_lang.get(lang) or forms_by_lang[DEFAULT_LANGUAGE]
+    # Дробові бали БПР (4,5) мають власну форму -- родовий однини
+    # («4,5 бала»). Слов'янське правило її не дає, бо працює із залишками
+    # цілого; тому нецілі відсікаємо ДО int().
     try:
-        n = abs(int(n))
+        number = abs(float(n))
     except (TypeError, ValueError):
         return forms[-1]
+    if number != int(number):
+        return forms[3] if len(forms) > 3 else forms[-1]
+    n = int(number)
     if len(forms) == 2:  # 2-формні мови (en): one / other
         return forms[0] if n == 1 else forms[1]
     return forms[_slavic_index(n)]

@@ -1,7 +1,10 @@
 """Локалізована плюралізація (app.i18n_plurals.plural)."""
+from decimal import Decimal
+
 import pytest
 
 from app.i18n_plurals import PLURAL_FORMS, plural
+from app.utils import uk_plural
 
 
 @pytest.mark.parametrize('n,expected', [
@@ -42,7 +45,8 @@ def test_unknown_lang_falls_back_to_uk():
 def test_every_key_has_all_languages():
     for key, langs in PLURAL_FORMS.items():
         assert set(langs) >= {'uk', 'ru', 'en'}, key
-        assert len(langs['uk']) == 3 and len(langs['ru']) == 3
+        # uk/ru мають 3 або 4 форми (3 для старих ключів, 4 для ключів з дробовою формою)
+        assert len(langs['uk']) in (3, 4) and len(langs['ru']) in (3, 4)
         assert len(langs['en']) == 2
 
 
@@ -53,3 +57,29 @@ def test_filter_uses_active_locale(app):
             assert plural(5, 'seats') == 'мест'
         with force_locale('uk'):
             assert plural(5, 'seats') == 'місць'
+
+
+def test_plural_fraction_uses_genitive_singular():
+    assert plural(Decimal('4.5'), 'bpr_points', lang='uk') == 'бала'
+    assert plural(Decimal('7.5'), 'points', lang='uk') == 'бала'
+    assert plural(Decimal('4.5'), 'bpr_points', lang='ru') == 'балла'
+
+
+def test_plural_whole_numbers_unchanged():
+    assert plural(1, 'bpr_points', lang='uk') == 'бал БПР'
+    assert plural(3, 'bpr_points', lang='uk') == 'бали БПР'
+    assert plural(9, 'bpr_points', lang='uk') == 'балів БПР'
+
+
+def test_plural_fraction_in_two_form_language():
+    assert plural(Decimal('7.5'), 'bpr_points', lang='en') == 'BPR points'
+
+
+def test_plural_fraction_without_fourth_form_falls_back_to_many():
+    assert plural(Decimal('2.5'), 'seats', lang='uk') == 'місць'
+
+
+def test_uk_plural_fraction():
+    assert uk_plural(Decimal('4.5'), 'бал', 'бали', 'балів', 'бала') == 'бала'
+    assert uk_plural(Decimal('4.5'), 'бал', 'бали', 'балів') == 'балів'
+    assert uk_plural(2, 'бал', 'бали', 'балів', 'бала') == 'бали'
