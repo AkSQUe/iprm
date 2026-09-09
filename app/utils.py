@@ -1,6 +1,7 @@
 import os
 import re
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from zoneinfo import ZoneInfo
 
 import bleach
@@ -56,6 +57,49 @@ def normalize_name(value):
         )
 
     return ' '.join(cap_word(w) for w in s.split(' '))
+
+
+# Бали БПР бувають дробові (4,5 / 7,5), а вводяться людьми, тобто прийти
+# може і кома, і крапка, і нерозривний пробіл із Excel. Розбір один на всі
+# точки входу: WTForms-поле, xlsx-імпорт, форма підтвердження присутності.
+POINTS_QUANT = Decimal('0.01')
+
+
+def parse_points(raw):
+    """Рядок або число -> Decimal з двома знаками. Порожнє -> None.
+
+    Приймає кому і крапку як роздільник. Нерозбірне значення -- ValueError,
+    щоб виклик показав людині рядок, а не мовчки записав None.
+    """
+    if raw is None:
+        return None
+    text = str(raw).strip().replace(' ', '').replace(' ', '').replace(',', '.')
+    if not text:
+        return None
+    try:
+        value = Decimal(text)
+    except InvalidOperation:
+        raise ValueError(f'не число: {raw!r}')
+    if not value.is_finite():
+        raise ValueError(f'не число: {raw!r}')
+    return value.quantize(POINTS_QUANT, rounding=ROUND_HALF_UP)
+
+
+def format_points(value, sep=','):
+    """Decimal -> рядок без хвостових нулів: 9.00 -> '9', 7.50 -> '7,5'.
+
+    `sep` окремим аргументом, бо той самий нормалізатор збирає ім'я файлу
+    розетки на сертифікаті, а там роздільник -- крапка.
+    """
+    if value is None or value == '':
+        return ''
+    number = Decimal(str(value))
+    # normalize() зрізає хвостові нулі, але ціле сотнями віддає як 1E+2 --
+    # тому цілі окремо зводимо до звичайного запису.
+    number = number.normalize()
+    if number == number.to_integral_value():
+        number = number.quantize(Decimal(1))
+    return format(number, 'f').replace('.', sep)
 
 
 # Київський час. Потрібен там, де межа доби має бути людською, а не UTC:

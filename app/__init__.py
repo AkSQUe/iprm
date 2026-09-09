@@ -213,8 +213,9 @@ def create_app(config_name=None):
     app.jinja_env.filters['uk_plural'] = uk_plural
     # Локалізована плюралізація (uk/ru/en) для публічних сторінок; uk_plural
     # лишається для uk-only PDF-сертифікатів.
-    from app.i18n_plurals import plural
+    from app.i18n_plurals import plural, points_text
     app.jinja_env.filters['plural'] = plural
+    app.jinja_env.filters['points'] = points_text
     # Назва локації розкладу активною мовою через довідник City. Канонічна
     # укр-назва лишається в CourseInstance.location -- фільтр застосовуємо
     # лише там, де текст читає людина (не в JSON-LD, ICS і партнерському API).

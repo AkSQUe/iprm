@@ -97,3 +97,11 @@ def plural(n, key, lang=None):
     if len(forms) == 2:  # 2-формні мови (en): one / other
         return forms[0] if n == 1 else forms[1]
     return forms[_slavic_index(n)]
+
+
+def points_text(value, lang=None):
+    """Бали у записі активної локалі: 7,5 для uk/ru, 7.5 для en."""
+    from app.utils import format_points
+
+    lang = lang or _active_language()
+    return format_points(value, sep='.' if lang == 'en' else ',')
