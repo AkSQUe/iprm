@@ -43,10 +43,11 @@ def test_unknown_lang_falls_back_to_uk():
 
 
 def test_every_key_has_all_languages():
+    fraction_keys = {'bpr_points', 'points'}
     for key, langs in PLURAL_FORMS.items():
         assert set(langs) >= {'uk', 'ru', 'en'}, key
-        # uk/ru мають 3 або 4 форми (3 для старих ключів, 4 для ключів з дробовою формою)
-        assert len(langs['uk']) in (3, 4) and len(langs['ru']) in (3, 4)
+        expected = 4 if key in fraction_keys else 3
+        assert len(langs['uk']) == expected and len(langs['ru']) == expected, key
         assert len(langs['en']) == 2
 
 
@@ -60,9 +61,9 @@ def test_filter_uses_active_locale(app):
 
 
 def test_plural_fraction_uses_genitive_singular():
-    assert plural(Decimal('4.5'), 'bpr_points', lang='uk') == 'бала'
+    assert plural(Decimal('4.5'), 'bpr_points', lang='uk') == 'бала БПР'
     assert plural(Decimal('7.5'), 'points', lang='uk') == 'бала'
-    assert plural(Decimal('4.5'), 'bpr_points', lang='ru') == 'балла'
+    assert plural(Decimal('4.5'), 'bpr_points', lang='ru') == 'балла БПР'
 
 
 def test_plural_whole_numbers_unchanged():
