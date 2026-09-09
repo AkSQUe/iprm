@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from 'partials/_money.html' import money %}
+{% from 'partials/_bpr_points.html' import points_range %}
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 
 {% block title %}{{ _('Обліковий запис | ІПРМ') }}{% endblock %}
@@ -92,12 +93,12 @@
               {% if reg.instance and reg.instance.event_format %}
                 <span class="account-course__format">{{ reg.instance.format_label }}</span>
               {% endif %}
-              {% if reg.instance and reg.instance.effective_cpd_points %}
-                <span class="account-course__cpd">{{ reg.instance.effective_cpd_points }} BPR</span>
+              {% if reg.instance and reg.instance.cpd_range[0] %}
+                <span class="account-course__cpd">{{ points_range(*reg.instance.cpd_range) }}</span>
               {% endif %}
             </div>
             {% if reg.attended and reg.cpd_points_awarded %}
-              <div class="account-course__awarded">{% trans points=reg.cpd_points_awarded %}Нараховано {{ points }} балів БПР{% endtrans %}</div>
+              <div class="account-course__awarded">{% trans points=reg.cpd_points_awarded | points %}Нараховано {{ points }} балів БПР{% endtrans %}</div>
             {% endif %}
             {# Тестування: кабінет -- єдиний вхід у тест. Показуємо лише коли
                є що зробити або вже складено; решту станів (не оплачено, захід

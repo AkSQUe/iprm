@@ -3,6 +3,7 @@
 {% from 'partials/_money.html' import money %}
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 {% from 'partials/_location_badge.html' import location_badge %}
+{% from 'partials/_bpr_points.html' import points_by_format, points_range %}
 
 {% block title %}{{ _('Курси після дипломної освіти для лікарів | ІПРМ') }}{% endblock %}
 {% block meta_description %}{{ _('Сертифіковані курси підвищення кваліфікації з плазмотерапії та регенеративної медицини для лікарів: очний та онлайн формат, офіційне нарахування балів БПР.') }}{% endblock %}
@@ -162,8 +163,8 @@
               {% if inst.course.event_type %}
               <span class="iprm-schedule__tag iprm-schedule__tag--type">{{ inst.course.event_type_label }}</span>
               {% endif %}
-              {% if inst.effective_cpd_points %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ inst.effective_cpd_points }} {{ inst.effective_cpd_points | plural('bpr_points') }}</span>
+              {% if inst.cpd_range[0] %}
+              <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ points_range(*inst.cpd_range) }}</span>
               {% endif %}
               {% if inst.effective_price and inst.effective_price > 0 %}
               <span class="iprm-schedule__price">{% if inst.price_is_from %}{{ _('від') }} {% endif %}{{ money(inst.effective_price) }}</span>

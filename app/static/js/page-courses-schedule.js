@@ -255,7 +255,7 @@
   function renderEventDetails(ev) {
     var meta = [];
     if (ev.event_type_label) meta.push(escapeHtml(ev.event_type_label));
-    if (ev.cpd) meta.push(t('{n} балів БПР', { n: escapeHtml(ev.cpd) }));
+    if (ev.cpd_text) meta.push(escapeHtml(ev.cpd_text));
     if (ev.price) meta.push(ev.price + ' ₴');
     if (ev.seats_left != null && ev.seats_left > 0) {
       meta.push(t(

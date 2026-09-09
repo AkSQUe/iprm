@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from 'partials/_money.html' import money %}
 {% from 'partials/_location_badge.html' import location_badge %}
+{% from 'partials/_bpr_points.html' import points_by_format %}
 
 {% block title %}{% trans event_title=event.title %}Реєстрація: {{ event_title }} | ІПРМ{% endtrans %}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -94,7 +95,7 @@
       <div class="reg-success-banner__body">
         <p class="reg-success-banner__title">{{ _('Захід завершено') }}</p>
         {% if reg.attended and reg.cpd_points_awarded %}
-        <p class="reg-success-banner__subtitle">{{ _('Вам нараховано') }} {{ reg.cpd_points_awarded }} {{ reg.cpd_points_awarded | plural('bpr_points') }}.</p>
+        <p class="reg-success-banner__subtitle">{{ _('Вам нараховано') }} {{ reg.cpd_points_awarded | points }} {{ reg.cpd_points_awarded | plural('bpr_points') }}.</p>
         {% endif %}
       </div>
     </div>
@@ -216,14 +217,14 @@
       </span>
     </div>
     {% endif %}
-    {% if event.cpd_points %}
+    {% if event.cpd_pairs %}
     <div class="reg-status-card__row">
       <span class="reg-status-card__label">{{ _('Балів БПР') }}</span>
       <span class="reg-status-card__value">
         {% if reg.cpd_points_awarded %}
-          {{ reg.cpd_points_awarded }} {{ _('(нараховано)') }}
+          {{ reg.cpd_points_awarded | points }} {{ _('(нараховано)') }}
         {% else %}
-          {{ event.cpd_points }} {{ _('(після завершення)') }}
+          {{ points_by_format(event.cpd_pairs) }} {{ _('(після завершення)') }}
         {% endif %}
       </span>
     </div>

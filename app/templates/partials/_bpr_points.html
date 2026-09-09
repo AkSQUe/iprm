@@ -1,0 +1,27 @@
+{# Єдине місце, де вирішується, як показати бали БПР. Захід буває
+   гібридний, і тоді значень два -- широкі блоки друкують обидва з
+   підписами, вузькі (теги, картки) -- діапазон. #}
+
+{% macro points_by_format(pairs) %}
+  {%- if pairs | length == 1 -%}
+    {{ pairs[0][1] | points }} {{ pairs[0][1] | plural('bpr_points') }}
+  {%- elif pairs | length > 1 -%}
+    {%- set values = pairs | map(attribute=1) | list -%}
+    {%- if values | unique | list | length == 1 -%}
+      {{ values[0] | points }} {{ values[0] | plural('bpr_points') }}
+    {%- else -%}
+      {%- for fmt, value in pairs -%}
+        {%- if not loop.first %} &middot; {% endif -%}
+        {{ _('Онлайн') if fmt == 'online' else _('Офлайн') }} {{ value | points }}
+      {%- endfor %} {{ values | max | plural('bpr_points') }}
+    {%- endif -%}
+  {%- endif -%}
+{% endmacro %}
+
+{% macro points_range(low, high) %}
+  {%- if low and high and high != low -%}
+    {{ low | points }}&ndash;{{ high | points }} {{ high | plural('bpr_points') }}
+  {%- elif low -%}
+    {{ low | points }} {{ low | plural('bpr_points') }}
+  {%- endif -%}
+{% endmacro %}

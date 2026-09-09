@@ -4,6 +4,7 @@
 {% block recaptcha %}{% include 'partials/_recaptcha.html' %}{% endblock %}
 {% from 'partials/_location_badge.html' import location_badge %}
 {% from 'partials/_money.html' import money %}
+{% from 'partials/_bpr_points.html' import points_by_format, points_range %}
 
 {% block title %}{% trans title=course.t('title') %}{{ title }} | ІПРМ{% endtrans %}{% endblock %}
 {% block meta_description %}{{ course.t('subtitle') or course.t('short_description') or course.t('title') }}{% endblock %}
@@ -61,7 +62,8 @@
   'availability': 'https://schema.org/InStock',
   'url': course_url
 }}) %}{% endif %}
-{% if course.cpd_points %}{% set _discard = course_schema.update({'numberOfCredits': course.cpd_points}) %}{% endif %}
+{% set _course_cpd = course.cpd_points_offline or course.cpd_points_online %}
+{% if _course_cpd %}{% set _discard = course_schema.update({'numberOfCredits': _course_cpd | float}) %}{% endif %}
 {# jobTitle -- лише коли в тренера справді заповнена посада: порожній
    рядок у JSON-LD -- це заявлене й порожнє значення, а не відсутнє поле. #}
 {% if course.trainer %}
@@ -182,7 +184,10 @@
     {% set _days = (open_inst.end_date.date() - open_inst.start_date.date()).days + 1 %}
     {% if _days > 0 %}{% set _discard = hero_meta.append({'value': '%s %s' % (_days, _days | plural('days')), 'label': _('тривалість')}) %}{% endif %}
   {% endif %}
-  {% if course.cpd_points %}{% set _discard = hero_meta.append({'value': course.cpd_points, 'label': course.cpd_points | plural('bpr_points')}) %}{% endif %}
+  {# Бали БПР сюди не йдуть: на гібриді їх два (онлайн/очно), а hero_meta --
+     пара value/label під ОДНЕ число. Показуємо чипом окремим рядком під
+     hero (нижче), через points_by_format -- він сам вирішує, писати одне
+     число чи обидва підписаними. #}
   {% if capacity %}{% set _discard = hero_meta.append({'value': '%s %s' % (_('до'), capacity), 'label': _('у групі')}) %}{% endif %}
   {% if min_price and min_price > 0 %}
     {# Через макрос, а не рядком: символ гривні -- HTML-сутність, і зібраний
@@ -232,6 +237,14 @@
   {% endset %}
 
   {% include 'partials/_course_hero.html' %}
+
+  {# Бали БПР показаного проведення -- окремим чипом під hero: value/label
+     hero_meta вище пари не тримає, а тут (гібрид) значень часто два. #}
+  {% if open_inst and open_inst.cpd_pairs %}
+  <div class="iprm-section__inner">
+    <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ points_by_format(open_inst.cpd_pairs) }}</span>
+  </div>
+  {% endif %}
 
   {# ===================================================================
      Порядок секцій -- еталонний (WS-A плану міграції,

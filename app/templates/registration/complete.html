@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from 'partials/_money.html' import money %}
 {% from 'partials/_location_badge.html' import location_badge %}
+{% from 'partials/_bpr_points.html' import points_by_format %}
 
 {% block title %}{{ _('Завершення реєстрації | ІПРМ') }}{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
@@ -46,7 +47,7 @@
       {% else %}
         <div>{{ _('Вартість:') }} <strong>{{ _('Безкоштовно') }}</strong></div>
       {% endif %}
-      {% if event.cpd_points %}<div>{{ _('БПР:') }} <strong>{{ event.cpd_points }} {{ event.cpd_points | plural('points') }}</strong></div>{% endif %}
+      {% if event.cpd_pairs %}<div>{{ _('БПР:') }} <strong>{{ points_by_format(event.cpd_pairs) }}</strong></div>{% endif %}
     </div>
   </div>
   {% endif %}

@@ -55,7 +55,8 @@ class EventAdapter:
         self.location = instance.location
         self.online_link = instance.online_link
         self.price = instance.effective_price
-        self.cpd_points = instance.effective_cpd_points
+        self.cpd_pairs = instance.cpd_pairs
+        self.cpd_range = instance.cpd_range
         self.max_participants = instance.effective_max_participants
         self.trainer = instance.effective_trainer
         self.card_image = course.card_src if course else None

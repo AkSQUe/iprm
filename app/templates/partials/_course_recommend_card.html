@@ -13,6 +13,7 @@
    span, а не <a>: візуальний афорданс без другого посилання на ту саму
    адресу. #}
 {% from 'partials/_location_badge.html' import location_badge %}
+{% from 'partials/_bpr_points.html' import points_range %}
 {% set insts = rec_upcoming.get(course.id, []) %}
 {% set nearest = insts[0] if insts else None %}
 {% set has_seats = nearest is not none and nearest.id in rec_open_ids %}
@@ -31,9 +32,11 @@
    ній означає "не заповнено", а не безкоштовну участь. #}
 {% set is_free = _prices and (_prices | max) == 0 and not price_from %}
 {% set show_price = _prices or (price_min and price_min > 0) %}
-{% set _cpds = insts | map(attribute='effective_cpd_points') | reject('none') | list %}
-{% set cpd_min = _cpds | min if _cpds else course.cpd_points %}
-{% set cpd_max = _cpds | max if _cpds else course.cpd_points %}
+{% set _ranges = insts | map(attribute='cpd_range') | list %}
+{% set _lows = _ranges | map(attribute=0) | reject('none') | list %}
+{% set _highs = _ranges | map(attribute=1) | reject('none') | list %}
+{% set cpd_min = _lows | min if _lows else (course.cpd_points_online or course.cpd_points_offline) %}
+{% set cpd_max = _highs | max if _highs else (course.cpd_points_offline or course.cpd_points_online) %}
 {% set summary = course.t('short_description') or course.t('subtitle') %}
 {% set card_tags = course.t('tags') or [] %}
 {# Є дати -> ведемо одразу до блоку форматів участі. Сама секція #formats
@@ -62,13 +65,7 @@
       <span class="iprm-card-badge iprm-card-badge--level" title="{{ course.difficulty_label }}">{% trans level=course.difficulty_level %}Рівень {{ level }}/3{% endtrans %}</span>
       {% endif %}
       {% if cpd_min %}
-      <span class="iprm-card-badge iprm-card-badge--cpd">
-        {%- if cpd_max and cpd_max != cpd_min -%}
-        {{ cpd_min }}&ndash;{{ cpd_max }} {{ cpd_max | plural('bpr_points') }}
-        {%- else -%}
-        {{ cpd_min }} {{ cpd_min | plural('bpr_points') }}
-        {%- endif -%}
-      </span>
+      <span class="iprm-card-badge iprm-card-badge--cpd">{{ points_range(cpd_min, cpd_max) }}</span>
       {% endif %}
     </div>
 

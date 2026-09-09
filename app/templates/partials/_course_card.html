@@ -4,11 +4,14 @@
    site_settings (глобальний). show_tag_filter=false ховає теги-фільтри
    (потрібні лише в каталозі з JS-фільтрацією). #}
 {% from 'partials/_location_badge.html' import location_badge %}
+{% from 'partials/_bpr_points.html' import points_range %}
 {% set insts = upcoming_by_course.get(course.id, []) %}
 {% set nearest = insts[0] if insts else None %}
-{% set _cpds = insts | map(attribute='effective_cpd_points') | select | list %}
-{% set cpd_min = _cpds | min if _cpds else course.cpd_points %}
-{% set cpd_max = _cpds | max if _cpds else course.cpd_points %}
+{% set _ranges = insts | map(attribute='cpd_range') | list %}
+{% set _lows = _ranges | map(attribute=0) | reject('none') | list %}
+{% set _highs = _ranges | map(attribute=1) | reject('none') | list %}
+{% set cpd_min = _lows | min if _lows else (course.cpd_points_online or course.cpd_points_offline) %}
+{% set cpd_max = _highs | max if _highs else (course.cpd_points_offline or course.cpd_points_online) %}
 {% set _prices = insts | map(attribute='effective_price') | select | list %}
 {% set price_min = _prices | min if _prices else course.base_price %}
 {% set price_varies = (_prices | unique | list | length) > 1 %}
@@ -73,13 +76,7 @@
         {{ location_badge('online', none) }}
         {% endif %}
         {% if cpd_min %}
-        <span class="iprm-card-badge iprm-card-badge--cpd">
-          {%- if cpd_max and cpd_max != cpd_min -%}
-          {{ cpd_min }}&ndash;{{ cpd_max }} {{ cpd_max | plural('bpr_points') }}
-          {%- else -%}
-          {{ cpd_min }} {{ cpd_min | plural('bpr_points') }}
-          {%- endif -%}
-        </span>
+        <span class="iprm-card-badge iprm-card-badge--cpd">{{ points_range(cpd_min, cpd_max) }}</span>
         {% endif %}
       </div>
 

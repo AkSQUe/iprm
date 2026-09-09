@@ -141,7 +141,11 @@ def _serialize_event(inst, capacity):
         'event_type_label': inst.course.event_type_label,
         'tags': inst.course.t('tags') or [],
         'trainer': inst.effective_trainer.t('full_name') if inst.effective_trainer else None,
-        'cpd': inst.effective_cpd_points,
+        # Готовий локалізований рядок, а не число: інакше плюралізацію й
+        # роздільник довелося б повторювати в JS, і вони розійшлися б.
+        'cpd_text': render_template(
+            'partials/_bpr_points_text.html', pairs=inst.cpd_pairs,
+        ).strip(),
         'price': (
             int(inst.effective_price)
             if inst.effective_price and inst.effective_price > 0
