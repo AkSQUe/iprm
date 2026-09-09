@@ -30,7 +30,7 @@ def _wants_json():
     return accept.best_match(['application/json', 'text/html']) == 'application/json'
 
 
-def _populate_choices(form, preselected_course_id=None):
+def _populate_choices(form, preselected_course_id=None, instance=None):
     courses = (
         Course.query.filter_by(is_active=True)
         .order_by(Course.title)
@@ -50,7 +50,12 @@ def _populate_choices(form, preselected_course_id=None):
     ]
 
     from app.services import specialties
-    instance_codes = form.bpr_specialty_codes.data or []
+    # Збережене в БД, а НЕ form.data: на POST form.data -- це щойно надіслані
+    # значення, і "тримати обраний деактивований код" звелося б до "тримати
+    # будь-що надіслане" -- pre_validate пропускав би навіть код, якого в
+    # цього проведення ніколи не було. current мусить бути тим, що реально
+    # записано зараз (як і в course_edit -- current=course.bpr_specialty_codes).
+    instance_codes = instance.bpr_specialty_codes if instance else None
     # dict(), не список кортежів: WTForms розпізнає групи (<optgroup>) лише
     # у choices-словнику -- див. коментар у routes_courses.py.
     form.bpr_specialty_codes.choices = dict(specialties.choices(current=instance_codes))
@@ -327,7 +332,7 @@ def instance_edit(instance_id):
         return redirect(url_for('admin.instances_list'))
 
     form = CourseInstanceForm(obj=instance)
-    _populate_choices(form)
+    _populate_choices(form, instance=instance)
 
     if form.validate_on_submit():
         try:

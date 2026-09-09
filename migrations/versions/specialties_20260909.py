@@ -117,9 +117,19 @@ def _backfill(bind):
         normalize_name(name): code
         for code, name in bind.execute(sa.text('SELECT code, name FROM specialties'))
     }
+    # Повний набір зайнятих кодів -- ОКРЕМО від name_to_code.values(): у
+    # номенклатурі є коди, чиї назви нормалізуються однаково (регістр/пробіли),
+    # тож частина реальних кодів у values() втрачається, і specialty_code()
+    # може згенерувати те, що вже зайняте, порушивши UNIQUE(code).
+    taken_codes = {code for (code,) in bind.execute(sa.text('SELECT code FROM specialties'))}
+    # TRIM, а не просто <> '': рядок із самих пробілів інакше пройшов би далі
+    # й після ' '.join(text.split()) перетворився на порожню назву -- код
+    # 'specialty' без відповідного рядка в довіднику (legacy_code_for
+    # повертає missing='' -- falsy, тож INSERT не станеться, а посилання
+    # на неіснуючий код лишиться в courses.bpr_specialty_codes).
     courses = bind.execute(sa.text(
         "SELECT id, bpr_specialties FROM courses "
-        "WHERE bpr_specialties IS NOT NULL AND bpr_specialties <> ''"
+        "WHERE bpr_specialties IS NOT NULL AND TRIM(bpr_specialties) <> ''"
     )).fetchall()
 
     update_stmt = sa.text(
@@ -127,18 +137,25 @@ def _backfill(bind):
     ).bindparams(sa.bindparam('codes', type_=sa.JSON))
 
     for course_id, text in courses:
-        code, missing = legacy_code_for(text, name_to_code)
+        code, missing = legacy_code_for(text, name_to_code, taken=taken_codes)
         if missing:
             # Значення, якого немає в номенклатурі, лишається в довіднику
             # деактивованим: у виборі його не пропонують, у наявних курсах
-            # воно рендериться далі.
+            # воно рендериться далі. Назву обрізаємо до 200 -- ширина
+            # specialties.name; вхідний текст курсу міг бути до 500 символів
+            # (стара колонка bpr_specialties -- String(500)), і без обрізання
+            # INSERT падає на "value too long" посеред деплою.
             bind.execute(
                 sa.text('INSERT INTO specialties (code, name, section, is_group, '
                         'sort_order, is_active) VALUES (:code, :name, :section, '
                         'false, 999, false)'),
-                {'code': code, 'name': missing, 'section': 'medical'},
+                {'code': code, 'name': missing[:200], 'section': 'medical'},
             )
+            # Ключ -- нормалізована ПОВНА (не обрізана) назва: наступний курс з
+            # тим самим довгим текстом має знайти той самий код, а не завести
+            # другий рядок-дублікат через розбіжність після обрізання.
             name_to_code[normalize_name(missing)] = code
+            taken_codes.add(code)
         bind.execute(update_stmt, {'codes': [code], 'id': course_id})
 
 
@@ -172,6 +189,21 @@ def _drop_translation_key(bind):
 
 def downgrade():
     bind = op.get_bind()
+
+    # Обрізати ДО звуження типу, не після: Text -> String(500) на Postgres
+    # падає з "value too long for type character varying(500)" на будь-якому
+    # знімку, довшому за 500 символів -- а знімок міг стати довшим САМЕ ТОМУ,
+    # що upgrade зняв ліміт (список обраних спеціальностей необмежений).
+    # Односторонній крок: довші знімки обрізаються назавжди, як і
+    # courses.bpr_specialties нижче.
+    bind.execute(sa.text(
+        "UPDATE certificates SET specialties = SUBSTR(specialties, 1, 500) "
+        "WHERE specialties IS NOT NULL"
+    ))
+    bind.execute(sa.text(
+        "UPDATE lecturer_certificates SET specialties = SUBSTR(specialties, 1, 500) "
+        "WHERE specialties IS NOT NULL"
+    ))
 
     with op.batch_alter_table('certificates') as batch:
         batch.alter_column('specialties', existing_type=sa.Text(),

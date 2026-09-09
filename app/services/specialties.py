@@ -145,15 +145,26 @@ def usage():
     return counts
 
 
-def legacy_code_for(text, name_to_code):
+def legacy_code_for(text, name_to_code, taken=None):
     """Код довідника для старого вільного тексту курсу.
 
     Повертає (code, missing_name). missing_name не None, коли збігу немає:
     міграція заводить такий рядок деактивованим, щоб значення не загубилось і
     курс не лишився з осиротілим кодом.
+
+    taken -- повний набір уже зайнятих кодів. Якщо не передано, рахується як
+    set(name_to_code.values()) -- ЦЕ НЕПОВНИЙ набір: name_to_code індексований
+    нормалізованою назвою, а кілька різних кодів довідника нормалізуються до
+    однієї й тієї ж назви (регістр/пробіли), тож частина реальних кодів у
+    values() губиться і згенерований код може випадково зіткнутися з уже
+    наявним (UNIQUE(code)). Викликач із живою базою (міграція) повинен
+    передавати taken окремим SELECT code FROM specialties; дефолт лишається
+    для викликів без такого контексту (юніт-тести цього модуля).
     """
     name = ' '.join((text or '').split())
     code = name_to_code.get(normalize_name(name))
     if code:
         return code, None
-    return specialty_code(name, taken=set(name_to_code.values())), name
+    if taken is None:
+        taken = set(name_to_code.values())
+    return specialty_code(name, taken=taken), name
