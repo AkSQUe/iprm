@@ -65,10 +65,17 @@ def extract_lines(pdf_path):
 
 
 def parse(lines):
-    """[(section, number, name)] у порядку появи в документі."""
+    """[(section, number, name, after_header)] у порядку появи в документі.
+
+    after_header -- True, якщо перед записом (з точністю до порожніх рядків
+    і рядків-продовжень заголовка) стояв заголовок розділу чи підрозділу.
+    Це єдина ознака, за якою problems() може відрізнити легітимний рестарт
+    нумерації від обірваного хвоста попереднього підрозділу.
+    """
     entries = []
     section = None
     current = None
+    after_header = False
     for raw in lines:
         stripped = raw.strip()
         if not stripped:
@@ -93,14 +100,17 @@ def parse(lines):
         if head:
             section = SECTIONS[head.group(1)]
             current = None
+            after_header = True
             continue
         if _SUBSECTION_RE.match(stripped):
             current = None
+            after_header = True
             continue
         entry = _ENTRY_RE.match(stripped)
         if entry and section:
-            current = [section, int(entry.group(1)), [entry.group(2) or '']]
+            current = [section, int(entry.group(1)), [entry.group(2) or ''], after_header]
             entries.append(current)
+            after_header = False
             continue
         if current is not None:
             if raw != raw.lstrip():
@@ -113,7 +123,12 @@ def parse(lines):
                 # рядок у джерелі.
                 current[2].append('')
             current[2].append(stripped)
-    return [(section, number, _name_from(chunks)) for section, number, chunks in entries]
+        # Рядок-продовження заголовка (не належить жодному record і не
+        # матчить жоден з патернів вище) -- after_header навмисно НЕ
+        # скидається: заголовок може розгортатись на кілька фізичних рядків
+        # ("ІV. СПЕЦІАЛЬНОСТІ ФАХІВЦІВ ..." + "ТА ВІДПОВІДНІ ЇМ ...").
+    return [(section, number, _name_from(chunks), after_head)
+            for section, number, chunks, after_head in entries]
 
 
 def _name_from(chunks):
@@ -137,19 +152,27 @@ def _name_from(chunks):
 
 
 def problems(entries):
-    """Чому розбору можна не вірити. Порожній список -- можна."""
+    """Чому розбору можна не вірити. Порожній список -- можна.
+
+    entries -- [(section, number, name, after_header)], як повертає parse().
+    """
     found = []
-    expected, prev_section = 1, None
-    for section, number, name in entries:
-        if number == 1 or section != prev_section:
+    expected = 1
+    for section, number, name, after_header in entries:
+        if after_header:
+            # Перед записом був заголовок розділу чи підрозділу -- у
+            # номенклатурі це легітимний рестарт нумерації з 1.
             expected = 1
         if number != expected:
-            # У номенклатурі номери в підрозділі йдуть 1, 2, 3 ... без дірок.
-            # Дірка або повтор означає, що рядок склеївся з сусіднім або
-            # загубився.
+            # Без заголовка перед записом номери в підрозділі йдуть
+            # 1, 2, 3 ... без дірок. Дірка чи повтор означає, що рядок
+            # склеївся з сусіднім або загубився. Число 1 БЕЗ заголовка
+            # перед ним -- це НЕ легітимний рестарт, а підозра на обірваний
+            # хвіст попереднього підрозділу (саме так один раз проскочив
+            # фантомний запис із шапки таблиці частини 2 -- "1 2 3 4 5" мав
+            # номер 1 і раніше маскувався під початок нового підрозділу).
             found.append(f'{section}: очікував номер {expected}, отримав {number} ({name!r})')
         expected = number + 1
-        prev_section = section
 
         if not name:
             found.append(f'{section} #{number}: порожня назва')
@@ -163,7 +186,7 @@ def problems(entries):
 def to_rows(entries):
     """[(code, name, section, sort_order)] -- рівно те, що йде у файл даних."""
     rows, taken, order = [], set(), {}
-    for section, _number, name in entries:
+    for section, _number, name, _after_header in entries:
         code = specialty_code(name, taken=taken)
         taken.add(code)
         order[section] = order.get(section, 0) + 1
@@ -199,7 +222,7 @@ def main():
     entries = parse(extract_lines(args.pdf))
     found = problems(entries)
     counts = {}
-    for section, _number, _name in entries:
+    for section, _number, _name, _after_header in entries:
         counts[section] = counts.get(section, 0) + 1
     print('Розібрано:', ', '.join(f'{k}={v}' for k, v in sorted(counts.items())))
     for line in found:
