@@ -161,6 +161,18 @@ class CourseInstance(TimestampMixin, db.Model):
     def format_label(self):
         return dict(self.FORMATS).get(self.event_format, self.event_format)
 
+    @property
+    def effective_event_type(self):
+        """Код виду заходу: власний, а якщо порожній -- курсовий."""
+        if self.event_type:
+            return self.event_type
+        return self.course.event_type if self.course else None
+
+    @property
+    def event_type_label(self):
+        from app.services import event_types
+        return event_types.label(self.effective_event_type)
+
     def _warn_orphan(self, context):
         """Логувати якщо instance без course (дата-інтегріті issue)."""
         logger.warning(

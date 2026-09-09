@@ -182,7 +182,13 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
 
     @property
     def event_type_label(self):
-        return dict(self.EVENT_TYPES).get(self.event_type, self.event_type)
+        """Назва виду заходу з довідника, активною мовою.
+
+        Перелік більше не константа: він живе в таблиці event_types і
+        редагується в /admin/event-types.
+        """
+        from app.services import event_types
+        return event_types.label(self.event_type)
 
     @property
     def difficulty_label(self):
