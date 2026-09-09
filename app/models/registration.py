@@ -292,8 +292,10 @@ class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
     def effective_participation_format(self):
         """Формат участі: власне поле -> тариф -> формат заходу.
 
-        Гібрид без тарифу трактуємо як очну участь -- тією ж консервативною
-        логікою, що InstanceTariff.requires_attendance_confirmation.
+        Гібрид без тарифу (заведення рукою адміна чи xlsx-імпорт без
+        вказаного формату) трактуємо як очну участь -- консервативний
+        дефолт: приписати бали за неявний онлайн ризикованіше, ніж за
+        неявний офлайн.
         """
         if self.participation_format in ('online', 'offline'):
             return self.participation_format
