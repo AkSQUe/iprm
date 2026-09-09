@@ -19,6 +19,7 @@ from app.models.course_instance import CourseInstance
 from app.models.registration import EventRegistration
 from app.models.trainer import Trainer
 from app.models.user import User
+from app.utils import format_points, parse_points
 
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger('audit')
@@ -278,9 +279,13 @@ def registration_attendance(reg_id):
 
     reg.attended = True
     reg.status = 'completed'
-    cpd = request.form.get('cpd_points', type=int)
-    # max cap = 2x the instance's effective cpd (або принаймні 100)
-    base_cpd = reg.instance.effective_cpd_points if reg.instance else 0
+    try:
+        cpd = parse_points(request.form.get('cpd_points'))
+    except ValueError:
+        flash('Некоректна кількість балів БПР', 'error')
+        return _redirect_after_action(reg)
+    # max cap = 2x належних цій людині балів (або принаймні 100)
+    base_cpd = reg.due_cpd_points
     max_cpd = (base_cpd or 0) * 2
     if cpd is not None and (cpd < 0 or cpd > max(max_cpd, 100)):
         flash('Некоректна кількість балів БПР', 'error')
@@ -293,7 +298,10 @@ def registration_attendance(reg_id):
             'Admin %s confirmed attendance reg %d, CPD=%s',
             current_user.email, reg_id, reg.cpd_points_awarded,
         )
-        flash(f'Присутність підтверджено, нараховано {reg.cpd_points_awarded} балів БПР', 'success')
+        flash(
+            f'Присутність підтверджено, нараховано '
+            f'{format_points(reg.cpd_points_awarded)} балів БПР', 'success',
+        )
     except Exception:
         logger.exception('Failed to update attendance for registration %d', reg_id)
         db.session.rollback()

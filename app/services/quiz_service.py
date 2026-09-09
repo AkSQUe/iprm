@@ -204,12 +204,14 @@ def public_quiz_for_course(course):
         return None
     if not (SiteSettings.get().bpr_provider_number or '').strip():
         return None
-    if not (course.bpr_event_number or '').strip() or not course.cpd_points:
+    if not (course.bpr_event_number or '').strip() or not (
+        course.cpd_points_online or course.cpd_points_offline
+    ):
         return None
     return quiz
 
 
-def _bpr_is_configured(instance, context=None):
+def _bpr_is_configured(instance, context=None, registration=None):
     """Чи вистачає даних, щоб видати сертифікат за цей захід.
 
     Перевіряємо ДО того, як пустити людину в тест. Інакше вона склала б його і
@@ -231,7 +233,12 @@ def _bpr_is_configured(instance, context=None):
     if not (course.bpr_event_number or '').strip():
         return False
     # Бали друкуються на сертифікаті; без них документ виходить порожнім.
-    return bool(instance.effective_cpd_points)
+    # Перевіряємо саме формат цієї людини: на гібриді із заповненим лише
+    # офлайном онлайновий учасник мусить упертися сюди, а не отримати
+    # сертифікат із порожнім місцем під бали.
+    if registration is not None:
+        return bool(registration.due_cpd_points)
+    return any(instance.effective_cpd_for(fmt) for fmt in instance.cpd_formats)
 
 
 def _unfinished_attempt(registration, context=None):
@@ -355,7 +362,7 @@ def eligibility(registration, context=None):
     if not quiz.is_ready:
         return Eligibility(QUIZ_NOT_READY, quiz=quiz)
 
-    if not _bpr_is_configured(instance, context):
+    if not _bpr_is_configured(instance, context, registration):
         return Eligibility(BPR_NOT_CONFIGURED, quiz=quiz)
 
     profile = registration.user.medical_profile if registration.user else None
@@ -720,7 +727,6 @@ def award_and_issue(registration):
     """
     from app.services import certificate_service
 
-    instance = registration.instance
     registration.attended = True
     # Статус теж переводимо, як це робить ручна відмітка присутності
     # (admin/routes_registrations.py -> registration_attendance). Інакше два
@@ -730,9 +736,10 @@ def award_and_issue(registration):
     if registration.status != 'cancelled':
         registration.status = 'completed'
     if registration.cpd_points_awarded is None:
-        registration.cpd_points_awarded = (
-            instance.effective_cpd_points if instance else None
-        )
+        # Бали САМЕ цієї людини: на гібриді онлайн і очно отримують різну
+        # кількість, і effective_cpd_points (агрегат по проведенню) тут
+        # підставив би не той формат.
+        registration.cpd_points_awarded = registration.due_cpd_points
     # Окремим комітом, до видачі: інакше провал видачі на рівні БД забрав би
     # разом із собою присутність і нараховані бали.
     db.session.commit()

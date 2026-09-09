@@ -100,6 +100,9 @@ def _setup(bank=10, per_attempt=10, passing=8, max_attempts=3, active=True,
     course = Course(
         title=f'Курс {uuid4().hex[:4]}', slug=f'qr-{uuid4().hex[:6]}',
         is_active=True, event_type='course', cpd_points=12,
+        # Дзеркалимо міграційний бекфіл (cpd_points_online = cpd_points_offline
+        # = cpd_points): due_cpd_points читає лише нові розщеплені колонки.
+        cpd_points_online=12, cpd_points_offline=12,
         bpr_event_number=(event_num if event_num is not None
                           else str(next(_event_numbers))),
     )

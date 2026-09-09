@@ -169,6 +169,9 @@ def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=Non
             payment_amount=price,
             payment_method=payment_method,
             tariff_id=tariff.id if tariff is not None else None,
+            # Формат участі беремо з обраного тарифу: на гібридному заході
+            # саме тариф каже, онлайн людина чи очно, а не формат заходу.
+            participation_format=tariff.event_format if tariff else None,
             status=new_status,
             payment_status=new_payment,
             referral_code=referral_code or None,

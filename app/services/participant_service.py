@@ -199,6 +199,7 @@ def apply_registration_fields(reg, data, profile):
     reg.payment_amount = data.get('payment_amount')
     reg.attended = bool(data.get('attended'))
     reg.cpd_points_awarded = data.get('cpd_points_awarded')
+    reg.participation_format = data.get('participation_format')
     reg.admin_notes = _strip_or_none(data.get('admin_notes'))
 
 
@@ -219,7 +220,8 @@ def upsert_participant(data, reg=None, on_duplicate='error'):
             middle_name, email, phone, participant_type, birth_date,
             education, workplace, position, specializations[list codes],
             status, payment_status, payment_amount, attended,
-            cpd_points_awarded, experience_years, license_number, admin_notes).
+            cpd_points_awarded, participation_format, experience_years,
+            license_number, admin_notes).
         reg: наявний EventRegistration для редагування, або None (створення).
         on_duplicate: коли при створенні знайдено активну реєстрацію
             user+instance: 'error' (raise ParticipantError) | 'update'.

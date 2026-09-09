@@ -191,6 +191,11 @@
           {% for error in form.cpd_points_awarded.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
         </div>
         <div class="form-group">
+          <label for="participation_format">Формат участі</label>
+          {{ form.participation_format(class="form-input", id="participation_format") }}
+          <small class="form-hint">{{ form.participation_format.description }}</small>
+        </div>
+        <div class="form-group">
           <label for="experience_years">Стаж (років)</label>
           {{ form.experience_years(class="form-input", id="experience_years") }}
           {% for error in form.experience_years.errors %}<div class="form-error">{{ error }}</div>{% endfor %}

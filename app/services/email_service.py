@@ -491,7 +491,10 @@ class EmailService:
             online_link = instance.online_link
             event_format = instance.event_format
             price = instance.effective_price
-            cpd_points = instance.effective_cpd_points
+            # Бали САМЕ цього отримувача листа: на гібриді онлайн і очно
+            # отримують різну кількість, а effective_cpd_points (агрегат по
+            # проведенню) підставив би чужий формат.
+            cpd_points = registration.due_cpd_points
 
             # Властивості, а не готові значення: читаються під час рендеру,
             # тобто вже всередині force_locale. Раніше тут лежала канонічна

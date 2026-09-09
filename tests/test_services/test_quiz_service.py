@@ -77,6 +77,10 @@ def _setup(bank=12, per_attempt=10, passing=8, max_attempts=3,
     course = Course(
         title=f'Курс {uuid4().hex[:4]}', slug=f'qs-{uuid4().hex[:6]}',
         is_active=True, event_type='course', cpd_points=cpd_points,
+        # Дзеркалимо міграційний бекфіл (cpd_points_online = cpd_points_offline
+        # = cpd_points): цей курс -- офлайновий, і due_cpd_points читає лише
+        # нові розщеплені колонки, легасі cpd_points для нього більше не відкат.
+        cpd_points_online=cpd_points, cpd_points_offline=cpd_points,
         bpr_event_number=(event_num if event_num is not None
                           else str(next(_event_numbers))),
     )
