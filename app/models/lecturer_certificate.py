@@ -42,7 +42,7 @@ class LecturerCertificate(TimestampMixin, db.Model):
     recipient_name = db.Column(db.String(255), nullable=False)  # давальний відмінок
     event_title = db.Column(db.String(500), nullable=False)
     event_date = db.Column(db.DateTime(timezone=True))
-    cpd_points = db.Column(db.Integer)
+    cpd_points = db.Column(db.Numeric(5, 2))
     specialties = db.Column(db.String(500))
     # Тип заходу у РОДОВОМУ відмінку ("тренінгу") для рядка "лектору(-ці) ...".
     event_type_label = db.Column(db.String(100))

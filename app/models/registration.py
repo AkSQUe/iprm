@@ -93,8 +93,14 @@ class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
     discount_amount = db.Column(db.Numeric(10, 2))
 
     attended = db.Column(db.Boolean, default=False)
-    cpd_points_awarded = db.Column(db.Integer)
+    cpd_points_awarded = db.Column(db.Numeric(5, 2))
     admin_notes = db.Column(db.Text)
+
+    # Формат участі саме цієї людини. На гібридному заході від нього залежать
+    # бали. Заповнюється з тарифу при реєстрації, але лишається окремою
+    # колонкою: tariff_id буває NULL (xlsx-імпорт, заведення рукою адміна), і
+    # без власного поля такий випадок не виправити.
+    participation_format = db.Column(db.String(20))
 
     # Реферальна атрибуція: код реферера (User.referral_code або
     # Trainer.referral_code), захоплений з cookie в момент реєстрації.
@@ -210,6 +216,11 @@ class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
             'refunded_amount >= 0',
             name='ck_event_registrations_refunded_amount_non_negative',
         ),
+        db.CheckConstraint(
+            "participation_format IN ('online', 'offline') "
+            "OR participation_format IS NULL",
+            name='ck_event_registrations_participation_format',
+        ),
     )
 
     STATUSES = [
@@ -276,6 +287,28 @@ class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
         from app.services.participant_service import is_placeholder_email
         email = self.user.email if self.user else None
         return bool(email and not is_placeholder_email(email))
+
+    @property
+    def effective_participation_format(self):
+        """Формат участі: власне поле -> тариф -> формат заходу.
+
+        Гібрид без тарифу трактуємо як очну участь -- тією ж консервативною
+        логікою, що InstanceTariff.requires_attendance_confirmation.
+        """
+        if self.participation_format in ('online', 'offline'):
+            return self.participation_format
+        tariff_format = self.tariff.event_format if self.tariff else None
+        if tariff_format in ('online', 'offline'):
+            return tariff_format
+        event_format = self.instance.event_format if self.instance else None
+        return 'online' if event_format == 'online' else 'offline'
+
+    @property
+    def due_cpd_points(self):
+        """Скільки балів належить саме цій людині за її форматом участі."""
+        if self.instance is None:
+            return None
+        return self.instance.effective_cpd_for(self.effective_participation_format)
 
     @property
     def side_payments_received(self):

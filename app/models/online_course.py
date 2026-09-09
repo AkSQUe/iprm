@@ -74,7 +74,7 @@ class OnlineCourse(TranslatableMixin, TimestampMixin, db.Model):
     )
     duration_hours = db.Column(db.Integer)
     # Довідкове поле. Видача сертифікатів за онлайн-курс -- окрема фаза (Q6).
-    cpd_points = db.Column(db.Integer)
+    cpd_points = db.Column(db.Numeric(5, 2))
 
     is_published = db.Column(
         db.Boolean, default=False, nullable=False, server_default=db.false(),

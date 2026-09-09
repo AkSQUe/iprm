@@ -28,7 +28,11 @@ class CourseInstance(TimestampMixin, db.Model):
     event_format = db.Column(db.String(20))
 
     price = db.Column(db.Numeric(10, 2))
+    # Бали БПР окремо за форматом участі -- те саме розмежування, що й у
+    # Course. ТИМЧАСОВО поруч лишається cpd_points -- прибирається в Task 10.
     cpd_points = db.Column(db.Integer)
+    cpd_points_online = db.Column(db.Numeric(5, 2))
+    cpd_points_offline = db.Column(db.Numeric(5, 2))
     max_participants = db.Column(db.Integer)
 
     # `location` -- адреса для людини ("м. Харків, вул. Сковороди, 80, ДУ ..."),
@@ -73,6 +77,14 @@ class CourseInstance(TimestampMixin, db.Model):
         db.CheckConstraint(
             'cpd_points >= 0 OR cpd_points IS NULL',
             name='ck_course_instances_cpd_points_non_negative',
+        ),
+        db.CheckConstraint(
+            'cpd_points_online >= 0 OR cpd_points_online IS NULL',
+            name='ck_course_instances_cpd_points_online_non_negative',
+        ),
+        db.CheckConstraint(
+            'cpd_points_offline >= 0 OR cpd_points_offline IS NULL',
+            name='ck_course_instances_cpd_points_offline_non_negative',
         ),
         db.CheckConstraint(
             'max_participants >= 1 OR max_participants IS NULL',
@@ -208,6 +220,47 @@ class CourseInstance(TimestampMixin, db.Model):
             self._warn_orphan('cpd_points')
             return None
         return self.course.cpd_points
+
+    def effective_cpd_for(self, fmt):
+        """Бали БПР для формату участі `fmt` ('online' / 'offline').
+
+        Відкат -- лише на однойменне поле курсу. Підставляти сюди значення
+        іншого формату не можна: порожній онлайн на гібриді означає «ще не
+        вирішили», а не «стільки ж, скільки очно».
+        """
+        column = 'cpd_points_online' if fmt == 'online' else 'cpd_points_offline'
+        own = getattr(self, column)
+        if own is not None:
+            return own
+        if self.course is None:
+            self._warn_orphan(column)
+            return None
+        return getattr(self.course, column)
+
+    @property
+    def cpd_formats(self):
+        """Формати участі, які цей захід реально пропонує."""
+        if self.event_format == 'hybrid':
+            return ('online', 'offline')
+        return (self.event_format or 'offline',)
+
+    @property
+    def cpd_pairs(self):
+        """[(формат, бали)] -- лише наявні формати й лише заповнені бали."""
+        pairs = []
+        for fmt in self.cpd_formats:
+            points = self.effective_cpd_for(fmt)
+            if points is not None:
+                pairs.append((fmt, points))
+        return pairs
+
+    @property
+    def cpd_range(self):
+        """(мінімум, максимум) балів заходу -- для вузьких місць верстки."""
+        values = [points for _, points in self.cpd_pairs]
+        if not values:
+            return (None, None)
+        return (min(values), max(values))
 
     @property
     def effective_max_participants(self):

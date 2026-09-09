@@ -44,7 +44,12 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     faq = db.Column(db.JSON, default=list)
 
     base_price = db.Column(db.Numeric(10, 2), default=0)
+    # Бали БПР окремо за форматом участі: на гібридному заході онлайн і очно
+    # дають різну кількість. Дробові (Numeric), бо 4,5 і 7,5 -- норма.
+    # ТИМЧАСОВО поруч лишається cpd_points -- прибирається в Task 10.
     cpd_points = db.Column(db.Integer)
+    cpd_points_online = db.Column(db.Numeric(5, 2))
+    cpd_points_offline = db.Column(db.Numeric(5, 2))
     max_participants = db.Column(db.Integer)
     # Рівень складності 1..3 (базовий/просунутий/експертний); NULL -- не вказано.
     difficulty_level = db.Column(db.Integer)
@@ -60,7 +65,7 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     bpr_specialties = db.Column(db.String(500))
     # Бали БПР, що нараховуються ЛЕКТОРУ заходу (відрізняються від балів
     # учасника) -- для лекторського сертифіката.
-    bpr_lecturer_points = db.Column(db.Integer)
+    bpr_lecturer_points = db.Column(db.Numeric(5, 2))
 
     # ---- контент продажної сторінки (docs/plan-course-landing-redesign.md) ----
     # Усі поля порожні за замовчуванням: курс без заповненого контенту просто
@@ -109,6 +114,14 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
         db.CheckConstraint(
             'cpd_points >= 0 OR cpd_points IS NULL',
             name='ck_courses_cpd_points_non_negative',
+        ),
+        db.CheckConstraint(
+            'cpd_points_online >= 0 OR cpd_points_online IS NULL',
+            name='ck_courses_cpd_points_online_non_negative',
+        ),
+        db.CheckConstraint(
+            'cpd_points_offline >= 0 OR cpd_points_offline IS NULL',
+            name='ck_courses_cpd_points_offline_non_negative',
         ),
         db.CheckConstraint(
             'max_participants >= 1 OR max_participants IS NULL',

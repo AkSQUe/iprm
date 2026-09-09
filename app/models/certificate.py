@@ -42,7 +42,7 @@ class Certificate(TimestampMixin, db.Model):
     recipient_name = db.Column(db.String(255), nullable=False)
     event_title = db.Column(db.String(500), nullable=False)
     event_date = db.Column(db.DateTime(timezone=True))
-    cpd_points = db.Column(db.Integer)
+    cpd_points = db.Column(db.Numeric(5, 2))
     # Знімок імені лектора (тренера проведення) на момент видачі.
     lecturer_name = db.Column(db.String(200))
     # Знімок шляху до підпису лектора (відносно static) на момент видачі.
