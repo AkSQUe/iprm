@@ -373,7 +373,8 @@ def populate_course_from_form(course, form):
     course.base_price = form.base_price.data or 0
     course.difficulty_level = form.difficulty_level.data or None
     course.roi_hint = _clean_text(form.roi_hint.data)
-    course.cpd_points = form.cpd_points.data
+    course.cpd_points_online = form.cpd_points_online.data
+    course.cpd_points_offline = form.cpd_points_offline.data
     course.max_participants = form.max_participants.data
     course.bpr_event_number = _clean_text(form.bpr_event_number.data)
     course.bpr_specialties = _clean_text(form.bpr_specialties.data)
@@ -447,7 +448,8 @@ def populate_instance_from_form(instance, form):
     instance.end_date = form.end_date.data
     instance.event_format = form.event_format.data
     instance.price = form.price.data
-    instance.cpd_points = form.cpd_points.data
+    instance.cpd_points_online = form.cpd_points_online.data
+    instance.cpd_points_offline = form.cpd_points_offline.data
     instance.max_participants = form.max_participants.data
     instance.location = _clean_text(form.location.data)
     # 0 -- це «Місце уточнюється» з пікера; у БД воно має лягти як NULL, а не
@@ -578,7 +580,8 @@ def clone_course(source, created_by_id):
         base_price=source.base_price,
         difficulty_level=source.difficulty_level,
         roi_hint=source.roi_hint,
-        cpd_points=source.cpd_points,
+        cpd_points_online=source.cpd_points_online,
+        cpd_points_offline=source.cpd_points_offline,
         max_participants=source.max_participants,
         trainer_id=source.trainer_id,
         is_active=False,

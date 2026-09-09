@@ -134,8 +134,13 @@
         </div>
 
         <div class="form-group">
-          <label for="cpd_points">Бали БПР (default)</label>
-          {{ form.cpd_points(class="form-input", id="cpd_points") }}
+          <label for="cpd_points_online">Бали БПР онлайн (default)</label>
+          {{ form.cpd_points_online(class="form-input", id="cpd_points_online", placeholder="7,5") }}
+        </div>
+
+        <div class="form-group">
+          <label for="cpd_points_offline">Бали БПР офлайн (default)</label>
+          {{ form.cpd_points_offline(class="form-input", id="cpd_points_offline", placeholder="9") }}
         </div>
 
         <div class="form-group">
@@ -159,7 +164,7 @@
         <div class="form-group">
           <label for="bpr_lecturer_points">Бали БПР лектору</label>
           {{ form.bpr_lecturer_points(class="form-input", id="bpr_lecturer_points", placeholder="16") }}
-          <small class="form-hint">Бали лектора заходу (можуть відрізнятись від балів учасника). Для сертифіката лектора.</small>
+          <small class="form-hint">Бали лектора заходу (можуть відрізнятись від балів учасника). Для сертифіката лектора. Приймається дробове значення (4,5).</small>
         </div>
 
         <div class="form-group">

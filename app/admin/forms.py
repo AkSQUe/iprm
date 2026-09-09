@@ -13,6 +13,7 @@ from wtforms.validators import (
 from app.utils import (
     normalize_name, normalize_phone, UA_PHONE_RE, CYRILLIC_NAME_RE,
 )
+from app.admin.fields import PointsField
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest
@@ -547,8 +548,12 @@ class CourseForm(FlaskForm):
         validators=[Optional(), NumberRange(min=0)],
         description='Default-ціна; конкретне проведення може перевизначити',
     )
-    cpd_points = IntegerField(
-        'Бали БПР (default)',
+    cpd_points_online = PointsField(
+        'Бали БПР онлайн (default)',
+        validators=[Optional(), NumberRange(min=0)],
+    )
+    cpd_points_offline = PointsField(
+        'Бали БПР офлайн (default)',
         validators=[Optional(), NumberRange(min=0)],
     )
     max_participants = IntegerField(
@@ -565,7 +570,7 @@ class CourseForm(FlaskForm):
         validators=[Optional(), Length(max=500)],
         description='Напр. "усі лікарські спеціальності". Друкується на сертифікаті.',
     )
-    bpr_lecturer_points = IntegerField(
+    bpr_lecturer_points = PointsField(
         'Бали БПР лектору',
         validators=[Optional(), NumberRange(min=0)],
         description='Бали, що нараховуються лектору заходу (відрізняються від балів учасника).',
@@ -731,8 +736,13 @@ class CourseInstanceForm(FlaskForm):
         validators=[Optional(), NumberRange(min=0)],
         description='Залиште порожнім щоб взяти базову ціну курсу',
     )
-    cpd_points = IntegerField(
-        'Бали БПР',
+    cpd_points_online = PointsField(
+        'Бали БПР онлайн',
+        validators=[Optional(), NumberRange(min=0)],
+        description='Залиште порожнім щоб взяти з курсу',
+    )
+    cpd_points_offline = PointsField(
+        'Бали БПР офлайн',
         validators=[Optional(), NumberRange(min=0)],
         description='Залиште порожнім щоб взяти з курсу',
     )
@@ -1146,9 +1156,15 @@ class ParticipantForm(FlaskForm):
         render_kw={'autocomplete': 'off'},
     )
     attended = BooleanField('Був присутній')
-    cpd_points_awarded = IntegerField(
+    cpd_points_awarded = PointsField(
         'Нараховані бали БПР',
         validators=[Optional(), NumberRange(min=0)],
+    )
+    participation_format = SelectField(
+        'Формат участі',
+        choices=[('', 'За тарифом'), ('online', 'Онлайн'), ('offline', 'Офлайн')],
+        validators=[Optional()],
+        description='Впливає на кількість балів БПР на гібридному заході.',
     )
     experience_years = IntegerField(
         'Стаж (років)',
