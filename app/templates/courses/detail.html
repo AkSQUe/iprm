@@ -62,7 +62,11 @@
   'availability': 'https://schema.org/InStock',
   'url': course_url
 }}) %}{% endif %}
-{% set _course_cpd = course.cpd_points_offline or course.cpd_points_online %}
+{# Максимум із заповнених форматів, а не "офлайн, якщо є": `or` віддає
+   перший непорожній операнд, і при онлайн > офлайн у Schema.org поїхало б
+   менше число. #}
+{% set _course_cpds = [course.cpd_points_online, course.cpd_points_offline] | select | list %}
+{% set _course_cpd = _course_cpds | max if _course_cpds else none %}
 {% if _course_cpd %}{% set _discard = course_schema.update({'numberOfCredits': _course_cpd | float}) %}{% endif %}
 {# jobTitle -- лише коли в тренера справді заповнена посада: порожній
    рядок у JSON-LD -- це заявлене й порожнє значення, а не відсутнє поле. #}

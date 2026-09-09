@@ -11,7 +11,10 @@
       {{ values[0] | points }} {{ values[0] | plural('bpr_points') }}
     {%- else -%}
       {%- for fmt, value in pairs -%}
-        {%- if not loop.first %} &middot; {% endif -%}
+        {# Літеральна крапка (U+00B7), а не сутність &middot;: cpd_text
+           їде в JS через escapeHtml (page-courses-schedule.js), яка
+           перетворила б & на &amp; -- сутність показалась би буквально. #}
+        {%- if not loop.first %} · {% endif -%}
         {{ _('Онлайн') if fmt == 'online' else _('Офлайн') }} {{ value | points }}
       {%- endfor %} {{ values | max | plural('bpr_points') }}
     {%- endif -%}
