@@ -81,6 +81,9 @@ def db_session(app):
     звичайний двигун -- одне з'єднання SQLite на два потоки дало б помилку
     замість ізоляції, і незакомічену транзакцію тесту вони бачити не мають.
     """
+    from app.services import event_types
+    event_types.reset_cache()
+
     with app.app_context():
         connection = _db.engine.connect()
         transaction = connection.begin()
