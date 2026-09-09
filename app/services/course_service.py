@@ -377,7 +377,7 @@ def populate_course_from_form(course, form):
     course.cpd_points_offline = form.cpd_points_offline.data
     course.max_participants = form.max_participants.data
     course.bpr_event_number = _clean_text(form.bpr_event_number.data)
-    course.bpr_specialties = _clean_text(form.bpr_specialties.data)
+    course.bpr_specialty_codes = form.bpr_specialty_codes.data or []
     course.bpr_lecturer_points = form.bpr_lecturer_points.data
     course.trainer_id = form.trainer_id.data or None
     course.is_active = form.is_active.data
@@ -457,6 +457,8 @@ def populate_instance_from_form(instance, form):
     instance.city_id = form.city_id.data or None
     instance.online_link = _clean_text(form.online_link.data)
     instance.trainer_id = form.trainer_id.data or None
+    # Порожній вибір -- це "як у курсу", тож у БД лягає NULL, а не [].
+    instance.bpr_specialty_codes = form.bpr_specialty_codes.data or None
     # Гвард і тут, а не лише в `change_instance_status`: форма
     # редагування писала статус напряму, тобто повз ОБИДВІ перевірки.
     # Половина гварда гірша за його відсутність — вона створює

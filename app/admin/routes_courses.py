@@ -15,7 +15,7 @@ from app.admin.forms import CourseForm
 from app.admin.routes_translations import apply_inline_translations
 from app.extensions import db
 from app.models.course import Course
-from app.services import course_service
+from app.services import course_service, specialties
 
 audit_logger = logging.getLogger('audit')
 
@@ -86,6 +86,10 @@ def courses_list():
 def course_create():
     form = CourseForm()
     populate_trainer_choices(form)
+    # dict(), а не список кортежів: WTForms розпізнає групи (<optgroup>) лише
+    # у choices-словнику {підпис: [(код, назва), ...]} -- список пар WTForms
+    # трактує як плоскі (значення, підпис) і звірка на валідність ламається.
+    form.bpr_specialty_codes.choices = dict(specialties.choices(current=None))
 
     if form.validate_on_submit():
         slug = form.slug.data.strip() or course_service.generate_course_slug(form.title.data)[0]
@@ -129,6 +133,9 @@ def course_edit(course_id):
 
     form = CourseForm(obj=course)
     populate_trainer_choices(form)
+    form.bpr_specialty_codes.choices = dict(specialties.choices(
+        current=(course.bpr_specialty_codes if course else None),
+    ))
 
     if request.method == 'GET':
         form.target_audience_text.data = course_service.list_to_lines(course.target_audience)

@@ -135,6 +135,12 @@
           <small class="form-hint">{{ form.cpd_points_offline.description }}</small>
         </div>
 
+        <div class="form-group admin-form__full">
+          <label for="bpr_specialty_codes">Спеціальності (для сертифіката)</label>
+          {{ form.bpr_specialty_codes(class="form-input", id="bpr_specialty_codes", size=8) }}
+          <small class="form-hint">Порожньо -- беруться з курсу.</small>
+        </div>
+
         <div class="form-group">
           <label for="max_participants">Макс. учасників</label>
           {{ form.max_participants(class="form-input", id="max_participants") }}

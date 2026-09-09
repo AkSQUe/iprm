@@ -14,7 +14,7 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     __translatable__ = (
         'title', 'subtitle', 'description', 'short_description',
         'target_audience', 'tags', 'speaker_info', 'agenda', 'faq',
-        'roi_hint', 'bpr_specialties', 'final_cta_text',
+        'roi_hint', 'final_cta_text',
         'proof_stats', 'benefits', 'practice_note_title', 'practice_note_text',
         'gallery_intro',
     )
@@ -61,8 +61,11 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     final_cta_text = db.Column(db.String(300))
     # Реєстраційний номер заходу БПР (7 цифр) -- сегмент номера сертифіката.
     bpr_event_number = db.Column(db.String(20))
-    # Спеціальності заходу БПР для сертифіката (напр. "усі лікарські спеціальності").
-    bpr_specialties = db.Column(db.String(500))
+    # Спеціальності заходу БПР для сертифіката -- коди рядків довідника
+    # specialties. Порожній список = у сертифікаті рядка «Спеціальності:» не
+    # буде. Назви перекладаються в довіднику, а не тут: одна "Дерматовенерологія"
+    # на всі курси.
+    bpr_specialty_codes = db.Column(db.JSON, default=list)
     # Бали БПР, що нараховуються ЛЕКТОРУ заходу (відрізняються від балів
     # учасника) -- для лекторського сертифіката.
     bpr_lecturer_points = db.Column(db.Numeric(5, 2))

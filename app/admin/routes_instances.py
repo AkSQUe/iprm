@@ -49,6 +49,12 @@ def _populate_choices(form, preselected_course_id=None):
         (city.id, city.name) for city in City.query.order_by(City.name).all()
     ]
 
+    from app.services import specialties
+    instance_codes = form.bpr_specialty_codes.data or []
+    # dict(), не список кортежів: WTForms розпізнає групи (<optgroup>) лише
+    # у choices-словнику -- див. коментар у routes_courses.py.
+    form.bpr_specialty_codes.choices = dict(specialties.choices(current=instance_codes))
+
 
 _INSTANCES_PER_PAGE = 25
 

@@ -47,8 +47,9 @@ class Certificate(TimestampMixin, db.Model):
     lecturer_name = db.Column(db.String(200))
     # Знімок шляху до підпису лектора (відносно static) на момент видачі.
     lecturer_signature = db.Column(db.String(500))
-    # Знімок спеціальностей заходу (напр. "усі лікарські спеціальності").
-    specialties = db.Column(db.String(500))
+    # Знімок спеціальностей заходу на момент видачі (назви через кому).
+    # Text, а не String(500): ліміту на кількість обраних позицій немає.
+    specialties = db.Column(db.Text)
     # Знімок типу заходу (семінар/конгрес/фахова школа...) для тексту й мета-блоку.
     event_type_label = db.Column(db.String(100))
     # Знімок місця проведення (напр. "м. Київ").

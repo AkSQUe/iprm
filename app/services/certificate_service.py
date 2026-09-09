@@ -21,6 +21,7 @@ from sqlalchemy.exc import IntegrityError
 from app.extensions import db
 from app.models.certificate import Certificate
 from app.models.mixins import utcnow
+from app.services import specialties as specialties_service
 
 logger = logging.getLogger(__name__)
 
@@ -193,10 +194,12 @@ def _event_snapshot(registration):
     trainer = instance.effective_trainer if instance else None
     lecturer = trainer.full_name if trainer else None
     signature = (trainer.signature or '').strip() if trainer and trainer.signature else None
-    specialties = (course.bpr_specialties or '').strip() if course and course.bpr_specialties else None
+    specialties_line = specialties_service.line(
+        instance.effective_specialty_codes if instance else [],
+    )
     event_type = course.event_type_label.lower() if course and course.event_type else None
     place = (instance.location or '').strip() if instance and instance.location else None
-    return title, event_date, cpd, lecturer, signature, specialties, event_type, place
+    return title, event_date, cpd, lecturer, signature, specialties_line, event_type, place
 
 
 _POINTS_BADGE_DIR = ('images', 'certificates')
@@ -732,7 +735,7 @@ def issue_lecturer_certificate(instance, issued_by=None):
         event_title=course.title if course else (instance.title or 'Захід'),
         event_date=event_date,
         cpd_points=points,
-        specialties=(course.bpr_specialties or '').strip() if course and course.bpr_specialties else None,
+        specialties=specialties_service.line(instance.effective_specialty_codes),
         event_type_label=event_type,
         event_place=(instance.location or '').strip() or None,
         issued_at=issued_at,

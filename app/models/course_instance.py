@@ -50,6 +50,9 @@ class CourseInstance(TimestampMixin, db.Model):
     )
     online_link = db.Column(db.String(500))
 
+    # Перевизначення спеціальностей проведення. NULL/порожньо -- беремо курс.
+    bpr_specialty_codes = db.Column(db.JSON)
+
     trainer_id = db.Column(
         db.BigInteger,
         db.ForeignKey('trainers.id', ondelete='SET NULL'),
@@ -220,6 +223,14 @@ class CourseInstance(TimestampMixin, db.Model):
             self._warn_orphan('cpd_points')
             return None
         return self.course.cpd_points
+
+    @property
+    def effective_specialty_codes(self):
+        """Коди спеціальностей проведення або, якщо не задані, коди курсу."""
+        if self.bpr_specialty_codes:
+            return list(self.bpr_specialty_codes)
+        course = self.course
+        return list(course.bpr_specialty_codes or []) if course else []
 
     def effective_cpd_for(self, fmt):
         """Бали БПР для формату участі `fmt` ('online' / 'offline').

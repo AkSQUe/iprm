@@ -117,3 +117,43 @@ def choices(current=None):
 def valid_codes():
     """Усі коди довідника, включно з деактивованими."""
     return set(catalog())
+
+
+def effective_codes(instance):
+    """Коди проведення або, якщо не задані, коди його курсу."""
+    if instance is None:
+        return []
+    return instance.effective_specialty_codes
+
+
+def usage():
+    """{code: скільки курсів і проведень його вживають}.
+
+    Адмінці довідника треба вага рядка: позицію з нулем можна видаляти, зайняту
+    -- лише деактивувати. JSON-колонку рахуємо в пам'яті: рядків у курсах і
+    проведеннях сотні, а SQL-джерела для JSON-масиву в SQLite і Postgres різні.
+    """
+    from app.extensions import db
+    from app.models.course import Course
+    from app.models.course_instance import CourseInstance
+
+    counts = {}
+    for model in (Course, CourseInstance):
+        for (codes,) in db.session.query(model.bpr_specialty_codes).all():
+            for code in (codes or []):
+                counts[code] = counts.get(code, 0) + 1
+    return counts
+
+
+def legacy_code_for(text, name_to_code):
+    """Код довідника для старого вільного тексту курсу.
+
+    Повертає (code, missing_name). missing_name не None, коли збігу немає:
+    міграція заводить такий рядок деактивованим, щоб значення не загубилось і
+    курс не лишився з осиротілим кодом.
+    """
+    name = ' '.join((text or '').split())
+    code = name_to_code.get(normalize_name(name))
+    if code:
+        return code, None
+    return specialty_code(name, taken=set(name_to_code.values())), name

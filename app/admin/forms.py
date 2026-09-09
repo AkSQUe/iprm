@@ -565,10 +565,11 @@ class CourseForm(FlaskForm):
         validators=[Optional(), Length(max=20)],
         description='7 цифр. Використовується у номері сертифіката (напр. 1028974).',
     )
-    bpr_specialties = StringField(
+    bpr_specialty_codes = SelectMultipleField(
         'Спеціальності (для сертифіката)',
-        validators=[Optional(), Length(max=500)],
-        description='Напр. "усі лікарські спеціальності". Друкується на сертифікаті.',
+        validators=[Optional()],
+        description='Друкуються рядком «Спеціальності: …» на сертифікаті. '
+                    'Список -- офіційна номенклатура; choices присвоюються в роуті.',
     )
     bpr_lecturer_points = PointsField(
         'Бали БПР лектору',
@@ -772,6 +773,11 @@ class CourseInstanceForm(FlaskForm):
         coerce=int,
         validators=[Optional()],
         description='Залиште порожнім щоб взяти default-тренера курсу',
+    )
+    bpr_specialty_codes = SelectMultipleField(
+        'Спеціальності (для сертифіката)',
+        validators=[Optional()],
+        description='Залиште порожнім щоб взяти з курсу',
     )
 
     def validate_end_date(self, field):

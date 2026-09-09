@@ -25,7 +25,7 @@ FIELD_LABELS = {
     'title': 'Назва', 'subtitle': 'Підзаголовок', 'description': 'Опис',
     'short_description': 'Короткий опис', 'target_audience': 'Цільова аудиторія',
     'tags': 'Теги', 'speaker_info': 'Про спікера', 'agenda': 'Програма (agenda)',
-    'faq': 'FAQ', 'roi_hint': 'ROI-підказка', 'bpr_specialties': 'Спеціальності БПР',
+    'faq': 'FAQ', 'roi_hint': 'ROI-підказка',
     'final_cta_text': 'Фінальний заклик',
     'full_name': 'ПІБ', 'full_name_dative': 'ПІБ (давальний)', 'role': 'Роль',
     'bio': 'Біографія', 'certificates': 'Сертифікати', 'patents': 'Патенти',

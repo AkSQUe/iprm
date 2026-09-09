@@ -155,10 +155,9 @@
         </div>
 
         <div class="form-group admin-form__full">
-          <label for="bpr_specialties">Спеціальності (для сертифіката)</label>
-          {{ form.bpr_specialties(class="form-input", id="bpr_specialties", placeholder="усі лікарські спеціальності") }}
-          <small class="form-hint">Друкується рядком «Спеціальності: …» на сертифікаті.</small>
-          {{ i18n.panes(tr, 'bpr_specialties', obj=course) }}
+          <label for="bpr_specialty_codes">Спеціальності (для сертифіката)</label>
+          {{ form.bpr_specialty_codes(class="form-input", id="bpr_specialty_codes", size=8) }}
+          <small class="form-hint">Друкуються рядком «Спеціальності: …» на сертифікаті. Перелік -- чинна номенклатура; правиться в довіднику спеціальностей.</small>
         </div>
 
         <div class="form-group">

@@ -43,7 +43,9 @@ class LecturerCertificate(TimestampMixin, db.Model):
     event_title = db.Column(db.String(500), nullable=False)
     event_date = db.Column(db.DateTime(timezone=True))
     cpd_points = db.Column(db.Numeric(5, 2))
-    specialties = db.Column(db.String(500))
+    # Знімок спеціальностей заходу на момент видачі (назви через кому).
+    # Text, а не String(500): ліміту на кількість обраних позицій немає.
+    specialties = db.Column(db.Text)
     # Тип заходу у РОДОВОМУ відмінку ("тренінгу") для рядка "лектору(-ці) ...".
     event_type_label = db.Column(db.String(100))
     event_place = db.Column(db.String(255))
