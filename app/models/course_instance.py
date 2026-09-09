@@ -27,6 +27,11 @@ class CourseInstance(TimestampMixin, db.Model):
 
     event_format = db.Column(db.String(20))
 
+    # Перевизначення виду заходу для конкретного проведення. Порожньо --
+    # береться тип курсу (див. effective_event_type). Потрібне, коли той
+    # самий курс раз проводять тренінгом, а раз -- фаховою школою.
+    event_type = db.Column(db.String(30))
+
     price = db.Column(db.Numeric(10, 2))
     cpd_points = db.Column(db.Integer)
     max_participants = db.Column(db.Integer)

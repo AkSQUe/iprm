@@ -39,6 +39,7 @@ from app.models.referral_click import ReferralClick
 from app.models.promo_code import PromoCode, PromoRedemption
 from app.models.review import Review
 from app.models.city import City
+from app.models.event_type import EventType
 from app.models.course_quiz import CourseQuiz, QuizQuestion
 from app.models.quiz_attempt import QuizAttempt
 from app.models.perf_run import PerfRun, PerfPageMetric
@@ -63,7 +64,7 @@ __all__ = [
     'MaterialKit', 'MaterialKitItem',
     'ReferralReward', 'ReferralAdjustment', 'ReferralClick',
     'PromoCode', 'PromoRedemption', 'Review',
-    'City',
+    'City', 'EventType',
     'CourseQuiz', 'QuizQuestion', 'QuizAttempt',
     'PerfRun', 'PerfPageMetric',
     'OnlineCourse', 'OnlineEnrollment',

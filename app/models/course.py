@@ -101,10 +101,6 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     __table_args__ = (
         db.Index('ix_courses_active_featured', 'is_active', 'is_featured'),
         db.Index('ix_courses_created_at', 'created_at'),
-        db.CheckConstraint(
-            "event_type IN ('seminar', 'webinar', 'course', 'masterclass', 'conference')",
-            name='ck_courses_event_type',
-        ),
         db.CheckConstraint('base_price >= 0', name='ck_courses_base_price_non_negative'),
         db.CheckConstraint(
             'cpd_points >= 0 OR cpd_points IS NULL',

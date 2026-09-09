@@ -49,6 +49,12 @@ def app():
         _db.create_all()
         from app.rbac import service as rbac_service
         rbac_service.sync()
+
+        from app.models.event_type import SEED_ROWS, EventType
+        for row in SEED_ROWS:
+            if not EventType.query.filter_by(code=row['code']).first():
+                _db.session.add(EventType(**row))
+
         _db.session.commit()
         yield app
         _db.drop_all()
