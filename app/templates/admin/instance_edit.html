@@ -137,7 +137,7 @@
 
         <div class="form-group admin-form__full">
           <label for="bpr_specialty_codes">Спеціальності (для сертифіката)</label>
-          {{ form.bpr_specialty_codes(class="form-input", id="bpr_specialty_codes", size=8) }}
+          {{ form.bpr_specialty_codes(class="form-input", id="bpr_specialty_codes", size=8, **{'data-multiselect': ''}) }}
           <small class="form-hint">Порожньо -- беруться з курсу.</small>
         </div>
 
@@ -171,4 +171,5 @@
   </div>
 </div>
 <script src="{{ url_for('static', filename='js/admin-instance-points.js') }}?v={{ assets_version }}"></script>
+<script src="{{ url_for('static', filename='js/admin-multiselect.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

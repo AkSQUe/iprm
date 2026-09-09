@@ -322,8 +322,12 @@
    всередині url() не розгортаються. Було #666 -- 5.27 у світлій темі, але 2.95 у
    тёмній, тобто стрілка зникала. Це правило перекриває однойменне нижче в
    цьому файлі, тож колір тримаємо в них однаковим -- щоб від того, яке з
-   двох спрацювало, нічого не залежало. */
-.admin-form select.form-input {
+   двох спрацювало, нічого не залежало.
+   :not([multiple]) -- стрілка одиночного select тут доречна, а мультиселект
+   (select[multiple], нативний фолбек .admin-multiselect) -- це прокручуваний
+   список, а не спадне меню; та сама стрілка поверх нього малювала фальшивий
+   шеврон посеред опцій і зайве праве поле. */
+.admin-form select.form-input:not([multiple]) {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23857c93' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -1847,10 +1851,10 @@ a.admin-stat-card:focus-visible {
 /* Скоуплено так само, як `.form-section .form-input` вище: інакше та
    заскоуплена база (0,3,0) перебиває цей перелік (0,2,1), і select лишається
    без стрілки та без місця під неї. */
-.admin-with-sidebar .admin-form select.form-input,
-.admin-with-sidebar .admin-control-row select.form-input,
-.admin-with-sidebar .admin-filters__form select.form-input,
-.admin-with-sidebar .backup-actions__form select.form-input {
+.admin-with-sidebar .admin-form select.form-input:not([multiple]),
+.admin-with-sidebar .admin-control-row select.form-input:not([multiple]),
+.admin-with-sidebar .admin-filters__form select.form-input:not([multiple]),
+.admin-with-sidebar .backup-actions__form select.form-input:not([multiple]) {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -3629,3 +3633,49 @@ th.access-perm__label {
   margin: 0 0 12px;
   font-size: 1rem;
 }
+
+/* ---- Мультиселект (чіпи + пошук над нативним <select multiple>) ----
+   Прогресивне покращення: без admin-multiselect.js лишається сам
+   select[multiple] зі стилями .form-input (плюс правки вище, що прибрали
+   з нього фальшиву стрілку одиночного select) -- і сабміт формою працює
+   тим самим getlist. Токени звірено з common.css/admin.css: --iprm-border,
+   --iprm-white, --iprm-radius-md, --iprm-accent, --iprm-surface-inset,
+   --iprm-text, --iprm-text-secondary, --iprm-shadow-md -- усі реально
+   оголошені (світла й тёмна тема), вигаданих тут немає. */
+.admin-multiselect { position: relative; display: block; }
+.admin-multiselect__control {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  min-height: 42px; padding: 6px 8px;
+  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-md);
+  background: var(--iprm-white);
+}
+.admin-multiselect__control:focus-within { border-color: var(--iprm-accent); }
+.admin-multiselect__chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: var(--iprm-radius-pill);
+  background: var(--iprm-surface-inset); color: var(--iprm-text);
+  font-size: 13px;
+}
+.admin-multiselect__chip-remove {
+  border: 0; background: none; cursor: pointer; padding: 0;
+  color: var(--iprm-text-secondary); line-height: 1;
+}
+.admin-multiselect__search {
+  flex: 1 1 120px; min-width: 120px; border: 0; outline: none;
+  background: none; color: var(--iprm-text); font: inherit; padding: 4px;
+}
+.admin-multiselect__list {
+  position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px);
+  max-height: 260px; overflow-y: auto; padding: 4px 0; margin: 0;
+  list-style: none; background: var(--iprm-white);
+  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-md);
+  box-shadow: var(--iprm-shadow-md);
+}
+.admin-multiselect__group {
+  padding: 6px 12px; font-size: 12px; text-transform: uppercase;
+  color: var(--iprm-text-secondary);
+}
+.admin-multiselect__option { padding: 6px 12px; cursor: pointer; }
+.admin-multiselect__option:hover,
+.admin-multiselect__option[aria-selected="true"] { background: var(--iprm-surface-inset); }
+.admin-multiselect__empty { padding: 8px 12px; color: var(--iprm-text-secondary); }

@@ -567,5 +567,27 @@
     </div>
     <p class="ds-hint">.access-status: рядок стану автозбереження, data-state перемикає колір (ok/error), нейтральний -- без атрибута. .access-roles__title: заголовок «Ролі» над списком карток. .access-roles / __list: секція з картками ролей над матрицею (сітка по 220px). .access-role: картка ролі (__head/__slug/__desc/__meta/__actions). .access-group__head/.access-module/.access-perm: службові рядки матриці прав, .access-perm__code -- моноширинна назва права. Живий приклад -- /admin/access.</p>
     <p class="ds-hint">.admin-table--grid: сітка «рядок x колонка» замість реєстру -- щільність 10px 12px, шапка прилипає зверху (в обгортці з max-height), перша колонка -- зліва, на мобільному лишається таблицею з горизонтальною прокруткою, а не картками. Тло рядка задає &lt;tr&gt; через --row-bg (так його дістає й прилипла перша комірка): .access-group__head і .access-module -- --iprm-surface-inset, .access-perm:hover -- --iprm-accent-light.</p>
+
+    <h3 class="ds-section-heading">Мультиселект</h3>
+    <div class="ds-demo">
+      <div class="admin-multiselect">
+        <div class="admin-multiselect__control">
+          <span class="admin-multiselect__chip">Алергологія
+            <button type="button" class="admin-multiselect__chip-remove" aria-label="Прибрати Алергологія">&times;</button>
+          </span>
+          <span class="admin-multiselect__chip">Дерматовенерологія
+            <button type="button" class="admin-multiselect__chip-remove" aria-label="Прибрати Дерматовенерологія">&times;</button>
+          </span>
+          <input type="text" class="admin-multiselect__search" placeholder="Пошук…" aria-label="Пошук спеціальності">
+        </div>
+        <ul class="admin-multiselect__list" role="listbox" aria-multiselectable="true">
+          <li class="admin-multiselect__group" role="presentation">Лікарські</li>
+          <li class="admin-multiselect__option" role="option" aria-selected="false">Ендокринологія</li>
+          <li class="admin-multiselect__option" role="option" aria-selected="true">Кардіологія</li>
+          <li class="admin-multiselect__empty">Нічого не знайдено</li>
+        </ul>
+      </div>
+    </div>
+    <p class="ds-hint">.admin-multiselect: чіпи й пошук поверх нативного &lt;select multiple data-multiselect&gt; (admin-multiselect.js). Джерело правди -- сам select, тож без JS форма лишається робочою, а сабміт іде звичайним getlist. Тут демо статичне: список показано розгорнутим навмисно.</p>
   </div>
 
