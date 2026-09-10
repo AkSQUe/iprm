@@ -132,16 +132,24 @@ def test_datecard_shows_date_topic_place_and_a_way_in(client):
     assert f'/instance/{inst.id}/register' in about
 
 
-def test_datecard_names_the_hour_in_kyiv_time(client):
-    """Час доби -- частина вибору дати, і він київський, а не UTC."""
+def test_datecard_prints_the_hour_exactly_as_it_was_entered(client):
+    """Час доби -- без переведення зон, як усюди на цій сторінці.
+
+    DateTimeLocalField в адмінці пише наївний datetime -- київський
+    настінний час, який на проді лягає в timestamptz як UTC і читається
+    назад тими самими цифрами. Фільтр `| kyiv` додав би поверх нього ще
+    зсув зони, і захід о 10:00 показувався б о 13:00. Картка hero, листи,
+    підтвердження реєстрації та startDate JSON-LD цієї ж сторінки друкують
+    те саме значення голим strftime; розсинхронізувати їх було б гірше,
+    ніж мати одну спільну умовність.
+    """
     course = _course('-time')
-    # 07:00 UTC = 10:00 у Києві (літній час).
-    _instance(course, start_date=datetime(2030, 6, 12, 7, 0, tzinfo=timezone.utc))
+    _instance(course, start_date=datetime(2030, 6, 12, 10, 0))
     db.session.commit()
 
     about = _about_html(client, course)
     assert '10:00' in about
-    assert '07:00' not in about
+    assert '13:00' not in about
 
 
 def test_datecard_keeps_bpr_points_and_tariffs(client):

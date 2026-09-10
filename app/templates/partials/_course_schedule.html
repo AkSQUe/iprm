@@ -33,11 +33,15 @@
 <article class="iprm-datecard">
   <div class="iprm-datecard__when">
     {% if inst.start_date %}
-    <span class="iprm-datecard__day">{{ inst.start_date | kyiv('%d') }}</span>
-    <span class="iprm-datecard__month">{{ inst.start_date | kyiv('%m.%Y') }}</span>
-    {# Час доби -- частина вибору дати. Через `| kyiv`, а не strftime:
-       у БД дата лежить в UTC, і вечірній захід інакше з'їжджає на добу. #}
-    <span class="iprm-datecard__time">{{ inst.start_date | kyiv('%H:%M') }}</span>
+    <span class="iprm-datecard__day">{{ inst.start_date.strftime('%d') }}</span>
+    <span class="iprm-datecard__month">{{ inst.start_date.strftime('%m.%Y') }}</span>
+    {# Час доби -- частина вибору дати. Голий strftime, а НЕ `| kyiv`:
+       DateTimeLocalField в адмінці пише наївний datetime (київський
+       настінний час), який на проді лягає в timestamptz як UTC і читається
+       назад тими самими цифрами. `| kyiv` додав би до нього ще зсув зони.
+       Та сама умовність, що в картці hero, листах, підтвердженнях
+       реєстрації та startDate JSON-LD цієї ж сторінки. #}
+    <span class="iprm-datecard__time">{{ inst.start_date.strftime('%H:%M') }}</span>
     {% else %}
     <span class="iprm-datecard__day">TBD</span>
     {% endif %}
@@ -129,7 +133,7 @@
     {# «Проведень немає» тут було б неправдою: дата є, просто місць на
        неї вже нема. Це різні новини, і друга -- привід лишити контакт. #}
     {% set nearest_full = full_instances[0] %}
-    <p>{% trans date=nearest_full.start_date | kyiv('%d.%m.%Y') if nearest_full.start_date else _('найближчу дату') %}Групу на {{ date }} вже набрано.{% endtrans %}</p>
+    <p>{% trans date=nearest_full.start_date.strftime('%d.%m.%Y') if nearest_full.start_date else _('найближчу дату') %}Групу на {{ date }} вже набрано.{% endtrans %}</p>
     <p><a href="#request" class="apple-btn apple-btn--primary iprm-empty-state__cta">{{ _('Повідомити про нову дату') }}</a></p>
     {% else %}
     <p>{{ _('Наразі немає запланованих проведень цього курсу.') }}</p>

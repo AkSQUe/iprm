@@ -23,7 +23,6 @@ from app.models.course_instance import CourseInstance
 from app.models.instance_tariff import InstanceTariff
 from app.models.registration import EventRegistration
 from app.models.user import User
-from app.utils import to_kyiv
 
 # Префікс адрес, за якими впізнаємо створених тут користувачів.
 EMAIL_PREFIX = 'sched-block-'
@@ -175,7 +174,7 @@ def test_empty_state_names_the_group_that_is_already_full(client):
 
     schedule = _schedule_html(client, course)
     assert 'вже набрано' in schedule
-    assert to_kyiv(full.start_date).strftime('%d.%m.%Y') in schedule
+    assert full.start_date.strftime('%d.%m.%Y') in schedule
 
 
 def test_empty_state_offers_to_be_notified_about_a_new_date(client):
