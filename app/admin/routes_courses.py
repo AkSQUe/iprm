@@ -134,7 +134,12 @@ def course_edit(course_id):
         return redirect(url_for('admin.courses_list'))
 
     form = CourseForm(obj=course)
-    populate_trainer_choices(form)
+    # linked_ids -- інакше деактивований, але вже прив'язаний тренер не
+    # отримає <option> у choices, form.trainer_ids.data нижче не відмалює
+    # його вибраним, сабміт його не надішле -- і set_trainers() тихо
+    # прибере тренера з курсу при наступному ж збереженні (докладніше --
+    # у docstring populate_trainer_choices).
+    populate_trainer_choices(form, linked_ids=[t.id for t in course.trainers])
     form.bpr_specialty_codes.choices = specialties.choices(
         current=(course.bpr_specialty_codes if course else None),
     )

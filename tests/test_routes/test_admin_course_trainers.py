@@ -2,6 +2,7 @@
 from uuid import uuid4
 
 import pytest
+from bs4 import BeautifulSoup
 
 from tests.support.rbac import grant_role
 
@@ -80,6 +81,40 @@ def test_empty_submission_clears_the_list(client, admin, trainers):
     _post(client, course, [trainers[0].id])
     _post(client, course, [])
     assert db.session.get(Course, course.id).trainers == []
+
+
+def _selected_trainer_ids(html):
+    """Значення, що їх ЖИВИЙ браузер відправив би для trainer_ids: лише
+    <option selected> -- WTForms малює selected тільки для значень, наявних
+    у choices, тож деактивований тренер без linked_ids узагалі випав би з
+    розмітки, а не просто лишився невибраним."""
+    select = BeautifulSoup(html, 'html.parser').find(id='trainer_ids')
+    return {int(opt['value']) for opt in select.find_all('option') if opt.has_attr('selected')}
+
+
+def test_get_then_post_preserves_deactivated_linked_trainer(client, admin, trainers):
+    """Деактивований, але вже прив'язаний тренер має пережити збереження
+    форми -- навіть коли сабміт міняє геть інше поле. populate_trainer_choices
+    бере лише is_active=True; без linked_ids деактивований тренер не
+    отримує <option> зовсім, GET-форма його не відправляє, і наступний
+    set_trainers() тихо прибирає його з курсу."""
+    _login(client, admin)
+    course = _course()
+    a, b = trainers
+    from app.services import trainer_links
+    trainer_links.set_trainers(course, [a.id, b.id])
+    b.is_active = False
+    db.session.commit()
+
+    resp = client.get(f'/admin/courses/{course.id}/edit')
+    assert resp.status_code == 200
+    selected = _selected_trainer_ids(resp.data)
+    assert selected == {a.id, b.id}
+
+    resp = _post(client, course, selected)
+    assert resp.status_code == 200
+    saved = db.session.get(Course, course.id)
+    assert {t.id for t in saved.trainers} == {a.id, b.id}
 
 
 def test_duplicate_copies_trainers_with_order(client, admin, trainers):

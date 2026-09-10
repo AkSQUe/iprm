@@ -119,6 +119,43 @@ def test_get_edit_form_does_not_prefill_inherited_course_trainers(client, admin,
     assert 'selected' not in select_block
 
 
+def _selected_trainer_ids(select_block):
+    """Значення <option selected> -- те, що реально відправив би браузер."""
+    ids = set()
+    for opt in re.findall(r'<option[^>]*>', select_block):
+        if 'selected' in opt:
+            m = re.search(r'value="(\d+)"', opt)
+            if m:
+                ids.add(int(m.group(1)))
+    return ids
+
+
+def test_get_then_post_preserves_deactivated_linked_trainer(client, admin, trainers):
+    """Дзеркало однойменного тесту для курсу (test_admin_course_trainers.py):
+    деактивований, але вже прив'язаний до ПРОВЕДЕННЯ тренер має пережити
+    збереження форми. populate_trainer_choices бере лише is_active=True;
+    без linked_ids деактивований тренер не отримує <option> зовсім, GET-форма
+    його не відправляє, і наступний set_trainers() тихо прибирає його з
+    проведення."""
+    _login(client, admin)
+    course = _course()
+    instance = _instance(course)
+    a, b = trainers
+    trainer_links.set_trainers(instance, [a.id, b.id])
+    b.is_active = False
+    db.session.commit()
+
+    html = client.get(f'/admin/instances/{instance.id}/edit').get_data(as_text=True)
+    select_block = _trainer_select_block(html)
+    selected = _selected_trainer_ids(select_block)
+    assert selected == {a.id, b.id}
+
+    response = _post(client, instance, selected)
+    assert response.status_code == 200
+    saved = db.session.get(CourseInstance, instance.id)
+    assert {t.id for t in saved.trainers} == {a.id, b.id}
+
+
 def test_post_empty_selection_clears_own_list_and_falls_back_to_course(client, admin, trainers):
     _login(client, admin)
     course = _course()

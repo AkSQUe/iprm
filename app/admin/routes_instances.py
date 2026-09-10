@@ -44,7 +44,12 @@ def _populate_choices(form, preselected_course_id=None, instance=None):
     if preselected_course_id and not form.course_id.data:
         form.course_id.data = preselected_course_id
 
-    populate_trainer_choices(form)
+    # linked_ids -- див. docstring populate_trainer_choices: без нього
+    # деактивований, але вже прив'язаний до проведення тренер випадає з
+    # choices і зникає з форми на першому ж збереженні.
+    populate_trainer_choices(
+        form, linked_ids=[t.id for t in instance.trainers] if instance else None,
+    )
 
     # Місто необов'язкове: адресу часто знають пізніше за дату, і розклад
     # показує «Місце уточнюється» замість того, щоб ховати захід.

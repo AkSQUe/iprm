@@ -5,7 +5,7 @@ import re
 from datetime import datetime, timezone
 
 from flask import current_app, flash
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from app.extensions import db
 
@@ -360,19 +360,30 @@ def try_commit(log_context='', error_msg='Помилка при збережен
         return False
 
 
-def populate_trainer_choices(form):
+def populate_trainer_choices(form, linked_ids=None):
     """Заповнити form.trainer_ids.choices активними тренерами.
 
     Порожнього пункту немає: у мультиселекті порожнеча виражається
     порожнім вибором, а окремий пункт «не обрано» став би значенням,
     яке треба відсіювати на кожному записі.
+
+    `linked_ids` -- id тренерів, уже пов'язаних із цією сутністю (курсом
+    чи проведенням). WTForms малює <option selected> лише для значень,
+    що є в choices: деактивований тренер без цього випав би з розмітки
+    зовсім, форма не відправила б його id при сабміті -- і наступний
+    set_trainers() мовчки прибрав би його зі списку, навіть якщо
+    редагували геть інше поле. Union із choices тримає зв'язок живим,
+    доки хтось явно не прибере цього тренера з мультиселекта. Деактивованих
+    тренерів БЕЗ наявного зв'язку в choices не додаємо -- інакше вони знову
+    стали б доступні для НОВОГО вибору, чого is_active і мав запобігти.
     """
     from app.models.trainer import Trainer
-    trainers = (
-        Trainer.query.filter_by(is_active=True)
-        .order_by(Trainer.full_name)
-        .all()
-    )
+    query = Trainer.query
+    if linked_ids:
+        query = query.filter(or_(Trainer.is_active.is_(True), Trainer.id.in_(linked_ids)))
+    else:
+        query = query.filter_by(is_active=True)
+    trainers = query.order_by(Trainer.full_name).all()
     form.trainer_ids.choices = [(t.id, t.full_name) for t in trainers]
 
 
