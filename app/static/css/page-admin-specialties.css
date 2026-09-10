@@ -1,0 +1,110 @@
+/* Адмінка довідника спеціальностей (admin/specialties.html) -- лише layout:
+   ширини колонок, сітка панелей, відступи. Уся декоративна частина (кольори,
+   межі, тіні, типографіка заголовків) бере компонентні класи admin.css --
+   .form-section, .form-section__title, .admin-form__actions, .switch,
+   .admin-table, .badge, .btn-admin і т.д. Тут їх ПЕРЕОГОЛОШУВАТИ не можна:
+   правка компонента інакше сюди не дійде. */
+
+/* ========== ДОДАВАННЯ ВРУЧНУ ========== */
+
+.specialties-add {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.specialties-add__name {
+  flex: 1 1 240px;
+  max-width: 360px;
+}
+
+.specialties-add__section {
+  flex: 0 1 220px;
+}
+
+/* ========== ТАБЛИЦЯ ========== */
+
+.specialties-form {
+  margin-top: 24px;
+}
+
+.specialties-table td {
+  vertical-align: middle;
+}
+
+/* Вузькі службові колонки притискаємо до мінімуму, щоб уся вільна ширина
+   лишалась назві й полям перекладу -- рядків тут дві сотні, і кожен зайвий
+   піксель на "Порядок" чи "Активна" забирає його в найважливіші колонки. */
+.specialties-table .specialties-col-section {
+  width: 160px;
+}
+
+.specialties-table .specialties-col-order {
+  width: 96px;
+}
+
+.specialties-table .specialties-col-active {
+  width: 84px;
+  text-align: center;
+}
+
+.specialties-table .specialties-col-uses {
+  width: 108px;
+  text-align: center;
+}
+
+.specialties-table .specialties-col-actions {
+  width: 72px;
+  text-align: right;
+}
+
+.specialties-table .specialties-input {
+  width: 100%;
+}
+
+.specialties-table .specialties-order-input {
+  width: 100%;
+  text-align: center;
+}
+
+/* ========== ПАНЕЛЬ ЗБЕРЕЖЕННЯ ========== */
+
+/* .admin-form__actions (admin.css) вирівнює вміст по правому краю -- підказці
+   потрібен саме зсув до лівого, а не власна позиція чи колір. */
+.specialties-savebar__hint {
+  margin-right: auto;
+}
+
+/* ========== АДАПТИВ ========== */
+
+@media (max-width: 768px) {
+  /* Таблиця тут стає картками (admin.css), де комірка -- рядок
+     "Заголовок: значення". Полям перекладу й порядку віддаємо решту ширини. */
+  .specialties-table .specialties-col-section,
+  .specialties-table .specialties-col-order,
+  .specialties-table .specialties-col-active,
+  .specialties-table .specialties-col-uses,
+  .specialties-table .specialties-col-actions {
+    width: auto;
+    text-align: right;
+  }
+
+  .specialties-table .specialties-input,
+  .specialties-table .specialties-order-input {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+
+  .specialties-add__name,
+  .specialties-add__section {
+    flex: 1 1 auto;
+    max-width: none;
+  }
+
+  .specialties-add .btn-admin {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -16,7 +16,7 @@
     </button>
   </div>
   <nav class="admin-sidebar__nav">
-    {% if can_any('courses.view', 'instances.view', 'online_courses.view', 'cities.view', 'quizzes.view', 'course_requests.view', 'b2b_requests.view', 'meta_leads.view', 'refund_requests.view', 'trainers.view', 'blog.view', 'media.view') %}
+    {% if can_any('courses.view', 'instances.view', 'online_courses.view', 'cities.view', 'specialties.view', 'quizzes.view', 'course_requests.view', 'b2b_requests.view', 'meta_leads.view', 'refund_requests.view', 'trainers.view', 'blog.view', 'media.view') %}
     <div class="admin-sidebar__group">
       <p class="admin-sidebar__group-title">Контент</p>
       {% if can('courses.view') %}
@@ -41,6 +41,12 @@
       <a href="{{ url_for('admin.cities_list') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.cities_list', 'admin.cities_save', 'admin.cities_add', 'admin.cities_delete') %} admin-sidebar__link--active{% endif %}">
         {{ icon('table_view') }}
         <span class="admin-sidebar__text">Довідник локацій</span>
+      </a>
+      {% endif %}
+      {% if can('specialties.view') %}
+      <a href="{{ url_for('admin.specialties_list') }}" class="admin-sidebar__link admin-sidebar__link--sub{% if ep in ('admin.specialties_list', 'admin.specialties_save', 'admin.specialties_add', 'admin.specialties_delete') %} admin-sidebar__link--active{% endif %}">
+        {{ icon('table_view') }}
+        <span class="admin-sidebar__text">Довідник спеціальностей</span>
       </a>
       {% endif %}
       {% if can('quizzes.view') %}

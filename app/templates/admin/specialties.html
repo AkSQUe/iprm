@@ -1,0 +1,170 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Довідник спеціальностей | ІПРМ{% endblock %}
+{% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-admin-specialties.css') }}?v={{ assets_version }}">
+{% endblock %}
+
+{% from 'admin/partials/_filter_bar.html' import filter_bar, empty_state, stat_cards %}
+
+{% block content %}
+<div class="admin-with-sidebar">
+  {% include 'admin/partials/_sidebar.html' %}
+  <div class="admin-layout admin-layout--wide">
+
+    <div class="admin-hero">
+      <div>
+        <div class="admin-breadcrumb">
+          <a href="{{ url_for('admin.courses_list') }}" class="admin-breadcrumb__link">Курси</a>
+          <span class="admin-breadcrumb__sep">/</span>
+          <span class="admin-breadcrumb__current">Довідник спеціальностей</span>
+        </div>
+        <h1 class="admin-hero__title">Довідник спеціальностей</h1>
+        <p class="admin-hero__subtitle">
+          Перелік із чинної номенклатури. Зайнятий рядок не видаляють, а деактивують.
+        </p>
+      </div>
+    </div>
+
+    {% include 'partials/flash_messages.html' %}
+
+    {{ stat_cards([
+         {'value': total, 'label': 'Спеціальностей у довіднику'},
+         {'value': active_count, 'label': 'Активні',
+          'mod': 'success' if active_count == total else ''},
+         {'value': inactive_count, 'label': 'Деактивовані',
+          'mod': 'alert' if inactive_count else ''},
+       ], cols=3) }}
+
+    <div class="form-section">
+      <h2 class="form-section__title">Додати спеціальність вручну</h2>
+      <p class="admin-text-muted">
+        Код рядка генерується з назви автоматично й не змінюється надалі --
+        переклади й видимість правляться нижче, у таблиці.
+      </p>
+      <form method="POST" action="{{ url_for('admin.specialties_add') }}" class="specialties-add">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="text" name="name" class="form-input specialties-add__name" maxlength="200"
+               placeholder="Дитяча ендокринологія" aria-label="Назва спеціальності українською">
+        <select name="section" class="form-input specialties-add__section" aria-label="Розділ номенклатури">
+          {% for code, label in section_options %}
+          <option value="{{ code }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn-admin btn-admin--secondary">{{ icon('add') }} Додати</button>
+      </form>
+    </div>
+
+    {{ filter_bar(
+         endpoint='admin.specialties_list',
+         values=filters,
+         search={'name': 'q', 'placeholder': 'Пошук за назвою або кодом'},
+         fields=[
+           {'name': 'section', 'label': 'Розділ', 'placeholder': 'Усі розділи', 'options': section_options},
+           {'name': 'state', 'label': 'Стан', 'placeholder': 'Усі стани', 'options': state_options},
+         ],
+       ) }}
+
+    {% if rows %}
+    <form method="POST" action="{{ url_for('admin.specialties_save') }}" class="admin-form specialties-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="admin-table-wrap">
+        <table class="admin-table specialties-table">
+          <thead>
+            <tr>
+              <th>Українська (оригінал)</th>
+              <th class="specialties-col-section">Розділ</th>
+              {% for lang in languages %}<th>{{ 'Російська' if lang == 'ru' else 'Англійська' }}</th>{% endfor %}
+              <th class="specialties-col-order">Порядок</th>
+              <th class="specialties-col-active">Активна</th>
+              <th class="specialties-col-uses" title="Скільки курсів і проведень вживають цей код">Використань</th>
+              <th class="specialties-col-actions">Дії</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+            <tr>
+              <td class="admin-cell-title">
+                <input type="hidden" name="row__{{ row.specialty.id }}" value="1">
+                <strong>{{ row.specialty.name }}</strong>
+                {% if row.specialty.is_group %}
+                  <span class="admin-text-muted">&middot; узагальнення</span>
+                {% endif %}
+                <div class="admin-text-muted">{{ row.specialty.code }}</div>
+              </td>
+              <td class="specialties-col-section">{{ row.specialty.section_label }}</td>
+              {% for lang in languages %}
+              <td>
+                <input type="text" class="form-input specialties-input" maxlength="200"
+                       name="tr__{{ lang }}__{{ row.specialty.id }}"
+                       value="{{ row.tr[lang] }}"
+                       placeholder="–"
+                       aria-label="{{ row.specialty.name }} – {{ 'російська' if lang == 'ru' else 'англійська' }}">
+              </td>
+              {% endfor %}
+              <td class="specialties-col-order">
+                <input type="number" min="0" class="form-input specialties-order-input"
+                       name="order__{{ row.specialty.id }}" value="{{ row.specialty.sort_order }}"
+                       aria-label="Порядок «{{ row.specialty.name }}» у розділі">
+              </td>
+              <td class="specialties-col-active">
+                <label class="switch">
+                  <input type="checkbox" class="switch__input" name="active__{{ row.specialty.id }}"
+                         {% if row.specialty.is_active %}checked{% endif %}
+                         aria-label="«{{ row.specialty.name }}» активна">
+                  <span class="switch__track"><span class="switch__knob"></span></span>
+                </label>
+              </td>
+              <td class="specialties-col-uses">
+                {% if row.uses %}
+                  {{ row.uses }}
+                {% else %}
+                  <span class="admin-text-muted" title="Код не вживається в курсах чи проведеннях">–</span>
+                {% endif %}
+              </td>
+              <td class="specialties-col-actions">
+                {# Форма видалення живе поза формою збереження (вкладені form
+                   невалідні); кнопка прив'язана до неї атрибутом form. Сервер
+                   однаково відмовляє видаляти зайнятий рядок -- кнопка тут
+                   не дублює цю перевірку. #}
+                <button type="submit" form="specialty-delete-{{ row.specialty.id }}"
+                        class="btn-admin btn-admin--danger btn-admin--sm btn-admin--icon">
+                  {{ icon('delete', label='Видалити') }}
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="admin-form__actions">
+        <span class="admin-text-muted specialties-savebar__hint">
+          Зміни в полях не зберігаються самі -- натисніть «Зберегти».
+        </span>
+        <button type="submit" class="btn-admin btn-admin--primary">
+          {{ icon('check') }} Зберегти
+        </button>
+      </div>
+    </form>
+
+    {% for row in rows %}
+    <form method="POST" action="{{ url_for('admin.specialties_delete', specialty_id=row.specialty.id) }}"
+          id="specialty-delete-{{ row.specialty.id }}" hidden
+          data-confirm="Видалити «{{ row.specialty.name }}» з довідника?" data-confirm-danger>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+    {% endfor %}
+    {% else %}
+    {% call empty_state('admin.specialties_list', filter_args,
+                        icon_name='table_view', title='Довідник порожній') %}
+      <p>Рядків номенклатури поки немає. Додайте перший вище.</p>
+    {% endcall %}
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
