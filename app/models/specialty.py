@@ -27,7 +27,8 @@ class Specialty(TranslatableMixin, TimestampMixin, db.Model):
     id = db.Column(BigIntPK, primary_key=True)
 
     # Латинський slug української назви, згенерований один раз і заморожений.
-    code = db.Column(db.String(60), unique=True, nullable=False, index=True)
+    # Без окремого index=True: UNIQUE(code) уже створює індекс сам.
+    code = db.Column(db.String(60), unique=True, nullable=False)
     name = db.Column(db.String(200), nullable=False)
     section = db.Column(db.String(20), nullable=False, index=True)
 

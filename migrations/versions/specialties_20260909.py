@@ -59,7 +59,7 @@ def upgrade():
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('code'),
     )
-    op.create_index('ix_specialties_code', 'specialties', ['code'])
+    # Без окремого індексу на code: UNIQUE(code) уже створює індекс сам.
     op.create_index('ix_specialties_section', 'specialties', ['section'])
 
     bind = op.get_bind()
@@ -103,6 +103,32 @@ def _seed(bind):
     )
 
 
+def _name_to_code_map(rows, normalize_name):
+    """{нормалізована_назва: code} з довідника, rows -- (code, name, section).
+
+    27 назв повторюються у двох розділах номенклатури ("Педіатрія",
+    "Хірургія", "Бактеріологія" ідуть і серед лікарських, і серед
+    фахівців/професіоналів), тож кілька різних кодів нормалізуються до
+    однієї й тієї ж назви. Без явного порядку виграє випадковий рядок із
+    SELECT (порядок рядків без ORDER BY -- деталь реалізації БД, не
+    контракт), і курс лікарського профілю міг опинитись прив'язаним до коду
+    з розділу "Фахівців". Тут перемагає рядок із МЕНШОЮ позицією розділу за
+    SECTIONS (app/models/specialty.py) -- лікарські важать більше за
+    фахівців/професіоналів.
+    """
+    from app.models.specialty import SECTIONS
+
+    section_order = {code: position for position, (code, _label) in enumerate(SECTIONS)}
+    # Спершу найгірші позиції, найкращі -- останніми: у dict-comprehension
+    # останній запис для ключа перемагає, тож найкраща позиція лишається.
+    ordered = sorted(
+        rows,
+        key=lambda row: section_order.get(row[2], len(section_order)),
+        reverse=True,
+    )
+    return {normalize_name(name): code for code, name, _section in ordered}
+
+
 def _backfill(bind):
     """Старий вільний текст курсу -> список кодів.
 
@@ -113,10 +139,8 @@ def _backfill(bind):
     """
     from app.services.specialties import legacy_code_for, normalize_name
 
-    name_to_code = {
-        normalize_name(name): code
-        for code, name in bind.execute(sa.text('SELECT code, name FROM specialties'))
-    }
+    rows = bind.execute(sa.text('SELECT code, name, section FROM specialties')).fetchall()
+    name_to_code = _name_to_code_map(rows, normalize_name)
     # Повний набір зайнятих кодів -- ОКРЕМО від name_to_code.values(): у
     # номенклатурі є коди, чиї назви нормалізуються однаково (регістр/пробіли),
     # тож частина реальних кодів у values() втрачається, і specialty_code()
@@ -244,5 +268,4 @@ def downgrade():
         batch.drop_column('bpr_specialty_codes')
 
     op.drop_index('ix_specialties_section', table_name='specialties')
-    op.drop_index('ix_specialties_code', table_name='specialties')
     op.drop_table('specialties')
