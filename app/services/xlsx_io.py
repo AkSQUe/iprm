@@ -547,10 +547,20 @@ COURSE_LABELS = {
     'speaker_info': 'Інфо про спікера',
     'agenda': 'Програма (опис)',
     'final_cta_text': 'Фінальний заклик',
-    'target_audience': 'Цільова аудиторія',
+    'target_audience': 'Цільова аудиторія (допис)',
     'tags': 'Теги',
     'is_active': 'Активний',
     'is_featured': 'Рекомендований',
+}
+
+# Підписи колонок, що змінилися після того, як менеджери вже мали на руках
+# експорти. Приймаються на імпорті нарівні з чинними -- інакше перейменування
+# підпису мовчки лишало б поле незмінним у файлі, який виглядає цілком
+# нормальним. Ключ -- старий підпис, значення -- internal key.
+LEGACY_HEADERS = {
+    # target_audience звузився до допису: перелік спеціальностей на сторінці
+    # збирається з довідника, а не з цього поля.
+    'Цільова аудиторія': 'target_audience',
 }
 
 # Колонки, додані після того, як менеджери вже мали на руках експорти.
@@ -905,6 +915,10 @@ def _read_sheet(ws, columns: list[str], labels: dict[str, str] | None = None,
             ua = labels[key]
             accepted[ua] = key
             accepted[ua.lower()] = key
+    for legacy, key in LEGACY_HEADERS.items():
+        if key in columns:
+            accepted.setdefault(legacy, key)
+            accepted.setdefault(legacy.lower(), key)
 
     col_idx: dict[str, int] = {}
     for i, hv in enumerate(header):
