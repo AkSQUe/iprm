@@ -127,6 +127,13 @@ def downgrade():
         with op.batch_alter_table(table) as batch:
             batch.drop_column('cpd_points_online')
             batch.drop_column('cpd_points_offline')
+            # Відновлюємо CHECK, який upgrade() дропнув разом зі старою
+            # колонкою -- інакше повторний upgrade() спіткнеться об
+            # drop_constraint неіснуючого об'єкта.
+            batch.create_check_constraint(
+                f'ck_{table}_cpd_points_non_negative',
+                'cpd_points >= 0 OR cpd_points IS NULL',
+            )
 
     with op.batch_alter_table('courses') as batch:
         batch.alter_column('bpr_lecturer_points', type_=sa.Integer())
