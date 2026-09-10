@@ -119,7 +119,12 @@ xlsx-звіти.
 лишаються в довіднику деактивованими.
 
 Служба `app/services/event_types.py` кешує довідник на час запиту
-(`g`) і дає `label()`, `accusative()`, `genitive()`, `choices(current=None)`.
+(`g`) і дає `label()`, `base_name()`, `accusative()`, `genitive()`,
+`choices(current=None)`.
+
+xlsx-вигрузка проведень (`export_instances_xlsx`) не має колонки
+`event_type` — override, який задають лише через адмінку, у файлі
+розкладу не видно й не редагується.
 
 ## CourseRequest (запит на курс)
 

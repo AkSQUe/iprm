@@ -113,7 +113,11 @@ def upgrade():
     # ця задача якраз і позбувається.
     bind = op.get_bind()
     if bind.dialect.name != 'sqlite':
-        op.drop_constraint('ck_courses_event_type', 'courses', type_='check')
+        # IF EXISTS: продова послідовність констрейнт має (ставить
+        # d1e2f3a4b5c6), але Postgres-база, піднята напряму через
+        # db.create_all() (dev/тести), його не отримує -- без IF EXISTS
+        # міграція там аварійно спинялась би на цьому кроці.
+        op.execute('ALTER TABLE courses DROP CONSTRAINT IF EXISTS ck_courses_event_type')
 
     op.add_column('course_instances',
                   sa.Column('event_type', sa.String(length=30), nullable=True))
