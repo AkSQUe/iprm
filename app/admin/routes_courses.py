@@ -100,6 +100,8 @@ def course_create():
         course = Course(slug=slug, created_by=current_user.id)
         course_service.populate_course_from_form(course, form)
         db.session.add(course)
+        from app.services import trainer_links
+        trainer_links.set_trainers(course, form.trainer_ids.data)
         apply_inline_translations(course)
         db.session.flush()
         blocks_data = course_service.extract_program_blocks_from_form(request.form)
@@ -139,6 +141,7 @@ def course_edit(course_id):
     populate_event_type_choices(form, current=course.event_type)
 
     if request.method == 'GET':
+        form.trainer_ids.data = [t.id for t in course.trainers]
         form.target_audience_text.data = course_service.list_to_lines(course.target_audience)
         form.tags_text.data = course_service.list_to_lines(course.tags)
         form.faq_text.data = course_service.faq_list_to_text(course.faq)
@@ -156,6 +159,12 @@ def course_edit(course_id):
 
         course.slug = slug
         course_service.populate_course_from_form(course, form)
+        # flush ПЕРЕД set_trainers: курс уже існує (id не None), тож без
+        # цього expire() усередині set_trainers відкотив би щойно
+        # виставлені атрибути форми, які ще не пішли в БД.
+        db.session.flush()
+        from app.services import trainer_links
+        trainer_links.set_trainers(course, form.trainer_ids.data)
         apply_inline_translations(course)
         blocks_data = course_service.extract_program_blocks_from_form(request.form)
         course_service.save_program_blocks_for_course(course, blocks_data)

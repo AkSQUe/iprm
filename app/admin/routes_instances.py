@@ -44,7 +44,7 @@ def _populate_choices(form, preselected_course_id=None, instance=None):
     if preselected_course_id and not form.course_id.data:
         form.course_id.data = preselected_course_id
 
-    populate_trainer_choices(form, empty_label='– Тренер курсу (default) –')
+    populate_trainer_choices(form)
 
     # Місто необов'язкове: адресу часто знають пізніше за дату, і розклад
     # показує «Місце уточнюється» замість того, щоб ховати захід.
@@ -315,6 +315,8 @@ def instance_create():
         instance = CourseInstance()
         course_service.populate_instance_from_form(instance, form)
         db.session.add(instance)
+        from app.services import trainer_links
+        trainer_links.set_trainers(instance, form.trainer_ids.data)
         # Copy-on-create: дефолтна тарифна вилка курсу переїжджає у
         # проведення (лише шаблони, що пасують формату). flush -- щоб
         # instance отримав id для FK тарифів.
@@ -346,6 +348,13 @@ def instance_edit(instance_id):
     form = CourseInstanceForm(obj=instance)
     _populate_choices(form, instance=instance)
 
+    if request.method == 'GET':
+        # Власний перелік проведення, НЕ effective_trainers: порожнє поле
+        # означає «успадкувати тренерів курсу», і префіл успадкованим
+        # списком непомітно перетворив би успадкування на явну копію
+        # при першому ж збереженні форми.
+        form.trainer_ids.data = [t.id for t in instance.trainers]
+
     if form.validate_on_submit():
         try:
             course_service.populate_instance_from_form(instance, form)
@@ -357,6 +366,12 @@ def instance_edit(instance_id):
             flash(str(exc), 'error')
             return render_template('admin/instance_edit.html', form=form,
                                    instance=instance)
+        # flush ПЕРЕД set_trainers: проведення вже існує (id не None), тож
+        # без цього expire() усередині set_trainers відкотив би щойно
+        # виставлені атрибути форми, які ще не пішли в БД.
+        db.session.flush()
+        from app.services import trainer_links
+        trainer_links.set_trainers(instance, form.trainer_ids.data)
         if try_commit(log_context=f'instance_edit id={instance.id}'):
             audit_logger.info(
                 'Admin %s updated instance %s', current_user.email, instance.id,

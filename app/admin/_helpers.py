@@ -360,17 +360,20 @@ def try_commit(log_context='', error_msg='Помилка при збережен
         return False
 
 
-def populate_trainer_choices(form, empty_label='– Default-тренер не обрано –'):
-    """Заповнити form.trainer_id.choices активними тренерами."""
+def populate_trainer_choices(form):
+    """Заповнити form.trainer_ids.choices активними тренерами.
+
+    Порожнього пункту немає: у мультиселекті порожнеча виражається
+    порожнім вибором, а окремий пункт «не обрано» став би значенням,
+    яке треба відсіювати на кожному записі.
+    """
     from app.models.trainer import Trainer
     trainers = (
         Trainer.query.filter_by(is_active=True)
         .order_by(Trainer.full_name)
         .all()
     )
-    form.trainer_id.choices = [(0, empty_label)] + [
-        (t.id, t.full_name) for t in trainers
-    ]
+    form.trainer_ids.choices = [(t.id, t.full_name) for t in trainers]
 
 
 def populate_event_type_choices(form, current=None, empty_label=None):

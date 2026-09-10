@@ -145,7 +145,14 @@ def test_seed_creates_two_tariffs_with_one_flag(app):
 
 
 def test_seed_leaves_trainer_alone_and_drafts_reviews(app):
+    from app.services import trainer_links
+
     course = _fixture_course('seed-pg-extras')
+    # _fixture_course пише лише legacy-колонку trainer_id; Course.trainer
+    # тепер читає таблицю звʼязку, тож довиставляємо той самий запис туди
+    # (id уже є -- курс проходить крізь flush усередині _fixture_course).
+    trainer_links.set_trainers(course, [course.trainer_id])
+    db.session.commit()
     _run(app, course.slug)
 
     # Цифри тренера команда НЕ чіпає: в еталоні це біографія Анастасії

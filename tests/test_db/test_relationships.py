@@ -4,15 +4,23 @@ from app.models.payment_transaction import PaymentTransaction
 from app.models.program_block import ProgramBlock
 from app.models.registration import EventRegistration
 from app.models.user import User
+from app.services import trainer_links
 
 
 class TestCourseRelationships:
     """Зв'язки моделі Course."""
 
     def test_course_trainer_back_populates(self, db_session, sample_trainer):
-        """Двосторонній зв'язок Course <-> Trainer."""
-        course = Course(title='C', slug='c-bp-trainer', trainer_id=sample_trainer.id)
+        """Двосторонній зв'язок Course <-> Trainer через таблицю course_trainers.
+
+        Course.trainer -- read-only property (перший запис), Trainer.courses --
+        viewonly dynamic-зв'язок; обидва читають ту саму таблицю звʼязку, а не
+        колонку trainer_id, тож запис іде через trainer_links.set_trainers.
+        """
+        course = Course(title='C', slug='c-bp-trainer')
         db_session.add(course)
+        db_session.flush()
+        trainer_links.set_trainers(course, [sample_trainer.id])
         db_session.flush()
 
         assert course.trainer.full_name == sample_trainer.full_name
@@ -81,10 +89,13 @@ class TestTrainerRelationships:
     """Зв'язки моделі Trainer."""
 
     def test_trainer_courses_dynamic(self, db_session, sample_trainer):
-        """Trainer.courses -- dynamic relationship з фільтрацією."""
-        c1 = Course(title='Active', slug='c-t-active', trainer_id=sample_trainer.id, is_active=True)
-        c2 = Course(title='Inactive', slug='c-t-inactive', trainer_id=sample_trainer.id, is_active=False)
+        """Trainer.courses -- dynamic relationship з фільтрацією, через таблицю звʼязку."""
+        c1 = Course(title='Active', slug='c-t-active', is_active=True)
+        c2 = Course(title='Inactive', slug='c-t-inactive', is_active=False)
         db_session.add_all([c1, c2])
+        db_session.flush()
+        trainer_links.set_trainers(c1, [sample_trainer.id])
+        trainer_links.set_trainers(c2, [sample_trainer.id])
         db_session.flush()
 
         assert sample_trainer.courses.count() >= 2

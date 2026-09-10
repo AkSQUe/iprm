@@ -380,7 +380,9 @@ def populate_course_from_form(course, form):
     course.bpr_event_number = _clean_text(form.bpr_event_number.data)
     course.bpr_specialty_codes = clean_codes(form.bpr_specialty_codes.data)
     course.bpr_lecturer_points = form.bpr_lecturer_points.data
-    course.trainer_id = form.trainer_id.data or None
+    # Перелік тренерів пишеться окремо, через trainer_links.set_trainers у
+    # маршруті: курсу-новачку тут ще бракує id, якого потребує таблиця
+    # звʼязку, а Course.trainer -- read-only property без сеттера.
     course.is_active = form.is_active.data
     course.is_featured = form.is_featured.data
     course.is_pinned = form.is_pinned.data
@@ -462,7 +464,8 @@ def populate_instance_from_form(instance, form):
     # як неіснуючий id міста.
     instance.city_id = form.city_id.data or None
     instance.online_link = _clean_text(form.online_link.data)
-    instance.trainer_id = form.trainer_id.data or None
+    # Перелік тренерів пишеться окремо, через trainer_links.set_trainers у
+    # маршруті: порожній вибір там і означає «успадкувати від курсу».
     # Порожній вибір -- це "як у курсу", тож у БД лягає NULL, а не [].
     instance.bpr_specialty_codes = clean_codes(form.bpr_specialty_codes.data) or None
     # Гвард і тут, а не лише в `change_instance_status`: форма
@@ -591,7 +594,6 @@ def clone_course(source, created_by_id):
         cpd_points_online=source.cpd_points_online,
         cpd_points_offline=source.cpd_points_offline,
         max_participants=source.max_participants,
-        trainer_id=source.trainer_id,
         is_active=False,
         is_featured=False,
         created_by=created_by_id,
@@ -616,6 +618,9 @@ def clone_course(source, created_by_id):
         ))
 
     db.session.add(clone)
+    db.session.flush()  # копії потрібен id, перш ніж вішати звʼязки
+    from app.services import trainer_links
+    trainer_links.set_trainers(clone, [t.id for t in source.trainers])
     return clone
 
 

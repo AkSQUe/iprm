@@ -581,10 +581,12 @@ class CourseForm(FlaskForm):
         validators=[Optional(), NumberRange(min=0)],
         description='Бали, що нараховуються лектору заходу (відрізняються від балів учасника).',
     )
-    trainer_id = SelectField(
-        'Тренер (default)',
+    trainer_ids = SelectMultipleField(
+        'Тренери',
         coerce=int,
         validators=[Optional()],
+        description='Порядок має значення: перший -- головний лектор, '
+                    'його підпис іде на сертифікат учасника.',
     )
     is_active = BooleanField('Активний у каталозі', default=True)
     is_featured = BooleanField('Рекомендований')
@@ -779,11 +781,13 @@ class CourseInstanceForm(FlaskForm):
         'Посилання на онлайн',
         validators=[Optional(), Length(max=500), _optional_url()],
     )
-    trainer_id = SelectField(
-        'Тренер',
+    trainer_ids = SelectMultipleField(
+        'Тренери',
         coerce=int,
         validators=[Optional()],
-        description='Залиште порожнім щоб взяти default-тренера курсу',
+        description='Порядок має значення: перший -- головний лектор, '
+                    'його підпис іде на сертифікат учасника. Залиште порожнім, '
+                    'щоб узяти тренерів курсу.',
     )
     bpr_specialty_codes = SelectMultipleField(
         'Спеціальності (для сертифіката)',

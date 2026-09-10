@@ -3,6 +3,7 @@ import pytest
 from app.models.course import Course
 from app.models.program_block import ProgramBlock
 from app.models.trainer import Trainer
+from app.services import trainer_links
 
 
 def test_course_creation(db_session):
@@ -28,16 +29,25 @@ def test_course_event_type_label_of_unknown_code_is_the_code(db_session):
 
 
 def test_course_trainer_relationship(db_session):
-    """Зв'язок Course -> Trainer."""
-    trainer = Trainer(full_name='Dr. Test', slug='dr-test')
-    db_session.add(trainer)
+    """Course.trainer -- перший (головний лектор) з переліку trainers.
+
+    Раніше .trainer читав FK trainer_id; тепер список пишеться через
+    trainer_links.set_trainers, а .trainer лишається лектором №1 --
+    саме його підпис іде на сертифікат учасника.
+    """
+    lead = Trainer(full_name='Dr. Test', slug='dr-test')
+    second = Trainer(full_name='Dr. Second', slug='dr-second')
+    db_session.add_all([lead, second])
     db_session.flush()
 
-    course = Course(title='C', slug='c-trainer', trainer_id=trainer.id)
+    course = Course(title='C', slug='c-trainer')
     db_session.add(course)
+    db_session.flush()
+    trainer_links.set_trainers(course, [lead.id, second.id])
     db_session.flush()
 
     assert course.trainer.full_name == 'Dr. Test'
+    assert [t.full_name for t in course.trainers] == ['Dr. Test', 'Dr. Second']
 
 
 def test_course_program_blocks_cascade(db_session):

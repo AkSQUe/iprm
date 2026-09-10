@@ -166,9 +166,10 @@
           <small class="form-hint">Бали лектора заходу (можуть відрізнятись від балів учасника). Для сертифіката лектора. Приймається дробове значення (4,5).</small>
         </div>
 
-        <div class="form-group">
-          <label for="trainer_id">Тренер (default)</label>
-          {{ form.trainer_id(class="form-input", id="trainer_id") }}
+        <div class="form-group admin-form__full">
+          <label for="trainer_ids">Тренери</label>
+          {{ form.trainer_ids(class="form-input", id="trainer_ids", size=8, **{'data-multiselect': '', 'data-multiselect-ordered': ''}) }}
+          <small class="form-hint">{{ form.trainer_ids.description }}</small>
         </div>
 
       </div>
