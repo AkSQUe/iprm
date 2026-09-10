@@ -26,7 +26,7 @@ from flask import jsonify, make_response, request
 
 from app.api.v1 import api_v1_bp
 from app.api.v1.auth import require_api_key
-from app.api.v1.serializers import API_VERSION
+from app.api.v1.serializers import API_VERSION, _points
 from app.extensions import csrf, db, limiter
 from app.models.b2b_request import B2BRequest
 from app.models.course_request import CourseRequest
@@ -286,7 +286,7 @@ def list_registrations():
             ),
             'paid_at': _iso(reg.paid_at),
             'attended': bool(reg.attended),
-            'cpd_points_awarded': reg.cpd_points_awarded,
+            'cpd_points_awarded': _points(reg.cpd_points_awarded),
             # Знімок анкети на момент реєстрації: людина могла відтоді
             # змінити місце роботи, а партнеру потрібен саме той стан.
             'phone': reg.phone,

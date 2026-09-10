@@ -5,6 +5,7 @@
 лишається ідентичною.
 """
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -53,6 +54,9 @@ def published_event(app, user):
         title='Published Event', slug=f'pub-{_uid()}',
         short_description='desc', event_type='course',
         base_price=1500, cpd_points=5, tags=['gynecology', 'ppp'],
+        # Бекфіл, як у справжній міграції: стара колонка дублюється в обидві
+        # нові, бо історично невідомо, для якого формату призначались бали.
+        cpd_points_online=5, cpd_points_offline=5,
         is_active=True, created_by=user.id,
     )
     db.session.add(c)
@@ -60,6 +64,7 @@ def published_event(app, user):
     inst = CourseInstance(
         course_id=c.id, status='published',
         event_format='offline', price=1500, cpd_points=5,
+        cpd_points_online=5, cpd_points_offline=5,
         start_date=datetime.now(timezone.utc) + timedelta(days=10),
         end_date=datetime.now(timezone.utc) + timedelta(days=11),
     )
@@ -85,6 +90,38 @@ def draft_event(app, user):
     db.session.flush()
     c._test_instance = inst
     return c
+
+
+@pytest.fixture
+def hybrid_event(app, user):
+    c = Course(
+        title='Hybrid', slug=f'hyb-{_uid()}', event_type='course',
+        base_price=1500, is_active=True, created_by=user.id,
+    )
+    db.session.add(c)
+    db.session.flush()
+    inst = CourseInstance(
+        course_id=c.id, status='published', event_format='hybrid', price=1500,
+        cpd_points_online=Decimal('7.50'), cpd_points_offline=Decimal('9.00'),
+        start_date=datetime.now(timezone.utc) + timedelta(days=10),
+    )
+    db.session.add(inst)
+    db.session.flush()
+    c._test_instance = inst
+    return c
+
+
+def test_event_card_exposes_points_per_format(
+    client, partner_settings, hybrid_event,
+):
+    resp = client.get('/api/v1/events', headers={'X-API-Key': API_KEY})
+    card = next(
+        item for item in resp.get_json()['items']
+        if item['slug'] == hybrid_event.slug
+    )
+    assert 'cpd_points' not in card
+    assert card['cpd_points_online'] == 7.5
+    assert card['cpd_points_offline'] == 9.0
 
 
 class TestEventsList:
@@ -113,7 +150,8 @@ class TestEventsList:
         resp = client.get('/api/v1/events', headers={'X-API-Key': API_KEY})
         card = next(e for e in resp.get_json()['items'] if e['slug'] == published_event.slug)
         assert card['title'] == 'Published Event'
-        assert card['cpd_points'] == 5
+        assert card['cpd_points_online'] == 5.0
+        assert card['cpd_points_offline'] == 5.0
         assert card['tags'] == ['gynecology', 'ppp']
         assert card['currency'] == 'UAH'
         inst_id = published_event._test_instance.id

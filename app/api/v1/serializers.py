@@ -214,9 +214,15 @@ def serialize_event_card(course, instance=None) -> dict:
         'city': serialize_city(instance.city) if instance else None,
         'card_image_url': _image_url(course.card_src),
         'hero_image_url': _image_url(course.hero_src),
-        'cpd_points': (
-            instance.effective_cpd_points if instance
-            else course.cpd_points
+        # Розділено за форматом участі: на гібриді онлайн і очно дають різні
+        # бали, і одне число тут завжди було неправдою для половини людей.
+        'cpd_points_online': _points(
+            instance.effective_cpd_for('online') if instance
+            else course.cpd_points_online
+        ),
+        'cpd_points_offline': _points(
+            instance.effective_cpd_for('offline') if instance
+            else course.cpd_points_offline
         ),
         'tags': course.tags or [],
         'is_featured': course.is_featured,
@@ -271,6 +277,11 @@ def serialize_event_detail(course, instance=None) -> dict:
         ],
     })
     return data
+
+
+def _points(value):
+    """Бали назовні -- числом, щоб партнеру не парсити кому."""
+    return float(value) if value is not None else None
 
 
 def _seats_left(instance) -> int | None:
@@ -329,7 +340,7 @@ def serialize_online_course(course, lang=None) -> dict:
                   if course.effective_price is not None else None),
         'currency': course.currency,
         'duration_hours': course.duration_hours,
-        'cpd_points': course.cpd_points,
+        'cpd_points': _points(course.cpd_points),
         'image': course.card_src or course.hero_src,
         'public_url': url_for('online.course_detail', slug=course.slug,
                               _external=True),
