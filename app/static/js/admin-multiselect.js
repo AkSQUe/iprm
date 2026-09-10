@@ -7,8 +7,20 @@
 (function () {
   'use strict';
 
+  // Варіанти апострофа в назвах довідника ("здоров’я", U+2019) і в тому, що
+  // хтось надрукує в пошуку з клавіатури ("здоров'я", ASCII U+0027) --
+  // звід до одного символу, щоб пошук по одному варіанту знаходив назви з
+  // іншим. Той самий список і той самий канонічний символ, що й у
+  // normalize_name() (app/services/specialties.py) -- лише JS не читає
+  // Python-константу, тож дублюється тут.
+  var APOSTROPHE_VARIANTS = ['’', 'ʼ'];
+
   function normalize(text) {
-    return (text || '').toLowerCase().trim();
+    var value = text || '';
+    APOSTROPHE_VARIANTS.forEach(function (variant) {
+      value = value.split(variant).join("'");
+    });
+    return value.toLowerCase().trim();
   }
 
   function build(select) {
@@ -27,7 +39,11 @@
     list.className = 'admin-multiselect__list';
     list.hidden = true;
     list.setAttribute('role', 'listbox');
-    list.setAttribute('aria-multiselectable', 'true');
+    // aria-multiselectable НЕ ставимо: список показує лише НЕвибрані пункти
+    // (renderList відсіює option.selected), тож кожен <li role="option">
+    // завжди aria-selected="false" -- атрибут aria-multiselectable=true
+    // обіцяв би скрінрідеру множинний вибір усередині ЦЬОГО списку, якого
+    // тут немає (сам вибір живе на прихованому <select>).
 
     if (select.id) {
       // id-и поля пошуку й списку -- від select.id, щоб на сторінці з
@@ -143,7 +159,15 @@
   function open(ui, isOpen) {
     ui.list.hidden = !isOpen;
     ui.search.setAttribute('aria-expanded', String(isOpen));
-    if (!isOpen) { ui.search.removeAttribute('aria-activedescendant'); }
+    if (!isOpen) {
+      ui.search.removeAttribute('aria-activedescendant');
+      // Список ховається, а <li> нікуди не дівається (renderList його не
+      // перебудовує при закритті) -- клас is-active лишався б на ньому. Без
+      // цього наступний Enter (до першого ArrowDown/ArrowUp) додавав чіп із
+      // пункту, підсвіченого ще ДО Escape, замість надіслати форму.
+      var current = active(ui);
+      if (current) { current.classList.remove('is-active'); }
+    }
   }
 
   function active(ui) {

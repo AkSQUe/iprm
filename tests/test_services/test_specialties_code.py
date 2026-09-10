@@ -31,3 +31,17 @@ def test_code_fits_column():
 
 def test_normalize_name_ignores_case_and_spacing():
     assert normalize_name('  Усі   Лікарські  Спеціальності ') == 'усі лікарські спеціальності'
+
+
+def test_normalize_name_treats_apostrophe_variants_as_equal():
+    # U+2019 (’, як у номенклатурі) і ASCII U+0027 ('), як хтось набирає з
+    # клавіатури -- мають нормалізуватись до однієї й тієї ж форми, інакше
+    # бекфіл міграції заводить рядок-дублікат замість того, щоб впізнати
+    # вже наявний код довідника (Громадське здоров’я / Громадське здоров'я).
+    assert normalize_name('Громадське здоров’я') == normalize_name("Громадське здоров'я")
+
+
+def test_normalize_name_treats_modifier_apostrophe_as_equal():
+    # U+02BC (ʼ, модифікатор-апостроф) -- третій варіант, який теж трапляється
+    # у вільному тексті.
+    assert normalize_name('Громадське здоровʼя') == normalize_name("Громадське здоров'я")

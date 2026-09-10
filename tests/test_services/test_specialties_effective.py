@@ -52,6 +52,17 @@ def test_legacy_text_matches_known_name():
                                        name_to_code) == ('all-medical', None)
 
 
+def test_legacy_text_matches_despite_apostrophe_variant():
+    # Довідник несе назву з U+2019 ("Громадське здоров’я"), а старий вільний
+    # текст курсу міг бути набраний ASCII-апострофом ("здоров'я"). Без
+    # зведення варіантів у normalize_name бекфіл завів би це дублікатом
+    # замість того, щоб впізнати наявний код.
+    name_to_code = {specialties.normalize_name('Громадське здоров’я'): 'hromadske-zdorovia'}
+    assert specialties.legacy_code_for(
+        "Громадське здоров'я", name_to_code,
+    ) == ('hromadske-zdorovia', None)
+
+
 def test_legacy_text_without_match_becomes_new_row():
     name_to_code = {'усі лікарські спеціальності': 'all-medical'}
     code, missing = specialties.legacy_code_for('Косметологія та дерматологія',
@@ -86,6 +97,31 @@ def test_populate_instance_from_form_empty_selection_becomes_none(app, course):
     assert instance.bpr_specialty_codes is None
     # І тоді ефективний список знову бере коди курсу.
     assert instance.effective_specialty_codes == ['alerholohiia']
+
+
+def test_clean_codes_drops_empty_strings():
+    assert specialties.clean_codes(['alerholohiia', '', 'farmatsiia']) == \
+        ['alerholohiia', 'farmatsiia']
+
+
+def test_clean_codes_handles_none():
+    assert specialties.clean_codes(None) == []
+
+
+def test_populate_instance_from_form_drops_empty_code(app, course):
+    """Форгнутий POST із порожнім значенням не повинен писати код '' у БД --
+    другий, дешевий захист поряд із WTForms pre_validate (яке форгнутий
+    запит з невідомим значенням мало б відхилити самостійно)."""
+    instance = CourseInstance(course_id=course.id)
+    db.session.add(instance)
+    db.session.commit()
+
+    with app.test_request_context():
+        form = CourseInstanceForm(obj=instance)
+        form.bpr_specialty_codes.data = ['alerholohiia', '']
+        course_service.populate_instance_from_form(instance, form)
+
+    assert instance.bpr_specialty_codes == ['alerholohiia']
 
 
 @pytest.fixture
