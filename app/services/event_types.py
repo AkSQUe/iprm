@@ -54,6 +54,21 @@ def label(code, lang=None):
     return row.t('name', lang) if row is not None else code
 
 
+def base_name(code):
+    """Канонічна (українська, неперекладена) назва -- незалежна від
+    активної локалі. Немає в довіднику -- сам код.
+
+    На відміну від label(), джерело для контрактів, які мусять лишатись
+    стабільними в будь-якій мовній сесії адміна: xlsx-експорт і drop-down
+    тієї самої колонки звіряються саме за цим значенням, а не за
+    локалізованою назвою.
+    """
+    if not code:
+        return code
+    row = directory().get(code)
+    return row.name if row is not None else code
+
+
 def accusative(code):
     """Знахідний для сертифіката учасника: "завершив(-ла) <accusative>"."""
     return _case(code, 'name_accusative')

@@ -197,3 +197,36 @@ def test_duplicate_slug_in_file_is_error(client, tmp_path):
     path = _write_courses_file(tmp_path, [_base_row(c), _base_row(c)])
     plan = xlsx_io.parse_courses_xlsx(path)
     assert any(ch.action == 'error' for ch in plan.changes)
+
+
+# --- регрес: експорт під ru-сесією адміна -----------------------------------
+
+def test_export_then_import_roundtrip_survives_ru_locale(client, tmp_path):
+    """Адмін хоч раз зазирнув у /ru/ -- сесія лишилась на ru (locale береться
+    з session['lang'], а не з URL-префікса). Колонка "Тип" мусить лишатись
+    імпортовною навіть тоді, коли drop-down показав перекладену назву:
+    export пише КАНОНІЧНУ (укр.) назву, а не локалізовану."""
+    from flask_babel import force_locale
+
+    from app.models.event_type import EventType
+    from app.services import event_types
+
+    row = EventType.query.filter_by(code='seminar').first()
+    row.set_translation('ru', 'name', 'Семинар')
+    db.session.commit()
+    event_types.reset_cache()
+
+    c = _course()
+    c.event_type = 'seminar'
+    db.session.commit()
+    with force_locale('ru'):
+        assert event_types.label('seminar') == 'Семинар'
+        wb_bytes = xlsx_io.export_courses_xlsx()
+
+    path = tmp_path / 'roundtrip-ru.xlsx'
+    path.write_bytes(wb_bytes.getvalue())
+
+    plan = xlsx_io.parse_courses_xlsx(path)
+    assert plan.is_valid, plan.errors
+    assert xlsx_io.apply_courses_plan(plan)['ok']
+    assert db.session.get(Course, c.id).event_type == 'seminar'
