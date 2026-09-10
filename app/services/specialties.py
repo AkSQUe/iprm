@@ -110,7 +110,12 @@ def names(codes, lang=None):
     документ не має залежати від локалі того, хто натиснув кнопку видачі.
     """
     known = catalog()
-    rows = [known[code] for code in (codes or []) if code in known]
+    # dict.fromkeys -- зняти дублі, не втративши порядок. Кліком у формі
+    # дубль не зробити, але pre_validate звіряє КОЖНЕ значення окремо, тож
+    # зібраний руками POST із двома однаковими кодами проходить валідацію
+    # і лягає в поле; так само пише туди сідінг чи ручний UPDATE. Двічі
+    # надрукована назва псує і сторінку, і рядок сертифіката.
+    rows = [known[code] for code in dict.fromkeys(codes or ()) if code in known]
     return [row.t('name', lang=lang) for row in sorted(rows, key=_order_key)]
 
 

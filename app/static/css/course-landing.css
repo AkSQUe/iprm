@@ -556,6 +556,23 @@
   color: var(--iprm-text-light);
 }
 
+/* Перелік спеціальностей заходу: чіпи в один потік із переносом.
+   Декор чіпа -- .iprm-tag дизайн-системи, тут лише розкладка. */
+.iprm-audience-card__specialties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+/* Другий заголовок у картці (ручний чек-лист після спеціальностей) --
+   відбивка від переліку вище, щоб блоки не злипались. */
+.iprm-audience-card__specialties + .iprm-audience-card__title {
+  margin-top: 22px;
+}
+
 /* Список із галочками -- спільний для карток аудиторії й тарифів. */
 .iprm-check-list {
   margin: 16px 0 0;
