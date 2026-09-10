@@ -63,6 +63,20 @@ def test_add_rejects_empty_name(client, admin):
     assert Specialty.query.count() == before
 
 
+def test_add_redirect_keeps_active_filters(client, admin):
+    """Додавання рядка не повинно скидати фільтр, з яким адміністратор
+    дивився список -- інакше він щоразу повертається на непрофільтрований
+    довідник."""
+    _login(client, admin)
+    response = client.post(
+        '/admin/specialties/add?section=pharmacy&state=active',
+        data={'name': 'Дитяча ендокринологія', 'section': 'medical'},
+    )
+    assert response.status_code == 302
+    assert 'section=pharmacy' in response.headers['Location']
+    assert 'state=active' in response.headers['Location']
+
+
 def test_save_writes_translation_and_flags(client, admin, row):
     _login(client, admin)
     response = client.post('/admin/specialties/save', data={

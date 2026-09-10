@@ -26,14 +26,20 @@ audit_logger = logging.getLogger('audit')
 _STATES = {'active': 'Активні', 'inactive': 'Деактивовані'}
 
 
-@admin_bp.route('/specialties', methods=['GET'])
-@permission_required('specialties.view')
-def specialties_list():
-    filters = {
+def _specialties_filters():
+    """Той самий набір фільтрів для сторінки списку й для редіректу з
+    /specialties/add -- інакше додавання рядка скидає активний зріз."""
+    return {
         'q': _listing.text_arg('q'),
         'section': _listing.choice_arg('section', SECTION_LABELS),
         'state': _listing.choice_arg('state', _STATES),
     }
+
+
+@admin_bp.route('/specialties', methods=['GET'])
+@permission_required('specialties.view')
+def specialties_list():
+    filters = _specialties_filters()
     query = Specialty.query
     if filters['section']:
         query = query.filter(Specialty.section == filters['section'])
@@ -123,7 +129,11 @@ def specialties_add():
         audit_logger.info('Admin %s added specialty %r (%s)',
                           current_user.email, name, code)
         flash(f'Додано "{name}". Впишіть переклади і збережіть.', 'success')
-    return redirect(url_for('admin.specialties_list', **_listing.filter_args({})))
+    # Фільтри -- з query-string САМОГО запиту: форма додавання несе поточний
+    # зріз у своєму action (див. admin/specialties.html), тож request.args
+    # тут -- це те, що показувала сторінка в момент кліку "Додати".
+    return redirect(url_for('admin.specialties_list',
+                            **_listing.filter_args(_specialties_filters())))
 
 
 @admin_bp.route('/specialties/<int:specialty_id>/delete', methods=['POST'])

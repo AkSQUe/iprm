@@ -45,7 +45,7 @@
         Код рядка генерується з назви автоматично й не змінюється надалі --
         переклади й видимість правляться нижче, у таблиці.
       </p>
-      <form method="POST" action="{{ url_for('admin.specialties_add') }}" class="specialties-add">
+      <form method="POST" action="{{ url_for('admin.specialties_add', **filter_args) }}" class="specialties-add">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="text" name="name" class="form-input specialties-add__name" maxlength="200"
                placeholder="Дитяча ендокринологія" aria-label="Назва спеціальності українською">
