@@ -25,6 +25,32 @@ class MediaFile(TimestampMixin, SoftDeleteMixin, db.Model):
         'inline', 'photo', 'hero', 'card',
     )
 
+    # Підписи для людини. Живуть тут, а не в шаблоні бібліотеки: ті самі
+    # значення показує і фільтр, і картка, і пікер, а сирий код ('hero',
+    # 'blog_post') у списку читається як службове сміття.
+    USAGE_LABELS = {
+        'main': 'Головне',
+        'gallery': 'Галерея',
+        'cover': 'Обкладинка',
+        'certificate': 'Сертифікат',
+        'patent': 'Патент',
+        'inline': 'У тексті',
+        'photo': 'Фото',
+        'hero': 'Банер',
+        'card': 'Картка',
+    }
+
+    # Типи власників, які реально пишуться в реєстр (див. media_service та
+    # виклики create_from_upload). Перелік один на фільтр і на підпис картки:
+    # доти фільтр не знав про online_course, і зображення онлайн-курсів
+    # неможливо було відібрати взагалі.
+    ENTITY_LABELS = {
+        'blog_post': 'Допис',
+        'trainer': 'Тренер',
+        'course': 'Курс',
+        'online_course': 'Онлайн-курс',
+    }
+
     id = db.Column(BigIntPK, primary_key=True)
     uploaded_by = db.Column(
         db.BigInteger, db.ForeignKey('users.id', ondelete='SET NULL'),
@@ -87,6 +113,22 @@ class MediaFile(TimestampMixin, SoftDeleteMixin, db.Model):
             return self.url
         prefix = current_app.config.get('MEDIA_URL_PREFIX', '/media')
         return f'{prefix}/{path}'
+
+    @property
+    def purge_at(self):
+        """Коли фонова задача прибере м'яко видалений рядок НАЗАВЖДИ.
+
+        None для живого файлу. Імпорти локальні: модель не мусить тягнути
+        за собою сервісний шар при кожному завантаженні модуля.
+        """
+        if self.deleted_at is None:
+            return None
+        from datetime import timedelta
+
+        from app.services.soft_delete_purge import RETENTION_DAYS
+        from app.utils import ensure_utc
+
+        return ensure_utc(self.deleted_at) + timedelta(days=RETENTION_DAYS)
 
     # ---- Запити ----
     @classmethod

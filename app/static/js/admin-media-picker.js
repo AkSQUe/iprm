@@ -21,10 +21,13 @@
     var moreBtn = document.getElementById('media-picker-more');
     var empty = document.getElementById('media-picker-empty');
 
+    var searchEl = document.getElementById('media-picker-q');
+
     var onPick = null;
     var page = 1;
     var loading = false;
     var lastFocus = null;
+    var term = '';
 
     function close() {
       modal.hidden = true;
@@ -49,7 +52,9 @@
     function load() {
       if (loading) return;
       loading = true;
-      fetch('/admin/media/list.json?page=' + page, { headers: { 'Accept': 'application/json' } })
+      var url = '/admin/media/list.json?page=' + page
+        + (term ? '&q=' + encodeURIComponent(term) : '');
+      fetch(url, { headers: { 'Accept': 'application/json' } })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
           loading = false;
@@ -64,6 +69,21 @@
     if (moreBtn) {
       moreBtn.addEventListener('click', function () { page += 1; load(); });
     }
+    if (searchEl) {
+      var timer = null;
+      searchEl.addEventListener('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          // Новий запит -- новий зріз: сторінка й уже показані мініатюри
+          // від попереднього терміна до нього не належать.
+          term = searchEl.value.trim();
+          page = 1;
+          grid.innerHTML = '';
+          if (moreBtn) moreBtn.hidden = true;
+          load();
+        }, 300);
+      });
+    }
     Array.prototype.slice.call(modal.querySelectorAll('[data-picker-close]')).forEach(function (b) {
       b.addEventListener('click', close);
     });
@@ -74,6 +94,8 @@
     window.openMediaPicker = function (pickCallback) {
       onPick = pickCallback;
       page = 1;
+      term = '';
+      if (searchEl) searchEl.value = '';
       grid.innerHTML = '';
       if (empty) empty.hidden = true;
       if (moreBtn) moreBtn.hidden = true;

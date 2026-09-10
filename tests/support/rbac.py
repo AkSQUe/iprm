@@ -26,3 +26,23 @@ def make_user_with_role(role_name, email=None, **kwargs):
 
 def make_super_admin(email=None, **kwargs):
     return make_user_with_role('super_admin', email, **kwargs)
+
+
+def switch_user(client, user):
+    """Перелогінити тестовий клієнт на іншого користувача.
+
+    Одного запису в сесію мало. `conftest.app` тримає піднятий app-context
+    на весь тест, тож Flask не створює новий на кожен запит клієнта -- а `g`
+    належить саме app-контексту. Flask-Login кладе туди `_login_user` при
+    першому ж запиті й наступного разу бере користувача звідти, не заглядаючи
+    в сесію: сторінка рендериться від імені ПОПЕРЕДНЬОГО користувача, хоча в
+    сесії вже інший id. У проді цього не буває -- там кожен запит має свій
+    app-контекст, -- тому симптом видно лише в тестах, і виглядає він як
+    «перевірка прав не працює».
+    """
+    from flask import g
+
+    g.pop('_login_user', None)
+    with client.session_transaction() as session:
+        session['_user_id'] = str(user.id)
+    return user
