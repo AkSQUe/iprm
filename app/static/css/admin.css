@@ -946,6 +946,16 @@ a.admin-stat-card:focus-visible {
     min-width: 0;
   }
 
+  /* `.admin-subline` оголошена display:block рівно заради того, щоб стояти
+     на СВОЄМУ рядку -- під назвою. У картковому режимі комірка сама стає
+     flex-контейнером, і підрядок перетворювався на черговий елемент ряду:
+     form_id ставав поруч із назвою форми, а година -- поруч із датою, і
+     лише коли сусід був досить довгим, підрядок випадково падав униз.
+     Тобто той самий компонент вів себе по-різному від довжини даних. */
+  .admin-table td .admin-subline {
+    flex-basis: 100%;
+  }
+
     .admin-table td:last-child {
     border-bottom: 0;
   }
@@ -1851,7 +1861,12 @@ a.admin-stat-card:focus-visible {
 /* Скоуплено так само, як `.form-section .form-input` вище: інакше та
    заскоуплена база (0,3,0) перебиває цей перелік (0,2,1), і select лишається
    без стрілки та без місця під неї. */
+/* `.admin-inline-form` у переліку тому, що це ТРЕТІЙ спосіб поставити
+   селект в адмінці -- форма прямо в комірці реєстру (запити B2B, форми
+   Meta), -- і саме він лишався поза списком: селект малювався з рідною
+   стрілкою браузера, тобто виглядав інакше за всі решта селектів сайту. */
 .admin-with-sidebar .admin-form select.form-input:not([multiple]),
+.admin-with-sidebar .admin-inline-form select.form-input:not([multiple]),
 .admin-with-sidebar .admin-control-row select.form-input:not([multiple]),
 .admin-with-sidebar .admin-filters__form select.form-input:not([multiple]),
 .admin-with-sidebar .backup-actions__form select.form-input:not([multiple]) {
@@ -1867,6 +1882,7 @@ a.admin-stat-card:focus-visible {
 
 /* Firefox: прибрати пунктирну рамку в фокусі на select */
 .admin-form select.form-input:-moz-focusring,
+.admin-inline-form select.form-input:-moz-focusring,
 .admin-control-row select.form-input:-moz-focusring,
 .admin-filters__form select.form-input:-moz-focusring,
 .backup-actions__form select.form-input:-moz-focusring {
