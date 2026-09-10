@@ -718,26 +718,34 @@ def issue_certificate(registration, issued_by=None):
 
 
 # ---- Лекторський сертифікат ----
-def issue_lecturer_certificate(instance, issued_by=None):
-    """Видати (або повернути наявний) сертифікат лектора для проведення.
+def issue_lecturer_certificate(instance, trainer, issued_by=None):
+    """Видати (або повернути наявний) сертифікат лектора для пари
+    «проведення + тренер».
 
-    Один запис на instance (повторна видача -> той самий номер). Дані -- знімки
-    з курсу/проведення/тренера на момент видачі. Номер учасника у діапазоні
-    1xxxxx (окремий лічильник). Тип заходу зберігаємо у родовому відмінку.
+    Захід може мати кількох тренерів (`effective_trainers`), і кожен читає
+    лекцію особисто -- ідемпотентність тому на парі (instance_id, trainer_id),
+    а не на самому проведенні: повторна видача ТОМУ Ж тренеру повертає той
+    самий номер, а видача ІНШОМУ тренеру того самого заходу створює власний
+    запис. Номер лектора у діапазоні 1xxxxx (окремий лічильник). Тип заходу
+    зберігаємо у родовому відмінку.
     """
     from app.models.site_settings import SiteSettings
     from app.models.lecturer_certificate import (
         LECTURER_NUMBER_OFFSET, LecturerCertificate,
     )
 
-    existing = LecturerCertificate.query.filter_by(instance_id=instance.id).first()
+    # ДО запиту, а не після: інакше `trainer.id` нижче впаде AttributeError-ом
+    # на порожньому тренері замість зрозумілого ValueError.
+    if trainer is None:
+        raise ValueError('Не задано лектора для сертифіката.')
+
+    existing = LecturerCertificate.query.filter_by(
+        instance_id=instance.id, trainer_id=trainer.id,
+    ).first()
     if existing is not None:
         return existing
 
     course = instance.course
-    trainer = instance.effective_trainer
-    if trainer is None:
-        raise ValueError('У проведення не задано лектора (тренера).')
     provider = (SiteSettings.get().bpr_provider_number or '').strip()
     event_num = (course.bpr_event_number or '').strip() if course and course.bpr_event_number else ''
     if not provider:
@@ -782,11 +790,14 @@ def issue_lecturer_certificate(instance, issued_by=None):
     try:
         db.session.flush()
     except IntegrityError:
-        # instance_id-unique міг спрацювати, якщо паралельно вже створили --
-        # це не помилка, повертаємо той запис. Перебору номерів тут більше
-        # немає: вільний номер уже підібрано до запису (див. _next_free_number).
+        # unique-пара (instance_id, trainer_id) могла спрацювати, якщо
+        # паралельно вже видали цьому самому тренеру -- це не помилка,
+        # повертаємо той запис. Перебору номерів тут більше немає: вільний
+        # номер уже підібрано до запису (див. _next_free_number).
         db.session.rollback()
-        dup = LecturerCertificate.query.filter_by(instance_id=instance.id).first()
+        dup = LecturerCertificate.query.filter_by(
+            instance_id=instance.id, trainer_id=trainer.id,
+        ).first()
         if dup is not None:
             return dup
         raise

@@ -337,6 +337,17 @@ def instance_create():
     return render_template('admin/instance_edit.html', form=form, instance=None)
 
 
+def _lecturer_certs_by_trainer(instance):
+    """Видані сертифікати лектора заходу, за trainer_id -- для рядків у шаблоні.
+
+    Один захід тепер може мати кілька лекторських сертифікатів (по одному на
+    тренера), тож замість одного запису шаблону потрібен словник.
+    """
+    from app.models.lecturer_certificate import LecturerCertificate
+    rows = LecturerCertificate.query.filter_by(instance_id=instance.id).all()
+    return {lc.trainer_id: lc for lc in rows}
+
+
 @admin_bp.route('/instances/<int:instance_id>/edit', methods=['GET', 'POST'])
 @permission_required('instances.manage')
 def instance_edit(instance_id):
@@ -365,7 +376,8 @@ def instance_edit(instance_id):
             db.session.rollback()
             flash(str(exc), 'error')
             return render_template('admin/instance_edit.html', form=form,
-                                   instance=instance)
+                                   instance=instance,
+                                   lecturer_certs=_lecturer_certs_by_trainer(instance))
         from app.services import trainer_links
         trainer_links.set_trainers(instance, form.trainer_ids.data)
         if try_commit(log_context=f'instance_edit id={instance.id}'):
@@ -375,7 +387,8 @@ def instance_edit(instance_id):
             flash('Проведення оновлено', 'success')
             return redirect(url_for('admin.instances_list'))
 
-    return render_template('admin/instance_edit.html', form=form, instance=instance)
+    return render_template('admin/instance_edit.html', form=form, instance=instance,
+                           lecturer_certs=_lecturer_certs_by_trainer(instance))
 
 
 @admin_bp.route('/instances/<int:instance_id>/lecturer-certificate', methods=['POST'])
@@ -390,8 +403,19 @@ def instance_lecturer_certificate(instance_id):
     if not instance:
         flash('Проведення не знайдено', 'error')
         return redirect(url_for('admin.instances_list'))
+
+    trainer_id = request.form.get('trainer_id', type=int)
+    trainer = next(
+        (t for t in instance.effective_trainers if t.id == trainer_id), None
+    )
+    if trainer is None:
+        # Свого тренера серед тренерів заходу -- чужого id (підміна у формі)
+        # не приймаємо, так само як відсутність вибору.
+        flash('Оберіть лектора зі списку тренерів заходу', 'error')
+        return redirect(url_for('admin.instance_edit', instance_id=instance_id))
+
     try:
-        lc = cs.issue_lecturer_certificate(instance, issued_by=current_user)
+        lc = cs.issue_lecturer_certificate(instance, trainer, issued_by=current_user)
         pdf = cs.render_lecturer_pdf(lc)
     except ValueError as exc:
         flash(str(exc), 'error')

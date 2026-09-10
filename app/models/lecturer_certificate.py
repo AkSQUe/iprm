@@ -4,8 +4,11 @@
 на реєстрацію). Лектор отримує власний сертифікат після заходу: інший текст,
 інша кількість балів БПР, лише підпис Директора.
 
-Поля -- незмінні знімки на момент видачі (як у Certificate). Один запис на
-проведення (instance_id unique): повторна видача повертає той самий номер.
+Поля -- незмінні знімки на момент видачі (як у Certificate). Захід може мати
+кількох тренерів (`CourseInstance.effective_trainers`), і кожен читає лекцію
+особисто, тож сертифікат належить парі "проведення + тренер", а не самому
+проведенню: три лектори одного заходу отримують три окремі записи. Повторна
+видача для того самого тренера повертає той самий номер (unique-пара нижче).
 Номер учасника (остання група) -- у діапазоні 1xxxxx (окремий лічильник, щоб
 не перетинатися з учасницькими 0xxxxx).
 """
@@ -21,14 +24,18 @@ class LecturerCertificate(TimestampMixin, db.Model):
 
     id = db.Column(BigIntPK, primary_key=True)
 
-    # Одне проведення -> один лекторський сертифікат (повторна видача = reuse).
+    # Пара (instance_id, trainer_id) -- unique нижче в __table_args__, а не тут:
+    # проведення саме по собі більше не унікальне (кілька тренерів = кілька
+    # записів), унікальна лише пара.
     instance_id = db.Column(
         db.BigInteger,
         db.ForeignKey('course_instances.id', ondelete='CASCADE'),
-        unique=True,
         nullable=False,
         index=True,
     )
+    # nullable + SET NULL, а не CASCADE: сертифікат -- незмінний знімок (як і
+    # recipient_name нижче), тож видалення тренера з довідника не повинно
+    # стирати вже видані йому сертифікати.
     trainer_id = db.Column(
         db.BigInteger,
         db.ForeignKey('trainers.id', ondelete='SET NULL'),
@@ -37,6 +44,17 @@ class LecturerCertificate(TimestampMixin, db.Model):
     )
 
     number = db.Column(db.String(40), unique=True, nullable=False, index=True)
+
+    __table_args__ = (
+        # Один запис -- це пара «проведення + тренер». Після видалення
+        # тренера пара стає (instance_id, NULL), і PostgreSQL вважає такі
+        # рядки різними -- UNIQUE їх не блокує. Це правильно: два знімки
+        # на двох різних видалених людей мусять співіснувати.
+        db.UniqueConstraint(
+            'instance_id', 'trainer_id',
+            name='uq_lecturer_certificates_instance_trainer',
+        ),
+    )
 
     # Незмінні знімки на момент видачі.
     recipient_name = db.Column(db.String(255), nullable=False)  # давальний відмінок

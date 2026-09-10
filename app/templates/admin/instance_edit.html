@@ -45,12 +45,6 @@
       <a href="{{ url_for('admin.instance_quiz_results', instance_id=instance.id) }}" class="btn-admin btn-admin--secondary">
         {{ icon('quiz') }} Тестування
       </a>
-      <form method="POST" action="{{ url_for('admin.instance_lecturer_certificate', instance_id=instance.id) }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn-admin btn-admin--secondary">
-          {{ icon('workspace_premium') }} Сертифікат лектора
-        </button>
-      </form>
       {% endif %}
       <a href="{{ url_for('admin.instances_list') }}" class="btn-admin btn-admin--secondary">Назад до розкладу</a>
     </div>
@@ -175,6 +169,51 @@
   </form>
 
   {% if instance %}
+  {% set lecturers = instance.effective_trainers %}
+  <div class="form-section">
+    <h3 class="admin-form__section-title">Сертифікат лектора</h3>
+    {% if lecturers %}
+    {# Кожен тренер заходу читає лекцію особисто -- окремий сертифікат на
+       кожного, а не один на перевагу першого. Видача кожного лишається
+       свідомою дією: кнопки «видати всім» немає навмисно. #}
+    <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Лектор</th>
+          <th>Сертифікат</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for trainer in lecturers %}
+        {% set cert = lecturer_certs.get(trainer.id) %}
+        <tr>
+          <td>{{ trainer.full_name }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('admin.instance_lecturer_certificate', instance_id=instance.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="trainer_id" value="{{ trainer.id }}">
+              {% if cert %}
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm" title="Завантажити PDF">
+                {{ icon('workspace_premium') }} {{ cert.number }}
+              </button>
+              {% else %}
+              <button type="submit" class="btn-admin btn-admin--secondary btn-admin--sm">
+                {{ icon('workspace_premium') }} Видати
+              </button>
+              {% endif %}
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="admin-speakers__empty">Лектора не задано -- додайте тренерів заходу вище.</p>
+    {% endif %}
+  </div>
+
   <form method="POST" action="{{ url_for('admin.instance_delete', instance_id=instance.id) }}" class="admin-form__danger-zone" data-confirm="Видалити проведення?" data-confirm-ok="Видалити проведення" data-confirm-danger>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="btn-admin btn-admin--danger btn-admin--sm">Видалити проведення</button>
