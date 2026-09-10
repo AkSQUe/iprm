@@ -159,10 +159,6 @@ def course_edit(course_id):
 
         course.slug = slug
         course_service.populate_course_from_form(course, form)
-        # flush ПЕРЕД set_trainers: курс уже існує (id не None), тож без
-        # цього expire() усередині set_trainers відкотив би щойно
-        # виставлені атрибути форми, які ще не пішли в БД.
-        db.session.flush()
         from app.services import trainer_links
         trainer_links.set_trainers(course, form.trainer_ids.data)
         apply_inline_translations(course)

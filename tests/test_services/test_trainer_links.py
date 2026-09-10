@@ -70,6 +70,44 @@ def test_rejects_unknown_entity_type():
         trainer_links.set_trainers(object(), [])
 
 
+def test_does_not_discard_unflushed_scalar_changes():
+    """set_trainers не має чіпати НЕПОВʼЯЗАНІ атрибути сутності.
+
+    Раніше set_trainers завершувався бланкетним db.session.expire(entity)
+    (без списку атрибутів) -- expire ВСІХ атрибутів. Викликач, що щойно
+    (як у адмінських роутах) дістав сутність через db.session.get і виставив
+    на ній звичайний (не relationship) атрибут -- ще не зафлашивши -- тихо,
+    без жодної помилки, отримував відкат цієї зміни до останнього
+    зафлашеного значення. Саме так форма курсу/проведення губила щойно
+    введені дані (title, slug, ціни тощо), щойно з'являвся виклик
+    set_trainers після populate_*_from_form.
+
+    expire_all() + повторний db.session.get -- щоб course був у тому самому
+    стані, в якому set_trainers застає сутність у реальному роуті (свіжо
+    завантажена з БД, НЕ той самий Python-обʼєкт, що тримав курс одразу
+    після створення в цьому тесті): саме на цій формі стану бланкетний
+    expire і губив зміни. Регресія ловить повернення до expire(entity) без
+    списку атрибутів: title знову відкотився б на 'Original'.
+    """
+    course = _course()
+    trainer = _trainer('А')
+    course_id, trainer_id = course.id, trainer.id
+    db.session.expire_all()
+
+    fresh = db.session.get(Course, course_id)
+    fresh.title = 'Changed but not flushed'
+    trainer_links.set_trainers(fresh, [trainer_id])
+
+    # Перелік тренерів мав застосуватись...
+    assert [t.id for t in fresh.trainers] == [trainer_id]
+    # ...а незвʼязаний скалярний атрибут -- лишитись як виставив викликач,
+    # ще ДО commit (тобто expire не встиг його "забути").
+    assert fresh.title == 'Changed but not flushed'
+
+    db.session.commit()
+    assert db.session.get(Course, course_id).title == 'Changed but not flushed'
+
+
 def test_position_assigned_by_input_order_not_sorted_ids():
     """Position нумерується в порядку переданого списку, а не за id.
 

@@ -366,10 +366,6 @@ def instance_edit(instance_id):
             flash(str(exc), 'error')
             return render_template('admin/instance_edit.html', form=form,
                                    instance=instance)
-        # flush ПЕРЕД set_trainers: проведення вже існує (id не None), тож
-        # без цього expire() усередині set_trainers відкотив би щойно
-        # виставлені атрибути форми, які ще не пішли в БД.
-        db.session.flush()
         from app.services import trainer_links
         trainer_links.set_trainers(instance, form.trainer_ids.data)
         if try_commit(log_context=f'instance_edit id={instance.id}'):

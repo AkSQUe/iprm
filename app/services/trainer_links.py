@@ -46,9 +46,14 @@ def set_trainers(entity, trainer_ids):
             {key: entity.id, 'trainer_id': tid, 'position': pos}
             for pos, tid in enumerate(ordered)
         ])
-    # Relationship уже міг завантажитись у цій сесії -- без expire читач
-    # побачив би старий список.
-    db.session.expire(entity)
+    # Звужено до 'trainers': relationship viewonly=True, тож сам ніколи не
+    # тримає pending-змін -- expire саме його примушує до перезавантаження,
+    # якого вимагає щойно виконаний DELETE/INSERT по таблиці звʼязку.
+    # Бланкетний db.session.expire(entity) (без списку атрибутів) експайрить
+    # УСІ атрибути сутності, включно з тими, що викликач міг виставити перед
+    # цим викликом і ще не встиг зафлашити, -- і тихо викидає їх, без жодної
+    # помилки. Це саме той баг, що зʼїв trainer_ids-форму курсу/проведення.
+    db.session.expire(entity, ['trainers'])
 
 
 def course_trainer_clause(trainer_id):
