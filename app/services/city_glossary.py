@@ -42,6 +42,13 @@ def _glossary():
         # назви, але НЕ кладемо кожну публічну сторінку.
         logger.exception('City glossary unavailable, falling back to source text')
         mapping = {}
+        # Та сама причина, що в app/services/event_types.py: на Postgres
+        # невдалий запит труїть транзакцію, і без rollback наступний запит
+        # реквесту гине з InFailedSqlTransaction.
+        try:
+            db.session.rollback()
+        except Exception:
+            logger.exception('Rollback after city glossary failure failed')
 
     if has_app_context():
         setattr(g, _CACHE_ATTR, mapping)

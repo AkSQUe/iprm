@@ -32,6 +32,7 @@ def directory():
     if has_app_context() and _CACHE_ATTR in g:
         return g.get(_CACHE_ATTR)
 
+    from app.extensions import db
     from app.models.event_type import EventType
     try:
         rows = EventType.query.order_by(
@@ -40,6 +41,14 @@ def directory():
     except Exception:
         logger.exception('Event type directory unavailable, falling back to raw codes')
         mapping = {}
+        # Без rollback запобіжник шкодить більше, ніж допомагає: на Postgres
+        # невдалий запит труїть транзакцію, і наступний запит того ж реквесту
+        # гине з InFailedSqlTransaction -- тобто сторінка, яку ми тут
+        # рятували, однаково падає, лише з менш зрозумілою помилкою.
+        try:
+            db.session.rollback()
+        except Exception:
+            logger.exception('Rollback after event type directory failure failed')
 
     if has_app_context():
         setattr(g, _CACHE_ATTR, mapping)
@@ -81,13 +90,13 @@ def genitive(code):
 
 def _case(code, field):
     """Відмінок із довідника; немає -- називний з малої; немає рядка --
-    сам код. Порожній код лишається порожнім: шаблон сертифіката тоді
-    друкує запасне "захід"/"заходу"."""
+    сам код, як і в label(). Порожній код лишається порожнім: шаблон
+    сертифіката тоді друкує запасне "захід"/"заходу"."""
     if not code:
         return code
     row = directory().get(code)
     if row is None:
-        return code.lower()
+        return code
     return getattr(row, field) or row.name.lower()
 
 
@@ -105,26 +114,3 @@ def choices(current=None):
         row = rows.get(current)
         items.append((current, f'{row.name} (застарілий)' if row else current))
     return items
-
-
-def usage():
-    """{code: скільки курсів і проведень цим типом}.
-
-    Адмінці це і вага рядка, і запобіжник: вживаний тип видаляти не можна,
-    його деактивують.
-    """
-    from app.extensions import db
-    from app.models.course import Course
-    from app.models.course_instance import CourseInstance
-
-    counts = {}
-    for model in (Course, CourseInstance):
-        rows = (
-            db.session.query(model.event_type, db.func.count(model.id))
-            .filter(model.event_type.isnot(None), model.event_type != '')
-            .group_by(model.event_type)
-            .all()
-        )
-        for code, count in rows:
-            counts[code] = counts.get(code, 0) + count
-    return counts

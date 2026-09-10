@@ -1,12 +1,15 @@
 {# "Для кого курс" + картка зі зворотним звʼязком.
 
-   Спільний партіал. Дані -- course.target_audience (список рядків).
+   Спільний партіал. Перелік спеціальностей -- course.audience_specialties()
+   (рендериться з bpr_specialty_codes, ніде не дублюється), додатковий опис --
+   course.target_audience (список рядків, пишеться руками).
    Друга картка показується завжди, коли є перша: людині, яка сумнівається,
    чи їй підходить курс, потрібен вихід, а не глухий кут.
 
    Очікує ask_href -- якір або URL цілі "залишити контакт". #}
 {% set audience = course.t('target_audience') %}
-{% if audience %}
+{% set audience_specialties = course.audience_specialties() %}
+{% if audience or audience_specialties %}
 <section id="audience" class="iprm-section" aria-labelledby="audience-title">
   <div class="iprm-section__inner">
     {# Eyebrow не повторює h2: в еталона плашка каже "Чи це ваш курс", але в нас
@@ -21,12 +24,24 @@
 
       <article class="iprm-audience-card apple-reveal">
         <span class="iprm-audience-card__tag">{{ _('Підходить') }}</span>
+        {% if audience_specialties %}
+        {# Назви номенклатури -- іменники ("Дерматовенерологія"), тож вони йдуть
+           окремим переліком, а не пунктами чек-листа "якщо ви ...". #}
+        <h3 class="iprm-audience-card__title">{{ _('Спеціальності') }}</h3>
+        <ul class="iprm-audience-card__specialties">
+          {% for name in audience_specialties %}
+          <li class="iprm-tag iprm-tag--inset">{{ name }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if audience %}
         <h3 class="iprm-audience-card__title">{{ _('Вам варто приєднатися, якщо ви') }}</h3>
         <ul class="iprm-check-list">
           {% for item in audience %}
           <li>{{ item }}</li>
           {% endfor %}
         </ul>
+        {% endif %}
       </article>
 
       <article class="iprm-audience-card iprm-audience-card--ask apple-reveal">

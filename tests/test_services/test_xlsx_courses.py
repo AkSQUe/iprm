@@ -91,6 +91,43 @@ def test_export_values_align_with_columns(client):
     assert row[xlsx_io.COURSE_LABELS['tags']] == 'PRP'
 
 
+# --- перейменована колонка --------------------------------------------------
+
+def test_export_labels_audience_column_as_addendum(client):
+    """Колонка несе лише допис: перелік спеціальностей збирається з довідника."""
+    _course()
+    assert xlsx_io.COURSE_LABELS['target_audience'] == 'Цільова аудиторія (допис)'
+    assert xlsx_io.COURSE_LABELS['target_audience'] in _header(_export_sheet())
+
+
+def test_import_accepts_old_audience_header(client, tmp_path):
+    """Файл зі старим підписом колонки має лишатись робочим.
+
+    Менеджери тримають на руках експорти з підписом «Цільова аудиторія»:
+    без аліаса імпорт мовчки лишив би поле незмінним.
+    """
+    from openpyxl import Workbook
+
+    c = _course(target_audience=['Було'])
+    cols = list(xlsx_io.COURSE_COLS)
+    labels = [('Цільова аудиторія' if col == 'target_audience'
+               else xlsx_io.COURSE_LABELS[col]) for col in cols]
+    row = _base_row(c, target_audience='а також усі, хто цікавиться темою')
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Курси'
+    ws.append(labels)
+    ws.append([row.get(col, '') for col in cols])
+    path = tmp_path / f'old-{uuid4().hex[:6]}.xlsx'
+    wb.save(path)
+
+    plan = xlsx_io.parse_courses_xlsx(path)
+    assert plan.is_valid, plan.errors
+    assert xlsx_io.apply_courses_plan(plan)['ok']
+    assert db.session.get(Course, c.id).target_audience == [
+        'а також усі, хто цікавиться темою']
+
+
 # --- нова колонка -----------------------------------------------------------
 
 def test_import_sets_final_cta_text(client, tmp_path):

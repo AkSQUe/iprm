@@ -28,7 +28,7 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     description = db.Column(db.Text)
     short_description = db.Column(db.String(500))
 
-    event_type = db.Column(db.String(30))
+    event_type = db.Column(db.String(30), index=True)
 
     # Зображення -- лише через медіа-реєстр (Фаза 6: legacy hero/card_image прибрано).
     hero_media_id = db.Column(
@@ -198,6 +198,17 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
         """
         from app.services import event_types
         return event_types.label(self.event_type)
+
+    def audience_specialties(self, lang=None):
+        """Назви спеціальностей для блоку «Цільова аудиторія».
+
+        Перелік НЕ дублюється в target_audience: він рендериться з
+        bpr_specialty_codes щоразу, тож правка спеціальностей курсу або
+        назви в довіднику одразу видно на сторінці. target_audience
+        лишається ручним дописом до цього переліку.
+        """
+        from app.services import specialties
+        return specialties.names(self.bpr_specialty_codes, lang=lang)
 
     @property
     def difficulty_label(self):

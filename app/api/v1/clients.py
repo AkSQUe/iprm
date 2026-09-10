@@ -276,7 +276,7 @@ def list_registrations():
             'phone_e164': profile.phone_e164 if profile else None,
             'instance_id': reg.instance_id,
             'course_slug': instance.course.slug if instance.course else None,
-            'course_title': instance.course.title if instance.course else None,
+            'course_title': instance.effective_title,
             'start_date': _iso(instance.start_date),
             'status': reg.status,
             'payment_status': reg.payment_status,

@@ -54,7 +54,7 @@
       <div class="participant-event">
         {{ icon('event', cls='participant-event__icon') }}
         <span>
-          {% if instance and instance.course %}{{ instance.course.title }}{% else %}Захід{% endif %}
+          {{ (instance.effective_title if instance else None) or 'Захід' }}
           {% if instance and instance.start_date %} &middot; {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
         </span>
       </div>

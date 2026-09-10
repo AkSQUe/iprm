@@ -488,9 +488,12 @@ class CourseForm(FlaskForm):
     hero_media_id = HiddenField('Hero (media)', validators=[Optional()])
     card_media_id = HiddenField('Картка (media)', validators=[Optional()])
     target_audience_text = TextAreaField(
-        'Цільова аудиторія',
+        'Додатковий опис цільової аудиторії',
         validators=[Optional()],
-        description='Один пункт на рядок',
+        description='Спеціальності зі списку вище виводяться на сторінці '
+                    'автоматично -- дублювати їх не треба. Тут пишуть лише '
+                    'дописи (напр. «а також усі, хто цікавиться темою»), '
+                    'кожен рядок стане окремим пунктом.',
     )
     tags_text = TextAreaField(
         'Теги',
@@ -714,6 +717,13 @@ class CourseInstanceForm(FlaskForm):
         'Курс',
         coerce=int,
         validators=[DataRequired(message='Оберіть курс')],
+    )
+    topic = StringField(
+        'Тема',
+        validators=[Optional(), Length(max=255)],
+        description='Порожньо -- береться назва курсу. Заповнена тема стає '
+                    'назвою заходу скрізь: у розкладі, листах, рахунку, '
+                    'сертифікаті й поданні до БПР.',
     )
     start_date = DateTimeLocalField(
         'Дата початку',

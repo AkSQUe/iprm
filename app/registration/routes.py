@@ -45,7 +45,7 @@ class EventAdapter:
         course = instance.course
         self.id = instance.id
         self.slug = course.slug if course else None
-        self.title = course.title if course else ''
+        self.title = instance.effective_title or ''
         self.subtitle = course.subtitle if course else None
         self.description = course.description if course else None
         self.short_description = course.short_description if course else None
@@ -588,7 +588,7 @@ def confirmation(registration_id):
             liqpay_result_url = result_url
             server_url = url_for('payments.liqpay_callback', _external=True)
             description = (
-                reg.instance.course.title if reg.instance and reg.instance.course
+                reg.instance.effective_title if reg.instance and reg.instance.course
                 else reg.target_title or f'Реєстрація #{reg.id}'
             )
             liqpay_data, liqpay_signature, liqpay_checkout_url = (
@@ -829,7 +829,7 @@ def complete_payment(token):
             liqpay_result_url = result_url
             server_url = url_for('payments.liqpay_callback', _external=True)
             description = (
-                reg.instance.course.title if reg.instance and reg.instance.course
+                reg.instance.effective_title if reg.instance and reg.instance.course
                 else reg.target_title or f'Реєстрація #{reg.id}'
             )
             liqpay_data, liqpay_signature, liqpay_checkout_url = (

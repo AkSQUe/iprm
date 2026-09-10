@@ -19,8 +19,31 @@ _cached_assets_version = None
 _CERTDATA_POPUP_MUTED = frozenset({'auth', 'registration', 'payments', 'quiz'})
 
 
+# Що саме входить у ключ ?v=assets_version: (тека в static/, розширення).
+#
+# ПРАВИЛО: тут мусить бути КОЖНА тека, файли якої десь у шаблонах підключені
+# з `?v={{ assets_version }}`. Файл, підключений цим ключем, але не врахований
+# тут, залипає в браузері назавжди: nginx віддає /static/ з `expires 30d;
+# Cache-Control: public, immutable`, і поки ключ не зрушить, браузер не
+# перепитує. Саме так 15 нових іконок сайдбару малювались порожнечею -- теки
+# fonts/ у розрахунку не було, і перегенерація субсету ключа не міняла.
+#
+# Перелік НЕ розширюється «про запас»: ключ спільний, тож зайва тека зриває
+# кеш усього CSS і JS від кожної правки в ній. static/images/ цілком -- 7 МБ
+# рідко пов'язаних із версткою картинок; входить лише images/main, який
+# справді підключений ключем. Синхронність із шаблонами тримає
+# tests/test_assets_version.py::test_every_versioned_folder_is_hashed.
+VERSIONED_ASSET_DIRS = (
+    ('css', ('.css',)),
+    ('js', ('.js',)),
+    ('fonts', ('.woff2', '.woff', '.ttf', '.otf')),
+    ('images/main', ('.webp', '.png', '.jpg', '.jpeg', '.svg', '.avif')),
+    ('video', ('.mp4', '.webm')),
+)
+
+
 def get_assets_version(static_folder):
-    """Ключ ?v= для CSS/JS -- хеш ВМІСТУ файлів, а не їхніх mtime.
+    """Ключ ?v= для версійованої статики -- хеш ВМІСТУ файлів, а не їхніх mtime.
 
     Раніше рахувались mtime, і це зривало кеш на кожному деплої: rsync
     оновлює час модифікації й тим файлам, вміст яких не змінився. Статика
@@ -28,8 +51,13 @@ def get_assets_version(static_folder):
     після кожного деплою наново тягнув усі CSS і JS. За вмістом ключ міняється
     лише тоді, коли щось справді змінилось.
 
-    133 файли / 1.2 МБ читаються один раз на першому запиті й лягають у кеш
-    процесу, тож на подальші запити це не впливає.
+    Читається один раз на першому запиті (близько 3 МБ) і лягає в кеш процесу,
+    тож на подальші запити це не впливає. Перелік тек -- VERSIONED_ASSET_DIRS
+    вище, там же правило, за яким він поповнюється.
+
+    Обхід рекурсивний: у ключ входить і те, що лежить у підтеках (images/main
+    -- сама вже підтека). У хеш іде шлях ВІДНОСНО static_folder, а не саме
+    ім'я файлу: інакше однойменні файли з різних тек не розрізнялись би.
     """
     global _cached_assets_version
     if _cached_assets_version:
@@ -38,23 +66,27 @@ def get_assets_version(static_folder):
     digest = hashlib.md5()
     seen = False
 
-    for folder in (os.path.join(static_folder, 'css'),
-                   os.path.join(static_folder, 'js')):
+    for subfolder, extensions in VERSIONED_ASSET_DIRS:
+        folder = os.path.join(static_folder, *subfolder.split('/'))
         if not os.path.isdir(folder):
             continue
-        for name in sorted(os.listdir(folder)):
-            if not name.endswith(('.css', '.js')):
-                continue
-            try:
-                with open(os.path.join(folder, name), 'rb') as fh:
-                    digest.update(name.encode())
-                    for chunk in iter(lambda: fh.read(65536), b''):
-                        digest.update(chunk)
-            except OSError:
-                # Файл міг зникнути просто під rsync-деплоєм. Пропускаємо:
-                # менш точний ключ кешу краще за 500 на всьому сайті.
-                continue
-            seen = True
+        for current, dirnames, filenames in os.walk(folder):
+            dirnames.sort()
+            for name in sorted(filenames):
+                if not name.lower().endswith(extensions):
+                    continue
+                path = os.path.join(current, name)
+                key = os.path.relpath(path, static_folder).replace(os.sep, '/')
+                try:
+                    with open(path, 'rb') as fh:
+                        digest.update(key.encode())
+                        for chunk in iter(lambda: fh.read(65536), b''):
+                            digest.update(chunk)
+                except OSError:
+                    # Файл міг зникнути просто під rsync-деплоєм. Пропускаємо:
+                    # менш точний ключ кешу краще за 500 на всьому сайті.
+                    continue
+                seen = True
 
     _cached_assets_version = digest.hexdigest()[:8] if seen else '1.0'
     return _cached_assets_version
@@ -254,6 +286,12 @@ def create_app(config_name=None):
     app.jinja_env.globals['tr_field_status'] = tr_field_status
     app.jinja_env.globals['tr_inline_leaves'] = tr_inline_leaves
     app.jinja_env.globals['tr_orphaned'] = tr_orphaned
+
+    # Назви спеціальностей за списком кодів -- та сама функція, що малює
+    # перелік на сторінці заходу, тож прев'ю в адмін-формі не розходиться з
+    # тим, що побачить учасник (порядок номенклатури, активна мова).
+    from app.services.specialties import names as specialty_names
+    app.jinja_env.globals['specialty_names'] = specialty_names
 
     # Глобал icon('<name>') -- рендерить Material Symbols іконку через кодпойнт
     # (self-hosted субсет-шрифт). Див. app/icons.py.

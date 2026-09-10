@@ -53,6 +53,7 @@ from ._common import (  # noqa: F401
     HEADER_FONT,
     INSTANCE_WIDTHS,
     KYIV,
+    LEGACY_HEADERS,
     MAX_CELL_LENGTH,
     NUMBER_FORMATS,
     PROGRAM_WIDTHS,
@@ -129,6 +130,7 @@ from .courses import (  # noqa: F401
 from .instances import (  # noqa: F401
     INSTANCE_COLS,
     INSTANCE_LABELS,
+    OPTIONAL_INSTANCE_COLS,
     InstanceChange,
     InstancesImportPlan,
     _diff_instance,

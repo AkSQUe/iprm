@@ -152,7 +152,7 @@
           {% if inst.course %}
           <a href="{{ url_for('admin.instance_registrations', instance_id=inst.id) }}"
              class="admin-clamp-2"
-             title="{{ inst.course.title }} — зареєстровані на це проведення"><strong>{{ inst.course.title }}</strong></a>
+             title="{{ inst.effective_title }} — зареєстровані на це проведення"><strong>{{ inst.effective_title }}</strong></a>
           {% else %}
           <strong>&ndash;</strong>
           {% endif %}
@@ -165,7 +165,7 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <select name="status"
                     class="badge badge-select badge-select--{{ inst.status }}"
-                    aria-label="Статус проведення {{ inst.course.title if inst.course else '' }}">
+                    aria-label="Статус проведення {{ inst.effective_title or '' }}">
               {% for value, label in inst.STATUSES %}
               <option value="{{ value }}"{% if inst.status == value %} selected{% endif %}>{{ label }}</option>
               {% endfor %}

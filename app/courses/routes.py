@@ -28,6 +28,16 @@ _REQUEST_MESSAGE_MAX = 2000
 # щоб перелік не розійшовся з обмеженням БД у трьох місцях одразу.
 _REQUEST_MESSENGERS = {value for value, _label in CourseRequest.MESSENGERS}
 
+# Намір заявки, який сторінка знає наперед. Позначка дописується в
+# message першим рядком: окрема колонка вимагала б міграції заради одного
+# прапорця, а адмін усе одно читає саме текст заявки.
+#
+# Рядок НЕ перекладається: його читає адмін у своїй мові роботи, а не
+# відвідувач. Через gettext заявка з /en/ приїхала б у панель англійською.
+_REQUEST_TOPICS = {
+    'new_date': 'Чекає на нову дату проведення.',
+}
+
 # Legacy URL redirects -> slug-based routes.
 # Ключі -- історичні URL (стомали в email-розсилках і SERP), значення --
 # цільовий slug у БД. Обробляються в course_by_slug перед запитом до БД.
@@ -44,6 +54,7 @@ LEGACY_REDIRECTS = {
 # Головною. Аліаси зберігають наявні внутрішні виклики без змін.
 from app.services.course_listing import (  # noqa: E402
     capacity_map as _capacity_map,
+    group_by_location as _group_by_location,
     open_from_capacity as _open_from_capacity,
 )
 
@@ -133,7 +144,7 @@ def _serialize_event(inst, capacity):
         'id': inst.id,
         'date': inst.start_date.strftime('%Y-%m-%d'),
         'end': inst.end_date.strftime('%Y-%m-%d') if inst.end_date else None,
-        'title': inst.course.t('title'),
+        'title': inst.effective_title,
         'slug': inst.course.slug,
         'format': inst.event_format,
         'format_label': inst.format_label,
@@ -322,6 +333,22 @@ def course_by_slug(slug):
     capacity = _capacity_map([course.id])
     open_ids = _open_from_capacity(capacity)
 
+    # Перелік для блоку «Найближчі дати» -- лише те, на що реально можна
+    # зареєструватися. Набрана група -- не варіант вибору: показана з
+    # бейджем «закрито», вона займала перший екран після опису й тягла
+    # увагу на дату, яку не купиш. upcoming_instances лишається ширшим:
+    # на ньому тримається JSON-LD (заплановані події для Google не
+    # перестають бути подіями через заповненість).
+    schedule_instances = [i for i in upcoming_instances if i.id in open_ids]
+
+    # Заплановані, але вже набрані. У переліку їх немає, проте мовчати про
+    # них не можна: «проведень немає» і «на найближчу дату не встигли» --
+    # різні новини, і друга ще й привід лишити контакт.
+    full_instances = [i for i in upcoming_instances if i.id not in open_ids]
+
+    # Плоский перелік читається до п'яти дат; далі -- за містами.
+    schedule_groups = _group_by_location(schedule_instances)
+
     # Реферальне посилання на цей курс (лише для залогінених, коли програму
     # увімкнено). Код генерується лениво при першому відкритті сторінки.
     from app.services import referral_service
@@ -365,11 +392,11 @@ def course_by_slug(slug):
         user=current_user if current_user.is_authenticated else None,
     )
 
-    # Найближче проведення з активними тарифами -- джерело блоку "Формат
-    # участі" й однойменного якоря. Рахуємо тут, а не в шаблоні: якорі
-    # потрібні шапці, яка рендериться ДО блоку content.
+    # Найближче ВІДКРИТЕ проведення з активними тарифами -- джерело блоку
+    # "Формат участі" й однойменного якоря. Рахуємо тут, а не в шаблоні:
+    # якорі потрібні шапці, яка рендериться ДО блоку content.
     format_inst = next(
-        (i for i in upcoming_instances if i.active_tariffs), None,
+        (i for i in schedule_instances if i.active_tariffs), None,
     )
 
     gallery = course.gallery
@@ -382,6 +409,7 @@ def course_by_slug(slug):
         anchors.append(('benefits', _('Результат')))
     if course.description:
         anchors.append(('about', _('Про курс')))
+    anchors.append(('schedule', _('Дати')))
     if gallery:
         anchors.append(('gallery', _('Як проходить')))
     if course.program_blocks or course.t('practice_note_title'):
@@ -394,13 +422,13 @@ def course_by_slug(slug):
         anchors.append(('formats', _('Формати')))
     if course.faq:
         anchors.append(('faq', _('Питання')))
-    anchors.append(('schedule', _('Дати')))
 
-    # Лічильник місць у шапці -- за найближчим ВІДКРИТИМ проведенням.
-    seats_left = next(
-        (capacity.get(i.id) for i in upcoming_instances
-         if i.id in open_ids and capacity.get(i.id) is not None), None,
-    )
+    # Лічильник місць у шапці -- саме за НАЙБЛИЖЧИМ відкритим проведенням,
+    # тим самим, про яке говорять чипи hero. Раніше брали перше, де
+    # місткість узагалі задана, тож шапка могла приписати найближчій даті
+    # залишок пізнішої. None (місткість не задана) -- це "числа немає",
+    # а не "шукай далі": шапка тоді просто не показує лічильник.
+    seats_left = capacity.get(schedule_instances[0].id) if schedule_instances else None
 
     return render_template(
         'courses/detail.html',
@@ -411,15 +439,18 @@ def course_by_slug(slug):
         page_anchor_seats=seats_left,
         page_anchor_cta={
             'href': '#formats' if format_inst else (
-                '#schedule' if upcoming_instances else '#request'),
+                '#schedule' if schedule_instances else '#request'),
             'label': _('Забронювати місце') if format_inst else (
-                _('Найближчі дати') if upcoming_instances else _('Залишити запит')),
+                _('Найближчі дати') if schedule_instances else _('Залишити запит')),
         },
         # Галерея -- окремий запит до медіа-реєстру (прив'язка поліморфна,
         # тому не joinedload). Беремо в роуті, а не в шаблоні: так видно
         # ціну сторінки в одному місці.
         gallery=gallery,
         upcoming_instances=upcoming_instances,
+        schedule_instances=schedule_instances,
+        schedule_groups=schedule_groups,
+        full_instances=full_instances,
         past_instances=past_instances,
         open_instance_ids=open_ids,
         seats_left_map=capacity,
@@ -475,7 +506,7 @@ def event_ics(instance_id):
         'DTSTAMP:' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ'),
         'DTSTART;VALUE=DATE:' + start.strftime('%Y%m%d'),
         'DTEND;VALUE=DATE:' + dtend_date.strftime('%Y%m%d'),
-        'SUMMARY:' + _ics_escape(inst.course.title),
+        'SUMMARY:' + _ics_escape(inst.effective_title or ''),
         'DESCRIPTION:' + _ics_escape(description),
         'URL:' + course_url,
         'END:VEVENT',
@@ -610,6 +641,14 @@ def course_request(slug):
     # невідоме значення завалило б збереження заявки цілком. Тихо відкидаємо:
     # для людини це другорядне поле, губити через нього заявку не можна.
     messenger = messenger_raw if messenger_raw in _REQUEST_MESSENGERS else None
+
+    # Намір зі сторінки. Невідоме значення тихо ігноруємо -- поле приховане,
+    # тож підставити чуже могла тільки не-людина, і губити через це заявку
+    # не можна. Позначка йде першим рядком, текст відвідувача -- нижче.
+    topic_note = _REQUEST_TOPICS.get((request.form.get('topic') or '').strip())
+    if topic_note:
+        message_raw = f'{topic_note}\n\n{message_raw}'.strip() if message_raw \
+            else topic_note
 
     # Згода фіксується моментом, а не галочкою: важливо КОЛИ вона дана.
     # Коротка форма запиту згоди не питає -- там лишається NULL.

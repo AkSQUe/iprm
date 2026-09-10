@@ -25,6 +25,110 @@
     </div>
   </div>
 
+  <!-- ===== HERO ПРОДАЖНОЇ СТОРІНКИ ===== -->
+  <div class="ds-section" id="hero-landing">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Hero продажної сторінки</h2>
+
+    <div class="ds-demo ds-demo--flush">
+      <div class="apple-page">
+        <div class="iprm-hero-wrap">
+          <section class="iprm-hero iprm-hero--landing" aria-label="Hero курсу">
+            <div class="iprm-hero__content">
+              <div class="iprm-hero__copy">
+                <div class="iprm-hero__chips">
+                  <span class="iprm-hero__chip">Курс</span>
+                  <span class="iprm-hero__chip">Базовий</span>
+                  <span class="iprm-hero__chip">Очний</span>
+                  <span class="iprm-hero__chip">Очна участь + індивідуальна практика</span>
+                </div>
+                <h1 class="iprm-hero__title iprm-hero__title--xlong">Біль у суглобах і відновлення після травм: сучасні PRP-протоколи для <span class="apple-gradient-text">ортопеда-травматолога</span></h1>
+                <p class="iprm-hero__subtitle">Від лабораторного протоколу до клінічного рішення: теоретичні основи, практикум і розбір клінічних кейсів.</p>
+                <div class="iprm-hero__actions iprm-hero__actions--detail">
+                  <a href="#" class="apple-btn apple-btn--accent">Забронювати місце</a>
+                  <a href="#" class="apple-btn apple-btn--white">Отримати програму</a>
+                </div>
+              </div>
+
+              <div class="iprm-hero__visual">
+                <img class="iprm-hero__photo" src="{{ url_for('static', filename='images/og-default.png') }}" alt="" width="1200" height="630">
+                <div class="iprm-hero__seats">
+                  <p class="iprm-hero__seats-date"><time datetime="2026-09-12T10:00">12.09.2026, 10:00</time></p>
+                  <span class="iprm-hero__seats-kicker">Набір відкрито</span>
+                  <span class="iprm-hero__seats-value">6 вільних місць</span>
+                  <div class="iprm-progress" role="img" aria-label="4 з 10 місць уже зайнято">
+                    <span class="iprm-progress__fill" data-progress="40"></span>
+                  </div>
+                  <p class="iprm-hero__seats-city">Харків</p>
+                  <p class="iprm-hero__seats-note">вул. Григорія Сковороди, 80, ДУ «ІПХС ім. проф. М. І. Ситенка НАМН України»</p>
+                </div>
+              </div>
+
+              <div class="iprm-hero__meta" aria-label="Ключові параметри курсу">
+                <div class="iprm-hero__meta-item">
+                  <span class="iprm-hero__meta-value">1 день</span>
+                  <span class="iprm-hero__meta-label">тривалість</span>
+                </div>
+                <div class="iprm-hero__meta-item">
+                  <span class="iprm-hero__meta-value">7,5</span>
+                  <span class="iprm-hero__meta-label">балів БПР, Онлайн</span>
+                </div>
+                <div class="iprm-hero__meta-item">
+                  <span class="iprm-hero__meta-value">9</span>
+                  <span class="iprm-hero__meta-label">балів БПР, Офлайн</span>
+                </div>
+                <div class="iprm-hero__meta-item">
+                  <span class="iprm-hero__meta-value">до 10</span>
+                  <span class="iprm-hero__meta-label">у групі</span>
+                </div>
+                <div class="iprm-hero__meta-item">
+                  <span class="iprm-hero__meta-value">від 1 000 &#8372;</span>
+                  <span class="iprm-hero__meta-label">вартість</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">Двоколонковий тёмний варіант hero (<code class="ds-code">.iprm-hero--landing</code>, course-landing.css), спільний для сторінки очного курсу й онлайн-курсу. Колонка візуалу ширша за колонку тексту (1.06 проти 0.94): зображення має врівноважувати текст, а не супроводжувати його.</p>
+
+    <h3 class="ds-section-heading">Ступені заголовка за довжиною назви</h3>
+    <div class="ds-demo ds-demo--flush">
+      <div class="apple-page">
+        <section class="iprm-hero iprm-hero--landing" aria-label="Ступені заголовка">
+          <div class="iprm-hero__content">
+            <div class="iprm-hero__copy">
+              <h1 class="iprm-hero__title">PRP у <span class="apple-gradient-text">травматології</span></h1>
+              <h1 class="iprm-hero__title iprm-hero__title--long">Плазмотерапія в дерматології: базовий <span class="apple-gradient-text">протокол</span></h1>
+              <h1 class="iprm-hero__title iprm-hero__title--xlong">Біль у суглобах і відновлення після травм: сучасні PRP-протоколи для <span class="apple-gradient-text">ортопеда-травматолога</span></h1>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <p class="ds-hint">Клемп відповідає лише за ширину екрана; довжину назви CSS не знає, тож її передає шаблон (<code class="ds-code">hero_title_len</code> у <code class="ds-code">partials/_course_hero.html</code>): до 40 символів — базовий clamp(34px, 1.6vw + 22px, 46px), 41&#8211;75 — <code class="ds-code">--long</code>, понад 75 — <code class="ds-code">--xlong</code>. Без цього назва в 96 символів давала п'ять рядків по 72px і виштовхувала лід, кнопки й параметри за межі першого екрана.</p>
+
+    <h3 class="ds-section-heading">Теги характеристик</h3>
+    <div class="ds-demo ds-demo--flush">
+      <div class="apple-page">
+        <section class="iprm-hero iprm-hero--landing" aria-label="Теги">
+          <div class="iprm-hero__content">
+            <div class="iprm-hero__copy">
+              <div class="iprm-hero__chips">
+                <span class="iprm-hero__chip">Курс</span>
+                <span class="iprm-hero__chip">Базовий</span>
+                <span class="iprm-hero__chip">Очний</span>
+                <span class="iprm-hero__chip iprm-hero__chip--accent">Акцентний тег</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <p class="ds-hint">Компактний тег на тёмному: 5/11px, 12px/700, розділені межею rgba(255,255,255,.28) — 2.22 до фону hero на світлішому кінці градієнта, 2.41 на тёмнішому. Модифікатор <code class="ds-code">--accent</code> (золото) лишається для випадку, коли один тег справді головніший за решту — за правилом «золото це дія, терракота це мітка» його вживають ощадно.</p>
+  </div>
+
   <!-- ===== FEATURE CARDS ===== -->
   <div class="ds-section" id="feature-cards">
     <p class="ds-label">Components</p>
@@ -167,31 +271,47 @@
     <h2 class="ds-title">Program Blocks</h2>
     <div class="ds-demo">
       <div class="apple-page">
-        <div class="iprm-program">
-          <article class="iprm-program__block">
-            <header class="iprm-program__head">
-              <span class="iprm-program__badge" aria-hidden="true">1</span>
-              <h3 class="iprm-program__heading">Теоретична частина</h3>
-            </header>
-            <ul class="iprm-program__list">
-              <li class="iprm-program__item">Пункт програми</li>
-              <li class="iprm-program__item">Другий пункт</li>
-            </ul>
-          </article>
-          <article class="iprm-program__block">
-            <header class="iprm-program__head">
-              <span class="iprm-program__badge" aria-hidden="true">2</span>
-              <h3 class="iprm-program__heading">Практична частина</h3>
-            </header>
-            <ul class="iprm-program__list">
-              <li class="iprm-program__item">Практичний пункт</li>
-              <li class="iprm-program__item">Ще один пункт</li>
-            </ul>
-          </article>
+        <div class="iprm-program iprm-program--columns" data-program-accordion>
+          <div class="iprm-program__nav">
+            <h3 class="iprm-program__head">
+              <button type="button" class="iprm-program__trigger"
+                      id="ds-program-head-1" aria-controls="ds-program-panel-1"
+                      aria-expanded="true">
+                <span class="iprm-program__badge" aria-hidden="true">1</span>
+                <span class="iprm-program__heading">Теоретична частина</span>
+                <span class="iprm-program__chevron" aria-hidden="true"></span>
+              </button>
+            </h3>
+            <h3 class="iprm-program__head">
+              <button type="button" class="iprm-program__trigger"
+                      id="ds-program-head-2" aria-controls="ds-program-panel-2"
+                      aria-expanded="false">
+                <span class="iprm-program__badge" aria-hidden="true">2</span>
+                <span class="iprm-program__heading">Практична частина</span>
+                <span class="iprm-program__chevron" aria-hidden="true"></span>
+              </button>
+            </h3>
+          </div>
+          <div class="iprm-program__stage">
+            <div class="iprm-program__panel" id="ds-program-panel-1"
+                 role="region" aria-labelledby="ds-program-head-1">
+              <ul class="iprm-program__list">
+                <li class="iprm-program__item">Пункт програми</li>
+                <li class="iprm-program__item">Другий пункт</li>
+              </ul>
+            </div>
+            <div class="iprm-program__panel" id="ds-program-panel-2"
+                 role="region" aria-labelledby="ds-program-head-2" hidden>
+              <ul class="iprm-program__list">
+                <li class="iprm-program__item">Практичний пункт</li>
+                <li class="iprm-program__item">Ще один пункт</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <p class="ds-hint">partials/_course_program.html (courses/online detail), скоуплений на .apple-page (course-landing.css). Номер блоку -- aria-hidden, як і в benefit-card вище. Йде в парі з .iprm-practice-note -- див. секцію "Practice note" у Course Landing.</p>
+    <p class="ds-hint">partials/_course_program.html (courses/online detail), скоуплений на .apple-page (course-landing.css). Нумерований акордеон: розкрито рівно один блок, керує course-program.js за aria-expanded на .iprm-program__trigger. До 768px блоки йдуть один під одним (.iprm-program__head і .iprm-program__panel парами в контейнері), ширше -- скрипт переносить заголовки в .iprm-program__nav, панелі в .iprm-program__stage і вішає .iprm-program--columns; тут показано саме десктопний стан. Номер блоку -- aria-hidden, як і в benefit-card вище. Йде в парі з .iprm-practice-note -- див. секцію "Practice note" у Course Landing.</p>
   </div>
 
   <!-- ===== CTA ===== -->
@@ -329,18 +449,20 @@
       </div>
       <p class="ds-hint">Базовий варіант — 4 колонки. Модифікатор --band: тонка смуга одразу під hero (у парі з секцією .iprm-section--band)</p>
 
-      <h3 class="ds-section-heading">Progress + seats card</h3>
+      <h3 class="ds-section-heading">Картка проведення (progress + seats)</h3>
       <div class="ds-demo">
         <div class="iprm-hero__seats">
+          <p class="iprm-hero__seats-date"><time datetime="2026-09-12T10:00">12.09.2026, 10:00</time></p>
           <span class="iprm-hero__seats-kicker">Набір відкрито</span>
           <span class="iprm-hero__seats-value">6 вільних місць</span>
           <div class="iprm-progress" role="img" aria-label="4 з 10 місць уже зайнято">
             <span class="iprm-progress__fill" data-progress="40"></span>
           </div>
-          <p class="iprm-hero__seats-note">Київ, клініка «Мультимед»</p>
+          <p class="iprm-hero__seats-city">Київ</p>
+          <p class="iprm-hero__seats-note">вул. Хрещатик, 1, клініка «Мультимед»</p>
         </div>
       </div>
-      <p class="ds-hint">Заповнення — CSS-змінна --iprm-progress, яку виставляє JS із data-progress (No Inline Policy). У hero — накладка на фото, до 768px стає звичайним блоком</p>
+      <p class="ds-hint">Порядок рядків — питання відвідувача в тому порядку, в якому він їх ставить: дата/час (.iprm-hero__seats-date) → статус набору (.iprm-hero__seats-kicker) → вільні місця (.iprm-hero__seats-value) → смужка → місто (.iprm-hero__seats-city) → адреса (.iprm-hero__seats-note). Кожен рядок необов'язковий: захід без обмеження місць лишається з датою й адресою. Заповнення смужки — CSS-змінна --iprm-progress, яку виставляє JS із data-progress (No Inline Policy). У hero картка стоїть ПІД фото в тій самій колонці, а не накладкою на нього: з п'ятьма рядками накладка закривала нижню третину зображення</p>
 
       <h3 class="ds-section-heading">Benefit cards</h3>
       <div class="ds-demo">
@@ -733,6 +855,7 @@
       <p class="ds-label">Components</p>
       <h2 class="ds-title">Schedule (найближчі дати)</h2>
       <div class="ds-demo">
+        <h3 class="iprm-schedule__group-title">Київ</h3>
         <div class="iprm-schedule">
           <div class="iprm-schedule__item">
             <div class="iprm-schedule__date">
@@ -776,9 +899,72 @@
             </div>
           </div>
         </div>
+        <p class="iprm-schedule__note">ще 1 групу вже набрано</p>
       </div>
-      <p class="ds-hint">.iprm-schedule__tag--warning — коли seats_left ≤ site_settings.seats_low_threshold. Друге проведення — стан "закрито" (registration_open=false): дата TBD, дій нема, лише badge--draft. Живе в courses (детальна сторінка) і partials/_course_schedule.html</p>
+      <p class="ds-hint">.iprm-schedule__tag--warning — коли seats_left ≤ site_settings.seats_low_threshold. Друге проведення — стан "закрито" (registration_open=false): дата TBD, дій нема, лише badge--draft. Живе лише на /courses (список і календар): сторінка курсу з пункту 14 ТЗ показує дати вузькою колонкою поруч з описом — див. секцію "Date card" нижче</p>
+      <p class="ds-hint">.iprm-schedule__group-title — підпис міста над групою; з'являється лише коли дат більше п'яти (services/course_listing.group_by_location), інакше перелік плоский. .iprm-schedule__note — рядок про заплановані, але вже набрані групи під переліком</p>
     </div>
+  </div>
+
+  <!-- ===== IPRM DATE CARD ===== -->
+  <div class="ds-section" id="iprm-datecard">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Date card (колонка дат на сторінці курсу)</h2>
+    <div class="ds-demo">
+      <div class="ds-demo-column">
+        <div class="iprm-daterail">
+          <article class="iprm-datecard">
+            <div class="iprm-datecard__when">
+              <span class="iprm-datecard__day">12</span>
+              <span class="iprm-datecard__month">10.2026</span>
+              <span class="iprm-datecard__time">10:00</span>
+            </div>
+            <h4 class="iprm-datecard__title iprm-block-title">Плазмотерапія обличчя</h4>
+            <div class="iprm-datecard__meta">
+              <span class="iprm-loc-badge iprm-loc-badge--offline">
+                <span class="iprm-loc-badge__text">Харків</span>
+              </span>
+              <span class="iprm-schedule__tag iprm-schedule__tag--cpd">10 балів БПР</span>
+            </div>
+            <div class="iprm-datecard__tariffs" role="list" aria-label="Тарифи участі">
+              <a class="iprm-tariff-pill iprm-tariff-pill--link" role="listitem" href="#iprm-datecard">
+                <span class="iprm-tariff-pill__name">Стандарт</span>
+                <span class="iprm-tariff-pill__price">7 500 &#8372;</span>
+              </a>
+            </div>
+            <a href="#iprm-datecard" class="apple-btn apple-btn--primary apple-btn--sm iprm-datecard__action">Обрати дату</a>
+          </article>
+          <article class="iprm-datecard">
+            <div class="iprm-datecard__when">
+              <span class="iprm-datecard__day">TBD</span>
+            </div>
+            <h4 class="iprm-datecard__title iprm-block-title">Плазмотерапія обличчя</h4>
+            <div class="iprm-datecard__meta">
+              <span class="iprm-loc-badge iprm-loc-badge--online">
+                <span class="iprm-loc-badge__text">Онлайн</span>
+              </span>
+            </div>
+            <a href="#iprm-datecard" class="apple-btn apple-btn--primary apple-btn--sm iprm-datecard__action">Обрати дату</a>
+          </article>
+          <details class="iprm-daterail__more">
+            <summary class="iprm-daterail__more-summary">Ще 2 дати</summary>
+            <h3 class="iprm-daterail__group-title">Львів</h3>
+            <article class="iprm-datecard">
+              <div class="iprm-datecard__when">
+                <span class="iprm-datecard__day">04</span>
+                <span class="iprm-datecard__month">11.2026</span>
+                <span class="iprm-datecard__time">09:30</span>
+              </div>
+              <h4 class="iprm-datecard__title iprm-block-title">Плазмотерапія обличчя</h4>
+              <a href="#iprm-datecard" class="apple-btn apple-btn--primary apple-btn--sm iprm-datecard__action">Обрати дату</a>
+            </article>
+          </details>
+          <p class="iprm-daterail__note">ще 1 групу вже набрано</p>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">Вузький двійник Schedule вище, для правої колонки блоку «Про курс» (partials/_course_schedule.html, пункт 14 ТЗ). Ціни окремим рядком немає навмисно: вона вже всередині .iprm-tariff-pill. Час доби -- голий strftime, а не `| kyiv`: адмінка пише наївний datetime (київський настінний час), і зсув зони поверх нього додав би заходу три години. Та сама умовність, що в картці hero, листах і JSON-LD.</p>
+    <p class="ds-hint">.iprm-daterail__more — п'ята картка й далі, під &lt;details&gt; без JS: приховані картки лишаються в HTML, тож їх бачить і пошуковик, і читач екрана. Межа наскрізна по всіх містах, а не по кожному окремо. .iprm-daterail--empty — рейка з єдиним порожнім станом: на вузькому екрані решта рейки стає сіткою колонок, а їй сітка не потрібна.</p>
   </div>
 
   <!-- ===== QUIZ QUESTION ===== -->

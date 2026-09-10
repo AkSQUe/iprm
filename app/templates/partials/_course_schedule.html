@@ -1,73 +1,144 @@
 {% from 'partials/_money.html' import money %}
 {% from 'partials/_bpr_points.html' import points_range %}
-{# Найближчі дати проведень.
+{% from 'partials/_location_badge.html' import location_badge %}
+{# Колонка доступних дат для блоку «Про курс» (пункт 14 ТЗ).
 
-   Лише офлайн-курс. Очікує upcoming_instances, open_instance_ids,
-   seats_left_map і макрос location_badge (імпортує сторінка-господар). #}
-  <section id="schedule" class="iprm-section" aria-labelledby="schedule-title">
-    <div class="iprm-section__inner">
-      <h2 id="schedule-title" class="iprm-section__title apple-reveal">{{ _('Найближчі <span class="apple-gradient-text">дати</span>') }}</h2>
-      {% if upcoming_instances %}
-      <div class="iprm-schedule">
-        {% for inst in upcoming_instances %}
-        {% set is_open = inst.id in open_instance_ids %}
-        {% set remaining = seats_left_map.get(inst.id) if is_open else None %}
-        <div class="iprm-schedule__item apple-reveal">
-          <div class="iprm-schedule__date">
-            {% if inst.start_date %}
-            <span class="iprm-schedule__day">{{ inst.start_date.strftime('%d') }}</span>
-            <span class="iprm-schedule__month">{{ inst.start_date.strftime('%m.%Y') }}</span>
-            {% else %}
-            <span class="iprm-schedule__day">TBD</span>
-            {% endif %}
-          </div>
-          <div class="iprm-schedule__content">
-            <h3 class="iprm-schedule__title iprm-block-title">{{ course.t('title') }}</h3>
-            <div class="iprm-schedule__meta">
-              {{ location_badge(inst.event_format, inst.location) }}
-              {% if inst.cpd_range[0] %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ points_range(*inst.cpd_range) }}</span>{% endif %}
-              {% if inst.effective_price and inst.effective_price > 0 %}<span class="iprm-schedule__price">{% if inst.price_is_from %}{{ _('від') }} {% endif %}{{ money(inst.effective_price) }}</span>{% endif %}
-              {% if remaining is not none %}
-              <span class="iprm-schedule__tag iprm-schedule__tag--seats{% if site_settings.seats_low_threshold and remaining <= site_settings.seats_low_threshold %} iprm-schedule__tag--warning{% endif %}">{{ _('Залишилось') }} {{ remaining }} {{ remaining | plural('seats') }}</span>
-              {% endif %}
-            </div>
-            {% set inst_tariffs = inst.active_tariffs %}
-            {% if inst_tariffs %}
-            <div class="iprm-schedule__tariffs" role="list" aria-label="{{ _('Тарифи участі') }}">
-              {% for tariff in inst_tariffs %}
-              {% set tariff_items = (tariff.t('description') or '').splitlines() | map('trim') | select | list %}
-              {% if is_open %}
-              <a class="iprm-tariff-pill iprm-tariff-pill--link" role="listitem"
-                 href="{{ url_for('registration.register_instance', instance_id=inst.id, tariff=tariff.id) }}"
-                 {% if tariff_items %} title="{{ tariff_items | join('; ') }}"{% endif %}>
-                <span class="iprm-tariff-pill__name">{{ tariff.t('name') }}</span>
-                <span class="iprm-tariff-pill__price">{{ money(tariff.price) }}</span>
-              </a>
-              {% else %}
-              <span class="iprm-tariff-pill" role="listitem"{% if tariff_items %} title="{{ tariff_items | join('; ') }}"{% endif %}>
-                <span class="iprm-tariff-pill__name">{{ tariff.t('name') }}</span>
-                <span class="iprm-tariff-pill__price">{{ money(tariff.price) }}</span>
-              </span>
-              {% endif %}
-              {% endfor %}
-            </div>
-            {% endif %}
-          </div>
-          <div class="iprm-schedule__action">
-            {% if is_open %}
-            <a href="{{ url_for('registration.register_instance', instance_id=inst.id) }}" class="apple-btn apple-btn--primary apple-btn--sm">{{ _('Реєстрація') }}</a>
-            {% else %}
-            <span class="badge badge--draft">{{ _('Реєстрацію закрито') }}</span>
-            {% endif %}
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-      {% else %}
-      <div class="iprm-empty-state">
-        <p>{{ _('Наразі немає запланованих проведень цього курсу.') }}</p>
-        <p><a href="#request" class="apple-btn apple-btn--primary iprm-empty-state__cta">{{ _('Залишити запит на проведення') }}</a></p>
-      </div>
-      {% endif %}
-    </div>
-  </section>
+   Віддає ВМІСТ колонки, а не секцію: заголовок і <aside> ставить
+   сторінка-господар (courses/detail.html), бо саме вона знає, що це права
+   половина двоколонкової сітки. Раніше цей файл був окремою секцією під
+   описом -- сторінка описувала курс, а тоді починала розповідь заново.
+
+   Очікує schedule_instances, schedule_groups, full_instances.
+
+   schedule_instances, а не upcoming_instances: колонка читається як
+   перелік варіантів вибору, тож набрані групи в неї не потрапляють
+   взагалі. Через це тут немає стану «закрито» -- він живий на /courses,
+   де розклад показує всі заходи, а не лише ті, на які можна записатись.
+
+   schedule_groups -- [(місто, [проведення])] або None. None означає
+   «плоский перелік»; щоб не тримати розмітку картки у двох гілках, у
+   цьому разі підставляємо один безіменний блок.
+
+   location_badge імпортуємо тут, а не беремо з контексту сторінки:
+   макрос потрібен усередині datecard(), і власний імпорт лишає партіал
+   самодостатнім. #}
+
+{# Скільки карток видно без розкриття. Колонка стоїть поруч із описом і не
+   повинна бути вищою за нього: п'ята дата й далі -- під розкривачем.
+   Саме <details>, а не JS-обрізання: приховані картки лишаються в HTML,
+   тож їх бачить і пошуковик, і читач екрана. #}
+{% set DATES_VISIBLE = 4 %}
+
+{% macro datecard(inst) %}
+<article class="iprm-datecard">
+  <div class="iprm-datecard__when">
+    {% if inst.start_date %}
+    <span class="iprm-datecard__day">{{ inst.start_date.strftime('%d') }}</span>
+    <span class="iprm-datecard__month">{{ inst.start_date.strftime('%m.%Y') }}</span>
+    {# Час доби -- частина вибору дати. Голий strftime, а НЕ `| kyiv`:
+       DateTimeLocalField в адмінці пише наївний datetime (київський
+       настінний час), який на проді лягає в timestamptz як UTC і читається
+       назад тими самими цифрами. `| kyiv` додав би до нього ще зсув зони.
+       Та сама умовність, що в картці hero, листах, підтвердженнях
+       реєстрації та startDate JSON-LD цієї ж сторінки. #}
+    <span class="iprm-datecard__time">{{ inst.start_date.strftime('%H:%M') }}</span>
+    {% else %}
+    <span class="iprm-datecard__day">TBD</span>
+    {% endif %}
+  </div>
+  {# h4, а не h3: над карткою може стояти підпис міста (h3), і рівні
+     заголовків мусять лишатись послідовними. Тема проведення, якщо
+     задана: під одним курсом дати можуть мати різні тематичні акценти
+     (CourseInstance.effective_title). #}
+  <h4 class="iprm-datecard__title iprm-block-title">{{ inst.effective_title }}</h4>
+  <div class="iprm-datecard__meta">
+    {{ location_badge(inst.event_format, inst.location) }}
+    {% if inst.cpd_range[0] %}<span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ points_range(*inst.cpd_range) }}</span>{% endif %}
+  </div>
+  {% set inst_tariffs = inst.active_tariffs %}
+  {% if inst_tariffs %}
+  {# Ціни окремим рядком немає навмисно: вона вже всередині пігулок. #}
+  <div class="iprm-datecard__tariffs" role="list" aria-label="{{ _('Тарифи участі') }}">
+    {% for tariff in inst_tariffs %}
+    {% set tariff_items = (tariff.t('description') or '').splitlines() | map('trim') | select | list %}
+    <a class="iprm-tariff-pill iprm-tariff-pill--link" role="listitem"
+       href="{{ url_for('registration.register_instance', instance_id=inst.id, tariff=tariff.id) }}"
+       {% if tariff_items %} title="{{ tariff_items | join('; ') }}"{% endif %}>
+      <span class="iprm-tariff-pill__name">{{ tariff.t('name') }}</span>
+      <span class="iprm-tariff-pill__price">{{ money(tariff.price) }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <a href="{{ url_for('registration.register_instance', instance_id=inst.id) }}"
+     class="apple-btn apple-btn--primary apple-btn--sm iprm-datecard__action">{{ _('Обрати дату') }}</a>
+</article>
+{% endmacro %}
+
+{% set _groups = schedule_groups if schedule_groups else [(none, schedule_instances)] %}
+{% set _hidden_count = (schedule_instances | length) - DATES_VISIBLE %}
+
+<div class="iprm-daterail apple-reveal{% if not schedule_instances %} iprm-daterail--empty{% endif %}">
+  {% if schedule_instances %}
+
+  {# Перший прохід -- перші DATES_VISIBLE карток наскрізно по всіх містах.
+     Лічильник наскрізний, бо межа «п'ята картка» стосується колонки
+     цілком, а не кожного міста окремо. #}
+  {% set head_ns = namespace(seen=0) %}
+  {% for group_label, group_instances in _groups %}
+  {% set head = group_instances[:(DATES_VISIBLE - head_ns.seen) if head_ns.seen < DATES_VISIBLE else 0] %}
+  {% if head %}
+  {% if group_label %}<h3 class="iprm-daterail__group-title">{{ group_label }}</h3>{% endif %}
+  {% for inst in head %}{{ datecard(inst) }}{% endfor %}
+  {% endif %}
+  {% set head_ns.seen = head_ns.seen + (group_instances | length) %}
+  {% endfor %}
+
+  {% if _hidden_count > 0 %}
+  <details class="iprm-daterail__more">
+    <summary class="iprm-daterail__more-summary">
+      {# Одним msgid, а не шматками: порядок слів у складеній фразі
+         відрізняється між мовами, і перекладач мусить бачити її цілком. #}
+      {% trans count=_hidden_count, noun=_hidden_count | plural('dates') %}Ще {{ count }} {{ noun }}{% endtrans %}
+    </summary>
+    {# Другий прохід -- хвіст кожного міста після наскрізної межі. #}
+    {% set tail_ns = namespace(seen=0) %}
+    {% for group_label, group_instances in _groups %}
+    {% set skip = (DATES_VISIBLE - tail_ns.seen) if tail_ns.seen < DATES_VISIBLE else 0 %}
+    {% set tail = group_instances[skip:] %}
+    {% if tail %}
+    {% if group_label %}<h3 class="iprm-daterail__group-title">{{ group_label }}</h3>{% endif %}
+    {% for inst in tail %}{{ datecard(inst) }}{% endfor %}
+    {% endif %}
+    {% set tail_ns.seen = tail_ns.seen + (group_instances | length) %}
+    {% endfor %}
+  </details>
+  {% endif %}
+
+  {% if full_instances %}
+  {# Набрані групи не зникають безслідно: інакше перелік із трьох дат
+     виглядає як увесь розклад курсу, хоча насправді дат більше. #}
+  {# Одним msgid, а не трьома шматками: складене з "ще" + число + іменник
+     речення в англійській дає "another 1 group already full" -- порядок
+     слів там інший, і перекладач мусить бачити фразу цілком. #}
+  <p class="iprm-daterail__note">
+    {%- set _full_count = full_instances | length -%}
+    {% trans count=_full_count, noun=_full_count | plural('full_groups') %}ще {{ count }} {{ noun }} вже набрано{% endtrans %}
+  </p>
+  {% endif %}
+
+  {% else %}
+  <div class="iprm-empty-state">
+    {% if full_instances %}
+    {# «Проведень немає» тут було б неправдою: дата є, просто місць на
+       неї вже нема. Це різні новини, і друга -- привід лишити контакт. #}
+    {% set nearest_full = full_instances[0] %}
+    <p>{% trans date=nearest_full.start_date.strftime('%d.%m.%Y') if nearest_full.start_date else _('найближчу дату') %}Групу на {{ date }} вже набрано.{% endtrans %}</p>
+    <p><a href="#request" class="apple-btn apple-btn--primary iprm-empty-state__cta">{{ _('Повідомити про нову дату') }}</a></p>
+    {% else %}
+    <p>{{ _('Наразі немає запланованих проведень цього курсу.') }}</p>
+    <p><a href="#request" class="apple-btn apple-btn--primary iprm-empty-state__cta">{{ _('Залишити запит на проведення') }}</a></p>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>

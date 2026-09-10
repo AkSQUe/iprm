@@ -70,6 +70,7 @@ def catalog():
     if has_app_context() and _CACHE_ATTR in g:
         return g.get(_CACHE_ATTR)
 
+    from app.extensions import db
     from app.models.specialty import Specialty
     try:
         rows = Specialty.query.all()
@@ -80,6 +81,14 @@ def catalog():
         # рядка спеціальностей, але сторінка не падає.
         logger.exception('Specialties catalog unavailable')
         mapping = {}
+        # Без rollback запобіжник шкодить більше, ніж допомагає: на Postgres
+        # невдалий запит труїть транзакцію, і наступний запит того ж реквесту
+        # гине з InFailedSqlTransaction. Відколи блок «Цільова аудиторія»
+        # читає довідник, цей шлях проходить кожна сторінка заходу.
+        try:
+            db.session.rollback()
+        except Exception:
+            logger.exception('Rollback after specialties catalog failure failed')
 
     if has_app_context():
         setattr(g, _CACHE_ATTR, mapping)
@@ -101,7 +110,12 @@ def names(codes, lang=None):
     документ не має залежати від локалі того, хто натиснув кнопку видачі.
     """
     known = catalog()
-    rows = [known[code] for code in (codes or []) if code in known]
+    # dict.fromkeys -- зняти дублі, не втративши порядок. Кліком у формі
+    # дубль не зробити, але pre_validate звіряє КОЖНЕ значення окремо, тож
+    # зібраний руками POST із двома однаковими кодами проходить валідацію
+    # і лягає в поле; так само пише туди сідінг чи ручний UPDATE. Двічі
+    # надрукована назва псує і сторінку, і рядок сертифіката.
+    rows = [known[code] for code in dict.fromkeys(codes or ()) if code in known]
     return [row.t('name', lang=lang) for row in sorted(rows, key=_order_key)]
 
 

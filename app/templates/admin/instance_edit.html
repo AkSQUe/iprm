@@ -1,10 +1,12 @@
 {% extends "admin/base_admin.html" %}
+{% import 'admin/partials/_i18n_tabs.html' as i18n %}
 
 {% block title %}{% if instance %}Редагування проведення{% else %}Нове проведення{% endif %} | ІПРМ{% endblock %}
 {% block extra_meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v={{ assets_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-i18n-tabs.css') }}?v={{ assets_version }}">
 {% endblock %}
 
 {% block content %}
@@ -21,7 +23,8 @@
       <h1 class="admin-hero__title">{% if instance %}Редагування проведення{% else %}Нове проведення{% endif %}</h1>
       <p class="admin-hero__subtitle">
         {% if instance %}
-          {{ instance.course.title if instance.course else '' }}
+          {{ instance.effective_title or '' }}
+          {%- if instance.topic and instance.course %} &middot; курс: {{ instance.course.title }}{% endif %}
           <span class="badge badge--{{ instance.status_badge }}">{{ instance.status_label }}</span>
         {% else %}
           Створення нового запланованого проведення
@@ -46,6 +49,11 @@
         {{ icon('quiz') }} Тестування
       </a>
       {% endif %}
+      {# Лише коли тема задана: без неї проведення зветься назвою курсу, і
+         перекладати тут нічого -- переклад назви живе в картці курсу. #}
+      {% if instance and instance.topic %}
+      <a href="{{ url_for('admin.translations_edit', entity='course_instance', obj_id=instance.id) }}" class="btn-admin btn-admin--secondary">Переклади</a>
+      {% endif %}
       <a href="{{ url_for('admin.instances_list') }}" class="btn-admin btn-admin--secondary">Назад до розкладу</a>
     </div>
   </div>
@@ -55,6 +63,10 @@
   <form method="POST" class="admin-form">
     {{ form.hidden_tag() }}
     {% include 'admin/partials/_form_errors.html' %}
+    {# Перекладна в проведенні лише тема, але вкладки стоять над усією
+       формою -- так само, як у курсі: перемикач мови мусить бути там, де
+       його шукають, а не всередині одного поля. #}
+    {{ i18n.tabs(instance) }}
 
     <div class="form-section">
       <h3 class="admin-form__section-title">Основні параметри</h3>
@@ -64,6 +76,14 @@
           <label for="course_id">Курс <span class="required">*</span></label>
           {{ form.course_id(class="form-input" + (" is-invalid" if form.course_id.errors else ""), id="course_id") }}
           {% for error in form.course_id.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group admin-form__full">
+          <label for="topic">Тема</label>
+          {{ form.topic(class="form-input" + (" is-invalid" if form.topic.errors else ""), id="topic", placeholder=instance.course.title if instance and instance.course else "Назва курсу") }}
+          <small class="form-hint">{{ form.topic.description }}</small>
+          {{ i18n.panes(instance.translations or {} if instance else {}, 'topic', obj=instance) }}
+          {% for error in form.topic.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
         </div>
 
         <div class="form-group">
@@ -223,5 +243,6 @@
 </div>
 <script src="{{ url_for('static', filename='js/admin-instance-points.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-multiselect.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin-i18n-tabs.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-course-speakers.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

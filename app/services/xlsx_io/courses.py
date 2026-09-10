@@ -101,7 +101,7 @@ COURSE_LABELS = {
     'card_image': 'Зображення картки',
     'agenda': 'Програма (опис)',
     'final_cta_text': 'Фінальний заклик',
-    'target_audience': 'Цільова аудиторія',
+    'target_audience': 'Цільова аудиторія (допис)',
     'tags': 'Теги',
     'is_active': 'Активний',
     'is_featured': 'Рекомендований',

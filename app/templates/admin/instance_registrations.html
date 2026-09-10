@@ -33,7 +33,7 @@
           <span class="admin-breadcrumb__sep">/</span>
           <span class="admin-breadcrumb__current">Захід</span>
         </div>
-        <h1 class="admin-hero__title">{{ course.title if course else 'Захід' }}</h1>
+        <h1 class="admin-hero__title">{{ instance.effective_title or 'Захід' }}</h1>
         <p class="admin-hero__subtitle">
           {% if instance.start_date %}{{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
           {% if instance.cpd_pairs %} &middot; {{ points_by_format(instance.cpd_pairs) }} БПР{% endif %}

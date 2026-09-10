@@ -1475,9 +1475,8 @@ class EmailService:
         міграцій CHECK -- див. коментар у NotificationRule).
         """
         instance = registration.instance if registration is not None else None
-        course = instance.course if instance is not None else None
         user = registration.user if registration is not None else None
-        title = course.title if course is not None else 'Захід'
+        title = (instance.effective_title if instance is not None else None) or 'Захід'
         return EmailService.notify_admins_with_template(
             event_type='payment',
             subject=f'Перевищення місць: {title} ({occupied}/{capacity})',
@@ -1733,7 +1732,7 @@ class EmailService:
     @staticmethod
     def _materials_context(reservation, instance):
         return {
-            'event_title': (instance.course.title if instance and instance.course else 'Захід'),
+            'event_title': ((instance.effective_title if instance else None) or 'Захід'),
             'event_date': (instance.start_date.strftime('%d.%m.%Y')
                            if instance and instance.start_date else None),
             'event_location': getattr(instance, 'location', None) if instance else None,
@@ -1779,8 +1778,8 @@ class EmailService:
         """
         if user is None or not user.email:
             return None
-        event_title = (instance.course.title
-                       if instance and instance.course else 'Захід')
+        event_title = ((instance.effective_title if instance else None)
+                       or 'Захід')
         return EmailService.send_email(
             to=user.email,
             subject=lambda: _('Тренер підтвердив матеріали: %(title)s',

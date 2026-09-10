@@ -1907,6 +1907,13 @@ select.badge-select:disabled {
   border-color: var(--iprm-accent-light);
 }
 
+/* Тег на картці, тло якої вже --iprm-white: базовий тег там зливається з
+   карткою (у темній темі від нього лишається межа в 10% білого), тож
+   поверхня опускається на щабель нижче. */
+.iprm-tag--inset {
+  background: var(--iprm-surface-inset);
+}
+
 /* Активний тег-фільтр (градієнтна заливка) */
 .iprm-tag.iprm-tag--active {
   background: linear-gradient(135deg, var(--iprm-nav-active) 0%, var(--iprm-accent-mid) 50%, var(--iprm-gold) 100%);

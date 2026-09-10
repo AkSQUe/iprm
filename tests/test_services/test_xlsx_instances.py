@@ -219,3 +219,61 @@ def test_trainer_resolved_by_name_and_slug(client, tmp_path):
         plan = xlsx_io.parse_instances_xlsx(path)
         assert plan.is_valid, plan.errors
         assert plan.instances[0]['parsed']['trainer_ids'] == [trainer.id]
+
+
+# --- тема проведення --------------------------------------------------------
+
+def test_export_carries_the_topic(client):
+    course = _course()
+    _instance(course, topic='PRP у практиці ортопеда')
+    ws = load_workbook(xlsx_io.export_instances_xlsx())['Розклад']
+    header = [c.value for c in ws[1]]
+    rows = [dict(zip(header, r)) for r in ws.iter_rows(min_row=2, values_only=True)]
+    row = next(r for r in rows if r[xlsx_io.INSTANCE_LABELS['course_slug']] == course.slug)
+    assert row[xlsx_io.INSTANCE_LABELS['topic']] == 'PRP у практиці ортопеда'
+
+
+def test_import_sets_the_topic(client, tmp_path):
+    course = _course()
+    inst = _instance(course)
+    path = _write(tmp_path, [_row(course, id=inst.id, topic='PRP у практиці ортопеда')])
+    plan = xlsx_io.parse_instances_xlsx(path)
+    assert plan.is_valid, plan.errors
+    xlsx_io.apply_instances_plan(plan)
+    assert db.session.get(CourseInstance, inst.id).topic == 'PRP у практиці ортопеда'
+
+
+def test_empty_cell_clears_the_topic(client, tmp_path):
+    """Порожня комірка -- це «зняти тему», і захід вертається до назви курсу.
+    У БД має лягти NULL, а не порожній рядок."""
+    course = _course()
+    inst = _instance(course, topic='Стара тема')
+    path = _write(tmp_path, [_row(course, id=inst.id, topic='')])
+    plan = xlsx_io.parse_instances_xlsx(path)
+    xlsx_io.apply_instances_plan(plan)
+    saved = db.session.get(CourseInstance, inst.id)
+    assert saved.topic is None
+    assert saved.effective_title == course.title
+
+
+def test_old_file_without_the_column_keeps_the_topic(client, tmp_path):
+    """Файл, вивантажений до появи колонки, не має стирати теми: менеджери
+    тримають такі файли на руках (та сама причина, що й у OPTIONAL_COURSE_COLS).
+    """
+    course = _course()
+    inst = _instance(course, topic='PRP у практиці ортопеда')
+    path = _write(tmp_path, [_row(course, id=inst.id)], drop_columns=('topic',))
+    plan = xlsx_io.parse_instances_xlsx(path)
+    assert plan.is_valid, plan.errors
+    xlsx_io.apply_instances_plan(plan)
+    assert db.session.get(CourseInstance, inst.id).topic == 'PRP у практиці ортопеда'
+
+
+def test_changed_topic_shows_up_in_the_plan(client, tmp_path):
+    course = _course()
+    inst = _instance(course, topic='Стара тема')
+    path = _write(tmp_path, [_row(course, id=inst.id, topic='Нова тема')])
+    plan = xlsx_io.parse_instances_xlsx(path)
+    change = plan.changes[0]
+    assert change.action == 'update'
+    assert 'topic' in change.fields_changed

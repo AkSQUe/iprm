@@ -3650,6 +3650,17 @@ th.access-perm__label {
    --iprm-white, --iprm-radius-md, --iprm-accent, --iprm-surface-inset,
    --iprm-text, --iprm-text-secondary, --iprm-shadow-md -- усі реально
    оголошені (світла й тёмна тема), вигаданих тут немає. */
+/* Прев'ю автопереліку спеціальностей у блоці «Цільова аудиторія».
+   Декор чіпа -- .iprm-tag дизайн-системи, тут лише розкладка й тон
+   службового рядка «нічого не обрано». */
+.admin-audience-preview {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 8px;
+}
+.admin-audience-preview__empty {
+  color: var(--iprm-text-secondary); font-size: 13px;
+}
+
 .admin-multiselect { position: relative; display: block; }
 .admin-multiselect__control {
   display: flex; flex-wrap: wrap; gap: 6px; align-items: center;

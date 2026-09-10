@@ -53,7 +53,7 @@
       </div>
       <h1 class="admin-hero__title">Витратні матеріали заходу</h1>
       <p class="admin-hero__subtitle">
-        {{ instance.course.title if instance.course else 'Захід' }}
+        {{ instance.effective_title or 'Захід' }}
         {% if instance.start_date %} — {{ instance.start_date.strftime('%d.%m.%Y') }}{% endif %}
         {% if participants is not none %} · учасників: {{ participants }}{% endif %}
       </p>

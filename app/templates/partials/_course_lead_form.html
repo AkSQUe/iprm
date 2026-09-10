@@ -35,6 +35,13 @@
             data-recaptcha-action="course_request" data-ga-event="generate_lead">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
+        {# Намір заявки, коли сторінка знає його наперед (порожній блок дат
+           -> «чекаю на нову дату»). Роут дописує позначку в message: окрема
+           колонка вимагала б міграції заради одного прапорця. #}
+        {% if lead_topic %}
+        <input type="hidden" name="topic" value="{{ lead_topic }}">
+        {% endif %}
+
         {# Honeypot: name="website" лишається приманкою для ботів, але label
            без слова "Website" -- щоб поле не сприймалось як справжнє, якщо
            колись стане видимим (переклад сторінки, reader mode, автофіл). #}

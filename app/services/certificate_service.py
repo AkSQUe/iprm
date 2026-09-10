@@ -187,8 +187,8 @@ def frame_ring_svg(width=794, height=1123, width_mm=210.0,
 def _event_snapshot(registration):
     """Витягти незмінні дані заходу з реєстрації."""
     instance = registration.instance
-    course = instance.course if instance else None
-    title = course.title if course else (registration.target_title or 'Захід')
+    title = ((instance.effective_title_for(DEFAULT_LANGUAGE) if instance else None)
+             or registration.target_title or 'Захід')
     event_date = instance.start_date if instance else None
     cpd = registration.cpd_points_awarded
     if cpd is None:
@@ -209,9 +209,6 @@ def _event_snapshot(registration):
     place = (instance.location or '').strip() if instance and instance.location else None
     return title, event_date, cpd, lecturer, signature, specialties_line, event_type, place
 
-
-_POINTS_BADGE_DIR = ('images', 'certificates')
-_POINTS_BADGE_DEFAULT = 10
 
 # Запасний підпис (коли у тренера немає власного) -- спільне зображення.
 _DEFAULT_SIGNATURE = 'images/certificates/trainer-sign.webp'
@@ -243,25 +240,6 @@ def _active_format(cert_format=None):
         return (SiteSettings.get().certificate_format or _DEFAULT_FORMAT).strip()
     except Exception:
         return _DEFAULT_FORMAT
-
-
-def points_badge_url(cpd_points):
-    """Відносний (від static) шлях до розетки балів БПР під цю кількість.
-
-    Конвенція файлів: images/certificates/{N}-points-BPR.webp.
-    Якщо файлу під конкретну кількість ще немає -- беремо дефолт (10 балів).
-    """
-    base = os.path.join(current_app.static_folder, *_POINTS_BADGE_DIR)
-    points = cpd_points if cpd_points is not None else _POINTS_BADGE_DEFAULT
-    # Ім'я збирається тим самим нормалізатором, що й показ, інакше
-    # Decimal('9.00') шукає файл «9.00-points-BPR.webp», якого немає, і
-    # дев'ятибальний захід тихо отримує десятибальну розетку.
-    fname = f'{format_points(points, sep=".")}-points-BPR.webp'
-    if not os.path.exists(os.path.join(base, fname)):
-        fname = f'{_POINTS_BADGE_DEFAULT}-points-BPR.webp'
-    return '/'.join(_POINTS_BADGE_DIR) + '/' + fname
-
-
 _QR_FALLBACK_URL = 'https://iprm.space'
 
 
@@ -476,7 +454,6 @@ def render_certificate_html(certificate, kind='participant', cert_format=None):
         meta_date=_meta_date(certificate.event_date),
         molecules_svg=molecular_svg(certificate.number, width=cw_px, height=ch_px),
         frame_svg=frame_ring_svg(width=cw_px, height=ch_px, width_mm=spec['w_mm']),
-        points_badge=points_badge_url(certificate.cpd_points),
         specialties=getattr(certificate, 'specialties', None),
         specialties_size_class=_specialties_size_class(
             getattr(certificate, 'specialties', None)),
@@ -768,7 +745,7 @@ def issue_lecturer_certificate(instance, trainer, issued_by=None):
         instance_id=instance.id,
         trainer_id=trainer.id,
         recipient_name=(trainer.full_name_dative or '').strip() or trainer.full_name,
-        event_title=course.title if course else (instance.title or 'Захід'),
+        event_title=instance.effective_title_for(DEFAULT_LANGUAGE) or 'Захід',
         event_date=event_date,
         cpd_points=points,
         # DEFAULT_LANGUAGE -- та сама причина, що й у _event_snapshot вище:

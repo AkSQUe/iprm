@@ -105,9 +105,11 @@ def test_materials_filename_includes_date_and_course():
     from types import SimpleNamespace
     from datetime import datetime as _dt
     from app.admin.routes_materials import _materials_filename
+    # `effective_title` -- назва проведення: власна тема, а якщо її немає --
+    # назва курсу (app/models/course_instance.py).
     inst = SimpleNamespace(
         start_date=_dt(2026, 7, 15),
-        course=SimpleNamespace(title='Плазмотерапія / базовий'),
+        effective_title='Плазмотерапія / базовий',
     )
     # forbidden filename chars removed, whitespace collapsed
     assert _materials_filename(inst) == 'Витр. мат-и на 15.07.2026 Плазмотерапія базовий.xlsx'

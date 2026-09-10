@@ -6417,3 +6417,28 @@ msgstr ""
 #~ msgid "Про Інститут плазмотерапії та регенеративної медицини"
 #~ msgstr "About the Institute of Plasma Therapy and Regenerative Medicine"
 
+
+msgid "Спеціальності"
+msgstr "Specialties"
+
+msgid "Місце уточнюється"
+msgstr "Location to be confirmed"
+
+msgid "Повідомити про нову дату"
+msgstr "Notify me about a new date"
+
+msgid "найближчу дату"
+msgstr "the nearest date"
+
+msgid "Групу на %(date)s вже набрано."
+msgstr "The group on %(date)s is already full."
+
+msgid "ще %(count)s %(noun)s вже набрано"
+msgstr "%(count)s more %(noun)s already full"
+
+msgid "Оберіть <span class=\"apple-gradient-text\">дату</span>"
+msgstr "Choose a <span class=\"apple-gradient-text\">date</span>"
+
+#, python-format
+msgid "Ще %(count)s %(noun)s"
+msgstr "%(count)s more %(noun)s"

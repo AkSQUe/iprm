@@ -58,7 +58,6 @@ def export_referral_rewards_xlsx(rewards, referrer_map,
         reg = rw.registration
         user = reg.user if reg else None
         inst = reg.instance if reg else None
-        course = inst.course if inst else None
         rows.append([
             rw.created_at.strftime('%d.%m.%Y') if rw.created_at else '',
             ref.get('name') or rw.referral_code,
@@ -67,7 +66,7 @@ def export_referral_rewards_xlsx(rewards, referrer_map,
             rw.referral_code,
             (f'{user.first_name} {user.last_name}'.strip() if user else '—'),
             (user.email if user else ''),
-            (course.title if course else '—'),
+            ((inst.effective_title if inst else None) or '—'),
             (inst.start_date.strftime('%d.%m.%Y') if (inst and inst.start_date) else ''),
             rw.points,
             rw.status_label,
@@ -208,7 +207,7 @@ def export_registrations_xlsx(regs, referrer_map=None,
         cert = reg.certificate
         rows.append([
             reg.id,
-            (course.title if course else ''),
+            ((inst.effective_title if inst else None) or ''),
             _to_kyiv_naive(inst.start_date).date() if (inst and inst.start_date) else None,
             (inst.location if inst else '') or '',
             (trainer.full_name if trainer else ''),
@@ -721,7 +720,7 @@ def export_instances_report_xlsx(instances, reg_counts, occupied_map=None,
             capacity = course.max_participants
         rows.append([
             inst.id,
-            (course.title if course else ''),
+            (inst.effective_title or ''),
             _to_kyiv_naive(inst.start_date),
             _to_kyiv_naive(inst.end_date),
             FORMAT_LABEL.get(inst.event_format, inst.event_format or ''),

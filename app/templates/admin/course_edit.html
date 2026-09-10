@@ -234,9 +234,28 @@
           {{ i18n.panes(tr, 'description', widget='textarea', rows=6, obj=course) }}
         </div>
         <div class="form-group admin-form__full">
-          <label for="target_audience_text">Цільова аудиторія</label>
+          <label for="target_audience_text">{{ form.target_audience_text.label.text }}</label>
+          {# Перелік спеціальностей на сторінці заходу формується сам -- прев'ю
+             показує його тут, щоб редактор не переписував те саме руками.
+             Назви беремо з ДАНИХ ФОРМИ, а не з курсу в БД: після невдалої
+             валідації мультиселект малюється з форми, і прев'ю з бази
+             показувало б інший перелік у тій самій формі.
+             aria-live: після вибору спеціальності блок перемальовує JS, а
+             без цього зміна лишалась би тільки візуальною. #}
+          {% set preview_empty = 'Спеціальності не обрані' %}
+          <div class="admin-audience-preview"
+               data-audience-preview
+               data-audience-preview-source="bpr_specialty_codes"
+               data-audience-preview-empty="{{ preview_empty }}"
+               aria-live="polite">
+            {% for name in specialty_names(form.bpr_specialty_codes.data) %}
+            <span class="iprm-tag iprm-tag--inset">{{ name }}</span>
+            {% else %}
+            <span class="admin-audience-preview__empty">{{ preview_empty }}</span>
+            {% endfor %}
+          </div>
+          <div class="form-hint">{{ form.target_audience_text.description }}</div>
           {{ form.target_audience_text(class="form-input", id="target_audience_text", rows="5") }}
-          <div class="form-hint">Кожен рядок стане окремою карткою</div>
           {{ i18n.json_panes(course, 'target_audience') }}
         </div>
         <div class="form-group admin-form__full">
@@ -429,5 +448,6 @@
 <script src="{{ url_for('static', filename='js/admin-i18n-tabs.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-course-gallery.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-multiselect.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin-audience-preview.js') }}?v={{ assets_version }}" defer></script>
 <script src="{{ url_for('static', filename='js/admin-course-speakers.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

@@ -175,6 +175,7 @@ COURSE_WIDTHS = {
 INSTANCE_WIDTHS = {
     'id': 6,
     'course_slug': 32,
+    'topic': 42,
     'start_date': 22,
     'end_date': 22,
     'event_format': 14,
@@ -767,6 +768,19 @@ def _add_inline_dropdown(ws, column_key: str, columns: list[str],
 
 # Читання аркуша -- спільне для всіх доменів. Лежало під банером COURSES
 # разом із рештою помічників аркушів: банер стояв вище за код.
+# Підписи колонок, що змінилися після того, як менеджери вже мали на руках
+# експорти. Приймаються на імпорті нарівні з чинними -- інакше перейменування
+# підпису мовчки лишало б поле незмінним у файлі, який виглядає цілком
+# нормальним. Ключ -- старий підпис, значення -- internal key. Живе тут, а не
+# поруч із COURSE_LABELS: єдиний споживач -- _read_sheet, спільний для всіх
+# аркушів.
+LEGACY_HEADERS = {
+    # target_audience звузився до допису: перелік спеціальностей на сторінці
+    # збирається з довідника, а не з цього поля.
+    'Цільова аудиторія': 'target_audience',
+}
+
+
 def _read_sheet(ws, columns: list[str], labels: dict[str, str] | None = None,
                 optional: tuple[str, ...] = ()) -> list[dict]:
     """Прочитати sheet у list[dict].
@@ -803,6 +817,10 @@ def _read_sheet(ws, columns: list[str], labels: dict[str, str] | None = None,
             ua = labels[key]
             accepted[ua] = key
             accepted[ua.lower()] = key
+    for legacy, key in LEGACY_HEADERS.items():
+        if key in columns:
+            accepted.setdefault(legacy, key)
+            accepted.setdefault(legacy.lower(), key)
 
     col_idx: dict[str, int] = {}
     for i, hv in enumerate(header):

@@ -15,6 +15,29 @@
 
 .event-types-table .event-types-col-code { width: 168px; }
 .event-types-table .event-types-col-sort { width: 88px; }
-.event-types-table .event-types-col-uses { width: 72px; text-align: center; }
+.event-types-table .event-types-col-uses { width: 104px; text-align: center; }
 .event-types-table .event-types-col-status { width: 88px; text-align: center; }
-.event-types-table .event-types-col-actions { width: 72px; text-align: right; }
+.event-types-table .event-types-col-actions {
+  /* Три кнопки замість однієї -- тримаємо їх в один ряд без переносу. */
+  width: 148px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Розкривний перелік курсів у клітинці "Вжито": сам маркер і відступи
+   списку. Кольори й шрифт -- з admin.css. */
+.event-types-uses {
+  margin-top: 4px;
+}
+
+.event-types-uses__toggle {
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.event-types-uses__list {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  text-align: left;
+  font-size: 12px;
+}

@@ -36,6 +36,18 @@ def test_names_ignore_unknown_codes(app, catalog_rows):
         assert specialties.names(['alerholohiia', 'no-such-code']) == ['Алергологія']
 
 
+def test_names_drop_duplicate_codes(app, catalog_rows):
+    """Той самий код двічі -- одна назва.
+
+    Кліком у формі дубль не зробити, але pre_validate звіряє кожне
+    значення окремо, тож зібраний руками POST (як і сідінг чи ручний
+    UPDATE) кладе в поле два однакові коди: без дедупу це два однакові
+    чіпи на сторінці й двічі та сама назва в рядку сертифіката.
+    """
+    with app.test_request_context('/'):
+        assert specialties.names(['alerholohiia', 'alerholohiia']) == ['Алергологія']
+
+
 def test_line_joins_with_comma(app, catalog_rows):
     with app.test_request_context('/'):
         assert specialties.line(['alerholohiia', 'dermatovenerolohiia']) == \

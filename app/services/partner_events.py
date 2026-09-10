@@ -84,7 +84,7 @@ def _registration_payload(registration):
         'email': registration.user.email if registration.user else None,
         'instance_id': registration.instance_id,
         'course_slug': getattr(course, 'slug', None),
-        'event_title': getattr(course, 'title', None),
+        'event_title': instance.effective_title if instance is not None else None,
         'status': registration.status,
         'payment_status': registration.payment_status,
         'attended': bool(registration.attended),
@@ -216,11 +216,10 @@ def _lead_offer(form):
     if instance is None:
         return None
 
-    course = getattr(instance, 'course', None)
     city = getattr(getattr(instance, 'city', None), 'name', None)
     return {
         'course_instance_id': instance.id,
-        'title': getattr(course, 'title', None),
+        'title': instance.effective_title,
         'starts_at': instance.start_date.isoformat() if instance.start_date else None,
         # Місто зі структурованого довідника, а якщо його немає -- адреса:
         # менеджеру потрібне будь-яке «де», і порожнє поле гірше за адресу.

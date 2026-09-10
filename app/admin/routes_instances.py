@@ -8,6 +8,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.admin import _listing, admin_bp
+from app.admin.routes_translations import apply_inline_translations
 from app.admin._helpers import (
     populate_event_type_choices,
     populate_trainer_choices,
@@ -108,11 +109,13 @@ def _instances_query(filters):
         selectinload(CourseInstance.trainers),
     )
     if filters['q']:
-        # Пошук за назвою курсу й місцем: саме так менеджер шукає захід,
-        # коли пам'ятає "щось про плазмоліфтинг у Львові".
+        # Пошук за назвою курсу, темою й місцем: саме так менеджер шукає
+        # захід, коли пам'ятає "щось про плазмоліфтинг у Львові". Тема тут
+        # нарівні з назвою курсу, бо саме вона стоїть підписом рядка, коли
+        # задана -- шукати доводиться по тому, що видно на екрані.
         query = query.join(Course, CourseInstance.course_id == Course.id)
         query = _listing.apply_search(query, filters['q'], [
-            Course.title, CourseInstance.location,
+            Course.title, CourseInstance.topic, CourseInstance.location,
         ])
     if filters['course_id']:
         query = query.filter(CourseInstance.course_id == filters['course_id'])
@@ -322,10 +325,14 @@ def instance_create():
         db.session.add(instance)
         from app.services import trainer_links
         trainer_links.set_trainers(instance, form.trainer_ids.data)
+        # Після українського тексту, до коміту: одиниці перекладу рахуються
+        # з АКТУАЛЬНОЇ теми, тож тема і її переклад зберігаються одним
+        # сабмітом (див. apply_inline_translations).
         # Copy-on-create: дефолтна тарифна вилка курсу переїжджає у
         # проведення (лише шаблони, що пасують формату). flush -- щоб
         # instance отримав id для FK тарифів.
         db.session.flush()
+        apply_inline_translations(instance)
         copied = course_service.copy_course_tariffs_to_instance(instance)
         if try_commit(log_context=f'instance_create course={form.course_id.data}'):
             audit_logger.info(
@@ -385,6 +392,7 @@ def instance_edit(instance_id):
                                    lecturer_certs=_lecturer_certs_by_trainer(instance))
         from app.services import trainer_links
         trainer_links.set_trainers(instance, form.trainer_ids.data)
+        apply_inline_translations(instance)
         if try_commit(log_context=f'instance_edit id={instance.id}'):
             audit_logger.info(
                 'Admin %s updated instance %s', current_user.email, instance.id,

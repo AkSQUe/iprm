@@ -425,7 +425,7 @@ class EventRegistration(TimestampMixin, RefundableMixin, DiscountedMixin,
     @property
     def target_title(self):
         if self.instance and self.instance.course:
-            return self.instance.course.title
+            return self.instance.effective_title or ''
         return ''
 
     @property

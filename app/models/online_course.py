@@ -145,6 +145,14 @@ class OnlineCourse(TranslatableMixin, TimestampMixin, db.Model):
         cascade='all, delete-orphan',
     )
 
+    def audience_specialties(self, lang=None):
+        """Спільний із Course інтерфейс для партіала «Цільова аудиторія».
+
+        Онлайн-курс не є заходом БПР і спеціальностей не має, тож блок
+        показує лише ручні рядки target_audience.
+        """
+        return []
+
     @property
     def trainers(self):
         """Список із нуля або одного елемента.

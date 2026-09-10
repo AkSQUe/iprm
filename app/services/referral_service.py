@@ -533,7 +533,7 @@ def _notify_referrer_award(reg, kind, referrer_id, points):
             return
         event_title = None
         if reg.instance and reg.instance.course:
-            event_title = reg.instance.course.title
+            event_title = reg.instance.effective_title
         # Лист мовою реферера-користувача (тренери -- дефолтна 'uk').
         lang = None
         if kind == 'user':
