@@ -20,7 +20,7 @@ _CERTDATA_POPUP_MUTED = frozenset({'auth', 'registration', 'payments', 'quiz'})
 
 
 def get_assets_version(static_folder):
-    """Ключ ?v= для CSS/JS -- хеш ВМІСТУ файлів, а не їхніх mtime.
+    """Ключ ?v= для версійованої статики -- хеш ВМІСТУ файлів, а не їхніх mtime.
 
     Раніше рахувались mtime, і це зривало кеш на кожному деплої: rsync
     оновлює час модифікації й тим файлам, вміст яких не змінився. Статика
@@ -30,6 +30,12 @@ def get_assets_version(static_folder):
 
     133 файли / 1.2 МБ читаються один раз на першому запиті й лягають у кеш
     процесу, тож на подальші запити це не впливає.
+
+    ШРИФТИ ТУТ ОБОВ'ЯЗКОВІ. Субсет іконок підключений тим самим
+    ?v={{ assets_version }} (partials/_icon_font.html), і поки теки fonts/ у
+    розрахунку не було, його перегенерація без правки css/js ключа не рухала:
+    браузер 30 днів віддавав зі свого immutable-кешу старий субсет, і кожна
+    щойно додана іконка малювалась порожнечею. Гард -- tests/test_assets_version.py.
     """
     global _cached_assets_version
     if _cached_assets_version:
@@ -38,12 +44,18 @@ def get_assets_version(static_folder):
     digest = hashlib.md5()
     seen = False
 
-    for folder in (os.path.join(static_folder, 'css'),
-                   os.path.join(static_folder, 'js')):
+    # (тека, розширення) -- усе, що віддається з ключем ?v=assets_version.
+    versioned = (
+        ('css', ('.css',)),
+        ('js', ('.js',)),
+        ('fonts', ('.woff2', '.woff', '.ttf', '.otf')),
+    )
+    for subfolder, extensions in versioned:
+        folder = os.path.join(static_folder, subfolder)
         if not os.path.isdir(folder):
             continue
         for name in sorted(os.listdir(folder)):
-            if not name.endswith(('.css', '.js')):
+            if not name.endswith(extensions):
                 continue
             try:
                 with open(os.path.join(folder, name), 'rb') as fh:
@@ -254,6 +266,12 @@ def create_app(config_name=None):
     app.jinja_env.globals['tr_field_status'] = tr_field_status
     app.jinja_env.globals['tr_inline_leaves'] = tr_inline_leaves
     app.jinja_env.globals['tr_orphaned'] = tr_orphaned
+
+    # Назви спеціальностей за списком кодів -- та сама функція, що малює
+    # перелік на сторінці заходу, тож прев'ю в адмін-формі не розходиться з
+    # тим, що побачить учасник (порядок номенклатури, активна мова).
+    from app.services.specialties import names as specialty_names
+    app.jinja_env.globals['specialty_names'] = specialty_names
 
     # Глобал icon('<name>') -- рендерить Material Symbols іконку через кодпойнт
     # (self-hosted субсет-шрифт). Див. app/icons.py.
