@@ -43,11 +43,10 @@
 | `tags`, `faq` | JSON | Списки |
 | `target_audience` | JSON | Список рядків «Цільова аудиторія». Несе ЛИШЕ ручний допис: основний перелік на сторінці збирається з `bpr_specialty_codes` через `specialties.names()` |
 | `bpr_specialty_codes` | JSON | Коди спеціальностей заходу з довідника `Specialty.code` — рядок «Спеціальності:» на сертифікаті і перелік у блоці «Цільова аудиторія» |
-| `speaker_info`, `agenda` | Text | Текстові блоки |
+| `agenda` | Text | Текстовий блок програми |
 | `base_price` | Numeric(10,2) | Default-ціна (instance може перевизначити) |
 | `cpd_points_online`, `cpd_points_offline` | Numeric(5,2) | Default бали БПР окремо для онлайн/очної участі (гібрид дає різну кількість) |
 | `max_participants` | Integer | Default обмеження |
-| `trainer_id` | FK trainers | Default-тренер |
 | `created_by` | FK users | Хто створив |
 | `is_active` | Boolean | Видимий у каталозі |
 | `is_featured` | Boolean | Рекомендований |
@@ -59,6 +58,12 @@
 Галерея власного поля не має: фото беруться з медіа-реєстру
 (`entity_type='course'`, `usage_type='gallery'`) через властивість
 `Course.gallery`. Порядок — `MediaFile.sort_order`, підпис — `MediaFile.caption`.
+
+Тренерів курс так само не тримає власною колонкою: `Course.trainers` —
+`viewonly`-зв'язок через таблицю `course_trainers` (див. розділ
+[Trainer](#trainer) нижче), впорядкований за `position`. Перший у порядку —
+`Course.trainer` (властивість) — головний лектор, чий підпис іде на
+сертифікат учасника.
 
 Контентні поля продажної сторінки порожні за замовчуванням: курс, якому їх не
 заповнили, просто не показує відповідну секцію.
@@ -120,8 +125,14 @@
 | `cpd_points_online`, `cpd_points_offline` | Numeric(5,2), overrides | null = взяти з Course; `effective_cpd_for(fmt)` / `cpd_pairs` / `cpd_range` читають обидва |
 | `event_type` | String(30) | Необов'язковий override коду з довідника `EventType`; null = взяти з `Course.event_type` (`effective_event_type`) |
 | `location`, `online_link` | String | Локація |
-| `trainer_id` | FK trainers | Override тренера |
 | `status` | String(20) | draft/published/active/completed/cancelled |
+
+Тренери проведення — так само не колонка, а `CourseInstance.trainers`
+(`viewonly`-зв'язок через `course_instance_trainers`, впорядкований за
+`position`). Порожній перелік означає «успадкувати від курсу»:
+`CourseInstance.effective_trainers` повертає власний перелік, якщо він
+непорожній, інакше — `course.trainers`; `CourseInstance.effective_trainer`
+бере першого з `effective_trainers` (головний лектор заходу).
 
 ### Місткість: місце тримає лише оплачена реєстрація
 
@@ -274,6 +285,32 @@ xlsx-вигрузка проведень (`export_instances_xlsx`) не має �
 | `is_active` | Boolean | Активний |
 | `created_at` | DateTime (UTC) | TimestampMixin |
 | `updated_at` | DateTime (UTC) | TimestampMixin |
+
+## course_trainers / course_instance_trainers (звʼязок «захід -- тренери»)
+
+Курс і проведення мають кількох тренерів, а не одного: замість FK-колонки
+`trainer_id` — таблиці звʼязку «багато-до-багатьох» з позицією. Обидві живуть
+в окремому модулі `app/models/trainer_links.py` (не в `course.py` чи
+`course_instance.py`, бо потрібні обом моделям одразу — інше розташування
+дало б циклічний імпорт).
+
+| Таблиця | Поля |
+|---|---|
+| `course_trainers` | `course_id` (FK courses, CASCADE), `trainer_id` (FK trainers, CASCADE), `position` (Integer, not null) — складений PK `(course_id, trainer_id)` |
+| `course_instance_trainers` | `instance_id` (FK course_instances, CASCADE), `trainer_id` (FK trainers, CASCADE), `position` (Integer, not null) — складений PK `(instance_id, trainer_id)` |
+
+`position` нумерує тренерів заходу з нуля без пропусків — це роль, а не
+довільний порядок: **тренер з `position=0` — головний лектор**, і саме його
+ПІБ іде на сертифікат учасника (`Course.trainer` / `CourseInstance.effective_trainer`).
+Нумерує позиції виключно `app/services/trainer_links.py:set_trainers()` —
+записи в ці таблиці напряму не редагують, а `Course.trainers` і
+`CourseInstance.trainers` оголошені `viewonly=True` саме тому.
+
+Складений PK замість сурогатного `id` дає унікальність пари даром: одного
+тренера двічі в один захід не додати. `ON DELETE CASCADE`, а не `SET NULL`
+— рядок «у заходу є тренер, і це ніхто» сенсу не має. Окремий індекс на
+`trainer_id` (`ix_..._trainer_id`) — для зворотного запиту «заходи цього
+тренера», якому складений PK не підходить.
 
 ## ProgramBlock
 
