@@ -207,13 +207,15 @@ def test_invalid_plan_is_not_applied(client, tmp_path):
 
 
 def test_trainer_resolved_by_name_and_slug(client, tmp_path):
+    """Колонка trainer_slugs приймає і ПІБ, і slug для одного тренера --
+    список з єдиним елементом."""
     course = _course()
     trainer = Trainer(slug=f'tr-{uuid4().hex[:6]}', full_name='Тренер Розкладу')
     db.session.add(trainer)
     db.session.commit()
 
     for value in (trainer.full_name, trainer.slug):
-        path = _write(tmp_path, [_row(course, trainer_slug=value)])
+        path = _write(tmp_path, [_row(course, trainer_slugs=value)])
         plan = xlsx_io.parse_instances_xlsx(path)
         assert plan.is_valid, plan.errors
-        assert plan.instances[0]['parsed']['trainer_id'] == trainer.id
+        assert plan.instances[0]['parsed']['trainer_ids'] == [trainer.id]

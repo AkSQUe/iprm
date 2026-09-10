@@ -19,7 +19,12 @@
   - program_blocks та faq для course_slug, який присутній у відповідній
     sheet, ПОВНІСТЮ замінюються (REPLACE). Якщо course_slug не зустрі-
     чається у sheet -> блоки/FAQ цього курсу не чіпаємо.
-  - Trainer-FK у xlsx подається як trainer_slug (human-readable).
+  - Тренери у xlsx -- колонка trainer_slugs: список ПІБ (або slug) через
+    '; ' на експорті (кома трапляється всередині самого ПІБ, напр.
+    «Іванов І. І., PhD», тож нею не можна розділяти), з прийомом і ';',
+    і ',' на імпорті (людина, що редагує вручну, радше поставить кому).
+    Порядок у списку -- це роль: перший тренер є головним лектором.
+    Пишеться через `trainer_links.set_trainers`, а не прямим FK-полем.
 """
 from __future__ import annotations
 
@@ -52,6 +57,7 @@ from app.models.registration import EventRegistration
 from app.models.specializations import SPECIALIZATIONS
 from app.models.trainer import Trainer
 from app.models.user import User
+from app.services import trainer_links
 from app.utils import ensure_utc
 
 logger = logging.getLogger(__name__)
@@ -177,7 +183,7 @@ COURSE_WIDTHS = {
     'cpd_points_online': 14,
     'cpd_points_offline': 14,
     'max_participants': 12,
-    'trainer_slug': 24,
+    'trainer_slugs': 36,
     'hero_image': 50,
     'card_image': 50,
     'speaker_info': 40,
@@ -199,7 +205,7 @@ INSTANCE_WIDTHS = {
     'cpd_points_online': 14,
     'cpd_points_offline': 14,
     'max_participants': 12,
-    'trainer_slug': 24,
+    'trainer_slugs': 36,
     'location': 18,
     'online_link': 40,
     'status': 14,
@@ -512,6 +518,44 @@ def _dt(v) -> datetime | None:
     return dt
 
 
+# Роздільник переліку тренерів у клітинці. Експорт зʼєднує через '; ' (кома
+# трапляється ВСЕРЕДИНІ самого ПІБ, напр. «Іванов І. І., PhD», тож нею не
+# можна розділяти елементи списку), а на імпорті приймаємо і ';', і ',' --
+# людина, що редагує клітинку вручну, радше поставить кому.
+_TRAINER_LIST_SEP_RE = re.compile(r'[;,]')
+
+
+def _split_trainer_names(text: str) -> list[str]:
+    return [p.strip() for p in _TRAINER_LIST_SEP_RE.split(text) if p.strip()]
+
+
+def _resolve_trainer_ids(raw, trainer_id_by_slug: dict, trainer_id_by_name: dict) -> list[int]:
+    """Клітинка з переліком тренерів (ПІБ і/або slug, через ';'/',') ->
+    id тренерів у порядку запису.
+
+    Порядок -- це роль (перший тренер лектор-головний), тож список, а не
+    множина. Усі нерозпізнані значення збираємо в ОДНУ помилку рядка: інакше
+    менеджер правив би десятиіменну клітинку по одному імені за раунд.
+    """
+    text = _str(raw)
+    if not text:
+        return []
+    ids: list[int] = []
+    unknown: list[str] = []
+    for name in _split_trainer_names(text):
+        tid = trainer_id_by_slug.get(name) or trainer_id_by_name.get(name)
+        if tid is None:
+            unknown.append(name)
+        else:
+            ids.append(tid)
+    if unknown:
+        raise ValueError(
+            'тренерів не знайдено (ні за slug, ні за ПІБ): '
+            + ', '.join(repr(n) for n in unknown)
+        )
+    return ids
+
+
 # ======================================================================
 # COURSES
 # ======================================================================
@@ -520,7 +564,7 @@ COURSE_COLS = [
     'id', 'slug', 'title', 'subtitle', 'short_description', 'description',
     'event_type', 'base_price', 'cpd_points_online', 'cpd_points_offline',
     'max_participants',
-    'trainer_slug', 'hero_image', 'card_image', 'speaker_info', 'agenda',
+    'trainer_slugs', 'hero_image', 'card_image', 'speaker_info', 'agenda',
     'final_cta_text', 'target_audience', 'tags', 'is_active', 'is_featured',
 ]
 
@@ -540,7 +584,7 @@ COURSE_LABELS = {
     'cpd_points_online': 'Бали БПР онлайн',
     'cpd_points_offline': 'Бали БПР офлайн',
     'max_participants': 'Макс. учасників',
-    'trainer_slug': 'Тренер',
+    'trainer_slugs': 'Тренери',
     'hero_image': 'Hero-зображення',
     'card_image': 'Зображення картки',
     'speaker_info': 'Інфо про спікера',
@@ -591,8 +635,8 @@ def _find_sheet(wb, key: str):
     return None
 
 
-# Кількість рядків, на які поширюється data-validation drop-down у
-# колонці trainer_slug. Менеджер може дописувати нові рядки знизу --
+# Кількість рядків, на які поширюється data-validation drop-down (тип
+# заходу, формат, статус тощо). Менеджер може дописувати нові рядки знизу --
 # валідація все одно покриватиме. 500 з запасом.
 _DROPDOWN_BUFFER_ROWS = 500
 _TRAINERS_SHEET_NAME = 'Тренери'
@@ -676,32 +720,6 @@ def _add_inline_dropdown(ws, column_key: str, columns: list[str],
     ws.add_data_validation(dv)
 
 
-def _add_trainer_dropdown(ws, column_key: str, columns: list[str],
-                          last_data_row: int, trainers_last_row: int) -> None:
-    """Прикріпити data-validation drop-down з тренерами до вказаної
-    колонки. range покриває існуючі рядки + буфер для додавання нових.
-    """
-    if trainers_last_row < 2:  # порожній список тренерів
-        return
-    col_letter = get_column_letter(columns.index(column_key) + 1)
-    formula = f"='{_TRAINERS_SHEET_NAME}'!$A$2:$A${trainers_last_row}"
-    dv = DataValidation(
-        type='list',
-        formula1=formula,
-        allow_blank=True,
-        # showDropDown у OOXML інвертоване: False = ПОКАЗУВАТИ стрілочку
-        showDropDown=False,
-        errorStyle='warning',
-        error='Тренер з таким slug відсутній у sheet "Тренери".',
-        errorTitle='Невідомий тренер',
-        prompt='Оберіть тренера зі списку (натисніть стрілочку)',
-        promptTitle='Тренер',
-    )
-    final_row = max(last_data_row, 1) + _DROPDOWN_BUFFER_ROWS
-    dv.add(f'{col_letter}2:{col_letter}{final_row}')
-    ws.add_data_validation(dv)
-
-
 @dataclass
 class CourseChange:
     slug: str
@@ -747,10 +765,7 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
     ws.title = 'Курси'
     _style_header(ws, COURSE_COLS, COURSE_LABELS)
 
-    # Тренер у клітинці — ПІБ (Ukrainian). На імпорті повертаємо в slug.
-    trainer_name_by_id = {t.id: t.full_name for t in Trainer.query.all()}
-
-    q = Course.query.order_by(Course.id)
+    q = Course.query.options(joinedload(Course.trainers)).order_by(Course.id)
     if active == 'true':
         q = q.filter(Course.is_active.is_(True))
     elif active == 'false':
@@ -769,7 +784,10 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
             float(c.cpd_points_online) if c.cpd_points_online is not None else None,
             float(c.cpd_points_offline) if c.cpd_points_offline is not None else None,
             c.max_participants,
-            trainer_name_by_id.get(c.trainer_id, '') if c.trainer_id else '',
+            # Порядок тренерів = порядок лекторів (перший -- головний):
+            # relationship уже відсортований за position, зʼєднуємо '; ',
+            # бо кома трапляється всередині самого ПІБ.
+            '; '.join(t.full_name for t in c.trainers),
             # Експортуємо ОСНОВНИЙ media-URL (не варіант) -> резолвиться назад
             # у реєстр за file_path на імпорті (_resolve_media_id).
             c.hero_media.url if c.hero_media else '',
@@ -839,13 +857,11 @@ def export_courses_xlsx(active: str = 'all') -> io.BytesIO:
     _apply_zebra(ws_f, len(FAQ_COLS), first_data_row=2, last_data_row=faq_last_row)
     _set_column_widths(ws_f, FAQ_COLS, FAQ_WIDTHS)
 
-    # Reference sheet з тренерами (вже з Table) + drop-down у колонці trainer_slug.
-    trainers_last_row = _add_trainers_sheet(wb)
-    _add_trainer_dropdown(
-        ws, 'trainer_slug', COURSE_COLS,
-        last_data_row=courses_last_row,
-        trainers_last_row=trainers_last_row,
-    )
+    # Reference sheet з тренерами (вже з Table): джерело точних написань
+    # ПІБ для клітинки зі списком. Без drop-down у самій колонці -- клітинка
+    # тримає кілька значень, а Excel вміє валідувати лише ОДНЕ значення з
+    # діапазону: залишений drop-down мовчки відхиляв би коректний ввід.
+    _add_trainers_sheet(wb)
 
     # Drop-down для типу заходу -- лише активні типи з довідника.
     _event_type_options = event_type_dropdown_options()
@@ -983,21 +999,11 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
             # «Семінар» замість «Курс» -- ризик визнано прийнятним.
             event_type = normalize_event_type(raw.get('event_type')) or 'seminar'
 
-            # Колонка "Тренер" може містити або slug (старі файли), або ПІБ
-            # (новий експорт + drop-down). Спершу шукаємо за slug, потім за
-            # full_name -- так покриваємо обидва формати.
-            trainer_raw = _str(raw.get('trainer_slug'))
-            trainer_id = None
-            if trainer_raw:
-                trainer_id = (
-                    trainer_id_by_slug.get(trainer_raw)
-                    or trainer_id_by_name.get(trainer_raw)
-                )
-                if trainer_id is None:
-                    raise ValueError(
-                        f'тренера {trainer_raw!r} не знайдено '
-                        f'(ні за slug, ні за ПІБ)'
-                    )
+            # Колонка "Тренери" -- перелік через ';'/',' (ПІБ і/або slug),
+            # у порядку запису: перший -- головний лектор.
+            trainer_ids = _resolve_trainer_ids(
+                raw.get('trainer_slugs'), trainer_id_by_slug, trainer_id_by_name,
+            )
 
             parsed = {
                 'id': _int(raw.get('id')),
@@ -1011,7 +1017,7 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
                 'cpd_points_online': _points_cell(raw.get('cpd_points_online')),
                 'cpd_points_offline': _points_cell(raw.get('cpd_points_offline')),
                 'max_participants': _int(raw.get('max_participants')),
-                'trainer_id': trainer_id,
+                'trainer_ids': trainer_ids,
                 'hero_image': _str(raw.get('hero_image')),
                 'card_image': _str(raw.get('card_image')),
                 'speaker_info': _str(raw.get('speaker_info')),
@@ -1053,7 +1059,7 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
             if existing is None:
                 plan.changes.append(CourseChange(slug=slug, action='create'))
             else:
-                diff = _diff_course(existing, parsed, trainer_id_by_slug)
+                diff = _diff_course(existing, parsed)
                 if diff:
                     plan.changes.append(CourseChange(
                         slug=slug, action='update', fields_changed=diff,
@@ -1139,7 +1145,7 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
     return plan
 
 
-def _diff_course(existing: Course, parsed: dict, trainer_id_by_slug: dict) -> list[str]:
+def _diff_course(existing: Course, parsed: dict) -> list[str]:
     """Повернути список імен змінених полів. Порівняння помилкостійке."""
     changed = []
     # hero_image/card_image тут НЕМАЄ свідомо: після переходу на медіа-реєстр
@@ -1149,7 +1155,7 @@ def _diff_course(existing: Course, parsed: dict, trainer_id_by_slug: dict) -> li
     # резолвленими id.
     fields = [
         'title', 'subtitle', 'short_description', 'description', 'event_type',
-        'cpd_points_online', 'cpd_points_offline', 'max_participants', 'trainer_id',
+        'cpd_points_online', 'cpd_points_offline', 'max_participants',
         'speaker_info', 'agenda', 'is_active', 'is_featured',
     ]
     for f in fields:
@@ -1157,6 +1163,10 @@ def _diff_course(existing: Course, parsed: dict, trainer_id_by_slug: dict) -> li
             (getattr(existing, f) in ('', None)) and (parsed[f] in ('', None))
         ):
             changed.append(f)
+    # Тренери -- порядок, а не множина: перший є головним лектором, тож
+    # переставлення без зміни складу теж має вважатись зміною.
+    if [t.id for t in existing.trainers] != parsed['trainer_ids']:
+        changed.append('trainer_slugs')
     if (existing.base_price or Decimal(0)) != parsed['base_price']:
         changed.append('base_price')
     if (existing.target_audience or []) != parsed['target_audience']:
@@ -1207,7 +1217,6 @@ def apply_courses_plan(plan: CoursesImportPlan) -> dict:
             course.cpd_points_online = p['cpd_points_online']
             course.cpd_points_offline = p['cpd_points_offline']
             course.max_participants = p['max_participants']
-            course.trainer_id = p['trainer_id']
             course.hero_media_id = _resolve_media_id(p['hero_image'])
             course.card_media_id = _resolve_media_id(p['card_image'])
             course.speaker_info = p['speaker_info']
@@ -1219,6 +1228,9 @@ def apply_courses_plan(plan: CoursesImportPlan) -> dict:
             for opt in OPTIONAL_COURSE_COLS:
                 if opt in p:
                     setattr(course, opt, p[opt])
+            # Порядок -- ознака ролі (перший = головний лектор); set_trainers
+            # сам подбає про flush нового курсу, якщо йому ще бракує id.
+            trainer_links.set_trainers(course, p['trainer_ids'])
 
         db.session.flush()
 
@@ -1269,7 +1281,7 @@ def apply_courses_plan(plan: CoursesImportPlan) -> dict:
 INSTANCE_COLS = [
     'id', 'course_slug', 'start_date', 'end_date', 'event_format',
     'price', 'cpd_points_online', 'cpd_points_offline', 'max_participants',
-    'trainer_slug', 'location', 'online_link', 'status',
+    'trainer_slugs', 'location', 'online_link', 'status',
 ]
 
 INSTANCE_LABELS = {
@@ -1282,7 +1294,7 @@ INSTANCE_LABELS = {
     'cpd_points_online': 'Бали БПР онлайн',
     'cpd_points_offline': 'Бали БПР офлайн',
     'max_participants': 'Макс. учасників',
-    'trainer_slug': 'Тренер',
+    'trainer_slugs': 'Тренери',
     'location': 'Локація',
     'online_link': 'Онлайн-лінк',
     'status': 'Статус',
@@ -1335,9 +1347,12 @@ def export_instances_xlsx(
     _style_header(ws, INSTANCE_COLS, INSTANCE_LABELS)
 
     course_slug_by_id = {c.id: c.slug for c in Course.query.all()}
-    trainer_name_by_id = {t.id: t.full_name for t in Trainer.query.all()}
 
-    q = CourseInstance.query.order_by(CourseInstance.start_date)
+    q = (
+        CourseInstance.query
+        .options(joinedload(CourseInstance.trainers))
+        .order_by(CourseInstance.start_date)
+    )
     if year:
         start = datetime(year, 1, 1, tzinfo=timezone.utc)
         end = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
@@ -1361,7 +1376,9 @@ def export_instances_xlsx(
             float(i.cpd_points_online) if i.cpd_points_online is not None else None,
             float(i.cpd_points_offline) if i.cpd_points_offline is not None else None,
             i.max_participants,
-            trainer_name_by_id.get(i.trainer_id, '') if i.trainer_id else '',
+            # Порядок тренерів = порядок лекторів (перший -- головний), той
+            # самий формат, що й у Курсах (див. export_courses_xlsx).
+            '; '.join(t.full_name for t in i.trainers),
             i.location or '',
             i.online_link or '',
             STATUS_LABEL.get(i.status, i.status or 'draft'),
@@ -1387,13 +1404,9 @@ def export_instances_xlsx(
     _set_column_widths(ws, INSTANCE_COLS, INSTANCE_WIDTHS)
     _apply_number_formats(ws, INSTANCE_COLS, instances_last_row)
 
-    # Reference sheet з тренерами + drop-down у колонці trainer_slug розкладу.
-    trainers_last_row = _add_trainers_sheet(wb)
-    _add_trainer_dropdown(
-        ws, 'trainer_slug', INSTANCE_COLS,
-        last_data_row=instances_last_row,
-        trainers_last_row=trainers_last_row,
-    )
+    # Reference sheet з тренерами -- як і в Курсах, без drop-down у самій
+    # колонці (список значень, а не одне) -- див. коментар у export_courses_xlsx.
+    _add_trainers_sheet(wb)
 
     # Drop-down для формату та статусу — українські labels.
     _add_inline_dropdown(
@@ -1493,19 +1506,11 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
                     f'status={status_raw!r} – допустимі: {allowed}'
                 )
 
-            # Колонка "Тренер" -- ПІБ (новий формат) або slug (старий).
-            trainer_raw = _str(raw.get('trainer_slug'))
-            trainer_id = None
-            if trainer_raw:
-                trainer_id = (
-                    trainer_id_by_slug.get(trainer_raw)
-                    or trainer_id_by_name.get(trainer_raw)
-                )
-                if trainer_id is None:
-                    raise ValueError(
-                        f'тренера {trainer_raw!r} не знайдено '
-                        f'(ні за slug, ні за ПІБ)'
-                    )
+            # Колонка "Тренери" -- перелік через ';'/',' (ПІБ і/або slug),
+            # у порядку запису: перший -- головний лектор.
+            trainer_ids = _resolve_trainer_ids(
+                raw.get('trainer_slugs'), trainer_id_by_slug, trainer_id_by_name,
+            )
 
             parsed = {
                 'id': _int(raw.get('id')),
@@ -1518,7 +1523,7 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
                 'cpd_points_online': _points_cell(raw.get('cpd_points_online')),
                 'cpd_points_offline': _points_cell(raw.get('cpd_points_offline')),
                 'max_participants': _int(raw.get('max_participants')),
-                'trainer_id': trainer_id,
+                'trainer_ids': trainer_ids,
                 'location': location,
                 'online_link': online_link,
                 'status': status,
@@ -1579,11 +1584,15 @@ def _diff_instance(existing: CourseInstance, parsed: dict) -> list[str]:
         if ensure_utc(getattr(existing, f)) != ensure_utc(parsed[f]):
             changed.append(f)
     for f in ('event_format', 'cpd_points_online', 'cpd_points_offline',
-              'max_participants', 'trainer_id', 'online_link', 'status'):
+              'max_participants', 'online_link', 'status'):
         ev = getattr(existing, f)
         pv = parsed[f]
         if (ev or None) != (pv or None):
             changed.append(f)
+    # Тренери -- порядок, а не множина: перший є головним лектором, тож
+    # переставлення без зміни складу теж має вважатись зміною.
+    if [t.id for t in existing.trainers] != parsed['trainer_ids']:
+        changed.append('trainer_slugs')
     if (existing.location or '') != (parsed['location'] or ''):
         changed.append('location')
     ep = existing.price
@@ -1620,10 +1629,12 @@ def apply_instances_plan(plan: InstancesImportPlan) -> dict:
             inst.cpd_points_online = p['cpd_points_online']
             inst.cpd_points_offline = p['cpd_points_offline']
             inst.max_participants = p['max_participants']
-            inst.trainer_id = p['trainer_id']
             inst.location = p['location']
             inst.online_link = p['online_link']
             inst.status = p['status']
+            # Порядок -- ознака ролі (перший = головний лектор); set_trainers
+            # сам подбає про flush нового проведення, якщо йому ще бракує id.
+            trainer_links.set_trainers(inst, p['trainer_ids'])
 
         db.session.commit()
         return {'ok': True, 'created': created, 'updated': updated}
