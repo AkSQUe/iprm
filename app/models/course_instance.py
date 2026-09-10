@@ -36,7 +36,7 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
     # Перевизначення виду заходу для конкретного проведення. Порожньо --
     # береться тип курсу (див. effective_event_type). Потрібне, коли той
     # самий курс раз проводять тренінгом, а раз -- фаховою школою.
-    event_type = db.Column(db.String(30))
+    event_type = db.Column(db.String(30), index=True)
 
     price = db.Column(db.Numeric(10, 2))
     # Бали БПР окремо за форматом участі -- те саме розмежування, що й у Course.
@@ -181,7 +181,10 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
         """Код виду заходу: власний, а якщо порожній -- курсовий."""
         if self.event_type:
             return self.event_type
-        return self.course.event_type if self.course else None
+        if self.course is None:
+            self._warn_orphan('event_type')
+            return None
+        return self.course.event_type
 
     def effective_title_for(self, lang=None):
         """Назва проведення мовою `lang`: власна тема, інакше назва курсу.

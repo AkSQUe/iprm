@@ -16,7 +16,7 @@ from app.admin.forms import CourseForm
 from app.admin.routes_translations import apply_inline_translations
 from app.extensions import db
 from app.models.course import Course
-from app.services import course_service, specialties
+from app.services import course_service, event_types, specialties
 
 audit_logger = logging.getLogger('audit')
 
@@ -43,10 +43,18 @@ _COURSE_STATES = {'active': 'Активні', 'inactive': 'Приховані'}
 def courses_list():
     from app.models.trainer import Trainer
 
+    # Перелік типів беремо з довідника, а не з констант: choice_arg звіряє
+    # значення з ним, тож ?event_type=<сміття> тихо падає в порожній фільтр,
+    # а не в порожній екран.
+    event_type_options = [
+        (code, row.name) for code, row in event_types.directory().items()
+    ]
     filters = {
         'q': _listing.text_arg('q'),
         'state': _listing.choice_arg('state', _COURSE_STATES),
         'trainer_id': _listing.int_arg('trainer_id'),
+        'event_type': _listing.choice_arg(
+            'event_type', {code for code, _ in event_type_options}),
     }
 
     # Той самий порядок, що в публічному каталозі, -- адмін бачить реальну
@@ -59,6 +67,8 @@ def courses_list():
         query = query.filter(Course.is_active.is_(filters['state'] == 'active'))
     if filters['trainer_id']:
         query = query.filter(Course.trainer_id == filters['trainer_id'])
+    if filters['event_type']:
+        query = query.filter(Course.event_type == filters['event_type'])
     courses = query.order_by(
         Course.is_pinned.desc(), Course.sort_order, Course.title,
     ).all()
@@ -79,6 +89,7 @@ def courses_list():
             (t.id, t.full_name)
             for t in Trainer.query.order_by(Trainer.full_name).all()
         ],
+        event_type_options=event_type_options,
     )
 
 

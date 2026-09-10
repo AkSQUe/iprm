@@ -27,7 +27,7 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     description = db.Column(db.Text)
     short_description = db.Column(db.String(500))
 
-    event_type = db.Column(db.String(30))
+    event_type = db.Column(db.String(30), index=True)
 
     # Зображення -- лише через медіа-реєстр (Фаза 6: legacy hero/card_image прибрано).
     hero_media_id = db.Column(
