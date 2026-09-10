@@ -240,12 +240,40 @@ def courses_import_preview(token):
         entity='courses',
         token=token,
         plan=plan,
+        errors_url=url_for('admin.courses_import_errors', token=token),
         apply_url=url_for('admin.courses_import_apply', token=token),
         cancel_url=url_for('admin.courses_import_cancel', token=token),
         back_url=url_for('admin.courses_list'),
         title='Імпорт курсів',
     )
 
+
+@admin_bp.route('/courses/import/errors/<token>')
+@permission_required('courses.import')
+def courses_import_errors(token):
+    """Копія завантаженого файлу з колонкою «Помилка» проти винних рядків.
+
+    Окремий маршрут, а не вкладення у сторінку: файл щоразу збирається
+    наново з того самого джерела, тож не може розійтися з тим, що людина
+    бачить у прев'ю.
+    """
+    path = xlsx_io.get_uploaded_path(token)
+    if path is None:
+        flash('Файл імпорту не знайдено або сесія застаріла', 'error')
+        return redirect(url_for('admin.courses_list'))
+
+    plan = xlsx_io.parse_courses_xlsx(path)
+    stream = xlsx_io.annotate_errors_xlsx(path, plan.row_errors)
+    if stream is None:
+        flash('Помилок рядків немає -- позначати нічого', 'info')
+        return redirect(url_for('admin.courses_import_preview', token=token))
+
+    return send_file(
+        stream,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='courses-errors.xlsx',
+    )
 
 @admin_bp.route('/courses/import/apply/<token>', methods=['POST'])
 @permission_required('courses.import')
@@ -370,12 +398,40 @@ def instances_import_preview(token):
         entity='instances',
         token=token,
         plan=plan,
+        errors_url=url_for('admin.instances_import_errors', token=token),
         apply_url=url_for('admin.instances_import_apply', token=token),
         cancel_url=url_for('admin.instances_import_cancel', token=token),
         back_url=url_for('admin.instances_list'),
         title='Імпорт розкладу',
     )
 
+
+@admin_bp.route('/instances/import/errors/<token>')
+@permission_required('instances.import')
+def instances_import_errors(token):
+    """Копія завантаженого файлу з колонкою «Помилка» проти винних рядків.
+
+    Окремий маршрут, а не вкладення у сторінку: файл щоразу збирається
+    наново з того самого джерела, тож не може розійтися з тим, що людина
+    бачить у прев'ю.
+    """
+    path = xlsx_io.get_uploaded_path(token)
+    if path is None:
+        flash('Файл імпорту не знайдено або сесія застаріла', 'error')
+        return redirect(url_for('admin.instances_list'))
+
+    plan = xlsx_io.parse_instances_xlsx(path)
+    stream = xlsx_io.annotate_errors_xlsx(path, plan.row_errors)
+    if stream is None:
+        flash('Помилок рядків немає -- позначати нічого', 'info')
+        return redirect(url_for('admin.instances_import_preview', token=token))
+
+    return send_file(
+        stream,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='instances-errors.xlsx',
+    )
 
 @admin_bp.route('/instances/import/apply/<token>', methods=['POST'])
 @permission_required('instances.import')

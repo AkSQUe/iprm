@@ -7,6 +7,7 @@
 сотнею сусідніх, ні в чому не винних рядків. Тести нижче фіксують, що
 кожне таке порушення лишається помилкою свого рядка.
 """
+import io
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from uuid import uuid4
@@ -278,9 +279,111 @@ def test_apply_failure_does_not_leak_database_internals(app, tmp_path, monkeypat
     def boom(*_a, **_kw):
         raise RuntimeError('relation "courses" column "secret_column" blew up')
 
-    monkeypatch.setattr(xlsx_io.db.session, 'commit', boom)
+    monkeypatch.setattr(db.session, 'commit', boom)
     result = xlsx_io.apply_courses_plan(plan)
 
     assert result['ok'] is False
     assert 'secret_column' not in result['reason']
     assert 'Дані не змінено' in result['reason']
+
+
+# --- цілісність пакета ----------------------------------------------------
+
+def test_package_facade_exposes_the_whole_public_surface():
+    """xlsx_io -- пакет із чотирьох доменних модулів, але імпортний шлях
+    лишився тим самим. Фасад перелічує імена вручну, тож ім'я, додане в
+    доменний модуль і забуте тут, зникло б для всіх споживачів -- і зникло б
+    мовчки, бо звичайний імпорт пакета від цього не падає."""
+    for name in (
+        'export_courses_xlsx', 'parse_courses_xlsx', 'apply_courses_plan',
+        'export_instances_xlsx', 'parse_instances_xlsx', 'apply_instances_plan',
+        'export_participants_xlsx', 'parse_participants_xlsx',
+        'apply_participants_plan',
+        'export_materials_template_xlsx', 'parse_materials_xlsx',
+        'export_material_reservations_xlsx',
+        'save_uploaded_xlsx', 'get_uploaded_path', 'cleanup_upload',
+        'COURSE_COLS', 'INSTANCE_COLS', 'PARTICIPANT_COLS',
+        'build_trainer_lookup', '_check_min_values', '_read_sheet',
+    ):
+        assert hasattr(xlsx_io, name), f'фасад не віддає {name}'
+
+
+def test_every_domain_module_resolves_its_own_names():
+    """Кожен доменний модуль мусить сам тягнути все, чим користується.
+    Поділ великого файлу двічі лишав назву невирішеною (_find_sheet,
+    _read_sheet): банери секцій у вихідному файлі стояли ВИЩЕ за код, і
+    спільні помічники опинялись усередині чужого домену."""
+    import ast
+    import builtins
+    import importlib
+
+    for mod in ('_common', 'courses', 'instances', 'participants', 'materials'):
+        module = importlib.import_module(f'app.services.xlsx_io.{mod}')
+        tree = ast.parse(io.open(module.__file__, encoding='utf-8').read())
+        local = set()
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+                local.add(node.name)
+            elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+                local.add(node.id)
+            elif isinstance(node, ast.arg):
+                local.add(node.arg)
+            elif isinstance(node, (ast.Import, ast.ImportFrom)):
+                for alias in node.names:
+                    local.add(alias.asname or alias.name.split('.')[0])
+            elif isinstance(node, ast.ExceptHandler) and node.name:
+                local.add(node.name)
+        used = {n.id for n in ast.walk(tree)
+                if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
+        unresolved = sorted(
+            n for n in used - local
+            if not hasattr(builtins, n) and not hasattr(module, n)
+        )
+        assert not unresolved, f'{mod}: нерозвʼязані імена {unresolved}'
+
+
+# --- повернення помилок у сам файл ----------------------------------------
+
+def test_errors_come_back_inside_a_copy_of_the_uploaded_file(app, tmp_path):
+    """Правити десять помилок, звіряючись зі списком на екрані, незручно
+    рівно настільки, наскільки зручно правити їх у самому рядку."""
+    from openpyxl import load_workbook
+
+    good = _course()
+    bad = _course()
+    path = _write_courses_file(tmp_path, [
+        _course_row(good),
+        _course_row(bad, max_participants=0),
+    ])
+    plan = xlsx_io.parse_courses_xlsx(path)
+    assert not plan.is_valid
+
+    # структурований перелік поруч із текстовим -- саме він і дозволяє
+    # позначити рядок у файлі
+    assert plan.row_errors, plan.errors
+    sheets = {sheet for sheet, _line, _msg in plan.row_errors}
+    assert sheets == {'courses'}
+
+    stream = xlsx_io.annotate_errors_xlsx(path, plan.row_errors)
+    assert stream is not None
+
+    ws = load_workbook(stream)['Курси']
+    header = [c.value for c in ws[1]]
+    assert xlsx_io.ERROR_COLUMN_LABEL in header
+    col = header.index(xlsx_io.ERROR_COLUMN_LABEL) + 1
+
+    # рядок 2 -- справний курс, рядок 3 -- винний
+    assert ws.cell(row=2, column=col).value is None
+    assert 'місць' in (ws.cell(row=3, column=col).value or '')
+
+
+def test_annotate_returns_nothing_when_there_is_nothing_to_annotate(app, tmp_path):
+    path = _write_courses_file(tmp_path, [_course_row(_course())])
+    assert xlsx_io.annotate_errors_xlsx(path, []) is None
+
+
+def test_annotate_never_breaks_the_main_error_flow(app, tmp_path):
+    """Це допоміжна зручність. Якщо файл уже не читається, показ помилок на
+    сторінці має лишитись цілим, а не впасти разом із нею."""
+    missing = tmp_path / 'no-such-file.xlsx'
+    assert xlsx_io.annotate_errors_xlsx(missing, [('courses', 3, 'щось')]) is None

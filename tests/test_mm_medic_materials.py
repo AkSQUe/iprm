@@ -26,6 +26,7 @@ from app.models.material_kit import MaterialKit, MaterialKitItem
 from app.models.user import User
 from app.services import material_reservation_service as mrs
 from app.services import xlsx_io
+from app.services.xlsx_io import materials
 from app.services.mm_medic_client import MMMedicClient, _sign, MMConfigError
 
 
@@ -33,7 +34,10 @@ from app.services.mm_medic_client import MMMedicClient, _sign, MMConfigError
 
 def test_export_then_parse_ignores_blank_and_zero_rows(monkeypatch):
     # Avoid any network fetch for embedded thumbnails in the unit test.
-    monkeypatch.setattr(xlsx_io, '_download_thumb', lambda *a, **k: None)
+    # Патчимо в модулі, який ФУНКЦІЮ ВИКЛИКАЄ, а не на фасаді пакета:
+    # export_materials_template_xlsx шукає ім'я у власному просторі
+    # xlsx_io.materials, тож підміна на xlsx_io до неї не доходить.
+    monkeypatch.setattr(materials, '_download_thumb', lambda *a, **k: None)
     catalog = [
         {'sku': 'AAA-1', 'name': 'Голка', 'available': 50, 'image': 'https://x/y.jpg', 'is_consumable': True},
         {'sku': 'BBB-2', 'name': 'Пробірка', 'available': 12, 'image': None, 'is_consumable': True},
@@ -79,7 +83,7 @@ def test_export_embeds_image_when_available(monkeypatch):
         buf.seek(0)
         return buf
 
-    monkeypatch.setattr(xlsx_io, '_download_thumb', _fake_thumb)
+    monkeypatch.setattr(materials, '_download_thumb', _fake_thumb)
     catalog = [
         {'sku': 'IMG-1', 'name': 'Товар', 'available': 5, 'image': 'https://x/a.png'},
         {'sku': 'IMG-2', 'name': 'Без фото', 'available': 3, 'image': None},
