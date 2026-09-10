@@ -19,6 +19,29 @@ _cached_assets_version = None
 _CERTDATA_POPUP_MUTED = frozenset({'auth', 'registration', 'payments', 'quiz'})
 
 
+# Що саме входить у ключ ?v=assets_version: (тека в static/, розширення).
+#
+# ПРАВИЛО: тут мусить бути КОЖНА тека, файли якої десь у шаблонах підключені
+# з `?v={{ assets_version }}`. Файл, підключений цим ключем, але не врахований
+# тут, залипає в браузері назавжди: nginx віддає /static/ з `expires 30d;
+# Cache-Control: public, immutable`, і поки ключ не зрушить, браузер не
+# перепитує. Саме так 15 нових іконок сайдбару малювались порожнечею -- теки
+# fonts/ у розрахунку не було, і перегенерація субсету ключа не міняла.
+#
+# Перелік НЕ розширюється «про запас»: ключ спільний, тож зайва тека зриває
+# кеш усього CSS і JS від кожної правки в ній. static/images/ цілком -- 7 МБ
+# рідко пов'язаних із версткою картинок; входить лише images/main, який
+# справді підключений ключем. Синхронність із шаблонами тримає
+# tests/test_assets_version.py::test_every_versioned_folder_is_hashed.
+VERSIONED_ASSET_DIRS = (
+    ('css', ('.css',)),
+    ('js', ('.js',)),
+    ('fonts', ('.woff2', '.woff', '.ttf', '.otf')),
+    ('images/main', ('.webp', '.png', '.jpg', '.jpeg', '.svg', '.avif')),
+    ('video', ('.mp4', '.webm')),
+)
+
+
 def get_assets_version(static_folder):
     """Ключ ?v= для версійованої статики -- хеш ВМІСТУ файлів, а не їхніх mtime.
 
@@ -28,14 +51,13 @@ def get_assets_version(static_folder):
     після кожного деплою наново тягнув усі CSS і JS. За вмістом ключ міняється
     лише тоді, коли щось справді змінилось.
 
-    133 файли / 1.2 МБ читаються один раз на першому запиті й лягають у кеш
-    процесу, тож на подальші запити це не впливає.
+    Читається один раз на першому запиті (близько 3 МБ) і лягає в кеш процесу,
+    тож на подальші запити це не впливає. Перелік тек -- VERSIONED_ASSET_DIRS
+    вище, там же правило, за яким він поповнюється.
 
-    ШРИФТИ ТУТ ОБОВ'ЯЗКОВІ. Субсет іконок підключений тим самим
-    ?v={{ assets_version }} (partials/_icon_font.html), і поки теки fonts/ у
-    розрахунку не було, його перегенерація без правки css/js ключа не рухала:
-    браузер 30 днів віддавав зі свого immutable-кешу старий субсет, і кожна
-    щойно додана іконка малювалась порожнечею. Гард -- tests/test_assets_version.py.
+    Обхід рекурсивний: у ключ входить і те, що лежить у підтеках (images/main
+    -- сама вже підтека). У хеш іде шлях ВІДНОСНО static_folder, а не саме
+    ім'я файлу: інакше однойменні файли з різних тек не розрізнялись би.
     """
     global _cached_assets_version
     if _cached_assets_version:
@@ -44,29 +66,27 @@ def get_assets_version(static_folder):
     digest = hashlib.md5()
     seen = False
 
-    # (тека, розширення) -- усе, що віддається з ключем ?v=assets_version.
-    versioned = (
-        ('css', ('.css',)),
-        ('js', ('.js',)),
-        ('fonts', ('.woff2', '.woff', '.ttf', '.otf')),
-    )
-    for subfolder, extensions in versioned:
-        folder = os.path.join(static_folder, subfolder)
+    for subfolder, extensions in VERSIONED_ASSET_DIRS:
+        folder = os.path.join(static_folder, *subfolder.split('/'))
         if not os.path.isdir(folder):
             continue
-        for name in sorted(os.listdir(folder)):
-            if not name.endswith(extensions):
-                continue
-            try:
-                with open(os.path.join(folder, name), 'rb') as fh:
-                    digest.update(name.encode())
-                    for chunk in iter(lambda: fh.read(65536), b''):
-                        digest.update(chunk)
-            except OSError:
-                # Файл міг зникнути просто під rsync-деплоєм. Пропускаємо:
-                # менш точний ключ кешу краще за 500 на всьому сайті.
-                continue
-            seen = True
+        for current, dirnames, filenames in os.walk(folder):
+            dirnames.sort()
+            for name in sorted(filenames):
+                if not name.lower().endswith(extensions):
+                    continue
+                path = os.path.join(current, name)
+                key = os.path.relpath(path, static_folder).replace(os.sep, '/')
+                try:
+                    with open(path, 'rb') as fh:
+                        digest.update(key.encode())
+                        for chunk in iter(lambda: fh.read(65536), b''):
+                            digest.update(chunk)
+                except OSError:
+                    # Файл міг зникнути просто під rsync-деплоєм. Пропускаємо:
+                    # менш точний ключ кешу краще за 500 на всьому сайті.
+                    continue
+                seen = True
 
     _cached_assets_version = digest.hexdigest()[:8] if seen else '1.0'
     return _cached_assets_version
