@@ -52,6 +52,29 @@
   margin: 0 auto;
 }
 
+/* Підпис міста над групою дат -- з'являється, коли проведень більше п'яти
+   (services/course_listing.group_by_location). Тримає ту саму ширину, що й
+   перелік під ним, інакше підпис висить не над своїми картками. */
+.iprm-schedule__group-title {
+  max-width: 960px;
+  margin: 32px auto 12px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--iprm-text-light);
+}
+
+.iprm-schedule__group-title:first-of-type {
+  margin-top: 0;
+}
+
+/* Рядок про набрані групи під переліком. */
+.iprm-schedule__note {
+  max-width: 960px;
+  margin: 16px auto 0;
+  font-size: 0.9375rem;
+  color: var(--iprm-text-light);
+}
+
 /* `display: flex` на .iprm-schedule перевизначає браузерне правило для
    атрибута [hidden]. Повертаємо очікувану поведінку для обох панелей. */
 .iprm-schedule[hidden],
@@ -355,21 +378,6 @@
   margin-top: auto;
   justify-content: center;
   text-align: center;
-}
-
-/* Закритий продаж: неактивна плашка замість кнопки. */
-.iprm-format-card__cta--closed {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: auto;
-  padding: 12px 24px;
-  border-radius: var(--iprm-radius-pill);
-  background: var(--iprm-card-bg);
-  color: var(--iprm-text-light);
-  font-size: 0.9375rem;
-  font-weight: 600;
-  cursor: not-allowed;
 }
 
 .iprm-schedule__action {

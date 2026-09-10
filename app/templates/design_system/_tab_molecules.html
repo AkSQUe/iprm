@@ -708,6 +708,7 @@
       <p class="ds-label">Components</p>
       <h2 class="ds-title">Schedule (найближчі дати)</h2>
       <div class="ds-demo">
+        <h3 class="iprm-schedule__group-title">Київ</h3>
         <div class="iprm-schedule">
           <div class="iprm-schedule__item">
             <div class="iprm-schedule__date">
@@ -751,8 +752,10 @@
             </div>
           </div>
         </div>
+        <p class="iprm-schedule__note">ще 1 групу вже набрано</p>
       </div>
-      <p class="ds-hint">.iprm-schedule__tag--warning — коли seats_left ≤ site_settings.seats_low_threshold. Друге проведення — стан "закрито" (registration_open=false): дата TBD, дій нема, лише badge--draft. Живе в courses (детальна сторінка) і partials/_course_schedule.html</p>
+      <p class="ds-hint">.iprm-schedule__tag--warning — коли seats_left ≤ site_settings.seats_low_threshold. Друге проведення — стан "закрито" (registration_open=false): дата TBD, дій нема, лише badge--draft. Живе на /courses (список і календар); на сторінці курсу стану "закрито" немає — partials/_course_schedule.html показує лише відкриті проведення</p>
+      <p class="ds-hint">.iprm-schedule__group-title — підпис міста над групою; з'являється лише коли дат більше п'яти (services/course_listing.group_by_location), інакше перелік плоский. .iprm-schedule__note — рядок про заплановані, але вже набрані групи під переліком</p>
     </div>
   </div>
 

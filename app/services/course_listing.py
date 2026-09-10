@@ -176,3 +176,44 @@ def gather_active_courses(featured_first=False):
     ubc = upcoming_by_course(courses)
     cap = capacity_map([c.id for c in courses])
     return courses, ubc, cap, open_from_capacity(cap)
+
+
+# Понад скільки дат плоский перелік перестає читатись і його варто
+# розкласти за містами. П'ять -- висота, яку видно без прокрутки на
+# типовому ноутбуці; далі око вже шукає своє місто, а не наступну дату.
+GROUPING_THRESHOLD = 5
+
+
+def group_by_location(instances, threshold=GROUPING_THRESHOLD):
+    """[(підпис міста, [проведення])] або None, якщо групувати не треба.
+
+    None -- це «показуй плоским списком», і саме None, а не одна група:
+    шаблону потрібно розрізняти «групи є» і «груп немає», інакше він
+    надрукував би підпис єдиної групи над звичайним переліком.
+
+    Групи впорядковані за найранішою датою всередині, тож найближче
+    проведення лишається у верхній групі. Всередині групи порядок
+    вхідного списку зберігається (він уже хронологічний).
+    """
+    if len(instances) <= threshold:
+        return None
+
+    from flask_babel import gettext
+    from app.services.city_glossary import localize_location
+
+    groups = {}
+    for inst in instances:
+        if inst.event_format == 'online':
+            label = gettext('Онлайн')
+        elif inst.location:
+            label = localize_location(inst.location)
+        else:
+            label = gettext('Місце уточнюється')
+        groups.setdefault(label, []).append(inst)
+
+    # Проведення без дати сортуються останніми -- так само, як у переліку.
+    def _earliest(pair):
+        dates = [ensure_utc(i.start_date) for i in pair[1] if i.start_date]
+        return min(dates) if dates else datetime.max.replace(tzinfo=timezone.utc)
+
+    return sorted(groups.items(), key=_earliest)

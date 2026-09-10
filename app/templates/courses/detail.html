@@ -55,11 +55,14 @@
 {% if course.card_src %}{% set _discard = _images.append(abs_url(course.card_src)) %}{% endif %}
 {% for media in gallery or [] %}{% set _discard = _images.append(abs_url(media.url)) %}{% endfor %}
 {% if _images %}{% set _discard = course_schema.update({'image': _images}) %}{% endif %}
+{# availability за фактом відкритих проведень, а не константою: InStock без
+   жодної дати, на яку можна записатись, -- обіцянка, якої сторінка не
+   виконує, і Google карає саме за розходження розмітки з видимим вмістом. #}
 {% if course.base_price and course.base_price > 0 %}{% set _discard = course_schema.update({'offers': {
   '@type': 'Offer',
   'price': course.base_price|string,
   'priceCurrency': 'UAH',
-  'availability': 'https://schema.org/InStock',
+  'availability': 'https://schema.org/InStock' if schedule_instances else 'https://schema.org/SoldOut',
   'url': course_url
 }}) %}{% endif %}
 {# Максимум із заповнених форматів, а не "офлайн, якщо є": `or` віддає
@@ -126,12 +129,10 @@
         data-meta-param-currency="UAH"
         {% endif %}></span>
 
-  {# Найближче проведення з активними тарифами -- джерело блоку "Формат участі". #}
-  {% set ns_fmt = namespace(inst=None) %}
-  {% for inst in upcoming_instances %}
-    {% if ns_fmt.inst is none and inst.active_tariffs %}{% set ns_fmt.inst = inst %}{% endif %}
-  {% endfor %}
-  {% set format_inst = ns_fmt.inst %}
+  {# format_inst приходить із courses/routes.py -- шаблон його більше не
+     перераховує. Копія тут була не зайвим рядком, а другим правилом:
+     маршрут звузив вибір до ВІДКРИТИХ проведень, а цикл далі брав перше
+     з тарифами, і блок "Формат участі" пропонував ціни набраної групи. #}
 
   {% if referral_inviter %}
   <div class="referral-invite-banner" role="note" data-referral-banner hidden>
@@ -141,23 +142,25 @@
   {% endif %}
 
   {# --- Найближче ВІДКРИТЕ проведення: джерело чипів, місць і локації.
-         Відрізняється від format_inst: там потрібні активні тарифи, тут --
-         відкритий продаж. Часто це те саме проведення, але не завжди. --- #}
-  {% set ns_open = namespace(inst=None, seats=None) %}
-  {% for inst in upcoming_instances %}
-    {% if ns_open.inst is none and inst.id in open_instance_ids %}
-      {% set ns_open.inst = inst %}
-      {% set ns_open.seats = seats_left_map.get(inst.id) %}
-    {% endif %}
-  {% endfor %}
-  {% set open_inst = ns_open.inst %}
-  {% set seats_left = ns_open.seats %}
-  {% set capacity = (open_inst.max_participants if open_inst else none) or course.max_participants %}
+         Відрізняється від format_inst: там потрібні ще й активні тарифи.
+         Часто це те саме проведення, але не завжди.
 
-  {% set _prices = upcoming_instances | map(attribute='effective_price') | select | list %}
+         schedule_instances уже відсортовані хронологічно й містять лише
+         відкриті, тож перший елемент -- і є найближче відкрите. --- #}
+  {% set open_inst = schedule_instances[0] if schedule_instances else none %}
+  {% set seats_left = seats_left_map.get(open_inst.id) if open_inst else none %}
+  {# effective_max_participants, а не своя пара or-ів: правило "місткість
+     проведення, інакше курсу" належить моделі й мусить бути одним. #}
+  {% set capacity = open_inst.effective_max_participants if open_inst else course.max_participants %}
+
+  {# Ціна -- лише по ВІДКРИТИХ проведеннях. З upcoming_instances у hero
+     потрапляла ціна набраної групи: сторінка обіцяла "від 4 000" за дату,
+     якої відвідувач у переліку вже не бачив. Немає відкритих -- базова
+     ціна курсу, вона не прив'язана до конкретного проведення. #}
+  {% set _prices = schedule_instances | map(attribute='effective_price') | select | list %}
   {% set min_price = (_prices | min) if _prices else course.base_price %}
   {% set price_is_from = (_prices | unique | list | length) > 1
-                         or (upcoming_instances | selectattr('price_is_from') | list | length) > 0 %}
+                         or (schedule_instances | selectattr('price_is_from') | list | length) > 0 %}
 
   {# Якорі секцій живуть у глобальній шапці (partials/header.html); список
      будує роут -- шапка рендериться раніше за цей блок. #}
@@ -231,7 +234,7 @@
          --primary (фіолетова) зливалася б із тлом. #}
       {% if format_inst %}
       <a href="#formats" class="apple-btn apple-btn--accent">{{ _('Забронювати місце') }}</a>
-      {% elif upcoming_instances %}
+      {% elif schedule_instances %}
       <a href="#schedule" class="apple-btn apple-btn--accent">{{ _('Найближчі дати') }}</a>
       {% else %}
       <a href="#request" class="apple-btn apple-btn--accent">{{ _('Залишити запит') }}</a>
@@ -286,6 +289,12 @@
   </section>
   {% endif %}
 
+  {# ===== SCHEDULE =====
+     Одразу за повним описом (пункт 7 ТЗ): пояснивши, ЩО за курс, сторінка
+     мусить тут-таки показати, КОЛИ на нього можна прийти. У підвалі, де
+     блок стояв раніше, до нього дочитували одиниці. #}
+  {% include 'partials/_course_schedule.html' %}
+
   <!-- ===== ROI CALCULATOR ===== -->
   {% include 'partials/_course_roi.html' %}
 
@@ -327,8 +336,11 @@
 
   <!-- ===== LEAD FORM ===== -->
   {% set lead_action = url_for('courses.course_request', slug=course.slug) %}
+  {# Немає жодної відкритої дати -> єдиний вихід із блоку дат веде сюди, і
+     заявка насправді про нову дату, а не про програму. #}
+  {% set lead_topic = 'new_date' if not schedule_instances else none %}
   {% set lead_title %}
-    {% if upcoming_instances %}{{ _('Залиште контакт — надішлемо <span class="apple-gradient-text">повну програму</span>') }}
+    {% if schedule_instances %}{{ _('Залиште контакт — надішлемо <span class="apple-gradient-text">повну програму</span>') }}
     {% else %}{{ _('Залиште запит <span class="apple-gradient-text">на курс</span>') }}{% endif %}
   {% endset %}
   {% set lead_lead = _('Без нав’язування. Ми уточнимо ваш досвід, відповімо на запитання та надішлемо деталі у зручний спосіб.') %}
@@ -364,9 +376,9 @@
       {# Другорядна дія ховається на найвужчих екранах (CSS), тому основна
          завжди йде другою -- щоб лишалась праворуч під великим пальцем. #}
       <a href="#request" class="iprm-sticky-cta__btn iprm-sticky-cta__btn--ghost">{{ _('Програма') }}</a>
-      <a href="{% if format_inst %}#formats{% elif upcoming_instances %}#schedule{% else %}#request{% endif %}"
+      <a href="{% if format_inst %}#formats{% elif schedule_instances %}#schedule{% else %}#request{% endif %}"
          class="iprm-sticky-cta__btn">
-        {% if upcoming_instances %}{{ _('Реєстрація') }}{% else %}{{ _('Залишити запит') }}{% endif %}
+        {% if schedule_instances %}{{ _('Реєстрація') }}{% else %}{{ _('Залишити запит') }}{% endif %}
       </a>
     </div>
   </div>

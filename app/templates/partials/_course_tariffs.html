@@ -1,9 +1,11 @@
 {# Формат участі -- тарифи найближчого проведення.
 
    Лише офлайн-курс: в онлайн-курсу тарифів немає, там блок купівлі.
-   Очікує format_inst і open_instance_ids (див. courses/routes.py). #}
+   Очікує format_inst (див. courses/routes.py).
+
+   Стану "продаж завершено" тут немає: format_inst береться зі
+   schedule_instances, тобто вже лише з відкритих проведень. #}
   {% if format_inst %}
-  {% set fmt_open = format_inst.id in open_instance_ids %}
   {% set fmt_date = format_inst.start_date.strftime('%d.%m.%Y') if format_inst.start_date else '' %}
   {% set fmt_tariffs = format_inst.active_tariffs %}
   <section id="formats" class="iprm-section apple-section-gray" aria-labelledby="formats-title">
@@ -35,14 +37,10 @@
             </ul>
           </div>
           {% endif %}
-          {% if fmt_open %}
           <a href="{{ url_for('registration.register_instance', instance_id=format_inst.id, tariff=tariff.id) }}"
              class="apple-btn apple-btn--primary iprm-format-card__cta">
             {% if fmt_date %}{% trans date=fmt_date %}Зареєструватися на {{ date }}{% endtrans %}{% else %}{{ _('Зареєструватися') }}{% endif %}
           </a>
-          {% else %}
-          <span class="iprm-format-card__cta iprm-format-card__cta--closed">{{ _('Продаж завершено') }}</span>
-          {% endif %}
         </article>
         {% endfor %}
       </div>
