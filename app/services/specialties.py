@@ -22,11 +22,24 @@ CODE_MAX_LENGTH = 60
 _CACHE_ATTR = '_specialties_catalog'
 
 
+# Варіанти апострофа, що трапляються в назвах довідника ("Громадське
+# здоров’я") і в старому вільному тексті курсу, набраному з клавіатури
+# ("здоров'я"): U+2019 (права одинарна лапка), U+02BC (модифікатор-апостроф)
+# і ASCII U+0027. Без зведення до одного символу normalize_name() не бачить
+# у них збігу, і бекфіл міграції заводить рядок-дублікат замість того, щоб
+# впізнати вже наявний код довідника.
+_APOSTROPHE_VARIANTS = ('’', 'ʼ')
+_APOSTROPHE_CANONICAL = "'"
+
+
 def normalize_name(text):
     """Форма для звірки: без крайніх пробілів, стиснуті внутрішні, нижній
-    регістр. Такою звіряється старий вільний текст курсу з назвами
-    довідника."""
-    return ' '.join((text or '').split()).lower()
+    регістр, один варіант апострофа. Такою звіряється старий вільний текст
+    курсу з назвами довідника."""
+    text = text or ''
+    for variant in _APOSTROPHE_VARIANTS:
+        text = text.replace(variant, _APOSTROPHE_CANONICAL)
+    return ' '.join(text.split()).lower()
 
 
 def specialty_code(name, taken=()):
@@ -80,29 +93,41 @@ def _order_key(row):
     return (position, row.sort_order, row.name)
 
 
-def names(codes):
-    """Назви активною мовою в порядку номенклатури. Невідомий код -- пропуск."""
+def names(codes, lang=None):
+    """Назви в порядку номенклатури. Невідомий код -- пропуск.
+
+    lang=None -- активна мова запиту (прев'ю адмінки, вибір форми). Знімок
+    сертифіката передає мову явно (app.i18n.DEFAULT_LANGUAGE): виданий
+    документ не має залежати від локалі того, хто натиснув кнопку видачі.
+    """
     known = catalog()
     rows = [known[code] for code in (codes or []) if code in known]
-    return [row.t('name') for row in sorted(rows, key=_order_key)]
+    return [row.t('name', lang=lang) for row in sorted(rows, key=_order_key)]
 
 
-def line(codes):
+def line(codes, lang=None):
     """Рядок для сертифіката: назви через кому. Порожньо -- None."""
-    return ', '.join(names(codes)) or None
+    return ', '.join(names(codes, lang=lang)) or None
 
 
 def choices(current=None):
-    """[(підпис розділу, [(code, назва), ...])] для SelectMultipleField.
+    """{підпис розділу: [(code, назва), ...]} для SelectMultipleField.
 
     Активні рядки ПЛЮС ті коди, що вже збережені (current), навіть якщо рядок
     деактивований. Інакше WTForms відхилить сабміт із "Not a valid choice", і
     адміністратор не збереже жодної правки старого курсу -- навіть правки
     заголовка, що спеціальностей не стосується.
+
+    Віддає ГОТОВИЙ dict, а не список пар: WTForms 3.2 розпізнає групи
+    (<optgroup>) лише в choices-словнику -- список кортежів (підпис, [...])
+    воно трактує як плоскі (значення, підпис) і звірка на валідність
+    ламається. Виклик лишається `form.bpr_specialty_codes.choices =
+    specialties.choices(...)` -- без зайвого `dict(...)` на кожному
+    виклику.
     """
     from app.models.specialty import SECTIONS
     keep = set(current or ())
-    groups = []
+    groups = {}
     for section, label in SECTIONS:
         rows = sorted(
             (row for row in catalog().values()
@@ -110,7 +135,7 @@ def choices(current=None):
             key=_order_key,
         )
         if rows:
-            groups.append((label, [(row.code, row.t('name')) for row in rows]))
+            groups[label] = [(row.code, row.t('name')) for row in rows]
     return groups
 
 
@@ -119,11 +144,15 @@ def valid_codes():
     return set(catalog())
 
 
-def effective_codes(instance):
-    """Коди проведення або, якщо не задані, коди його курсу."""
-    if instance is None:
-        return []
-    return instance.effective_specialty_codes
+def clean_codes(data):
+    """Список кодів без порожніх рядків.
+
+    WTForms відхиляє форгнутий POST із порожнім значенням через
+    pre_validate ("Not a valid choice"), але форма -- не єдиний шлях
+    запису: цей фільтр -- другий, дешевий захист прямо біля присвоєння
+    полю моделі, щоб порожній код ніколи не ліг у bpr_specialty_codes.
+    """
+    return [code for code in (data or []) if code]
 
 
 def usage():

@@ -19,6 +19,7 @@ from flask import current_app, render_template
 from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
+from app.i18n import DEFAULT_LANGUAGE
 from app.models.certificate import Certificate
 from app.models.mixins import utcnow
 from app.services import specialties as specialties_service
@@ -195,8 +196,14 @@ def _event_snapshot(registration):
     trainer = instance.effective_trainer if instance else None
     lecturer = trainer.full_name if trainer else None
     signature = (trainer.signature or '').strip() if trainer and trainer.signature else None
+    # Мова -- фіксовано українська (DEFAULT_LANGUAGE), а не активна локаль
+    # запиту: знімок сертифіката видається один раз, і документ не має
+    # залежати від того, на якій мові сайту учасник опинився в момент
+    # видачі (event_title поряд бере сирий course.title -- теж без
+    # локалізації, для узгодженості).
     specialties_line = specialties_service.line(
         instance.effective_specialty_codes if instance else [],
+        lang=DEFAULT_LANGUAGE,
     )
     event_type = course.event_type_label.lower() if course and course.event_type else None
     place = (instance.location or '').strip() if instance and instance.location else None
@@ -764,7 +771,11 @@ def issue_lecturer_certificate(instance, issued_by=None):
         event_title=course.title if course else (instance.title or 'Захід'),
         event_date=event_date,
         cpd_points=points,
-        specialties=specialties_service.line(instance.effective_specialty_codes),
+        # DEFAULT_LANGUAGE -- та сама причина, що й у _event_snapshot вище:
+        # знімок не має залежати від локалі того, хто спричинив видачу.
+        specialties=specialties_service.line(
+            instance.effective_specialty_codes, lang=DEFAULT_LANGUAGE,
+        ),
         event_type_label=event_type,
         event_place=(instance.location or '').strip() or None,
         issued_at=issued_at,

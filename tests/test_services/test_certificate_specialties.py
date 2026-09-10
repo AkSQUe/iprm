@@ -151,6 +151,26 @@ def test_snapshot_comes_from_effective_codes_in_directory_order(app, _no_pdf):
     assert cert.specialties == 'Алергологія, Кардіологія'
 
 
+def test_snapshot_ignores_visitor_locale(app, _no_pdf):
+    """Мова знімка -- завжди українська, незалежно від локалі, з якої
+    учасник спричинив видачу (наприклад, склав тест на /ru/). Офіційний
+    документ БПР не можна видавати з мовно-мішаним рядком спеціальностей."""
+    row = Specialty(code='alerholohiia', name='Алергологія', section='medical',
+                    sort_order=2)
+    db.session.add(row)
+    db.session.commit()
+    row.set_translation('ru', 'name', 'Аллергология')
+    db.session.commit()
+    reg = _registration_with_codes(['alerholohiia'])
+
+    with app.test_request_context('/ru/'):
+        from flask import g
+        g.lang_code = 'ru'
+        cert = certificate_service.issue_certificate(reg)
+
+    assert cert.specialties == 'Алергологія'
+
+
 def test_renaming_directory_row_after_issue_does_not_change_snapshot(app, _no_pdf):
     """Знімок -- це знімок: перейменування рядка довідника ПІСЛЯ видачі не
     повинно змінювати вже виданий сертифікат."""
