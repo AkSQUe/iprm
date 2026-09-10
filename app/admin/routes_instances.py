@@ -56,9 +56,7 @@ def _populate_choices(form, preselected_course_id=None, instance=None):
     # цього проведення ніколи не було. current мусить бути тим, що реально
     # записано зараз (як і в course_edit -- current=course.bpr_specialty_codes).
     instance_codes = instance.bpr_specialty_codes if instance else None
-    # dict(), не список кортежів: WTForms розпізнає групи (<optgroup>) лише
-    # у choices-словнику -- див. коментар у routes_courses.py.
-    form.bpr_specialty_codes.choices = dict(specialties.choices(current=instance_codes))
+    form.bpr_specialty_codes.choices = specialties.choices(current=instance_codes)
 
 
 _INSTANCES_PER_PAGE = 25
