@@ -156,6 +156,16 @@
           {% else %}
           <strong>&ndash;</strong>
           {% endif %}
+          {# Вид заходу БПР -- другим поверхом, а не окремою колонкою: таблиця
+             вже стоїть на межі ширини (page-admin-instances.css), і восьма
+             колонка повернула б горизонтальну прокрутку, заради усунення
+             якої той файл і заведено. Друкуємо ФАКТИЧНИЙ вид дати, хай
+             успадкований; перевизначений позначаємо, бо саме відхилення від
+             курсу і треба помітити оком. #}
+          {% if inst.event_type_label %}
+          <small class="admin-text-muted admin-subline"
+                 title="{% if inst.event_type %}Вид заходу перевизначено для цієї дати{% else %}Вид заходу успадковано від курсу{% endif %}">{{ inst.event_type_label }}{% if inst.event_type %} *{% endif %}</small>
+          {% endif %}
         </td>
         <td>
           <form method="POST"

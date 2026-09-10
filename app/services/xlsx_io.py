@@ -196,6 +196,9 @@ INSTANCE_WIDTHS = {
     'start_date': 22,
     'end_date': 22,
     'event_format': 14,
+    # Найдовша назва виду («Фахова (тематична) школа») -- 24 символи, і саме
+    # вона, а не мітка шапки, задає ширину цієї колонки.
+    'event_type': 26,
     'price': 14,
     'cpd_points_online': 14,
     'cpd_points_offline': 14,
@@ -640,7 +643,8 @@ def _add_trainers_sheet(wb) -> int:
 
 def _add_inline_dropdown(ws, column_key: str, columns: list[str],
                          options: list[str], last_data_row: int,
-                         title: str = '', hint: str = '') -> None:
+                         title: str = '', hint: str = '',
+                         allow_blank: bool = False) -> None:
     """Прикріпити drop-down зі статичним списком значень.
 
     Використовується для невеликих enum-полів (event_type, формат, статус).
@@ -674,7 +678,10 @@ def _add_inline_dropdown(ws, column_key: str, columns: list[str],
     dv = DataValidation(
         type='list',
         formula1=formula,
-        allow_blank=False,
+        # За замовчуванням порожньо -- помилка: у більшості enum-колонок
+        # порожня клітинка не означає нічого. Кличний виняток -- вид заходу
+        # в розкладі, де порожньо це «як у курсу».
+        allow_blank=allow_blank,
         showDropDown=False,  # False у XML = ПОКАЗУВАТИ стрілочку
         errorStyle='stop',
         error=error_message,
@@ -1283,13 +1290,21 @@ def apply_courses_plan(plan: CoursesImportPlan) -> dict:
 
 INSTANCE_COLS = [
     'id', 'course_slug', 'topic', 'start_date', 'end_date', 'event_format',
-    'price', 'cpd_points_online', 'cpd_points_offline', 'max_participants',
-    'trainer_slug', 'location', 'online_link', 'status',
+    'event_type', 'price', 'cpd_points_online', 'cpd_points_offline',
+    'max_participants', 'trainer_slug', 'location', 'online_link', 'status',
 ]
 
-# Колонка, додана після того, як менеджери вже мали на руках експорти:
-# її відсутність лишає тему як у БД, а не занулює (як у курсів).
-OPTIONAL_INSTANCE_COLS = ('topic',)
+# Колонки, додані після того, як менеджери вже мали на руках експорти:
+# їх відсутність лишає значення як у БД, а не занулює (як у курсів).
+OPTIONAL_INSTANCE_COLS = ('topic', 'event_type')
+
+# Розбір опційних колонок. Вид заходу -- не вільний текст: клітинку треба
+# звести до коду довідника (приймаючи і код, і українську назву), а сміття
+# завалити помилкою рядка, а не тихо записати.
+_OPTIONAL_INSTANCE_PARSERS = {
+    'topic': lambda v: _str(v) or None,
+    'event_type': lambda v: normalize_event_type(v),
+}
 
 INSTANCE_LABELS = {
     'id': 'ID',
@@ -1298,6 +1313,7 @@ INSTANCE_LABELS = {
     'start_date': 'Початок',
     'end_date': 'Кінець',
     'event_format': 'Формат',
+    'event_type': 'Вид заходу',
     'price': 'Ціна (грн)',
     'cpd_points_online': 'Бали БПР онлайн',
     'cpd_points_offline': 'Бали БПР офлайн',
@@ -1349,6 +1365,8 @@ def export_instances_xlsx(
       upcoming_only: True -- лише з start_date >= зараз.
       status: 'draft'|'published'|'active'|'completed'|'cancelled' -- фільтр статусу.
     """
+    from app.services import event_types
+
     wb = Workbook()
     ws = wb.active
     ws.title = 'Розклад'
@@ -1378,6 +1396,12 @@ def export_instances_xlsx(
             _to_kyiv_naive(i.start_date),
             _to_kyiv_naive(i.end_date),
             FORMAT_LABEL.get(i.event_format, i.event_format or ''),
+            # ЛИШЕ власний вид дати, не effective_event_type: успадкування
+            # мусить пережити round-trip. Друк успадкованого виду означав би,
+            # що вивантаження й завантаження назад запише курсовий тип у
+            # кожну дату твердою копією, і наступна правка курсу нікуди
+            # не дійде.
+            event_types.base_name(i.event_type) if i.event_type else '',
             float(i.price) if i.price is not None else None,
             float(i.cpd_points_online) if i.cpd_points_online is not None else None,
             float(i.cpd_points_offline) if i.cpd_points_offline is not None else None,
@@ -1430,6 +1454,17 @@ def export_instances_xlsx(
         last_data_row=instances_last_row,
         title='Статус',
         hint='Чернетка / Опубліковано / Активний / Завершено / Скасовано',
+    )
+    # allow_blank -- на відміну від курсів: у розкладі порожня клітинка має
+    # власне значення «вид як у курсу», і заборона порожнього змусила б
+    # проставити вид у кожну дату руками.
+    _add_inline_dropdown(
+        ws, 'event_type', INSTANCE_COLS,
+        options=event_type_dropdown_options(),
+        last_data_row=instances_last_row,
+        allow_blank=True,
+        title='Вид заходу БПР',
+        hint='Порожньо -- як у курсу. Інакше оберіть зі списку.',
     )
 
     # Excel Table style.
@@ -1549,7 +1584,7 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
             # відсутність колонки має лишити поле як є, а не занулити його.
             for opt in OPTIONAL_INSTANCE_COLS:
                 if opt in raw:
-                    parsed[opt] = _str(raw.get(opt)) or None
+                    parsed[opt] = _OPTIONAL_INSTANCE_PARSERS[opt](raw.get(opt))
 
             existing = None
             if parsed['id'] is not None:

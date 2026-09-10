@@ -275,3 +275,119 @@ def test_changed_topic_shows_up_in_the_plan(client, tmp_path):
     change = plan.changes[0]
     assert change.action == 'update'
     assert 'topic' in change.fields_changed
+
+
+# --- вид заходу БПР для конкретної дати -------------------------------------
+
+def _exported_row(course):
+    ws = load_workbook(xlsx_io.export_instances_xlsx())['Розклад']
+    header = [c.value for c in ws[1]]
+    rows = [dict(zip(header, r)) for r in ws.iter_rows(min_row=2, values_only=True)]
+    return next(r for r in rows
+                if r[xlsx_io.INSTANCE_LABELS['course_slug']] == course.slug)
+
+
+def test_export_carries_the_event_type_override(client):
+    course = _course()
+    _instance(course, event_type='training')
+    row = _exported_row(course)
+    assert row[xlsx_io.INSTANCE_LABELS['event_type']] == 'Тренінг'
+
+
+def test_export_leaves_the_cell_empty_when_type_is_inherited(client):
+    """Порожньо -- «як у курсу», а не назва курсового виду.
+
+    Друкувати успадкований вид означало б, що перше ж вивантаження й
+    завантаження назад запише курсовий тип у КОЖНУ дату твердою копією --
+    і наступна зміна виду курсу вже нікуди не дійде.
+    """
+    course = _course()          # event_type='course'
+    _instance(course)
+    row = _exported_row(course)
+    # openpyxl віддає порожню клітинку як None, а не ''.
+    assert not row[xlsx_io.INSTANCE_LABELS['event_type']]
+
+
+def test_import_sets_the_event_type_override(client, tmp_path):
+    course = _course()
+    inst = _instance(course)
+    path = _write(tmp_path, [_row(course, id=inst.id, event_type='Тренінг')])
+    plan = xlsx_io.parse_instances_xlsx(path)
+    assert plan.is_valid, plan.errors
+    xlsx_io.apply_instances_plan(plan)
+    assert db.session.get(CourseInstance, inst.id).event_type == 'training'
+
+
+def test_import_accepts_the_internal_code_too(client, tmp_path):
+    course = _course()
+    inst = _instance(course)
+    path = _write(tmp_path, [_row(course, id=inst.id, event_type='training')])
+    plan = xlsx_io.parse_instances_xlsx(path)
+    assert plan.is_valid, plan.errors
+    xlsx_io.apply_instances_plan(plan)
+    assert db.session.get(CourseInstance, inst.id).event_type == 'training'
+
+
+def test_empty_cell_clears_the_override(client, tmp_path):
+    """Порожня комірка -- «зняти перевизначення», у БД NULL, не ''."""
+    course = _course()
+    inst = _instance(course, event_type='training')
+    path = _write(tmp_path, [_row(course, id=inst.id, event_type='')])
+    plan = xlsx_io.parse_instances_xlsx(path)
+    xlsx_io.apply_instances_plan(plan)
+    saved = db.session.get(CourseInstance, inst.id)
+    assert saved.event_type is None
+    assert saved.effective_event_type == course.event_type
+
+
+def test_old_file_without_the_column_keeps_the_override(client, tmp_path):
+    course = _course()
+    inst = _instance(course, event_type='training')
+    path = _write(tmp_path, [_row(course, id=inst.id)],
+                  drop_columns=('event_type',))
+    plan = xlsx_io.parse_instances_xlsx(path)
+    assert plan.is_valid, plan.errors
+    xlsx_io.apply_instances_plan(plan)
+    assert db.session.get(CourseInstance, inst.id).event_type == 'training'
+
+
+def test_changed_event_type_shows_up_in_the_plan(client, tmp_path):
+    course = _course()
+    inst = _instance(course, event_type='training')
+    path = _write(tmp_path, [_row(course, id=inst.id,
+                                  event_type='Фахова (тематична) школа')])
+    plan = xlsx_io.parse_instances_xlsx(path)
+    change = plan.changes[0]
+    assert change.action == 'update'
+    assert 'event_type' in change.fields_changed
+
+
+def test_unknown_event_type_is_error(client, tmp_path):
+    course = _course()
+    path = _write(tmp_path, [_row(course, event_type='Файна вечірка')])
+    plan = xlsx_io.parse_instances_xlsx(path)
+    assert not plan.is_valid
+    assert any('event_type' in e for e in plan.errors)
+
+
+def test_round_trip_keeps_inheritance_intact(client, tmp_path):
+    """Вивантажити й одразу завантажити назад не мусить чіпати вид заходу.
+
+    Про start_date тут не йдеться свідомо: на SQLite колонка
+    DateTime(timezone=True) читається naive, тож _to_kyiv_naive в експорті --
+    no-op, а імпорт трактує naive як Київ і дає зсув на 3 години. На
+    PostgreSQL (прод) колонка aware і зсуву немає, тож перевіряти тут увесь
+    рядок означало б закріпити артефакт тестової БД.
+    """
+    course = _course()
+    inst = _instance(course)
+    exported = tmp_path / 'sch-roundtrip.xlsx'
+    exported.write_bytes(xlsx_io.export_instances_xlsx().getvalue())
+
+    plan = xlsx_io.parse_instances_xlsx(exported)
+    assert plan.is_valid, plan.errors
+    change = next(c for c in plan.changes if c.line_no and c.action != 'error')
+    assert 'event_type' not in (change.fields_changed or [])
+
+    xlsx_io.apply_instances_plan(plan)
+    assert db.session.get(CourseInstance, inst.id).event_type is None

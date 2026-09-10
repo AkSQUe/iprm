@@ -143,3 +143,80 @@ class TestInstanceEventTypeOverride:
 
         assert instance.event_type is None
         assert instance.effective_event_type == 'course'
+
+
+class TestInheritedTypeIsVisible:
+    """Порожній варіант мусить називати той тип, який успадковується.
+
+    Без назви в дужках «– Як у курсу –» нічого не повідомляє: щоб дізнатись,
+    тренінг це чи фахова школа, менеджер мусив відкрити картку курсу в
+    сусідній вкладці. Саме тому це поле й заводили -- бачити фактичний вид
+    конкретної дати.
+    """
+
+    def test_edit_form_names_the_inherited_type(self, client, admin):
+        _login(client, admin)
+        course = _course('training')
+        instance = _instance(course)
+        db.session.commit()
+
+        html = client.get(
+            f'/admin/instances/{instance.id}/edit').get_data(as_text=True)
+
+        assert 'Як у курсу (Тренінг)' in html
+
+    def test_new_form_keeps_bare_label_while_course_is_unknown(self, client, admin):
+        """На /new курс ще не обрано -- називати нічого."""
+        _login(client, admin)
+
+        html = client.get('/admin/instances/new').get_data(as_text=True)
+
+        assert 'Як у курсу' in html
+        assert 'Як у курсу (' not in html
+
+    def test_new_form_names_the_type_of_a_preselected_course(self, client, admin):
+        """/instances/new?course_id=X -- курс уже відомий, тип називаємо."""
+        _login(client, admin)
+        course = _course('training')
+        db.session.commit()
+
+        html = client.get(
+            f'/admin/instances/new?course_id={course.id}').get_data(as_text=True)
+
+        assert 'Як у курсу (Тренінг)' in html
+
+    def test_course_without_type_keeps_bare_label(self, client, admin):
+        _login(client, admin)
+        course = _course(None)
+        instance = _instance(course)
+        db.session.commit()
+
+        html = client.get(
+            f'/admin/instances/{instance.id}/edit').get_data(as_text=True)
+
+        assert 'Як у курсу' in html
+        assert 'Як у курсу (' not in html
+
+
+class TestInstancesListShowsType:
+    """Реєстр проведень мусить називати фактичний вид кожної дати."""
+
+    def test_list_shows_effective_type_of_each_instance(self, client, admin):
+        _login(client, admin)
+        course = _course('seminar')
+        _instance(course, event_type='training')
+        db.session.commit()
+
+        html = client.get('/admin/instances').get_data(as_text=True)
+
+        assert 'Тренінг' in html
+
+    def test_list_shows_inherited_type_when_not_overridden(self, client, admin):
+        _login(client, admin)
+        course = _course('professional_school')
+        _instance(course)
+        db.session.commit()
+
+        html = client.get('/admin/instances').get_data(as_text=True)
+
+        assert 'Фахова (тематична) школа' in html

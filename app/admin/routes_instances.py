@@ -67,13 +67,44 @@ def _populate_choices(form, preselected_course_id=None, instance=None):
     # зі збереженого проведення, а не з form.data.
     populate_event_type_choices(
         form, current=(instance.event_type if instance else None),
-        empty_label='– Як у курсу –',
+        empty_label=_inherited_type_label(instance, preselected_course_id),
     )
 
     form.difficulty_level.choices = (
         [(0, _inherited_level_label(instance, preselected_course_id))]
         + Course.DIFFICULTY_LEVELS
     )
+
+
+_BARE_INHERITED = '– Як у курсу –'
+
+
+def _inherited_type_label(instance, preselected_course_id=None):
+    """Підпис порожнього варіанта поля «Вид заходу».
+
+    Голе «Як у курсу» не повідомляє нічого: щоб дізнатись, тренінг це чи
+    фахова школа, довелось би відкрити картку курсу. Тому називаємо тип у
+    дужках скрізь, де курс уже відомий -- і в правці наявної дати, і в
+    створенні з картки курсу (?course_id=). На чистому /new курс обирають
+    у тій самій формі, називати ще нічого.
+    """
+    course = _known_course(instance, preselected_course_id)
+    if course is None or not course.event_type:
+        return _BARE_INHERITED
+    return f'– Як у курсу ({course.event_type_label}) –'
+
+
+def _known_course(instance, preselected_course_id=None):
+    """Курс, до якого належить (чи належатиме) проведення, якщо він відомий.
+
+    Спільне для всіх успадкованих полів: у правці дати курс беремо з неї,
+    у створенні з картки курсу -- з ?course_id=. На чистому /new курс
+    обирають у тій самій формі, тож відомого курсу ще немає.
+    """
+    course = instance.course if instance is not None else None
+    if course is None and preselected_course_id:
+        course = db.session.get(Course, preselected_course_id)
+    return course
 
 
 def _inherited_level_label(instance, preselected_course_id=None):
@@ -86,12 +117,9 @@ def _inherited_level_label(instance, preselected_course_id=None):
     (?course_id=). На чистому /new курс обирають у тій самій формі, тож
     називати ще нічого.
     """
-    bare = '– Як у курсу –'
-    course = instance.course if instance is not None else None
-    if course is None and preselected_course_id:
-        course = db.session.get(Course, preselected_course_id)
+    course = _known_course(instance, preselected_course_id)
     if course is None or not course.difficulty_level:
-        return bare
+        return _BARE_INHERITED
     return f'– Як у курсу ({course.difficulty_label}) –'
 
 
