@@ -8,7 +8,11 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
-from app.admin._helpers import try_commit, populate_trainer_choices
+from app.admin._helpers import (
+    populate_event_type_choices,
+    populate_trainer_choices,
+    try_commit,
+)
 from app.rbac import permission_required
 from app.admin.forms import CourseInstanceForm
 from app.extensions import db, limiter
@@ -30,7 +34,7 @@ def _wants_json():
     return accept.best_match(['application/json', 'text/html']) == 'application/json'
 
 
-def _populate_choices(form, preselected_course_id=None):
+def _populate_choices(form, preselected_course_id=None, current_event_type=None):
     courses = (
         Course.query.filter_by(is_active=True)
         .order_by(Course.title)
@@ -48,6 +52,10 @@ def _populate_choices(form, preselected_course_id=None):
     form.city_id.choices = [(0, '– Місце уточнюється –')] + [
         (city.id, city.name) for city in City.query.order_by(City.name).all()
     ]
+
+    populate_event_type_choices(
+        form, current=current_event_type, empty_label='– Як у курсу –',
+    )
 
 
 _INSTANCES_PER_PAGE = 25
@@ -321,7 +329,7 @@ def instance_edit(instance_id):
         return redirect(url_for('admin.instances_list'))
 
     form = CourseInstanceForm(obj=instance)
-    _populate_choices(form)
+    _populate_choices(form, current_event_type=instance.event_type)
 
     if form.validate_on_submit():
         try:

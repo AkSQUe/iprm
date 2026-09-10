@@ -7,6 +7,7 @@ from sqlalchemy.orm import joinedload
 
 from app.admin import _listing, admin_bp
 from app.admin._helpers import (
+    populate_event_type_choices,
     populate_trainer_choices,
     try_commit,
 )
@@ -86,6 +87,7 @@ def courses_list():
 def course_create():
     form = CourseForm()
     populate_trainer_choices(form)
+    populate_event_type_choices(form)
 
     if form.validate_on_submit():
         slug = form.slug.data.strip() or course_service.generate_course_slug(form.title.data)[0]
@@ -129,6 +131,7 @@ def course_edit(course_id):
 
     form = CourseForm(obj=course)
     populate_trainer_choices(form)
+    populate_event_type_choices(form, current=course.event_type)
 
     if request.method == 'GET':
         form.target_audience_text.data = course_service.list_to_lines(course.target_audience)

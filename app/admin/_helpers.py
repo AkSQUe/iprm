@@ -373,6 +373,20 @@ def populate_trainer_choices(form, empty_label='– Default-тренер не о
     ]
 
 
+def populate_event_type_choices(form, current=None, empty_label=None):
+    """Заповнити form.event_type.choices з довідника.
+
+    `current` -- код, що вже стоїть у сутності. Він домішується, навіть
+    коли тип деактивовано: інакше WTForms відхилив би сабміт старої
+    сутності з "Not a valid choice".
+    """
+    from app.services import event_types
+    choices = event_types.choices(current=current)
+    if empty_label is not None:
+        choices = [('', empty_label)] + choices
+    form.event_type.choices = choices
+
+
 def course_request_counts(status='pending', course_ids=None):
     """Агреговане {course_id: count} для CourseRequest з заданим статусом.
 

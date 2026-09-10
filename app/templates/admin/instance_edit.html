@@ -89,6 +89,12 @@
         </div>
 
         <div class="form-group">
+          <label for="event_type">Вид заходу</label>
+          {{ form.event_type(class="form-input", id="event_type") }}
+          <small class="form-hint">{{ form.event_type.description }}</small>
+        </div>
+
+        <div class="form-group">
           <label for="status">Статус <span class="required">*</span></label>
           {{ form.status(class="form-input", id="status") }}
         </div>
