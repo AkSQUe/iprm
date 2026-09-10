@@ -246,31 +246,47 @@
     <h2 class="ds-title">Program Blocks</h2>
     <div class="ds-demo">
       <div class="apple-page">
-        <div class="iprm-program">
-          <article class="iprm-program__block">
-            <header class="iprm-program__head">
-              <span class="iprm-program__badge" aria-hidden="true">1</span>
-              <h3 class="iprm-program__heading">Теоретична частина</h3>
-            </header>
-            <ul class="iprm-program__list">
-              <li class="iprm-program__item">Пункт програми</li>
-              <li class="iprm-program__item">Другий пункт</li>
-            </ul>
-          </article>
-          <article class="iprm-program__block">
-            <header class="iprm-program__head">
-              <span class="iprm-program__badge" aria-hidden="true">2</span>
-              <h3 class="iprm-program__heading">Практична частина</h3>
-            </header>
-            <ul class="iprm-program__list">
-              <li class="iprm-program__item">Практичний пункт</li>
-              <li class="iprm-program__item">Ще один пункт</li>
-            </ul>
-          </article>
+        <div class="iprm-program iprm-program--columns" data-program-accordion>
+          <div class="iprm-program__nav">
+            <h3 class="iprm-program__head">
+              <button type="button" class="iprm-program__trigger"
+                      id="ds-program-head-1" aria-controls="ds-program-panel-1"
+                      aria-expanded="true">
+                <span class="iprm-program__badge" aria-hidden="true">1</span>
+                <span class="iprm-program__heading">Теоретична частина</span>
+                <span class="iprm-program__chevron" aria-hidden="true"></span>
+              </button>
+            </h3>
+            <h3 class="iprm-program__head">
+              <button type="button" class="iprm-program__trigger"
+                      id="ds-program-head-2" aria-controls="ds-program-panel-2"
+                      aria-expanded="false">
+                <span class="iprm-program__badge" aria-hidden="true">2</span>
+                <span class="iprm-program__heading">Практична частина</span>
+                <span class="iprm-program__chevron" aria-hidden="true"></span>
+              </button>
+            </h3>
+          </div>
+          <div class="iprm-program__stage">
+            <div class="iprm-program__panel" id="ds-program-panel-1"
+                 role="region" aria-labelledby="ds-program-head-1">
+              <ul class="iprm-program__list">
+                <li class="iprm-program__item">Пункт програми</li>
+                <li class="iprm-program__item">Другий пункт</li>
+              </ul>
+            </div>
+            <div class="iprm-program__panel" id="ds-program-panel-2"
+                 role="region" aria-labelledby="ds-program-head-2" hidden>
+              <ul class="iprm-program__list">
+                <li class="iprm-program__item">Практичний пункт</li>
+                <li class="iprm-program__item">Ще один пункт</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <p class="ds-hint">partials/_course_program.html (courses/online detail), скоуплений на .apple-page (course-landing.css). Номер блоку -- aria-hidden, як і в benefit-card вище. Йде в парі з .iprm-practice-note -- див. секцію "Practice note" у Course Landing.</p>
+    <p class="ds-hint">partials/_course_program.html (courses/online detail), скоуплений на .apple-page (course-landing.css). Нумерований акордеон: розкрито рівно один блок, керує course-program.js за aria-expanded на .iprm-program__trigger. До 768px блоки йдуть один під одним (.iprm-program__head і .iprm-program__panel парами в контейнері), ширше -- скрипт переносить заголовки в .iprm-program__nav, панелі в .iprm-program__stage і вішає .iprm-program--columns; тут показано саме десктопний стан. Номер блоку -- aria-hidden, як і в benefit-card вище. Йде в парі з .iprm-practice-note -- див. секцію "Practice note" у Course Landing.</p>
   </div>
 
   <!-- ===== CTA ===== -->

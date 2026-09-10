@@ -655,171 +655,84 @@
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* ========== PROGRAM (блоки програми) ==========
-   ПРОГРАМА КУРСУ -- єдиний власник компонента.
-   Правила нижче переїхали з apple-pages.css, де стояли ПІД ТИМИ САМИМИ
-   селекторами: однакова вага, ті самі елементи, тож який вигляд
-   переможе, вирішував лише порядок підключення файлів. Порядок тут
-   збережено -- спершу база з apple-pages, далі власні уточнення, --
-   тому вигляд не змінився, а власник став один. Блок рендериться
-   тільки з partials/_course_program.html, а той інклюдять дві
-   сторінки, і обидві вантажать саме цей файл. */
+/* ========== PROGRAM (нумерований акордеон) ==========
+   ПРОГРАМА КУРСУ -- єдиний власник компонента. Правила колись жили ще й
+   в apple-pages.css під тими самими селекторами, тож вигляд вирішував
+   лише порядок підключення файлів; тепер власник один. Компонент
+   рендериться тільки з partials/_course_program.html, а той інклюдять
+   дві сторінки, і обидві вантажать саме цей файл.
 
-/* ========== PROGRAM BLOCKS ========== */
+   Була сітка карток у дві колонки: порядок читався 1-3-5 ліворуч і 2-4
+   праворуч, а різна висота карток лишала порожні зони. Стало -- один
+   вертикальний перелік, де розкрито рівно один блок. На десктопі той
+   самий перелік стоїть ліворуч, а зміст обраного блоку -- праворуч;
+   колонки збирає course-program.js переносом вузлів. */
 
 .apple-page .iprm-program {
   max-width: var(--iprm-max-content);
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.apple-page .iprm-program__block {
-  position: relative;
-  background: var(--iprm-white);
-  border-radius: var(--iprm-radius);
-  padding: 32px 32px 12px;
-  border: 1px solid var(--iprm-border);
-  overflow: hidden;
-  transition:
-    transform 0.3s var(--ease-interact),
-    box-shadow 0.3s var(--ease-interact);
-}
-
-/* Тонка смужка-акцент зверху картки */
-.apple-page .iprm-program__block::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--iprm-accent);
-  opacity: 0;
-  transition: opacity 0.3s var(--ease-interact);
-}
-
-.apple-page .iprm-program__block:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 18px 48px rgba(var(--iprm-accent-rgb), 0.12);
-}
-
-.apple-page .iprm-program__block:hover::before {
-  opacity: 1;
-}
-
-/* Шапка картки: нумерований бейдж + заголовок */
+/* h3 лише тримає кнопку: розмір і насиченість -- на .iprm-program__heading,
+   інакше заголовок сторінки й заголовок блоку сперечались би за розмір. */
 .apple-page .iprm-program__head {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+/* Уся плашка блоку -- кнопка: натискання, а не наведення, тож на телефоні
+   працює так само, як на комп'ютері. */
+.apple-page .iprm-program__trigger {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.apple-page .iprm-program__badge {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: var(--iprm-on-accent);
-  background: var(--iprm-accent);
-  box-shadow: 0 6px 16px rgba(var(--iprm-accent-rgb), 0.28);
-}
-
-.apple-page .iprm-program__heading {
-  font-size: 1.3125rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  margin: 0;
-  color: var(--iprm-text);
-}
-
-.apple-page .iprm-program__list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.apple-page .iprm-program__item {
-  font-size: 0.9375rem;
-  color: var(--iprm-text-secondary);
-  line-height: 1.55;
-  padding: 12px 0 12px 32px;
-  border-top: 1px solid var(--iprm-divider);
-  position: relative;
-  transition: color 0.2s var(--ease-interact);
-}
-
-.apple-page .iprm-program__item:first-child {
-  border-top: none;
-}
-
-/* Чек-маркер: кольорове коло з білою галочкою */
-.apple-page .iprm-program__item::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 13px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--iprm-accent);
-}
-
-/* Біла галочка, відцентрована в колі (коло: left 0..20, top 13..33,
-   центр (10, 23)). Класичний check = box з right+bottom border, rotate 45.
-   transform-origin center => після повороту центр box лишається на місці,
-   тож box-центр ставимо в центр кола з легким зсувом угору для оптики. */
-.apple-page .iprm-program__item::after {
-  content: '';
-  position: absolute;
-  left: 7px;
-  top: 17px;
-  width: 6px;
-  height: 9px;
-  border: solid var(--iprm-on-accent);
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-.apple-page .iprm-program__block:hover .iprm-program__item {
-  color: var(--iprm-text);
-}
-
-/* Та сама картка, що в результаті й аудиторії: однакова щільність по всій
-   сторінці. Нижній падінг повний, бо останній пункт списку більше не має
-   межі, якою добирався відступ. */
-.apple-page .iprm-program__block {
-  padding: 28px;
-  box-shadow: var(--iprm-shadow-soft);
-}
-
-.apple-page .iprm-program__head {
   gap: 14px;
-  margin-bottom: 18px;
+  padding: 16px 20px;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: var(--iprm-radius);
+  box-shadow: var(--iprm-shadow-soft);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.25s var(--ease-interact),
+    box-shadow 0.25s var(--ease-interact);
+}
+
+.apple-page .iprm-program__trigger:hover {
+  border-color: rgba(var(--iprm-accent-rgb), 0.45);
+}
+
+.apple-page .iprm-program__trigger:focus-visible {
+  outline: 2px solid var(--iprm-nav-active);
+  outline-offset: 3px;
+}
+
+.apple-page .iprm-program__trigger[aria-expanded='true'] {
+  border-color: var(--iprm-accent);
+  box-shadow: 0 10px 30px rgba(var(--iprm-accent-rgb), 0.14);
 }
 
 /* Номер блоку -- єдине місце на сторінці з градієнтом на малій площі: він
    відрізняє «крок програми» від «пункту результату», у якого плашка світла.
-   Другий стоп -- --iprm-hero-grad-1 замість еталонного #56219a: окремого
-   токена під той відтінок немає, а common.css у цьому етапі не наш. */
+   Другий стоп -- --iprm-hero-grad-1: окремого токена під той відтінок немає. */
 .apple-page .iprm-program__badge {
+  flex-shrink: 0;
   width: 42px;
   height: 42px;
   border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 1rem;
   font-weight: 900;
   color: var(--iprm-on-accent);
   background: linear-gradient(135deg, var(--iprm-accent), var(--iprm-hero-grad-1));
-  box-shadow: none;
 }
 
 /* У тёмній темі бренд світлішає (#b48cff), тож білий текст на градієнті дає
@@ -830,16 +743,55 @@
   background: var(--iprm-accent-light);
 }
 
-.apple-page .iprm-program__list {
-  margin: 16px 0 0;
+.apple-page .iprm-program__heading {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--iprm-text);
 }
 
-/* Межі йдуть ПІД пунктом, а не над: остання лінія в еталона зникає, інакше
-   вона дублювала б нижній край картки. */
+/* Стрілка-шеврон малюється межами, щоб не тягти іконковий шрифт заради
+   одного знака. Поворот показує, що блок розкрито. */
+.apple-page .iprm-program__chevron {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  margin-right: 4px;
+  border: solid var(--iprm-text-light);
+  border-width: 0 2px 2px 0;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.25s var(--ease-interact);
+}
+
+.apple-page .iprm-program__trigger[aria-expanded='true'] .iprm-program__chevron {
+  border-color: var(--iprm-accent);
+  transform: translateY(2px) rotate(-135deg);
+}
+
+/* Панель без власної рамки: рамку вже несе плашка над нею, а друга дала б
+   подвійну лінію на кожному розкритті. Лівий відступ вирівняний під текст
+   заголовка (42 бейдж + 14 проміжок + 20 падінг). */
+.apple-page .iprm-program__panel {
+  padding: 6px 20px 14px 76px;
+}
+
+.apple-page .iprm-program__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Межі йдуть ПІД пунктом, а не над: остання лінія зникає, інакше вона
+   дублювала б нижній край панелі. */
 .apple-page .iprm-program__item {
+  position: relative;
   padding: 10px 0 10px 27px;
+  font-size: 0.9375rem;
+  line-height: 1.55;
   color: var(--iprm-text-light);
-  border-top: none;
   border-bottom: 1px solid var(--iprm-border);
 }
 
@@ -847,36 +799,86 @@
   border-bottom: none;
 }
 
-/* Маркер -- та сама зелена галка, що в решті списків сторінки (еталон малює
-   програму тим же .card li). Гасимо кольорове коло базових правил: воно
-   збиралося з ::before-кола й ::after-галочки. */
+/* Маркер -- та сама зелена галка, що в решті списків сторінки. */
 .apple-page .iprm-program__item::before {
   content: '\2713';
-  top: auto;
-  width: auto;
-  height: auto;
-  border-radius: 0;
-  background: none;
+  position: absolute;
+  left: 0;
   color: var(--iprm-success);
   font-weight: 900;
 }
 
-.apple-page .iprm-program__item::after {
-  content: none;
-}
+/* ---------- Дві колонки на комп'ютері ----------
+   Клас вішає course-program.js, він же переносить заголовки в __nav, а
+   панелі в __stage. Медіа-запит дублює поріг із JS-константи DESKTOP
+   навмисно: якщо скрипт не відпрацював, вузького екрана колонки не
+   зачеплять у будь-якому разі. */
 
-/* Мобільні метрики живуть тут, а не в області RESPONSIVE: вони перебивають
-   @media з apple-pages.css, де в картки був зрізаний нижній падінг (8px) під
-   старий список із верхніми межами, а номер лишався 18px. */
-@media (max-width: 480px) {
-  .apple-page .iprm-program__block {
-    padding: 24px;
+@media (min-width: 769px) {
+  .apple-page .iprm-program--columns {
+    display: grid;
+    grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
   }
 
-  .apple-page .iprm-program__badge {
+  .apple-page .iprm-program__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Зміст обраного блоку -- картка тієї ж щільності, що решта карток
+     сторінки. Мінімальна висота тримає праву колонку від стрибків на
+     коротких блоках. */
+  .apple-page .iprm-program__stage {
+    min-height: 100%;
+    padding: 24px 28px;
+    background: var(--iprm-white);
+    border: 1px solid var(--iprm-border);
+    border-radius: var(--iprm-radius);
+    box-shadow: var(--iprm-shadow-soft);
+  }
+
+  /* Усередині картки відступ під бейдж уже не потрібен -- бейдж лишився
+     ліворуч, у переліку. */
+  .apple-page .iprm-program--columns .iprm-program__panel {
+    padding: 0;
+  }
+
+  /* У переліку шеврон нічого не додає: обраний блок і так позначений
+     рамкою й тим, що його зміст стоїть поруч. */
+  .apple-page .iprm-program--columns .iprm-program__chevron {
+    display: none;
+  }
+
+  .apple-page .iprm-program--columns .iprm-program__trigger[aria-expanded='true'] {
+    background: var(--iprm-accent-light);
+  }
+}
+
+@media (max-width: 480px) {
+  .apple-page .iprm-program__trigger {
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .apple-page .iprm-program__heading {
     font-size: 1rem;
   }
+
+  .apple-page .iprm-program__panel {
+    padding: 4px 16px 12px 22px;
+  }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .apple-page .iprm-program__trigger,
+  .apple-page .iprm-program__chevron {
+    transition: none;
+  }
+}
+
 
 /* ========== PRACTICE NOTE (акцент у програмі) ========== */
 
@@ -1704,38 +1706,5 @@
 @media (max-width: 768px) {
   .iprm-final-cta {
     gap: 16px;
-  }
-}
-
-/* Адаптив програми -- переїхав сюди разом із базою: лишати його в
-   apple-pages.css означало б тримати один компонент у двох файлах
-   знову, тільки тепер по різні боки медіа-запиту. */
-
-@media (max-width: 768px) {
-  .apple-page .iprm-program {
-      grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 480px) {
-  .apple-page .iprm-program__block {
-      padding: 24px 20px 8px;
-    }
-  .apple-page .iprm-program__badge {
-      width: 42px;
-      height: 42px;
-      font-size: 1.125rem;
-    }
-  .apple-page .iprm-program__heading {
-      font-size: 1.1875rem;
-    }
-}
-
-/* Вимкнення переходів разом із рештою карток. Правило жило в apple-pages.css
-   одним із шести селекторів наскрізного списку -- через що компонент програми
-   лишався оголошеним у двох файлах навіть після переносу бази й адаптиву. */
-@media (prefers-reduced-motion: reduce) {
-  .apple-page .iprm-program__block {
-    transition: none;
   }
 }

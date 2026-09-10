@@ -4,7 +4,14 @@
    офлайновому АБО онлайновому курсу) і course.practice_note_*.
 
    Плашка показується і без блоків програми: буває, що структура ще не
-   заведена, а сказати про практику вже є що. #}
+   заведена, а сказати про практику вже є що.
+
+   Блоки -- акордеон, а не сітка карток: у двох колонках порядок читався
+   1-3-5 ліворуч і 2-4 праворуч, а різна висота карток лишала порожні зони.
+   Пари "заголовок -> панель" лежать у DOM плоско й підряд, бо саме такий
+   порядок потрібен мобільному акордеону; десктопні колонки збирає
+   course-program.js. Без JS усі панелі відкриті -- сторінка лишається
+   читабельною, тільки довшою. #}
 {% set practice_title = course.t('practice_note_title') %}
 {% if course.program_blocks or practice_title %}
 <section id="program" class="iprm-section" aria-labelledby="program-title">
@@ -22,19 +29,31 @@
       {% endif %}
     </div>
     {% if course.program_blocks %}
-    <div class="iprm-program">
+    {# apple-reveal на контейнері, а не на блоці: анімація появи не має
+       ганяти згорнуті панелі. #}
+    <div class="iprm-program apple-reveal" data-program-accordion>
       {% for block in course.program_blocks %}
-      <article class="iprm-program__block apple-reveal">
-        <header class="iprm-program__head">
+      {# id від block.id, а не від loop.index: два акордеони на одній
+         сторінці не мають ділити один id. #}
+      {% set head_id = 'iprm-program-head-%s' % block.id %}
+      {% set panel_id = 'iprm-program-panel-%s' % block.id %}
+      <h3 class="iprm-program__head">
+        <button type="button" class="iprm-program__trigger" id="{{ head_id }}"
+                aria-controls="{{ panel_id }}"
+                aria-expanded="{{ 'true' if loop.first else 'false' }}">
           <span class="iprm-program__badge" aria-hidden="true">{{ loop.index }}</span>
-          <h3 class="iprm-program__heading">{{ block.t('heading') }}</h3>
-        </header>
+          <span class="iprm-program__heading">{{ block.t('heading') }}</span>
+          <span class="iprm-program__chevron" aria-hidden="true"></span>
+        </button>
+      </h3>
+      <div class="iprm-program__panel" id="{{ panel_id }}" role="region"
+           aria-labelledby="{{ head_id }}">
         <ul class="iprm-program__list">
           {% for item in block.t('items') %}
           <li class="iprm-program__item">{{ item }}</li>
           {% endfor %}
         </ul>
-      </article>
+      </div>
       {% endfor %}
     </div>
     {% endif %}

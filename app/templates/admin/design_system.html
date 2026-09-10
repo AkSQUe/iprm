@@ -77,6 +77,9 @@
    рівно цій сторінці, а вантажились на кожній. #}
 <script defer src="{{ url_for('static', filename='js/tabs.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/modal.js') }}?v={{ assets_version }}" defer></script>
+{# Мокап програми має бути живим: компонент, який у каталозі не клікається,
+   наступний перевіряє на справжній сторінці або пише заново. #}
+<script src="{{ url_for('static', filename='js/course-program.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}
 
 {% block content %}
