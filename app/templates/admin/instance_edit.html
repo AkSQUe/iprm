@@ -168,6 +168,12 @@
         </div>
 
         <div class="form-group">
+          <label for="difficulty_level">Рівень складності</label>
+          {{ form.difficulty_level(class="form-input", id="difficulty_level") }}
+          <small class="form-hint">{{ form.difficulty_level.description }}</small>
+        </div>
+
+        <div class="form-group">
           <label for="max_participants">Макс. учасників</label>
           {{ form.max_participants(class="form-input", id="max_participants") }}
         </div>

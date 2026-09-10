@@ -844,6 +844,7 @@
                   <span class="iprm-loc-badge__text">Київ</span>
                 </span>
                 <span class="iprm-schedule__tag iprm-schedule__tag--cpd">10 балів БПР</span>
+                <span class="iprm-schedule__tag iprm-schedule__tag--level">Рівень 3/3</span>
                 <span class="iprm-schedule__tag iprm-schedule__tag--seats iprm-schedule__tag--warning">Залишилось 2 місця</span>
               </div>
               <div class="iprm-schedule__tariffs" role="list" aria-label="Тарифи участі">
@@ -876,7 +877,7 @@
         </div>
         <p class="iprm-schedule__note">ще 1 групу вже набрано</p>
       </div>
-      <p class="ds-hint">.iprm-schedule__tag--warning — коли seats_left ≤ site_settings.seats_low_threshold. Друге проведення — стан "закрито" (registration_open=false): дата TBD, дій нема, лише badge--draft. Живе лише на /courses (список і календар): сторінка курсу з пункту 14 ТЗ показує дати вузькою колонкою поруч з описом — див. секцію "Date card" нижче</p>
+      <p class="ds-hint">.iprm-schedule__tag--level — рівень складності саме цього проведення; ставиться, лише коли він відрізняється від рівня курсу (CourseInstance.distinct_difficulty_level), інакше рівень уже названо один раз біля опису курсу. .iprm-schedule__tag--warning — коли seats_left ≤ site_settings.seats_low_threshold. Друге проведення — стан "закрито" (registration_open=false): дата TBD, дій нема, лише badge--draft. Живе лише на /courses (список і календар): сторінка курсу з пункту 14 ТЗ показує дати вузькою колонкою поруч з описом — див. секцію "Date card" нижче</p>
       <p class="ds-hint">.iprm-schedule__group-title — підпис міста над групою; з'являється лише коли дат більше п'яти (services/course_listing.group_by_location), інакше перелік плоский. .iprm-schedule__note — рядок про заплановані, але вже набрані групи під переліком</p>
     </div>
   </div>
@@ -900,6 +901,7 @@
                 <span class="iprm-loc-badge__text">Харків</span>
               </span>
               <span class="iprm-schedule__tag iprm-schedule__tag--cpd">10 балів БПР</span>
+              <span class="iprm-schedule__tag iprm-schedule__tag--level">Рівень 3/3</span>
             </div>
             <div class="iprm-datecard__tariffs" role="list" aria-label="Тарифи участі">
               <a class="iprm-tariff-pill iprm-tariff-pill--link" role="listitem" href="#iprm-datecard">

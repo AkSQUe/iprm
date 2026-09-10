@@ -166,6 +166,12 @@
               {% if inst.cpd_range[0] %}
               <span class="iprm-schedule__tag iprm-schedule__tag--cpd">{{ points_range(*inst.cpd_range) }}</span>
               {% endif %}
+              {# Рівень цієї дати, якщо він відрізняється від курсового: у
+                 розкладі дати зіставляють між собою, і курсовий рівень уже
+                 стоїть бейджем на картці курсу вище. #}
+              {% if inst.distinct_difficulty_level %}
+              <span class="iprm-schedule__tag iprm-schedule__tag--level" title="{{ inst.difficulty_label }}">{% trans level=inst.distinct_difficulty_level %}Рівень {{ level }}/3{% endtrans %}</span>
+              {% endif %}
               {% if inst.effective_price and inst.effective_price > 0 %}
               <span class="iprm-schedule__price">{% if inst.price_is_from %}{{ _('від') }} {% endif %}{{ money(inst.effective_price) }}</span>
               {% endif %}

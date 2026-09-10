@@ -161,6 +161,14 @@
   color: var(--iprm-success);
 }
 
+.iprm-schedule__tag--level {
+  /* Ті самі нейтральні токени, що в бейджа рівня на картці курсу
+     (.iprm-card-badge--level): рівень має читатись однаково скрізь, де його
+     називають, і не сперечатись за увагу з балами й ціною. */
+  background: var(--iprm-neutral-bg);
+  color: var(--iprm-neutral-text);
+}
+
 .iprm-schedule__price {
   font-size: 0.8125rem;
   font-weight: 500;

@@ -120,6 +120,7 @@
 | `price`, `max_participants` | Overrides | null = взяти з Course |
 | `cpd_points_online`, `cpd_points_offline` | Numeric(5,2), overrides | null = взяти з Course; `effective_cpd_for(fmt)` / `cpd_pairs` / `cpd_range` читають обидва |
 | `event_type` | String(30) | Необов'язковий override коду з довідника `EventType`; null = взяти з `Course.event_type` (`effective_event_type`) |
+| `difficulty_level` | Integer, override | Рівень складності саме цієї дати за шкалою `Course.DIFFICULTY_LEVELS` (1..3, CHECK у БД); null = взяти з `Course.difficulty_level` (`effective_difficulty_level`). Публічно показується лише `distinct_difficulty_level` -- рівень, що відрізняється від курсового |
 | `location`, `online_link` | String | Локація |
 | `trainer_id` | FK trainers | Override тренера |
 | `status` | String(20) | draft/published/active/completed/cancelled |
