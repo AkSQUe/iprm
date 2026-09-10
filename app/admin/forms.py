@@ -488,9 +488,12 @@ class CourseForm(FlaskForm):
     hero_media_id = HiddenField('Hero (media)', validators=[Optional()])
     card_media_id = HiddenField('Картка (media)', validators=[Optional()])
     target_audience_text = TextAreaField(
-        'Цільова аудиторія',
+        'Додатковий опис цільової аудиторії',
         validators=[Optional()],
-        description='Один пункт на рядок',
+        description='Спеціальності зі списку вище виводяться на сторінці '
+                    'автоматично -- дублювати їх не треба. Тут пишуть лише '
+                    'дописи (напр. «а також усі, хто цікавиться темою»), '
+                    'кожен рядок стане окремим пунктом.',
     )
     tags_text = TextAreaField(
         'Теги',

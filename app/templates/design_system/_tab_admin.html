@@ -590,5 +590,17 @@
       </div>
     </div>
     <p class="ds-hint">.admin-multiselect: чіпи й пошук поверх нативного &lt;select multiple data-multiselect&gt; (admin-multiselect.js). Джерело правди -- сам select, тож без JS форма лишається робочою, а сабміт іде звичайним getlist. &lt;label for&gt; веде на поле пошуку (не на прихований select) -- клік по підпису фокусує саме його. Підсвітку клавіатурою показує клас .is-active + aria-activedescendant на полі пошуку, а не aria-selected -- цей атрибут на &lt;li role="option"&gt; лишається завжди false, бо список показує тільки НЕвибрані пункти. Тут демо статичне: список показано розгорнутим навмисно.</p>
+
+    <h3 class="ds-section-heading">Прев'ю автопереліку</h3>
+    <div class="ds-demo">
+      <div class="admin-audience-preview">
+        <span class="iprm-tag iprm-tag--inset">Алергологія</span>
+        <span class="iprm-tag iprm-tag--inset">Дерматовенерологія</span>
+      </div>
+      <div class="admin-audience-preview">
+        <span class="admin-audience-preview__empty">Спеціальності не обрані</span>
+      </div>
+    </div>
+    <p class="ds-hint">.admin-audience-preview: нередагований перелік того, що форма виведе на сторінку сама (admin-audience-preview.js слухає change мультиселекта-джерела за data-audience-preview-source). Чіпи -- .iprm-tag дизайн-системи, тут лише розкладка; порожній стан -- .admin-audience-preview__empty із текстом із data-audience-preview-empty. Живий приклад -- поле «Додатковий опис цільової аудиторії» у формі заходу.</p>
   </div>
 

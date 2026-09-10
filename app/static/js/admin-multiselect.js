@@ -74,6 +74,16 @@
     return { wrap: wrap, control: control, search: search, list: list };
   }
 
+  // Вибір змінився: перемалювати компонент і сказати про це сторінці.
+  // Нативний <select> сам шле change, коли його чіпає користувач; тут вибір
+  // міняє скрипт, тож подію треба відтворити -- інакше слухачі (наприклад,
+  // прев'ю цільової аудиторії) про зміну не дізнаються.
+  function sync(select, ui) {
+    renderChips(select, ui);
+    renderList(select, ui);
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
   function renderChips(select, ui) {
     Array.prototype.slice.call(
       ui.control.querySelectorAll('.admin-multiselect__chip')
@@ -92,8 +102,7 @@
       remove.textContent = '×';
       remove.addEventListener('click', function () {
         option.selected = false;
-        renderChips(select, ui);
-        renderList(select, ui);
+        sync(select, ui);
       });
       chip.appendChild(remove);
       ui.control.insertBefore(chip, ui.search);
@@ -140,8 +149,7 @@
           event.preventDefault();
           option.selected = true;
           ui.search.value = '';
-          renderChips(select, ui);
-          renderList(select, ui);
+          sync(select, ui);
         });
         ui.list.appendChild(item);
         shown += 1;
@@ -218,8 +226,7 @@
         });
         if (selected.length) {
           selected[selected.length - 1].selected = false;
-          renderChips(select, ui);
-          renderList(select, ui);
+          sync(select, ui);
         }
       }
     });
