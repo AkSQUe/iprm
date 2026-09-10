@@ -6432,3 +6432,10 @@ msgstr "The group on %(date)s is already full."
 
 msgid "ще %(count)s %(noun)s вже набрано"
 msgstr "%(count)s more %(noun)s already full"
+
+msgid "Оберіть <span class=\"apple-gradient-text\">дату</span>"
+msgstr "Choose a <span class=\"apple-gradient-text\">date</span>"
+
+#, python-format
+msgid "Ще %(count)s %(noun)s"
+msgstr "%(count)s more %(noun)s"

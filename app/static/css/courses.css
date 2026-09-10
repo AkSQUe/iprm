@@ -208,6 +208,227 @@
   box-shadow: 0 2px 12px rgba(var(--iprm-accent-rgb), 0.12);
 }
 
+/* ========== ABOUT + DATES (двоколонковий блок «Про курс») ==========
+
+   Пункт 14 ТЗ: опис курсу ліворуч, доступні проведення праворуч. Раніше це
+   були дві секції одна під одною, і перелік дат починав розповідь заново
+   власним заголовком на всю ширину.
+
+   Колонка дат фіксованої ширини, а не частка: картка тут вертикальна, і
+   від ширини екрана її зручність не залежить -- на 1400px розтягнута
+   колонка лише розганяла б підписи. Опис забирає решту. */
+.iprm-about {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+  gap: 56px;
+  align-items: start;
+}
+
+/* Заголовок секції в колонці -- по лівому краю: центрований (дефолт
+   .iprm-section__title) над вузьким стовпчиком тексту читається як помилка
+   верстки. Відступ під ним теж власний: базове правило дає 46px заголовку
+   без ліда, і в колонці ця дірка завелика. */
+.apple-page .iprm-about .iprm-section__title {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.iprm-about__level {
+  margin: 0 0 16px;
+}
+
+/* .iprm-prose (course-landing.css) центрує себе `margin: 0 auto` в межах
+   свого max-width -- це працювало, поки заголовок секції теж був
+   центрований. У колонці заголовок по лівому краю, і на планшеті, де
+   колонка ширша за 800px міри тексту, опис від'їжджав праворуч від нього.
+   Міру лишаємо, авто-поля прибираємо. */
+.iprm-about__text .iprm-prose {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.iprm-about__dates-title {
+  margin: 0 0 20px;
+  font-size: clamp(22px, 2.2vw, 28px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--iprm-text);
+}
+
+/* ---------- Перелік карток ---------- */
+
+.iprm-daterail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Підпис міста над групою дат -- з'являється, коли проведень більше п'яти
+   (services/course_listing.group_by_location). */
+.iprm-daterail__group-title {
+  margin: 10px 0 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--iprm-text-light);
+}
+
+.iprm-daterail__group-title:first-child {
+  margin-top: 0;
+}
+
+.iprm-daterail__note {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--iprm-text-light);
+}
+
+/* Розкривач для п'ятої дати й далі. display: flex, щоб розкриті картки
+   стали в той самий стовпчик із тим самим проміжком, що й видимі. */
+.iprm-daterail__more {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.iprm-daterail__more-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--iprm-accent);
+  cursor: pointer;
+  /* Обидва рядки -- про той самий трикутник розкривача: list-style знімає
+     його у Firefox, ::-webkit-details-marker -- у Safari. Свій маркер
+     нижче, бо браузерний не бере колір і не анімується. */
+  list-style: none;
+}
+
+.iprm-daterail__more-summary::-webkit-details-marker {
+  display: none;
+}
+
+.iprm-daterail__more-summary::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.2s var(--iprm-transition);
+}
+
+.iprm-daterail__more[open] .iprm-daterail__more-summary::after {
+  transform: translateY(1px) rotate(-135deg);
+}
+
+/* ---------- Картка однієї дати ---------- */
+
+.iprm-datecard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--iprm-white);
+  border: 1px solid var(--iprm-border);
+  border-radius: 18px;
+  padding: 18px 20px;
+  transition: transform 0.3s var(--iprm-transition), box-shadow 0.3s var(--iprm-transition);
+}
+
+.iprm-datecard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+}
+
+.iprm-datecard__when {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.iprm-datecard__day {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--iprm-accent);
+}
+
+.iprm-datecard__month {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--iprm-text-light);
+}
+
+/* Час -- до правого краю картки: він відповідає на інше питання, ніж дата
+   ліворуч, і зливатись із нею в один рядок цифр не повинен. */
+.iprm-datecard__time {
+  margin-left: auto;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--iprm-text-light);
+}
+
+/* .iprm-block-title несе власний margin-bottom; у картці відступи тримає
+   gap, тож тут його знімаємо. */
+.iprm-datecard__title {
+  margin: 0;
+}
+
+.iprm-datecard__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.iprm-datecard__tariffs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* apple-btn -- inline-flex без justify-content, тому на всю ширину картки
+   текст притискався б до лівого краю. */
+.iprm-datecard__action {
+  width: 100%;
+  margin-top: 4px;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Дві колонки живуть, поки права лишається колонкою: нижче 980px опис
+   стискається до газетного стовпчика раніше, ніж картки стають тісними. */
+@media (max-width: 980px) {
+  .iprm-about {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  /* Картки під описом (пункт 14 ТЗ) -- ширші за 360px колонки, тож стають
+     у сітку по дві, поки вистачає місця. Порожня рейка лишається flex:
+     єдиному порожньому стану сітка з колонок не потрібна, а стилювати тут
+     .iprm-empty-state не можна -- він належить дизайн-системі. */
+  .iprm-daterail:not(.iprm-daterail--empty),
+  .iprm-daterail__more[open] {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+
+  /* Підпис міста, примітка й розкривач -- на всю ширину сітки: вони
+     стосуються всіх карток під собою, а не однієї комірки. */
+  .iprm-daterail__group-title,
+  .iprm-daterail__note,
+  .iprm-daterail__more,
+  .iprm-daterail__more-summary {
+    grid-column: 1 / -1;
+  }
+}
+
 /* ========== FORMAT / TARIFF CARDS (Оберіть формат участі) ========== */
 
 .iprm-format-cards {

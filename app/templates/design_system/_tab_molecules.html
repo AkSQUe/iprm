@@ -860,9 +860,70 @@
         </div>
         <p class="iprm-schedule__note">ще 1 групу вже набрано</p>
       </div>
-      <p class="ds-hint">.iprm-schedule__tag--warning — коли seats_left ≤ site_settings.seats_low_threshold. Друге проведення — стан "закрито" (registration_open=false): дата TBD, дій нема, лише badge--draft. Живе на /courses (список і календар); на сторінці курсу стану "закрито" немає — partials/_course_schedule.html показує лише відкриті проведення</p>
+      <p class="ds-hint">.iprm-schedule__tag--warning — коли seats_left ≤ site_settings.seats_low_threshold. Друге проведення — стан "закрито" (registration_open=false): дата TBD, дій нема, лише badge--draft. Живе лише на /courses (список і календар): сторінка курсу з пункту 14 ТЗ показує дати вузькою колонкою поруч з описом — див. секцію "Date card" нижче</p>
       <p class="ds-hint">.iprm-schedule__group-title — підпис міста над групою; з'являється лише коли дат більше п'яти (services/course_listing.group_by_location), інакше перелік плоский. .iprm-schedule__note — рядок про заплановані, але вже набрані групи під переліком</p>
     </div>
+  </div>
+
+  <!-- ===== IPRM DATE CARD ===== -->
+  <div class="ds-section" id="iprm-datecard">
+    <p class="ds-label">Components</p>
+    <h2 class="ds-title">Date card (колонка дат на сторінці курсу)</h2>
+    <div class="ds-demo">
+      <div class="ds-demo-column">
+        <div class="iprm-daterail">
+          <article class="iprm-datecard">
+            <div class="iprm-datecard__when">
+              <span class="iprm-datecard__day">12</span>
+              <span class="iprm-datecard__month">10.2026</span>
+              <span class="iprm-datecard__time">10:00</span>
+            </div>
+            <h4 class="iprm-datecard__title iprm-block-title">Плазмотерапія обличчя</h4>
+            <div class="iprm-datecard__meta">
+              <span class="iprm-loc-badge iprm-loc-badge--offline">
+                <span class="iprm-loc-badge__text">Харків</span>
+              </span>
+              <span class="iprm-schedule__tag iprm-schedule__tag--cpd">10 балів БПР</span>
+            </div>
+            <div class="iprm-datecard__tariffs" role="list" aria-label="Тарифи участі">
+              <a class="iprm-tariff-pill iprm-tariff-pill--link" role="listitem" href="#iprm-datecard">
+                <span class="iprm-tariff-pill__name">Стандарт</span>
+                <span class="iprm-tariff-pill__price">7 500 &#8372;</span>
+              </a>
+            </div>
+            <a href="#iprm-datecard" class="apple-btn apple-btn--primary apple-btn--sm iprm-datecard__action">Обрати дату</a>
+          </article>
+          <article class="iprm-datecard">
+            <div class="iprm-datecard__when">
+              <span class="iprm-datecard__day">TBD</span>
+            </div>
+            <h4 class="iprm-datecard__title iprm-block-title">Плазмотерапія обличчя</h4>
+            <div class="iprm-datecard__meta">
+              <span class="iprm-loc-badge iprm-loc-badge--online">
+                <span class="iprm-loc-badge__text">Онлайн</span>
+              </span>
+            </div>
+            <a href="#iprm-datecard" class="apple-btn apple-btn--primary apple-btn--sm iprm-datecard__action">Обрати дату</a>
+          </article>
+          <details class="iprm-daterail__more">
+            <summary class="iprm-daterail__more-summary">Ще 2 дати</summary>
+            <h3 class="iprm-daterail__group-title">Львів</h3>
+            <article class="iprm-datecard">
+              <div class="iprm-datecard__when">
+                <span class="iprm-datecard__day">04</span>
+                <span class="iprm-datecard__month">11.2026</span>
+                <span class="iprm-datecard__time">09:30</span>
+              </div>
+              <h4 class="iprm-datecard__title iprm-block-title">Плазмотерапія обличчя</h4>
+              <a href="#iprm-datecard" class="apple-btn apple-btn--primary apple-btn--sm iprm-datecard__action">Обрати дату</a>
+            </article>
+          </details>
+          <p class="iprm-daterail__note">ще 1 групу вже набрано</p>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">Вузький двійник Schedule вище, для правої колонки блоку «Про курс» (partials/_course_schedule.html, пункт 14 ТЗ). Ціни окремим рядком немає навмисно: вона вже всередині .iprm-tariff-pill. Час доби йде через фільтр `| kyiv` — у БД дата лежить в UTC, і вечірній захід інакше з'їжджає на добу.</p>
+    <p class="ds-hint">.iprm-daterail__more — п'ята картка й далі, під &lt;details&gt; без JS: приховані картки лишаються в HTML, тож їх бачить і пошуковик, і читач екрана. Межа наскрізна по всіх містах, а не по кожному окремо. .iprm-daterail--empty — рейка з єдиним порожнім станом: на вузькому екрані решта рейки стає сіткою колонок, а їй сітка не потрібна.</p>
   </div>
 
   <!-- ===== QUIZ QUESTION ===== -->

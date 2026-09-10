@@ -1,9 +1,12 @@
-"""Блок «Найближчі дати» на сторінці курсу.
+"""Колонка доступних дат на сторінці курсу.
 
-Пункт 7 ТЗ: перелік проведень стоїть одразу під повним описом курсу і
-показує лише ті дати, на які реально можна зареєструватися. Проведення з
+Перелік проведень стоїть у правій колонці блоку «Про курс» (пункт 14 ТЗ)
+і показує лише ті дати, на які реально можна зареєструватися. Проведення з
 набраною групою -- не варіант вибору для відвідувача, тож у переліку його
 немає взагалі, а не з бейджем «Реєстрацію закрито».
+
+Тут сторожимо ВІДБІР дат і стани переліку; двоколонкову оболонку навколо
+нього -- у test_course_about_dates.py.
 
 Набрану групу будуємо чесно -- max_participants=1 плюс одна оплачена
 реєстрація: CHECK-обмеження не дає поставити 0, а capacity_map рахує
@@ -20,6 +23,7 @@ from app.models.course_instance import CourseInstance
 from app.models.instance_tariff import InstanceTariff
 from app.models.registration import EventRegistration
 from app.models.user import User
+from app.utils import to_kyiv
 
 # Префікс адрес, за якими впізнаємо створених тут користувачів.
 EMAIL_PREFIX = 'sched-block-'
@@ -91,11 +95,11 @@ def _fill(inst, suffix):
 
 
 def _schedule_html(client, course):
-    """HTML лише секції розкладу -- від її заголовка до кінця секції."""
+    """HTML лише колонки дат -- від її заголовка до кінця <aside>."""
     html = client.get(f'/courses/{course.slug}').get_data(as_text=True)
     start = html.find('id="schedule-title"')
-    assert start != -1, 'секцію «Найближчі дати» не знайдено'
-    return html[start:html.find('</section>', start)]
+    assert start != -1, 'колонку дат не знайдено'
+    return html[start:html.find('</aside>', start)]
 
 
 def test_schedule_lists_only_instances_open_for_registration(client):
@@ -125,6 +129,7 @@ def test_schedule_shows_empty_state_when_every_group_is_full(client):
 
 
 def test_schedule_stands_between_description_and_roi(client):
+    """Дати -- усередині блоку опису, а не окремою секцією після нього."""
     course = _course('-order')
     _instance(course, days=30, location='Київ', max_participants=10)
     db.session.commit()
@@ -170,7 +175,7 @@ def test_empty_state_names_the_group_that_is_already_full(client):
 
     schedule = _schedule_html(client, course)
     assert 'вже набрано' in schedule
-    assert full.start_date.strftime('%d.%m.%Y') in schedule
+    assert to_kyiv(full.start_date).strftime('%d.%m.%Y') in schedule
 
 
 def test_empty_state_offers_to_be_notified_about_a_new_date(client):
@@ -206,7 +211,7 @@ def test_many_dates_are_grouped_by_city(client):
     db.session.commit()
 
     schedule = _schedule_html(client, course)
-    assert 'iprm-schedule__group-title' in schedule
+    assert 'iprm-daterail__group-title' in schedule
     # Групи -- за найранішою датою всередині: Київ (10 днів) перед Львовом (15).
     assert schedule.find('Київ') < schedule.find('Львів')
 
@@ -218,4 +223,4 @@ def test_few_dates_stay_a_flat_list(client):
     db.session.commit()
 
     schedule = _schedule_html(client, course)
-    assert 'iprm-schedule__group-title' not in schedule
+    assert 'iprm-daterail__group-title' not in schedule

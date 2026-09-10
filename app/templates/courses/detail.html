@@ -309,7 +309,10 @@
 
      Виняток: секція «Про курс». В еталоні її немає (там лід у hero), але
      course.description -- реальний контент, і ховати його після FAQ було б
-     втратою. Лишили одразу після блоку результату.
+     втратою. Лишили одразу після блоку результату. Від пункту 14 ТЗ вона ще
+     й двоколонкова: перелік дат живе її правою колонкою, тож окремої секції
+     «Найближчі дати» на сторінці більше немає (якір #schedule -- на цій
+     колонці).
 
      Фони: apple-section-gray стоїть на ROI, галереї, тренері й тарифах --
      як section-soft в еталоні. Решта секцій білі.
@@ -322,23 +325,42 @@
   {% set benefits_lead = course.t('roi_hint') %}
   {% include 'partials/_course_benefits.html' %}
 
-  <!-- ===== ABOUT ===== -->
-  {% if course.description %}
+  {# ===== ABOUT + SCHEDULE =====
+     Один блок у дві колонки (пункт 14 ТЗ): ліворуч опис курсу, праворуч
+     доступні проведення. Пояснивши, ЩО за курс, сторінка мусить тут-таки
+     показати, КОЛИ на нього можна прийти -- і не окремою секцією нижче,
+     яка починала розповідь заново власним заголовком.
+
+     Умова рендеру не на самому описі: курс без опису, але з датами, інакше
+     не показав би жодної дати. На мобільному сітка сходиться в одну
+     колонку, і картки лягають під опис. #}
+  {% if course.description or schedule_instances or full_instances %}
   <section id="about" class="iprm-section" aria-labelledby="about-title">
-    <div class="iprm-section__inner">
-      <h2 id="about-title" class="iprm-section__title apple-reveal">
-        {{ _('Про <span class="apple-gradient-text">курс</span>') }}
-      </h2>
-      <div class="iprm-prose apple-reveal">{{ course.t('description') | sanitize_rich_text }}</div>
+    <div class="iprm-section__inner iprm-about">
+      <div class="iprm-about__text">
+        <h2 id="about-title" class="iprm-section__title apple-reveal">
+          {{ _('Про <span class="apple-gradient-text">курс</span>') }}
+        </h2>
+        {# Рівень -- властивість КУРСУ, однакова для всіх його проведень,
+           тож названий один раз тут, а не на кожній картці дати. #}
+        {% if course.difficulty_level %}
+        <p class="iprm-about__level apple-reveal">
+          <span class="iprm-card-badge iprm-card-badge--level" title="{{ course.difficulty_label }}">{% trans level=course.difficulty_level %}Рівень {{ level }}/3{% endtrans %}</span>
+        </p>
+        {% endif %}
+        {% if course.description %}
+        <div class="iprm-prose apple-reveal">{{ course.t('description') | sanitize_rich_text }}</div>
+        {% endif %}
+      </div>
+      <aside class="iprm-about__dates" id="schedule" aria-labelledby="schedule-title">
+        <h2 id="schedule-title" class="iprm-about__dates-title apple-reveal">
+          {{ _('Оберіть <span class="apple-gradient-text">дату</span>') }}
+        </h2>
+        {% include 'partials/_course_schedule.html' %}
+      </aside>
     </div>
   </section>
   {% endif %}
-
-  {# ===== SCHEDULE =====
-     Одразу за повним описом (пункт 7 ТЗ): пояснивши, ЩО за курс, сторінка
-     мусить тут-таки показати, КОЛИ на нього можна прийти. У підвалі, де
-     блок стояв раніше, до нього дочитували одиниці. #}
-  {% include 'partials/_course_schedule.html' %}
 
   <!-- ===== ROI CALCULATOR ===== -->
   {% include 'partials/_course_roi.html' %}

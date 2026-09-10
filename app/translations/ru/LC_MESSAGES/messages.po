@@ -6419,3 +6419,10 @@ msgstr "Группа на %(date)s уже набрана."
 
 msgid "ще %(count)s %(noun)s вже набрано"
 msgstr "ещё %(count)s %(noun)s уже набрано"
+
+msgid "Оберіть <span class=\"apple-gradient-text\">дату</span>"
+msgstr "Выберите <span class=\"apple-gradient-text\">дату</span>"
+
+#, python-format
+msgid "Ще %(count)s %(noun)s"
+msgstr "Ещё %(count)s %(noun)s"
