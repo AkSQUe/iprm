@@ -3721,6 +3721,10 @@ th.access-perm__label {
    значень тут немає. */
 .admin-speakers { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
 .admin-speakers__empty { margin: 0; color: var(--iprm-text-secondary); font-size: 13px; }
+/* Підпис над УСПАДКОВАНИМ складом. Окремо від __empty: там нічого немає й
+   треба щось робити, тут усе гаразд і робити нічого не треба. */
+.admin-speakers__note { margin: 0; color: var(--iprm-text-secondary); font-size: 13px; }
+.admin-speakers__copy { align-self: flex-start; margin-top: 8px; }
 .admin-speaker-card {
   display: flex; gap: 12px; padding: 12px;
   border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-md);
@@ -3729,6 +3733,12 @@ th.access-perm__label {
 /* Перший чіп трен-селекту -- головний лектор (підпис на сертифікаті
    учасника), як і в .admin-multiselect__chip--primary поруч. */
 .admin-speaker-card--primary { border-color: var(--iprm-accent); }
+/* Успадкований склад: картка приглушена, бо правиться не в цій формі, а в
+   курсі. Пунктир, а не лише прозорість -- відмінність мусить лишатись
+   помітною й тоді, коли поруч немає власної картки для порівняння. */
+.admin-speaker-card--inherited {
+  border-style: dashed; opacity: 0.75; background: transparent;
+}
 .admin-speaker-card__photo {
   flex: 0 0 auto; width: 56px; height: 56px;
   border-radius: var(--iprm-radius-pill); object-fit: cover;

@@ -13,7 +13,7 @@ from wtforms.validators import (
 from app.utils import (
     normalize_name, normalize_phone, UA_PHONE_RE, CYRILLIC_NAME_RE,
 )
-from app.admin.fields import PointsField
+from app.admin.fields import PointsField, TrainerSelectField
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
 from app.models.course_request import CourseRequest
@@ -580,7 +580,7 @@ class CourseForm(FlaskForm):
         validators=[Optional(), NumberRange(min=0)],
         description='Бали, що нараховуються лектору заходу (відрізняються від балів учасника).',
     )
-    trainer_ids = SelectMultipleField(
+    trainer_ids = TrainerSelectField(
         'Тренери',
         coerce=int,
         validators=[Optional()],
@@ -766,6 +766,12 @@ class CourseInstanceForm(FlaskForm):
         validators=[Optional(), NumberRange(min=0)],
         description='Залиште порожнім щоб взяти з курсу',
     )
+    bpr_lecturer_points = PointsField(
+        'Бали БПР лектору',
+        validators=[Optional(), NumberRange(min=0)],
+        description='Нараховуються лектору, а не учаснику, і від формату '
+                    'участі не залежать. Залиште порожнім щоб взяти з курсу.',
+    )
     max_participants = IntegerField(
         'Макс. учасників',
         validators=[Optional(), NumberRange(min=1)],
@@ -787,7 +793,7 @@ class CourseInstanceForm(FlaskForm):
         'Посилання на онлайн',
         validators=[Optional(), Length(max=500), _optional_url()],
     )
-    trainer_ids = SelectMultipleField(
+    trainer_ids = TrainerSelectField(
         'Тренери',
         coerce=int,
         validators=[Optional()],

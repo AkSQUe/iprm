@@ -84,10 +84,15 @@
     var at = chosen.indexOf(option);
     var target = chosen[at + step];
     if (!target) { return; }
+    // Тільки в межах спільного батька: insertBefore на рівні <select>
+    // ВИТЯГ би <option> із його <optgroup> -- групування розсипалось би
+    // тихо, без жодної помилки. Сусід із іншої групи лишається на місці.
+    if (option.parentNode !== target.parentNode) { return; }
+    var parent = option.parentNode;
     if (step < 0) {
-      select.insertBefore(option, target);
+      parent.insertBefore(option, target);
     } else {
-      select.insertBefore(target, option);
+      parent.insertBefore(target, option);
     }
   }
 
@@ -188,7 +193,12 @@
         ? Array.prototype.slice.call(node.children)
         : [node];
       var matching = options.filter(function (option) {
-        return !option.selected && normalize(option.textContent).indexOf(needle) !== -1;
+        // data-inactive -- деактивований тренер, який лишився у choices лише
+        // заради вже наявного зв'язку (див. populate_trainer_choices). Чіп
+        // його показує, випадний список -- ні: новим вибором він бути не може.
+        return !option.selected
+          && !option.hasAttribute('data-inactive')
+          && normalize(option.textContent).indexOf(needle) !== -1;
       });
       if (!matching.length) { return; }
       if (node.tagName === 'OPTGROUP') {
@@ -213,6 +223,16 @@
         item.setAttribute('aria-selected', 'false');
         item.addEventListener('mousedown', function (event) {
           event.preventDefault();
+          // У впорядкованому полі порядок <option> -- це порядок лекторів,
+          // а щойно обраний <option> лишається на своєму (алфавітному)
+          // місці. Тому обраний другим міг мовчки стати першим чіпом, тобто
+          // головним лектором. Переносимо в кінець: порядок кліків і є той
+          // порядок, який людина мала на увазі. Опції всередині <optgroup>
+          // не рухаємо -- це вивело б їх із групи.
+          if (select.hasAttribute('data-multiselect-ordered')
+              && option.parentNode === select) {
+            select.appendChild(option);
+          }
           option.selected = true;
           ui.search.value = '';
           sync(select, ui);
@@ -298,6 +318,15 @@
     });
     document.addEventListener('click', function (event) {
       if (!ui.wrap.contains(event.target)) { open(ui, false); }
+    });
+
+    // Вхід для чужих скриптів, що міняють вибір напряму (кнопка «Скопіювати
+    // тренерів з курсу»). Слухати 'change' тут не можна: його ж шле sync(),
+    // і вийшла б нескінченна рекурсія. Своя подія такої петлі не має, тож і
+    // change звідси не шлемо -- це справа того, хто вибір змінив.
+    select.addEventListener('admin-multiselect:refresh', function () {
+      renderChips(select, ui);
+      renderList(select, ui);
     });
   }
 

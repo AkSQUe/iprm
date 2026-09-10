@@ -384,7 +384,18 @@ def populate_trainer_choices(form, linked_ids=None):
     else:
         query = query.filter_by(is_active=True)
     trainers = query.order_by(Trainer.full_name).all()
-    form.trainer_ids.choices = [(t.id, t.full_name) for t in trainers]
+    # Деактивований, але прив'язаний тренер лишається у choices (інакше зв'язок
+    # обірвався б сам собою -- див. вище), проте мусить бути ВІДРІЗНЯЛЬНИМ: у
+    # голому списку ПІБ він виглядає як звичайний доступний вибір. Підпис каже
+    # про це прямо, а data-inactive прибирає його з випадного списку
+    # мультиселекта -- новим вибором він більше не стає. Знятий чіп такого
+    # тренера назад у цій же формі не повернеш: перезавантаження сторінки
+    # (до збереження) вертає все як було.
+    form.trainer_ids.choices = [
+        (t.id, t.full_name) if t.is_active
+        else (t.id, f'{t.full_name} — неактивний', {'data-inactive': ''})
+        for t in trainers
+    ]
 
 
 def populate_event_type_choices(form, current=None, empty_label=None):

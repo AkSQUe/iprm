@@ -651,12 +651,33 @@
     </div>
     <p class="ds-hint">.admin-speaker-card: те, що реально збереться на сторінці заходу з обраної картки тренера (admin-course-speakers.js, GET /admin/trainers/&lt;id&gt;/card.json). .admin-speaker-card--primary -- перший тренер у trainer_ids: головний лектор, як і в мультиселекті вище. .__photo -- показується лише коли є фото (тут без файлу -- плейсхолдер-коло компонента, як у Trainer block вище); немає фото -- немає &lt;img&gt; взагалі, а не порожня рамка. .__warning -- зʼявляється лише коли чогось бракує з трійки bio/role/photo (саме те, що рендерить публічний блок спікерів), називає бракуюче адресно й веде на редагування тренера в новій вкладці. Попередження ніколи не блокує збереження форми заходу.</p>
 
-    <h3 class="ds-section-heading">Картка спікера -- тренерів не обрано</h3>
+    <h3 class="ds-section-heading">Картка спікера -- успадкований склад</h3>
     <div class="ds-demo">
       <div class="admin-speakers">
-        <p class="admin-speakers__empty">Тренерів не обрано -- блок спікерів на сторінці заходу не зʼявиться.</p>
+        <p class="admin-speakers__note">Власних тренерів немає -- захід веде склад курсу:</p>
+        <div class="admin-speaker-card admin-speaker-card--primary admin-speaker-card--inherited">
+          <div class="admin-speaker-card__body">
+            <strong>Петренко О. В. -- головний</strong>
+            <span class="admin-speaker-card__role">Лікар-дерматовенеролог</span>
+          </div>
+        </div>
+        <div class="admin-speaker-card admin-speaker-card--inherited">
+          <div class="admin-speaker-card__body">
+            <strong>Коваль І. М.</strong>
+            <span class="admin-speaker-card__role">Косметолог</span>
+          </div>
+        </div>
+        <button type="button" class="btn-admin btn-admin--secondary btn-admin--sm admin-speakers__copy">Скопіювати тренерів з курсу</button>
       </div>
     </div>
-    <p class="ds-hint">.admin-speakers__empty: стан порожнього списку trainer_ids -- редактор бачить наслідок одразу, до збереження форми, а не здогадується з порожньої сторінки заходу.</p>
+    <p class="ds-hint">.admin-speaker-card--inherited: у формі ПРОВЕДЕННЯ порожнє поле trainer_ids означає «успадкувати склад курсу», а не «без тренерів», тож прев'ю показує саме той склад, який дата отримає. Пунктир і приглушення кажуть, що правиться він у курсі, а не тут; --primary поверх нього лишається, бо перший успадкований і є головним лектором цієї дати. .admin-speakers__note -- підпис над таким складом (окремий від __empty: там треба щось робити, тут -- ні). Кнопка .admin-speakers__copy перетворює успадкування на власний зафіксований склад: вона ЗАМІЩАЄ вибір, а не додає до нього.</p>
+
+    <h3 class="ds-section-heading">Картка спікера -- тренерів немає взагалі</h3>
+    <div class="ds-demo">
+      <div class="admin-speakers">
+        <p class="admin-speakers__empty">Тренерів немає ні у проведення, ні в курсу: сертифікати й розсилка «Тренер заходу» лишаться без лектора.</p>
+      </div>
+    </div>
+    <p class="ds-hint">.admin-speakers__empty: стан, коли успадковувати теж нема від кого. Текст називає наслідок для документів і листів, а не для блоку спікерів: той блок живе на сторінці КУРСУ і збирається з course.trainers -- перелік проведення на нього не впливає взагалі.</p>
   </div>
 

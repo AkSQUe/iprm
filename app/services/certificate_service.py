@@ -731,10 +731,12 @@ def issue_lecturer_certificate(instance, trainer, issued_by=None):
     if not event_num:
         raise ValueError('Не задано реєстраційний номер заходу БПР '
                          '(Адмінка -> Курс -> редагувати).')
-    points = course.bpr_lecturer_points if course else None
+    # Норма проведення, інакше курсова: дата може дати лектору іншу
+    # кількість, ніж курс узагалі (див. effective_lecturer_points).
+    points = instance.effective_lecturer_points
     if points is None:
-        raise ValueError('Не задано бали БПР лектору '
-                         '(Адмінка -> Курс -> редагувати).')
+        raise ValueError('Не задано бали БПР лектору (Адмінка -> Курс або '
+                         'конкретне проведення -> редагувати).')
 
     issued_at = utcnow()
     event_date = instance.start_date

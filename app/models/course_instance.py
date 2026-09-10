@@ -43,6 +43,11 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
     # Бали БПР окремо за форматом участі -- те саме розмежування, що й у Course.
     cpd_points_online = db.Column(db.Numeric(5, 2))
     cpd_points_offline = db.Column(db.Numeric(5, 2))
+    # Бали лектору саме за це проведення. NULL -- беремо з курсу (див.
+    # effective_lecturer_points). Потрібне з тієї ж причини, що й бали
+    # учасника: та сама програма в один день іде повним днем, а в інший --
+    # скороченим блоком, і лекторська норма за неї інша.
+    bpr_lecturer_points = db.Column(db.Numeric(5, 2))
     max_participants = db.Column(db.Integer)
 
     # `location` -- адреса для людини ("м. Харків, вул. Сковороди, 80, ДУ ..."),
@@ -93,6 +98,10 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
         db.CheckConstraint(
             'cpd_points_offline >= 0 OR cpd_points_offline IS NULL',
             name='ck_course_instances_cpd_points_offline_non_negative',
+        ),
+        db.CheckConstraint(
+            'bpr_lecturer_points >= 0 OR bpr_lecturer_points IS NULL',
+            name='ck_course_instances_bpr_lecturer_points_non_negative',
         ),
         db.CheckConstraint(
             'max_participants >= 1 OR max_participants IS NULL',
@@ -320,6 +329,22 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
             self._warn_orphan(column)
             return None
         return getattr(self.course, column)
+
+    @property
+    def effective_lecturer_points(self):
+        """Бали БПР лектору: власні, а якщо не задані -- курсові.
+
+        Формату участі тут немає навмисно: лектор читає лекцію особисто, і
+        онлайновість заходу для нього нічого не змінює. Ділити бали між
+        кількома тренерами теж не треба -- кожен веде свою частину і
+        отримує повну норму (див. issue_lecturer_certificate).
+        """
+        if self.bpr_lecturer_points is not None:
+            return self.bpr_lecturer_points
+        if self.course is None:
+            self._warn_orphan('bpr_lecturer_points')
+            return None
+        return self.course.bpr_lecturer_points
 
     @property
     def cpd_formats(self):

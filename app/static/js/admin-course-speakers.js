@@ -19,10 +19,30 @@
     }).map(function (option) { return option.value; });
   }
 
-  function card(data, isPrimary) {
+  function parseIds(raw) {
+    try {
+      var parsed = JSON.parse(raw || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function note(box, className, text) {
+    if (!text) { return; }
+    var line = document.createElement('p');
+    line.className = className;
+    line.textContent = text;
+    box.appendChild(line);
+  }
+
+  function card(data, isPrimary, isInherited) {
     var box = document.createElement('div');
     box.className = 'admin-speaker-card';
     if (isPrimary) { box.classList.add('admin-speaker-card--primary'); }
+    // Успадкований склад -- не вибір цієї форми, а наслідок порожнього поля:
+    // приглушена картка каже, що правити її треба в курсі, а не тут.
+    if (isInherited) { box.classList.add('admin-speaker-card--inherited'); }
 
     if (data.photo) {
       var img = document.createElement('img');
@@ -76,14 +96,22 @@
 
   function render(box, select, cache) {
     var ids = selectedIds(select);
+    var inheritedIds = parseIds(box.dataset.speakersInherited);
+    var isInherited = false;
     box.textContent = '';
 
     if (!ids.length) {
-      var empty = document.createElement('p');
-      empty.className = 'admin-speakers__empty';
-      empty.textContent = box.dataset.speakersEmpty || '';
-      box.appendChild(empty);
-      return;
+      // Порожнє поле у ФОРМІ ПРОВЕДЕННЯ означає «успадкувати склад курсу», а
+      // не «без тренерів»: показуємо, кого саме буде успадковано. У формі
+      // курсу успадковувати нема від кого -- там data-speakers-inherited
+      // порожній, і лишається чесний порожній стан.
+      if (!inheritedIds.length) {
+        note(box, 'admin-speakers__empty', box.dataset.speakersEmpty);
+        return;
+      }
+      note(box, 'admin-speakers__note', box.dataset.speakersInheritedNote);
+      ids = inheritedIds.map(String);
+      isInherited = true;
     }
 
     ids.forEach(function (id, index) {
@@ -91,7 +119,7 @@
       box.appendChild(slot);
 
       var draw = function (data) {
-        slot.replaceWith(card(data, index === 0));
+        slot.replaceWith(card(data, index === 0, isInherited));
       };
 
       if (cache[id]) { draw(cache[id]); return; }
@@ -116,6 +144,32 @@
     });
   }
 
+  function wireCopy(button, box, select) {
+    button.addEventListener('click', function () {
+      var ids = parseIds(box.dataset.speakersInherited);
+      if (!ids.length) { return; }
+      // Саме СКОПІЮВАТИ, а не долучити: кнопка перетворює успадкування на
+      // власний, зафіксований склад цієї дати, і лишити поверх нього
+      // випадковий попередній вибір означало б віддати третій, ніде не
+      // описаний склад.
+      Array.prototype.forEach.call(select.options, function (option) {
+        option.selected = false;
+      });
+      // Порядок курсу = порядок лекторів, тож переносимо <option> у кінець
+      // по черзі: у впорядкованому полі позиція і є роллю.
+      ids.forEach(function (id) {
+        var option = select.querySelector('option[value="' + id + '"]');
+        if (!option) { return; }
+        if (option.parentNode === select) { select.appendChild(option); }
+        option.selected = true;
+      });
+      // Перша подія перемальовує чіпи мультиселекта, друга -- прев'ю нижче
+      // (воно слухає звичайний change, як і решта форми).
+      select.dispatchEvent(new CustomEvent('admin-multiselect:refresh', { bubbles: true }));
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     Array.prototype.forEach.call(
       document.querySelectorAll('[data-speakers-preview]'),
@@ -129,6 +183,13 @@
           render(box, select, cache);
         });
         render(box, select, cache);
+
+        Array.prototype.forEach.call(
+          document.querySelectorAll(
+            '[data-speakers-copy="' + box.dataset.speakersSource + '"]'
+          ),
+          function (button) { wireCopy(button, box, select); }
+        );
       }
     );
   });

@@ -461,6 +461,7 @@ def populate_instance_from_form(instance, form):
     instance.price = form.price.data
     instance.cpd_points_online = form.cpd_points_online.data
     instance.cpd_points_offline = form.cpd_points_offline.data
+    instance.bpr_lecturer_points = form.bpr_lecturer_points.data
     instance.max_participants = form.max_participants.data
     instance.location = _clean_text(form.location.data)
     # 0 -- це «Місце уточнюється» з пікера; у БД воно має лягти як NULL, а не
