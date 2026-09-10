@@ -187,6 +187,31 @@ def test_course_export_uses_semicolon_separator(client):
     assert cell.count(';') == 1  # рівно один роздільник між ДВОМА тренерами
 
 
+def test_course_trainer_comma_in_full_name_survives_round_trip(client, tmp_path):
+    """Саме той випадок, заради якого існує роздільник ';': ПІБ з комою
+    всередині ("Іванов І. І., PhD"). Експорт з'єднує тренерів через '; ',
+    але клітинка МІСТИТЬ і кому -- ту, що частина імені. Якщо імпорт
+    ріже і за ';', і за ',' без пріоритету, ця сама клітинка розпадається
+    на три фрагменти замість двох тренерів, і рядок падає з
+    "тренерів не знайдено". Це не гіпотетичний кейс -- це рівно те, що
+    export уже гарантує (test_course_export_uses_semicolon_separator
+    вище), просто ніхто не скормив результат назад в import."""
+    course = _course()
+    t1 = _trainer(full_name='Іванов І. І., PhD')
+    t2 = _trainer(full_name='Петров П. П.')
+    trainer_links.set_trainers(course, [t1.id, t2.id])
+    db.session.commit()
+
+    ws = _export_courses_sheet()
+    cell = _course_row(ws, course.slug)[xlsx_io.COURSE_LABELS['trainer_slugs']]
+    assert cell == f'{t1.full_name}; {t2.full_name}'
+
+    path = _write_courses_file(tmp_path, [_base_course_row(course, trainer_slugs=cell)])
+    plan = xlsx_io.parse_courses_xlsx(path)
+    assert plan.is_valid, plan.errors
+    assert plan.courses[0]['parsed']['trainer_ids'] == [t1.id, t2.id]
+
+
 def test_course_import_accepts_comma_separator(client, tmp_path):
     """Людина, яка друкує вручну, поставить кому."""
     course = _course()

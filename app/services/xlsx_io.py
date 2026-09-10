@@ -521,11 +521,19 @@ def _dt(v) -> datetime | None:
 # трапляється ВСЕРЕДИНІ самого ПІБ, напр. «Іванов І. І., PhD», тож нею не
 # можна розділяти елементи списку), а на імпорті приймаємо і ';', і ',' --
 # людина, що редагує клітинку вручну, радше поставить кому.
-_TRAINER_LIST_SEP_RE = re.compile(r'[;,]')
+#
+# Але не одночасно: якщо в клітинці є хоч одна ';', це саме той формат,
+# що дає export, і кома в ній -- частина ПІБ, а не роздільник між
+# тренерами ("Іванов І. І., PhD; Петров П. П." має розпастись на ДВА
+# тренери, а не на три фрагменти). Кома як роздільник -- лише запасний
+# варіант для клітинки без жодної ';' узагалі, набраної вручну.
+_TRAINER_LIST_SEP_SEMICOLON_RE = re.compile(r';')
+_TRAINER_LIST_SEP_COMMA_RE = re.compile(r',')
 
 
 def _split_trainer_names(text: str) -> list[str]:
-    return [p.strip() for p in _TRAINER_LIST_SEP_RE.split(text) if p.strip()]
+    sep_re = _TRAINER_LIST_SEP_SEMICOLON_RE if ';' in text else _TRAINER_LIST_SEP_COMMA_RE
+    return [p.strip() for p in sep_re.split(text) if p.strip()]
 
 
 def _resolve_trainer_ids(raw, trainer_id_by_slug: dict, trainer_id_by_name: dict) -> list[int]:
