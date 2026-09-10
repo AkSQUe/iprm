@@ -1,6 +1,6 @@
 import json
 import logging
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import current_user
 from app.admin import _listing, admin_bp
 from app.rbac import permission_required
@@ -260,3 +260,36 @@ def trainer_delete(trainer_id):
             db.session.rollback()
             flash('Помилка при видаленні', 'error')
     return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/trainers/<int:trainer_id>/card.json')
+@permission_required('trainers.view')
+def trainer_card_json(trainer_id):
+    """Картка тренера для прев'ю блоку спікерів у формі заходу.
+
+    Окремий ендпоінт, а не JSON усіх тренерів у data-атрибуті: тренерів
+    десятки, у кожного bio -- абзац, і вбудований масив зробив би форму
+    заходу помітно важчою заради даних, з яких знадобиться два-три записи.
+    """
+    trainer = db.session.get(Trainer, trainer_id)
+    if trainer is None:
+        return jsonify({'error': 'not_found'}), 404
+
+    # «Заповнена картка» = те, що рендерить публічний блок спікерів.
+    missing = []
+    if not (trainer.bio or '').strip():
+        missing.append('bio')
+    if not (trainer.role or '').strip():
+        missing.append('role')
+    if not trainer.photo_thumb:
+        missing.append('photo')
+
+    return jsonify({
+        'id': trainer.id,
+        'full_name': trainer.full_name,
+        'role': (trainer.role or '').strip(),
+        'bio': (trainer.bio or '').strip(),
+        'photo': trainer.photo_thumb or '',
+        'missing': missing,
+        'edit_url': url_for('admin.trainer_edit', trainer_id=trainer.id),
+    })

@@ -156,6 +156,11 @@
           <label for="trainer_ids">Тренери</label>
           {{ form.trainer_ids(class="form-input", id="trainer_ids", size=8, **{'data-multiselect': '', 'data-multiselect-ordered': ''}) }}
           <small class="form-hint">{{ form.trainer_ids.description }}</small>
+          <div class="admin-speakers" data-speakers-preview
+               data-speakers-source="trainer_ids"
+               data-speakers-url="/admin/trainers/__ID__/card.json"
+               data-speakers-empty="Тренерів не обрано -- блок спікерів на сторінці заходу не зʼявиться.">
+          </div>
         </div>
 
       </div>
@@ -179,4 +184,5 @@
 </div>
 <script src="{{ url_for('static', filename='js/admin-instance-points.js') }}?v={{ assets_version }}"></script>
 <script src="{{ url_for('static', filename='js/admin-multiselect.js') }}?v={{ assets_version }}" defer></script>
+<script src="{{ url_for('static', filename='js/admin-course-speakers.js') }}?v={{ assets_version }}" defer></script>
 {% endblock %}

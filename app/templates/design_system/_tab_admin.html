@@ -617,5 +617,35 @@
       </div>
     </div>
     <p class="ds-hint">Той самий .admin-multiselect, увімкнений із data-multiselect-ordered (як trainer_ids на формі курсу й проведення) -- на відміну від bpr_specialty_codes, де впорядкування сенсу не має й атрибута немає. Порядок чіпів -- це порядок &lt;option&gt; у прихованому select, а він і є порядок сабміту: кнопки ◀/▶ фізично переставляють &lt;option&gt;, окремого поля з індексами немає. Перший чіп -- головний лектор: його підпис іде на сертифікат учасника. Позначено не лише рамкою й жирністю (колір -- ненадійний канал сам по собі), а й текстом у .visually-hidden, тож скрінрідер це теж чує. Демо статичне: чіпи показано розгорнутими навмисно, як і в базовому варіанті вище.</p>
+
+    <h3 class="ds-section-heading">Картка спікера</h3>
+    <div class="ds-demo">
+      <div class="admin-speakers">
+        <div class="admin-speaker-card admin-speaker-card--primary">
+          <img class="admin-speaker-card__photo" alt="" loading="lazy">
+          <div class="admin-speaker-card__body">
+            <strong>Петренко О. В. -- головний</strong>
+            <span class="admin-speaker-card__role">Лікар-дерматовенеролог</span>
+            <p class="admin-speaker-card__bio">13 років практики в естетичній дерматології, автор методик плазмотерапії.</p>
+          </div>
+        </div>
+        <div class="admin-speaker-card">
+          <div class="admin-speaker-card__body">
+            <strong>Коваль І. М.</strong>
+            <span class="admin-speaker-card__role">Косметолог</span>
+            <p class="admin-speaker-card__warning">У картці немає біографії, немає фото. <a href="#">Доповнити картку</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="ds-hint">.admin-speaker-card: те, що реально збереться на сторінці заходу з обраної картки тренера (admin-course-speakers.js, GET /admin/trainers/&lt;id&gt;/card.json). .admin-speaker-card--primary -- перший тренер у trainer_ids: головний лектор, як і в мультиселекті вище. .__photo -- показується лише коли є фото (тут без файлу -- плейсхолдер-коло компонента, як у Trainer block вище); немає фото -- немає &lt;img&gt; взагалі, а не порожня рамка. .__warning -- зʼявляється лише коли чогось бракує з трійки bio/role/photo (саме те, що рендерить публічний блок спікерів), називає бракуюче адресно й веде на редагування тренера в новій вкладці. Попередження ніколи не блокує збереження форми заходу.</p>
+
+    <h3 class="ds-section-heading">Картка спікера -- тренерів не обрано</h3>
+    <div class="ds-demo">
+      <div class="admin-speakers">
+        <p class="admin-speakers__empty">Тренерів не обрано -- блок спікерів на сторінці заходу не зʼявиться.</p>
+      </div>
+    </div>
+    <p class="ds-hint">.admin-speakers__empty: стан порожнього списку trainer_ids -- редактор бачить наслідок одразу, до збереження форми, а не здогадується з порожньої сторінки заходу.</p>
   </div>
 

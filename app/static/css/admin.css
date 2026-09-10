@@ -3693,3 +3693,40 @@ th.access-perm__label {
 .admin-multiselect__option:hover,
 .admin-multiselect__option.is-active { background: var(--iprm-surface-inset); }
 .admin-multiselect__empty { padding: 8px 12px; color: var(--iprm-text-secondary); }
+
+/* Прев'ю блоку спікерів (admin-course-speakers.js) -- картки того, що
+   реально збереться на сторінці заходу з обраних тренерів, у порядку чіпів
+   trainer_ids. Токени звірено з common.css: --iprm-border, --iprm-accent,
+   --iprm-radius-md/sm/pill, --iprm-surface-inset, --iprm-text,
+   --iprm-text-secondary, --iprm-warning-bg/text/border -- вигаданих
+   значень тут немає. */
+.admin-speakers { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.admin-speakers__empty { margin: 0; color: var(--iprm-text-secondary); font-size: 13px; }
+.admin-speaker-card {
+  display: flex; gap: 12px; padding: 12px;
+  border: 1px solid var(--iprm-border); border-radius: var(--iprm-radius-md);
+  background: var(--iprm-surface-inset);
+}
+/* Перший чіп трен-селекту -- головний лектор (підпис на сертифікаті
+   учасника), як і в .admin-multiselect__chip--primary поруч. */
+.admin-speaker-card--primary { border-color: var(--iprm-accent); }
+.admin-speaker-card__photo {
+  flex: 0 0 auto; width: 56px; height: 56px;
+  border-radius: var(--iprm-radius-pill); object-fit: cover;
+  background: var(--iprm-border-strong);
+}
+.admin-speaker-card__body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.admin-speaker-card__role { color: var(--iprm-text-secondary); font-size: 13px; }
+.admin-speaker-card__bio {
+  margin: 0; color: var(--iprm-text); font-size: 13px; line-height: 1.5;
+}
+/* Попередження про недописану картку -- ніколи не блокує збереження форми,
+   лише адресно називає, чого бракує, і веде на редагування тренера. */
+.admin-speaker-card__warning {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px;
+  margin: 0; padding: 6px 10px;
+  border: 1px solid var(--iprm-warning-border); border-radius: var(--iprm-radius-sm);
+  background: var(--iprm-warning-bg); color: var(--iprm-warning-text);
+  font-size: 12px;
+}
+.admin-speaker-card__warning a { color: inherit; font-weight: 600; }
