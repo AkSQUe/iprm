@@ -436,7 +436,7 @@ def normalize_event_type(raw):
     """
     from app.services import event_types
 
-    value = (raw or '').strip()
+    value = _str(raw) or ''
     if not value:
         return None
 

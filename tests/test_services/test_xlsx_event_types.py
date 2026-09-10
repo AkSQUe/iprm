@@ -32,6 +32,15 @@ def test_rejects_unknown_type_with_helpful_message(app):
     assert 'Вечірка' in str(err.value)
 
 
+def test_rejects_non_string_cell_with_value_error(app):
+    """Excel може віддати клітинку як int/float (values_only=True) --
+    таке значення мусить давати ValueError з текстом значення, а не
+    AttributeError із сирого .strip() на не-рядку."""
+    with pytest.raises(ValueError) as err:
+        xlsx_io.normalize_event_type(123)
+    assert '123' in str(err.value)
+
+
 def test_dropdown_offers_only_active_types(app):
     options = xlsx_io.event_type_dropdown_options()
     assert 'Наукова конференція' in options
