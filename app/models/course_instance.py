@@ -7,6 +7,7 @@ from sqlalchemy import func, select
 
 from app.extensions import db
 from app.models.mixins import TimestampMixin, BigIntPK
+from app.models.trainer_links import course_instance_trainers
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +96,11 @@ class CourseInstance(TimestampMixin, db.Model):
     )
 
     course = db.relationship('Course', back_populates='instances')
-    trainer = db.relationship('Trainer', foreign_keys=[trainer_id])
+    trainers = db.relationship(
+        'Trainer', secondary=course_instance_trainers,
+        order_by=course_instance_trainers.c.position,
+        viewonly=True, lazy='select',
+    )
     city = db.relationship('City', foreign_keys=[city_id])
     tariffs = db.relationship(
         'InstanceTariff',
@@ -285,13 +290,20 @@ class CourseInstance(TimestampMixin, db.Model):
         return self.course.max_participants
 
     @property
-    def effective_trainer(self):
-        if self.trainer is not None:
-            return self.trainer
+    def effective_trainers(self):
+        """Тренери проведення, інакше -- курсу. Повне перекриття, не злиття."""
+        if self.trainers:
+            return list(self.trainers)
         if self.course is None:
-            self._warn_orphan('trainer')
-            return None
-        return self.course.trainer
+            self._warn_orphan('trainers')
+            return []
+        return list(self.course.trainers)
+
+    @property
+    def effective_trainer(self):
+        """Головний тренер заходу -- перший зі списку."""
+        trainers = self.effective_trainers
+        return trainers[0] if trainers else None
 
     @property
     def registration_count(self):

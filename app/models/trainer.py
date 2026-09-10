@@ -1,5 +1,6 @@
 from app.extensions import db
 from app.models.mixins import TimestampMixin, TranslatableMixin, BigIntPK
+from app.models.trainer_links import course_trainers
 
 
 class Trainer(TranslatableMixin, TimestampMixin, db.Model):
@@ -74,10 +75,8 @@ class Trainer(TranslatableMixin, TimestampMixin, db.Model):
     )
 
     courses = db.relationship(
-        'Course',
-        foreign_keys='Course.trainer_id',
-        back_populates='trainer',
-        lazy='dynamic',
+        'Course', secondary=course_trainers,
+        viewonly=True, lazy='dynamic',
     )
     photo_media = db.relationship('MediaFile', foreign_keys=[photo_media_id])
 

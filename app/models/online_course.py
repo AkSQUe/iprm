@@ -146,6 +146,20 @@ class OnlineCourse(TranslatableMixin, TimestampMixin, db.Model):
     )
 
     @property
+    def trainers(self):
+        """Список із нуля або одного елемента.
+
+        Партіал блоку тренера (_course_trainer.html) спільний із курсами
+        і ходить по списку. Без цієї властивості цикл по неіснуючому
+        атрибуту рендерився б порожнечею -- блок тренера мовчки зник би
+        з усіх сторінок онлайн-курсів, без винятку в логах.
+
+        Множинність онлайн-курсам не потрібна: колонка, форма й адмінка
+        лишаються одиничними.
+        """
+        return [self.trainer] if self.trainer else []
+
+    @property
     def gallery(self):
         """Фото галереї у порядку sort_order. Див. Course.gallery."""
         from app.models.media_file import MediaFile

@@ -7,6 +7,7 @@ from sqlalchemy import func
 
 from app.extensions import db
 from app.models.mixins import TimestampMixin, TranslatableMixin, BigIntPK
+from app.models.trainer_links import course_trainers
 
 
 class Course(TranslatableMixin, TimestampMixin, db.Model):
@@ -122,8 +123,10 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
         ),
     )
 
-    trainer = db.relationship(
-        'Trainer', foreign_keys=[trainer_id], back_populates='courses',
+    trainers = db.relationship(
+        'Trainer', secondary=course_trainers,
+        order_by=course_trainers.c.position,
+        viewonly=True, lazy='select',
     )
     creator = db.relationship(
         'User', foreign_keys=[created_by], back_populates='created_courses',
@@ -153,6 +156,17 @@ class Course(TranslatableMixin, TimestampMixin, db.Model):
     )
     hero_media = db.relationship('MediaFile', foreign_keys=[hero_media_id])
     card_media = db.relationship('MediaFile', foreign_keys=[card_media_id])
+
+    @property
+    def trainer(self):
+        """Головний тренер -- перший у порядку.
+
+        Властивість, а не колонка: денормалізований «головний» другим
+        джерелом істини розходився б із переліком непомітно. Місць, де
+        потрібен рівно один (ПІБ на картці, підпис на сертифікаті),
+        більше, ніж місць, де потрібні всі.
+        """
+        return self.trainers[0] if self.trainers else None
 
     @property
     def hero_src(self):
