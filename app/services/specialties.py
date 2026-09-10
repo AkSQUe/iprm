@@ -70,6 +70,7 @@ def catalog():
     if has_app_context() and _CACHE_ATTR in g:
         return g.get(_CACHE_ATTR)
 
+    from app.extensions import db
     from app.models.specialty import Specialty
     try:
         rows = Specialty.query.all()
@@ -80,6 +81,14 @@ def catalog():
         # рядка спеціальностей, але сторінка не падає.
         logger.exception('Specialties catalog unavailable')
         mapping = {}
+        # Без rollback запобіжник шкодить більше, ніж допомагає: на Postgres
+        # невдалий запит труїть транзакцію, і наступний запит того ж реквесту
+        # гине з InFailedSqlTransaction. Відколи блок «Цільова аудиторія»
+        # читає довідник, цей шлях проходить кожна сторінка заходу.
+        try:
+            db.session.rollback()
+        except Exception:
+            logger.exception('Rollback after specialties catalog failure failed')
 
     if has_app_context():
         setattr(g, _CACHE_ATTR, mapping)

@@ -32,6 +32,7 @@ def directory():
     if has_app_context() and _CACHE_ATTR in g:
         return g.get(_CACHE_ATTR)
 
+    from app.extensions import db
     from app.models.event_type import EventType
     try:
         rows = EventType.query.order_by(
@@ -40,6 +41,14 @@ def directory():
     except Exception:
         logger.exception('Event type directory unavailable, falling back to raw codes')
         mapping = {}
+        # Без rollback запобіжник шкодить більше, ніж допомагає: на Postgres
+        # невдалий запит труїть транзакцію, і наступний запит того ж реквесту
+        # гине з InFailedSqlTransaction -- тобто сторінка, яку ми тут
+        # рятували, однаково падає, лише з менш зрозумілою помилкою.
+        try:
+            db.session.rollback()
+        except Exception:
+            logger.exception('Rollback after event type directory failure failed')
 
     if has_app_context():
         setattr(g, _CACHE_ATTR, mapping)
