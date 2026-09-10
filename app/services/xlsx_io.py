@@ -45,7 +45,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.table import Table, TableStyleInfo
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.extensions import db
 from app.models.course import Course
@@ -346,7 +346,7 @@ def _apply_table_style(ws, columns: list[str], table_name: str, last_data_row: i
 
 
 def _apply_zebra(ws, n_cols: int, first_data_row: int, last_data_row: int) -> None:
-    """Заповнити кожен 2-й data-рядок ledь-помітним сірим. Викликати
+    """Заповнити кожен 2-й data-рядок ледь помітним сірим. Викликати
     ПЕРЕД призначенням enum-fills, щоб кольорові клітинки (event_type,
     status, is_active, ...) перекривали zebra-fill своїм кольором.
     """
@@ -476,17 +476,28 @@ def _decimal(v) -> Decimal | None:
     if v is None or v == '':
         return None
     try:
-        return Decimal(str(v).replace(' ', '').replace(',', '.'))
+        value = Decimal(str(v).replace(' ', '').replace(',', '.'))
     except (InvalidOperation, ValueError):
         raise ValueError(f'не число: {v!r}')
+    # Decimal вважає 'NaN' і 'Infinity' валідними значеннями, і вони проходять
+    # далі мовчки: NaN підриває будь-яке порівняння (`NaN < 0` кидає
+    # InvalidOperation вже в чужому місці), а Infinity порівняння ПРОХОДИТЬ
+    # і доживає до commit, де падає вся транзакція через одну клітинку.
+    # `parse_points` в app/utils.py давно робить цю перевірку -- тут її бракувало.
+    if not value.is_finite():
+        raise ValueError(f'не число: {v!r}')
+    return value
 
 
 def _int(v) -> int | None:
     if v is None or v == '':
         return None
     try:
+        # OverflowError, а не ValueError: float('1e400') -> inf, і int(inf)
+        # кидає саме його. Без нього нагору йшов англомовний текст
+        # "cannot convert float infinity to integer" замість нашого рядка.
         return int(float(str(v).replace(' ', '').replace(',', '.')))
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         raise ValueError(f'не ціле число: {v!r}')
 
 
@@ -498,6 +509,73 @@ def _points_cell(v) -> 'Decimal | None':
         return parse_points(v)
     except ValueError:
         raise ValueError(f'некоректні бали БПР: {v!r}')
+
+
+# Текст, який бачить людина, коли застосування плану впало з несподіваної
+# причини. Сирий str(exc) сюди віддавати не можна: у ньому буває фрагмент SQL
+# і назви колонок, тобто внутрішня будова БД у відповіді на завантажений файл.
+# Повний traceback іде в лог через logger.exception.
+_APPLY_FAILED_MESSAGE = (
+    'Не вдалося застосувати імпорт. Дані не змінено. '
+    'Подробиці записано в лог -- зверніться до адміністратора.'
+)
+
+
+# ----------------------------------------------------------------------
+# Межі значень: ОДНЕ місце для того, що дублювалося між розбором xlsx і
+# CHECK-обмеженнями моделей.
+#
+# Досі розбір перевіряв тільки `base_price < 0` на курсі, а решту меж знала
+# лише БД. Наслідок: рядок із max_participants=0 або відʼємними балами
+# проходив розбір, доходив до commit() і валив УВЕСЬ імпорт -- хоча для будь-
+# якої іншої помилки людина отримувала акуратне "Рядок 7: ...". Тепер обидва
+# аркуші звіряються з цим переліком, і кожне порушення лишається помилкою
+# СВОГО рядка.
+#
+# Межі звірені з CheckConstraint моделей (app/models/course.py:104-116,
+# app/models/course_instance.py:74-87) І з розрядністю самих колонок.
+#
+# Верхня межа потрібна не менше за нижню, і з менш очевидної причини:
+# `Decimal('1e400')` -- цілком СКІНЧЕННЕ число, тож перевірка is_finite() його
+# пропускає, порівняння з нулем воно проходить, а Numeric(10,2) у Postgres
+# відхиляє з "numeric field overflow" вже на commit -- тобто знову весь імпорт
+# гине через одну клітинку.
+#
+# Numeric(10,2) -> 8 цілих розрядів -> 99 999 999.99
+# Numeric(5,2)  -> 3 цілих розряди  -> 999.99
+# Integer       -> int4             -> 2 147 483 647
+# Додаючи сюди поле, звіряйся з оголошенням колонки, а не з памʼяттю.
+_NUMERIC_10_2_MAX = Decimal('99999999.99')
+_NUMERIC_5_2_MAX = Decimal('999.99')
+_INT4_MAX = 2147483647
+
+_VALUE_LIMITS = {
+    'base_price': (Decimal(0), _NUMERIC_10_2_MAX, 'ціна'),
+    'price': (Decimal(0), _NUMERIC_10_2_MAX, 'ціна'),
+    'cpd_points_online': (Decimal(0), _NUMERIC_5_2_MAX, 'бали БПР (онлайн)'),
+    'cpd_points_offline': (Decimal(0), _NUMERIC_5_2_MAX, 'бали БПР (офлайн)'),
+    'max_participants': (1, _INT4_MAX, 'місць'),
+}
+
+
+def _check_min_values(parsed: dict) -> None:
+    """Кинути ValueError на перше поле, що виходить за межі колонки.
+
+    Порожнє значення (None) пропускаємо: обмеження моделей усі мають форму
+    "... OR IS NULL", крім base_price, який розбір і так завжди заповнює.
+    """
+    for field, (minimum, maximum, label) in _VALUE_LIMITS.items():
+        value = parsed.get(field)
+        if value is None:
+            continue
+        if value < minimum:
+            raise ValueError(
+                f'{label}: значення {value} менше за дозволене {minimum}'
+            )
+        if value > maximum:
+            raise ValueError(
+                f'{label}: значення {value} більше за дозволене {maximum}'
+            )
 
 
 def _dt(v) -> datetime | None:
@@ -512,7 +590,9 @@ def _dt(v) -> datetime | None:
         except ValueError:
             raise ValueError(f'неможливо розпарсити дату: {v!r}')
     if dt.tzinfo is None:
-        # припускаємо Київ (UTC+3), щоб збігалось з seed-розкладом
+        # Наївний час у клітинці вважаємо київським. ZoneInfo сам візьме
+        # правильний зсув для тієї дати (узимку +2, влітку +3) -- фіксоване
+        # число тут було б помилкою двічі на рік.
         dt = dt.replace(tzinfo=KYIV)
     return dt
 
@@ -527,34 +607,69 @@ def _dt(v) -> datetime | None:
 # тренерами ("Іванов І. І., PhD; Петров П. П." має розпастись на ДВА
 # тренери, а не на три фрагменти). Кома як роздільник -- лише запасний
 # варіант для клітинки без жодної ';' узагалі, набраної вручну.
-_TRAINER_LIST_SEP_SEMICOLON_RE = re.compile(r';')
-_TRAINER_LIST_SEP_COMMA_RE = re.compile(r',')
-
-
 def _split_trainer_names(text: str) -> list[str]:
-    sep_re = _TRAINER_LIST_SEP_SEMICOLON_RE if ';' in text else _TRAINER_LIST_SEP_COMMA_RE
-    return [p.strip() for p in sep_re.split(text) if p.strip()]
+    sep = ';' if ';' in text else ','
+    return [p.strip() for p in text.split(sep) if p.strip()]
 
 
-def _resolve_trainer_ids(raw, trainer_id_by_slug: dict, trainer_id_by_name: dict) -> list[int]:
+def build_trainer_lookup(trainers) -> tuple[dict, dict, set]:
+    """Довідники «slug -> id» і «ПІБ -> id» плюс множина неоднозначних ПІБ.
+
+    ПІБ не унікальний у БД, тож словник за іменем мовчки лишав би останнього
+    тезку: клітинка з «Іванов І. І.» прив'язала б довільного з двох, і
+    менеджер побачив би це лише на сайті. Тезок збираємо окремо і на імпорті
+    вимагаємо slug -- він унікальний.
+    """
+    by_slug = {t.slug: t.id for t in trainers}
+    by_name: dict[str, int] = {}
+    ambiguous: set[str] = set()
+    for t in trainers:
+        if t.full_name in by_name:
+            ambiguous.add(t.full_name)
+        else:
+            by_name[t.full_name] = t.id
+    for name in ambiguous:
+        by_name.pop(name, None)
+    return by_slug, by_name, ambiguous
+
+
+def _resolve_trainer_ids(raw, trainer_id_by_slug: dict, trainer_id_by_name: dict,
+                         ambiguous_names: set | None = None) -> list[int]:
     """Клітинка з переліком тренерів (ПІБ і/або slug, через ';'/',') ->
     id тренерів у порядку запису.
 
     Порядок -- це роль (перший тренер лектор-головний), тож список, а не
     множина. Усі нерозпізнані значення збираємо в ОДНУ помилку рядка: інакше
     менеджер правив би десятиіменну клітинку по одному імені за раунд.
+
+    Дублікати відсіюємо тут-таки, зберігаючи перше входження: `set_trainers`
+    робить те саме на записі, і без дзеркальної поведінки тут клітинка з
+    повтореним іменем назавжди показувала б «змінено» у прев'ю -- розібраний
+    список ніколи не збігся б із дедуплікованим збереженим.
     """
     text = _str(raw)
     if not text:
         return []
+    ambiguous_names = ambiguous_names or set()
     ids: list[int] = []
+    seen: set[int] = set()
     unknown: list[str] = []
+    ambiguous_hit: list[str] = []
     for name in _split_trainer_names(text):
+        if name in ambiguous_names:
+            ambiguous_hit.append(name)
+            continue
         tid = trainer_id_by_slug.get(name) or trainer_id_by_name.get(name)
         if tid is None:
             unknown.append(name)
-        else:
+        elif tid not in seen:
+            seen.add(tid)
             ids.append(tid)
+    if ambiguous_hit:
+        raise ValueError(
+            'кілька тренерів мають однакове ПІБ, вкажіть slug замість імені: '
+            + ', '.join(repr(n) for n in ambiguous_hit)
+        )
     if unknown:
         raise ValueError(
             'тренерів не знайдено (ні за slug, ні за ПІБ): '
@@ -977,10 +1092,16 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
         plan.errors.append(str(exc))
         return plan
 
-    _all_trainers = Trainer.query.all()
-    trainer_id_by_slug = {t.slug: t.id for t in _all_trainers}
-    trainer_id_by_name = {t.full_name: t.id for t in _all_trainers}
-    existing_by_id = {c.id: c for c in Course.query.all()}
+    trainer_id_by_slug, trainer_id_by_name, ambiguous_names = build_trainer_lookup(
+        Trainer.query.all()
+    )
+    # selectinload: _diff_course читає existing.trainers на КОЖНОМУ рядку, а
+    # relationship лінивий -- без цього прев'ю великого файлу робило по запиту
+    # на курс.
+    existing_by_id = {
+        c.id: c
+        for c in Course.query.options(selectinload(Course.trainers)).all()
+    }
     existing_by_slug = {c.slug: c for c in existing_by_id.values()}
 
     seen_slugs = set()
@@ -1008,6 +1129,7 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
             # у порядку запису: перший -- головний лектор.
             trainer_ids = _resolve_trainer_ids(
                 raw.get('trainer_slugs'), trainer_id_by_slug, trainer_id_by_name,
+                ambiguous_names,
             )
 
             parsed = {
@@ -1039,8 +1161,7 @@ def parse_courses_xlsx(path: Path) -> CoursesImportPlan:
 
             if not parsed['title']:
                 raise ValueError('порожній title')
-            if parsed['base_price'] < 0:
-                raise ValueError('base_price < 0')
+            _check_min_values(parsed)
 
             # знайти існуючий: id має пріоритет, потім slug
             existing = None
@@ -1195,6 +1316,7 @@ def apply_courses_plan(plan: CoursesImportPlan) -> dict:
 
     created = 0
     updated = 0
+    vanished = []
     blocks_touched = 0
     faq_touched = 0
 
@@ -1209,6 +1331,14 @@ def apply_courses_plan(plan: CoursesImportPlan) -> dict:
                 created += 1
             else:
                 course = db.session.get(Course, ex_id)
+                if course is None:
+                    # План будується на знімку БД і показується людині на
+                    # підтвердження; поки вона його читає, курс могли
+                    # видалити. Без цієї перевірки наступний рядок звалився б
+                    # AttributeError на None і відкотив УВЕСЬ імпорт через
+                    # одну зниклу сутність. Пропускаємо і звітуємо окремо.
+                    vanished.append(p['slug'])
+                    continue
                 updated += 1
 
             course.title = p['title']
@@ -1268,13 +1398,14 @@ def apply_courses_plan(plan: CoursesImportPlan) -> dict:
             'ok': True,
             'created': created,
             'updated': updated,
+            'vanished': vanished,
             'blocks_touched': blocks_touched,
             'faq_touched': faq_touched,
         }
-    except Exception as exc:
+    except Exception:
         db.session.rollback()
         logger.exception('apply_courses_plan failed')
-        return {'ok': False, 'reason': str(exc)}
+        return {'ok': False, 'reason': _APPLY_FAILED_MESSAGE}
 
 
 # ======================================================================
@@ -1456,10 +1587,17 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
         return plan
 
     course_id_by_slug = {c.slug: c.id for c in Course.query.all()}
-    _all_trainers = Trainer.query.all()
-    trainer_id_by_slug = {t.slug: t.id for t in _all_trainers}
-    trainer_id_by_name = {t.full_name: t.id for t in _all_trainers}
-    existing_by_id = {i.id: i for i in CourseInstance.query.all()}
+    trainer_id_by_slug, trainer_id_by_name, ambiguous_names = build_trainer_lookup(
+        Trainer.query.all()
+    )
+    # selectinload -- з тієї самої причини, що й у розборі курсів:
+    # _diff_instance читає existing.trainers на кожному рядку.
+    existing_by_id = {
+        i.id: i
+        for i in CourseInstance.query.options(
+            selectinload(CourseInstance.trainers)
+        ).all()
+    }
 
     for line_no, raw in enumerate(rows, start=2):
         try:
@@ -1513,6 +1651,7 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
             # у порядку запису: перший -- головний лектор.
             trainer_ids = _resolve_trainer_ids(
                 raw.get('trainer_slugs'), trainer_id_by_slug, trainer_id_by_name,
+                ambiguous_names,
             )
 
             parsed = {
@@ -1531,6 +1670,7 @@ def parse_instances_xlsx(path: Path) -> InstancesImportPlan:
                 'online_link': online_link,
                 'status': status,
             }
+            _check_min_values(parsed)
 
             existing = None
             if parsed['id'] is not None:
@@ -1611,6 +1751,7 @@ def apply_instances_plan(plan: InstancesImportPlan) -> dict:
 
     created = 0
     updated = 0
+    vanished = []
 
     try:
         for item in plan.instances:
@@ -1622,6 +1763,12 @@ def apply_instances_plan(plan: InstancesImportPlan) -> dict:
                 created += 1
             else:
                 inst = db.session.get(CourseInstance, ex_id)
+                if inst is None:
+                    # Те саме, що й у курсах: проведення могли видалити, поки
+                    # людина читала прев'ю. Одна зникла сутність не має
+                    # відкочувати весь імпорт.
+                    vanished.append(ex_id)
+                    continue
                 updated += 1
 
             inst.course_id = p['course_id']
@@ -1640,11 +1787,12 @@ def apply_instances_plan(plan: InstancesImportPlan) -> dict:
             trainer_links.set_trainers(inst, p['trainer_ids'])
 
         db.session.commit()
-        return {'ok': True, 'created': created, 'updated': updated}
-    except Exception as exc:
+        return {'ok': True, 'created': created, 'updated': updated,
+                'vanished': vanished}
+    except Exception:
         db.session.rollback()
         logger.exception('apply_instances_plan failed')
-        return {'ok': False, 'reason': str(exc)}
+        return {'ok': False, 'reason': _APPLY_FAILED_MESSAGE}
 
 
 # ======================================================================
@@ -2356,12 +2504,13 @@ def apply_participants_plan(plan: ParticipantsImportPlan) -> dict:
         db.session.commit()
         return {'ok': True, 'created': created, 'updated': updated, 'skipped': skipped}
     except participant_service.ParticipantError as exc:
+        # Доменна помилка -- її текст написаний для людини, показуємо як є.
         db.session.rollback()
         return {'ok': False, 'reason': str(exc)}
-    except Exception as exc:
+    except Exception:
         db.session.rollback()
         logger.exception('apply_participants_plan failed')
-        return {'ok': False, 'reason': str(exc)}
+        return {'ok': False, 'reason': _APPLY_FAILED_MESSAGE}
 
 
 # ==================== MM MEDIC MATERIALS TEMPLATE ====================
