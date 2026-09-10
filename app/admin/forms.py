@@ -800,6 +800,16 @@ class CourseInstanceForm(FlaskForm):
         validators=[Optional()],
         description='Залиште порожнім щоб взяти з курсу',
     )
+    # choices доповнюються в _populate_choices: підпис порожнього варіанта
+    # називає успадкований рівень («– Як у курсу (Рівень 2 — просунутий) –»).
+    difficulty_level = SelectField(
+        'Рівень складності',
+        coerce=int,
+        choices=[(0, '– Як у курсу –')] + Course.DIFFICULTY_LEVELS,
+        validators=[Optional()],
+        description='Показується біля цієї дати, лише якщо відрізняється '
+                    'від рівня курсу.',
+    )
 
     def validate_end_date(self, field):
         if field.data and self.start_date.data and field.data <= self.start_date.data:

@@ -196,6 +196,40 @@ def test_difficulty_level_is_named_once_beside_the_description(client):
     assert about.find('iprm-card-badge--level') < about.find('iprm-datecard')
 
 
+def test_datecard_names_the_level_only_when_it_differs_from_the_course(client):
+    """Рівень проведення -- привід порівняти дати між собою.
+
+    Дата з власним рівнем називає його біля себе; сусідня, що йде за
+    курсом, мовчить -- інакше в колонці стояв би стовпчик однакових
+    підписів, серед яких відмінність і губиться.
+    """
+    course = _course('-inst-level', difficulty_level=2)
+    _instance(course, days=10)
+    deeper = _instance(course, days=20)
+    deeper.difficulty_level = 3
+    db.session.commit()
+
+    about = _about_html(client, course)
+    dates = about[about.find('id="schedule"'):]
+
+    assert dates.count('iprm-schedule__tag--level') == 1
+    assert 'Рівень 3/3' in dates
+
+
+def test_datecard_stays_silent_when_the_level_repeats_the_course(client):
+    """Рівень курсу названо один раз біля опису -- на картках його немає."""
+    course = _course('-same-level', difficulty_level=2)
+    inst = _instance(course, days=10)
+    inst.difficulty_level = 2
+    db.session.commit()
+
+    about = _about_html(client, course)
+    dates = about[about.find('id="schedule"'):]
+
+    assert 'iprm-schedule__tag--level' not in dates
+    assert about.count('iprm-card-badge--level') == 1
+
+
 def test_fifth_and_further_dates_hide_behind_a_disclosure(client):
     """Колонка не має бути вищою за опис -- решта дат під розкривачем.
 

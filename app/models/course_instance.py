@@ -63,6 +63,12 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
     # Перевизначення спеціальностей проведення. NULL/порожньо -- беремо курс.
     bpr_specialty_codes = db.Column(db.JSON)
 
+    # Перевизначення рівня складності (шкала Course.DIFFICULTY_LEVELS, 1..3).
+    # NULL -- беремо рівень курсу (див. effective_difficulty_level). Потрібне,
+    # коли дати одного курсу мають різну підготовку: та сама програма раз іде
+    # базовим модулем, а раз -- поглибленим.
+    difficulty_level = db.Column(db.Integer)
+
     status = db.Column(db.String(20), default='draft', nullable=False, index=True)
 
     # start_date має index=True на колонці -- окремого ix_course_instances_start_date не додаємо.
@@ -91,6 +97,10 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
         db.CheckConstraint(
             'max_participants >= 1 OR max_participants IS NULL',
             name='ck_course_instances_max_participants_positive',
+        ),
+        db.CheckConstraint(
+            'difficulty_level BETWEEN 1 AND 3 OR difficulty_level IS NULL',
+            name='ck_course_instances_difficulty_level_scale',
         ),
     )
 
@@ -259,6 +269,41 @@ class CourseInstance(TranslatableMixin, TimestampMixin, db.Model):
             return list(self.bpr_specialty_codes)
         course = self.course
         return list(course.bpr_specialty_codes or []) if course else []
+
+    @property
+    def effective_difficulty_level(self):
+        """Рівень складності: власний, а якщо не заданий -- курсовий."""
+        if self.difficulty_level is not None:
+            return self.difficulty_level
+        if self.course is None:
+            self._warn_orphan('difficulty_level')
+            return None
+        return self.course.difficulty_level
+
+    @property
+    def difficulty_label(self):
+        """Підпис рівня зі шкали курсу -- шкала оголошена один раз, у Course."""
+        from app.models.course import Course
+        return dict(Course.DIFFICULTY_LEVELS).get(self.effective_difficulty_level)
+
+    @property
+    def distinct_difficulty_level(self):
+        """Рівень, лише якщо він відрізняється від курсового; інакше None.
+
+        Правило показу живе тут, а не в шаблонах: рівень називають і картка
+        дати на сторінці курсу, і рядок розкладу /courses, і в обох випадках
+        він доречний рівно тоді, коли ця дата вибивається із курсу. Рівень,
+        однаковий для всіх дат, уже названо один раз біля опису курсу --
+        повторений на кожній картці, він перестає щось розрізняти.
+
+        Курс без власного рівня + дата з рівнем -- теж відмінність: сказати
+        про неї нема де більше.
+        """
+        own = self.difficulty_level
+        if own is None:
+            return None
+        course_level = self.course.difficulty_level if self.course else None
+        return None if own == course_level else own
 
     def effective_cpd_for(self, fmt):
         """Бали БПР для формату участі `fmt` ('online' / 'offline').

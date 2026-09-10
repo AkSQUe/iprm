@@ -471,6 +471,9 @@ def populate_instance_from_form(instance, form):
     # маршруті: порожній вибір там і означає «успадкувати від курсу».
     # Порожній вибір -- це "як у курсу", тож у БД лягає NULL, а не [].
     instance.bpr_specialty_codes = clean_codes(form.bpr_specialty_codes.data) or None
+    # 0 -- це «Як у курсу» з пікера; NULL, а не 0, бо шкала починається з 1,
+    # і нуль у колонці означав би неіснуючий рівень.
+    instance.difficulty_level = form.difficulty_level.data or None
     # Гвард і тут, а не лише в `change_instance_status`: форма
     # редагування писала статус напряму, тобто повз ОБИДВІ перевірки.
     # Половина гварда гірша за його відсутність — вона створює

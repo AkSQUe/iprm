@@ -75,6 +75,30 @@ def _populate_choices(form, preselected_course_id=None, instance=None):
         empty_label='– Як у курсу –',
     )
 
+    form.difficulty_level.choices = (
+        [(0, _inherited_level_label(instance, preselected_course_id))]
+        + Course.DIFFICULTY_LEVELS
+    )
+
+
+def _inherited_level_label(instance, preselected_course_id=None):
+    """Підпис порожнього варіанта поля «Рівень складності».
+
+    Голе «Як у курсу» приховує саме ту цифру, з якою адмін і збирається
+    зіставити цю дату: щоб дізнатись, базовий курс чи поглиблений, довелось
+    би відкрити його картку. Тому називаємо рівень у дужках скрізь, де курс
+    уже відомий -- і в правці наявної дати, і в створенні з картки курсу
+    (?course_id=). На чистому /new курс обирають у тій самій формі, тож
+    називати ще нічого.
+    """
+    bare = '– Як у курсу –'
+    course = instance.course if instance is not None else None
+    if course is None and preselected_course_id:
+        course = db.session.get(Course, preselected_course_id)
+    if course is None or not course.difficulty_level:
+        return bare
+    return f'– Як у курсу ({course.difficulty_label}) –'
+
 
 _INSTANCES_PER_PAGE = 25
 
