@@ -66,7 +66,7 @@ def test_sidebar_shows_only_permitted_links(app, client):
 
     html = client.get('/admin/courses').get_data(as_text=True)
     assert '/admin/courses' in html
-    assert 'Контент' in html
+    assert 'Навчання' in html
     assert '/admin/users' not in html
     assert 'Продажі' not in html
     assert 'Система' not in html
