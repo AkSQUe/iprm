@@ -107,7 +107,7 @@
     {% set _discard = hero_meta.append({'value': '%s %s' % (course.duration_hours, _('год')), 'label': _('тривалість')}) %}
   {% endif %}
   {% if course.cpd_points %}
-    {% set _discard = hero_meta.append({'value': course.cpd_points, 'label': course.cpd_points | plural('bpr_points')}) %}
+    {% set _discard = hero_meta.append({'value': course.cpd_points | points, 'label': course.cpd_points | plural('bpr_points')}) %}
   {% endif %}
   {% set _discard = hero_meta.append({'value': _('Одразу'), 'label': _('старт після оплати')}) %}
   {% if course.effective_price %}

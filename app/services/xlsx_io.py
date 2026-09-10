@@ -1930,8 +1930,15 @@ def export_participants_xlsx(instance_id=None, blank=False) -> io.BytesIO:
             float(reg.payment_amount) if reg.payment_amount is not None else None,
             'Так' if reg.attended else 'Ні',
             reg.cpd_points_awarded,
+            # Сира колонка, а не effective_participation_format: імпорт кладе
+            # значення саме туди, тож віддавати обчислене з тарифу означало б
+            # круговоротом "вивантажив -> виправив прізвище -> завантажив"
+            # жорстко фіксувати похідне значення в кожному рядку (подальша
+            # зміна тарифу вже не рухала б бали) і позначати "формат участі"
+            # зміненим у кожному рядку, де колонка була NULL. Порожньо тут --
+            # "за тарифом", так само як у формі картки учасника.
             {'online': 'Онлайн', 'offline': 'Офлайн'}.get(
-                reg.effective_participation_format, ''),
+                reg.participation_format, ''),
             reg.experience_years,
             reg.license_number or '',
             reg.admin_notes or '',

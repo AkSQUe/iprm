@@ -475,6 +475,11 @@ def execute(registration, *, target_instance, initiator, tariff=None,
     registration.place_number = None
     registration.instance_id = target_instance.id
     registration.tariff_id = tariff.id if tariff is not None else None
+    # Формат участі -- з тарифу НОВОГО заходу: без цього людина, перенесена
+    # з очного на онлайновий формат, лишалась би проштампованою 'offline' і
+    # або отримувала чужі бали БПР, або due_cpd_points віддавав би None і
+    # гейт підтвердження присутності блокував би тест.
+    registration.participation_format = tariff.event_format if tariff is not None else None
 
     if (registration.payment_status == 'paid'
             and registration.status != 'cancelled'):

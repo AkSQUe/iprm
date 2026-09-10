@@ -29,6 +29,16 @@ def test_parse_points_rejects_garbage(raw):
         parse_points(raw)
 
 
+@pytest.mark.parametrize('raw', ['1e30', '9' * 32])
+def test_parse_points_rejects_overflow_as_value_error(raw):
+    # quantize() кидає decimal.InvalidOperation на завеликому числі -- це
+    # ArithmeticError, НЕ ValueError, і виклики (форми, xlsx-імпорт,
+    # підтвердження присутності) ловлять лише ValueError. Без явного
+    # перетворення в parse_points сюрприз був би 500-ю.
+    with pytest.raises(ValueError):
+        parse_points(raw)
+
+
 @pytest.mark.parametrize('value, expected', [
     (Decimal('9.00'), '9'),
     (Decimal('7.50'), '7,5'),

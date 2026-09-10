@@ -35,8 +35,12 @@
 {% set _ranges = insts | map(attribute='cpd_range') | list %}
 {% set _lows = _ranges | map(attribute=0) | reject('none') | list %}
 {% set _highs = _ranges | map(attribute=1) | reject('none') | list %}
-{% set cpd_min = _lows | min if _lows else (course.cpd_points_online or course.cpd_points_offline) %}
-{% set cpd_max = _highs | max if _highs else (course.cpd_points_offline or course.cpd_points_online) %}
+{# Курс без майбутніх проведень: беремо min/max із заповнених форматів, а
+   не `or` -- інакше на онлайн 9 / офлайн 7,5 діапазон друкував би
+   "9-7,5" замість "7,5-9". #}
+{% set _course_cpds = [course.cpd_points_online, course.cpd_points_offline] | select | list %}
+{% set cpd_min = _lows | min if _lows else (_course_cpds | min if _course_cpds else none) %}
+{% set cpd_max = _highs | max if _highs else (_course_cpds | max if _course_cpds else none) %}
 {% set summary = course.t('short_description') or course.t('subtitle') %}
 {% set card_tags = course.t('tags') or [] %}
 {# Є дати -> ведемо одразу до блоку форматів участі. Сама секція #formats

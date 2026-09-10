@@ -216,6 +216,13 @@ def create_app(config_name=None):
     from app.i18n_plurals import plural, points_text
     app.jinja_env.filters['plural'] = plural
     app.jinja_env.filters['points'] = points_text
+    # PDF-сертифікат україномовний завжди, незалежно від активної локалі
+    # користувача: `points` бере роздільник з неї, і en-користувач
+    # завантажив би PDF із крапкою ("7.5 бала БПР"). Окремий фільтр із
+    # фіксованою комою -- поведінку наявного `points` (locale-aware, для
+    # решти сайту) не чіпаємо.
+    from app.utils import format_points
+    app.jinja_env.filters['points_uk'] = lambda value: format_points(value, sep=',')
     # Назва локації розкладу активною мовою через довідник City. Канонічна
     # укр-назва лишається в CourseInstance.location -- фільтр застосовуємо
     # лише там, де текст читає людина (не в JSON-LD, ICS і партнерському API).

@@ -11,6 +11,7 @@ from openpyxl import Workbook, load_workbook
 from app.extensions import db
 from app.models.course import Course
 from app.models.course_instance import CourseInstance
+from app.models.instance_tariff import InstanceTariff
 from app.models.registration import EventRegistration
 from app.models.user import User
 from app.services import xlsx_io
@@ -179,3 +180,70 @@ def test_participant_import_garbage_participation_format_is_row_error(client, tm
     plan = xlsx_io.parse_participants_xlsx(path)
     assert not plan.is_valid
     assert any('формат участі' in e.lower() for e in plan.errors)
+
+
+def test_participant_export_shows_raw_column_not_tariff_derived(client):
+    # Формат участі не проставлений (власна колонка NULL), а бали
+    # обчислюються з тарифу онлайн: effective_participation_format віддає
+    # 'online', але експорт мусить показати "за тарифом" (порожньо),
+    # інакше круговорот вивантаження/довантаження зафіксував би похідне
+    # значення у власній колонці.
+    inst = _instance()
+    tariff = InstanceTariff(instance_id=inst.id, name='Онлайн', price=0,
+                             event_format='online')
+    db.session.add(tariff)
+    db.session.flush()
+    user = User.create_with_password(f'ex-{uuid4().hex[:6]}@test.com', 'password123',
+                                     first_name='Ол', last_name='Ів')
+    db.session.flush()
+    reg = EventRegistration(
+        user_id=user.id, instance_id=inst.id, phone='+380501112233',
+        specialty='Дерматолог', workplace='Клініка', tariff_id=tariff.id,
+    )
+    db.session.add(reg)
+    db.session.commit()
+
+    assert reg.participation_format is None
+    assert reg.effective_participation_format == 'online'
+
+    ws = load_workbook(xlsx_io.export_participants_xlsx())['Учасники']
+    header = [c.value for c in ws[1]]
+    row = dict(zip(header, [c.value for c in ws[2]]))
+    # Порожня комірка після реального save/load openpyxl повертається як
+    # None, а не '' -- саме так, як після справжнього циклу
+    # вивантаження/довантаження в Excel.
+    assert row[xlsx_io.PARTICIPANT_LABELS['participation_format']] in (None, '')
+
+
+def test_participant_roundtrip_does_not_freeze_derived_format(client, tmp_path):
+    # Круговорот "вивантажив -> нічого не міняв -> завантажив" не повинен
+    # записати обчислений з тарифу формат у власну колонку реєстрації --
+    # інакше подальша зміна тарифу вже не рухала б бали.
+    inst = _instance()
+    tariff = InstanceTariff(instance_id=inst.id, name='Онлайн', price=0,
+                             event_format='online')
+    db.session.add(tariff)
+    db.session.flush()
+    user = User.create_with_password(f'rt-{uuid4().hex[:6]}@test.com', 'password123',
+                                     first_name='Р', last_name='Т')
+    db.session.flush()
+    reg = EventRegistration(
+        user_id=user.id, instance_id=inst.id, phone='+380501112233',
+        specialty='Дерматолог', workplace='Клініка', tariff_id=tariff.id,
+    )
+    db.session.add(reg)
+    db.session.commit()
+    reg_id = reg.id
+
+    buf = xlsx_io.export_participants_xlsx()
+    path = tmp_path / 'roundtrip.xlsx'
+    path.write_bytes(buf.getvalue())
+
+    plan = xlsx_io.parse_participants_xlsx(path)
+    assert plan.is_valid, plan.errors
+    result = xlsx_io.apply_participants_plan(plan)
+    assert result['ok']
+
+    reg = db.session.get(EventRegistration, reg_id)
+    assert reg.participation_format is None
+    assert reg.effective_participation_format == 'online'

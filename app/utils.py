@@ -82,7 +82,14 @@ def parse_points(raw):
         raise ValueError(f'не число: {raw!r}')
     if not value.is_finite():
         raise ValueError(f'не число: {raw!r}')
-    return value.quantize(POINTS_QUANT, rounding=ROUND_HALF_UP)
+    try:
+        return value.quantize(POINTS_QUANT, rounding=ROUND_HALF_UP)
+    except InvalidOperation:
+        # quantize кидає InvalidOperation (не ValueError!) на завеликому
+        # числі ('1e30', 32 дев'ятки) -- виклики ловлять лише ValueError,
+        # і без цього перетворення сюрприз був би 500-ю замість зрозумілої
+        # помилки в формі, xlsx-імпорті чи підтвердженні присутності.
+        raise ValueError(f'не число: {raw!r}')
 
 
 def format_points(value, sep=','):

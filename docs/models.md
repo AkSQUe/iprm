@@ -43,7 +43,7 @@
 | `target_audience`, `tags`, `faq` | JSON | Списки |
 | `speaker_info`, `agenda` | Text | Текстові блоки |
 | `base_price` | Numeric(10,2) | Default-ціна (instance може перевизначити) |
-| `cpd_points` | Integer | Default бали БПР |
+| `cpd_points_online`, `cpd_points_offline` | Numeric(5,2) | Default бали БПР окремо для онлайн/очної участі (гібрид дає різну кількість) |
 | `max_participants` | Integer | Default обмеження |
 | `trainer_id` | FK trainers | Default-тренер |
 | `created_by` | FK users | Хто створив |
@@ -71,7 +71,8 @@
 | `course_id` | FK courses | Батьківський курс |
 | `start_date`, `end_date` | DateTime | Дати проведення |
 | `event_format` | String(20) | online/offline/hybrid |
-| `price`, `cpd_points`, `max_participants` | Overrides | null = взяти з Course |
+| `price`, `max_participants` | Overrides | null = взяти з Course |
+| `cpd_points_online`, `cpd_points_offline` | Numeric(5,2), overrides | null = взяти з Course; `effective_cpd_for(fmt)` / `cpd_pairs` / `cpd_range` читають обидва |
 | `location`, `online_link` | String | Локація |
 | `trainer_id` | FK trainers | Override тренера |
 | `status` | String(20) | draft/published/active/completed/cancelled |
@@ -200,7 +201,8 @@ xlsx-звіти.
 | `promo_code_id` | FK -> promo_codes.id (SET NULL) | Застосований промокод |
 | `discount_amount` | Numeric(10,2) | Знімок знижки (payment_amount уже без неї) |
 | `attended` | Boolean | Чи відвідав захід |
-| `cpd_points_awarded` | Integer | Нараховані бали БПР |
+| `cpd_points_awarded` | Numeric(5,2) | Нараховані бали БПР (знімок; фактично видані) |
+| `participation_format` | String(20) | online/offline/NULL -- власний формат участі, перекриває тариф. `effective_participation_format` (own -> tariff -> instance) і `due_cpd_points` (скільки НАЛЕЖИТЬ за форматом, на відміну від уже нарахованого `cpd_points_awarded`) читають цей ланцюжок |
 | `admin_notes` | Text | Нотатки адміністратора |
 | `created_at` | DateTime (UTC) | TimestampMixin |
 | `updated_at` | DateTime (UTC) | TimestampMixin |
@@ -272,7 +274,7 @@ WHERE `status = 'applied'`) гарантує рівно одне активне 
 | `recipient_name` | String(255) | Знімок ПІБ на момент видачі |
 | `event_title` | String(500) | Знімок назви заходу |
 | `event_date` | DateTime (UTC) | Знімок дати заходу |
-| `cpd_points` | Integer | Знімок балів БПР |
+| `cpd_points` | Numeric(5,2) | Знімок балів БПР (дробові -- гібрид дає різну кількість онлайн/очно) |
 | `lecturer_name` | String(200) | Знімок імені лектора (тренер проведення) |
 | `issued_at` | DateTime (UTC) | Дата видачі |
 | `issued_by_id` | FK -> users.id (SET NULL) | Адмін, що видав |
@@ -464,7 +466,8 @@ Singleton-модель для зберігання SMTP-налаштувань �
 | `title` / `description` / `short_description` | | Наші тексти; порожньо -> беремо з Sintegrum |
 | `price` | Numeric(10,2) | НАША ціна продажу. Обов'язкова для публікації |
 | `currency` | String(3) | Валюта, типово UAH |
-| `duration_hours`, `cpd_points` | Integer | Тривалість; бали БПР (довідково) |
+| `duration_hours` | Integer | Тривалість (год) |
+| `cpd_points` | Numeric(5,2) | Бали БПР (довідково) |
 | `is_published`, `is_featured`, `sort_order` | | Керування каталогом |
 | `hero_media_id`, `card_media_id` | FK -> media_files | Зображення через медіа-реєстр |
 | `card_avatar_src` | String(1000) | Посилання Sintegrum, з якого зроблено `card_media` |

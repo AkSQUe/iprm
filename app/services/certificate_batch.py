@@ -24,6 +24,7 @@ import zipfile
 from datetime import datetime
 
 from app.models.mixins import utcnow
+from app.utils import parse_points
 
 logger = logging.getLogger(__name__)
 
@@ -213,7 +214,10 @@ def parse_workbook(job_id):
         cpd = None
         if cpd_raw not in (None, ''):
             try:
-                cpd = int(float(str(cpd_raw).strip().replace(',', '.')))
+                # parse_points, а не int(float(...)): бали БПР бувають
+                # дробові (7,5), і обрізання до int друкувало б на
+                # сертифікаті менше, ніж людина заробила.
+                cpd = parse_points(cpd_raw)
             except ValueError:
                 problems.append('бали БПР не число')
         # дубль номера учасника в межах файлу

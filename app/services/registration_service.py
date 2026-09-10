@@ -152,6 +152,11 @@ def create_or_reactivate(user_id, instance, form_data, existing=None, tariff=Non
         existing.payment_amount = price
         existing.payment_method = payment_method
         existing.tariff_id = tariff.id if tariff is not None else None
+        # Формат участі -- з обраного тарифу, а не старий, що лишився зі
+        # скасованої реєстрації: людина могла записатись очно, скасувати й
+        # повернутись на онлайновий тариф гібрида -- власна колонка інакше
+        # виграла б над тарифом і дала їй чужі бали БПР.
+        existing.participation_format = tariff.event_format if tariff else None
         existing.status = new_status
         existing.payment_status = new_payment
         existing.payment_id = None
